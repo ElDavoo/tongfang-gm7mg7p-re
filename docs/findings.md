@@ -10760,3 +10760,93 @@ with a dated correction beside them per §4a-4d. A pre-existing failure in
 vs `xdata-clusters.csv`) is unrelated to this change and fails at `HEAD` too.
 No live test ran, no register was read back, no capture was opened, and no
 hardware, EC, Windows, Ghidra or `registers.yaml` row was involved.
+
+## 83. The bounds check `descend()` runs after the read is kept, and the one that runs before it is added (2026-09-26, issue #844)
+
+The write-up is
+[`descend-index-guard.md`](findings/descend-index-guard.md); this is the summary.
+§53's census, `opcode-len-bounds-census.md` follow-up 2, named `descend()`
+in `walk_branch_arms.py` as **the one row in its table where the end-of-buffer
+test runs after the read it guards**, and asked for a verdict: a comment naming
+the invariant, or the pre-read check `test_site()` already has.
+
+**The pre-read check landed, and the census's reason for the old ordering is
+corrected beside itself rather than edited away**, per §4a-4d. That reason —
+"`off` comes from `offset_for_runtime()`, which is `None`-checked, so the read
+is in range before the length test is reached" — is wrong as a general claim.
+`None`-checked is not in-range: returning non-`None` says the *runtime address*
+is inside a mapped region, and nothing in it says the *file offset* it computes
+is inside the buffer. Two numbers make the gap, and both are the region's and
+neither is `descend()`'s:
+
+- the **ceiling** is `0x2FFFF`, not the `0x40000` the census's argument leans
+  on. The largest `hi` in `REGIONS` is the second `erased` row, whose `base` is
+  `None`, and `offset_for_runtime()`'s `next()` filters on `base is not None`, so
+  that row can never be selected. The highest offset the function can return is
+  the `pd-image` row's last address.
+- the **floor** is `0x2004A`, because `main()`'s PD-marker check is a *slice*
+  comparison, which cannot raise on a short buffer, and a buffer is the
+  caller's. That leaves **65461 bytes** of the region table's range that nothing
+  certifies the buffer covers.
+
+**The existing `off + n > len(d)` test stays**, and this is the part worth
+reading: it was never what held the index. It asks whether the *instruction*
+fits, which `off + n == len(d)` satisfies, so a one-byte opcode at the last byte
+decodes and the walk is allowed to land exactly on `len(d)`. The new check asks
+a different question, and a comment at the old one says so — the census's row-9
+lesson, *the instruction fits* versus *the index is readable*, applied here with
+the same force it applies to `trace_xdata_refs.py`. **The fix is additional, not
+a move, and "move the check" must not be read as "delete the old one".**
+
+The new stop reason is in `CUTS` deliberately and fires **0** times over the
+committed `0x0751` run; the two committed CSVs,
+`manual-fan-ctrl-0751-arms.csv` and `-sites.csv`, come out **byte-identical**
+before and after, and that diff is the load-bearing evidence. Two cases in
+`test_walk_branch_arms.py`'s `BoundTests` pin it, and **both raise
+`IndexError` on the pre-change tool** — checked against `HEAD`'s copy, so they
+are pins and not formalities. One names `region="pd-image"` on a buffer cut to
+the marker floor, which is the region that puts the two numbers furthest apart.
+
+Three corrections and three follow-ups, all in the write-up, and the two that
+matter here: the census's membership-grep block was re-run rather than hand-
+edited, and it turned out to be **already stale on `main`** for five lines
+(`trace_xdata_refs.py:229` is `:297` — the #846 move this block never received —
+and four `disasm8051.py` lines are each one higher), so the re-run moves seven
+lines rather than the two this change is responsible for; the count is unchanged
+at 39. And the plan's own arithmetic expected one moved line, not two. The
+census's per-site table rows 2 and 8 are **deliberately left at their old
+numbers**, with the mapping in a note beside the grep block.
+
+**On the tree this merges into, that count is 41, not 39, and the sentence above
+is left as it was** because it is true of the tree it was measured on. #843's
+side of the same merge added the census's two new membership sites — the
+`if i + OPCODE_LEN[op] > hi:` guard it put in `walk_helper()` and in
+`chain_from()` — and moved all nineteen of that file's `pd_index_geometry.py`
+sites, so the block is re-run and the table repointed beside it, both on the
+file's own "the block is the re-run" rule and on #848's precedent. **#844 moved
+no count**: it moved two `walk_branch_arms.py` lines and added no site, and the
+five lines it did find already stale are still five. The census's `:71` pin, on
+the fenced block, still does not move, and the pin the write-up repointed sits at
+`:169` for the same reason it was at `:147` on that tree — #843's note is longer
+and sits above it.
+
+Nothing here claims the EC does anything: no capture was opened, no EC or
+hardware or Windows was involved, and the subject is Python walking a `bytes`
+object. No `status:` moved, so `ec/annotations/registers.yaml` is not touched; no
+gate, workflow or action is edited; and nothing is opened in another repository.
+The suite's one red, `test_check_cluster_citations.py`, is named in the write-up
+and not fixed — §59 records it as red on `main` on a file this change does not
+touch.
+
+*(Numbering note, 2026-09-26, recorded here and not in §82, on the rule the
+earlier collisions set — the summary already committed on `main` does not move
+and the branch's own gives way, per §4a-4d. **This section is written as §82
+and is §83 on the tree it lands in**, having given way to #843's §82 in the
+same merge; §82 keeps the whole number and the collision costs this section one
+digit, not its content. **No §-number reference pointed at it, so nothing is
+owed a repoint** — the two censuses this change edits, `opcode-len-bounds-census.md`
+and `test-line-pin-census.md`, pin `ec/tools/*.py` and census line numbers, not
+this section's, and the one row they share is repointed in its own file above.
+The write-up it points at,
+[`descend-index-guard.md`](findings/descend-index-guard.md), cites §53, §4a-4d
+and §59 and no section number of its own, so it is unaffected by the shift.)*

@@ -47,7 +47,7 @@ sweep's boundary is stated rather than assumed:
   a value read out of a dict, so by the paragraph above it cannot raise.
 
 And a third, in the same family, which is *not* the shape and is easy to
-mistake for it: `pd_index_geometry.py:595,629`'s `i + OPCODE_LEN[MOV_DPTR]`
+mistake for it: `pd_index_geometry.py:644,678`'s `i + OPCODE_LEN[MOV_DPTR]`
 indexes the table with the `MOV_DPTR` **constant**, not with anything read out
 of a buffer.
 
@@ -61,39 +61,41 @@ either gets the same list or finds a correction to make.
 $ grep -rn 'OPCODE_LEN\[' --include=*.py ec/tools
 ```
 ```
-ec/tools/trace_xdata_refs.py:229:        n = OPCODE_LEN[d[i]]
-ec/tools/disasm8051.py:108:    `disp` is the instruction's *last* byte -- `d[i + OPCODE_LEN[op] - 1]`, not
-ec/tools/disasm8051.py:114:    return (addr + OPCODE_LEN[op] + (disp - 256 if disp > 127 else disp)) & 0xFFFF
-ec/tools/disasm8051.py:311:        n = OPCODE_LEN[d[i]]
-ec/tools/disasm8051.py:333:            i += OPCODE_LEN[d[i]]
+ec/tools/trace_xdata_refs.py:297:        n = OPCODE_LEN[d[i]]
+ec/tools/disasm8051.py:109:    `disp` is the instruction's *last* byte -- `d[i + OPCODE_LEN[op] - 1]`, not
+ec/tools/disasm8051.py:115:    return (addr + OPCODE_LEN[op] + (disp - 256 if disp > 127 else disp)) & 0xFFFF
+ec/tools/disasm8051.py:312:        n = OPCODE_LEN[d[i]]
+ec/tools/disasm8051.py:334:            i += OPCODE_LEN[d[i]]
 ec/tools/second_copy_census.py:468:            i += OPCODE_LEN[fw[i]]
 ec/tools/second_copy_census.py:473:        raw = fw[last:last + OPCODE_LEN[fw[last]]]
 ec/tools/test_disasm8051.py:52:        # `OPCODE_LEN[d[1]]` before its own bounds check -- an IndexError from
-ec/tools/pd_index_geometry.py:364:        raw = d[i:i + OPCODE_LEN[op]]
-ec/tools/pd_index_geometry.py:403:        i += OPCODE_LEN[op]
-ec/tools/pd_index_geometry.py:412:        n = OPCODE_LEN[d[i]]
-ec/tools/pd_index_geometry.py:430:            run.append((i, d[i:i + OPCODE_LEN[d[i]]]))
-ec/tools/pd_index_geometry.py:431:            i += OPCODE_LEN[d[i]]
-ec/tools/pd_index_geometry.py:531:        raw = d[i:i + OPCODE_LEN[op]]
-ec/tools/pd_index_geometry.py:538:            i += OPCODE_LEN[op]
-ec/tools/pd_index_geometry.py:566:        i += OPCODE_LEN[op]
-ec/tools/pd_index_geometry.py:595:        helpers, terms, stopped = chain_from(d, i + OPCODE_LEN[MOV_DPTR],
-ec/tools/pd_index_geometry.py:629:        start = i + OPCODE_LEN[MOV_DPTR] if base is not None else i
-ec/tools/pd_index_geometry.py:636:            listing.append((j, d[j:j + OPCODE_LEN[d[j]]]))
-ec/tools/pd_index_geometry.py:637:            j += OPCODE_LEN[d[j]]
-ec/tools/pd_index_geometry.py:716:        raw = d[i:i + OPCODE_LEN[op]]
-ec/tools/pd_index_geometry.py:739:        i += OPCODE_LEN[d[i]]
-ec/tools/pd_index_geometry.py:1062:            n = OPCODE_LEN[d[i]]
-ec/tools/pd_index_geometry.py:1100:        op, n = d[i], OPCODE_LEN[d[i]]
-ec/tools/pd_index_geometry.py:1178:        n = OPCODE_LEN[d[i]]
-ec/tools/pd_index_geometry.py:1191:            n = OPCODE_LEN[d[i]]
-ec/tools/pd_index_geometry.py:1507:            i += OPCODE_LEN[op]
+ec/tools/pd_index_geometry.py:392:        if i + OPCODE_LEN[op] > hi:
+ec/tools/pd_index_geometry.py:397:        raw = d[i:i + OPCODE_LEN[op]]
+ec/tools/pd_index_geometry.py:436:        i += OPCODE_LEN[op]
+ec/tools/pd_index_geometry.py:445:        n = OPCODE_LEN[d[i]]
+ec/tools/pd_index_geometry.py:463:            run.append((i, d[i:i + OPCODE_LEN[d[i]]]))
+ec/tools/pd_index_geometry.py:464:            i += OPCODE_LEN[d[i]]
+ec/tools/pd_index_geometry.py:576:        if i + OPCODE_LEN[op] > hi:
+ec/tools/pd_index_geometry.py:580:        raw = d[i:i + OPCODE_LEN[op]]
+ec/tools/pd_index_geometry.py:587:            i += OPCODE_LEN[op]
+ec/tools/pd_index_geometry.py:615:        i += OPCODE_LEN[op]
+ec/tools/pd_index_geometry.py:644:        helpers, terms, stopped = chain_from(d, i + OPCODE_LEN[MOV_DPTR],
+ec/tools/pd_index_geometry.py:678:        start = i + OPCODE_LEN[MOV_DPTR] if base is not None else i
+ec/tools/pd_index_geometry.py:685:            listing.append((j, d[j:j + OPCODE_LEN[d[j]]]))
+ec/tools/pd_index_geometry.py:686:            j += OPCODE_LEN[d[j]]
+ec/tools/pd_index_geometry.py:765:        raw = d[i:i + OPCODE_LEN[op]]
+ec/tools/pd_index_geometry.py:788:        i += OPCODE_LEN[d[i]]
+ec/tools/pd_index_geometry.py:1115:            n = OPCODE_LEN[d[i]]
+ec/tools/pd_index_geometry.py:1153:        op, n = d[i], OPCODE_LEN[d[i]]
+ec/tools/pd_index_geometry.py:1231:        n = OPCODE_LEN[d[i]]
+ec/tools/pd_index_geometry.py:1244:            n = OPCODE_LEN[d[i]]
+ec/tools/pd_index_geometry.py:1569:            i += OPCODE_LEN[op]
 ec/tools/counter_sweep_entry.py:319:    last = idx == OPCODE_LEN[op] - 1
 ec/tools/counter_sweep_entry.py:384:            n = OPCODE_LEN[r["owner_opcode"]]
 ec/tools/counter_sweep_entry.py:551:    check(all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
 ec/tools/counter_sweep_entry.py:565:          and all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
-ec/tools/walk_branch_arms.py:213:        n = OPCODE_LEN[op]
-ec/tools/walk_branch_arms.py:328:            n = OPCODE_LEN[op]
+ec/tools/walk_branch_arms.py:220:        n = OPCODE_LEN[op]
+ec/tools/walk_branch_arms.py:347:            n = OPCODE_LEN[op]
 ec/tools/audit_call_targets.py:170:        if op in REL_OPCODES and i + OPCODE_LEN[op] <= hi:
 ec/tools/audit_call_targets.py:171:            yield i, op, relative_target(op, d[i + OPCODE_LEN[op] - 1],
 ec/tools/audit_call_targets.py:314:                "length": OPCODE_LEN[op],
@@ -102,7 +104,7 @@ ec/tools/citation_gap_scan.py:28:called in a loop over these windows.** It evalu
 ec/tools/citation_gap_scan.py:234:        n = D.OPCODE_LEN[window[i]]
 ```
 
-**39 lines, and 25 of them are sites of the shape, in 20 rows.** The other
+**41 lines, and 27 of them are sites of the shape, in 20 rows.** The other
 14 are accounted for here so that the arithmetic is checkable rather than
 asserted:
 
@@ -115,12 +117,57 @@ loop above the listing add no `OPCODE_LEN[` of their own, so the count is
 unchanged at 39 and the sweep still exits 0. The block above is the grep re-run,
 not the old output edited by hand.)*
 
+*(Re-run again by #844, which moved both `walk_branch_arms.py` sites: `:213` is
+`:220` and `:328` is `:347`, because the new `END_IMAGE` stop reason and its
+`CUTS` entry sit above `test_site()` and the pre-read guard sits between them
+and `descend()`'s read. The count is unchanged at 39. **This re-run also picked
+up five lines that were already stale before #844 touched anything**, and they
+are recorded here so they are not credited to it: `trace_xdata_refs.py:229` is
+`:297` — the #846 note further down this file records that same move, and this
+block was not updated with it — and the four `disasm8051.py` lines are each one
+higher, `:108,114,311,333` becoming `:109,115,312,334`. A partial hand-edit of
+two lines would have left the block neither the old output nor the new one,
+which is what the sentence above exists to prevent, so all seven are the re-run.
+The `not a site` table's first row cites `disasm8051.py:108,114` and needs
+`109,115`; it is the one row in that table this change moves.)*
+
+*(The per-site table's rows 2 and 8 are **deliberately left at `:212-213` and
+`:327-328`**, and the `three more rows` paragraph at its `:328` with them. Row 8
+is the most conflict-prone cell in the file, both rows name their function
+beside the number, and follow-up 2's correction clause below carries the update
+— which is why the answer went there rather than here. The mapping for a reader
+who follows one of those citations: row 2's `test_site()` guard is `:217` and
+its read and table index are `:219` and `:220`; row 8's `descend()` read and
+index are `:346` and `:347`, its new pre-read guard is `:343`, and its
+`off + n > len(d)` test is `:353`. This is the same shape as the #846 note
+below — a moved file, not a wrong one.)*
+
+*(Re-run once more at the `#843` × `#844` merge, 2026-09-26, and **this is the
+re-run that moves the count: 39 is 41, and 25 sites of the shape is 27.** Both
+sides moved `pd_index_geometry.py` and only one of them re-ran this command, so
+the two changes land together here. #843 bounded `walk_helper()` and
+`chain_from()` by the region end, and the guard it added to each is
+`if i + OPCODE_LEN[op] > hi:` — **two new sites of the shape, at `:392` and
+`:576`**, which is the whole of the `+2`; #844 moved no count, only two
+`walk_branch_arms.py` lines. #843 also shifted the other 19 of this file's
+`pd_index_geometry.py` sites, so every one of them is re-numbered in the block
+above and in the table below, on the same precedent the #848 note sets: the
+block is the re-run, and the table cites the same new numbers. **The count that
+#844's note records as unchanged at 39 was true of that branch's tree and is
+false of this one; the sentence stays, and this note is the correction beside
+it**, per §4a-4d. Every other file's lines in the block are untouched by this
+merge, so `trace_xdata_refs.py`, `disasm8051.py`, `second_copy_census.py`,
+`counter_sweep_entry.py`, `audit_call_targets.py` and `citation_gap_scan.py`
+carry #844's numbers and not a third set. The `not a site` table's
+`pd_index_geometry.py` row is `:644,678`, and it is still **2** and still not
+sites — `MOV_DPTR` is a constant, and #843's guards read `d[i]`.)*
+
 | not a site | lines | why |
 |---|---|---|
-| `disasm8051.py:108,114` | 2 | `relative_target()`'s docstring and body, indexing by the `op` **argument** — a byte value, and this function indexes no buffer at all |
+| `disasm8051.py:109,115` | 2 | `relative_target()`'s docstring and body, indexing by the `op` **argument** — a byte value, and this function indexes no buffer at all |
 | `citation_gap_scan.py:28` | 1 | the module docstring, quoting the retracted `decode()` claim |
 | `test_disasm8051.py:52` | 1 | a comment in the test that already pins the #679 fix |
-| `pd_index_geometry.py:595,629` | 2 | `OPCODE_LEN[MOV_DPTR]` — the constant, not a buffer read |
+| `pd_index_geometry.py:644,678` | 2 | `OPCODE_LEN[MOV_DPTR]` — the constant, not a buffer read |
 | `counter_sweep_entry.py:319,384,551,565` | 4 | `op` or `r["owner_opcode"]` is a byte value already in hand |
 | `audit_call_targets.py:170,314` | 2 | the same: `op` is in hand from `d[i]` at `:169`, and `:314`'s `OPCODE_LEN[op]` is a length value with no buffer read at all |
 | `audit_call_targets.py:171,315` | 2 | the adjacent last-byte-of-instruction read, excluded above |
@@ -129,8 +176,8 @@ The six sites the issue named are a subset of the table, not its content. Three
 more rows are the sweep's finding beyond both the issue and the plan that
 produced this file: `walk_branch_arms.py:328` (`descend`), which is a
 *different* function from the `test_site` the issue cites and has a different
-bound; `pd_index_geometry.py:716` (`branch_index`); and
-`pd_index_geometry.py:1507` (`byte_address`, a `--self-test` fixture walker
+bound; `pd_index_geometry.py:765` (`branch_index`); and
+`pd_index_geometry.py:1569` (`byte_address`, a `--self-test` fixture walker
 whose buffer is a hand-written fixture rather than the image).
 
 ## The per-site table
@@ -146,23 +193,23 @@ in the function that walks.
 | 1 | `disasm8051.py:311` `decode()` | `range(count)`, `if i >= len(d): return` at `:309` | **is** | yes | #679's own fix; `test_disasm8051.py` pins it | existing guard + docstring `:303-306` |
 | 2 | `walk_branch_arms.py:212-213` `test_site()` | `range(SCAN_INSNS)`, `if off < 0 or off >= len(d): return None` at `:210` | **is** | yes | the check is on the line *before* the read | existing guard |
 | 3 | `citation_gap_scan.py:234` `walk()` | `while i < len(window)` | **is** | yes | — | existing docstring `:227-229` |
-| 4 | `pd_index_geometry.py:1100` `access_walk()` | `while used < budget`, `if not lo <= i < hi: break` at `:1093`, `hi = min(hi, len(d))` at `:1078` | region, clamped to `len(d)` | yes | — | existing guard |
-| 5 | `pd_index_geometry.py:1191` `reaches_template()` | `range(HELPER_MAX_INSNS)`, `if not lo <= i < hi: return False` at `:1189` | region | yes | — | existing guard |
-| 6 | `pd_index_geometry.py:1178` `access_entries()` | `for i in range(lo, hi)`, `hi = min(hi, len(d))` at `:1175` | region, clamped | yes | — | existing guard |
-| 7 | `pd_index_geometry.py:1507` `byte_address()` | `while i < len(raw)` | **is** (`len(raw)`) | yes | `--self-test` over the committed fixtures, exit 0 | existing bound; not the image |
+| 4 | `pd_index_geometry.py:1153` `access_walk()` | `while used < budget`, `if not lo <= i < hi: break` at `:1146`, `hi = min(hi, len(d))` at `:1131` | region, clamped to `len(d)` | yes | — | existing guard |
+| 5 | `pd_index_geometry.py:1244` `reaches_template()` | `range(HELPER_MAX_INSNS)`, `if not lo <= i < hi: return False` at `:1242` | region | yes | — | existing guard |
+| 6 | `pd_index_geometry.py:1231` `access_entries()` | `for i in range(lo, hi)`, `hi = min(hi, len(d))` at `:1228` | region, clamped | yes | — | existing guard |
+| 7 | `pd_index_geometry.py:1569` `byte_address()` | `while i < len(raw)` | **is** (`len(raw)`) | yes | `--self-test` over the committed fixtures, exit 0 | existing bound; not the image |
 | 8 | `walk_branch_arms.py:327-328` `descend()` | `while True`, `budget <= 0` at `:324`; `if off + n > len(d)` at `:329` | **is**, but the test runs *after* the read | yes | `--self-test` over the image, exit 0 | existing guard; see follow-up 2 |
 | 9 | **`trace_xdata_refs.py:229` `walk()`** | `range(max_insns)`; `len(d)` is tested twice, `:230` and the guard's first disjunct, and only the latter bounds the index | **no** — held by `:241` | yes, 114 walks / 311 iterations over the committed sweep | the guard's first disjunct fired **0** times; the exposure is real (see below) | **restated comment at `:241-242`** |
-| 10 | `pd_index_geometry.py:635-637` `site_rows()` (was `:600-601` when this census was written) | `range(max_insns)` = `SITE_WINDOW` (16), no flow break, two `d[j]` per iteration | **no** | yes, every `--sites` run | last read `0x3000E` from `--sites 0xFFFF` against a `0x40000` image, under the `0x3002C` ceiling below; command 2, exit 0 | **range check added by #848** — [`pd-sites-address-range.md`](pd-sites-address-range.md); the instruction-boundary precondition stays one |
-| 11 | `pd_index_geometry.py:412` `_insns()` | `while i < start + length` | caller's | yes | `--helpers` and `--accesses`, exit 0 | census row + verdict |
-| 12 | `pd_index_geometry.py:1062` `access_frames()` | `while i < off` | caller's | yes | `--accesses` over the image, 980 lines, exit 0 | census row + verdict |
+| 10 | `pd_index_geometry.py:684-686` `site_rows()` (was `:600-601` when this census was written) | `range(max_insns)` = `SITE_WINDOW` (16), no flow break, two `d[j]` per iteration | **no** | yes, every `--sites` run | last read `0x3000E` from `--sites 0xFFFF` against a `0x40000` image, under the `0x3002C` ceiling below; command 2, exit 0 | **range check added by #848** — [`pd-sites-address-range.md`](pd-sites-address-range.md); the instruction-boundary precondition stays one |
+| 11 | `pd_index_geometry.py:445` `_insns()` | `while i < start + length` | caller's | yes | `--helpers` and `--accesses`, exit 0 | census row + verdict |
+| 12 | `pd_index_geometry.py:1115` `access_frames()` | `while i < off` | caller's | yes | `--accesses` over the image, 980 lines, exit 0 | census row + verdict |
 | 13 | `second_copy_census.py:468` `framing()` | `while i < off` | caller's | yes | over the committed image, exit 0 | census row + verdict |
 | 14 | `disasm8051.py:333` `converges_from()` | `while i < off` | caller's | yes | inside every `trace_xdata_refs --check` run | **no change** — #679's reason stands |
-| 15 | `pd_index_geometry.py:362-403` `walk_helper()` | `for _ in range(HELPER_MAX_INSNS)` | **no** | yes | `--helpers` over the image, exit 0 | census row + verdict |
-| 16 | `pd_index_geometry.py:530-566` `chain_from()` | `for _ in range(max_insns)` at `:519`, `max_insns: int = 12` at `:496` | **no** | yes | `--bases all`, 7270 lines, exit 0 | census row + verdict |
-| 17 | `pd_index_geometry.py:430-431` `frame_of()` | `while i < off` | caller's | yes | driven by four of the modes: `--helpers`, `--bases`, `--sites`, `--callers` | census row + verdict |
-| 18 | `pd_index_geometry.py:739` `reaches()` | `while i < lo + site` | caller's | yes | `--callers 0x0860`, exit 0 | census row + verdict |
+| 15 | `pd_index_geometry.py:391-436` `walk_helper()` | `for _ in range(HELPER_MAX_INSNS)` | **no** | yes | `--helpers` over the image, exit 0 | census row + verdict |
+| 16 | `pd_index_geometry.py:575-615` `chain_from()` | `for _ in range(max_insns)` at `:556`, `max_insns: int = 12` at `:529` | **no** | yes | `--bases all`, 7270 lines, exit 0 | census row + verdict |
+| 17 | `pd_index_geometry.py:463-464` `frame_of()` | `while i < off` | caller's | yes | driven by four of the modes: `--helpers`, `--bases`, `--sites`, `--callers` | census row + verdict |
+| 18 | `pd_index_geometry.py:788` `reaches()` | `while i < lo + site` | caller's | yes | `--callers 0x0860`, exit 0 | census row + verdict |
 | 19 | `second_copy_census.py:473` `framing()` | after the `:468` loop: `fw[last:last + OPCODE_LEN[fw[last]]]` | caller's | yes | as row 13 | census row + verdict |
-| 20 | `pd_index_geometry.py:716` `branch_index()` | `for i in range(lo, hi - 2)` | region | yes | `--callers 0x0860`, exit 0 | census row + verdict |
+| 20 | `pd_index_geometry.py:765` `branch_index()` | `for i in range(lo, hi - 2)` | region | yes | `--callers 0x0860`, exit 0 | census row + verdict |
 
 Rows 1-8 are the contrast class: a bound that **is** `len(d)`, or clamped to
 it, or a check that runs before the read. Eight rows, eight existing guards or
@@ -253,7 +300,7 @@ above is unaffected because the shape itself is at `:229`, above the edit. No
 behaviour change — which is what makes command 1 a real regression test rather
 than a formality.
 
-## Row 10: `pd_index_geometry.py:635-637` — the arithmetic is a statement about this image, and the check added by #848 is not
+## Row 10: `pd_index_geometry.py:684-686` — the arithmetic is a statement about this image, and the check added by #848 is not
 
 `site_rows()` starts each window at `i = lo + addr`, where `lo` is the PD
 region's `0x20000` (`trace_xdata_refs.py:77`) and `addr` is the 16-bit runtime
@@ -605,6 +652,27 @@ the 10 start(s) that reached the end-of-buffer check: 0x3FFF6 -> 0x3FFFE, 0x3FFF
    look, because it is the single place in the table where the post-#679
    ordering is not what #679 established, and a reader scanning for "index
    before bounds" will land on it.
+
+   **(2026-09-26, #844: the reason in the paragraph above is wrong as a general
+   claim, and the ordering it describes no longer exists. The paragraph stands
+   as the record; this is the correction beside it.)** It says the read is in
+   range "`before the length test is reached", on the strength of
+   `offset_for_runtime()` being `None`-checked. **`None`-checked is not the same
+   as in-range**: returning non-`None` says the *runtime address* is inside a
+   mapped region, and nothing in it says the *file offset* it computes is inside
+   the buffer. Those coincide only while the buffer is as long as the region
+   table implies, and `descend()` never said so. The arithmetic is in
+   [`descend-index-guard.md`](descend-index-guard.md); the short version is that
+   the region table's ceiling is `0x2FFFF` and `main()`'s PD-marker check
+   certifies only `0x2004A`, so 65461 bytes of the range are unguarded.
+   **The verdict is the pre-read check** `test_site()` already has, now at
+   `walk_branch_arms.py:343`, above the read at `:346`; the `off + n > len(d)`
+   test stays at `:353` because it answers a different question (does the
+   *instruction* fit, which `off + n == len(d)` satisfies) and was never what
+   held the index. The line numbers above are the pre-#844 ones: the read is
+   `:327`→`:346`, the index `:328`→`:347`, the fits test `:329`→`:353`, the
+   `None`-check `:321-322`→`:328-329`, and the operand comment `:337-339`
+   →`:361-363`.
 
 ---
 

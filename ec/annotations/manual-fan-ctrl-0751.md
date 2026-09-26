@@ -724,7 +724,7 @@ tail-jump descent: the `jnc 0xb736` at `0xB714` **falls through** into
 `0xB716 … 0xB736 ret` body — including the `mov dptr,#0x08a2` at `0xB72C`,
 the `mov dptr,#0x09e7` at `0xB724`, and the `mov dptr,#0x089e` at `0xB730`
 that puts `0x089E` in the arm's `writes`. `walk_branch_arms.py` does *not*
-follow a tail jump inline: at `walk_branch_arms.py:380-388` it appends the
+follow a tail jump inline: at `walk_branch_arms.py:404-412` it appends the
 target to `arm.callees` and ends the arm, so the callee's own instructions are
 never decoded into it. `0xB716` is in this arm's `callees` too, but for an
 unrelated path — the `ljmp 0xb716` at `0xB5F8` — which is not what puts those
