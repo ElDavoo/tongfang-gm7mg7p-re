@@ -54,7 +54,7 @@ three are not. That difference is the most useful thing in the table.
 - **`0xE17` and `0xECB` are not reachable at all.** Both are hidden numerics
   with an empty prompt and an empty help, the shape §8 already relies on for
   flags the BIOS exposes to its own conditions. `0xE17` is 8-bit at
-  `SetupVolatileData[0x4]` (`:26964`); `0xECB` is 8-bit at `Setup[0x741]`
+  `SetupVolatileData[0x4]` (`:26937`); `0xECB` is 8-bit at `Setup[0x741]`
   (`:27297`).
 
 **`0xE17` is the one that makes this table worth having.** `Charging Method` is
@@ -65,7 +65,7 @@ across the dump (12 against 4, 8 against 2, 8 against 1, 7 against 5, 4
 against 3) — so it reads as a five-valued platform-type selector rather than
 anything about charging, and `DeepSx Power Policies` is gated on the same byte
 three lines into its own option list. It has no `Default` statement at all: its
-block is the question and an `End` (`:26964-26975`). Whatever sets it is a
+block is the question and an `End` (`:26937-26938`). Whatever sets it is a
 PEI-or-early-DXE platform probe, and the IFR does not say which. `docs/findings.md`
 §8 already located the vendor mechanism that writes a *non-volatile* setup byte
 from a runtime variable at boot; this is a different byte, in a different store,
@@ -135,20 +135,19 @@ Power`, `Energy Efficient Turbo` and `Intel Speed Optimizer`. `AC Brick
 Capacity` and `AC Power` are two-word phrases precisely so that a `Charge
 Method` row can be found without taking in the rest.
 
-`--list-excluded` prints the **475** questions a looser probe (`ac`, `pow`,
+`--list-excluded` prints the **521** questions a looser probe (`ac`, `pow`,
 `adapter`, `batter`, `charg`) would have caught and this list declined, with
 which probe term hit which field, so the exclusion is a decision a reader can
 overturn rather than a silence:
 
 ```
 $ python3 bios/tools/ifr_census.py --list-excluded | head -6
-475 question(s) trip 'ac' / 'pow' / 'adapter' / 'batter' / 'charg' and none of battery / charg / flexicharge / ac brick / ac power.
+521 question(s) trip 'ac' / 'pow' / 'adapter' / 'batter' / 'charg' and none of battery / charg / flexicharge / ac brick / ac power.
   0x2A2B  Operating Mode                               'pow' in help
   0x2A2C  Operating Mode                               'pow' in help
   0x2A2F  Light Effect                                 'pow' in help
   0x2A2D  Light Effect                                 'pow' in help
   0x2A2E  Light Effect                                 'pow' in help
-  0x49    PECI Access Method                           'ac' in prompt, 'ac' in help, 'ac' in option
 ```
 
 The three the issue named are all in that list: `AC Loadline` (`:4386` and

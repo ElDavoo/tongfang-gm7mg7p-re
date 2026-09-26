@@ -179,6 +179,19 @@ class LineNumberTests(unittest.TestCase):
         self.assertEqual(len(charging), 1)
         self.assertEqual(charging[0].stmt.line, 5953)
 
+    def test_the_two_hidden_numerics_are_cited_by_grep_line_number(self):
+        # The write-up cites the bytes that hide things by `:NNNN` like every
+        # other offset there, and once cited the dump's left-column file offset
+        # (`0x56964`, `0x56975`) in that slot instead. Those read as plausible
+        # line numbers and `sed -n` on one lands in the middle of the next
+        # hidden numeric, so nothing but a case here catches the slip. The CSV's
+        # `ifr_line` column and the eight rows in it are `grep -n` numbers, and
+        # the write-up says every offset in it is the one `grep -n` prints.
+        _, questions = committed_census()
+        lines = dict((q.stmt.question_id(), q.stmt.line) for q in questions)
+        self.assertEqual(lines["0xE17"], 26937)   # SetupVolatileData[0x4]
+        self.assertEqual(lines["0xECB"], 27297)   # Setup[0x741]
+
 
 class ConditionTests(unittest.TestCase):
     """The condition buffer, which is a stack machine and not a tree."""
@@ -558,6 +571,25 @@ class LookupTests(unittest.TestCase):
         self.assertIn("ACPI Debug", out)       # ACPI, which contains "AC"
         self.assertIn("PEP SATA", out)
         self.assertIn("'adapter' in option", out)
+
+    def test_the_excluded_list_is_the_transcript_the_write_up_pastes(self):
+        # The write-up states this list's size in prose and pastes `head -6` of
+        # it, and both drifted once with nothing failing: the near-misses above
+        # stay in the list however the count moves, so only a case that pins the
+        # count and the rows catches it. The size is derived from the phrase
+        # list, the looser probe and the parse, so any of those three moving is
+        # a deliberate edit to this case and to the write-up together.
+        out, code = run("--list-excluded")
+        self.assertEqual(code, 0)
+        self.assertEqual(out.splitlines()[:6], [
+            "521 question(s) trip 'ac' / 'pow' / 'adapter' / 'batter' / 'charg' "
+            "and none of battery / charg / flexicharge / ac brick / ac power.",
+            "  0x2A2B  Operating Mode                               'pow' in help",
+            "  0x2A2C  Operating Mode                               'pow' in help",
+            "  0x2A2F  Light Effect                                 'pow' in help",
+            "  0x2A2D  Light Effect                                 'pow' in help",
+            "  0x2A2E  Light Effect                                 'pow' in help",
+        ])
 
     def test_the_excluded_list_holds_no_question_that_matched(self):
         # The two lists must not overlap, or a row is both in the census and
