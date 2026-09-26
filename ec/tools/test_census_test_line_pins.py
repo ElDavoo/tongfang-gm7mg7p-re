@@ -612,9 +612,17 @@ class TheCommittedTree(unittest.TestCase):
         self.assertEqual(verdicts(records), {
             census.RESOLVES: 74, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 32})
+        # Re-derived for #962, not lowered. Its class and a docstring above it
+        # grew, so every pin into `test_xdata_cluster_names.py` lands `N` lines
+        # lower than it did, and the landing *shapes* follow: five pins that
+        # read a `def test_` header now read prose or code, and the split moves
+        # from `5/19/10/6/34` to `0/16/22/5/31`. Nothing above this changed --
+        # 106 records over 28 files and 79 spellings, the same 74 resolving and
+        # 32 declined, the same 58 targets -- which is what makes the shape the
+        # one column a line shift can move on its own.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 5, census.ASSERTION: 19, census.COMMENT: 10,
-            census.BLANK: 6, census.OTHER: 34})
+            census.DEF_TEST: 0, census.ASSERTION: 16, census.COMMENT: 22,
+            census.BLANK: 5, census.OTHER: 31})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
                  if r[3] == census.RESOLVES}), 58)

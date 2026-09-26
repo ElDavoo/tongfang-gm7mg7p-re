@@ -11,10 +11,10 @@ only one that settles it: **regenerate and show that a cluster the prose cites
 still resolves to the membership the sentence describes.**
 
 Everything here reads committed text. The guard-off census in
-`TheGuardOffRegeneration` is a regeneration from the committed tree with the
-`==` rejection off, via `--no-eq-guard`, which is the flag
-`annotations/xdata-06c2-06db-timers.md` §6a already re-runs; no image, no
-Ghidra, no network, and nothing here touched hardware.
+`TheGuardOffRegeneration` and `TheGuardOffKeyDistinctness` is a regeneration
+from the committed tree with the `==` rejection off, via `--no-eq-guard`, which
+is the flag `annotations/xdata-06c2-06db-timers.md` §6a already re-runs; no
+image, no Ghidra, no network, and nothing here touched hardware.
 """
 import collections
 import csv
@@ -35,6 +35,16 @@ TOOL = HERE / "xdata_register_map.py"
 spec = importlib.util.spec_from_file_location("xdata_register_map", TOOL)
 xrm = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(xrm)
+
+# The second tool, for `duplicate_keys()` and nothing else: that is the
+# predicate every `cluster_key unique ... / COLLISION` line in a report is
+# printed from. Sharing it is the point rather than a convenience -- a suite
+# checking its own re-derived `len()` compare would be testing something the
+# report does not print, and the two could only agree by accident.
+_moved_spec = importlib.util.spec_from_file_location(
+    "xdata_moved_ranks", HERE / "xdata_moved_ranks.py")
+ranks = importlib.util.module_from_spec(_moved_spec)
+_moved_spec.loader.exec_module(ranks)
 
 CLUSTERS = EC / "annotations" / "xdata-clusters.csv"
 REGISTERS = EC / "annotations" / "xdata-registers.csv"
@@ -78,8 +88,13 @@ def guard_off():
     figures from. The flag refuses to be given the committed output paths, so
     both CSVs go to a scratch directory the tool is pointed at by name and the
     run reads the committed decompile and writes nothing into it. ~2 s, and the
-    only reason the suite caches it is that six cases want the same
-    regeneration.
+    only reason the suite caches it is that ten cases want the same
+    regeneration -- seven in `TheGuardOffRegeneration`, three in
+    `TheGuardOffKeyDistinctness`. "six", the count this sentence carried until
+    `TheGuardOffKeyDistinctness` was added, is left in the write-up beside it
+    rather than deleted: it was already one short of the seven its own class
+    held, so the number went stale in the file before anything here did, and
+    that is worth a reader being able to see.
     """
     tmp = tempfile.mkdtemp(prefix="xdata-guard-off-")
     out_clusters = os.path.join(tmp, "clusters.csv")
@@ -137,7 +152,26 @@ def export_ownership_census():
 
 
 class TheContentKey(unittest.TestCase):
-    """`cluster_key` is a function of the membership, not of the position."""
+    """`cluster_key` is a function of the membership, not of the position.
+
+    **The coverage split, because "the census" is two of the four censuses a
+    view can re-key.** This class holds the *committed* pair: the
+    `annotations/xdata-clusters.csv` read off disk, and the key on every
+    register row read back out of it, in
+    `test_the_committed_census_has_no_colliding_keys`. With the two `check()`s
+    inside `xdata_register_map.py`'s `self_test()` it also holds a fresh
+    **guard-on** generation -- the tool's own, over the tree it just read.
+    `TheGuardOffKeyDistinctness` adds the **guard-off** regeneration, which
+    neither of those can be pointed at: `--no-eq-guard` is refused together
+    with `--check` and `--self-test`, and refused without scratch outputs.
+
+    The fourth census is held by none of this and is named here so that no
+    reader counts four: the 430-row pair at `e169a0e4`, whose committed census
+    and whose guard-off regeneration both need that commit's decompiled tree,
+    which no case in this suite has. Its two rows of
+    `docs/findings/xdata-guard-off-key-distinctness.md` §4 are hand-measured
+    transcripts, and a re-derivation of them is a human's job.
+    """
 
     def test_key_is_order_independent_over_addrs(self):
         # The membership is a set. A key that changed because a column was
@@ -974,6 +1008,110 @@ class TheGeneratorsAreUnchanged(unittest.TestCase):
         committed = clusters_of(CLUSTERS)
         for cid, row in committed.items():
             self.assertEqual(cid, row["cluster_id"])
+
+
+class TheGuardOffKeyDistinctness(unittest.TestCase):
+    """The guard-off generation's own key uniqueness, held by a case.
+
+    The other half of `TheContentKey`, and the half that had no case. The
+    committed census is read off disk and a fresh guard-on generation is built
+    in-process by `--self-test`, so those two censuses are held; the guard-off
+    generation is written to a scratch directory by a flag that is *refused*
+    together with `--check` and `--self-test` (`xdata_register_map.py`'s
+    refusal contract, held by `test_xdata_register_map.py::Refusals` and
+    written up in `docs/findings/xdata-no-eq-guard-refusal-contract.md`), so
+    no producer check could ever be aimed at it. That is the gap
+    `xdata-moved-ranks-collision-scope.md` §5 recorded in as many words --
+    "nothing holds *its* key uniqueness between runs" -- and the census it
+    left uncovered is not an incidental one. `cause_report` re-keys the
+    guard-off pair for its population, and that population is the `N
+    guard-off key(s)` figure in the report's header, the `population` column
+    every rate divides by, and `holders_by_program`'s per-program index. A
+    collision there does not fail a run; it makes a count quietly too small.
+
+    A separate class rather than an eighth case in
+    `TheGuardOffRegeneration`, for the reason `TheExportOwnershipClusters`
+    gives for itself: `docs/findings.md` §50 calls that class's seventh case
+    "a seventh case", and an eighth would falsify a sentence this change has
+    no business touching. The regeneration is the one `guard_off()` already
+    caches, so this costs no second run -- the two classes share it.
+
+    **The property is the claim; the totals are not.** Nothing here pins 445
+    or 439. `duplicate_keys()` answers "are these distinct", and a re-
+    derivation that moved the count would not have anything to say about the
+    design being defended. The row count appears in the failure message, where
+    a reader who is chasing a collision sees it, and nowhere else. That is the
+    same reasoning `TheGuardOffRegeneration` applies to its `> 300` floor and
+    `assertTrue(movers, ...)` to its exhibit, and for the same reason.
+
+    The fourth census is not here: see `TheContentKey`'s docstring, which
+    names the `e169a0e4` pair as held by none of this.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        _tmp, cls.clusters, cls.registers, _err = guard_off()
+        cls.rows = clusters_of(cls.clusters)
+
+    def test_the_guard_off_census_has_no_colliding_keys(self):
+        # `duplicate_keys()` rather than a `len()` comparison, for the reason
+        # the module-level import gives: this is the same predicate the
+        # report's own `cluster_key unique ...` line is printed from, so a
+        # disagreement here is a disagreement about the census rather than
+        # about two implementations of the same question. And the message
+        # names the keys and their ranks -- "N collisions" sends a reader to
+        # the tool to find out which, which is the tool's job and not the
+        # failure message's.
+        dups = ranks.duplicate_keys(self.rows)
+        self.assertEqual(
+            dups, {},
+            f"{len(dups)} colliding cluster_key(s) over the {len(self.rows)} "
+            "guard-off row(s) -- "
+            + ("; ".join(f"{k} on {', '.join(ranks_)}"
+                         for k, ranks_ in sorted(dups.items()))
+               or "none, which is a bug in this message rather than a result"))
+
+    def test_the_guard_off_registers_csv_agrees_with_its_clusters(self):
+        # The second half of `TheContentKey`'s case, over the pair this
+        # generation actually wrote rather than the pair on disk. The reason
+        # to hold it twice is that these are the CSVs nobody reads: they land
+        # in a scratch directory and are gone with the next run, so a registers
+        # CSV that disagreed with its own clusters CSV would break the
+        # byte-to-key lookup here and be caught by nothing. The committed pair
+        # gets read by people and by `--check`; this one gets read by nothing
+        # but the tool that wrote it.
+        by_id = {cid: row["cluster_key"] for cid, row in self.rows.items()}
+        with open(self.registers, newline="") as f:
+            for r in csv.DictReader(f):
+                self.assertEqual(r["cluster_key"], by_id[r["cluster_id"]])
+
+    def test_a_duplicated_key_is_named_with_both_its_ranks(self):
+        # The negative control, as a permanent case rather than a transcript.
+        # The two above can only be *shown* capable of going red by handing
+        # them a census that collides, and this is that census: copy one row's
+        # key onto a second and ask the predicate what it makes of the result.
+        # The fixture is a forgery -- `cluster_key` is a content hash over the
+        # program and the sorted membership, so two different memberships
+        # sharing one key is not something the tool emits -- and that is the
+        # point rather than a flaw in the fixture. A collision worth holding a
+        # case against cannot come from the generator; it comes from a census
+        # assembled by something else, which is exactly the shape the
+        # precondition is there to catch.
+        rows = {cid: dict(row) for cid, row in self.rows.items()}
+        donor, victim = sorted(rows)[:2]
+        key = rows[donor]["cluster_key"]
+        rows[victim]["cluster_key"] = key
+        self.assertEqual(
+            ranks.duplicate_keys(rows), {key: [donor, victim]},
+            f"the forged collision was not reported as {key} on {donor} and "
+            f"{victim}")
+
+        # And the forgery stayed in the copy. `setUpClass` hands the same
+        # regeneration to `TheGuardOffRegeneration`, so a case that wrote
+        # through to the shared rows would leave a real collision behind for
+        # whatever ran next -- and the assertion above would be a lie about
+        # which census it had just checked.
+        self.assertEqual(ranks.duplicate_keys(self.rows), {})
 
 
 if __name__ == "__main__":

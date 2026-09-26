@@ -573,9 +573,20 @@ class TheCommittedTree(unittest.TestCase):
                 counts[key] = counts.get(key, 0) + 1
         self.assertEqual(read, {census.BY_PATH: 53, census.BY_NAME: 19,
                                 census.BY_BESIDE: 2, "-": 32})
-        self.assertEqual(shape, {census.DEF_TEST: 5, census.ASSERTION: 19,
-                                 census.COMMENT: 10, census.BLANK: 6,
-                                 census.OTHER: 34, "-": 32})
+        # The shape split is re-derived rather than lowered. #962 adds a class
+        # to `test_xdata_cluster_names.py` and corrects a docstring above it,
+        # which moves the line every pin *into that one file* lands on; the
+        # `5/19/10/6/34` this read is what the tree gave before that shift and
+        # stays true of the tree it was measured on, and `0/16/22/5/31` is
+        # what it gives now. The read column above is the control: no pin was
+        # added, removed, respelled or re-resolved, so the only thing that
+        # moved is where each pin lands, which is the shift and not a change
+        # to the corpus. **`def test_` is absent rather than zero**, because
+        # this cell counts the words that occur in the table and none of them
+        # is that one any more: `assertEqual` compares key sets, so a
+        # `census.DEF_TEST: 0` term would redden on a table that is correct.
+        self.assertEqual(shape, {census.ASSERTION: 16, census.COMMENT: 22,
+                                 census.BLANK: 5, census.OTHER: 31, "-": 32})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing

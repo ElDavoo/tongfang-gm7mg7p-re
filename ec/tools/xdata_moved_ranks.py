@@ -125,13 +125,18 @@ def addrs_of(row):
 
 def keyed_by(rows):
     """{cluster_key: row} for a census. Keys are unique within a census --
-    `test_xdata_cluster_names.py::TheContentKey` holds that, and the committed
-    census measures clean -- so this is a bijective re-keying and the last row
-    wins for none. "Unique" is the one claim here a map cannot show failing, so
-    each **view** over a census prints `duplicate_keys()` over the census it
-    re-keyed rather than inheriting the check from a sibling function: two
-    ranks on one key leave a shorter map, not a wrong shape, and a shorter map
-    is exactly what a count reads as a smaller measurement.
+    `test_xdata_cluster_names.py::TheContentKey` holds that over the committed
+    census, `xdata_register_map.py --self-test` over a fresh guard-on
+    generation, and `::TheGuardOffKeyDistinctness` over the guard-off
+    regeneration, so this is a bijective re-keying and the last row wins for
+    none on those three. The fourth census the second paragraph names, the
+    430-row pair at `e169a0e4`, has no case behind it and is a bijective
+    re-keying only by the same argument. "Unique" is the one claim here a map
+    cannot show failing, so each **view** over a census prints
+    `duplicate_keys()` over the census it re-keyed rather than inheriting the
+    check from a sibling function: two ranks on one key leave a shorter map,
+    not a wrong shape, and a shorter map is exactly what a count reads as a
+    smaller measurement.
 
     The unit is the view rather than the caller, and that is the whole of the
     claim. The seven call sites reach four distinct censuses -- the two
