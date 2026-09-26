@@ -43,7 +43,11 @@ A union would let row 7 pass on its own after-dump, which covers
 to prevent. `evidence/ec-watch/` is flat and every capture in it is dated in
 its own filename, so the glob is a glob and not a guess, and it is taken over
 the whole date -- all six files of `2026-09-23-*` -- rather than narrowed by a
-word in the prose, which would be the parser guessing. **The cost of the union
+word in the prose, which would be the parser guessing. **Those two properties
+were a premise until #973 measured them, and they are now the one thing
+`check_capture_names.py` refuses a name for** -- the census is in
+`docs/findings/capture-filename-date-prefix.md`, and `dated_report()` below
+prints the denominator for them. **The cost of the union
 over the date is one address in any of a date's files satisfying a claim about
 that date**, and it is written here rather than designed away. **A sentence
 naming two or more bare dates is refused whole rather than read from either of
@@ -136,8 +140,11 @@ the tree is a change to this docstring, not an invitation to add a regex:
     has to name the file -- it comes from the row, or from a bare date the
     sentence happens to carry.
   * *Row counts, directory reachability, `Feeds`, nested tables.* Those are
-    `check_testdata_index.py`'s, in both directions, and this tool reads
-    neither a directory listing nor a `Feeds` cell.
+    `check_testdata_index.py`'s, in both directions, over the testdata tree,
+    and this tool walks no part of that tree and reads no `Feeds` cell. The
+    one listing it does take is of the *capture* root, and only to print the
+    dated block's denominator; it is `check_capture_names.py`'s own `census()`
+    imported rather than a second reader of the same directory.
   * *The prose below the table, the `Feeds` column, and
     `call-graph/README.md`'s own table.* A nested index of a different shape
     is its own piece of work.
@@ -201,6 +208,13 @@ from check_cluster_citations import REGISTERS, units
 # the `change_count` schema, so borrowing it is what keeps this tool from
 # growing a second parser that has to learn both of those separately.
 from check_capture_claims import WATCH, read_capture
+
+# The one listing of the capture root, and the prefix rule the dated glob is
+# reached by, imported from the tool that owns both. `dated_report()` reads a
+# denominator out of it, and a second reader of one directory is a second thing
+# to fall out of date -- which is what stops the two tools coming to answer
+# differently about the same root.
+from check_capture_names import census
 
 # The index checker is imported for what it got right, and re-implemented for
 # the one thing it does not expose. `resolve()` returns `(verdict, note)` and
@@ -317,10 +331,14 @@ Claim = collections.namedtuple("Claim", "row files address token reason verdict"
 # tool. `dated` is the per-date breakdown the issue asks for: (glob, the files
 # it resolved to, the claims that date carried), in reading order, one entry
 # per date a sentence named -- which for a refused two-date sentence is two
-# entries carrying the same literals as `unresolved`.
+# entries carrying the same literals as `unresolved`. `captures` is the root
+# the run was handed, so the dated block and the denominator it prints name the
+# tree they were measured against rather than the module-level `CAPTURES`,
+# which every scratch case replaces and which a report naming would
+# misattribute.
 Result = collections.namedtuple(
     "Result", "rows literal_rows literals resolved missing unresolved checked "
-    "claiming_rows claims shapes dated")
+    "claiming_rows claims shapes dated captures")
 
 
 def normalise(address: str) -> str:
@@ -687,7 +705,8 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
     return Result(len(files), len(literal_rows), len(claims), resolved, missing,
                   len(claims) - resolved - missing, resolved + missing,
                   len(per_row), claims, shapes,
-                  [(pattern, where[0], where[1]) for pattern, where in dated.items()])
+                  [(pattern, where[0], where[1]) for pattern, where in dated.items()],
+                  captures)
 
 
 def report(result):
@@ -741,16 +760,42 @@ def dated_report(result):
     date resolving to `.txt` dumps alone has no column for the columnar read to
     ask, and a reader seeing a claim `resolved` has no other way to learn that
     the other files of the date carried no column to consult.
+
+    **The last line is the denominator, and it is the other question.** How
+    many files in the capture root are out of the reach of *every* `<date>-*`
+    glob, against how many files are in it. That is not how many captures the
+    run touched: the run globs the dates the index names and the index is not a
+    manifest of the root, so a conforming capture no dated sentence mentions is
+    reached by its own date and is simply not in this block. Only a file no
+    glob can match is out here, and it is a file the tool never reads whatever
+    the index says -- the premise `captures_for()` rests on, read back as a
+    count instead of assumed. The answer is `0 of 15` today and costs nothing
+    when it is 0; what it buys is that a capture that arrives without its date
+    shows up as `1 of 15` rather than as a run that is quietly checking less.
     """
     if not result.dated:
         return
+    root = repo_path(result.captures)
     print("dated-capture claims, each held to the captures its date names and "
           "never to the row's own fixtures:")
     for pattern, paths, dated in result.dated:
-        print(f"  {pattern} ({len(paths)} capture(s) under "
-              f"{repo_path(CAPTURES)}, {with_column(paths)} with an addr "
-              f"column): " + ", ".join(
+        print(f"  {pattern} ({len(paths)} capture(s) under {root}, "
+              f"{with_column(paths)} with an addr column): " + ", ".join(
                   f"row {c.row} {c.address} {c.verdict}" for c in dated))
+    # A root that cannot be listed is reported rather than crashed on:
+    # `glob.glob()` answers an unreadable root with an empty list rather than
+    # an error, so a run against a root that has moved reaches this far and
+    # would otherwise die on the attribute instead of saying which tree it
+    # could not read.
+    found = census(result.captures)
+    if found is None:
+        print(f"  {root} could not be listed, so this block's denominator is "
+              f"not reported -- that is a broken census, not an empty one",
+              file=sys.stderr)
+        return
+    print(f"  {len(found.undated)} of {len(found.files)} capture(s) in {root} "
+          f"are out of the reach of every <date>-* glob: "
+          f"{', '.join(found.undated) or 'none'}")
 
 
 def main() -> int:

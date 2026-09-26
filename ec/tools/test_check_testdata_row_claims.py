@@ -636,6 +636,61 @@ class SkipsDeliberately(ScratchIndex, unittest.TestCase):
         self.assertIn("2026-01-01-* (0 capture(s)", out.getvalue())
         self.assertIn("row 1 0x0F58 unresolved", out.getvalue())
 
+    def test_the_block_and_its_denominator_name_the_root_the_run_was_given(self):
+        # Two things at once, and the second is the one with teeth. The block
+        # used to print the module-level `CAPTURES` whatever tree the run was
+        # handed, so a scratch case and a committed one printed the same path
+        # and a reader could not tell which tree the figures were about; the
+        # root is on the `Result` now. And the denominator line reads `1 of 2`
+        # here: one of the two captures carries its date and no glob can reach
+        # the other, which is the state the committed tree is in `0 of 15` and
+        # cannot be shown by a run over the committed tree.
+        #
+        # The scratch root is named by its own unique directory, not by
+        # `ec-watch` -- both roots end in that name, so anything less would
+        # pass against a block still printing the committed one.
+        self.set("example.csv", 0x0F5D)
+        self.capture("2026-09-23-cycle-a.csv", 0x0F58)
+        self.capture("cycle-b.csv", 0x0F5C)
+        self.row("example.csv", "is the shape the 2026-09-23 power-mode-cycle "
+                                "capture shows, where they track `0x0F58`.")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ctrc.dated_report(self.check())
+        block = out.getvalue()
+        scratch = os.path.basename(self.root)
+        self.assertIn(scratch, block)
+        self.assertNotIn(ctrc.CAPTURES, block)
+        # The dated sentence still resolves over the one capture its date
+        # reaches, which is the other half of the same distinction: an
+        # unprefixed capture beside it is unreachable, not unread.
+        self.assertIn("2026-09-23-* (1 capture(s)", block)
+        self.assertIn("1 of 2 capture(s)", block)
+        self.assertIn("cycle-b.csv", block)
+
+    def test_a_capture_root_that_cannot_be_listed_is_reported_not_crashed_on(self):
+        # `glob.glob()` answers an unreadable root with an empty list rather
+        # than an error, so a run pointed at a root that has moved gets all the
+        # way here with a dated sentence that resolved to nothing. The
+        # denominator is unreadable too, and the honest answer is that the tree
+        # could not be read -- not a crash on the attribute, and not a `0 of 0`
+        # that reads like a conformant root. The check cannot be called through
+        # `ScratchIndex.check()`, which always hands in a root it made.
+        self.set("example.csv", 0x0F58)
+        self.row("example.csv", "is the shape the 2026-01-01 power-mode-cycle "
+                                "capture shows, where they track `0x0F58`.")
+        self.write("README.md", HEADER + "".join(r + "\n" for r in self.rows))
+        gone = os.path.join(self.root, "not-a-root")
+        result = ctrc.check(self.testdata, captures=gone)
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            ctrc.dated_report(result)
+        # The per-date block is still printed -- the run did read a date, and
+        # it is the denominator alone that could not be measured.
+        self.assertIn("2026-01-01-* (0 capture(s)", out.getvalue())
+        self.assertIn("broken census, not an empty one", err.getvalue())
+        self.assertNotIn("out of the reach", out.getvalue())
+
 
 class TheDatedClaimIsHeldToTheColumn(ScratchIndex, unittest.TestCase):
     """A claim about a capture is columnar, and a claim about a fixture is not.
@@ -857,6 +912,30 @@ class TheCommittedTree(unittest.TestCase):
         with contextlib.redirect_stderr(err):
             misses = ctrc.report(self.result)
         self.assertEqual(misses, 0, err.getvalue())
+
+    def test_the_dated_block_denominates_itself_in_the_capture_root(self):
+        # The denominator line, over the committed root. The **numerator** is
+        # the refusal -- a capture no `<date>-*` glob can match -- so it is
+        # asserted as `0` and a future capture that arrives without its date
+        # turns this case red, which is what a refusal is for and the cost
+        # written down in `docs/findings/capture-filename-date-prefix.md`.
+        #
+        # The **denominator** is asserted non-zero and never as a figure. `15`
+        # is the size of the corpus today; pinning it would turn every capture
+        # added afterwards into a failure, which is the trade
+        # `docs/agent-pipeline.md` records against a floor and the reason the
+        # rest of this class reads non-emptiness off the output.
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ctrc.dated_report(self.result)
+        block = out.getvalue()
+        lines = [line for line in block.splitlines()
+                 if "out of the reach" in line]
+        self.assertEqual(len(lines), 1, block)
+        found = re.search(r"(\d+) of (\d+) capture\(s\)", lines[0])
+        self.assertIsNotNone(found, lines[0])
+        self.assertEqual(found.group(1), "0", lines[0])
+        self.assertGreater(int(found.group(2)), 0, lines[0])
 
     def test_the_run_reached_something(self):
         # Each tally non-empty, and the shapes non-empty on top of them, read
