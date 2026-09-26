@@ -11,13 +11,13 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. **There are thirty-eight today, 1168 tests in all** — both figures
-*(The `1161` this sentence carried until #794 and the `1165` it carried on
-#794's own branch are left visible per
-[`../docs/findings.md`](../docs/findings.md) §4a-4d, each true of the tree it
-was measured on: the four cases `ec/tools/test_check_testdata_row_claims.py`
-gained are the whole of both steps, `1161 + 4 = 1165` and `1164 + 4 = 1168`.
-Neither merge added a suite — see the twenty-first note below.)*
+file committed. **There are thirty-nine today, 1211 tests in all** — both figures
+*(The `1161` this sentence carried until #794, the `1165` on #794's own branch,
+the `1168` at the #962 × #794 merge and the `1180` this branch proposed are
+left visible per [`../docs/findings.md`](../docs/findings.md) §4a-4d, each true
+of the tree it was measured on: #794's four cases and #982's nine are the two
+steps, and the `1180` is from before #982 — which implements #975 — was in the
+base. The suite count moves on #985's side; see the twenty-second note below.)*
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
 *(Corrected at the `#929` × `#942` merge, by running the runner as this sentence
@@ -1057,6 +1057,65 @@ re-derived by running the runner rather than by arithmetic on a diff.
 > merged-tree note above, and 1033 + 2 rather than 1018 + 2. The
 > `test_xdata_cluster_names.py` figure of **30** is unaffected: it is 30 on both
 > trees, and it is 30 here.)*
+
+*(Twenty-second merged-tree note, 2026-09-26, issues #979 × #985. **The suite
+totals move, and this is the merge that re-derives the sentence from a run
+rather than from arithmetic**, which is what the note above leaves open. **On
+the merged tree `bash tools/run-tests.sh` reads `39 suite(s) run, 1211 tests;
+one or more FAILED` and `python3 -m unittest discover -s ec/tools` reads
+`907`**, both measured here. Three steps, and **the middle one is a suite**:
+`1177`/`873` at this merge's base `368e9e52` (#982), #985's thirty-one cases
+and its new `ec/tools/test_disasm8051_oracle.py` taking that to `1208`/`904`,
+and #979's three the last step to `1211`/`907`. The suite count is `38` at the
+base and `39` from #985 on, so the suite count is the half that has to move
+here — and it moves on the *other* side, which is the first time that is true
+of a merge in this file.
+
+**The branch's own `1180`/`876` and `38` are left visible above and are not
+this merge's, and the reason is worth recording rather than the delta.** They
+were measured on a tree from before #982 — which implements #975 — had landed in
+the base, and this merge's counterpart on `main` is #985. So the count the
+branch could not have known about is the suite, and the delta this issue
+contributes is **+3 tests and no suite**: all three in
+`ec/tools/test_check_testdata_row_claims.py`, which is `47` at the base and on
+`origin/main` and `50` here. **Both sides were right to re-derive rather than
+to add up**, and neither number here is carried from either side's own tree —
+every figure in this note was measured by running the runner and the discovery
+in a worktree of each of the three trees, the base `368e9e52`, clean
+`origin/main` at `3e020cf4`, and the merged one.
+
+**`1168` was already stale on `main` before this merge found it, and that is the
+part worth keeping.** #982 added five cases to
+`ec/tools/test_check_testdata_row_claims.py` and four to
+`ec/tools/test_check_capture_claims.py` and did not re-derive the sentence, so
+the base measures `1177`/`873` where the sentence read `1168` — measured by
+running both commands in a clean worktree of that commit, so the `+9` is a run
+and not a diff, which is the same rule this file states four paragraphs up and
+the one that makes the steps above an arithmetic and not an assumption.
+
+**The red set is unchanged, and it was re-checked here rather than carried** —
+the single suite the notes above name, `test_check_cluster_citations`, 48
+tests, the one failure, on the same `:220` of #822's
+`xdata-cluster-names-guard-off-recipe.md` with the same two `0x0464`/`0x0465`
+disagreements, each against `main-ec-145`. It fails identically on the base, on
+the clean `origin/main` worktree and here, so neither #979 nor #985 caused it
+and neither fixes it, and this merge adds no second red suite.
+
+**This file's own `:203` pin does not move at this merge, and that is the
+exception worth naming** — corrections have moved it before and this one does
+not. "What it runs" above is corrected **in place within the lines it already
+had**, so `159 + 9 + 7 + 22 + 6 = :203` still holds, the row in
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+is still registered to `:203` with no re-registration, and
+`check_pin_table_rows.py` reads **106 rows, 106 records, 106 placed, all seven
+classes 0** on this tree — checked by running the tool rather than by reading
+this paragraph, and `:203` itself checked by reading the line rather than by
+trusting the register, which still carries the repoint this row is registered
+for. Both sides' edits land below it — #985's suite row at `~1076`, and this
+note — which is the whole reason the pin holds, and this note sits below `:203`
+for the same reason the twenty-first sits below the twentieth: a correction that
+moves a registered pin to say a count is the merge-conflict hazard for a delta,
+and the one thing this merge did not have to pay.*
 
 | suite | what it stands in for |
 |---|---|

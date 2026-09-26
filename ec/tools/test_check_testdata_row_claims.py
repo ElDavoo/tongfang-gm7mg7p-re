@@ -8,7 +8,7 @@ reader who has already been misled -- which is how the index needed hand-repair
 twice, in #502 and #720, with no check reading that column either time. So what
 is pinned here is the line between what the tool claims and what it declines
 to check, from both sides: each rule that makes it strict, each of the five
-shapes and the dated-capture variant that make it conservative, and then
+shapes and the two dated refusals that make it conservative, and then
 **each of the nine rules dropped in turn** -- eight of them asserted to make
 the run check *more* and the ninth, the dated-capture resolution, in the other
 direction, because a rule that stops changing the answer has stopped
@@ -231,7 +231,7 @@ class ReportsRealDrift(ScratchIndex, unittest.TestCase):
 
 
 class SkipsDeliberately(ScratchIndex, unittest.TestCase):
-    """The five shapes, the dated-capture variant, and the entry predicate,
+    """The five shapes, the two dated refusals, and the entry predicate,
     each as a case saying so.
 
     Every one of them would otherwise report a row which is true today, and a
@@ -459,6 +459,110 @@ class SkipsDeliberately(ScratchIndex, unittest.TestCase):
         self.assertEqual(self.verdicts(), {"0x07C4": "resolved",
                                            "0x07C6": "resolved"})
 
+    def test_a_two_date_sentence_is_refused_rather_than_read_from_the_first(self):
+        # The issue's own example, and the half of it that is a row which is
+        # true today: both literals are in the **second** day's captures, so a
+        # reading that takes the first match reports them `missing` and turns
+        # the run red on a sentence the index states correctly. Only the second
+        # date is added to the case above's own sentence, which is what makes
+        # the first match the thing under test rather than the date. A
+        # cross-date union is the other wrong answer and fails here too --
+        # `resolved`, against a set drawn from two unrelated capture families.
+        self.set("example.csv", 0x0F5D)
+        self.capture("2026-09-23-cycle-0f00-0f5f.csv", 0x0F0A)
+        self.capture("2026-09-24-06d6-reload-linux.csv", 0x0F58, 0x0F5C)
+        self.row("example.csv", "is the shape the 2026-09-23 power-mode-cycle "
+                                "capture and the 2026-09-24 plug-in sweep "
+                                "show, where they track `0x0F58-0x0F5C`.")
+        reason = "two dated captures in one sentence"
+        self.assertEqual(self.shapes(), {"0x0F58": reason, "0x0F5C": reason})
+        result = self.check()
+        self.assertEqual(self.verdicts(), {"0x0F58": "unresolved",
+                                           "0x0F5C": "unresolved"})
+        self.assertEqual(result.missing, 0)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(ctrc.report(result), 0)
+        self.assertIn("not absent", err.getvalue())
+        # Both globs on **one** line, and the separator left open: what the
+        # reader needs is that neither date was dropped, not how the two are
+        # joined. A refusal that printed only the first fails here.
+        self.assertTrue(
+            any("2026-09-23-*" in line and "2026-09-24-*" in line
+                for line in err.getvalue().splitlines()), err.getvalue())
+        # And each date reaches the breakdown on its own, with its own file
+        # count: the block is the one that says the run read dates at all, and
+        # a date the run could not read has to be visible in it too.
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ctrc.dated_report(result)
+        self.assertIn("2026-09-23-* (1 capture(s)", out.getvalue())
+        self.assertIn("2026-09-24-* (1 capture(s)", out.getvalue())
+        # Twice each: the sentence's literals are listed under **both** dates,
+        # unresolved, rather than once under whichever was read.
+        self.assertEqual(out.getvalue().count("row 1 0x0F58 unresolved"), 2)
+        self.assertEqual(out.getvalue().count("row 1 0x0F5C unresolved"), 2)
+
+    def test_a_two_date_sentence_is_refused_with_its_literals_in_neither_day(self):
+        # The other half, and what keeps the refusal from being a way of
+        # excusing a claim that is false. A first-match reading reports these
+        # two as `missing` and fails the run, which asserts the claim is wrong
+        # at a sentence the tool has just said it cannot read -- and neither
+        # day carrying the bytes is a fact about two capture sets rather than
+        # about what the sentence claims, which is the same thing the other
+        # six shapes say when they pass a literal over.
+        self.set("example.csv", 0x0F5D)
+        self.capture("2026-09-23-cycle-0f00-0f5f.csv", 0x0F0A)
+        self.capture("2026-09-24-06d6-reload-linux.csv", 0x0F5A)
+        self.row("example.csv", "is the shape the 2026-09-23 power-mode-cycle "
+                                "capture and the 2026-09-24 plug-in sweep "
+                                "show, where they track `0x0F58-0x0F5C`.")
+        reason = "two dated captures in one sentence"
+        self.assertEqual(self.shapes(), {"0x0F58": reason, "0x0F5C": reason})
+        result = self.check()
+        self.assertEqual(self.verdicts(), {"0x0F58": "unresolved",
+                                           "0x0F5C": "unresolved"})
+        self.assertEqual(result.missing, 0)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(ctrc.report(result), 0)
+        self.assertIn(reason, err.getvalue())
+        self.assertIn("not absent", err.getvalue())
+
+    def test_two_dates_of_which_one_resolves_to_nothing_are_refused_still(self):
+        # The only place the two dated reasons compete: a date that resolved
+        # to nothing is a refusal of its own, and so is a sentence naming two
+        # of them. What decides is the count of the dates and never what they
+        # resolve to, so the empty `2026-01-01-*` is named beside the full
+        # `2026-09-23-*` rather than swallowed by the reason that would have
+        # applied to it alone -- and the order the two are written in does not
+        # settle it either, which is why the empty one is written first.
+        self.set("example.csv", 0x0F5D)
+        self.capture("2026-09-23-cycle-0f00-0f5f.csv", 0x0F58, 0x0F5C)
+        self.row("example.csv", "is the shape the 2026-01-01 plug-in sweep "
+                                "and the 2026-09-23 power-mode-cycle capture "
+                                "show, where they track `0x0F58-0x0F5C`.")
+        reason = "two dated captures in one sentence"
+        self.assertEqual(self.shapes(), {"0x0F58": reason, "0x0F5C": reason})
+        result = self.check()
+        self.assertEqual(self.verdicts(), {"0x0F58": "unresolved",
+                                           "0x0F5C": "unresolved"})
+        self.assertEqual(result.missing, 0)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(ctrc.report(result), 0)
+        self.assertTrue(
+            any("2026-01-01-*" in line and "2026-09-23-*" in line
+                for line in err.getvalue().splitlines()), err.getvalue())
+        # Each glob in the breakdown with its **own** count, so the date that
+        # resolved to nothing reads as the zero it is and not as the file count
+        # of the date beside it.
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ctrc.dated_report(result)
+        self.assertIn("2026-01-01-* (0 capture(s)", out.getvalue())
+        self.assertIn("2026-09-23-* (1 capture(s)", out.getvalue())
+
     def test_two_digit_values_are_not_addresses(self):
         # `0x50 -> 0x28` is the value the dumps carry, `0xFD`/`0xC9` the magic,
         # `0xA0`/`0x10` the two mark values, `0x0a`/`0x99` the two spellings
@@ -641,9 +745,14 @@ class EachRuleIsLoadBearing(unittest.TestCase):
     saying so is part of the case: `0x07C4`/`0x07D7` really are in the file
     row 11 names, `0x0750`/`0x0010` in the dumps row 22 names, and `0x888D` in
     the fixture header row 8 names. What dropping those rules does is
-    under-report, which is what the assertion is about. The sixth entry of the
-    shape list, a dated capture that resolved to nothing, has no instance in
-    the committed tree at all, so it is pinned in a scratch case instead.
+    under-report, which is what the assertion is about. The sixth and seventh
+    entries of the shape list -- both dated refusals, a capture that resolved
+    to nothing and a sentence naming two of them -- have no instance in the
+    committed tree at all, so each is pinned in a scratch case instead. **The
+    multi-date rule is not dropped here and cannot be**: loosening it needs a
+    two-date sentence, and the committed index has none for the shape to be
+    exercised on. The scratch cases are the pinning, which is why this class's
+    docstring says it rather than leaving the omission to be found.
     """
 
     NEVER = re.compile(r"(?!x)x")
@@ -777,8 +886,8 @@ class TheCommittedTree(unittest.TestCase):
                             ('checked claims', 'claim(s) checked'),
                             ('claiming rows', 'claiming row(s)'),
                             ('passed-over literals',
-                             'passed over under the five shapes and a dated '
-                             'capture that resolves to nothing')):
+                             'passed over under the five shapes and the two '
+                             'dated refusals')):
             self.assertGreater(
                 counts.get(label, 0), 0,
                 f"the run reached no {name}: a run that checked nothing and a "
@@ -820,12 +929,15 @@ class TheCommittedTree(unittest.TestCase):
 
     def test_the_committed_tree_exercises_every_shape(self):
         # Each of the five has an instance in the committed index, so none of
-        # them is a rule that only ever runs in a scratch tree -- and a sixth
-        # shape appearing here is a change to the docstring rather than a
-        # silent widening of the check. The sixth *entry* of the docstring's
-        # list, a dated capture that resolved to nothing, is not named: the
-        # one dated sentence in the tree resolves, so the shape has no instance
-        # here by construction and the case that pins it is a scratch one.
+        # them is a rule that only ever runs in a scratch tree -- and an eighth
+        # entry appearing here is a change to the docstring rather than a
+        # silent widening of the check. Neither dated refusal is named, the
+        # sixth and seventh entries of the docstring's list: the one dated
+        # sentence in the tree names one date and resolves, so both have no
+        # instance here by construction, and each is pinned in a scratch case
+        # instead. **The count stays at five** -- a sixth instance here is a
+        # sentence in the index naming two bare dates, which is a change to
+        # what this tree exercises and not a reason to widen the check.
         self.assertEqual(
             sorted({reason for _, _, reason in self.result.shapes}),
             sorted(["capture/window bound", "denial", "dump-command argument",

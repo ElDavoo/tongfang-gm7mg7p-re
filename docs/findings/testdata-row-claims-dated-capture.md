@@ -225,7 +225,17 @@ many files it resolved to, and what became of each literal.
   the date's files.
 - **A second bare date in one sentence.** `DATED_CAPTURE` takes the first, as
   the rule it replaced took the sentence whole. There is no such sentence in
-  the committed index; the limit is stated rather than met.
+  the committed index; the limit is stated rather than met. **Corrected
+  2026-09-26, issue #979** — that is no longer how the tool reads one, and the
+  "there is no such sentence" above is still true and is now a measured census
+  rather than an assumption. A sentence naming two or more bare dates is
+  **refused as a whole**: `two dated captures in one sentence` as the reason,
+  every glob it named printed beside the literals, and the literals off
+  `checked` rather than read against the first of the two. The
+  first-match reading this bullet described would have reported `missing` on a
+  sentence that is true, or `resolved` against a day the sentence never named,
+  in silence. See
+  [`testdata-row-claims-multi-date-sentence.md`](testdata-row-claims-multi-date-sentence.md).
 - **The other five shapes**, and the wording of a `missing` dated claim. Decided
   here rather than left open: the existing line is kept, because a disagreement
   is a defect in the index's prose about a fixture whichever fixture it is, and
