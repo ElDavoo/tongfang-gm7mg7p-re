@@ -28,17 +28,18 @@ under `--no-eq-guard` — is measured over both censuses below and is held by
 from the word itself, and every transcript quoted in any of them is left as
 written.
 
-**The #890/#900 merge moved three line pins in this file and no figure, and the
-pre-merge values are kept here per §4a-4d.** #890 added `write_movement()` and
-its four self-test cases; #900 added `rank_of()`, `signed()`, the
-`rank_shift_report()` block and the `--cell` walk beside them, and the merge
-takes both, so `write_movement()` is at **`ec/tools/xdata_moved_ranks.py:181`**
-rather than `:147`, the `pair_report` block is at **`:270-283`** rather than
-`:236-249`, and the four cases are at **`:1215-1277`** rather than
-`:1108-1170`. **What the merge changed is where this correction's own code
-sits, not what it does**: the `entering`/`leaving`/`net` figures, the `closes:`
-arithmetic and the four cases are identical on both sides, and
-`xdata_moved_ranks.py --self-test` is green with all of them.
+**This branch is one commit on `d62730e1`, which is `origin/main`, so the pins
+in this file are its own and nothing was superseded.** #900's `rank_of()`,
+`signed()`, the `rank_shift_report()` block and the `--cell` walk are already
+in `d62730e1`; `a4f967ed` adds `write_movement()` and the four cases on top of
+it, and `diff <(git show a4f967ed:ec/tools/xdata_moved_ranks.py)
+ec/tools/xdata_moved_ranks.py` is empty, so the tool was never edited on two
+sides and no merge needed reconciling. **The values to cite are
+`write_movement()` at `ec/tools/xdata_moved_ranks.py:181`, the `pair_report`
+block at `:270-283` and the four cases at `:1215-1277`** — `write_movement` is
+absent from `d62730e1` altogether, so `:181` is where it is first written and
+there is no earlier line for a §4a-4d correction to keep visible beside it. No
+figure moves with them, as the paragraph above records.
 
 **Nothing here is a hardware claim.** No image is opened, no register is
 read back, and no laptop, EC or Windows machine is involved. Both censuses
@@ -177,7 +178,7 @@ subtraction, so a cell that is numerically but not textually equal (`"05"`
 against `"5"`) is a change to one and no movement to the other. Every `write`
 cell in both censuses is canonical — 1,326 rows checked, 0 non-canonical in
 each — so nothing real reaches it. The `MISMATCH` marker is the file's
-existing idiom from `across_report`'s four-term close (`:349-352`), reused
+existing idiom from `across_report`'s four-term close (`:452-455`), reused
 rather than invented.
 
 ### The four new `--self-test` cases
@@ -204,7 +205,17 @@ case. Four now do, over fixtures the file already had where possible.
 4. **The `MISMATCH` line fired**, over the `"05"`/`"5"` fixture above, so the
    closure is shown to be reachable rather than assumed to be.
 
-All 34 `--self-test` checks pass (30 before this change).
+All 43 `--self-test` checks pass (39 before this change). `--self-test` prints
+one `  ok` line per `check()` and then `all checks passed`, so the count is the
+`ok` lines and nothing else:
+
+```console
+$ python3 ec/tools/xdata_moved_ranks.py --self-test | grep -c '^  ok'
+43
+$ git show origin/main:ec/tools/xdata_moved_ranks.py > /tmp/main-ranks.py
+$ python3 /tmp/main-ranks.py --self-test | grep -c '^  ok'
+39
+```
 
 ## The known-answer run
 
@@ -267,7 +278,7 @@ the last two are new, and only the words in them.
 - **Four places still carry the wrong wording as records, and one carries it
   as a defect this branch did not reach.** The four records are named in the
   table above and are left for the reason given there: two of them
-  (`xdata-06c2-06db-timers.md:960` and
+  (`xdata-06c2-06db-timers.md:980,987` and
   `xdata-cluster-names-guard-off-recipe.md:153`) are a *runnable heredoc*, and
   the honest fix is to relabel the `print()` **and re-run it**, which is
   §6b's page and §6a's reproduction rather than this issue's. The fifth is

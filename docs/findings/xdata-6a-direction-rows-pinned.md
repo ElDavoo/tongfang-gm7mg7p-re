@@ -161,6 +161,19 @@ AssertionError: {'main-ecx': 390, 'pdx': 50} != {'main-ec': 390, 'pd': 50}
 + {'main-ec': 390, 'pd': 50} : §6b's console block: the two 'N clusters at threshold 0.5' figures the run printed are {'main-ecx': 390, 'pdx': 50}, and the clusters CSV that run wrote splits {'main-ec': 390, 'pd': 50}
 ```
 
+† **The one message above that names a direction word is a record of that run
+and stays as written.** #5 reads §6a *'references leaving `write`, all three
+programs'*, because that is the label the page carried when the case was run.
+The tool's convention is committed → guard-off and the sum behind the figure is
+`off − on`, so the references **enter** `write` and none leave; the `833`, the
+`[742, 51, 40]` it decomposes into and every other part of the message are
+unchanged. `test_xdata_cluster_names.py` now prints *entering* in that message,
+**so this transcript can no longer be produced by the test it names** — which
+is the reason it is a record and not a stale expectation, and why §4a-4d keeps
+it visible rather than re-transcribing it. The measurement, the correction and
+the per-address property behind it are in
+[`xdata-write-direction-correction.md`](xdata-write-direction-correction.md).
+
 Two of those messages were **rewritten after seeing what they read like under
 perturbation**, and that is worth recording because it is the failure mode this
 class exists to prevent. The first draft of #5 and #9 said *"the deltas sum to

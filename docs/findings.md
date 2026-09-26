@@ -8631,5 +8631,5 @@ Nothing was re-derived: 210, 0, 833, 1,326 and 445 all reproduce, so §6a, §6b
 and `xdata-moved-ranks-fall.md` keep their figures. `ec/tools/test_check_cluster_citations.py`
 is red on this branch and was red before it, for the two `0x0464`/`0x0465`
 disagreements §66 records; `bash tools/run-tests.sh` read 35 suites and 1,076
-tests before this change with that one red, and the 30 `--self-test` checks
+tests before this change with that one red, and the 43 `--self-test` checks
 and 30 tests of `test_xdata_cluster_names.py` pass after it.

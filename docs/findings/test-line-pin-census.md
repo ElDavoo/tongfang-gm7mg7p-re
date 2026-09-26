@@ -253,22 +253,22 @@ count would show here first. **The `7185` this row carried was already stale on
 `origin/main` — the pin is at `7190` on a clean tree — and is corrected here
 because this branch was in the file anyway, not because it caused it.**
 
-‡ **What the #890/#900 merge moved, re-registered against the merged tree, and
-still no count.** The *cited* targets are the branch's, because #890's 25 lines
-are what moved them; the *citing* lines are the merged tree's, because neither
-side had them. Four rows re-registered: `xdata-moved-ranks-fall.md`'s second and
-third at `:352` and `:364` on the branch and `:383` and `:395` on main are at
-**`:404` and `:416`** here, and `../findings.md`'s `:7364` and `:7425` and
-[`../../tools/README.md`](../../tools/README.md)'s `:157` — stale on `main`
-before this merge, by #900's edits to those two files — are at **`:7369`,
-`:7430` and `:159`**. **The one figure the merge does move is the `read N
-markdown file(s)` line of the transcript above, `143` → `144`:** #890 added
-`docs/findings/xdata-write-direction-correction.md` and #900 added no markdown
-file at all — its `142` → `143` was a correction of a stale transcript, since
-the tool reports `143` on the tree this merge forked from as well as on `main` —
-and the new file carries no `test_*.py:NNN` pin, which is why 69/24/44/40 and
-53/16 are untouched while the denominator moved. The three prose places that
-name `tools/README.md:157` are repointed with the row.
+‡ **What the tree carrying both #890 and #900 moved, re-registered against it,
+and still no count.** The *cited* targets are this branch's, because #890's 25
+lines are what moved them; the *citing* lines are likewise this tree's, because
+neither issue had them. Four rows re-registered: `xdata-moved-ranks-fall.md`'s
+second and third at `:352` and `:364` on the branch and `:383` and `:395` on
+main are at **`:404` and `:416`** here, and `../findings.md`'s `:7364` and
+`:7425` and [`../../tools/README.md`](../../tools/README.md)'s `:157` — stale
+on `main` before this branch, by #900's edits to those two files — are at
+**`:7369`, `:7430` and `:159`**. **The one figure this branch does move is the
+`read N markdown file(s)` line of the transcript above, `143` → `144`:** #890
+added `docs/findings/xdata-write-direction-correction.md` and #900 added no
+markdown file at all — its `142` → `143` was a correction of a stale
+transcript, since the tool reports `143` on the tree this branch forked from as
+well as on `main` — and the new file carries no `test_*.py:NNN` pin, which is
+why 69/24/44/40 and 53/16 are untouched while the denominator moved. The three
+prose places that name `tools/README.md:157` are repointed with the row.
 
 **The "carries in part" row is gone from this tree, and the argument it carried
 is not.** It was the sharpest of the three qualified values:
@@ -647,7 +647,7 @@ more of the eighteen are #889's three citations — two into this same write-up
 insertions and repointed to `:208` and `:240`/`:234` for the same reason) and
 one into the tool — which is a sibling's write-up this merge broke in the same
 way it broke this one's, and `tools/README.md` carries the count. **The
-eighteen is #891's tree, and the #890/#900 merge adds three more to it**, all
+eighteen is #891's tree, and this branch adds three more to it**, all
 from the branch's new `xdata-write-direction-correction.md`, which cites the
 write-up three times (`:116`/`:129`, `:148` and `:156-165`) and none of the
 three moved. The seven that are this file's are still seven — three rows, three
