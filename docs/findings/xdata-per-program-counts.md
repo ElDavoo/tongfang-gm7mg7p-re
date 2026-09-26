@@ -177,29 +177,40 @@ $ head -1 ec/annotations/xdata-registers.csv | cut -d, -f22-33
 refs_main_ec,refs_pd,read_main_ec,read_pd,write_main_ec,write_pd,read+write_main_ec,read+write_pd,passed-to-call_main_ec,passed-to-call_pd,address-taken_main_ec,address-taken_pd
 ```
 
-Read down the `0x04A3` line: 7 and 1 references, 4 and 0 reads, 3 and 0 writes,
-nothing in the three buckets that describe a handoff, 0 and 1 address-taken. So
-the single `address-taken` on that row is the PD image's, and a reader looking
-for a writer is looking at three bank1 writes with the cell now saying so.
+Read down the `0x04A3` line: the main EC's seven are 4 reads and 3 writes, and
+the PD image's single reference is the row's one `address-taken`. Everything
+else is zero — `read+write` and `passed-to-call` on both halves, and the
+`address-taken` count on the main-EC side — so a reader looking for a writer is
+looking at three bank1 writes with the cell now saying so.
 `0x0834` is the more interesting shape: 40 + 16 reads, 7 + 1 writes, and one
 `read+write` that is the PD image's alone.
 
-**The same two columns on a single-program row.** `0x07D0` is a `pd` row
-(`BATTERY_CHARGE_LIMIT_DOWN` in `name`, `DAT_EXTMEM_07d0` in the PD image's own
-text — the `pd-xdata-overlap.md` distinction, and the reason `spelled_as` and
-`name` are separate columns), so its `refs_main_ec` is `0` across all six:
+**The same two columns on a single-program row.** `0x07D0` is a `pd` row, and
+its `name` is `DBD1` — the DSDT name `xdata-symbols.csv` and `registers.yaml`
+record, not the `BATTERY_CHARGE_LIMIT_DOWN` that `ECSpec` calls the same byte.
+`DAT_EXTMEM_07d0` is the PD image's own source spelling, and those two
+disagreeing is the `pd-xdata-overlap.md` distinction and the reason
+`spelled_as` and `name` are separate columns. Its `refs_main_ec` is `0` across
+all six:
 
 ```console
 $ grep '^0x07D0,' ec/annotations/xdata-registers.csv | cut -d, -f1,2,6,7,8,9,10,11,22-33
 0x07D0,pd,41,17,4,2,16,2,0,41,0,17,0,4,0,2,0,16,0,2
-$ grep '^0x0004,' ec/annotations/xdata-registers.csv | cut -d, -f1,2,6,7,8,9,10,11,22-33
-0x0004,main-ec,13,0,13,0,0,0,13,0,0,0,13,0,0,0,0,0,0,0
+$ grep '^0x0004,' ec/annotations/xdata-registers.csv | cut -d, -f1,2,6,7,8,9,10,11,12,13,22-33
+0x0004,main-ec,13,0,13,0,0,0,0,13,13,0,0,0,13,0,0,0,0,0,0,0
+$ grep '^0x0004,' ec/annotations/xdata-registers.csv | cut -d, -f17 | tr ';' '\n' | grep -o '\(bank0\|bank1\|common\):' | sort | uniq -c
+      2 bank0:
+      7 bank1:
+      4 common:
 ```
 
-`0x0004` is the mirror: 13 references, all of them bank0's `write`s, and
-`refs_pd` zero. On 1,277 of the 1,326 rows the twelve columns are a restatement
-of the six beside them, and that is the point — the shape is uniform, so a
-consumer never has to ask which kind of row it is holding.
+`0x0004` is the mirror: 13 references, all of them `write`s with `readers` 0
+and `writers` 13, and `refs_pd` zero. The bank attribution is not bank0's
+alone — the `functions` cell is two `bank0:`, seven `bank1:` and four `common:`
+sites, so most of the row is bank1. On 1,277 of the 1,326 rows the twelve
+columns are a restatement of the six beside them, and that is the point — the
+shape is uniform, so a consumer never has to ask which kind of row it is
+holding.
 
 ## The assertions, and where they live
 
@@ -423,6 +434,13 @@ for nothing else — no `status:` moved and none of those figures was refreshed.
   since they go through the same `build()`. A per-program guard-off measurement
   — what the `==` guard moves *within* each program rather than in the summed
   total — is measurable from the same recipe and is not done here.
+- **The same sentence in `ec/tools/xdata_register_map.py`'s module docstring.**
+  It reads `0x07D0` as `BATTERY_CHARGE_LIMIT_DOWN` in `name`, where the `name`
+  column holds `DBD1` and `BATTERY_CHARGE_LIMIT_DOWN` is what `ECSpec` calls
+  the same byte. That instance is pre-existing on `main` and this page
+  inherited the wording rather than the fact, so it is left as a follow-up
+  against the tool file instead of being reworded inside a change about the
+  CSV.
 
 ## The three places that said no per-program count exists, corrected in place
 
