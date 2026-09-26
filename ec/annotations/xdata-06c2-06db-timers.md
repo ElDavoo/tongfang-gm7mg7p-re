@@ -813,6 +813,38 @@ the same guard. The next re-derivation has its checklist at
 which is also where the eight figures this table does *not* have a test holding
 are named, since those decay silently rather than going red.)*
 
+*(Pinned, 2026-09-25, issue #850. The four direction rows above are now held by
+named assertions, as is §6b's `390`/`50` per-program cluster split, and the
+`1,169`/`108`/`49` and `13,891`/`603`/`1,202` denominators are pinned with them
+— so a re-export that moved a direction between the PD set and the main-EC set,
+or five clusters from one program to the other, now goes red rather than leaving
+the `833` and the `440` standing. **The rule is unchanged: re-derive §6a, do not
+move a number here.** That issue edits no row of the table above; the figures
+here remain this page's own. The derivation of every number in it — the
+`program` partition read as a `collections.Counter` walk, and an audit of which
+figures this tree already held and which it still does not — is at
+[`../../docs/findings/xdata-6a-direction-rows-pinned.md`](../../docs/findings/xdata-6a-direction-rows-pinned.md).
+The counts this page does *not* print stay at the checklist, whose §2b heading
+has since been corrected in place: three of its eight "unpinned" rows had a
+check all along — two of them wholly, and `157`/`858` for the *default* census
+only — and six of the eight are held now, the last two only in part. It first
+read "four … were held all along, and five of the eight are held now"; the
+`1218`/`9320` above is one of the five with no check rather than one of the
+four with one, and the wrong count stays visible at the write-up per §4a-4d.)*
+
+*(Corrected at the merge, 2026-09-25, and the count above stays visible per
+§4a-4d: **the `1218`/`9320` is no longer one of the five with no check.** Issue
+#849 landed in the same window and added the "and its main-EC half is" `check()`
+at `xdata_register_map.py:4315-4319`, which reads `OWNERSHIP["main_distinct"]`
+and `["main_refs"]` against the in-process export-ownership census — this page's
+own §6b run, so the pair §6b's per-program line prints is now held whole. Two
+issues, opposite conclusions about the same two keys, each right about the tree
+it was measured on. The checklist's §2b now reads **eighteen figures, eighteen
+held and none unheld**, with the two gaps it cannot vouch for — the `157`/`858`
+pair, held for the *default* census rather than for §6b's de-duplicated run, and
+the guard-off `pd` cluster count `51`, which §6a does not print at all — named
+beside the tables instead of in a column.)*
+
 ### 6b. The other defect, now measured: the 42-fold export count
 
 **The guard table above and this one are independent, and the independence is

@@ -11,7 +11,7 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are thirty-four today, 1033 tests in all — both figures
+file committed. There are thirty-five today, 1076 tests in all — both figures
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
 Re-derive them by running it rather than by editing this sentence. None of the
@@ -118,7 +118,7 @@ is **still only** `ec/tools/test_check_cluster_citations.py` on the same `:220`
 of the same #822 file — confirmed once more here by running that suite alone in
 a worktree of clean `origin/main`, where it fails with the same two
 `0x0464`/`0x0465` disagreements, so #851 neither caused it nor fixes it. The new
-suite is green at 15.*
+suite is green at 15.)*
 
 *(A seventh thing this merge moved, recorded here because it is the kind that
 survives a totals note: #851 added 80 lines to `ec/tools/xdata_register_map.py`
@@ -169,7 +169,82 @@ why the two pre-existing ones are still wrong — and since #887 this paragraph 
 no longer the only thing saying so:
 [`docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
 censuses the whole class and still checks none of it, because six of the seven
-places that cite a stale pin on purpose do so in unmarked prose.)*
+places that cite a stale pin on purpose do so in unmarked prose. *(Left as
+written per §4a-4d: that census is of a tree, and on the tree this file now
+sits in it reads **eight of the ten**, for the reason the ninth note below
+gives.)*)*
+
+*(A ninth thing this merge moved, and the largest displacement so far. #713
+(`4151cb1c`) added the twelve per-program count columns to
+`ec/annotations/xdata-registers.csv` and, with them, ~400 lines to
+`ec/tools/xdata_register_map.py` — its pin block in the `ORACLE`/`OWNERSHIP`
+region *and* four new `--self-test` assertions below every existing one — so
+**every `file:line` #849 and #850 cited into that file was stale again**, and
+this time the `ORACLE`/`OWNERSHIP` definition lines moved too, which the seventh
+note above said they would not: `:649`/`:654`/`:655`/`:1264`/`:1292` →
+`:738`/`:743`/`:744`/`:1414`/`:1442`, `:1212`/`:1228` → `:1362`/`:1378`,
+`:3037`/`:3073`/`:3087` → `:3253`/`:3289`/`:3304`, `:3339-3356` → `:3555-3572`,
+`:3485-3490` → `:3864-3869`, `:3927-3929` → `:4306-4308`, `:3936-3940` →
+`:4315-4319`, `:3968-3975` → `:4347-4354`. Every one of those citations —
+#849's, #850's and #850's new write-up's — was re-measured against the merged
+file and repointed, in `doc-figure-pin-audit.md`, the checklist's §2b, the
+§2a/§2b discussion, `xdata-6a-direction-rows-pinned.md`, `xdata-census-self-test-gate.md`
+and `findings.md` §66. **The `check_doc_figure_pins.py` transcript at the top of
+`doc-figure-pin-audit.md` was re-run rather than shifted**, and the two spans
+`ec/tools/test_check_doc_figure_pins.py` pins were re-measured by #713 itself,
+through two successive corrections (`:3339-3356` → `:3554-3571` → `:3555-3572`,
+and `:3936-3940` → `:4360-4366`) — which is the same defect a page that pins a
+line has, caught by the suite that exists to catch it. The **verdicts** are
+unchanged: the run still reads `18 figure(s), 18 measured held, 0 measured
+unheld`, and the only denominator that moved is `searched 9 module-level
+constant(s)` → `10`, since #713's own `ORACLE` keys are what the tool now finds.
+What none of this is: a fix for the pins this file already records as stale
+before any of these merges — `:463` in `xdata-census-totals.md` and the `md5sum`
+in `xdata-export-ownership-page-census.md`, both named in `findings.md` §64 and
+both left where they are, for the reason the eighth note gives.)*
+
+*(Eighth merged-tree note, 2026-09-25, issue #850 landing beside #801, #849 and
+#851. **The counts below are that tree's, not this one's** — #887 has landed
+since, and the ninth note gives this tree's. On that tree they are
+**thirty-four suites and 1035 tests**, which is the
+seventh note's 1033 plus #850's two cases. #850 adds no suite: it adds
+`TheExportOwnershipClusters`'s two cases to `ec/tools/test_xdata_cluster_names.py`,
+so **the suite count of thirty-four was unchanged**, which is the one figure of the
+two #850 did not move. The last line read `34 suite(s) run, 1035 tests; one or
+more FAILED` with the runner exiting 1, and the red one was **still only**
+`ec/tools/test_check_cluster_citations.py` on the same `:220` of the same #822
+file, with the same two `0x0464`/`0x0465` disagreements. **The two notes above
+this one are kept in the order they landed rather than renumbered**, so the
+numbering runs seventh (#852), the eighth-thing paragraph (also #852's), and then
+this note — which is #850's, and is the eighth *note* only because it is the eighth
+paragraph of this kind. #850's own write-up derived `33`/`1020` on a tree that
+carried #801 and #849 but not #851, and that figure is recorded there as it stood
+rather than rewriting the notes above this one for a two-case delta — the same
+reason this file exists rather than arithmetic on a diff.)*
+
+*(Ninth merged-tree note, 2026-09-26, the `#850`/`#887` merge, and it is the one
+that re-derives the totals in the first paragraph rather than adding to them.
+**Thirty-five suites and 1076 tests**, from a `bash tools/run-tests.sh` on this
+tree. The seventh note's 1033 was already stale when #887 landed — #887 added
+`ec/tools/test_census_test_line_pins.py` at 41 cases and the paragraph above never
+moved, so `main` itself was reading *thirty-four* against a runner finding
+thirty-five, and #850's two cases make the merged tree 1076. **The red set is
+otherwise unmoved: still only `ec/tools/test_check_cluster_citations.py`**, 48
+tests, on the same `:220` of the same #822 file with the same two
+`0x0464`/`0x0465` disagreements — so neither #850 nor #887 caused it and neither
+fixes it. **One suite that #887 added went red on the merge and is green again
+here**, which is the eighth-thing paragraph's own subject rather than a new one:
+`ec/tools/census_test_line_pins.py` pins the census's own committed-tree counts,
+and #850's nineteen new `test_*.py:NNN` citations moved them from `50`/`37`/`32`
+to `69`/`44`/`40`. That is a pin doing the job a pin is for — the tree changed
+under a figure and the suite said so rather than the figure quietly becoming
+wrong — and `check_doc_figure_pins.py` did **not** go red a second time, because
+#887's `SELF_MODULES` exclusion already covers both census modules. The notes
+above are kept in the order they landed rather than renumbered. Two carry a
+merge-time correction rather than a renumber: the eighth, in its first clause, to
+say that its counts are its tree's, and the eighth-thing paragraph, whose
+"seven places" is a census of a tree rather than a constant — the same two
+figures, and the same reason the notes are not renumbered.)*
 `docs/findings/0751-grader-self-test-gate.md` records the red set as it stood
 and the follow-up issues that owned it, and
 [`tools-readme-totals.md`](../docs/findings/tools-readme-totals.md)
@@ -230,11 +305,35 @@ re-derived by running the runner rather than by arithmetic on a diff.
 > about prose: nothing written in this block can turn a suite red or green. The
 > write-up is
 > [`docs/findings/xdata-no-eq-guard-measured-state-correction.md`](../docs/findings/xdata-no-eq-guard-measured-state-correction.md).
+>
+> **Corrected at the merge, 2026-09-25, #850 beside #849.** The transcript
+> above and the counts in the two paragraphs are re-derived on `main` and were
+> exact there. Two merges move them, and both are in this tree: #849 adds
+> `ec/tools/test_check_doc_figure_pins.py` at 44 cases, and #850 adds
+> `TheExportOwnershipClusters`'s two cases to
+> `ec/tools/test_xdata_cluster_names.py`, so the merged tree reads
+> **`33 suite(s) run, 1020 tests; one or more FAILED`** and
+> `ec/tools/test_xdata_cluster_names.py` is at **30** tests. Everything else in
+> this block stands: still one red suite, still
+> `ec/tools/test_check_cluster_citations.py`, still #822's
+> `xdata-cluster-names-guard-off-recipe.md:220`. The counts in the two
+> paragraphs are left at `33`/`1018` and are now stale in the way this file's own
+> first paragraph says a stale count should be handled — **re-derive by running
+> the runner** — and this block is where the fact is recorded, rather than the
+> paragraphs being rewritten for a two-case delta.
+>
+> *(Corrected once more at this merge, 2026-09-25, and the `33`/`1020` above
+> stays visible because it was true of the tree #850 was written on. **That tree
+> carried #801 and #849 but not #851, and #851 added a suite**, so the tree this
+> block finally lands in reads `34 suite(s) run, 1035 tests` — the eighth
+> merged-tree note above, and 1033 + 2 rather than 1018 + 2. The
+> `test_xdata_cluster_names.py` figure of **30** is unaffected: it is 30 on both
+> trees, and it is 30 here.)*
 
 | suite | what it stands in for |
 |---|---|
 | `ec/tools/test_bank1_e582_framing.py` | The byte facts behind the issue #680 reading that the `bank1,0xE582` entry is reached through 0xE580 and the census row at 0x9F03 is a displacement byte: the push/lcall/pop save-restore pair across the 0xE57E cut, `converges_from` on both halves of each site, and the `80 02` at 0x9F02 read as a `sjmp` whose displacement's landing address is the committed `9F04.asm` first instruction — asserted against the image rather than by re-running the scan that wrote the census, so a regenerated table that disagreed would fail rather than pass on a stale pair, plus that both annotation comments still carry the clause their `CORRECTION` replaces, that no entry is seeded at 0xE580, and that the phantom census row is deliberately left in place |
-| `ec/tools/test_census_test_line_pins.py` | `ec/tools/census_test_line_pins.py`'s population and its **standing as a census rather than a check**, which is the invariant the most: a run whose every pin is broken still exits 0, and a run that located nothing reports that and exits non-zero, one case each, so "found nothing" and "found nothing wrong" cannot read alike from the exit code. Around it, one case per way a pin is read wrongly — a `windows/tools/` prefix truncated into `tools/`, a `../tools/…` path written relative to the citing file, a bare module name two files could answer to (ambiguous, never guessed), a span that outruns its file, a span that opens on the blank line above what it is about (a real answer here, not a miss) — a fenced transcript declined and counted while the same pin in live prose beside it is read, and the census's own write-up excluded from its own population so the class's size is not a function of the report about it; and the committed tree's reconciled 50 / 37 / 32, per-verdict and per-shape, held from both sides — `out-of-range`, `unresolved-path` and `ambiguous-path` are 0 there and that is asserted as the measurement it is, not left to a prose figure |
+| `ec/tools/test_census_test_line_pins.py` | `ec/tools/census_test_line_pins.py`'s population and its **standing as a census rather than a check**, which is the invariant the most: a run whose every pin is broken still exits 0, and a run that located nothing reports that and exits non-zero, one case each, so "found nothing" and "found nothing wrong" cannot read alike from the exit code. Around it, one case per way a pin is read wrongly — a `windows/tools/` prefix truncated into `tools/`, a `../tools/…` path written relative to the citing file, a bare module name two files could answer to (ambiguous, never guessed), a span that outruns its file, a span that opens on the blank line above what it is about (a real answer here, not a miss) — a fenced transcript declined and counted while the same pin in live prose beside it is read, and the census's own write-up excluded from its own population so the class's size is not a function of the report about it; and the committed tree's reconciled 69 / 44 / 40, per-verdict and per-shape, held from both sides — `out-of-range`, `unresolved-path` and `ambiguous-path` are 0 there and that is asserted as the measurement it is, not left to a prose figure |
 | `ec/tools/test_check_doc_figure_pins.py` | `ec/tools/check_doc_figure_pins.py`'s four verdicts over a page's own tables, measured against the real `ec/tools/` rather than a stubbed tree — so the figures the checklist lists are asserted by value and a tree that changes under any of them fails here instead of quietly changing what the page claims — with the line between what it reads and what it declines, one case per shape: a thousands comma, two figures in one cell, a count with a noun after it, a hex address (stripped) beside the run that is not, a `0.5` threshold (not a figure), a `set(off) == set(on)` relation (declined, never failing), a `§2b` or `#849` reference (stripped), and a figure in a second cell (not read at all, so a prose cell's `1,169 addresses` is not a count); the four `file:line` rules no gate in this tree had, since `check_doc_links` only resolves relative `.md` links; and both directions demonstrated rather than asserted — a pinned figure marked unheld is reported, and a table that stops declaring a `verdict` column is reported too, because that second one would otherwise return the page to its pre-#849 state and report a clean run |
 | `ec/tools/test_check_capture_claims.py` | `ec/tools/check_capture_claims.py`'s address-presence and row-count rules against the committed `evidence/ec-watch/*.csv` captures, and the line between what it checks and what it deliberately skips |
 | `ec/tools/test_check_citation_lines.py` | `ec/tools/check_citation_lines.py`'s three rules over the line numbers the prose repeats out of the generated CSVs — the `xdata-086x-dispatch.md` site table and the `HAND_CHECKED["0x0860"]` comment against `xdata-0860-census-sites.csv`, and every `xdata-registers.csv`/`xdata-clusters.csv` line pointer in the two files its `ROW_SCOPE` names, each held to the row for the **address or cluster id** rather than to a table of expected line numbers, because a rank is not an identity — one case per way a citation can be wrong, and the cases a loosened test would let through: a table whose header lost the column, reported as not located rather than passing vacuously; a `—` cell over a CSV row that does cite; the merged `0x25CE4`/`0x25CFC` row read as one row and two sites; the `:49` shorthand bound to the file it follows and a bare list bound to the file named ahead of it; a header line and a line past EOF diagnosed as such; a rule that located nothing reporting that rather than returning clean; the two supersession shapes **skipped**, with the skip counted and `--verbose` naming it, and a live paragraph that merely mentions a correction still checked; the deliberate asymmetry between the per-site and the union rule, pinned from both sides; and that the committed prose and the committed census currently agree |

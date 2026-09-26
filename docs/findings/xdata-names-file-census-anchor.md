@@ -25,7 +25,7 @@ combination**:
 | the statement | where |
 |---|---|
 | the comment scoping `--self-test`'s stale-key check | `ec/tools/xdata_register_map.py:4117-4132` |
-| `TheNamesFile`'s class docstring, *"the editable surface, and it is anchored"* | `ec/tools/test_xdata_cluster_names.py:581` |
+| `TheNamesFile`'s class docstring, *"the editable surface, and it is anchored"* | `ec/tools/test_xdata_cluster_names.py:808` |
 | §4.4's *"The names are anchored to the committed census"* paragraph | `ec/annotations/xdata-register-map.md:1255-1269` |
 | the checklist's §3 bullet | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md) §3 |
 
@@ -58,7 +58,7 @@ two are not.
 For those shapes the overlap carries are **structural, not evidence of a moved
 key** — and the tree already measures that, three times over:
 
-- `ec/annotations/xdata-06c2-06db-timers.md:851-855` — 39 of the 439 committed
+- `ec/annotations/xdata-06c2-06db-timers.md:883-887` — 39 of the 439 committed
   `cluster_key`s do not survive into the `--export-ownership` pass, and it *breaks
   5 of the 9 hand names*;
 - `ec/annotations/xdata-export-ownership.md:210` — the same cost, in the flag's
@@ -129,7 +129,7 @@ such case for something to fail.** Three parts, all already in the tree:
    membership and of nothing else.
 2. So *"the key still resolves"* and *"the membership is unchanged"* are the same
    statement. The tree already has the unit test for exactly that:
-   `test_xdata_cluster_names.py:117-121`,
+   `test_xdata_cluster_names.py:149-153`,
    `test_changed_membership_is_a_new_key_not_a_collision`.
 3. And the committed CSV's `cluster_key` column really is that hash rather than a
    hand-written string, because `--check` re-derives the whole file cell for cell
@@ -146,7 +146,7 @@ one the check answers, and this file says so rather than blurring the two.
 **The residual, recorded rather than fixed.** The `note` column is the only record
 of the membership judgements (`counter-sweep`'s *"43 addresses and 4,966
 references"*, *"membership did not move in the 2026-09-24 re-derivation"*), and
-nothing reads it. `test_xdata_cluster_names.py:592-598` requires the column
+nothing reads it. `test_xdata_cluster_names.py:820-826` requires the column
 non-empty and checks nothing else in it, and `ec/tools/check_cluster_citations.py`
 never opens the names file at all. A note checker cannot be key-anchored: it would
 have to parse prose (*"43 addresses and 4,966 references"*), or the file would need
@@ -202,6 +202,10 @@ coincidence — neither side of this merge touched what the census reads.
 The runner's figures move because of the merge rather than because of this
 change, and are recorded in `tools/README.md`'s sixth note: thirty-four suites
 and 1033 tests, the one addition being this change's
-`ec/tools/test_xdata_carry_notice.py` at 15. The red set is unchanged by either
+`ec/tools/test_xdata_carry_notice.py` at 15. **#850 landed in the same window
+with two cases in `ec/tools/test_xdata_cluster_names.py` rather than a suite, so
+the tree both changes share reads thirty-four suites and 1035 tests** —
+`tools/README.md`'s eighth note — and the suite count of the two sides' records
+agreeing is the one figure neither moved. The red set is unchanged by either
 side — still `ec/tools/test_check_cluster_citations.py` alone, on `:220` of the
 same #822 file, and still red on a clean `origin/main`.

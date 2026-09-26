@@ -6577,6 +6577,26 @@ contract, `tools/README.md`,
 the sentence it belongs to; the write-up is
 [`docs/findings/xdata-no-eq-guard-measured-state-correction.md`](findings/xdata-no-eq-guard-measured-state-correction.md), and the summary is §59.
 
+*(**Corrected at the merge, 2026-09-25, #850 beside #849.** The `974` above is
+the count re-derived on `main` and it was exactly right there. Two merges are in
+this tree: #849 adds `ec/tools/test_check_doc_figure_pins.py` at 44 cases and
+#850 adds `TheExportOwnershipClusters`'s two cases to
+`test_xdata_cluster_names.py`, so on the merged tree the runner reads
+**`33 suite(s) run, 1020 tests; one or more FAILED`** — the same one red suite, on
+the same #822 line, and the runner wrote nothing into the tree to get it. The
+figure above stays visible because it was true of the tree it was measured on;
+§66 is the other half. **#851 then added a suite in the same window, so the tree
+this finally lands in reads `34 suite(s) run, 1035 tests; one or more FAILED`**,
+on the same one red suite and the same #822 line. *(`34`/`1035` is #850's merged
+tree and not this one: #887 added a suite, so this tree reads `35`/`1076` and
+#850's two cases are in that too. The sequence and the seven places the
+superseded figure is left standing are in
+[`runner-red-suite-set.md`](findings/runner-red-suite-set.md), which is the file
+that exists so this correction is written once rather than seven times.)* Three of the four numbers
+here are records of three trees; the one that is the same on all of them is the
+red suite. `runner-red-suite-set.md` is where the counts are argued
+rather than pinned, and this is the merge being the reason that rule exists.)*
+
 ## 30. The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (2026-09-25, issue #456)
 
 Issue #134's tranche left twelve of its 44 rows at `type=unresolved` and
@@ -7563,7 +7583,19 @@ instruction in `ec/annotations/xdata-register-map.md`, §4d above, and in
 
 The checklist names the seven figures `test_the_census_is_the_one_6a_measured`
 holds §6a to, and — the half the test cannot do — **the eight more in §6a's table
-and §6b's console block that no test holds and which therefore decay silently**,
+and §6b's console block that no test holds and which therefore decay silently**
+(**three of those eight rows already had a check when this section was written —
+two of them wholly, by `--check`'s cell comparison and by
+`ORACLE["distinct"]`/`OWNERSHIP["distinct"]`/`OWNERSHIP["clusters"]`, and the
+`157`/`858` pair for the *default* census only. This section also credited the
+`1218`/`9320` to `OWNERSHIP["main_distinct"]`/`["main_refs"]`, which no
+assertion read; §66 is where that is corrected, and it is what takes the count
+from four rows with a check to three. The checklist's §2b heading said "unpinned"
+for all eight and §66 corrects that in place, per §4a-4d, and **all five rows it
+left open are now held** — four of them by §66's own named assertions and the
+`1218`/`9320` by §60's `check()`, which is the one #849 and #850 reached opposite
+conclusions about. The figure §66 adds to the list is the guard-off pd cluster
+count `51`, which §6a does not print at all**),
 the tool's `BUCKET_TOTALS` five, the `xdata-cluster-names.csv` re-key, and the
 `> 300` moved-ranks floor at its measured 315 with the argument for leaving it
 there. It states the response as the order the work happens, `--check` first,
@@ -7571,7 +7603,8 @@ and it asserts nothing about what a re-derivation *would* produce: every figure
 in it is today's snapshot, marked as one, the way §6a's own re-derivation note
 is. One of the eight is commonly mis-transcribed — the console block reads
 `1326 rows` / `440 rows`, `1218 / 9320 / 390` and `157 / 858 / 50`, where
-`14,838` is §6b's own table cell rather than a per-program total — so the
+`14,838` is §6b's own table cell rather than a per-program total, and where §66
+adds that it is `ORACLE["main_refs"]` and is asserted — so the
 checklist quotes the page and names the trap rather than the wrong figure. No
 measurement moved, no CSV, `registers.yaml`, tool, gate or assertion was edited,
 no re-export was run, and nothing was read off a machine.
@@ -7776,6 +7809,20 @@ Windows machine is involved anywhere: every input is a committed file.
 > section number is a property of the merge in the same way the runner's totals
 > are — see `runner-red-suite-set.md` — which is why the collision is recorded
 > here rather than left for the next reader to find.
+>
+> **One figure below moved in the same merge, and this is where it is corrected.**
+> The `28` for `test_xdata_cluster_names.py` was exact on `main`; #850 added
+> `TheExportOwnershipClusters`'s two cases there, so the merged tree measures
+> **30**. The runner's totals line moves on both merges in this tree rather than
+> one: **1020** over thirty-three suites, not the `974` over thirty-two the §29
+> addendum and this section's siblings were re-derived at, because #849's
+> `ec/tools/test_check_doc_figure_pins.py` at 44 cases is in the tree as well.
+> **#851 then added a suite in the same window, so the tree this finally lands in
+> reads 1035 over thirty-four**, and `30` is the one figure of the three that did
+> not move.
+> `45` and `48` did not move, the red set is still the same one suite, and the
+> failing line is still #822's. Left visible per §4a-4d because both were true of
+> the tree they were measured on.
 
 The write-up is
 [`xdata-no-eq-guard-measured-state-correction.md`](findings/xdata-no-eq-guard-measured-state-correction.md);
@@ -7844,10 +7891,27 @@ the tree made on purpose.
 > and is **§62**.
 > Nothing this branch wrote pointed at its own section number — the write-up,
 > the checklist's correction block and both READMEs all name §2b, §3, §4a-4d
-> and the issue numbers instead — so there was no reference to repoint. A
-> section number is a property of the merge in the same way the runner's
-> totals are (see `runner-red-suite-set.md`), which is why the collision is
-> recorded here rather than left for the next reader to find.
+> and the issue numbers instead — so there was no reference to repoint.
+> **#850's summary collided a third time, in this same merge**: it was written as
+> §59, renumbered to the same next free number #851 took, and is renumbered once
+> more, to §62 below, so §61 is #851's and §62 #850's. Its numbering note says
+> so for itself. **Amended at the third merge: §62 is not #850's.** #852's
+> measurement took that number in the same window, so #850's is renumbered once
+> more to **§66**, the end of the file, and the sentence above is left as it was
+> written per §4a-4d. §61 is #851's, §62 #852's, §63 #886's, §64 #713's, §65
+> #887's and §66 #850's. A
+> section number is a property of the merge in the same way the
+> runner's totals are (see `runner-red-suite-set.md`), which is why the collision
+> is recorded here rather than left for the next reader to find.
+>
+> **Amended at the fifth merge: §66 is not #850's either, and the owner list above
+> is re-derived rather than moved.** #713 took §64 in the window before this one
+> and #887's line-pin census (`bb4c1d27`) took §65 behind it, so #850's is at
+> **§66** and the file ends there. Both amendments left their sentence as it was
+> written per §4a-4d; only the owner list is re-derived, because it is a list of
+> owners rather than a pointer at one of them, and a list that no longer lists
+> every owner is wrong in a way a superseded record is not. #850's own numbering
+> note carries the arithmetic from the other side.
 
 The write-up is [`doc-figure-pin-audit.md`](findings/doc-figure-pin-audit.md); this
 is the summary. §2b of the re-derivation checklist said **"Eight, unpinned"**,
@@ -7900,6 +7964,26 @@ in this file family**. No live test ran, no register was read back, no image was
 opened, and no hardware, EC, Windows, Ghidra or `registers.yaml` row was
 involved.
 
+*(Corrected at the merge, 2026-09-25, issue #850. **Two of the three things
+above are closed and the count above has moved, and the wrong versions stay
+visible per §4a-4d.** `390` and `50` are held, by a new
+`TheExportOwnershipClusters` in `test_xdata_cluster_names.py`, so they are no
+longer the natural next issue; the eight §6a subset sums are held too, by named
+assertions in the same file — **and the second reason given for them not being
+fixable was a reason about *this* checker, not about the census.** It read
+`unheld` because the guard-off run is written to `/tmp` and committed nowhere,
+so no committed cell existed for `--check` to compare; a case that builds the
+same census in a temp dir and asserts the sums does not need a committed cell,
+which is what the recipe's own comment about the refusal contract has been
+saying. The measurable consequence is the count: §2b now reads **eighteen
+figures, eighteen held, none unheld**, and `390` and `50` measuring `held` is
+the literal-search limit above turning out to be real rather than theoretical —
+a case naming them was all it took. What the all-held column does *not* cover
+is in §66 and in §2b itself: the `157`/`858` pair, which is held for the
+*default* census rather than for the run §6b prints it from, and the guard-off
+`pd` cluster count `51`, which §6a does not print at all. The third thing above
+stands: wiring the tool into a gate is still a human's change.)*
+
 ## 61. The carry line names the census it is a claim about (2026-09-25, issue #851)
 
 > **Numbering note, added at the merge.** This summary was written as §59 and
@@ -7922,6 +8006,13 @@ involved.
 > #849 taking §60, and then gave way again to this one taking §61, so it sits at
 > **§62** below. It is left visible here rather than corrected out, because the
 > two §61s are the same collision twice and the sequence is the record.
+>
+> **Amended again, for #850.** #850's summary collided with #852's over §62 in
+> this same merge and, being the branch's own, is the one that gives way: it is
+> at **§66**, past #886's §63, #713's §64 and #887's §65, so the "last section
+> in the file" this note first claimed is now four sections away rather than
+> none. §60's amendment above and §66's own numbering note record the collision
+> and the correction from their two sides.
 
 `ec/annotations/xdata-cluster-names.csv` is anchored to the **committed** census
 — the two CSVs as committed, which is the run `--check` reproduces — and four
@@ -7952,7 +8043,12 @@ this is the summary, and it restates no measurement.
 > to the next free number rather than left to collide. §60 is now #849's
 > held/unheld measurement above. It then gave way a second time, to #851's
 > summary (`a02de81b`) taking §61, so it is **§62** and is the last section in
-> the file. Nothing this branch wrote pointed at its own section number — the
+> the file. *(Its last clause is left as it was written per §4a-4d: §63
+> (`#886`) landed behind it before this note was, #713's §64 behind that, #887's
+> §65 behind that, and #850's §66 behind that, so
+> §62 is not the last section in the file on any tree this note has been read
+> on. The number itself is right.)* Nothing this branch wrote pointed at its own
+> section number — the
 > write-up, the checklist's correction block and the
 > `xdata-4-4-identity-rederivation.md` note all name the issue, the write-up and
 > the sections they measure instead — so there was no reference to repoint; the
@@ -8138,6 +8234,17 @@ back, and nothing is opened in another repository.
 > the same way the runner's totals are (see `runner-red-suite-set.md`), which is
 > why the collision is recorded here rather than left for the next reader to
 > find.
+>
+> *(Its last clause is left as it was written per §4a-4d: **§64 is not the last
+> section in the file on any tree this note has been read on.** #850's summary
+> collided with this number in the same merge and, being the branch's own, is the
+> one that gives way — first to **§65** and then once more, to **§66** below, and
+> the file ends there. The two collisions are not the same one: #713 took §64 in
+> the window before this note was, and #887's line-pin census (`bb4c1d27`) took
+> §65 behind it, so the number #850 gives way to this time is #887's rather than
+> this branch's own. The number itself is right, and so is the "no reference to
+> repoint" clause: #713 still points at nothing of its own. §66's numbering note
+> records both collisions and the correction from that side.)*
 
 The write-up is
 [`xdata-per-program-counts.md`](findings/xdata-per-program-counts.md);
@@ -8230,6 +8337,21 @@ new** — a comment quoted from `:2687` and cited at `:2232-2233`, a
 a `GUARD` constant #753 removed from the file, and a "third-generation figure"
 that is the second — and each is named in the write-up with where the line is.
 
+*(Re-measured at the #850 merge, 2026-09-26, and **every figure above moved
+because #850 moved the tree, not because the merge did**: the run on #850's own
+tree and the run on the tree both issues are in are the same run, so #850's
+nineteen new citations and its 239 lines into
+`ec/tools/test_xdata_cluster_names.py` are the whole of it. It reads
+**69 occurrences, 44 spellings and 40 resolved targets, across 24 markdown
+files**, with 53 resolving and 16 declined against 44 and 6. **Nine pins do not
+carry against six, and the four that are new are one defect**: #850 moved the
+`> 300` floor from `:392` to `:563` and repointed one citation of five, so four
+sentences in `xdata-flip-cause-derivation.md` and `xdata-moved-ranks-fall.md`
+still name where it was. **The census is what found them, and that is the part
+worth keeping**: they were wrong the moment #850 landed, on #850's own tree, and
+nothing in this pipeline runs the census. The wrong version stays above per
+§4a-4d.)*
+
 **Two of the issue's extraction numbers did not reproduce, and both are the
 scan's fault rather than the tree's.** Its "12 ambiguous `tools/` pins" are four
 `windows/tools/` citations a prefix-recognising regex truncates into `tools/`
@@ -8246,7 +8368,12 @@ least six shapes — a repoint list naming the stale value, a "deliberately not
 fixed" bullet, a "the check caught it here" sentence, an "At the time of writing"
 lead-in, a pin qualified by a commit, a dated findings section — of which the
 two-shape vocabulary `check_citation_lines.py` already uses catches exactly one,
-and the one it catches is a *correct* citation. A checker would redden on
+and the one it catches is a *correct* citation. *(Left as written per §4a-4d:
+the shape split is 5 / 11 / 9 / 6 / 22 over 53 on the merged tree, and the
+supersession records are eight unmarked shapes out of ten, of which the
+vocabulary catches two and both are correct citations — so the argument is
+unchanged and the margin is larger, which is the opposite of what a re-measure
+usually shows.)* A checker would redden on
 sentences that are true, which is the surest way to get a check switched off. The
 re-open condition is written down: a supersession marker this class's authors
 would use, or a decision that pins into a test file must name a `def`.
@@ -8267,3 +8394,150 @@ No register `status:` moved, no `registers.yaml` figure was
 refreshed, no CSV or `xdata-symbols.csv` was regenerated, no Ghidra project was
 opened, no gate was edited, no register was read back, and nothing is opened in
 another repository.
+
+## 66. §6a's per-direction rows and §6b's cluster split are held, and the checklist's "eight unpinned" is a retraction (2026-09-25, issue #850)
+
+> **Numbering note, added at the merge, and this one is renumbered five times
+> over.** Written as §59, and #816 (`2665a6a8`) took §59 on `main` in the same
+> window — it is two sections above now, and the §29 addendum,
+> `xdata-cluster-names-guard-off-recipe.md`, the register map and
+> `xdata-no-eq-guard-measured-state-correction.md` all point at **§59** for that
+> one. #849's summary took the same next free number this one did, and so, at
+> this merge, did #851's — so this summary is renumbered again, to **§62**, the
+> only free number left, and the seven in-place pointers this issue adds (§29's
+> merged-tree note, §54's parenthetical, five of them, and §60's correction
+> above) are repointed with it. **§62 was not free on the tree this actually
+> lands in**: #852's moved-rank measurement reached it in the same window, from
+> the same §59, and #886 took §63 behind it. This summary is therefore
+> renumbered once more, to **§64**, and the seven pointers carry **§64** with
+> it. They are the exception here, and *not* left at §62 per §4a-4d, because the
+> distinction is the point: each of the seven is a pointer at this summary, so a
+> number that has become #852's is a wrong pointer rather than a superseded
+> record, while the two `§62`s in the sentences above are the record of a number
+> that was really taken and stay as they were written. §61 is #851's, §62
+> #852's, §63 #886's and §64 #850's; §60's amendment and
+> §61's record the same correction from the other side. A
+> section number is a property of the merge in the same way the runner's totals
+> are — see `runner-red-suite-set.md` — which is why the collision is recorded
+> here rather than left for the next reader to find.
+>
+> **Renumbered a fourth time, and settled the way the third was: this one gives
+> way again.** #713's per-program column split reached **§64** on `main` in the
+> same window, written as §63 and renumbered for #886 taking that — so the
+> `§64` three paragraphs above is not #850's, and **§64 is #713's and this is
+> §65**, the last section in the file. #713's was already committed when the
+> collision became visible, so the rule §60's numbering note set at the third
+> merge applies unchanged a fourth time: the branch's own summary is what gives
+> way, and every pointer this issue adds carries **§65** with it. **Eleven `§64`s
+> were repointed, not the seven above**: the seven this issue adds, plus four
+> written at earlier merges against a §64 that was free when this branch last
+> ran — the owner list in §60's note, and the amendments §60, §61 and §62 each
+> carry. One of those four is a different job from the other three, and is worth
+> separating: a *pointer* at this summary moves, but §60's *list of owners* is
+> re-derived rather than moved, so it reads "§64 #713's and §65 #850's" now and
+> keeps a `§64` in it that is #713's. That is the only `§64` in the tree this
+> issue added that still names a section that is not this one, and it is a list
+> rather than a pointer by construction. #713's own note is left as it was
+> written, with its "last section in the file" clause corrected in place beside
+> it per §4a-4d.
+>
+> **Renumbered a fifth time, and settled the way the fourth was: this one gives
+> way again.** #887's `test_*.py:NNN` line-pin census (`bb4c1d27`) reached **§65**
+> on `main` in the same window — written as §64, and renumbered there for #713
+> taking that — so the `§65` the amendment above settled on is not #850's, and
+> **§65 is #887's and this is §66**, still the last section in the file. The
+> rule §60's numbering note set at the third merge applies unchanged a fifth
+> time, and for the same reason: #887's was already committed when this collision
+> became visible, so the branch's own summary is what gives way, and every
+> pointer this issue adds carries **§66** with it. **Fourteen `§65`s are
+> repointed, not the eleven `§64`s above** — the eleven that amendment moved to
+> §65, plus three more this issue adds in the same pass, which are named here
+> for the first time because that amendment did not: the two in §64's numbering
+> note above and the one in `tools/README.md`'s ninth-thing paragraph. One of the
+> fourteen is still the odd job out, and it is the eleventh that amendment
+> already named: §60's *list of owners* is re-derived rather than moved, so it
+> reads "§65 #887's and §66 #850's" now, while §60's *amendment* beside it moves
+> with the other thirteen. #887's section carries no numbering note of its own to
+> correct in place — it landed on `main` with §65 already free, so it claims
+> nothing about its own position and nothing about it has gone stale — and the
+> collision is therefore recorded from this side only.
+
+The write-up is
+[`xdata-6a-direction-rows-pinned.md`](findings/xdata-6a-direction-rows-pinned.md);
+this is the summary. §54's checklist named eight figures in §6a's table and
+§6b's console block that no test held, and asked for the five of them that are
+printed as *rows* to be held to the page that prints them. All five are now, by
+`ec/tools/test_xdata_cluster_names.py`: four per-subset direction rows inside
+`test_the_census_is_the_one_6a_measured` — `main-ec` `write` `3,948`/`3,206`,
+`main-ec` `read` `7,189`/`7,935`, `pd` `write` `193`/`142`, `both` `write`
+`279`/`239`, each with the `1,169`/`108`/`49` and `13,891`/`603`/`1,202`
+denominators §6a prints beside it in the same assertion — plus a decomposition
+asserting the three `write` deltas are the `742 + 51 + 40` the case's existing
+`833` is the sum of, and §6b's `390`/`50` per-program cluster split in a new
+`TheExportOwnershipClusters`. **That last one is a separate class on purpose:**
+it is a different flag's census, and §50 describes the other class as holding
+"a seventh case", so an eighth case there would falsify a published sentence.
+Every one of the ten new expectations was perturbed in turn, the message
+captured and the value reverted; the transcript is in the write-up, and each
+message names its §6a/§6b line and carries the measured figure.
+
+**The audit is the part that corrects something, and it is corrected twice.**
+The issue is right that five figures were unheld; it does not say the others
+were, and **on this tree three of the checklist's eight §2b rows already had a
+check that held all or part of them** — `4,966` by `--check`'s cell-for-cell
+comparison, `1326`/`440` by `ORACLE`/`OWNERSHIP` keys asserted in `--self-test`,
+and `157`/`858` for the *default* census. So §2b's
+heading, "**Eight, unpinned — these are the ones that decay silently**", was an
+overclaim in exactly the shape §4 records twice, and it is corrected in place per
+§4a-4d: the wrong count stays visible, both tables gain a "held by" column rather
+than losing rows, and §2a gains the four rows this change moved from one to the
+other. **Two rows stay open, and the first draft of this paragraph had it
+backwards.** It credited `1218`/`9320` to `OWNERSHIP["main_distinct"]` /
+`["main_refs"]` (`:1256`) "asserted at `:3840-3842`", but that assertion reads
+`OWNERSHIP["distinct"]`/`["refs"]` — `1326`/`10178`, the census-wide pair — and
+`grep -n 'OWNERSHIP\[' ec/tools/xdata_register_map.py` showed the `main_*` pair
+read by nothing in the tree; `9,320` was asserted nowhere, and the `1218` that
+is asserted is `ORACLE["main_distinct"]` (`:744`) for the **default** census,
+beside `14,838` where §6b prints `9,320`. So that row was unheld rather than
+partly held, and the count it was carrying is five/two/one, not four/two/two.
+The `157`/`858` row is the one that is narrower than it looked — those two
+*are* held, but by `ORACLE["extmem_pd_*"]`, which measures the **default**
+census's token spellings; `OWNERSHIP` carries no `pd_*` key, so nothing holds
+§6b's de-duplicated pair. The guard-off `pd` cluster count `51` is the third
+figure left unheld, the missing other half of the `394` §2a pins.
+
+*(Corrected at the merge, 2026-09-25: **the first of the two rows above is no
+longer open, and the `main_*` pair this paragraph calls unread is read.** #849
+landed in the same window and added the "and its main-EC half is" `check()` at
+`ec/tools/xdata_register_map.py:4315-4319`, which reads `OWNERSHIP["main_distinct"]`
+and `["main_refs"]` and compares them against the in-process export-ownership
+census — §6b's own run, which is that row's subject, so it is a whole hold and
+not a partial one. `grep -n 'OWNERSHIP\[' ec/tools/xdata_register_map.py` now
+returns the `main_*` pair as read, and §60 above is that issue's own account of
+why it had to be. **The two sides had reached opposite conclusions about the same
+two keys from opposite ends** — #849 from "a value in a constant that nothing
+reads is a promise wearing the costume of a pin", this section from "the key is
+defined and read by nothing" — and both were right about the tree each was
+measured on. What is left open is the `157`/`858` pair and, outside §2b's
+tables, the `51`: the third figure above, which is the one this correction does
+*not* touch. §2b and
+[`xdata-6a-direction-rows-pinned.md`](findings/xdata-6a-direction-rows-pinned.md)
+now say exactly that. The wrong versions stay visible per §4a-4d.)*
+
+Nothing was flipped, re-keyed or regenerated: the `--export-ownership` default
+stays off, `xdata-cluster-names.csv` keeps its 9 keys, both committed CSVs
+reproduce with 0 differences, and both test runs pass scratch `--out-` paths
+into a temp dir because each flag refuses to write anywhere else. No tool, CSV,
+`registers.yaml` or gate was edited, `agent-gates.sh` still runs `--check` and
+`--self-test` but not the unittest suites, and nothing was read off a machine —
+no register, no image, no laptop, no Windows. `bash tools/run-tests.sh` read
+`33 suite(s) run, 1020 tests; one or more FAILED` on the tree this change was
+written on and read `34 suite(s) run, 1035 tests; one or more FAILED` on the tree
+it lands in, #851 having added a suite in the same window — **and
+`35 suite(s) run, 1076 tests` on the tree it actually lands in**, #887 having
+added `ec/tools/test_census_test_line_pins.py` at 41 cases, so
+[`runner-red-suite-set.md`](findings/runner-red-suite-set.md) carries the
+sequence and `tools/README.md`'s first paragraph the current pair; the red suite is
+`ec/tools/test_check_cluster_citations.py` on
+`docs/findings/xdata-cluster-names-guard-off-recipe.md:220`, which is #822's
+file, is red on a clean `origin/main`, and is named here rather than fixed here.

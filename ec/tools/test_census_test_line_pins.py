@@ -475,19 +475,26 @@ class TheCommittedTree(unittest.TestCase):
         self.assertGreater(len({r[0] for r in records}), 1)
 
     def test_the_committed_counts_are_the_ones_the_write_up_publishes(self):
+        # Re-measured at the #850/#887 merge: every figure below moved because
+        # #850 added nineteen `test_*.py:NNN` citations to the markdown and put
+        # 239 lines into ec/tools/test_xdata_cluster_names.py, and the run on
+        # the merged tree is identical to the run on #850's own tree -- so
+        # #850 is what moved the class, not the merge. The old 50/23/37/32 and
+        # the 44/6 and 5/15/5/8/11 splits are the record of the tree this
+        # landed on, kept in the write-up beside the corrected ones per §4a-4d.
         records, _files = census.census(census.REPO)
-        self.assertEqual(len(records), 50)
-        self.assertEqual(len({r[0] for r in records}), 23)
-        self.assertEqual(len({r[2] for r in records}), 37)
+        self.assertEqual(len(records), 69)
+        self.assertEqual(len({r[0] for r in records}), 24)
+        self.assertEqual(len({r[2] for r in records}), 44)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 44, census.OUT_OF_RANGE: 0,
-            census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 6})
+            census.RESOLVES: 53, census.OUT_OF_RANGE: 0,
+            census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 16})
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 5, census.ASSERTION: 15, census.COMMENT: 5,
-            census.BLANK: 8, census.OTHER: 11})
+            census.DEF_TEST: 5, census.ASSERTION: 11, census.COMMENT: 9,
+            census.BLANK: 6, census.OTHER: 22})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 32)
+                 if r[3] == census.RESOLVES}), 40)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

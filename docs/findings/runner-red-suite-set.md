@@ -147,6 +147,25 @@ the suite; the fix was not to loosen either assertion.
   > reason to leave them alone than the one the section gives. The last
   > paragraph of this file carries the same correction in the terms this file
   > uses for the two suites the section above is really about.
+  >
+  > **Corrected again at the merge, 2026-09-25, #850 beside #849.** "Today"
+  > was `main`, and two merges are in this tree: #849 adds
+  > `ec/tools/test_check_doc_figure_pins.py` at 44 cases and #850 adds
+  > `TheExportOwnershipClusters`'s two cases to
+  > `ec/tools/test_xdata_cluster_names.py`, so the merged
+  > tree reads **`33 suite(s) run, 1020 tests`** and that suite is at **30**
+  > tests, not the `28` in the table below. The figure is left visible because
+  > it was true of the tree it was measured on, and nothing else in the block
+  > moves: the red set is still one suite, and the arguments the three places
+  > name are what the whole rule rests on.
+  >
+  > *(Corrected once more at the final merge, 2026-09-25: **#851 landed in the
+  > same window and added a suite of its own**, so the tree #850 finally lands in
+  > reads **`34 suite(s) run, 1035 tests`** — 1033 + 2 rather than 1018 + 2 — and
+  > `tools/README.md` carries that as its own merged-tree note. **The `30` above
+  > is unaffected**, because #850's two cases are what make it 30 and #851 added
+  > a suite rather than a case. Everything else stands, and the rule this file
+  > argues is the reason the `33`/`1020` is left reading rather than rewritten.)*
 
 ## The two suites named above are green, and the set is not empty (2026-09-25, issue #816)
 
@@ -160,7 +179,7 @@ nominates as "the file that tracks the set".
 | suite | was | now | fixed by |
 |---|---|---|---|
 | `ec/tools/test_check_site_census.py` | 14 `census_refs` line disagreements against an `ec/decompiled/bank0/D091.c` hand-corrected on 2026-09-24 | green, 45 tests | #752 re-pinned the four cells; no `census_count` moved |
-| `ec/tools/test_xdata_cluster_names.py` | #528's `==`-guard failure, raising in `setUpClass` before any case runs | green, 28 tests, seven cases running | #753 replaced the copy-and-patch recipe with `--no-eq-guard` |
+| `ec/tools/test_xdata_cluster_names.py` | #528's `==`-guard failure, raising in `setUpClass` before any case runs | green, 28 tests, seven cases running — **30 tests after #850, in its own class** | #753 replaced the copy-and-patch recipe with `--no-eq-guard`; #850 added `TheExportOwnershipClusters` beside it, deliberately not as an eighth case in the seven |
 | `ec/tools/test_check_cluster_citations.py` | 1 failure: §26 of `docs/findings.md` put a cluster id and an address in the same sentence | **still red**, 48 tests, 1 failure — but on `xdata-cluster-names-guard-off-recipe.md:220`, not on §26 | **#822** (`2ed6f030`), whose `:220` paragraph is a pasted `xdata_register_map.py` transcript — it prints cluster ids of its own — in the same paragraph as the addresses a later sentence of it discusses. `../findings.md` §52 records it in a merged-tree note and names it to that file's owner |
 
 ```console
@@ -180,7 +199,12 @@ merge rather than to any suite, and that reasoning is why this section does not
 paste `32` and `974` into a file that will be read long after they moved — that
 is the mechanism by which the sentences above went wrong in the first place.
 Re-derive the figures; this section records the shape, which is *one suite, and
-not either of the two this file's first section names*.
+not either of the two this file's first section names*. *(The transcript above
+pastes them anyway, which is the file demonstrating the rule it states; the
+merge correction in this file's first section is where the `974` in it is
+corrected to the `1020` #850's merged tree printed, and then again — #851's
+suite making it `1035` on the tree that finally carries it — for the reason
+this file exists. Re-derive it; do not read it off this sentence.)*
 
 **This section was first drafted with that cell absent and the runner green**,
 against `64dbde19`. #822 landed afterwards and made it false, and the
@@ -203,7 +227,32 @@ total, by the decision that section records three ways. That stays by design: a
 wrong number nobody is blocked by is cheaper than a right number that turns every
 added case red. A reader who wants the current figure runs the runner; a reader
 who wants to know why nothing in the tree would notice that figure changing has
-the reason three paragraphs up.
+the reason three paragraphs up. *(The "prints exactly that" was true when this
+was written and stopped being true at the merge: #850 added two cases to
+`ec/tools/test_xdata_cluster_names.py`, so #850's merged tree reads `1020` and
+this one reads `1035`, #851 having added a suite between them. That is
+this file's own argument arriving on schedule rather than a new one — nothing
+notices, which is the cost, and why the figure here is corrected and the shared
+totals are not rewritten.)*
+
+*(And once more at the `#850`/`#887` merge, which is where the shared totals are
+rewritten after all — by the merge, rather than by a branch, because two suites
+arrived from two sides. **This tree reads `35 suite(s) run, 1076 tests`**, and
+the sequence is `30`/`882` (#821) → `31`/`934` (#846) → `32`/`974` (#846+#801) →
+`32`/`978` → `33`/`1018` (#849) → `34`/`1033` (#851) → `34`/`1035` (#850's two
+cases) → **`35`/`1076`**. **Every `34`/`1035` in the tree is a record of #850's
+merged tree and none of them is this tree's** — the ones in
+`tools/README.md`'s eighth note, `docs/findings.md` §29 and §66,
+`xdata-6a-direction-rows-pinned.md`, `xdata-names-file-census-anchor.md`,
+`xdata-no-eq-guard-measured-state-correction.md`,
+`xdata-no-eq-guard-refusal-contract.md` and this file are left reading as written
+rather than each carrying its own correction, because seven copies of the same
+correction is the failure this file measures. **`tools/README.md`'s first
+paragraph and its ninth note are the two places that hold the current figures.**
+The red set is unmoved: still only
+`ec/tools/test_check_cluster_citations.py` on the same `:220` of the same #822
+file — neither #850 nor #887 caused it, and the run is byte-identical on a clean
+`origin/main` worktree.)*
 
 The write-up is
 [`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md).

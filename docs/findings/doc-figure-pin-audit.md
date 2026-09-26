@@ -27,7 +27,11 @@ and which the old heading therefore called unpinned when they were not. And the
 figures that really were unpinned — eight of §6a's per-subset sums, correctly
 listed there, and the console block's `9320`, `390` and `50` — were left looking
 like company, which is the direction that costs more: the one person who reads
-the list and trusts it is the one who needed the warning.
+the list and trusts it is the one who needed the warning. **That split is the
+tree this page was written on and no longer any tree it lands in**: the
+measurement below reads eighteen held and none unheld, and *The residual* at
+the foot of this file records the eleven figures that have moved since, per
+§4a-4d.
 
 `9320` was the sharpest of the eleven, because it was not merely unpinned. It
 was `OWNERSHIP["main_refs"]`, a value in a module-level constant, and **a value
@@ -36,8 +40,8 @@ in a constant is a pin-shaped thing**: it sits next to eleven other values that
 it (`1062/8546 -> 1218/9320`), and nothing in its neighbourhood says otherwise.
 But the key was read by no check at all. `OWNERSHIP`'s own comment already had
 the rule — *"the --self-test ownership block asserts all four rather than
-leaving the promise to a reader"* (`ec/tools/xdata_register_map.py:1228`) —
-thirty-six lines above a promise left to the reader, at `:1264`.
+leaving the promise to a reader"* (`ec/tools/xdata_register_map.py:1378`) —
+thirty-six lines above a promise left to the reader, at `:1414`.
 
 **A pin is a check, not a promise.** That is the sentence the constant's comment
 already used for the `--eq-guard` flip's four figures, and it is the rule
@@ -59,44 +63,51 @@ decided it:
 ```console
 $ python3 ec/tools/check_doc_figure_pins.py \
     docs/findings/xdata-census-rederivation-checklist.md --section 2b
-    1326  held-by-assertion      ORACLE["distinct"] @ ec/tools/xdata_register_map.py:654, asserted at ec/tools/xdata_register_map.py:3485-3490  [marked held]
-     440  held-by-assertion      OWNERSHIP["clusters"] @ ec/tools/xdata_register_map.py:1292, asserted at ec/tools/xdata_register_map.py:3968-3975  [marked held]
-    1218  held-by-assertion      ORACLE["main_distinct"] @ ec/tools/xdata_register_map.py:655, asserted at ec/tools/xdata_register_map.py:3485-3490  [marked held]
-    9320  held-by-assertion      OWNERSHIP["main_refs"] @ ec/tools/xdata_register_map.py:1264, asserted at ec/tools/xdata_register_map.py:3936-3940  [marked held]
-     157  held-by-assertion      ORACLE["extmem_pd_distinct"] @ ec/tools/xdata_register_map.py:649, asserted at ec/tools/xdata_register_map.py:3339-3356  [marked held]
-     858  held-by-assertion      ORACLE["extmem_pd_refs"] @ ec/tools/xdata_register_map.py:649, asserted at ec/tools/xdata_register_map.py:3339-3356  [marked held]
-     390  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
-      50  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
-    3948  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
-    3206  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
-    7189  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
-    7935  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
-     193  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
-     142  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
-     279  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
-     239  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
+    1326  held-by-assertion      ORACLE["distinct"] @ ec/tools/xdata_register_map.py:743, asserted at ec/tools/xdata_register_map.py:3864-3869  [marked held]
+     440  held-by-assertion      OWNERSHIP["clusters"] @ ec/tools/xdata_register_map.py:1442, asserted at ec/tools/xdata_register_map.py:4347-4354  [marked held]
+    1218  held-by-assertion      ORACLE["main_distinct"] @ ec/tools/xdata_register_map.py:744, asserted at ec/tools/xdata_register_map.py:3864-3869  [marked held]
+    9320  held-by-assertion      OWNERSHIP["main_refs"] @ ec/tools/xdata_register_map.py:1414, asserted at ec/tools/xdata_register_map.py:4315-4319  [marked held]
+     157  held-by-assertion      ORACLE["extmem_pd_distinct"] @ ec/tools/xdata_register_map.py:738, asserted at ec/tools/xdata_register_map.py:3555-3572  [marked held]
+     858  held-by-assertion      ORACLE["extmem_pd_refs"] @ ec/tools/xdata_register_map.py:738, asserted at ec/tools/xdata_register_map.py:3555-3572  [marked held]
+     390  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:709  [marked held]
+      50  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:709  [marked held]
+    3948  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:448  [marked held]
+    3206  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:448  [marked held]
+    7189  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:465  [marked held]
+    7935  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:465  [marked held]
+     193  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:482  [marked held]
+     142  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:482  [marked held]
+     279  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:499  [marked held]
+     239  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:499  [marked held]
       43  held-by-check-literal  cell 43 of ec/annotations/xdata-clusters.csv:4, compared whole-file by --check  [marked held]
     4966  held-by-check-literal  cell 4966 of ec/annotations/xdata-clusters.csv:4, compared whole-file by --check  [marked held]
-docs/findings/xdata-census-rederivation-checklist.md §2b: 18 figure(s), 8 measured held, 10 measured unheld, 0 not read by this method (searched 9 module-level constant(s), 175 literal(s) inside a check, and the cited lines of 2 committed CSV(s))
+docs/findings/xdata-census-rederivation-checklist.md §2b: 18 figure(s), 18 measured held, 0 measured unheld, 0 not read by this method (searched 10 module-level constant(s), 190 literal(s) inside a check, and the cited lines of 2 committed CSV(s))
 docs/findings/xdata-census-rederivation-checklist.md §2b: the section's own marking agrees with the measurement
 ```
 
-**Eighteen figures, eight held, ten unheld.** The old heading's "eight" was a
+**Eighteen figures, eight held, ten unheld** — the split this tool measured on
+the tree it was written on, which the fourth merged-tree note below supersedes:
+the transcript at the top of this file is now a re-run on the tree both issues
+land in, and it reads **eighteen held, none unheld**. The arithmetic below is
+kept as the record of the earlier tree, per §4a-4d, and the wrong split is not
+deleted because a run that reports `unheld` for a figure is the finding the
+whole page is about. The old heading's "eight" was a
 count of table *rows* (five from §6a, three from the console block), and the
 issue's own summary said "five of its nine numbers are pinned" — the "nine" is
 not a count of anything on this page. The console block prints eight figures and
 five of them were held; the two `0.5` threshold tokens the block also prints are
-`DEFAULT_THRESHOLD = 0.50` (`ec/tools/xdata_register_map.py:400`) and were
+`DEFAULT_THRESHOLD = 0.50` (`ec/tools/xdata_register_map.py:489`) and were
 already held. **The measured count is recorded rather than the issue's**, which
 is the calibration rule applied to the issue as well as to the page.
 
 The transcript above is a re-run on the tree this change lands in, and its
-`175 literal(s) inside a check` is the one figure in it that another issue can
+literal count — `175 literal(s) inside a check` on that tree, **`190` on this
+one** — is the one figure in it that another issue can
 move: the literal search is over *every* tool module, so a suite landing
 anywhere under `ec/tools/` changes the denominator without any of the eighteen
 verdicts changing. That figure was 167 before #846's
 `test_walk_budget_census.py` and 173 on the tree this write-up was written on,
-and #801's `ec/tools/check_citation_lines.py` took it to 175 in this merge. Both
+and #801's `ec/tools/check_citation_lines.py` took it to 175 in that merge. Both
 ends of that step are measured rather than inferred: running this tool against
 `origin/main`'s own copy of `ec/tools/` with that file and its suite moved aside
 returns **173** — the figure this paragraph already gives for the pre-#801 tree,
@@ -108,7 +119,12 @@ is not on that tree, and `9320` is the only verdict of the eighteen that differs
 between the two. So the denominator moved 173 → 175 while the eighteen figures
 did not, which is the shape of the method's one real weakness, named under
 *What the method cannot see* below as a search rather than a proof. The 167
-figure is quoted from #846's own record and was not re-measured here.
+figure is quoted from #846's own record and was not re-measured here. **The step
+from 175 to 190 is #850's fifteen, and it is the same weakness one issue later:
+ten named `assertEqual` literals plus the five denominators asserted beside them
+are exactly the "a figure that happens to equal an unrelated assertion's
+literal reads as held" case below — the verdicts became held *because* a case
+names the figure, which is the limit, not a resolution of it.**
 
 ## What the fix was, and what it is not
 
@@ -133,6 +149,12 @@ consequences rather than a matter of taste.
 
 ## The residual: `390` and `50`
 
+**This section is the record of a residual the tree no longer has, and it is
+kept whole, per §4a-4d.** #850 closed the pair in the same window as this page
+and both paragraphs below were true of the tree they were written on. The
+reasons each one gave for the gap are the ones worth keeping, and one of them —
+the second — is the reason the closure is a measurement rather than a constant.
+
 §6b's two cluster counts are genuinely unheld, and only their sum — the pinned
 `440` — is. A re-deriver can cross-check the pair by subtraction, and cannot
 check either half alone: `390` could move to `389` with `51` beside it, the
@@ -153,6 +175,24 @@ census they come from is the guard-off run, which is written to `/tmp` and
 committed nowhere. There is no committed cell for `--check` to hold them to. The
 recipe's denominator checks live in
 `ec/tools/test_xdata_cluster_names.py:307` and cover §2a's seven, not these.
+
+*(Closed at the merge, 2026-09-25, issue #850. All ten of the figures this
+section calls a residual are held now: the four §6a direction rows inside
+`test_the_census_is_the_one_6a_measured` — `ec/tools/test_xdata_cluster_names.py:448`,
+`:465`, `:482`, `:499` — and §6b's `390`/`50` split at `:709` in a new
+`TheExportOwnershipClusters`, held to `OWNERSHIP["clusters"]` as well so the
+breakdown and the total cannot drift apart. **The second paragraph's reason was
+a reason about this checker, not about the census**, and that is why the
+`clusters_by_program` key was not the way round: a case that builds the same
+census in a temp dir and asserts the sums does not need a committed cell at all,
+so a constant was never required. Its last sentence names a case that has since
+moved — the denominator checks were at `test_xdata_cluster_names.py:307` on the
+pre-#850 file and are at `:339` on this one — and the `(:448`, `:465`, `:482`,
+`:499`, `:709`)` above are the merged tree's.
+The derivation is in
+[`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md); the
+figure the all-held column still does not reach is the guard-off `pd` cluster
+count `51`, which §6a does not print at all.)*
 
 ## What the method cannot see
 
@@ -264,17 +304,18 @@ which fails identically on a clean `origin/main` worktree.)*
 re-checked on a clean `origin/main` worktree. `tools/README.md` carries both
 figures as the records of the two trees they were measured on, and the
 thirty-three / 1018 pair as its own. This change moved none of the figures
-`check_doc_figure_pins.py` measures: run against the merged tree it still reports
+`check_doc_figure_pins.py` measures: run against that tree it still reports
 eighteen figures, eight held, ten unheld, and agrees with the page's own
 marking, because #801 added no constant and no check that any §2b figure could
 resolve to.)*
 
-*(Third merged-tree note, 2026-09-25: the tree this change lands in also carries
+*(Third merged-tree note, 2026-09-25, and it is the record of the tree #849 lands
+in rather than of the one this section finally lands in: that tree also carries
 #851, which added `census_shape()` and `carry_advice()` to
 `ec/tools/xdata_register_map.py` — 80 lines, every one of them above the `check()`
 at `:2970` — while this issue added 19 from the other side. **The transcript
 above is re-run on that merged tree, not carried across**: all eighteen verdicts
-and the `8 held / 10 unheld` split are unchanged, and so is the
+and the `8 held / 10 unheld` split are unchanged, and so is that tree's
 `175 literal(s) inside a check`, which #851's new suite did not move because it
 contributes no *distinct* literal inside a `check()`. What did move is every
 `file:line` in the transcript, and they are re-measured rather than shifted by
@@ -287,3 +328,47 @@ above both sides' insertions and are unchanged, which is the same reason
 cases, so it was red for the duration and is green again; both are re-measured
 too, and the write-up's own claim that the tree "moves under a page that cited
 it" is now a thing that happened to the checker rather than only to the prose.)*
+
+*(Fourth merged-tree note, 2026-09-25, issue #850 landing beside #801, #849 and
+#851. That tree also carries #850's two cases in
+`ec/tools/test_xdata_cluster_names.py` — which adds two cases and no suite, so
+**the thirty-four suites of the sixth `tools/README.md` note are unchanged** and
+only the test count moves — so **its** figures are **thirty-four suites and 1035
+tests**, 1033 + 2 rather than the 1018 + 2 #850 measured on a tree without #851,
+with the last line reading `34 suite(s) run, 1035 tests; one or more FAILED` and
+the same one red suite on the same #822 line. **And this is the tree the
+transcript at the top of this file is transcribed from**, because the second
+note's claim stopped being true of it: #850 gave the ten figures this tool
+reported `unheld` a literal at an `assertEqual` each, so the run now reads
+**eighteen figures, eighteen measured held, none unheld**, and the
+`190 literal(s) inside a check` in the summary line under it is #850's own
+contribution rather than the 175 the third note records for its own tree. The
+rows above it, the summary line under it and `§2b`'s own verdict column are all
+the same run, and they agree. The one figure the all-held column does not cover
+is named beside those tables rather than in a column: the `157`/`858` pair, held
+for the *default* census rather than for the de-duplicated run §6b prints them
+from.)*
+
+*(Fifth merged-tree note, 2026-09-26, issue #713 landing beside #801, #849, #850
+and #851. **The transcript at the top of this file is re-run on this tree, not
+carried across from the fourth note**, and the whole of what moved is
+`file:line` again: #713 added the twelve per-program count columns to
+`ec/annotations/xdata-registers.csv` and ~400 lines to
+`ec/tools/xdata_register_map.py` around them, so `:654`/`:655`/`:649`/`:1264`/
+`:1292` → `:743`/`:744`/`:738`/`:1414`/`:1442` and `:3485-3490`/`:3968-3975`/
+`:3936-3940`/`:3339-3356` → `:3864-3869`/`:4347-4354`/`:4315-4319`/`:3555-3572`.
+**The third note's claim that the `ORACLE` and `OWNERSHIP` definition lines "sit
+above both sides' insertions and are unchanged" is the one this falsifies** —
+they did not this time, because #713's new columns went into the very region
+they are in; the note is left as it was written per §4a-4d rather than corrected
+into agreement, since it was true of its own tree. **Every verdict is
+unchanged**: the run still reads `18 figure(s), 18 measured held, 0 measured
+unheld`, with `190 literal(s) inside a check` — #850's — and the only figure
+that moved at all is `searched 9 module-level constant(s)` → `10`, which is
+#713's own keys being what the tool now finds rather than a verdict changing.
+The two spans `ec/tools/test_check_doc_figure_pins.py` pins in its own cases
+were re-measured by #713 itself, through two successive corrections, so that
+suite was never red here; the pages it checks were. And the `157`/`858` gap the
+fourth note ends on is unchanged: still held for the *default* census, still
+not for the de-duplicated run §6b prints it from, with the guard-off `51` still
+outside these tables altogether.)*
