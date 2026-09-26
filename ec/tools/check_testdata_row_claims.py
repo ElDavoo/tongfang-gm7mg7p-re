@@ -37,9 +37,16 @@ power-mode-cycle capture shows is about that capture, and the fixtures the row
 names are not it. So `captures_for()` resolves such a date against
 `evidence/ec-watch/<date>-*` and the sentence's literals are held to *those*
 files -- **or** to the row's own where there is no such date, never to both.
-A union would let row 7 pass on its own after-dump, which covers
+~~A union would let row 7 pass on its own after-dump, which covers
 `0x0F00-0x0F5F`, and that is the misattribution the sentence's date is there
-to prevent. `evidence/ec-watch/` is flat and every capture in it is dated in
+to prevent.~~ **Row 7 stopped being the witness for that when the dated claim
+became columnar, and the rule is not weaker for it: both of its files are
+`.txt` dumps, which carry no column and are not read at all.** The union is
+still refused, and what it would now cost is a row's own `.csv` satisfying a
+claim about a capture --
+`test_a_dated_claim_is_not_also_the_rows_own` is that case, and a `.txt`-only
+row is a second thing a union cannot reach rather than the only one.
+`evidence/ec-watch/` is flat and every capture in it is dated in
 its own filename, so the glob is a glob and not a guess, and it is taken over
 the whole date -- all six files of `2026-09-23-*` -- rather than narrowed by a
 word in the prose, which would be the parser guessing. **Those two properties
@@ -48,7 +55,10 @@ were a premise until #973 measured them, and they are now the one thing
 `docs/findings/capture-filename-date-prefix.md`, and `dated_report()` below
 prints the denominator for them. **The cost of the union
 over the date is one address in any of a date's files satisfying a claim about
-that date**, and it is written here rather than designed away. **A sentence
+that date**, and it is written here rather than designed away -- **but it is
+made measurable too**, which is what the dated block naming the file each
+literal was carried by is for: on the committed tree "1 of 6" is a number on
+the line rather than a sentence a reader has to take on trust. **A sentence
 naming two or more bare dates is refused whole rather than read from either of
 them.** Which of the two a literal belongs to is not a thing the prose says, so
 reading the first is how the run came to report `missing` on a sentence that is
@@ -151,6 +161,16 @@ the tree is a change to this docstring, not an invitation to add a regex:
     census, so a code address with no annotation row is not filtered by it.
     Every one of those is a literal this tool cannot place, and each is
     reported with the reason rather than passed over in silence.
+  * *Which capture of a date a sentence meant.* Naming the file that carried
+    a literal makes the union's cost a number; it does not narrow the set, and
+    the file it names is the one that *satisfied* the claim rather than the one
+    the sentence was about. A sentence claiming a byte of one capture is still
+    satisfied by that byte in **any** of the date's files that can carry it --
+    and after `carried_by_column()` that is the date's `.csv` members rather
+    than all of them, so the union is narrower than it was by the `.txt` half
+    and no narrower than that. Reading the prose to tell the files apart is the
+    parser guessing, declined above for the same reason the date is taken
+    whole.
   * ~~*A whole sentence that names a capture in prose.* That is what the
     other-capture shape is, and it is the widest exemption here: none of a
     sentence's literals is checked once it names a dated capture in running
@@ -324,8 +344,12 @@ DATED_CAPTURE = re.compile(r"(?<!`)\b20\d\d-\d\d-\d\d\b(?!`)")
 # held against -- the row's own `File` cell, or the `<date>-*` glob where the
 # sentence named a capture in prose, or **every** such glob where it named more
 # than one -- so a report line says which, and a dated claim cannot be read as
-# one about the row's fixtures.
-Claim = collections.namedtuple("Claim", "row files address token reason verdict")
+# one about the row's fixtures. `carriers` is which of those files carried the
+# address, so a dated line can name the file the union was satisfied in; it is
+# empty for a claim that was never checked and for a `missing`, which nothing
+# carried.
+Claim = collections.namedtuple(
+    "Claim", "row files address token reason verdict carriers")
 
 # What one run found: the three verdicts, the tallies a caller prints, and
 # the lists it prints them from. A run that reached nothing and a run that
@@ -338,10 +362,14 @@ Claim = collections.namedtuple("Claim", "row files address token reason verdict"
 # it resolved to, the claims that date carried), in reading order, one entry
 # per date a sentence named -- which for a refused two-date sentence is two
 # entries carrying the same literals as `unresolved`. `captures` is the root
-# the run was handed, so the dated block and the denominator it prints name the
-# tree they were measured against rather than the module-level `CAPTURES`,
-# which every scratch case replaces and which a report naming would
-# misattribute.
+# those globs were taken over, and it is carried rather than read back off the
+# module constant because the suite points a run at a scratch root: a block
+# naming the committed directory for a directory it never opened is a defect a
+# reader cannot see. It is on the `Result` so that the dated block, the carrier
+# beside each of its claims, the denominator the block closes with, and
+# `closing_line()` all name the tree they were measured against rather than the
+# module-level `CAPTURES`, which every scratch case replaces and which a report
+# naming would misattribute.
 Result = collections.namedtuple(
     "Result", "rows literal_rows literals resolved missing unresolved checked "
     "claiming_rows claims shapes dated captures")
@@ -542,7 +570,7 @@ def reason_for(address, token, sentence, offset, code, capture):
 
 
 def carried_by(address: str, paths):
-    """Whether any of `paths` carries the address, in any case.
+    """The sorted paths among `paths` that carry the address, in any case.
 
     Textual, and for a **fixture** that is the whole of the question: a mark
     label, a dump line and a change row are three ways a fixture carries an
@@ -553,18 +581,42 @@ def carried_by(address: str, paths):
     #975 gave it one: the columnar read below.** It is a different question
     for a different corpus, and the corpus is what tells them apart -- see
     `carried_by_column()`.
+
+    **The set is read whole rather than stopped at**, and the whole list is
+    returned rather than a yes: a boolean could say *whether* a date's files
+    satisfied a claim and never *how many of them did*, and the union's
+    declared cost -- one address in any of a date's files satisfying a claim
+    about that date -- is a cost nobody can weigh unless the carriers are
+    counted. Reading every path is what makes `dated_report()` able to name
+    one. It is affordable because the sets are small and hand-picked, and the
+    cost is measured rather than asserted: on the committed tree the two
+    readers together read ~~32 files with a first-match short-circuit~~ **40
+    reads over 20 distinct files with a first-match short-circuit, corrected
+    on merge per `docs/findings.md` §4a: the 32 does not reproduce here, and
+    this summary does not claim to know which of the two readers it was
+    counting** and 97 reading every set whole, out of a 140 KB `testdata/`,
+    and the difference does not show in the run's wall time ~~-- 78ms against
+    79ms over seven runs each, interpreter startup included~~ **-- a pair
+    measured on the branch's own machine and deliberately not restated here,
+    because a wall time is a property of the machine that took it and the
+    figure is not the part the argument rests on; the read count is the
+    machine-independent half, and the whole-set side is the same 97 either
+    way.** `carried_by_column()` reads its sets the same way for the same
+    reason, so `Claim.carriers` names a file for a dated claim as well as for
+    a fixture one.
     """
+    found = []
     for path in paths:
         if not os.path.isfile(path):
             continue
         with open(path, encoding="utf-8") as f:
             if re.search(r"0x" + address[2:] + r"\b", f.read(), re.IGNORECASE):
-                return True
-    return False
+                found.append(path)
+    return sorted(found)
 
 
 def carried_by_column(address: str, paths):
-    """Whether a `.csv` of `paths` has a row with the address in `addr`.
+    """The sorted `.csv` paths among `paths` with a row for `addr`.
 
     The other question from `carried_by()`, and it is asked only of a date's
     captures because a capture is not a fixture. A capture is a change log
@@ -578,17 +630,26 @@ def carried_by_column(address: str, paths):
     capture is columnar, and the bare date in the sentence is what tells them
     apart.**
 
+    **The list is returned rather than a yes**, for `carried_by()`'s reason and
+    so that `Claim.carriers` means the same thing whichever reader answered:
+    `dated_report()` names the file a claim was satisfied in, and a date whose
+    two captures both have the row would print one name and understate the
+    cost. `.txt` members of the set are skipped rather than read -- they have
+    no column to ask, and `with_column()` is what tells the reader how many
+    of the set that was.
+
     `read_capture()` is the sibling's, imported at the top rather than
     re-derived: it is already the reader that drops `#` lines before the
     header is read, which is the whole of what makes a `#`-header mention not
     count, and a second parser here would have to learn that separately.
     """
+    found = []
     for path in paths:
         if not path.endswith(".csv") or not os.path.isfile(path):
             continue
         if read_capture(path)[0].get(address):
-            return True
-    return False
+            found.append(path)
+    return sorted(found)
 
 
 def with_column(paths):
@@ -650,6 +711,11 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
     first sentence is about a capture and whose second is about its own
     fixture is two claims over two file sets, and reading the row's own files
     for both would be the misattribution the date is there to prevent.
+
+    **The `captures` root is carried on the `Result`** rather than left to the
+    report to read off the module constant, because this parameter exists and
+    callers use it: a block that named the committed directory for a
+    directory the run never opened would be a sentence with nothing behind it.
     """
     index_path = os.path.join(root, "README.md")
     with open(index_path, encoding="utf-8") as f:
@@ -669,7 +735,10 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
             found, captures_of, dates = captures_for(sentence, captures)
             # `or`, never a union: a date that resolves redirects the sentence
             # away from the row's own fixtures, so a claim about a capture
-            # cannot be satisfied by a row that names the byte in its after-dump.
+            # cannot be satisfied by a row that names the byte itself. A row
+            # whose own files are `.txt` dumps is no longer reachable by a
+            # union either -- `carried_by_column()` reads no `.txt` -- but a
+            # row's own `.csv` still is, and that is the case the suite holds.
             about_capture = found == RESOLVED
             held = captures_of if about_capture else paths
             for address, token, offset in literals(sentence):
@@ -684,7 +753,7 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
                 if reason:
                     shapes.append((number, address, reason))
                     claims.append(Claim(number, against, address, token, reason,
-                                        UNRESOLVED))
+                                        UNRESOLVED, []))
                 else:
                     per_row[number] += 1
                     # Which reader, and it is the corpus rather than a flag:
@@ -692,12 +761,14 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
                     # capture, and a capture's `addr` column is the question.
                     # Every other claim is about a fixture, where a mark label
                     # is a real way to carry an address and there is no column
-                    # to read.
-                    carried = (carried_by_column(address, held)
-                               if about_capture
-                               else carried_by(address, held))
+                    # to read. Either way the answer is the carrier list, so
+                    # `Claim.carriers` names a file whichever reader answered.
+                    carriers = (carried_by_column(address, held)
+                                if about_capture
+                                else carried_by(address, held))
                     claims.append(Claim(number, against, address, token, None,
-                                        RESOLVED if carried else MISSING))
+                                        RESOLVED if carriers else MISSING,
+                                        carriers))
                 # One entry per date the sentence named, each keyed by its own
                 # glob with its own files, so a refused two-date sentence's
                 # literals are listed under both dates and a date nobody could
@@ -711,7 +782,8 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
     return Result(len(files), len(literal_rows), len(claims), resolved, missing,
                   len(claims) - resolved - missing, resolved + missing,
                   len(per_row), claims, shapes,
-                  [(pattern, where[0], where[1]) for pattern, where in dated.items()],
+                  [(pattern, where[0], where[1])
+                   for pattern, where in dated.items()],
                   captures)
 
 
@@ -748,8 +820,46 @@ def report(result):
     return result.missing
 
 
+def dated_claim(claim):
+    """`row N 0xNNNN <verdict>`, plus the file of the set that carried it.
+
+    **The carrier is what turns the union's cost into a number.** The block
+    already said how wide a date's file set was; without this it could not say
+    how many of those files were needed, so "one address in any of a date's
+    files satisfies a claim about that date" stayed a sentence in a docstring
+    rather than something a reader could see priced on the run's own output.
+
+    Two things it does not do. It does not narrow the search -- every path in
+    the set is still read, and the set is still the whole date, because a
+    reader is owed the cost as it is paid and not a set chosen to look
+    better. And it names the file that *satisfied* the claim, which is not the
+    capture the sentence was about: that is the refusal this tool already
+    states, and a report line is not the place to have quietly decided it.
+
+    A basename, not a path: the root is named on the same line, and
+    `captures_for()` globs exactly one directory, so the basename identifies
+    the file within the named set -- where `repo_path()` over the suite's
+    scratch root would print a chain of `../` onto the line a test reads.
+    """
+    line = f"row {claim.row} {claim.address} {claim.verdict}"
+    if claim.verdict == UNRESOLVED:
+        # Never checked, so nothing could have carried it, and the date's file
+        # set was empty or the literal was passed over under a shape. The
+        # capture count beside the glob already says which of those.
+        return line
+    if not claim.carriers:
+        return f"{line} and no file in the set carries it"
+    names = [os.path.basename(path) for path in claim.carriers]
+    # `and` before the last, because two carriers joined by a comma inside a
+    # comma-separated claim list reads as three claims.
+    listed = (names[0] if len(names) == 1
+              else f"{', '.join(names[:-1])} and {names[-1]}")
+    return f"{line} in {listed}"
+
+
 def dated_report(result):
-    """Print each dated claim with the file set it was checked against.
+    """Print each dated claim with the file set it was checked against, and
+    the file in that set which carried it.
 
     The issue asks for the literals of a sentence naming a capture to be
     reported one by one against the files that date resolved to, and neither
@@ -766,6 +876,11 @@ def dated_report(result):
     date resolving to `.txt` dumps alone has no column for the columnar read to
     ask, and a reader seeing a claim `resolved` has no other way to learn that
     the other files of the date carried no column to consult.
+
+    **The root on these lines is the one the run was handed**, off
+    `Result.captures`, not the module constant: a scratch run must not print a
+    repository path for a directory it never searched, and the suite replaces
+    that constant on every case that reaches here.
 
     **The last line is the denominator, and it is the other question.** How
     many files in the capture root are out of the reach of *every* `<date>-*`
@@ -786,13 +901,14 @@ def dated_report(result):
           "never to the row's own fixtures:")
     for pattern, paths, dated in result.dated:
         print(f"  {pattern} ({len(paths)} capture(s) under {root}, "
-              f"{with_column(paths)} with an addr column): " + ", ".join(
-                  f"row {c.row} {c.address} {c.verdict}" for c in dated))
+              f"{with_column(paths)} with an addr column): "
+              + ", ".join(dated_claim(c) for c in dated))
     # A root that cannot be listed is reported rather than crashed on:
     # `glob.glob()` answers an unreadable root with an empty list rather than
     # an error, so a run against a root that has moved reaches this far and
     # would otherwise die on the attribute instead of saying which tree it
-    # could not read.
+    # could not read. The block above has already been printed, so the claims
+    # read stay true of a run whose denominator could not be taken.
     found = census(result.captures)
     if found is None:
         print(f"  {root} could not be listed, so this block's denominator is "
@@ -802,6 +918,60 @@ def dated_report(result):
     print(f"  {len(found.undated)} of {len(found.files)} capture(s) in {root} "
           f"are out of the reach of every <date>-* glob: "
           f"{', '.join(found.undated) or 'none'}")
+
+
+def closing_line(result) -> str:
+    """The run's last line: the file sets the third column was held to, and
+    how many claims went to each.
+
+    **"the fixtures its row names" stopped being a statement about the column
+    when a bare date started redirecting a sentence to that date's captures
+    instead** -- two of the thirty claims on the committed tree are held to
+    files the row does not name -- and a sentence that says "the fixtures"
+    about all of them reads exactly the same whether the redirect is there or
+    the tool ignored the date and held every sentence to its own row. That is
+    the misattribution the dated rule exists to prevent, made invisible by a
+    summary that cannot tell the two apart, so the line names both sets and
+    counts each: what agrees with the fixtures their row names, and what
+    agrees with the captures a bare date in their sentence names.
+
+    The count that is *not* used is the dated one. "2 are held elsewhere" is
+    the same 2 under both readings -- with the date ignored, row 7's own
+    after-dump carries both literals, the run stays green, and the number does
+    not move -- so the split has to carry a figure the two readings disagree
+    about, and that is the agreeing count per set.
+
+    **A claim is dated by membership in the globs `result.dated` already
+    carries**, which needs no field of its own: `Claim.files` is what the claim
+    was held against, and a claim's `files` can be a pattern only when the
+    date resolved. A claim the five shapes passed over is `unresolved` and so
+    reaches neither count, which is correct -- it was never held to either
+    set -- and is why the split is over the *checked* claims.
+
+    A disagreement never reaches here: `main()` prints this after `report()`
+    has returned none, which is what "every address claim ... agrees" asserts.
+    The counts are of the claims that agree with the set they were held
+    against, so the line stays true if a caller renders a red `Result` -- the
+    two per-set figures then sum to less than `result.checked`, which is the
+    whole of the shortfall.
+
+    `main()` still labels the index with `repo_path(INDEX)`, which is the
+    same class of constant, and that is left alone on purpose: it is the only
+    caller of `check()` and it always passes the default root, so no run that
+    prints this line ever searched another tree. Carrying the root for the
+    index as well would be a change with no wrong output to fix.
+
+    Extracted from `main()` so a case can render it from a scratch `Result`
+    the way `report()` and `dated_report()` already can.
+    """
+    dated = {pattern for pattern, _, _ in result.dated}
+    agreed = [claim for claim in result.claims if claim.verdict == RESOLVED]
+    own = [claim for claim in agreed if claim.files not in dated]
+    captures = [claim for claim in agreed if claim.files in dated]
+    return (f"{repo_path(INDEX)}: every address claim in the third column "
+            f"agrees with the files it was held to -- {len(own)} with the "
+            f"fixtures their row names, {len(captures)} with the captures a "
+            f"bare date in their sentence names")
 
 
 def main() -> int:
@@ -834,8 +1004,7 @@ def main() -> int:
         f"{reason} {count}" for reason, count
         in sorted(by_shape.items(), key=lambda kv: (-kv[1], kv[0]))))
     dated_report(result)
-    print(f"{repo_path(INDEX)}: every address claim in the third column agrees "
-          "with the fixtures its row names")
+    print(closing_line(result))
     return 0
 
 

@@ -137,7 +137,7 @@ and after, with the denominator line and with the block naming the root the run
 was actually handed rather than the module-level `CAPTURES`:
 
 ```
-  2026-09-23-* (6 capture(s) under evidence/ec-watch, 2 with an addr column): row 7 0x0F58 resolved, row 7 0x0F5C resolved
+  2026-09-23-* (6 capture(s) under evidence/ec-watch, 2 with an addr column): row 7 0x0F58 resolved in 2026-09-23-power-mode-cycle-0f00-0f5f.csv, row 7 0x0F5C resolved in 2026-09-23-power-mode-cycle-0f00-0f5f.csv
   0 of 15 capture(s) in evidence/ec-watch are out of the reach of every <date>-* glob: none
 ```
 
@@ -148,8 +148,17 @@ it, and neither is this issue's — #975 (issue #982) put the `, 2 with an addr
 column` on the file-count line before this page was written, and #979 (issue
 #983) landed beside it and changed `captures_for()`'s *shape* without changing
 what the one dated sentence in the committed index resolves to, so the block is
-the same two literals keyed by the same glob. **Nothing this page is about
-moved:** the two figures are the tallies and the `0 of 15`, and both are
+the same two literals keyed by the same glob. **And #974 (issue #974) has since
+added a third**: each claim is now followed by the file of the set that
+**carried** the byte, which is why the two `resolved` verdicts above read
+`… in 2026-09-23-power-mode-cycle-0f00-0f5f.csv` rather than bare. **That is a
+fact about a *claim* rather than about the file set, so it is this page's
+denominator's opposite and not a restatement of it** — it answers which of the
+six files satisfied a claim, where the line below answers how much of the root
+no glob can reach. Neither clause narrows the set, and the `1 of 6` the carrier
+makes visible is #974's finding; the counts below are this page's. **Nothing
+this page is about moved:** the two figures are the tallies and the `0 of 15`,
+and both are
 unchanged at `30 resolved, 0 missing, 24 unresolved` and `15 capture(s) … 0
 without a date prefix, 0 subdirector(ies)`, measured by running both tools on
 the merged tree. The "before" block above is left as written because it is

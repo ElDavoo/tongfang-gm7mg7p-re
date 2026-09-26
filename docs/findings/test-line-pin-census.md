@@ -1006,7 +1006,7 @@ the half this table exists to record.
 | [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md):22 | `ec/tools/test_xdata_cluster_names.py:88` | by-path | other | carries |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | comment | **does not carry** |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2665 | `../tools/test_xdata_cluster_names.py:68-90` | beside | other | carries |
-| [`../../tools/README.md`](../../tools/README.md):247 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** |
+| [`../../tools/README.md`](../../tools/README.md):279 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** |
 
 **43 carry, 2 carry on the adjacent line, 19 do not carry, 10 record another line
 on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
@@ -1391,6 +1391,65 @@ ninth note's `still unaffected` clause is the whole of the defect** — not a
 missing row, not a moved target, and not a count: the reason it gives for the
 four rows staying put is false, and a reader following it would not have looked.
 
+‡‡ **And a twelfth, 2026-09-26 (the `#978` × `#974` merge, this file's own
+tree), re-registering the same `../../tools/README.md` row for the sixth time and
+still no count moving — and the first merge in this file's run to re-register one
+row that three different trees had already named.** `main` read `:247` at the
+`#978` × `#979` × `#973` × `#780` merge, the branch's own tree read `:249` at the
+`#780` × `#974` one, and this tree reads **`:279`**: `159 + 9 + 7 + 22 + 6 + 33 +
+11 + 32 = :279`, the `+11` being the ninth note above's and the `+32` this merge's.
+**All three superseded values stay written where they are** — the `:203`, the
+`:206`, the `:208`, the `:236`, the `:247` and the `:249` — each true of the tree
+it was measured on, per [`../findings.md`](../findings.md) §4a-4d, and this is a
+**sixth** value for one pin and the third time this file has held more than two.
+**The `+32` is the second step above `+30` this row has taken, and it came out of
+the sentence's own parenthetical rather than out of any note**, because every
+merged-tree note in `tools/README.md` sits below the pin and this merge's four of
+them are renumbers rather than additions: the fourteen-figure superseded list both
+sides' histories add up to, the `1243 + 21 = 1264` clause beside the
+`1233 + 10 + 5 = 1248` that superseded it, and the three-figure arithmetic and
+the count of superseded values that go with it. **The tool read `1 unplaced-row`
+and `1 row-without-record` with every superseded value put back in the table —
+`:208`, `:236`, `:247`, `:249` and `:278` in turn, each run rather than predicted
+— and reads **106 rows, 106 records, 106 placed, all seven classes 0** with
+`:279`, the arithmetic being what it printed.
+
+**The census's own figures are unmoved, and re-derived rather than carried** by
+running `census_test_line_pins.py` on this tree: still **106 / 28 / 79 / 58** with
+`74` resolving, `32` declined, the landing-shape split still `0/15/22/5/32` and
+41 indexed test files — the same run `origin/main` reads, and the property every
+note above rests on. `check_pin_table_by_cited_file.py` reads **41 / 11 / 30**,
+which supersedes the eleventh note's "`40 / 11 / 29` needs no correction" clause
+beside itself rather than into it: the step is #978's suite and nothing else.
+
+**The four `../findings.md` rows the ninth note moved were not moved again here,
+and that is `main`'s half of the merge rather than this one's.** They read
+`:7193`, `:7406`, `:7467` and `:9209` on this tree with `:4206` and `:4208`
+unmoved, because #978's four edits to that file land at `:7053-7056` (the `+2`
+the tenth note above measures), `:7286`, `:10086` and `:10493`, and both of its
+new sections land below the last of the six rows the table registers against
+that file — the tenth note's own finding rather than a new one, re-run here
+rather than carried and confirmed by the tool placing all 106 rows.
+
+**The standing red set was two for the length of this merge and the second is the
+one this note is here for, as it was at the merge above.**
+`ec/tools/test_check_pin_table_rows.py` read `FAILED (failures=3)` and is green at
+36 cases with `:279`. **Three, and it is three whatever value the row names**:
+the row was put back to `:208`, `:236`, `:247`, `:249` and `:278` in turn and
+both the checker and the suite run over each, and the checker read `1
+unplaced-row` and `1 row-without-record` and the suite `FAILED (failures=3)` in
+all five. **The eleventh note's four is therefore not a function of the gap, and
+its own explanation — one more stacked correction above the pin is one more red
+case — is corrected beside itself here rather than edited into, per §4a-4d**; the
+four stays written there as that note's tree's. What the measurement does show is
+the property the re-registration is run for: a row naming any superseded line
+fails the same way and nothing else about the table's size, shape or verdict
+split moves with it. `ec/tools/test_check_cluster_citations.py` is the suite
+every note above names: 48 tests, the single failure, on the same `:220` of
+#822's `xdata-cluster-names-guard-off-recipe.md` with the same two
+`0x0464`/`0x0465` disagreements against `main-ec-145`, re-checked here rather
+than carried, so neither #978 nor #974 caused it and neither fixes it.
+
 ‡ **What the tree carrying both #890 and #900 moved, re-registered against it,
 and still no count.** The *cited* targets are this branch's, because #890's 25
 lines are what moved them; the *citing* lines are likewise this tree's, because
@@ -1726,7 +1785,7 @@ is no checker rather than a deferral:
 
 | shape | where | caught by `check_citation_lines.py`'s vocabulary? |
 |---|---|---|
-| a repoint list naming the stale value, in running prose | [`../../tools/README.md`](../../tools/README.md):236 — `test_xdata_cluster_names.py:303` → `:307` in four places | **no** |
+| a repoint list naming the stale value, in running prose | [`../../tools/README.md`](../../tools/README.md):249 — `test_xdata_cluster_names.py:303` → `:307` in four places | **no** |
 | a "deliberately not fixed" bullet naming the wrong pin | [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):446 | **no** |
 | a "the citation check caught it here" sentence | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):579 — `:513` named *because* it was the wrong line | **no** |
 | an "At the time of writing, `file:NNN`:" lead-in to a quoted block | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):25 — **the pin is gone, the lead-in is not**: #780 rewrote it as *"At the time of writing the file read:"* and re-pointed the record to `:47`, so the shape survives here without the `file:NNN` that made it a record, and `:47` is the seventh row's shape | **no** |
@@ -1784,7 +1843,7 @@ than my having to assert it.** Four things, in the order they decide it:
    `check_citation_lines.py` gets away with a two-shape skip because a
    supersession there *has* a shape. Here it does not: eight of the ten
    records above are ordinary running prose or a bullet, and
-   [`../../tools/README.md`](../../tools/README.md):236 cites `:303` **because
+   [`../../tools/README.md`](../../tools/README.md):249 cites `:303` **because
    `:303` is the stale value it is reporting**. A checker with no skip rule
    reddens on every one of the ten, and with the rule
    `check_citation_lines.py` already has it still reddens on eight more — the
