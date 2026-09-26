@@ -9605,6 +9605,23 @@ that is a change this branch does not make.
 > from its own end. #978's note below records the first collision from the other
 > end, and this one records the latest beside it.
 >
+> **And that clause is corrected a fourth time at the `#845` × `#974` merge, in
+> the same place and for the same reason a third time.** #974's §84 took the
+> number #845's own renumber had produced, so #845's summary — the
+> bounds-disjunct one — gives way a second time and is **§85**, which is the last
+> section in the file rather than #974's §84. The `§84` the paragraph above gives
+> #974 is untouched and stays true: the number is a property of the merge in the
+> way [`findings/runner-red-suite-set.md`](findings/runner-red-suite-set.md)
+> records for the runner's totals, and §84 is already committed on `main`, so
+> #974 keeps it and #845's own gives way. The list of sections between §73 and
+> the end grows by one and is still in order: #929's §74, #962's §75, #794's §76,
+> #811's §77, #979's §78, #973's §79, #780's §80, #978's §81, #843's §82,
+> #844's §83, #974's §84 and #845's §85, and **§85 is the last section in the
+> file**. **The half that does not move is again the load-bearing one**: neither
+> #844's §83 nor #974's §84 carries a "last section in the file" clause of its
+> own, so nothing beyond this correction is owed for either, and #845's §85
+> records both collisions from its own end in a single numbering note.
+>
 > **And that clause is corrected once more at the `#929` × `#778` merge, in the
 > same place and for the same reason §68's, §69's and §70's were.** #929's
 > collision-scope summary
@@ -11248,3 +11265,72 @@ sentence are **not edited** — nothing is wrong with either today.
 unchanged — and it remains a human's `git apply`, so no gate is wired here. No
 `status:` moved, so `ec/annotations/registers.yaml` is not touched. No `gh`
 command runs in this work.
+
+## 85. The bounds disjunct is pinned by two cases, and the totals line sees neither guard go (2026-09-26, issue #845)
+
+Issue #845's central claim was a measurement — delete the bounds disjunct of
+`walk_why()`'s guard and the runner prints the same `19 suite(s) run, 600
+tests` with the same single failure, so it is "pinned by nothing". **That
+measurement is stale and this tree says otherwise**: deleting only the
+`i + 2 >= len(d)` block, located by its source text, turns
+`ec/tools/test_walk_budget_census.py` red with two `IndexError` **errors**, and
+the totals line is *byte-identical* to the baseline's. The other half of the
+issue's measurement still holds and is still the reason the disjunct reads as
+dead code: the fifteen-address `--check` sweep exits 0 with the guard gone,
+because the smallest `len(d) - i` any committed walk reaches is 94109 bytes.
+The correction is recorded beside the claim rather than in place of it — no
+committed file asserted the wrong one.
+
+The two disjuncts are not held equally, and that is the finding rather than a
+defence of either. The `d[i] == MOV_DPTR` guard is held from three directions
+and its loss makes the `--check` sweep exit 1 with **75 of 114 committed rows**
+rewritten; the bounds guard is held from one, in a neighbouring suite, and the
+sweep cannot see it at all. The traceback a reader gets for it lands on
+`if d[i] == MOV_DPTR:` — **the other guard's line**, the one the census says
+does all the work — so the last frame names the line that did not do it.
+
+Two things in [#805's census](findings/opcode-len-bounds-census.md) do not
+reproduce on this tree, and neither disturbs its conclusion: its reproducing
+snippet's locator takes the first *mention* of `i + 2 >= len(d)`, which #846's
+comment near the token constants now precedes, so its `guard deleted` rows are
+measured with the guard present; and the per-iteration trace under its derived
+vector shows four appends and a fourth-iteration guard where the run gives two
+appends and a second-iteration one. Both are named as follow-ups there and
+neither file was edited by this work.
+
+`ec/tools/test_trace_xdata_refs.py` lands with it: six cases, no firmware read,
+holding **which instructions come back** where
+`ec/tools/test_walk_budget_census.py` holds **which guard fired** — the two are
+complementary, and a walk that decoded wrongly for the right reason would pass
+one and fail the other. Both call sites (`csv_table()` and `main()`) are driven
+over a hand-built 7-byte fixture whose window only the bounds guard can end.
+
+The write-up is
+[`walk-bounds-guard-pinned.md`](findings/walk-bounds-guard-pinned.md).
+
+*(Numbering note, 2026-09-26, recorded here and not in §83, on the rule §83's
+own note sets: the summary already committed on `main` does not move and this
+branch's own gives way, per §4a-4d. **This section is written as §83 and is
+§85 on the tree it lands in**, having given way to #844's §83 in the same merge
+and then to #974's §84 in the one after, the summary committed on `main` having
+taken that number in the window; §83 and §84 keep the whole numbers and the two
+collisions cost this section two digits, not its content. **No §-number reference
+pointed at it, so nothing is owed a repoint** — the write-up cites §52 and no
+section number of its own, and the two censuses this work reads,
+`opcode-len-bounds-census.md` and `test-line-pin-census.md`, pin `ec/tools/*.py`
+and census line numbers, not this section's. **§73's "and the last section in
+the file" clause is corrected a fourth time beside itself** for the same reason
+it has been corrected three times: §85 is the last section in the file now, and
+neither §83 nor §84 carries such a clause of its own.)*
+
+*(Two things this merge did to the section above, recorded beside it rather
+than edited into it. **The write-up's runner totals stay as written** — `29`
+suites and `960` tests are the tree as committed at `99c01938`, and `30` and
+`966` are that tree plus the new suite, so both are dated records of the trees
+they were measured on and the sentence above that reports them is true of
+those trees; `tools/README.md`'s thirty-fourth merged-tree note carries the
+present-tense figures, re-derived on this tree. And **follow-up 3 in the
+write-up landed in this same merge**: it names `walk_branch_arms.py`'s
+`descend()` as the one other row where the check runs after the read it guards,
+which is §83's subject, so the list stands as it was written and this is where
+a reader finds it closed.)*
