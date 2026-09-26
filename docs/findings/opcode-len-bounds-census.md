@@ -671,3 +671,65 @@ moved is the arithmetic of the citation, and `:298`'s test still permits
 #846 does add is the finding that raising it to 64 would rewrite 13 committed
 `access` cells, 10 of them wrongly — so the parameter is now a recorded fact
 with a cost attached rather than one nobody can account for.
+
+---
+
+## Note (2026-09-26, issue #843): rows 15 and 16 get a bound, and follow-up 1's open question is answered
+
+**Rows 15 and 16 keep the verdict they carried — `census row + verdict` — and it
+is superseded, not corrected in place.** The table above is a record of the tree
+when this census was written, the same way the #846 note above treats row 9's
+line numbers; the verdict cell is left as it was so a reader can see what the
+census concluded and what later decided otherwise. What is superseded is
+narrower than the cell suggests: **the two functions are now bounded by the
+region end, and the "verdict" was a deferral, so nothing in the analysis
+above is retracted.**
+
+The design question follow-up 1 declined to answer — *what invariant is a
+count-bounded walk supposed to enforce* — is answered in
+[`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md): **a count
+is a budget on work, not a bound on the buffer.** The region end bounds the
+walk; the count stays as the cap; and whichever end stopped it is named.
+`walk_helper` takes `hi` from `pd_bounds()` and clamps it to `len(d)`, with
+stops for the region end, a term template that crosses it, and an instruction
+it cuts; `chain_from` gets the same three in its own prose style.
+
+**The measurement that decided it, which is the one thing this note has to
+carry:** the census's zero-crossing run is unchanged and still says only *did
+not cross over these runs*. The exposure that settled the question is a
+**legal** address the census's rows did not name — `--helpers 0xFFFF` exits 0
+today and lists 24 lines, 23 of them the erased `0xFF` fill past the region's
+end at file `0x30000`, printed as instructions. `0xFFFF` is a legal PD runtime
+address that `check_site_addr()` accepts and no CLI rule rejects, so it is not a
+caller error; the region end is what bounds that walk.
+
+**What follow-up 1's "second contract" turned out to be, since it is the part a
+reader of the row might otherwise re-derive:** `pd_bounds()` gives
+`hi - lo` = `0x10000`, the whole 16-bit address space, so every target
+`branch_target()` can produce is a legal PD runtime address *by construction* —
+and driven over every byte of the region, the 9553 branch operands yield 0
+unresolvable targets and 0 targets `>= 0x10000`. `chain_from`'s internal calls
+to `walk_helper` therefore need no check of their own. **The check went to
+`print_helpers()`, beside the `check_site_addr()` call `site_rows()` already
+had**, so `--helpers 0x1FFE9` and `--helpers 0x1FFFF` are now exit 2 with the
+region and both ranges named instead of a bare `IndexError`. That is the same
+argument #848 made for `--sites` and it is the concrete form of the issue's
+*"say where the caller is checked"*.
+
+**Nothing else in the table moved.** The 16 modes were re-run against the
+pre-change file extracted from `HEAD` and every one is byte-identical, and all
+five committed CSVs regenerate byte for byte — which is also why rows 15 and
+16's "exposure / yes / exit 0" cells above are still literally true. The one
+output that changed is `--helpers 0xFFFF`, from 24 listing lines to 1; it is
+reported as a correction in the write-up rather than as a repair, because the
+23 lines it dropped were erased bytes presented as instructions.
+
+The **row 10 contrast is now sharp enough to be worth stating**: row 10's
+`site_rows` listing loop still reads past the region (`--sites 0xFFFF` to file
+`0x3000E`, 14 bytes past) and is still deliberately left alone, because its
+contract is a fixed `SITE_WINDOW`-long window whose end is the answer, and
+bounding it would move the self-test pin that exists to measure that read. The
+two walkers walk until something stops them, and a walk that stops nowhere is a
+listing with no end. That is the whole difference, and it is a difference in
+contract, not in caution.
+

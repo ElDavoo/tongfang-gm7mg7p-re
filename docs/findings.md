@@ -10706,3 +10706,57 @@ to make a tool green is why the edit is a paragraph. No `status:` moved, so
 `ec/annotations/registers.yaml` is not touched; no fixture, row, capture, `.asm`
 or `.c` is edited; no gate is wired, which is also the right tier call for a
 mode that needs full history; and no `gh pr create` anywhere.
+
+## 82. A count is a budget on work, not a bound on the buffer, and the two walkers that discarded `hi` now keep it (2026-09-26, issue #843)
+
+The write-up is
+[`count-bounded-walk-invariant.md`](findings/count-bounded-walk-invariant.md);
+this is the summary. §53's census deferred the question rather than settling it
+— rows 15 and 16 (`walk_helper`, `chain_from`) were given the verdict
+`census row + verdict` because *"the answer depends on what invariant a
+count-bounded walk is supposed to enforce, which is a design question and not
+a bug report."* **The answer: a count is a budget on work, not a bound on the
+buffer.** The region end bounds the walk, the count stays as the cap, and
+whichever end stopped the walk is said out loud — so a routine that ran out of
+image and one that ran out of instructions do not read alike. Both functions now
+take `hi` from `pd_bounds()` and clamp it to `len(d)`, with stops for the region
+end, a term template that crosses it, and an instruction it cuts, and
+`walk_helper`'s keep the `unmodelled:` prefix because that element is the row's
+completeness flag. **The census's zero-crossing run did not decide this and is
+not restated as a bound**: six commands, all exit 0, zero listing offsets past
+`0x30000` is *"did not cross over these runs"*. What decided it is that
+**`--helpers 0xFFFF` — a legal PD runtime address `check_site_addr()` accepts —
+exits 0 today and lists 24 lines, 23 of them the erased `0xFF` fill past the
+region's end at file `0x30000`, printed as instructions**, so "a run off the
+region end is a caller error" cannot be the whole answer: the caller here did
+nothing wrong. **The check went where a caller's address is taken**, not into
+the walker, which is what the census's deferred "second contract" asked for and
+what two measurements settle: `pd_bounds()` gives `hi - lo` = `0x10000`, the
+whole 16-bit space, so every `branch_target()` result is a legal runtime address
+by construction, and over all 9553 branch operands in the region **0** are
+unresolvable and **0** are `>= 0x10000`. So `print_helpers()` now calls
+`check_site_addr()` beside the one `site_rows()` has had since #848, and
+`--helpers 0x1FFE9` / `0x1FFFF` are exit 2 naming the region and both ranges
+instead of a bare `IndexError`; `chain_from`'s internal calls pass for free.
+**The sibling question is answered the same way** — an out-of-region address is
+a caller error, rejected at the CLI — and the `site_rows` listing loop itself
+is left alone on purpose, because its contract is a fixed `SITE_WINDOW`-long
+window whose end is the answer, which is the whole difference between it and a
+walk that ends when something stops it; that loop is the named follow-up.
+**Sixteen modes are byte-identical against the pre-change file from `HEAD`, and
+all five committed CSVs regenerate byte for byte**; the one output that moved
+is `--helpers 0xFFFF`, 24 listing lines to 1, reported as a **correction** — the
+23 lines it dropped were erased bytes presented as instructions — and
+`--helpers 0x1FFE8` moves from exit 0 to exit 2, having never been a 16-bit
+runtime address, only an unchecked one. Four new `--self-test` cases go red if
+either function is changed back, each verified by re-running against the
+spliced `HEAD` bodies: `--helpers 0xFFFF` reporting 24 lines at file `0x30016`,
+a `chain_from` fixture reporting `` `mov r7,a` at 0x10000` ``, and the
+short-fixture case raising `IndexError` outright. **`grep -n 'lo, _ =
+pd_bounds()'` is now eleven, not the twelve §56 measured**, because the two this
+fixes were on that list; the census's rows 15/16 cells stay visible unedited
+with a dated correction beside them per §4a-4d. A pre-existing failure in
+`test_check_cluster_citations.py` (`xdata-cluster-names-guard-off-recipe.md:220`
+vs `xdata-clusters.csv`) is unrelated to this change and fails at `HEAD` too.
+No live test ran, no register was read back, no capture was opened, and no
+hardware, EC, Windows, Ghidra or `registers.yaml` row was involved.
