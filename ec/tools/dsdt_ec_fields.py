@@ -28,10 +28,12 @@ this tool:
     `CPU_PL1/PL2/PL4`, `APTC`+`APTN` 0x0786 / `CPU_TCC_OFFSET`, `WMS0`
     0x07C6 / `AP_OEM_6`, `DBD1` 0x07D0 / `BATTERY_CHARGE_LIMIT_DOWN`. Every
     one of those entries' `sources` carries a `uniwill-laptop`, `ecspec` or
-    `live` tag beside the `dsdt` one, which is what makes the agreement a
-    measurement and not a restatement -- `--self-test` checks the tag rather
-    than trusting the list. Nine addresses a block would have to get right by
-    chance is a better argument than any one of them.
+    `live` tag of its own -- seven of the nine carry the `dsdt` one beside it,
+    `CPU_TEMP` and `GPU_TEMP` do not -- which is what makes the agreement a
+    measurement and not a restatement. `--self-test` checks the property each
+    entry states (it carries such a tag) rather than trusting this list. Nine
+    addresses a block would have to get right by chance is a better argument
+    than any one of them.
 
     The other twelve addresses ECMG names that `registers.yaml` holds were
     named *from* the DSDT (`DBEN`/`DBST` 0x07C4, `GFID` 0x07D3, `CPUA`

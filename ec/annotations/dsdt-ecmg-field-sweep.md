@@ -61,23 +61,31 @@ of them this sweep:
    sweep ran, 21 of the addresses ECMG names were already in
    `registers.yaml`; nine of those were held under a name the DSDT did not
    supply. Every one of these entries carries a `uniwill-laptop`, `ecspec` or
-   `live` tag in its `sources` beside the `dsdt` one, and lands on the same
-   byte the DSDT gives it:
+   `live` tag of its own in `sources` — seven of the nine carry the `dsdt` one
+   beside it, `CPU_TEMP` and `GPU_TEMP` do not — and lands on the same byte the
+   DSDT gives it:
 
-   | DSDT name | addr | `registers.yaml` entry | the entry's independent source |
+   | DSDT name | addr | `registers.yaml` entry | the entry's own `sources` tags |
    |---|---:|---|---|
    | `CPTM` | `0x043E` | `CPU_TEMP` | `uniwill-laptop`, `live` |
    | `VGAT` | `0x044F` | `GPU_TEMP` | `uniwill-laptop`, `live` |
-   | `GNEN`+`ECDC` | `0x0743` | `CTGP_DB_CTRL / OFFSET` | `uniwill-laptop` |
-   | `APL1`–`APL4` | `0x0783`–`0x0785` | `CPU_PL1 / PL2 / PL4` | `ecspec-3.1.6.0` |
-   | `APTC`+`APTN` | `0x0786` | `CPU_TCC_OFFSET` | `ecspec-3.1.6.0`, `uniwill-laptop` |
-   | `WMS0` | `0x07C6` | `AP_OEM_6` | `uniwill-laptop`, `live` |
-   | `DBD1` | `0x07D0` | `BATTERY_CHARGE_LIMIT_DOWN` | `ecspec-3.1.6.0` |
+   | `GNEN`+`ECDC` | `0x0743` | `CTGP_DB_CTRL / OFFSET` | `uniwill-laptop`, `vendor-3.1.39.0`, `live` |
+   | `APL1`–`APL4` | `0x0783`–`0x0785` | `CPU_PL1 / PL2 / PL4` | `ecspec-3.1.6.0`, `vendor-3.1.39.0`, `live` |
+   | `APTC`+`APTN` | `0x0786` | `CPU_TCC_OFFSET` | `vendor-3.1.39.0`, `uniwill-laptop`, `live` |
+   | `WMS0` | `0x07C6` | `AP_OEM_6` | `uniwill-laptop`, `vendor-3.1.39.0`, `live` |
+   | `DBD1` | `0x07D0` | `BATTERY_CHARGE_LIMIT_DOWN` | `ecspec-3.1.6.0`, `acpidriver-3.9.18.0`, `live` |
 
-   `--self-test` checks the `sources` tag as well as the address, because the
-   tag is the half of the claim that makes this a measurement rather than a
-   restatement. Nine addresses a block would have to get right by chance is a
-   better argument than any one of them.
+   That column is each entry's `sources` list in `ec/annotations/registers.yaml`
+   with the `dsdt` tag dropped, so every row is checkable against the file; the
+   qualifier a tag carries there (`uniwill-laptop(EC_ADDR_FAN_DEFAULT)`,
+   `vendor-3.1.39.0(SetCpuTccOffset)`, `ecspec-3.1.6.0(ADDR_PL1/PL2/PL4_SETTING_VALUE)`)
+   is dropped here too, because the prefix is what decides. `--self-test`
+   checks the *property* each row states — that the entry carries a tag
+   matching `uniwill-laptop`, `ecspec`, `live`, `vendor-` or `acpidriver` —
+   alongside the address, not this column's wording; the tag is the half of
+   the claim that makes this a measurement rather than a restatement. Nine
+   addresses a block would have to get right by chance is a better argument
+   than any one of them.
 
    The other twelve are named *from* the DSDT and carry no independent weight:
    `XDATA_0460` 0x0460, `XDATA_0468` 0x0468, `GPU_DYNAMIC_BOOST_STATUS`
@@ -360,13 +368,16 @@ exported C on the next `--mode rebuild-project` run, not in this tree. The
 committed `.c` still spells `DAT_EXTMEM_0ea8`, and §3c's "41 main-EC
 addresses the decompile spells by symbol" is unchanged by this sweep. The
 eight reworded plate comments travel the same route, so a reader diffing this
-tree against `ec/decompiled/bank0/` will find six exported `.c` files
-(`83FF.c`, `9167.c`, `BA36.c`, `BB80.c`, `BB81.c`, `C4F8.c`) still carrying the
-pre-#30 sentences — five of them the literal "0x074C has no entry in
-ec/annotations/registers.yaml" or "0x07C5 has no entry" for bytes that now
-carry `PDIN` and `WHMS`. That is expected until the rebuild and nothing in the
-generated files is edited to hide it. A rebuild writes the Ghidra project,
-which two branches cannot both do.
+tree against `ec/decompiled/bank0/` will find eight exported `.c` files still
+carrying the pre-#30 sentences. Five carry the literal "0x074C has no entry in
+ec/annotations/registers.yaml" or "0x07C5 has no entry" for bytes that now hold
+`PDIN` and `WHMS` (`9167.c`, `BA36.c`, `BB80.c`, `BB81.c`, `C4F8.c`); the other
+three carry the same idiom in its list form (`CC64.c` and `CCFC.c` over
+`0x07C5`/`0x0788`, `83FF.c` over the `0x0788` that `0x09E9` is synced into —
+though `83FF.c`'s own no-entry claim is about `0x09E9` and is still true, so
+what is stale there is only the missing `CTWA`). That is expected until the
+rebuild and nothing in the generated files is edited to hide it. A rebuild
+writes the Ghidra project, which two branches cannot both do.
 
 ## 7. A note on `static-refs-audit.md`'s scope line
 

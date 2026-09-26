@@ -1303,7 +1303,7 @@ NOT_IN_TREE = {
     0x0EAD: "in a routine no export covers: as 0x0EA9, at bank0 0xF35D",
     0x0EAE: "in a routine no export covers: as 0x0EA9, at bank0 0xF365",
     0x0EAF: "in a routine no export covers: as 0x0EA9, at bank0 0xF36D",
-    # AP01-AP03 (0x07C0-0x07C2) are the three the sweep graded
+    # AP01/AP02/AP10 (0x07C0-0x07C2) are the three the sweep graded
     # unknown-not-absent, and the reason is a different one again: the only
     # `mov DPTR` for each in the whole 256 KiB dump is in the ITE8850-PD image,
     # where DPTR is handed to a PD subroutine. That is a reference to another
