@@ -11661,3 +11661,53 @@ apart.
 **Not in any gate**, for the reason `tools/test_readme_suite_table.py` is not
 either, and **not hardware evidence of any kind** — the scratch trees are
 hand-built and the tool reads committed YAML and committed Python.
+
+## 89. The `ITE8850-PD` image at `0x20000`: the map, and the provenance answer (2026-09-26, issue #26)
+
+**The map is
+[`../ec/annotations/pd-image.md`](../ec/annotations/pd-image.md)**, and this is
+the pointer. §3a above established that the region is a second program sharing
+the dump and left it unmapped beyond that; issue #26 asked for the map, and the
+three things it produced worth carrying here are these.
+
+**Its vector table has six entries, not the five §2's table shows**, and the
+geometry is not the textbook one: reset at `0x00`, then `0x03 + n * 8`, with
+`0x26`-`0x3F` erased. The sixth is the serial vector, `ljmp 0x010E`.
+8-aligning the whole table reads the padding and finds an `LJMP` at `0x00` and
+nothing at the other five. **All five interrupt entries are the same wrapper
+shape in two forms — three long-form (`0x0056`/`0x00B2`/`0x010E`,
+`mov psw,#0x00` plus eight explicit R0-R7 pushes) and two short-form
+(`0x0094`/`0x00F0`, `mov psw,#0x10`, no R0-R7 pushes), identical within a form
+apart from the three DPTR immediate bytes — and the constant in each is a
+per-vector CODE address
+(`0x0151`/`0x0154`/`0x0157`/`0x015A`/`0x015D`) that selects a handler at run
+time.** Each `lcall`s `0x0050`, which reads three CODE bytes there and jumps
+through them. So the vector table is a table, and the five words in it
+are constants fixed in the image: `0xA8AE` (the committed
+`event_dispatch_ff80_ffe0`), `0xF7AE`, `0xF7AF`, `0xF790` and `0xF7B0` — the
+last four are not committed entries and are not decoded. The five addresses
+also appear among the 448 `unresolved` XDATA bases in `pd-base-strides.csv`;
+that census is a scan of `MOV DPTR` immediates and cannot know which space the
+program means by one, so the two do not conflict.
+
+**The string pool is 43 candidates and 0 of them is named by a `MOV DPTR` +
+`MOVC` pair.** That is a statement about the method, and the page says so where
+the number is: this program also reaches CODE by table (`0x119C`,
+`0x11C2`) and by arithmetic, neither of which a literal-pointer scan sees.
+
+**The provenance question is answered, and the answer is both.** The
+`ITE8850-PD` blob is **not** findable by grepping `vendor/bios-1.09/` — every
+member of the zip large enough to hold it is DEFLATE, and that null is a
+compression artefact. Inflating the members: the `GMxMGxx_11.800` member is
+byte-identical to the committed `ec/firmware/GMxMGxx_11.800`, the 13 MiB
+`GMxMGxxN109A08.ROM` holds five byte-identical copies of the 64 KiB region and
+the whole 256 KiB EC image at `0x43CA2C` with **0 differing bytes**, and
+`ecflash.nsh` is 29 bytes — `IFUX64.efi GMxMGxx_11.800 0 1` — one write of the
+whole file, region included. **So the PD firmware ships with the EC update, not
+only with the BIOS**, which narrows `lightbar-bat-flow.md` §2's handoff story
+without settling it: how many dies are involved is a hardware observation, and
+the procedure for it is
+[`hardware-tests/pd-controller-enumeration.md`](hardware-tests/pd-controller-enumeration.md),
+**not run**. The write-up is
+[`findings/pd-image-census.md`](findings/pd-image-census.md); §3a above is not
+edited and needs no correction.

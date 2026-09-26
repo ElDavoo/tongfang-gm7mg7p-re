@@ -88,7 +88,12 @@ Four independent facts, each re-runnable against the committed image:
 
 Whether that image runs on a physically separate PD controller or is a payload
 the EC hands off is *not* determined here, and does not change the conclusion:
-its variables are allocated in its own XDATA map.
+its variables are allocated in its own XDATA map. (Issue #26 narrows that
+question without settling it — the image ships in the same single 256 KiB
+`ecflash.nsh` write as the EC firmware — and completes this section's table to
+its sixth entry, the serial vector at `0x23` → `ljmp 0x010E`. Both are in
+[`pd-image.md`](pd-image.md), which is where the image's layout, its string
+pool, its dispatch surface and its provenance are.)
 
 ## 3. What the PD image does with `0x07E2`-`0x07E5`
 
