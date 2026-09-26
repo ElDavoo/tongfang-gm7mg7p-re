@@ -8517,6 +8517,37 @@ both sets, and the carry count is **32** for the second time running against
 below moves, which rests on the split between the line-content half and the
 supersession half rather than on any of these counts.)*
 
+*(**And again at issue #930, one line later, and this time all three of that
+paragraph's figures go back the way they came — and the one it said could not
+move is the one that does.** The follow-up list §65 names was worked: the two
+by-name pins of finding 7 are repointed onto `:588`, the line the `> 300` floor
+is on now, so both carry again. **It is measured on the tree the #885 × #771
+merge produced rather than on the one that paragraph records**, because that
+merge landed beside this pass: the run reads **105 occurrences, 78 spellings and
+57 targets across 27 files**, 73 resolving and 32 declined, shapes
+**5/19/10/6/33**, with **eleven** pins that do not carry and a carry count of 50
+against the 48 that tree carried. The `assertion` shape is back because `:588`
+is an `assertion`, the target count is back by one because `:588` was already a
+target under the checklist's by-path spelling and `:563` has now lost the last
+name it had, and the two rows are off the not-carrying list because they carry
+again — a reading of the two cited lines, not a verdict from a tool. **The
+`105`, the `27`, the `78`, the 73 and the 32 do not move**, and that is the
+measurement that matters: two rows changed spelling and neither was added nor
+deleted, so the correction did not add a pin to the census it is reporting on.
+The run's **148** markdown files read is one more than the tree above, and one
+file is all of the difference: this pass's own write-up,
+[`findings/test-line-pin-repoint-563.md`](findings/test-line-pin-repoint-563.md),
+which carries no `test_*.py:NNN` pin at all. **The six `> 300` pins of findings 6
+and 8 are deliberately untouched in the same pass** and are #920's: they cite the
+one `> 300` floor and name `:417`, `:412-414` and `:392` rather than `:588`,
+which is both why they are stale and why this pass's repoint does not reach
+them; they were stale in the tree when the census found them where these two
+were correct when written, and doing all three at once would collapse the
+distinction the eleven and the thirteen exist to record. The argument below —
+the split between the line-content half and the supersession half — is
+untouched, a repoint being a reading in a table rather than a property of the
+class; line numbers are written bare for the reason the paragraph above gives.)*
+
 **Two of the issue's extraction numbers did not reproduce, and both are the
 scan's fault rather than the tree's.** Its "12 ambiguous `tools/` pins" are four
 `windows/tools/` citations a prefix-recognising regex truncates into `tools/`
