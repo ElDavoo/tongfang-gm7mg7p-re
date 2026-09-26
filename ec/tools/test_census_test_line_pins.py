@@ -497,19 +497,32 @@ class TheCommittedTree(unittest.TestCase):
         # pin. It is a real defect of the kind the census exists to find, and
         # it is recorded in the write-up rather than repointed here, for the
         # write-up's own reason: repointing the citing prose is a follow-up.
+        #
+        # Re-measured a fourth time, at the #888 x #885 merge, and this is the
+        # one move where the two merges' additions are simply additive: each
+        # added one new markdown file carrying two new occurrences of its own
+        # spelling, on disjoint lines, so occurrences, files, `resolves`,
+        # spellings and targets each go up by four/two/two/two/two over the
+        # 71/25/45/55/41 above and `other` goes 24 -> 26. `declined` does not
+        # move, because all four new pins are live prose rather than transcript.
+        # The two that moved the shape split are #888's `:563` pair and #885's
+        # `:392` pair, both `other` on this tree -- the second of them is
+        # `decreased, {},`, the last line of the assertion holding that no
+        # address's `write` decreases -- so `assertion` stays at 11 for the
+        # fourth time running. Measured with the tool, not derived.
         records, _files = census.census(census.REPO)
-        self.assertEqual(len(records), 71)
-        self.assertEqual(len({r[0] for r in records}), 25)
-        self.assertEqual(len({r[2] for r in records}), 45)
+        self.assertEqual(len(records), 73)
+        self.assertEqual(len({r[0] for r in records}), 26)
+        self.assertEqual(len({r[2] for r in records}), 46)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 55, census.OUT_OF_RANGE: 0,
+            census.RESOLVES: 57, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 16})
         self.assertEqual(shapes(records), {
             census.DEF_TEST: 5, census.ASSERTION: 11, census.COMMENT: 9,
-            census.BLANK: 6, census.OTHER: 24})
+            census.BLANK: 6, census.OTHER: 26})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 41)
+                 if r[3] == census.RESOLVES}), 42)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

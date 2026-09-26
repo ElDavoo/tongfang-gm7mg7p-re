@@ -435,6 +435,31 @@ much.** The 15 ranks of headroom
 counts are a snapshot of one merge, the same way every other figure in this
 census's prose is, and this re-derivation is the second time that has been true.
 
+**The paragraph above stands, and a third point was looked for and is not there
+(issue #885).** The "one data point" reading is left as written rather than
+edited, per [`../findings.md`](../findings.md) §4a-4d, because what
+[`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) found does not
+correct it — it **confirms** it, and removes the reason to think a third was
+available. Two commits carry a 427-row census and neither can be paired. At
+`e6c88864` the committed census is a file its own tree does not derive
+(`--check` exits 1, and that commit's own `--self-test` fails its "committed
+CSVs match a fresh generation" line), and the tree derives the **430-row**
+census instead. At `1fcd5f1e` — the only other 427-row commit, and the census
+commit immediately before `e6c88864` added `cluster_key` — the tree does derive
+427 rows, and `xdata_moved_ranks.py` raises `KeyError: 'cluster_key'` on its
+census, so that pair is **not measured** rather than measured and found wanting.
+Nine of the twenty-two censuses in `ec/annotations/xdata-clusters.csv`'s
+history predate `cluster_key`; that is the whole of the reason the era the pair
+tool can read begins at `e6c88864`. Measured like for like the 427-era tree and
+this one are the same census — 430 of 430 keys with identical membership, `moved`
+**366** in both, **0** clusters flipped, and the same 210 perturbed addresses —
+so the "third point" is this one re-measured
+on an earlier tree, and the series is still **two** points, 366 → 315. Two points
+cannot establish a trend, in either direction. The one thing that did gain is
+§2's structural claim: the guard's per-address effect is now **210 addresses, 0
+`refs`, 833 references** in **three** trees across three tool generations, which
+is the claim the `> 300` floor rests on rather than a direction in `moved`.
+
 **No assertion is edited, and no threshold moves.** `assertGreater(len(moved),
 300)` is unchanged, and the figures in the class docstring are unchanged — this
 file is a measurement beside them, not a replacement for them.
@@ -820,6 +845,27 @@ that file's own closing note, in `tools/README.md`'s merged-tree note and in
 48 tests and the same line. This change neither fixes it nor adds to it:
 `check_cluster_citations.py` reports the same two citations before and after,
 and none of them is in a file this one added.
+
+> **Correction, 2026-09-26, issue #885: the totals in the paragraph above are
+> superseded, and that paragraph is left as written.** **34 suites and 1033
+> tests** was correct for the merged tree it was measured on and went stale on
+> a later merge — **#887's `ec/tools/test_census_test_line_pins.py` landed in the
+> same window** at 41 tests. The pair #885 corrected it to,
+> `35 suite(s) run, 1074 tests`, **does not reproduce and is itself superseded**:
+> the runner reads `35 suite(s) run, 1076 tests; one or more FAILED` on this
+> tree, on a clean `origin/main`, and on the fork point `d62730e1` this branch
+> started from, so **neither #885's merge nor anything on `main` since the fork
+> moves the runner at all** and `1074` reproduces on none of the three trees. The
+> `32 + 1 + 1` and `974 + 44 + 15` that reach 34/1033
+> are unchanged and are not the error; the missing term is the one merge the
+> paragraph could not have named because it had not landed, and the two tests it
+> was short by were already in the tree when that correction was written. Both
+> superseded pairs are left visible here per
+> [`../findings.md`](../findings.md) §4a-4d rather than
+> edited out, and the corrected figure with its arithmetic is
+> [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) §8. A total
+> is a property of the merge, which is the same sentence `../findings.md` §62's
+> numbering note makes.
 
 **`test_check_cluster_citations.py` is the constraint that shaped this file, and
 it is a real one.** That suite's `test_committed_prose_matches_committed_census`

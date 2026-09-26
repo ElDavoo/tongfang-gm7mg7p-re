@@ -34,10 +34,10 @@ census, and the count it starts from.
 
 ```console
 $ python3 ec/tools/census_test_line_pins.py
-71 pin(s) in 25 markdown file(s): 45 distinct spelling(s), 41 distinct resolved target(s)
-  55 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 16 declined
-  5 def test_, 11 assertion, 9 comment, 6 blank, 24 other (of the pins that resolve)
-  read 145 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 35 test file(s) in it
+73 pin(s) in 26 markdown file(s): 46 distinct spelling(s), 42 distinct resolved target(s)
+  57 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 16 declined
+  5 def test_, 11 assertion, 9 comment, 6 blank, 26 other (of the pins that resolve)
+  read 146 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 35 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -108,47 +108,126 @@ file's own follow-up list below is where repointing lives, and these two rows
 join finding 6 in it. **The `144` above is `145` here**: #890 added
 `xdata-write-direction-correction.md` and #888 added
 `xdata-moved-ranks-key-collision.md`.)*
+> **These four figures moved three times, once for each of the merges that
+> reached this one, and every time the cause is the tree rather than the
+> tool.** #887
+> published `50` pins in `23` files, `44` of them resolving and `15` landing on
+> an assertion, over `141` markdown files; the #850/#887 merge above took that to
+> `69`/`24`/`44`/`40` and `53`/`16`; **#900 then corrected this transcript's own
+> `142` to the `143` its tree reads, without moving a pin — a hand-transcribed
+> figure drifting, the same class of thing as the citing lines the tool cannot
+> see, and named here rather than dropped**; and **this merge, measured here,
+> takes the class to `71`/`25`/`45`/`41` and `55`/`16` over `145` markdown
+> files.**
+>
+> **What #885 added is two occurrences of one spelling, and that is the whole of
+> the move in occurrences.** Its own citations of
+> `ec/tools/test_xdata_cluster_names.py:392` — one in
+> [`../findings.md`](../findings.md) §69, for `> 300` staying put, and one in
+> [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md):446 — are
+> **one spelling written twice**, and the target it names is one main's tree
+> already carried. Occurrences, files and `resolves` each go up by two against
+> `main` and `declined` stays at 16.
+>
+> **The spelling and target counts do move here, `44` → `45` and `40` → `41`,
+> and neither side's merge moved them — the two sides simply never shared a
+> tree.** #890 repointed 56 pins in `ec/tools/test_xdata_cluster_names.py` by
+> +25, so `main` names that file's `:417` and `:412-414` where #885 still names
+> `:392` and `:387-389`; the merged tree carries **both**, which is one more
+> spelling and one more target than either side had alone. #885's own note below
+> predicted `44`/`40` and was right for the tree it measured; this paragraph
+> supersedes that figure rather than arguing with it, and the wrong version is
+> left visible in the note per §4a-4d.
+>
+> **The two land on `other` rather than on the assertion, and that is #890's
+> doing, not #885's — so they do not carry.** Both were written on a tree where
+> `:392` was `self.assertGreater(len(moved), 300)`; #850 put 239 lines into that
+> suite and moved it, #890 put 30 more in, and `:392` is now `decreased, {},` —
+> the last line of the very assertion that holds *no* address's `write`
+> decreasing. So **`other` goes 22 → 24, `comment` stays at 9 and `assertion`
+> stays at 11**, and the two new rows in the per-pin table below are *does not
+> carry* — the same defect as finding 6's four, for the same reason, arrived at
+> by a different route. #885's own merge note below read `comment` 9 → 11 on the
+> tree it measured, where `:392` was still a §2b comment; that reading is left
+> beside this one for the same reason. The merge therefore finds two more stale
+> pins, and it is this census that finds them, one merge after the four it
+> already found for the identical reason. The suite's pinned figures move with
+> the transcript and each pin says which addition moved it.
+>
+> **And at the `#888 × #885` merge, the two classes of new pin land beside each
+> other and every count in the transcript above moves once more — `73` pins in
+> `26` files, `46` spellings, `42` targets, `57` resolving, `16` declined,
+> `5/11/9/6/26` over `146` markdown files read.** Each of those deltas is the sum
+> of the two merges above it rather than a third cause: `main` contributed two
+> occurrences of `test_xdata_cluster_names.py:563` and one new file, `#885`
+> contributed two occurrences of `ec/tools/test_xdata_cluster_names.py:392` and
+> one new file, and neither spelling or target was the other's. **The two sets of
+> defective rows are disjoint**, `:563` in `xdata-moved-ranks-key-collision.md`
+> (finding 7) and `:392` in [`../findings.md`](../findings.md) §69 and
+> [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) (finding 8),
+> so the eleven neither merge had alone is **thirteen** and the carry count is
+> **32** — the same number `main` had before either, reached twice over by adding
+> four rows that do not carry. The shape split follows arithmetically: the two
+> `:563` rows and the two `:392` rows are all `other` on this tree, so `other`
+> goes 24 → **26** and nothing else moves. The superseded `71`/`25`/`45`/`41` and
+> `5/11/9/6/24` are the records of the two trees above and stay visible per
+> §4a-4d; the suite's pin carries a comment saying which addition moved it.
 
 **Each count below is a different thing, and every one of them is printed**,
 which is the only reason a census like this can be trusted: a headcount that
 cannot be reconciled against itself is the failure it is measuring.
 
-- **71 occurrences** — every pin, counted once per place it is written. Thirty
-  spellings are written once, six twice, eight three times and one five times
+- **73 occurrences** — every pin, counted once per place it is written. Thirty
+  spellings are written once, seven twice, eight three times and one five times
   (`ec/tools/test_xdata_cluster_names.py:473`, five times over), which is the
-  whole of the gap: `6 + 16 + 4 = 26`, and `71 - 26 = 45`. *(`:448` is what this
+  whole of the gap: `7 + 16 + 4 = 27`, and `73 - 27 = 46`. *(`:448` is what this
   bullet named on #888's tree and is stale here: #890 repointed that spelling
   by +25 in the four files that carry it, and this file's own mentions of it
   are not counted by the census — the tool excludes this file — so nothing
-  repointed them. The distribution beside it is unchanged and reproduces.)*
-- **45 distinct spellings** — the pin exactly as written, so `test_a.py:12` and
+  repointed them. The distribution beside it is unchanged and reproduces. The
+  50/23/37/32 figures #887 published and the 69 this bullet read at the #850
+  merge are the record of the trees they were measured on and stay visible here
+  per §4a-4d; the gap was 13, then 25, then 26, and is 27 above. **The last step
+  is the only one two merges have ever taken together**: the gap is 26 on each of
+  the two trees alone and 27 on the tree carrying both, because the `:392` pair
+  #885 wrote lands *beside* the `:417` pair #890's repoint created rather than
+  replacing it.)*
+- **46 distinct spellings** — the pin exactly as written, so `test_a.py:12` and
   `ec/tools/test_a.py:12` are two. This is the figure the issue's grep reported
-  for a tree half this size and it is the one that moved least.
-- **41 distinct resolved targets** — distinct `(file, span)` pairs after
-  resolution, so the two spellings of one span are one target. **The two new
-  pins are the whole of the move, 40 → 41**, and the reason is the one the
-  paragraph under the transcript above first measured and then had to take back.
-  On #888's tree the corpus already wrote the same span **by path** —
+  for a tree half this size and it is the one that moved least. *(`#885`'s own
+  merge note read `45` and `#887` read `37`; the tree this bullet sits in
+  carries `test_xdata_cluster_names.py:563` beside the `:392` pair `#885`
+  added, so 46 is the sum of two unrelated additions rather than a third
+  revision of the same one.)*
+- **42 distinct resolved targets** — distinct `(file, span)` pairs after
+  resolution, so the two spellings of one span are one target. **Both merges'
+  four new pins are the whole of the move, 40 → 42**, and the two got there by
+  opposite routes, which is why neither merge's note predicted the other's
+  figure. On #888's tree the corpus already wrote the same span **by path** —
   `ec/tools/test_xdata_cluster_names.py:563` in
   [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334
   — so the two new by-name pins arrived against a target that was already there
   and this count was argued not to move. **#890 repointed that by-path spelling
   by +25, to `:588`, and left the by-name one at `:563`**: the two no longer name
   the same line, so they are now two targets rather than one, and a figure two
-  merges ago was measured as unmovable has moved by one. It is the same line
-  moving as finding 7 below, counted from the other end.
-- **25 files** carry at least one; [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md)
-  carries ten, [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) thirteen and
+  merges ago was measured as unmovable has moved by one. **#885's two arrived
+  the other way** — `ec/tools/test_xdata_cluster_names.py:392`, which neither
+  tree carried, so they added a target rather than splitting one. It is the same
+  line moving as finding 7 below, counted from the other end, and a different
+  line moving as finding 8.
+- **26 files** carry at least one;
+  [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) carries
+  ten, [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) thirteen,
   [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md)
-  nine.
+  nine and [`../findings.md`](../findings.md) six.
 
 **Two of the planning stage's numbers did not reproduce, and both are the
 extractor's fault rather than the tree's.** The issue's own grep reported 37
 distinct pins across 22 files; the plan built on it counted 49 occurrences over
 the same 22, and **called 12 of those 49 an ambiguous `tools/` prefix**. This
-tree carries **71 occurrences across 25 files** — three pins and three files
-written since, two of them by [#888](xdata-moved-ranks-key-collision.md)'s own
-write-up (the correction above) — and
+tree carries **73 occurrences across 26 files** — twenty-three pins and three
+files written since, two of them by [#888](xdata-moved-ranks-key-collision.md)'s
+own write-up and two by `#885`'s (the corrections above) — and
 **none** of them ambiguous, for two reasons that are findings in their own right
 and are the reason the tool is written the way it is:
 
@@ -171,20 +250,20 @@ and are the reason the tool is written the way it is:
    tree does not have it, beside the citing file — and says which of the two
    answered for every pin.
 
-**So the measured headcount of this class is 71 occurrences, 45 spellings, 41
+**So the measured headcount of this class is 73 occurrences, 46 spellings, 42
 resolved targets — and zero of the twelve the plan's scan called an ambiguous
 prefix is one.** The figures that moved from the plan's are recorded as a defect
 in the method that produced them rather than as a drift in the tree, and a census
 that reports the wrong population with great confidence is worth less than no
 census. The `50`/`23` and `69`/`24` this paragraph was written with are the
 record of the two trees it was measured on, and stay visible beside the
-`71`/`25` for the same reason they do everywhere else in this file.
+`73`/`26` for the same reason they do everywhere else in this file.
 
 ### Verdicts, and what each one is not
 
 | verdict | what it means | here |
 |---|---|---|
-| `resolves` | the file was found and the span is one it has | **55** |
+| `resolves` | the file was found and the span is one it has | **57** |
 | `out-of-range` | the file is there and the span ends past its end | 0 |
 | `unresolved-path` | no such file under either reading | 0 |
 | `ambiguous-path` | a bare module name two files in the tree could answer to | 0 |
@@ -223,20 +302,23 @@ duplicate.
 | assertion | **11** | the `assertEqual`/`assertGreater` that decides the claim |
 | comment | 9 | prose the case is annotated with |
 | `blank` | 6 | nothing at all — the blank line above what the span is about |
-| other | 24 | a `def` that is not a test, an assignment, a `setUpClass` body |
+| other | 26 | a `def` that is not a test, an assignment, a `setUpClass` body |
 
-*(The split has now been measured four times and the only rows that have ever
+*(The split has now been measured five times and the only rows that have ever
 moved are the assertions and `other`: **5 / 15 / 5 / 8 / 11 over 44** as the
 issue was filed, **5 / 11 / 9 / 6 / 22 over 53** after #850, **5 / 13 / 9 / 6 / 22
-over 55** on the #888 × #891 tree, and the **5 / 11 / 9 / 6 / 24 over 55** above,
-where the two that moved back are the `> 300` floor's own `assertGreater` and
-the `other` row it became when #890 put 25 lines above it. The first three are
-the record of the trees they were taken on and stay visible per §4a-4d. That a
-figure this close to stable still moves at every one of the three merges since
+over 55** on the #888 × #891 tree, **5 / 11 / 9 / 6 / 24 over 55** on the
+#888 × #890 one, and the **5 / 11 / 9 / 6 / 26 over 57** above. The first four
+are the record of the trees they were taken on and stay visible per §4a-4d. The
+two that moved back are the `> 300` floor's own `assertGreater` and the `other`
+row it became when #890 put 25 lines above it; the last step is arithmetic rather
+than a fourth cause, being the two `:563` rows and the two `:392` rows the two
+merges added between them, all four of which are `other` here. That a
+figure this close to stable still moves at every one of the merges since
 the issue was filed is the reason the distribution is printed on every run rather
 than quoted once.)*
 
-**Six of the 55 resolving pins land on a blank line**, and that is the house
+**Six of the 57 resolving pins land on a blank line**, and that is the house
 spelling rather than a mistake: a span is written from the line *above* the thing
 it is about. `ec/tools/test_disasm8051.py:3-6` is a module docstring that opens
 on its own blank line; `ec/tools/test_grade_0751_isolation.py:16-20` is an import
@@ -261,6 +343,7 @@ the half this table exists to record.
 | [`../findings.md`](../findings.md):7190 † | `test_xdata_cluster_names.py:286` | by-name | assertion | **does not carry** |
 | [`../findings.md`](../findings.md):7369 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
 | [`../findings.md`](../findings.md):7430 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
+| [`../findings.md`](../findings.md):9028 | `ec/tools/test_xdata_cluster_names.py:392` | by-path | other | **does not carry** |
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |
@@ -315,6 +398,7 @@ the half this table exists to record.
 | [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):376 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
 | [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):377 | `test_xdata_cluster_names.py:417` | by-name | comment | **does not carry** |
 | [`xdata-green-set.md`](xdata-green-set.md):283 | `ec/tools/test_xdata_cluster_names.py:339` | by-path | def test_ | carries |
+| [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md):622 | `ec/tools/test_xdata_cluster_names.py:392` | by-path | other | **does not carry** |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15 | `ec/tools/test_xdata_cluster_names.py:417` | by-path | comment | **does not carry** |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):415 | `test_xdata_cluster_names.py:417` | by-name | comment | **does not carry** |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):427 | `test_xdata_cluster_names.py:412-414` | by-name | comment | **does not carry** |
@@ -327,23 +411,39 @@ the half this table exists to record.
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2645 | `../tools/test_xdata_cluster_names.py:68-90` | beside | blank | carries |
 | [`../../tools/README.md`](../../tools/README.md):159 | `test_xdata_cluster_names.py:303` | by-name | other | **records another line** |
 
-**32 carry, 2 carry on the adjacent line, 11 do not carry, 10 record another line
+**32 carry, 2 carry on the adjacent line, 13 do not carry, 10 record another line
 on purpose, 16 are declined, and none is unresolvable.** *(Those are the counts
 on the merged tree; the 27/3/1/6/7/6 this page was written with, the
-32/3/0/9/10/16 #850's merge measured and the 34/2/9/10/16 #888's measured are the
-record of the trees they were taken on and are kept in the sentence rather than
-deleted, per §4a-4d. Three moves, and the third is the one worth reading twice:
-#850's took the class 50 → 69 pins, #888's took it 69 → 71 by adding two rows
-that **carried** on its own tree, and #890's landing beside them took those same
-two rows to **`does not carry`** — so the carry count is **32**, the same number
-`main` had before either of them, and the headcount is two higher than it was.
-The eleven that do not carry are the nine #850 left plus these two; see the
-correction under the transcript above and the note at the foot of this file.)*
+32/3/0/9/10/16 #850's merge measured, the 34/2/9/10/16 #888's and the
+32/2/11/10/16 #888 × #890's are the record of the trees they were taken on and
+are kept in the sentence rather than deleted, per §4a-4d. Four moves, and the
+fourth is the one worth reading twice: #850's took the class 50 → 69 pins, #888's
+took it 69 → 71 by adding two rows that **carried** on its own tree, #890's
+landing beside them took those same two rows to **`does not carry`** — so the
+carry count is **32**, the same number `main` had before either of them, and the
+headcount is two higher than it was — and #885's landing beside those added two
+more rows that do not carry either, for the same reason and by a different route.
+**The carry count is therefore 32 for the second time running and the headcount
+is 73, four higher than `main` had**: four rows added, none of which carries.
+The thirteen that do not carry are the nine #850 left, #888's two and #885's
+two; see the correction under the transcript above and the note at the foot of
+this file.)*
 **"carries, adjacent"** is
-a pin one line off the thing it names, and it is two of seventy-one because this
-corpus writes *"is at `:1862`"* against a `def` on the next line. No rule can
+a pin one line off the thing it names, and it is two of seventy-three because
+this corpus writes *"is at `:1862`"* against a `def` on the next line. No rule can
 decide whether that is a pin or a typo, which is the first reason the judgement
 half is a table and not a verdict.
+**The 9 → 11 is #885's and the 11 → 13 is this merge's, and the two new
+citations are where #885's half of that lands in the table** — both in the *does
+not carry* column rather than the *carries* one
+their own write-up predicted, because `:392` is not where the assertion is on
+this tree. One is [`../findings.md`](../findings.md) §69's, one is
+[`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md):622's, and
+together with finding 6's four they make six pins naming `:392`, `:417` or
+`:412-414` for the `> 300` assertion, which is at **`:588`**. The two `:563`
+pins of finding 7 name the same assertion a third way round and are **not** in
+that six: they are counted apart precisely because they got wrong by a different
+cause, a line moving rather than a line never having been the one named.
 
 † **Two changes to the table, 2026-09-26 (issue #890), and neither moves a
 count.** That issue put 25 lines into `ec/tools/test_xdata_cluster_names.py` at
@@ -388,35 +488,47 @@ split in one sentence. #850 repointed `:433` to `:307`, which carries, so
 second half of the split is still right; what is lost is a worked example of it,
 and it is named rather than papered over.
 
-## The eleven that do not carry
+## The thirteen that do not carry
 
-*(The nine this section was written with, and the two the #888 × #890 merge
-added, are all below; the `9`s in the lead paragraph that this one replaces are
-kept visible in the italicised note under it rather than edited out, per
-`../findings.md` §4a-4d.)*
+*(The nine this section was written with, the two the #888 × #890 merge added and
+the two the #888 × #885 one added beside them are all below; the `9`s and the
+`11`s in the lead paragraphs that this one replaces are kept visible in the
+italicised notes under it rather than edited out, per `../findings.md` §4a-4d.)*
 
-**Six items below were nine pins, and the sixth is the reason the count was nine
-and not ten**: finding 1 was one of the six when this was written and #850
+**Eight items below and thirteen pins, and the sixth is the reason the count is
+not one higher than the items**: finding 1 was one of the six when this was
+written and #850
 repointed it into carrying, so it is kept struck through rather than deleted.
 Finding 4 is one stale pin written twice, in two files, describing the same
-removed constant, and finding 6 is one moved assertion written four times across
-two files. **The issue's own citing-line reference is not among the nine** — it
+removed constant; finding 6 is one moved assertion written **four** times across
+**two** files; finding 7 is the same assertion written **twice** more by #888; and
+finding 8 the same assertion written **twice** again by #885 — **eight pins
+naming one line, in five files**, and the reason thirteen pins sit under eight
+items. **The issue's own citing-line reference is not among
+the thirteen** — it
 was finding 1, and on this tree it carries, which is the one claim of the issue's
 two that #850's own change turned into a `carries` rather than a
-`does not carry`. Five of the nine carried over from the six this section
-recorded; **four are new**, all four finding 6 and all four #850's.
-**Finding 7 is the eleventh, and it is the only one a merge in this repository
-produced rather than found lying in the tree** — two pins that were *born*
-correct and were made wrong, in the same commit that made this file's own §2
-transcription stale, by moving the line they name. The count is eleven because
-two pins that carried on #888's tree stopped carrying here, not because anything
-about the other nine moved.
+`does not carry`. Five of the thirteen carried over from the six this section
+recorded; **four are #850's** (all four finding 6), **two are #888's** (both
+finding 7) and **two are #885's** (both finding 8).
+**Finding 7 is the eleventh and finding 8 the thirteenth, and they are the only
+two a merge in this repository produced rather than found lying in the tree** —
+two pins that were *born* correct and were made wrong, in the same commit that
+made this file's own §2 transcription stale, by moving the line they name, and
+two that were born correct against a line another branch had already moved. The
+count is thirteen because four pins that carried on their own trees stopped
+carrying here, not because anything about the other nine moved.
 
-*(The lead paragraph above is #850's merge, kept whole: **six items and nine
-pins**, one struck through, four new and all four #850's. The heading's `9` and
-this paragraph's are the record of the trees they were measured on. What moved
-at the #888 × #890 merge is the heading and the two sentences that follow it,
-and nothing in the list below items 1–6 changed verdict.)*
+*(The lead paragraph as #850's merge wrote it — **six items and nine pins**, one
+struck through, four new and all four #850's — is the record of that tree and is
+carried in this note rather than edited out of the sentence above, per
+`../findings.md` §4a-4d, and the heading's `9` is its record in the same way.
+What moved at the #888 × #890 merge is the heading and the two sentences that
+follow it, and nothing in the list below items 1–6 changed verdict; what moved
+at the #888 × #885 one is the heading, those two sentences and the addition of
+item 8. **The two sets are disjoint** — `:563` and `:392`
+are different lines in different files — so nothing in finding 7 changed verdict
+when finding 8 landed beside it.)*
 
 1. ~~**[`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):403**
    — `test_xdata_cluster_names.py:355-370`~~ — **repointed by #850 and now
@@ -459,7 +571,7 @@ and nothing in the list below items 1–6 changed verdict.)*
    `:286` is `self.assertEqual(names, {})`; the third generation, *"427 clusters
    become 439, 48 … 379"*, is at `:307-309` and the second, *"430 → 439 with 64
    ranks intact and 366 changed"*, beside it. The sentence names neither.
-6. **NEW, and all four pins are one assertion.** **`> 300`** —
+6. **All four pins are one assertion, and #850 is what moved it.** **`> 300`** —
    `assertGreater(len(moved), 300)` — is at
    [`test_xdata_cluster_names.py:588`](../../ec/tools/test_xdata_cluster_names.py)
    on this tree, and the comment it rests on, *"a regeneration that renumbers
@@ -514,6 +626,50 @@ and nothing in the list below items 1–6 changed verdict.)*
    here**, for §7's reason; they are named in that follow-up list instead.
 
 
+   **The last two bullets' citing lines are the second repointing of these two
+   rows, and all three values stay in the table above rather than being
+   deleted.** The file read `:319`/`:331` when this table was written; **#885,
+   working from the pre-#889 base, repointed them to `:331`/`:343` and was right
+   for its own tree**; **#900 repointed them to `:383`/`:395` and was right for
+   its own**; and **#890's own twenty-five lines into the fall write-up put them
+   at `:404`/`:416`, which is what the merged tree reads, re-measured by
+   `--verbose` after the merge.** #885's forty-one lines into that write-up all
+   land below `:395`, so its side did not move the pair a second time — which is
+   where the two sides came out differently, and the `#885` merge note below says
+   the same of it at length.
+8. **NEW, and both pins are the same assertion finding 6 names, one merge
+   later.** #885's merge added two more citations of
+   `ec/tools/test_xdata_cluster_names.py:392`, one in
+   [`../findings.md`](../findings.md) §69 and one in
+   [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md):622, and
+   **both were correct on the tree they were written on** — `:392` was the
+   `assertGreater` there, and #885's own write-up says so and reports both as
+   carrying. They are the same defect finding 6 records, arrived at without
+   anyone moving a line: #850 moved the assertion in the same window, the two
+   branches never shared a tree, and each was written against a `:392` that was
+   right for it. **`:392` names a different line on every tree since** — a §2b
+   comment where #885 read it, `decreased, {},` on the tree this file now sits
+   in, where #890 has since put the assertion that no address's `write`
+   decreases — so both land on a line that does not carry the claim, and land on
+   a *different* wrong line on the two trees.
+
+   **This is the sharpest result in the file, and it is a measure of the method
+   rather than of either branch.** #885 predicted its own two pins would carry
+   and the prediction was right *for its tree*; #850 predicted nothing and was
+   right for its own; #888 predicted the same for its two and was right for
+   *its* tree too, and wrong here for the mirror-image reason. None of the three
+   was wrong. A census run only on the merged tree
+   cannot tell a pin that was always wrong from one that a concurrent merge made
+   wrong, so this section records the cause rather than the verdict alone: **six
+   pins in four files now name `:392`, `:417` or `:412-414` for the `> 300`
+   assertion, which is at `:588`**, four of them because #850 moved it and two
+   because a
+   branch written against the old line landed beside it; **and two more, in a
+   fifth file, name `:563` for the same assertion, which is finding 7 and is
+   counted apart because the line moved under those rather than having been
+   moved before they were written.** None of the eight is repointed here,
+   for the reason the follow-up list below gives.
+
 ## The ten that record another line, and why that is the blocker
 
 These are **correct sentences about a line that has moved**, and the reason each
@@ -552,7 +708,7 @@ the ten**, because all three are the *same* sentence pattern in one tree's own
 prose and the two ends of it are two different verdicts.
 
 **What is deliberately not done about them.** Repointing the citing prose is
-twenty-five files' worth of edits against open agent PRs, and **every one of
+twenty-six files' worth of edits against open agent PRs, and **every one of
 these ten is already recorded in place** — that is what makes each of them
 right, and
 `xdata-4-4-identity-rederivation.md`'s own "Deliberately not fixed" list says
@@ -568,9 +724,9 @@ on the next merge. **It needs that judgement, and the measurement says so rather
 than my having to assert it.** Four things, in the order they decide it:
 
 1. **The pins are not one kind of thing.** 5 name a `def test_` line, 11 an
-   assertion, 9 a comment, **6 a blank line** and 24 something else. The
+   assertion, 9 a comment, **6 a blank line** and 26 something else. The
    citation means "the line where this claim is decided", and that line is the
-   test header in 5 cases out of 55. A `def`-anchored rule is wrong; an
+   test header in 5 cases out of 57. A `def`-anchored rule is wrong; an
    assertion-anchored rule is wrong; a blank-line-anchored rule is worse than
    both, because the blank is an artefact of the span convention and 6 of them
    move whenever a line is inserted one line above. **No single anchor covers
@@ -598,7 +754,11 @@ than my having to assert it.** Four things, in the order they decide it:
    a file that exists and a span it has. **The entire defect is in the
    line-*content* half**, and that half is the one a rule cannot make — as
    finding 6 above shows, one assertion and four sentences give four different
-   verdicts, none of them mechanically decidable.
+   verdicts, none of them mechanically decidable. Findings 7 and 8 make the same
+   point from the other side: **eight sentences naming one assertion, written by
+   three branches that never shared a tree, all of them right where they were
+   written and all of them wrong here** — and nothing in a merged tree
+   distinguishes the two cases.
 
 **So the tool ships as a census that renders no verdict and never fails on
 drift**, and the re-open condition is written down rather than left to a later
@@ -660,7 +820,7 @@ $ echo $?
 0
 $ python3 -m unittest discover -s ec/tools -p test_census_test_line_pins.py
 .........................................
-Ran 41 tests in 1.172s
+Ran 41 tests in 0.877s
 
 OK
 $ bash tools/run-tests.sh
@@ -671,7 +831,10 @@ $ bash tools/run-tests.sh
 `ec/tools/test_check_cluster_citations.py`, 48 cases, on
 `docs/findings/xdata-cluster-names-guard-off-recipe.md:220` with the same two
 `0x0464`/`0x0465` cluster disagreements `tools/README.md` has named as
-reproducing on a clean `origin/main` since #822. This change touches no cluster,
+reproducing on a clean `origin/main` since #822. **Confirmed rather than assumed
+at the #885 merge**: the same suite fails the same single case on a clean
+`origin/main` worktree, and `check_cluster_citations.py` reports the same two
+citations before and after this merge. This change touches no cluster,
 no CSV and no membership, and neither causes it nor fixes it.
 
 The suite is 41 cases and it is the reason the two directions are demonstrated
@@ -718,11 +881,19 @@ committed-tree figures was **`50`** — so the moment the suite landed, the cens
 own count made the checklist's §2b console-block cluster count `50` (an unrelated
 figure that happens to be the same integer) measure `held-by-check-literal`, and
 §2b's own `unheld` marking disagreed with the measurement. *(That figure is
-**`69`** after #850's merge and **`71`** on the tree this now lands in, for the
-reason the note at the foot of this file gives; the exclusion is what keeps it
-from mattering, which is the point of an exclusion rather than of the number —
-and it is **preventive rather than current** on this tree, since `71` is not a
-figure §2b's tables hold, which is checked rather than assumed.)*
+**`69`** after #850's merge, **`71`** after #888's and **`73`** on the tree this
+now lands in, for the reason the note at the foot of this file gives; the
+exclusion is what keeps it from mattering, which is the point of an exclusion
+rather than of the number — and it is **preventive rather than current** on this
+tree, since `73` is not a figure §2b's tables hold, which is checked rather than
+assumed.)*
+§2b's own `unheld` marking disagreed with the measurement. *(That figure is:
+**`71`** on the tree #885 merged into, `69` at the #850 merge and `50` when the
+suite landed — for the reason the note at the foot of this file gives. `71`
+collides with nothing in §2b, so the measurement below is re-run on the merged
+tree and not carried over. The exclusion is what keeps the question from
+mattering at all, which is the point of an exclusion rather than of the
+number.)*
 
 That is not a new defect: it is the one `check_doc_figure_pins.py` already
 anticipates in its own `SELF_MODULES` comment — *"nothing mechanical can tell a
@@ -741,7 +912,7 @@ merged tree's, and neither is claimed to be: §2b reads **eighteen held, none
 unheld** over **`190 literal(s)`** there because #850 gave each of the ten
 unheld figures a literal at an `assertEqual`, which is a different cause with a
 different answer. The exclusion did its job either way — without it the census's
-own `69` would have been searched like any other integer in `ec/tools/`.)*
+own `73` would have been searched like any other integer in `ec/tools/`.)*
 
 **The alternative was to write this suite so it never says `50`, and that is the
 accommodation worth naming.** A count that avoids a search is a count that was
@@ -766,6 +937,15 @@ twice: the merged file names `:383` and `:395`, re-measured against the merged
 file, and the three places this file's own prose names the same two citing lines
 — finding 6's third and fourth bullets and follow-up 1's `xdata-moved-ranks-fall.md`
 pin — are repointed with them so the table and the prose agree.
+
+**Correction to the sentence above, made at the #885 merge: it named three
+places and the tree carried two.** Finding 6's third and fourth bullets were
+repointed to `:383`/`:395`; **follow-up 1's `xdata-moved-ranks-fall.md` pin still
+read `:331` in this note's own tree**, which was the pre-#889 value the same note
+calls stale two paragraphs up. It reads `:395` now, and the `#885` merge note
+below carries the third repointing. The claim was not "not found by this method"
+— it was checked and the check came back short, which is the only kind of
+correction §4a-4d is for.
 
 **Neither the tool's figures nor this table's verdicts move with any of it**,
 and that is the shape of the defect rather than a coincidence: a citing line is
@@ -880,6 +1060,22 @@ these merges makes. `144` markdown files read becomes `145`.)*
    carries them was new to the census and the tool that would have said so is
    not in any gate. That is this file's own argument — *no checker* — costing
    two pins, and it is the strongest evidence in it for a supersession marker.
+   **And finding 8's two are a fourth kind again, and the only kind where no
+   tree is wrong at any point.** Taken together the eight `> 300` pins are one
+   follow-up with four causes: #850's four, #888's two and #885's two all →
+   `:588`, with
+   [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):415 and `:427` →
+   `:584-585`, and the two `:392` pins named in
+   [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md):622 and
+   [`../findings.md`](../findings.md) §69 → `:588`, which is the same target the
+   other six name. #850 is the change that made four of them stale and the
+   change that would have caught them; #890's repoint is the change that made
+   the next two stale *after* they had been written correctly; and #885's merge
+   added the last two against a `:392` that was right on the tree it was written
+   on. It is a useful measurement rather than a defect: one merge moved a line
+   and left four sentences naming where it was, a second moved it again and left
+   two more born wrong, and a third branch then wrote two more against the same
+   number without any of the three trees being wrong.
 2. **The wider `.py:NNN` class** — 373 occurrences, 229 targets, 34 files, on the
    measurement above. It is not owned by this census, not by #870 (which is
    `registers.yaml`'s six `xdata_register_map.py` pointers), and not by
@@ -1067,6 +1263,178 @@ re-reading a write-up catches.
 wider `.py:NNN` class is not re-run, and #890's commit adds no `test_*.py:NNN`
 pin, so it cannot move that figure either. The re-open condition and the ten that
 record another line are unchanged, and the argument of *Why no checker* stands.
+
+## The `#885` merge, 2026-09-26
+
+*(This section records the tree `#885` merged into on its own, before #888's two
+pins were in it, and it is kept whole. Every headline figure in it is lower
+than the tree the section below this one measures — two occurrences, one file,
+one spelling, one target and two resolving pins short of it — because the two
+merges added four occurrences between them rather than because anything here is
+in dispute; the correction under the transcript above is where that is taken
+back.)*
+
+**Two figures moved, and the cause is #885's two citations rather than anything
+either merge did to the class.** #885's merge added two occurrences of one
+spelling — `ec/tools/test_xdata_cluster_names.py:392`, once in
+[`../findings.md`](../findings.md) §69 and once in
+[`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md):446 (the table
+above re-registers it at `:622`) — and that
+is the whole of it in occurrences: **71 pins, 25 files, 45 spellings, 41 targets,
+55 resolves,
+16 declined, 5/11/9/6/24** over 145 markdown files, against 69/24/44/40/53/16/
+5/11/9/6/22 on `main`. Occurrences, files and `resolves` each go up by two over
+`main` and `declined` is untouched. Both counts were run
+rather than derived: the tool on the merged tree and on a clean `origin/main`
+worktree, which prints main's 69/24/44/40 exactly.
+
+> **Correction to the two paragraphs below, at the tree this merge actually
+> lands in, and it is the one place this file's own re-measure was wrong twice
+> over.** This note originally read `44` spellings and `40` targets, on the
+> reasoning that `main` already counted both the `:392` spelling and its target
+> so neither could move. That is true of the tree #885 merged into and false of
+> this one, and the reason is #890: its +25 repoint made `main` name
+> `ec/tools/test_xdata_cluster_names.py:417` and `:412-414` where #885 still
+> names `:392`, so the merged tree carries **both** sets — one more spelling and
+> one more target than either side had. The same thirty lines moved `:392`
+> itself from the §2b comment #885 read there to `decreased, {},`, so the second
+> paragraph's `comment` 9 → 11 is really `other` 22 → 24, and `assertion` stays
+> at 11 because `:392` is not an assertion on either tree. **#885 was right for
+> the tree it measured and this is the record of that tree**, left per §4a-4d.
+
+**The two land on `other`, and that is the finding.** `other` goes 22 → 24 and
+`assertion` stays at 11, because `:392` is `decreased, {},` on this tree — the
+last line of the assertion holding that no address's `write` decreases — and the
+`> 300` assertion is at `:588`. **#885's own write-up predicted both of its pins
+would carry and that prediction was right for the tree it was written on**, where
+`:392` *was* the `assertGreater`. Finding 8 records this. It is the second time
+this file has found stale pins and the first time it has found two that were
+correct when written, which is the sharper case: **a merged tree cannot tell a
+pin that was always wrong from one a concurrent merge made wrong**, and a checker
+built on either would have to guess. The verdict column here records the cause as
+well as the verdict for that reason, and the re-open condition is unchanged —
+what would make a checker writable is a supersession marker, not a smarter
+resolver.
+
+**What is deliberately not re-measured here, and why.** The wider `.py:NNN` class
+— 373 occurrences, 229 targets, 34 files — is not re-run, for the reason the
+#850/#887 note above gives: it was measured with a scratch definition that is not
+committed, so re-deriving it would publish a *different* measurement under the
+same name. **#885's two new pins do not move it in any case**, because both name
+a `test_*.py`, which is the class that wider census excludes.
+
+**The `SELF_MODULES` exclusion did its job again, and over a figure that had
+moved twice.** The census's committed-tree figure is `71` here and `69` on
+`main`, and the `50` that collided with §2b is neither of those — it is the
+figure the suite landed with, on the tree of #887's own merge.
+`check_doc_figure_pins.py`
+was re-run on the merged tree rather than carried over and reads
+**18 figure(s), 18 measured held, 0 measured unheld** over
+**190 literal(s) inside a check** — the same run `main` gives, and both figures
+are in the exclusion's own shadow, which is the point of an exclusion rather than
+of the number.
+
+**What the merge did to this table's own citing column, which is a further
+repointing and the one the census cannot see.** #900's commit landed between
+this branch and `main` and moved two citing lines this file names, without moving
+one pin — the same shape as the exclusion's price named in the `#891` note above,
+paid again. `--verbose` re-run on the merged tree gives
+[`../findings.md`](../findings.md):**8790** where this file said `8702` and
+[`../../tools/README.md`](../../tools/README.md):**159** where it said `157`, and
+gives `xdata-moved-ranks-fall.md` at `404`/`416` rather than the `383`/`395`
+`main` had, so the
+`:331`/`:343` this branch repointed those two to are superseded rather than
+contradicted. All three are corrected in place, everywhere this file names them;
+the
+`#900` transcript correction from `142` to `143` is recorded in the blockquote at
+the head of this file.
+
+**Each side's repointing was right for the tree it measured, and this is the
+second time this file has had to say so about a line number.** #885 read
+`331`/`343` off a tree where those were correct; #900 read `383`/`395` off a tree
+where those were; **#890's twenty-five lines into that write-up put them at
+`404`/`416`, and that is what the merged tree reads** — the third repointing of
+the same pair, and the reason the pair *did* move again where the `#900` merge
+note below expected it not to is that #885's forty-one lines all land below
+`:395` while #890's land above it. That is an accident of where the two
+branches' insertions fell, not a
+property of either. **The direction of the accident is the point, and it is the
+one thing here that flipped:** on the tree #885 measured, #900's concurrent
+change was harmless to this pair, and nothing in the tree would have said so if
+it had not been; on the tree this merge lands in, #890's concurrent change moved
+the pair a third time, and the sentence two paragraphs up that predicted it would
+not is corrected above. **Nothing mechanical in either tree distinguishes the two
+cases** — the same class of blindness finding 8 is about, with the direction
+reversed.
+
+## The `#888` × `#885` merge, 2026-09-26
+
+**Two merges landed together, four pins came with them, and every headline figure
+is the sum of the two sections above rather than a third cause.** The run on the
+merged tree is **73 pins, 26 files, 46 spellings, 42 targets, 57 resolves, 16
+declined, 5/11/9/6/26 over 146 markdown files read**, against 71/25/45/41/55/16/
+5/11/9/6/24 over 145 on either side alone. **The four additions are disjoint** —
+#888's two `test_xdata_cluster_names.py:563` in
+[`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md) and
+#885's two `ec/tools/test_xdata_cluster_names.py:392` in
+[`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) and
+[`../findings.md`](../findings.md) §69, two new files between them — so no
+spelling and no target is the other's and each count moves by the sum rather
+than by an overlap neither merge could see coming.
+
+**The two sets of new rows are defective for opposite reasons, and the table
+counts them apart for that reason.** #888's two were correct on the tree they
+were written on and #890's repoint made them wrong here (finding 7); #885's two
+were correct on *their* tree and a branch that had already moved the line landed
+beside them without either tree being wrong (finding 8). **The heading of that
+section moves from eleven to thirteen, and the lead paragraph with it**, because
+neither merge had alone had all four of the rows the other added. **Nothing in
+findings 1–6 changed verdict**, and the two new items are on different lines in
+different files, so there is no re-reading to do.
+
+**The carry count is 32 for the second time running, and that is the part worth
+sitting with.** `main` had 32 carrying rows and eleven that did not. The two
+merges between then and now added four rows and none of them carries, so the
+class is four pins larger and the defective share of the resolving pins larger
+still — 13 of 57 against 11 of 55. **A merge that adds two citations and moves
+the defect count by two is what both of these did**, and it is the argument the
+`#888` section made for the opposite case, arriving anyway.
+
+**What the merge did to this table's own citing column, which is a further
+repointing and the one the census cannot see.** `--verbose` re-run on the merged
+tree gives **`:9028`** for the `> 300` pin in [`../findings.md`](../findings.md)
+§69 and **`:622`** for the one in
+[`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md), against the
+`8793` and `446` each side's own table carried, and both are re-registered
+above. The `xdata-moved-ranks-fall.md` pair is **not** moved
+a fourth time: `415`/`427` is what the merged tree reads, the same value the
+#888 × #890 merge re-registered, because #885's forty-one lines into that write-up
+all land below them — the same accident of where the branches' insertions fell
+the `#885` section above describes, and it held this time.
+
+**What is deliberately not re-measured here, and why.** The wider `.py:NNN` class
+— 373 occurrences, 229 targets, 34 files — is not re-run, for the reason the
+#850/#887 note gives: it was measured with a scratch definition that is not
+committed. **Neither merge's new pins can move it in any case**, because all four
+name a `test_*.py`, which is the class that wider census excludes. That is a
+fact about what the two branches added, not a re-run, and the difference is the
+reason it is written here as its own paragraph.
+
+**The `SELF_MODULES` exclusion did its job a fourth time, over a figure that has
+now moved three times.** The census's committed-tree figure is `73` here, `71` on
+either side alone, `69` at the #850 merge and `50` when the suite landed, and
+`check_doc_figure_pins.py` was re-run on the merged tree rather than carried
+over: it reads **18 figure(s), 18 measured held, 0 measured unheld** over
+**190 literal(s) inside a check**, the same run `main` gives. The suite's own pin
+in `ec/tools/test_census_test_line_pins.py` carries a comment saying which
+addition moved each figure, and the shape split is the fourth one it has had to
+follow.
+
+**The verdict is unchanged and so is the re-open condition.** Thirteen pins do
+not carry and ten record another line, the defect is still entirely in the
+line-*content* half, and the supersession records are still unmarked prose in
+eight of ten shapes. Nothing here moves the argument, and nothing here is a
+reason to soften it.
 
 
 Submitting anything upstream is unaffected: this issue touches no driver and no
