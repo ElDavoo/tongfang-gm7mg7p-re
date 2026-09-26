@@ -130,7 +130,7 @@ Recomputing the census side from the committed
 1 1 1 1 1 1 2 2 4 5
 ```
 
-byte-identical to `xdata-moved-ranks-fall.md:199` and `../findings.md:7989`.
+byte-identical to `xdata-moved-ranks-fall.md:199` and `../findings.md:7990`.
 The flipped side is 94 keys and the census side 439, both far above the floor,
 which is why neither can move. The four `deciles` reads quoted in
 [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) are over
@@ -181,8 +181,11 @@ than a retraction, because §4's own figures were never wrong.
 
 **2. "All 14 cases in `--self-test`" understates the suite by eleven.** There
 were **25** cases before this branch and **30** after. The finding the count
-was attached to holds regardless: none of the 25 reached a size distribution,
-which is the whole of why the stretch was never noticed.
+was attached to holds regardless, in the narrower form §2 above states: none of
+the 25 **asserted on** a size distribution, which is why the stretch survived.
+The stronger claim is §2's, not this one: the A/B fixture did not merely reach
+one, it printed the stretched string beside a real read on a green run, and
+read as a distribution doing it.
 
 ## What is left open
 
