@@ -348,6 +348,31 @@ line is what read them. `git worktree remove /tmp/xdata-old` ran after, and
   with the line that moved. Both sides of that split are deliberate, and the
   census distinguishes them: these two **carry**, those four do not.
 
+*(Re-measured at the #888 × #890 merge, 2026-09-26: **the clause above is wrong,
+and the split it describes is no longer a split.** #890 put 25 lines into
+`ec/tools/test_xdata_cluster_names.py` above the floor, which put
+`assertGreater(len(moved), 300)` at **`:588`** and turned `:563` into a fixture
+row, `("0x0843", ("84", "42"), ("126", "0"))):`. So §3's pin and the one in the
+bullet above both now name a line carrying neither the floor nor anything else
+of this issue's, and **neither carries**. The sentence stays as written per
+`docs/findings.md` §4a-4d because it was true of the tree this issue was written
+on and the line moved underneath it, not because it was re-checked and found
+right. [`test-line-pin-census.md`](test-line-pin-census.md) measures the same two
+rows the same way: both **does not carry** † at shape `other`, in its per-pin
+table, in its finding 7 — "the pins were correct when written and the line moved
+underneath them" — and in its follow-up 1, where they are "a third kind of
+follow-up again": #850's four were already stale when that census found them,
+whereas these two were **correct** when #888 wrote them and #890's repoint made
+them stale in this very merge, so nothing in #888 could have known. **All six
+read `does not carry`; the other four are just older.** Neither pair is
+repointed here, and that is the census's decision rather than an omission: its
+§7 rule is that the merge which makes citing prose stale does not repoint it, the
+repointing lives in that file's follow-up list, and both pairs name the same
+target, `:588`. That line number is written bare here for the reason
+[`../findings.md`](../findings.md) §65 gives: a correction that added a 46th
+spelling and a twelfth `assertion` to the census it is correcting would move two
+of the very figures it is reporting.)*
+
 ## 6. What this opens
 
 - **`write_census()` could take an optional key per row it is told to repeat**,

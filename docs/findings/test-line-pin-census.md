@@ -315,8 +315,8 @@ the half this table exists to record.
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15 | `ec/tools/test_xdata_cluster_names.py:417` | by-path | comment | **does not carry** |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):415 | `test_xdata_cluster_names.py:417` | by-name | comment | **does not carry** |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):427 | `test_xdata_cluster_names.py:412-414` | by-name | comment | **does not carry** |
-| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):210 | `test_xdata_cluster_names.py:563` | by-name | other | **does not carry** † |
-| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):321 | `test_xdata_cluster_names.py:563` | by-name | other | **does not carry** † |
+| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):212 | `test_xdata_cluster_names.py:563` | by-name | other | **does not carry** † |
+| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):323 | `test_xdata_cluster_names.py:563` | by-name | other | **does not carry** † |
 | [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):28 | `ec/tools/test_xdata_cluster_names.py:833` | by-path | other | carries |
 | [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):132 | `test_xdata_cluster_names.py:149-153` | by-name | def test_ | carries |
 | [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):149 | `test_xdata_cluster_names.py:845-851` | by-name | def test_ | carries |
@@ -495,8 +495,8 @@ and nothing in the list below items 1–6 changed verdict.)*
    below says why, and the re-open condition is unchanged.
 7. **NEW, and the only entry here a merge produced rather than found.** **Both
    pins are one line, written twice, in one file** —
-   [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):210
-   and `:321`, both naming `test_xdata_cluster_names.py:563` for
+   [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):212
+   and `:323`, both naming `test_xdata_cluster_names.py:563` for
    `assertGreater(len(moved), 300)`. **On #888's tree that was correct**: the
    floor was at `:563` there, and §5 of that write-up goes at some length into
    why a file new to the census must cite a line that holds the claim rather
@@ -862,8 +862,8 @@ these merges makes. `144` markdown files read becomes `145`.)*
    four `> 300` pins of finding 6 → `:588`, with
    [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):427 → `:584-585`;
    and the two `:563` pins of finding 7 →
-   [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):210
-   and `:321` → `:588`, which is the same target the other four name.**
+   [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):212
+   and `:323` → `:588`, which is the same target the other four name.**
    **Each is one line in one file, which is why they are a follow-up and not a
    merge** — and the `> 300` four is a different kind of follow-up from the rest,
    because #850 is the change that made them stale and #850 is the change that
