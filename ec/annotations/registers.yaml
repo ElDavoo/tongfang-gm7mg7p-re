@@ -3001,9 +3001,9 @@ registers:
       work (moves 838 occurrences across 211 addresses); the reading is
       complete without it." Both describe a tool already fixed and a census
       already regenerated. The == exclusion is present: xdata_register_map.py's
-      store_target() is at :505, ASSIGN at :165, the rejection at :524-525,
-      the reason for it in the function's own comment at :515-516 and the 838
-      tree-wide count at :523; the module docstring states the rule in the
+      store_target() is at :1730, ASSIGN at :377, the rejection at :1753-1754,
+      the reason for it in the function's own comment at :1750-1751 and the 838
+      tree-wide count at :1752; the module docstring states the rule in the
       past tense at :64-75 and credits issue #178, which merged before PR
       #225. The committed row at ec/annotations/xdata-registers.csv:662 is 14
       read, 2 write, 0 read+write, 1 passed-to-call -- the inverse of those
@@ -3014,7 +3014,7 @@ registers:
       buckets and the self-test's "hand-checked direction oracle" at
       :1490-1496 fails if a generated row parts company with it; --check and
       --self-test both exit 0 on main, and the committed ORACLE comment at
-      :258-259 records named_in_tree moving 131 -> 146 with issue #180's
+      :757-758 records named_in_tree moving 131 -> 146 with issue #180's
       entries, which are the ones this block is about, and 146 -> 150 with
       issue #183's four since. The 7 EC-side static_refs above are
       register_ref_table.py's opcode-site count and the 17 is the census's
@@ -3033,11 +3033,12 @@ registers:
       bank0/D289.c:18, not the :18 and :17 quoted above; issue #752's rewrite
       of the D091.c header moved them, and the committed correspondence says
       so at ec/annotations/xdata-0860-census-sites.csv:6-7. HAND_CHECKED
-      ["0x0860"] is at ec/tools/xdata_register_map.py:1399, not :359, and the
+      ["0x0860"] is at ec/tools/xdata_register_map.py:1557, not :359, and the
       hand-checked direction oracle that pins those buckets -- the loop over
-      HAND_CHECKED and the check() that reports it -- is at :3606-3619, not
-      :1490-1496; :359 is now the ASSIGN tuple and :1490 is inside a comment
-      about pair accessors. Six more of the pointers the 2026-09-24 block
+      HAND_CHECKED and the check() that reports it -- is at :4073-4085, not
+      :1490-1496; as of this addendum :359 was the ASSIGN tuple and :1490 a
+      comment about pair accessors, both of which have moved since. Six more
+      of the pointers the 2026-09-24 block
       above quotes are stale for the same reason and are NOT corrected here:
       :165 (ASSIGN, now :359), :505 (store_target(), now :1572), :515-516 and
       :524-525 (the `==` rejection and the reason for it, now :1593-1595
@@ -3058,16 +3059,51 @@ registers:
       files in scope -- the xdata-registers.csv row in
       xdata-086x-dispatch.md's three live cells, and the D281.c/D289.c line
       values in that page's site table and its HAND_CHECKED comment. The
-      third, the :1399 and :3606-3619 source-file pointers, is held by
+      third, the :1557 and :4073-4085 source-file pointers, is held by
       nothing anywhere: a pointer into a source file rather than a generated
       CSV is one of the cases that tool's own docstring lists under what it
       does not check, and holding it needs a prose-to-source-line checker
       that does not exist yet. The instances in THIS file are held by
-      nothing either, because every live sentence in this note is a
-      CORRECTION paragraph and a rule that skipped corrections would check
-      nothing here. XDATA_0860 stays present-untested. No status moves, no
-      count moves, and no CSV or export was regenerated: every input here is
-      a committed file and no EC, hardware or Windows machine is involved.
+      nothing either. That was originally given as because every live
+      sentence in this note is a CORRECTION paragraph and a rule that
+      skipped corrections would check nothing here; **corrected
+      2026-09-26, issue #870: that is not the reason** -- the file is in
+      neither `bodies` nor `ROW_SCOPE` of ec/tools/check_citation_lines.py,
+      so it is not walked at all, and its one pointer rule, POINTER,
+      matches a `.csv:NNN` and nothing else, so a `.py` pointer is outside
+      it whatever the supersession vocabulary says. Supersession is
+      not the reason and in fact never fires on this note: a folded scalar
+      holds no blank lines, so this whole entry is ONE paragraph opening
+      `- name: XDATA_0860`, and the *** CORRECTION marker sits inside that
+      paragraph rather than at its opening. XDATA_0860 stays
+      present-untested. No status moves, no count moves, and no CSV or
+      export was regenerated: every input here is a committed file and no
+      EC, hardware or Windows machine is involved.
+      *** ADDENDUM 2026-09-26 (issue #870), see
+      docs/findings/xdata-0860-note-live-pointers.md. The six the 2026-09-25
+      addendum above names as stale and uncorrected are repointed in place
+      now, each measured against the committed tree rather than carried over
+      from the issue that named them: :165 (ASSIGN) -> :377, :505
+      (store_target()) -> :1730, :524-525 (the `==` rejection) -> :1753-1754,
+      :515-516 (the reason for it) -> :1750-1751, :523 (the tree-wide 838) ->
+      :1752, and :258-259 (the named_in_tree record) -> :757-758 in the ORACLE
+      at :638. The block's :64-75 still resolves and is still not in that
+      list. This is not the correction-of-a-correction the addendum above
+      declined: those six are the 2026-09-24 block's own present-tense
+      claims, outside the quotation marks that hold its superseded direction
+      split, so repointing one changes no figure and contradicts nothing.
+      What each treatment was, and why: the six and this addendum's own two
+      source-file pointers (:1399 -> :1557, :3606-3619 -> :4073-4085) were
+      repointed, being live claims that had drifted; the four corrected by
+      record above (:662, D281.c:18/:17, :359, :1490-1496) were left as they
+      stand, because 4a-4d wants that record to stay visible and they are
+      wrong on purpose; and the 2026-09-25 sentence's own measurements stand
+      as a dated record of what was true that day, superseded here rather
+      than edited. The six remain hand-maintained, like this note's other
+      pointers: no rule holds a `.py` pointer and the tool that would is
+      follow-up 1 in prose-line-citations-held.md, not this issue. No status
+      moves, no count moves, no CSV or export regenerated, and no EC,
+      hardware or Windows machine involved.
 
   - name: XDATA_0862
     addr: 0x0862

@@ -78,18 +78,36 @@ quietly.
 
 **What this does not check, which is as much of the point:**
 
-  * *`registers.yaml`.* Every live sentence in the `XDATA_0860` note *is* a
-    `*** CORRECTION` paragraph, because 4a-4d and the 2026-09-24 block both
-    require the superseded figure to stay as text. A rule that skipped
-    corrections would check nothing there; a rule that did not would redden on
-    the quoted predecessor. So those three cells are fixed by hand with a dated
-    addendum, and `docs/findings/prose-line-citations-held.md` records that no
-    rule covers them.
+  * *`registers.yaml`.* Two measured reasons, and the correction-skip is
+    neither of them: the file is in neither `bodies` nor `ROW_SCOPE`, so no
+    rule walks it at all, and `POINTER` below is a `.csv:NNN` and nothing
+    else, so a `.py` pointer is outside the one pointer rule whatever the
+    vocabulary says. `supersession()` never fires on that note in the first
+    place -- a folded scalar holds no blank lines, so the whole `XDATA_0860`
+    entry is ONE paragraph opening `name: XDATA_0860` and its
+    `*** CORRECTION` marker sits mid-paragraph rather than at the opening.
+    Scoping the file in was measured rather than assumed, and it goes red at
+    once: it reports `xdata-registers.csv:662` at `registers.yaml:3008`, the
+    `0x077E` row. That is the 2026-09-24 block's own live prose -- its quoted
+    run names the CSV with no row number and holds no pointer -- and the
+    2026-09-25 addendum already records the figure as superseded in that same
+    paragraph (`:817` is the `0x0860` row), so a rule scoped to the file would
+    redden on a pointer a record already covers: this rule's own stated reason
+    for the skip, on a file it had only been argued about. The second half is
+    structural: Rule 3 scopes a `(file, csv, subject, column)` tuple, and the
+    three other CSVs this file cites would each report no declared subject.
+    So the paragraph-wide skip stays and the file stays out of `ROW_SCOPE`,
+    and what is left unheld is fixed by hand:
+    the three cells #801 corrected by record, and the six source-file
+    pointers #870 repointed in place -- the `store_target()` definition,
+    `ASSIGN`, the `==` rejection, the reason for it, the tree-wide 838 and the
+    `named_in_tree` record. `docs/findings/xdata-0860-note-live-pointers.md`.
   * *A pointer into a source file*, as against one into a generated CSV:
-    `registers.yaml:3013`'s `:359` and `:1490-1496`, and the `:1399` that
-    addendum writes. That is a different tool with its own false-positive
-    surface; it belongs beside `citation_frames.py`, and those cells are fixed
-    by hand and named as a follow-up rather than promised here.
+    `registers.yaml:3013`'s `:359` and `:1490-1496`, and the `:1557` and
+    `:4073-4085` that addendum writes. That is a different tool with its own
+    false-positive surface; it belongs beside `citation_frames.py`, and those
+    cells are fixed by hand and named as a follow-up rather than promised
+    here.
   * *Whether a cited line still holds the right code.* `check_site_census.py`
     reads the decompile through the census and does that; this holds the
     pointers, so the two together cover the chain and neither re-derives the
