@@ -22,6 +22,24 @@ and a hard-coded table. No capture is opened, no EC is opened, no register is
 read back, and **no new hardware observation is needed to close this issue** —
 so nothing here is deferred to a human at the machine.
 
+> **Addendum, 2026-09-26, issue #811 — the sentence above is now true of the
+> whole clause, and it was true of only its second half when written.** "Reads a
+> committed firmware image, **a committed annotation file** and a hard-coded
+> table" was accurate about the image and about the table, and wrong about the
+> middle: `self_test()` had exactly one `open()`, on the image, and the two
+> `.md` files naming where `SELF_TEST` and `REL_SITES` were transcribed from
+> sat in comments as *provenance*. Left standing per §4a-4d rather than edited,
+> because it is right now and the correction is the record. The mode re-reads
+> both files — the two windows and §8's four decodes — and reconciles them, so
+> the `self-test FAILED:` line no longer names a file the run never opened. The
+> patch this file describes needed **no change**: its header's "the two hand
+> transcriptions in `ec/annotations/`" and its `case` arm's "It reads a committed
+> image and a committed annotation file" both become true the moment the code
+> reads the files, so **a re-cut should not go looking for a correction to
+> make**. What did *not* become true is any claim that CI runs this: it still
+> does not, and the paragraph above still governs that. See
+> [`disasm8051-oracle-from-the-annotations.md`](disasm8051-oracle-from-the-annotations.md).
+
 ## The gap, and why it is load-bearing rather than tidiness
 
 `ec/tools/test_disasm8051.py:3-6` opens by naming this mode as the oracle it

@@ -10072,3 +10072,40 @@ check that the change moved the question being asked rather than the answer.
 that names no claim is now named in `--verbose` and counted on a line of its
 own. The write-up is
 [`testdata-addr-column-claim.md`](findings/testdata-addr-column-claim.md).
+
+## 77. The `--self-test` oracle is re-read from the two files it cites, and the gate comment that ships with a re-copy is now true (2026-09-26, issue #811)
+
+`disasm8051.py --self-test` is the oracle for the two opcode tables, and it had
+exactly one `open()` — on the firmware image. The two `.md` files naming where
+`SELF_TEST` and `REL_SITES` were transcribed from sat in **comments**, so
+correcting `charge-profile-flow.md` left the literals holding the old text, the
+mode stayed green, and the `self-test FAILED:` line pointed a human at two files
+the run had never opened. `ec/tools/disasm8051_oracle.py` closes that inside the
+mode, because the prepared gate arm runs `python3 "$tool" --self-test` and
+nothing else — a separate tool would have left the same sentence false.
+
+The 18 window rows and 4 branch sites are read back out of the committed
+markdown. The two files are in two different listing dialects —
+`charge-profile-flow.md` in the decoder's own style, `bank-call-audit.md` §8
+quoting `r2 -a 8051` verbatim with its box-drawing glyphs — so there is no text
+normaliser: the windows compare on the text, the branch sites on **bytes and
+target**, which are the same in both. **The vacuity guard is the point**: a
+window covering no parsed row, a file with no fence and a `REL_SITES` address
+absent from §8 are all refused, and the windows compare by address rather than
+by position, because pairing the two lists in order reports a *removed* row as
+agreement and an *added* one as a cascade of disagreements one address to the
+right.
+
+**Not claimed.** The 11 `BIT_SITES` and the `TEXTBOOK_BIT_SITES` pair have no
+committed transcription to reconcile against — `grep -rn "0xEDA4\|0xeda4"
+--include=*.md ec/annotations/` returns nothing — so they are **not found by this
+method**, which is `registers.yaml`'s own wording and not "absent". The `0xB330`
+block is printed as a *report* (6 transcribed rows the table has never carried),
+not added. `docs/ci/agent-gates-disasm8051-self-test.patch` needed **no change**
+and `test_agent_gates_patches.py` needed none: both sentences the patch carries
+become true the moment the code reads the files, so a re-cut should not go
+looking for a correction to make. No gate runs any of this until a human applies
+that patch, and no capture, EC or register read back is involved anywhere in it.
+
+The write-up is
+[`disasm8051-oracle-from-the-annotations.md`](findings/disasm8051-oracle-from-the-annotations.md).

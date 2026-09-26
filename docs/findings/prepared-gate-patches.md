@@ -308,3 +308,15 @@ passes `--work "$scratch"`. Both halves were checked against that mutation
 the only one of fifteen that fails.
 
 Written-up in [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md).
+
+**2026-09-26, issue #811 — this patch still needs no edit, and that is a
+result, not an omission.** The mode was reading a committed image and a
+hard-coded table while the patch's header and its `case` arm both said it also
+read the two hand transcriptions in `ec/annotations/`. `self_test()` now
+re-reads them, so both sentences became true of the code without the patch
+changing: its two hunks, its `@@` line counts and its `ArmRetentionTests.REQUIRED`
+string (which sits *below* the comment, at the arm body) are all still correct,
+and `tools/test_agent_gates_patches.py` is still green unchanged — which is
+itself the evidence the patch was not disturbed. **A future re-cut should not go
+looking for a correction to make here.** Read with
+[`disasm8051-oracle-from-the-annotations.md`](disasm8051-oracle-from-the-annotations.md).

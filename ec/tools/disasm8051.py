@@ -33,6 +33,7 @@ Usage:
     python3 disasm8051.py ../firmware/GMxMGxx_11.800 --at 0x23478 --converge
 """
 import argparse
+from pathlib import Path
 import sys
 
 # Instruction length for every opcode. Rows of 16, opcode 0x00 first.
@@ -341,7 +342,8 @@ def converges_from(d: bytes, off: int, back: int = 24) -> tuple:
 # Transcribed from ec/annotations/charge-profile-flow.md, which took them
 # from `r2 -a 8051` against a make_bank_image.py bank-0 image. If a change
 # to the tables above breaks one of these, the tables are wrong, not the
-# listing.
+# listing -- and that listing is re-read on every run rather than only
+# cited here, so a corrected one fails the mode instead of outliving it.
 SELF_TEST = [
     (0xB12C, [
         (0xB12C, "mov  dptr,#0x078e"),
@@ -369,10 +371,13 @@ SELF_TEST = [
 
 # Relative-branch sites hand-decoded with `r2 -a 8051` against a
 # make_bank_image.py bank-0 image, as (file offset, runtime address, bytes,
-# target); the transcripts are in ../annotations/bank-call-audit.md 8. Two are
-# from the SELF_TEST windows above and two are backward branches, which those
-# windows do not contain -- 0xFE24 doubles as the last-byte check, since
-# reading its displacement from d[i + 1] would give 0xFE08 rather than 0xFE0F.
+# target); the transcripts are in ../annotations/bank-call-audit.md 8, and
+# that section is re-read on every run too -- on bytes and target, never on
+# the text, because §8 quotes r2 verbatim where charge-profile-flow.md writes
+# in this module's own style. Two are from the SELF_TEST windows above and two
+# are backward branches, which those windows do not contain -- 0xFE24 doubles
+# as the last-byte check, since reading its displacement from d[i + 1] would
+# give 0xFE08 rather than 0xFE0F.
 REL_SITES = (
     (0x0B2EE, 0xB2EE, b"\x80\x6e", 0xB35E),
     (0x0B137, 0xB137, b"\x20\xe0\x07", 0xB141),
@@ -422,14 +427,44 @@ TEXTBOOK_BIT_SITES = (
 )
 
 DEFAULT_FIRMWARE = "../firmware/GMxMGxx_11.800"
+DEFAULT_ANNOTATIONS = "../annotations"
 BANK0_FILE_OFFSET = 0x08000
 
 
-def self_test(fw_path: str) -> int:
+def self_test(fw_path: str, annotations: str = None) -> int:
     d = open(fw_path, "rb").read()
     # Same stitching make_bank_image.py does for bank 0, in memory.
     image = d[0:0x8000] + d[BANK0_FILE_OFFSET:BANK0_FILE_OFFSET + 0x8000]
     bad = 0
+    # The two files SELF_TEST and REL_SITES were transcribed out of, re-read
+    # here, so an edit to either is a red run rather than a literal that has
+    # quietly stopped matching its own provenance. The import is inside this
+    # function because eleven tools under ec/tools/ import the module above for
+    # its opcode tables and none of them wants a --self-test-only dependency on
+    # a markdown parser; the sibling is resolved off __file__ rather than off
+    # the cwd, so the gate's cwd is irrelevant here exactly as it is for
+    # main()'s firmware default.
+    here = Path(__file__).resolve().parent
+    if str(here) not in sys.path:
+        sys.path.insert(0, str(here))
+    import disasm8051_oracle as oracle
+
+    reconciled, drift, untranscribed = oracle.reconcile(
+        annotations or here / DEFAULT_ANNOTATIONS, SELF_TEST, REL_SITES)
+    for problem in drift:
+        bad += 1
+        print(f"  !   {problem}")
+    if untranscribed:
+        lo, hi, n = untranscribed
+        # Reported, not a finding: a third block the table has never carried,
+        # so nothing above checks it and the line says so rather than letting
+        # "the two windows" read as "the file".
+        print(f"  --  {n} rows at 0x{lo:04X}..0x{hi:04X} in "
+              f"{oracle.CHARGE_PROFILE_FLOW} are transcribed and are not in "
+              f"SELF_TEST, so nothing here checks them")
+    print(f"  {'ok ' if not drift else '!  '} {reconciled} transcribed rows in "
+          f"SELF_TEST and REL_SITES re-read from ec/annotations/ and reconciled")
+    print()
     for start, expected in SELF_TEST:
         got = [(a, text) for a, _, text in
                decode(image, start, len(expected), start)]

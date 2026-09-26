@@ -774,7 +774,7 @@ the half this table exists to record.
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):128 | `ec/tools/test_grade_0751_isolation.py:4356` | by-path | assertion | carries |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):139 | `windows/tools/test_ec_watch.py:1134` | by-path | other | carries |
 | [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md):68 | `ec/tools/test_citation_gap_scan.py:109` | by-path | assertion | carries |
-| [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md):27 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
+| [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md):45 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):72 | `ec/tools/test_xdata_cluster_names.py:799` | — | — | **declined** (fenced) |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):73 | `ec/tools/test_xdata_cluster_names.py:799` | — | — | **declined** (fenced) |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):74 | `ec/tools/test_xdata_cluster_names.py:481` | — | — | **declined** (fenced) |
