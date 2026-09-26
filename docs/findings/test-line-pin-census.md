@@ -37,7 +37,7 @@ $ python3 ec/tools/census_test_line_pins.py
 69 pin(s) in 24 markdown file(s): 44 distinct spelling(s), 40 distinct resolved target(s)
   53 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 16 declined
   5 def test_, 11 assertion, 9 comment, 6 blank, 22 other (of the pins that resolve)
-  read 143 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 35 test file(s) in it
+  read 144 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 35 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -144,7 +144,7 @@ duplicate.
 spelling rather than a mistake: a span is written from the line *above* the thing
 it is about. `ec/tools/test_disasm8051.py:3-6` is a module docstring that opens
 on its own blank line; `ec/tools/test_grade_0751_isolation.py:16-20` is an import
-block the same way; and `test_xdata_cluster_names.py:820-826` is a span that
+block the same way; and `test_xdata_cluster_names.py:845-851` is a span that
 begins on the blank above `def test_every_row_records_the_evidence_for_its_name`.
 **A checker for this class has to accept a blank line as a legitimate target**,
 which is not a rule anyone writes down twice.
@@ -162,9 +162,9 @@ the half this table exists to record.
 | `docs/agent-pipeline.md:345` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
 | [`../findings.md`](../findings.md):4206 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** |
 | [`../findings.md`](../findings.md):4208 | `test_ec_watch.py:86-89` | by-name | other | **records another line** |
-| [`../findings.md`](../findings.md):7185 | `test_xdata_cluster_names.py:286` | by-name | assertion | **does not carry** |
-| [`../findings.md`](../findings.md):7364 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`../findings.md`](../findings.md):7425 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
+| [`../findings.md`](../findings.md):7190 † | `test_xdata_cluster_names.py:286` | by-name | assertion | **does not carry** |
+| [`../findings.md`](../findings.md):7369 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
+| [`../findings.md`](../findings.md):7430 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |
@@ -184,18 +184,18 @@ the half this table exists to record.
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):641 | `windows/tools/test_manual_fan_ctrl_probe.py:515` | — | — | **declined** (fenced) |
 | [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md):68 | `ec/tools/test_citation_gap_scan.py:109` | by-path | assertion | carries |
 | [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md):27 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):72 | `ec/tools/test_xdata_cluster_names.py:709` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):73 | `ec/tools/test_xdata_cluster_names.py:709` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):74 | `ec/tools/test_xdata_cluster_names.py:448` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):75 | `ec/tools/test_xdata_cluster_names.py:448` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):76 | `ec/tools/test_xdata_cluster_names.py:465` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):77 | `ec/tools/test_xdata_cluster_names.py:465` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):78 | `ec/tools/test_xdata_cluster_names.py:482` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):79 | `ec/tools/test_xdata_cluster_names.py:482` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):80 | `ec/tools/test_xdata_cluster_names.py:499` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):81 | `ec/tools/test_xdata_cluster_names.py:499` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):72 | `ec/tools/test_xdata_cluster_names.py:734` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):73 | `ec/tools/test_xdata_cluster_names.py:734` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):74 | `ec/tools/test_xdata_cluster_names.py:473` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):75 | `ec/tools/test_xdata_cluster_names.py:473` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):76 | `ec/tools/test_xdata_cluster_names.py:490` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):77 | `ec/tools/test_xdata_cluster_names.py:490` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):78 | `ec/tools/test_xdata_cluster_names.py:507` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):79 | `ec/tools/test_xdata_cluster_names.py:507` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):80 | `ec/tools/test_xdata_cluster_names.py:524` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):81 | `ec/tools/test_xdata_cluster_names.py:524` | — | — | **declined** (fenced) |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):177 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | **records another line** |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):181 | `ec/tools/test_xdata_cluster_names.py:448` | by-path | other | carries |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):181 | `ec/tools/test_xdata_cluster_names.py:473` | by-path | other | carries |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):189 | `test_xdata_cluster_names.py:307` | by-name | other | **records another line** |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):71 | `ec/tools/test_disasm8051.py:52` | — | — | **declined** (fenced) |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):122 | `test_disasm8051.py:52` | by-name | comment | carries |
@@ -203,31 +203,31 @@ the half this table exists to record.
 | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):25 | `ec/tools/test_check_testdata_index.py:413-415` | by-path | assertion | **records another line** |
 | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):145 | `ec/tools/test_check_site_census.py:449` | by-path | assertion | carries |
 | [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):392 | `test_xdata_cluster_names.py:54` | by-name | other | **does not carry** |
-| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):403 | `test_xdata_cluster_names.py:626-641` | by-name | other | carries |
+| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):403 | `test_xdata_cluster_names.py:651-666` | by-name | other | carries |
 | [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):433 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | carries |
 | [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):446 | `ec/tools/test_xdata_cluster_names.py:355-370` | by-path | comment | **records another line** |
-| [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md):87 | `ec/tools/test_xdata_cluster_names.py:448` | by-path | other | carries |
+| [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md):87 | `ec/tools/test_xdata_cluster_names.py:473` | by-path | other | carries |
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):20 | `ec/tools/test_xdata_cluster_names.py:339` | by-path | def test_ | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):121 | `ec/tools/test_xdata_cluster_names.py:709` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):127 | `ec/tools/test_xdata_cluster_names.py:448` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):128 | `ec/tools/test_xdata_cluster_names.py:465` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):129 | `ec/tools/test_xdata_cluster_names.py:482` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):130 | `ec/tools/test_xdata_cluster_names.py:499` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):146 | `ec/tools/test_xdata_cluster_names.py:339` | by-path | def test_ | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):155 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | **records another line** |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):324 | `ec/tools/test_xdata_cluster_names.py:563` | by-path | assertion | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):131 | `ec/tools/test_xdata_cluster_names.py:734` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):137 | `ec/tools/test_xdata_cluster_names.py:473` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):138 | `ec/tools/test_xdata_cluster_names.py:490` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):139 | `ec/tools/test_xdata_cluster_names.py:507` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):140 | `ec/tools/test_xdata_cluster_names.py:524` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):156 | `ec/tools/test_xdata_cluster_names.py:339` | by-path | def test_ | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):165 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | **records another line** |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334 | `ec/tools/test_xdata_cluster_names.py:588` | by-path | assertion | carries |
 | [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):376 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
-| [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):377 | `test_xdata_cluster_names.py:392` | by-name | comment | **does not carry** |
+| [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):377 | `test_xdata_cluster_names.py:417` | by-name | comment | **does not carry** |
 | [`xdata-green-set.md`](xdata-green-set.md):283 | `ec/tools/test_xdata_cluster_names.py:339` | by-path | def test_ | carries |
-| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15 | `ec/tools/test_xdata_cluster_names.py:392` | by-path | comment | **does not carry** |
-| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):383 | `test_xdata_cluster_names.py:392` | by-name | comment | **does not carry** |
-| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):395 | `test_xdata_cluster_names.py:387-389` | by-name | comment | **does not carry** |
-| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):28 | `ec/tools/test_xdata_cluster_names.py:808` | by-path | other | carries |
+| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15 | `ec/tools/test_xdata_cluster_names.py:417` | by-path | comment | **does not carry** |
+| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):404 | `test_xdata_cluster_names.py:417` | by-name | comment | **does not carry** |
+| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):416 | `test_xdata_cluster_names.py:412-414` | by-name | comment | **does not carry** |
+| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):28 | `ec/tools/test_xdata_cluster_names.py:833` | by-path | other | carries |
 | [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):132 | `test_xdata_cluster_names.py:149-153` | by-name | def test_ | carries |
-| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):149 | `test_xdata_cluster_names.py:820-826` | by-name | def test_ | carries |
+| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):149 | `test_xdata_cluster_names.py:845-851` | by-name | def test_ | carries |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | other | **does not carry** |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2645 | `../tools/test_xdata_cluster_names.py:68-90` | beside | blank | carries |
-| [`../../tools/README.md`](../../tools/README.md):157 | `test_xdata_cluster_names.py:303` | by-name | other | **records another line** |
+| [`../../tools/README.md`](../../tools/README.md):159 | `test_xdata_cluster_names.py:303` | by-name | other | **records another line** |
 
 **32 carry, 2 carry on the adjacent line, 9 do not carry, 10 record another line
 on purpose, 16 are declined, and none is unresolvable.** *(Those are the counts
@@ -238,6 +238,37 @@ file.)* **"carries, adjacent"** is a pin one line off the thing it names, and it
 is two of sixty-nine because this corpus writes *"is at `:1862`"* against a `def`
 on the next line. No rule can decide whether that is a pin or a typo, which is
 the first reason the judgement half is a table and not a verdict.
+
+† **Two changes to the table, 2026-09-26 (issue #890), and neither moves a
+count.** That issue put 25 lines into `ec/tools/test_xdata_cluster_names.py` at
+`:365`, which is the cascade this tool's own docstring describes — "#852 put four
+lines into `ec/tools/test_xdata_cluster_names.py` at `:291` and every `file:line`
+the tree cited into that file past `:291` went stale in the same commit,
+silently". **56 pins past that line were repointed by +25** across seven
+markdown files, and the eight rows below whose *citing* line moved (this file
+grew §2a's footnote and `xdata-moved-ranks-fall.md` grew its correction) were
+re-registered against the new lines. The verdicts, the shapes, the 69/24/44 and
+the 53/16 all come back identical, which is the check: a repoint that moved a
+count would show here first. **The `7185` this row carried was already stale on
+`origin/main` — the pin is at `7190` on a clean tree — and is corrected here
+because this branch was in the file anyway, not because it caused it.**
+
+‡ **What the #890/#900 merge moved, re-registered against the merged tree, and
+still no count.** The *cited* targets are the branch's, because #890's 25 lines
+are what moved them; the *citing* lines are the merged tree's, because neither
+side had them. Four rows re-registered: `xdata-moved-ranks-fall.md`'s second and
+third at `:352` and `:364` on the branch and `:383` and `:395` on main are at
+**`:404` and `:416`** here, and `../findings.md`'s `:7364` and `:7425` and
+[`../../tools/README.md`](../../tools/README.md)'s `:157` — stale on `main`
+before this merge, by #900's edits to those two files — are at **`:7369`,
+`:7430` and `:159`**. **The one figure the merge does move is the `read N
+markdown file(s)` line of the transcript above, `143` → `144`:** #890 added
+`docs/findings/xdata-write-direction-correction.md` and #900 added no markdown
+file at all — its `142` → `143` was a correction of a stale transcript, since
+the tool reports `143` on the tree this merge forked from as well as on `main` —
+and the new file carries no `test_*.py:NNN` pin, which is why 69/24/44/40 and
+53/16 are untouched while the denominator moved. The three prose places that
+name `tools/README.md:157` are repointed with the row.
 
 **The "carries in part" row is gone from this tree, and the argument it carried
 is not.** It was the sharpest of the three qualified values:
@@ -307,27 +338,32 @@ recorded; **four are new**, all four finding 6 and all four #850's.
    ranks intact and 366 changed"*, beside it. The sentence names neither.
 6. **NEW, and all four pins are one assertion.** **`> 300`** —
    `assertGreater(len(moved), 300)` — is at
-   [`test_xdata_cluster_names.py:563`](../../ec/tools/test_xdata_cluster_names.py)
+   [`test_xdata_cluster_names.py:588`](../../ec/tools/test_xdata_cluster_names.py)
    on this tree, and the comment it rests on, *"a regeneration that renumbers
-   nothing is not the case the identity columns exist for"*, is at `:557-559`.
+   nothing is not the case the identity columns exist for"*, is at `:582-584`.
    **#850 put 239 lines into that suite and repointed two citations — the
-   checklist's `:183` and nothing else — so four pins elsewhere still name
-   `:392` and `:387-389` for it:**
+   checklist's `:183` and nothing else — so four pins elsewhere still name a
+   line of §2b's comment for it.** They said `:392` and `:387-389` before #890
+   repointed them by +25; **they now say `:417` and `:412-414`, and they are
+   wrong in the same way for the same reason, which is that a +25 repoint moves
+   a pin without changing what it names:**
 
    - **[`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):377**
-     — `:392`, cited as *"`assertGreater(len(moved), 300)` stays at
-     [`test_xdata_cluster_names.py:392`]"*. `:392` is a comment about §2b's
-     held/unheld split.
-   - **[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15** — `:392`, cited
-     as *"whether `> 300` at `ec/tools/test_xdata_cluster_names.py:392` still says
+     — `:417`, cited as *"`assertGreater(len(moved), 300)` stays at
+     [`test_xdata_cluster_names.py:417`]"*. `:417` is a comment about the
+     guard-off pd cluster count `51` (`:392` before the repoint) and is not
+     where `> 300` is.
+   - **[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15** — `:417`, cited
+     as *"whether `> 300` at `ec/tools/test_xdata_cluster_names.py:417` still says
      what the comment beside it says it says"*.
-   - **[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):383** — `:392`, cited
-     as *"**It is the first, and `> 300` stays at `test_xdata_cluster_names.py:392`,
-     untouched.**"*
-   - **[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):395** — `:387-389`, cited
-     as *"the comment at `test_xdata_cluster_names.py:387-389` asks that a
+   - **[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):404** — `:417`, cited
+     as *"**It is the first, and `> 300` stays at `test_xdata_cluster_names.py:417`,
+     untouched.**"* — `:392` before #890's repoint
+   - **[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):416** — `:412-414`, cited
+     as *"the comment at `test_xdata_cluster_names.py:412-414` asks that a
      regeneration that renumbers nothing is not the case the identity columns
-     exist for"*. `:387-389` is three lines of the §2b comment.
+     exist for"*. `:412-414` is three lines of the §2b comment (`:387-389`
+     before #890's repoint), and the comment being quoted is at `:584`.
 
    **The first three of the four are sentences this census would have caught
    before #850 landed and did not, because nothing ran it then** — which is this
@@ -352,7 +388,7 @@ is no checker rather than a deferral:
 
 | shape | where | caught by `check_citation_lines.py`'s vocabulary? |
 |---|---|---|
-| a repoint list naming the stale value, in running prose | [`../../tools/README.md`](../../tools/README.md):157 — `test_xdata_cluster_names.py:303` → `:307` in four places | **no** |
+| a repoint list naming the stale value, in running prose | [`../../tools/README.md`](../../tools/README.md):159 — `test_xdata_cluster_names.py:303` → `:307` in four places | **no** |
 | a "deliberately not fixed" bullet naming the wrong pin | [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):446 | **no** |
 | a "the citation check caught it here" sentence | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):579 — `:513` named *because* it was the wrong line | **no** |
 | an "At the time of writing, `file:NNN`:" lead-in to a quoted block | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):25 | **no** |
@@ -361,7 +397,7 @@ is no checker rather than a deferral:
 | a blockquote correction naming the post-fix location | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2645 | yes — and it is one of the **carries** |
 | a section kept whole per §4a-4d, so a pre-#850 value is quoted as it stood | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):177 — `:307` inside *The residual* , which the branch's own header marks as a record of a tree the file no longer has | **no** |
 | a merged-tree note naming both the old and the new value in one sentence | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):189 — *"were at `:307` on the pre-#850 file and are at `:339` on this one"* | **no** |
-| the same sentence, quoted verbatim inside a `>` block | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):155 | yes — and it is one of the **records** |
+| the same sentence, quoted verbatim inside a `>` block | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):165 | yes — and it is one of the **records** |
 
 **Eight of the ten are invisible to the vocabulary that already works**, and the
 two it does catch are correct sentences. That is not a rule waiting to be
@@ -400,7 +436,7 @@ than my having to assert it.** Four things, in the order they decide it:
    `check_citation_lines.py` gets away with a two-shape skip because a
    supersession there *has* a shape. Here it does not: eight of the ten
    records above are ordinary running prose or a bullet, and
-   [`../../tools/README.md`](../../tools/README.md):157 cites `:303` **because
+   [`../../tools/README.md`](../../tools/README.md):159 cites `:303` **because
    `:303` is the stale value it is reporting**. A checker with no skip rule
    reddens on every one of the ten, and with the rule
    `check_citation_lines.py` already has it still reddens on eight more — the
@@ -610,7 +646,12 @@ more of the eighteen are #889's three citations — two into this same write-up
 (`xdata-decile-small-set-contract.md`'s `:199` and `:220`, stale by the same
 insertions and repointed to `:208` and `:240`/`:234` for the same reason) and
 one into the tool — which is a sibling's write-up this merge broke in the same
-way it broke this one's, and `tools/README.md` carries the count.
+way it broke this one's, and `tools/README.md` carries the count. **The
+eighteen is #891's tree, and the #890/#900 merge adds three more to it**, all
+from the branch's new `xdata-write-direction-correction.md`, which cites the
+write-up three times (`:116`/`:129`, `:148` and `:156-165`) and none of the
+three moved. The seven that are this file's are still seven — three rows, three
+bullets, follow-up 1 — at the re-registered lines above.
 
 ## What is left, as follow-ups
 
@@ -622,8 +663,8 @@ way it broke this one's, and `tools/README.md` carries the count.
    the sentence rather than the line is what needs rewriting;
    [`../findings.md`](../findings.md):7185's "third-generation" → the sentence
    has to distinguish `:307-309` from `:286` or drop one of the two; **and the
-   four `> 300` pins of finding 6 → `:563`, with
-   [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):331 → `:557-559`.**
+   four `> 300` pins of finding 6 → `:588`, with
+   [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):416 → `:582-584`.**
    **Each is one line in one file, which is why they are a follow-up and not a
    merge** — and the `> 300` four is a different kind of follow-up from the rest,
    because #850 is the change that made them stale and #850 is the change that

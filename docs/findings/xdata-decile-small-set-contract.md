@@ -108,7 +108,7 @@ before this branch and are now the sets they are.
 ## What the code does now
 
 Three branches, in the order the docstring states them, at
-`ec/tools/xdata_moved_ranks.py:277`:
+`ec/tools/xdata_moved_ranks.py:332`:
 
 - **empty** — `no rows`, reported before the floor rule applies. An empty set
   is not a set too small to cut; it is no set at all, and the two are told

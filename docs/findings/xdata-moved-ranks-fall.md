@@ -12,7 +12,7 @@ and [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checkli
 
 The issue asks two things and this answers both: **which clusters stopped
 moving and why**, and **whether `> 300` at
-`ec/tools/test_xdata_cluster_names.py:392` still says what the comment beside it
+`ec/tools/test_xdata_cluster_names.py:417` still says what the comment beside it
 says it says.** The answer to the second is *leave it there*, and it is decided
 by §5 below rather than by the 15 ranks of headroom
 [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):170-175
@@ -29,6 +29,12 @@ guard-off pair**, and it is what §1 re-derives from a commit.
 The measurements come from a new read-only tool,
 [`ec/tools/xdata_moved_ranks.py`](../../ec/tools/xdata_moved_ranks.py), which
 reads four clusters CSVs and two registers CSVs, prints, and writes nothing.
+
+**Two places in §2 carried the wrong direction word and no number moved,
+2026-09-26 (issue #890).** The `833` row read "references leaving `write`"; the
+references enter, and both corrections are in place at §2 with the measurement
+behind them in
+[`xdata-write-direction-correction.md`](xdata-write-direction-correction.md).
 
 ## 1. M0 — the historical pair reproduces exactly, so the fall is a fall and not two different measurements
 
@@ -139,7 +145,7 @@ rows are the ones the count does not show:
 | committed ranks absent from the guard-off census | 0 | 0 |
 | §6a: addresses whose `write` changes | **210** of 1,171 | **210** of 1,326 |
 | §6a: addresses whose `refs` changes | 0 of 1,171 | 0 of 1,326 |
-| §6a: references leaving `write` | **833** | **833** |
+| §6a: references entering `write` † | **833** | **833** |
 | guard-off membership delta, address-slots | **1,623** | **1,030** |
 
 **`intact` is verified rather than assumed.** No committed rank is missing from
@@ -150,13 +156,28 @@ have been the finding instead.
 **The guard itself did not change, and this is stronger than the counts
 matching.** §6a's per-address triple is *identical* in both generations — the
 same **210** addresses have their `write` column changed, the same **0** have
-`refs` changed, the same **833** references leave `write` — and the two runs
+`refs` changed, the same **833** references enter `write` † — and the two runs
 perturb **the same 210 addresses, address for address**, which a pair of matching
 totals would not establish on its own. §3's transcript prints that comparison
 from the same four registers CSVs. The address universe grew 1,171 → 1,326, the
 **155** addresses `ec/annotations/xdata-cluster-names.csv`'s `mode-oem-init` note
 records, and **none of the 155 is perturbed at all**: not one of the bytes this
 re-derivation added is a byte the guard reaches.
+
+† **The direction word, corrected 2026-09-26 (issue #890).** Both occurrences
+on this page said *leaving*; the tool's convention is committed → guard-off and
+the sum behind the figure is `off − on`, so the references **enter** `write` and
+none leave. **The `833` is unchanged in both cells and the paragraph's claim is
+untouched** — same 210 addresses, same 0 `refs` changes, same 833, same address
+set, all four re-measured on today's tree. What was wrong was one word, and it
+was wrong in the tool that printed it: `xdata_moved_ranks.py` summed signed
+differences and printed the total under a label asserting a direction the
+arithmetic never checked, which is what carried the word this far. The
+measurement, the correction and the per-address property behind it are in
+[`xdata-write-direction-correction.md`](xdata-write-direction-correction.md).
+The `pair` transcripts at `:116` and `:129` above print the old wording and
+**stay as written** — they are records of two runs, the same way the stale
+figures at `:297-307` below are kept rather than re-transcribed.
 
 **What did change is what the guard's perturbation does to cluster boundaries:
 1,623 address-slots of membership change became 1,030.** That is a fall of 593,
@@ -380,7 +401,7 @@ The decision rule, quoted from the issue's own framing: *is the fall caused by
 an identified, already-happened change, or is `moved` a quantity that shrinks as
 the census grows?*
 
-**It is the first, and `> 300` stays at `test_xdata_cluster_names.py:392`,
+**It is the first, and `> 300` stays at `test_xdata_cluster_names.py:417`,
 untouched.** The re-derivation that produced the 439-row census is one already
 happened and named commit (`6bf9c234`, #279), its 155 added addresses are
 recorded, and the 94 clusters whose behaviour changed are named and measured. So
@@ -392,7 +413,7 @@ that grew 430 → 439 saw `moved` fall 366 → 315. A single observation cannot
 establish that `moved` decays as the census grows, and this file does not claim
 it does. What the measurement does support is the *structural* claim the
 `> 300` floor is actually resting on — the comment at
-`test_xdata_cluster_names.py:387-389` asks that a regeneration that renumbers
+`test_xdata_cluster_names.py:412-414` asks that a regeneration that renumbers
 nothing is not the case the identity columns exist for, and at 315 moved of 439
 it is very much not that — and the floor is left exactly where the recipe's
 argument put it, with the measurement recorded beside it. The expectation to

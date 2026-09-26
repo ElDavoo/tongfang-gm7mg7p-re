@@ -400,7 +400,7 @@ assertion is what stands between them and a guard-*on* one.
 
 **There is a second, independent drift behind the first, and the `setUpClass`
 error is hiding it.** `test_the_two_largest_cited_clusters_are_carried_by_overlap_not_by_key`
-(`test_xdata_cluster_names.py:626-641`) pairs `main-ec-001` with
+(`test_xdata_cluster_names.py:651-666`) pairs `main-ec-001` with
 `mode-oem-init` and `main-ec-002` with `level-block-086x`; the committed census
 puts `mode-oem-init` at `main-ec-002` and `level-block-086x` at `main-ec-004`.
 So repairing the guard alone would trade one red for another. And on the

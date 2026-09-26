@@ -178,6 +178,51 @@ def signed(values):
     return f"{sum(values) / len(values):+.2f}" if values else "-"
 
 
+def write_movement(on, off):
+    """(entering, leaving, net, entering_addrs, leaving_addrs) for the `write`
+    column of two per-address registers CSVs, `on` first.
+
+    Gross in each direction, never one signed total, so that every figure
+    carries a label the arithmetic checked. The tool's convention is committed
+    -> guard-off and the `==` rejection is the only thing
+    `xdata_register_map.py --no-eq-guard` lifts, so a column that goes *up*
+    under it has references **entering** `write` and none leaving; a signed
+    sum reports that as "leaving 833", a direction the census never had and
+    that a reader of `xdata-06c2-06db-timers.md` §6a would carry to the next
+    page. `net` is the signed total, kept beside the two it is the difference
+    of rather than instead of them.
+
+    The two address lists are what make this one measurement with `changed`
+    and not a second one: every address whose `write` differs moves one way or
+    the other, so `len(entering_addrs) + len(leaving_addrs) == changed` is a
+    closure `pair_report` can print and be caught by. Note the two sides
+    compare differently and that is deliberate -- `changed` is a string
+    inequality and this is an integer subtraction, so a cell that is
+    numerically but not textually equal (`"05"` against `"5"`) is a change to
+    one and no movement to the other. The closure is what says so out loud;
+    the census's own cells are all canonical, so nothing real reaches it.
+
+    Only the addresses both files carry take part. An address the guard-off
+    census dropped is not a change, which is the fallback `changed` applies
+    too, so the two do not disagree about one.
+    """
+    entering = leaving = net = 0
+    entering_addrs, leaving_addrs = [], []
+    for addr, row in on.items():
+        other = off.get(addr)
+        if other is None:
+            continue
+        delta = int(other["write"]) - int(row["write"])
+        net += delta
+        if delta > 0:
+            entering += delta
+            entering_addrs.append(addr)
+        elif delta < 0:
+            leaving -= delta
+            leaving_addrs.append(addr)
+    return entering, leaving, net, entering_addrs, leaving_addrs
+
+
 # --------------------------------------------------------------------------
 # One pair.
 # --------------------------------------------------------------------------
@@ -222,10 +267,20 @@ def pair_report(label, committed_path, off_path, registers=None):
         universe = "identical" if set(on) == set(offreg) else "NOT identical"
         changed = sum(1 for a in on if offreg.get(a, on[a])["write"] != on[a]["write"])
         refs = sum(1 for a in on if offreg.get(a, on[a])["refs"] != on[a]["refs"])
+        entering, leaving, net, up, down = write_movement(on, offreg)
         out.append(f"  §6a: address universe {universe} ({len(on)} rows); "
                    f"write changes {changed} of {len(on)}; refs changes {refs} of {len(on)}; "
-                   f"references leaving write "
-                   f"{sum(int(offreg[a]['write']) - int(on[a]['write']) for a in on if a in offreg)}")
+                   f"references entering write {entering}, leaving write {leaving}, "
+                   f"net {net:+d}")
+        # `changed` counts addresses and the pair above counts references, so
+        # the two are not comparable as numbers; what has to hold is that the
+        # pair moved every address `changed` says it moved, once, in one
+        # direction or the other. Marked rather than raised, as `across`'s
+        # four-term close is, because a disagreement here is a report to read
+        # and not a run to abort.
+        out.append(f"  closes: {len(up)} + {len(down)} = {len(up) + len(down)}, "
+                   f"over the {changed} address(es) whose write column changed"
+                   + ("" if len(up) + len(down) == changed else "   MISMATCH"))
 
     out.append("")
     out.append(f"  {'cluster_key':<14} {'name':<16} {'committed':<12} {'guard-off':<12} "
@@ -1155,6 +1210,71 @@ def self_test() -> int:
           "two runs can agree on a count and disagree on which addresses, and "
           "an address a re-derivation adds can be outside the guard's reach "
           "entirely")
+
+    # `pair_report`'s §6a line, which had no case: the call above this block is
+    # the one self-test `pair_report` makes and it passes `registers=None`, so
+    # the whole registers block was dead to `--self-test` and the number on it
+    # was a signed sum under a directional label that nothing read. `on_b`/`off_b`
+    # are generation B's own fixture, where `0x62` goes 0 -> 5 and nothing moves
+    # the other way.
+    lines, _c, _o, _m = pair_report("registers", committed, off, (on_b, off_b))
+    check(any("references entering write 5, leaving write 0, net +5" in ln
+              for ln in lines)
+          and not any("leaving write 5" in ln for ln in lines),
+          "a fixture where five references entered `write` and none left says "
+          "so, and the signed sum of that is not printed under the word "
+          "'leaving' -- which is what it used to be")
+
+    # A decrease, because the first fixture has none: a one-directional one
+    # cannot tell "both directions are counted" from "the count happens to be
+    # right". The two cancel here, so a single signed total would print 0 and a
+    # single gross count would print 4.
+    two_way_on = write_registers(tmp, "twoway-on.csv",
+                                 [("0x60", "2"), ("0x61", "7"), ("0x62", "0")])
+    two_way_off = write_registers(tmp, "twoway-off.csv",
+                                  [("0x60", "6"), ("0x61", "3"), ("0x62", "0")])
+    lines, _c, _o, _m = pair_report("both ways", committed, off,
+                                    (two_way_on, two_way_off))
+    check(any("references entering write 4, leaving write 4, net +0" in ln
+              for ln in lines)
+          and any("closes: 1 + 1 = 2, over the 2 address(es)" in ln
+                  for ln in lines),
+          "a pair that moves one reference each way reports both counts, and "
+          "the closes: line says they are over the two addresses that moved")
+
+    # A negative net, read from the helper rather than from the printed line,
+    # so the two are compared as a reader would read them. Neither direction is
+    # a count that can be negative and the only figure here that carries a sign
+    # is the net.
+    net_on = write_registers(tmp, "net-on.csv",
+                             [("0x60", "0"), ("0x61", "9"), ("0x62", "4")])
+    net_off = write_registers(tmp, "net-off.csv",
+                              [("0x60", "3"), ("0x61", "2"), ("0x62", "4")])
+    movement = write_movement(registers_of(net_on), registers_of(net_off))
+    lines, _c, _o, _m = pair_report("negative net", committed, off,
+                                    (net_on, net_off))
+    check(movement == (3, 7, -4, ["0x60"], ["0x61"])
+          and any("references entering write 3, leaving write 7, net -4" in ln
+                  for ln in lines)
+          and not any("entering write -" in ln or "leaving write -" in ln
+                      for ln in lines),
+          "a negative net is still a net: entering and leaving are counts, "
+          "each naming the address it moved, and neither carries a sign")
+
+    # The closes: line, fired rather than assumed reachable. It compares a
+    # string inequality against an integer subtraction, and the census writes
+    # canonical integers everywhere, so the one input that reaches it is a
+    # cell that is numerically but not textually equal.
+    padded_on = write_registers(tmp, "padded-on.csv", [("0x60", "5")])
+    padded_off = write_registers(tmp, "padded-off.csv", [("0x60", "05")])
+    lines, _c, _o, _m = pair_report("padded", committed, off,
+                                    (padded_on, padded_off))
+    check(any("write changes 1 of 1" in ln for ln in lines)
+          and any("references entering write 0, leaving write 0, net +0" in ln
+                  for ln in lines)
+          and any("MISMATCH" in ln for ln in lines),
+          "when `changed` and the movement disagree the closes: line says so: "
+          "a `05` against a `5` is a change as text and no movement as a number")
 
     # ------------------------------------------------------------------------
     # `cause`, over a fourth pair of censuses. The one above cannot exercise

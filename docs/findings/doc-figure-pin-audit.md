@@ -69,16 +69,16 @@ $ python3 ec/tools/check_doc_figure_pins.py \
     9320  held-by-assertion      OWNERSHIP["main_refs"] @ ec/tools/xdata_register_map.py:1414, asserted at ec/tools/xdata_register_map.py:4315-4319  [marked held]
      157  held-by-assertion      ORACLE["extmem_pd_distinct"] @ ec/tools/xdata_register_map.py:738, asserted at ec/tools/xdata_register_map.py:3555-3572  [marked held]
      858  held-by-assertion      ORACLE["extmem_pd_refs"] @ ec/tools/xdata_register_map.py:738, asserted at ec/tools/xdata_register_map.py:3555-3572  [marked held]
-     390  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:709  [marked held]
-      50  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:709  [marked held]
-    3948  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:448  [marked held]
-    3206  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:448  [marked held]
-    7189  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:465  [marked held]
-    7935  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:465  [marked held]
-     193  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:482  [marked held]
-     142  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:482  [marked held]
-     279  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:499  [marked held]
-     239  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:499  [marked held]
+     390  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:734  [marked held]
+      50  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:734  [marked held]
+    3948  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:473  [marked held]
+    3206  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:473  [marked held]
+    7189  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:490  [marked held]
+    7935  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:490  [marked held]
+     193  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:507  [marked held]
+     142  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:507  [marked held]
+     279  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:524  [marked held]
+     239  held-by-check-literal  literal inside a check() at ec/tools/test_xdata_cluster_names.py:524  [marked held]
       43  held-by-check-literal  cell 43 of ec/annotations/xdata-clusters.csv:4, compared whole-file by --check  [marked held]
     4966  held-by-check-literal  cell 4966 of ec/annotations/xdata-clusters.csv:4, compared whole-file by --check  [marked held]
 docs/findings/xdata-census-rederivation-checklist.md §2b: 18 figure(s), 18 measured held, 0 measured unheld, 0 not read by this method (searched 10 module-level constant(s), 190 literal(s) inside a check, and the cited lines of 2 committed CSV(s))
@@ -178,7 +178,7 @@ recipe's denominator checks live in
 
 *(Closed at the merge, 2026-09-25, issue #850. All ten of the figures this
 section calls a residual are held now: the four §6a direction rows inside
-`test_the_census_is_the_one_6a_measured` — `ec/tools/test_xdata_cluster_names.py:448`,
+`test_the_census_is_the_one_6a_measured` — `ec/tools/test_xdata_cluster_names.py:473`,
 `:465`, `:482`, `:499` — and §6b's `390`/`50` split at `:709` in a new
 `TheExportOwnershipClusters`, held to `OWNERSHIP["clusters"]` as well so the
 breakdown and the total cannot drift apart. **The second paragraph's reason was
