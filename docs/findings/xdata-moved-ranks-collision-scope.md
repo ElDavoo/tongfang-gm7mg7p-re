@@ -352,7 +352,17 @@ register rows, 439 cluster rows, both exit 0), and the CSVs are not touched.
   The one pin this change *breaks* —
   [`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md)
   `:436`, which was correct before this and is not after it — is repointed to
-  `:487`.
+  `:487`. **Both are now decided**, in
+  [`xdata-moved-ranks-pin-decisions.md`](xdata-moved-ranks-pin-decisions.md):
+  `:181` is repointed to `:257`, because
+  [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):155
+  is live prose under its own "What the code does now"; and
+  `tools/README.md`'s `xdata_moved_ranks.py:243` is recorded as **records
+  another line**, because that sentence is quoting a past tree. **The walk
+  behind those two also corrects the reading above.** They were carried by real
+  trees — `write_movement` at `:181` on `bdfddcfd`, `deciles` at `:243` on
+  `a01e5c49` — so they are drifted values, not values no tree carried, and each
+  superseded value is now attributable to the tree it was true of.
 - **What this opens, and is not done here.** `--self-test` creates its scratch
   directory with `tempfile.mkdtemp(prefix="xdata-moved-ranks-")` and never removes
   it (`shutil` is not imported), so every run leaks a directory under `/tmp`.
@@ -389,6 +399,33 @@ three are corrected to the figure §7 below measures, and the figures they
 carried — 31, 36, 39, 45 and 49 — stay visible, because each is true of the tree
 it was measured on.
 
+**A fifth, added by the pass that decided §5's two pins.** Every superseded value
+here is a line number that was true of a tree and is not true of this one, so
+each is corrected beside itself rather than edited down, and none is deleted:
+
+- **§5's `:181` → `:257`**, in
+  [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md),
+  where it is live prose. Two more pins in the same sentence moved the same way
+  and are repointed with it: the `pair_report` block `:270-283` → `:306-313`,
+  and the four self-test cases `:1215-1277` → `:1413-1476`. The last is derived
+  rather than chosen: the four `check(` calls sit at a uniform `+199` between
+  `bdfddcfd`'s copy and this one, boundaries included, so the old span and the
+  new one name the same four cases.
+- **`tools/README.md`'s `:485` → `:487` and `:255` → `:257`**, in the same
+  merged-tree note §5's bullet quotes, where the parenthetical asserts the
+  present tree. That sentence's `xdata_moved_ranks.py:243` is left alone
+  deliberately, for the reason §5 gives.
+- **The `a4f967ed` commit id**,
+  [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md)'s,
+  is not reachable from this tree — `git cat-file -t a4f967ed` is
+  `fatal: Not a valid object name` — so the `diff` it is an argument for is
+  marked unreproduced there rather than left asserting a result no run here
+  produces.
+
+The argument §5 makes is unchanged by any of this. Deciding what a drifted pin
+was meant to name was a next pass's call; this is that pass, it took the two
+decisions above, and it did not re-open the claim §1-§3 argue.
+
 ## 7. The test that proves it
 
 `--self-test` goes from **49 to 53**, and the four are the shape the six before
@@ -398,9 +435,20 @@ changes exactly one earlier check's text, and that one is the widened
 expectation below.
 
 ```console
-$ python3 ec/tools/xdata_moved_ranks.py --self-test | grep -c '^  ok'
+$ python3 ec/tools/xdata_moved-ranks.py --self-test | grep -c '^  ok'
 53
 ```
+
+**Both figures this file publishes are re-measured on the tree the decision in
+§5 landed on, rather than assumed to hold, and both hold.** The headcount above
+is 53 because this change moved no code line, and §5's parenthetical *"`deciles()`
+was at `:436` and `write_movement()` at `:227`; they are at `:487` and `:257`
+here"* is still exactly right — `git show 31f683e5` puts them at `:436` and
+`:227`, and `grep -n '^def '` on the merged tool puts them at `:487` and
+`:257`. Neither is amended, and saying so is the point: a figure that has to be
+re-derived at every merge is worth re-deriving when the merge touches the files
+around it. The re-derivations are in
+[`xdata-moved-ranks-pin-decisions.md`](xdata-moved-ranks-pin-decisions.md).
 
 The four, in print order at 50–53:
 

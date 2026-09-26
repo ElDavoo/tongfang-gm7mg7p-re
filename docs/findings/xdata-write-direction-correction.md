@@ -35,11 +35,11 @@ in `d62730e1`; `a4f967ed` adds `write_movement()` and the four cases on top of
 it, and `diff <(git show a4f967ed:ec/tools/xdata_moved_ranks.py)
 ec/tools/xdata_moved_ranks.py` is empty, so the tool was never edited on two
 sides and no merge needed reconciling. **The values to cite are
-`write_movement()` at `ec/tools/xdata_moved_ranks.py:181`, the `pair_report`
-block at `:270-283` and the four cases at `:1215-1277`** — `write_movement` is
-absent from `d62730e1` altogether, so `:181` is where it is first written and
-there is no earlier line for a §4a-4d correction to keep visible beside it. No
-figure moves with them, as the paragraph above records.
+`write_movement()` at `ec/tools/xdata_moved_ranks.py:257`, the `pair_report`
+block at `:306-313` and the four cases at `:1413-1476`**, repointed per §4a-4d:
+`:181`, `:270-283` and `:1215-1277` are what this file cited and each is true of
+`bdfddcfd`; `a4f967ed` is not reachable from this tree, so the diff above is
+unreproduced. Decided in [`xdata-moved-ranks-pin-decisions.md`](xdata-moved-ranks-pin-decisions.md).
 
 **Nothing here is a hardware claim.** No image is opened, no register is
 read back, and no laptop, EC or Windows machine is involved. Both censuses
@@ -152,11 +152,14 @@ only, and the same figure stands.
 
 ## What the code does now
 
-`write_movement()` at `ec/tools/xdata_moved_ranks.py:181` is one
+`write_movement()` at `ec/tools/xdata_moved_ranks.py:257` is one
 module-level helper returning
 `(entering, leaving, net, entering_addrs, leaving_addrs)`, so the report and
 the self-test read the same function rather than a print statement and a test
-asserting the print statement. `pair_report` prints:
+asserting the print statement. (`:181` is where this file cited it and where
+`bdfddcfd`, the first tree the walk finds the function on, carried it; it is
+left written per §4a-4d, and reads as prose inside `collision_line`'s docstring
+today.) `pair_report` prints:
 
 ```console
   §6a: address universe identical (1326 rows); write changes 210 of 1326; refs changes 0 of 1326; references entering write 833, leaving write 0, net +833
