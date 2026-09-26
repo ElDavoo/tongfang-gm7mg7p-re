@@ -101,7 +101,7 @@ in the gate run above:
   switch exists to measure against;
 - **the §4.1 `BUCKET_TOTALS` pin** — `read 8826 / write 3587 / read+write 2482 /
   passed-to-call 534 / address-taken 267`, a hard-coded constant
-  (`xdata_register_map.py:1212`) compared against a fresh generation, so it is a
+  (`xdata_register_map.py:1362`) compared against a fresh generation, so it is a
   pin and not the run restating itself;
 - **the whole export-ownership oracle** (`--export-ownership`): 1,326 distinct /
   10,178 references, its own five bucket totals, the guarantee that the pass
@@ -215,9 +215,9 @@ The issue's explicit instruction, and four places carry sentences this branch
 makes false. None is edited here; each is a shared file another agent PR may be
 open against, and the gate arm is the deliverable.
 
-- [`../../ec/annotations/xdata-06c2-06db-timers.md:937-938`](../../ec/annotations/xdata-06c2-06db-timers.md)
+- [`../../ec/annotations/xdata-06c2-06db-timers.md:972-973`](../../ec/annotations/xdata-06c2-06db-timers.md)
   — "neither is green today: both exit 1 on `main`". Both exit 0. Its
-  `:987-988` "red on `main` at the time of writing" is the same claim again.
+  `:1031-1032` "red on `main` at the time of writing" is the same claim again.
 - [`xdata-cluster-names-guard-off-recipe.md:406-407`](xdata-cluster-names-guard-off-recipe.md)
   — "the cheap tier not running the tool's `--check`/`--self-test`, which are
   red on `main`". The cheap tier runs both, and they are green.

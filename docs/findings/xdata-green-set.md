@@ -175,8 +175,8 @@ overrule that at a cost of one line each**:
 | `xdata-no-eq-guard-refusal-contract.md:261-269` | `test_check_site_census.py` "45 tests, 1 failure" | 45 tests, OK | #752 landed this; the page is a record |
 | `xdata-no-eq-guard-refusal-contract.md:250-252` | "the only working scripted route to a guard-off census" | one of two, since `64dbde19` | **#816** |
 | `docs/findings.md:6514` | "`tools/run-tests.sh` is 19 of 22 suites", in a dated section | 30 of 30 | inside an already-dated section; left as the record |
-| `docs/findings.md:6636` | "21 of 23 suites, 609 tests … both reproduce on a pristine `main`" | 30 of 30, none red | as above |
-| `docs/findings.md:7135` (§45) | "`ec/tools/test_xdata_cluster_names.py` is **red on `main`**" | green, since `64dbde19` | inside a dated section; the sentence already says "reported, not edited around" |
+| `docs/findings.md:6682` | "21 of 23 suites, 609 tests … both reproduce on a pristine `main`" | 30 of 30, none red | as above |
+| `docs/findings.md:7181` (§45) | "`ec/tools/test_xdata_cluster_names.py` is **red on `main`**" | green, since `64dbde19` | inside a dated section; the sentence already says "reported, not edited around" |
 | `0751-grader-self-test-gate.md:349-354` | "the runner is red today. That was three suites … and is two now" | no failures | its own `Left out on purpose` bullet, already telling the reader to re-derive |
 | `0751-grader-self-test-gate.md:360-365` | "the runner is red today on the two suites finding (2) names" | no failures | as above |
 | `runner-red-suite-set.md:70-90` | "the runner is red … **is still one** … should expect two rather than three" | the set is empty | the file this issue's write-up is the complement of; its §46 companion now says so |
@@ -280,8 +280,10 @@ committed CSVs and not a re-derivation of the 32 and 6.
   `tools/test_readme_suite_table.py`'s job is the suite *index*, not the claims
   in the pages it indexes. The commands are the test, and they are above.
 - **The §6a figures.** They are right and are not re-derived here;
-  `ec/tools/test_xdata_cluster_names.py:307`
-  (`test_the_census_is_the_one_6a_measured`) now pins all seven.
+  `ec/tools/test_xdata_cluster_names.py:339`
+  (`test_the_census_is_the_one_6a_measured`) now pins all eleven — the seven it
+  pinned when this was written, and the four per-subset direction rows #850
+  added.
 - **`ec/tools/test_check_cluster_citations.py`**, the one suite red on this tree
   and on `main` as of the `#820` correction above. **Naming it is the point;
   fixing it is not**, for the reason `runner-red-suite-set.md:146-149` gives about
@@ -320,11 +322,11 @@ stands only as a quotation. **Both carry a pathspec, and both patterns are
 shorter than the sentence**, and the reason is that **neither `../findings.md`
 line this block used to record is what its own command returned.** The first
 pattern was `exit 1 on \`main\``, which does not occur on any single line of
-`../findings.md` at all — it wraps across `:7401-7402`, so
+`../findings.md` at all — it wraps across `:7447-7448`, so
 `git grep -n "exit 1 on \`main\`" -- docs/findings.md` prints nothing and the
 `:7400` line the block carried was the block's own transcript, not a hit. The
 second pattern was `are red for their own separate reasons`, which does match,
-but at `:7399` and reading `are red for their own separate reasons" and that
+but at `:7445` and reading `are red for their own separate reasons" and that
 block's own closing "that` — not the `two other suites that read these CSVs …`
 the block recorded against `:7397`, which is a string that runs from `:7398` into
 `:7399`. The patterns below fit on one line in every file they match, and
@@ -333,13 +335,13 @@ matching its own transcript:
 
 ```console
 $ git grep -n "green today: both exit" -- . ":!docs/findings/xdata-green-set.md"
-docs/findings.md:7401:`ec/annotations/xdata-06c2-06db-timers.md`, "neither is green today: both exit
+docs/findings.md:7447:`ec/annotations/xdata-06c2-06db-timers.md`, "neither is green today: both exit
 docs/findings/xdata-census-self-test-gate.md:219:  — "neither is green today: both exit 1 on `main`". Both exit 0. Its
-ec/annotations/xdata-06c2-06db-timers.md:941:green today: both exit 1 on `main`, on the naming drift described below. What
+ec/annotations/xdata-06c2-06db-timers.md:973:green today: both exit 1 on `main`, on the naming drift described below. What
 
 $ git grep -n "red for their own separate reasons" -- . ":!docs/findings/xdata-green-set.md"
-docs/findings.md:7399:are red for their own separate reasons" and that block's own closing "that
-ec/annotations/xdata-register-map.md:2606:  CSVs are red for their own separate reasons and are not in that loop either:
+docs/findings.md:7445:are red for their own separate reasons" and that block's own closing "that
+ec/annotations/xdata-register-map.md:2609:  CSVs are red for their own separate reasons and are not in that loop either:
 ```
 
 **Five hits, and only two of them want a correction.** Three of them are
@@ -349,9 +351,9 @@ write-up of this kind is for: both hits in `../findings.md` are §51, and
 edited** list, where the false sentence is the item being named. None of the
 three is a claim of its own, so none wants a second correction; the two that
 matter are distinguished by what follows them, not by the string. The timers
-paragraph ends at `:947` and a `#819` blockquote opens at `:949`. The register-map
-sentence at `:2606` is followed at `:2612` by the `#752` block, and `#819`'s
-entry is appended **inside** that block at `:2628` — one block carrying two dated
+paragraph ends at `:979` and a `#819` blockquote opens at `:981`. The register-map
+sentence at `:2609` is followed at `:2615` by the `#752` block, and `#819`'s
+entry is appended **inside** that block at `:2631` — one block carrying two dated
 entries in date order, which is the point: the issue's complaint was a paragraph
 contradicting the correction printed immediately beneath it, and a second block
 *under* the first would have been that defect again. **So `grep -A6` is the wrong

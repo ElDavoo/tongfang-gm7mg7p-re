@@ -91,6 +91,19 @@ totals line does not, and moved from 30/882 to 31/934 when #846 added
 `ec/tools/test_walk_budget_census.py` at 52 tests, then on to 32/974 when #801
 added `ec/tools/test_check_citation_lines.py` at 40. That is the argument below
 made by another example.
+*(**Corrected at the merge, 2026-09-25, #850.** The first clause is the one that
+stopped being true. "The three suites' own counts — 28, 45 and 48 — hold across
+every tree" is right about `45` and `48` and was right about `28` until #850
+added `TheExportOwnershipClusters`'s two cases to
+`ec/tools/test_xdata_cluster_names.py`, which measures **30**; the totals line
+moves again for the same reason, to **`33 suite(s) run, 1020 tests`**, and the
+red suite above is still the same one on the same #822 line. **#851 then added a
+suite in the same window, so the tree this finally lands in reads
+`34 suite(s) run, 1035 tests`**, and the `30` is the one figure of the three that
+did not move. Every figure in
+this block was re-derived on the tree this landed on and is left visible for the
+same reason — it was true of that tree — and `runner-red-suite-set.md` is where
+the rule that lets a count go stale without anything turning red is argued.)*
 
 The three suites the retracted sentences are about, individually rather than
 through the runner, so that a reader can re-run one and not wait for the whole
@@ -459,7 +472,14 @@ drive-by, and nothing else here depends on it.
   moved the `30` and `882` #821 wrote from `90ac6d2c` — and the runner still
   prints exactly
   that, so leaving them alone is a decision rather than a patch over a stale
-  number. What no check in the tree can see them is unchanged and is still the
+  number. *(The "prints exactly that" held on `main` and the merge ended it:
+  #850's two new cases in `test_xdata_cluster_names.py` made #850's merged tree
+  read `1020`, and #851's suite, landing in the same window, makes this one read
+  `1035`. The counts are left at `33`/`1018` and the fact is recorded here and
+  in the correction blocks those two files carry, which is this page's own rule —
+  re-derive on the tree you land on, do not rewrite a shared totals paragraph
+  for a two-case delta — working.)* What no check in the tree can see them is
+  unchanged and is still the
   reason: `tools/test_readme_suite_table.py` compares the row *set* and
   `tools/run-tests.sh` asserts no total. The correction blocks there and in
   `runner-red-suite-set.md` say so, and the file's own closing paragraph already

@@ -76,6 +76,18 @@ class ClassifiesTheRealTree(unittest.TestCase):
     This is the class that says the classification is a measurement. Each case
     names one figure and the verdict it has to have, so a tree that changes under
     any of them fails here rather than quietly changing what the page claims.
+
+    **Every figure §2b's tables list measured `held` as of #850, so this class
+    no longer has a §2b figure to assert `unheld`.** The two that remain are
+    asserted anyway, because a checker for held-versus-unheld that has never
+    seen the other verdict is decoration: `51` is the one figure §2b's prose
+    names as open, and `8826` is a `BUCKET_TOTALS` value this checker measures
+    `unheld` — not because the tree never reads it, since `--self-test` compares
+    every key of the constant, but because `reads()` credits a key that is
+    *subscripted* outside its own definition and `BUCKET_TOTALS` is only
+    iterated by key. `unheld` is "not found by this method". Both are also
+    shapes rather than §2b rows, and the second is what keeps the `unheld`
+    branch measured against the real tree at all.
     """
 
     def assertVerdict(self, value, want, pins=()):
@@ -105,18 +117,22 @@ class ClassifiesTheRealTree(unittest.TestCase):
         # the rule that separates a subscription from the literal defining one.
         self.assertFalse(lo <= read[1] <= hi)
 
-    def test_the_residual_pair_is_unheld(self):
-        # `390` and `50` are §6b's two cluster counts, and only their sum (the
-        # pinned `440`) is held. This is the residual the write-up names as the
-        # next pin rather than folding in here.
+    def test_the_residual_pair_is_held_by_the_census_suite(self):
+        # `390` and `50` are §6b's two cluster counts, and until #850 only their
+        # sum (the pinned `440`) was held. They now measure as a literal inside
+        # an `assertEqual` -- `TheExportOwnershipClusters` writes each arm's
+        # figure at its own assertion rather than in a table above them, which is
+        # what puts the literal where this tool can see it.
         for value in (390, 50):
-            self.assertVerdict(value, cdfp.UNHELD)
+            self.assertVerdict(value, cdfp.BY_LITERAL)
 
-    def test_the_sixa_subset_sums_are_unheld(self):
+    def test_the_sixa_subset_sums_are_held_by_the_census_suite(self):
         # The four §6a rows whose per-subset sums are computed inline in the
-        # heredoc and asserted nowhere, on either side of the guard-off split.
+        # heredoc, on either side of the guard-off split. Held the same way
+        # since #850, for the same reason: the expectation is a literal at each
+        # assertion.
         for value in (3948, 3206, 7189, 7935, 193, 142, 279, 239):
-            self.assertVerdict(value, cdfp.UNHELD)
+            self.assertVerdict(value, cdfp.BY_LITERAL)
 
     def test_the_cluster_refs_cell_is_held_through_the_line_the_row_cites(self):
         # `4,966` is the `refs` cell of `main-ec-003`, and `--check` compares
@@ -129,13 +145,28 @@ class ClassifiesTheRealTree(unittest.TestCase):
         self.assertVerdict(43, cdfp.BY_LITERAL, pins)
 
     def test_a_small_figure_is_not_pinned_by_an_unrelated_cell(self):
-        # The over-match the cited-line rule exists to prevent. `50` is §6b's pd
-        # cluster count and `50` is also a cell in some other cluster's row; with
-        # no citation the measurement refuses to borrow the other one, and
-        # `390` — which is in no cell at all — measures the same way. A tool that
-        # called both of these held would be wrong about a figure a re-deriver
-        # would then be told to skip.
-        for value in (390, 50):
+        # The over-match the cited-line rule exists to prevent. `51` is the
+        # guard-off pd cluster count §2b's prose names as the one figure there
+        # nothing holds, and `51` is also a cell in some other cluster's row;
+        # with no citation the measurement refuses to borrow the other one. A
+        # tool that called this held would be wrong about a figure a re-deriver
+        # would then be told to skip. `8826` is the second shape, and its reason
+        # is the oracle rule's: `reads()` credits a key that is *subscripted*
+        # outside its own definition, and `BUCKET_TOTALS` is never subscripted —
+        # `--self-test` walks it by key at `xdata_register_map.py:4284-4286` and
+        # compares every value, so `8826` is not a value the tree ignores — it is
+        # one this checker has no subscription to see. That is what makes it the
+        # negative case for the rule rather than a claim about the tree.
+        #
+        # The first assertion is what keeps the case from going vacuous: a
+        # figure that is in no committed cell would prove nothing about the
+        # rule, so the cell is checked for before the verdict is.
+        self.assertTrue(
+            any(51 in cells for cells
+                in FOUND["cells"]["ec/annotations/xdata-clusters.csv"].values()),
+            "51 is in no committed cluster row, so this case is not testing "
+            "the over-match rule any more")
+        for value in (51, 8826):
             self.assertVerdict(value, cdfp.UNHELD)
 
 
@@ -152,16 +183,20 @@ class TheCommittedChecklist(unittest.TestCase):
             cdfp.section(CHECKLIST.read_text(encoding="utf-8"), "2b")[2], FOUND)
         self.assertEqual(problems, [])
         self.assertEqual(declined, [])
-        # Eighteen figures: the six the console block's four held rows name, the
-        # two it leaves unheld, the eight §6a subset sums, and the pair in the
-        # `main-ec-003` row. Eight held, ten not, which is what the heading says.
+        # Eighteen figures: the eight the console block's rows name, the eight
+        # §6a subset sums, and the pair in the `main-ec-003` row. Eight held and
+        # ten not is what the heading read while `390`/`50` and the eight subset
+        # sums were unmeasured; #850 closed those ten in the same tree, so the
+        # count is eighteen held and none unheld, which is what the heading says
+        # now. It was #850 that moved it -- #849 had already read
+        # `OWNERSHIP["main_refs"]`, which is the other end of the same merge.
         self.assertEqual(len(results), 18)
         held = [r for r in results if r[2] in cdfp.HELD_VERDICTS]
-        self.assertEqual(len(held), 8)
+        self.assertEqual(len(held), 18)
         self.assertEqual(sorted(r[0] for r in held),
-                         [43, 157, 440, 858, 1218, 1326, 4966, 9320])
-        self.assertEqual(sorted(r[0] for r in results if r not in held),
-                         [50, 142, 193, 239, 279, 390, 3206, 3948, 7189, 7935])
+                         [43, 50, 142, 157, 193, 239, 279, 390, 440, 858, 1218,
+                          1326, 3206, 3948, 4966, 7189, 7935, 9320])
+        self.assertEqual(sorted(r[0] for r in results if r not in held), [])
 
     def test_the_page_runs_green_end_to_end(self):
         # stdout too: the report is the point of the tool, and a runner that
@@ -176,7 +211,7 @@ class TheCommittedChecklist(unittest.TestCase):
             sys.argv = argv
         self.assertEqual(rc, 0, err.getvalue())
         self.assertIn("agrees with the measurement", out.getvalue())
-        self.assertIn("18 figure(s), 8 measured held, 10 measured unheld",
+        self.assertIn("18 figure(s), 18 measured held, 0 measured unheld",
                       out.getvalue())
 
 
@@ -243,9 +278,13 @@ class ReadsTheFigure(unittest.TestCase):
         self.assertEqual(self.verdicts_of("`4,966`"), {4966: ("unheld", "unheld")})
 
     def test_two_figures_in_one_cell_are_both_read(self):
-        self.assertEqual(self.verdicts_of("`3,948` / `3,206`"),
-                         {3948: ("unheld", "unheld"),
-                          3206: ("unheld", "unheld")})
+        # `4,966` and `8,826` rather than a §2b pair, because a shape case wants
+        # a verdict this tool's method owns rather than one the tree happens to
+        # produce today: `3,948` / `3,206` measured `unheld` until #850 gave
+        # them a literal at an assertion.
+        self.assertEqual(self.verdicts_of("`4,966` / `8,826`"),
+                         {4966: ("unheld", "unheld"),
+                          8826: ("unheld", "unheld")})
 
     def test_a_count_with_a_noun_after_it_is_still_a_figure(self):
         # The `main-ec-003` row's own cell: two figures, two nouns, one row.
@@ -289,9 +328,9 @@ class ReadsTheFigure(unittest.TestCase):
         # Bounding the reader is what keeps a prose cell's "1,169 addresses" out
         # of a count it was never making: §6a's own first cell carries one and is
         # quoted in the middle column here.
-        self.assertEqual(verdicts(TABLE + "| `390` | main-EC `write` references "
+        self.assertEqual(verdicts(TABLE + "| `51` | main-EC `write` references "
                                   "(1,169 addresses) | unheld | |\n"),
-                         {390: ("unheld", "unheld")})
+                         {51: ("unheld", "unheld")})
 
     def test_a_row_with_no_verdict_cell_at_all_is_reported(self):
         # The shape an accidental merge leaves behind. Reporting it is the whole
@@ -392,12 +431,16 @@ class TheOracleRule(unittest.TestCase):
     constants that really are in `ec/tools/`.
     """
 
-    def test_an_unread_constant_measures_unheld(self):
-        # `BUCKET_TOTALS` is the one in this file that genuinely has no reader:
+    def test_a_constant_never_subscripted_measures_unheld(self):
+        # `BUCKET_TOTALS` is the one in this file that is never subscripted:
         # §3 of the checklist names its five figures, and the issue excluded them
-        # (#838 owns the stale `:668` citation beside them). It is here as the
-        # negative case for the oracle rule, and it is the reason the rule cannot
-        # be "is it in a constant".
+        # (#838 owns the stale `:668` citation beside them). `--self-test` does
+        # read every one of them, by key, at `xdata_register_map.py:4284-4286`,
+        # which is the distinction this case turns on — a value nothing in the
+        # tree looks at and a value this checker cannot see a subscription to
+        # measure the same, and only the second is what `unheld` reports. It is
+        # here as the negative case for the oracle rule, and it is the reason the
+        # rule cannot be "is it in a constant".
         self.assertEqual(measured(8826), cdfp.UNHELD)
 
     def test_a_read_constant_measures_held(self):

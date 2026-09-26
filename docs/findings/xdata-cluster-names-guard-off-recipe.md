@@ -135,7 +135,7 @@ Re-run on this tree, writing only to `/tmp`, `git status` clean afterwards:
 | cluster rows | 445 | 439 |
 
 The first three are the page's own heredoc, printed at
-`xdata-06c2-06db-timers.md:924` and reproduced here so the claim is a transcript
+`xdata-06c2-06db-timers.md:952` and reproduced here so the claim is a transcript
 rather than a summary:
 
 ```console

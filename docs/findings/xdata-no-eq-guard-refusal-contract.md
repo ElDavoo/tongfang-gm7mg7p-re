@@ -255,6 +255,21 @@ one is a regression **from the commit that added the flag this issue is about**
   > 1
   > ```
   >
+  > **Corrected at the merge, 2026-09-25, #850.** The transcript above was
+  > measured on `main` and was exact there; #850 added
+  > `TheExportOwnershipClusters`'s two cases to
+  > `ec/tools/test_xdata_cluster_names.py` in the same window, so the merged
+  > tree reads **`33 suite(s) run, 1020 tests; one or more FAILED`**. The claim
+  > the rest of this block makes is unaffected and is not repeated here: still
+  > one red suite, still `test_check_cluster_citations.py`, still #822's line.
+  >
+  > *(Corrected once more at the final merge, 2026-09-25, and the `33` stays
+  > visible because it was true of #850's tree: **#851 added a suite in the same
+  > window**, so the tree this finally lands in reads
+  > **`34 suite(s) run, 1035 tests; one or more FAILED`** on the same one red
+  > suite and the same #822 line. The two cases that took
+  > `test_xdata_cluster_names.py` to **30** are unaffected by it.)*
+  >
   > **The one suite still red *is* one of this paragraph's three — the third of
   > the three paragraphs below.** What #752 and #753 cleared are the three
   > *failures* this paragraph counted, not the three suites: it is
@@ -500,7 +515,9 @@ is another file's finding from another issue.
   > `origin/main`, which is where `docs/findings.md` §52 records it and names it
   > to that file's owner rather than fixing it here. It is the suite's one
   > failure, and it is why `bash tools/run-tests.sh` prints
-  > `32 suite(s) run, 974 tests; one or more FAILED` on this tree. That
+  > `32 suite(s) run, 974 tests; one or more FAILED` on this tree — `1020` on
+  > #850's merged tree and `1035` on this one, #851 having added a suite, as the
+  > correction above records. That
   > file-and-line total is itself a function of the corpus and moves when a page
   > is added: 112 files / 54972 lines on the tree this lands on, which is the
   > tool reading the new page rather than the page escaping it.

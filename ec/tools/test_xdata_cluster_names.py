@@ -16,12 +16,14 @@ Everything here reads committed text. The guard-off census in
 `annotations/xdata-06c2-06db-timers.md` §6a already re-runs; no image, no
 Ghidra, no network, and nothing here touched hardware.
 """
+import collections
 import csv
 import functools
 import importlib.util
 import io
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -102,6 +104,36 @@ def guard_off_map():
     if proc.returncode != 0:
         raise AssertionError(f"--map failed: {proc.stderr}")
     return list(csv.DictReader(io.StringIO(proc.stdout))), proc.stderr
+
+
+@functools.lru_cache(maxsize=1)
+def export_ownership_census():
+    """(tmp dir, clusters.csv path, registers.csv path, stdout) for the
+    de-duplicated census.
+
+    Built the way §6b builds it: the committed tool run with
+    `--export-ownership`, which reads each routine once from the export that
+    owns it, so bank1:0x8001's 42 overlapping exports are not counted 42
+    times. Both of that flag's refusals apply here as they do to `guard_off()`
+    above — refused with `--check` and `--self-test`, and refused without
+    scratch outputs, which is why both `--out-` paths go to a temp dir rather
+    than the committed pair. ~1 s, and the only reason this is cached rather
+    than built per case is that two cases want the same regeneration.
+
+    The last slot is **stdout**, where `guard_off()` returns stderr: §6b's
+    per-program totals are printed on stdout, and the only thing worth
+    checking them against is the CSV this same run wrote.
+    """
+    tmp = tempfile.mkdtemp(prefix="xdata-export-ownership-")
+    out_clusters = os.path.join(tmp, "clusters.csv")
+    out_registers = os.path.join(tmp, "registers.csv")
+    proc = subprocess.run(
+        [sys.executable, str(TOOL), "--export-ownership", "--out-clusters",
+         out_clusters, "--out-registers", out_registers],
+        capture_output=True, text=True, check=False)
+    if proc.returncode != 0:
+        raise AssertionError(f"the export-ownership run failed: {proc.stderr}")
+    return tmp, out_clusters, out_registers, proc.stdout
 
 
 class TheContentKey(unittest.TestCase):
@@ -314,7 +346,7 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # reason this case exists (#753: the recipe had been re-pointed three
         # times and a `source.replace()` that stopped matching failed
         # silently). §6b prints the derivation of the first three at
-        # `xdata-06c2-06db-timers.md:924`; the 2026-09-25 re-derivation
+        # `xdata-06c2-06db-timers.md:952`; the 2026-09-25 re-derivation
         # recorded beside it is what put them at their current values.
         #
         # `test_xdata_register_map.py::AcceptedWrite` holds the same flag and
@@ -346,18 +378,157 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # The denominators are pinned with the numerators because a
         # re-derivation that changes them has changed what §6a measured, and
         # the response to that is to re-derive §6a, not to move a number here.
-        # That response is written out -- the seven figures below, the eighteen
-        # §2b of the checklist measures, the order to run the checks in -- at
+        # That response is written out -- the eleven figures below (seven
+        # before #850 added the four per-subset direction rows), §6b's two
+        # per-program cluster counts one class down, the eighteen §2b of the
+        # checklist measures, and the order to run the checks in -- at
         # docs/findings/xdata-census-rederivation-checklist.md, which is where
-        # the export instruction and §6a itself now point. Eight of §2b's are
-        # held and ten are not; the four §6a rows and §6b's `390` and `50` are
-        # what nothing holds, and §2b says so per figure since issue #849.
+        # the export instruction and §6a itself now point. **§2b's held/unheld
+        # split is a command's output, not prose**: `check_doc_figure_pins.py
+        # --section 2b` measures all eighteen of its figures held since #849
+        # read `OWNERSHIP["main_refs"]` and #850 added the rows above, and the
+        # two it cannot see are named beside it -- the `157`/`858` §6b prints
+        # for its *de-duplicated* run, which `ORACLE["extmem_pd_*"]` holds for
+        # the default census instead, and the guard-off pd cluster count `51`,
+        # which §6a does not print and so is not in that section's tables. An
+        # `unheld` there is "not found by this method", never "absent".
         self.assertEqual(
             (sum(1 for a in on if off[a]["write"] != on[a]["write"]), len(on)),
             (210, 1326), "§6a: 'addresses whose write changes: 210 of 1326'")
         self.assertEqual(
             (sum(1 for a in on if off[a]["refs"] != on[a]["refs"]), len(on)),
             (0, 1326), "§6a: 'addresses whose refs changes: 0 of 1326'")
+
+        # The four direction rows above the bold ones, each over one arm of the
+        # `program` partition rather than over all 1,326 rows
+        # (xdata-06c2-06db-timers.md:781-784). `program` is a partition --
+        # every register row is `main-ec`, `pd` or `both`, and the three arms
+        # sum to the same 1,326 the 210/0 denominators above already pin -- so
+        # these are the *terms* of the 833 rather than a second reading of it.
+        # That is what makes a re-export which moves a direction between the PD
+        # set and the main-EC set go red here: on its own it moves a pair of
+        # per-subset figures and leaves every aggregate above it standing.
+        # §6a prints each figure over a stated denominator, so the denominator
+        # is pinned in the same assertion, for the same reason the 210 and the
+        # 0 are: a re-derivation that changes it changed what the row is over.
+        # Each denominators assertion says which figures the page prints and
+        # which are this assertion's, because the three arms are not alike
+        # there: :781 carries the main-EC arm's parenthetical and :783 the pd
+        # arm's, while :784 names the 49 both-image addresses with no refs
+        # figure at all. A message that sends a re-deriver to a line without
+        # the figure they are looking for is the failure this whole case is
+        # about.
+        #
+        # **Four blocks rather than one loop over a table of cases, and the
+        # expected pair is a literal inside each assertion rather than a `for`
+        # header.** That is what #850's merge with #849 turned out to need, and
+        # it is a claim about a second file: `check_doc_figure_pins.py` decides
+        # a figure is `held` by finding it inside a `check()`/numeric-`assert*`
+        # call, so a figure that only ever appears in a `for` header measures
+        # `unheld` however many cases hold it. The checklist's §2b verdict
+        # column is that command's own output and is re-run by
+        # `test_check_doc_figure_pins.py::TheCommittedChecklist`, so a table
+        # loop here would have sent every re-deriver to redo work this case
+        # does. Nothing about *what* is asserted changes; the two shared
+        # helpers below are what the loop body used to be.
+        def arm_sum(program, direction):
+            """(guard-off, committed) for one arm of the `program` partition."""
+            return tuple(sum(int(r[direction]) for r in rows.values()
+                             if r["program"] == program)
+                         for rows in (off, on))
+
+        def arm_denominators(program, rows):
+            """(addresses, refs) over one arm -- the denominator §6a states."""
+            arm = [r for r in rows.values() if r["program"] == program]
+            return (len(arm), sum(int(r["refs"]) for r in arm))
+
+        with self.subTest(program="main-ec", direction="write"):
+            measured = arm_sum("main-ec", "write")
+            self.assertEqual(
+                measured, (3948, 3206),
+                f"§6a 'main-ec `write` references', guard removed / as "
+                f"committed: measured {measured[0]} / {measured[1]} against "
+                f"the page's 3948 / 3206")
+            for rows, label in ((off, "guard-off"), (on, "committed")):
+                denominators = arm_denominators("main-ec", rows)
+                self.assertEqual(
+                    denominators, (1169, 13891),
+                    f"§6a 'main-ec' denominators (1169 addresses, 13891 refs): "
+                    f"measured {denominators[0]} / {denominators[1]} in the "
+                    f"{label} census -- §6a:781 prints both, on the `write` "
+                    f"row. The `0 of {len(on)}` above is the same fact over all "
+                    "three arms, so this localises it to one")
+
+        with self.subTest(program="main-ec", direction="read"):
+            measured = arm_sum("main-ec", "read")
+            self.assertEqual(
+                measured, (7189, 7935),
+                f"§6a 'main-ec `read` references', guard removed / as "
+                f"committed: measured {measured[0]} / {measured[1]} against "
+                f"the page's 7189 / 7935")
+            for rows, label in ((off, "guard-off"), (on, "committed")):
+                denominators = arm_denominators("main-ec", rows)
+                self.assertEqual(
+                    denominators, (1169, 13891),
+                    f"§6a 'main-ec' denominators (1169 addresses, 13891 refs): "
+                    f"measured {denominators[0]} / {denominators[1]} in the "
+                    f"{label} census -- §6a:781 prints both, for the arm rather "
+                    f"than for the row. The `0 of {len(on)}` above is the same "
+                    "fact over all three arms, so this localises it to one")
+
+        with self.subTest(program="pd", direction="write"):
+            measured = arm_sum("pd", "write")
+            self.assertEqual(
+                measured, (193, 142),
+                f"§6a 'pd `write` references', guard removed / as committed: "
+                f"measured {measured[0]} / {measured[1]} against the page's "
+                f"193 / 142")
+            for rows, label in ((off, "guard-off"), (on, "committed")):
+                denominators = arm_denominators("pd", rows)
+                self.assertEqual(
+                    denominators, (108, 603),
+                    f"§6a 'pd' denominators (108 addresses, 603 refs): "
+                    f"measured {denominators[0]} / {denominators[1]} in the "
+                    f"{label} census -- §6a:783 prints both. The `0 of "
+                    f"{len(on)}` above is the same fact over all three arms, so "
+                    "this localises it to one")
+
+        with self.subTest(program="both", direction="write"):
+            measured = arm_sum("both", "write")
+            self.assertEqual(
+                measured, (279, 239),
+                f"§6a 'both `write` references', guard removed / as committed: "
+                f"measured {measured[0]} / {measured[1]} against the page's "
+                f"279 / 239")
+            for rows, label in ((off, "guard-off"), (on, "committed")):
+                denominators = arm_denominators("both", rows)
+                self.assertEqual(
+                    denominators, (49, 1202),
+                    f"§6a 'both' denominators (49 addresses, 1202 refs): "
+                    f"measured {denominators[0]} / {denominators[1]} in the "
+                    f"{label} census -- §6a:784 prints the address count and "
+                    "no refs figure; the refs total is this assertion's -- the "
+                    "sum of `refs` over the `program=both` rows -- and is not "
+                    "printed there. The `0 of "
+                    f"{len(on)}` above is the same fact over all three arms, so "
+                    "this localises it to one")
+
+        # 833 is the sum of the three `write` arms, which §6a states rather
+        # than shows. Asserted because it is a claim about the partition: a
+        # `program` column that stopped partitioning would leave the total at
+        # 833 and the terms not adding to it, which is the shape a table takes
+        # when a row has been transcribed from the wrong column.
+        deltas = [sum(int(off[a]["write"]) - int(on[a]["write"]) for a in off
+                      if off[a]["program"] == program)
+                  for program in ("main-ec", "pd", "both")]
+        self.assertEqual(
+            sum(deltas), 833,
+            "§6a 'references leaving `write`, all three programs' (`:785`): the "
+            f"three per-program deltas are {deltas}, which sum to "
+            f"{sum(deltas)}; the page prints that sum in bold, so a set that "
+            "does not add up to it has a row transcribed from the wrong column "
+            "rather than a total that moved. Re-derive §6a; do not move this "
+            "number")
 
         # The two named rows of §6a's table, where the totals above are visible
         # address by address. Both are addresses the sweep covers, so they are
@@ -510,6 +681,62 @@ class TheGuardOffRegeneration(unittest.TestCase):
         self.assertEqual({r["cluster_name"] for r in carried},
                          set(self.off_named))
         self.assertIn("whose cluster_key changed", stderr)
+
+
+class TheExportOwnershipClusters(unittest.TestCase):
+    """§6b's per-program cluster counts: a split that was held only as a total.
+
+    `OWNERSHIP["clusters"]` holds the 440 that `--export-ownership` produces
+    and `--self-test` asserts it against an after-census built in-process
+    (`xdata_register_map.py:4347-4354`), so five clusters moving from one program
+    to the other left every assertion in the tree green and both lines of
+    §6b's console block wrong at once. A *separate* class rather than another
+    case in `TheGuardOffRegeneration`, for two reasons: it is a different
+    flag's census, so the two regenerations are not the same measurement and
+    one class would read as though they were; and `docs/findings.md` §50 calls
+    the other class's seventh case "a seventh case", so an eighth there would
+    falsify a sentence this change did not set out to touch.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        _tmp, cls.clusters, _registers, cls.stdout = export_ownership_census()
+        cls.rows = list(clusters_of(cls.clusters).values())
+
+    def test_the_440_splits_the_way_6b_prints_it(self):
+        counts = collections.Counter(r["program"] for r in self.rows)
+        self.assertEqual(
+            dict(counts), {"main-ec": 390, "pd": 50},
+            "§6b: 'main-ec: 1218 distinct addresses, 9320 references, 390 "
+            f"clusters at threshold 0.5' and its `pd` line's 50 -- measured "
+            f"{dict(counts)} across the {len(self.rows)} cluster rows the run "
+            "wrote")
+        # And the split is held to the total it is the breakdown of, so the two
+        # cannot drift apart: OWNERSHIP is the 440, this is the division of it.
+        self.assertEqual(
+            sum(counts.values()), xrm.OWNERSHIP["clusters"],
+            "§6b 'wrote ...: 440 rows' is the sum of those two console lines, "
+            f"and OWNERSHIP['clusters'] holds it (now "
+            f"{xrm.OWNERSHIP['clusters']}); the split {dict(counts)} sums to "
+            f"{sum(counts.values())}, so the breakdown and the total have "
+            "drifted apart. Re-derive §6b; do not move either number")
+
+    def test_the_console_block_agrees_with_the_csv_it_wrote(self):
+        # §6b's block is a transcript, and the correction at `:917-931` exists
+        # because a transcript there once carried ids and counts from two
+        # different runs. The two cluster figures it prints are this run's own
+        # stdout, so they can be read back against the CSV the same run wrote
+        # -- which is the only way a half-renumbered transcript is caught
+        # rather than believed, and the reason the numbers above are not
+        # simply restated here.
+        printed = {program: int(n) for program, n in re.findall(
+            r"^\s*(\S+): \d+ distinct addresses, \d+ references, (\d+) clusters"
+            r" at threshold", self.stdout, re.M)}
+        self.assertEqual(
+            printed, dict(collections.Counter(r["program"] for r in self.rows)),
+            "§6b's console block: the two 'N clusters at threshold 0.5' figures "
+            f"the run printed are {printed}, and the clusters CSV that run "
+            f"wrote splits {dict(collections.Counter(r['program'] for r in self.rows))}")
 
 
 class TheMapReport(unittest.TestCase):

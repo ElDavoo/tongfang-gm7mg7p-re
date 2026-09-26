@@ -400,7 +400,7 @@ assertion is what stands between them and a guard-*on* one.
 
 **There is a second, independent drift behind the first, and the `setUpClass`
 error is hiding it.** `test_the_two_largest_cited_clusters_are_carried_by_overlap_not_by_key`
-(`test_xdata_cluster_names.py:355-370`) pairs `main-ec-001` with
+(`test_xdata_cluster_names.py:626-641`) pairs `main-ec-001` with
 `mode-oem-init` and `main-ec-002` with `level-block-086x`; the committed census
 puts `mode-oem-init` at `main-ec-002` and `level-block-086x` at `main-ec-004`.
 So repairing the guard alone would trade one red for another. And on the
@@ -430,7 +430,7 @@ carry a correction naming their tree are left as they are.
   figures of its own threshold re-run.
 - `ec/README.md:279` — "Ten of the 427 clusters have one"; the names file holds
   nine of 439.
-- `ec/tools/test_xdata_cluster_names.py:286` — a third-generation figure in the
+- `ec/tools/test_xdata_cluster_names.py:307` — a third-generation figure in the
   suite's docstring, "427 clusters become 439, 48 … 379", plus the second
   generation beside it at "430 → 439 with 64 ranks intact and 366 changed". A
   guard-on re-run of the committed tree is 439 → 439 with nothing moved, since
