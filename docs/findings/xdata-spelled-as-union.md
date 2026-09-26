@@ -226,6 +226,23 @@ their own corrections. The `functions` cell already answers the per-program
 question for sites, which is why it is listed as the exception above rather
 than as an open item.
 
+*(Correction, 2026-09-26, issue #713. The paragraph above is **incomplete, not
+wrong**, and it is kept as written: `refs` on a `both` row **is** still the sum
+of the two halves, and the five unsuffixed buckets still are, which is what
+`xdata-registers.csv` carries today. What has changed is that the row now also
+carries a per-program answer beside the summed one — the twelve columns at
+22–33, `refs_main_ec` / `refs_pd` and each of the five buckets once per program,
+written on every row rather than only on the 49 `both` ones. So the bullets
+above are now true of the *unsuffixed* columns and no longer describe the whole
+row, and "None of this is fixed here" is no longer true of `refs` and the
+buckets: it is still true of the function counts and of §2's table, which the
+re-keying half of this issue's follow-up has not done. Nothing was retracted and
+no figure moved — the 1,202 is still the `both` rows' `refs` column summed, and
+it is now also 947 main-EC + 255 pd. The write-up is
+[`xdata-per-program-counts.md`](xdata-per-program-counts.md), and the three
+places in the tree that said no per-program count exists carry the same dated
+correction beside the original sentence.)*
+
 ## What this does not establish
 
 The column says how each program **spells** an address, not what either one

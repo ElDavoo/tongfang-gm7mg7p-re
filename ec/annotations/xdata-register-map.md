@@ -519,7 +519,8 @@ self-test asserts. The distinct column now sums to more than the count of
 and one row of the CSV; the `refs` column does not double-count, since each row
 carries that address's whole reference count once — and on a `both` row that
 count is still the sum over both programs, which `spellings_by_program` does
-not split.
+not split (the twelve per-program columns after it, 22–33, do:
+`docs/findings/xdata-per-program-counts.md`).
 
 *(Correction, 2026-09-25, issue #557, re-transcribed against the tree #279
 superseded. Every cell of the table above is read from the committed CSV. The

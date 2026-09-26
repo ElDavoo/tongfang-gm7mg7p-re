@@ -8124,3 +8124,84 @@ wrong. No CSV, YAML, threshold, `status:` or gate was edited, no `test_*.py` is
 added so the runner's 34 suites and 1033 tests are unmoved, the `> 300` floor
 stays where §62's recipe put it, no image was opened, no register was read
 back, and nothing is opened in another repository.
+
+## 64. `refs` and the five buckets are split per program, and `refs` itself does not move (2026-09-26, issue #713)
+
+> **Numbering note, added at the merge.** This section was written as §63, and
+> #886's `--swept` second-holder measurement (`32218840`) took §63 on `main` in
+> the same window, so it is renumbered to the next free number rather than left
+> to collide. §63 is now #886's summary above, and this is **§64** and is the
+> last section in the file. Nothing this branch wrote pointed at its own section
+> number — the write-up, the `ec/README.md` bullet and the three correction
+> blocks all name the issue, the CSV, §2 of the map and §39 instead — so there
+> was no reference to repoint. A section number is a property of the merge in
+> the same way the runner's totals are (see `runner-red-suite-set.md`), which is
+> why the collision is recorded here rather than left for the next reader to
+> find.
+
+The write-up is
+[`xdata-per-program-counts.md`](findings/xdata-per-program-counts.md);
+this is the summary. §39 split what a `program=both` row *spells* and left
+every *count* on it a sum, so `0x04A3` read 4 `read` / 3 `write` / 0 / 0 / 1 with
+nothing saying the main-EC seven are 4 read + 3 write and the pd one is 1
+address-taken — a reader looking for a writer saw three bank1 writes and a
+single pd `address-taken` in one cell.
+
+**`ec/annotations/xdata-registers.csv` now carries twelve more columns, 22–33**,
+appended after `spellings_by_program`: `refs_<program>` and each of the five
+buckets once per program, `_pd` and not `_pd_image` because this CSV's own
+vocabulary is already `pd` (`registers.yaml` spells it the other way and the
+divergence is recorded). Written on **every** row, not only the 49 `both` ones —
+a column blank on 1,277 of 1,326 rows is a shape no `DictReader` consumer can
+rely on, and it is what makes `refs == refs_main_ec + refs_pd` checkable
+corpus-wide. **0 violations on all 1,326 rows.**
+
+**`refs` on a `both` row is still the sum, and every published figure stands.**
+Σ `refs_main_ec` is 14,838 and Σ `refs_pd` is 858, which is 15,696 — the per-
+program totals the tool already pinned are each the single-program rows plus one
+half of the `both` rows, and that identity is the cross-check that says the
+columns split *this* census rather than re-counting it. The 1,202 the `both`
+rows carry is 947 main-EC + 255 pd, and their buckets 546/165/212/16/8 against
+95/74/2/56/28. `xdata-clusters.csv` regenerates **byte-identical**, which is the
+strongest single statement that no reference was added, de-duplicated or
+re-bucketed and the ranking is untouched.
+
+**Four `--self-test` assertions** hold it, three reading the committed file as
+#711's do and one deliberately against a fresh generation (a column wrong in
+both the tool and the CSV is internally consistent and the others would pass
+it): the per-row partition plus where the columns sit, the 15,912 cells against
+`groups`, the aggregate reconciliation, and the four `pair-literal` rows to the
+bucket. **Two of those four were already published per program** in
+`xdata-spelled-as-union.md` and §2 of the map, so that assertion is checked
+against prose nobody re-derived for this change. Every key of the new pin block
+is read, per #849's rule. Both `--check` and `--self-test` are already gated
+(`agent-gates.sh:261-262`, since #815), so none of this can be removed without
+CI going red.
+
+**Four places said no per-program count exists; all four were incomplete, not
+wrong**, and they were not corrected the same way. The sibling page's "The union
+that remains" got a dated correction *beside* the original rather than a silent
+edit; the other three were in-place edits, which is what the issue's per-file
+spec asked for and what actually landed — the `xdata-registers.csv` bullet in
+`ec/README.md` and the `build()` comment that said "nothing here splits those"
+both rewritten, and §2's "which `spellings_by_program` does not split" given a
+naming clause pointing at columns 22–33. Nothing was retracted and no figure
+moved: the numbers the sibling page publishes for `0x04A3` and `0x0834` are the
+same ones these columns publish, and the two agree. §39's closing sentence is
+left exactly as written, because the **re-keying half of that follow-up is
+still open** — `xdata-register-map.md` §2's `both` rows per program, which
+would take that table's `distinct` from 1,326 to 1,375 and invalidate its three
+superseded-table blocks. That is the next issue, deliberately not this one: two
+large edits to one long shared file is the merge conflict `CLAUDE.md`'s "new work
+goes in new files" rule exists to prevent. Also not done, and named in the
+write-up: the function-count columns (`readers`, `writers`, `co_reading`, …) and
+`registers.yaml`'s 160 `static_refs_main_ec` / `static_refs_pd_image` entries,
+which are a different method over different bytes. Two pre-existing stales were
+found and left alone on purpose — `xdata-census-totals.md`'s `8341` bucket line
+and `xdata-export-ownership-page-census.md`'s `md5sum` — neither caused by this
+append. The positional readers `$6`, `$7`-`$11` and `$21` are re-run verbatim in
+the write-up and print 15,696, `read 8826 write 3587 read+write 2482
+passed-to-call 534 address-taken 267` and 214. No register `status:` moved, no
+`registers.yaml` figure was refreshed, no image or Ghidra project was opened, no
+gate was edited, no register was read back, and nothing is opened in another
+repository.
