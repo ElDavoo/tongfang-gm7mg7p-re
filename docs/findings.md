@@ -9562,6 +9562,29 @@ that is a change this branch does not make.
 > given and not the one it holds; both halves are corrected here and not in it,
 > per §4a-4d, and §80's own numbering note is the record from the other end.*
 >
+> **And that clause is corrected a second time at the `#780` × `#974` merge, in
+> the same place and for the same reason again.** The half of it this landing
+> makes false is the "**and the last section in the file**" one: #974's summary
+> landed below **§80** and is **§82**, so §80 is not the last section in the file
+> and §82 is. **The "**§80**" above is untouched and stays true** — the number
+> is a property of the merge in the way [`findings/runner-red-suite-set.md`](findings/runner-red-suite-set.md)
+> records for the runner's totals, and `main` held §80 first, so #780 keeps it
+> and #974's own summary gives way to **§82**. The clause is corrected here
+> rather than in the paragraph above because that paragraph is committed on
+> `main` and does not move. **The `§81` this paragraph first gave #974 is left
+> visible and is true of the `#780` × `#974` tree it was measured on**: on this
+> tree `main`'s own **§81** — #978's, the index hand-repair measurement — took
+> that number in the same window, so #974's gives way twice in one merge and
+> **§82** is the sixth time the rule has been applied here. #978's own numbering
+> note records the same collision from the other end. Nothing else above is
+> affected: #929's §74, #962's §75, #794's §76, #811's §77, #979's §78, #973's
+> §79, #780's §80 and #978's §81 all still sit between §73 and the end in that
+> order, and the section order still matches the numbering. **Neither #780's own
+> §80, nor #978's §81, nor #974's own §82 carries a "last section in the file"
+> clause of its own**, so nothing beyond this correction is owed, and the rule
+> the earlier collisions set gives the whole of §80 to #780, of §81 to #978 and
+> of §82 to #974.
+>
 > **And that clause is corrected once more at the `#929` × `#778` merge, in the
 > same place and for the same reason §68's, §69's and §70's were.** #929's
 > collision-scope summary
@@ -10151,7 +10174,7 @@ sixes in `evidence/ec-watch/` are **disjoint capture families** —
 `06d9` plug-in sweeps, so a sentence about one of them held to both is handed a
 twelve-file set of two unrelated families, which is the same misattribution the
 date exists to prevent along a second axis — and because a union would falsify
-the cost the tool documents at `check_testdata_row_claims.py:46-48`, *"one
+the cost the tool documents at `check_testdata_row_claims.py:53-55`, *"one
 address in any of a date's files satisfying a claim about that date"*, which
 this issue's Done condition requires to stay true. **A refusal does not touch
 it**, so that sentence keeps its wording.
@@ -10179,6 +10202,17 @@ byte-identical there too — and, diffed against a clean `origin/main` at
 `368e9e52`, the committed run's stdout differs **only** in the summary line's
 wording while its 24 lines of stderr are byte-identical.
 
+*(Corrected at the #974 merge, beside the paragraph rather than in it per §4a-4d:
+"**No `Result` field is new**" is true of **#979's** merge and not of the tree
+this section now sits in. #974 appends one — `captures`, the root the run was
+handed, so a report cannot name the committed directory for a directory it
+never searched — and it is appended at the end, which is what makes it safe
+where a field inserted mid-tuple would not be. The rest of the paragraph
+re-measures: `Result.dated` is still `(glob, files, claims)` per date, the six
+dated cases are still unedited, and the committed run's stdout still differs
+from clean `origin/main`'s only in wording. **`Claim` grows a field on the same
+merge**, `carriers`, and neither field is read by this issue's own rule.)*
+
 **Three cases and three mutations, run.** The second-day case, the neither-day
 case and the precedence case are in `SkipsDeliberately`, on scratch trees — a
 case asserting this over the committed index would have to edit the index to
@@ -10189,7 +10223,16 @@ failures, and the run is green again on the shipped tool. `EachRuleIsLoadBearing
 tree, which has no two-date sentence — and both class docstrings say so rather
 than leaving the omission to be found. The suite is 47 at this merge's base
 `368e9e52` and on clean `origin/main`, and is **50** on the merged tree — this
-issue's three cases, the whole of the step. *(The `42` a first draft of this
+issue's three cases, the whole of the step. *(The **50** is this merge's, and the
+**55** is not a figure about the tree this section now sits in: the **55** is the
+#974 × #979 × #985 tree's, #974 landing on the other side of this section's tree
+and adding five more to the same suite, and each figure here is true of the tree
+it was measured on per §4a-4d. This tree reads **58**, re-run rather than
+carried — `python3 ec/tools/test_check_testdata_row_claims.py` gives `Ran 58
+tests` — and the step from the **55** is **#984's three**, which landed between
+the two merges on `main`: the same suite reads 50 at `abfe76e6` (#979), 53 at
+`563488c4` (#984) and 58 at `8bf0a1a9` (#974), each measured by running it at
+that commit. No other suite moves.)* *(The `42` a first draft of this
 paragraph read at "the fork", and the "#975's five" it added to it, are figures
 from before #982 — which implements #975 — landed in the base; those five cases
 are inside the 47 and are not this issue's.)* The 3, 3 and 2 are re-measured on
@@ -10209,7 +10252,12 @@ it remains a human's `git apply`, so no gate is wired here. **The
 from the runner rather than from an edit: §47 already says that a total is a
 property of the merge. **(Merged-tree note, the #979 × #985 re-derivation: it is
 `1211`, and it is derived by running the runner rather than by adding two
-figures up.)** The merge measures `39 suite(s) run, 1211 tests` and `907` for
+figures up.)** *(Re-derived again at the #974 merge, which is the one this
+section's tree now sits in: **`1216`**, and `912` for
+`python3 -m unittest discover -s ec/tools` where the note above reads `907`.
+The step is **+5 tests and no suite**, all five in the suite above, so the
+merged figure is `1211 + 5`. `tools/README.md`'s twenty-fourth note carries the
+arithmetic and the pin re-registration.)* The merge measures `39 suite(s) run, 1211 tests` and `907` for
 `python3 -m unittest discover -s ec/tools`, against clean `origin/main`'s
 `1208`/`904` and this merge's base `368e9e52`'s `1177`/`873` — so the step
 this issue contributes is **+3 tests and no suite**, all three in
@@ -10225,8 +10273,8 @@ was *already* stale on `main` is the part worth keeping**, and it is why
 neither side's figure is the merged tree's: #982 added nine cases and did not
 re-derive. The correction fits inside the lines the sentence already had, so the
 `tools/README.md:203` pin does **not** move —
-`159 + 9 + 7 + 22 + 6 = :203`, both sides' edits landing below `:203` —
-and `check_pin_table_rows.py` still reads 106 / 106 / 106 with all seven
+`159 + 9 + 7 + 22 + 6 = :203`, both sides' edits landing below `:203` — and
+`check_pin_table_rows.py` still reads 106 / 106 / 106 with all seven
 classes 0. No `gh pr create` anywhere.
 
 *(**Superseded at the `#979` × `#780` merge, beside this section rather than
@@ -10409,6 +10457,25 @@ the files the run was handed, and the line beneath them — the only denominator
 this section is about — is byte-identical at `0 of 15`. The tallies are too, so
 this section's check that it moved reporting and not verdicts still holds with
 #975's clause on the same line.)*
+*(Second merged-tree note, 2026-09-26, #974 landing beside the #979 × #973
+merge: the dated block now carries a **fourth** clause, and this section still
+accounts for two of them. The merged line reads `2026-09-23-* (6 capture(s)
+under evidence/ec-watch, 2 with an addr column): row 7 0x0F58 resolved in
+2026-09-23-power-mode-cycle-0f00-0f5f.csv, row 7 0x0F5C resolved in
+2026-09-23-power-mode-cycle-0f00-0f5f.csv` — each verdict now followed by the
+file of the set that **carried** the byte. That is #974's, and the page that
+owns it is
+[`testdata-row-claims-report-naming.md`](findings/testdata-row-claims-report-naming.md).
+**It is a fact about a claim rather than about a file set, so it is not a third
+reading of this section's question and the denominator below it is untouched:**
+the carrier names which of a date's files satisfied a claim, where the line
+beneath them answers how much of the root no glob can reach. The carrier does
+not narrow the set and moves no verdict — **the tallies are still byte-identical
+at `30 resolved, 0 missing, 24 unresolved`, and the denominator is still `0 of
+15`** — so this section's check that it moved reporting and not verdicts holds
+with #974's clause on the same line, as it did with #975's. What the new clause
+adds is a *cost* this section could not previously see: `1 of 6`, which is the
+union's price on this tree and is #974's finding to state.)*
 
 **The refusals have teeth, and the cost of that is written down rather than
 designed away.** The suite asserts the committed root has **no** non-conforming
@@ -10434,6 +10501,78 @@ they are the convention being held, not prose to be rewritten to match a rule.
 `captures_for()`'s resolution semantics are unchanged and re-stated as
 unchanged, no `status:` moved so `ec/annotations/registers.yaml` is not
 touched, no gate is wired, and no `gh pr create` anywhere.
+*(Corrected at the #974 merge, beside the paragraph rather than in it per §4a-4d:
+the pin **does** move there, and the reason is the one this section's own
+twentieth note records for every other time it has moved. #974 re-derives the
+same sentence from the other side and its correction is *also* longer than the
+lines it replaced, so neither side's fit in place once both are in and the
+citing line is at **`tools/README.md:206`** — `203 + 3`. The row in
+`test-line-pin-census.md` is re-registered to `:206` in place, with its
+supersession-shape legend row and its blocker argument, with the `:203` above
+left written; `check_pin_table_rows.py` reads 106 / 106 / 106 with every class 0
+again, and `ec/tools/test_check_pin_table_rows.py` was red on three of its
+cases until the re-registration. **What made the move cheap is the placement
+this paragraph already argued for**: both sides' corrections sit far below the
+pin, so the three lines that moved it came out of the sentence's own
+parenthetical and not out of either note. `tools/README.md`'s twenty-seventh note
+carries the arithmetic.)*
+*(Corrected a second time on the #974 × #973 merge, per §4a-4d again, and the
+`+3` above is not this tree's: three corrections to that sentence now stand
+stacked rather than two, and the citing line is at **`tools/README.md:208`**. The
+row in `test-line-pin-census.md` is re-registered to `:208`, with its
+supersession-shape legend row and its blocker argument, and **the `:203` and the
+`:206` are both left written** — a third value for one pin, each true of the tree
+it was measured on. `check_pin_table_rows.py` reads 106 / 106 / 106 with every
+class 0 again, measured by running the tool on this tree, and
+`ec/tools/test_check_pin_table_rows.py` was red on three of its cases on it too,
+for the same reason and the same repair. `tools/README.md`'s twenty-eighth note
+carries this arithmetic, and this section's own **§79 → §80** is recorded beside
+its heading.)*
+*(Corrected a third time at the `#780` × `#974` merge, per §4a-4d once more, and
+this is the tree the correction above and the `:206` and the `:208` were all
+superseded on: **four** corrections to that sentence now stand stacked, because
+both branches rewrote it and neither side's fit in place once both were in, so
+the shared history, the two sides' own measurements and the merged `1248` are
+written above the pin together. The citing line is at
+**`tools/README.md:249`** — `203 + 33 + 13 = :249`, the `+33` being the merge
+above's side-by-side corrections and the `+13` this one's. The row in
+`test-line-pin-census.md` is re-registered to `:249` in place, together with its
+supersession-shape legend row and its blocker argument, and **the `:203`, the
+`:206`, the `:208` and the `:236` are all left written** — a fifth value for one
+pin, and the second time this file has held more than two. `check_pin_table_rows.py`
+reads 106 / 106 / 106 with every class 0, measured by running the tool on this
+tree, and `ec/tools/test_check_pin_table_rows.py` was red on **four** of its 36
+cases while the row was stale — one more than at either correction above, because
+a fifth stacked correction above the pin is one more case that cannot be
+reconciled while the row names a superseded line, and it is the same stale-row
+case rather than a new defect. `tools/README.md`'s twenty-ninth note carries this
+arithmetic and the runner's figures, and this section's own **§81 → §82** is
+recorded beside its heading.)*
+*(Corrected a fourth time at the `#978` × `#974` merge, per §4a-4d once more, and
+this is the tree the `+3` and the `+13` above were both superseded on, so the pin
+has now taken six values in four merges: **four** corrections to that sentence
+stand stacked and the fifth is this merge's. `main` read `:247` at the `#978` ×
+`#979` × `#973` × `#780` merge, the branch's own tree read `:249` at the `#780` ×
+`#974` one, and this tree reads **`tools/README.md:279`** —
+`159 + 9 + 7 + 22 + 6 + 33 + 11 + 32 = :279`, the `+11` being #978's merge's and
+the `+32` this one's, which came out of the totals sentence's own parenthetical
+because every merged-tree note in that file sits below the pin. The row in
+`test-line-pin-census.md` is re-registered to `:279` in place, together with its
+supersession-shape legend row and its blocker argument, and **the `:203`, the
+`:206`, the `:208`, the `:236`, the `:247` and the `:249` are all left
+written** — a sixth value for one pin, and the third time this file has held
+more than two. `check_pin_table_rows.py` reads 106 / 106 / 106 with every class 0
+again, measured by running the tool on this tree, and
+`ec/tools/test_check_pin_table_rows.py` was red on **three** of its 36 cases
+while the row was stale, for the same reason and the same repair as at each
+correction above — and on three whatever superseded value the row named, which is
+what `tools/README.md`'s thirty-second note measures and corrects beside the
+four the thirty-first recorded. `tools/README.md`'s thirty-second note carries this arithmetic and the
+runner's figures, and **this section's summary gives way a fifth time, to §82,
+because `main` holds §81 for #978** — `main`'s §81 left reading as #978's. The
+four `../findings.md` rows §41's `+2` moved are not moved again, so `:7193`,
+`:7406`, `:7467` and `:9209` stand as this tree's and `:4206` and `:4208` are
+unmoved.)*
 
 ## 80. The fixture CSVs' `evidence` column is resolved against the real tree, and the eight cells naming nothing there are empty (2026-09-26, issue #780)
 
@@ -10706,3 +10845,193 @@ to make a tool green is why the edit is a paragraph. No `status:` moved, so
 `ec/annotations/registers.yaml` is not touched; no fixture, row, capture, `.asm`
 or `.c` is edited; no gate is wired, which is also the right tier call for a
 mode that needs full history; and no `gh pr create` anywhere.
+
+## 82. The dated block names the file that carried the byte, and the closing sentence stops reading the same either way (2026-09-26, issue #974)
+
+> **Numbering note, added at the merge.** This section was written as §81, and
+> the tree it was written on it was. **#978** took **§81** on `main` in the same
+> window, so this one is renumbered to **§82** and the references this branch
+> added to it move with it. §79's note's rule applies unchanged, and it is the
+> rule §76's and §74's record from the other side: the summary already committed
+> on `main` does not move and this one gives way. §77, §78, §79, §80, §81 and
+> §82 are #811's, #979's, #973's, #780's, #978's and #974's summaries above, in
+> that order, and the section order matches the numbering. **This is the fifth
+> renumber, and the only one that moved twice inside a single merge** — §81 was
+> taken here by `main` and given way here by this branch. §81's own numbering
+> note is the record from the other end, and §73's note carries the correction
+> to its "last section in the file" clause for the same collision. **No tool,
+> test or gate reads a section number out of this file**, and the three
+> references this branch added to its own §81 — in `tools/README.md`'s notes
+> below, in `docs/findings/test-line-pin-census.md` and in
+> `docs/findings/testdata-row-claims-report-naming.md` — are repointed to §82
+> with it.
+
+The write-up is
+[`testdata-row-claims-report-naming.md`](findings/testdata-row-claims-report-naming.md);
+this is the summary, and it is **§82**, which is five renames from the §77 this
+branch wrote: **#811** (§77), **#979** (§78) and **#973** (§79) took those three
+numbers on `main` while this branch was open, **#780** took **§80** there too,
+and **#978** took **§81** in this merge's own window, so this one is renumbered
+again and the references this branch added to it move with it. The rule is §76's
+and §74's, unchanged: the summary already committed on `main` does not move and
+this one gives way — five times now, to five different summaries, and §81 is the
+fifth. `main`'s §79 above is #973's, `main`'s §80 above is #780's and `main`'s
+§81 above is #978's; all three are left exactly as written, and the sections are
+kept whole rather than one replacing the other. **The `§81` this summary carried
+on its own tree is left visible in the note above and is true of that tree**,
+per §4a-4d.
+
+§76 gave a bare date in the third column a file set to be
+held against and paid for it by writing the cost down as a **sentence** — "one
+address in any of a date's files satisfying a claim about that date". This
+change does not design that cost away and **moves no verdict**: it makes the
+sentence a number. **54 literals, 30 resolved, 0 missing, 24 unresolved, 30
+checked, 15 claiming rows, five shapes at 16/3/2/2/1, and rc 0 are all
+byte-identical before and after** — two lines of wording changed and nothing
+else, which is the check that this moved reporting rather than checking. On the
+merged tree the dated line also carries §76's `, 2 with an addr column` clause,
+which is #975's and reports a fact about the *file set*; the carrier names below
+are the one line that names a fact about a *claim*. **A fourth line sits beneath
+that one on the merged tree and is neither this issue's nor #975's** — `0 of 15
+capture(s) … are out of the reach of every <date>-* glob: none`, which is
+**#973's** (§79) and answers a different question: not which file of a date
+carried a claim, but how much of the capture root no `<date>-*` glob can reach
+at all. It is named here so that a reader counting the block's lines is not left
+to work out which of them this section introduced.
+
+**Three reporting facts, each checkable by running the tool.** The dated block
+names the file each literal was carried by — on this tree `2026-09-23-*` is six
+files and per-file `grep -ic` gives `0 0`, `0 0`, `0 0`, **`4 6`**, `0 0`, `0 0`,
+so the cost is **1 of 6**, in the file the sentence's own "power-mode-cycle"
+wording points at. The block labels that set with the root **the run was
+handed**, carried on `Result`, so a run pointed at a scratch tree no longer
+prints the committed `evidence/ec-watch` for a directory it never opened — the
+case for it is scratch-only, and the pre-existing `2026-09-23-* (2 capture(s)`
+assertion is retained unchanged precisely because it could not see the defect.
+And the closing line names **both** file sets with a count each.
+
+**The named carrier is the one the question was asked of.** A dated claim is
+answered by `carried_by_column()`, so the file named on the line is the one
+with a **row** for the address, not the first one with the token in it
+anywhere — and the two agree on this tree, `2026-09-23-power-mode-cycle-0f00-0f5f.csv`
+being the only carrier under either reading. They are not the same question, and
+`docs/findings/testdata-row-claims-report-naming.md` §(a) records the deferred
+one with a correction beside it. The `.txt` half of the date carries no column
+and is not read at all now; `, 2 with an addr column` beside the file count is
+what says so.
+
+**The count that is deliberately not used is the dated one, and the reason is
+the whole of the sharper half.** Row 7's own
+`0751-isolation-example-moved-fan-after-0f00.txt` carries both literals on
+**line 8 only, a `#` comment in its own header** — a quotation of the very
+sentence that is not about it — so with the date ignored both verdicts flip to
+`resolved` on the textual read, the run stays green, and "2 are held elsewhere"
+is the same 2 either way. Measured, the two runs are **both green and both 30
+checked** and the split is all that separates them: **28/2** as shipped against
+**30/0** with `captures_for()` mocked to `(UNRESOLVED, [], "")`. An
+implementation that never resolved a date would print **the sentence §76
+printed**, exit 0, and pass every count the run had. A claim is dated by
+membership in the globs `result.dated` already carries, so this needed **no new
+field**, and a claim one of the five shapes passed over was never held to either
+set and reaches neither count — which is why the split runs over the checked
+claims and the two figures sum to `result.checked` on a green run.
+
+**Every carrier, not the first match.** `carried_by()` returned a `bool` and
+short-circuited, which would print one name for a date whose two files both
+carry the byte and understate the very cost the issue asks to weigh. Both readers
+now read their set whole and return the sorted carriers, so `Claim.carriers`
+names a file whichever reader answered; the cost is measured, not asserted —
+**40 file reads become 97** over a 140 KB `testdata/`, and the difference does
+not show in the run's wall time (**32.1ms against 33.0ms** for `check()` alone,
+best of nine runs each). *(The **32** and the **78ms/79ms** are the branch's own
+instrumentation on its own tree and stay visible per §4a-4d: the whole-set
+**97** reproduces byte for byte here and the short-circuit figure does not, and
+this summary does not claim to know which reader the **32** was counting. What
+the measurement is for does not depend on the exact figure — the short-circuit
+is 57 reads cheaper against a corpus whose whole-set side is the same **97**.)* `main()`'s index label is left as
+`repo_path(INDEX)` on purpose: it is the only caller and always passes the
+default root, so no run that prints the line ever searched another tree. **That
+asymmetry is written down rather than left unexplained.**
+
+**Six wrong implementations were applied to the tool in place and the suite run
+over each** — the committed path printed again, the carrier dropped, the
+short-circuit restored in both readers, the date ignored, the split collapsed to
+a single total, and the dated claim reverted to the textual read — and each is
+red, on **1, 2, 1, 16, 3** and **1** cases, the fourth including the new
+closing-line split and the last being §76's own rule from #975. *(Re-measured
+on this merge rather than carried: the **14** and the **2** are the tree #975
+merged into and are left visible per §4a-4d. **#979's** three cases move the
+date-ignored count to **16** — its third asserts the two-date refusal and stays
+green when no date resolves, which is right, since a tool that resolved nothing
+refuses nothing — and the split-collapsed count to **3**, the committed-tree
+case's date-ignored half among them.)* *(Re-derived again on the tree this
+section now sits in, per `docs/findings/testdata-row-claims-report-naming.md`,
+which carries the per-case lists. The **1** in the first row and the **16** and
+**3** in the fourth and fifth are left written per §4a-4d and are true of the
+#974 × #979 × #985 tree; what the runner prints on this tree is **2, 19** and
+**2 or 3**: the `repo_path(CAPTURES)` row reds the
+new root case **and** the pre-existing denominator case beside it, whose
+`assertNotIn(ctrc.CAPTURES, block)` cannot survive the constant coming back; the
+date-ignored row reads **19** (`FAILED (failures=19)` over `Ran 58 tests`) =
+this branch's four plus the twelve the same mutation reds on #979's tree plus
+**#984's** three, which ask what the run read out of the root and so go red when
+it reads nothing; and the split-collapsed row reds **2** collapsed to
+`len(own)` alone — the committed-tree case's `assertNotEqual` still holds on 28
+against 30 — and **3** collapsed to the combined total, which is the collapse the
+**3** above was measured on. **The half of the date-ignored explanation that was
+false is the one about the two-date cases:** a run that resolves no date still
+refuses, because `reason_for()` reads the multi-date refusal off the sentence and
+not off a file, so `test_a_two_date_sentence_is_refused_with_its_literals_in_neither_day`
+stays green — but the run carries no globs, so a refused sentence's stderr line
+names neither date, and **both** of the other two go red on their own assertion
+that both dates appear on that line.)* The scratch
+split case is built as row 7's tree is, with the row's own fixture carrying
+every address the sentence claims, so **both readings are green** and the only
+thing left to differ is the wording; the committed tree asserts that premise as
+a relation — the two runs share the whole sentence and differ only after the
+`--` — so the measurement above is reproducible by a test and not only by this
+write-up. The suite is **42 → 52** on the merged tree, five cases from each side
+and one extended; the committed tree is asserted for **shape only** (both sets
+named, the two counts summing to `result.checked`, every dated claim `resolved`
+with a column behind it), never for a count, per `docs/agent-pipeline.md`.
+`test_the_run_reached_something` parses `number label` pairs off stdout, and
+the new wording's one pair was **checked** to collide with none of the seven it
+asserts. The suite is **42 → 55** on this merge, not the **52** above: that is
+the tree #975 merged into and stays visible per §4a-4d, and **#979's** three
+cases are the whole of the difference, none of them one of the cases this
+section names. It is **42 → 58** on the tree this section now sits in, re-run
+rather than carried: **#973's** three cases are the whole of that step, and
+again none of them is one of the cases this section names. **It is still `58` on
+the `#978` × `#974` merge**, re-run rather than carried again: #978 added a
+suite of its own and no case to this one, so the step is #979's and #973's and
+this issue's and nobody else's, and **the `58` is the one figure in this section
+that the merge did not move, which is worth saying because every other figure in
+it is a verdict or a carrier and those are byte-identical for the same reason.**
+`ec/tools/test_check_testdata_index.py` is at **69** and
+`ec/tools/test_measure_index_repair_visibility.py` at **21** beside it, and
+`check_testdata_row_claims.py` still reads **`27 table row(s), 17 literal-bearing:
+54 literal(s), 30 resolved, 0 missing, 24 unresolved`** with the dated block
+naming `2026-09-23-power-mode-cycle-0f00-0f5f.csv` for both of row 7's literals
+and the closing line reading **28 with the fixtures their row names, 2 with the
+captures a bare date in their sentence names** — re-run on the merged tree rather
+than carried, and unmoved, which is the whole point of the change this section
+describes. `tools/README.md`'s thirty-second note carries the runner's figures
+for the same tree.
+
+**Nothing here is a hardware claim, and the old line is superseded, not
+retracted.** No capture is *opened*: the files under `evidence/ec-watch/` are
+read as text by `carried_by()` for a fixture claim and parsed by
+`read_capture()` for a dated one — §76's own framing, not this change's. The
+closing line §76 quoted was accurate for the tree it was measured on, so the two
+predecessor write-ups that quote it verbatim are **left exactly as written**,
+following `testdata-index-suite-count-floor.md`'s precedent that a write-up is a
+record of what its branch measured — the §4a pattern is for a claim stated more
+strongly than its evidence supported, and this one was not. Naming the carrier
+does not narrow the file set, does not change a verdict, and does not say which
+capture the sentence meant; that refusal is now a bullet in the tool's own
+"what this does not check" list. `ec/tools/testdata/README.md` and row 7's
+sentence are **not edited** — nothing is wrong with either today.
+`docs/ci/agent-gates-testdata-row-claims.patch` is **not** touched — the CLI is
+unchanged — and it remains a human's `git apply`, so no gate is wired here. No
+`status:` moved, so `ec/annotations/registers.yaml` is not touched. No `gh`
+command runs in this work.

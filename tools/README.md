@@ -11,13 +11,15 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. **There are forty-one today, 1264 tests in all** — both figures
+file committed. **There are forty-one today, 1269 tests in all** — both figures
 *(The `1161` this sentence carried until #794, the `1165` it carried on #794's
 own branch, the `1168` it carried at the `#962` × `#794` merge, the `1180` the
-#979 branch proposed, the `1187` #780's own branch carried, the `1211` the
-`#979` × `#985` merge re-derived it to, the `1221` and `1233` the two sides
-of one merge each measured on their own tree, and the `1243` the
-`#979` × `#973` × `#780` merge re-derived it to, are all left visible per
+#979 branch proposed, the `1182` the #974 branch proposed beside it, the `1187`
+#780's own branch carried, the `1211` the `#979` × `#985` merge re-derived it to,
+the `1216`, `1221`, `1233`, `1238` and `1243` the four two-sided merges before
+this one measured between them, and the `1248` and `1264` this merge's own two
+sides measured apart, each on the tree its own side stood on, are all
+left visible per
 [`../docs/findings.md`](../docs/findings.md) §4a-4d, each true of the tree it
 was measured on: `1161 + 4 = 1165` and `1164 + 4 = 1168` are the four cases
 `ec/tools/test_check_testdata_row_claims.py` gained, `1177 + 31 + 3 + 10 =
@@ -26,22 +28,42 @@ reads at `368e9e52`, not the `1168` the sentence carried, so that step is off
 `main` and not off the value above — with its four parts being #985's
 thirty-one cases and its new `ec/tools/test_disasm8051_oracle.py`, #979's three
 in `ec/tools/test_check_testdata_row_claims.py` and #780's ten in
-`ec/tools/test_check_testdata_index.py`, and `1233 + 10 = 1243` is the
+`ec/tools/test_check_testdata_index.py`, `1233 + 10 = 1243` is the
 `#979` × `#973` × `#780` merge's, the ten being #780's again in the same suite
 and the suite count unmoved at the `40` `main` already read — the same fact the
-twenty-third note states about its own step, so **the two merges that first put
-a suite on this sentence each put theirs on the side their counterpart had
-none, and neither figure is derived by adding the other's**. **`1243 + 21 =
-1264` is this merge's own**, the twenty-one being #978's own new
-`ec/tools/test_measure_index_repair_visibility.py` and nothing else, so the test
-count moved with the suite count rather than the suite count alone, and both are
-a re-derivation by running the runner here rather than the addition either side
-could have made: `939 + 21 = 960` is the same twenty-one under `python3 -m
-unittest discover -s ec/tools`. **The suite count's step is `40` → `41`, and it
-is a third single-suite step and not a fourth** — #985's
-`ec/tools/test_disasm8051_oracle.py` and #973's `ec/tools/test_check_capture_names.py`
-were the first two, and #780's ten above added cases to a suite it already
-counted, which is why that merge's step left the `40` where it was.
+twenty-third note states about its own step — and **`1233 + 10 + 5 = 1248` is
+#974's side of this merge**, the ten again #780's ten in that same suite and the
+five #974's five in `ec/tools/test_check_testdata_row_claims.py`, **with the
+suite count unmoved at the `40` `main` already read on *both* sides** — the count
+moves on #985's side at the twenty-second note, on #973's at the twenty-third, and
+on neither side there, which is the same fact the twenty-third note states about
+its own step and the twenty-ninth about #974's, so **the two merges that first
+put a suite on this sentence each put theirs on the side their counterpart had
+none, and neither figure is derived by adding the other's**. **The `1238` and the
+`1243` are the `#780` × `#974` merge's two sides measured apart, each adding only
+its own contributor to the `1233` the two shared, and the `1248` is the one figure
+there that added both** — measured by running the runner on that tree first and
+written down afterwards, the rule the twenty-fifth note below states and the
+thirty-first applies. **`1243 + 21 = 1264` is `#978`'s side of this merge** and
+`1233 + 10 + 5 = 1248` is the other's, so **`1243 + 21 + 5 = 1269` is this merged
+tree's**: the twenty-one being #978's own new
+`ec/tools/test_measure_index_repair_visibility.py` and the five #974's five in
+`ec/tools/test_check_testdata_row_claims.py`, and both sides' figures are left
+written above per [`../docs/findings.md`](../docs/findings.md) §4a-4d, each true
+of the tree it was measured on. **The merged figure is a re-derivation by
+running the runner here rather than the addition either side could have made** —
+`939 + 21 + 5 = 965` is the same twenty-one and five under `python3 -m unittest
+discover -s ec/tools`, and the `939` is the twenty-fifth note's own figure both
+sides built on. **The suite count's step is `40` → `41`, and it is a third single-suite step
+and not a fourth** — #985's `ec/tools/test_disasm8051_oracle.py` and #973's
+`ec/tools/test_check_capture_names.py` were the first two, and #780's ten above
+added cases to a suite it already counted, which is why that merge's step left
+the `40` where it was. **It moves on `main`'s side alone**: #978's suite is the
+only `test_*.py` either side of this merge added, so the thirty-first's own
+figure would have read `40` and `1248` where this one reads `41` and `1269` — the
+same one-sidedness the twenty-second and twenty-third notes record, and the
+reason `test_readme_suite_table.py`'s set check needed no correction on the
+branch and needs none here either.
 [`disasm8051-oracle-from-the-annotations.md`](../docs/findings/disasm8051-oracle-from-the-annotations.md)
 is #985's write-up. **A merge has now added a suite where the steps before it
 added none, and both sides of one did it**: `main` gained a commit after #780
@@ -50,18 +72,28 @@ forked, so thirty-eight became thirty-nine on the branch's own tree on #985's
 #973's `ec/tools/test_check_capture_names.py`. **"No merge added a suite" is
 therefore superseded and left standing in the twenty-first note it was written
 in**, true of every tree from `24460001` until `3e020cf4`, per §4a-4d. **The
-`1180` is from before #982 — which implements #975 — was in the base, the
-`1211` and the `1233` are re-derivations for trees #780 was not on, and the
-`1187` is #780's own branch before `main` moved at all**: four figures, four
-trees, none of them this one, which is why the sentence carries the arithmetic
-and them side by side rather than any of them. Every figure
+`1180` and the `1182` are both from trees before #982 — which implements #975 —
+and #979 were in the base, the `1211`, the `1216`, the `1233`, the `1238`, the
+`1243`, the `1248` and the `1264` are re-derivations for trees the branch that
+wrote each one down was not on, and the `1187` is #780's own branch before `main`
+moved at all**: fourteen
+figures, fourteen trees, none of them this one, which is why the sentence carries
+the arithmetic and them side by side rather than any of them. Every figure
 above is re-derived by
 running the runner on the tree it is written on — see the twenty-second note
 below for the `#979` × `#985` merge, the twenty-third for the `#979` × `#973`
 one, the twenty-fourth for the `#929` × `#962` × `#794` × `#780` × `#985` ×
-`#979` merge the branch carried, and the twenty-fifth for the `#979` × `#973` ×
-`#780` merge this sentence is written in, which is the first of the four that
-carries a figure for a tree none of the three above measured.)*
+`#979` merge #780 carried, the twenty-fifth for the `#979` × `#973` × `#780`
+merge both sides of this one built on, the thirty-first for the `#780` × `#974`
+merge, and the thirty-second for this one — the last being the second to carry a
+figure for a tree none of the five above measured, and the first to stop at two
+sides' figures and add its own to them, which is one term more than the
+thirty-first added to the twenty-fifth's. The thirty-second is also the first
+note here to record **both sides owning a number**, because `main` took
+twenty-six and twenty-seventh before this branch did: **those two keep their
+numbers and the branch's own four give way** to the twenty-eighth, twenty-ninth,
+thirtieth and thirty-first, on the rule the twenty-fourth states and every note
+after it applies.)*
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
 *(Corrected at the `#929` × `#942` merge, by running the runner as this sentence
@@ -1015,6 +1047,54 @@ corrections are independent and neither is arithmetic on the other — checked b
 reading both lines rather than by assuming a merge's diff lands above a pin it
 does not name.*
 
+*(Twenty-eighth merged-tree note, 2026-09-26, issue #974 landing beside #982.
+**It is the twenty-eighth and not the twenty-second, or the twenty-third, or the
+twenty-fourth, or the twenty-fifth, or the twenty-sixth, or the twenty-seventh,
+because #811's, #979's, #973's and #780's merges took those first four numbers on
+`main` while this branch was open, and #978's took the other two in this merge's
+own window** — the same
+collision the tenth note records from the other direction, and the same rule:
+the one `main` held first keeps it, and this note is renumbered rather than
+left as a second twenty-second. **The number it was first given on its own
+branch was the twenty-third, and that stays written here** — it is what the
+file read on `origin/agent/issue-974` and the arithmetic below is that note's
+own. **"What it runs" above is corrected a fifth
+time, `1168` → `1182`, and the `1168` stays written here** per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d — it was true of the tree
+it was measured on, `26e970d5`, and it is the figure this file carried through
+both commits that landed after it. **The arithmetic is additive from three
+trees, not two, and only the merged run is the authority**: the base's `1168`,
+`#982`'s **nine** cases (five in `ec/tools/test_check_testdata_row_claims.py`
+and four in `ec/tools/test_check_capture_claims.py` — the second suite is #982's
+own silent-skip self-report, and it is why the merged total moves fourteen
+rather than ten) and this issue's **five**, is `1168 + 9 + 5 = 1182`, and
+`python3 -m unittest discover -s ec/tools` reads **`878`** where the note above
+reads `864`. Both are measured by running both commands on this tree, not
+arithmetic on a diff. **The red set is unchanged, and it was re-checked here
+rather than carried**: the single suite every note above names,
+`test_check_cluster_citations`, 48 tests, the one failure, on the same `:220`
+of `xdata-cluster-names-guard-off-recipe.md` with the same two
+`0x0464`/`0x0465` disagreements — the state `main` measured before this merge,
+so it is a re-derivation and not an assumption, and neither branch caused it
+nor fixes it. **No pin moved on this branch's own tree, and that was a placement
+decision rather than an accident**: this note is below the eighth-thing
+paragraph at `:203` rather than beside the twenty-first, so the one
+`tools/README.md` row in the per-pin table still placed and the twenty-first
+note's own `+6` arithmetic was untouched. **It does move on the merge with
+#979 × #985**, because the twenty-second note below re-derives the same
+sentence and its correction is longer; the twenty-ninth note carries the
+`+3` and the re-registration. The table row for
+`ec/tools/test_check_testdata_row_claims.py` **is** reworded in place,
+appending this issue's cases to #975's rather than replacing either; the census
+population is unmoved at 106 pins in 28 files, 79 spellings and 58 resolved
+targets, so nothing here added a citation for the per-pin table to place. #974's
+own write-up is the record of what it measured;
+`../docs/findings.md` §82 is the summary and says the same — **§79** on the
+tree this note measured, renumbered three times since, once by the thirtieth
+note below because `main` took that number for #973, once at the `#780` ×
+`#974` merge because `main` holds **§80** for #780, and once more at this merge
+because `main` holds **§81** for #978.*
+
 *(Eleventh merged-tree note, 2026-09-26, issue #891 landing beside the
 `#850`/`#887` merge: the counts above are this merged tree's, re-derived from a
 `bash tools/run-tests.sh` on it — **thirty-five suites and 1076 tests**, which
@@ -1343,6 +1423,152 @@ the measured **40 / 11 / 29**: #973's suite and #811's landed beside each other
 rather than one replacing the other, and the comment beside that assert and
 [`../docs/findings/pin-table-by-cited-file.md`](../docs/findings/pin-table-by-cited-file.md)
 say why. The `11` does not move, because the pin count is still **106**.*
+> **Corrected beside the paragraph above on the #974 merge, per
+> [`../docs/findings.md`](../docs/findings.md) §4a-4d — the pin *does* move
+> there, and this merge's saving was placement rather than a shorter edit.**
+> #974 re-derived the same sentence from the other side, and the two corrections
+> together are longer than the lines they replaced, so the citing line this
+> paragraph names is at **`:206`**: `203 + 3` is the whole of it, and the row
+> in
+> [`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+> is re-registered to `:206` in place, with the `:203` above left written
+> because it is true of the tree this note measured. `check_pin_table_rows.py`
+> reads **106 rows, 106 records, 106 placed, all seven classes 0** again on that
+> tree, re-run rather than carried. **What the paragraph above got right is
+> what made the move cheap**: this note sits far below the pin and #974's does
+> too, so the three lines that moved it came out of the sentence's own
+> correction and not out of either note. The twenty-ninth note below carries
+> the arithmetic, and the thirty-first carries the merged tree's, with the
+> thirty-second carrying this tree's.*
+
+*(Twenty-ninth merged-tree note, 2026-09-26, issue #974 landing beside the
+`#979` × `#985` merge. **The number this note was first given, the twenty-fourth,
+belongs to `main`'s own note above**, which held it before this branch opened its
+own, so the rule the tenth note records from the other direction gives the whole
+of it to `main` and this one is renumbered — **every figure below is unchanged by
+that, because they are this note's tree's and not this file's numbering.** **The
+`twenty-seventh` it carried on its own tree is superseded beside that, and this
+is its second renumber**: `main` took twenty-six and twenty-seventh for #978 in
+this merge's window, so the twenty-sixth, twenty-seventh, twenty-eighth and
+twenty-ninth this branch carried all give way and this one lands on the
+twenty-ninth — `main`'s own twenty-sixth and twenty-seventh stay reading as its
+own, and the twenty-eighth above keeps the branch's first of the four.
+**The suite totals move once more and only the test count
+does, and the merged run is the authority rather than either side's figure.**
+`bash tools/run-tests.sh` on this tree reads **`39 suite(s) run, 1216 tests; one
+or more FAILED`** and `python3 -m unittest discover -s ec/tools` reads
+**`912`**. The step this issue contributes is **+5 tests and no suite**, all
+five in `ec/tools/test_check_testdata_row_claims.py` — `50` on this merge's base
+`3e020cf4` and `55` here — so the arithmetic from the note above is `1211 + 5 =
+1216` and `907 + 5 = 912`, both measured by running the two commands on this
+tree and not by adding a diff. **The suite count is unmoved at `39`**, because
+#974 adds no `test_*.py`, which is the same shape as #962's step in the
+twentieth note and the opposite of #985's: for the fourth merge running, the two
+sides of this one could not have seen each other's suite, and only one of them
+had one to see.
+
+**The `1182` and `878` the twenty-eighth note above records are that branch's
+tree and stay written.** They were measured before #982 — which implements #975 — and
+#979 were in the base, exactly as the twenty-second note records of its
+counterpart's `1180`/`876`, and neither number is carried into the sentence
+above. **That note is renumbered to the twenty-eighth** because both sides of
+this merge took "twenty-second" while their branches were open, and the one
+`main` held first keeps it — the same rule the twentieth note records from the
+other direction, and the same rule that moves it on once more at the merge above.
+
+**This file's own `:203` pin moves, for the seventh time, and by +3.** The
+correction to "What it runs" above is longer than the lines it replaced —
+neither side's fit in place once both are in — so the citing line this file's
+per-pin row names is at **`:206`**. The row in
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+is re-registered to `:206` in place, together with its supersession-shape legend
+row and the blocker argument that names the same line, with the `:203` left
+written per [`../docs/findings.md`](../docs/findings.md) §4a-4d.
+`check_pin_table_rows.py` reads **106 rows, 106 records, 106 placed, all seven
+classes 0** on this tree — run, not read off the paragraph above — and
+`census_test_line_pins.py` reads **106 pins in 28 files, 79 spellings, 58
+targets, 74 resolves, 32 declined**, the population the note above records and
+this merge does not move: #974's write-up and this note cite no `test_*.py:NNN`
+pin, so nothing was added for the table to place.
+
+**The red set is the single suite the notes above name, and this merge added a
+second red suite and repaired it**, which is the eighth-thing paragraph's own
+subject rather than a new one: `test_check_pin_table_rows` went red on three of
+its cases the moment the merged sentence was longer than the one that note
+registered, and green again once the row was re-registered to `:206` — a pin
+doing the job a pin is for. **The failure that remains is not this merge's**:
+`test_check_cluster_citations`, 48 tests, one failure, on the same `:220` of
+`xdata-cluster-names-guard-off-recipe.md` with the same two `0x0464`/`0x0465`
+disagreements, which the notes above re-checked on the base and on clean
+`origin/main` before either branch merged.
+
+**The suite-table row for `ec/tools/test_check_testdata_row_claims.py` is
+reworded in place once more**, this merge appending #974's cases to the ones
+#975 and #979 already added rather than replacing any of them, and
+**`test_readme_suite_table.py`'s set check is unaffected again**, since it
+compares the *set* of suites and neither side adds one. **And
+`docs/findings.md`'s numbering moved**, which is the one thing in this merge
+that is a rename rather than a correction: this branch's summary was `§77` and
+`main` held `§77` for #811 and `§78` for #979 while it was open, so the summary
+is **§79** on the tree this note measured, and the two references this branch
+added to it — here and in its own write-up — are repointed with it. **The
+thirtieth note below renumbers it once more**, because `main` has since taken
+`§79` for #973, **the `#780` × `#974` merge renumbers it a fourth time to §81,
+because `main` holds §80 for #780, and this merge renumbers it a fifth time to
+§82, because `main` holds §81 for #978 as well** — the same rule each time, and
+`main`'s §80 stays reading as #780's and its §81 as #978's.*
+
+*(Thirtieth merged-tree note, 2026-09-26, issue #974 landing on the #979 ×
+#973 merge, which is the fifth merge of this issue and the second in a row
+whose two sides each re-derived the same sentence. **The number this note was
+first given, the twenty-fifth, belongs to `main`'s own note below**, so the same
+rule renumbers this one and leaves every figure below, which is this note's
+tree's, where it was. **The suite totals move
+again, and this time only the test count does.** `bash tools/run-tests.sh` on
+this tree reads **`40 suite(s) run, 1238 tests; one or more FAILED`**, and the
+step from the twenty-third note's `40`/`1233` is **+5 tests and no suite**,
+which is #974's five cases and nothing else: the base already had #973's suite
+and its three cases, so `1233 + 5 = 1238` and `40 + 0 = 40`, both measured by
+running the runner on this tree rather than by adding a diff. The branch's own
+`39`/`1216` and the twenty-second note's `39`/`1211` stay written for the trees
+they measured.
+
+**`docs/findings.md`'s summary is renumbered a third time and the pin moves
+again, and both are consequences of the same thing** — two sections arriving
+with the same number and neither side's correction fitting in place:
+
+- **§79 → §80, then §80 → §81, then §81 → §82.** `main` committed §79 for #973
+  first, and this file's own numbering rule is that the summary already on
+  `main` does not move and the branch's gives way, so #974's summary is **§80** on
+  this note's tree. The two references the branch added to it — the sentence in
+  the twenty-ninth note above and one in its own write-up — are repointed, and
+  §79 is left reading as #973's. **At the `#780` × `#974` merge it gives way once
+  more, to §81, because `main` holds §80 for #780**, and the three references —
+  those two and the one in the twenty-eighth note above — are repointed again;
+  `main`'s §80 stays reading as #780's. **At this merge it gives way a fifth time,
+  to §82, because `main` holds §81 for #978 as well**, and the same three
+  references are repointed once more. `main`'s §81 stays reading as #978's.
+- **`:206` → `:208`.** The twenty-ninth note's own `+3` was true of a merge
+  whose sentence correction was longer than the lines it replaced; this tree's
+  carries *three* such corrections stacked, and the citing line lands at
+  **`:208`** — checked by reading the line rather than by trusting this
+  paragraph, which is the same rule the twenty-third note states. The row in
+  [`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+  is re-registered to `:208`, with the `:203` and the `:206` left written per
+  [`../docs/findings.md`](../docs/findings.md) §4a-4d — a third value for one
+  pin, which is the fourth time this file has held more than two. **The
+  thirty-first note below carries the fourth, for the merged tree this note's
+  `:208` was measured on and not this one, and the thirty-second carries the
+  fifth, for the tree this file now sits in.**
+
+**`test_check_pin_table_rows` went red on three of its cases and was repaired
+by that re-registration**, so the red set this note leaves is the one every note
+above names and one of them fixes: `ec/tools/test_check_cluster_citations.py`,
+48 tests, one failure, on the same `:220` of #822's
+`xdata-cluster-names-guard-off-recipe.md` with the same two `0x0464`/`0x0465`
+disagreements, re-checked here on this tree rather than carried. **The suite
+count is `40` and `test_readme_suite_table.py`'s set check is unaffected**,
+since it compares the *set* of suites and this merge adds none.
 
 *(Twenty-fifth merged-tree note, 2026-09-26, issues #979 × #973 × #780. **The
 sentence above is re-derived by running the runner rather than by adding the two
@@ -1546,6 +1772,236 @@ joined it for the length of this merge and left it when the four rows were
 re-registered. Named by suite and by count rather than by line here, for the
 reason the notes above give.*
 
+*(Thirty-first merged-tree note, 2026-09-26, issues #780 × #974. **This is the
+first note in the run that is not one side's tree: both sides' corrections to
+the sentence above are in it, so every figure here is this merge's and neither
+side's, and the two sides' own measurements are left written above per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d rather than replaced.**
+**The `twenty-ninth` it carried on its own tree gives way here**, on the rule every
+note after the twenty-fourth applies: `main` took twenty-six and twenty-seventh
+for #978 in this merge's window, so the branch's own four give way to the
+twenty-eighth, twenty-ninth, thirtieth and thirty-first while `main`'s two stay
+reading as its own. Every figure below is that note's tree's and unmoved by the
+rename, which is why the rename costs this note nothing but its name.*
+`bash tools/run-tests.sh` on this tree reads **`40 suite(s) run, 1248 tests; one
+or more FAILED`** and `python3 -m unittest discover -s ec/tools` reads
+**`944`**, both measured by running the two commands here before the arithmetic
+below was written, which is the rule the twenty-fifth note states and the one
+this file's first note has kept since. **The two steps are #780's ten in
+`ec/tools/test_check_testdata_index.py` and #974's five in
+`ec/tools/test_check_testdata_row_claims.py`, and they are the same number from
+either side's tree:** `1233 + 10 + 5 = 1248` and `939 + 5 = 944` both land on
+what the merged run printed. The `1238` and the `1243` are the two sides
+measured apart, each adding only its own contributor to the `1233` they shared,
+and **the `1248` is the first figure in this run that adds both sides' steps to
+each other** — the twenty-fifth note's own reason for not deriving its number
+from the two it had, applied here to two figures rather than one. **The suite
+count is the half that does not move, `40` on `main`, `40` on #780's tree, `40`
+on the branch's and `40` here**, because neither side adds a `test_*.py`, which
+is why `test_readme_suite_table.py`'s set check is unaffected for the fifth merge
+running and why `check_pin_table_by_cited_file.py`'s `40 / 11 / 29` needs no
+correction either.
+
+**The `:203` pin moves for the tenth time, and the step is the merged sentence's
+own.** `main` reads `:236` and the branch's own tree read `:208`, and this tree
+reads **`:249`** — so `159 + 9 + 7 + 22 + 6 = :203` becomes
+`159 + 9 + 7 + 22 + 6 + 33 + 13 = :249`, the `+33` being the two sides'
+corrections written side by side at the merge above and the `+13` being this
+one, where neither side's parenthetical fit in place and both had to be carried
+with the merged figure beside them. That is the fifth value this one pin has
+held, and the second time this file has held more than two. The row in
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+is re-registered to `:249` together with its supersession-shape legend row and
+its blocker argument, with the `:203`, the `:206`, the `:208` and the `:236`
+all left written where they are. `check_pin_table_rows.py` reads **106 rows,
+106 records, 106 placed, all seven classes 0** with it, and
+`census_test_line_pins.py` reads **106 pins in 28 files, 79 spellings, 58
+targets, 74 resolves, 32 declined** with the landing-shape split `0/15/22/5/32`
+— every one of them unmoved, because this merge moved a line and not a record, a
+count or a shape.
+
+**The red set was two for the length of this merge, and the second is the one
+this note is here for, exactly as it was at the merge above.** The suite every
+note above names is `ec/tools/test_check_cluster_citations.py`: 48 tests, the
+single failure, on the same `:220` of #822's
+`xdata-cluster-names-guard-off-recipe.md` with the same two `0x0464`/`0x0465`
+disagreements against `main-ec-145`, re-checked here rather than carried, so
+neither #780 nor #974 caused it and neither fixes it. **The one this merge did
+add is `ec/tools/test_check_pin_table_rows.py`**, 36 tests and four failures
+while the sentence above still carried both sides' figures and the row still
+named `:236`: the tool read **1 `unplaced-row` and 1 `row-without-record`**, and
+reads 106 / 106 / 106 with every class 0 once the row is re-registered to
+`:249`. **Four failures rather than the three the notes above record is this
+merge's own arithmetic, not a new defect** — one more sentence correction above
+the pin is one more case that cannot be reconciled while the row is stale, and
+the case that fails is the same one the eighth-thing paragraph has been about
+since the twenty-first note. It is also why the placement argument those notes
+make is the one this note follows: this note sits below the pin, so the `+13`
+came out of the sentence's own parenthetical and not out of it.
+
+**`docs/findings.md`'s numbering moved a fourth time on this merge, and the two
+sides' sections are both kept.** `main` held **§80** for #780, so the branch's
+gave way to **§81**, and the three references the branch added to it — the
+sentences in the twenty-eighth and twenty-ninth notes above and the one in
+`docs/findings/testdata-row-claims-report-naming.md` — were repointed with it.
+`main`'s §80 was left reading as #780's. **The three notes this branch carried
+are renumbered to the twenty-eighth, twenty-ninth and thirtieth**, because
+`main` held the twenty-third, twenty-fourth and twenty-fifth first, and every
+figure inside them is that note's own tree's and unmoved by the rename. **On
+the tree this file now sits in the branch's summary gives way once more, to
+§82, because `main` holds §81 for #978 as well** — the same rule a fifth time,
+`main`'s §81 left reading as #978's, and the thirty-second note below carries the
+record from this end. **The `../findings.md` rows are unaffected again**, for the
+reason every note above gives: this merge's edits to that file land at its
+`:9549` and at its new section, `:10491` on, and every one of the six rows the
+per-pin table registers against that file — `:4206`, `:4208`, `:7191`, `:7404`,
+`:7465` and `:9207` — is above both, so no repoint is owed. **That is still true
+on the merged tree, and the half of it that is `main`'s is the twenty-seventh
+note's own finding rather than a new one**: #978's four edits to that file land
+at `:7053-7056` (the `+2` that note measures), `:7286`, `:10086` and `:10493`,
+and both new sections land below the last of them — so four of the six rows move
+and two do not, and the four are the ones the twenty-seventh note registered, at
+`:7193`, `:7406`, `:7467` and `:9209`.
+
+**Nothing else this merge touched is a moving figure, and all of it was re-run
+rather than carried:** `xdata_moved_ranks.py --self-test` is at **53**,
+`xdata_register_map.py --check` at **1326** register rows and **439** cluster
+rows, and `check_testdata_index.py`'s own fifth-direction line is unmoved at
+**2 fixture CSV(s), 0 with no `evidence` column, 10 evidence cell(s), 11 evidence
+path token(s): 11 resolved, 0 missing, 0 unresolved** — #974's change is in
+`check_testdata_row_claims.py` and reads none of those files.
+`check_testdata_row_claims.py` itself reads **`27 table row(s), 17
+literal-bearing: 54 literal(s), 30 resolved, 0 missing, 24 unresolved`**, the
+tallies every write-up about this issue quotes, with the dated block naming
+`2026-09-23-power-mode-cycle-0f00-0f5f.csv` as the carrier of both of row 7's
+literals and the closing line reading **28 with the fixtures their row names, 2
+with the captures a bare date in their sentence names** — neither moved by the
+merge, which is the point #974's write-up makes about them.*
+
+*(Thirty-second merged-tree note, 2026-09-26, issues #978 × #974. **This is the
+first note in this run that sits below every other merge's rather than beside one,
+the first whose arithmetic is **three** figures where each of the two before it
+had two, and the first to re-register a line that three trees had already named
+three different ways.** `main`'s twenty-sixth and twenty-seventh are above it,
+and above them the branch's own, renumbered to the twenty-eighth through
+thirty-first on the rule every note after the twenty-fourth states; `main`'s two
+keep their numbers and their text, and the branch's four keep every figure inside
+them, which is the whole reason a rename costs a note nothing but its name. **Every figure below is
+this tree's and was measured on it before the arithmetic was written down**,
+which is the rule the twenty-fifth note states and the thirty-first applied to
+two figures rather than one.
+
+`bash tools/run-tests.sh` on this tree reads **`41 suite(s) run, 1269 tests; one
+or more FAILED`** and `python3 -m unittest discover -s ec/tools` reads
+**`965`**. **The two sides' own figures are left written where they are**, the
+twenty-sixth's `1243 + 21 = 1264` and the thirty-first's `1233 + 10 + 5 = 1248`,
+each true of the tree it was measured on, per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d — and **both build on the same
+`1233` and the same `939`**, so `1243 + 21 + 5 = 1269` and `939 + 21 + 5 = 965`
+are the two merges' steps added to their shared base, and each lands on what the
+merged run printed. **The suite count moves `40` → `41` and it moves on `main`'s
+side alone**: #978's `ec/tools/test_measure_index_repair_visibility.py` at 21
+cases is the only `test_*.py` either side added, and #974's five cases went into
+`ec/tools/test_check_testdata_row_claims.py`, which the branch's own tree already
+indexed. **So a run that had taken the thirty-first's side of the sentence rather
+than this one would read `40` and `1248` where this one reads `41` and `1269`** —
+the arithmetic is the same three terms in a different grouping and the count is
+not, and that is the whole of what one-sidedness costs a totals sentence.
+
+**The `:203` pin moves a twelfth time, by `+32`, and this is the second step above
+`+30`.** `main` reads `:247` and the branch's own tree read `:249`, and this tree
+reads **`:279`** — so `159 + 9 + 7 + 22 + 6 + 33 = :236` becomes
+`159 + 9 + 7 + 22 + 6 + 33 + 11 + 32 = :279`, the `+11` being the twenty-sixth's
+and the `+32` this one's. **The whole `+32` came out of the sentence's own
+parenthetical and not out of any note**, because every note here sits below the
+pin and the twenty-eighth through thirty-first are four renumbers rather than
+four additions: the fourteen-figure superseded list both sides' histories add up
+to, the `1243 + 21 = 1264` clause beside the `1233 + 10 + 5 = 1248` that
+superseded it, and the three-figure arithmetic and the count of superseded values
+that go with it. The row in
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+is re-registered to `:279`, with its supersession-shape legend row and its
+blocker argument, and **the `:203`, the `:206`, the `:208`, the `:236`, the
+`:247` and the `:249` are all left written where they are** — a sixth value for
+one pin, and the third time this file has held more than two. **The tool read
+`1 unplaced-row` and `1 row-without-record` with every superseded value put back
+in the table — `:208`, `:236`, `:247`, `:249` and `:278` in turn, each run rather
+than predicted — and reads 106 rows, 106 records, 106 placed, all seven classes 0
+with `:279`**, the arithmetic being what it printed rather than a guess at it. `census_test_line_pins.py` reads **106 pins in
+28 files, 79 spellings, 58 targets, 74 resolves, 32 declined**, the landing-shape
+split still `0/15/22/5/32` and 41 indexed test files: **re-derived by running it
+on this tree rather than carried**, which is the check a re-registration is run
+for, since a line moving is not a record, a count or a shape moving.
+
+**`check_pin_table_by_cited_file.py` reads `41 / 11 / 30`**, so the thirty-first's
+"needs no correction either" clause is superseded beside itself rather than edited
+into: the `40 / 11 / 29` it left standing was true of its own tree, and the step
+is #978's suite and nothing else.
+
+**The red set is two, and the second is the one this note is here for, as it was
+at the merge below.** `ec/tools/test_check_cluster_citations.py` — 48 tests, the
+single failure, on the same `:220` of #822's
+`xdata-cluster-names-guard-off-recipe.md` with the same two `0x0464`/`0x0465`
+disagreements against `main-ec-145` — fails identically on a clean `origin/main`
+worktree, re-checked here rather than carried, so neither #978 nor #974 caused it
+and neither fixes it. `ec/tools/test_check_pin_table_rows.py` joined it at
+**three** of its 36 cases while the row still named a superseded line, and is
+green with `:279`. **The three is not the thirty-first's four, and the reason is
+worth more than the figure: it is three whatever value the row names.** The row
+was put back to `:208`, `:236`, `:247`, `:249` and `:278` in turn and the suite
+run over each, and the checker read `1 unplaced-row` and `1 row-without-record`
+and the suite `FAILED (failures=3)` in all five, so **the count is a function of
+the row being stale and not of how far its value is from the line the file
+reads** — which is not what the thirty-first's own explanation says, and that
+explanation is corrected beside itself here rather than in it, per §4a-4d. The
+**four** is left written there as that note's tree's, and so is the claim that
+one more stacked correction above the pin is one more red case. Named by suite
+and by count rather than by line, for the reason every note above gives.
+
+**`docs/findings.md`'s numbering moved a fifth time and both sections are kept.**
+`main` holds **§81** for #978, so #974's summary gives way to **§82** — the same
+rule the four before it applied, `main`'s §81 left reading as #978's, and the
+three references the branch added repointed with it, in the twenty-eighth and
+twenty-ninth notes above and in
+`docs/findings/testdata-row-claims-report-naming.md`. **The four `../findings.md`
+rows the census table registers moved on `main`'s side at the merge above and are
+not moved again here**: they read `:7193`, `:7406`, `:7467` and `:9209` on this
+tree, with `:4206` and `:4208` unmoved, because #978's four edits to that file
+land at `:7053-7056` (the `+2` the twenty-seventh note measures), `:7286`,
+`:10086` and `:10493`, and both new sections land below the last of the six
+rows — the twenty-seventh note's own finding, re-run here rather than carried
+and confirmed by `check_pin_table_rows.py` placing all 106 rows, and the one
+thing in this merge that neither side could have predicted alone.
+
+**Everything else this merge touched is not a moving figure, and all of it was
+re-run rather than carried**: `xdata_moved_ranks.py --self-test` is at **53**,
+`xdata_register_map.py --check` at **1326** register rows and **439** cluster
+rows, `check_testdata_index.py`'s fifth-direction line unmoved at **2 fixture
+CSV(s), 0 with no `evidence` column, 10 evidence cell(s), 11 evidence path
+token(s): 11 resolved, 0 missing, 0 unresolved**, and
+`check_testdata_row_claims.py` at **`27 table row(s), 17 literal-bearing: 54
+literal(s), 30 resolved, 0 missing, 24 unresolved`** with the dated block naming
+`2026-09-23-power-mode-cycle-0f00-0f5f.csv` and the closing line reading **28
+with the fixtures their row names, 2 with the captures a bare date in their
+sentence names**. **The suite count is the one figure here a reader cannot get
+from either side's note alone**, and the per-suite counts are the check that it
+was read rather than assumed:
+`ec/tools/test_check_testdata_row_claims.py` reads **58** here, on `main`'s tree
+and on the branch's alike, because #978 added a suite and no case to it, while
+`ec/tools/test_check_testdata_index.py` reads **69** and
+`ec/tools/test_measure_index_repair_visibility.py` **21** — the twenty-first of
+them `59` before #943 and the twenty-second new.
+
+**One figure in the table below was wrong on `main` and is corrected here rather
+than left**, for the reason the twenty-fifth note's own rule gives: the
+`test_check_pin_table_rows.py` row read **105-row** per-pin table where the
+committed table holds **106** rows, which the same row's own last clause states
+twenty words later and which `check_pin_table_rows.py` prints as `106 table
+row(s)`. **The `105` is left visible in this note per §4a-4d** — it was true of
+the tree that row was written on, and what the merge did was make the row
+register, which is the first time a reader following it could have checked the
+number against the tool that prints it.*
+
 | suite | what it stands in for |
 |---|---|
 | `ec/tools/test_bank1_e582_framing.py` | The byte facts behind the issue #680 reading that the `bank1,0xE582` entry is reached through 0xE580 and the census row at 0x9F03 is a displacement byte: the push/lcall/pop save-restore pair across the 0xE57E cut, `converges_from` on both halves of each site, and the `80 02` at 0x9F02 read as a `sjmp` whose displacement's landing address is the committed `9F04.asm` first instruction — asserted against the image rather than by re-running the scan that wrote the census, so a regenerated table that disagreed would fail rather than pass on a stale pair, plus that both annotation comments still carry the clause their `CORRECTION` replaces, that no entry is seeded at 0xE580, and that the phantom census row is deliberately left in place |
@@ -1554,12 +2010,12 @@ reason the notes above give.*
 | `ec/tools/test_check_pin_table_by_cited_file.py` | `ec/tools/check_pin_table_by_cited_file.py`'s fifth axis on issue #887's pin census — **which test file a pin names, and which indexed suite none does** — with the standing that it is a breakdown rather than a check held from the output side, a run whose every pin is wrong still exits 0 and its report contains neither `carries` nor `does not carry`. Around it, one case per way a record can be charged to the wrong file: two spellings of one pin landing in one bucket, a line past the end charged to its file but not to `resolves`, a `grep -rn` transcript's `./` prefix normalised away as a *spelling* and not repaired as a path, a bare module name answered by the census's own index, two files of one base name refused rather than guessed, and a path nowhere in the tree landing in a named `unresolved-path` bucket instead of the file that shares its base name; each column reconciled back to `census()`'s own `RESOLVES` and `DECLINED` on a fixture that exercises every column and both buckets, so the breakdown cannot become a second set of numbers; the committed table held as a `{path: (resolves, declined)}` dict and the 44-of-106 / 80-of-106 concentration derived from it, so a merge that adds a pin to a fifth file moves a figure rather than reweighting the breakdown; the indexed/unpinned tail's length held as `len(suites())` minus the distinct resolved paths rather than frozen by name, since it moves every time a suite lands — including this one, which the suite asserts is in it |
 | `ec/tools/test_check_capture_names.py` | `ec/tools/check_capture_names.py`'s two refusals over one listing of the capture root — a name carrying no `<YYYY-MM-DD>-` prefix, and a subdirectory in the root — which are the two properties nothing on the tree read and `captures_for()`'s `<date>-*` glob is a glob only while they hold, and its **standing as a census with a refusal in it**: read by hand the run prints the census and the refusals and exits 0, and only `--check` makes a refusal the verdict. Both fired on a scratch root rather than on the committed tree, which is conformant, each reported in its own vocabulary so "2 problems" cannot leave a reader guessing which premise stopped holding, and each message pinned to naming *what it costs* — a glob that cannot reach the file, or a glob that reaches a directory `carried_by()` skips. **The two costs demonstrated, not asserted**: an unprefixed capture is one `captures_for()` reports as a glob coming back empty, which this tool's own vocabulary calls `unresolved`, so the run stays green while checking strictly less; a subdirectory is one `glob.glob()` returns and the reader skips, so the sentence's literal comes back `missing` and sends a reader to fix the index's prose when the thing to fix is a directory. The declined alternative pinned as a refusal rather than left in prose (`power-mode-…-2026-09-23.csv` is out of reach, because the glob is `<date>-*`), a lookalike year accepted because the prefix is a shape and not a calendar, and `PREFIX` and `captures_for()`'s glob asserted to agree in both directions so the two readers of one rule cannot drift. The committed root's two tripwires assert **emptiness, not a figure** — no count of captures appears in either, so the corpus grows freely while a capture that loses its date prefix turns them red — and a root that cannot be listed is a broken census rather than three empty lists, the §14b defect `run-tests.sh` guards at the suite level |
 | `ec/tools/test_check_capture_claims.py` | `ec/tools/check_capture_claims.py`'s address-presence and row-count rules against the committed `evidence/ec-watch/*.csv` captures, and the line between what it checks and what it deliberately skips, plus the file-granularity self-report #975 added — a file read in full that names no claim is named in `--verbose` and counted on a line of its own, and the two `--verbose` line shapes are asserted to partition the file total the summary prints rather than asserted against a figure |
-| `ec/tools/test_check_pin_table_rows.py` | `ec/tools/check_pin_table_rows.py`'s reconciliation of the 105-row per-pin table against `census_test_line_pins.py`'s own run, and **its standing as a check on the four mechanical columns and not on the fifth**: a tree where every verdict cell is wrong still exits 0, and so does one where the verdict cells are empty, so the cell is demonstrably never read — the write-up's `*Why no checker*` declines a checker that renders verdicts and this is not it. One case per way it can fail (a citing line that moved, a shape that changed under a row, a record with no row, a row with no record, a run that placed nothing) and one per way a loosened version would slip through: both citing-cell spellings and the `†` marker kept in the message, the table's `beside` abbreviation honoured against the census's own constant, an unknown read cell reported rather than passed, a duplicate key reported rather than resolved to the first, an unparsed row reported and a two-header write-up refused, and a missing header or an unreadable file reported rather than passing vacuously — plus the white-box `path-differs` case, because that class is an identity on a placed row (the match key pins both inputs its re-derivation has) and a check only ever exercised by a tree that cannot occur is a check nothing has tested; the committed table held at 106 rows against 106 records, every class 0, and the read and shape cells held to the census's own vocabulary and split. **Not in any gate**: the prepared patch is `docs/ci/agent-gates-pin-table-rows.patch` |
+| `ec/tools/test_check_pin_table_rows.py` | `ec/tools/check_pin_table_rows.py`'s reconciliation of the 106-row per-pin table against `census_test_line_pins.py`'s own run, and **its standing as a check on the four mechanical columns and not on the fifth**: a tree where every verdict cell is wrong still exits 0, and so does one where the verdict cells are empty, so the cell is demonstrably never read — the write-up's `*Why no checker*` declines a checker that renders verdicts and this is not it. One case per way it can fail (a citing line that moved, a shape that changed under a row, a record with no row, a row with no record, a run that placed nothing) and one per way a loosened version would slip through: both citing-cell spellings and the `†` marker kept in the message, the table's `beside` abbreviation honoured against the census's own constant, an unknown read cell reported rather than passed, a duplicate key reported rather than resolved to the first, an unparsed row reported and a two-header write-up refused, and a missing header or an unreadable file reported rather than passing vacuously — plus the white-box `path-differs` case, because that class is an identity on a placed row (the match key pins both inputs its re-derivation has) and a check only ever exercised by a tree that cannot occur is a check nothing has tested; the committed table held at 106 rows against 106 records, every class 0, and the read and shape cells held to the census's own vocabulary and split. **Not in any gate**: the prepared patch is `docs/ci/agent-gates-pin-table-rows.patch` |
 | `ec/tools/test_check_citation_lines.py` | `ec/tools/check_citation_lines.py`'s three rules over the line numbers the prose repeats out of the generated CSVs — the `xdata-086x-dispatch.md` site table and the `HAND_CHECKED["0x0860"]` comment against `xdata-0860-census-sites.csv`, and every `xdata-registers.csv`/`xdata-clusters.csv` line pointer in the two files its `ROW_SCOPE` names, each held to the row for the **address or cluster id** rather than to a table of expected line numbers, because a rank is not an identity — one case per way a citation can be wrong, and the cases a loosened test would let through: a table whose header lost the column, reported as not located rather than passing vacuously; a `—` cell over a CSV row that does cite; the merged `0x25CE4`/`0x25CFC` row read as one row and two sites; the `:49` shorthand bound to the file it follows and a bare list bound to the file named ahead of it; a header line and a line past EOF diagnosed as such; a rule that located nothing reporting that rather than returning clean; the two supersession shapes **skipped**, with the skip counted and `--verbose` naming it, and a live paragraph that merely mentions a correction still checked; the deliberate asymmetry between the per-site and the union rule, pinned from both sides; and that the committed prose and the committed census currently agree |
 | `ec/tools/test_check_cluster_citations.py` | `ec/tools/check_cluster_citations.py`'s two rules against `ec/annotations/xdata-clusters.csv` — `main-ec-NNN`/`cluster_key`/`cluster_name` citations held to their membership, and a census row's hand-typed counts held to the CSV, pinned apart as well as together — and the line between what it checks and what it deliberately skips, so that a denial, singleton wording, a mention without a membership claim, a code address and a split written as a list are each skipped rather than checked and each rule that makes it conservative gets a case saying so, because a pointer-checker's failure mode is silence, plus that the tree's committed prose currently agrees with the committed census beside it |
 | `ec/tools/test_check_site_census.py` | `ec/tools/check_site_census.py`'s vocabulary table, one case per row asserting the checker *rejects* that row's disagreement, plus the unsupported-claim, stale-citation, unjoined-pair and totals-drift clauses, `--check`'s exit code, and that the committed sweep, correspondence and census currently agree |
 | `ec/tools/test_check_testdata_index.py` | `ec/tools/check_testdata_index.py`'s two directions between `ec/tools/testdata/README.md` and the tree under it, each rule that makes it strict and each that makes it conservative getting a case: a directory no index names is a gap, a self-indexed one is not (on a directory name the tool has never seen, so the clause is structural and not an exemption list), the trailing slash that stops `0751-isolation-run/` passing on a sibling's row, the `...-suffix.csv` and `*-glob` shorthands resolved by glob rather than by splicing, and a token whose shape matches no rule landing in `unresolved` without failing the run — plus the rule that the run's three tallies are read out of what it printed and are not a floor on the tree's size, a rule of its own with a case per clause: a tree with more of them than today and one with fewer are both green, and an empty tree, a rowless index beside a tree that has one, and one token per row are each refused on the clause that refused them |
-| `ec/tools/test_check_testdata_row_claims.py` | `ec/tools/check_testdata_row_claims.py`'s rule over the **third** column of `ec/tools/testdata/README.md` — an address a row attributes to its fixture has to occur in a file that row names, across the whole set the first column resolves to rather than per file, so `0x075B` living in one of `0751-isolation-run-staged/`'s three CSVs is a claim the row makes and not a miss — with each of the five shapes and the dated-capture variant pinned as a case from both sides: the page-boundary range, the `capture`/`page` word, the two-token watched-set span, the denial in both its spellings, the `ecrw.py dump` argument, the firmware code address filtered against `ghidra-functions.csv` minus `xdata-registers.csv`, and a bare date in prose resolved against `evidence/ec-watch/<date>-*` with its literals held to those files instead of passed over — a backticked date, by its spelling, still being a file the comparison is drawn from; and the four-hex-digit width and the backticked-only predicate besides — then all nine rules dropped in turn, eight asserted to make the committed tree check *more* and the ninth, the dated-capture resolution, to make it check *fewer*, against the run as shipped rather than against a figure, so no added fixture row breaks any of them; and, from #975, a claim about a capture being held to the `addr` column of the `.csv` members of the file set its date resolved to — a capture whose `#` header names an address and whose rows do not is a `missing`, a date of `.txt` dumps alone reporting that it has no column to read, and the rule pinned by reverting the claim to the textual read and watching that first case go green |
+| `ec/tools/test_check_testdata_row_claims.py` | `ec/tools/check_testdata_row_claims.py`'s rule over the **third** column of `ec/tools/testdata/README.md` — an address a row attributes to its fixture has to occur in a file that row names, across the whole set the first column resolves to rather than per file, so `0x075B` living in one of `0751-isolation-run-staged/`'s three CSVs is a claim the row makes and not a miss — with each of the five shapes and the dated-capture variant pinned as a case from both sides: the page-boundary range, the `capture`/`page` word, the two-token watched-set span, the denial in both its spellings, the `ecrw.py dump` argument, the firmware code address filtered against `ghidra-functions.csv` minus `xdata-registers.csv`, and a bare date in prose resolved against `evidence/ec-watch/<date>-*` with its literals held to those files instead of passed over — a backticked date, by its spelling, still being a file the comparison is drawn from; and the four-hex-digit width and the backticked-only predicate besides — then all nine rules dropped in turn, eight asserted to make the committed tree check *more* and the ninth, the dated-capture resolution, to make it check *fewer*, against the run as shipped rather than against a figure, so no added fixture row breaks any of them; and, from #975, a claim about a capture being held to the `addr` column of the `.csv` members of the file set its date resolved to — a capture whose `#` header names an address and whose rows do not is a `missing`, a date of `.txt` dumps alone reporting that it has no column to read, and the rule pinned by reverting the claim to the textual read and watching that first case go green; and, from #974, that same dated block naming the file each literal was carried by — a date whose two captures both carry one address naming both, since a first-match short-circuit would print one and understate the cost — and the closing line splitting the checked claims into what agrees with the fixtures their row names and what agrees with the captures a bare date in their sentence names, with the two counts asserted to sum to the checked count and to render 3/0 under an implementation that ignores the date, so the line cannot read the same either way |
 | `ec/tools/test_measure_index_repair_visibility.py` | `ec/tools/measure_index_repair_visibility.py`'s answer to a question the corpus carried unanswered for five issues — **what `check_testdata_row_claims.py` and `check_testdata_index.py` do over a hand-repair's pre-repair tree**, measured rather than assumed, and the three ways that number could be wrong quietly: the content-based `repair_rows()` detector that finds a third-column edit wherever it is and **refuses two images of different row counts rather than aligning them** (a pair with no such edit is "not found by this method", a different answer from a count of zero); the **post-repair control** that makes a pre-repair `missing` mean anything, and the one check the tool can fail on (exit 1); and the **runnability flag** that reports a row whose fixture the measured revision does not carry as *not runnable, because …* rather than folding its claims into a count. `git_lines()`/`resolve_revision()` return **None plus a reason** on failure, copied with attribution from `verify_reassembly.py`, so a git that failed cannot read as a tree with nothing in it. Scratch repositories built by the suite itself give the shape of the committed answer at a size where the answer is not in doubt: red before a repair, green after one, which is what makes the committed number falsifiable |
 | `ec/tools/test_citation_callers.py` | `ec/tools/citation_callers.py`'s two predicates on the citing listing: all-`0xFF` detection including the `-`-pad spelling every 1-byte instruction uses, the `ret` that is a five-token line a fixed-width reader never sees, a two-byte instruction that is not a fill run, a listing with no instruction line at all asserted **not** fill, header lines that must not parse as code, and transfer-target extraction across all four forms — plus that `call_graph.parse_listing` and `citation_callers.transfers` agree token for token, so the two tools cannot drift on the listing grammar |
 | `ec/tools/test_citation_frames.py` | `ec/tools/citation_frames.py`'s code/data frame test, on sentences taken from the committed annotations and truncated to the clause under test: the two that a whole-sentence rule gets backwards (`calls to 0x110A, 0x158E, …` is a code list, `the 0x07D0 sites` is a byte count), the `FILLER_BUDGET` limit stated as a rejection case, and the reason and population reporting |
