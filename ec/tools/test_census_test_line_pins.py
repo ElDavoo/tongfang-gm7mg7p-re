@@ -634,12 +634,31 @@ class TheCommittedTree(unittest.TestCase):
         # the one that had stopped doing so. The `50` -> `51` is #778's one new
         # pin, read here and carrying; the eleven that do not carry are the same
         # eleven.
+        # movements compose rather than one replacing the other and the merged
+        # tree reads `0/15/22/5/32`. Nothing above this changed: 106 records
+        # over 28 files and 79 spellings, the same 74 resolving and 32 declined,
+        # the same 58 targets -- which is what makes the shape the one column a
+        # line shift can move on its own.
+        #
+        # **#1009's step is the sixth to move these, and the first to move a
+        # shape for a reason that is not a line shift.** Issue #1009's write-up
+        # cites `ec/tools/test_measure_index_repair_visibility.py:373-391` by
+        # path, so its record is new rather than repointed: `106 + 1 = 107`
+        # records, `28 + 1 = 29` files, `79 + 1 = 80` spellings, `74 + 1 = 75`
+        # resolving with the 32 declined unmoved, `58 + 1 = 59` targets, and
+        # `32 + 1 = 33` `other` because the line it names is a `class` header
+        # read as prose. The figures above stay written, true of the tree they
+        # were measured on, per §4a-4d. **The seven repointed rows are not part
+        # of that arithmetic at all** -- a repoint moves a citing line and not a
+        # record -- which is the distinction this file keeps making, and the
+        # reason `check_pin_table_rows.py` is the tool that had to be run to see
+        # them.
         records, _files = census.census(census.REPO)
-        self.assertEqual(len(records), 106)
-        self.assertEqual(len({r[0] for r in records}), 28)
-        self.assertEqual(len({r[2] for r in records}), 79)
+        self.assertEqual(len(records), 107)
+        self.assertEqual(len({r[0] for r in records}), 29)
+        self.assertEqual(len({r[2] for r in records}), 80)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 74, census.OUT_OF_RANGE: 0,
+            census.RESOLVES: 75, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 32})
         # Re-derived for #962, then again here, and not lowered either time.
         # #962's class and a docstring above it grew, so every pin into
@@ -650,16 +669,17 @@ class TheCommittedTree(unittest.TestCase):
         # top of that -- one assertion onto prose, `19` -> `18` and `34` -> `35`
         # -- and it is a different pin from any of the five, so the two
         # movements compose rather than one replacing the other and the merged
-        # tree reads `0/15/22/5/32`. Nothing above this changed: 106 records
-        # over 28 files and 79 spellings, the same 74 resolving and 32 declined,
-        # the same 58 targets -- which is what makes the shape the one column a
-        # line shift can move on its own.
+        # tree reads `0/15/22/5/32`. #1009's own record then lands as a `class`
+        # header read as prose, so the `other` column is the one that takes it:
+        # `0/15/22/5/33`. Nothing else above this changed: 107 records over 29
+        # files and 80 spellings, the same 75 resolving and 32 declined, the
+        # same 59 targets.
         self.assertEqual(shapes(records), {
             census.DEF_TEST: 0, census.ASSERTION: 15, census.COMMENT: 22,
-            census.BLANK: 5, census.OTHER: 32})
+            census.BLANK: 5, census.OTHER: 33})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 58)
+                 if r[3] == census.RESOLVES}), 59)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

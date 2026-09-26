@@ -3373,9 +3373,15 @@ The numbers are this section's: the 2,705 control, the empty diff, the
 2,705/2,705. `--listings-from` is passed rather than defaulted, because
 `8c7985e` is not `08b72e2`'s direct parent and the printed count should not
 depend on it being one. It reads the two revisions out of the repository's
-history, so it needs a full clone — the agent stages have one
-(`fetch-depth: 0`) and `ci.yml`'s two checkouts do not; the mode says so in the
-failure message and `docs/agent-pipeline.md` records it. What it prints is the
+history, so it needs a full clone — every job that runs a history reader has
+one (`fetch-depth: 0`, `ci.yml`'s `gates` job included, since #407), while
+`ci.yml`'s `workflows` job is the default-depth one and runs no history reader;
+the mode says so in the failure message and `docs/agent-pipeline.md` records it.
+*(Corrected 2026-09-26, issue #1009: this sentence read "the agent stages have
+one (`fetch-depth: 0`) and `ci.yml`'s two checkouts do not", which was true of
+no committed tree since #407 and is left here per §4a-4d.
+[`findings/history-checkout-claims.md`](findings/history-checkout-claims.md)
+has the derivation and the four further copies.)* What it prints is the
 claim above and nothing more: the digests are of the text the last full
 `--report` measured, and they attest to that text rather than verifying it.
 
@@ -9605,22 +9611,25 @@ that is a change this branch does not make.
 > from its own end. #978's note below records the first collision from the other
 > end, and this one records the latest beside it.
 >
-> **And that clause is corrected a fourth time at the `#845` × `#974` merge, in
-> the same place and for the same reason a third time.** #974's §84 took the
-> number #845's own renumber had produced, so #845's summary — the
-> bounds-disjunct one — gives way a second time and is **§85**, which is the last
-> section in the file rather than #974's §84. The `§84` the paragraph above gives
-> #974 is untouched and stays true: the number is a property of the merge in the
-> way [`findings/runner-red-suite-set.md`](findings/runner-red-suite-set.md)
-> records for the runner's totals, and §84 is already committed on `main`, so
-> #974 keeps it and #845's own gives way. The list of sections between §73 and
-> the end grows by one and is still in order: #929's §74, #962's §75, #794's §76,
-> #811's §77, #979's §78, #973's §79, #780's §80, #978's §81, #843's §82,
-> #844's §83, #974's §84 and #845's §85, and **§85 is the last section in the
-> file**. **The half that does not move is again the load-bearing one**: neither
-> #844's §83 nor #974's §84 carries a "last section in the file" clause of its
-> own, so nothing beyond this correction is owed for either, and #845's §85
-> records both collisions from its own end in a single numbering note.
+> **And that clause is corrected a fifth time at the `#845` × `#1009` merge, in
+> the same place and for the same reason a fourth time.** `main` gained a §85 for
+> #845 — the commit that landed it, `5881153d`, is `(#1012)` on its subject line
+> and #845 on the section's own — and this landing adds §86 for #1009 below it, so
+> **"§85 is the last section in the file"** is now false and **§86 is the last
+> section in the file**. **The `§85` the paragraph above gives #845 is untouched
+> and stays true**: the number is a property of the merge in the way
+> [`findings/runner-red-suite-set.md`](findings/runner-red-suite-set.md) records
+> for the runner's totals, and §85 is already committed on `main`, so #845 keeps it
+> and #1009's own gives way — a second time, having given way to #974's §84 in
+> the branch's own landing. The list of sections between §73 and the end grows by
+> one and is still in order: #929's §74, #962's §75, #794's §76, #811's §77,
+> #979's §78, #973's §79, #780's §80, #978's §81, #843's §82, #844's §83,
+> #974's §84, #845's §85 and **#1009's §86**, and **§86 is the last section in
+> the file**. **The half that does not move is again the load-bearing one**:
+> neither #844's §83 nor #974's §84 nor #845's §85 carries a "last section in
+> the file" clause of its own, so nothing beyond this correction is owed for any
+> of them, and #1009's §86 records both collisions from its own end in a single
+> numbering note.
 >
 > **And that clause is corrected once more at the `#929` × `#778` merge, in the
 > same place and for the same reason §68's, §69's and §70's were.** #929's
@@ -11321,7 +11330,16 @@ section number of its own, and the two censuses this work reads,
 and census line numbers, not this section's. **§73's "and the last section in
 the file" clause is corrected a fourth time beside itself** for the same reason
 it has been corrected three times: §85 is the last section in the file now, and
-neither §83 nor §84 carries such a clause of its own.)*
+neither §83 nor §84 carries such a clause of its own. **That fourth correction
+is itself superseded by the fifth, recorded in §73 and not here**: this section
+keeps §85, and #1009's lands as §86 below it, so §85 is not the last section in
+the file on this tree. The sentence above stays written, true of the tree it was
+measured on, per §4a-4d, and **§85 keeps its number and its content** — the
+number is a property of the merge, the way
+[`findings/runner-red-suite-set.md`](findings/runner-red-suite-set.md) records
+for the runner's totals, and `main` held it first. **Nothing is owed a repoint
+for that either**: §86's own numbering note says so, and no tool, test or gate
+reads a section number out of this file.)*
 
 *(Two things this merge did to the section above, recorded beside it rather
 than edited into it. **The write-up's runner totals stay as written** — `29`
@@ -11334,3 +11352,129 @@ write-up landed in this same merge**: it names `walk_branch_arms.py`'s
 `descend()` as the one other row where the check runs after the read it guards,
 which is §83's subject, so the list stands as it was written and this is where
 a reader finds it closed.)*
+## 86. Seven sentences about CI's checkouts are corrected, and one checker now re-derives them (2026-09-26, issue #1009)
+
+> **Numbering note, added at the merge, and corrected twice at the
+> `#974` × `#1009` and then at the `#845` × `#1009` merges beside itself.**
+> This section was written as §80, and **§80 is already
+> held on `main`**, at #780's summary (`c83cf3b3`), so the collision is not one
+> this landing created and the rule that decides it is the one §80's own note
+> records from the other side: **the summary already committed on `main` does
+> not move and the branch's own gives way.** `main` has **§81** (#978's summary,
+> `99c01938`), **§82** (#843's, `3ca4c13e`), **§83** (#844's, `39b32188`),
+> **§84** and now **§85** on it.
+> **§84 is #974's summary and not #981's** — the commit that
+> landed it is `0daac768`, and *its* subject line reads `(#981)`, a pipeline
+> collision artifact rather than the section's issue. `grep -c '#981'
+> docs/findings.md` reads **0** on `origin/main` at that commit, and §84's own
+> numbering note enumerates the sections' issues with **#974's** last, so no
+> summary on `main` is #981's. **§85 is #845's and not #1012's** by the same
+> reasoning: `5881153d` carries `(#1012)` in its subject line and §85's own
+> heading reads `issue #845`. That is said once here and every other mention
+> below cites the commit rather than a number the subject line supplies.
+> **This section gives way to §84 first and to §85 here**, and the next free
+> number after that is **§86**; the section order matches the numbering.
+> **Three clauses of this paragraph are left visible per §4a-4d**, each true of
+> the tree the branch was rebuilt on: it read that "the branch is a single
+> commit on `39b32188`, which **is** `origin/main` (`git rev-parse HEAD^` and
+> `git rev-parse origin/main` both read it)", that "the next free number is
+> **§84**", and that "**`main` gained nothing after the fork point, because the
+> fork point *is* `main`'s tip, so every figure this landing adds is the
+> branch's own**". `agent-conflicts.yml` did squash the branch onto `main` at
+> `39b32188`, and `main` then gained `0daac768` (#974's §84) and `5881153d`
+> (#845's §85), so `origin/main` reads
+> `5881153d` where this paragraph says it read the branch's own parent. **So
+> this merge is two-sided after all**, and both §84 and §85 are numbers `main`
+> took rather than the absent one this note records — which is the same
+> one-sidedness §73's note records for #978's, in the other direction.
+> The pre-rebase geometry this paragraph declines to describe — a branch forked
+> at `3ca4c13e` that `main` then moved past — is still not a tree this
+> repository has, and the branch commit it was measured on, `a9b3b90c`, is
+> **still not an object here** (`git cat-file -t a9b3b90c` answers *Not a valid
+> object name* and `git rev-list --all` does not contain it), because
+> `agent-conflicts.yml` rebuilt the branch on `main`, as `39b32188`'s own commit
+> message records. **A revision a note names has to be one the repository can
+> resolve**, or the figure is a record and not a reading.
+> **Nothing this branch wrote pointed at its own section number, so there was
+> no reference to repoint** — the section names §14f, and the write-up names
+> §14f and §4a-4d, and no tool, test or gate reads a section number out of
+> this file. **A "last section in the file" clause is left off**, for the
+> reason §79's note gives and §81's note applies a second time: a clause
+> asserting a position is what the next merge has to contradict beside itself —
+> and this landing is the fifth to prove the point, since #1009's own summary
+> does become the last section in the file and says nothing about it, while
+> §73's correction to the same clause is owed twice more for it — once for
+> #845's §85 and once for this §86.
+
+Four sentences in `ec/tools/verify_reassembly.py` and
+`ec/tools/measure_index_repair_visibility.py` described what this repository's
+checkouts can do, and each named the file and not the job. Three said the whole
+of `ci.yml` was default-depth; the sibling's said the whole of it was
+`fetch-depth: 0`, which over-claimed in the other direction, and is why its
+replacement had to name the job rather than the file.
+**`ci.yml`'s `gates` job has been `fetch-depth: 0` since 2026-09-24** —
+commit `cc2ab10d`, PR #411 closing #407 — and that same commit added the
+`--verify-provenance` call to `.github/scripts/agent-gates.sh`. The sentence
+naming the shallow case was naming the *other* job in the file, `workflows`,
+which runs actionlint and zizmor and no history reader. §14f's sentence above
+and `ec/ghidra/README.md`'s were the two further copies; `docs/agent-pipeline.md`
+item 3 was the sharpest, its heading contradicted by its own decision
+paragraph seventeen lines below it in the file as it stood (the heading at
+`:98`, the decision at `:115`). **Seven sites, all left readable with the old
+wording beside the correction**; the write-up is
+[`history-checkout-claims.md`](findings/history-checkout-claims.md).
+**The seven are the sites the first sweep found, and the table is not the
+claim's complete blast radius.** A second round, at this change's review, found
+two further mentions of the same claim in
+[`testdata-row-claims-repair-measurement.md`](findings/testdata-row-claims-repair-measurement.md):
+its *"every `agent-*.yml` stage check out with `fetch-depth: 0`"* is false of
+`agent-plan.yml`'s `plan` job and `agent-followups.yml`'s `followups` job, which
+this same sweep's `check_history_checkouts.py` reads at depth 1; and its open
+bullet claiming `verify_reassembly.py:1313-1319` *"still says"* site 2's old
+wording was work this change had already done. **Both are corrected in that
+file with the old wording left visible beside them per §4a-4d, and neither is
+in the seven-site table because neither is a site that first sweep found.**
+
+**This is a correction to prose and not to behaviour.** `--verify-provenance`
+still needs a full clone and nothing here changes what the mode does. **And
+nothing here is a claim that the mode has ever passed in CI** — a workflow that
+says a job runs a gate is not an observation of the gate having run, and the
+issue does not claim that either.
+
+**`ec/tools/check_history_checkouts.py` is new, a separate file per
+`CLAUDE.md`'s rule, and it re-derives the claim from the committed workflows.**
+It prints every `actions/checkout` step's effective depth — the explicit
+`fetch-depth`, or the action's default of 1 where a step states none — and
+asserts the **inverse** of the stale claim: every job that runs a history reader
+has a full-depth checkout. A re-copy of `ci.yml` from the `agent-pipeline`
+template that drops the `fetch-depth: 0` breaks no job and turns the cheap gate
+red with a *history requirement* message that reads like a provenance failure
+rather than like a workflow accident, which is the failure it exists to catch.
+The second half prints every depth claim in the two tools with its `file:line`
+and the fact it should have been derived from, and asserts the one rule
+decidable without reading English: **a sentence that asserts a workflow's
+checkout depth names the job.** All four stale sentences fail it; the four
+corrected sites pass it in the five sentences they now occupy. It is a floor
+and not a proof — job ids here are ordinary English words, so it holds the
+defect's shape and not its content.
+
+**A measurement worth its own line, because the issue's own wording repeats the
+defect it describes:** the issue said `claude.yml:72`'s `fetch-depth: 1` is "the
+only shallow checkout" in the repository's own workflows. It is not — it is the
+only one that *states* a depth other than 0. `agent-plan.yml`'s `plan` job and
+`agent-followups.yml`'s `followups` job state nothing and are the action's
+default, which is also 1. The four are all shallow; the table says which of
+them said so, and that word is the whole correction.
+
+**Two facts recorded for other issues rather than acted on here.** #997's "the
+tree's only suite that reads git history" is no longer true —
+`ec/tools/test_measure_index_repair_visibility.py`'s `CommittedRepairTests`
+resolves both repair revisions in `setUp` and skips when the clone is shallow —
+and no committed
+file carries that sentence, so there is nothing here to retract. And the
+shared-definition option for the two tools' copies is **declined with a reason
+on the page**: the strings differ by a word, the tools are not importable by
+name from outside their directory, and the failure here was not the sharing
+decision but that nothing compared either copy against the workflows. The
+checker is that comparison. **Not in any gate**, for the reason
+`tools/test_readme_suite_table.py` is not either.

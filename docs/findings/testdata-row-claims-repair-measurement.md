@@ -223,6 +223,19 @@ control before its negative check for the same reason.
     a count of zero. `HISTORY_REQUIREMENT` in the tool says so from what the
     workflows say today, and both `ci.yml:39` and every `agent-*.yml` stage
     check out with `fetch-depth: 0`.
+    **The "every `agent-*.yml` stage" half is corrected here and not only in the
+    tool, and the wording above is left visible per `docs/findings.md` §4a-4d** —
+    it was true of the tree it was measured on, and it is the same defect #1009
+    was opened for. `ec/tools/check_history_checkouts.py` derives the depths from
+    the committed workflows rather than asserting them, and it reads
+    `agent-plan.yml`'s `plan` job and `agent-followups.yml`'s `followups` job at
+    **depth 1, the action's default**: both files match `agent-*.yml` and both
+    jobs are pipeline stages, so "every" is false for two of them. The four
+    stages that *are* `fetch-depth: 0` are `agent-implement.yml`'s `implement`,
+    `agent-fix.yml`'s `fix`, `agent-review.yml`'s `review` and
+    `agent-conflicts.yml`'s `resolve`, and it is those four the narrower claims
+    downstream rest on. See `docs/findings.md` §86 and
+    [`history-checkout-claims.md`](history-checkout-claims.md).
 
 **What is not claimed, beyond the above:** that the checker is right about
 these rows. It is not asked. `check_testdata_row_claims.py`'s own docstring is
@@ -318,3 +331,15 @@ revision — never how many.
     from what the workflows say rather than carried over from that sentence. It
     is the same class of stale claim and the one a reader would copy when
     writing this tool, but correcting it belongs to its own issue.
+    **That issue was #1009, and it has closed this item: the wording above is
+    left visible per `docs/findings.md` §4a-4d and was true of the tree it was
+    measured on, but the lines it names now say the opposite of that.** The
+    `gates` job is the `fetch-depth: 0` one —
+    `ec/tools/verify_reassembly.py:1313-1319` says *"Every job that runs
+    `.github/scripts/agent-gates.sh` … checks out with `fetch-depth: 0`"* — and
+    its `workflows` job is the default-depth one that *"runs actionlint and
+    zizmor only, so it never reaches the mode"*, with the same claim re-derived
+    from the committed workflows at `:1321-1327`. **It is not open.** The
+    derivation is in `docs/findings.md` §86 and
+    [`history-checkout-claims.md`](history-checkout-claims.md), and
+    `ec/tools/check_history_checkouts.py` re-derives it on demand.

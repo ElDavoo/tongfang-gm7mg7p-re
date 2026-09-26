@@ -34,10 +34,10 @@ census, and the count it starts from.
 
 ```console
 $ python3 ec/tools/census_test_line_pins.py
-106 pin(s) in 28 markdown file(s): 79 distinct spelling(s), 58 distinct resolved target(s)
-  74 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
-  0 def test_, 15 assertion, 22 comment, 5 blank, 32 other (of the pins that resolve)
-  read 161 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 40 test file(s) in it
+107 pin(s) in 29 markdown file(s): 80 distinct spelling(s), 59 distinct resolved target(s)
+  75 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
+  0 def test_, 15 assertion, 22 comment, 5 blank, 33 other (of the pins that resolve)
+  read 167 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 43 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -901,13 +901,13 @@ the claim it is cited for", which is the half no tool in this tree can make and
 the half this table exists to record.
 
 | citing | cited target | read | shape | verdict |
-| `docs/agent-pipeline.md:345` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`../findings.md`](../findings.md):4206 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** |
-| [`../findings.md`](../findings.md):4208 | `test_ec_watch.py:86-89` | by-name | other | **records another line** |
-| [`../findings.md`](../findings.md):7193 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** |
-| [`../findings.md`](../findings.md):7406 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`../findings.md`](../findings.md):7467 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
-| [`../findings.md`](../findings.md):9209 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
+| `docs/agent-pipeline.md:366` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
+| [`../findings.md`](../findings.md):4212 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** |
+| [`../findings.md`](../findings.md):4214 | `test_ec_watch.py:86-89` | by-name | other | **records another line** |
+| [`../findings.md`](../findings.md):7199 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** |
+| [`../findings.md`](../findings.md):7412 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
+| [`../findings.md`](../findings.md):7473 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
+| [`../findings.md`](../findings.md):9215 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |
@@ -972,6 +972,7 @@ the half this table exists to record.
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):190 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | comment | **records another line** |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):194 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):202 | `test_xdata_cluster_names.py:307` | by-name | comment | **records another line** |
+| [`history-checkout-claims.md`](history-checkout-claims.md):252 | `ec/tools/test_measure_index_repair_visibility.py:373-391` | by-path | other | carries |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):71 | `ec/tools/test_disasm8051.py:52` | — | — | **declined** (fenced) |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):169 | `test_disasm8051.py:52` | by-name | comment | carries |
 | [`runner-red-suite-set.md`](runner-red-suite-set.md):103 | `tools/test_readme_suite_table.py:11-20` | by-path | other | carries |
@@ -1006,7 +1007,7 @@ the half this table exists to record.
 | [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md):22 | `ec/tools/test_xdata_cluster_names.py:88` | by-path | other | carries |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | comment | **does not carry** |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2665 | `../tools/test_xdata_cluster_names.py:68-90` | beside | other | carries |
-| [`../../tools/README.md`](../../tools/README.md):312 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** — and this merge's shift moved the row's own citing line `:279` → `:312`, the seventh re-registration for this one row and this file's thirteenth change |
+| [`../../tools/README.md`](../../tools/README.md):341 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** — and this merge's shift moved the row's own citing line `:279` → `:341`, the eighth re-registration for this one row and this file's fourteenth change; the `:312` the `#845` × `#974` merge measured and the `:346` #1009's own branch did are each left written beside it per [`../findings.md`](../findings.md) §4a-4d, each true of the tree it was measured on |
 
 **43 carry, 2 carry on the adjacent line, 19 do not carry, 10 record another line
 on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
@@ -3251,3 +3252,248 @@ firmware, and the mission's eventual
 `Wer-Wolf/uniwill-laptop`/`tuxedo-drivers` contribution stays a prepared patch
 in this repository for a human to submit, per issue #10. Nothing is opened in
 another repository.
+
+*(A #1009 merge note, 2026-09-26, and it is the seventh time this page's own
+headcount has been re-derived rather than differenced. **107 pins in 29 files,
+80 spellings, 59 targets, 75 resolves against 32 declined**, the shape split
+`0/15/22/5/33`, and the block at the top re-transcribed from a run on this tree:
+the `106` / `28` / `79` / `58` / `74` / `32` / `0/15/22/5/32` and the `161`
+markdown files and `40` test files it carried are left written above, each true
+of the tree it was measured on, per
+[`../findings.md`](../findings.md) §4a-4d. **Every one of the six moved by
++1 and the arithmetic is a single new record:**
+[`history-checkout-claims.md`](history-checkout-claims.md) cites
+`ec/tools/test_measure_index_repair_visibility.py:373-391` by path — a
+`class CommittedRepairTests` header read as prose, which is why `other` is the
+column that takes it and not one of the others. `check_pin_table_rows.py` reads
+**107 rows, 107 records, 107 placed, all seven classes 0**; the `106` the prose
+above carries stays written. The table gained that one row, in sorted position
+between `doc-figure-pin-audit.md:202` and `opcode-len-bounds-census.md:71`.)*
+
+*(**The seven repointed rows are not in that arithmetic, and the distinction is
+the one this page exists to make.** #1009's corrections to `docs/findings.md`'s
+§14f and to `docs/agent-pipeline.md`'s item 3 are retractions written in place
+per §4a-4d, and in place means in those files: **six lines go into
+`findings.md` above every pin into it, and thirteen into `agent-pipeline.md`
+above the one pin into that.** So `agent-pipeline.md:345` is now `:358` and
+`findings.md`'s `4206`/`4208`/`7193`/`7406`/`7467`/`9209` are now
+`4212`/`4214`/`7199`/`7412`/`7473`/`9215`, each repointed in place and each
+checked to still name what its sentence names. **A repoint moves a citing line
+and not a record**, so none of the seven is in the headcount above, the `by-path`
+column takes exactly one from the new row rather than sixteen, and the
+`test_*.py:NNN` targets are all unmoved — which is the difference between this
+merge and the six before it, and the reason `check_pin_table_rows.py` rather
+than `census_test_line_pins.py` is the tool that had to be run to find them.)*
+
+*(**The by-cited-file axis moves two of its three figures, and #978's did not.**
+`ec/tools/test_check_history_checkouts.py` is indexed and no committed markdown
+cites a line of it, so it joins the tail — and #1009's write-up's one pin names
+`test_measure_index_repair_visibility.py`, which no pin named before, so that
+suite *leaves* it. One in and one out, and the reading is **42 indexed / 12
+named / 30 named by none**, with the tail's own figure unmoved at `30`; the
+`41 / 11 / 30` stays written, true of the tree between #978's merge and this
+one. The concentration the argument rests on is untouched: `44 of 107` name one
+suite and `80 of 107` name the two, the two rows themselves reading `44` and
+`36` exactly as before. **A pin added to a file the table did not carry is
+invisible in the concentration and visible only in the total**, which is what
+separates this axis from the count above it.)*
+
+*(**A second #1009 merge note, 2026-09-26, for the landing against `main`'s
+#843 (`3ca4c13e`) — and it is the first of these notes whose arithmetic is a
+*zero* rather than a delta.** The one figure the block at the top moves is the
+`163` markdown files read: #843's
+[`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md) is a new
+write-up, `163 + 1 = 164`, and the `163` stays written here per
+[`../findings.md`](../findings.md) §4a-4d. **Every other figure is unmoved** —
+`107` pins, `29` files, `80` spellings, `59` targets, `75` resolves against `32`
+declined, the shape split `0/15/22/5/33`, and the by-cited-file reading `42 /
+12 / 30` — because the new write-up cites no `test_*.py:NNN` at all and
+`main`'s other edit to this page's population, the #843 note appended to
+[`opcode-len-bounds-census.md`](opcode-len-bounds-census.md), lands at its
+`:671` and so moves no line above the `opcode-len-bounds-census.md:71` the
+table carries. **A file added to the corpus is a figure only until something in
+it is a pin**, which is the same asymmetry the note above names from the other
+side.)*
+
+*(**Two rows are repointed here, and unlike the seven above they were not
+`main`'s doing — they were the branch's, and the merge is where they surfaced.**
+`check_pin_table_rows.py` reads **2 unplaced-row against 2 row-without-record** on
+the branch's own tip, at the identical two records, so this is reported as a
+defect the branch carried rather than as a movement this landing caused: the row
+for #1009's one new pin named
+`history-checkout-claims.md:243` where the pin is at that file's **`:247`** (the
+write-up grew four lines under the row that named it), and the row for
+`tools/README.md`'s long-standing pin named **`:247`** where #1009's additions
+to that file put it at **`:259`**. Both are repointed in place, and the run now
+reads **107 rows, 107 records, 107 placed, all seven classes 0** — the same
+figure the note above already claims for this tree, which it did not hold until
+this one. **The `by-name` and `by-path` columns, the shape, and the verdict cell
+are untouched by a repoint**, and the `†` on the `tools/README.md` row — the
+"records another line" marker, which says the cited line is not the claim's own
+line and not that the row is misplaced — is carried across as written. **What
+this page cannot tell a reader is how a citing line came to be stale**, because
+that is the reading the verdict column exists for: `check_pin_table_rows.py`
+places a row against a record and reports the two disagreements above as
+`unplaced-row`, but neither is a verdict, and the fact that both were stale in
+the *same* direction and that one of the two files was written by the branch
+that also wrote the row is a reading, not a measurement.)*
+
+*(**A third #1009 merge note, 2026-09-26 — and this one is re-derived, because
+the geometry it was written against is not the branch's.** It was first written
+for a landing where the branch had forked at `3ca4c13e` and `main` had gone on
+to `39b32188`, so there were three readings to keep apart: `main`'s, the
+branch's, and the merged one, and the `164` → `165` move belonged to #844. **As
+it stands the branch is a single commit on `39b32188`, which *is* `origin/main`**
+— `git rev-parse HEAD^` and `git rev-parse origin/main` both read it — so
+`main` gained nothing after the fork point, the fork point *is* `main`'s tip, and
+**there is no third reading and no other side's step: the branch's own tree is
+the merged tree.** Two figures this note used carried are of a tree the
+repository no longer has, the branch commit `a9b3b90c` among them, which
+`git cat-file -t a9b3b90c` answers *Not a valid object name* for and
+`git rev-list --all` does not contain, because `agent-conflicts.yml` rebuilt the
+branch on `main` (`39b32188`'s own commit message records the rebuild). **So
+every figure below is re-run rather than differenced, by this tool's own walk on
+a `git archive` of each tree, and each names a revision a reader can resolve:**
+- `3ca4c13e`, the commit the branch forked at before the rebuild, reads **106
+  pins in 28 files, 79 spellings, 58 targets, 74 resolves against 32 declined,
+  the `0/15/22/5/32` split, `163` markdown files, `41` test files**;
+- `39b32188` = `origin/main`, the fork point, reads **those same six figures and
+  `164` markdown files** — so #844 moved no pin, no spelling, no target, no
+  resolve, no declined and no suite, and its whole of it is the one write-up it
+  committed, [`descend-index-guard.md`](descend-index-guard.md), `163 + 1 = 164`;
+- the branch's own tree reads **107 / 29 / 80 / 59 / 75 / 32, the `0/15/22/5/33`
+  split, `165` markdown files, `42` test files** — so `164 + 1 = 165` is **this
+  change's own** write-up,
+  [`history-checkout-claims.md`](history-checkout-claims.md), and `41 + 1 = 42`
+  is its one new suite, the `ec/tools/test_check_history_checkouts.py` the note
+  below transcribes.
+
+`check_pin_table_rows.py` reads **107 rows, 107 records, 107 placed, all seven
+classes 0** on that tree, and the by-cited-file axis reads **`42` / `12` / `30`**
+with the tail's own figure at `30`. **The `164` stays written in the note above,
+true of the tree it measured** — which is `39b32188`, and is still a revision
+this page can name — and so does that note's claim that the block's move is "the
+one figure", which #844 falsified on exactly the field it names and this note
+does not restore. **The row #844's own edit moved is
+`opcode-len-bounds-census.md:122 → :169`, and it already stands at `:169` on the
+branch's tree**, because the branch is built on the commit that moved it; the
+rows this landing moves are the branch's own — the two repoints the notes above
+each made, and the `tools/README.md` row the note below transcribes. **The
+composition held with no conflict marker between them, because the rows a merge
+would have collided on were `main`'s `opcode-len-bounds-census.md` repoint and the
+branch's own repoints, and they name three different rows.**)*
+
+*(**A third row moves here, and it is this merge's own doing rather than either
+side's — which is the case the two notes above each had to disclaim.** The
+`tools/README.md` row above read `:259` on the branch's tree, and
+re-transcribing `tools/README.md`'s own suite count in this landing's note —
+`1288 → 1290`, which on the tree the branch now stands on is this change's own
+step, `1266 + 24 = 1290` for the new suite, and not the two cases
+`39b32188` added to `test_walk_branch_arms.py` — put lines above that pin, so the
+row is repointed in place and `check_pin_table_rows.py` is green again at **107
+rows, 107 records, 107 placed, all seven classes 0**. **A correction paragraph to
+a document is an edit to that document, and this page has now been bitten by its
+own rule in the one direction that leaves no trace**: the two notes above each
+moved a citing line by a paragraph *they* added, which is why they could
+enumerate the repoints, and this one is moved by a paragraph added to a file
+neither side wrote in this merge.
+**What makes it visible is that the count `tools/README.md` carries is pinned by
+no test** — `test_readme_suite_table.py` says so in its own docstring, *"the
+counts are never compared: an expected count turns every added test into a
+failure"* — so nothing would have failed here but the two tools, and the
+document-transcribing half of a merge is the half a test suite cannot reach. The
+`†` is carried across as written and the `by-name`/`assertion` cells are
+untouched, because a repoint moves a citing line and nothing else.)*
+
+*(**A fourth #1009 merge note, 2026-09-26 — and the third above is re-derived
+here, because the geometry it reasons about is not this merge's either.** It
+reads *"as it stands the branch is a single commit on `39b32188`, which **is**
+`origin/main`"* and concludes that *"`main` gained nothing after the fork point,
+the fork point *is* `main`'s tip, and **there is no third reading and no other
+side's step: the branch's own tree is the merged tree**". **All of that is left
+written per [`../findings.md`](../findings.md) §4a-4d and none of it is true of
+this tree**: `agent-conflicts.yml` did squash the branch onto `39b32188`, and
+`main` then gained `0daac768` (#974's §84), so `origin/main` reads `0daac768` where
+that note says it read the branch's own parent — **so this merge has three
+readings, not one**, and the note's own method (re-run rather than difference,
+each reading naming a revision a reader can resolve) is the one that settles it.
+All three, measured:
+- `0daac768` = `origin/main` reads **106 pins in 28 files, 79 spellings, 58
+  targets, 74 resolves against 32 declined, the `0/15/22/5/32` split, `165`
+  markdown files, `41` test files** — that landing is **a zero on every one of
+  the eight**: it commits no suite, and its one new write-up
+  ([`testdata-row-claims-report-naming.md`](testdata-row-claims-report-naming.md))
+  cites no `test_*.py:NNN`, so `165` is `39b32188`'s `164` plus that file and
+  nothing else in the corpus moved;
+- the branch's own tip `8f16d7ce` reads **107 / 29 / 80 / 59 / 75 / 32, the
+  `0/15/22/5/33` split, `165` markdown files, `42` test files**;
+- **this merged tree reads `107 / 29 / 80 / 59 / 75 / 32, the `0/15/22/5/33`
+  split, `166` markdown files and `42` test files**, so `165 + 1 = 166` is
+  #974's own write-up entering the corpus and **the six figures the two sides
+  share are additive and unmoved** — #974 contributes a denominator and
+  #1009 contributes the record, which is the same asymmetry the second note above
+  names from the other side.
+
+**One citing line moves and it is this merge's own, for the fourth time running
+and the first time from a paragraph neither side wrote in this merge.** The
+`tools/README.md` row read `:284` on the branch's tip and `:279` on `main`, and
+this tree reads **`:346`**: `247` at `39b32188` plus main's **32** and the
+branch's own **37** above the pin, plus **30** more from the merged correction
+paragraph in that file's "What it runs" section — the branch's 38-line block
+became 68 — and `247 + 32 + 37 + 30 = :346` is the whole of it. **The `:259`,
+`:279` and `:284` stay written where each was measured**, and
+`check_pin_table_rows.py` reads **107 rows, 107 records, 107 placed, all seven
+classes 0** with `:346`, run rather than predicted. **Every other citing line
+this page registers is unmoved**: `docs/agent-pipeline.md:358` and
+`history-checkout-claims.md:252` are the branch's own values, and
+`../findings.md`'s six are too — `4206` → `4212` is the branch's **six** lines at
+`findings.md`'s §14f and **none of `0daac768`'s**, whose first edit to that file is at
+`:9562` and so above none of the six. **The `docs/agent-pipeline.md:358` half of
+that sentence is corrected here rather than in it, and the `358` is left visible
+per [`../findings.md`](../findings.md) §4a-4d** — this merge's correction to
+`docs/agent-pipeline.md` for issue #1009 ends eight lines lower than the wording
+this measurement was taken against, so the pin reads at **`:366`** on this tree
+and the table above carries that. It is the one citing line this merge moves
+rather than inherits, and it moves because the file it cites was corrected, not
+because any figure above changed: the census still reads **107 pins in 29
+files**. The by-cited-file axis reads **`42` / `12`
+/ `30`** with `44` of `107` and `80` of `107`, `main`'s being `41` / `11` / `30`
+over `106`.
+
+**The suite totals are re-derived here and the red set is still one.**
+`bash tools/run-tests.sh` reads `42 suite(s) run, 1295 tests; one or more FAILED`
+and `python3 -m unittest discover -s ec/tools` reads `991`, against `main`'s `41`
+/ `1271` and `967` — `1271 + 24 = 1295` and `967 + 24 = 991`, the twenty-four
+being #1009's one new suite. The single failure is
+`ec/tools/test_check_cluster_citations.py` on the same `:220` of #822's
+`xdata-cluster-names-guard-off-recipe.md` with the same two `0x0464`/`0x0465`
+disagreements, and it is red on a clean worktree of `origin/main` at `0daac768`
+with the identical message, so neither #974 nor #1009 caused it and neither
+fixes it.)*
+
+*(**And the second side of this merge is #845 rather than #974, and it moves two
+of the figures above.** `main` gained `5881153d` after the branch forked, and it
+is `5881153d` that the note above should have measured from rather than
+`0daac768`. Re-measured in a clean worktree of `origin/main` at that commit,
+`bash tools/run-tests.sh` reads **`42` / `1277`** and
+`python3 -m unittest discover -s ec/tools` reads **`973`**; this tree reads
+**`43` / `1301`** and **`997`**, so the step is `1277 + 24 = 1301` and
+`973 + 24 = 997`, the twenty-four being #1009's one new suite on both sides of
+the arithmetic. **The `1271`/`967`, the `1295` and the `991` stay written above**,
+each true of the tree it was measured on, per
+[`../findings.md`](../findings.md) §4a-4d. **The census itself is unmoved at
+`107` pins in `29` files** — #845's write-up names its suite by path and so
+brings no record — while **the corpus denominator takes both merges' write-ups:
+`165 + 1 = 166` for #974's and `166 + 1 = 167` here**, and the test-file
+denominator reads **`42` → `43`**, which is the figure re-transcribed into the
+block at the top of this page. **The by-cited-file axis moves on two of its
+three**: `origin/main` at `5881153d` reads **`42` / `11` / `31`** over `106` and
+this tree reads **`43` / `12` / `31`** over `107`, with `44`-of-`107` and
+`80`-of-`107` unmoved either way. The tail's `31` is reached by a different
+route on each — here by one suite in and one out plus a second suite in — and
+that sameness is the reason it is worth stating rather than leaving as a
+coincidence. The `docs/agent-pipeline.md` pin this merge moved to **`:366`** is
+unmoved by it and still reads there. **The red set is still the one suite above
+and no other**: re-checked on a clean worktree of `origin/main` at `5881153d`
+and on this tree, both red with the identical message, so neither #845 nor
+#974 nor #1009 caused it and none of them fixes it.)*
