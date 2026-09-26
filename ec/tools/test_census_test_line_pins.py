@@ -475,19 +475,26 @@ class TheCommittedTree(unittest.TestCase):
         self.assertGreater(len({r[0] for r in records}), 1)
 
     def test_the_committed_counts_are_the_ones_the_write_up_publishes(self):
-        # Re-measured at the #888 x #890 merge, on top of the #850/#887 and
-        # #888 re-measurements these figures already carried. Three moves, each
-        # recorded in the write-up beside the figures it replaces, per §4a-4d:
+        # Re-measured at issue #930, on top of the #885 x #771, #888 x #885,
+        # #888 x #890, #850/#887 and #888 re-measurements these figures already
+        # carried. Six moves, each recorded in the write-up beside the figures it
+        # replaces, per §4a-4d:
         # #850 added nineteen `test_*.py:NNN` citations to the markdown and 239
         # lines to ec/tools/test_xdata_cluster_names.py, which is what took
         # 50/23/37/32 and the 44/6 and 5/15/5/8/11 splits to 69/24/44/53/16 and
         # 5/11/9/6/22; #888's write-up
         # (`docs/findings/xdata-moved-ranks-key-collision.md`) is one new file
         # and cites the `> 300` floor twice, taking those to 71/25/45/55/16 and
-        # 5/13/9/6/22; and #890's commit is what takes the last line below from
-        # 40 to 41 and `assertion`/`other` from 13/22 to 11/24. **The two
-        # figures #888 moved are unmoved by that** -- #890 added no pin and no
-        # markdown file -- but it moved the line #888's two new pins name.
+        # 5/13/9/6/22; #890's commit is what takes the last line below from
+        # 40 to 41 and `assertion`/`other` from 13/22 to 11/24; the #888 x #885
+        # merge added #885's own two citations of the same assertion, taking
+        # those to 73/26/46/57/16, 42 targets and 5/11/9/6/26; the #885 x #771
+        # merge added one new file carrying sixteen transcript pins and their
+        # sixteen live-prose twins, taking those to 105/27/78/73/32, 58 targets
+        # and 5/17/10/6/35; **and #930 repoints the two pins #888 wrote, which
+        # takes the shape split back again.**
+        # #890 added no pin and no markdown file, so it moved no figure #888
+        # moved -- but it moved the line #888's two new pins name.
         # `assertGreater(len(moved), 300)` was at `test_xdata_cluster_names.py:563`
         # on #888's tree, and #890 put 25 lines into that file above it, so the
         # floor is at `:588` here and `:563` is now a fixture line. That is the
@@ -495,8 +502,9 @@ class TheCommittedTree(unittest.TestCase):
         # resolved target the branch introduced and `main` had never named, and
         # a cited line whose shape changed under a reader rather than a new
         # pin. It is a real defect of the kind the census exists to find, and
-        # it is recorded in the write-up rather than repointed here, for the
-        # write-up's own reason: repointing the citing prose is a follow-up.
+        # it was recorded in the write-up rather than repointed there, for the
+        # write-up's own reason -- repointing the citing prose is a follow-up --
+        # and #930 is that follow-up.
         #
         # Re-measured a fourth time, at the #888 x #885 merge, and this is the
         # one move where the two merges' additions are simply additive: each
@@ -506,9 +514,9 @@ class TheCommittedTree(unittest.TestCase):
         # 71/25/45/55/41 above and `other` goes 24 -> 26. `declined` does not
         # move, because all four new pins are live prose rather than transcript.
         # The two that moved the shape split are #888's `:563` pair and #885's
-        # `:392` pair, both `other` on this tree -- the second of them is
+        # `:392` pair, both `other` on that tree -- the second of them is
         # `decreased, {},`, the last line of the assertion holding that no
-        # address's `write` decreases -- so `assertion` stays at 11 for the
+        # address's `write` decreases -- so `assertion` stayed at 11 for the
         # fourth time running. Measured with the tool, not derived.
         #
         # Re-measured a fifth time, at the #885 x #771 merge, and this is the
@@ -540,6 +548,29 @@ class TheCommittedTree(unittest.TestCase):
         # else: `assertion` 11 -> 17, `comment` 9 -> 10, `other` 26 -> 35, and
         # `blank` and `def test_` do not move. Measured with the tool, not
         # derived.
+        #
+        # **Re-measured a sixth time, at issue #930, whose two repointed rows
+        # reverse the whole of the shape movement and add nothing**: 58 -> 57
+        # targets, 17 -> 19 assertions, 35 -> 33 other. #930 moved the two
+        # by-name `test_xdata_cluster_names.py:563` rows of #888's own write-up
+        # onto `:588`, the line the `> 300` floor is on, so `:588` rejoins a
+        # target the checklist already carried by path and `:563` loses the last
+        # name it had. It is measured on the tree the fifth re-measure produced,
+        # so the three figures it reverses are that paragraph's 58, 17 and 35
+        # rather than the 42, 11 and 26 the fourth measured. The headcount is
+        # what says the correction did not smuggle a pin into the census it is
+        # reporting on, so `105`, `27` and `78` are unmoved across the #885 x
+        # #771 and #930 runs -- the last two of the six, and the only two that
+        # carry those figures; the first four read 69/24/44, 71/25/45, 71/25/45
+        # and 73/26/46, as the history above records. They are the figures to
+        # read first if one of the four below ever disagrees with the run.
+        #
+        # The `carries` / `does not carry` counts (50 and 11 here, 48 and 13
+        # before) are **not** here on purpose: they are a reading of whether a
+        # cited line still carries the claim it is cited for, and this suite
+        # tests the mechanical half. They live in the write-up's table, and
+        # #930's repoint is the reason to keep them there -- the tool printed
+        # every number the repoint changed and none of them was a verdict.
         records, _files = census.census(census.REPO)
         self.assertEqual(len(records), 105)
         self.assertEqual(len({r[0] for r in records}), 27)
@@ -548,11 +579,11 @@ class TheCommittedTree(unittest.TestCase):
             census.RESOLVES: 73, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 32})
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 5, census.ASSERTION: 17, census.COMMENT: 10,
-            census.BLANK: 6, census.OTHER: 35})
+            census.DEF_TEST: 5, census.ASSERTION: 19, census.COMMENT: 10,
+            census.BLANK: 6, census.OTHER: 33})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 58)
+                 if r[3] == census.RESOLVES}), 57)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

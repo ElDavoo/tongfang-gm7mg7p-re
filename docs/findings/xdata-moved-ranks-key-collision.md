@@ -209,9 +209,9 @@ does not hold the address.
 - **`moved_ranks()` is keyed on `cluster_id`.** A rank is the key of the dict
   `clusters_of()` returns, so this join cannot collapse by construction, and
   the predicate is untouched — the suite's own two lines, string for string,
-  which is what `test_xdata_cluster_names.py:563`'s `> 300` floor is applied to.
-  `len(moved)` is now the number of ranks that matched, and `intact`, which is
-  derived from it, follows.
+  which is what `test_xdata_cluster_names.py:588`'s `> 300` floor is applied
+  to — `:563` until #890 moved it (§5). `len(moved)` is now the number of
+  ranks that matched, and `intact`, which is derived from it, follows.
 - **`duplicate_keys()` is the check**, over a `{cluster_id: row}` census, and
   `collision_line()` prints it. It runs **unconditionally in `pair`**, beside
   the two counts it qualifies: a run that reports nothing is then a run that
@@ -320,8 +320,8 @@ line is what read them. `git worktree remove /tmp/xdata-old` ran after, and
 - **The `--swept` line does not repair the cross-reference.** Under a collision
   the holder index is still lossy; what changes is that the report says so
   instead of reading as a census that does not hold the address.
-- **The `> 300` floor at `test_xdata_cluster_names.py:563` is untouched**, and
-  `TheContentKey` is untouched.
+- **The `> 300` floor at `test_xdata_cluster_names.py:588` is untouched**, and
+  `TheContentKey` is untouched. *(`:563` until #890 — see the amendment below.)*
   [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) §5 argues for the
   floor staying where the recipe's argument put it, and one line in a report is
   not a reason to move a threshold.
@@ -372,6 +372,28 @@ target, `:588`. That line number is written bare here for the reason
 [`../findings.md`](../findings.md) §65 gives: a correction that added a 46th
 spelling and a twelfth `assertion` to the census it is correcting would move two
 of the very figures it is reporting.)*
+
+*(**And again at issue #930, which takes the amendment above back — the second
+correction in this section, and the first one to undo another.** The two
+citations in §3 and in the bullet above are repointed to `:588`, where the floor
+is, with the superseded `:563` written bare beside them. **So the split §5
+describes is a split again**: both carry, `:588` is an `assertion` again, and
+*"these two **carry**, those four do not"* is once more what this section says.
+That is a reading of the two cited lines, not a verdict from a tool —
+`census_test_line_pins.py` declines to render one. The four are still `does not
+carry`, and are deliberately untouched in the same pass: they are #920's, a
+different finding with a different provenance, and doing both at once would
+collapse the distinction this section and the census between them exist to
+record. The amendment above stays written as it stands, per §4a-4d: it was true
+of the tree it was written on, and the two lines it describes went stale in a
+merge and were then repointed in a follow-up rather than in the merge that broke
+them — which is the follow-up list doing the work §7's rule assigns to it, and
+not a licence to repoint anyone else's prose in the same pass. The argument, the
+before-and-after run and the counts the repoint moved are
+[`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md). Line numbers are
+written bare here for the reason the clause above gives: spelled out, the
+correction would be the 79th spelling in the census it is reporting on, and
+would move two of the very figures it reports.)*
 
 ## 6. What this opens
 
