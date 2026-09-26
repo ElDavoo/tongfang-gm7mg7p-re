@@ -119,13 +119,13 @@ not the old output edited by hand.)*
 `:220` and `:328` is `:347`, because the new `END_IMAGE` stop reason and its
 `CUTS` entry sit above `test_site()` and the pre-read guard sits between them
 and `descend()`'s read. The count is unchanged at 39. **This re-run also picked
-up four lines that were already stale before #844 touched anything**, and they
+up five lines that were already stale before #844 touched anything**, and they
 are recorded here so they are not credited to it: `trace_xdata_refs.py:229` is
 `:297` — the #846 note further down this file records that same move, and this
 block was not updated with it — and the four `disasm8051.py` lines are each one
 higher, `:108,114,311,333` becoming `:109,115,312,334`. A partial hand-edit of
 two lines would have left the block neither the old output nor the new one,
-which is what the sentence above exists to prevent, so all six are the re-run.
+which is what the sentence above exists to prevent, so all seven are the re-run.
 The `not a site` table's first row cites `disasm8051.py:108,114` and needs
 `109,115`; it is the one row in that table this change moves.)*
 

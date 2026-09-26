@@ -10755,9 +10755,9 @@ the marker floor, which is the region that puts the two numbers furthest apart.
 
 Three corrections and three follow-ups, all in the write-up, and the two that
 matter here: the census's membership-grep block was re-run rather than hand-
-edited, and it turned out to be **already stale on `main`** for four lines
+edited, and it turned out to be **already stale on `main`** for five lines
 (`trace_xdata_refs.py:229` is `:297` — the #846 move this block never received —
-and four `disasm8051.py` lines are each one higher), so the re-run moves six
+and four `disasm8051.py` lines are each one higher), so the re-run moves seven
 lines rather than the two this change is responsible for; the count is unchanged
 at 39. And the plan's own arithmetic expected one moved line, not two. The
 census's per-site table rows 2 and 8 are **deliberately left at their old

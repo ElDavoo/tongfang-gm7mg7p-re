@@ -242,10 +242,10 @@ so rather than a reader noticing.
 **One correction to the plan, recorded because the plan's own arithmetic for
 this was off in a way a reader would hit.** The plan expected *"the one line
 that moved"* in the grep block. **Two moved** (`:213` and `:328`), and the
-re-run also picked up **four that were already stale before this issue touched
+re-run also picked up **five that were already stale before this issue touched
 anything** — `trace_xdata_refs.py:229` is `:297` (the #846 move, which that
 block never received) and the four `disasm8051.py` lines are each one higher.
-The count is unchanged at 39. All six are in the re-run, because that block's
+The count is unchanged at 39. All seven are in the re-run, because that block's
 own rule is that it is the grep re-run and not the old output edited by hand,
 and a two-line hand-edit would have left it neither.
 
