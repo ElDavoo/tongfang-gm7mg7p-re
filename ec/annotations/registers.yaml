@@ -4434,9 +4434,12 @@ registers:
       `python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800
       0x0EA8` and `make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000`
       plus `r2 -a 8051 -q -c 's 0x0f335; pd 32' bank0.bin`. ***
-      The other two sites are separate: bank0 0xF221 reads this byte and
-      compares it with 0x12, and bank0 0xF335 is the copy above. So this byte
-      is a value something chooses, not a table, on this evidence -- and
+      The other two sites are separate, and both are inside bank0 0xF221:
+      0xF221 reads this byte and compares it with 0x12, and 0xF234 is that
+      cjne's own branch target -- mov DPTR,#0x0ea8 / movx A,@DPTR / ret -- so
+      the mismatch arm re-reads the byte and returns it to the caller. The
+      copy at 0xF335 is the one described above, not one of these two. So this
+      byte is a value something chooses, not a table, on this evidence -- and
       "on this evidence" is doing real work in that sentence, since what
       writes 0x0EA8 is still not established. Three is a count of byte
       patterns, not of accesses. The page as a whole is the sweep's open

@@ -93,10 +93,13 @@ A GNVS-named field would become an EC-register candidate if some ASL path both
 referenced that name and reached an EC byte. The tool's answer, measured
 rather than argued:
 
-- **The DSDT contains no call site of `ECRW`, `ECRR` or `T1WR` at all.** The
-  three declarations at `dsdt.dsl:50497`, `50504` and `50635` are the whole of
-  it. There is no such path in this file, so nothing in the NVS list can be
-  shown to reach an EC byte.
+- **No ASL path calls `ECRW`, `ECRR` or `T1WR`.** The only *Method*
+  declarations of the three are at `dsdt.dsl:50497`, `50504` and `50635`, and
+  nothing in this file invokes any of them. The only other occurrence of any
+  of the three names is an unrelated `CreateBitField (BUF0, 0x0C48, ECRW)` bit
+  field at `dsdt.dsl:4437`-`4438`, an alias into the local buffer declared at
+  `dsdt.dsl:4156` that reads and writes no EC byte. So nothing in the NVS list
+  can be shown to reach an EC byte.
 - **`T1WR`'s body dispatches on values that name fields rather than address
   them.** `Arg0 == 0x81` writes `APL1` (`dsdt.dsl:50637`), `0x84` writes
   `APL4` (`dsdt.dsl:50646`), `0x85` writes `APTN`/`APTC` (`dsdt.dsl:50650`).
@@ -215,17 +218,20 @@ Three of the thirteen are the most interesting:
   (`dsdt.dsl:50786`) inside a test on `GFID`, and again at `:50801`, `:50813`,
   `:50828`, `:50841` and `:50856` for the other `GFID` arms. So the DSDT
   gives both a name and the width that name occupies, from two directions.
-- **`CTL0`–`CTL7` at 0x0EA8–0x0EAF, 9 sites across 8 bytes.** Disassembled
+- **`CTL0`–`CTL7` at 0x0EA8–0x0EAF, 10 sites across 8 bytes.** Disassembled
   rather than inferred from the count, because the eight-byte spacing invites
   exactly the wrong guess: bank0 `0xF335`-`0xF374` is eight 8-byte stanzas,
   each `mov DPTR,#src / movx A,@DPTR / mov DPTR,#dst / movx @DPTR,A`, copying
   `0x0EA8`-`0x0EAF` into `0x0F61`-`0x0F68` one byte at a time. **There is no
   `inc dptr` in it** — it is a straight-line copy, so the run is a value
-  something chooses rather than a table being walked. The third site,
-  bank0 `0xF221`, reads `0x0EA8` and compares it against `0x12`; that one *is*
-  in the census, and it is why `0x0EA8` and `0x0EB8` are reached while
-  `CTL1`-`CTL7` are not. What writes `0x0EA8` is still not established, and
-  the copy says only that the eight bytes are read together.
+  something chooses rather than a table being walked. That block is eight of
+  the ten sites, one per byte. The other two are both inside bank0 `0xF221`:
+  `0xF221` reads `0x0EA8` and compares it against `0x12`, and `0xF234` is that
+  `cjne`'s own branch target — `mov DPTR,#0x0ea8 / movx A,@DPTR / ret` — so
+  the mismatch arm re-reads the byte and hands it back to the caller. That
+  function *is* in the census, and it is why `0x0EA8` and `0x0EB8` are reached
+  while `CTL1`-`CTL7` are not. What writes `0x0EA8` is still not established,
+  and the copy says only that the eight bytes are read together.
 - **`MGI8` 0x0EB8, 1 site.** The only byte of the 32 in the `MGI0`–`MGIF` and
   `MGO0`–`MGOF` banks at 0x0EB0–0x0ECF with any direct site. Sixteen
   neighbouring bytes and one site is a shape this file does not explain. The
@@ -276,8 +282,9 @@ stated here rather than left to the reader.
 
 Of the 98 names, **59 sit on the `0x0Exx` page** (`0x0E0D`–`0x0ECF`) — the
 largest single group in the list, and the part of it `xdata_span_survey.py`'s
-`0x0400`–`0x07FF` span never covered. Nine of those 59 have a direct site: the
-`CTL0`–`CTL7` run and `MGI8`. The other **50 have none** — `SN1T`–`SN5T`,
+`0x0400`–`0x07FF` span never covered. Nine of those 59 **names** have a direct
+site — the `CTL0`–`CTL7` run and `MGI8` — and those nine names carry ten sites.
+The other **50 have none** — `SN1T`–`SN5T`,
 `F1SH`/`F1SL`/`F1DC`/`F1CM`/`F2DC`/`F2CM`, `UVER`/`RESV`, `CCI0`–`CCI3`, the
 `MGI`/`MGO` banks either side of the one byte that has a site, and the
 controller page's opening `CPUT`/`PCHT`.
@@ -290,11 +297,12 @@ like. One static method cannot tell those apart, and this file does not pick
 one. The count is 50 names with no direct site, which is a lower bound on what
 is there and nothing else.
 
-The place to start is the `CTL0`–`CTL7` run at `0x0EA8`. Nine sites across
+The place to start is the `CTL0`–`CTL7` run at `0x0EA8`. Ten sites across
 eight consecutive bytes is the one place on the page with enough signal to
 decode, and it has now been decoded: bank0 `0xF335` copies the run into
-`0x0F61`-`0x0F68` byte by byte, and bank0 `0xF221` reads `0x0EA8` and
-compares it with `0x12`. What that leaves open is the half the sweep cannot
+`0x0F61`-`0x0F68` byte by byte, and bank0 `0xF221` reads `0x0EA8`, compares
+it with `0x12`, and at `0xF234` re-reads it to return it to the caller when
+the comparison fails. What that leaves open is the half the sweep cannot
 reach — what *writes* `0x0EA8`, and what reads `0x0F61`-`0x0F68` afterwards,
 which is a different sweep over a different region. The copy is a real
 result; the page's meaning is not, and one routine that moves bytes says
@@ -335,20 +343,30 @@ carrying a decoded name", so the six functions that touch `0x074C`, `0x07C5`
 or `0x0EB8` now qualify on the rule's own terms. `grade_name_basis.py
 --apply` wrote them; no name was changed.
 
-**Nine plate comments were reworded.** `"0x07C5 has no entry in
+**Eight plate comments were reworded.** `"0x07C5 has no entry in
 ec/annotations/registers.yaml"` is a house idiom for saying what a byte is
 *not* yet, and `build_ec_decompile.py` polices it precisely because a stale
-one is worse than a missing one. Each of the nine now names the new entry
-where the name helps — `read_low_nibble_074c`'s returned nibble *is* `PDIN`,
-since the DSDT gives that name to the byte's low four bits — and keeps the
-no-entry claim over the addresses that still have none.
+one is worse than a missing one. Each of the eight — `0x83FF`, `0x9167`,
+`0xBA36`, `0xBB80`, `0xBB81`, `C4F8`, `0xCC64` and `0xCCFC` — now names the new
+entry where the name helps (`read_low_nibble_074c`'s returned nibble *is*
+`PDIN`, since the DSDT gives that name to the byte's low four bits) and keeps
+the no-entry claim over the addresses that still have none. The other two rows
+this sweep touched, `bank0:F221` and `bank1:92DC`, moved `name_basis` only;
+neither comment carried the idiom.
 
 **The committed decompile has not been rebuilt.** `xdata-symbols.csv` is
 applied by `build_ec_decompile.py` at build time, so the names reach the
 exported C on the next `--mode rebuild-project` run, not in this tree. The
 committed `.c` still spells `DAT_EXTMEM_0ea8`, and §3c's "41 main-EC
-addresses the decompile spells by symbol" is unchanged by this sweep. A
-rebuild writes the Ghidra project, which two branches cannot both do.
+addresses the decompile spells by symbol" is unchanged by this sweep. The
+eight reworded plate comments travel the same route, so a reader diffing this
+tree against `ec/decompiled/bank0/` will find six exported `.c` files
+(`83FF.c`, `9167.c`, `BA36.c`, `BB80.c`, `BB81.c`, `C4F8.c`) still carrying the
+pre-#30 sentences — five of them the literal "0x074C has no entry in
+ec/annotations/registers.yaml" or "0x07C5 has no entry" for bytes that now
+carry `PDIN` and `WHMS`. That is expected until the rebuild and nothing in the
+generated files is edited to hide it. A rebuild writes the Ghidra project,
+which two branches cannot both do.
 
 ## 7. A note on `static-refs-audit.md`'s scope line
 
@@ -387,7 +405,7 @@ addresses it audited, and its scope statement was true when written. Re-run
 - `ghidra-functions.csv` — `grade_name_basis.py --apply`, which regraded six
   rows from `code-shape` to `ec-register` (the rule's own definition: the
   routine touches an XDATA address `registers.yaml` now carries a decoded name
-  for). Nine plate comments saying one of the sixteen bytes "has no entry in
+  for). Eight plate comments saying one of the sixteen bytes "has no entry in
   `ec/annotations/registers.yaml`" were reworded, each to name the new entry
   where the name helps and to keep the no-entry claim over the addresses that
   still have none. That idiom is a house convention and
