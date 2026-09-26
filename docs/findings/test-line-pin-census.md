@@ -562,7 +562,7 @@ the half this table exists to record.
 | [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):149 | `test_xdata_cluster_names.py:845-851` | by-name | def test_ | carries |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | other | **does not carry** |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2645 | `../tools/test_xdata_cluster_names.py:68-90` | beside | blank | carries |
-| [`../../tools/README.md`](../../tools/README.md):159 | `test_xdata_cluster_names.py:303` | by-name | other | **records another line** |
+| [`../../tools/README.md`](../../tools/README.md):168 | `test_xdata_cluster_names.py:303` | by-name | other | **records another line** |
 
 **50 carry, 2 carry on the adjacent line, 11 do not carry, 10 record another line
 on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
@@ -914,7 +914,7 @@ is no checker rather than a deferral:
 
 | shape | where | caught by `check_citation_lines.py`'s vocabulary? |
 |---|---|---|
-| a repoint list naming the stale value, in running prose | [`../../tools/README.md`](../../tools/README.md):159 — `test_xdata_cluster_names.py:303` → `:307` in four places | **no** |
+| a repoint list naming the stale value, in running prose | [`../../tools/README.md`](../../tools/README.md):168 — `test_xdata_cluster_names.py:303` → `:307` in four places | **no** |
 | a "deliberately not fixed" bullet naming the wrong pin | [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):446 | **no** |
 | a "the citation check caught it here" sentence | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):579 — `:513` named *because* it was the wrong line | **no** |
 | an "At the time of writing, `file:NNN`:" lead-in to a quoted block | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):25 | **no** |
@@ -965,7 +965,7 @@ than my having to assert it.** Four things, in the order they decide it:
    `check_citation_lines.py` gets away with a two-shape skip because a
    supersession there *has* a shape. Here it does not: eight of the ten
    records above are ordinary running prose or a bullet, and
-   [`../../tools/README.md`](../../tools/README.md):159 cites `:303` **because
+   [`../../tools/README.md`](../../tools/README.md):168 cites `:303` **because
    `:303` is the stale value it is reporting**. A checker with no skip rule
    reddens on every one of the ten, and with the rule
    `check_citation_lines.py` already has it still reddens on eight more — the

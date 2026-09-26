@@ -420,6 +420,48 @@ only covers what's specific to *this* copy.
      rather than the end, for item 10's reason — the end is that patch's context
      window, and two patches editing one contiguous region cannot both be
      applied in either order.
+  13. **`check_doc_patch_refs.py --check` is not in the cheap tier yet, and
+     should be** (2026-09-26, issue #777). `check_doc_links()`'s discovery is
+     `grep -rEo '\]\(([^:)]+\.md)\)'`, so it reads markdown *links* and nothing
+     else — not a backticked path, and not a `.patch` at all. It finds 686 `.md`
+     link references at `271389d` and **zero** references to a patch, while
+     `docs/ci/agent-gates-*.patch` is named in prose 53 times across 16 markdown
+     files at that same commit — the tree this item was written on;
+     `check_doc_patch_refs.py` prints the current figure on every run, and that
+     is the one to re-derive rather than this one. That is the half of the
+     prepared-patch arrangement `test_agent_gates_patches.py` does not hold: its
+     case 6 checks each patch *header's* `git apply` line, and a fold breaks the
+     prose the same way. #745 deleted `agent-gates-testdata-index.patch` and
+     repointing its references was six manual edits across five files with
+     nothing to notice a miss. Adding it is a `check_doc_patch_refs()` function
+     and a `gate` line beside `check_doc_links`:
+
+     ```sh
+     check_doc_patch_refs() {
+       python3 tools/check_doc_patch_refs.py --check || return 1
+     }
+
+     gate 'doc patch refs'  check_doc_patch_refs
+     ```
+
+     **No `docs/ci/agent-gates-*.patch` was prepared for it, and that is a
+     decision with a reason rather than an omission** — the same one
+     `docs/findings/prose-line-citations-held.md` took for the `run-tests.sh`
+     wiring above, followed here rather than reinvented. A seventh patch would
+     need a `gate` line at the same seven-line list's anchor where
+     `agent-gates-capture-claims.patch` and `agent-gates-testdata-row-claims.patch`
+     already insert — item 12 above took the *head* of that list for exactly
+     this reason — and two patches that each apply alone and do not compose is
+     the failure `tools/test_agent_gates_patches.py` exists to catch; the file
+     would also need adding to that suite's held `PATCHES` set, which issue #772
+     owns. Cheap tier for item 4's reason: markdown and one directory, the
+     standard library, no firmware image, no Ghidra, no network, no assembler.
+     It is not here for item 4's reason, template-copied file and no `workflow`
+     scope on the token, and **until a human lands it, no commit runs it** — the
+     prepared patch is the next step, not a gate line here. Its own suite
+     (`tools/test_doc_patch_refs.py`) needs no wiring to be run at all, for
+     item 5's reason: `tools/run-tests.sh` discovers every `test_*.py` in the
+     repository, so it is already collected by the runner above.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,

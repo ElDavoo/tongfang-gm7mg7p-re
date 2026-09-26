@@ -9293,3 +9293,74 @@ The write-up is
 [`docs/findings/pin-table-row-reconciliation.md`](findings/pin-table-row-reconciliation.md).
 No image was opened, no capture taken, no register read back, and no laptop, EC
 or Windows machine was involved: this is bookkeeping over committed text.
+
+## 72. The names prose gives a prepared gate patch are held in both directions, and the two deliberate ones are an enumerated fact (2026-09-26, issue #777)
+
+Write-up: [`doc-patch-reference-gate.md`](findings/doc-patch-reference-gate.md);
+this is the summary.
+
+**The gap.** `check_doc_links()` reads markdown *links* and nothing else, so it
+finds 686 `.md` link references at `271389d` and **zero** references to a patch.
+`docs/ci/agent-gates-*.patch` is named in prose 53 times across 16 markdown
+files at that same commit — the tree the issue was filed against; the checker's
+own run prints the current figure, which is the one to re-derive. A `git apply`
+instruction a human copies out of a header is worth exactly as much as the name
+beside it. `tools/test_agent_gates_patches.py` holds each patch *header's* `git
+apply` line; the prose is a different surface and #745's fold broke it the same
+way, by six manual edits across five files with nothing to notice a miss.
+`tools/check_doc_patch_refs.py` holds both directions — a name in the prose
+resolves to a file, a file on disk is named somewhere — and reads markdown
+links onto a patch, which `check_doc_links` cannot see because its pattern ends
+in `\.md`. There is one of those at `271389d` and **two on the merged tree**,
+#942's `pin-table-row-reconciliation.md` having added a second beside this
+issue's, so the self-test's link count is pinned to two and the census figure
+above stays the one-commit measurement it is pinned to be.
+
+**Four corrections to the issue, recorded as corrections.** Its 213 is 686 here
+(the conclusion is unchanged). Its 34-across-9 is **53 across 16**, and the
+difference is the **bare spelling** — a name with no `docs/ci/` in front of it,
+which is 19 of the 53 and is how a table row's first cell has to be written; a
+`docs/ci/`-only pattern would pass this tree while holding 64% of the references
+and would not see three of the four deliberate ones at all. There are **8
+glob-shaped** references describing the *set*, so the character class has to
+exclude `*`. And the deliberate population is **4 references to 2 absent
+names**, not "three of the 34" — only one of the issue's 34 qualified
+references names an absent file, the other three being bare-spelled. The
+`.py`-side population, three further references inside
+`tools/test_agent_gates_patches.py`, is a follow-up: the checker is scoped to
+`*.md`, and widening it would put this tool in a file #772 owns.
+
+**The historical rule, and why it is an enumeration rather than a per-reference
+opt-out.** Three of the four deliberate references are *records* — §43's sentence
+about the collision, and a measured-results table row whose whole content is a
+filename as it was — and `CLAUDE.md` §4a-4d says a superseded claim stays
+visible with a correction beside it. Fencing them would move lines in two of the
+most-cited files here, which is the defect `ec/tools/census_test_line_pins.py`
+exists for. So the opt-out is a two-name set in the checker, keyed on the
+**name** rather than `file:line` for the same reason, and it is held in **both**
+directions: each key is still absent from `docs/ci/` and still cited by
+markdown, both failures name the key, and a fourth absent name is refused. The
+live direction is checked too — every patch on disk is cited — which is the half
+that broke in `test_readme_suite_table.py`. **The bound is stated rather than
+hidden: any new reference to one of those two names is exempt by construction.**
+
+**Not in the gate, and that is a decision with a reason.** No
+`docs/ci/agent-gates-*.patch` was added, because a seventh would need a `gate`
+line at the same seven-line list's anchor where two patches already insert — two
+patches that each apply alone and do not compose is what
+`tools/test_agent_gates_patches.py` exists to catch, and §71's took the *head*
+of that list for exactly this reason — and it would need adding to that suite's
+held `PATCHES` set, which #772 owns.
+[`findings/prose-line-citations-held.md`](findings/prose-line-citations-held.md)
+took this exact decision for the `run-tests.sh` wiring; this follows that
+precedent. The recipe is `docs/agent-pipeline.md` item 13, the renumbering
+§71's item 12 forced on both. The **suite** needs no wiring at all:
+`tools/run-tests.sh` finds every `test_*.py`, so
+`tools/test_doc_patch_refs.py` is collected on a full run.
+
+**Nothing here is a live test and nothing is evidence about the firmware.** It is
+arithmetic over committed text: no EC opened, no register read back, no capture
+taken, no `status:` moved, no hardware or Windows run implied. The gate wiring is
+prepared rather than landed for the reason items 4 through 12 each give —
+`.github/` is template-copied and the push token has no `workflow` scope — and
+that is a change this branch does not make.
