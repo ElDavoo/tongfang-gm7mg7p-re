@@ -904,10 +904,10 @@ the half this table exists to record.
 | `docs/agent-pipeline.md:345` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
 | [`../findings.md`](../findings.md):4206 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** |
 | [`../findings.md`](../findings.md):4208 | `test_ec_watch.py:86-89` | by-name | other | **records another line** |
-| [`../findings.md`](../findings.md):7191 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** |
-| [`../findings.md`](../findings.md):7404 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`../findings.md`](../findings.md):7465 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
-| [`../findings.md`](../findings.md):9207 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
+| [`../findings.md`](../findings.md):7193 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** |
+| [`../findings.md`](../findings.md):7406 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
+| [`../findings.md`](../findings.md):7467 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
+| [`../findings.md`](../findings.md):9209 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |
@@ -1329,6 +1329,67 @@ declines every other prose mention of a path it is not citing. **Nothing new is
 pinned, so `58` distinct resolved targets does not move** — a declined mention
 is not a record, which is the same property the eighth note relies on when it
 says a line pin would have moved the 106 / 79 / 58.
+
+† **And a tenth, 2026-09-26 (the same `#978` × `#979` × `#973` × `#780` merge as
+the note above, and the second re-registration it needed rather than the only
+one): the four `../findings.md` rows, which the note above leaves registered to
+lines this merge moved.** Its `still unaffected` clause stays written where it is
+— it was true of no tree, since §41's `+2` lands above all four rows and moves
+every one of them — and is corrected here beside itself rather than edited into,
+per §4a-4d.
+
+**What moves a pin is whether an edit adds lines above it, not which section the
+edit is in, and the note above's reason does not survive its own arithmetic.** It
+gives "all four of which are sections above the rows", naming §41, §47, §76 and
+§79: two of the four are not above the rows. §76's edit is at
+[`../findings.md`](../findings.md):10063 and §79's at `:10426`, both *below*
+`:9207`. They move nothing because they are below the last row, not because of
+the section they sit in, and the difference is what would have told the ninth note
+to check the other three. §47's edit, at `:7286`, is the case that separates the
+two readings outright: it is between `:7191` and the other three rows, and it is
+5 lines for 5, so it moves nothing despite being above three of them.
+
+**The whole of the step is §41's own edit, and it is two lines.**
+`docs/findings.md:7052-7056` is where "…so this check would have been green
+through both. Not claimed: that it would have caught them." gives way to the
+measurement beside it — three lines for five, the `+2` of this note. It sits below
+the two rows at `:4206` and `:4208` and above the other four, which is why four of
+the table's six `../findings.md` rows move and two do not. So `7191 + 2 = :7193`,
+`7404 + 2 = :7406`, `7465 + 2 = :7467` and `9207 + 2 = :9209`, and all four
+superseded values stay written here, each true of the tree it was measured on, per
+§4a-4d. **The count the note above gives is `five` rows and the table carries
+`six`**: `:4206`, `:4208`, `:7191`, `:7404`, `:7465` and `:9207` — three of which
+the notes further down name at `:7191`, `:7370` and `:7431`, before the `+27`
+above the ninth took them to the `:7404`, `:7465` and `:9207` this merge then
+moves again.
+
+**The tool read 4 `unplaced-row` and 4 `row-without-record` with `:7191`, `:7404`,
+`:7465` and `:9207` still in the table** — checked by running it, not predicted,
+and four of each rather than one because four rows moved rather than the single
+`../../tools/README.md` row the last three notes took — **and reads 106 rows,
+106 records, 106 placed, all seven classes 0** with the four re-registered. **The
+read, shape and verdict cells of all four are the ones those rows held before,
+unedited**: `by-name`/`other`/**does not carry**, `by-path`/`blank`/carries,
+`by-path`/other/carries and `by-path`/other/**does not carry**.
+`check_citation_lines.py`'s verdict does not move with them either, for the reason
+the seventh note gives: the records are counted, their lines are not.
+
+**The census's own figures are unmoved, and re-derived rather than carried** by
+running `census_test_line_pins.py` on this tree: still **106 / 28 / 79 / 58** with
+`74` resolving, `32` declined and the landing-shape split still `0/15/22/5/32`,
+which is the same run `origin/main` reads. A line moving is not a record moving,
+and that is the property every note above rests on.
+
+**The standing red set was wrong for this merge, and the correction is the note
+above's, not the tree's.** Every note above names
+`ec/tools/test_check_cluster_citations.py` as the one red suite and records
+`ec/tools/test_check_pin_table_rows.py` as green on its own tree. That was false
+of this one: with the ninth note's registration standing, this suite read
+`FAILED (failures=3)` and the checker placed `102` of `106`, because the one row
+§41's `+2` did not touch was re-registered and the four it did were not. **The
+ninth note's `still unaffected` clause is the whole of the defect** — not a
+missing row, not a moved target, and not a count: the reason it gives for the
+four rows staying put is false, and a reader following it would not have looked.
 
 ‡ **What the tree carrying both #890 and #900 moved, re-registered against it,
 and still no count.** The *cited* targets are this branch's, because #890's 25

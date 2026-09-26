@@ -1487,6 +1487,65 @@ row this merge moved a second time**: `check_pin_table_rows.py` reads **106 rows
 was written in place within the lines the sentence already had. Named by suite
 and by count rather than by line here, for the reason the notes above give.*
 
+*(Twenty-seventh merged-tree note, 2026-09-26, issue #978, the same `#978` ×
+`#979` × `#973` × `#780` merge as the twenty-sixth. **Written below the
+twenty-sixth rather than beside it, on the twenty-fourth's own rule**, and for
+the same reason the twenty-sixth gives for sitting below the twenty-fifth: the
+position is what does the work, and the twenty-sixth does not have to be reopened
+to make room for this one. Two of its sentences are false on the tree it shipped
+and both stay written above, each true of no tree rather than of the tree it was
+measured on, per [`../docs/findings.md`](../docs/findings.md) §4a-4d.*
+
+**A repoint was owed, four of them, and the reason the twenty-sixth gives for
+saying none was is false on its own terms.** That reason is "they land in
+`docs/findings.md` at §41, §47, §76 and §79, every one of which is above the four
+rows". **What moves a pin is whether an edit adds lines above it, not which
+section the edit is in**, and two of the four are not above the rows: §76's edit
+is at [`../docs/findings.md`](../docs/findings.md):10063 and §79's at `:10426`,
+both below the last of the four. The twenty-sixth's own measurement is what
+settles it — the four `docs/findings.md` retirements it says cost the checker
+"nothing, because each was written in place within the lines the sentence already
+had", which is true of §47's alone. §41's retirement runs `3` lines to `5`,
+§76's `6` to `8` and §79's `3` to `6`, and §81 adds `111` below all of it.
+
+**Only §41's growth is above the four `../findings.md` rows, and it is `+2`.**
+`docs/findings.md:7052-7056` is where "…so this check would have been green
+through both. Not claimed: that it would have caught them." gives way to the
+measurement beside it, below the two rows at `:4206` and `:4208` and above the
+other four. So `7191 + 2 = :7193`, `7404 + 2 = :7406`, `7465 + 2 = :7467` and
+`9207 + 2 = :9209`. §47's edit, at `:7286`, sits between `:7191` and the other
+three and is `5` lines for `5`, so it moves nothing despite being above three of
+them — the case that separates *the edit is above the pin* from *the edit changed
+the line count above the pin*. The four superseded values stay written in
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)'s
+tenth note beside the four new ones, per §4a-4d, and its `still unaffected`
+clause in this file's twenty-sixth is corrected there for the same reason.
+
+**`ec/tools/test_check_pin_table_rows.py` was not green on the tree the
+twenty-sixth shipped, and this note is what made it so rather than a prediction
+that it would be.** The twenty-sixth records it green and records
+`check_pin_table_rows.py` reading "**106 rows, 106 records, 106 placed, all seven
+classes 0**". On the tree as committed it read **`FAILED (failures=3)`**, and the
+checker read **102 placed** with **4 `unplaced-row`** and **4
+`row-without-record`** — checked by running both here, against the same
+`origin/main` worktree the twenty-sixth names for
+`test_check_cluster_citations.py`, where the suite is `OK`. **The re-registration
+above is the whole of the difference**: with it, the suite is `OK` at 36 cases and
+`check_pin_table_rows.py` reads 106 rows, 106 records, 106 placed, all seven
+classes 0, and the census's own figures are unmoved at **106 / 28 / 79 / 58** with
+`74` resolving, `32` declined and the landing-shape split still `0/15/22/5/32` —
+**re-derived by running `census_test_line_pins.py` on this tree rather than
+carried**, which is the check the re-registration is run for, since a line moving
+is not a record moving.
+
+**The standing red set named above was wrong for this merge, and it is the
+twenty-sixth's clause that makes it wrong rather than anything in the tree.** The
+red set is the single suite `ec/tools/test_check_cluster_citations.py`, and it
+fails identically on a clean `origin/main` worktree; `test_check_pin_table_rows.py`
+joined it for the length of this merge and left it when the four rows were
+re-registered. Named by suite and by count rather than by line here, for the
+reason the notes above give.*
+
 | suite | what it stands in for |
 |---|---|
 | `ec/tools/test_bank1_e582_framing.py` | The byte facts behind the issue #680 reading that the `bank1,0xE582` entry is reached through 0xE580 and the census row at 0x9F03 is a displacement byte: the push/lcall/pop save-restore pair across the 0xE57E cut, `converges_from` on both halves of each site, and the `80 02` at 0x9F02 read as a `sjmp` whose displacement's landing address is the committed `9F04.asm` first instruction — asserted against the image rather than by re-running the scan that wrote the census, so a regenerated table that disagreed would fail rather than pass on a stale pair, plus that both annotation comments still carry the clause their `CORRECTION` replaces, that no entry is seeded at 0xE580, and that the phantom census row is deliberately left in place |

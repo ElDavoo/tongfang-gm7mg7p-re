@@ -241,9 +241,21 @@ place, in the fourteen sentences across eight files that carried it — the two 
 §79's), one in `testdata-third-column-claims.md`, two each in
 `testdata-row-claims-dated-capture.md` and `capture-filename-date-prefix.md`,
 and `docs/agent-pipeline.md`'s item 10. Each keeps its claim that the repairs
-were to the third column, drops the "nobody has looked", and points here. The
-old wording is not deleted but superseded beside itself, per `docs/findings.md`
-§4a-4d.
+were to the third column, drops the "nobody has looked", and points here. **The
+handling is not uniform across the fourteen, and which is which is named rather
+than left to a reader to find: four keep the old wording beside the correction** —
+the `Superseded, 2026-09-26, by issue #978` blockquote in each of
+`testdata-third-column-claims.md`, `testdata-row-claims-dated-capture.md` and
+`capture-filename-date-prefix.md`, and §79's, which names the retired clause in
+italics where it stood and says which sections it was carried forward from —
+**and the other ten are replaced with a pointer to here rather than superseded
+beside themselves.** The three blockquotes and §79 are the four that satisfy
+`docs/findings.md` §4a-4d in its full sense; a replaced sentence satisfies the
+half of it that asks the old claim not to survive unchallenged, which is why the
+superseded wording is quoted in this write-up's opening paragraph rather than at
+each of the ten sites — and why the three are named here by their opening words
+rather than by line, on the reasoning
+[`test-line-pin-census.md`](test-line-pin-census.md) measures.
 
 **`ec/tools/testdata/README.md` is edited below its table, never in a
 description cell.** Both checkers read table rows only (`table_cells`), so an
