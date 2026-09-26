@@ -605,7 +605,9 @@ class SkipsDeliberately(ScratchIndex, unittest.TestCase):
         # number of them would turn every dated sentence a later PR adds into a
         # failure, which is the same trade `docs/agent-pipeline.md` records
         # against a floor. What is pinned is that the block exists, says which
-        # glob, how wide the file set was, and what became of each literal.
+        # glob, how wide the file set was, and what became of each literal --
+        # and, since the two captures here carry one literal each, which of
+        # them carried it.
         self.set("example.csv", 0x0F5D)
         self.capture("2026-09-23-cycle-a.csv", 0x0F58)
         self.capture("2026-09-23-cycle-b.csv", 0x0F5C)
@@ -622,6 +624,88 @@ class SkipsDeliberately(ScratchIndex, unittest.TestCase):
         self.assertIn("2026-09-23-* (2 capture(s)", block)
         self.assertIn("row 1 0x0F58 resolved", block)
         self.assertIn("row 1 0x0F5C resolved", block)
+        self.assertIn("row 1 0x0F58 resolved in 2026-09-23-cycle-a.csv", block)
+        self.assertIn("row 1 0x0F5C resolved in 2026-09-23-cycle-b.csv", block)
+
+    def test_a_literal_two_of_the_dates_files_carry_names_both(self):
+        # The union's cost, made a number: two captures of one date carrying
+        # the same address, both named. A reader who was told only that "one
+        # address in any of a date's files satisfies a claim about that date"
+        # had no way to see the shape of the compromise on the run's own
+        # output, and a short-circuit on the first carrier would print one
+        # name and understate exactly what this case is about.
+        self.set("example.csv", 0x0F5D)
+        self.capture("2026-09-23-cycle-a.csv", 0x0F58)
+        self.capture("2026-09-23-cycle-b.csv", 0x0F58, 0x0F5C)
+        self.row("example.csv", "is the shape the 2026-09-23 power-mode-cycle "
+                                "capture shows, where they track "
+                                "`0x0F58-0x0F5C`.")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ctrc.dated_report(self.check())
+        block = out.getvalue()
+        self.assertIn("row 1 0x0F58 resolved in 2026-09-23-cycle-a.csv and "
+                      "2026-09-23-cycle-b.csv", block)
+        # And the one only the second carries is not dragged along with it.
+        self.assertIn("row 1 0x0F5C resolved in 2026-09-23-cycle-b.csv", block)
+
+    def test_the_block_names_the_capture_root_the_run_was_given(self):
+        # The block used to print `repo_path(CAPTURES)`, the module constant,
+        # while `check()` takes the root as a parameter -- so every run pointed
+        # at a scratch tree printed the committed `evidence/ec-watch` for a
+        # directory it never opened. `Result.captures` carries what the run was
+        # handed, and this is the case that fails if the constant comes back.
+        self.set("example.csv", 0x0F5D)
+        self.capture("2026-09-23-cycle-a.csv", 0x0F58)
+        self.capture("2026-09-23-cycle-b.csv", 0x0F5C)
+        self.row("example.csv", "is the shape the 2026-09-23 power-mode-cycle "
+                                "capture shows, where they track "
+                                "`0x0F58-0x0F5C`.")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ctrc.dated_report(self.check())
+        block = out.getvalue()
+        # The glob and the count are unchanged by the fix, which is why the
+        # case above could not see it.
+        self.assertIn("2026-09-23-* (2 capture(s)", block)
+        self.assertIn(ctrc.repo_path(self.captures), block)
+        self.assertNotIn(ctrc.repo_path(ctrc.CAPTURES), block)
+
+    def test_the_closing_line_splits_the_two_file_sets(self):
+        # "agrees with the fixtures its row names" was a sentence about all
+        # thirty claims once a bare date started redirecting two of them
+        # elsewhere, and it read the same whether the redirect was there or
+        # the tool ignored the date -- which is row 7's own situation, since
+        # its after-dump carries both literals. So the tree here is built the
+        # same way: the row's own fixture carries every address the sentence
+        # claims, so **both readings are green** and the only thing left to
+        # differ is the wording. A count of the dated claims would not survive
+        # that either -- it is 2 under both readings -- so the line counts
+        # what agrees with each set, which is 1/2 here and 3/0 with the date
+        # ignored.
+        self.set("example.csv", 0x0F5D, 0x0F58, 0x0F5C)
+        self.capture("2026-09-23-cycle-0f00-0f5f.csv", 0x0F58, 0x0F5C)
+        self.row("example.csv", "The `0x0F5D` poke lands inside the window.")
+        self.row("example.csv", "is the shape the 2026-09-23 power-mode-cycle "
+                                "capture shows, where they track "
+                                "`0x0F58-0x0F5C`.")
+        result = self.check()
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(ctrc.report(result), 0)
+        self.assertIn("-- 1 with the fixtures their row names, 2 with the "
+                      "captures a bare date in their sentence names",
+                      ctrc.closing_line(result))
+        # The wrong implementation this case exists for: the date read as
+        # unresolved, so every sentence is held to the row's own files. The
+        # run stays green -- that is the point -- and the line has to say so.
+        with mock.patch.object(ctrc, "captures_for",
+                               return_value=(ctrc.UNRESOLVED, [], "")):
+            ignored = self.check()
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(ctrc.report(ignored), 0)
+        self.assertIn("-- 3 with the fixtures their row names, 0 with the "
+                      "captures a bare date in their sentence names",
+                      ctrc.closing_line(ignored))
 
     def test_an_unresolving_date_is_listed_in_the_breakdown_too(self):
         # The other half of the block: a date that resolved to nothing still
@@ -901,7 +985,10 @@ class TheCommittedTree(unittest.TestCase):
     having the tool in the tree at all. What it asserts is that the run
     reached something -- a run reporting no claims and no disagreements is
     green for the wrong reason -- and never how much, because an expected count
-    turns every added fixture into a failure.
+    turns every added fixture into a failure. **One case does assert a number,
+    and it is one that follows from the run rather than from the tree**: the
+    closing line's two per-set counts sum to the checked count, which is true
+    of any green run whatever its size.
     """
 
     def setUp(self):
@@ -943,6 +1030,14 @@ class TheCommittedTree(unittest.TestCase):
         # being pinned is the docstring's, that the counts are the output, since
         # a run that checked nothing and a run that found nothing look the same
         # from the exit code alone.
+        #
+        # The new closing wording puts a `number label` pair of its own on the
+        # last line -- "2 with the captures a bare date in their sentence
+        # names" -- and it is checked rather than assumed: it collides with
+        # none of the seven labels below, so no count here is shadowed by a
+        # later line parsing to the same key. A wording change that *did*
+        # collide would leave a stale figure reading as a real one, which is
+        # the failure this whole test exists to catch.
         out, err = io.StringIO(), io.StringIO()
         argv = sys.argv
         sys.argv = ['check_testdata_row_claims.py', '--check']
@@ -1040,6 +1135,51 @@ class TheCommittedTree(unittest.TestCase):
                             f"{pattern} resolved to .csv files only, so this "
                             "run no longer exercises the .txt half of a date")
 
+    def test_the_closing_line_names_both_file_sets_and_they_add_up(self):
+        # The shape of the closing line over the committed tree, and the only
+        # figure asserted here is one that follows from the run rather than
+        # from the tree: the two per-set counts are the claims that agreed with
+        # the set each was held against, so on a green run -- the only run that
+        # prints the line -- they cover `checked` between them. Neither count
+        # is written down, because a dated sentence a later PR adds would move
+        # one of them and that is not a defect.
+        line = ctrc.closing_line(self.result)
+        self.assertIn("with the fixtures their row names", line)
+        self.assertIn("with the captures a bare date in their sentence names",
+                      line)
+        found = re.search(r"-- (\d+) with the fixtures their row names, "
+                          r"(\d+) with the captures", line)
+        self.assertIsNotNone(found, line)
+        self.assertEqual(
+            int(found.group(1)) + int(found.group(2)), self.result.checked,
+            f"the split covers only the claims that agree, so a shortfall is "
+            f"the run's own {self.result.missing} disagreement(s)")
+
+    def test_the_committed_tree_cannot_tell_the_two_readings_apart(self):
+        # The premise the closing line's split rests on, asserted rather than
+        # assumed. With the date ignored the committed run is **still green**
+        # and still the same number of claims, because row 7's own after-dump
+        # carries both literals in a comment in its header -- so an
+        # implementation that never resolved a date would exit 0, agree with
+        # every count the run has, and print the sentence this branch
+        # replaced. That is why the split is over the agreeing count per set
+        # and not over the dated-claim count, and why no single figure on the
+        # line can do the job. **No figure is written down here**: the claim
+        # is that the two runs agree about everything except the two numbers
+        # on the last line, and `test_the_closing_line_splits_the_two_file_
+        # sets` is where the disagreement itself is read.
+        with mock.patch.object(ctrc, "captures_for",
+                               return_value=(ctrc.UNRESOLVED, [], "")):
+            ignored = ctrc.check()
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(ctrc.report(ignored), 0)
+        self.assertEqual(ignored.checked, self.result.checked)
+        shipped = ctrc.closing_line(self.result)
+        wrong = ctrc.closing_line(ignored)
+        self.assertNotEqual(shipped, wrong)
+        # The difference is in the counts, not in the wording around them.
+        self.assertEqual(shipped.split("-- ")[0], wrong.split("-- ")[0])
+
     def test_the_two_door_discriminations_the_issue_names(self):
         # `0751-isolation-run-3blocks/` has no `0x0784` row and
         # `...-3blocks-moved/` has one; `gpu-door-example-quiet.csv` has no
@@ -1058,9 +1198,12 @@ class TheCommittedTree(unittest.TestCase):
                     line for line in f if not line.lstrip().startswith("#")))
             held = {ctdi.as_address(r["addr"]) for r in rows}
             self.assertNotIn(address, held, rel)
-        self.assertTrue(ctrc.carried_by("0x0784", [os.path.join(
-            ctdi.TESTDATA, "0751-isolation-run-3blocks-moved/"
-            "2026-01-01-0751-isolation-0700-07ff.csv")]))
+        # `carried_by()` answers with the carriers rather than a yes, so the
+        # assertion is over the name it returns: this file and no other.
+        moved = os.path.join(ctdi.TESTDATA, "0751-isolation-run-3blocks-moved/"
+                            "2026-01-01-0751-isolation-0700-07ff.csv")
+        self.assertEqual(ctrc.carried_by("0x0784", [moved]), [moved])
+        self.assertEqual(ctrc.carried_by("0x07C4", [moved]), [])
 
 
 if __name__ == '__main__':
