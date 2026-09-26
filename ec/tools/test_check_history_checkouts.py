@@ -7,7 +7,8 @@ against `main`: a checker that had quietly stopped finding anything would print
 the same clean report. The scratch-tree cases below are therefore the ones that
 matter most in this suite -- the synthetic workflow that resolves to the depths
 it spells, the gate job that goes red on a shallow checkout, the actionlint job
-that does not, and the sentence that names `ci.yml` without naming a job.
+that does not, the sentence that names `ci.yml` without naming a job, and the
+one that names two workflows and a job of only one of them.
 
 **The stale sentences are the control, in the spelling they actually had.** Four
 of them went stale the same way, and #1009's own claim -- that a checker
@@ -89,6 +90,17 @@ CORRECTED_DOCSTRING = r'''
     # runs the gate; its `workflows` job is default-depth and runs no
     # history reader, so it never reaches this mode
 '''
+
+# The sentence issue #1034 is filed with, **verbatim**, and the one its *Done*
+# rests on. It is a module constant for the reason the four above are, and
+# sharper here: `claude.yml`'s job is `claude`, so the job id is a substring of
+# the filename the sentence is required to carry. A paraphrase that spelled
+# either job differently, or that dropped `claude.yml` and left a bare `claude`
+# behind, would stop being a control for the thing it is a control for -- the
+# way the pre-#1009 paraphrases would have stopped catching the stale rule.
+ISSUE_TWO_WORKFLOW = (
+    "# ci.yml's `gates` job is full-depth and claude.yml is shallow throughout")
+
 
 
 def workflow(name, jobs):
@@ -264,13 +276,31 @@ class DepthTests(ScratchTree):
 
 
 class ProseTests(ScratchTree):
-    """The reported half: a depth claim has to name the job it is about."""
+    """The reported half: a depth claim names the job of every workflow it names.
+
+    **Per workflow and not per sentence**, and that is the half of the rule the
+    last six cases are about. A sentence naming two workflows is judged once for
+    each of them, so the cases come in pairs with the job named on either side,
+    against a control that names a job of both -- without which a checker that
+    flagged every multi-workflow sentence would pass the pair.
+    """
 
     def workflow(self):
         self.put(".github/workflows/ci.yml", workflow("CI", {
             "gates": [{"uses": True, "depth": 0},
                       {"run": ".github/scripts/agent-gates.sh"}],
             "workflows": [{"uses": True}],
+        }))
+
+    def claude(self, job_id="claude"):
+        """A second readable workflow, default-depth like the committed one.
+
+        The job id is a parameter because two of the cases below need one that
+        is *not* `claude`, and a builder that spelled its own would make them
+        read as though `claude.yml` could only ever hold that job.
+        """
+        self.put(".github/workflows/claude.yml", workflow("Claude", {
+            job_id: [{"uses": True}],
         }))
 
     def test_a_sentence_naming_a_workflow_and_no_job_is_flagged(self):
@@ -345,6 +375,96 @@ class ProseTests(ScratchTree):
         self.workflow()
         _depth, prose, out = self.problems()
         self.assertFalse(prose, out)
+
+    def test_a_job_of_the_first_workflow_does_not_satisfy_the_second(self):
+        # The issue's sentence, verbatim, and the case its *Done* rests on: a
+        # job of `ci.yml` says nothing about `claude.yml`, which the same
+        # sentence asserts a depth of and names no job of. Judged on the first
+        # readable name alone this returned nothing at all.
+        self.workflow()
+        self.claude()
+        self.tool("ec/tools/verify_reassembly.py", ISSUE_TWO_WORKFLOW + "\n")
+        depth, prose, out = self.problems()
+        self.assertFalse(depth, out)
+        self.assertEqual(len(prose), 1, out)
+        # The message names the workflow that has no job, and not the one that
+        # has -- read off the head, because the sentence itself is quoted in the
+        # tail and carries both names.
+        head = prose[0].split(" -- ", 1)[0]
+        self.assertIn("names claude.yml and no job of it", head)
+        self.assertNotIn("ci.yml", head)
+
+    def test_a_job_of_the_second_workflow_does_not_satisfy_the_first(self):
+        # The other direction, and the one the old code got *right* for the
+        # wrong reason -- it reported this, naming both workflows in a message
+        # about one. So this case pins the message as much as the verdict: the
+        # answer must not depend on which name sorts first.
+        self.workflow()
+        self.claude()
+        self.tool("ec/tools/verify_reassembly.py",
+                  "# claude.yml's claude job is full-depth and ci.yml is shallow "
+                  "throughout\n")
+        depth, prose, out = self.problems()
+        self.assertFalse(depth, out)
+        self.assertEqual(len(prose), 1, out)
+        head = prose[0].split(" -- ", 1)[0]
+        self.assertIn("names ci.yml and no job of it", head)
+        self.assertNotIn("claude.yml", head)
+
+    def test_a_sentence_naming_a_job_of_each_workflow_is_not_flagged(self):
+        # The positive control, and the reason it cannot be left out: a checker
+        # that flagged every sentence naming two workflows would pass both cases
+        # above, so without this the suite could not tell "two workflows" from
+        # "two workflows and one job each".
+        self.workflow()
+        self.claude()
+        self.tool("ec/tools/verify_reassembly.py",
+                  "# ci.yml's gates job is full-depth and claude.yml's claude "
+                  "job is shallow\n")
+        _depth, prose, out = self.problems()
+        self.assertFalse(prose, f"a sentence naming a job of each was flagged:\n{out}")
+
+    def test_an_unreadable_workflow_beside_a_readable_one_rescues_nothing(self):
+        # The third ask: a workflow this tool could not read is not judged, and
+        # that must not become an excuse for the one it could. `broken.yml` is
+        # still reported as not found by this method, so the pass is not a
+        # second one -- the sentence is flagged for `ci.yml` and only `ci.yml`.
+        self.workflow()
+        self.put(".github/workflows/broken.yml", "jobs: [oops\n")
+        self.tool("ec/tools/verify_reassembly.py",
+                  "# ci.yml and broken.yml both check out shallow\n")
+        _depth, prose, out = self.problems()
+        self.assertEqual(len(prose), 1, out)
+        self.assertIn("names ci.yml and no job of it", prose[0].split(" -- ", 1)[0])
+        self.assertIn("broken.yml: jobs not found by this method", out)
+
+    def test_a_job_id_two_workflows_share_satisfies_the_rule_for_both(self):
+        # The floor and not a proof, at its bluntest: one word, both workflows,
+        # and no way to tell which the sentence meant. The rule passes both
+        # rather than guessing, which is the honest answer and a real blind spot
+        # -- `gates` is not a rare job id and `ci.yml` really has one.
+        self.workflow()
+        self.claude("gates")
+        self.tool("ec/tools/verify_reassembly.py",
+                  "# ci.yml and claude.yml are shallow except for gates, which is "
+                  "full-depth\n")
+        _depth, prose, out = self.problems()
+        self.assertFalse(prose, f"a shared job id did not satisfy both:\n{out}")
+
+    def test_a_workflow_name_is_not_read_as_a_mention_of_its_own_stem_job(self):
+        # The other half of the pair above, and the reason `job_text()` blanks
+        # the names rather than the rule tightening its boundary: `claude.yml`'s
+        # job is `claude`, so a matcher reading the raw sentence found that job
+        # inside the filename the sentence had to carry anyway, and the issue's
+        # sentence passed on its own name. Blanking the name's span has to leave
+        # a real mention of the job alone, which is the half that could
+        # over-reach into flagging correct sentences.
+        self.claude()
+        self.tool("ec/tools/verify_reassembly.py",
+                  "# claude.yml is shallow, and the claude job is the one that "
+                  "fetches\n")
+        _depth, prose, out = self.problems()
+        self.assertFalse(prose, f"a real mention of the job was missed:\n{out}")
 
 
 class CommittedTreeTests(unittest.TestCase):
