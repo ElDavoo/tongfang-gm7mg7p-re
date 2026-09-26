@@ -208,6 +208,17 @@ measurement.
 > — and the guard's per-address effect is unchanged (210 addresses, 833
 > references, both figures identical in the two generations). The floor stays
 > where it is, argued from that measurement rather than from the headroom.
+>
+> **The step that measurement named and did not take has since been taken, and
+> both mechanisms it named are refuted** (issue #884).
+> [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) follows each
+> moved rank's substitution into the other generation's guard-off census.
+> Rank displacement accounts for at most **10 of the 71** substitutions landing
+> within two ranks, at the rate the whole census reappears at (**79 in 408**),
+> and the 155 added addresses reach **none of the 71** and **one key of the 23**.
+> Both are stated at their counts there, each against the two cells that did not
+> flip — which is what turns a per-cell number into a null rather than a
+> mechanism.
 
 ## 4. The order the work happens
 
