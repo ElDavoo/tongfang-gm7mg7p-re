@@ -159,7 +159,17 @@ ORACLE_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
 # same call shape, and only the second is circular. That is the general limit of
 # the literal search and it is worth knowing: a figure this tool reports unheld
 # can be "held" by a test somewhere, and this tool will not have seen it.
-SELF_MODULES = ("check_doc_figure_pins.py", "test_check_doc_figure_pins.py")
+#
+# `census_test_line_pins.py`'s two modules are in the same position and for the
+# same reason, which is what adding them here measured: #887's suite holds the
+# census's own reconciled counts, and `50` is one of them, so the moment that
+# suite landed the checklist's `50` -- §2b's console-block cluster count, an
+# unrelated figure that happens to be the same integer -- measured
+# held-by-check-literal at `test_census_test_line_pins.py:479`. The general rule
+# is the one the original exclusion states: a module that publishes a figure
+# this tool measures cannot also be the evidence for it.
+SELF_MODULES = ("check_doc_figure_pins.py", "test_check_doc_figure_pins.py",
+                "census_test_line_pins.py", "test_census_test_line_pins.py")
 
 # Removed from a cell before any number is read out of it. None of these can
 # reintroduce a digit, and the hex form has to go before the bare-number pass.
@@ -193,8 +203,8 @@ MARKUP = re.compile(r"[`*]")
 def tool_names(exclude_self=False):
     """Every module in `ec/tools/`, sorted, so a report is reproducible.
 
-    `exclude_self` drops this tool's own two modules; see `SELF_MODULES` for
-    why a measurement of the measurement is not evidence about the census.
+    `exclude_self` drops the modules named in `SELF_MODULES`; see it for why a
+    measurement of the measurement is not evidence about the census.
     """
     return sorted(n for n in os.listdir(TOOLS)
                   if n.endswith(".py") and not n.startswith("_")
