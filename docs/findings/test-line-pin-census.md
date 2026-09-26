@@ -721,9 +721,9 @@ the half this table exists to record.
 | [`../findings.md`](../findings.md):4206 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** |
 | [`../findings.md`](../findings.md):4208 | `test_ec_watch.py:86-89` | by-name | other | **records another line** |
 | [`../findings.md`](../findings.md):7191 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** |
-| [`../findings.md`](../findings.md):7377 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`../findings.md`](../findings.md):7438 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
-| [`../findings.md`](../findings.md):9180 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
+| [`../findings.md`](../findings.md):7404 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
+| [`../findings.md`](../findings.md):7465 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
+| [`../findings.md`](../findings.md):9207 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |
@@ -982,6 +982,31 @@ and both pairs are re-derived by running the two commands
 column are identical on all three trees, and the corpus denominator is the one
 figure the merge does move, `main`'s **155** plus this issue's own write-up for
 **156**.
+
+† **A fifth change to the same table, 2026-09-26 (issue #977), re-registering
+the same three `../findings.md` rows a fourth time, and no count moves either.**
+That issue corrects #747's write-up in place and adds **one** correction
+paragraph at the end of `../findings.md` §47 — the shape count, the case count
+and the rules table's inversion are 2026-09-25's, and §47 carried the stale
+version of all three with no correction beside them. §47 sits above the same
+three rows #794 moved, so `:7377 + 27 = :7404`, `:7438 + 27 = :7465` and
+`:9180 + 27 = :9207` is the whole of that move; the `+27` is the correction
+paragraph and its blank line, and it is **the third addition to §47 to push
+these rows**, after #794's `+7` and #900's `+1`. **The three verdicts, the three
+shapes and the 106 headcount come back identical**, which is the check a
+repoint is run for: a repoint that moved a count would show here first.
+`ec/tools/test_check_pin_table_rows.py` read **3 `unplaced-row` and 3
+`row-without-record` with the old lines still in the table**, and then **106
+rows, 106 records, 106 placed, all seven classes 0** with the three rows
+above — the arithmetic is what that tool printed, not a guess at it. **That
+issue introduces no pin at all**, which is the other half and the reason this
+note is three rows rather than seven: its corrections cite
+`test_the_dated_capture_rule`, the suite's class docstring and the tool's own
+struck docstring bullet by name, because `test_*.py:NNN` is the fragile class
+this census exists for and a named test in a named file needs no row here.
+The superseded `:7377`, `:7438` and `:9180` stay written in the note above
+rather than edited out of it, each true of the tree it was measured on, per
+§4a-4d.
 
 ‡ **What the tree carrying both #890 and #900 moved, re-registered against it,
 and still no count.** The *cited* targets are this branch's, because #890's 25

@@ -7343,6 +7343,33 @@ committed annotation CSVs, a markdown file and a directory of fixtures, no
 capture opened, no EC, no hardware, and no claim that any fixture constructs
 what its row says.
 
+> **Correction, 2026-09-26, at the `#964` merge: three figures in this section
+> are 2026-09-25's, and all three stay written above per §4a-4d — this block is
+> additive and edits none of them.** With the six shapes removed the run is red
+> on **4 rows with 5 missing literals** and calls **54 of the 54** literals
+> claims: that verdict is **re-measured on the merged tree, not carried**, and
+> it is the same one. What moved is that there are now **five** shapes and a
+> dated-capture resolution rather than six shapes, that the literals are counted
+> against **30** presence claims rather than 28, and that the four literals
+> caught by two rules at once are still four. The suite is **42 cases, nine of
+> which are refusals**,
+> and **eight** of those nine are asserted to make the run check *more*; the
+> ninth, the dated-capture resolution, is asserted the other way — loosening it
+> points the run at an empty capture root and takes row 7's two claims back out
+> — which is the inversion `test_the_dated_capture_rule` holds with
+> `assertLess` (`test_the_dated_capture_rule`, in
+> `ec/tools/test_check_testdata_row_claims.py`). And
+> **three of the five shapes**, not four of six, cannot turn the run red by
+> being dropped; they are the same three (`0x07C4`/`0x07D7`, `0x0750`/`0x0010`,
+> `0x888D`), which is what the suite's class docstring says. The paragraph
+> above, at "**The list is five shapes and a variant since #794**", already
+> carries #964's own correction and is left exactly as it stands; these three
+> are the ones it does not reach. The re-derivation is in
+> [`testdata-row-claims-dated-capture.md`](findings/testdata-row-claims-dated-capture.md),
+> and the corrections now in place beside each of them in the write-up
+> `:7279` points at are in
+> [`testdata-third-column-claims.md`](findings/testdata-third-column-claims.md).
+
 ## 48. The `0x0860` census citations move; the counts do not (2026-09-25, issue #752)
 
 The write-up is
