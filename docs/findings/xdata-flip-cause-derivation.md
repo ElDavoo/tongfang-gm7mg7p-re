@@ -215,10 +215,11 @@ keys an expected 4.3 and an observed 0 is not a finding, and it is printed
 because a reader scanning for a mechanism would otherwise stop there.
 
 **The claim is therefore: rank displacement is not what closed the delta on
-those 71, at 10 of 71 against a population rate of 79 in 408.** The rows did
-reorder — the mean displacement of +6.80 in §2 is real and large — but
-reordering is what happened to *every* guard-off row in the census, and so it
-cannot be what distinguishes these 71 from the 266 that kept moving.
+those 71.** It accounts for at most 10 of them, landing within two ranks at
+**10 of the 60** that reappear — 16.7% against the population's **79 in 408**,
+19.4%. The rows did reorder — the mean displacement of +6.80 in §2 is real and
+large — but reordering is what happened to *every* guard-off row in the census,
+and so it cannot be what distinguishes these 71 from the 266 that kept moving.
 
 ## 5. The 155 added addresses — a null for the 71, and one key of the 23
 
@@ -279,8 +280,12 @@ constant by construction and the only thing that differs is the membership.
 Both mover cells shift *onto* the page; the 71 shift about five times as far.
 And the two flip directions are opposite in kind: the 71 touch **102 distinct
 page addresses of their own census's 274**, while the 23 touch **5 of the newer
-census's 425** — the two censuses do not have the same page, and the 151 added
-addresses of §5 are most of the difference between 274 and 425.
+census's 425** — though those are shares of two nested pages rather than two
+samples of one. Over the two guard-off census CSVs the 439-row pair's 425 is the
+430-row pair's 274 **plus exactly the 151 added addresses of §5**, set for set,
+with no page address leaving the older census, so the 151 are the whole of the
+difference between 274 and 425 and the 102 and the 5 are not a like-for-like
+pair.
 
 **Two things stop that being read as the cause, and the mode prints both.**
 
@@ -323,14 +328,17 @@ should not be reintroduced:
 | `ke96d2e265d5d` | main-ec-008 | 12 | `kea0c67af9b51` | 0 | reappears |
 | `kea0c67af9b51` | main-ec-007 | 13 | `k45909c137449` | 12 | absorbed |
 
-Three of them are wholly page rows and two of the five carry more page
-addresses than the row they replaced. **Two of these five are the same clusters
-seen from the other side of the pair** — `k733571bb7f66` is the committed key
-of a `moved in both` row, and `kea0c67af9b51` is the subject row of
-`ke96d2e265d5d`'s — so the large page clusters are being permuted among the top
-ten ranks, and which of them lands in the quiet cell rather than the moving one
-is close to arbitrary. This is `mode-oem-init`'s neighbourhood: the one hand
-name that moves, at `main-ec-001`/`main-ec-002`, the ranks just above these.
+**One** of the five is wholly a page row — `k0ebf038645b0`, 12 of its 12 — and
+**four** of them carry more page addresses than the committed 430-row census's
+row at the same rank, which hold 0, 0, 1, 0 and 0 of them in page; only
+`kea0c67af9b51` matches the row it displaced, at 0 against 0. **Two of these
+five are the same clusters seen from the other side of the pair** —
+`k733571bb7f66` is the committed key of a `moved in both` row, and
+`kea0c67af9b51` is the subject row of `ke96d2e265d5d`'s — so the large page
+clusters are being permuted among the top ten ranks, and which of them lands in
+the quiet cell rather than the moving one is close to arbitrary. This is
+`mode-oem-init`'s neighbourhood: the one hand name that moves, at
+`main-ec-001`/`main-ec-002`, the ranks just above these.
 
 **The claim, at its count: the guard's substitution at those 71 ranks sat on the
 working page more often than the control's did — 37.4% against 19.1%, measured

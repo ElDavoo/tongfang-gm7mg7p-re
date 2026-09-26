@@ -8030,11 +8030,12 @@ refuted** (issue #884). The write-up is
 new `cause` mode on the same tool follows each moved rank's substitution into the
 other generation's guard-off census, per cell, **beside the two cells that did
 not flip** — which is what makes the counts decidable. **Rank displacement**
-accounts for at most **10 of the 71** substitutions landing within two ranks,
-against **79 in 408** for the census as a whole, so the flipped cell reappears
-and reorders at the population's rate. **The 155 added addresses** reach **0 of
-the 71's 273 substitution addresses** and **0 of the 266 control's 450**, and
-**one key of the 23** (`ka01f369d385f`, whose substitute is `0x036E 0x036F`) —
+accounts for at most **10 of the 71** substitutions landing within two ranks —
+**10 of the 60** that reappear, against **79 in 408** for the census as a whole
+— so the flipped cell reappears and reorders at the population's rate. **The 155
+added addresses** reach **0 of the 71's 273 substitution addresses** and **0 of
+the 266 control's 450**, and **one key of the 23** (`ka01f369d385f`, whose
+substitute is `0x036E 0x036F`) —
 so across all 94 flipped keys the added set reaches exactly one. A third thing
 is located and *not* claimed as a cause: at the same ranks the 71's
 substitutions sat on the `0x03xx`–`0x05xx` page at **37.4% against 19.1%**, but
