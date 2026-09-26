@@ -17,7 +17,7 @@ tree at 1,326 register rows and 439 cluster rows.
 
 ## 1. The tripwire, and the response
 
-`ec/tools/test_xdata_cluster_names.py:303`
+`ec/tools/test_xdata_cluster_names.py:307`
 `TheGuardOffRegeneration.test_the_census_is_the_one_6a_measured` compares the
 guard-off census against **§6a's published figures** rather than against a fresh
 run of the same recipe, which would agree with itself by construction. Its own
@@ -95,7 +95,7 @@ inline in §6a's heredoc and asserted nowhere.** The census they come from is th
 guard-off run, which is written to `/tmp` and committed nowhere, so there is no
 committed cell for `--check` to hold them to either. They are *not found* by the
 method above; the recipe's own denominator checks live in
-`ec/tools/test_xdata_cluster_names.py:303` and cover §2a's seven, not these.
+`ec/tools/test_xdata_cluster_names.py:307` and cover §2a's seven, not these.
 
 **Read every figure above off the page before quoting it; three are commonly
 transcribed wrong.** `14,838` is *not* a per-program total — it is §6b's own
@@ -180,7 +180,7 @@ membership that has gone, which is what `--self-test`'s check at `:4128` exists 
 catch ("every key … names a cluster of the committed census"). **Re-key by hand;
 there is no command that writes that file for you.**
 
-**The `> 300` floor** — `ec/tools/test_xdata_cluster_names.py:387`,
+**The `> 300` floor** — `ec/tools/test_xdata_cluster_names.py:392`,
 `assertGreater(len(moved), 300)`, measured at **315** today: **15 of headroom**.
 It is left there deliberately, and the argument is
 [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):170-175:
@@ -193,6 +193,21 @@ to this checklist). The tree records the fall without attributing a cause; a
 re-derivation that lands addresses in already-large clusters would move fewer
 membership sets, which is the obvious shape of it, but that is a guess and not a
 measurement.
+
+> **The guess above has since been measured, and it is wrong** (issue #852).
+> [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) re-derives the
+> intermediate pair from `e169a0e4` — it reproduces 366 / 64 / 439 exactly, so
+> the two figures are one measurement's worth of each — and finds that the 94
+> clusters that changed their guard-off membership did **not** grow: a
+> `cluster_key` is a hash of the membership, so all 400 keys shared by the two
+> committed censuses have byte-identical membership and the `grew` column is `0`
+> on every flipped row. "The large clusters" is also not the shape of it: 5 of
+> the 23 committed clusters of 8 addresses or more flipped, and the largest, at
+> 152 addresses, is not among them. What moved is the guard's *membership
+> delta* — 7.66 address-slots on average over the 71 that went quiet, 0.00 after
+> — and the guard's per-address effect is unchanged (210 addresses, 833
+> references, both figures identical in the two generations). The floor stays
+> where it is, argued from that measurement rather than from the headroom.
 
 ## 4. The order the work happens
 

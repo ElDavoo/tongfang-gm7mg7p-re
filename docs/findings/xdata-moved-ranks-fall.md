@@ -1,0 +1,577 @@
+# Why the guard-off regeneration's moved-rank count fell from 366 to 315, measured (issue #852)
+
+**Nothing here is a hardware claim.** No register was read back, no image was
+opened, and no laptop, EC or Windows machine is involved. Every figure below is
+the output of a command over committed text, with every scratch output under
+`/tmp` and `git status --porcelain` printing nothing after the runs. The two
+censuses this reads are files; the guard-off one is a regeneration of a
+committed tree by `xdata_register_map.py --no-eq-guard`, which reads
+`ec/decompiled/**` and `ec/firmware/GMxMGxx_11.800` as files. Same framing as
+[`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):11
+and [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):11.
+
+The issue asks two things and this answers both: **which clusters stopped
+moving and why**, and **whether `> 300` at
+`ec/tools/test_xdata_cluster_names.py:392` still says what the comment beside it
+says it says.** The answer to the second is *leave it there*, and it is decided
+by §5 below rather than by the 15 ranks of headroom
+[`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):170-175
+counts.
+
+**A note on the number 366, because it means two different measurements in this
+tree.** Every occurrence below says which one. The `366` in
+`ec/tools/check_cluster_citations.py:17-20` — and the 427, 425, 59 and 413 beside
+it — is issue #274's **threshold-0.45 re-run**: 59 of 427 ids intact, 366
+naming a different membership. It is not the 366 here. The 366 here is
+`test_the_regeneration_really_moves_the_ranks`'s count for the **430 → 439
+guard-off pair**, and it is what §1 re-derives from a commit.
+
+The measurements come from a new read-only tool,
+[`ec/tools/xdata_moved_ranks.py`](../../ec/tools/xdata_moved_ranks.py), which
+reads four clusters CSVs and two registers CSVs, prints, and writes nothing.
+
+## 1. M0 — the historical pair reproduces exactly, so the fall is a fall and not two different measurements
+
+The 366 was never re-derived. The commit that carries the 430-row census is
+`e169a0e4a736956f35af5ffff65e997154c76bdd` — "rank the 455 not-yet-owned
+unannotated common-area functions … (#620)", 2026-09-25 — the last commit whose
+`ec/annotations/xdata-clusters.csv` has 430 data rows. Its successor `6bf9c234`
+(#279) is the one that re-derived the census to 439.
+
+**`--no-eq-guard` is present at that commit**, so the old pair needs no
+copy-and-patch route: #528 (`db6d7d2d`) added the flag, and
+`git merge-base --is-ancestor db6d7d2d e169a0e4` says so. That is checked
+because the plan named it as the thing to check before relying on the flag, and
+because the recipe this suite used before #753 existed at all.
+
+The old tree's own census is current there, so the committed half of the pair
+is the tree and not a stale file:
+
+```console
+$ git log --format='%H %ad %s' --date=short -- ec/annotations/xdata-clusters.csv \
+    | while read c rest; do echo "$c $(git show $c:ec/annotations/xdata-clusters.csv | wc -l)"; done
+6bf9c2341b28ff8db1f0976a74d4ac2c9e04231e 440
+e169a0e4a736956f35af5ffff65e997154c76bdd 431
+f0be5173d2c9f6807cf5aaaaabb5de78902f8516 431
+... twelve more, all 431 ...
+e6c88864505068a5bcd43d1042bd22b3911503ee 428        # the last 427-row census
+
+$ git show e169a0e4:ec/tools/xdata_register_map.py | grep -c 'no-eq-guard'
+20
+$ git worktree add --detach /tmp/xdata-old e169a0e4a736956f35af5ffff65e997154c76bdd
+HEAD is now at e169a0e4 rank the 455 not-yet-owned unannotated common-area functions
+by a stated criterion, and land a 37-row first tranche of the runtime-helper tail (#620)
+$ cd /tmp/xdata-old && python3 ec/tools/xdata_register_map.py --check
+  names: seeded 10, exact 0, carried by overlap 0, tied, not carried 0, with no name 420
+ec/annotations/xdata-registers.csv: 1171 rows match a fresh generation from the committed tree at threshold 0.5
+ec/annotations/xdata-clusters.csv: 430 rows match a fresh generation from the committed tree at threshold 0.5
+$ cd /tmp/xdata-old && python3 ec/tools/xdata_register_map.py --no-eq-guard \
+    --out-clusters /tmp/old-off-clusters.csv --out-registers /tmp/old-off-registers.csv
+  names: seeded 8, exact 0, carried by overlap 2, tied, not carried 0, with no name 429
+    main-ec-001 carries mode-oem-init by overlap, Jaccard 0.97 from k7497cf885614 -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-022 carries page-0300 by overlap, Jaccard 0.78 from k3fdd14ddea2e -- re-key annotations/xdata-cluster-names.csv if the name moved
+wrote /tmp/old-off-registers.csv: 1171 rows
+wrote /tmp/old-off-clusters.csv: 439 rows
+  main-ec: 1062 distinct addresses, 13964 references, 388 clusters at threshold 0.5
+  pd: 157 distinct addresses, 858 references, 51 clusters at threshold 0.5
+```
+
+**The tool then computes the 366 from those two files, and it is 366.**
+
+## 2. The two pairs, side by side
+
+Both derivations, printed rather than summarised — the form
+[`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):216-271
+uses. Both runs write only to `/tmp`; `git worktree remove /tmp/xdata-old` runs
+after them and `git status --porcelain` prints nothing.
+
+```console
+$ python3 ec/tools/xdata_register_map.py --no-eq-guard \
+    --out-clusters /tmp/new-off-clusters.csv --out-registers /tmp/new-off-registers.csv
+  names: seeded 8, exact 0, carried by overlap 1, tied, not carried 0, with no name 436
+    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from kefb63d82f8c7 -- re-key annotations/xdata-cluster-names.csv if the name moved
+wrote /tmp/new-off-registers.csv: 1326 rows
+wrote /tmp/new-off-clusters.csv: 445 rows
+  main-ec: 1218 distinct addresses, 14838 references, 394 clusters at threshold 0.5
+  pd: 157 distinct addresses, 858 references, 51 clusters at threshold 0.5
+
+$ python3 ec/tools/xdata_moved_ranks.py pair --label 'the 430-row pair' \
+    --old /tmp/xdata-old/ec/annotations/xdata-clusters.csv --new /tmp/old-off-clusters.csv \
+    --old-registers /tmp/xdata-old/ec/annotations/xdata-registers.csv \
+    --new-registers /tmp/old-off-registers.csv
+pair the 430-row pair
+  committed  /tmp/xdata-old/ec/annotations/xdata-clusters.csv: 430 rows
+  guard-off  /tmp/old-off-clusters.csv: 439 rows
+  moved      366  (main-ec 346, pd 20)
+  intact     64
+  committed ranks the guard-off census does not carry: 0
+  of the moved ranks, 351 hold a guard-off row of the same size and 364 share no address with it
+  guard-off membership delta over the 430 rank(s) the two censuses share: 1623 address-slots
+  §6a: address universe identical (1171 rows); write changes 210 of 1171; refs changes 0 of 1171; references leaving write 833
+
+$ python3 ec/tools/xdata_moved_ranks.py pair --label 'the 439-row pair' \
+    --old ec/annotations/xdata-clusters.csv --new /tmp/new-off-clusters.csv \
+    --old-registers ec/annotations/xdata-registers.csv --new-registers /tmp/new-off-registers.csv
+pair the 439-row pair
+  committed  ec/annotations/xdata-clusters.csv: 439 rows
+  guard-off  /tmp/new-off-clusters.csv: 445 rows
+  moved      315  (main-ec 295, pd 20)
+  intact     124
+  committed ranks the guard-off census does not carry: 0
+  of the moved ranks, 307 hold a guard-off row of the same size and 311 share no address with it
+  guard-off membership delta over the 439 rank(s) the two censuses share: 1030 address-slots
+  §6a: address universe identical (1326 rows); write changes 210 of 1326; refs changes 0 of 1326; references leaving write 833
+
+$ git worktree remove /tmp/xdata-old
+$ git status --porcelain
+```
+
+The two pair blocks above, read together, are the whole measurement. Three of the
+rows are the ones the count does not show:
+
+| | 430-row pair | 439-row pair |
+|---|---:|---:|
+| committed rows | 430 | 439 |
+| guard-off rows | 439 | 445 |
+| **moved** | **366** | **315** |
+| intact | 64 | 124 |
+| moved, `main-ec` / `pd` | 346 / 20 | 295 / 20 |
+| committed ranks absent from the guard-off census | 0 | 0 |
+| §6a: addresses whose `write` changes | **210** of 1,171 | **210** of 1,326 |
+| §6a: addresses whose `refs` changes | 0 of 1,171 | 0 of 1,326 |
+| §6a: references leaving `write` | **833** | **833** |
+| guard-off membership delta, address-slots | **1,623** | **1,030** |
+
+**`intact` is verified rather than assumed.** No committed rank is missing from
+either guard-off census, so `366 + 64 = 430` and `315 + 124 = 439` both close.
+Had a committed id been absent, the arithmetic would not have, and that would
+have been the finding instead.
+
+**The guard itself did not change, and this is stronger than the counts
+matching.** §6a's per-address triple is *identical* in both generations — the
+same **210** addresses have their `write` column changed, the same **0** have
+`refs` changed, the same **833** references leave `write` — and the two runs
+perturb **the same 210 addresses, address for address**, which a pair of matching
+totals would not establish on its own. §3's transcript prints that comparison
+from the same four registers CSVs. The address universe grew 1,171 → 1,326, the
+**155** addresses `ec/annotations/xdata-cluster-names.csv`'s `mode-oem-init` note
+records, and **none of the 155 is perturbed at all**: not one of the bytes this
+re-derivation added is a byte the guard reaches.
+
+**What did change is what the guard's perturbation does to cluster boundaries:
+1,623 address-slots of membership change became 1,030.** That is a fall of 593,
+and it is the quantity §4 accounts for. The last two rows of the pair blocks are
+the other half of why `moved` is not a magnitude of perturbation: **351 of 366**
+and **307 of 315** moved ranks hold a guard-off row of *the same size*, and
+**364 of 366** and **311 of 315** share *no address at all* with it. A moved
+rank is overwhelmingly a **substitution** — one same-sized group replaced by
+another at the same number — not an address added to a large group. Read as
+"the guard perturbs N clusters", that count is close to meaningless; read as
+"the guard-off ranking disagrees with the committed ranking on N rows", it is
+exactly what the floor is about.
+
+## 3. The flip table, keyed on `cluster_key` and not on the rank
+
+`ec/annotations/xdata-06c2-06db-timers.md:885-896` (§6b's correction) is the
+cautionary case: a transcript written out in the half-renumbered shape of a run
+that never happened, caught because the ids and the counts disagreed. So the
+cross-pair diff is keyed on **`cluster_key`**, and every row is about a key.
+Ranks are printed as data, always beside the key, because the rank is what moved
+and the key is what did not.
+
+```console
+$ python3 ec/tools/xdata_moved_ranks.py across \
+    --label-a 'the 430-row pair' --label-b 'the 439-row pair' \
+    --old-a /tmp/xdata-old/ec/annotations/xdata-clusters.csv --new-a /tmp/old-off-clusters.csv \
+    --old-b ec/annotations/xdata-clusters.csv --new-b /tmp/new-off-clusters.csv
+    --old-a-registers /tmp/xdata-old/ec/annotations/xdata-registers.csv --new-a-registers /tmp/old-off-registers.csv \
+    --old-b-registers ec/annotations/xdata-registers.csv --new-b-registers /tmp/new-off-registers.csv
+across the 430-row pair -> the 439-row pair
+  keys in both committed censuses: 400; in one only: 30 / 39
+    71  moved in the 430-row pair, intact in the 439-row pair
+   266  moved in both
+    23  intact in the 430-row pair, moved in the 439-row pair
+    40  intact in both
+  of the one-sided keys, 29 moved in the 430-row pair and 26 moved in the 439-row pair
+  closes: 366 - 315 = 51, over the four terms: (71 - 23) + (29 - 26) = 51
+
+  the flipped set's size distribution, against the census: 1 1 1 1 2 2 4 4 5 6
+                                            the census:  1 1 1 1 1 1 2 2 4 5
+  of the 23 committed cluster(s) of 8 addresses or more, 5 flipped; the largest committed cluster is 152 addresses
+  shared keys whose committed membership differs between the two censuses: 0 of 400 -- a key is a hash of the membership, so this is zero by construction and is printed rather than assumed
+
+  §6a across the two generations, over the per-address columns:
+    the 430-row pair: write changes 210 of 1171
+    the 439-row pair: write changes 210 of 1326
+    the perturbed address sets are identical (0 only in the 430-row pair, 0 only in the 439-row pair)
+    the 439-row pair adds 155 address(es) to the universe and 0 of them are perturbed
+
+  mean guard-off delta over   71 moved -> intact A   7.66   B   0.00
+  mean guard-off delta over  266 moved in both   A   3.14   B   3.04
+  mean guard-off delta over   23 intact -> moved A   0.00   B   3.65
+  mean guard-off delta over   40 intact in both  A   0.00   B   0.00
+
+  cluster_key    name             size  grew  delta A  delta B  verdict
+  k0121504b8669  -                   2     0        0        4  intact->moved
+  k01ed753bc8ac  -                   2     0        0        4  intact->moved
+  k047da7d61103  -                   1     0        2        0  moved->intact
+  k0498704b659b  -                   3     0        6        0  moved->intact
+  k04dddd85ead2  -                   2     0        0        4  intact->moved
+  k07947f325d97  -                   5     0       11        0  moved->intact
+  k0933c373f5ad  -                   1     0        2        0  moved->intact
+  k0b7f9545b4f2  -                   2     0        0        4  intact->moved
+  k0f280d94b049  -                   4     0        8        0  moved->intact
+  k0f4e69560e36  -                   4     0        8        0  moved->intact
+  k0f5c689b2cfc  -                   2     0        0        4  intact->moved
+  k133a4ac2e88c  -                   6     0       13        0  moved->intact
+  (82 more; --rows for all of them)
+```
+
+**The three counts, and the fourth term that has to be named.** 71 clusters
+stopped moving, 23 started, and 266 of the 400 shared keys moved in both pairs.
+The one-sided sets — 30 keys in the 430-row census only, 39 in the 439-row one
+only — are **not** netted off silently, because a difference of two totals
+written as a difference of two subtotals is the half-renumbered transcript
+§6b's correction is about. Split by moved/intact they are 29 and 26, and then
+it closes: `(71 − 23) + (29 − 26) = 51 = 366 − 315`.
+
+The 266 that moved in both are the bulk, and the ranking they disagree about is
+mostly a renumbering: **345 of the 350 shared `main-ec` keys changed rank**
+between the two censuses, by **+9.5 on average** (range −8 to +15, so on balance
+down the size ordering), which is the `main-ec-002` → `main-ec-003` shift the
+recipe's own transcript shows. That shift is strongly but **not perfectly**
+correlated with the cell a key lands in — 246 of the 266 that moved in both also
+changed rank, and 9 of the 40 that were intact in both did — so it is a
+statement about the size of the reordering, not an identity for the cell.
+
+## 4. M3 — the checklist's guess, measured on both halves, and it is wrong
+
+> The tree records the fall without attributing a cause; a re-derivation that
+> lands addresses in already-large clusters would move fewer membership sets,
+> which is the obvious shape of it, but that is a guess and not a measurement.
+> — [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):193-196
+
+The guess has two halves and **both are refuted**. The guess stays visible above
+and here beside the measurement, per [`../findings.md`](../findings.md) §4a-4d.
+
+**Half one — "lands addresses in already-large clusters" — cannot be the
+mechanism, because the flipped clusters' committed membership did not grow at
+all.** `cluster_key` is a content hash over the program and the sorted
+membership (`xdata_register_map.py`), so a key present in both committed
+censuses is present because its membership is in both. The tool prints this
+rather than assuming it: **0 of 400** shared keys have a committed membership
+that differs between the generations, and the `grew` column is `0` on every one
+of the 94 flipped rows. A flipped cluster gained nothing. It is not a large
+cluster that absorbed an address; it is an unchanged cluster the guard used to
+disturb.
+
+**"The large clusters", as a distribution rather than an adjective.** The 94
+flipped keys have size deciles `1 1 1 1 2 2 4 4 5 6` against the census's
+`1 1 1 1 1 1 2 2 4 5` — the same shape, shifted right by roughly one step. Of
+the **23** committed clusters of 8 addresses or more, **5** flipped; of the
+**7** of 16 or more, **1**; the largest committed cluster is **152** addresses
+and it is not in the flipped set at all. §2a's "the large `main-ec` clusters"
+are not what stopped moving.
+
+**Half two — the column that does move, and it moves in both directions.** The
+guard-off delta `|addrs(off) Δ addrs(committed)|` of the cluster carrying each
+key, per cell, as a distribution rather than an average — a mean would hide that
+the quiet cells are quiet *completely*:
+
+| cell | n | old pair | new pair | what changed |
+|---|---:|---|---|---|
+| moved → intact | 71 | mean 7.66, range 2–29 | **0 on all 71** | the guard's delta closed completely, on every one |
+| moved in both | 266 | mean 3.14 | mean 3.04 | the same shape, both generations |
+| intact → moved | 23 | **0 on all 23** | mean 3.65: **2** on four, **4** on nineteen | the delta opened on every one of them |
+| intact in both | 40 | 0 on all 40 | 0 on all 40 | undisturbed by the guard in both |
+
+Two worked rows, in full, because the shape of the change is the finding:
+
+| `cluster_key` | committed (both gens) | 430-row guard-off | 439-row guard-off |
+|---|---|---|---|
+| `k07947f325d97` | `0x0A56 0x0A57 0x0A58 0x0A59 0x0A5A` (5) | `0x0769 0x076A 0x076B 0x076C 0x076D 0x076E` (6) | the same 5 — undisturbed |
+| `k0121504b8669` | `0x0858 0x0859` (2) | the same 2 — undisturbed | `0x00DC 0x00DD` (2) — substituted |
+
+These are not addresses added to a cluster. They are whole clusters replaced,
+at the same rank, by a different group of about the same size — in the first row
+a five-address block swapped for a six-address block, in the second a pair for a
+different pair. The 155 addresses #279 added across the `0x03xx`–`0x05xx`
+working page changed the co-reading matrix enough to move which cluster the
+guard-off partition puts at a given number, in both directions, and `moved`
+counts that.
+
+**How far the cause is established.** The flipped set is **fully accounted
+for**: 94 of 94 keys are named, the arithmetic closes over four terms, and for
+each the quantity that changed is measured. What is *not* derived is why a
+re-partition closes the guard's delta on those 71 particular small clusters and
+opens it on those 23 — that is a question about the co-reading matrix under the
+155 added addresses, and the search did not go there. So the claim is: **the
+fall is the re-partition's, not the guard's, and the 94 clusters it happened to
+are named.** It is not the claim that a particular re-partition change caused
+it.
+
+## 5. The floor, decided from §1–§4 and not from the headroom
+
+The decision rule, quoted from the issue's own framing: *is the fall caused by
+an identified, already-happened change, or is `moved` a quantity that shrinks as
+the census grows?*
+
+**It is the first, and `> 300` stays at `test_xdata_cluster_names.py:392`,
+untouched.** The re-derivation that produced the 439-row census is one already
+happened and named commit (`6bf9c234`, #279), its 155 added addresses are
+recorded, and the 94 clusters whose behaviour changed are named and measured. So
+`moved` is a property of a classifier generation, not a drift with a direction.
+
+**And the honest limit of that, which is why the floor is not narrowed either.**
+There is **one** observed re-derivation here, so **one** data point: a census
+that grew 430 → 439 saw `moved` fall 366 → 315. A single observation cannot
+establish that `moved` decays as the census grows, and this file does not claim
+it does. What the measurement does support is the *structural* claim the
+`> 300` floor is actually resting on — the comment at
+`test_xdata_cluster_names.py:387-389` asks that a regeneration that renumbers
+nothing is not the case the identity columns exist for, and at 315 moved of 439
+it is very much not that — and the floor is left exactly where the recipe's
+argument put it, with the measurement recorded beside it. The expectation to
+carry is the other direction from the one the issue anticipated: **a future
+re-derivation moves it again, and this measurement does not predict by how
+much.** The 15 ranks of headroom
+[`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):170-175
+counts are a snapshot of one merge, the same way every other figure in this
+census's prose is, and this re-derivation is the second time that has been true.
+
+**No assertion is edited, and no threshold moves.** `assertGreater(len(moved),
+300)` is unchanged, and the figures in the class docstring are unchanged — this
+file is a measurement beside them, not a replacement for them.
+
+## 6. The nine hand names, per pair
+
+Per pair, for each row of `ec/annotations/xdata-cluster-names.csv`: did the
+guard-off run change the membership of the cluster carrying that name?
+
+| name | 430-row pair | 439-row pair | key |
+|---|---|---|---|
+| `mode-oem-init` | **moved** | **moved** | re-keyed twice, `k7497cf885614` → `kefb63d82f8c7` → guard-off `kc0f2a0be0103` |
+| `level-block-086x` | intact | intact | `ka39cda99615f`, seeded in both |
+| `countdown-06c6` | intact | intact | `kebb1f590f488` |
+| `countdown-06cd` | intact | intact | `k801a3e80698f` |
+| `counter-sweep` | intact | intact | `k733222e83898` |
+| `fan-step-08a0` | intact | intact | `kb787f7579eab` |
+| `ff-fill-stubs` | intact | intact | `kea0c67af9b51` |
+| `flag-pair-0442` | intact | intact | `kb07a0f522a7d` |
+| `user-clear-bytes` | intact | intact | `k66512c56e77b` |
+
+**Exactly one hand name moves in either pair, and it moves in both.**
+`mode-oem-init` is the tree's own `test_the_two_largest_cited_clusters_are_carried_by_overlap_not_by_key`
+case, the one name that arrives on overlap rather than by key, and the only
+`cluster_name` in the census whose membership the guard changes. It is **not**
+in the flipped set: it moved in the 430-row pair and moved in the 439-row pair,
+which is the same cell, not a flip.
+
+The 430-row census carried **ten** names and the 439-row one **nine**; the one
+that went is `page-0300`, which is not in the current names file at all and
+whose key `k3fdd14ddea2e` the old guard-off run carried on overlap at Jaccard
+0.78 onto `main-ec-022`. That difference is visible in §1's transcript and is
+recorded here so the two `names:` lines are not read as the same run.
+
+**The two names sitting a generation behind their ids** are `mode-oem-init` and
+`level-block-086x`: `test_the_two_largest_cited_clusters_are_carried_by_overlap_not_by_key`
+pairs `main-ec-001` with the first and `main-ec-002` with the second, and the
+committed census puts them at `main-ec-002` and `main-ec-004`. The tree records
+that at
+[`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):401-411
+and in [`../findings.md`](../findings.md) §44. **The identification is taken from
+the tree rather than from the issue**: `gh issue view 778` is refused in the
+implement stage's environment, so the number could not be read and the two
+names are named from the record the tree already holds. If #778 means a
+different pair, this table is the place to correct it.
+
+The answer the issue wanted from that pair: of the two, **`mode-oem-init` is the
+one whose membership the guard changes, in both generations**, and
+`level-block-086x` is intact in both. Neither is in the flipped set, so a fall
+in `moved` is **not** explained by a hand-named cluster's membership being
+absorbed.
+
+## 7. The 43 swept addresses, per address
+
+The addresses come from `test_xdata_cluster_names.py`'s own `SWEPT_43` — passed
+to `--swept`, not copied into the tool a third time. **All 43** sit in one
+committed `main-ec` cluster, `k733222e83898`, the key `counter-sweep` names, in
+every one of the four censuses here; it is **intact in both pairs and not
+flipped**. **Five** of the 43 are *also* members of a `pd` cluster, because both
+programs touch those bytes, which is why the block below prints 48 rows for 43
+addresses and why a cross-reference reporting one holder per address would be
+right by accident on 38 of them.
+
+```console
+$ python3 ec/tools/xdata_moved_ranks.py across \
+    --label-a 'the 430-row pair' --label-b 'the 439-row pair' \
+    --old-a /tmp/xdata-old/ec/annotations/xdata-clusters.csv --new-a /tmp/old-off-clusters.csv \
+    --old-b ec/annotations/xdata-clusters.csv --new-b /tmp/new-off-clusters.csv \
+    --swept 0x0460 0x0468 0x055F 0x0621 \
+    0x0635 0x0636 0x0637 0x0638 \
+    0x0639 0x063A 0x06C2 0x06C3 \
+    0x06C5 0x06D1 0x06D2 0x06D6 \
+    0x06D8 0x06D9 0x06DA 0x06DB \
+    0x06F3 0x0706 0x070B 0x070D \
+    0x0723 0x07F3 0x07F6 0x0809 \
+    0x080C 0x080D 0x0811 0x0843 \
+    0x0844 0x085B 0x0890 0x08A7 \
+    0x08A8 0x08E4 0x0981 0x0982 \
+    0x0985 0x0986 0x09CE
+  swept addresses: 43
+  address  cluster_key    program  rank A       rank B       verdict
+  0x0460   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0468   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x055F   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0621   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0635   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0636   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0637   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0638   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0639   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x063A   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x06C2   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x06C3   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x06C5   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x06D1   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x06D2   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x06D6   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x06D8   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x06D9   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x06DA   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x06DB   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x06F3   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0706   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x070B   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x070D   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0723   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x07F3   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x07F3   kedee1182bba5  pd       pd-002       pd-002       intact in both
+  0x07F6   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x07F6   kedee1182bba5  pd       pd-002       pd-002       intact in both
+  0x0809   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0809   kedee1182bba5  pd       pd-002       pd-002       intact in both
+  0x080C   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x080C   kedee1182bba5  pd       pd-002       pd-002       intact in both
+  0x080D   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x080D   ke928434f6676  pd       pd-033       pd-033       moved in both
+  0x0811   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0843   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0844   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x085B   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0890   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x08A7   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x08A8   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x08E4   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0981   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0982   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0985   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x0986   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  0x09CE   k733222e83898  main-ec  main-ec-002  main-ec-003  intact in both
+  3 committed cluster(s) hold at least one of the 43: 1 main-ec, 2 pd; 1 hold all of them; 5 address(es) have a second holder
+  of those 3, 0 flipped; 1 moved in A and 1 moved in B
+```
+
+**The answer to "are they the clusters §2a already sweeps": no, in the sense
+that matters.** The cluster the sweep is *about* — the one holding all 43 — is
+intact in both pairs and is not in the flipped set. The only swept address whose
+cluster moves at all is `0x080D`, in `ke928434f6676` (`pd-033`), and that one
+moved in **both** pairs, so it is in the `moved in both` cell and not among the
+94. **Zero of the three holding clusters flipped.**
+
+## 8. What this does not do
+
+- **No CSV, YAML or tool is edited.** `xdata-clusters.csv`,
+  `xdata-registers.csv`, `xdata-cluster-names.csv` and `registers.yaml` are
+  byte-untouched; the guard-off runs wrote only to `/tmp`, and the tool refuses
+  the committed output paths in any case. `xdata_register_map.py` is not
+  touched at all.
+- **No threshold, figure or assertion moves.** §5 says why, and the floor is
+  where the recipe's argument put it.
+- **Nothing here is opened in another repository.** No driver or firmware change
+  is proposed, so there is nothing to send to `Wer-Wolf/uniwill-laptop` or
+  `tuxedo-drivers`.
+- **No live hardware, EC, BIOS or Windows step**, because nothing here needs
+  one. No live run is planned, claimed or implied. The one thing this reads that
+  a reader might not expect is `ec/firmware/GMxMGxx_11.800`, and reading a file
+  is not an observation of a machine.
+- **The re-partition itself is not derived**, only located: §4 names what
+  changed and what did not, and stops there.
+- **No gate is wired.** The tool is a read-only investigation aid; the checklist
+  already tells a re-deriver what to run by hand, and adding two census runs to
+  every push would cost more than the gate gets.
+
+## 9. The test that proves it
+
+```console
+$ python3 ec/tools/xdata_moved_ranks.py --self-test
+xdata_moved_ranks.py --self-test
+  ok    a rank whose guard-off row holds a different membership is moved, and the two that hold their own membership are not
+  ok    the tool's count equals the suite's own two-line predicate over the same pair (2 moved)
+  ok    a committed rank the guard-off census does not carry is reported, not folded into either count
+  ok    a committed rank missing from the guard-off census is named
+  ok    the moved ranks are split by program, so a `pd` mover is not hidden inside a `main-ec` total
+  ok    moved and intact are reported as separate counts, and they sum to the ranks the two censuses share
+  ok    both flip directions are reported separately, each naming its key
+  ok    a cluster that moved in both and one that moved in neither are their own rows, not the absence of the other two -- and k4's and k8's ranks moved on the way, which is a renumbering and not a membership change
+  ok    the moved-count difference closes over the four terms it is made of
+  ok    a key in only one generation is named as such, in both directions
+  ok    an address both programs touch is reported once per committed cluster holding it, not once
+  ok    a cluster that flipped is labelled FLIPPED, one that did not is not, and the summary counts the `pd` holders separately
+  ok    whether the two generations perturb the same addresses is reported on its own, not inferred from two matching counts
+  ok    two runs can agree on a count and disagree on which addresses, and an address a re-derivation adds can be outside the guard's reach entirely
+  all checks passed
+
+$ python3 ec/tools/xdata_register_map.py --check && python3 ec/tools/xdata_register_map.py --self-test
+... 1326 register rows, 439 cluster rows, both exit 0 ...
+
+$ python3 -m unittest discover -s ec/tools -p 'test_xdata_cluster_names.py'
+............................
+Ran 28 tests in 15.721s
+
+OK
+```
+
+**The known-answer run is §1 through §4 above**: the tool is what produced
+366/64/439 and 315/124/445, the 71/266/23/40 flip table, the size
+distributions, the four cell distributions, the §6a comparison and the
+three-cluster cross-reference. A `--self-test` that can only go green is not a
+test, and the fixtures are chosen so it can go red: a committed rank with no row
+in the regeneration, both flip directions, a key in only one generation, a key
+whose rank moved while its membership did not, an address held by two programs'
+clusters at once, and two runs that agree on a perturbed *count* over different
+address *sets*.
+
+**The tree's own runner stands at 34 suites and 1033 tests**, re-measured on
+the merged tree rather than carried over: this change adds no `test_*.py` and so
+no row to `tools/README.md`'s table, and the two figures it started from — 32
+suites and 974 tests — moved entirely because two merges landed in the same
+window, #849 (`a00fe940`) with `ec/tools/test_check_doc_figure_pins.py` at 44
+tests and #851 (`a02de81b`) with `ec/tools/test_xdata_carry_notice.py` at 15, so
+`32 + 1 + 1 = 34` and `974 + 44 + 15 = 1033` closes with nothing left over.
+That is the whole delta; `tools/README.md`'s own seventh merged-tree note
+carries the same arithmetic and the runner prints `34 suite(s) run, 1033 tests;
+one or more FAILED`. *(This paragraph first read 33 suites and 1018 tests, which
+is the tree #852 branched from — #849's, before #851 landed — and the superseded
+pair is left visible here per [`../findings.md`](../findings.md) §4a-4d rather
+than edited out.)* One
+suite is red and was red before this change:
+`ec/tools/test_check_cluster_citations.py`, at 48 tests, on
+`xdata-cluster-names-guard-off-recipe.md:220` — **#822's** write-up, named in
+that file's own closing note, in `tools/README.md`'s merged-tree note and in
+`docs/findings.md` §59, and reproducible on a clean `origin/main` at the same
+48 tests and the same line. This change neither fixes it nor adds to it:
+`check_cluster_citations.py` reports the same two citations before and after,
+and none of them is in a file this one added.
+
+**`test_check_cluster_citations.py` is the constraint that shaped this file, and
+it is a real one.** That suite's `test_committed_prose_matches_committed_census`
+runs the checker over every committed markdown file and requires exit 0, and the
+checker resolves ids, keys and names against the **committed** census only. A
+file that prints a guard-off generation beside the committed one — which is
+exactly what the transcripts here do — "names clusters from two rankings at
+once" and goes red, which is how
+[`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md)
+was rejected once already. So every table here keeps `cluster_key` in the
+**first cell**, which keeps the row out of the census-row rule, and no table
+pairs a rank with an address.

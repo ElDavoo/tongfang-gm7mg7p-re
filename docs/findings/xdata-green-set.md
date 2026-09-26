@@ -280,7 +280,7 @@ committed CSVs and not a re-derivation of the 32 and 6.
   `tools/test_readme_suite_table.py`'s job is the suite *index*, not the claims
   in the pages it indexes. The commands are the test, and they are above.
 - **The §6a figures.** They are right and are not re-derived here;
-  `ec/tools/test_xdata_cluster_names.py:303`
+  `ec/tools/test_xdata_cluster_names.py:307`
   (`test_the_census_is_the_one_6a_measured`) now pins all seven.
 - **`ec/tools/test_check_cluster_citations.py`**, the one suite red on this tree
   and on `main` as of the `#820` correction above. **Naming it is the point;
