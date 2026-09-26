@@ -171,7 +171,7 @@ and are the reason the tool is written the way it is:
    tree does not have it, beside the citing file — and says which of the two
    answered for every pin.
 
-**So the measured headcount of this class is 71 occurrences, 45 spellings, 40
+**So the measured headcount of this class is 71 occurrences, 45 spellings, 41
 resolved targets — and zero of the twelve the plan's scan called an ambiguous
 prefix is one.** The figures that moved from the plan's are recorded as a defect
 in the method that produced them rather than as a drift in the tree, and a census
@@ -220,18 +220,21 @@ duplicate.
 | shape | here | what a pin naming it is pointing at |
 |---|---|---|
 | `def test_` | **5** | the header of a test case |
-| assertion | **13** | the `assertEqual`/`assertGreater` that decides the claim |
+| assertion | **11** | the `assertEqual`/`assertGreater` that decides the claim |
 | comment | 9 | prose the case is annotated with |
 | `blank` | 6 | nothing at all — the blank line above what the span is about |
-| other | 22 | a `def` that is not a test, an assignment, a `setUpClass` body |
+| other | 24 | a `def` that is not a test, an assignment, a `setUpClass` body |
 
-*(The split has now been measured three times and only the assertions have ever
-moved: **5 / 15 / 5 / 8 / 11 over 44** as the issue was filed, **5 / 11 / 9 / 6 /
-22 over 53** after #850, and the **5 / 13 / 9 / 6 / 22 over 55** above, where the
-two are the `> 300` floor's own `assertGreater`. The first two are the record of
-the trees they were taken on and stay visible per §4a-4d. That a figure this
-close to stable still moves four times over two merges is the reason the
-distribution is printed on every run rather than quoted once.)*
+*(The split has now been measured four times and the only rows that have ever
+moved are the assertions and `other`: **5 / 15 / 5 / 8 / 11 over 44** as the
+issue was filed, **5 / 11 / 9 / 6 / 22 over 53** after #850, **5 / 13 / 9 / 6 / 22
+over 55** on the #888 × #891 tree, and the **5 / 11 / 9 / 6 / 24 over 55** above,
+where the two that moved back are the `> 300` floor's own `assertGreater` and
+the `other` row it became when #890 put 25 lines above it. The first three are
+the record of the trees they were taken on and stay visible per §4a-4d. That a
+figure this close to stable still moves at every one of the three merges since
+the issue was filed is the reason the distribution is printed on every run rather
+than quoted once.)*
 
 **Six of the 55 resolving pins land on a blank line**, and that is the house
 spelling rather than a mistake: a span is written from the line *above* the thing
@@ -564,8 +567,8 @@ this issue does not make, to say so rather than shipping a checker that reddens
 on the next merge. **It needs that judgement, and the measurement says so rather
 than my having to assert it.** Four things, in the order they decide it:
 
-1. **The pins are not one kind of thing.** 5 name a `def test_` line, 13 an
-   assertion, 9 a comment, **6 a blank line** and 22 something else. The
+1. **The pins are not one kind of thing.** 5 name a `def test_` line, 11 an
+   assertion, 9 a comment, **6 a blank line** and 24 something else. The
    citation means "the line where this claim is decided", and that line is the
    test header in 5 cases out of 55. A `def`-anchored rule is wrong; an
    assertion-anchored rule is wrong; a blank-line-anchored rule is worse than
