@@ -37,7 +37,7 @@ $ python3 ec/tools/census_test_line_pins.py
 69 pin(s) in 24 markdown file(s): 44 distinct spelling(s), 40 distinct resolved target(s)
   53 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 16 declined
   5 def test_, 11 assertion, 9 comment, 6 blank, 22 other (of the pins that resolve)
-  read 142 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 35 test file(s) in it
+  read 143 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 35 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -220,8 +220,8 @@ the half this table exists to record.
 | [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):377 | `test_xdata_cluster_names.py:392` | by-name | comment | **does not carry** |
 | [`xdata-green-set.md`](xdata-green-set.md):283 | `ec/tools/test_xdata_cluster_names.py:339` | by-path | def test_ | carries |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15 | `ec/tools/test_xdata_cluster_names.py:392` | by-path | comment | **does not carry** |
-| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):319 | `test_xdata_cluster_names.py:392` | by-name | comment | **does not carry** |
-| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):331 | `test_xdata_cluster_names.py:387-389` | by-name | comment | **does not carry** |
+| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):383 | `test_xdata_cluster_names.py:392` | by-name | comment | **does not carry** |
+| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):395 | `test_xdata_cluster_names.py:387-389` | by-name | comment | **does not carry** |
 | [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):28 | `ec/tools/test_xdata_cluster_names.py:808` | by-path | other | carries |
 | [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):132 | `test_xdata_cluster_names.py:149-153` | by-name | def test_ | carries |
 | [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):149 | `test_xdata_cluster_names.py:820-826` | by-name | def test_ | carries |
@@ -321,10 +321,10 @@ recorded; **four are new**, all four finding 6 and all four #850's.
    - **[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15** — `:392`, cited
      as *"whether `> 300` at `ec/tools/test_xdata_cluster_names.py:392` still says
      what the comment beside it says it says"*.
-   - **[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):319** — `:392`, cited
+   - **[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):383** — `:392`, cited
      as *"**It is the first, and `> 300` stays at `test_xdata_cluster_names.py:392`,
      untouched.**"*
-   - **[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):331** — `:387-389`, cited
+   - **[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):395** — `:387-389`, cited
      as *"the comment at `test_xdata_cluster_names.py:387-389` asks that a
      regeneration that renumbers nothing is not the case the identity columns
      exist for"*. `:387-389` is three lines of the §2b comment.
@@ -567,6 +567,50 @@ accommodation worth naming.** A count that avoids a search is a count that was
 chosen to be invisible, and the next reader would have no way to know the figure
 was shaped rather than measured. The exclusion is one line, it is the rule the
 tool already states, and it costs a denominator that was going to move anyway.
+
+### Merged-tree note (2026-09-26, #891 landing beside #887, #850 and #889)
+
+**Two of this table's own citing lines went stale in the merge, and they are
+repointed — which is follow-up 1 below happening to this write-up rather than to
+the pages that follow-up names.** The first column is the *citing* line. The
+two rows naming `xdata-moved-ranks-fall.md` said `:319` and `:331`, and the
+citations they name now sit at `:383` and `:395`; the third row, `:15`, is above
+every insertion either merge makes and did not move. **The two were already
+stale on `main` before this merge, by twelve lines rather than by sixty-four**,
+because #889 put its `deciles()` note into that write-up at `:328` — ahead of
+both — and re-measured the census's counts and its `test_*.py` targets without
+re-measuring this file's citing column, which the tool cannot see. That is the
+exclusion below's price paid once already, and this merge is where it is paid
+twice: the merged file names `:383` and `:395`, re-measured against the merged
+file, and the three places this file's own prose names the same two citing lines
+— finding 6's third and fourth bullets and follow-up 1's `xdata-moved-ranks-fall.md`
+pin — are repointed with them so the table and the prose agree.
+
+**Neither the tool's figures nor this table's verdicts move with any of it**,
+and that is the shape of the defect rather than a coincidence: a citing line is
+not a pin. `census_test_line_pins.py` re-run on the merged tree prints `69
+pin(s) in 24 markdown file(s): 44 distinct spelling(s), 40 distinct resolved
+target(s)` with `0 out-of-range`, `test_census_test_line_pins.py` is green, and
+the verdicts are readings of the *cited* line, which no merge touched. **The
+`50` / `37` / `32` this note first carried is the branch's tree**, measured
+before #850's nineteen new `test_*.py:NNN` citations were beside it; the `69` /
+`44` / `40` the suite pins is the merged tree's, and #891 moves neither.
+
+**What found them was a recount of the sibling class, and the exclusion this
+file makes is why nothing here did.** The grep over
+`xdata-moved-ranks-fall.md` that `tools/README.md`'s merged-tree notes run
+returns **eighteen** on this tree, and **seven of the eighteen are this
+file's** — three rows of this table, three bullets of finding 6, and follow-up
+1 — because the `):NNN` end of that pattern matches a link followed by a line
+number exactly as it matches a citation. The census excludes its own write-up
+from its own population, deliberately, so **a pin census cannot see its report
+going stale**: the exclusion is right, and this is its price, named here beside
+the repointed rows rather than left for the next reader to rediscover. Three
+more of the eighteen are #889's three citations — two into this same write-up
+(`xdata-decile-small-set-contract.md`'s `:199` and `:220`, stale by the same
+insertions and repointed to `:208` and `:240`/`:234` for the same reason) and
+one into the tool — which is a sibling's write-up this merge broke in the same
+way it broke this one's, and `tools/README.md` carries the count.
 
 ## What is left, as follow-ups
 

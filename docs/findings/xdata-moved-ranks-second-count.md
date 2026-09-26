@@ -105,9 +105,15 @@ both`: the flip table is not what this check is about.
 `index_b` both have two entries and `or` picks either without consequence —
 and no existing check reads the `second` figure at all, so nothing about that
 pair can go red by itself. Measured: moving the B fixture's guard-off `pd` row
-to a different address leaves all 15 checks green. Re-measured on the merged
-tree, where the self-test is 25 checks (see §4's merged-tree note), the same
-mutation is still green against all 25.
+to a different address leaves all 15 checks green. Re-measured twice on the
+merged tree, where the self-test was then 34 checks (see §4's merged-tree note),
+the
+same mutation is still green against all 34. *(The self-test is 39 on the tree
+this now sits in; the mutation result is left as the record of the run that
+produced it rather than re-run here, because the fixture it moves is named in a
+sibling's merged-tree note and not in this one, and a re-measurement of a
+mutation this section does not restate would be a second claim rather than a
+correction.)*
 
 The issue's own alternative — give the B generation's `pd` row a different
 address — is real, but it is more than a one-cell edit, and the write-up above
@@ -119,7 +125,7 @@ red — 2 rows above a summary reading `0` — and the fix turns it green, as
 measured. A dedicated pair buys that same red state with **no existing line of
 the self-test changed** and nothing to correct in #852's 577-line write-up,
 whose §9 transcript at
-[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):516 prints the
+[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):590 prints the
 existing check text verbatim.
 
 The check is written as the invariant rather than as a number: it groups the
@@ -146,18 +152,34 @@ report itself, over the same pair, with the old `second` line and the new one:
 > 15 after — are what this write-up's own change made of the self-test, and they
 > are left as the record of the run that produced them, for the reason the
 > `xdata-moved-ranks-fall.md is not edited` bullet below gives. On the merged
-> tree the tool prints **25** checks: #884's `cause` mode
+> tree the tool prints **39** checks, and the 25 this note first recorded is
+> where it stood after one of the two merges beside it: #884's `cause` mode
 > ([`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md)) added ten
-> of its own to the same fixture block, and they print after check 15 — so the
-> console block above, which used to be the run's tail, is not any more. The
-> tail now is those 10 `cause` lines and `all checks passed`. **The check this
-> section is about is unchanged and still passes**, printed verbatim as it reads
-> above: it is the 13th `ok` of the 25, and the 14 lines this change left alone
-> print in the same order as they did — 12 of them ahead of it and 2 after. The
+> of its own to the same fixture block, and they print after check 20, so the
+> console block above, which used to be the run's tail, is not any more. #891
+> then added nine more after those — the rank-shift block of
+> [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) §9, whose own §9
+> transcript is re-recorded at 39 — and #889 added five more
+> ([`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md)),
+> which print at 10–14, between the two halves of the first fifteen rather than
+> after anything, so `25 + 9 + 5 = 39` is the whole story and the tail is
+> unchanged at those 19 lines and `all checks passed`. *(The 34 this note first recorded is the
+> same tool without #889's five beside it; the count is re-run on the merged
+> tool rather than carried over, and 39 is what it prints.)* **The check this
+> section is about is unchanged and still
+> passes**, printed verbatim as it reads
+> above: it is the 18th `ok` of the 39, and the 14 lines this change left alone
+> print in the same order as they did — 12 of them ahead of it and 21 after (2
+> of the original 15, then the 19 the two later blocks added), with #889's five
+> interleaved ahead of it and changing neither its position within the first
+> fifteen nor its text. The
 > block above is the last two of the first group, this check, and those last
 > two. §63's summary in [`../findings.md`](../findings.md)
-> carries the same note. Nothing else here moves because of #884, which adds a
-> mode and does not touch `swept_report()`.
+> carries the same note. Nothing else here moves because of either merge: #884
+> adds a mode, and #891 adds two rank columns and a `--cell` to `across`'s
+> per-key table, and **neither touches `swept_report()`** — it is byte-identical
+> across the base commit, `main` and the merged tree, which is the function this
+> section is about.
 
 ```console
 === the old `second` line, over the new fixture ===
@@ -190,7 +212,7 @@ place, and the check reads:
 ## 5. The committed pair, re-derived: the figure does not move
 
 This is the point that has to be measured rather than presumed, and §7 of
-[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):394 is the recipe —
+[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):458 is the recipe —
 `git worktree add --detach /tmp/xdata-old e169a0e4a736956f35af5ffff65e997154c76bdd`,
 two `xdata_register_map.py --no-eq-guard --out-clusters/--out-registers` runs
 (one in the worktree, one in this tree), then the `across --swept` command over
@@ -199,7 +221,7 @@ one, on the same re-derived censuses:
 
 **48 rows for 43 addresses, and `5 address(es) have a second holder` both
 times** — `diff` over the two 86-line reports is empty. The committed line is
-byte-for-byte the one at [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):471,
+byte-for-byte the one at [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):535,
 because on this pair the two `pd` holders, `kedee1182bba5` (`pd-002`) and
 `ke928434f6676` (`pd-033`), are present in **both** generations, so B's count
 and the union's are the same five. This is a latent disagreement, not an
@@ -241,11 +263,18 @@ the two reads were a decision rather than a miss.
   here touches the measurement
   [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) is about.
 - **No `test_*.py` is added**, so `tools/README.md`'s suite table gains no row
-  and the runner's **34 suites / 1033 tests** are unmoved — the same arithmetic
-  its seventh merged-tree note closes over. The new self-test lives inside the
-  tool, as `xdata_register_map.py`'s and `grade_0751_isolation.py`'s do.
+  and the runner's totals are unmoved **by this change**: **34 suites / 1033
+  tests** on the tree it merged into, and **35 / 1076** on the tree it lands on,
+  the additions being #887's `ec/tools/test_census_test_line_pins.py` at 41 and
+  #850's two cases in `ec/tools/test_xdata_cluster_names.py` —
+  `1035 + 41 = 1076`. The first is the arithmetic its seventh merged-tree note
+  closes over and the second is what `tools/README.md`'s ninth carries. *(The
+  `1033 + 41 = 1074` this first recorded is the tree before #850's two cases
+  were beside it, and is left visible here rather than edited out.)* The new
+  self-test lives inside the tool, as `xdata_register_map.py`'s and
+  `grade_0751_isolation.py`'s do.
 - **No gate is wired**, for the reasons
-  [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):500 gives: the tool
+  [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):564 gives: the tool
   is a read-only investigation aid and adding two census runs to every push
   would cost more than the gate gets. `CLAUDE.md` separately says
   `agent-gates.sh` is a copy from the `agent-pipeline` template this repository

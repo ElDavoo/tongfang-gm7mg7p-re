@@ -179,11 +179,20 @@ cross-pair diff is keyed on **`cluster_key`**, and every row is about a key.
 Ranks are printed as data, always beside the key, because the rank is what moved
 and the key is what did not.
 
+**The table below walks the flipped cells and only those, which is why the
+other two had no row to give.** The 266 that moved in both and the 40 intact in
+both are counted in the summary and in the rank-shift block, and before this
+were printed nowhere at all — so no column could ever have shown them.
+`--cell` names the four cells under six names (`flipped`, `moved-both`,
+`moved-a-only`, `moved-b-only`, `intact-both`, `all`) and defaults to
+`flipped`, so the report above is the one this file has always carried, with
+the two rank columns added beside it.
+
 ```console
 $ python3 ec/tools/xdata_moved_ranks.py across \
     --label-a 'the 430-row pair' --label-b 'the 439-row pair' \
     --old-a /tmp/xdata-old/ec/annotations/xdata-clusters.csv --new-a /tmp/old-off-clusters.csv \
-    --old-b ec/annotations/xdata-clusters.csv --new-b /tmp/new-off-clusters.csv
+    --old-b ec/annotations/xdata-clusters.csv --new-b /tmp/new-off-clusters.csv \
     --old-a-registers /tmp/xdata-old/ec/annotations/xdata-registers.csv --new-a-registers /tmp/old-off-registers.csv \
     --old-b-registers ec/annotations/xdata-registers.csv --new-b-registers /tmp/new-off-registers.csv
 across the 430-row pair -> the 439-row pair
@@ -198,6 +207,7 @@ across the 430-row pair -> the 439-row pair
   the flipped set's size distribution, against the census: 1 1 1 1 2 2 4 4 5 6
                                             the census:  1 1 1 1 1 1 2 2 4 5
   of the 23 committed cluster(s) of 8 addresses or more, 5 flipped; the largest committed cluster is 152 addresses
+  of the 7 of 16 or more, 1 flipped
   shared keys whose committed membership differs between the two censuses: 0 of 400 -- a key is a hash of the membership, so this is zero by construction and is printed rather than assumed
 
   §6a across the two generations, over the per-address columns:
@@ -211,19 +221,29 @@ across the 430-row pair -> the 439-row pair
   mean guard-off delta over   23 intact -> moved A   0.00   B   3.65
   mean guard-off delta over   40 intact in both  A   0.00   B   0.00
 
-  cluster_key    name             size  grew  delta A  delta B  verdict
-  k0121504b8669  -                   2     0        0        4  intact->moved
-  k01ed753bc8ac  -                   2     0        0        4  intact->moved
-  k047da7d61103  -                   1     0        2        0  moved->intact
-  k0498704b659b  -                   3     0        6        0  moved->intact
-  k04dddd85ead2  -                   2     0        0        4  intact->moved
-  k07947f325d97  -                   5     0       11        0  moved->intact
-  k0933c373f5ad  -                   1     0        2        0  moved->intact
-  k0b7f9545b4f2  -                   2     0        0        4  intact->moved
-  k0f280d94b049  -                   4     0        8        0  moved->intact
-  k0f4e69560e36  -                   4     0        8        0  moved->intact
-  k0f5c689b2cfc  -                   2     0        0        4  intact->moved
-  k133a4ac2e88c  -                   6     0       13        0  moved->intact
+  rank shift between the two committed censuses; a positive delta is down the size ordering, and a delta is only comparable within one program
+    over the 400 shared keys; the 30 in one census only and the 39 in the other have no counterpart to difference, so they are in no figure below
+    main-ec   345 of  350 changed rank; mean  +9.63 over those,  +9.49 over all (an unchanged key at 0); range -8 to +15
+    pd          0 of   50 changed rank; mean      - over those,  +0.00 over all (an unchanged key at 0); range +0 to +0
+    of the   71 moved->intact    67 changed rank
+    of the  266 moved-in-both   246 changed rank
+    of the   23 intact->moved    23 changed rank
+    of the   40 intact-in-both    9 changed rank
+    over all  400 shared keys,  345 changed rank -- the four cells above close on it
+
+  cluster_key    name             rank A       rank B       size  grew  delta A  delta B  verdict
+  k0121504b8669  -                main-ec-136  main-ec-143     2     0        0        4  intact->moved
+  k01ed753bc8ac  -                main-ec-114  main-ec-120     2     0        0        4  intact->moved
+  k047da7d61103  -                main-ec-219  main-ec-232     1     0        2        0  moved->intact
+  k0498704b659b  -                main-ec-073  main-ec-080     3     0        6        0  moved->intact
+  k04dddd85ead2  -                main-ec-153  main-ec-164     2     0        0        4  intact->moved
+  k07947f325d97  -                main-ec-032  main-ec-036     5     0       11        0  moved->intact
+  k0933c373f5ad  -                main-ec-216  main-ec-229     1     0        2        0  moved->intact
+  k0b7f9545b4f2  -                main-ec-155  main-ec-166     2     0        0        4  intact->moved
+  k0f280d94b049  -                main-ec-070  main-ec-077     4     0        8        0  moved->intact
+  k0f4e69560e36  -                main-ec-064  main-ec-073     4     0        8        0  moved->intact
+  k0f5c689b2cfc  -                main-ec-147  main-ec-153     2     0        0        4  intact->moved
+  k133a4ac2e88c  -                main-ec-025  main-ec-027     6     0       13        0  moved->intact
   (82 more; --rows for all of them)
 ```
 
@@ -237,12 +257,42 @@ it closes: `(71 − 23) + (29 − 26) = 51 = 366 − 315`.
 
 The 266 that moved in both are the bulk, and the ranking they disagree about is
 mostly a renumbering: **345 of the 350 shared `main-ec` keys changed rank**
-between the two censuses, by **+9.5 on average** (range −8 to +15, so on balance
-down the size ordering), which is the `main-ec-002` → `main-ec-003` shift the
-recipe's own transcript shows. That shift is strongly but **not perfectly**
-correlated with the cell a key lands in — 246 of the 266 that moved in both also
-changed rank, and 9 of the 40 that were intact in both did — so it is a
-statement about the size of the reordering, not an identity for the cell.
+between the two censuses, over a range of **−8 to +15** and so on balance
+*down* the size ordering, which is the `main-ec-002` → `main-ec-003` shift the
+recipe's own transcript shows. A positive delta is down that ordering because
+`cluster_id` numbers clusters by descending size, and the tool says so on the
+line that prints the figure rather than leaving the convention to the reader.
+
+**The mean needs its population named, because two of them are true and they
+differ.** The tool prints both, each labelled: **+9.63** over the 345 keys that
+changed, and **+9.49** over all 350 with the 5 that sat still read as 0. This
+paragraph previously carried one figure, `+9.5 on average`, and did not say
+which of the two it was over. It is the second — the mean over all 350 — and the
+two are **not** interchangeable, so the figure that stands is the one whose
+population is named.
+*(This paragraph first read "by +9.5 on average" without saying which of the two
+populations it was over; the re-derivation behind `ec/tools/xdata_moved_ranks.py`'s
+rank-shift block is what settled it, and the superseded reading is left here per
+[`../findings.md`](../findings.md) §4a-4d rather than edited out.)*
+
+**The shift is strongly but *not perfectly* correlated with the cell a key
+lands in, and the four numbers are the claim.** Of the **266** that moved in
+both, **246** also changed rank; of the **40** intact in both, **9** did; of the
+**71** that stopped moving, **67** did; of the **23** that started, **23** did.
+The four cells sum to the **345** of the whole-shared figure, so the correlation
+is stated over a partition rather than over two cells picked out of it. It is
+imperfect in both directions — 67 of the 71 that stopped moving changed rank
+anyway, and 31 of the 40 that never moved did not — and it is a statement about
+the size of the reordering, not an identity for the cell. A cluster's
+membership and its rank move independently: 4 of the 71 changed cell at the
+rank they already held.
+
+**`pd` did not move at all, which the `main-ec` figure alone would have hidden.**
+All **50** shared `pd` keys hold the same rank in both censuses — a range of
+`+0 to +0`, and no mean over the changed set because nothing changed. A single
+mean over all 400 shared keys would have reported `+8.31` and said nothing about
+which program's ranking it was a mean of; a rank orders one program's clusters,
+so the two are reported apart.
 
 ## 4. M3 — the checklist's guess, measured on both halves, and it is wrong
 
@@ -270,8 +320,10 @@ flipped keys have size deciles `1 1 1 1 2 2 4 4 5 6` against the census's
 `1 1 1 1 1 1 2 2 4 5` — the same shape, shifted right by roughly one step. Of
 the **23** committed clusters of 8 addresses or more, **5** flipped; of the
 **7** of 16 or more, **1**; the largest committed cluster is **152** addresses
-and it is not in the flipped set at all. §2a's "the large `main-ec` clusters"
-are not what stopped moving.
+and it is not in the flipped set at all. The last two of those are the same
+distribution cut at two points, and the tool prints both rather than leaving
+"the large clusters" to a threshold a reader has to pick. §2a's "the large
+`main-ec` clusters" are not what stopped moving.
 
 **Note, 2026-09-26 (issue #889): what this read needs to be one, and what it
 prints without.** `xdata_moved_ranks.py`'s `deciles()` is a nearest-rank read
@@ -527,11 +579,36 @@ xdata_moved_ranks.py --self-test
   ok    both flip directions are reported separately, each naming its key
   ok    a cluster that moved in both and one that moved in neither are their own rows, not the absence of the other two -- and k4's and k8's ranks moved on the way, which is a renumbering and not a membership change
   ok    the moved-count difference closes over the four terms it is made of
+  ok    a flipped set of two clusters is reported as the two sizes it is, on the line itself -- not `2 2 2 2 2 2 2 2 2 2` read as a decile distribution beside the census's
+  ok    an empty set is reported before the floor rule applies
+  ok    ten rows is the floor: one whole row per cell, and crossing it does not change the shape of the read
+  ok    nine rows is below the floor -- the cells already double up at the ends there, so the set is returned rather than repeated
+  ok    a set below the floor comes back sorted and marked, as the set it is and not as ten numbers a reader would take for deciles
   ok    a key in only one generation is named as such, in both directions
   ok    an address both programs touch is reported once per committed cluster holding it, not once
   ok    a cluster that flipped is labelled FLIPPED, one that did not is not, and the summary counts the `pd` holders separately
+  ok    the second-holder count is over both generations' holders, so it equals the number of addresses that printed more than one row: 2 rows for 1 address, counted once
   ok    whether the two generations perturb the same addresses is reported on its own, not inferred from two matching counts
   ok    two runs can agree on a count and disagree on which addresses, and an address a re-derivation adds can be outside the guard's reach entirely
+  ok    all four cells are filled from the fixture, the two controls included -- a mode that read only the flipped cells would see two of these and pass nothing
+  ok    the population a cell's rate is read against is printed, with the one-sided keys named and the survivors' rank deltas spread
+  ok    a substitution that reappears at a neighbouring rank is reported as reappearing, with that rank, rather than as a row that went missing
+  ok    a substitution built from the added addresses is counted against the page and the added set, and its members are reported as having no holder in the generation that predates them
+  ok    a control cell is counted with the same verdicts as a flipped one, so a rate the controls show is visible as such
+  ok    an address both programs touch is indexed under each program's own rows, so a `pd` holder is never reported for a `main-ec` row
+  ok    a row whose addresses land in two of its own program's rows is a split, and a member that also has a home in the other program is counted rather than resolved
+  ok    a cell with no substitution says so on its own line, so its reappearance rate is not read as a mechanism
+  ok    whether the two generations' `pd` partitions are the same partition at all is reported on its own, so a `pd` cell above it is visible as a disagreement rather than a surprise
+  ok    a committed rank with no row in the guard-off census is in no cell, rather than in a cell with a missing subject row -- `absent_ranks` is the one place that names it
+  ok    a rank is the number after the last hyphen, so neither the two-part program name nor a rank wider than the id's three-digit field is read as a digit or as a fixed window
+  ok    a key's membership and its rank move independently: k1 changes cell at the rank it already had, and k2 holds its cell at a different rank -- the two directions the shift is not perfectly correlated with
+  ok    both means are printed and each names its population, so "changed by N on average" cannot be read the wrong way round: +1.00 over the four keys that changed, +0.80 over all five
+  ok    a rank shift is reported per program, so a ranking that moved in one program and not in the other is two figures rather than one average
+  ok    the four cells partition the shared keys, so the per-cell changed-rank counts close on the one figure for the whole set
+  ok    two size cut points on one distribution, so "the large clusters" is a range and not a threshold a reader has to pick
+  ok    the default cell is the flipped one, so the table is the one the report has always printed with two rank columns beside it
+  ok    --cell walks a cell the default does not: a key that never changed cell gets a row of its own, and only that key gets one
+  ok    --cell all is every shared key, so the cells are walkable together as well as one at a time
   all checks passed
 
 $ python3 ec/tools/xdata_register_map.py --check && python3 ec/tools/xdata_register_map.py --self-test
@@ -544,29 +621,96 @@ Ran 28 tests in 15.721s
 OK
 ```
 
+> **Merged-tree note (2026-09-26, #891 landing beside #884).** The block above is
+> the merged tree's run, re-recorded rather than carried over, so the check count
+> it prints is the one the merged tool prints. The two modes that landed beside
+> this one each brought their own fixture block, and both are in the transcript
+> above in the order they run: the 15 checks this file already listed are checks
+> 1–9 and 15–20, #884's `cause` block
+> ([`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md)) is
+> 21–30, and this change's own rank-shift block is 31–39 — so the tree prints
+> **39 checks**, not the 24 this file's own change left and not the 25 the
+> `cause` merge left. **A third block landed beside both and is why that figure
+> is 39 rather than the 34 this note first recorded**: #889's five `deciles()`
+> floor cases ([`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md))
+> print at 10–14, between the two halves of the first fifteen, and the count was
+> re-run on the merged tool rather than carried over. `rank_of` is one function
+> on the merged tree rather than
+> the two the two changes each wrote: `cause` needs the program beside the
+> number and the rank shift needs the number, and the shared one returns
+> `(program, rank)` so the shift's per-key difference takes the number half of
+> it. The rank-shift fixture is lettered **`F`/`G`** here, not `D`/`E`, because
+> the `cause` fixture above it is `A`/`B` and the two blocks share one scratch
+> directory — the one rename this merge forced in the tool. Nothing else moves:
+> §1's and §2's regenerations and §3's and §7's `across` runs were all re-run on
+> the merged tree and are **byte-identical** to the transcripts above them, so
+> every figure in §1–§4 stands as printed, and the 1326/439 and 28-test lines
+> in this block were re-measured the same way.
+
 **The known-answer run is §1 through §4 above**: the tool is what produced
 366/64/439 and 315/124/445, the 71/266/23/40 flip table, the size
-distributions, the four cell distributions, the §6a comparison and the
-three-cluster cross-reference. A `--self-test` that can only go green is not a
-test, and the fixtures are chosen so it can go red: a committed rank with no row
-in the regeneration, both flip directions, a key in only one generation, a key
-whose rank moved while its membership did not, an address held by two programs'
-clusters at once, and two runs that agree on a perturbed *count* over different
-address *sets*.
+distributions, the **23-of-8-and-more and 7-of-16-or-more cut points**, the
+four cell distributions, the **committed-A → committed-B rank shift** (345 of
+350 `main-ec`, +9.63 and +9.49, range −8 to +15, and the four per-cell
+changed-rank counts), the §6a comparison and the three-cluster cross-reference.
+A `--self-test` that can only go green is not a test, and the fixtures are
+chosen so it can go red: a committed rank with no row in the regeneration, both
+flip directions, a key in only one generation, a key whose rank moved while its
+membership did not, an address held by two programs' clusters at once, and two
+runs that agree on a perturbed *count* over different address *sets*.
 
-**The tree's own runner stands at 34 suites and 1033 tests**, re-measured on
+**The rank-shift cases needed a fixture pair the earlier fixtures could not
+supply, which is the reason they are not a variation on them.** `b_committed` is
+written from the same `committed_rows` as `committed`, so the two committed
+censuses in that fixture are content-identical and **no key changes rank between
+them at all** — the A→B check that says k4's and k8's "ranks moved on the way" is
+asserted about the *guard-off* rows, not about the two committed censuses. (The
+`cause` block's own `A`/`B` pair, merged in beside this one, is not a candidate
+either: its second census *gains* a cluster but renumbers nothing, so every
+shared key sits at the rank it already had.) The `F`/`G` pair is the same keys
+and the same memberships under a different
+numbering, plus one cluster `G` gained, chosen so that a key changing cell
+without changing rank (`k1`) and a key changing rank without changing cell
+(`k2`) both exist, that a zero-delta key shares a program with four moved ones
+so the two means differ, and that a 9- and a 20-address cluster are both
+present so the two size cut points are distinguishable. Each new case was checked to be
+able to fail, each applied and re-run: each turns at least one check red — the
+delta's sign reversed 1, the per-program split dropped 2, one cell pointed at
+the wrong list 3, the 16-address cut lowered to 8 turns 1 red, a second cell
+leaking into `--cell intact-both` 1, one population under both mean labels 1.
+
+**One defect in a transcript here, found by re-running rather than by reading,
+and fixed in place because a transcript that does not paste-and-run is not a
+transcript.** §3's `across` command was missing the trailing `\` that joins its
+`--old-b` line to the four `--*-registers` lines after it, so the command as
+written would have run half its arguments and stopped — with the shell treating
+the next line as a new command, which is the shape §3's own preamble cites
+`ec/annotations/xdata-06c2-06db-timers.md` for. The block was re-recorded from
+the run that produced the figures above, so it carries the backslash now; every
+other `console` block in this file was checked the same way and was already
+sound, and §7's `across` invocation has always had it.
+
+
+**The tree's own runner stands at 35 suites and 1076 tests**, re-measured on
 the merged tree rather than carried over: this change adds no `test_*.py` and so
 no row to `tools/README.md`'s table, and the two figures it started from — 32
-suites and 974 tests — moved entirely because two merges landed in the same
+suites and 974 tests — moved entirely because merges landed in the same
 window, #849 (`a00fe940`) with `ec/tools/test_check_doc_figure_pins.py` at 44
-tests and #851 (`a02de81b`) with `ec/tools/test_xdata_carry_notice.py` at 15, so
-`32 + 1 + 1 = 34` and `974 + 44 + 15 = 1033` closes with nothing left over.
-That is the whole delta; `tools/README.md`'s own seventh merged-tree note
-carries the same arithmetic and the runner prints `34 suite(s) run, 1033 tests;
-one or more FAILED`. *(This paragraph first read 33 suites and 1018 tests, which
-is the tree #852 branched from — #849's, before #851 landed — and the superseded
-pair is left visible here per [`../findings.md`](../findings.md) §4a-4d rather
-than edited out.)* One
+tests, #851 (`a02de81b`) with `ec/tools/test_xdata_carry_notice.py` at 15,
+#887 (`bb4c1d27`) with `ec/tools/test_census_test_line_pins.py` at 41 and
+#850 with `TheExportOwnershipClusters`'s two cases in
+`ec/tools/test_xdata_cluster_names.py`, so
+`32 + 1 + 1 + 1 = 35` and `974 + 44 + 15 + 41 + 2 = 1076` closes with nothing
+left over. That is the whole delta; `tools/README.md`'s own ninth merged-tree
+note carries the same arithmetic and the runner prints `35 suite(s) run, 1076
+tests; one or more FAILED`. *(This paragraph first read 33 suites and 1018 tests,
+which
+is the tree #852 branched from — #849's, before #851 landed — then 34 suites
+and 1033 tests, which is the tree this change merged into and one merge before
+#887's, and then 35 and 1074, which is the tree this change merged into once
+#850's two cases were beside it. All three superseded pairs are left visible here
+per [`../findings.md`](../findings.md) §4a-4d rather than edited out, and the
+figures that stand are the ones re-measured on the tree this lands on.)* One
 suite is red and was red before this change:
 `ec/tools/test_check_cluster_citations.py`, at 48 tests, on
 `xdata-cluster-names-guard-off-recipe.md:220` — **#822's** write-up, named in
@@ -587,3 +731,15 @@ once" and goes red, which is how
 was rejected once already. So every table here keeps `cluster_key` in the
 **first cell**, which keeps the row out of the census-row rule, and no table
 pairs a rank with an address.
+
+**The `rank A` / `rank B` columns are the same constraint read from the other
+side, and they were run rather than reasoned about.** §3's preamble has always
+said ranks are printed beside the key because the rank moved and the key did
+not; adding the columns is what makes the sentence true of the table rather than
+only of §7's swept block, and §7 is the precedent that a row may carry a
+`main-ec-NNN` pair beside a `cluster_key` without the checker's membership rule
+reading it. What the columns do **not** do is add an address column, which is
+the pairing that would go red: the checker holds a *membership* claim, and a
+rank beside an address reads as one. The table above keeps `cluster_key` first,
+introduces no address column, and the checker reports the same two `#822`
+disagreements before and after this change and no new one.

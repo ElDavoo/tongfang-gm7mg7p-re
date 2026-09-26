@@ -421,6 +421,28 @@ $ python3 ec/tools/xdata_moved_ranks.py --self-test
   all checks passed
 ```
 
+> **Merged-tree note (2026-09-26, #891 landing beside #884).** The block above is
+> left as the record of the run that produced it, and every line in it still
+> prints `ok` in the same order — but `all checks passed` is no longer the
+> tail. #891's rank-shift block
+> ([`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) §9) added nine
+> checks of its own to the same `--self-test`, and they run after this one, so
+> the tree printed **34** where this block ends at 25; #889 then added five
+> more, at 10–14, between the two halves of the first fifteen rather than in
+> the tail, so the tree this file now sits in prints **39**. The tail is the
+> nineteen lines those two blocks added and then `all checks passed`, and the
+> full run is transcribed there. *(The 34 is left reading as the record of the
+> tree this note was written on.)* One
+> merge detail is recorded here because it changed this file's own code: the
+> two changes each wrote a `rank_of`, one returning the rank and one returning
+> `(program, rank)`, and a clean auto-merge left both — the second silently
+> shadowing the first, so `across`'s rank shift would have subtracted tuples.
+> The merged tool has **one** `rank_of` returning the pair, in the reading
+> section, and `rank_shift_report` takes the number half of it. That is the only
+> forced change to anything either file added; no `cause` fixture, count, rate or
+> assertion moved, which is checked by the ten `ok` lines above still being the
+> ten they were.
+
 **The known-answer run is §1 through §6 above.** The fixtures are over a fourth
 pair of censuses, chosen so each case can go red: a substitution that reappears
 one rank over, one built from the added addresses and with no holder in the
@@ -458,10 +480,14 @@ adds nothing to it.** `ec/tools/test_check_cluster_citations.py` fails 1 of its
 [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) §9. `check_cluster_citations.py`
 exits 1 for those same two citations (`0x0464` and `0x0465`), and its output is
 **byte-identical with and without this file** — checked by running it with the
-new file moved aside and diffing. The runner's totals are the **34 suites /
-1033 tests** that #852 recorded, re-measured on this tree rather than carried
+new file moved aside and diffing. The runner's totals in the block above are the
+**34 suites / 1033 tests** that #852 recorded, re-measured on the tree this
+block was produced on rather than carried
 over: this change adds no `test_*.py` and so no row to `tools/README.md`'s
-table, so that file is not touched either.
+table, so that file is not touched either. *(On the tree this file now sits in
+the runner reads `35 suite(s) run, 1076 tests; one or more FAILED`, with the
+same one red suite; the block is left as the record of the run that produced
+it.)*
 
 **That same test is the constraint that shaped this file**, the same one that
 shaped [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) §9. The checker

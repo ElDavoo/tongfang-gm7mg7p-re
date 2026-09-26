@@ -108,7 +108,7 @@ before this branch and are now the sets they are.
 ## What the code does now
 
 Three branches, in the order the docstring states them, at
-`ec/tools/xdata_moved_ranks.py:243`:
+`ec/tools/xdata_moved_ranks.py:277`:
 
 - **empty** — `no rows`, reported before the floor rule applies. An empty set
   is not a set too small to cut; it is no set at all, and the two are told
@@ -130,7 +130,7 @@ Recomputing the census side from the committed
 1 1 1 1 1 1 2 2 4 5
 ```
 
-byte-identical to `xdata-moved-ranks-fall.md:199` and `../findings.md:7990`.
+byte-identical to `xdata-moved-ranks-fall.md:208` and `../findings.md:8086`.
 The flipped side is 94 keys and the census side 439, both far above the floor,
 which is why neither can move. The four `deciles` reads quoted in
 [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) are over
@@ -172,7 +172,11 @@ shape.
 **1. The issue's `xdata-moved-ranks-fall.md:220` does not hold the sentence.**
 That line is one of the twelve rows of the flipped-cluster transcript, under
 the `cluster_key / name / size / grew / delta A / delta B / verdict` header at
-`:214` — a data row, `moved->intact`. Repo-wide before this branch, the phrase
+`:214` — a data row, `moved->intact`. *(The row itself is at `:240` and the
+header at `:234` on the tree this file now sits in, the same two columns wider
+for the `rank A` / `rank B` #891 added; `:220`/`:214` are the tree this
+correction was measured on, and the correction holds on this one too — the
+sentence is still in the **tool**, not in the write-up.)* Repo-wide before this branch, the phrase
 existed in exactly one place: the tool's own docstring. The correction that
 was needed was therefore not beside a claim in that document but **in the
 tool**, and §4's decile sentence — which the issue cites correctly, and which

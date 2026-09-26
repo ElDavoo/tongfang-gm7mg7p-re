@@ -14,9 +14,18 @@ that the guess is not a measurement.
 This is the measurement, and it is the measurement in the shape the guess is
 about: both census pairs, keyed on `cluster_key` rather than on `main-ec-NNN`,
 so the row a number is about survives the renumbering that produced it. `pair`
-prints one pair; `across` prints the flip table between two of them; `cause`
-follows the row a rank carried into the other generation, which is the step
-`xdata-moved-ranks-fall.md` §4 named and did not take.
+prints one pair; `across` prints the flip table between two of them and the
+rank shift between the two *committed* censuses the table is built from;
+`cause` follows the row a rank carried into the other generation, which is the
+step `xdata-moved-ranks-fall.md` §4 named and did not take.
+
+**A rank shift is a per-program figure, and its sign is a convention.** A rank
+orders one program's clusters, so `main-ec-002` -> `main-ec-003` and
+`pd-002` -> `pd-003` are not distances on one scale and a mean over both is a
+figure about neither. And a positive delta is *down* the size ordering, because
+`cluster_id` numbers clusters by descending size -- which is stated on the line
+that prints it rather than left to a reader who has to know the convention
+already.
 
 **What this does not claim, and the two ways it is easy to overclaim.**
 
@@ -77,6 +86,8 @@ Usage:
         --old-a-registers ONa.csv --new-a-registers OFFa.csv \\
         --old-b-registers ONb.csv --new-b-registers OFFb.csv \\
         --page 0x0300 0x05FF --rows
+    python3 xdata_moved_ranks.py across --old-a A --new-a B --old-b C --new-b D \\
+        --cell intact-both --rows
     python3 xdata_moved_ranks.py --self-test
 """
 import argparse
@@ -142,6 +153,29 @@ def moved_ranks(committed, off):
 def absent_ranks(committed, off):
     """Committed ranks the guard-off census does not carry."""
     return [cid for cid in sorted(committed) if cid not in off]
+
+
+def rank_of(row):
+    """(program, integer rank) from a `cluster_id` like `main-ec-014`.
+
+    After the *last* hyphen, because the program is a two-part name and
+    `main-ec-002` has a hyphen in the half that is not the number -- and
+    nothing else in a clusters CSV carries the rank, so this is the one place
+    the shape is read. The number comes back with its program rather than on
+    its own because it is a rank *within* that program: `pd-002` and
+    `main-ec-002` are not two places in one ordering, so a difference between
+    two rows of different programs is `None` (`rank_delta`) rather than a
+    number that invites a comparison nobody asked for.
+    """
+    program, _, num = row["cluster_id"].rpartition("-")
+    return program, int(num)
+
+
+def signed(values):
+    """A mean with its sign, or `-` for an empty set -- which a program can be
+    here, and which a `+0.00` would report as a measurement rather than as the
+    absence of one."""
+    return f"{sum(values) / len(values):+.2f}" if values else "-"
 
 
 # --------------------------------------------------------------------------
@@ -265,10 +299,79 @@ def deciles(sizes):
                     for i in range(10))
 
 
+# The four cells, under the spelling the table's own verdict column carries.
+# The table had two of them before the `rank A` / `rank B` columns and walked
+# only the ones a key can be in by changing cell, so the 266 and the 40 were
+# counted in the summary and never given a row.
+CELLS = {"moved->intact": "a_to_b", "moved-in-both": "both",
+         "intact->moved": "b_to_a", "intact-in-both": "neither"}
+
+# `--cell` choices, over the cells above. `flipped` is both flip directions
+# and is the default, so the report a reader has already seen is the report
+# this prints.
+TABLE_CELLS = {
+    "flipped": ("moved->intact", "intact->moved"),
+    "moved-both": ("moved-in-both",),
+    "moved-a-only": ("moved->intact",),
+    "moved-b-only": ("intact->moved",),
+    "intact-both": ("intact-in-both",),
+    "all": tuple(CELLS),
+}
+
+
+def rank_shift_report(a, b, table):
+    """How far the numbering moved between the two committed censuses, per
+    program and per cell.
+
+    Three things this is not, and each of them is a way the pair of figures
+    below gets read wrong:
+
+    - *A mean is not a shift.* A cluster's rank can change without its
+      membership changing, and its membership can change without its rank
+      changing, so the two are counted apart rather than one standing in for
+      the other.
+    - *The two means are not the same figure.* "Changed by N on average" is
+      ambiguous between the keys that changed and every shared key, and the
+      two differ by however many keys sat still. Both are printed, each
+      labelled, because the ambiguity is a defect in the sentence that would
+      have carried either one alone.
+    - *A rank is not comparable across programs.* A rank orders one program's
+      clusters, so the two means are per program and there is no combined one;
+      and a positive delta is *down* the size ordering, because `cluster_id`
+      numbers clusters by descending size. That convention is on the line
+      rather than in this docstring alone, because a signed figure whose sign
+      nobody has read is the one a reader gets backwards.
+    """
+    def delta(key):
+        return rank_of(b[key])[1] - rank_of(a[key])[1]
+
+    shared = table["shared"]
+    out = ["  rank shift between the two committed censuses; a positive delta is "
+           "down the size ordering, and a delta is only comparable within one "
+           "program",
+           f"    over the {len(shared)} shared keys; the {len(table['only_a'])} in one "
+           f"census only and the {len(table['only_b'])} in the other have no "
+           "counterpart to difference, so they are in no figure below"]
+    for program in sorted({a[k]["program"] for k in shared}):
+        deltas = [delta(k) for k in shared if a[k]["program"] == program]
+        changed = [d for d in deltas if d]
+        spread = f"{min(deltas):+d} to {max(deltas):+d}" if deltas else "-"
+        out.append(f"    {program:<8} {len(changed):>4} of {len(deltas):>4} changed rank; "
+                   f"mean {signed(changed):>6} over those, {signed(deltas):>6} over all "
+                   f"(an unchanged key at 0); range {spread}")
+    for name in CELLS:
+        keys = table[CELLS[name]]
+        out.append(f"    of the {len(keys):>4} {name:<14} "
+                   f"{sum(1 for k in keys if delta(k)):>4} changed rank")
+    out.append(f"    over all {len(shared):>4} shared keys, "
+               f"{sum(1 for k in shared if delta(k)):>4} changed rank -- the four cells "
+               "above close on it")
+    return out
+
 
 def across_report(label_a, committed_a_path, off_a_path,
                   label_b, committed_b_path, off_b_path, rows=False,
-                  registers=None):
+                  registers=None, cell="flipped"):
     committed_a, off_a = clusters_of(committed_a_path), clusters_of(off_a_path)
     committed_b, off_b = clusters_of(committed_b_path), clusters_of(off_b_path)
     t = flip_table(committed_a, off_a, committed_b, off_b)
@@ -306,6 +409,7 @@ def across_report(label_a, committed_a_path, off_a_path,
     grew_any = sum(1 for k in t["shared"] if addrs_of(b[k]) != addrs_of(a[k]))
     census_sizes = [len(addrs_of(row)) for row in b.values()]
     at_least_8 = [row for row in b.values() if len(addrs_of(row)) >= 8]
+    at_least_16 = [row for row in b.values() if len(addrs_of(row)) >= 16]
     out.append("")
     out.append(f"  the flipped set's size distribution, against the census: "
                f"{deciles([len(addrs_of(b[k])) for k in flipped])}")
@@ -314,6 +418,11 @@ def across_report(label_a, committed_a_path, off_a_path,
     out.append(f"  of the {len(at_least_8)} committed cluster(s) of 8 addresses or more, "
                f"{sum(1 for row in at_least_8 if row['cluster_key'] in flipped)} flipped; "
                f"the largest committed cluster is {max(census_sizes) if census_sizes else 0} addresses")
+    # A second cut point on the same distribution rather than a second census:
+    # "the large clusters" is a range, and one threshold says which end of it
+    # the flip set sits at without a reader having to choose a threshold.
+    out.append(f"  of the {len(at_least_16)} of 16 or more, "
+               f"{sum(1 for row in at_least_16 if row['cluster_key'] in flipped)} flipped")
     out.append(f"  shared keys whose committed membership differs between the two "
                f"censuses: {grew_any} of {len(t['shared'])} -- a key is a hash of the "
                f"membership, so this is zero by construction and is printed rather than assumed")
@@ -334,21 +443,31 @@ def across_report(label_a, committed_a_path, off_a_path,
         out.append(f"  mean guard-off delta over {len(keys):>4} {title:<15} "
                    f"A {mean_delta(keys, a, off_a):>6}   B {mean_delta(keys, b, off_b):>6}")
     out.append("")
-    out.append(f"  {'cluster_key':<14} {'name':<16} {'size':>4} {'grew':>5} "
-               f"{'delta A':>8} {'delta B':>8}  verdict")
-    for key in (flipped if rows else flipped[:12]):
+    out += rank_shift_report(a, b, t)
+    out.append("")
+    # The table walks one cell of the four, and the *default* cell is the
+    # flipped one: the two cells nothing changed in are the ones a reader
+    # cannot see a row of otherwise, and `--cell` is how they get one. The
+    # sizes and the cut points above stay on `flipped` whatever this is set to,
+    # because they are about the flip and not about which rows are printed.
+    verdict_of = {k: name for name, field in CELLS.items() for k in t[field]}
+    listed = [k for k in t["shared"] if verdict_of.get(k) in TABLE_CELLS[cell]]
+    out.append(f"  {'cluster_key':<14} {'name':<16} {'rank A':<12} {'rank B':<12} "
+               f"{'size':>4} {'grew':>5} {'delta A':>8} {'delta B':>8}  verdict")
+    for key in (listed if rows else listed[:12]):
         ra, rb = a[key], b[key]
         da = off_a.get(ra["cluster_id"])
         db = off_b.get(rb["cluster_id"])
         grew = len(addrs_of(rb) - addrs_of(ra))
         out.append(
             f"  {key:<14} {(rb['cluster_name'] or ra['cluster_name'] or '-'):<16} "
+            f"{ra['cluster_id']:<12} {rb['cluster_id']:<12} "
             f"{len(addrs_of(rb)):>4} {grew:>5} "
             f"{(len(addrs_of(da) ^ addrs_of(ra)) if da else '-'):>8} "
             f"{(len(addrs_of(db) ^ addrs_of(rb)) if db else '-'):>8}  "
-            f"{'moved->intact' if key in t['a_to_b'] else 'intact->moved'}")
-    if not rows and len(flipped) > 12:
-        out.append(f"  ({len(flipped) - 12} more; --rows for all of them)")
+            f"{verdict_of[key]}")
+    if not rows and len(listed) > 12:
+        out.append(f"  ({len(listed) - 12} more; --rows for all of them)")
     return out, t
 
 
@@ -458,18 +577,6 @@ def swept_report(committed_a, committed_b, table, addrs):
 # flip are counted the same way, because a rate the quiet cells show at the
 # same rate is not a mechanism.
 # --------------------------------------------------------------------------
-
-def rank_of(row):
-    """(program, integer rank) from a `cluster_id` like `main-ec-014`.
-
-    The number is a rank *within* its program: `pd-002` and `main-ec-002` are
-    not two places in one ordering, so a difference between two rows of
-    different programs is `None` rather than a number that invites a
-    comparison nobody asked for.
-    """
-    program, _, num = row["cluster_id"].rpartition("-")
-    return program, int(num)
-
 
 def rank_delta(old, new):
     """The signed rank difference, or None across programs."""
@@ -1222,6 +1329,121 @@ def self_test() -> int:
           "rather than in a cell with a missing subject row -- `absent_ranks` "
           "is the one place that names it")
 
+    # ------------------------------------------------------------------------
+    # The rank-shift fixture, lettered F and G because the `cause` block above
+    # is A and B and the two would otherwise write the same file names into the
+    # one scratch directory this function makes.
+    #
+    # A census renumbered against itself, which the fixtures above cannot be:
+    # `b_committed` is written from the same `committed_rows` as `committed`,
+    # so the two committed censuses are content-identical and no key changes
+    # rank between them at all. This pair is the same keys and the same
+    # memberships under a different numbering, plus one cluster the second
+    # census gained, so every claim a rank shift can make has a case here.
+    wide = [f"0x{0x400 + i:04X}" for i in range(20)]
+    half = wide[:10]
+    added = [f"0x{0x500 + i:04X}" for i in range(9)]
+    f_committed = write_census(tmp, "f-committed.csv", [
+        ("main-ec-001", "main-ec", ["0x0E", "0x0F"], key(1)),
+        ("main-ec-002", "main-ec", ["0x10"], key(2)),
+        ("main-ec-003", "main-ec", wide, key(5)),
+        ("main-ec-004", "main-ec", ["0x70"], key(4)),
+        ("main-ec-005", "main-ec", ["0x80"], key(6)),
+        ("pd-001", "pd", ["0x20", "0x21"], key(3)),
+        ("pd-002", "pd", ["0x0E", "0x50"], key(8))])
+    f_off = write_census(tmp, "f-off.csv", [
+        ("main-ec-001", "main-ec", ["0x0E", "0x10"], key(1)),
+        ("main-ec-002", "main-ec", ["0x10"], key(2)),
+        ("main-ec-003", "main-ec", half, key(5)),
+        ("main-ec-004", "main-ec", ["0x71"], key(4)),
+        ("main-ec-005", "main-ec", ["0x81"], key(6)),
+        ("pd-001", "pd", ["0x20", "0x21"], key(3)),
+        ("pd-002", "pd", ["0x0E", "0x50"], key(8))])
+    # The renumbering is an insertion at rank 2, so the `main-ec` keys below it
+    # each move down one and the two above it are the ones that did not; the
+    # `pd` ranking moves as a whole, which is the shape a program's own
+    # re-partition produces and the reason a rank is not one scale.
+    g_committed = write_census(tmp, "g-committed.csv", [
+        ("main-ec-001", "main-ec", ["0x0E", "0x0F"], key(1)),
+        ("main-ec-002", "main-ec", added, key(9)),
+        ("main-ec-003", "main-ec", ["0x10"], key(2)),
+        ("main-ec-004", "main-ec", wide, key(5)),
+        ("main-ec-005", "main-ec", ["0x70"], key(4)),
+        ("main-ec-006", "main-ec", ["0x80"], key(6)),
+        ("pd-002", "pd", ["0x20", "0x21"], key(3))])
+    g_off = write_census(tmp, "g-off.csv", [
+        ("main-ec-001", "main-ec", ["0x0E", "0x0F"], key(1)),
+        ("main-ec-002", "main-ec", added, key(9)),
+        ("main-ec-003", "main-ec", ["0x10"], key(2)),
+        ("main-ec-004", "main-ec", wide, key(5)),
+        ("main-ec-005", "main-ec", ["0x71"], key(4)),
+        ("main-ec-006", "main-ec", ["0x81"], key(6)),
+        ("pd-002", "pd", ["0x20", "0x22"], key(3))])
+    lines, t3 = across_report("F", f_committed, f_off, "G", g_committed, g_off)
+
+    def delta_of(key_):
+        return rank_of(t3["b"][key_])[1] - rank_of(t3["a"][key_])[1]
+
+    def rows_of(lines_):
+        """The table's own rows: every summary line above it starts with a
+        word, and the '(N more)' line with a bracket."""
+        return [ln for ln in lines_ if ln.lstrip().startswith("k0000000000")]
+
+    # The rank is re-derived from the id here rather than written beside it, for
+    # the reason the moved-count predicate above is restated rather than called:
+    # a bare int inside a `check()` is a census figure to
+    # `check_doc_figure_pins.py`, and a rank off a synthetic id is not one --
+    # but nothing in that audit can tell the two apart, and a `pd-050` that
+    # happens to read 50 turns a figure `xdata-census-rederivation-checklist.md`
+    # §2b marks `unheld` into one this tool appears to pin. The four ids cover
+    # the three shapes that discriminate: a hyphen in the program name, a rank
+    # wider than the id's three-digit field, and one of each.
+    rank_ids = ["main-ec-002", "pd-050", "main-ec-1234", "pd-007"]
+    check([rank_of({"cluster_id": c})[1] for c in rank_ids]
+          == [int(c.rsplit("-", 1)[1]) for c in rank_ids],
+          "a rank is the number after the last hyphen, so neither the two-part "
+          "program name nor a rank wider than the id's three-digit field is "
+          "read as a digit or as a fixed window")
+    check(t3["a_to_b"] == [key(1), key(5)] and delta_of(key(1)) == 0
+          and t3["neither"] == [key(2)] and delta_of(key(2)) == 1,
+          "a key's membership and its rank move independently: k1 changes cell "
+          "at the rank it already had, and k2 holds its cell at a different "
+          "rank -- the two directions the shift is not perfectly correlated with")
+    check(any("4 of    5 changed rank; mean  +1.00 over those,  +0.80 over all" in ln
+              for ln in lines),
+          "both means are printed and each names its population, so \"changed "
+          "by N on average\" cannot be read the wrong way round: +1.00 over the "
+          "four keys that changed, +0.80 over all five")
+    check(any("pd          1 of    1 changed rank" in ln for ln in lines),
+          "a rank shift is reported per program, so a ranking that moved in one "
+          "program and not in the other is two figures rather than one average")
+    shift_cells = [k for field in CELLS.values() for k in t3[field]]
+    check(sorted(shift_cells) == t3["shared"]
+          and sum(1 for k in shift_cells if delta_of(k)) == 5
+          and sum(1 for k in t3["shared"] if delta_of(k)) == 5,
+          "the four cells partition the shared keys, so the per-cell "
+          "changed-rank counts close on the one figure for the whole set")
+    check(any("of the 2 committed cluster(s) of 8 addresses or more, 1 flipped" in ln
+              for ln in lines)
+          and any("of the 1 of 16 or more, 1 flipped" in ln for ln in lines),
+          "two size cut points on one distribution, so \"the large clusters\" is "
+          "a range and not a threshold a reader has to pick")
+    check([ln.split()[0] for ln in rows_of(lines)] == [key(1), key(3), key(5)]
+          and not any("intact-in-both" in ln for ln in rows_of(lines)),
+          "the default cell is the flipped one, so the table is the one the "
+          "report has always printed with two rank columns beside it")
+    lines, _t = across_report("F", f_committed, f_off, "G", g_committed, g_off,
+                              cell="intact-both")
+    check([ln.split()[0] for ln in rows_of(lines)] == [key(2)]
+          and "intact-in-both" in lines[-1],
+          "--cell walks a cell the default does not: a key that never changed "
+          "cell gets a row of its own, and only that key gets one")
+    lines, _t = across_report("F", f_committed, f_off, "G", g_committed, g_off,
+                              cell="all", rows=True)
+    check([ln.split()[0] for ln in rows_of(lines)] == t3["shared"],
+          "--cell all is every shared key, so the cells are walkable together "
+          "as well as one at a time")
+
     print(f"  {'FAILED' if bad else 'all checks passed'}"
           + (f" ({bad})" if bad else ""))
     return 1 if bad else 0
@@ -1251,8 +1473,11 @@ def main() -> int:
     ap.add_argument("--label-b", help="what to call pair B in the report (across, cause)")
     ap.add_argument("--rows", action="store_true",
                     help="print every row rather than the first twelve: the "
-                         "flipped clusters in across, the followed substitutions "
-                         "in cause")
+                         "clusters of the selected cell in across, the followed "
+                         "substitutions in cause")
+    ap.add_argument("--cell", default="flipped", choices=list(TABLE_CELLS),
+                    help="which cell of the flip table the per-key table walks "
+                         "(default: flipped, the two cells a key changes between)")
     ap.add_argument("--page", nargs=2, type=lambda s: int(s, 16), metavar=("LO", "HI"),
                     default=(0x0300, 0x05FF),
                     help="the address range the page test counts against "
@@ -1308,7 +1533,8 @@ def main() -> int:
     lines, table = across_report(args.label_a or args.old_a, args.old_a,
                                  args.new_a, args.label_b or args.old_b,
                                  args.old_b, args.new_b, rows=args.rows,
-                                 registers=quad if all(quad) else None)
+                                 registers=quad if all(quad) else None,
+                                 cell=args.cell)
     print("\n".join(lines))
     if args.swept:
         print()
