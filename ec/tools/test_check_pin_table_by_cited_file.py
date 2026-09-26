@@ -631,12 +631,26 @@ class TheCommittedTree(unittest.TestCase):
         # and a crossing. The `42 / 11 / 31`, the `42 / 12 / 30` and the
         # `41 / 11 / 30` above each stay written, true of the tree it was
         # measured on, per §4a-4d. Measured with the tool, not derived.
+        #
+        # **#1037's step is `43 -> 44` and it moves one figure, for #811's
+        # reason a third time.** Its
+        # `ec/tools/test_check_history_checkouts_run.py` is indexed and no
+        # committed markdown cites a line of it, so the tail takes it. That was
+        # a choice and not an accident: the write-up
+        # (`docs/findings/history-checkout-run-contract.md`) first cited
+        # `test_check_history_checkouts.py:255` and `check_pin_table_rows.py`
+        # refused it for a row the table had no way to hold without moving the
+        # 107 / 80 / 59 the census prints and the 107-row table it reconciles,
+        # so it names that case instead, by name -- which is what #845's own
+        # write-up did two issues ago. One in, none out, and the named count
+        # unmoved: **44 / 12 / 32**. The `43 / 12 / 31` above stays written, true
+        # of the tree it was measured on, per §4a-4d.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 43)
+        self.assertEqual(len(files), 44)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 31)
+        self.assertEqual(len(tail), 32)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

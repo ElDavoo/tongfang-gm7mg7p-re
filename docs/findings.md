@@ -11583,3 +11583,81 @@ restoring a stale `:505` and watching every check stay green. No `status:`
 moved (`XDATA_0860` is still `present-untested`), no count moved, no CSV or
 Ghidra export regenerated, and no EC, hardware or Windows machine is involved
 anywhere: this is arithmetic over committed text.
+## 88. The checkout checker's exit code is its product, and the run crashed on the trees `--repo` exists for (2026-09-26, issue #1037)
+
+**`ec/tools/check_history_checkouts.py`'s `main()` was reached by no case in the
+twenty-four #1009 wrote, and building the cases that reach it found a crash on
+the same path.** Every existing case calls `report()` or one of the functions
+under it; the exit code, the `FAIL` lines, the `N problem(s)` summary and
+`--repo`'s default had nothing behind them, and deleting `if problems:` left all
+twenty-four green — the same defect #948 records for
+`check_pin_table_rows.py:547`. The write-up is
+[`history-checkout-run-contract.md`](findings/history-checkout-run-contract.md);
+this is the pointer. **#1034 added six cases to that suite on `main` beside this
+landing and a seventh followed, so it is thirty-one here where this landing's
+own branch had thirty, and the gap is unmoved**: all thirty-one read the
+report, none reaches `main()`, and the mutation above still leaves the whole file
+green — re-measured on this tree rather than carried.
+
+**The run crashed on any tree whose `.github/workflows/` is missing or holds no
+`*.yml`.** `load_workflows()` returned a **list** on its two failure paths where
+every caller — `report()` three times, `depth_problems()`,
+`workflow_names()` — reads the first element as a mapping, so the run took an
+`AttributeError` at `report():470`, *after* the report had printed the
+`broken census, not an empty one` refusal written for exactly that case. **The
+committed tree cannot reach it** (eleven workflows are read), and `--repo` exists
+for the trees that can: a scratch tree, a sparse checkout, a `git archive`
+extraction. Both paths now return the `{}` the working one returns. **Nothing
+about what the tool measures or reports changes** — the depth rule, the prose
+rule, `DEFAULT_DEPTH`, `HISTORY_READERS` and `PROSE_FILES` are as #1009 left
+them.
+
+**And once the crash was gone, the same two trees exited 0.** A checker that
+located nothing and a checker that found nothing wrong returned the same number,
+which is §14b's defect at the level of the process status. `main()` now re-reads
+the census and returns 1 with the report's own refusal on stderr when it read no
+workflow at all — keyed on **zero workflows read, not on an unreadable file**, so
+a `broken.yml` beside a conforming `ci.yml` is a tree one bad file short of
+complete and still gets a real measurement. The re-read is eleven small YAML
+files parsed twice, chosen over widening `report()`'s two-tuple because two
+cases in the suite the issue says to leave alone unpack it. **The alternative —
+pin 0 and call it a hole in a comment — was declined**, because a later reader
+takes 0 as the contract, which is the defect in the one suite meant to hold it.
+**Nothing here is a claim that a gate exists**: none runs this tool, and #1033,
+which wants one to key on this return value, has not landed.
+
+**`ec/tools/test_check_history_checkouts_run.py` is new, a separate file per
+`CLAUDE.md`'s rule**, and this landing does not edit the report suite at all —
+what the issue asks for, and true of the thirty-one on this tree as much as of
+the thirty on its branch and the twenty-four #1009 left. It runs the tool **as a subprocess** over the same
+scratch trees and holds the run's contract: exit 1 with five `  FAIL ` lines, the
+summary and the report **split across stderr and stdout**; exit 0 with an
+**empty** stderr and both verdicts on stdout; a default `--repo` that reads this
+repository from inside a stale tree, which is a fact about `__file__` an
+in-process case could only fake by patching the constant under test; the empty
+and missing workflow directories refused rather than crashed; **one unreadable
+file beside a conforming one not being a broken census**; and the `--help`
+block. The four stale sentences and the `workflow()` builder are **imported**
+from the report suite rather than copied — a paraphrase that happened to name a
+job would be a control passing for the wrong reason, and a second copy is a
+second thing to drift. **Two of the seven pin a prose verdict line, and both are
+worded as #1034 left them on `main`** — that landing judged the depth-claim rule
+per *workflow* rather than per sentence and renamed both summary lines to say so.
+The stale tree's numbers are unmoved (four claims in four sentences, five
+problems), so the merge corrected the wording and not a figure.
+
+**Two of the seven cases were red before the three-line edit, and the suite says
+so rather than claiming it went from all-green to all-green**: both are the two
+empty-census cases above, each finding the `AttributeError` where the refusal
+belongs, measured by running this suite against the pre-fix tool in a copy of
+the tree (5 passed, 2 failed) — re-measured on this tree after the merge, where
+that tool is `origin/main`'s copy rather than `HEAD`'s, and still 5 and 2.
+The issue's own `sed -i 's/    if problems:/    if False:/'` now turns **this**
+suite red on the stale-tree case's returncode and leaves the report suite's
+thirty-one green — the mutation takes the tree from exit 1 with five `FAIL` lines to
+exit 0 with an empty stderr, and only a tree the tool rejects can tell the two
+apart.
+
+**Not in any gate**, for the reason `tools/test_readme_suite_table.py` is not
+either, and **not hardware evidence of any kind** — the scratch trees are
+hand-built and the tool reads committed YAML and committed Python.

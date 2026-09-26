@@ -1007,17 +1007,20 @@ the half this table exists to record.
 | [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md):22 | `ec/tools/test_xdata_cluster_names.py:88` | by-path | other | carries |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | comment | **does not carry** |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2665 | `../tools/test_xdata_cluster_names.py:68-90` | beside | other | carries |
-| [`../../tools/README.md`](../../tools/README.md):431 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** — and this merge's shift moved the row's own citing line `:279` → `:341`, the eighth re-registration for this one row and this file's fourteenth change; the `:312` the `#845` × `#974` merge measured and the `:346` #1009's own branch did are each left written beside it per [`../findings.md`](../findings.md) §4a-4d, each true of the tree it was measured on. **#1034's shift moved it twice more, `:341` → `:366` → `:370`**, by a supersession note for the test totals and not by anything to do with the `test_xdata_cluster_names.py` claim this row reconciles — the ninth and tenth re-registrations for this row, and the reason a note about a different suite's figure still costs this one a cell, twice: the second move was this change recording the first. **The `#1034` × `#1035` merge's shift moved it once more, `:370` → `:399`**, by a fourth supersession note for the same figures — the eleventh re-registration for this row, and one move rather than #1034's pair, because that note recorded its own shift correctly the first time. **The `#1034` × `#1035` × `#1038` merge's shift moved it once more, `:399` → `:431`**, by a fifth supersession note for the same figures — the twelfth re-registration for this row and **one move again rather than a pair**, because that note too recorded its own shift correctly the first time |
+| [`../../tools/README.md`](../../tools/README.md):467 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** — and this merge's shift moved the row's own citing line `:279` → `:341`, the eighth re-registration for this one row and this file's fourteenth change; the `:312` the `#845` × `#974` merge measured and the `:346` #1009's own branch did are each left written beside it per [`../findings.md`](../findings.md) §4a-4d, each true of the tree it was measured on. **#1034's shift moved it twice more, `:341` → `:366` → `:370`**, by a supersession note for the test totals and not by anything to do with the `test_xdata_cluster_names.py` claim this row reconciles — the ninth and tenth re-registrations for this row, and the reason a note about a different suite's figure still costs this one a cell, twice: the second move was this change recording the first. **The `#1034` × `#1035` merge's shift moved it once more, `:370` → `:399`**, by a fourth supersession note for the same figures — the eleventh re-registration for this row, and one move rather than #1034's pair, because that note recorded its own shift correctly the first time. **The `#1034` × `#1035` × `#1038` merge's shift moved it once more, `:399` → `:431`**, by a fifth supersession note for the same figures — the twelfth re-registration for this row and **one move again rather than a pair**, because that note too recorded its own shift correctly the first time. **This merge's shift moved it once more, `:431` → `:467`**, by a sixth supersession note for the same figures — the thirteenth re-registration for this row, and **one move and not a pair** again, the sixth note having recorded its own shift correctly too. **#1037's own branch measured `:387` rather than either of the last two**, off a `main` that had not yet carried the fourth and fifth notes: seventeen lines added above the row by a note about the runner totals, none of it about this claim, true of that tree alone per [`../findings.md`](../findings.md) §4a-4d |
 
-**43 carry, 2 carry on the adjacent line, 19 do not carry, 10 record another line
+**44 carry, 2 carry on the adjacent line, 19 do not carry, 10 record another line
 on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
 on the merged tree; the 27/3/1/6/7/6 this page was written with, the
 32/3/0/9/10/16 #850's merge measured, the 34/2/9/10/16 #888's, the
 32/2/11/10/16 #888 × #890's, the 32/2/13/10/16 #888 × #885's, the
-48/2/13/10/32 #885 × #771's, the 50/2/11/10/32 #930's repoint and the
-51/2/11/10/32 #778's merge measured are
+48/2/13/10/32 #885 × #771's, the 50/2/11/10/32 #930's repoint,
+the 51/2/11/10/32 #778's merge and the 43/2/19/10/32 `d3304785` measured are
 the record of the trees they were taken on and
-are kept in the sentence rather than deleted, per §4a-4d. Nine moves, and the
+are kept in the sentence rather than deleted, per §4a-4d — the last of them
+being the figure this sentence read at every commit from `d3304785` to
+`origin/main`'s `5244f119`, and the step that made it stale is named in its own
+paragraph below.** Nine moves, and the
 fifth is the one worth reading twice: #850's took the class 50 → 69 pins, #888's
 took it 69 → 71 by adding two rows that **carried** on its own tree, #890's
 landing beside them took those same two rows to **`does not carry`** — so the
@@ -1100,6 +1103,22 @@ merge: the `#929 × #962 × #780` merge moved no verdict at all, which is what i
 correction above says, and the two rows it did re-derive are a repoint that kept
 its reading. **The sentence is left as written and the counts are here**, so both
 the wrong value and the right one stay visible.
+
+**And the same paragraph is itself a record, because the sentence it corrects has
+since been caught by the same defect a second time.** `d3304785` — #1013's — took
+this table from **106 rows to 107** by adding one row that **carries**, and the
+sentence was not re-counted: it has read `43 carry` at every commit from there to
+`origin/main`'s `5244f119`, so the five columns summed to 106 over a 107-row table
+for the whole of that window, and the `43` in this paragraph is the *then*-right
+count rather than this tree's. **Counting the table on this tree with
+`check_pin_table_rows.find_table()` gives 44 / 2 / 19 / 10 / 32 over 107**, which
+is what the sentence now says, and the paragraph above is left exactly as written
+for the same reason the sentence's own parenthetical keeps `51` and `43`. **No
+verdict moved for this merge**: the merged tree's table is byte-identical to
+`5244f119`'s apart from the one `tools/README.md` row's citing line, and the step
+into `107` is #1013's. It is recorded here because the sentence is the one a
+reader counts against, and a second correction leaving it unmentioned would be
+the same silence the first one is.**
 **"carries, adjacent"** is
 a pin one line off the thing it names, and it is two of one hundred and six because
 this corpus writes *"is at `:1862`"* against a `def` on the next line. No rule can
