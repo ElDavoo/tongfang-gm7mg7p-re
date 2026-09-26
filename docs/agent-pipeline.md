@@ -322,8 +322,8 @@ only covers what's specific to *this* copy.
      **third** column, the description, is the one a reader opens the index
      for and the one that names the addresses each fixture is supposed to
      contain — and both of the index's hand-repairs (#502, #720) were to that
-     column, so every check on the index was green through them. **Not
-     claimed: that this would have caught either.** Adding it is a
+     column; **measured since #978, 0 `missing` over both pre-repair trees**
+     (`docs/findings/testdata-row-claims-repair-measurement.md`). Adding it is a
      `check_testdata_row_claims()` function and a `gate` line, and the whole of
      it is prepared in `docs/ci/agent-gates-testdata-row-claims.patch` — a
      patch of its own, but one that still composes with item 9's: its `gate`

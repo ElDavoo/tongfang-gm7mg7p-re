@@ -559,12 +559,24 @@ class TheCommittedTree(unittest.TestCase):
         # value rather than argued. The `39/11/28` and the `38/11/27` stay
         # written above, each figure triple true of the tree it was measured
         # on, per §4a-4d.
+        #
+        # **The 40 -> 41 step is one suite and the same reasoning again.**
+        # Issue #978's `ec/tools/test_measure_index_repair_visibility.py` landed
+        # beside #973's, and its write-up cites the suite *by path* and never
+        # as `test_measure_index_repair_visibility.py:NNN` -- for #811's reason,
+        # a line pin would add a record and move the 106 / 79 / 58 in
+        # `test_census_test_line_pins.py` and the 106-row table
+        # `check_pin_table_rows.py` reconciles, which is a second shared-file
+        # edit with no bearing on this axis. So `suites()` indexes one more
+        # file, the tail takes it, and the pinned count does not move at all:
+        # **41 / 11 / 30**. The 40 / 11 / 29 stays written above, true of every
+        # tree from #973's merge until this one.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 40)
+        self.assertEqual(len(files), 41)
         self.assertEqual(len(files) - len(tail), 11)
-        self.assertEqual(len(tail), 29)
+        self.assertEqual(len(tail), 30)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

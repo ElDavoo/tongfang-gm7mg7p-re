@@ -7,8 +7,7 @@ names that is not on disk is a miss. It reads the **first** column, the
 `Feeds` column and the nested tables. It does not read the third -- the
 description -- and the third column is the one the index has needed a human to
 repair, twice, in #502 and #720, both times in a description of a row whose
-file was already named correctly. So every check on the index would have been
-green through both.
+file was already named correctly.
 
 **This is a new file, not a mode on `check_capture_claims.py`.** That tool's
 docstring records why the reuse is not free: `units()` and the sentence
@@ -174,11 +173,18 @@ the tree is a change to this docstring, not an invitation to add a regex:
     *second* date in one sentence rather than about a first that resolved to
     nothing.
 
-**Not claimed: that this would have caught #502 or #720.** What those two
-repairs changed is in the issues, not in the tree, and neither has been read
-back as a diff this tool could have been run over. What it holds is the tree as
+**What this does over the two hand-repairs, measured and not assumed (issue
+#978).** `measure_index_repair_visibility.py` ran this check over the
+pre-repair tree at each of #502 and #720: **0 `missing` both times**, at row 24
+and at rows 23-24 respectively. The reason is content, not coincidence -- every
+row either repair touched spells **zero** backticked `0xNNNN` literals, before
+and after, because both rewrote prose about mark labels, block membership and
+grader branch names, and this tool reads addresses. All three rows were
+runnable at their own pre-repair revision, so this is a blind spot with its
+reason rather than a row that resolved to nothing. What it holds is the tree as
 it stands: the surface is asserted non-empty, and every rule that makes it
-conservative has a case.
+conservative has a case. The measurement and its four limits are in
+`docs/findings/testdata-row-claims-repair-measurement.md`.
 
 Usage:
     python3 ec/tools/check_testdata_row_claims.py [--check]

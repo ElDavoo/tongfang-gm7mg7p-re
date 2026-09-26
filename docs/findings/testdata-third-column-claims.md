@@ -26,6 +26,18 @@ consistent with this one being green through them too. What those two
 repairs changed is in the issues, not in the tree, and neither has been read
 back as a diff this tool could have been run over.
 
+> **Superseded, 2026-09-26, by issue #978:** the diffs have now been read back
+> and the checker run over each pre-repair tree — **0 `missing` at row 24 for
+> #502 and at rows 23 and 24 for #720**, and the reason is content rather than
+> coincidence: every row either repair touched spells zero backticked
+> `0xNNNN` literals, before and after, because both rewrote prose about mark
+> labels and grader branch names where this tool reads addresses. All three
+> rows were runnable at their own pre-repair revision, so this is a blind spot
+> with its reason and not a row that resolved to nothing. The sentence above is
+> kept as it stood rather than edited out, per `docs/findings.md` §4a. The
+> measurement and its four limits are in
+> [`testdata-row-claims-repair-measurement.md`](testdata-row-claims-repair-measurement.md).
+
 > **Correction, 2026-09-26, at the `#964` merge: this page is #747's write-up
 > as it was measured on 2026-09-25, and it carries corrections in place since.**
 > The rule the corrections below are about — the `another capture's address`

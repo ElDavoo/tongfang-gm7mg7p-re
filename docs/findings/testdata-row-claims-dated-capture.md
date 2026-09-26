@@ -24,6 +24,14 @@ laptop is involved.
 read back as a diff this tool could have been run over. What it holds is the
 tree as it stands.
 
+> **Superseded, 2026-09-26, by issue #978:** both pre-repair trees have now
+> been read back and the checker run over each — **0 `missing` at row 24 for
+> #502 and at rows 23 and 24 for #720**, because every row either repair touched
+> spells zero backticked `0xNNNN` literals before and after, and all three were
+> runnable at their own pre-repair revision. The paragraph above is kept as it
+> stood rather than edited out, per `docs/findings.md` §4a; see
+> [`testdata-row-claims-repair-measurement.md`](testdata-row-claims-repair-measurement.md).
+
 ## The census, measured on this tree, 2026-09-26
 
 `grep -noE '`?20[0-9]{2}-[0-9]{2}-[0-9]{2}`?' ec/tools/testdata/README.md` over
@@ -247,8 +255,10 @@ many files it resolved to, and what became of each literal.
   is a defect in the index's prose about a fixture whichever fixture it is, and
   a reader is sent to the same place — the sentence. A follow-up may want
   distinct wording; that is not this issue.
-- **Re-reading #502 or #720 as diffs.** Both repairs are to this column, and the
-  disclaimer above is carried forward from #747.
+- **Re-reading #502 or #720 as diffs.** Done, as issue #978: the pre-repair trees
+  were extracted and both checkers run over each, and the answer is 0 `missing`
+  with a content reason. See
+  [`testdata-row-claims-repair-measurement.md`](testdata-row-claims-repair-measurement.md).
 - **Repairing any fixture, row or capture.** Nothing is wrong today. The
   committed index's row 7 sentence is **not edited** — it is true, it is now
   checked, and editing prose to make a tool green is the thing this repository

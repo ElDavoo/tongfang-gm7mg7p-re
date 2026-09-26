@@ -1006,7 +1006,7 @@ the half this table exists to record.
 | [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md):22 | `ec/tools/test_xdata_cluster_names.py:88` | by-path | other | carries |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | comment | **does not carry** |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2665 | `../tools/test_xdata_cluster_names.py:68-90` | beside | other | carries |
-| [`../../tools/README.md`](../../tools/README.md):236 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** |
+| [`../../tools/README.md`](../../tools/README.md):247 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** |
 
 **43 carry, 2 carry on the adjacent line, 19 do not carry, 10 record another line
 on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
@@ -1299,6 +1299,36 @@ shape and the verdict of that one row come back identical for the fourth time**
 figures are unmoved at **106 / 28 / 79 / 58** with `74` resolving, `32` declined
 and the landing-shape split still `0/15/22/5/32`, which is the check a repoint
 is run for: this one moved a line and not a record, a count or a shape.
+
+† **And a ninth, 2026-09-26 (the `#978` × `#979` × `#973` × `#780` merge),
+re-registering the same `../../tools/README.md` row alone again and still no
+count moving either.** #978's "What it runs" correction is eleven lines above
+the pin and nothing else on either side of this merge is: the eighth note above
+is the last to have moved it, and its `33` is already in the sum. So
+`236 + 11 = :247` and `159 + 9 + 7 + 22 + 6 + 33 + 11 = :247` is the whole
+arithmetic — **the largest value this row has held and, unlike the `33` step
+before it, a step no side of this merge could have predicted alone**, since
+the eleventh line is the clause carrying `1243 + 21 = 1264` beside the `1233 +
+10 = 1243` it supersedes, and that clause exists only because the two merges'
+corrections are written side by side. **The tool read 1 `unplaced-row` and 1
+`row-without-record` with `:236` still in the table** — checked by running it,
+not predicted — and **106 rows, 106 records, 106 placed, all seven classes 0**
+with `:247`. **The five `../findings.md` rows are still unaffected, and for the
+same reason as each time above**: #978's four edits to that file land in §41,
+§47, §76 and §79, all four of which are sections above the rows, and its new
+§81 is below them. **The shape and the verdict of that one row come back
+identical for the fifth time** — `by-name`, `assertion`, **records another
+line** — and the census's own figures are unmoved at **106 / 28 / 79 / 58** with
+`74` resolving, `32` declined and the landing-shape split still `0/15/22/5/32`.
+**That `32` is worth one clause rather than a shrug, because this merge is the
+one that added the suite whose name the newest prose spells with `:NNN` in it**:
+`tools/README.md`'s twenty-sixth note and the suite's own write-up both write
+`test_measure_index_repair_visibility.py:NNN` to say the pin is *not* taken
+there, and the census declines it as a non-numeric line for the same reason it
+declines every other prose mention of a path it is not citing. **Nothing new is
+pinned, so `58` distinct resolved targets does not move** — a declined mention
+is not a record, which is the same property the eighth note relies on when it
+says a line pin would have moved the 106 / 79 / 58.
 
 ‡ **What the tree carrying both #890 and #900 moved, re-registered against it,
 and still no count.** The *cited* targets are this branch's, because #890's 25

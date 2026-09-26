@@ -197,6 +197,9 @@ not fail the run — "not checked, not absent" — along with both dated refusal
 a capture named in prose that resolves to nothing and a sentence naming two of
 them, and the rest of the column is free prose that no rule reaches. Its wiring
 is prepared at
-`docs/ci/agent-gates-testdata-row-claims.patch`; **not claimed: that it would
-have caught #502 or #720**, whose repairs were both to this column. See
-`docs/findings/testdata-third-column-claims.md`.
+`docs/ci/agent-gates-testdata-row-claims.patch`. Both of the index's
+hand-repairs (#502, #720) were to this column; run over both pre-repair trees
+it reports 0 missing, and the reason is that the rows either repair touched
+carry no address claim to be wrong about — measured in issue #978. See
+`docs/findings/testdata-third-column-claims.md` and
+`docs/findings/testdata-row-claims-repair-measurement.md`.
