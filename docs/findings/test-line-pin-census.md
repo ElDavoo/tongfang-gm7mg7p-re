@@ -725,10 +725,10 @@ made this file's own §2 transcription stale, by moving the line they name, and
 two that were born correct against a line another branch had already moved. The
 count was thirteen because four pins that carried on their own trees stopped
 carrying here, not because anything about the other nine moved. **#930 repointed
-finding 7's pair and they carry again, so the count is eleven** — the same eleven
-of the thirteen this section recorded, and not one fewer,
-because the pair's return to `carries` took it off the list rather than repairing
-anything in it.
+finding 7's pair and they carry again, so the count fell by two, thirteen to the
+eleven** — and the eleven that are left are the same pins this section's list
+names, one for one, because the pair's return to `carries` took it off the list
+rather than repairing anything in it.
 
 *(The lead paragraph as #850's merge wrote it — **six items and nine pins**, one
 struck through, four new and all four #850's — is the record of that tree and is
@@ -1271,26 +1271,45 @@ one place this file says the repointing "lives in that file's follow-up list",
 and #930 is that list's finding-7 entry being worked: the two by-name pins move
 onto `:588`, the line the `> 300` floor is on. The re-run therefore **does** move
 this page's numbers, and moves them the way a correction rather than a merge
-does — the target count 42 → 41 because `:588` was already a target under the
-checklist's by-path spelling and `:563` has now lost its last name, the shape
-split `5/11/9/6/26` → `5/13/9/6/24` because `:588` is an `assertion` again, the
-thirteen that do not carry → the **eleven** as finding 7 comes off the
-list, and the carry count 32 → **34**. **The headcount does not move**: 73
-occurrences, 26 files, 46 spellings, 57 resolves and 16 declined are identical,
-because two rows changed spelling and neither was added nor deleted, and the
-citing lines stayed at `:212` and `:323` without re-registration. `146` markdown
-files read becomes `147`, the one figure that moves because the correction's own
-write-up is a new file — and that file carries no `test_*.py:NNN` pin, so the
-denominator moved and nothing else did. **The six of findings 6 and 8 are
-untouched**
+does.
+
+**The tree is named first, because the paragraph above is not one.** That note
+measures a projected `#888 × #890` merge that never landed; #930 landed on the
+`#885 × #771` tree instead, which is `main`, and every figure below is
+`census_test_line_pins.py` run on that tree and on no other. The run is **105
+pins, 27 files, 78 spellings, 57 targets, 73 resolves, 32 declined,
+`5/19/10/6/33`, 148 markdown files read**, against the
+`105/27/78/58/73/32/5/17/10/6/35/147` that same tree gives on its own — so each
+delta is read off the one run, and not off the `41` targets, `5/11/9/6/24` and
+`145` files the note above records. Those belong to that merge, they stay
+written as its figures, and they are not to be differenced against these.
+Three figures move, and all three are #888's two rows and nothing else:
+
+- **the target count 58 → 57**, because `:588` was already a target under the
+  checklist's by-path spelling and `:563` has now lost its last name;
+- **the shape split `5/17/10/6/35` → `5/19/10/6/33`**, because `:588` is an
+  `assertion` and the fixture row it replaces was an `other` — two `other` become
+  two `assertion`, and nothing else in the split moves;
+- **the thirteen that do not carry → the eleven, and the carry count 48 → 50**,
+  as finding 7's pair comes off the list and carries again. The nine and the
+  eleven above are that projected merge's; the thirteen is what the table reads
+  on this tree.
+
+**The headcount does not move**, and that is the part worth making: **105**
+occurrences, **27** files, **78** spellings, **73** resolves and **32** declined
+are identical on the two runs, because two rows changed spelling and neither was
+added nor deleted, and the citing lines stayed at `:212` and `:323` without
+re-registration. `147` markdown files read becomes `148`, the one figure that
+moves because the correction's own write-up is a new file — and that file
+carries no `test_*.py:NNN` pin, so the denominator moved and nothing else did.
+**The six of findings 6 and 8 are untouched**
 and are #920's: they were stale in the tree when this census found them, where
 these two were correct when written and were made stale by a merge beside them,
 and doing all three in one pass would collapse the distinction the count of
 eleven against thirteen exists to record. **No item below items 1–6 changed
-verdict, the
-ten that record another line are unchanged, and `Why no checker` stands** — the
-repoint is a reading recorded in the table, and no verdict was rendered by
-anything to record it.)*
+verdict, the ten that record another line are unchanged, and `Why no checker`
+stands** — the repoint is a reading recorded in the table, and no verdict was
+rendered by anything to record it.)*
 
 ## What is left, as follow-ups
 

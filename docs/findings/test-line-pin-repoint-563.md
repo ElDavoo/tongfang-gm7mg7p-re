@@ -88,8 +88,10 @@ both sides of the table are the `#885 × #771` ones rather than the
 `#888 × #885` ones — #885's two are two of the 105 occurrences, one of the 27
 files, one of the 78 spellings, one of the 57 targets and two of the 73
 resolving pins, and #771's thirty-two are thirty-two more occurrences in one
-more file, none of either set being a target the other already had. All six of
-those are also thirteen that do not carry, two of them #888's and two #885's.
+more file, none of either set being a target the other already had. Of the
+thirteen that did not carry on that tree, four were #850's, two #888's and two
+#885's; this pass's repoint took #888's two off the list, and the eleven that
+remain are the nine #850 left and #885's two.
 Nothing about the repoint's own arithmetic changes: two rows re-spelled,
 `assertion` back, one target fewer, one file read more. **The same two rows are
 the reason the target count is the one figure three trees disagree about**: the
