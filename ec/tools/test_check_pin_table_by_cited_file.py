@@ -488,18 +488,18 @@ class TheCommittedTree(unittest.TestCase):
         self.assertEqual(len(records), 105)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
-        # 36 indexed, 11 named, 25 named by none -- the three figures that move
+        # 37 indexed, 11 named, 26 named by none -- the three figures that move
         # by construction the moment this suite itself lands, since `suites()`
         # indexes every `test_*.py` in the tree and this is one. The superseded
-        # 35 / 11 / 24 are the record of the tree the write-up was measured on,
-        # per §4a-4d, and the first two are the ones to read first if one of
-        # these ever disagrees with the run.
+        # 36 / 11 / 25 are the record of the tree this branch's base is, per
+        # §4a-4d, and the first two are the ones to read first if one of these
+        # ever disagrees with the run.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 36)
+        self.assertEqual(len(files), 37)
         self.assertEqual(len(files) - len(tail), 11)
-        self.assertEqual(len(tail), 25)
+        self.assertEqual(len(tail), 26)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be
