@@ -84,7 +84,7 @@ it into the other two, and the new assertions keep it separate.
 
 | assertion | file:line | the page line it names |
 |---|---|---|
-| `main-ec` `write`, guard-off / committed, with its `1,169` / `13,891` denominators in both censuses | `ec/tools/test_xdata_cluster_names.py:473` | `xdata-06c2-06db-timers.md:781` |
+| `main-ec` `write`, guard-off / committed, with its `1,169` / `13,891` denominators in both censuses | `ec/tools/test_xdata_cluster_names.py:481` | `xdata-06c2-06db-timers.md:781` |
 | `main-ec` `read`, same arm, denominators printed on the `write` row above | `:465` | `:782` |
 | `pd` `write`, with `108` / `603`, both printed there | `:482` | `:783` |
 | `both` `write`, with `49` printed there and the `1,202` added by the assertion | `:499` | `:784` |

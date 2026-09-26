@@ -292,8 +292,17 @@ class ReadsTheFigure(unittest.TestCase):
                          [43, 4966])
 
     def test_a_hex_address_is_not_a_figure_and_the_run_beside_it_is(self):
-        self.assertEqual(self.verdicts_of("`0x08A8` `84/44`"), {84: ("unheld", "unheld"),
-                                                                 44: ("unheld", "unheld")})
+        # `84/86` rather than the `84/44` this was written with, for the reason
+        # `test_two_figures_in_one_cell_are_both_read` gives above: a shape case
+        # wants a verdict this tool's method owns rather than one the tree
+        # happens to produce today. #778's merge gave `44` a literal at an
+        # assertion in `test_check_pin_table_by_cited_file.py` -- the
+        # by-cited-file concentration figure, which is a real held pin and
+        # correctly reported as one -- so `44` stopped being a number this tool
+        # has no opinion about. The shape under test is unchanged: a hex address
+        # is not a figure, and the decimal run beside it is two of them.
+        self.assertEqual(self.verdicts_of("`0x08A8` `84/86`"), {84: ("unheld", "unheld"),
+                                                                 86: ("unheld", "unheld")})
 
     def test_a_decimal_is_not_a_figure(self):
         # `at threshold 0.5` is a threshold, not a count, and `DEFAULT_THRESHOLD`

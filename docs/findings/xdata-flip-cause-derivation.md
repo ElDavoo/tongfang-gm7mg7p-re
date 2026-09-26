@@ -374,7 +374,7 @@ branches, identical and different, so the line cannot pass by being one string.
 - **No CSV, YAML, threshold or assertion moves.** `xdata-clusters.csv`,
   `xdata-registers.csv`, `xdata-cluster-names.csv` and `registers.yaml` are
   byte-untouched. `assertGreater(len(moved), 300)` stays at
-  [`test_xdata_cluster_names.py:417`](../../ec/tools/test_xdata_cluster_names.py),
+  [`test_xdata_cluster_names.py:425`](../../ec/tools/test_xdata_cluster_names.py),
   and §5 of
   [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) is still the argument
   for leaving it there. The guard-off runs wrote only to `/tmp`.

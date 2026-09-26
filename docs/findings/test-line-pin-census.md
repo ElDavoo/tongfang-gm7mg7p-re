@@ -34,14 +34,47 @@ census, and the count it starts from.
 
 ```console
 $ python3 ec/tools/census_test_line_pins.py
-105 pin(s) in 27 markdown file(s): 78 distinct spelling(s), 57 distinct resolved target(s)
-  73 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
-  5 def test_, 19 assertion, 10 comment, 6 blank, 33 other (of the pins that resolve)
-  read 148 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 35 test file(s) in it
+106 pin(s) in 28 markdown file(s): 79 distinct spelling(s), 58 distinct resolved target(s)
+  74 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
+  5 def test_, 19 assertion, 10 comment, 6 blank, 34 other (of the pins that resolve)
+  read 152 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 38 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
 ```
+
+**Correction, 2026-09-26, at the #778 merge: this census is 106 pins in 28 files,
+not the 105 in 27 the block above read.** The block is re-run on the merged tree
+and every count this page publishes is re-transcribed from it; the `105`/`27`
+stays visible above and in the list below rather than edited out of silence, per
+§4a-4d. Two merges are owed the correction and only one of them is this one:
+**#942** added a markdown write-up and a tool with a suite without re-running
+this page, which is why the `148` → `149` markdown files read and the
+`35` → `36` test files resolved against were already a merge behind, and
+**[#778](xdata-two-largest-case-restatement.md)** is what moved the rest — its
+new write-up brings one pin with it, so files 27 → **28**, spellings 78 → **79**,
+targets 57 → **58**, resolves 73 → **74** and `declined` holds at **32**, and the
+`other` shape 33 → **34** is the whole of the shape movement. Its edit to
+`ec/tools/test_xdata_cluster_names.py` re-registered 33 further pins without
+adding any, which is a statement about the sweep's mechanics and not about a
+claim: the 33 are the ones the *Pins* section of that write-up already measured,
+and its `105 -> 106` and `73 -> 74` are these same two numbers, arrived at
+separately. **The two merges that landed on `main` in the same window move none
+of the six figures above, and the two denominators are `150` → `152` and `36` →
+`38` rather than the branch's own**: [#777](doc-patch-reference-gate.md) and
+[#946](pin-table-by-cited-file.md) each brought a markdown write-up and a suite
+with it, and neither wrote a `test_*.py:NNN` into either, so the class is the
+same 106 pins in the same 28 files — the third merge in a row, and the first
+that moved **only** the two denominators. #777 did re-register one row's *citing*
+line (`tools/README.md`, `159` → `168`, which is why the three places below that
+name it agree on `168`), and #942's own addition shifted `../findings.md`'s by 26
+to `9103`; both are re-registrations, neither is a new pin, and the per-pin
+table below carries the re-registered readings rather than new ones.
+**The per-pin table below was re-derived on the merged tree rather
+than left to lag**, because #942's `check_pin_table_rows.py` makes a lagging row
+a `read-differs` or an `unplaced-row` rather than a thing only a reader notices;
+the standing a dated table had, this write-up's own paragraph claims, no longer
+holds once the four mechanical columns are held to the run.
 
 **Correction, 2026-09-26, at the #888 merge: this census is 71 pins in 25 files,
 not the 69 in 24 the block above first read after #850.** The block is re-run on
@@ -253,10 +286,10 @@ tree carries all four causes at once.**)*
 which is the only reason a census like this can be trusted: a headcount that
 cannot be reconciled against itself is the failure it is measuring.
 
-- **105 occurrences** — every pin, counted once per place it is written. Sixty-two
+- **106 occurrences** — every pin, counted once per place it is written. Sixty-three
   spellings are written once, seven twice, eight three times and one five times
-  (`ec/tools/test_xdata_cluster_names.py:473`, five times over), which is the
-  whole of the gap: `7 + 16 + 4 = 27`, and `105 - 27 = 78`. *(`:448` is what this
+  (`ec/tools/test_xdata_cluster_names.py:481`, five times over), which is the
+  whole of the gap: `7 + 16 + 4 = 27`, and `106 - 27 = 79`. *(`:448` is what this
   bullet named on #888's tree and is stale here: #890 repointed that spelling
   by +25 in the four files that carry it, and this file's own mentions of it
   are not counted by the census — the tool excludes this file — so nothing
@@ -271,8 +304,13 @@ cannot be reconciled against itself is the failure it is measuring.
   written twice and sixteen written once, all of them new. The step from 26 to 27
   was the only one two merges had ever taken together, and it was taken by the
   `:392` pair #885 wrote landing *beside* the `:417` pair #890's repoint created
-  rather than replacing it.)*
-- **78 distinct spellings** — the pin exactly as written, so `test_a.py:12` and
+  rather than replacing it. **#778's merge is the second time the gap has held,
+  and it holds for the same reason and a different cause: its one new pin is a
+  singleton, so sixty-two written once became sixty-three and the repeated tail
+  is untouched.** The `:473` that was written five times is now `:481` and is
+  still written five times — the repoint moved all five together, which is what
+  a repoint is.)*
+- **79 distinct spellings** — the pin exactly as written, so `test_a.py:12` and
   `ec/tools/test_a.py:12` are two. This is the figure the issue's grep reported
   for a tree half this size and it is the one that moved least, and it is also
   the figure that held through the repoint above. *(`#885`'s own merge note read
@@ -288,10 +326,12 @@ cannot be reconciled against itself is the failure it is measuring.
   arithmetic rather than a coincidence. The distinction this bullet exists to
   draw is the reason the 46 → 78 step looks twice the size of the one above it,
   and it is the same distinction the `#888` section drew about a spelling and a
-  target being two measurements.)*
-- **57 distinct resolved targets** — distinct `(file, span)` pairs after
+  target being two measurements. **78 → 79 is #778's and is a sixth kind: a new
+  singleton, neither an addition of a row that shares a spelling nor a repoint of
+  one that does.**)*
+- **58 distinct resolved targets** — distinct `(file, span)` pairs after
   resolution, so the two spellings of one span are one target. **Every addition
-  is the whole of the move, 40 → 42 → 58 → 57**, and the first two got there by
+  is the whole of the move, 40 → 42 → 58 → 57 → 58**, and the first two got there by
   opposite routes, which is why neither merge's note predicted the other's figure.
   On #888's tree the corpus already wrote the same span **by path** —
   `ec/tools/test_xdata_cluster_names.py:563` in
@@ -313,8 +353,14 @@ cannot be reconciled against itself is the failure it is measuring.
   pair back onto `:588` rejoins a target the checklist already carried by path
   and leaves `:563` named by nothing the census counts, so the count falls to
   **57** — a figure the argument below said could not move, moved by one and
-  moved back, and the argument was right both times.
-- **27 files** carry at least one;
+  moved back, and the argument was right both times. **#778's single pin is the
+  57 → 58 step back the other way and is the first move since #771's that adds
+  a target without any line moving** — `:88` is the `--no-eq-guard` invocation,
+  which no other pin in the tree names. **Its 33 re-registrations are not in this
+  bullet and that is the point**: a repoint that moves a line the tree already
+  names resolves to the target the tree already had, so a sweep of 33 leaves this
+  figure at 57 + the one new pin and nothing else.
+- **28 files** carry at least one;
   [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md) carries
   thirty-two, [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) thirteen,
   [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) ten,
@@ -325,12 +371,28 @@ cannot be reconciled against itself is the failure it is measuring.
 extractor's fault rather than the tree's.** The issue's own grep reported 37
 distinct pins across 22 files; the plan built on it counted 49 occurrences over
 the same 22, and **called 12 of those 49 an ambiguous `tools/` prefix**. This
-tree carries **105 occurrences across 27 files** — fifty-five pins and four
-files written since, two of them by [#888](xdata-moved-ranks-key-collision.md)'s
-own write-up, two by `#885`'s and thirty-two by `#771`'s (the corrections above) —
-and
+tree carries **106 occurrences across 28 files** — fifty-seven pins and six
+files above the plan's `49` over `22` — and
 **none** of them ambiguous, for two reasons that are findings in their own right
 and are the reason the tool is written the way it is:
+
+*(The list of write-ups this paragraph used to carry does not add up to that
+total, and the residue is left visible rather than assigned to a cause nobody
+measured. It read "fifty-five pins and four files" when the headcount was 105,
+which is one short of its own `105 − 49` and one short of its own `27 − 22`
+already, and it named [#888](xdata-moved-ranks-key-collision.md)'s two and
+`#885`'s two and `#771`'s thirty-two — 36 pins over three files, not 55 over
+four. **What the four corrections above between them account for is 19 pins from
+`#850`, 2 from `#888`, 2 from `#885`, 32 from `#771` and 1 from
+[#778](xdata-two-largest-case-restatement.md) — 56 pins over six files** — which
+is still one pin short of the 57, and the plan's `49` and #887's own `50` are
+two different baselines, so the remainder is a difference between two
+measurements of a population neither of them fixes. A reader who needs the
+breakdown should read the per-file split the census prints on every run; this
+sentence is not where it is kept, and the arithmetic error is recorded here
+rather than edited into agreement, per §4a-4d.)*
+
+
 
 1. **A scan that recognises `tools/` but not `windows/tools/` truncates the
    second into the first.** Four of the twelve are `windows/tools/…` citations
@@ -351,21 +413,22 @@ and are the reason the tool is written the way it is:
    tree does not have it, beside the citing file — and says which of the two
    answered for every pin.
 
-**So the measured headcount of this class is 105 occurrences, 78 spellings, 57
+**So the measured headcount of this class is 106 occurrences, 79 spellings, 58
 resolved targets — and zero of the twelve the plan's scan called an ambiguous
 prefix is one.** The figures that moved from the plan's are recorded as a defect
 in the method that produced them rather than as a drift in the tree, and a census
 that reports the wrong population with great confidence is worth less than no
-census. The `50`/`23` and `69`/`24` this paragraph was written with, and the
-`73`/`26` it was last restated at, are the record of the trees they were
-measured on, and stay visible beside the `105`/`27` for the same reason they do
-everywhere else in this file.
+census. The `50`/`23` and `69`/`24` this paragraph was written with, the
+`73`/`26` it was last restated at and the `105`/`27`/`78`/`57` #930's merge
+measured, are the record of the trees they were measured on, and stay visible
+beside the `106`/`28`/`79`/`58` for the same reason they do everywhere else in
+this file.
 
 ### Verdicts, and what each one is not
 
 | verdict | what it means | here |
 |---|---|---|
-| `resolves` | the file was found and the span is one it has | **73** |
+| `resolves` | the file was found and the span is one it has | **74** |
 | `out-of-range` | the file is there and the span ends past its end | 0 |
 | `unresolved-path` | no such file under either reading | 0 |
 | `ambiguous-path` | a bare module name two files in the tree could answer to | 0 |
@@ -416,15 +479,18 @@ duplicate.
 | `blank` | 6 | nothing at all — the blank line above what the span is about |
 | other | 33 | a `def` that is not a test, an assignment, a `setUpClass` body |
 
-*(The split has now been measured seven times and the only rows that have ever
+*(The split has now been measured eight times and the only rows that have ever
 moved are the assertions and `other`: **5 / 15 / 5 / 8 / 11 over 44** as the
 issue was filed, **5 / 11 / 9 / 6 / 22 over 53** after #850, **5 / 13 / 9 / 6 / 22
 over 55** on the #888 × #891 tree, **5 / 11 / 9 / 6 / 24 over 55** on the
 #888 × #890 one, **5 / 11 / 9 / 6 / 26 over 57** on the #888 × #885 one,
-**5 / 17 / 10 / 6 / 35 over 73** at the #885 × #771 merge, and the
-**5 / 19 / 10 / 6 / 33 over 73** above, which is that same `:563` pair repointed
-back onto the floor by #930. The first six are the record of the trees they were
-taken on and stay visible per §4a-4d. The two that moved back are the `> 300`
+**5 / 17 / 10 / 6 / 35 over 73** at the #885 × #771 merge, the
+**5 / 19 / 10 / 6 / 33 over 73** #930's repoint of that same `:563` pair onto
+the floor gave, and the **5 / 19 / 10 / 6 / 34 over 74** above, which is #778's
+one new pin and nothing else — its 33 re-registrations are re-registrations, and a
+row that keeps its shape when the line under it moves is what a re-registration
+is. The first seven are the record of the trees they were taken on and stay
+visible per §4a-4d. The two that moved back are the `> 300`
 floor's own `assertGreater` and the `other` row it became when #890 put 25 lines
 above it; the step before that is arithmetic rather than a fourth cause, being
 the two `:563` rows and the two `:392` rows the two merges added between them,
@@ -433,17 +499,17 @@ comment and nine `other` out of one new file, the fifteen that are not assertion
 being the call sites and the assignments a `grep -rn` transcript prints — and the
 sixth is that same `:563` pair coming back as assertions, which is why `assertion`
 reads 19 and `other` 33 rather than either side's 17/35 or 13/22. That a figure
-this close to stable still moves at every one of the seven moves since the issue
+this close to stable still moves at every one of the eight moves since the issue
 was filed is the reason the distribution is printed on every run rather than
-quoted once — and that the last of those moves is a *correction* rather than a
-merge is the reason the shape split is a reading of the class rather than a
+quoted once — and that one of the last two is a *correction* rather than a merge
+is the reason the shape split is a reading of the class rather than a
 property of it.)*
 
-**Six of the 73 resolving pins land on a blank line**, and that is the house
+**Six of the 74 resolving pins land on a blank line**, and that is the house
 spelling rather than a mistake: a span is written from the line *above* the thing
 it is about. `ec/tools/test_disasm8051.py:3-6` is a module docstring that opens
 on its own blank line; `ec/tools/test_grade_0751_isolation.py:16-20` is an import
-block the same way; and `test_xdata_cluster_names.py:845-851` is a span that
+block the same way; and `test_xdata_cluster_names.py:910-916` is a span that
 begins on the blank above `def test_every_row_records_the_evidence_for_its_name`.
 **A checker for this class has to accept a blank line as a legitimate target**,
 which is not a rule anyone writes down twice.
@@ -464,7 +530,7 @@ the half this table exists to record.
 | [`../findings.md`](../findings.md):7191 † | `test_xdata_cluster_names.py:286` | by-name | assertion | **does not carry** |
 | [`../findings.md`](../findings.md):7370 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
 | [`../findings.md`](../findings.md):7431 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
-| [`../findings.md`](../findings.md):9103 | `ec/tools/test_xdata_cluster_names.py:392` | by-path | other | **does not carry** |
+| [`../findings.md`](../findings.md):9103 | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |
@@ -516,61 +582,63 @@ the half this table exists to record.
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):139 | `windows/tools/test_ec_watch.py:1134` | by-path | other | carries |
 | [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md):68 | `ec/tools/test_citation_gap_scan.py:109` | by-path | assertion | carries |
 | [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md):27 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):72 | `ec/tools/test_xdata_cluster_names.py:734` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):73 | `ec/tools/test_xdata_cluster_names.py:734` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):74 | `ec/tools/test_xdata_cluster_names.py:473` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):75 | `ec/tools/test_xdata_cluster_names.py:473` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):76 | `ec/tools/test_xdata_cluster_names.py:490` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):77 | `ec/tools/test_xdata_cluster_names.py:490` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):78 | `ec/tools/test_xdata_cluster_names.py:507` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):79 | `ec/tools/test_xdata_cluster_names.py:507` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):80 | `ec/tools/test_xdata_cluster_names.py:524` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):81 | `ec/tools/test_xdata_cluster_names.py:524` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):177 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | **records another line** |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):181 | `ec/tools/test_xdata_cluster_names.py:473` | by-path | other | carries |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):189 | `test_xdata_cluster_names.py:307` | by-name | other | **records another line** |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):72 | `ec/tools/test_xdata_cluster_names.py:799` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):73 | `ec/tools/test_xdata_cluster_names.py:799` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):74 | `ec/tools/test_xdata_cluster_names.py:481` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):75 | `ec/tools/test_xdata_cluster_names.py:481` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):76 | `ec/tools/test_xdata_cluster_names.py:498` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):77 | `ec/tools/test_xdata_cluster_names.py:498` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):78 | `ec/tools/test_xdata_cluster_names.py:515` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):79 | `ec/tools/test_xdata_cluster_names.py:515` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):80 | `ec/tools/test_xdata_cluster_names.py:532` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):81 | `ec/tools/test_xdata_cluster_names.py:532` | — | — | **declined** (fenced) |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):190 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | **records another line** |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):194 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | other | carries |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):202 | `test_xdata_cluster_names.py:307` | by-name | other | **records another line** |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):71 | `ec/tools/test_disasm8051.py:52` | — | — | **declined** (fenced) |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):122 | `test_disasm8051.py:52` | by-name | comment | carries |
 | [`runner-red-suite-set.md`](runner-red-suite-set.md):103 | `tools/test_readme_suite_table.py:11-20` | by-path | other | carries |
 | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):25 | `ec/tools/test_check_testdata_index.py:413-415` | by-path | assertion | **records another line** |
 | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):145 | `ec/tools/test_check_site_census.py:449` | by-path | assertion | carries |
 | [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):392 | `test_xdata_cluster_names.py:54` | by-name | other | **does not carry** |
-| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):403 | `test_xdata_cluster_names.py:651-666` | by-name | other | carries |
-| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):433 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | carries |
-| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):446 | `ec/tools/test_xdata_cluster_names.py:355-370` | by-path | comment | **records another line** |
-| [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md):87 | `ec/tools/test_xdata_cluster_names.py:473` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):20 | `ec/tools/test_xdata_cluster_names.py:339` | by-path | def test_ | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):131 | `ec/tools/test_xdata_cluster_names.py:734` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):137 | `ec/tools/test_xdata_cluster_names.py:473` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):138 | `ec/tools/test_xdata_cluster_names.py:490` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):139 | `ec/tools/test_xdata_cluster_names.py:507` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):140 | `ec/tools/test_xdata_cluster_names.py:524` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):156 | `ec/tools/test_xdata_cluster_names.py:339` | by-path | def test_ | carries |
+| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):403 | `test_xdata_cluster_names.py:659-674` | by-name | other | carries |
+| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):447 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | carries |
+| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):460 | `ec/tools/test_xdata_cluster_names.py:363-378` | by-path | comment | **records another line** |
+| [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md):87 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):20 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | def test_ | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):131 | `ec/tools/test_xdata_cluster_names.py:799` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):137 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):138 | `ec/tools/test_xdata_cluster_names.py:498` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):139 | `ec/tools/test_xdata_cluster_names.py:515` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):140 | `ec/tools/test_xdata_cluster_names.py:532` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):156 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | def test_ | carries |
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):165 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | **records another line** |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334 | `ec/tools/test_xdata_cluster_names.py:588` | by-path | assertion | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334 | `ec/tools/test_xdata_cluster_names.py:596` | by-path | assertion | carries |
 | [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):376 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
-| [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):377 | `test_xdata_cluster_names.py:417` | by-name | comment | **does not carry** |
-| [`xdata-green-set.md`](xdata-green-set.md):283 | `ec/tools/test_xdata_cluster_names.py:339` | by-path | def test_ | carries |
-| [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md):622 | `ec/tools/test_xdata_cluster_names.py:392` | by-path | other | **does not carry** |
-| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15 | `ec/tools/test_xdata_cluster_names.py:417` | by-path | comment | **does not carry** |
-| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):415 | `test_xdata_cluster_names.py:417` | by-name | comment | **does not carry** |
-| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):427 | `test_xdata_cluster_names.py:412-414` | by-name | comment | **does not carry** |
-| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):212 | `test_xdata_cluster_names.py:588` | by-name | assertion | carries § |
-| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):323 | `test_xdata_cluster_names.py:588` | by-name | assertion | carries § |
-| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):28 | `ec/tools/test_xdata_cluster_names.py:833` | by-path | other | carries |
+| [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):377 | `test_xdata_cluster_names.py:425` | by-name | comment | **does not carry** |
+| [`xdata-green-set.md`](xdata-green-set.md):283 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | def test_ | carries |
+| [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md):622 | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
+| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15 | `ec/tools/test_xdata_cluster_names.py:425` | by-path | comment | **does not carry** |
+| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):415 | `test_xdata_cluster_names.py:425` | by-name | comment | **does not carry** |
+| [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):427 | `test_xdata_cluster_names.py:420-422` | by-name | comment | **does not carry** |
+| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):212 | `test_xdata_cluster_names.py:596` | by-name | assertion | carries § |
+| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):323 | `test_xdata_cluster_names.py:596` | by-name | assertion | carries § |
+| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):28 | `ec/tools/test_xdata_cluster_names.py:898` | by-path | other | carries |
 | [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):132 | `test_xdata_cluster_names.py:149-153` | by-name | def test_ | carries |
-| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):149 | `test_xdata_cluster_names.py:845-851` | by-name | def test_ | carries |
+| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):149 | `test_xdata_cluster_names.py:910-916` | by-name | def test_ | carries |
+| [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md):22 | `ec/tools/test_xdata_cluster_names.py:88` | by-path | other | carries |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | other | **does not carry** |
-| [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2645 | `../tools/test_xdata_cluster_names.py:68-90` | beside | blank | carries |
+| [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2665 | `../tools/test_xdata_cluster_names.py:68-90` | beside | blank | carries |
 | [`../../tools/README.md`](../../tools/README.md):168 | `test_xdata_cluster_names.py:303` | by-name | other | **records another line** |
 
-**50 carry, 2 carry on the adjacent line, 11 do not carry, 10 record another line
+**51 carry, 2 carry on the adjacent line, 11 do not carry, 10 record another line
 on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
 on the merged tree; the 27/3/1/6/7/6 this page was written with, the
 32/3/0/9/10/16 #850's merge measured, the 34/2/9/10/16 #888's, the
-32/2/11/10/16 #888 × #890's, the 32/2/13/10/16 #888 × #885's and the
-48/2/13/10/32 #885 × #771's are the record of the trees they were taken on and
-are kept in the sentence rather than deleted, per §4a-4d. Six moves, and the
+32/2/11/10/16 #888 × #890's, the 32/2/13/10/16 #888 × #885's, the
+48/2/13/10/32 #885 × #771's and the 50/2/11/10/32 #930's repoint measured are
+the record of the trees they were taken on and
+are kept in the sentence rather than deleted, per §4a-4d. Seven moves, and the
 fifth is the one worth reading twice: #850's took the class 50 → 69 pins, #888's
 took it 69 → 71 by adding two rows that **carried** on its own tree, #890's
 landing beside them took those same two rows to **`does not carry`** — so the
@@ -591,11 +659,26 @@ one that turns a row off the list rather than onto it.** #930's repoint put
 **105** and the number that do not carry back to the **eleven** #850 and #885
 left between them. What moved across the last two is two rows and one line; what
 did not move is the headcount, and that is the measurement: a repoint that had
-added or deleted a pin would have shown here first. The eleven that do not carry
+added or deleted a pin would have shown here first. **The seventh is #778's, and
+it is the first move here that adds a row and moves no verdict at all.** Its new
+write-up brings one pin, [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md):22
+naming the `--no-eq-guard` recipe, which was read and **carries**, and the 33
+re-registrations its edit to `ec/tools/test_xdata_cluster_names.py` forced
+re-registered the reading each row already had rather than making a new one —
+which is the property a re-registration is supposed to have, and the reason the
+class is at **51** with the headcount at **106** and the eleven that do not carry
+still the same eleven. **Two merges landed on `main` in the same window and
+neither is an eighth, because neither moved a number or a verdict**: #946
+re-registered two rows' *citing* lines — `../findings.md` `:9077` → `:9103` and
+`tools/README.md` `:159` → `:168`, the first because #942's own section landed
+above it and the second because #777's `tools/README.md` edit did — and the two
+readings are the ones already in the table. So the seventh is #778's on the
+merged tree exactly as on its own, and the counts above are the merged tree's.
+The eleven that do not carry
 are the nine #850 left and #885's two; see the corrections under the transcript
 above and the notes at the foot of this file.)*
 **"carries, adjacent"** is
-a pin one line off the thing it names, and it is two of one hundred and five because
+a pin one line off the thing it names, and it is two of one hundred and six because
 this corpus writes *"is at `:1862`"* against a `def` on the next line. No rule can
 decide whether that is a pin or a typo, which is the first reason the judgement
 half is a table and not a verdict.
@@ -951,16 +1034,17 @@ on the next merge. **It needs that judgement, and the measurement says so rather
 than my having to assert it.** Four things, in the order they decide it:
 
 1. **The pins are not one kind of thing.** 5 name a `def test_` line, 19 an
-   assertion, 10 a comment, **6 a blank line** and 33 something else. The
+   assertion, 10 a comment, **6 a blank line** and 34 something else. The
    citation means "the line where this claim is decided", and that line is the
-   test header in 5 cases out of 73. A `def`-anchored rule is wrong; an
+   test header in 5 cases out of 74. A `def`-anchored rule is wrong; an
    assertion-anchored rule is wrong; a blank-line-anchored rule is worse than
    both, because the blank is an artefact of the span convention and 6 of them
    move whenever a line is inserted one line above. **No single anchor covers
    them and the range form needs a third rule on top.** *(`11`/`9`/`26` and `57`
    are what this item was written with; #771's write-up took the split to
-   `17`/`10`/`35` over `73` and #930's repoint to the `19`/`10`/`33` above, and
-   the four figures are re-measured rather than derived.)*
+   `17`/`10`/`35` over `73`, #930's repoint to the `19`/`10`/`33` and #778's
+   merge to the `19`/`10`/`34` over `74` above, and the five figures are
+   re-measured rather than derived.)*
 2. **Supersession is unmarked prose in this class, and that is the blocker.**
    `check_citation_lines.py` gets away with a two-shape skip because a
    supersession there *has* a shape. Here it does not: eight of the ten
@@ -1113,10 +1197,10 @@ own count made the checklist's §2b console-block cluster count `50` (an unrelat
 figure that happens to be the same integer) measure `held-by-check-literal`, and
 §2b's own `unheld` marking disagreed with the measurement. *(That figure is
 **`69`** after #850's merge, **`71`** after #888's, **`73`** on the tree the
-`#888` × `#885` merge produced and **`105`** on the tree this now lands in, for
+`#888` × `#885` merge produced and **`106`** on the tree this now lands in, for
 the reason the note at the foot of this file gives; the exclusion is what keeps it
 from mattering, which is the point of an exclusion rather than of the number — and
-it is **preventive rather than current** on this tree, since `105` is not a figure
+it is **preventive rather than current** on this tree, since `106` is not a figure
 §2b's tables hold, which is checked rather than assumed: the tool reads
 **18 figure(s), 18 measured held, 0 measured unheld** over
 **190 literal(s) inside a check**, the same run `main` gives.)*
@@ -1341,7 +1425,7 @@ rendered by anything to record it.)*
    two pins, and it is the strongest evidence in it for a supersession marker.
    **Issue #942 has since added a tool that says so about the bookkeeping, and
    it does not overturn the sentence above.** `ec/tools/check_pin_table_rows.py`
-   holds the 105 rows of the table above to the run this census makes of the
+   holds the 106 rows of the table above to the run this census makes of the
    same markdown, and reports any row it cannot place, any record with no row,
    and any row whose read kind, shape or resolved path differs — all four
    mechanical columns, which are five things this census already computes. **It

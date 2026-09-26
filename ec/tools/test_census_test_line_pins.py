@@ -565,25 +565,59 @@ class TheCommittedTree(unittest.TestCase):
         # and 73/26/46, as the history above records. They are the figures to
         # read first if one of the four below ever disagrees with the run.
         #
-        # The `carries` / `does not carry` counts (50 and 11 here, 48 and 13
-        # before) are **not** here on purpose: they are a reading of whether a
+        # **Re-measured a seventh time, at issue #778, and the first of the seven
+        # to add a pin rather than move one**: 105 -> 106 records, 27 -> 28
+        # files, 78 -> 79 spellings, 73 -> 74 resolves, 33 -> 34 other, 57 -> 58
+        # targets. Its write-up cites the `--no-eq-guard` recipe at
+        # `ec/tools/test_xdata_cluster_names.py:88`, which is one pin in a new
+        # file, so every one of those moved by one and the verdicts did not --
+        # `declined` is 32 for the fifth time running and the three zero verdicts
+        # are zero for the sixth, which is the shape an *addition* has and the
+        # opposite of #930's, where the movement was 58 -> 57 targets against a
+        # headcount held still. It also repointed 33 occurrences across 11
+        # files without moving the headcount, because a repoint changes the
+        # target a spelling resolves to and not the number of spellings; the two
+        # are separate measurements and both are below. #930's `105`, `27` and
+        # `78` are the figures for the #885 x #771 and #930 runs and stay
+        # readable above as the run they were measured on.
+        #
+        # **Re-run an eighth time on this same merged tree, and the eighth moved
+        # nothing at all**: #946 and #944 landed between that re-measurement and
+        # this merge, each adding a markdown write-up and a `test_*.py` suite,
+        # and neither wrote a `test_*.py:NNN` into either -- so all six figures
+        # above are unchanged and only the two denominators the census prints
+        # beside them went on, `150` -> `152` markdown files read and `36` -> `38`
+        # test files resolved against. A write-up and a suite that cite no pin of
+        # this class are the cheapest merge in the series and the one most worth
+        # recording, because a reader who sees the denominators move and the head
+        # count not has the measurement rather than the guess.
+        #
+        # The `carries` / `does not carry` counts (51 and 11 here, 50 and 11
+        # before #778, 48 and 13 before that) are **not** here on purpose: they
+        # are a reading of whether a
         # cited line still carries the claim it is cited for, and this suite
         # tests the mechanical half. They live in the write-up's table, and
         # #930's repoint is the reason to keep them there -- the tool printed
         # every number the repoint changed and none of them was a verdict.
+        # #778's 33 repointed occurrences are the second reason: a repoint
+        # moves a target and says nothing about whether the line it now names
+        # carries the claim, so there is no count here that would have caught
+        # the one that had stopped doing so. The `50` -> `51` is #778's one new
+        # pin, read here and carrying; the eleven that do not carry are the same
+        # eleven.
         records, _files = census.census(census.REPO)
-        self.assertEqual(len(records), 105)
-        self.assertEqual(len({r[0] for r in records}), 27)
-        self.assertEqual(len({r[2] for r in records}), 78)
+        self.assertEqual(len(records), 106)
+        self.assertEqual(len({r[0] for r in records}), 28)
+        self.assertEqual(len({r[2] for r in records}), 79)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 73, census.OUT_OF_RANGE: 0,
+            census.RESOLVES: 74, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 32})
         self.assertEqual(shapes(records), {
             census.DEF_TEST: 5, census.ASSERTION: 19, census.COMMENT: 10,
-            census.BLANK: 6, census.OTHER: 33})
+            census.BLANK: 6, census.OTHER: 34})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 57)
+                 if r[3] == census.RESOLVES}), 58)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

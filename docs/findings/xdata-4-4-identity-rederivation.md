@@ -400,7 +400,7 @@ assertion is what stands between them and a guard-*on* one.
 
 **There is a second, independent drift behind the first, and the `setUpClass`
 error is hiding it.** `test_the_two_largest_cited_clusters_are_carried_by_overlap_not_by_key`
-(`test_xdata_cluster_names.py:651-666`) pairs `main-ec-001` with
+(`test_xdata_cluster_names.py:659-674`) pairs `main-ec-001` with
 `mode-oem-init` and `main-ec-002` with `level-block-086x`; the committed census
 puts `mode-oem-init` at `main-ec-002` and `level-block-086x` at `main-ec-004`.
 So repairing the guard alone would trade one red for another. And on the
@@ -409,6 +409,20 @@ committed census the case's premise is only half true in any case:
 `main-ec-002` is the one of the two carried on overlap, at 0.97. That is also
 what makes §4.4's "the test that settles it" paragraph half stale, and the
 correction in the map says so where the sentence is.
+
+*(Resolved, 2026-09-26, issue #778. The prediction in the paragraph above held
+rather than failing: repairing the recipe did not turn this case red, it left it
+green and **vacuous** — the two pairs are disjoint clusters at Jaccard 0.0000,
+and `assertNotEqual` on two cluster keys is true of any two distinct clusters.
+The case is now
+`test_every_name_the_key_cannot_find_is_carried_by_overlap`, and it selects the
+`how == "overlap"` records of the tool's own `carry_names` over the two
+censuses, so the pairs above are the defect it was restated out of rather than
+the exhibits it uses. The old name stays in the sentence above so the record of
+the drift is readable. `level-block-086x` being found by its key and
+`mode-oem-init` being the one overlap carry are both confirmed, not corrected;
+[`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md)
+carries the measurement.)*
 
 **Not fixed here, and the reason is the issue's own scope.** Issue #582 scopes
 itself to documentation and says "`--check` and `--self-test` are unchanged";
@@ -443,10 +457,10 @@ carry a correction naming their tree are left as they are.
   itself stands as written: the figures are the trees they were measured on.)*
 - `ec/tools/xdata_register_map.py:2723` and `:2885` — two comments in the tool
   carrying "the committed 427 ids" and "417 of the 427 clusters".
-- `ec/tools/test_xdata_cluster_names.py:355-370` — this file's own `:403` cites
+- `ec/tools/test_xdata_cluster_names.py:363-378` — this file's own `:403` cites
   the suite at `:355-370` for
   `test_the_two_largest_cited_clusters_are_carried_by_overlap_not_by_key`, which
-  is at `:459-473`; the cited span is §6a's assertion block, which pairs no ids.
+  was at `:459-473`; the cited span is §6a's assertion block, which pairs no ids.
   **Stale before the #852 merge and recorded rather than repointed**, because
   the pin is #582's, written when the suite was that much shorter, and
   `check_citation_lines.py` holds citations into the generated CSVs and the
@@ -454,6 +468,13 @@ carry a correction naming their tree are left as they are.
   same "not found by this method" the checker prints. The same is true of
   `xdata-census-self-test-gate.md:221`'s
   `xdata-cluster-names-guard-off-recipe.md:406-407`, for a sentence at `:446-447`.
+  *(Repointed 2026-09-26, issue #778: the two pin numbers were moved with the
+  lines they name, and the case they were cited for is now
+  `test_every_name_the_key_cannot_find_is_carried_by_overlap` at `:663`. The
+  defect recorded here is therefore gone, but the pin still does not carry the
+  claim — which is the whole point of listing it rather than fixing it: a
+  citation into a test file is a reading, and this one had been read wrong
+  twice.)*
 - `ec/tools/check_cluster_citations.py:17-20` — its module docstring carries the
   427/439/48 and the 425/59/366/413 figures. **Not a false claim**: the checker
   is green because it resolves citations against the committed CSV, and the

@@ -379,7 +379,7 @@ only covers what's specific to *this* copy.
      windows — and the patch header says so, because tidying either one back
      breaks every-ordered-pair landing while each patch still applies alone.
   12. **`check_pin_table_rows.py` is not in the cheap tier yet, and should
-     be** (2026-09-26, issue #942). It holds the 105 rows of the per-pin table
+     be** (2026-09-26, issue #942). It holds the 106 rows of the per-pin table
      in `docs/findings/test-line-pin-census.md` to the run
      `census_test_line_pins.py` makes of the same markdown: the citing file, the
      citing line, the cited target, the read kind and the shape. Four of that

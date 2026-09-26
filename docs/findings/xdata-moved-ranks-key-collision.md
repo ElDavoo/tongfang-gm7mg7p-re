@@ -209,7 +209,7 @@ does not hold the address.
 - **`moved_ranks()` is keyed on `cluster_id`.** A rank is the key of the dict
   `clusters_of()` returns, so this join cannot collapse by construction, and
   the predicate is untouched — the suite's own two lines, string for string,
-  which is what `test_xdata_cluster_names.py:588`'s `> 300` floor is applied
+  which is what `test_xdata_cluster_names.py:596`'s `> 300` floor is applied
   to — `:563` until #890 moved it (§5). `len(moved)` is now the number of
   ranks that matched, and `intact`, which is derived from it, follows.
 - **`duplicate_keys()` is the check**, over a `{cluster_id: row}` census, and
@@ -320,7 +320,7 @@ line is what read them. `git worktree remove /tmp/xdata-old` ran after, and
 - **The `--swept` line does not repair the cross-reference.** Under a collision
   the holder index is still lossy; what changes is that the report says so
   instead of reading as a census that does not hold the address.
-- **The `> 300` floor at `test_xdata_cluster_names.py:588` is untouched**, and
+- **The `> 300` floor at `test_xdata_cluster_names.py:596` is untouched**, and
   `TheContentKey` is untouched. *(`:563` until #890 — see the amendment below.)*
   [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) §5 argues for the
   floor staying where the recipe's argument put it, and one line in a report is

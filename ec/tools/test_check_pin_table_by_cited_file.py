@@ -454,12 +454,20 @@ class TheCommittedTree(unittest.TestCase):
         # `out-of-range` is not in the dict because it is 0 -- and it is 0 as a
         # measurement, which the census's own suite asserts on the other side of
         # the same population.
+        #
+        # The one row that moved under #778's merge is the first, `33` -> `34`:
+        # that issue's write-up brings one pin, naming the `--no-eq-guard`
+        # recipe by path, and its 33 repointed occurrences all name this same
+        # file, so they cannot move a count that is a count of *files*. Every
+        # other row is unchanged, which is the distinction
+        # `test-line-pin-repoint-563.md` is about arriving from the other end --
+        # a repoint moves a line, not a name.
         records, _files = census.census(tool.REPO)
         files, index = census.suites(tool.REPO)
         table, _buckets = tool.charged(records, files, index)
         self.assertEqual(
             {row[0]: (row[1], row[3]) for row in tool.rows(table)},
-            {"ec/tools/test_xdata_cluster_names.py": (33, 10),
+            {"ec/tools/test_xdata_cluster_names.py": (34, 10),
              "ec/tools/test_grade_0751_isolation.py": (21, 15),
              "windows/tools/test_manual_fan_ctrl_probe.py": (5, 3),
              "ec/tools/test_disasm8051.py": (4, 1),
@@ -472,20 +480,22 @@ class TheCommittedTree(unittest.TestCase):
              "tools/test_readme_suite_table.py": (1, 0)})
 
     def test_the_committed_concentration_is_the_figure_the_argument_rests_on(self):
-        # 43 of 105 occurrences name one suite and 79 of 105 name the two, read
+        # 44 of 106 occurrences name one suite and 80 of 106 name the two, read
         # out of the committed table's own first two rows rather than re-typed,
         # so a merge that moved a pin from one file to another moves these and
-        # nothing silently absorbs the move. The `105` is the denominator of a
+        # nothing silently absorbs the move. The `106` is the denominator of a
         # figure this suite holds; the headcount itself is held in
         # `test_census_test_line_pins.py`, and it is the one to read first if
-        # these ever disagree.
+        # these ever disagree. Each of the three moved by exactly #778's one new
+        # pin -- 43 -> 44, 79 -> 80, 105 -> 106 -- and the second row is held at
+        # 36 because that file was not edited.
         records, _files = census.census(tool.REPO)
         files, index = census.suites(tool.REPO)
         table, _buckets = tool.charged(records, files, index)
         cited = tool.rows(table)
-        self.assertEqual([row[4] for row in cited[:2]], [43, 36])
-        self.assertEqual(cited[0][4] + cited[1][4], 79)
-        self.assertEqual(len(records), 105)
+        self.assertEqual([row[4] for row in cited[:2]], [44, 36])
+        self.assertEqual(cited[0][4] + cited[1][4], 80)
+        self.assertEqual(len(records), 106)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
         # 37 indexed, 11 named, 26 named by none -- the three figures that move
@@ -494,6 +504,17 @@ class TheCommittedTree(unittest.TestCase):
         # 36 / 11 / 25 are the record of the tree this branch's base is, per
         # §4a-4d, and the first two are the ones to read first if one of these
         # ever disagrees with the run.
+        #
+        # **This case is red on `origin/main` and is left red here.** #944 landed
+        # `tools/test_doc_patch_refs.py` after the `37` was measured, so the
+        # indexed count is **38** and the tail is **27** on any tree carrying
+        # #944 -- the tool's own header line has read `38 indexed test file(s)`
+        # since, and this pin is the only thing in the tree still saying `37`.
+        # Re-measuring it belongs to whichever change next owns this file, the
+        # same way the red sets in `runner-red-suite-set.md` are named and not
+        # quietly fixed from a branch that did not cause them; neither #778's
+        # merge nor anything in it moved a `test_*.py` into or out of the tree,
+        # so the three figures are this issue's own, unchanged by it.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
