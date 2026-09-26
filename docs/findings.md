@@ -8049,6 +8049,26 @@ rather than edited into it. No threshold, CSV, YAML or gate moves, and
 `across --swept` summary's own second-holder count is derived differently by §63
 below, which leaves its printed figure on the committed pair the same.
 
+**Correction, 2026-09-26 (issue #889): the deciles above are read over a set
+of 94 and 439 rows, and `deciles()` now says so — a floor of ten, below which
+it returns the set itself instead of ten cells.** The figures are unchanged and
+stand; what was wrong was the tool's own docstring, which claimed the
+below-floor case was already handled when the body clamped the other way and
+drew a set of two rows out across ten cells. Both of this section's reads are
+far above the floor, so nothing quoted in it moves — §4's are the two the
+section is *about*, and neither is a below-floor read. What the fix changes is
+that the form can no longer be produced: §4 reads one of these strings against
+the other cell for cell, and under the clamp a handful of keys was rendered on
+a line of its own, indistinguishable from a real read, with only the input's
+size to tell them apart. The tool's own A/B fixture did exactly that, printing
+`2 2 2 2 2 2 2 2 2 2` for a flipped set of two clusters on every green
+`--self-test` run. Five cases now pin the contract, three of which fail against
+the code as it was, and one of them goes through `across_report` so the
+*report* is held to it and not only the helper. The write-up is
+[`xdata-decile-small-set-contract.md`](findings/xdata-decile-small-set-contract.md).
+No figure, threshold, CSV or gate changes, and this section's `pair` and
+`across` output is unchanged on the committed pair.
+
 ## 63. `--swept`'s second-holder count was taken over one generation, and the rows above it over both (2026-09-26, issue #886)
 
 The write-up is
