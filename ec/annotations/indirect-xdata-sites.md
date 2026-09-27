@@ -11,7 +11,7 @@ mode is `movx a,@r0` / `movx @r1,a`, one byte each, with the page in the `P2`
 SFR and the low byte in a register -- and nobody had looked for them.
 
 **Both of the issue's questions, answered.** The main EC image does **not**
-reach page `0x07` by this method, anywhere (§3). No resolvable site lands on
+reach page `0x07` by this method, anywhere (§4). No resolvable site lands on
 `0x07B9` or on `0x07D0`, because no site resolves to any address at all (§2).
 That is a result about the *form* the issue asked about and not a finding about
 `0x07D0`; §5 is the long list of what it is not.
