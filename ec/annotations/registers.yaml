@@ -210,7 +210,37 @@ registers:
     static_refs_main_ec: 0
     static_refs_pd_image: 0
     status: absent
-    note: "driver reads this for capability bits (SUPER_KEY_LOCK, LIGHTBAR, FAN_BOOST); not referenced by this firmware build"
+    note: >
+      driver reads this for capability bits (SUPER_KEY_LOCK, LIGHTBAR,
+      FAN_BOOST); not referenced by this firmware build
+      No committed line puts the three capability names at 0x0765; the names
+      themselves are not missing from the tree, and every line behind them
+      lands on some other byte. The committed upstream excerpt
+      (linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt) carries no
+      0x0765 line, its only FAN_BOOST token is TRIGGER_FAN_BOOST BIT(2)
+      under EC_ADDR_TRIGGER 0x0767 (upstream-excerpt.txt:160, upstream
+      line 213), and SUPER_KEY_LOCK_STATUS and LIGHTBAR_STATUS are 0x0768
+      bits (upstream-excerpt.txt:169-170); outside the excerpt the vendor
+      stack's own fan boost is a third thing again, the FAN_BOOST_ON and
+      FAN_BOOST_OFF cases in
+      windows/decompiled/v3.1.39.0/GCUService/MyControlCenter.MyFan/
+      MyFanManager_RamFan1p5.cs:270,274 reach a SetFanMode that writes bit 6
+      of 0x0751 (windows/vendor-ec-map.md:71), and none of 0x0767, 0x0768,
+      0x0751 is 0x0765. The ASL's ECMG field list
+      (evidence/acpi/dsdt.dsl:52193-52194, the only field list in the DSDT
+      that names XDATA addresses in that window) has no Offset anywhere in
+      0x0720-0x072F or in 0x0760-0x076F. The one literal 0x076x in the
+      DSDT, CreateBitField (BUF0, 0x0768, D4RW) at :4365, is a bit offset
+      into a local Name (BUF0, Buffer (0x021C)) at :4156 rather than an
+      XDATA address, so it is evidence about neither range. The excerpt's
+      silence is a curated fragment set rather than the whole of
+      uniwill-acpi.c, so this is not a claim that upstream does not define
+      0x0765; on this board, though, a Linux driver cannot source those
+      capabilities from here. A read-only procedure for that is prepared
+      and not run:
+      docs/hardware-tests/ac-autoboot-0726-0765.md section 5, with 0x0726
+      as the other half of the pair
+      docs/findings/pd-only-status-vocabulary.md question 1 names.
 
   - name: SUPPORT_2
     addr: 0x0766
@@ -262,11 +292,22 @@ registers:
       0x07B9 retraction, "0 direct refs" is not proof it's ignored either.
       Real verdict: unknown, needs a live behavioural test (does the
       laptop actually auto-boot on AC insert while off?).
+      That procedure is prepared and not run:
+      docs/hardware-tests/ac-autoboot-0726-0765.md. Its first arm is a
+      control with this byte untouched, because whether XDATA survives a
+      shutdown with AC out is the run's first observation rather than a
+      precondition -- if the power sequence clears the byte, the treated
+      arms tested nothing and the run is void rather than negative. A
+      negative result moves this row toward the unknown-not-absent
+      argument, not toward absent, and does not settle the grade; see
+      docs/findings/pd-only-status-vocabulary.md question 1, which is open
+      on purpose.
 
   - name: OEM_4 (CHARGING_PROFILE_MASK)
     addr: 0x07A6
-    bits: [4, 5]
-    sources: [uniwill-laptop, ecspec-3.1.6.0(BatteryLimitationMode), live]
+    bits: [0, 1, 2, 3, 4, 5, 6]
+    sources: [uniwill-laptop, ecspec-3.1.6.0(BatteryLimitationMode),
+              vendor-3.1.39.0(ec-callsites.csv), xdata-refs, live]
     static_refs: 7
     static_refs_main_ec: 7
     static_refs_pd_image: 0
@@ -316,6 +357,52 @@ registers:
       windows/decompiled/v3.1.39.0/ec-callsites.csv). After a BIOS
       load-defaults on 2026-09-19 the byte read 0x28 instead of 0x29, so
       bit 0 cleared; its owner was not established.
+      2026-09-27 (issue #93), the full bit map and bit 0's owner. Every
+      bit's vendor writer with its file:line is tabulated in
+      docs/findings/oem4-bit-map-and-bit0.md, and `bits:` above is widened
+      from [4, 5] to [0-6] on that basis. Bit 0 MyFanManager.SetApExist
+      (b & 0xFE / b | 1, MyFanManager.cs:1500-1507); bit 1
+      SetOverBoostByDynamicTemp, which is an ADD and not an OR --
+      (Data & 253) + ((!bEnable) ? 2 : 0) -- so a scan keyed on `| 2`
+      misses it; bit 2 MicMuteControl.SetLED (b & 0xFB / b | 4); bit 3
+      MySettingManager.UserSetTouchPadLedStatus (b & 0xF7 / b | 8); bits
+      4-5 BatteryProtection2.SetHealthProtection*; bit 6
+      MySettingManager.TouchpadToggle_ON/OFF (& 0xBF, _OFF re-adding 64).
+      Bit 7 has no writer found by either ec_callsites.py over the vendor
+      tree or trace_xdata_refs.py over this image -- not found, not unused.
+      "Its owner was not established" above is superseded: the EC sets
+      bit 0, at 0xABC0 (`movx a,@dptr ; orl a,#0x01 ; movx @dptr,a`,
+      ec/decompiled/bank0/AB9E.asm:24-27), inside set_0751_and_07a6_bits,
+      already named at ec/annotations/ghidra-functions.csv:152, and only
+      when bit 1 of 0x0782 (BIOS_OEM_2, the Q-key) is clear, per
+      AB9E.asm:7-9. That is a STATIC claim and a narrow one: the
+      instruction sequence is evidence the EC writes the bit, not that it
+      acts on it, and what the bit means to the EC is not decoded. The
+      fan manager running on this machine cannot write bit 0 --
+      MyFanCtrl.cs:26-72 picks one of four MyFanManager_RamFan1p5*
+      classes and none contains SetApExist or calls base.Init()/
+      base.Uninstall(), and RamFan1p5's replacement Uninstall records the
+      same fact in NVRAM instead (MyFanManager_RamFan1p5.cs:248). That
+      this machine takes a RamFan1p5* arm at all is a PRIOR RECORDED
+      observation, not a result of this work: the service published
+      RamFan1p5Support: 1 and IsProjectIdCommercial: 0 here
+      (evidence/mqtt-capture/2026-09-18-profile-and-connect.jsonl), the
+      two branch conditions MyFanCtrl.cs:30 and :46 test -- written at
+      CustomizeCtrl.cs:392 and :388, read back by MqttClientCtrl.cs:236
+      and :232. The predicate is load-bearing: with the plain
+      MyFanManager the constructor would have selected at :35/:39/:42,
+      MyFanManager.cs:389 would have cleared bit 0. Mind
+      the name collision when grepping: MyRgbLightbarManager*.SetApExist
+      has the same name and the same bit-0 idiom and writes 0x0748, not
+      this byte (MyRgbLightbarManager.cs:547-555). NOT FOUND by
+      trace_xdata_refs.py over this image, across all 7 sites: anything
+      that clears bit 0, or reads it. 0xAD0D and 0xCD11 clear bit 6,
+      0xB13A clears bits 4-5, the three read sites test bit 6 or bits
+      4-5, and nothing masks with 0xFE -- so what cleared it on
+      2026-09-19 is still unexplained, and a zero here is "not found by
+      this method", never "absent" (see the xdata-refs and absent notes
+      at the top of this file; 0x07B0-0x07BE is a documented blind spot
+      of the scan this census comes from).
 
   - name: CHARGE_CTRL (numeric threshold)
     addr: 0x07B9

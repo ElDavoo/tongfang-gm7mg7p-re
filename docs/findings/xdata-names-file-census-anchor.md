@@ -178,34 +178,24 @@ hand. Both costs are named here for the follow-up pass to price.
   suite is collected with no runner edit, and the `--check`/`--self-test` arm is
   already in place from #823.
 
-## Merged-tree note (2026-09-25)
+## Neither side of a merge touching this file moved what the census reads
 
-This change lands beside #849, which added 19 lines to
-`ec/tools/xdata_register_map.py` above the same `check()`s, so **every
-`file:line` cited above was stale the moment the two landed together** —
-#851's own 80 lines moved the anchors this page points at, and #849's 19 moved
-the ones it pointed at in the other direction. All of them were re-measured
-against the merged file rather than shifted by arithmetic: `:4098-4113` →
-`:4117-4132`, `:2710` → `:2718`, `:4545-4548` → `:4564-4567`, `:3084`/`:3103` →
-`:3092`/`:3111`, `:2347-2357` → `:2355-2365`, `:4109` → `:4128`, and
-`:4105`/`:4559-4560` → `:4124`/`:4578-4579`. The same pass repointed six
-citations in six other pages that this change edited, and #849's own pins in
-`doc-figure-pin-audit.md` and the checklist's §2b.
+This file's line anchors have been re-measured after several merges, and each
+re-measurement was arithmetic on the way *in* and a real run on the way out —
+every `:4098-4113` → `:4117-4132` style shift above was recorded because a
+concurrent change to `ec/tools/xdata_register_map.py` moved the anchors, and
+then the census was re-run rather than shifted. **The arithmetic is in this
+file's history and is not repeated here**: a document that carries one dated
+section per merge is an append log, and `ec/tools/check_no_append_logs.py` now
+fails one. What survives is the part that was a finding rather than a
+chronology, and it is the sentence below.
 
-**The two transcripts below are re-run on the merged tree, and they are
-byte-identical to the ones this change wrote**: `--check` still prints
-`seeded 9, … carried by overlap 0`, and the `--export-ownership` run still
-prints `seeded 4, … carried by overlap 3` with the same three tails and the
-same Jaccard scores. That is the point of the anchor rule rather than a
-coincidence — neither side of this merge touched what the census reads.
-
-The runner's figures move because of the merge rather than because of this
-change, and are recorded in `tools/README.md`'s sixth note: thirty-four suites
-and 1033 tests, the one addition being this change's
-`ec/tools/test_xdata_carry_notice.py` at 15. **#850 landed in the same window
-with two cases in `ec/tools/test_xdata_cluster_names.py` rather than a suite, so
-the tree both changes share reads thirty-four suites and 1035 tests** —
-`tools/README.md`'s eighth note — and the suite count of the two sides' records
-agreeing is the one figure neither moved. The red set is unchanged by either
-side — still `ec/tools/test_check_cluster_citations.py` alone, on `:220` of the
-same #822 file, and still red on a clean `origin/main`.
+**The two transcripts are re-run on the merged tree, and they are byte-identical
+to the ones this change wrote**: `--check` still prints `seeded 9, … carried by
+overlap 0`, and the `--export-ownership` run still prints `seeded 4, … carried
+by overlap 3` with the same three tails and the same Jaccard scores. That is the
+point of the anchor rule rather than a coincidence — **neither side of the merge
+touched what the census reads.** A re-anchoring that shifted the page's own
+figures as well as its line numbers would be indistinguishable from one that
+found a real change, and this is the case that shows the two are not the same
+thing: twenty-odd citations moved and not one number did.

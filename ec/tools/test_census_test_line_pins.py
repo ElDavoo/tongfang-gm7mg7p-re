@@ -653,12 +653,22 @@ class TheCommittedTree(unittest.TestCase):
         # record -- which is the distinction this file keeps making, and the
         # reason `check_pin_table_rows.py` is the tool that had to be run to see
         # them.
+        # Re-derived 2026-09-27, and the whole delta is **one record removed**:
+        # the per-merge log at the end of `test-line-pin-census.md` carried a
+        # passing mention of `test_xdata_cluster_names.py:303` while it was
+        # talking about something else, that log went to git, and the census
+        # row for it went with it. Every counter below moves by exactly one, in
+        # the column that record occupied -- the spelling, the target, the file
+        # it was cited from, `resolves`, and `assertion` -- and the four that
+        # do not move (`declined`, `comment`, `blank`, `def test_`) are the
+        # four it was not in. That is the check that the numbers moved for the
+        # reason given rather than because something else also changed.
         records, _files = census.census(census.REPO)
-        self.assertEqual(len(records), 107)
-        self.assertEqual(len({r[0] for r in records}), 29)
-        self.assertEqual(len({r[2] for r in records}), 80)
+        self.assertEqual(len(records), 106)
+        self.assertEqual(len({r[0] for r in records}), 28)
+        self.assertEqual(len({r[2] for r in records}), 79)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 75, census.OUT_OF_RANGE: 0,
+            census.RESOLVES: 74, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 32})
         # Re-derived for #962, then again here, and not lowered either time.
         # #962's class and a docstring above it grew, so every pin into
@@ -671,15 +681,17 @@ class TheCommittedTree(unittest.TestCase):
         # movements compose rather than one replacing the other and the merged
         # tree reads `0/15/22/5/32`. #1009's own record then lands as a `class`
         # header read as prose, so the `other` column is the one that takes it:
-        # `0/15/22/5/33`. Nothing else above this changed: 107 records over 29
-        # files and 80 spellings, the same 75 resolving and 32 declined, the
-        # same 59 targets.
+        # `0/15/22/5/33`. The 2026-09-27 re-derivation takes `assertion` to 14
+        # and the record count to 106; `comment`, `blank` and `other` are
+        # unmoved, which is the check that the removed record was an assertion
+        # and not something else. 106 records over 28 files and 79 spellings,
+        # the same 32 declined, 74 resolving, 58 targets.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 0, census.ASSERTION: 15, census.COMMENT: 22,
+            census.DEF_TEST: 0, census.ASSERTION: 14, census.COMMENT: 22,
             census.BLANK: 5, census.OTHER: 33})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 59)
+                 if r[3] == census.RESOLVES}), 58)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

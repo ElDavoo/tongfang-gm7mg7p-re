@@ -475,7 +475,7 @@ class TheCommittedTree(unittest.TestCase):
         table, _buckets = tool.charged(records, files, index)
         self.assertEqual(
             {row[0]: (row[1], row[3]) for row in tool.rows(table)},
-            {"ec/tools/test_xdata_cluster_names.py": (34, 10),
+            {"ec/tools/test_xdata_cluster_names.py": (33, 10),
              "ec/tools/test_grade_0751_isolation.py": (21, 15),
              "windows/tools/test_manual_fan_ctrl_probe.py": (5, 3),
              "ec/tools/test_disasm8051.py": (4, 1),
@@ -510,9 +510,15 @@ class TheCommittedTree(unittest.TestCase):
         files, index = census.suites(tool.REPO)
         table, _buckets = tool.charged(records, files, index)
         cited = tool.rows(table)
-        self.assertEqual([row[4] for row in cited[:2]], [44, 36])
-        self.assertEqual(cited[0][4] + cited[1][4], 80)
-        self.assertEqual(len(records), 107)
+        # Re-derived 2026-09-27. The record count is 106 rather than 107 for
+        # the reason `test_census_test_line_pins.py` gives in full: one pin
+        # left the tree with the per-merge log it was a passing mention
+        # inside, and it was a `test_xdata_cluster_names.py` record, so that
+        # file's concentration and this sum each take exactly one and the
+        # second entry here is unmoved.
+        self.assertEqual([row[4] for row in cited[:2]], [43, 36])
+        self.assertEqual(cited[0][4] + cited[1][4], 79)
+        self.assertEqual(len(records), 106)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
         # Three figures, and each moves by construction the moment a suite
@@ -546,16 +552,26 @@ class TheCommittedTree(unittest.TestCase):
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        # The step from `56 / 12 / 44` is one suite,
-        # `ec/tools/test_find_indirect_xdata.py` (#34), and it moved the two
-        # figures it moves rather than the named one: its write-up
-        # (`ec/annotations/indirect-xdata-sites.md`) names it by path and
-        # never as `suite.py:NNN`, which is the tail rule two paragraphs
-        # above. That is the axis working -- a suite written with its tool
-        # starts unpinned, and citing one of its lines later moves it.
-        self.assertEqual(len(files), 57)
+        # The claim is the `12`, and only the `12`: twelve of the indexed suites
+        # are named by a `test_*.py:NNN` somewhere in committed markdown. That
+        # is a fact about the corpus, and it moves only when a write-up starts
+        # citing a line of a suite -- which is the axis the comment above
+        # describes, and the reason this assertion is the one worth keeping.
+        #
+        # **The two absolutes that used to sit beside it are gone**, and their
+        # absence is the finding rather than a loss. `len(files)` and
+        # `len(tail)` are a census of the tree, not a claim about it: both take
+        # one on every merge that lands a suite and its write-up, whichever
+        # side of the tail the new suite starts on. Asserting them made this
+        # method a value four concurrent branches each had to edit -- #1169,
+        # #1171, #1172 and #1177, from fork bases 56, 57, 57 and 58 -- so it
+        # conflicted in 18 of 21 branch pairs, and every resolution had to
+        # re-derive an arithmetic nobody had claimed. The comment block above
+        # already records this method losing 351 lines of step history to the
+        # same mistake in prose; the two numbers under it were the same lock in
+        # a shorter form. A suite landing is not a defect, and nothing here
+        # should go red for one.
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 45)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

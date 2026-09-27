@@ -14,7 +14,13 @@ output should be checked against.
 ```c
 /* bank0 0xB158 .. 0xB38D. No direct lcall/ljmp to 0xB158 was found
  * (searched common + banks 0/1 for 12 B1 58 / 02 B1 58); it is reached
- * indirectly -- a function-pointer table or a BL51 trampoline. Unresolved. */
+ * indirectly -- a function-pointer table or a BL51 trampoline. Unresolved.
+ *
+ * The indirect path was traced 2026-09-27 (issue #89), and it is neither of
+ * the two mechanisms guessed above: common 0x0DFE -> 0x0E55 -> the far-call
+ * stub 0x157C -> bank0 0x8539 -> bank0 0x853F -> bank0 0xB12C, which branches
+ * here. See docs/findings/charge-target-caller-chain.md and 3 below. The
+ * direct-call census above still finds nothing, and still will. */
 void charge_target_update(void)
 {
     /* Keil C51 overlay locals/parameters, XDATA 0x0A47..0x0A51.
@@ -135,18 +141,31 @@ What this predicts, and what was then observed:
 
 ## 3. What it does not say (open questions)
 
-- **When it runs (resolved 2026-09-21, issue #91).** `0xB158` has no *direct*
-  caller, but the path in is now found: the task-dispatch slot at `0x8539`
-  does `lcall 0xB12C`, and `0xB12C` falls through `0xB141`
-  (`jb acc.1,0xB158` on `0x0490` bit 1) into `0xB158`. The same slot also
-  `lcall`s `0xE010` — a second `0x0522` writer that copies the pack's
-  requested `0x030E` in first, before the derating overwrites it. So the
-  target is recomputed inside the periodic task loop, not on a
-  function-pointer/trampoline as this file previously guessed. The exact
-  tick rate is not read from the image, but live it is effectively
+- **When it runs (resolved 2026-09-21, issue #91; chain and dispatch
+  extended 2026-09-27, issue #89).** `0xB158` has no *direct* caller, but the
+  path in is now found: the task-dispatch run at `0x8539` does `lcall 0xB12C`,
+  and `0xB12C` falls through `0xB141` (`jb acc.1,0xB158` on `0x0490` bit 1)
+  into `0xB158`. The same run also `lcall`s `0xE010` — a second `0x0522`
+  writer that copies the pack's requested `0x030E` in first, before the
+  derating overwrites it. So the target is recomputed inside the periodic task
+  loop, not on a function-pointer/trampoline as this file previously guessed.
+  The exact tick rate is not read from the image, but live it is effectively
   continuous: a host write to `0x0522` is reclaimed within a single ~100 µs
   read (`docs/findings.md` §4m). That also answers "can the host override
   the target": no — `0x0522` is host-read-only.
+
+  **Correction (2026-09-27, issue #89).** This paragraph and `docs/findings.md`
+  §4m both said *the slot at* `0x8539` *does* `lcall 0xB12C`. That address is
+  off by one slot: `0x8539` is `12 E0 10`, `lcall 0xE010`, and `0xB12C` is
+  called from `0x853F` (`12 B1 2C`) — the next entry of the same stride-3 run,
+  which is `0x8518`–`0x8559`, 22 entries. The claim is otherwise unchanged and
+  is not withdrawn: `0xE010` and `0xB12C` are both in the run and both are
+  dispatched together, which is the part that mattered. See
+  [`docs/findings/charge-target-caller-chain.md`](../../docs/findings/charge-target-caller-chain.md)
+  for the full chain, the dispatch above it (a timer-0 overflow flag polled at
+  `0x0C86`, which calls a divide-down scheduler at `0x0D7B` whose inline case
+  table selects this chain at case `0x0A`), and the methods that found
+  nothing. The rate is still not established and none is claimed.
 - **Whether `stress` survives an EC reset.** `0x09C9/0x09CA` is XDATA RAM.
   If nothing persists it (to e-flash, or to the pack), a full EC power loss
   would reset the counter, and the derating would fall back to the

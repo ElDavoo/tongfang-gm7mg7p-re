@@ -1142,6 +1142,25 @@ vendor methods read-modify-write other bits of `0x07A6`
 LED, `SetApExist`, `SetOverBoostByDynamicTemp`). Which one owns bit 0 was
 not established.
 
+*(**Answered 2026-09-27, issue #93.** The four methods named above are the
+vendor's, and none of them is the owner on this machine: the fan manager that
+runs here is one of four `MyFanManager_RamFan1p5*` classes, none of which
+contains `SetApExist` or calls the two base methods that do, so its
+`Uninstall` records the same fact in NVRAM instead. Which arm the constructor
+takes is the load-bearing part, and it rests on a **prior recorded capture of
+the service on this machine**, not on a live result of this work: it reported
+`RamFan1p5Support: 1` and `IsProjectIdCommercial: 0`
+(`evidence/mqtt-capture/2026-09-18-profile-and-connect.jsonl`), which are
+exactly the two conditions `MyFanCtrl.cs:30` and `:46` test — with the plain
+`MyFanManager` instead, `MyFanManager.cs:389` would have cleared bit 0.
+**The EC sets bit 0**, at `0xABC0` (`orl a,#0x01`), and only when bit 1 of
+`0x0782` — the Q-key, read
+live as clear — is clear. A static instruction sequence, so it says the EC
+writes the bit and not that it acts on it, and *what* cleared it on
+2026-09-19 is still unexplained: no site in the image was found that clears
+bit 0. Full bit map, citations and the searches behind each negative are in
+[`findings/oem4-bit-map-and-bit0.md`](findings/oem4-bit-map-and-bit0.md).)*
+
 The EC watch run during this charge was stopped at 86%, part-way through
 (see `docs/related-projects.md`: on a sibling Uniwill board, reading the
 fan-tachometer registers through `ECRR` stalled the fans).
@@ -1326,6 +1345,27 @@ of view. (`0xB141`'s other branch, taken when `0x0490` bit 1 is clear, zeroes
 the stress counter `0x09C9/0x09CA` — a partial data point for #90: the counter
 is plain XDATA that the EC clears under that condition; whether it is persisted
 to e-flash or the pack elsewhere was not determined here.)
+
+**Correction, and the rest of #89, 2026-09-27.** The two addresses in that
+paragraph are one slot apart: `0x8539` is `12 E0 10`, `lcall 0xE010`, and
+`0xB12C` is called from `0x853F`. Both are in the same 22-entry stride-3 run
+(`0x8518`–`0x8559`), so the conclusion — reached from a dispatched task loop
+— is unchanged and is not withdrawn; only the address was wrong. #89's caller
+question is now answered in full, with the chain named and re-derivable:
+common `0x0E55` → far-call stub `0x157C` → bank0 `0x8539` → `0x853F` →
+`0xB12C` → `0xB158`, via `ec/tools/task_call_table.py` and
+[`docs/findings/charge-target-caller-chain.md`](findings/charge-target-caller-chain.md).
+The *period* half is bounded rather than settled, and the bound is tighter
+than "not measured from the image": the dispatch is now traced from a timer-0
+overflow handler (`common 0x0530`) setting a flag that `common 0x0C86` polls
+and dispatches to a divide-down scheduler at `0x0D7B`, whose inline case table
+selects this chain's slot at case `0x0A`. Two things are still open, not one.
+The timer period is not established — `0x0E5E`'s reload bytes are written but
+`TMOD` is not read, so the mode, and with it the interval, is unknown. And the
+divide factor is not followed: the chain runs when the scheduler's internal
+byte `0x45` is `0x0A`, and how many ticks it takes `0x45` to come round again
+was not traced, because `0x0D7B` has a tail-dispatch path that abandons its
+own frame. No rate is claimed. Nothing here was run on hardware.
 
 **What this means for the driver.** There is no host-writable charge-limit
 control on this EC image. `0x07B9`/`0x07D0` have no EC consumer (§4f, §4k) and

@@ -540,8 +540,13 @@ class TheCommittedTree(unittest.TestCase):
     def test_the_committed_table_reconciles_and_exits_zero(self):
         rc, out, err = run_main(check.REPO)
         self.assertEqual(rc, 0, err)
-        self.assertIn("107 table row(s) against 107 census record(s)", out)
-        self.assertIn("107 placed", out)
+        # 106 rather than 107: the census row for the one pin that lived
+        # inside `test-line-pin-census.md`'s per-merge log went with the log,
+        # and a table row with no record behind it is the `unplaced-row` this
+        # tool exists to name. Re-derived, not lowered -- `test_census_test_line_pins.py`
+        # carries the same delta with every counter in it.
+        self.assertIn("106 table row(s) against 106 census record(s)", out)
+        self.assertIn("106 placed", out)
 
     def test_every_class_is_zero_on_the_committed_tree(self):
         # Not left to a prose figure. Zero is the measurement here -- the
@@ -559,7 +564,7 @@ class TheCommittedTree(unittest.TestCase):
         table, records, placed, _problems, _uncompared = check.reconcile(check.REPO)
         self.assertTrue(records)
         self.assertTrue(table)
-        self.assertEqual(placed, 107)
+        self.assertEqual(placed, 106)
 
     def test_the_committed_read_and_shape_cells_are_the_census_vocabulary(self):
         # The two vocabularies the table's own cells have to be drawn from, and
@@ -584,7 +589,10 @@ class TheCommittedTree(unittest.TestCase):
                 with self.subTest(cell=cells[at]):
                     self.assertIsNotNone(key)
                 counts[key] = counts.get(key, 0) + 1
-        self.assertEqual(read, {census.BY_PATH: 54, census.BY_NAME: 19,
+        # `by-name` 18 rather than 19 for the same one row: it was the only
+        # `by-name` row that went, and the other three cells are unmoved,
+        # which is the control the paragraph below this one argues from.
+        self.assertEqual(read, {census.BY_PATH: 54, census.BY_NAME: 18,
                                 census.BY_BESIDE: 2, "-": 32})
         # The shape split is re-derived rather than lowered, twice. #962 adds a
         # class to `test_xdata_cluster_names.py` and corrects a docstring above
@@ -611,7 +619,7 @@ class TheCommittedTree(unittest.TestCase):
         # control for it in the other direction: the row is new rather than
         # moved, so unlike the seven repointed rows it cannot have changed where
         # anything lands.
-        self.assertEqual(shape, {census.ASSERTION: 15, census.COMMENT: 22,
+        self.assertEqual(shape, {census.ASSERTION: 14, census.COMMENT: 22,
                                  census.BLANK: 5, census.OTHER: 33, "-": 32})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
