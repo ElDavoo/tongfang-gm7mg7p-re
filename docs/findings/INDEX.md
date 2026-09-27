@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-120 write-ups.
+121 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -25,6 +25,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md) — §3's three unlabelled mark rounds were a fourth class of mark, and the block model had no place for them (issue #472)
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
+- [`bucket-c-codemap.md`](bucket-c-codemap.md) — Bucket C against a recovered code map: 16 of the 140 sites are on an instruction boundary, and 14 of those 16 sit inside spans already listed as data tables
 - [`call-graph-unresolved.md`](call-graph-unresolved.md) — The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (issue #456)
 - [`capture-filename-date-prefix.md`](capture-filename-date-prefix.md) — The capture root's date prefix and its flatness are measured, and a name breaking either is refused (issue #973)
 - [`checkout-claim-corpus.md`](checkout-claim-corpus.md) — The checkout-depth sweep derived its own population, and a retraction quotes the sentence it retracts
