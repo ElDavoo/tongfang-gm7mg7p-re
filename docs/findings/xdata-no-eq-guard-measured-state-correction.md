@@ -250,6 +250,24 @@ the next writer does not repeat it.
 | [`runner-red-suite-set.md`](runner-red-suite-set.md) | "Two suites fail on their subject", naming `test_check_site_census.py` and `test_xdata_cluster_names.py` and describing `TheGuardOffRegeneration`'s `setUpClass` as "rais[ing] before any case runs" | both are green. A dated section after the `#615` counts section, carrying the one suite that is *not* |
 | [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md) | the superseded-claims table's rows 2 and 3, whose "now" column promised the correction this page pays for | a closing paragraph under that table. Rows 1 and 4 are untouched: row 1 (#568 open) still stands as written, and row 4 was already corrected in place in a test file |
 
+> **Corrected 2026-09-26, issue #873.** The table's fourth row, and the prose
+> below that repeats its figures, quote `xdata_register_map.py` line numbers as
+> **352, 352, 564 and 625 lines low**. That arithmetic was true of the tree this
+> page was written against and stays written, per §4a-4d. Re-measured by
+> `grep -n` on `d330478`, the same four anchors are **510, 510, 763 and 856
+> lines low**: `def store_target(text, start, end, eq_guard=True)` is at `:1730`,
+> `if eq_guard and stripped.startswith("==")` at `:1753`, `def scan()` at
+> `:2367` and the `not args.no_eq_guard` flip at `:3148`. **The offsets are a
+> property of the tree they were measured on, not a constant**, and the pins
+> have been re-anchored to the code they name rather than to a number — in the
+> refusal-contract page, in `../ec/annotations/xdata-register-map.md`,
+> `xdata-4-4-identity-rederivation.md` and `../findings.md`, with
+> `ec/tools/check_eq_guard_citations.py` holding all of them. Nothing in this
+> page's own prose is changed: what it argues, that the four moved by four
+> different offsets, is still true and is the reason the argument survives. The
+> write-up is
+> [`xdata-no-eq-guard-citation-anchors.md`](xdata-no-eq-guard-citation-anchors.md).
+
 ## Why #753 recorded two of them rather than editing, and what that cost
 
 The decision is recorded in its own write-up and is not re-litigated here: the
@@ -313,6 +331,19 @@ four moved together would be wrong about two of the four, because `:1604` and
 `:2292` are not 352 lines low like the first pair but 564 and 625.
 The sentence is a live instance of its own claim, and deleting it would have
 removed the evidence.
+
+> **Corrected 2026-09-26, issue #873.** This paragraph is left as written, and
+> the note above the table says what has changed: the 352/352/564/625 offsets
+> are of the tree this page was measured against, and on `d330478` the same four
+> anchors are 510/510/763/856 lines low. **The argument this paragraph makes is
+> the stronger for it** — it is a sentence about citations rotting by whole
+> hundreds of lines, and the drift has since grown by more than half again in
+> every one of the four. `:1604` and `:2292` are the tool lines those two
+> shorthand numbers name; their replacements are `def scan()` at `:2367` and
+> the `not args.no_eq_guard` flip at `:3148`, and the two citing files now name
+> the code rather than the line. `ec/tools/check_eq_guard_citations.py` holds
+> all four, so the next growth of the tool is a red run rather than a sentence
+> that reads correctly.
 
 ## The open question, and what actually settles it
 
@@ -443,6 +474,21 @@ first draft wrongly shared the offset with: those are 352 to 625 lines low, by
 four different offsets, so no single handful of commits explains both sets and a
 correction filed for one does not discharge the other. It is a follow-up, not a
 drive-by, and nothing else here depends on it.
+
+> **Corrected 2026-09-26, issue #873 — the follow-up is filed and it is
+> discharged.** The pair this paragraph names was re-measured by `grep -n` on
+> `d330478`: the `eq_guard and` line `../ec/annotations/xdata-register-map.md`
+> pinned at `:1582` is at **`:1753`**, and the `--out-*` refusal it pinned at
+> `:4495-4499` is at **`:4985`** — `args.out_registers == OUT_REGISTERS`, which
+> is the committed-output refusal and **not** the `--check`/`--self-test`
+> refusal at `:4976` that `:4495-4499` had drifted onto. The 13-line offset
+> this page measures is 171 and 490 on this tree, and the two no longer agree
+> with each other, which is the drift this page's own argument is about. Both
+> are corrected in place in that file, with the code named beside each number,
+> and held by `ec/tools/check_eq_guard_citations.py`. The rest of the
+> paragraph — that the two sets are different drifts, and that a correction for
+> one does not discharge the other — stands, and the write-up for this one is
+> [`xdata-no-eq-guard-citation-anchors.md`](xdata-no-eq-guard-citation-anchors.md).
 
 ## Left out on purpose
 

@@ -1085,12 +1085,12 @@ re-run over the committed tree, and the recipe is
 `xdata-06c2-06db-timers.md` §6a's with the `==` guard issue #178 added
 **removed** instead — the classifier-and-everything-it-counts regeneration, in
 its cheapest form. That is the `--no-eq-guard` flag
-(`../tools/xdata_register_map.py:4568`) with scratch outputs, which is what §6a
-and this block's transcript now do rather than a source edit: the flag is
-refused with the committed output paths
-(`../tools/xdata_register_map.py:4606-4611`), so everything below is a report
-about the committed census and not a replacement for it. The derivation, with
-the commands and their output, is
+(`ap.add_argument("--no-eq-guard"`, `../tools/xdata_register_map.py:4947`) with
+scratch outputs, which is what §6a and this block's transcript now do rather
+than a source edit: the flag is refused with the committed output paths
+(`args.out_registers == OUT_REGISTERS`, `:4985`, not the `--check` refusal at
+`:4976`), so everything below is a report about the committed census and not a
+replacement for it. The derivation, with the commands and their output, is
 `../../docs/findings/xdata-4-4-identity-rederivation.md`.
 
 **The cost, measured.** 439 clusters become 445. Of the 439 committed ids, **124
@@ -1222,17 +1222,17 @@ wrote /tmp/census/clusters.csv: 445 rows
 
 **The copy-and-`str.replace` this transcript used to open with is gone, and its
 replacement is the flag the block's preamble names.** The old recipe copied the
-tool into `/tmp`, symlinked the inputs back, and deleted the `==` guard from the
-copy's source, because when the block was written nothing else removed it. It
-was a workaround one rename away from silently regenerating the guard-on census
-instead, and the tree has since taken that step: issue #302 parameterised the
-guard (`../tools/xdata_register_map.py:1582` is `if eq_guard and
-stripped.startswith("==")`) so `--no-eq-guard` could be a flag. A regeneration
-now writes to a scratch path and reads the committed decompile in place, with
-no copy of the tool and no source edit. The `--out-*` flags are not decoration
-either: the tool refuses `--no-eq-guard` with the committed output paths
-(`../tools/xdata_register_map.py:4606-4611`), which is what keeps a run of
-this transcript from overwriting the census it is measuring.
+tool into `/tmp`, symlinked the inputs back, and deleted the `==` guard from
+the copy's source, because when the block was written nothing else removed it.
+It was a workaround one rename away from silently regenerating the guard-on
+census instead, and the tree has since taken that step: issue #302
+parameterised the guard (`../tools/xdata_register_map.py:1753` is `if eq_guard
+and stripped.startswith("==")`) so `--no-eq-guard` could be a flag. A
+regeneration now writes to a scratch path and reads the committed decompile in
+place, with no copy of the tool and no source edit. The `--out-*` flags are not
+decoration either: the tool refuses `--no-eq-guard` with the committed output
+paths (`args.out_registers == OUT_REGISTERS`, `:4985`, not the `--check`
+refusal at `:4976`), which keeps this transcript from overwriting the census.
 
 *(Correction, 2026-09-25, issue #582's re-run. The transcript above is the same
 experiment re-run against the tree as it now stands; the one it supersedes
@@ -1329,24 +1329,24 @@ either way, naming the committed 92-address `mode-oem-init` and a 93-address
 cluster here, so the same id is a different cluster in the two censuses — which
 is the point, and is why the rank is not an identity.
 
-*(Correction, 2026-09-25, issue #582's re-run. The 315/124 split, the
-`main-ec-003`/`k733222e83898`/43 addresses and the 92→93 are re-derived and
-stand. One clause of the paragraph above does not: the suite no longer builds
-the regeneration this paragraph describes, so none of its four holds is
-currently *running*, and the clause naming `main-ec-004` as "carried by overlap
-and not by key" is not what the committed census would give anyway —
-`level-block-086x` is `seeded` there, key and membership both unchanged, and
-`main-ec-002` is the only one of the two carried on overlap (0.97). The suite's
-own recipe is two generations behind: `GUARD`
-(`../tools/test_xdata_cluster_names.py:54`) is a literal the parameterised guard
-at `../tools/xdata_register_map.py:1582` no longer contains, and its
-two-largest case pairs `main-ec-001` with `mode-oem-init` and `main-ec-002`
-with `level-block-086x`, which the committed census puts at `main-ec-002` and
-`main-ec-004`. **The suite is red on `main` and is not wired into
-`.github/scripts/agent-gates.sh`**, so nothing has been failing CI over it.
-Fixing it is a change to a test and is a follow-up, not a line to move inside a
-documentation change; `../../docs/findings/xdata-4-4-identity-rederivation.md`
-carries the reading in full.)*
+*(Correction, 2026-09-25, issue #582's re-run. The 315/124 split, the `main-
+ec-003`/`k733222e83898`/43 addresses and the 92→93 are re-derived and stand.
+One clause of the paragraph above does not: the suite no longer builds the
+regeneration this paragraph describes, so none of its four holds is currently
+*running*, and the clause naming `main-ec-004` as "carried by overlap and not
+by key" is not what the committed census would give anyway — `level-block-086x`
+is `seeded` there, key and membership both unchanged, and `main-ec-002` is the
+only one of the two carried on overlap (0.97). The suite's own recipe is two
+generations behind: `GUARD` (`../tools/test_xdata_cluster_names.py:54`) is a
+literal the parameterised guard at `../tools/xdata_register_map.py:1753` —
+`eq_guard and` — no longer contains, and its two-largest case pairs `main-
+ec-001` with `mode-oem-init` and `main-ec-002` with `level-block-086x`, which
+the committed census puts at `main-ec-002` and `main-ec-004`. **The suite is
+red on `main` and is not wired into `.github/scripts/agent-gates.sh`**, so
+nothing has been failing CI over it. Fixing it is a change to a test and is a
+follow-up, not a line to move inside a documentation change;
+`../../docs/findings/xdata-4-4-identity-rederivation.md` carries the reading in
+full.)*
 
 *(Second correction, 2026-09-26, issue #778. Two clauses above are now false,
 and the shape of the fix is the one this paragraph predicted. **The suite is no
@@ -2783,3 +2783,24 @@ re-measurement, so it is left for its own issue rather than folded in here.
   its own issue: the ordering is pre-existing on `main`, it is not a regression
   from #206, and folding it in here would put an unrelated classifier change
   inside a correction about `==`.
+
+> **Corrected 2026-09-26, issue #873.** Four `xdata_register_map.py` line
+> numbers in this file no longer name the code they were written for, and all
+> four were measured again on `d330478` — `grep -n` over the tool, nothing
+> else. `:4568` → `ap.add_argument("--no-eq-guard"` at **`:4947`**;
+> `:4606-4611` → the committed-output refusal, `args.out_registers ==
+> OUT_REGISTERS`, at **`:4985`**, with the `--check` refusal named beside it at
+> **`:4976`** because `:4606-4611` used to read as that other refusal; `:1582` →
+> `eq_guard and` at **`:1753`**, twice. **Every number here is a `grep` over a
+> committed file and a property of that tree**, not a constant: `:1582` was
+> 13 low when #582's block was written and is 171 low now, and a
+> content-anchored citation is what stops that from reading as correct. The
+> figures the pins were cited for are untouched — the flag is still refused
+> with the committed output paths, and the guard is still the same conditional
+> in front of the same rejection. **This note is at the end of the file on
+> purpose**: twenty citations in nine other files point into lines above it
+> (`guard-off-recipe.md:374`, `test-line-pin-census.md:1008`, `§4.4`'s own
+> `:1255-1269`, and seventeen more), so a note placed beside any of them would
+> have shifted every one. The write-up is
+> [`xdata-no-eq-guard-citation-anchors.md`](../../docs/findings/xdata-no-eq-guard-citation-anchors.md);
+> `ec/tools/check_eq_guard_citations.py` holds these four numbers.

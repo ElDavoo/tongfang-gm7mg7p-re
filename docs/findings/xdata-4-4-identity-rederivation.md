@@ -10,13 +10,13 @@ left for the next pass.
 
 **Nothing here is a live observation.** The census is a static measurement of
 committed decompiled C, and every figure below comes off the committed tree by
-a command a reader can paste. **The CSVs are inputs, not outputs** — §4.4's
-own argument is that a name is a human addition and an id is a rank, so a
+a command a reader can paste. **The CSVs are inputs, not outputs** — §4.4's own
+argument is that a name is a human addition and an id is a rank, so a
 regeneration that rewrote the committed census to match the prose would invert
 the thing the section is about. Every run below writes to `/tmp`, and that is
-structural rather than a promise this file makes:
-`ec/tools/xdata_register_map.py:4606-4611` refuses `--no-eq-guard` with the
-committed output paths.
+structural rather than a promise this file makes: `args.out_registers ==
+OUT_REGISTERS` at `ec/tools/xdata_register_map.py:4985` refuses `--no-eq-guard`
+with them, not the `--check` refusal at `:4976`.
 
 ## What the committed census holds, with a parser rather than a summary
 
@@ -392,11 +392,26 @@ same drift §4.4's transcript had: `GUARD`
 (`test_xdata_cluster_names.py:54`) is the literal
 `'    if stripped.startswith("=="):\n        return False\n'`, and the guard in
 the tool is now `if eq_guard and stripped.startswith("==")` at
-`xdata_register_map.py:1582` — issue #302 parameterised it so `--no-eq-guard`
+`xdata_register_map.py:1753` — issue #302 parameterised it so `--no-eq-guard`
 could be a flag instead of a source edit. The test's own comment says it is
 built this way "rather than quietly regenerating the same census twice", and it
 is doing exactly that: six cases want a guard-off regeneration and the
 assertion is what stands between them and a guard-*on* one.
+
+> **Corrected 2026-09-26, issue #873.** Two `xdata_register_map.py` numbers in
+> this file named code they were not written for, both re-measured by `grep -n`
+> on `d330478`. The committed-output refusal above was cited at
+> `:4606-4611`; it is `args.out_registers == OUT_REGISTERS` at **`:4985`**, and
+> the `--check` refusal it used to be confused with is **`:4976`**. The
+> parameterised guard, also above, was cited at `:1582`; `if eq_guard and
+> stripped.startswith("==")` is at **`:1753`**. Both numbers are `grep` over a committed file and hold of that
+> tree — `:1582` was 13 low when #582 wrote it and is 171 low now — which is
+> why the code is named beside each one rather than left to the number. What
+> the citations were cited for is unchanged: the flag is still refused with the
+> committed output paths, and the guard is still a conditional in front of the
+> rejection. `ec/tools/check_eq_guard_citations.py` holds all four numbers, and
+> the write-up is
+> [`xdata-no-eq-guard-citation-anchors.md`](xdata-no-eq-guard-citation-anchors.md).
 
 **There is a second, independent drift behind the first, and the `setUpClass`
 error is hiding it.** `test_the_two_largest_cited_clusters_are_carried_by_overlap_not_by_key`

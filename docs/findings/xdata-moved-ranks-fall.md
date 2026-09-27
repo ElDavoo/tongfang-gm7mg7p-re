@@ -520,7 +520,7 @@ recorded here so the two `names:` lines are not read as the same run.
 pairs `main-ec-001` with the first and `main-ec-002` with the second, and the
 committed census puts them at `main-ec-002` and `main-ec-004`. The tree records
 that at
-[`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):401-411
+[`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):415-426
 and in [`../findings.md`](../findings.md) §44. **The identification is taken from
 the tree rather than from the issue**: `gh issue view 778` is refused in the
 implement stage's environment, so the number could not be read and the two

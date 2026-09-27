@@ -96,9 +96,15 @@ EC = os.path.join(HERE, os.pardir)
 REPO = os.path.join(EC, os.pardir)
 
 # Directories that are walked past rather than pruned on content. `vendor/` is
-# committed binary and third-party documentation, `.git/` is the object store;
-# both are in the docstring and in `--help` so the population is never a secret.
-PRUNED = (".git", "vendor")
+# committed binary and third-party documentation, `.git/` is the object store,
+# `.claude/` is gitignored agent scratch — it can hold a `git worktree` of this
+# very repository under `.claude/worktrees/`, and without this the walk counts
+# that checkout's `test_*.py` as suites of this tree. That is invisible on CI,
+# which has no such directory, and it makes the committed figures
+# unreproducible locally for anyone whose working copy holds one, so it is
+# pruned on the same grounds as the other two. All three are in the docstring
+# and in `--help` so the population is never a secret.
+PRUNED = (".git", "vendor", ".claude")
 
 # This census's own write-up, for the reason in the docstring: its table copies
 # the pins rather than using them. A constant rather than a literal at the call
