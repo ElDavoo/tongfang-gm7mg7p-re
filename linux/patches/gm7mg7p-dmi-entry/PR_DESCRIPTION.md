@@ -131,14 +131,18 @@ Seven candidates are left out. Each exclusion is a live result, not a shrug.
   are in the ITE8850-PD image rather than the EC firmware, so this is "the
   references that made it look present belong to a different program".
 
-## A naming conflict worth recording
+## A naming difference worth recording
 
-Upstream calls `0x0786` `EC_ADDR_FAN_DEFAULT` (the fan curve). The DSDT
-(`APTC`/`APTN`) and the vendor stack both call the same byte a CPU TCC offset,
-and those two agree with each other and disagree with upstream. The fan claims
-above rest on the RPM observation, not on the addresses agreeing, and I have
-not set the fan curve for this board on the strength of a disagreement neither
-side has resolved.
+Upstream defines `0x0786` as `EC_ADDR_FAN_DEFAULT` (`uniwill-acpi.c:254`, the
+fan curve) and `0x078E` as `EC_ADDR_FAN_CTRL` (`:265`). The DSDT (`APTC`/`APTN`)
+and the vendor stack both call `0x0786` a CPU TCC offset, and those two agree
+with each other. The disagreement is between an unused constant and the
+DSDT's reading rather than between two live users of the byte: at `5a24248`
+neither upstream constant is referenced anywhere in the tree — each occurs
+exactly once, at its own `#define` — so the driver has no write path to
+`0x0786` and I have not set a fan curve for this board on the strength of a
+constant that nothing reads. The fan claims above rest on the RPM observation,
+not on the addresses agreeing.
 
 ## Cross-reference
 

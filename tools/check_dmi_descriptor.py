@@ -58,8 +58,9 @@ binary, so a reviewer can run it offline.
      of the excerpt which really contains that address.
 
      This rule is the whole reason the excerpt is committed. The previous
-     attempt at this work marked twelve rows `unsourced` and accepted any
-     plausible constant, so a name invented into both the CSV and a patch
+     attempt at this work marked thirteen of its fifteen rows `unsourced` and
+     accepted any plausible constant, so a name invented into both the CSV and
+     a patch
      passed every check here -- and a reviewer correctly called that
      unfalsifiable. With the enum and the address defines committed as
      evidence, `UNIWILL_FEATURE_CPU_TMP` is a typo the excerpt does not

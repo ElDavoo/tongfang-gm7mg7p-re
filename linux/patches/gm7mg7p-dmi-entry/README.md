@@ -28,11 +28,12 @@ rev, which is what `fetchFromGitHub` wants. Both are checked, so the patch
 cannot drift off the source the local build actually fetches.
 
 An earlier attempt at this work asserted the upstream source could not be
-fetched, marked twelve map rows `unsourced` on that basis, and shipped a
-one-bit descriptor. The fetch is an ordinary HTTPS GET and it works. Rather
-than assert that a second time, the answer is committed: `upstream-excerpt.txt`
-holds the fragments the map's spellings are checked against, so a reviewer can
-verify every constant offline, with no network and no re-fetch.
+fetched, marked thirteen of its fifteen map rows `unsourced` on that basis,
+and shipped a one-bit descriptor. The fetch is an ordinary HTTPS GET and it
+works. Rather than assert that a second time, the answer is committed:
+`upstream-excerpt.txt` holds the fragments the map's spellings are checked
+against, so a reviewer can verify every constant offline, with no network and
+no re-fetch.
 
 The full 90 KB `uniwill-acpi.c` is deliberately *not* vendored here — the
 excerpt is ~300 lines and reviews in a diff, and `CLAUDE.md` is explicit that
@@ -114,8 +115,13 @@ that happens to start the same way.
 `registers.yaml` is **read-only** here. This change packages statuses already
 recorded; it changes none. So no row is edited, which also keeps a branch that
 does edit one from colliding. Where the map shows a status that ought to change
-— the `0x0786` / `0x078E` fan-address question that a readable upstream source
-now makes askable — that is a follow-up issue with its own evidence.
+— what `0x0786` and `0x078E` are on this EC — that is a follow-up issue with
+its own evidence. The addresses are readable at the pinned rev, and reading
+them is itself the useful result: upstream *defines* both constants and
+references neither anywhere in the tree, so there is no upstream write path to
+either byte, and the disagreement with `registers.yaml` is between an unused
+constant and this repository's reading rather than between two live users of
+the byte.
 
 ## What is not verified, and who is left holding it
 

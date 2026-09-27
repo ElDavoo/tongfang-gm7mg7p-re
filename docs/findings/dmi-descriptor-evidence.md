@@ -23,9 +23,10 @@ curl -fsSL -o /tmp/uw.tar.gz \
 
 It returns 27,634 bytes containing `uniwill-acpi.c` at 90,721 bytes, and lines
 356-371 of that file define all fifteen `UNIWILL_FEATURE_*` constants — each
-spelled exactly as the map's `repo_feature` names it. Twelve map rows had been
-marked `unsourced` and the descriptor reduced to one bit on the strength of a
-file not being vendored in this tree.
+spelled exactly as the map's `repo_feature` names it. Thirteen of the fifteen
+map rows had been marked `unsourced` — every one but the two charge rows, whose
+bits that attempt had guessed correctly — and the descriptor was reduced to one
+bit on the strength of a file not being vendored in this tree.
 
 **"This file is not vendored here" and "this file is not readable" are
 different facts, and only the second one blocks anything.** That distinction
@@ -96,15 +97,26 @@ because of what this tree happens to vendor. All fifteen rows carry
 `bit_source=upstream@5a24248`; `unsourced` is no longer a value the map can
 hold.
 
-**A live naming conflict at `0x0786`, recorded because the next reader will
-trip over it.** Upstream calls it `EC_ADDR_FAN_DEFAULT` (the fan curve);
+**A naming difference at `0x0786`, and the constant that creates it is unused.**
+Upstream defines `EC_ADDR_FAN_DEFAULT` at `0x0786` (`uniwill-acpi.c:254`) and
+`EC_ADDR_FAN_CTRL` at `0x078E` (`uniwill-acpi.c:265`) for the fan curve;
 `registers.yaml` calls `0x0786` `CPU_TCC_OFFSET (APTC/APTN)` on the authority
-of the DSDT and vendor 3.1.39.0, which agree with each other and disagree with
-upstream, at `present-untested`. So the fan claim rests on the RPM observation,
-**not** on the address agreeing, and the map says so in the row rather than
-leaving the disagreement for someone to discover. Resolving which name is right
-is a follow-up issue with its own evidence; it is not settled here, and
-`registers.yaml` is not edited.
+of the DSDT and vendor 3.1.39.0, which agree with each other, at
+`present-untested`. The disagreement is between an **unused** upstream constant
+and this repository's reading, **not** between two live users of the byte: at
+`5a24248` neither constant is referenced anywhere in the tree, each occurs
+exactly once at its own `#define`, and `0x0786` appears nowhere else in the
+file, so upstream has no write path to it. Per `registers.yaml`'s own caveat
+this is *not found used by this method* — a `#define` with no reference is what
+an unused constant looks like, and it is not proof the byte is unused on the
+hardware. It is also a claim about the whole file rather than about
+`upstream-excerpt.txt`, which quotes those two `#define`s and not their uses
+(it cannot be checked from the excerpt, and counting occurrences in a partial
+quotation is meaningless — see "What the checker's rules are"). So the fan
+claim rests on the RPM observation, **not** on the address agreeing, and the
+map says so in the row rather than leaving the disagreement for someone to
+discover. What `0x0786` actually is on this EC is a follow-up issue with its
+own evidence; it is not settled here, and `registers.yaml` is not edited.
 
 ## The seven exclusions, and what makes them settled rather than open
 
@@ -170,12 +182,31 @@ that changed this work's shape:
 
 **Rule 7 is the one the review said was unfalsifiable.** The previous checker
 accepted a `bit_source` of `upstream@<rev>` and verified only that the named bit
-appeared in the patch's added lines — so twelve `unsourced` cells would each
+appeared in the patch's added lines — so thirteen `unsourced` cells would each
 have been satisfied by writing a plausible-looking name into both the CSV and a
 patch, with nothing able to tell a real spelling from an invented one. With the
 enum committed, that is checkable offline and byte for byte, and a
 misspelled-but-plausible constant such as `UNIWILL_FEATURE_CPU_TMP` is a
 refusal. The suite pins exactly that case.
+
+**Rule 7 cannot catch a dead constant, and that is a limit of the excerpt
+rather than of the rule.** The review that corrected this write-up asked for a
+further rule: a `reason` cell asserting a driver *action* at an upstream
+address should have to name something the excerpt shows being used, so a
+`#define` with no reference cannot be written up as behaviour again. It cannot
+be built on what is committed here, and the reason is worth keeping.
+`upstream-excerpt.txt` is a deliberate **partial** quotation, so how often a
+constant appears in it says nothing about how often it appears in
+`uniwill-acpi.c` — it is in fact backwards. `EC_ADDR_FAN_DEFAULT` occurs once in
+the source, at its own `#define`, and **twice** in the excerpt (its fragment's
+heading and the quoted line); the live `EC_ADDR_MAIN_FAN_RPM_1` occurs four
+times in the source and **once** in the excerpt, because the excerpt quotes the
+defines and not their uses. An occurrence-count rule would pass the dead
+constant and fail the live ones. Telling the two apart needs the whole 90 KB
+file, which is deliberately not vendored and which no offline gate can fetch —
+so the correction is in the prose, and the checker keeps doing the one thing it
+can actually do: verify that every spelling it is given is quoted verbatim from
+the pinned source.
 
 **Rule 6 has two halves and neither is sufficient alone.** Where `reg_addr` is
 present, the status must be one that asserts the feature works; where it is
@@ -221,11 +252,13 @@ board in the table; the checker refuses it outright.
 
 ## Follow-ups this opens
 
-1. **`0x0786` / `0x078E` in `registers.yaml`.** Now that upstream's fan curve
-   and fan control addresses are readable, the live naming conflict between
-   `EC_ADDR_FAN_DEFAULT` and `CPU_TCC_OFFSET (APTC/APTN)` is askable, and so
-   is whether the driver needs a fan curve set for this board. Its own issue,
-   with its own evidence; deliberately not done here.
+1. **What `0x0786` and `0x078E` are on this EC.** The addresses are now
+   readable, and reading them shows upstream never uses them, so the question
+   is no longer a conflict between two live users of the byte — it is what the
+   byte is, given the DSDT's `APTC`/`APTN`, the vendor 3.1.39.0 stack and
+   `registers.yaml`'s `CPU_TCC_OFFSET` reading, with upstream's dead
+   `EC_ADDR_FAN_DEFAULT` as the one contrary hint and no writer to test it
+   with. Its own issue, with its own evidence; deliberately not done here.
 2. **The `kbd_led_*` values for a 4-zone RGB backlight.** Left at upstream's
    default. A human at the machine can answer whether this board needs them.
 3. **Compiling and loading the patch**, and exercising the eight bits. The

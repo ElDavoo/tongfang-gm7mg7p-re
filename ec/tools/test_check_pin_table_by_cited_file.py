@@ -552,14 +552,14 @@ class TheCommittedTree(unittest.TestCase):
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        # 57 rather than 56, and 45 rather than 44, for one reason in two
-        # places: `test_check_no_append_logs.py` landed on 2026-09-27 and
-        # nothing in the committed markdown cites a line of it yet, so the
+        # 58 rather than 57, and 46 rather than 45, for one reason in two
+        # places: `tools/test_check_dmi_descriptor.py` landed on 2026-09-27
+        # and nothing in the committed markdown cites a line of it yet, so the
         # suite count and the unpinned tail each take one and `pinned` does
         # not move. That is the tail doing its job, not a miss.
-        self.assertEqual(len(files), 57)
+        self.assertEqual(len(files), 58)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 45)
+        self.assertEqual(len(tail), 46)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be
