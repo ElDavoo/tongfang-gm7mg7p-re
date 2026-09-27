@@ -557,13 +557,19 @@ class TheCommittedTree(unittest.TestCase):
         # issue #832's write-up, and that write-up names the suite's *tool* and
         # the census it reads but never cites a `test_*.py:NNN`, so the suite
         # count and the unpinned tail each take one and `pinned` does not move.
+        # 60 and 48 rather than 59 and 47 for that same reason and over that
+        # same axis: `tools/test_digest_doc_coverage.py` landed with issue
+        # #372's write-up, and that write-up names the suite *by path* and the
+        # two component pages the suite reads but cites no `test_*.py:NNN`, so
+        # the suite count and the unpinned tail each take one and `pinned` does
+        # not move.
         # That is the tail doing its job, not a miss, and the axis the comment
         # above describes is what makes it visible: a write-up that grows a
         # line-citation of the new suite moves it out of the tail and into the
         # named count, and the pair of assertions go red together.
-        self.assertEqual(len(files), 59)
+        self.assertEqual(len(files), 60)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 47)
+        self.assertEqual(len(tail), 48)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be
