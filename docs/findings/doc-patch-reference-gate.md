@@ -12,6 +12,11 @@ as the name beside it, and the name is the part nothing held.
 This adds `tools/check_doc_patch_refs.py` and its suite. It is a check over
 committed text and nothing else.
 
+Both directions were widened on 2026-09-27 (issue #955) to hold what this file's
+wording claimed, and the census below is re-measured over the set the check now
+reads: [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md) has the two
+decisions, the measurements and the limits.
+
 **None of this is a live test, and none of it is evidence about the firmware.**
 The failure being prevented is a stale name in a sentence, which is visible from
 a checkout: no EC is opened, no register is read back, no capture is taken, no
@@ -58,7 +63,7 @@ fold is:
 | `docs/findings/0751-early-exit-row.md` | 1 |
 | `docs/findings/0751-capture-row-shape.md` | 1 |
 
-### Four corrections to the issue, stated rather than folded in
+### Corrections to the issue, stated rather than folded in
 
 1. **`check_doc_links()`'s discovery finds 686 `.md` link references at
    `271389d`, not 213.** The issue's number is a measurement of an older tree.
@@ -97,6 +102,21 @@ fold is:
    message). That `.py` population is a follow-up, not something to widen this
    into: the checker is scoped to `*.md`, and a wider scan would put this tool
    inside a file issue #772 owns.
+
+5. **The "every reference" wording over-claimed, in both directions, and the
+   file set is now named wherever it is claimed** (2026-09-27, issue
+   [#955](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/955)). The live
+   direction below said "every patch in `docs/ci/`", which reads as covering
+   the directory and covers a glob over `.patch` — so
+   `docs/ci/agent-gates-deep-schedule.yml`, the seventh prepared change, was
+   held by nothing: rewrite every citation of it and the run stayed green. The
+   reference direction said "every", and what was checked was every *markdown*
+   reference — a rename of `agent-gates-0751-self-test.patch` went red on its
+   markdown citations while `ec/tools/grade_0751_isolation.py` and
+   `ec/tools/test_grade_0751_isolation.py` kept naming it unreported. Both are
+   fixed rather than reworded away, and the set is named in each of the places
+   that said "every". The decision, the re-measured census and the limits are
+   in [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md).
 
 ### The one genuinely new thing the issue's headline implies and does not mention
 
@@ -163,10 +183,19 @@ is exempt by construction. That is the intent. The exemption is two names wide
 and held in both directions, and this is a cost of the shape rather than a defect
 in it.
 
-The **live** direction is checked too, mirroring the sibling: every patch in
-`docs/ci/` must be cited by at least one markdown file. All six are, in 3–11
-files each. A human adding a seventh prepared patch and documenting it nowhere
-is the mirror failure, and it is the half that broke in the sibling.
+The **live** direction is checked too, mirroring the sibling: every prepared
+change in `docs/ci/` must be cited by at least one file the check reads. *(Corrected
+2026-09-27, issue #955: this read "every patch in `docs/ci/` must be cited by at
+least one **markdown** file. All six are, in 3–11 files each. A human adding a
+seventh prepared patch and documenting it nowhere is the mirror failure" — two
+words of it were wrong. The glob was over `.patch`, so the seventh prepared
+change, `agent-gates-deep-schedule.yml`, was not covered by it, and the
+"markdown" was not the whole of what is read. Both are now held: the set is
+`REFERENCE_GLOBS`, and the non-patch entry is named and compared against
+discovery in both directions. The "all six" and the "seventh" were that
+commit's counts; `--check` prints the current one and the population line is
+the figure to re-derive.)* A human adding a prepared change and documenting it
+nowhere is the mirror failure, and it is the half that broke in the sibling.
 
 **No count is asserted anywhere** — not by the check, not by the suite. The
 reason is `tools/test_readme_suite_table.py`'s own docstring: an expected count
@@ -316,8 +345,15 @@ OK
 ## What this does not do, and what a new question opens
 
 - **The `.py` population.** `tools/test_agent_gates_patches.py` names the deleted
-  patch in three more places. Recorded as a follow-up rather than widened into a
-  file issue #772 owns.
+  patch in three more places, and five `ec/tools/` files carry live-direction
+  citations the check does not count. *(Decided 2026-09-27, issue #955, not
+  deferred: this read "recorded as a follow-up". It is out of scope by decision
+  and for a reason — widening to `*.py` reports this tool's own deliberately
+  absent fixture names as STALE and makes the "still cited" half of every
+  `HISTORICAL` key self-certifying, since this tool's docstring names all three.
+  The five files and what each names are listed in
+  [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md), and the files a
+  wider scan would newly govern are issue #772's.)*
 - **Whether a reference's sentence is instructing or describing.** That is what
   `HISTORICAL` stands in for, at name granularity. The cost of getting it wrong
   is a false positive a reader can see and an edit to make — not a silent pass.
