@@ -135,6 +135,20 @@ trusting one of theirs: every row says whether it was verified against
   onto an existing one. Structured sources of truth (`registers.yaml`, the
   annotation CSVs) stay single files: edit the rows you need and nothing
   else.
+- **No hand-kept totals in prose, and never a correction chain.**
+  Adding a suite does not make you restate how many suites there are, and it
+  certainly does not make you append a paragraph explaining the new
+  arithmetic. `tools/README.md` carried "There are forty-nine today, 1561
+  tests in all" for long enough to collect **3,522 lines and 22 supersession
+  notes** under it — 40,240 words, every one appended at the same spot by a
+  branch that had added a suite, which made it a merge conflict as well as a
+  stale sentence, and the note ordinals disagree with each other because
+  branches numbered their own without seeing the others'. The total is
+  `bash tools/run-tests.sh`'s last line; the file now points at that instead,
+  and `tools/test_readme_suite_table.py` fails if a total or a
+  `*(Superseded …)*` note reappears in its lead. Per-suite counts *inside a
+  table row* are fine and are not what that reads. The same shape killed
+  `docs/findings.md`'s section counter, which is the next bullet.
 - **`docs/findings.md` is closed, and this is enforced rather than
   advised.** A new finding is a new file under `docs/findings/`, and
   nothing else — no summary section, no pointer appended here.

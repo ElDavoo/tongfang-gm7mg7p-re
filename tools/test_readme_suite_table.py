@@ -107,6 +107,37 @@ def readme_rows():
     return table_rows(README.read_text())
 
 
+def readme_lead(text):
+    """The prose above the table: everything before the first table line.
+
+    Scoped deliberately. The counter this file used to carry lived in the lead,
+    so the lead is where a total is a mistake -- but a *row* is allowed to say
+    how many cases its own suite has, and `at 36 cases` or `twenty-four tests`
+    is documentation, not a claim about the repository. A whole-file rule would
+    go red on that and teach everyone to ignore this suite, which is the same
+    failure `is_suite_row` exists to avoid.
+    """
+    for line in text.splitlines():
+        if line.startswith('|'):
+            break
+        yield line
+
+
+# A number immediately followed by `suite`/`test`. Digits only, not the spelled
+# words: "Three suites that landed in parallel with it" is prose about three
+# named suites and is not a total, and a rule that reddened on it would be a rule
+# nobody keeps. Every historical instance is digits -- `1561 tests in all`,
+# `48 suites`, `1740 tests` -- so digits lose nothing and cost no false positive.
+# Measured on the pre-2026-09-27 file: 214 matches, against 0 in the current one.
+TOTAL_SHAPED = re.compile(r'\d[\d,]*\s+(?:suite|test)s?\b', re.I)
+
+# The other half of the same disease, and the reason the numbers were corrected
+# in place rather than edited: a correction *chain*. Twenty-two of these were
+# appended to one sentence, all in the same spot, which is what made the file a
+# merge conflict as well as a stale one.
+SUPERSESSION_NOTE = re.compile(r'\*\(Superseded\b')
+
+
 class ParseTests(unittest.TestCase):
     """The parse itself, on inline tables.
 
@@ -181,6 +212,37 @@ class SuiteTableTests(unittest.TestCase):
             f'tools/README.md has {len(stale)} row(s) for a suite that is '
             f'not on disk:\n  ' + '\n  '.join(stale) +
             '\nEither the file was renamed or moved, or the row outlived it.')
+
+    def test_the_lead_states_no_total(self):
+        # The whole point. This file carried "There are forty-nine today, 1561
+        # tests in all" for long enough to collect 3,522 lines of correction
+        # under it, every one appended at the same spot by a branch that had
+        # added a suite. The total is the runner's last line and belongs there.
+        lead = '\n'.join(readme_lead(README.read_text()))
+        found = TOTAL_SHAPED.findall(lead)
+        self.assertFalse(
+            found,
+            f'tools/README.md\'s lead states {len(found)} total-shaped figure(s): '
+            f'{found}\nA number of suites or tests written here is a claim about a '
+            f'tree that stops being true the moment a suite lands, and correcting '
+            f'it in place is what grew this section to 3,522 lines. Run '
+            f'`bash tools/run-tests.sh` and read its last line; if the lead needs '
+            f'to say how big this is, point at that instead of restating it. The '
+            f'per-suite counts in the table rows below are fine and are not what '
+            f'this reads.')
+
+    def test_the_lead_carries_no_correction_chain(self):
+        # The other half. Even with the total gone there is nothing to supersede,
+        # so a chain here means one was reintroduced by another route.
+        lead = '\n'.join(readme_lead(README.read_text()))
+        found = SUPERSESSION_NOTE.findall(lead)
+        self.assertFalse(
+            found,
+            f'tools/README.md\'s lead carries {len(found)} supersession note(s). '
+            f'A correction to this file belongs in a `docs/findings/` write-up -- '
+            f'the twenty-two that were here are preserved verbatim in '
+            f'`docs/findings/tools-readme-totals.md` -- not appended to a '
+            f'paragraph in the file they correct.')
 
 
 if __name__ == '__main__':
