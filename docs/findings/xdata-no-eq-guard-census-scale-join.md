@@ -3,11 +3,11 @@
 The write-up for [issue
 #832](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/832), which is
 about `ec/tools/xdata_register_map.py`'s `--no-eq-guard` refusal arguing from
-an instruction where the `--export-ownership` refusal eighteen lines below it
-argues from a measurement. What this branch adds is the measurement, at the
-granularity the issue said had never been measured: the 1,326 rows of
-`ec/annotations/xdata-registers.csv` joined row by row against a guard-off
-regeneration, split by program.
+an instruction where the next refusal in the same `main()` — the
+`--export-ownership` one — argues from a measurement. What this branch adds is
+the measurement, at the granularity the issue said had never been measured: the
+1,326 rows of `ec/annotations/xdata-registers.csv` joined row by row against a
+guard-off regeneration, split by program.
 
 **Nothing here is a hardware claim.** No register was read back, no firmware
 image was opened, and no laptop, EC or Windows machine is involved. Every
@@ -116,10 +116,10 @@ The `both` column is the one nobody had a figure for, and it is the least
 intuitive: **34 of the 49** rows the census marks `both` change `cluster_id`,
 against 464 of 1,169 for `main-ec` alone. Those 49 are addresses both programs
 touch, so both programs' classifications of them moved, and they moved at a
-rate four times the main-EC one. That is a property of this flag's effect on
-this census, and it is a reason a per-program figure quoted without its
-denominator should be read carefully: `464 of 1,169` and `9 of 108` are both
-"the flag moved some rows", and only one of them is 40%.
+rate of 69% where `main-ec`'s is 40% — about 1.7 times it. That is a property
+of this flag's effect on this census, and it is a reason a per-program figure
+quoted without its denominator should be read carefully: `464 of 1,169` and
+`9 of 108` are both "the flag moved some rows", and only one of them is 40%.
 
 ## The 439 `cluster_key`s, and the 15 among them
 
@@ -202,12 +202,14 @@ $ python3 ec/tools/check_cluster_citations.py \
 
 3 against the committed census, **51 against the guard-off one** — 48 membership
 and 3 census-count, where the committed run's three are 2 membership and 1
-census-count. Exactly **one** of the fifty-one is the same line under both
-censuses, the census-count row that disagrees either way. The other fifty are
-the tree's prose read against a clustering its ranks do not describe, and the
-two membership lines the committed run already reports come back in a
-different spelling, because the message names the clusters the line cites and
-those are the ids that moved.
+census-count. Exactly **one** of the fifty-one is the same line with the same
+disagreement under both censuses, the census-count row that disagrees either
+way; the recipe page's `:220` is the other line both runs report, and it comes
+back disagreeing about a different address. The other fifty are the tree's
+prose read against a clustering its ranks do not describe, and the two
+membership lines the committed run already reports come back in a different
+spelling, because the message names the clusters the line cites and those are
+the ids that moved.
 
 **That number is not a verdict on the prose.** It is what the checker reports
 when the census under it moves, and it is the same shape as the 507: many

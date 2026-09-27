@@ -2,7 +2,7 @@
 """What `--no-eq-guard` moves at census scale, held to the figures already published.
 
 `xdata_register_map.py` refuses the flag with an argument that quotes no figure
-at all, while the refusal eighteen lines below it argues from measured ones.
+at all, while the next refusal in the same `main()` argues from measured ones.
 This suite is the measurement that closes that asymmetry, and the two halves
 have different jobs and both are here.
 
@@ -205,6 +205,16 @@ class ThePublishedFigures(unittest.TestCase):
         self.assertEqual(self.report.figure("rows whose refs differs"),
                          (0, 1326))
 
+    def test_the_join_pages_both_and_main_ec_cells_are_reproduced(self):
+        # `xdata-no-eq-guard-census-scale-join.md`'s row-level table, the
+        # `cluster_id` row: "464 of 1,169" and "34 of 49". The `both` cell is
+        # the one that column exists for -- the addresses both programs touch
+        # are 49 rows the tree had no per-program rate for -- so it is held
+        # here beside the `main-ec` cell it is read against.
+        split = self.report.split("rows whose cluster_id differs")
+        self.assertEqual(split["both"], (34, 49))
+        self.assertEqual(split["main-ec"], (464, 1169))
+
     def test_the_6a_main_ec_cluster_count_is_reproduced(self):
         # §6a: "main-EC clusters at threshold 0.50 | 394 | 389". The report
         # counts the CSV's rows rather than the program's clusters, so this is
@@ -287,7 +297,7 @@ class TheRowLevelJoin(unittest.TestCase):
         # The rank/key cross-tab has to close. If it did not, a row could sit
         # in two cells and every figure in the report would be about an
         # unknown population -- which is what the `--export-ownership` refusal
-        # eighteen lines below this flag's own quotes its numbers to avoid.
+        # after this flag's own quotes its numbers to avoid.
         cells = [int(v) for v in re.findall(r"\d+", self.report.value(
             "cluster_id and cluster_key together"))]
         self.assertEqual(len(cells), 4, "four cells, and every one is a count")
@@ -303,6 +313,23 @@ class TheRowLevelJoin(unittest.TestCase):
                              total, f"{column}: the split does not sum")
             self.assertEqual(sum(n for _, n in split.values()), rows,
                              f"{column}: the split's denominators do not sum")
+
+    def test_the_both_bucket_moves_faster_than_main_ec(self):
+        # The page's one rate comparison -- `both` against `main-ec` -- is
+        # arithmetic over two cells of the same split, and a multiplier is the
+        # one figure on the page no other line prints, so nothing re-derives
+        # it: a draft of that sentence put it at four times, which the two
+        # cells make 1.7. The cells themselves are `ThePublishedFigures`'
+        # business; what is this class's is the quotient. Held as the quotient
+        # rather than as a round number, so a census that moved either cell
+        # moves this with it and turns the sentence above stale rather than
+        # leaving it to be caught by a reader.
+        split = self.report.split("rows whose cluster_id differs")
+        both = split["both"][0] / split["both"][1]
+        main_ec = split["main-ec"][0] / split["main-ec"][1]
+        self.assertAlmostEqual(both, 0.69, places=2)
+        self.assertAlmostEqual(main_ec, 0.40, places=2)
+        self.assertAlmostEqual(both / main_ec, 1.7, delta=0.1)
 
     def test_the_cluster_id_and_key_counts_reconcile_with_the_cross_tab(self):
         # `rows whose cluster_id differs` counts a rank and
