@@ -397,9 +397,34 @@ into `r2 -a 8051` with no stitching needed.
   image, plus the `0xC1`/`0xC2` pair stated from the manual — and it **re-reads
   the two windows and §8 out of those files** rather than only citing them, so an
   edit to either is a red run and not a literal that has quietly stopped matching
-  its own provenance; run it after touching either table; the gate call for it
-  is prepared at `../docs/ci/agent-gates-disasm8051-self-test.patch`, and no gate
-  runs it until a human lands that.
+  its own provenance; run it after touching either table. **`--self-test` pins 20
+  of the 256 opcode lengths and says nothing about the other 236** — those were
+  read one at a time, which is a method and not a reproducible one. What pins
+  the rest is `tools/opcode_coverage.py`: `--divergence` compares every length
+  against the 45,643 instruction starts in the committed Ghidra listings and
+  reports **0 disagreements over 45,643 rows** (`0xA5` and `0xC1` are *not
+  found by this method*, not confirmed wrong — no listing places either at an
+  instruction start), `--r2-diff` gives a second decoder's opinion from a linear
+  `r2 -a 8051` walk of all three images, which reaches both and reports **0
+  events over 114,953 positions**, and the same `--divergence` run compares
+  against a third route — the **MCS-51 manual, transcribed into `MCS51_LEN`** —
+  for **0 disagreements over the 255 rows it assigns**. That third one is not
+  decoration: Ghidra and r2 share a map, and the manual is the only source in
+  this tree that can contradict both, so **0 against the two decoders is one map
+  counted twice**.
+  *(Corrected 2026-09-27, review of #67: "the only source in this tree that can
+  contradict both" holds on the 247 rows where the manual transcription is itself
+  independent, and not on `0xA8`-`0xAF`, where it had been copied from the
+  `0x78` row and so agreed with both. `--divergence` now reports those eight.)* The **1 row the manual assigns nothing to (`0xA5`) is reported
+  as a third state**, in the `man` column of `--coverage` and in `--divergence`,
+  because a decoder agreeing with the table where the manual has no row is a
+  shared convention and not a corroboration. Lengths
+  only: mnemonics are `--self-test`'s business and framing is
+  `converges_from()`'s. Written up in
+  `../docs/findings/opcode-table-coverage.md`; no gate runs either mode, and the
+  `--self-test` gate call is prepared at
+  `../docs/ci/agent-gates-disasm8051-self-test.patch` with no gate running it
+  until a human lands that.
 - **`tools/verify_gap_text.py`** — cross-decodes the 143 instructions
   `verify_reassembly.py` cannot re-encode, so none of the committed listing is
   read by no check. It recomputes the set from `to_sdas()` rather than carrying

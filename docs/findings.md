@@ -2965,6 +2965,10 @@ are holes rather than confirmations:
   None of the 180 is in the 143 (`0xC2` is a form `sdas8051` expresses, so they
   are inside the 45,481), which is exactly why nothing had noticed.
 - **`0xA0`/`0xB0` are unresolved and this repository cannot resolve them.**
+  *(Not the only shared departure, and since #67 the other one is a length a
+  table can see: `0xA8`-`0xAF`, where the decoders collapse `XCH A,Rn` onto the
+  `0x78` row's two bytes and the manual transcription had been copied from that
+  row — see `opcode-table-coverage.md`.)*
   Ghidra's SLEIGH, r2 and `sdas8051` all put `ORL C,/bit` at `0xA0` and `ANL
   C,/bit` at `0xB0`; the MCS-51 manual as reproduced in common references has
   them the other way round. Three tools agreeing is why `disasm8051.py` follows

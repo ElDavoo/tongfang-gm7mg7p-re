@@ -37,7 +37,7 @@ $ python3 ec/tools/census_test_line_pins.py
 107 pin(s) in 29 markdown file(s): 80 distinct spelling(s), 59 distinct resolved target(s)
   75 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
   0 def test_, 15 assertion, 22 comment, 5 blank, 33 other (of the pins that resolve)
-  read 182 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 47 test file(s) in it
+  read 184 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 48 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -4054,6 +4054,35 @@ differenced against, stay written as the two readings of the tree before
 on all three of its figures** — `46` / `12` / `34` over `107`, with `44`-of-
 `107` and `80`-of-`107` — because this merge re-registers rows without changing
 which test file any of them names, and commits no suite.
+
+**#37's merge moves two of the corpus denominators and none of the pins.**
+Re-run on this tree, `census_test_line_pins.py` reads the same eight figures the
+block above reads — **107 pins in 29 markdown files, 80 spellings, 59 targets,
+75 resolves against 32 declined, the `0/15/22/5/33` split** — with **48 test
+files** against `main`'s `47` and **184 markdown files** against `main`'s `183`.
+The step is one of each, and both are this branch's two new files:
+[`opcode-table-coverage.md`](opcode-table-coverage.md) and
+`ec/tools/test_opcode_coverage.py`, so `183 + 1 = 184` and `47 + 1 = 48`, and
+neither cites a `test_*.py:NNN` of its own — the write-up and `ec/README.md`'s
+`disasm8051.py` bullet each name the suite and the tool *by path*. **The
+by-cited-file axis moves on two of its three figures and not the third**, which
+is #811's reason for the fifth time: **48 / 12 / 36** over `107`, with
+`44`-of-`107` and `80`-of-`107` unmoved, because the new suite is in the tail
+and no pin names it. The `46` / `12` / `34`, the `180` and the `46 test files`
+above stay written as the measurements they are, per
+[`../findings.md`](../findings.md) §4a-4d. **This paragraph was first written
+against a `main` reading `180` and `46`, and both halves of that are one landing
+behind** — `5672042a` (#1008) has since added
+[`testdata-index-repair-census.md`](testdata-index-repair-census.md),
+[`history-checkout-site-identity.md`](history-checkout-site-identity.md),
+[`trampoline-relative-branch-sites.md`](trampoline-relative-branch-sites.md) and
+`ec/tools/test_census_index_third_column_edits.py` to `main`, so `main` is at
+`183` and `47` and the `181` and `47` this paragraph carried were a tree that is
+not this one. They are **re-measured rather than differenced**, both sides run on
+the trees they describe; the `180` and `46` above stay as they were written, per
+§4a-4d. **The transcription at the top of this page is this tree's**, `184` and
+`48`, and the `182` / `47` it carried is `main` one landing before this one, left
+as the block's own prior reading.
 
 **The runner's own counters are `46 suite(s) run, 1437 tests`, and
 `python3 -m unittest discover -s ec/tools` reads `1075`** — the same pair
