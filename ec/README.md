@@ -407,13 +407,27 @@ into `r2 -a 8051` with no stitching needed.
   `bank0` `0x8038` one that `annotations/bank-call-audit.md` §8 met as a
   misframed rel8 escape and §9 corrects. Finds them by that reader's prologue
   and the `lcall` sites naming it, not by a DPTR scan — nothing in this image
-  loads such a table's address as an immediate. `--all-tables` is the
+  loads such a table's address as an immediate. The prologue search is an
+  enumerated set of twelve shapes reported in two tiers (every shape match, and
+  the subset corroborated by a `movc a,@a+dptr`), and `--region {main,pd,both}`
+  runs it over the `ITE8850-PD` image as well; `--all-tables` is the
   image-wide census, `--csv` regenerates
   `annotations/bank0-8038-dispatch-table.csv`, `--all-csv` and `--spans-csv`
   regenerate `annotations/index-table-entries.csv` and
   `annotations/index-table-spans.csv`, and `--self-test` re-checks the
-  reader's bytes, the table's extent and stride, the whole 15-site census and
-  the census rows each span accounts for against the committed image.
+  widened search, the trampoline immediates, the reader's bytes, the table's
+  extent and stride, the whole 15-site census and the census rows each span
+  accounts for against the committed image.
+- **`tools/pd_index_tables.py`** — the same reader search and the same decode
+  and well-formedness checks, imported from `decode_index_table.py` rather than
+  restated, run over the `ITE8850-PD` image at `0x20000`. It finds three
+  dispatchers a caller names, not the two the committed census names, and reads
+  each one's entry stride off its own loop: the PD's `0x11C2` and `0x11EF` walk
+  4- and 6-byte entries where the main EC's reader walks 3, so their verdicts
+  are the main EC's rule over another layout and the CSV says so per row.
+  `--spans-csv` regenerates `annotations/pd-index-table-spans.csv` and
+  `--self-test` pins the search, the reconciliation against
+  `pd_image_census.py`'s 9 and 16, and all 28 census rows.
 - **`tools/bank_attribution.py`** — a per-bank reachability closure seeded from
   the 403 BL51 trampolines, whose stub identity names the bank, so those entry
   points are linker-attributed rather than assumed. Reuses
@@ -699,6 +713,12 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   `frame_over`. It is the census, not a filtered view of it, so a site whose
   bytes do not decode keeps a `well_formed=no` row rather than disappearing.
   Produced by `tools/decode_index_table.py --spans-csv`.
+- **`annotations/pd-index-table-spans.csv`** — the same census over the
+  `ITE8850-PD` image's 28 candidate call sites, with the dispatcher's runtime
+  address and its own entry stride in front of it. The stride is what makes
+  `well_formed` readable there: the column is the main EC's 3-byte rule, and it
+  is only a statement about a table where the stride is 3. Produced by
+  `tools/pd_index_tables.py --spans-csv`.
 
 ## Recompilation — status: toolchain proven, not attempted
 

@@ -1261,6 +1261,36 @@ bank-paged-call-targets         0 site(s)
 bank-relative-branch-targets    0 site(s)
 ```
 
+**Two of those blind spots have since been searched, and one closes. The
+sentence above stands as written**; this is the result run against it, not a
+rewrite of it (#61, and the full account in
+[`../../docs/findings/table-reader-spellings.md`](../../docs/findings/table-reader-spellings.md)).
+`decode_index_table.py`'s reader search is now an enumerated set of twelve
+prologue shapes — both pop orders, the selector save in a register other than
+`r0` or in a direct address, an intervening `push acc` — and the main EC's
+**uniqueness assertion survives it**: 36 candidates match a shape, 10 of them
+reach a `movc a,@a+dptr` within eight instructions, and exactly one of those
+ten is named by an `lcall`. The other nine are each the `pop dpl ; pop dph` half
+of a `push dph ; push dpl` the same routine issued a few bytes earlier around a
+single XDATA read, so they restore a pointer of their own and have no caller
+naming them at all; `--self-test` holds all nine as that byte pattern. A
+reader that names its table with an immediate is not this family and is counted
+in its own bucket — **one** site, `0x104D`, which walks no table. So
+`pop dpl`-first is searched and is empty as a reader; **a `ret`-based thunk is
+not searched and remains a blind spot**, and nothing here claims otherwise.
+
+The **trampoline** half closes negative on the committed range, without waiting
+on #48: all 403 `trampolines()` DPTR immediates span `0x8031`-`0xFE00`, every
+one is at or above `0x8000`, and **none is `0x7151`**, so no trampoline names
+this reader and no trampoline caller is a call site `reader_call_sites()`
+structurally could not have found. That is also what the structure predicts — a
+trampoline naming a target below `0x8000` would be naming common-area code,
+which is mapped in every bank and needs no switch. #48's own work, decoding
+what the other 402 name, is untouched and open. The **computed-target** half is
+untouched too: a caller reaching `0x7151` by arithmetic or through the
+`jmp @a+dptr` at `0x716B` is still invisible to any byte scan, and no widening
+of this search changes that.
+
 The 15 sites are a byte scan and could in principle include a phantom whose
 following bytes happen to pass all three well-formedness checks; `frame_onto`
 is reported per site so the weakest ones (`0x00DD3` and `0x08662`, 23 of 24)

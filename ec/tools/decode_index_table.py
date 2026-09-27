@@ -27,6 +27,42 @@ more bytes give the default. Address-then-case, not case-then-address:
 section 8 read them the other way round, which shifts every entry by one byte
 and puts a phantom `sjmp` at the table's head.
 
+**The reader search is an enumerated set of shapes, and it is tiered.** One
+literal is a weak search: `d0 83 d0 82 f8` is the spelling this compiler
+runtime emitted at `0x7151`, and nothing licenses reading a different reader
+in the same image as the same five bytes. `PROLOGUE_SHAPES` below is the
+enumerated set -- both pop orders, the selector save landing in a register or
+a direct address, an intervening `push acc` -- and each entry says whether it
+`from_return_address`, which is the family's invariant and the one thing that
+separates this reader from a routine that pops a DPTR it pushed itself. A
+direct-address reader (`mov dptr,#imm16` plus a table walk) is reported in its
+own bucket by `direct_address_readers()` and never decoded as a table of this
+family; the two buckets are separate results, not one widened one.
+
+Widening trades a blind spot for false positives unless it is counted in two
+tiers, so it is: **every** shape match is a tier-1 candidate, and a tier-2
+candidate is one whose first `PROLOGUE_BODY_INSNS` instructions contain a
+`movc a,@a+dptr`, i.e. the routine actually walks a table. On this image the
+`d0 82 d0 83` pair alone is 36 sites in the main EC and 93 in the PD image,
+against 2 for the whole five-byte literal, and the corroboration is what
+separates them. A third filter settles the family question on its own terms: a
+reader of *this* family is entered by a bare `lcall` and nothing else, so
+`reader_call_sites()` on a candidate is what says whether its table can be
+inline at all. `docs/findings/table-reader-spellings.md` is the reading, with
+the counts, the `r2` listings and the two PD readers whose entry layout is not
+this one.
+
+**Regions, and what a PD verdict is worth.** `--region` runs the same search
+over `common`/`bank0`/`bank1` (the regions a common-area subroutine is called
+from), over the `ITE8850-PD` image at `0x20000`, or over both.
+`pd_index_tables.py` is the PD half's own census and imports the shapes, the
+decode and the checks from here rather than restating them, so the two readings
+cannot drift. One check is weaker in the PD and reads the same: `malformed()`'s
+"resolves inside the caller's own region" test is *banked* in the main EC --
+below `0x8000` is common area, at or above it is the caller's own bank -- while
+the PD image is flat, so the same test there only asks for a `0x0000`-`0xFFFF`
+CODE address. That is a weaker check, not a stronger result.
+
 **What a well-formed verdict is worth.** An `lcall` byte site is a byte scan
 and over-counts (bank-call-audit.md section 1 says why), so each candidate's
 table is checked rather than assumed: case values strictly ascending, every
@@ -45,6 +81,7 @@ Usage:
     python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800
     python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --at 0x0D148
     python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --all-tables
+    python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --region pd
     python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --csv \
         > ec/annotations/bank0-8038-dispatch-table.csv
     python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --all-csv \
@@ -54,6 +91,7 @@ Usage:
     python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --self-test
 """
 import argparse
+import collections
 import csv
 import sys
 
@@ -61,19 +99,87 @@ from disasm8051 import converges_from, decode
 from trace_xdata_refs import (PD_MARKER, REGIONS, offset_for_runtime,
                               region_of, runtime_addr)
 
-# `pop dph ; pop dpl ; mov r0,a` -- the reader's first five bytes. The two
-# pops are what make the table findable at all: they turn the pushed return
-# address into the table pointer, so the table is named by the *position* of
-# the call and never by an immediate.
-READER_PROLOGUE = bytes.fromhex("d083d082f8")
-
 LCALL = 0x12
+
+MOVC_A_DPTR = 0x93  # movc a,@a+dptr -- the table walk this family exists for
+JMP_AT_A_DPTR = 0x73  # the dispatch; carries no address for a byte scan
+MOV_DPTR = 0x90
+
+# Instructions decoded past a shape match before the walk is called
+# uncorroborated. The family's own reader reaches its first `movc` at +4, and
+# a routine that walks a table does the same; the window is short on purpose,
+# because a longer one lets a linear decode run past a call and into the bytes
+# after it, which is how a `pop dpl ; pop dph` around a `movx` comes to look
+# like a reader.
+PROLOGUE_BODY_INSNS = 8
+
+Prologue = collections.namedtuple(
+    "Prologue", ["name", "pattern", "from_return_address", "what"])
+
+# The enumerated prologue set, longest pattern first, so a candidate matches
+# the most specific shape it can rather than the shortest. `from_return_address`
+# is the family's invariant -- the pointer comes off the return address the
+# `lcall` pushed -- and it is what `lcalled_readers()` gates on. Every entry
+# here is `True` today, because a pop off the stack is the only spelling of
+# that invariant; a shape that does not preserve it belongs in
+# `direct_address_readers()`'s bucket instead, and adding one here with the
+# flag `False` is the deliberate way to say it is not a table of this family.
+#
+# A shape match is not sufficient on its own, and the two filters that are
+# named above: a shape match alone is tier 1, a `movc` in the window makes it
+# tier 2, and a bare `lcall` naming it is what says the pointer came off the
+# return address rather than off a `push dph`/`push dpl` the same routine did a
+# few instructions earlier. The last two entries are the bare pop pairs, which
+# are the other ten's prefixes: they are what a candidate matches when none of
+# the more specific spellings does, and they are where the false positives
+# come from.
+PROLOGUE_SHAPES = (
+    Prologue("pop-dph-dpl-selector-r0", bytes.fromhex("d083d082f8"), True,
+             "`pop dph ; pop dpl ; mov r0,a` -- the spelling at 0x7151, and the "
+             "one at the head of each PD dispatcher"),
+    Prologue("pop-dpl-dph-selector-r0", bytes.fromhex("d082d083f8"), True,
+             "pop dpl before dph, selector still r0"),
+    Prologue("pop-dph-dpl-selector-rn", bytes.fromhex("d083d082f9"), True,
+             "selector saved to r1 rather than r0"),
+    Prologue("pop-dph-dpl-selector-r7", bytes.fromhex("d083d082ff"), True,
+             "selector saved to r7 rather than r0"),
+    Prologue("pop-dpl-dph-selector-rn", bytes.fromhex("d082d083f9"), True,
+             "pop dpl first, selector saved to r1"),
+    Prologue("pop-dpl-dph-selector-r7", bytes.fromhex("d082d083ff"), True,
+             "pop dpl first, selector saved to r7"),
+    Prologue("pop-dph-dpl-selector-direct", bytes.fromhex("d083d082f5"), True,
+             "selector saved by `mov direct,a` rather than to a register"),
+    Prologue("pop-dpl-dph-selector-direct", bytes.fromhex("d082d083f5"), True,
+             "pop dpl first, selector saved to a direct address"),
+    Prologue("pop-dph-dpl-push-acc", bytes.fromhex("d083d082e0"), True,
+             "`push acc` between the pops and the selector save"),
+    Prologue("pop-dpl-dph-push-acc", bytes.fromhex("d082d083e0"), True,
+             "pop dpl first, `push acc` before the selector save"),
+    Prologue("pop-dph-dpl", bytes.fromhex("d083d082"), True,
+             "the bare pop pair, dph first -- no selector save named"),
+    Prologue("pop-dpl-dph", bytes.fromhex("d082d083"), True,
+             "the bare pop pair, dpl first -- no selector save named"),
+)
+
+SHORTEST_PROLOGUE = min(len(p.pattern) for p in PROLOGUE_SHAPES)
 
 # The main EC image, i.e. the regions a common-area subroutine can be called
 # from. The PD image at 0x20000 is a separate program with its own copy of
 # the same compiler runtime, so its readers are not this one and its tables
-# are not in this address space.
+# are not in this address space -- which is why it is a separate entry of
+# REGION_SETS rather than a fourth region of the search. The runtime does
+# carry over: the PD dispatchers are this family's shape, spelled the same way.
 MAIN_EC = ("common", "bank0", "bank1")
+PD_IMAGE = ("pd-image",)
+
+REGION_SETS = {"main": MAIN_EC, "pd": PD_IMAGE, "both": MAIN_EC + PD_IMAGE}
+
+# The common-area range BL51's bank-switch trampolines occupy, and the low and
+# high of their DPTR immediates. Both are oracles for `--self-test` rather than
+# inputs: every run re-derives them through `trampoline_targets()` and compares,
+# so a different dump gets them checked and not inherited.
+TRAMPOLINE_RANGE = (0x1150, 0x1ABC)
+TRAMPOLINE_IMMEDIATE_RANGE = (0x8031, 0xFE00)
 
 ENTRY_LEN = 3  # address_hi, address_lo, case value
 
@@ -92,31 +198,88 @@ RET_OPCODES = (0x22, 0x32)  # ret, reti
 # offset of the `lcall` that precedes it.
 SITE_0X8038 = 0x08035
 
-MOV_DPTR = 0x90
+
+def walks_a_table(d: bytes, off: int) -> bool:
+    """Whether a `movc a,@a+dptr` falls in the first PROLOGUE_BODY_INSNS
+    instructions at `off` -- tier 2 out of tier 1. A linear decode, so it can
+    read a `movc` that does not execute; the short window is what bounds that."""
+    return any(raw[0] == MOVC_A_DPTR
+               for _, raw, _ in decode(d, off, PROLOGUE_BODY_INSNS))
 
 
-def find_readers(d: bytes):
-    """File offsets in the main EC image whose bytes open with the
-    stack-pointer-to-table prologue."""
+def find_readers(d: bytes, regions=MAIN_EC):
+    """Every prologue candidate in `regions`, one per matching offset.
+
+    A candidate is tier 1 on its shape and tier 2 when `walks_a_table()` also
+    holds; the shape name is the most specific one that matched, so `mov r0,a`
+    is reported as itself rather than as the bare pop pair it starts with.
+
+    A byte scan, like every other reader of this image: the same two or four
+    bytes occur inside data and as operands of other instructions, and none of
+    that is settled here. `reader_call_sites()` is what settles it."""
     out = []
     for name, lo, hi, base, _ in REGIONS:
-        if name not in MAIN_EC:
+        if name not in regions:
             continue
-        for i in range(lo, hi - len(READER_PROLOGUE)):
-            if d[i:i + len(READER_PROLOGUE)] == READER_PROLOGUE:
-                out.append(i)
+        for i in range(lo, hi - SHORTEST_PROLOGUE + 1):
+            for p in PROLOGUE_SHAPES:
+                if d[i:i + len(p.pattern)] == p.pattern:
+                    out.append({"file_offset": i, "region": name,
+                                "runtime": runtime_addr(i, True),
+                                "shape": p.name,
+                                "from_return_address": p.from_return_address,
+                                "walks_table": walks_a_table(d, i)})
+                    break
     return out
 
 
-def reader_call_sites(d: bytes, reader_runtime: int):
-    """Every `lcall <reader>` *byte* in the main EC image, with frame
-    evidence. A byte scan, with the over-count bank-call-audit.md section 1
-    describes: the same three bytes occur inside data and as operand bytes
-    of other instructions, so a site is a candidate until its table decodes."""
+def direct_address_readers(d: bytes, regions=MAIN_EC):
+    """Candidates for a reader that names its table with an immediate.
+
+    The family this tool reads takes the table pointer off the *return
+    address*, which is why an immediate-DPTR scan finds none of its 15 tables.
+    A reader spelled the other way -- `mov dptr,#imm16` naming the table
+    outright -- would not be one of this family, so it is counted and listed
+    here and decoded nowhere: the two are separate results and folding the
+    second into the first would widen the family to fit the search.
+
+    The shape is deliberately tight, because `mov dptr,#imm16` is everywhere in
+    this image -- 1632 byte sites in `common` alone -- and a looser shape would
+    drown the search in pointer loads: a candidate must walk a table
+    (`movc a,@a+dptr`) *and* dispatch through it (`jmp @a+dptr`) inside the
+    same short window. That is a reader-shaped two-instruction pattern, not a
+    pointer load."""
+    out = []
+    for name, lo, hi, base, _ in REGIONS:
+        if name not in regions:
+            continue
+        for i in range(lo, hi - 2):
+            if d[i] != MOV_DPTR:
+                continue
+            seen = {raw[0] for _, raw, _ in decode(d, i, PROLOGUE_BODY_INSNS)}
+            if {MOVC_A_DPTR, JMP_AT_A_DPTR} <= seen:
+                out.append({"file_offset": i, "region": name,
+                            "runtime": runtime_addr(i, True),
+                            "table_runtime": (d[i + 1] << 8) | d[i + 2]})
+    return out
+
+
+def reader_call_sites(d: bytes, reader_runtime: int, regions=MAIN_EC):
+    """Every `lcall <reader>` *byte* in `regions`, with frame evidence. A byte
+    scan, with the over-count bank-call-audit.md section 1 describes: the same
+    three bytes occur inside data and as operand bytes of other instructions,
+    so a site is a candidate until its table decodes.
+
+    For a prologue candidate this is the decisive filter rather than a census
+    step: a reader of this family is entered by a bare `lcall` and nothing
+    else, so a candidate no `lcall` names cannot have an inline table at all.
+    The gap that leaves is a caller reaching it another way -- a `jmp @a+dptr`
+    dispatch, an `ljmp` thunk, a trampoline -- and those stay named as the
+    blind spots they are."""
     want = bytes((LCALL, reader_runtime >> 8, reader_runtime & 0xFF))
     out = []
     for name, lo, hi, base, _ in REGIONS:
-        if name not in MAIN_EC:
+        if name not in regions:
             continue
         for i in range(lo, hi - len(want)):
             if d[i:i + len(want)] == want:
@@ -125,6 +288,29 @@ def reader_call_sites(d: bytes, reader_runtime: int):
                             "runtime": runtime_addr(i, True),
                             "frame_onto": onto, "frame_over": over})
     return out
+
+
+def lcalled_readers(d: bytes, regions=MAIN_EC):
+    """The subset of `find_readers()` that an `lcall` names, in the order
+    `find_readers()` returns them. Two conditions, and both are needed: a shape
+    that does not take the pointer off the return address has no inline table by
+    construction, and a reader with no caller has none to decode. What is left
+    is what the census is allowed to run under."""
+    return [r for r in find_readers(d, regions)
+            if r["from_return_address"]
+            and reader_call_sites(d, r["runtime"], regions)]
+
+
+def trampoline_targets(d: bytes):
+    """{trampoline entry: DPTR target} over BL51's bank-switch block, from
+    `audit_call_targets.trampolines()` -- the same function every figure in
+    bank-call-audit.md derives from, imported rather than re-derived so this
+    cross-check cannot disagree with the audit it is checking.
+
+    Imported lazily: `audit_call_targets` is a whole census tool, and a module
+    that only wants its trampoline reader should not pay for the rest."""
+    from audit_call_targets import bank_switch_stubs, trampolines
+    return trampolines(d, bank_switch_stubs(d))
 
 
 def decode_table(d: bytes, off: int):
@@ -263,17 +449,41 @@ def print_bodies(d: bytes, tbl) -> None:
     print()
 
 
-def print_readers(d: bytes, readers, sites) -> None:
-    print(f"reader search: {len(readers)} subroutine(s) in the main EC image open "
-          f"`{READER_PROLOGUE.hex(' ')}`")
-    for off in readers:
-        print(f"  file 0x{off:05X} runtime 0x{runtime_addr(off, True):04X} "
-              f"({region_of(off, True)[0]})")
+def print_readers(d: bytes, readers, called, regions=MAIN_EC) -> None:
+    """The search, its tiers, the direct-address bucket, and the reach of the
+    readers the census below runs under. Tier 1 is every shape match and tier
+    2 the corroborated subset of it, so the two counts are nested and the
+    difference is the false-positive mass the tiers are there to show."""
+    print(f"reader search over {'/'.join(regions)}: {len(PROLOGUE_SHAPES)} "
+          f"prologue shape(s)")
+    by_shape = collections.Counter(r["shape"] for r in readers)
+    for p in PROLOGUE_SHAPES:
+        if by_shape[p.name]:
+            print(f"  {by_shape[p.name]:4}  {p.pattern.hex(' '):<14} "
+                  f"{p.name}  -- {p.what}")
+    tier2 = [r for r in readers if r["walks_table"]]
+    n_sites = {r["runtime"]: len(reader_call_sites(d, r["runtime"], regions))
+               for r in called}
+    print(f"  {len(readers)} shape match(es) (tier 1), of which {len(tier2)} "
+          f"reach a `movc a,@a+dptr` within {PROLOGUE_BODY_INSNS} "
+          f"instructions (tier 2) and {len(called)} are named by an `lcall`")
+    for r in tier2:
+        print(f"    tier 2  file 0x{r['file_offset']:05X} runtime "
+              f"0x{r['runtime']:04X} ({r['region']})  {r['shape']}  "
+              f"{n_sites.get(r['runtime'], 0)} `lcall` byte site(s)")
+    direct = direct_address_readers(d, regions)
+    print(f"  {len(direct)} direct-address candidate(s) -- `mov dptr,#imm16` "
+          "then a table walk and `jmp @a+dptr`. Not this family, and decoded "
+          "nowhere:")
+    for r in direct:
+        print(f"    file 0x{r['file_offset']:05X} runtime 0x{r['runtime']:04X} "
+              f"({r['region']}) names table 0x{r['table_runtime']:04X}")
     for immediate in (0x8038, 0x803A):
         want = bytes((MOV_DPTR, immediate >> 8, immediate & 0xFF))
         hits = [i for i in range(len(d) - 3) if d[i:i + 3] == want]
         print(f"  `mov dptr,#0x{immediate:04X}` byte sites file-wide: {len(hits)}")
-    print(f"  {len(sites)} `lcall` byte site(s) name the reader")
+    print(f"  {sum(n_sites.values())} `lcall` byte site(s) name the "
+          f"{len(called)} reader(s) above")
     print()
 
 
@@ -498,6 +708,55 @@ WEAK_SITES = (
      0x8681, 0x00),
 )
 
+# The enumerated set as a value, so a shape cannot be added, dropped or
+# respelled without the self-test going red. (name, pattern, from_return_address)
+SHAPE_ENUMERATION = (
+    ("pop-dph-dpl-selector-r0", "d083d082f8", True),
+    ("pop-dpl-dph-selector-r0", "d082d083f8", True),
+    ("pop-dph-dpl-selector-rn", "d083d082f9", True),
+    ("pop-dph-dpl-selector-r7", "d083d082ff", True),
+    ("pop-dpl-dph-selector-rn", "d082d083f9", True),
+    ("pop-dpl-dph-selector-r7", "d082d083ff", True),
+    ("pop-dph-dpl-selector-direct", "d083d082f5", True),
+    ("pop-dpl-dph-selector-direct", "d082d083f5", True),
+    ("pop-dph-dpl-push-acc", "d083d082e0", True),
+    ("pop-dpl-dph-push-acc", "d082d083e0", True),
+    ("pop-dph-dpl", "d083d082", True),
+    ("pop-dpl-dph", "d082d083", True),
+)
+
+# The widened search's own result, as a whole census rather than a sample, so
+# that a different dump gets these re-derived instead of inheriting them.
+# SHAPE_HITS counts every tier-1 candidate by region; TIER2_SITES is the
+# corroborated subset in file order.
+SHAPE_HITS = {"common": 18, "bank0": 13, "bank1": 5}
+
+TIER2_SITES = (0x07151, 0x086EA, 0x08716, 0x09410, 0x09439, 0x09484,
+               0x0A22E, 0x0A25C, 0x0A282, 0x0A2A7)
+
+# Why the nine bank0 candidates are not readers, and it is the same nine
+# bytes each: every one is a `push dph ; push dpl ; mov dptr,#imm` , one read,
+# `pop dpl ; pop dph` -- the compiler saving a DPTR it is about to clobber and
+# restoring it after, so the pair restores a pointer the same routine pushed
+# rather than taking a return address off the stack. Held as the candidate
+# offsets and checked as a byte pattern, so the reading is a property of the
+# image and not of this comment.
+DPTR_RESTORE_SITES = (0x086EA, 0x08716, 0x09410, 0x09439, 0x09484,
+                      0x0A22E, 0x0A25C, 0x0A282, 0x0A2A7)
+
+PUSH_DPH_DPL = bytes.fromhex("c083c082")
+POP_DPL_DPH = bytes.fromhex("d082d083")
+READ_DPTR = (0xE0, 0xFD)  # `movx a,@dptr` and `mov r5,a`, the two spellings
+# The low byte of every one of those nine `mov dptr,#imm16` immediates, so
+# they all save and restore a pointer into the same 0x0a4x/0x0a50 page.
+RESTORED_DPTR_LOW = (0x49, 0x50)
+
+# The direct-address bucket's one site in the main EC, and the reason it is
+# not a table: it reads a single byte at 0x1055 and dispatches through the
+# bank-switch stub at 0x1100 indexed by it, so it names no table of this
+# family's shape. The PD image has none of the shape at all.
+DIRECT_ADDRESS_SITES = (0x0104D,)
+
 
 def phantom_rows(spans):
     """Rows of the three committed censuses whose site falls inside one of
@@ -521,13 +780,103 @@ def self_test(d: bytes) -> int:
             bad += 1
         print(f"  {'ok ' if ok else 'FAIL'}  {text}")
 
-    readers = find_readers(d)
-    check(readers == [READER_SITE[0]],
-          f"exactly one stack-pointer-to-table reader in the main EC image, at "
-          f"file 0x{READER_SITE[0]:05X} (got "
-          f"{', '.join(f'0x{r:05X}' for r in readers) or 'none'})")
-
     off, rt, raw = READER_SITE
+
+    # The enumeration itself, held as a value: a shape added, dropped or
+    # respelled changes the search, so it cannot change quietly. Longest first
+    # is a precondition of the "most specific shape wins" rule, not a style.
+    check(tuple((p.name, p.pattern.hex(), p.from_return_address)
+                for p in PROLOGUE_SHAPES) == SHAPE_ENUMERATION
+          and all(len(p.pattern) for p in PROLOGUE_SHAPES)
+          and [len(p.pattern) for p in PROLOGUE_SHAPES]
+          == sorted((len(p.pattern) for p in PROLOGUE_SHAPES), reverse=True),
+          f"{len(PROLOGUE_SHAPES)} enumerated shape(s), longest pattern first, "
+          "each naming itself and whether it takes the pointer off the return "
+          f"address (got {[p.name for p in PROLOGUE_SHAPES]})")
+
+    # The widening, and what it did not disturb. The counts are the whole
+    # result of this issue: a wider net finds many more candidates and the
+    # `lcall` filter still leaves one, so section 9's uniqueness assertion
+    # holds against a search that no longer depends on the single literal it
+    # was written against.
+    readers = find_readers(d)
+    per_region = collections.Counter(r["region"] for r in readers)
+    check(per_region == SHAPE_HITS,
+          f"{sum(SHAPE_HITS.values())} tier-1 candidates over "
+          f"{len(PROLOGUE_SHAPES)} shapes -- "
+          + ", ".join(f"{k} {v}" for k, v in sorted(SHAPE_HITS.items()))
+          + f" (got {dict(sorted(per_region.items()))})")
+
+    tier2 = [r for r in readers if r["walks_table"]]
+    check(tuple(r["file_offset"] for r in tier2) == TIER2_SITES,
+          f"{len(TIER2_SITES)} of them corroborated by a `movc a,@a+dptr` "
+          "within the window, all but one of them in bank0 and none of them "
+          f"named by an `lcall` but 0x{off:05X} (got "
+          + ", ".join(f"0x{r['file_offset']:05X}" for r in tier2) + ")")
+
+    called = lcalled_readers(d)
+    check(tuple(r["file_offset"] for r in called) == (off,),
+          "and the `lcall` filter leaves exactly the reader this file was "
+          f"written about, at file 0x{off:05X} (got "
+          + (", ".join(f"0x{r['file_offset']:05X}" for r in called) or "none")
+          + ")")
+
+    check(tuple(r["shape"] for r in called) == ("pop-dph-dpl-selector-r0",),
+          "which the enumerated set names by its specific shape rather than "
+          f"only as a member of the family (got "
+          + ", ".join(r["shape"] for r in called) + ")")
+
+    # Why the other nine are not readers, held as bytes rather than as the
+    # verdict read off them: each is the `pop dpl ; pop dph` half of a
+    # `push dph ; push dpl ; mov dptr,#0x0a4x ; movx a,@dptr` a few bytes
+    # earlier. The push is 8 bytes back, or 9 where the byte read is also
+    # kept in `r5`.
+    for cand in DPTR_RESTORE_SITES:
+        back = 9 if d[cand - 1] == 0xFD else 8
+        head = d[cand - back:cand]
+        check(head[:4] == PUSH_DPH_DPL
+              and head[4] == MOV_DPTR and head[5] == 0x0A
+              and head[6] in RESTORED_DPTR_LOW and head[7] == 0xE0
+              and d[cand - 1] in READ_DPTR
+              and d[cand:cand + 4] == POP_DPL_DPH,
+              f"file 0x{cand:05X} is `{d[cand - back:cand + 4].hex(' ')}` -- a "
+              f"DPTR pushed at 0x{cand - back:05X} and restored at "
+              f"0x{cand:05X} around one read, not a return address off the "
+              "stack")
+
+    direct = direct_address_readers(d)
+    check(tuple(r["file_offset"] for r in direct) == DIRECT_ADDRESS_SITES,
+          f"the direct-address bucket -- `mov dptr,#imm16` then a table walk "
+          f"and `jmp @a+dptr` -- is {len(DIRECT_ADDRESS_SITES)} site(s) and is "
+          "not this family, so it is reported and not decoded (got "
+          + (", ".join(f"0x{r['file_offset']:05X}" for r in direct) or "none")
+          + ")")
+
+    # The trampoline half of section 9's blind spots, decided on the
+    # committed range rather than deferred to #48. #48's own work -- decoding
+    # what the 402 other immediates point at -- is untouched and stays open.
+    tramp = trampoline_targets(d)
+    lo, hi = TRAMPOLINE_RANGE
+    tlo, thi = TRAMPOLINE_IMMEDIATE_RANGE
+    check(len(tramp) == 403
+          and (min(tramp), max(tramp)) == (lo, hi),
+          f"{len(tramp)} BL51 trampolines, entries 0x{lo:04X}-0x{hi:04X} "
+          f"(got {len(tramp)}, 0x{min(tramp):04X}-0x{max(tramp):04X})")
+
+    imms = [target for _, target in tramp.values()]
+    check(min(imms) == tlo and max(imms) == thi
+          and not [t for t in imms if t < 0x8000],
+          f"every one of their {len(imms)} DPTR immediates is at or above "
+          f"0x8000, spanning 0x{tlo:04X}-0x{thi:04X} (got 0x{min(imms):04X}-"
+          f"0x{max(imms):04X}, {len([t for t in imms if t < 0x8000])} below)")
+
+    check(rt not in imms,
+          f"and none of them names the reader at 0x{rt:04X}, so no trampoline "
+          "caller is a call site `reader_call_sites()` could have found -- the "
+          "half of section 9's blind-spot sentence this issue asked about is "
+          f"closed and the computed-caller half is not (got "
+          f"{len([t for t in imms if t == rt])} naming it)")
+
     check(d[off:off + len(raw)] == raw,
           f"its {len(raw)} bytes are as hand-decoded -- the entry layout is read "
           "off these and off nothing else")
@@ -575,11 +924,19 @@ def self_test(d: bytes) -> int:
           "0x808E is no entry of the decoded table -- the two readings disagree, "
           "which is what section 9 corrects")
 
-    for off, raw, what in CORROBORATION_SITES:
-        check(d[off:off + len(raw)] == raw,
-              f"file 0x{off:05X} is `{raw.hex(' ')}` -- {what}")
+    for site_off, site_raw, what in CORROBORATION_SITES:
+        check(d[site_off:site_off + len(site_raw)] == site_raw,
+              f"file 0x{site_off:05X} is `{site_raw.hex(' ')}` -- {what}")
 
-    rows = census(d, reader_call_sites(d, rt))
+    # And the census below, which the widening must not have disturbed. The
+    # reader it runs under is the one the search found, not a hard-coded
+    # address, so a second reader appearing shows up here as a changed count.
+    sites = reader_call_sites(d, called[0]["runtime"])
+    check(called[0]["runtime"] == rt and called[0]["file_offset"] == off,
+          f"and the census runs under the found reader, file 0x{off:05X} / "
+          f"runtime 0x{rt:04X}, rather than an address this file assumed")
+
+    rows = census(d, sites)
     good = [r for r in rows if r[1] is not None and not r[2]]
     check(len(rows) == 15 and len(good) == 15,
           f"15 `lcall` byte sites name the reader and all 15 are followed by a "
@@ -615,15 +972,15 @@ def self_test(d: bytes) -> int:
     # The two 23-of-24 sites, pinned as bytes rather than as the verdict read
     # off them: section 10's hand decode is a reading of these and stops being
     # worth anything if they are not what it read.
-    for site, prev_off, prev_raw, entry_raw, target, case in WEAK_SITES:
-        tbl = decode_table(d, site + 3)
+    for weak, prev_off, prev_raw, entry_raw, target, case in WEAK_SITES:
+        tbl = decode_table(d, weak + 3)
         check(d[prev_off:prev_off + len(prev_raw)] == prev_raw
-              and prev_off + len(prev_raw) == site
-              and d[site:site + 3] == bytes((LCALL, rt >> 8, rt & 0xFF))
-              and d[site + 3:site + 3 + ENTRY_LEN] == entry_raw
+              and prev_off + len(prev_raw) == weak
+              and d[weak:weak + 3] == bytes((LCALL, rt >> 8, rt & 0xFF))
+              and d[weak + 3:weak + 3 + ENTRY_LEN] == entry_raw
               and tbl["entries"][0]["target"] == target
               and tbl["entries"][0]["case"] == case,
-              f"file 0x{site:05X} is `{prev_raw.hex(' ')}` ending on the "
+              f"file 0x{weak:05X} is `{prev_raw.hex(' ')}` ending on the "
               f"`lcall` and `{entry_raw.hex(' ')}` after it, i.e. "
               f"0x{target:04X} case 0x{case:02X}")
 
@@ -638,6 +995,11 @@ def main() -> int:
     ap.add_argument("firmware", help="raw EC firmware image (e.g. ec/firmware/GMxMGxx_11.800)")
     ap.add_argument("--at", help="file offset of the `lcall` preceding a table, "
                                  "e.g. 0x0D148 (default: the 0x8038 table)")
+    ap.add_argument("--region", choices=sorted(REGION_SETS), default="main",
+                    help="which regions to search for readers: the main EC "
+                         "(common/bank0/bank1), the ITE8850-PD image at "
+                         "0x20000, or both. The search is the same either way; "
+                         "pd_index_tables.py is the PD census built on it")
     ap.add_argument("--all-tables", action="store_true",
                     help="decode the table after every call site naming the reader")
     ap.add_argument("--csv", action="store_true",
@@ -649,9 +1011,10 @@ def main() -> int:
                     help="write one row per candidate call site with its "
                          "table's span, frame evidence and case range")
     ap.add_argument("--self-test", action="store_true",
-                    help="re-check the reader bytes, the 0x8038 table, every "
-                         "span of the call-site census and the rows each one "
-                         "costs the three committed censuses")
+                    help="re-check the widened reader search, the trampoline "
+                         "immediates, the reader's bytes, the 0x8038 table, "
+                         "every span of the call-site census and the rows each "
+                         "one costs the three committed censuses")
     args = ap.parse_args()
 
     d = open(args.firmware, "rb").read()
@@ -664,16 +1027,31 @@ def main() -> int:
     if args.self_test:
         return self_test(d)
 
-    readers = find_readers(d)
-    if len(readers) != 1:
-        print(f"expected one table reader in the main EC image, found "
-              f"{len(readers)} -- rerun --self-test", file=sys.stderr)
+    regions = REGION_SETS[args.region]
+    readers = find_readers(d, regions)
+    # The census is under every reader the search found that a caller
+    # actually names. On this image that is one in the main EC and three in
+    # the PD, so the count is asserted by --self-test rather than by a
+    # hard-coded "expect exactly one" that a second reader would fail on.
+    called = lcalled_readers(d, regions)
+    if not called:
+        print(f"no reader of the enumerated shapes is named by an `lcall` in "
+              f"{'/'.join(regions)} -- rerun --self-test", file=sys.stderr)
         return 1
-    sites = reader_call_sites(d, runtime_addr(readers[0], True))
+    sites = [s for r in called for s in reader_call_sites(d, r["runtime"], regions)]
 
     if args.all_csv or args.spans_csv:
         rows = census(d, sites)
         (write_all_csv if args.all_csv else write_spans_csv)(d, rows)
+        return 0
+
+    # `--at` names a main-EC file offset, so with no `--at` and a region set
+    # that is not the main EC there is no single table to default to. The
+    # census over the region's readers is the reading in that case, and it is
+    # the one pd_index_tables.py writes up.
+    if not args.at and regions != MAIN_EC:
+        print_readers(d, readers, called, regions)
+        print_census(d, census(d, sites))
         return 0
 
     site = int(args.at, 16) if args.at else SITE_0X8038
@@ -686,7 +1064,7 @@ def main() -> int:
         write_csv(d, tbl)
         return 0
 
-    print_readers(d, readers, sites)
+    print_readers(d, readers, called, regions)
     if args.all_tables:
         print_census(d, census(d, sites))
         return 0
