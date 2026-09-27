@@ -84,8 +84,9 @@ The drift is not a supersession. The two shell scripts predate
 today, and `battery_trace.py` is the Windows counterpart rather than the
 successor of either. What happened is that a new capture shape was added
 alongside the old ones and only the new one got a test.
-`limit-pair-test:17` defaults into a directory nothing in the tree validates,
-which is the next paragraph's point. `battery-trace:9` does not: it hardcodes
+`limit-pair-test:17` defaults into a directory no committed check validated
+until this write-up added one, which is the next paragraph's point.
+`battery-trace:9` does not: it hardcodes
 `OUT=/var/log/battery-trace/trace-threshold.csv` and takes no argument, so
 `2026-09-09-threshold80.csv` sitting in this directory is a copy brought here
 from there by a route the tree does not record. What the script is evidence

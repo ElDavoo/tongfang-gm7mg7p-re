@@ -194,8 +194,10 @@ rather than copying its rules exists to prevent.
 
 ## Offline tests
 
-Nine of the tools carry offline `unittest` suites, and all of them run from
-Linux with no Windows box, no EC and no vendor code:
+Several of the tools carry offline `unittest` suites — deliberately not
+counted here, the way `../tools/README.md` is not: `bash tools/run-tests.sh`
+prints the total, and its last line *is* the number, on the tree you ran it on.
+All of them run from Linux with no Windows box, no EC and no vendor code:
 
 ```sh
 bash tools/run-tests.sh            # from the repository root: every suite in the tree
