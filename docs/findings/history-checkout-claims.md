@@ -177,7 +177,10 @@ firmware. Demonstrated on a scratch tree by
 from a synthetic `gates` job and watches the checker fail on it.
 
 **The reported half**, which never fails the tree. It locates every sentence in
-the two tools that makes a depth claim about a workflow, prints each with its
+the tree that makes a depth claim about a workflow — since #1031 the population
+is derived by walking for text files rather than read from a two-entry list,
+which is what this page's *What is not claimed* used to concede; the sweep is
+[`checkout-claim-corpus.md`](checkout-claim-corpus.md) — prints each with its
 `file:line` and the derived fact it should have come from, and asserts the one
 rule that is decidable without reading English meaning: **a sentence that
 asserts a workflow's checkout depth names the job.** All four stale sentences
@@ -345,7 +348,12 @@ question is open, and is not resolved by what is on this page.
   the fact that `ci.yml` puts it in a full-depth checkout says what the workflow
   asks for, not what a runner observed.
 - That the corrected sentences are *exhaustive* of the claim's blast radius.
-  `check_history_checkouts.py` reads the two tools it was written for; a
-  sentence in a third file is not found by this method.
+  **They are not, and as of #1031 that is no longer this page's own gap to
+  concede:** `check_history_checkouts.py` derived its population by walking the
+  tree instead of reading the two paths it was written for, and found sixteen
+  further sites in nine more files. The sweep, the sixteen sites it corrected,
+  the quotation rule that keeps it from red-flagging every retraction, and the
+  files it declined and why are
+  [`checkout-claim-corpus.md`](checkout-claim-corpus.md).
 - Any verdict of any tool, any register status, and any hardware or Windows
   fact. None of this needs a laptop, and none of it produces a hardware claim.

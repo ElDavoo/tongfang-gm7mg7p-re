@@ -241,11 +241,17 @@ false claim standing.
 
 The issue's point is that `:181` and `:243` are *"values no tree carried"* rather
 than drifted values, and that the distinction must stay visible. **Settle it by
-measurement, not by assertion.** `agent-implement.yml` checks out with
-`fetch-depth: 0` (`.github/workflows/agent-implement.yml:118`), so the full
-history is here; *this plan* was written against a depth-1 checkout, which is
-exactly the case CLAUDE.md's "your runner is not the one the change gets built
-on" warns about.
+measurement, not by assertion.** `agent-implement.yml`'s `implement` job checks
+out with `fetch-depth: 0` (`.github/workflows/agent-implement.yml:118`), so the
+full history is here; *this plan* was written against a depth-1 checkout, which
+is exactly the case CLAUDE.md's "your runner is not the one the change gets built
+on" warns about. *(Corrected 2026-09-26, issue #1031: this named the workflow and
+not the job, the fourth copy of the claim and the first in a fifth file that no
+earlier sweep read. Nothing in it was false, and the old wording is not left in
+this file — it is in [`checkout-claim-corpus.md`](checkout-claim-corpus.md)'s
+thirteen-site table, whose *what it said* column holds all thirteen, and §4a-4d
+asks for a retracted claim's wrong version to stay visible rather than for this
+one. `:118` is the `implement` job's checkout.)*
 
 Every commit that touched the tool, oldest first, with both definitions located
 in that commit's own copy:

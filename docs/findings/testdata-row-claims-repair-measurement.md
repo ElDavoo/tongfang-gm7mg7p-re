@@ -389,9 +389,14 @@ revision — never how many.
     between the index's prose and that grader, and this measurement does not
     close it.
   * **`verify_reassembly.py:1313-1319` still says** *"both of ci.yml's
-    checkouts are default-depth"*. `ci.yml:39` is `fetch-depth: 0` now, with a
+    checkouts are default-depth"*. The `gates` job — `ci.yml:39` — is
+    `fetch-depth: 0` now, with a
     comment saying so — which is why this write-up's fourth limit is worded
-    from what the workflows say rather than carried over from that sentence. It
+    from what the workflows say rather than carried over from that sentence.
+    *(Corrected 2026-09-26, issue #1031: this read "`ci.yml:39` is `fetch-depth:
+    0` now", naming a line rather than the job on it, and the wording is left
+    per `docs/findings.md` §4a-4d. `:39` is the `gates` job's checkout, and the
+    `workflows` job beside it states no depth at all.)* It
     is the same class of stale claim and the one a reader would copy when
     writing this tool, but correcting it belongs to its own issue.
     **That issue was #1009, and it has closed this item: the wording above is

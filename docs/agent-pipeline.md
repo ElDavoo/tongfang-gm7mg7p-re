@@ -100,16 +100,28 @@ only covers what's specific to *this* copy.
      #1009). The mode audits a `listing_digest`
      migration against two committed revisions (`docs/findings.md` §14f), so
      how deep the clone is is part of its contract the way the assembler is part
-     of `--report`'s: the agent stages check out with `fetch-depth: 0`
-     (`agent-implement.yml:118`, `agent-fix.yml:116`, `agent-review.yml:85`,
-     `agent-conflicts.yml:156`)
-     and can run it. As this entry was first written, `ci.yml` was the other
-     half of the claim: both of its checkouts (`:39` and `:66-69` today, the
-     lines having moved since) were default-depth, and `08b72e2` and `a56b3bb`
+     of `--report`'s: the agent stages check out with `fetch-depth: 0` —
+     `agent-implement.yml`'s `implement` job (`:118`), `agent-fix.yml`'s `fix`
+     (`:116`), `agent-review.yml`'s `review` (`:85`) and `agent-conflicts.yml`'s
+     `resolve` (`:156`)
+     and can run it. *(Corrected 2026-09-26, issue #1031: this read "the agent
+     stages check out with `fetch-depth: 0`", naming four workflows and no job
+     of any of them. Nothing in it was false — each of those four jobs *is*
+     `fetch-depth: 0` — it named the files where the sentence names the jobs,
+     and a reader checking one of them had to open the workflow to learn which
+     job it meant. Left visible per `docs/findings.md` §4a-4d.)* As this entry
+     was first written, `ci.yml` was the other
+     half of the claim: both of its checkouts — the `gates` job (`:39` today)
+     and the `workflows` job (`:66-69`, the lines having moved since) — were
+     default-depth, and `08b72e2` and `a56b3bb`
      did not resolve from one, so the mode failed there with its history
      requirement rather than auditing whatever happened to be checked out, and
-     it was not in the gate for that reason. The decision below landed the next
-     day, so that is now the record of 2026-09-23 rather than a claim about the
+     it was not in the gate for that reason. *(Corrected 2026-09-26, issue #1031:
+     the two checkouts are named here by line rather than by job. Nothing in the
+     2026-09-23 record is in question and it stands; the old wording is in
+     [`findings/checkout-claim-corpus.md`](findings/checkout-claim-corpus.md)'s
+     thirteen-site table, row 2.)* The decision below landed the next day, so
+     that is now the record of 2026-09-23 rather than a claim about the
      tree this file sits in. **The heading this replaces read "`--
      verify-provenance` needs a full git history, and `ci.yml` does not have
      one",** which the decision had contradicted seventeen lines below it in

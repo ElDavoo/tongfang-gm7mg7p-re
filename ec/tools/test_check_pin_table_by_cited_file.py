@@ -546,9 +546,9 @@ class TheCommittedTree(unittest.TestCase):
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 51)
+        self.assertEqual(len(files), 52)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 39)
+        self.assertEqual(len(tail), 40)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

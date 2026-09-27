@@ -54,10 +54,15 @@ showing rather than adding a second reading of the tree.
 
 ## Why it matters here
 
-`claude.yml:72`'s `fetch-depth: 1` is the one checkout in `.github/workflows/`
+`claude.yml`'s `claude` job at `:72`, which states `fetch-depth: 1`, is the one
+checkout in `.github/workflows/`
 that *states* a depth other than 0, and it is the punchline of
 [`history-checkout-claims.md`](history-checkout-claims.md) — "the difference is
-the whole reason the word `stated` is in the table". A sentence that says the
+the whole reason the word `stated` is in the table". *(Corrected 2026-09-26,
+issue #1031: this named the line and not the job on it. Nothing in it was false;
+the old wording is in
+[`checkout-claim-corpus.md`](checkout-claim-corpus.md)'s thirteen-site table, row
+11.)* A sentence that says the
 right thing about `ci.yml` and the wrong thing about `claude.yml` is exactly the
 shape the seven-site correction was about, and the checker could not see it. The
 same holds for any second workflow: `agent-plan.yml`/`plan` and

@@ -72,11 +72,19 @@ spec.loader.exec_module(chc)
 # would be testing the rebinding.
 import history_checkout_sites as hcs
 
-# The two prose files, from the tool's own list rather than written out here.
-# What the controls below demonstrate is a file going unread, so the set of
-# files the tool reads is not something this suite should hold a second copy
+# The two prose files, from the tool's own declaration rather than written out
+# here. What the controls below demonstrate is a file going unread, so the set
+# of files the tool reads is not something this suite should hold a second copy
 # of, and a second copy is what a `PROSE_FILES` shrink looks like from in here.
-FIRST_TOOL, SECOND_TOOL = chc.PROSE_FILES
+# **This line read `chc.PROSE_FILES` until #1031 removed that name**, and nothing
+# ran the suite to say so: `tools/run-tests.sh` finds every `test_*.py` in the
+# tree but no workflow calls it, so an import-time `AttributeError` in here was
+# a red run nobody was looking at. The pair is taken from `SITES` instead, which
+# is the declaration that survives, and `dict.fromkeys` keeps the first
+# occurrence of each so the order is the declared one -- `FIRST_TOOL` is the
+# file carrying `NO_DEPTH_REQUIREMENT` and `SECOND_TOOL` the one that does not,
+# and the cases below depend on which is which.
+FIRST_TOOL, SECOND_TOOL = list(dict.fromkeys(row.rel for row in hcs.SITES))
 
 # The four sentences #1009 corrects, **verbatim from the sources as they were
 # before it**, line breaks and quoting included. Verbatim is the point: a
@@ -1039,58 +1047,24 @@ class CommittedTreeTests(unittest.TestCase):
         self.assertFalse(chc.prose_problems(sites), chc.prose_problems(sites))
 
     def test_each_corrected_site_is_still_one_of_the_sites(self):
-        # The four sites, held by value. This is literally a list now rather than
-        # the file set: each row names a file and a fragment of the sentence at
-        # it, and a site that stops being found leaves its row unmatched, which
-        # is what neither the `>= 4` floor nor the comparison against
-        # `PROSE_FILES` could see -- the first because the tree holds five
-        # sentences for four sites, and the second because `prose_sites()`
-        # iterates `PROSE_FILES` itself, so a file dropped from it left the set
-        # it was compared against holding the answer.
+        # The two tools' sites, named. A reader that found one of them would
+        # leave this green, which is why this is a set and not a count -- and
+        # since #1031 the population is a walk of the tree rather than
+        # `chc.PROSE_FILES`, so the *whole* derived set, the three #1009
+        # markdown sites and the decline rules are held in
+        # `test_check_history_checkouts_corpus.py` rather than here. This case
+        # stays as the one that says the two tools are still read at all, since
+        # their own five sentences are what the case above is about.
         workflows, unreadable = chc.load_workflows(str(REPO))
         sites = chc.prose_sites(str(REPO), workflows, unreadable)
-        self.assertEqual(hcs.problems(sites), [])
-
-    def test_a_file_dropped_from_prose_files_left_the_old_comparison_green(self):
-        # Control G, and the edit control B above is not: dropping a file from
-        # `PROSE_FILES` rather than losing it from the tree. `prose_sites()`
-        # iterates that tuple, so the file leaves the set its found paths are
-        # compared against at the same moment it leaves the set that is read --
-        # both sides shrink together, the old assert stays green, and two
-        # corrected sites go unread under it. The old comparison is run verbatim
-        # below, and the message on that assertion says so: a run of it that went
-        # red would be showing the other edit.
-        #
-        # The committed tree, because the point is two rows that really are in a
-        # file: a scratch tree has to lose the file outright to make the
-        # comparison see anything, and that is control B. `PROSE_FILES` is
-        # restored by the cleanup rather than at the end of the case, so a
-        # failing assertion here cannot leave the rest of the suite reading a
-        # one-entry tuple.
-        saved = chc.PROSE_FILES
-        self.addCleanup(setattr, chc, "PROSE_FILES", saved)
-        chc.PROSE_FILES = tuple(rel for rel in saved if rel != SECOND_TOOL)
-        self.assertEqual(len(chc.PROSE_FILES), len(saved) - 1,
-                         "`PROSE_FILES` does not hold the sibling this case "
-                         "drops, so the edit is not the one it names")
-        workflows, unreadable = chc.load_workflows(str(REPO))
-        sites = chc.prose_sites(str(REPO), workflows, unreadable)
-        found = {rel for rel, _line, _sentence, _named, _job in sites}
+        found = {rel for rel, _line, _sentence, _named, _jobs, _quoted in sites}
         self.assertEqual(
-            found, set(chc.PROSE_FILES),
-            "the file-set comparison this replaced went red on the tree it was "
-            "blind to, so the argument that it could not see this edit does not "
-            "hold and the page beside it is wrong")
-        # And the keyed hold, on the same read, names the two rows the file was
-        # carrying -- each by its own fragment, not by a count.
-        rows = [row for row in hcs.SITES if row.rel == SECOND_TOOL]
-        self.assertEqual(len(rows), 2, rows)
-        problems = hcs.problems(sites)
-        self.assertEqual(len(problems), len(rows), problems)
-        for row in rows:
-            named = [message for message in problems if row.fragment in message]
-            self.assertEqual(len(named), 1, problems)
-            self.assertIn(row.what, named[0])
+            found & {"ec/tools/verify_reassembly.py",
+                     "ec/tools/measure_index_repair_visibility.py"},
+            {"ec/tools/verify_reassembly.py",
+             "ec/tools/measure_index_repair_visibility.py"},
+            "one of the two tools the check was written for is no longer in the "
+            "population at all")
 
     def test_the_report_prints_every_checkout_it_found(self):
         out = io.StringIO()

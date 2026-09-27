@@ -116,9 +116,13 @@
 # this tree's, and three merges have moved it since #1013 wrote the tool -- it
 # read `:288` at `fe92940a` and `:247` at `d3304785` -- so the pair to
 # re-derive it is `grep -n '^def depth_problems'
-# ec/tools/check_history_checkouts.py`. Note the `fetch-depth: 0` `ci.yml:39`
-# carries and the note above it at `:33-34`: a re-copy lands the missing depth
-# and its comment together, which is why the landed comment names both. **Until
+# ec/tools/check_history_checkouts.py`. Note the `fetch-depth: 0` `ci.yml`'s
+# `gates` job carries at its `:39`, and the note above it at `:33-34`: a
+# re-copy lands the missing depth and its comment together, which is why the
+# landed comment names both. (Corrected at the #1032 x #1031 merge: this named
+# the line and not the job on it. Nothing in it was false -- that line *is*
+# `ci.yml`'s `gates` job's `fetch-depth: 0` -- and it is the line a re-copy
+# would move, so both halves stand.) **Until
 # a human lands this, no commit runs any of the three**, and the next false
 # capture claim, the eleventh fixture directory with no row, or a `ci.yml`
 # re-copy that drops the depth, merges the way the earlier ones did.
