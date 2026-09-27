@@ -115,7 +115,8 @@ only unbounded one:
 
 | where | `--check` | `--self-test` | bounded? |
 |---|---|---|---|
-| `docs/findings.md` §14e | 0.19 s | 0.13 s | dated, tree named |
+| `docs/findings.md` §15c, the generation it superseded | 0.24 s | 0.15 s | dated, and §15c names it as the pair the two `ec/README.md` copies quoted |
+| `docs/findings.md` §15c | 0.19 s | 0.13 s | dated, tree named, five runs each |
 | `ec/ghidra/README.md` | 0.34 s | 0.59 s | dated, machine class, warm page cache, and it says what it superseded |
 | `ec/README.md` | 0.19 s | 0.13 s | **no** |
 | `docs/findings.md` §14j, merged tree | 0.48 s | 0.77 s | three runs each, on the tree carrying §14j and §14i both |
