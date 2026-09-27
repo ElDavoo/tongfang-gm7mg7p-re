@@ -400,7 +400,8 @@ into `r2 -a 8051` with no stitching needed.
   attributes 775 to a bank (568 agreeing, 207 contradicting), leaves 115
   attributed to both, and does not reach 398. `--pairs-csv` and `--regions-csv`
   regenerate the two committed tables and `--self-test` pins the stub decoding,
-  the seed census, two hand-decoded attributions and those four counts.
+  the seed census, two hand-decoded attributions, those four counts and the
+  per-run `bounds` column the region map reads.
   `annotations/bank-attribution.md` is the reading, and it is explicit that
   every attribution is "attributed by this closure": the walk has no
   function-boundary recovery, and its own failure mode — one byte of the `0x8038`

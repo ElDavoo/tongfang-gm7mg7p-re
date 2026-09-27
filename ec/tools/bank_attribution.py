@@ -587,15 +587,29 @@ def print_cuts(closures, seeds) -> None:
     print()
 
 
+def bounds_for(eps, cuts):
+    """The bounds that fired for the walks whose entry points are `eps`.
+
+    Filtered by the entry points that cover the run, not the union over
+    `cuts`. `cuts` is every bound that fired *anywhere* in the bank -- three
+    entry points stopped in bank 0, seven in bank 1 -- so a union over its keys
+    labels all 7006 bank-0 runs as bound-limited when only 535 are reached by a
+    walk that stopped. An empty list is a fact about those walks and not about
+    the bank's: it means no walk reaching this run stopped.
+    """
+    return sorted(why for why, cut_eps in cuts.items() if eps & cut_eps)
+
+
 def write_regions_csv(closures, seeds) -> int:
     """One row per attributed contiguous run per bank.
 
     The entry-point columns are what a later region map (#50) needs and a
     per-address list cannot give it: how many independent paths reach the run,
     how many of those start at a name the linker wrote down, and which bounds
-    fired for the walks that covered it. `bounds` is the union over those walks,
-    so a run whose entry points hit a bound is a run whose right-hand edge is
-    the walk's decision and not the image's.
+    fired for the walks that covered it. `bounds` is bounds_for() over those
+    walks, so a run whose entry points hit a bound is a run whose right-hand
+    edge is the walk's decision and not the image's, and a run with none is not
+    labelled by a bound that fired somewhere else in the bank.
     """
     w = csv.writer(sys.stdout)
     w.writerow(["bank", "start", "end", "bytes", "entry_points", "seed_entries",
@@ -607,7 +621,7 @@ def write_regions_csv(closures, seeds) -> int:
             paths = [reached[a] for a in addrs]
             eps = {e for a in addrs for e in who[a]}
             seeded = sum(1 for e in eps if entries[e][0] == "trampoline")
-            bounds = sorted({why for e in eps for why in cuts})
+            bounds = bounds_for(eps, cuts)
             w.writerow([f"bank{bank}", f"0x{start:04X}", f"0x{end:04X}",
                         len(addrs), len(eps), seeded, min(paths), max(paths),
                         " ; ".join(bounds)])
@@ -717,6 +731,15 @@ PAIR_PINS = {
 # The 17 pairs outside the 1288: zero contradictions among the 11
 # own-live/other-erased pairs, and zero attributions among the 6 both-erased.
 CHECK_PINS = (11, 0, 6, 0)
+
+# The regions CSV's `bounds` column, per bank: the runs a stopped walk reaches,
+# and the runs in all. The two differ by an order of magnitude, and that gap is
+# the pin. `cuts` is every reason that fired *anywhere* in the bank, so a
+# consumer -- or a future edit to bounds_for() -- that unions it over a run
+# reports all 9662 rows as bound-limited when 603 are. Pinned per run because
+# the per-address figures §5 already prints (849 of 12694, 115 of 4159) do not
+# constrain it: a run of 1 byte and a run of 40 both count once.
+CUT_RUNS = ((535, 7006), (68, 2656))
 
 # The closures' own sizes, reported rather than pinned. They are a property of
 # this image's bounds, and a pin here would fail a correct tool over a
@@ -878,6 +901,27 @@ def self_test(d: bytes) -> int:
           + ("" if got == CHECK_PINS else f" -- expected {CHECK_PINS}"))
     for p in contra + reached:
         print(f"        {SHORT[p['verdict']]} at `{p['region']}` 0x{p['target']:04X}")
+
+    # The `bounds` column, which is what the region map (#50) reads as "do not
+    # trust this run's right-hand edge". Checked through bounds_for() -- the
+    # function write_regions_csv() calls -- so this holds the column rather than
+    # a restatement of it, and a row whose walks all finished carries nothing.
+    got_runs = []
+    for bank in (0, 1):
+        reached_b, who_b, _e_b, cuts_b, _c_b = closures[bank]
+        runs_b = runs_of(reached_b)
+        covered_b = sum(1 for start, end in runs_b
+                        if bounds_for({e for a in range(start, end)
+                                       if a in reached_b
+                                       for e in who_b[a]}, cuts_b))
+        got_runs.append((covered_b, len(runs_b)))
+    got_runs = tuple(got_runs)
+    check(got_runs == CUT_RUNS,
+          f"the per-run bounds column: {got_runs[0][0]} of {got_runs[0][1]} bank0 "
+          f"runs and {got_runs[1][0]} of {got_runs[1][1]} bank1 runs are reached "
+          f"by a walk that stopped, so the other {got_runs[0][1] - got_runs[0][0]} "
+          f"and {got_runs[1][1] - got_runs[1][0]} carry no bound at all"
+          + ("" if got_runs == CUT_RUNS else f" -- expected {CUT_RUNS}"))
 
     for bank, want, entries_want in zip((0, 1), CLOSURE_SIZE, ENTRY_POINTS):
         got_size = len(closures[bank][0])

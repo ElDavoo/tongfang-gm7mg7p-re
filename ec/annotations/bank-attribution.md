@@ -47,10 +47,11 @@ $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/
 $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 1 0x10000 /tmp/bank1.bin
 ```
 
-The self-test exits 0 and prints 18 checks: the stub→bank decoding re-derived
+The self-test exits 0 and prints 19 checks: the stub→bank decoding re-derived
 through `find_stubs()`, the seed census, the two hand-decoded pins below, the
 two `jmp @a+dptr` dispatch shapes §5 names, the four verdicts over both
-populations, and the closure's own internal check.
+populations, the closure's own internal check, and the per-run `bounds` column
+below.
 
 Wiring it into `check_ghidra_tooling`'s tool list in
 `../../.github/scripts/agent-gates.sh` would make it permanently self-checking,
@@ -64,7 +65,11 @@ classes `bank-call-audit.md` §4 assigned (`own_bank`/`other_bank`), the
 closure's `verdict`, and the path count from each bank's closure.
 [`bank-attribution-regions.csv`](bank-attribution-regions.csv) is one row per
 attributed contiguous run per bank, with the entry points that reach it, how
-many of those start at a name the linker wrote down, and which bounds fired.
+many of those start at a name the linker wrote down, and which bounds fired
+**for the walks that reach that run** — 535 of bank 0's 7006 rows and 68 of
+bank 1's 2656 carry a bound and the other 9059 carry none, so an empty cell
+means those walks all finished rather than that the bank has no bounds. §5
+counts the same thing.
 
 ## 1. The seeds, and the one link in the chain that is not new
 
@@ -276,10 +281,37 @@ by where they stopped rather than as a rate — together with how much of each
 closure rests on them, which is the number that decides how much weight the rest
 of this file can carry.
 
-| bank | entry points that stopped | first at | addresses reached by a stopped walk | of those, by no other |
-|---|---|---|---:|---:|
-| `bank0` | 1 depth limit, 2 instruction budget | `0x8749`, `0x95DD`, `0x96AD` | 849 of 12694 | 637 |
-| `bank1` | 7 indirect jump | `0x8A04` and six more | 115 of 4159 | 115 |
+| bank | entry points that stopped | first at | addresses reached by a stopped walk | of those, by no other | of those, runs |
+|---|---|---|---:|---:|---:|
+| `bank0` | 1 depth limit, 2 instruction budget | `0x8749`, `0x95DD`, `0x96AD` | 849 of 12694 | 637 | 535 of 7006 |
+| `bank1` | 7 indirect jump | `0x8A04` and six more | 115 of 4159 | 115 | 68 of 2656 |
+
+The first five columns are the tool's own printed section 7; the last is a
+group-by over [`bank-attribution-regions.csv`](bank-attribution-regions.csv),
+and it is the one a consumer of that file needs. The address column weights a
+stop by how much it reached, where the `bounds` column is one cell per run, so
+the two are not the same measurement: the 535 and 68 runs carry `854` and `120`
+bytes against the `849` and `115` addresses the stopped walks reached, the
+difference being addresses in those runs that a walk which *finished* also
+reaches.
+
+```console
+$ python3 -c '
+import csv, collections
+rows = list(csv.DictReader(open("ec/annotations/bank-attribution-regions.csv")))
+per = collections.defaultdict(lambda: [0, 0, 0])
+for r in rows:
+    p = per[r["bank"]]
+    p[0] += 1
+    if r["bounds"]:
+        p[1] += 1
+        p[2] += int(r["bytes"])
+for b, p in sorted(per.items()):
+    print(f"{b} {p[1]:>5} of {p[0]:>5} runs carry a bound, holding {p[2]:>5} bytes")
+'
+bank0   535 of  7006 runs carry a bound, holding   854 bytes
+bank1    68 of  2656 runs carry a bound, holding   120 bytes
+```
 
 **The calls that leave the bank window are the larger blind spot, and they are
 counted.** bank0's 130 entry points call 67 distinct common-area targets —
