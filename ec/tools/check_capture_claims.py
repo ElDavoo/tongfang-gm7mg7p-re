@@ -60,10 +60,20 @@ disagreement is a fact about the prose rather than a race to be re-tried.
     satisfied if it matches either. The same weaker sense
     `check_cluster_citations.py` gives "a unit naming two clusters", and the
     same reason: it catches a wrong number, not a wrong pairing.
-  * *`.txt` captures.* The four `.txt` files in `evidence/ec-watch/` are
-    `ecrw.py dump` output -- one is a hex dump, one a value listing -- and
-    have no row-per-change shape to count. A unit naming one is reported as
-    skipped rather than passed over in silence.
+  * *`.txt` captures.* A `.txt` capture is outside the oracle: `main()`
+    indexes `evidence/ec-watch/*.csv` and nothing else, and `check()` skips a
+    unit naming one before either rule runs, so there is no row set here for
+    a claim to agree or disagree with. That is the whole reason, and it is not
+    the file's shape -- `2026-09-23-0751-isolation.txt` is a per-change watch
+    log, and it is skipped for want of an index entry rather than for want of a
+    row per change. What an individual capture holds is a fact about that file
+    rather than about this tool; `evidence/README.md` indexes the `.txt`
+    captures under `evidence/ec-watch/` but not `2026-09-23-ctgp-live.txt`, and
+    the roster is in
+    `docs/findings/capture-claims-docstring-surface.md`. A unit naming one is
+    reported as skipped rather than passed over in silence, which is the part
+    that matters: it keeps "outside the oracle" distinguishable from "nothing
+    to check".
   * *Addresses the unit does not name.* A count resolves to the enclosing
     `registers.yaml` entry's `addr:`, because the sentence usually does not
     write the address it is about ("Moved 238 times ... the second-busiest
@@ -102,17 +112,32 @@ caveat `ec/annotations/registers.yaml` carries for a static scan. The
 `status:`. Passing means the checked sentences agree with the CSVs beside
 them; it does not mean the prose is right about the firmware.
 
-The surface is small and the closing line says how small: on the tree as
-merged this checks five address-presence claims and two row counts, in
-`ec/annotations/registers.yaml` (the `XDATA_0449` and `GPU_DYNAMIC_BOOST_STATUS`
-notes) and `docs/hardware-tests/system-id-0456-bit6-divisor.md` §5. A corpus
-scan over the same roots finds 19 units naming a `.csv` capture at all (and 10
-more naming one of the `.txt` ones); the rest are
-the skips above, several of which are deliberate and one of which -- the
-`xdata-0400-045f.md` §8 table -- holds true claims this tool cannot reach.
-That count is a number to read, not a target: a re-run prints it, so a
-future change that widens or narrows the surface is visible rather than
-silent.
+The surface is small, and every file in it is a file `--verbose` names. These
+are the figures a run prints, per file, with the two rules told apart -- a
+split re-derived from the run rather than read off the sentences, because
+`XDATA_0449`'s note yields both kinds from one unit: a count bound to the
+entry's own `addr:`, and a presence claim for the `0x044C` it names as the
+comparison. In `ec/annotations/registers.yaml` the two entries are
+`XDATA_0449` and `GPU_DYNAMIC_BOOST_STATUS`.
+
+| file | `--verbose` | presence | row count |
+|---|---|---|---|
+| `ec/annotations/registers.yaml` | 5 | 4 | 1 |
+| `docs/hardware-tests/system-id-0456-bit6-divisor.md` | 2 | 1 | 1 |
+| `docs/hardware-tests/xdata-06c2-06db-sweep.md` | 2 | 1 | 1 |
+
+**A subset of what a run confirms, not a restatement of it.** A file is named
+here because a claim in it was checked, and a capture committed into the prose
+is expected to add a row nobody has written down, so what the suite holds is
+membership and the figures, not equality -- that is the shape that breaks on
+the next capture a human commits, and a stale docstring has only ever drifted
+by gaining a file. Each figure is a number to read, not a target: a re-run
+prints it against its own file, so a change that widens or narrows the
+surface is visible rather than silent. The rest are the skips above, several
+of which are deliberate and one of which -- the `xdata-0400-045f.md` §8 table
+-- holds true claims this tool cannot reach. The measurement behind the table,
+and the figures it deliberately does not carry, are in
+`docs/findings/capture-claims-docstring-surface.md`.
 
 **The run also reports on itself at file granularity, and that is #975's
 half.** A file that yields no claim is named in `--verbose` and counted on a
@@ -123,8 +148,10 @@ in `docs/findings/testdata-addr-column-claim.md`, which is where a number
 belongs; the figure is deliberately not written here, because a file count
 quoted in a docstring is invalidated by the next document added to the tree and
 this paragraph is one a future `docs/` file invalidates. A per-*unit* line is
-declined for the same reason the count is enough: the corpus is 27,032 units,
-so that is not a `--verbose` anyone runs.
+declined for the same reason the count is enough, and the run's own shape is
+the evidence: `main()` prints two lines about the whole walk however
+`--verbose` is set, and a line per unit would name every unit in `ROOTS` that
+yields no claim.
 
 Usage:
     python3 ec/tools/check_capture_claims.py [--check] [--verbose]

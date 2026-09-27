@@ -249,11 +249,15 @@ into `r2 -a 8051` with no stitching needed.
   than a race. It imports `check_cluster_citations.units` rather than writing a
   second sentence splitter, so a fix to the splitting logic (issue #273) lands
   once and both checkers get it. Committed files only: no image, no Ghidra, no
-  network — `.csv` captures only, as the four `.txt` files in that directory are
-  `ecrw.py dump` output with no row-per-change shape. The limits it earns the
-  right to state are in its own docstring, in the sibling's style, and the two
-  that matter most: a sentence that *denies* movement is skipped, which is what
-  keeps #270's correction green and is exactly why a stale denial is not caught;
+  network — `.csv` captures only: the index is built from
+  `evidence/ec-watch/*.csv` and a unit naming a `.txt` is skipped before either
+  rule runs, so there is no row set to hold a claim against.
+  `evidence/README.md` indexes what an individual capture holds — every `.txt`
+  file there but `2026-09-23-ctgp-live.txt`.
+  The limits it earns the right to state are in its own docstring, in the
+  sibling's style, and the two that matter most: a sentence that *denies*
+  movement is skipped, which is what keeps #270's correction green and is
+  exactly why a stale denial is not caught;
   and a table row is its own unit, so `annotations/xdata-0400-045f.md` §8's
   `changes` column — six true counts — is not read, because the capture is named
   in the paragraph above the table. The run prints how many claims it checked
