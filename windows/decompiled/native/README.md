@@ -219,6 +219,24 @@ Measured, on this machine, with two annotation sweeps also running:
 | `GamingCenter3_Cross.exe` | 1 | 1 | 0 | 3.9 MB |
 | `GamingCenter3_Cross.dll` | 64,591 | 64,588 | **3** | 337 MB — **not committed** |
 
-The three failures are in the manifest and the index, not rounded away. The
-PDB leg is opt-in behind `--pdb`; the manifest records `pdb_staged` per program
+The three failures are in the manifest and the index, not rounded away. **That
+is not true of `GamingCenter3_Cross.dll` on the committed tree, and the sentence
+should not be read as covering it** (corrected 2026-09-27, issue #370). That
+program is not in the committed project, so `write_manifest()` gives its row
+zeros — `functions=0, decompiled=0, failed=0, mode=not-in-project` — and
+neither index carries a row for it (`grep -c '(failed)'` is 0 in both). The 3
+comes from the run's own `.counts` file, and nothing in this repository holds
+that file. What *is* re-derivable is the 64,588: the retained `.c` declares one
+`// ==== ` separator per decompiled function, and a function that failed to
+decompile emits none, so the three are not in the text and cannot be counted
+back out of it.
+
+What is in each committed `.c` is measured, per binary and with the manifest's
+own figures beside it, by `../../ghidra/c-census.csv` —
+`python3 ../../tools/census_native_c.py --check` re-derives it. The
+`count_basis` column is what says whether a row's number is a measurement or a
+figure carried from a run, and it is why that row reads `64588` next to
+`functions=0` rather than instead of it.
+
+The PDB leg is opt-in behind `--pdb`; the manifest records `pdb_staged` per program
 so "decompiled without symbols" can never be read as "decompiled".

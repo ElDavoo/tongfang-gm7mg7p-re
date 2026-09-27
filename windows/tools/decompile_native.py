@@ -95,6 +95,14 @@ LISTING_INDEX = os.path.join(WINDOWS_DIR, "ghidra", "listing-index.csv")
 # named in no index at all, so a check built on index rows says nothing about
 # the largest artefact in the Windows stack no matter how thorough it is.
 C_DIGESTS = os.path.join(WINDOWS_DIR, "ghidra", "c-digests.csv")
+# What is IN each committed .c, where c-digests.csv says only that it has not
+# moved. A third committed file rather than a manifest column, for the same
+# reason the digest is not one: every column of the manifest is written by
+# write_manifest() from a Ghidra run, and the row for a program in
+# PROJECT_EXCLUDED is zeros by construction -- so a count measured off the
+# retained .c would be destroyed by the next export and reappear as a silent
+# diff. census_native_c.py derives this; --check below re-derives it too.
+C_CENSUS = os.path.join(WINDOWS_DIR, "ghidra", "c-census.csv")
 
 # A disassembly line: an address, then the byte column, then the mnemonic. The
 # byte column ends at the first `-` and is padded to the program's widest
@@ -471,6 +479,33 @@ def c_presence_problems(index_rows, decompiled_dir=DECOMPILED_DIR):
                        f"{sorted(got[addr])} at that address instead -- a "
                        f"wrong-function export, or a stale index")
     return out, len(declared), n_rows
+
+
+def census_problems(path=C_CENSUS, decompiled_dir=DECOMPILED_DIR):
+    """Whether `windows/ghidra/c-census.csv` still says what the .c files say.
+
+    A delegating wrapper, and the logic lives in `census_native_c.py`. That
+    direction is not tidiness: the census tool already imports _c_markers() and
+    export_label() from here, so a module-level import back would be a cycle,
+    and duplicating the separator grammar here to avoid a deferred import would
+    give the repository two definitions of what a `// ==== ` line is -- the
+    exact thing importing it was meant to prevent.
+
+    The check this brings to --check is the reconciliation the census exists
+    for: a program in PROJECT_EXCLUDED has no index row, no listing row and a
+    manifest row of zeros, so nothing else run from this file can say anything
+    about the 56 MB decompile retained for it. That is a genuine gap rather
+    than a formality, and it is closed by a second committed file rather than
+    by writing a measurement into a generated one.
+    """
+    import census_native_c
+    if HERE not in sys.path:
+        # A sibling module by path, not a package. sys.path[0] is this file's
+        # own directory when it is run as a script, which is the gate's
+        # invocation; the insert is for the case where something imported this
+        # module by path from elsewhere and then asked for the census.
+        sys.path.insert(0, HERE)
+    return census_native_c.census_problems(path, decompiled_dir)
 
 
 def find_ghidra():
@@ -1202,6 +1237,34 @@ def do_check():
           any(r["path"].endswith("GamingCenter3_Cross.c") for r in _cdrows),
           "the largest artefact in the Windows stack is in no index, so this row "
           "is the only thing that says anything about it")
+
+    # And the third layer, which is what is IN the .c rather than whether it has
+    # moved. The digest above cannot say how many functions the retained export
+    # declares and the manifest cannot either -- its row is zeros because
+    # write_manifest() only ever sees programs that are in the project -- so
+    # without this the two committed artefacts that disagree about
+    # GamingCenter3_Cross.dll would go on disagreeing with nothing in the gate
+    # reading either. The census is derived from the .c files by
+    # census_native_c.py; this re-derives it and says so on every run, so a
+    # stale row is a failed line here rather than a reader's problem.
+    _cen = census_problems()
+    check("every committed .c's census row re-derives from the .c itself",
+          not _cen, "; ".join(_cen[:3]))
+    if os.path.isfile(C_CENSUS):
+        _cenrows = list(csv.DictReader(open(C_CENSUS, newline="")))
+        _retained_row = [r for r in _cenrows
+                         if r.get("export_label") == export_label(
+                             next(iter(PROJECT_EXCLUDED)))]
+        print("  census: %d row(s), %d separator(s) declared; the retained "
+              "export is %s"
+              % (len(_cenrows),
+                 sum(int(r["separators_declared"] or 0) for r in _cenrows),
+                 ("%s over %s-%s, manifest functions %s, count_basis %s"
+                  % (_retained_row[0]["separators_declared"],
+                     _retained_row[0]["first_addr"], _retained_row[0]["last_addr"],
+                     _retained_row[0]["project_functions"],
+                     _retained_row[0]["count_basis"])) if _retained_row
+                 else "NOT IN THE CENSUS"))
 
     print("  all checks passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
