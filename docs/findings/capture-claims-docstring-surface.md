@@ -81,9 +81,9 @@ as a `.txt` skip, and not a member of the evidence tree at all.
 > all (and 10 more naming one of the `.txt` ones).
 
 This is the sentence that had to be **deleted rather than corrected**, and the
-next section is why. It is stale as well as misplaced: on the tree this change
-merges into, the same scan finds **38 units in 14 files** naming a `.csv`
-capture, where the docstring said 19. Nothing in the tool prints that —
+next section is why. It is stale as well as misplaced: on the tree this
+write-up is dated to, the same scan finds **38 units in 14 files** naming a
+`.csv` capture, where the docstring said 19. Nothing in the tool prints that —
 `main()`'s index is `WATCH`-scoped and its output is claims, not census — so it
 is a separate walk, and this is the whole of it:
 
@@ -115,25 +115,29 @@ document doing the counting.
 ## The measurement, re-derived from the run, 2026-09-27
 
 Nothing below is taken from the issue or from the predecessor write-up; all of
-it comes from running the tool, on the tree this change lands on:
+it comes from running the tool on the tree this change lands on:
 
 ```
 $ python3 ec/tools/check_capture_claims.py --check --verbose
-198 files / 100160 lines / 9 capture claims checked against 10 committed captures: every checked claim agrees with the capture it names
-195 of those 198 file(s) were read in full and named no capture claim; `--verbose` names each one
+199 files / 100500 lines / 9 capture claims checked against 10 committed captures: every checked claim agrees with the capture it names
+196 of those 199 file(s) were read in full and named no capture claim; `--verbose` names each one
 ```
 
-Both census figures belong to the walk and move with it, so this block is dated
-to the commit it sits in. It is worth saying what moved them, because the
-figures an earlier draft of this section quoted are the issue's: `195 files /
-99083 lines` and `192 of those 195` is the tree at `d4c8510`, the commit the
-issue measured on, and `e38ee864` — the commit this branch merges into — added
-two write-ups since, so the tree this lands on reads three more files than the
-block quoted, one of them this write-up, which the walk reads because it is a
-`.md` under a root it walks. The `registers.yaml` line numbers the issue
-carried went stale for the same reason and are re-derived on this tree in the
-table below rather than corrected by arithmetic. The per-file table is the part
-that does not move with the corpus, and it is the part the new cases hold.
+The two census figures in that block are the run's own, and both belong to the
+walk rather than to the tool: this write-up is a `.md` under a root the walk
+reads, so both count this file among the files they count, and the next
+document merged moves them again. The block is dated to the commit it sits in
+and is not restated elsewhere in this document as a standing figure — it is
+checkable by re-running the command inside it, which is the only reason a
+figure of this kind belongs in a write-up at all. The figures an earlier draft
+of this section quoted are the issue's: `195 files / 99083 lines` and `192 of
+those 195` is the tree at `d4c8510`, the commit the issue measured on, and the
+block reads four more files than that — three added between `d4c8510` and this
+branch's merge base `5ce6467f`, and this write-up. The `registers.yaml` line
+numbers the issue carried went stale for the same reason and are re-derived on
+this tree in the table below rather than corrected by arithmetic. The per-file
+table is the part that does not move with the corpus, and it is the part the
+new cases hold.
 
 The per-file surface `--verbose` prints, with the presence/count split derived
 by neutering `ccc.COUNT` — a module global looked up at call time inside
@@ -208,8 +212,8 @@ reach, and the answer to the second is the list of skip rules — which is the
 bullet list directly above it, and needs no figure at all.
 
 So the paragraph now says what `--verbose` prints, and the census line's own
-count — `192 of those 195 file(s)`, printed on every run, the *run's* own
-figure rather than a separate scan's — is where a count belongs. This is
+count — the `N of those M file(s)` line, printed on every run, the *run's*
+own figure rather than a separate scan's — is where a count belongs. This is
 flagged explicitly because it is the one place this change does **less** than
 the issue literally asks: it drops figures rather than re-quoting them, and
 the reason is that the issue's own replacement numbers are stale on the tree
@@ -291,28 +295,33 @@ above records. Recorded so the correction is not re-derived.
 
 ## What this deliberately does not change
 
-- **The generated index's pre-existing off-by-one, and only that.**
-  `gen_findings_index.py --check` fails on the tree as received: the entry list
-  is complete and correct and only the prose count line is stale. At `d4c8510`
-  the index carried 124 entries and said **123**; at `e38ee864`, the commit
-  this branch merges into, it carries 126 and says **125**. Nothing runs that
+- **The generated index's prose count line, and only that.**
+  `gen_findings_index.py --check` was clean on the tree as received: at
+  `5ce6467f`, this branch's merge base, the index carries 127 entries and says
+  **127**. Hand-adding this write-up's entry — which is what a branch that
+  does not know the file is generated does — leaves the entry list complete
+  and correct and makes the count line the only stale thing, so the entry is
+  **regenerated** instead:
+  `python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md`, which
+  moves the one line the count is on and leaves 128 entries, 128 stated,
+  `--check` exiting 0. The file says *do not edit*, and the reason it is
+  generated is precisely that this is the edit: a hand-added entry is the
+  same class of stale figure as the docstring this write-up is about, one
+  file over.
+
+  The off-by-one the index *did* carry is worth recording, because it is what
+  makes the hand-edit tempting: at `d4c8510` the index carried 124 entries
+  against a stated **123**, and at `e38ee864` 126 against **125**. Both were
+  corrected at `c99c6aca`, which is why the merge base is clean and there is
+  no pre-existing drift here for this change to inherit. Nothing runs that
   check — `docs/ci/agent-gates-findings-frozen.patch` is the patch that would
-  put it in `.github/scripts/agent-gates.sh` and it is not applied, so the
-  drift was invisible. Hand-adding this write-up's entry, which is what a
-  branch that does not know the file is generated does, takes it to 127
-  entries against a stated 125, so the entry is **regenerated** instead —
-  `python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md`, which moves
-  the one line the count is on, and leaves 127 entries, 127 stated, `--check`
-  clean. The file says *do not edit*, and the reason it is generated is
-  precisely that this is the edit: a hand-added entry is the same class of
-  stale figure as the docstring this write-up is about, one file over. What put
-  the drift there, and why nothing has run `--check` since, is not answered
-  here; that check is a human's `git apply` away, and it is the same patch this
-  change leaves alone.
+  put it in `.github/scripts/agent-gates.sh` and it is not applied, so neither
+  that correction nor this one would be caught by CI. That check is a human's
+  `git apply` away, and it is the same patch this change leaves alone.
 - **`docs/findings/testdata-addr-column-claim.md`** is a dated record of what
   #975 measured and declined, and its §"A finding this PR names but does not
   fix" is scoped to "this PR". Its census figures (145 of 148, 146 of 149) no
-  longer describe the tree — this run says 195 of 198 — but rewriting another
+  longer describe the tree — this run says 196 of 199 — but rewriting another
   branch's dated record is the append-log shape `check_no_append_logs.py`
   exists to stop. This file names it as the predecessor and carries today's
   figures, dated. The docstring's pointer to it names a *file*, which is why
