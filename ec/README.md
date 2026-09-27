@@ -391,6 +391,21 @@ into `r2 -a 8051` with no stitching needed.
   `annotations/index-table-spans.csv`, and `--self-test` re-checks the
   reader's bytes, the table's extent and stride, the whole 15-site census and
   the census rows each span accounts for against the committed image.
+- **`tools/bank_attribution.py`** — a per-bank reachability closure seeded from
+  the 403 BL51 trampolines, whose stub identity names the bank, so those entry
+  points are linker-attributed rather than assumed. Reuses
+  `walk_branch_arms.descend()` for the block walk unchanged and adds only the
+  entry-point worklist above it. Of the 1288 both-banks-live bucket-B pairs
+  `annotations/bank-call-audit.md` §4 leaves to the same-bank assumption, it
+  attributes 775 to a bank (568 agreeing, 207 contradicting), leaves 115
+  attributed to both, and does not reach 398. `--pairs-csv` and `--regions-csv`
+  regenerate the two committed tables and `--self-test` pins the stub decoding,
+  the seed census, two hand-decoded attributions, those four counts and the
+  per-run `bounds` column the region map reads.
+  `annotations/bank-attribution.md` is the reading, and it is explicit that
+  every attribution is "attributed by this closure": the walk has no
+  function-boundary recovery, and its own failure mode — one byte of the `0x8038`
+  dispatch table — is pinned rather than dropped.
 - **`tools/pd_index_geometry.py`** — the `ITE8850-PD` image's DPTR index
   helpers, the bases they are called against, and who calls the routines that
   do it. `--helpers` decodes each helper to its `ret` into a symbolic "what
@@ -560,6 +575,19 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   `annotations/bank-call-targets.csv`,
   `annotations/bank-paged-call-targets.csv` and
   `annotations/bank-relative-branch-targets.csv` are the per-site tables.
+- **`annotations/bank-attribution.md`** — what the 403-trampoline closure does
+  with the 1288 pairs §4 of that file leaves to the same-bank assumption: 775
+  evidence-decided (568 agreeing, 207 contradicting), 115 attributed to both
+  banks, and **398 the closure never reaches**, printed as the residue. It
+  reports the `0x04A6` handoff's two halves separately — bank 1's closure does
+  reach `0x888C` from a linker-named seed, and does not reach the `0xDFD0` call
+  site that names it — and it names the blind spots with numbers, including the
+  15 index-table handlers that sit behind a common-area dispatch no closure
+  follows.
+  `annotations/bank-attribution-pairs.csv` and
+  `annotations/bank-attribution-regions.csv` are the per-pair and per-run
+  tables, produced by `tools/bank_attribution.py --pairs-csv` /
+  `--regions-csv`.
 - **`annotations/bank0-8038-dispatch-table.csv`** — the per-entry table behind
   `annotations/bank-call-audit.md` §9: the eight entries of the `bank0`
   `0x8038` inline `switch` table, each with the XDATA addresses its handler's
