@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-120 write-ups.
+121 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -40,6 +40,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`descend-index-guard.md`](descend-index-guard.md) — `descend()` reads `d[off]` two lines above the test that would catch it, and the invariant that held it was not the one the census named
 - [`disasm8051-oracle-from-the-annotations.md`](disasm8051-oracle-from-the-annotations.md) — The two hand transcriptions are re-read now, and the sentence the gate comment carries is true (2026-09-26, issue #811)
 - [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md) — `disasm8051.py --self-test` is the oracle for the opcode tables, and no gate
+- [`dmi-descriptor-evidence.md`](dmi-descriptor-evidence.md) — The DMI descriptor claims eight bits, and the source that names them was one fetch away (issue #10)
 - [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) — Which of the census checklist's figures a check actually holds, measured (issue #849)
 - [`doc-patch-reference-gate.md`](doc-patch-reference-gate.md) — The names prose gives a prepared gate patch, and what now holds them (issue #777)
 - [`dump-pair-block-attribution.md`](dump-pair-block-attribution.md) — A whole-block bracket is not a second reading of the same bytes (issue #475)

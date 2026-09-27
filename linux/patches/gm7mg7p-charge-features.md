@@ -15,6 +15,20 @@ the entry does not exist yet. So this is the *notes* half of the question: what
 the descriptor should and should not claim, and the wording the upstream PR
 description will carry once someone writes the patch proper.
 
+*Corrected 2026-09-27, in place, with the paragraph above kept visible because
+it is what was true when this file was written.* Every clause of it is now
+false. Issue #10's deliverable exists: [`gm7mg7p-dmi-entry/`](gm7mg7p-dmi-entry/README.md)
+holds a `uniwill_device_descriptor`, a `uniwill_dmi_table` row, the feature-bit
+list, and the PR description this file was the notes for. The descriptor claims
+**eight** bits, of which `UNIWILL_FEATURE_BATTERY_CHARGE_MODES` is one; the
+charge rows in §1 below are carried into
+[`feature-map.csv`](gm7mg7p-dmi-entry/feature-map.csv) with the same verdicts
+and the same reasons, and `UNIWILL_FEATURE_BATTERY_CHARGE_LIMIT` is still not
+claimed. `docs/hardware-identity.md` is unchanged and its "not in
+`uniwill-laptop`'s DMI match table" sentence is still exactly true — the entry
+is *prepared*, not upstream. The write-up is
+[`dmi-descriptor-evidence.md`](../../docs/findings/dmi-descriptor-evidence.md).
+
 ## 1. What the descriptor should claim
 
 | feature bit | EC register | claim for this board | where the evidence is |

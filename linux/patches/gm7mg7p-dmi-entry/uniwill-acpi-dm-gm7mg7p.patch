@@ -1,0 +1,63 @@
+Subject: [PATCH] Add DMI support for the PCSpecialist / TongFang GM7MG7P
+
+Adds one `uniwill_device_descriptor` and one `uniwill_dmi_table` row. No
+existing descriptor, row, field or bit is touched, so every other board in the
+table keeps exactly the behaviour it has today.
+
+Base commit: 5a24248f6422a0b673a47cbfd65e19a98eb4c8a9
+  ("Bump minimum supported kernel version to 7.2"), the rev
+  linux/patches/BASE_COMMIT pins and the same rev the local nix build fetches.
+  The blob this diff is against hashes to 7a2eeae, which is the same base
+  index line linux/patches/uniwill-laptop-force_charge_limit.patch carries.
+
+To apply:
+    git fetch https://github.com/Wer-Wolf/uniwill-laptop 5a24248f6422a0b673a47cbfd65e19a98eb4c8a9
+    git am linux/patches/gm7mg7p-dmi-entry/uniwill-acpi-dm-gm7mg7p.patch
+  or, to check it without applying:
+    git apply --check linux/patches/gm7mg7p-dmi-entry/uniwill-acpi-dm-gm7mg7p.patch
+
+Every bit claimed here, and why this one rather than the other seven candidates,
+is recorded row by row with its evidence in feature-map.csv beside this file;
+the upstream PR body is PR_DESCRIPTION.md. The short version: each of the eight
+is either graded `confirmed-*` in ec/annotations/registers.yaml, or confirmed
+live by a documented test that the driver's own interface acts on. The seven not
+claimed are excluded with a cited reason each, and nothing here is claimed on
+the strength of a write the EC merely accepted.
+
+diff --git a/uniwill-acpi.c b/uniwill-acpi.c
+index 7a2eeae..816c846 100644
+--- a/uniwill-acpi.c
++++ b/uniwill-acpi.c
+@@ -2860,6 +2860,17 @@ static struct uniwill_device_descriptor x4sp4nal_descriptor __initdata = {
+ 	.kbd_led_max_brightness = 2,
+ };
+ 
++static struct uniwill_device_descriptor gm7mg7p_descriptor __initdata = {
++	.features = UNIWILL_FEATURE_FN_LOCK |
++		    UNIWILL_FEATURE_SUPER_KEY |
++		    UNIWILL_FEATURE_BATTERY_CHARGE_MODES |
++		    UNIWILL_FEATURE_CPU_TEMP |
++		    UNIWILL_FEATURE_GPU_TEMP |
++		    UNIWILL_FEATURE_PRIMARY_FAN |
++		    UNIWILL_FEATURE_SECONDARY_FAN |
++		    UNIWILL_FEATURE_NVIDIA_CTGP_CONTROL,
++};
++
+ static const struct dmi_system_id uniwill_dmi_table[] __initconst = {
+ 	{
+ 		.ident = "AiStone X4SP4NAL",
+@@ -3316,6 +3327,14 @@ static const struct dmi_system_id uniwill_dmi_table[] __initconst = {
+ 		},
+ 		.driver_data = &tux_featureset_1_descriptor,
+ 	},
++	{
++		.ident = "PCSpecialist GM7MG7P",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "PCSpecialist"),
++			DMI_EXACT_MATCH(DMI_BOARD_NAME, "GM7MG7P"),
++		},
++		.driver_data = &gm7mg7p_descriptor,
++	},
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(dmi, uniwill_dmi_table);
