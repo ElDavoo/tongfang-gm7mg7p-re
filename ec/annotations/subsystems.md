@@ -558,7 +558,8 @@ accessors the issue's phrase points at —
 `0x7421`, `0x9DEC`, `0xB5D3` and `0xE9F5` — **are not exported functions at
 all**: each is a code site inside a larger routine that no `lcall` names.
 [`pd-index-callers.csv`](pd-index-callers.csv) traces all four, and **four of
-its five rows are `status: unresolved`**; the fifth found literal index loads
+its five rows are `status: unresolved`**; the fifth found literals in a caller's
+frame, none of them in a register that site indexes on, and so bounds nothing
 rather than resolving a caller either.
 
 **What this group does not establish.** Which entry those four sites belong to,

@@ -50,7 +50,9 @@ Five modes, in increasing order of how much they assume:
               nearest preceding call target by byte scan, and the nearest that
               also passes the two structural tests in reaches() and
               is_entry_shaped() -- and every site calling each, with its own
-              framing counts and any literal `mov rN,#imm` its frame contains.
+              framing counts and any literal `mov rN,#imm` its frame contains
+              in a register this site indexes on. A load into a register the
+              site's term decode does not name is listed and bounds nothing.
               Both are heuristics; printing them side by side is the point.
 
 What this cannot do, stated once so no output below has to repeat it:
@@ -72,8 +74,9 @@ What this cannot do, stated once so no output below has to repeat it:
     read those before trusting a row.
   * Nothing here observes hardware. No register is read, written or read
     back; the index registers' *values* at run time are not knowable from
-    these bytes, which is why --callers reports literal loads it happens to
-    see and reports every other row unresolved.
+    these bytes, which is why --callers reports a literal load only into a
+    register the site's term decode names as an index, and reports every
+    other row unresolved.
 
 The --accesses/--accesses-csv and --access-strides/--access-strides-csv
 modes independently scan immediate-base templates and bounded direct helper
@@ -201,6 +204,28 @@ REBASE_BASE_RE = re.compile(re.escape(REBASE) + r"[^←]*← 0x([0-9A-F]{4})")
 PAGE_TERM = "0x200×"
 UNRESOLVED_STRIDE = "unresolved"
 
+# A register name standing alone in a term. No hex literal can contain `R`, so
+# a match here is a register and never part of a number; the `\b` on each side
+# is defence against a longer name it would otherwise match inside. The term
+# model's five templates name no such name today.
+INDEX_REG_RE = re.compile(r"\bR[0-7]\b")
+
+# The --callers status vocabulary, kept as constants for the same reason
+# UNRESOLVED_STRIDE is: these are machine-readable cells that three documents
+# quote by string, so they are defined once here and asserted against the
+# committed CSV by --self-test.
+#
+# Each value says no more than the decode behind it. The positive one stops at
+# the *load*: --callers traces no further than the caller frame, the entry pick
+# is a heuristic, and literals_in() does not follow what a callee leaves in the
+# register bank, so nothing here says the value survives the call. The
+# "none an index register" value says only that these loads are not the index --
+# not that the index is provably unbounded.
+UNRESOLVED_CALLER = "unresolved"
+CALLER_NO_INDEX = "literals found, none an index register"
+CALLER_INDEX_LOAD = "literal load into an index register"
+CALLER_UNRESOLVED_INDEX = "literals found; site index registers unresolved"
+
 # Every opcode that leaves a new value in the accumulator. Needed in full,
 # because a frame scan that only watched the loads it recognises would report
 # `A=R7` for `mov a,r7 ; movx a,@dptr ; mov dptr,#…` -- naming a register the
@@ -268,9 +293,11 @@ def check_site_addr(addr: int) -> None:
     instruction-boundary precondition beside it is not the tool's to make --
     no byte says where a routine's instructions begin.
 
-    Two modes call it and both take a caller's address: `--sites` through
-    site_rows() and `--helpers` through print_helpers(). The message is already
-    mode-neutral, which is why the function is not named for either.
+    Three modes call it and each takes a caller's address: `--sites` through
+    site_rows(), `--callers` through the same site_rows() it now decodes each
+    site's index registers with, and `--helpers` through print_helpers(). The
+    message is already mode-neutral, which is why the function is not named
+    for any of them.
     """
     lo, hi = pd_bounds()
     if 0 <= addr < hi - lo:
@@ -708,6 +735,47 @@ def effective_terms(terms):
     return out
 
 
+def index_registers(terms):
+    """The R0-R7 registers a site's effective terms name as an index factor.
+
+    Only the right-hand side of a construction's `←` is read. One template
+    lands its result in `A:R1`, where the `R1` is a *destination* and not
+    something the access indexes on -- 0x578E produces that form, and no
+    committed caller row reaches it, which is why --self-test covers it
+    synthetically instead.
+
+    `A` and `B` are excluded because the site's own frame reloads both, so
+    neither is a value a caller's literal could bound. That leaves R0-R7 as
+    the only registers a frame's literal load and a site's index can share,
+    which is what makes the intersection in caller_status() well defined.
+    """
+    out = set()
+    for term in terms:
+        out.update(INDEX_REG_RE.findall(term.split(" ← ")[-1]))
+    return out
+
+
+def caller_status(literals, index_regs) -> str:
+    """The status cell for one caller row: a function of the *intersection* of
+    the frame's literal register loads with the index registers the site's own
+    term decode names, not of the mere presence of literals. A caller loading
+    literals into registers this access does not index on bounds nothing about
+    it, and saying so is the whole difference between the row and the claim
+    pd-index-geometry.md 4.2 spends its length denying.
+
+    Branch order is load-bearing. "Does the decode name any index register at
+    all" is tested before the intersection, so a site whose terms resolve
+    nothing keeps its own wording: "not found by this method" is a different
+    claim from "a match was sought here and none was found", and collapsing
+    the two is the mistake this function exists to stop.
+    """
+    if not literals:
+        return UNRESOLVED_CALLER
+    if not index_regs:
+        return CALLER_UNRESOLVED_INDEX
+    return CALLER_INDEX_LOAD if literals.keys() & index_regs else CALLER_NO_INDEX
+
+
 def effective_base(row) -> int:
     """The base the chain actually indexes from: the site's `MOV DPTR`
     immediate, unless a REBASE term replaced it with an immediate of its own.
@@ -832,6 +900,10 @@ def caller_rows(d: bytes, sites):
     calls, jumps = branch_index(d)
     out = []
     for site in sites:
+        # Once per site, outside the picks and rows loops: the decode is the
+        # same for every caller of it, and the status is that decode's index
+        # registers intersected with each frame's own literals.
+        regs = index_registers(effective_terms(site_rows(d, [site])[0]["terms"]))
         picks = []
         candidates = sorted((e for e in calls if e <= site), reverse=True)
         containing = next((e for e in candidates
@@ -857,9 +929,7 @@ def caller_rows(d: bytes, sites):
                         "opcode": mnemonic(d, off, off - lo).strip(),
                         "frame_onto": onto, "frame_over": over,
                         "literals": lits,
-                        # A frame that names no index register bounds nothing.
-                        # That is the expected row, not a broken one.
-                        "status": "literal index loads found" if lits else "unresolved",
+                        "status": caller_status(lits, regs),
                     })
             pick["rows"] = sorted(rows, key=lambda r: r["file_offset"])
         out.append({"site": site, "picks": picks})
@@ -998,10 +1068,14 @@ def print_callers(d: bytes, sites) -> None:
             for r in pick["rows"]:
                 lits = ", ".join(f"{k}=#0x{v:02X}"
                                  for k, v in sorted(r["literals"].items()))
+                # The status on every row, not only where the literals are
+                # empty: printing `lits or status` made the one row that
+                # carries a status the one row whose status was invisible, in
+                # the very view a reader reads the claim off.
                 print(f"    file 0x{r['file_offset']:05X}  runtime 0x{r['runtime']:04X}  "
                       f"{r['kind']:<9} {r['opcode']:<16} "
                       f"frame {r['frame_onto']}/{r['frame_onto'] + r['frame_over']}  "
-                      f"{lits or r['status']}")
+                      f"{lits or '-'} [{r['status']}]")
         print()
 
 
@@ -1412,6 +1486,25 @@ STRIDE_HELPER_TERMS = {
 # page term. pd-index-geometry.md 7 answers the issue's question off this set,
 # so it is pinned rather than re-read from the prose.
 PAGED_STRIDES = {"60", "1F"}
+
+# The literals and status every row of ../annotations/pd-index-callers.csv
+# carries, keyed by (site, caller runtime). Transcribed from
+# pd-index-geometry.md 4 and 4.2 rather than read back out of the CSV, so the
+# committed cell, the value this run computes and the prose it comes from are
+# three separate things and a disagreement between any two of them fails here.
+#
+# 4's net is "not one index register bounded by a literal"; 4.2's is "None of
+# the three literals is an index for this access", for a site indexing on R7
+# and R6 that its frame loads R1/R2/R3 into. The literals sit beside each
+# status so the second of those is checkable and not just assertable: an empty
+# literals column would make CALLER_NO_INDEX true for the wrong reason.
+CALLER_STATUSES = {
+    ("0x7421", "0xC9DD"): ("", UNRESOLVED_CALLER),
+    ("0x7421", "0x7CD1"): ("", UNRESOLVED_CALLER),
+    ("0x9DEC", "0xB452"): ("", UNRESOLVED_CALLER),
+    ("0xB5D3", "0xB838"): ("", UNRESOLVED_CALLER),
+    ("0xE9F5", "0x66E4"): ("R1=#0x00 R2=#0x08 R3=#0x01", CALLER_NO_INDEX),
+}
 
 SITES_CSV = "../annotations/ec-0x07d0-sites.csv"
 HELPERS_CSV = "../annotations/pd-index-helpers.csv"
@@ -1867,11 +1960,69 @@ def self_test(fw_path: str) -> int:
           "answers")
 
     want_callers = _csv_rows(CALLERS_CSV)
-    got_callers = sum(len(p["rows"]) for g in caller_rows(d, DEFAULT_CALLER_SITES)
-                      for p in g["picks"])
+    groups = caller_rows(d, DEFAULT_CALLER_SITES)
+    got_callers = sum(len(p["rows"]) for g in groups for p in g["picks"])
     check(len(want_callers) == got_callers,
           f"{CALLERS_CSV} has {got_callers} row(s) for the four 0x04A6 sites "
           f"(got {len(want_callers)} committed)")
+
+    # The status is a claim about an intersection of two decodes, so it is
+    # pinned on both sides rather than against the CSV alone: access_self_test
+    # below byte-compares the whole file, which stops it drifting from the tool
+    # but could not stop both drifting from the prose together. That is how this
+    # column came to contradict 4.2 in the first place.
+    fresh = {(f"0x{r['site']:04X}", f"0x{r['runtime']:04X}"):
+             (" ".join(f"{k}=#0x{v:02X}"
+                       for k, v in sorted(r["literals"].items())), r["status"])
+             for g in groups for p in g["picks"] for r in p["rows"]}
+    committed = {(row["site"], row["caller_runtime"]):
+                 (row["literals"], row["status"]) for row in want_callers}
+    check(set(committed) == set(fresh) == set(CALLER_STATUSES),
+          f"{CALLERS_CSV}'s keys are exactly the {len(CALLER_STATUSES)} pinned "
+          f"site/caller pairs (committed {len(committed)}, computed {len(fresh)})")
+    for key, want in sorted(CALLER_STATUSES.items()):
+        site, runtime = key
+        got = fresh.get(key, ("<absent>", "<absent>"))
+        was = committed.get(key, ("<absent>", "<absent>"))
+        check(got == want and was == want,
+              f"{CALLERS_CSV} site {site} caller {runtime}: literals "
+              f"`{want[0] or '-'}` / status `{want[1]}` (computed "
+              f"`{got[1]}`, committed `{was[1]}`)")
+    # The 0xE9F5 status is not vacuously true: its three loads are what 4.2's
+    # own `r2` listing shows, and emptying the column they are derived from
+    # would leave CALLER_NO_INDEX satisfied by a frame with nothing in it.
+    e9f5 = [row for row in want_callers
+            if (row["site"], row["caller_runtime"]) == ("0xE9F5", "0x66E4")]
+    check(len(e9f5) == 1
+          and e9f5[0]["literals"] == "R1=#0x00 R2=#0x08 R3=#0x01",
+          "0xE9F5's frame still loads R1=#0x00 R2=#0x08 R3=#0x01, so `none an "
+          "index register` is a statement about those three, not about none")
+
+    # The two values no committed row reaches, and the two every committed row
+    # agrees on. caller_status() is pure, so all four are reachable without an
+    # image; the two that matter for a reader who finds a new site are the
+    # positive one and the one saying the decode itself resolved nothing.
+    for lits, regs, want in (
+            ({}, {"R3"}, UNRESOLVED_CALLER),
+            ({"R1": 0, "R2": 8, "R3": 1}, {"R7", "R6"}, CALLER_NO_INDEX),
+            ({"R7": 4, "R3": 1}, {"R7", "R6"}, CALLER_INDEX_LOAD),
+            ({"R1": 0, "R2": 8, "R3": 1}, set(), CALLER_UNRESOLVED_INDEX)):
+        got = caller_status(lits, regs)
+        check(got == want,
+              f"caller_status({lits or '{}'}, {regs or 'set()'}) is `{want}` "
+              f"(got `{got}`)")
+    # 0x578E's `A:R1 ← 0x089B + A×0x77`: the R1 is a destination, not an
+    # index factor. None of the four committed sites has that form, which is
+    # why the stripping is covered here rather than left to a real run.
+    check(index_registers(["A:R1 ← 0x089B + A×0x77"]) == set(),
+          "index_registers reads only the right-hand side of `←`, so 0x578E's "
+          "A:R1 destination is not taken for an index register")
+    check(index_registers(["DPTR ← 0x08F8 + low8(R7×0x5E)", "0x200×R7"]) == {"R7"}
+          and index_registers(["R3×0x60", "0x200×R3"]) == {"R3"}
+          and index_registers(["A×0x60", "0x200×R7"]) == {"R7"}
+          and index_registers(["R5×0x1F", "{a}×{b}", "A×B"]) == {"R5"},
+          "index_registers finds R0-R7 as whole names in a term's right-hand "
+          "side, and leaves A, B, {a} and {b} out")
 
     access_self_test(d, check)
 
@@ -1971,7 +2122,10 @@ def main() -> int:
     if strides_span is not None:
         print_strides(d, strides_span)
     if args.callers:
-        print_callers(d, [int(a, 16) for a in args.callers])
+        try:
+            print_callers(d, [int(a, 16) for a in args.callers])
+        except ValueError as exc:
+            ap.error(str(exc))
     if args.helpers_csv:
         write_helpers_csv(d)
     if strides_csv_span is not None:

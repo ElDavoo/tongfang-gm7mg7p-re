@@ -5828,7 +5828,12 @@ second copy is not established by the bytes alone.
 
 **Also measured while writing it, and left alone here.** `pd-index-callers.csv`
 has five rows of which **four** are `status: unresolved`, not all five; the fifth
-found literal index loads. `ec/annotations/bank-call-audit.md`'s own note that
+found literals in a caller's frame, none in a register that site indexes on
+(the status is a function of the intersection, not of the presence of literals —
+corrected in place under
+[`findings/pd-callers-status-intersection.md`](findings/pd-callers-status-intersection.md),
+which carries the vocabulary and what each value does not claim).
+`ec/annotations/bank-call-audit.md`'s own note that
 the BL51 stub at `0x1100` is reached by "350 of the 403 trampolines in
 `0x1150`-`0x1ABC`" is a range-restricted count from the exporter and is not the
 same measurement as the map's: over the whole export, by shape, 290 functions

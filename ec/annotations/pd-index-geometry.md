@@ -333,21 +333,21 @@ $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 \
           --callers 0x7421 0x9DEC 0xB5D3 0xE9F5
 PD runtime 0x7421
   byte-scan entry 0x7420: reaches the site with no intervening `ret`; preceded by mov  0xf0,#0x60; 0 jump target(s) in between
-    file 0x2C9DD  runtime 0xC9DD  call      lcall 0x7420     frame 1/24  unresolved
+    file 0x2C9DD  runtime 0xC9DD  call      lcall 0x7420     frame 1/24  - [unresolved]
   containing entry 0x7392: reaches the site with no intervening `ret`; preceded by ret; 1 jump target(s) in between
-    file 0x27CD1  runtime 0x7CD1  call      lcall 0x7392     frame 24/24  unresolved
+    file 0x27CD1  runtime 0x7CD1  call      lcall 0x7392     frame 24/24  - [unresolved]
 
 PD runtime 0x9DEC
   byte-scan entry 0x9D51: reaches the site with no intervening `ret`; preceded by ret; 1 jump target(s) in between
-    file 0x2B452  runtime 0xB452  call      lcall 0x9d51     frame 24/24  unresolved
+    file 0x2B452  runtime 0xB452  call      lcall 0x9d51     frame 24/24  - [unresolved]
 
 PD runtime 0xB5D3
   byte-scan entry 0xB59B: reaches the site with no intervening `ret`; preceded by ret; 0 jump target(s) in between
-    file 0x2B838  runtime 0xB838  call      lcall 0xb59b     frame 24/24  unresolved
+    file 0x2B838  runtime 0xB838  call      lcall 0xb59b     frame 24/24  - [unresolved]
 
 PD runtime 0xE9F5
   byte-scan entry 0xE9E3: reaches the site with no intervening `ret`; preceded by ret; 0 jump target(s) in between
-    file 0x266E4  runtime 0x66E4  call      lcall 0xe9e3     frame 24/24  R1=#0x00, R2=#0x08, R3=#0x01
+    file 0x266E4  runtime 0x66E4  call      lcall 0xe9e3     frame 24/24  R1=#0x00, R2=#0x08, R3=#0x01 [literals found, none an index register]
 ```
 
 Each site gets two entry picks: the nearest preceding call target by byte scan
@@ -424,6 +424,20 @@ $ r2 -a 8051 -e scr.color=0 -q -c 's 0x66da; pd 8' /tmp/pd.bin
 `R6`, and `R7` here is built by `setb acc.0` on a value from somewhere else.
 None of the three literals is an index for this access.
 
+**The `status` column of `pd-index-callers.csv` says so, and says only that.**
+It is computed from the intersection of a frame's literal loads with the index
+registers that site's term decode names, not from the presence of literals: a
+caller loading into `R1`/`R2`/`R3` a site that indexes on `R7`/`R6` reads
+`literals found, none an index register`, which is a statement about those
+three loads and **not** a claim that the index is unbounded. A fourth value,
+`literals found; site index registers unresolved`, covers a site whose terms
+name no index register at all — "not found by this method" is a different claim
+from "a match was sought and none was found", and the vocabulary keeps both. The
+full four-value table, with what each one does not claim, is in
+[`../../docs/findings/pd-callers-status-intersection.md`](../../docs/findings/pd-callers-status-intersection.md),
+and `--self-test` pins every row of the CSV against the values transcribed from
+this section.
+
 **Net for §4: five caller rows for four sites, four of them a single anchored
 `lcall` each, and not one index register bounded by a literal.** That is the
 result, not a failure of the scan — and it is why no record count appears
@@ -472,10 +486,12 @@ anywhere in this file.
   width a PD runtime address has on any dump, not a property of this image — and
   names the file range beside it, because the tool's own output prints
   `file_offset` next to `runtime` and its committed CSVs carry both columns.
-  What it does **not** check is the instruction boundary: a caller naming a
-  mid-instruction address still gets a listing that is visibly wrong rather than
-  refused, and §7's `--sites`-only sites and windows are read on that basis. One
-  range, one precondition, and they are not the same check —
+  `--callers` now reaches the same check, through the `site_rows()` it decodes
+  each site's index registers with. What it does **not** check is the
+  instruction boundary: a caller naming a mid-instruction address still gets a
+  listing that is visibly wrong rather than refused, and §7's `--sites`-only
+  sites and windows are read on that basis. One range, one precondition, and
+  they are not the same check —
   [`../../docs/findings/pd-sites-address-range.md`](../../docs/findings/pd-sites-address-range.md)
   has the measurements and the argument for which is which.
 - **No `registers.yaml` status moved, and none could have.** See the preamble.
