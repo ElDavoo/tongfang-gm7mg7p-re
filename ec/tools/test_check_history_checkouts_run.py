@@ -113,12 +113,14 @@ class StaleTreeTests(RunTests):
         self.assertTrue(any("ci.yml/gates" in line for line in fails), err)
         self.assertIn("5 problem(s).", err)
         # The report's own prose verdict line, as #1034's landing on `main` left
-        # it: that change judged the rule per *workflow* rather than per
-        # sentence, so the line reads "claims ... in N sentence(s)". The number
-        # the stale tree produces is still 4 and 4 -- every stale sentence
-        # names one workflow and no job of it -- so the fix is the wording, not
+        # it and #1031's landed on top: that change judged the rule per
+        # *workflow* rather than per sentence, and this one counts the sentences
+        # the rule was applied to rather than the sentences the walk found, since
+        # a quoted one is reported beside these. The stale tree has no
+        # quotations, so the number is still 4 and 4 -- every stale sentence
+        # names one workflow and no job of it -- and the fix is the wording, not
         # a figure that moved.
-        self.assertIn("4 of the claims name no job, in 4 sentence(s)", out)
+        self.assertIn("4 of the claims name no job, in 4 judged sentence(s)", out)
         self.assertIn("ci.yml / gates / Checkout: depth 1", out)
 
     def test_a_conforming_tree_exits_zero_with_an_empty_stderr(self):

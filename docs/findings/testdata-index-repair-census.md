@@ -665,7 +665,8 @@ the count.
   * **A full clone is required**, for the reason
     `measure_index_repair_visibility.py`'s `HISTORY_REQUIREMENT` gives, and that
     constant is **reused verbatim** rather than restated here. This
-    repository's checkouts differ: `ci.yml:39` and every `agent-*.yml` stage are
+    repository's checkouts differ: `ci.yml`'s `gates` job and every
+    `agent-*.yml` stage are
     `fetch-depth: 0`, while `claude.yml:72` is `fetch-depth: 1` — so an
     "@claude" checkout **cannot** answer this. A revision that does not resolve
     is *not measurable in this clone*, at exit 2 and with the command that

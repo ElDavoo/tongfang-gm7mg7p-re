@@ -11738,9 +11738,16 @@ a reader finds it closed.)*
 Four sentences in `ec/tools/verify_reassembly.py` and
 `ec/tools/measure_index_repair_visibility.py` described what this repository's
 checkouts can do, and each named the file and not the job. Three said the whole
-of `ci.yml` was default-depth; the sibling's said the whole of it was
+of `ci.yml` — the `gates` job, which has been `fetch-depth: 0` since #407,
+included — was default-depth; the sibling's said the whole of it was
 `fetch-depth: 0`, which over-claimed in the other direction, and is why its
-replacement had to name the job rather than the file.
+replacement had to name the job rather than the file. *(Corrected 2026-09-26,
+issue #1031: "the whole of `ci.yml`" is the wording as it stood, and the sentence
+it was part of is in
+[`checkout-claim-corpus.md`](findings/checkout-claim-corpus.md)'s thirteen-site
+table, row 3. Nothing in it was false, and the phrase is left visible per
+§4a-4d; naming the job says which one of the two checkouts the three sentences
+wrongly covered, which the file's name could not.)*
 **`ci.yml`'s `gates` job has been `fetch-depth: 0` since 2026-09-24** —
 commit `cc2ab10d`, PR #411 closing #407 — and that same commit added the
 `--verify-provenance` call to `.github/scripts/agent-gates.sh`. The sentence
@@ -11764,6 +11771,30 @@ wording was work this change had already done. **Both are corrected in that
 file with the old wording left visible beside them per §4a-4d, and neither is
 in the seven-site table because neither is a site that first sweep found.**
 
+**§1031 derived the population instead of reading it, and a third round is what
+that found.** `check_history_checkouts.py` walked the tree rather than the two
+paths it was written for: the sweep now finds **66 sites in 19 files**, where
+the constant read 5 in 2, so **61 of them are in 17 files no list held**.
+**Sixteen of those 61 failed the rule, in 9 files**, and none of them was a
+claim that was false: each named a file where the sentence should name a job.
+Six of the sixteen are in the two write-ups that had landed after #1009's
+sweep, which is the same failure arriving later rather than sooner. All sixteen
+are corrected, a `*(Corrected 2026-09-26, issue #1031)*` marker stands at every
+one of the thirteen, and **the write-up's table holds the old wording for all
+thirteen** — six of the markers carry it beside the sentence as well, per
+§4a-4d, and the other seven name what changed and point at the table, because
+none of the thirteen was a retracted claim and so there is no wrong version for
+§4a-4d to leave visible. The one that is a *fourth* copy in a *fifth* file —
+`xdata-moved-ranks-pin-decisions.md`, which no earlier sweep looked at — is the
+clearest return this page predicted. **A
+retraction quotes the sentence it retracts, so the sweep reports a quoted span
+and does not judge it**; **13 of the 46** are that, and without the rule each of
+them would have been red for the defect it corrects. The write-up is
+[`checkout-claim-corpus.md`](findings/checkout-claim-corpus.md), and it carries
+what the walk declined and why. **The derived corpus is "found by this method"
+and never "exhaustive"** — the declined list is a scope list, and a scope list
+is not a claim that nothing was in the paths it left alone.
+
 **This is a correction to prose and not to behaviour.** `--verify-provenance`
 still needs a full clone and nothing here changes what the mode does. **And
 nothing here is a claim that the mode has ever passed in CI** — a workflow that
@@ -11776,11 +11807,18 @@ It prints every `actions/checkout` step's effective depth — the explicit
 `fetch-depth`, or the action's default of 1 where a step states none — and
 asserts the **inverse** of the stale claim: every job that runs a history reader
 has a full-depth checkout. A re-copy of `ci.yml` from the `agent-pipeline`
-template that drops the `fetch-depth: 0` breaks no job and turns the cheap gate
-red with a *history requirement* message that reads like a provenance failure
-rather than like a workflow accident, which is the failure it exists to catch.
-The second half prints every depth claim in the two tools with its `file:line`
-and the fact it should have been derived from, and asserts the one rule
+template that drops `fetch-depth: 0` from the `gates` job breaks no job and turns
+the cheap gate red with a *history requirement* message that reads like a
+provenance failure rather than like a workflow accident, which is the failure it
+exists to catch. *(Corrected 2026-09-26, issue #1031: this named `ci.yml` and no
+job; the old wording is in
+[`checkout-claim-corpus.md`](findings/checkout-claim-corpus.md)'s thirteen-site
+table, row 4. The `fetch-depth: 0` it describes is the `gates` job's
+and only the `gates` job's — `ci.yml`'s `workflows` job states no depth at all
+and is not what a re-copy has to keep.)*
+The second half prints every depth claim in the tree with its `file:line`
+and the fact it should have been derived from — the population is derived by
+walking, since #1031, where it read the two tools — and asserts the one rule
 decidable without reading English: **a sentence that asserts a workflow's
 checkout depth names the job.** All four stale sentences fail it; the four
 corrected sites pass it in the five sentences they now occupy. It is a floor
@@ -11797,10 +11835,14 @@ committed sentence names two workflows, so this flags nothing new on the tree as
 it stands.
 
 **A measurement worth its own line, because the issue's own wording repeats the
-defect it describes:** the issue said `claude.yml:72`'s `fetch-depth: 1` is "the
-only shallow checkout" in the repository's own workflows. It is not — it is the
-only one that *states* a depth other than 0. `agent-plan.yml`'s `plan` job and
-`agent-followups.yml`'s `followups` job state nothing and are the action's
+defect it describes:** the issue said the `claude` job — `claude.yml:72`, which
+states `fetch-depth: 1` — is "the only shallow checkout" in the repository's own
+workflows. It is not — it is the only one that *states* a depth other than 0.
+*(Corrected 2026-09-26, issue #1031: this read "`claude.yml:72`'s `fetch-depth:
+1`", naming the file's stem rather than its job, and the wording is left per
+§4a-4d. The `claude` job is the one at `:72`; a reader who did not already know
+that had no way to learn it from the sentence.)* `agent-plan.yml`'s `plan` job
+and `agent-followups.yml`'s `followups` job state nothing and are the action's
 default, which is also 1. The four are all shallow; the table says which of
 them said so, and that word is the whole correction.
 
@@ -11948,7 +11990,10 @@ for the trees that can: a scratch tree, a sparse checkout, a `git archive`
 extraction. Both paths now return the `{}` the working one returns. **Nothing
 about what the tool measures or reports changes** — the depth rule, the prose
 rule, `DEFAULT_DEPTH`, `HISTORY_READERS` and `PROSE_FILES` are as #1009 left
-them.
+them. *(Corrected 2026-09-26, issue #1031: this paragraph records what #1043
+changed and is left per §4a-4d. `PROSE_FILES` did not survive it — the prose
+half is a walk of the tree now — while the depth rule, the prose rule,
+`DEFAULT_DEPTH` and `HISTORY_READERS` are as #1009 left them.)*
 
 **And once the crash was gone, the same two trees exited 0.** A checker that
 located nothing and a checker that found nothing wrong returned the same number,

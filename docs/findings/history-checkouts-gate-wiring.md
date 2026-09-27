@@ -269,10 +269,18 @@ being quietly dropped:
   sends a reader to a line holding nothing is the same defect as the one it
   was correcting.
 - The issue says the patch's comment should carry *"the same `fetch-depth: 0`
-  note `ci.yml:37-38` carries"*. **`ci.yml:39` is the `fetch-depth: 0`**, and
-  the note above it is at **`:33-34`**. The landed comment cites both, because
-  a re-copy lands the missing depth and its comment together and a reader
-  chasing a re-copy needs the pair.
+  note `ci.yml:37-38` carries"*. **`ci.yml`'s `gates` job carries the
+  `fetch-depth: 0` at its `:39`**, and the note above it is at **`:33-34`**. The
+  landed comment cites both, because a re-copy lands the missing depth and its
+  comment together and a reader chasing a re-copy needs the pair. *(Corrected
+  2026-09-27, at the `#1032` × `#1031` merge: this named `ci.yml:39` and not the
+  job on that line. Nothing in it was false — that line **is** `ci.yml`'s
+  `gates` job's `fetch-depth: 0` — and the line number it gives is the one a
+  re-copy would move, so both halves stand; what a reader could not do was learn
+  from the sentence which job the sentence was about. Found by
+  `check_history_checkouts.py`, whose population #1031 widened from two typed
+  files to a walk of the tree, which is how a page added after that change came
+  to be read at all. Left visible per `../findings.md` §4a-4d.)*
 
 ## What is not claimed
 

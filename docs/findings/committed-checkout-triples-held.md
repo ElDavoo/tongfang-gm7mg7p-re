@@ -81,7 +81,11 @@ is the one that says nothing about either row.
 ## Why `stated` is the load-bearing half, and not a second copy of `depth`
 
 The two halves of the triple are not redundant, and the measurement below is
-what shows it: **`claude.yml` losing its `fetch-depth: 1` leaves its depth at 1.**
+what shows it: **`claude.yml`'s `claude` job losing its `fetch-depth: 1` leaves
+its depth at 1.** *(Corrected 2026-09-26, issue #1031: this named the file and
+not the job. Nothing in it was false; the old wording is in
+[`checkout-claim-corpus.md`](checkout-claim-corpus.md)'s thirteen-site table, row
+6.)*
 A comparison over `(job, depth)` alone cannot see that edit at all, because the
 depth is genuinely unchanged — the step falls back to `actions/checkout`'s
 default, which is also 1. Only `stated` distinguishes "this step says 1" from
@@ -91,9 +95,12 @@ of the correction.
 It is what the `stated?` column of
 [`history-checkout-claims.md`](history-checkout-claims.md)'s table is, and what
 the paragraph in [`../findings.md`](../findings.md) §86 says when it corrects the
-issue's own wording: the issue called `claude.yml`'s `fetch-depth: 1` "the only
+issue's own wording: the issue called the `claude` job's `fetch-depth: 1` "the only
 shallow checkout", and the correction is that it is the only one that *states* a
-depth other than 0. Four checkouts are shallow; one says so. Two published claims
+depth other than 0. *(Corrected 2026-09-26, issue #1031: this named the file and
+not the job. Nothing in it was false; the old wording is in
+[`checkout-claim-corpus.md`](checkout-claim-corpus.md)'s thirteen-site table, row
+7.)* Four checkouts are shallow; one says so. Two published claims
 turn on that word — the table's `stated?` column, and that sentence — and before
 this change a suite read neither.
 
@@ -119,8 +126,12 @@ equals the expected one. Depth alone would have caught this one; it is included
 because it is the edit the retraction #1013 led with, and "every `agent-*.yml`
 stage checks out with `fetch-depth: 0`" was false for exactly this job.
 
-**`claude.yml` losing its `fetch-depth: 1` line.** The line removed, nothing
-else touched:
+**`claude.yml`'s `claude` job losing its `fetch-depth: 1` line.** *(Corrected
+2026-09-26, issue #1031: this named the file and not the job. Nothing in it was
+false; the old wording is in
+[`checkout-claim-corpus.md`](checkout-claim-corpus.md)'s thirteen-site table, row
+8.)* The line removed, nothing else
+touched:
 
 ```
   claude.yml / claude / Checkout repository: fetch-depth: 1                          # before
@@ -165,12 +176,23 @@ is worth spelling out rather than leaving as "the sentences go stale":**
   wrong — it would read `fetch-depth: 0`, not *absent* — and makes §86's
   "`agent-plan.yml`'s `plan` job and `agent-followups.yml`'s `followups` job
   state nothing" wrong, because `plan` would state something. §86's other
-  sentence in that paragraph, that `claude.yml` is "the only one that *states* a
-  depth other than 0", **survives it**: `0` is not a depth other than 0.
-- **`claude.yml` losing its line** makes that sentence wrong, because nothing
+  sentence in that paragraph, that `claude.yml`'s `claude` job is "the only one
+  that *states* a depth other than 0", **survives it**: `0` is not a depth other
+  than 0.
+- **`claude.yml`'s `claude` job losing its line** makes that sentence wrong,
+  because nothing
   would then state a depth other than 0 at all, and makes the table's `claude.yml`
   row read *absent* rather than `fetch-depth: 1`. §86's "the `plan` job and the
   `followups` job state nothing" survives it untouched.
+
+(The two bullets above — sites 9 and 10 of
+[`checkout-claim-corpus.md`](checkout-claim-corpus.md)'s thirteen-site table —
+name the job where the bullet named the file, and are left per
+`docs/findings.md` §4a-4d's pattern; the old wording was
+"`claude.yml` is 'the only one that *states* a depth other than 0'" and
+"**`claude.yml` losing its line**". Nothing in either was false. Corrected
+2026-09-26, issue #1031, which found both by deriving the population rather than
+by being handed it.)
 
 Whoever makes either edit updates the table row and the sentence it falsifies in
 the same change. The other sentence in §86's paragraph is not a tripwire for that
@@ -217,9 +239,12 @@ None of these is a gap the change closes, and none is reported as absent:
   > `agent-review.yml`'s `review` mid-sentence in a criterion and so printed
   > rather than counted — and both report outputs are in
   > [`history-checkout-prompt-reach.md`](history-checkout-prompt-reach.md).
-- **The `PROSE_FILES` half of the tool is not in this mapping at all.** It is
-  held by the two other committed cases in the same class, which are unchanged
-  by this.
+- **The prose half of the tool is not in this mapping at all.** It is held by
+  the two other committed cases in the same class. Since #1031 that half reads
+  the derived walk of the tree rather than the two-file constant it was written
+  around — `PROSE_FILES` is gone and the population is derived — and one of
+  those two cases is edited by that change, and a third suite was added beside
+  them to hold the walk itself.
 - **Whether the tools' own two verdicts stay green** is held by a third case, and
   was not touched.
 

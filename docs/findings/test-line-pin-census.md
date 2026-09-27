@@ -43,6 +43,29 @@ $ echo $?
 0
 ```
 
+*(**And the `#1032` × `#1031` merge moves both denominators of the block again,
+re-run rather than differenced, and the `167` and the `43` it carried are left
+written as the `#845` × `#1009` merge's reading of them.** `origin/main` at
+`6b5bf965` reads **107 pins in 29 files, 80 spellings, 59 targets, 75 resolves
+against 32 declined, the `0/15/22/5/33` split, `179` markdown files, `46` test
+files**; the branch measured **`180` / `45`** on its own tip, and this merged
+tree reads **`181` markdown files and `47` test files**. The steps are
+`179 + 1 + 1 = 181` and `46 + 1 = 47`: three write-ups that cite no
+`test_*.py:NNN` of their own — this issue's
+[`checkout-claim-corpus.md`](checkout-claim-corpus.md), #1076's and #1033's — and
+one suite, this issue's
+`ec/tools/test_check_history_checkouts_corpus.py`, which is indexed and named
+by path rather than by line for #811's reason. **The `180` and the `45` are the
+branch's own readings and neither is this tree's**, and the `46` / `12` / `34`
+the by-cited-file axis reads beside them becomes **`47` / `12` / `35`**, the
+named count unmoved because no pin crossed into a fifth file. Everything above
+the denominators is unmoved: the headcount is still 107 pins in 29 files, 80
+spellings, 59 targets, 75 resolves against 32 declined and the `0/15/22/5/33`
+split, which is what keeps the 107-row table reconciling at 107 placed with all
+seven classes 0. The `167`, the `43`, the `171`, the `176`, the `177`, the `179`
+and the `180` all stay written where each was measured, per
+[`../findings.md`](../findings.md) §4a-4d.)*
+
 **Correction, 2026-09-26, at the `#929` × `#962` × `#794` × `#780` merge: the
 `156` above is the one figure on the block that this tree moves, and it moves
 because `main` gained two write-ups after that block was transcribed.** The
@@ -3948,8 +3971,8 @@ neither of the two renumberings this merge carried touches them.*
 
 | row | was | is | the arithmetic |
 |---|---|---|---|
-| `docs/agent-pipeline.md` | `:366` | **`:396`** | item 5 gained the third check this patch prepares, `+39 −9` = **net `+30`**, and the pin sits below it |
-| [`history-checkout-claims.md`](history-checkout-claims.md) | `:262` | **`:291`** | three merges each added above it: #1034's `#1042` `+10 −0`, #1032's correction blockquote `+16 −0`, and this branch's pointer to [`history-checkouts-gate-wiring.md`](history-checkouts-gate-wiring.md) `+13 −0` — so **`+39` from the shared `:252`**, and the `:265` this branch measured before `#1042` landed and the `:275` and `:278` each side measured after their own merge stay written here beside the merged value per [`../findings.md`](../findings.md) §4a-4d |
+| `docs/agent-pipeline.md` | `:366` | **`:408`** | **two sides' blocks, both above the pin, and they compose rather than one carrying the other**: item 5 gained the third check this patch prepares, `+39 −9` = **net `+30`** on the merging side, and this branch's rewrite of that item, `+12 −0`, so `366 + 30 + 12 = 408`. The `:396` `main` measured and the `:378` the branch measured each stay written here as the measurements they are, per [`../findings.md`](../findings.md) §4a-4d |
+| [`history-checkout-claims.md`](history-checkout-claims.md) | `:262` | **`:294`** | four merges each added above it: #1034's `#1042` `+10 −0`, #1032's correction blockquote `+16 −0`, this branch's pointer to [`history-checkouts-gate-wiring.md`](history-checkouts-gate-wiring.md) `+13 −0`, and **this branch's own three-line rewrite of the *reported half* paragraph at the file's `:168`, `+3 −0`** — so **`+42` from the shared `:252`**, of which the `+3` is the whole of the branch's step to the `:265` it measured (its other edit to that file is at `:283`, below the pin, and moves nothing above it). The `:265` this branch measured before `#1042` landed, and the `:275`, `:278` and `:291` each side measured after its own merge, stay written here beside the merged value per [`../findings.md`](../findings.md) §4a-4d |
 | [`../findings.md`](../findings.md) | `:4224` | **`:4249`** | two commits above it, `+6` from #1070 (`58f43ee7`) and `+19` from #1076 (`a6a7df7a`), the second `main`'s own; the `:4230` this table carried before `a6a7df7a` landed stays written as the measurement it was |
 | [`../findings.md`](../findings.md) | `:4226` | **`:4251`** | the same `+25`, the two pins being two lines apart on all three trees |
 | [`../findings.md`](../findings.md) † | `:7211` | **`:7236`** | the same `+25` |
@@ -3966,10 +3989,16 @@ every cited target named in the table above — `ec/tools/test_disasm8051.py:3-6
 beside them — is unmoved by this merge. The read kind, the shape and the
 verdict cell of every row are unchanged, and the verdict cell of none is read by
 anything, as the run below prints. `history-checkout-claims.md` is the only row
-two sides moved, and it is repointed once to the measured `:291` rather than
-twice to either side's own figure, because the two deltas are different blocks
+two sides moved, and it is repointed once to the measured `:294` rather than
+twice to either side's own figure, because the deltas are different blocks
 of different sides' prose stacked on one base rather than the same block counted
-twice. **The block this table first carried listed six `../findings.md` rows and
+twice. **That `:294` is this merge's own re-measurement and supersedes the
+`:291` the paragraph and the table above it were written against, which was the
+figure on the tree as it stood before this landing's three lines reached that
+file** — `291 + 3 = 294`, the `+3` being this issue's rewrite of the *reported
+half* paragraph at `history-checkout-claims.md`'s `:168`, above the pin, and the
+only edit of that file on this side that is. The `:291` stays written where it
+was measured, per [`../findings.md`](../findings.md) §4a-4d. **The block this table first carried listed six `../findings.md` rows and
 five of them were the six** — `:7211` → `:7217` appeared twice and `:7485` →
 `:7491` did not appear at all, though the table it describes carried all six
 repoints. The six are above and the `†` markers are the table's own.*
