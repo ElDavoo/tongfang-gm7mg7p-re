@@ -115,29 +115,32 @@ document doing the counting.
 ## The measurement, re-derived from the run, 2026-09-27
 
 Nothing below is taken from the issue or from the predecessor write-up; all of
-it comes from running the tool on the tree this change lands on:
+it comes from running the tool on the tree as it stands at this commit:
 
 ```
 $ python3 ec/tools/check_capture_claims.py --check --verbose
-199 files / 100500 lines / 9 capture claims checked against 10 committed captures: every checked claim agrees with the capture it names
-196 of those 199 file(s) were read in full and named no capture claim; `--verbose` names each one
+202 files / 101547 lines / 9 capture claims checked against 10 committed captures: every checked claim agrees with the capture it names
+199 of those 202 file(s) were read in full and named no capture claim; `--verbose` names each one
 ```
 
 The two census figures in that block are the run's own, and both belong to the
 walk rather than to the tool: this write-up is a `.md` under a root the walk
 reads, so both count this file among the files they count, and the next
-document merged moves them again. The block is dated to the commit it sits in
-and is not restated elsewhere in this document as a standing figure — it is
-checkable by re-running the command inside it, which is the only reason a
-figure of this kind belongs in a write-up at all. The figures an earlier draft
-of this section quoted are the issue's: `195 files / 99083 lines` and `192 of
-those 195` is the tree at `d4c8510`, the commit the issue measured on, and the
-block reads four more files than that — three added between `d4c8510` and this
-branch's merge base `5ce6467f`, and this write-up. The `registers.yaml` line
-numbers the issue carried went stale for the same reason and are re-derived on
-this tree in the table below rather than corrected by arithmetic. The per-file
-table is the part that does not move with the corpus, and it is the part the
-new cases hold.
+document merged moves them again. The block is the run on this tree, not an
+arithmetic carry-forward of an earlier one, and it is not restated elsewhere in
+this document as a standing figure — it is checkable by re-running the command
+inside it, which is the only reason a figure of this kind belongs in a write-up
+at all. What the issue measured is the census two trees back: `195 files /
+99083 lines` and `192 of those 195` is the tree at `d4c8510`, and the block
+reads seven more files than that — six added between `d4c8510` and this branch's
+merge base `19ac21da`, and this write-up.
+
+The `registers.yaml` line numbers are re-derived on this tree by the trace the
+table below names, and not by arithmetic, because the issue's do not resolve
+even at the commit it measured: at `d4c8510`, `:1314` is `XDATA_0451`'s `name:`
+line and `:3942` is an SMRW/DSDT note, neither of which is an entry this table
+is about. The per-file table is the part that does not move with the corpus,
+and it is the part the new cases hold.
 
 The per-file surface `--verbose` prints, with the presence/count split derived
 by neutering `ccc.COUNT` — a module global looked up at call time inside
@@ -159,17 +162,17 @@ line the number is written on:
 
 | file:line | address | kind | stated |
 |---|---|---|---|
-| `ec/annotations/registers.yaml:1314` | `0x0449` | count | 238 |
-| `ec/annotations/registers.yaml:1316` | `0x044C` | presence | — |
-| `ec/annotations/registers.yaml:3942` | `0x0743` | presence | — |
-| `ec/annotations/registers.yaml:3942` | `0x0745` | presence | — |
-| `ec/annotations/registers.yaml:3943` | `0x0746` | presence | — |
+| `ec/annotations/registers.yaml:1329` | `0x0449` | count | 238 |
+| `ec/annotations/registers.yaml:1331` | `0x044C` | presence | — |
+| `ec/annotations/registers.yaml:3957` | `0x0743` | presence | — |
+| `ec/annotations/registers.yaml:3957` | `0x0745` | presence | — |
+| `ec/annotations/registers.yaml:3958` | `0x0746` | presence | — |
 | `docs/hardware-tests/system-id-0456-bit6-divisor.md:276` | `0x0449` | count | 238 |
 | `docs/hardware-tests/system-id-0456-bit6-divisor.md:276` | `0x0449` | presence | — |
 | `docs/hardware-tests/xdata-06c2-06db-sweep.md:145` | `0x06D6` | count | 260 |
 | `docs/hardware-tests/xdata-06c2-06db-sweep.md:145` | `0x06D6` | presence | — |
 
-`registers.yaml:1314` is the one count with no address line of its own, and it
+`registers.yaml:1329` is the one count with no address line of its own, and it
 is there for a reason worth stating, because it is the fallback and not the
 rule: `XDATA_0449`'s `0x0449` is the entry's `addr:`, which the presence rule
 does not read, so nothing in that unit speaks the address and the count falls
@@ -177,9 +180,9 @@ back to the unit's first line. Everywhere else the address is written down, and
 both kinds land on the same line.
 
 `registers.yaml` is five claims over four lines, two of them sharing
-`registers.yaml:3942` — `0x0743` and `0x0745`, out of the
+`registers.yaml:3957` — `0x0743` and `0x0745`, out of the
 `GPU_DYNAMIC_BOOST_STATUS` note's "where `0x0743/0x0745`/`0x0746` land", which
-splits across `:3942` and `:3943` — and none of the three named twice. A
+splits across `:3957` and `:3958` — and none of the three named twice. A
 sentence that says three addresses attributed to one capture is three claims,
 not one, and this is the table that says so.
 
@@ -270,13 +273,17 @@ the file restored. All four directions, verbatim from those runs:
 
 | doctored docstring | result |
 |---|---|
-| a fourth row naming `docs/hardware-tests/never-opened-by-this-tool.md` | **red** — `AssertionError: 'docs/hardware-tests/never-opened-by-this-tool.md' not found in {'docs/hardware-tests/system-id-0456-bit6-divisor.md': 2, 'docs/hardware-tests/xdata-06c2-06db-sweep.md': 2, 'ec/annotations/registers.yaml': 5}` |
+| a fourth row naming `docs/hardware-tests/never-opened-by-this-tool.md` | **red** — `AssertionError: 'docs/hardware-tests/never-opened-by-this-tool.md' not found in {'docs/hardware-tests/system-id-0456-bit6-divisor.md': 2, 'docs/hardware-tests/xdata-06c2-06db-sweep.md': 2, 'ec/annotations/registers.yaml': 5} : docstring: docs/hardware-tests/never-opened-by-this-tool.md is named and no run confirms it` |
 | `registers.yaml`'s total moved 5 → 6 | **red** — `AssertionError: 5 != 6 : docstring: ec/annotations/registers.yaml` |
 | `registers.yaml`'s split moved `4, 1` → `5, 0` | **red** — `First differing element 0: 4 5  - (4, 1)  + (5, 0)` |
 | the `xdata-06c2-06db-sweep.md` row **deleted** | **green** — `Ran 7 tests ... OK` |
 
 The last row is the one the issue explicitly asks to stay green, and it is the
 only direction a growing tree travels on its own.
+
+The doubled filename in the first row is not a transcription slip: `assertIn`
+prints its own message and then appends the `msg` argument after it, so the
+tail names the same path a second time, in the words the case supplies.
 
 The derivation is held to be load-bearing in the sibling suite's form: the
 neutering has to *lower* the checked total, so a walk that answered the same
@@ -296,32 +303,37 @@ above records. Recorded so the correction is not re-derived.
 ## What this deliberately does not change
 
 - **The generated index's prose count line, and only that.**
-  `gen_findings_index.py --check` was clean on the tree as received: at
-  `5ce6467f`, this branch's merge base, the index carries 127 entries and says
-  **127**. Hand-adding this write-up's entry — which is what a branch that
-  does not know the file is generated does — leaves the entry list complete
-  and correct and makes the count line the only stale thing, so the entry is
-  **regenerated** instead:
-  `python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md`, which
-  moves the one line the count is on and leaves 128 entries, 128 stated,
-  `--check` exiting 0. The file says *do not edit*, and the reason it is
-  generated is precisely that this is the edit: a hand-added entry is the
-  same class of stale figure as the docstring this write-up is about, one
-  file over.
+  The index is regenerated, not hand-edited:
+  `python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md`. On the
+  merged tree that lands **130** entries, a count line of **130**, and
+  `--check` exiting 0, and it moves exactly one line — the count. Hand-adding
+  this write-up's entry, which is what a branch that does not know the file is
+  generated does, is what made the count line the only stale thing; the file
+  says *do not edit*, and the reason it is generated is precisely that this is
+  the edit. A hand-added entry is the same class of stale figure as the
+  docstring this write-up is about.
 
-  The off-by-one the index *did* carry is worth recording, because it is what
-  makes the hand-edit tempting: at `d4c8510` the index carried 124 entries
-  against a stated **123**, and at `e38ee864` 126 against **125**. Both were
-  corrected at `c99c6aca`, which is why the merge base is clean and there is
-  no pre-existing drift here for this change to inherit. Nothing runs that
-  check — `docs/ci/agent-gates-findings-frozen.patch` is the patch that would
-  put it in `.github/scripts/agent-gates.sh` and it is not applied, so neither
-  that correction nor this one would be caught by CI. That check is a human's
-  `git apply` away, and it is the same patch this change leaves alone.
+  The regeneration also clears an off-by-one this change inherits rather than
+  introduces, and the history of that is worth recording because the count line
+  is hand-maintained prose inside a generated file. At `d4c8510` the index
+  carried 124 entries against a stated **123**, and at `e38ee864` 126 against
+  **125**; both were corrected at `c99c6aca`, which read 127 and said 127. The
+  next off-by-one arrived afterwards and is still on `main`: at this branch's
+  merge base, `19ac21da`, the index carries **129** entries against a stated
+  **128**, so `--check` already exits 1 there. That is why the line moves by
+  two and not one. (The clean 127/127 reading quoted for `5ce6467f` in an
+  earlier draft of this section is a commit on `main` below the merge base, not
+  the merge base itself.)
+
+  Nothing runs that check in CI — `docs/ci/agent-gates-findings-frozen.patch`
+  is the patch that would put it in `.github/scripts/agent-gates.sh` and it is
+  not applied, which is why the inherited drift survived on `main` and this
+  branch's own count line would have too. That check is a human's `git apply`
+  away, and it is the same patch this change leaves alone.
 - **`docs/findings/testdata-addr-column-claim.md`** is a dated record of what
   #975 measured and declined, and its §"A finding this PR names but does not
   fix" is scoped to "this PR". Its census figures (145 of 148, 146 of 149) no
-  longer describe the tree — this run says 196 of 199 — but rewriting another
+  longer describe the tree — this run says 199 of 202 — but rewriting another
   branch's dated record is the append-log shape `check_no_append_logs.py`
   exists to stop. This file names it as the predecessor and carries today's
   figures, dated. The docstring's pointer to it names a *file*, which is why
