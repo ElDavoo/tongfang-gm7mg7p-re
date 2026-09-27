@@ -83,6 +83,13 @@ them whole. `0x6482`'s does not: the block ends at the `ljmp` at `0x648F`, and
 §4's classification for the `0x6498` site is a direct consequence of that, not
 of what the code does.
 
+The fourth command is two listings, and their windows **overlap**: `pd 12` from
+`0x6482` runs to `0x649B`, which is inside the `pd 6` that follows from
+`0x6492`. So `0x6492`-`0x649B` legitimately appears twice in §3's transcript —
+once per listing, each with its own flow gutter, because r2 draws the gutter
+once per listing and the command does list twice. The repetition is the
+command's output, not a transcription slip; re-running it is what settles that.
+
 ## 2. `0x0F45`, decoded independently
 
 ```console
@@ -531,15 +538,17 @@ canonical statement and this file only applies it.
 bytes into `R4:R7` from one of three address spaces, and the tag that selects
 between them is the byte at the PD image's XDATA `0x07D8` while the address
 behind it is `0x07D9`/`0x07DA`. The 33 PD-image sites on `0x07D8` split
-19 read / 9 write / 1 read+write / 4 handoff / 1 no-access-in-window, and the
-one EC-image site is a three-in-a-row seed from a CODE table in
+19 read / 8 write / 1 read+write / 4 handoff / 1 no-access-in-window — the
+`region=pd-image` rows of the committed CSV, against §4's table, whose buckets
+count all 34 sites and so carry a ninth `write`, the EC's own. The one EC-image
+site is a three-in-a-row seed from a CODE table in
 `seed_tcc_defaults_from_ba36`. Every one of those is an instruction in a
 committed image, re-decodable from the six `r2` command lines in §1.
 
 **Does not.** Nothing here is a behavioural claim. That the PD program acts on
 the value in `0x07D8`, that the `R3` selector takes any particular value at
 run time, or that the four bytes mean anything, are all open. The 19 `read`
-and 9 `write` classes are instruction classifications with
+and 8 `write` classes are instruction classifications with
 `register_ref_table.py`'s stated limits — a linear eight-instruction walk that
 stops at the first control-flow instruction, blind to indirect and
 pointer-mediated XDATA access — so a `0` or a `no movx in window` anywhere in

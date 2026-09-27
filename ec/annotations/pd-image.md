@@ -559,7 +559,8 @@ prov_zip_other_members = 6
   builds the pointers the `0x0FAF` four-byte XDATA reader then consumes, and
   the `0x119C` CODE-table cases. (This bullet used to credit the file with the
   `0x0F45`/`0x10FD` pointer-kind dispatchers; neither address appears in it.
-  `0x0F45` is the next entry, and `0x10FD` is its three-byte sibling in
+  `0x0F45` is decoded in the next entry, [`pd-0x07d8-flow.md`](pd-0x07d8-flow.md),
+  and `0x10FD` is its three-byte sibling in
   `annotations/ghidra-functions.csv`.)
 - [`pd-0x07d8-flow.md`](pd-0x07d8-flow.md) — what `0x35DA`'s `ljmp 0x0F45` does
   with the program's own `0x07D8`-`0x07DA`, and the read/write/handoff split
