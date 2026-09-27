@@ -12187,3 +12187,58 @@ written there per §4a-4d — and neither §83, §84, §85, §86, §87, §88, §
 "last section in the file" clause of its own, §86's note recording that it left
 one off on purpose and §90's and §91's each recording the collisions that
 renumbered them, so nothing beyond this correction is owed for any of them.)*
+*(**§93 is the last section in the file now**, corrected beside the clause above
+for the same reason rather than edited into it: #57's summary takes the next
+free number, and no other branch's summary collided with it in this merge — so
+this is an append and not the renumbering §85 through §91 record. The clause
+above stays written, true of the tree it was measured on, per §4a-4d. Nothing
+else in this section moves: the counts, the write-up and the corrections beside
+them are as §92 left them.)*
+
+## 93. All 170 of §8's trampoline-landing relative sites are inside the trampoline block, and #48's tail-branch class is not needed (2026-09-27, issue #57)
+
+The write-up is
+[`trampoline-relative-branch-sites.md`](findings/trampoline-relative-branch-sites.md);
+this is the summary. [`bank-call-audit.md`](../ec/annotations/bank-call-audit.md)
+§8 counted 170 PC-relative sites resolving onto a BL51 trampoline entry, exactly
+one of them anchored, and declined to call them phantoms on that evidence.
+**All 170 have their own address inside the block** `0x1150`-`0x1AC2` — 403
+entries `trampolines()` finds by shape, on an exact 6-byte stride with no gap —
+and 0 of all 9076 sites reach an entry from outside it. The method is one byte
+identity applied in bulk rather than 170 hand reads: a site at `entry+1` or
+`entry+2` reads its displacement from `d[entry+3]`, the `ljmp` opcode, and lands
+on `entry+6`, which is why 168 of the 170 share a target and carry
+`disp == 0x02`; the two that do not are the same artefact reading the
+immediate's low byte instead. The single anchored site, `0x01968`, is the `0xDB`
+of `mov dptr,#0xe0db` at `0x1966` read as `djnz r1`, with `0x1969`'s
+`ljmp 0x1100` supplying the displacement and `0x196C` — the next entry — as the
+target; its 1-of-24 frame score is §2's dense-run artefact, not evidence.
+§8's "these are phantoms is not the claim here" is superseded **in place**, with
+a correction beside it, and the geometry argument in the same paragraph — the
+block is common-area, so a common-area branch near it could reach it and a bank
+never can — is unaffected: the population it permits turned out to be empty.
+
+**The consequence for #48, in one sentence:** no rel8 tail-branch edge class
+has to be added to the bank-attribution set — every one of the 170 candidate
+sites is inside the trampoline block's own `mov dptr,#imm16` immediate, and the
+scan tests `d[i] in REL_OPCODES` at every offset of the three audited regions
+bar the two at each region's top edge (whose six addresses all hold `0xFF`, not
+a relative opcode, so nothing is dropped), which makes 0 of 9076 sites reaching
+the block from outside it an exhaustive negative for this image, not a sample.
+The negative is exhaustive rather than sampled because a byte scan's error is
+one-directional: it can invent a branch that is not there, but a rel8 branch is
+a rel8 opcode at its own PC and is reported wherever it is — §8's
+over-counting cannot touch a count of *external* sites. That sentence belongs in
+[`bank-attribution.md`](../ec/annotations/bank-attribution.md) §5's named blind
+spots and its §9, and is **not** written there here: that is #48's own file and
+#48's own implementer, and pre-empting it is the merge conflict `CLAUDE.md`
+warns about. Two `--self-test` lines in `ec/tools/audit_call_targets.py` hold
+the block's 6-byte stride and the zero, which is where a future image that
+breaks either says so. The generated `bank-relative-branch-targets.csv` is
+unchanged, no Ghidra project was re-exported, and no `status:` in
+`registers.yaml` moved — nothing here is behavioural, and no live test ran. #53
+is **not** a blocker for this and stays open on its own terms: deciding these
+170 needed the framing of a block already known to be code, not a code/data map
+of the common area. #54's 18 paged sites are the other half of the same
+question and are untouched; the write-up notes that §7's two hand reads found
+the same shape and decides the other 16 nowhere.
