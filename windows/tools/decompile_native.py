@@ -498,13 +498,15 @@ def census_problems(path=C_CENSUS, decompiled_dir=DECOMPILED_DIR):
     than a formality, and it is closed by a second committed file rather than
     by writing a measurement into a generated one.
     """
-    import census_native_c
     if HERE not in sys.path:
         # A sibling module by path, not a package. sys.path[0] is this file's
         # own directory when it is run as a script, which is the gate's
         # invocation; the insert is for the case where something imported this
-        # module by path from elsewhere and then asked for the census.
+        # module by path from elsewhere and then asked for the census. It has
+        # to come BEFORE the import, or that case raises ModuleNotFoundError
+        # on the line above and the insert below is never reached.
         sys.path.insert(0, HERE)
+    import census_native_c
     return census_native_c.census_problems(path, decompiled_dir)
 
 

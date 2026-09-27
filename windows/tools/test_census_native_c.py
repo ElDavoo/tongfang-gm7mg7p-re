@@ -17,7 +17,9 @@ counts move when a legitimate re-export lands, and a test holding one of them
 would go red on exactly the change that is supposed to be reviewable -- the
 §14a/census lesson `census_test_line_pins.py` and
 `tools/test_readme_suite_table.py` both carry. What is asserted is the claim:
-the committed CSV re-derives from the committed `.c`, in both directions.
+the committed CSV re-derives from the committed `.c`, in both directions, and
+each `c-digests.csv` row names a committed `.c` rather than there being six of
+them.
 
 **Read once, not "fast enough".** There is no wall-clock bound anywhere in this
 file. §14a's regression was 5.4 s at 26x the work and passed the bound that
@@ -325,9 +327,13 @@ class AttributionTests(unittest.TestCase):
 class RangeGroundTests(unittest.TestCase):
     """The range ground's limit, made executable.
 
-    The committed tree contains no two exports that overlap, so the case where a
-    range resolves nothing is one a future seventh binary would create. A suite
-    that only ran the committed tree could not tell the two behaviours apart.
+    The committed tree does contain overlapping exports -- four of its six share
+    image base `0x180000000` -- so
+    `test_the_committed_tree_reports_the_retained_export_as_the_disjoint_one`
+    can assert the real behaviour against the real tree. The fixtures here are
+    the pair that tells the two behaviours apart without depending on which
+    exports happen to be committed, so a future seventh binary at either image
+    base does not decide whether this class still means anything.
     """
 
     def test_two_exports_at_one_image_base_do_not_attribute_to_each_other(self):
@@ -780,9 +786,20 @@ class AnchorTests(unittest.TestCase):
     def test_the_digests_file_is_unchanged_by_the_census_landing(self):
         # A census layer that quietly absorbed the digest layer would leave one
         # file doing two claims and no way to re-derive the other.
+        #
+        # Asserted as the claim -- every digest row names a committed `.c` --
+        # and not as `len(rows) == 6`. The count is a value every landing export
+        # has to bump by hand, and a seventh binary turning this red is a
+        # nuisance, not a finding. The other direction (a `.c` landing without a
+        # digest row) is held as a set equality by
+        # `test_the_digest_and_the_census_are_different_claims_and_both_hold`.
         rows = _committed_digests()
-        self.assertEqual(len(rows), 6)
+        committed = {rel for _abs, rel in
+                     decompile_native.committed_c_files()}
         for r in rows:
+            self.assertIn(r["path"], committed,
+                          f'{r["path"]} has a digest row but is not a committed '
+                          f'.c under {decompile_native.DECOMPILED_DIR}')
             self.assertEqual(
                 decompile_native.sha256_file(os.path.join(REPO, r["path"])),
                 r["sha256"], r["path"])

@@ -10,9 +10,16 @@ already in the tree, counted.)
 `windows/decompiled/native/GamingCenter3_Cross.c` is **56,693,822 bytes** and
 declares **64,588** functions. It was in no index, no listing and no census,
 while the manifest row for the program it belongs to read `functions=0`. Both
-files are committed, both were right about their own subject, and nothing in the
-gate read either. `windows/ghidra/c-census.csv` is the missing third layer,
-derived by `windows/tools/census_native_c.py`:
+files are committed, both were right about their own subject, and nothing
+compared them. The gate did read both — `decompile_native.py --check`, which
+`.github/scripts/agent-gates.sh` runs, opens `windows/ghidra/manifest.csv` and
+hashes the 56 MB `.c` against `c-digests.csv` — but only each against its own
+prior claim: the manifest row is checked for being well-formed, and the export
+is checked for not having moved. Nothing read the 64,588 and the zeros *as a
+contradiction of each other*, and nothing in the gate could say what the `.c`
+contains. That gap is what
+`windows/ghidra/c-census.csv` closes, derived by
+`windows/tools/census_native_c.py`:
 
 ```
 grep -c '^// ==== ' windows/decompiled/native/GamingCenter3_Cross.c     # 64588
@@ -30,20 +37,29 @@ python3 windows/tools/census_native_c.py --check
 
 That is 75,252 declared functions across the six committed exports, of which
 64,588 (85.8%) are the one no index row reaches
-(`tail -n +2 windows/ghidra/index.csv | wc -l` gives the 10,664 the other five
-contribute). None of those 10,664 addresses is declared in the retained export —
-0 for every program, measured per program against the export's separator set — so
-the 64,588 are additional rather than a second copy.
+(`tail -n +2 windows/ghidra/index.csv | wc -l` gives the 10,664 rows the other
+five contribute, over 10,649 distinct addresses). None of those 10,664 rows is
+declared in the retained export — 0 for every program, measured per program
+against the export's separator set — so the 64,588 are additional rather than a
+second copy. No committed tool performs that intersection; it was checked by hand
+with the one-liner in the last section, and the tool's only range logic is
+`disjoint_exports()`, which compares per-export min/max rather than address sets
+and is printed on every run rather than asserted.
 
 ## Which binary, on two grounds that agree
 
 **By range, with its limit stated.** The retained file's `0x180DE2000`–`0x1818D1B40`
 is disjoint from every other export's range, so all 64,588 are the `.dll`'s and
 0 are any other binary's. That limit is real and the tool prints it on every
-run: `ACPIDriverDll.dll`, `UEFI_Firmware.dll` and `clrcompression.dll` are all
-PE32+ at base `0x180000000` and their ranges overlap *each other*, so a range
-resolves this file only because it happens to be disjoint. Ranges are not a
-general attribution mechanism in this tree and are not presented as one.
+run — 2 of the 6 exports are range-disjoint, the other 4 overlap at least one
+other export. `ACPIDriverDll.dll`, `UEFI_Firmware.dll`, `clrcompression.dll` and
+`GC3_launcher` are all PE32+ at base `0x180000000` and their ranges overlap
+*each other*, so a range resolves this file only because it happens to be
+disjoint. (The other disjoint one is `ACPIDriver.sys`, which is PE32 at
+`0x140000000` and so overlaps none of them — a second limit on the same
+mechanism, since a range would no longer single this file out even as "the" one
+it resolves.) Ranges are not a general attribution mechanism in this tree and
+are not presented as one.
 
 **By the header's digest pairing.** The `// Source:` line is **byte-identical
 across the five indexed exports** — the same five paths and the same five
@@ -56,10 +72,12 @@ The retained file's line is the common five **plus a sixth pair**
 (`.../GamingCenter3_Cross.dll`, `6663e63d…`), and that sixth digest appears in no
 other header in the tree.
 
-That digest is written down nowhere else. The manifest's `.dll` row carries an
-empty `sha256`, and `windows/ghidra/native-binaries.csv` carries `runtime` for
-that row. `binary_sha256` in the census is therefore the only committed record
-of `GamingCenter3_Cross.dll`'s digest anywhere in this repository — a small
+That sixth digest is written down in exactly one other place, and it is the
+place it is copied from: the retained export's own header. The manifest's `.dll`
+row carries an empty `sha256`, and `windows/ghidra/native-binaries.csv` carries
+`runtime` for that row. So `binary_sha256` in the census is the only committed
+record of `GamingCenter3_Cross.dll`'s digest *outside* that header, and the only
+one in a structured file a tool can read without parsing 56 MB of C — a small
 unprompted gain, and one that only falls out of doing the attribution properly
 rather than reading the filename.
 
@@ -147,6 +165,20 @@ python3 windows/tools/census_native_c.py              # the table, from the file
 python3 windows/tools/census_native_c.py --check      # the committed CSV is current
 python3 windows/tools/census_native_c.py --write      # regenerate it after a re-export
 grep -c '^// ==== ' windows/decompiled/native/GamingCenter3_Cross.c
+```
+
+The tool reads only committed files — the six `.c` exports plus
+`c-census.csv`, `manifest.csv` and `native-binaries.csv` — and needs no Ghidra,
+no network, no project and no vendor binary.
+
+The one figure above that no committed tool re-derives is the index/export
+address disjointness, which is a check by hand:
+
+```
+python3 -c 'import csv,sys; sys.path.insert(0,"windows/tools"); \
+from decompile_native import _c_markers; \
+a=set(_c_markers("windows/decompiled/native/GamingCenter3_Cross.c")); \
+print(sum(1 for r in csv.DictReader(open("windows/ghidra/index.csv",newline="")) if r["addr"] in a))'
 ```
 
 `c-digests.csv` is untouched and still says one row per committed `.c`. The two

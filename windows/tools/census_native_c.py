@@ -43,7 +43,9 @@ binary's digest. On the five projects already in the project those digests are
 in the manifest already; for `GamingCenter3_Cross.dll` they are not -- its
 manifest row carries an empty `sha256` and `native-binaries.csv` carries
 `runtime` for it -- so `binary_sha256` here is the only committed record of
-that binary's digest anywhere in the tree.
+that binary's digest *outside* the retained export's own `// Source:` header,
+which is where it is copied from, and the only one in a structured file another
+tool can read without parsing 56 MB of C.
 
 A header pair that resolves to no binary, or to more than one, is **refused,
 not guessed**. So is a `.c` that is missing, empty, or declares no separator, and
@@ -60,10 +62,13 @@ all of them. `disjoint_exports()` reports the exports a range really can
 resolve and every run prints how many that is; it is a second opinion on one
 row, not a mechanism, and the header pairing is what does the work.
 
-Needs no Ghidra, no network, no project and no vendor binary: the committed
-`.c` files are the only input it opens. Each is read ONCE (the header comes
-from a 8 KB prefix of the same file, not a second pass over 56 MB), which is
-the §14a lesson `c_presence_problems()` already learned the expensive way.
+Needs no Ghidra, no network, no project and no vendor binary. Every file it
+opens is committed: the `.c` exports under `decompiled/native/`, and three CSVs
+under `ghidra/` -- `c-census.csv` (what it is checking), `manifest.csv` (the
+`project_*` columns) and `native-binaries.csv` (the target list
+`load_targets()` reads). Each `.c` is read ONCE (the header comes from a 8 KB
+prefix of the same file, not a second pass over 56 MB), which is the §14a lesson
+`c_presence_problems()` already learned the expensive way.
 
 Usage:
     python3 windows/tools/census_native_c.py                    print the table
@@ -224,12 +229,14 @@ def disjoint_exports(measured):
     """The export labels whose address range overlaps no other export's.
 
     A second opinion, on one row, and deliberately not the attribution
-    mechanism. `ACPIDriverDll.dll`, `UEFI_Firmware.dll` and `clrcompression.dll`
-    are all PE32+ at base `0x180000000` and overlap each other, so this returns
-    the five of them as unattributable and only `GamingCenter3_Cross` as
-    resolvable -- which is the honest reading, and the reason the header pairing
-    is what decides the binary. Returning the names rather than a count is so
-    that a run which suddenly resolves one of the overlapping ones says which.
+    mechanism. `ACPIDriverDll.dll`, `UEFI_Firmware.dll`, `clrcompression.dll`
+    and `GC3_launcher` share image base `0x180000000` and overlap each other, so
+    on the committed tree this returns just two of the six --
+    `GamingCenter3_Cross`, and `ACPIDriver`, which is PE32 at `0x140000000` and
+    so overlaps none of them. That is the honest reading, and the reason the
+    header pairing is what decides the binary. Returning the names rather than
+    a count is so that a run which suddenly resolves one of the overlapping ones
+    says which.
     """
     ranges = {}
     for label, (_n, lo, hi) in measured.items():
@@ -696,9 +703,10 @@ def self_test():
               read_header_pairs(_fixture(tmp, "Bare.c", "// nothing\n")) is None)
 
         # The range ground's limit, made executable. Two exports at one image
-        # base overlap, so neither is resolvable by range -- the case the
-        # committed tree happens not to contain and the one a future seventh
-        # binary would.
+        # base overlap, so neither is resolvable by range. The committed tree
+        # does contain that case -- four of its six exports share
+        # `0x180000000` -- so these fixtures are the pair that separates the two
+        # behaviours without depending on which exports are committed.
         ranges = {"a": (1, "0005", "0009"), "b": (1, "0007", "0014"),
                   "c": (1, "0064", "0078")}
         check("overlapping ranges attribute nothing; a disjoint one does",
