@@ -1,4 +1,4 @@
-# The opcode table's coverage and a differential decode: 254 of 256 rows, 0 disagreements against two decoders that are not independent — and 8 against the manual, which is the findingndependent
+# The opcode table's coverage and a differential decode: 254 of 256 rows, 0 disagreements against two decoders that are not independent — and 8 against the manual, which is the finding — independent
 
 (2026-09-27, issue #37. Static reading of committed files, plus one `r2 -a 8051`
 subprocess. No capture opened, no EC, no hardware, no Windows.)
