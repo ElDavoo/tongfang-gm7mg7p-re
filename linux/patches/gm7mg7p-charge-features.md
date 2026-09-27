@@ -57,8 +57,10 @@ column and prints the correction two lines above it. Quote both, or neither.
 `0x07B9` is the one address in the tree flagged as a *confirmed* instance of
 this blind spot — Windows demonstrably writes it and the scan cannot find how —
 and the same scan correctly predicted the status of 20 registers with
-independently confirmed live behaviour (`docs/findings.md` §4d). So this line
-is evidence about the method's reach, not about the hardware.
+independently confirmed live behaviour, of which 14 are re-derivable from
+committed files (`docs/findings.md` §4d, and the correction it carries in
+place). So this line is evidence about the method's reach, not about the
+hardware.
 
 **b. The partner byte is not the EC's to read either.** The other half of the
 vendor's UP/DOWN pair:
@@ -99,15 +101,18 @@ service is `MyFanManager_QC.SetBatteryChargingLimit`, and that class is never
 instantiated in this build: `MyFanCtrl` picks `MyFanManager` or a
 `MyFanManager_RamFan1p5*` variant. `docs/findings.md` §4k.
 
-**d. The pair was written live, five ways, and charging never stopped.** The
-experiment this line stands on is `docs/findings.md` §4f
-(2026-09-17, `evidence/battery-traces/2026-09-17-limit-pair.csv`): byte writes
+**d. The pair was written live, in five phases over four distinct
+value-pairs, and charging never stopped.** The experiment this line stands on
+is `docs/findings.md` §4f (2026-09-17,
+`evidence/battery-traces/2026-09-17-limit-pair.csv`): byte writes
 at physical `0xFE4107B9`/`0xFE4107D0` — the address Windows' `ECRW` lands on,
 so not a Linux-access-path artefact — as 60, 60 with bit 7, 95 armed from 93%,
 and 60/55 armed at 56% under each of the three `0x07A6` profiles and then held
-untouched from 72% through 91%. Every write read back correctly and stayed put.
-Current never stopped, never dropped below the normal taper, and `status` never
-left `Charging`.
+untouched from 72% through 91%. The first attempt wrote `0x07B9` alone, with
+`0x07D0` left at `0x00`; the 72%→91% hold re-writes the same `0x3C`/`0x37`
+pair as the profile phase rather than a further value-pair. Every write read
+back correctly and stayed put. Current never stopped, never dropped below the
+normal taper, and `status` never left `Charging`.
 
 **What this does not establish, and what it does.** It does not show the EC
 ignores the pair in general: the values Windows actually writes are still
@@ -166,12 +171,17 @@ Two consequences that the percentage reading gets wrong:
 - **Age overtakes the profile.** On a pack past the 250 mV/cell tier, no
   profile value changes anything. On *this* pack that is the case: 450 cycles
   and a 16400 mV target against a 17400 mV request is exactly 4 × 250 mV/cell,
-  the top tier, which is above both profile floors. Confirmed live and then
-  again under High capacity (`0x07A6`=0x08) on 2026-09-21: `0x0522` held at
+  the top tier, which is above both profile floors. The 450 cycles are what
+  put it at the 200 tier, not the 250 one — that needs 550 — so the trigger for
+  the top tier must be the stress-hours counter, which the host cannot read
+  (see §5). Confirmed live and then again under High capacity (`0x07A6`=0x08)
+  on 2026-09-21: `0x0522` held at
   16400 mV throughout a full CV charge run, and the measured pack voltage
-  plateaued at 16466 mV under Trickle, `Long_Life` and `Standard` alike
+  plateaued at 16466 mV under Trickle, `Long_Life` and `Standard` alike in the
+  2026-09-09 trace
   ([`charge-target-derating.md`](../../ec/annotations/charge-target-derating.md)
-  §2; `evidence/battery-traces/`).
+  §2; `evidence/battery-traces/2026-09-09-profiles.csv`, and
+  `evidence/battery-traces/2026-09-21-0522-follow.csv` for the 09-21 run).
 
 The earlier reading of these branches — that the profile "selects a current
 taper" — was wrong and is retracted in place in
@@ -201,7 +211,8 @@ each one, and can be stripped when the text is lifted into the PR body.
 > count and a temperature-weighted count of hours spent above 4.1 V/cell can
 > push the derating higher, and when they do, no preset changes the target. On
 > an aged pack — including this machine's, at 450 cycles and the top 250
-> mV/cell tier — the profile makes no observable difference at all. Selecting
+> mV/cell tier, which here comes from the stress-hours counter rather than the
+> cycle count — the profile makes no observable difference at all. Selecting
 > `Trickle` on a fresh pack would mean "at most 4.15 V/cell", not "80%".
 >
 > `charge_control_end_threshold` is not claimed because no EC consumer for
@@ -209,17 +220,19 @@ each one, and can be stripped when the text is lifted into the PR body.
 > static scan finds zero direct references — a method with a documented
 > indirect-addressing blind spot that this very address is the confirmed
 > instance of, and which correctly predicted 20 other registers' live
-> behaviour, so this is "not found by this method" and not "absent". The
+> behaviour (14 of them re-derivable from this tree's committed files), so
+> this is "not found by this method" and not "absent". The
 > paired `0x07D0` register is referenced 254 times, all in the separate
 > ITE8850-PD image rather than the EC firmware. In the decrypted Control Center
 > Service 3.1.39.0, `BatteryProtection2.SetBatteryChargingLimit_Up/_Down` are
 > private with no caller, and the only other writer in the service lives in a
 > class that build never instantiates. And when the pair was written live at
 > the physical address Windows' own `ECRW` path lands on — 60 alone, 60 with
-> bit 7, 95 set from 93% above the cap, and 60/55 armed at 56% below it and
-> left untouched from 72% through 91%, the last three under each of the
-> profiles — charging never stopped and current never dropped below the normal
-> taper.
+> bit 7, 95 set from 93%, and 60/55 armed at 56% and left untouched from 72%
+> through 91% — the 60 alone and the 60-with-bit-7 were written from above
+> their caps, the 95 and the 60/55 from below, and only the 60/55 was repeated,
+> under each of the three `0x07A6` profiles. Charging never stopped and
+> current never dropped below the normal taper.
 >
 > One caution for anyone who revives the limit path later. The `0x07D0` byte
 > is deliberately **not** described here as a resume-charging threshold, and
@@ -249,9 +262,11 @@ are real decompiled source, not a summary of one.
 **A hand decode, and checked as one:** §3's arithmetic comes from
 `charge_target_update`, decoded by hand with a linear 8051 decoder rather than
 by Ghidra. `charge-target-derating.md` says so in its own first paragraph and
-names Ghidra as the cross-check that should come first. `cells = 4` and
-`derating = 250 mV/cell` are inferred from the decode plus the live target, not
-read from the counters — the stress counter (`0x09C9`) and cell count
+names Ghidra as the cross-check that should come first. `cells = 4`,
+`derating = 250 mV/cell`, and *which* age trigger put the pack in that tier
+are inferred from the decode plus the live target, not read from the counters —
+450 cycles reach the 200 tier and the observed 1000 mV gap means 250, so the
+trigger is `stress > 18144`; the stress counter (`0x09C9`) and cell count
 (`0x0A47`) sit in EC RAM the host window does not map and read back `0xFF`.
 
 **Live, and cited rather than re-observed:** every live figure here comes from a

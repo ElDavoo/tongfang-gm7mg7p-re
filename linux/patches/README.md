@@ -24,8 +24,9 @@ Both halves turned out to be wrong as stated:
   was written, and the one live test of it (threshold=80, upper register
   only) did not stop charging either — see `docs/findings.md` §4c. The paired
   write this left open has since been run: `docs/findings.md` §4f wrote
-  `0x07B9` and `0x07D0` as a pair at the physical address Windows' own `ECRW`
-  path lands on — from above the cap and armed from below it, under all three
+  `0x07B9` and `0x07D0` at the physical address Windows' own `ECRW` path lands
+  on — the first attempt `0x07B9` alone, then the pair, from above the cap and
+  armed from below it, with the 60/55 write repeated under each of the three
   `0x07A6` profiles — and charging never stopped. §4k then closed the service
   side from decrypted source: the two methods that would write the pair are
   private with no caller, so on Control Center Service 3.1.39.0 nothing writes

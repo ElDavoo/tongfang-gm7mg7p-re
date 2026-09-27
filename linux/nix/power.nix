@@ -104,7 +104,9 @@ in {
   # (richiesta della batteria - derating × celle) e il profilo è un *floor*
   # su quel derating: >=200 mV/cella Stationary, >=100 Balanced, 0 High
   # capacity. Cicli e ore ad alta tensione possono alzarlo oltre la soglia e
-  # su questa batteria (450 cicli) lo fanno, quindi qui nessun profilo cambia
+  # su questa batteria lo fanno: i 450 cicli bastano per il livello 200, ma
+  # il target osservato (16400 mV) impone il livello 250, quindi a portarci è
+  # il contatore di stress, non il conteggio cicli — e nessun profilo cambia
   # il risultato. Vedi ../patches/gm7mg7p-charge-features.md
   # Quindi il profilo "stationary" da scrivere è "Trickle", NON "Long Life".
   systemd.services.battery-charge-profile = {
