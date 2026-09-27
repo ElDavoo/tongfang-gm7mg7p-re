@@ -18,9 +18,11 @@ claim as
 one level further from the data.
 
 **Not claimed: that this would have caught #502 or #720.** Carried forward from
-#747 verbatim, because both repairs were to this column and neither has been
-read back as a diff this tool could have been run over. What it holds is the
-tree as it stands.
+#747 verbatim, because all four of the index's third-column repairs (#182,
+#502, #720 and #736, counted at #1008 — see
+[`testdata-index-repair-census.md`](testdata-index-repair-census.md)) are to
+this column and none of them has been read back as a diff this tool could have
+been run over. What it holds is the tree as it stands.
 
 > **Superseded, 2026-09-26, by issue #978,** which is about
 > `check_testdata_row_claims.py` and not about a capture's name: the pre-repair

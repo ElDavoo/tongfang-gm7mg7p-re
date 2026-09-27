@@ -90,7 +90,8 @@
 # name is resolved against the repository root, so a cell naming a listing
 # under ec/decompiled/ that the real tree does not have is a miss as well.
 # That index is hand-written and has been repaired
-# by hand twice, and nothing read it before. check_history_checkouts holds the
+# by hand four times over its history (#182, #502, #720, #736), and nothing
+# read that column before. check_history_checkouts holds the
 # reverse of the claim #1009 retracted: **every job that runs a history reader
 # has a full-depth checkout**, derived from the committed workflows rather than
 # from prose. A re-copy of `ci.yml` from the template that drops

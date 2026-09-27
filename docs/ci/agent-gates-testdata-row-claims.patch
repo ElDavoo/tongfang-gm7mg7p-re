@@ -29,11 +29,12 @@
 # in four directions -- but it reads the first column, the `Feeds` column and
 # the nested tables, and not the third. The third is the description: the
 # column a reader opens the index to read, and the one that names the
-# addresses each fixture is supposed to contain. Both of the index's
-# hand-repairs (#502, #720) were to that column, and every check on the index
-# would have been green through them. **Not claimed: that this would have
-# caught either** -- what those two repairs changed is in the issues, not in
-# the tree, and the PR says so in its own words.
+# addresses each fixture is supposed to contain. The two hand-repairs
+# measured over their pre-repair trees (#502, #720) were to that column, and
+# every check on the index was green through both; the other two of the four
+# the history holds (#1008) are in the same column. **Not claimed: that this
+# would have caught any of them** -- what those repairs changed is in the
+# issues, not in the tree, and the PR says so in its own words.
 #
 # The rule is an address a row's third column attributes to a fixture having
 # to occur in a file that row names, searched across the whole set the row's
@@ -64,7 +65,7 @@ diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
 +# and the column a reader checks it by -- the third, the description -- names
 +# the addresses each fixture is supposed to carry. Nothing read that column, so
 +# a row could say a fixture differs at 0x0784 and the fixture need not, and the
-+# index has needed a hand-repair twice (#502, #720), both times in a
++# index has needed a hand-repair four times (#182, #502, #720, #736), each in a
 +# description of a row whose file was already named correctly. This holds those
 +# sentences to the files the row names, across the whole set its first column
 +# resolves to rather than per file: 0x075B is in one of

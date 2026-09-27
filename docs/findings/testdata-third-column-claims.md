@@ -20,11 +20,27 @@ right.** It is index/tree agreement over committed files, as
 [`testdata-index-check.md`](testdata-index-check.md) is. No capture is opened,
 no EC, no firmware image, no laptop.
 
-**Not claimed: that this would have caught #502 or #720.** Both repairs were
-to a row's third column, so every check that was green through them is
-consistent with this one being green through them too. What those two
-repairs changed is in the issues, not in the tree, and neither has been read
-back as a diff this tool could have been run over.
+**Not claimed: that this would have caught #502 or #720.** All four of the
+index's third-column repairs (#182, #502, #720 and #736, counted over the
+whole history at #1008 — see
+[`testdata-index-repair-census.md`](testdata-index-repair-census.md)) are to a
+row's third column, so every check that was green through them is consistent
+with this one being green through them too. What those repairs changed is in
+the issues, not in the tree, and none of them has been read back as a diff
+this tool could have been run over.
+
+> **Superseded, 2026-09-26, by issue #1008:** "the two repairs" is not the
+> population. #978 read back the diffs of the two this page names and measured
+> the checker over each, and the two names came from `git log --format=%s` on
+> the `(#502)` and `(#720)` subjects rather than from a walk of the history, so
+> the count that reached the corpus was a count of a pair. Walking the history
+> instead finds **four** edits to `ec/tools/testdata/README.md`'s third column —
+> **#182, #502, #720 and #736** — every one of them at a revision that changed
+> no fixture the row names, so the "zero backticked literals" reason the
+> blockquote below gives for two holds for all four. The paragraph above is kept
+> as it stood, per `docs/findings.md` §4a. The census, its criterion and its
+> limits are in
+> [`testdata-index-repair-census.md`](testdata-index-repair-census.md).
 
 > **Superseded, 2026-09-26, by issue #978:** the diffs have now been read back
 > and the checker run over each pre-repair tree — **0 `missing` at row 24 for

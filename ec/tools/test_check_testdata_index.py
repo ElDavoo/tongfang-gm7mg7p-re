@@ -1241,7 +1241,9 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
     This goes red on any future edit that drifts the index and the tree apart in
     any of the five directions. It does not go red on an edit to what a row says
     its fixture is: that is the third column, which this tool does not read, and
-    which both of the index's past hand-repairs were. It does not go red on the
+    which all four of the index's past hand-repairs to the top-level table were
+    (#182, #502, #720 and #736 -- issue #1008,
+    `docs/findings/testdata-index-repair-census.md`). It does not go red on the
     tree being a different size either, which is what
     `TheTalliesAreNotAFloor` is about.
     """

@@ -515,12 +515,14 @@ class TheCommittedTree(unittest.TestCase):
         self.assertEqual(len(records), 107)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
-        # 40 indexed, 11 named, 29 named by none -- the three figures that move
+        # 43 indexed, 11 named, 32 named by none -- the three figures that move
         # by construction the moment this suite itself lands, since `suites()`
         # indexes every `test_*.py` in the tree and this is one. The superseded
-        # 36 / 11 / 25, then 37 / 11 / 26, then 38 / 11 / 27 and then 39 / 11 /
-        # 28 are the record of the trees this branch's base, `main`, and
-        # `main` again after #811 were, per §4a-4d, and the first two are the
+        # 36 / 11 / 25, then 37 / 11 / 26, then 38 / 11 / 27, then 39 / 11 / 28
+        # and the `40 / 11 / 29` this line carried on both sides of this merge --
+        # each already behind the asserts above it there -- are the record of
+        # the trees this branch's base, `main`, `main` again after #811, and the
+        # two trees this merge joins were, per §4a-4d, and the first two are the
         # ones to read first if one of these ever disagrees with the run.
         #
         # **The 37 -> 38 step is one suite, and both sides of this merge name
@@ -589,11 +591,11 @@ class TheCommittedTree(unittest.TestCase):
         # **41 / 11 / 30**. The 40 / 11 / 29 stays written above, true of every
         # tree from #973's merge until this one.
         #
-        # **Each side's step is `41 -> 42`, and the merged tree takes a 43rd
-        # suite and a second crossing, so the triple is `43 / 12 / 31`.** Two
+        # **Each side's step is `41 -> 42`, and the merged tree takes a 44th
+        # suite and a second crossing, so the triple is `44 / 12 / 32`.** Three
         # steps compose rather than one replacing the other, and the figure is
         # measured on this tree with the tool below rather than derived from
-        # either side's arithmetic.
+        # any side's arithmetic.
         #
         # **main's side, `41 -> 42`, moves one figure and for #845's reason
         # again.** Issue #845's `ec/tools/test_trace_xdata_refs.py` pins
@@ -621,15 +623,28 @@ class TheCommittedTree(unittest.TestCase):
         # for this suite's own side of it: it is in the tail, and a later
         # write-up citing it turns that red.
         #
-        # **The merged tree is neither, and neither side's figure is the
-        # merged tree's.** Two suites are indexed rather than one, so the
-        # denominator takes both; one crossing rather than none, so the named
-        # count takes #1009's `12` and not main's `11`; and the tail takes the
-        # 43rd suite and loses the one #1009's pin crossed out:
-        # `43 - 12 = 31`, **the same `31` main's own step arrived at by a
-        # different route** -- there by adding a suite, here by adding a suite
-        # and a crossing. The `42 / 11 / 31`, the `42 / 12 / 30` and the
-        # `41 / 11 / 30` above each stay written, true of the tree it was
+        # **The `#1008` step is `42 -> 43` and it is a fourth `+1` of the same
+        # shape, neither crossing nor moving the named count.** Issue #1008's
+        # `ec/tools/test_census_index_third_column_edits.py` landed beside the
+        # two above, and its write-up cites the suite *by path* and never as
+        # `test_census_index_third_column_edits.py:NNN` -- for #811's reason, the
+        # same one, and the same second shared-file edit avoided. It does move
+        # existing citing lines in `docs/findings.md`,
+        # `docs/agent-pipeline.md` and `tools/README.md`, so
+        # `check_pin_table_rows.py`'s table is re-pointed -- and
+        # **no pin was added or removed, so the census's own counts are
+        # unmoved by it.**
+        #
+        # **The merged tree is none of the three, and no side's figure is the
+        # merged tree's.** Three suites are indexed rather than one, so the
+        # denominator takes all three; one crossing rather than none, so the
+        # named count takes #1009's `12` and not main's `11`; and the tail takes
+        # the 44th file and keeps the one #1009's pin crossed out:
+        # `44 - 12 = 32`, **the same `32` #1008's own step arrived at by a
+        # different route** -- there by adding a suite to a tree with no
+        # crossing on it, here by adding a suite and a crossing to a tree that
+        # had two. The `43 / 12 / 31`, the `42 / 12 / 30`, the `42 / 11 / 31`
+        # and the `43 / 11 / 32` each stay written, true of the tree it was
         # measured on, per §4a-4d. Measured with the tool, not derived.
         #
         # **#1037's step is `43 -> 44` and it moves one figure, for #811's
@@ -674,12 +689,67 @@ class TheCommittedTree(unittest.TestCase):
         # figure for the reason the `41 -> 42` case above gives. The
         # `45 / 12 / 33` stays written above, true of the tree it was measured
         # on, per §4a-4d.
+        #
+        # **This merge's step is `44 -> 45` and it is one suite on *each* side,
+        # the first time on this axis that neither side's own step describes the
+        # tree.** #1008's `ec/tools/test_census_index_third_column_edits.py` and
+        # #1037's `ec/tools/test_check_history_checkouts_run.py` are both indexed
+        # and neither is named by a committed pin, so both join the tail and
+        # **neither side's pin moves**: the named count holds at the `12` `main`
+        # reached, and the tail's own figure moves `32` -> `33`. That is
+        # `45 / 12 / 33`, and it is **the same shape as #973's and #978's
+        # landings read from the other direction** -- there a suite joined the
+        # tail and the pinned count did not move at all, and here a suite joins
+        # it on each side and the count still does not. The `44 / 12 / 32` above
+        # is #1037's own measurement and the branch measured the same triple by
+        # the other route recorded in the paragraph before it; both stay written,
+        # each true of the tree it was measured on, per §4a-4d. Measured with the
+        # tool below rather than by adding the two sides up, per §4a-4d.
+        #
+        # **The `#1008` x `#26` merge moves it once more, `45 -> 46`, and it is
+        # the same shape one landing later.** #26's
+        # `ec/tools/test_pd_image_census.py` is indexed and no committed
+        # markdown cites a line of it, so the tail takes it exactly as
+        # #1008's and #1037's were taken, the named count holds at the `12`, and
+        # the merged tree reads **`46 / 12 / 34`**. The `45 / 12 / 33` above is
+        # the `#1008` x `#1037` tree's own figure and is left written, true of
+        # the tree it was measured on, per §4a-4d; so is `main`'s own `45 / 12 /
+        # 33`, which `517be444` (#1058) reached without moving this pin off the
+        # `44` it held. Measured with the tool below, not by adding the two
+        # sides up, per §4a-4d.
+        #
+        # **And the merged tree is `47 / 12 / 35`, which is neither side's
+        # figure, and the step is #1008's suite alone.** `origin/main` at
+        # `560752b2` reads exactly `46 / 12 / 34` with this pin already set to
+        # it, so main's figure is main's own and correct there, and the
+        # branch's is one low here because it counted a step `main` had already
+        # made. **The agreement is not a cross-check**: the two routes meet
+        # because each was reasoning from a tree that already carried the other
+        # side's landing, and what neither could see is the landing the *other*
+        # side had yet to make. The one suite this merge adds is
+        # `ec/tools/test_census_index_third_column_edits.py`, indexed and named
+        # by no committed pin -- its write-up
+        # (`docs/findings/testdata-index-repair-census.md`) names the suite and
+        # the tool *by path* and never as `test_census_index_third_column_edits.py:NNN`,
+        # for #811's reason the four landings above give -- so the tail takes it,
+        # the named count holds at the `12` and the tail moves `34` -> `35`. It
+        # is also the only difference in the tail: `unpinned()` over the two
+        # trees differs by that one name and nothing else. Both `46 / 12 / 34`s
+        # stay written above, each true of the tree it was measured on, per
+        # §4a-4d, and so does the `45 / 12 / 33` that main's own paragraph reads
+        # as main being red: main's pin and main's tree both read `46 / 12 / 34`
+        # there, so that clause describes a state main has since carried past.
+        # Measured with the tool below on this tree, not by adding the two sides
+        # up, per §4a-4d.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 46)
+        # 44 -> 45 was one suite from each side of that merge, 45 -> 46 is
+        # #26's alone, and 46 -> 47 is #1008's; the named count is unmoved
+        # through all three, so the tail takes every one.
+        self.assertEqual(len(files), 47)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 34)
+        self.assertEqual(len(tail), 35)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

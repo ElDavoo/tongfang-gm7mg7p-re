@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """Measure what the two testdata checkers do over a hand-repair's *before* tree.
 
-The index has been repaired by hand twice, in #502 and #720, and both repairs
-were to a row's third column -- the description. Every sentence in the corpus
-that repeated the fact also repeated the same disclaimer with it: nobody has
-run `check_testdata_row_claims.py` or `check_testdata_index.py` over the tree
-as it stood before either repair, so whether the checks were red there is
-unknown. This tool runs them over it and prints the answer.
+The index has been repaired by hand four times in the top-level table's third
+column -- in #182, #502, #720 and #736, counted rather than assumed at #1008 --
+and this tool measures the two of them it is pointed at, #502 and #720. Both of
+those were to a row's third column, the description. Every sentence in the
+corpus that repeated the fact also repeated the same disclaimer with it: nobody
+has run `check_testdata_row_claims.py` or `check_testdata_index.py` over the
+tree as it stood before either repair, so whether the checks were red there is
+unknown. This tool runs them over it and prints the answer. The other two, and
+the one nested path cell, are in
+`docs/findings/testdata-index-repair-census.md`; the count over the whole
+history is a different measurement from this one, which is a pair.
 
 **What is measured, and the four limits that bound it.** None of them is a
 "this would have caught them", and the first is the one a reader has to hold:

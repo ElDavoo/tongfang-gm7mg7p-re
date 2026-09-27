@@ -9,6 +9,23 @@ thing with it — *what those two repairs changed is in the issues, not in the
 tree, and neither has been read back as a diff this tool could have been run
 over*.
 
+> **Superseded, 2026-09-26, by issue #1008:** the "twice" above is a count of
+> the **two revisions this tool was pointed at**, not of the index's history.
+> It takes `--base`/`--repair`, and the two shas came from `git log
+> --format=%s` on the `(#502)` and `(#720)` subjects — the merge recorded the
+> pair it had measured, and the number became a sentence about the population.
+> `ec/tools/census_index_third_column_edits.py` walks the history of both
+> indexes and finds **four** third-column edits — **#182, #502, #720 and #736**
+> — and **one** nested first-column edit, #746. The two measurements are not
+> rivals: this one is about what a checker would have said over a named pair,
+> and that one is about how many edits there are. The count, the criterion for
+> calling one a repair, and the limits are in
+> [`testdata-index-repair-census.md`](testdata-index-repair-census.md). The
+> answer below is unchanged: the two repairs measured here are still the two
+> the corpus named, and the "zero backticked literals" reason extends to the
+> other two because every one of the four is at a revision that changed no
+> fixture its row names.
+
 **The answer, measured rather than assumed: `check_testdata_row_claims.py` is
 green over both pre-repair trees — 0 `missing` at row 24 for #502, and 0 at
 rows 23 and 24 for #720 — and it is green because every row either repair
@@ -280,6 +297,52 @@ make a tool green is forbidden — is why the edit is a paragraph and not a cell
 **Nothing else moves.** No `status:` in `ec/annotations/registers.yaml`, no
 `static_refs*` count, no fixture, no row, no capture, no `.asm`, no `.c`. No
 `gh pr create` in any repository, and nothing here touches a driver.
+
+**And the count those fourteen carried has since moved, which is #1008's
+subject and not this one's.** The fourteen retired the "nobody has looked"
+disclaimer and kept the number attached to it; the number was this tool's
+measurement of a named pair, and nothing had asked how many third-column edits
+the history holds at all. #1008 asked, by walking it, and the answer is **four**
+— #182, #502, #720 and #736 — plus one nested first-column repair, #746. **The
+sites corrected at #1008, and this list is what makes the set checkable:
+`ec/tools/check_testdata_index.py`, `ec/tools/measure_index_repair_visibility.py`
+(a docstring each), `ec/tools/check_testdata_row_claims.py` at **two** sites —
+its opening docstring and the `#978` block, which the census table's two rows
+for that one file count separately — `ec/tools/test_check_testdata_index.py`
+and `ec/tools/test_check_testdata_row_claims.py` (a docstring each);
+`ec/tools/testdata/README.md` (the paragraph below its table, again not in a
+cell); `docs/findings.md` §41, §47 and §81; `docs/agent-pipeline.md` item 10;
+and `docs/findings/testdata-third-column-claims.md` and **this file**, each
+with a dated `Superseded` blockquote in this page's own §4a form. That is
+**thirteen sites in ten files**, and the unit counted is the site rather than the
+file, which is why two of the ten files contribute more than one —
+`docs/findings.md` with its three sections and `check_testdata_row_claims.py`
+with its two sites. **Five of
+the thirteen keep the superseded wording as the body of the paragraph and carry
+the correction beside it** — §41's, §47's and §81's inline notes, and the two
+`Superseded` blockquotes. Two of those five need the reason stated rather than
+left to be found: §81's, because its "twice" is a record of what §41, §47, §76
+and §79 said rather than a claim of its own, and §41's "those two are the
+error class, and not a repair history" distinction, which the count does not
+touch. **The other eight are replaced in place**, the old wording quoted in
+[`testdata-index-repair-census.md`](testdata-index-repair-census.md)'s opening
+rather than at each site — a different eight from the ten this section replaced
+at #978, which is the same kind of split and not the same one.
+
+**That list was itself short, and the correction stands beside it rather than
+in place of it.** It was headed "twelve sites" against a published figure of
+"ten files at twelve sites" — a table of twelve rows, not an enumeration of the
+population, which is the error this section is about. Re-enumerating over the
+base tree gives **twenty sites in fifteen files**;
+`testdata-index-repair-census.md`'s table is now that enumeration and is where
+the figure is derived from, and **seven of the twenty were missing here** and
+are corrected there — the thirteen named above and those seven are the twenty,
+which is the check a reader can make against the table rather than take on
+trust. The worst of the seven is `docs/agent-pipeline.md`
+**item 9**, one paragraph above the item 10 this list names. This paragraph's
+list is left as what this write-up corrected, because the full twenty are in
+the census table and restating them here would be a second place for the
+figure to go stale.
 
 ## The test
 
