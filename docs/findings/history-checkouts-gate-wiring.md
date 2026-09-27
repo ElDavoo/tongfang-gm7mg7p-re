@@ -1,6 +1,10 @@
 # The checkout-depth check is prepared for the cheap gate, in a patch that had to fold (issue #1033)
 
-**Written 2026-09-26, against `d3304785`.** Issue #1033 asked for a
+**Written 2026-09-26, against `d3304785`.** Every `.github/scripts/agent-gates.sh`
+line below is that commit's and still reads, that file being unmoved since it.
+The two `ec/tools/check_history_checkouts.py` pins are the exception: each was
+first read on a later tree, so each carries the commit it was true of beside
+the reading this branch lands on. Issue #1033 asked for a
 `docs/ci/agent-gates-check-history-checkouts.patch` "following the shape of
 `docs/ci/agent-gates-pin-table-rows.patch`". The shape is available for the
 **function** and closed for the **`gate` line**, so the check and its gate line
@@ -126,7 +130,7 @@ exists.
 P0, P3 and P7 are held because a committed patch inserts at exactly those
 anchors. **P1, P2 and P4 are not free either**, which is the part worth
 recording: they are two and one lines away from a held anchor, and a hunk's
-three-line context window reaches over them. P5 and P6 are the only two whose
+three-line context window reaches over them. P6 and P7 are the only two whose
 sole obstruction is the tail patch. "Re-anchor somewhere else in the list" is
 therefore not a workaround at any of the eight, and the header says so.
 
@@ -232,11 +236,17 @@ that it was checked at all.
   machinery is needed for the patch to work. The landed function's comment says
   what a red run means, in the template's terms: either a checkout is shallower
   than the job using it needs — `depth_problems()` at
-  `ec/tools/check_history_checkouts.py:288`, whose message ends *"the mode will
+  `ec/tools/check_history_checkouts.py:468`, whose message ends *"the mode will
   report a history requirement rather than an answer"* — or a sentence in the
   two history-reading tools asserts a workflow's checkout depth without naming
   the job, which is #1009's own correction rule turned back on. The tool
-  reports both at a `file:line`, so the reader is told which.
+  reports both at a `file:line`, so the reader is told which. **`:468` is this
+  branch's; `:288` is `fe92940a`'s and `:247` is `d3304785`'s.** The first draft
+  of this bullet gave `:288` bare, which resolves on `fe92940a` and on no other
+  tree a reader of this page would be holding — the header names `d3304785` as
+  the baseline. An unattributed `file:line` is what
+  `test-line-pin-census.md` exists about, so both earlier readings stay written
+  here beside the current one rather than dropped, per `../findings.md` §4a-4d.
 - The red path is **cited, not re-run**: `ec/tools/test_check_history_checkouts.py`'s
   `test_a_gate_job_on_a_shallow_checkout_is_a_failure` already deletes
   `fetch-depth: 0` from a synthetic `gates` job on a scratch tree and watches
@@ -247,10 +257,17 @@ that it was checked at all.
 Both were checked against the files, and both belong in a diff rather than
 being quietly dropped:
 
-- The issue puts `main()` at `:1533-1555`. It is at **`:607-629`**
-  (`ec/tools/check_history_checkouts.py`, 633 lines). The shape of the claim is
+- The issue puts `main()` at `:1533-1555`. It is at **`:817-853`**
+  (`ec/tools/check_history_checkouts.py`, 857 lines). The shape of the claim is
   right — `main()` returns 1 on any problem from `report()` — but a reader sent
-  to `:1533` finds nothing.
+  to `:1533` finds nothing. This section first answered **`:607-629`** in 633
+  lines, which is `fe92940a`'s reading and not this branch's; `d3304785`, the
+  commit the header above names as the baseline, reads **`:509-531`** in 535, so
+  the correction was stale against the tree it claims to be written on as well
+  as against the tip. Both earlier readings are left here beside the merged one
+  rather than dropped, per `../findings.md` §4a-4d — and a correction that
+  sends a reader to a line holding nothing is the same defect as the one it
+  was correcting.
 - The issue says the patch's comment should carry *"the same `fetch-depth: 0`
   note `ci.yml:37-38` carries"*. **`ci.yml:39` is the `fetch-depth: 0`**, and
   the note above it is at **`:33-34`**. The landed comment cites both, because

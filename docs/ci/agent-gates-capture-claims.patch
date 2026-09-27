@@ -49,15 +49,15 @@
 # List order in the `gate` block is cosmetic, as it is in the tool list: the
 # loop is over a `for` word list and nothing reads the order. The new `gate`
 # line therefore goes below the two this patch already adds rather than in a
-# place that reads as a priority, and its name is one character too long for
+# place that reads as a priority, and its name is two characters too long for
 # the column the shorter lines align on -- which
 # `gate 'scan_refs.py smoke test' check_scan_refs_smoke_test` already breaks.
 # The filename is kept rather than given an honest one for two checks now three,
 # because at `d3304785` it is cited **30 times across 13 markdown files** as
 # this repository's canonical account of the prepared-not-landed shape, and a
 # name is not worth churning the long shared files for. Those 30 are the tree
-# this patch was re-cut from; #1033's own landing adds five more across three
-# files, so the pair to re-derive is `grep -rc 'agent-gates-capture-claims\.patch'
+# this patch was re-cut from; #1033's own landing adds nine more across three
+# files (39 across 16), so the pair to re-derive is `grep -rc 'agent-gates-capture-claims\.patch'
 # --include='*.md' .` rather than either figure, and `check_doc_patch_refs.py`
 # prints its own on every run.
 #
@@ -107,17 +107,20 @@
 # tool's own exit code and that is what a reader lands on: one of the two
 # things it reports, and it says which. Either a checkout is shallower than the
 # job using it needs -- `depth_problems()` at
-# `ec/tools/check_history_checkouts.py:288`, whose message ends "the mode will
+# `ec/tools/check_history_checkouts.py:468`, whose message ends "the mode will
 # report a history requirement rather than an answer" -- or a sentence in the
 # two tools that read history asserts a workflow's checkout depth without
 # naming the job, which is the rule §1009's own correction turned on. A red
-# run is a workflow or a toolstring, never a claim about the EC. Note the
-# `fetch-depth: 0` `ci.yml:39` carries and the note above it at `:33-34`: a
-# re-copy lands the missing depth and its comment together, which is why the
-# landed comment names both. **Until a human lands this, no commit runs any of
-# the three**, and the next false capture claim, the eleventh fixture directory
-# with no row, or a `ci.yml` re-copy that drops the depth, merges the way the
-# earlier ones did.
+# run is a workflow or a toolstring, never a claim about the EC. That `:468` is
+# this tree's, and three merges have moved it since #1013 wrote the tool -- it
+# read `:288` at `fe92940a` and `:247` at `d3304785` -- so the pair to
+# re-derive it is `grep -n '^def depth_problems'
+# ec/tools/check_history_checkouts.py`. Note the `fetch-depth: 0` `ci.yml:39`
+# carries and the note above it at `:33-34`: a re-copy lands the missing depth
+# and its comment together, which is why the landed comment names both. **Until
+# a human lands this, no commit runs any of the three**, and the next false
+# capture claim, the eleventh fixture directory with no row, or a `ci.yml`
+# re-copy that drops the depth, merges the way the earlier ones did.
 # Neither the first tool nor the second reads a fixture for what it contains,
 # opens a capture, or touches an EC: both are disagreements between committed
 # files about which paths and rows exist. The third reads no git history and no
