@@ -290,11 +290,16 @@ later look the same in the log. With `--csv` it writes each mark into the
 capture itself as a `ts,MARK,,label,provenance` row, so the CSV is
 self-contained — type what you just did as the label, one of the six forms
 the block above names, `rem mark each console:` under each round, rather
-than keeping the timing in separate notes. **The fifth field is where an
-operator sees which console wrote a mark**: it is empty unless that console
-was started with `--label-vocab`, and where it is set it names the program
-and the vocabulary, so two consoles' blocks in one CSV are told apart by the
-file rather than by which console you remember starting. **A blank line
+than keeping the timing in separate notes. **The fifth field records which
+program wrote the mark and whether that process held `--label-vocab`**: it
+is empty unless the console was started with the flag, and where it is set
+it names the program and the vocabulary. **It does not tell the three §3
+consoles apart.** All three run the same `ec_watch.py` with the same
+`--label-vocab 0751`, so all three write the byte-identical
+`prog=ec_watch.py label-vocab=0751`; nothing in the file says which window
+a mark was typed in. The three captures are told apart by their
+`--csv` filenames, as the block above names them, and a mark's window
+within a capture is still whatever the operator remembers. **A blank line
 records nothing: the mark prompt says so and asks again**, so there is no
 such thing as an unnamed mark in a capture
 ([`../../windows/tools/ec_watch-marks.md`](../../windows/tools/ec_watch-marks.md)).

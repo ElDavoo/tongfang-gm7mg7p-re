@@ -318,7 +318,7 @@ what happened to it:
   function rather than by line below, deliberately.
 - **One pin in the tool had already drifted on `main` before this change and
   was not this change's to move:** `check_capture_claims.py:514` read
-  `DRIFT` against this tree, the call being at `:549`. It is re-anchored
+  `DRIFT` against this tree, the call being at `:576`. It is re-anchored
   here so the tool is green, and it is named here because a pin corrected in
   passing is a pin whose history cannot be read.
 
@@ -355,7 +355,7 @@ what makes them one.
 | `ec/tools/grade_0751_isolation.py:1435` | `:1364` |
 | `ec/tools/grade_0751_isolation.py:1477` | `:1406` |
 | `ec/tools/grade_0751_isolation.py:3065` | `:2994` |
-| `ec/tools/check_capture_claims.py:549` | `:514` (drifted before this change) |
+| `ec/tools/check_capture_claims.py:576` | `:514` (drifted before this change) |
 | `windows/tools/test_ec_watch.py:148` | `:145` |
 | `windows/tools/test_system_id_probe.py:317` | `:311` |
 | `windows/tools/test_ec_watch.py:1168` | `:1134` |
@@ -415,11 +415,24 @@ the tool's own output, which is the one thing a quotation is for.
 ## What a populated column does and does not say
 
 **It says:** which program wrote the mark, and that that program held
-`--label-vocab 0751` when it did. That is the distinction
-`warn_unchecked_marks` names four ways of arriving at and cannot draw: a §3
-console started without the flag, a watcher restarted mid-block, a
-`gpu_block_watch.py` capture landing in a §3 file, and a pre-flag run are now
-four different things in the file rather than one.
+`--label-vocab 0751` when it did. Those are the two facts a reader cannot
+get another way, and they separate a `gpu_block_watch.py` mark from an
+`ec_watch.py` one, and a mark typed under the vocabulary from one typed
+without it.
+
+**It does not say which console wrote a mark, and cannot.** §3 runs three
+consoles, all three of them `python windows\tools\ec_watch.py … --mark
+--label-vocab 0751`
+([`../../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md`](../../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md):158-163),
+and the field is built from the program name and the vocabulary alone
+(`windows/tools/ec_watch.py:562`) — so all three write the byte-identical
+`prog=ec_watch.py label-vocab=0751`. Two of `warn_unchecked_marks`'s four
+arrivals also collapse: a console started without the flag and a
+`gpu_block_watch.py` capture both write an empty field, and are one value in
+the file rather than two. So the four arrivals are three distinguishable
+values, not four, and the one a §3 operator most wants — *which of my three
+windows did I type this in* — is not among them. The three captures are told
+apart by their `--csv` filenames.
 
 **It does not say:** that the label was checked, or that the mark is
 placeable, or that the block it sits in is the block the operator intended.
@@ -458,7 +471,7 @@ what has been verified.
   50 still read the same. **That last half has a check behind it, and the tool
   is not the one this section used to name.** `check_capture_claims.py`'s
   `read_capture` index is built from `WATCH = "evidence/ec-watch"` alone
-  (`ec/tools/check_capture_claims.py:154`, the one call at `:549`), and a run
+  (`ec/tools/check_capture_claims.py:181`, the one call at `:576`), and a run
   there reports *9 capture claims checked against 10 committed captures*: it
   reads the two, and never the 48. What walks the 48 is
   `MarkProvenanceTests.test_it_agrees_with_the_reader_the_notice_lists_marks_from`

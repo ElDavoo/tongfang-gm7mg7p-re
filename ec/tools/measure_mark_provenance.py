@@ -647,7 +647,7 @@ CITATIONS = [
      "the per-capture census line, which counts rather than spells"),
     ("ec/tools/grade_gpu_door.py", 421, "m, c = fan.read_capture(path)",
      "the second consumer of read_capture's two-tuple"),
-    ("ec/tools/check_capture_claims.py", 549,
+    ("ec/tools/check_capture_claims.py", 576,
      "read_capture(os.path.join(REPO, WATCH, name))",
      "a third, and the only one that reads every committed capture"),
     ("ec/tools/grade_timer_sweep.py", 115, 'if line.startswith("#"):',

@@ -23,7 +23,7 @@ before believing any of it.
 
 With both --mark and --csv, each mark is written into the CSV as its own row
 (`ts,MARK,,label,provenance`) as well as printed, so the capture alone says
-when the operator acted and, under --label-vocab, which console typed it -- see
+when the operator acted and, under --label-vocab, which program wrote it, not which console -- see
 ec/tools/grade_0751_isolation.py, which grades a capture by what moved between
 one mark and the next. A blank line is not a mark: the prompt records nothing,
 says so, and asks again, so no capture holds a mark the operator did not

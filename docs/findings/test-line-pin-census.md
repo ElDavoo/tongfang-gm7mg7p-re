@@ -55,7 +55,7 @@ $ python3 ec/tools/census_test_line_pins.py
 128 pin(s) in 29 markdown file(s): 93 distinct spelling(s), 69 distinct resolved target(s)
   95 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 33 declined
   0 def test_, 24 assertion, 22 comment, 5 blank, 44 other (of the pins that resolve)
-  read 213 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 65 test file(s) in it
+  read 214 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 65 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -67,9 +67,9 @@ and excludes only `.git/`, `vendor/` and `.claude/`, so an **untracked**
 markdown file in a worktree is counted and the figure reads one higher. The
 run above is the committed tree — `git ls-files | xargs cp --parents` into a
 scratch directory, which is `git archive` without the export attributes — and
-that is what makes `213` and `65` the two numbers a reader re-running it gets.
+that is what makes `214` and `65` the two numbers a reader re-running it gets.
 Run in place in a worktree carrying a `.claude-pr/` or any other untracked
-notes, it reads `214`; the difference is the untracked file and nothing else.
+notes, it reads `215`; the difference is the untracked file and nothing else.
 The `65` is `len(suites(REPO))` and moves only when a suite is added.)*
 
 *(Re-run 2026-09-27 for #739, whose write-up
