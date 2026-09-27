@@ -546,9 +546,16 @@ class TheCommittedTree(unittest.TestCase):
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 56)
+        # The step from `56 / 12 / 44` is one suite,
+        # `ec/tools/test_find_indirect_xdata.py` (#34), and it moved the two
+        # figures it moves rather than the named one: its write-up
+        # (`ec/annotations/indirect-xdata-sites.md`) names it by path and
+        # never as `suite.py:NNN`, which is the tail rule two paragraphs
+        # above. That is the axis working -- a suite written with its tool
+        # starts unpinned, and citing one of its lines later moves it.
+        self.assertEqual(len(files), 57)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 44)
+        self.assertEqual(len(tail), 45)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

@@ -120,6 +120,23 @@ into `r2 -a 8051` with no stitching needed.
   sites with no row there read `not recorded` rather than blank, and stderr
   names them. `--check` turns the diff against a committed table into an exit
   code, so a page's "reproduce this byte for byte" is an assertion.
+- **`tools/find_indirect_xdata.py`** — the other XDATA addressing mode, which
+  the two above cannot see at all: `movx a,@r0` / `movx @r1,a` (0xE2, 0xE3,
+  0xF2, 0xF3), one byte each, with the page in the `P2` SFR and the low byte
+  in a register, so the address is not in the instruction. Reach for it when
+  the question is "does the firmware reach this byte at all", which is the
+  question `0x07B9` is the standing counter-example to. It imports `REGIONS`
+  and `region_of` from `trace_xdata_refs.py`, so there is one region map and
+  main-EC and PD-image counts are never added; it reports the raw byte-scan
+  count beside the anchored one because 0xE2/0xE3/0xF2/0xF3 are common
+  *operands* and a byte scan over-counts 8x. `--page 0xNN` answers "does the
+  main EC reach this page" per image and exits non-zero when it does not;
+  `--check` diffs `annotations/indirect-xdata-sites.csv` byte for byte. The
+  blind spot to read before quoting it: it resolves a page only from a literal
+  `mov p2,#imm` inside a 24-byte backward window, so a `P2` set from a
+  register, a table, or across a call is `unresolved` and says which half
+  defeated it — never "absent". `annotations/indirect-xdata-sites.md` is the
+  write-up and its §5 is the full list.
 - **`tools/data_regions.py`** — re-derives every span in
   `annotations/data-regions.yaml` from the committed image, so the map of data
   tables cannot drift from the bytes it claims to describe. `--check`

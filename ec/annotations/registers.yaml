@@ -30,6 +30,21 @@
 #                    control-flow instruction, so a store a branch jumps over is
 #                    invisible to it -- the timer block's one reload is exactly
 #                    such a store (xdata-06c2-06db-timers.md 5).
+#                    The INDIRECT addressing mode is a separate scan and a
+#                    separate caveat: ec/tools/find_indirect_xdata.py looks for
+#                    `movx @Ri`, whose page is in P2 and whose low byte is in a
+#                    register, and finds 44 such sites in the EC image of which
+#                    none resolves to an address -- `mov p2,#imm` occurs 0 times
+#                    in this image, with the same query finding 529 for
+#                    `mov b,#imm`, so the common literal-P2 idiom is not in
+#                    this firmware at all. That is a fact about the FORM, not
+#                    about the register: P2 set from a register or a table, set
+#                    across a call, `mov @Ri,#data` and @dptr walks are all
+#                    outside that scan, and the 12 `mov p2,register` it does
+#                    report turn out to be a data table its own walk decoded as
+#                    code. ec/annotations/indirect-xdata-sites.md 5 is the full
+#                    list of what it does not establish. No `status:` below
+#                    moves on the strength of it, in either direction.
 #
 # reference-count keys (all three are direct MOV DPTR,#addr site counts,
 # and all three inherit the blind spot in the "absent" note below):
