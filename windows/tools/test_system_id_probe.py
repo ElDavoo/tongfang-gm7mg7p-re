@@ -300,15 +300,22 @@ class RunTests(unittest.TestCase):
         at = [i for i, r in enumerate(rows) if ',MARK,' in r]
         self.assertEqual(len(at), 1)
         i = at[0]
-        self.assertEqual(rows[i].split(',', 1)[1], 'MARK,,GPU mode -> dGPU')
+        # The fifth field is `ec_watch.Marker`'s provenance column, empty
+        # because this process has no `--label-vocab` to record: a mark row is
+        # the 0751 capture shape whatever wrote it, and `CSV_HEADER` above is
+        # this tool's own schema and is a different one.
+        self.assertEqual(rows[i].split(',', 1)[1], 'MARK,,GPU mode -> dGPU,')
         self.assertEqual(rows[i - 1].split(",")[1], "4")
         self.assertEqual(rows[i + 1].split(",")[1], "5")
 
     def test_a_mark_row_parses_as_the_grader_expects(self):
         _, _, _, rows = self.run_probe('--mark', label='GPU mode -> dGPU')
         mark = [r for r in rows if ',MARK,' in r][0]
-        ts, addr, old, label = mark.split(',')
+        # The grader reads the first four fields and never the fifth, so this
+        # parses as the four-field row did.
+        ts, addr, old, label, provenance = mark.split(',')
         self.assertEqual((addr, old, label), ('MARK', '', 'GPU mode -> dGPU'))
+        self.assertEqual(provenance, '')
         self.assertTrue(ts.startswith('20'))
 
     def test_without_a_csv_nothing_is_written_to_disk(self):

@@ -476,12 +476,13 @@ class TheCommittedTree(unittest.TestCase):
         self.assertEqual(
             {row[0]: (row[1], row[3]) for row in tool.rows(table)},
             {"ec/tools/test_xdata_cluster_names.py": (33, 10),
-             "ec/tools/test_grade_0751_isolation.py": (21, 15),
-             "windows/tools/test_manual_fan_ctrl_probe.py": (5, 3),
+             "ec/tools/test_grade_0751_isolation.py": (22, 15),
+             "windows/tools/test_manual_fan_ctrl_probe.py": (11, 3),
              "ec/tools/test_disasm8051.py": (4, 1),
-             "windows/tools/test_ec_watch.py": (3, 2),
+             "windows/tools/test_ec_watch.py": (10, 2),
              "ec/tools/test_xdata_register_map.py": (2, 0),
-             "windows/tools/test_system_id_probe.py": (1, 1),
+             "windows/tools/test_gpu_block_watch.py": (2, 0),
+             "windows/tools/test_system_id_probe.py": (4, 1),
              "ec/tools/test_check_site_census.py": (1, 0),
              "ec/tools/test_check_testdata_index.py": (1, 0),
              "ec/tools/test_citation_gap_scan.py": (1, 0),
@@ -516,9 +517,18 @@ class TheCommittedTree(unittest.TestCase):
         # inside, and it was a `test_xdata_cluster_names.py` record, so that
         # file's concentration and this sum each take exactly one and the
         # second entry here is unmoved.
-        self.assertEqual([row[4] for row in cited[:2]], [43, 36])
-        self.assertEqual(cited[0][4] + cited[1][4], 79)
-        self.assertEqual(len(records), 106)
+        # Re-derived again for #739, and the delta is its write-up alone: its
+        # nineteen records take the first row not at all (it names
+        # `test_xdata_cluster_names.py` zero times) and the second `36 -> 37`,
+        # so the sum holds at `80` and only the denominator moves,
+        # `106 -> 125`. The one is `test_grade_0751_isolation.py` and the other
+        # two are the suites whose repaired assertions it names, which is the
+        # "a repoint moves a line, not a name" distinction the paragraph above
+        # draws -- except that these are new records rather than repointed
+        # ones, and so they reweight.
+        self.assertEqual([row[4] for row in cited[:2]], [43, 37])
+        self.assertEqual(cited[0][4] + cited[1][4], 80)
+        self.assertEqual(len(records), 125)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
         # Three figures, and each moves by construction the moment a suite
@@ -571,7 +581,13 @@ class TheCommittedTree(unittest.TestCase):
         # same mistake in prose; the two numbers under it were the same lock in
         # a shorter form. A suite landing is not a defect, and nothing here
         # should go red for one.
-        self.assertEqual(len(files) - len(tail), 12)
+        # `12 -> 13` is #739's write-up, and it is one suite entering the
+        # named table: `windows/tools/test_gpu_block_watch.py`, whose suite had
+        # no committed line-citation and now has two, in the write-up that
+        # names the assertion it repaired. The comment above this assertion is
+        # about not holding the two absolutes; this one is a named count and
+        # moves by construction for the same reason the other two axes do.
+        self.assertEqual(len(files) - len(tail), 13)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

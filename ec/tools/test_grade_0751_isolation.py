@@ -4371,6 +4371,172 @@ class ExistingMarkLabelTests(unittest.TestCase):
         self.assertTrue(all(m.source.endswith('capture.csv') for m in marks))
 
 
+class MarkProvenanceTests(unittest.TestCase):
+    # `existing_mark_provenance`: the mark row's position and its fifth
+    # field. #739, and the reader that makes the column worth writing -- the
+    # two things it returns over `existing_mark_labels` are the position,
+    # which #719 measured as the sharpest limit of the shape that was chosen
+    # over a `# provenance` row, and the column itself.
+    #
+    # The three states are what the cases below are about, because they are
+    # what the format exists to keep apart: absent (a pre-change file), empty
+    # (a process that held no flag) and populated (one that did). A
+    # four-column row read as the second would turn a pre-change capture into
+    # evidence about a console that was never asked.
+    #
+    # The preflight contract is `existing_mark_labels`' and is not restated
+    # here: the file is one a watcher is about to append to, so a reader that
+    # would not open it loses the one warning the notice exists to print. The
+    # last case is the anti-drift guard, and it is over the committed corpus
+    # rather than a fixture written for it.
+    #
+    # Offline throughout: a temp directory and the committed captures under
+    # `testdata/`. No EC, no capture taken, no register read.
+
+    def capture(self, rows, tmp):
+        path = Path(tmp) / 'capture.csv'
+        path.write_text(''.join(row + '\n' for row in rows))
+        return str(path)
+
+    def test_the_three_states_are_three_different_answers(self):
+        # One mark row per state in one file, so the reader is asked to tell
+        # them apart rather than to recognise a shape: four fields, five with
+        # nothing in the fifth, and five with the text a `--label-vocab`
+        # console writes. The first is a pre-change file and the second is
+        # `gpu_block_watch.py`, and the difference between them is the whole
+        # of what the backward-compatibility case is.
+        rows = ['ts,addr,old,new',
+                '2026-01-01T12:00:00.000+01:00,MARK,,wrote 0x0751=0xA0',
+                '2026-01-01T12:00:10.000+01:00,MARK,,settled,',
+                '2026-01-01T12:00:20.000+01:00,MARK,,held,'
+                'prog=ec_watch.py label-vocab=0751']
+        with tempfile.TemporaryDirectory() as tmp:
+            got = grade.existing_mark_provenance(self.capture(rows, tmp))
+        self.assertEqual([prov for _, _, _, prov in got],
+                         [None, '', 'prog=ec_watch.py label-vocab=0751'])
+        # `None` and not `""` for the first, named rather than left to the
+        # list above: a reader that answered "" for a four-field row would be
+        # reporting that a process held no flag, where nothing recorded
+        # whether it held one.
+        self.assertIsNone(got[0][3])
+        # The label is untouched by all three: the column is additive, and a
+        # provenance that moved a field would be a format change the readers
+        # above this one would have had to be reopened for.
+        self.assertEqual([label for _, _, label, _ in got],
+                         ['wrote 0x0751=0xA0', 'settled', 'held'])
+
+    def test_the_ordinal_counts_every_row_the_csv_yields(self):
+        # A `#` row, the header and a blank ahead of the marks, because the
+        # ordinal is a position in the *row stream* rather than a line
+        # number: each of those three is a record the reader consumed and
+        # `skippable_row` dropped, and a position that skipped them would
+        # not be a position a caller could find the row at.
+        rows = ['# 0751 isolation, 0xA0 block',
+                'ts,addr,old,new',
+                '',
+                '2026-01-01T12:00:05.000+01:00,0x0701,0x00,0x11',
+                '# the operator noted the settle here',
+                '2026-01-01T12:00:00.000+01:00,MARK,,wrote 0x0751=0xA0,',
+                '2026-01-01T12:00:30.000+01:00,MARK,,settled,']
+        with tempfile.TemporaryDirectory() as tmp:
+            got = grade.existing_mark_provenance(self.capture(rows, tmp))
+        # 5 and 6, against line numbers 6 and 7: the `#` row, the header and
+        # the blank are three records and three lines, and the ordinal counts
+        # the records.
+        self.assertEqual([ordinal for ordinal, _, _, _ in got], [5, 6])
+
+    def test_the_ordinal_is_a_row_ordinal_and_not_a_line_number(self):
+        # The reason the two are named apart, on the one input where they
+        # differ: a quoted field can carry an embedded newline and `csv` is
+        # what decided where the record ended. A hand-annotated capture whose
+        # label wraps is one mark at one position and two physical lines, so
+        # a reader that reported a line number would point an operator into
+        # the middle of a label.
+        rows = ['ts,addr,old,new',
+                '2026-01-01T12:00:00.000+01:00,MARK,,"held',
+                'over",',
+                '2026-01-01T12:00:30.000+01:00,MARK,,settled,']
+        with tempfile.TemporaryDirectory() as tmp:
+            got = grade.existing_mark_provenance(self.capture(rows, tmp))
+        self.assertEqual([ordinal for ordinal, _, _, _ in got], [1, 2])
+        self.assertEqual(got[0][2], 'held\nover')
+        # The second mark is on line 4 and is at position 2, which is the
+        # gap the docstring's "not a line number" is about.
+        self.assertEqual(got[1][2], 'settled')
+
+    def test_it_does_not_raise_on_what_read_capture_refuses(self):
+        # Three of the four things `read_capture` refuses -- a timestamp
+        # `parse_ts` cannot read, a short row, and (in the case below) a byte
+        # outside the declared codec -- plus a two-column mark row, which is
+        # not a refusal at all and must still come back rather than raise an
+        # IndexError. `existing_mark_labels`' tolerance, carried over rather
+        # than re-decided: the file is one a run is about to append to.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(['ts,addr,old,new',
+                                 '2026-01-01 12:00,MARK,,held',
+                                 '2026-01-01T12:01:00.000+01:00,MARK,',
+                                 '2026-01-01T12:02:00.000+01:00,MARK',
+                                 '2026-01-01T12:03:00.000+01:00,MARK,,settled,'],
+                                tmp)
+            # The same file really is one `read_capture` refuses, so the
+            # leniency above is a difference and not a row shape that never
+            # occurs.
+            with self.assertRaises(ValueError):
+                grade.read_capture(path)
+            got = grade.existing_mark_provenance(path)
+        self.assertEqual([(ts, label, prov) for _, ts, label, prov in got],
+                         [('2026-01-01 12:00', 'held', None),
+                          ('2026-01-01T12:01:00.000+01:00', '', None),
+                          ('2026-01-01T12:02:00.000+01:00', '', None),
+                          ('2026-01-01T12:03:00.000+01:00', 'settled', '')])
+
+    def test_a_byte_the_encoding_cannot_read_does_not_stop_it(self):
+        # The other thing the file can hold that `read_capture` refuses and
+        # this must not: bytes. `CsvSink` appends to a path without ever
+        # decoding it, so a capture written before the codec was declared, or
+        # annotated in an editor that saved something else, is still there at
+        # startup -- 0xE9, as latin-1 and cp1252 both write for `café`, and
+        # as a capture cannot hold. Under the declared codec and with
+        # iteration lazy the raise comes out of the loop rather than the
+        # open, and it came out of the startup path.
+        #
+        # Both marks, not just the one before the bad byte: a reader that
+        # swallowed the decode error to survive it would swallow the rest of
+        # the file with it. And the column is still read, because the byte is
+        # in a label rather than in it.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_bytes(b'ts,addr,old,new\n'
+                             b'2026-01-01T12:00:00.000+01:00,MARK,,caf\xe9,\n'
+                             b'2026-01-01T12:00:30.000+01:00,MARK,,settled,\n')
+            got = grade.existing_mark_provenance(str(path))
+        self.assertEqual([label for _, _, label, _ in got],
+                         ['caf\ufffd', 'settled'])
+        self.assertEqual([prov for _, _, _, prov in got], ['', ''])
+
+    def test_it_agrees_with_the_reader_the_notice_lists_marks_from(self):
+        # The anti-drift guard. The skip rule and the mark branch are spelled
+        # in this reader as well as in `mark_labels_of`, and over the
+        # committed corpus rather than a fixture written for it: every
+        # capture under `testdata/` has to come back as the same `(ts, label)`
+        # pairs, in the same order, from both. A reader that reached a mark
+        # the notice does not list, or skipped one it does, fails here over a
+        # file neither was written for -- which is the failure the position
+        # and the column make worse, not better, if the two ever part.
+        seen = 0
+        for path in sorted((HERE / 'testdata').rglob('*.csv')):
+            with self.subTest(capture=path.name):
+                got = grade.existing_mark_provenance(str(path))
+                self.assertEqual([(ts, label) for _, ts, label, _ in got],
+                                 grade.existing_mark_labels(str(path)))
+                seen += len(got)
+        # Counted rather than left to the loop: a walk that found no captures
+        # would pass every case above without having checked one, and "the
+        # corpus is inert to the format change" has to be a claim somebody
+        # can fail rather than a vacuous one.
+        self.assertGreater(seen, 0)
+
+
 class SelfTestModeTests(unittest.TestCase):
     # The mode the gate calls, and the one
     # `docs/ci/agent-gates-0751-self-test.patch` wires in. Driven through its

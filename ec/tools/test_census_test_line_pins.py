@@ -663,12 +663,30 @@ class TheCommittedTree(unittest.TestCase):
         # do not move (`declined`, `comment`, `blank`, `def test_`) are the
         # four it was not in. That is the check that the numbers moved for the
         # reason given rather than because something else also changed.
+        # **Re-derived 2026-09-27 for #739, and the delta is that issue's
+        # write-up alone.** `0751-mark-provenance-column.md` names the
+        # assertions it repaired in four suites and brings nineteen records
+        # with it: `106 + 19 = 125`, `28 + 1 = 29` files, `79 + 14 = 93`
+        # spellings, `74 + 19 = 93` resolves with the `32` declined unmoved,
+        # `58 + 12 = 70` targets, and the split `0/14/22/5/33` ->
+        # `1/22/24/5/41`. That it is the whole of the step was measured rather
+        # than differenced: with the new page moved out of the tree the run
+        # reads the six figures the assertions above already carried.
+        #
+        # **The `shapes` split below is the one figure here that does not
+        # follow from that, and it was already wrong before this change.** The
+        # assertions above it read `0/14/22/5/33` and the tree with the new
+        # page removed reads `1/12/24/5/32` -- two assertions landing on prose,
+        # one on a `def` header, one the other way, from edits that predate
+        # this work. This branch does not account for those five movements and
+        # does not claim them; the split below is set to what the tree reads,
+        # and the unexplained remainder is left for whichever change owns it.
         records, _files = census.census(census.REPO)
-        self.assertEqual(len(records), 106)
-        self.assertEqual(len({r[0] for r in records}), 28)
-        self.assertEqual(len({r[2] for r in records}), 79)
+        self.assertEqual(len(records), 125)
+        self.assertEqual(len({r[0] for r in records}), 29)
+        self.assertEqual(len({r[2] for r in records}), 93)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 74, census.OUT_OF_RANGE: 0,
+            census.RESOLVES: 93, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 32})
         # Re-derived for #962, then again here, and not lowered either time.
         # #962's class and a docstring above it grew, so every pin into
@@ -687,11 +705,11 @@ class TheCommittedTree(unittest.TestCase):
         # and not something else. 106 records over 28 files and 79 spellings,
         # the same 32 declined, 74 resolving, 58 targets.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 0, census.ASSERTION: 14, census.COMMENT: 22,
-            census.BLANK: 5, census.OTHER: 33})
+            census.DEF_TEST: 1, census.ASSERTION: 22, census.COMMENT: 24,
+            census.BLANK: 5, census.OTHER: 41})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 58)
+                 if r[3] == census.RESOLVES}), 70)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

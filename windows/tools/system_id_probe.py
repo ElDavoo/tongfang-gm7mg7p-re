@@ -258,7 +258,14 @@ class Marker:
             ts = now()
             self.marks.append((ts, label))
             if self._sink:
-                self._sink.row([ts, "MARK", "", label])
+                # The fifth field is `ec_watch.Marker`'s provenance column,
+                # empty here because this process has no --label-vocab to
+                # record: a `--mark` row is the 0751 capture shape, so it is
+                # written as that shape now stands rather than as the one this
+                # file happened to be written in before. Empty and not absent
+                # is the whole difference -- see
+                # docs/findings/0751-mark-provenance-column.md.
+                self._sink.row([ts, "MARK", "", label, ""])
             print(f"--- {ts}  MARK: {label} ---", flush=True)
 
 

@@ -1,0 +1,425 @@
+# A fifth `provenance` column on the mark row, and the reader that makes it worth writing (issue #739)
+
+#719 measured two shapes for the question `warn_unchecked_marks` says it
+cannot answer — which process wrote this mark — and recommended one. This is
+that recommendation implemented: a fifth column on the `ts,MARK,,label` row,
+written by the three writers that write the row in this tree, and a reader
+that returns the column *and the position of the row holding it*.
+
+The measurement is [`ec/tools/measure_mark_provenance.py`](../../ec/tools/measure_mark_provenance.py)
+and its write-up is
+[`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md). Nothing
+below re-argues the choice; the four grounds for it are there, and they are
+re-run over this tree rather than quoted.
+
+**Nothing here has been run at a machine.** No EC, no laptop and no Windows
+box is reachable from a runner. No capture was taken, no mark was typed, no
+register was read and no §3 block was run. Every figure below is offline
+behaviour of a reader over a temp file, or a count over committed files. The
+three commands in
+[§3 of the runbook](../../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md)
+are where a human later sees a populated column, and that is their step.
+
+---
+
+## The four writer decisions, one by one
+
+The measurement's "Its costs" section is explicit that three of the four
+writers must be decided rather than left to drift, so here they are, each
+with the line that decided it.
+
+### 1. `windows/tools/ec_watch.py` `Marker._loop` — widened, and the column is populated
+
+`windows/tools/ec_watch.py:493` now writes
+`self._sink.row([ts, "MARK", "", label, self._provenance or ""])`, and
+`Marker.__init__` at `windows/tools/ec_watch.py:438` takes a defaulted
+`provenance=None` that `main` fills in at `windows/tools/ec_watch.py:562`
+when `--label-vocab` is given and passes at `windows/tools/ec_watch.py:573`.
+`--label-vocab` is the only flag in the tree that produces a populated
+column, because it is the only one that says the process is checking
+anything.
+
+**What the column holds is `prog=<basename of argv[0]> label-vocab=<name>`,
+and that is a decision rather than a shortened `sys.argv`.** Three reasons, and
+the first is the one that settles it:
+
+- A raw join would carry commas, path bytes that are not the format's declared
+  `utf-8`, and a length no reader needs. `prog=` and `label-vocab=` are the two
+  facts a reader of a capture cannot get any other way.
+- The `pid=` the measurement's own `PROVENANCE` sample carried is **gone**, and
+  its sample changed with it. Nothing in this repository reads a pid, and one
+  would make two captures of the same run differ for a reason no reader could
+  use — which would make a committed capture irreproducible for nothing.
+- The tool's constructed captures hold what the writers hold, not a shape
+  nobody writes. That is the same complaint its `write_capture` makes about a
+  hand-joined row a few lines above, applied one level up.
+
+`Path(sys.argv[0]).name` rather than `sys.argv[0]` for the same reason: a
+staged `C:\tools\ec_watch.py` and a checkout's `ec_watch.py` are the same
+program, and a column that differed by a directory would be saying something
+about where a tool was staged rather than about what it checked.
+
+**The default is the load-bearing part, not an omission.** `Marker` is
+imported at module scope by `gpu_block_watch.py:59,166`, which constructs
+`Marker(sink)` with nothing to put in a fourth argument. If the column were
+written only when there is something to say, that caller's marks would come
+back as *not recorded* — state 1 — where the honest answer is state 2, *held
+no flag*. Those two are different claims about different things, and the whole
+reason the three states are states is that they are different. So the column
+is written always, empty when there is nothing to say.
+
+### 2. `windows/tools/system_id_probe.py` `Marker._loop` — widened, empty column
+
+`windows/tools/system_id_probe.py:268` writes the fifth field as `""`. The
+column is a shape and this process has no `--label-vocab` to record, which is
+state 2 rather than a gap in the change.
+
+Its `CSV_HEADER` at `windows/tools/system_id_probe.py:111` is a **different
+schema** — `ts,sweep,0x…,branch,implied` — and is deliberately not touched;
+see *The header* below. Its `CsvSink` at `windows/tools/system_id_probe.py:221`
+writes that header and nothing else, and it shares no code with
+`ec_watch.py`'s.
+
+This writer imports no `ec_watch.Marker`, so scoping the change to
+`ec_watch.Marker._loop` would not have reached it. That was the measurement's
+point 1 and it is why the decision is written down here rather than made by
+omission.
+
+### 3. `ec/tools/ec_timer_capture.py`, four sites — widened, empty column
+
+`ec/tools/ec_timer_capture.py:177`, `:212`, `:218` and `:240`. A different
+capture family, in files the 0751 grader would also open, read by
+`grade_timer_sweep.py:138` under a different label convention
+(`resumed` at `ec/tools/grade_timer_sweep.py:139`).
+
+That reader indexes `r[1]` and `r[3]` and never `r[4]`, so the cost of the
+column here is zero — which was the measurement's point 2, and the reason to
+widen rather than leave a second four-column writer in the same shape. What
+this family gets from the change is smaller and real: a capture taken after
+it is distinguishable from one taken before it, by a field rather than by a
+date in a filename.
+
+`Sink.__init__` at `ec/tools/ec_timer_capture.py:150` writes no header — the
+header is written in `main`, at `ec/tools/ec_timer_capture.py:321`, and is
+covered below.
+
+### 4. `windows/tools/manual_fan_ctrl_probe.py` `MarkCsv.mark` — **not** widened
+
+`windows/tools/manual_fan_ctrl_probe.py:443` is unchanged, and this is a
+decision rather than an oversight. Four reasons, in the order they decided
+it:
+
+- **The format's own documentation already anticipates it.** The
+  measurement's backward-compatibility section lists state 1 as "a pre-change
+  file, **or a probe capture under this scope**"
+  ([`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md), under
+  *Backward compatibility: three states, not two*). A four-column row from
+  this writer therefore already has a documented reading, and a populated
+  column could never appear there to contradict it.
+- **It holds no flag, so the column would be empty there too.** Its labels
+  come from `arm_labels` at `windows/tools/manual_fan_ctrl_probe.py:382` in a
+  process that never runs `--label-vocab`. Widening it would add a field to
+  every mark it writes in order to say nothing, and it would move a fourth
+  writer's captures from state 1 to state 2 for no reader's benefit.
+- **It would make two committed assertions fail**,
+  `windows/tools/test_manual_fan_ctrl_probe.py:513` and `:515`, which is the
+  canary working and not an argument against anything — see below.
+- **The runbook cause it stands for stays open either way.** That capture is
+  reason (d) in the runbook's four ways a file comes to hold an unchecked
+  mark, and a fifth column does not resolve it: nothing in the file can say
+  what §3's forms are checked against when the process that wrote it holds no
+  vocabulary. That is a separate issue and this is not it.
+
+**The tripwire for whichever issue does widen it is named here, so it is
+found rather than rediscovered:** `mark_rows` at
+`windows/tools/test_manual_fan_ctrl_probe.py:508` filters on
+`len(r) == 4` and `:515` asserts `self.assertEqual(len(row), 4, row)`. Those
+two lines are the first thing that fails, and `:508` fails *silently* — it
+returns an empty list rather than raising, so a suite that only counted the
+result would see zero marks and pass.
+
+---
+
+## The reader: `existing_mark_provenance`
+
+`ec/tools/grade_0751_isolation.py:1091`, placed immediately after
+`mark_labels_of` so the row's shape is stated in one place rather than two.
+It returns `(row_ordinal, ts, label, provenance)` per mark row.
+
+**It lives in the grader and not in a writer, and that is #548's rule rather
+than a preference.** The prompt loads this module by path precisely so no
+second copy of a rule can drift from the thing that enforces it; a reader
+that returned the column from a writer would be exactly the copy
+`load_label_vocab`/`load_label_vocab`'s lookup exists to stop. The shape of a
+mark row is the grader's, and so is the shape of the column on it.
+
+Three things about the return value, each of which the docstring states and
+`MarkProvenanceTests` pins:
+
+- **`row_ordinal` is a row ordinal and not a line number.** It is 0-based
+  over every row `csv.reader` yields — the header, the `#` rows and the blank
+  lines included, all of which `skippable_row` drops. The two differ on a
+  hand-annotated capture, because a quoted CSV field can carry an embedded
+  newline: `MarkProvenanceTests.test_the_ordinal_is_a_row_ordinal_and_not_a_line_number`
+  is the one mark at one position and two lines. A reader can produce the
+  ordinal from the rows it already has; a line number would have to re-open
+  the file as text and re-derive the record boundaries `csv` is what decided
+  them by.
+- **`None` and `""` are different values, and that is the whole of what the
+  column is for.** `None` is the column absent, `""` is the column present
+  and empty, and the text is present and populated. **A four-column row can
+  therefore never be read as "this process did not hold the flag."** It reads
+  as *not recorded*, which is a weaker claim about a different thing; a
+  reader that conflated them would turn a pre-change capture into evidence
+  about a console that was never asked.
+- **The preflight contract is carried over**, not re-decided. It is built on
+  `capture_rows(path, errors="replace")` and `skippable_row`, so it does not
+  raise on anything `read_capture` refuses — a short row, a timestamp
+  `parse_ts` cannot read, a byte outside the declared codec — and does not
+  die on the file's encoding. A two-column mark row comes back as
+  `(N, "", "", None)`, matching `mark_labels_of`'s tolerance. The reason is
+  `existing_mark_labels`' and it is unchanged: the file is one a watcher is
+  about to append to, and a preflight that would not open it loses the one
+  warning the notice exists to print.
+
+**One function, not a `mark_provenance_of(rows)` beside it.** No second
+caller needs the rows form, and `existing_mark_labels`' pair of that shape
+exists only because `existing_mark_findings` re-reads the file; this reader
+has one caller, and the tool's own self-test is that caller.
+
+**The skip rule and the `MARK` predicate are spelled in its own body**, as
+the third and fourth such spellings do. The guard against that drifting is a
+test rather than a refactor: `MarkProvenanceTests` at
+`ec/tools/test_grade_0751_isolation.py:4374` holds this reader to
+`mark_labels_of` over **every committed fixture** under `ec/tools/testdata/`,
+so a mark this reaches and a mark the notice lists cannot part. That is the
+same idiom `ExistingMarkLabelTests` uses, and the same reason: merging the
+three contracts would delete the preflight rather than state the shape once.
+
+**It is deliberately not in `measure_mark_provenance.py`'s `families` table.**
+That table drives the assertion that *no* reader's result differs under
+either shape, and this reader's whole purpose is that its result does — it
+is printed under the table instead, as its own line in section 3, and checked
+in `--self-test` beside the same comparison rather than inside it. Adding it
+to `families` would fail the self-test the issue requires to stay green.
+
+**What a populated column is not: "this label was checked."** It is *a
+process that said it was checking, wrote this*. The per-label verdict is
+`parse_mark` and `unplaceable_marks`, which already exist, are per-label, and
+know nothing about who typed what. `warn_unchecked_marks` says nothing new and
+this change does not promise the operator a better warning: the notice at
+`windows/tools/ec_watch.py:295` still builds its list from
+`existing_mark_findings`, which still returns `(ts, label)` pairs. What landed
+is the column and the reader that can see it, not a consumer.
+
+---
+
+## The header, which the issue does not name
+
+`windows/tools/ec_watch.py:155` writes
+`["ts", "addr", "old", "new", "provenance"]` on a new file, and
+`ec/tools/ec_timer_capture.py:321` does the same for the timer family.
+**The consequence, stated plainly: a new capture has a five-name header over
+four-field change rows, because the fifth field is a mark-row field.** Change
+rows are unchanged — `ts,addr,old,new`, four fields, as before.
+
+That is the right trade rather than a compromise, and the reason is that
+every reader in the tree drops the header anyway. `skippable_row` at
+`ec/tools/grade_0751_isolation.py:845` takes it on `row[0] == "ts"`, and so do
+`grade_timer_sweep.py:115` and `check_capture_encoding.py:164` with their own
+spelling of the same test. A name the change rows do not use costs none of
+them, and a header that named four would document a five-field mark row
+wrongly, which is the failure this column's whole point is to avoid.
+
+**This is a format change the measurement did not record.** Its section 2
+counts a header as present or absent per fixture and never asks what the
+header *says*, and its section 1 scans for `"MARK"` and does not match a
+header line. Both are blind sides of scans that were written to answer
+different questions; the one that is worth naming is that "the writer writes
+a header" was not in the census at all until the second header was found here.
+
+`windows/tools/system_id_probe.py:221` writes its own `CSV_HEADER` and is
+deliberately **not** widened: `ts,sweep,0x…,branch,implied` is a different
+schema whose names are not this row's names, and adding `provenance` to it
+would be a claim about columns that file does not have. Naming it in the
+tool's citation table is what makes "left alone" a decision rather than an
+omission.
+
+---
+
+## The census had a blind side, and widening this row found the other three
+
+The measurement looked for the one committed assertion of an exact column
+count and named `windows/tools/test_manual_fan_ctrl_probe.py:515` as the
+canary. **The order of failures is not what the issue's framing says, and
+that is worth correcting while the sites are still fresh.** The lines below
+are where each assertion stands *after* the repair; "breaks when" is what
+happened to the version that was there before it.
+
+| site | what the line reads now | what it did when the row gained a field |
+|---|---|---|
+| `windows/tools/test_ec_watch.py:135` | the header equality, naming five columns | it asserted `ts,addr,old,new` — four names |
+| `windows/tools/test_ec_watch.py:138` | the mark row in a row-list assertion, with its trailing comma | the list ended at the label, so the row's text did not match |
+| `windows/tools/test_ec_watch.py:147` | a five-way unpack of the mark row, the fifth the provenance | it was a **four**-way unpack, and a five-field row raises `ValueError: too many values to unpack (expected 4)` **before any assertion in the test runs** |
+| `windows/tools/test_ec_watch.py:233` | the same row list, in the blank-press class | the same |
+| `windows/tools/test_ec_watch.py:406` | the same row list in a run holding `--label-vocab`, compared without the fifth field | the row's fifth field named whichever runner invoked the suite, so a literal list of rows could not hold it |
+| `windows/tools/test_gpu_block_watch.py:869` | the header equality, naming five columns | it asserted four names — `gpu_block_watch.py:59,166` imports `CsvSink` and `Marker` from `ec_watch` and constructs `Marker(sink)` |
+| `windows/tools/test_gpu_block_watch.py:872` | the mark row, with its trailing comma | the list ended at the label |
+| `windows/tools/test_system_id_probe.py:307` | the mark row, with its trailing comma | the assertion's right side was the four-field row |
+| `windows/tools/test_system_id_probe.py:316` | a five-way unpack, as `test_ec_watch.py:147` | a four-way unpack |
+| `windows/tools/test_manual_fan_ctrl_probe.py:508` | `mark_rows`'s `len(r) == 4` filter | **unchanged**, and it would fail *silently* — an empty list rather than an exception |
+| `windows/tools/test_manual_fan_ctrl_probe.py:513` | the header equality, four names | **unchanged** — only if the probe is widened, which this change does not do |
+| `windows/tools/test_manual_fan_ctrl_probe.py:515` | `self.assertEqual(len(row), 4, row)` | **unchanged**, and the loudest of the three: it is the first to raise |
+
+So the *first* failure of the three suites the change actually breaks is a
+`ValueError` from a tuple unpack, not an assertion, and it is in
+`test_ec_watch.py` rather than in the file the measurement named. The scan
+looked for one spelling of "an exact column count" and the tree has three
+more, none of which is that spelling.
+
+This is the fourth spelling of the same fact this tree keeps producing: the
+measurement's own census found seven writers where a hand-typed list would
+have found two, its literal scan missed the single-quoted `'MARK'`
+assertions, its call scan missed the consumers that only count, and its
+canary scan missed the unpacks. **None of these is a defect in the scans**,
+which were each written to answer one question. The generalisation is the one
+worth keeping: a census's coverage is a property of the pattern it matches,
+and "the tree has more of this than the scan says" is the default outcome of
+writing the pattern before looking at what the tree holds.
+
+---
+
+## The issue's line numbers had drifted, and the real ones are above
+
+Every line in the issue's text is a line that has since moved. Recorded here
+rather than silently re-pinned, so a reader who goes looking for `:355` knows
+what happened to it:
+
+- `ec_watch.py:355` (`Marker._loop`) was already stale before this change:
+  it read `windows/tools/ec_watch.py:433`, and is `:450` now. The issue's
+  `:254` for `warn_unchecked_marks` read `:288` and is `:295`; `:361` read
+  `:368` and is `:368` — that one had not moved. The tool's table had
+  re-anchored `:473`/`:288`/`:361` after #718, #748 and #749; this change
+  moved them again and the table moved with them.
+- `system_id_probe.py:256` was already stale before this change: the writer
+  read `:261` and is `:268` now.
+- `ec_timer_capture.py:164`, `:199`, `:205`, `:227` are `:169`, `:204`,
+  `:210`, `:232` before this change.
+- `grade_0751_isolation.py:735` (`existing_mark_labels`) is `:896`, and the
+  flat `(row[0], row[3])` list the issue names is built in `mark_labels_of` at
+  `:1087`, not at `:735`.
+- `measure_mark_provenance.py:457` (`CITATIONS`) and `:621`/`:647`
+  (`check_citations`/`check_page`) are the tool's own, and the most volatile
+  lines in the tree: they are `:509`, `:696` and `:722` now. Named by
+  function rather than by line below, deliberately.
+- **One pin in the tool had already drifted on `main` before this change and
+  was not this change's to move:** `check_capture_claims.py:514` read
+  `DRIFT` against this tree, the call being at `:549`. It is re-anchored
+  here so the tool is green, and it is named here because a pin corrected in
+  passing is a pin whose history cannot be read.
+
+---
+
+## The pins this change moved
+
+`measure_mark_provenance.py` re-reads every site at the line quoted, and
+`check_page` holds the write-ups to the tool's output, so a pin that moved has
+to be named by a page that says it moved. This is that page for the pins the
+change moved; the *before* column is what
+[`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) quotes, and
+it is left there rather than edited, because that page is the record of a
+measurement and this one is the record of a format change.
+
+| after | before |
+|---|---|
+| `windows/tools/ec_watch.py:155` | — (the header is new to the census) |
+| `windows/tools/ec_watch.py:295` | `:288` |
+| `windows/tools/ec_watch.py:368` | `:361` |
+| `windows/tools/ec_watch.py:493` | `:473` |
+| `windows/tools/system_id_probe.py:268` | `:261` |
+| `ec/tools/ec_timer_capture.py:157` | `:149` |
+| `ec/tools/ec_timer_capture.py:177` | `:169` |
+| `ec/tools/ec_timer_capture.py:212` | `:204` |
+| `ec/tools/ec_timer_capture.py:218` | `:210` |
+| `ec/tools/ec_timer_capture.py:240` | `:232` |
+| `ec/tools/ec_timer_capture.py:321` | — (the header is new to the census) |
+| `ec/tools/grade_0751_isolation.py:1156` | — (the reader is new) |
+| `ec/tools/grade_0751_isolation.py:1179` | `:1108` |
+| `ec/tools/grade_0751_isolation.py:1192` | `:1121` |
+| `ec/tools/grade_0751_isolation.py:1435` | `:1364` |
+| `ec/tools/grade_0751_isolation.py:1477` | `:1406` |
+| `ec/tools/grade_0751_isolation.py:3065` | `:2994` |
+| `ec/tools/check_capture_claims.py:549` | `:514` (drifted before this change) |
+| `windows/tools/test_ec_watch.py:148` | `:145` |
+| `windows/tools/test_system_id_probe.py:317` | `:311` |
+
+The shapes page's own transcripts — sections 1, 2, 3 and 5 — are the
+measurement's as taken, and they are a quotation of a run rather than a live
+view. Re-run the tool rather than trusting them; that is what the page says
+about itself, and this change is the case it was written for.
+
+---
+
+## What a populated column does and does not say
+
+**It says:** which program wrote the mark, and that that program held
+`--label-vocab 0751` when it did. That is the distinction
+`warn_unchecked_marks` names four ways of arriving at and cannot draw: a §3
+console started without the flag, a watcher restarted mid-block, a
+`gpu_block_watch.py` capture landing in a §3 file, and a pre-flag run are now
+four different things in the file rather than one.
+
+**It does not say:** that the label was checked, or that the mark is
+placeable, or that the block it sits in is the block the operator intended.
+Those are `parse_mark` and `unplaceable_marks`, and they are per-label. A
+consumer that printed this column as a checking verdict would be reporting
+something the file does not contain — which is why the reader's own docstring
+says it in those words and the tests do not assert anything about labels
+through it.
+
+**It is not a claim about the machine.** Nothing in this change was observed
+at a laptop. The four states of a capture's usefulness to a reader — absent,
+empty, populated, and *never written by a human* — are all decided by what a
+program writes into a file, and a program writing into a file is the whole of
+what has been verified.
+
+---
+
+## What is out of scope, and what is left open
+
+- **`manual_fan_ctrl_probe.py`**, decided against above with the tripwire
+  named. A follow-up issue, not this one.
+- **Any consumer.** Displaying provenance in the notice, grading on it, a
+  `--check-provenance` mode: the reader is the deliverable, the consumer is
+  the next issue. This change promises the operator no better warning and
+  delivers none.
+- **Re-recording the two committed timer captures** in
+  `evidence/ec-watch/`. They stopped being representative the day a capture is
+  taken with the new shape, which is a hardware run. The honest statement is
+  that they are stale as *examples* of the format, not that they are wrong:
+  they are four-column mark rows, and the reader reads them as state 1, which
+  is the correct reading of a four-column row.
+- **The committed fixtures under `ec/tools/testdata/`.** All 50 hold
+  four-column mark rows and all 50 still grade identically —
+  `check_capture_claims.py` opens every one of them through `read_capture`,
+  and the fixture set is not inert to the format change, only unchanged by it.
+- **Anything outside this repository.** No issue and no pull request is opened
+  anywhere else, and this change does not end at an upstream contribution.
+- **`.github/`.** The push token has no `workflow` scope, so no gate is wired
+  for the repaired suites or the tool's new cases. `agent-gates.sh` is a file
+  copied from `ElDavoo/agent-pipeline` and a gate call is an upstream change
+  and a re-copy, not a line here — the same reason
+  `0751-mark-provenance-shapes.md` left its self-test ungated.
+
+## Re-deriving this
+
+```console
+python3 ec/tools/measure_mark_provenance.py              # the tables, re-run
+python3 ec/tools/measure_mark_provenance.py --self-test  # checked rather than printed
+python3 ec/tools/test_grade_0751_isolation.py            # MarkProvenanceTests
+bash tools/run-tests.sh                                  # the repaired suites
+python3 ec/tools/check_capture_claims.py                 # the 50 committed fixtures
+```
+
+Every one of these is offline: temp files and committed captures. None of them
+opens an EC, and none of them is evidence about the machine.

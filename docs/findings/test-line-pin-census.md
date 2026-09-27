@@ -20,7 +20,7 @@ is the standing §4a-4d gives every figure here, and the trees differ: the count
 has been `105`, `106` and `107` at different points, and the paragraphs that
 say `106` and the paragraphs that say `107` are each true of the tree they were
 measured on. **The figures for the tree this file is in now are the ones in the
-transcript under *The measurement*, and they are `106 / 28 / 79 / 58`.** Every
+transcript under *The measurement*, and they are `125 / 29 / 93 / 70`.** Every
 other number in this file is a record of a tree, not a claim about this one.
 
 That is a real weakness in the file's shape rather than a disagreement in its
@@ -52,14 +52,27 @@ census, and the count it starts from.
 
 ```console
 $ python3 ec/tools/census_test_line_pins.py
-106 pin(s) in 28 markdown file(s): 79 distinct spelling(s), 58 distinct resolved target(s)
-  74 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
-  0 def test_, 14 assertion, 22 comment, 5 blank, 33 other (of the pins that resolve)
-  read 207 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 59 test file(s) in it
+125 pin(s) in 29 markdown file(s): 93 distinct spelling(s), 70 distinct resolved target(s)
+  93 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
+  1 def test_, 22 assertion, 24 comment, 5 blank, 41 other (of the pins that resolve)
+  read 209 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 60 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
 ```
+
+*(Re-run 2026-09-27 for #739, whose write-up
+[`0751-mark-provenance-column.md`](0751-mark-provenance-column.md) names the
+repaired assertions in four suites and brings **nineteen** new records with it:
+`106 + 19 = 125`, `28 + 1 = 29` files, `79 + 14 = 93` spellings,
+`58 + 12 = 70` targets, `74 + 19 = 93` resolves with the `32` declined
+unmoved, and the shape split `0/14/22/5/33` → `1/22/24/5/41`. That is the
+whole of the delta, and it was measured rather than differenced: with the new
+page moved out of the tree the run reads the six figures the block above
+carried, so the step is this change's and not something that also moved. The
+pre-merge-log figures this block carried until the 2026-09-27 removal, and
+every paragraph further down that states a number, are the record of the trees
+they were measured on and stay visible per §4a-4d.)*
 
 *(Re-run 2026-09-27 after the per-merge log above was removed, and the `107`/`29`/`80`/`59` this block carried until then are left visible in §4a-4d terms: they were true of every tree up to that removal, which is what dropped one pin — the row whose only citing line was a passing mention inside the log itself. The `.claude/` in the `read` line is the worktree pruning `run-tests.sh` gained the same day, so this figure and the runner's own are the same population again. **This block is a run, not a held figure**: re-run the tool rather than editing it, which is the rule the 3,522-line chain in `tools/README.md` spent its length rediscovering.)*
 
@@ -871,7 +884,7 @@ this file.
 
 | verdict | what it means | here |
 |---|---|---|
-| `resolves` | the file was found and the span is one it has | **74** |
+| `resolves` | the file was found and the span is one it has | **93** |
 | `out-of-range` | the file is there and the span ends past its end | 0 |
 | `unresolved-path` | no such file under either reading | 0 |
 | `ambiguous-path` | a bare module name two files in the tree could answer to | 0 |
@@ -916,11 +929,15 @@ duplicate.
 
 | shape | here | what a pin naming it is pointing at |
 |---|---|---|
-| `def test_` | **5** | the header of a test case |
-| assertion | **18** | the `assertEqual`/`assertGreater` that decides the claim |
-| comment | 10 | prose the case is annotated with |
-| `blank` | 6 | nothing at all — the blank line above what the span is about |
-| other | 35 | a `def` that is not a test, an assignment, a `setUpClass` body |
+| `def test_` | **1** | the header of a test case |
+| assertion | **22** | the `assertEqual`/`assertGreater` that decides the claim |
+| comment | 24 | prose the case is annotated with |
+| `blank` | 5 | nothing at all — the blank line above what the span is about |
+| other | 41 | a `def` that is not a test, an assignment, a `setUpClass` body |
+
+*(The `here` column is the run above, re-read on the tree this file is in
+now. The split in the italic paragraph below it is the record of the nine
+trees it was measured on and is left written as each of them read.)*
 
 *(The split has now been measured nine times and the only rows that have ever
 moved are the assertions and `other`: **5 / 15 / 5 / 8 / 11 over 44** as the
@@ -1111,9 +1128,28 @@ the half this table exists to record.
 | [`0751-grader-unplaced-window-scope.md`](0751-grader-unplaced-window-scope.md):226 | `ec/tools/test_grade_0751_isolation.py:16` | by-path | blank | **does not carry** |
 | [`0751-grader-unplaced-window-scope.md`](0751-grader-unplaced-window-scope.md):310 | `ec/tools/test_grade_0751_isolation.py:1862` | by-path | comment | carries, adjacent |
 | [`0751-grader-unplaced-window-scope.md`](0751-grader-unplaced-window-scope.md):426 | `ec/tools/test_grade_0751_isolation.py:2694` | by-path | comment | carries, adjacent |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):125 | `windows/tools/test_manual_fan_ctrl_probe.py:513` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):135 | `windows/tools/test_manual_fan_ctrl_probe.py:508` | by-path | other | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):193 | `ec/tools/test_grade_0751_isolation.py:4374` | by-path | other | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):253 | `windows/tools/test_manual_fan_ctrl_probe.py:515` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):261 | `windows/tools/test_ec_watch.py:135` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):262 | `windows/tools/test_ec_watch.py:138` | by-path | other | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):263 | `windows/tools/test_ec_watch.py:147` | by-path | other | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):264 | `windows/tools/test_ec_watch.py:233` | by-path | other | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):265 | `windows/tools/test_ec_watch.py:406` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):266 | `windows/tools/test_gpu_block_watch.py:869` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):267 | `windows/tools/test_gpu_block_watch.py:872` | by-path | other | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):268 | `windows/tools/test_system_id_probe.py:307` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):269 | `test_ec_watch.py:147` | by-name | other | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):269 | `windows/tools/test_system_id_probe.py:316` | by-path | other | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):270 | `windows/tools/test_manual_fan_ctrl_probe.py:508` | by-path | other | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):271 | `windows/tools/test_manual_fan_ctrl_probe.py:513` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):272 | `windows/tools/test_manual_fan_ctrl_probe.py:515` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):353 | `windows/tools/test_ec_watch.py:148` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):354 | `windows/tools/test_system_id_probe.py:317` | by-path | assertion | carries |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):105 | `windows/tools/test_manual_fan_ctrl_probe.py:508` | — | — | **declined** (fenced) |
-| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):203 | `windows/tools/test_ec_watch.py:145` | by-path | assertion | carries |
-| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):204 | `windows/tools/test_system_id_probe.py:311` | by-path | assertion | carries |
+| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):203 | `windows/tools/test_ec_watch.py:145` | by-path | comment | carries |
+| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):204 | `windows/tools/test_system_id_probe.py:311` | by-path | def test_ | carries |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):231 | `windows/tools/test_manual_fan_ctrl_probe.py:508` | by-path | other | carries |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):541 | `windows/tools/test_manual_fan_ctrl_probe.py:515` | by-path | assertion | carries |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):579 | `test_manual_fan_ctrl_probe.py:513` | by-name | assertion | **records another line** |
@@ -1152,7 +1188,7 @@ the half this table exists to record.
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):126 | `ec/tools/test_grade_0751_isolation.py:4057` | by-path | assertion | carries |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):127 | `ec/tools/test_grade_0751_isolation.py:4166` | by-path | other | carries |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):128 | `ec/tools/test_grade_0751_isolation.py:4356` | by-path | assertion | carries |
-| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):139 | `windows/tools/test_ec_watch.py:1134` | by-path | other | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):139 | `windows/tools/test_ec_watch.py:1134` | by-path | comment | carries |
 | [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md):68 | `ec/tools/test_citation_gap_scan.py:109` | by-path | assertion | carries |
 | [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md):45 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):72 | `ec/tools/test_xdata_cluster_names.py:799` | — | — | **declined** (fenced) |

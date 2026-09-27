@@ -540,13 +540,16 @@ class TheCommittedTree(unittest.TestCase):
     def test_the_committed_table_reconciles_and_exits_zero(self):
         rc, out, err = run_main(check.REPO)
         self.assertEqual(rc, 0, err)
-        # 106 rather than 107: the census row for the one pin that lived
-        # inside `test-line-pin-census.md`'s per-merge log went with the log,
-        # and a table row with no record behind it is the `unplaced-row` this
-        # tool exists to name. Re-derived, not lowered -- `test_census_test_line_pins.py`
-        # carries the same delta with every counter in it.
-        self.assertIn("106 table row(s) against 106 census record(s)", out)
-        self.assertIn("106 placed", out)
+        # 125 rather than 106: #739's write-up brings nineteen records and the
+        # nineteen rows beside them, every one of them placed. The 106 rather
+        # than 107 that stood here before is the census row for the one pin
+        # that lived inside `test-line-pin-census.md`'s per-merge log, which
+        # went with the log -- a table row with no record behind it is the
+        # `unplaced-row` this tool exists to name. Re-derived, not lowered --
+        # `test_census_test_line_pins.py` carries the same delta with every
+        # counter in it.
+        self.assertIn("125 table row(s) against 125 census record(s)", out)
+        self.assertIn("125 placed", out)
 
     def test_every_class_is_zero_on_the_committed_tree(self):
         # Not left to a prose figure. Zero is the measurement here -- the
@@ -564,7 +567,11 @@ class TheCommittedTree(unittest.TestCase):
         table, records, placed, _problems, _uncompared = check.reconcile(check.REPO)
         self.assertTrue(records)
         self.assertTrue(table)
-        self.assertEqual(placed, 106)
+        # `106 -> 125` is #739's write-up: nineteen new records, nineteen
+        # new rows, all of them placed. The count is placed rows rather
+        # than table rows, so it moves with the corpus and not with the
+        # table's shape.
+        self.assertEqual(placed, 125)
 
     def test_the_committed_read_and_shape_cells_are_the_census_vocabulary(self):
         # The two vocabularies the table's own cells have to be drawn from, and
@@ -592,7 +599,10 @@ class TheCommittedTree(unittest.TestCase):
         # `by-name` 18 rather than 19 for the same one row: it was the only
         # `by-name` row that went, and the other three cells are unmoved,
         # which is the control the paragraph below this one argues from.
-        self.assertEqual(read, {census.BY_PATH: 54, census.BY_NAME: 18,
+        # Re-derived for #739 on top of that: its write-up's nineteen records
+        # are eighteen `by-path` and one `by-name`, so `by-path` 54 -> 72 and
+        # `by-name` 18 -> 19, with `by-beside` and the declined `-` unmoved.
+        self.assertEqual(read, {census.BY_PATH: 72, census.BY_NAME: 19,
                                 census.BY_BESIDE: 2, "-": 32})
         # The shape split is re-derived rather than lowered, twice. #962 adds a
         # class to `test_xdata_cluster_names.py` and corrects a docstring above
@@ -619,8 +629,15 @@ class TheCommittedTree(unittest.TestCase):
         # control for it in the other direction: the row is new rather than
         # moved, so unlike the seven repointed rows it cannot have changed where
         # anything lands.
-        self.assertEqual(shape, {census.ASSERTION: 14, census.COMMENT: 22,
-                                 census.BLANK: 5, census.OTHER: 33, "-": 32})
+        # Re-derived for #739 on top of #1009's `0/15/22/5/33`: its write-up's
+        # nineteen rows are ten assertions and nine `other`, so the split reads
+        # `1/22/24/5/41`. The `1` is a `def test_` row -- a pin that lands on a
+        # test case's own header -- which the six figures above did not carry
+        # a place for, and which is the shape a pin naming a whole case rather
+        # than a line inside one is read as.
+        self.assertEqual(shape, {census.ASSERTION: 22, census.COMMENT: 24,
+                                 census.BLANK: 5, census.OTHER: 41,
+                                 census.DEF_TEST: 1, "-": 32})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing

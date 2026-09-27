@@ -662,3 +662,24 @@ itself. What the measurement settles is what a change would cost, which is a
 fact about this tree; whether the column's contents are worth writing on the
 machine is a human's step, and implementing the chosen shape is the next
 issue's.
+
+> **Correction (2026-09-27, issue #739), leaving the sections above as they
+> were taken.** The last sentence's "the next issue's" has been this issue's
+> since it landed: the shape recommended at the end of this page is
+> implemented, three of the four writers are widened, and
+> `existing_mark_provenance` is the reader this page's sharpest finding asked
+> for. **The transcripts in sections 1, 2, 3 and 5 are the measurement's as
+> taken, and their line numbers no longer describe the tree** — the widened
+> writers moved, the grader's reader moved in above `partition_capture_rows`,
+> and the census now counts a fifth site over the row and two headers it
+> never looked for. Nothing in the *argument* above is falsified by that; the
+> figures were re-run over the changed tree and the two shapes still cost the
+> same in every reader, because every reader indexes rather than unpacks.
+> Re-run `python3 ec/tools/measure_mark_provenance.py` rather than trusting
+> the quotations — which is what this page has said about them since it was
+> written, and this is the case it was written for. The record of what moved
+> and why is
+> [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md), and one
+> pin in the tool's own table (`check_capture_claims.py:514`) had already
+> drifted on `main` before that change and is re-anchored there rather than
+> quietly fixed here.

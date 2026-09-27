@@ -1088,6 +1088,77 @@ def mark_labels_of(rows):
     return out
 
 
+def existing_mark_provenance(path):
+    """(ordinal, ts, label, provenance) for the mark rows `path` holds.
+
+    `existing_mark_labels` with the position and the fifth column, and the
+    two are one reader: a preflight that names a mark has to be able to say
+    *which* mark, and a flat `(ts, label)` list cannot -- #719 measured that
+    as the sharpest limit of the shape that was chosen over a comment row, and
+    [its page](0751-mark-provenance-shapes.md) says so.
+
+    **`ordinal` is a row ordinal and not a line number.** It is 0-based over
+    every row `csv.reader` yields -- the header, the `#` rows and the blank
+    lines included, all of which `skippable_row` drops below -- so a quoted
+    field carrying an embedded newline is one position and two lines, and on
+    a hand-annotated capture the two are different numbers. The ordinal is
+    what a reader can produce from the rows it already has; a line number
+    would have to re-open the file as text and re-derive the record
+    boundaries `csv` is what decided them by.
+
+    **`None` and `""` are different answers, and holding them apart is the
+    whole of what the column is for.** A mark row carries three states and
+    they must not collapse into two:
+
+      * `None` -- the column is absent, so nothing was recorded. A file
+        written before the column existed, or a `manual_fan_ctrl_probe.py`
+        capture.
+      * `""` -- the column is there and empty: a process that held no
+        `--label-vocab` to record.
+      * the text -- a process that held one, naming itself and the
+        vocabulary.
+
+    So a four-column mark row never reads as "this process did not hold the
+    flag". It reads as *not recorded*, which is a weaker claim about a
+    different thing, and a caller that read it the other way would turn a
+    pre-change capture into evidence about a console that was never asked.
+    That is the backward-compatibility case `ec_watch.Marker` writes the
+    column always to keep reachable.
+
+    **What a populated column is not.** It is *a process that said it was
+    checking, wrote this*; it is not *this label was checked*. The
+    per-label verdict is `parse_mark` and `unplaceable_marks`, which are
+    per-label, already exist, and know nothing about who typed what. Neither
+    shape of provenance moves that boundary, and a consumer that prints this
+    as a checking verdict is reporting something false.
+
+    A preflight, on `existing_mark_labels`' contract rather than
+    `read_capture`'s: `capture_rows(path, errors="replace")` and
+    `skippable_row`, so a short row, a timestamp `parse_ts` cannot read and a
+    byte outside the declared codec all come back as something to name rather
+    than as an exception. The file is one a watcher is about to append to, and
+    a preflight that would not open it loses the one warning this exists to
+    print. A two-column mark row comes back as `(N, "", "", None)`.
+
+    The skip rule and the mark branch are spelled here rather than shared,
+    which is the duplication #548 left and the row shape still owns: the
+    rule is `skippable_row` and the branch is a decision, and the three
+    readers that have one keep a different contract for it. The guard
+    against the two drifting is a test rather than a refactor --
+    `MarkProvenanceTests` holds this to `mark_labels_of` over every committed
+    fixture under `testdata/`, so a mark this reaches and a mark the notice
+    lists cannot part.
+    """
+    out = []
+    for ordinal, row in enumerate(capture_rows(path, errors="replace")):
+        if skippable_row(row):
+            continue
+        if len(row) > 1 and row[1] == "MARK":
+            out.append((ordinal, row[0], row[3] if len(row) > 3 else "",
+                        row[4] if len(row) > 4 else None))
+    return out
+
+
 def partition_capture_rows(rows, path):
     """(accepted, refused) over already-read `rows`, by the rules
     `take_capture_row` applies, for the ones `read_capture` never got to.
