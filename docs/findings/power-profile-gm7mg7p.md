@@ -28,7 +28,7 @@ nothing with it, and the host has to do all of it.
 
 | half | what it found | where |
 |---|---|---|
-| static | All 29 firmware sites that touch `0x0751` touch no other XDATA byte. They are bit tests and read-modify-writes of bits 4-7. The per-mode default blocks (`0x0730-0x0737`, `0x07A7-0x07AA`) have **no read site at all** in the image, and the EC's only found writer of `0x0783-0x0785` is gated on `AP_OEM` (`0x0741`) bit 0 rather than on the mode, and writes zero. | `ec/annotations/manual-fan-ctrl-0751.md` §5; `ec/annotations/registers.yaml`, `MANUAL_FAN_CTRL` |
+| static | All 29 firmware sites that touch `0x0751` touch no other XDATA byte. They are bit tests and read-modify-writes of bits 4-7. The per-mode default blocks (`0x0730-0x0737`, `0x07A7-0x07AA`) have **no read site at all** in the image, and the EC's only found writer of `0x0783-0x0785` is gated on `AP_OEM` (`0x0741`) bit 0 rather than on the mode, and writes zero. | `ec/annotations/manual-fan-ctrl-0751.md` §2 (the 29 sites), §4 (the one `0x0783-0x0785` write) and §5 (the default blocks); `ec/annotations/registers.yaml`, `MANUAL_FAN_CTRL` |
 | live | On AC, from Turbo, service running, `0x0751` was set to each of `0xA0`/`0x00`/`0x10` and held 20 s while `0x0783-0x0787`, `0x07C5`, `0x07C6`, `0x0743-0x0746` and `0x0F00-0x0F5F` were watched. Nothing else moved. A silent write persisted — the service, not event-triggered, did not revert it. | `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md`; `evidence/ec-watch/2026-09-23-0751-isolation.txt` |
 
 Both halves agree, which is the only reason the conclusion above is worth
@@ -56,7 +56,7 @@ repository's, and that is the point:
   `evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv`). More usefully,
   **the EC produces the same `0x10` itself** on its own Turbo path at bank0
   `0xABE8` and `0xC741`, so the firmware and the service agree on the encoding
-  (`ec/annotations/manual-fan-ctrl-0751.md` §5). Writing 0xA0/0x00/0x10 is
+  (`ec/annotations/manual-fan-ctrl-0751.md` §3). Writing 0xA0/0x00/0x10 is
   therefore not a transcription of the service's constants; it is writing what
   the EC already writes.
 - The PL triples are read out of the EC's own default blocks at apply time.
@@ -108,12 +108,13 @@ with the bit clear for the fan-curve handshake
 That is the whole reason the curve is left out, and it is a real trade rather
 than an omission. The curve's mailbox at `0x0F5D`/`0x0F5E`/`0x0F5F` requires
 clearing and re-setting `0x0741` bit 0, which is exactly the window in which
-the unresolved PL clear at `0xA833` can fire;
-`ec/annotations/manual-fan-ctrl-0751.md` §6 calls the overlap "unresolved" and
-names it the first thing to check if PL bytes ever go to zero around a table
-refresh. **The consequence is stated in the PR body rather than left for a
-reviewer to infer: a profile switch changes the power limits and not the
-curve.**
+the PL clear at `0xA833` can fire. `ec/annotations/manual-fan-ctrl-0751.md` §4
+("The one blind write") is where that clear is documented, and its §6 calls
+the overlap "not established" and names it the first thing to check if PL
+bytes ever go to zero around a table refresh; `windows/vendor-ec-map.md:276`
+is where the same overlap is called "unresolved". **The consequence is
+stated in the PR body rather than left for a reviewer to infer: a profile
+switch changes the power limits and not the curve.**
 
 The mechanism is decoded, so the follow-up does not start from zero. EC
 handler at bank0 `0x888D`; magic `0xFD` at `0x0F5D` and `0xC9` at `0x0F5E`;
@@ -159,8 +160,8 @@ write a handler into — it names "the `platform_profile` struct, the
 existing profile store/cycle helpers". It does not, and two measurements say
 so, of different weight. The first is a quotation rather than a search:
 `struct uniwill_device_descriptor` is reproduced in full at
-`upstream-excerpt-profile.txt:235-242` (upstream lines 428-435, closing brace
-included), four fields, and no `platform_profile` member among them. The
+`upstream-excerpt-profile.txt:237-244` (upstream lines 428-435, closing brace
+included), five members, and no `platform_profile` member among them. The
 second is a scan of four spellings, over the whole extracted tree:
 
     $ grep -rn 'platform_profile\|PLATFORM_PROFILE\|profile_cycles\|profile_available' .

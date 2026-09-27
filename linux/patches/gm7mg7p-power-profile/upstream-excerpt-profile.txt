@@ -59,7 +59,7 @@ existing profile store/cycle helpers". All three are absent here, and two
 measurements say so, of different weight.
 
   - `struct uniwill_device_descriptor` is quoted in full at 428-436 below --
-    four fields, closing brace included -- with no `platform_profile` member
+    five members, closing brace included -- with no `platform_profile` member
     in it. That is the struct the callback would go in, read rather than
     searched for, and it is the quotation that establishes the missing member.
   - A scan for the names, which is a scan of four spellings and not a reading

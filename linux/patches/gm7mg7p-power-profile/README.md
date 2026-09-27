@@ -66,8 +66,8 @@ $ grep -rn 'platform_profile\|PLATFORM_PROFILE\|profile_cycles\|profile_availabl
 
 Four spellings is what it looks for, so on its own that is a statement about
 those four names rather than about the driver's functionality. What carries
-the functional half is a quotation instead: `struct
-uniwill_device_descriptor` is reproduced complete in the excerpt, four fields
+the functional half is a quotation instead: `struct uniwill_device_descriptor`
+is reproduced complete in the excerpt (upstream lines 428-435), five members
 and no `platform_profile` member, so the struct this patch adds a callback to
 has nowhere to put one. And what the tree does carry is the keymap line at
 `uniwill-acpi.c:478`, commented "Reported when user wants to cycle the
@@ -132,9 +132,9 @@ and the answer is the negative one — so a `0x0751`-only profile is a patch thi
 repository has already measured and knows does not switch power modes. Three
 committed places say it, and the plan is built on all three:
 
-- `ec/annotations/manual-fan-ctrl-0751.md` §5 — all 29 firmware sites that
-  touch `0x0751` touch no other XDATA byte; the per-mode default blocks have no
-  read site in the image at all.
+- `ec/annotations/manual-fan-ctrl-0751.md` §2 — all 29 firmware sites that
+  touch `0x0751` touch no other XDATA byte; and its §5 — the per-mode default
+  blocks have no read site in the image at all.
 - `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:3` — "**Status: run
   2026-09-23 (issue #99); the prediction held.**" On AC, from Turbo, service
   running, `0x0751` was set to each of `0xA0`/`0x00`/`0x10` and held 20 s
@@ -156,11 +156,13 @@ directs, and for a second reason as well — see below.
 - **The fan-table replay.** The issue defers it. There is also a second,
   independent reason: the mailbox at `0x0F5D`/`0x0F5E`/`0x0F5F` requires
   clearing and re-setting `0x0741` bit 0, and that is the exact window in
-  which the unresolved PL clear at `0xA833` can fire —
-  `manual-fan-ctrl-0751.md` §6 calls the overlap "unresolved" and names it the
-  first thing to check if PL bytes ever go to zero around a table refresh. The
-  mechanism is written down in `docs/findings/power-profile-gm7mg7p.md` and in
-  the PR body, so the follow-up starts from the decode rather than from zero.
+  which the PL clear at `0xA833` can fire — `manual-fan-ctrl-0751.md` §4
+  documents that clear, and its §6 calls the overlap "not established" and
+  names it the first thing to check if PL bytes ever go to zero around a table
+  refresh; the word "unresolved" for that overlap is
+  `windows/vendor-ec-map.md:276`. The mechanism is written down in
+  `docs/findings/power-profile-gm7mg7p.md` and in the PR body, so the follow-up
+  starts from the decode rather than from zero.
   **Consequence, stated in the PR body:** the curve does not follow the mode.
 - **The GPU bytes `0x0743-0x0746`.** cTGP/DynamicBoost is issue #8. Keeping it
   out also keeps this patch clear of the 25-vs-15-vs-5 W DynamicBoost

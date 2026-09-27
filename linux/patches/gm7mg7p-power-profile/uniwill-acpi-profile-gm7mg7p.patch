@@ -158,14 +158,15 @@ diff --git a/uniwill-acpi.c b/uniwill-acpi.c
  };
  
  struct uniwill_battery_entry {
-@@ -432,6 +486,20 @@
+@@ -432,6 +486,21 @@
  	u8 lightbar_max_brightness;
  	/* Executed during driver probing */
  	int (*probe)(struct uniwill_data *data);
 +	/*
 +	 * Optional. Boards that leave it NULL get no profile attribute and keep
 +	 * reporting UNIWILL_OSD_PERFORMANCE_MODE_TOGGLE as KEY_F14, exactly as
-+	 * they do today.
++	 * they do today. Returns 0 on success and a negative errno on failure;
++	 * profile_store() hands that errno to userspace unchanged.
 +	 */
 +	int (*platform_profile)(struct uniwill_data *data,
 +				enum uniwill_platform_profile profile);
@@ -223,7 +224,7 @@ diff --git a/uniwill-acpi.c b/uniwill-acpi.c
  		return true;
  	default:
  		return false;
-@@ -1250,6 +1341,63 @@
+@@ -1250,6 +1341,70 @@
  
  static DEVICE_ATTR_RW(usb_powershare_high);
  
@@ -246,7 +247,11 @@ diff --git a/uniwill-acpi.c b/uniwill-acpi.c
 +	if (profile == UNIWILL_PLATFORM_PROFILE_PERFORMANCE && !data->turbo_supported)
 +		return -EOPNOTSUPP;
 +
-+	return device_descriptor.platform_profile(data, profile) ? count : -EIO;
++	ret = device_descriptor.platform_profile(data, profile);
++	if (ret)
++		return ret;
++
++	return count;
 +}
 +
 +static ssize_t profile_show(struct device *dev, struct device_attribute *attr, char *buf)
@@ -271,7 +276,10 @@ diff --git a/uniwill-acpi.c b/uniwill-acpi.c
 +
 +	guard(mutex)(&data->profile_lock);
 +
-+	for (i = 0; i < UNIWILL_PLATFORM_PROFILE_MAX; i++) {
++	/* UNKNOWN is what the machine might be in, not something to ask it to
++	 * be in, so the list starts where profile_store() starts accepting. */
++	for (i = UNIWILL_PLATFORM_PROFILE_LOW_POWER;
++	     i < UNIWILL_PLATFORM_PROFILE_MAX; i++) {
 +		if (i == UNIWILL_PLATFORM_PROFILE_PERFORMANCE && !data->turbo_supported)
 +			continue;
 +
