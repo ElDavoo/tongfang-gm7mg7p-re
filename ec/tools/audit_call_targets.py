@@ -77,6 +77,7 @@ import collections
 import csv
 import sys
 
+from data_regions import load as load_data_regions, region_at
 from disasm8051 import (OPCODE_LEN, REL_OPCODES, REL_SITES, converges_from,
                         paged_target, relative_target)
 from find_banks import START_OPCODES, STUB_PROLOGUE, find_stubs
@@ -387,7 +388,7 @@ def print_trampolines(rows, stubs, tramp) -> None:
     print()
 
 
-def print_bucket_b(rows) -> None:
+def print_bucket_b(rows, regions) -> None:
     print("## 3. Bucket B: what each target's own bank holds, against the other bank")
     print()
     print("`entry` is find_banks.py's START_OPCODES heuristic, `erased` a run of")
@@ -395,8 +396,23 @@ def print_bucket_b(rows) -> None:
     print("caller's own bank erased is the shape that would falsify the same-bank")
     print("assumption; a live/`erased` pair is consistent with it.")
     print()
-    print("| caller | distinct targets | own / other bank | targets | sites |")
-    print("|---|---:|---|---:|---:|")
+    print("`in listed region` counts the sites of this row that fall inside a span")
+    print("`annotations/data-regions.yaml` lists as a data table (issue #50). It is")
+    print("a LABEL and the `sites` count is unchanged by it: a site inside a table")
+    print("read one byte out of frame is a phantom, and a phantom that has been")
+    print("named is not rediscovered by the next scan. It does not clear the site")
+    print("either -- `0` means no site in a *listed* region, not no phantom.")
+    print()
+    print("Every column below reads 0, and that is a fact about the two files rather")
+    print("than a broken lookup: all "
+          f"{len(regions)} listed regions end below 0x8000 (highest")
+    print(f"0x{max(r['file_hi'] for r in regions):04X}), and a bucket-B site is by "
+          "definition at or above it, its")
+    print("caller being in a bank. Bucket B's ambiguity is not a framing problem this")
+    print("map has anything to say about.")
+    print()
+    print("| caller | distinct targets | own / other bank | targets | sites | in listed region |")
+    print("|---|---:|---|---:|---:|---:|")
     for name in ("bank0", "bank1"):
         sel = [r for r in rows if r["region"] == name and r["bucket"] == "B"]
         per_target = collections.defaultdict(list)
@@ -408,36 +424,47 @@ def print_bucket_b(rows) -> None:
         for (own, other), n in sorted(hist.items(), key=lambda kv: -kv[1]):
             sites = sum(len(rs) for t, rs in per_target.items()
                         if (rs[0]["own_bank"], rs[0]["other_bank"]) == (own, other))
+            labelled = sum(1 for t, rs in per_target.items()
+                           if (rs[0]["own_bank"], rs[0]["other_bank"]) == (own, other)
+                           for r in rs if region_at(regions, r["file_offset"]))
             print(f"| {'`' + name + '`' if first else ''} "
                   f"| {len(per_target) if first else ''} "
-                  f"| `{own}` / `{other}` | {n} | {sites} |")
+                  f"| `{own}` / `{other}` | {n} | {sites} | {labelled} |")
             first = False
     print()
 
 
-def print_bucket_c(d: bytes, rows, tramp) -> None:
+def print_bucket_c(d: bytes, rows, tramp, regions) -> None:
     sel = [r for r in rows if r["bucket"] == "C"]
     anchored = [r for r in sel if r["anchored"]]
     targets = {r["target"] for r in sel}
     known = {t for _, t in tramp.values()}
+    labelled = [r for r in sel if region_at(regions, r["file_offset"])]
     print("## 4. Bucket C: the sites offset_for_runtime() returns None for")
     print()
     print(f"  {len(sel)} site(s) upper bound, {len(anchored)} anchored, "
           f"{len(targets)} distinct target(s)")
     print(f"  {len(targets & known)} of those targets is/are also a banked entry point "
           "some trampoline names")
+    print(f"  {len(labelled)} of the {len(sel)} site(s) fall inside a span "
+          f"`annotations/data-regions.yaml` lists as a data table (issue #50), so a")
+    print("  table entry is the default reading for them rather than a call. The")
+    print("  other sites are not thereby calls -- they are the ones this reading")
+    print("  has not placed, and no `status:` in registers.yaml moves on either.")
     print()
     print("The most strongly framed of them, by converges_from() score -- the ones")
     print("worth reading bytes for before treating any of this bucket as a call:")
     print()
-    print("| file | ljmp/lcall | target | frame onto/over | preceding bytes |")
-    print("|---|---|---|---:|---|")
+    print("| file | ljmp/lcall | target | frame onto/over | preceding bytes | in listed region |")
+    print("|---|---|---|---:|---|---|")
     for r in sorted(anchored, key=lambda r: -r["frame_onto"])[:10]:
         off = r["file_offset"]
         prev = " ".join(f"{b:02x}" for b in d[max(0, off - 6):off])
+        region = region_at(regions, off)
         print(f"| `0x{off:05X}` | {r['opcode']} | `0x{r['target']:04X}` "
               f"| {r['frame_onto']}/{r['frame_onto'] + r['frame_over']} "
-              f"| `{prev}` |")
+              f"| `{prev}` "
+              f"| {'`' + region['name'] + '`' if region else 'not listed'} |")
     print()
 
 
@@ -861,8 +888,9 @@ def main() -> int:
 
     print_buckets(rows)
     print_trampolines(rows, stubs, tramp)
-    print_bucket_b(rows)
-    print_bucket_c(d, rows, tramp)
+    regions = load_data_regions()
+    print_bucket_b(rows, regions)
+    print_bucket_c(d, rows, tramp, regions)
     print_paged(paged_survey(d)[0])
     print_relative(relative_survey(d)[0])
     return 0

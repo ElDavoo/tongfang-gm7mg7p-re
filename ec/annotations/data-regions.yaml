@@ -1,0 +1,251 @@
+# Data regions in ec/firmware/GMxMGxx_11.800: byte ranges that are table
+# entries rather than instructions, re-derived and re-derivable.
+#
+# **What this file is.** A record of *what was read*. Every entry is a span a
+# human walked byte by byte, with the command that walks it again in
+# `established_by` and the path that argues for it in `evidence`. It exists so
+# that a scan site landing inside one of these spans is *labelled* rather than
+# rediscovered as a finding.
+#
+# **What this file is not.** It is not a claim that the rest of the image is
+# code, and a region that is not listed is not a claim that its bytes are
+# instructions. Nothing here is a behavioural claim about any register, no
+# `status:` in registers.yaml moves because of it, and nothing in it was
+# observed on hardware. The regions are also not exhaustive: this is the set
+# one reading of bank-call-audit.md §2 and §5 turned up, not a code/data
+# separation of the image. `../README.md` and
+# `../../docs/findings/ec-data-regions.md` carry the same caveat in prose.
+#
+# **A zero is "not found by this method", never "absent."** The subject of
+# this file is one method's blind spots, so the caveat that governs
+# `registers.yaml` and every tool built on it governs it most of all: a span
+# absent from this list is a span this reading did not find, and the other 105
+# bucket-C sites -- 50 of them anchored, 140 sites less the 35 below this file
+# labels (33 anchored), the arithmetic `audit_call_targets.py` §4 and
+# `data_regions.region_at()` give -- are exactly the population a future census
+# has to work on (`../../docs/findings/ec-data-regions.md` §Limits).
+#
+# **`file_lo`/`file_hi` are FILE OFFSETS into the committed image, not runtime
+# addresses**, and the range is HALF-OPEN: `file_lo` is the first byte of the
+# region, `file_hi` is one past the last. `ec/tools/data_regions.py --check`
+# re-derives the span, the stride, the entry count and the first/last decoded
+# value from the image and fails on any mismatch; run it after editing this
+# file, and `--self-test` for the refusals.
+#
+# **`established_by` is a literal block (`|-`), not a folded one, and has to
+# stay one.** It holds a multi-line `python3 -c` command, and a folded block
+# joins those lines with spaces -- which turns a `while` clause that was on its
+# own line into a `SyntaxError` on paste. The value would still hold the
+# firmware path and still look like a command, so nothing short of running it
+# would notice, which is why `test_data_regions.py` runs each one and holds it
+# to this entry: the walk has to be seeded at `file_lo` and has to print
+# `file_hi` and `entries`.
+#
+# Ranges are as re-derived here, not as the issue transcribed them. Four of
+# the six the issue listed moved, and two of its claims about them did not hold
+# at all; every one of those is corrected in the entry's own `supersedes` and
+# `note`, with the wrong value kept visible, and argued in
+# `../../docs/findings/ec-data-regions.md` §3. A scan-site address is not a
+# table boundary, and in a hex dump the two look identical -- which is the
+# argument for this file.
+
+# `shape` is a closed vocabulary, and `data_regions.py` refuses a value outside
+# it rather than guessing a decoder:
+#   ljmp-table    3-byte `02 <hi> <lo>` entries (stride 3)
+#   be-words      2-byte big-endian words (stride 2)
+#   ff-triples    3-byte `FF <hi> <lo>` entries (stride 3)
+#   addresses     2-byte big-endian words holding a common-area address
+#                 (stride 2); the same bytes as `be-words`, separated because
+#                 the *claim* differs and the check does too
+#   repeat-bytes  a fixed-length byte pattern repeating (stride = its length)
+#
+# `confidence` is about HOW THE EXTENT WAS CHOSEN, never about whether the
+# bytes agree -- `--check` verifies the declared stride and shape across the
+# declared span for every tier but one:
+#   read-by-hand       a human read the bytes; `established_by` cites the
+#                      transcript and `evidence` the arguing file
+#   inferred           the extent was extended by pattern from a hand-read
+#                      core; still checked, but the edge is a reading
+#   inferred-unchecked an `inferred` span `--check` cannot reach. It says so
+#                      here rather than passing silently, and `--check`
+#                      reports it as unchecked rather than as a pass. **No
+#                      entry carries this today**; it is here so that a future
+#                      one has a way to be honest that `--check` accepted it.
+regions:
+
+  - name: common-032f-ljmp-table
+    file_lo: 0x032F
+    file_hi: 0x0497
+    stride: 3
+    shape: ljmp-table
+    entries: 120
+    first_value: 0x11F2
+    last_value: 0x14BC
+    confidence: read-by-hand
+    evidence: ec/annotations/bank-call-audit.md; docs/findings/ec-data-regions.md
+    established_by: |-
+      docs/findings/ec-data-regions.md §2.1; python3 -c "d=open('ec/firmware/GMxMGxx_11.800','rb').read();o=0x32f
+      while d[o]==2:o+=3
+      print(hex(o),(o-0x32f)//3)"
+    supersedes: >-
+      issue #50 listed `0x0035C`-`0x003B4`. 0x035C is entry 15 of 120, and
+      0x0378/0x03B4 are not entry-aligned at all -- d[0x378]=0x12 is the
+      opcode byte of the phantom `lcall 0xXX02` itself. The range mixed the
+      true start with a misframed end.
+    note: >-
+      Targets step by 6 from 0x11F2 to 0x14BC and stay in the common area. The
+      byte after the last entry is 0x90, not 0x02, so the run stops there
+      rather than at a chosen boundary.
+
+  - name: common-055a8-be-words
+    file_lo: 0x55A8
+    file_hi: 0x5672
+    stride: 2
+    shape: be-words
+    entries: 101
+    first_value: 0x03E8
+    last_value: 0x0071
+    confidence: read-by-hand
+    evidence: ec/annotations/bank-call-audit.md; docs/findings/ec-data-regions.md
+    established_by: |-
+      docs/findings/ec-data-regions.md §2.2; python3 -c "d=open('ec/firmware/GMxMGxx_11.800','rb').read();o=0x55a8
+      while (d[o]<<8|d[o+1]) < (d[o-2]<<8|d[o-1]):o+=2
+      print(hex(o-2),(o-0x55a8)//2)"
+    supersedes: >-
+      issue #50 listed `0x0055D0`+. The phenomenon is real and 0x055DC **is**
+      entry-aligned in this frame (entry 26, value 0x02EC) -- which is why the
+      `ljmp 0xEC02` scoring 23 of 24 there is genuinely a table entry and not a
+      call. The start given was mid-table, 0x34 bytes in.
+    note: >-
+      Strictly descending; `--check` verifies that, not just the stride. The
+      two bytes before the start are `f0 22` (`movx @dptr,a` / `ret`), so the
+      region begins after a return rather than at an arbitrary offset. 0x5672
+      onward is a run of single-byte values, not more words.
+
+  - name: common-0656-address-table
+    file_lo: 0x0656
+    file_hi: 0x07B6
+    stride: 2
+    shape: addresses
+    entries: 176
+    first_value: 0x0006
+    last_value: 0x052E
+    confidence: inferred
+    evidence: ec/annotations/bank-call-audit.md; docs/findings/ec-data-regions.md
+    established_by: |-
+      docs/findings/ec-data-regions.md §2.3; python3 -c "d=open('ec/firmware/GMxMGxx_11.800','rb').read();o=0x656
+      while (d[o]<<8|d[o+1])<0x8000:o+=2
+      print(hex(o-2),(o-0x656)//2)"
+    supersedes: >-
+      issue #50 listed `0x0066C`+ as "a table of common-area addresses". The
+      region is real; the start was 0x16 bytes in.
+    note: >-
+      **The weakest of the six, and the reason this entry is `inferred` rather
+      than `read-by-hand`: the stride is NOT uniform.** Every word is a
+      common-area address (< 0x8000) and 121 of the 176 are exactly
+      0x032F + 3k for k = 0..120 -- the entry offsets of the `common-032f-ljmp-table`
+      above, so this region indexes that table. The remaining words are not on
+      that progression (0x0006, 0x0007, 0x0114, 0x018C, 0x029B, 0x04A5, 0x04B4
+      and others), so the extent was extended by pattern to the run's end
+      rather than read edge by edge, and `--check` verifies the run and its
+      bounds, not that every word lies on one stride. The word at file_hi is
+      0xE490, outside the common area, which is what stops the run.
+
+  - name: common-219c-ff-triples
+    file_lo: 0x219C
+    file_hi: 0x21B4
+    stride: 3
+    shape: ff-triples
+    entries: 8
+    first_value: 0x1E1A
+    last_value: 0x20A4
+    confidence: read-by-hand
+    evidence: ec/annotations/bank-call-audit.md; docs/findings/ec-data-regions.md
+    established_by: |-
+      docs/findings/ec-data-regions.md §2.4; python3 -c "d=open('ec/firmware/GMxMGxx_11.800','rb').read();o=0x219c
+      while d[o]==0xff:o+=3
+      print(hex(o),(o-0x219c)//3)"
+    supersedes: >-
+      issue #50 listed `0x0219C`+ and said the `lcall 0xE000` at `0x021C6`
+      scoring 24 of 24 "sits inside" it. The start is exactly right; the
+      second half is wrong. **0x021C6 is 0x12 bytes PAST the end of this region,
+      not inside it** -- see bank-call-audit.md §5, corrected in place.
+    note: >-
+      The issue's start is the one range of the six that needed no correction,
+      and it is worth saying why the two halves of its sentence disagree: the
+      start was read off the table, the 0x021C6 was read off a scan site.
+
+  - name: common-690b-ff-triples
+    file_lo: 0x690B
+    file_hi: 0x695C
+    stride: 3
+    shape: ff-triples
+    entries: 27
+    first_value: 0x1678
+    last_value: 0x1714
+    confidence: read-by-hand
+    evidence: ec/annotations/bank-call-audit.md; docs/findings/ec-data-regions.md
+    established_by: |-
+      docs/findings/ec-data-regions.md §2.5; python3 -c "d=open('ec/firmware/GMxMGxx_11.800','rb').read();o=0x690b
+      while d[o]==0xff:o+=3
+      print(hex(o),(o-0x690b)//3)"
+    supersedes: >-
+      issue #50 listed `0x006940`+. d[0x6940]=0xDE is the *address* byte of
+      the entry at 0x693E, not an entry boundary: the given offset is
+      mid-entry, one byte off the 3-byte grid.
+    note: >-
+      Address field steps by 6 throughout. The byte after the last entry is
+      0x3D, not 0xFF, which is what stops the run. The audit's 24-of-24 site
+      at 0x06952 lands inside this region but is NOT entry-aligned (offset 71
+      in a stride-3 region), which is the distinction the column makes visible.
+
+  - name: common-6e65-repeat-bytes
+    file_lo: 0x6E65
+    file_hi: 0x6E7D
+    stride: 6
+    shape: repeat-bytes
+    entries: 4
+    first_value: 0x104210411040
+    last_value: 0x104210411040
+    confidence: read-by-hand
+    evidence: ec/annotations/bank-call-audit.md; docs/findings/ec-data-regions.md
+    established_by: |-
+      docs/findings/ec-data-regions.md §2.6; python3 -c "d=open('ec/firmware/GMxMGxx_11.800','rb').read();p=bytes.fromhex('104210411040');o=0x6e65
+      while d[o:o+6]==p:o+=6
+      print(hex(o),(o-0x6e65)//6)"
+    supersedes: >-
+      issue #50 listed `0x006E78`+ as "another big-endian word table". **At
+      0x006E78 there is no word table**: d[0x6E78]=0x42 is the third byte of
+      this 6-byte repeating pattern, 3.17 repeats in. bank-call-audit.md §5's
+      "`0x006E78`+ is a big-endian word table" is corrected in place.
+    note: >-
+      `10 42 10 41 10 40` four times over, so `stride` is the pattern length
+      and `first_value`/`last_value` are the pattern itself. The bytes after it
+      are a separate region, `common-6e7d-be-words` below, and the audit's
+      24-of-24 site at 0x06E83 is in *that* one -- not here, and not at
+      0x006E78.
+
+  - name: common-6e7d-be-words
+    file_lo: 0x6E7D
+    file_hi: 0x6E8F
+    stride: 2
+    shape: be-words
+    entries: 9
+    first_value: 0x0421
+    last_value: 0x0000
+    confidence: read-by-hand
+    evidence: ec/annotations/bank-call-audit.md; docs/findings/ec-data-regions.md
+    established_by: |-
+      docs/findings/ec-data-regions.md §2.6; python3 -c "d=open('ec/firmware/GMxMGxx_11.800','rb').read();o=0x6e7d
+      while (d[o]<<8|d[o+1]) < (d[o-2]<<8|d[o-1]):o+=2
+      print(hex(o-2),(o-0x6e7d)//2)"
+    supersedes: >-
+      Not in issue #50. Listed because the audit's 0x06E83 site needs somewhere
+      to land, and because it is the word table the issue's `0x006E78` claim
+      was probably reaching for -- five bytes off.
+    note: >-
+      Strictly descending, 9 words, 0x0421 to 0x0000. 0x06E83 is entry 3 and is
+      entry-aligned, so the `ljmp 0xAA02` there is a table entry on the same
+      grounds as 0x055DC's. Kept separate from `common-6e65-repeat-bytes`
+      because the two have different strides and different checks; adjacent,
+      not overlapping.

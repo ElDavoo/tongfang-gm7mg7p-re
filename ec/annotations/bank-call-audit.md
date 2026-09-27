@@ -26,7 +26,12 @@ does establish:
   shape and still should — the issue is right that it is unresolvable. Every
   one this file read the bytes for turned out to be a misframed address table
   rather than a call, but 83 sites were not cleared one by one and this file
-  does not claim they were. §5.
+  does not claim they were. §5. **35 of the 140 now sit in a span
+  [`data-regions.yaml`](data-regions.yaml) lists as a data table** (33
+  anchored), which makes the table reading mechanical for that quarter of the
+  bucket instead of hand-read; the other 105 are not thereby calls, and one
+  24-of-24 site — `0x021C6` — is in no listed region at all. §5's correction,
+  and [`../../docs/findings/ec-data-regions.md`](../../docs/findings/ec-data-regions.md).
 - **The 2-byte paged family is now counted too, and it is not a banking
   question.** 3481 `ajmp`/`acall` sites by byte scan, 1667 of them anchored.
   An `ajmp`/`acall` target is inside the page the caller is already executing
@@ -287,6 +292,17 @@ descending run of `0x0336`, `0x0329`, `0x031D`, `0x0311`, `0x0305`, `0x02F9`,
 uniform-length entries resyncs, not because the frame is right. Read the pair
 of numbers, and read bytes before treating any individual site as a call.
 
+> **Correction, issue #50: the table starts at `0x55A8`, not `0x55D0`.** The
+> `r2` seek above is 0x34 bytes into a 101-word run that ends at `0x5671`; the
+> two bytes before the real start are `f0 22` (`movx @dptr,a` / `ret`), so the
+> table begins after a return rather than at an arbitrary offset. **The reading
+> of `0x055DC` itself is unaffected** — in the `0x55A8` frame it is entry 26
+> with value `0x02EC`, so the `ljmp 0xEC02` scoring 23 of 24 there is genuinely
+> a table entry, exactly as this section says. The map is
+> [`data-regions.yaml`](data-regions.yaml); the derivation is
+> [`../../docs/findings/ec-data-regions.md`](../../docs/findings/ec-data-regions.md)
+> §2.2.
+
 ## 3. The BL51 trampoline path — and what the stub evidence does not license
 
 [`lightbar-bat-flow.md`](lightbar-bat-flow.md) §2 already records that the Keil
@@ -471,6 +487,46 @@ Two readings of that population, neither of them a clearance:
   entries, and the `lcall 0xE000` at `0x021C6` scoring 24 of 24 sits inside
   them.
 
+  > **Correction, issue #50.** Two of the ranges above moved when they were
+  > re-derived byte by byte, and one of the two sentences above does not hold.
+  > The original text is left above rather than edited out, per
+  > [`../../docs/findings.md`](../../docs/findings.md) §4a-4d.
+  >
+  > **`0x021C6` does not sit inside the `0x219C` triples.** The entries run
+  > `0x219C`-`0x21B3` — eight of them, `0x21B4` is the byte after the last
+  > (`0xE0`, not `0xFF`) — and `0x021C6` is **0x12 bytes past that end**, with
+  > `d[0x21C5] = 0xE0` in between. It is a 24-of-24 site that no listed region
+  > explains, which is a different and more interesting population from the 83
+  > anchored sites, and it is the one
+  > [`../../docs/findings/ec-data-regions.md`](../../docs/findings/ec-data-regions.md)
+  > §4 follows up. It is still 24 of 24, and 24 of 24 is **not** evidence that
+  > it is a real call — `converges_from()` measures framing, which §2 above is
+  > explicit about, and a uniform run resyncs any walk.
+  >
+  > **The other five ranges are all wider than stated, in one direction each.**
+  > `0x00378`-`0x003B4` is really `0x032F`-`0x0496`, **120** entries rather than
+  > the 20 the 60 bytes `0x00378`-`0x003B4` imply at stride 3 (`0x035C` is
+  > entry 15, and `0x0378`/`0x03B4` are not entry-aligned at all —
+  > `d[0x378] = 0x12` is the opcode byte of the very phantom `lcall 0xXX02`
+  > this bullet describes). `0x0055D0`+ starts 0x34 bytes
+  > late; `0x055DC` **is** entry 26 of the `0x55A8` frame, so the §2 reading of
+  > it stands unchanged. `0x0066C`+ starts 0x16 bytes late.
+  > `0x006940`+ is **`0x690B`**, 27 entries: `d[0x6940] = 0xDE` is the *address*
+  > byte of the entry at `0x693E`, so the offset given is mid-entry.
+  > `0x006E78`+ **is not a big-endian word table at all** — `d[0x6E78] = 0x42` is
+  > the third byte of a `10 42 10 41 10 40` pattern repeating over
+  > `0x6E65`-`0x6E7C`. The word table the reading was reaching for is the nine
+  > descending words at `0x6E7D`-`0x6E8E`, five bytes later, and that is where
+  > §1's `0x06E83` site actually is.
+  >
+  > **None of this changes a count or the verdict.** The 140/83 figures, the
+  > 102 targets, the "every one this file read is a data table" reading, and
+  > §6's four numbered statements are all unaffected — the corrections move
+  > where a table starts and stops, not what the enumeration found. The full
+  > map, with a per-region confidence tier and a `--check` that re-derives
+  > every span from the image, is
+  > [`../../docs/findings/ec-data-regions.md`](../../docs/findings/ec-data-regions.md).
+
 **What is not claimed.** 83 anchored sites exist and fewer than ten were read
 byte by byte. "No direct common-to-bank `lcall`/`ljmp` was found by this
 enumeration" is the statement this file stands behind; "there is none" is not,
@@ -478,6 +534,16 @@ and per [`../../docs/findings.md`](../../docs/findings.md) §4c a scan that
 finds nothing never licenses the second. Anyone who needs bucket C settled
 should decode the common area from a recovered function boundary set, which is
 a disassembler's job and a different issue.
+
+**What has changed since (issue #50).** The 140 sites are now cross-referenced
+against [`data-regions.yaml`](data-regions.yaml), and
+`tools/audit_call_targets.py`'s §3 and §4 tables carry the result: **35 of the
+140 bucket-C sites fall inside a span listed as a data table**, 33 of them
+anchored. A site in a listed region is *labelled*, never dropped — the counts
+above are unchanged, and the other 105 are not thereby calls. §3's new column
+reads 0 throughout, which is a fact about the two files rather than a broken
+lookup: every listed region ends below `0x8000` and every bucket-B site is at
+or above it.
 
 ## 6. Verdict, in the §4c form
 

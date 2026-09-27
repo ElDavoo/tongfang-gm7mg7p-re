@@ -102,6 +102,11 @@ into `r2 -a 8051` with no stitching needed.
   this README. Validated 20/20 against live-hardware ground truth (see
   `docs/findings.md`), but has a known blind spot for pointer/indirect
   addressing — treat "0 refs" as "not found by this method", not "absent".
+  A trailing `in_data_region=` column labels how many of an address's sites
+  fall inside a span `annotations/data-regions.yaml` lists as a data table. It
+  is a **label, not a filter**: the counts above it are unchanged, because a
+  scan that dropped the phantoms would report a smaller number, and a smaller
+  number nobody can audit is indistinguishable from absence.
 - **`tools/trace_xdata_refs.py`** — same `MOV DPTR,#addr` sites and the same
   image split as `scan_refs.py`, but down to the individual site: which region
   each one is in (common area, a CODE bank, or the separate PD image above),
@@ -115,6 +120,22 @@ into `r2 -a 8051` with no stitching needed.
   sites with no row there read `not recorded` rather than blank, and stderr
   names them. `--check` turns the diff against a committed table into an exit
   code, so a page's "reproduce this byte for byte" is an assertion.
+- **`tools/data_regions.py`** — re-derives every span in
+  `annotations/data-regions.yaml` from the committed image, so the map of data
+  tables cannot drift from the bytes it claims to describe. `--check`
+  recomputes each region's stride agreement, entry count and first/last decoded
+  value and fails on any mismatch — the `check_register_counts.py` model — and
+  it is the mode that matters: `--self-test` holds the refusals (an entry with
+  no `evidence`, a `confidence` or `shape` outside its vocabulary, a span whose
+  own bytes violate its declared stride, and a mutation of each region shifted
+  by one byte) plus an oracle transcribed from `bank-call-audit.md` rather than
+  from the YAML, so the tool cannot grade its own homework. `--csv` and
+  `--for-offset` answer the two questions a caller has. It has **no mode that
+  filters a site out**, and that is a refusal in the code rather than a
+  convention in a comment: a scan that dropped the phantoms would report a
+  smaller number, and a smaller number nobody can audit is indistinguishable
+  from absence. Reads the committed image and the committed YAML only — no
+  capture, no EC, no register read back.
 - **`tools/check_register_counts.py`** — recomputes every `static_refs`,
   `static_refs_main_ec` and `static_refs_pd_image` in
   `annotations/registers.yaml` from the image and exits non-zero on a mismatch
@@ -401,7 +422,15 @@ into `r2 -a 8051` with no stitching needed.
   caller's own 2 KiB page. `--self-test` re-checks the four BL51 stub sites,
   the `offset_for_runtime`/`runtime_addr` round-trip and the page arithmetic
   against two hand decodes; `annotations/bank-call-audit.md` is the transcript
-  and the verdict.
+  and the verdict. Its §3 and §4 tables also carry an `in listed region`
+  column from `annotations/data-regions.yaml` — **35 of bucket C's 140 sites
+  are inside a listed data table**, labelled rather than dropped, so the 140/83
+  figures the audit's verdict rests on are unchanged. §3's column reads 0
+  throughout, because every listed region ends below `0x8000` and a bucket-B
+  site is by definition at or above it. `write_csv()` is untouched: adding the
+  column to `bank-call-targets.csv` needs
+  `tools/build_ec_decompile.py`'s `CALL_TARGET_COLUMNS` edited too, and its
+  `--self-test` runs in the cheap gate.
 - **`tools/decode_index_table.py`** — decodes the inline `switch` tables the
   main EC image's one table-reading subroutine consumes, starting with the
   `bank0` `0x8038` one that `annotations/bank-call-audit.md` §8 met as a
@@ -513,6 +542,24 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   start here. It is 144 addresses, and `annotations/xdata-register-map.md`
   covers 1,172 — the two corpora are nearly disjoint, and which of the two a
   question is about decides where the answer lives.
+- **`annotations/data-regions.yaml`** — the seven byte ranges in this image
+  that `annotations/bank-call-audit.md` §2 and §5 read as **data tables rather
+  than instructions**, made machine-readable so the scanning tools can *label*
+  a site landing inside one instead of every tool rediscovering the same
+  phantoms. Each entry carries a file-offset range, an entry stride and shape,
+  the command that re-derives it, and a `confidence:` saying how the extent was
+  chosen — `read-by-hand`, `inferred`, or `inferred-unchecked` for a span
+  `tools/data_regions.py --check` cannot reach. **It is a hand-edited file, not
+  a generated one** — the way `xdata-cluster-names.csv` is — and it is
+  deliberately *not* added to the generated list in
+  `.github/workflows/agent-conflicts.yml`. It is **a record of what was read,
+  not a claim about the rest of the image**: a region not listed is not a claim
+  that its bytes are instructions, and a region being listed is not proof its
+  site is a phantom. It is not a code/data separation of the image, which is
+  issue #20's goal and the first thing this map would feed. Four of the six
+  ranges issue #50 transcribed had moved and one did not hold at all;
+  `../../docs/findings/ec-data-regions.md` carries the corrections with the
+  original values beside them.
 - **`annotations/call-graph.md`** — the second pass over the edges rather than
   the leaves: what `tools/call_graph.py` measures, how the anonymous callees
   are ranked, and what the counts do not establish. The first tranche it drove

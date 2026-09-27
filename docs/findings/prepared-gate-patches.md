@@ -352,3 +352,54 @@ of the six do not add a function at all but rewrite lines inside existing ones,
 so a re-cut is a per-patch reading rather than a mechanical splice. Until it is
 done, the gate runs two tools and the other six checkers are not in it, which
 is why a PR can merge with five failing offline suites and a green cheap tier.
+**2026-09-27, issue #50 — a seventh tool folds into the disasm8051 patch, and
+the set is six files still.** `data_regions.py --check --self-test` wants the
+cheap gate, and the collision table above is unchanged by that: the tool-list
+windows are held by the gap-text and 0751 hunks, and the only line outside
+every one of them is still `:129`, the `windows/tools/decompile_native.py; do`
+the disasm8051 hunk splits. A new patch would have to cut that same line to be
+independently applicable, which means it could not compose with the disasm8051
+patch in every ordered pair — and that failure is silent in the way that
+matters: **each would still apply cleanly alone.** So the second tool folds into
+`docs/ci/agent-gates-disasm8051-self-test.patch` rather than shipping a seventh
+file, which is what this file prescribes for exactly this collision and what
+`FoldTests` already does for the capture-claims pair.
+
+The filename is kept for the reference-count reason recorded above for
+`agent-gates-capture-claims.patch`: renaming a file seventeen citations across
+eleven files name — re-measured 2026-09-27 on this tree, since the 9-across-6
+figure this passage and the patch header carried was already stale on
+`origin/main` — would churn exactly the long shared files `CLAUDE.md` says not
+to churn, to fix a name that is not load-bearing. The header now says plainly
+that it carries two tools, names both, and keeps the disasm8051-only text
+beneath an `Original header, for ec/tools/disasm8051.py alone:` marker so the
+older reasoning is not lost.
+
+**A fold is a new way for a patch here to be half-right, so `ArmRetentionTests`
+grew to match.** Both tools' four strings are now in `REQUIRED`, and the
+disasm8051 list entry is pinned in its folded ` \`-continued form because
+folding moved its `; do` to the line below — a re-cut that un-folds the two
+would put `; do` back where the old single string expected it. The mutation
+was checked rather than assumed: dropping only `data_regions.py`'s `case` arm
+from the patch still **applies, still composes, and still passes every other
+case in the suite**, because the dropped arm is precisely what keeps the tool
+off the `*)` default. That is the same shape the `FoldTests` case was written
+for and the same reason this class exists at all.
+
+The second tool's arm runs `--check` as well as `--self-test`, unlike the
+first's, because `data_regions.py --check` is the mode that actually holds
+`ec/annotations/data-regions.yaml` to the committed image — seven spans, each
+re-derived for stride, entry count and first/last value — while its
+`--self-test` holds the refusals. It reads two committed files: no Ghidra, no
+network, no assembler, no `r2`, no capture, no EC, and nothing about it is a
+behavioural claim, which is why it belongs beside `check_register_counts` in
+the cheap tier rather than anywhere deeper.
+
+**The collision table's first four rows are now jointly held by two patches
+rather than one.** They are not updated in place above, because that table is
+a record of what was measured on the commit that measured it and this paragraph
+is the update; a reader cutting a new hunk should read both. A future re-cut
+that wants a third `ec/tools/` entry in the tool list has no free line left at
+all, and the honest move at that point is upstream in
+[`ElDavoo/agent-pipeline`](https://github.com/ElDavoo/agent-pipeline) rather
+than a seventh local patch.

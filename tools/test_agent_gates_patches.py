@@ -375,7 +375,7 @@ class FoldTests(unittest.TestCase):
 
 @unittest.skipUnless(has_git(), 'no git on PATH')
 class ArmRetentionTests(unittest.TestCase):
-    """The disasm8051 patch still lands both halves of its change.
+    """The disasm8051 patch still lands both halves of *either* tool's change.
 
     Every other patch here is one function and one `gate` line, or one tool
     line and one arm, and every case above checks that the patch *applies*.
@@ -388,18 +388,35 @@ class ArmRetentionTests(unittest.TestCase):
     exists, and it is the reason the same is checked in both directions here:
     a patch that dropped the list entry instead would carry an arm the loop
     never reaches.
+
+    **Two tools since issue #50**, folded into this one file rather than
+    shipped as a seventh, because the free hunks in `agent-gates.sh` are
+    already spent (`docs/findings/prepared-gate-patches.md`). A fold is
+    exactly what can go half-right without anyone noticing: a re-cut that
+    lands `data_regions.py`'s two halves and drops `disasm8051.py`'s, or the
+    reverse, still applies, still composes in every ordered pair, and still
+    passes `bash -n` and `shellcheck` -- because the dropped arm is precisely
+    what keeps its tool off the `*)` default. So all four strings are here,
+    and dropping any one of them is a failure.
     """
 
     PATCH = 'docs/ci/agent-gates-disasm8051-self-test.patch'
-    # The arm is one string rather than the two lines the issue names, because
+    # Each arm is one string rather than the two lines the issue names, because
     # `python3 "$tool" --self-test || rc=1` is already in the
     # merge_annotation_shards and grade_0751 arms -- checking it on its own
     # would pass with this patch's arm dropped, which is the exact case this
-    # class exists to catch.
+    # class exists to catch. The list entries are the ` \`-continued form
+    # because disasm8051 is no longer the last line in the `for tool in` list:
+    # folding a second tool in moved its `; do` to the line after, so a
+    # re-cut that un-folds the two would put `; do` back on this one.
     REQUIRED = [
-        'ec/tools/disasm8051.py; do',
+        'ec/tools/disasm8051.py \\\n'
+        '              ec/tools/data_regions.py; do',
         '      *disasm8051.py)\n'
         '        python3 "$tool" --self-test || rc=1\n'
+        '        ;;',
+        '      *data_regions.py)\n'
+        '        python3 "$tool" --check && python3 "$tool" --self-test || rc=1\n'
         '        ;;',
     ]
 
@@ -412,10 +429,10 @@ class ArmRetentionTests(unittest.TestCase):
             with self.subTest(line=line):
                 self.assertIn(
                     line, landed,
-                    f'{self.PATCH} no longer lands {line!r}. Its two halves are '
-                    'what keep disasm8051.py off the `*)` default arm, and a '
-                    're-cut that lands one without the other still applies, '
-                    'so nothing else here would notice.')
+                    f'{self.PATCH} no longer lands {line!r}. Each tool\'s two '
+                    'halves are what keep it off the `*)` default arm, and a '
+                    're-cut that lands one tool and drops the other still '
+                    'applies, so nothing else here would notice.')
 
 
 class HeaderInstructionTests(unittest.TestCase):

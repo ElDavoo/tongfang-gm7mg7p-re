@@ -26,6 +26,15 @@ block is a documented blind spot -- see docs/findings.md "Retraction".
 That applies to the split too: `ec=0` means "not found in the EC image by
 this method", never "absent".
 
+The `in_data_region` column labels how many of an address's sites fall inside
+a span `annotations/data-regions.yaml` lists as table entries (issue #50). It
+is a LABEL, not a filter: the counts are unchanged and no site is dropped,
+because dropping the phantoms would make a future scan's zero look like
+absence -- the docs/findings.md 4c failure this header already cites.
+`in_data_region=0` means "no site falls in a listed region", never "no site
+is a phantom", and a region not being listed is not a claim about its bytes
+either.
+
 Usage:
     python3 scan_refs.py firmware.bin 0x07A6 0x07B9 0x0768
     python3 scan_refs.py firmware.bin --file registers.txt
@@ -35,6 +44,7 @@ import argparse
 import collections
 import sys
 
+from data_regions import load as load_data_regions, region_at
 from trace_xdata_refs import PD_MARKER, region_of
 
 # Which trace_xdata_refs.py regions are the EC firmware itself, as opposed
@@ -53,18 +63,36 @@ CAVEAT = (
 
 
 def scan(data: bytes, pd_verified: bool = True):
-    """addr -> [file-wide, EC-image, PD-image] direct reference counts."""
-    hits = collections.defaultdict(lambda: [0, 0, 0])
+    """addr -> [file-wide, EC-image, PD-image] direct reference counts.
+
+    The sites themselves are kept alongside, because the data-region label is
+    a property of a *site* and not of an address: the same register can be
+    referenced from code and from a table. A fourth slot carries the count of
+    that address's sites landing inside a listed region.
+    """
+    hits = collections.defaultdict(lambda: [0, 0, 0, []])
     for i in range(len(data) - 2):
         if data[i] == 0x90:
             counts = hits[(data[i + 1] << 8) | data[i + 2]]
             counts[0] += 1
+            counts[3].append(i)
             name = region_of(i, pd_verified)[0]
             if name in MAIN_EC_REGIONS:
                 counts[1] += 1
             elif name == PD_REGION:
                 counts[2] += 1
     return hits
+
+
+def sites_in_data_regions(sites, regions) -> int:
+    """How many of `sites` fall inside a listed data region.
+
+    A label, deliberately: the caller still counts every site. Labelling is
+    the whole point of `annotations/data-regions.yaml` -- a site that is
+    inside a table read one byte out of frame is a phantom, and a phantom that
+    has been named is not rediscovered by the next scan.
+    """
+    return sum(1 for s in sites if region_at(regions, s) is not None)
 
 
 def main() -> None:
@@ -79,6 +107,7 @@ def main() -> None:
     off, magic = PD_MARKER
     pd_verified = data[off:off + len(magic)] == magic
     hits = scan(data, pd_verified)
+    regions = load_data_regions()
 
     print(CAVEAT)
     if not pd_verified:
@@ -89,8 +118,10 @@ def main() -> None:
     if args.all_0700:
         for a in range(0x0700, 0x0800):
             if hits.get(a):
-                total, ec, pd = hits[a]
-                print(f"0x{a:04X} : {total:>4} refs   ec={ec:<4} pd={pd}")
+                total, ec, pd, sites = hits[a]
+                labelled = sites_in_data_regions(sites, regions)
+                print(f"0x{a:04X} : {total:>4} refs   ec={ec:<4} pd={pd}"
+                      f"   in_data_region={labelled}")
         return
 
     targets = []
@@ -108,14 +139,18 @@ def main() -> None:
         ap.error("give addresses as args, --file, or --all-0700")
 
     for label, a in targets:
-        total, ec, pd = hits.get(a, [0, 0, 0])
+        total, ec, pd, sites = hits.get(a, [0, 0, 0, []])
         if ec:
             verdict = "referenced"
         elif pd:
             verdict = "referenced in the PD image ONLY, not by the EC"
         else:
             verdict = "ABSENT (see blind-spot caveat above)"
-        print(f"0x{a:04X}  refs={total:<5} ec={ec:<5} pd={pd:<5} {verdict}   {label}")
+        # Trailing, so the columns the cheap gate's smoke test greps for
+        # (`refs=15`, `referenced`) are untouched by adding it.
+        labelled = sites_in_data_regions(sites, regions)
+        print(f"0x{a:04X}  refs={total:<5} ec={ec:<5} pd={pd:<5} {verdict}"
+              f"   in_data_region={labelled}   {label}")
 
 
 if __name__ == "__main__":
