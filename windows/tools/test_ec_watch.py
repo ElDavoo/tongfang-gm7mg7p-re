@@ -157,11 +157,19 @@ class MarkCsvTests(unittest.TestCase):
 
     def test_a_run_holding_the_vocabulary_names_itself_in_the_mark_row(self):
         # The one writer in this tree that can populate the column, and the
-        # whole of what the column buys: after this run a reader can tell §3's
-        # three consoles apart in one file, which is the distinction
-        # `warn_unchecked_marks` says it cannot draw. It still cannot say the
-        # label was checked -- `parse_mark` and `unplaceable_marks` are what
-        # say that, and they are per-label.
+        # whole of what the column buys: which program wrote a mark, and that
+        # that program held the vocabulary. So a `gpu_block_watch.py` mark is
+        # told from an `ec_watch.py` one, and a mark typed under the vocabulary
+        # from one typed without it -- and `warn_unchecked_marks`, which can
+        # name a foreign mark only as one "placed by a process that did not
+        # type them here", is the reader that could not say which.
+        #
+        # What it does not buy is which of §3's three consoles wrote a mark.
+        # All three run this same program with the same vocabulary, so all
+        # three write the byte-identical field, and the three captures are
+        # told apart by their `--csv` filenames rather than by anything in the
+        # row. It still cannot say the label was checked -- `parse_mark` and
+        # `unplaceable_marks` are what say that, and they are per-label.
         _, rows, _ = self.run_watch('--mark', '--label-vocab', '0751')
         got = [r.split(',')[4] for r in rows if ',MARK,' in r]
         self.assertEqual(len(got), 1)
