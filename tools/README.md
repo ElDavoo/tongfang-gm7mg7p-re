@@ -11,7 +11,7 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. **There are forty-four today, 1316 tests in all** — both figures
+file committed. **There are forty-six today, 1437 tests in all** — both figures
 *(Superseded at the `#845` × `#974` merge, and **both sides of that merge moved
 a figure, which no merge earlier in this run did**: `origin/main` at `0daac768`
 (#974's) reads **`41 suite(s) run, 1271 tests`** and the merged tree read
@@ -167,6 +167,112 @@ that claim, and **one move and not a pair** — the shift this note records was
 written correct the first time, the way the fifth note's was. **No pin was
 added, so the reconciled count did not move**: 107 rows answer 107 records as
 they did before.)*
+*(Superseded a sixth time, by #1032, and **the `1307` the third note above
+carries was already one behind its own tree when that merge found it** —
+measured, not differenced, on a
+clean worktree of each side: `d3304785` (#1009's) reads **`43` / `1301`**,
+`fe92940a` (#1034's) reads **`43` / `1307`**, `origin/main` at `8c51e6ed` reads
+**`43` / `1308`**, and the branch's tree reads **`43` / `1316`**. So the `1307` is true
+of `fe92940a` and not of `main`'s tip, the one case being #1038's addition to
+`ec/tools/test_check_citation_lines.py`, and the step this merge records is
+`1308 + 8 = 1316`: eight cases on `ec/tools/test_check_history_checkouts.py`
+(30 → 38), which is the whole difference between the two trees' per-suite
+counts — every other suite reads the same number on both sides — and so
+`forty-three` is unchanged by it a second time running. The `1301`, the `1307`
+and the `1301` the tenth note records stay written where each was measured, per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d. **One citing line moved
+again rather than one pin being added**: this merge's amendment to
+`history-checkout-claims.md` is *above* the pin of that file's and is the whole
+of the step, so the row in
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+reads **`:278`** — `262` on `main` and `278` on the branch, which agree — and the
+reconciled count did not move: 107 rows
+answer 107 records as they did before. **The red set is still one suite, and
+#1032 neither caused it nor fixes it**: `ec/tools/test_check_cluster_citations.py`
+alone, on the same `:220` of the same #822 file, re-checked on a clean
+worktree of `origin/main` at `8c51e6ed` and on the branch's, red with the
+identical message in both.)*
+*(Superseded a seventh time, by the `#1034` × `#1035` × `#1038` × `#1032` merge,
+and **this is the first supersession in this run with a change on the branch side
+and another on the `main` side touching the same suite**: `origin/main` at
+`5244f119` (#1039's) reads **`43 suite(s) run, 1309 tests`** and `1005` from
+`python3 -m unittest discover -s ec/tools`, and this tree reads
+**`43 suite(s) run, 1317 tests`** and `1013` from the same command, the step being
+#1032's eight cases on `ec/tools/test_check_history_checkouts.py` (31 → 39) and
+nothing else, so `1309 + 8 = 1317` and `forty-three` is still unchanged by it a
+third time running. **Neither side's figure is a reading of this tree and the sum
+is**, and that is the first time in this run the two sides of one step have
+touched the same suite rather than two different ones: #1039's `1309` counted one
+case against the `1308` #1034 left and #1032's `1316` counted eight against that
+same `1308`, so both arrive at the merged tree from a common base neither could
+see. All four figures stay written where each was measured, per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d. **Every figure here is
+measured by running the runner on the tree it is written about** and not
+differenced, the reason the notes above give, on a working tree whose clone is
+full — `git rev-parse --is-shallow-repository` answers *false* — so the three cases
+`test_measure_index_repair_visibility.py` skips on a shallow one did run. **The
+red set is unchanged, pre-existing, and no side of this merge caused it or fixed
+it**: `ec/tools/test_check_cluster_citations.py` alone, on the same `:220` of the
+same #822 file, and it fails identically on a clean `origin/main` worktree at
+`5244f119` that reads `1309` too — the two readings differing by the eight cases
+under test and by nothing else. **This note cost this file's own pin two cells
+rather than one**: the row in
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+for the `test_xdata_cluster_names.py` claim this file records reads **`:490`**
+here, where `main`'s copy reads `:431` and the branch's reads `:394` — `:431 + 25
+= :456` is #1032's sixth note landing above it on this tree, and `:456 + 34 =
+:490` is this note — the thirteenth and fourteenth re-registrations, two notes
+about test totals having moved it and nothing about the
+`test_xdata_cluster_names.py` claim the row reconciles. **No pin
+was added, so the reconciled count did not move**: 107 rows answer 107 records as
+they did before.)*
+*(Superseded an eighth time, by the `#1037` × `#1032` merge, and **this is the
+first note in this chain whose tree is not one the runner can total at all**,
+which is a fact about the command the sentence above names rather than about
+either side's arithmetic.** `origin/main` at `560752b2` measures **`46
+suite(s) run, 1429 tests`** and `1067` from
+`python3 -m unittest discover -s ec/tools`, and this tree measures **`46
+suite(s) run, 1437 tests`** and `1075` from the same command, the step being
+#1032's eight cases on `ec/tools/test_check_history_checkouts.py` (31 → 39) and
+nothing else, so `1429 + 8 = 1437`, `1067 + 8 = 1075` and `forty-six` is
+unchanged by it a fourth time running. **The `forty-four` and the `1316` the
+sentence carries are left written where they were measured, and they are two
+suites behind even `main`**: #1058 (`ec/tools/test_pd_image_census.py`, 55
+cases) and #1060 (`bios/tools/test_ifr_census.py`, 58 cases) each committed a
+suite and neither re-transcribed the total, so `1316 + 55 + 58 = 1429` and
+`44 + 2 = 46` is the shape of the drift, per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d — **which is also why
+the figure above is the first one in this chain read off a run rather than off
+a side's own sentence.**
+
+**The runner does not print that total, and does not print one at all on this
+tree.** `tools/run-tests.sh:73` adds every `Ran N test` line its `sed` finds,
+and `ec/tools/test_pd_image_census.py` runs nested unittests whose transcripts
+reach the same stream, so `n` holds three numbers and the arithmetic dies on it
+— `tools/run-tests.sh: line 73: tests + 1`, then `1`, then `55: syntax error in
+expression`. The loop counts the suite before it tallies, so the run dies on the
+twenty-eighth and the `28 suite(s) run, 911 tests` printed on the way out is the
+twenty-seven ahead of it — the same twenty-seven on `origin/main`, which dies at
+`903`. **Every figure in this note was therefore measured by the runner's own
+loop with the last `Ran` line taken rather than every one, per file**, on full
+clones of both sides (`git rev-parse --is-shallow-repository` answers *false*),
+and the `46` is the 46 `test_*.py` files `find` returns — the runner's own rule,
+and the one `tools/test_readme_suite_table.py` checks the table's first column
+against.
+
+**The red set on this tree is three suites and none of the three is this
+merge's**: `ec/tools/test_check_cluster_citations.py` (the long-standing one, on
+the same `:220` of the same #822 file),
+`ec/tools/test_check_doc_figure_pins.py`
+(`test_a_hex_address_is_not_a_figure_and_the_run_beside_it_is`), and
+`tools/test_readme_suite_table.py`, red because #1058 committed a suite without
+the table row that test asks for. All three fail identically on a clean
+`origin/main` worktree at `560752b2` — measured there rather than carried, and
+the runner aborts on both trees — so the set is `main`'s and this merge neither
+grew nor shrank it. **None of the three is repaired here**: the missing row is
+#1058's to write, the other two are not this merge's to move, and a merge that
+quietly repaired them would leave the next reader unable to tell which of the
+three were ever green.)*
 *(The `1161` this sentence carried until #794, the `1165` it carried on #794's
 own branch, the `1168` it carried at the `#962` × `#794` merge, the `1180` the
 #979 branch proposed, the `1182` the #974 branch proposed beside it, the `1187`
@@ -2308,38 +2414,74 @@ note's rule applies from the other direction. **The base this note measures
 from is `5881153d` (#845's), where the thirty-fourth's was `0daac768`, and
 that is the whole difference between the two steps.**)*
 
-**The runner reads `43 suite(s) run, 1309 tests; one or more FAILED`, and
-`python3 -m unittest discover -s ec/tools` reads `1005`** — both re-run on this
+**The runner reads `43 suite(s) run, 1317 tests; one or more FAILED`, and
+`python3 -m unittest discover -s ec/tools` reads `1013`** — both re-run on this
 tree, both measured in a real `git worktree` rather than differenced, because
 `test_measure_index_repair_visibility.py` skips three cases where the clone is
-shallow and a `git archive` extraction is exactly that. **`1301 + 8 = 1309` and
-`997 + 8 = 1005`**, the eight being #1034's six cases and #1035's one, both on
-`ec/tools/test_check_history_checkouts.py`, and #1038's one on
-`ec/tools/test_check_citation_lines.py`, and nothing else, against #1009's
-`1277 + 24 = 1301` and `973 + 24 = 997`, whose twenty-four were that merge's one
-new suite. **The suite count does not move at this step** — it is
+shallow and a `git archive` extraction is exactly that. **`1309 + 8 = 1317` and
+`1005 + 8 = 1013`**, the eight being #1032's cases on
+`ec/tools/test_check_history_checkouts.py` and nothing else, against #1039's
+`1308 + 1 = 1309` and `1004 + 1 = 1005`, whose one was a case on that **same**
+suite, #1038's one on `ec/tools/test_check_citation_lines.py`, #1034's six on
+`ec/tools/test_check_history_checkouts.py` inside the base this
+step measures from rather than beside it, and #1009's `1277 + 24 = 1301` and
+`973 + 24 = 997`, whose twenty-four were that merge's one new suite. **The suite
+count does not move at this step** — it is
 **`42` → `43` and that step is #1009's alone**, #845's suite having been in the
-base this note measures from rather than beside it, and all three changes' cases
-being in suites that were already counted — the one-sidedness
+base this note measures from rather than beside it, and every change since
+#1009's being in suites that were already counted — the one-sidedness
 the twenty-second and twenty-third notes record in the other direction, and why
-`test_readme_suite_table.py`'s set check needed no correction on any of the five
-sides. **This step has three changes in it and no two of them touch the same
-suite**, so **no one of them's arithmetic is a reading of this tree** — #1034's
-`1307` counted six against a base of `1301`, #1035's own branch read `1301`
-before those six existed, and #1038's `1308` counted one against the `1307`
-#1034 left; the sum is the measurement and all three figures are left written
-above, each true of the tree it was measured on, per §4a-4d. **The `1301` and
+`test_readme_suite_table.py`'s set check needed no correction on any of the six
+sides. **This step is the first in this run whose two sides touched the same
+suite**, so **neither side's arithmetic is a reading of this tree and the sum
+is** — #1039's `1309` counted one case against the `1308` #1034 left and #1032's
+`1316` counted eight against that same `1308`, on one suite in both cases. Every
+earlier step's two sides had gone to different suites, and their arithmetic was
+right for the same reason: #1034's `1307` counted six against a base of `1301`,
+#1035's own branch read `1301` before those six existed, and #1038's `1308`
+counted one against the `1307` #1034 left but on `test_check_citation_lines.py`
+rather than on the other two's suite — so no two of those three figures were
+ever one apart by accident, and all of them stay written above, each true of the
+tree it was measured on, per §4a-4d. **The `1301` and
 the `997` this sentence carried until #1034 stay written
 in the parenthetical above**, and so do the `1308` and the `1004` it carried at
-the `#1034` × `#1035` merge, now in that merge's own note; as do the `1295` and
+the `#1034` × `#1035` merge, now in that merge's own note, the `1309` and the
+`1005` it carried at the `#1034` × `#1035` × `#1038` merge, now in that one's,
+and the `1316` and the `1012` the branch measured, now in the sixth note at the
+head of this section; as do the `1295` and
 the `991` its branch measured
 and the `1288` — whose
 commit, `a9b3b90c`, **is not an object in this repository at all** (`git
 cat-file -t a9b3b90c` answers *Not a valid object name*), so that figure is a
-record rather than a reading anyone can re-run. **The red set is unchanged and
+record rather than a reading anyone can re-run. **Every superseded figure in
+that trail is behind `main`'s own tip**, which #1039 moved on to `1309` and
+`1005` — the notes at the head of this section carry the measurement for each
+revision, and the one this sentence carried until #1032 was `1307`/`1003` — so
+each stays written here rather than being deleted, because each was true of the
+tree it was measured on and `main` is a tree this repository has had since.
+
+**One attribution in the fourth note at the head of this section does not survive
+the per-suite reading, and the correction is here rather than there.** That note
+gives the `1307` → `1308` step to *#1034's six cases and #1035's one, both on
+`ec/tools/test_check_history_checkouts.py`*, and the two trees differ by one case
+on `ec/tools/test_check_citation_lines.py` instead: that suite is 40 at
+`fe92940a` and 41 at `8c51e6ed`, while `test_check_history_checkouts.py` is 30 at
+both — 24 → 30 between `d3304785` and `fe92940a`, which is #1034's six, and
+unmoved after. **The `1308` the note gives is right and only the attribution is
+early**, so both stay written per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d; #1035's case on
+`test_check_history_checkouts.py` is real and is the `1308` → `1309` step the
+fifth note records — it simply landed in `5244f119`, one commit later than that
+note places it, which is the same "`1307` behind `main`'s tip" shape the sixth
+note above measures from the other side. **Nothing in the merged tree's own
+figures moves with it**, which is what a mis-attribution is rather than a
+mis-measurement, and the per-suite count is the thing that caught it — a total
+taken from the runner cannot tell the two apart.
+
+**The red set is unchanged and
 pre-existing**: `ec/tools/test_check_cluster_citations.py` alone, on the same
-`:220` of the same #822 file, and neither #1034, #1035 nor #1038, nor any merge
-of them, caused it or fixes it.
+`:220` of the same #822 file, and neither #1034, #1035, #1038 nor #1039, nor
+#1032 nor any merge of them, caused it or fixes it.
 
 **The `tools/README.md` row in the per-pin table moved with the sentence rather
 than with a note, and this merge's step came out of the sentence's own
@@ -2353,7 +2495,7 @@ classes 0** on the merged tree, measured rather than derived.
 
 **The census and the by-cited-file axis are re-run rather than carried.**
 `census_test_line_pins.py` reads **107 pins in 29 files, 80 spellings, 59
-targets, 75 resolves against 32 declined, the `0/15/22/5/33` split, over `170`
+targets, 75 resolves against 32 declined, the `0/15/22/5/33` split, over `171`
 markdown files read and `43` test files**; and
 `check_pin_table_by_cited_file.py` reads **43 indexed / 12 named / 31 named by
 none**. **Its branch measured `42` / `12` / `30`, and the merged tree differs on
@@ -2371,11 +2513,27 @@ rather than a reading, and it is left written only in the sense that every other
 superseded figure here is** — it had already stopped being true of `main` before
 this merge, and nothing in the tree turned red, because the census's own count
 of the population is a by-product of what it reports and no assertion holds it.
-`origin/main` at `8c51e6ed` reads `169` and this tree reads `170`, the step being
-this merge's own two new write-ups — #1038's
-`xdata-0860-note-live-pointers.md` and #1035's
-`committed-checkout-triples-held.md` — so **the `170` is measured and the `166`
-was correct of a tree none of this run has**.
+`origin/main` at `8c51e6ed` reads `169` and the `#1034` × `#1035` × `#1038`
+merge's tree reads `170`, the step being that merge's own two new write-ups —
+#1038's `xdata-0860-note-live-pointers.md` and #1035's
+`committed-checkout-triples-held.md` — so **that `170` is measured and the `166`
+was correct of a tree none of this run has**. **Re-measured on the two trees
+this merge can name, the step splits in two and only one of the halves is on
+`main`**: `origin/main` at `5244f119` reads `170` and this tree reads **`171`**,
+and #1038's write-up is in the `169` that `8c51e6ed` already carries, so the
+`169` → `170` step on `main`'s linear history is
+[`committed-checkout-triples-held.md`](../docs/findings/committed-checkout-triples-held.md)
+alone. **The `170` the sentence above records and the `170` `main` reads are
+therefore the same figure reached from two different pairs of commits, which is
+a coincidence of arithmetic rather than a shared tree**, and both stay written
+per [`../docs/findings.md`](../docs/findings.md) §4a-4d — the shape the fifth note
+at the head of this section records for the two `1308`s, on the same two sides.
+The step this merge records is then #1032's own
+[`history-checkout-prompt-reach.md`](../docs/findings/history-checkout-prompt-reach.md)
+entering the corpus and citing no `test_*.py:NNN` of its own — so **the `171` is
+measured, and it is the same asymmetry the sentence above describes from the
+other end: a write-up that brings a denominator and no record, which is why
+every other figure in this paragraph is unmoved by it.**
 
 **The numbering moved a ninth time, and `main`'s is the one that does not
 move.** **§84** is #974's summary, landed by `0daac768` (whose subject line
@@ -2513,8 +2671,8 @@ seven classes 0**, re-measured rather than carried.
 | `ec/tools/test_check_doc_figure_pins.py` | `ec/tools/check_doc_figure_pins.py`'s four verdicts over a page's own tables, measured against the real `ec/tools/` rather than a stubbed tree — so the figures the checklist lists are asserted by value and a tree that changes under any of them fails here instead of quietly changing what the page claims — with the line between what it reads and what it declines, one case per shape: a thousands comma, two figures in one cell, a count with a noun after it, a hex address (stripped) beside the run that is not, a `0.5` threshold (not a figure), a `set(off) == set(on)` relation (declined, never failing), a `§2b` or `#849` reference (stripped), and a figure in a second cell (not read at all, so a prose cell's `1,169 addresses` is not a count); the four `file:line` rules no gate in this tree had, since `check_doc_links` only resolves relative `.md` links; and both directions demonstrated rather than asserted — a pinned figure marked unheld is reported, and a table that stops declaring a `verdict` column is reported too, because that second one would otherwise return the page to its pre-#849 state and report a clean run |
 | `ec/tools/test_check_pin_table_by_cited_file.py` | `ec/tools/check_pin_table_by_cited_file.py`'s fifth axis on issue #887's pin census — **which test file a pin names, and which indexed suite none does** — with the standing that it is a breakdown rather than a check held from the output side, a run whose every pin is wrong still exits 0 and its report contains neither `carries` nor `does not carry`. Around it, one case per way a record can be charged to the wrong file: two spellings of one pin landing in one bucket, a line past the end charged to its file but not to `resolves`, a `grep -rn` transcript's `./` prefix normalised away as a *spelling* and not repaired as a path, a bare module name answered by the census's own index, two files of one base name refused rather than guessed, and a path nowhere in the tree landing in a named `unresolved-path` bucket instead of the file that shares its base name; each column reconciled back to `census()`'s own `RESOLVES` and `DECLINED` on a fixture that exercises every column and both buckets, so the breakdown cannot become a second set of numbers; the committed table held as a `{path: (resolves, declined)}` dict and the 44-of-106 / 80-of-106 concentration derived from it, so a merge that adds a pin to a fifth file moves a figure rather than reweighting the breakdown; the indexed/unpinned tail's length held as `len(suites())` minus the distinct resolved paths rather than frozen by name, since it moves every time a suite lands — including this one, which the suite asserts is in it |
 | `ec/tools/test_check_capture_names.py` | `ec/tools/check_capture_names.py`'s two refusals over one listing of the capture root — a name carrying no `<YYYY-MM-DD>-` prefix, and a subdirectory in the root — which are the two properties nothing on the tree read and `captures_for()`'s `<date>-*` glob is a glob only while they hold, and its **standing as a census with a refusal in it**: read by hand the run prints the census and the refusals and exits 0, and only `--check` makes a refusal the verdict. Both fired on a scratch root rather than on the committed tree, which is conformant, each reported in its own vocabulary so "2 problems" cannot leave a reader guessing which premise stopped holding, and each message pinned to naming *what it costs* — a glob that cannot reach the file, or a glob that reaches a directory `carried_by()` skips. **The two costs demonstrated, not asserted**: an unprefixed capture is one `captures_for()` reports as a glob coming back empty, which this tool's own vocabulary calls `unresolved`, so the run stays green while checking strictly less; a subdirectory is one `glob.glob()` returns and the reader skips, so the sentence's literal comes back `missing` and sends a reader to fix the index's prose when the thing to fix is a directory. The declined alternative pinned as a refusal rather than left in prose (`power-mode-…-2026-09-23.csv` is out of reach, because the glob is `<date>-*`), a lookalike year accepted because the prefix is a shape and not a calendar, and `PREFIX` and `captures_for()`'s glob asserted to agree in both directions so the two readers of one rule cannot drift. The committed root's two tripwires assert **emptiness, not a figure** — no count of captures appears in either, so the corpus grows freely while a capture that loses its date prefix turns them red — and a root that cannot be listed is a broken census rather than three empty lists, the §14b defect `run-tests.sh` guards at the suite level |
-| `ec/tools/test_check_history_checkouts.py` | `ec/tools/check_history_checkouts.py`'s two halves, and the line between them. **The measured half** re-derives what each `actions/checkout` step in the repository's own workflows resolves to -- the explicit `fetch-depth`, or `actions/checkout`'s default of 1 where a step states none -- and asserts the *inverse* of the claim #1009 retracted: every job whose `run:` names a history reader has a full-depth checkout, with `verify_reassembly.py` **alone** deliberately not counting, because `--check` never reads history. That invariant is what catches a template re-copy dropping `fetch-depth: 0` from `ci.yml`'s `gates` job, which breaks no job and turns the cheap gate red with a *history requirement* message that reads like a provenance failure. **The reported half** prints every depth claim in the two history-reading tools with its `file:line` -- the depth word's line, not the sentence's, because a docstring's claim sits eleven lines below the `Usage:` block that precedes it -- and asserts the one rule decidable without reading English: a sentence asserting a workflow's checkout depth names the job of **every workflow it names**. All four stale sentences fail it and the four corrected sites pass it in the five sentences they now occupy, and it is held as a floor rather than a proof: job ids are ordinary English words, so it holds the defect's shape and not its content -- a job id two workflows share satisfies both, and a job id is not read out of the workflow name beside it. The scratch cases paste the four stale sentences **verbatim from the pre-#1009 sources, line breaks and quoting included**, because a paraphrase that happened to name a job would be a control passing for the wrong reason, and a gate job on a shallow checkout, a lint job on a shallow checkout (not a failure), `agent-gates.sh` not reading as a job named `gates`, a `${{ }}` depth not guessed and a workflow that will not parse all demonstrate the two halves apart. **The rule is per workflow and not per sentence** (#1034), so the two-workflow sentence the issue is filed with is pasted verbatim and appears twice -- a job of the first workflow named, then a job of the second -- against a control naming a job of each, without which a checker flagging every multi-workflow sentence would pass the pair; an unreadable workflow named beside a readable one rescues nothing, and `claude.yml`'s `claude` job is not satisfied by the filename alone. **A checkout this method cannot find is *not found by this method*, never absent** -- a composite action, a job reaching the gate from its prompt rather than a `run:` step, and the prepared `docs/ci/agent-gates-deep-schedule.yml` each land there, which is why the committed cases assert the derivation and not a coverage figure. **Not in any gate**: `.github/` is template-copied and this branch's token has no `workflow` scope |
-| `ec/tools/test_check_history_checkouts_run.py` | The **run** rather than the report, because for a checker `main()` is the product and its exit code is the whole of it -- the seven cases here run `ec/tools/check_history_checkouts.py` **as a subprocess** over the same scratch trees, which is the only arrangement that can observe what a consumer observes: the in-process `run_tool` harness the two sibling checkers use sees a return value that nothing then turns into a process status, and `--repo`'s default is a fact about `__file__` that an in-process case could only fake by patching the constant under test. Held: exit 1 with five `  FAIL ` lines and `5 problem(s).` on **stderr** while the report stays on **stdout** -- the stream split is the case, because a verdict a reader cannot route to a stream is not a contract -- exit 0 with an **empty** stderr and both verdicts on stdout, a no-`--repo` run from *inside* a stale tree printing this repository's own `ci.yml / gates / Checkout: fetch-depth: 0`, and the `--help` block, which is otherwise reached by nothing. **Two of the seven were red before a three-line edit, and the suite records that rather than claiming it went from all-green to all-green**: `load_workflows()` returned a `list` on its two failure paths where every caller reads a mapping, so any tree whose `.github/workflows/` is missing or holds no `*.yml` took the run to an `AttributeError` *after* the report had printed the `broken census, not an empty one` refusal written for that case -- and once the crash was gone those same two trees **exited 0**, which is §14b's defect at the level of the process status, so `main()` now re-reads the census and refuses when it read no workflow at all. The refusal is keyed on **zero workflows read and not on any unreadable file**, so a `broken.yml` beside a conforming `ci.yml` is a tree one bad file short of complete and still gets a real measurement -- the other side of the same clause, and the one that would be lost by keying on the wrong thing. The four stale sentences and the `workflow()` builder are **imported** from `test_check_history_checkouts.py` rather than copied, which leaves #1009's twenty-four byte-identical and keeps a single copy of a control that must not paraphrase. The issue's own `sed -i 's/    if problems:/    if False:/'` turns this suite red and leaves those twenty-four green, because only a tree the tool rejects can tell exit 0 from exit 1. **Not in any gate**: `.github/` is template-copied and this branch's token has no `workflow` scope |
+| `ec/tools/test_check_history_checkouts.py` | `ec/tools/check_history_checkouts.py`'s two halves, and the line between them. **The measured half** re-derives what each `actions/checkout` step in the repository's own workflows resolves to -- the explicit `fetch-depth`, or `actions/checkout`'s default of 1 where a step states none -- and asserts the *inverse* of the claim #1009 retracted: every job whose `run:` or `prompt:` names a history reader has a full-depth checkout, with `verify_reassembly.py` **alone** deliberately not counting, because `--check` never reads history. That invariant is what catches a template re-copy dropping `fetch-depth: 0` from `ci.yml`'s `gates` job, which breaks no job and turns the cheap gate red with a *history requirement* message that reads like a provenance failure. **The reported half** prints every depth claim in the two history-reading tools with its `file:line` -- the depth word's line, not the sentence's, because a docstring's claim sits eleven lines below the `Usage:` block that precedes it -- and asserts the one rule decidable without reading English: a sentence asserting a workflow's checkout depth names the job of **every workflow it names**. All four stale sentences fail it and the four corrected sites pass it in the five sentences they now occupy, and it is held as a floor rather than a proof: job ids are ordinary English words, so it holds the defect's shape and not its content -- a job id two workflows share satisfies both, and a job id is not read out of the workflow name beside it. The scratch cases paste the four stale sentences **verbatim from the pre-#1009 sources, line breaks and quoting included**, because a paraphrase that happened to name a job would be a control passing for the wrong reason, and a gate job on a shallow checkout, a lint job on a shallow checkout (not a failure), `agent-gates.sh` not reading as a job named `gates`, a `${{ }}` depth not guessed and a workflow that will not parse all demonstrate the two halves apart. **The rule is per workflow and not per sentence** (#1034), so the two-workflow sentence the issue is filed with is pasted verbatim and appears twice -- a job of the first workflow named, then a job of the second -- against a control naming a job of each, without which a checker flagging every multi-workflow sentence would pass the pair; an unreadable workflow named beside a readable one rescues nothing, and `claude.yml`'s `claude` job is not satisfied by the filename alone. **A checkout this method cannot find is *not found by this method*, never absent** -- a composite action, a `prompt:` that is not a string, and the prepared `docs/ci/agent-gates-deep-schedule.yml` each land there, which is why the committed cases assert the derivation and not a coverage figure. *(Corrected at #1032, with the old wording kept: this cell read "a composite action, a job reaching the gate from its prompt rather than a `run:` step, and the prepared ...". The prompt case left that list rather than being decided against, because a `with: prompt:` is now read as well as a `run:` and a marker alone on an indented line of one is a run -- so the tool counts `agent-conflicts.yml`'s `resolve` from its prompt at `:248`, the report reads `4 job(s) run a history reader`, and the four-job claim in `verify_reassembly.py:1315` stops disagreeing with it. The rule is the marker's being in command position, which leaves `agent-review.yml`'s `review` -- its marker is inside a review criterion -- uncounted and *printed* under a line naming what was declined; four of the suite's cases go red against the looser form of that rule. Write-up: `docs/findings/history-checkout-prompt-reach.md`.)* **Not in any gate**: `.github/` is template-copied and this branch's token has no `workflow` scope |
+| `ec/tools/test_check_history_checkouts_run.py` | The **run** rather than the report, because for a checker `main()` is the product and its exit code is the whole of it -- the seven cases here run `ec/tools/check_history_checkouts.py` **as a subprocess** over the same scratch trees, which is the only arrangement that can observe what a consumer observes: the in-process `run_tool` harness the two sibling checkers use sees a return value that nothing then turns into a process status, and `--repo`'s default is a fact about `__file__` that an in-process case could only fake by patching the constant under test. Held: exit 1 with five `  FAIL ` lines and `5 problem(s).` on **stderr** while the report stays on **stdout** -- the stream split is the case, because a verdict a reader cannot route to a stream is not a contract -- exit 0 with an **empty** stderr and both verdicts on stdout, a no-`--repo` run from *inside* a stale tree printing this repository's own `ci.yml / gates / Checkout: fetch-depth: 0`, and the `--help` block, which is otherwise reached by nothing. **Two of the seven were red before a three-line edit, and the suite records that rather than claiming it went from all-green to all-green**: `load_workflows()` returned a `list` on its two failure paths where every caller reads a mapping, so any tree whose `.github/workflows/` is missing or holds no `*.yml` took the run to an `AttributeError` *after* the report had printed the `broken census, not an empty one` refusal written for that case -- and once the crash was gone those same two trees **exited 0**, which is §14b's defect at the level of the process status, so `main()` now re-reads the census and refuses when it read no workflow at all. The refusal is keyed on **zero workflows read and not on any unreadable file**, so a `broken.yml` beside a conforming `ci.yml` is a tree one bad file short of complete and still gets a real measurement -- the other side of the same clause, and the one that would be lost by keying on the wrong thing. The four stale sentences and the `workflow()` builder are **imported** from `test_check_history_checkouts.py` rather than copied, which keeps a single copy of a control that must not paraphrase. That left #1009's twenty-four byte-identical, and no longer does: #1032 edited one of them -- the reader-set loop, to add `resolve` -- and the builder's step emitter, to spell a `with: prompt:` block, both in the suite this one imports from, so the single copy is kept and the byte-identity is not. The issue's own `sed -i 's/    if problems:/    if False:/'` turns this suite red and leaves the report suite's **thirty-nine** green -- twenty-four of #1009's and the fifteen #1034, #1035, #1039 and #1032 added between them -- measured on this merged tree rather than carried from the thirty-one it was, and true of the thirty-nine because only a tree the tool rejects can tell exit 0 from exit 1. **Not in any gate**: `.github/` is template-copied and this branch's token has no `workflow` scope |
 | `ec/tools/test_check_capture_claims.py` | `ec/tools/check_capture_claims.py`'s address-presence and row-count rules against the committed `evidence/ec-watch/*.csv` captures, and the line between what it checks and what it deliberately skips, plus the file-granularity self-report #975 added — a file read in full that names no claim is named in `--verbose` and counted on a line of its own, and the two `--verbose` line shapes are asserted to partition the file total the summary prints rather than asserted against a figure |
 | `ec/tools/test_check_pin_table_rows.py` | `ec/tools/check_pin_table_rows.py`'s reconciliation of the 106-row per-pin table against `census_test_line_pins.py`'s own run, and **its standing as a check on the four mechanical columns and not on the fifth**: a tree where every verdict cell is wrong still exits 0, and so does one where the verdict cells are empty, so the cell is demonstrably never read — the write-up's `*Why no checker*` declines a checker that renders verdicts and this is not it. One case per way it can fail (a citing line that moved, a shape that changed under a row, a record with no row, a row with no record, a run that placed nothing) and one per way a loosened version would slip through: both citing-cell spellings and the `†` marker kept in the message, the table's `beside` abbreviation honoured against the census's own constant, an unknown read cell reported rather than passed, a duplicate key reported rather than resolved to the first, an unparsed row reported and a two-header write-up refused, and a missing header or an unreadable file reported rather than passing vacuously — plus the white-box `path-differs` case, because that class is an identity on a placed row (the match key pins both inputs its re-derivation has) and a check only ever exercised by a tree that cannot occur is a check nothing has tested; the committed table held at 106 rows against 106 records, every class 0, and the read and shape cells held to the census's own vocabulary and split. **Not in any gate**: the prepared patch is `docs/ci/agent-gates-pin-table-rows.patch` |
 | `ec/tools/test_check_citation_lines.py` | `ec/tools/check_citation_lines.py`'s three rules over the line numbers the prose repeats out of the generated CSVs — the `xdata-086x-dispatch.md` site table and the `HAND_CHECKED["0x0860"]` comment against `xdata-0860-census-sites.csv`, and every `xdata-registers.csv`/`xdata-clusters.csv` line pointer in the two files its `ROW_SCOPE` names, each held to the row for the **address or cluster id** rather than to a table of expected line numbers, because a rank is not an identity — one case per way a citation can be wrong, and the cases a loosened test would let through: a table whose header lost the column, reported as not located rather than passing vacuously; a `—` cell over a CSV row that does cite; the merged `0x25CE4`/`0x25CFC` row read as one row and two sites; the `:49` shorthand bound to the file it follows and a bare list bound to the file named ahead of it; a header line and a line past EOF diagnosed as such; a rule that located nothing reporting that rather than returning clean; the two supersession shapes **skipped**, with the skip counted and `--verbose` naming it, and a live paragraph that merely mentions a correction still checked; the deliberate asymmetry between the per-site and the union rule, pinned from both sides; and that the committed prose and the committed census currently agree |

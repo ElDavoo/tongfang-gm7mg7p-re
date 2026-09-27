@@ -7,8 +7,18 @@ against `main`: a checker that had quietly stopped finding anything would print
 the same clean report. The scratch-tree cases below are therefore the ones that
 matter most in this suite -- the synthetic workflow that resolves to the depths
 it spells, the gate job that goes red on a shallow checkout, the actionlint job
-that does not, the sentence that names `ci.yml` without naming a job, and the
-one that names two workflows and a job of only one of them.
+that does not, the sentence that names `ci.yml` without naming a job, the one
+that names two workflows and a job of only one of them, and the gate reached
+from a `prompt:` rather than a `run:` step.
+
+**The two prompt shapes are a matched pair, and the pair is the point.** A
+marker alone on an indented line of a prompt is a command and its job's shallow
+checkout is a failure; the same marker as the fourth word of a bullet is a
+review criterion, its job needs no clone, and it is neither a failure nor a
+reader -- it is printed under *named in a `prompt:` but not read as a run*,
+with the line the citation resolves to. A rule that only tested whether the
+prompt had any text on the line would count the second, and four of the cases
+below go red when it is loosened that way.
 
 **The stale sentences are the control, in the spelling they actually had.** Four
 of them went stale the same way, and #1009's own claim -- that a checker
@@ -31,6 +41,7 @@ one any more.
 import importlib.util
 import io
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -154,7 +165,13 @@ def checkout_triples(repo):
 
 
 def workflow(name, jobs):
-    """A workflow file's text, from `{job id: steps}`."""
+    """A workflow file's text, from `{job id: steps}`.
+
+    A step is a checkout with `"uses"`, a `with: prompt:` with `"prompt"`, and
+    a `run:` otherwise. The prompt is emitted as a literal block indented the
+    way the repository's own workflows indent one, so a case's line numbers are
+    the ones a reader of the scratch file would count.
+    """
     lines = ["name: %s" % name, "on: [push]", "jobs:"]
     for job_id, steps in jobs.items():
         lines.append("  %s:" % job_id)
@@ -166,10 +183,33 @@ def workflow(name, jobs):
                 if "depth" in step:
                     lines.append("        with:")
                     lines.append("          fetch-depth: %d" % step["depth"])
+            elif "prompt" in step:
+                lines.append("      - uses: anthropics/claude-code-action@v1")
+                lines.append("        with:")
+                lines.append("          prompt: |")
+                for line in step["prompt"].splitlines():
+                    lines.append("            " + line)
             else:
                 lines.append("      - name: %s" % step.get("name", "Run"))
                 lines.append("        run: %s" % step["run"])
     return "\n".join(lines) + "\n"
+
+
+def at_line(path, line):
+    """The text of one 1-based line of a workflow, for checking a citation."""
+    with open(path, encoding="utf-8") as handle:
+        return handle.read().splitlines()[line - 1]
+
+
+def cited_line(text, workflow):
+    """The workflow line the report's one `file:line` citation points at.
+
+    Read out of the report rather than written into the case, so a case pins
+    the property that matters -- the citation resolves to the line carrying
+    the marker -- and not this helper's own line numbering, which a change to
+    the scratch-workflow layout above would move for no reason.
+    """
+    return int(re.search(r"%s:(\d+)" % re.escape(workflow), text).group(1))
 
 
 class ScratchTree(unittest.TestCase):
@@ -303,6 +343,91 @@ class DepthTests(ScratchTree):
         self.assertTrue(depth)
         self.assertIn("not found by this method", depth[0])
         self.assertIn("no `actions/checkout` step", depth[0])
+
+    def test_a_gate_in_a_prompt_on_a_shallow_checkout_is_a_failure(self):
+        # The case `agent-conflicts.yml`'s `resolve` is, and the one the
+        # widening exists for. A re-copy of that workflow that dropped
+        # `fetch-depth: 0` would break no job and turn no gate red, and before
+        # the widening this checker stayed green through it because the gate
+        # was reached from a prompt and only a `run:` was read.
+        self.put(".github/workflows/ci.yml", workflow("CI", {
+            "resolve": [{"uses": True},
+                        {"prompt": "Resolve it, then run:\n\n"
+                                   ".github/scripts/agent-gates.sh"}],
+        }))
+        depth, _prose, out = self.problems()
+        self.assertEqual(len(depth), 1, out)
+        self.assertIn("ci.yml/resolve", depth[0])
+        self.assertIn(".github/scripts/agent-gates.sh", depth[0])
+        self.assertIn("depth 1", depth[0])
+
+    def test_a_gate_in_a_prompt_on_a_full_depth_checkout_is_not_a_failure(self):
+        # The committed shape, so the widening cannot make a correct tree go
+        # red -- and the job has to be *on* the list, not merely tolerated,
+        # because a job quietly excluded and a job correctly included read the
+        # same from the exit code.
+        self.put(".github/workflows/ci.yml", workflow("CI", {
+            "resolve": [{"uses": True, "depth": 0},
+                        {"prompt": "Resolve it, then run:\n\n"
+                                   ".github/scripts/agent-gates.sh"}],
+        }))
+        depth, _prose, out = self.problems()
+        self.assertFalse(depth, f"a full-depth prompt-reached job failed:\n{out}")
+        self.assertIn("resolve (.github/scripts/agent-gates.sh, from its prompt)",
+                      out)
+
+    def test_a_gate_named_inline_in_a_criterion_is_not_a_reader(self):
+        # `agent-review.yml:169`'s shape: the marker is the fourth word of a
+        # bullet, so the line's first non-whitespace text is a hyphen. Counting
+        # it would put a job that runs no gate and needs no clone inside a
+        # full-depth invariant, which is the rule being wrong rather than
+        # strict -- so it is reported, not counted and not dropped.
+        path = self.put(".github/workflows/ci.yml", workflow("CI", {
+            "review": [{"uses": True, "depth": 0},
+                       {"prompt": "Reject a PR that:\n"
+                                  "- a gate weakened rather than satisfied -- "
+                                  "`.github/scripts/agent-gates.sh` relaxed"}],
+        }))
+        depth, _prose, out = self.problems()
+        self.assertFalse(depth, f"a criterion counted as a reader:\n{out}")
+        self.assertIn("no job's `run:` or `prompt:` names a history reader", out)
+        self.assertIn("not in command position", out)
+        cited = cited_line(out, "ci.yml")
+        self.assertIn("review: .github/scripts/agent-gates.sh", out)
+        self.assertIn("`.github/scripts/agent-gates.sh`", at_line(path, cited))
+
+    def test_a_run_step_outranks_a_prompt_that_reaches_the_same_gate(self):
+        # `agent-fix.yml`'s `fix` reaches the gate both ways, at its `:220` and
+        # its `:316`, and the step is the route a checkout depth can be held
+        # against -- a `run:` is executed and a prompt is read. The report has
+        # to say which one put the job on the list, or a reader comparing it
+        # against the workflow has to work out which of the two mattered.
+        self.put(".github/workflows/ci.yml", workflow("CI", {
+            "fix": [{"uses": True, "depth": 0},
+                    {"prompt": "Then run:\n\n.github/scripts/agent-gates.sh"},
+                    {"run": "bash .github/scripts/agent-gates.sh"}],
+        }))
+        depth, _prose, out = self.problems()
+        self.assertFalse(depth, out)
+        self.assertIn("fix (.github/scripts/agent-gates.sh, from a run: step)", out)
+
+    def test_a_prompt_that_is_not_a_string_is_not_read_and_not_a_crash(self):
+        # The same answer a non-string `run:` gets, and the same answer a
+        # non-integer `fetch-depth` gets: this method has not read it. A
+        # prompt arriving as a list or a `${{ }}` handed in from elsewhere is
+        # not a sentence to be scanned, and stringifying one would manufacture
+        # a line of "prose" out of a value that has none.
+        self.put(".github/workflows/ci.yml",
+                 "name: CI\njobs:\n  gates:\n    steps:\n"
+                 "      - uses: actions/checkout@v4\n        with:\n"
+                 "          fetch-depth: 0\n"
+                 "      - uses: anthropics/claude-code-action@v1\n"
+                 "        with:\n"
+                 "          prompt: ${{ inputs.prompt }}\n")
+        depth, _prose, out = self.problems()
+        self.assertFalse(depth, out)
+        self.assertIn("no job's `run:` or `prompt:` names a history reader", out)
+        self.assertIn("not found by this method", out)
 
     def test_a_fetch_depth_that_is_not_an_integer_is_not_guessed(self):
         self.put(".github/workflows/ci.yml",
@@ -549,9 +674,58 @@ class CommittedTreeTests(unittest.TestCase):
         text = out.getvalue()
         self.assertIn("every job that runs a history reader has a full-depth "
                       "checkout", text)
-        for job in ("gates", "implement", "fix"):
+        for job in ("gates", "implement", "fix", "resolve"):
             self.assertIn(job, text)
         self.assertIn(".github/scripts/agent-gates.sh", text)
+
+    def test_the_reader_set_is_exactly_the_four_jobs_the_prose_names(self):
+        # Held by name and not by count, for the reason the depth table above
+        # gives: a count is satisfied by any four. `resolve` is the job the
+        # widening added -- it reaches the gate from its prompt at
+        # `agent-conflicts.yml:248` -- and it is the one a re-copy of that
+        # workflow would take the `fetch-depth: 0` from, so leaving it off this
+        # list is the miss that has to stay red.
+        workflows, _unreadable = chc.load_workflows(str(REPO))
+        readers = {f"{name}/{job.job}": (job.reader, job.route)
+                   for name in workflows for job in workflows[name].values()
+                   if job.reader}
+        self.assertEqual(readers, {
+            "ci.yml/gates": (".github/scripts/agent-gates.sh", "a run: step"),
+            "agent-implement.yml/implement": (".github/scripts/agent-gates.sh",
+                                              "a run: step"),
+            "agent-fix.yml/fix": (".github/scripts/agent-gates.sh", "a run: step"),
+            "agent-conflicts.yml/resolve": (".github/scripts/agent-gates.sh",
+                                            "its prompt"),
+        })
+
+    def test_a_prompt_naming_the_gate_in_a_criterion_is_printed_and_not_counted(self):
+        # `agent-review.yml`'s `review` is the shape the command-position rule
+        # exists to keep out, and it has to be out of it from both sides: absent
+        # from the reader list above, and *present* in the line this tool prints
+        # for what it declined to count. A rule that neither counts a job nor
+        # says it saw one is indistinguishable from a rule that never looked.
+        workflows, _unreadable = chc.load_workflows(str(REPO))
+        job = workflows["agent-review.yml"]["review"]
+        self.assertIsNone(job.reader)
+        self.assertEqual(job.named, [(169, ".github/scripts/agent-gates.sh")])
+        # And the line is one a reader can go and check, which is the whole
+        # reason the loader keeps a position for a parsed scalar.
+        self.assertIn(".github/scripts/agent-gates.sh",
+                      at_line(REPO / ".github" / "workflows" /
+                              "agent-review.yml", 169))
+
+    def test_the_report_prints_the_prompt_it_did_not_count(self):
+        out = io.StringIO()
+        with redirect_stdout(out):
+            chc.report(str(REPO))
+        text = out.getvalue()
+        self.assertIn("not in command position", text)
+        self.assertIn("agent-review.yml:169 review", text)
+        # The blind-spot footer is the report's half of the docstring's own
+        # paragraph, and the second declared blind spot is in it: the prepared
+        # workflow outside the glob.
+        self.assertIn("docs/ci/agent-gates-deep-schedule.yml", text)
+        self.assertIn("not found by this method", text)
 
     def test_the_two_tools_name_the_job_in_every_depth_claim_they_make(self):
         # The control that makes the rest of this suite mean something: on the

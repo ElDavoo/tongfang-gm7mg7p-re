@@ -972,7 +972,7 @@ the half this table exists to record.
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):190 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | comment | **records another line** |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):194 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):202 | `test_xdata_cluster_names.py:307` | by-name | comment | **records another line** |
-| [`history-checkout-claims.md`](history-checkout-claims.md):262 | `ec/tools/test_measure_index_repair_visibility.py:373-391` | by-path | other | carries |
+| [`history-checkout-claims.md`](history-checkout-claims.md):278 | `ec/tools/test_measure_index_repair_visibility.py:373-391` | by-path | other | carries — **and #1032's shift moved the row's own citing line, `:262` → `:278`**, with `origin/main` at `8c51e6ed` and at `5244f119` both reading `:262` and the branch and this tree both reading `:278`, each left written per [`../findings.md`](../findings.md) §4a-4d, each true of the tree it was measured on. **The step is `262 + 16 = :278` and all sixteen lines are #1032's own blockquote, and the explanation this cell gave for it does not survive a re-measurement** — it read *"`262 + 10` is #1034's supersession note in that file, above the pin, and `268 + 10` is the same ten with the branch's own six already in it; what moves the pin on top of either is nothing in the branch's blockquote, which is below it"*, and three parts of that fail against the trees: that file carries no supersession note at all, on `8c51e6ed` or on `5244f119`, so the ten #1034's note contributed to `tools/README.md` contributed nothing here; the blockquote is at the file's `:210`, **above** the pin rather than below it; and it is sixteen lines rather than six, so the branch's own reading is `:278` and not the `:268` this cell recorded. **What survives is the number and the direction** — the same row, the same reading, sixteen lines down — and the earlier text stays written where it was measured, per §4a-4d |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):71 | `ec/tools/test_disasm8051.py:52` | — | — | **declined** (fenced) |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):169 | `test_disasm8051.py:52` | by-name | comment | carries |
 | [`runner-red-suite-set.md`](runner-red-suite-set.md):103 | `tools/test_readme_suite_table.py:11-20` | by-path | other | carries |
@@ -1007,7 +1007,7 @@ the half this table exists to record.
 | [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md):22 | `ec/tools/test_xdata_cluster_names.py:88` | by-path | other | carries |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | comment | **does not carry** |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2665 | `../tools/test_xdata_cluster_names.py:68-90` | beside | other | carries |
-| [`../../tools/README.md`](../../tools/README.md):467 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** — and this merge's shift moved the row's own citing line `:279` → `:341`, the eighth re-registration for this one row and this file's fourteenth change; the `:312` the `#845` × `#974` merge measured and the `:346` #1009's own branch did are each left written beside it per [`../findings.md`](../findings.md) §4a-4d, each true of the tree it was measured on. **#1034's shift moved it twice more, `:341` → `:366` → `:370`**, by a supersession note for the test totals and not by anything to do with the `test_xdata_cluster_names.py` claim this row reconciles — the ninth and tenth re-registrations for this row, and the reason a note about a different suite's figure still costs this one a cell, twice: the second move was this change recording the first. **The `#1034` × `#1035` merge's shift moved it once more, `:370` → `:399`**, by a fourth supersession note for the same figures — the eleventh re-registration for this row, and one move rather than #1034's pair, because that note recorded its own shift correctly the first time. **The `#1034` × `#1035` × `#1038` merge's shift moved it once more, `:399` → `:431`**, by a fifth supersession note for the same figures — the twelfth re-registration for this row and **one move again rather than a pair**, because that note too recorded its own shift correctly the first time. **This merge's shift moved it once more, `:431` → `:467`**, by a sixth supersession note for the same figures — the thirteenth re-registration for this row, and **one move and not a pair** again, the sixth note having recorded its own shift correctly too. **#1037's own branch measured `:387` rather than either of the last two**, off a `main` that had not yet carried the fourth and fifth notes: seventeen lines added above the row by a note about the runner totals, none of it about this claim, true of that tree alone per [`../findings.md`](../findings.md) §4a-4d |
+| [`../../tools/README.md`](../../tools/README.md):573 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** — and this merge's shift moved the row's own citing line `:279` → `:341`, the eighth re-registration for this one row and this file's fourteenth change; the `:312` the `#845` × `#974` merge measured and the `:346` #1009's own branch did are each left written beside it per [`../findings.md`](../findings.md) §4a-4d, each true of the tree it was measured on. **#1034's shift moved it twice more, `:341` → `:366` → `:370`**, by a supersession note for the test totals and not by anything to do with the `test_xdata_cluster_names.py` claim this row reconciles — the ninth and tenth re-registrations for this row, and the reason a note about a different suite's figure still costs this one a cell, twice: the second move was this change recording the first. **The `#1034` × `#1035` merge's shift moved it once more, `:370` → `:399`**, by a fourth supersession note for the same figures — the eleventh re-registration for this row, and one move rather than #1034's pair, because that note recorded its own shift correctly the first time. **The `#1034` × `#1035` × `#1038` merge's shift moved it once more, `:399` → `:431`**, by a fifth supersession note for the same figures — the twelfth re-registration for this row and **one move again rather than a pair**, because that note too recorded its own shift correctly the first time. **This is the first step in this row's history with three notes stacked above the pin rather than two**, and both sides' are written whole where each measured it. #1037's sixth note moved it once, `:431` → `:467`, the thirteenth re-registration and **one move and not a pair** again, the sixth note having recorded its own shift correctly too; #1032's sixth moved it once more, `:467` → `:492`, and its seventh once again, `:492` → `:526`, the fourteenth and fifteenth, both about `tools/README.md`'s own test totals and neither about the `test_xdata_cluster_names.py` claim this row reconciles — the same pair of moves #1034's cost, and **the first time the branch's and `main`'s have been counted from one base rather than from two**, since the branch's `:456` and `:490` were measured off a `main` carrying neither #1038's note nor #1037's. This merge's eighth moved it once more, `:526` → `:573`, the sixteenth, and all four are the same one step: `25 + 34 + 47 = 106` lines of supersession note added above the row, `467 + 106 = 573`, none of any of them about this claim. **#1037's own branch measured `:387` rather than any of the last three**, off a `main` that had not yet carried the fourth and fifth notes: seventeen lines added above the row by a note about the runner totals, none of it about this claim, true of that tree alone per [`../findings.md`](../findings.md) §4a-4d |
 
 **44 carry, 2 carry on the adjacent line, 19 do not carry, 10 record another line
 on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
@@ -3469,7 +3469,7 @@ became 68 — and `247 + 32 + 37 + 30 = :346` is the whole of it. **The `:259`,
 `check_pin_table_rows.py` reads **107 rows, 107 records, 107 placed, all seven
 classes 0** with `:346`, run rather than predicted. **Every other citing line
 this page registers is unmoved**: `docs/agent-pipeline.md:358` and
-`history-checkout-claims.md:252` are the branch's own values, and
+`history-checkout-claims.md:268` are the branch's own values, and
 `../findings.md`'s six are too — `4206` → `4212` is the branch's **six** lines at
 `findings.md`'s §14f and **none of `0daac768`'s**, whose first edit to that file is at
 `:9562` and so above none of the six. **The `docs/agent-pipeline.md:358` half of
@@ -3521,3 +3521,106 @@ unmoved by it and still reads there. **The red set is still the one suite above
 and no other**: re-checked on a clean worktree of `origin/main` at `5881153d`
 and on this tree, both red with the identical message, so neither #845 nor
 #974 nor #1009 caused it and none of them fixes it.)*
+
+*(**And the second side of this merge is #1032, which moves the corpus
+denominator and two citing lines and nothing else.** Re-run rather than
+differenced, on a clean worktree of `origin/main` at `8c51e6ed` and on this
+tree: `origin/main` reads **107 pins in 29 files, 80 spellings, 59 targets, 75
+resolves against 32 declined, the `0/15/22/5/33` split, `169` markdown files,
+`43` test files** and this tree reads **the same eight figures with `170`
+markdown files**, so `169 + 1 = 170` is
+[`history-checkout-prompt-reach.md`](history-checkout-prompt-reach.md) entering
+the corpus and citing no `test_*.py:NNN` of its own — the same asymmetry the
+note above names from the other side, a write-up that brings a denominator and a
+change that brings the record. **The `167` the block at the top of this page
+carries was two behind `main` before this merge touched anything** — it is the
+`#845` × `#1009` merge's figure, and #1034's and #1038's write-ups took the
+corpus to `169` without a note here recording the step. It stays written in the
+block, true of the tree it was measured on, per
+[`../findings.md`](../findings.md) §4a-4d; the six figures beside it are the
+merged tree's and are unmoved. **Two citing lines move and both are re-registered
+in the table above rather than added to it**, so 107 rows answer 107 records
+exactly as they did: `history-checkout-claims.md` `:262` → **`:278`**, whose
+`+16` is #1034's supersession note above that file's pin — this merge's own
+amendment to it is *below* the pin and moves it not at all, which is the rare
+case and worth the words — and `tools/README.md` `:370` → **`:394`**, whose
+`+24` is this merge's own fourth test-total note in that file's "What it runs"
+section, a note about a different suite's figure again, the eleventh
+re-registration for that row. `docs/agent-pipeline.md:366` and `../findings.md`'s
+six are unmoved by it. `check_pin_table_rows.py` reads **107 rows, 107 records,
+107 placed, all seven classes 0** with both, run rather than predicted. **The
+by-cited-file axis is unmoved on all three of its figures** — `43` / `12` / `31`
+over `107`, with `44`-of-`107` and `80`-of-`107` — because this merge re-registers
+two rows without changing which test file either names, and commits no suite.
+**The suite totals are re-derived here and the red set is still one.**
+`bash tools/run-tests.sh` reads `43 suite(s) run, 1316 tests; one or more FAILED`
+and `python3 -m unittest discover -s ec/tools` reads `1012`, against `origin/main`
+at `8c51e6ed`'s `43` / `1308` and `1004` — `1308 + 8 = 1316` and `1004 + 8 =
+1012`, the eight being #1032's cases on `ec/tools/test_check_history_checkouts.py`
+(30 → 38) and nothing else, every other suite reading the same number on both
+sides, which is why the suite count does not move a second time running. The
+single failure is `ec/tools/test_check_cluster_citations.py` on the same `:220`
+of the same #822 file with the same two `0x0464`/`0x0465` disagreements, red
+with the identical message on a clean worktree of `origin/main` at `8c51e6ed`,
+so neither #1034 nor #1032 caused it and neither fixes it.)*
+
+*(**And the second side of *this* merge is #1032 again, one commit later, and
+the corpus denominator moves a second time running for the same reason.** Re-run
+rather than differenced, on a clean worktree of `origin/main` at `5244f119`
+(#1039's) and on this tree: `origin/main` reads **107 pins in 29 files, 80
+spellings, 59 targets, 75 resolves against 32 declined, the `0/15/22/5/33` split,
+`170` markdown files, `43` test files** and this tree reads **the same eight
+figures with `171` markdown files**, so `170 + 1 = 171` is
+[`history-checkout-prompt-reach.md`](history-checkout-prompt-reach.md) entering
+the corpus — the same write-up the note above puts into the `169` → `170` step,
+counted here against a base it could not see. **The `170` that note records and
+the `167` the block at the top of this page carries both stay written**, each true
+of the tree it was measured on, and #1039's
+[`committed-checkout-triples-held.md`](committed-checkout-triples-held.md) is
+the `169` → `170` step neither of them could see, for the reason the note above
+gives for #1034's and #1038's: a write-up that cites no `test_*.py:NNN` costs
+the corpus one file and no record. **So the denominator has now moved on every
+merge in this run for two commits running and nothing else has**, which is the
+measurement the two notes above make from the other direction and is worth one
+line here for the opposite reason: a figure that moves only when a write-up
+arrives is a denominator rather than a drift.
+
+**One citing line moves and it is the same one the note above moved, by a
+different cause, so 107 rows answer 107 records exactly as they did.**
+`history-checkout-claims.md` is **unmoved at `:278`** this time, which is the
+rare case again and for the simplest of reasons: **nothing in this merge touched
+that file**, so there is no above-the-pin arithmetic to do. *(`#1032`'s own
+amendment to it *is* above the pin — it is the blockquote at the file's `:210`,
+and it is what took `:262` to `:278` in the first place; the note above called it
+six lines and below the pin, and its own row now carries the correction with the
+per-file count that settles it, per §4a-4d.)* `tools/README.md` moves
+`:431` → **`:490`**, and this is the first step in that row's history where both
+sides' notes sit above the pin in one tree — `:431 + 25 = :456` is #1032's own
+supersession note, which recorded `:370 + 24 = :394` on a tree that had never
+taken #1038's fifth note, and `:456 + 34 = :490` is the note this merge adds, so
+the merged tree carries one more re-registration than either side had and the
+thirteenth and fourteenth are both a supersession note about a test total rather
+than about the `test_xdata_cluster_names.py` claim the row reconciles.
+`docs/agent-pipeline.md:366` and `../findings.md`'s six are unmoved by it, and
+`check_pin_table_rows.py` reads **107 rows, 107 records, 107 placed, all seven
+classes 0** with all of them, run rather than predicted. **The by-cited-file axis
+is unmoved on all three of its figures** — `43` / `12` / `31` over `107`, with
+`44`-of-`107` and `80`-of-`107` — because this merge re-registers one row without
+changing which test file it names, and commits no suite.
+
+**The suite totals are re-derived here and the red set is still one.**
+`bash tools/run-tests.sh` reads `43 suite(s) run, 1317 tests; one or more FAILED`
+and `python3 -m unittest discover -s ec/tools` reads `1013`, against
+`origin/main` at `5244f119`'s `43` / `1309` and `1005` — `1309 + 8 = 1317` and
+`1005 + 8 = 1013`, the eight being #1032's cases on
+`ec/tools/test_check_history_checkouts.py` (31 → 39) and nothing else, every
+other suite reading the same number on both sides, which is why the suite count
+does not move a third time running. **The two sides' steps go to the same suite
+for the first time in this run** — `main`'s `1309` counted #1039's one case and
+the branch's `1316` counted #1032's eight, both off the `1308` the fork point
+reads — so neither side's arithmetic is a reading of this tree and the sum is,
+which is the reason both figures stay written above. The single failure is
+`ec/tools/test_check_cluster_citations.py` on the same `:220` of the same #822
+file with the same two `0x0464`/`0x0465` disagreements, red with the identical
+message on a clean worktree of `origin/main` at `5244f119`, so neither #1039 nor
+#1032 caused it and neither fixes it.)*

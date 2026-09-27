@@ -198,6 +198,25 @@ None of these is a gap the change closes, and none is reported as absent:
   than from a `run:` step,** so `depth_problems()` does not count it as a
   history reader and its `fetch-depth: 0` is held by this table rather than by
   the invariant. It is right today, and it is held.
+
+  > **Correction, added by #1032. The bullet above is left as written and is
+  > no longer true of the tool; the *tree* it describes is unchanged, and its
+  > closing half — that `resolve` is held, and held by a page worth reading —
+  > was and is correct.** `check_history_checkouts.py` now reads a step's
+  > `with: prompt:` as well as its `run:`, so a marker alone on an indented line
+  > of a prompt is a run and `resolve` is counted. The report reads
+  > `4 job(s) run a history reader: fix (…), gates (…), implement (…), resolve (.github/scripts/agent-gates.sh, from its prompt)`
+  > where it read `3`, and the verdict line `every job that runs a history reader
+  > has a full-depth checkout` covers `resolve` along with the other three — so
+  > this bullet's "held by this table rather than by the invariant" was
+  > describing a rule that was too narrow, not a job that was correctly
+  > excluded. `resolve` is held by **both** now, and by nothing here in
+  > particular: this page's mapping is nine `(job, depth, stated)` triples and
+  > it never had a place to record which route a job reaches the gate by. The
+  > corrected rule, the two cases it separates — `resolve` in command position,
+  > `agent-review.yml`'s `review` mid-sentence in a criterion and so printed
+  > rather than counted — and both report outputs are in
+  > [`history-checkout-prompt-reach.md`](history-checkout-prompt-reach.md).
 - **The `PROSE_FILES` half of the tool is not in this mapping at all.** It is
   held by the two other committed cases in the same class, which are unchanged
   by this.
