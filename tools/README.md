@@ -11,7 +11,40 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. **There are forty-seven today, 1481 tests in all** — both figures
+file committed. **There are forty-nine today, 1561 tests in all** — both figures
+*(Superseded a ninth time, by #54: `ec/tools/test_paged_trampoline_framing.py`
+lands with **28** cases, so `46 + 1 = 47` and `1437 + 28 = 1465`, the step being
+this one suite and nothing else. Measured here rather than carried, by the
+per-file rule the note below gives — the runner still cannot total this tree —
+and the `forty-six` and the `1437` stay written where each was measured, per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d. **The table gains its row
+in the same change**, so the one suite `tools/test_readme_suite_table.py` still
+reports as missing is the same one it reported before: #1058's
+`ec/tools/test_pd_image_census.py`, which is not this change's to write.)*
+*(Superseded a tenth time, by this merge, and **this is the second time in this
+run that a suite lands on *both* sides of the same merge**, so the merged tree
+is ahead of either side's own arithmetic and neither side's step describes it
+alone. `origin/main` at `9bb8fca1` writes **`forty-seven` / `1481`** in this
+lead and the branch writes **`forty-seven` / `1465`**, and the step from each is
+one suite: #40's `ec/tools/test_walk_flow_follow.py` on one side and #54's
+`ec/tools/test_paged_trampoline_framing.py` on the other. **Neither written
+figure is its own tree's**, which is the standing the notes above already give:
+`main`'s tree finds `48` suites, because #40 landed there and this lead was not
+re-measured after it, and the branch's base carried neither #40's suite nor
+`main`'s #1030 cases. **Measured on the tree this lands in,
+`bash tools/run-tests.sh` reads `49 suite(s) run, 1561 tests`**, and the step
+from `main` is the one suite this merge adds and nothing else — #54's
+`ec/tools/test_paged_trampoline_framing.py` at **28** cases, so
+`48 + 1 = 49` and `1533 + 28 = 1561`, the `1533` being `origin/main` at
+`9bb8fca1` re-run with this landing's own `run-tests.sh` rather than differenced,
+for the reason the thirtieth note below gives. #40's suite is already on `main`
+and is **not** part of this merge's step, which is the one respect in which the
+two sides are not mirror images and the same clause the ninth note gives for
+`forty-six` → `forty-seven`. Every figure the notes above carry stays written
+where it was measured on, per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d; the `forty-seven` in
+particular is now a full landing behind on `main`, exactly as the fourth note
+below already recorded for the `46` one landing earlier.)*
 *(Superseded at the `#845` × `#974` merge, and **both sides of that merge moved
 a figure, which no merge earlier in this run did**: `origin/main` at `0daac768`
 (#974's) reads **`41 suite(s) run, 1271 tests`** and the merged tree read
@@ -258,7 +291,14 @@ loop with the last `Ran` line taken rather than every one, per file**, on full
 clones of both sides (`git rev-parse --is-shallow-repository` answers *false*),
 and the `46` is the 46 `test_*.py` files `find` returns — the runner's own rule,
 and the one `tools/test_readme_suite_table.py` checks the table's first column
-against.
+against. *(That count is `47` on the tree this note was measured on, `46 + 1`
+for #54's `ec/tools/test_paged_trampoline_framing.py`; the `46` stays written
+because the figures around it were measured on the tree that had it. **On the
+tree this lands in it is `49`, `47 + 2`**, the two being #40's
+`ec/tools/test_walk_flow_follow.py` and #54's, and this note's own `46` is three
+behind it — the same standing the note above records for the lead's figures,
+each true of the tree it was measured on per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d.)*
 
 **The red set on this tree is four suites and none of the four is this
 merge's**: `ec/tools/test_check_cluster_citations.py` (the long-standing one, on
@@ -3502,6 +3542,7 @@ The census page's own correction records both rows in the same sentence.
 | `tools/test_doc_patch_refs.py` | `tools/check_doc_patch_refs.py`'s two directions between the prose and `docs/ci/`, and the line between what it reads and what it declines: a name in the prose resolves to a file, a file on disk is named somewhere, and the parse cases that keep a loosened pattern from passing vacuously — both backtick spellings (the bare one is 31 of this tree's 70 references and is how a table row's first cell has to be written), a glob-shaped span and the `.yml` sibling refused by shape rather than by a list, a link resolved to its last path component, a URL refused, and one line in both spellings counted as two; the four refusals on trees small enough to read the whole finding list, each reported by name *and* by citing file; the live direction, which is the half that broke in the suite below; one case per historical name **in both directions** — still absent from `docs/ci/`, still cited by markdown — with the two ways an exemption rots demonstrated rather than asserted on a `tempfile` copy; the rename case, on a copy of the committed tree rather than a fixture, because "red for *every* stale reference" is a claim about this tree's references — every one of the renamed patch's references, list-compared against the tree's own, with the uncited rename reported separately; and that a discovery which found nothing exits non-zero rather than reading as a clean tree. No count is asserted, for the reason the suite below's docstring gives |
 | `tools/test_agent_gates_patches.py` | the prepared `docs/ci/agent-gates-*.patch` set against the committed `.github/scripts/agent-gates.sh`, which is the file those patches exist not to edit: the set on disk against the set the suite names, both directions and by name; each patch alone; every ordered pair applied in sequence, so no landing order has to be written down anywhere; the full set landing and the result still parsing under `bash -n` and `shellcheck`, because a patch that applies and yields broken shell is still wrong; that the folded capture-claims patch still carries both `check_capture_claims` and `check_testdata_index`, so a later re-cut cannot drop half of it quietly; and that each header's `git apply` line names the file the reader is holding. A case holds the working-tree gate script byte-identical to the committed one, so a local edit under `.github/` cannot quietly change what every other case measures. Every mutation goes to a `tempfile` scratch tree and nothing writes to `.github/` |
 | `tools/test_readme_suite_table.py` | this table's own first column against what `find` discovers, both directions and by name: a discovered suite with no row and a row for a suite that is gone are different mistakes, and the half that broke is the one a missing row took. The *set* and nothing else — the descriptions are prose, and comparing counts would turn every added test into a failure. It is a discovered suite itself, so the invariant covers the file that checks it |
+| `ec/tools/test_paged_trampoline_framing.py` | The byte facts behind the issue #54 reading that all 18 `calls_trampoline` rows of `bank-paged-call-targets.csv` are an operand byte of a named instruction one or two bytes earlier — asserted against the committed image, not by re-running the scan that wrote the census, which would be the tool against itself. The population first, so 14 read as 18 is a failure: the predicate's 18 rows, all `region=common`, all `in_region=yes`, none resolving onto a stub, and `calls_trampoline` splitting **17 `0` / 1 `1`** as parsed values rather than truthiness, because the column is a bank number and not a boolean. Then each row's `target` re-derived by `paged_target()` on the image (a lost `+ 2` would still agree with a regenerated CSV and disagree with all 18) and confined to the `0x1150`-`0x1ABC` block. Then per site the owning instruction's offset, bytes, mnemonic, spanning length and `converges_from` score, plus the census's own opcode label checked against `paged_sites()`'s `op & 0x1F` predicate — with the one site whose byte is *also* a real opcode (`0xC1` is `CLR bit`, and the two committed disassemblers resolve it opposite ways) pinned separately rather than folded into a loop that would be false for it. The **negative controls**, which are the reason green means anything: three sites where the byte before is a real instruction head of its own, asserted to decode as `cjne`/`djnz` *and* to score 0 of 24 while their owners score 24, plus the assertion that the wrong framing of the same bytes also contains a paged call, plus the non-circularity check that no owner is itself a paged instruction. Fifteen covering listings checked to cover and to carry the pinned bytes, five of them at their own first instruction — and **the three gaps pinned as gaps**, because a write-up claiming eighteen would be overclaiming. And the write-up's verdict table parsed back to 18 rows, one per census address, none missing and none invented, every verdict in the declared four-word vocabulary — which is what makes "18 of 18" checkable rather than asserted |
 
 Committing a `test_*.py` is the whole of what it takes to be run. A row is
 the one step the runner cannot do for it, because the second column is prose
