@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-122 write-ups.
+123 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -27,6 +27,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`call-graph-unresolved.md`](call-graph-unresolved.md) — The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (issue #456)
 - [`capture-filename-date-prefix.md`](capture-filename-date-prefix.md) — The capture root's date prefix and its flatness are measured, and a name breaking either is refused (issue #973)
+- [`charge-target-caller-chain.md`](charge-target-caller-chain.md) — Who reaches `0xB158` — the charge-target caller chain, and how often it runs (issue #89)
 - [`checkout-claim-corpus.md`](checkout-claim-corpus.md) — The checkout-depth sweep derived its own population, and a retraction quotes the sentence it retracts
 - [`citation-code-vs-data.md`](citation-code-vs-data.md) — A citation is a code frame, not an address (issue #453)
 - [`citation-gap-scan.md`](citation-gap-scan.md) — The bytes a function boundary cut out of a citing listing (issue #560)
