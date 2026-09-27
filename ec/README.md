@@ -249,9 +249,10 @@ into `r2 -a 8051` with no stitching needed.
   than a race. It imports `check_cluster_citations.units` rather than writing a
   second sentence splitter, so a fix to the splitting logic (issue #273) lands
   once and both checkers get it. Committed files only: no image, no Ghidra, no
-  network — `.csv` captures only, as the four `.txt` files in that directory are
-  `ecrw.py dump` output with no row-per-change shape. The limits it earns the
-  right to state are in its own docstring, in the sibling's style, and the two
+  network — `.csv` captures only, as a `.txt` capture has no row-per-change
+  shape to count; `evidence/README.md` indexes what any individual one holds.
+  The limits it earns the right to state are in its own docstring, in the
+  sibling's style, and the two
   that matter most: a sentence that *denies* movement is skipped, which is what
   keeps #270's correction green and is exactly why a stale denial is not caught;
   and a table row is its own unit, so `annotations/xdata-0400-045f.md` §8's
