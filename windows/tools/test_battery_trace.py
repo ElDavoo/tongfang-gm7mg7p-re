@@ -125,9 +125,13 @@ REGS = {
     0x07B9: 0x00, 0x07D0: 0x00, 0x07D1: 0x00, 0x07CC: 0x00,
 }
 
-# The six tokens WMI_QUERY formats, in the order wmi() zips them onto its keys.
-# AC in, charging, so discharging is 0 -- that column the current tool does not
-# log at all, which is one of the drifts the census below records.
+# The six tokens WMI_QUERY formats, in the order wmi() zips them onto its keys
+# (battery_trace.py:62). AC in, charging, so discharging is 0 -- a key wmi()
+# returns that cols (:77-79) has no column for, so the tool drops it. That is
+# visible by reading the two lists against each other and nothing else: no
+# assertion here mentions the key, the census below is a file-to-class map plus
+# a row-0 header comparison, and `discharging` is in none of the eight
+# committed headers, so the captures cannot show the drop either.
 WMI_TOKENS = "1 1 0 19152 27992 63"
 
 # The ACPI rate the committed row records, kept as a name because it is the

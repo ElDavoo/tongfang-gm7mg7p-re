@@ -30,12 +30,18 @@ gets if they take row 0 for a header.
 |---|---|---|---|
 | `2026-09-09-profiles.csv` | row 0 | 162 | nothing in this tree |
 | `2026-09-09-threshold80.csv` | row 0 | 6 | `linux/battery-trace/battery-trace` |
-| `2026-09-17-limit-pair.csv` | **row 1** | 195 | `linux/battery-trace/limit-pair-test` |
+| `2026-09-17-limit-pair.csv` | **row 1** | 171 | `linux/battery-trace/limit-pair-test` |
 | `2026-09-18-windows-stationary.csv` | row 0 | 416 | `battery_trace.py` |
 | `2026-09-19-windows-bios-defaults.csv` | row 0 | 185 | `battery_trace.py` |
 | `2026-09-21-0522-follow.csv` | row 0 | 8 | `charge_target_test.py` |
 | `2026-09-21-0522-holdcheck.csv` | row 0 | 3 | `charge_target_test.py` |
 | `2026-09-21-0522-stick.csv` | row 0 | 11 | `charge_target_test.py` |
+
+Seven of the eight counts are the file's line count less its one header. The
+eighth is not, and the section on that file below is why: its 201 lines are 171
+data rows, a header, five `#` annotations and 24 `ecmem.py` write
+confirmations, and a count that skipped the header and the `#` lines but
+nothing else would put those 24 under *data rows* and report 195.
 
 ```
 2026-09-09-profiles.csv         ts,ac,status,capacity,charge_now,current_now,voltage_now,profile,ec_hex
@@ -103,10 +109,18 @@ classifies it. That is the intended behaviour, not an inconvenience: the
 alternative is a check that only ever reads the files it was written against.
 
 `2026-09-17-limit-pair.csv` is also the one file here that is not
-header-first. Row 0 is `# original: 0x07b9=0x00 0x07d0=0x00 `, written by the
-script before the header, and four further `# charge_types=…` rows are
-interleaved *through* the data at lines 94, 115, 136 and 159, each recording
-which charge profile the operator had selected. So the file is annotated both
+header-first, and the only one here with a row that is not on its header's field
+count: 29 of its 201 lines are single-field. Five are the operator's
+annotation. Row 0 is `# original: 0x07b9=0x00 0x07d0=0x00 `, written by the
+script before the header, and four `# charge_types=…` rows are interleaved
+*through* the data at lines 94, 115, 136 and 159, each recording which charge
+profile the operator had selected — hand-added, since nothing in this tree
+writes that line. The other 24 are `ecmem.py`'s own write confirmations,
+`0x07b9: was 0x00 wrote 0x3c readback 0x3c` and one line per register, which
+the three `$ECM write … >> "$OUT"` redirects at `limit-pair-test:40,42,44` put
+straight into the capture; that is `ecmem.py:56`'s format rendered exactly.
+A `csv.reader` returns every one of the 29 as a single-field row, the shape a
+data row with fields missing would also take. So the file is annotated both
 before and inside its own row stream, and
 `test_charge_target_test.py`'s
 `test_the_committed_0522_traces_share_that_header` — which reads row 0 with
@@ -136,18 +150,25 @@ comment that the gap is unfixed; closing it turns that case red, which is the
 record turning over rather than a defect in the fix.
 
 Two things are *not* claimed here. That this has corrupted a committed file:
-it has not, and each file above is internally consistent — checked by reading
-them, and by the census holding every one to the column set its class claims.
-And that the guard is the defect: the guard is doing what it was written to do.
-The gap is that nobody wrote the check that is not there.
+it has not, and **no file in the directory carries a data row on a column set
+other than its own header's** — which is exactly the damage an append to a
+mismatched header causes, and none of them shows any. That is a reading of the
+committed tree rather than a check that re-derives it: the census holds every
+file to the column set its class claims, which is a property of row 0, and the
+29 single-field rows above are non-data lines rather than rows on a foreign
+column set, so nothing in the suite walks every row. And that the guard is the
+defect: the guard is doing what it was written to do. The gap is that nobody
+wrote the check that is not there.
 
 The one writer of the four with **no** guard is the interesting one, because it
 is the one that would double. `limit-pair-test` appends its `#` line and its
 header on every run, so two runs on one date would put a second header in the
 middle of the file — and `2026-09-17-limit-pair.csv` has exactly one of each,
-so the committed capture is a single run with four hand-added annotations after
-it. The `2026-09-21-0522-*` files are on the guarded path, and each carries one
-header line.
+so the committed capture is a single run, and the non-data rows that run
+produced are the `$ECM write` confirmations counted above — the four
+`# charge_types=` rows are hand-added, and neither of the script's own per-run
+lines appears twice. The `2026-09-21-0522-*` files are on the guarded path, and
+each carries one header line.
 
 ## The two-source property, at the row level
 
