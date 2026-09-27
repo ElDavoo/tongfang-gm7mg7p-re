@@ -71,8 +71,8 @@ import io
 import os
 import sys
 
-from disasm8051 import (FLOW_OPCODES, OPCODE_LEN, converges_from, mnemonic,
-                        paged_target)
+from disasm8051 import (FLOW_OPCODES, OPCODE_LEN, converges_from, inline_arg_len,
+                        mnemonic, paged_target)
 
 # Image map for ec/firmware/GMxMGxx_11.800. `runtime` is the address a site
 # has once the image is loaded for disassembly; for the main EC that means
@@ -288,6 +288,17 @@ def walk_why(d: bytes, start: int, max_insns: int = 8):
     this feeds is a guess -- see `TERMINATORS` and
     ../../docs/findings/walk-window-terminators.md for the committed census of
     the rows the budget truncates.
+
+    `inline_arg_len()` is consulted for the same reason `converges_from()`
+    consults it: a walk that stepped *through* a `disasm8051.INLINE_ARG_CALLS`
+    argument block would decode data as instructions, and the resulting
+    `access` cell would be a finding about nothing. No window this walk
+    produces can currently contain one -- the block's call is an `lcall`, and
+    `lcall` is in `FLOW_OPCODES`, so the loop returns at the call and never
+    reaches the block -- which makes this a latent hole rather than a live
+    one, kept because the loop is here and the table is imported: a later
+    change that relaxed the flow stop would otherwise mis-frame every row
+    behind one, silently, with the cells still reading as answers.
     """
     out = []
     i = start
@@ -304,7 +315,7 @@ def walk_why(d: bytes, start: int, max_insns: int = 8):
         if d[i] in FLOW_OPCODES:
             why = FLOW_END
             break
-        i += n
+        i += n + inline_arg_len(d, i)
         # `max_insns`, not `len(d)`, bounds this loop, and the first of these
         # two tests is what holds the index: the `i + n > len(d)` test above
         # asks whether the *instruction* fits and permits `i + n == len(d)`,

@@ -240,7 +240,11 @@ the two-programs-in-one-dump problem in §3a:
   four argument bytes out of the code stream before resuming past them. A
   linear decoder walks into those bytes and comes out misaligned, which is
   why `disasm8051.py --converge` reports evidence about instruction framing
-  rather than a verdict on it.
+  rather than a verdict on it. **Resolved (issue #36):** `0x104D` is a 4-byte
+  inline argument — the helper copies the four code bytes at its return address
+  into XDATA and tail-jumps to return + 4 — and `disasm8051.py` now steps over
+  the block, which is why 45 of the 254 were unsyncable and 3 are. See
+  [`findings/pd-inline-arg-trampoline.md`](findings/pd-inline-arg-trampoline.md).
 
 ### 3c. The register corpus and the firmware's are nearly disjoint, and one reason for that was a grep (2026-09-23, issue #132)
 

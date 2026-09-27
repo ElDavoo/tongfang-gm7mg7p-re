@@ -267,45 +267,41 @@ import csv, collections
 rows = list(csv.DictReader(open('ec/annotations/ec-0x07d0-sites.csv')))
 print(collections.Counter('syncs from every anchor' if r['frame_over'] == '0' else
       'syncs from none' if r['frame_onto'] == '0' else 'mixed' for r in rows))"
-Counter({'syncs from every anchor': 154, 'mixed': 55, 'syncs from none': 45})
+Counter({'syncs from every anchor': 154, 'mixed': 97, 'syncs from none': 3})
 ```
 
-The 45 that no preceding anchor syncs onto are the ones worth explaining, and
-all 45 are accounted for without any of them being misframed:
+**The 45 became 3 (issue #36), and the 42 that moved are the `lcall 0x104D`
+idiom.** `disasm8051.py` now knows that call carries four bytes of inline
+argument data and steps over them, so the sweep lands on those 42 sites instead
+of walking through the argument bytes; `0x07D6`-`0x07D7` went 9 to 0 and
+`0x07D1` 4 to 0 on the same change. The convention is written down, with the
+simulation that settles what the helper does with the bytes and the 458-site
+census, in
+[`../../docs/findings/pd-inline-arg-trampoline.md`](../../docs/findings/pd-inline-arg-trampoline.md);
+`ec/tools/pd_inline_arg_sites.py` measures it and
+`annotations/pd-inline-arg-sites.csv` is its table. In short: `0x104D` takes
+its own return address off the stack into DPTR, copies the four code bytes at
+that address into XDATA through `0x1064`, and tail-jumps back to four bytes
+past the call — so the four bytes are the argument, and the helper is a 4-byte
+CODE→XDATA copier rather than "something that pops its return address". What
+the constant *means* is not established; the enumeration over all 458 sites is
+in that file.
 
-- **42 sit immediately after `lcall 0x104D` followed by four bytes of inline
-  data.** 68 of the full 254 sit there; for the other 26 some anchor inside
-  the inline bytes happens to land on the site anyway, which is its own
-  reminder of how weak the sweep is. `0x104D` pops its own return address
-  into DPTR, fetches four bytes from the code stream through `0x1064`
-  (`clr a ; movc a,@a+dptr ; inc dptr`), and resumes past them with
-  `jmp @a+dptr`:
+The transcript that used to show the decoder failing here, corrected — the
+four `nop`s are now the argument block and the walk resumes on the
+`mov dptr,#0x07d0` this site is:
 
-  ```console
-  $ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x2104D --runtime 0x104D -n 10
-  0x104d  a882     mov  r0,0x82
-  0x104f  8583f0   mov  0xf0,0x83
-  0x1052  d083     pop  0x83
-  0x1054  d082     pop  0x82
-  0x1056  121064   lcall 0x1064
-  0x1059  121064   lcall 0x1064
-  0x105c  121064   lcall 0x1064
-  0x105f  121064   lcall 0x1064
-  0x1062  e4       clr  a
-  0x1063  73       jmp  @a+dptr
-  ```
+```console
+$ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x23AA8 --runtime 0x3AA8 -n 4
+0x3aa8  12104d   lcall 0x104d
+0x3aab  00000001 inline args: 00 00 00 01
+0x3aaf  9007d0   mov  dptr,#0x07d0
+0x3ab2  e0       movx a,@dptr
+0x3ab3  ff       mov  r7,a
+```
 
-  A linear decoder cannot know those four bytes are arguments, so it walks
-  through them and comes out misaligned — `disasm8051.py` renders them as
-  `nop`s, which is exactly the failure mode its docstring warns about:
-
-  ```console
-  $ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x23AA8 --runtime 0x3AA8 -n 4
-  0x3aa8  12104d   lcall 0x104d
-  0x3aab  00       nop
-  0x3aac  00       nop
-  0x3aad  00       nop
-  ```
+The 3 that no preceding anchor syncs onto are the ones worth explaining, and
+all 3 are accounted for without any of them being misframed:
 
 - **3 sit immediately after a table of code addresses that includes their
   own.** At file `0x23A81` the preceding bytes are `3e 6f 01 0c | 3f 38 01 0d

@@ -540,7 +540,11 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
 - **`annotations/ec-0x07d0-sites.md`** — all 254 `0x07D0` reference sites
   enumerated and classified, with `annotations/ec-0x07d0-sites.csv` as the
   machine-readable table behind it. Answers what the sites *are*; deliberately
-  does not answer what the EC does with the address of the same number.
+  does not answer what the EC does with the address of the same number. Its §5
+  call idiom is written up in
+  `../docs/findings/pd-inline-arg-trampoline.md`, with
+  `annotations/pd-inline-arg-sites.csv` (458 rows) and
+  `tools/pd_inline_arg_sites.py` behind it.
 - **`annotations/ec-07c4-07d5-sites.md`** — the 15 main-EC reference sites of
   `0x07C4`, `0x07D3`, `0x07D4` and `0x07D5`, against 102 in the PD image, with
   `annotations/ec-07c4-07d5-sites.csv` as the machine-readable table behind it.
