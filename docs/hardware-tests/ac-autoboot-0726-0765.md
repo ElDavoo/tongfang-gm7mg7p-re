@@ -266,20 +266,36 @@ object named first**, and `BUF0` is `Name (BUF0, Buffer (0x021C) {…})` at
 `C4RW`, `0x05C8` `CCRW`, `0x0698` `D0RW`) are buffer bit offsets too, so it
 is evidence about neither range. `registers.yaml`'s `sources: [uniwill-laptop]`
 tag is then the only thing in the tree that attaches the three names to
-`0x0765`, and it attaches them as a claim about a byte nothing else reads.
+`0x0765`, and the committed scan reports `0x0765: 0 direct MOV DPTR site(s)
+none` — which is the vocabulary of `static-refs-audit.md:60` and, in
+`xdata_register_map.py:1238`, already graded as "not found by this method".
 
 The driver-facing consequence, stated plainly: **on this board a Linux driver
 cannot source `SUPER_KEY_LOCK`, `LIGHTBAR` or `FAN_BOOST` capability from
-`0x0765`.** Nothing in the tree establishes that the byte carries them, and no
-site in either image reads it. A driver taking those bits from here would be
-reading a name, not a capability.
+`0x0765`.** The argument is documentary, and it stands on its own: no
+committed line places those three names at this byte, and the three lines that
+do carry them land on `0x0767`, `0x0768` and `0x0751`. What backs the byte up
+is weaker and is stated in its own terms — `static_refs_main_ec: 0,
+static_refs_pd_image: 0` is a direct-`MOV DPTR` scan, so it means *no direct
+`MOV DPTR` use site for `0x0765` was found in either image by the committed
+scan*, not that the byte is unread. A use reached by a computed DPTR, a paged
+write, or a route through code the scan does not disassemble would leave that
+count at zero, which is precisely the `0x07B9` blind spot
+[`docs/findings.md` §4c](../findings.md) was retracted for, and it is why the
+row is not `absent` on the strength of the count. Either way a
+driver taking those bits from `0x0765` would be reading a name, not a
+capability.
 
 **So this arm is read-only, and the reason is the point.** A host write into a
 byte the stack may consult is an intervention whose effect on the driver is
 unknown — it could make a driver take a path the byte never named, which is
-the opposite of what a capability probe is for. There is no write here, no
-restore, and no "flip a bit and see". Read the raw value at three states, in
-this order, and record each verbatim:
+the opposite of what a capability probe is for. "May consult" is as far as the
+evidence goes in *either* direction, and that is the same blind spot: the
+scan's zero rules out the direct `MOV DPTR` sites it can see and nothing
+beyond them, which is a reason to leave the byte alone rather than a reason
+to probe it harder. There is no write here, no restore, and no "flip a bit
+and see". Read the raw value at the three states below, in this order, and
+record each verbatim:
 
 ```console
 $ sudo python3 ec/tools/ecmem.py read 0x0765
@@ -289,14 +305,24 @@ $ sudo python3 ec/tools/ecmem.py read 0x0765
 - **AC in, machine running** — the state most of the run lives in.
 - **AC out, machine running** — the transition, read after the machine has
   been on battery long enough for the reading to be steady. Say how long.
-- **AC out, machine fully off** — the last thing before the shutdown in each
-  arm, so the three states bracket the power sequence the other arm is testing.
+- **First OS contact, before anything writes** — the `read 0x0726 0x0765` §3
+  already takes, recorded here for `0x0765` with the state it was taken in.
+  It is the only reading adjacent to the off window this run can produce, and
+  it is *adjacent* rather than in it: a reading with the machine fully off is
+  not available at all, because the instrument maps `/dev/mem` and needs a
+  running OS, which is the same fact §1 gives for why no capture spans the
+  moment. Do not substitute "read it immediately before shutting down" for
+  this state — that is the second bullet under a different label, and the log
+  has to be able to tell them apart.
 
 A byte that reads the same in all three is *not found by this method, within
 these windows* — and that wording is not a formality, it is the correction
 `docs/findings.md` §4c exists to enforce. The driver-facing statement above
-does not change either way: it rests on the absence of any use site, not on
-this run's readings.
+does not change either way, and neither does the converse: it rests on the
+documentary half — no committed line puts the three names at this byte, and
+the three lines that do carry them land on `0x0767`, `0x0768` and `0x0751` —
+not on this run's readings, and not on the scan's zero, which says what that
+scan looked for and not that nothing looks for it.
 
 ## 6. Restore
 
@@ -324,9 +350,10 @@ rule.
 
 **Safety.** This test writes one byte, `0x0726`, and reads `0x0765` without
 writing it. That is the whole of the intervention: `0x0726` is `absent` on a
-zero-in-both-images count and `0x0765` is untouched, so no writer in this
-firmware build has been shown to exist for either. The restore is the last
-line of defence, and it is done with the machine up rather than left for later
+zero-in-both-images count and `0x0765` is untouched, so the committed scan
+has shown no direct `MOV DPTR` writer for either — which, per §5, is what that
+scan can and cannot see. The restore is the last line of defence, and it is
+done with the machine up rather than left for later
 — not because a host write to this window has ever been observed to damage
 anything, but because there is no reason to carry a modified byte across
 another shutdown.
@@ -426,13 +453,17 @@ turns into confident-sounding prose.
   rather than mistaken for a result. What the run has established is a fact
   about XDATA survival on this board, which is worth recording in its own
   right.
-- **`0x0765` read the same at all three states.** That is *not found by this
-  method, within these windows*. The driver-facing statement in §5 is
-  unchanged by it, because that statement rests on the absence of any use site
-  in either image rather than on this run's readings. A single differing
-  reading is worth a second run before anything is written about it, and it is
-  a statement about the byte across those three states and not about what the
-  byte means.
+- **`0x0765` read the same at all three of §5's states** — AC in running, AC
+  out running, and first OS contact before anything writes. That is *not found
+  by this method, within these windows*, and it is not a verdict on a fourth
+  state: no host runs while the machine is off, so no run of this procedure
+  produces a reading from inside the off window and §5 does not ask for one.
+  The driver-facing statement in §5 is unchanged by it, because that statement
+  rests on the documentary half — no committed line puts the three capability
+  names at `0x0765`, and the three that do carry them land elsewhere — rather
+  than on this run's readings. A single differing reading is worth a second run
+  before anything is written about it, and it is a statement about the byte
+  across those three states and not about what the byte means.
 
 ---
 
