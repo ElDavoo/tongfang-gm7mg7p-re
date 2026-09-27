@@ -49,18 +49,27 @@ per-file split; both are corrected below.
 
 Wrong three ways, and the "hex dump / value listing" half is the only part
 that survives. There are **five** `.txt` files, and **none** of them is
-`ecrw.py dump` output. Each file's own header says what made it:
+`ecrw.py dump` output. Four carry a header saying what made them, and the
+fifth has none; what the headers do *not* say is kept in its own column, so an
+attribution is never read as a quotation:
 
-| file | line | what its own header says |
-|---|---|---|
-| `2026-09-24-host-window-page-census.txt` | 1 | `# host-window page census, ec/tools/ec_timer_capture.py --census, ECMG 0xfe410000 via /dev/mem, read-only` |
-| `2026-09-23-0751-isolation.txt` | 1 | `# Issue #99 -- write 0x0751 alone, service running, AC, from Turbo (0x10)` — `ec_watch.py` output, one row per change |
-| `2026-09-23-power-mode-cycle-0f00-final.txt` | — | no header at all; line 1 is `0F00: 35 39 3b 3d 3f 41 43 4b 50 53 ff ff ...`, a bare hex dump |
-| `2026-09-23-ctgp-live.txt` | 1-4 | `# Issue #8 -- cTGP/DynamicBoost live test, ...` — a hand-written observation table |
-| `2026-09-23-power-mode-snapshot-dc.txt` | 6 | `# Tool: windows/tools/ecrw.py read. Values copied verbatim from its output.` |
+| file | header | what its own header says | what it is, and where that is recorded |
+|---|---|---|---|
+| `2026-09-24-host-window-page-census.txt` | 1-3 | `# host-window page census, ec/tools/ec_timer_capture.py --census, ECMG 0xfe410000 via /dev/mem, read-only` | a per-page count of non-`0xFF` bytes over the 64 KiB mapping, read over `/dev/mem` rather than from the EC (`evidence/README.md:77`) |
+| `2026-09-23-0751-isolation.txt` | 1-3 | `# Issue #99 -- write 0x0751 alone, service running, AC, from Turbo (0x10)` | a watch log, one block per value `0xA0`/`0x00`/`0x10`, carrying the `0x0751` rows only — the PWM rows are not in the capture, only in its own closing note (`evidence/README.md:50`, `:60`) |
+| `2026-09-23-power-mode-cycle-0f00-final.txt` | none | — | a bare hex dump: line 1 is `0F00: 35 39 3b 3d 3f 41 43 4b 50 53 ff ff ...`, the fan-table window read back after the last switch (`evidence/README.md:42`) |
+| `2026-09-23-ctgp-live.txt` | 1-4 | `# Issue #8 -- cTGP/DynamicBoost live test, ...` | a hand-written observation table; the one file here `evidence/README.md` does not index |
+| `2026-09-23-power-mode-snapshot-dc.txt` | 6 | `# Tool: windows/tools/ecrw.py read. Values copied verbatim from its output.` | read-only reads taken on battery just before the power-mode capture (`evidence/README.md:45`) |
 
-The last is the only one whose header names a tool, and it says **read**. The
-`ecrw.py dump` attribution most likely crossed over from the testdata fixture
+The last is the only one whose header names a tool that reaches the EC, and it
+says **read**. So the "no row-per-change shape" half of the old bullet is not a
+property of `.txt` captures either: `2026-09-23-0751-isolation.txt` is a watch
+log with a row per change, minus the PWM rows, and it is skipped because the
+oracle is `main()`'s `evidence/ec-watch/*.csv` index — `check()` skips a unit
+naming anything else, before either rule runs — and not because of what the
+file holds.
+
+The `ecrw.py dump` attribution most likely crossed over from the testdata fixture
 `ec/tools/testdata/0751-isolation-example-moved-fan-after-0f00.txt`, whose
 header does say "the same `ecrw.py dump 0x0F00 0x0060` as §3's step 6 takes
 it" — a *constructed* input modelled on a dump, which `--verbose` also reports
@@ -72,13 +81,43 @@ as a `.txt` skip, and not a member of the evidence tree at all.
 > all (and 10 more naming one of the `.txt` ones).
 
 This is the sentence that had to be **deleted rather than corrected**, and the
-next section is why. It is stale as well as misplaced: the same scan on this
-tree measures **38 units in 14 files** and **16 units**.
+next section is why. It is stale as well as misplaced: on the tree as received,
+before this write-up was added, the same scan finds **38 units in 14 files**
+naming a `.csv` capture, where the docstring said 19. Nothing in the tool
+prints that — `main()`'s index is `WATCH`-scoped and its output is claims, not
+census — so it is a separate walk, and this is the whole of it:
+
+```
+$ python3 - <<'EOF'
+import os, sys; sys.path.insert(0, 'ec/tools')
+import check_capture_claims as ccc
+from check_cluster_citations import units
+hits = []
+for root in ccc.ROOTS:
+    for d, sub, fs in os.walk(os.path.join(ccc.REPO, root)):
+        sub[:] = [s for s in sub if not s.startswith('.')]
+        for n in sorted(fs):
+            if n.endswith(ccc.PROSE):
+                p = os.path.join(d, n)
+                hits += [(p, u) for _, u in units(open(p, encoding='utf-8').read())
+                         if ccc.captures_in(u)[0]]
+print(len(hits), 'units in', len({p for p, _ in hits}), 'files')
+EOF
+38 units in 14 files
+```
+
+The `.txt` half of the old sentence — "and 10 more naming one of the `.txt`
+ones" — is not re-quoted here, for the reason the next section gives: this
+write-up names two `.txt` paths of its own (the `0751-isolation` row above and
+the follow-up at the end), so a count of the units naming one measures the
+document doing the counting.
 
 ## The measurement, re-derived from the run, 2026-09-27
 
 Nothing below is taken from the issue or from the predecessor write-up; all of
-it comes from running the tool. The run:
+it comes from running the tool. The run, on the tree as received — before this
+write-up was added, which is itself one of the files it walks, so the merged
+tree reads one file and one uncounted file more than this block does:
 
 ```
 $ python3 ec/tools/check_capture_claims.py --check --verbose
@@ -100,7 +139,9 @@ over the two `checked += 1` sites:
 | **total** | **9** | **6** | **3** |
 
 And every claim by address and line, which is what "re-derive the split" is
-worth:
+worth. A claim is listed at the line `check()` reports it on, which is the line
+the *address* is on for both kinds — the count row is the address line, not the
+line the number is written on:
 
 | file:line | address | kind | stated |
 |---|---|---|---|
@@ -109,17 +150,24 @@ worth:
 | `ec/annotations/registers.yaml:3895` | `0x0743` | presence | — |
 | `ec/annotations/registers.yaml:3895` | `0x0745` | presence | — |
 | `ec/annotations/registers.yaml:3896` | `0x0746` | presence | — |
-| `docs/hardware-tests/system-id-0456-bit6-divisor.md:275` | `0x0449` | count | 238 |
+| `docs/hardware-tests/system-id-0456-bit6-divisor.md:276` | `0x0449` | count | 238 |
 | `docs/hardware-tests/system-id-0456-bit6-divisor.md:276` | `0x0449` | presence | — |
-| `docs/hardware-tests/xdata-06c2-06db-sweep.md:144` | `0x06D6` | count | 260 |
+| `docs/hardware-tests/xdata-06c2-06db-sweep.md:145` | `0x06D6` | count | 260 |
 | `docs/hardware-tests/xdata-06c2-06db-sweep.md:145` | `0x06D6` | presence | — |
 
-`registers.yaml` is five claims over three lines because three of the
-addresses are named on one line and one of them twice; `0x0743` and `0x0745`
-share `registers.yaml:3895`, which is the `GPU_DYNAMIC_BOOST_STATUS` note's
-"where `0x0743/0x0745`/`0x0746` land". A sentence that says three addresses
-attributed to one capture is three claims, not one, and this is the table that
-says so.
+`registers.yaml:1267` is the one count with no address line of its own, and it
+is there for a reason worth stating, because it is the fallback and not the
+rule: `XDATA_0449`'s `0x0449` is the entry's `addr:`, which the presence rule
+does not read, so nothing in that unit speaks the address and the count falls
+back to the unit's first line. Everywhere else the address is written down, and
+both kinds land on the same line.
+
+`registers.yaml` is five claims over four lines, two of them sharing
+`registers.yaml:3895` — `0x0743` and `0x0745`, out of the
+`GPU_DYNAMIC_BOOST_STATUS` note's "where `0x0743/0x0745`/`0x0746` land", which
+splits across `:3895` and `:3896` — and none of the three named twice. A
+sentence that says three addresses attributed to one capture is three claims,
+not one, and this is the table that says so.
 
 ## Why the corpus-scan sentence was deleted rather than re-quoted
 
@@ -135,11 +183,12 @@ document added to the tree". The same applies with more force to a unit count.
 
 **Its replacement is not stable either.** The issue proposed replacing "19 and
 10" with "13 `skip (capture is not a .csv)` lines … across seven files". That
-figure is *also* already stale on the tree the issue was filed against: the
-run prints **19** such lines, across **11** files, naming **six** distinct
-`.txt` paths (the five under `evidence/ec-watch/` plus the testdata fixture
-above). It is a better figure — the run prints it, at least — but it is still
-a count of units in a corpus, and it moves the same way.
+figure is *also* stale, in exactly this section's way: on the tree as received
+the run already prints more of those lines, across more files, than the issue
+quoted, and this write-up's own two `.txt` paths push it up again. It is a
+better figure than "19 and 10" — the run prints it, at least — but it is still
+a count of units in a corpus, and it moves the same way, which is the argument
+applied to the replacement and not only to the thing it replaces.
 
 **A count of skips is a count of the corpus, not of the checker.** The
 `skip (…)` lines are one per *unit that named a capture and was not checked*,
@@ -227,7 +276,7 @@ missing. It is not one, and correctly is not: that is a **distinct-address
 count over a whole capture**, which the docstring's own "Numbers that are not
 row counts" bullet leaves alone *by construction* — a count has to be a number
 immediately followed by `times`/`changes`/`rows` and bound to a nearby address.
-The count claim in that file is `:144`'s "260 rows", which is what the table
+The count claim in that file is `:145`'s "260 rows", which is what the table
 above records. Recorded so the correction is not re-derived.
 
 ## What this deliberately does not change
@@ -251,6 +300,15 @@ above records. Recorded so the correction is not re-derived.
   exists to stop. This file names it as the predecessor and carries today's
   figures, dated. The docstring's pointer to it names a *file*, which is why
   the pointer is still right and its figures are not quoted.
+- **The `27,032`-unit figure the docstring carried**, dropped for the reason
+  the bullet above gives: it is #975's measurement of the corpus
+  (`testdata-addr-column-claim.md:89`), not a property of the tool, and it no
+  longer describes this tree — the `units()` walk over `ROOTS` the scan above
+  uses returns a different total today, and that total is not quoted here
+  either. The sentence it sat in stands without it, on the run's own two lines
+  rather than on a figure about the corpus. The same sentence in
+  `test_check_capture_claims.py`'s `TheFileLevelSelfReport` went with it, since
+  it is the same argument in the same words.
 - **`tools/README.md`**'s suite row is a *description*, and
   `tools/test_readme_suite_table.py` states outright that descriptions are not
   checked. Adding a class to an existing suite needs no row, and the existing
@@ -267,11 +325,14 @@ above records. Recorded so the correction is not re-derived.
 
 - **`evidence/ec-watch/2026-09-23-ctgp-live.txt` is described nowhere.** It is
   the one `.txt` in the capture root that `evidence/README.md` does not index —
-  the other four are at `:42`, `:45`, `:50` and `:77`. Correcting the docstring
-  to point readers at `evidence/README.md` for what any individual capture is
-  makes that gap load-bearing, and `evidence/README.md` is a shared file this
-  change does not touch. Named here rather than fixed.
-- **The `0x06D6` pair at `xdata-06c2-06db-sweep.md:144`/`:145` was invisible to
-  every prior statement of the surface**, including the issue's. That is what
-  the per-file table is for: a file the paragraph does not name is a file
-  whose claims nothing was keeping track of.
+  the other four are at `:42`, `:45`, `:50` and `:77`. The docstring now says
+  "four of the five" and names the exception rather than pointing at that index
+  as if it were complete, so the gap is stated where a reader meets the pointer
+  instead of being left to find it; `evidence/README.md` is a shared file this
+  change does not touch, so the index itself is still missing the entry. Named
+  here rather than fixed.
+- **The `0x06D6` pair on `xdata-06c2-06db-sweep.md:145` — a count and a
+  presence claim, one line — was invisible to every prior statement of the
+  surface**, including the issue's. That is what the per-file table is for: a
+  file the paragraph does not name is a file whose claims nothing was keeping
+  track of.

@@ -60,13 +60,19 @@ disagreement is a fact about the prose rather than a race to be re-tried.
     satisfied if it matches either. The same weaker sense
     `check_cluster_citations.py` gives "a unit naming two clusters", and the
     same reason: it catches a wrong number, not a wrong pairing.
-  * *`.txt` captures.* A `.txt` capture has no row-per-change shape, so
-    there is nothing in it for either rule to hold a claim against. What an
-    individual one holds is a fact about that file rather than about this
-    tool -- `evidence/README.md` is the index of them -- so this one states
-    the rule and not the roster. A unit naming one is reported as skipped
-    rather than passed over in silence, which is the part that matters: it
-    keeps "outside the oracle" distinguishable from "nothing to check".
+  * *`.txt` captures.* A `.txt` capture is outside the oracle: `main()`
+    indexes `evidence/ec-watch/*.csv` and nothing else, and `check()` skips a
+    unit naming one before either rule runs, so there is no row set here for
+    a claim to agree or disagree with. That is the whole reason, and it is not
+    the file's shape -- the `.txt` captures in the tree share none, one of them
+    being a per-change watch log. What an individual capture holds is a fact
+    about that file rather than about this tool; `evidence/README.md` indexes
+    four of the five under `evidence/ec-watch/`, `2026-09-23-ctgp-live.txt`
+    excepted, and the roster is in
+    `docs/findings/capture-claims-docstring-surface.md`. A unit naming one is
+    reported as skipped rather than passed over in silence, which is the part
+    that matters: it keeps "outside the oracle" distinguishable from "nothing
+    to check".
   * *Addresses the unit does not name.* A count resolves to the enclosing
     `registers.yaml` entry's `addr:`, because the sentence usually does not
     write the address it is about ("Moved 238 times ... the second-busiest
@@ -141,8 +147,10 @@ in `docs/findings/testdata-addr-column-claim.md`, which is where a number
 belongs; the figure is deliberately not written here, because a file count
 quoted in a docstring is invalidated by the next document added to the tree and
 this paragraph is one a future `docs/` file invalidates. A per-*unit* line is
-declined for the same reason the count is enough: the corpus is 27,032 units,
-so that is not a `--verbose` anyone runs.
+declined for the same reason the count is enough, and the run's own shape is
+the evidence: `main()` prints two lines about the whole walk however
+`--verbose` is set, and a line per unit would name every unit in `ROOTS` that
+yields no claim.
 
 Usage:
     python3 ec/tools/check_capture_claims.py [--check] [--verbose]

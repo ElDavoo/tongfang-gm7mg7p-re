@@ -249,8 +249,9 @@ class SkipsDeliberately(unittest.TestCase):
         self.assertEqual(drifted(text), (0, None))
 
     def test_txt_capture_is_reported_not_passed_over(self):
-        # A .txt capture has no row-per-change shape to count, so it is out of
-        # the oracle -- but it says so on stderr rather than looking like
+        # A .txt capture is out of the oracle -- `main()` indexes the .csv
+        # files and this one is not among them, so there is no row set to hold
+        # a claim against -- but it says so on stderr rather than looking like
         # nothing to check.
         text = ('`0x07A6` moved in '
                 'evidence/ec-watch/2026-09-23-power-mode-cycle-0f00-final.txt.\n')
@@ -424,9 +425,10 @@ class TheFileLevelSelfReport(unittest.TestCase):
     no claim looked exactly like a file nobody opened -- which is most of the
     corpus, and how a whole column of claims stayed invisible to a reader who
     had every reason to look. The count is at **file** granularity and not at
-    unit granularity deliberately: the corpus is 27,032 units, so a per-unit
-    line is not a `--verbose` anyone runs, and the invisibility the issue
-    names is a property of the file, not of the sentence.
+    unit granularity deliberately: a line per unit would name every unit in
+    `ROOTS` that yields no claim, which is not a `--verbose` anyone runs, and
+    the invisibility the issue names is a property of the file, not of the
+    sentence.
     """
 
     NO_CLAIM = 'A paragraph that names no capture at all.\n'
