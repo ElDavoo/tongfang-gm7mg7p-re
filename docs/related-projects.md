@@ -19,7 +19,7 @@ built on a patched `uniwill-laptop` plus `acpi_call` → `ECRR`/`ECRW`.
 
 | their finding | status on this machine |
 |---|---|
-| `0x07B9` threshold is stored, read back, and **never enforced**. `CHARGE_CTRL_REACHED` (bit 7) never armed over a full cycle. They dropped `UNIWILL_FEATURE_BATTERY_CHARGE_LIMIT` from their descriptor (DESIGN.md §3.2) | Same result here: `docs/findings.md` §4c/§4f/§4g |
+| `0x07B9` threshold is stored, read back, and **never enforced**. `CHARGE_CTRL_REACHED` (bit 7) never armed over a full cycle. They dropped `UNIWILL_FEATURE_BATTERY_CHARGE_LIMIT` from their descriptor (DESIGN.md §3.2) | Same result here: `docs/findings.md` §4c/§4f/§4g. The descriptor consequence of that row is written up for #10 in [`linux/patches/gm7mg7p-charge-features.md`](../linux/patches/gm7mg7p-charge-features.md) |
 | Neither Trickle nor Long_Life caps a single charge cycle; their pack charged to 4.21 V/cell under both | Ours plateaus at 4.12 V/cell under all three profiles. The reason on *this* EC is the age derating in `ec/annotations/charge-target-derating.md` |
 | **Reading the fan-tachometer registers (`0x0464/0x0465/0x046C/0x046D`) through `ECRR` stalled the fans**; the OEM software and `uniwill-laptop` sleep 6 ms after every EC access (DESIGN.md §4.2) | **Relevant to `windows/tools/ec_watch.py`**, which sweeps those addresses without a delay. Not observed to stall fans here, but avoid bulk sweeps under load |
 | `0x04xx` is a live read-back window: writes are accepted and silently discarded; `0x07xx` is the settings (write) window | Consistent with everything logged here so far |

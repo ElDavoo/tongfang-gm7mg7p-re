@@ -22,10 +22,10 @@ index 7a2eeae..74d8985 100644
 +		/*
 +		 * Assume that the device supports all features except the charge limit,
 +		 * which is masked because an unvalidated threshold register could harm
-+		 * the battery. On some boards (e.g. the GM5MG7Y) the EC stores the
-+		 * charge mode in EC_ADDR_OEM_4 but never derives a threshold from it,
-+		 * so the charge modes are inert and the charge limit is the only
-+		 * working interface. Allow opting into it explicitly.
++		 * the battery. The charge modes are a real interface, but they floor the
++		 * EC's charge-voltage derating, not a percentage. No EC consumer for
++		 * the limit was found by any method on the boards checked, and the
++		 * vendor service never writes it. Opting in is not a claim that it works.
 +		 */
 +		if (force_charge_limit)
 +			device_descriptor.features = UINT_MAX & ~UNIWILL_FEATURE_BATTERY_CHARGE_MODES;

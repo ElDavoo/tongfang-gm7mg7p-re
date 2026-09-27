@@ -86,19 +86,28 @@ in {
   # TUXEDO/Schenker/Intel NUC), quindi serve force=1. force abilita tutte le
   # feature TRANNE la soglia numerica charge_control_end_threshold, che viene
   # mascherata apposta per non danneggiare la batteria su schede non validate.
-  # Non è una perdita: il registro della soglia (EC 0x07B9) su questo firmware
-  # non è nemmeno mappato in ACPI, la field list di ECMG salta esattamente
-  # quel byte. Resta l'interfaccia a profili, che è quella giusta per i GM7.
+  # Non è una perdita: la soglia numerica (EC 0x07B9) su questo firmware non
+  # ha un consumatore lato EC trovato con nessun metodo, e il servizio vendor
+  # non la scrive mai. Vedi ../patches/gm7mg7p-charge-features.md
   boot.extraModulePackages = [uniwill-laptop];
   boot.extraModprobeConfig = "options uniwill-laptop force=1";
 
   # Niente autoload: gli alias DMI del modulo non coprono questa scheda.
   boot.kernelModules = ["uniwill-laptop"];
 
-  # ATTENZIONE ai nomi, sono controintuitivi. La mappatura driver → EC è:
-  #   Standard    → HIGH_CAPACITY (100%)
-  #   Long Life   → BALANCED      (~90%)
-  #   Trickle     → STATIONARY    (~80%, e carica anche più lenta)
+  # ATTENZIONE ai nomi, sono controintuitivi. La mappatura driver → EC
+  # (0x07A6, bit 4-5) è:
+  #   Standard    → HIGH_CAPACITY (00)
+  #   Long Life   → BALANCED      (01)
+  #   Trickle     → STATIONARY    (10)
+  # NON è una soglia in percentuale: l'EC calcola la tensione di carica come
+  # (richiesta della batteria - derating × celle) e il profilo è un *floor*
+  # su quel derating: >=200 mV/cella Stationary, >=100 Balanced, 0 High
+  # capacity. Cicli e ore ad alta tensione possono alzarlo oltre la soglia e
+  # su questa batteria lo fanno: i 450 cicli bastano per il livello 200, ma
+  # il target osservato (16400 mV) impone il livello 250, quindi a portarci è
+  # il contatore di stress, non il conteggio cicli — e nessun profilo cambia
+  # il risultato. Vedi ../patches/gm7mg7p-charge-features.md
   # Quindi il profilo "stationary" da scrivere è "Trickle", NON "Long Life".
   systemd.services.battery-charge-profile = {
     description = "Battery charging profile (Uniwill EC) → stationary";
