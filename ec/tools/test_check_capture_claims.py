@@ -84,13 +84,16 @@ SURFACE_ROW = re.compile(
 # rather than the line being filtered on it afterwards.
 VERBOSE_CLAIMING = re.compile(r"^\s*(?P<path>\S+):\s*(?P<claims>\d+)\s+claim")
 
+# A pattern that matches nothing, so patching it over `ccc.COUNT` makes the
+# count rule's `finditer` yield nothing while the presence rule stands, which
+# is what separates the two figures in `derives_presence_split`.
+NEVER = re.compile(r"(?!x)x")
+
+
 # Every capture under `evidence/ec-watch/`, as `main()` builds it. The two
 # index constants above are the fixtures and the one capture the count cases
 # are argued about; the docstring's table is about the real corpus, so it
 # needs the real one.
-NEVER = re.compile(r"(?!x)x")
-
-
 def committed_index():
     """{path: (per-address, rows, distinct)} for every committed capture."""
     watch = os.path.join(ccc.REPO, ccc.WATCH)

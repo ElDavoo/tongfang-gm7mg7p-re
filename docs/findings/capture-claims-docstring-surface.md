@@ -12,10 +12,14 @@ evidence tree rather than of the tool, and adds
 `test_check_capture_claims.py::TheDocstringSurface` to hold what remains
 against a real run.
 
-**Nothing here touches the machine.** No register is read, no capture is
-opened, no image is loaded, and no EC, BIOS, Windows or laptop is involved.
-Every figure below is a count of occurrences in committed text, produced by a
-command that is in this tree. It is the same class of claim as
+**Nothing here reads hardware.** No register is read, no image is loaded, and
+no EC, BIOS, Windows or laptop is involved; the captures are read as committed
+`.csv` files on disk, which is the same class of read as reading the prose.
+Every figure below comes out of a command in this tree — the `--verbose` run,
+and `check()` re-run over those same captures with the count rule taken out —
+rather than being carried forward, so each is a count over the committed prose
+*checked against* the committed captures, and each moves when either does. It
+is the same class of claim as
 [`testdata-addr-column-claim.md`](testdata-addr-column-claim.md), which is
 where the file-granularity census lives, and one step further from the data:
 nothing here is a statement about the firmware at all.
@@ -119,7 +123,7 @@ it comes from running the tool on the tree as it stands at this commit:
 
 ```
 $ python3 ec/tools/check_capture_claims.py --check --verbose
-202 files / 101547 lines / 9 capture claims checked against 10 committed captures: every checked claim agrees with the capture it names
+202 files / 101551 lines / 9 capture claims checked against 10 committed captures: every checked claim agrees with the capture it names
 199 of those 202 file(s) were read in full and named no capture claim; `--verbose` names each one
 ```
 
