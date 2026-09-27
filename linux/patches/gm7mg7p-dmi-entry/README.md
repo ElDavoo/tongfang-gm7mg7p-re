@@ -141,6 +141,18 @@ the byte.
 
 ## Before you submit
 
+**Which of the two GM7MG7P patches you are submitting comes first.**
+`../gm7mg7p-power-profile/` carries a second prepared patch for this board and
+the same `BASE_COMMIT`, which adds the *same* `gm7mg7p_descriptor` (the same
+eight feature bits, plus a probe and a platform-profile callback) and the
+*same* DMI row. The one in that directory is the superset: applied to a single
+tree in either order, whichever patch goes second fails at
+`uniwill-acpi.c:2860`, the descriptor hunk. **Submit one, not both** — the
+power-profile one is the superset, so that is the one to send for this board;
+if this patch reaches upstream first, drop the descriptor and DMI-row hunks
+from the other and rebase the rest. Both sides record it:
+`../gm7mg7p-power-profile/README.md`, under "The other patch for this board".
+
 1. `bash fetch-upstream.sh` — the excerpt still matches the pinned source.
 2. `git apply --check uniwill-acpi-dm-gm7mg7p.patch` against a fresh checkout
    of `5a24248`.
