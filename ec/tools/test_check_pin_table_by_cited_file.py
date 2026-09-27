@@ -747,9 +747,20 @@ class TheCommittedTree(unittest.TestCase):
         # 44 -> 45 was one suite from each side of that merge, 45 -> 46 is
         # #26's alone, and 46 -> 47 is #1008's; the named count is unmoved
         # through all three, so the tail takes every one.
-        self.assertEqual(len(files), 47)
+        #
+        # **47 -> 48 is #40's, and again only the tail moves.**
+        # `ec/tools/test_walk_flow_follow.py` is indexed and named by no
+        # committed pin, for the reason #1008's suite is: its write-up
+        # (`docs/findings/walk-flow-follow.md`) names the suite and the tool
+        # *by path* and never as `test_walk_flow_follow.py:NNN`. So the named
+        # count holds at the `12` `main` reached and the tail takes `35` ->
+        # `36`. Every `47 / 12 / 35` above stays written, each true of the tree
+        # it was measured on, per §4a-4d, and the step is this suite's alone.
+        # Measured with the tool below on this tree, not by adding one to the
+        # previous total.
+        self.assertEqual(len(files), 48)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 35)
+        self.assertEqual(len(tail), 36)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

@@ -1,0 +1,12 @@
+addr,file_offset,region,runtime,linear,followed,via,max_depth,max_insns,insns,ends,window
+0x043E,0x0E066,bank0,0xE066,no movx found in the decoded window,read x1,sjmp target 0xE091,4,8,4,,"0xE066 mov dptr,#0x043e ; 0xE069 sjmp +0x26 | 0xE091 movx a,@dptr ; 0xE092 sjmp +0x09"
+0x0768,0x0A39C,bank0,0xA39C,no movx found in the decoded window,"read x1, write x1","fall-through past jnb acc.6,+0x06 at 0xA39F",4,8,6,,"0xA39C mov dptr,#0x0768 ; 0xA39F jnb acc.6,+0x06 | 0xA3A2 movx a,@dptr ; 0xA3A3 anl a,#0xfd ; 0xA3A5 movx @dptr,a ; 0xA3A6 sjmp +0x04"
+0x0768,0x0A848,bank0,0xA848,no movx found in the decoded window,"read x1, write x1","fall-through past cjne a,#0xa5,+0x06 at 0xA84B",4,8,6,,"0xA848 mov dptr,#0x0768 ; 0xA84B cjne a,#0xa5,+0x06 | 0xA84E movx a,@dptr ; 0xA84F orl a,#0x10 ; 0xA851 movx @dptr,a ; 0xA852 sjmp +0x04"
+0x07D0,0x24B40,pd-image,0x4B40,no movx found in the decoded window,DPTR handed to lcall 0x34a5 -- direction unresolved here,fall-through past jnz +0x12 at 0x4B43,4,8,3,,"0x4B40 mov dptr,#0x07d0 ; 0x4B43 jnz +0x12 | 0x4B45 lcall 0x34a5"
+0x07D0,0x24C15,pd-image,0x4C15,no movx found in the decoded window,no movx found in the decoded window,at site,4,8,2,ret,"0x4C15 mov dptr,#0x07d0 ; 0x4C18 ret"
+0x07D0,0x24C1C,pd-image,0x4C1C,no movx found in the decoded window,no movx found in the decoded window,at site,4,8,2,ret,"0x4C1C mov dptr,#0x07d0 ; 0x4C1F ret"
+0x07D0,0x24C23,pd-image,0x4C23,no movx found in the decoded window,no movx found in the decoded window,at site,4,8,2,ret,"0x4C23 mov dptr,#0x07d0 ; 0x4C26 ret"
+0x07D0,0x252F2,pd-image,0x52F2,no movx found in the decoded window,no movx found in the decoded window,at site,4,8,2,ret,"0x52F2 mov dptr,#0x07d0 ; 0x52F5 ret"
+0x07D0,0x25322,pd-image,0x5322,no movx found in the decoded window,no movx found in the decoded window,at site,4,8,2,ret,"0x5322 mov dptr,#0x07d0 ; 0x5325 ret"
+0x07D0,0x27B10,pd-image,0x7B10,no movx found in the decoded window,no movx found in the decoded window,at site,4,8,2,ret,"0x7B10 mov dptr,#0x07d0 ; 0x7B13 ret"
+0x07D0,0x28572,pd-image,0x8572,no movx found in the decoded window,no movx found in the decoded window,at site,4,8,2,ret,"0x8572 mov dptr,#0x07d0 ; 0x8575 ret"

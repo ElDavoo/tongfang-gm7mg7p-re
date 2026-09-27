@@ -39,10 +39,24 @@ a callee that hands DPTR on again, ends its window at a branch, or is not
 reachable from the calling site's region stays `handoff->unresolved`, which
 is a verdict of this method and not a statement that the callee does nothing.
 
+`--follow-flow` splits the `none` bucket the other way, by what
+walk_flow_follow.py finds when it continues one path past the control-flow
+instruction the walk stopped at -- a conditional's fall-through, or an
+unconditional jump's target. A site resolved that way is a **weaker** claim
+than one resolved where it sits, so it lands in its own `->flow` column rather
+than in `read`/`write`/`r+w`, and `--csv` carries the instruction that carried
+the follow in a `flow_via` column. Only `none` sites are re-decoded, so every
+other bucket here is still `classify()` over the bytes `walk()` decoded and
+the reconciliation below is what says the columns still partition the sites.
+A `none` cell that stays `none` after the follow means "not found by this
+method", never "this site does not access the register" -- 0x07B9 is the
+standing counter-example, and nothing here is measured on hardware.
+
 Usage:
     python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800
     python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --csv > sites.csv
     python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1
+    python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --follow-flow
 """
 import argparse
 import collections
@@ -55,11 +69,16 @@ from check_register_counts import DEFAULT_YAML, counts_for
 from trace_xdata_refs import (PD_MARKER, call_target, classify, mnemonic,
                               offset_for_runtime, region_of, runtime_addr,
                               sites_for, walk)
+# One-directional: this imports walk_flow_follow, which imports only
+# trace_xdata_refs and disasm8051, so there is no cycle back here.
+from walk_flow_follow import NO_MOVX, follow_site
 
 # Names the absolute forms because that is what it meant when the committed
 # transcripts and ec-0x07d0-sites.csv were taken; the bucket now also holds
 # the paged ajmp/acall handoffs classify() learned to see.
 HANDOFF = "handed to lcall/ljmp (unresolved)"
+
+NONE = "no movx in window"
 
 # Bucket label -> markdown column header. Order is the table's column order,
 # and the labels are what --csv writes, so the two stay the same vocabulary.
@@ -70,7 +89,7 @@ CLASSES = (
     ("movc (CODE pointer)", "movc"),
     ("jmp @a+dptr", "jmp"),
     (HANDOFF, "handoff"),
-    ("no movx in window", "none"),
+    (NONE, "none"),
 )
 
 # What the handoff column becomes at --callee-depth 1. The unresolved bucket
@@ -83,16 +102,37 @@ HANDOFF_CLASSES = (
     (HANDOFF, "handoff->unresolved"),
 )
 
+# What the none column becomes at --follow-flow, in the same in-place
+# replacement --callee-depth uses. The `->flow` names are the point: a site
+# resolved by following a branch is a weaker claim than one resolved where it
+# sits, and the two never share a column, so nothing downstream can compare
+# them as equal or average them together. The `none` label survives as the
+# last of the five because a site the follow does not settle is still `none`:
+# the same verdict, reached further in, on the same terms as the depth-0 one.
+FLOW_CLASSES = (
+    ("read reached only by following a branch", "read->flow"),
+    ("write reached only by following a branch", "write->flow"),
+    ("read+write reached only by following a branch", "r+w->flow"),
+    ("CODE pointer or DPTR handoff reached only by following a branch",
+     "other->flow"),
+    (NONE, "none"),
+)
 
-def classes_for(callee_depth: int):
-    """Column order for a depth. At depth 1 the single handoff column is
-    replaced in place by the four it resolves into, so the two modes never
-    both describe the same site and depth 0 stays byte-identical to before."""
-    if not callee_depth:
+
+def classes_for(callee_depth: int, follow_flow: bool = False):
+    """Column order for a mode. Each flag replaces one column in place by the
+    set it resolves into, so the two modes never both describe the same site,
+    and depth 0 without --follow-flow stays byte-identical to before."""
+    replacements = {}
+    if follow_flow:
+        replacements[NONE] = FLOW_CLASSES
+    if callee_depth:
+        replacements[HANDOFF] = HANDOFF_CLASSES
+    if not replacements:
         return CLASSES
     out = []
     for label, short in CLASSES:
-        out.extend(HANDOFF_CLASSES if label == HANDOFF else [(label, short)])
+        out.extend(replacements.get(label, ((label, short),)))
     return tuple(out)
 
 
@@ -111,7 +151,29 @@ def bucket(access: str) -> str:
         return "read"
     if write:
         return "write"
-    return "no movx in window"
+    return NONE
+
+
+def flow_bucket(access: str) -> str:
+    """The bucket for a verdict `walk_flow_follow` reached past a branch.
+
+    Deliberately not `bucket()`, and the difference is the whole reason the
+    `->flow` columns exist: a handoff or a `movc` found one level down is a
+    weaker claim than the same verdict at the site, and putting the two in one
+    column would let a reader treat them as equal. Anything that is not a
+    read, a write or both lands in the catch-all rather than in `none` -- the
+    follow *did* find something there, and a `none` cell would say it had not.
+    """
+    if access == NO_MOVX:
+        return NONE
+    read, write = "read" in access, "write" in access
+    if read and write:
+        return FLOW_CLASSES[2][0]
+    if read:
+        return FLOW_CLASSES[0][0]
+    if write:
+        return FLOW_CLASSES[1][0]
+    return FLOW_CLASSES[3][0]
 
 
 def resolve_handoff(d: bytes, off: int, insns, pd_verified: bool):
@@ -152,19 +214,30 @@ def resolve_handoff(d: bytes, off: int, insns, pd_verified: bool):
     return HANDOFF, target, f"{access} | {window}"
 
 
-def site_rows(d: bytes, addr: int, pd_verified: bool, callee_depth: int):
-    """One (offset, region, runtime, bucket, callee, callee_window) per site.
-    The markdown table is a group-by over these, so both outputs classify the
-    same sites the same way."""
+def site_rows(d: bytes, addr: int, pd_verified: bool, callee_depth: int,
+              follow_flow: bool = False):
+    """One (offset, region, runtime, bucket, callee, callee_window, window,
+    via) per site. The markdown table is a group-by over these, so both
+    outputs classify the same sites the same way."""
     for o in sites_for(d, addr):
-        insns = walk(d, o)
-        label = bucket(classify(insns))
+        if follow_flow:
+            # follow_site() re-derives the site's own window rather than
+            # taking one in, and both labels come out of that single decode --
+            # so `bucket(f.linear)` and `flow_bucket(f.followed)` cannot
+            # disagree about what the site looks like before a branch.
+            f = follow_site(d, addr, o, pd_verified)
+            insns, label, via = f.anchor, bucket(f.linear), None
+            if label == NONE:
+                label, via = flow_bucket(f.followed), f.via_cell
+        else:
+            insns, label, via = walk(d, o), None, None
+            label = bucket(classify(insns))
         callee = window = None
         if callee_depth and label == HANDOFF:
             label, callee, window = resolve_handoff(d, o, insns, pd_verified)
         yield (o, region_of(o, pd_verified)[0], runtime_addr(o, pd_verified),
                label, callee, window,
-               " ; ".join(" ".join(mn.split()) for _, _, mn in insns[1:]))
+               " ; ".join(" ".join(mn.split()) for _, _, mn in insns[1:]), via)
 
 
 def addresses(regs):
@@ -208,16 +281,17 @@ def reconcile(name: str, addr: int, total: int, main: int, pd: int, hist,
     return problems
 
 
-def write_markdown(d: bytes, regs, pd_verified: bool, callee_depth: int) -> int:
+def write_markdown(d: bytes, regs, pd_verified: bool, callee_depth: int,
+                   follow_flow: bool = False) -> int:
     problems = 0
-    classes = classes_for(callee_depth)
+    classes = classes_for(callee_depth, follow_flow)
     header = ["addr", "register", "total", "main EC", "PD"]
     header += [short for _, short in classes]
     align = ["---", "---"] + ["---:"] * (len(header) - 2)
     print("| " + " | ".join(header) + " |")
     print("|" + "|".join(align) + "|")
     for name, addr in addresses(regs):
-        rows = list(site_rows(d, addr, pd_verified, callee_depth))
+        rows = list(site_rows(d, addr, pd_verified, callee_depth, follow_flow))
         total, main, pd, hist = row_for(d, addr, pd_verified, rows)
         problems += reconcile(name, addr, total, main, pd, hist, classes)
         # The parenthetical half of a name is commentary ("(Windows-only
@@ -230,29 +304,36 @@ def write_markdown(d: bytes, regs, pd_verified: bool, callee_depth: int) -> int:
     return problems
 
 
-def write_csv(d: bytes, regs, pd_verified: bool, callee_depth: int) -> int:
+def write_csv(d: bytes, regs, pd_verified: bool, callee_depth: int,
+              follow_flow: bool = False) -> int:
     """One row per site. The markdown table is a group-by over this, so a
     reader can re-derive it without re-running anything. At depth 1 the two
-    extra columns carry the callee the class came from, so a row's verdict
-    can be checked against an independent disassembler."""
+    extra columns carry the callee the class came from, and under
+    --follow-flow a `flow_via` column carries the instruction that carried
+    the follow, so a row's verdict can be checked against an independent
+    disassembler."""
     problems = 0
-    classes = classes_for(callee_depth)
+    classes = classes_for(callee_depth, follow_flow)
     w = csv.writer(sys.stdout)
     head = ["addr", "register", "file_offset", "region", "runtime", "class",
             "window"]
     if callee_depth:
         head += ["callee", "callee_window"]
+    if follow_flow:
+        head += ["flow_via"]
     w.writerow(head)
     for name, addr in addresses(regs):
-        rows = list(site_rows(d, addr, pd_verified, callee_depth))
+        rows = list(site_rows(d, addr, pd_verified, callee_depth, follow_flow))
         total, main, pd, hist = row_for(d, addr, pd_verified, rows)
         problems += reconcile(name, addr, total, main, pd, hist, classes)
-        for o, region, rt, label, callee, callee_window, window in rows:
+        for o, region, rt, label, callee, callee_window, window, via in rows:
             cells = [f"0x{addr:04X}", name, f"0x{o:05X}", region,
                      f"0x{rt:04X}" if rt is not None else "", label, window]
             if callee_depth:
                 cells += [f"0x{callee:04X}" if callee is not None else "",
                           callee_window or ""]
+            if follow_flow:
+                cells += [via or ""]
             w.writerow(cells)
     return problems
 
@@ -270,6 +351,15 @@ def main() -> int:
     ap.add_argument("--callee-depth", type=int, choices=(0, 1), default=0,
                     help="1: split the handoff bucket by what the called routine's "
                          "own entry point does with DPTR (default 0, site only)")
+    ap.add_argument("--follow-flow", action="store_true",
+                    help="split the `none` bucket by what ec/tools/walk_flow_"
+                         "follow.py finds on the one path past the branch the "
+                         "walk stopped at, into read->flow / write->flow / "
+                         "r+w->flow / other->flow and a `none` that survives "
+                         "it. A site resolved that way is a weaker claim than "
+                         "one resolved where it sits and never shares a column "
+                         "with it; only `none` sites are re-decoded, so every "
+                         "other bucket is unchanged code over unchanged bytes")
     args = ap.parse_args()
 
     d = open(args.firmware, "rb").read()
@@ -284,7 +374,7 @@ def main() -> int:
         regs = yaml.safe_load(f)["registers"]
 
     problems = (write_csv if args.csv else write_markdown)(
-        d, regs, pd_verified, args.callee_depth)
+        d, regs, pd_verified, args.callee_depth, args.follow_flow)
     addrs = sum(1 for _ in addresses(regs))
     if problems:
         print(f"{problems} reconciliation problem(s) across {len(regs)} entries "

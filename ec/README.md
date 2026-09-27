@@ -278,7 +278,30 @@ into `r2 -a 8051` with no stitching needed.
   the site count and main + PD against the file-wide total, and exits non-zero
   if either fails. The classification inherits the 8-instruction linear walk's
   limits — `annotations/static-refs-audit.md` §5 is the table it produced and
-  the caveats that go with it.
+  the caveats that go with it. `--follow-flow` is the one opt-in that changes
+  what a cell means: it splits the `none` bucket by what
+  `tools/walk_flow_follow.py` finds on the one path past the branch the walk
+  stopped at, into `read->flow`/`write->flow`/`r+w->flow`/`other->flow` and a
+  `none` that survives it, and `--csv` names the instruction that carried the
+  follow in a `flow_via` column. Those columns are a weaker claim than the
+  plain ones and never share one with them; only `none` sites are re-decoded,
+  so every other bucket is unchanged code over unchanged bytes and depth 0
+  without the flag is byte-identical to before.
+- **`tools/walk_flow_follow.py`** — what `--follow-flow` above reads, and the
+  other half of `walk_branch_arms.py` by deliberately weaker means: it
+  re-decodes the sites the 8-instruction linear walk gives up on by continuing
+  **one** path past the control-flow instruction it stopped at — a
+  conditional's fall-through, or an unconditional jump's target — and says
+  which resolve. `walk()` and `classify()` are untouched, and only a site
+  already classified `none` is decoded again, so no other bucket and no
+  committed table can move. Every target comes from the decoded stream rather
+  than from arithmetic on the site address, the depth and instruction bounds are
+  named on every row that hits them, and `linear`/`followed`/`via` keep a site
+  resolved by following a branch a column apart from one resolved where it
+  sits. `--check` re-derives `annotations/flow-follow-none-sites.csv`;
+  `../docs/findings/walk-flow-follow.md` is the reading, and it is explicit
+  that a `none` it leaves alone means "not found by this method" and that
+  nothing in it is measured on hardware.
 - **`tools/xdata_register_map.py`** — every XDATA address the decompiled
   firmware touches, attributed to the functions that touch it and grouped into
   clusters: the per-address census in
