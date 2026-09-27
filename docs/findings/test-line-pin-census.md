@@ -3583,7 +3583,30 @@ the corpus one file and no record. **So the denominator has now moved on every
 merge in this run for two commits running and nothing else has**, which is the
 measurement the two notes above make from the other direction and is worth one
 line here for the opposite reason: a figure that moves only when a write-up
-arrives is a denominator rather than a drift.
+arrives is a denominator rather than a drift.*
+
+*(**And the `171` and the `43` are a reading of the branch rather than of the
+merged tree, so the note above is left written and corrected here in the same
+shape rather than edited.** `main` carried the base from `170` to `176` between
+`5244f119` and this merge's: #1037 (`f6480168`) `+1`, #1058 (`517be444`) `+3` and
+#1060 (`560752b2`) `+2` on the markdown axis, and one suite each on the
+test-file axis, `43` → `44` → `45` → `46`. **The merge base `560752b2` therefore
+reads `176` markdown files and `46` test files, and this tree reads `177`
+markdown files and `46` test files** — `176 + 1 = 177`, this issue's own
+[`history-checkout-prompt-reach.md`](history-checkout-prompt-reach.md) entering
+the corpus a second time — while `check_pin_table_by_cited_file.py` reads
+**`46` indexed / `12` named / `34` named by none** on this tree, which is the
+triple
+[`../../tools/README.md`](../../tools/README.md) carries as `43` / `12` / `31`.
+**So "the same eight figures with `171` markdown files" is true of the pair of
+trees that run was made on and not of this one**: the `43` was that base's own
+inventory, and the eight figures are still the eight, since six write-ups and
+three suites moved the population and not one record. **Nothing turned red,
+because no assertion holds the census's own count of its own population** — the
+reason the `forty-four` and the `1316` give in
+[`../../tools/README.md`](../../tools/README.md) for the same drift one axis
+over. The `171` and the `43` stay written where they were measured, per
+[`../findings.md`](../findings.md) §4a-4d.)*
 
 **One citing line moves and it is the same one the note above moved, by a
 different cause, so 107 rows answer 107 records exactly as they did.**

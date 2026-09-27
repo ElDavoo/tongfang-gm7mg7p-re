@@ -142,10 +142,28 @@ tell that from a clean run over a correct tree. The same tree, after:
 
 ```console
 $ python3 ec/tools/check_history_checkouts.py --repo /tmp/scratch-wf
+check_history_checkouts.py: every actions/checkout under .github/workflows/.
+  s.yml / s / Checkout: depth 1 (the action's default)
+
+1 job(s) run a history reader: s (.github/scripts/agent-gates.sh, from its prompt)
+  1 job(s) do not
+
+not found by this method, which is not the same as absent: a checkout behind a composite action; a `fetch-depth` that is a `${{ }}` rather than a literal; a `prompt:` that is not a string; a workflow file that will not parse; a marker in a prompt behind another word on its line, so `bash .github/scripts/agent-gates.sh` is not counted; a marker in an `env:`, an `if:` or a YAML comment, where `ci.yml:11` is the committed case; and `docs/ci/agent-gates-deep-schedule.yml`, which is prepared rather than landed and so outside the glob read above
+
+0 sentence(s) in the two tools assert a checkout depth:
+  every one of them names the job of every workflow it names
+
   FAIL s.yml/s: runs '.github/scripts/agent-gates.sh' but its checkout is depth 1 (actions/checkout default), not `fetch-depth: 0` -- the mode will report a history requirement rather than an answer
+check_history_checkouts.py: 1 problem(s). The history requirement itself is unchanged by any of this; what is at issue is the sentence describing which job needs it.
 $ echo $?
 1
 ```
+
+**Pasted whole rather than trimmed, and the last three lines are `stderr`.** The
+report is `stdout` and the two `FAIL` lines are `stderr`, so the block is the
+order a terminal shows them in and a reader piping `stdout` alone would see the
+whole report and neither the failure nor the exit code — which is the other half
+of why the report and the count have to be read together.
 
 The marker is printed back, the route is `from its prompt`, and the depth is
 named. `ec/tools/test_check_history_checkouts.py`'s

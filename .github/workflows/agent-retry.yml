@@ -589,13 +589,10 @@ jobs:
             exit 0
           fi
 
-          # `_` is the trailing `createdAt`. order_queue needs it in the line it writes back --
-          # it is the key the age bucket is computed from, and its contract is to hand every
-          # field back intact -- but nothing in this loop reads it, so it is not bound under a
-          # name that would only look used. Dropping the read outright would not do: bash gives
-          # the last variable everything left on the line, separators and all, so `waiting`
-          # would come out as "1032<TAB>2026-09-26T 00:00:00Z" and every lookup below would be
-          # against a number no issue has. `_` is what ends the split.
+          # `_` is the createdAt `order_queue` sorted on. It rode along because that function's
+          # contract is to hand every field back intact, and it is spent by the time a line gets
+          # here -- nothing in this loop reads the age, so it is not bound under a name that
+          # would only look used.
           while IFS=$'\t' read -r waiting _ <&3; do
           [ "$FREE_SLOTS" -gt 0 ] || break
           if busy_issue "$waiting"; then
@@ -705,8 +702,7 @@ jobs:
             exit 0
           fi
 
-          # Same trailing `createdAt` as the step above, spent the same way and for the same
-          # reason: the title is the last field this loop reads.
+          # `_`, as in the step above: order_queue's sort key, already spent.
           while IFS=$'\t' read -r waiting title _ <&3; do
           [ "$FREE_SLOTS" -gt 0 ] || break
           [ "$(( open ))" -lt "$MAX_OPEN_AGENT_PRS" ] || { echo "at the open-PR cap — stopping"; break; }

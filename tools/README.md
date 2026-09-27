@@ -2535,6 +2535,29 @@ measured, and it is the same asymmetry the sentence above describes from the
 other end: a write-up that brings a denominator and no record, which is why
 every other figure in this paragraph is unmoved by it.**
 
+**And the `171`, the `43` and the `31` are a reading of the branch rather than of
+this tree, so the sentence above is left written and corrected here rather than
+edited.** Its run was against `origin/main` at `5244f119`, which reads `170`
+markdown files and `43` test files — the `170 + 1 = 171` is that tree's own step
+and the `43` was its inventory, both true where they were measured. **`main`
+carried the base six files past that commit before this merge**: #1037
+(`f6480168`) `+1`, #1058 (`517be444`) `+3` and #1060 (`560752b2`) `+2` on the
+markdown axis and one suite each on the other, `43` → `44` → `45` → `46`, so the
+merge base reads `176` markdown files and `46` test files. **Re-run on the merged
+tree the census reads the same eight figures over `177` markdown files and `46`
+test files** — `176 + 1 = 177`, the `+1` being this issue's own write-up again —
+and `check_pin_table_by_cited_file.py` reads **`46` indexed / `12` named / `34`
+named by none**, which is the triple the line above carries as `43` / `12` /
+`31`. **So "the `171` is measured" is true of the tree that run was made on and
+not of this one**, and the `43` and the `31` are behind for the reason the
+`forty-four` and the `1316` give above: suites landed and the total was not
+re-transcribed, and no assertion holds the census's own count of its own
+population, so nothing in the tree turned red. **The `107`, the `29`, the `80`,
+the `59`, the `75`, the `32` and the `0/15/22/5/33` split are unmoved by all of
+it** — six write-ups and three suites moved the population and not one record —
+and both readings stand written, per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d.
+
 **The numbering moved a ninth time, and `main`'s is the one that does not
 move.** **§84** is #974's summary, landed by `0daac768` (whose subject line
 reads `(#981)`, a pipeline collision artifact rather than the section's issue),
