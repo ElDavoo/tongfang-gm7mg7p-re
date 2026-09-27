@@ -25,11 +25,28 @@ if a template re-copy from `ElDavoo/agent-pipeline` drops `fetch-depth: 0` from
 like a workflow accident.
 
 **What counts as a history reader** is decided from the committed files, never
-from prose: a step whose `run:` names `.github/scripts/agent-gates.sh`,
+from prose: a step whose `run:` or `prompt:` names `.github/scripts/agent-gates.sh`,
 `--verify-provenance`, or `measure_index_repair_visibility.py`. Naming
 `verify_reassembly.py` on its own is deliberately *not* enough -- `--check` is
 that tool's whole cheap tier and never touches history, so a step running only
 that would be counted by a coarser rule than this one.
+
+**A `prompt:` is read as well, and only in command position.** A `run:` is
+executed by the runner, so a marker anywhere in one is a run. A `prompt:` is
+read by a model, so a marker in one is a run only where the *marker* is in
+command position: the first non-whitespace text on its line, which is how an
+indented block spells a shell line. That is what puts `agent-conflicts.yml`'s
+`resolve` on the list, which reaches the gate from the prompt at its `:248` and
+was therefore the one job of the four the corrected prose names that this tool
+did not count -- a re-copy of that workflow dropping `fetch-depth: 0` from the
+job would have broken no job and left this checker green. The test is on the
+marker and not on the line, and the same rule leaves `agent-review.yml`'s
+`review` off the list: its marker at `:169` is the fourth word of a bullet
+beginning `- a gate weakened rather than satisfied --`. That is the rule being
+right rather than lenient. `review` runs no gate, needs no clone, and putting a
+job that runs none inside a full-depth invariant would be the rule being wrong.
+A marker in a prompt in any other shape is **printed** beside the list with its
+line, not counted and not dropped.
 
 **The reported half.** Every sentence in those two tools that makes a depth
 claim about a workflow, printed with its `file:line` and the derived fact the
@@ -85,14 +102,23 @@ jobs and a file this tool could not read. An unreadable one is never judged.
 
 **What is not found by this method, and is never reported as absent.** A
 checkout behind a composite action, a checkout expressed through a `${{ }}`
-rather than a literal, a workflow file that will not parse, a job that reaches
-the gate from its prompt rather than from a `run:` step, and
-`docs/ci/agent-gates-deep-schedule.yml` -- prepared rather than landed, and so
-outside the glob. Each is reported as not found, per `CLAUDE.md`'s rule and
-`ec/annotations/registers.yaml`'s own caveat. `agent-conflicts.yml`'s `resolve`
-job is the case in point: it does run the gate, from the prompt at its `:248`,
-and its checkout is `fetch-depth: 0` anyway -- this run does not count it, and
-says so rather than deciding it.
+rather than a literal, a `prompt:` that is not a string, a workflow file that
+will not parse, and `docs/ci/agent-gates-deep-schedule.yml` -- prepared rather
+than landed, and so outside the glob. Each is reported as not found, per
+`CLAUDE.md`'s rule and `ec/annotations/registers.yaml`'s own caveat. A `prompt:`
+is no longer one of them: it is read, and the shape of the read is the command-
+position rule above rather than a decision about English. Three things a
+`prompt:` could carry are still not read, and each is a miss rather than a
+verdict: a marker in an `env:`, an `if:`, a job name or a YAML comment, where
+`ci.yml:11`'s hand-written comment about the gate is the committed case and
+reading comments as prompts would put prose about the gate on a list of jobs
+that run it; a marker behind another word on its line, so a prompt spelling the
+command `bash .github/scripts/agent-gates.sh` is not counted, because where a
+shell command ends inside a line of prose is not decidable mechanically and a
+list of command prefixes would reintroduce the template-coupling the table
+above exists to shed; and the line a marker in a *folded* prompt block is
+reported on, which is the block's first rather than the marker's own, because
+folding has already joined the lines by the time the text is a value.
 
 Usage:
     python3 ec/tools/check_history_checkouts.py            # the committed tree
@@ -131,6 +157,30 @@ FULL_DEPTH = 0
 HISTORY_READERS = (".github/scripts/agent-gates.sh",
                    "--verify-provenance",
                    "measure_index_repair_visibility.py")
+
+# A `run:` is executed by the runner, so a marker anywhere in one is a run and
+# is matched as a plain substring. A `prompt:` is read by a model, so a marker
+# in one is a run only where the marker itself is in command position: the
+# first non-whitespace text on its line, which is how an indented block spells a
+# shell line. The test is on the *marker* and not on the line, and that is the
+# whole difference between the two committed cases. `agent-conflicts.yml`'s
+# `resolve` carries the gate alone on an indented line and reaches it, and
+# `agent-review.yml`'s `review` carries it inside a bullet whose line begins
+# `- a gate weakened rather than satisfied --`, so its first non-whitespace text
+# is a hyphen and the marker is the fourth word of the line. A rule that asked
+# only whether the line had any text on it would count `review`, and `review`
+# needs no clone: a prompt is not an execution.
+#
+# Built per marker from the tuple above, so the two lists cannot disagree about
+# which strings are the readers.
+COMMAND_POSITION = {marker: re.compile(r"^[ \t]*" + re.escape(marker))
+                    for marker in HISTORY_READERS}
+
+# The two block-scalar styles, and the only reason `first_line()` below has a
+# term at all: a block scalar's node starts on the `|` that introduces it, so
+# its text begins on the line below, while a plain or quoted scalar's node
+# starts on its own text. PyYAML reports `|-` and `|+` as `|` and `>-` as `>`.
+BLOCK_STYLES = ("|", ">")
 
 # The two tools whose contract paragraphs make the claim, and the only files
 # this reads prose from. Its own write-up quotes all three stale sentences and
@@ -179,7 +229,62 @@ TRIM = "\"'`#* \t()"
 
 Checkout = collections.namedtuple(
     "Checkout", "workflow job step depth stated")
-Job = collections.namedtuple("Job", "job checkouts reader")
+# `reader` is the bare marker, because `depth_problems()`'s messages are about
+# the marker and their wording is held by the suite. `route` is which of the
+# two places it was reached through, so the reader list beside the table can
+# say *how* a job is on it rather than only that it is. `named` is every
+# `(line, marker)` a job's prompt names in a shape this method does not count,
+# which is a finding about the prompt rather than about the job.
+Job = collections.namedtuple("Job", "job checkouts reader route named")
+
+
+class _Line(str):
+    """A `str` that remembers the line of the workflow it was read from.
+
+    The prompt side has to say *where* in a workflow a marker sits, because
+    "the job names the gate in guidance" is not something a reader can go and
+    check without a line number. A parsed scalar has no position left in it,
+    and this carries one for the price of a constructor.
+    """
+
+    def __new__(cls, value, line, style):
+        made = super().__new__(cls, value)
+        made.line, made.style = line, style
+        return made
+
+
+class _WorkflowLoader(yaml.SafeLoader):
+    """`safe_load`'s loader, with the one constructor the line numbers need.
+
+    A subclass rather than a call into `yaml.compose()`: the parse this tool
+    already does is the parse it keeps doing, and a second walk of the same
+    tree over the same file to recover positions would be a second thing to
+    keep right. `SafeLoader` is not modified, so every other consumer of it
+    reads the same document.
+    """
+
+
+def _construct_str(loader, node):
+    return _Line(loader.construct_yaml_str(node), node.start_mark.line,
+                 node.style)
+
+
+_WorkflowLoader.add_constructor("tag:yaml.org,2002:str", _construct_str)
+
+
+def first_line(text):
+    """The 1-based workflow line `text`'s own first line is on, or None.
+
+    A plain or quoted scalar's node starts on its text; a block scalar's node
+    starts on the `|` or `>` introducing it and its text starts on the line
+    below, which is the one adjustment `BLOCK_STYLES` exists for. `None` when
+    the value is not one of the strings this loader decorated -- a `prompt:`
+    that is a list or a number rather than prose -- so a caller reads it as
+    not found by this method instead of a position of 0.
+    """
+    if not isinstance(text, _Line):
+        return None
+    return text.line + 1 + (text.style in BLOCK_STYLES)
 
 
 def effective_depth(with_block):
@@ -204,8 +309,8 @@ def is_checkout(uses):
     return uses == "actions/checkout" or str(uses).startswith("actions/checkout@")
 
 
-def history_reader(step):
-    """The `run:` text of a step, or "" -- the only place a reader is looked for.
+def run_reader(step):
+    """The `run:` text of a step, or "" -- a marker in it is a run outright.
 
     Not the whole file and not `uses:`: a composite action that checked out
     would be a checkout this method cannot see, which is the caveat above rather
@@ -213,6 +318,80 @@ def history_reader(step):
     """
     run = step.get("run")
     return run if isinstance(run, str) else ""
+
+
+def prompt_text(step):
+    """A step's `with: prompt:`, or "" -- and never a guess at a non-string one.
+
+    A `prompt:` that is a list or a number rather than prose is not a prompt
+    this method can read, and "" says so the same way a non-string `run:`
+    does: the step is looked at and contributes nothing, rather than raising or
+    being stringified into a line that reads like an instruction.
+    """
+    prompt = (step.get("with") or {}).get("prompt")
+    return prompt if isinstance(prompt, str) else ""
+
+
+def prompt_mentions(step):
+    """-> [(line, marker, in command position)] for a step's prompt.
+
+    The line is the workflow line the marker is written on, which is the whole
+    reason the loader above keeps one: a report that says "named in guidance"
+    without saying where is a claim a reader has to take on trust.
+
+    Only a literal block resolves a marker to its own line exactly. A folded
+    one (`>`) has had its lines joined with spaces by the time it is a value, so
+    a marker in it is reported on the block's first line -- where the text
+    begins -- rather than on a line it may not be on, which is a limitation of
+    reading the value and not a position this method is claiming.
+    """
+    prompt = prompt_text(step)
+    at = first_line(prompt)
+    if not prompt or at is None:
+        return []
+    found = []
+    for offset, line in enumerate(prompt.splitlines()):
+        for marker in HISTORY_READERS:
+            if marker in line:
+                found.append((at + offset, marker,
+                              COMMAND_POSITION[marker].match(line) is not None))
+    return found
+
+
+def job_routes(steps):
+    """-> (reader, route, named) for one job's steps.
+
+    `route` is `"a run: step"` or `"its prompt"`, and a `run:` outranks a
+    prompt rather than going by whichever came first in the file. The reason
+    is the same asymmetry `COMMAND_POSITION` rests on: a `run:` is executed and
+    a prompt is read, so the step is the route a checkout depth can be held
+    against. `agent-fix.yml`'s `fix` names the gate in both -- at its `:220`
+    and its `:316` -- and belongs on the list for the one that does not depend
+    on a model reading the sentence.
+
+    `named` is every prompt mention that is not in command position, whether or
+    not the job is a reader by some other route. It is a fact about that line
+    of the prompt, and folding it into the job's own standing would report a
+    job as reaching a gate it only describes.
+    """
+    stepped, prompted, named = [], [], []
+    for step in steps:
+        if not isinstance(step, dict):
+            continue
+        run = run_reader(step)
+        for marker in HISTORY_READERS:
+            if marker in run:
+                stepped.append(marker)
+        for line, marker, command in prompt_mentions(step):
+            if command:
+                prompted.append(marker)
+            else:
+                named.append((line, marker))
+    if stepped:
+        return stepped[0], "a run: step", named
+    if prompted:
+        return prompted[0], "its prompt", named
+    return None, None, named
 
 
 def load_workflow(path):
@@ -226,7 +405,7 @@ def load_workflow(path):
     name = os.path.basename(path)
     try:
         with open(path, encoding="utf-8") as handle:
-            doc = yaml.safe_load(handle)
+            doc = yaml.load(handle, Loader=_WorkflowLoader)
     except (OSError, yaml.YAMLError) as exc:
         return None, None, f"{name}: not read ({exc.__class__.__name__})"
     if not isinstance(doc, dict):
@@ -243,9 +422,9 @@ def load_workflow(path):
     jobs = {}
     for job_id, job in jobs_block.items():
         if not isinstance(job, dict):
-            jobs[job_id] = Job(job_id, [], None)
+            jobs[job_id] = Job(job_id, [], None, None, [])
             continue
-        found, reader = [], None
+        found = []
         for step in job.get("steps") or []:
             if not isinstance(step, dict):
                 continue
@@ -254,10 +433,8 @@ def load_workflow(path):
                 found.append(Checkout(name, job_id,
                                       str(step.get("name", "")).strip() or "Checkout",
                                       depth, stated))
-            run = history_reader(step)
-            if reader is None and any(r in run for r in HISTORY_READERS):
-                reader = next(r for r in HISTORY_READERS if r in run)
-        jobs[job_id] = Job(job_id, found, reader)
+        reader, route, named = job_routes(job.get("steps") or [])
+        jobs[job_id] = Job(job_id, found, reader, route, named)
     return name, jobs, None
 
 
@@ -568,13 +745,43 @@ def report(repo, stream=None):
     say()
     if jobs:
         say(f"{len(jobs)} job(s) run a history reader: "
-            + ", ".join(f"{j.job} ({j.reader})" for j in sorted(jobs, key=lambda j: j.job)))
+            + ", ".join(f"{j.job} ({j.reader}, from {j.route})"
+                        for j in sorted(jobs, key=lambda j: j.job)))
     else:
-        say("no job's `run:` names a history reader -- not found by this method, "
-            "which is not the same as there being none")
+        say("no job's `run:` or `prompt:` names a history reader -- not found by "
+            "this method, which is not the same as there being none")
     depth = depth_problems(workflows)
     say("  every job that runs a history reader has a full-depth checkout"
         if not depth else f"  {len(depth)} job(s) do not")
+
+    # A marker in a prompt that is not in command position is the one shape
+    # this method reads and declines, so it is printed rather than left in the
+    # docstring: a rule whose misses are only written down where the rule is
+    # defined is a rule whose misses nobody reads at the point they would have
+    # caught one. `agent-review.yml`'s `review` is the committed case, and it is
+    # correct to be absent from the list above -- a prompt is not an execution
+    # and `review` needs no clone -- which is the reason this is a line of the
+    # report and not a fifth job on it.
+    not_counted = [(name, job) for name in sorted(workflows)
+                   for job in workflows[name].values() if job.named]
+    if not_counted:
+        say()
+        say("named in a `prompt:` but not read as a run, because the marker is "
+            "not in command position:")
+        for name, job in not_counted:
+            for line, marker in job.named:
+                say(f"  {name}:{line} {job.job}: {marker} -- in a sentence, not a "
+                    f"command, so this method does not count it a reader")
+
+    say()
+    say("not found by this method, which is not the same as absent: a checkout "
+        "behind a composite action; a `fetch-depth` that is a `${{ }}` rather "
+        "than a literal; a `prompt:` that is not a string; a workflow file that "
+        "will not parse; a marker in a prompt behind another word on its line, "
+        "so `bash .github/scripts/agent-gates.sh` is not counted; a marker in an "
+        "`env:`, an `if:` or a YAML comment, where `ci.yml:11` is the committed "
+        "case; and `docs/ci/agent-gates-deep-schedule.yml`, which is prepared "
+        "rather than landed and so outside the glob read above")
 
     sites = prose_sites(repo, workflows, unreadable)
     say()

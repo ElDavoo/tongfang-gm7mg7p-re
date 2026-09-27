@@ -11435,7 +11435,19 @@ a reader finds it closed.)*
 > and this landing is the fifth to prove the point, since #1009's own summary
 > does become the last section in the file and says nothing about it, while
 > §73's correction to the same clause is owed twice more for it — once for
-> #845's §85 and once for this §86.
+> #845's §85 and once for this §86. **The count is four now, and this is the
+> record of the whole of it rather than a fourth landing that repeats it:**
+> #870's §87 and #1032's §88 both landed below without amending the count, and
+> neither carries a "last section in the file" clause of its own, so the debt is
+> §73's sentence and this paragraph is the only place it is written down.
+> **The section this paragraph was written on carried the number `§88` and was
+> the last section in the file on that tree; `§89` and `§90` have both landed
+> since, this landing being `§90`** — a number that really was carried is a
+> record and not a pointer, which is the distinction §90's own numbering note
+> draws, and the position is not this file's. **This landing is the repeat
+> §73's clause was owed for**: neither the clause nor the count is edited into
+> shape here, §73's stays as written per §4a-4d, and this is the correction
+> beside it.
 
 Four sentences in `ec/tools/verify_reassembly.py` and
 `ec/tools/measure_index_repair_visibility.py` described what this repository's
@@ -11729,3 +11741,66 @@ the procedure for it is
 **not run**. The write-up is
 [`findings/pd-image-census.md`](findings/pd-image-census.md); §3a above is not
 edited and needs no correction.
+
+## 90. The checker now reads a `prompt:` as well as a `run:`, so the count agrees with the four-job claim (2026-09-26, issue #1032)
+
+> **Numbering note, added at the merge, and this one is renumbered twice.**
+> Written as §87, and #870's summary (`8c51e6ed`) took the same next free
+> number this one did in the same window, so the rule §66's numbering note set
+> at the third merge applies unchanged: the branch's own summary is what gives
+> way, and it was renumbered to **§88** for that collision. **It is renumbered
+> again here, to §90**, because `main` reached §88 and §89 while this section
+> was off in the tree — §88 in `f6480168` (#1037) and §89 in `517be444` (#26) —
+> and both are already merged here. The rule settles it the same way twice: a
+> number `main` held first keeps it, and the section arriving second gives way.
+> The `§88` in the sentence above stays written, as a record of a number this
+> section really did carry on the tree it was measured on, which is the
+> distinction §66's note draws between a record and a pointer; what moved is
+> this section's number, not that record.
+>
+> **No pointer needed repointing with either rename**, which is not the usual
+> case and is worth saying why — nothing in the tree cites this summary, so
+> there is no `§87` or `§88` anywhere that means *this* section and could be
+> left as a wrong pointer. The `§87` three sections up is #870's and the `§88` two
+> up is #1037's, each already committed when its collision became visible, and
+> each keeps its number.
+
+**`ec/tools/check_history_checkouts.py` found a history reader only in a
+step's `run:`, so it printed `3 job(s) run a history reader` for a claim §86 and
+`verify_reassembly.py:1315-1317` make about four.** The fourth,
+`agent-conflicts.yml`'s `resolve`, reaches the gate from its `prompt:` at its
+`:248` and from nowhere else — a re-copy of that workflow dropping
+`fetch-depth: 0` from the job would break no job, turn no gate red, and leave
+the checker green, which is the failure §86's tool exists to catch reached
+through the one door it could not see. The tool now reads a step's
+`with: prompt:` as well, and a marker there counts only in **command
+position** — the marker itself first on its line — because a `run:` is executed
+by the runner and a prompt is read by a model. That rule adds `resolve` and
+nothing else: `agent-fix.yml` and `agent-implement.yml` already reached the gate
+through a `run:` step, and `agent-review.yml`'s `review`, whose marker at `:169`
+sits inside a review criterion rather than in command position, stays off the
+list and is **printed** under a line naming what was declined, with its line.
+**The report reads `4 job(s) run a history reader` and still exits 0**, and the
+number and the verdict together are the claim: the prose and the tool agree for
+the first time. The tool is not newly right about the tree — `resolve` was
+`fetch-depth: 0` before this and is not changed by it. **The suite grew from
+twenty-four cases to thirty-nine**, twenty-four to thirty-two on the branch,
+thirty-two to thirty-eight where it first merged beside #1034's six cases on the
+same suite, and thirty-eight to thirty-nine at that merge, where #1039's one case
+on that suite landed on `main` in the same window and is kept whole; the
+`twenty-four`, the `thirty-two` and the `thirty-eight` stay written where each was
+measured, per §4a-4d. **This merge adds none of the eight itself — the same eight
+§90's account already counts, landing on `main` rather than beside it**:
+`origin/main`'s tip reads thirty-one, so the step is `31 + 8 = 39` and the suite
+is thirty-nine here for the third reading, from a `30` neither side could see
+whole — #1039's one case is in both, and the eight are this issue's alone.
+**§88's "thirty-one" is left written where it was measured and is thirty-nine
+here**, and the two claims it hangs on both survive the eight: none of the
+thirty-nine reaches `main()` — the eight are report-reading cases, like the
+thirty-one — and the mutation §88 names still leaves the whole file green,
+re-measured on this tree at thirty-nine rather than carried. And **nothing
+under `.github/workflows/` is
+edited**: the issue is *about* a workflow and the change is to a tool that reads
+it. The full account, both report outputs transcribed, and what is still *not
+found by this method* is in
+[`findings/history-checkout-prompt-reach.md`](findings/history-checkout-prompt-reach.md).

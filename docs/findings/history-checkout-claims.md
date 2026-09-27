@@ -207,6 +207,22 @@ the gate, from the prompt at its `:248`, and this run does not count it. Its
 checkout is `fetch-depth: 0` anyway, which is the sentence's own half of the
 truth and the reason nothing is at risk today.
 
+> **Correction, added by #1032. The paragraph above is left as written and is
+> no longer true of the tool; the *tree* it describes is unchanged, and its
+> closing half — that `resolve`'s checkout is `fetch-depth: 0` anyway — was and
+> is correct.** `check_history_checkouts.py` now reads a step's `with: prompt:`
+> as well as its `run:`, so the prompt case has come **out** of the
+> "not found by this method" list rather than being decided against: a marker
+> alone on an indented line of a prompt is a run, and `resolve` is counted. The
+> report reads `4 job(s) run a history reader` where it read `3`, and
+> `resolve` is named in it as reached *from its prompt*. The same rule leaves
+> `agent-review.yml`'s `review` uncounted, because its marker at `:169` is
+> inside a review criterion rather than in command position, and a prompt is
+> not an execution — so this sentence's "does not count it" was describing a
+> rule that was too narrow, not a job that was correctly excluded. The
+> corrected rule, the two cases it separates, and both report outputs are in
+> [`history-checkout-prompt-reach.md`](history-checkout-prompt-reach.md).
+
 ### The checker run against the tree as it stood before this change
 
 The control for all of it — the checker, pointed at a scratch root holding the
