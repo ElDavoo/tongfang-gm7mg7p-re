@@ -113,7 +113,7 @@ a different claim about the same byte.
 | verdict | sites | what it means |
 |---|---:|---|
 | `reached-by-walk` | 16 | on an instruction boundary inside a span this walk decoded |
-| `not-reached` | 123 | outside every reached span, and the walk decided it |
+| `not-reached` | 123 | outside every reached span; `walk_reason` says which terminator stopped the frontier, **not** how far below it this site sits |
 | `unknown` | 1 | outside every reached span, and the walk could not decide |
 
 By reason: `mid-instruction` 74, `tail-jump` 29, `ret` 20, `reached` 16,
@@ -312,11 +312,21 @@ name. That is raised as a follow-up rather than patched in silently.
   from the `bank-call-target` base, so the walk is partly graded on inputs the
   census produced and whose framing it does not vouch for. Seeds drawn from an
   upper bound can seed phantoms, and §3 is where that shows.
-- **`not-reached` is not always a finding about the byte.** For `0x021C6` it is
-  a statement that the walk's frontier stopped 943 bytes away and never covered
-  the site, which is a fact about this seed set rather than about the byte. The
-  `walk_reason` column is what distinguishes the two cases, and a reader who
-  wants the second kind has to read the reason rather than the verdict alone.
+- **`not-reached` is not always a finding about the byte, and no column in the
+  CSV says which kind a row is.** A site far below the walk's frontier is a
+  statement about *this seed set* — the walk stopped and never came back — and
+  not about the byte sitting there. `walk_reason` does **not** distinguish the
+  two cases: it records which terminator stopped the frontier, so `0x021C6`
+  reads `tail-jump` exactly as the other `tail-jump` rows do while lying 921
+  bytes below the nearest decoded instruction. Nor is `0x021C6` a singleton —
+  measured against the nearest decoded address below, a tail of `not-reached`
+  rows sits hundreds of bytes past the frontier, not one row. **A reader who
+  wants the second kind has to measure the gap**, from the `--spans` export:
+  take each `not-reached` `file_offset` and its distance to the nearest address
+  in the decoded `block_lo`-`block_hi` ranges. The figure is not carried in the
+  CSV because it is a reading over two artifacts rather than a property of
+  either, and a column that meant "the walk stopped here" would be a claim
+  about coverage wearing a row's clothes.
 - **Three of the 16 reached sites are themselves seeds**, which is circular by
   construction: a site the scan named cannot then be evidence that the scan
   found a real entry. They are in the table as reached, and the `is a seed`
@@ -327,7 +337,11 @@ name. That is raised as a follow-up rather than patched in silently.
 - **Not a code/data separation of the image.** That is
   [#20](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/20). This is the
   narrow slice of it one question needed, and `--spans` emits the reached-span
-  set — 1007 blocks over 950 entry points — in a form #20 can consume.
+  set in a form #20 can consume: **1007 blocks over 615 entry points**. Those
+  615 are the seeds; the walk's 950 descents include entries it reached through
+  a callee, and `write_spans()` iterates the seeds, so the 335 callee-discovered
+  entries are in the coverage count and **not** in the file. A consumer reading
+  the export gets the 615.
 - **Banks 2 and 3 are taken as unused** on the word of `find_banks.py`, which
   `audit_call_targets.py` already takes as given; this tool does not re-derive
   it.
@@ -383,5 +397,6 @@ r2 -a 8051 -e scr.color=0 -q -c 's 0xe000; pd 6' bank1.bin
   finds to be a checked property of this image. Nothing in this table classifies
   those *sites*; they are the walk's frontier, and whether any of them is a
   common-to-bank direct call is the same open question.
-- **The full code map.** `--spans` gives the 1007 blocks this seed set reached;
-  the gaps between them are where the next seed set has to come from.
+- **The full code map.** `--spans` gives the 1007 blocks, over the 615 entries
+  this seed set reached; the gaps between them are where the next seed set has
+  to come from.
