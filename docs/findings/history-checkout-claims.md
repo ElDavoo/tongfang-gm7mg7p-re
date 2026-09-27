@@ -93,6 +93,15 @@ wording is kept, next to the correction.
 | 6 | `docs/findings.md` §14f, correction at `:3380` | "the agent stages have one (`fetch-depth: 0`) and `ci.yml`'s two checkouts do not" | every job that runs a history reader has one, `ci.yml`'s `gates` included |
 | 7 | `docs/agent-pipeline.md` item 3, correction at `:99` | heading "**`--verify-provenance` needs a full git history, and `ci.yml` does not have one**"; body "both of `ci.yml`'s checkouts (`:34`, `:64`) are default-depth" and "it is not in the gate for that reason" | heading names the jobs rather than the file; body's stale line refs repointed and its 2026-09-23 state marked as the record it is, since the decision paragraph below it landed the next day |
 
+**The line numbers in that table are as of the tree that closed #1009, and
+they are not repointed.** The comment above `HISTORY_REQUIREMENT` moved under
+it, and the machine-checked identity is not a line but a **fragment of the
+sentence**, tabulated in
+[`history-checkout-site-identity.md`](history-checkout-site-identity.md) — which
+is also where the retraction of the `>= 4` floor that this page's last section
+describes is recorded. This paragraph is the drift rule, stated here so a reader
+arriving at a stale `:NNN` in the table knows what it is looking at.
+
 Two of the seven are the tools' own contract paragraphs, and site 4's comment
 is itself the record of the divergence: before this change it said the sentence
 was *"worded from what the workflows say today rather than carried over from
@@ -282,6 +291,33 @@ left out are in
 `docs/agent-pipeline.md` item 5 carries it. **Not claimed: that the invariant
 has ever run in CI** — it has not, and the patch is the evidence it *would* go
 red, not a record of a red run.
+
+### 2026-09-26, #1030: the suite's two committed-tree tripwires could not fail
+
+Above is what that suite was written to be. **Two of its cases turned out to
+satisfy the very edit they were written to catch, and both are retracted here
+rather than quietly replaced**; the old source is quoted verbatim in
+[`history-checkout-site-identity.md`](history-checkout-site-identity.md) with
+them. `test_the_two_tools_name_the_job_in_every_depth_claim_they_make` held the
+sites with `assertGreaterEqual(len(sites), 4)` — and the corrected sites occupy
+**five** sentences, so a reader stopping at four was green. And
+`test_each_corrected_site_is_still_one_of_the_sites` compared `{rel for rel, …
+in sites}` against `set(chc.PROSE_FILES)`, which `prose_sites()` iterates
+directly: the set found is a *subset* of the one compared by construction, so
+the assert could only fire on a file that is not in `PROSE_FILES`. **Dropping an
+entry from `PROSE_FILES` left it green**, and its comment's *"which is why the
+count above is a floor and this is a list"* described the opposite of what the
+code did — it was the file set, two strings, and `verify_reassembly.py` alone
+carries three of the four sites.
+
+The replacement is `ec/tools/history_checkout_sites.py`: one row per corrected
+site, keyed by its file and a **fragment of its sentence** rather than by a line,
+a count, or the tool's own file list, checked in both directions. The page linked
+above holds the five rows, the five cases that show it going red where the
+count stayed green, and the falsification. **The finding on this page is not in
+question** — the five sentences all name a job and `prose_problems()` is empty
+today; what was wrong was the tripwire, and no behaviour of
+`check_history_checkouts.py` changed here.
 
 ## Two facts recorded for other issues
 

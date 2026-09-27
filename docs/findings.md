@@ -11774,6 +11774,26 @@ decision but that nothing compared either copy against the workflows. The
 checker is that comparison. **Not in any gate**, for the reason
 `tools/test_readme_suite_table.py` is not either.
 
+**2026-09-26, #1030: the two cases that held those four sites could not fail on
+the edit they were written for, and are replaced by a keyed table.** §86's suite
+held them with `assertGreaterEqual(len(sites), 4)` and with a comparison of
+`{rel for rel, … in sites}` against `set(chc.PROSE_FILES)` — the very tuple
+`prose_sites()` iterates, so the set found is a subset of the one compared *by
+construction*. **Four sites occupy five sentences**, so a reader stopping at four
+was green, and **dropping an entry from `PROSE_FILES` left the other case green**
+too; its comment's *"this is a list"* described the file set, two strings, of
+which `verify_reassembly.py` alone carries three of the four sites. Both old
+sources are quoted beside their retraction on
+[`history-checkout-site-identity.md`](findings/history-checkout-site-identity.md),
+which also holds the replacement — `ec/tools/history_checkout_sites.py`, one row
+per corrected site keyed by its file and a **fragment of its sentence**, checked
+in both directions, with five scratch-tree controls showing it red where the
+count stayed green. **Nothing in the finding above is in question**: the five
+sentences all name a job and `prose_problems()` is empty on this tree, and no
+behaviour of `check_history_checkouts.py` changed. The seven-site table's line
+numbers are **not** repointed; a drift rule is stated beside them on the claims
+page instead.
+
 **What the suite behind it held, which is now all nine rows and the `stated`
 column with them (#1035).** `ec/tools/test_check_history_checkouts.py` asserted
 seven of the nine depths by value — `ci.yml` and `claude.yml` as `(job, depth)`

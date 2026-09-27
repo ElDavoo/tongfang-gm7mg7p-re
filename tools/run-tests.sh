@@ -64,7 +64,15 @@ while IFS= read -r -d '' path; do
                        -p "$(basename -- "$path")" 2>&1)
   rc=$?
   suites=$((suites + 1))
-  n=$(printf '%s\n' "$out" | sed -nE 's/^Ran ([0-9]+) tests? .*/\1/p')
+  # `tail -1` because a suite that *runs* other suites prints their summaries
+  # too: `ec/tools/test_pd_image_census.py` drives `disasm8051.py --self-test`
+  # and a stub, so its output carries three `Ran N tests` lines -- 1, 1 and its
+  # own 55. Without it `n` is three numbers, `$((tests + ${n:-0}))` dies on a
+  # syntax error, and the runner stops partway through printing no total at all
+  # -- the §14b failure mode one level up, a run that has stopped counting
+  # rather than one reporting a wrong count. The last line is the suite's own
+  # summary, and that is the one this tally wants.
+  n=$(printf '%s\n' "$out" | sed -nE 's/^Ran ([0-9]+) tests? .*/\1/p' | tail -1)
   # Counted here rather than in the pass branch, and a failing suite
   # included rather than skipped, because the figure this builds is *tests
   # run*: a failure changes the verdict, not how much of the suite ran. The
