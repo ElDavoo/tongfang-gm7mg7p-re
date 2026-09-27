@@ -606,8 +606,9 @@ onto a stub. That is a route the geometry allows — the trampoline block
 `0x1150`-`0x1ABC` is in the common area, so a common-area paged call can
 reach it from inside its own page, which a bank never can. The sites do not
 look like real calls, though: the best of the 18 scores 1 of 24 anchors and
-14 score 0. Two were read by hand, and both are the trampoline block's own
-bytes misframed:
+14 score 0. All 18 have since been read one by one, and every one is an
+operand byte of a named instruction; the two below are the trampoline
+block's own bytes, and they are:
 
 ```console
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0x15b8; pd 2' /tmp/bank0.bin
@@ -624,6 +625,28 @@ The scan's `ajmp` at `0x15BA` is the `0x81` low byte of a trampoline's
 inside the bank-0 stub. The other 16 were **not** read one by one, so "these
 18 are phantoms" is not the claim — "two of them are, and the anchor scores
 of the rest give no reason to think otherwise" is.
+
+**Correction to the two sentences above: the split is 4-and-14, not 1-and-14,
+and all 18 have now been read.** Both are left standing, per
+[`../../docs/findings.md`](../../docs/findings.md) §4a-4d. Recounted from the
+committed CSV, the 18 split `(0, 24) × 14` and `(1, 23) × 4`, and the four are
+`0x15BA`, `0x1656`, `0x16FE` and `0x1B5F` — so "the best of the 18 scores 1 of
+24" named one of four. The count was never load-bearing anyway, for the reason
+§2 and §8 already give: `converges_from()`'s own docstring says a site nobody
+syncs onto is not thereby misframed and a site everybody syncs onto is not
+thereby real, and the best-scoring of the four, `0x15BA`, is one of the two
+read and settled here as a phantom.
+
+"The other 16 were **not** read one by one" no longer holds either. All 18
+have been, and the claim is now 18 of 18 on byte evidence rather than on the
+absence of evidence against them: the byte at each site is an operand byte of
+an instruction one or two bytes earlier that 23 or 24 of the 24 preceding
+anchors decode onto, and 15 of the 18 have a committed listing in
+`ec/decompiled/common/` covering that instruction. The three that do not, and
+the one site (`0x15E3`) whose byte is also a real opcode in its own right, are
+named in the write-up rather than smoothed into the count. Full account, all 18
+transcripts, and the reading's own limits:
+[`../../docs/findings/paged-trampoline-hits-by-hand.md`](../../docs/findings/paged-trampoline-hits-by-hand.md).
 
 **What the false-negative fix found: nothing, in this image.** The mission
 half of this was `register_ref_table.py --callee-depth 1` silently dropping a

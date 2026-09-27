@@ -758,9 +758,30 @@ class TheCommittedTree(unittest.TestCase):
         # it was measured on, per §4a-4d, and the step is this suite's alone.
         # Measured with the tool below on this tree, not by adding one to the
         # previous total.
-        self.assertEqual(len(files), 48)
+        #
+        # **48 -> 49 is #54's, and it is the same single step one landing
+        # later.** `ec/tools/test_paged_trampoline_framing.py` is a `test_*.py`
+        # under `ec/tools`, so `census.suites()` returns it and `unpinned()`
+        # files it -- nothing in the committed markdown cites a *line* of it,
+        # for the same reason #40's suite is: its write-up
+        # (`docs/findings/paged-trampoline-hits-by-hand.md`) names the suite
+        # and the tool *by path* and never as
+        # `test_paged_trampoline_framing.py:NNN`. So the named count holds at
+        # the `12` and the tail takes `36` -> `37`. Every `48 / 12 / 36` above
+        # stays written, each true of the tree it was measured on, per §4a-4d,
+        # and so does the `47 / 12 / 35` the branch measured off a `main` that
+        # had not yet carried #40's suite. **Neither side's figure is this
+        # tree's and the two are not one apart**: this merge takes a suite on
+        # *each* side, so the step is both landings together -- `48 + 1 = 49`
+        # and `36 + 1 = 37` -- and the branch's own `47 / 12 / 35` counted a
+        # base that was already a suite behind. Measured with the tool below on
+        # this tree, not by adding the two sides up, per §4a-4d. This is the
+        # axis working, not drift: a suite with no committed line-citation
+        # belongs in the tail, and the pin that says so is what keeps the count
+        # from being carried forward unexamined.
+        self.assertEqual(len(files), 49)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 36)
+        self.assertEqual(len(tail), 37)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

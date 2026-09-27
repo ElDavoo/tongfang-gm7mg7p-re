@@ -12216,6 +12216,11 @@ this is an append and not the renumbering §85 through §91 record. The clause
 above stays written, true of the tree it was measured on, per §4a-4d. Nothing
 else in this section moves: the counts, the write-up and the corrections beside
 them are as §92 left them.)*
+*(**And §94 is the last section in the file now**, corrected beside that one for
+the same reason and not edited into it: #54's summary takes the next free number
+after §93, so this is a second append rather than either a renumbering or a
+correction of §92's figures. Nothing in this section moves for it, and the
+`§93` above stays written, true of the tree it was measured on, per §4a-4d.)*
 
 ## 93. All 170 of §8's trampoline-landing relative sites are inside the trampoline block, and #48's tail-branch class is not needed (2026-09-27, issue #57)
 
@@ -12264,3 +12269,100 @@ is **not** a blocker for this and stays open on its own terms: deciding these
 of the common area. #54's 18 paged sites are the other half of the same
 question and are untouched; the write-up notes that §7's two hand reads found
 the same shape and decides the other 16 nowhere.
+
+*(**The "are untouched" and "decides the other 16 nowhere" above are corrected
+beside themselves, not edited into it**, per §4a-4d: both are true of the tree
+this was measured on and false of the one it lands in, because #54 landed in the
+merge that brought this section in. All 18 of that issue's paged sites have now
+been read one by one and **all 18 are misframed operands**, at §94 below — the
+same shape this section's 170 rel8 sites turned out to be, reached by the other
+of the two byte-identity arguments rather than this one. **The two populations
+stay separate and neither is evidence for the other**: 18 paged sites and 170
+relative sites are different scans of different columns of
+`bank-paged-call-targets.csv` and `bank-relative-branch-targets.csv`, and #54's
+verdicts are byte readings that never consult the anchor scores this section
+discards. The two do agree on the shape, which is worth a sentence now that both
+are read, and it is a *weak* agreement — a misframed operand is the expected
+reading wherever a byte is inside a longer instruction, so the two populations
+converging on it says more about how often that happens in this image than about
+either set. The clause above stays written, true of the tree it was measured on,
+per §4a-4d.)*
+
+## 94. The 18 paged-trampoline hits are all 18 misframed operands, and §7's anchor count was one of four (2026-09-27, issue #54)
+
+> **Numbering note, added at the merge, and extended by a second merge.** Written
+> as §91, and #1033's summary (`48887fa0`) took the same next free number this
+> one did in the same window, so the rule §66's numbering note set at the third
+> merge applies unchanged: the number `main` held first keeps it, and the section
+> arriving second gives way. §91 above is #1033's, which reached the number a
+> commit earlier and keeps the pointer §88's "Nothing here is a claim that a gate
+> exists" paragraph already carries. **The branch's own merge renumbered this to
+> §92, and the merge this section actually lands in moved it once more, to §94**:
+> `main` reached §92 (#1008's, `5672042a`) and §93 (#57's, `e0a9115a`) in the four
+> commits after the fork, so this section gives way to both and the two-digit
+> number is not free on the tree it lands in. §92 and §93 keep the whole numbers,
+> and the three collisions cost this section three digits, not its content. **No
+> reference pointed at this section and none needed repointing**, the usual case
+> rather than §91's exception: nothing in the tree names it, the write-up names
+> §4c and `bank-call-audit.md`'s own §7, and no tool, test or gate reads a
+> section number out of this file, for the reason §91's note gives. **§94 was
+> free on the tree this actually lands in** — `main` reached §93 and no further —
+> so unlike §91's own renumber there is no further collision behind this one, and
+> unlike §66's five there is no pointer to carry with it. **§73's "and the last
+> section in the file" clause is corrected beside itself again for the same
+> reason the two before it were**: **§94 is the last section in the file now**,
+> where §92's own correction beside that clause reads §93 — the clause stays
+> written, true of the tree it was measured on, per §4a-4d.
+
+`ec/annotations/bank-call-audit.md` §7 reported 18 sites in
+`bank-paged-call-targets.csv` whose `ajmp`/`acall` target
+lands on a BL51 trampoline entry, read **two** of them by hand, and stopped
+short of the other sixteen on the grounds that "two of them are, and the
+anchor scores of the rest give no reason to think otherwise" — the best of the
+18 scoring 1 of 24 anchors and 14 scoring 0. All 18 have now been read, one by
+one, and **the claim is 18 of 18 on byte evidence rather than on the absence of
+evidence against them**: for every site the byte at the site is an operand byte
+of an instruction one or two bytes earlier that 23 or 24 of the 24 preceding
+anchors decode onto. No site is a genuine paged call, none is misframed data,
+and none came back `unresolved` — which per §4c is a first-class verdict and is
+never a synonym for phantom, not because it was overridden but because the
+criterion for it never arose.
+
+**The count §7 leaned on was wrong, and is corrected in place with the old
+wording left standing.** The 18 split `(0, 24) × 14` and `(1, 23) × 4` — the
+four are `0x15BA`, `0x1656`, `0x16FE` and `0x1B5F` — so "the best of the 18
+scores 1 of 24" named one of four. The more useful half of that correction is
+*why* the score was never load-bearing: `converges_from()`'s own docstring says
+a site nobody syncs onto is not thereby misframed and a site everybody syncs
+onto is not thereby real, and the best-scoring of the four, `0x15BA`, is one of
+the two §7 had already read and settled as a phantom.
+
+**What the reading found beyond the count.** The four stub sites at base
+`+0x10` are the `0x91` bit-address operand of the stubs' own `clr p1.1` /
+`setb p1.1`. `find_stubs()` reads its bank bits out of those instructions'
+**opcode** bytes — `d[a + 13 + 2*k]`, which is never `a + 0x10` — so it
+corroborates the owner and is silent on the site's own framing, and the four
+rest on the committed listing each has and the 23-of-24 anchor score rather
+than on the stub finder. Seven are immediate bytes of the trampoline block's
+six-byte `mov dptr`/`ljmp` entries, five of them at a listing's own first
+instruction. The seven outside both blocks, which are where the work was,
+resolve four ways with no appeal to the trampoline block at all: five are the
+`0x01` immediate of the `xrl a,#0x01` flag idiom, one the `0x01` of a
+`mov r7,#0x01`, and one (`0x1B5F`) the displacement of a `jnb`. **15 of the 18
+owning instructions sit in a committed listing and three do not** (`0x1656`,
+`0x16FE`, `0x1F8E`); the write-up names the three rather than implying 18.
+
+Two things the reading opens rather than closes, both in the write-up: the
+`FUN_CODE_1706` entry is one byte into an `ljmp` and its listing's first
+instruction, `acall 0x1000`, is not in the image at that alignment — a
+byte-scan-derived function boundary already committed to the tree, retiring it
+needs `--mode rebuild-project`; and `0x15E3` is the one site whose byte is also
+a *real* opcode (`0xC1` is `CLR bit`), so "these bytes are not an instruction"
+is true for the other seventeen and false for it. Nothing behavioural: no
+register `status:` moves, `bank-paged-call-targets.csv` is a generated file and
+is not edited, and no Ghidra rebuild. The full account, all 18 transcripts, and
+the reading's own limits are in
+[`findings/paged-trampoline-hits-by-hand.md`](findings/paged-trampoline-hits-by-hand.md);
+its `ec/tools/test_paged_trampoline_framing.py` pins every byte, holds the
+negative controls that stop a "phantom for all 18" reader from passing, and
+parses this write-up's verdict table back to 18 rows.
