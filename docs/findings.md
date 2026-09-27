@@ -1808,6 +1808,18 @@ side is doable from committed files (`vendor/bios-1.09/`), and
 for it. The extraction itself was not done this session.
 *(**2026-09-23:** done. `bios/tools/bios_extract.py` regenerates the IFR
 as `bios/ifr/Setup.en-US.ifr.txt`; §8 uses it.)*
+*(**2026-09-26:** the IFR is now a map rather than a dump.
+`bios/tools/ifr_census.py` turns it into a per-question census, and
+`bios/ifr/charge-questions.csv` is the charge subset: six questions with
+their store, offset, IFR default and the `SuppressIf` deciding whether
+each is shown — including `Setup[0x4F3]`, the only one of the six
+suppressed on a byte of the *volatile* store, hidden unless
+`SetupVolatileData[0x4]` holds 1 or 5. Eleven other form-sets are
+committed beside the `Setup` dump and none adds a charge question.
+Written up in `docs/findings/ifr-charge-and-battery-options.md`, with
+each dump's provenance in `bios/ifr/README.md`; `UniWillVariable` appears
+in none of the twelve, a not-found-by-this-method negative scoped and
+method-named there.)*
 
 **`UniWillVariable`** (`{9f33f85c-13ca-4fd1-9c4a-96217722c593}`, 180 bytes,
 NV+BS+RT) is the settings block the vendor service shares with the BIOS;

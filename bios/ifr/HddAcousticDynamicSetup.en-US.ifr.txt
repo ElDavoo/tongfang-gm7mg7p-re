@@ -1,0 +1,16 @@
+Program version: 1.6.1, Extraction mode: UEFI, SHA256: 05bbdf2cccd4a80a89d4ed8ddf650e9ee3bf3f94a24448bea5142cf8b446e5f0
+0x6298: FormSet Guid: C48AA1AC-F870-418D-A6EF-C1DD89C1CE19, Title: "Acoustic Management Configuration", Help: "Menu for configuring Automatic Acoustic Management" { 0E A7 AC A1 8A C4 70 F8 8D 41 A6 EF C1 DD 89 C1 CE 19 04 00 05 00 01 71 99 03 93 45 85 04 4B B4 5E 32 EB 83 26 04 0E }
+0x62BF: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Class, Class: 0xD0 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 03 D0 00 }
+0x62D4: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: SubClass, SubClass: 0x0 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 04 00 00 }
+0x62E9: 	DefaultStore DefaultId: 0x0, Name: "" { 5C 06 00 00 00 00 }
+0x62EF: 	DefaultStore DefaultId: 0x1, Name: "" { 5C 06 00 00 01 00 }
+0x62F5: 	VarStore Guid: 4B63986C-20B3-49C6-91A8-8A1B968D5AB3, VarStoreId: 0xDDDE, Size: 0x59, Name: "AcousticVarName" { 24 26 6C 98 63 4B B3 20 C6 49 91 A8 8A 1B 96 8D 5A B3 DE DD 59 00 41 63 6F 75 73 74 69 63 56 61 72 4E 61 6D 65 00 }
+0x631B: 	Form FormId: 0x1, Title: "Global Acoustic Configuration" { 01 86 01 00 02 00 }
+0x6321: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x640 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 00 10 }
+0x6336: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x641 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 01 10 }
+0x634B: 	End  { 29 02 }
+0x634D: 	Form FormId: 0x2, Title: "Global Acoustic Configuration" { 01 86 02 00 02 00 }
+0x6353: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0xC80 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 00 20 }
+0x6368: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0xC81 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 01 20 }
+0x637D: 	End  { 29 02 }
+0x637F: End  { 29 02 }

@@ -1,0 +1,56 @@
+Program version: 1.6.1, Extraction mode: UEFI, SHA256: 2f8cb1581be5ef260d158e8b2aeddc4974d53a1e5bc0b20fcf575fcb09dd0eb6
+0x5358: FormSet Guid: DE8AB926-EFDA-4C23-BBC4-98FD29AA0069, Title: "FixedBootOrder Group Form", Help: "Group Go to item" { 0E A7 26 B9 8A DE DA EF 23 4C BB C4 98 FD 29 AA 00 69 15 00 16 00 01 71 99 03 93 45 85 04 4B B4 5E 32 EB 83 26 04 0E }
+0x537F: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Class, Class: 0x10 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 03 10 00 }
+0x5394: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: SubClass, SubClass: 0x0 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 04 00 00 }
+0x53A9: 	DefaultStore DefaultId: 0x0, Name: "" { 5C 06 00 00 00 00 }
+0x53AF: 	DefaultStore DefaultId: 0x1, Name: "" { 5C 06 00 00 01 00 }
+0x53B5: 	VarStore Guid: DE8AB926-EFDA-4C23-BBC4-98FD29AA0069, VarStoreId: 0x1, Size: 0x288, Name: "FixedBoot" { 24 20 26 B9 8A DE DA EF 23 4C BB C4 98 FD 29 AA 00 69 01 00 88 02 46 69 78 65 64 42 6F 6F 74 00 }
+0x53D5: 	Form FormId: 0x2A1A, Title: "UEFI USB Key Drive BBS Priorities" { 01 86 1A 2A 13 00 }
+0x53DB: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x106E { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 06 2A }
+0x53F0: 	End  { 29 02 }
+0x53F2: 	Form FormId: 0x2A1B, Title: "UEFI USB Hard Disk Drive BBS Priorities" { 01 86 1B 2A 11 00 }
+0x53F8: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x106F { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 07 2A }
+0x540D: 	End  { 29 02 }
+0x540F: 	Form FormId: 0x2A1C, Title: "UEFI USB CDROM/DVD Drive BBS Priorities" { 01 86 1C 2A 12 00 }
+0x5415: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1070 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 08 2A }
+0x542A: 	End  { 29 02 }
+0x542C: 	Form FormId: 0x2A1D, Title: "UEFI USB Floppy Drive BBS Priorities" { 01 86 1D 2A 14 00 }
+0x5432: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1071 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 09 2A }
+0x5447: 	End  { 29 02 }
+0x5449: 	Form FormId: 0x2A1E, Title: "UEFI NVME Drive BBS Priorities" { 01 86 1E 2A 0E 00 }
+0x544F: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1072 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 0A 2A }
+0x5464: 	End  { 29 02 }
+0x5466: 	Form FormId: 0x2A1F, Title: "UEFI Hard Disk Drive BBS Priorities" { 01 86 1F 2A 0D 00 }
+0x546C: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1073 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 0B 2A }
+0x5481: 	End  { 29 02 }
+0x5483: 	Form FormId: 0x2A20, Title: "UEFI NETWORK Drive BBS Priorities" { 01 86 20 2A 10 00 }
+0x5489: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1074 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 0C 2A }
+0x549E: 	End  { 29 02 }
+0x54A0: 	Form FormId: 0x2A21, Title: "UEFI CDROM/DVD Drive BBS Priorities" { 01 86 21 2A 0F 00 }
+0x54A6: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1075 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 0D 2A }
+0x54BB: 	End  { 29 02 }
+0x54BD: 	Form FormId: 0x2A22, Title: "USB Key Drive BBS Priorities" { 01 86 22 2A 0A 00 }
+0x54C3: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1076 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 0E 2A }
+0x54D8: 	End  { 29 02 }
+0x54DA: 	Form FormId: 0x2A23, Title: "USB Hard Disk Drive BBS Priorities" { 01 86 23 2A 09 00 }
+0x54E0: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1077 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 0F 2A }
+0x54F5: 	End  { 29 02 }
+0x54F7: 	Form FormId: 0x2A24, Title: "CDROM/DVD Drive BBS Priorities" { 01 86 24 2A 0B 00 }
+0x54FD: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1078 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 10 2A }
+0x5512: 	End  { 29 02 }
+0x5514: 	Form FormId: 0x2A25, Title: "USB Floppy Drive BBS Priorities" { 01 86 25 2A 0C 00 }
+0x551A: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1079 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 11 2A }
+0x552F: 	End  { 29 02 }
+0x5531: 	Form FormId: 0x2A26, Title: "NVME Drive BBS Priorities" { 01 86 26 2A 06 00 }
+0x5537: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x107A { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 12 2A }
+0x554C: 	End  { 29 02 }
+0x554E: 	Form FormId: 0x2A27, Title: "Hard Disk Drive BBS Priorities" { 01 86 27 2A 05 00 }
+0x5554: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x107B { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 13 2A }
+0x5569: 	End  { 29 02 }
+0x556B: 	Form FormId: 0x2A28, Title: "NETWORK Drive BBS Priorities" { 01 86 28 2A 08 00 }
+0x5571: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x107C { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 14 2A }
+0x5586: 	End  { 29 02 }
+0x5588: 	Form FormId: 0x2A29, Title: "CDROM/DVD Drive BBS Priorities" { 01 86 29 2A 07 00 }
+0x558E: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x107D { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 15 2A }
+0x55A3: 	End  { 29 02 }
+0x55A5: End  { 29 02 }

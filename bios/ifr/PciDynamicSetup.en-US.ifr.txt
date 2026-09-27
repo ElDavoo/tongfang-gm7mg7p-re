@@ -1,0 +1,110 @@
+Program version: 1.6.1, Extraction mode: UEFI, SHA256: fe144cf77d764417399ed933bd359180a956ef4f38e4669e162190b25a35b046
+0x6838: FormSet Guid: ACA9F304-21E2-4852-9875-7FF4881D67A5, Title: "PCI Subsystem Settings", Help: "" { 0E A7 04 F3 A9 AC E2 21 52 48 98 75 7F F4 88 1D 67 A5 06 00 02 00 01 71 99 03 93 45 85 04 4B B4 5E 32 EB 83 26 04 0E }
+0x685F: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Class, Class: 0x88 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 03 88 00 }
+0x6874: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: SubClass, SubClass: 0x0 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 04 00 00 }
+0x6889: 	DefaultStore DefaultId: 0x0, Name: "" { 5C 06 00 00 00 00 }
+0x688F: 	DefaultStore DefaultId: 0x1, Name: "" { 5C 06 00 00 01 00 }
+0x6895: 	VarStore Guid: ACA9F304-21E2-4852-9875-7FF4881D67A5, VarStoreId: 0xCCCC, Size: 0x7, Name: "PCI_COMMON" { 24 21 04 F3 A9 AC E2 21 52 48 98 75 7F F4 88 1D 67 A5 CC CC 07 00 50 43 49 5F 43 4F 4D 4D 4F 4E 00 }
+0x68B6: 	Form FormId: 0x1, Title: "PCI Subsystem Settings" { 01 86 01 00 06 00 }
+0x68BC: 		Subtitle Prompt: "00.00", Help: "", Flags: 0x0 { 02 87 3E 00 00 00 00 }
+0x68C3: 		End  { 29 02 }
+0x68C5: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 02 00 00 00 00 }
+0x68CC: 		End  { 29 02 }
+0x68CE: 		Subtitle Prompt: "PCI Settings Common for all Devices:", Help: "", Flags: 0x0 { 02 87 07 00 00 00 00 }
+0x68D5: 		End  { 29 02 }
+0x68D7: 		SuppressIf  { 0A 82 }
+0x68D9: 			Uint64 Value: 0x0 { 45 8A 00 00 00 00 00 00 00 00 }
+0x68E3: 				Uint64 Value: 0x0 { 45 0A 00 00 00 00 00 00 00 00 }
+0x68ED: 				Equal  { 2F 02 }
+0x68EF: 			End  { 29 02 }
+0x68F1: 			CheckBox Prompt: "Above 4G Decoding", Help: "Globally Enables or Disables 64bit capable Devices to be Decoded in Above 4G Address Space (Only if System Supports 64 bit PCI Decoding).", QuestionFlags: 0x10, QuestionId: 0x7006, VarStoreId: 0xCCCC, VarOffset: 0x3, Flags: 0x0, Default: Disabled, MfgDefault: Disabled { 06 8E 0C 00 0D 00 06 70 CC CC 03 00 10 00 }
+0x68FF: 				Default DefaultId: 0x0 Value: 0 { 5B 06 00 00 00 00 }
+0x6905: 			End  { 29 02 }
+0x6907: 		End  { 29 02 }
+0x6909: 		SuppressIf  { 0A 82 }
+0x690B: 			Uint64 Value: 0x1 { 45 8A 01 00 00 00 00 00 00 00 }
+0x6915: 				Uint64 Value: 0x0 { 45 0A 00 00 00 00 00 00 00 00 }
+0x691F: 				Equal  { 2F 02 }
+0x6921: 			End  { 29 02 }
+0x6923: 			CheckBox Prompt: "BME DMA Mitigation", Help: "Re-enable Bus Master Attribute disabled during Pci enumeration for PCI Bridges after SMM Locked ", QuestionFlags: 0x10, QuestionId: 0x702A, VarStoreId: 0xCCCC, VarOffset: 0x5, Flags: 0x0, Default: Disabled, MfgDefault: Disabled { 06 8E 12 00 13 00 2A 70 CC CC 05 00 10 00 }
+0x6931: 				Default DefaultId: 0x0 Value: 0 { 5B 06 00 00 00 00 }
+0x6937: 			End  { 29 02 }
+0x6939: 		End  { 29 02 }
+0x693B: 		SuppressIf  { 0A 82 }
+0x693D: 			Uint64 Value: 0x0 { 45 8A 00 00 00 00 00 00 00 00 }
+0x6947: 				Uint64 Value: 0x0 { 45 0A 00 00 00 00 00 00 00 00 }
+0x6951: 				Equal  { 2F 02 }
+0x6953: 			End  { 29 02 }
+0x6955: 			CheckBox Prompt: "Hot-Plug Support", Help: "Globally Enables or Disables Hot-Plug support for the entire System. If System has Hot-Plug capable Slots and this option set to Enabled, it provides a Setup screen for selecting PCI resource padding for Hot-Plug.", QuestionFlags: 0x10, QuestionId: 0x7008, VarStoreId: 0xCCCC, VarOffset: 0x2, Flags: 0x0, Default: Disabled, MfgDefault: Disabled { 06 8E 14 00 15 00 08 70 CC CC 02 00 10 00 }
+0x6963: 				Default DefaultId: 0x0 Value: 1 { 5B 06 00 00 00 01 }
+0x6969: 			End  { 29 02 }
+0x696B: 		End  { 29 02 }
+0x696D: 		SuppressIf  { 0A 82 }
+0x696F: 			Uint64 Value: 0x0 { 45 8A 00 00 00 00 00 00 00 00 }
+0x6979: 				Uint64 Value: 0x0 { 45 0A 00 00 00 00 00 00 00 00 }
+0x6983: 				Equal  { 2F 02 }
+0x6985: 			End  { 29 02 }
+0x6987: 			CheckBox Prompt: "Restore PCIE Registers", Help: "On non-PCI Express aware OS's (Pre Windows Vista) some devices may not be correctly reinitialized after S3. Enabling this restors PCI Express device configurations on S3 resume. Warning: Enabling this may cause issues with other hardware after S3 resume.", QuestionFlags: 0x10, QuestionId: 0x700D, VarStoreId: 0xCCCC, VarOffset: 0x1, Flags: 0x0, Default: Disabled, MfgDefault: Disabled { 06 8E A4 00 A5 00 0D 70 CC CC 01 00 10 00 }
+0x6995: 			End  { 29 02 }
+0x6997: 		End  { 29 02 }
+0x6999: 		SuppressIf  { 0A 82 }
+0x699B: 			Uint64 Value: 0x0 { 45 8A 00 00 00 00 00 00 00 00 }
+0x69A5: 				Uint64 Value: 0x0 { 45 0A 00 00 00 00 00 00 00 00 }
+0x69AF: 				Equal  { 2F 02 }
+0x69B1: 			End  { 29 02 }
+0x69B3: 			CheckBox Prompt: "Don't Reset VC-TC Mapping", Help: "If system has Virtual Channels, Software can reset Traffic Class mapping through the Virtual Channels to it's default state. Setting this option to Enabled will not modify VC Resources.", QuestionFlags: 0x10, QuestionId: 0x7029, VarStoreId: 0xCCCC, VarOffset: 0x6, Flags: 0x0, Default: Disabled, MfgDefault: Disabled { 06 8E 16 00 17 00 29 70 CC CC 06 00 10 00 }
+0x69C1: 				Default DefaultId: 0x0 Value: 1 { 5B 06 00 00 00 01 }
+0x69C7: 			End  { 29 02 }
+0x69C9: 		End  { 29 02 }
+0x69CB: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 02 00 00 00 00 }
+0x69D2: 		End  { 29 02 }
+0x69D4: 		Subtitle Prompt: "Change Settings of the Following PCI Devices:", Help: "", Flags: 0x0 { 02 87 08 00 00 00 00 }
+0x69DB: 		End  { 29 02 }
+0x69DD: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x65 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 01 01 }
+0x69F2: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x66 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 02 01 }
+0x6A07: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 02 00 00 00 00 }
+0x6A0E: 		End  { 29 02 }
+0x6A10: 		Subtitle Prompt: "WARNING: Changing PCI Device(s) settings may", Help: "", Flags: 0x0 { 02 87 09 00 00 00 00 }
+0x6A17: 		End  { 29 02 }
+0x6A19: 		Subtitle Prompt: "have unwanted side effects! System may HANG!", Help: "", Flags: 0x0 { 02 87 0A 00 00 00 00 }
+0x6A20: 		End  { 29 02 }
+0x6A22: 		Subtitle Prompt: "PROCEED WITH CAUTION.", Help: "", Flags: 0x0 { 02 87 0B 00 00 00 00 }
+0x6A29: 		End  { 29 02 }
+0x6A2B: 	End  { 29 02 }
+0x6A2D: 	Form FormId: 0x2, Title: "PCI Device Settings" { 01 86 02 00 18 00 }
+0x6A33: 		Subtitle Prompt: "n/a", Help: "", Flags: 0x0 { 02 87 1F 00 00 00 00 }
+0x6A3A: 		End  { 29 02 }
+0x6A3C: 		Subtitle Prompt: "n/a", Help: "", Flags: 0x0 { 02 87 20 00 00 00 00 }
+0x6A43: 		End  { 29 02 }
+0x6A45: 		Subtitle Prompt: "n/a", Help: "", Flags: 0x0 { 02 87 21 00 00 00 00 }
+0x6A4C: 		End  { 29 02 }
+0x6A4E: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 02 00 00 00 00 }
+0x6A55: 		End  { 29 02 }
+0x6A57: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0xC9 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 01 02 }
+0x6A6C: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0xCA { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 02 02 }
+0x6A81: 	End  { 29 02 }
+0x6A83: 	Form FormId: 0x3, Title: "PCI Express GEN 1 Settings" { 01 86 03 00 19 00 }
+0x6A89: 		Subtitle Prompt: "PCI Express GEN 1 Settings", Help: "", Flags: 0x0 { 02 87 19 00 00 00 00 }
+0x6A90: 		End  { 29 02 }
+0x6A92: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 02 00 00 00 00 }
+0x6A99: 		End  { 29 02 }
+0x6A9B: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x12D { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 01 03 }
+0x6AB0: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x12E { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 02 03 }
+0x6AC5: 	End  { 29 02 }
+0x6AC7: 	Form FormId: 0x4, Title: "PCI Express GEN 2 Settings" { 01 86 04 00 1A 00 }
+0x6ACD: 		Subtitle Prompt: "PCI Express GEN 2 Settings", Help: "", Flags: 0x0 { 02 87 1A 00 00 00 00 }
+0x6AD4: 		End  { 29 02 }
+0x6AD6: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 02 00 00 00 00 }
+0x6ADD: 		End  { 29 02 }
+0x6ADF: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x191 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 01 04 }
+0x6AF4: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x192 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 02 04 }
+0x6B09: 	End  { 29 02 }
+0x6B0B: 	Form FormId: 0x5, Title: "PCI Hot-Plug Settings" { 01 86 05 00 1B 00 }
+0x6B11: 		Subtitle Prompt: "PCI Hot-Plug Settings", Help: "", Flags: 0x0 { 02 87 1B 00 00 00 00 }
+0x6B18: 		End  { 29 02 }
+0x6B1A: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 02 00 00 00 00 }
+0x6B21: 		End  { 29 02 }
+0x6B23: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1F5 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 01 05 }
+0x6B38: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x1F6 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 02 05 }
+0x6B4D: 	End  { 29 02 }
+0x6B4F: End  { 29 02 }
