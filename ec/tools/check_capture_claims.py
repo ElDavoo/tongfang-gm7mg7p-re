@@ -64,11 +64,12 @@ disagreement is a fact about the prose rather than a race to be re-tried.
     indexes `evidence/ec-watch/*.csv` and nothing else, and `check()` skips a
     unit naming one before either rule runs, so there is no row set here for
     a claim to agree or disagree with. That is the whole reason, and it is not
-    the file's shape -- the `.txt` captures in the tree share none, one of them
-    being a per-change watch log. What an individual capture holds is a fact
-    about that file rather than about this tool; `evidence/README.md` indexes
-    four of the five under `evidence/ec-watch/`, `2026-09-23-ctgp-live.txt`
-    excepted, and the roster is in
+    the file's shape -- `2026-09-23-0751-isolation.txt` is a per-change watch
+    log, and it is skipped for want of an index entry rather than for want of a
+    row per change. What an individual capture holds is a fact about that file
+    rather than about this tool; `evidence/README.md` indexes the `.txt`
+    captures under `evidence/ec-watch/` but not `2026-09-23-ctgp-live.txt`, and
+    the roster is in
     `docs/findings/capture-claims-docstring-surface.md`. A unit naming one is
     reported as skipped rather than passed over in silence, which is the part
     that matters: it keeps "outside the oracle" distinguishable from "nothing

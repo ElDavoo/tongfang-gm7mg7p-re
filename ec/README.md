@@ -252,8 +252,8 @@ into `r2 -a 8051` with no stitching needed.
   network — `.csv` captures only: the index is built from
   `evidence/ec-watch/*.csv` and a unit naming a `.txt` is skipped before either
   rule runs, so there is no row set to hold a claim against.
-  `evidence/README.md` indexes what an individual capture holds — four of the
-  five `.txt` files there, `2026-09-23-ctgp-live.txt` excepted.
+  `evidence/README.md` indexes what an individual capture holds — every `.txt`
+  file there but `2026-09-23-ctgp-live.txt`.
   The limits it earns the right to state are in its own docstring, in the
   sibling's style, and the two that matter most: a sentence that *denies*
   movement is skipped, which is what keeps #270's correction green and is

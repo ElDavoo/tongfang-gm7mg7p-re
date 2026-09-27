@@ -115,11 +115,11 @@ document doing the counting.
 ## The measurement, re-derived from the run, 2026-09-27
 
 Nothing below is taken from the issue or from the predecessor write-up; all of
-it comes from running the tool, on the tree this change merges into:
+it comes from running the tool, on the tree this change lands on:
 
 ```
 $ python3 ec/tools/check_capture_claims.py --check --verbose
-198 files / 100156 lines / 9 capture claims checked against 10 committed captures: every checked claim agrees with the capture it names
+198 files / 100160 lines / 9 capture claims checked against 10 committed captures: every checked claim agrees with the capture it names
 195 of those 198 file(s) were read in full and named no capture claim; `--verbose` names each one
 ```
 
@@ -127,7 +127,7 @@ Both census figures belong to the walk and move with it, so this block is dated
 to the commit it sits in. It is worth saying what moved them, because the
 figures an earlier draft of this section quoted are the issue's: `195 files /
 99083 lines` and `192 of those 195` is the tree at `d4c8510`, the commit the
-issue measured on, and `4ecb8517` — the commit this branch merges into — added
+issue measured on, and `e38ee864` — the commit this branch merges into — added
 two write-ups since, so the tree this lands on reads three more files than the
 block quoted, one of them this write-up, which the walk reads because it is a
 `.md` under a root it walks. The `registers.yaml` line numbers the issue
@@ -294,7 +294,7 @@ above records. Recorded so the correction is not re-derived.
 - **The generated index's pre-existing off-by-one, and only that.**
   `gen_findings_index.py --check` fails on the tree as received: the entry list
   is complete and correct and only the prose count line is stale. At `d4c8510`
-  the index carried 124 entries and said **123**; at `4ecb8517`, the commit
+  the index carried 124 entries and said **123**; at `e38ee864`, the commit
   this branch merges into, it carries 126 and says **125**. Nothing runs that
   check — `docs/ci/agent-gates-findings-frozen.patch` is the patch that would
   put it in `.github/scripts/agent-gates.sh` and it is not applied, so the
@@ -341,13 +341,17 @@ above records. Recorded so the correction is not re-derived.
 ## Follow-ups this exposes
 
 - **`evidence/ec-watch/2026-09-23-ctgp-live.txt` is described nowhere.** It is
-  the one `.txt` in the capture root that `evidence/README.md` does not index —
-  the other four are at `:42`, `:45`, `:50` and `:77`. The docstring now says
-  "four of the five" and names the exception rather than pointing at that index
-  as if it were complete, so the gap is stated where a reader meets the pointer
-  instead of being left to find it; `evidence/README.md` is a shared file this
-  change does not touch, so the index itself is still missing the entry. Named
-  here rather than fixed.
+  the one `.txt` in the capture root that `evidence/README.md` does not index.
+  The docstring and `ec/README.md` both name it as the exception rather than
+  pointing at that index as if it were complete, so the gap is stated where a
+  reader meets the pointer instead of being left to find it;
+  `evidence/README.md` is a shared file this change does not touch, so the
+  index itself is still missing the entry. Named here rather than fixed. The
+  count a first draft of the docstring carried beside that exception — how many
+  of the `.txt` captures the index does cover — went with it, for the reason
+  the lead gives: it is a property of the evidence tree, it moves whenever a
+  capture is committed, and naming the one file that is missing says the same
+  thing with no figure to go stale.
 - **The `0x06D6` pair on `xdata-06c2-06db-sweep.md:145` — a count and a
   presence claim, one line — was invisible to every prior statement of the
   surface**, including the issue's. That is what the per-file table is for: a
