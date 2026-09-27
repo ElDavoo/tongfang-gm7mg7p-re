@@ -589,7 +589,10 @@ def broken_pins(pins, figure_cell, claimed, resolved):
     moved once. A `held` row has to cite something, or "held" is a claim with
     nothing behind it. A `held` row's citation has to name the file the
     measurement resolved to, so a pin that has drifted onto the wrong module is
-    caught rather than counted. And an `unheld` row citing anything is a
+    caught rather than counted -- and that rule is scoped to a figure resolving
+    *nowhere* among the cited files, because a bare literal is weak evidence that
+    two numbers are the same quantity, so a coincidental match elsewhere is not a
+    competing measurement. And an `unheld` row citing anything is a
     disagreement the other way: a citation claims that something there holds the
     figure, which is exactly what `unheld` denies.
     """
@@ -624,6 +627,17 @@ def broken_pins(pins, figure_cell, claimed, resolved):
         return problems + [f"the row for {figure_cell} is marked {HELD!r} but "
                            f"names no `file:line` to pin it with"]
     cited = {name for name, _line in pins}
+    if resolved & cited:
+        # The row names a file the figure really was measured in, so the
+        # citation is satisfied. A *second* file carrying the same number is a
+        # coincidence, not a competing measurement, and reporting it would make
+        # this tool fire on every suite that happens to assert a small literal
+        # -- the case that put it here is #1172's `test_bucket_c_codemap.py`
+        # asserting `len(FLOW_OPCODES) == 50`, where the 8051 branch count
+        # matched the 50 pd clusters of this page's `390 / 50` row by accident
+        # alone. The drift this rule exists for is a figure that resolves
+        # *nowhere* among the cited files, and that is the case below.
+        return problems
     for name in sorted(resolved - cited):
         problems.append(
             f"the held row for {figure_cell} cites "
