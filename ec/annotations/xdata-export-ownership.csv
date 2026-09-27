@@ -1527,7 +1527,7 @@ common/0C86.c,common,0C86,32,common/0C86.c,0C86,poll_flag_bytes_30_to_3b_and_dis
 common/0D49.c,common,0D49,1,common/0D49.c,0D49,FUN_CODE_0d49,no,1.00
 common/0D4A.c,common,0D4A,4,common/0D4A.c,0D4A,FUN_CODE_0d4a,no,1.00
 common/0D78.c,common,0D78,2,common/0D78.c,0D78,thunk_FUN_CODE_2819,no,1.00
-common/0D7B.c,common,0D7B,44,common/0D7B.c,0D7B,FUN_CODE_0d7b,no,1.00
+common/0D7B.c,common,0D7B,44,common/0D7B.c,0D7B,divide_down_scheduler_counters_44_45_47,no,1.00
 common/0DF7.c,common,0DF7,5,common/1602.c,1602,FUN_CODE_1602,yes,1.00
 common/0E04.c,common,0E04,5,common/1602.c,1602,FUN_CODE_1602,yes,1.00
 common/0E1E.c,common,0E1E,4,common/0E1E.c,0E1E,FUN_CODE_0e1e,no,1.00

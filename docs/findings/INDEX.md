@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-128 write-ups.
+129 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -86,6 +86,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`rel8-displacement-bound.md`](rel8-displacement-bound.md) — What holds the rel8 displacement read in range: a constant in another module, and a marker check three frames away
 - [`reset-vector-dptr-targets.md`](reset-vector-dptr-targets.md) — The reset vector's two DPTR-only bank-0 targets, `0xD89F` and `0xD96C` (issue #559)
 - [`runner-red-suite-set.md`](runner-red-suite-set.md) — The runner's red set, and the third of #162's blocker that was a missing table row (issue #751)
+- [`scheduler-divide-down-cycle.md`](scheduler-divide-down-cycle.md) — How many entries to the divide-down scheduler is one case-`0x0A` turn (issue #1183)
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
