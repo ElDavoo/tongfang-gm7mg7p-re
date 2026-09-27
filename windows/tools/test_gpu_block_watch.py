@@ -861,11 +861,15 @@ class MarkCsvTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         # ec_watch.py's schema exactly: a downstream reader of a mark-delimited
         # capture (ec/tools/grade_gpu_door.py, issue #283) must not need a
-        # parser written for this file.
-        self.assertEqual(rows[0], 'ts,addr,old,new')
+        # parser written for this file. The mark row's fifth field is
+        # `ec_watch.Marker`'s provenance column, and this tool constructs
+        # `Marker(sink)` with nothing to put in it, so it is present and empty:
+        # "this process held no --label-vocab", which is not what a four-field
+        # row would say.
+        self.assertEqual(rows[0], 'ts,addr,old,new,provenance')
         self.assertEqual([r.split(',', 1)[1] for r in rows[1:]],
                          [f'0x{ACPI:04X},0x00,0x37',
-                          'MARK,,gpu tgp 115W->130W',
+                          'MARK,,gpu tgp 115W->130W,',
                           f'0x{HOST:04X},0x00,0x0A'])
 
     def test_both_windows_are_in_one_capture(self):

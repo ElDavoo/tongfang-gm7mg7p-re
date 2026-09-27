@@ -46,7 +46,7 @@ four ways a file comes to hold a mark no watcher checked:
 
 §3a's service-stopped pass is not a fifth: it is a second run with its own
 `<date>`, not a fourth block of §3's
-(`manual-fan-ctrl-0751-isolation.md:904-907`), so a §3a pass on a fresh date
+(`manual-fan-ctrl-0751-isolation.md:909-912`), so a §3a pass on a fresh date
 writes three new files and starts on empty ones. It is the one routine that
 correctly *avoids* the collision, which is why the notice stays quiet for it.
 

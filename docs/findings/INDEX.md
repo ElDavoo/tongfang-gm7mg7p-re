@@ -19,6 +19,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-grader-unplaced-window-checks.md`](0751-grader-unplaced-window-checks.md) — A stray `restore` the consoles spelled two ways, or that one console missed, was graded in full (issue #529)
 - [`0751-grader-unplaced-window-scope.md`](0751-grader-unplaced-window-scope.md) — The sentence §7's verdict is read from did not say which windows are a window of a value under test (issue #530)
 - [`0751-grader-withheld-count-denominators.md`](0751-grader-withheld-count-denominators.md) — The withheld banner counted one way over windows numbered another (issue #500)
+- [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md) — A fifth `provenance` column on the mark row, and the reader that makes it worth writing (issue #739)
 - [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) — Which process wrote this mark: a fifth column measured against a `# provenance` row (issue #719)
 - [`0751-notice-two-moments.md`](0751-notice-two-moments.md) — The 0751 startup notice described two moments as one (issue #749)
 - [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md) — The two path-taking readers are kept, and their docstrings name their callers (issue #771)

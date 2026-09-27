@@ -473,15 +473,32 @@ class TheCommittedTree(unittest.TestCase):
         records, _files = census.census(tool.REPO)
         files, index = census.suites(tool.REPO)
         table, _buckets = tool.charged(records, files, index)
+        # #739 takes `test_ec_watch.py` from `10` to `11` and every other row
+        # with it, and the re-anchoring beside it is the control: that change
+        # also moved three pins *into* the two files it edits, and each was
+        # re-anchored to a line a second write-up already named, so none of the
+        # three changes a name, a file count or this table -- which is what
+        # "a repoint moves a line, not a name" says when a repoint is caused by
+        # the same change that does the repointing.
+        # Then one more row, same issue, and this one *is* a name the change
+        # newly made: re-running `0751-path-taking-reader-fates.md`'s second
+        # `grep` transcript printed a twelfth `test_grade_0751_isolation.py`
+        # line the table had been carrying eleven of, so that row's two cells
+        # each take one, `22 -> 23` and `15 -> 16`. It is the same file rather
+        # than a new one, which is the distinction the paragraph above draws —
+        # a change that adds a record to a file the table already carries
+        # reweights that file, where a change that adds one to a *new* file
+        # leaves the two rows the concentration argument rests on alone.
         self.assertEqual(
             {row[0]: (row[1], row[3]) for row in tool.rows(table)},
             {"ec/tools/test_xdata_cluster_names.py": (33, 10),
-             "ec/tools/test_grade_0751_isolation.py": (21, 15),
-             "windows/tools/test_manual_fan_ctrl_probe.py": (5, 3),
+             "ec/tools/test_grade_0751_isolation.py": (23, 16),
+             "windows/tools/test_manual_fan_ctrl_probe.py": (11, 3),
              "ec/tools/test_disasm8051.py": (4, 1),
-             "windows/tools/test_ec_watch.py": (3, 2),
+             "windows/tools/test_ec_watch.py": (11, 2),
              "ec/tools/test_xdata_register_map.py": (2, 0),
-             "windows/tools/test_system_id_probe.py": (1, 1),
+             "windows/tools/test_gpu_block_watch.py": (2, 0),
+             "windows/tools/test_system_id_probe.py": (4, 1),
              "ec/tools/test_check_site_census.py": (1, 0),
              "ec/tools/test_check_testdata_index.py": (1, 0),
              "ec/tools/test_citation_gap_scan.py": (1, 0),
@@ -516,9 +533,29 @@ class TheCommittedTree(unittest.TestCase):
         # inside, and it was a `test_xdata_cluster_names.py` record, so that
         # file's concentration and this sum each take exactly one and the
         # second entry here is unmoved.
-        self.assertEqual([row[4] for row in cited[:2]], [43, 36])
-        self.assertEqual(cited[0][4] + cited[1][4], 79)
-        self.assertEqual(len(records), 106)
+        # Re-derived again for #739, and the delta is its write-up alone: its
+        # twenty records take the first row not at all (it names
+        # `test_xdata_cluster_names.py` zero times) and the second `36 -> 37`,
+        # so the sum holds at `80` and only the denominator moves,
+        # `106 -> 126`. The one is `test_grade_0751_isolation.py` and the other
+        # two are the suites whose repaired assertions it names, which is the
+        # "a repoint moves a line, not a name" distinction the paragraph above
+        # draws -- except that these are new records rather than repointed
+        # ones, and so they reweight. The third re-anchoring the write-up
+        # names lands in neither of these two files, and moves no occurrence
+        # into or out of either, so it takes nothing here — the same
+        # distinction read from the other end.
+        # Then +2 again, same issue and the same shape as the row above: the
+        # transcript's two new records both name `test_grade_0751_isolation.py`
+        # — the fenced line and its live-prose twin are one line written
+        # twice — so the second row takes both of its cells, `37 -> 39`, and
+        # the sum with an unmoved first row is `80 -> 82`. The first row is the
+        # control: neither record names `test_xdata_cluster_names.py`, so a
+        # reader can see the step is a weight on the second row and not a
+        # shift between the two.
+        self.assertEqual([row[4] for row in cited[:2]], [43, 39])
+        self.assertEqual(cited[0][4] + cited[1][4], 82)
+        self.assertEqual(len(records), 128)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
         # Three figures, and each moves by construction the moment a suite
@@ -571,7 +608,13 @@ class TheCommittedTree(unittest.TestCase):
         # same mistake in prose; the two numbers under it were the same lock in
         # a shorter form. A suite landing is not a defect, and nothing here
         # should go red for one.
-        self.assertEqual(len(files) - len(tail), 12)
+        # `12 -> 13` is #739's write-up, and it is one suite entering the
+        # named table: `windows/tools/test_gpu_block_watch.py`, whose suite had
+        # no committed line-citation and now has two, in the write-up that
+        # names the assertion it repaired. The comment above this assertion is
+        # about not holding the two absolutes; this one is a named count and
+        # moves by construction for the same reason the other two axes do.
+        self.assertEqual(len(files) - len(tail), 13)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

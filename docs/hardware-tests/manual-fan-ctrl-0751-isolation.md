@@ -287,11 +287,21 @@ itself is worth less than no block.
 `--mark` is what makes the CSV readable afterwards: without a timestamp for
 "I wrote it now", a byte that moves 400 ms later and one that moves 40 s
 later look the same in the log. With `--csv` it writes each mark into the
-capture itself as a `ts,MARK,,label` row, so the CSV is self-contained — type
-what you just did as the label — one of the six forms the block above names,
-`rem mark each console:` under each round — rather than keeping the timing
-in separate notes. **A blank line records nothing: the mark prompt says so and
-asks again**, so there is no such thing as an unnamed mark in a capture
+capture itself as a `ts,MARK,,label,provenance` row, so the CSV is
+self-contained — type what you just did as the label, one of the six forms
+the block above names, `rem mark each console:` under each round, rather
+than keeping the timing in separate notes. **The fifth field records which
+program wrote the mark and whether that process held `--label-vocab`**: it
+is empty unless the console was started with the flag, and where it is set
+it names the program and the vocabulary. **It does not tell the three §3
+consoles apart.** All three run the same `ec_watch.py` with the same
+`--label-vocab 0751`, so all three write the byte-identical
+`prog=ec_watch.py label-vocab=0751`; nothing in the file says which window
+a mark was typed in. The three captures are told apart by their
+`--csv` filenames, as the block above names them, and a mark's window
+within a capture is still whatever the operator remembers. **A blank line
+records nothing: the mark prompt says so and asks again**, so there is no
+such thing as an unnamed mark in a capture
 ([`../../windows/tools/ec_watch-marks.md`](../../windows/tools/ec_watch-marks.md)).
 Mark the same action in all three consoles within a few
 seconds of each other; the grader treats marks less than five seconds apart as

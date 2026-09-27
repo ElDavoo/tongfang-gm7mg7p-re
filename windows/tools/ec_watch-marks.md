@@ -17,9 +17,11 @@ is the one who sees the new prompt, and that is their step.
 With `--mark`, each line read from stdin is one mark, and it lands in three
 places at once:
 
-- in the capture, as its own row `ts,MARK,,label` (`ts` to the millisecond,
-  the label exactly as typed), which is what makes a `--csv` capture
-  self-contained rather than a log plus a set of notes;
+- in the capture, as its own row `ts,MARK,,label,provenance` (`ts` to the
+  millisecond, the label exactly as typed, and the fifth field the
+  provenance column — empty unless the process held `--label-vocab`, in which
+  case it names the program and the vocabulary), which is what makes a
+  `--csv` capture self-contained rather than a log plus a set of notes;
 - on the console, as `--- ts  MARK: label ---`;
 - in the end-of-run `marks:` summary, one line per mark the run took.
 
@@ -411,7 +413,7 @@ and the first three are the ones that can leave the day ungraded:
 
 §3a's service-stopped pass is *not* one of them, and its own runbook note is
 why: it is a second run with its own `<date>`, not a fourth block of §3's
-(`manual-fan-ctrl-0751-isolation.md:904-907`), so a §3a pass on a fresh date
+(`manual-fan-ctrl-0751-isolation.md:909-912`), so a §3a pass on a fresh date
 writes three new files and starts on empty ones — the one routine that
 correctly *avoids* the collision, which is why the notice stays quiet for it.
 The collision the warning has to allow for is §3's own blocks 2 and 3.
@@ -632,7 +634,11 @@ juxtaposition.
 - `ec/tools/grade_0751_isolation.py` — `parse_mark`, `unplaceable_marks` and
   `build_windows` are the three functions above. None of them changed: the
   grader's refusal was correct and still is. `existing_mark_labels` is the one
-  addition, and it is additive.
+  addition, and it is additive. A fifth mark-row field arrived after this
+  file was written, and
+  [`0751-mark-provenance-column.md`](../../docs/findings/0751-mark-provenance-column.md)
+  is its write-up: the four writer decisions, the reader that returns the
+  column with the row's position, and what a populated one does not say.
 - `ec/tools/test_grade_0751_isolation.py` — its `mark 3` case is a
   hand-written fixture of the shape, and it still exits 1, because a capture
   carrying that row is still fatal however it got there.

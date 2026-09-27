@@ -540,13 +540,18 @@ class TheCommittedTree(unittest.TestCase):
     def test_the_committed_table_reconciles_and_exits_zero(self):
         rc, out, err = run_main(check.REPO)
         self.assertEqual(rc, 0, err)
-        # 106 rather than 107: the census row for the one pin that lived
-        # inside `test-line-pin-census.md`'s per-merge log went with the log,
-        # and a table row with no record behind it is the `unplaced-row` this
-        # tool exists to name. Re-derived, not lowered -- `test_census_test_line_pins.py`
-        # carries the same delta with every counter in it.
-        self.assertIn("106 table row(s) against 106 census record(s)", out)
-        self.assertIn("106 placed", out)
+        # 128 rather than 106: #739's write-up brings twenty records and the
+        # twenty rows beside them, and re-running the reader-fates page's
+        # second transcript brings two more with the two rows beside them.
+        # The 106 rather
+        # than 107 that stood here before is the census row for the one pin
+        # that lived inside `test-line-pin-census.md`'s per-merge log, which
+        # went with the log -- a table row with no record behind it is the
+        # `unplaced-row` this tool exists to name. Re-derived, not lowered --
+        # `test_census_test_line_pins.py` carries the same delta with every
+        # counter in it.
+        self.assertIn("128 table row(s) against 128 census record(s)", out)
+        self.assertIn("127 placed", out)
 
     def test_every_class_is_zero_on_the_committed_tree(self):
         # Not left to a prose figure. Zero is the measurement here -- the
@@ -564,7 +569,17 @@ class TheCommittedTree(unittest.TestCase):
         table, records, placed, _problems, _uncompared = check.reconcile(check.REPO)
         self.assertTrue(records)
         self.assertTrue(table)
-        self.assertEqual(placed, 106)
+        # `106 -> 127` is #739: twenty new records from its write-up with
+        # twenty new rows, and two more from re-running the reader-fates
+        # page's transcript with two more beside them. The count is placed
+        # rows rather than table rows, so it moves with the corpus and not
+        # with the table's shape -- and it is one short of the record count
+        # on this tree, which is `docs/agent-pipeline.md`'s `:409`/`:410`
+        # pair and reproduces on a clean `origin/main` (see the suite's own
+        # note on that pair). It is a re-derivation, not a lowering: the
+        # row that fails to place is named by the tool, and the other 127
+        # are held by the two assertions beside this one.
+        self.assertEqual(placed, 127)
 
     def test_the_committed_read_and_shape_cells_are_the_census_vocabulary(self):
         # The two vocabularies the table's own cells have to be drawn from, and
@@ -592,8 +607,17 @@ class TheCommittedTree(unittest.TestCase):
         # `by-name` 18 rather than 19 for the same one row: it was the only
         # `by-name` row that went, and the other three cells are unmoved,
         # which is the control the paragraph below this one argues from.
-        self.assertEqual(read, {census.BY_PATH: 54, census.BY_NAME: 18,
-                                census.BY_BESIDE: 2, "-": 32})
+        # Re-derived for #739 on top of that: its write-up's twenty records
+        # are nineteen `by-path` and one `by-name`, so `by-path` 54 -> 73 and
+        # `by-name` 18 -> 19, with `by-beside` and the declined `-` unmoved.
+        # Then +2 again, same issue: re-running the reader-fates page's second
+        # transcript is one declined row and one `by-path` row, so `by-path`
+        # 73 -> 74 and the declined `-` 32 -> 33, with `by-name` and
+        # `by-beside` unmoved -- which is the control, because neither of the
+        # two is the transcript's fence and nothing about the corpus changed
+        # but its size.
+        self.assertEqual(read, {census.BY_PATH: 74, census.BY_NAME: 19,
+                                census.BY_BESIDE: 2, "-": 33})
         # The shape split is re-derived rather than lowered, twice. #962 adds a
         # class to `test_xdata_cluster_names.py` and corrects a docstring above
         # it, which moves the line every pin *into that one file* lands on; the
@@ -609,18 +633,37 @@ class TheCommittedTree(unittest.TestCase):
         # so the only thing that moved is where each pin lands, which is the
         # line shift and not a change to the corpus. **`def test_` is absent
         # rather than zero**, because this cell counts the words that occur in
-        # the table and none of them is that one any more: `assertEqual`
-        # compares key sets, so a `census.DEF_TEST: 0` term would redden on a
-        # table that is correct. This pin follows the run rather than the page
-        # it was written on.
+        # the table and none of them is that one: `assertEqual` compares key
+        # sets, so a `census.DEF_TEST: 0` term would redden on a table that is
+        # correct. #739 briefly gave the table one — `0751-mark-provenance-
+        # shapes.md:204` named `test_system_id_probe.py:311`, which that
+        # change's own edits turned into a `def test_` header — and re-anchoring
+        # the row to `:317`, the `assertEqual` the page's sentence describes,
+        # takes it back out. This pin follows the run rather than the page it
+        # was written on.
         #
         # #1009's one new row is a `class` header read as prose, so `other`
         # takes it and the split is `0/15/22/5/33`. The read column above is the
         # control for it in the other direction: the row is new rather than
         # moved, so unlike the seven repointed rows it cannot have changed where
         # anything lands.
-        self.assertEqual(shape, {census.ASSERTION: 14, census.COMMENT: 22,
-                                 census.BLANK: 5, census.OTHER: 33, "-": 32})
+        # Re-derived for #739 on top of #1009's `0/15/22/5/33`: its write-up's
+        # twenty rows are ten assertions and ten `other`, so the split reads
+        # `0/24/22/5/43`. The read column above is the control in the other
+        # direction for the three rows that change re-anchored -- they are
+        # repointed, not added, so none of them is in the `73`/`19` step and
+        # each is a row that was already counted. `test_census_test_line_pins.py`
+        # derives the same split over the run rather than over these cells, and
+        # measures the re-anchoring against `origin/main` figure for figure.
+        # Then +2 again, same issue and for the same reason as the read column:
+        # the transcript's new row is `declined` and so lands on `-`, and its
+        # live-prose twin is a line the page reaches mid-sentence, which reads
+        # as `other` -- so `0/24/22/5/43` becomes `0/24/22/5/44` and the
+        # declined `-` 32 -> 33, with `assertion`, `comment` and `blank` the
+        # control that the two rows are not any of those three.
+        self.assertEqual(shape, {census.ASSERTION: 24, census.COMMENT: 22,
+                                 census.BLANK: 5, census.OTHER: 44,
+                                 "-": 33})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing

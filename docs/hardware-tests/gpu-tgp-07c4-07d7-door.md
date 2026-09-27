@@ -279,10 +279,11 @@ python ec\tools\grade_gpu_door.py <date>-gpu-door-07c4-07d7.csv
 ```
 
 It reads the file §3 writes as it stands — the same `ts,addr,old,new` rows and
-`ts,MARK,,label` marks, one mark per window and none merged — and prints, per
-mark, what moved in each block with its DSDT field-list name, which block moved
-first and by how many ms, and a `net`/`total`/`max` line for all 24 watched
-addresses whether or not they moved. It opens no EC, so it runs on any machine
+`ts,MARK,,label,provenance` marks, one mark per window and none merged — and
+prints, per mark, what moved in each block with its DSDT field-list name, which
+block moved first and by how many ms, and a `net`/`total`/`max` line for all 24
+watched addresses whether or not they moved. It opens no EC, so it runs on any
+machine
 with the repository checked out, including before the capture leaves the
 Windows box.
 
@@ -489,13 +490,18 @@ three actions in the order they were taken. None of that is in the CSV, and
 `ac plug` mark says nothing about either action if the run started on
 battery.
 
-No parser is needed to read the capture. The schema is `ts,addr,old,new` with
-a mark as `ts,MARK,,label` — `ec_watch.py`'s own, and the one
-`../../ec/tools/grade_gpu_door.py` and
+No parser is needed to read the capture. The schema is
+`ts,addr,old,new,provenance` with a mark as `ts,MARK,,label,provenance` —
+`ec_watch.py`'s own, and the one `../../ec/tools/grade_gpu_door.py` and
 `../../ec/tools/grade_0751_isolation.py` already read, which is what lets
-§5's grader take this file as it stands. `gpu_block_watch.py` prints a
-windowed summary at the end, and that summary is a timing report rather than a
-grade: §5's ordering cell is read off the CSV, and
+§5's grader take this file as it stands. Only a mark row carries the fifth
+field, and in a capture from this procedure it is empty: `gpu_block_watch.py`
+stamps its marks through `Marker(sink)` and holds no `--label-vocab`, so there
+is no provenance to write. An empty fifth field is not a missing one — it says
+this capture is post-column and its writer had nothing to put there, where a
+four-field mark row would say the file predates the column. `gpu_block_watch.py`
+prints a windowed summary at the end, and that summary is a timing report rather
+than a grade: §5's ordering cell is read off the CSV, and
 `../../ec/tools/grade_gpu_door.py` (issue #283) owns the reading.
 
 ## 9. What a result has to say

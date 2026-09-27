@@ -15,6 +15,17 @@ reads no EC and touches no register; it prints, and
 any hand-copied number, because a figure in that page the tool did not print is
 a figure nobody can re-derive. Five sections:
 
+**It measured and did not change; #739 then acted on it, and that is the one
+sentence above this paragraph that has a date on it.** The writers were
+widened, `ec_watch.CsvSink`'s header and the timer family's with them, and
+`existing_mark_provenance` was added to the grader -- so the census and the
+per-reader table below now describe a tree that holds the shape rather than
+one that might. Nothing was re-measured to make the change look justified:
+the figures are the ones #719 took, and the tables are re-run over the new
+tree so a reader can see that the two shapes' costs did not change with the
+writers. The write-up is
+[`docs/findings/0751-mark-provenance-column.md`](0751-mark-provenance-column.md).
+
   1. **the row's census** -- every site in the tree that constructs
      `ts,MARK,,label` and every site that consumes it, found by scanning for
      the `"MARK"` literal rather than off a hand-typed list, so a writer
@@ -33,7 +44,10 @@ a figure nobody can re-derive. Five sections:
      Printed from a call, not concluded from a reading of the source: the
      issue says a fifth column "passes `len(row) < 4` and `row[0..3]`
      unpacks", and only a call settles whether that is an ignored tail or a
-     `ValueError`;
+     `ValueError`. `existing_mark_provenance` is printed under that table and
+     is deliberately **not** in it: the table drives the assertion that no
+     reader's result differs under a shape, and that reader's whole purpose
+     is that its result does;
   4. **the `#` namespace** -- the machine-written `#` phrases each capture
      family already spends, since one shape's cost is what it takes from a
      namespace the readers treat by exact phrase;
@@ -52,7 +66,9 @@ a figure nobody can re-derive. Five sections:
   * **The other three writers.** `system_id_probe.py`,
     `ec_timer_capture.py` and `manual_fan_ctrl_probe.py` write the same row
     and are in the census, but nothing here decides what a widened shape
-    should mean for any of them. Deciding is the implementation issue's.
+    should mean for any of them. #739 decided the first two deliberately and
+    the third against; the decisions and their citations are in the column
+    page, and nothing here is what argued for them.
   * **A capture this tool cannot see.** The fixture census walks two
     committed directories. A capture taken at the machine and not committed
     is not counted, and "0 fixtures untouched" is a count over those two
@@ -66,7 +82,7 @@ a figure nobody can re-derive. Five sections:
     is not the reader agreeing with the firmware.
 
 Usage:
-    python3 measure_mark_provenance.py [--page PATH] [--self-test]
+    python3 measure_mark_provenance.py [--page PATH ...] [--self-test]
 """
 import argparse
 import csv
@@ -82,6 +98,13 @@ GRADER = os.path.join(HERE, "grade_0751_isolation.py")
 TIMER = os.path.join(HERE, "grade_timer_sweep.py")
 PAGE = os.path.join(REPO, "docs", "findings",
                     "0751-mark-provenance-shapes.md")
+# The write-up for the change that acted on the measurement above (#739). It
+# is a second page rather than a section of the first because the first is
+# the record of a measurement and the second is the record of a format
+# change, and because the pins the first quotes moved when the second landed.
+COLUMN_PAGE = os.path.join(REPO, "docs", "findings",
+                           "0751-mark-provenance-column.md")
+PAGES = (PAGE, COLUMN_PAGE)
 
 # The two committed directories the issue names for its fixture count. Fixed
 # rather than globbed so a new directory is a visible decision rather than a
@@ -102,7 +125,16 @@ ROW_LITERAL = '"MARK"'
 # value is all any reader here sees, and the page argues about what it should
 # say separately. No comma, so the row stays five columns under `csv.writer`
 # and the comment stays one field.
-PROVENANCE = "pid=4821 prog=ec_watch.py label-vocab=0751"
+#
+# **This is what `ec_watch.py` writes, and the `pid=` the earlier version of
+# this sample carried is gone because the writers do not.** The tool measures
+# the shape the tree produces; a constructed file holding a field no writer
+# puts in it is a measurement of a shape nobody takes, which is the whole
+# complaint `write_capture` makes about a hand-joined row a few lines below.
+# Nothing in this repository reads a pid, and one would make two captures of
+# the same run differ for a reason a reader of the file could not use --
+# `docs/findings/0751-mark-provenance-column.md` says so in full.
+PROVENANCE = "prog=ec_watch.py label-vocab=0751"
 PROVENANCE_TAG = "# provenance"
 
 # Two constructed captures, one per family, because the readers were written
@@ -345,7 +377,13 @@ def own_provenance(path: str) -> int:
     reader's answer: a reader has to be *asked* for the tail, and the two
     readers measured below are both written not to ask. So it is read here
     off the file, which is the position a later implementation would have to
-    put a reader in to get the same answer."""
+    put a reader in to get the same answer.
+
+    That reader now exists -- `existing_mark_provenance`, #739 -- and this is
+    still read off the file rather than taken from it. The count is a
+    property of the two *shapes*, which is what this tool measured; a reader
+    written after the choice was made is not what made it, and asking it
+    would make the measurement depend on the thing it was arguing for."""
     n = 0
     with open(path, newline="", errors="replace") as f:
         for row in csv.reader(f):
@@ -450,32 +488,73 @@ def section_shapes(grader, timer, tmp: str) -> int:
                for name, rows, readers in families)
 
 
+def section_provenance_reader(grader, tmp: str) -> None:
+    """`existing_mark_provenance` over the same three captures, outside the
+    comparison the table above runs.
+
+    Deliberately not in `families`. That table drives the assertion that *no*
+    reader's result differs under either shape, and this reader's whole
+    purpose is that its result does: the fifth field and the position are the
+    two things the measurement said the format needed and had no reader for,
+    and a table that held this one would have to record a difference as a
+    failure. So it is printed under the table rather than added to it, and
+    the self-test checks it beside rather than inside the same assertion.
+
+    What a populated column reads is *a process that said it was checking
+    wrote this*. It is not *this label was checked*: that is `parse_mark` and
+    `unplaceable_marks`, per-label, and neither shape of provenance moves
+    them."""
+    print("  existing_mark_provenance, deliberately outside the comparison "
+          "above:")
+    for shape in SHAPES:
+        path = os.path.join(tmp, f"0751-{shape.replace(' ', '-')}.csv")
+        print(f"    {shape:<16} {grader.existing_mark_provenance(path)}")
+
+
 # Every site this tool's page names, as (path, line, the text that must be
 # there, what it is). The text is the whole check: a line that moves is a
 # mismatch whether it moved because the file grew above it or because the
 # claim was wrong, and the two need a reader, not a guess.
 CITATIONS = [
     # -- writers -------------------------------------------------------------
-    ("windows/tools/ec_watch.py", 473,
-     'self._sink.row([ts, "MARK", "", label])',
+    ("windows/tools/ec_watch.py", 493,
+     'self._sink.row([ts, "MARK", "", label,',
      "writer: the Marker._loop the issue's shape A is scoped to"),
-    ("windows/tools/system_id_probe.py", 261,
-     'self._sink.row([ts, "MARK", "", label])',
+    ("windows/tools/system_id_probe.py", 268,
+     'self._sink.row([ts, "MARK", "", label, ""])',
      "writer: a third class, importing no ec_watch.Marker"),
-    ("ec/tools/ec_timer_capture.py", 169, 'sink.row([ts, "MARK", "", label])',
+    ("ec/tools/ec_timer_capture.py", 177, 'sink.row([ts, "MARK", "", label, ""])',
      "writer: mark_loop"),
-    ("ec/tools/ec_timer_capture.py", 204,
-     'sink.row([now(), "MARK", "", label])',
+    ("ec/tools/ec_timer_capture.py", 212,
+     'sink.row([now(), "MARK", "", label, ""])',
      "writer: auto_mark_loop, the resume branch"),
-    ("ec/tools/ec_timer_capture.py", 210,
-     'sink.row([now(), "MARK", "", label])',
+    ("ec/tools/ec_timer_capture.py", 218,
+     'sink.row([now(), "MARK", "", label, ""])',
      "writer: auto_mark_loop, the machine-state branch"),
-    ("ec/tools/ec_timer_capture.py", 232,
-     'sink.row([now(), "MARK", "", label])',
+    ("ec/tools/ec_timer_capture.py", 240,
+     'sink.row([now(), "MARK", "", label, ""])',
      "writer: input_mark_loop"),
     ("windows/tools/manual_fan_ctrl_probe.py", 443,
      'self.row([now() if ts is None else ts, "MARK", "", label])',
      "writer: MarkCsv.mark"),
+    # -- the header, which this measurement did not record ------------------
+    # A format change to a mark row is also a change to the row that names
+    # this capture's columns, and the two are not the same file: a
+    # four-name header over a five-field mark row documents the file
+    # wrongly. Every reader drops the header on `row[0] == "ts"` or through
+    # `skippable_row`, so a name the change rows do not use costs none of
+    # them. The third entry is the one left alone, and the reason it is
+    # named is that "left alone" is a decision rather than an omission.
+    ("windows/tools/ec_watch.py", 155,
+     'self.row(["ts", "addr", "old", "new", "provenance"])',
+     "the 0751 family's header, widened to name the fifth field"),
+    ("ec/tools/ec_timer_capture.py", 321,
+     'sink.row(["ts", "addr", "old", "new", "provenance"])',
+     "the timer family's own header, which the measurement above never "
+     "counted as a header at all"),
+    ("windows/tools/system_id_probe.py", 221, "self.row(CSV_HEADER)",
+     "a header deliberately not widened: `ts,sweep,0x…,branch,implied` is a "
+     "different schema, and its names are not this row's names"),
     # -- readers that index the row -----------------------------------------
     # Every pin below is re-measured on the merged tree rather than carried
     # over from either tip, because the two sides moved the same lines: #749
@@ -489,7 +568,7 @@ CITATIONS = [
     # re-anchored here too, so nothing is red on this tree.
     ("ec/tools/grade_0751_isolation.py", 1064, 'if addr == "MARK":',
      "reader: take_capture_row recognising the row, read_capture's own body"),
-    ("ec/tools/grade_0751_isolation.py", 1121, 'if addr == "MARK":',
+    ("ec/tools/grade_0751_isolation.py", 1192, 'if addr == "MARK":',
      "reader: partition_capture_rows recognising the row -- the fourth site "
      "over this shape, and the one the notice partitions its own read with, "
      "so a mark row is never hex-read there either"),
@@ -497,6 +576,11 @@ CITATIONS = [
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: mark_labels_of recognising the row, existing_mark_labels' own "
      "extraction"),
+    ("ec/tools/grade_0751_isolation.py", 1156,
+     'if len(row) > 1 and row[1] == "MARK":',
+     "reader: existing_mark_provenance recognising the row -- #739's reader, "
+     "the fifth site over this shape, and the one whose result is *supposed* "
+     "to differ under the fifth column, which is why it is not in `families`"),
     ("ec/tools/grade_0751_isolation.py", 986,
      '`addr == "MARK"` before the `int()` calls, and so does this',
      "the partition's docstring quoting that branch, which the scan matches "
@@ -516,11 +600,11 @@ CITATIONS = [
      'if len(r) == 4 and r[1] == "MARK"]',
      "reader: the only exact-column-count filter in the tree"),
     # -- the spelling the literal scan cannot see ----------------------------
-    ("windows/tools/test_ec_watch.py", 145,
+    ("windows/tools/test_ec_watch.py", 148,
      "('MARK', '', 'wrote 0x0751=0xA0')",
      "a single-quoted MARK the scan cannot match: a test assertion, not a "
      "writer"),
-    ("windows/tools/test_system_id_probe.py", 311,
+    ("windows/tools/test_system_id_probe.py", 317,
      "('MARK', '', 'GPU mode -> dGPU')",
      "the same in the other suite, so the blind side is the tree's and not "
      "one file's"),
@@ -545,25 +629,25 @@ CITATIONS = [
     ("ec/tools/grade_0751_isolation.py", 1084, "if skippable_row(row):",
      "mark_labels_of takes that one skip rule, so existing_mark_labels -- which "
      "delegates its extraction to it -- cannot spell a second copy"),
-    ("ec/tools/grade_0751_isolation.py", 1108, "if skippable_row(row):",
+    ("ec/tools/grade_0751_isolation.py", 1179, "if skippable_row(row):",
      "and so does the partition, over the notice's own read"),
     ("ec/tools/grade_0751_isolation.py", 1087,
      'out.append((row[0], row[3] if len(row) > 3 else ""))',
      "the (ts, label) pair: no position, and no fifth column either"),
-    ("ec/tools/grade_0751_isolation.py", 1364, "def read_early_exits(path):",
+    ("ec/tools/grade_0751_isolation.py", 1435, "def read_early_exits(path):",
      "read_early_exits"),
-    ("ec/tools/grade_0751_isolation.py", 1406,
+    ("ec/tools/grade_0751_isolation.py", 1477,
      "if not row or not row[0].startswith(EARLY_EXIT_TAG):",
      "the phrase test: a mark's row[0] is a timestamp"),
     ("ec/tools/grade_0751_isolation.py", 428,
      'EARLY_EXIT_TAG = "# the run ended early:"',
      "the one machine phrase the `#` namespace spends in this family"),
-    ("ec/tools/grade_0751_isolation.py", 2994,
+    ("ec/tools/grade_0751_isolation.py", 3065,
      'read = f"{path}: {len(m)} mark(s), {len(c)} change row(s)"',
      "the per-capture census line, which counts rather than spells"),
     ("ec/tools/grade_gpu_door.py", 421, "m, c = fan.read_capture(path)",
      "the second consumer of read_capture's two-tuple"),
-    ("ec/tools/check_capture_claims.py", 514,
+    ("ec/tools/check_capture_claims.py", 576,
      "read_capture(os.path.join(REPO, WATCH, name))",
      "a third, and the only one that reads every committed capture"),
     ("ec/tools/grade_timer_sweep.py", 115, 'if line.startswith("#"):',
@@ -571,10 +655,10 @@ CITATIONS = [
     ("ec/tools/grade_timer_sweep.py", 139, 'if "resumed" in r[3]:',
      "the one phrase grade_timer_sweep reads a MARK row for"),
     # -- the notice, the canary, and the `#` namespace -----------------------
-    ("windows/tools/ec_watch.py", 288,
+    ("windows/tools/ec_watch.py", 295,
      "def warn_unchecked_marks(path, existing_findings):",
      "the notice the measurement exists for"),
-    ("windows/tools/ec_watch.py", 361,
+    ("windows/tools/ec_watch.py", 368,
      "accepted, refused, unplaceable = existing_findings(path)",
      "the notice's one call into the grader's reader"),
     ("windows/tools/test_manual_fan_ctrl_probe.py", 515,
@@ -586,7 +670,7 @@ CITATIONS = [
     ("windows/tools/manual_fan_ctrl_probe.py", 927,
      'sink.row([f"{EARLY_EXIT_TAG} {now()}",',
      "the only machine-written `#` row in the 0751 family"),
-    ("ec/tools/ec_timer_capture.py", 149, 'self._fh.write(f"# {text}\\n")',
+    ("ec/tools/ec_timer_capture.py", 157, 'self._fh.write(f"# {text}\\n")',
      "the timer family's `#` writer, which writes by prefix not by phrase"),
     # -- the runbook ---------------------------------------------------------
     ("docs/hardware-tests/manual-fan-ctrl-0751-isolation.md", 159,
@@ -606,15 +690,15 @@ CITATIONS = [
 COMMENT_PHRASES = [
     ("windows/tools/manual_fan_ctrl_probe.py", 257,
      "# the run ended early:"),
-    ("ec/tools/ec_timer_capture.py", 296, "ec/tools/ec_timer_capture.py, "
+    ("ec/tools/ec_timer_capture.py", 304, "ec/tools/ec_timer_capture.py, "
      "read-only, ECMG window "),
-    ("ec/tools/ec_timer_capture.py", 298, "started "),
-    ("ec/tools/ec_timer_capture.py", 299, "power: "),
-    ("ec/tools/ec_timer_capture.py", 300, "interval "),
-    ("ec/tools/ec_timer_capture.py", 303, "note: "),
-    ("ec/tools/ec_timer_capture.py", 306, "baseline "),
-    ("ec/tools/ec_timer_capture.py", 312, "auto-mark state at start: "),
-    ("ec/tools/ec_timer_capture.py", 342, "ended "),
+    ("ec/tools/ec_timer_capture.py", 306, "started "),
+    ("ec/tools/ec_timer_capture.py", 307, "power: "),
+    ("ec/tools/ec_timer_capture.py", 308, "interval "),
+    ("ec/tools/ec_timer_capture.py", 311, "note: "),
+    ("ec/tools/ec_timer_capture.py", 314, "baseline "),
+    ("ec/tools/ec_timer_capture.py", 325, "auto-mark state at start: "),
+    ("ec/tools/ec_timer_capture.py", 355, "ended "),
 ]
 
 
@@ -644,19 +728,35 @@ def check_citations(scan: set) -> list:
     return problems
 
 
-def check_page(path: str) -> list:
-    """Whether the page names every citation this tool prints.
+def check_page(paths) -> list:
+    """Whether the pages name every citation this tool prints.
 
     The closure that makes the page checkable: a `file:line` in it that the
     tool did not print, or one the tool stopped printing, is a figure nobody
     can re-derive -- which is the whole reason the measurement is a tool
-    rather than a paragraph."""
-    if not os.path.isfile(path):
-        return [f"{repo_path(path)}: not there, so nothing in it can be "
-                "checked against this tool's output"]
-    with open(path, encoding="utf-8") as f:
+    rather than a paragraph.
+
+    More than one page since #739, because the measurement and the change
+    that acted on it are two write-ups and the pins did not stay where the
+    first one put them: a site the format change moved has to be named
+    somewhere, and the page that moved it is the one that says so. The check
+    is a union -- a citation named in any of them counts -- because a
+    citation is a fact about a file, not about the write-up that first
+    recorded it."""
+    problems = []
+    for path in paths:
+        if not os.path.isfile(path):
+            problems.append(f"{repo_path(path)}: not there, so nothing in it "
+                            "can be checked against this tool's output")
+    if problems:
+        return problems
+    with open(paths[0], encoding="utf-8") as f:
         text = f.read()
-    return [f"{p}:{n}: cited here and not named in {repo_path(path)}"
+    for path in paths[1:]:
+        with open(path, encoding="utf-8") as f:
+            text += f.read()
+    named = " or ".join(repo_path(p) for p in paths)
+    return [f"{p}:{n}: cited here and not named in {named}"
             for p, n, _, _ in CITATIONS if f"{p}:{n}" not in text]
 
 
@@ -668,6 +768,80 @@ def section_comment_namespace() -> None:
         got = line_of(os.path.join(REPO, path), lineno)
         ok = phrase in got
         print(f"  {path}:{lineno}  {'ok ' if ok else 'DRIFT'}  {phrase!r}")
+
+
+def self_test_provenance(grader, tmp: str, problems: list) -> None:
+    """`existing_mark_provenance`, checked rather than printed.
+
+    The reader `families` must not hold, so its cases live here: the three
+    states and a position, the preflight contract on the three things
+    `read_capture` refuses plus a row that is not a refusal at all, and the
+    agreement with `existing_mark_labels` over every shape this tool
+    constructs. The last is the same agreement `MarkProvenanceTests` holds
+    over the committed corpus, and both exist because the skip rule and the
+    `MARK` branch are spelled in this reader as well as in that one."""
+    states = os.path.join(tmp, "provenance-states.csv")
+    with open(states, "w", newline="") as f:
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(["ts", "addr", "old", "new"])
+        w.writerow(["2026-01-01T12:00:00.000+01:00", "MARK", "",
+                    "wrote 0x0751=0xA0"])
+        w.writerow(["2026-01-01T12:00:10.000+01:00", "MARK", "", "settled", ""])
+        w.writerow(["2026-01-01T12:00:20.000+01:00", "MARK", "", "held",
+                    "prog=ec_watch.py label-vocab=0751"])
+    got = grader.existing_mark_provenance(states)
+    if [prov for _, _, _, prov in got] != [
+            None, "", "prog=ec_watch.py label-vocab=0751"]:
+        problems.append(f"the three states do not come back as three "
+                        f"different answers: {got}")
+    # The position, counted over a header, a `#` row and a blank -- the three
+    # the skip rule drops and the ordinal must not.
+    counted = os.path.join(tmp, "provenance-ordinal.csv")
+    with open(counted, "w", newline="") as f:
+        f.write("# a hand annotation\n"
+                "ts,addr,old,new\n"
+                "\n"
+                "2026-01-01T12:00:05.000+01:00,0x0701,0x00,0x11\n"
+                "2026-01-01T12:00:00.000+01:00,MARK,,wrote 0x0751=0xA0,\n")
+    got = grader.existing_mark_provenance(counted)
+    if [ordinal for ordinal, _, _, _ in got] != [4]:
+        problems.append(f"the row ordinal is {[o for o, _, _, _ in got]}, not "
+                        "[4]: it is counting something other than the row "
+                        "stream, or a row of the file the preflight drops has "
+                        "become a mark")
+    # The preflight contract, on the three things `read_capture` refuses and
+    # one mark row that is not a refusal at all.
+    odd = os.path.join(tmp, "provenance-preflight.csv")
+    with open(odd, "wb") as f:
+        f.write(b"ts,addr,old,new\n"
+                b"2026-01-01 12:00,MARK,,caf\xe9\n"
+                b"2026-01-01T12:01:00.000+01:00,MARK,\n"
+                b"2026-01-01T12:02:00.000+01:00,MARK\n"
+                b"2026-01-01T12:03:00.000+01:00,MARK,,settled,\n")
+    try:
+        got = grader.existing_mark_provenance(odd)
+    except Exception as e:                      # noqa: BLE001 - the raise
+        problems.append("existing_mark_provenance raised on a file "
+                        f"read_capture refuses: {e}")   # *is* the result
+        return
+    if [(ts, label, prov) for _, ts, label, prov in got] != [
+            ("2026-01-01 12:00", "caf\ufffd", None),
+            ("2026-01-01T12:01:00.000+01:00", "", None),
+            ("2026-01-01T12:02:00.000+01:00", "", None),
+            ("2026-01-01T12:03:00.000+01:00", "settled", "")]:
+        problems.append("the preflight did not survive a bad timestamp, a "
+                        f"short row and an undecodable byte: {got}")
+    # And the agreement, over every shape this tool constructs rather than a
+    # fixture written for it: the same `(ts, label)` pairs, in the same order,
+    # from the reader the notice lists marks from.
+    for shape in SHAPES:
+        path = os.path.join(tmp, f"0751-{shape.replace(' ', '-')}.csv")
+        pairs = [(ts, label) for _, ts, label, _
+                 in grader.existing_mark_provenance(path)]
+        if pairs != grader.existing_mark_labels(path):
+            problems.append(f"existing_mark_provenance and existing_mark_"
+                            f"labels differ under {shape}: {pairs} against "
+                            f"{grader.existing_mark_labels(path)}")
 
 
 def self_test() -> int:
@@ -731,6 +905,11 @@ def self_test() -> int:
                 ("2026-01-01T12:00:10.000+01:00", "settled")]:
             problems.append("an empty fifth column does not come back as "
                             "('ts', label); the three-state claim is stale")
+        # And the reader the column needed, which the table above must not
+        # hold because its result is *meant* to differ under the fifth
+        # column. Checked here rather than in `families` for that reason and
+        # no other.
+        self_test_provenance(grader, tmp, problems)
     for problem in problems:
         print(f"measure_mark_provenance.py: {problem}", file=sys.stderr)
     if problems:
@@ -746,9 +925,9 @@ def self_test() -> int:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--page", default=PAGE,
-                    help=f"the findings page to hold to this tool's output "
-                         f"(default: {repo_path(PAGE)})")
+    ap.add_argument("--page", default=list(PAGES), nargs="*",
+                    help=f"the findings pages to hold to this tool's output "
+                         f"(default: {' and '.join(repo_path(p) for p in PAGES)})")
     ap.add_argument("--self-test", action="store_true",
                     help="run the measurement over a temp tree and check it "
                          "rather than print it")
@@ -794,6 +973,7 @@ def main(argv=None) -> int:
     print("\n3. What each shape costs each reader, on a temp file")
     with tempfile.TemporaryDirectory() as tmp:
         section_shapes(grader, timer, tmp)
+        section_provenance_reader(grader, tmp)
 
     print("\n4. The machine-written `#` phrases already in each family")
     section_comment_namespace()
@@ -819,8 +999,9 @@ def main(argv=None) -> int:
         print(f"   {len(problems)} citation problem(s)", file=sys.stderr)
         return 1
     print(f"   {len(CITATIONS)} citations resolve at the line quoted, the "
-          f"row-site join closes both ways,\n   and {repo_path(args.page)} "
-          "names every one of them.")
+          f"row-site join closes both ways,\n   and "
+          f"{' and '.join(repo_path(p) for p in args.page)} name every one "
+          "of them.")
     print("\nNothing here is hardware evidence: no EC was opened, no capture "
           "was taken, no\nregister was read and no mark was typed. Section 2 "
           "is a count over two committed\ndirectories; section 3 is a reader's "

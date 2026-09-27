@@ -663,13 +663,74 @@ class TheCommittedTree(unittest.TestCase):
         # do not move (`declined`, `comment`, `blank`, `def test_`) are the
         # four it was not in. That is the check that the numbers moved for the
         # reason given rather than because something else also changed.
+        # **Re-derived 2026-09-27 for #739, and the delta is that issue's
+        # write-up alone.** `0751-mark-provenance-column.md` names the
+        # assertions it repaired in four suites and brings twenty records
+        # with it: `106 + 20 = 126`, `28 + 1 = 29` files, `79 + 12 = 91`
+        # spellings, `74 + 20 = 94` resolves with the `32` declined unmoved,
+        # `58 + 10 = 68` targets, and the split `0/14/22/5/33` ->
+        # `0/24/22/5/43` -- the twenty records being ten assertions and ten
+        # `other`. The spelling and target steps are smaller than the record
+        # step for one reason, and it is the same one the next paragraph is
+        # about: three of the page's records name a line a second write-up
+        # already names -- `test_ec_watch.py:148`,
+        # `test_system_id_probe.py:317` and `test_ec_watch.py:1168` are the
+        # shapes page's two and the path-taking page's one -- so a distinct
+        # spelling and a distinct target are each counted once rather than
+        # twice.
+        #
+        # **That the new page is the whole of the step is measured, not
+        # differenced, and the measurement covers the other half of this
+        # change.** This change also edits `windows/tools/test_ec_watch.py` and
+        # `windows/tools/test_system_id_probe.py`, which moves the line every
+        # pin *into those two files* lands on, and three pins cited in two
+        # other write-ups moved with it:
+        # `0751-mark-provenance-shapes.md:203` (`test_ec_watch.py:145` ->
+        # `:148`), `:204` (`test_system_id_probe.py:311` -> `:317`) and
+        # `0751-path-taking-reader-fates.md:139` (`test_ec_watch.py:1134` ->
+        # `:1168`). Left alone they read `comment`, `def test_` and `comment`
+        # where `origin/main` reads `assertion`, `assertion` and `other`, and
+        # that is where an earlier draft of this comment put an unexplained
+        # `1/12/24/5/32` remainder and attributed it to edits predating the
+        # work. **It was this change's**, and it is spent: each is re-anchored
+        # now to the line its own page names, so with the new page moved out
+        # the tree reads `0/14/22/5/33` over `79` spellings and `58` targets --
+        # `origin/main` figure for figure. That equality is the control, and it
+        # is the check a movement claim is run for: every pin this change's
+        # edits moved is a pin this change re-anchored, so there is no
+        # remainder left to hand to anybody.
+        #
+        # **The control has since been re-measured, and it no longer reads
+        # `origin/main` figure for figure** — with the new page moved out the
+        # tree reads `108` records, `81` spellings, `59` targets, `75` resolves
+        # against `33` declined, the `0/14/22/5/34` split. The difference is
+        # the two records re-running the reader-fates page's second transcript
+        # added, which are *not* this write-up's twenty and not a remainder
+        # from the three re-anchorings above: that page is still in the tree
+        # when only this one is moved out. The claim the control exists to
+        # support is unchanged and is the one the assertions below carry —
+        # nothing is left over that this change's edits to the two test files
+        # put there. A control that has to be re-run to keep being a control
+        # is worth saying so beside, rather than restating the figure it used
+        # to give.
         records, _files = census.census(census.REPO)
-        self.assertEqual(len(records), 106)
-        self.assertEqual(len({r[0] for r in records}), 28)
-        self.assertEqual(len({r[2] for r in records}), 79)
+        # **And re-derived once more, same issue, same day, for the fence
+        # rule rather than the new page: +2, not +20.** Re-running
+        # `0751-path-taking-reader-fates.md`'s second transcript added the
+        # grader suite's twelfth `existing_mark_labels` call to it, which is
+        # one `declined` for the fenced line and one `resolves` for the
+        # live-prose twin the fence rule requires beside it — so
+        # `126 + 2 = 128` records, `91 + 2 = 93` spellings (the fenced
+        # `./`-prefixed spelling and the bare one prose writes are two), and
+        # `68 + 1 = 69` targets, because a declined pin resolves to nothing
+        # and only the twin is a target. The files figure is unmoved at `29`:
+        # both records are in a file that was already cited.
+        self.assertEqual(len(records), 128)
+        self.assertEqual(len({r[0] for r in records}), 29)
+        self.assertEqual(len({r[2] for r in records}), 93)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 74, census.OUT_OF_RANGE: 0,
-            census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 32})
+            census.RESOLVES: 95, census.OUT_OF_RANGE: 0,
+            census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 33})
         # Re-derived for #962, then again here, and not lowered either time.
         # #962's class and a docstring above it grew, so every pin into
         # `test_xdata_cluster_names.py` lands `N` lines lower than it did, and
@@ -687,11 +748,11 @@ class TheCommittedTree(unittest.TestCase):
         # and not something else. 106 records over 28 files and 79 spellings,
         # the same 32 declined, 74 resolving, 58 targets.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 0, census.ASSERTION: 14, census.COMMENT: 22,
-            census.BLANK: 5, census.OTHER: 33})
+            census.DEF_TEST: 0, census.ASSERTION: 24, census.COMMENT: 22,
+            census.BLANK: 5, census.OTHER: 44})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 58)
+                 if r[3] == census.RESOLVES}), 69)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a
