@@ -287,11 +287,16 @@ itself is worth less than no block.
 `--mark` is what makes the CSV readable afterwards: without a timestamp for
 "I wrote it now", a byte that moves 400 ms later and one that moves 40 s
 later look the same in the log. With `--csv` it writes each mark into the
-capture itself as a `ts,MARK,,label` row, so the CSV is self-contained — type
-what you just did as the label — one of the six forms the block above names,
-`rem mark each console:` under each round — rather than keeping the timing
-in separate notes. **A blank line records nothing: the mark prompt says so and
-asks again**, so there is no such thing as an unnamed mark in a capture
+capture itself as a `ts,MARK,,label,provenance` row, so the CSV is
+self-contained — type what you just did as the label, one of the six forms
+the block above names, `rem mark each console:` under each round, rather
+than keeping the timing in separate notes. **The fifth field is where an
+operator sees which console wrote a mark**: it is empty unless that console
+was started with `--label-vocab`, and where it is set it names the program
+and the vocabulary, so two consoles' blocks in one CSV are told apart by the
+file rather than by which console you remember starting. **A blank line
+records nothing: the mark prompt says so and asks again**, so there is no
+such thing as an unnamed mark in a capture
 ([`../../windows/tools/ec_watch-marks.md`](../../windows/tools/ec_watch-marks.md)).
 Mark the same action in all three consoles within a few
 seconds of each other; the grader treats marks less than five seconds apart as

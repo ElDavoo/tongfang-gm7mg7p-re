@@ -55,7 +55,7 @@ the three CSVs as one set for the whole run -- blocks 2 and 3 are meant to land
 on the marks block 1 left there. So a file can carry marks this
 process did not type and could not have checked: a pre-`--label-vocab` run, a
 console started without the flag, a watcher restarted mid-block, or a
-`manual_fan_ctrl_probe.py` capture, which writes the same `ts,MARK,,label` row.
+`manual_fan_ctrl_probe.py` capture, which writes that row and no fifth field.
 A run that finds any says so, naming them, above the file and a long way above
 the EC -- a warning rather than a refusal, because §3's own second block is
 that collision and because no process can check a mark another one already

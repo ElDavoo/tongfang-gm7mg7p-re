@@ -128,7 +128,7 @@ it:
   reason (d) in the runbook's four ways a file comes to hold an unchecked
   mark, and a fifth column does not resolve it: nothing in the file can say
   what §3's forms are checked against when the process that wrote it holds no
-  vocabulary. That is a separate issue and this is not it.
+  vocabulary. That is a separate issue; see *What not widening costs* below.
 
 **The tripwire for whichever issue does widen it is named here, so it is
 found rather than rediscovered:** `mark_rows` at
@@ -314,7 +314,7 @@ what happened to it:
   `:1087`, not at `:735`.
 - `measure_mark_provenance.py:457` (`CITATIONS`) and `:621`/`:647`
   (`check_citations`/`check_page`) are the tool's own, and the most volatile
-  lines in the tree: they are `:509`, `:696` and `:722` now. Named by
+  lines in the tree: they are `:518`, `:705` and `:731` now. Named by
   function rather than by line below, deliberately.
 - **One pin in the tool had already drifted on `main` before this change and
   was not this change's to move:** `check_capture_claims.py:514` read
@@ -489,3 +489,29 @@ python3 ec/tools/check_capture_claims.py                 # the 50 committed fixt
 
 Every one of these is offline: temp files and committed captures. None of them
 opens an EC, and none of them is evidence about the machine.
+
+---
+
+## What not widening costs
+
+Decision 4 above is right for its four reasons and it is not free, and this is
+the bill. `manual_fan_ctrl_probe.py` keeps the four-column mark row, so
+from this change on a probe capture and an `ec_watch.py` one are
+distinguishable by a field, where before the change nothing but the tool that
+wrote a file separated them. That is the same *taken after the change / taken
+before it* property the timer family is widened for, and this writer is left on
+the other side of it deliberately rather than by oversight.
+
+Two pieces of prose had to follow, and both are in this change. `ec_watch.py:58`
+lists a probe capture among the four ways a file comes to hold a mark this
+process did not type, and called it "the same `ts,MARK,,label` row" — still
+true of the field count, no longer true of the row, so it now says the writer
+stamps "that row and no fifth field". And the probe's own two docstrings, which
+said `--csv` writes what `ec_watch.py --mark --csv` writes, now say it keeps the
+four-column row on purpose, so a capture from either tool is identifiable by its
+shape alone. Neither is a behaviour change; both are the format change being
+stated where a reader of one file would otherwise be misled by the other.
+
+The cost is bounded and it is the tripwire already named in decision 4 above, so
+whichever issue does widen this writer fails there first, and fails on the
+column count rather than on anything this page added.

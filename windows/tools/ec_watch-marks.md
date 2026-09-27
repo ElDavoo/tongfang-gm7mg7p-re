@@ -413,7 +413,7 @@ and the first three are the ones that can leave the day ungraded:
 
 §3a's service-stopped pass is *not* one of them, and its own runbook note is
 why: it is a second run with its own `<date>`, not a fourth block of §3's
-(`manual-fan-ctrl-0751-isolation.md:904-907`), so a §3a pass on a fresh date
+(`manual-fan-ctrl-0751-isolation.md:909-912`), so a §3a pass on a fresh date
 writes three new files and starts on empty ones — the one routine that
 correctly *avoids* the collision, which is why the notice stays quiet for it.
 The collision the warning has to allow for is §3's own blocks 2 and 3.

@@ -157,9 +157,9 @@ reported, neither is graded: whether the results track fan speed is a human's
 reading of a capture on the machine, and `0x086E` carries no clamps at all, so
 a `0x23` there means nothing of the kind one on `0x086B` means.
 
-`--csv` writes what `ec_watch.py --mark --csv` writes -- `ts,addr,old,new`, with
-this run's three marks as the `MARK` rows -- so the capture is read by
-`ec/tools/grade_0751_isolation.py` with no conversion (issue #124). The marks
+`--csv` keeps the four-column mark row on purpose: this run's three marks
+are `ts,MARK,,label` where `ec_watch.py --mark --csv` now writes five
+fields (#739) -- both are read with no conversion (issue #124). The marks
 are free here: this tool performs both writes and the restore itself and so
 already knows when each landed, which is the one thing `ec_watch.py` needs a
 stdin thread for. The restore's mark is the one that closes the block: the
@@ -401,7 +401,7 @@ def arm_labels(orig, target):
 
 
 class MarkCsv:
-    """Append-only capture in `ec_watch.py --mark --csv`'s row shape.
+    """Append-only capture, four columns where #739 made ec_watch.py's five.
 
     `ts,addr,old,new` with the arm boundaries as `ts,MARK,,label`, which is
     what `ec/tools/grade_0751_isolation.py` already reads -- the format is not

@@ -233,7 +233,7 @@ fixture has a window graded or withheld differently.
 ## Left out on purpose
 
 - **The `rem` block in §6 of the procedure doc**
-  (`docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:630-635`) describes
+  (`docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:635-640`) describes
   the refusal in block terms and is now incomplete. The section's §3 text
   (`:176-181`) and that `rem` block's first sentence already say *"every action
   in all three CSVs, every capture spelling it the same way"* — the contract
