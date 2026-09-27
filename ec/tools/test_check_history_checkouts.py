@@ -36,7 +36,15 @@ away. All nine `(job, depth, stated)` triples are compared as one mapping rather
 than as nine separate assertions, so a tenth checkout anywhere under
 `.github/workflows/` turns it red with them; this paragraph used to say one that
 adds a workflow does not, which was a property of the narrower form and is not
-one any more.
+one any more. **The corrected prose sites are held by value too, in
+`ec/tools/history_checkout_sites.py`** -- each one by its file and a fragment of
+its sentence, rather than by the count and the file-set comparison that could
+not see a site go missing -- and the six cases in `ProseTests` that reach it
+are what show that hold: four of them name a row that goes red, and the other
+two show the hold surviving a rewrap and the phrase the two tools share. A
+seventh, in `CommittedTreeTests` beside the keyed hold itself, is the
+`PROSE_FILES` shrink the file-set comparison could not see: that comparison
+green on the committed tree, both of the dropped file's rows named.
 """
 import importlib.util
 import io
@@ -56,6 +64,19 @@ spec = importlib.util.spec_from_file_location(
     'check_history_checkouts', HERE / 'check_history_checkouts.py')
 chc = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(chc)
+
+# The expected-site table, a plain sibling import for the reason the three tools
+# `check_testdata_row_claims.py` imports are: these files are not a package, and
+# `HERE` is on the path for this suite's own reasons. It is a *second* module
+# object for the tool, which is deliberate -- a case that rebound `chc` instead
+# would be testing the rebinding.
+import history_checkout_sites as hcs
+
+# The two prose files, from the tool's own list rather than written out here.
+# What the controls below demonstrate is a file going unread, so the set of
+# files the tool reads is not something this suite should hold a second copy
+# of, and a second copy is what a `PROSE_FILES` shrink looks like from in here.
+FIRST_TOOL, SECOND_TOOL = chc.PROSE_FILES
 
 # The four sentences #1009 corrects, **verbatim from the sources as they were
 # before it**, line breaks and quoting included. Verbatim is the point: a
@@ -164,6 +185,111 @@ def checkout_triples(repo):
             {name: sorted(rows) for name, rows in EXPECTED_CHECKOUTS.items()})
 
 
+# What the site-identity controls cut on, both spelled rather than counted:
+# a control that cut at a line number would be the one thing in this suite that
+# broke on a rewrap of the very comment it edits, and the table's fragment-keyed
+# identity exists to be immune to that.
+COMMENT_HEAD = "# The mode reads two revisions out of the repository's own history"
+REQUIREMENT_HEAD = "HISTORY_REQUIREMENT = ("
+
+# Control A's replacement constant: one line, and no depth word anywhere in it,
+# so the sentence is not one the tool recognises as a claim at all. The 5 -> 4
+# that leaves is the demonstration, and it is the issue's own argument
+# executable -- the `len(sites) >= 4` the committed case used to carry is green
+# on exactly this tree.
+NO_DEPTH_REQUIREMENT = ('HISTORY_REQUIREMENT = "This mode needs the '
+                        'repository\'s history."\n')
+
+# Control C's copy of site 2's comment: the committed file's words at different
+# line breaks. The *words* are the point, and the case asserts the squashed
+# sentence is the committed one rather than assuming it, so a rewrap that
+# quietly edited a sentence cannot pass as a demonstration of rewrap-immunity.
+REWRAPPED_COMMENT = '''\
+# The mode reads two revisions out of the repository's own history, so
+# how deep the clone is is part of its contract the way the assembler is
+# part of --report's. Every job that runs
+# `.github/scripts/agent-gates.sh` -- ci.yml's `gates` and the agent
+# stages' `implement`, `fix` and `resolve` -- checks out with
+# `fetch-depth: 0` and can run it. ci.yml's other checkout, its
+# `workflows` job, is the default-depth one and runs actionlint and
+# zizmor only, so it never reaches the mode. The four are re-derived
+# from the committed workflows by `check_history_checkouts.py`, and see
+# docs/agent-pipeline.md.
+'''
+
+# A depth claim no row names, in the same voice as the five that are -- which is
+# what makes it a control rather than a sixth claim. It is true of the scratch
+# tree the fixture writes (`gates` is `fetch-depth: 0` there), so the case is
+# about the table's second direction and not about whether a sentence is right.
+NEW_CLAIM = ('# `ci.yml`\'s `gates` job checks out with `fetch-depth: 0`, and a\n'
+             '# re-copy of the template that drops it turns the gate red with a\n'
+             '# history requirement rather than a workflow failure.\n')
+
+# Control F's copy of the sibling's site 4, **merged into one comment**: the
+# committed words of the row that names the comment and the row that names the
+# `HISTORY_REQUIREMENT`, in a single sentence. This is the rewrap of control C
+# taken one step further, and it is here because it is the move that makes the
+# table's fourth direction reachable -- two of one file's rows landing on one
+# sentence. Every fragment is verbatim from the committed file rather than
+# retyped, so the two rows really do both match and the case is about the
+# direction rather than about the words.
+MERGED_SIBLING = """\
+# ci.yml's `gates` job has been `fetch-depth: 0` since #407 (`cc2ab10d`) while
+# its `workflows` job is default-depth, and a default-depth checkout has
+# neither of them, and this tool would go on to report a count of zero over a
+# tree it never read.
+"""
+
+# The phrase both tools' `HISTORY_REQUIREMENT` sentences carry, one in each
+# file. It is here to be *not* a fragment, and the case below says why.
+SHARED_PHRASE = "which is what ci.yml's `workflows` job uses"
+
+# Where the sibling's site 4 begins, so control F can replace the comment *and*
+# the constant with one sentence. Spelled rather than derived from the tree so
+# the case does not depend on a comment that has since been reworded, in the
+# same way `COMMENT_HEAD` and `REQUIREMENT_HEAD` are spelled for control C.
+SIBLING_HEAD = "# The mode answers from the repository's own history"
+
+
+def committed(rel):
+    """A committed file's text, read rather than pasted.
+
+    The controls below rewrap and truncate real prose, so a copy pasted here
+    would be a copy of this suite's memory of the file rather than of the file
+    -- the same reason the corrected sentences are read out of the tree rather
+    than carried above.
+    """
+    with open(REPO / rel, encoding="utf-8") as handle:
+        return handle.read()
+
+
+def carrying(row, sites):
+    """-> the sites `row` matches. One per site on the committed tree."""
+    return [site for site in sites
+            if site[0] == row.rel and row.fragment in hcs.squash(site[2])]
+
+
+def with_requirement(text, replacement):
+    """`text` with everything from `HISTORY_REQUIREMENT = (` onwards replaced."""
+    head, sep, _tail = text.partition(REQUIREMENT_HEAD)
+    if not sep:
+        raise AssertionError(f"{REQUIREMENT_HEAD!r} is not in the committed text")
+    return head + replacement
+
+
+def rewrapped(text):
+    """`text` with site 2's comment replaced by `REWRAPPED_COMMENT`.
+
+    The span cut is from the comment's first line to the line before the
+    constant, so the comment is replaced whole rather than appended to itself --
+    a splice that left the original in place would report the same sentence
+    twice and redden the table on the more-than-one-match rule, which is a bug
+    in the control rather than a demonstration of anything.
+    """
+    return (text[:text.index(COMMENT_HEAD)] + REWRAPPED_COMMENT
+            + text[text.index(REQUIREMENT_HEAD):])
+
+
 def workflow(name, jobs):
     """A workflow file's text, from `{job id: steps}`.
 
@@ -233,12 +359,24 @@ class ScratchTree(unittest.TestCase):
         """One of the two prose files, at a path the checker actually reads."""
         return self.put(rel, text)
 
-    def problems(self):
-        """(depth problems, prose problems) over the scratch tree."""
+    def sites(self):
+        """(sites, depth problems, prose problems, report) over the scratch tree.
+
+        The list and the two verdicts come from one run, so a case that wants
+        what the report found and a case that wants the verdicts cannot be
+        looking at two different reads of the tree.
+        """
         out = io.StringIO()
         with redirect_stdout(out):
+            workflows, unreadable = chc.load_workflows(self.root)
             depth, prose = chc.report(self.root)
-        return depth, prose, out.getvalue()
+            found = chc.prose_sites(self.root, workflows, unreadable)
+        return found, depth, prose, out.getvalue()
+
+    def problems(self):
+        """(depth problems, prose problems, report) over the scratch tree."""
+        _found, depth, prose, out = self.sites()
+        return depth, prose, out
 
 
 class DepthTests(ScratchTree):
@@ -641,6 +779,164 @@ class ProseTests(ScratchTree):
         _depth, prose, out = self.problems()
         self.assertFalse(prose, f"a real mention of the job was missed:\n{out}")
 
+    # The site-identity cases below all reach `hcs.problems()` through
+    # `self.sites()`, which is the same call the committed-tree case makes, and
+    # each names the row it expects to be red rather than asserting that some
+    # list is non-empty -- the same argument this module's docstring makes about
+    # the `STALE_*` paraphrases, and the reason a control that passed for the
+    # wrong reason would be worth nothing.
+
+    def test_a_corrected_site_that_stops_being_reported_is_a_failure(self):
+        # Control A, the 5 -> 4. `HISTORY_REQUIREMENT` replaced by a one-line
+        # version carrying no depth word, so the report finds the other four
+        # sentences and not this one. The count is pinned at four because four
+        # is what satisfies the `len(sites) >= 4` the committed case used to
+        # carry, so the old floor is green here by arithmetic -- and the rule the
+        # tool asserts is green too, which is the other half of why the old pair
+        # could not see this.
+        self.workflow()
+        self.tool(FIRST_TOOL,
+                  with_requirement(committed(FIRST_TOOL), NO_DEPTH_REQUIREMENT))
+        self.tool(SECOND_TOOL, committed(SECOND_TOOL))
+        sites, _depth, prose, out = self.sites()
+        self.assertEqual(len(sites), 4, f"the committed tree holds five:\n{out}")
+        self.assertFalse(prose, f"this control is for the keyed hold, "
+                                f"not for the rule:\n{out}")
+        row = hcs.SITES[2]
+        self.assertEqual(carrying(row, sites), [], out)
+        found = hcs.problems(sites)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn(row.fragment, found[0])
+        self.assertIn(row.what, found[0])
+
+    def test_the_sibling_going_unread_is_two_rows_named_not_a_shorter_list(self):
+        # Control B, and the tree-absence case only: a prose file the reader
+        # cannot open is silence, and the keyed hold names a row for each of the
+        # two sentences that file was carrying. **This is not the `PROSE_FILES`
+        # edit**, and claiming it here would claim the opposite: with the sibling
+        # gone from the tree but still listed, the old file-set comparison goes
+        # *red* -- it can fire on a file the reader did not find, which is the
+        # one direction it could see. The shrink that leaves it green is the
+        # committed case below. Reached through a scratch tree rather than by
+        # rebinding `PROSE_FILES`, which reaches identical code and keeps the
+        # fixture this suite already uses.
+        self.workflow()
+        self.tool(FIRST_TOOL, committed(FIRST_TOOL))
+        sites, _depth, _prose, out = self.sites()
+        self.assertEqual(len(sites), 3, out)
+        rows = [row for row in hcs.SITES if row.rel == SECOND_TOOL]
+        self.assertEqual(len(rows), 2, rows)
+        found = hcs.problems(sites)
+        self.assertEqual(len(found), len(rows), found)
+        for row in rows:
+            self.assertEqual(carrying(row, sites), [], out)
+            named = [message for message in found if row.fragment in message]
+            self.assertEqual(len(named), 1, found)
+            self.assertIn(row.what, named[0])
+
+    def test_a_rewrapped_site_is_still_the_same_site(self):
+        # Control C, the executable form of "a fragment-keyed identity needs no
+        # drift rule". Site 2's comment at different line breaks: the report
+        # gives the sentence a different line, and the table still holds it.
+        # Without this case that claim is asserted rather than shown, and a
+        # line-keyed identity would have needed a stated rule for exactly the
+        # move made here.
+        self.workflow()
+        self.tool(FIRST_TOOL, rewrapped(committed(FIRST_TOOL)))
+        self.tool(SECOND_TOOL, committed(SECOND_TOOL))
+        sites, _depth, prose, out = self.sites()
+        self.assertFalse(prose, out)
+        self.assertEqual(len(sites), len(hcs.SITES), out)
+        self.assertEqual(hcs.problems(sites), [], out)
+        workflows, unreadable = chc.load_workflows(str(REPO))
+        before = carrying(hcs.SITES[1], chc.prose_sites(str(REPO),
+                                                       workflows, unreadable))
+        after = carrying(hcs.SITES[1], sites)
+        self.assertEqual(len(before), 1, before)
+        self.assertEqual(len(after), 1, after)
+        self.assertEqual(hcs.squash(after[0][2]), hcs.squash(before[0][2]))
+        self.assertNotEqual(after[0][1], before[0][1],
+                            "the rewrap did not move the line the report gives "
+                            "this site, so this case is not demonstrating what "
+                            "it is written for")
+
+    def test_a_depth_claim_no_row_names_is_a_failure(self):
+        # The table's second direction, which a floor has no way to express: a
+        # sixth depth claim in either tool is invisible to a count, because the
+        # count is satisfied by the five that are named. Without this direction
+        # the table would be a floor the other way round and a tool that grows a
+        # claim would get no sentence about it.
+        self.workflow()
+        self.tool(FIRST_TOOL, committed(FIRST_TOOL) + "\n" + NEW_CLAIM)
+        self.tool(SECOND_TOOL, committed(SECOND_TOOL))
+        sites, _depth, prose, out = self.sites()
+        self.assertFalse(prose, out)
+        self.assertEqual(len(sites), len(hcs.SITES) + 1, out)
+        found = hcs.problems(sites)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("matches no row", found[0])
+        self.assertIn("ci.yml`'s `gates` job checks out with `fetch-depth: 0`",
+                      found[0])
+
+    def test_a_fragment_is_matched_against_its_own_file_only(self):
+        # The file scope, which is what keeps a row to one sentence. Both tools'
+        # `HISTORY_REQUIREMENT` sentences carry `SHARED_PHRASE` -- one in each
+        # file -- so a row written from the wording the two of them share would
+        # match a site in each. Asserted through `hcs.match()` and not through
+        # `carrying()` above, because `carrying()` applies the scope itself and
+        # a case that used it would be testing this suite's own filter: with the
+        # matcher's scope dropped, one row would come back carrying a sentence
+        # from each file and this is the case that has to notice.
+        self.workflow()
+        self.tool(FIRST_TOOL, committed(FIRST_TOOL))
+        self.tool(SECOND_TOOL, committed(SECOND_TOOL))
+        sites, _depth, _prose, out = self.sites()
+        self.assertEqual(len([site for site in sites
+                              if SHARED_PHRASE in hcs.squash(site[2])]), 2, out)
+        row = hcs.Site(SECOND_TOOL, SHARED_PHRASE, "the phrase both sentences carry")
+        matched = [site for site, got in zip(sites, hcs.match(sites, [row])) if got]
+        self.assertEqual(len(matched), 1, out)
+        self.assertEqual(matched[0][0], SECOND_TOOL, out)
+
+    def test_two_rows_matching_one_sentence_is_a_bug_in_the_table(self):
+        # Control F, and the direction #1030 filed by its own words: *"a site
+        # matching two rows -- reported as a bug in the table, not as a
+        # drift"*. The sibling's site 4 occupies two sentences, so the rewrap
+        # of control C taken one step further -- both of them merged into one
+        # comment, in the committed words -- lands two of that file's rows on
+        # one site. That is the move a reader has to be able to make without a
+        # false red on the way, and it is the one condition this table used to
+        # name in a message without checking, so the case asserts the direction
+        # is judged *and* that it is judged as a table fault: nothing has gone
+        # missing here, the site is still found.
+        self.workflow()
+        self.tool(FIRST_TOOL, committed(FIRST_TOOL))
+        text = committed(SECOND_TOOL)
+        self.assertIn(SIBLING_HEAD, text,
+                      "the sibling's site 4 has been reworded away from where "
+                      "this control cuts, so it is not the control it says it is")
+        self.tool(SECOND_TOOL, text[:text.index(SIBLING_HEAD)] + MERGED_SIBLING)
+        sites, _depth, prose, out = self.sites()
+        self.assertFalse(prose, out)
+        # The two rows, named: one site, both of the sibling's rows on it.
+        rows = [row for row in hcs.SITES if row.rel == SECOND_TOOL]
+        self.assertEqual(len(rows), 2, rows)
+        for row in rows:
+            self.assertEqual(len(carrying(row, sites)), 1, out)
+        merged = [site for site in sites if site[0] == SECOND_TOOL]
+        self.assertEqual(len(merged), 1,
+                         f"the merge did not produce one sentence:\n{out}")
+        hits = hcs.match(sites)
+        carried = [i for i, got in enumerate(hits) if len(got) > 1]
+        self.assertEqual(len(carried), 1, hits)
+        self.assertEqual(sorted(hits[carried[0]]),
+                         sorted(hcs.SITES.index(row) for row in rows), hits)
+        found = hcs.problems(sites)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("carried by 2 rows", found[0])
+        self.assertIn("a bug in this table", found[0])
+        for row in rows:
+            self.assertIn(row.what, found[0])
 
 class CommittedTreeTests(unittest.TestCase):
     """The committed workflows and the committed prose, as they stand."""
@@ -731,23 +1027,70 @@ class CommittedTreeTests(unittest.TestCase):
         # The control that makes the rest of this suite mean something: on the
         # tree as it stands, the committed prose passes the rule. When a tool's
         # contract paragraph goes stale again, this is what goes red.
+        #
+        # The `len(sites) >= 4` this case also used to assert is gone, and the
+        # keyed hold below subsumes it with the half a count cannot have: *which*
+        # site stopped being found. A reader that has stopped finding every site
+        # at all is still diagnosed, by that keyed hold rather than by a case
+        # elsewhere: with no sites at all, no row matches anything, so
+        # `hcs.problems()` returns one message per row.
         workflows, unreadable = chc.load_workflows(str(REPO))
         sites = chc.prose_sites(str(REPO), workflows, unreadable)
-        self.assertGreaterEqual(
-            len(sites), 4,
-            "fewer than four depth claims in the two tools. Each of the four "
-            "sites #1009 corrected carries one, so fewer means a reader has "
-            "quietly stopped finding them -- which reads exactly like a tool "
-            "that is working.")
         self.assertFalse(chc.prose_problems(sites), chc.prose_problems(sites))
 
     def test_each_corrected_site_is_still_one_of_the_sites(self):
-        # The four sites, named. A reader that found three of them would leave
-        # this green, which is why the count above is a floor and this is a list.
+        # The four sites, held by value. This is literally a list now rather than
+        # the file set: each row names a file and a fragment of the sentence at
+        # it, and a site that stops being found leaves its row unmatched, which
+        # is what neither the `>= 4` floor nor the comparison against
+        # `PROSE_FILES` could see -- the first because the tree holds five
+        # sentences for four sites, and the second because `prose_sites()`
+        # iterates `PROSE_FILES` itself, so a file dropped from it left the set
+        # it was compared against holding the answer.
+        workflows, unreadable = chc.load_workflows(str(REPO))
+        sites = chc.prose_sites(str(REPO), workflows, unreadable)
+        self.assertEqual(hcs.problems(sites), [])
+
+    def test_a_file_dropped_from_prose_files_left_the_old_comparison_green(self):
+        # Control G, and the edit control B above is not: dropping a file from
+        # `PROSE_FILES` rather than losing it from the tree. `prose_sites()`
+        # iterates that tuple, so the file leaves the set its found paths are
+        # compared against at the same moment it leaves the set that is read --
+        # both sides shrink together, the old assert stays green, and two
+        # corrected sites go unread under it. The old comparison is run verbatim
+        # below, and the message on that assertion says so: a run of it that went
+        # red would be showing the other edit.
+        #
+        # The committed tree, because the point is two rows that really are in a
+        # file: a scratch tree has to lose the file outright to make the
+        # comparison see anything, and that is control B. `PROSE_FILES` is
+        # restored by the cleanup rather than at the end of the case, so a
+        # failing assertion here cannot leave the rest of the suite reading a
+        # one-entry tuple.
+        saved = chc.PROSE_FILES
+        self.addCleanup(setattr, chc, "PROSE_FILES", saved)
+        chc.PROSE_FILES = tuple(rel for rel in saved if rel != SECOND_TOOL)
+        self.assertEqual(len(chc.PROSE_FILES), len(saved) - 1,
+                         "`PROSE_FILES` does not hold the sibling this case "
+                         "drops, so the edit is not the one it names")
         workflows, unreadable = chc.load_workflows(str(REPO))
         sites = chc.prose_sites(str(REPO), workflows, unreadable)
         found = {rel for rel, _line, _sentence, _named, _job in sites}
-        self.assertEqual(found, set(chc.PROSE_FILES))
+        self.assertEqual(
+            found, set(chc.PROSE_FILES),
+            "the file-set comparison this replaced went red on the tree it was "
+            "blind to, so the argument that it could not see this edit does not "
+            "hold and the page beside it is wrong")
+        # And the keyed hold, on the same read, names the two rows the file was
+        # carrying -- each by its own fragment, not by a count.
+        rows = [row for row in hcs.SITES if row.rel == SECOND_TOOL]
+        self.assertEqual(len(rows), 2, rows)
+        problems = hcs.problems(sites)
+        self.assertEqual(len(problems), len(rows), problems)
+        for row in rows:
+            named = [message for message in problems if row.fragment in message]
+            self.assertEqual(len(named), 1, problems)
+            self.assertIn(row.what, named[0])
 
     def test_the_report_prints_every_checkout_it_found(self):
         out = io.StringIO()
