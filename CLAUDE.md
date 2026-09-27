@@ -147,8 +147,17 @@ trusting one of theirs: every row says whether it was verified against
   `bash tools/run-tests.sh`'s last line; the file now points at that instead,
   and `tools/test_readme_suite_table.py` fails if a total or a
   `*(Superseded …)*` note reappears in its lead. Per-suite counts *inside a
-  table row* are fine and are not what that reads. The same shape killed
-  `docs/findings.md`'s section counter, which is the next bullet.
+  table row* are fine and are not what that reads. This has now happened in
+  three files, and `ec/tools/check_no_append_logs.py` fails a **heading that is
+  a merge** or a supersession note outside `docs/findings/` — the shape, not the
+  numerals, because a number in a document nobody can edit is harmless and it is
+  the line every change has to touch that costs. The write-up is
+  `docs/findings/no-append-logs.md`, and the same mistake killed
+  `docs/findings.md`'s section counter, which is the next bullet. **A log is not
+  a claim:** §4a-4d keeps a wrong *figure* visible beside its correction, and it
+  does not ask you to keep a record of what each merge did — that is
+  `git log -p`, and copying one into a live file is how the chain got to 3,522
+  lines in the first place.
 - **`docs/findings.md` is closed, and this is enforced rather than
   advised.** A new finding is a new file under `docs/findings/`, and
   nothing else — no summary section, no pointer appended here.

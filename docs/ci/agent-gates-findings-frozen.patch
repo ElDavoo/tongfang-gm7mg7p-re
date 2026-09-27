@@ -1,4 +1,5 @@
-# docs/findings.md is closed, and the generated findings index is current.
+# docs/findings.md is closed, the generated findings index is current, and no
+# document has grown a per-merge append log.
 # Prepared here rather than landed, for the reason
 # docs/ci/agent-gates-capture-claims.patch gives:
 # `.github/scripts/agent-gates.sh` is copied from the agent-pipeline template
@@ -12,9 +13,14 @@
 # and that is the whole change.
 #
 # Added 2026-09-27. The write-up is the head of `docs/findings.md` itself, and
-# the tool is `ec/tools/check_findings_frozen.py`.
+# the tool is `ec/tools/check_findings_frozen.py`. The third call,
+# `check_no_append_logs.py`, was folded into this same patch rather than cut as
+# an eighth one, because the anchor it would want -- the function below -- is
+# this patch's, and two patches writing into one function is the ordering
+# problem the header describes. The two are the same idea anyway: both are
+# about documents that every change has to edit.
 #
-# Why the cheap tier: both halves read the committed tree and the standard
+# Why the cheap tier: all three read the committed tree and the standard
 # library. No firmware image, no Ghidra, no network, no assembler, and no
 # PyYAML. The section count is a `re` over one file and the index check is a
 # directory listing; together they are milliseconds against a cheap tier
@@ -50,15 +56,31 @@
 # before `check_doc_links()` and is called from inside it, and no other patch in
 # the set has `check_doc_links()` in any hunk's context window -- which is a
 # claim the pair test proves rather than this header asserting.
+
+# The third call, `check_no_append_logs.py`, is the same argument one level up,
+# and it is here because the argument did not work in prose. Three documents in
+# this repository have each been the file every merge had to edit, in turn:
+# `docs/findings.md` (frozen by the first call), `tools/README.md` (22
+# supersession notes under one hand-kept total, 3,522 lines, held by
+# `tools/test_readme_suite_table.py`) and `docs/findings/test-line-pin-census.md`
+# (sixteen dated `## The #NNN merge` sections, 1,924 lines). Each is a document
+# that is correct and unreadable, and each cost a conflict. The write-up is
+# `docs/findings/no-append-logs.md`.
+#
+# It is a shape test, not a figure test, and that is deliberate: a number in a
+# document nobody can edit is harmless -- `docs/findings.md` states its section
+# count 254 times and costs nothing -- and the thing that costs is the *line
+# every change has to touch*. So this reads headings and one marker, and rules
+# no claim true.
 #
 # The cost is honest and small: the two checks report under the `doc links`
 # tier rather than a tier of their own. They are two counts over markdown and
 # the tree layout, which is what that tier already is.
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index ce9f0964..5d139b80 100755
+index ce9f0964..da70d6ed 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -299,6 +299,24 @@ check_shellcheck() {
+@@ -299,6 +299,25 @@ check_shellcheck() {
  # A relative markdown link that 404s is a documentation bug that's
  # otherwise invisible until someone clicks it -- and CLAUDE.md/findings.md
  # cross-reference each other and ec/annotations/registers.yaml constantly.
@@ -76,6 +98,7 @@ index ce9f0964..5d139b80 100755
 +  local rc=0
 +  python3 ec/tools/check_findings_frozen.py || rc=1
 +  python3 ec/tools/gen_findings_index.py --check || rc=1
++  python3 ec/tools/check_no_append_logs.py || rc=1
 +  return "$rc"
 +}
 +
@@ -83,7 +106,7 @@ index ce9f0964..5d139b80 100755
  check_doc_links() {
    local broken=0
    while IFS=: read -r file link; do
-@@ -307,6 +325,7 @@ check_doc_links() {
+@@ -307,6 +326,7 @@ check_doc_links() {
      [ -f "$dir/$link" ] || { echo "BROKEN: $file -> $link"; broken=1; }
    done < <(grep -rEo '\]\(([^:)]+\.md)\)' --include='*.md' . 2>/dev/null \
              | sed -E 's/:\]\(([^)]+)\)/:\1/')

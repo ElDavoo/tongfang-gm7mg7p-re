@@ -324,21 +324,40 @@ looking for a correction to make here.** Read with
 ## A seventh patch, in the one region the table above does not use
 
 **2026-09-27.** `docs/ci/agent-gates-findings-frozen.patch` adds
-`check_findings_frozen()`, which runs `ec/tools/check_findings_frozen.py` and
-`ec/tools/gen_findings_index.py --check`. It is here for the same reason the
-file is: a re-cut needs to know where it may cut, and this one deliberately
-takes the **only two regions the collision table above does not list**.
+`check_findings_frozen()`, which runs `ec/tools/check_findings_frozen.py`,
+`ec/tools/gen_findings_index.py --check` and
+`ec/tools/check_no_append_logs.py`. It is here for the same reason the
+file is: a re-cut needs to know where it may cut.
 
 | region of `agent-gates.sh` | used by this patch |
 |---|---|
 | between `check_shellcheck()` and `check_doc_links()` | the function |
-| the `gate` list, after `gate 'doc links'` | the one `gate` line |
+| inside `check_doc_links()`, before its `return` | the one call |
 
-Neither region is in the table's tool list, its arms, or the
+**Correction, same day: this table previously said the patch took `the gate
+list, after gate 'doc links'` for `the one gate line`, and it takes no such
+line.** That was true of an earlier cut and stopped being true when the patch
+was re-cut to add **no `gate` line at all**, because four prepared patches
+write into that list and the windows their hunks need overlap — so a fifth
+lands in one order and not the other, and `tools/test_agent_gates_patches.py`
+checks every ordered pair. The function is called from inside
+`check_doc_links()` instead, and no other patch in the set has that function
+in any hunk's context window, which is the claim the pair test proves rather
+than this table asserting. A reader checking a re-cut against the old row would
+have gone looking for a `gate` line that is not there.
+
+Both regions are outside the table's tool list, its arms, and the
 `check_register_counts` `gate` list, so this patch's hunks have no context any
 existing patch writes into, and the two compose in either order —
 `tools/test_agent_gates_patches.py` proves it rather than the prose here
 claiming it.
+
+**The third call was folded into this patch rather than cut as an eighth.**
+`check_no_append_logs.py` is about the same thing the other two are — documents
+every change has to edit — and the region it would want is this patch's
+function, so a separate patch would have been two patches writing into one
+function, which is the ordering problem the header above describes. Three
+checks in one function is the composition the pair test already covers.
 
 **It is cut against the current file, and the six older ones are not.** Every
 patch in this set whose hunk context has since drifted out of

@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-119 write-ups.
+120 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -57,6 +57,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`name-basis-and-groups.md`](name-basis-and-groups.md) — What grounds a name, and what a group is (issue #135)
 - [`named-without-a-row.md`](named-without-a-row.md) — The 25 functions that carry a name no CSV row wrote (issue #601)
 - [`neighbour-edge-attribution.md`](neighbour-edge-attribution.md) — Does the kept citation name the neighbour's call site? Fifteen rows and two, decided (issue #681)
+- [`no-append-logs.md`](no-append-logs.md) — A document every merge must edit is a lock nobody holds, and this repository has now hit that three times
 - [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md) — The opcode-table bounds census: every `OPCODE_LEN[d[i]]` in `ec/tools/`, and what holds the index in
 - [`opcode-table-coverage.md`](opcode-table-coverage.md) — The opcode table's coverage and a differential decode: 254 of 256 rows, 0 disagreements against two decoders that are not independent — and 8 against the manual, which is the finding — independent
 - [`paged-trampoline-hits-by-hand.md`](paged-trampoline-hits-by-hand.md) — All 18 paged-trampoline hits, read one by one (issue #54)

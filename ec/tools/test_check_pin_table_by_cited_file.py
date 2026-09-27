@@ -475,7 +475,7 @@ class TheCommittedTree(unittest.TestCase):
         table, _buckets = tool.charged(records, files, index)
         self.assertEqual(
             {row[0]: (row[1], row[3]) for row in tool.rows(table)},
-            {"ec/tools/test_xdata_cluster_names.py": (34, 10),
+            {"ec/tools/test_xdata_cluster_names.py": (33, 10),
              "ec/tools/test_grade_0751_isolation.py": (21, 15),
              "windows/tools/test_manual_fan_ctrl_probe.py": (5, 3),
              "ec/tools/test_disasm8051.py": (4, 1),
@@ -510,9 +510,15 @@ class TheCommittedTree(unittest.TestCase):
         files, index = census.suites(tool.REPO)
         table, _buckets = tool.charged(records, files, index)
         cited = tool.rows(table)
-        self.assertEqual([row[4] for row in cited[:2]], [44, 36])
-        self.assertEqual(cited[0][4] + cited[1][4], 80)
-        self.assertEqual(len(records), 107)
+        # Re-derived 2026-09-27. The record count is 106 rather than 107 for
+        # the reason `test_census_test_line_pins.py` gives in full: one pin
+        # left the tree with the per-merge log it was a passing mention
+        # inside, and it was a `test_xdata_cluster_names.py` record, so that
+        # file's concentration and this sum each take exactly one and the
+        # second entry here is unmoved.
+        self.assertEqual([row[4] for row in cited[:2]], [43, 36])
+        self.assertEqual(cited[0][4] + cited[1][4], 79)
+        self.assertEqual(len(records), 106)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
         # Three figures, and each moves by construction the moment a suite
@@ -546,9 +552,14 @@ class TheCommittedTree(unittest.TestCase):
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 56)
+        # 57 rather than 56, and 45 rather than 44, for one reason in two
+        # places: `test_check_no_append_logs.py` landed on 2026-09-27 and
+        # nothing in the committed markdown cites a line of it yet, so the
+        # suite count and the unpinned tail each take one and `pinned` does
+        # not move. That is the tail doing its job, not a miss.
+        self.assertEqual(len(files), 57)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 44)
+        self.assertEqual(len(tail), 45)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be
