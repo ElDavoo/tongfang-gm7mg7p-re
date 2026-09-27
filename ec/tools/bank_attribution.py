@@ -54,15 +54,18 @@ it.
 bank N",** and the reason is in bank-call-audit.md 2: a flow walk has no
 function-boundary recovery, and a 23-of-24 anchored site there sits inside a
 data table. This tool's own answer to that is in section 5 and in --self-test --
-it reaches exactly one byte of the `bank0` `0x8038` dispatch table, and it says
-so rather than dropping the check. Two further limits are inherited rather than
-chosen: a seed's bank is a fact about the *stub*, not about the target's bank
-at run time, because the closure propagates the trampoline's bank through edges
-and never observes which bank is selected; and a walk that runs out of budget
-stops, which is a statement about the walk and not about the code. Banks 2 and
-3 are taken as unused on find_banks.py's word and were not re-derived. Nothing
-here measures the byte, so no `status:` in ../annotations/registers.yaml moves
-and nothing here is evidence that the EC executes any of it.
+it reaches one byte of the `bank0` `0x8038` dispatch table, and the mis-decode
+it makes of that byte is *followed* into a real routine rather than refused, so
+the failure shows up as a false entry in the closure instead of a stop. All
+three halves are asserted rather than dropped. Two further limits are inherited
+rather than chosen: a seed's bank is a fact about the *stub*, not about the
+target's bank at run time, because the closure propagates the trampoline's bank
+through edges and never observes which bank is selected; and a walk that runs
+out of budget stops, which is a statement about the walk and not about the
+code. Banks 2 and 3 are taken as unused on find_banks.py's word and were not
+re-derived. Nothing here measures the byte, so no `status:` in
+../annotations/registers.yaml moves and nothing here is evidence that the EC
+executes any of it.
 
 Usage:
     python3 ec/tools/bank_attribution.py ec/firmware/GMxMGxx_11.800
@@ -656,15 +659,30 @@ POSITIVE = {
 # bank-call-audit.md 9 transcript) named by the trampoline at common 0x1A98.
 # The `lcall` is followed by the index table inline -- that is the shape 9
 # describes, where the callee pops the return address into DPTR -- so a walk
-# that continues past a call lands on table data. It lands on exactly one byte
-# of it, 0x8038, and stops: the table's first entry `80 54` decodes as
-# `sjmp 0x808E`, a transfer this closure does not follow, so 0x8039-0x8053 are
-# not reached.
+# that continues past a call lands on table data, and 0x8038 is that table's
+# first byte (9's layout: 8 entries of three at 0x08038, `0000` at 0x08050, the
+# default at 0x08052, the span ending at its own first target 0x08054).
 #
-# The pin is therefore the boundary as it fell rather than the one the issue
-# expected. 0x8038 IS reached, and that is the finding: dropping the check
-# because it failed would have been the quiet way to lose it, so it is asserted
-# in both directions -- the one byte reached, and the 27 that are not.
+# What happens there is NOT a refusal. 0x8038 is the entry-0 address field
+# `80 54`, and `80 54` is also a well-formed instruction: descend() decodes it
+# as `sjmp 0x808E` and *follows* it, because an unconditional jump is a
+# transfer, not a split. 0x808E is a real routine, and this closure credits it
+# to the 0x8031 arm alone. So the walk does not stop at the table -- it sails
+# through it on a frame the data gave it and acquires a false entry. That is
+# the same failure mode 2 records (a walk whose frame came from inside a data
+# table), and here it reads as a silent gain rather than as a stop, which is
+# the less visible of the two.
+#
+# 0x8039-0x8053 are unreached for an unrelated reason, and an earlier draft of
+# this comment got it wrong: descend() has no fall-through past an
+# unconditional jump. `sjmp` ends the linear block and opens a fresh one at the
+# target, so the bytes after 0x8038 are never decoded -- not because the
+# transfer was declined.
+#
+# The pin is the boundary as it fell rather than the one the issue expected,
+# and it is asserted in all three directions: the one byte reached, the 27 that
+# are not, and the target the mis-decode *did* reach. Dropping the check
+# because it failed would have been the quiet way to lose all three.
 NEGATIVE = {
     "bank": 0,
     "seed": 0x8031,
@@ -674,6 +692,9 @@ NEGATIVE = {
     "call_bytes": b"\x12\x71\x51",
     "reached": 0x8038,
     "reached_bytes": b"\x80\x54",
+    # The target the mis-decode reaches, asserted because it is the half of
+    # the failure mode that looks like a stop and is not one.
+    "followed": 0x808E,
     "table": (0x8039, 0x8054),   # half-open: the rest of the 28-byte table
 }
 
@@ -793,11 +814,23 @@ def self_test(d: bytes) -> int:
           f"bank{bank}'s closure reaches 0x{NEGATIVE['reached']:04X}: the walk "
           f"continues past the `lcall` and lands on the table, which is the known "
           f"failure mode and is pinned here rather than dropped")
+    # The half of the failure mode that reads as a stop and is not one. `80 54`
+    # is a well-formed `sjmp`, so the walk follows it out of the table and into
+    # a real routine. Asserting the *arrival* is what keeps the corrected
+    # mechanism from decaying back into "the transfer was declined": the 27
+    # bytes below are unreached because descend() has no fall-through past an
+    # unconditional jump, which is a different fact from not following one.
+    check(NEGATIVE["followed"] in closures[bank][0],
+          f"and follows the `sjmp` off it to 0x{NEGATIVE['followed']:04X}, which "
+          f"is a real routine -- the walk does not stop at the table, it leaves "
+          f"it on a frame the data gave it"
+          + ("" if NEGATIVE["followed"] in closures[bank][0] else " -- not reached"))
     inside = [a for a in range(*NEGATIVE["table"]) if a in closures[bank][0]]
     check(not inside,
-          f"and not one of the {NEGATIVE['table'][1] - NEGATIVE['table'][0]} "
-          f"remaining table bytes 0x{NEGATIVE['table'][0]:04X}-"
-          f"0x{NEGATIVE['table'][1] - 1:04X}"
+          f"while not one of the {NEGATIVE['table'][1] - NEGATIVE['table'][0]} "
+          f"table bytes after it, 0x{NEGATIVE['table'][0]:04X}-"
+          f"0x{NEGATIVE['table'][1] - 1:04X} -- descend() has no fall-through "
+          f"past an unconditional jump, so they are never decoded"
           + ("" if not inside else " -- reached "
              + ", ".join(f"0x{a:04X}" for a in inside[:8])))
 

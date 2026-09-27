@@ -18,10 +18,11 @@ its own line and is the honest bottom of all of it.
 bank N",** and that is not a formality. A flow walk has no function-boundary
 recovery, so it inherits the framing risk §2 of that file documents: a 23-of-24
 anchored site there sits inside a data table. §4 below is this tool's own
-instance of the same failure — it walks one byte into the `bank0` `0x8038`
-dispatch table — pinned in `--self-test` in both directions rather than dropped.
-A negative in this file is a statement about *this closure's coverage* and never
-about the address it failed to reach.
+instance of the same failure — it walks onto the first byte of the `bank0`
+`0x8038` dispatch table and follows its mis-decode out into a real routine —
+pinned in `--self-test` in all three directions rather than dropped. A negative
+in this file is a statement about *this closure's coverage* and never about the
+address it failed to reach.
 
 Nothing here was measured on hardware. No register was read back, no capture
 was taken, and no `status:` in [`registers.yaml`](registers.yaml) moves. This is
@@ -46,7 +47,7 @@ $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/
 $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 1 0x10000 /tmp/bank1.bin
 ```
 
-The self-test exits 0 and prints 17 checks: the stub→bank decoding re-derived
+The self-test exits 0 and prints 18 checks: the stub→bank decoding re-derived
 through `find_stubs()`, the seed census, the two hand-decoded pins below, the
 two `jmp @a+dptr` dispatch shapes §5 names, the four verdicts over both
 populations, and the closure's own internal check.
@@ -203,9 +204,9 @@ a name the linker wrote down, or one hop from one.
 ## 4. The one-byte failure, pinned
 
 The plan for this work expected a negative pin of the form "the closure must not
-reach the `bank0` `0x8038` dispatch table". **It reaches one byte of it.** That
-is the finding, and the pin became the boundary as it actually fell rather than
-being quietly dropped.
+reach the `bank0` `0x8038` dispatch table". **It reaches its first byte, and
+follows what it decodes there out of the table.** That is the finding, and the
+pin became the boundary as it actually fell rather than being quietly dropped.
 
 `bank0` `0x8031` is a real routine, named by the trampoline at common `0x1A98`:
 
@@ -223,11 +224,12 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x8031; pd 4' /tmp/bank0.
 The `lcall 0x7151` is `bank-call-audit.md` §9's table dispatch, and the table is
 stored **inline after it** — the callee pops the return address into DPTR, so the
 table's address is never an immediate and never appears in a scan. A walk that
-continues past a call, which is what a closure must do, therefore falls into
-data. It falls in by exactly one byte: `0x8038` is `80 54`, which the decoder
-resolves as `sjmp 0x808E`, a transfer the closure does not follow as a new entry
-point, so `0x8039`–`0x8053` — the other 27 bytes of the 28-byte table — are
-never reached.
+continues past a call, which is what a closure must do, therefore lands on data.
+It lands on `0x8038`, which §9's own layout puts as the table's **first byte** —
+8 entries of three from file `0x08038`, `0000` at `0x08050`, the default at
+`0x08052`, the span ending at its own first target `0x08054` — not on a byte
+standing in front of one. §9 retracted the framing that puts an `sjmp` at the
+head of the table, and this section had reintroduced it.
 
 ```console
 $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x8038; px 16' /tmp/bank0.bin
@@ -238,8 +240,33 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x8038; px 16' /tmp/bank0
 Read as §9 reads it, that is eight 3-byte entries of `address; case` — `0x8054`
 with case `00`, `0x8094` with `01`, `0x80D7` with `02`, … — not instructions.
 
-`--self-test` asserts both halves — that `0x8038` **is** reached, and that
-`0x8039`–`0x8053` are **not** — so the failure mode stays visible and the
+**The walk does not stop there, and that is the half worth reading twice.**
+`0x8038` is `80 54`, the address field of entry 0 — and `80 54` is *also* a
+well-formed instruction. `descend()` decodes it as `sjmp 0x808E` and follows
+it, because an unconditional jump is a transfer and not a split. `0x808E` is a
+real routine (`mov r6,#0x74` / `ajmp 0x8402`), and this closure credits it to
+the `0x8031` arm alone — path count 1, one entry point. So the failure mode
+shows up here as a **silent gain** rather than as a stop: the closure acquires
+an address on the strength of a frame the data handed it, and nothing in the
+tables distinguishes that from a real one.
+
+This is still `bank-call-audit.md` §2's "walked into a data table", and it is
+worth being exact about which instance: the walk is standing on a frame that
+came out of a table, which is the whole of that caveat. What is *not* claimed
+is that the table caused visible damage — it is a lucky mis-decode that landed
+on real code, and `0x808E` is not a target of any of the 1305 bucket-B pairs,
+so no number anywhere in this file moves. What it demonstrates is the shape of
+the risk, not its magnitude: a table that decoded to a stop would have shown up
+in §5's bounds, and one that decodes to code will not show up at all.
+
+`0x8039`–`0x8053` are unreached, and for a reason that has nothing to do with
+the transfer above. `descend()` has no fall-through past an unconditional jump:
+`sjmp` ends the linear block and opens a fresh one at the target, so the bytes
+after `0x8038` are never decoded. The walk did not decline to follow anything.
+
+`--self-test` asserts all three halves — that `0x8038` **is** reached, that the
+mis-decode **is** followed to `0x808E`, and that `0x8039`–`0x8053` are **not** —
+so the failure mode stays visible in the form it actually takes, and the
 one-byte spread stays a measured fact rather than a claim.
 
 ## 5. What the closure cannot see, measured
