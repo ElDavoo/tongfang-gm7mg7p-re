@@ -25,11 +25,19 @@ and #942 added a second beside it in
 than prose, and both of them things extending the gate's *link* discovery to
 `.patch` reaches. Both spellings are read here for that reason.
 
-**Scope, and why it stops at this prefix.** The subject is the
-`docs/ci/agent-gates-*.patch` set, and the check is scoped to it: a bare `*.patch`
-would sweep in `evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv` and the
-version matrix beside it, which cite a run artefact that is legitimately a
-snapshot rather than a file in this tree.
+**Scope: two directions, two declared file sets.** The *live* direction reads
+`docs/ci/` -- every prepared change there, a glob over `.patch` plus the names
+in `PREPARED_NON_PATCH`. The *reference* direction reads `REFERENCE_GLOBS`,
+`**/*.md` and `docs/ci/**/*.patch`: prose, and the prepared changes' own
+headers. A `.patch` naming another `.patch` is a reference class no prose grep
+can see, which is the second glob's whole reason. A bare `*.patch` would also
+sweep in `linux/patches/`, which holds two upstream driver patches rather than
+prepared gate changes; neither names a name in the set, so the scope is stated
+here rather than left incidental. (The paragraph this replaces gave
+`evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv` as the reason to stop at
+the `docs/ci/` prefix, and that file is a `.csv` -- never a counterexample to a
+`*.patch` glob. The two `linux/patches/` files above are, and they are what
+the second glob is drawn around.)
 
 **The historical rule, which is the whole design problem here.** Three names
 are in prose and deliberately not on disk, and a naive "every name resolves"
@@ -62,19 +70,47 @@ each key is still absent from `docs/ci/`, and still cited by at least one
 markdown file -- so neither a patch reappearing under that name nor a reference
 being edited away can leave the exemption quietly true.
 
-**The live direction is checked too, mirroring the sibling:** every patch in
-`docs/ci/` must be cited by at least one markdown file. A human adding a sixth
-prepared patch and documenting it nowhere is the mirror failure, and it is the
-half that broke in `test_readme_suite_table.py`.
+**The live direction is checked too, mirroring the sibling:** every prepared
+change in `docs/ci/` must be cited by at least one file this check reads -- a
+patch by a parsed reference, and the one named non-patch entry by prose, for
+the reason `scan` gives. Every reference *in the files this check reads* is
+what the reference direction holds; that is narrower than every reference in
+the tree, and the `.py` paragraph below is where the difference is. A human
+adding a prepared change and documenting it nowhere is the mirror failure, and
+it is the half that broke in `test_readme_suite_table.py`. The named entry is
+held in both directions, so its deletion is not invisible to a glob that has
+stopped matching it.
 
 **What this does not check.** It resolves a *name* against a directory. It does
 not read a reference's surrounding sentence to decide whether that sentence is
 instructing a `git apply` or describing history -- `HISTORICAL` stands in for
 that at name granularity, and the cost of getting it wrong is a false positive a
-reader can see and an edit to make. It also does not check the `.py` population:
-`tools/test_agent_gates_patches.py` names the deleted patch in three further
-places, and widening the scan to `*.py` would put this tool inside a file issue
-#772 owns.
+reader can see and an edit to make. Three further limits, all measured rather
+than asserted, and `docs/findings/doc-patch-ref-file-sets.md` has the commands
+and the decision behind each:
+
+- **The `.py` population is out of scope, and by name.** Five `ec/tools/` files
+  carry live-direction citations this check does not count --
+  `grade_0751_isolation.py` and `test_grade_0751_isolation.py` name
+  `agent-gates-0751-self-test.patch`, `test_check_pin_table_rows.py` names
+  `agent-gates-pin-table-rows.patch`, `test_data_regions.py` names
+  `agent-gates-disasm8051-self-test.patch` and
+  `test_check_history_checkouts_corpus.py` names
+  `agent-gates-capture-claims.patch`. Widening to `*.py` would report this
+  tool's and its suite's own deliberately-absent fixture names
+  (`agent-gates-a.patch`, `-b`, `-never-existed`, `-gone`) as STALE, and would
+  make the "still cited" half of every `HISTORICAL` key self-certifying -- this
+  file's own docstring names all three.
+- **A citation in a diff body is not a citation.** The one place
+  `docs/ci/agent-gates-capture-claims.patch` names
+  `agent-gates-deep-schedule.yml` is a `+` line at :197, a comment the patch
+  adds to a Python file. That is why the non-patch entry's citation is read
+  over prose, and it is why a future patch that adds a backticked patch name
+  into a file it patches would contribute a reference that is a diff rather
+  than a citation.
+- **A renamed non-patch entry leaves its prose citations unreported.** Its name
+  is not parsed, so `stale` cannot see them; the `MISSING` verdict reports the
+  rename once, by naming the file that is gone.
 
 **Counts print on every run and none is asserted.** A run that found nothing and
 a run that found nothing wrong look identical from the exit code alone, so a
@@ -112,6 +148,32 @@ HISTORICAL = {
     "agent-gates-check-history-checkouts.patch",
 }
 
+# The prepared changes in `docs/ci/` that are not `.patch`. One entry today,
+# and it is held *by name* rather than by shape: the exclusion
+# `docs/findings/prepared-gate-patches.md` records is about what the file is --
+# a `cp` into `.github/workflows/`, order-independent, with no pre-image to go
+# stale against -- and not about its extension. So the live-side glob is left
+# over `.patch` and this is added beside it, which also means a `.rej` an
+# editor or a `git apply --reject` left in `docs/ci/` cannot be admitted by
+# accident the way widening the glob to `agent-gates-*` would admit it.
+# The two directions are now separate: `NAME` still ends in `\.patch`, so this
+# name is never *parsed* as a reference, while it is held on disk. See
+# `docs/findings/doc-patch-ref-file-sets.md` for what that costs.
+PREPARED_NON_PATCH = {
+    "agent-gates-deep-schedule.yml",
+}
+
+# The files the reference direction reads, and the prose half kept beside them.
+# A tuple rather than a bare `*.patch` glob, because the scope is a decision
+# and not an accident of the tree: `linux/patches/` holds two `.patch` files
+# that are upstream driver patches, not prepared gate changes, and neither
+# names a name in the set below. Prose plus the prepared changes' own headers
+# is the whole of it, and a `.patch` naming another `.patch` is a reference
+# class no prose grep can see.
+PROSE_GLOB = "**/*.md"
+PREPARED_GLOB = "docs/ci/**/*.patch"
+REFERENCE_GLOBS = (PROSE_GLOB, PREPARED_GLOB)
+
 # The subject, as a shape. `*` is deliberately not in the character class: a
 # pattern loose enough to match a bare name also matches the eight prose spans
 # that name the *set* -- `` `docs/ci/agent-gates-*.patch` `` -- and those are
@@ -141,7 +203,8 @@ KIND_NAME, KIND_LINK = "name", "link"
 # somewhere a reader is not looking.
 Result = collections.namedtuple(
     "Result",
-    "refs links files link_files patches stale uncited absent uncited_keys dead")
+    "refs links files link_files patches stale uncited absent uncited_keys "
+    "dead missing")
 
 # A checkout carries directories that are not prose. `.git` is the exclusion
 # `tools/test_readme_suite_table.discover` makes and for the same reason: a file
@@ -149,15 +212,29 @@ Result = collections.namedtuple(
 SKIP = {".git"}
 
 
+def _glob(root, pattern):
+    return {p.relative_to(root).as_posix() for p in root.glob(pattern)
+            if not set(p.relative_to(root).parts) & SKIP}
+
+
+def reference_files(root):
+    """The reference set as (prose, prepared): the two halves, each sorted.
+
+    Two lists rather than one because two verdicts are computed over different
+    halves of it, and the difference is the whole of the `HISTORICAL` liveness
+    rule -- see `scan`. `docs/findings/doc-patch-ref-file-sets.md` has why the
+    set is those two globs and what a third one would have to answer for.
+    """
+    return sorted(_glob(root, PROSE_GLOB)), sorted(_glob(root, PREPARED_GLOB))
+
+
 def markdown_files(root):
-    """Every `*.md` under `root`, root-relative, sorted.
+    """The prose half of `reference_files`, root-relative, sorted.
 
     Recomputed per call rather than cached at import, so a case can point it at
     a scratch tree -- which is what makes the rename case below possible at all.
     """
-    return sorted(p.relative_to(root).as_posix()
-                  for p in root.rglob("*.md")
-                  if not set(p.relative_to(root).parts) & SKIP)
+    return reference_files(root)[0]
 
 
 def references(text):
@@ -179,26 +256,31 @@ def references(text):
 
 def read_refs(root):
     """Every reference under `root`, as (file, kind, name, line)."""
-    out = []
-    for rel in markdown_files(root):
-        text = (root / rel).read_text(encoding="utf-8")
-        out += [(rel, kind, name, line)
-                for kind, name, line in references(text)]
-    return out
+    prose, prepared = reference_files(root)
+    return [(rel, kind, name, line)
+            for rel in prose + prepared
+            for kind, name, line in
+            references((root / rel).read_text(encoding="utf-8"))]
 
 
 def on_disk(root):
-    """The `agent-gates-*.patch` files in `root/docs/ci`, as bare names.
+    """The prepared changes in `root/docs/ci`, as bare names.
 
     Bare names, because that is what both spellings resolve to and what the
-    report prints. `agent-gates-deep-schedule.yml` is not matched and is not a
-    patch, which is what `docs/findings/prepared-gate-patches.md` records about
-    it and the reason this is a glob over `.patch` rather than over everything.
+    report prints.
+
+    The glob is over `.patch` and `PREPARED_NON_PATCH` is added beside it, and
+    only when the file is there. That conditional is what keeps `uncited`
+    meaning "a prepared change that is on disk and nothing names it": a
+    `mini_tree` fixture holding one synthetic patch and no yml has to stay
+    green, or every synthetic case in this file and its suite would be
+    reporting the yml as uncited on a tree that never had it.
     """
     ci = root / "docs" / "ci"
     if not ci.is_dir():
         return []
-    return sorted(p.name for p in ci.glob("agent-gates-*.patch"))
+    return sorted({p.name for p in ci.glob("agent-gates-*.patch")}
+                  | {n for n in PREPARED_NON_PATCH if (ci / n).is_file()})
 
 
 def scan(root):
@@ -208,22 +290,69 @@ def scan(root):
     scanned with the same call the committed tree is and no rule below knows
     which tree it is on.
     """
+    prose, prepared = reference_files(root)
+    by_file = {rel: (root / rel).read_text(encoding="utf-8")
+               for rel in prose + prepared}
+    prose_refs = [(rel, kind, name, line)
+                  for rel in prose
+                  for kind, name, line in references(by_file[rel])]
+    refs = prose_refs + [(rel, kind, name, line)
+                         for rel in prepared
+                         for kind, name, line in references(by_file[rel])]
+
     disk = set(on_disk(root))
-    refs = read_refs(root)
     cited = {name for _f, _k, name, _l in refs}
 
-    # A name is stale when it resolves to nothing in `docs/ci/` and is not one of
-    # the two the docstring says prose names on purpose. That second clause is
+    # The `HISTORICAL` half of the enumeration is read over *prose only*, and
+    # this is the one place where the widened set and the narrower one part
+    # company. `docs/ci/agent-gates-capture-claims.patch` names the deleted
+    # patch in its own header, so with liveness over the whole set that one
+    # header would satisfy "still cited" by itself and every markdown
+    # reference to the key could be deleted with nothing going red -- the
+    # exemption would keep its place on the strength of a diff of a file that
+    # is itself about the key. Staleness below *is* over the whole set,
+    # because a name a patch header no longer matches is just as stale as one
+    # a sentence no longer matches.
+    prose_cited = {name for _f, _k, name, _l in prose_refs}
+
+    # A prepared change that is not a patch is cited by a coarser test than a
+    # patch is, and over a narrower set. `NAME` ends in `\.patch` on purpose,
+    # so this name is never parsed as a reference and the citation is the name
+    # appearing at all -- in prose, and only in prose.
+    #
+    # Prose only, because the widened set is not a set of citations. The one
+    # place `docs/ci/agent-gates-capture-claims.patch` names this file is a
+    # `+` line at :197 -- a comment the patch *adds* to a Python file, not a
+    # header of its own naming a sibling. Counting it would let a diff body
+    # sustain the liveness of a prepared change whose every real citation had
+    # been deleted, which is a false negative produced by a phantom rather than
+    # a false positive a reader can see. The two patch-name references the
+    # widened set does pick up are both `#` header lines, so nothing else
+    # here is affected; `docs/findings/doc-patch-ref-file-sets.md` records the
+    # diff-body caveat as the realised case rather than a hypothetical one.
+    for name in PREPARED_NON_PATCH:
+        if any(name in by_file[rel] for rel in prose):
+            cited.add(name)
+
+    # A name is stale when it resolves to nothing in `docs/ci/` and is not one
+    # of the names the docstring says prose names on purpose. That clause is
     # the exemption and it is the *only* one: a fourth absent name is refused
     # here rather than needing a fourth entry, so the exemption cannot widen by
     # accident.
     stale = [(rel, line, name) for rel, _k, name, line in refs
              if name not in disk and name not in HISTORICAL]
 
-    # A patch on disk that no markdown file names is a prepared change nobody
-    # can find -- the mirror of a stale name, and the half that broke in the
-    # sibling suite.
+    # A prepared change on disk that nothing this check reads names is one
+    # nobody can find -- the mirror of a stale name, and the half that broke in
+    # the sibling suite.
     uncited = sorted(disk - cited)
+
+    # And the named prepared change that is *not* there. The same
+    # both-directions arrangement `HISTORICAL` has: a rename or a delete of the
+    # yml is invisible to a glob that no longer matches it, so the written-down
+    # expectation is compared against discovery here rather than left to a
+    # reader who already knows the file was there.
+    missing = sorted(n for n in PREPARED_NON_PATCH if n not in disk)
 
     # The enumeration read in both directions, so `check` can say whether a key
     # is still doing the work it was added for rather than only whether it is
@@ -239,9 +368,10 @@ def scan(root):
         stale=stale,
         uncited=uncited,
         absent=sorted(n for n in HISTORICAL if n not in disk),
-        uncited_keys=sorted(n for n in HISTORICAL if n not in cited),
+        uncited_keys=sorted(n for n in HISTORICAL if n not in prose_cited),
         dead=[n for n in sorted(HISTORICAL)
-              if n in disk or n not in cited],
+              if n in disk or n not in prose_cited],
+        missing=missing,
     )
 
 
@@ -252,7 +382,10 @@ def report(result, verbose=False):
     folded in, because a reader who fixed the first has not fixed the second
     and the two want opposite edits. The `dead` half is counted separately from
     both again: it is a property of this tool's own enumeration, and it is not
-    something an edit to any markdown file can fix.
+    something an edit to any markdown file can fix. The `missing` half is a
+    fourth of the same kind -- also this tool's own enumeration, also not
+    something an edit to prose can fix, and also a `git rm` rather than a
+    sentence.
     """
     for rel, line, name in result.stale:
         if verbose:
@@ -261,19 +394,25 @@ def report(result, verbose=False):
         else:
             print(f"STALE: {name} <- {rel}")
     for name in result.uncited:
-        print(f"UNCITED: docs/ci/{name} is on disk and no markdown file names it")
+        print(f"UNCITED: docs/ci/{name} is on disk and nothing this check "
+              f"reads names it")
     for name in result.dead:
         why = ("a patch by that name is back on disk"
                if name in result.patches else
                "no markdown file names it any more")
         print(f"DEAD KEY: `{name}` is in HISTORICAL and {why}, so the "
               f"exemption is not earning its place")
+    for name in result.missing:
+        print(f"MISSING: docs/ci/{name} is in PREPARED_NON_PATCH and is not "
+              f"there, so a rename or a delete of it is invisible to the glob")
 
-    total = len(result.stale) + len(result.uncited) + len(result.dead)
+    total = (len(result.stale) + len(result.uncited) + len(result.dead)
+             + len(result.missing))
     if total:
         print(f"{total} problem(s): {len(result.stale)} stale reference(s), "
-              f"{len(result.uncited)} uncited patch(es), "
-              f"{len(result.dead)} dead historical key(s)", file=sys.stderr)
+              f"{len(result.uncited)} uncited prepared change(s), "
+              f"{len(result.dead)} dead historical key(s), "
+              f"{len(result.missing)} missing prepared change(s)", file=sys.stderr)
     return total
 
 
@@ -284,13 +423,18 @@ def population(result):
     verdict, because a key that has stopped being absent or stopped being cited
     is the one failure here whose cause is not visible in a reader's own file:
     nothing in the prose changed, the exemption just quietly stopped applying.
+    The named prepared change's two directions are in the line for the same
+    reason, and this line is the figure to re-derive rather than any count
+    written in a document beside it.
     """
     return (f"{len(result.refs)} name reference(s) in {len(result.files)} "
-            f"markdown file(s), {len(result.links)} link(s) in "
+            f"file(s), {len(result.links)} link(s) in "
             f"{len(result.link_files)} file(s); "
             f"{len(HISTORICAL)} historical key(s), {len(result.absent)} still "
             f"absent and {len(HISTORICAL) - len(result.uncited_keys)} still "
-            f"cited; {len(result.patches)} patch(es) in docs/ci/")
+            f"cited; {len(result.patches)} prepared change(s) in docs/ci/, "
+            f"{len(PREPARED_NON_PATCH) - len(result.missing)} of "
+            f"{len(PREPARED_NON_PATCH)} named non-patch one(s) there")
 
 
 @contextlib.contextmanager
@@ -457,8 +601,8 @@ def self_test():
         citing = [(rel, line) for rel, _k, n, line in read_refs(root)
                   if n == target]
         assert_that({n for _r, _l, n in after.stale} == {target},
-                    "renaming it makes every reference to that name stale and "
-                    "nothing else stale")
+                    "renaming it makes every reference in the files this check "
+                    "reads to that name stale, and nothing else stale")
         assert_that([(rel, line) for rel, line, _n in after.stale] == citing,
                     "and every one of them is reported, in the order the tree "
                     "holds them -- a check that stopped at the first would leave "
@@ -513,7 +657,78 @@ def self_test():
 
     print()
 
-    # The found-nothing refusal. An empty tree is not a tree in which every name
+    # The named non-patch prepared change, in both directions, on the committed
+    # tree first and then on a copy. The glob over `.patch` does not match it,
+    # so without these two the seventh prepared change in `docs/ci/` is on disk
+    # with nothing holding either half of it.
+    for name in sorted(PREPARED_NON_PATCH):
+        assert_that(name in on_disk(REPO) and name not in scan(REPO).uncited,
+                    "`%s` is a prepared change in docs/ci/ and something names "
+                    "it -- the live direction, held for a file the `.patch` "
+                    "glob cannot see" % name)
+
+        with scratch_tree() as root:
+            (root / "docs" / "ci" / name).unlink()
+            gone = scan(root)
+            assert_that(gone.missing == [name] and gone.uncited == [],
+                        "and deleting it is refused: the missing-entry verdict "
+                        "names the file rather than counting it, and a glob "
+                        "that stopped matching it is not a clean tree")
+            assert_that(quiet(check_mode, gone)[1] == 1, "and the run is red")
+
+        # The citation half, stripped the way a real edit takes it: the name
+        # out of every prose file that has it. Prose and not the whole declared
+        # set, because the one place a `.patch` names this file is a `+`
+        # diff-body line -- see `scan`.
+        with scratch_tree() as root:
+            (root / "docs" / "ci" / name).write_text("a\n", encoding="utf-8")
+            for rel in markdown_files(root):
+                path = root / rel
+                text = path.read_text(encoding="utf-8")
+                if name in text:
+                    path.write_text(text.replace(name, "a retired change"),
+                                    encoding="utf-8")
+            stripped = scan(root)
+            assert_that(stripped.uncited == [name] and not stripped.missing,
+                        "and stripping every prose citation of it is refused "
+                        "the other way: it is on disk and nothing names it, "
+                        "which is the mirror of a stale name")
+            assert_that(quiet(check_mode, stripped)[1] == 1, "and red again")
+
+    print()
+
+    # A citation from a diff body does not sustain the liveness of a
+    # historical key, which is what keeps the widened reference set from
+    # making "still cited" satisfy itself. The one non-prose reference to the
+    # deleted patch in this tree is a bare mention in a patch header, so the
+    # case has to write the parsed spelling to have anything to hold.
+    with scratch_tree() as root:
+        key = "agent-gates-testdata-index.patch"
+        header = root / "docs" / "ci" / "agent-gates-capture-claims.patch"
+        header.write_text("# a prepared change citing `" + key + "`\n",
+                          encoding="utf-8")
+        assert_that(("docs/ci/agent-gates-capture-claims.patch", 1) in
+                    {(rel, line) for rel, _k, _n, line in read_refs(root)},
+                    "a backticked name in a prepared change's own header is a "
+                    "reference, which is the class a prose grep cannot see -- "
+                    "asserted on the file it came from, because this key is "
+                    "named in the tree's prose too and asserting the name alone "
+                    "would pass on that and pin nothing")
+        for rel in markdown_files(root):
+            path = root / rel
+            text = path.read_text(encoding="utf-8")
+            if key in text:
+                path.write_text(text.replace(key, "a retired name"),
+                                encoding="utf-8")
+        result = scan(root)
+        assert_that(result.uncited_keys == [key] and result.dead == [key],
+                    "and with every markdown citation gone the key is still "
+                    "reported dead: the liveness half is read over prose, so a "
+                    "patch's own header cannot keep the exemption alive on its "
+                    "own and the references could have been deleted unnoticed")
+
+    print()
+
     # resolved; it is a tree this tool read nothing in, and the two must not read
     # alike from an exit code.
     with mini_tree({"docs/note.md": "nothing here\n"}) as root:
@@ -532,13 +747,17 @@ def self_test():
     live = scan(REPO)
     assert_that(live.refs and live.patches,
                 "the committed tree is not empty: %d name reference(s) in %d "
-                "file(s) and %d patch(es) in docs/ci/"
+                "file(s) and %d prepared change(s) in docs/ci/"
                 % (len(live.refs), len(live.files), len(live.patches)))
-    # 2, not the 1 this branch was written against: #777 added the link in
-    # `xdata-census-self-test-gate.md` and #942 added the one in
-    # `pin-table-row-reconciliation.md`, so the merged tree carries both.
-    assert_that(len(live.links) == 2 and live.link_files,
-                "and the two markdown links onto a patch are found: %s"
+    # No count here, per the docstring's own rule applied to itself: this
+    # assertion read `len(live.links) == 2`, pinned against
+    # `xdata-census-self-test-gate.md` (#777) and `pin-table-row-reconciliation.md`
+    # (#942), and every later merge that added a link turned it red. The tree
+    # moved; the assertion did not. Non-emptiness is the claim that is true of
+    # the tree rather than of this tool, and the names stay in the message so a
+    # reader who emptied the set is told which ones went.
+    assert_that(live.links and live.link_files,
+                "and the markdown links onto a patch are found: %s"
                 % ", ".join(live.link_files))
     assert_that(not live.stale and not live.uncited and not live.dead,
                 "and the committed tree is clean")
@@ -555,6 +774,8 @@ def check_mode(result, verbose=False):
     Without that clause an empty tree is a perfect score, and so is a `docs/ci`
     that stopped being a directory or a pattern that stopped matching -- the
     three ways this check goes quiet are the ones a green run cannot see.
+    Every verdict `report` counts is part of the total this returns, the
+    `missing` one included.
     """
     if not result.refs and not result.links:
         print("found no patch reference at all: the population is empty, which "
@@ -568,9 +789,10 @@ def main() -> int:
         description=__doc__.splitlines()[0],
         formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true",
-                    help="fail on a stale reference, an uncited patch or a dead "
-                         "historical key (the default, and the gate's entry "
-                         "point)")
+                    help="fail on a stale reference, an uncited prepared "
+                         "change, a dead historical key or a named prepared "
+                         "change that is not there (the default, and the gate's "
+                         "entry point)")
     ap.add_argument("--self-test", action="store_true",
                     help="the refusals, on synthetic text and on a tempfile "
                          "copy of the committed tree")
@@ -585,9 +807,15 @@ def main() -> int:
     # The scope and the population print on every run, before the verdict, the
     # way `tools/run-tests.sh` prints what it ran: a reader holding only the exit
     # code should still be able to tell a clean tree from a discovery that
-    # matched nothing.
-    print(f"every `*.md` under the repository root, patch names against "
-          f"docs/ci/, {len(HISTORICAL)} historical key(s) exempt")
+    # matched nothing. The scope names the declared set rather than saying
+    # "every", because the set is a decision -- `REFERENCE_GLOBS` is two globs,
+    # and a reader who widens it has to know there was a width to widen.
+    print(f"every reference in the declared set ("
+          f"{', '.join('`%s`' % g for g in REFERENCE_GLOBS)}) under the "
+          f"repository root, patch names against docs/ci/, "
+          f"{len(HISTORICAL)} historical key(s) exempt and "
+          f"{len(PREPARED_NON_PATCH)} named non-patch prepared change(s) held "
+          f"both ways")
     print(population(result))
     return check_mode(result, args.verbose)
 

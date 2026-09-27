@@ -552,15 +552,26 @@ class TheCommittedTree(unittest.TestCase):
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        # 58 rather than 57, and 46 rather than 45, for one reason in two
-        # places: two suites have landed -- `test_check_no_append_logs.py` on
-        # 2026-09-27 and `ec/tools/test_bucket_c_codemap.py` with issue #49 --
-        # and nothing in the committed markdown cites a line of either yet, so
-        # the suite count and the unpinned tail each take one and `pinned` does
-        # not move. That is the tail doing its job, not a miss.
-        self.assertEqual(len(files), 58)
+        # The claim is the `12`, and only the `12`: twelve of the indexed suites
+        # are named by a `test_*.py:NNN` somewhere in committed markdown. That
+        # is a fact about the corpus, and it moves only when a write-up starts
+        # citing a line of a suite -- which is the axis the comment above
+        # describes, and the reason this assertion is the one worth keeping.
+        #
+        # **The two absolutes that used to sit beside it are gone**, and their
+        # absence is the finding rather than a loss. `len(files)` and
+        # `len(tail)` are a census of the tree, not a claim about it: both take
+        # one on every merge that lands a suite and its write-up, whichever
+        # side of the tail the new suite starts on. Asserting them made this
+        # method a value four concurrent branches each had to edit -- #1169,
+        # #1171, #1172 and #1177, from fork bases 56, 57, 57 and 58 -- so it
+        # conflicted in 18 of 21 branch pairs, and every resolution had to
+        # re-derive an arithmetic nobody had claimed. The comment block above
+        # already records this method losing 351 lines of step history to the
+        # same mistake in prose; the two numbers under it were the same lock in
+        # a shorter form. A suite landing is not a defect, and nothing here
+        # should go red for one.
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 46)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

@@ -175,6 +175,14 @@ MANIFEST = os.path.join(REPO, "bios", "ghidra", "manifest.csv")
 # both do (.gitattributes -merge). A digest column there would make adding one
 # require the merge-hostile operation this check exists to avoid needing.
 C_DIGESTS = os.path.join(REPO, "bios", "ghidra", "c-digests.csv")
+# The one committed decompile here that a person writes rather than the exporter,
+# so it is also the only one where a digest disagreement is the sanctioned
+# workflow instead of a fault -- bios/README.md calls it "Hand-written" and gives
+# the reason it exists. Matched on the basename, not the repo-relative path, so it
+# holds wherever the file sits: --self-test calls verify_c_digests() against /tmp
+# fixtures and the message has to branch there too, or the branch is only ever
+# exercised by the tree it was written for.
+HAND_EDITED_C = "OemOcDxe.annotated.c"
 # The five TE images, committed so `--check` and `--self-test` need neither
 # Ghidra nor a UEFIExtract run. bios/ghidra/README.md says why.
 TE_MODULES_DIR = os.path.join(REPO, "bios", "ghidra", "modules")
@@ -231,9 +239,9 @@ def committed_c_files(decompiled_dir):
     Sorted because the digest file is a committed artefact and two runs over the
     same tree have to produce the same bytes; the order a directory walk happens
     to return is not that. This walk has no exclusion, and that is the point for
-    the BIOS: `OemOcDxe.annotated.c` is the one hand-edited decompile in the
-    repository and it gets a digest like every other file, so editing the prose
-    is a visible committed diff rather than an edit the gate cannot see."""
+    the BIOS: `HAND_EDITED_C` is the one hand-edited decompile in the repository
+    and it gets a digest like every other file, so editing the prose is a
+    visible committed diff rather than an edit the gate cannot see."""
     out = []
     for dp, _dns, fns in os.walk(decompiled_dir):
         for fn in fns:
@@ -294,6 +302,30 @@ def write_c_digests(path=C_DIGESTS, decompiled_dir=DECOMPILED):
         w.writeheader()
         w.writerows(rows)
     return len(rows)
+
+
+def digest_mismatch_note(rel):
+    """The half of a digest-mismatch message that says what to do about it.
+
+    Split out from the measured half so the two failure strings -- the byte
+    count and the hash -- carry the same advice and cannot drift apart with
+    one updated and the other not. The advice itself branches on `HAND_EDITED_C`:
+    telling a reader who followed this repository's own convention that they
+    corrupted a file is an accusation, and the convention is
+    `bios/decompiled/OemOcDxe.annotated.c`.
+
+    Both branches fail. Only the explanation changes, because the digest's job
+    is to force a visible committed diff on the readable layer, and a branch
+    that downgraded this file to a warning would delete that quietly.
+    """
+    if os.path.basename(rel) == HAND_EDITED_C:
+        return ("This is the one hand-edited decompile in the repository, so a "
+                "digest that is behind is an uncommitted edit rather than "
+                "damage. Read the diff, then re-run --write-digests to "
+                "re-bless it: the digest records that the file changed, not "
+                "that the reading is right.")
+    return ("If this came from a re-export, re-run --write-digests; if it did "
+            "not, the file was truncated, overwritten or hand-edited.")
 
 
 def verify_c_digests(path=C_DIGESTS, decompiled_dir=DECOMPILED):
@@ -359,17 +391,13 @@ def verify_c_digests(path=C_DIGESTS, decompiled_dir=DECOMPILED):
             continue
         got_bytes = os.path.getsize(abs_path)
         if got_bytes != want_bytes:
-            bad.append("%s: %d byte(s) committed, %d on disk. If this came from a "
-                       "re-export, re-run --write-digests; if it did not, the file "
-                       "was truncated, overwritten or hand-edited."
-                       % (rel, want_bytes, got_bytes))
+            bad.append("%s: %d byte(s) committed, %d on disk. %s"
+                       % (rel, want_bytes, got_bytes, digest_mismatch_note(rel)))
             continue
         got = sha256(abs_path)
         if got != r["sha256"]:
-            bad.append("%s: committed digest %s, on disk %s. If this came from a "
-                       "re-export, re-run --write-digests; if it did not, the file "
-                       "was truncated, overwritten or hand-edited."
-                       % (rel, r["sha256"], got))
+            bad.append("%s: committed digest %s, on disk %s. %s"
+                       % (rel, r["sha256"], got, digest_mismatch_note(rel)))
     for rel in sorted(set(on_disk) - seen):
         bad.append("%s: a committed .c with no digest row" % rel)
     if len(rows) != len(on_disk):
@@ -1870,8 +1898,11 @@ def self_test():
         _files = committed_c_files(DECOMPILED)
         check("BIOS: one digest row per committed .c", len(_drows) == len(_files),
               "%d row(s), %d file(s)" % (len(_drows), len(_files)))
-        check("BIOS: the hand-edited restatement is digested like every other .c",
-              any(r["path"].endswith("OemOcDxe.annotated.c") for r in _drows))
+        # Keyed on the constant, so the message branch below and the row that
+        # makes it reachable cannot be about different files.
+        check("BIOS: the hand-edited restatement (%s) is digested like every "
+              "other .c" % HAND_EDITED_C,
+              any(r["path"].endswith(HAND_EDITED_C) for r in _drows))
     else:
         check("BIOS: c-digests.csv is committed", False, "not present")
     _d = tempfile.mkdtemp()
@@ -1894,6 +1925,13 @@ def self_test():
         _p = verify_c_digests(_dg, _d)
         check("BIOS: a .c that changed under its digest is caught, and the file is "
               "named", len(_p) == 1 and _key in _p[0], str(_p))
+        # The unedited export keeps the fault wording, and pinning it here is
+        # what makes the branch below a branch rather than a replacement: the
+        # same one-line difference in the file, two explanations, and which one
+        # is expected is the whole distinction.
+        check("BIOS: an unedited export's stale digest is still called truncation "
+              "or hand-mangling",
+              "truncated, overwritten or hand-edited" in _p[0], str(_p))
         # A row for a file that is not there.
         with open(_dg, "w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=C_DIGEST_COLUMNS, lineterminator="\n")
@@ -1956,6 +1994,42 @@ def self_test():
               "which is the one substitution a hash cannot see", _refused)
     finally:
         shutil.rmtree(_d, ignore_errors=True)
+
+    # The message branch, on a fixture named for the file it is about. Its own
+    # temp directory because this one carries a second .c, and adding a file to
+    # it would make every assertion above about a one-file digest a two-file
+    # one. Both failure strings are covered: a same-length rewrite reaches the
+    # hash, an append reaches the byte count, and the advice has to be the same
+    # in both or the branch is only half of what the reader sees.
+    _hd = tempfile.mkdtemp()
+    try:
+        _hc = os.path.join(_hd, HAND_EDITED_C)
+        with open(_hc, "w") as f:
+            f.write("// ==== FUN_00000260 @ 00000260\n")
+        _hgd = os.path.join(_hd, "c-digests.csv")
+        write_c_digests(_hgd, _hd)
+        _hkey = committed_c_files(_hd)[0][1]
+        with open(_hc) as f:
+            _reworded = f.read().replace("00000260", "0000026a")
+        with open(_hc, "w") as f:
+            f.write(_reworded)
+        _p = verify_c_digests(_hgd, _hd)
+        check("BIOS: a reworded hand-edited restatement still FAILS its digest, "
+              "and the message says the edit is the expected cause",
+              len(_p) == 1 and _hkey in _p[0] and "committed digest" in _p[0]
+              and "hand-edited decompile" in _p[0]
+              and "truncated" not in _p[0], str(_p))
+        write_c_digests(_hgd, _hd)
+        with open(_hc, "a") as f:
+            f.write("// a paragraph a person wrote\n")
+        _p = verify_c_digests(_hgd, _hd)
+        check("BIOS: the same branch carries the byte-count failure too, which "
+              "is the other of the two messages",
+              len(_p) == 1 and _hkey in _p[0] and "byte(s) committed" in _p[0]
+              and "hand-edited decompile" in _p[0]
+              and "truncated" not in _p[0], str(_p))
+    finally:
+        shutil.rmtree(_hd, ignore_errors=True)
     print("  all assertions passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
 

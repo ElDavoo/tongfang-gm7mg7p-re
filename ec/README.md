@@ -759,11 +759,16 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   `annotations/ghidra-functions.csv` and the generated XDATA names, and
   exports one C file per function to `decompiled/`. Two modes: the default
   re-exports from the committed project without touching it, and
-  `--mode rebuild-project` rewrites the project. `--check` and `--self-test`
-  run with no Ghidra and no network and are what CI calls — 0.19 s and 0.13 s.
-  `--self-test --cross-decoder` adds the advisory comparison against
-  `disasm8051.py`; it is 0.13 s, it prints rather than fails, and the deep gate
-  tier is what passes the flag. `--self-test --oracle` additionally rebuilds
+  `--mode rebuild-project` rewrites the project. After a re-export that
+  legitimately changed a `.c`, `--write-digests` refreshes
+  `ghidra/c-digests.csv` (no Ghidra; refuses to record a hash for a
+  zero-length `.c`), so a changed export is a visible committed diff instead
+  of a red `--check` with the fix in a different file. `--check` and
+  `--self-test` run with no Ghidra and no network and are what CI calls; their
+  cost is measured and dated in `ghidra/README.md`, which also records what it
+  superseded. `--self-test --cross-decoder` adds the advisory comparison
+  against `disasm8051.py`; it prints rather than fails, and the deep gate tier
+  is what passes the flag. `--self-test --oracle` additionally rebuilds
   and checks the output against the hand reading in
   `annotations/charge-target-derating.md`. Method, measured coverage and
   limits: `ghidra/README.md`.
