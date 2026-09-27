@@ -192,8 +192,10 @@ jobs:
           # sampled CSV cannot be joined row-for-row against the committed
           # report, and a CSV that silently covers half the firmware is the
           # defect this artifact exists to remove. The exit status is this
-          # step's, so a re-encode that finds something fails the run here too
-          # rather than uploading a CSV that disagrees with the log.
+          # step's, so a re-encode that finds something turns the run red here
+          # too -- the upload below is `if: always()` and is not gated on that
+          # exit status, which is the point of it: a failed night's reader
+          # needs the row that failed.
           #
           # The two `$RUNNER_TEMP` paths are spelled out rather than held in a
           # variable, so a reader of this file -- and `check_deep_schedule_emit`,

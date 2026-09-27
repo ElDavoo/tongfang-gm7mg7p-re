@@ -66,7 +66,8 @@ only covers what's specific to *this* copy.
      scheduled runs without telling anyone: a run that happened leaves an
      artifact behind and a run that did not leaves none, so "the nightly did not
      run" stays distinguishable from "the nightly found nothing". Absence is
-     observable, not failing; making a vanished run fail needs another checker.
+     observable, not failing; making a vanished run fail needs another checker
+     that runs when the scheduled one did not.
      Until it is landed, the re-encode is opt-in, and the reason it is opt-in
      rather than dropped is in `docs/findings.md` §14e — which also records
      what per-commit coverage is still missing, and it is not nothing: since

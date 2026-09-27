@@ -32,12 +32,14 @@ that fixes it does not have one.
 and an empty value is the same instruction to it as an unset one, which is what
 `evidence/ec-reencode/2026-09-23-sdas8051-versions.md` did deliberately. It
 matters because the committed report was measured with a pinned nix build —
-2,704 of its 2,711 rows, and the 7 exceptions are rows `d8525eae` added or
-replaced later under apt without re-running the rest — and the runner installs
-apt SDCC: a non-empty `SDAS8051` would put a *third* binary in the picture and
-the CSV's `assembler` column would name something the schedule's own "Name the
-assembler" step never printed. The 7 do not disturb the 52 below: all 58
-`assembler-gap` rows are on the nix build and all 7 apt rows read `match`.
+2,704 of its 2,711 rows, and the 7 exceptions are rows added or replaced under
+apt after that measurement without re-running the rest: five of them by
+`d8525eae`, `bank0,CC64` by `85741eca` and `bank1,C1E7` by `ca3b01ff` — and
+the runner installs apt SDCC: a non-empty `SDAS8051` would put a *third* binary
+in the picture and the CSV's `assembler` column would name something the
+schedule's own "Name the assembler" step never printed. The 7 do not disturb the
+52 below: all 58 `assembler-gap` rows are on the nix build and all 7 apt rows
+read `match`.
 
 ## The first reading, and the part that is not the assembler
 
