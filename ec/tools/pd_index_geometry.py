@@ -1706,9 +1706,12 @@ def access_self_test(d, check):
             (0x5950, 0xEE, 0x00, 0x095E, 0x085E),
             (0x5950, 0x65, 0x01, 0x08D5, 0x09D5),
             # 0x5792 ends `addc a,b`, so B survives and the full product stands.
-            # 0x0800 is what this site would build if it dropped B the way the
-            # three DPTR rows do.
-            (0x5792, 3, 0x77, 0x0A00, 0x0800)):
+            # 0x0900 is what this site would build if it dropped B the way the
+            # three DPTR rows do -- `clr a` in place of `mov a,#hi`, which
+            # still leaves the carry out of `add a,#0x9B` live into
+            # `addc a,#0x08`. 0x0800 would need that carry dropped too, which
+            # is not what those rows do.
+            (0x5792, 3, 0x77, 0x0A00, 0x0900)):
         got = byte_address(bytes.fromhex(ctor_runs[off]), a, b)
         check(got == want and got != not_,
               f"0x{off:04X} at A=0x{a:02X} B=0x{b:02X} builds 0x{want:04X}, not 0x{not_:04X}")

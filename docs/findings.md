@@ -12487,17 +12487,22 @@ strings in agreement pass. Six new rows compare the committed bytes against
 addresses worked out by hand, each paired with the address it rules out:
 `0x09B4`≠`0x08B4` and `0x095E`≠`0x085E` for the base-low carry below `0xFF`;
 `0x0912`≠`0x0A12`, `0x0916`≠`0x0A16`, `0x08D5`≠`0x09D5` above it; and
-`0x0A00`≠`0x0800` for `0x5792`, where `0x0800` is what it would build if it
-dropped B. Swapping one expectation to the pre-#74 value fails exactly that
-pin and nothing else. They are **not** a re-widening detector — they read the
-image, not the template, which is the independence that makes them worth
-having, and the string checks cover the other direction: re-widening fails 15
-checks, and re-widening plus regenerating the census fails 16.
+`0x0A00`≠`0x0900` for `0x5792`, where `0x0900` is what it would build if it
+dropped B the way the three DPTR rows do — `clr a` leaves the carry out of
+`add a,#0x9B` live into `addc a,#0x08`. Swapping one expectation to the
+pre-#74 value fails exactly that pin and nothing else. They are **not** a
+re-widening detector — they read the image, not the template, which is the
+independence that makes them worth having, and the string checks cover the
+other direction: re-widening the template in place fails 16 checks, and
+re-widening it *and* regenerating `pd-index-accesses.csv` to match fails 15 —
+the CSV-regeneration check is the one that clears, while the census property
+still fails, because it is computed from the decode rather than from the file
+on disk.
 
 Nothing behavioural: no index range is recovered, no `registers.yaml` row
 moves, no CSV changed, and no hardware or Windows step is implied. The self-test
 is run by hand and is **not** in `agent-gates.sh`, which is part of the copied
 `agent-pipeline` template set this pipeline's own `CLAUDE.md` says not to edit
-casually. Full account, the twelve-line grep classification and the mutation
+casually. Full account, the eleven-line grep classification and the mutation
 results are in
 [`findings/pd-index-low8-propagation.md`](findings/pd-index-low8-propagation.md).

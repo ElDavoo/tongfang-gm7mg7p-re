@@ -31,11 +31,18 @@ independent of the formatted-string expectations.
 ## Which files already carried `low8`, and which two did not
 
 `grep -rn '+ R7×0x5E\|+ A×0x5E\|+ R7×0x77' --include='*.md' .` finds
-**eleven** lines outside this file and the summary that links to it (the
-table below and `docs/findings.md` §96 add eight more, all of them this
-write-up quoting the pattern it is classifying). Nine of the eleven are
-correct as they stand and two were not; the classification is below, because
-"it matched the grep" is not the same as "it was wrong".
+**eleven lines in the whole tree**. Six are outside this file and the summary
+that links to it — five in `ec/annotations/pd-index-geometry.md`
+(`:71,74,602,639,728`) and one in `docs/findings/walk-window-terminators.md`
+(`:117`) — and of those six, five were correct as they stand and one,
+`walk-window-terminators.md:117`, was stale. The other five are inside the
+two of them: four are this write-up quoting the pattern it is classifying
+(the command above and three rows of the table below), and the fifth is
+`docs/findings.md:7824` (§57), the other stale line. Both stale lines are
+corrected in place below. The classification is in the table, because "it
+matched the grep" is not the same as "it was wrong" — and because three of
+its rows cite `0x578E` terms the grep does not reach at all, its alternation
+being written for the R7 spelling and `0x578E` writing `A×0x77`.
 
 | file | what it is | verdict |
 |---|---|---|
@@ -113,14 +120,15 @@ address the row exists to rule out:
 | `0x34D9` | `0x34DD` | 3 | `0x0916` | `0x0A16` | product `0x011A`; B discarded |
 | `0xDA9B → 0x5950` | `0x5950` | 2 | `0x095E` | `0x085E` | suffix entered with `2×0x77` in A:B; base-low carry |
 | `0xDA9B → 0x5950` | `0x5950` | 3 | `0x08D5` | `0x09D5` | product `0x0165`; B discarded |
-| `0x578E` | `0x5792` | 3 | `0x0A00` | `0x0800` | the contrast: B *is* added, so the full product stands |
+| `0x578E` | `0x5792` | 3 | `0x0A00` | `0x0900` | the contrast: B *is* added, so the full product stands |
 
 `0x5950` is the add-only suffix, entered with the product already in A:B
 rather than carrying its own `mul ab`, so its `a` and `b` are the halves of
 `R7×0x77` — `0xEE`/`0x00` and `0x65`/`0x01` — not the index and the
-multiplier. The `0x0800` in the last row is what `0x5792` would build if it
-dropped B the way the three DPTR rows do, which is what makes the row a
-contrast rather than a fourth instance.
+multiplier. The `0x0900` in the last row is what `0x5792` would build if it
+dropped B the way the three DPTR rows do — `clr a` in place of `mov a,#hi`,
+which still leaves the carry out of `add a,#0x9B` live into `addc a,#0x08`.
+That is what makes the row a contrast rather than a fourth instance.
 
 **What these pins catch, measured rather than asserted.** Swapping the
 `0x0912` expectation for the pre-#74 `0x0A12` fails exactly one check, and it
@@ -132,10 +140,13 @@ to the opcodes.
 the image, not the template, so re-widening the template leaves all six green.
 That is deliberate — it is the independence the issue asked for — but it means
 they are not a re-widening detector. The term-string checks and the CSV
-regeneration are: re-widening the template in place fails 15 checks, and
-re-widening it *and* regenerating `pd-index-accesses.csv` to match fails 16,
-the extra one being the census property above. The pins and the string checks
-cover opposite directions and neither substitutes for the other.
+regeneration are: re-widening the template in place fails 16 checks, and
+re-widening it *and* regenerating `pd-index-accesses.csv` to match fails 15.
+The one that clears is the CSV-regeneration check itself, which is what a
+regeneration is for; the census property above still fails, because
+`access_self_test` computes it from `rows = access_rows(d)` — the decode, not
+the file on disk — so nothing regenerated can satisfy it. The pins and the
+string checks cover opposite directions and neither substitutes for the other.
 
 `0xFFFC` for 16-bit wrap and the `0xB2D6` low-add-carry/high-byte-discard
 pair were already in the self-test, so neither is duplicated here.
@@ -166,7 +177,7 @@ $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --self-test
   ok  0x34DD at A=0x03 B=0x5E builds 0x0916, not 0x0A16
   ok  0x5950 at A=0xEE B=0x00 builds 0x095E, not 0x085E
   ok  0x5950 at A=0x65 B=0x01 builds 0x08D5, not 0x09D5
-  ok  0x5792 at A=0x03 B=0x77 builds 0x0A00, not 0x0800
+  ok  0x5792 at A=0x03 B=0x77 builds 0x0A00, not 0x0900
   ok  the census's 21 untruncated products are all the A:R1 form
   ...
   ok  ../annotations/pd-index-accesses.csv: complete CSV bytes/schema/order regenerate
