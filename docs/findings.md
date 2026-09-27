@@ -12383,3 +12383,62 @@ the reading's own limits are in
 its `ec/tools/test_paged_trampoline_framing.py` pins every byte, holds the
 negative controls that stop a "phantom for all 18" reader from passing, and
 parses this write-up's verdict table back to 18 rows.
+
+## 95. The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout (2026-09-27, issue #61)
+
+`ec/annotations/bank-call-audit.md` §9 finds the main EC image's inline `switch`
+tables by one five-byte literal, `d0 83 d0 82 f8`, and names its own blind spots
+in the same paragraph — a second reader spelled `pop dpl` first, a `ret`-based
+thunk, a caller reaching `0x7151` through a BL51 trampoline. This is that search
+run over twelve enumerated shapes and over both images, and the answer is
+different in each.
+
+**The main EC's uniqueness assertion survives the widening, and now for a
+read reason.** 36 candidates match a shape (18 `common`, 13 `bank0`, 5
+`bank1`), 10 of them reach a `movc a,@a+dptr` within eight instructions, and
+exactly one of those ten — `0x7151`, the reader §9 read — is named by an
+`lcall`. The other nine are each the `pop dpl ; pop dph` half of a
+`push dph ; push dpl` the same routine issued a few bytes earlier around one
+XDATA read, so they restore a pointer of their own and have **zero** `lcall`
+byte sites naming them. The tiering is not decoration: every one of the 36
+candidates, and every one of the 93 in the PD image, is a bare `d0 82 d0 83` or
+`d0 83 d0 82` at some offset, against 1 and 2 for the whole five-byte literal,
+so a search that stopped at the pops would return 93 phantoms in the PD image
+alone where it found one reader in the main EC. A reader that names its table
+with an immediate is not this family and is counted in its own bucket — **one**
+site, `0x104D`, which walks no table — and no trampoline in the image names
+`0x7151`: all 403 `trampolines()` DPTR immediates span `0x8031`-`0xFE00` and are
+all at or above `0x8000`, which is also what the structure predicts. A
+`ret`-based thunk and the computed-target caller remain unsearched, and are
+named as still open.
+
+**The PD image has three dispatchers, not two, and two of them are not this
+family's layout.** `0x119C` and `0x11C2` are the ones
+`ec/annotations/pd-image.md` and `pd_image_census.py` already name (9 and 16
+`lcall` sites, reconciled against that tool's committed figures so the two
+cannot disagree). **`0x11EF` is a third, with 3 call sites, that nothing in the
+tree names** — it is found only because the search went past the literal, since
+it has no `mov r0,a` at entry. Reading each reader's own loop gives entry
+strides of **3, 4 and 6**: `0x11C2` compares two key bytes against `B` and `r0`
+where the main EC's reader compares one against `r0`, and `0x11EF` compares
+four against `r4`-`r7`. So `decode_index_table.py`'s 3-byte
+`[address, address, case]` rule is the wrong rule for the latter two, and the
+new `ec/annotations/pd-index-table-spans.csv` carries a `reader_stride` column
+for exactly that reason: its `well_formed` column is the main EC's rule, and it
+is a statement about a table only where the stride is 3. **322 bytes of the PD
+image are read as table data** by this method and the full 28-row census is
+committed, failures included.
+
+**What the PD verdict is worth is weaker than the same verdict reads in the
+main EC, and that is a property of the region.** `malformed()`'s "resolves
+inside the caller's own region" test means *banked* in the main EC and only
+*flat `0x0000`-`0xFFFF`* in a 64 KiB program, so the 8-of-9 above is 8 spans
+read as tables under one weakened check plus two unchanged ones — and the two
+spans this method also calls well-formed under `0x11C2` are under the wrong
+rule and are not a statement about a table at all. Nothing behavioural: no
+register was read, no `status:` in `../ec/annotations/registers.yaml` moves, no
+committed main-EC CSV was regenerated (all three still come back
+byte-identical), and no handler of any span this method calls well-formed was
+walked. The full account, the `r2` listings, the nine hand-read lookalikes and
+the limits are in
+[`findings/table-reader-spellings.md`](findings/table-reader-spellings.md).
