@@ -5021,12 +5021,12 @@ def main() -> int:
                     help="registers.yaml for --reconcile")
     args = ap.parse_args()
 
-    # Refused here, before any mode runs, rather than inside the two of them:
-    # both are gates, and a flag that re-buckets occurrences while writing
-    # nothing must not be reachable from a mode whose claim is that the
-    # committed CSVs already match. `--check` would go red and `--self-test`
-    # would go red for the same reason, which is the point -- they should not
-    # be answerable to a switch.
+    # Refused here, before any mode runs: both are gates, and a flag that
+    # re-buckets occurrences while writing nothing must not be reachable
+    # from a mode whose claim is that the committed CSVs already match.
+    # What it costs, measured by ec/tools/xdata_guard_off_row_join.py:
+    # cluster_id moves on 507 of the 1,326 register rows and cluster_key on
+    # 15 of the 439 clusters: docs/findings/xdata-no-eq-guard-census-scale-join.md
     if args.no_eq_guard and (args.check or args.self_test):
         ap.error("--no-eq-guard changes what the census says, so it cannot be "
                  "combined with --check or --self-test. To see the pre-#178 "
