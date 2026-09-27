@@ -771,6 +771,18 @@ population than §7's 18 rather than a stronger one. None of the 170 was read
 one by one, so "these are phantoms" is not the claim here; "one of 170 has any
 frame evidence behind it" is.
 
+**Correction to the sentence above: they are decided in bulk, and every one of
+them is the block's own operand.** "None of the 170 was read one by one, so
+'these are phantoms' is not the claim here" was right of §8 and is superseded:
+§8.1 decides all 170 from a single byte identity rather than by reading each
+one, and finds every one of them *inside* the block `0x1150`-`0x1AC2` — a
+`mov dptr,#imm16` immediate read as a branch opcode, which does not rest on the
+anchor score §2 already showed buys nothing. What survives unchanged is the
+geometry in the same paragraph: the block is common-area, so a common-area
+branch starting within 128 bytes of an entry could reach it and a bank never
+can. That argument is untouched by the population it permits having turned out
+to be empty. §8.1.
+
 **Reproducing every table in this section from the committed CSV.** Each of
 them is a group-by over
 [`bank-relative-branch-targets.csv`](bank-relative-branch-targets.csv), not a
@@ -816,6 +828,59 @@ enumeration half only: `classify()` in `../tools/register_ref_table.py` still
 stops at a relative opcode rather than following it, so a `--callee-depth 1`
 handoff made by a conditional branch is still invisible to it. That is issue
 #40, and it stays open.
+
+### 8.1 The 170 are the block's own operands, so nothing reaches it from outside
+
+**All 170 relative sites counted above have their own address inside the
+trampoline block**, `0x1150`-`0x1AC2` — the 403 entries `trampolines()` finds,
+each `90 hh ll 02 11 00` or `90 hh ll 02 11 14`, on an exact 6-byte stride with
+no gap in 403. None of the 9076 is a caller branching into the block, and no
+rel8 tail-branch edge class has to be added to the bank-attribution set for
+#48.
+
+The method is one byte identity, applied in bulk rather than one site at a
+time. For an entry at `e`, a relative site at `e+1` or `e+2` reads its
+displacement from a byte of the entry's own six — `d[e+3]`, the `ljmp` opcode,
+for a 3-byte form at `e+1` or a 2-byte form at `e+2` — and lands on `e+6`, the
+next entry. 168 of the 170 carry `disp == 0x02` and resolve to `entry+6` for
+exactly that reason (155 at `e+1` as a 3-byte form, 13 at `e+2` as a 2-byte
+form); the two that do not are the same artefact reading `d[e+2]` instead, both
+2-byte forms at `e+1`, at `0x01637` and `0x0195B`. The one anchored site is that
+reading too, and it is the `0xDB` low byte of a `mov dptr,#imm16` read as
+`djnz r1`:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x1966; pd 4' /tmp/bank0.bin
+       ╎╎   0x00001966      90e0db         mov dptr, #0xe0db
+       └──< 0x00001969      021100         ljmp 0x1100
+        ╎   0x0000196c      90e0a2         mov dptr, #0xe0a2
+        └─< 0x0000196f      021100         ljmp 0x1100
+$ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x1966 --runtime 0x1966 -n 4
+0x1966  90e0db   mov  dptr,#0xe0db
+0x1969  021100   ljmp 0x1100
+0x196c  90e0a2   mov  dptr,#0xe0a2
+0x196f  021100   ljmp 0x1100
+```
+
+`0x01968` is that `0xDB`; its displacement is read from `d[0x1969]`, the
+`ljmp`, giving the target `0x196C` — the next entry, three bytes into the
+following `mov dptr`. `0x1967`'s `0xE0` is not a relative opcode, which is why
+one site here and not two. Its 1-of-24 frame score is §2's dense-run artefact:
+a 6-byte-stride table converges from any walk.
+
+**The negative for #48 is exhaustive, not a sample**, and that is the one place
+the calibration elsewhere in this file runs the other way. A byte scan can
+invent a branch that is not there, but it cannot miss one: a rel8 branch is a
+rel8 opcode at its own PC, so §8's over-counting does not touch the count of
+*external* sites. The one gap is `relative_sites()`'s guard
+`i + OPCODE_LEN[op] <= hi` (`../tools/audit_call_targets.py:176`), which
+declines a 3-byte form in a region's last two bytes: six addresses, and all six
+hold `0xFF`, which is not a relative opcode, so nothing is dropped. Two
+`--self-test` lines now hold the framing and the zero, and both name themselves
+if a future image breaks either. The full write-up, the group-by behind every
+figure, the blind spot (this takes the block's framing as given and so cannot
+find an entry `trampolines()` missed), and what this does not say are in
+[`../../docs/findings/trampoline-relative-branch-sites.md`](../../docs/findings/trampoline-relative-branch-sites.md).
 
 ## 9. The `0x8038` table, read against its reader
 

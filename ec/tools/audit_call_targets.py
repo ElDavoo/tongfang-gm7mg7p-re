@@ -95,6 +95,12 @@ PAGE = 0x800  # what a paged target cannot leave
 # this from both of its region's edges therefore cannot resolve outside it.
 REL_REACH = 128
 
+# Bytes from one BL51 trampoline entry to the next: `90 hi lo 02 11 00`, a
+# 3-byte `mov dptr,#imm16` and a 3-byte `ljmp`. Measured over the block rather
+# than assumed by it -- --self-test asserts the run, because the byte scan reads
+# those six bytes as operands and the reading is only as good as the framing.
+TRAMP_STRIDE = 6
+
 # Regions this audit covers, in REGIONS order. The PD image is flat, so its
 # calls are not a banking question and are out of scope here.
 AUDITED = ("common", "bank0", "bank1")
@@ -772,6 +778,41 @@ def self_test(d: bytes) -> int:
           f"caller's own region, every one of them within {REL_REACH} bytes of a "
           f"region edge as the rel8 range requires"
           f"{'' if not far else ' -- not at ' + ', '.join(far[:8])}")
+
+    # Section 6 counts relative sites landing on the BL51 block without deciding
+    # them. Every one of those is inside the block, so a branch reaching an
+    # entry from outside it -- the tail-branch edge class section 2's trampoline
+    # model does not have -- is what the count has to answer, and the answer is
+    # reported here rather than left to the reader of the table. The block's
+    # framing is what licenses the answer, so it is asserted first rather than
+    # assumed: `trampolines()` keys on the `90 hi lo 02 11 ..` shape, and a dense
+    # stride over the whole span is what says the shape covers the span rather
+    # than starting somewhere inside it.
+    entries = sorted(trampolines(d, bank_switch_stubs(d)))
+    # `0x0000`/`-1` rather than a raise: an image whose stubs the first line
+    # did not find has no block, and this is the line that says so.
+    lo0, hi0 = (entries[0], entries[-1]) if entries else (0, -1)
+    gaps = sorted({b - a for a, b in zip(entries, entries[1:])})
+    check(gaps == [TRAMP_STRIDE],
+          f"the {len(entries)} trampoline entries are one {TRAMP_STRIDE}-byte-stride "
+          f"run over 0x{lo0:04X}-0x{hi0 + TRAMP_STRIDE:04X} -- the framing the next "
+          f"line rests on"
+          f"{'' if gaps == [TRAMP_STRIDE] else ' -- strides ' + (', '.join(str(g) for g in gaps) or 'none to measure')}")
+
+    on_entry, outside = 0, []
+    onto = set(entries)
+    for name in AUDITED:
+        lo, hi = region_bounds(name)
+        for off, _, target in relative_sites(d, lo, hi):
+            if target in onto:
+                on_entry += 1
+                if not lo0 <= off <= hi0 + TRAMP_STRIDE:
+                    outside.append(f"0x{off:05X}")
+    check(not outside,
+          f"all {on_entry} relative site(s) resolving onto a trampoline entry have "
+          f"their own address inside the block's 0x{lo0:04X}-0x{hi0 + TRAMP_STRIDE:04X}, "
+          f"so none of them is a branch reaching the block from outside it"
+          f"{'' if not outside else ' -- reached it from outside at ' + ', '.join(outside[:8])}")
 
     print()
     print("self-test FAILED" if bad else "self-test passed")
