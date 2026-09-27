@@ -51,7 +51,11 @@ its known answers, which is why they are no longer the 0.19 s and 0.13 s
 0.10 s (`--report` measures 0.17 s end to end) — the price of 1,920 short
 decodes and 1,920 reads of a `.c`, with no subprocess per function, where the
 four-function version it replaces spawned one and re-scanned the whole
-2,714-row listing index for each of them.
+2,714-row listing index for each of them. `docs/findings.md` §14j re-took the
+pair on the tree carrying §14i as well and recorded **0.48 s** and **0.77 s**,
+three runs each; that is what the pair costs on the merged tree, and the two
+figures above are of 2026-09-24, which §14j calls still correct of the tree it
+measured.
 
 `--cross-decoder` prints the run; `--report` records it; `--check` ratchets
 on the record. So the comparison's result is no longer read by nobody, which
