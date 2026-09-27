@@ -125,15 +125,33 @@ trusting one of theirs: every row says whether it was verified against
 
 - **New work goes in new files; shared files get a pointer.** Several agent
   PRs are open at once, and every edit to a long shared file
-  (`docs/findings.md`, `ec/README.md`, `ec/annotations/xdata-register-map.md`)
+  (`ec/README.md`, `ec/annotations/xdata-register-map.md`)
   is a likely merge conflict with one of them. Write a new investigation up
-  in its own file under `docs/findings/` (one per topic or issue), and add
-  only a short summary and link to `docs/findings.md`. Retractions of an
+  in its own file under `docs/findings/` (one per topic or issue) — **and
+  that is the whole of it; see the next bullet, which is why there is no
+  longer a summary to add anywhere.** Retractions of an
   existing section still go in place, per the calibration rule above. The
   same applies to code: a new tool is a new file, not another mode bolted
   onto an existing one. Structured sources of truth (`registers.yaml`, the
   annotation CSVs) stay single files: edit the rows you need and nothing
   else.
+- **`docs/findings.md` is closed, and this is enforced rather than
+  advised.** A new finding is a new file under `docs/findings/`, and
+  nothing else — no summary section, no pointer appended here.
+  `ec/tools/check_findings_frozen.py` fails a change that adds a section,
+  deletes one, renumbers one or reuses a number, and
+  `gen_findings_index.py --check` fails a stale
+  `docs/findings/INDEX.md`; the patch that puts both in the gate is
+  `docs/ci/agent-gates-findings-frozen.patch`. The sections below §97 stay
+  citable and stay put — the numbering is not what stopped, the *counter*
+  is. **Do not "helpfully" add a summary section; that is the one edit to
+  this file that a change is not allowed to make**, and the reason is
+  mechanical rather than stylistic: it was the file every change had to
+  append to, so seven branches in flight collided in the same hunk every
+  time, and the resolutions were pages of prose about which section number
+  was "the last section in the file" — a claim the next append falsifies,
+  which the file made 51 times against a rule it had written down twice.
+  Cite a finding by **file and heading**, not by a new `§N`.
 - **`ec/annotations/registers.yaml`** is the source of truth for EC
   register status. Its `status:` vocabulary
   (`confirmed-working`, `confirmed-inert`, `present-untested`, `absent`,

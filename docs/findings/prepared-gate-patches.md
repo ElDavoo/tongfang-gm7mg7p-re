@@ -320,3 +320,35 @@ and `tools/test_agent_gates_patches.py` is still green unchanged — which is
 itself the evidence the patch was not disturbed. **A future re-cut should not go
 looking for a correction to make here.** Read with
 [`disasm8051-oracle-from-the-annotations.md`](disasm8051-oracle-from-the-annotations.md).
+
+## A seventh patch, in the one region the table above does not use
+
+**2026-09-27.** `docs/ci/agent-gates-findings-frozen.patch` adds
+`check_findings_frozen()`, which runs `ec/tools/check_findings_frozen.py` and
+`ec/tools/gen_findings_index.py --check`. It is here for the same reason the
+file is: a re-cut needs to know where it may cut, and this one deliberately
+takes the **only two regions the collision table above does not list**.
+
+| region of `agent-gates.sh` | used by this patch |
+|---|---|
+| between `check_shellcheck()` and `check_doc_links()` | the function |
+| the `gate` list, after `gate 'doc links'` | the one `gate` line |
+
+Neither region is in the table's tool list, its arms, or the
+`check_register_counts` `gate` list, so this patch's hunks have no context any
+existing patch writes into, and the two compose in either order —
+`tools/test_agent_gates_patches.py` proves it rather than the prose here
+claiming it.
+
+**It is cut against the current file, and the six older ones are not.** Every
+patch in this set whose hunk context has since drifted out of
+`.github/scripts/agent-gates.sh` fails to apply — `test_each_patch_applies_on_its_own`
+is red on `origin/main` for `agent-gates-0751-self-test.patch`,
+`agent-gates-disasm8051-self-test.patch` and others, and the failure message is
+the instruction: *"Re-cut it against the current file; the context a hunk needs
+is whatever the file has today, not whatever it had when the patch was cut."*
+That is a real and separate piece of work, and it is **not** done here — three
+of the six do not add a function at all but rewrite lines inside existing ones,
+so a re-cut is a per-patch reading rather than a mechanical splice. Until it is
+done, the gate runs two tools and the other six checkers are not in it, which
+is why a PR can merge with five failing offline suites and a green cheap tier.

@@ -1,0 +1,93 @@
+# docs/findings.md is closed, and the generated findings index is current.
+# Prepared here rather than landed, for the reason
+# docs/ci/agent-gates-capture-claims.patch gives:
+# `.github/scripts/agent-gates.sh` is copied from the agent-pipeline template
+# and the pipeline's push token has no `workflow` scope, so a branch editing it
+# fails at the end of the PR rather than at the start of it.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-findings-frozen.patch
+#
+# and that is the whole change.
+#
+# Added 2026-09-27. The write-up is the head of `docs/findings.md` itself, and
+# the tool is `ec/tools/check_findings_frozen.py`.
+#
+# Why the cheap tier: both halves read the committed tree and the standard
+# library. No firmware image, no Ghidra, no network, no assembler, and no
+# PyYAML. The section count is a `re` over one file and the index check is a
+# directory listing; together they are milliseconds against a cheap tier
+# docs/agent-pipeline.md records at 5.9 s.
+#
+# What it buys. `docs/findings.md` is the file every change in this repository
+# was required to touch, so a change in flight and a change that landed an hour
+# ago collided in the same hunk, and the resolution was a page of prose about
+# which section number was "the last section in the file" -- a claim the next
+# append falsifies, which the file made 51 times against a rule it had written
+# down twice. A gate is the only thing that beats a rule written in prose, and
+# this is that gate: one more section, a deleted section, a reused number or a
+# renumbered one is a red run, and the new section is named in the report.
+#
+# **It holds the file closed, not the prose in it.** Nothing here reads whether
+# a section is still true; `docs/findings.md` §4a-4d is the rule for that and is
+# unchanged. What is held is the count and the ordering, which are the two
+# things that move when a change collides with another.
+#
+# The second call is `gen_findings_index.py --check`, and it is here for the
+# same reason from the other direction: `docs/findings/INDEX.md` is generated
+# from the write-ups beside it, so two branches that both add one and both
+# regenerate produce the same file, and the conflict is resolved in the content
+# once rather than in prose every time. An index nothing regenerates goes stale
+# within a week and is worse than none.
+#
+# **Placement is the whole design problem here, and the answer was measured
+# rather than chosen.** The obvious spot -- a `gate` line in the cheap tier's
+# list -- cannot work: four prepared patches write into that list and the
+# windows their hunks need overlap, so a fifth lands in one order and not the
+# other, and `tools/test_agent_gates_patches.py` checks every ordered pair. So
+# this patch adds **no `gate` line at all**. Its function goes immediately
+# before `check_doc_links()` and is called from inside it, and no other patch in
+# the set has `check_doc_links()` in any hunk's context window -- which is a
+# claim the pair test proves rather than this header asserting.
+#
+# The cost is honest and small: the two checks report under the `doc links`
+# tier rather than a tier of their own. They are two counts over markdown and
+# the tree layout, which is what that tier already is.
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index ce9f0964..5d139b80 100755
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -299,6 +299,24 @@ check_shellcheck() {
+ # A relative markdown link that 404s is a documentation bug that's
+ # otherwise invisible until someone clicks it -- and CLAUDE.md/findings.md
+ # cross-reference each other and ec/annotations/registers.yaml constantly.
++# docs/findings.md is closed to new sections, and the generated index beside
++# the write-ups is current. Two cheap counts -- the section list in the
++# narrative and the file list in the index -- both over the committed tree and
++# the standard library, and neither reads firmware, Ghidra or the network.
++#
++# Called from check_doc_links() rather than given its own `gate` line, and that
++# is composition, not tidiness: four prepared patches write into the `gate`
++# list and the windows their hunks need overlap, so a fifth there cannot land
++# beside them in both orders. `tools/test_agent_gates_patches.py` proves every
++# ordered pair, and this is the placement that needs no pair.
++check_findings_frozen() {
++  local rc=0
++  python3 ec/tools/check_findings_frozen.py || rc=1
++  python3 ec/tools/gen_findings_index.py --check || rc=1
++  return "$rc"
++}
++
++
+ check_doc_links() {
+   local broken=0
+   while IFS=: read -r file link; do
+@@ -307,6 +325,7 @@ check_doc_links() {
+     [ -f "$dir/$link" ] || { echo "BROKEN: $file -> $link"; broken=1; }
+   done < <(grep -rEo '\]\(([^:)]+\.md)\)' --include='*.md' . 2>/dev/null \
+             | sed -E 's/:\]\(([^)]+)\)/:\1/')
++  check_findings_frozen || broken=1
+   return "$broken"
+ }
+ 

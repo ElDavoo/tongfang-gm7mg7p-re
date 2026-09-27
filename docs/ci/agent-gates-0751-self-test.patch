@@ -61,7 +61,7 @@
 # of the gate will see it, rather than only here.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index 125d647..9d80607 100755
+index ce9f0964..b12093af 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
 @@ -123,6 +123,7 @@ check_ghidra_tooling() {
@@ -71,8 +71,8 @@ index 125d647..9d80607 100755
 +              ec/tools/grade_0751_isolation.py \
                ec/tools/citation_gap_scan.py \
                ec/tools/xdata_register_map.py \
-               bios/tools/bios_extract.py \
-@@ -189,6 +190,27 @@ check_ghidra_tooling() {
+               ec/tools/check_status_vocabulary.py \
+@@ -190,6 +191,27 @@ check_ghidra_tooling() {
        *call_graph.py)
          python3 "$tool" --check && python3 "$tool" --self-test || rc=1
          ;;

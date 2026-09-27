@@ -11,6 +11,27 @@ investigation** (§4l, §9, and the gate claim corrected in §14). They're kept
 in, not edited out, because the *reason* each one was wrong is itself a finding
 about the limits of the methods used.
 
+**This file is frozen. A new finding is a new file under `docs/findings/`, and
+not a section here.** The sections below run to **§97** and none is added to
+them; `ec/tools/check_findings_frozen.py` fails a change that adds one, and
+`docs/findings/INDEX.md` is the entry point for everything newer.
+
+**Why, given that this file is the record the rest of the tree cites.** Because
+the opposite was tried and it does not scale. Every finding is written up in its
+own file and *summarised* here, so every change in the repository appends to one
+file, and two changes in flight collide at the same hunk every time. The
+resolution was never "merge the two findings" — it was a page of prose arguing
+about which section number was **the last section in the file**, a claim every
+later append falsifies. There are **51** such clauses in the text below, against
+a rule this file wrote down *twice* not to write them, because the rule was prose
+and prose loses. The `§N` numbers stay, and stay citable, because the sections
+they name do not move; what stops is the counter, not the numbering.
+
+The 116 write-ups under `docs/findings/` are where new work goes. The sections
+below are kept whole rather than re-homed: they are the history, several of them
+are cited by number from files that predate the freeze, and moving them would
+break those citations to solve a problem the freeze already solves.
+
 ## 1. Battery health, honestly
 
 `charge_full` / `charge_full_design` = 2000/4100 mAh, 445 cycles. Genuinely
