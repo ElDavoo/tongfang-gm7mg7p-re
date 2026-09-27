@@ -2,11 +2,13 @@
 """The row-level join issue #832 asked for: what `--no-eq-guard` moves, at census scale.
 
 `docs/findings/xdata-cluster-names-guard-off-recipe.md` runs the census twice
-and reports what moved for **nine hand-named clusters**. Everything else the
-tree has said about this flag has been counted over clusters or over names.
-The 1,326 rows of `annotations/xdata-registers.csv` have never been joined to
-a regeneration row by row, so "what does the flag do" has no answer at the only
-granularity a reader of that CSV is holding.
+and reports what moved for **nine hand-named clusters**, and its §6a heredoc
+joins `annotations/xdata-registers.csv` to a regeneration on `addr` to count
+`write` and `refs` changes row by row. The clustering columns were the ones
+with no row-level count at all: nothing had asked `cluster_id` or `cluster_key`
+of a register row, split any of it by `program`, or reported the `both` bucket
+on its own. So the row-level answer existed for two of the four columns here,
+not for none of them, and this is the join that covers the other two.
 
 This is that join. It takes a committed pair and a guard-off pair and prints
 four things, each against a denominator: the register rows whose columns differ,

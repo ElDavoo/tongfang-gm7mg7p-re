@@ -5,9 +5,11 @@ The write-up for [issue
 about `ec/tools/xdata_register_map.py`'s `--no-eq-guard` refusal arguing from
 an instruction where the next refusal in the same `main()` — the
 `--export-ownership` one — argues from a measurement. What this branch adds is
-the measurement, at the granularity the issue said had never been measured: the
-1,326 rows of `ec/annotations/xdata-registers.csv` joined row by row against a
-guard-off regeneration, split by program.
+the measurement, at the granularity the issue asked for and the tree had only
+half of: the 1,326 rows of `ec/annotations/xdata-registers.csv` joined row by
+row against a guard-off regeneration, split by program, over all four of the
+columns a reader of that CSV is holding. Two of the four — `write` and `refs` —
+had a row-level answer already; the two clustering columns had none.
 
 **Nothing here is a hardware claim.** No register was read back, no firmware
 image was opened, and no laptop, EC or Windows machine is involved. Every
@@ -42,13 +44,20 @@ measurement sits on top of it rather than beside it:
 | **0 of 1,326** rows change `refs`; **210 of 1,326** change `write` | the recipe page's own heredoc, §6a's transcript | the `write`/`refs` answer, already measured |
 | nine names: 3 movers, 1 changed on both columns, 5 untouched | the recipe page's table | the names, at key level |
 
-Every one of those is counted over **clusters or names**. None is counted over
-rows, and the issue is right that this was the gap: "of the 1,326 rows, how many
-change `cluster_id`" and "of the 439 clusters, how many change `cluster_key`"
-are different questions, and a reader holding the registers CSV is holding the
-first one. So that is what `ec/tools/xdata_guard_off_row_join.py` is for, and
-the last section below is what putting the two answers next to each other
-turned up.
+Three of those four are counted over **clusters or names**. The fourth is a row
+count and the table above says so: §6a's heredoc
+([`xdata-cluster-names-guard-off-recipe.md:150-162`](xdata-cluster-names-guard-off-recipe.md))
+builds `{r['addr']: r}` over the committed CSV and sums one column per key, on
+the same 1,326 rows and the same `addr` join this tool uses. So the row-level
+answer existed for **two of the four columns, not for none of them**, and it is
+the two clustering columns it was missing: nothing had counted `cluster_id` or
+`cluster_key` per row, nothing had split any of it by `program`, and nothing
+had reported the `both` bucket separately. That narrower question is the one
+the issue asks — "of the 1,326 rows, how many change `cluster_id`" against "of
+the 439 clusters, how many change `cluster_key`" are different questions, and a
+reader holding the registers CSV is holding the first one. So that is what
+`ec/tools/xdata_guard_off_row_join.py` is for, and the last section below is
+what putting the two answers next to each other turned up.
 
 ## The join, and the key it uses
 

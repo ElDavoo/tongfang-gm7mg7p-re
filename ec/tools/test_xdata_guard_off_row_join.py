@@ -280,7 +280,7 @@ class TheRowLevelJoin(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.text, _off_c, _off_r = joined()
+        cls.text, cls.off_clusters, cls.off_registers = joined()
         cls.report = Report(cls.text)
         cls.committed = rows_of(REGISTERS)
 
@@ -386,17 +386,44 @@ class TheRowLevelJoin(unittest.TestCase):
                          self.report.figure("rows whose cluster_key differs")[0])
 
     def test_the_key_moving_rows_sit_in_exactly_the_moved_keys(self):
-        # The reconciliation itself, as arithmetic: the distinct committed
-        # clusters a key-changing row sits in are the moved keys, so the
-        # cluster-level count and the row-level count are one population at
-        # two granularities rather than two populations that happen to be
-        # near each other.
-        below = {k: v for _i, k, v in self.report.below("cluster_key that moves")}
+        # The reconciliation itself, and it is asserted as two **sets** rather
+        # than as the two counts the report prints. The counts cannot disagree:
+        # `touched` is a subset of the moved keys by construction, because
+        # `cluster_key` is a content hash of program plus sorted members
+        # (`xdata_register_map.py:2600-2610`) -- a committed key that still
+        # existed guard-off would carry the same membership, so its rows would
+        # carry the same key and would not be in `touched` at all. Comparing
+        # the two counts would be comparing a number with itself. The sets can
+        # disagree: a committed key could leave the guard-off census with no
+        # key-changing row sitting in it, or a key-changing row could sit in a
+        # committed cluster that kept its key under some route the report does
+        # not report. So the set equality is the claim, and it is the one that
+        # makes the 15 the row count's own population rather than a number
+        # that happens to match.
+        below = self.report.below("cluster_key that moves")
+        reported = {k: v for _i, k, v in below}
         self.assertEqual(
-            below["distinct committed keys a key-changing row sits in"],
-            below["of those, absent from the guard-off set"],
-            "a key changed without the cluster losing it is not a move; the "
-            "two counts being equal is what makes the 15 the row count's own")
+            int(reported["of those, absent from the guard-off set"]),
+            int(reported["distinct committed keys a key-changing row sits in"]),
+            "the report's own two counts disagree, so the tool no longer "
+            "believes `touched` is a subset of the moved keys")
+        # Both sides recomputed from the CSVs, over the same two files the
+        # report reads, so this compares the tool's join against the rows
+        # rather than the tool against itself.
+        on = {r["addr"]: r for r in self.committed}
+        off = {r["addr"]: r for r in rows_of(self.off_registers)}
+        touched = {on[a]["cluster_key"] for a in on.keys() & off.keys()
+                   if on[a]["cluster_key"] != off[a]["cluster_key"]}
+        off_keys = {r.get("cluster_key", "") for r in rows_of(self.off_clusters)}
+        moved = {r.get("cluster_key", "") for r in rows_of(CLUSTERS)
+                 if r.get("cluster_key", "") not in off_keys}
+        self.assertTrue(touched, "no key-changing row, so there is nothing to "
+                                 "reconcile against the moved keys")
+        self.assertEqual(touched, moved,
+                         "the committed clusters a key-changing row sits in "
+                         "are not the committed keys the guard-off census "
+                         "dropped; the 15 and the 336 would be two "
+                         "populations rather than one at two granularities")
 
     def test_a_row_missing_from_one_census_is_its_own_bucket(self):
         # Both censuses here cover one address universe, so both "only"
