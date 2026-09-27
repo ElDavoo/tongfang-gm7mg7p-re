@@ -51,12 +51,12 @@ the tree is keyed to.
 
 **That run is caught, but loudly and by other tools — not silently, and not by
 these two files agreeing with each other.** `--check` is refused with
-`--no-eq-guard` (guard 1, `:3618`), so it always regenerates the *guard-on*
-census and compares the on-disk file to that. A guard-off file can never match
-it, by construction: an on-disk guard-off file and a fresh guard-on generation
-disagree by definition, not by accident. So the harm a bare run gets to do is
-a corrupted committed source of truth plus a red `--check` and a red
-`check_cluster_citations.py`, not a wrong census that quietly certifies itself.
+`--no-eq-guard` (guard 1, `args.check or args.self_test` at `:4976`), so it
+always regenerates the *guard-on* census and compares the on-disk file to that.
+A guard-off file can never match it, by construction: an on-disk guard-off file
+and a fresh guard-on generation disagree by definition. So the harm a bare run
+does is a corrupted committed source of truth plus a red `--check` and a red
+`check_cluster_citations.py`, not a wrong census that certifies itself.
 No mutation is needed to see it — write a guard-off census to scratch, then
 point `--check` at it:
 
@@ -302,14 +302,34 @@ Its `GUARD` recipe is the literal line pair
 ```
 
 and that pair **no longer exists in the tool.** #528 threaded the flag through
-as a parameter — `store_target(text, start, end, eq_guard=True)` at `:1220`,
-`if eq_guard and stripped.startswith("==")` at `:1243`, carried to `scan()` at
-`:1604` and flipped by `not args.no_eq_guard` at `:2292` — so deleting the two
-lines no longer removes the rejection; it removes a conditional and the guard
-stays on for every run. The suite's own guard against exactly this fires
-first, which is why the error is an `AssertionError` and not a silently
-doubled census: *"the `==` guard is not where §6a's recipe deletes it; the
-guard-off census this suite builds is not the one §6a measured."*
+as a parameter — `def store_target(text, start, end, eq_guard=True)` at
+`:1730`, `if eq_guard and stripped.startswith("==")` at `:1753`, carried to
+`def scan()` at `:2367` and flipped by `not args.no_eq_guard` at `:3148` — so
+deleting the two lines no longer removes the rejection; it removes a
+conditional and the guard stays on for every run. The suite's own guard
+against exactly this fires first, which is why the error is an
+`AssertionError` and not a silently doubled census: *"the `==` guard is not
+where §6a's recipe deletes it; the guard-off census this suite builds is not
+the one §6a measured."*
+
+> **Corrected 2026-09-26, issue #873.** The four line numbers in the walk above
+> are re-measured by `grep -n` on `d330478`, and the code each one names is now
+> written into the sentence rather than left to the number: `def store_target(
+> text, start, end, eq_guard=True)` is at **`:1730`**, `if eq_guard and
+> stripped.startswith("==")` at **`:1753`**, `def scan()` at **`:2367`** and the
+> `not args.no_eq_guard` flip at **`:3148`**, against the `:1220`, `:1243`,
+> `:1604` and `:2292` above — a drift of **510, 510, 763 and 856 lines** on this
+> tree, and the reason the number alone cannot be the citation. The paragraph's
+> *reasoning* is undisturbed: all four lines still exist, and the guard is still
+> a conditional in front of the rejection. **What changed is the reason #816
+> gave for leaving the pins standing** — "a correction that adds lines to the
+> file it corrects invalidates its own line numbers" — which is a real trap and
+> is why the block below says so too. This correction adds lines to a
+> *markdown* file, not to the tool, and the numbers it carries are content, so
+> that trap no longer applies to them; the one place it still does is noted in
+> the block below. The write-up is
+> [`xdata-no-eq-guard-citation-anchors.md`](xdata-no-eq-guard-citation-anchors.md)
+> and `ec/tools/check_eq_guard_citations.py` holds all four.
 
   > **Corrected 2026-09-25, issue #816.** The whole of that paragraph and the
   > transcript above it are left standing rather than rewritten, and none of it
@@ -359,6 +379,37 @@ guard-off census this suite builds is not the one §6a measured."*
   > **silently**. That is the failure mode #753's seventh case exists to stop,
   > and the write-up for it is
   > [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md).
+
+> **Corrected 2026-09-26, issue #873.** The four pins this block measures are
+> left exactly as written, because they were true of the tree this block landed
+> on and §4a-4d keeps a superseded figure visible. What has been re-measured is
+> where they are **now**, on `d330478`: `def store_target(text, start, end,
+> eq_guard=True)` is at `:1730` rather than `:1572`, `if eq_guard and
+> stripped.startswith("==")` at `:1753` rather than `:1595`, `def scan()` at
+> `:2367` rather than `:2168`, and the `not args.no_eq_guard` flip at `:3148`
+> rather than `:2917` — so the drift this block measures as 352, 352, 564 and
+> 625 lines is **510, 510, 763 and 856** on this tree, and the two numbers that
+> agreed with each other still do, for the reason this block gives. The same
+> re-measurement moved the `xdata-register-map.md:1228` pair this block names
+> (`:1582` → `:1753`, and the committed-output refusal `:4495-4499` → `:4985`,
+> with the `--check` refusal it used to be confused with at `:4976`); that
+> file's own correction is at the end of it. **The self-invalidation trap is
+> real and it is why this block is a block**: it cites
+> `xdata-register-map.md:1228` and `docs/findings.md:4885-4890`, so a change
+> above either of those would move the numbers under it. Nothing in this
+> correction adds a line above either, which is why the block is quoted rather
+> than edited in place.
+>
+> **The rest of this file's tool-line pins, so the next sweep starts from a
+> list.** The mutation table above cites guard 1 at `:3618` and guard 2 at
+> `:3627-3628`; those are the same two refusals, at `:4976` and `:4985` on
+> `d330478`, and the table is a record of mutations applied to a scratch copy of
+> the tool as it stood, so re-pointing it would falsify what it says rather than
+> fix it. Three more are stale for other claims and belong to a different sweep:
+> `:86`'s `:4602-4605` is a `co_reading_group_table` print header rather than
+> the comment it names, `:638`'s `:2485` is a blank line, and `:672`'s
+> `:4623-4632` is `--export-ownership`'s refusal pair, now at `:5002-5011`.
+> The write-up carries all of them with what is there instead.
 
 The flip used to sit in `generate()`; #566 moved the census into
 `census_and_groups()` when it added the co-reading relation, so the line to

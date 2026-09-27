@@ -741,14 +741,61 @@ class TheCommittedTree(unittest.TestCase):
         # there, so that clause describes a state main has since carried past.
         # Measured with the tool below on this tree, not by adding the two sides
         # up, per §4a-4d.
+        #
+        # **#873's step is the same shape as #1009's and one suite rather than
+        # two.** `ec/tools/test_check_eq_guard_citations.py` is indexed and no
+        # committed markdown cites a line of it -- its write-up cites the tool
+        # it checks, not the suite that checks the tool -- so it joins the
+        # tail, the named count of 12 does not move, and the step is
+        # **44 / 12 / 32** on a tree carrying this step alone. That `44` is the
+        # same number two steps above arrived at, from a different suite and a
+        # different `main`, and both stay written: each is true of the tree it
+        # was measured on, per §4a-4d.
+        #
+        # **And on this merge it lands beside #1037's and #95's rather than
+        # instead of either, so the merged tree is the 47th suite and no
+        # single side's figure is the tree's.** Three suites are indexed
+        # rather than one -- `test_check_history_checkouts_run.py`,
+        # `bios/tools/test_ifr_census.py` and `test_pd_image_census.py` from
+        # `main`, `test_check_eq_guard_citations.py` from #873 -- and all
+        # three are in the tail, so the denominator takes all three and the
+        # named count is unmoved: **47 / 12 / 35**. Measured with the tool on
+        # the merged tree rather than derived from either side's arithmetic,
+        # and held at the merged figure for the reason the `41 -> 42` case
+        # above gives. The `46 / 12 / 34` and the `44 / 12 / 32` stay written
+        # above, each true of the tree it was measured on, per §4a-4d.
+        #
+        # **And on this tree the step is `47 -> 48`, one suite from each side
+        # again -- the second merge on this axis where neither side's own figure
+        # is the tree's.** Each side is one low here, and for the reason the
+        # paragraph above gives rather than a new one: #1008 measured a tree
+        # that had not yet taken #873's suite, and #873 measured a tree that had
+        # not yet taken #1008's, so each side was counting a landing the other
+        # had yet to make. **The two are
+        # `ec/tools/test_census_index_third_column_edits.py` and
+        # `ec/tools/test_check_eq_guard_citations.py`; both are indexed, both are
+        # in the tail, and neither is named by a committed pin** -- the first's
+        # write-up (`docs/findings/testdata-index-repair-census.md`) names its
+        # suite and its tool by path and never as
+        # `test_census_index_third_column_edits.py:NNN`, and the second's
+        # (`docs/findings/xdata-no-eq-guard-citation-anchors.md`) cites the tool
+        # it checks and never the suite that checks the tool, each for #811's
+        # reason the four landings above give -- so the denominator takes both,
+        # the named count holds at the `12` both sides reached, and the tail
+        # moves `35` -> `36`. **Both copies of the `47 / 12 / 35` above are
+        # therefore one low, each for a different missing suite, and both stay
+        # written, each true of the tree it was measured on**, per §4a-4d; that
+        # they agree is not a cross-check, for the reason the paragraph above
+        # gives. Measured with the tool below on this tree, not by adding the two
+        # sides up, per §4a-4d.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
         # 44 -> 45 was one suite from each side of that merge, 45 -> 46 is
-        # #26's alone, and 46 -> 47 is #1008's; the named count is unmoved
-        # through all three, so the tail takes every one.
+        # #26's alone, and 46 -> 47 is #1008's on both sides; the named count
+        # is unmoved through all three, so the tail takes every one.
         #
-        # **47 -> 48 is #40's, and again only the tail moves.**
+        # **47 -> 48 is #40's on `main`, and again only the tail moves.**
         # `ec/tools/test_walk_flow_follow.py` is indexed and named by no
         # committed pin, for the reason #1008's suite is: its write-up
         # (`docs/findings/walk-flow-follow.md`) names the suite and the tool
@@ -779,9 +826,41 @@ class TheCommittedTree(unittest.TestCase):
         # axis working, not drift: a suite with no committed line-citation
         # belongs in the tail, and the pin that says so is what keeps the count
         # from being carried forward unexamined.
-        self.assertEqual(len(files), 49)
+        #
+        # **49 -> 50 is #873's, and it is the same single-suite step, but it is
+        # measured on a tree that carries a correction the two above were not.**
+        # `ec/tools/test_check_eq_guard_citations.py` is a `test_*.py` under
+        # `ec/tools`, so `suites()` returns it, and `unpinned()` files it for
+        # the same reason every suite here is filed: its write-up
+        # (`docs/findings/xdata-no-eq-guard-citation-anchors.md`) names the
+        # suite and the checker *by path* and never as
+        # `test_check_eq_guard_citations.py:NNN`. So the named count holds at
+        # the `12` and the tail takes `37` -> `38`: **50 / 12 / 38**, measured
+        # with the tool below on this tree rather than by adding one to either
+        # side's total, per §4a-4d. Every `49 / 12 / 37` above stays written,
+        # each true of the tree it was measured on.
+        #
+        # **The measurement is only reproducible because this change also prunes
+        # `.claude/` from the walk, and without that it is not reproducible at
+        # all on the working copy this was measured on.** `census.suites()`
+        # walked the tree it was given and pruned `.git/` and `vendor/`, so a
+        # `git worktree` of this repository parked under `.claude/worktrees/`
+        # -- gitignored, so `git status` never shows it, and entirely ordinary
+        # for anyone working on this repository with an agent -- contributed its
+        # own `test_*.py` files to this population: **three** of them, on this
+        # tree, which is why the first run of this suite here read `53 / 12 /
+        # 41` and failed against a `49` that CI has always seen. On CI the
+        # directory does not exist and the count is `50`; the committed figures
+        # were therefore reproducible on CI and *not* on a developer's machine,
+        # which is the one property a figure asserted in this file has to have.
+        # `PRUNED` now carries `.claude/` beside the other two, on the grounds
+        # its docstring gives for them, and the population is a function of the
+        # committed tree again. **The `53 / 12 / 41` was a property of the
+        # working copy and not of the repository, and is left here as the record
+        # of what the walk did before it was corrected** rather than edited out.
+        self.assertEqual(len(files), 50)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 37)
+        self.assertEqual(len(tail), 38)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

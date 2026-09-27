@@ -4936,18 +4936,18 @@ and per §1 all 42 come from the overlapping exports.
 > the two figures that did reproduce: 833 references leaving `write`, 210 of
 > 1,171 addresses changing, and the `0x08A8` / `0x0843` rows.
 > Both line citations were wrong against the tool as it now stands: the
-> classifier is `store_target()` at `xdata_register_map.py:916`, its `==`
-> rejection is at `:939`, and `ASSIGN` is at `:243` — not `:277` and not line
-> 138, both of which land on comments in the current file. Those four are
-> pinned to the head version of the tool. The first attempt at them was
-> measured against `96bc8e89` and ran exactly four lines low, because the
-> `--no-eq-guard` paragraph the round-3 fix added to the module docstring
-> sits above `ASSIGN` and moves every citation below it by that much; say
-> which tree a citation is measured against, or it drifts again. The 1,172 is
-> 1,171 rows.
-> The diff this called follow-up work has landed, and the census in the tree has
-> been post-guard since. `xdata_register_map.py --no-eq-guard` now re-derives
-> the before column from the committed tool, and
+> classifier is `def store_target()` at `xdata_register_map.py:1730`, its `==`
+> rejection `if eq_guard and stripped.startswith("==")` is at `:1753`, and
+> `ASSIGN` is at `:377` — not `:277` and not line 138, both of which land on
+> comments in the current file. Those four are pinned to the tool as of
+> `d330478`, by `grep -n` over it. The first attempt at them was measured
+> against `96bc8e89` and ran exactly four lines low, because the
+> `--no-eq-guard` paragraph the round-3 fix added to the module docstring sits
+> above `ASSIGN` and moves every citation below it by that much; say which tree
+> a citation is measured against, or it drifts again. The 1,172 is 1,171 rows.
+> The diff this called follow-up work has landed, and the census in the tree
+> has been post-guard since. `xdata_register_map.py --no-eq-guard` now
+> re-derives the before column from the committed tool, and
 > `xdata-06c2-06db-timers.md` §6a carries the corrected measurement.
 
 **What a clean result means, precisely.** The committed files carry no
@@ -7237,11 +7237,11 @@ at nine is `6bf9c234`, #279. The wrong version is kept here rather than edited
 out, per §4a; the full derivation is in
 [`xdata-4-4-identity-rederivation.md`](findings/xdata-4-4-identity-rederivation.md)'s
 "Which tree §4.4 was measured against".)*
-Re-running the block's own recipe with the flag that now does what its
-workaround did (`--no-eq-guard`, `xdata_register_map.py:4568`) gives 439 → 445,
-124 ranks intact and 315 changed, 424 keys unchanged, 434 committed rows
-reaching a new cluster, 15 clusters a key cannot carry (10 on overlap, 5 on
-nothing), nine names carried and 430 committed clusters with a key and none.
+Re-running the block's recipe with the flag that now does what its workaround
+did (`--no-eq-guard`, `ap.add_argument` in `xdata_register_map.py:4947`) gives
+439 → 445, 124 ranks intact and 315 changed, 424 keys unchanged, 434 committed
+rows reaching a new cluster, 15 clusters a key cannot carry (10 on overlap, 5
+on nothing), nine names carried and 430 committed clusters with a key and none.
 Every superseded figure stays visible beside a correction naming the tree it
 belongs to, which is the shape the section's own #256 and #279 corrections
 already use, and §4.2's `479` — a half the console block beside it had already
@@ -7255,11 +7255,11 @@ keeps citing is the tool's own `with no name 430` line rather than a row count �
 the conflation the issue itself warns about one paragraph later, so the re-run's
 figures are what the block now carries and the disagreement is written down
 rather than pasted. Two things this pass found that are not figures:
-`ec/tools/test_xdata_cluster_names.py` is **red on `main`**, because its `GUARD`
-literal predates the parameterised guard at `xdata_register_map.py:1582` and
-its two-largest case pairs ids with names a generation behind — reported, not
-edited around, and a follow-up rather than a line to move inside a
-documentation change; and `test_xdata_cluster_names.py:286` carries a
+`ec/tools/test_xdata_cluster_names.py` is **red on `main`**, because its
+`GUARD` literal predates the parameterised guard, `eq_guard and`, at
+`xdata_register_map.py:1753` and its two-largest case pairs ids with names a
+generation behind — reported, not edited around, and a follow-up rather than a
+line to move here; and `test_xdata_cluster_names.py:286` carries a
 third-generation figure in its docstring, recorded rather than fixed.
 
 ## 45. The testdata index's `Feeds` column and its self-indexed nested tables are read too (2026-09-25, issue #746)
@@ -12506,3 +12506,72 @@ is run by hand and is **not** in `agent-gates.sh`, which is part of the copied
 casually. Full account, the eleven-line grep classification and the mutation
 results are in
 [`findings/pd-index-low8-propagation.md`](findings/pd-index-low8-propagation.md).
+## 97. The `--no-eq-guard` mechanism's own line citations are content-anchored, and a checker holds the anchors (2026-09-26, issue #873)
+
+> **Numbering note, added at the merge, extended at the second, third and
+> fourth, and kept to a path rather than a paragraph each time.**
+> Written as §87, and #870's summary (`8c51e6ed`) took the same next free number
+> this one did in the same window, so the rule §66's numbering note set at the
+> third merge applies unchanged and has applied at every step since: **the
+> number `main` held first keeps it, and the section arriving second gives
+> way.** The path is **87 → 93 → 94 → 96 → 97** and the content is the same
+> section throughout. `main` reached §87 through §91 while this section was off in the
+> tree — §87 in #870, §88 in #1037, §89 in #26, §90 in #1032 and §91 in #1033 —
+> and §92 is #1008's, landed in the window after this branch forked. The §93 so
+> reached was held by #57's summary in the same merge (`e0a9115a`, committed as
+> §93 on `main` before the merge began), and the §94 so reached was held here
+> too: `main` carried §94 to #54 and then §95 to #61 in `e6c95b8c` while this
+> section sat in review, and then §96 to #73 in `7aecdb4a`,
+> so **§97 is the next free number on the merged tree and this summary takes
+> it.** Each earlier step stays written above rather than
+> edited into the next, per §4a-4d: every one of them is true of the tree it was
+> measured on, and only the last is true of this one.
+>
+> **Four pointers this change adds are repointed to §97, and the numbers that
+> are *not* repointed are the ones naming other sections.** Repointed: the
+> write-up's summary table row, its "declined" paragraph,
+> `test_check_eq_guard_citations.py`'s comment, and `check_eq_guard_citations.py`'s
+> comment — all four name *this* summary. Not repointed: the `§87` above that
+> names #870's section, the two below that name §17 and §45, the `§92` in §81's
+> title that names #1008's, and every `§93` that names #57's section, in #57's
+> own summary and inside §92's note — those are pointers at other sections and
+> are correct where they stand, which is the whole content of the rule.
+> Nothing in the tree cites this summary itself, and no tool, test or gate reads
+> a section number out of this file, for the reason §88's note gives.
+
+**Five line citations in this file named code they were not written for.** The
+`--no-eq-guard` block above cited `xdata_register_map.py:4568` for the flag, and
+on `d330478` that line is `--co-reading-group-table prints the other half: every
+group over two` — **a different flag's help**. `ap.add_argument("--no-eq-guard"`
+is at **`:4947`**. That is the shape issue #873 found at `:4457`, naming the tail
+of `--reconcile`'s help (`"image and registers.yaml, unlike every other mode"`,
+now **`:4934`**): on this tree the same defect has moved on to a *third* flag's
+help, which is the argument for anchoring the code rather than re-pointing the
+number. §17's #254 correction block cited `xdata_register_map.py:916` for
+`store_target()`, `:939` for its `==` rejection and `:243` for `ASSIGN`, and
+those three land on a comment about callers, a `("write_r3r4_to_xdata_pair",
+"write")` tuple and prose about `cluster_key`. Re-measured, `def
+store_target()` is at **`:1730`**, its `==` rejection at **`:1753`** and `ASSIGN`
+at **`:377`**, the first two named as content in the block now. The block's own
+reason for being a block — that a first attempt at those pins "ran exactly four
+lines low" because nothing said which tree it was measured against — is the whole
+of this section: those pins have since moved 814 lines, and the sentence is
+quoted above because it is right. `:1582` for the parameterised guard, in the
+§45 paragraph, is 171 lines low and is `:1753` too.
+
+**Every number above is a `grep -n` over a committed file, measured on
+`d330478`, and is a property of that tree rather than a constant.** Nothing here
+is a claim about the EC, the firmware, or any register's behaviour: the guard is
+still a conditional in front of the rejection is a statement about
+`xdata_register_map.py:1753` and nothing else, and it is the claim every one of
+these corrections depends on. The same pins were re-anchored in
+`ec/annotations/xdata-register-map.md`, in
+`xdata-no-eq-guard-refusal-contract.md`, in
+`xdata-no-eq-guard-measured-state-correction.md` and in
+`xdata-4-4-identity-rederivation.md`, each with a dated note per §4a-4d, and
+`ec/tools/check_eq_guard_citations.py` holds every one of them so the next
+growth of the tool is a red run rather than a sentence that reads correctly.
+The write-up is
+[`findings/xdata-no-eq-guard-citation-anchors.md`](findings/xdata-no-eq-guard-citation-anchors.md).
+**Not in any gate**: `.github/` is template-copied and this branch's token has
+no `workflow` scope.
