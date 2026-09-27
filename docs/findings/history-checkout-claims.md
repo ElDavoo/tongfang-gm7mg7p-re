@@ -270,6 +270,19 @@ call is an upstream change and a re-copy rather than a line here, and this
 branch's token has no `workflow` scope. It runs under `tools/run-tests.sh`,
 which is where those two live.
 
+**Prepared for the gate as of 2026-09-26 (issue #1033), and the sentence above
+is still true** — a `check_history_checkouts()` function and a
+`gate 'history checkouts'` line now exist as a patch, not as a gate line, and
+no commit runs either check until a human lands it. They are in
+`docs/ci/agent-gates-capture-claims.patch` rather than a patch of their own
+because the seven-line `gate` list admits no insertion point that composes with
+the set already prepared; the anchor table, the method and the alternatives
+left out are in
+[`history-checkouts-gate-wiring.md`](history-checkouts-gate-wiring.md).
+`docs/agent-pipeline.md` item 5 carries it. **Not claimed: that the invariant
+has ever run in CI** — it has not, and the patch is the evidence it *would* go
+red, not a record of a red run.
+
 ## Two facts recorded for other issues
 
 **#997's "the tree's only suite that reads git history" is no longer true of
