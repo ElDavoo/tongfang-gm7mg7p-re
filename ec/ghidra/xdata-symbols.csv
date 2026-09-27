@@ -24,7 +24,7 @@ addr,name,from_register,register_status,derivation,programs
 0x07E4,LIGHTBAR_BAT_CTRL_GREEN,LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE,unknown-not-absent,name-split,bank0;bank1
 0x07E5,LIGHTBAR_BAT_CTRL_BLUE,LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE,unknown-not-absent,name-split,bank0;bank1
 0x078C,KBD_STATUS,KBD_STATUS,present-untested,scalar-name,bank0;bank1
-0x07CC,USB_C_POWER_PRIORITY,USB_C_POWER_PRIORITY,present-untested,scalar-name,bank0;bank1
+0x07CC,USB_C_POWER_PRIORITY,USB_C_POWER_PRIORITY,unknown-not-absent,scalar-name,bank0;bank1
 0x043E,CPU_TEMP,CPU_TEMP,confirmed-working,scalar-name,bank0;bank1
 0x044F,GPU_TEMP,GPU_TEMP,confirmed-working,scalar-name,bank0;bank1
 0x0400,BAT_POWER_UNIT_0,BAT_POWER_UNIT,present-untested,override,bank0;bank1

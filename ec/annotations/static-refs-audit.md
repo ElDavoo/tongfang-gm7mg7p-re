@@ -776,3 +776,65 @@ in its entry rather than papered over: the C-level method counts the
 decompile, and misses 0xC4E7, whose decompile is a bare `return;`. One too
 many and one too few on a total that lands on 6 either way. `0x1666` and
 `0x166A` agree with the image in both count and composition.
+
+## 9. The `0x07CC` vocabulary question, opened and answered (2026-09-27, issue #32)
+
+**§2's row for `0x07CC` and the sentence below it are left as they were
+written**, per the retraction pattern in `../../docs/findings.md` §4a-4d. That
+row still reads `present-untested | present-untested` in the "status after"
+column, and §2's own words still stand:
+
+> `USB_C_POWER_PRIORITY` (`0x07CC`) is still labelled `present-untested` on a
+> PD-only count; its entry already says the count is not EC-side evidence, and
+> re-grading it is a vocabulary question this audit deliberately does not open.
+
+The question is now open, and answered: **`0x07CC` is re-graded to
+`unknown-not-absent`**, the value `registers.yaml`'s own header defines in
+exactly these terms and the value five sibling PD-only entries already carry.
+No new status value was invented for it — CLAUDE.md asks for the existing
+values, and the argument for one would have to be that `unknown-not-absent` is
+the wrong name, which it is not. The write-up is
+[`../../docs/findings/pd-only-status-vocabulary.md`](../../docs/findings/pd-only-status-vocabulary.md);
+the rule that grades it is now stated in the `status values:` header comment
+and held by `../tools/check_status_vocabulary.py`.
+
+**No count in this file moved.** The `6 / 0 / 6` row is unchanged, the
+per-address tables in §5 are unchanged, and `../tools/check_register_counts.py`
+re-derives every count from the committed image exactly as before — which is
+the point: the re-grade is a statement about what a count warrants, not about
+what the image contains. `ec/ghidra/xdata-symbols.csv` moved in one cell
+(`0x07CC`'s `register_status`, carried through verbatim by the generator),
+and the `name` column is untouched, so no export and no `--mode rebuild-project`
+is involved.
+
+**This section widens the sweep; it does not extend the tables.** §2 and §5
+are a 29-address snapshot, taken when this file was written, and §6's is a
+57-address one — the same terms §6, §7 and §8 set out, which is why this
+section states its consequences rather than editing the sections above. The
+sweep is over **every entry in `registers.yaml` as it stands, 160 entries /
+192 addresses**, not over this file's 29, because an entry added since would
+not appear in a table written then. Its result, in the mechanical form the
+tool prints on every run:
+
+- **6 entries are PD-only** — no EC-side site on any address, at least one
+  PD-image site: `0x07D0`, `0x07D1`, `0x07E2`-`0x07E5` (one entry), `0x07D6`,
+  `0x07D7`, `0x07CC`. Five carried `unknown-not-absent` before this change and
+  one did not; `0x07CC` was the only entry in the file claiming EC-side
+  presence on a PD-only count, so the issue's "any other entry in the same
+  position" resolves to nothing else.
+- **0 entries are partly split** — no entry mixes an EC-side address with a
+  PD-only one. `0x04A6` at 3 EC-side / 4 PD-side would be, so the count is
+  printed rather than assumed, and the count rule is written per address.
+- **6 entries have no sites in either image**, unchanged by this: `absent`
+  ×2 (`0x0726`, `0x0765`), `unknown-not-absent` ×3 (`0x07B9`, `0x07C7`,
+  `0x07C8`), `confirmed-not-this-mechanism` ×1 (`0x0748`-`0x074B`).
+
+That last row is where the two open questions this change leaves behind live,
+both recorded in the findings file rather than settled here: whether `absent`
+is the right word for a zero in both images when `0x07B9` on the identical
+shape says `unknown-not-absent` and `0x0726`'s own note says "Real verdict:
+unknown"; and what a single `present-untested` is worth when its one EC-side
+site is a DPTR handoff that resolves no further, `0x0420` being the clearest
+case and its own note saying whether the byte is touched at all is not
+established. Neither is a re-grade this issue asked for, and the check
+deliberately encodes neither.
