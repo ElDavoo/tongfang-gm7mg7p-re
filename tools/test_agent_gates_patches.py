@@ -329,24 +329,31 @@ class CompositionTests(unittest.TestCase):
 
 @unittest.skipUnless(has_git(), 'no git on PATH')
 class FoldTests(unittest.TestCase):
-    """The folded patch still carries both of the checks it absorbed.
+    """The folded patch still carries all three of the checks it absorbed.
 
     `check_testdata_index()` came out of its own patch because that patch and
-    `check_capture_claims()` could not both be landed. Folding is only the
-    right answer while both halves are still there: a later re-cut that keeps
-    the one function and drops the other would apply cleanly, pass every case
-    above, and quietly lose a gate. This is the case that says so.
+    `check_capture_claims()` could not both be landed, and
+    `check_history_checkouts()` joined the same file for the same reason two
+    folds later: a seventh patch has no `gate` line it can insert that
+    composes with the six already here, which
+    `docs/findings/history-checkouts-gate-wiring.md` measures anchor by
+    anchor. Folding is only the right answer while every half is still there:
+    a later re-cut that keeps two functions and drops the third would apply
+    cleanly, pass every case above, and quietly lose a gate. This is the case
+    that says so, and it grows a line per fold for the same reason.
     """
 
     FOLDED = 'docs/ci/agent-gates-capture-claims.patch'
     REQUIRED = [
         'check_capture_claims() {',
         'check_testdata_index() {',
+        'check_history_checkouts() {',
         "gate 'capture claims'   check_capture_claims",
         "gate 'testdata index'   check_testdata_index",
+        "gate 'history checkouts'  check_history_checkouts",
     ]
 
-    def test_both_checks_and_both_gate_lines_land(self):
+    def test_all_three_checks_and_all_three_gate_lines_land(self):
         with scratch_tree() as tree:
             done = apply_patch(tree, self.FOLDED)
             self.assertEqual(done.returncode, 0, done.stderr)
@@ -355,11 +362,14 @@ class FoldTests(unittest.TestCase):
             with self.subTest(line=line):
                 self.assertIn(
                     line, landed,
-                    f'{self.FOLDED} no longer lands {line!r}. That patch '
-                    'absorbed agent-gates-testdata-index.patch because the two '
-                    'could not both be landed at the same anchors; a re-cut '
-                    'that keeps one half and drops the other still applies, so '
-                    'nothing else here would notice.')
+                    f'{self.FOLDED} no longer lands {line!r}. That patch has '
+                    'absorbed two others -- agent-gates-testdata-index.patch '
+                    'in #745, and the history-checkouts check in #1033 -- '
+                    'because the checks could not be landed at the same '
+                    'anchors as separate patches. A re-cut that keeps some '
+                    'halves and drops others still applies, still composes, '
+                    'and still passes every other case here, so nothing else '
+                    'in this suite would notice.')
 
 
 @unittest.skipUnless(has_git(), 'no git on PATH')

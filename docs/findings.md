@@ -11672,8 +11672,14 @@ files parsed twice, chosen over widening `report()`'s two-tuple because two
 cases in the suite the issue says to leave alone unpack it. **The alternative —
 pin 0 and call it a hole in a comment — was declined**, because a later reader
 takes 0 as the contract, which is the defect in the one suite meant to hold it.
-**Nothing here is a claim that a gate exists**: none runs this tool, and #1033,
-which wants one to key on this return value, has not landed.
+**Nothing here is a claim that a gate exists**: none runs this tool. The clause
+that read "and #1033, which wants one to key on this return value, has not
+landed" was true when this section was written and is kept visible per §4a-4d;
+#1033 has since landed as §91, **still as a prepared patch and not as a gate
+line**, so the conclusion is unmoved and only the reason's tense moved. The
+`check_history_checkouts()` function and its `gate 'history checkouts'` line
+exist in `docs/ci/agent-gates-capture-claims.patch` and no commit runs them
+until a human lands that.
 
 **`ec/tools/test_check_history_checkouts_run.py` is new, a separate file per
 `CLAUDE.md`'s rule**, and this landing does not edit the report suite at all —
@@ -11823,3 +11829,26 @@ edited**: the issue is *about* a workflow and the change is to a tool that reads
 it. The full account, both report outputs transcribed, and what is still *not
 found by this method* is in
 [`findings/history-checkout-prompt-reach.md`](findings/history-checkout-prompt-reach.md).
+
+## 91. The checkout-depth check is prepared for the cheap gate, folded into a patch that had to be (2026-09-26, issue #1033)
+
+> **Numbering note, added at the merge.** Written as §90, and #1032's summary
+> (`6b5bf965`) took the same next free number this one did in the same window,
+> so the rule §66's numbering note set at the third merge applies unchanged: the
+> number `main` held first keeps it, and the section arriving second gives way.
+> It is renumbered to **§91**, and §90 above is #1032's, which reached the number
+> a commit earlier. **One reference pointed at this section and was repointed**,
+> the amendment this branch added to §88's "Nothing here is a claim that a gate
+> exists" paragraph, which read "#1033 has since landed as §90" and now reads
+> §91; nothing else in the tree names it, the write-up names §86 and §4a-4d,
+> and no tool, test or gate reads a section number out of this file, for the
+> reason §88's note gives.
+
+§86's checker is not in a gate and now has a patch that would put it there, for
+a human to land: a `check_history_checkouts()` function and a
+`gate 'history checkouts'` line, in `docs/ci/agent-gates-capture-claims.patch`
+rather than a patch of their own, because the seven-line `gate` list admits no
+insertion point that composes with the six patches already prepared. Measured,
+with the method, the two alternatives left out, the issue's two wrong line
+references, and a "what is not claimed" that says the invariant has **never**
+run in CI: [`findings/history-checkouts-gate-wiring.md`](findings/history-checkouts-gate-wiring.md).

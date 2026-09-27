@@ -193,15 +193,45 @@ only covers what's specific to *this* copy.
      `check_register_counts`, and the whole of it is prepared at
      `docs/ci/agent-gates-capture-claims.patch`; a human lands it with
      `git apply docs/ci/agent-gates-capture-claims.patch`. That patch carries
-     item 9's check as well, for the reason item 9 gives. Cheap tier for the
-     same reason item 4 gives: it needs the committed CSVs and the standard
-     library's `csv` module — no firmware image, no Ghidra, no assembler. It
-     is not here for item 4's reason, template-copied file and no `workflow`
-     scope on the token, and **until a human lands it, no commit runs it** and
-     the next false capture claim merges the way the last two did. Its own
-     suite (`ec/tools/test_check_capture_claims.py`) needs no wiring to be
-     run at all: `tools/run-tests.sh` discovers every `test_*.py` in the
-     repository, so it is already collected by the runner above.
+     item 9's check as well, for the reason item 9 gives, and a third:
+     **`check_history_checkouts()` and `gate 'history checkouts'`**
+     (2026-09-26, issue #1033), which holds the inverse of the claim #1009
+     retracted — every job that runs a history reader has a full-depth
+     checkout — derived from the committed workflows rather than from prose.
+     A re-copy of `ci.yml` from the template that drops `fetch-depth: 0` from
+     the `gates` job breaks no job, and turns this tier red with a *history
+     requirement* message that reads like a firmware provenance failure and
+     sends a reader to the wrong tree; the `fetch-depth: 0` and the note above
+     it (`ci.yml:39`, `:33-34`) land together in a re-copy, which is why the
+     landed function's comment names both. **A red run means one of the two
+     things the tool reports, and it says which at a `file:line`:** a checkout
+     shallower than its job needs, or a sentence in the two history-reading
+     tools that claims a workflow's depth without naming the job. It is never
+     a claim about the EC. It is in that patch rather than a seventh one
+     because the seven-line `gate` list admits **eight** insertion points and
+     **none of them composes** with the set already prepared, while three of
+     the seven function gaps are free — the table, the method and the two
+     alternatives left out are in
+     [`findings/history-checkouts-gate-wiring.md`](findings/history-checkouts-gate-wiring.md),
+     which is where #954, #877, #921 and item 13's own should read it from.
+     **Nothing in this repository has seen that accident happen**: the
+     invariant has never been exercised in CI, and the patch is the evidence
+     it *would* go red.
+     Cheap tier for the same reason item 4 gives: the first needs the
+     committed CSVs and the standard library's `csv` module, the third the
+     committed YAML under `.github/workflows/` — no firmware image, no Ghidra,
+     no assembler, and no git history either, so no full clone. It measures
+     0.18 s here (0.17–0.18 s over five runs on 2026-09-26) against the
+     cheap tier the paragraph above records at 5.9 s, on item 12's reading
+     that the ratio is the point. They are not here for item 4's reason,
+     template-copied file and no `workflow` scope on the token, and **until a
+     human lands them, no commit runs any of the three** and the next false
+     capture claim merges the way the last two did. Their own suites
+     (`ec/tools/test_check_capture_claims.py`,
+     `ec/tools/test_check_testdata_index.py`,
+     `ec/tools/test_check_history_checkouts.py`) need no wiring to be run at
+     all: `tools/run-tests.sh` discovers every `test_*.py` in the
+     repository, so they are already collected by the runner above.
   6. **`call_graph.py --check` and `--self-test` are added to the tool list
      in `check_ghidra_tooling`, and a re-copy drops both** (2026-09-24, issue
      #454). They hold the 1,841-row `ec/annotations/call-graph-callees.csv`

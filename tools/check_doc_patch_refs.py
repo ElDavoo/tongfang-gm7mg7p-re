@@ -31,9 +31,12 @@ would sweep in `evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv` and the
 version matrix beside it, which cite a run artefact that is legitimately a
 snapshot rather than a file in this tree.
 
-**The historical rule, which is the whole design problem here.** Two names are
-in prose and deliberately not on disk, and a naive "every name resolves" rule
-false-positives on all four references to them:
+**The historical rule, which is the whole design problem here.** Three names
+are in prose and deliberately not on disk, and a naive "every name resolves"
+rule false-positives on every reference to them. **The count of those
+references is a figure of the tree it was counted on and has moved more than
+once** -- it read "all four" when the first two were added, and `--verbose`
+prints the current one, which is the figure to re-derive:
 
   * `agent-gates-testdata-index.patch` -- the file as it was, named in
     `docs/findings/prepared-gate-patches.md`'s measured-results table row and in
@@ -41,15 +44,20 @@ false-positives on all four references to them:
     collision the fold resolved.
   * `agent-gates-claims-and-testdata.patch` -- the alternative reading #745
     rejected and left out on purpose, named in that same write-up.
+  * `agent-gates-check-history-checkouts.patch` -- the filename issue #1033
+    asked for, which the same saturation that folded #745's second patch
+    declined again: the check went into
+    `docs/ci/agent-gates-capture-claims.patch` instead, and the write-up names
+    what was asked for beside what was prepared, per `CLAUDE.md` §4a-4d.
 
 `HISTORICAL` below is that opt-out, keyed on the patch **name** and enumerated
 here rather than marked in the prose. The alternative the issue offers -- a
 fenced or quoted span at each reference -- was not taken, and the reason is
-recorded in `docs/findings/doc-patch-reference-gate.md`: three of the four are
-records, and `CLAUDE.md` §4a-4d says a superseded claim stays visible with a
+recorded in `docs/findings/doc-patch-reference-gate.md`: every one of them is a
+record, and `CLAUDE.md` §4a-4d says a superseded claim stays visible with a
 correction beside it rather than reshaped so a checker can see it. The bound is
-stated rather than hidden: any *new* reference to one of these two names is
-exempt by construction. It is two names wide, and both directions are held --
+stated rather than hidden: any *new* reference to one of these three names is
+exempt by construction. It is three names wide, and both directions are held --
 each key is still absent from `docs/ci/`, and still cited by at least one
 markdown file -- so neither a patch reappearing under that name nor a reference
 being edited away can leave the exemption quietly true.
@@ -95,12 +103,13 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 CI = REPO / "docs" / "ci"
 
-# The two names prose names on purpose; see the docstring. The write-up beside
+# The three names prose names on purpose; see the docstring. The write-up beside
 # this tool records why this is an enumeration rather than a per-reference
 # opt-out, and what the choice costs.
 HISTORICAL = {
     "agent-gates-testdata-index.patch",
     "agent-gates-claims-and-testdata.patch",
+    "agent-gates-check-history-checkouts.patch",
 }
 
 # The subject, as a shape. `*` is deliberately not in the character class: a
@@ -394,11 +403,12 @@ def self_test():
                     "and the citing file")
         assert_that(quiet(check_mode, result)[1] == 1, "and the run is red")
 
-    # A second absent name is refused the same way. `HISTORICAL` is two wide and
-    # a name outside it is stale, which is the whole of the "the exemption
-    # cannot widen silently" claim: there is no path that admits a third. Both
-    # names here are absent from a `docs/ci/` holding one patch, and the second
-    # is the "fourth" one the issue asks about.
+    # A second absent name is refused the same way. `HISTORICAL` is an explicit
+    # enumeration and a name outside it is stale, which is the whole of the "the
+    # exemption cannot widen silently" claim: there is no path that admits a
+    # name the enumeration does not hold, whatever its width. Both names here
+    # are absent from a `docs/ci/` holding one patch, and the second is the
+    # "fourth" one the issue asks about.
     with mini_tree({"docs/note.md":
                     "`agent-gates-a.patch`\n`agent-gates-b.patch`\n",
                     "docs/ci/agent-gates-a.patch": "a patch\n"}) as root:
@@ -474,28 +484,32 @@ def self_test():
     # without anybody touching the prose, and both are refusals here rather than
     # notes, because a check that keeps accepting an exemption it no longer
     # needs is the thing this repository keeps writing suites about.
-    for name, mutate in (
-        (sorted(HISTORICAL)[0], "restored"),
-        (sorted(HISTORICAL)[1], "un-cited"),
-    ):
-        with scratch_tree() as root:
-            if mutate == "restored":
-                (root / "docs" / "ci" / name).write_text("a patch\n",
-                                                         encoding="utf-8")
-            else:
-                # Edit the reference away rather than the file, because that is
-                # the direction a real edit takes.
-                for rel in markdown_files(root):
-                    path = root / rel
-                    text = path.read_text(encoding="utf-8")
-                    if name in text:
-                        path.write_text(text.replace(name, "a name retired"),
-                                        encoding="utf-8")
-            result = scan(root)
-            assert_that(result.dead == [name] and quiet(check_mode, result)[1] == 1,
-                        "`%s` is refused when it is %s: the exemption has "
-                        "stopped earning its place, and the failure names the "
-                        "key rather than counting it" % (name, mutate))
+    # Both directions for *every* key rather than for two of them by position:
+    # #1033 widened the enumeration, and a loop over `sorted(HISTORICAL)[0]` and
+    # `[1]` would have left the new key with no case here at all while reading
+    # exactly as before.
+    for name in sorted(HISTORICAL):
+        for mutate in ("restored", "un-cited"):
+            with scratch_tree() as root:
+                if mutate == "restored":
+                    (root / "docs" / "ci" / name).write_text("a patch\n",
+                                                             encoding="utf-8")
+                else:
+                    # Edit the reference away rather than the file, because that
+                    # is the direction a real edit takes.
+                    for rel in markdown_files(root):
+                        path = root / rel
+                        text = path.read_text(encoding="utf-8")
+                        if name in text:
+                            path.write_text(text.replace(name, "a name retired"),
+                                            encoding="utf-8")
+                result = scan(root)
+                assert_that(result.dead == [name]
+                            and quiet(check_mode, result)[1] == 1,
+                            "`%s` is refused when it is %s: the exemption has "
+                            "stopped earning its place, and the failure names "
+                            "the key rather than counting it"
+                            % (name, mutate))
 
     print()
 

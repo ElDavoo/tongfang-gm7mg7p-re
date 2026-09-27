@@ -1,11 +1,11 @@
-# ec/tools/check_capture_claims.py and ec/tools/check_testdata_index.py, both
-# wired into the cheap gate. Prepared here rather than landed, because
-# `.github/scripts/agent-gates.sh` is copied from the agent-pipeline template
-# and the pipeline's push token has no `workflow` scope, so a branch editing it
-# fails at the end of the PR rather than at the start of it.
-# `docs/agent-pipeline.md` says the same thing about every other leg of this
-# that a human has to land, and carries these two across too, as its items 5
-# and 9.
+# ec/tools/check_capture_claims.py, ec/tools/check_testdata_index.py and
+# ec/tools/check_history_checkouts.py, all three wired into the cheap gate.
+# Prepared here rather than landed, because `.github/scripts/agent-gates.sh` is
+# copied from the agent-pipeline template and the pipeline's push token has no
+# `workflow` scope, so a branch editing it fails at the end of the PR rather
+# than at the start of it. `docs/agent-pipeline.md` says the same thing about
+# every other leg of this that a human has to land, and carries these three
+# across too, as its items 5 and 9.
 #
 # To land it:
 #
@@ -13,7 +13,7 @@
 #
 # and that is the whole change.
 #
-# This patch carries BOTH checks, and that is not tidiness -- they cannot be
+# This patch carries THREE checks, and that is not tidiness -- they cannot be
 # landed apart. It was two files until 2026-09-25 (issue #745): this one and
 # agent-gates-testdata-index.patch. Both applied cleanly on their own, and
 # neither could be applied after the other, in either order, because each put
@@ -24,20 +24,54 @@
 # insertions into it share a context window. The two `gate` lines ship in one
 # patch or not at all. The other file is deleted and its content and rationale
 # folded in here; the item and the two write-ups that named it point here
-# instead. The filename is kept rather than given an honest one because seven
-# other references across four files already cite it as this repository's
-# canonical account of the prepared-not-landed shape, and a name is not worth
-# churning the long shared files for.
+# instead.
 #
-# Why the cheap tier and not agent-gates-deep.sh: between them the two read
+# A third check joined it on 2026-09-26 (issue #1033) for the same reason, and
+# the measurement behind that is the second half of this header rather than a
+# story about a filename. Re-derived at `d3304785`: cut a one-line `gate`
+# patch at each of the **eight** insertion points a seven-line list admits, the
+# way `git diff` cuts a real one, and try each alone and in both orders against
+# all six patches then in `docs/ci/`. **Every one of the eight applies alone,
+# and not one of them composes** -- P0 with pin-table-rows, P1 and P2 with both
+# of those and capture-claims, P3 and P4 with capture-claims, P5 with
+# capture-claims and testdata-row-claims, P6 and P7 with testdata-row-claims.
+# The function side is *not* saturated: of the seven gaps between the
+# `check_*()` definitions, three carry no colliding patch, and the new function
+# would have had a free home on its own. The `gate` line would not. So the pair
+# rides here, where the third `gate` line lands at an anchor this patch
+# already holds, and the two halves compose by construction rather than by
+# luck. The table, the method and the two rejected alternatives are in
+# `docs/findings/history-checkouts-gate-wiring.md`, which is where #954, #877,
+# #921 and #777 should read it from rather than re-deriving the saturation.
+# `docs/agent-pipeline.md` item 13 declined a seventh patch for the same
+# reason, from the other direction.
+#
+# List order in the `gate` block is cosmetic, as it is in the tool list: the
+# loop is over a `for` word list and nothing reads the order. The new `gate`
+# line therefore goes below the two this patch already adds rather than in a
+# place that reads as a priority, and its name is two characters too long for
+# the column the shorter lines align on -- which
+# `gate 'scan_refs.py smoke test' check_scan_refs_smoke_test` already breaks.
+# The filename is kept rather than given an honest one for two checks now three,
+# because at `d3304785` it is cited **30 times across 13 markdown files** as
+# this repository's canonical account of the prepared-not-landed shape, and a
+# name is not worth churning the long shared files for. Those 30 are the tree
+# this patch was re-cut from; #1033's own landing adds nine more across three
+# files (39 across 16), so the pair to re-derive is `grep -rc 'agent-gates-capture-claims\.patch'
+# --include='*.md' .` rather than either figure, and `check_doc_patch_refs.py`
+# prints its own on every run.
+#
+# Why the cheap tier and not agent-gates-deep.sh: between them the three read
 # the committed CSVs under `evidence/ec-watch/`, the committed tree under
-# `ec/tools/testdata/` and the two CSVs beside it, and the standard library's
-# `csv` and `glob` modules. No
-# firmware image, no Ghidra, no network, no assembler -- so by the split
-# `docs/agent-pipeline.md` records, both belong beside `check_register_counts`,
-# not in the deep tier. The first runs in well under a second and the second
-# measures 0.03 s over three runs here, against a cheap tier recorded at
-# 5.9 s.
+# `ec/tools/testdata/` and the two CSVs beside it, and the committed YAML under
+# `.github/workflows/`, and the standard library's `csv`, `glob` and `re`
+# modules. No firmware image, no Ghidra, no network, no assembler -- and no
+# git history either, so no full clone -- so by the split
+# `docs/agent-pipeline.md` records, all three belong beside
+# `check_register_counts`, not in the deep tier. The first runs in well under
+# a second, the second measures 0.03 s over three runs here, and the third
+# measures 0.18 s (0.17-0.18 s over five runs on 2026-09-26), against a cheap
+# tier recorded at 5.9 s.
 #
 # What they buy, and what they do not. check_capture_claims holds the prose's
 # capture claims to the committed CSVs they name: an address a sentence
@@ -56,26 +90,57 @@
 # name is resolved against the repository root, so a cell naming a listing
 # under ec/decompiled/ that the real tree does not have is a miss as well.
 # That index is hand-written and has been repaired
-# by hand twice, and nothing read it before. **Until a human lands this, no
-# commit runs either**, and the next false capture claim -- or the eleventh
-# fixture directory with no row -- merges the way the earlier ones did.
-# Neither tool reads a fixture for what it contains, opens a capture, or
-# touches an EC: both are disagreements between committed files about which
-# paths and rows exist. Each prints what it actually checked, because a run
-# that checked nothing and a run that found nothing look the same from the
-# exit code alone. Both own suites (`ec/tools/test_check_capture_claims.py`,
-# `ec/tools/test_check_testdata_index.py`) need no wiring to be run at all --
+# by hand twice, and nothing read it before. check_history_checkouts holds the
+# reverse of the claim #1009 retracted: **every job that runs a history reader
+# has a full-depth checkout**, derived from the committed workflows rather than
+# from prose. A re-copy of `ci.yml` from the template that drops
+# `fetch-depth: 0` from the `gates` job breaks no job -- the gate still runs --
+# and turns the cheap tier red with a *history requirement* message that reads
+# like a firmware provenance failure and sends a reader looking at the wrong
+# tree. That is the accident it names, and **nothing in this repository has
+# seen it happen**: the invariant has never been exercised in CI, and
+# `ec/tools/test_check_history_checkouts.py`'s
+# `test_a_gate_job_on_a_shallow_checkout_is_a_failure` is the evidence it
+# *would* go red, on a scratch tree, not a record of a red run.
+#
+# **What a red run from the third check means**, since the gate keys on the
+# tool's own exit code and that is what a reader lands on: one of the two
+# things it reports, and it says which. Either a checkout is shallower than the
+# job using it needs -- `depth_problems()` at
+# `ec/tools/check_history_checkouts.py:468`, whose message ends "the mode will
+# report a history requirement rather than an answer" -- or a sentence in the
+# two tools that read history asserts a workflow's checkout depth without
+# naming the job, which is the rule §1009's own correction turned on. A red
+# run is a workflow or a toolstring, never a claim about the EC. That `:468` is
+# this tree's, and three merges have moved it since #1013 wrote the tool -- it
+# read `:288` at `fe92940a` and `:247` at `d3304785` -- so the pair to
+# re-derive it is `grep -n '^def depth_problems'
+# ec/tools/check_history_checkouts.py`. Note the `fetch-depth: 0` `ci.yml:39`
+# carries and the note above it at `:33-34`: a re-copy lands the missing depth
+# and its comment together, which is why the landed comment names both. **Until
+# a human lands this, no commit runs any of the three**, and the next false
+# capture claim, the eleventh fixture directory with no row, or a `ci.yml`
+# re-copy that drops the depth, merges the way the earlier ones did.
+# Neither the first tool nor the second reads a fixture for what it contains,
+# opens a capture, or touches an EC: both are disagreements between committed
+# files about which paths and rows exist. The third reads no git history and no
+# firmware either -- it parses YAML. Each prints what it actually checked,
+# because a run that checked nothing and a run that found nothing look the same
+# from the exit code alone. All three own suites
+# (`ec/tools/test_check_capture_claims.py`,
+# `ec/tools/test_check_testdata_index.py`,
+# `ec/tools/test_check_history_checkouts.py`) need no wiring to be run at all --
 # `tools/run-tests.sh` discovers every `test_*.py` in the repository, so they
 # are already collected by the runner.
 #
-# The comments the two functions add at the call site say the same thing where
-# the next reader of the gate will see it, rather than only here.
+# The comments the three functions add at the call site say the same thing
+# where the next reader of the gate will see it, rather than only here.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index 125d6478..30df515a 100755
+index de5db1f..62dd622 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -84,6 +84,38 @@ check_register_counts() {
+@@ -84,6 +84,58 @@ check_register_counts() {
    python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
  }
  
@@ -111,15 +176,36 @@ index 125d6478..30df515a 100755
 +  python3 ec/tools/check_testdata_index.py --check
 +}
 +
++# A re-copy of ci.yml from the agent-pipeline template that drops
++# `fetch-depth: 0` from the `gates` job breaks no job -- the gate still runs
++# -- and turns this tier red with a *history requirement* message that reads
++# like a firmware provenance failure and sends a reader to the wrong tree.
++# The invariant is that every job running a history reader has a full-depth
++# checkout; ci.yml's `workflows` job is default-depth and runs no history
++# reader, so it is not a failure. The tool's other half holds a sentence in
++# the two tools that read history to naming the job it is about, and both
++# halves are reported at a `file:line`, so a red run here is one of those two
++# things and says which. Cheap tier because of what it reads: the committed
++# YAML under .github/workflows/ and the standard library, so no git history
++# and no full clone, no firmware image, no Ghidra, no network. The deep tier
++# reaches this by re-running this one; what does not carry it is that tier's
++# schedule, which is prepared at docs/ci/agent-gates-deep-schedule.yml and not
++# landed -- and that file is outside the tool's glob, so the `fetch-depth: 0`
++# it states is not a row in the table it prints.
++check_history_checkouts() {
++  python3 ec/tools/check_history_checkouts.py
++}
++
  check_python_syntax() {
    local f rc=0
    for f in ec/tools/*.py bios/tools/*.py windows/tools/*.py ghidra/tools/*.py; do
-@@ -271,6 +303,8 @@ check_doc_links() {
+@@ -297,6 +349,9 @@ check_doc_links() {
  gate 'registers.yaml'  check_registers_yaml
  gate 'scan_refs.py smoke test' check_scan_refs_smoke_test
  gate 'register counts'  check_register_counts
 +gate 'capture claims'   check_capture_claims
 +gate 'testdata index'   check_testdata_index
++gate 'history checkouts'  check_history_checkouts
  gate 'ghidra tooling'  check_ghidra_tooling
  gate 'python syntax'   check_python_syntax
  gate 'shellcheck'      check_shellcheck

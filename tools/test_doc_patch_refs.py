@@ -179,14 +179,20 @@ class HistoricalTests(unittest.TestCase):
     is the same silent-pass shape the empty-discovery guard above is for.
     """
 
-    def test_there_are_two_keys(self):
+    def test_there_are_exactly_three_keys(self):
         # A count here is not the population: it is the size of the exemption,
         # and the exemption is what a new absent name would have to join. It is
         # pinned because a fourth key appearing silently *widens* what this
         # check tolerates, which is the one direction a bare "is it still
         # absent" test would not notice.
+        #
+        # The third is `agent-gates-check-history-checkouts.patch`, the filename
+        # #1033 asked for and the same saturated `gate` list declined, exactly as
+        # #745 declined the second. #1033's own case for it is in
+        # docs/findings/history-checkouts-gate-wiring.md.
         self.assertEqual(sorted(tool.HISTORICAL),
-                         ["agent-gates-claims-and-testdata.patch",
+                         ["agent-gates-check-history-checkouts.patch",
+                          "agent-gates-claims-and-testdata.patch",
                           "agent-gates-testdata-index.patch"])
 
     def test_each_key_is_still_absent_from_docs_ci(self):
