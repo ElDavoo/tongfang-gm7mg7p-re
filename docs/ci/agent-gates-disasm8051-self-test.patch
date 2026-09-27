@@ -1,5 +1,6 @@
-# ec/tools/disasm8051.py --self-test and ec/tools/data_regions.py --check
-# --self-test, wired into the cheap gate. TWO tools in one patch, and the
+# ec/tools/disasm8051.py --self-test, ec/tools/data_regions.py --check
+# --self-test, and ec/tools/dsdt_ec_fields.py --csv --check --self-test, wired
+# into the cheap gate. THREE tools in one patch, and the
 # reason is in docs/findings/prepared-gate-patches.md: the free hunks in
 # .github/scripts/agent-gates.sh are already spent, so a second tool wanting
 # the same tool-list and case-arm context would have to cut the same
@@ -7,17 +8,29 @@
 # -- and could then not compose with this one in every ordered pair, with a
 # failure that is silent in the way that matters (each still applies cleanly
 # alone). data_regions.py therefore folds in here rather than shipping a
-# seventh file. The filename is KEPT for the reference-count reason that file
-# gives for agent-gates-capture-claims.patch: seventeen citations across eleven
-# files (measured 2026-09-27, `grep -rc agent-gates-disasm8051-self-test.patch
-# --include=*.md .` outside docs/ci/) name this patch as the canonical account
-# of the prepared-not-landed shape, and renaming it would churn exactly the
-# long shared files CLAUDE.md says not to churn.
+# seventh file. dsdt_ec_fields.py folds in here rather than an eighth for the
+# same reason one step further along: by the time it came, the union of the
+# three patches holding the tool list was :119-133 -- the whole list plus the
+# `case "$tool" in` line -- so there was no free boundary left in it to cut a
+# new hunk against, and the one line outside the other two windows (the same
+# `windows/tools/decompile_native.py; do` split) is precisely the cut that does
+# not compose. `tools/test_agent_gates_patches.py::CompositionTests` is what
+# says so rather than this header: it applies the set in every ordered pair, and
+# a standalone patch would fail only there, having applied cleanly on its own.
+# The filename is KEPT for the reference-count reason that file
+# gives for agent-gates-capture-claims.patch: the patch is named in prose across
+# many markdown files outside docs/ci/, each of which names it as the canonical
+# account of the prepared-not-landed shape, and renaming it would churn exactly
+# the long shared files CLAUDE.md says not to churn. **There is deliberately no
+# count here** -- `grep -rc agent-gates-disasm8051-self-test.patch
+# --include=*.md .`, read outside docs/ci/, prints the per-file figures and the
+# total on the tree you run it on, and a number written into a header is a
+# sentence every later fold has to edit (the treatment `tools/README.md` got).
 # tools/test_agent_gates_patches.py's ArmRetentionTests.REQUIRED
-# carries both tools' four strings for the same reason FoldTests carries two
+# carries both of each tool's halves for the same reason FoldTests carries two
 # functions' worth of strings for the capture-claims patch: a re-cut that
-# lands one tool's halves and drops the other's applies cleanly and passes
-# every other case here.
+# lands one tool's halves and drops another's -- or either of the other two's --
+# applies cleanly and passes every other case here.
 #
 # Original header, for ec/tools/disasm8051.py alone:
 #
@@ -80,11 +93,11 @@
 # no capture is opened, no EC is opened, no register is read back, and nothing
 # here is evidence about the laptop.
 #
-# The two `ec/tools/` entries sit at the *end* of the `for tool in` list,
+# The three `ec/tools/` entries sit at the *end* of the `for tool in` list,
 # after `windows/tools/decompile_native.py` and so not grouped with the other
-# `ec/tools/` paths; the two `case` arms sit after `*xdata_register_map.py)`
-# and so not beside either semantic neighbour (`*citation_gap_scan.py)` for
-# disasm8051, and none at all for data_regions). All four are
+# `ec/tools/` paths; the three `case` arms sit after `*xdata_register_map.py)`
+# and so not beside any semantic neighbour (`*citation_gap_scan.py)` for
+# disasm8051, and none at all for the other two). All six are
 # deliberate and none is where a reader would put them.
 # The second tool's own `case` arm runs `--check` as well as `--self-test`,
 # unlike the first's, because `data_regions.py --check` is the mode that
@@ -99,6 +112,33 @@
 # registers.yaml moves, which is why it belongs in the cheap tier beside
 # check_register_counts rather than anywhere deeper.
 #
+# The third tool's arm runs `--csv --check` and `--self-test`, and is the only
+# one of the three that passes an argument: `ECMG` is in `XDATA_REGIONS`, so
+# its three `static_refs*` columns are functions of the image and both
+# `--check` and the bare table refuse to run without one. The path is relative
+# to the repo root the way every other path in this script is.
+# `--check` is the half that matters here, and it is the mode the issue was
+# filed about: it is what holds `ec/annotations/dsdt-ecmg-fields.csv` to
+# `evidence/acpi/dsdt.dsl` and the committed image, so the `in_registers` and
+# `grade` columns cannot drift as `registers.yaml` moves -- and the write-up's
+# own §2 records that both of those summary figures are functions of *when* the
+# tool runs, which is the whole reason `--check` exists. Its `--self-test` pins
+# the bit arithmetic against oracles from opposite ends of the stack
+# (`registers.yaml` and `windows/tools/gpu_block_watch.py`) and the six parser
+# refusals, so a check that has quietly stopped refusing still looks exactly
+# like a check that is working. It reads four committed files -- the image, the
+# DSDT, `registers.yaml` and the committed CSV -- so no Ghidra, no network, no
+# assembler, no `r2`, no capture and no EC, and nothing in them is evidence
+# about the laptop: the 13 `present-untested` and 3 `unknown-not-absent` rows
+# the sweep landed stay untested, and a register write being accepted is not
+# evidence the EC acts on it. It measures 0.74 s for `--csv --check` and 0.16 s
+# for `--self-test` here over three runs on 2026-09-27, against a cheap tier
+# recorded at 5.9 s -- one runner's figures, and the ratio is the point, as
+# item 6 says for `call_graph.py`; the two commands are the two lines of the
+# arm, so a reader re-derives them rather than quoting this sentence.
+# **Until a human lands this, both modes run by hand and a CSV that has drifted
+# from `registers.yaml` still merges green.**
+#
 # **Where the two hunks are cut, and why not somewhere tidier.** The reason is
 # `tools/test_agent_gates_patches.py`, which applies the set in **every
 # ordered pair** against a scratch copy of the committed script. Two hunks
@@ -109,11 +149,24 @@
 #
 #   tool list :119-124  held by agent-gates-gap-text-check.patch hunk 1
 #   tool list :123-128  held by agent-gates-0751-self-test.patch hunk 1
-#   arms      :162-167  held by agent-gates-gap-text-check.patch hunk 2
-#   arms      :189-194  held by agent-gates-0751-self-test.patch hunk 2
+#   tool list :127-133  this patch's hunk 1
+#   arms      :163-168  held by agent-gates-gap-text-check.patch hunk 2
+#   arms      :190-195  held by agent-gates-0751-self-test.patch hunk 2
+#   arms      :138-143  this patch's hunk 2
 #
-# The union of the tool-list windows is :119-128, and :129 -- the `; do` line
-# this hunk splits -- is the only line in the list outside every one of them.
+# (Content-matched against the committed script rather than read off the `@@`
+# numbers, which are stale for most of this set; that is what the first two
+# rows and the last two were measured with. The arms rows were one line low
+# before the third tool was folded in and are corrected here.)
+#
+# The union of the two tool-list windows this patch was cut against is :119-128,
+# and :129 -- the `; do` line this hunk splits -- was the only line in the list
+# outside every one of them. Adding this patch's own window makes the union of
+# all three :119-133: the whole list, the `[ -f "$tool" ] || continue` guard and
+# the `case "$tool" in` line. **There is no free boundary left in the tool list
+# for a fourth `ec/tools/` entry**, which is the whole reason the third tool
+# folds into an existing hunk's post-image -- the pre-images are untouched, so
+# the spans above are still the spans, and every other patch still composes.
 # The arm's is the same shape at the other end of the arm list. List order here
 # is cosmetic: nothing reads the order, the loop is over a `for tool in` word
 # list. **"Tidying" either placement back to where a reader expects it breaks
@@ -127,18 +180,19 @@ diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
 index ce9f0964..5db19cdf 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -127,7 +127,9 @@ check_ghidra_tooling() {
+@@ -127,7 +127,10 @@ check_ghidra_tooling() {
                ec/tools/xdata_register_map.py \
                ec/tools/check_status_vocabulary.py \
                bios/tools/bios_extract.py \
 -              windows/tools/decompile_native.py; do
 +              windows/tools/decompile_native.py \
 +              ec/tools/disasm8051.py \
-+              ec/tools/data_regions.py; do
++              ec/tools/data_regions.py \
++              ec/tools/dsdt_ec_fields.py; do
      [ -f "$tool" ] || continue
      case "$tool" in
        # The symbol generator takes no --work and has no --self-test; its
-@@ -138,6 +140,12 @@ check_ghidra_tooling() {
+@@ -138,6 +141,16 @@ check_ghidra_tooling() {
        *decompile_native.py)
          python3 "$tool" --check && python3 "$tool" --self-test || rc=1
          ;;
@@ -147,6 +201,10 @@ index ce9f0964..5db19cdf 100755
 +        ;;
 +      *data_regions.py)
 +        python3 "$tool" --check && python3 "$tool" --self-test || rc=1
++        ;;
++      *dsdt_ec_fields.py)
++        python3 "$tool" ec/firmware/GMxMGxx_11.800 --csv --check && \
++        python3 "$tool" --self-test || rc=1
 +        ;;
        # The annotation merge's refusals. It is what stands between a fan-out's
        # CSV and main, and a check that has quietly stopped rejecting anything

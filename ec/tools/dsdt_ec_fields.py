@@ -99,17 +99,21 @@ place would put fields on the wrong address or leave a hole in the list, and a
 hole here reads as "the DSDT does not name this", which is a claim about the
 firmware made from a gap in a tool.
 
-`--self-test` is run by hand rather than from `.github/scripts/agent-gates.sh`:
-that file lives under `.github/`, which this repository's pipeline push token
-cannot write, so wiring the mode into the gate's tool loop is a human's change
-to a template file. `ec/tools/test_dsdt_ec_fields.py` holds the parser's edge
-cases and is runnable standalone the same way.
+Both `--csv --check` and `--self-test` are prepared in
+`../../docs/ci/agent-gates-disasm8051-self-test.patch` rather than run from
+`.github/scripts/agent-gates.sh`: that file lives under `.github/`, which this
+repository's pipeline push token cannot write, so wiring the modes into the
+gate's tool loop is a human's change to a template file and the prepared patch
+is the deliverable. **Until a human lands it, both modes run by hand**, and a
+CSV that has drifted from `registers.yaml` merges green.
+`ec/tools/test_dsdt_ec_fields.py` holds the parser's edge cases and is runnable
+standalone the same way.
 
 Usage:
     python3 dsdt_ec_fields.py ../firmware/GMxMGxx_11.800
     python3 dsdt_ec_fields.py --region gnvs
     python3 dsdt_ec_fields.py ../firmware/GMxMGxx_11.800 --csv > fields.csv
-    python3 dsdt_ec_fields.py ../firmware/GMxMGxx_11.800 --check
+    python3 dsdt_ec_fields.py ../firmware/GMxMGxx_11.800 --csv --check
     python3 dsdt_ec_fields.py --self-test
 """
 import argparse

@@ -375,7 +375,7 @@ class FoldTests(unittest.TestCase):
 
 @unittest.skipUnless(has_git(), 'no git on PATH')
 class ArmRetentionTests(unittest.TestCase):
-    """The disasm8051 patch still lands both halves of *either* tool's change.
+    """The disasm8051 patch still lands both halves of *each* tool's change.
 
     Every other patch here is one function and one `gate` line, or one tool
     line and one arm, and every case above checks that the patch *applies*.
@@ -389,15 +389,24 @@ class ArmRetentionTests(unittest.TestCase):
     a patch that dropped the list entry instead would carry an arm the loop
     never reaches.
 
-    **Two tools since issue #50**, folded into this one file rather than
-    shipped as a seventh, because the free hunks in `agent-gates.sh` are
-    already spent (`docs/findings/prepared-gate-patches.md`). A fold is
+    **Three tools since issue #50**, folded into this one file rather than
+    shipped as a seventh and an eighth, because the free hunks in
+    `agent-gates.sh` are already spent
+    (`docs/findings/prepared-gate-patches.md`). A fold is
     exactly what can go half-right without anyone noticing: a re-cut that
     lands `data_regions.py`'s two halves and drops `disasm8051.py`'s, or the
-    reverse, still applies, still composes in every ordered pair, and still
+    reverse, or lands the third tool's and drops both of the others', still
+    applies, still composes in every ordered pair, and still
     passes `bash -n` and `shellcheck` -- because the dropped arm is precisely
-    what keeps its tool off the `*)` default. So all four strings are here,
-    and dropping any one of them is a failure.
+    what keeps its tool off the `*)` default. So both halves of every tool are
+    here, and dropping any one of them is a failure.
+
+    **This is not a count of the tree and must not become one.** A fourth fold
+    adds a seventh and eighth string; it does not edit the sentence above to
+    say four, and no case here should ever assert how many tools the patch
+    carries. What is asserted is the shape -- a list entry and a whole arm per
+    tool -- which is a claim the patch can keep making as it grows, where
+    "this patch carries three tools" is a value every later fold has to edit.
     """
 
     PATCH = 'docs/ci/agent-gates-disasm8051-self-test.patch'
@@ -405,18 +414,28 @@ class ArmRetentionTests(unittest.TestCase):
     # `python3 "$tool" --self-test || rc=1` is already in the
     # merge_annotation_shards and grade_0751 arms -- checking it on its own
     # would pass with this patch's arm dropped, which is the exact case this
-    # class exists to catch. The list entries are the ` \`-continued form
-    # because disasm8051 is no longer the last line in the `for tool in` list:
-    # folding a second tool in moved its `; do` to the line after, so a
-    # re-cut that un-folds the two would put `; do` back on this one.
+    # class exists to catch. The list entry is the whole ` \`-continued run
+    # because none of the three is the last line in the `for tool in` list:
+    # each fold moved the `; do` to the line after, so a re-cut that un-folds
+    # them would put `; do` back on a line checked here.
     REQUIRED = [
         'ec/tools/disasm8051.py \\\n'
-        '              ec/tools/data_regions.py; do',
+        '              ec/tools/data_regions.py \\\n'
+        '              ec/tools/dsdt_ec_fields.py; do',
         '      *disasm8051.py)\n'
         '        python3 "$tool" --self-test || rc=1\n'
         '        ;;',
         '      *data_regions.py)\n'
         '        python3 "$tool" --check && python3 "$tool" --self-test || rc=1\n'
+        '        ;;',
+        # The only arm of the three that passes an argument, because
+        # `--check` reads the committed image for its `static_refs*` columns.
+        # That makes the two halves inseparable in a way the other two are not:
+        # dropping this arm does not just lose the mode, it hands the tool to
+        # the `*)` default, which passes `--work` and a flag the tool refuses.
+        '      *dsdt_ec_fields.py)\n'
+        '        python3 "$tool" ec/firmware/GMxMGxx_11.800 --csv --check && \\\n'
+        '        python3 "$tool" --self-test || rc=1\n'
         '        ;;',
     ]
 
@@ -431,8 +450,8 @@ class ArmRetentionTests(unittest.TestCase):
                     line, landed,
                     f'{self.PATCH} no longer lands {line!r}. Each tool\'s two '
                     'halves are what keep it off the `*)` default arm, and a '
-                    're-cut that lands one tool and drops the other still '
-                    'applies, so nothing else here would notice.')
+                    're-cut that lands some of the tools and drops the rest '
+                    'still applies, so nothing else here would notice.')
 
 
 class HeaderInstructionTests(unittest.TestCase):
