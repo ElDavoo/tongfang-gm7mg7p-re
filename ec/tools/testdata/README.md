@@ -197,9 +197,13 @@ not fail the run — "not checked, not absent" — along with both dated refusal
 a capture named in prose that resolves to nothing and a sentence naming two of
 them, and the rest of the column is free prose that no rule reaches. Its wiring
 is prepared at
-`docs/ci/agent-gates-testdata-row-claims.patch`. Both of the index's
-hand-repairs (#502, #720) were to this column; run over both pre-repair trees
-it reports 0 missing, and the reason is that the rows either repair touched
-carry no address claim to be wrong about — measured in issue #978. See
+`docs/ci/agent-gates-testdata-row-claims.patch`. All four of the top-level
+table's hand-repairs were to this column (#182, #502, #720 and #736; the count
+is measured in issue #1008, `docs/findings/testdata-index-repair-census.md`,
+which also holds the one nested index's hand-repair — a first-column path cell
+in #746, which the second checker above reads rather than this one). Run over
+the #502 and #720 pre-repair trees it reports 0 missing, and the reason is that
+the rows either repair touched carry no address claim to be wrong about —
+measured in issue #978, and the same reason holds for all four. See
 `docs/findings/testdata-third-column-claims.md` and
 `docs/findings/testdata-row-claims-repair-measurement.md`.

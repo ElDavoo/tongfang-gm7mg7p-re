@@ -11,15 +11,22 @@ own table naming a listing or a CSV row that is not there, and a fixture CSV's
 unremarked. Those are the five places an index and a tree can disagree, which
 this walks in one pass and prints each one's tally for.
 
-The index has needed a hand-repair twice, in #502 and #720, and that is not
-what these directions are for. Both were edits to a row's third column -- the
-description of a case the row already named -- and this reads the first column,
-the second and the nested tables, not the third. Run over both pre-repair
+The index has needed a hand-repair four times in the top-level table's third
+column -- in #182, #502, #720 and #736 -- and once in a nested index's first
+column, in #746, and that is not what these directions are for. The first four
+were edits to a row's third column, the description of a case the row already
+named, and this reads the first column, the second and the nested tables, not
+the third; the fifth is a path cell, and it is this check's own `nested_missing`
+finding. The four were counted rather than assumed at #1008, by walking the
+history of both indexes instead of a named pair of it (issue #1008,
+`docs/findings/testdata-index-repair-census.md`); the "twice" this sentence
+carried until then was #978's measurement of the two shas it was handed, read
+as a count over the whole table. Run over the #502 and #720 pre-repair
 trees it reported 0 gaps, 0 path misses and 0 `Feeds` misses, so the "green
 through both" this used to assert is now a measurement; the one nested miss it
 does report is a stale `common`/`bank0` spelling in this check's own nested
 cell, a real index defect at those revisions and since fixed on `main`, and
-unrelated to either repair (issue #978,
+unrelated to any of the four (issue #978,
 `docs/findings/testdata-row-claims-repair-measurement.md`). It is here for the
 gaps, which nothing else would have caught.
 

@@ -4,8 +4,9 @@
 The tool is a pointer-checker, so its failure mode is silence rather than a
 crash. Loosen a shape rule and it stops counting the literals it should be
 passing over while still exiting 0, and the only thing that notices is a
-reader who has already been misled -- which is how the index needed hand-repair
-twice, in #502 and #720, with no check reading that column either time. So what
+reader who has already been misled -- which is how the index's third column
+needed hand-repair four times, in #182, #502, #720 and #736, with no check
+reading that column at any of them. So what
 is pinned here is the line between what the tool claims and what it declines
 to check, from both sides: each rule that makes it strict, each of the five
 shapes and the two dated refusals that make it conservative, and then

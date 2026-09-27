@@ -346,10 +346,10 @@ only covers what's specific to *this* copy.
      `ec/tools/testdata/README.md` to the tree under it in both directions: a
      fixture directory no index names is a gap, and a path the index's table
      names that is not on disk is a miss. That index is hand-written and has
-     been repaired by hand twice — #720 fixed two rows of it by reading the
-     grader and the CSVs by hand, and the repair before it was one too — while
-     `grep -rn 'testdata/README'` over the gate and the suite returned two prose
-     mentions and not one read. Adding it is a `check_testdata_index()`
+     been repaired by hand **four times** (#182, #502, #720, #736 — third
+     column, counted at #1008; see `findings/testdata-index-repair-census.md`)
+     — while `grep -rn 'testdata/README'` over the gate and the suite returned
+     two prose mentions and not one read. Adding it is a `check_testdata_index()`
      function and a `gate` line beside `check_register_counts`, and the whole of
      it is prepared in `docs/ci/agent-gates-capture-claims.patch` — **not in a
      patch of its own**, since issue #745: this check and item 5's insert at
@@ -372,7 +372,8 @@ only covers what's specific to *this* copy.
      the index's first column, its `Feeds` column and the nested tables; the
      **third** column, the description, is the one a reader opens the index
      for and the one that names the addresses each fixture is supposed to
-     contain — and both of the index's hand-repairs (#502, #720) were to that
+     contain — and all four of the top-level table's hand-repairs (#182, #502,
+     #720 and #736, counted over the whole history at #1008) were to that
      column; **measured since #978, 0 `missing` over both pre-repair trees**
      (`docs/findings/testdata-row-claims-repair-measurement.md`). Adding it is a
      `check_testdata_row_claims()` function and a `gate` line, and the whole of

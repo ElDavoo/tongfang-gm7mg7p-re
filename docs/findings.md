@@ -7091,12 +7091,21 @@ a directory it does not name and a row naming a path that is not on disk are bot
 invisible. `ec/tools/check_testdata_index.py` now holds the two files to each
 other in both directions: a directory no index names is a gap, and a path the
 index's table names that is not on disk is a miss. **Those two are the error
-class, and not a repair history**: the index needed hand-repair twice, in #502
-and #720, both in a row's third column — the description, which this check does
-not read. **Measured over both pre-repair trees (#978): 0 gaps, 0 misses, and 1
+class, and not a repair history**: the index needed hand-repair four times, in
+#182, #502, #720 and #736, all in a row's third column — the description, which
+this check does not read. **Measured over both pre-repair trees (#978): 0 gaps, 0 misses, and 1
 nested — a stale `common`/`bank0` spelling in `call-graph/README.md`'s own cell,
 since fixed on `main`** — see
 `docs/findings/testdata-row-claims-repair-measurement.md`.
+
+*(Correction, 2026-09-26, by issue #1008: the "twice, in #502 and #720" this
+sentence used to carry was #978's measurement of the two revisions it was
+handed — it takes `--base`/`--repair` — read as a count over the whole table.
+`ec/tools/census_index_third_column_edits.py` walks the history of both indexes
+and finds **four** third-column edits and **one** nested first-column edit (#746);
+the count and its criterion are in
+`docs/findings/testdata-index-repair-census.md`. The "error class, and not a
+repair history" distinction is not touched by this.)*
 
 **The merged tree is green, and that is the finding rather than a defect** —
 13 directories, 12 named in the index, `call-graph/` self-indexed, 27 rows, 34
@@ -7331,6 +7340,14 @@ since #978 rather than assumed: 0 `missing` over both pre-repair trees**, and
 the reason is content — every row either repair touched spells zero backticked
 `0xNNNN` literals before and after. A blind spot with its reason — see
 `docs/findings/testdata-row-claims-repair-measurement.md`.
+
+*(Correction, 2026-09-26, by issue #1008: it was **all four** of the top-level
+table's hand-repairs — #182, #502, #720 and #736 — and each of the four is at a
+revision that changed no fixture its row names, so the "zero literals" reason
+above holds for all four and not only for the two #978 was pointed at. Counted
+over the whole history at #1008; the nested index's one hand-repair (#746) is a
+first-column path cell and was never in this column at all. See
+`docs/findings/testdata-index-repair-census.md`.)*
 
 `ec/tools/check_testdata_row_claims.py` is a **new file**, not a mode on
 `check_capture_claims.py`, for the reason that tool's docstring records, and
@@ -9702,6 +9719,135 @@ that is a change this branch does not make.
 > runner's totals are — see [`findings/runner-red-suite-set.md`](findings/runner-red-suite-set.md)
 > — which is why the collision is recorded here rather than left for the next
 > reader to find.
+>
+> **And that clause is corrected a fifth time at the `#1008` × `#845` × `#1009`
+> merge, in the same place and for the same reason the four before it were.**
+> #1008's
+> third-column-edit census summary
+> ([`findings/testdata-index-repair-census.md`](findings/testdata-index-repair-census.md))
+> landed below §85, which #845 had just taken on `main` in the same window, and
+> below #1009's §86, which #1013 had landed in the next one, so by
+> the rule this note applies each number already committed on `main` keeps it and
+> #1008's own gives way twice: written as §85, it is renumbered to **§87**, and
+> **§87 is the last section in the file**. **The `§86` the paragraph above gave
+> #1009 stays written and is untouched** — `main` held it first, in a window
+> after this branch forked, which is the same direction the rule runs in every
+> other collision here. **The half that does not move is the
+> load-bearing one again**: §85's own numbering note records its two collisions
+> from its own end and carries no "last section in the file" clause of its own,
+> and neither §83 nor §84 nor §86 does either — §86's note records that it left
+> one off on purpose — so nothing beyond this correction is owed
+> for any of the four. **The one reference that did point at the moved number
+> is repointed**: §81's title, which #1008 rewrote to say "the count over the
+> whole history is §85", now reads §87, and §87's own numbering note records that
+> from its end; the two `§86` citations in
+> [`findings/testdata-row-claims-repair-measurement.md`](findings/testdata-row-claims-repair-measurement.md)
+> name #1009's summary and are **not** repointed. The list between §73 and the end
+> grows by two and is still in
+> order — #929's §74, #962's §75, #794's §76, #811's §77, #979's §78, #973's
+> §79, #780's §80, #978's §81, #843's §82, #844's §83, #974's §84, #845's §85,
+> #1009's §86 and #1008's §87 — and the §85 this note gave the "last section"
+> clause to stays
+> written above, true of `main`, per §4a-4d.
+>
+> **And that clause is corrected once more at the `#1008` × `#870` merge, in the
+> same place and for the same reason the ones before it were.** `main` then
+> gained a §87 of its own — #870's summary, landed as `8c51e6ed` (#1038) in a
+> window after this branch forked — so **"§87 is the last section in the file"**
+> is now false and **§88 is**, #1008's summary having given way a third time by
+> the rule this note applies. **The `§87` the paragraph above gives #1008 is left
+> visible and is true of the tree it was measured on**, per §4a-4d, in the same
+> way the `§85` beside it is. The list between §73 and the end grows by one more
+> and is still in
+> order — #929's §74, #962's §75, #794's §76, #811's §77, #979's §78, #973's
+> §79, #780's §80, #978's §81, #843's §82, #844's §83, #974's §84, #845's §85,
+> #1009's §86, #870's §87 and #1008's §88 — and the §85 this note gave the "last
+> section" clause to stays
+> written above, true of `main`, per §4a-4d. **The half that does not move is
+> again the load-bearing one**: #870's §87 carries no "last section in the file"
+> clause of its own, so nothing beyond this correction is owed for it either, and
+> §88's own numbering note records the third collision from its own end. **The
+> one reference that followed the number is repointed again**: §81's title, which
+> read §87, now reads **§88**, because §81 is §88's subject and that pointer is
+> what a reader follows.
+>
+> **And that clause is corrected a fourth time at the `#1008` × `#1037` merge, in
+> the same place and for the same reason the ones before it were.** `main` then
+> gained a §88 of its own — #1037's summary, landed as `f6480168` (#1043) in a
+> window after this branch forked — so **"§88 is the last section in the file"**
+> is now false and **§89 is**, #1008's summary having given way a fourth time by
+> the rule this note applies. **The `§88` the paragraph above gives #1008 is left
+> visible and is true of the tree it was measured on**, per §4a-4d, in the same
+> way the `§87` and `§85` beside it are. The list between §73 and the end grows by
+> one more and is still in
+> order — #929's §74, #962's §75, #794's §76, #811's §77, #979's §78, #973's
+> §79, #780's §80, #978's §81, #843's §82, #844's §83, #974's §84, #845's §85,
+> #1009's §86, #870's §87, #1037's §88 and #1008's §89 — and the §85 this note
+> gave the "last section" clause to stays
+> written above, true of `main`, per §4a-4d. **The half that does not move is
+> again the load-bearing one**: #1037's §88 carries no "last section in the file"
+> clause of its own, so nothing beyond this correction is owed for it either, and
+> §89's own numbering note records the fourth collision from its own end. **The
+> one reference that followed the number is repointed again**: §81's title, which
+> read §88, now reads **§89**, because §81 is §89's subject and that pointer is
+> what a reader follows.
+>
+> **And that clause is corrected once more at the `#1008` × `#26` merge, in the
+> same place and for the same reason the ones before it were.** `main` then
+> gained a §89 of its own — #26's summary, landed as `517be444` (#1058) in a
+> window after that — so **"§89 is the last section in the file"** is now false and
+> **§90 is**, #1008's summary having given way a fifth time by the rule this note
+> applies. **The `§89` the paragraph above gives #1008 is left visible and is true
+> of the tree it was measured on**, per §4a-4d, in the same way the `§88`, `§87`
+> and `§85` beside it are. The list between §73 and the end grows by one more and
+> is still in
+> order — #929's §74, #962's §75, #794's §76, #811's §77, #979's §78, #973's
+> §79, #780's §80, #978's §81, #843's §82, #844's §83, #974's §84, #845's §85,
+> #1009's §86, #870's §87, #1037's §88, #26's §89 and #1008's §90 — and the §85
+> this note gave the "last section" clause to stays
+> written above, true of `main`, per §4a-4d. **The half that does not move is
+> again the load-bearing one**: #26's §89 carries no "last section in the file"
+> clause of its own, so nothing beyond this correction is owed for it either, and
+> §90's own numbering note records the fifth collision from its own end. **The
+> one reference that followed the number is repointed again**: §81's title, which
+> read §89, now reads **§90**, because §81 is §90's subject and that pointer is
+> what a reader follows. **The two places in
+> [`test-line-pin-census.md`](findings/test-line-pin-census.md) that also name
+> the number are left written** — its `#1008` × `#1009` note's `§87` and its
+> `#1008` × `#870` note's `§88` — each true of the merge its own heading names,
+> per §4a-4d, in the same way the numbers in this note are.
+>
+> **And that clause is corrected a sixth time at the `#1008` × `#1032` × `#1033`
+> merge, in the same place and for the same reason the ones before it were.**
+> `main` then gained a §90 and a §91 of its own — #1032's summary, landed as
+> `6b5bf965` (#1040) and #1033's, landed as `48887fa0` (#1041), both in windows
+> after this branch forked — so **"§90 is the last section in the file"** is now
+> false twice over, §90 being #1032's rather than #1008's, and **§92 is**,
+> #1008's summary having given way a sixth time by the rule this note applies.
+> **The `§90` the paragraph above gives #1008 is left visible and is true of the
+> tree it was measured on**, per §4a-4d, in the same way the `§89`, `§88`, `§87`
+> and `§85` beside it are; **what moved is the section's number, not that
+> record**, and the two `§90`s are two different sections rather than a
+> disagreement, which is the one shape a collision of this kind takes that none
+> of the corrections above had. The list between §73 and the end grows by two
+> and is still in
+> order — #929's §74, #962's §75, #794's §76, #811's §77, #979's §78, #973's
+> §79, #780's §80, #978's §81, #843's §82, #844's §83, #974's §84, #845's §85,
+> #1009's §86, #870's §87, #1037's §88, #26's §89, #1032's §90, #1033's §91 and
+> #1008's §92 — and the §85 this note gave the "last section" clause to stays
+> written above, true of `main`, per §4a-4d. **The half that does not move is
+> again the load-bearing one**: neither #1032's §90 nor #1033's §91 carries a
+> "last section in the file" clause of its own, each recording instead the
+> collisions that renumbered it, so nothing beyond this correction is owed for
+> either of them, and §92's own numbering note records the sixth collision from
+> its own end. **The one reference that followed the number is repointed again**:
+> §81's title, which read §90, now reads **§92**, because §81 is §92's subject
+> and that pointer is what a reader follows. The two places in
+> [`test-line-pin-census.md`](findings/test-line-pin-census.md) that name the
+> number are **still left written**, for the reason the paragraph above gives,
+> and neither is repointed: the `#1008` × `#1060` section added to that page by
+> this branch names `§90` too, and it is a third record of the same shape rather
+> than a pointer.
 
 Write-up: [`xdata-two-largest-case-restatement.md`](findings/xdata-two-largest-case-restatement.md);
 this is the summary.
@@ -10846,7 +10992,7 @@ the new-side hash and the two call-site comments move, four directions to five.
 No EC was opened, no capture taken, no register read, and nothing here is a
 claim about what the fixture exercises.
 
-## 81. Both index hand-repairs are measured, and the third column's checker is a blind spot with a reason (2026-09-26, issue #978)
+## 81. Both index hand-repairs are measured, and the third column's checker is a blind spot with a reason (2026-09-26, issue #978) — a **named pair**; the count over the whole history is §92
 
 > **Numbering note, added at the merge.** This section was written as §80.
 > #780's summary above holds **§80** on `main` in the same window, so it is
@@ -10894,6 +11040,19 @@ the index needed hand-repair twice, in #502 and #720, both times in a row's
 third column, and **nobody had run either checker over the pre-repair tree**,
 so whether they were red there was unknown. That was an open question in
 fourteen sentences across eight files.
+
+*(Correction, 2026-09-26, by issue #1008: the sentence above stays as the
+record of what those four sections said, and its "twice" is not a count over
+the index. It was never one — #978 measured the two revisions it was given,
+`--base`/`--repair` on a named pair, and the number became a sentence about the
+population. `ec/tools/census_index_third_column_edits.py` walks the history of
+both indexes and finds **four** edits to the top-level table's third column —
+**#182, #502, #720 and #736** — and **one** to a nested index's first column,
+#746. Every one of the five is at a revision that changed no fixture the row
+names, so the "zero literals" reason below holds for all four of the third-column
+edits and not only the two that were run. The write-up is
+[`testdata-index-repair-census.md`](findings/testdata-index-repair-census.md),
+and the corrected count is in §41 and §47 above and in the two tool docstrings.)*
 
 **It is now a number with a reason.
 `ec/tools/measure_index_repair_visibility.py` extracted each pre-repair tree
@@ -11467,6 +11626,71 @@ a reader finds it closed.)*
 > §73's clause was owed for**: neither the clause nor the count is edited into
 > shape here, §73's stays as written per §4a-4d, and this is the correction
 > beside it.
+>
+> **One clause of the paragraph above is corrected at the `#1008` × `#870`
+> merge, beside itself and not into itself, per §4a-4d.** Its two halves were
+> written for the tree #1009 landed in and are true of it: **#1009's own summary
+> did become the last section in the file there, and said nothing about it**,
+> which is the point the sentence was making. **On this tree it is §88 rather
+> than this §86 that is last** — #1008's third-column census summary landed
+> below it, giving way to #845's §85, to this §86 and then to #870's §87 by the
+> rule the paragraph above states. So **§73's correction to the same clause is
+> owed once more rather than twice**: the one for #845's §85 and the one for this
+> §86 are both now recorded in §73, whose last correction paragraph covers
+> #1008's §88, which is the last section on this tree. **The rest of the
+> paragraph does not move, and the half that does not move is the load-bearing
+> one**: the sentence's argument is that leaving the clause off is right, and
+> this landing is the fifth merge to show that — which is now true a second time
+> over rather than once. **§88's own numbering note records the same collision
+> from its own end.**
+>
+> **And the same clause is corrected a second time at the `#1008` × `#1037`
+> merge, beside itself and not into itself, per §4a-4d.** The paragraph above was
+> written for the `#1008` × `#870` tree and is true of it; **on this tree it is
+> §89 rather than the §88 the paragraph above names**, because #1008's summary has
+> given way once more since — to #1037's own §88, landed as `f6480168` in a
+> window after this branch forked — and is §89 by the rule the paragraph states.
+> **The `§88` the paragraph above gives #1008 is left written** and is true of the
+> tree it was measured on, per §4a-4d, in the same way the `§86` and `§85` beside
+> it are. **The rest of the paragraph does not move**, and the half that does not
+> move is still the load-bearing one: the sentence's argument is that leaving the
+> clause off is right, and this is the sixth merge to show that — true a third time
+> over rather than once. **§89's own numbering note records the same collision from
+> its own end.**
+>
+> **And the same clause is corrected a third time at the `#1008` × `#26` merge,
+> beside itself and not into itself, per §4a-4d.** The paragraph above was written
+> for the `#1008` × `#1037` tree and is true of it; **on this tree it is §90 rather
+> than the §89 the paragraph above names**, because #1008's summary has given way
+> once more since — to #26's own §89, landed as `517be444` (#1058) in a window
+> after that — and is §90 by the rule the paragraph states. **The `§89` the
+> paragraph above gives #1008 is left written** and is true of the tree it was
+> measured on, per §4a-4d, in the same way the `§88`, `§86` and `§85` beside it
+> are. **The rest of the paragraph does not move**, and the half that does not move
+> is still the load-bearing one: the sentence's argument is that leaving the clause
+> off is right, and this is the seventh merge to show that — true a fourth time over
+> rather than once. **§90's own numbering note records the same collision from its
+> own end.**
+>
+> **And the same clause is corrected a fourth time at the `#1008` × `#1032` ×
+> `#1033` merge, beside itself and not into itself, per §4a-4d.** The paragraphs
+> above were written for the `#1008` × `#1060` tree and are true of it; **on this
+> tree #1008's summary is §92 rather than the §90 the last of them names**,
+> because `main` took §90 and §91 in two windows after that — `6b5bf965` for
+> #1032 and `48887fa0` for #1033 — and by the rule the paragraph states the
+> section arriving second gives way twice more. **The `§90` that paragraph gives
+> #1008 is left written** and is true of the tree it was measured on, per §4a-4d,
+> in the same way the `§89`, `§88` and `§87` beside it are, and **the §90 it
+> names is now a different section altogether** — #1032's, whose own numbering
+> note draws the same record-and-not-a-pointer distinction this file keeps
+> drawing. **The rest of the paragraph does not move**, and the half that does
+> not move is still the load-bearing one: the sentence's argument is that leaving
+> the clause off is right, and this is the ninth merge to show that — true a
+> fifth time over rather than once. **§92's own numbering note records the same
+> collision from its own end.** **The count of four in the paragraph above does
+> not move either**, and neither does the debt: `main`'s two summaries carry no
+> "last section in the file" clause of their own, so the only place the debt is
+> written down is still §73's and this paragraph.
 
 Four sentences in `ec/tools/verify_reassembly.py` and
 `ec/tools/measure_index_repair_visibility.py` described what this repository's
@@ -11852,3 +12076,114 @@ insertion point that composes with the six patches already prepared. Measured,
 with the method, the two alternatives left out, the issue's two wrong line
 references, and a "what is not claimed" that says the invariant has **never**
 run in CI: [`findings/history-checkouts-gate-wiring.md`](findings/history-checkouts-gate-wiring.md).
+
+## 92. The index's third column has been edited four times, and "twice" was a count of a named pair (2026-09-26, issue #1008)
+
+The write-up is
+[`testdata-index-repair-census.md`](findings/testdata-index-repair-census.md);
+this is the summary. §81 measured a **pair**: `measure_index_repair_visibility.py`
+takes `--base`/`--repair`, the two shas came from `git log --format=%s` on the
+`(#502)` and `(#720)` subjects, and the number the merge published — "twice" —
+was that pair's size. Nothing had asked how many third-column edits the history
+holds at all, so a measurement of two became a claim about a population and
+propagated into **twenty sites across fifteen files** — a figure the census
+write-up's first pass got wrong as "ten files at twelve sites", which is the
+same error one level up and is corrected there beside the wrong version — and
+the merge that retired the "nobody has looked" disclaimer around it propagated
+it to three more, which are three of the seven sites the first pass missed.
+
+**Measured, by walking the history: four.**
+`ec/tools/census_index_third_column_edits.py` reads every revision of
+`ec/tools/testdata/README.md` and of every nested index beneath it, and reports
+**4 `edited`** in the root table's third column — **#182 (`944b1ce7`), #502
+(`565b6f3c`), #720 (`8f4f211f`) and #736 (`a393229b`)** — and **1 `edited`** in
+a nested index's **first** column, **#746 (`1813fe98`)**, over **33 revisions at
+`0daac768`**: **5 edited, 14 refused, 12 unchanged, 2 unborn, 0 no-parent, 0
+not-read-by-this-method.** **The total is a per-ref figure and carries the ref it
+was taken at, because this PR moves it by one**: the same 33 is what
+`origin/main` holds, and the tree this lands in holds 34 — this PR's own edit to
+the paragraph below `testdata/README.md`'s table, which is a revision of the
+root index the census classes `unchanged` (so it reads `13 unchanged` there).
+`5 edited` and `14 refused` are the same on both, and are the load-bearing pair.
+
+**Two findings the census had to be shaped around, and both are why the count is
+per population.** `table_cells(text, column=3)` returns `[]` for a file whose
+tables are headed `file / row`, so a third-column census run over
+`call-graph/README.md` compares two empty lists, finds the lengths equal and
+reports no difference — the silent zero its own `repair_rows()` docstring names.
+The nested tables are two columns wide, so the column a nested repair lands in
+is the **first** one, and it is a *path* cell: the #746 edit is
+`` `decompiled/common/0EA2.asm` `` → `` `decompiled/bank0/0EA2.asm` ``, which is
+what `check_testdata_index.py` reports as `nested_missing` in the first place.
+An image the reader cannot locate is therefore `not read by this method`, and
+the population is discovered from `git log --diff-filter=A --name-only` rather
+than hardcoded, so a nested index that has since been deleted is still
+censused.
+
+**The criterion, stated in as many words because the corpus conflated the two
+things.** A **hand-repair** is an edit to a description cell at a revision that
+changed **no fixture the row names** — the sentence is what was wrong. A
+**routine** edit is one at a revision that changed the fixture, where the cell
+followed the bytes. And a **row addition is not an edit at all**: it moves the
+row count, which the census refuses rather than aligns, so it lands in
+`refused` and is counted on neither side. **All four root edits and the nested
+one are at revisions that touched no fixture** — one `git show --stat -- ec/tools/testdata/`
+per revision says so, and the corpus's own two have never been anything else.
+The tool counts edits and never prints the word; that judgement is the
+write-up's, made per revision from the cells the census prints.
+
+**The corpus changes at the twenty sites the write-up's table lists**, in
+place, superseded wording left visible per §4a-4d: three tool docstrings and
+two suite docstrings, `ec/tools/testdata/README.md` (below its table, never in
+a cell, for the reason #978 gives), `docs/findings.md` §41, §47 and §81,
+`docs/agent-pipeline.md` items 9 **and** 10, the two write-ups, two prepared
+patches under `docs/ci/`, and the three `#747` disclaimer blocks propagated
+across `docs/findings/`. The table is the enumeration and the count is what
+its rows add up to, for the reason the previous paragraph gives. §41's "those
+two are the error class, and not a repair history" is preserved and not
+flattened: the count moved, the distinction did not.
+
+**Nothing here is a hardware claim and nothing is gated.** Every number is read
+out of committed history and committed prose. No capture is opened, no EC, no
+firmware image, no laptop. The census is **not** in
+`.github/scripts/agent-gates.sh` and cannot be from an agent branch — the plan
+stage's push token has no `workflow` scope — and it renders no verdict, so there
+is nothing for a gate to call. No `status:` moved, no checker rule or threshold
+changed, and no `gh` command runs against any repository.
+
+*(Numbering note, 2026-09-26, recorded here and not in §85, on the rule §85's own
+note sets: a summary already committed on `main` does not move and this branch's
+own gives way, per §4a-4d. **This section is written as §85 and is §92 on the
+tree it lands in**, having given way to #845's §85 in the same merge, to #1009's
+§86 on `main`, to #870's §87 on `main` after that, to **#1037's §88**, which
+`f6480168` landed in the window after this branch forked, to **#26's §89**,
+which `517be444` (#1058) landed in the window after that, and to **#1032's §90**
+and **#1033's §91**, which `6b5bf965` and `48887fa0` landed in the window after
+*that* — seven summaries already committed; §85 through §91 keep the whole
+numbers and the seven collisions cost this section seven digits, not its
+content. **The `§90` the branch's own tree carried is left written** wherever it
+appears below, true of the tree it was measured on, in the same way the `§87` and
+`§88` beside it are; what moved is this section's number and not that record.
+**The one §-number reference that pointed at it — §81's own title, which this
+branch rewrote to say "the count over the whole history is §85" — is repointed to
+§92**, because §81 is
+this section's subject and that pointer is what a reader follows. Two further
+places name it and are **left written, each true of the tree it was measured on**
+per §4a-4d: `test-line-pin-census.md`'s `#1008` × `#1009` note gives it **§87**
+and its `#1008` × `#870` note gives it **§88**, and both notes are headed by the
+merge they describe. Everything else in the tree names another section: the
+write-up cites §41, §47 and §81 and no section number of its own, the two censuses
+this work reads, `test-line-pin-census.md` and
+[`testdata-third-column-claims.md`](findings/testdata-third-column-claims.md),
+pin `ec/tools/*.py` line numbers and not this section's, and the two `docs/
+findings.md` §86 citations in
+[`testdata-row-claims-repair-measurement.md`](findings/testdata-row-claims-repair-measurement.md)
+name **#1009's** summary, which is §86 on this tree and is not renumbered. **§73's
+"and the last section in the file" clause is corrected once more beside itself**
+for the same reason the ones before it were: **§92 is the last section in
+the file now**, where §85's own clause says §85 is — true of `main`, and left
+written there per §4a-4d — and neither §83, §84, §85, §86, §87, §88, §89, §90 nor
+§91 carries a
+"last section in the file" clause of its own, §86's note recording that it left
+one off on purpose and §90's and §91's each recording the collisions that
+renumbered them, so nothing beyond this correction is owed for any of them.)*
