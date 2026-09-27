@@ -215,7 +215,7 @@ regions:
       print(hex(o),(o-0x6e65)//6)"
     supersedes: >-
       issue #50 listed `0x006E78`+ as "another big-endian word table". **At
-      0x006E78 there is no word table**: d[0x6E78]=0x42 is the third byte of
+      0x006E78 there is no word table**: d[0x6E78]=0x42 is the second byte of
       this 6-byte repeating pattern, 3.17 repeats in. bank-call-audit.md §5's
       "`0x006E78`+ is a big-endian word table" is corrected in place.
     note: >-

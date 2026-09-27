@@ -72,8 +72,11 @@ table but off its grid is a table entry read one byte out of frame, which is
 the phantom mechanism precisely; a site inside a table *on* the grid is the
 table.
 
-**`0x021C6` is the interesting one, and §4 is about it.** It scores 24 of 24,
-it is the strongest site in bucket C, and no region covers it. See §4.
+**`0x021C6` is the interesting one, and §4 is about it.** It scores 24 of 24
+— tying `0x00686`, `0x06952` and `0x06E83`, all four in the table above at
+24/24 — and it is **the only one of the four that no region covers**. That is
+the claim; "the strongest site in bucket C" was a unique maximum the same
+table refutes. See §4.
 
 **`0x00381` is the audit's own worked example, and it is in the table.** The
 audit's §5 reads `0x00378`-`0x003B4` as "a `ljmp` dispatch table read one byte
@@ -214,8 +217,9 @@ count, and its verdict are untouched.
 This is the most interesting result in the diff, and the one that should shape
 the follow-up.
 
-`0x021C6` is the highest-scoring site in bucket C: 24 of 24 anchors decode onto
-it. The audit placed it inside the `0x219C` triple table. It is not inside it —
+`0x021C6` scores 24 of 24 anchors decoding onto it, which **ties** `0x00686`,
+`0x06952` and `0x06E83` rather than leading them, and it is the only one of the
+four that no listed region covers. The audit placed it inside the `0x219C` triple table. It is not inside it —
 the table's last entry byte is `0x21B3` and the site is at `0x21C6`, **0x13
 bytes past the end** — `0x12` past the region's `file_hi` of `0x21B4`, the byte
 after that last entry, which is the reference the `--self-test` in

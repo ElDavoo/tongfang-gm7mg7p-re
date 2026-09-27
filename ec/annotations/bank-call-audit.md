@@ -514,7 +514,7 @@ Two readings of that population, neither of them a clearance:
   > `0x006940`+ is **`0x690B`**, 27 entries: `d[0x6940] = 0xDE` is the *address*
   > byte of the entry at `0x693E`, so the offset given is mid-entry.
   > `0x006E78`+ **is not a big-endian word table at all** — `d[0x6E78] = 0x42` is
-  > the third byte of a `10 42 10 41 10 40` pattern repeating over
+  > the second byte of a `10 42 10 41 10 40` pattern repeating over
   > `0x6E65`-`0x6E7C`. The word table the reading was reaching for is the nine
   > descending words at `0x6E7D`-`0x6E8E`, five bytes later, and that is where
   > §1's `0x06E83` site actually is.
