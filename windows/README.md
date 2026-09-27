@@ -194,7 +194,7 @@ rather than copying its rules exists to prevent.
 
 ## Offline tests
 
-Eight of the tools carry offline `unittest` suites, and all of them run from
+Nine of the tools carry offline `unittest` suites, and all of them run from
 Linux with no Windows box, no EC and no vendor code:
 
 ```sh
@@ -221,13 +221,22 @@ wrote, which on the vendor's own `0x07` is the same byte the right probe
 writes — its `finally`, its CSV, and the bit arithmetic pinned to the DSDT
 field list and to the three `ghidra-functions.csv` rows it is a transcription
 of, which is the half that says those are the bits the EC's own code reads.
+`tools/test_battery_trace.py` does the same for the coulomb-count tool, and is
+the only one here whose subject is a capture directory rather than a tool: the
+column set is held against the two committed traces on that shape instead of
+against the tool itself, a sample row is checked for carrying both current
+sources — the instrument `docs/findings.md` §4a's retraction turned on — and
+every file in `evidence/battery-traces/` is accounted for by name, including the
+two a shell script in `linux/battery-trace/` still writes and the one whose `#`
+annotation leaves its header on row 1 rather than row 0.
 (`tools/test_system_id_probe.py` covers the `0x0456` probe;
 `../tools/README.md` lists it.) All but one of them work by faking
 `ecrw` — the module binds kernel32 at import time and only loads on Windows —
-which is also what makes the arms scriptable; the charge-target suite fakes the
-`powershell` call behind its WMI line as well. The probe, `ec_watch`,
-GPU-block and cTGP/DBEN suites use the shared `tools/ecrw_fake.py`; the other
-three still carry fakes of their own. `tools/test_ecrw.py` is the exception
+which is also what makes the arms scriptable; the charge-target and
+battery-trace suites fake the `powershell` call behind their WMI lines as well.
+The probe, `ec_watch`, GPU-block, cTGP/DBEN and battery-trace suites use the
+shared `tools/ecrw_fake.py`; the other three still carry fakes of their own.
+`tools/test_ecrw.py` is the exception
 and the reason the others can be: it puts a fake `ctypes.WinDLL` in front of
 the *real* `ecrw.py`, so the `MMRD` marshalling, the aligned-block arithmetic
 and the unchanged per-byte buffer are checked against the code that ships

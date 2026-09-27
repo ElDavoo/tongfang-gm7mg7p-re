@@ -43,9 +43,10 @@ failed=0
 # the other died on
 #   ImportError: cannot import name 'EcError' from 'ecrw' (unknown location)
 #
-# test_manual_fan_ctrl_probe.py, test_ec_watch.py, test_gpu_block_watch.py and
-# test_ctgp_dben_probe.py install windows/tools/ecrw_fake.py now, one shape by
-# assignment. test_ec_validate.py, test_system_id_probe.py and
+# test_manual_fan_ctrl_probe.py, test_ec_watch.py, test_gpu_block_watch.py,
+# test_ctgp_dben_probe.py and test_battery_trace.py install
+# windows/tools/ecrw_fake.py now, one shape by assignment. test_ec_validate.py,
+# test_system_id_probe.py and
 # test_charge_target_test.py still setdefault their own fakes, so a single
 # discovery run is still order-dependent for them. Do not collapse this into
 # one discovery run until they are moved over.

@@ -86,6 +86,7 @@ the row is the one step it cannot do.
 | `windows/tools/test_ec_validate.py` | the `ec_validate.py` `0x0436` capacity arm's exact-copy scoring, full-capacity bound, CSV, and `0x0400-0x045F` page assertion |
 | `windows/tools/test_system_id_probe.py` | the `0x0456` probe's `store_scaled_quotient_0449` arithmetic, its branch labels, its address guard, and that it has no write path |
 | `windows/tools/test_charge_target_test.py` | the charge-target tool's three refusals, the restore in its `finally`, and its CSV column set |
+| `windows/tools/test_battery_trace.py` | the coulomb-count tool's column set, held against the two committed captures that carry it rather than against the tool itself, and a row that carries both current sources -- `ec_current_ma` little-endian through the tool's own `u16`, `wmi_rate_mw` from the faked WMI line -- reproduced field for field from `2026-09-19-windows-bios-defaults.csv`'s first row. Around it, a census of `evidence/battery-traces/` in which every file is named and claimed exactly once, so a capture nobody has classified fails rather than being passed over: the two on a shape a shell script in `linux/battery-trace/` **still writes** are held byte-identical to that script, and the one whose `#` annotation puts its header on row 1 is recorded rather than skipped. It also pins the append guard, **both ways** -- a second run does not repeat the header, and a run into a file with a foreign header interleaves its columns in anyway, asserted as today's behaviour because the tool never compares the two, so closing that gap turns this case red. What it is not: hardware evidence, a register reading, or anything about the capture shapes it names but does not produce. The write-up is [`../docs/findings/battery-trace-column-drift.md`](../docs/findings/battery-trace-column-drift.md) |
 | `windows/tools/test_gpu_block_watch.py` | the GPU-block watcher's citation table against `evidence/acpi/dsdt.dsl` and `ec/annotations/registers.yaml`, the door procedure's own copy of that table against the tool, that copy's cross-reference column for the four census-covered rows against `ec/annotations/ec-07c4-07d5-sites.csv` and its `.md`, the door grader's third copy of the window bounds and DSDT names against the tool, its watch set, and its mark reaching the CSV |
 | `windows/tools/test_ctgp_dben_probe.py` | the `0x07C4` `DBEN` probe's refusals, its two-arm byte script read back from a run that started with the value bit clear, the restore in its `finally`, its CSV column set, and the bit arithmetic pinned to `evidence/acpi/dsdt.dsl` and the `0x96AD`/`0x94C0`/`0x83FF` rows of `ec/annotations/ghidra-functions.csv` |
 | `linux/lightbar/test_probe_6005.py` | the lightbar probe's ioctl encoding, dry run, and off-after-failure |
@@ -104,9 +105,10 @@ makes skipping it fail, by name, on a full run.
 
 `windows/tools/ecrw_fake.py` is a shared fixture rather than a suite — it is
 the offline stand-in for the `ecrw` module, installed by
-`test_manual_fan_ctrl_probe.py`, `test_ec_watch.py`, `test_gpu_block_watch.py`
-and `test_ctgp_dben_probe.py`, and the `test_*.py` pattern above does not pick
-it up, so it costs no suite count. `windows/tools/test_ecrw.py` is the odd one
+`test_manual_fan_ctrl_probe.py`, `test_ec_watch.py`, `test_gpu_block_watch.py`,
+`test_ctgp_dben_probe.py` and `test_battery_trace.py`, and the `test_*.py`
+pattern above does not pick it up, so it costs no suite count.
+`windows/tools/test_ecrw.py` is the odd one
 out and installs nothing: it puts a fake `ctypes.WinDLL` in front of the real
 `ecrw.py`, because a suite that only ever exercises the fake is not testing
 the file whose arithmetic #147 is about.
