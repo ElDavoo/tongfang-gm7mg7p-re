@@ -18,9 +18,11 @@ produced by a run that happened now.
 
 ## The census
 
-Every file in the directory as committed here, by column set. The counts are
-the tree this page was written against; the suite is what holds the directory
-to them, and a file added or removed moves the table, not the check. The
+Every file in the directory as committed here, by column set. The suite holds
+the file set and the column sets — a file added or removed turns the census
+red rather than passing over it. The data-row counts are a one-time
+transcription of the committed tree that no check re-derives, so read them as
+a record of this tree rather than as a figure something enforces. The
 headers are transcribed, not paraphrased, because the point is what a reader
 gets if they take row 0 for a header.
 
@@ -28,7 +30,7 @@ gets if they take row 0 for a header.
 |---|---|---|---|
 | `2026-09-09-profiles.csv` | row 0 | 162 | nothing in this tree |
 | `2026-09-09-threshold80.csv` | row 0 | 6 | `linux/battery-trace/battery-trace` |
-| `2026-09-17-limit-pair.csv` | **row 1** | 196 | `linux/battery-trace/limit-pair-test` |
+| `2026-09-17-limit-pair.csv` | **row 1** | 195 | `linux/battery-trace/limit-pair-test` |
 | `2026-09-18-windows-stationary.csv` | row 0 | 416 | `battery_trace.py` |
 | `2026-09-19-windows-bios-defaults.csv` | row 0 | 185 | `battery_trace.py` |
 | `2026-09-21-0522-follow.csv` | row 0 | 8 | `charge_target_test.py` |
@@ -40,7 +42,7 @@ gets if they take row 0 for a header.
 2026-09-09-threshold80.csv      ts,ac,status,capacity,charge_now,current_now,voltage_now,thr,r7b9,r7a6
 2026-09-17-limit-pair.csv       ts,phase,ac,status,capacity,charge_now,current_now,voltage_now,mem7b9,mem7d0,regmap7b9
 2026-09-18-windows-stationary   ts,phase,ac,charging,capacity,remaining_mwh,wmi_rate_mw,ec_current_ma,ec_voltage_mv,ec_07a6,ec_07b9,ec_07d0,ec_07d1,ec_07cc
-2026-09-19-windows-bios-defaults  (the same fourteen)
+2026-09-19-windows-bios-defaults  ts,phase,ac,charging,capacity,remaining_mwh,wmi_rate_mw,ec_current_ma,ec_voltage_mv,ec_07a6,ec_07b9,ec_07d0,ec_07d1,ec_07cc
 2026-09-21-0522-*.csv           ts,phase,t_s,target_written_mv,target_readback_mv,held,requested_mv,ec_current_ma,ec_voltage_mv,profile_07a6,gate_0490,ac,charging,capacity,remaining_mwh,wmi_rate_mw
 ```
 
@@ -98,15 +100,16 @@ glob that passed over it would report what it read and mean less than it said.
 ## The append guard
 
 Every tool that writes here opens the file for append and decides about the
-header separately. Three of them, three different decisions:
+header separately. Four of them, three different decisions:
 
 | writer | the guard | what it asks |
 |---|---|---|
 | `battery_trace.py:81-84` | `if fh.tell() == 0` | is the file empty |
+| `charge_target_test.py:154-157` | `if fh.tell() == 0` | is the file empty |
 | `linux/battery-trace/battery-trace:15-17` | `if [ ! -s "$OUT" ]` | is the file non-empty |
 | `linux/battery-trace/limit-pair-test:23-24` | none | nothing; it appends the `#` line and the header on every run |
 
-**None of the three compares the header already in the file with the columns it
+**None of the four compares the header already in the file with the columns it
 is about to write.** `battery_trace.py` appends a row of fourteen
 current-shape columns to a file whose header is `2026-09-17-limit-pair.csv`'s
 eleven, and reports exit 0. Column 4 is `status` in one and `charging` in the
@@ -121,13 +124,13 @@ them, and by the census holding every one to the column set its class claims.
 And that the guard is the defect: the guard is doing what it was written to do.
 The gap is that nobody wrote the check that is not there.
 
-The one writer with **no** guard is the interesting one, because it is the one
-that would double. `limit-pair-test` appends its `#` line and its header on
-every run, so two runs on one date would put a second header in the middle of
-the file — and `2026-09-17-limit-pair.csv` has exactly one of each, so the
-committed capture is a single run with four hand-added annotations after it. The
-`2026-09-21-0522-*` files are on the guarded path, and each carries one header
-line.
+The one writer of the four with **no** guard is the interesting one, because it
+is the one that would double. `limit-pair-test` appends its `#` line and its
+header on every run, so two runs on one date would put a second header in the
+middle of the file — and `2026-09-17-limit-pair.csv` has exactly one of each,
+so the committed capture is a single run with four hand-added annotations after
+it. The `2026-09-21-0522-*` files are on the guarded path, and each carries one
+header line.
 
 ## The two-source property, at the row level
 
