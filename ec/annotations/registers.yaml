@@ -198,11 +198,20 @@ registers:
     note: >
       driver reads this for capability bits (SUPER_KEY_LOCK, LIGHTBAR,
       FAN_BOOST); not referenced by this firmware build
-      The three capability names are carried by the sources: tag and by
-      nothing else in the tree: the committed upstream excerpt
+      No committed line puts the three capability names at 0x0765; the names
+      themselves are not missing from the tree, and every line behind them
+      lands on some other byte. The committed upstream excerpt
       (linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt) carries no
-      0x0765 line, the only FAN_BOOST in it is TRIGGER_FAN_BOOST BIT(2)
-      under EC_ADDR_TRIGGER 0x0767 (:213), and the ASL's ECMG field list
+      0x0765 line, its only FAN_BOOST token is TRIGGER_FAN_BOOST BIT(2)
+      under EC_ADDR_TRIGGER 0x0767 (upstream-excerpt.txt:160, upstream
+      line 213), and SUPER_KEY_LOCK_STATUS and LIGHTBAR_STATUS are 0x0768
+      bits (upstream-excerpt.txt:169-170); outside the excerpt the vendor
+      stack's own fan boost is a third thing again, the FAN_BOOST_ON and
+      FAN_BOOST_OFF cases in
+      windows/decompiled/v3.1.39.0/GCUService/MyControlCenter.MyFan/
+      MyFanManager_RamFan1p5.cs:270,274 reach a SetFanMode that writes bit 6
+      of 0x0751 (windows/vendor-ec-map.md:71), and none of 0x0767, 0x0768,
+      0x0751 is 0x0765. The ASL's ECMG field list
       (evidence/acpi/dsdt.dsl:52193-52194, the only field list in the DSDT
       that names XDATA addresses in that window) has no Offset anywhere in
       0x0720-0x072F or in 0x0760-0x076F. The one literal 0x076x in the

@@ -45,10 +45,12 @@ settles it, and §8 says so in the outcome that would bear on it hardest.
 
 **The bit's name is written down; its behaviour is not.** Upstream names both
 the byte and the bit —
-[`upstream-excerpt.txt:115-116`](../../linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt)
+[`upstream-excerpt.txt:109-110`](../../linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt)
 carries `#define EC_ADDR_OEM_9 0x0726` and `#define AC_AUTO_BOOT_ENABLE
 BIT(3)` — and the excerpt's own section header is candid that the name lives
-there: `[EC_ADDR_OEM_9 -- upstream's AC_AUTO_BOOT_ENABLE bit lives here]`. But
+there: `[EC_ADDR_OEM_9 -- upstream's AC_AUTO_BOOT_ENABLE bit lives here]`. A
+`:NNN` on that file is its own file line; the `NNN:` each quoted line carries
+is its line in `uniwill-acpi.c`, and the two are not the same numbers. But
 **no use site of that `#define` is in the excerpt**, and no behaviour
 attaches to the name anywhere in this tree. That is a materially weaker
 footing than a polarity, so this procedure is built to be polarity-agnostic:
@@ -229,15 +231,27 @@ count, and also half of the pair
 question 1 names. Its note reads: "driver reads this for capability bits
 (SUPER_KEY_LOCK, LIGHTBAR, FAN_BOOST); not referenced by this firmware build".
 
-**Those three capability names have no committed line behind them.** The
-excerpt carries no `0x0765` line at all — its silence is worth stating
-carefully, because the excerpt is a curated fragment set rather than the whole
-of `uniwill-acpi.c`, so this is not a claim that upstream does not define the
-address. What is checkable is narrower and is enough: the only `FAN_BOOST` in
-committed material is `TRIGGER_FAN_BOOST BIT(2)` at `upstream-excerpt.txt:213`,
-which the excerpt's own section header puts under `EC_ADDR_TRIGGER 0x0767`;
-`SUPER_KEY_LOCK_STATUS` and `LIGHTBAR_STATUS` are `0x0768` bits at
-`upstream-excerpt.txt:221-222`; and the ASL's `ECMG` field list — the
+**No committed line puts those three capability names at `0x0765`.** That is a
+narrower claim than "no committed line at all", and it is the one that holds:
+the names themselves are not missing from this tree, and every line behind them
+lands on some other byte. The excerpt carries no `0x0765` line — its silence
+is worth stating carefully, because the excerpt is a curated fragment set
+rather than the whole of `uniwill-acpi.c`, so this is not a claim that upstream
+does not define the address. What is checkable is narrower still, and it is
+enough: the excerpt's only `FAN_BOOST` token is `TRIGGER_FAN_BOOST BIT(2)` at
+`upstream-excerpt.txt:160`, which the excerpt's own section header puts under
+`EC_ADDR_TRIGGER 0x0767`; `SUPER_KEY_LOCK_STATUS` and `LIGHTBAR_STATUS` are
+`0x0768` bits at `upstream-excerpt.txt:169-170`; and outside the excerpt the
+vendor stack has a fan boost of its own, the `FAN_BOOST_ON` and `FAN_BOOST_OFF`
+cases at
+`MyFanManager_RamFan1p5.cs:270,274`
+([`../../windows/decompiled/v3.1.39.0/GCUService/MyControlCenter.MyFan/`](../../windows/decompiled/v3.1.39.0/GCUService/MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs))
+reaching a `SetFanMode` that writes bit 6 of `0x0751`, which
+[`../../windows/vendor-ec-map.md:56,71`](../../windows/vendor-ec-map.md) traces
+under both `SetFanMode` and `SetFanBoost`, and which its `_CML`, `_NV` and
+`_Normal` platform variants do in the same shape. So `0x0767`, `0x0768` and
+`0x0751` are three different bytes behind the three names, and none of them is
+`0x0765`. The ASL's `ECMG` field list — the
 `OperationRegion (ECMG, SystemMemory, 0xFE410000, 0x00010000)` at
 `dsdt.dsl:52193-52194`, and the only field list in the DSDT that names XDATA
 addresses in that window, the other two EC regions being the `ECRR`/`ECRW`
@@ -250,9 +264,9 @@ XDATA address: `CreateBitField`'s second operand is a **bit offset into the
 object named first**, and `BUF0` is `Name (BUF0, Buffer (0x021C) {…})` at
 `dsdt.dsl:4156`, a local ASL buffer whose siblings (`0x0358` `C0RW`, `0x0428`
 `C4RW`, `0x05C8` `CCRW`, `0x0698` `D0RW`) are buffer bit offsets too, so it
-is evidence about neither range. The three names in the note are therefore
-carried by `registers.yaml`'s `sources: [uniwill-laptop]` tag and by nothing
-else in the tree.
+is evidence about neither range. `registers.yaml`'s `sources: [uniwill-laptop]`
+tag is then the only thing in the tree that attaches the three names to
+`0x0765`, and it attaches them as a claim about a byte nothing else reads.
 
 The driver-facing consequence, stated plainly: **on this board a Linux driver
 cannot source `SUPER_KEY_LOCK`, `LIGHTBAR` or `FAN_BOOST` capability from
