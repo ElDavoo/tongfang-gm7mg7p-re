@@ -388,6 +388,34 @@ class PinsMustResolve(unittest.TestCase):
         self.assertEqual(len(problems), 1)
         self.assertIn("the pin that measures it is in", problems[0])
 
+    def test_a_coincidental_match_in_another_file_is_not_reported(self):
+        # The scoping that #1172 forced. Its `test_bucket_c_codemap.py` asserts
+        # `len(FLOW_OPCODES) == 50`, and the 8051 branch count matched the 50
+        # pd clusters of this page's `390 / 50` row by accident alone -- the
+        # row cites the file that really holds the figure, so the citation is
+        # satisfied and the second file is a coincidence rather than a
+        # competing measurement. A tool that reported this would go red on
+        # every future suite asserting a small literal.
+        self.assertEqual(cdfp.broken_pins(
+            [("ec/tools/test_xdata_cluster_names.py", 833)], "`390 / 50`",
+            cdfp.HELD,
+            {"ec/tools/test_xdata_cluster_names.py",
+             "ec/tools/test_bucket_c_codemap.py"}), [])
+
+    def test_drift_is_still_reported_when_no_cited_file_resolves(self):
+        # The other half of the same scoping, and the reason it is a scoping
+        # rather than a deletion: when *nothing* the row names holds the
+        # figure, the citation is still wrong and every other file is named.
+        problems = cdfp.broken_pins(
+            [("docs/findings/xdata-census-rederivation-checklist.md", 1)],
+            "`390 / 50`", cdfp.HELD,
+            {"ec/tools/xdata_register_map.py",
+             "ec/tools/test_bucket_c_codemap.py"})
+        self.assertEqual(len(problems), 2)
+        for name in ("ec/tools/xdata_register_map.py",
+                     "ec/tools/test_bucket_c_codemap.py"):
+            self.assertTrue(any(name in p for p in problems), name)
+
     def test_an_unheld_row_naming_a_pin_is_reported(self):
         # The other direction: a citation claims something there holds the
         # figure, which is what `unheld` denies.
