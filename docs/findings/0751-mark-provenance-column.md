@@ -3,8 +3,10 @@
 #719 measured two shapes for the question `warn_unchecked_marks` says it
 cannot answer — which process wrote this mark — and recommended one. This is
 that recommendation implemented: a fifth column on the `ts,MARK,,label` row,
-written by the three writers that write the row in this tree, and a reader
-that returns the column *and the position of the row holding it*.
+written by three of the four writers that write the row in this tree —
+`manual_fan_ctrl_probe.py` is the fourth and is left alone on purpose, decided
+below — and a reader that returns the column *and the position of the row
+holding it*.
 
 The measurement is [`ec/tools/measure_mark_provenance.py`](../../ec/tools/measure_mark_provenance.py)
 and its write-up is
@@ -150,8 +152,8 @@ It returns `(row_ordinal, ts, label, provenance)` per mark row.
 than a preference.** The prompt loads this module by path precisely so no
 second copy of a rule can drift from the thing that enforces it; a reader
 that returned the column from a writer would be exactly the copy
-`load_label_vocab`/`load_label_vocab`'s lookup exists to stop. The shape of a
-mark row is the grader's, and so is the shape of the column on it.
+`load_label_vocab`'s lookup of the grader's four names exists to stop. The
+shape of a mark row is the grader's, and so is the shape of the column on it.
 
 Three things about the return value, each of which the docstring states and
 `MarkProvenanceTests` pins:
@@ -265,8 +267,8 @@ happened to the version that was there before it.
 | `windows/tools/test_ec_watch.py:135` | the header equality, naming five columns | it asserted `ts,addr,old,new` — four names |
 | `windows/tools/test_ec_watch.py:138` | the mark row in a row-list assertion, with its trailing comma | the list ended at the label, so the row's text did not match |
 | `windows/tools/test_ec_watch.py:147` | a five-way unpack of the mark row, the fifth the provenance | it was a **four**-way unpack, and a five-field row raises `ValueError: too many values to unpack (expected 4)` **before any assertion in the test runs** |
-| `windows/tools/test_ec_watch.py:233` | the same row list, in the blank-press class | the same |
-| `windows/tools/test_ec_watch.py:406` | the same row list in a run holding `--label-vocab`, compared without the fifth field | the row's fifth field named whichever runner invoked the suite, so a literal list of rows could not hold it |
+| `windows/tools/test_ec_watch.py:241` | the same row list, in the blank-press class | the same |
+| `windows/tools/test_ec_watch.py:414` | the same row list in a run holding `--label-vocab`, compared without the fifth field | the row's fifth field named whichever runner invoked the suite, so a literal list of rows could not hold it |
 | `windows/tools/test_gpu_block_watch.py:869` | the header equality, naming five columns | it asserted four names — `gpu_block_watch.py:59,166` imports `CsvSink` and `Marker` from `ec_watch` and constructs `Marker(sink)` |
 | `windows/tools/test_gpu_block_watch.py:872` | the mark row, with its trailing comma | the list ended at the label |
 | `windows/tools/test_system_id_probe.py:307` | the mark row, with its trailing comma | the assertion's right side was the four-field row |
@@ -275,11 +277,32 @@ happened to the version that was there before it.
 | `windows/tools/test_manual_fan_ctrl_probe.py:513` | the header equality, four names | **unchanged** — only if the probe is widened, which this change does not do |
 | `windows/tools/test_manual_fan_ctrl_probe.py:515` | `self.assertEqual(len(row), 4, row)` | **unchanged**, and the loudest of the three: it is the first to raise |
 
-So the *first* failure of the three suites the change actually breaks is a
-`ValueError` from a tuple unpack, not an assertion, and it is in
-`test_ec_watch.py` rather than in the file the measurement named. The scan
-looked for one spelling of "an exact column count" and the tree has three
-more, none of which is that spelling.
+So the *first* failure of the three suites the change actually breaks is an
+assertion rather than the exception, and it is in `test_ec_watch.py` rather
+than in the file the measurement named. Reproduced with `origin/main`'s
+`test_ec_watch.py` checked back over the widened writers, then
+`python3 windows/tools/test_ec_watch.py -v`, the order is
+`BlankMarkTests.test_a_blank_press_writes_no_row_and_leaves_the_real_mark_alone`
+**FAIL** on the row list at `:241`, then
+`MarkCsvTests.test_mark_lands_in_the_csv_between_the_change_rows` **FAIL** on
+the header equality at `:135`, then
+`MarkCsvTests.test_mark_row_parses_as_the_grader_expects` **ERROR**
+`ValueError: too many values to unpack (expected 4)` at the four-way unpack the
+table names at `:147`, and last
+`RefusedLabelTests.test_a_refused_label_writes_no_row_and_leaves_the_real_mark_alone`
+**FAIL** on the row list at `:414`. `test_gpu_block_watch.py` raises nothing at
+all: with the same writers over `origin/main`'s test file, the one assertion
+the change breaks there is its own header equality.
+
+**The exception is still the finding, and the `:147` row's per-test claim
+stands as the run shows it.** The unpack raises before its own test reaches an
+assertion, so it is the one failure here that no row-text assertion would have
+caught, and it is the one the canary scan cannot see — that scan matches one
+literal line in one file, and the tree spells the same fact as a four-way
+tuple unpack in two of them, the second in `test_system_id_probe.py`. What the
+run corrects is the *order*, not the exception: the scan looked for one
+spelling of "an exact column count" and the tree has three more, none of
+which is that spelling.
 
 This is the fourth spelling of the same fact this tree keeps producing: the
 measurement's own census found seven writers where a hand-typed list would
@@ -358,7 +381,7 @@ what makes them one.
 | `ec/tools/check_capture_claims.py:576` | `:514` (drifted before this change) |
 | `windows/tools/test_ec_watch.py:148` | `:145` |
 | `windows/tools/test_system_id_probe.py:317` | `:311` |
-| `windows/tools/test_ec_watch.py:1168` | `:1134` |
+| `windows/tools/test_ec_watch.py:1176` | `:1134` (landed at `:1168` first) |
 
 **The last three rows are this change's edits to the two test files, and every
 one of them is a pin two write-ups this change does not own also carry** — two
@@ -377,6 +400,17 @@ lines move with the prose — which is the note at the head of
 `test_every_declined_pin_is_also_cited_in_live_prose` between them, and a
 declined pin whose line nothing else names is a lost record rather than a
 declined duplicate. The rule is what holds; the two sides move together.
+
+**The `:1176` is a second landing, and it is this change's own doing.** The
+repair of `test_a_run_holding_the_vocabulary_names_itself_in_the_mark_row` put
+eight comment lines into `test_ec_watch.py` above it, which is what carried
+`:1168` to `:1176` — named here because a pin moved by this change's own later
+edit is the one kind of drift the table above cannot show by itself. Its
+`before` column stays `:1134` because that is where the line stood on
+`origin/main`, and a before/after pair records where a pin came from and where
+it ends rather than each hop: the two re-anchored write-ups moved with it, and
+`0751-path-taking-reader-fates.md`'s `grep` transcript now prints `:1176` too,
+which is what a transcript is for.
 
 With that done, the census over a tree carrying this page moved out reads
 `origin/main` figure for figure — `106` records, `28` files, `79` spellings,
@@ -495,13 +529,31 @@ what has been verified.
 ```console
 python3 ec/tools/measure_mark_provenance.py              # the tables, re-run
 python3 ec/tools/measure_mark_provenance.py --self-test  # checked rather than printed
-python3 ec/tools/test_grade_0751_isolation.py            # MarkProvenanceTests
-bash tools/run-tests.sh                                  # the repaired suites
-python3 ec/tools/check_capture_claims.py                 # the 50 committed fixtures
+python3 ec/tools/test_grade_0751_isolation.py            # MarkProvenanceTests walks the 48
+bash tools/run-tests.sh                                  # the suites the change touches
+python3 ec/tools/check_capture_claims.py                 # its 10 captures, 2 mark-bearing
 ```
 
 Every one of these is offline: temp files and committed captures. None of them
 opens an EC, and none of them is evidence about the machine.
+
+**What `run-tests.sh` actually reports on this tree, since a green run is a
+claim and not a default.** Three of the four suites that assert something about
+the mark row's columns are green — `test_ec_watch.py` 48 tests OK,
+`test_system_id_probe.py` 32 OK, and `test_manual_fan_ctrl_probe.py` 67 OK,
+which is the canary staying green. The fourth, `test_gpu_block_watch.py`, ends
+`FAILED (failures=4)`: all four about `0x07C5` in `dsdt.dsl` against
+`ec/annotations/registers.yaml`, and the same four fail on an `origin/main`
+worktree, so what this change repaired in that suite is not what the four are.
+`ec/tools/test_check_pin_table_rows.py` is the fifth suite this change touches
+and it goes the other way: three failures on `origin/main`, two here. The one
+that stops failing is `test_the_committed_table_places_something`, whose own
+comment re-derives `placed` at `127` and records the
+`docs/agent-pipeline.md:409`-`:410` pair as pre-existing; the two that remain
+are that same unplaced row seen from the other side —
+`test_every_class_is_zero_on_the_committed_tree` and
+`test_the_committed_table_reconciles_and_exits_zero`. A reduction, not a
+lowering.
 
 ---
 

@@ -105,7 +105,7 @@ it is an API or a test fixture. Every executable reference to it is:
 
 ```console
 $ grep -rn "\.existing_mark_labels" --include=*.py .
-./windows/tools/test_ec_watch.py:1168:                             grader.existing_mark_labels(str(out)))
+./windows/tools/test_ec_watch.py:1176:                             grader.existing_mark_labels(str(out)))
 ./windows/tools/ec_watch.py:282:                     grader.existing_mark_labels,
 ./ec/tools/test_grade_0751_isolation.py:3500:            self.assertEqual(grade.existing_mark_labels(path),
 ./ec/tools/test_grade_0751_isolation.py:3520:            self.assertEqual(grade.existing_mark_labels(path),
@@ -150,7 +150,7 @@ comparison against this function. `ec_watch.py`'s `load_label_vocab` reads its
 **name** into a liveness probe, so a staged grader copy that predates the
 attribute is refused by a message naming the path, and `test_ec_watch.py`
 asserts what the staged copy returns against the committed one, at
-`windows/tools/test_ec_watch.py:1168`.
+`windows/tools/test_ec_watch.py:1176`.
 `windows/tools/ec_watch-marks.md` documents it as *"The reader"* and describes
 its extraction as a helper `existing_mark_findings` shares.
 
