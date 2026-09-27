@@ -203,8 +203,41 @@ those pairs; they are not proof that a cross-bank call exists. §3 of
 spelled differently would be invisible to this walk.
 
 **The strongest sub-class, and the one to quote if only one number is quoted:
-632 of the 1288 have the target as an entry point of the caller's own closure** —
-a name the linker wrote down, or one hop from one.
+632 of the 1288 have the target as an entry point of the caller's own
+closure.** 51 are a seed the linker wrote down and 581 are a same-bank call
+target one to five hops from one. The depth is measured — each chain walked
+back to the seed that reaches it, not counted off a name — and is printed as a
+histogram rather than described:
+
+```console
+$ python3 -c '
+import collections, sys
+sys.path.insert(0, "ec/tools")
+import bank_attribution as B
+d = open("ec/firmware/GMxMGxx_11.800", "rb").read()
+rows, stubs, tramp = B.survey(d)
+seeds = B.seeds_for(tramp)
+closures = {b: B.closure(d, b, seeds[b]) for b in (0, 1)}
+pairs = B.pair_rows(rows, closures)
+amb = B.both_live(pairs)
+own = [p for p in amb if p["target"] in closures[int(p["region"][-1])][2]]
+depth = collections.Counter()
+for p in own:
+    b = int(p["region"][-1])
+    depth[len(B.entry_chain(closures[b][2], p["target"])) - 1] += 1
+print(f"  {len(own)} of {len(amb)}   " + "  ".join(f"{k}: {depth[k]}" for k in sorted(depth)))
+'
+  632 of 1288   0: 51  1: 187  2: 218  3: 112  4: 57  5: 7
+```
+
+Only 238 are a linker-written name or one hop from one; the other 394 sit two
+to five hops out. §7's five confirmations have that same shape — `0xF495` and
+`0xF4A4` are call-derived entry points three hops from the `bank0` seed
+`0x84EB` — though they sit in the 17 pairs outside the 1288 rather than in the
+632, so they illustrate the depth rather than belong to it. Hence the histogram
+rather than a summary: an earlier revision of this sentence read the whole
+sub-class as "a name the linker wrote down, or one hop from one", which covers
+238 of the 632 and mis-describes the 394 behind them.
 
 ## 4. The one-byte failure, pinned
 

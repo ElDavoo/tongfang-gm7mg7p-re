@@ -415,11 +415,31 @@ def print_headline(pairs, closures) -> None:
     print("bank-call-audit.md 3's point stands -- BL51's path is indirect, so a")
     print("direct `lcall` between banks would not be one of these.")
     print()
-    own_entry = sum(1 for p in amb
-                    if p["target"] in closures[int(p["region"][-1])][2])
-    print(f"  {own_entry} of the {len(amb)} have the target as an entry point of the")
-    print("  caller's own closure, which is the strongest sub-class: a name the")
-    print("  linker wrote down, or one hop from a name it wrote down.")
+    # Depth from the seed is measured, not characterised: an earlier revision
+    # of this section read the sub-class as "a name the linker wrote down, or
+    # one hop from one", which holds for 238 of these 632 and mis-describes the
+    # 394 further out. bank-attribution.md 7 records call-derived entry points
+    # three hops from a linker-written seed (0xF495, 0xF4A4) -- in the 17 pairs
+    # outside the 1288, so they show the shape rather than join this set -- and
+    # the depth is a real spread. Printed as a histogram, not a two-value gloss,
+    # with every number in it derived here.
+    own = [p for p in amb
+           if p["target"] in closures[int(p["region"][-1])][2]]
+    depth = collections.Counter()
+    for p in own:
+        bank = int(p["region"][-1])
+        depth[len(entry_chain(closures[bank][2], p["target"])) - 1] += 1
+    shallow = depth[0] + depth[1]
+    deepest = max(depth, default=0)
+    print(f"  {len(own)} of the {len(amb)} have the target as an entry point of the")
+    print("  caller's own closure, which is the strongest sub-class: a seed the")
+    print(f"  linker wrote down ({depth[0]}), or a same-bank call target one to")
+    print(f"  {deepest} hops from one ({len(own) - depth[0]}). Those hops are")
+    print("  measured, each chain walked back to the seed that reaches it:")
+    print()
+    print("    " + "  ".join(f"{k}: {depth[k]}" for k in sorted(depth)))
+    print()
+    print(f"    {shallow} at one hop or fewer, {len(own) - shallow} at two or more")
     print()
 
 
