@@ -1717,6 +1717,25 @@ parenthetical, its note carries the result above, and `0x07D1` gets its own
 row. Both keep `unknown-not-absent-DO-NOT-WRITE-BLIND`. §4f above is left
 as written, with this section as the answer to the question it ends on.
 
+**Addendum (2026-09-27, issue #48). A second method reaches part of that
+negative's subject from the other direction, and the form of the answer is the
+same.** A call-graph method finds no caller; this one is a reachability
+closure seeded from the 403 BL51 trampolines, whose stub identity names the
+bank, and it attributes **775 of the 1288 both-banks-live bucket-B pairs** to a
+bank — 568 agreeing with the same-bank assumption, 207 contradicting it — leaves
+115 attributed to both, and **does not reach 398**. That 398 is the residue and
+is printed, not rounded away: a closure seeded from 403 entry points does not
+cover a bank, and saying so is the point. The one EC-side handoff this bears on
+splits in two: bank 1's closure does reach `0x888C` from a linker-named seed,
+which is a second independent line for the target, and does **not** reach the
+`0xDFD0` call site that names it, so `static-refs-audit.md` §5.2's caller side
+is unchanged. Every attribution is "attributed by this closure", never "proved
+to be in bank N" — the walk has no function-boundary recovery, and its own
+failure mode (one byte of the `bank0` `0x8038` dispatch table) is pinned in its
+self-test rather than dropped. Static, and no `status:` moves.
+[`ec/annotations/bank-attribution.md`](../ec/annotations/bank-attribution.md)
+is the reading, and `ec/tools/bank_attribution.py` the tool.
+
 ## 5. Net status going into the issue tracker
 
 *(**2026-09-19 update, read before the bullets below.** §4j–§4l change the
