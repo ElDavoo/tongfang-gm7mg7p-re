@@ -2,27 +2,37 @@
 """Offline checks for `tools/check_doc_patch_refs.py`'s invariants.
 
 The tool holds two directions that `tools/test_agent_gates_patches.py` does not
-and cannot: that every `docs/ci/agent-gates-*.patch` name in the prose resolves
-to a file, and that every patch on disk is named somewhere. The sibling holds
-each patch *header's* `git apply` line to the file it came from; this holds the
-prose around the patch set, which is a different surface and breaks the same way.
-#745's fold deleted `agent-gates-testdata-index.patch` and left six references to
-repoint by hand across five files, and nothing in the tree noticed a miss.
+and cannot: that every `docs/ci/agent-gates-*.patch` name in the files it reads
+resolves to a file, and that every prepared change on disk is named somewhere.
+The sibling holds each patch *header's* `git apply` line to the file it came
+from; this holds the prose around the patch set, which is a different surface
+and breaks the same way. #745's fold deleted `agent-gates-testdata-index.patch`
+and left six references to repoint by hand across five files, and nothing in the
+tree noticed a miss.
+
+**"Every" is bounded by the file set, and the bound is named.** The reference
+direction reads `REFERENCE_GLOBS` -- `**/*.md` and `docs/ci/**/*.patch` -- and
+not the `.py` population, which is out of scope and is listed by file and by
+path in the tool's own docstring and in
+`docs/findings/doc-patch-ref-file-sets.md`. Every case here that says "every"
+means every reference in that set.
 
 **What is pinned here is the refusal, not the count.** Every case below is a way
 the check can be wrong in the direction that matters: a pattern that quietly
 stops matching (the §14b defect -- a run that reads nothing exits 0 and looks
 like a clean tree), a pattern loose enough to match prose that was never naming a
-file, and an exemption that widens or rots. No expected population is asserted,
-for the reason `tools/test_readme_suite_table.py`'s docstring gives: an expected
-count turns every added reference into a failure, which is the wrong trade.
+file, a declared set that stops being read, and an exemption that widens or
+rots. No expected population is asserted, for the reason
+`tools/test_readme_suite_table.py`'s docstring gives: an expected count turns
+every added reference into a failure, which is the wrong trade.
 
-The one thing pinned by name is `HISTORICAL`, and it is pinned in **both**
-directions, one case per key. A key that has stopped being absent -- a patch
-reappearing under that name -- and a key that has stopped being cited -- the
-reference being edited away -- are the two ways an exemption rots with nobody
-touching the prose, and either one left unchecked is a `HISTORICAL` entry that
-reads as a decision and is not one. Both failures name the key.
+Two things are pinned by name. `HISTORICAL` is pinned in **both** directions,
+one case per key. A key that has stopped being absent -- a patch reappearing
+under that name -- and a key that has stopped being cited -- the reference being
+edited away -- are the two ways an exemption rots with nobody touching the prose,
+and either one left unchecked is a `HISTORICAL` entry that reads as a decision
+and is not one. Both failures name the key. `PREPARED_NON_PATCH` is pinned the
+same way, for the same reason and for a file a glob over `.patch` cannot see.
 
 Every mutation happens in a `tempfile` scratch tree, and the tool itself writes
 only into the trees it is handed, so nothing here touches `docs/ci/`.
@@ -205,7 +215,15 @@ class HistoricalTests(unittest.TestCase):
                                  f"know it came back.")
 
     def test_each_key_is_still_cited(self):
-        cited = {n for _f, _k, n, _l in tool.read_refs(REPO)}
+        # Prose only, deliberately: this half of the enumeration is what says
+        # the exemption is still earning its place, and the justification for a
+        # historical name is a *prose* record of what the file was. A patch
+        # header naming the key is not that, and `ReferenceSetTests` holds the
+        # case that shows what counting it would cost.
+        prose, _prepared = tool.reference_files(REPO)
+        cited = {n for rel in prose
+                 for _k, n, _l in tool.references(
+                     (REPO / rel).read_text(encoding="utf-8"))}
         for name in sorted(tool.HISTORICAL):
             with self.subTest(name=name):
                 self.assertIn(
@@ -240,6 +258,183 @@ class HistoricalTests(unittest.TestCase):
                     self.assertEqual(quiet(tool.check_mode, found)[1], 1)
 
 
+class ReferenceSetTests(unittest.TestCase):
+    """The declared reference set, and the three populations inside it.
+
+    A widening is only worth taking if it can be shown to widen. These pin
+    that a `docs/ci/*.patch` is read as a reference source at all -- the class
+    no prose grep can see -- and that widening did not drag the two verdicts
+    that must stay narrow along with it.
+    """
+
+    def test_a_patch_header_is_read_as_a_reference_source(self):
+        # A `.patch` naming another `.patch` is a real reference: a fold that
+        # renames one leaves the other's header naming a file that is gone, and
+        # nothing in the tree notices. `tools/test_agent_gates_patches.py` case 6
+        # does not cover this -- it holds each header's own `git apply` line,
+        # not a cross-reference between two headers.
+        #
+        # Discovery is what is pinned, not the verdict on a diff body. A future
+        # patch that adds markdown containing a backticked patch name would
+        # contribute a `+`-line reference, which is a diff rather than a
+        # citation; `docs/findings/doc-patch-ref-file-sets.md` records that as a
+        # limit, and pinning it here would make a caveat look like a decision.
+        with tool.mini_tree({"docs/note.md": "a sibling\n",
+                             "docs/ci/agent-gates-a.patch": "a patch\n",
+                             "docs/ci/agent-gates-b.patch":
+                                 "# see `agent-gates-a.patch` for context\n"}) as root:
+            found = tool.scan(root)
+            self.assertIn(("docs/ci/agent-gates-b.patch", tool.KIND_NAME,
+                           "agent-gates-a.patch", 1), found.refs,
+                          "a backticked name in a prepared change's own header "
+                          "is a reference")
+            self.assertFalse(found.stale,
+                             "and it resolves against docs/ci/ like any other")
+
+    def test_the_declared_set_is_prose_plus_the_prepared_headers(self):
+        # The scope is a decision and is held as one, so a future edit that
+        # widens or narrows it has to move this. Both halves are named rather
+        # than globbed bare, and the count is deliberately not here.
+        self.assertEqual(tool.REFERENCE_GLOBS,
+                         ("**/*.md", "docs/ci/**/*.patch"))
+        prose, prepared = tool.reference_files(REPO)
+        self.assertTrue(prose and prepared)
+        self.assertTrue(all(rel.endswith(".md") for rel in prose))
+        self.assertTrue(all(rel.startswith("docs/ci/") and rel.endswith(".patch")
+                            for rel in prepared),
+                        "and the second half is docs/ci's own headers, not a "
+                        "bare `*.patch` -- `linux/patches/` holds two upstream "
+                        "driver patches that are outside the subject")
+
+    def test_historical_liveness_is_read_over_prose_only(self):
+        # The consequence of the widening, handled rather than left: if "still
+        # cited" were evaluated over the whole set, a patch's own header would
+        # satisfy it alone and every markdown reference to the key could be
+        # deleted with nothing going red.
+        #
+        # The one non-prose reference to this key in the tree is a bare mention
+        # in a patch header, which is not a parsed reference at all, so the case
+        # writes the parsed spelling to have something to hold.
+        key = "agent-gates-testdata-index.patch"
+        with tool.scratch_tree() as root:
+            header = root / "docs" / "ci" / "agent-gates-capture-claims.patch"
+            header.write_text("# naming `" + key + "` from a sibling header\n",
+                              encoding="utf-8")
+            self.assertIn(("docs/ci/agent-gates-capture-claims.patch", 1),
+                          {(rel, line) for rel, _k, _n, line
+                           in tool.read_refs(root)},
+                          "the header citation is a reference to the check, and "
+                          "it is asserted on the file it came from: this key is "
+                          "named in the tree's prose too, so asserting the name "
+                          "alone would pass on that and pin nothing")
+            for rel in tool.markdown_files(root):
+                path = root / rel
+                text = path.read_text(encoding="utf-8")
+                if key in text:
+                    path.write_text(text.replace(key, "a retired name"),
+                                    encoding="utf-8")
+            found = tool.scan(root)
+            self.assertEqual(found.uncited_keys, [key])
+            self.assertEqual(found.dead, [key],
+                             "every markdown citation is gone and the key is "
+                             "still reported dead, so the exemption cannot be "
+                             "kept alive by the patch that documents its own "
+                             "deletion")
+            self.assertEqual(quiet(tool.check_mode, found)[1], 1)
+
+
+class PreparedNonPatchTests(unittest.TestCase):
+    """The one named prepared change that is not a `.patch`, both ways.
+
+    `docs/ci/agent-gates-deep-schedule.yml` is a `cp` into
+    `.github/workflows/`, and the `.patch` glob on the live side cannot see it.
+    So the on-disk half is a named entry held in both directions, the way
+    `HISTORICAL` is, and the name parse is left alone.
+    """
+
+    def setUp(self):
+        self.name = sorted(tool.PREPARED_NON_PATCH)[0]
+
+    def test_the_named_entry_is_on_disk_and_is_cited(self):
+        # The reciprocal, on the committed tree and in both halves.
+        with self.subTest(direction="on disk"):
+            self.assertIn(self.name, tool.on_disk(REPO),
+                          f"{self.name} is in PREPARED_NON_PATCH and is not in "
+                          f"docs/ci/. Either it was renamed, which is the "
+                          f"verdict below, or the constant is stale.")
+        with self.subTest(direction="cited"):
+            self.assertNotIn(self.name, tool.scan(REPO).uncited,
+                             f"{self.name} is on disk and nothing in the files "
+                             f"this check reads names it.")
+
+    def test_deleting_it_goes_red_by_name(self):
+        # The direction the `.patch` glob cannot hold: with the file gone the
+        # glob simply matches one fewer thing, and nothing reports the loss.
+        with tool.scratch_tree() as root:
+            (root / "docs" / "ci" / self.name).unlink()
+            found = tool.scan(root)
+            self.assertEqual(found.missing, [self.name])
+            self.assertEqual(found.uncited, [],
+                             "and not a stale-name finding as well: the file "
+                             "is not there to be named, and the two verdicts "
+                             "want different edits")
+            self.assertEqual(quiet(tool.check_mode, found)[1], 1)
+
+    def test_editing_every_citation_of_it_away_goes_red(self):
+        # The issue's done clause, and the tree it could not go red on. The
+        # name is stripped from every prose file, which is the shape of a real
+        # edit; a prepared change left on disk that nothing in the write-ups
+        # names is the mirror of a stale name.
+        #
+        # Prose and not the whole declared set, and that is a measured
+        # distinction rather than a convenience: the one place
+        # `docs/ci/agent-gates-capture-claims.patch` names this file is a `+`
+        # line at :197, a comment the patch adds to a Python file. A diff body
+        # is not a citation, and letting one sustain this would make the
+        # verdict true of nothing.
+        with tool.scratch_tree() as root:
+            stripped = 0
+            for rel in tool.markdown_files(root):
+                path = root / rel
+                text = path.read_text(encoding="utf-8")
+                if self.name in text:
+                    path.write_text(text.replace(self.name, "a retired change"),
+                                    encoding="utf-8")
+                    stripped += 1
+            self.assertGreater(stripped, 1,
+                               "the yml is named in more than one file, or "
+                               "'every citation' is being satisfied by one edit")
+            # The boundary this case rests on, asserted rather than assumed: a
+            # non-prose mention of the yml survives the strip, so the red below
+            # is the prose-only rule and not the absence of any mention. If
+            # that line ever goes away, this fails and says why it mattered --
+            # a diff body is not a citation, and this is the one place the tree
+            # has one.
+            _prose, prepared = tool.reference_files(root)
+            self.assertTrue(
+                [rel for rel in prepared
+                 if self.name in (root / rel).read_text(encoding="utf-8")],
+                "a `+` line in a patch body still names the yml after the prose "
+                "strip. The citation is read over prose precisely because a "
+                "diff body must not sustain a prepared change's liveness; with "
+                "nothing left outside prose this case would pass for the wrong "
+                "reason.")
+            found = tool.scan(root)
+            self.assertEqual(found.uncited, [self.name])
+            self.assertEqual(found.missing, [])
+            self.assertEqual(quiet(tool.check_mode, found)[1], 1)
+
+    def test_a_patch_nobody_names_is_still_uncited_alongside_the_named_entry(self):
+        # The two halves of the live direction reaching one verdict, so a
+        # `mini_tree` fixture that has the yml and no citation of it is not
+        # ambiguous about which file is the finding.
+        with tool.mini_tree({"docs/note.md": "nothing here\n",
+                             "docs/ci/agent-gates-a.patch": "a\n",
+                             "docs/ci/" + self.name: "a\n"}) as root:
+            found = tool.scan(root)
+            self.assertEqual(found.uncited, ["agent-gates-a.patch", self.name])
+
+
 class LiveTreeTests(unittest.TestCase):
     """The invariant itself, against the committed tree.
 
@@ -269,14 +464,24 @@ class LiveTreeTests(unittest.TestCase):
               "first -- if the patch is really gone, the reference is the thing "
               "that is wrong, and `HISTORICAL` is where a deliberate one goes.")
 
-    def test_every_patch_on_disk_is_named_by_some_markdown_file(self):
+    def test_every_prepared_change_on_disk_is_named_by_something(self):
         self.assertFalse(
             self.found.uncited,
-            f"{len(self.found.uncited)} patch(es) in docs/ci/ are named by no "
-            f"markdown file:\n  " + "\n  ".join(self.found.uncited)
+            f"{len(self.found.uncited)} prepared change(s) in docs/ci/ are "
+            f"named by nothing this check reads:\n  " + "\n  ".join(
+                self.found.uncited)
             + "\nA prepared change nobody can find is the mirror of a stale "
               "name, and it is the half that broke in "
               "`tools/test_readme_suite_table.py`.")
+
+    def test_every_named_non_patch_change_is_on_disk(self):
+        self.assertFalse(
+            self.found.missing,
+            f"{len(self.found.missing)} name(s) in PREPARED_NON_PATCH are not "
+            f"in docs/ci/:\n  " + "\n  ".join(self.found.missing)
+            + "\nA rename or a delete of one is invisible to a glob that has "
+              "stopped matching it, which is why the written-down expectation "
+              "is compared against discovery in both directions.")
 
     def test_no_historical_key_is_dead(self):
         # The two directions the `dead` verdict is derived from, asserted
@@ -344,10 +549,11 @@ class RenameTests(unittest.TestCase):
                                "'every reference' to mean anything")
             self.assertEqual([(rel, line) for rel, line, _n in found.stale],
                              cited,
-                             "every reference to the renamed patch is stale, in "
-                             "the order the tree holds them -- a check that "
-                             "stopped at the first would leave the rest to the "
-                             "manual sweep this exists to end")
+                             "every reference in the files this check reads to "
+                             "the renamed patch is stale, in the order the tree "
+                             "holds them -- a check that stopped at the first "
+                             "would leave the rest to the manual sweep this "
+                             "exists to end")
             self.assertEqual(found.uncited, ["agent-gates-renamed.patch"],
                              "and the renamed file is uncited, which is the "
                              "other half of a rename: the new name has not been "
