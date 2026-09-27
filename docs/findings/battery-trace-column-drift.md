@@ -51,6 +51,18 @@ The `2026-09-21-0522-*` header is the charge-target tool's and is pinned by
 repeat that; the row above names the three so a reader of this directory knows
 what the other tool owns.
 
+**The two `battery_trace.py` captures are not one long run each.** `--phase`
+is a per-run label (`battery_trace.py:73-74`), so a phase that changes *inside*
+one file can only come from a second invocation appending into it:
+`2026-09-19-windows-bios-defaults.csv` runs `biosdefaults_nohdmi_stationary` to
+file line 132 and `cv88_switch_to_highcap` from 133 to the end, and
+`2026-09-18-windows-stationary.csv` carries five phases, two of which
+alternate row by row from line 105. So the `phase` column is what separates
+the invocations *inside* a file that has only one header, and the row counts
+in the table are the total across all of them rather than one run's. That
+makes the column load-bearing for reading either file, and it is why the
+append guard below has real committed runs behind it.
+
 ### The drift is not dead designs
 
 **The natural reading of that table is wrong for two of its rows.**
@@ -65,8 +77,13 @@ The drift is not a supersession. The two shell scripts predate
 `battery_trace.py` and were never replaced by it — all three are in the tree
 today, and `battery_trace.py` is the Windows counterpart rather than the
 successor of either. What happened is that a new capture shape was added
-alongside the old ones and only the new one got a test; the two writer scripts
-emit into a directory nothing in the tree validates.
+alongside the old ones and only the new one got a test.
+`limit-pair-test:17` defaults into a directory nothing in the tree validates,
+which is the next paragraph's point. `battery-trace:9` does not: it hardcodes
+`OUT=/var/log/battery-trace/trace-threshold.csv` and takes no argument, so
+`2026-09-09-threshold80.csv` sitting in this directory is a copy brought here
+from there by a route the tree does not record. What the script is evidence
+of is the header, which it emits byte for byte — not the copy.
 
 `2026-09-09-profiles.csv` is the one row with no writer. Its `profile,ec_hex`
 tail appears nowhere outside the file itself, so the shape that produced it is
@@ -187,9 +204,12 @@ from the two fixture bytes in the suite rather than by calling the tool's own
   so whatever the charge-target work does to that helper applies here without
   this suite blocking it.
 - **The append gap, fixed.** It is recorded, tested as today's behaviour, and
-  left. Refusing a mismatched header is a behaviour change to a tool no
-  committed run exercises, which makes it a change nobody can check from a
-  cloud runner — its own issue.
+  left. `battery_trace.py` wrote both current captures and every row in them
+  went through the append path, so the path is not what is untested. What no
+  committed run does is *append to a file whose header differs from `cols`*,
+  and that narrower case is all a refusal would change — and no committed file
+  records such an append either, so a cloud runner has no evidence to check
+  the refusal against. Test 10 holds today's behaviour there. Its own issue.
 - **Anything about the `2026-09-09-*` and `limit-pair` designs.** They are named
   and classified, not re-run and not re-derived. Re-deriving a shape would mean
   building the tool that produced it, which this work has no mandate to do.

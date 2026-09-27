@@ -19,8 +19,14 @@ them depend on. The pieces that are load-bearing:
   * a row carrying both current sources, which is the property
     docs/findings.md §4a's retraction was about and the tool's own docstring
     gives as the reason it logs two;
-  * the fh.tell() == 0 branch, which decides whether a header is written and
-    has never run against a pre-existing file in any committed run.
+  * the fh.tell() == 0 branch, which decides whether a header is written. Both
+    current captures are several invocations appending into one file -- the
+    phase column changes partway down each, and --phase is a per-run label
+    (battery_trace.py:73-74), so a phase that moves inside one file can only
+    come from a second run -- so the guard is taken against a pre-existing file
+    on every invocation after the first. That is what keeps each of them one
+    header line. The case it cannot handle is the mismatched header, which
+    test 10 records.
 
 The other half of the suite is a census: every file in evidence/battery-traces/
 is named, classified, and checked to be on the column set its class claims. A
@@ -420,7 +426,9 @@ class BatteryTraceTests(unittest.TestCase):
             self.assertEqual(rows[1][1:], rows_of(BIOS_DEFAULTS)[1][1:])
 
     # 9. fh.tell() == 0 decides whether a header is written, so a second run
-    #    into the same file must not add one.
+    #    into the same file must not add one. This is the branch both committed
+    #    captures were written through, for the reason in the module docstring:
+    #    each is more than one invocation appending, not one long run.
     def test_appending_does_not_repeat_the_header(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'run.csv'
@@ -440,8 +448,10 @@ class BatteryTraceTests(unittest.TestCase):
     #    exit 0. 2026-09-17-limit-pair.csv is the committed file that would be
     #    corrupted, and what is asserted is the damage. Nothing here guards
     #    against it, and the fix -- refusing the append on a mismatched header
-    #    -- is a behaviour change to a tool no committed run exercises, so it
-    #    belongs to its own issue rather than to this suite.
+    #    -- changes the one thing no committed run does: append to a file whose
+    #    header differs from cols. No committed file records such an append
+    #    either, so a cloud runner cannot check the refusal against evidence --
+    #    which is why it belongs to its own issue rather than to this suite.
     #
     #    Closing the gap therefore turns this case red. That is the record
     #    turning over, not a defect in the fix: rewrite it to assert the
