@@ -555,8 +555,15 @@ prov_zip_other_members = 6
 
 - [`lightbar-bat-flow.md`](lightbar-bat-flow.md) §2 — why the region is a
   separate program. Canonical, and not re-argued here.
-- [`pd-0x38-consumers.md`](pd-0x38-consumers.md) — the `0x0F45`/`0x10FD`
-  pointer-kind dispatchers and the `0x119C` CODE-table cases.
+- [`pd-0x38-consumers.md`](pd-0x38-consumers.md) — five manual traces of who
+  builds the pointers the `0x0FAF` four-byte XDATA reader then consumes, and
+  the `0x119C` CODE-table cases. (This bullet used to credit the file with the
+  `0x0F45`/`0x10FD` pointer-kind dispatchers; neither address appears in it.
+  `0x0F45` is the next entry, and `0x10FD` is its three-byte sibling in
+  `annotations/ghidra-functions.csv`.)
+- [`pd-0x07d8-flow.md`](pd-0x07d8-flow.md) — what `0x35DA`'s `ljmp 0x0F45` does
+  with the program's own `0x07D8`-`0x07DA`, and the read/write/handoff split
+  behind those three addresses.
 - [`pd-index-geometry.md`](pd-index-geometry.md) — the indexed DPTR idiom that
   §3.1 says is a way this program reaches CODE.
 - [`pd-base-strides.csv`](pd-base-strides.csv) — the 448 XDATA bases §2.1 names

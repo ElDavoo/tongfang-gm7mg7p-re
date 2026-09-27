@@ -6,7 +6,9 @@
 
 /* Writes R1 to the XDATA address in DPTR, increments DPTR and writes R2 to the next address, so the
    16-bit register pair R1:R2 goes out low byte first. Nothing else is read or written and no return
-   value is produced.
+   value is produced. The census reads this routine's call sites: xdata_register_map.py resolves a
+   literal first argument as an XDATA address in this direction, on the strength of this body's
+   `movx` rather than of any spelling (see ec/annotations/xdata-register-map.md 4.7).
    type: writer
    evidence: ec/decompiled/bank1/9193.asm; ec/decompiled/bank1/9193.c
    basis: hand-decoded

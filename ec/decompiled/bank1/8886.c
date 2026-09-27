@@ -5,7 +5,10 @@
 
 
 /* Reads two consecutive XDATA bytes at DPTR into R1 for the first and R2 for the second, leaving
-   DPTR one past the second byte, and returns the second byte in A. No other address is touched.
+   DPTR one past the second byte, and returns the second byte in A. No other address is touched. The
+   census reads this routine's call sites: xdata_register_map.py resolves a literal first argument
+   as an XDATA address in this direction, on the strength of this body's `movx` rather than of any
+   spelling (see ec/annotations/xdata-register-map.md 4.7).
    type: reader
    evidence: ec/decompiled/bank1/8886.asm; ec/decompiled/bank1/8886.c
    basis: hand-decoded

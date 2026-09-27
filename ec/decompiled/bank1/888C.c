@@ -5,7 +5,10 @@
 
 
 /* Stores R1 to XDATA at DPTR, increments DPTR, then stores R2, writing the 16-bit pair R1:R2 out
-   low byte first to two adjacent XDATA bytes. Returns with the accumulator holding R2.
+   low byte first to two adjacent XDATA bytes. Returns with the accumulator holding R2. The census
+   reads this routine's call sites: xdata_register_map.py resolves a literal first argument as an
+   XDATA address in this direction, on the strength of this body's `movx` rather than of any
+   spelling (see ec/annotations/xdata-register-map.md 4.7).
    type: writer
    evidence: ec/decompiled/bank1/888C.asm; ec/decompiled/bank1/888C.c
    basis: hand-decoded

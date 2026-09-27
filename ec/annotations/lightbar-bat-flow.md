@@ -431,6 +431,13 @@ is exactly the kind of one-linear-walk claim `../../docs/findings.md` §4
 warns about, and neither site's remaining control flow (`ljmp 0x0C46`,
 `ljmp 0x0F0E`) was traced. They are recorded as `handoff→unresolved`.
 
+**The `0x35DA` row is no longer a dead end.** What its `ljmp 0x0F45` then does
+with the `0x07D8` triple is read in
+[`pd-0x07d8-flow.md`](pd-0x07d8-flow.md) — a four-way dispatch on the tag byte
+`0x07D8` over an address in `0x07D9`/`0x07DA`, with all four arms and their
+address spaces. The `0x07E3` handoffs here and the `0x07D8` read there are
+still two separate facts about one routine, and that file keeps them apart.
+
 Neither of the eight is one of the `lcall 0x104D` inline-argument routines
 that **#36** owns, so nothing here depends on that framing question. `0x1041`
 sits immediately before `0x104D` in the image, but it is a separate routine:

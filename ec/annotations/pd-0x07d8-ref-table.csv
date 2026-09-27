@@ -1,0 +1,104 @@
+addr,register,file_offset,region,runtime,class,window,callee,callee_window
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x093AE,bank0,0x93AE,write,"movx @dptr,a ; mov 0x82,r7 ; mov 0x83,r6 ; mov a,#0x0b ; movc a,@a+dptr",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x235DF,pd-image,0x35DF,handed to lcall/ljmp -> callee reads,lcall 0x10c8,0x10C8,"movx a,@dptr ; mov r3,a ; inc dptr ; movx a,@dptr ; mov r2,a ; inc dptr ; movx a,@dptr ; mov r1,a"
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x25F1A,pd-image,0x5F1A,read,"movx a,@dptr ; mov r6,a ; setb c ; subb a,r7 ; jc +0x04",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x26498,pd-image,0x6498,no movx in window,jnz +0x1b,,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x26D90,pd-image,0x6D90,write,"mov a,r3 ; movx @dptr,a",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x26DD9,pd-image,0x6DD9,read,"movx a,@dptr ; mov r7,a ; jnz +0x2c",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x29F25,pd-image,0x9F25,write,"mov a,r7 ; movx @dptr,a ; mov r5,#0x00",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x29F34,pd-image,0x9F34,read,"movx a,@dptr ; mov r6,a ; jnz +0x38",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x29FD5,pd-image,0x9FD5,handed to lcall/ljmp -> callee writes,lcall 0x1041,0x1041,"mov a,r4 ; movx @dptr,a ; inc dptr ; mov a,r5 ; movx @dptr,a ; inc dptr ; mov a,r6 ; movx @dptr,a"
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2A10E,pd-image,0xA10E,write,"movx @dptr,a ; mov a,r5 ; xrl a,#0x01 ; jz +0x03",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2B2A8,pd-image,0xB2A8,handed to lcall/ljmp -> callee reads,ljmp 0x0faf,0x0FAF,"movx a,@dptr ; mov r4,a ; inc dptr ; movx a,@dptr ; mov r5,a ; inc dptr ; movx a,@dptr ; mov r6,a"
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2B8DB,pd-image,0xB8DB,read+write,"mov a,r7 ; movx @dptr,a ; movx a,@dptr ; mov r5,a ; mov r6,a ; clr a ; add a,#0x00",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2B8F4,pd-image,0xB8F4,read,"movx a,@dptr ; mov r7,a ; clr a ; mov r5,a ; lcall 0xec5e",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2B8FE,pd-image,0xB8FE,read,"movx a,@dptr ; mov r1,a ; mov r5,a ; mov r7,#0x00 ; mov r6,a ; clr a ; add a,r7",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2B963,pd-image,0xB963,read,"movx a,@dptr ; mov r7,a ; lcall 0x90d6",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2B971,pd-image,0xB971,read,"movx a,@dptr ; mov r7,a ; mov r5,#0x03 ; lcall 0xf50e",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2B97B,pd-image,0xB97B,handed to lcall/ljmp -> callee reads,lcall 0x9115,0x9115,"movx a,@dptr ; mov r5,a ; mov r7,#0x00 ; mov r6,a ; mov a,r7 ; ret"
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2BB4C,pd-image,0xBB4C,read,"movx a,@dptr",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2BD7C,pd-image,0xBD7C,read,"movx a,@dptr",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2BF03,pd-image,0xBF03,read,"movx a,@dptr ; mov r7,a ; cjne a,#0x02,+0x04",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2BF1B,pd-image,0xBF1B,read,"movx a,@dptr ; jnz +0x06",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2BF27,pd-image,0xBF27,read,"movx a,@dptr ; mov r7,a ; cjne a,#0x01,+0x06",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2BF45,pd-image,0xBF45,read,"movx a,@dptr ; mov r7,a ; jnz +0x04",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2BF63,pd-image,0xBF63,read,"movx a,@dptr ; jz +0x14",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2BF73,pd-image,0xBF73,read,"movx a,@dptr ; jnz +0x07",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2E423,pd-image,0xE423,write,"mov a,r7 ; movx @dptr,a",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2E435,pd-image,0xE435,read,"movx a,@dptr ; mov r5,a ; jz +0x0a",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2E458,pd-image,0xE458,write,"mov a,r7 ; movx @dptr,a ; jnz +0x0b",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2E479,pd-image,0xE479,read,"movx a,@dptr ; mov r7,a ; lcall 0xf775",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2E48B,pd-image,0xE48B,read,"movx a,@dptr ; mov r7,a ; mov r5,#0x01 ; ljmp 0xd435",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2EB3D,pd-image,0xEB3D,write,"mov a,r7 ; movx @dptr,a ; clr a ; mov r3,a ; mov a,#0xa4 ; add a,r3 ; lcall 0x9bce",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2ECFA,pd-image,0xECFA,write,"mov a,r5 ; movx @dptr,a",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2F390,pd-image,0xF390,write,"mov a,r7 ; movx @dptr,a ; mov r5,#0x06 ; lcall 0x0180",,
+0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x2F39A,pd-image,0xF39A,read,"movx a,@dptr ; mov r7,a ; clr a ; mov r5,a ; ljmp 0xd3d1",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x093B9,bank0,0x93B9,write,"movx @dptr,a",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x204C0,pd-image,0x04C0,handed to lcall/ljmp -> callee writes,lcall 0x10e8,0x10E8,"mov a,r3 ; movx @dptr,a ; inc dptr ; mov a,r2 ; movx @dptr,a ; inc dptr ; mov a,r1 ; movx @dptr,a"
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x204D5,pd-image,0x04D5,handed to lcall/ljmp -> callee reads,lcall 0x10c8,0x10C8,"movx a,@dptr ; mov r3,a ; inc dptr ; movx a,@dptr ; mov r2,a ; inc dptr ; movx a,@dptr ; mov r1,a"
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x24ABF,pd-image,0x4ABF,handed to lcall/ljmp -> callee writes,lcall 0x1041,0x1041,"mov a,r4 ; movx @dptr,a ; inc dptr ; mov a,r5 ; movx @dptr,a ; inc dptr ; mov a,r6 ; movx @dptr,a"
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x25F15,pd-image,0x5F15,read,"movx a,@dptr ; mov r7,a",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x26660,pd-image,0x6660,handed to lcall/ljmp -> callee reads+writes,"clr a ; mov 0xf0,#0x04 ; lcall 0x0ce1",0x0CE1,"xch a,0xf0 ; mov r0,a ; inc dptr ; movx a,@dptr ; add a,r0 ; movx @dptr,a ; xch a,0xf0 ; mov r0,a"
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x26DAA,pd-image,0x6DAA,no movx in window,"cjne r5,#0x03,+0x0f",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x29481,pd-image,0x9481,write,"mov a,r7 ; movx @dptr,a",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x29502,pd-image,0x9502,read,"movx a,@dptr ; anl a,#0x07 ; orl a,#0x08 ; mov r7,a ; inc dptr ; movx a,@dptr ; swap a",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x2BF13,pd-image,0xBF13,read,"movx a,@dptr ; xrl a,#0x01 ; jz +0x27",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x2BF3A,pd-image,0xBF3A,read,"movx a,@dptr ; xrl a,#0x01 ; jnz +0x3e",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x2BF53,pd-image,0xBF53,read,"movx a,@dptr ; jnz +0x27",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x2BF6D,pd-image,0xBF6D,read,"movx a,@dptr ; jz +0x0a",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x2E430,pd-image,0xE430,write,"mov a,r7 ; movx @dptr,a",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x2E446,pd-image,0xE446,read,"movx a,@dptr ; mov r5,a ; jz +0x0a",,
+0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x2F775,pd-image,0xF775,write,"mov a,r7 ; movx @dptr,a ; ret",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x093C6,bank0,0x93C6,write,"movx @dptr,a",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x25326,pd-image,0x5326,read+write,"mov a,r7 ; movx @dptr,a ; mov r5,a ; movx a,@dptr ; mov r7,a ; mov 0xf0,#0x67",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x253DA,pd-image,0x53DA,read,"movx a,@dptr ; mov r7,a ; mov r3,#0x0b ; mov r5,#0x01 ; lcall 0xc901",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x25433,pd-image,0x5433,read,"movx a,@dptr ; mov r5,a ; mov 0xf0,#0x67",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2545E,pd-image,0x545E,read,"movx a,@dptr ; mov r7,a ; jc +0x13",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x25488,pd-image,0x5488,read,"movx a,@dptr ; mov r6,a ; mov 0xf0,#0x67",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x254A7,pd-image,0x54A7,read,"movx a,@dptr ; mov r7,a",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x254F9,pd-image,0x54F9,read,"movx a,@dptr ; mov r7,a",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x25511,pd-image,0x5511,handed to lcall/ljmp (unresolved),lcall 0x9c27,0x9C27,"no movx found in the decoded window | mov a,r7 ; add a,#0x0f ; mov r7,a ; clr a ; addc a,r6 ; mov r6,a ; clr a ; addc a,r5"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x25520,pd-image,0x5520,read,"movx a,@dptr ; mov r7,a ; mov r3,#0x10 ; mov r5,#0x01 ; lcall 0xc901",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x25568,pd-image,0x5568,handed to lcall/ljmp -> callee reads,lcall 0x9c56,0x9C56,"mov r0,0x04 ; mov r1,0x05 ; mov r2,0x06 ; mov r3,0x07 ; movx a,@dptr ; mov r7,a ; mov 0xf0,#0x67 ; ret"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x25580,pd-image,0x5580,handed to lcall/ljmp -> callee reads,lcall 0x9c13,0x9C13,"movx a,@dptr ; mov r7,a"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x25599,pd-image,0x5599,read,"movx a,@dptr ; mov r7,a ; mov r3,#0x10 ; ljmp 0x5646",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x255E1,pd-image,0x55E1,handed to lcall/ljmp -> callee reads,lcall 0x9c13,0x9C13,"movx a,@dptr ; mov r7,a"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2563F,pd-image,0x563F,read,"movx a,@dptr ; mov r7,a ; mov r3,#0x0b ; mov r5,#0x01 ; lcall 0xc901",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x25652,pd-image,0x5652,read,"movx a,@dptr ; mov r7,a ; ret",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x25F0F,pd-image,0x5F0F,read,"movx a,@dptr ; jnz +0x1c",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26B40,pd-image,0x6B40,write,"mov a,r7 ; movx @dptr,a ; lcall 0x9cfd",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26BBA,pd-image,0x6BBA,handed to lcall/ljmp -> callee reads,lcall 0x9c13,0x9C13,"movx a,@dptr ; mov r7,a"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26BDE,pd-image,0x6BDE,read,"movx a,@dptr ; mov r7,a ; mov r3,#0x06 ; ljmp 0x6d83",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26C21,pd-image,0x6C21,read,"movx a,@dptr ; mov r6,a ; mov 0xf0,#0x67",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26C70,pd-image,0x6C70,read,"movx a,@dptr ; mov r7,a ; mov r3,#0x07 ; ljmp 0x6d83",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26CAA,pd-image,0x6CAA,handed to lcall/ljmp -> callee reads,lcall 0x9ca4,0x9CA4,"movx a,@dptr ; mov r7,a ; mov r6,#0x00 ; mov r4,#0x01 ; mov r5,#0x67 ; ljmp 0x0c7a"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26CB6,pd-image,0x6CB6,read,"movx a,@dptr ; mov r7,a",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26CCB,pd-image,0x6CCB,read,"movx a,@dptr ; mov r7,a ; lcall 0xe725",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26CF8,pd-image,0x6CF8,read,"movx a,@dptr ; mov r7,a ; mov r3,#0x04 ; sjmp +0x13",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26D07,pd-image,0x6D07,handed to lcall/ljmp -> callee reads,lcall 0x9c34,0x9C34,"movx a,@dptr ; mov r3,a ; mov 0xf0,#0x67"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26D17,pd-image,0x6D17,read,"movx a,@dptr ; mov r7,a ; mov r3,#0x0a ; ljmp 0x6d83",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26D24,pd-image,0x6D24,handed to lcall/ljmp -> callee reads,lcall 0x9c56,0x9C56,"mov r0,0x04 ; mov r1,0x05 ; mov r2,0x06 ; mov r3,0x07 ; movx a,@dptr ; mov r7,a ; mov 0xf0,#0x67 ; ret"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x26D38,pd-image,0x6D38,read,"movx a,@dptr ; mov r7,a ; mov r3,#0x04 ; sjmp +0x42",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x29497,pd-image,0x9497,write,"mov a,r7 ; movx @dptr,a",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x29861,pd-image,0x9861,write,"movx @dptr,a ; mov a,#0x04 ; inc dptr ; movx @dptr,a ; mov r7,#0x00 ; mov r6,#0x00 ; mov r5,#0x00",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x298CE,pd-image,0x98CE,write,"movx @dptr,a ; inc dptr ; ret",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x29C64,pd-image,0x9C64,read,"movx a,@dptr ; mov r7,a ; mov 0xf0,#0x67 ; ret",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x29C98,pd-image,0x9C98,read,"movx a,@dptr ; mov r7,a ; mov 0xf0,#0x67 ; ret",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x29CA1,pd-image,0x9CA1,read,"movx a,@dptr ; mov r7,a ; mov r6,#0x00 ; mov r4,#0x01 ; mov r5,#0x67 ; ljmp 0x0c7a",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x29CF3,pd-image,0x9CF3,read,"movx a,@dptr ; mov r7,a ; mov r3,#0x01 ; ret",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2BBA3,pd-image,0xBBA3,handed to lcall/ljmp (unresolved),lcall 0x104d,0x104D,"DPTR handed to lcall 0x1064 -- direction unresolved here | mov r0,0x82 ; mov 0xf0,0x83 ; pop 0x83 ; pop 0x82 ; lcall 0x1064"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2BC91,pd-image,0xBC91,handed to lcall/ljmp -> callee writes,lcall 0x1041,0x1041,"mov a,r4 ; movx @dptr,a ; inc dptr ; mov a,r5 ; movx @dptr,a ; inc dptr ; mov a,r6 ; movx @dptr,a"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2BDD3,pd-image,0xBDD3,handed to lcall/ljmp (unresolved),lcall 0x104d,0x104D,"DPTR handed to lcall 0x1064 -- direction unresolved here | mov r0,0x82 ; mov 0xf0,0x83 ; pop 0x83 ; pop 0x82 ; lcall 0x1064"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2BEDD,pd-image,0xBEDD,write,"movx @dptr,a ; mov r3,#0x01 ; mov r2,#0x07 ; mov r1,#0xd9",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2BF5C,pd-image,0xBF5C,read,"movx a,@dptr ; mov r7,a ; jnz +0x06",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2C00D,pd-image,0xC00D,write,"movx @dptr,a ; mov a,#0x03 ; lcall 0x9867",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2C578,pd-image,0xC578,handed to lcall/ljmp -> callee writes,"mov a,#0x09 ; lcall 0x9864",0x9864,"movx @dptr,a ; mov a,#0x04 ; inc dptr ; movx @dptr,a ; mov r7,#0x00 ; mov r6,#0x00 ; mov r5,#0x00 ; ret"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2C743,pd-image,0xC743,handed to lcall/ljmp -> callee reads,lcall 0x10c8,0x10C8,"movx a,@dptr ; mov r3,a ; inc dptr ; movx a,@dptr ; mov r2,a ; inc dptr ; movx a,@dptr ; mov r1,a"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2CA0A,pd-image,0xCA0A,handed to lcall/ljmp -> callee writes,"mov a,#0x10 ; lcall 0x9864",0x9864,"movx @dptr,a ; mov a,#0x04 ; inc dptr ; movx @dptr,a ; mov r7,#0x00 ; mov r6,#0x00 ; mov r5,#0x00 ; ret"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2CFC3,pd-image,0xCFC3,read,"movx a,@dptr ; mov r7,a ; setb c ; subb a,#0x10 ; jc +0x06",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2DEEC,pd-image,0xDEEC,handed to lcall/ljmp -> callee writes,lcall 0x10e8,0x10E8,"mov a,r3 ; movx @dptr,a ; inc dptr ; mov a,r2 ; movx @dptr,a ; inc dptr ; mov a,r1 ; movx @dptr,a"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2DF0A,pd-image,0xDF0A,handed to lcall/ljmp -> callee writes,"mov a,#0x02 ; lcall 0x9864",0x9864,"movx @dptr,a ; mov a,#0x04 ; inc dptr ; movx @dptr,a ; mov r7,#0x00 ; mov r6,#0x00 ; mov r5,#0x00 ; ret"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2E46A,pd-image,0xE46A,handed to lcall/ljmp (unresolved),lcall 0x104d,0x104D,"DPTR handed to lcall 0x1064 -- direction unresolved here | mov r0,0x82 ; mov 0xf0,0x83 ; pop 0x83 ; pop 0x82 ; lcall 0x1064"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2E79E,pd-image,0xE79E,write,"mov a,#0x05 ; movx @dptr,a ; inc dptr ; dec a ; lcall 0x9868",,
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2EBAD,pd-image,0xEBAD,handed to lcall/ljmp -> callee writes,"mov a,#0x10 ; lcall 0x9864",0x9864,"movx @dptr,a ; mov a,#0x04 ; inc dptr ; movx @dptr,a ; mov r7,#0x00 ; mov r6,#0x00 ; mov r5,#0x00 ; ret"
+0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x2F05C,pd-image,0xF05C,handed to lcall/ljmp -> callee reads,lcall 0x0faf,0x0FAF,"movx a,@dptr ; mov r4,a ; inc dptr ; movx a,@dptr ; mov r5,a ; inc dptr ; movx a,@dptr ; mov r6,a"
