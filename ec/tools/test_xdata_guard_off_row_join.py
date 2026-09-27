@@ -9,14 +9,15 @@ have different jobs and both are here.
 **The load-bearing class is `ThePublishedFigures`.** Every figure it holds comes
 from a page that already prints it -- `annotations/xdata-06c2-06db-timers.md`
 §6a, `docs/findings/xdata-cluster-names-guard-off-recipe.md`,
-`annotations/xdata-register-map.md` §4.4 -- and is compared against the CSVs
-**the run actually wrote**, not against a fresh run of the same recipe. That
-distinction is the whole reason this class exists and it has bitten this tree
-before (#753: the recipe had been re-pointed three times and a
-`source.replace()` that stopped matching failed silently, so the suite was
-comparing the tool against itself). A case that re-derives its expectations
-from its own inputs agrees with itself by construction and keeps agreeing after
-the recipe changes underneath it.
+`annotations/xdata-register-map.md` §4.4 -- and is **typed into the case as a
+constant** rather than re-derived from the run that produced the CSVs, so what
+is compared is a published figure against a regeneration and never one derived
+from the other. That distinction is the whole reason this class exists and it
+has bitten this tree before (#753: the recipe had been re-pointed three times
+and a `source.replace()` that stopped matching failed silently, so the suite
+was comparing the tool against itself). A case that re-derives its
+expectations from its own inputs agrees with itself by construction and keeps
+agreeing after the recipe changes underneath it.
 
 **The other half asserts arithmetic rather than constants.** `TheRowLevelJoin`
 pins the denominators -- 1,169 / 108 / 49 over 1,326 -- because those are
@@ -194,7 +195,7 @@ class ThePublishedFigures(unittest.TestCase):
         self.assertIn("committed 439", self.report.value("clusters"))
 
     def test_the_6a_write_and_refs_figures_are_reproduced(self):
-        # §6a's own heredoc, printed at `xdata-06c2-06db-timers.md:952`:
+        # §6a's own heredoc, printed at `xdata-06c2-06db-timers.md:988-989`:
         # "addresses whose 'write' changes: 210 of 1326" and "addresses whose
         # 'refs' changes: 0 of 1326". The second is the one that matters most
         # -- it is the figure that does not move, and a report that stopped
@@ -314,6 +315,41 @@ class TheRowLevelJoin(unittest.TestCase):
             self.assertEqual(sum(n for _, n in split.values()), rows,
                              f"{column}: the split's denominators do not sum")
 
+    def test_a_both_row_mixes_the_main_ec_clustering_with_summed_counts(self):
+        # What the `both` cells *are*, since the page's rate is read off them
+        # and the two halves of that column are not the same kind of cell. On a
+        # `program=both` row `xdata_register_map.py` picks one program --
+        # `primary = "main-ec" if "main-ec" in seen else "pd"` (`:3022`) -- and
+        # reads `cluster_id` (`:3029`) and `cluster_key` (`:3058`) from that
+        # group alone, "the two programs have separate XDATA maps and a cluster
+        # must not span them" (`:346`). `refs` and `write` are the other kind:
+        # the sum over both programs (`:191`), which is why the row carries
+        # `refs_main_ec`/`refs_pd` and `write_main_ec`/`write_pd` beside them.
+        # So `34 of 49` is about the main-EC clustering of those 49 addresses,
+        # and the last assertion is the structural reason the write-up claims
+        # nothing measured about their PD one: there is one `cluster_id` column
+        # to compare, not two.
+        both = [r for r in self.committed if r["program"] == "both"]
+        self.assertEqual(len(both), 49)
+        clusters = {c["cluster_id"]: c for c in rows_of(CLUSTERS)}
+        for row in both:
+            where = row["cluster_id"]
+            with self.subTest(addr=row["addr"]):
+                self.assertEqual(clusters[where]["program"], "main-ec",
+                                 f"{where} is not a main-EC cluster, so the "
+                                 f"`both` cell is not about main-ec")
+                self.assertIn(row["addr"], clusters[where]["addrs"].split())
+                for column in ("refs", "write"):
+                    self.assertEqual(
+                        int(row[column]),
+                        int(row[f"{column}_main_ec"]) + int(row[f"{column}_pd"]),
+                        f"{column} is not the sum over both programs")
+        self.assertEqual(
+            [c for c in self.committed[0] if c.startswith("cluster_id")],
+            ["cluster_id"],
+            "a second per-program cluster id would make a `both` row say which "
+            "cluster each program put the address in")
+
     def test_the_both_bucket_moves_faster_than_main_ec(self):
         # The page's one rate comparison -- `both` against `main-ec` -- is
         # arithmetic over two cells of the same split, and a multiplier is the
@@ -323,7 +359,10 @@ class TheRowLevelJoin(unittest.TestCase):
         # business; what is this class's is the quotient. Held as the quotient
         # rather than as a round number, so a census that moved either cell
         # moves this with it and turns the sentence above stale rather than
-        # leaving it to be caught by a reader.
+        # leaving it to be caught by a reader. What the `both` rate is a rate
+        # *over* is the case above's, not this one's: these are two cells of a
+        # split, and the split's `both` column is the main-EC clustering of the
+        # 49 addresses rather than a count over both programs.
         split = self.report.split("rows whose cluster_id differs")
         both = split["both"][0] / split["both"][1]
         main_ec = split["main-ec"][0] / split["main-ec"][1]

@@ -39,10 +39,19 @@ the second.
 
 **The `refs` column is included because the committed figure for it is 0**, and
 a report that omits the column that does not move is a report that cannot be
-told apart from one that never looked. The `0 of 1,326` here is reproduced from
+told apart from one that never looked. The `0 of 1,326` here is computed from
 the two CSVs, not copied from §6a; that the two agree is the point, and
-`test_xdata_guard_off_row_join.py` holds the published figures to the files the
-run actually wrote rather than to a fresh run of the recipe that wrote them.
+`test_xdata_guard_off_row_join.py` holds the published figures as constants
+typed from the pages that print them, so what it compares is a published figure
+against a regeneration rather than one derived from the other.
+
+**The `both` bucket is not one kind of cell, and a rate read off it is a rate
+over main-EC.** A `program=both` register row takes its
+`cluster_id`/`cluster_key` from the one program `xdata_register_map.py` picks
+for a multi-program address, while its `refs`/`write` are the sum over both.
+The report prints each without saying which kind it is, so the suite holds the
+two apart and the write-up says so; the reason it matters is that a `both` row
+carries one `cluster_id` cell, not one per program.
 
 **A row that moves under this flag is different under this flag, never
 mis-clustered.** Both classifications are a reading of the same occurrences

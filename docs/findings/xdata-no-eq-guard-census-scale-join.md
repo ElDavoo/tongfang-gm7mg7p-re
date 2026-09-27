@@ -94,7 +94,10 @@ than assumed.
 
 ## What moves, at the row level
 
-Of the 1,326 register rows:
+Of the 1,326 register rows — and the `both` column is not one kind of cell:
+`cluster_id` and `cluster_key` on a `both` row are the **main-EC** clustering,
+while `write` and `refs` are the sum over both programs. Which is which, and
+what that costs the reading, is below:
 
 | column | differs | `main-ec` | `pd` | `both` |
 |---|---:|---:|---:|---:|
@@ -103,23 +106,37 @@ Of the 1,326 register rows:
 | `write` | 210 of 1,326 | 173 of 1,169 | 19 of 108 | 18 of 49 |
 | `refs` | **0 of 1,326** | 0 of 1,169 | 0 of 108 | 0 of 49 |
 
-The `write` and `refs` rows are §6a's, reproduced rather than assumed: the
-suite reads them back off the two CSVs the run above wrote, not off a fresh run
-of the same recipe, because a case that re-derives its expectations from its own
-inputs agrees with itself by construction. `refs` is the row that matters most
-and is the one most easily missing from a report — it is the column that does
-not move, and a report that stopped comparing it would print nothing for it
-rather than a wrong number, which is the failure the suite's assertion on it is
-shaped to catch.
+The `write` and `refs` rows are §6a's, reproduced rather than assumed: their
+expectations are typed into the suite as constants taken from the page that
+publishes them, so what is compared is a published figure against a
+regeneration, never one derived from the other. A case that re-derives its
+expectations from its own inputs agrees with itself by construction and keeps
+agreeing after the recipe changes underneath it, which is what #753 was.
+`refs` is the row that matters most and is the one most easily missing from a
+report — it is the column that does not move, and a report that stopped
+comparing it would print nothing for it rather than a wrong number, which is
+the failure the suite's assertion on it is shaped to catch.
 
 The `both` column is the one nobody had a figure for, and it is the least
-intuitive: **34 of the 49** rows the census marks `both` change `cluster_id`,
-against 464 of 1,169 for `main-ec` alone. Those 49 are addresses both programs
-touch, so both programs' classifications of them moved, and they moved at a
-rate of 69% where `main-ec`'s is 40% — about 1.7 times it. That is a property
-of this flag's effect on this census, and it is a reason a per-program figure
-quoted without its denominator should be read carefully: `464 of 1,169` and
-`9 of 108` are both "the flag moved some rows", and only one of them is 40%.
+intuitive, partly because it is not one kind of cell. On a `program=both` row
+`xdata_register_map.py` picks one program and reads the clustering from it —
+`primary = "main-ec" if "main-ec" in seen else "pd"` (`:3022`), with
+`cluster_id` (`:3029`) and `cluster_key` (`:3058`) read from that one group —
+and it gives the reason at `:346`: "the two programs have separate XDATA maps
+and a cluster must not span them". `refs` and `write` are the other kind: they
+are the **sum** over the two programs (`:191`), which is why the row carries
+`refs_main_ec`/`refs_pd` and `write_main_ec`/`write_pd` beside them.
+
+So **34 of the 49** says those 49 addresses' *main-EC* cluster id moved — a
+rate of 69% where `main-ec`'s own is 40%, about 1.7 times it. It is not a
+statement about both programs, because nothing here measures the PD
+classification of those 49 addresses: a `both` row carries one `cluster_id`
+cell and it is main-EC's, so a rate over the pd `addrs` of those addresses
+would need a column this census does not have. That is a property of this
+flag's effect on this census, and it is a reason a per-program figure quoted
+without its denominator *and* without naming which program its cells came from
+should be read carefully: `464 of 1,169` and `9 of 108` are both "the flag
+moved some rows", and only one of them is 40%.
 
 ## The 439 `cluster_key`s, and the 15 among them
 
@@ -299,12 +316,16 @@ column when the question is "did this change", and the `507` alone is not it.
 
 `ec/tools/test_xdata_guard_off_row_join.py` splits the two jobs it has apart on
 purpose. `ThePublishedFigures` holds every figure on this page to a page that
-already prints it, **against the CSVs the run actually wrote** — §6a's 445/439,
+already prints it, **as constants typed from those pages** — §6a's 445/439,
 210 of 1,326 `write`, 0 of 1,326 `refs`, 394/389 main-EC clusters, 124/315
 ranks, the 15 and its 10/5 split and its two score ranges. `TheRowLevelJoin`
 holds the arithmetic instead: the denominators (1,169 / 108 / 49 over 1,326)
 are asserted because they are properties of the committed CSV, and **no count of
 moved rows is typed**, because a typed 507 is a claim that goes stale silently.
+A case there holds what the `both` cells are — a main-EC cluster id beside
+summed counts, and only one `cluster_id` column for a `both` row to carry — so
+the reading the section above gives is the one the CSV supports rather than the
+one a reader might assume.
 `TheToolWritesNothing` holds the read-only contract from the tool's own side —
 no write mode anywhere in it, no `--out-`, the flag still refused against the
 committed paths, and a full run leaving `git status --porcelain` byte-identical
@@ -312,15 +333,14 @@ to what it was.
 
 ```console
 $ python3 -m unittest discover -s ec/tools -p 'test_xdata_guard_off_row_join.py'
-..............................
-
-Ran 30 tests in 5.9s
-
 OK
 ```
 
-The count is reported as the run prints it and is a property of this merge,
-not a claim about any suite.
+The progress line and the count are left out of the fence rather than copied
+out of one run, and that is the point rather than an omission: a hand-kept test
+total is a number the next case added to this suite makes wrong — the
+`tools/README.md` shape CLAUDE.md writes up — and the only line in a transcript
+that stays true is the verdict.
 
 **Landing the suite moved one other gate, and it moved the way that gate is
 built to move.** `check_pin_table_by_cited_file.py` indexes every `test_*.py`
@@ -335,5 +355,8 @@ is the same reason the comment is there at all.
 pointer, its figure, and the report's per-program split were each perturbed in
 turn — the pointer removed, every figure removed, one program bucket dropped
 from the tool's `PROGRAMS` — and each perturbation turned a named case red
-before being reverted. A case that cannot fail has not been shown to check
-anything.
+before being reverted. The `both` case was perturbed the same way, in a scratch
+copy of the two CSVs rather than in the tree: a `both` row's `cluster_id`
+re-pointed at a pd cluster, its `refs` no longer the sum of its two per-program
+cells, and a second `cluster_id` column added to the header, each of which turns
+it red. A case that cannot fail has not been shown to check anything.
