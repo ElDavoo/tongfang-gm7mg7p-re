@@ -102,10 +102,15 @@ MOVX_RI = {0xE2: ("movx a,@r0", 0), 0xE3: ("movx a,@r1", 1),
 # the address, name, the immediate is the page).
 #
 # The table is complete rather than literal-only, and that completeness is
-# the point: a window whose *last* `P2` write is one of the other seventeen
+# the point: a window whose *last* `P2` write is one of the other eighteen
 # has a page this tool cannot name, and a table listing only `mov p2,#imm`
 # and the four bit forms would step over `orl p2,#0x0f` silently and resolve
 # a page from a `P2` that had just been overwritten.
+#
+# `pd_index_geometry.DIRECT_DST_OPS` is the in-repository oracle for the
+# direct-byte-destination rows, and it is what caught `xch a,direct` (0xC5)
+# missing here when #1169 was reviewed: this table was built from sdas8051
+# alone and that encoding is the one an assembling-first pass does not reach.
 #
 # Every row here was assembled with sdas8051 -- the assembler
 # `verify_reassembly.py` re-encodes every committed listing with -- rather
@@ -138,6 +143,7 @@ MOVX_RI = {0xE2: ("movx a,@r0", 0), 0xE3: ("movx a,@r1", 1),
 P2_WRITERS = [
     (0x75, 0x75, 1, "mov p2,#imm", True),
     (0x85, 0x85, 2, "mov p2,direct", False),
+    (0xC5, 0xC5, 1, "xch a,p2", False),           # the direct byte is at raw[1]
     (0x86, 0x87, 1, "mov p2,@ri", False),        # r0, r1
     (0x88, 0x8F, 1, "mov p2,register", False),   # Rn in the opcode's low 3 bits
     (0xF5, 0xF5, 1, "mov p2,acc", False),

@@ -113,10 +113,10 @@ this a statement about the *form* in this image and not about the scan. The
 `MOV DPTR,#imm16` idiom the other two tools look for is everywhere in the
 image; the `P2` half of the indirect idiom is not in it at all.
 
-**The tool does not stop at the literal.** An 8051 has 18 encodings that write
+**The tool does not stop at the literal.** An 8051 has 19 encodings that write
 `0xA0`-`0xA7`, and only `mov p2,#imm` supplies a page this tool can name; the
-other 17 make the half `unresolved` and say which one defeated it. Four of the
-18 occur in this image, and none of the four is the literal:
+other 18 make the half `unresolved` and say which one defeated it. Four of the
+19 occur in this image, and none of the four is the literal:
 
 | encoding | anchored occurrences | where |
 |---|---|---|
@@ -126,8 +126,13 @@ other 17 make the half `unresolved` and say which one defeated it. Four of the
 | `inc p2` | 1 | `bank0` `0xA35E` |
 | `mov p2,direct` | 1 | `bank1` `0x16CA3` |
 
-The 14 that do not occur are not found by this method, which is not the same
-as their being absent from the 8051.
+The 15 that do not occur are not found by this method, which is not the same
+as their being absent from the 8051. The nineteenth, `xch a,direct` (`0xC5`),
+was missing from the tool's table until #1169 was reviewed: it is in
+`ec/tools/pd_index_geometry.py`'s `DIRECT_DST_OPS`, and a table assembled from
+`sdcc`'s assembler alone does not reach it. It occurs zero times here, so the
+census above is unchanged by adding it -- the count that moved is the
+completeness guarantee, not the measurement.
 
 ### 3a. The 12 `mov p2,register` are a data table the walk decoded as code
 

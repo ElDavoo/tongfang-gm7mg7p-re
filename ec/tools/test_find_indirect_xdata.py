@@ -162,6 +162,7 @@ class P2WriterTests(unittest.TestCase):
     WRITERS = [
         (b"\x75\xa0\x07", "mov p2,#imm", 0x07),
         (b"\x85\x90\xa0", "mov p2,direct", None),
+        (b"\xc5\xa0", "xch a,p2", None),
         (b"\x86\xa0", "mov p2,@ri", None),
         (b"\x87\xa0", "mov p2,@ri", None),
         (b"\x88\xa0", "mov p2,register", None),
