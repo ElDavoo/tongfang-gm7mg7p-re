@@ -62,14 +62,14 @@ covers `0x07C4` at lines 52238-52242 and has nothing anywhere in `0x0720`-`0x072
 state.** [`../../evidence/ec-watch/2026-09-18-ac-plugin-sweep-summary.csv`](../../evidence/ec-watch/2026-09-18-ac-plugin-sweep-summary.csv)
 is a per-address change count over `0x0000`-`0x07FF` across an AC plug-in on a
 **running** Linux machine. `0x0726` is not among the 205 addresses it lists,
-while its neighbours are — `0x071D`, `0x071E`, `0x071F`, `0x0743`, `0x075B`,
-`0x075C`. So the byte did not change across an AC insertion while the machine
-was up, which is already committed and is not what §3 repeats. What that
-capture cannot speak to is the **off** window, and it fixes the evidence shape
-as much as the answer: no host runs while the machine is off, so there is no
-capture spanning the interesting moment and none can be taken. The record is
-two fragments joined by the operator's wall clock, and §7 names the file shape
-for exactly that.
+while other addresses in the same sweep did change — `0x071D`, `0x071E`,
+`0x071F`, `0x0743`, `0x075B`, `0x075C`. So the byte did not change across an
+AC insertion while the machine was up, which is already committed and is not
+what §3 repeats. What that capture cannot speak to is the **off** window, and
+it fixes the evidence shape as much as the answer: no host runs while the
+machine is off, so there is no capture spanning the interesting moment and none
+can be taken. The record is two fragments joined by the operator's wall clock,
+and §7 names the file shape for exactly that.
 
 **The first question is not the polarity, it is survival.** Whether XDATA
 survives a full shutdown with AC removed is not knowable from the firmware
@@ -237,9 +237,20 @@ address. What is checkable is narrower and is enough: the only `FAN_BOOST` in
 committed material is `TRIGGER_FAN_BOOST BIT(2)` at `upstream-excerpt.txt:213`,
 which the excerpt's own section header puts under `EC_ADDR_TRIGGER 0x0767`;
 `SUPER_KEY_LOCK_STATUS` and `LIGHTBAR_STATUS` are `0x0768` bits at
-`upstream-excerpt.txt:221-222`; and the ASL does not name `0x0765` or any
-neighbour in `0x0760`-`0x076F` — its one `0x076x` `CreateBitField` is
-`D4RW` at `0x0768` (`dsdt.dsl:4365`). So the three names in the note are
+`upstream-excerpt.txt:221-222`; and the ASL's `ECMG` field list — the
+`OperationRegion (ECMG, SystemMemory, 0xFE410000, 0x00010000)` at
+`dsdt.dsl:52193-52194`, and the only field list in the DSDT that names XDATA
+addresses in that window, the other two EC regions being the `ECRR`/`ECRW`
+methods, which take the offset as an argument rather than naming one, and the
+`ECMP`/`ECXP` embedded-controller regions, which reach `0x7B` and bit 0
+respectively — carries no `Offset` anywhere in `0x0720`-`0x072F` or in
+`0x0760`-`0x076F`. The one literal `0x076x` in the DSDT is
+`CreateBitField (BUF0, 0x0768, D4RW)` at `dsdt.dsl:4365`, and it is not an
+XDATA address: `CreateBitField`'s second operand is a **bit offset into the
+object named first**, and `BUF0` is `Name (BUF0, Buffer (0x021C) {…})` at
+`dsdt.dsl:4156`, a local ASL buffer whose siblings (`0x0358` `C0RW`, `0x0428`
+`C4RW`, `0x05C8` `CCRW`, `0x0698` `D0RW`) are buffer bit offsets too, so it
+is evidence about neither range. The three names in the note are therefore
 carried by `registers.yaml`'s `sources: [uniwill-laptop]` tag and by nothing
 else in the tree.
 

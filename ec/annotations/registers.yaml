@@ -202,11 +202,20 @@ registers:
       nothing else in the tree: the committed upstream excerpt
       (linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt) carries no
       0x0765 line, the only FAN_BOOST in it is TRIGGER_FAN_BOOST BIT(2)
-      under EC_ADDR_TRIGGER 0x0767 (:213), and the ASL names neither this
-      address nor any neighbour in 0x0760-0x076F. So a Linux driver cannot
-      source those capabilities from here. A read-only procedure for that
-      is prepared and not run: docs/hardware-tests/ac-autoboot-0726-0765.md
-      section 5, with 0x0726 as the other half of the pair
+      under EC_ADDR_TRIGGER 0x0767 (:213), and the ASL's ECMG field list
+      (evidence/acpi/dsdt.dsl:52193-52194, the only field list in the DSDT
+      that names XDATA addresses in that window) has no Offset anywhere in
+      0x0720-0x072F or in 0x0760-0x076F. The one literal 0x076x in the
+      DSDT, CreateBitField (BUF0, 0x0768, D4RW) at :4365, is a bit offset
+      into a local Name (BUF0, Buffer (0x021C)) at :4156 rather than an
+      XDATA address, so it is evidence about neither range. The excerpt's
+      silence is a curated fragment set rather than the whole of
+      uniwill-acpi.c, so this is not a claim that upstream does not define
+      0x0765; on this board, though, a Linux driver cannot source those
+      capabilities from here. A read-only procedure for that is prepared
+      and not run:
+      docs/hardware-tests/ac-autoboot-0726-0765.md section 5, with 0x0726
+      as the other half of the pair
       docs/findings/pd-only-status-vocabulary.md question 1 names.
 
   - name: SUPPORT_2
