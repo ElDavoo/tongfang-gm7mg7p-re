@@ -62,10 +62,23 @@ To apply:
     git apply --check linux/patches/gm7mg7p-power-profile/uniwill-acpi-profile-gm7mg7p.patch
 
 Every address, bit and value the handler uses is recorded row by row with its
-evidence in profile-map.csv beside this file. No existing descriptor, DMI row,
-feature bit or keymap entry is modified: the 0xB0 arm falls through to the arm
-below it on every board whose descriptor leaves the callback NULL, so no other
-machine changes behaviour.
+evidence in profile-map.csv beside this file.
+
+This patch adds a GM7MG7P descriptor and the GM7MG7P DMI row that points at
+it, and neither exists in the tree it is diffed against. It supersedes an
+earlier patch of mine for the same board and the same rev, which added that
+descriptor -- the same eight feature bits, and no profile -- and that same DMI
+row: so the two are alternatives, not a series, and this one is the one to
+apply. Applied to one tree in either order the second one fails at
+uniwill-acpi.c:2860, the descriptor hunk, because the descriptor and the row
+are then already there. If the descriptor and row reach upstream first, drop
+those two hunks from this patch and rebase the rest onto them.
+
+Apart from what it adds, no existing descriptor, DMI row, feature bit or
+keymap entry is modified -- which is a statement about this diff applied on its
+own to the rev named above, and about nothing else. The 0xB0 arm falls through
+to the arm below it on every board whose descriptor leaves the callback NULL,
+so no other machine changes behaviour.
 
 diff --git a/uniwill-acpi.c b/uniwill-acpi.c
 --- a/uniwill-acpi.c

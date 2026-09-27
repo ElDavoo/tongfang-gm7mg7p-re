@@ -21,9 +21,19 @@ Everything between the two rules is the body itself.
 `struct uniwill_device_descriptor`, and a `UNIWILL_OSD_PERFORMANCE_MODE_TOGGLE`
 arm that cycles the profile instead of reporting `KEY_F14` on boards whose
 descriptor carries a handler. The GM7MG7P descriptor is the first one to carry
-one, and no existing descriptor, DMI row, feature bit or keymap entry is
-modified: on every other board the new `0xB0` arm falls through to the arm
+one, and this diff is against `5a24248` on its own: the GM7MG7P descriptor and
+the DMI row pointing at it do not exist there, and nothing already in the tree
+is modified. On every other board the new `0xB0` arm falls through to the arm
 below it, so nothing about today's behaviour changes anywhere.
+
+**Apply this one, not the other GM7MG7P patch.** I have a second patch for
+this board, against the same rev, that adds the same descriptor with the eight
+feature bits and no profile, and the same DMI row. This one is the superset,
+so the two are alternatives rather than a series: applied to one tree in
+either order, the second one fails at the descriptor hunk, because
+`gm7mg7p_descriptor` and that row are already there. If the smaller patch
+reaches upstream first, drop this patch's descriptor and DMI row hunks and
+rebase the rest onto them.
 
 The three real modes on this board map as the issue asked:
 
@@ -116,7 +126,19 @@ done — it just needs to be built once.
 
 ## 7. Testing
 
-- `git apply --check` against `5a24248`: clean.
+- `git apply --check` against `5a24248`: clean. Run on 2026-09-27 into an
+  empty tree, from a fresh `git fetch --depth 1` of
+  `5a24248f6422a0b673a47cbfd65e19a98eb4c8a9` whose `uniwill-acpi.c` is the
+  `7a2eeae` blob the patch's own `index` line names:
+
+  ```sh
+  git apply --check -v uniwill-acpi-profile-gm7mg7p.patch
+  Checking patch uniwill-acpi.c...
+  ```
+
+  Exit 0, every hunk accepted, no warning. That is a check of the diff against
+  the pinned source and nothing more; the last bullet is what is still not
+  done.
 - The regmap gates this touches were read off the source rather than assumed:
   `EC_ADDR_MANUAL_FAN_CTRL`, the three `EC_ADDR_PL*_SETTING` bytes,
   `EC_ADDR_BIOS_INFO_3` and the three default blocks are in

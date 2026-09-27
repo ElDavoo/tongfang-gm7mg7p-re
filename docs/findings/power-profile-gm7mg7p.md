@@ -156,13 +156,21 @@ The issue this work answers was written on the assumption that
 `Wer-Wolf/uniwill-laptop` at `5a24248` has a platform-profile framework to
 write a handler into — it names "the `platform_profile` struct, the
 `UNIWILL_PLATFORM_PROFILE_UNK`/low-power/balanced/performance enum and the
-existing profile store/cycle helpers". It does not. Measured on the fetched
-tree rather than assumed:
+existing profile store/cycle helpers". It does not, and two measurements say
+so, of different weight. The first is a quotation rather than a search:
+`struct uniwill_device_descriptor` is reproduced in full at
+`upstream-excerpt-profile.txt:235-242` (upstream lines 428-435, closing brace
+included), four fields, and no `platform_profile` member among them. The
+second is a scan of four spellings, over the whole extracted tree:
 
     $ grep -rn 'platform_profile\|PLATFORM_PROFILE\|profile_cycles\|profile_available' .
     (no output)
 
-across all seven files in the tree. The only trace is the keymap line at
+So: none of those four names occurs anywhere at `5a24248`. That is what the
+scan shows, and it is not by itself a claim about functionality it did not
+look for — the missing struct member above is what carries that, and the
+patch needs both halves of that sentence to justify adding a framework rather
+than a callback. The only trace of the idea in the tree is the keymap line at
 `uniwill-acpi.c:478`, commented "Reported when user wants to cycle the
 platform profile" and mapped to `KEY_F14` — an event with nothing to cycle.
 

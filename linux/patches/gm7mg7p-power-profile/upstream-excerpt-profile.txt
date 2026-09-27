@@ -55,16 +55,28 @@ THE FINDING THAT CHANGED THE SHAPE OF THIS WORK
 was written on the assumption that it did: it asked for a `platform_profile`
 handler written against "the `platform_profile` struct, the
 `UNIWILL_PLATFORM_PROFILE_UNK`/low-power/balanced/performance enum and the
-existing profile store/cycle helpers". All three do not exist. Measured on the
-fetched tree rather than assumed:
+existing profile store/cycle helpers". All three are absent here, and two
+measurements say so, of different weight.
 
-    $ grep -rn 'platform_profile\|PLATFORM_PROFILE\|profile_cycles\|profile_available' .
-    (no output)
+  - `struct uniwill_device_descriptor` is quoted in full at 428-436 below --
+    four fields, closing brace included -- with no `platform_profile` member
+    in it. That is the struct the callback would go in, read rather than
+    searched for, and it is the quotation that establishes the missing member.
+  - A scan for the names, which is a scan of four spellings and not a reading
+    of the file:
 
-across all seven files. What *is* there is the one line quoted at 470-482
-below, commented "Reported when user wants to cycle the platform profile" and
-mapped to `KEY_F14` -- an event with nothing to cycle. So the patch in this
-directory has to add the framework, not only a callback, and every one of the
+        $ grep -rn 'platform_profile\|PLATFORM_PROFILE\|profile_cycles\|profile_available' .
+        (no output)
+
+    run over the whole extracted tree, every file of it. So: none of those
+    four names occurs anywhere at this rev. That is what this measurement
+    shows, and it is not on its own a statement about functionality the scan
+    did not look for.
+
+What *is* there is the one line quoted at 470-482 below, commented
+"Reported when user wants to cycle the platform profile" and mapped to
+`KEY_F14` -- an event with nothing to cycle. So the patch in this directory
+has to add the framework, not only a callback, and every one of the the
 three names above is a name this patch introduces rather than one it reads.
 
 Two consequences, both recorded rather than smoothed over:

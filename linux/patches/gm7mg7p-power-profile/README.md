@@ -18,14 +18,60 @@ anyone posted.
 | `upstream-excerpt-profile.txt` | the committed evidence — the power-mode block, the PL registers, the regmap gates and the notify path, each with its line number in `uniwill-acpi.c` |
 | `fetch-upstream-profile.sh` | re-derives the excerpt from a fresh fetch and diffs it. Needs the network, so it is not in any gate |
 
+## The other patch for this board, and which one to submit
+
+`../gm7mg7p-dmi-entry/` holds a second prepared patch for the same board and
+the same `BASE_COMMIT`. It adds the `gm7mg7p_descriptor` with its eight
+feature bits and the `PCSpecialist GM7MG7P` DMI row, and no profile.
+**This patch supersedes both of those**: its descriptor is the same eight
+feature bits plus `.probe` and `.platform_profile`, its DMI row is identical,
+and its hunks are written against the tree as it is *before* that patch, so it
+applies to `BASE_COMMIT` on its own.
+
+They are alternatives, not a series. Applied to one tree in either order, the
+second one fails at `uniwill-acpi.c:2860` — the descriptor hunk — because the
+descriptor and the row are already there. Checked on 2026-09-27 in a throwaway
+checkout of `5a24248` — not in this repository, which is not the tree either
+patch is diffed against — with `<repo>` for this repository's root:
+
+```console
+$ cd <throwaway> && git init -q . && git fetch -q --depth 1 \
+      https://github.com/Wer-Wolf/uniwill-laptop 5a24248 && git checkout -q FETCH_HEAD
+$ git apply <repo>/linux/patches/gm7mg7p-dmi-entry/uniwill-acpi-dm-gm7mg7p.patch
+$ git apply --check <repo>/linux/patches/gm7mg7p-power-profile/uniwill-acpi-profile-gm7mg7p.patch
+error: patch failed: uniwill-acpi.c:2860
+error: uniwill-acpi.c: patch does not apply
+```
+
+The same command with the two patches swapped fails the same way, at the same
+line.
+
+**So submit this one for the board.** If the DMI-entry change reaches upstream
+first, drop this patch's descriptor and DMI-row hunks and rebase the rest onto
+it — do not apply both. That is also what the sentence in this patch's header
+now says: "no existing descriptor, DMI row, feature bit or keymap entry is
+modified" is true of this diff applied on its own to `BASE_COMMIT`, and of
+nothing else.
+
 ## The thing that changed the shape of the work
 
-**Upstream has no platform-profile support at `5a24248`.** Not a partial one,
-none: `grep -rn 'platform_profile\|PLATFORM_PROFILE\|profile_cycles\|profile_available'`
-over the fetched tree returns nothing across all seven files. What exists is
-the keymap line at `uniwill-acpi.c:478`, commented "Reported when user wants
-to cycle the platform profile" and mapped to `KEY_F14` — an event with nothing
-to cycle.
+**No reference to `platform_profile`, `PLATFORM_PROFILE`, `profile_cycles` or
+`profile_available` anywhere in the tree at `5a24248`.** That is what the scan
+showed, over the whole fetched tree:
+
+```console
+$ grep -rn 'platform_profile\|PLATFORM_PROFILE\|profile_cycles\|profile_available' .
+(no output)
+```
+
+Four spellings is what it looks for, so on its own that is a statement about
+those four names rather than about the driver's functionality. What carries
+the functional half is a quotation instead: `struct
+uniwill_device_descriptor` is reproduced complete in the excerpt, four fields
+and no `platform_profile` member, so the struct this patch adds a callback to
+has nowhere to put one. And what the tree does carry is the keymap line at
+`uniwill-acpi.c:478`, commented "Reported when user wants to cycle the
+platform profile" and mapped to `KEY_F14` — an event with nothing to cycle.
 
 The issue was written assuming otherwise: it asked for a handler written
 against "the `platform_profile` struct, the
@@ -178,6 +224,29 @@ That last one is a command for a maintainer to re-run, not something any gate
 in this repository runs: it needs the network, and this repository does not
 describe a check that only sometimes runs as one that does.
 
+**It was run once, on 2026-09-27, and this is the record of it.** Against a
+fresh `git fetch --depth 1` of
+`5a24248f6422a0b673a47cbfd65e19a98eb4c8a9` into an empty tree, whose
+`uniwill-acpi.c` is 90,721 bytes with sha256
+`914d876fa3255e6ad8f8669162eaa844b23eaf9f41fd181113447c49c3ecc2a7` — the digest
+`upstream-excerpt-profile.txt` already records, so the checkout is the source
+this patch was made against and not some other one:
+
+```console
+$ cd <throwaway> && git init -q . && git fetch -q --depth 1 \
+      https://github.com/Wer-Wolf/uniwill-laptop 5a24248 && git checkout -q FETCH_HEAD
+$ git apply --check -v <repo>/linux/patches/gm7mg7p-power-profile/uniwill-acpi-profile-gm7mg7p.patch
+Checking patch uniwill-acpi.c...
+$ echo $?
+0
+```
+
+Every hunk accepted, no warning, no fuzz. `PR_DESCRIPTION.md` says so to
+whoever pastes it upstream, and it says it *here* first because a claim in a
+body bound for another repository is only as good as what this one records.
+The same throwaway checkout is what the stacking result in "The other patch
+for this board" above was measured on.
+
 **`fetch-upstream-profile.sh` is a deliberate near-duplicate of
 `gm7mg7p-dmi-entry/fetch-upstream.sh`, not an oversight.** The two range lists
 are disjoint — that one quotes the feature bits, the cTGP block, the charge
@@ -220,16 +289,21 @@ line it comes from.
 
 1. `bash fetch-upstream-profile.sh` — the excerpt still matches the pinned source.
 2. `git apply --check uniwill-acpi-profile-gm7mg7p.patch` against a fresh
-   checkout of `5a24248`.
+   checkout of `5a24248`. Run once and recorded under "Reproducing it"; this
+   is the re-run, on your own checkout, and it is the step that would catch a
+   base that has moved under the pin.
 3. `python3 tools/check_power_profile.py --check` — nine rules, green.
 4. Read `profile-map.csv` and agree with all eighteen rows, not just the four
    writes. The exclusions are the part a reviewer is most likely to challenge,
    and the fan table's in particular is a deliberate absence rather than an
    oversight.
-5. **Build it.** `linux/nix/uniwill-laptop.nix`. The first build is part of the
+5. Read "The other patch for this board" above, and submit **this** patch, not
+   the `../gm7mg7p-dmi-entry/` one. They are alternatives; stacked, the second
+   does not apply.
+6. **Build it.** `linux/nix/uniwill-laptop.nix`. The first build is part of the
    review, not a formality — see the PR body's fourth section.
-6. Load it, and check `profile_cycles` reads `low-power balanced performance`
+7. Load it, and check `profile_cycles` reads `low-power balanced performance`
    and that `echo performance > profile` moves `0x0783-0x0785` to `4B 4B A5`
    and back. This is the step this repository cannot do.
-7. Only then: open the PR, pasting `PR_DESCRIPTION.md`. Not before, and not
+8. Only then: open the PR, pasting `PR_DESCRIPTION.md`. Not before, and not
    from here.
