@@ -94,7 +94,20 @@ while IFS= read -r -d '' path; do
   else
     printf '%s: passed\n' "$shown"
   fi
-done < <(find "${dirs[@]}" -name 'test_*.py' -not -path './.git/*' -print0 \
+# `.claude/` is pruned for the same reason `.git/` always was, and the reason is
+# not tidiness: `git worktree add` under `.claude/worktrees/` puts a whole second
+# checkout inside this one, so a developer with any worktree open runs three
+# suites that do not exist in the committed tree and CI cannot run, and reads a
+# total three higher than anyone else's. A figure that depends on whether a
+# developer happens to have a worktree open is not a measurement of this tree.
+# The same three names are pruned by `ec/tools/census_test_line_pins.py` and by
+# `tools/test_readme_suite_table.py`'s `discover()`; the three should be read
+# together, because one suite set defined three ways is three answers.
+done < <(find "${dirs[@]}" -name 'test_*.py' \
+         -not -path './.git/*' \
+         -not -path './.claude/*' \
+         -not -path './vendor/*' \
+         -print0 \
          | sort -z)
 
 # A run that found nothing is not a pass. The vacuous check is the failure
