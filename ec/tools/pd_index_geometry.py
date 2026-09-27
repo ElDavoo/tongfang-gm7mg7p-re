@@ -1680,6 +1680,51 @@ def access_self_test(d, check):
                     base + (index*mult & 255)) & 65535
     check(arithmetic_ok, "byte-level arithmetic agrees across product overflow, low-add carry, discarded B and 16-bit wrap")
 
+    # pd-index-geometry.md 8.1's four addresses, each pinned against an address
+    # worked out by hand from the opcodes rather than from the term string. The
+    # sweep above proves the two agree; two wrong strings in agreement sail
+    # straight through it, so the expectation has to be a third thing. `not_` is
+    # the address the row exists to rule out -- the pre-#74 full product, or the
+    # no-carry base, whichever that row is about -- and the row is refused if the
+    # bytes produce it. The bytes are the committed ones, so a re-widened
+    # template cannot satisfy these by reformatting.
+    ctor_runs = {0xC302: "a424f8f582e43408f583",   # 0xC2FA: 0x08F8 + low8(R7x0x5E)
+                 0x34DD: "a424fcf582e43408f583",   # 0x34D9: 0x08FC + low8(Ax0x5E)
+                 0x5950: "2470f582e43408f583",     # 0xDA9B's suffix: 0x0870 + A
+                 0x5792: "a4249bf9740835f0"}       # 0x578E: 0x089B + Ax0x77, A:R1
+    for off, run in ctor_runs.items():
+        check(d[lo + off:lo + off + len(run)//2].hex() == run,
+              f"0x{off:04X} construction bytes are the committed ones")
+    for off, a, b, want, not_ in (
+            (0xC302, 2, 0x5E, 0x09B4, 0x08B4),   # 2x0x5E = 0xBC; 0xBC+0xF8 carries
+            (0xC302, 3, 0x5E, 0x0912, 0x0A12),   # 3x0x5E = 0x011A; B never added
+            (0x34DD, 3, 0x5E, 0x0916, 0x0A16),
+            # 0x5950 is the add-only suffix, entered with the product already in
+            # A:B, so a and b are the halves of Rx0x77 rather than R and 0x77
+            # separately. At index 2 that product is below 0x100, which leaves
+            # the base-low carry as the only thing left to test there.
+            (0x5950, 0xEE, 0x00, 0x095E, 0x085E),
+            (0x5950, 0x65, 0x01, 0x08D5, 0x09D5),
+            # 0x5792 ends `addc a,b`, so B survives and the full product stands.
+            # 0x0800 is what this site would build if it dropped B the way the
+            # three DPTR rows do.
+            (0x5792, 3, 0x77, 0x0A00, 0x0800)):
+        got = byte_address(bytes.fromhex(ctor_runs[off]), a, b)
+        check(got == want and got != not_,
+              f"0x{off:04X} at A=0x{a:02X} B=0x{b:02X} builds 0x{want:04X}, not 0x{not_:04X}")
+
+    # The same rule as a property of the whole census rather than of the four
+    # rows above: a multiply addend keeps its full product only where the
+    # template ends `addc a,b`. All 21 untruncated rows are the A:R1 form, so a
+    # re-widened template shows up here as a DPTR row that kept its product --
+    # and the CSV regeneration checks above would not refuse it, because the
+    # CSVs would have been regenerated to match.
+    untruncated = [r for r in rows if any("×" in p and not p.startswith("low8(")
+                                           for p in r["terms"].split(" + "))]
+    check(len(untruncated) == 21 and
+          all(r["destination"] == "A:R1" for r in untruncated),
+          "the census's 21 untruncated products are all the A:R1 form")
+
     for off, base in ((0xB2B1, 0x0946), (0xB2D6, 0x0976)):
         raw = d[lo + off:lo + off + 10]
         _, term = _match_template(d, lo + off)
