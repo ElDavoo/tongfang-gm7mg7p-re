@@ -1,0 +1,536 @@
+Subject: [PATCH] Add a platform profile for the PCSpecialist / TongFang GM7MG7P
+
+This driver has no platform-profile support at all, so this patch adds it: a
+`profile` and `profile_cycles` sysfs pair, a `platform_profile` callback on
+`struct uniwill_device_descriptor`, and a `UNIWILL_OSD_PERFORMANCE_MODE_TOGGLE`
+arm that cycles instead of reporting KEY_F14 on boards that carry a handler.
+The GM7MG7P descriptor is the first one to carry one.
+
+The reason for writing it in this driver's own idiom rather than on top of
+`dev_pm_platform_profile_register()` is a practical one and worth stating
+before a reviewer finds it: the patch was written without a kernel headers
+tree to compile against, so an API whose current signature could not be
+checked here was not something to guess at. The enum carries the kernel's
+member names in the kernel's order, so moving the attribute to
+`dev_pm_platform_profile_register()` later is a translation of about twenty
+lines and not a redesign. If you would rather have that in the same patch,
+say so and it can be done -- it just needs to be built once.
+
+The GM7MG7P handler:
+
+  - maps the three real modes onto low-power/balanced/performance as
+    Office/Gaming/Turbo, which is the order the OSD cycles them;
+  - gates Turbo on EC_ADDR_BIOS_INFO_3 (0x049F) bit 1, and deliberately not on
+    the existing FAN_TURBO_SUPPORTED, which is EC_ADDR_SUPPORT_5 (0x0742)
+    bit 4: 0x0742 reads 0x02 on this board, so that bit is clear while Turbo
+    works. I have not reconciled the two and do not think this patch should;
+  - writes the power limits as well as the mode byte, out of the EC's own
+    per-mode default blocks. This is the part that is easy to get wrong by
+    omission: on this EC the mode byte alone does not move them. Holding
+    EC_ADDR_MANUAL_FAN_CTRL at each of the three values and watching moved
+    neither EC_ADDR_PL1/PL2/PL4_SETTING nor the fan curve, and none of the 29
+    firmware sites for that byte touches another address. A handler that wrote
+    only the mode byte would report a new profile while the machine stayed in
+    the old one;
+  - carries no wattage. The limits are read out of the EC and written back, so
+    a board whose EC was programmed differently follows its own EC;
+  - leaves the fan curve alone. The OEM service's curve handshake parks the EC
+    with EC_ADDR_AP_OEM bit 0 clear, and that is the state in which the EC's own
+    zeroing of the power limits runs. The driver holds that bit set from probe
+    and nothing here clears it, which is what makes writing the limits without
+    the curve safe -- and the reason not to add the curve later without
+    rethinking this.
+
+Two things this patch does not claim. The mode bits' effect on fan behaviour is
+not established: the measurement above was near-idle, and the fan duty moved the
+same amount under a no-op control write, so what changed there was thermally. A
+profile switch here changes the power limits; whether it changes the curve is
+untested and should be read as untested. And the patch has been neither compiled
+nor loaded -- it was written against the source alone, on a machine with no
+kernel headers tree, so treat the first build as the review step.
+
+Base commit: 5a24248f6422a0b673a47cbfd65e19a98eb4c8a9
+  ("Bump minimum supported kernel version to 7.2"), the rev
+  linux/patches/BASE_COMMIT pins and the same rev the local nix build fetches.
+  The blob this diff is against hashes to 7a2eeae, which is the same base
+  index line linux/patches/uniwill-laptop-force_charge_limit.patch carries.
+
+To apply:
+    git fetch https://github.com/Wer-Wolf/uniwill-laptop 5a24248f6422a0b673a47cbfd65e19a98eb4c8a9
+    git am linux/patches/gm7mg7p-power-profile/uniwill-acpi-profile-gm7mg7p.patch
+  or, to check it without applying:
+    git apply --check linux/patches/gm7mg7p-power-profile/uniwill-acpi-profile-gm7mg7p.patch
+
+Every address, bit and value the handler uses is recorded row by row with its
+evidence in profile-map.csv beside this file. No existing descriptor, DMI row,
+feature bit or keymap entry is modified: the 0xB0 arm falls through to the arm
+below it on every board whose descriptor leaves the callback NULL, so no other
+machine changes behaviour.
+
+diff --git a/uniwill-acpi.c b/uniwill-acpi.c
+--- a/uniwill-acpi.c
++++ b/uniwill-acpi.c
+@@ -348,6 +348,30 @@
+ #define PWM_MAX			200
+ #define FAN_TABLE_LENGTH	16
+ 
++/*
++ * Addresses a platform profile needs that are not named above. They are kept
++ * together rather than spread through the address list because they only make
++ * sense next to each other: a profile selects a mode byte, and replays the
++ * power limits out of the per-mode default block for that mode.
++ *
++ * EC_ADDR_BIOS_INFO_3 bit 1 is the Turbo capability bit on the boards that
++ * expose a profile, which is deliberately not EC_ADDR_SUPPORT_5's
++ * FAN_TURBO_SUPPORTED above.
++ */
++#define EC_ADDR_BIOS_INFO_3		0x049F
++#define TURBO_MODE_SUPPORTED		BIT(1)
++
++#define EC_ADDR_GAMING_PL_DEFAULT	0x0730
++#define EC_ADDR_OFFICE_PL_DEFAULT	0x0734
++#define EC_ADDR_TURBO_PL_DEFAULT	0x07A7
++
++/*
++ * The mode byte minus Fan Boost. FAN_MODE_BOOST belongs to the OSD, which adds
++ * it while Fan Boost is on, so a profile must not clear it by writing the whole
++ * byte.
++ */
++#define FAN_PROFILE_MASK		(GENMASK(5, 0) | FAN_MODE_USER)
++
+ #define LED_CHANNELS		3
+ 
+ #define KBD_LED_CHANNELS	3
+@@ -375,6 +399,33 @@
+ 	USB_C_POWER_PRIORITY_PERFORMANCE,
+ };
+ 
++/*
++ * The platform profile vocabulary of the kernel's platform-profile interface,
++ * with the same member names and the same order, so that a board whose
++ * descriptor carries a platform_profile callback can be handed to
++ * dev_pm_platform_profile_register() without translating.
++ */
++enum uniwill_platform_profile {
++	UNIWILL_PLATFORM_PROFILE_UNKNOWN,
++	UNIWILL_PLATFORM_PROFILE_LOW_POWER,
++	UNIWILL_PLATFORM_PROFILE_BALANCED,
++	UNIWILL_PLATFORM_PROFILE_PERFORMANCE,
++	UNIWILL_PLATFORM_PROFILE_MAX,
++};
++
++static const char * const uniwill_profile_names[UNIWILL_PLATFORM_PROFILE_MAX] = {
++	[UNIWILL_PLATFORM_PROFILE_UNKNOWN] = "unknown",
++	[UNIWILL_PLATFORM_PROFILE_LOW_POWER] = "low-power",
++	[UNIWILL_PLATFORM_PROFILE_BALANCED] = "balanced",
++	[UNIWILL_PLATFORM_PROFILE_PERFORMANCE] = "performance",
++};
++
++static const u16 uniwill_pl_settings[] = {
++	EC_ADDR_PL1_SETTING,
++	EC_ADDR_PL2_SETTING,
++	EC_ADDR_PL4_SETTING,
++};
++
+ struct uniwill_data {
+ 	struct device *dev;
+ 	acpi_handle handle;
+@@ -418,6 +469,9 @@
+ 	struct notifier_block nb;
+ 	struct mutex usb_c_power_priority_lock; /* Protects dependent bit write and state safe */
+ 	enum usb_c_power_priority_options last_usb_c_power_priority_option;
++	struct mutex profile_lock;	/* Protects the platform profile and its registers */
++	enum uniwill_platform_profile current_profile;
++	bool turbo_supported;
+ };
+ 
+ struct uniwill_battery_entry {
+@@ -432,6 +486,20 @@
+ 	u8 lightbar_max_brightness;
+ 	/* Executed during driver probing */
+ 	int (*probe)(struct uniwill_data *data);
++	/*
++	 * Optional. Boards that leave it NULL get no profile attribute and keep
++	 * reporting UNIWILL_OSD_PERFORMANCE_MODE_TOGGLE as KEY_F14, exactly as
++	 * they do today.
++	 */
++	int (*platform_profile)(struct uniwill_data *data,
++				enum uniwill_platform_profile profile);
++};
++
++struct uniwill_profile_entry {
++	/* The bytes this profile writes into EC_ADDR_MANUAL_FAN_CTRL */
++	u8 mode_byte;
++	/* First byte of the EC's per-mode power-limit default block */
++	u16 pl_defaults;
+ };
+ 
+ static bool force;
+@@ -619,6 +687,10 @@
+ 	case EC_ADDR_CTGP_DB_TPP_OFFSET:
+ 	case EC_ADDR_CTGP_DB_DB_OFFSET:
+ 	case EC_ADDR_USB_C_POWER_PRIORITY:
++	case EC_ADDR_MANUAL_FAN_CTRL:
++	case EC_ADDR_PL1_SETTING:
++	case EC_ADDR_PL2_SETTING:
++	case EC_ADDR_PL4_SETTING:
+ 		return true;
+ 	default:
+ 		return false;
+@@ -665,6 +737,14 @@
+ 	case EC_ADDR_CTGP_DB_TPP_OFFSET:
+ 	case EC_ADDR_CTGP_DB_DB_OFFSET:
+ 	case EC_ADDR_USB_C_POWER_PRIORITY:
++	case EC_ADDR_BIOS_INFO_3:
++	case EC_ADDR_GAMING_PL_DEFAULT:
++	case EC_ADDR_OFFICE_PL_DEFAULT:
++	case EC_ADDR_TURBO_PL_DEFAULT:
++	case EC_ADDR_MANUAL_FAN_CTRL:
++	case EC_ADDR_PL1_SETTING:
++	case EC_ADDR_PL2_SETTING:
++	case EC_ADDR_PL4_SETTING:
+ 		return true;
+ 	default:
+ 		return false;
+@@ -691,6 +771,17 @@
+ 	case EC_ADDR_OEM_4:
+ 	case EC_ADDR_CHARGE_CTRL:
+ 	case EC_ADDR_USB_C_POWER_PRIORITY:
++	/*
++	 * The EC rewrites the mode byte on its own -- on a boot-time default
++	 * mode, on its own Turbo path, and whenever the Fan Boost arms decide to
++	 * clear the bit -- and it zeroes the power limits on a path that is not
++	 * gated on the mode. A cached read of any of these would report the
++	 * driver's own last write back to it instead of what the EC believes.
++	 */
++	case EC_ADDR_MANUAL_FAN_CTRL:
++	case EC_ADDR_PL1_SETTING:
++	case EC_ADDR_PL2_SETTING:
++	case EC_ADDR_PL4_SETTING:
+ 		return true;
+ 	default:
+ 		return false;
+@@ -1250,6 +1341,63 @@
+ 
+ static DEVICE_ATTR_RW(usb_powershare_high);
+ 
++static ssize_t profile_store(struct device *dev, struct device_attribute *attr,
++			     const char *buf, size_t count)
++{
++	struct uniwill_data *data = dev_get_drvdata(dev);
++	enum uniwill_platform_profile profile;
++	int ret;
++
++	ret = sysfs_match_string(uniwill_profile_names, buf);
++	if (ret < 0)
++		return ret;
++
++	/* What the machine is in right now is not something to ask it to be in. */
++	if (!ret)
++		return -EINVAL;
++
++	profile = ret;
++	if (profile == UNIWILL_PLATFORM_PROFILE_PERFORMANCE && !data->turbo_supported)
++		return -EOPNOTSUPP;
++
++	return device_descriptor.platform_profile(data, profile) ? count : -EIO;
++}
++
++static ssize_t profile_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct uniwill_data *data = dev_get_drvdata(dev);
++	enum uniwill_platform_profile profile;
++
++	mutex_lock(&data->profile_lock);
++	profile = data->current_profile;
++	mutex_unlock(&data->profile_lock);
++
++	return sysfs_emit(buf, "%s\n", uniwill_profile_names[profile]);
++}
++
++static DEVICE_ATTR_RW(profile);
++
++static ssize_t profile_cycles_show(struct device *dev, struct device_attribute *attr,
++				   char *buf)
++{
++	struct uniwill_data *data = dev_get_drvdata(dev);
++	int i, len = 0;
++
++	guard(mutex)(&data->profile_lock);
++
++	for (i = 0; i < UNIWILL_PLATFORM_PROFILE_MAX; i++) {
++		if (i == UNIWILL_PLATFORM_PROFILE_PERFORMANCE && !data->turbo_supported)
++			continue;
++
++		len += sysfs_emit_at(buf, len, "%s%s", len ? " " : "",
++				     uniwill_profile_names[i]);
++	}
++
++	return len;
++}
++
++static DEVICE_ATTR_RO(profile_cycles);
++
+ static struct attribute *uniwill_attrs[] = {
+ 	/* Keyboard-related */
+ 	&dev_attr_fn_lock.attr,
+@@ -1263,6 +1411,9 @@
+ 	&dev_attr_usb_c_power_priority.attr,
+ 	&dev_attr_ac_auto_boot.attr,
+ 	&dev_attr_usb_powershare_high.attr,
++	/* Platform-profile-related */
++	&dev_attr_profile.attr,
++	&dev_attr_profile_cycles.attr,
+ 	NULL
+ };
+ 
+@@ -1312,6 +1463,11 @@
+ 			return attr->mode;
+ 	}
+ 
++	if (attr == &dev_attr_profile.attr || attr == &dev_attr_profile_cycles.attr) {
++		if (device_descriptor.platform_profile)
++			return attr->mode;
++	}
++
+ 	return 0;
+ }
+ 
+@@ -2168,6 +2324,36 @@
+ 	return devm_battery_hook_register(data->dev, &data->hook);
+ }
+ 
++/*
++ * The next profile after the current one, in the order the OSD cycles them and
++ * wrapping round at the end. The target is chosen under profile_lock and then
++ * applied by the descriptor's callback, which takes the lock again; two racing
++ * callers therefore write the same profile rather than interleaving.
++ */
++static int uniwill_profile_cycle(struct uniwill_data *data)
++{
++	enum uniwill_platform_profile profile;
++	int i;
++
++	mutex_lock(&data->profile_lock);
++
++	for (i = data->current_profile + 1; i < UNIWILL_PLATFORM_PROFILE_MAX; i++) {
++		if (i == UNIWILL_PLATFORM_PROFILE_PERFORMANCE && !data->turbo_supported)
++			continue;
++
++		break;
++	}
++
++	if (i == UNIWILL_PLATFORM_PROFILE_MAX)
++		profile = UNIWILL_PLATFORM_PROFILE_LOW_POWER;
++	else
++		profile = i;
++
++	mutex_unlock(&data->profile_lock);
++
++	return device_descriptor.platform_profile(data, profile);
++}
++
+ static int uniwill_notifier_call(struct notifier_block *nb, unsigned long action, void *dummy)
+ {
+ 	struct uniwill_data *data = container_of(nb, struct uniwill_data, nb);
+@@ -2239,6 +2425,16 @@
+ 			return NOTIFY_DONE;
+ 
+ 		return notifier_from_errno(uniwill_notify_kbd_led(data, 4));
++	case UNIWILL_OSD_PERFORMANCE_MODE_TOGGLE:
++		/*
++		 * Only a board whose descriptor carries a profile handler consumes
++		 * this here. Every other board falls through to the arm below and
++		 * still reports it as KEY_F14, so no existing machine changes.
++		 */
++		if (device_descriptor.platform_profile)
++			return notifier_from_errno(uniwill_profile_cycle(data));
++
++		fallthrough;
+ 	default:
+ 		mutex_lock(&data->input_lock);
+ 		sparse_keymap_report_event(data->input_device, action, 1, true);
+@@ -2248,6 +2444,14 @@
+ 	}
+ }
+ 
++static int uniwill_profile_init(struct uniwill_data *data)
++{
++	if (!device_descriptor.platform_profile)
++		return 0;
++
++	return devm_mutex_init(data->dev, &data->profile_lock);
++}
++
+ static int uniwill_input_init(struct uniwill_data *data)
+ {
+ 	int ret;
+@@ -2375,6 +2579,10 @@
+ 	if (ret < 0)
+ 		return ret;
+ 
++	ret = uniwill_profile_init(data);
++	if (ret < 0)
++		return ret;
++
+ 	return uniwill_input_init(data);
+ }
+ 
+@@ -2860,6 +3068,142 @@
+ 	.kbd_led_max_brightness = 2,
+ };
+ 
++/*
++ * The GM7MG7P's three real power modes, in the order the OSD cycles them.
++ *
++ * The mode bytes are the firmware's own encoding rather than this driver's: the
++ * OEM service writes them from SetFanMode, and the EC produces the same 0x10 on
++ * its own Turbo path. They are spelled here as FAN_MODE_USER | FAN_MODE_HIGH
++ * and FAN_MODE_TURBO because those are the names the byte already has in this
++ * file; Gaming is zero.
++ *
++ * pl_defaults is the first byte of the EC's per-mode PL1/PL2/PL4 default block.
++ * Each block is contiguous for three bytes and so are EC_ADDR_PL1/PL2/PL4_SETTING,
++ * so both halves of the replay are one bulk transfer each. No wattage appears
++ * anywhere in this file: the limits are read out of the EC at apply time, so a
++ * board whose EC was programmed with different limits follows its own EC rather
++ * than a constant.
++ */
++static const struct uniwill_profile_entry
++gm7mg7p_profiles[UNIWILL_PLATFORM_PROFILE_MAX] = {
++	[UNIWILL_PLATFORM_PROFILE_LOW_POWER] = {
++		.mode_byte = FAN_MODE_USER | FAN_MODE_HIGH,
++		.pl_defaults = EC_ADDR_OFFICE_PL_DEFAULT,
++	},
++	[UNIWILL_PLATFORM_PROFILE_BALANCED] = {
++		.mode_byte = 0,
++		.pl_defaults = EC_ADDR_GAMING_PL_DEFAULT,
++	},
++	[UNIWILL_PLATFORM_PROFILE_PERFORMANCE] = {
++		.mode_byte = FAN_MODE_TURBO,
++		.pl_defaults = EC_ADDR_TURBO_PL_DEFAULT,
++	},
++};
++
++static int gm7mg7p_platform_profile(struct uniwill_data *data,
++				    enum uniwill_platform_profile profile)
++{
++	struct acpi_battery_info bat = { 0 };
++	const struct uniwill_profile_entry *entry;
++	u8 limits[ARRAY_SIZE(uniwill_pl_settings)];
++	int ret;
++
++	if (profile >= ARRAY_SIZE(gm7mg7p_profiles))
++		return -EINVAL;
++
++	entry = &gm7mg7p_profiles[profile];
++	if (!entry->pl_defaults)
++		return -EINVAL;
++
++	guard(mutex)(&data->profile_lock);
++
++	ret = regmap_bulk_read(data->regmap, entry->pl_defaults, limits, sizeof(limits));
++	if (ret < 0)
++		return ret;
++
++	/*
++	 * The mode byte on its own moves nothing else on this EC. Measured on
++	 * the machine: holding EC_ADDR_MANUAL_FAN_CTRL at each of the three
++	 * values moved neither the power limits nor the fan curve, and none of
++	 * the 29 firmware sites for this byte touches another address. The
++	 * limits are written here because nothing else writes them.
++	 */
++	ret = regmap_update_bits(data->regmap, EC_ADDR_MANUAL_FAN_CTRL,
++				 FAN_PROFILE_MASK, entry->mode_byte);
++	if (ret < 0)
++		return ret;
++
++	/*
++	 * On battery the OEM service writes zero to all three limits, and what
++	 * zero means to this EC is untested, so the limits are left alone off AC
++	 * rather than shipped as a guess.
++	 */
++	ret = acpi_get_battery_info(&bat);
++	if (ret < 0)
++		return ret;
++
++	if (bat.state != ACPI_BATT_STATUS_DISCHARGING) {
++		ret = regmap_bulk_write(data->regmap, EC_ADDR_PL1_SETTING, limits,
++					sizeof(limits));
++		if (ret < 0)
++			return ret;
++	}
++
++	/*
++	 * Writing the limits at all is safe here only because uniwill_ec_init()
++	 * set ENABLE_MANUAL_CTRL, and the EC's own zeroing of these bytes runs
++	 * on the arm where that bit is clear. Nothing in this path clears it,
++	 * which is why the fan curve is not replayed along with them: the
++	 * curve's handshake needs the EC parked in exactly the state this
++	 * profile deliberately does not put it in.
++	 */
++	data->current_profile = profile;
++
++	return 0;
++}
++
++static int gm7mg7p_probe(struct uniwill_data *data)
++{
++	unsigned int value;
++	int ret;
++
++	/*
++	 * Turbo is offered on EC_ADDR_BIOS_INFO_3 bit 1 and not on the
++	 * FAN_TURBO_SUPPORTED bit of EC_ADDR_SUPPORT_5, which reads clear on
++	 * this board while Turbo works. The two have not been reconciled.
++	 */
++	ret = regmap_read(data->regmap, EC_ADDR_BIOS_INFO_3, &value);
++	if (ret < 0)
++		return ret;
++
++	data->turbo_supported = !!(value & TURBO_MODE_SUPPORTED);
++
++	/* EC_ADDR_BIOS_OEM_2 bit 4 clear is Office, set is Gaming. */
++	ret = regmap_read(data->regmap, EC_ADDR_BIOS_OEM_2, &value);
++	if (ret < 0)
++		return ret;
++
++	if (value & DEFAULT_MODE)
++		data->current_profile = UNIWILL_PLATFORM_PROFILE_BALANCED;
++	else
++		data->current_profile = UNIWILL_PLATFORM_PROFILE_LOW_POWER;
++
++	return 0;
++}
++
++static struct uniwill_device_descriptor gm7mg7p_descriptor __initdata = {
++	.features = UNIWILL_FEATURE_FN_LOCK |
++		    UNIWILL_FEATURE_SUPER_KEY |
++		    UNIWILL_FEATURE_BATTERY_CHARGE_MODES |
++		    UNIWILL_FEATURE_CPU_TEMP |
++		    UNIWILL_FEATURE_GPU_TEMP |
++		    UNIWILL_FEATURE_PRIMARY_FAN |
++		    UNIWILL_FEATURE_SECONDARY_FAN |
++		    UNIWILL_FEATURE_NVIDIA_CTGP_CONTROL,
++	.probe = gm7mg7p_probe,
++	.platform_profile = gm7mg7p_platform_profile,
++};
++
+ static const struct dmi_system_id uniwill_dmi_table[] __initconst = {
+ 	{
+ 		.ident = "AiStone X4SP4NAL",
+@@ -3316,6 +3660,14 @@
+ 		},
+ 		.driver_data = &tux_featureset_1_descriptor,
+ 	},
++	{
++		.ident = "PCSpecialist GM7MG7P",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "PCSpecialist"),
++			DMI_EXACT_MATCH(DMI_BOARD_NAME, "GM7MG7P"),
++		},
++		.driver_data = &gm7mg7p_descriptor,
++	},
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(dmi, uniwill_dmi_table);

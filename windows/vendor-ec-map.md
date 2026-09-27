@@ -279,7 +279,7 @@ routine runs, which is unresolved.
 
 - **A power mode is not one register on this board.** The vendor writes
   `0x0751`, PL1/PL2/PL4, a fan table and (on AC) the GPU bytes on every
-  switch. **Open:** does the EC derive any of these from `0x0751` alone? For
+  switch. ~~**Open:** does the EC derive any of these from `0x0751` alone? For
   example, does it load its own table or PLs when `0x0751` changes? The
   capture can't tell, because the service always wrote everything. That
   decides whether a driver needs to write more than `0x0751`. **Static half
@@ -289,7 +289,20 @@ routine runs, which is unresolved.
   `AP_OEM` (`0x0741`) bit 0 rather than on the mode. So the expected answer
   is "a driver must write the bundle" — still unconfirmed live, and
   `../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` is the unrun
-  test that would confirm it.
+  test that would confirm it.~~
+  **Corrected 2026-09-23, the test ran and the prediction held.** That
+  procedure was executed on the machine, and writing `0x0751` alone to each
+  of `0xA0`/`0x00`/`0x10` and holding it moved nothing else: not the PLs,
+  not the fan table, not `0x07C6`, not the GPU bytes. Raw log
+  `../evidence/ec-watch/2026-09-23-0751-isolation.txt`; the procedure now
+  carries that status in its own header. So the answer is **confirmed**, not
+  predicted: a driver has to write the PLs and the fan table itself, out of
+  the EC default blocks, and `0x0751` alone will not do it. The one part
+  still open is whether the mode bits scale fan behaviour along the
+  unchanged curve — the run was near-idle, so that is unseparated from
+  temperature and the fixed-load comparison (#122/#123) has not been run. A
+  prepared driver patch built on this answer is in
+  `../linux/patches/gm7mg7p-power-profile/` (issue #102).
 - A natural mapping is low-power = Office, balanced = Gaming (the EC's
   default mode), performance = Turbo, offered only when `0x049F` bit 1 is
   set. The values a driver would write can all be read back from the EC's

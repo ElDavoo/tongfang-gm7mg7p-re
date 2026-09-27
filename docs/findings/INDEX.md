@@ -82,6 +82,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-sites-address-range.md`](pd-sites-address-range.md) — `--sites` refuses an address outside the PD region, and the arithmetic the census's row 10 declined to guard becomes a statement about the code
 - [`pin-table-by-cited-file.md`](pin-table-by-cited-file.md) — Which test file the corpus's pins name, and the indexed suites none of them does (issue #941)
 - [`pin-table-row-reconciliation.md`](pin-table-row-reconciliation.md) — The per-pin table's four mechanical columns are now reconciled against the run, and its fifth is not read (issue #942)
+- [`power-profile-gm7mg7p.md`](power-profile-gm7mg7p.md) — A `0x0751`-only platform profile would report a new mode and not move the machine's power limits
 - [`prepared-gate-patches.md`](prepared-gate-patches.md) — The prepared gate patches: the set composes, and a test says so
 - [`probe-0700-whole-page-arm.md`](probe-0700-whole-page-arm.md) — The probe's watch set can be §3's first watcher, whole (issue #666)
 - [`probe-hold-mark-merge.md`](probe-hold-mark-merge.md) — A `--csv` probe run's `hold` is held to the grader's mark-merge window (issue #665)
