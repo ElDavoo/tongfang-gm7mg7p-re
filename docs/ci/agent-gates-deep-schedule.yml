@@ -10,7 +10,7 @@
 #
 # and that is the whole change. Everything it checks is already committed; it
 # calls the deep tier's documented entry point and nothing else, and uploads
-# the run's log as an artifact.
+# the run's log and its per-row results as two artifacts.
 #
 # Why it is written to pass the `workflows:` job in ci.yml (actionlint and
 # zizmor) before it lands: that job audits every file in this directory, so
@@ -139,6 +139,107 @@ jobs:
           AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh 2>&1 \
             | tee "$RUNNER_TEMP/deep-gates.log"
 
+      # The same re-encode a second time, this one keeping every row instead of
+      # printing twenty of them. The step above passes no `--emit-csv`, and the
+      # scratch directory it hands `--work` is removed by a `trap ... EXIT`, so
+      # the per-row content of a night exists only as a number and a capped list
+      # in the log. That is the case `--emit-csv` was built for: the committed
+      # report's own row-for-row comparison,
+      # `evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv`, exists only
+      # because a human ran it by hand (docs/findings.md §14h).
+      #
+      # Placed here rather than folded into the step above, and that is a
+      # `.github/` edit this file exists to avoid: `agent-gates-deep.sh` reads no
+      # arguments at all, so an `--emit-csv` passed through the existing switch
+      # would be silently dropped rather than refused. Twice is the ~4 s §14e
+      # measured for the re-encode alone, and the two runs are sequential, so
+      # the shared /tmp/ec-verify-images scratch is rebuilt by the second rather
+      # than written by both at once.
+      #
+      # if: always(), for the reason the upload below carries: the night a
+      # reader wants is the one that failed.
+      - name: Emit the per-row CSV
+        if: always()
+        run: |
+          set -uo pipefail
+          log="$RUNNER_TEMP/deep-gates.log"
+          {
+            echo
+            echo "=== per-row CSV (--emit-csv) ==="
+          } >> "$log"
+          # Guarded, not skipped: `if: always()` above is what puts this step
+          # on a run whose deep tier failed for want of the assembler, and a
+          # second red there would be a second sentence about a fact the log
+          # already carries.
+          if ! command -v sdas8051 >/dev/null 2>&1; then
+            {
+              echo "not emitted: sdas8051 is not on PATH, which is the reason"
+              echo "the step above failed. The log above is this night's record."
+            } >> "$log"
+            exit 0
+          fi
+          # `SDAS8051=''` empty on purpose. find_assembler() prefers it over
+          # PATH and an empty value is the same instruction as an unset one
+          # there, which is what
+          # `evidence/ec-reencode/2026-09-23-sdas8051-versions.md` measured:
+          # the reading exercises the PATH entry project-setup installed, so
+          # the `assembler` column names the same binary the "Name the
+          # assembler" step above printed beside this one. The `''` is the
+          # explicit spelling of an empty assignment; the bare `= ` reads as a
+          # typo to a linter and warns.
+          #
+          # No `--limit`, and that is a requirement rather than an omission: a
+          # sampled CSV cannot be joined row-for-row against the committed
+          # report, and a CSV that silently covers half the firmware is the
+          # defect this artifact exists to remove. The exit status is this
+          # step's, so a re-encode that finds something turns the run red here
+          # too -- the upload below is `if: always()` and is not gated on that
+          # exit status, which is the point of it: a failed night's reader
+          # needs the row that failed.
+          #
+          # The two `$RUNNER_TEMP` paths are spelled out rather than held in a
+          # variable, so a reader of this file -- and `check_deep_schedule_emit`,
+          # which holds the destination and the upload beside it -- sees which
+          # file each one is without resolving a shell assignment first.
+          rc=0
+          SDAS8051='' python3 ec/tools/verify_reassembly.py \
+            --work "$RUNNER_TEMP/reasm-csv" --jobs 4 \
+            --emit-csv "$RUNNER_TEMP/deep-gates-csv.csv" || rc=$?
+          {
+            if [ -f "$RUNNER_TEMP/deep-gates-csv.csv" ]; then
+              echo "wrote $RUNNER_TEMP/deep-gates-csv.csv" \
+                   "($(( $(wc -l < "$RUNNER_TEMP/deep-gates-csv.csv") - 1 ))" \
+                   "rows)"
+            else
+              echo "not written: verify_reassembly.py exited $rc"
+            fi
+            echo
+            echo "Uploaded beside this log as deep-gates-csv-${GITHUB_RUN_ID},"
+            echo "so a reader pairs the two by run id. Compare it against the"
+            echo "committed report on (program, addr) with:"
+            echo "  python3 tools/check_deep_schedule_emit.py --diff <csv> \\"
+            echo "      ec/ghidra/reassembly.csv"
+            echo
+            echo "Expect it to differ, and expect the count to be more than the"
+            echo "assembler alone accounts for. Two things move a row here, and"
+            echo "the tool names which column moved so they can be told apart:"
+            echo "  * this run's assembler is the apt SDCC 4.2.0 build and the"
+            echo "    committed report was measured with the pinned nix one,"
+            echo "    which docs/findings.md §14h measured at 52 rows, all of"
+            echo "    them assembler-gap on the committed side;"
+            echo "  * a row already in the report keeps the name the function"
+            echo "    had when the row was written, so a function renamed since"
+            echo "    moves on the name column alone. listing_digest does not"
+            echo "    move on those rows: the code did not change, the label did."
+            echo "A moved row settles nothing on its own. A result that actually"
+            echo "changed is a re-report and a docs/findings/ write-up, not an"
+            echo "artifact, and this one is retained for 90 days like the log"
+            echo "beside it. Do not re-report from here: this run's assembler is"
+            echo "not the one the committed report was measured with, and"
+            echo "--report would replace it wholesale rather than refresh it."
+          } >> "$log"
+          exit "$rc"
+
       - name: Upload the deep gates log
         # if: always(), because the log anyone wants is the one from the run
         # that failed. A run that fails with no artifact is the same silence
@@ -156,4 +257,36 @@ jobs:
           # upload step rather than being clamped. The log is a point-in-time
           # reading of one night; the durable record of a result that *changed*
           # is a re-report and a docs/findings.md entry, not an artifact.
+          retention-days: 90
+
+      - name: Upload the deep gates CSV
+        # The same pin, the same `always()`, the same `warn` and the same 90
+        # days as the log above, and the same reason for each: this is the
+        # night's second artifact, and a night that failed is the night a reader
+        # wants. `warn` rather than `error` because the step above is the one
+        # that could have declined to write it, and a missing CSV should say so
+        # here rather than replace the log with an error about a file.
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          # A different name from the log's, both carrying the run id. Equal
+          # names would make upload-artifact v4+ *merge* the two files into one
+          # artifact, and "two artifacts" would then be quietly false -- which
+          # is what `tools/check_deep_schedule_emit.py` holds.
+          name: deep-gates-csv-${{ github.run_id }}
+          # The on-disk name carries no run id, exactly as `deep-gates.log`
+          # does. The pairing a reader wants is on the artifact *name*, and
+          # mirroring the log keeps the two files symmetrical and keeps `${{ }}`
+          # out of the `run:` block entirely, which is where a workflow's
+          # template-injection surface is.
+          #
+          # ${{ runner.temp }}-rooted, and that is the `refuses_committed_report`
+          # invariant held by construction rather than by a comment: a path
+          # under the repository could be `ec/ghidra/reassembly.csv`, which
+          # `--emit-csv` refuses and which nothing else should be writing to.
+          path: ${{ runner.temp }}/deep-gates-csv.csv
+          if-no-files-found: warn
+          # A point-in-time reading of one night, like the log. A result that
+          # *changed* is a re-report and a write-up under `docs/findings/`, not
+          # something an artifact holds for a quarter.
           retention-days: 90
