@@ -348,6 +348,8 @@ splits by what the callee's own entry point does with DPTR:
 ```console
 $ cd ec/tools && python3 register_ref_table.py ../../ec/firmware/GMxMGxx_11.800 --callee-depth 1
 ...
+| `0x07D0` | `DBD1` | 254 | 0 | 254 | 157 | 8 | 2 | 0 | 0 | 72 | 7 | 0 | 0 | 8 |
+| `0x04A6` | `BAT_CYCLE_COUNT` | 7 | 3 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 0 |
 | `0x07D8` | `MODE_TCC_OFFSET_DEFAULTS` | 34 | 1 | 33 | 19 | 9 | 1 | 0 | 0 | 3 | 1 | 0 | 0 | 1 |
 | `0x07D9` | `MODE_TCC_OFFSET_DEFAULTS` | 16 | 1 | 15 | 7 | 4 | 0 | 0 | 0 | 1 | 2 | 1 | 0 | 1 |
 | `0x07DA` | `MODE_TCC_OFFSET_DEFAULTS` | 53 | 1 | 52 | 25 | 8 | 1 | 0 | 0 | 9 | 6 | 0 | 4 | 0 |
@@ -368,12 +370,23 @@ $ cd ec/tools && python3 register_ref_table.py ../../ec/firmware/GMxMGxx_11.800 
 | 0 | 0 | 4 | handoff → unresolved |
 | 1 | 1 | 0 | no movx in window |
 
-The two all-zero rows are a result and not padding: no site on any of the three
-addresses builds a CODE pointer or a jump-table entry out of it, which is what
-distinguishes this triple from `0x07D0` and `0x04A6` — the two
-`ec/annotations/ec-0x07d0-sites.md` §5 and `ec/annotations/pd-xdata-overlap.md`
-§3 record as pointer constructions. They are ordinary XDATA variables on the
-PD-image side.
+The two all-zero rows are a result and not padding, but it is a narrow one: no
+site on any of the three addresses is followed by a `movc`, and none builds a
+jump-table entry out of the address. That is all they say, and it separates
+nothing here — `0x07D0` and `0x04A6` are all-zero on the same two rows, which
+is why they are quoted alongside above.
+
+What does separate them is a fact these buckets cannot see, and it is not in
+this file. `0x07D0` and `0x04A6` are read into address arithmetic and turned
+into XDATA pointers: `ec/annotations/ec-0x07d0-sites.md` §4 has `0x578E`
+landing its pointer in A:R1 and most sites feeding `0x10BC`'s `DPTR += A*B`,
+and `ec/annotations/pd-xdata-overlap.md` §3 has the four `0x04A6` sites
+computing `0x04A6 + R3×0x60 + 2×R3×0x100 + A×0x1F` — a base, not a variable.
+Whether any site of the triple does the same is not something these buckets
+measure; what they do show is 19 `read` and 9 `write` of the 34 `0x07D8` sites,
+4 handing off to a callee and 1 landing in `no movx in window`, and no CODE use
+of any of the three. What the byte *means* is §6's open question, and stays
+there.
 
 Reconciliation is the point, not the printed numbers: the tool exits non-zero
 if a site's class is dropped or if main + PD stops summing to the file-wide
