@@ -466,14 +466,37 @@ only after a follow, so it stays direction-unresolved here.
 The seven that stay `none` are all the same shape — a byte-identical 7-byte
 unit `lcall 0xF739 ; mov dptr,#0x07d0 ; ret`, of which a scan of the PD image
 finds exactly seven, at those seven runtimes. A `ret` is the end of the
-routine and has no fall-through, so there is nothing to continue at; and a scan
-of the same image finds no `lcall`/`acall` targeting any of the seven, so they
-are not called either. **What reaches them, and therefore where the `0x07D0`
-access happens, is open** — a computed dispatch and a table this decode walked
-into are both consistent with what was measured, and this file does not choose
-between them. `ec-0x07d0-sites.md` §5's blind spot is the neighbouring
-question, and a table would mean `sites_for()` is counting entries rather than
-code.
+routine and has no fall-through, so there is nothing to continue at.
+
+**Each of the seven cells is the `mov dptr` at entry+3, so the unit's `lcall
+0xF739` sits three bytes earlier, at `0x4C12`, `0x4C19`, `0x4C20`, `0x52EF`,
+`0x531F`, `0x7B0D`, `0x856F`.** A scan anchored at the `mov dptr` finds no
+`lcall`/`acall` at all; that null is a property of the anchor, not of the
+image, and an earlier draft of this paragraph read it as "so they are not
+called either". Anchored at the entry the scan finds **two `lcall`s per stub,
+fourteen in all** — 13 the byte-identical triple
+`lcall <stub> ; lcall 0x347B ; lcall 0x104D` and one
+`lcall 0x4C20 ; lcall 0x38CA ; lcall 0x3497`, with the file offsets in
+[`../../docs/findings/walk-flow-follow.md`](../../docs/findings/walk-flow-follow.md)
+§2. So the reason these seven stay `none` is **a DPTR handoff across a `ret`,
+not an unreachable stub**: the unit loads `0x07D0` and returns to a caller
+that exists, and every one of those fourteen callers then calls `0x347B` or
+`0x38CA`, both of which begin `movx a,@dptr` under
+`../tools/disasm8051.py`'s `mnemonic()`. The read of `0x07D0` therefore
+happens in the caller, one call past the site — which is what a single-path
+walk cannot follow, and what the `ret` stops it reaching. What is still open
+is the callers' own path, which is a different question from the one the
+retracted scan was answering, and re-grading these cells a read is
+`--callee-depth`'s question rather than this file's.
+
+The committed call census does not carry these edges, and that is a gap in the
+listing export rather than a disagreement with the bytes:
+`call-graph-callees.csv` holds one row for the family, at `0x4C20`, with
+`inbound=1 lcall=1`, and the other six entries none at all — 1 of the 14. The
+one it carries is the `0x4B1D` site, which `pd/4D6F.asm` spells; the other 13
+have no committed listing that spells them, and `call_graph.py` parses
+listings. Carrying all 14 is a follow-up, so the census's silence here should
+not be read as the bytes being in dispute.
 
 **So the warning above holds after the change, and holds for seven cells
 rather than eleven.** A `none` cell is "this method stopped", and a method that

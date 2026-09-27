@@ -659,6 +659,27 @@ class CliTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 2)
         self.assertIn("at least one address", proc.stderr)
 
+    def test_check_alone_takes_the_addresses_the_table_records(self):
+        # The no-address error names --check as the way out of it, so --check
+        # has to work without an address list rather than reject the very flag
+        # it points at. Same re-decode, same result as spelling them out.
+        alone = self.run_tool('--check')
+        self.assertEqual(alone.returncode, 0, alone.stderr)
+        spelled = self.run_tool('0x043E', '0x0768', '0x07D0', '--check')
+        self.assertEqual(spelled.returncode, 0, spelled.stderr)
+        self.assertEqual(alone.stdout, spelled.stdout)
+
+    def test_check_refuses_a_partial_address_list(self):
+        # The bounds are guarded by load_recorded(); the address set needs the
+        # same guard, or a subset diffs a partial re-decode against the whole
+        # table and the missing rows read as drift in the committed file.
+        proc = self.run_tool('0x0768', '--check')
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("records 0x043E, 0x0768, 0x07D0", proc.stderr)
+        # ...and the refusal names what the run actually asked for, so a
+        # dropped address is visible rather than inferred.
+        self.assertIn("asked for 0x0768", proc.stderr)
+
     def test_a_zero_depth_or_a_zero_budget_is_refused(self):
         self.assertEqual(self.run_tool('0x0768', '--max-insns', '0').returncode, 1)
         # A depth of 0 is a real question with a real answer -- follow nothing,

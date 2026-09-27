@@ -94,6 +94,7 @@ Usage:
     python3 walk_flow_follow.py ../firmware/GMxMGxx_11.800 0x0768 --csv
     python3 walk_flow_follow.py ../firmware/GMxMGxx_11.800 0x0768 --max-depth 0
     python3 walk_flow_follow.py ../firmware/GMxMGxx_11.800 0x0768 --check
+    python3 walk_flow_follow.py --check
 """
 import argparse
 import collections
@@ -117,12 +118,13 @@ FOLLOW_CSV = os.path.join(ANNOT, "flow-follow-none-sites.csv")
 # How many control transfers past the branch the site's own window stopped at
 # to follow, and how many instructions to decode in each followed segment.
 #
-# Four is not a tuned figure: it is the smallest that covers the three
-# EC-side sites ../annotations/static-refs-audit.md 5.3 hand-checked against
-# `r2 -a 8051` (each resolves on the first follow), and it is a named default
-# rather than a hard-coded one so a reader can re-run at another value and see
-# which cells are a bound talking rather than the bytes. Both are named in
-# every row that hits them -- see the bounds paragraph in the docstring.
+# Four is not a tuned figure and not a minimal one. The three EC-side sites
+# ../annotations/static-refs-audit.md 5.3 hand-checked against `r2 -a 8051`
+# each resolve on the *first* follow, so `--max-depth 1` reproduces the same
+# three verdicts and the same `via` cells; 4 is headroom over that, kept
+# named rather than hard-coded so a reader can re-run at another value and see
+# which cells are a bound talking rather than the bytes. Both bounds are named
+# in every row that hits them -- see the bounds paragraph in the docstring.
 MAX_DEPTH = 4
 MAX_INSNS = 8
 
@@ -425,20 +427,28 @@ def check_table(generated: str, path: str) -> int:
     return 1
 
 
-def load_recorded_bounds(path: str):
-    """The (max_depth, max_insns) pairs the committed table actually records.
+def load_recorded(path: str):
+    """What the committed table actually records: its bounds and its addresses.
 
     Read for one purpose, the one `walk_budget_census.load_recorded_budgets()`
-    reads it for: `--check` at bounds this file does not record would diff a
-    different measurement against it and report a difference that says
-    nothing. Refused rather than defaulted, because a default bound here is a
-    `--check` that goes green against rows it never looked at."""
+    reads it for: a `--check` that re-decodes a different population than the
+    file holds would diff a different measurement against it and report a
+    difference that says nothing. Both halves are refused rather than
+    defaulted, because a default here is a `--check` that goes green against
+    rows it never looked at -- at a bound it never reached, or at an address
+    set that is a subset of the file's."""
     with open(path, newline="") as f:
         rows = list(csv.DictReader(f))
-    if not rows or "max_depth" not in rows[0] or "max_insns" not in rows[0]:
-        raise ValueError(f"{repo_path(path)} has no max_depth/max_insns "
+    if not rows or not {"addr", "max_depth", "max_insns"} <= set(rows[0]):
+        raise ValueError(f"{repo_path(path)} has no addr/max_depth/max_insns "
                          "columns; it is not a walk_flow_follow table")
-    return {(int(r["max_depth"]), int(r["max_insns"])) for r in rows}
+    bounds = {(int(r["max_depth"]), int(r["max_insns"])) for r in rows}
+    addrs = {int(r["addr"], 16) for r in rows}
+    return bounds, addrs
+
+
+def describe_addrs(addrs) -> str:
+    return ", ".join(f"0x{a:04X}" for a in sorted(addrs))
 
 
 def print_rows(rows, max_depth: int, max_insns: int) -> None:
@@ -510,11 +520,37 @@ def main() -> int:
                          "re-decoded site; --check is always the re-decoded set")
     ap.add_argument("--check", nargs="?", const=FOLLOW_CSV, metavar="PATH",
                     help="diff this run against the committed table and exit "
-                         f"non-zero on any difference (default: {repo_path(FOLLOW_CSV)})")
+                         f"non-zero on any difference (default: {repo_path(FOLLOW_CSV)}). "
+                         "Needs the table's whole address set, not a subset: "
+                         "with no addresses it re-decodes the ones the table "
+                         "records, and with a partial list it refuses rather "
+                         "than diff a partial run against the full table")
     args = ap.parse_args()
 
-    if not args.addrs:
-        ap.error("give a firmware image and at least one address, or --check")
+    # `--check` needs the whole address set, not a subset, or it diffs a
+    # partial re-decode against the full table and reports the missing rows as
+    # drift. Given no addresses of its own it takes them from the table, so
+    # the error below can honestly name --check as the way out of it.
+    addrs = [int(text, 16) for text in args.addrs]
+    if args.check is not None:
+        try:
+            recorded_bounds, recorded_addrs = load_recorded(args.check)
+        except (OSError, ValueError) as e:
+            print(f"note: {e}", file=sys.stderr)
+            return 1
+        if not addrs:
+            addrs = sorted(recorded_addrs)
+        elif set(addrs) != recorded_addrs:
+            print(f"note: {repo_path(args.check)} records "
+                  f"{describe_addrs(recorded_addrs)} and this run asked for "
+                  f"{describe_addrs(set(addrs))}; --check over a subset of "
+                  "the addresses would diff a partial re-decode against the "
+                  "whole table and call the missing rows drift",
+                  file=sys.stderr)
+            return 1
+    elif not addrs:
+        ap.error("give a firmware image and at least one address, or --check "
+                 "to re-decode the addresses the committed table records")
     if args.max_depth < 0 or args.max_insns < 1:
         print("note: --max-depth is a count of transfers and may be 0; "
               "--max-insns is a count of instructions and has to be at least 1",
@@ -529,18 +565,12 @@ def main() -> int:
               "the image the annotations were written against", file=sys.stderr)
         return 1
 
-    rows = follow_rows(d, [int(text, 16) for text in args.addrs], pd_verified,
-                       args.max_depth, args.max_insns)
+    rows = follow_rows(d, addrs, pd_verified, args.max_depth, args.max_insns)
 
     if args.check is not None:
-        try:
-            recorded = load_recorded_bounds(args.check)
-        except (OSError, ValueError) as e:
-            print(f"note: {e}", file=sys.stderr)
-            return 1
-        if (args.max_depth, args.max_insns) not in recorded:
+        if (args.max_depth, args.max_insns) not in recorded_bounds:
             have = ", ".join(f"max_depth {d0} / max_insns {i0}"
-                             for d0, i0 in sorted(recorded))
+                             for d0, i0 in sorted(recorded_bounds))
             print(f"note: {repo_path(args.check)} records {have} and this run "
                   f"used max_depth {args.max_depth} / max_insns {args.max_insns}; "
                   "--check at bounds the file does not record would diff a "

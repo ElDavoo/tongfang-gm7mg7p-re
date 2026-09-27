@@ -136,29 +136,91 @@ $ r2 -a 8051 -e scr.color=0 -q -c 's 0x4c19; pd 6' /tmp/pd.bin
 ```
 
 A `ret` is the end of the routine and has no fall-through, so there is nothing
-for the follow to continue at and the reason on the row is `ret`. Two
-measurements turn that from a shrug into a stated reason:
+for the follow to continue at and the reason on the row is `ret`. Three
+measurements turn that from a shrug into a stated reason.
 
 * A byte scan of the whole PD image finds **exactly seven** units matching
   `lcall 0xF739 ; mov dptr,#0x07d0 ; ret`, and they are these seven runtimes.
-  (There are 37 `lcall 0xF739 ; mov dptr,#<addr>` units in all, across 14
-  distinct addresses — an accessor-stub family, of which seven happen to load
-  `0x07D0` and return.)
-* A scan of the same image for `lcall`/`acall` targeting any of the seven
-  finds **none**. So these are not called; whatever reaches them is not a
-  direct call in the bytes.
+  (There are 37 `lcall 0xF739 ; mov dptr,#<addr>` units in all, across **13**
+  distinct addresses — an accessor-stub family. 7 of the 37 end in `ret`, and
+  those 7 are exactly the ones loading `0x07D0`.)
+* **The unit's entry is three bytes *before* the site.** Each `none` cell is
+  the `mov dptr` at entry+3, so the `lcall 0xF739` that starts the unit is at
+  `site - 3`: `0x4C12`, `0x4C19`, `0x4C20`, `0x52EF`, `0x531F`, `0x7B0D`,
+  `0x856F`. The `r2` transcript above already shows it, anchored at `0x4C19`
+  and `0x4C20` — the two entries either side of the `0x4C1C` and `0x4C23` cells.
+* So the caller scan has to be anchored at the entry, not at the cell.
+  Anchored at the `mov dptr` it finds **no** `lcall` or `acall` at all, and
+  that null is a property of the anchor rather than of the image — an earlier
+  draft of this file reported it and built "so these are not called" on it.
+  Anchored at the entry it finds **two `lcall`s per stub, fourteen in all**,
+  13 of them the byte-identical triple
+  `lcall <stub> ; lcall 0x347B ; lcall 0x104D` and the 14th
+  `lcall 0x4C20 ; lcall 0x38CA ; lcall 0x3497`:
 
-What reaches them, and therefore where the `0x07D0` access happens, is
-**open**. A computed dispatch and a table this decode walked into are both
-consistent with what was measured, and this file does not choose between them.
-`ec-0x07d0-sites.md` §5's blind spot is the neighbouring question — a
-`90 07 d0` byte pattern is also what a table entry looks like — and a table
-would mean `sites_for()` is counting entries rather than code. That is a
-follow-up, not a claim.
+```console
+$ python3 - <<'EOF'   # PD image at file 0x20000, mnemonic() from ec/tools/disasm8051.py
+import sys; sys.path.insert(0, "ec/tools")
+from disasm8051 import mnemonic
+pd = open("ec/firmware/GMxMGxx_11.800", "rb").read()[0x20000:]
+sites = [0x4C15, 0x4C1C, 0x4C23, 0x52F2, 0x5322, 0x7B10, 0x8572]
+entries = sorted(s - 3 for s in sites)
+for label, targets in (("mov dptr (site)", sites), ("unit entry (site-3)", entries)):
+    hits = [(o, (pd[o+1] << 8) | pd[o+2]) for o in range(len(pd) - 2)
+            if pd[o] == 0x12 and ((pd[o+1] << 8) | pd[o+2]) in targets]
+    print("%-20s %d lcall sites" % (label, len(hits)))
+    for o, t in hits:
+        print("   0x%05X  %s ; %s ; %s" % (o, mnemonic(pd, o, o),
+              mnemonic(pd, o + 3, o + 3), mnemonic(pd, o + 6, o + 6)))
+EOF
+mov dptr (site)      0 lcall sites
+unit entry (site-3)  14 lcall sites
+   0x0488F  lcall 0x4c12 ; lcall 0x347b ; lcall 0x104d
+   0x04932  lcall 0x4c12 ; lcall 0x347b ; lcall 0x104d
+   0x0496C  lcall 0x4c19 ; lcall 0x347b ; lcall 0x104d
+   0x04989  lcall 0x4c19 ; lcall 0x347b ; lcall 0x104d
+   0x04AE9  lcall 0x4c20 ; lcall 0x347b ; lcall 0x104d
+   0x04B1D  lcall 0x4c20 ; lcall 0x38ca ; lcall 0x3497
+   0x05131  lcall 0x52ef ; lcall 0x347b ; lcall 0x104d
+   0x051B2  lcall 0x52ef ; lcall 0x347b ; lcall 0x104d
+   0x051E6  lcall 0x531f ; lcall 0x347b ; lcall 0x104d
+   0x051FE  lcall 0x531f ; lcall 0x347b ; lcall 0x104d
+   0x079B3  lcall 0x7b0d ; lcall 0x347b ; lcall 0x104d
+   0x07A5A  lcall 0x7b0d ; lcall 0x347b ; lcall 0x104d
+   0x0842F  lcall 0x856f ; lcall 0x347b ; lcall 0x104d
+   0x0844B  lcall 0x856f ; lcall 0x347b ; lcall 0x104d
+```
+
+**The reason the seven stay `none` is a DPTR handoff across a `ret`, not an
+unreachable stub.** The unit loads `0x07D0` into DPTR and returns, handing
+DPTR to a caller that exists. Every one of those fourteen callers continues
+with a call, and both targets of it — `0x347B`, at 13 of the 14, and `0x38CA`
+at the 14th — begin `movx a,@dptr`. So the read of `0x07D0` happens **in the
+caller**, one call past the site: which is precisely what a single-path walk
+cannot see, and precisely what the `ret` stops it reaching. The walk's `ret`
+end is still the correct verdict for a single-path walk; what makes it
+uninformative here is a handoff the method does not follow.
+
+**What remains open is the caller's own path** — what the fourteen do with
+the DPTR they are handed past that first read, and whether the `0x4AE9`
+caller, which no committed PD listing spells, is shaped like the other
+thirteen. That is a different question from the one the retracted scan was
+answering. Whether these seven cells should be re-graded a read is
+`--callee-depth`'s question and not this file's.
+
+**The committed call census does not carry these edges**, which is a gap in
+the listing export rather than a disagreement with the bytes, so a reader
+should not read the two as conflicting. `call-graph-callees.csv` holds one
+row for the family, at `0x4C20`, with `inbound=1 lcall=1`; the other six
+entries hold no row at all, so of the 14 edges the census carries 1. The one
+it does carry is the `0x4B1D` site, which `pd/4D6F.asm` spells as
+`lcall 0x4c20`; the other 13 sites have no committed listing that spells
+them, and `call_graph.py` parses listings, so it had nothing to read them
+from. Regenerating the census to carry all 14 is a follow-up.
 
 **So the 7 cells are: the walk gives up, and not because the method ran out.**
 It reached a `ret` and stopped, which is the correct answer for a single-path
-walk; the register may well be accessed by the code that calls these stubs.
+walk, and the handoff that `ret` carries is one this method does not follow.
 The wording is the one `scan_refs.py` and `static-refs-audit.md` already
 carry: **"not found by this method", never "this site does not access the
 register"**, with `0x07B9` as the standing counter-example.
@@ -178,6 +240,9 @@ register"**, with `0x07B9` as the standing counter-example.
   renaming it.
 - **No callee is followed, and no `inc dptr` span is attributed across a
   follow.** Both are `--callee-depth 1` and `inc_dptr_sites.py`'s questions.
+  This is not hypothetical: §2's seven `ret` cells turned out to be exactly
+  this — the `0x07D0` read lives in a callee's caller, one call past the site,
+  and this tool stops before it rather than charging it to the site.
 - **`registers.yaml` is not touched.** No `status:`, no `static_refs*` count,
   no grade. The `none` column is a reading of sites and issue #32 owns the
   grading question.
