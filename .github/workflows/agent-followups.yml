@@ -26,6 +26,21 @@ name: Agent · followups
 #     maintainer's own issues -- see agent-plan.yml's "who is trusted" triage -- and means the
 #     new issue runs unattended instead of idling at the approval gate for no reason.
 
+# Why the mission prompt carries an explicit test, added 2026-09-27. It was measured, not
+# assumed. Of the 200 open issues, hand-classifying the titles against the mission's own
+# functional and technical goals put roughly 168 against the repository's own tooling, prose and
+# line-pins and roughly 32 against the machine -- decoding a component, settling a question about
+# a register, running the live half, preparing the upstream driver. The gap is not noise: the
+# meta issues overwhelmingly have one shape, and it is self-feeding. A merge adds a checker; the
+# checker quotes a figure in a write-up; a later merge moves a line-pin or a count; the follow-up
+# pass opens an issue about the drift; fixing that issue moves a line number and manufactures the
+# next one. `docs/findings/test-line-pin-census.md` records 373 `test_*.py:NNN` pins over 229
+# targets in 34 files, which is the fuel. So the prompt now asks one question of every candidate
+# and names the shape that fails it, including the honest counter-case: a checker that cannot
+# detect a drifted census really is mission work, because a reverse-engineering result nobody can
+# trust is not a result. The label set is unchanged -- `needs-hardware-test` still means a human at
+# the machine, and that half of the follow-ups is working and should keep working.
+
 #
 # Recovered when displaced, like the pipeline's own stages: it shares their concurrency group, so
 # a third arrival can cancel it before its first step. agent-retry.yml finds a recent merge with
@@ -213,6 +228,33 @@ jobs:
             empty list. Never propose an issue that duplicates one already open; if a currently
             open issue already covers the ground, say so in your reasoning and propose nothing
             for it instead.
+
+            Put every candidate through one test before you propose it: **would finishing it
+            make one of the three closed-source components more understood, or bring a feature
+            closer to a Linux driver?** Not "would it make the repository tidier" and not "would
+            it keep a number honest". A candidate that fails this is not proposed, however real
+            and however small.
+
+            The candidates that most often fail it are follow-ups about the merge's own hygiene:
+            a figure in a write-up the merge just added is one count out of date; a `:NNN` line-pin
+            shifted because a paragraph went in above it; a census table row naming a line that
+            has moved; a checker whose `--check` is not in the gate yet. These are real problems
+            and they are worth fixing, but **they are not follow-ups -- they are the merge not
+            finished.** A merge that adds a write-up also adds the figures that write-up quotes.
+            If one of them is stale, the fix belongs in that PR; if it genuinely will not fit,
+            the honest response is to say so in the PR body, not to open an issue for a different
+            agent to fix against a base that has moved again by the time it is picked up. This
+            loop is the single largest thing filling the queue: each such fix moves a line number
+            and manufactures the next one, and the work is real while the direction is not.
+
+            The test cuts both ways, and a tool defect can pass it. A checker that fails to detect
+            a drifted CSV, a census whose population the committed tree does not actually derive,
+            or a decode that silently mis-frames is **mission work** -- a reverse-engineering
+            result nobody can trust is not a result, so propose those, and say in the body which
+            claim the defect puts at risk. A tool's summary line being one word long, a table's
+            third column holding an inconsistent value, or a `--self-test` running in no gate are
+            maintenance: propose them only when leaving them would let a published finding rot,
+            and otherwise leave them to whoever next touches that file.
 
             Every issue needs:
             - a title: short, specific, in the style of the existing open issues;

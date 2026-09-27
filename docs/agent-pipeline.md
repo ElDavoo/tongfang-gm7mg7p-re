@@ -656,6 +656,21 @@ only covers what's specific to *this* copy.
   while `docs/MISSION.md`'s goal is nowhere near done; see its own header
   comment for what it does and why it uses `AGENT_PUSH_TOKEN` rather than
   the default `GITHUB_TOKEN` to open issues.
+- **`agent-followups.yml`'s prompt gates every candidate on the mission**
+  (2026-09-27, not in the template). The stage was filing a large majority of
+  issues about the repository's own tooling, prose and `:NNN` line-pins rather
+  than about the machine — measured at roughly 168 of 200 open issues against
+  the toolchain and roughly 32 against the mission's own goals, and the gap was
+  self-feeding, since each such fix moves a line number and produces the next
+  one. The prompt now asks one question of every candidate ("would finishing it
+  make one of the three components more understood, or bring a feature closer to
+  a Linux driver?"), names the merge's-own-hygiene shape that fails it, and says
+  explicitly that a merge leaving its own write-up's figures stale is an
+  unfinished merge rather than a follow-up. It also keeps the counter-case: a
+  checker that cannot detect a drifted census is mission work, because a result
+  nobody can trust is not a result. The label set is unchanged and
+  `needs-hardware-test` still means a human at the machine. The measurement and
+  its method are in that file's own header comment.
 
 Apart from the provider override below, everything else under
 `.github/workflows/agent-*.yml` is an unmodified copy of the `agent-pipeline`
