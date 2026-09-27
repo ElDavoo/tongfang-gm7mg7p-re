@@ -123,6 +123,18 @@ what this work does not do.** Re-cutting at a larger budget is not a tidier
 version of the same table; for 10 of the 13 it would put a wrong `access` cell
 into a committed file.
 
+**Correction (issue #73), leaving the claim above as history.** The decode
+`pd_index_geometry.py --self-test` asserts is
+`DPTR ← 0x08F8 + low8(R7×0x5E)`, not the unrestricted product the sentence
+above quotes: `0xC2FA`'s arithmetic at `0xC302` ends `clr a ; addc a,#0x08`,
+so the high byte `mul ab` put in B is never added. The correction to the
+template landed in #74 and this summary was one step further out than the
+files #74 edited, which is why it still read the pre-#74 form. Nothing about
+the conclusion is affected — `0x2C30C` reads an R7-derived address either way,
+and the base-low carry out of `0x08F8` is independent of the discarded byte —
+so the paragraph above decides the same thing it always did. See
+[`pd-index-low8-propagation.md`](pd-index-low8-propagation.md).
+
 ### B: the budget-8 window was short, for three of the thirteen
 
 `xdata-0400-045f-sites.csv` `0x0DD4A` is the possibility the issue raises — "a

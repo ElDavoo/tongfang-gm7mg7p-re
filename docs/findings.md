@@ -7823,6 +7823,11 @@ the budget hides and the larger window files an indexed access under the site
 register — `ec-0x07d0-sites.csv` `0x2C2FA` is the case, and
 `pd-index-geometry.md`'s own `0x08F8 + R7×0x5E` decode plus
 `pd_index_geometry.py --self-test` already refute the budget-64 reading of it.
+(**Correction, issue #73, leaving the quoted decode as history:** the term is
+`0x08F8 + low8(R7×0x5E)` — `0xC2FA`'s arithmetic at `0xC302` ends
+`clr a ; addc a,#0x08`, so the product's high byte is discarded. #74 corrected
+the template and this summary was one step further out. The refutation stands
+either way; §96 has the rest.)
 For **three** the budget-8 window was simply short and the larger cell is the
 same site's own further accesses, which is the issue's own "a site may have two
 accesses" possibility and is right for two of its four. So the budget does not
@@ -12442,3 +12447,62 @@ byte-identical), and no handler of any span this method calls well-formed was
 walked. The full account, the `r2` listings, the nine hand-read lookalikes and
 the limits are in
 [`findings/table-reader-spellings.md`](findings/table-reader-spellings.md).
+
+## 96. #73's truncation was already in the template; what it left was two summaries and a test that agreed with itself (2026-09-27, issue #73)
+
+Issue #73 asked for four things about the `0x5E`/`0x77` rebasing, and **three
+of them were already done at HEAD**, so the first result here is the state of
+the tree rather than a change to it: #74 had already corrected the template
+(`ec/tools/pd_index_geometry.py:160` reads `low8({a}×{b})`), its pinned
+expectations, `pd-index-geometry.md` §7.3/§8 and `ec-0x07d0-sites.md` §4,
+and `--self-test` passed with all five committed CSVs regenerating
+byte-identically. That was verified rather than assumed, and repeating the
+correction would have duplicated a merged PR. What was left is the residue the
+issue's own last clause asks for: **two downstream summaries still quoted the
+pre-#74 expression as current tool output** — `docs/findings.md` §57 and
+`docs/findings/walk-window-terminators.md`, each quoting `pd-index-geometry.md`
+from memory rather than copying it, which is exactly why a template corrected
+upstream leaves them behind. Both are retracted in place with the superseded
+wording left visible. **Neither changes its file's conclusion:** the
+discarded product byte and the carry out of the low base addition are
+independent, so `0x2C30C` reads an R7-derived address under either spelling
+and the budget-64 reading stays refuted.
+
+**`0x578E`'s exemption is four bytes, and one file that reads like the same
+defect is not one.** The DPTR form ends `clr a ; addc a,#hi`, and neither
+`clr a` nor `mov a,#hi` touches the 8051 carry, so B is never read; the A:R1
+form at `0x5792` ends `addc a,0xf0` and keeps the full product. So
+`docs/findings/pd-callers-status-intersection.md`'s `A:R1 ← 0x089B + A×0x77`
+is correct and must not be "fixed" — of the 977 `pd-index-accesses.csv` rows,
+the 21 carrying an untruncated product are exactly the 21 `A:R1` rows, which
+the self-test now holds to, because it is the one drift the regeneration
+checks cannot see (a re-widened template whose CSVs were regenerated to match
+regenerates clean). A sweep keyed on the missing `low8` rather than on the
+template would have corrupted all 21.
+
+**The arithmetic tests were only partly independent of the strings, and the
+gap is now closed — in the direction the issue did not ask for.** The existing
+sweep proved the executed bytes and the term string agree, which two wrong
+strings in agreement pass. Six new rows compare the committed bytes against
+addresses worked out by hand, each paired with the address it rules out:
+`0x09B4`≠`0x08B4` and `0x095E`≠`0x085E` for the base-low carry below `0xFF`;
+`0x0912`≠`0x0A12`, `0x0916`≠`0x0A16`, `0x08D5`≠`0x09D5` above it; and
+`0x0A00`≠`0x0900` for `0x5792`, where `0x0900` is what it would build if it
+dropped B the way the three DPTR rows do — `clr a` leaves the carry out of
+`add a,#0x9B` live into `addc a,#0x08`. Swapping one expectation to the
+pre-#74 value fails exactly that pin and nothing else. They are **not** a
+re-widening detector — they read the image, not the template, which is the
+independence that makes them worth having, and the string checks cover the
+other direction: re-widening the template in place fails 16 checks, and
+re-widening it *and* regenerating `pd-index-accesses.csv` to match fails 15 —
+the CSV-regeneration check is the one that clears, while the census property
+still fails, because it is computed from the decode rather than from the file
+on disk.
+
+Nothing behavioural: no index range is recovered, no `registers.yaml` row
+moves, no CSV changed, and no hardware or Windows step is implied. The self-test
+is run by hand and is **not** in `agent-gates.sh`, which is part of the copied
+`agent-pipeline` template set this pipeline's own `CLAUDE.md` says not to edit
+casually. Full account, the eleven-line grep classification and the mutation
+results are in
+[`findings/pd-index-low8-propagation.md`](findings/pd-index-low8-propagation.md).
