@@ -377,8 +377,10 @@ class CommittedCensusTests(unittest.TestCase):
     def test_charging_method_is_setup_0x4f3_under_a_suppressif_on_0xe17(self):
         row = self.assert_row("0x2A6", "Setup", "0x4F3", "8", "Charging Method",
                               "charge-option")
-        # The row the table exists for: the only charge control in the whole
-        # IFR that is hidden, and hidden on a byte the OS cannot see.
+        # The row the table exists for. All six charge questions are
+        # suppressed; what separates this one is that its gate is the only one
+        # of the six on a byte of the *volatile* store, and a byte the OS
+        # cannot see.
         self.assertEqual(row["suppress_if"],
                          "(NOT (EqIdVal QuestionId: 0xE17, Value: 0x1) AND "
                          "NOT (EqIdVal QuestionId: 0xE17, Value: 0x5))")

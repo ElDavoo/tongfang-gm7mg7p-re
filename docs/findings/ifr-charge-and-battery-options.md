@@ -41,8 +41,8 @@ The three varstores, from the `VarStore` lines at the top of the dump:
 `B08F97FF-E6E8-4193-A997-5E9E9B0ADB32`, 0x2BB; `SetupVolatileData` =
 `EC87D643-…`, 0x97. All three are in the CSV row by row.
 
-Three of the six rows are gated on something a user could actually reach, and
-three are not. That difference is the most useful thing in the table.
+Four of the six rows are gated on something a user could actually reach, and
+two are not. That difference is the most useful thing in the table.
 
 - **`0x229` is `Intel(R) Dynamic Tuning`** — a visible `OneOf` at
   `Setup[0x3A8]` (`:5415`), "Enable/Disable Intel(R) Dynamic Tuning". The
@@ -57,19 +57,20 @@ three are not. That difference is the most useful thing in the table.
   `SetupVolatileData[0x4]` (`:26937`); `0xECB` is 8-bit at `Setup[0x741]`
   (`:27297`).
 
-**`0xE17` is the one that makes this table worth having.** `Charging Method` is
-the only charge control in the whole IFR that is suppressed, and it is
-suppressed unless a byte in a boot-populated *volatile* store holds 1 or 5. It
-is compared against exactly the values 1, 2, 3, 4 and 5, in 39 conditions
-across the dump (12 against 4, 8 against 2, 8 against 1, 7 against 5, 4
-against 3) — so it reads as a five-valued platform-type selector rather than
-anything about charging, and `DeepSx Power Policies` is gated on the same byte
-three lines into its own option list. It has no `Default` statement at all: its
-block is the question and an `End` (`:26937-26938`). Whatever sets it is a
-PEI-or-early-DXE platform probe, and the IFR does not say which. `docs/findings.md`
-§8 already located the vendor mechanism that writes a *non-volatile* setup byte
-from a runtime variable at boot; this is a different byte, in a different store,
-with no located writer.
+**`0xE17` is the one that makes this table worth having.** All six rows are
+suppressed, so what separates `Charging Method` is *which* byte gates it: it is
+the only one of the six gated on a byte of a *volatile* store — the other five
+gates are in `Setup` or `CpuSetup` — and it is shown unless that boot-populated
+byte holds 1 or 5. `0xE17` is compared against exactly the values 1, 2, 3, 4
+and 5, in 39 conditions across the dump (12 against 4, 8 against 2, 8 against
+1, 7 against 5, 4 against 3) — so it reads as a five-valued platform-type
+selector rather than anything about charging, and `DeepSx Power Policies` is
+gated on the same byte three lines into its own option list. It has no `Default`
+statement at all: its block is the question and an `End` (`:26937-26938`).
+Whatever sets it is a PEI-or-early-DXE platform probe, and the IFR does not say
+which. `docs/findings.md` §8 already located the vendor mechanism that writes a
+*non-volatile* setup byte from a runtime variable at boot; this is a different
+byte, in a different store, with no located writer.
 
 **This is a reading of the condition tree, not a statement about the menu.**
 `Charging Method`'s condition is a flat stream evaluated on a stack, not a tree:
@@ -196,12 +197,17 @@ output. That is the issue's specific `AMITSE` question answered, scoped: *not
 found by this method, on this ROM, by this ifrextractor*.
 
 **None of the eleven adds a charge or battery question.** Running
-`ifr_census.py` over each of the twelve dumps, the only two matches outside
-`Setup` are `Subtitle` warnings in `ReFlash` ("DO NOT TURN THE POWER OFF !!!")
-and `PciOutOfResourceSetupPage` ("It is strongly recommended to Power Off the
-system") — not questions, and not about charge. The charge map is `Setup`'s
-alone, which is the answer the issue's first bullet needed and the reason the
-other eleven dumps are a completeness result rather than new charge findings.
+`ifr_census.py --ifr` over each of the other eleven dumps reports `0 matched` on
+every one of them, and that is the result the charge map rests on: not one adds
+a row to the census. A `grep -ril pow` over the twelve does turn up two strings
+outside `Setup` — `ReFlash`'s "DO NOT TURN THE POWER OFF !!!" (`:20`) and
+`PciOutOfResourceSetupPage`'s "It is strongly recommended to Power Off the
+system" (`:22`) — but `pow` is the near-miss probe, not a `CHARGE_TERMS` entry,
+and both are `Subtitle` statements rather than questions. A `Subtitle` carries
+no `VarStoreId`/`VarOffset`, so the census never considers one. The charge map
+is `Setup`'s alone, which is the answer the issue's first bullet needed and the
+reason the other eleven dumps are a completeness result rather than new charge
+findings.
 
 **The method that does not work, recorded so nobody repeats it.** Handing
 `ifrextractor` every `body.bin` in the dump — 2,813 of them — looks more
@@ -217,7 +223,7 @@ found by handing the tool one module at a time.
 ## New questions this opens
 
 - **Who writes `SetupVolatileData[0x4]`?** It is the only thing standing
-  between a user and the sole charge control in the IFR, it is compared against
+  between a user and the `Charging Method` question, it is compared against
   five values in 39 conditions, and it has no located writer. The same question
   for `Setup[0x741]` (`0xECB`), which gates the light bar. Both are PEI-or-early-DXE
   platform probes by the look of them, and neither is in `bios/ghidra/load-map.csv`'s

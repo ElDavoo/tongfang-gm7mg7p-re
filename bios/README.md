@@ -105,8 +105,8 @@ resolved to a readable expression. Its default output is the charge and
 battery subset, and `bios/ifr/charge-questions.csv` is that subset
 committed. The write-up is
 `../docs/findings/ifr-charge-and-battery-options.md`; the interesting row
-is `Setup[0x4F3]`, the only charge control in the whole IFR, which is
-suppressed unless a hidden byte in `SetupVolatileData[0x4]` holds 1 or 5.
+is `Setup[0x4F3]`, the only charge question suppressed on a byte of the
+*volatile* store, hidden unless `SetupVolatileData[0x4]` holds 1 or 5.
 Nothing in any of it is a reading of this machine's current values.
 
 ## Default values

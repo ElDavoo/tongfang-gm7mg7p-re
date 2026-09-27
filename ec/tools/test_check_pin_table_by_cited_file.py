@@ -655,14 +655,31 @@ class TheCommittedTree(unittest.TestCase):
         # moved the 107 / 80 / 59 the census prints and the 107-row table
         # `check_pin_table_rows.py` reconciles, and that table is a second
         # shared-file edit with no bearing on this axis. One in, none out, and
-        # the named count unmoved: **45 / 12 / 33**. The `44 / 12 / 32` above
-        # stays written, true of the tree it was measured on, per §4a-4d.
+        # the named count unmoved: **45 / 12 / 33** on a tree carrying this step
+        # alone. The `44 / 12 / 32` above stays written, true of the tree it was
+        # measured on, per §4a-4d.
+        #
+        # **But `origin/main` was already a suite ahead of the `44` it
+        # asserted, so the merged tree is the 46th suite and neither side's
+        # figure is its own.** #1058's `ec/tools/test_pd_image_census.py`
+        # landed without moving this pin, so main's tree measures
+        # **45 / 12 / 33** against an assertion of `44 / 12 / 32` -- main is red
+        # by the same one suite, for a step this change did not cause and does
+        # not own. This step did not replace a correct `44` with a `45`; it
+        # joined a `45` main had not recorded, and the two are additive rather
+        # than one superseding the other, so the merged tree indexes both new
+        # suites, the tail takes both, and the pinned count does not move:
+        # **46 / 12 / 34**. Measured with the tool on the merged tree rather
+        # than derived from either side's arithmetic, and held at the merged
+        # figure for the reason the `41 -> 42` case above gives. The
+        # `45 / 12 / 33` stays written above, true of the tree it was measured
+        # on, per §4a-4d.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 45)
+        self.assertEqual(len(files), 46)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 33)
+        self.assertEqual(len(tail), 34)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

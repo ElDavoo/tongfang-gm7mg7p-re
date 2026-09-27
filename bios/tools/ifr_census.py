@@ -53,7 +53,7 @@ resolve rather than passing them off as read.
 
 The CSV this writes is derived from a committed input, which is what makes
 `--check` a real gate: it re-derives the file and fails on any difference, so a
-hand-edited table cannot survive. A census of all 3,660 store questions is
+hand-edited table cannot survive. A census of all 3,659 store questions is
 deliberately not committed -- that is a lookup, and `--ifr` with `--match` and
 `--offset` serves the lookup without a large derived file in review.
 """
@@ -216,10 +216,10 @@ class Statement(object):
     """One ifrextractor line, its continuations joined and its parts read.
 
     `line` is the 1-based number the statement starts on as `grep -n` counts
-    it. The dump is read with newline translation off for that reason: 1,724 of
-    its lines end in a bare CR inside a help string, and Python's default text
-    mode turns each of those into a line break, which shifts most of the
-    citations in the dump by up to five.
+    it. The dump is read with newline translation off for that reason: 7 of its
+    lines end in a bare CR inside a help string, and Python's default text mode
+    turns each of those into a line break as well, so a reader in that mode
+    numbers every citation past `grep` line 8441 seven lower than this does.
     """
 
     __slots__ = ("line", "depth", "body", "opcode", "fields")
@@ -1071,4 +1071,12 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except BrokenPipeError:
+        # `--list-excluded | head -6` is a documented invocation, and the
+        # interpreter's own flush of stdout against a closed pipe would
+        # otherwise turn it into a traceback. The write did not land, so this
+        # is not reported as success; the dup2 keeps the shutdown flush quiet.
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        sys.exit(1)
