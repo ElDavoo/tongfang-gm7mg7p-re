@@ -51,7 +51,9 @@ comes from two directions, and the reader has to be able to tell them apart,
 which is why every moved line names *which column* moved.
 
   * **The assembler.** The committed report was measured with a pinned nix
-    build of SDCC; `project-setup` installs the apt one, and §14h measured that
+    build of SDCC -- 2,704 of its 2,711 rows, the 7 exceptions having been
+    added or replaced later under apt without re-running the rest;
+    `project-setup` installs the apt one, and §14h measured that
     difference at 52 rows -- all of them `assembler-gap` on one side, none
     regressed. This is standing, documented and settles nothing.
   * **Annotation drift.** `verify()` reads each row's `name` out of

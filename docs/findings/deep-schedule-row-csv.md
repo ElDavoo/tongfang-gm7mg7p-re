@@ -31,10 +31,13 @@ that fixes it does not have one.
 `SDAS8051` is set empty on purpose. `find_assembler()` prefers it over `PATH`
 and an empty value is the same instruction to it as an unset one, which is what
 `evidence/ec-reencode/2026-09-23-sdas8051-versions.md` did deliberately. It
-matters because the committed report was measured with a pinned nix build and
-the runner installs apt SDCC: a non-empty `SDAS8051` would put a *third* binary
-in the picture and the CSV's `assembler` column would name something the
-schedule's own "Name the assembler" step never printed.
+matters because the committed report was measured with a pinned nix build —
+2,704 of its 2,711 rows, and the 7 exceptions are rows `d8525eae` added or
+replaced later under apt without re-running the rest — and the runner installs
+apt SDCC: a non-empty `SDAS8051` would put a *third* binary in the picture and
+the CSV's `assembler` column would name something the schedule's own "Name the
+assembler" step never printed. The 7 do not disturb the 52 below: all 58
+`assembler-gap` rows are on the nix build and all 7 apt rows read `match`.
 
 ## The first reading, and the part that is not the assembler
 
@@ -58,8 +61,13 @@ headers byte-identical. **190 rows moved**, and they are two different things:
   `assembler-gap` on the committed side. This is §14h's difference, reproducing
   exactly and in the same direction: the apt ASxxxx places forms the nix one
   declines. Standing, documented, and not an alarm.
-- **138 rows moved on `name` alone.** 2 more rows moved on `name` as well as on
-  the two above, and no row is in both classes.
+- **140 rows moved on `name`, 138 of them on `name` alone.** The other 2 are
+  also among the 52 above — `common,0022` and `pd,EA67`, both in
+  `evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv` — so the two classes
+  overlap by 2 and 52 + 140 − 2 = the 190. The 2 are where a rename and the
+  assembler difference land on one row, which is the case worth naming rather
+  than rounding away: a row in both is a row whose `outcome` argument and whose
+  `name` argument are the same row's story.
 
 `listing_digest` — the column that says whether the *code* moved — is identical
 on all 2,711 rows. So the second class is a label, not a measurement: a function
@@ -67,12 +75,13 @@ renamed after its row was written still shows the name it had then. The evidence
 is in the history, not in the reading. `bank0,708F` is
 `div_r6r4_by_r5_16bit` in `ec/annotations/ghidra-functions.csv` and in
 `ec/decompiled/listing-index.csv` today, and `FUN_CODE_708f` in the report; the
-rename landed at `37140548` (2026-09-25, #327) and the report's row for that
-address was last written at `8c7985ec` (2026-09-23). `verify()` reads `name`
-out of the listing index at run time, so a fresh run sees the new name and a
-`--report` rerun would write it; the report simply has not been regenerated
-since, because re-reporting is a deliberate act tied to a measurement changing
-and these were annotation changes with no measurement behind them.
+rename landed at `37140548` (2026-09-25, #327), and the report's `name` cell
+for that address was last written at `a56b3bbf` (2026-09-24) — before the
+rename. `verify()` reads `name` out of the listing index at run time, so a fresh
+run sees the new name and a `--report` rerun would write it; the report simply
+has not been regenerated since, because re-reporting is a deliberate act tied to
+a measurement changing and these were annotation changes with no measurement
+behind them.
 
 **Why the tool prints which column moved.** 190 rows with no breakdown reads
 as "the re-encode disagrees with the report", which is the wrong conclusion and
