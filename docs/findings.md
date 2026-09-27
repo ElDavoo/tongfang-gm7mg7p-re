@@ -143,6 +143,18 @@ Two knock-on notes, since the same conflation reaches other entries:
   than before, not more — but "map the 254 call sites" is now a PD-firmware
   task.
 - `0x07CC` (`USB_C_POWER_PRIORITY`, 6 refs) is in the same position.
+  **(Re-graded 2026-09-27, issue #32; the bullet above is left as it was
+  written.)** `present-untested` → `unknown-not-absent`, matching `0x07D0` and
+  the other four PD-only entries: six sites and none of them EC-side cannot
+  carry a grade whose whole warrant is an EC-side count. The count did not
+  move and the entry's own note already said so; what changed is that the
+  grade no longer says the opposite of the note. **This says nothing about
+  whether the EC acts on the byte** — the EC image still references `0x07CC`
+  zero times *by this method*, which is the §4c blind spot, and the question
+  stays open as #8. The rule is now written into the `status values:` header
+  comment of `../ec/annotations/registers.yaml` and held by
+  `../ec/tools/check_status_vocabulary.py`; the write-up is
+  [`findings/pd-only-status-vocabulary.md`](findings/pd-only-status-vocabulary.md).
 - `ec/tools/scan_refs.py` was correct for what it claimed to count but handed
   out a bare file-wide total, which is the number that caused this; it now
   prints the same `ec=`/`pd=` split `ec/tools/trace_xdata_refs.py` does.

@@ -53,7 +53,22 @@
 #
 # status values:
 #   confirmed-working   : live behaviour matches the driver's model
+#   confirmed-working-partially : live behaviour matches for the part of the
+#                            entry it was tested on and not the rest
+#                            (0x07A6: the profile write changes the early-exit
+#                            taper, and does not cap charging)
 #   confirmed-inert      : write accepted, EC does not act on it (proven live)
+#                            (declared and currently unused: the one entry
+#                            downgraded out of it, 0x0726, sits at `absent`
+#                            with its own note saying the real verdict is
+#                            unknown. Naming the state is not the same as
+#                            grading anything with it.)
+#   confirmed-not-this-mechanism : the live test refutes the mechanism this
+#                            entry names rather than the byte's existence
+#                            (0x0748-0x074B: a lightbar on a chassis whose
+#                            lightbar is a USB HID device, with three
+#                            independent corroborations and no site in
+#                            either image)
 #   present-untested     : static-scan finds real references, not yet exercised live
 #   absent                : static-scan finds zero direct references
 #                            (NOTE: absence is not proof -- see docs/findings.md,
@@ -63,6 +78,35 @@
 #   unknown-not-absent   : the references that made it look present turned out to
 #                            belong to the PD image, so the EC image has none -- and
 #                            per the note above that is not "absent" either
+#   -DO-NOT-WRITE-BLIND   : not a value, a suffix any value above may carry --
+#                            read "that value, and a blind write to it is
+#                            unsafe": a byte Windows demonstrably writes with
+#                            no traceable EC-side handler, so the suffix warns
+#                            without re-grading (0x07D0, 0x07D1). It is spelled
+#                            appended, `unknown-not-absent-DO-NOT-WRITE-BLIND`,
+#                            and it does not launder the value it rides on.
+#
+# Two rules hold this vocabulary together, and ec/tools/check_status_vocabulary.py
+# enforces both in the agent gate (its `--self-test` is the refusals themselves).
+# docs/findings/pd-only-status-vocabulary.md is the write-up.
+#
+#   1. Every `status:` is one of the values declared above, with the declared
+#      suffix if any. The list above is parsed out of this comment by that
+#      tool, not copied into it, so the two cannot drift apart silently.
+#   2. `present-untested` is the one value whose whole warrant is a reference
+#      count, so it requires static_refs_main_ec >= 1 for EVERY address in the
+#      entry. A PD-only count cannot carry it: 0x07CC held it with six sites
+#      of which none is EC-side, and the grade read as "the EC implements
+#      this, nobody has tried it" -- the claim the image split left with
+#      nothing behind it. Re-graded to `unknown-not-absent` 2026-09-27 (#32),
+#      matching 0x07D0, 0x07D1, 0x07D6, 0x07D7 and 0x07E2-0x07E5.
+#      The four values whose warrant is a *live* observation are exempt, and
+#      the exemption is deliberate rather than convenient: 0x07B9 is a byte
+#      Windows demonstrably writes with zero direct MOV DPTR sites anywhere
+#      in the image, and 0x0748-0x074B is a live-refuted mechanism with no
+#      site in either image. Demanding EC-side sites of a live-confirmed byte
+#      would re-introduce the error the `absent` note above retracts. The
+#      exemption is those four values and nothing else.
 
 registers:
   - name: PROJECT_ID
@@ -619,7 +663,7 @@ registers:
     static_refs: 6
     static_refs_main_ec: 0
     static_refs_pd_image: 6
-    status: present-untested
+    status: unknown-not-absent
     note: >
       All 6 sites are in the ITE8850-PD image, not the EC firmware
       (ec/annotations/lightbar-bat-flow.md 6). Plausible for a USB-C
@@ -634,6 +678,17 @@ registers:
       the vendor's own test the feature is unsupported on this board,
       which matters for issue #8. Re-read live 2026-09-23 (same values) alongside
       the cTGP test below.
+      Re-graded 2026-09-27 (#32): `present-untested` -> `unknown-not-absent`,
+      leaving the reading above as it was written. The grade claimed EC-side
+      presence on a count whose every site belongs to the other 8051 program
+      in the dump, which is the reading `present-untested`'s own definition
+      does not support -- and the five sibling PD-only entries already carry
+      the value this now takes. No count moved and no site was found or lost:
+      the EC image still references 0x07CC zero times by this method, which is
+      "not found by this method" and not "the EC does not touch it" (the
+      0x07B9 blind spot above). Whether the EC acts on this byte at all is
+      still open, and is issue #8. See
+      docs/findings/pd-only-status-vocabulary.md.
 
   - name: CPU_TEMP
     addr: 0x043E

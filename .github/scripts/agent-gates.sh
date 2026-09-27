@@ -125,6 +125,7 @@ check_ghidra_tooling() {
               ec/tools/call_graph.py \
               ec/tools/citation_gap_scan.py \
               ec/tools/xdata_register_map.py \
+              ec/tools/check_status_vocabulary.py \
               bios/tools/bios_extract.py \
               windows/tools/decompile_native.py; do
     [ -f "$tool" ] || continue
@@ -259,6 +260,21 @@ check_ghidra_tooling() {
       # with both modes, and refused again without the two `--out-` paths so
       # neither can reach the committed CSVs.
       *xdata_register_map.py)
+        python3 "$tool" --check && python3 "$tool" --self-test || rc=1
+        ;;
+      # The `status:` vocabulary of registers.yaml, which nothing held to its
+      # own header comment before issue #32. Same arm shape as call_graph.py
+      # above -- it takes no --work and has no scratch dir -- and for the same
+      # cheap-tier reason: both modes need only python3 and the committed
+      # registers.yaml, no image, no Ghidra and no network. It reads no
+      # firmware, which is what keeps it distinct from the register-counts
+      # gate: that one re-derives the numbers a status was argued from, this
+      # one holds the shape of the claim. `--check` prints the PD-only sweep
+      # and fails on an undeclared status or a `present-untested` with no
+      # EC-side site; `--self-test` is the half that matters, because a check
+      # that has quietly stopped refusing looks exactly like a check that is
+      # working.
+      *check_status_vocabulary.py)
         python3 "$tool" --check && python3 "$tool" --self-test || rc=1
         ;;
       *)
