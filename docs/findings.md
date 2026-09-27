@@ -12079,7 +12079,8 @@ through them. So the vector table is a table, and the five words in it
 are constants fixed in the image: `0xA8AE` (the committed
 `event_dispatch_ff80_ffe0`), `0xF7AE`, `0xF7AF`, `0xF790` and `0xF7B0` — the
 last four are not committed entries and are not decoded. The five addresses
-also appear among the 448 `unresolved` XDATA bases in `pd-base-strides.csv`;
+also appear among the 448 `unresolved` XDATA bases in `pd-base-strides.csv`
+(438 since #67 widened the term model; 448 when this was written);
 that census is a scan of `MOV DPTR` immediates and cannot know which space the
 program means by one, so the two do not conflict.
 

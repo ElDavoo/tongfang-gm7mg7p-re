@@ -11,7 +11,7 @@ here") and 6 ("no control-flow recovery"). This tool answers the mechanical
 half of it -- *what address the helper computes* -- and bounds, without
 resolving, the half that needs a call graph.
 
-Five modes, in increasing order of how much they assume:
+Six modes, in increasing order of how much they assume:
 
   --helpers   Decode each named helper entry to its `ret`, following a tail
               `ljmp`/`ajmp` and stepping into an `lcall`, and report the
@@ -54,6 +54,12 @@ Five modes, in increasing order of how much they assume:
               in a register this site indexes on. A load into a register the
               site's term decode does not name is listed and bounds nothing.
               Both are heuristics; printing them side by side is the point.
+  --reached   Every entry the base sites in a span hand DPTR to, one per entry
+              rather than one per site, with the decode outcome each one gets:
+              its term string, or `unmodelled` with the listing. --helpers
+              names eleven entries; this is the population behind that table,
+              and `named_in_table` says which rows are those eleven.
+              --reached-csv is the same table as a committed CSV.
 
 What this cannot do, stated once so no output below has to repeat it:
 
@@ -101,11 +107,13 @@ Usage:
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --helpers 0x34D9 0x578E
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --bases
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --bases all
+    python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --reached
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --sites 0xC2FA 0xDA9B
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --strides all
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 \
             --callers 0x7421 0x9DEC 0xB5D3 0xE9F5
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --helpers-csv
+    python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --reached-csv
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --strides-csv all
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --self-test
 """
@@ -185,6 +193,7 @@ RETI = 0x32
 MOV_B_IMM = bytes((0x75, 0xF0))          # mov b,#imm
 MOV_A_IMM = 0x74                          # mov a,#imm
 CLR_A = 0xE4                              # clr a
+MOV_R_FROM_A = (0xF8, 0xFF)              # mov rN,a -- source is A, so A survives
 MOVX_A_DPTR = 0xE0                        # movx a,@dptr
 MOVX_DPTR_A = 0xF0                        # movx @dptr,a
 MUL_AB = 0xA4                             # mul ab
@@ -372,7 +381,7 @@ def _match_template(d: bytes, i: int):
 
 
 def walk_helper(d: bytes, entry: int, depth: int = 0, seen: frozenset = frozenset()):
-    """Decode the helper at PD runtime `entry` into (terms, listing, note).
+    """Decode the helper at PD runtime `entry` into (terms, listing, note, gap).
 
     `terms` is the list of symbolic DPTR addends in the order the routine
     applies them, with A and B rendered as whatever the routine last put in
@@ -380,6 +389,9 @@ def walk_helper(d: bytes, entry: int, depth: int = 0, seen: frozenset = frozense
     byte from the entry to the `ret` was accounted for, and otherwise says
     which instruction the term model does not cover -- that row is
     `unmodelled` and its listing is the whole of what is claimed about it.
+    `gap` is that first uncovered instruction's runtime address, and None when
+    the walk ended on a bound instead -- a budget stop covers every byte it
+    read, so it has no gap to point at.
 
     A count bounds work, not the buffer: the region's end bounds the walk and
     HELPER_MAX_INSNS stays the cap on a walk that never reaches it. Which end
@@ -390,23 +402,23 @@ def walk_helper(d: bytes, entry: int, depth: int = 0, seen: frozenset = frozense
     # image the region ends first and this changes nothing.
     hi = min(hi, len(d))
     if entry in seen or depth > 3:
-        return [], [], f"unmodelled: tail chain not followed past 0x{entry:04X}"
+        return [], [], f"unmodelled: tail chain not followed past 0x{entry:04X}", entry
     seen = seen | {entry}
-    terms, listing, note = [], [], ""
+    terms, listing, note, gap = [], [], "", None
     a_sym, b_sym = UNKNOWN_A, UNKNOWN_B
     i = lo + entry
     for _ in range(HELPER_MAX_INSNS):
         if not lo <= i < hi:
             return terms, listing, (
                 f"unmodelled: walk left the {PD_REGION} at runtime "
-                f"0x{i - lo:04X}, its end at file 0x{hi:05X}")
+                f"0x{i - lo:04X}, its end at file 0x{hi:05X}"), i - lo
         n, term = _match_template(d, i)
         if term and not note:
             if i + n > hi:
                 return terms, listing, (
                     f"unmodelled: the {n}-byte term template at runtime "
                     f"0x{i - lo:04X} crosses the {PD_REGION} end at file "
-                    f"0x{hi:05X}")
+                    f"0x{hi:05X}"), i - lo
             for j, raw, _ in _insns(d, i, n):
                 listing.append((j, raw))
             terms.append(term.format(a=a_sym, b=b_sym))
@@ -419,17 +431,17 @@ def walk_helper(d: bytes, entry: int, depth: int = 0, seen: frozenset = frozense
         if i + OPCODE_LEN[op] > hi:
             return terms, listing, (
                 f"unmodelled: the instruction at runtime 0x{i - lo:04X} is cut "
-                f"by the {PD_REGION} end at file 0x{hi:05X}")
+                f"by the {PD_REGION} end at file 0x{hi:05X}"), i - lo
         here = i - lo
         raw = d[i:i + OPCODE_LEN[op]]
         listing.append((i, raw))
         if op == RET:
-            return terms, listing, note
+            return terms, listing, note, gap
         if note:
             # Past the first unmodelled instruction nothing is claimed, but the
             # walk keeps going so the row carries a whole routine's listing.
             if is_jmp(op):
-                return terms, listing, note
+                return terms, listing, note, gap
         elif raw[:2] == MOV_B_IMM:
             b_sym = f"0x{raw[2]:02X}"
         elif 0xE8 <= op <= 0xEF:
@@ -438,6 +450,15 @@ def walk_helper(d: bytes, entry: int, depth: int = 0, seen: frozenset = frozense
             a_sym = f"0x{raw[1]:02X}"
         elif op == CLR_A:
             a_sym = "0x00"
+        elif MOV_R_FROM_A[0] <= op <= MOV_R_FROM_A[1]:
+            # `mov rN,a` takes its source from A and writes nothing else, so
+            # the accumulator's symbol carries through and the walk continues.
+            # It contributes no term: it adds nothing to DPTR, which is what
+            # separates it from the `add`/`mul` idioms above. A_WRITERS
+            # excludes this range already, so the frame walkers read it the
+            # same way; the difference is only that these two forward walks
+            # used to treat it as the end of a decode.
+            pass
         elif op in (MOVX_A_DPTR, MOVX_DPTR_A):
             # A `movx` consumes the pointer but does not change DPTR, so the
             # term chain carries across it. `movx a,@dptr` does clobber A, and
@@ -450,18 +471,20 @@ def walk_helper(d: bytes, entry: int, depth: int = 0, seen: frozenset = frozense
             target = branch_target(raw, here)
             if target is None:
                 note = f"unmodelled: unresolvable handoff at 0x{here:04X}"
+                gap = here
             else:
-                sub_terms, _, sub_note = walk_helper(d, target, depth + 1, seen)
+                sub_terms, _, sub_note, sub_gap = walk_helper(d, target, depth + 1, seen)
                 terms += resolve_terms(sub_terms, a_sym, b_sym)
-                note = sub_note
+                note, gap = sub_note, sub_gap
                 if is_jmp(op):
-                    return terms, listing, note  # tail call: the callee returns
+                    return terms, listing, note, gap  # tail call: the callee returns
                 a_sym, b_sym = UNKNOWN_A, UNKNOWN_B
         else:
             note = (f"unmodelled: 0x{here:04X} `{mnemonic(d, i, here).strip()}` "
                     "is outside the term model")
+            gap = here
         i += OPCODE_LEN[op]
-    return terms, listing, note or f"unmodelled: no `ret` within {HELPER_MAX_INSNS} instructions"
+    return terms, listing, note or f"unmodelled: no `ret` within {HELPER_MAX_INSNS} instructions", gap
 
 
 def _insns(d: bytes, start: int, length: int):
@@ -619,7 +642,7 @@ def chain_from(d: bytes, start: int, a_sym: str, b_sym: str, max_insns: int = 12
             target = branch_target(raw, here)
             if target is None:
                 return helpers, terms, f"unresolvable handoff at 0x{here:04X}"
-            sub_terms, _, note = walk_helper(d, target)
+            sub_terms, _, note, _ = walk_helper(d, target)
             helpers.append(target)
             if note:
                 return helpers, terms, f"0x{target:04X} is {note}"
@@ -635,6 +658,12 @@ def chain_from(d: bytes, start: int, a_sym: str, b_sym: str, max_insns: int = 12
             a_sym = f"0x{raw[1]:02X}"
         elif op == CLR_A:
             a_sym = "0x00"
+        elif MOV_R_FROM_A[0] <= op <= MOV_R_FROM_A[1]:
+            # `mov rN,a` reads A and writes only the register bank, so the
+            # chain steps over it with the accumulator's symbol intact and
+            # reaches the template behind it. No term: it adds nothing to
+            # DPTR. The same rule and the same reason as walk_helper's.
+            pass
         elif op == MUL_AB:
             a_sym, b_sym = product_sym(a_sym, b_sym), UNKNOWN_B
         else:
@@ -715,6 +744,54 @@ def site_rows(d: bytes, addrs, max_insns: int = SITE_WINDOW):
             "addr": addr, "base": base, "file_offset": i,
             "helpers": helpers, "frame_onto": onto, "frame_over": over,
             "a": a_sym, "b": b_sym, "terms": terms, "stopped": stopped,
+            "listing": listing,
+        })
+    return rows
+
+
+def reached_entries(d: bytes, span=BASE_RUN):
+    """Every entry the base sites in `span` hand DPTR to, one row each, sorted
+    by entry.
+
+    A projection of base_sites(), not a second scan: an entry is here exactly
+    when --bases reaches it, and `sites` is how many of those sites call it.
+    So the two can never disagree about the population, and
+    ../annotations/pd-reached-helpers.md is the file that says what each one
+    turns out to be.
+
+    The eleven entries of §2 are reached too, so this supersedes
+    pd-index-helpers.csv rather than shadowing it: `named_in_table` says which
+    rows are those. `terms` is empty wherever the model does not cover the
+    body, and the listing is then the whole of what is claimed -- the same
+    contract pd-index-helpers.csv already has, and the reason a site whose
+    chain reaches an unmodelled entry carries no term either."""
+    lo, _ = pd_bounds()
+    per = {}
+    for r in base_sites(d, span):
+        for entry in r["helpers"]:
+            per.setdefault(entry, []).append(r)
+    rows = []
+    for entry in sorted(per):
+        sites = per[entry]
+        terms, listing, note, gap = walk_helper(d, entry)
+        tail = ""
+        if listing:
+            off, last = listing[-1]
+            if is_call(last[0]) or is_jmp(last[0]):
+                t = branch_target(last, off - lo)
+                tail = f"0x{t:04X}" if t is not None else ""
+        rows.append({
+            "entry": entry, "file_offset": lo + entry,
+            "bytes": sum(len(raw) for _, raw in listing),
+            "terms": "" if note else fmt_terms(terms),
+            "tail_target": tail, "unmodelled": bool(note), "note": note,
+            "first_unmodelled": "" if gap is None else f"0x{gap:04X}",
+            "sites": len(sites),
+            # Effective rather than the site's own immediate, for the reason
+            # stride_census() reads that instead: the base is the array being
+            # indexed, and a rebasing chain replaces the one the site loaded.
+            "bases": sorted({effective_base(r) for r in sites}),
+            "named_in_table": entry in HELPERS,
             "listing": listing,
         })
     return rows
@@ -978,7 +1055,7 @@ def print_helpers(d: bytes, entries=None) -> None:
         for entry in entries:
             check_site_addr(entry)
     for entry in entries:
-        terms, listing, note = walk_helper(d, entry)
+        terms, listing, note, _ = walk_helper(d, entry)
         # Terms *and* a note is the ordinary case for a mid-routine entry that
         # finishes its arithmetic and then tail-jumps into something else: the
         # terms are resolved, the tail is not, and printing only the note would
@@ -994,6 +1071,32 @@ def print_helpers(d: bytes, entries=None) -> None:
 def fmt_span(span) -> str:
     return "the whole image" if tuple(span) == WHOLE_IMAGE \
         else f"0x{span[0]:04X}-0x{span[1]:04X}"
+
+
+def print_reached(d: bytes, span=BASE_RUN) -> None:
+    lo, _ = pd_bounds()
+    rows = reached_entries(d, span)
+    unmodelled = [r for r in rows if r["unmodelled"]]
+    # The same three counts pd-index-geometry.md 2.3 reports, so a reader can
+    # check the prose against this run without re-deriving it. The span is
+    # named for the reason print_bases() names it.
+    print(f"{len(rows)} DPTR-recipient entry/entries reached by the PD-image "
+          f"MOV DPTR site(s) with a base in {fmt_span(span)}")
+    print(f"{len(rows) - len(unmodelled)} decode, {len(unmodelled)} do not; "
+          f"{sum(1 for r in rows if r['named_in_table'])} of them are in the "
+          f"{len(HELPERS)}-entry table\n")
+    for r in rows:
+        bases = " ".join(f"0x{b:04X}" for b in r["bases"])
+        # Terms and a note together is the ordinary case for a mid-routine
+        # entry, and print_helpers() reads it the same way: the arithmetic can
+        # be known while the tail it falls into is not.
+        head = r["terms"] or ""
+        head = f"{head}; {r['note']}" if head and r["note"] else head or r["note"]
+        print(f"0x{r['entry']:04X}  (file 0x{r['file_offset']:05X})  "
+              f"{r['sites']} site(s)  {bases}  {head}")
+        for i, raw in r["listing"]:
+            print(f"    0x{i - lo:04x}  {raw.hex():<8} {mnemonic(d, i, i - lo)}")
+        print()
 
 
 def print_bases(d: bytes, span=BASE_RUN) -> None:
@@ -1084,7 +1187,7 @@ def write_helpers_csv(d: bytes) -> None:
     w = csv.writer(sys.stdout)
     w.writerow(["entry", "file_offset", "bytes", "terms", "tail_target", "unmodelled"])
     for entry in HELPERS:
-        terms, listing, note = walk_helper(d, entry)
+        terms, listing, note, _ = walk_helper(d, entry)
         tail = ""
         if listing:
             off, last = listing[-1]
@@ -1095,6 +1198,39 @@ def write_helpers_csv(d: bytes) -> None:
                     sum(len(raw) for _, raw in listing),
                     "" if note else fmt_terms(terms),
                     tail, "yes" if note else "no"])
+
+
+REACHED_FIELDS = ("entry", "file_offset", "bytes", "terms", "tail_target",
+                  "unmodelled", "note", "first_unmodelled", "sites", "bases",
+                  "named_in_table", "listing")
+
+
+def reached_csv_row(d: bytes, r) -> list:
+    """One reached entry as the REACHED_FIELDS list of strings.
+
+    The single formatter for that CSV -- write_reached_csv() and the --self-test
+    comparison both go through it, so a regenerated file and a re-derived row
+    cannot disagree about a column. `listing` is filled only where `unmodelled`
+    is yes: a resolved row is one short line of terms, and a row the model does
+    not cover is quoted rather than fitted, which is the whole of what is
+    claimed about it.
+    """
+    lo, _ = pd_bounds()
+    return [f"0x{r['entry']:04X}", f"0x{r['file_offset']:05X}", r["bytes"],
+            r["terms"], r["tail_target"],
+            "yes" if r["unmodelled"] else "no", r["note"],
+            r["first_unmodelled"], r["sites"],
+            " ".join(f"0x{b:04X}" for b in r["bases"]),
+            "yes" if r["named_in_table"] else "no",
+            "; ".join(f"0x{i - lo:04X} {mnemonic(d, i, i - lo).strip()}"
+                      for i, _ in r["listing"]) if r["unmodelled"] else ""]
+
+
+def write_reached_csv(d: bytes, span=BASE_RUN) -> None:
+    w = csv.writer(sys.stdout)
+    w.writerow(REACHED_FIELDS)
+    for r in reached_entries(d, span):
+        w.writerow(reached_csv_row(d, r))
 
 
 def write_strides_csv(d: bytes, span=WHOLE_IMAGE) -> None:
@@ -1510,7 +1646,40 @@ SITES_CSV = "../annotations/ec-0x07d0-sites.csv"
 HELPERS_CSV = "../annotations/pd-index-helpers.csv"
 CALLERS_CSV = "../annotations/pd-index-callers.csv"
 STRIDES_CSV = "../annotations/pd-base-strides.csv"
+REACHED_CSV = "../annotations/pd-reached-helpers.csv"
 DEFAULT_FIRMWARE = "../firmware/GMxMGxx_11.800"
+
+# ../annotations/pd-reached-helpers.md reports what widening the term model by
+# one rule measured. These are its figures, pinned so the write-up cannot drift
+# from the tool that produced them; the eleven named entries, the 151/3176
+# denominators and the access census below are unchanged by that rule and say
+# so where they are checked.
+REACHED_TOTALS = dict(entries=80, decoded=60, unmodelled=20, no_term_sites=11)
+
+# 0x99E2 is the entry pd-index-geometry.md 2.3 names as the reason the low run
+# has sites with no term, and it decodes under the new rule. 0x9A71 is named
+# here because it is *not* reached from the low run -- it belongs to a site
+# pd-xdata-overlap.md 3.2 has, not to this span -- so its pin is against the
+# decode directly. It is the one row that must stay unmodelled: a rule that
+# widened past `mov rN,a` would start fitting it, and an empty term there is
+# what 2.2 says it is.
+REACHED_BY_NAME = {0x99E2: "A×0x60"}
+REACHED_STILL_UNMODELLED = (0x9A71,)
+
+# One entry per class the model still does not cover, so none of the five can
+# quietly start "decoding" into nothing. Each value is the tool's own note.
+REACHED_GAPS = {
+    0x0FAF: "unmodelled: 0x0FB1 `inc  dptr` is outside the term model",
+    0x3627: "unmodelled: 0x3627 `mov  a,0x82` is outside the term model",
+    0x104D: "unmodelled: 0x104D `mov  r0,0x82` is outside the term model",
+    0x35F3: "unmodelled: 0x35F5 `mov  dptr,#0x0408` is outside the term model",
+    0x99D4: "unmodelled: 0x99D5 `add  a,#0x01` is outside the term model",
+}
+
+# pd-index-geometry.md 3.2's question, one row further on. The last is the
+# load-bearing number: it is what says 0x260 survived the widening rather than
+# being an artefact of the subset the old templates happened to resolve.
+BOTH_TERM_SITES, SAME_REGISTER, DIFFERENT_REGISTER = 98, 40, 0
 
 
 def _csv_rows(path: str):
@@ -1533,6 +1702,97 @@ def fixture(chunks, end=None):
         raw = bytes.fromhex(text)
         image[lo + off:lo + off + len(raw)] = raw
     return bytes(image)
+
+
+def reached_self_test(d, check):
+    """Pin ../annotations/pd-reached-helpers.csv against a fresh decode.
+
+    The same contract `pd-index-helpers.csv` is pinned under, one row per
+    entry this time: the file is not an oracle, so every field is re-derived
+    and compared, and the row set is checked against what --bases actually
+    reaches rather than against the CSV's own length.
+    """
+    committed = {r["entry"]: r for r in _csv_rows(REACHED_CSV)}
+    fresh = {f"0x{r['entry']:04X}": r for r in reached_entries(d)}
+    reached = {f"0x{h:04X}" for r in base_sites(d) for h in r["helpers"]}
+    check(reached == set(committed) == set(fresh),
+          f"{REACHED_CSV} has one row per entry --bases reaches "
+          f"({len(reached)}; got {len(committed)} committed, "
+          f"{len(fresh)} re-derived)")
+    for entry in sorted(committed):
+        got = dict(zip(REACHED_FIELDS, reached_csv_row(d, fresh[entry])))
+        # The committed file is read back as text and the row is re-derived as
+        # the writer's own values, so both sides are compared as strings.
+        drifted = [k for k in REACHED_FIELDS
+                   if committed[entry][k] != str(got[k])]
+        check(not drifted,
+              f"{REACHED_CSV} row {entry} regenerates unchanged "
+              f"(terms {committed[entry]['terms']!r}, "
+              f"unmodelled={committed[entry]['unmodelled']}"
+              f"{'; ' + ', '.join(drifted) + ' differ' if drifted else ''})")
+
+    for entry, want in REACHED_BY_NAME.items():
+        got = fresh.get(f"0x{entry:04X}", {})
+        check(got.get("terms") == want and not got.get("unmodelled"),
+              f"--reached 0x{entry:04X} decodes to {want} "
+              f"(got {got.get('terms', '(not reached)')!r})")
+    for entry in REACHED_STILL_UNMODELLED:
+        terms, _, note, _ = walk_helper(d, entry)
+        check(bool(note) and not terms,
+              f"0x{entry:04X} stays unmodelled with no term, as "
+              f"pd-index-geometry.md 2.2 says it is (got note {note!r})")
+    for entry, want in REACHED_GAPS.items():
+        _, _, note, _ = walk_helper(d, entry)
+        check(note == want, f"0x{entry:04X} still stops where it stopped "
+                            f"(got {note!r})")
+
+    totals = dict(entries=len(fresh),
+                  decoded=sum(1 for r in fresh.values() if not r["unmodelled"]),
+                  unmodelled=sum(1 for r in fresh.values() if r["unmodelled"]),
+                  no_term_sites=sum(1 for r in base_sites(d)
+                                    if not effective_terms(r["terms"])))
+    check(totals == REACHED_TOTALS,
+          f"reached-helpers.md's counts hold: {totals['entries']} entries, "
+          f"{totals['decoded']} decode, {totals['unmodelled']} do not, "
+          f"{totals['no_term_sites']} site(s) with no term")
+
+    # pd-index-geometry.md 3.2's arithmetic, on the widened decode.
+    def strides_of(r):
+        return {s for t in effective_terms(r["terms"])
+                for s in STRIDE_RE.findall(t)}
+
+    def register_in(term, stride):
+        # The factor before the multiply, not the whole string before it: a
+        # rebasing term writes `=DPTR ← 0x08F8 + low8(R7×0x60)`, and the
+        # register in that is R7.
+        m = (re.search(r"0x200×([^\s+×)]+)", term) if stride == PAGE_TERM
+             else re.search(r"(?:^|[+×(])([A-Za-z0-9{}]+)×" + stride, term))
+        return m.group(1) if m and m.group(1) in REGISTER_NAMES else None
+
+    both = [r for r in base_sites(d)
+            if "60" in strides_of(r) and PAGE_TERM in " ".join(effective_terms(r["terms"]))]
+    same = different = 0
+    for r in both:
+        sixty = {s for s in (register_in(t, "0x60") for t in effective_terms(r["terms"])) if s}
+        page = {s for s in (register_in(t, PAGE_TERM) for t in effective_terms(r["terms"])) if s}
+        # One side unresolved counts neither way, which is 3.2's own rule and
+        # the reason it reported 40 of 82 rather than a verdict on all of them.
+        if not sixty or not page:
+            continue
+        same, different = (same + 1, different) if sixty == page else (same, different + 1)
+    check((len(both), same, different) == (BOTH_TERM_SITES, SAME_REGISTER, DIFFERENT_REGISTER),
+          f"{len(both)} site(s) apply both a x0x60 and a 0x200x term; "
+          f"{same} name an identified register on both sides and {different} "
+          "of those name two different ones -- 3.2's 0x260 collapse")
+
+    # The rule itself, on a chain the committed image cannot pin: A's symbol
+    # has to survive `mov rN,a` for the template behind it to be reached, and
+    # has to survive it as the *old* symbol rather than as the register's name.
+    for load, want, text in (("ef", "R7×0x5E", "carries A's symbol through"),
+                             ("ee", "R6×0x5E", "does not rename A")):
+        raw = fixture({0x100: load + "75f05ef8a42582f582e5f03583f583e022"})
+        check(walk_helper(raw, 0x100)[0] == [want],
+              f"mov rN,a {text}: the term behind it is {want}")
 
 
 def access_self_test(d, check):
@@ -1859,7 +2119,7 @@ def self_test(fw_path: str) -> int:
         check(got == want, f"0x{entry:04X} body is `{want}` (got `{got}`)")
 
     for entry, want in HELPER_TERMS.items():
-        terms, _, note = walk_helper(d, entry)
+        terms, _, note, _ = walk_helper(d, entry)
         got = fmt_terms(terms, note)
         check(got == want, f"0x{entry:04X} adds {want} to DPTR (got {got})")
 
@@ -1925,19 +2185,21 @@ def self_test(fw_path: str) -> int:
     # the count stays the cap. 0xFFFF is a legal address and the fill past the
     # region is 0xFF, one byte per opcode, so a count-bounded walk listed 24
     # lines here and 23 of them were the fill past the region's end.
-    _, top_walk, top_note = walk_helper(d, 0xFFFF)
+    _, top_walk, top_note, _ = walk_helper(d, 0xFFFF)
     check(len(top_walk) == 1 and top_walk[-1][0] == hi - 1
           and top_note.startswith("unmodelled:") and f"0x{hi:05X}" in top_note,
           f"--helpers 0xFFFF stops at the {PD_REGION} end, {len(top_walk)} "
           f"listing line(s) at file 0x{top_walk[-1][0]:05X}, note {top_note!r}")
-    # chain_from() cannot be reached on the committed image: at 0xFFFF it
-    # stops on its first byte, an unmodelled `mov r7,a`, which is eight
-    # instructions short of the end. The fixture is SITE_WINDOW of `mov rN,a`
-    # at the top of the region -- one byte each, and modelled, so the chain
-    # steps over them -- and the walk starts eight in, which leaves the region
-    # end inside the 12-instruction budget. The 0xFF tail past the region is
-    # the committed image's own shape and the point of the fixture: a walk
-    # bounded by len(d) instead reads it, and reports `mov r7,a` at 0x10000.
+    # chain_from() cannot be reached on the committed image: the fill there is
+    # 0xFF, which is `mov r7,a` -- an instruction the term model now covers, so
+    # a walk bounded by len(d) would step over the 0xFF tail silently until its
+    # own budget ran out, and report a window that ended rather than a bound.
+    # The fixture is SITE_WINDOW of `mov a,rN` at the top of the region instead
+    # -- one byte each, and modelled for the same reason, so the chain steps
+    # over them too -- and the walk starts eight in, which leaves the region
+    # end inside the 12-instruction budget. What is being pinned is that the
+    # region end and not the budget stops this walk, and neither `mov` form
+    # would stop it.
     run = fixture({0x10000 - SITE_WINDOW: "e8" * SITE_WINDOW}) + b"\xff" * 0x100
     stopped = chain_from(run, lo + 0x10000 - 8, UNKNOWN_A, UNKNOWN_B)[2]
     check(f"0x{hi:05X}" in stopped and not stopped.endswith("ended"),
@@ -1947,7 +2209,7 @@ def self_test(fw_path: str) -> int:
     # carries 65536 bytes of 0xFF past the region, so only a truncated fixture
     # reaches the clamp. Both walkers read past `hi` on one of these and raise.
     short = fixture({0x1F0: "e8" * SITE_WINDOW}, end=0x200)
-    _, short_walk, short_note = walk_helper(short, 0x1F8)
+    _, short_walk, short_note, _ = walk_helper(short, 0x1F8)
     check(short_walk[-1][0] == lo + 0x1FF and f"0x{lo + 0x200:05X}" in short_note,
           f"walk_helper stops at the end of a short image, last line at file "
           f"0x{short_walk[-1][0]:05X}, note {short_note!r}")
@@ -1956,7 +2218,7 @@ def self_test(fw_path: str) -> int:
           f"chain_from stops at the end of a short image (got {stopped!r})")
 
     for entry, want in STRIDE_HELPER_TERMS.items():
-        terms, _, _ = walk_helper(d, entry)
+        terms, _, _, _ = walk_helper(d, entry)
         got = fmt_terms(terms)
         check(got == want,
               f"--helpers 0x{entry:04X} decodes to {want} (got {got})")
@@ -1980,7 +2242,7 @@ def self_test(fw_path: str) -> int:
           f"got {len(want_helpers)})")
     for row in want_helpers:
         entry = int(row["entry"], 16)
-        terms, _, note = walk_helper(d, entry)
+        terms, _, note, _ = walk_helper(d, entry)
         got = "" if note else fmt_terms(terms)
         check(got == row["terms"],
               f"{row['entry']} terms match the committed CSV "
@@ -2082,7 +2344,7 @@ def self_test(fw_path: str) -> int:
         print(f"self-test passed: the helper bodies and terms match "
               f"pd-xdata-overlap.md 3, the four 0x04A6 sites sit where "
               f"trace_xdata_refs.py puts them, the four 0x5E/0x77 addresses sit "
-              f"where ec-0x07d0-sites.md 4 puts them, and all five CSVs "
+              f"where ec-0x07d0-sites.md 4 puts them, and all six CSVs "
               f"regenerate unchanged (PD image at file 0x{lo:05X})")
     return 1 if bad else 0
 
@@ -2105,8 +2367,16 @@ def main() -> int:
                     help="census of the stride constants the decode resolves over SPAN")
     ap.add_argument("--callers", nargs="+", metavar="ADDR",
                     help="bound the caller set of these PD runtime sites, e.g. 0x7421")
+    ap.add_argument("--reached", nargs="?", const=BASE_RUN, metavar="SPAN",
+                    help="every entry the base sites in SPAN hand DPTR to, with "
+                         "the decode outcome each gets; with no argument, the "
+                         f"low base run 0x{BASE_RUN[0]:04X}-0x{BASE_RUN[1]:04X}")
     ap.add_argument("--helpers-csv", action="store_true",
                     help="write the helper table as CSV on stdout")
+    ap.add_argument("--reached-csv", nargs="?", const=BASE_RUN, metavar="SPAN",
+                    help="write the reached-entry table as CSV; with no "
+                         "argument, the low base run, which is what the "
+                         "committed CSV holds")
     ap.add_argument("--strides-csv", nargs="?", const=WHOLE_IMAGE, metavar="SPAN",
                     help="write the stride census as CSV; with no argument, "
                          "the whole image, which is what the committed CSV holds")
@@ -2124,16 +2394,19 @@ def main() -> int:
     if args.self_test:
         return self_test(fw)
     modes = (args.helpers, args.bases, args.sites, args.strides, args.callers,
-             args.helpers_csv, args.strides_csv, args.callers_csv,
-             args.accesses, args.accesses_csv, args.access_strides, args.access_strides_csv)
+             args.reached, args.helpers_csv, args.reached_csv, args.strides_csv,
+             args.callers_csv, args.accesses, args.accesses_csv,
+             args.access_strides, args.access_strides_csv)
     if all(m is None or m is False for m in modes):
         ap.error("pick a mode: --helpers, --bases, --sites, --strides, "
-                 "--callers, --helpers-csv, --strides-csv, --callers-csv or "
-                 "--self-test")
+                 "--callers, --reached, --helpers-csv, --reached-csv, "
+                 "--strides-csv, --callers-csv or --self-test")
     try:
         bases_span = parse_span(args.bases)
         strides_span = parse_span(args.strides)
         strides_csv_span = parse_span(args.strides_csv)
+        reached_span = parse_span(args.reached)
+        reached_csv_span = parse_span(args.reached_csv)
         access_spans = [parse_span(v) for v in (args.accesses, args.accesses_csv,
                         args.access_strides, args.access_strides_csv)]
     except ValueError as exc:
@@ -2162,6 +2435,8 @@ def main() -> int:
             ap.error(str(exc))
     if bases_span is not None:
         print_bases(d, bases_span)
+    if reached_span is not None:
+        print_reached(d, reached_span)
     if args.sites:
         try:
             print_sites(d, [int(a, 16) for a in args.sites])
@@ -2176,6 +2451,8 @@ def main() -> int:
             ap.error(str(exc))
     if args.helpers_csv:
         write_helpers_csv(d)
+    if reached_csv_span is not None:
+        write_reached_csv(d, reached_csv_span)
     if strides_csv_span is not None:
         write_strides_csv(d, strides_csv_span)
     if args.callers_csv:
