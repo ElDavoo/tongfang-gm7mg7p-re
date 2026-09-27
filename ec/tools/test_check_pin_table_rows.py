@@ -540,16 +540,16 @@ class TheCommittedTree(unittest.TestCase):
     def test_the_committed_table_reconciles_and_exits_zero(self):
         rc, out, err = run_main(check.REPO)
         self.assertEqual(rc, 0, err)
-        # 125 rather than 106: #739's write-up brings nineteen records and the
-        # nineteen rows beside them, every one of them placed. The 106 rather
+        # 126 rather than 106: #739's write-up brings twenty records and the
+        # twenty rows beside them, every one of them placed. The 106 rather
         # than 107 that stood here before is the census row for the one pin
         # that lived inside `test-line-pin-census.md`'s per-merge log, which
         # went with the log -- a table row with no record behind it is the
         # `unplaced-row` this tool exists to name. Re-derived, not lowered --
         # `test_census_test_line_pins.py` carries the same delta with every
         # counter in it.
-        self.assertIn("125 table row(s) against 125 census record(s)", out)
-        self.assertIn("125 placed", out)
+        self.assertIn("126 table row(s) against 126 census record(s)", out)
+        self.assertIn("126 placed", out)
 
     def test_every_class_is_zero_on_the_committed_tree(self):
         # Not left to a prose figure. Zero is the measurement here -- the
@@ -567,11 +567,11 @@ class TheCommittedTree(unittest.TestCase):
         table, records, placed, _problems, _uncompared = check.reconcile(check.REPO)
         self.assertTrue(records)
         self.assertTrue(table)
-        # `106 -> 125` is #739's write-up: nineteen new records, nineteen
+        # `106 -> 126` is #739's write-up: twenty new records, twenty
         # new rows, all of them placed. The count is placed rows rather
         # than table rows, so it moves with the corpus and not with the
         # table's shape.
-        self.assertEqual(placed, 125)
+        self.assertEqual(placed, 126)
 
     def test_the_committed_read_and_shape_cells_are_the_census_vocabulary(self):
         # The two vocabularies the table's own cells have to be drawn from, and
@@ -599,10 +599,10 @@ class TheCommittedTree(unittest.TestCase):
         # `by-name` 18 rather than 19 for the same one row: it was the only
         # `by-name` row that went, and the other three cells are unmoved,
         # which is the control the paragraph below this one argues from.
-        # Re-derived for #739 on top of that: its write-up's nineteen records
-        # are eighteen `by-path` and one `by-name`, so `by-path` 54 -> 72 and
+        # Re-derived for #739 on top of that: its write-up's twenty records
+        # are nineteen `by-path` and one `by-name`, so `by-path` 54 -> 73 and
         # `by-name` 18 -> 19, with `by-beside` and the declined `-` unmoved.
-        self.assertEqual(read, {census.BY_PATH: 72, census.BY_NAME: 19,
+        self.assertEqual(read, {census.BY_PATH: 73, census.BY_NAME: 19,
                                 census.BY_BESIDE: 2, "-": 32})
         # The shape split is re-derived rather than lowered, twice. #962 adds a
         # class to `test_xdata_cluster_names.py` and corrects a docstring above
@@ -619,10 +619,14 @@ class TheCommittedTree(unittest.TestCase):
         # so the only thing that moved is where each pin lands, which is the
         # line shift and not a change to the corpus. **`def test_` is absent
         # rather than zero**, because this cell counts the words that occur in
-        # the table and none of them is that one any more: `assertEqual`
-        # compares key sets, so a `census.DEF_TEST: 0` term would redden on a
-        # table that is correct. This pin follows the run rather than the page
-        # it was written on.
+        # the table and none of them is that one: `assertEqual` compares key
+        # sets, so a `census.DEF_TEST: 0` term would redden on a table that is
+        # correct. #739 briefly gave the table one — `0751-mark-provenance-
+        # shapes.md:204` named `test_system_id_probe.py:311`, which that
+        # change's own edits turned into a `def test_` header — and re-anchoring
+        # the row to `:317`, the `assertEqual` the page's sentence describes,
+        # takes it back out. This pin follows the run rather than the page it
+        # was written on.
         #
         # #1009's one new row is a `class` header read as prose, so `other`
         # takes it and the split is `0/15/22/5/33`. The read column above is the
@@ -630,14 +634,16 @@ class TheCommittedTree(unittest.TestCase):
         # moved, so unlike the seven repointed rows it cannot have changed where
         # anything lands.
         # Re-derived for #739 on top of #1009's `0/15/22/5/33`: its write-up's
-        # nineteen rows are ten assertions and nine `other`, so the split reads
-        # `1/22/24/5/41`. The `1` is a `def test_` row -- a pin that lands on a
-        # test case's own header -- which the six figures above did not carry
-        # a place for, and which is the shape a pin naming a whole case rather
-        # than a line inside one is read as.
-        self.assertEqual(shape, {census.ASSERTION: 22, census.COMMENT: 24,
-                                 census.BLANK: 5, census.OTHER: 41,
-                                 census.DEF_TEST: 1, "-": 32})
+        # twenty rows are ten assertions and ten `other`, so the split reads
+        # `0/24/22/5/43`. The read column above is the control in the other
+        # direction for the three rows that change re-anchored -- they are
+        # repointed, not added, so none of them is in the `73`/`19` step and
+        # each is a row that was already counted. `test_census_test_line_pins.py`
+        # derives the same split over the run rather than over these cells, and
+        # measures the re-anchoring against `origin/main` figure for figure.
+        self.assertEqual(shape, {census.ASSERTION: 24, census.COMMENT: 22,
+                                 census.BLANK: 5, census.OTHER: 43,
+                                 "-": 32})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing

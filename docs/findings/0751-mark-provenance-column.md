@@ -328,7 +328,9 @@ to be named by a page that says it moved. This is that page for the pins the
 change moved; the *before* column is what
 [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) quotes, and
 it is left there rather than edited, because that page is the record of a
-measurement and this one is the record of a format change.
+measurement and this one is the record of a format change. The three rows at
+the foot of the table are the exception, and the paragraph below them says
+what makes them one.
 
 | after | before |
 |---|---|
@@ -352,11 +354,41 @@ measurement and this one is the record of a format change.
 | `ec/tools/check_capture_claims.py:549` | `:514` (drifted before this change) |
 | `windows/tools/test_ec_watch.py:148` | `:145` |
 | `windows/tools/test_system_id_probe.py:317` | `:311` |
+| `windows/tools/test_ec_watch.py:1168` | `:1134` |
+
+**The last three rows are this change's edits to the two test files, and every
+one of them is a pin two write-ups this change does not own also carry** — two
+in [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md), one in
+[`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md). The
+widened rows put lines into both files above what those three pins name, which
+moved what each of them landed on: two assertions became a `comment` and a
+`def test_` header, which left the census's per-pin table recording `carries`
+for lines that no longer held the sentence they were cited for. The `before`
+column is what each read, and these three are the exception the paragraph
+above names: the shapes page's live prose is re-anchored rather than left,
+because leaving it would leave a citation naming a line that no longer holds
+what it is cited for. The two fenced transcripts that print the same three
+lines move with the prose — which is the note at the head of
+`0751-path-taking-reader-fates.md` and
+`test_every_declined_pin_is_also_cited_in_live_prose` between them, and a
+declined pin whose line nothing else names is a lost record rather than a
+declined duplicate. The rule is what holds; the two sides move together.
+
+With that done, the census over a tree carrying this page moved out reads
+`origin/main` figure for figure — `106` records, `28` files, `79` spellings,
+`58` targets, `74` resolves against `32` declined, the `0/14/22/5/33` split —
+so this change's edits to the two test files leave no drift behind them. The
+step from there to this tree is this page's own records, and
+`ec/tools/test_census_test_line_pins.py` carries the arithmetic.
 
 The shapes page's own transcripts — sections 1, 2, 3 and 5 — are the
 measurement's as taken, and they are a quotation of a run rather than a live
 view. Re-run the tool rather than trusting them; that is what the page says
-about itself, and this change is the case it was written for.
+about itself, and this change is the case it was written for. Two lines of the
+section-5 transcript are the exception, and they are the two this change's
+re-anchoring of the tool's own `CITATIONS` moved: a transcript naming a line
+the tool no longer cites would leave the page disagreeing with the tool about
+the tool's own output, which is the one thing a quotation is for.
 
 ---
 
@@ -399,10 +431,24 @@ what has been verified.
   that they are stale as *examples* of the format, not that they are wrong:
   they are four-column mark rows, and the reader reads them as state 1, which
   is the correct reading of a four-column row.
-- **The committed fixtures under `ec/tools/testdata/`.** All 50 hold
-  four-column mark rows and all 50 still grade identically —
-  `check_capture_claims.py` opens every one of them through `read_capture`,
-  and the fixture set is not inert to the format change, only unchanged by it.
+- **The committed fixtures.** The 50 mark-bearing captures are **48 under
+  `ec/tools/testdata` and 2 under `evidence/ec-watch`**, the split section 2
+  of the tool above already prints (`48 file(s), 239 MARK row(s)` and
+  `2 file(s), 8 MARK row(s)`), and all 50 hold four-column mark rows and all
+  50 still read the same. **That last half has a check behind it, and the tool
+  is not the one this section used to name.** `check_capture_claims.py`'s
+  `read_capture` index is built from `WATCH = "evidence/ec-watch"` alone
+  (`ec/tools/check_capture_claims.py:154`, the one call at `:549`), and a run
+  there reports *9 capture claims checked against 10 committed captures*: it
+  reads the two, and never the 48. What walks the 48 is
+  `MarkProvenanceTests.test_it_agrees_with_the_reader_the_notice_lists_marks_from`
+  in `ec/tools/test_grade_0751_isolation.py`, which reads every
+  `testdata/**/*.csv`, holds `existing_mark_provenance` to the `(ts, label)`
+  pairs `mark_labels_of` returns from the same file, and counts the marks it
+  saw — so a walk that found no captures cannot pass over the corpus.
+  `check_testdata_row_claims.py` is the other committed tool that opens those
+  fixtures, through `read_capture` at its `:656`. Either way the fixture set
+  is not inert to the format change, only unchanged by it.
 - **Anything outside this repository.** No issue and no pull request is opened
   anywhere else, and this change does not end at an upstream contribution.
 - **`.github/`.** The push token has no `workflow` scope, so no gate is wired

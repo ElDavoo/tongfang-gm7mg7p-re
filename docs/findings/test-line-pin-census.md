@@ -20,7 +20,7 @@ is the standing §4a-4d gives every figure here, and the trees differ: the count
 has been `105`, `106` and `107` at different points, and the paragraphs that
 say `106` and the paragraphs that say `107` are each true of the tree they were
 measured on. **The figures for the tree this file is in now are the ones in the
-transcript under *The measurement*, and they are `125 / 29 / 93 / 70`.** Every
+transcript under *The measurement*, and they are `126 / 29 / 91 / 68`.** Every
 other number in this file is a record of a tree, not a claim about this one.
 
 That is a real weakness in the file's shape rather than a disagreement in its
@@ -52,27 +52,50 @@ census, and the count it starts from.
 
 ```console
 $ python3 ec/tools/census_test_line_pins.py
-125 pin(s) in 29 markdown file(s): 93 distinct spelling(s), 70 distinct resolved target(s)
-  93 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
-  1 def test_, 22 assertion, 24 comment, 5 blank, 41 other (of the pins that resolve)
-  read 209 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 60 test file(s) in it
+126 pin(s) in 29 markdown file(s): 91 distinct spelling(s), 68 distinct resolved target(s)
+  94 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
+  0 def test_, 24 assertion, 22 comment, 5 blank, 43 other (of the pins that resolve)
+  read 210 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 62 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
 ```
 
+*(The `read` line's population, because it is the one figure here that depends
+on something other than the commit: the tool walks the tree it is standing in
+and excludes only `.git/`, `vendor/` and `.claude/`, so an **untracked**
+markdown file in a worktree is counted and the figure reads one higher. The
+run above is the committed tree — `git ls-files | xargs cp --parents` into a
+scratch directory, which is `git archive` without the export attributes — and
+that is what makes `210` and `62` the two numbers a reader re-running it gets.
+Run in place in a worktree carrying a `.claude-pr/` or any other untracked
+notes, it reads `211`; the difference is the untracked file and nothing else.
+The `62` is `len(suites(REPO))` and moves only when a suite is added.)*
+
 *(Re-run 2026-09-27 for #739, whose write-up
 [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md) names the
-repaired assertions in four suites and brings **nineteen** new records with it:
-`106 + 19 = 125`, `28 + 1 = 29` files, `79 + 14 = 93` spellings,
-`58 + 12 = 70` targets, `74 + 19 = 93` resolves with the `32` declined
-unmoved, and the shape split `0/14/22/5/33` → `1/22/24/5/41`. That is the
-whole of the delta, and it was measured rather than differenced: with the new
-page moved out of the tree the run reads the six figures the block above
-carried, so the step is this change's and not something that also moved. The
-pre-merge-log figures this block carried until the 2026-09-27 removal, and
-every paragraph further down that states a number, are the record of the trees
-they were measured on and stay visible per §4a-4d.)*
+repaired assertions in four suites and brings **twenty** new records with it:
+`106 + 20 = 126`, `28 + 1 = 29` files, `79 + 12 = 91` spellings,
+`58 + 10 = 68` targets, `74 + 20 = 94` resolves with the `32` declined
+unmoved, and the shape split `0/14/22/5/33` → `0/24/22/5/43` — the twenty
+records being ten assertions and ten `other`. The two steps that are smaller
+than the record step, spelling and target, are the two where a record of the
+new page's names a line a second write-up already named: `test_ec_watch.py:148`,
+`test_system_id_probe.py:317` and `test_ec_watch.py:1168` are
+`0751-mark-provenance-shapes.md:203`'s, `:204`'s and
+`0751-path-taking-reader-fates.md:139`'s lines as well, so those three are
+counted once rather than twice. That is the whole of the delta, and it was
+measured rather than differenced: with the new page moved out of the tree the
+run reads `origin/main` figure for figure, so the step is this change's and
+not something that also moved. That equality is worth the second half of a
+sentence, because the same change edits `windows/tools/test_ec_watch.py` and
+`windows/tools/test_system_id_probe.py` and so moves the line every pin *into
+those two files* lands on: three pins cited in two other write-ups moved, and
+re-anchoring them is what brings the page-removed tree back to `origin/main`
+rather than leaving a remainder to attribute to somebody. The pre-merge-log
+figures this block carried until the 2026-09-27 removal, and every paragraph
+further down that states a number, are the record of the trees they were
+measured on and stay visible per §4a-4d.)*
 
 *(Re-run 2026-09-27 after the per-merge log above was removed, and the `107`/`29`/`80`/`59` this block carried until then are left visible in §4a-4d terms: they were true of every tree up to that removal, which is what dropped one pin — the row whose only citing line was a passing mention inside the log itself. The `.claude/` in the `read` line is the worktree pruning `run-tests.sh` gained the same day, so this figure and the runner's own are the same population again. **This block is a run, not a held figure**: re-run the tool rather than editing it, which is the rule the 3,522-line chain in `tools/README.md` spent its length rediscovering.)*
 
@@ -1145,17 +1168,18 @@ the half this table exists to record.
 | [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):270 | `windows/tools/test_manual_fan_ctrl_probe.py:508` | by-path | other | carries |
 | [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):271 | `windows/tools/test_manual_fan_ctrl_probe.py:513` | by-path | assertion | carries |
 | [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):272 | `windows/tools/test_manual_fan_ctrl_probe.py:515` | by-path | assertion | carries |
-| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):353 | `windows/tools/test_ec_watch.py:148` | by-path | assertion | carries |
-| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):354 | `windows/tools/test_system_id_probe.py:317` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):355 | `windows/tools/test_ec_watch.py:148` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):356 | `windows/tools/test_system_id_probe.py:317` | by-path | assertion | carries |
+| [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md):357 | `windows/tools/test_ec_watch.py:1168` | by-path | other | carries — **the page's own "pins this change moved" table, and the third of the three its edits to the test files moved; `:1168` is the line `0751-path-taking-reader-fates.md` also cites and the one its transcript prints, so one landing line is now named from two write-ups** |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):105 | `windows/tools/test_manual_fan_ctrl_probe.py:508` | — | — | **declined** (fenced) |
-| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):203 | `windows/tools/test_ec_watch.py:145` | by-path | comment | carries |
-| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):204 | `windows/tools/test_system_id_probe.py:311` | by-path | def test_ | carries |
+| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):203 | `windows/tools/test_ec_watch.py:148` | by-path | assertion | carries — **re-anchored from `:145` by this change's own edits to `test_ec_watch.py`, which put three lines above the assertion the page names; the page's sentence says the line is an `assertEqual` comparison and `:148` is one, so the verdict is re-read rather than carried** |
+| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):204 | `windows/tools/test_system_id_probe.py:317` | by-path | assertion | carries — **re-anchored from `:311` by this change's own edits to `test_system_id_probe.py`; `:311` had become the case's own `def` header and `:317` is the `assertEqual` the page names, so the verdict is re-read rather than carried** |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):231 | `windows/tools/test_manual_fan_ctrl_probe.py:508` | by-path | other | carries |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):541 | `windows/tools/test_manual_fan_ctrl_probe.py:515` | by-path | assertion | carries |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):579 | `test_manual_fan_ctrl_probe.py:513` | by-name | assertion | **records another line** |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):618 | `windows/tools/test_manual_fan_ctrl_probe.py:508` | — | — | **declined** (fenced) |
-| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):619 | `windows/tools/test_ec_watch.py:145` | — | — | **declined** (fenced) |
-| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):620 | `windows/tools/test_system_id_probe.py:311` | — | — | **declined** (fenced) |
+| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):619 | `windows/tools/test_ec_watch.py:148` | — | — | **declined** (fenced) — **re-anchored from `:145`, the line `measure_mark_provenance.py` prints in section 5 and cites in its own `CITATIONS` table; the tool was re-anchored by this change, so the transcript moves with it** |
+| [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):620 | `windows/tools/test_system_id_probe.py:317` | — | — | **declined** (fenced) — **re-anchored from `:311`, the same tool's other site, for the same reason** |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):641 | `windows/tools/test_manual_fan_ctrl_probe.py:515` | — | — | **declined** (fenced) |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):59 | `./ec/tools/test_grade_0751_isolation.py:3736` | — | — | **declined** (fenced) |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):60 | `./ec/tools/test_grade_0751_isolation.py:3795` | — | — | **declined** (fenced) |
@@ -1165,7 +1189,7 @@ the half this table exists to record.
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):80 | `ec/tools/test_grade_0751_isolation.py:3795` | by-path | other | carries |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):81 | `ec/tools/test_grade_0751_isolation.py:3926` | by-path | other | carries |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):84 | `ec/tools/test_grade_0751_isolation.py:3916` | by-path | comment | carries |
-| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):98 | `./windows/tools/test_ec_watch.py:1134` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):98 | `./windows/tools/test_ec_watch.py:1168` | — | — | **declined** (fenced) — **re-anchored from `:1134`, the line that `grep -rn "\.existing_mark_labels"` reports on this tree; the page's own note at `:28` is why a transcript is allowed to be a pin at all, and it is why this one moves with the prose at `:139`** |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):100 | `./ec/tools/test_grade_0751_isolation.py:3500` | — | — | **declined** (fenced) |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):101 | `./ec/tools/test_grade_0751_isolation.py:3520` | — | — | **declined** (fenced) |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):102 | `./ec/tools/test_grade_0751_isolation.py:3551` | — | — | **declined** (fenced) |
@@ -1188,7 +1212,7 @@ the half this table exists to record.
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):126 | `ec/tools/test_grade_0751_isolation.py:4057` | by-path | assertion | carries |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):127 | `ec/tools/test_grade_0751_isolation.py:4166` | by-path | other | carries |
 | [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):128 | `ec/tools/test_grade_0751_isolation.py:4356` | by-path | assertion | carries |
-| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):139 | `windows/tools/test_ec_watch.py:1134` | by-path | comment | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):139 | `windows/tools/test_ec_watch.py:1168` | by-path | other | carries — **re-anchored from `:1134` by this change's own edits to `test_ec_watch.py`, which moved the comparison down 34 lines into a different case. `:1168` is the line `grep -rn` reports and the one the transcript at `:98` prints, and the page's rule at `:28` is that a transcript is only safe while live prose names the same line; the two agree here. It reads as `other` rather than `assertion` because it is the second line of a wrapped `assertEqual` — the same class `:1134` read on `origin/main` — and it carries the sentence, so the verdict is re-read rather than carried** |
 | [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md):68 | `ec/tools/test_citation_gap_scan.py:109` | by-path | assertion | carries |
 | [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md):45 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):72 | `ec/tools/test_xdata_cluster_names.py:799` | — | — | **declined** (fenced) |

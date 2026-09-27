@@ -473,13 +473,20 @@ class TheCommittedTree(unittest.TestCase):
         records, _files = census.census(tool.REPO)
         files, index = census.suites(tool.REPO)
         table, _buckets = tool.charged(records, files, index)
+        # #739 takes `test_ec_watch.py` from `10` to `11` and every other row
+        # with it, and the re-anchoring beside it is the control: that change
+        # also moved three pins *into* the two files it edits, and each was
+        # re-anchored to a line a second write-up already named, so none of the
+        # three changes a name, a file count or this table -- which is what
+        # "a repoint moves a line, not a name" says when a repoint is caused by
+        # the same change that does the repointing.
         self.assertEqual(
             {row[0]: (row[1], row[3]) for row in tool.rows(table)},
             {"ec/tools/test_xdata_cluster_names.py": (33, 10),
              "ec/tools/test_grade_0751_isolation.py": (22, 15),
              "windows/tools/test_manual_fan_ctrl_probe.py": (11, 3),
              "ec/tools/test_disasm8051.py": (4, 1),
-             "windows/tools/test_ec_watch.py": (10, 2),
+             "windows/tools/test_ec_watch.py": (11, 2),
              "ec/tools/test_xdata_register_map.py": (2, 0),
              "windows/tools/test_gpu_block_watch.py": (2, 0),
              "windows/tools/test_system_id_probe.py": (4, 1),
@@ -518,17 +525,20 @@ class TheCommittedTree(unittest.TestCase):
         # file's concentration and this sum each take exactly one and the
         # second entry here is unmoved.
         # Re-derived again for #739, and the delta is its write-up alone: its
-        # nineteen records take the first row not at all (it names
+        # twenty records take the first row not at all (it names
         # `test_xdata_cluster_names.py` zero times) and the second `36 -> 37`,
         # so the sum holds at `80` and only the denominator moves,
-        # `106 -> 125`. The one is `test_grade_0751_isolation.py` and the other
+        # `106 -> 126`. The one is `test_grade_0751_isolation.py` and the other
         # two are the suites whose repaired assertions it names, which is the
         # "a repoint moves a line, not a name" distinction the paragraph above
         # draws -- except that these are new records rather than repointed
-        # ones, and so they reweight.
+        # ones, and so they reweight. The third re-anchoring the write-up
+        # names lands in neither of these two files, and moves no occurrence
+        # into or out of either, so it takes nothing here — the same
+        # distinction read from the other end.
         self.assertEqual([row[4] for row in cited[:2]], [43, 37])
         self.assertEqual(cited[0][4] + cited[1][4], 80)
-        self.assertEqual(len(records), 125)
+        self.assertEqual(len(records), 126)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
         # Three figures, and each moves by construction the moment a suite
