@@ -87,8 +87,9 @@ self-test passed: the helper bodies and terms match pd-xdata-overlap.md 3, the f
 ```
 
 (The elided rows are one pair per helper, checking the term string and the
-`unmodelled` flag against `pd-index-helpers.csv`, and one per row of
-`pd-base-strides.csv`; the full run prints 53.)
+`unmodelled` flag against `pd-index-helpers.csv`, one per row of the
+`pd-reached-helpers.csv` reached-entry table, and one per row of
+`pd-base-strides.csv`; the full run prints 230.)
 
 That self-test is the oracle for everything below. The helper bodies are
 pinned against the `r2 -a 8051` listings `pd-xdata-overlap.md` §3 already
@@ -105,10 +106,13 @@ $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --callers-csv
           > ec/annotations/pd-index-callers.csv
 $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --strides-csv \
           > ec/annotations/pd-base-strides.csv
+$ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --reached-csv \
+          > ec/annotations/pd-reached-helpers.csv
 ```
 
 `--strides-csv` with no argument is the whole-image census, which is what the
-committed file holds; §7 reads it.
+committed file holds; §7 reads it. `--reached-csv` with no argument is the low
+run, which is what `pd-reached-helpers.csv` holds; §2.3 reads it.
 
 Every `$ r2 …` block below was produced by running radare2 5.5.0, which
 `.github/actions/project-setup/action.yml` installs (`ec-0x07d0-sites.md` §1's
@@ -214,11 +218,22 @@ on it.
 
 ### 2.3 Beyond the eleven
 
-The eleven are not the whole family. The 151 base sites in §3 hand DPTR to 78
-distinct entries, of which 9 are from the table above; 38 of the other 69
-decode under the term model's byte templates and the rest do not. Enumerating
-them is not attempted here — it is the next question this opens, not a gap in
-what is claimed.
+The eleven are not the whole family. The 151 base sites in §3 hand DPTR to ~~78~~
+**80** distinct entries, of which 9 are from the table above. **[#67 enumerated
+them all](pd-reached-helpers.md):** of the 78 the older model saw, 38 decode
+under the term model's byte templates and ~~31~~ **20** do not; the two extra
+entries are ones a `mov rN,a` in front of a call had been hiding from
+`--bases`. Each carries a row in `pd-reached-helpers.csv` — a term string, or
+`unmodelled` with the listing quoted rather than fitted.
+
+That file is also what §3's no-term sites are read against, and it is where the
+one rule this added is stated: on an 8051 `MOV Rn,A` takes its source from A and
+writes only the register bank, so A's symbol carries through it. That is a
+per-opcode rule in the walkers, not a new byte template, and `0x99E2` — the
+entry this section named as the reason `0x04A4` has sites with no term — is the
+§2.1 fall-through idiom behind it. **Nothing is left unattempted here, and the
+20 entries that still do not decode are reported as `unmodelled` with their
+bytes, which is a result rather than a gap.**
 
 (The model has five templates since §7, not the two it had when this count was
 first taken. The count is unchanged: none of the 69 decodes under one of the
@@ -238,13 +253,13 @@ are used as an immediate DPTR base somewhere in the PD image.
 ### 3.1 One stride
 
 Across all 151 sites the term decode produces exactly two stride constants:
-`0x60`, used 100 times, and `0x1F`, used 3 times. Every base in the run whose
-sites resolve a stride at all resolves `0x60`; where `0x1F` appears it is a
-second, inner term *alongside* `0x60` at the same site, never instead of it.
-The `0x5E` and `0x77` strides `ec-0x07d0-sites.md` §4 saw against other bases
-are not produced by the term decode for any site in this run — which is a
-statement about what this method resolves, not about what the 35 unresolved
-sites do.
+`0x60`, used ~~100~~ **124** times, and `0x1F`, used 3 times. Every base in the
+run whose sites resolve a stride at all resolves `0x60`; where `0x1F` appears
+it is a second, inner term *alongside* `0x60` at the same site, never instead
+of it. The `0x5E` and `0x77` strides `ec-0x07d0-sites.md` §4 saw against other
+bases are not produced by the term decode for any site in this run — which is a
+statement about what this method resolves, not about what the ~~35~~ **11**
+unresolved sites do.
 
 That sentence is about *this run* and stays as written. Outside it the same
 decode does produce `0x5E` and `0x77`, against bases in `0x08xx`; §7 has the
@@ -252,10 +267,11 @@ whole-image census and the four sites `ec-0x07d0-sites.md` §4 names.
 
 ### 3.2 The record stride is `0x260`, not `0x60`
 
-~~75~~ **82** of the 151 sites apply both a `×0x60` term and a `0x200×` term.
+~~75~~ **98** of the 151 sites apply both a `×0x60` term and a `0x200×` term.
 In ~~37~~ **40** of them both terms name an identified register, and in **all
-40 it is the same register**; the remaining 42 have one side unresolved and are
-counted neither way. Where the register is shared the two terms collapse:
+40 it is the same register**; the remaining ~~42~~ **58** have one side
+unresolved and are counted neither way. Where the register is shared the two
+terms collapse:
 
     Rn × 0x60 + Rn × 0x200  =  Rn × 0x260
 
@@ -276,6 +292,17 @@ identified, still not one where the two registers differ. Nothing here is a
 retraction; the old numbers under-counted, and they are left visible per
 `../../docs/findings.md` §4a-4d.
 
+**`0x260` survives the wider decode, and the zero is the answer.** #67
+enumerated every entry §3 reaches and added one walker rule, `mov rN,a`
+([pd-reached-helpers.md](pd-reached-helpers.md) §4), which took the run from
+~~82~~ **98** two-term sites. All sixteen of the new ones have one side
+unresolved and are counted neither way, so the `40` does not move — and, the
+point of the exercise, **not one of the sixteen names two different
+registers.** Had the widening turned up an `Rn×0x60 + Rm×0x200` with `Rn ≠ Rm`,
+`0x260` would have been an artefact of the subset the older templates happened
+to resolve. It is not. The `0x1F` term does not move either: still three sites,
+still two bases, still an inner index alongside `0x60`.
+
 The `0x1F` term, where it appears, always names a *different* register from the
 `0x260` index — a second, inner index. `0x260` is not a whole multiple of
 `0x1F`, so the two do not tile; nothing here says what the inner index
@@ -286,21 +313,29 @@ addresses.
 `pd-xdata-overlap.md` §5.2 observed that `0x04A1` through `0x04A6` are
 contiguous and all have the index-helper shape. The term decode makes that
 concrete: every one of them that resolves a stride resolves the same `×0x60`,
-and five of the six have sites carrying the `0x200×` page term as well.
+and **all six** now have sites carrying the `0x200×` page term as well —
+`0x04A4` joined them when this change gave it its first, `0xB64F`
+(`DPTR = 0x04A4 + A×0x60 + 0x200×R6`). *(The sentence read "five of the
+six" above; it is left written, true of the tree it was measured on, per
+§4a-4d.)*
 
 | base | sites | strides seen | sites with the `0x200×` term |
 |---|---|---|---|
 | `0x04A1` | 3 | `0x60` | 3 |
-| `0x04A2` | 5 | `0x60` | 4 |
+| `0x04A2` | 5 | `0x60` | 5 |
 | `0x04A3` | 5 | `0x60` | 4 |
-| `0x04A4` | 2 | — | 0 |
-| `0x04A5` | 3 | `0x1F` `0x60` | 2 |
+| `0x04A4` | 2 | ~~—~~ `0x60` | ~~0~~ 1 |
+| `0x04A5` | 3 | `0x1F` `0x60` | 3 |
 | `0x04A6` | 4 | `0x1F` `0x60` | 4 |
 | `0x04A8` | 1 | `0x60` | 1 |
 
-`0x04A4`'s two sites both hand DPTR to a routine the term model does not cover
-(`0x99E2` begins `mov r6,a`), so its dash is "not resolved by this method", not
-"no stride".
+`0x04A4`'s dash was "not resolved by this method", never "no stride", and #67
+is what resolved it: one of its two sites hands DPTR to `0x99E2`, which begins
+`mov r6,a` and is the §2.1 fall-through idiom, so the row now reads `0x60`
+with one site carrying the page term. **The other site, `0x9A94`, resolves
+nothing at all** — it is `mov dptr,#0x04a4` immediately followed by `ret`
+([pd-reached-helpers.md](pd-reached-helpers.md) §6) — so `0x04A4` is the one
+row of this table where a base is now half-resolved.
 
 The four `0x04A6` sites in full, with the chain of helpers each one runs:
 
@@ -467,12 +502,15 @@ anywhere in this file.
   by the same test that caught `0x7420`. That would be a miss, not a
   refutation, which is why the byte-scan pick is printed beside it rather than
   replaced by it.
-- **`0x04A4`'s dash, and the 35 sites with no resolved term, mean "not
-  resolved by this method"**, never "no arithmetic there". Most of them hand
-  DPTR to one of the 69 unnamed entries in §2.3. The same reading applies to
-  §7's census: the 3047 whole-image sites with no stride, the `0x0870` base
-  that only `--sites` reaches, and the two chains that stop mid-routine in
-  §7.3 are all "not resolved here", and none of them is evidence of absence.
+- **The ~~35~~ 11 sites with no resolved term mean "not resolved by this
+  method"**, never "no arithmetic there". #67 enumerated the entries they
+  reach ([pd-reached-helpers.md](pd-reached-helpers.md)); the eleven that
+  remain are all `mov dptr,#imm` immediately followed by `ret`, which hands
+  the pointer to a caller rather than indexing anything here. The same reading
+  applies to §7's census: the ~~3047~~ **2987** whole-image sites with no
+  stride, the `0x0870` base that only `--sites` reaches, and the two chains
+  that stop mid-routine in §7.3 are all "not resolved here", and none of them
+  is evidence of absence.
 - **§7's "no `0x200×` term on the `0x5E`/`0x77` arrays" is a result of this
   decode, not a proof about the firmware.** It rests on five byte templates and
   on chains that stop where they say they stop; an index term applied by an
@@ -507,10 +545,11 @@ cannot do.
   sites. That is the same human-at-the-machine step `pd-xdata-overlap.md` §7
   already asks for, and it is out of reach from a GitHub-hosted runner
   (`../../CLAUDE.md`).
-- **Static, and reachable from here:** enumerate the 69 unnamed helper entries
-  of §2.3 and check whether the unresolved sites in §3 collapse to the same
-  `0x260`/`0x1F` geometry. That is a bounded piece of work on committed inputs
-  and would move the 35 no-term sites one way or the other.
+- **Static, and reachable from here: done.** #67 enumerated every entry §3
+  reaches ([pd-reached-helpers.md](pd-reached-helpers.md)) and checked whether
+  the unresolved sites collapse to the same `0x260`/`0x1F` geometry. They do:
+  24 of the 35 no-term sites resolved, and **not one of the sixteen newly
+  visible two-term sites names two different registers** (§3.2).
 - **Also static:** a recursive call graph of the PD image would replace §4's
   heuristic entry choice with a real one and could bound the index ranges by
   following the callers upward. That is `#26`'s territory and the reason this
@@ -552,20 +591,26 @@ base they load there is `0x07D0`, the index, and the array base arrives later.
 stride census over the whole image: 3176 PD-image MOV DPTR site(s), 7 stride constant(s) resolved
 bases are effective bases: the one a rebasing chain ends on, not the site's own immediate
 
-0x60                100 site(s)   33 base(s)    82 with 0x200×  0x0400 0x0404 0x0408 0x040C 0x0410 0x0418 0x041C 0x0420 0x0424 0x0426 0x0428 0x0429 ... and 21 more (see --strides-csv)
-0x17                  9 site(s)    3 base(s)     0 with 0x200×  0x0A15 0x0A27 0x0A35
-0x5E                  6 site(s)    4 base(s)     0 with 0x200×  0x08E7 0x08ED 0x08F4 0x08FC
-0x67                  6 site(s)    5 base(s)     0 with 0x200×  0x0661 0x0667 0x069B 0x07A3 0x07C4
-0x77                  6 site(s)    2 base(s)     0 with 0x200×  0x0896 0x089B
+0x60                124 site(s)   37 base(s)    98 with 0x200×  0x0400 0x0404 0x0408 0x040C 0x0410 0x0418 0x041C 0x0420 0x0424 0x0426 0x0428 0x0429 ... and 25 more (see --strides-csv)
+0x5E                 29 site(s)    9 base(s)     0 with 0x200×  0x08E7 0x08E9 0x08ED 0x08F3 0x08F4 0x08F6 0x08F8 0x08F9 0x08FC
+0x17                 17 site(s)    7 base(s)     0 with 0x200×  0x0A13 0x0A15 0x0A27 0x0A29 0x0A2C 0x0A2D 0x0A35
+0x77                 10 site(s)    4 base(s)     0 with 0x200×  0x086F 0x0896 0x089A 0x089B
+0x67                  7 site(s)    6 base(s)     0 with 0x200×  0x0661 0x0667 0x069A 0x069B 0x07A3 0x07C4
 0x1F                  3 site(s)    2 base(s)     3 with 0x200×  0x04A5 0x04A6
 0x04                  2 site(s)    2 base(s)     0 with 0x200×  0x00C0 0x00C8
-no stride resolved 3047 site(s)  448 base(s)    16 with 0x200×  0x0000 0x0001 0x0002 0x0003 0x0004 0x0005 0x0006 0x0007 0x0008 0x0009 0x000A 0x000B ... and 436 more (see --strides-csv)
+no stride resolved 2987 site(s)  438 base(s)    16 with 0x200×  0x0000 0x0001 0x0002 0x0003 0x0004 0x0005 0x0006 0x0007 0x0008 0x0009 0x000A 0x000B ... and 426 more (see --strides-csv)
 ```
+
+**Struck figures are the pre-#67 census**, kept beside these per
+`../../docs/findings.md` §4a-4d: `0x60` 100 sites / 82 paged / 33 bases,
+`0x17` 9/0/3, `0x5E` 6/0/4, `0x67` 6/0/5, `0x77` 6/0/2, `unresolved`
+3047/16/448. Nothing is retracted — the walker learned one instruction, and
+every figure that did not depend on it is unchanged.
 
 `pd-base-strides.csv` is the same table with every base spelled out; the text
 view elides after twelve and says how many it elided.
 
-Read it with its limits in front. 3047 of the 3176 `MOV DPTR` sites resolve no
+Read it with its limits in front. 2987 of the 3176 `MOV DPTR` sites resolve no
 stride at all — most of them are not index sites in the first place, and the
 rest are §5's "not resolved by this method". The census is the `MOV DPTR` path
 only, so the two sites §7.3 decodes are *in* it as unresolved rows: their
@@ -578,23 +623,38 @@ What the census does settle, over the span it covers:
 - `0x5E` and `0x77` are real strides in this image and the decode resolves
   them — so §3.1's "not for any site in this run" was a statement about the
   run, and it stays true of the run.
-- The `0x5E` bases (`0x08E7`, `0x08ED`, `0x08F4`, `0x08FC`) and the `0x77`
-  bases (`0x0896`, `0x089B`) are two tight clusters, each spanning under `0x16`
-  bytes — the same contiguous-field-offset shape §3.3 found for
-  `0x04A1`-`0x04A6`. What sits in those records is not named here, for the same
-  reason it is not named in §5.
+- The `0x5E` bases are one tight cluster, `0x08E7` through `0x08FC`, spanning
+  `0x15` bytes — the contiguous-field-offset shape §3.3 found for
+  `0x04A1`-`0x04A6`. **The `0x77` bases are no longer one cluster**: `0x0896`,
+  `0x089A` and `0x089B` still are, but `0x086F` sits `0x27` bytes below `0x0896`,
+  and that is §8.3's independently entered `0x56D1` suffix, which reaches a
+  consumer without executing the multiply above it. What sits in these records
+  is not named here, for the same reason it is not named in §5.
 - **Not one site with a `0x5E`, `0x77`, `0x17`, `0x67` or `0x04` stride also
   applies a `0x200×` term.** Every site that applies one *and* resolves a
-  stride resolves `×0x60` — the 82 of §3.2, three of which also resolve
-  `×0x1F` — i.e. it is in the `0x0400`-`0x04A8` run. A further 16 sites apply a
-  page term with no stride resolved at all, and those bound nothing either way.
+  stride resolves `×0x60` — the ~~82~~ **98** of §3.2, three of which also
+  resolve `×0x1F` — i.e. it is in the `0x0400`-`0x04A8` run. A further 16 sites
+  apply a page term with no stride resolved at all, and those bound nothing
+  either way. This held across a census that got 16 two-term sites wider, which
+  is the strongest form of the claim this decode can make.
 
 ### 7.3 The four addresses
 
 **Historical tool output is retained in this section.** Correction (#74):
 `0x34D9` is `DPTR ← 0x08FC + low8(A×0x5E)` and `0xC2FA` is
 `DPTR ← 0x08F8 + low8(R7×0x5E)`, not the unrestricted products printed
-below. `0x578E` constructs **A:R1**, not R2:R1. The independent r2
+below. `0x578E` constructs **A:R1**, not R2:R1.
+
+**Correction (#67), and it is a stop reason, not an address.** #67 added one
+walker rule, `mov rN,a` ([pd-reached-helpers.md](pd-reached-helpers.md) §4), so
+two stop reasons printed below name the instruction *after* a `mov rN,a` that
+used to end the decode: `0x34D9`'s is now `0x0FB1 \`inc dptr\`` rather than
+`0x0FB0 \`mov r4,a\``, and `0xDA9B`'s chain ends at `` `inc  a` at 0xDAA9 ``
+rather than `` `mov  r7,a` at 0xDAA8 ``. **No term string in this section
+moves** — `--self-test` pins all four of them — and the r2 listings below are
+the bytes, unchanged.
+
+The independent r2
 instruction listings themselves are unchanged and show why these corrections
 are necessary. `low(…)` below now prints as `low8(…)`.
 
@@ -891,15 +951,26 @@ python3 ec/tools/pd_index_geometry.py --accesses-csv all > /tmp/pd-index-accesse
 cmp /tmp/pd-index-accesses.csv ec/annotations/pd-index-accesses.csv
 python3 ec/tools/pd_index_geometry.py --access-strides-csv all > /tmp/pd-access-strides.csv
 cmp /tmp/pd-access-strides.csv ec/annotations/pd-access-strides.csv
+python3 ec/tools/pd_index_geometry.py --reached-csv > /tmp/pd-reached-helpers.csv
+cmp /tmp/pd-reached-helpers.csv ec/annotations/pd-reached-helpers.csv
 bash .github/scripts/agent-gates.sh
 ```
 
-The legacy census still has **151 low-run MOV-DPTR anchors**, **3,176
-whole-image anchors**, and **3,047 anchors with no multiplication constant
-resolved**. Its default spans and first-MOVX stopping rule are unchanged.
-The helper/caller CSVs and `pd-base-strides.csv` remain unchanged. New access
+The legacy census still has **151 low-run MOV-DPTR anchors** and **3,176
+whole-image anchors**. Its default spans and first-MOVX stopping rule are
+unchanged. The helper/caller CSVs remain unchanged.
+New access
 rows are not added to 3,176: they use a different counting unit and overlap
 with legacy anchors (the `0x07D0` stores are a concrete example).
+
+**`pd-base-strides.csv` is the one baseline #67 moved, and by design.** The
+`mov rN,a` rule changes what `chain_from` resolves at a site, so the anchors
+with no multiplication constant resolved go from **3,047** to **2,987** and
+`0x60` goes from 100 sites to 124; the 3,176 total and every stride's
+page-term column are unchanged. See [pd-reached-helpers.md](pd-reached-helpers.md)
+§8 for the full diff. The other four CSVs are byte-identical, and
+structurally so: `access_walk()` is a separate walker that never calls
+`walk_helper()` or `chain_from()`.
 
 The new span filter is on the **constructed effective base**, not on an
 anchor's MOV-DPTR immediate. Thus selecting `0x0800-0x08FF` can include
@@ -1027,18 +1098,22 @@ multiple constants occur under each, so totals are **not additive**. The
 `unresolved` group means no constant was extracted, not absence of arithmetic.
 Unknown symbols and unestablished consumers remain represented.
 
-| constant | legacy MOV-DPTR anchors (unchanged) | new decoded template accesses | new construction-only candidates |
+| constant | legacy MOV-DPTR anchors | new decoded template accesses | new construction-only candidates |
 |---|---:|---:|---:|
-| `0x5E` | 6 | 244 | 97 |
-| `0x77` | 6 | 80 | 37 |
-| `0x17` | 9 | 53 | 61 |
+| `0x5E` | ~~6~~ 29 | 244 | 97 |
+| `0x77` | ~~6~~ 10 | 80 | 37 |
+| `0x17` | ~~9~~ 17 | 53 | 61 |
 | `0x38` | not resolved | 0 | 4 |
 | `0x03` | not resolved | 0 | 2 |
-| unresolved constant | 3,047 | 51 (previously 33) | 24 (previously 19) |
+| unresolved constant | ~~3,047~~ 2,987 | 51 (previously 33) | 24 (previously 19) |
+
+The legacy column is struck because #67 widened the walker (§8.2); the other
+two columns and the 3,176 total are unchanged, because
+`access_walk()` is a separate walker that never calls `walk_helper()` or
+`chain_from()`. The whole-image base lists are §7.2's as re-measured.
 
 The new `0x5E` access bases include **`0x08F8`**; the new `0x77` access
-bases include **`0x0870`**. The legacy base lists remain exactly those in §7.2.
-There are also 186 unresolved-constant anchor snapshots (previously 185), kept separately in
+bases include **`0x0870`**. There are also 186 unresolved-constant anchor snapshots (previously 185), kept separately in
 the stride table. A candidate can contribute to a constant group in one
 framing and unresolved in another; these are not probabilities or a partition
 of runtime traffic.

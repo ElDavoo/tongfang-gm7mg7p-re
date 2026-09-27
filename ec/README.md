@@ -708,6 +708,17 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   resolve no stride, kept in the file rather than filtered out, because "not
   resolved by this method" is a result too. Produced by
   `tools/pd_index_geometry.py --strides-csv` and checked by its `--self-test`.
+- **`annotations/pd-reached-helpers.md`** — the full population behind
+  `annotations/pd-index-geometry.md` §2's eleven hand-named helpers: every entry
+  the 151-site low run hands DPTR to, one row each, carrying the term it decodes
+  to or `unmodelled` with its listing quoted rather than fitted. 80 entries, 60
+  decode, 20 do not. Adds the one walker rule the enumeration needed (`mov rN,a`
+  takes its source from A, so A survives it), which resolved 24 of the 35
+  no-term sites and — the answer to §3.2's open question — left `0x260` intact:
+  none of the sixteen newly visible two-term sites names two different
+  registers. `annotations/pd-reached-helpers.csv` is the per-entry table,
+  produced by `tools/pd_index_geometry.py --reached-csv`; the same rows are
+  readable with `--reached`.
 - **`tools/build_ec_decompile.py`** — builds the Ghidra project and the
   decompiled C. Imports the three programs, seeds them, applies
   `annotations/ghidra-functions.csv` and the generated XDATA names, and
