@@ -18,6 +18,7 @@ than asserting them.
 The descriptions are not checked. They are prose -- what a suite stands in
 for -- and the runner has no reason to know any of it, so those stay by hand.
 """
+import posixpath
 import re
 from pathlib import Path
 import unittest
@@ -34,6 +35,18 @@ README = HERE / 'README.md'
 ROW_PATH = re.compile(r'`([^`]+)`')
 
 
+# Trees a `find` from the repository root walks into but the committed tree does
+# not contain. `.claude/` is the one that bites: `git worktree add` under
+# `.claude/worktrees/` puts a whole second checkout inside this one, so a
+# developer with any worktree open counts three suites CI cannot see and a
+# developer with none does not -- the same figures, reproducible on one machine
+# and not the other. `vendor/` holds binaries, not suites. This is the pruning
+# `ec/tools/census_test_line_pins.py` already carries for the same reason; the
+# two lists should be read together, because a suite set that is well defined in
+# one tool and not the other is two answers to one question.
+PRUNED = ('.git', '.claude', 'vendor')
+
+
 def discover():
     """The suites `run-tests.sh` finds, by the runner's own rule.
 
@@ -42,14 +55,32 @@ def discover():
     this check has never heard of is a suite with no row, and that is the
     half that broke. Recomputed per call rather than cached at import, so a
     case can point it at a scratch tree.
+
+    `PRUNED` is walked out of the top of the relative path, so a checkout
+    nested at any depth is skipped rather than only one at the root.
     """
     found = set()
     for path in REPO.rglob('test_*.py'):
         rel = path.relative_to(REPO)
-        if rel.parts[0] == '.git':
+        if rel.parts[0] in PRUNED:
             continue
         found.add(rel.as_posix())
     return found
+
+
+def is_suite_row(path):
+    """Whether a table row is about a suite, as opposed to a plain tool.
+
+    The table documents checkers as well as suites -- `check_findings_frozen.py`
+    and `gen_findings_index.py` are rows here and have no `test_` suite of
+    their own, because a checker with no suite is exactly the thing this table
+    exists to make visible. So the "a row outlived its file" direction applies
+    to rows that name a `test_*.py`, and a row naming any other tool is
+    documentation the reverse check has no opinion about. Without this the
+    check is red on a correct table, which is how a gate teaches everyone to
+    ignore it.
+    """
+    return posixpath.basename(path).startswith('test_')
 
 
 def table_rows(text):
@@ -140,8 +171,11 @@ class SuiteTableTests(unittest.TestCase):
             'what the suite stands in for -- is prose it has no reason to '
             'know. Add both.')
 
-    def test_every_row_names_a_discovered_suite(self):
-        stale = sorted(set(readme_rows()) - discover())
+    def test_every_suite_row_names_a_discovered_suite(self):
+        # Suite rows only. A row for a checker with no suite of its own is a
+        # correct row; see `is_suite_row`.
+        stale = sorted(p for p in set(readme_rows())
+                       if is_suite_row(p) and p not in discover())
         self.assertFalse(
             stale,
             f'tools/README.md has {len(stale)} row(s) for a suite that is '
