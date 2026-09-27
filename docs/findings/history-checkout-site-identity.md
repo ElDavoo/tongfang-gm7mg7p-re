@@ -7,8 +7,10 @@ sites in that suite was a **count** and a **set**, and both were structural: the
 were satisfied by construction on the very edit they most needed to catch. This
 page keeps the old source, records what the tree holds, and states the
 replacement — `ec/tools/history_checkout_sites.py`, a keyed table read by the
-same suite — with the five cases that show it failing where the count stayed
-green.
+same suite — with the seven controls below: five of them name a row that goes
+red, the other two show the hold surviving a rewrap and the phrase the two tools
+share, and the seventh is the `PROSE_FILES` shrink the file-set comparison
+could not see.
 The finding #1009 made is not in question here and nothing here re-derives it:
 **the five sentences the tool prints today all name a job, and
 `prose_problems()` is empty on this tree.** What was wrong is the tripwire.
@@ -59,8 +61,16 @@ five:
 | 1 | `ec/tools/verify_reassembly.py` | `:82` | the docstring's usage block, as a comment |
 | 2 | same file | `:1317` | the comment above `HISTORY_REQUIREMENT` |
 | 3 | same file | `:1324` | `HISTORY_REQUIREMENT` itself |
-| 4 | `ec/tools/measure_index_repair_visibility.py` | `:111` | the sibling's comment — **two sentences, one site** |
-| 4 | same file | `:123` | the sibling's `HISTORY_REQUIREMENT` |
+| 4 | `ec/tools/measure_index_repair_visibility.py` | `:116` | the sibling's comment — **two sentences, one site** |
+| 4 | same file | `:128` | the sibling's `HISTORY_REQUIREMENT` |
+
+*(The sibling's two are `:116` and `:128` **on this tree**. The issue carried
+`:111`/`:123`, which is what the report gives at `d3304785`, the tree #1030
+forked from; they were re-taken here rather than carried forward, and
+`python3 ec/tools/history_checkout_sites.py` prints every row beside the line it
+matched, which is how to re-derive them. **The figures in this table are a
+reading of a tree, not part of the hold** — the *row* is what a line cannot be,
+and that argument is under its own heading below.)*
 
 Four sites, five sentences, and the floor says `>= 4`. **So 5 → 4 is green**: a
 reader that quietly stops finding one corrected site is caught by neither case.
@@ -88,8 +98,11 @@ being written. Re-run
 `grep -n '^PROSE_FILES\|for rel in PROSE_FILES'
 ec/tools/check_history_checkouts.py` to re-derive them, which is the same
 "hold the address" rule the paragraph this sits in is arguing for.)*
-**Deleting an entry from `PROSE_FILES` left this case green**, and that is
-exactly the edit that takes a corrected site out of the checker's reach. What it
+**Deleting an entry from `PROSE_FILES` left this case green** — control G, on
+the committed tree — and that is exactly the edit that takes a corrected site
+out of the checker's reach: the tuple is the one `prose_sites()` iterates, so a
+file leaves the set its found paths are compared against at the same moment it
+leaves the set that is read, and both sides shrink together. What it
 demonstrated is the shape
 [`history-checkout-claims.md`](history-checkout-claims.md) §"The suite, and why
 the checker needed one" exists against — *"a checker that has quietly stopped
@@ -166,11 +179,12 @@ it.
 
 ## The controls, and what each one proves
 
-Six, all on the suite's existing `ScratchTree` fixture, all reading the
-committed files through a `committed()` helper rather than a pasted copy — the
-same reason the corrected sentences are read out of the tree rather than carried
-as constants. **Each asserts which row is named, not that some list is
-non-empty**, which is the argument this suite's own docstring makes about the
+Seven: six on the suite's existing `ScratchTree` fixture, and **G on the
+committed tree**, which is the only place its edit can be shown. All of them
+read the committed files through a `committed()` helper rather than a pasted
+copy — the same reason the corrected sentences are read out of the tree rather
+than carried as constants. **Each asserts which row is named, not that some list
+is non-empty**, which is the argument this suite's own docstring makes about the
 `STALE_*` paraphrases — with the two exceptions noted below, which demonstrate
 that the hold *stays* green rather than that a row goes red.
 
@@ -187,12 +201,15 @@ this method: a reader that stopped finding this site and a sentence taken out of
 the file are the same thing here, and neither is reported as absent
 ```
 
-**B — the sibling gone.** The sibling absent from the tree, which is what
-dropping an entry from `PROSE_FILES` looks like from in here. Three sites, and
-both sibling rows named — one message each, each saying `0 site(s) were found in
-that file`. Reached through a scratch tree rather than by rebinding
+**B — the sibling gone.** The sibling absent from the tree, which is what a
+prose file the reader cannot open looks like from in here. Three sites, and both
+sibling rows named — one message each, each saying `0 site(s) were found in that
+file`. Reached through a scratch tree rather than by rebinding
 `chc.PROSE_FILES`, which reaches identical code and keeps the fixture the suite
-already uses.
+already uses. **This is not the `PROSE_FILES` edit and is not claimed to be**:
+with the sibling gone from the tree but still listed, the old file-set
+comparison goes *red*, because a file the reader could not find is the one
+direction it could see. The shrink that leaves it green is control G.
 
 **C — the rewrap.** Site 2's comment at different line breaks, same words. The
 report gives the sentence a **different line** (`:1317` → `:1318`) and the table
@@ -225,6 +242,19 @@ and **it is also the reachability argument for the fragment key**: control C's
 rewrap is a merge in the other direction, and a rewrap that merged two sentences
 of one file into one is a move a reader can make, so the condition had to be
 judged rather than left as a message nobody could see.
+
+**G — the `PROSE_FILES` shrink.** The edit the file-set comparison was blind to,
+on the committed tree rather than a scratch one: `chc.PROSE_FILES` with the
+sibling dropped from it, restored by the case's own cleanup. The old
+`assertEqual(found, set(chc.PROSE_FILES))` runs verbatim and is **green** —
+`prose_sites()` iterates the tuple, so the file leaves the set its found paths
+are compared against at the same moment it leaves the set that is read — and on
+that same read the keyed hold names both of the rows the file was carrying, each
+by its own fragment rather than by a count. This is the case §"The two
+tripwires" above rests the "deleting an entry left it green" sentence on, and
+the committed tree is the only place it can be shown: the point is two rows that
+really are in a file, and a scratch tree has to lose the file outright to make
+the comparison see anything at all, which is control B and a different result.
 
 **Falsifying the table itself**, which is the other half of the evidence: delete
 one row, re-run the suite, and the committed-tree case goes red on

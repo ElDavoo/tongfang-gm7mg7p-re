@@ -40,8 +40,11 @@ one any more. **The corrected prose sites are held by value too, in
 `ec/tools/history_checkout_sites.py`** -- each one by its file and a fragment of
 its sentence, rather than by the count and the file-set comparison that could
 not see a site go missing -- and the six cases in `ProseTests` that reach it
-are what show that hold: five of them name a row that goes red, and the sixth
-shows the hold surviving a rewrap and the phrase the two tools share.
+are what show that hold: four of them name a row that goes red, and the other
+two show the hold surviving a rewrap and the phrase the two tools share. A
+seventh, in `CommittedTreeTests` beside the keyed hold itself, is the
+`PROSE_FILES` shrink the file-set comparison could not see: that comparison
+green on the committed tree, both of the dropped file's rows named.
 """
 import importlib.util
 import io
@@ -807,12 +810,16 @@ class ProseTests(ScratchTree):
         self.assertIn(row.what, found[0])
 
     def test_the_sibling_going_unread_is_two_rows_named_not_a_shorter_list(self):
-        # Control B. The sibling absent from the tree, which is what dropping a
-        # file from `PROSE_FILES` looks like from in here: the file-set
-        # comparison could only fire on a file that is *not* in `PROSE_FILES`, so
-        # that edit left it green while two corrected sites went unread. Reached
-        # through a scratch tree rather than by rebinding `PROSE_FILES`, which
-        # reaches identical code and keeps the fixture this suite already uses.
+        # Control B, and the tree-absence case only: a prose file the reader
+        # cannot open is silence, and the keyed hold names a row for each of the
+        # two sentences that file was carrying. **This is not the `PROSE_FILES`
+        # edit**, and claiming it here would claim the opposite: with the sibling
+        # gone from the tree but still listed, the old file-set comparison goes
+        # *red* -- it can fire on a file the reader did not find, which is the
+        # one direction it could see. The shrink that leaves it green is the
+        # committed case below. Reached through a scratch tree rather than by
+        # rebinding `PROSE_FILES`, which reaches identical code and keeps the
+        # fixture this suite already uses.
         self.workflow()
         self.tool(FIRST_TOOL, committed(FIRST_TOOL))
         sites, _depth, _prose, out = self.sites()
@@ -1024,7 +1031,9 @@ class CommittedTreeTests(unittest.TestCase):
         # The `len(sites) >= 4` this case also used to assert is gone, and the
         # keyed hold below subsumes it with the half a count cannot have: *which*
         # site stopped being found. A reader that has stopped finding every site
-        # at all is still diagnosed, by the case above this one.
+        # at all is still diagnosed, by that keyed hold rather than by a case
+        # elsewhere: with no sites at all, no row matches anything, so
+        # `hcs.problems()` returns one message per row.
         workflows, unreadable = chc.load_workflows(str(REPO))
         sites = chc.prose_sites(str(REPO), workflows, unreadable)
         self.assertFalse(chc.prose_problems(sites), chc.prose_problems(sites))
@@ -1041,6 +1050,47 @@ class CommittedTreeTests(unittest.TestCase):
         workflows, unreadable = chc.load_workflows(str(REPO))
         sites = chc.prose_sites(str(REPO), workflows, unreadable)
         self.assertEqual(hcs.problems(sites), [])
+
+    def test_a_file_dropped_from_prose_files_left_the_old_comparison_green(self):
+        # Control G, and the edit control B above is not: dropping a file from
+        # `PROSE_FILES` rather than losing it from the tree. `prose_sites()`
+        # iterates that tuple, so the file leaves the set its found paths are
+        # compared against at the same moment it leaves the set that is read --
+        # both sides shrink together, the old assert stays green, and two
+        # corrected sites go unread under it. The old comparison is run verbatim
+        # below, and the message on that assertion says so: a run of it that went
+        # red would be showing the other edit.
+        #
+        # The committed tree, because the point is two rows that really are in a
+        # file: a scratch tree has to lose the file outright to make the
+        # comparison see anything, and that is control B. `PROSE_FILES` is
+        # restored by the cleanup rather than at the end of the case, so a
+        # failing assertion here cannot leave the rest of the suite reading a
+        # one-entry tuple.
+        saved = chc.PROSE_FILES
+        self.addCleanup(setattr, chc, "PROSE_FILES", saved)
+        chc.PROSE_FILES = tuple(rel for rel in saved if rel != SECOND_TOOL)
+        self.assertEqual(len(chc.PROSE_FILES), len(saved) - 1,
+                         "`PROSE_FILES` does not hold the sibling this case "
+                         "drops, so the edit is not the one it names")
+        workflows, unreadable = chc.load_workflows(str(REPO))
+        sites = chc.prose_sites(str(REPO), workflows, unreadable)
+        found = {rel for rel, _line, _sentence, _named, _job in sites}
+        self.assertEqual(
+            found, set(chc.PROSE_FILES),
+            "the file-set comparison this replaced went red on the tree it was "
+            "blind to, so the argument that it could not see this edit does not "
+            "hold and the page beside it is wrong")
+        # And the keyed hold, on the same read, names the two rows the file was
+        # carrying -- each by its own fragment, not by a count.
+        rows = [row for row in hcs.SITES if row.rel == SECOND_TOOL]
+        self.assertEqual(len(rows), 2, rows)
+        problems = hcs.problems(sites)
+        self.assertEqual(len(problems), len(rows), problems)
+        for row in rows:
+            named = [message for message in problems if row.fragment in message]
+            self.assertEqual(len(named), 1, problems)
+            self.assertIn(row.what, named[0])
 
     def test_the_report_prints_every_checkout_it_found(self):
         out = io.StringIO()

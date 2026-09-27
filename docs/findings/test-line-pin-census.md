@@ -4483,13 +4483,13 @@ suites as subprocesses, so it prints three `Ran N tests` lines where the runner'
 tally expected one, and the section above's **"`tools/run-tests.sh` still aborts
 on both trees"** is left written where it was measured. `sed … | tail -1` in
 `tools/run-tests.sh` counts the suite's own summary instead, and the count is
-reachable again: **`47` suites and `1480` tests** on the runner and **`1118`**
+reachable again: **`47` suites and `1481` tests** on the runner and **`1119`**
 from `python3 -m unittest discover -s ec/tools`, which printed normally all
 along. **`origin/main` at `5672042a` reads `47` / `1474` / `1112` and #1030's
-branch reads `46` / `1443` / `1081`**, so `1474 + 6 = 1480` and `1112 + 6 =
-1118`, the six being #1030's six in `ec/tools/test_check_history_checkouts.py`
-and nothing else — that suite reading **39 cases on `main` and 45 on both #1030's
-branch and this tree**. **`main`'s `1474` is a reading and not its note's figure
+branch reads `46` / `1443` / `1081`**, so `1474 + 7 = 1481` and `1112 + 7 =
+1119`, the seven being #1030's seven in `ec/tools/test_check_history_checkouts.py`
+and nothing else — that suite reading **39 cases on `main`, 45 on #1030's branch,
+and 46 on this tree**. **`main`'s `1474` is a reading and not its note's figure
 carried**: it is that note's own, re-measured here by running the repaired runner
 on a clean `origin/main` worktree, which is the only way to compare a tree whose
 own copy of the script stops at `28 suite(s) run` and prints no total with one

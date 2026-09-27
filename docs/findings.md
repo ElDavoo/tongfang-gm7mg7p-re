@@ -11787,8 +11787,10 @@ sources are quoted beside their retraction on
 [`history-checkout-site-identity.md`](findings/history-checkout-site-identity.md),
 which also holds the replacement — `ec/tools/history_checkout_sites.py`, one row
 per corrected site keyed by its file and a **fragment of its sentence**, checked
-in both directions, with five scratch-tree controls showing it red where the
-count stayed green. **Nothing in the finding above is in question**: the five
+in both directions, with seven controls: six on a scratch tree, three of them
+naming a row that goes red where the `>= 4` count stayed green, and a seventh on
+the committed tree dropping the `PROSE_FILES` entry the old file-set comparison
+was blind to. **Nothing in the finding above is in question**: the five
 sentences all name a job and `prose_problems()` is empty on this tree, and no
 behaviour of `check_history_checkouts.py` changed. The seven-site table's line
 numbers are **not** repointed; a drift rule is stated beside them on the claims
