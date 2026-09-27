@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-123 write-ups.
+127 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -28,6 +28,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
 - [`call-graph-unresolved.md`](call-graph-unresolved.md) — The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (issue #456)
 - [`capture-filename-date-prefix.md`](capture-filename-date-prefix.md) — The capture root's date prefix and its flatness are measured, and a name breaking either is refused (issue #973)
+- [`charge-target-caller-chain.md`](charge-target-caller-chain.md) — Who reaches `0xB158` — the charge-target caller chain, and how often it runs (issue #89)
 - [`checkout-claim-corpus.md`](checkout-claim-corpus.md) — The checkout-depth sweep derived its own population, and a retraction quotes the sentence it retracts
 - [`citation-code-vs-data.md`](citation-code-vs-data.md) — A citation is a code frame, not an address (issue #453)
 - [`citation-gap-scan.md`](citation-gap-scan.md) — The bytes a function boundary cut out of a citing listing (issue #560)
@@ -39,6 +40,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md) — A count is a budget on work, not a bound on the buffer: the region end bounds `walk_helper` and `chain_from`
 - [`counter-sweep-entry-set.md`](counter-sweep-entry-set.md) — The counter sweep's entry set: 180 call sites, one of them a call (issue #555)
 - [`descend-index-guard.md`](descend-index-guard.md) — `descend()` reads `d[off]` two lines above the test that would catch it, and the invariant that held it was not the one the census named
+- [`digest-docs-and-timings.md`](digest-docs-and-timings.md) — The digest step the two component READMEs were missing, the message that calls the repository's own convention corruption, and a timing figure with three generations (issue #372)
 - [`disasm8051-oracle-from-the-annotations.md`](disasm8051-oracle-from-the-annotations.md) — The two hand transcriptions are re-read now, and the sentence the gate comment carries is true (2026-09-26, issue #811)
 - [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md) — `disasm8051.py --self-test` is the oracle for the opcode tables, and no gate
 - [`dmi-descriptor-evidence.md`](dmi-descriptor-evidence.md) — The DMI descriptor claims eight bits, and the source that names them was one fetch away (issue #10)
@@ -61,6 +63,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`named-without-a-row.md`](named-without-a-row.md) — The 25 functions that carry a name no CSV row wrote (issue #601)
 - [`neighbour-edge-attribution.md`](neighbour-edge-attribution.md) — Does the kept citation name the neighbour's call site? Fifteen rows and two, decided (issue #681)
 - [`no-append-logs.md`](no-append-logs.md) — A document every merge must edit is a lock nobody holds, and this repository has now hit that three times
+- [`oem4-bit-map-and-bit0.md`](oem4-bit-map-and-bit0.md) — The `0x07A6` (`OEM_4`) bit map, and bit 0's owner (issue #93)
 - [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md) — The opcode-table bounds census: every `OPCODE_LEN[d[i]]` in `ec/tools/`, and what holds the index in
 - [`opcode-table-coverage.md`](opcode-table-coverage.md) — The opcode table's coverage and a differential decode: 254 of 256 rows, 0 disagreements against two decoders that are not independent — and 8 against the manual, which is the finding — independent
 - [`paged-trampoline-hits-by-hand.md`](paged-trampoline-hits-by-hand.md) — All 18 paged-trampoline hits, read one by one (issue #54)
@@ -123,6 +126,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-moved-ranks-pin-decisions.md`](xdata-moved-ranks-pin-decisions.md) — The two pins into `xdata_moved_ranks.py` are decided, and both were carried by real trees (issue #961)
 - [`xdata-moved-ranks-second-count.md`](xdata-moved-ranks-second-count.md) — The `--swept` summary's second-holder count was taken over one generation, and the rows were over both (issue #886)
 - [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md) — Which census `xdata-cluster-names.csv` is anchored to, and what a carry line is a claim about (issue #851)
+- [`xdata-no-eq-guard-census-scale-join.md`](xdata-no-eq-guard-census-scale-join.md) — What `--no-eq-guard` moves at census scale, joined one register row at a time
 - [`xdata-no-eq-guard-citation-anchors.md`](xdata-no-eq-guard-citation-anchors.md) — The `--no-eq-guard` mechanism's citations, re-anchored to code (issue #873)
 - [`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md) — The refusal contract's measured-state section, corrected against this tree (issue #816)
 - [`xdata-no-eq-guard-refusal-contract.md`](xdata-no-eq-guard-refusal-contract.md) — The `--no-eq-guard` refusal contract

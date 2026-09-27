@@ -196,8 +196,10 @@ invisible to it by construction.
    `.PML` will be dominated by the watcher's own `ECRR` traffic and by the rest
    of Windows.
 2. Back the trace to a `.PML` (`File ▸ Save As`) with the marks from §3 still
-   legible — write the mark labels and their timestamps on paper or in a text
-   file next to the trace, because the `.PML` does not carry them.
+   legible — the `.PML` does not carry them, so keep the mark labels and their
+   timestamps to hand while you work. They are the `MARK` rows in §3's CSV
+   (`grep ',MARK,'` on it) and §8 is where a run's files are named; paper is
+   enough, because there is no second marks file.
 3. For **each** §3 mark, read out of the capture:
    - the **PID**,
    - the **IOCTL code in the Detail column**,
@@ -446,33 +448,39 @@ Name the files the way the existing captures do, so a reader can pair them:
 
 ```
 evidence/ec-watch/<date>-gpu-door-07c4-07d7.csv
-evidence/ec-watch/<date>-gpu-door-07c4-07d7-marks.txt
 evidence/ec-watch/<date>-gpu-door-procmon.pml
 ```
 
 `<date>` is that run's YYYY-MM-DD — the same placeholder §3's command takes, so
 following this list produces this set with no rename step. The CSV is the
 capture itself, both blocks and every mark in one file; `CsvSink` opens it in
-append mode (`../../windows/tools/ec_watch.py:91-96`), so a second run into the
-same name extends the file rather than replacing it, which is also why the two
-runs must not be merged by hand afterwards (§3).
+append mode (`CsvSink.__init__`, `../../windows/tools/ec_watch.py`), so a
+second run into the same name extends the file rather than replacing it, which
+is also why the two runs must not be merged by hand afterwards (§3).
 
-The marks file is the one §4a.2 leaves unnamed. That step says to keep the
-mark labels and their timestamps "on paper or in a text file next to the
-trace" because the `.PML` carries none of them; the committed one is this
-name, and it holds the same `ts  label` pairs the CSV already carries — as
-text, so a reader looking for "what happened at 14:32" can grep it without
-parsing a capture. If §3's three actions were each marked with an opening and
-a closing label, they are here in that order, and that order is the whole of
-§5's mark column.
+The marks need no file of their own. They are the `MARK` rows in the CSV
+above — `ts,MARK,,label`, the schema `../../ec/tools/grade_gpu_door.py` reads
+and the whole of §5's mark column — so a reader looking for "what happened at
+14:32" greps the capture rather than parsing a second one. If §3's three
+actions were each marked with an opening and a closing label, they are in that
+order, and that order is the whole of §5's mark column. §4a.2 has the operator
+keep them to hand for the `.PML` — the same rows, not a copy of them.
+
+**There is no marks file, and that is deliberate (issue #402, 2026-09-27).**
+Nothing in the tree writes one: `gpu_block_watch.py` builds exactly one sink
+and hands it to `Marker` (`../../windows/tools/gpu_block_watch.py:164-166`),
+so every mark is a row in the CSV above and there is no second file for a run
+to produce. The sibling `0x0751` procedure's §6 has the same shape — one
+artifact per command, one per hand-saved step, no marks file — and an operator
+transcribing marks into a text file is doing a step, not producing an artifact.
 
 The `.PML` is §4a.2's saved trace under the same `<date>-gpu-door-` prefix,
-and it is the only one of the three that is not text: a ProcMon capture
-records a stack walk, so the file is large and does not read in a diff. The
-marks file is what pairs it to the CSV, which is why it is a separate artifact
-rather than a comment in either.
+and it is the only one of the two that is not text: a ProcMon capture records
+a stack walk, so the file is large and does not read in a diff. The CSV's
+`MARK` rows are what pair it to the capture, which is why the trace is a
+separate artifact rather than a comment in the CSV.
 
-Add all three to `evidence/README.md`, which is the index every findings claim
+Add both to `evidence/README.md`, which is the index every findings claim
 cites through, and say in that entry what the run was: the date, the starting
 AC state (§2 asks for it written down), the TGP values as the UI showed them,
 the Fn mode on each side of the mode switch, how long the capture ran, and the

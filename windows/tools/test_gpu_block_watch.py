@@ -258,6 +258,71 @@ def parse_door_table(section):
     return out
 
 
+def doc_subsection(text, heading):
+    """The named `### ` section, bounded at the next heading of either level.
+
+    `doc_section` above stops only at `## `, and this file's §4a is a `###`
+    under §4 with a `### 4b` sibling, so asking it for `### 4a.` runs on
+    through §4b and hands back 59 lines where §4a is 48. That is not a
+    cosmetic difference where a check is about §4a: the negative below is on
+    a filename, and a span that reaches into §4b is a span in which a `-marks`
+    would pass for §4a saying nothing. Bounded at the next heading of either
+    level instead, and a missing heading raises, as above.
+    """
+    lines = text.splitlines()
+    start = next(i for i, l in enumerate(lines) if l.startswith(heading))
+    body = lines[start + 1:]
+    for i, l in enumerate(body):
+        if re.match(r"^#{1,3} ", l):
+            return "\n".join(body[:i])
+    return "\n".join(body)
+
+
+# Suffixes §4 saves by a step an operator performs in ProcMon's own UI rather
+# than by anything the watcher writes. A set, and named for the step rather
+# than for today's file: a second hand-saved artifact joins it by having a
+# suffix here, and the step that justifies each is asserted against §4a in
+# `test_every_artifact_section_8_names_has_a_producer`, so the allowance cannot
+# sit here as a constant no section of the procedure backs.
+HUMAN_SAVED_SUFFIXES = frozenset({".pml"})
+
+
+def command_output_paths(cmd):
+    """Every path-shaped argument in §3's command, whichever flag carries it.
+
+    Not a list of known output flags, and that is deliberate: §3's command
+    grows a `--dump` or a `--marks` and this picks the new one up with nothing
+    edited. The discriminator is "carries a separator and is not the tool
+    itself" — the tool path is the one path-shaped argument that is an input,
+    and the `^` cmd line-continuation carries no separator, so both drop out
+    without a rule naming either.
+    """
+    out = set()
+    for token in cmd.split():
+        if "/" in token or "\\" in token:
+            path = token.replace("\\", "/")
+            if not path.endswith(".py"):
+                out.add(path)
+    return out
+
+
+def unaccounted_artifacts(listed, command_paths, human_suffixes):
+    """The §8 entries neither §3's command writes nor a §4 step saves.
+
+    Two producers and only two, because a run has two: an output path the
+    command passes to the tool, or a suffix a human saves in ProcMon's UI. An
+    entry matching neither is a file no run produces, which is the shape #402
+    found — §8 named a `MARK` transcript that no flag in the tree writes, so
+    the file an operator following the procedure by hand transcribed was not
+    an artifact of the run at all. One direction only; the other, that every
+    path the command writes is also listed, is a plain set comparison at the
+    call site so this helper's contract stays one-directional.
+    """
+    suffixes = tuple(human_suffixes)
+    return [p for p in listed
+            if p not in command_paths and not p.lower().endswith(suffixes)]
+
+
 class FakeEc:
     """Returns SWEEPS[n] for sweep n, and stops the run after the last one.
 
@@ -598,7 +663,25 @@ class CaptureHandoffTests(unittest.TestCase):
         cls.capture = doc_section(cls.text, "## 3. The byte capture")
         cls.where = doc_section(cls.text, "## 8. Where the output goes")
         cls.result = doc_section(cls.text, "## 9. What a result has to say")
+        cls.procmon = doc_subsection(cls.text, "### 4a. ProcMon, the primary route")
         cls.statuses, _ = read_registers()
+        # §3's command with the `rem` lines dropped, and §8's file list read
+        # out of its fenced block. The block rather than the prose around it,
+        # because that prose counts the set ("the only one of the two") and a
+        # check reading it would be holding a count against itself. Both raise
+        # rather than yielding an empty list or an empty command, for the
+        # vacuity reason `doc_section` gives.
+        block = re.search(r"```console\n(.*?)```", cls.capture, re.S)
+        if block is None:
+            raise AssertionError("§3's console block is gone")
+        cls.cmd = "\n".join(l for l in block.group(1).splitlines()
+                            if not l.strip().startswith("rem"))
+        files = re.search(r"```\n(.*?)```", cls.where, re.S)
+        if files is None:
+            raise AssertionError("§8's file list block is gone")
+        cls.artifacts = [l.strip().replace("\\", "/")
+                         for l in files.group(1).splitlines() if l.strip()]
+        cls.cmd_paths = command_output_paths(cls.cmd)
 
     def test_the_output_destination_exists_and_is_named(self):
         # The section is read by heading and doc_section() raises on a
@@ -616,11 +699,14 @@ class CaptureHandoffTests(unittest.TestCase):
     def test_the_capture_command_writes_into_that_destination(self):
         # The check that stops §3's command drifting back to a bare filename.
         # `CsvSink` resolves its path against whatever directory the tool
-        # runs in (windows/tools/ec_watch.py:91-96), so a command with no
-        # directory in it puts the capture wherever the operator happened to
-        # be standing -- which is how a run that happened ends up in a commit
-        # with no capture in it. Read out of the console block rather than
-        # the section, because the prose around it talks about `--csv` too.
+        # runs in (`CsvSink.__init__` in windows/tools/ec_watch.py -- the
+        # `open(path, "a", ...)` there, not a line number, so the next
+        # reorganisation of that file cannot silently re-stale this), so a
+        # command with no directory in it puts the capture wherever the
+        # operator happened to be standing -- which is how a run that happened
+        # ends up in a commit with no capture in it. Read out of the console
+        # block rather than the section, because the prose around it talks
+        # about `--csv` too.
         # Separators are normalised because a relative path is spelled with
         # either; the directory is not optional either way.
         block = re.search(r"```console\n(.*?)```", self.capture, re.S)
@@ -637,6 +723,59 @@ class CaptureHandoffTests(unittest.TestCase):
                          f"once: {found}")
         path = found[0].replace("\\", "/")
         self.assertTrue(path.startswith("evidence/ec-watch/"), path)
+
+    def test_every_artifact_section_8_names_has_a_producer(self):
+        # The general form of #402. §8 named three artifacts and two had a
+        # producer; the third was a marks transcript no flag in the tree
+        # writes, so an operator following the procedure either hand-made it
+        # or had nothing to hand in, and the run it named was not the run that
+        # happened. Read as a rule about the whole set rather than a refusal
+        # of that one filename, so the next artifact somebody adds without a
+        # producer is caught here too.
+        self.assertTrue(self.artifacts, "§8 names no artifacts at all")
+        unaccounted = unaccounted_artifacts(self.artifacts, self.cmd_paths,
+                                            HUMAN_SAVED_SUFFIXES)
+        self.assertEqual(unaccounted, [],
+                         f"§8 names artifacts no run produces: {unaccounted}")
+        # The other direction, kept out of the helper so that one's contract
+        # stays one: a path §3 writes that §8 does not list is a capture that
+        # lands where the index will not find it.
+        unlisted = self.cmd_paths - set(self.artifacts)
+        self.assertEqual(unlisted, set(),
+                         f"§3 writes artifacts §8 does not name: {unlisted}")
+        # The `.pml` allowance is the only producer a run does not have a flag
+        # for, so it is tied here to the step that earns it. Without this the
+        # set above is a constant that would keep exempting a suffix after the
+        # section behind it stopped saving one.
+        self.assertIn("File ▸ Save As", self.procmon)
+        self.assertIn(".pml", self.procmon.lower())
+        # The negative, on the list §8 really carried. A loosening that let
+        # the old `-marks.txt` through would be a green test; this is what
+        # makes it red instead.
+        marks_file = "evidence/ec-watch/<date>-gpu-door-07c4-07d7-marks.txt"
+        self.assertEqual(
+            unaccounted_artifacts(self.artifacts + [marks_file], self.cmd_paths,
+                                  HUMAN_SAVED_SUFFIXES),
+            [marks_file])
+
+    def test_section_4a_and_section_8_agree_where_the_marks_live(self):
+        # §4a.2 and §8 both answer "where are this run's marks", and they
+        # answered differently for as long as §8's marks file was in the text
+        # -- §4a said paper or a text file, §8 named a committed one, and
+        # neither mentioned the other. Both now point at the CSV's `MARK`
+        # rows, so neither can drift onto a second place alone.
+        for name, section in (("§4a", self.procmon), ("§8", self.where)):
+            self.assertIn("`MARK` rows", section,
+                          f"{name} must name the CSV's MARK rows as where the "
+                          "marks live")
+        # The negative is on a filename shape and not on the word: both
+        # sections say "marks" throughout, and so does the clause in §8 that
+        # records why there is no marks file. What must not come back is a
+        # marks *file*, which is the artifact with no producer.
+        for name, section in (("§4a", self.procmon), ("§8", self.where)):
+            self.assertNotIn("-marks", section, f"{name} names a marks file")
+        self.assertFalse([p for p in self.artifacts if p.endswith(".txt")],
+                         f"§8 lists a text artifact: {self.artifacts}")
 
     def test_the_result_section_names_the_rows_a_returned_capture_updates(self):
         # The three notes that record only what the 2026-09-23 capture

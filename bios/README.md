@@ -24,7 +24,18 @@ day to day. The script's two check modes need neither tool:
 ```
 python3 bios/tools/bios_extract.py --work /tmp/bios --check
 python3 bios/tools/bios_extract.py --work /tmp/bios --self-test
+# after a re-export that legitimately changed a .c, or after hand-editing
+# decompiled/OemOcDxe.annotated.c: refresh ghidra/c-digests.csv
+# (no Ghidra; refuses to record a hash for a zero-length .c)
+python3 bios/tools/bios_extract.py --work /tmp/bios --write-digests
 ```
+
+Every `.c` under `decompiled/` carries a committed SHA-256 in
+`ghidra/c-digests.csv`, so a re-export that legitimately changed one leaves
+`--check` red until that last command is run. The digest catches corruption
+and forces a visible committed diff; it is not a claim that the C is a
+faithful reading of the firmware, and `--write-digests` re-blesses whatever
+it is given.
 
 | Path | What |
 |---|---|
@@ -34,7 +45,7 @@ python3 bios/tools/bios_extract.py --work /tmp/bios --self-test
 | `ifr/charge-questions.csv` | **Derived** from `ifr/Setup.en-US.ifr.txt` by `tools/ifr_census.py`; `--check` re-derives it and fails on any difference. The charge and battery questions, with the conditions that hide them |
 | `tools/ifr_census.py` | Reads a dump and prints the census: the charge table, an offset or question lookup, the near-misses its phrase list declined, and `--check`/`--self-test` |
 | `decompiled/<Module>.c` | Ghidra 12.1.3 decompiles of 38 modules: every `Oem*` module in the ROM, Intel's overclocking chain, `EcPs2Kbd` and `Setup`. **Unedited tool output** |
-| `decompiled/OemOcDxe.annotated.c` | **Hand-written.** `OemOcDxe` with variable offsets resolved and named: the memory-OC menu gate, the EC 0x0741 bit 7 recovery path, the GPP_B22 write. The readable layer, and the reason it is not generated — see "Which layer is which" |
+| `decompiled/OemOcDxe.annotated.c` | **Hand-written.** `OemOcDxe` with variable offsets resolved and named: the memory-OC menu gate, the EC 0x0741 bit 7 recovery path, the GPP_B22 write. The readable layer, and the reason it is not generated — see "Which layer is which". It is the one `.c` here that is expected to be hand-edited, and its digest row is re-blessed with it deliberately, so the edit is a visible committed diff rather than something `--check` has to be taught to ignore |
 | `annotations/ghidra-functions.csv` | **Machine-readable**, transcribed from the file above, and what the build applies to the Ghidra project. `annotations/README.md` documents the columns |
 | `ghidra/` | The Ghidra project, the headless scripts `bios_extract.py` uses, the index, the manifest and the load map. `ghidra/README.md` is the long version |
 | `tools/bios_extract.py` | Regenerates the tool output |

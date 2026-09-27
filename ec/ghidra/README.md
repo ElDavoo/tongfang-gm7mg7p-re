@@ -47,11 +47,16 @@ measured against the pre-change file on the same machine the same day (0.22 s
 and 0.42 s). Both figures include the cross-decoder comparison described
 below: `--check` recomputes all 1,920 of its rows and `--self-test` asserts
 its known answers, which is why they are no longer the 0.19 s and 0.13 s
-`docs/findings.md` §14e recorded on 2026-09-23. The comparison itself is
+`docs/findings.md` §15c recorded on 2026-09-23. The comparison itself is
 0.10 s (`--report` measures 0.17 s end to end) — the price of 1,920 short
 decodes and 1,920 reads of a `.c`, with no subprocess per function, where the
 four-function version it replaces spawned one and re-scanned the whole
-2,714-row listing index for each of them.
+2,714-row listing index for each of them. `docs/findings.md` §14j re-took the
+pair on the tree carrying §14i as well and recorded **0.48 s** and **0.77 s**,
+three runs each; that is what the pair costs on the merged tree, and the
+`--check` / `--self-test` pair named at the top of this paragraph is of
+2026-09-24 — both are §14i's *after* column, and §14j calls them still correct
+of the tree they measured.
 
 `--cross-decoder` prints the run; `--report` records it; `--check` ratchets
 on the record. So the comparison's result is no longer read by nobody, which
