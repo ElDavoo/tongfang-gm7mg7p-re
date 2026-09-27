@@ -260,19 +260,30 @@ and the `46` is the 46 `test_*.py` files `find` returns — the runner's own rul
 and the one `tools/test_readme_suite_table.py` checks the table's first column
 against.
 
-**The red set on this tree is three suites and none of the three is this
+**The red set on this tree is four suites and none of the four is this
 merge's**: `ec/tools/test_check_cluster_citations.py` (the long-standing one, on
 the same `:220` of the same #822 file),
 `ec/tools/test_check_doc_figure_pins.py`
-(`test_a_hex_address_is_not_a_figure_and_the_run_beside_it_is`), and
-`tools/test_readme_suite_table.py`, red because #1058 committed a suite without
-the table row that test asks for. All three fail identically on a clean
-`origin/main` worktree at `560752b2` — measured there rather than carried, and
-the runner aborts on both trees — so the set is `main`'s and this merge neither
-grew nor shrank it. **None of the three is repaired here**: the missing row is
-#1058's to write, the other two are not this merge's to move, and a merge that
-quietly repaired them would leave the next reader unable to tell which of the
-three were ever green.)*
+(`test_a_hex_address_is_not_a_figure_and_the_run_beside_it_is`),
+**`ec/tools/test_check_pin_table_rows.py`, which is three cases rather than one
+and is the fourth suite for a reason worth naming — it reconciles
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md),
+the very file this merge's note edits, so the omission was in a checker over a
+file this change touches rather than over an unrelated one**:
+`test_the_committed_table_reconciles_and_exits_zero` (`rc 1 != 0`, six
+unplaced-row/row-without-record pairs),
+`test_the_committed_table_places_something` (`101 != 107`) and
+`test_every_class_is_zero_on_the_committed_tree`; and
+`tools/test_readme_suite_table.py`
+(`test_every_discovered_suite_has_a_row`), red because #1058 committed a suite
+without the table row that test asks for. All four fail identically on a clean
+`origin/main` worktree at **`58f43ee7`**, which is both that worktree's tip and
+this branch's own merge base — measured there rather than carried, and the runner
+aborts on both trees — so the set is `main`'s and this merge neither grew nor
+shrank it. **None of the four is repaired here**: the missing row is #1058's to
+write, the other three are not this merge's to move, and a merge that quietly
+repaired them would leave the next reader unable to tell which of the
+four were ever green.)*
 *(The `1161` this sentence carried until #794, the `1165` it carried on #794's
 own branch, the `1168` it carried at the `#962` × `#794` merge, the `1180` the
 #979 branch proposed, the `1182` the #974 branch proposed beside it, the `1187`

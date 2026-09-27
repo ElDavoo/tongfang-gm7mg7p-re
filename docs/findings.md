@@ -11440,9 +11440,14 @@ a reader finds it closed.)*
 > #870's §87 and #1032's §88 both landed below without amending the count, and
 > neither carries a "last section in the file" clause of its own, so the debt is
 > §73's sentence and this paragraph is the only place it is written down.
-> **§88 is the last section in the file on this tree**, and neither the clause
-> nor the count is edited into shape here — §73's stays as written, per §4a-4d,
-> and a landing that repeats this one is what the clause is for.
+> **The section this paragraph was written on carried the number `§88` and was
+> the last section in the file on that tree; `§89` and `§90` have both landed
+> since, this landing being `§90`** — a number that really was carried is a
+> record and not a pointer, which is the distinction §90's own numbering note
+> draws, and the position is not this file's. **This landing is the repeat
+> §73's clause was owed for**: neither the clause nor the count is edited into
+> shape here, §73's stays as written per §4a-4d, and this is the correction
+> beside it.
 
 Four sentences in `ec/tools/verify_reassembly.py` and
 `ec/tools/measure_index_repair_visibility.py` described what this repository's
