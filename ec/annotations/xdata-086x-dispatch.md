@@ -255,6 +255,26 @@ is the bucketing of those 17, not a rival count of the 7.
 > what the three-word vocabulary above exists to make impossible to say
 > wrongly.
 
+> **FURTHER CORRECTION (2026-09-26, issue #30) to the two figures the #279
+> block above states in the present tense, which have both moved.**
+> `xdata-symbols.csv` now holds **208** rows and `named_in_tree` is **181**, so
+> `len(symbols) - len(NOT_IN_TREE)` is 208 − 27. The DSDT ECMG field sweep
+> added 16 names to `registers.yaml` and ten of the sixteen are not in the
+> decompiled tree, so the gap went 17 → 27 while the count went 175 → 181. The
+> block above is left as written, because its own arithmetic — *names minus
+> reasons, with both terms moving* — is exactly what the new pair repeats, and
+> rewriting it would hide that the rule held twice. What is new is *which*
+> ten: `CTL1`-`CTL7` (`0x0EA9`-`0x0EAF`) sit in an unexported straight-line
+> copy at bank0 `0xF335`, and `0x07C0`-`0x07C2`'s only site is in the PD
+> image. Six of the sixteen are in the tree, which is why the count moves by
+> six and not by sixteen — `0x0EA8` and `0x0EB8` are reached through the
+> *exported* `bank0:0xF221` even though the copy is not exported, so the head
+> of a run and its tail land on opposite sides of this boundary for a reason
+> that has nothing to do with the run. Every reason is in the tool's
+> `NOT_IN_TREE`, and none uses the word this file's vocabulary forbids. The
+> sweep, the GNVS correction and the ten reasons in full are in
+> `dsdt-ecmg-field-sweep.md`.
+
 > **CORRECTION (2026-09-25, issue #801) to the `xdata-registers.csv:662` cell
 > in three places in this section, which named a line that has moved.** The
 > `0x0860` row is at **`ec/annotations/xdata-registers.csv:817`** of a

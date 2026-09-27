@@ -787,7 +787,19 @@ ORACLE = {
     # halves this pass reaches (0x0403, 0x0405, 0x043B, ...) are mostly *not*
     # in the symbol table, so they are new census rows without moving this
     # count. Only 0x0403, the second half of `BAT_DESIGN_CAPACITY`, is both.
-    "named_in_tree": 175,
+    # 175 -> 181, issue #30, and 208 - 27, the same arithmetic once more: the
+    # DSDT ECMG field sweep added 16 names to registers.yaml, and ten of the
+    # sixteen are not in the tree, so NOT_IN_TREE goes 17 -> 27 and the count
+    # moves by the six that are. The six that are are the ones with a site in
+    # an *exported* function -- 0x074C, 0x0788, 0x07A4, 0x07C5, 0x0EA8 and
+    # 0x0EB8. The ten that are not split 7/3 by the same boundary: CTL1-CTL7
+    # (0x0EA9-0x0EAF) sit in the unexported copy at bank0 0xF335, and
+    # 0x0EA8 and 0x0EB8 are reached anyway through bank0:0xF221, which is
+    # exported -- so the head of a run and its tail can differ here for a
+    # reason that has nothing to do with the run. 0x07C0-0x07C2's only site is
+    # in the PD image. Their reasons are in NOT_IN_TREE, and that is the
+    # measurement the next block above asks for, not the count alone.
+    "named_in_tree": 181,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # **Unmoved by issue #279, and worth saying why rather than leaving it as a
@@ -1270,6 +1282,48 @@ NOT_IN_TREE = {
     0x07E5: "not found by this method: as 0x07E3, plus the 0x6610 handoff to "
             "the PD writer at pd/1041.c, which stores four bytes from an entry "
             "pointer rather than naming one",
+    # Issue #30's ten: the DSDT ECMG field sweep landed these as entries, and
+    # none of the ten is in the decompiled tree, so each needs the reason the
+    # vocabulary above is for. Two different ones, and the difference matters.
+    #
+    # CTL1-CTL7 (0x0EA9-0x0EAF) are in the EC firmware and the export simply
+    # does not reach them: their one site each is inside the straight-line copy
+    # at bank0 0xF335-0xF374, which lies in the gap between the exported
+    # functions bank0:0xF239 and bank0:0xF424. Seeding that routine needs
+    # `--mode rebuild-project`. 0x0EA8 and 0x0EB8 are NOT in this set, and that
+    # is the copy explaining it -- they have a second site each, in
+    # bank0:0xF221, which *is* an exported function, so the census reaches them
+    # by that route.
+    0x0EA9: "in a routine no export covers: the single `mov DPTR,#0x0ea9` is at "
+            "bank0 0xF33D, inside the copy at 0xF335-0xF374 and in the gap "
+            "between the exported functions bank0:0xF239 and bank0:0xF424",
+    0x0EAA: "in a routine no export covers: as 0x0EA9, at bank0 0xF345",
+    0x0EAB: "in a routine no export covers: as 0x0EA9, at bank0 0xF34D",
+    0x0EAC: "in a routine no export covers: as 0x0EA9, at bank0 0xF355",
+    0x0EAD: "in a routine no export covers: as 0x0EA9, at bank0 0xF35D",
+    0x0EAE: "in a routine no export covers: as 0x0EA9, at bank0 0xF365",
+    0x0EAF: "in a routine no export covers: as 0x0EA9, at bank0 0xF36D",
+    # AP01/AP02/AP10 (0x07C0-0x07C2) are the three the sweep graded
+    # unknown-not-absent, and the reason is a different one again: the only
+    # `mov DPTR` for each in the whole 256 KiB dump is in the ITE8850-PD image,
+    # where DPTR is handed to a PD subroutine. That is a reference to another
+    # program's byte, so the EC decompile this census reads has nothing to find
+    # -- not a coverage gap. Uncovered anyway, as those PD routines are not
+    # exported either, which is why the second reason would also be true; the
+    # wrong-program fact is the one that decides what these three are, so it
+    # leads. Re-derive with trace_xdata_refs.py, which is the split the
+    # registers.yaml rows are graded on.
+    0x07C0: "not found by this method: the sole `mov DPTR,#0x07c0` in the dump "
+            "is at pd 0xE7EE, handing DPTR to lcall 0x9c8a -- the ITE8850-PD "
+            "image's own byte, whose XDATA map is its own, so the EC export "
+            "this census reads has no reference to find. That is a statement "
+            "about the scan and not about the byte, which is why "
+            "registers.yaml's AP01 row takes the status it takes rather than "
+            "an absence one",
+    0x07C1: "not found by this method: as 0x07C0, at pd 0xE810 handing DPTR to "
+            "lcall 0x9c8f",
+    0x07C2: "not found by this method: as 0x07C0, at pd 0xE7FC handing DPTR to "
+            "lcall 0x9c8f",
 }
 
 # Issue #181: the ten pd-001 addresses in 0xFF00-0xFFFF, and the instruction
