@@ -122,6 +122,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-moved-ranks-pin-decisions.md`](xdata-moved-ranks-pin-decisions.md) — The two pins into `xdata_moved_ranks.py` are decided, and both were carried by real trees (issue #961)
 - [`xdata-moved-ranks-second-count.md`](xdata-moved-ranks-second-count.md) — The `--swept` summary's second-holder count was taken over one generation, and the rows were over both (issue #886)
 - [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md) — Which census `xdata-cluster-names.csv` is anchored to, and what a carry line is a claim about (issue #851)
+- [`xdata-no-eq-guard-census-scale-join.md`](xdata-no-eq-guard-census-scale-join.md) — What `--no-eq-guard` moves at census scale, joined one register row at a time
 - [`xdata-no-eq-guard-citation-anchors.md`](xdata-no-eq-guard-citation-anchors.md) — The `--no-eq-guard` mechanism's citations, re-anchored to code (issue #873)
 - [`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md) — The refusal contract's measured-state section, corrected against this tree (issue #816)
 - [`xdata-no-eq-guard-refusal-contract.md`](xdata-no-eq-guard-refusal-contract.md) — The `--no-eq-guard` refusal contract

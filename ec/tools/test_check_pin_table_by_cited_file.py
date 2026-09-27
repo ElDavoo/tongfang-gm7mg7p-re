@@ -552,14 +552,18 @@ class TheCommittedTree(unittest.TestCase):
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        # 58 rather than 57, and 46 rather than 45, for one reason in two
-        # places: `tools/test_check_dmi_descriptor.py` landed on 2026-09-27
-        # and nothing in the committed markdown cites a line of it yet, so the
-        # suite count and the unpinned tail each take one and `pinned` does
-        # not move. That is the tail doing its job, not a miss.
-        self.assertEqual(len(files), 58)
+        # 59 rather than 58, and 47 rather than 46, for the reason the previous
+        # pair gives: `ec/tools/test_xdata_guard_off_row_join.py` landed with
+        # issue #832's write-up, and that write-up names the suite's *tool* and
+        # the census it reads but never cites a `test_*.py:NNN`, so the suite
+        # count and the unpinned tail each take one and `pinned` does not move.
+        # That is the tail doing its job, not a miss, and the axis the comment
+        # above describes is what makes it visible: a write-up that grows a
+        # line-citation of the new suite moves it out of the tail and into the
+        # named count, and the pair of assertions go red together.
+        self.assertEqual(len(files), 59)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 46)
+        self.assertEqual(len(tail), 47)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be
