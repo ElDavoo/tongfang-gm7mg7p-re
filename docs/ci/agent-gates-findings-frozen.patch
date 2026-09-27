@@ -69,9 +69,21 @@
 #
 # It is a shape test, not a figure test, and that is deliberate: a number in a
 # document nobody can edit is harmless -- `docs/findings.md` states its section
-# count 254 times and costs nothing -- and the thing that costs is the *line
-# every change has to touch*. So this reads headings and one marker, and rules
-# no claim true.
+# count over and over and costs nothing, being frozen -- and the thing that
+# costs is the *line every change has to touch*. So this reads headings and one
+# marker, and rules no claim true. (That sentence is itself the rule: the count
+# this header used to carry here was a figure no one could re-derive without
+# the tool that produced it, which is the same defect one tier down.)
+#
+# The fourth call, `check_no_conflict_markers.py`, is the cheapest of the four
+# and the one whose absence cost the most. Git stores `<<<<<<<` as ordinary
+# content, so a conflict that is committed rather than resolved is invisible to
+# every merge after it: `tools/README.md` carried one inside its own suite
+# table from `90287fec` (#1089) until #1163, and neither the review stage, nor
+# the gates, nor `tools/test_readme_suite_table.py` noticed -- the last because
+# a table row sitting inside the block still names its suite. Three regexes
+# over committed text, and a `=======` only in a file that also carries one of
+# the outer markers, because markdown spells a setext heading with it.
 #
 # The cost is honest and small: the two checks report under the `doc links`
 # tier rather than a tier of their own. They are two counts over markdown and
@@ -80,7 +92,7 @@ diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
 index ce9f0964..da70d6ed 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -299,6 +299,25 @@ check_shellcheck() {
+@@ -299,6 +299,26 @@ check_shellcheck() {
  # A relative markdown link that 404s is a documentation bug that's
  # otherwise invisible until someone clicks it -- and CLAUDE.md/findings.md
  # cross-reference each other and ec/annotations/registers.yaml constantly.
@@ -99,6 +111,7 @@ index ce9f0964..da70d6ed 100755
 +  python3 ec/tools/check_findings_frozen.py || rc=1
 +  python3 ec/tools/gen_findings_index.py --check || rc=1
 +  python3 ec/tools/check_no_append_logs.py || rc=1
++  python3 ec/tools/check_no_conflict_markers.py || rc=1
 +  return "$rc"
 +}
 +
@@ -106,7 +119,7 @@ index ce9f0964..da70d6ed 100755
  check_doc_links() {
    local broken=0
    while IFS=: read -r file link; do
-@@ -307,6 +326,7 @@ check_doc_links() {
+@@ -307,6 +327,7 @@ check_doc_links() {
      [ -f "$dir/$link" ] || { echo "BROKEN: $file -> $link"; broken=1; }
    done < <(grep -rEo '\]\(([^:)]+\.md)\)' --include='*.md' . 2>/dev/null \
              | sed -E 's/:\]\(([^)]+)\)/:\1/')
