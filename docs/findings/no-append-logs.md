@@ -88,6 +88,69 @@ Each case is fixed by removing the thing there was to correct:
 In every case the content that was *reasoning* stayed and the content that was
 *chronology* went to git, which already had it at every line.
 
+## The same lock, in code
+
+The three above are documents. The fourth instance is not one, and it is the
+clearest of the four because it cost four PRs at once rather than one.
+
+`ec/tools/test_check_pin_table_by_cited_file.py` asserted three numbers where
+one is a claim:
+
+```python
+self.assertEqual(len(files), 59)
+self.assertEqual(len(files) - len(tail), 12)
+self.assertEqual(len(tail), 47)
+```
+
+The middle one is the finding: **twelve of the indexed suites are named by a
+`test_*.py:NNN` somewhere in committed markdown.** That is a fact about the
+corpus, it moves only when a write-up starts citing a line of a suite, and it
+is the axis the method exists to hold. The outer two are a census of the tree.
+Each takes one on every merge that lands a suite and its write-up, whichever
+side of the tail the new suite starts on.
+
+On 2026-09-27, with seven PRs open, **four of them had each bumped those two
+numbers by one from a different fork base** — 56, 57, 57 and 58 — and each had
+rewritten the comment above them to explain its own arithmetic. The file
+conflicted in **18 of 21** branch pairs, and it was the only file in the tree
+that conflicted broadly. Every resolution had to re-derive a number nobody had
+claimed.
+
+The comment block three lines above the assertions already recorded that the
+same mistake had cost that method **351 lines** of step history in prose, and
+had been cured. Three lines below the cure, a changelog had been appended
+again. The prose was cut and the numbers stayed, because they looked like
+figures rather than like a lock, and a figure in a test reads as a test.
+
+The fix is the same one as the other three: **remove the thing there was to
+edit.** The two absolutes are gone; the claim stays. Measured rather than
+assumed — merging each of the four branches leaves `pinned` at 12 while files
+and tail each take one (60 / 48 / 12 in all four merged trees), which is
+exactly the axis and nothing else.
+
+## What the contention produced, when it lost
+
+A merge conflict that is committed rather than resolved is the worst thing this
+repository can produce, and it is invisible by construction: git stores
+`<<<<<<<` as ordinary content, so every merge after it treats the three lines
+as text. `tools/README.md` carried one inside its own suite table from
+`90287fec` (#1089) until #1163 removed it — and nothing noticed for the weeks
+between. Not the review stage, not the gates, and not
+`tools/test_readme_suite_table.py`, which asks whether every suite has a table
+row and was therefore *satisfied* by a row sitting inside the block.
+
+It nearly survived a second time, and the reason is worth stating because it is
+the general hazard. The incoming side of that block had **dropped** a row the
+outgoing side kept, and the mechanical resolution — `git checkout --theirs`,
+the reflex — would have deleted `test_walk_flow_follow.py`'s entry and failed a
+suite that was not watching. #1163's resolution is the correct one: it keeps
+the corrected `test_walk_budget_census.py` row and re-adds the dropped one.
+**Resolving a conflict is a reading, not a merge**, and
+`ec/tools/check_no_conflict_markers.py` now holds the outer two markers against
+every committed file. The `=======` is checked only in a file that carries one
+of them, because markdown spells a setext heading with a line of `=` and a rule
+that fires on correct text is a rule that gets deleted rather than fixed.
+
 ## The boundary, because a rule that misfires is worse than no rule
 
 Two distinctions do all the work, and both were checked by firing the new tool

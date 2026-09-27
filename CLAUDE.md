@@ -157,7 +157,25 @@ trusting one of theirs: every row says whether it was verified against
   a claim:** §4a-4d keeps a wrong *figure* visible beside its correction, and it
   does not ask you to keep a record of what each merge did — that is
   `git log -p`, and copying one into a live file is how the chain got to 3,522
-  lines in the first place.
+  lines in the first place. The same lock exists in code and bit #1169 the
+  fourth time: **a test that asserts a count of the tree is a value every
+  merge has to edit**, and `ec/tools/test_check_pin_table_by_cited_file.py`
+  held one that four concurrent branches each bumped from a different base.
+  Assert the claim (`twelve suites are cited by line`), not the census
+  (`fifty-nine suites exist`) — the second moves on every landing suite.
+- **A merge conflict is never committed; it is resolved.**
+  `ec/tools/check_no_conflict_markers.py` fails any committed file carrying
+  `<<<<<<< ` or `>>>>>>> `, and a `=======` in a file that has one of those.
+  The bare `=======` is deliberately not checked alone, because markdown
+  spells a setext heading with it. This is not hypothetical: `tools/README.md`
+  shipped a three-line block inside a table from `90287fec` (#1089) until
+  #1163 removed it, and nothing noticed for the weeks between — not the
+  review stage, not the gates, and not the suite-table check, which was
+  satisfied throughout by a table row sitting inside the block. **Resolve by
+  hand and check what the other side dropped**: the incoming side of that
+  block had deleted a row the outgoing side kept, so `git checkout
+  --theirs` would have removed a suite's entry and failed a suite nobody was
+  watching.
 - **`docs/findings.md` is closed, and this is enforced rather than
   advised.** A new finding is a new file under `docs/findings/`, and
   nothing else — no summary section, no pointer appended here.
