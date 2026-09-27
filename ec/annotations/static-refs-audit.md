@@ -432,9 +432,86 @@ it as "this site does not access the register" would be exactly the
 `0x07D0`'s PD population and are accounted for in `ec-0x07d0-sites.md` §3
 (seven `lcall 0xF739 ; mov dptr,#0x07d0 ; ret`, one `jnz`).
 
+**Re-adjudicated 2026-09-27 (issue #40); the paragraphs above are left as they
+were written.** The hand-check above was prose. It is now a tool:
+`../tools/walk_flow_follow.py` re-decodes a `none` site by continuing **one**
+path past the control-flow instruction the walk stopped at — a conditional's
+fall-through, or an unconditional jump's target — with a named depth and
+instruction bound, and `register_ref_table.py --follow-flow` puts the result in
+its own `read->flow`/`write->flow`/`r+w->flow`/`other->flow` columns so a
+branch-resolved site is never compared with one resolved at the site. `walk()`,
+`walk_why()` and `classify()` are unchanged and only `none` sites are
+re-decoded, so no row of §2 or §5 above can have moved; the depth-0 output is
+byte-identical to what is transcribed there.
+
+Of the **11** `none` cells this section names, **4 now resolve and 7 do not**,
+each of the 7 with a stated reason. All 11 rows are in
+`annotations/flow-follow-none-sites.csv`, re-derivable with `--check`:
+
+| cell | linear | resolved to | via |
+|---|---|---|---|
+| `0x0A39C` (`0x0768`) | none | `read x1, write x1` | fall-through past `jnb acc.6` at `0x0A39F` |
+| `0x0A848` (`0x0768`) | none | `read x1, write x1` | fall-through past `cjne a,#0xa5` at `0x0A84B` |
+| `0x0E066` (`0x043E`) | none | `read x1` | `sjmp` target `0xE091` |
+| `0x4B40` (`0x07D0`, PD) | none | DPTR handed to `lcall 0x34A5` — direction still unresolved | fall-through past `jnz` at `0x4B43` |
+| `0x4C15`, `0x4C1C`, `0x4C23`, `0x52F2`, `0x5322`, `0x7B10`, `0x8572` (`0x07D0`, PD) | none | **still none** — the window ends at `ret` | at site |
+
+The first three are the cells above, confirmed by the same transcripts and now
+asserted by `../tools/test_walk_flow_follow.py` against the committed image.
+The `0x4B40` cell resolves to a *handoff*, which is a different verdict from
+"no movx" and a weaker claim than a direction: `r2` decodes `0x34A5` as
+`movx a,@dptr`, but the repository's own tools do not resolve a handoff found
+only after a follow, so it stays direction-unresolved here.
+
+The seven that stay `none` are all the same shape — a byte-identical 7-byte
+unit `lcall 0xF739 ; mov dptr,#0x07d0 ; ret`, of which a scan of the PD image
+finds exactly seven, at those seven runtimes. A `ret` is the end of the
+routine and has no fall-through, so there is nothing to continue at.
+
+**Each of the seven cells is the `mov dptr` at entry+3, so the unit's `lcall
+0xF739` sits three bytes earlier, at `0x4C12`, `0x4C19`, `0x4C20`, `0x52EF`,
+`0x531F`, `0x7B0D`, `0x856F`.** A scan anchored at the `mov dptr` finds no
+`lcall`/`acall` at all; that null is a property of the anchor, not of the
+image, and an earlier draft of this paragraph read it as "so they are not
+called either". Anchored at the entry the scan finds **two `lcall`s per stub,
+fourteen in all** — 13 the byte-identical triple
+`lcall <stub> ; lcall 0x347B ; lcall 0x104D` and one
+`lcall 0x4C20 ; lcall 0x38CA ; lcall 0x3497`, with the file offsets in
+[`../../docs/findings/walk-flow-follow.md`](../../docs/findings/walk-flow-follow.md)
+§2. So the reason these seven stay `none` is **a DPTR handoff across a `ret`,
+not an unreachable stub**: the unit loads `0x07D0` and returns to a caller
+that exists, and every one of those fourteen callers then calls `0x347B` or
+`0x38CA`, both of which begin `movx a,@dptr` under
+`../tools/disasm8051.py`'s `mnemonic()`. The read of `0x07D0` therefore
+happens in the caller, one call past the site — which is what a single-path
+walk cannot follow, and what the `ret` stops it reaching. What is still open
+is the callers' own path, which is a different question from the one the
+retracted scan was answering, and re-grading these cells a read is
+`--callee-depth`'s question rather than this file's.
+
+The committed call census does not carry these edges, and that is a gap in the
+listing export rather than a disagreement with the bytes:
+`call-graph-callees.csv` holds one row for the family, at `0x4C20`, with
+`inbound=1 lcall=1`, and the other six entries none at all — 1 of the 14. The
+one it carries is the `0x4B1D` site, which `pd/4D6F.asm` spells; the other 13
+have no committed listing that spells them, and `call_graph.py` parses
+listings. Carrying all 14 is a follow-up, so the census's silence here should
+not be read as the bytes being in dispute.
+
+**So the warning above holds after the change, and holds for seven cells
+rather than eleven.** A `none` cell is "this method stopped", and a method that
+stops at a `ret` has not learned that the register is untouched. The full
+method, its two weaknesses it does not hide (the branch-taken arm is not
+walked, and DPTR is not tracked the way `walk_branch_arms.py` tracks it), and
+the reasons in full are in
+[`../../docs/findings/walk-flow-follow.md`](../../docs/findings/walk-flow-follow.md).
+
 **No `status:` value changed here, and no `static_refs*` number moved** —
 `check_register_counts.py` re-verifies all three counts per address and is the
-guard on that. Issue #32 owns the grading question this table feeds.
+guard on that. Worth being precise about what makes that true: that check
+derives its counts from `sites_for()` and `region_of()` alone and never calls
+`walk()` or `classify()`, so a change to the walk could not have moved a count
+in the first place. Issue #32 owns the grading question this table feeds.
 
 ## 6. `0x07D1` added to `registers.yaml` (2026-09-23, issue #131)
 

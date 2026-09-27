@@ -48,6 +48,8 @@ The decode is a linear best-effort walk, not a disassembler: it stops at
 the first control-flow instruction and cannot follow branches (disasm8051.py
 holds the opcode tables and says what else it cannot do). It stops for four
 other reasons too, and point 3 is which of the five ended a given window.
+`walk_flow_follow.py` continues one path past a branch that ended a window
+with no `movx` in it, without changing anything here.
 Treat the mnemonics as a reading aid and confirm anything load-bearing with
 `--r2-commands` output (or make_bank_image.py + r2 by hand). As with
 scan_refs.py, indirect/pointer XDATA access is invisible here, so "0 sites
