@@ -6,7 +6,9 @@
 
 /* Reads the byte at DPTR into B, increments DPTR, then reads the next byte and returns it in A,
    leaving DPTR one past the second byte. The accumulator is not cleared first, so it is fully
-   overwritten by the second read.
+   overwritten by the second read. The census reads this routine's call sites: xdata_register_map.py
+   resolves a literal first argument as an XDATA address in this direction, on the strength of this
+   body's `movx` rather than of any spelling (see ec/annotations/xdata-register-map.md 4.7).
    type: reader
    evidence: ec/decompiled/bank1/8898.asm; ec/decompiled/bank1/8898.c
    basis: hand-decoded

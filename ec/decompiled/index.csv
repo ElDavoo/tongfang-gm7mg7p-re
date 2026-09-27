@@ -2281,7 +2281,7 @@ pd,354F,store_a_to_5_xdata_bytes,11,annotation,yes,yes,writer,hand-decoded,ec/de
 pd,3565,dptr_0418_plus_60a,11,annotation,yes,yes,math,hand-decoded,ec/decompiled/pd/3565.asm; ec/decompiled/pd/3565.c,,pd/3565.c
 pd,357E,read_byte_to_r3_stride_60,9,annotation,yes,yes,reader,inferred,ec/annotations/ec-0x07d0-sites.md,,pd/357E.c
 pd,35AC,dptr_0428_plus_60a,11,annotation,yes,yes,math,hand-decoded,ec/decompiled/pd/35AC.asm; ec/decompiled/pd/35AC.c,,pd/35AC.c
-pd,35DA,store_2byte_r6r7_then_0x10c8,14,annotation,yes,yes,writer,hand-decoded,ec/annotations/lightbar-bat-flow.md,,pd/35DA.c
+pd,35DA,store_2byte_r6r7_then_0x10c8,14,annotation,yes,yes,writer,hand-decoded,ec/annotations/lightbar-bat-flow.md; ec/annotations/pd-0x07d8-flow.md,,pd/35DA.c
 pd,35E8,dptr_0400_plus_60a,11,annotation,yes,yes,math,hand-decoded,ec/decompiled/pd/35E8.asm; ec/decompiled/pd/35E8.c,,pd/35E8.c
 pd,35FF,read_07d2_to_r3,5,annotation,yes,yes,reader,hand-decoded,ec/decompiled/pd/35FF.asm; ec/decompiled/pd/35FF.c,,pd/35FF.c
 pd,3604,index_5e_f6,14,annotation,yes,yes,math,hand-decoded,ec/decompiled/pd/3604.asm; ec/decompiled/pd/3604.c,,pd/3604.c

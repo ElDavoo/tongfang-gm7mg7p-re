@@ -161,6 +161,12 @@ Two knock-on notes, since the same conflation reaches other entries:
   include features (`PRIMARY_FAN`/`SECONDARY_FAN`, `TOUCHPAD_TOGGLE`,
   `USB_POWERSHARE`) whose EC addresses are nowhere in this repo, so they
   could not be checked either way.
+- `0x07D8`-`0x07DA` (`MODE_TCC_OFFSET_DEFAULTS`) is 34/16/53 references, one
+  EC-side each and 33/15/52 PD-side, and the one EC-side site is real — a
+  straight-line block in `seed_tcc_defaults_from_ba36` writing all three from a
+  CODE table. What the PD image does with the same *numbers*, in its own XDATA,
+  is [`../ec/annotations/pd-0x07d8-flow.md`](../ec/annotations/pd-0x07d8-flow.md);
+  no `status:` value moves.
 
 The same "separate program, separate map" premise, approached from the other
 end, is §3e: the ten `0xFF00`-`0xFFFF` addresses in the PD image's largest

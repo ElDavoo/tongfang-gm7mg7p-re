@@ -5,10 +5,13 @@
 
 
 /* 2-byte store from R6:R7, then reloads DPTR with 0x07D8 and calls 0x10C8 on it, before ljmp
-   0x0F45. Reached by lcall from the 0x6482 and 0x64AD sites, and what it then does with the 0x07D8
-   pointer is not read in this file
+   0x0F45. Reached by lcall from the 0x6482 and 0x64AD sites. What it then does with the 0x07D8
+   pointer is now read: 0x10C8 leaves the PD program's own XDATA 0x07D8-0x07DA in R3:R2:R1, and
+   0x0F45 dispatches on R3 to a four-byte loader that overwrites R4:R7, so the pair just stored is
+   not the value 0x0F45 reads. The four arms, their three address spaces and the 34/16/53 site split
+   behind the triple are in the evidence file; none of it is measured on hardware
    type: writer
-   evidence: ec/annotations/lightbar-bat-flow.md
+   evidence: ec/annotations/lightbar-bat-flow.md; ec/annotations/pd-0x07d8-flow.md
    basis: hand-decoded
    name_basis: code-shape */
 
