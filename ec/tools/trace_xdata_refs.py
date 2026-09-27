@@ -242,9 +242,22 @@ def offset_for_runtime(runtime: int, region: str):
 
     A target at or above 0x8000 seen from the common area is unresolvable --
     nothing in the byte says which bank is mapped -- and returns None. That
-    case does occur: 140 sites by byte scan, 83 of them anchored, per 5 of
-    the same file. The PD image is flat, so nothing in it is affected by any
-    of this.
+    case does occur: 140 sites by byte scan, 83 of them anchored, across 102
+    distinct targets, per 5 of the same file. What that None now means is
+    stated rather than left to the count: the *target* is unresolvable, and
+    the *sites* have since been classified against a code map of the common
+    area in ../../docs/findings/bucket-c-codemap.md, which reads 16 of the 140
+    as on an instruction boundary this walk decoded, 123 as outside every
+    reached span with a named reason, and 1 as `unknown` because the walk
+    stopped at a computed jump. Every one of those 16 is either inside a span
+    annotations/data-regions.yaml lists as a table or is a seed the census
+    itself supplied, so the classification retires the old "fewer than ten
+    were read" framing without settling the bucket: a walk that did not reach
+    a byte is not a walk that found the byte to be data. The behaviour here is
+    unchanged and stays correct -- a direct common-to-bank call would need a
+    question asked of this function about what it may be asked to do, and that
+    is a separate issue from reading a target back.
+    The PD image is flat, so nothing in it is affected by any of this.
     """
     home = next(((lo, hi, base) for name, lo, hi, base, _ in REGIONS
                  if name == region and base is not None), None)

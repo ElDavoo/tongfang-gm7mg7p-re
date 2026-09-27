@@ -473,6 +473,16 @@ into `r2 -a 8051` with no stitching needed.
   column to `bank-call-targets.csv` needs
   `tools/build_ec_decompile.py`'s `CALL_TARGET_COLUMNS` edited too, and its
   `--self-test` runs in the cheap gate.
+- **`tools/bucket_c_codemap.py`** — classifies all 140 bucket-C sites against a
+  code map of the common area recovered by recursive descent, so
+  `audit_call_targets.py`'s unresolvable bucket stops being one undifferentiated
+  population. `python3 tools/bucket_c_codemap.py ../firmware/GMxMGxx_11.800
+  --check` re-derives the committed `annotations/bucket-c-codemap.csv` and diffs
+  it; `--self-test` holds the refusals, and `--spans` emits the reached-span set
+  for issue #20. Three verdicts — reached-by-walk, not-reached, unknown — each
+  with a named reason, and every count a count *of this walk from this seed
+  set*. The write-up is
+  [`../docs/findings/bucket-c-codemap.md`](../docs/findings/bucket-c-codemap.md).
 - **`tools/decode_index_table.py`** — decodes the inline `switch` tables the
   main EC image's one table-reading subroutine consumes, starting with the
   `bank0` `0x8038` one that `annotations/bank-call-audit.md` §8 met as a
