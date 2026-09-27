@@ -384,8 +384,16 @@ import csv, collections
 rows = list(csv.DictReader(open('ec/annotations/ec-0x07d1-sites.csv')))
 print(collections.Counter('syncs from every anchor' if r['frame_over'] == '0' else
       'syncs from none' if r['frame_onto'] == '0' else 'mixed' for r in rows))"
-Counter({'syncs from every anchor': 57, 'mixed': 15, 'syncs from none': 4})
+Counter({'syncs from every anchor': 57, 'mixed': 19})
 ```
+
+**None of them is unsynced any more (issue #36).** The 4 this file used to
+report were all the `lcall 0x104D` inline-argument idiom — the argument bytes
+made every preceding anchor mis-land — and `disasm8051.py` now steps over
+them, so the sweep syncs onto all 76. The convention is in
+[`../../docs/findings/pd-inline-arg-trampoline.md`](../../docs/findings/pd-inline-arg-trampoline.md).
+The paragraph below is kept as it was written, describing what those 4 were
+before the fix:
 
 All 4 that no preceding anchor syncs onto are the same idiom
 `ec-0x07d0-sites.md` §5 accounted for 42 of its own 45: `lcall 0x104D`
@@ -400,9 +408,12 @@ and the four argument bytes are:
 | `0xAF01` | `0xAEFA` | `00 00 00 01` |
 | `0xD76C` | `0xD765` | `00 00 03 20` |
 
-`0x104D` pops its own return address into DPTR, fetches four bytes from the
-code stream through `0x1064`, and resumes past them with `jmp @a+dptr` — the
-decode is in `ec-0x07d0-sites.md` §5 and is not repeated. So all 4 are
+`0x104D` pops its own return address into DPTR, copies four bytes from the
+code stream into XDATA through `0x1064`, and resumes past them with
+`jmp @a+dptr` — the full decode is in
+`ec-0x07d0-sites.md` §5 and
+[`pd-inline-arg-trampoline.md`](../../docs/findings/pd-inline-arg-trampoline.md)
+and is not repeated. So all 4 are
 accounted for, and none of them is misframed: the site itself is where the
 walk lands once the argument bytes are stepped over.
 

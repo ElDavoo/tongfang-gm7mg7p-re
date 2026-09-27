@@ -14,6 +14,12 @@ evidence about framing, not proof of it. Confirm anything load-bearing in
 `r2 -a 8051` (make_bank_image.py builds it an image; trace_xdata_refs.py
 --r2-commands prints the seek lines).
 
+The one exception to "walk forward one instruction at a time" is
+`INLINE_ARG_CALLS`, a named table of calls whose arguments sit inline in the
+code stream; it has one entry, the PD image's `0x104D`. That is a claim about
+one address, not a general inline-argument heuristic, and
+`docs/findings/pd-inline-arg-trampoline.md` is where it is established.
+
 The opcode length table covers the full 8051 map, because mis-framing one
 instruction corrupts every instruction after it. The mnemonic table covers
 the subset this firmware actually uses; anything else prints as `db`.
@@ -76,11 +82,45 @@ REL_OPCODES = {0x80: "sjmp", 0x40: "jc", 0x50: "jnc", 0x60: "jz", 0x70: "jnz",
 REL_OPCODES.update({op: "cjne" for op in range(0xB6, 0xC0)})  # CJNE @Ri/Rn
 REL_OPCODES.update({op: "djnz" for op in range(0xD8, 0xE0)})  # DJNZ Rn
 
+# Calls that carry their arguments inline in the code stream, as
+# {runtime target: number of argument bytes}. One entry, for the PD image's
+# `0x104D`, which pops its own return address into DPTR, copies the next four
+# code bytes into XDATA through `0x1064`, and tail-jumps back to the return
+# address + 4. A linear walk that decodes those four bytes as instructions is
+# misframed from there to the end of the region; the write-up that establishes
+# it -- the decoding, the simulation that settles what the helper does with the
+# bytes, and the 458-site census -- is
+# ../../docs/findings/pd-inline-arg-trampoline.md.
+#
+# Keyed on the *decoded instruction* -- opcode 0x12 and this target -- rather
+# than on a runtime-address range, so the same test works in `decode()`,
+# `converges_from()` and `trace_xdata_refs.walk_why()` alike, and so
+# `converges_from()` needs no region knowledge to know whether it is looking
+# at a site in a program that has the idiom. That it is a *named* entry and not
+# a general "inline arguments" heuristic is the point: a heuristic guessing at
+# argument blocks would be unfalsifiable, and this is a byte-exact claim about
+# one address. The idiom occurs 458 times in the PD image and 0 times in the EC
+# image, which `test_disasm8051_inline_args.py` pins.
+INLINE_ARG_CALLS = {0x104D: 4}
+
 # Bit-addressable SFRs, for rendering the bit operand of JB/JNB/JBC/SETB
 # the way r2 prints it (`acc.0`, not `0xe0`).
 BIT_SFR = {0x80: "p0", 0x88: "tcon", 0x90: "p1", 0x98: "scon", 0xA0: "p2",
            0xA8: "ie", 0xB0: "p3", 0xB8: "ip", 0xD0: "psw", 0xE0: "acc",
            0xF0: "b"}
+
+
+def inline_arg_len(d: bytes, i: int) -> int:
+    """How many argument bytes the instruction at d[i] carries inline, else 0.
+
+    Zero for anything but a call named in `INLINE_ARG_CALLS`, and zero for a
+    block the buffer does not hold whole -- so a `lcall 0x104D` sitting at the
+    very end of a window reads as "no argument block here to skip" in every
+    walk alike, and no walk reads past the end to discover that."""
+    if i >= len(d) or d[i] != 0x12 or i + 3 > len(d):
+        return 0
+    n = INLINE_ARG_CALLS.get((d[i + 1] << 8) | d[i + 2], 0)
+    return n if i + 3 + n <= len(d) else 0
 
 
 def bit_name(b: int) -> str:
@@ -304,7 +344,15 @@ def decode(d: bytes, start: int, count: int, addr: int = None, stop_at_flow: boo
     Stops cleanly rather than raising: the end-of-buffer check runs before the
     index it guards, so a caller asking for more instructions than the buffer
     holds gets what fitted, and an instruction that does not fit is not decoded
-    out of bytes that are not there. `count` is a request, not a promise."""
+    out of bytes that are not there. `count` is a request, not a promise.
+
+    A call named in `INLINE_ARG_CALLS` yields its argument block as one
+    indivisible item after itself and resumes past it -- there is no asking for
+    three of four of those bytes. The block is not an instruction and does not
+    consume a unit of `count`, so a caller that asked for N instructions still
+    gets N. `stop_at_flow` still returns on the call and does not reach the
+    block, which is the point of that flag: a window that ends at a branch
+    should end at the branch."""
     i = start
     for _ in range(count):
         if i >= len(d):
@@ -313,10 +361,14 @@ def decode(d: bytes, start: int, count: int, addr: int = None, stop_at_flow: boo
         if i + n > len(d):
             return
         here = None if addr is None else addr + (i - start)
+        extra = inline_arg_len(d, i)
         yield i, d[i:i + n], mnemonic(d, i, here)
         if stop_at_flow and d[i] in FLOW_OPCODES:
             return
         i += n
+        if extra:
+            yield i, d[i:i + extra], "inline args: " + d[i:i + extra].hex(" ")
+        i += extra
 
 
 def converges_from(d: bytes, off: int, back: int = 24) -> tuple:
@@ -324,14 +376,19 @@ def converges_from(d: bytes, off: int, back: int = 24) -> tuple:
     preceding bytes and count how many walks land exactly on `off` versus
     stepping over it. A site nobody syncs onto is not thereby misframed --
     it may simply be preceded by data (a dispatch table, padding) that no
-    linear walk can decode into alignment. Read the pair, not either half."""
+    linear walk can decode into alignment. Read the pair, not either half.
+
+    "Linear" means as `decode()` means it, so the walk steps over an
+    `INLINE_ARG_CALLS` argument block rather than through it; a sweep that did
+    not would report every site behind one as unsyncable, which is the defect
+    `docs/findings/pd-inline-arg-trampoline.md` measures."""
     onto = over = 0
     for b in range(1, back + 1):
         i = off - b
         if i < 0:
             continue
         while i < off:
-            i += OPCODE_LEN[d[i]]
+            i += OPCODE_LEN[d[i]] + inline_arg_len(d, i)
         if i == off:
             onto += 1
         else:

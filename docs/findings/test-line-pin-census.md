@@ -1046,12 +1046,12 @@ the half this table exists to record.
 
 | citing | cited target | read | shape | verdict |
 | `docs/agent-pipeline.md:397` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`../findings.md`](../findings.md):4249 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** |
-| [`../findings.md`](../findings.md):4251 | `test_ec_watch.py:86-89` | by-name | other | **records another line** |
-| [`../findings.md`](../findings.md):7245 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** |
-| [`../findings.md`](../findings.md):7466 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`../findings.md`](../findings.md):7527 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
-| [`../findings.md`](../findings.md):9282 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
+| [`../findings.md`](../findings.md):4253 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** |
+| [`../findings.md`](../findings.md):4255 | `test_ec_watch.py:86-89` | by-name | other | **records another line** |
+| [`../findings.md`](../findings.md):7249 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** |
+| [`../findings.md`](../findings.md):7470 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
+| [`../findings.md`](../findings.md):7531 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
+| [`../findings.md`](../findings.md):9286 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |

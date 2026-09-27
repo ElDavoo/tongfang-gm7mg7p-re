@@ -523,7 +523,17 @@ class ReCutTests(unittest.TestCase):
     `mov c,acc.0` where it read `db 0xa2`, and that is `disasm8051.py`'s
     current rule for opcode `0xA2` applied to a table that was not regenerated
     when the rule landed. It reproduces on clean `origin/main` and has nothing
-    to do with the terminator column."""
+    to do with the terminator column.
+
+    *(Correction, 2026-09-27, issue #36: "It reproduces on clean `origin/main`"
+    was true when written and stopped being true in `964279dc` (#862) -- the
+    commit that added this suite and this baseline is the one that corrected
+    the cell, so every tree from it on already reads `mov c,acc.0`. The drift
+    is still the pre-existing one it was, and still has nothing to do with the
+    terminator column; it has simply moved inside the pinned baseline rather
+    than sitting in the diff against it, which is why it no longer appears in
+    the expected tuple below. `xdata-0400-045f-sites.csv` is not one of the
+    three tables #36 re-cut.)*"""
 
     # The tree this re-cut was measured against: the commit immediately before
     # it, `e198fd9`. Pinned by SHA because a moving ref is exactly the bug this
@@ -534,7 +544,26 @@ class ReCutTests(unittest.TestCase):
     # second cell goes red against this SHA, which is the property the test is
     # cited for, and updating the work then means moving this SHA and the
     # expected tuple in `...preexisting_drift` together.
-    BASELINE = "e198fd9801709d276d0aca93df0b92129e2d7f93"
+    #
+    # **Superseded 2026-09-27 (issue #36), by the procedure that comment
+    # prescribes.** #36 re-cut three of the six tables, so a second cell moved
+    # -- 59 `frame_onto` and 59 `frame_over` -- and the guard went red against
+    # `e198fd9` exactly as that comment says it would. The remedy it gives is
+    # the one applied: the SHA moved to `5672042a`, this branch's parent, and
+    # the expected tuple moved with it. The superseded pair is kept below as
+    # `SUPERSEDED_BASELINE` and `SUPERSEDED_MOVED` rather than overwritten, and
+    # `test_the_superseded_baseline_is_kept_beside_its_replacement` holds both
+    # to what they were. `5672042a` is a descendant of `e198fd9`, so this is a
+    # re-pinning and not a new claim: the `0x11F16` `window` drift is still the
+    # pre-existing one, only no longer *in the diff*, because `964279dc` (#862)
+    # carried the correction into the tree the new SHA names and the baseline
+    # and the committed table now agree on that cell.
+    BASELINE = "5672042ac08dccd0053ab668fcc1111925a3ed1e"
+    SUPERSEDED_BASELINE = "e198fd9801709d276d0aca93df0b92129e2d7f93"
+    SUPERSEDED_MOVED = [
+        ("xdata-0400-045f-sites.csv", "0x11F16", "window",
+         "movx a,@dptr ; db 0xa2", "movx a,@dptr ; mov c,acc.0"),
+    ]
 
     # The six pages whose generating command gained --terminator-column.
     RECUT = ("ec-07c4-07d5-sites.csv", "ec-07d6-07d7-sites.csv",
@@ -590,11 +619,134 @@ class ReCutTests(unittest.TestCase):
                         moved.append((name, a["file_offset"], col, a[col], b[col]))
         self.assertEqual(
             moved,
-            [("xdata-0400-045f-sites.csv", "0x11F16", "window",
-              "movx a,@dptr ; db 0xa2", "movx a,@dptr ; mov c,acc.0")],
-            "a second cell moved, or the known drift changed; the load-bearing "
-            "claim of this re-cut is that no `access` cell and no other "
-            "`window` cell changed")
+            [
+            ('ec-07d6-07d7-sites.csv', '0x22FE1', 'frame_onto', '0', '16'),
+            ('ec-07d6-07d7-sites.csv', '0x22FE1', 'frame_over', '24', '8'),
+            ('ec-07d6-07d7-sites.csv', '0x23034', 'frame_onto', '0', '16'),
+            ('ec-07d6-07d7-sites.csv', '0x23034', 'frame_over', '24', '8'),
+            ('ec-07d6-07d7-sites.csv', '0x2307E', 'frame_onto', '0', '16'),
+            ('ec-07d6-07d7-sites.csv', '0x2307E', 'frame_over', '24', '8'),
+            ('ec-07d6-07d7-sites.csv', '0x230C7', 'frame_onto', '0', '16'),
+            ('ec-07d6-07d7-sites.csv', '0x230C7', 'frame_over', '24', '8'),
+            ('ec-07d6-07d7-sites.csv', '0x23178', 'frame_onto', '0', '18'),
+            ('ec-07d6-07d7-sites.csv', '0x23178', 'frame_over', '24', '6'),
+            ('ec-07d6-07d7-sites.csv', '0x2318B', 'frame_onto', '0', '16'),
+            ('ec-07d6-07d7-sites.csv', '0x2318B', 'frame_over', '24', '8'),
+            ('ec-07d6-07d7-sites.csv', '0x2325A', 'frame_onto', '0', '16'),
+            ('ec-07d6-07d7-sites.csv', '0x2325A', 'frame_over', '24', '8'),
+            ('ec-07d6-07d7-sites.csv', '0x232AF', 'frame_onto', '0', '16'),
+            ('ec-07d6-07d7-sites.csv', '0x232AF', 'frame_over', '24', '8'),
+            ('ec-07d6-07d7-sites.csv', '0x29F94', 'frame_onto', '0', '18'),
+            ('ec-07d6-07d7-sites.csv', '0x29F94', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x23AAF', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x23AAF', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x23B57', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x23B57', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x23C71', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x23C71', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x23CE7', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x23CE7', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x23DF6', 'frame_onto', '0', '17'),
+            ('ec-0x07d0-sites.csv', '0x23DF6', 'frame_over', '24', '7'),
+            ('ec-0x07d0-sites.csv', '0x2487B', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x2487B', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x24909', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x24909', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x2494F', 'frame_onto', '1', '16'),
+            ('ec-0x07d0-sites.csv', '0x2494F', 'frame_over', '23', '8'),
+            ('ec-0x07d0-sites.csv', '0x249A6', 'frame_onto', '1', '16'),
+            ('ec-0x07d0-sites.csv', '0x249A6', 'frame_over', '23', '8'),
+            ('ec-0x07d0-sites.csv', '0x24B03', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x24B03', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x24C07', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x24C07', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x250AD', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x250AD', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x250BE', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x250BE', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x250DB', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x250DB', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x25112', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x25112', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x2517A', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x2517A', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x2519B', 'frame_onto', '0', '16'),
+            ('ec-0x07d0-sites.csv', '0x2519B', 'frame_over', '24', '8'),
+            ('ec-0x07d0-sites.csv', '0x2527F', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x2527F', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x252C2', 'frame_onto', '0', '16'),
+            ('ec-0x07d0-sites.csv', '0x252C2', 'frame_over', '24', '8'),
+            ('ec-0x07d0-sites.csv', '0x252E0', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x252E0', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x26204', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x26204', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x26218', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x26218', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x26256', 'frame_onto', '0', '17'),
+            ('ec-0x07d0-sites.csv', '0x26256', 'frame_over', '24', '7'),
+            ('ec-0x07d0-sites.csv', '0x26267', 'frame_onto', '0', '17'),
+            ('ec-0x07d0-sites.csv', '0x26267', 'frame_over', '24', '7'),
+            ('ec-0x07d0-sites.csv', '0x262A6', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x262A6', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x262D2', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x262D2', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x26312', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x26312', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x2631B', 'frame_onto', '3', '12'),
+            ('ec-0x07d0-sites.csv', '0x2631B', 'frame_over', '21', '12'),
+            ('ec-0x07d0-sites.csv', '0x2633A', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x2633A', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x263AB', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x263AB', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x263D3', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x263D3', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x277DE', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x277DE', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x27826', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x27826', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x2786C', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x2786C', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x27882', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x27882', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x278B7', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x278B7', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x27929', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x27929', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x27994', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x27994', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x27A9D', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x27A9D', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x27AEC', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x27AEC', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x27AFE', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x27AFE', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x284C8', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x284C8', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x28502', 'frame_onto', '1', '18'),
+            ('ec-0x07d0-sites.csv', '0x28502', 'frame_over', '23', '6'),
+            ('ec-0x07d0-sites.csv', '0x285DF', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x285DF', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x29423', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x29423', 'frame_over', '24', '6'),
+            ('ec-0x07d0-sites.csv', '0x29437', 'frame_onto', '0', '18'),
+            ('ec-0x07d0-sites.csv', '0x29437', 'frame_over', '24', '6'),
+            ('ec-0x07d1-sites.csv', '0x27630', 'frame_onto', '0', '18'),
+            ('ec-0x07d1-sites.csv', '0x27630', 'frame_over', '24', '6'),
+            ('ec-0x07d1-sites.csv', '0x293CD', 'frame_onto', '0', '18'),
+            ('ec-0x07d1-sites.csv', '0x293CD', 'frame_over', '24', '6'),
+            ('ec-0x07d1-sites.csv', '0x2AF01', 'frame_onto', '0', '18'),
+            ('ec-0x07d1-sites.csv', '0x2AF01', 'frame_over', '24', '6'),
+            ('ec-0x07d1-sites.csv', '0x2D76C', 'frame_onto', '0', '18'),
+            ('ec-0x07d1-sites.csv', '0x2D76C', 'frame_over', '24', '6')
+            ],
+            "a cell moved that this re-cut did not name. The load-bearing "
+            "claim of a re-cut is that no `access` cell and no `window` cell "
+            "changed, and the whole of what this one moved is the 59 sites' "
+            "`frame_onto`/`frame_over` pairs in the list above: #36 taught "
+            "`disasm8051.py` to frame across `lcall 0x104D`, so the three "
+            "tables it re-cut count the inline arguments the old frame "
+            "stopped short of. An `access` or `window` cell in the moved set "
+            "is the failure this is here to catch.")
 
     def test_no_access_cell_moved_in_any_of_the_six(self):
         # The census's own check, run over the tables rather than over the
@@ -603,13 +755,56 @@ class ReCutTests(unittest.TestCase):
         self.assertEqual(W.census_table(firmware(),
                                         W.BUDGET, W.EXTEND)[4], [])
 
+    def test_the_superseded_baseline_is_kept_beside_its_replacement(self):
+        # CLAUDE.md asks for a superseded claim to be left visible with a
+        # correction next to it rather than edited away, and a constant that
+        # nothing reads is visible only until the next reader tidies it up.
+        # So the two are pinned to what they were, and to the direction of the
+        # move: `5672042a` is a descendant of `e198fd9`, which is what makes
+        # this a re-pinning of the same measurement and not a second,
+        # unrelated one.
+        self.assertEqual(
+            self.SUPERSEDED_BASELINE,
+            "e198fd9801709d276d0aca93df0b92129e2d7f93")
+        self.assertEqual(
+            self.SUPERSEDED_MOVED,
+            [("xdata-0400-045f-sites.csv", "0x11F16", "window",
+              "movx a,@dptr ; db 0xa2", "movx a,@dptr ; mov c,acc.0")])
+        self.assertNotEqual(self.BASELINE, self.SUPERSEDED_BASELINE)
+        anc = subprocess.run(
+            ["git", "merge-base", "--is-ancestor",
+             self.SUPERSEDED_BASELINE, self.BASELINE],
+            cwd=str(REPO), capture_output=True, text=True)
+        self.assertEqual(anc.returncode, 0,
+                         f"{self.SUPERSEDED_BASELINE[:7]} is not an ancestor of "
+                         f"{self.BASELINE[:7]}: the correction has to move the "
+                         f"pin forward, not sideways")
+        # And the drift that tuple recorded is still what that tree holds, so
+        # keeping it is not keeping a memory of a cell that was never there.
+        drift = self._committed_at(self.SUPERSEDED_BASELINE,
+                                   "xdata-0400-045f-sites.csv")
+        self.assertEqual(
+            [r for r in csv.DictReader(io.StringIO(drift))
+             if r["file_offset"] == "0x11F16"][0]["window"],
+            self.SUPERSEDED_MOVED[0][3])
+        # ... and the replacement baseline no longer carries it, which is why
+        # the entry is superseded rather than still expected.
+        now = self._committed_at(self.BASELINE, "xdata-0400-045f-sites.csv")
+        self.assertEqual(
+            [r for r in csv.DictReader(io.StringIO(now))
+             if r["file_offset"] == "0x11F16"][0]["window"],
+            self.SUPERSEDED_MOVED[0][4])
+
     def _committed_at_baseline(self, name):
+        return self._committed_at(self.BASELINE, name)
+
+    def _committed_at(self, sha, name):
         path = f"ec/annotations/{name}"
-        text = subprocess.run(["git", "show", f"{self.BASELINE}:{path}"],
+        text = subprocess.run(["git", "show", f"{sha}:{path}"],
                               cwd=str(REPO), capture_output=True, text=True)
         self.assertEqual(
             text.returncode, 0,
-            f"cannot read {path} at baseline {self.BASELINE[:7]}: the claim "
+            f"cannot read {path} at {sha[:7]}: the claim "
             f"under test is the diff against exactly that tree, and a missing "
             f"baseline is not a pass")
         return text.stdout

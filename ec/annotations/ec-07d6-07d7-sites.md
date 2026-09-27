@@ -124,9 +124,14 @@ classified, which is why they do not match; §2's split is the raw walk.
 Framing, in the `frame_onto`/`frame_over` sense of
 [`bank-call-audit.md`](bank-call-audit.md) §8: **148 of the 213 have all 24
 preceding anchors converging onto them** (94 of 142 for `0x07D6`, 54 of 71 for
-`0x07D7`), and the rest carry 20-23 with a handful at 0. The majority verdict
+`0x07D7`), and the rest carry 16-23 with **none** at 0. The majority verdict
 holds everywhere, so the `frame_onto` column is not load-bearing for any claim
-below, but it is named rather than smoothed over. The listings the argument
+below, but it is named rather than smoothed over. (The 9 that read 0 before
+issue #36 were the `lcall 0x104D` inline-argument idiom — the argument bytes
+made every preceding anchor mis-land — and `disasm8051.py` now steps over
+them; see
+[`pd-inline-arg-trampoline.md`](../../docs/findings/pd-inline-arg-trampoline.md).
+That is why the range moved as well as the count.) The listings the argument
 rests on (§3, §4, §5, §7) were re-run in `r2 -a 8051`; the commands are §6.
 
 ## 2. The sites, by access class
