@@ -55,7 +55,7 @@ $ python3 ec/tools/census_test_line_pins.py
 106 pin(s) in 28 markdown file(s): 79 distinct spelling(s), 58 distinct resolved target(s)
   74 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
   0 def test_, 14 assertion, 22 comment, 5 blank, 33 other (of the pins that resolve)
-  read 199 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 56 test file(s) in it
+  read 207 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 59 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -85,6 +85,38 @@ split, which is what keeps the 107-row table reconciling at 107 placed with all
 seven classes 0. The `167`, the `43`, the `171`, the `176`, the `177`, the `179`
 and the `180` all stay written where each was measured, per
 [`../findings.md`](../findings.md) §4a-4d.)*
+
+**Correction, 2026-09-27, at the `#93` merge: the two denominators on the block
+move and the headcount does not.** The block is re-run on the merged tree, and
+`origin/main` is re-run beside it rather than differenced against it: the merged
+tree reads **`207`** markdown files and **`59`** test files, `origin/main` at
+`4d779338` reads **`206`** and **`59`**, and the step is `206 + 1 = 207` with
+the test-file count unmoved. **The `+1` is #93's own
+[`oem4-bit-map-and-bit0.md`](oem4-bit-map-and-bit0.md)**, which cites no
+`test_*.py:NNN` of its own and adds no suite, so it moves the denominator
+without the headcount; `main`'s own additions are already inside the `206` it
+reads, and there is no `b2afcda4`-relative step left to account for. (#93's
+branch recorded a longer one — `199 + 1 + 5 + 1 = 205` and `57 + 1 = 58`, from
+a base nine merges behind `main`; that arithmetic does not describe this tree
+and the figures beside it supersede it. The `b2afcda4` re-run it rests on is
+confirmed and still stands: re-run at that commit the tool reads `199` and
+**`57`**, so the `56` the block carried from the day it was written to the day
+it was re-run was one low.)
+**Everything above the denominators is unmoved**: still `106` pins in `28`
+citing files, `79` spellings, `58` targets, `74` resolves against `32` declined
+and the `0/14/22/5/33` split, which is what keeps the 106-row table reconciling
+at 106 placed with all seven classes 0. **Six `../findings.md` rows in the
+table below are re-registered, not corrected**, and both sides of this merge
+move them: the five commits `main` took since `b2afcda4` put 21 lines into that
+file above them and #93 puts 19 more, so `:4328`→`:4368`, `:4330`→`:4370`,
+`:7329`→`:7369`, `:7550`→`:7590`, `:7611`→`:7651` and `:9371`→`:9411`, each of
+which is byte-identical to the line it replaces — `git show
+b2afcda4:docs/findings.md` at the six originals reads the same text — so the
+verdict against each is re-read rather than carried. The `181` and the `47` the
+`#1032` × `#1031` paragraph above records, and the `180`/`181` and the `46` the
+`#1033` × `#1030` paragraph below records, stay written where those merges
+measured them, per [`../findings.md`](../findings.md) §4a-4d — each was a
+different tree.
 
 **Correction, 2026-09-26, at the `#929` × `#962` × `#794` × `#780` merge: the
 `156` above is the one figure on the block that this tree moves, and it moves
@@ -1066,12 +1098,12 @@ the half this table exists to record.
 
 | citing | cited target | read | shape | verdict |
 | `docs/agent-pipeline.md:409` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries — **re-anchored from `:397` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read**
-| [`../findings.md`](../findings.md):4349 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** — **re-anchored from `:4328` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read**
-| [`../findings.md`](../findings.md):4351 | `test_ec_watch.py:86-89` | by-name | other | **records another line** — **re-anchored from `:4330` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read**
-| [`../findings.md`](../findings.md):7350 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** — **re-anchored from `:7329` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read**
-| [`../findings.md`](../findings.md):7571 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries  — **re-anchored from `:7550` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read**
-| [`../findings.md`](../findings.md):7632 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries  — **re-anchored from `:7611` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read**
-| [`../findings.md`](../findings.md):9392 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** — **re-anchored from `:9371` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read**
+| [`../findings.md`](../findings.md):4368 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** — **re-anchored from `:4328` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):4370 | `test_ec_watch.py:86-89` | by-name | other | **records another line** — **re-anchored from `:4330` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):7369 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** — **re-anchored from `:7329` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):7590 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries  — **re-anchored from `:7550` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):7651 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries  — **re-anchored from `:7611` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):9411 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** — **re-anchored from `:9371` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |

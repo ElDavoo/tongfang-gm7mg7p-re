@@ -1142,6 +1142,25 @@ vendor methods read-modify-write other bits of `0x07A6`
 LED, `SetApExist`, `SetOverBoostByDynamicTemp`). Which one owns bit 0 was
 not established.
 
+*(**Answered 2026-09-27, issue #93.** The four methods named above are the
+vendor's, and none of them is the owner on this machine: the fan manager that
+runs here is one of four `MyFanManager_RamFan1p5*` classes, none of which
+contains `SetApExist` or calls the two base methods that do, so its
+`Uninstall` records the same fact in NVRAM instead. Which arm the constructor
+takes is the load-bearing part, and it rests on a **prior recorded capture of
+the service on this machine**, not on a live result of this work: it reported
+`RamFan1p5Support: 1` and `IsProjectIdCommercial: 0`
+(`evidence/mqtt-capture/2026-09-18-profile-and-connect.jsonl`), which are
+exactly the two conditions `MyFanCtrl.cs:30` and `:46` test — with the plain
+`MyFanManager` instead, `MyFanManager.cs:389` would have cleared bit 0.
+**The EC sets bit 0**, at `0xABC0` (`orl a,#0x01`), and only when bit 1 of
+`0x0782` — the Q-key, read
+live as clear — is clear. A static instruction sequence, so it says the EC
+writes the bit and not that it acts on it, and *what* cleared it on
+2026-09-19 is still unexplained: no site in the image was found that clears
+bit 0. Full bit map, citations and the searches behind each negative are in
+[`findings/oem4-bit-map-and-bit0.md`](findings/oem4-bit-map-and-bit0.md).)*
+
 The EC watch run during this charge was stopped at 86%, part-way through
 (see `docs/related-projects.md`: on a sibling Uniwill board, reading the
 fan-tachometer registers through `ECRR` stalled the fans).
