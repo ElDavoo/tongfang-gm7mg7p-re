@@ -36,7 +36,8 @@ patch is diffed against — with `<repo>` for this repository's root:
 
 ```console
 $ cd <throwaway> && git init -q . && git fetch -q --depth 1 \
-      https://github.com/Wer-Wolf/uniwill-laptop 5a24248 && git checkout -q FETCH_HEAD
+      https://github.com/Wer-Wolf/uniwill-laptop 5a24248f6422a0b673a47cbfd65e19a98eb4c8a9 \
+      && git checkout -q FETCH_HEAD
 $ git apply <repo>/linux/patches/gm7mg7p-dmi-entry/uniwill-acpi-dm-gm7mg7p.patch
 $ git apply --check <repo>/linux/patches/gm7mg7p-power-profile/uniwill-acpi-profile-gm7mg7p.patch
 error: patch failed: uniwill-acpi.c:2860
@@ -236,18 +237,48 @@ this patch was made against and not some other one:
 
 ```console
 $ cd <throwaway> && git init -q . && git fetch -q --depth 1 \
-      https://github.com/Wer-Wolf/uniwill-laptop 5a24248 && git checkout -q FETCH_HEAD
+      https://github.com/Wer-Wolf/uniwill-laptop 5a24248f6422a0b673a47cbfd65e19a98eb4c8a9 \
+      && git checkout -q FETCH_HEAD
 $ git apply --check -v <repo>/linux/patches/gm7mg7p-power-profile/uniwill-acpi-profile-gm7mg7p.patch
 Checking patch uniwill-acpi.c...
+Hunk #5 succeeded at 688 (offset 1 line).
+Hunk #6 succeeded at 738 (offset 1 line).
+Hunk #7 succeeded at 772 (offset 1 line).
+Hunk #8 succeeded at 1342 (offset 1 line).
+Hunk #9 succeeded at 1419 (offset 8 lines).
+Hunk #10 succeeded at 1471 (offset 8 lines).
+Hunk #11 succeeded at 2332 (offset 8 lines).
+Hunk #12 succeeded at 2433 (offset 8 lines).
+Hunk #13 succeeded at 2452 (offset 8 lines).
+Hunk #14 succeeded at 2587 (offset 8 lines).
+Hunk #15 succeeded at 3076 (offset 8 lines).
+Hunk #16 succeeded at 3668 (offset 8 lines).
 $ echo $?
 0
 ```
 
-Every hunk accepted, no warning, no fuzz. `PR_DESCRIPTION.md` says so to
-whoever pastes it upstream, and it says it *here* first because a claim in a
-body bound for another repository is only as good as what this one records.
-The same throwaway checkout is what the stacking result in "The other patch
-for this board" above was measured on.
+Every hunk accepted, no warning, no fuzz, and exit 0. The block is not silent,
+though, and the offsets are the part to read: **twelve of the sixteen hunks
+apply at a line offset from the one their `@@` header names**, because the
+patch was hand-written against a reading of the source rather than produced by
+`git diff` off a prepared tree. Hunk #1-#4 land on the line they claim; #5-#8
+are one line out and #9-#16 are eight.
+
+That is benign here, and it is worth saying why rather than leaving a reader
+to work it out from a log. An offset means git did not find the hunk where its
+header said, but it did find it — a hunk is located by its context lines, not
+by its line number, so the twelve above are the twelve whose context still
+matched at a different line. This diff touches one file and adds lines only,
+not one `-` line anywhere in the body, so there is no removed line for an
+offset to re-target at the wrong place. A maintainer rebasing onto a tree
+where upstream has moved further will see those offsets grow, and possibly
+start seeing rejects; the check to re-run is the one above, against their own
+tree.
+
+`PR_DESCRIPTION.md` says so to whoever pastes it upstream, and it says it
+*here* first because a claim in a body bound for another repository is only as
+good as what this one records. The same throwaway checkout is what the
+stacking result in "The other patch for this board" above was measured on.
 
 **`fetch-upstream-profile.sh` is a deliberate near-duplicate of
 `gm7mg7p-dmi-entry/fetch-upstream.sh`, not an oversight.** The two range lists

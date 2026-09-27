@@ -129,16 +129,26 @@ done — it just needs to be built once.
 - `git apply --check` against `5a24248`: clean. Run on 2026-09-27 into an
   empty tree, from a fresh `git fetch --depth 1` of
   `5a24248f6422a0b673a47cbfd65e19a98eb4c8a9` whose `uniwill-acpi.c` is the
-  `7a2eeae` blob the patch's own `index` line names:
+  `7a2eeae` blob this diff is written against:
 
   ```sh
   git apply --check -v uniwill-acpi-profile-gm7mg7p.patch
   Checking patch uniwill-acpi.c...
+  Hunk #5 succeeded at 688 (offset 1 line).
+  ...
+  Hunk #16 succeeded at 3668 (offset 8 lines).
   ```
 
-  Exit 0, every hunk accepted, no warning. That is a check of the diff against
-  the pinned source and nothing more; the last bullet is what is still not
-  done.
+  Exit 0, every hunk accepted, no warning and no fuzz. Twelve of the sixteen
+  hunks apply at a line offset from the one their `@@` header names, because
+  the diff is hand-written rather than produced by `git diff`: a hunk is
+  located by its context lines, that context still matched, and the diff adds
+  lines only. Rebasing onto a tree where upstream has moved further will grow
+  those offsets. Separately, note that this patch carries **no `index` line**,
+  for the same reason it is hand-written — the base is the `Base commit:`
+  header above, and `7a2eeae` is the blob at that rev. That is a check of the
+  diff against the pinned source and nothing more; the last bullet is what is
+  still not done.
 - The regmap gates this touches were read off the source rather than assumed:
   `EC_ADDR_MANUAL_FAN_CTRL`, the three `EC_ADDR_PL*_SETTING` bytes,
   `EC_ADDR_BIOS_INFO_3` and the three default blocks are in

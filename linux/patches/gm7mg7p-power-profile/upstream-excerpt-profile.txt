@@ -55,8 +55,8 @@ THE FINDING THAT CHANGED THE SHAPE OF THIS WORK
 was written on the assumption that it did: it asked for a `platform_profile`
 handler written against "the `platform_profile` struct, the
 `UNIWILL_PLATFORM_PROFILE_UNK`/low-power/balanced/performance enum and the
-existing profile store/cycle helpers". All three are absent here, and two
-measurements say so, of different weight.
+existing profile store/cycle helpers". None of the three is present at this
+rev, on the two measurements below, which are of different weight.
 
   - `struct uniwill_device_descriptor` is quoted in full at 428-436 below --
     five members, closing brace included -- with no `platform_profile` member
