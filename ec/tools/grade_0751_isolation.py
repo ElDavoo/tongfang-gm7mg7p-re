@@ -1138,7 +1138,7 @@ def existing_mark_provenance(path):
     byte outside the declared codec all come back as something to name rather
     than as an exception. The file is one a watcher is about to append to, and
     a preflight that would not open it loses the one warning this exists to
-    print. A two-column mark row comes back as `(N, "", "", None)`.
+    print. A two-column mark row comes back as `(N, ts, "", None)`.
 
     The skip rule and the mark branch are spelled here rather than shared,
     which is the duplication #548 left and the row shape still owns: the

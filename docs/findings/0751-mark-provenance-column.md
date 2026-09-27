@@ -177,7 +177,11 @@ Three things about the return value, each of which the docstring states and
   raise on anything `read_capture` refuses — a short row, a timestamp
   `parse_ts` cannot read, a byte outside the declared codec — and does not
   die on the file's encoding. A two-column mark row comes back as
-  `(N, "", "", None)`, matching `mark_labels_of`'s tolerance. The reason is
+  `(N, ts, "", None)`, matching `mark_labels_of`'s tolerance in both defaults
+  and neither of them touching the timestamp: the label is defaulted to `""`
+  and the provenance to `None`, and the timestamp is passed through, because
+  it is the one field every row has and the caller is here to read it. The
+  reason is
   `existing_mark_labels`' and it is unchanged: the file is one a watcher is
   about to append to, and a preflight that would not open it loses the one
   warning the notice exists to print.
@@ -226,7 +230,7 @@ rows are unchanged — `ts,addr,old,new`, four fields, as before.
 That is the right trade rather than a compromise, and the reason is that
 every reader in the tree drops the header anyway. `skippable_row` at
 `ec/tools/grade_0751_isolation.py:845` takes it on `row[0] == "ts"`, and so do
-`grade_timer_sweep.py:115` and `check_capture_encoding.py:164` with their own
+`grade_timer_sweep.py:136` and `check_capture_encoding.py:164` with their own
 spelling of the same test. A name the change rows do not use costs none of
 them, and a header that named four would document a five-field mark row
 wrongly, which is the failure this column's whole point is to avoid.
@@ -380,6 +384,22 @@ With that done, the census over a tree carrying this page moved out reads
 so this change's edits to the two test files leave no drift behind them. The
 step from there to this tree is this page's own records, and
 `ec/tools/test_census_test_line_pins.py` carries the arithmetic.
+
+*(Correction, same day and same issue: "figure for figure" was true when this
+was written and is not now, and the two records that broke it are the ones
+re-running [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md)'s
+second transcript added — the grader suite's twelfth `existing_mark_labels`
+line, which this change's own edits to that suite created. With this page
+moved out the run reads `108` records, `28` files, `81` spellings, `59`
+targets, `75` resolves against `33` declined, the `0/14/22/5/34` split, which
+is `origin/main` plus exactly those two: `+2` records, `+2` spellings, `+1`
+target and `+1` resolve (a declined pin resolves to nothing, so only the
+live-prose twin is a target) and `+1` `other`. **The `origin/main` figures stay
+written above and are the record of the tree they were measured on.** The
+paragraph's claim is not that the run comes back to `origin/main` — it is that
+nothing is left over to attribute to somebody, and the two records that are
+there are the transcript's and are named in the row above. A control that had
+to be re-measured to stay a control is worth the sentence saying so.)*
 
 The shapes page's own transcripts — sections 1, 2, 3 and 5 — are the
 measurement's as taken, and they are a quotation of a run rather than a live

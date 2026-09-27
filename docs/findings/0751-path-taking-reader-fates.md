@@ -26,7 +26,7 @@ already; the write-up points at them instead. Test cases are named by name
 rather than by line, so that adding a case above one does not rot this page.
 
 *(One exception, and it is forced rather than chosen, so it is recorded here
-rather than left to look like an oversight. The sixteen `test_*.py:NNN` lines
+rather than left to look like an oversight. The seventeen `test_*.py:NNN` lines
 the two transcripts below print are **also** cited in live prose further down,
 which is the one thing this rule would otherwise forbid. The reason is
 `census_test_line_pins.py`'s fence rule: a pin that appears *only* inside a
@@ -34,14 +34,24 @@ fenced block is `declined`, and
 `test_every_declined_pin_is_also_cited_in_live_prose` requires every declined
 pin to have a live-prose twin, because declining the tree's only citation of a
 line is a quiet loss rather than a declined duplicate. This page's transcripts
-were the sole citation of all sixteen, so all sixteen reddened that test, and
-the choice was between citing them in prose and weakening the rule. The prose
-is sixteen lines that can rot; the rule is what keeps a transcript from quietly
-becoming the only record of a line. Rule kept. It also means the exception is
-narrow on purpose — it covers the *test-file* lines the transcripts print, and
-not one `grade_0751_isolation.py` line, which is what the rule above governs.
-The two sides of that split are the tool's own: it censuses `test_*.py:NNN`
-pins and nothing else.)*
+were the sole citation of all seventeen, so all seventeen reddened that test,
+and the choice was between citing them in prose and weakening the rule. The
+prose is seventeen lines that can rot; the rule is what keeps a transcript from
+quietly becoming the only record of a line. Rule kept. It also means the
+exception is narrow on purpose — it covers the *test-file* lines the
+transcripts print, and not one `grade_0751_isolation.py` line, which is what
+the rule above governs. The two sides of that split are the tool's own: it
+censuses `test_*.py:NNN` pins and nothing else.)*
+
+*(The seventeenth is the grader suite's own twelfth `existing_mark_labels`
+call, and it arrived with #739 rather than with #771: re-running the second
+transcript is what put it there, because that change's own edits to the suite
+added the call and the transcript was still printing the eleven it had been
+measured against. A transcript that has quietly stopped being the run is worse
+than one that is visibly dated, because a dated one says which tree it speaks
+for and a stale one claims the current. The two records it moved are a
+`declined` and a `resolves`, a fenced pin and its live-prose twin being two
+records of one line.)*
 
 ---
 
@@ -96,7 +106,7 @@ it is an API or a test fixture. Every executable reference to it is:
 ```console
 $ grep -rn "\.existing_mark_labels" --include=*.py .
 ./windows/tools/test_ec_watch.py:1168:                             grader.existing_mark_labels(str(out)))
-./windows/tools/ec_watch.py:275:                     grader.existing_mark_labels,
+./windows/tools/ec_watch.py:282:                     grader.existing_mark_labels,
 ./ec/tools/test_grade_0751_isolation.py:3500:            self.assertEqual(grade.existing_mark_labels(path),
 ./ec/tools/test_grade_0751_isolation.py:3520:            self.assertEqual(grade.existing_mark_labels(path),
 ./ec/tools/test_grade_0751_isolation.py:3551:            marks = grade.existing_mark_labels(str(path))
@@ -108,13 +118,16 @@ $ grep -rn "\.existing_mark_labels" --include=*.py .
 ./ec/tools/test_grade_0751_isolation.py:4057:            self.assertEqual(len(grade.existing_mark_labels(str(path))), 1)
 ./ec/tools/test_grade_0751_isolation.py:4166:            lenient = grade.existing_mark_labels(path)
 ./ec/tools/test_grade_0751_isolation.py:4356:                    self.assertEqual(grade.existing_mark_labels(path), [])
-./ec/tools/measure_mark_provenance.py:430:            ("existing_mark_labels", GRADER, grader.existing_mark_labels,
-./ec/tools/measure_mark_provenance.py:717:        base = grader.existing_mark_labels(os.path.join(tmp, "0751-none.csv"))
-./ec/tools/measure_mark_provenance.py:719:            got = grader.existing_mark_labels(
-./ec/tools/measure_mark_provenance.py:730:        if grader.existing_mark_labels(empty) != [
+./ec/tools/test_grade_0751_isolation.py:4531:                                 grade.existing_mark_labels(str(path)))
+./ec/tools/measure_mark_provenance.py:468:            ("existing_mark_labels", GRADER, grader.existing_mark_labels,
+./ec/tools/measure_mark_provenance.py:841:        if pairs != grader.existing_mark_labels(path):
+./ec/tools/measure_mark_provenance.py:844:                            f"{grader.existing_mark_labels(path)}")
+./ec/tools/measure_mark_provenance.py:891:        base = grader.existing_mark_labels(os.path.join(tmp, "0751-none.csv"))
+./ec/tools/measure_mark_provenance.py:893:            got = grader.existing_mark_labels(
+./ec/tools/measure_mark_provenance.py:904:        if grader.existing_mark_labels(empty) != [
 ```
 
-Eleven of those are the grader's own suite, which is not what the question is
+Twelve of those are the grader's own suite, which is not what the question is
 about — `ec/tools/test_grade_0751_isolation.py:3500`,
 `ec/tools/test_grade_0751_isolation.py:3520`,
 `ec/tools/test_grade_0751_isolation.py:3551`,
@@ -124,8 +137,9 @@ about — `ec/tools/test_grade_0751_isolation.py:3500`,
 `ec/tools/test_grade_0751_isolation.py:3858`,
 `ec/tools/test_grade_0751_isolation.py:4049`,
 `ec/tools/test_grade_0751_isolation.py:4057`,
-`ec/tools/test_grade_0751_isolation.py:4166` and
-`ec/tools/test_grade_0751_isolation.py:4356`. The other **four** are three
+`ec/tools/test_grade_0751_isolation.py:4166`,
+`ec/tools/test_grade_0751_isolation.py:4356` and
+`ec/tools/test_grade_0751_isolation.py:4531`. The other **eight** are three
 files that do not belong to it, and they are why the answer is API rather than
 fixture:
 
@@ -283,6 +297,20 @@ and the third is [`test-line-pin-census.md`](test-line-pin-census.md) — the pa
 that *publishes* this census's figures, so a correction paragraph beside its
 transcript, its verdict table, its shape split and its 32 new per-pin rows went
 in with it. None of the three numbers is derived here.
+
+*(Those totals have moved twice since, both on #739 and both recorded beside
+the tool that holds them rather than here: first by that change's own write-up
+adding twenty records, then by the transcript re-run above adding the two its
+seventeenth pin needs. The derivation above is the one the fence rule forced at
+the #771 merge and it stays as written, because a derivation is a record of
+what a change did and not a figure a reader should re-run against. **The three
+places are four now**, for the reason the paragraph above gives: the fourth is
+`ec/tools/test_check_pin_table_by_cited_file.py`, whose per-cited-file table
+reweights the row the seventeenth pin names, so it moved with the second step
+and would have reddened had it not been re-derived. The shape of the thing is
+the one this page has said from the start — a transcript is only safe while the
+tool that prints it is re-run, and everything downstream of that is a figure
+with a date on it.)*
 
 Nothing in this change needs hardware. The whole of it is offline behaviour of
 a text search, a line-number census and a test suite.

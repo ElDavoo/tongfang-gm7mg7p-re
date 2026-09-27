@@ -699,13 +699,38 @@ class TheCommittedTree(unittest.TestCase):
         # is the check a movement claim is run for: every pin this change's
         # edits moved is a pin this change re-anchored, so there is no
         # remainder left to hand to anybody.
+        #
+        # **The control has since been re-measured, and it no longer reads
+        # `origin/main` figure for figure** — with the new page moved out the
+        # tree reads `108` records, `81` spellings, `59` targets, `75` resolves
+        # against `33` declined, the `0/14/22/5/34` split. The difference is
+        # the two records re-running the reader-fates page's second transcript
+        # added, which are *not* this write-up's twenty and not a remainder
+        # from the three re-anchorings above: that page is still in the tree
+        # when only this one is moved out. The claim the control exists to
+        # support is unchanged and is the one the assertions below carry —
+        # nothing is left over that this change's edits to the two test files
+        # put there. A control that has to be re-run to keep being a control
+        # is worth saying so beside, rather than restating the figure it used
+        # to give.
         records, _files = census.census(census.REPO)
-        self.assertEqual(len(records), 126)
+        # **And re-derived once more, same issue, same day, for the fence
+        # rule rather than the new page: +2, not +20.** Re-running
+        # `0751-path-taking-reader-fates.md`'s second transcript added the
+        # grader suite's twelfth `existing_mark_labels` call to it, which is
+        # one `declined` for the fenced line and one `resolves` for the
+        # live-prose twin the fence rule requires beside it — so
+        # `126 + 2 = 128` records, `91 + 2 = 93` spellings (the fenced
+        # `./`-prefixed spelling and the bare one prose writes are two), and
+        # `68 + 1 = 69` targets, because a declined pin resolves to nothing
+        # and only the twin is a target. The files figure is unmoved at `29`:
+        # both records are in a file that was already cited.
+        self.assertEqual(len(records), 128)
         self.assertEqual(len({r[0] for r in records}), 29)
-        self.assertEqual(len({r[2] for r in records}), 91)
+        self.assertEqual(len({r[2] for r in records}), 93)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 94, census.OUT_OF_RANGE: 0,
-            census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 32})
+            census.RESOLVES: 95, census.OUT_OF_RANGE: 0,
+            census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 33})
         # Re-derived for #962, then again here, and not lowered either time.
         # #962's class and a docstring above it grew, so every pin into
         # `test_xdata_cluster_names.py` lands `N` lines lower than it did, and
@@ -724,10 +749,10 @@ class TheCommittedTree(unittest.TestCase):
         # the same 32 declined, 74 resolving, 58 targets.
         self.assertEqual(shapes(records), {
             census.DEF_TEST: 0, census.ASSERTION: 24, census.COMMENT: 22,
-            census.BLANK: 5, census.OTHER: 43})
+            census.BLANK: 5, census.OTHER: 44})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 68)
+                 if r[3] == census.RESOLVES}), 69)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

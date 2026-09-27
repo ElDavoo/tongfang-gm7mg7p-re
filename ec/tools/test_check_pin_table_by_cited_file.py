@@ -480,10 +480,19 @@ class TheCommittedTree(unittest.TestCase):
         # three changes a name, a file count or this table -- which is what
         # "a repoint moves a line, not a name" says when a repoint is caused by
         # the same change that does the repointing.
+        # Then one more row, same issue, and this one *is* a name the change
+        # newly made: re-running `0751-path-taking-reader-fates.md`'s second
+        # `grep` transcript printed a twelfth `test_grade_0751_isolation.py`
+        # line the table had been carrying eleven of, so that row's two cells
+        # each take one, `22 -> 23` and `15 -> 16`. It is the same file rather
+        # than a new one, which is the distinction the paragraph above draws —
+        # a change that adds a record to a file the table already carries
+        # reweights that file, where a change that adds one to a *new* file
+        # leaves the two rows the concentration argument rests on alone.
         self.assertEqual(
             {row[0]: (row[1], row[3]) for row in tool.rows(table)},
             {"ec/tools/test_xdata_cluster_names.py": (33, 10),
-             "ec/tools/test_grade_0751_isolation.py": (22, 15),
+             "ec/tools/test_grade_0751_isolation.py": (23, 16),
              "windows/tools/test_manual_fan_ctrl_probe.py": (11, 3),
              "ec/tools/test_disasm8051.py": (4, 1),
              "windows/tools/test_ec_watch.py": (11, 2),
@@ -536,9 +545,17 @@ class TheCommittedTree(unittest.TestCase):
         # names lands in neither of these two files, and moves no occurrence
         # into or out of either, so it takes nothing here — the same
         # distinction read from the other end.
-        self.assertEqual([row[4] for row in cited[:2]], [43, 37])
-        self.assertEqual(cited[0][4] + cited[1][4], 80)
-        self.assertEqual(len(records), 126)
+        # Then +2 again, same issue and the same shape as the row above: the
+        # transcript's two new records both name `test_grade_0751_isolation.py`
+        # — the fenced line and its live-prose twin are one line written
+        # twice — so the second row takes both of its cells, `37 -> 39`, and
+        # the sum with an unmoved first row is `80 -> 82`. The first row is the
+        # control: neither record names `test_xdata_cluster_names.py`, so a
+        # reader can see the step is a weight on the second row and not a
+        # shift between the two.
+        self.assertEqual([row[4] for row in cited[:2]], [43, 39])
+        self.assertEqual(cited[0][4] + cited[1][4], 82)
+        self.assertEqual(len(records), 128)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
         # Three figures, and each moves by construction the moment a suite
