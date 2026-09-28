@@ -83,10 +83,10 @@ $ grep -rno 'xdata_moved_ranks\.py:[0-9-]*' --include=*.md . | grep -v '^\./vend
 
 **Eight spellings on eight lines, and that is a floor.** The same sentences carry
 **elided** pins the pattern cannot see — `tools/README.md:372`'s `:277` and
-`:332`, `tools/README.md:462`'s `:436`, `:485` and `:255`, and
-`xdata-write-direction-correction.md:38`'s `:270-283` and `:1215-1277`. The table
-below is therefore a reading of the **citing lines whole**, with the grep as the
-enumerator and the elided forms named as elided.
+`:332`, `tools/README.md:462`'s `:436`, `:485` and `:255`, and the
+"values to cite" sentence of `xdata-write-direction-correction.md`'s `:270-283`
+and `:1215-1277`. The table below is therefore a reading of the **citing lines
+whole**, with the grep as the enumerator and the elided forms named as elided.
 
 **This file is excluded from its own population by name**, the way
 [`test-line-pin-census.md`](test-line-pin-census.md) excludes itself, so the
@@ -307,6 +307,17 @@ commit that was rewritten, or two different commits of which one is not reachabl
 from this branch. **That is a separate open question, not a finding**, and it is
 recorded here so the next pass does not re-derive it.
 
+**Answered 2026-09-28, issue #971: the same change recorded twice.** `a4f967ed`
+is a real commit — the first of the two on PR #923's branch, with `d62730e1` for
+a parent exactly as the walk above assumed, superseded by `2dd0f187` and
+squash-merged as `bdfddcfd`. The walk could not have found it: a commit no ref
+points at is invisible to `git cat-file`, and the only lookup that sees one is a
+plain object read on the remote. Decided in
+[`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md), which carries the
+transcripts. The three options the sentence above leaves open were: the first
+of them, and the other two are excluded — it is not a rewritten commit's alias
+and not a second, different change.
+
 ## 6. The §4a-4d treatment, file by file
 
 Per [`../findings.md`](../findings.md) §4a-4d the superseded text stays visible
@@ -377,7 +388,10 @@ true); [`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md
   §"What this opens" already files it as a separate defect, and fixing it is not
   this change's to do.
 - **`a4f967ed`**, per §5, is unreached and its relationship to `bdfddcfd` is not
-  settled here.
+  settled here. **Settled since**, in
+  [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md): the same change,
+  `a4f967ed` being the first commit on PR #923's branch and `bdfddcfd` the
+  squash that replaced it. The bullet stands as this file left it.
 
 ## 8. The test that proves it
 
