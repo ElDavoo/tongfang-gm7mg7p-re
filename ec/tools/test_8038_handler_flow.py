@@ -45,6 +45,7 @@ DECOMPILED = HERE.parent / 'decompiled'
 ARMS = ANNOTATIONS / 'bank0-8038-handler-arms.csv'
 CENSUS = ANNOTATIONS / 'xdata-registers.csv'
 CALL_TARGETS = ANNOTATIONS / 'bank-call-targets.csv'
+REL_CENSUS = ANNOTATIONS / 'bank-relative-branch-targets.csv'
 DISPATCH = ANNOTATIONS / 'bank0-8038-dispatch-table.csv'
 FLOW_DOC = ANNOTATIONS / 'bank0-8038-handler-flow.md'
 AUDIT_DOC = ANNOTATIONS / 'bank-call-audit.md'
@@ -391,19 +392,50 @@ class ThePerCaseWalk(unittest.TestCase):
                     self.assertEqual(EXIT[case][4], hi)
                     self.assertGreaterEqual(0x8274, hi)
 
-    def test_case_05_is_the_only_handler_arm_with_two_blocks(self):
-        # Its `sjmp` lands in the epilogue, which is the two-block case §4 of
-        # the document calls it. Case 0x06's epilogue is inside its own single
-        # block instead, so it reaches 0x821F and still has one.
-        for case, _t, _g, _s, _p, _f, _a, _h, _h2 in CASES:
-            if case == 0x07:
-                continue
+    def test_cases_05_and_07_are_the_two_block_handler_arms(self):
+        # §3's per-case arithmetic, asserted per case rather than as a range
+        # over all eight -- a range holds nothing when two of the eight are
+        # two blocks. Case 0x05's `sjmp` lands in the epilogue and case 0x07's
+        # run past its window into the default, so each is two blocks; case
+        # 0x06's epilogue is inside its own single block instead, so it
+        # reaches 0x821F and still has one.
+        expected = {0x00: [26], 0x01: [27], 0x02: [27], 0x03: [27],
+                    0x04: [26], 0x05: [27, 9], 0x06: [35], 0x07: [35, 9]}
+        # All eight, so a ninth case cannot join them unmeasured.
+        self.assertEqual(sorted(expected), sorted(c for c, *_ in CASES))
+        for case in sorted(expected):
             with self.subTest(case="0x%02X" % case):
-                window = arm_row(case)['window']
-                # One block is no separator, two is one -- so case 0x05 is
-                # the only handler arm with a `|` in its window.
-                self.assertEqual(window.count(" | "), 0 if case != 0x05 else 1)
+                # One block is no separator and two is one, so the per-block
+                # sizes come from splitting on it rather than from a count.
+                blocks = arm_row(case)['window'].split(" | ")
+                self.assertEqual(
+                    [len([i for i in b.split(';') if i.strip()])
+                     for b in blocks], expected[case])
+                self.assertEqual(int(arm_row(case)['insns']),
+                                 sum(expected[case]))
         self.assertIn("0x821f lcall 0xbb08", arm_row(0x05)['window'].lower())
+
+    def test_the_relative_census_carries_the_sjmp_case_05_leaves_by(self):
+        # §3's claim is that the PC-relative census *does* resolve the edge a
+        # linear window read cannot follow, so the row has to be there -- with
+        # the framing that says 0x821F is an instruction start, and the `sjmp`
+        # as its opcode rather than a byte inside a longer instruction.
+        sites = [r for r in rows(REL_CENSUS)
+                 if r['region'] == 'bank0' and int(r['runtime'], 16) == 0x81DD]
+        self.assertEqual(len(sites), 1)
+        row = sites[0]
+        self.assertEqual(hexat(BANK0, 0x81DD, 2), "8040")
+        self.assertEqual(row['opcode'], 'sjmp')
+        self.assertEqual(int(row['target'], 16), 0x821F)
+        self.assertEqual(row['target_class'], 'entry')
+        self.assertEqual((int(row['frame_onto']), int(row['frame_over'])),
+                         (21, 3))
+        # And the eight cases hold no other `sjmp` between them, which is the
+        # other half of §3's sentence.
+        others = {r['site_runtime'] for r in rows(ARMS)
+                  if r['kind'] == 'arm' and 'sjmp' in r['window'].lower()
+                  and r['site_runtime'] != '0x82D8'}
+        self.assertEqual(others, {'0x819D'})
 
     def test_case_06_contains_the_epilogue_in_its_own_block(self):
         window = arm_row(0x06)['window']

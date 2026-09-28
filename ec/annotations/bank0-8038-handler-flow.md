@@ -106,11 +106,14 @@ itself is spelled `jnb` rather than `jb`, so the same edge is the *taken* one.
 The walk reports all eight of these arms `complete` with no XDATA access and one
 callee, `0x8274`.
 
-**The bit-7-set arm is a single linear block** — one entry, no internal branch
-in any of the eight — of 26 to 35 instructions. Cases `0x00`-`0x04` have one
-distinct shape, and cases `0x05`-`0x07` differ from it and from each other in
-how they leave, which is the first thing the linear window decode folds
-together. The three shapes:
+**Six of the eight bit-7-set arms are a single linear block** — one entry, no
+internal branch — of 26 to 35 instructions. The two exceptions are `0x05` and
+`0x07`, two blocks each: `0x05` runs 27 instructions to its `sjmp` and 9 more
+from `0x821F`, `0x07` 35 to the `ret` at `0x827D` and 9 more from `0x827E`, and
+the `jz` at `0x8278` is inside `0x07`'s first block. Cases `0x00`-`0x04` have
+one distinct shape, and cases `0x05`-`0x07` differ from it and from each other
+in how they leave, which is the first thing the linear window decode folds
+together. The four shapes:
 
 | leaving the bit-7-set arm | cases | evidence |
 |---|---|---|
@@ -125,11 +128,17 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x81db; pd 2' /tmp/bank0.
         ┌─< 0x000081dd      8040           sjmp 0x821f
 ```
 
-Two of the three shapes are reachable only by a PC-relative edge (`sjmp`), and
-`sjmp` is excluded from the paged/relative census's branch family by
-construction — which is the concrete reason §9's window read could not see them.
-The `0x06` fall-through is visible to nothing at all: no branch, no call, no
-reference, just the next address.
+Case `0x05`'s shape is the only one of the four that leaves by a PC-relative
+edge, and the only `sjmp` in any of the eight. The PC-relative census does
+carry that edge: [`bank-relative-branch-targets.csv`](bank-relative-branch-targets.csv)
+resolves `0x081DD` to `0x821F` as `target_class: entry`, with 21 of 24 framings
+putting an instruction start there — the family
+[`bank-call-audit.md`](bank-call-audit.md) §8 counts, `sjmp` first in it. What a
+linear window read cannot do is *act* on that row: §9's window for case `0x05`
+is `0x819D`-`0x81DE`, which ends at the `sjmp` with nothing to follow (§4). Case
+`0x07` leaves its window with no branch at all, running past `0x8273` into the
+default. The `0x06` fall-through is visible to nothing at all: no branch, no
+call, no reference, just the next address.
 
 **The three committed Ghidra entries inside case `0x00`'s window are listing
 boundaries, not control-flow boundaries.** `8054.asm`, `805B.asm` and `806C.asm`
