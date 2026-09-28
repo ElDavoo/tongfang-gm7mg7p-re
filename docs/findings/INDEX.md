@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-151 write-ups.
+156 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -28,6 +28,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md) — §3's three unlabelled mark rounds were a fourth class of mark, and the block model had no place for them (issue #472)
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
+- [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
 - [`bucket-c-codemap.md`](bucket-c-codemap.md) — Bucket C against a recovered code map: 16 of the 140 sites are on an instruction boundary, and 14 of those 16 sit inside spans already listed as data tables
@@ -61,8 +62,10 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
 - [`ecmg-asl-references.md`](ecmg-asl-references.md) — Which of the 98 ECMG names the ASL reaches for, and what the two `0x71` arms are (issue #1159)
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
+- [`findings-index-staleness.md`](findings-index-staleness.md) — The index is hand-edited by merges and nothing runs the check that would catch it (issue #1137)
 - [`fixture-empty-pointer-cells.md`](fixture-empty-pointer-cells.md) — The fixture's six empty cells are not a count, and the set is derivable where the six is not (issue #1006)
 - [`group-proxy-populations.md`](group-proxy-populations.md) — What the banking rule discards, and how much of it (issue #455)
+- [`handoff-site-warrant.md`](handoff-site-warrant.md) — A DPTR handoff that resolves is a warrant, and the one address whose sites do not resolve
 - [`hardware-test-artifact-handoff.md`](hardware-test-artifact-handoff.md) — Every procedure's "Where the output goes" is now held to its own commands, in both directions (issue #1190)
 - [`history-checkout-claim-per-workflow.md`](history-checkout-claim-per-workflow.md) — A depth claim is judged per workflow, not per sentence
 - [`history-checkout-claims.md`](history-checkout-claims.md) — The checkout-depth claim, corrected at seven sites and re-derived by a checker
@@ -72,6 +75,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`history-checkouts-gate-wiring.md`](history-checkouts-gate-wiring.md) — The checkout-depth check is prepared for the cheap gate, in a patch that had to fold (issue #1033)
 - [`ifr-charge-and-battery-options.md`](ifr-charge-and-battery-options.md) — The charge and battery questions in the Setup IFR, and what hides them
 - [`landed-gate-patch-state.md`](landed-gate-patch-state.md) — A landed gate patch is not a stale one: the four states, and the two-step landing (issue #772)
+- [`mmrd-unaligned-escape.md`](mmrd-unaligned-escape.md) — The unaligned `MMRD` escape, and the two sources that would have to say it is safe (issue #439)
 - [`name-basis-and-groups.md`](name-basis-and-groups.md) — What grounds a name, and what a group is (issue #135)
 - [`name-shape.md`](name-shape.md) — A hand name is a citation wherever its words appear, so it is held to a shape before it is committed (issue #436)
 - [`named-without-a-row.md`](named-without-a-row.md) — The 25 functions that carry a name no CSV row wrote (issue #601)
@@ -108,6 +112,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
+- [`test-name-grader-coupling.md`](test-name-grader-coupling.md) — A test name that claims a coupling the test does not make
 - [`test-site-fits-guard.md`](test-site-fits-guard.md) — `test_site()` bounds the index at `:217` and reads three bytes underneath it, and the second bound is now there
 - [`testdata-addr-column-claim.md`](testdata-addr-column-claim.md) — A claim about a capture is columnar, and a claim about a fixture is not (issue #975)
 - [`testdata-index-check.md`](testdata-index-check.md) — `ec/tools/testdata/README.md` is now held to the tree under it (issue #727)

@@ -101,9 +101,10 @@
 #                            appended, `unknown-not-absent-DO-NOT-WRITE-BLIND`,
 #                            and it does not launder the value it rides on.
 #
-# Two rules hold this vocabulary together, and ec/tools/check_status_vocabulary.py
-# enforces both in the agent gate (its `--self-test` is the refusals themselves).
-# docs/findings/pd-only-status-vocabulary.md is the write-up.
+# Three rules hold this vocabulary together, and ec/tools/check_status_vocabulary.py
+# enforces all three in the agent gate (its `--self-test` is the refusals themselves).
+# docs/findings/pd-only-status-vocabulary.md is the write-up for rule 2 and
+# docs/findings/handoff-site-warrant.md for rule 3.
 #
 #   1. Every `status:` is one of the values declared above, with the declared
 #      suffix if any. The list above is parsed out of this comment by that
@@ -122,6 +123,26 @@
 #      site in either image. Demanding EC-side sites of a live-confirmed byte
 #      would re-introduce the error the `absent` note above retracts. The
 #      exemption is those four values and nothing else.
+#   3. `present-untested` also requires that at least one of an address's
+#      EC-side sites RESOLVES to a read, a write or both. Rule 2 asks whether
+#      a site exists; this asks what it is worth, which is a different question
+#      and gets its own name rather than widening rule 2 into something the
+#      reference count does not decide. "Resolves" is ec/tools/
+#      register_ref_table.py's `--callee-depth 1` verdict, committed per site
+#      in ec/annotations/site-resolution.csv and produced by
+#      ec/tools/check_site_resolution.py. A DPTR handoff that the callee's
+#      entry point settles is a legitimate warrant: the address demonstrably
+#      goes somewhere, and the direction is a plain store or load one call
+#      away. A `none` cell -- no `movx` in the decoded window -- is not, and
+#      neither is a handoff the callee does not settle. `XDATA_0420` is the
+#      one entry the rule refuses, and it is exempt by name: its single
+#      EC-side site hands the address across a `ret` in R1:R2, which
+#      --callee-depth does not model, so the verdict is a limit of the tool
+#      rather than a property of the byte. The exemption names its own
+#      expiry -- when 0x0420's direction is established, #1103's R1:R2
+#      propagation, it is deleted. Nothing here is measured on hardware: a
+#      resolved direction is a static instruction, not evidence the EC acts on
+#      the byte, and this rule moves no `status:`.
 
 registers:
   - name: PROJECT_ID
@@ -868,6 +889,16 @@ registers:
       inventing a routine at 0x0402, which is a naming artefact and not a code
       pointer: that callee's committed .asm is two `movx @DPTR` an `inc DPTR`
       apart.
+      *** 2026-09-28 (issue #1105) ***: the three handoffs are now named by
+      the routine holding each one, and all three resolve: 0xB4BD in
+      FUN_CODE_b43b hands to read_xdata_pair_to_r3r4 (0x8892), 0xDC14 in
+      FUN_CODE_db0b to write_r3r4_to_xdata_pair (0x889E), and 0xDF7C in
+      FUN_CODE_def1 to write_r1r2_to_xdata_pair (0x888C) -- 1 read and 2
+      writes, which is the same direction the #279 census reached by the other
+      route. 0x0403's 11 sites are direct reads where they sit, so the pair's
+      high half needed no handoff to be classified. Per-site table:
+      ec/annotations/site-resolution.csv. A static direction is not behaviour;
+      status stays present-untested.
 
   - name: XDATA_0390
     addr: 0x0390
@@ -942,6 +973,15 @@ registers:
       pair rather than a constant. "No writer" was never a claim about
       behaviour and is not withdrawn; it is now stated against the method that
       supports it. status stays present-untested.
+      *** 2026-09-28 (issue #1105) ***: the image half above reaches the same
+      place the census half did, by the other route: 0xDC2B in FUN_CODE_db0b
+      hands to write_r3r4_to_xdata_pair (0x889E) and 0xDFA0 in FUN_CODE_def1
+      to write_r1r2_to_xdata_pair (0x888C), so both EC-side sites are writes
+      and the pair is written. The `none` cells a depth-0 census reports for
+      this address are both PD-image and were never EC-side -- the columns
+      there are file-wide, which is why the per-image split comes from
+      ec/tools/check_site_resolution.py rather than from them. Per-site table:
+      ec/annotations/site-resolution.csv. status stays present-untested.
 
   - name: XDATA_040A
     addr: 0x040A
@@ -965,6 +1005,14 @@ registers:
       and by whom, is not established" is now "one write, through
       write_r1r2_to_xdata_pair, of a computed 16-bit pair". A static read or
       write is not behaviour, and status stays present-untested.
+      *** 2026-09-28 (issue #1105) ***: 2 read and 1 write again, from the
+      image this time, and now with the routine each site sits in: 0xAE31 and
+      0xB549 in cmp_0436_0437_against_040a_040b hand to
+      read_xdata_pair_to_r1r2 (0x8886), and 0xB51D in
+      derive_scaled_values_from_0404 hands to write_r1r2_to_xdata_pair
+      (0x888C). Two independent methods agreeing on a direction is worth
+      saying, and is still a static claim. Per-site table:
+      ec/annotations/site-resolution.csv. status stays present-untested.
 
   - name: XDATA_040C
     addr: 0x040C
@@ -981,6 +1029,13 @@ registers:
       *** 2026-09-25 (issue #279) ***: as 0x040A, 2 C-level sites resolved from
       the literal first argument, 1 read and 1 write, against the 2 unchanged
       image handoffs. status stays present-untested.
+      *** 2026-09-28 (issue #1105) ***: 1 read and 1 write from the image,
+      agreeing with the census: 0xAE98 in cmp_0436_0437_against_040c_040d
+      hands to read_xdata_pair_to_r1r2 (0x8886), 0xB52C in
+      derive_scaled_values_from_0404 to write_r1r2_to_xdata_pair (0x888C).
+      The 2 PD-image sites a depth-0 census counts for this address are not
+      EC references and are not classified here. Per-site table:
+      ec/annotations/site-resolution.csv. status stays present-untested.
 
   - name: XDATA_040E
     addr: 0x040E
@@ -996,6 +1051,13 @@ registers:
       *** 2026-09-25 (issue #279) ***: 2 C-level sites resolved, 1 read and 1
       write, against the 2 unchanged image handoffs, so the write exists and
       what is written does not. status stays present-untested.
+      *** 2026-09-28 (issue #1105) ***: 1 write and 1 read from the image, in
+      the routines that hold them: 0xB532 in derive_scaled_values_from_0404
+      hands to write_r1r2_to_xdata_pair (0x888C), 0xB55C in the same routine
+      to read_xdata_pair_to_r1r2 (0x8886). So what is written still is not
+      established -- a store of a computed 16-bit pair says where, not what.
+      Per-site table: ec/annotations/site-resolution.csv. status stays
+      present-untested.
 
   - name: XDATA_0410
     addr: 0x0410
@@ -1013,6 +1075,17 @@ registers:
       0 read and 1 write, against the 1 unchanged image site. Its high half
       0x0411 has census sites and no image site and is still not entered here.
       status stays present-untested.
+      *** 2026-09-28 (issue #1105) ***: the single EC-side site is 0xB565, in
+      derive_scaled_values_from_0404, and it resolves to a write through
+      write_r3r4_to_xdata_pair (0x889E) -- the same callee the #279 census
+      named, reached from the image rather than from the decompiled text. So
+      this is one of the three addresses the issue counts as resting on a
+      single EC-side site, and the site turns out to be worth something: a
+      resolved direction, which is a static claim and not a behaviour. The 5
+      PD-image sites a depth-0 census counts for this address are not EC
+      references; the `none` cell among them is PD-image too, so this
+      address has no EC-side `none` cell at all. Per-site table:
+      ec/annotations/site-resolution.csv. status stays present-untested.
 
   - name: XDATA_0420
     addr: 0x0420
@@ -1029,6 +1102,24 @@ registers:
       accesses it somewhere this scan cannot see. The site is neither a read
       nor a store, and whether the byte is touched at all is not established.
       No upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** 2026-09-28 (issue #1105) ***: the routine is
+      clamp_r2r1_to_0420_above_3c0b (bank1/E769.asm, 24 bytes, exported). It
+      is a range check on R2:R1 -- `subb a,#0x3c` / `subb a,#0x0b` against
+      0x3C0B -- and only the out-of-range path reaches the `mov dptr,#0x420`,
+      copies DPTR into R1:R2 and returns; nothing ever loads or stores
+      through it. So the address is *offered* to a caller, not used, and the
+      direction is a property of code this scan cannot see rather than of the
+      site. This is the ONLY `present-untested` address in the file whose
+      EC-side sites resolve to nothing, and it is why
+      ec/tools/check_status_vocabulary.py's third rule exists; the rule
+      refuses this entry and holds it by the named exemption in that tool,
+      because the unresolved verdict is a limit of --callee-depth (it models
+      a DPTR passed to a call, and this one is passed across a `ret` in
+      R1:R2). #1103 owns the R1:R2 propagation: when this entry's direction is
+      established the exemption is deleted and the refusal returns. Per-site
+      table: ec/annotations/site-resolution.csv. Whether the byte is touched
+      at all remains unestablished, and no static direction would have settled
+      it. status stays present-untested.
 
   - name: BAT_STATUS_1
     addr: 0x0432
@@ -1169,6 +1260,14 @@ registers:
       write**, against the 3 unchanged image handoffs -- the only one of this
       page's five whose resolved set is write-free. 0x043A had no census row at
       all before. status stays present-untested.
+      *** 2026-09-28 (issue #1105) ***: all three, and all three in the one
+      routine cmp_043a_0436_store_0548: 0xB572 hands to
+      read_xdata_pair_to_r3r4 (0x8892), 0xB590 and 0xB5A2 to
+      read_xdata_pair_to_r1r2 (0x8886). 3 reads, no write, which is the
+      write-free set the #279 census found from the decompiled text and the
+      image agrees. The 3 PD-image sites a depth-0 census counts for this
+      address are not EC references. Per-site table:
+      ec/annotations/site-resolution.csv. status stays present-untested.
 
   - name: XDATA_043C
     addr: 0x043C
@@ -2047,6 +2146,23 @@ registers:
       service seeds every profile slot from them (RefreshMode). Read live
       as 3C 3C A5 01 / 23 23 A5 01 / 4B 4B A5 01 (2026-09-23). The
       D-state byte is read but never written anywhere.
+      *** CORRECTION 2026-09-28 (issue #1105) *** The sentence above is wrong
+      on both halves and is left in place per docs/findings.md 4a-4d. The
+      D-state byte is the fourth of each four-byte block -- 0x0733, 0x0737,
+      0x07AA -- and all three are WRITTEN, and none of them is read: every
+      one of the 18 EC-side sites of the twelve-byte block is a store.
+      0x0733's single site (0x9548) and 0x0737's two (0x95B3, 0x95D6) and
+      0x07AA's one (0x9571) all sit in copy_code_table_into_0730_07a7
+      (bank0/94D0.asm), which copies a CODE table into the block: the
+      `mov dptr,#0x733 ; lcall 0xB939` pair resolves to a store at
+      store_a_to_dptr_b939's single `movx @DPTR,a`, and the other three are
+      direct `movx @DPTR,A` at the site. The live values above are
+      consistent with that -- the service seeds every slot from these bytes,
+      which is a write -- but consistency is not the evidence; the three
+      `movx` sites are. This is a static direction, not evidence the EC acts
+      on the byte, and whether it reads them back is still unestablished.
+      Per-site table: ec/annotations/site-resolution.csv. status stays
+      present-untested.
 
   - name: MODE_TCC_OFFSET_DEFAULTS
     addr: [0x07D8, 0x07D9, 0x07DA]
