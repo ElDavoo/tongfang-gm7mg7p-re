@@ -392,17 +392,57 @@ class TheReferenceCensus(unittest.TestCase):
         return {off for off, _op, _dir, _frame
                 in intmem_refs.scan(IMAGE, [addr], True).get(addr, [])}
 
-    def test_the_writers_of_0x44_in_the_main_ec(self):
-        # 0x0D81 `inc 0x44` and 0x0DC1 `mov 0x44,a` -- both inside 0x0D7B, both
-        # its own. The issue's "common 0x0B0A" is 0x0B0AC, which is not in
-        # this set because the bytes there are a `jnb` displacement and an
-        # `orl` opcode.
-        self.assertEqual(self.scan(0x44) & {0x0D81, 0x0DC1}, {0x0D81, 0x0DC1})
+    def main_ec(self, addr):
+        """Every hit below the PD image (file offset 0x20000), so the two banks
+        and the common area, and nothing else."""
+        return {off for off in self.scan(addr) if off < 0x20000}
+
+    def test_every_main_ec_hit_for_0x44_is_accounted_for(self):
+        # Held as the whole set, so a re-derivation that finds one more site
+        # fails here and has to say what it is. The scheduler's own writes are
+        # 0x0D81 `inc 0x44` and 0x0DC1 `mov 0x44,a`, and its own reads 0x0D83,
+        # 0x0D8E and 0x0DC3. The other five are each adjudicated below or in
+        # the tests around this one, and none is a write to the internal byte:
+        # the issue's "common 0x0B0A" is 0x0B0AC (a `jnb` displacement and an
+        # `orl` opcode), 0x0E9AF is a displaced decode too, the two bank1 hits
+        # are an XDATA address, and 0x06973 is a compare in a data-shaped run.
+        own_writes = {0x0D81, 0x0DC1}
+        own_reads = {0x0D83, 0x0D8E, 0x0DC3}
+        displaced = {0x0B0AC, 0x0E9AF}
+        xdata_address = {0x12E66, 0x13540}
+        compare_in_a_table = {0x06973}
+        self.assertEqual(
+            self.main_ec(0x44),
+            own_writes | own_reads | displaced | xdata_address
+            | compare_in_a_table)
+
+    def test_the_bank0_xrl_is_a_displaced_decode(self):
+        # 0x0E9AF is `65 44`, which the census files as `xrl a,0x44`. The bytes
+        # from 0x0E9AE are `e5 65 44 02`: the `65` is the operand of `mov
+        # a,0x65` and the `44` is the opcode of `orl a,#0x02`, so no
+        # instruction there names byte 0x44, and the frame score says the same
+        # (no preceding anchor decodes onto the pair, 24 step over it).
+        self.assertEqual(at(0x0E9AE, 4), "e5 65 44 02")
+        self.assertEqual([m for _a, _b, m in decoded(0x0E9AE, 2)],
+                         ["mov  a,0x65", "orl  a,#0x02"])
+        frames = {off: frame for off, _op, _dir, frame
+                  in intmem_refs.scan(IMAGE, [0x44], True)[0x44]}
+        self.assertEqual(frames[0x0E9AF], (0, 24))
+
+    def test_the_common_cjne_is_a_compare_in_a_repeated_byte_run(self):
+        # 0x06973 is `b5 44 rel`, `cjne a,0x44,rel`, which reads the byte and
+        # writes nothing. It is also inside `b4 b4 b4 43 b5 b5 b5 44 b6 b6 b6 4d
+        # b7 b7 b7`, triples of one repeated byte and then a value -- the shape
+        # that walks cleanly as short instructions, which is why its frame
+        # score is high and is not read as evidence it is code.
+        self.assertEqual(IMAGE[0x06973], 0xB5)
+        self.assertEqual(at(0x0696D, 15),
+                         "b4 b4 b4 43 b5 b5 b5 44 b6 b6 b6 4d b7 b7 b7")
 
     def test_the_two_bank1_sites_are_an_xdata_address(self):
         # The issue's "bank1 0xAE66 and 0xB540". The runtime addresses are
-        # right; what the bytes are is not. `90 05 44` is `mov dptr,#0x0545`-
-        # shaped -- an XDATA address, which is scan_refs.py's question and a
+        # right; what the bytes are is not. `90 05 44` is `mov dptr,#0x0544`,
+        # an XDATA address, which is scan_refs.py's question and a
         # different address space from an internal-RAM byte entirely.
         for off, runtime in ((0x12E66, 0xAE66), (0x13540, 0xB540)):
             with self.subTest(off=off):
@@ -440,10 +480,15 @@ class TheReferenceCensus(unittest.TestCase):
             self.assertEqual(disasm8051.bit_name(0x44), "0x28.4")
             self.assertNotIn(0xD2, {op for op, _d, _t in intmem_refs.OPCODE_TABLE})
 
-    def test_0x45_is_written_only_by_0x0d7b_in_the_main_ec(self):
-        # 0x0DC7 and 0x0E0E, both the scheduler's own. The other two the scan
-        # finds are a different program (the PD image) and a different bank.
-        self.assertEqual(self.scan(0x45) & {0x0DC7, 0x0E0E}, {0x0DC7, 0x0E0E})
+    def test_every_main_ec_hit_for_0x45_is_accounted_for(self):
+        # The whole set again. 0x0DC7 `inc 0x45` and 0x0E0E `mov 0x45,a` are
+        # the scheduler's own writes, and 0x0DC9 and 0x0DD1 its own reads. The
+        # other two are the bank1 `clr 0x45` that is an `ljmp`'s own bytes
+        # (next test) and bank1 0xE434, a data island the write-up reports at
+        # a frame score of 24 of 24. The PD image's hits are a different
+        # program and are outside this set.
+        self.assertEqual(self.main_ec(0x45),
+                         {0x0DC7, 0x0E0E, 0x0DC9, 0x0DD1, 0x12D89, 0x16434})
 
     def test_the_bank1_clr_0x45_is_a_ljmps_own_bytes(self):
         # 0x12D89 -- a `clr 0x45` the scan reports, and `02 c2 45` = `ljmp
@@ -463,8 +508,10 @@ class TheReferenceCensus(unittest.TestCase):
         self.assertEqual(at(0x386F, 9), "78 ad e6 b4 33 02 d2 33 22")
         self.assertEqual(IMAGE[0x0E2B], 0x02)
         self.assertEqual((IMAGE[0x0E2C] << 8) | IMAGE[0x0E2D], 0x152E)
-        for addr in range(0x386F, 0x3878):
-            self.assertNotIn((0xE5, addr - 0x386F), ())
+        texts = [m for _a, _b, m in decoded(0x386F, 5)]
+        self.assertEqual(texts, ["mov  r0,#0xad", "mov  a,@r0",
+                                 "cjne a,#0x33,0x3877", "setb 0x26.3", "ret"])
+        self.assertFalse(any("0x45" in m for m in texts))
 
 
 class TheAnnotation(unittest.TestCase):

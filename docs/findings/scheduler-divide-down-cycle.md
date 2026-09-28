@@ -46,8 +46,10 @@ Two further consequences follow, and both invert what the issue expected:
 - **`0x44` is not 1 on every entry, and `inc 0x45` does not fire every entry.**
   Both are below.
 
-`ec/decompiled/common/0D7B.c:20` reads it correctly all along
-(`if ((DAT_INTMEM_44 & 1) != 0) { FUN_CODE_0e2e(); return; }`), so the committed
+`ec/decompiled/common/0D7B.c` reads it correctly all along, at the line
+`if ((DAT_INTMEM_44 & 1) != 0) { FUN_CODE_0e2e(); return; }` (named by its text
+because this change's own annotation adds a comment block above it and moves
+the line number), so the committed
 `.c` and `.asm` never disagreed with each other. The issue was the outlier.
 
 ## The cycle
@@ -96,11 +98,13 @@ entries to `0x0D7B`.** `0x0A` → `0x0A` spans `0x0B`…`0x14` (10 steps, the la
 taking the default arm) then `0x01`…`0x0A` (10 more). `0x47` rides the same
 reset, so `lcall 0x0E5B` is every `0x3C` of those: **12,000 entries**.
 
-The period is **start-independent** — the same 200 from every starting
+The counter state machine's period, in entries to `0x0D7B`, is
+**start-independent** — the same 200 from every starting
 `(0x44, 0x45)` tried, because `0x44` is forced into 1…10 within two entries of
 any start. The *phase*, which entry number the first case-`0x0A` lands on, does
 depend on the reset values of `0x44` and `0x45`, and **the image does not
-establish those**. So 200 is a period and the phase is open; a reader wanting
+establish those**. So 200 is the period of that counter state machine measured in entries, not a
+time period (§5.1), and the phase is open; a reader wanting
 "the first one is at entry N" has no N here.
 
 ### The `ret` at `0x0E1D` returns to the poller, not into the table
@@ -154,6 +158,13 @@ $ python3 ec/tools/intmem_refs.py ec/firmware/GMxMGxx_11.800 0x44
 | `05 44` `inc 0x44` | `0x0D81`, `0x0B0AC`, `0x12E66`, `0x13540` | common `0x0D81` (the scheduler's own); bank0 `0xB0AC`; **bank1** `0xAE66`, `0xB540` |
 | `f5 44` `mov 0x44,a` | `0x0DC1` only | common — the scheduler's own clear |
 | `e5 44` `mov a,0x44` | `0x0D83`, `0x0D8E`, `0x0DC3` (own), `0x295CB` (pd-image) | — |
+| `65 44` `xrl a,0x44` | `0x0E9AF` | bank0 `0xE9AF` — a displaced decode, adjudicated below |
+| `b5 44 rel` `cjne a,0x44,rel` | `0x06973` | common `0x6973` — a compare in what reads as a data table, adjudicated below |
+
+The table lists the encodings the scan reports for the *main EC*, one row per
+encoding; the PD image's hits (`addc`, `xch` and one `mov a,0x44`) are a
+different program and are not in it. `ec/tools/test_scheduler_cycle.py` holds
+the main-EC set whole, so a site this table does not name fails it.
 
 **Three of the four `inc 0x44` sites are not references to `0x44` at all — and
 only one of the three is a framing artefact.** The issue's census is wrong in
@@ -174,7 +185,10 @@ them separately: a frame score catches the first and is blind to the second.
    `0x12E65` and `0x1353F` are `90 05 44`, a real `mov dptr,#0x0544`, and the
    low two bytes of an XDATA pointer are not a reference to internal byte
    `0x44`. This one is **not** a misframing: `converges_from` gives 23 of 24
-   and 24 of 24, because these are correctly framed instructions. That makes
+   and 24 of 24 at the `mov dptr` starts (`0x12E65` and `0x1353F`, one byte
+   before the census hits `0x12E66` and `0x13540`, whose own columns read
+   `1/23` and `0/24` because they are the middle of the instruction), because
+   these are correctly framed instructions. That makes
    it the sharpest of the four corrections and the one a frame score alone
    would have passed — the bytes are real code, and reading them as a counter
    is reading the wrong *address space*, which no framing evidence can catch.
@@ -188,11 +202,35 @@ them separately: a frame score catches the first and is blind to the second.
    displacement of a preceding `20 06 74` = `jb 0x20.6,0xbfba`. There is no
    `e5 44` and no `74 44` (as `mov 0x44,#imm`) instruction at any of the four.
 
+**Two more hits the issue did not name, adjudicated the same way.**
+
+5. **`bank0 0x0E9AF` `xrl a,0x44` is a displaced decode.** The bytes from
+   `0xE9AE` are `e5 65 44 02`, which frame as `mov a,0x65 ; orl a,#0x02`: the
+   `65` is the first instruction's operand and the `44` is the second's opcode,
+   so no instruction there names byte `0x44`. `converges_from` gives **0 of
+   24**, the same shape as `0x0B0AC`. Separately, `xrl a,direct` reads the byte
+   and writes the accumulator, so even a real `65 44` would not be a write to
+   `0x44`; `intmem_refs.py` files it under `rmw` with the other `a,direct`
+   arithmetic, which over-counts writers and is the safe direction for a
+   writer census. The site sits in bank0, which is the bank the `lcall 0x0E34`
+   arm enters, and that is why it is adjudicated here rather than filtered.
+6. **common `0x6973` `cjne a,0x44,rel` is a compare, and it sits in what reads
+   as a data table.** `cjne a,direct` never writes the byte. The bytes from
+   `0x696D` are `b4 b4 b4 43 b5 b5 b5 44 b6 b6 b6 4d b7 b7 b7` — triples of one
+   repeated byte, then a value — and the frame score is 20 of 24, the same kind
+   of high score on a data-shaped run that `0xE434` gives below. It is reported
+   and not counted on either way: not a write on its opcode, and not
+   established to be code.
+
 **The residual risk is real and is not waved away.** The two banks alias one
 `0x8000`–`0xFFFF` window, so banked and common code do not run concurrently —
 but **the `lcall` arms run banked code with `0x44` live and nonzero**, and that
 window is exactly where a banked writer of `0x44` would fire. Whether any is
-reached on this path is **not established**. So the correct statement is: `0x44`
+reached on this path is **not established**. Every main-EC hit the scan lists
+for `0x44` is accounted for above, so what is left is what the scan cannot see
+— indirect access, and code its byte table cannot frame — and the statement is
+"no adjudicated direct-byte writer outside the routine", not "no writer". So
+the correct statement is: `0x44`
 is not provably private, the count is conditional on no other code touching
 `0x44` mid-cycle, and if one did, the even arm's ladder test would be skipped
 and the count would shift.
@@ -303,15 +341,24 @@ accident:
 - **No hardware and no Windows.** Nothing here needs either, so nothing is
   deferred to a human at the machine for that reason. No live timing was taken
   and no register was read.
-- **`call-graph-callees.csv`, `bank-call-targets.csv`, `task-call-table.csv`
-  and `xdata-export-ownership.csv` are cited, not regenerated** — another
-  branch may be rebuilding them. The `common 0D7B` annotation row is added and
-  the default `--mode export-only` re-export ran, so `0D7B.{asm,c}`,
-  `0C86.c`, `index.csv`, `listing-index.csv`, `manifest.csv`, `c-digests.csv`
-  and `cross-decoder.csv` move; `c-digests.csv` and `cross-decoder.csv` carry
-  a pre-existing regeneration drift alongside this change, which was measured
-  by running the same export on a pristine tree and is named here rather than
-  presented as this row's doing.
+- **What was regenerated, and what was only cited.** `bank-call-targets.csv`
+  and `task-call-table.csv` are cited and not regenerated. Everything else that
+  moved, moved because the `common 0D7B` row renames a function the tables key
+  on, and it was produced by the tools and not by hand: the default
+  `--mode export-only` re-export (Ghidra 12.1.3, from the committed project)
+  for `0D7B.{asm,c}`, `0C86.c`, `index.csv`, `listing-index.csv` and
+  `manifest.csv`, then `--write-digests` and `--report` for `c-digests.csv` and
+  `cross-decoder.csv`, then `call_graph.py` for `call-graph-callees.csv` (the
+  `0D7B` row goes `no` -> `yes` in its annotated column and the
+  annotated-caller count of each function it reaches rises by one) and
+  `xdata_register_map.py` for `xdata-registers.csv`, `xdata-clusters.csv` and,
+  through the same name, `xdata-export-ownership.csv`. `function-groups.csv`
+  gains the row, and `subsystems.md`'s census counts move by one. Regenerating
+  `call-graph-callees.csv` and `xdata-export-ownership.csv` goes beyond issue
+  #1183's "cited, not regenerated" list; it followed from the re-export and was
+  not a separate decision. An earlier draft of this change carried unrelated
+  drift in `c-digests.csv` and `cross-decoder.csv` that `main`'s own committed
+  export had; `main` no longer has it and this tree carries none.
 - **No gate entry for `intmem_refs.py`.** `.github/workflows/` and
   `.github/actions/` are off limits to this pipeline's token, and
   `charge-target-caller-chain.md` §7 already establishes that a **seventh**

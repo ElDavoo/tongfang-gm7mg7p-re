@@ -132,8 +132,10 @@ CAVEAT = (
 SELF_TEST = (
     # 0x0D81 `05 44` inc 0x44 -- the scheduler's own, and 24/24 onto it.
     (0x0D81, 0x05, 0x44, (24, 0)),
-    # 0x0DC1 `f5 44` mov 0x44,a -- the only writer this scan finds in the main
-    # EC, and 24/24 onto it.
+    # 0x0DC1 `f5 44` mov 0x44,a -- the scheduler's own clear, and 24/24 onto
+    # it. It is not the only main-EC hit for 0x44: the others are the
+    # scheduler's own reads and five sites that are not writes on their bytes,
+    # each adjudicated in docs/findings/scheduler-divide-down-cycle.md.
     (0x0DC1, 0xF5, 0x44, (24, 0)),
     # 0x0DC7 `05 45` inc 0x45, and 0x0E0E `f5 45` mov 0x45,a: the two writes to
     # the second counter, both in the same routine.

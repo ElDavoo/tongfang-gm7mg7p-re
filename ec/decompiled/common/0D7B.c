@@ -27,9 +27,12 @@
    unestablished, so not even '200 ticks' is licensed. The count is conditional on the lcall 0x0E34
    arm returning: 0x0E34 is ljmp 0x153A, a BL51 far-call stub that pushes nothing, so the bank0
    routine it reaches returns to 0x0D8E. That is a trampoline design property plus consistency with
-   a working charge target, not a proof. The writer census is 'not found by this method': 0x44 is
-   written at 0x0DC1 and nowhere else by any direct-byte opcode outside this routine in the main EC,
-   and indirect access is invisible to the scan. Decoded in
+   a working charge target, not a proof. The writer census is 'not found by this method': the
+   direct-byte scan lists five main-EC sites for 0x44 that are not this routine's own -- bank0
+   0xB0AC and 0xE9AF (displaced decodes, 0 of 24 anchors), bank1 0xAE66 and 0xB540 (the XDATA
+   address mov dptr,#0x0544) and common 0x6973 (a compare in what reads as a data table) -- and on
+   their bytes none is a write to internal byte 0x44, so 0x44 has no adjudicated direct-byte writer
+   outside this routine; indirect access and unframed code are invisible to the scan. Decoded in
    docs/findings/scheduler-divide-down-cycle.md (issue #1183), whose byte pins are
    ec/tools/test_scheduler_cycle.py and whose writer census is ec/tools/intmem_refs.py.
    type: state
