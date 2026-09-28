@@ -1367,6 +1367,23 @@ byte `0x45` is `0x0A`, and how many ticks it takes `0x45` to come round again
 was not traced, because `0x0D7B` has a tail-dispatch path that abandons its
 own frame. No rate is claimed. Nothing here was run on hardware.
 
+> **CORRECTION (2026-09-27, issue #1183).** The second half above is withdrawn;
+> the superseding wording is kept visible per `CLAUDE.md`. The divide factor
+> **is** now followed, and the tail-dispatch path is not what blocks it:
+> `jnb acc.0` jumps when bit 0 is clear, so the `ljmp 0x0E2E` at `0x0D88` is
+> taken on an *odd* `0x44` while the ladder that advances the counter is on the
+> *even* one. `0x44` counts 1…10 and `0x0DC3`'s `jnz` falls through to
+> `inc 0x45` only on the entry where it is cleared, so `0x45` advances **on one
+> entry in ten, not on every entry**; `0x0A` → `0x0A` is 20 such firings via the
+> `0x0E0D` default arm. That is **200 entries to `0x0D7B`** per case-`0x0A`
+> turn, with `lcall 0x0E5B` every 12,000. **It is a count of entries and not a
+> period**, so the first half above is untouched and still open: the tick
+> interval is unestablished, counts-to-seconds needs an oscillator frequency
+> that appears nowhere in the tree, and the poller's own period against the
+> flag is unestablished too, so not even "200 ticks" is licensed. No rate is
+> claimed, here or there. Decoded in
+> [`docs/findings/scheduler-divide-down-cycle.md`](findings/scheduler-divide-down-cycle.md).
+
 **What this means for the driver.** There is no host-writable charge-limit
 control on this EC image. `0x07B9`/`0x07D0` have no EC consumer (§4f, §4k) and
 `0x0522` is EC-owned and un-writable from the host (this section). Capping

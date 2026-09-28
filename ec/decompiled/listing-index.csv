@@ -1527,7 +1527,7 @@ common,0C86,poll_flag_bytes_30_to_3b_and_dispatch,195,annotation,yes,yes,dispatc
 common,0D49,FUN_CODE_0d49,1,call-target,yes,no,,,,bank1,common/0D49.asm
 common,0D4A,FUN_CODE_0d4a,46,call-target,yes,no,,,,bank1,common/0D4A.asm
 common,0D78,thunk_FUN_CODE_2819,3,call-target,yes,no,,,,bank1,common/0D78.asm
-common,0D7B,FUN_CODE_0d7b,110,call-target,yes,no,,,,bank1,common/0D7B.asm
+common,0D7B,divide_down_scheduler_counters_44_45_47,110,annotation,yes,yes,state,hand-decoded,ec/decompiled/common/0D7B.asm; ec/decompiled/common/0D7B.c,bank1,common/0D7B.asm
 common,0DF7,thunk_FUN_CODE_0e4c,2,call-target,yes,no,,,,bank1,common/0DF7.asm
 common,0E04,thunk_FUN_CODE_0e4c,3,auto,yes,no,,,,bank1,common/0E04.asm
 common,0E1E,FUN_CODE_0e1e,16,call-target,yes,no,,,,bank1,common/0E1E.asm

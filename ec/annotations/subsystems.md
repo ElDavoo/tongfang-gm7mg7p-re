@@ -55,8 +55,8 @@ Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
 - `exported functions` — 2720
-- `annotated function rows` — 1960
-- `rows the index marks annotated` — 1981
+- `annotated function rows` — 1961
+- `rows the index marks annotated` — 1982
 - `unresolved rows` — 173
 
 By program, as exported minus annotated minus the rest:
@@ -66,7 +66,7 @@ By program, as exported minus annotated minus the rest:
 | `bank0` | 750 | 697 | 53 (7%) |
 | `bank1` | 676 | 608 | 68 (10%) |
 | `pd` | 541 | 541 | 0 (0%) |
-| `common` | 753 | 135 | 618 (82%) |
+| `common` | 753 | 136 | 617 (82%) |
 
 **The common area is the finding.** It is 28% of the export by row count and
 was 87% of it unannotated before issue #603's tranche; it is 82% now, and it is
@@ -611,11 +611,11 @@ own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
 - `exported functions` — 2720
-- `annotated function rows` — 1960
-- `rows the index marks annotated` — 1981
+- `annotated function rows` — 1961
+- `rows the index marks annotated` — 1982
 - `unresolved rows` — 173
 
-**618 of the 753 common-area functions are unannotated, and that is still the
+**617 of the 753 common-area functions are unannotated, and that is still the
 largest single block of undecoded firmware in this repository** — larger than
 the whole `pd` program. It was 656 before issue #603's tranche took 37 of them,
 and the remainder is now a queue rather than a size:

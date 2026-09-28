@@ -267,11 +267,28 @@ still not, and the two are separate claims.
   reload bytes are not a period.
 - **The divide factor.** The chain runs when `0x45` is `0x0A`, so its rate is
   the tick period times however many ticks it takes `0x45` to come round to
-  `0x0A` again — and that was not followed. `0x0D7B` has a tail-dispatch path
+  `0x0A` again — **and that was not followed. `0x0D7B` has a tail-dispatch path
   (`ljmp 0x0E2E` at `0x0D88`) that leaves its own frame, so whether `0x45`
-  advances on every entry to `0x0D7B` is not settled by these bytes alone.
+  advances on every entry to `0x0D7B` is not settled by these bytes alone.**
   **A gap that would sink a rate claim even if the first one closed**, which is
   why none is written down here in any form.
+  > **CORRECTION (2026-09-27, issue #1183).** The clause above is withdrawn and
+  > the gap is closed; the superseding wording stays visible per `CLAUDE.md`.
+  > `0x45` does **not** advance on every entry, and that is what makes the count
+  > computable: `0x44` counts 1…10, so `inc 0x45` fires on **one entry in ten**,
+  > and `0x0A` → `0x0A` is 20 such firings, giving **200 entries to `0x0D7B`**
+  > per case-`0x0A` turn (`lcall 0x0E5B` every 12,000). The reason the earlier
+  > reading could not see it is that the issue's polarity was inverted —
+  > `jnb acc.0` jumps when bit 0 is **clear**, so an *even* `0x44` reaches the
+  > ladder at `0x0D8B` and an odd one abandons the frame; the tail-dispatch
+  > path is real but takes the *other* half the values, and it is `0x44`
+  > reaching 10 that clears the counter. **This is a count of entries, not a
+  > period, and it is not a rate**: the tick's own period is the open gap
+  > above, the counts-to-seconds step needs an oscillator frequency that
+  > appears nowhere in the tree, and the poller's period against the flag is
+  > unestablished too, so not even "200 ticks" is licensed. Decoded in
+  > [`scheduler-divide-down-cycle.md`](scheduler-divide-down-cycle.md), whose
+  > byte pins are `ec/tools/test_scheduler_cycle.py`.
 - **`0x09C7`/`0x09C8` are not the tick source, and must not be read as one.**
   The issue raised the seconds/minutes counter as implying a once-per-second
   caller, and flagged the inference itself. It is worse than an inference: the
@@ -290,22 +307,34 @@ nothing in this file has been run on hardware.
 
 ## 5. What the open ends are now
 
-Two, and both are small.
+One, and it is small. The second was closed by issue #1183.
 
 **What the `0x0E2E` slot does, and whether it returns.** `0x0E2E` is
 `lcall 0x383A` and the `ret` comes back at `0x0E31`, which is a tail jump, so
 `0x0D7B`'s frame is abandoned on the `ljmp 0x0E2E` path. Whether the far-called
 routines return to it or the block's own chain unwinds differently is not
-traced, and it is what §4's second gap is about.
+traced. **The count in §4's correction does not depend on this**: the
+`ljmp 0x0E2E` arm is taken on an *odd* `0x44`, and it is `0x44` reaching 10 —
+on the even arm — that clears the counter and advances `0x45`. The two arms are
+disjoint, so this stays open without making the 200 contingent.
 
 **What the `0x45` counter's other values select.** The nine cases are decoded
 in §1 and the chain's is the `0x0A` one. The `0x0E0D` default arm — where the
 dispatcher falls off the end of a table and jumps to whatever follows the
 terminator — clears `0x45` and increments `0x47`, so the counter does wrap;
-by what route back to `0x0A` was not traced.
+**by what route back to `0x0A` was not traced.**
+> **CORRECTION (2026-09-27, issue #1183).** The route back to `0x0A` is the
+> default arm itself, and it is the only route: `0x45` counts up, the first even
+> value past the table's last key `0x12` is `0x14`, and `0x14` is what
+> `0x7151` sends to `0x0E0D` through the table's `00 00 0e` sentinel. So
+> `0x45` runs `0x01`…`0x14` and returns to zero, and `0x0A` → `0x0A` is 20
+> firings — which is the second term of the 200 in §4's correction. Decoded in
+> [`scheduler-divide-down-cycle.md`](scheduler-divide-down-cycle.md). This
+> supersedes the "was not traced" above rather than deleting it.
 
-Neither is the mechanism issue #89 asked about, and both are named here so the
-next reader does not have to rediscover that they were looked at.
+The one that remains is not the mechanism issue #89 asked about, and it is
+named here so the next reader does not have to rediscover that it was looked
+at.
 
 ## 6. Methods tried, including what found nothing
 

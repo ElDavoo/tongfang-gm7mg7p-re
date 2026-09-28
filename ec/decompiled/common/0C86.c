@@ -84,7 +84,7 @@ void poll_flag_bytes_30_to_3b_and_dispatch(char param_1)
               }
               else {
                 _6_5 = '\0';
-                FUN_CODE_0d7b();
+                divide_down_scheduler_counters_44_45_47();
                 if ((DAT_EXTMEM_007e != '\0') &&
                    (DAT_EXTMEM_007e = DAT_EXTMEM_007e + -1, DAT_EXTMEM_007e == '\0')) {
                   _0_4 = 0;

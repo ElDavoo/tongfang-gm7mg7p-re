@@ -71,7 +71,7 @@ bank1,F040,FUN_CODE_f040,no,,1,0,1,0,0,1,1,1,bank1:F012
 bank1,F1F8,FUN_CODE_f1f8,no,,1,1,0,0,0,1,1,1,bank1:F198
 common,0A7F,FUN_CODE_0a7f,no,bank1,1,1,0,0,0,1,1,1,common:0C86
 common,0D49,FUN_CODE_0d49,no,bank1,1,0,1,0,0,1,1,1,common:0C86
-common,0D7B,FUN_CODE_0d7b,no,bank1,1,1,0,0,0,1,1,1,common:0C86
+common,0E2E,FUN_CODE_0e2e,no,bank1,1,0,1,0,0,1,1,1,common:0D7B
 common,0FE6,FUN_CODE_0fe6,no,bank1,1,1,0,0,0,1,0,1,common:0200
 common,11B6,FUN_CODE_11b6,no,bank1,1,0,1,0,0,1,1,1,common:012F
 common,11BC,FUN_CODE_11bc,no,bank1,1,0,1,0,0,1,1,1,common:018C
@@ -79,6 +79,7 @@ common,14C8,FUN_CODE_14c8,no,bank1,1,1,0,0,0,1,1,1,common:0556
 common,150A,FUN_CODE_150a,no,bank1,1,1,0,0,0,1,0,1,common:0200
 common,1516,FUN_CODE_1516,no,bank1,1,1,0,0,0,1,1,1,common:0C86
 common,1528,FUN_CODE_1528,no,bank1,1,1,0,0,0,1,1,1,common:0C86
+common,153A,FUN_CODE_153a,no,bank1,1,0,1,0,0,1,1,1,common:0D7B
 common,2ACD,FUN_CODE_2acd,no,bank1,1,1,0,0,0,1,1,1,common:0C86
 common,3099,FUN_CODE_3099,no,bank1,1,1,0,0,0,1,1,1,common:0C86
 common,30DF,FUN_CODE_30df,no,bank1,1,1,0,0,0,1,1,1,common:2DE3
@@ -140,7 +141,7 @@ common,05E8,critical_section_enter_05e8,yes,bank1,14,14,0,0,0,14,10,0,
 bank0,0EA2,timer1_counted_delay_using_0a56,yes,,13,13,0,0,0,11,10,0,
 bank1,88A4,sub_r0_from_r1_stash_r0_on_borrow,yes,,13,13,0,0,0,2,2,0,
 common,3B22,mul13_table_lookup_3b22,yes,bank1,13,13,0,0,0,10,4,0,
-common,7151,switch_case_dispatch,yes,bank1,13,13,0,0,0,13,7,0,
+common,7151,switch_case_dispatch,yes,bank1,13,13,0,0,0,13,8,0,
 pd,0F0E,sub_or_cmp_r0_r7,yes,,13,6,7,0,0,10,10,0,
 bank0,B8C0,test_0770_equals_04,yes,,12,12,0,0,0,8,5,0,
 common,05EF,critical_section_exit_05ef,yes,bank1,12,11,1,0,0,12,9,0,
@@ -1394,15 +1395,15 @@ common,0BC8,FUN_CODE_0bc8,no,bank1,1,1,0,0,0,1,1,0,
 common,0BDB,FUN_CODE_0bdb,no,bank1,1,1,0,0,0,1,1,0,
 common,0D4A,FUN_CODE_0d4a,no,bank1,1,1,0,0,0,1,1,0,
 common,0D78,thunk_FUN_CODE_2819,no,bank1,1,1,0,0,0,1,1,0,
-common,0E1E,FUN_CODE_0e1e,no,bank1,1,1,0,0,0,1,0,0,
-common,0E2E,FUN_CODE_0e2e,no,bank1,1,0,1,0,0,1,0,0,
-common,0E34,thunk_FUN_CODE_153a,no,bank1,1,1,0,0,0,1,0,0,
-common,0E37,thunk_FUN_CODE_1540,no,bank1,1,1,0,0,0,1,0,0,
-common,0E3A,thunk_FUN_CODE_1546,no,bank1,1,1,0,0,0,1,0,0,
-common,0E3D,thunk_FUN_CODE_154c,no,bank1,1,1,0,0,0,1,0,0,
-common,0E40,thunk_FUN_CODE_1552,no,bank1,1,1,0,0,0,1,0,0,
-common,0E43,thunk_FUN_CODE_1558,no,bank1,1,1,0,0,0,1,0,0,
-common,0E46,thunk_FUN_CODE_155e,no,bank1,1,0,1,0,0,1,0,0,
+common,0D7B,divide_down_scheduler_counters_44_45_47,yes,bank1,1,1,0,0,0,1,1,0,
+common,0E1E,FUN_CODE_0e1e,no,bank1,1,1,0,0,0,1,1,0,
+common,0E34,thunk_FUN_CODE_153a,no,bank1,1,1,0,0,0,1,1,0,
+common,0E37,thunk_FUN_CODE_1540,no,bank1,1,1,0,0,0,1,1,0,
+common,0E3A,thunk_FUN_CODE_1546,no,bank1,1,1,0,0,0,1,1,0,
+common,0E3D,thunk_FUN_CODE_154c,no,bank1,1,1,0,0,0,1,1,0,
+common,0E40,thunk_FUN_CODE_1552,no,bank1,1,1,0,0,0,1,1,0,
+common,0E43,thunk_FUN_CODE_1558,no,bank1,1,1,0,0,0,1,1,0,
+common,0E46,thunk_FUN_CODE_155e,no,bank1,1,0,1,0,0,1,1,0,
 common,0E4C,FUN_CODE_0e4c,no,bank1,1,0,1,0,0,1,1,0,
 common,0E5E,timer0_reload_8a_06_8c_f1_clear_8d,yes,bank1,1,1,0,0,0,1,1,0,
 common,0E7D,stop_timer1_clear_tf1_and_bit_06_2,yes,bank1,1,1,0,0,0,1,1,0,
@@ -1444,7 +1445,6 @@ common,151C,FUN_CODE_151c,no,bank1,1,1,0,0,0,1,1,0,
 common,1522,FUN_CODE_1522,no,bank1,1,1,0,0,0,1,1,0,
 common,152E,FUN_CODE_152e,no,bank1,1,0,1,0,0,1,0,0,
 common,1534,FUN_CODE_1534,no,bank1,1,0,1,0,0,1,0,0,
-common,153A,FUN_CODE_153a,no,bank1,1,0,1,0,0,1,1,0,
 common,1540,FUN_CODE_1540,no,bank1,1,0,1,0,0,1,1,0,
 common,1546,FUN_CODE_1546,no,bank1,1,0,1,0,0,1,1,0,
 common,154C,FUN_CODE_154c,no,bank1,1,0,1,0,0,1,1,0,
@@ -1524,7 +1524,7 @@ common,3679,FUN_CODE_3679,no,bank1,1,1,0,0,0,1,0,0,
 common,375E,FUN_CODE_375e,no,bank1,1,1,0,0,0,1,0,0,
 common,3770,FUN_CODE_3770,no,bank1,1,1,0,0,0,1,0,0,
 common,383A,set_direct_bit_0c_3,yes,bank1,1,1,0,0,0,1,0,0,
-common,386F,FUN_CODE_386f,no,bank1,1,1,0,0,0,1,0,0,
+common,386F,FUN_CODE_386f,no,bank1,1,1,0,0,0,1,1,0,
 common,3878,FUN_CODE_3878,no,bank1,1,1,0,0,0,1,0,0,
 common,388B,FUN_CODE_388b,no,bank1,1,1,0,0,0,1,0,0,
 common,38F0,FUN_CODE_38f0,no,bank1,1,0,0,1,0,1,1,0,
