@@ -159,14 +159,14 @@ class MarkCsvTests(unittest.TestCase):
         self.assertEqual(marks[0].label, 'wrote 0x0751=0xA0')
         # The verdict, asked of `parse_mark` rather than spelled out here, and
         # the whole of what a split cannot say: §3's `wrote 0x0751=0xA0` is
-        # the write under test and the reader places it, so a `wrote` form that
-        # stopped being read, or a value that stopped being taken out of the
-        # label, goes red here. `RefusedLabelTests` asks the same function of
-        # a label the reader refuses. And the timestamp claim is `read_capture`
-        # having returned at all: `take_capture_row` runs `parse_ts` on every
-        # row, so a mark whose timestamp the reader could not read would have
-        # raised rather than compared equal to a `'20'` prefix.
+        # the write under test, so a `wrote` form that stopped being read, or
+        # a value that stopped being taken out of the label, goes red here.
+        # `RefusedLabelTests` asks the same function of a label it refuses.
         self.assertEqual(grader.parse_mark(marks[0].label), ('write', 0xA0))
+        # The century, which reaching `read_capture`'s return does not
+        # establish: `parse_ts` is `fromisoformat` and takes a 1999 stamp, so
+        # it is asked of the `datetime` rather than of a raw prefix, as before.
+        self.assertEqual(marks[0].ts.year // 100, 20)
 
     def test_the_fifth_column_is_read_off_the_row_and_not_through_the_reader(self):
         # Split out because this is the one field the reader cannot answer: it

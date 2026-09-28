@@ -95,11 +95,16 @@ that field is the provenance column. Adding a second copy of an assertion the
 suite already makes would be the "a copy is exactly what would drift" problem
 `test_ec_watch.py` names about itself.
 
-The timestamp claims went the other way. Both old tests asserted
-`ts.startswith('20')`; both assertions are gone, because reaching
-`read_capture`'s return *is* the stronger claim — `take_capture_row` runs
-`parse_ts` on every row, so a mark whose timestamp the reader could not read
-raises rather than comparing equal to a prefix.
+The timestamps are the one claim that does not follow the pattern above, and
+the reason is `parse_ts`: it is `datetime.datetime.fromisoformat`, which reads
+a 1999 stamp without complaint, so reaching `read_capture`'s return
+establishes *parseable* and not 20xx. The deleted `ts.startswith('20')` held
+a property the return alone does not — it caught a wrong-century stamp — so
+both tests assert the century again rather than dropping it, asked of
+`marks[0].ts.year`, the `datetime` the reader handed back. That is the old
+prefix test asked through the reader, not a stronger one: the assertion is
+`marks[0].ts.year // 100 == 20`, and it is the only part of either test that
+would go red on a 1999 stamp.
 
 ## The census control
 

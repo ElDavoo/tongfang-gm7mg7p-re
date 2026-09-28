@@ -325,9 +325,9 @@ class RunTests(unittest.TestCase):
         """The marks `grader.read_capture` reads out of `rows`.
 
         The reader takes a path and these cases hold the capture as text, so
-        it is written back out and read through it. The sample rows are this
-        tool's own `CSV_HEADER` and are not the 0751 shape at all; the mark
-        row is, and it is the only row the reader is being asked about.
+        it is written back out and read through it. Every row goes to it --
+        the sample rows are this tool's own `CSV_HEADER` and hex-parse as
+        addresses -- and the mark row is the only one the assertions name.
         """
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'capture.csv'
@@ -344,10 +344,11 @@ class RunTests(unittest.TestCase):
         # and no §3 form leads it. `ec_watch.py`'s own `RefusedLabelTests`
         # refuses an unplaceable label only while a vocabulary is held, which
         # is this same distinction read from the other side. Asserting a role
-        # here instead would claim a placement this run never made, and the
-        # timestamp is `read_capture` having returned: `take_capture_row` runs
-        # `parse_ts` on every row it reads.
+        # here instead would claim a placement this run never made. The
+        # century is not read off the return -- `parse_ts` is `fromisoformat`
+        # and takes a 1999 stamp -- so it is asked of the `datetime` instead.
         self.assertEqual(grader.parse_mark(marks[0].label), (None, None))
+        self.assertEqual(marks[0].ts.year // 100, 20)
 
     def test_without_a_csv_nothing_is_written_to_disk(self):
         rc, _, out, _ = self.run_probe(want_csv=False)
