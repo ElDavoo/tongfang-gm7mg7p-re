@@ -742,15 +742,20 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   eight handlers that table dispatches to, which §9's per-case table said was
   still outstanding: the two arms of each case's bit-7 test, the shared
   epilogue at `0x821F`, the default at `0x8274`, and the thirteen helpers the
-  cases share. It answers what the `0x08D0`-`0x08DE` word slots hold (a
-  straight copy of one of **four** source words, low byte at the lower
-  address, halved into eight accumulators by `0xB965`) and who else reads
-  those addresses, including the two `bank1` sites §9's census does not name.
+  cases share. It answers two separate questions about two separate sets of
+  addresses. What the sixteen `0x08D0`-`0x08DF` word slots hold: a straight
+  copy of one of **four** source words, low byte at the lower address, and — by
+  that section's own scans — no reader in either bank. Who reads the sixteen
+  `0x0600`-`0x060F` accumulator bytes those slots are folded into: sixteen
+  sites outside the handler block, in three `bank0` places and nine `bank1`
+  routines, of which `bank1,0xF3D7` writes a byte `registers.yaml` also derives
+  from battery current.
   §9's per-case table is confirmed on every column, and the one wrong value in
   its skeleton paragraph — `0x81 + case` for case `0x07` — is corrected beside
-  it. It deliberately does **not** name a subsystem: the eight channels
-  have no name, no unit and no identified consumer, and §10 says so in those
-  words rather than guessing.
+  it. It deliberately does **not** name a subsystem: the eight channels have no
+  name and no unit in `registers.yaml`, and the one consumer that reaches a
+  named byte is reported as a lead with what it does not establish attached,
+  rather than as an answer.
   `annotations/bank0-8038-handler-arms.csv` is the per-arm table behind §3-§7,
   produced by `tools/walk_branch_arms.py --csv`; all eighteen arms are
   `complete`.

@@ -888,9 +888,54 @@ class TheOtherReadersAndWriters(unittest.TestCase):
             "bank0:0x8054=index_case_00 [writer]; "
             "bank0:0x806C=store_byte_through_0a59_into_0600 [writer]")
 
+    def test_the_two_bank0_loader_shapes_the_accumulators_leave_by(self):
+        # §9.1's two `bank0` places that have committed listings. Both are
+        # checked as bytes rather than as listings so that a regeneration of
+        # either cannot make the claim pass on its own.
+        #
+        # `bank0,0xBAAE` reads the pair high byte last into r7 and the low one
+        # into r6 -- the accumulator's own order, §5.1's -- and returns the
+        # byte at 0x0399. The census names neither address here, and
+        # BAAE.c's own comment gives the reason, so that is asserted too.
+        self.assertEqual(hexat(BANK0, 0xBAAE, 17),
+                         "900609" "e0" "fc" "900608" "e0" "ff"
+                         "ec" "fe" "900399" "e0" "22")
+        self.assertIn('drops the two register loads',
+                      (DECOMPILED / 'bank0' / 'BAAE.c').read_text(
+                          errors="replace"))
+        # `bank0,0xB5D3` is the other order: r6 takes 0x0602, the high byte.
+        # The document reports the reversal and stops there.
+        self.assertEqual(hexat(BANK0, 0xB5D3, 11),
+                         "900602" "e0" "fe" "a3" "e0" "ff" "128399")
+        self.assertEqual(hexat(BANK0, 0xB5DE, 5), "900875" "ef" "f0")
+
+    def test_the_unnamed_region_that_subtracts_case_03s_accumulator(self):
+        # §9.1's third `bank0` place has no listing and no annotation row, so
+        # the document says what its bytes do and invents no name. The claim
+        # is that it reads 0x0606/0x0607, puts the low byte in r6 and the high
+        # one in r7 -- §5.1's order, where 0xB965 adds -- and `subb`s the pair
+        # out of 0x0A33/0x0A34.
+        self.assertEqual(hexat(BANK0, 0xDAFD, 13),
+                         "900607" "e0" "fa" "900606" "e0" "ff" "ea" "fe" "c3")
+        self.assertEqual(hexat(BANK0, 0xDB0A, 10), "900a34" "e0" "9f" "900a33" "e0" "9e")
+        # ... and that no committed export covers it, which is why it has no
+        # name: `bank0,D9FE` is 203 bytes and ends at 0xDAC8, and the next
+        # bank0 export is at 0xDB3E.
+        index = {r['addr']: int(r['size']) for r in rows(DECOMPILED / 'index.csv')
+                 if r['program'] == 'bank0' and r['size']}
+        self.assertEqual(0xD9FE + index['D9FE'] - 1, 0xDAC8)
+        spans = sorted((int(a, 16), int(a, 16) + n - 1) for a, n in index.items())
+        self.assertEqual([a for a, b in spans if a <= 0xDAFD <= b], [])
+        self.assertEqual([a for a, _ in spans if 0xDAFD <= a <= 0xDB2E], [])
+        starts = sorted(int(addr, 16) for (scope, addr) in annotations()
+                        if scope == 'bank0')
+        self.assertEqual([a for a in starts if 0xDAFD <= a <= 0xDB2E], [])
+
     def test_the_three_bank1_consumers_of_the_accumulators(self):
         # 0x8886 is the same 16-bit loader in all three, which is what ties
-        # the two bank1 sites to bank1,0xB728 at all.
+        # the two bank1 sites to bank1,0xB728 at all. §9.1 supersedes "the
+        # three": these are the readings of three of the ten bank1 sites, and
+        # the full set is pinned in TheAccumulatorConsumerSet below.
         self.assertEqual(hexat(BANK1, 0xB728, 22),
                          "900610" "e0" "10e501" "22" "f0"
                          "90060a" "128886" "7c03" "7be8" "128863")
@@ -945,6 +990,176 @@ class TheOtherReadersAndWriters(unittest.TestCase):
                 for addr in (slot, pair, pair + 1, 0x0610, 0x0A59, gate):
                     self.assertIn('0x%04X' % addr, notes)
         self.assertEqual(int(table['default']['target_runtime'], 16), 0x8274)
+
+
+class TheAccumulatorConsumerSet(unittest.TestCase):
+    """§9.1's table: for each of the eight accumulator pairs, every direct site
+    outside the handler block, and the census names for the same pair.
+
+    The set is re-derived here from the images rather than read out of
+    `trace_xdata_refs.py`, for the reason the module docstring gives about the
+    arms CSV: a tool checked against itself agrees with whatever it last
+    printed. `mov dptr,#imm16` is a three-byte `90 lo hi`, so the derivation
+    is a byte search, and it covers both halves of each pair -- two of the
+    sixteen sites are reached by an immediate of the pair's *low* byte
+    (`0xDAFD` and `0xBAAE`), which a table keyed on the high byte would drop.
+
+    It is a set and not a count. A count of the tree is a value every new
+    finding has to edit, which is the shape of assertion `CLAUDE.md` warns
+    about; this one is closed over a committed image and a fixed block extent,
+    so it is a claim the document makes and this file can falsify.
+    """
+
+    # pair -> [(bank, site)], as §9.1's second column spells them.
+    OUTSIDE = {
+        0x0600: [],
+        0x0602: [('bank0', 0xB5D3)],
+        0x0604: [],
+        0x0606: [('bank0', 0xDAFD), ('bank0', 0xDB02), ('bank0', 0xDB2E)],
+        0x0608: [('bank0', 0xBAAE), ('bank0', 0xBAB3),
+                 ('bank1', 0xA2B4), ('bank1', 0xD4DC)],
+        0x060A: [('bank1', 0xB731), ('bank1', 0xB7AB), ('bank1', 0xB7F7),
+                 ('bank1', 0xE8B7), ('bank1', 0xE8CD)],
+        0x060C: [('bank1', 0xF3F5)],
+        0x060E: [('bank1', 0xD979), ('bank1', 0xDAED)],
+    }
+
+    # pair -> the census `functions` cell entries that are not the handler.
+    CENSUS_NAMES = {
+        0x0602: ['bank0:0xB5D3=FUN_CODE_b5d3'],
+        0x0606: [],
+        0x0608: ['bank1:0xA24E=FUN_CODE_a24e', 'bank1:0xD4D3=FUN_CODE_d4d3'],
+        0x060A: ['bank1:0xB728=clear_0610_bit5_and_dispatch',
+                 'bank1:0xB784=FUN_CODE_b784',
+                 'bank1:0xE8A4=compute_097e_times_10_write_0386_0387'],
+        0x060C: ['bank1:0xF3D7=store_scaled_quotient_0449'],
+        0x060E: ['bank1:0xD946=FUN_CODE_d946', 'bank1:0xDAAD=FUN_CODE_daad',
+                 'bank1:0xDACC=FUN_CODE_dacc'],
+    }
+
+    # The census entry for the handler that writes each pair, filtered out of
+    # the cell above so what is left is the consumers. 0x060E has no handler
+    # in its cell at all -- the census has no writer for it, §9's second blind
+    # spot -- so nothing is filtered there.
+    HANDLER = {0x0600: 'bank0:0x8054', 0x0602: 'bank0:0x8094',
+               0x0604: 'bank0:0x80D7', 0x0606: 'bank0:0x811A',
+               0x0608: 'bank0:0x815D', 0x060A: 'bank0:0x819D',
+               0x060C: 'bank0:0x81DF', 0x060E: None}
+
+    # `0x0600`'s cell also carries the two in-block entries §3 shows are
+    # listing boundaries rather than functions: `0x8048` is table bytes the
+    # walk never reaches, and `0x806C` is a mid-block instruction.
+    IN_BLOCK_CELL = ('bank0:0x8048', 'bank0:0x806C')
+
+    BLOCK = (0x8038, 0x8293)
+
+    def _mov_dptr_sites(self, image, addr):
+        """Every `90 lo hi` site for `addr`, as offsets. The whole of what
+        `trace_xdata_refs.py` looks for, done with a byte search."""
+        needle = bytes((0x90,)) + addr.to_bytes(2, 'big')
+        return [i for i in range(len(image) - 2) if image[i:i + 3] == needle]
+
+    def _census_consumer_names(self, pair):
+        """The census's `functions` cell for a pair, less the handler and less
+        the two in-block entries `0x0600` carries, as bare names. The census
+        appends a `[type]` tag to most entries; §9.1's table quotes the name,
+        so the tag is dropped here rather than carried into the prose."""
+        out = []
+        for entry in census()[pair]['functions'].split('; '):
+            name = entry.rsplit(' [', 1)[0]
+            if self.HANDLER[pair] and name.startswith(self.HANDLER[pair]):
+                continue
+            if any(name.startswith(p) for p in self.IN_BLOCK_CELL):
+                continue
+            out.append(name)
+        return out
+
+    def test_the_table_is_every_mov_dptr_site_outside_the_block(self):
+        for pair, expected in sorted(self.OUTSIDE.items()):
+            found = set()
+            for bank, image in (('bank0', BANK0), ('bank1', BANK1)):
+                for half in (pair, pair + 1):
+                    for site in self._mov_dptr_sites(image, half):
+                        if not self.BLOCK[0] <= site <= self.BLOCK[1]:
+                            found.add((bank, site))
+            with self.subTest(pair="0x%04X" % pair):
+                self.assertEqual(sorted(found), sorted(expected))
+
+    def test_two_of_the_sites_are_immediates_of_a_pairs_low_byte(self):
+        # The two `bank0` places that read the pair in the other order are
+        # reached by `mov dptr` of the low byte, which is why the derivation
+        # above scans both halves. Pinned so a future edit that narrows it to
+        # the high byte fails here rather than silently losing two sites.
+        images = {'bank0': BANK0, 'bank1': BANK1}
+        for bank, site, low in (('bank0', 0xDAFD, 0x0607),
+                                ('bank0', 0xBAAE, 0x0609)):
+            with self.subTest(site="0x%04X" % site):
+                self.assertEqual(hexat(images[bank], site, 3), "90%04x" % low)
+
+    def test_the_census_names_exactly_what_the_table_says_it_names(self):
+        # The third column of §9.1's table is the census's own `functions`
+        # cell with the handler's entry removed. Compared as a whole set
+        # rather than by membership, so a census rebuild that added a consumer
+        # to one of these rows fails here instead of quietly becoming true.
+        for pair, names in sorted(self.CENSUS_NAMES.items()):
+            with self.subTest(pair="0x%04X" % pair):
+                self.assertEqual(self._census_consumer_names(pair), names)
+
+    def test_the_census_names_no_consumer_for_the_two_pairs_with_no_site(self):
+        # 0x0600/0x0601 and 0x0604/0x0605 have nothing outside the block, and
+        # §9.1's table says so with an em dash rather than by omitting them.
+        for pair in (0x0600, 0x0604):
+            with self.subTest(pair="0x%04X" % pair):
+                self.assertEqual(self.OUTSIDE[pair], [])
+                self.assertNotIn(pair, self.CENSUS_NAMES)
+        # ... and the one bank1 blind spot stands: 0x060E is all readers and
+        # the image has the writer §9 names, inside case 0x07.
+        self.assertEqual(census()[0x060E]['writers'], '0')
+        self.assertEqual(census()[0x060E]['functions'],
+                         '; '.join(self.CENSUS_NAMES[0x060E]))
+
+    def test_the_sixteen_sites_are_ten_bank1_and_six_bank0(self):
+        sites = [s for v in self.OUTSIDE.values() for s in v]
+        self.assertEqual(sorted(b for b, _ in sites),
+                         ['bank0'] * 6 + ['bank1'] * 10)
+        # Six of the eight pairs have a consumer; three of those six have
+        # every consumer in the other bank (cases 0x05, 0x06 and 0x07).
+        self.assertEqual(sorted(p for p, v in self.OUTSIDE.items() if v),
+                         [0x0602, 0x0606, 0x0608, 0x060A, 0x060C, 0x060E])
+        self.assertEqual(sorted(p for p, v in self.OUTSIDE.items()
+                                if v and {b for b, _ in v} == {'bank1'}),
+                         [0x060A, 0x060C, 0x060E])
+        # The census names nine bank1 routines behind the ten bank1 sites:
+        # 0xB7AB and 0xB7F7 sit in the routines the table names as 0xB728 and
+        # 0xB784, and 0xE8B7/0xE8CD are the two sites of 0xE8A4.
+        self.assertEqual(sorted(
+            n.split('=')[0] for names in self.CENSUS_NAMES.values()
+            for n in names if n.startswith('bank1')), [
+                'bank1:0xA24E', 'bank1:0xB728', 'bank1:0xB784',
+                'bank1:0xD4D3', 'bank1:0xD946', 'bank1:0xDAAD', 'bank1:0xDACC',
+                'bank1:0xE8A4', 'bank1:0xF3D7'])
+
+    def test_the_0x0449_lead_is_the_bytes_and_two_named_rows(self):
+        # §10's fourth bullet turns on this one site, so what it rests on is
+        # pinned rather than paraphrased: the mask, the x10, the
+        # `registers.yaml` rows at both ends, and the different divisors the
+        # two paths use. The document reports the link and declines to call it
+        # a subsystem, and this is the part that would move first if the link
+        # were wrong.
+        self.assertEqual(hexat(BANK1, 0xF3F5, 15),
+                         "90060c" "128886" "530203" "e9" "75f00a" "a4" "f9")
+        self.assertEqual(hexat(BANK1, 0xF411, 4), "900449" "f0")
+        # The sibling path divides 0x0434/0x0435 by 100 into the same byte.
+        self.assertEqual(hexat(BANK1, 0xF3EB, 4), "900449" "f0")
+        row = annotations()[('bank1', '0xF3D7')]
+        self.assertEqual(row['name'], 'store_scaled_quotient_0449')
+        for phrase in ('0x060C/0x060D', '0x0456', '0x0449', '0x0434'):
+            self.assertIn(phrase, row['comment'])
+        # ... and both ends of the link are `registers.yaml` rows, one of them
+        # established live, so this is not two unnamed bytes meeting.
+        text = (ANNOTATIONS / 'registers.yaml').read_text(errors='replace')
+        for name in ('BAT_CURRENT_MA', 'XDATA_0449', 'SYSTEM_ID'):
+            self.assertIn('- name: ' + name, text)
 
 
 class TheCommittedArmsTable(unittest.TestCase):

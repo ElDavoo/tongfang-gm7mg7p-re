@@ -53,8 +53,19 @@ $ python3 ec/tools/walk_branch_arms.py ec/firmware/GMxMGxx_11.800 \
           > ec/annotations/bank0-8038-handler-arms.csv
 $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 \
           0x1904 0x1906 0x1909 0x190C 0x0610 0x08D0 0x08D2 0x08D4 0x08D6 \
-          0x08D8 0x08DA 0x08DC 0x08DE 0x0600 0x060E 0x0A59 --csv
+          0x08D8 0x08DA 0x08DC 0x08DE 0x0600 0x0601 0x0602 0x0603 0x0604 0x0605 \
+          0x0606 0x0607 0x0608 0x0609 0x060A 0x060B 0x060C 0x060D 0x060E 0x060F \
+          0x0A59 --csv
 ```
+
+The sixteen `0x0600`-`0x060F` addresses are **all eight accumulator pairs**,
+not a sample of them. An earlier draft of this command named `0x0600` and
+`0x060E` only, and the consumer count §9 reported rested on them: two of its
+three came from the scan of `0x060E`, and the third, `bank1,0xB728`, from the
+census's row for `0x060A`. The shortfall was in the scan, not in the census —
+it already named consumers of the other six pairs that this document did not
+report. §9.1 is the account, and it is the reason the command reads this way
+now.
 
 All eight handlers open with `mov dptr,#<gate>` and branch on bit 7 of the byte
 they just read, so seeding `walk_branch_arms.py` on the four gate bytes reaches
@@ -883,9 +894,10 @@ and neither is named in a `ghidra-functions.csv` row this document could
 check; the shape is the result, and nothing is claimed about what `0x0378`
 holds or what `0xA5A7` does with the pair.
 
-**`bank1,0xB728` is a third cross-bank consumer, and the only one the census
-names** — of case `0x05`'s accumulator, compared against a constant. Its bytes,
-from a `bank1` image:
+**`bank1,0xB728` is a cross-bank consumer of case `0x05`'s accumulator,
+compared against a constant.** It is not the only one, and it is not the only
+one for this pair either — §9.1 gives the census's own set for `0x060A`/`0x060B`.
+Its bytes, from a `bank1` image:
 
 ```console
 $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xb728; pd 8' /tmp/bank1.bin
@@ -902,11 +914,94 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xb728; pd 8' /tmp/bank1.
 It tests bit 5 of `0x0610` — case `0x05`'s done bit, per §9's table and §4.6's
 `orl a,#0x20` — and on it being set, loads the 16-bit big-endian word at
 `0x060A` (case `0x05`'s accumulator, whose two bytes `0x8886` moves into `r1`
-and `r2` in that order) and compares it against `0x03E8`. This is the one place
-in the tree where a value a `0x8038` handler computes is read by different
-code, and it makes case `0x05` the most connected of the eight. It is a byte
+and `r2` in that order) and compares it against `0x03E8`. It is a byte
 reading: `0x060A` holds a 16-bit word and that word is compared with `1000`.
-Nothing here says the comparison's outcome means anything.
+Nothing here says the comparison's outcome means anything, and §9.1 shows it is
+not the only place a value a `0x8038` handler computes is read by other code —
+it is the only one of them that compares it against a constant.
+
+### 9.1 Every accumulator, and every consumer the widened scan finds
+
+§1's `trace_xdata_refs.py` line names all sixteen accumulator bytes. Run over
+all sixteen, it reports **48 direct sites, 32 of them inside the handler block
+and 16 outside it** — and the sixteen outside are in both banks, which is what
+the two-pair version of the command could not have shown. Of the eight pairs,
+only `0x0600`/`0x0601` and `0x0604`/`0x0605` have no site outside the block;
+the other six have between one and five.
+
+| pair | sites outside `0x8038`-`0x8293` | what the census names for that pair |
+|---|---|---|
+| `0x0600`/`0x0601` | none | — |
+| `0x0602`/`0x0603` | `bank0 0xB5D3` | `bank0:0xB5D3=FUN_CODE_b5d3` |
+| `0x0604`/`0x0605` | none | — |
+| `0x0606`/`0x0607` | `bank0 0xDAFD`, `0xDB02`, `0xDB2E` | nothing — see below |
+| `0x0608`/`0x0609` | `bank0 0xBAAE`, `0xBAB3`; `bank1 0xA2B4`, `0xD4DC` | `bank1:0xA24E=FUN_CODE_a24e`, `bank1:0xD4D3=FUN_CODE_d4d3` |
+| `0x060A`/`0x060B` | `bank1 0xB731`, `0xB7AB`, `0xB7F7`, `0xE8B7`, `0xE8CD` | `bank1:0xB728=clear_0610_bit5_and_dispatch`, `bank1:0xB784=FUN_CODE_b784`, `bank1:0xE8A4=compute_097e_times_10_write_0386_0387` |
+| `0x060C`/`0x060D` | `bank1 0xF3F5` | `bank1:0xF3D7=store_scaled_quotient_0449` |
+| `0x060E`/`0x060F` | `bank1 0xD979`, `0xDAED` | `bank1:0xD946=FUN_CODE_d946`, `bank1:0xDAAD=FUN_CODE_daad`, `bank1:0xDACC=FUN_CODE_dacc` |
+
+Ten of the sixteen are in `bank1`, spread over the nine `ghidra-functions.csv`
+rows the census names for them; the other six are in `bank0`, in three places.
+**Three pairs — `0x060A`, `0x060C` and `0x060E`, cases `0x05`, `0x06` and
+`0x07` — have every consumer this scan finds in the other bank, and six of the
+eight pairs have a consumer at all.**
+
+Two of the three `bank0` places have committed listings, and one does not:
+
+- **`bank0,0xB5D3`** — [`B5D3.asm`](../decompiled/bank0/B5D3.asm), 323 bytes
+  from a `call-target` boundary that [`bank-call-audit.md`](bank-call-audit.md)
+  §1 calls an upper bound. It reads `0x0602` into `R6` and `0x0603` into `R7`,
+  calls `0x8399`, and stores `R7` to `0x0875`. That is the reverse of §5.1's
+  register order, where `r6` is the low byte of the folded sum; the bytes are
+  what they are and this document does not say what the reversal is for.
+- **`bank0,0xBAAE`** — [`BAAE.asm`](../decompiled/bank0/BAAE.asm), the named
+  `load_r7_r6_from_0608_and_return_0399`. It loads `0x0608`/`0x0609` into
+  `R7:R6` in the accumulator's own order and returns the byte at `0x0399` in
+  `a`. **The census does not name it for either address**, and the committed
+  [`BAAE.c`](../decompiled/bank0/BAAE.c) says why in its own comment: "The
+  decompiled C reports only the 0x0399 return and drops the two register
+  loads." It is the sharpest illustration of the caveat this section opens
+  with — a real consumer invisible to a census of the decompiled C, in a
+  listing that carries a name for exactly that reason.
+- **`0xDAFD`-`0xDB2E`** — no committed listing and no `ghidra-functions.csv`
+  row covers it: `bank0,D9FE,seed_07d3_gfid_and_08xx_defaults` is 203 bytes
+  and ends at `0xDAC8`, and the next bank0 export is at `0xDB3E`. What the
+  bytes do is visible: it reads `0x0607` into `R2`, `0x0606` into `R7`, copies
+  `R2` into `R6`, and **subtracts** the pair from the 16-bit value at
+  `0x0A33`/`0x0A34` (`subb a,r7` then `subb a,r6` — `r6` the low byte, `r7`
+  the high one, §5.1's order, where `0xB965` adds). Case `0x03`'s accumulator
+  is a *minuend* here rather than the addend the handler folds it as. No
+  function boundary covers these bytes, so there is no name for the routine and
+  this document does not invent one.
+
+**`bank1,0xF3D7` is the one consumer that reaches outside the block to a
+[`registers.yaml`](registers.yaml) row, and §10 turns on it.** `0xF3F5` is
+`mov dptr,#0x060c ; lcall 0x8886` and the routine it sits in ends by storing
+`a` to `0x0449`:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xf3f0; pd 8' /tmp/bank1.bin
+            0x0000f3f0      12f3c9         lcall 0xf3c9
+            0x0000f3f3      7c00           mov r4, #0x00
+            0x0000f3f5      90060c         mov dptr, #0x060c
+            0x0000f3f8      128886         lcall 0x8886
+            0x0000f3fb      530203         anl r2, #0x03
+            0x0000f3fe      e9             mov a, r1
+            0x0000f3ff      75f00a         mov b, #0x0a
+            0x0000f402      a4             mul ab
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xf411; pd 3' /tmp/bank1.bin
+            0x0000f411      900449         mov dptr, #0x0449
+            0x0000f414      f0             movx @dptr, a
+            0x0000f415      22             ret
+```
+
+`0x060C`/`0x060D` is case `0x06`'s accumulator pair. The committed
+[`bank1,0xF3D7` row](ghidra-functions.csv) — `store_scaled_quotient_0449` —
+already records what happens to it: the high byte is masked with `0x03`, the
+value is multiplied by ten, divided by a divisor this routine picks from bit 6
+of `0x0456`, and the result goes to `0x0449`. Both those addresses are rows in
+`registers.yaml`, and both `registers.yaml` and the `0xF3D7` row cross-reference
+each other about it. §10 says what follows, and what it does not.
 
 ## 10. The subsystem question, and where this stops
 
@@ -918,10 +1013,11 @@ walk establishes is shape: eight handlers behind a gate bit, each copying a
 16-bit word out of a 16-bit XDATA word and halving it into its own 16-bit
 accumulator, with a done bit per case and a rotating ring of four gates. That
 shape is consistent with a sampling or smoothing loop, and it is also
-consistent with a dozen other things. The arguments that would move it toward a
-named subsystem all fail on the same point — every one of them is a statement
-about what the *values* mean, and nothing in this image assigns meaning to
-them:
+consistent with a dozen other things. Three of the four arguments below fail on
+the same point — each is a statement about what the *values* mean, and nothing
+in this image assigns meaning to them. The fourth is the one that has moved,
+and it moved because §1's scan was widened rather than because the bytes
+changed:
 
 - **No name.** None of `0x1904`/`0x1906`/`0x1909`/`0x190C`, `0x1907`-`0x1919`,
   `0x08D0`-`0x08E1`, `0x0600`-`0x0610` or `0x0A56`-`0x0A59` is in
@@ -931,34 +1027,55 @@ them:
 - **No unit, no range, no sign.** The halves are all `0x9F` and the sources are
   unknown bytes. A fan tachometer, a thermistor millidegree count and a
   coulomb counter are 16-bit and halve beautifully; so is a timer.
-- **No host-side record.** Nothing outside this bank0 block reads the `0x08D0`-`0x08DF`
-  slots by these scans (§6.2), and of the three bank1 consumers §9 finds, one
-  masks a byte of the value and nothing in the bytes these scans decode uses
-  the result, one passes it to an undecoded routine with two constants, and one
-  compares it against a bare `0x03E8` with no unit anywhere near it. So the
-  "EC-internal half of something `registers.yaml` tracks from the host side"
-  hypothesis of the issue has no support either: the intersection that would let
-  it be checked is empty, and the values that leave this block are handed to
-  routines these scans do not decode rather than read as measurements.
+- **No host-side record for the slots, and one for the accumulators.** Nothing
+  outside this bank0 block reads the `0x08D0`-`0x08DF` slots by these scans
+  (§6.2), and the sixteen addresses the block itself writes have no
+  `registers.yaml` row between them. The accumulators are the other way round,
+  and the first draft of this section said they were not: written as a blanket
+  negative, from a scan (§1) that named two of the eight pairs. §9.1's widened
+  scan finds sixteen sites outside the block, in three `bank0` places and nine
+  `bank1` routines, and one of them — `bank1,0xF3D7` — writes to `0x0449`, a
+  `registers.yaml` row whose own note says it is *"Derived from
+  0x0434/0x0435: store_scaled_quotient_0449 (bank1 0xF3D7) reads the battery
+  current pair and divides by 100 into this byte"*, and `0x0434`/`0x0435` is
+  `BAT_CURRENT_MA`, the one address in this repository whose value is
+  established live and agreed upstream. So the issue's "EC-internal half of
+  something `registers.yaml` tracks from the host side" hypothesis now has one
+  committed link behind it, and this document's earlier answer — that it "has no
+  support" — was wrong on the strength of a narrow scan.
+  **What that link is not:** the routine's own selector between the two paths
+  is `R7`, which the committed `0xF3D7` row says "is set nowhere in this
+  listing or in `0x198A`"; the divisor is `0x22` or `0x44` from a `SYSTEM_ID`
+  bit, not the `100` the battery path uses; and the mask `anl r2,#0x03` discards
+  the top two bits of the accumulator before the multiply. So the accumulator
+  reaches a byte battery current also reaches, and the two values are not shown
+  to be the same quantity, to be the same unit, or to be scaled the same way.
+  That is a lead with a file behind it, not a subsystem.
 - **The nearest neighbours are already spoken for, and are not these.** The
   blocks that *are* attached to a subsystem in this repository are attached
   through [`registers.yaml`](registers.yaml) rows —
   [`charge-profile-flow.md`](charge-profile-flow.md)'s `0x0741`/`0x07A6` and
   [`lightbar-bat-flow.md`](lightbar-bat-flow.md)'s `0x07E2` among them. None of
-  the thirty-two addresses here is one of them.
+  the thirty-two addresses here is one of them, and the `0x0449` link above is
+  not to a named measurement either: the `bank1,0xF3D7` row records it as "an
+  EC-side site found with its meaning not established", which is what its
+  `registers.yaml` row carries as `present-untested`.
 
 So the honest answer is: **eight accumulating channels fed by four 16-bit
 words, behind a gate bit that no edge in the walk's eighteen arms clears, with
-no name, no unit and no identified consumer — and no basis for calling it
-thermal, fan, battery or power.** The gate clause stops where the evidence
-stops, and the stop is named rather than assumed: the one direct write to a
-gate byte that no arm reaches is at `0x82B1`, it holds `0x9F`, and it sets bit
-7 like the rest (§7.1) — which is a decode of one site, **not** a sweep for
-every writer of `0x1904`/`0x1906`/`0x1909`/`0x190C`, and this document runs no
-such sweep. Naming a subsystem here would be a guess wearing the grammar of a
-finding, which is what `CLAUDE.md`'s calibration rule is written against. If a
-follow-up wants to close this, the cheapest next step is named in §11 and is a
-human's, not this pipeline's.
+no name and no unit; six of the eight have consumers this scan finds, and one
+of those — case `0x06`'s — writes to a byte the EC also derives from battery
+current — and no basis for calling all eight thermal, fan, battery or power.**
+The gate clause stops where the evidence stops, and the stop is named rather
+than assumed: the one direct write to a gate byte that no arm reaches is at
+`0x82B1`, it holds `0x9F`, and it sets bit 7 like the rest (§7.1) — which is a
+decode of one site, **not** a sweep for every writer of
+`0x1904`/`0x1906`/`0x1909`/`0x190C`, and this document runs no such sweep.
+Naming a subsystem here would be a guess wearing the grammar of a finding,
+which is what `CLAUDE.md`'s calibration rule is written against. The consumer
+side is no longer a blank, but the unit is: sixteen sites that read a value say
+nothing about what the value measures. If a follow-up wants to close this, the
+cheapest next step is named in §11 and is a human's, not this pipeline's.
 
 ## 11. What a live observation would settle, for a human at the machine
 
@@ -980,12 +1097,27 @@ each is a read, not a write:
    slot's real reader is something these scans cannot see. If the slot never
    changes while the source does, that is also a result, and it would say the
    handlers are not running.
-3. **A real value for the three bank1 consumers.** `bank1,0xD979` masks a byte
-   of the `0x060E`/`0x060F` accumulator with `0x03` and nothing in the bytes
-   §9 decodes uses the result; `bank1,0xDAED` passes the pair to `0xA5A7` with
-   `0x75` and `0x17`; and `bank1,0xB728` compares the `0x060A`/`0x060B`
-   accumulator against `0x03E8`. Sampling those pairs while the thing they track
-   changes is what would put a name on any of it. Nothing short of that will.
+3. **A real value for the consumers §9.1 lists.** Sample the eight accumulator
+   pairs while whatever they track changes, and read `0x0449` and `0x0434`/
+   `0x0435` in the same breath — the last of those is `BAT_CURRENT_MA`, whose
+   value is already established live, so a handler whose accumulator tracks
+   current will move with it and one that does not will not. That comparison is
+   the one this document can name precisely: `bank1,0xF3D7` masks the high byte
+   of case `0x06`'s accumulator, multiplies by ten and divides by a divisor
+   taken from `SYSTEM_ID` bit 6, and the routine's other branch — the one its
+   own `R7` selector picks instead — divides battery current by `100` into the
+   same byte. If `0x0449` correlates with `0x0434` only on the battery branch,
+   that says the two are one quantity; if it moves when current is flat, it is
+   a second, unnamed thing sharing a byte.
+   The other consumers are the same kind of read with less to compare against:
+   `bank1,0xD979` masks a byte of the `0x060E`/`0x060F` accumulator with `0x03`
+   and nothing in the bytes §9 decodes uses the result; `bank1,0xDAED` passes
+   the pair to `0xA5A7` with `0x75` and `0x17`; `bank1,0xB728` compares the
+   `0x060A`/`0x060B` accumulator against `0x03E8`; `bank0,0xB5D3` stores one
+   byte of case `0x01`'s to `0x0875`; and the unnamed `0xDAFD` region subtracts
+   case `0x03`'s from the pair at `0x0A33`/`0x0A34`. Reading `0x0875` and
+   `0x0A33`/`0x0A34` alongside the accumulator is what would put a number on
+   any of them. Nothing short of that will.
 
 Until one of those is run by a human, the correct description of this region is
 the one in §10, and no `status:` in [`registers.yaml`](registers.yaml) moves:
@@ -1026,9 +1158,11 @@ on readback would not be one either.
   one would be the duplication `walk_flow_follow.py` and `walk_branch_arms.py`
   already sit next to each other to avoid.
 - **Whether these are the EC-internal half of something `registers.yaml` already
-  tracks from the host side.** §10 gives the reasons the intersection is empty
-  and the one consumer is a bare comparison. Named as an open question, not
-  answered.
+  tracks from the host side.** §10 gives what the intersection over the
+  thirty-two addresses is empty of, and the one committed link the widened scan
+  turned up: case `0x06`'s accumulator reaching `0x0449` through
+  `bank1,0xF3D7`, a byte `registers.yaml` also derives from battery current.
+  Named as a lead with §11.3's comparison attached, not answered.
 - **§10's other fourteen tables.** Out of scope; this is the one table.
 - **Anything under `.github/workflows/` or `.github/actions/`.** The pipeline
   token has no `workflow` scope.
