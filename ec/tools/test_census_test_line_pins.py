@@ -725,11 +725,19 @@ class TheCommittedTree(unittest.TestCase):
         # `68 + 1 = 69` targets, because a declined pin resolves to nothing
         # and only the twin is a target. The files figure is unmoved at `29`:
         # both records are in a file that was already cited.
-        self.assertEqual(len(records), 128)
-        self.assertEqual(len({r[0] for r in records}), 29)
-        self.assertEqual(len({r[2] for r in records}), 93)
+        # **And once more for #421: +1, all four figures moving together.**
+        # `provenance-clone-depth-behaviour.md` cites
+        # `ec/tools/test_check_history_checkouts.py:438` -- the fixture line
+        # that is the only `--verify-provenance` string in any suite, and the
+        # evidence the write-up's "nothing runs the mode" rests on. It is a new
+        # file, so the files figure takes one, and a new spelling, so that one
+        # does too; it resolves, so `declined` is unmoved at `33` and no
+        # `out_of_range`, `unresolved` or `ambiguous` appears.
+        self.assertEqual(len(records), 129)
+        self.assertEqual(len({r[0] for r in records}), 30)
+        self.assertEqual(len({r[2] for r in records}), 94)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 95, census.OUT_OF_RANGE: 0,
+            census.RESOLVES: 96, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 33})
         # Re-derived for #962, then again here, and not lowered either time.
         # #962's class and a docstring above it grew, so every pin into
@@ -747,12 +755,21 @@ class TheCommittedTree(unittest.TestCase):
         # unmoved, which is the check that the removed record was an assertion
         # and not something else. 106 records over 28 files and 79 spellings,
         # the same 32 declined, 74 resolving, 58 targets.
+        # **#421's record lands as `other` too, for the same reason #1009's
+        # did**: `test_check_history_checkouts.py:438` is a step in a
+        # hand-built workflow fixture rather than an assertion or a `def
+        # test_` header, and the shape rule reads it as prose. So the `other`
+        # column takes the one, `44 -> 45`, and the four beside it are unmoved.
         self.assertEqual(shapes(records), {
             census.DEF_TEST: 0, census.ASSERTION: 24, census.COMMENT: 22,
-            census.BLANK: 5, census.OTHER: 44})
+            census.BLANK: 5, census.OTHER: 45})
+        # `69 -> 70` is the same #421 record, and it takes this axis for the
+        # reason the comment above gives for the split: a record that resolves
+        # names a target, and this one lands in a file the axis did not carry,
+        # so it adds a `(file, line)` pair rather than reweighting one.
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 69)
+                 if r[3] == census.RESOLVES}), 70)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a
