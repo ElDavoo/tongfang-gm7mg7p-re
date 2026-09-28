@@ -48,9 +48,11 @@ it says is not the fault.
 
 The cause is not a bug in either branch. It is that each branch is a
 single-condition test over one buffer, so **nothing forced an order on either
-side**, and the two callers were written years apart in intent: `read_capture`
-has to know about the mark before it reads a row, and the notice's reader has
-the whole buffer already and takes the refusals in the order they were added.
+side**: `read_capture` has to know about the mark before it reads a row, and the
+notice's reader has the whole buffer already and takes the refusals in the order
+they were added. The two branches landed the same day, 2026-09-25, in
+`43241736` (the mark, #761) and `c9e72c15` (the decode failure, #718), so this
+is two changes each correct alone and not a history of drift.
 
 ## The decision: the mark first, on both sides
 
@@ -157,8 +159,8 @@ file that happened to be otherwise perfect. The contract was true on every
 input the suite happened to build and false on the one an operator can
 produce.
 
-A fourth case now closes it, as a **sibling** rather than as a second fault
-folded into the existing one — the existing case is named for the *header* not
+A fourth case now closes it, **beside** the existing one rather than as a second
+fault folded into it — the existing case is named for the *header* not
 being refused as a hex complaint, which is a claim about a file with one
 fault, and giving it a second would make that name false and would drop the
 coverage of "a BOM'd file that is otherwise perfect" (fixture B).
@@ -167,6 +169,15 @@ asserts the equality, and carries a **control**: the identical bytes with the
 three mark bytes removed must give the decode refusal instead. Without the
 control a reader that refused every file with a reason would be green, and the
 order would be a coincidence rather than the assertion it is.
+
+Where the two new cases sit in their files is deliberate. Prose across
+`docs/findings/` pins lines of both suites by number, and a first draft that
+put them next to the cases they extend added about a hundred lines mid-file in
+the grader suite and about sixty in the notice suite, which moved every pin
+below them onto a different line. So the grader's case is the only method of
+`MarkBeforeCodecTests`, a class at the end of the file that borrows
+`count_opens` from `ExistingMarkLabelTests`, and the notice's case follows
+`test_the_reader_is_the_graders_own`, the last pinned test of its class.
 
 The notice suite gets the same input, and **the existing assertion holds**:
 `test_a_bom_is_refused_by_name_and_gets_the_same_remedy`'s
@@ -184,16 +195,17 @@ buffer that read had to have anyway, and `path_starts_with_bom` remains
 `read_capture`'s own three-byte open rather than a third read. The sibling
 `test_the_capture_is_opened_once_on_both_paths` is unchanged and still green.
 
-## Two pre-existing conditions, reported and not fixed
+## One pre-existing condition, reported and not fixed
 
-Both are on the merged tree **before** this change, measured by reconstructing
-the pre-change files and running the same tool over both. Neither is a gate,
-so neither turns red either way, and this change is not where either is
+It is on the merged tree **before** this change, measured by reconstructing
+the pre-change files and running the same tool over both. The tool is not a
+gate, so it does not turn red either way, and this change is not where it is
 repaired.
 
-**1. `ec/tools/measure_mark_provenance.py`'s `CITATIONS` table is already
-stale, and this change adds to it.** The tool exits 1 on the pre-change tree
-with 18 drifted line pins; on this tree it exits 1 with 20. The pin the issue
+**`ec/tools/measure_mark_provenance.py`'s `CITATIONS` table is already
+stale, and this change adds to it.** The tool exits 1 at `f173d570`, this
+branch's parent, with 18 drifted line pins; at this change's own first commit,
+`121791da`, it exits 1 with 20. The pin the issue
 names — `("ec/tools/grade_0751_isolation.py", 886, "if path_starts_with_bom(path):")`
 — is 156 lines off *before* this change (the content was at 1042) and 176 off
 after. The other new one is a pin into `windows/tools/ec_watch.py` that this
@@ -202,18 +214,31 @@ the pins are wrong by different amounts, and repairing the two this change
 touches would make a table with eighteen wrong entries look maintained when it
 is not. This is a finding about a stale census, not a licence to add to it.
 
-**2. `docs/findings/INDEX.md`'s count line is off by one before this change.**
-The committed file said 149 write-ups, the generator produced 150, and the
-entry lists were byte-identical — so the disagreement is between the count and
-the generator's own list, not between two lists. Regenerating the index moves
-it to 151 with this change's new file. The count/list discrepancy inside
-`gen_findings_index.py` is a separate thing and is not this issue's to find.
+That one is a table the census tool reports and no gate reads. Two others are
+gates, and this change did touch them, so they are stated here and not as
+conditions it inherited:
+
+- **The line-pin census can turn red from a change like this one.**
+  `ec/tools/test_census_test_line_pins.py` asserts the shape split of the pins
+  it resolves, which is a value of the tree, and a first draft of this change
+  moved four pins into the grader suite from `assertion` and `other` shapes
+  onto `comment` and `other`, so the suite failed where it had passed on the
+  base. Placing the new cases after the last pinned line of each file, as
+  above, leaves the split where it was: the suite is green here without an
+  edit to any of its counts.
+- **`docs/findings/INDEX.md` is generated**, and `gen_findings_index.py --check`
+  is a gate. The row for this write-up is added by regenerating the file, and
+  the check exits 0 on this branch. On the base the committed count and the
+  generator agreed; a hand-added row without the regenerated count is what the
+  check catches.
 
 ## How to re-check this
 
 ```console
-python3 ec/tools/test_grade_0751_isolation.py ExistingMarkLabelTests
+python3 ec/tools/test_grade_0751_isolation.py ExistingMarkLabelTests MarkBeforeCodecTests
 python3 windows/tools/test_ec_watch.py AppendNoticeTests
+python3 -m unittest ec.tools.test_census_test_line_pins
+python3 ec/tools/gen_findings_index.py --check
 bash tools/run-tests.sh
 ```
 

@@ -1185,6 +1185,34 @@ class AppendNoticeTests(unittest.TestCase):
         self.assertNotIn('locale', notice)
         self.assertNotIn('encoding this Python reads', notice)
 
+    def test_the_reader_is_the_graders_own(self):
+        # `load_label_vocab` loads the grader by path precisely so the prompt
+        # carries no second copy of the row shape, and a copy is exactly what
+        # would drift without anything failing. Asserted on where each
+        # function was defined -- the shape
+        # `test_manual_fan_ctrl_probe.py:905` uses for `read_capture` -- and
+        # then on what it does, so a shadow that kept the name would not pass
+        # the second half either. The second reader is the one that carries
+        # the reasons now (#718), so it is the more load-bearing of the two.
+        _, _, existing_marks, existing_findings = \
+            ec_watch.load_label_vocab(None, '0751')
+        self.assertEqual(existing_marks.__module__, 'grade_0751_isolation')
+        self.assertEqual(existing_findings.__module__, 'grade_0751_isolation')
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'capture.csv'
+            out.write_text(f'{self.HEADER}\n{self.CHANGE}\n{self.MARK_1}\n')
+            self.assertEqual(existing_marks(str(out)),
+                             grader.existing_mark_labels(str(out)))
+            self.assertEqual([label for _, label in existing_marks(str(out))],
+                             ['wrote 0x0751=0xA0'])
+            # A change row between the two mark rows is a row the file is
+            # gradeable over, so the finding agrees with the reader on this
+            # file rather than reporting a refusal the grading would not make.
+            accepted, refused, unplaceable = existing_findings(str(out))
+            self.assertEqual(accepted, existing_marks(str(out)))
+            self.assertEqual((refused, unplaceable), ([], []))
+
+
     def test_a_bom_and_an_undecodable_byte_are_named_by_the_mark(self):
         # The same refusal again, on a file that carries the codec fault as
         # well (#784), and the case where the notice and the grading could
@@ -1243,33 +1271,6 @@ class AppendNoticeTests(unittest.TestCase):
         # that true for a refused file.
         self.assertIn('caf', notice)
         self.assertIn('settled', notice)
-
-    def test_the_reader_is_the_graders_own(self):
-        # `load_label_vocab` loads the grader by path precisely so the prompt
-        # carries no second copy of the row shape, and a copy is exactly what
-        # would drift without anything failing. Asserted on where each
-        # function was defined -- the shape
-        # `test_manual_fan_ctrl_probe.py:905` uses for `read_capture` -- and
-        # then on what it does, so a shadow that kept the name would not pass
-        # the second half either. The second reader is the one that carries
-        # the reasons now (#718), so it is the more load-bearing of the two.
-        _, _, existing_marks, existing_findings = \
-            ec_watch.load_label_vocab(None, '0751')
-        self.assertEqual(existing_marks.__module__, 'grade_0751_isolation')
-        self.assertEqual(existing_findings.__module__, 'grade_0751_isolation')
-        with tempfile.TemporaryDirectory() as tmp:
-            out = Path(tmp) / 'capture.csv'
-            out.write_text(f'{self.HEADER}\n{self.CHANGE}\n{self.MARK_1}\n')
-            self.assertEqual(existing_marks(str(out)),
-                             grader.existing_mark_labels(str(out)))
-            self.assertEqual([label for _, label in existing_marks(str(out))],
-                             ['wrote 0x0751=0xA0'])
-            # A change row between the two mark rows is a row the file is
-            # gradeable over, so the finding agrees with the reader on this
-            # file rather than reporting a refusal the grading would not make.
-            accepted, refused, unplaceable = existing_findings(str(out))
-            self.assertEqual(accepted, existing_marks(str(out)))
-            self.assertEqual((refused, unplaceable), ([], []))
 
 
 class BlockPathTests(unittest.TestCase):
