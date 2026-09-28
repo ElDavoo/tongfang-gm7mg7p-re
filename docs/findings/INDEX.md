@@ -55,6 +55,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`dump-reads-for-a-refused-block.md`](dump-reads-for-a-refused-block.md) — A read taken for a block whose windows were refused (issue #499)
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
+- [`fixture-empty-pointer-cells.md`](fixture-empty-pointer-cells.md) — The fixture's six empty cells are not a count, and the set is derivable where the six is not (issue #1006)
 - [`group-proxy-populations.md`](group-proxy-populations.md) — What the banking rule discards, and how much of it (issue #455)
 - [`history-checkout-claim-per-workflow.md`](history-checkout-claim-per-workflow.md) — A depth claim is judged per workflow, not per sentence
 - [`history-checkout-claims.md`](history-checkout-claims.md) — The checkout-depth claim, corrected at seven sites and re-derived by a checker

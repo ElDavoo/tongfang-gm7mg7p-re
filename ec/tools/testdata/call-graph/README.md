@@ -67,4 +67,26 @@ neighbouring real listings (`common/0070.asm`, `pd/10BC.asm`) are present, which
 is what makes `0071` and `10E0` absences rather than a directory that went
 missing. `bank0,0EA3`'s cell is empty for the same reason its neighbours' are
 not: repointing it at the real `bank0/0EA2.asm` would make it assert that this
-row's decompilation is a *different function's* file.
+row's decompilation is a *different function's* file. Every cell behind those
+six addresses is in the `evidence` column; the sibling `out_file` column
+contributes none of them and has no cell carrying no value at all, which is a
+fact about that column rather than about these six.
+
+*(**Correction, 2026-09-27, issue #1006.** The "so six" above reads as a
+count of the emptied cells, and it is not one: the pointer cells carrying no
+value are far more numerous than the addresses this paragraph names, and they
+are not the same set. The six stay, because they are the record of a decision
+rather than a class anything derives — no column of either CSV puts them on one
+side of the rest. `../check_fixture_pointer_cells.py` now derives the set from
+the two CSVs and prints the figures — how many cells carry no value, over how
+many addresses, and the class each address falls in — and
+`../test_check_fixture_pointer_cells.py` holds these six addresses to it from
+both sides, so a cell emptied or filled in later cannot leave this sentence
+behind. `out_file` is not among the empties because none of its cells is empty,
+which is a fact about that column rather than about these six, and nothing that
+reads this fixture reads that column either: `build_ec_decompile.py` writes it
+for the real index and normalises it, which is the writer, not a reader. The
+`out_file` counts against the real tree, and the search behind "no column of
+either CSV puts them on one side", are in
+`docs/findings/fixture-empty-pointer-cells.md`, and the tool prints the current
+figures on every run.)*
