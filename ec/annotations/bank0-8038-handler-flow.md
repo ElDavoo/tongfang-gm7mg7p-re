@@ -165,17 +165,20 @@ eighteen arms, and that conclusion is unchanged.
 
 `window` is the span §9's linear decode was working over — target to next
 target, from [`bank0-8038-dispatch-table.csv`](bank0-8038-dispatch-table.csv).
-`blocks` is what the walk decoded, arm by arm.
+`blocks` is what the walk decoded, arm by arm. Both span columns are byte
+extents: the second address is the **last byte** of the span, so a span ending
+in a three-byte `ljmp` ends two past that `ljmp`'s own address. `leaves via`
+names the instruction itself, so it is that instruction's start.
 
 | case | target | window §9 used | bit-7-set arm reaches | leaves via |
 |---:|---|---|---|---|
 | `0x00` | `0x8054` | `0x8054`-`0x8093` | `0x805E`-`0x8093`, 26 insn, 1 block | `0x8091 ljmp 0x821F` |
 | `0x01` | `0x8094` | `0x8094`-`0x80D6` | `0x809E`-`0x80D6`, 27 insn, 1 block | `0x80D4 ljmp 0x821F` |
-| `0x02` | `0x80D7` | `0x80D7`-`0x8119` | `0x80E1`-`0x8117`, 27 insn, 1 block | `0x8117 ljmp 0x821F` |
+| `0x02` | `0x80D7` | `0x80D7`-`0x8119` | `0x80E1`-`0x8119`, 27 insn, 1 block | `0x8117 ljmp 0x821F` |
 | `0x03` | `0x811A` | `0x811A`-`0x815C` | `0x8124`-`0x815C`, 27 insn, 1 block | `0x815A ljmp 0x821F` |
 | `0x04` | `0x815D` | `0x815D`-`0x819C` | `0x8167`-`0x819C`, 26 insn, 1 block | `0x819A ljmp 0x821F` |
-| `0x05` | `0x819D` | `0x819D`-`0x81DE` | `0x81A7`-`0x81DD` **and `0x821F`-`0x822E`**, 36 insn, 2 blocks | `0x81DD sjmp 0x821F` |
-| `0x06` | `0x81DF` | `0x81DF`-`0x8230` | `0x81E9`-`0x822E`, 35 insn, 1 block | none — the block *contains* `0x821F`-`0x822E` |
+| `0x05` | `0x819D` | `0x819D`-`0x81DE` | `0x81A7`-`0x81DE` **and `0x821F`-`0x8230`**, 36 insn, 2 blocks | `0x81DD sjmp 0x821F` |
+| `0x06` | `0x81DF` | `0x81DF`-`0x8230` | `0x81E9`-`0x8230`, 35 insn, 1 block | none — the block *contains* `0x821F`-`0x8230` |
 | `0x07` | `0x8231` | `0x8231`-`0x8273` | `0x8238`-`0x8293`, 44 insn, 2 blocks | `0x8271 lcall 0xBCB1`, then falls into `0x8274` |
 
 **Two of the eight reach past the window §9 used, and neither changes what §9
@@ -423,10 +426,15 @@ entries into one stretch of bytes. §7 has the callers.
 ## 6. The per-case helpers, and what the word slot holds
 
 This is the issue's item 2, and the answer is not in the handlers: `r6`/`r7`
-are loaded by the first one or two `lcall`s of each bit-7-set arm, and neither
-is a function boundary in the Ghidra sense — `0xB9EA` is three bytes into
-`0xB9DF`, and `0xBE7E`/`0xBB9A`/`0xBE88`/`0xBE92` are six-byte stretches of one
-twenty-four-byte routine.
+are loaded by the first one or two `lcall`s of each bit-7-set arm, and the
+`lcall` targets are reached at byte offsets rather than at one shared entry.
+`0xB9EA` is 11 bytes after `0xB9DF` and past that export's own last byte,
+dropping into the `r6`/`r7` tail at `0xB9EF`-`0xB9F4`; and `0xBE7E`, `0xBE88`
+and `0xBE92` are three ten-byte, `ret`-terminated entries of one shape that
+the project happens to export separately, over a byte stream that runs on from
+`0xBE7E` to `0xBE9B`. `0xBB9A` is that same ten-byte shape in a different
+stretch, at `0xBB99`-`0xBBA3` — eleven bytes, the one longer because `0xBB99`
+opens it with a store of the caller's `a`.
 
 ### 6.1 The two entry points into one word loader
 
@@ -561,12 +569,15 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xbe7e; pd 20' /tmp/bank0
             0x0000bea3      90044c         mov dptr, #0x044c
 ```
 
-`0xBE7E`, `0xBE88` and `0xBE92` are three entries into one 24-byte routine, and
-`0xBB9A` is a fourth in the same shape at `0xBB99` (it opens with the
-store-to-caller's-DPTR `movx @dptr, a`, which is why the default at `0x8286`
-uses `lcall 0xBB99` to write `0x1904` and then finds `0x1909` in DPTR at
-`0x8289`). Each entry **writes `0x9F` to one gate and leaves DPTR on the next
-gate in the ring `0x1904` → `0x1906` → `0x1909` → `0x190C` → `0x1904`**.
+`0xBE7E`, `0xBE88` and `0xBE92` are three ten-byte, `ret`-terminated entries
+of one shape that the project happens to export separately, over a byte stream
+that runs on from `0xBE7E` to `0xBE9B`, and `0xBB9A` is a fourth in the same
+shape in a different stretch at `0xBB99`-`0xBBA3` — eleven bytes, the one
+longer because it opens with the store-to-caller's-DPTR `movx @dptr, a`, which
+is why the default at `0x8286` uses `lcall 0xBB99` to write `0x1904` and then
+finds `0x1909` in DPTR at `0x8289`. Each entry **writes `0x9F` to one gate and
+leaves DPTR on the next gate in the ring `0x1904` → `0x1906` → `0x1909` →
+`0x190C` → `0x1904`**.
 
 `0x9F` is `1001 1111`: **bit 7 is set.** So the value these helpers write is one
 on which every handler's bit-7 test takes, and the handler that called one calls
@@ -625,9 +636,11 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x8274; pd 17' /tmp/bank0
 non-zero it decrements it and returns, and the zero arm is `0x827E`-`0x8293`.
 Its writes, in the order the bytes make them, are `0x1904` = `0x80` (through
 `0xBB99`, whose `movx @dptr, a` stores the caller's `a`), then `0x1906` = `0x9F`
-and `0x1909` = `0x9F` (still inside `0xBB99`), then `0x190C` = whatever `a` held
-(the store inside `0xBAFD`), then bits 0 and 1 of `0x1900` and bit 0 of `0x1901`
-(`0xBAFD`), then `0x08E1` = `6` and `0x08E0` = `0` (`0xBCB1`), then `ret`.
+(inside `0xBB99`) and `0x1909` = `0x9F` (the `movx @dptr, a` at `0x8289`, back
+in the default once the `lcall` has returned), then `0x190C` = whatever `a`
+held (the store inside `0xBAFD`), then bits 0 and 1 of `0x1900` and bit 0 of
+`0x1901` (`0xBAFD`), then `0x08E1` = `6` and `0x08E0` = `0` (`0xBCB1`), then
+`ret`.
 
 **The default arms `0x1904` on every path through its zero arm, and disarms the
 other three to `0x9F`** — which, per §6.3, has bit 7 *set*. The `0x80` and the
@@ -744,8 +757,15 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x8029; pd 4' /tmp/bank0.
 
 **Neither of the two surviving edges is the dispatch**, and the table above is
 what makes that so: `0xD902` reaches the initialiser's own head, `0xAA51` its
-second byte of `0x802B`, and the twenty phantoms reach nothing at all. The one
-committed entry that names `0x8031` at all is the
+second byte of `0x802B`, and the twenty phantoms reach nothing at all. One
+census row outside that count names `0x8031` too —
+`bank1 0x14D05,0xCD05,ljmp,0x8031` in
+[`bank-call-targets.csv`](bank-call-targets.csv) — and it is the third kind of
+phantom again, in the other bank: the `02` at `0xCD05` is the displacement of
+the `jc 0xcd08` at `0xCD04`, and the `80 31` behind it that the census read as
+the rest of the `ljmp` is the operand of the `sjmp` at `0xCD06`, which goes to
+`0xCD39`. Its `frame_onto` is 0 of 24, as §9's retired `0xAA19`'s is. The one
+committed *annotation* that names `0x8031` at all is the
 cross-bank trampoline
 [`bank1,0x1A98,trampoline_bank0_8031`](ghidra-functions.csv) —
 `mov dptr,#0x8031` then `ljmp 0x1100` — which reaches the selector read through

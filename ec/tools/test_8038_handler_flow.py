@@ -572,8 +572,12 @@ class TheSharedHelpers(unittest.TestCase):
 
     def test_every_named_helper_opens_and_terminates_where_the_document_says(self):
         # The entry instruction's bytes and the `ret` that ends the stretch.
-        # Four of them have no `ret` of their own -- they are entries into the
-        # rotating routine of test_the_four_gate_helpers_write_9f_and_rotate.
+        # Every helper named in the document has one of its own: the four gate
+        # entries of test_the_four_gate_helpers_write_9f_and_rotate are three
+        # `ret`-terminated entries the project exports separately, over a byte
+        # stream that runs on, and 0xBB9A ends the 0xBB99-0xBBA3 stretch. The
+        # `ret` is not shared with the instruction after it, so it is asserted
+        # rather than skipped.
         expected = {
             0xB965: ("e0", 0xB982),
             0xB9DF: ("901918", 0xB9F4),
@@ -588,17 +592,16 @@ class TheSharedHelpers(unittest.TestCase):
             0xBCB1: ("9008e1", 0xBCBC),
             0xBAFD: ("f0", 0xBB10),
             0xBB99: ("f0", 0xBBA3),
-            0xBE7E: ("901904", None),
-            0xBE88: ("901909", None),
-            0xBE92: ("90190c", None),
+            0xBE7E: ("901904", 0xBE87),
+            0xBE88: ("901909", 0xBE91),
+            0xBE92: ("90190c", 0xBE9B),
             0xBB9A: ("901906", 0xBBA3),
         }
         for addr, (first, terminator) in sorted(expected.items()):
             with self.subTest(helper="0x%04X" % addr):
                 self.assertEqual(hexat(BANK0, addr, len(first) // 2), first)
-                if terminator is not None:
-                    self.assertEqual(BANK0[terminator], RET,
-                                     "0x%04X's terminator moved" % addr)
+                self.assertEqual(BANK0[terminator], RET,
+                                 "0x%04X's terminator moved" % addr)
 
     def test_and_case_07_has_no_committed_listing(self):
         # §4.8 of the document decodes 0x8231 from the image because the
