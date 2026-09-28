@@ -298,6 +298,32 @@ opens a question says so:
    arm of a real test, so the export carries two overlapping functions. Whether
    the exporter should drop a nested function whose parent covers it is a
    question about `ExportListing.java`, not about these rows.
+
+   **Correction, 2026-09-28 (issue #622): one of the two is `after-a-function`
+   and the count is a census, not a hand-list.** `pd 0x9C45`
+   `read_xdata_to_r6_set_dptr_069a` is listed `0x9C45`-`0x9C4C` — it *ends* the
+   byte before `0x9C4D`, so the frame at `0x9C4D` begins the next statement and
+   is inside nothing, which is the `after-a-function` shape §5 uses for
+   `common 0x1207`. §5's table carries no `0x9C4D` row to correct; the row
+   carries a name and a `ghidra-functions.csv` row of its own from #489, so it
+   is in neither this census's population nor `second_copy_census.py`'s, which
+   is why a hand count missed it. `bank0 0x805B` inside `bank0 0x8054`
+   `index_case_00`, listed `0x8054`-`0x806B`, stands.
+
+   "Two" was a count over the seven rows §5 adjudicates, not over the export.
+   [`nested_frame_census.py`](nested-export-frames.md) runs the read over every
+   `index.csv` row and reports the population per program and per `seed_basis`,
+   with the two causes the phrase "contained" conflates told apart: a container
+   whose listing opens at its own address, and one whose listing reaches back
+   past it. **The closing question above is therefore re-asked in its
+   row-backed form** — not *should the exporter drop a nested function whose
+   parent covers it*, but *should it drop a nested function that a
+   `ghidra-functions.csv` row backs* — and answered there: keep the backed ones.
+   They are hand-decoded, they carry `evidence` paths, and they are read as
+   functions downstream (`ec/annotations/xdata-registers.csv:132`, the `0x036C`
+   row, names `bank1:0xE322` and `bank1:0xE332` among its
+   `functions_touched 6`). `ExportListing.java` itself is untouched, and
+   `bank0 0xF002` `FUN_CODE_f002` is left to #577.
 3. **One annotated row one byte away from `0x703A` may have the same problem.**
    `bank1 0x703F` `forwarder_to_e322` is a hand-decoded row whose comment reads
    *"Three bytes: ljmp 0xE322, with nothing executed here"*, `name_basis:

@@ -80,6 +80,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`named-without-a-row.md`](named-without-a-row.md) — The 25 functions that carry a name no CSV row wrote (issue #601)
 - [`native-c-census.md`](native-c-census.md) — Census the retained 56 MB export, and reconcile the manifest row that calls it zero (issue #370)
 - [`neighbour-edge-attribution.md`](neighbour-edge-attribution.md) — Does the kept citation name the neighbour's call site? Fifteen rows and two, decided (issue #681)
+- [`nested-export-frames.md`](nested-export-frames.md) — Frames the export nests inside its own functions (issue #622)
 - [`no-append-logs.md`](no-append-logs.md) — A document every merge must edit is a lock nobody holds, and this repository has now hit that three times
 - [`oem4-bit-map-and-bit0.md`](oem4-bit-map-and-bit0.md) — The `0x07A6` (`OEM_4`) bit map, and bit 0's owner (issue #93)
 - [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md) — The opcode-table bounds census: every `OPCODE_LEN[d[i]]` in `ec/tools/`, and what holds the index in
