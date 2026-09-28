@@ -28,10 +28,15 @@ restated more weakly:
    as an option. It is *already* in #20's scope as **the third program of the
    existing `ec.gpr`** — `ec/ghidra/project/ec.rep/idata/~index.dat` lists
    `bank0.bin`, `bank1.bin`, `pd.bin`; `ec/ghidra/manifest.csv` carries the
-   `pd` row at 535 functions, 535 decompiled, 0 failed, 499 seeds, 498
-   annotations applied; and `ec/annotations/ghidra-functions.csv` holds **498
+   `pd` row at 541 functions, 541 decompiled, 0 failed, 541 seeds, 541
+   annotations applied; and `ec/annotations/ghidra-functions.csv` holds **541
    `pd`-scoped rows**. The deliverable here is to *state* that, not to decide
-   it, and the page states it.
+   it, and the page states it. (This sentence said 535/499/498, and the 499
+   and the 498 were already stale when it was written — the manifest reached
+   535 before this page did. 541 is what `ec/ghidra/manifest.csv` carries
+   today: issue #489's 37 `pd` rows, then issue #1101's six `0x07D0` accessor
+   stubs, which are also in
+   [`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md).)
 3. **The `docs/findings.md` one-liner already exists.** §3a says the
    `0x07E2`-`0x07E5` reference count was "counting the wrong program" and that
    all 38 sites are in "a second 8051 program sharing the flash dump — an
@@ -64,8 +69,8 @@ Everything is offline and reproducible from the committed tree.
 **Layout.** In use `0x0000`-`0xF7B7`; `0xF7B8`-`0xFFFF` erased (2,120 bytes);
 3,705 `0xFF` bytes in total, and that tail is the *only* 64-byte `0xFF` gap in
 the region. So the image is packed with constant pools between functions, which
-is why the string runs are scattered rather than one block. 535 committed
-listings, 498 annotated rows, **0** addresses held by two listings.
+is why the string runs are scattered rather than one block. 541 committed
+listings, 541 annotated rows, **0** addresses held by two listings.
 
 **Vector table: six entries, where §2's table has five.** `0x00` and then
 `0x03 + n * 8` — `0x00`, `0x03`, `0x0B`, `0x13`, `0x1B`, `0x23` — with
@@ -305,7 +310,7 @@ the protocol states their strings describe is the obvious next step and is
 deliberately not done: a `ghidra-functions.csv` row needs a `name_basis` the
 CSV's vocabulary accepts, none of the string-derived anchors is anchored to a
 referring routine yet (§ the null above), and a rename churns
-`ec/decompiled/pd/*.c` paths across 535 functions.
+`ec/decompiled/pd/*.c` paths across 541 functions.
 
 ## Not in any gate, for the reason
 

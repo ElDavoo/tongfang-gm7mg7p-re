@@ -1666,10 +1666,14 @@ pd,3A33,store_a_then_multiply_r7_by_5e,annotation,4,,,,vacuous
 pd,3FEA,clear_ram_07_08_then_call_10e8_at_0988,annotation,4,0988,,0988,disagree
 pd,4402,run_body_while_07cf_is_zero,annotation,9,07CF,07CF,,agree
 pd,4800,increment_dptr_byte_and_jump_back_to_4408,annotation,1,,,,vacuous
+pd,4C12,call_f739_then_return_dptr_07d0_4c12,annotation,0,,,,vacuous
+pd,4C19,call_f739_then_return_dptr_07d0_4c19,annotation,0,,,,vacuous
 pd,4C20,call_f739_then_return_dptr_07d0,annotation,0,,,,vacuous
 pd,4C27,dispatch_entry,annotation,10,0832 0834,0832 0834,,agree
 pd,4D6F,dispatch_case_06,annotation,2,0834,0834,,agree
 pd,4E84,dispatch_case_09,annotation,8,083A,083A,,agree
+pd,52EF,call_f739_then_return_dptr_07d0_52ef,annotation,0,,,,vacuous
+pd,531F,call_f739_then_return_dptr_07d0_531f,annotation,0,,,,vacuous
 pd,567C,scale_dptr_from_a_times_77_plus_73,annotation,7,,,,vacuous
 pd,56CB,store_a_then_scaled_lookup_from_r7,annotation,10,,,,vacuous
 pd,56ED,read_xdata_0852,annotation,2,0852,0852,,agree
@@ -1721,12 +1725,14 @@ pd,7392,count_07cb_up_to_3_over_07ca_records,annotation,14,07CA 07CB,07CA 07CB,,
 pd,7580,set_07d2_and_return_r7_zero_or_one,annotation,4,07D1 07D2,07D1 07D2,,agree
 pd,7753,call_f75c_with_07d1,annotation,3,07D1,07D1,,agree
 pd,775C,call_e4d0_return_r7,annotation,3,07D1,07D1,,agree
+pd,7B0D,call_f739_then_return_dptr_07d0_7b0d,annotation,0,,,,vacuous
 pd,7B14,stage_07c9_index_then_dispatch_on_flag_bits,annotation,4,07C9,07C9,,agree
 pd,7CE0,dispatch_on_0a8c_command_then_write_0a8b_record,annotation,17,0A8B 0A8C 0A8D 0A8F 0A93,0A8B 0A8C 0A8D 0A93,0A8F,disagree
 pd,7E91,reload_0a8b_call_f75c,annotation,3,0A8B,0A8B,,agree
 pd,805E,update_07d4_state,annotation,5,07D4,07D4,,agree
 pd,8210,call_dc29_with_07d4,annotation,4,07D4,07D4,,agree
 pd,821B,fill_0849_0857_block,annotation,17,042F 0849 084A 0851,042F 0849 084A 0851,,agree
+pd,856F,call_f739_then_return_dptr_07d0_856f,annotation,0,,,,vacuous
 pd,8576,step_state_07d0_07d1,annotation,9,07D0,07D0,,agree
 pd,8716,call_f22e_with_07d0,annotation,3,07D0,07D0,,agree
 pd,8814,store_3bytes_at_dptr_plus_1,annotation,1,,,,vacuous
