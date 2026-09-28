@@ -619,7 +619,10 @@ class HostSurface(unittest.TestCase):
         # listings that had no row, which took the total to 535 and added two
         # rows typed `dispatch` -- `pd 0x0B85` and `pd 0x1EFE` -- so the
         # dispatch indices below move with the total rather than with the type.
-        self.assertEqual(total, 535)
+        # Issue #1101's six `pd 0x07D0` accessor stubs then take it to 541,
+        # and add no `dispatch` row: they are `forwarder`, so `len(dispatch)`
+        # and `by_type["dispatch"]` are unmoved while the total is not.
+        self.assertEqual(total, 541)
         self.assertEqual(len(dispatch), 20)
         self.assertEqual(by_type["dispatch"], 20)
         self.assertEqual(dispatch[4], (0x119C, "dispatch_code_table"))
@@ -656,9 +659,9 @@ class FiguresAndCheck(unittest.TestCase):
         self.assertEqual(FIGURES["erased_tail"], "0xF7B8-0xFFFF")
         self.assertEqual(FIGURES["pool_candidates"], "43")
         self.assertEqual(FIGURES["pool_referrers"], "0")
-        self.assertEqual(FIGURES["pd_listings"], "535")
+        self.assertEqual(FIGURES["pd_listings"], "541")
         self.assertEqual(FIGURES["pd_listing_overlaps"], "0")
-        self.assertEqual(FIGURES["pd_annotation_rows"], "535")
+        self.assertEqual(FIGURES["pd_annotation_rows"], "541")
         self.assertEqual(FIGURES["pd_dispatch_rows"], "20")
 
     def test_the_page_pins_exactly_the_figures_the_tool_derives(self):

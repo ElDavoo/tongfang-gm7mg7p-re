@@ -322,7 +322,14 @@ OWNERSHIP_ORACLE = {
     # four `bank0`-scoped rows seed 0xC278, 0xC2C2, 0xC33C and 0xC4E7, and all
     # four are short enough to be counted as tiny bodies, so the second figure
     # moves by the same four.
-    "rows": 2714,
+    # 2,714 -> 2,720, and 1,276 -> 1,282, both moved by issue #1101 alone for
+    # the same reason: its six `pd 0x07D0` accessor stubs are 7-byte bodies,
+    # so every one of the six lands in the tiny count. None of the other eight
+    # figures moved, and that is the point worth recording -- a `pd` row cannot
+    # reach a class figure, because a class is a set of bodies that contain one
+    # another and six identical forwarders make a class of seven, not a
+    # re-partition of an existing one.
+    "rows": 2720,
     "classes": 56,
     "shared_rows": 146,
     "largest_class": 42,
@@ -359,7 +366,10 @@ OWNERSHIP_ORACLE = {
     "flood_no_floor": 562,
     # The body-size floor's own justification, as a count so a reader does not
     # have to take "half the tree's smallest exports are `return`" on trust.
-    "tiny_bodies": 1276,
+    # 1,276 -> 1,282 with issue #1101's six 7-byte `pd` accessor stubs, all six
+    # of them below the floor -- which is what makes this figure the one that
+    # moves alongside `rows` and a reader should not treat it as independent.
+    "tiny_bodies": 1282,
 }
 
 

@@ -74,6 +74,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md) — The opcode-table bounds census: every `OPCODE_LEN[d[i]]` in `ec/tools/`, and what holds the index in
 - [`opcode-table-coverage.md`](opcode-table-coverage.md) — The opcode table's coverage and a differential decode: 254 of 256 rows, 0 disagreements against two decoders that are not independent — and 8 against the manual, which is the finding — independent
 - [`paged-trampoline-hits-by-hand.md`](paged-trampoline-hits-by-hand.md) — All 18 paged-trampoline hits, read one by one (issue #54)
+- [`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md) — The six `pd 0x07D0` accessors that were not functions, and what naming them did to the census (issue #1101)
 - [`pd-callers-status-intersection.md`](pd-callers-status-intersection.md) — A caller's literals are not index-register loads unless the site indexes on those registers
 - [`pd-common-address-attribution.md`](pd-common-address-attribution.md) — A `pd` caller's edge was attributed to a `common` row it never reached (issue #471)
 - [`pd-common-address-spaces.md`](pd-common-address-spaces.md) — The lone `pd` proxy edge was a missing annotation, not a cross-program call (issue #470)
