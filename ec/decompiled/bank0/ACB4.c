@@ -43,7 +43,7 @@ void reset_xdata_flags_and_07d5_to_ff(void)
   DAT_EXTMEM_075e = DAT_EXTMEM_075e | 0x10;
   route_074c_nibble_to_160a_and_1608();
   clear_0741_bit0_and_08e2_bit4();
-  DAT_EXTMEM_07c5 = DAT_EXTMEM_07c5 & 0x7f;
+  WHMS = WHMS & 0x7f;
   AP_OEM_6 = AP_OEM_6 & 0xfb;
   OEM_4_CHARGING_PROFILE = OEM_4_CHARGING_PROFILE & 0xbf;
   clear_08a5_and_08a6();
@@ -62,15 +62,15 @@ void reset_xdata_flags_and_07d5_to_ff(void)
   DAT_EXTMEM_0471 = DAT_EXTMEM_0471 & 0x7f;
   XDATA_0442 = XDATA_0442 & 0xe7;
   SYSTEM_ID = SYSTEM_ID & 0xcf;
-  DAT_EXTMEM_074c = DAT_EXTMEM_074c & 0xcf;
+  PDIN = PDIN & 0xcf;
   clear_iram_6d_7f_then_xdata_b00_bfe();
   clear_08a5_and_08a6();
   zero_96_bytes_at_0f00();
   DAT_EXTMEM_0787 = 0;
   CPU_TCC_OFFSET = 0;
   CTGP_DB_CTRL = CTGP_DB_CTRL & 0xfa;
-  DAT_EXTMEM_07c5 = DAT_EXTMEM_07c5 & 0xdf;
-  DAT_EXTMEM_0788 = 0xff;
+  WHMS = WHMS & 0xdf;
+  CTWA = 0xff;
   DBAP = 0xff;
   ring_push_0990(0xe1);
   return;

@@ -17,7 +17,7 @@
 void _9ee_bit1_edge_drives_0897_countdown(void)
 
 {
-  if ((DAT_EXTMEM_07a4 >> 2 & 1) == 0) {
+  if ((GC6S >> 2 & 1) == 0) {
     if ((DAT_EXTMEM_09ee >> 1 & 1) != 0) {
       DAT_EXTMEM_09ee = DAT_EXTMEM_09ee & 0xfd;
       DAT_EXTMEM_0897 = 1;

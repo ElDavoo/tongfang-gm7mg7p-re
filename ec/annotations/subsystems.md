@@ -55,8 +55,8 @@ Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
 - `exported functions` — 2720
-- `annotated function rows` — 1957
-- `rows the index marks annotated` — 1978
+- `annotated function rows` — 1960
+- `rows the index marks annotated` — 1981
 - `unresolved rows` — 173
 
 By program, as exported minus annotated minus the rest:
@@ -64,7 +64,7 @@ By program, as exported minus annotated minus the rest:
 | program | exported | annotated | unannotated |
 |---|---|---|---|
 | `bank0` | 750 | 697 | 53 (7%) |
-| `bank1` | 676 | 605 | 71 (11%) |
+| `bank1` | 676 | 608 | 68 (10%) |
 | `pd` | 541 | 541 | 0 (0%) |
 | `common` | 753 | 135 | 618 (82%) |
 
@@ -78,7 +78,7 @@ interrupt entry, which is what §3 is. The tranche is
 block that issue #574 owns, which is where the rest of the 656 was.
 
 **The three counts disagree, and the difference is measured rather than
-smoothed.** `index.csv` marks 1978 rows `annotated=yes` and the CSV holds 1957
+smoothed.** `index.csv` marks 1981 rows `annotated=yes` and the CSV holds 1960
 rows: a gap of 21. Both sides are enumerated. 21 index rows are marked
 `annotated=yes` with no CSV row at all, and no CSV row is recorded by the index
 as `annotated=no`; 21 − 0 = 21.
@@ -139,7 +139,7 @@ basis rather than the presence of a name.
 > naming rule is in `README.md`, and a check now refuses the collision from
 > either side.
 
-**173 of the 1957 rows are `type: unresolved`, and 289 carry a name that
+**173 of the 1960 rows are `type: unresolved`, and 289 carry a name that
 describes a shape rather than a job.** Each is counted on the whole prefix, not
 a narrower one, and the six prefixes below are the whole scope of that 289 — a
 family that is not a row here is outside the total rather than quietly
@@ -611,8 +611,8 @@ own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
 - `exported functions` — 2720
-- `annotated function rows` — 1957
-- `rows the index marks annotated` — 1978
+- `annotated function rows` — 1960
+- `rows the index marks annotated` — 1981
 - `unresolved rows` — 173
 
 **618 of the 753 common-area functions are unannotated, and that is still the

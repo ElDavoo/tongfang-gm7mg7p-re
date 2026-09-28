@@ -102,7 +102,7 @@ R4:R3 is the CODE table's own two address bytes, read a few instructions
 earlier. Corrected cell: `write x1`.
 
 **`0xDE8E`**, bank1, in `FUN_CODE_de3c` —
-`ec/decompiled/bank1/DE3C.asm:52`:
+`ec/decompiled/bank1/DE3C.asm:50`:
 
 ```asm
 de8e     90 1c 04   mov      DPTR, #0x1c04   ; <- the site
@@ -135,13 +135,43 @@ The chain was walked and what it shows is recorded rather than resolved:
 - So `R2:R1` is whatever the caller *above* `0x8A04` left in those registers,
   and that caller's arguments are not recoverable from this path.
 
-The decompile agrees and is explicit about it: `ec/decompiled/bank1/DE3C.c:34`
+**CORRECTION 2026-09-28, issue #1296: the second half of that last bullet is
+wrong, and the walk above is what missed.** The reading above decoded the
+*caller-side* path and stopped; the clobbering instructions are in a
+**callee**, `bank1,0xB6DE`, reached over the `lcall 0xB6DE` at `0xDE89`
+(`ec/decompiled/bank1/DE3C.asm:48`) — twelve bytes below the store and
+inside the routine whose own frame the walk was reading. `mov R1,A` at `0xB6E2`
+and `mov R2,A` at `0xB6E9` are what supply the two bytes, and a linear
+window cannot cross the call, which is the same edge `walk()` stops at. So
+`0xB6DE` sat outside the six decoded ranges and the omission was structural,
+not a gap in the decode.
+
+What the pointer holds is now established, and it is neither a caller's value
+nor a single address: **`DPH` is the byte at XDATA `0x0564` and `DPL` the byte
+at XDATA `0x0563`**, both staged by `0xDE3C` itself from two CODE tables, so
+the store writes the 16-bit value that pair spells — a bounded set, not an
+unconstrained pointer and not a constant. The argument, the enumeration and
+the `test_de3c_store_target.py` negative that would falsify it are in
+[`de3c-1c04-to-0563.md`](de3c-1c04-to-0563.md). The corrected `read x1` cell
+at `0xDE8E` is **unaffected**: it was right, and it now rests on more than the
+eight-instruction window it was read from. Nothing in §6 moved.
+
+The decompile agrees and is explicit about it: `ec/decompiled/bank1/DE3C.c:50`
 reads `*(undefined1 *)CONCAT11(param_2,param_1) = DAT_EXTMEM_1c04;`, with
 `param_1`/`param_2` the un-initialised `R1`/`R2`. **The site's write is
 therefore a write to a caller-supplied address, not to any byte of the
 `0x1C00` block** — which is the strongest statement the bytes support, and it
 is the statement the corrected `read x1` cell rests on. Naming the address
 itself needs a caller-side walk and is not done here.
+
+**CORRECTION 2026-09-28, issue #1296, continuing the one above: the decompile
+is not a second witness here.** Ghidra named the routine's *incoming* `R1`/`R2`;
+the store reads the values those registers hold *after* `0xB6DE` overwrote
+them, so "the decompile agrees" was the same instructions read twice. And the
+"caller-supplied address" is now named in the correction above, from the other
+end of the chain. The claim that survives from this paragraph is the narrow
+one: the `read x1` cell rests on `0x1C04` being *read* at this site, and that
+is unchanged.
 
 **What the block at `DE81`-`DE8C` does not establish.** The issue suggests
 that block "reads/writes `0x0561` and does `anl A,#0x7f`, which is the shape
@@ -287,6 +317,12 @@ naming both misattributed sites) and needed no edit.
 - **Nothing about the in-place-modify forms** (§3). A real limit, named.
 - **What `R2:R1` addresses at `0xDE8E`** (§2). Not established, and not
   guessed.
+  **CORRECTION 2026-09-28, issue #1296: established.** The high byte is the
+  byte at XDATA `0x0564` and the low byte the byte at XDATA `0x0563`, both
+  written by the callee `0xB6DE` and staged by `0xDE3C` itself from two CODE
+  tables — so the store's target is a bounded set of addresses, enumerated
+  from the image in [`de3c-1c04-to-0563.md`](de3c-1c04-to-0563.md). The line
+  above is left as it was written; §2 carries the correction beside it.
 - **A `registers.yaml` row for `0x1C04`.** None exists. Creating one is a
   status decision with a `static_refs` census behind it, gated by
   `check_register_counts.py` and `check_status_vocabulary.py`; the issue

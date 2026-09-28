@@ -56,7 +56,7 @@ $ python3 ec/tools/check_testdata_index.py --check
 28 Feeds cell(s), 30 tool pointer(s): 30 resolved, 0 missing, 0 unresolved
 1 self-indexed README(s), 3 table(s), 19 row(s), 21 check(s): 21 resolved, 0 missing, 0 unresolved
 2 fixture CSV(s), 0 with no `evidence` column, 10 evidence cell(s), 11 evidence path token(s): 11 resolved, 0 missing, 0 unresolved
-ec/annotations/ghidra-functions.csv: 1957 annotation cell(s), 3973 annotation path token(s): 3973 resolved, 0 missing, 0 unresolved
+ec/annotations/ghidra-functions.csv: 1960 annotation cell(s), 3979 annotation path token(s): 3979 resolved, 0 missing, 0 unresolved
 ```
 
 Six lines where there were five, and the sixth is this change's. **The first
@@ -80,23 +80,23 @@ $ python3 ec/tools/census_evidence_citations.py
 census_evidence_citations.py -- the `evidence` column of ec/annotations/ghidra-functions.csv, both directions
 
 forward, every token resolved against the repository root by check_testdata_index.evidence_pointers()
-  1957 evidence cell(s), 0 empty, 3973 evidence path token(s): 3973 resolved, 0 missing, 0 unresolved
+  1960 evidence cell(s), 0 empty, 3979 evidence path token(s): 3979 resolved, 0 missing, 0 unresolved
   176 of the token(s) name a document rather than a listing (1 .csv, 81 .md, 94 .yaml): counted, resolved, and
   deliberately out of the reverse direction's numerator, because a row citing a write-up has not cited a listing
   ec/decompiled/index.csv carries both bases in one file: `out_file` resolves against
-  ec/decompiled/ (2720 of 2720) and `evidence` against the repository root (3973 of 3973).
+  ec/decompiled/ (2720 of 2720) and `evidence` against the repository root (3979 of 3979).
 
 reverse, every committed .asm named by no token
-  2717 committed .asm under ec/decompiled/, 1895 named by an `evidence` cell,
-  822 named by none
+  2717 committed .asm under ec/decompiled/, 1898 named by an `evidence` cell,
+  819 named by none
   annotation rows naming an address with no listing on disk: 0
 
   area    on disk   uncited  unannotated  cited elsewhere  deliberate 0xFF fill  not yet exported
   bank0       749        77        53        24         0         0
-  bank1       674        85        85         0         0         0
+  bank1       674        82        82         0         0         0
   common      753       626       617         9         0         0
   pd          541        34         0        34         0         0
-  total      2717       822       755        67         0         0
+  total      2717       819       752        67         0         0
   the four classes are disjoint and sum to the uncited set, so the last column
   is the uncited count decomposed rather than the uncited count minus something. Of the
   67 `cited elsewhere`, 67 name no `.asm` at all and 0 name a different
@@ -105,7 +105,7 @@ reverse, every committed .asm named by no token
   every negative above is not named by this method, never absent: a listing is a Ghidra
   function boundary and it is on disk. What is missing is a human reading of it. The
   class says which rule found the listing, not why nobody has read it, and a
-  classification by reason would be a guess -- see the write-up. Closing the 822 is
+  classification by reason would be a guess -- see the write-up. Closing the 819 is
   its own piece of work and needs per-area reading; this sizes the population and
   stops. No EC image is opened, no register is read, and nothing here was observed
   on hardware.
@@ -172,7 +172,7 @@ another listing` exit, and that population is 0 here, which is what makes all
 three read 0 together.
 
 The four are **disjoint and sum to the uncited set**, which is the claim the
-suite asserts on the committed tree rather than the numeral: `822` is a value
+suite asserts on the committed tree rather than the numeral: `819` is a value
 every annotation moves, and asserting it is the trap `CLAUDE.md` names four
 times. What is asserted is the partition, the per-area arithmetic, the
 `resolved = tokens - missing - unresolved` relation, and that the uncited set is
@@ -180,8 +180,8 @@ what is left of the listings once the named ones are removed.
 
 ## The limit, stated rather than met
 
-The census splits the 822 by **kind of file** and by **which rule found it**.
-It does not split them by **reason**, and every one of the 755 unannotated
+The census splits the 819 by **kind of file** and by **which rule found it**.
+It does not split them by **reason**, and every one of the 752 unannotated
 listings prints as "not named by this method". A reason — nobody has read it
 yet, versus it is a one-instruction trampoline that will never be worth a row —
 is a **reading**, and a tool that guessed one would produce a figure nobody
@@ -189,14 +189,14 @@ here can check. That is the same line `ec/annotations/registers.yaml` draws for
 a static scan, and the same line `census_test_line_pins.py` prints.
 
 **So the coverage figure this issue was reaching for is a lower bound with a
-named shape, not a list.** It sizes the work: 755 listings with no row at all,
+named shape, not a list.** It sizes the work: 752 listings with no row at all,
 by area, is what closing the reverse direction means. It does not say how much
 of that is worth a row.
 
 ## `ec/decompiled/index.csv`: two columns, two bases
 
 Its `out_file` resolves against **`ec/decompiled/`** (2,720 of 2,720) and its
-`evidence` against the **repository root** (3,973 of 3,973). One file, two
+`evidence` against the **repository root** (3,979 of 3,979). One file, two
 bases, and a reader of one column has to say which it used. The census reads
 `index.csv` only for the *not yet exported* class, prints both bases in the
 forward direction's block, and its own reader resolves `out_file` at
@@ -232,14 +232,14 @@ independent:
 1. **A gated reverse direction fails for a reason that is not a defect.** The
    next time a decompile export lands a listing nobody has read yet — the
    ordinary state of an unfinished reconstruction, and the state this
-   repository is in for 822 listings — the gate goes red. A red gate is a
+   repository is in for 819 listings — the gate goes red. A red gate is a
    report of a problem, and a report that fires on the normal state trains
    everyone to read past it.
 2. **The count is a value every merge has to edit.** `CLAUDE.md` names this
    shape four times, and a gate holding it would be a floor on the tree: the
    fourteenth fixture-style addition turns it red for no reason a reader could
    act on. This is the same reason `docs/agent-pipeline.md` records about
-   gates, and the reason the suite asserts the partition rather than `822`.
+   gates, and the reason the suite asserts the partition rather than `819`.
 3. **The judgement half is a reading and it lives here.** Whether a listing is
    worth a row is a per-area human decision; no predicate over committed files
    answers it, and a gate cannot hold a reading.
@@ -248,7 +248,7 @@ The census therefore **exits 0 with findings in hand** and non-zero only when
 it **located nothing** — no `evidence` token read at all, or no committed
 listing under `ec/decompiled/`. That is
 `census_test_line_pins.py`'s convention and the reason for it: a run that found
-822 uncited listings and one that read nothing at all both print, and only the
+819 uncited listings and one that read nothing at all both print, and only the
 second may claim the tool was broken. "Found nothing wrong" must not be
 reachable from the exit code.
 
@@ -261,31 +261,37 @@ commands named above.
 
 | | issue #1004's tip | this tip |
 |---|---:|---:|
-| annotation rows | 1,914 | **1,957** |
-| `evidence` tokens | 3,886 | **3,973** |
+| annotation rows | 1,914 | **1,960** |
+| `evidence` tokens | 3,886 | **3,979** |
 | empty `evidence` cells | 0 | **0** |
-| tokens that resolve | 3,886 | **3,973** |
+| tokens that resolve | 3,886 | **3,979** |
 | committed `.asm` under `ec/decompiled/` | 2,711 | **2,717** |
-| distinct `.asm` named by a cell | 1,852 | **1,895** |
-| **named by no token** | **859** | **822** |
+| distinct `.asm` named by a cell | 1,852 | **1,898** |
+| **named by no token** | **859** | **819** |
 | — `common/` (753 on disk) | 626 | **626** |
-| — `bank1/` (674) | 85 | **85** |
+| — `bank1/` (674) | 85 | **82** |
 | — `bank0/` (749) | 77 | **77** |
 | — `pd/` (535 on disk) | 71 | **34** |
 
-Three of the four areas are identical between the two tips and only `pd/` moved.
-The `common/` figure the issue leans on — 626 uncited of 753, where `0x07D0`'s
-callers and the `0x018C`/`0x029B` pair live — **reproduces exactly**.
-`pd/` is 34 of the 822, every one of them `cited elsewhere` rather than
+Two of the four areas are identical between the two tips; `pd/` and `bank1/`
+moved. The `common/` figure the issue leans on — 626 uncited of 753, where
+`0x07D0`'s callers and the `0x018C`/`0x029B` pair live — **reproduces exactly**.
+`pd/` is 34 of the 819, every one of them `cited elsewhere` rather than
 unannotated: the 34 `pd` rows that cite a document and no listing, which is the
-figure `test_pd_unannotated_census.py` already records.
+figure `test_pd_unannotated_census.py` already records. `bank1/` is 82 for the
+ordinary reason every other movement here is: issue #1296 gave three `bank1`
+listings that had **no row at their `(scope, addr)` at all** — `0xDE3C`,
+`0xB6DE` and `0x8F6B`, all three `FUN_CODE_*` — a row whose `evidence` names
+their own listing, so three left the *unannotated* class and the
+`cited elsewhere` count is unmoved at 67. That is the partition doing what the
+paragraph above says it does: the count moves, the classes stay disjoint.
 
 ## What this is not
 
 - **Not a claim about what the uncited listings do.** No EC image is opened, no
   register is read, no hardware or Windows is touched. This is a count of
   committed files.
-- **Not a licence to close the 822 by machine.** Adding citations is a
+- **Not a licence to close the 819 by machine.** Adding citations is a
   different piece of work and it needs per-area reading; this sizes the
   population and stops.
 - **Not a second `evidence` reader.** There is one reader, in
@@ -303,7 +309,7 @@ figure `test_pd_unannotated_census.py` already records.
 ## Closing the uncited set is its own issue, and it wants one per area
 
 The population is now sized and classified by a tool that re-derives it. What is
-left is the part no tool can do: reading 755 listings and deciding which are
+left is the part no tool can do: reading 752 listings and deciding which are
 worth a row. `common/` is the largest and the one the mission's end state cares
 most about — it is where the reachable code a C reconstruction has to cover
 function for function lives. Each area is a batch sized by the table above.

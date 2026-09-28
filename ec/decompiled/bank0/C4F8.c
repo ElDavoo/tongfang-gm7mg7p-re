@@ -5,17 +5,18 @@
 
 
 /* Loads DPTR with 0x074C, reads the byte, masks it with 0x0f and returns the low nibble in A. DPTR
-   is left pointing at 0x074C, which is why C3AE can re-read the same byte after calling this.
-   0x074C has no entry in ec/annotations/registers.yaml, so the nibble is not named.
+   is left pointing at 0x074C, which is why C3AE can re-read the same byte after calling this. The
+   nibble is named: 0x074C is in ec/annotations/registers.yaml as PDIN (issue #30), and the DSDT
+   gives that name to the byte's low four bits.
    type: reader
    evidence: ec/decompiled/bank0/C4F8.asm; ec/decompiled/bank0/C4F8.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 byte read_074c_low_nibble(void)
 
 {
-  return DAT_EXTMEM_074c & 0xf;
+  return PDIN & 0xf;
 }
 
 
