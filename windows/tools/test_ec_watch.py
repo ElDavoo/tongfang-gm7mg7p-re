@@ -1213,6 +1213,66 @@ class AppendNoticeTests(unittest.TestCase):
             self.assertEqual((refused, unplaceable), ([], []))
 
 
+    def test_a_bom_and_an_undecodable_byte_are_named_by_the_mark(self):
+        # The same refusal again, on a file that carries the codec fault as
+        # well (#784), and the case where the notice and the grading could
+        # disagree: the strict reader asks the mark before it reads a row,
+        # this notice's reader asked the decode, and a file that is both got
+        # the grader's "re-save this one without one" above the notice's "a
+        # capture is utf-8; this one is written in something else". Two
+        # sentences, two remedies, and they said the file was wrong in two
+        # ways at once.
+        #
+        # The existing assertion above is the whole of what this has to
+        # establish -- `bom_refusal` verbatim in the notice, on a file the
+        # codec sentence would otherwise have named -- so it is kept and
+        # pinned at this input as well rather than replaced. The decode
+        # sentence must be absent, which is the half that was false before
+        # and the reason the case is here at all.
+        ec = FakeEc()
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'capture.csv'
+            # `0xE9` is the byte latin-1 and cp1252 both write for `café`.
+            # Written as bytes for the same reason as the case above: a
+            # byte-order mark is not something a text-mode write makes, and
+            # the fault under test is the bytes rather than the characters.
+            # One row in latin-1 and the rest in utf-8, so the file is
+            # exactly one fault away from the case above's.
+            out.write_bytes(b'\xef\xbb\xbf'
+                            + (self.HEADER + '\n').encode('utf-8')
+                            + '2026-01-01T12:00:00.000+01:00,MARK,,caf\xe9\n'
+                              .encode('latin-1')
+                            + (self.MARK_2 + '\n').encode('utf-8'))
+            text = io.StringIO()
+            with patch.object(ec_watch, 'Ec', lambda: ec), \
+                 patch.object(ec_watch.sys, 'stdin',
+                              FakeStdin(ec, 'wrote 0x0751=0x10\n')), \
+                 contextlib.redirect_stdout(text):
+                rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
+                                    '--interval', '0', '--csv', str(out),
+                                    '--mark', *self.VOCAB])
+        notice = text.getvalue()
+        self.assertEqual(rc, 0)
+        # The grader's own sentence, verbatim -- the assertion the case above
+        # already makes, held now at the input where it used to be false.
+        self.assertIn(grader.bom_refusal(str(out)), notice)
+        # And not the codec's, which is what this notice said before: one
+        # verdict about the file, not two.
+        self.assertNotIn('cannot decode a byte', notice)
+        # Refused as the file, so no row is offered for deletion, and the
+        # remedy under the branch is the shared one rather than a second
+        # remedy contradicting the reason above it.
+        self.assertIn('the file itself', notice)
+        self.assertNotIn('fix or delete the row(s) above', notice)
+        self.assertIn('no row to fix', notice)
+        # The marks are still all named, the bad byte and all: a preflight
+        # that could not read the file would lose the one warning that says
+        # what is in it, and the strip in `capture_snapshot` is what keeps
+        # that true for a refused file.
+        self.assertIn('caf', notice)
+        self.assertIn('settled', notice)
+
+
 class BlockPathTests(unittest.TestCase):
     """--block: opt-in, off the per-byte path, and loud about the fan-tach page.
 

@@ -5,13 +5,14 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-158 write-ups.
+160 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
 - [`0751-capture-row-shape.md`](0751-capture-row-shape.md) — One row stream for the 0751 capture readers, and a byte-order mark retired at the shape (issue #750)
 - [`0751-dump-pair-battery-names.md`](0751-dump-pair-battery-names.md) — The 0x0400 pair's "other" bucket, on a mover the capture recorded (issue #219)
 - [`0751-early-exit-row.md`](0751-early-exit-row.md) — The grader dropped the probe's "the run ended early" row, and a 5-second arm graded as a 30-second one (issue #664)
+- [`0751-file-refusal-order.md`](0751-file-refusal-order.md) — Which of the two refusals names a file that is both (issue #784)
 - [`0751-grader-block-scope-claims.md`](0751-grader-block-scope-claims.md) — A `--block` run said "consistent with the static prediction" for the whole capture (issue #497)
 - [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md) — A `--block` run exited 1 over a window it neither printed nor withheld, and did not say why (issue #498)
 - [`0751-grader-moved-unplaced-scope.md`](0751-grader-moved-unplaced-scope.md) — A run that moved and graded a window in no block printed the movement over the whole capture and nothing that said so (issue #725)
