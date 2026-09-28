@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-148 write-ups.
+149 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -61,6 +61,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
 - [`fixture-empty-pointer-cells.md`](fixture-empty-pointer-cells.md) — The fixture's six empty cells are not a count, and the set is derivable where the six is not (issue #1006)
 - [`group-proxy-populations.md`](group-proxy-populations.md) — What the banking rule discards, and how much of it (issue #455)
+- [`hardware-test-artifact-handoff.md`](hardware-test-artifact-handoff.md) — Every procedure's "Where the output goes" is now held to its own commands, in both directions (issue #1190)
 - [`history-checkout-claim-per-workflow.md`](history-checkout-claim-per-workflow.md) — A depth claim is judged per workflow, not per sentence
 - [`history-checkout-claims.md`](history-checkout-claims.md) — The checkout-depth claim, corrected at seven sites and re-derived by a checker
 - [`history-checkout-prompt-reach.md`](history-checkout-prompt-reach.md) — A gate reached from a `prompt:` was outside the invariant, and the count was three where the prose says four (issue #1032)
