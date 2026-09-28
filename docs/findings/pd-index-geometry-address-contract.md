@@ -8,8 +8,9 @@ No capture opened, no EC, no hardware, no Windows.)
 different contracts behind one `metavar="ADDR"`. **The important finding is that
 the three contracts are the same one at this tree**, and the reason is that the
 work the issue asks for had already landed. Re-measuring the issue's own table
-puts every one of its nine rows on `pd_index_geometry.py: error:` and exit 2,
-including the three it reported as broken.
+puts every row it reported as broken on `pd_index_geometry.py: error:` and
+exit 2, with `--helpers 0xFFE8` and `--helpers 0xFFE9` still exiting 0 — the
+deferral recorded in the table below.
 
 So this is not a re-implementation. What was genuinely left is three things, and
 each is measured below rather than asserted: the contract was still only in
@@ -264,3 +265,10 @@ single byte of output on the legal range, and comparing against the extracted
 pre-change file is what makes that a measurement rather than an intention. The
 one branch that is *supposed* to differ is the refusal path, and its diff is
 the two lost stdout lines and nothing else.
+
+`bash tools/run-tests.sh ec/tools` ends red at this tree, and not from this
+change: `test_check_cluster_citations`, `test_check_doc_figure_pins`,
+`test_check_eq_guard_citations` and `test_check_pin_table_rows` fail with the
+same failure counts (1, 1, 3 and 3) on a checkout of `origin/main` at
+`49158e83`, and the failing assertions cite files this diff does not touch.
+`.github/scripts/agent-gates.sh` is the gate that passes clean.

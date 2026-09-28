@@ -2379,7 +2379,9 @@ def main() -> int:
                     help="decode each named index helper and report its DPTR "
                          "term(s); with no argument, the eleven named ones. ADDR "
                          "is a PD runtime address like --sites' and --callers', "
-                         "and one outside 0x0000-0xFFFF is refused the same way")
+                         "one outside 0x0000-0xFFFF is refused the same way, and "
+                         "one inside the file range is answered with the runtime "
+                         "address at that file_offset")
     ap.add_argument("--bases", nargs="?", const=BASE_RUN, metavar="SPAN",
                     help="every PD site whose MOV DPTR immediate is in SPAN "
                          "(`all`, or 0xLO-0xHI); with no argument, the low "
