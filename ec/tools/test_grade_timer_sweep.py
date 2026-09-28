@@ -81,6 +81,19 @@ def run(*paths):
     return rc, out.getvalue()
 
 
+def run_quietly(*paths):
+    """`run` plus stderr, which is where the refusal lands and nothing else.
+
+    Beside `run` rather than in place of it: every graded run prints its whole
+    report to stdout, so no call site has to be changed to learn about a run
+    that printed nothing there.
+    """
+    out, err = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        rc = gts.main(list(paths))
+    return rc, out.getvalue(), err.getvalue()
+
+
 class TheListsAreTheCode(unittest.TestCase):
     def test_counts_reconcile_to_thirty_nine(self):
         self.assertEqual(len(gts.PRE), 13)
@@ -190,6 +203,66 @@ class Grading(unittest.TestCase):
         write_capture(p, 0.05, [gts.RELOAD], {gts.RELOAD: 9}, rows, 3.1)
         rc, out = run(str(p))
         self.assertIn("WARNING: median step is under 3 sample intervals", out)
+
+    def test_a_capture_given_twice_is_refused(self):
+        # This is the shape the door grader takes too, and the two do not fail
+        # alike, which is why each refusal says what a repeat costs *it*.
+        # Here `load()` merges the rows of every file it is given, so a file
+        # listed twice puts two rows at one timestamp: every interval between
+        # two of 0x06D6's own steps becomes 0, the median step prints as
+        # 0.0 ms under the "not resolved" warning, and `period / step` then
+        # divides by it. That is a ZeroDivisionError and a traceback, after a
+        # report has already been half printed -- not a wrong number, and not a
+        # refusal.
+        p = self.dir / 'clean.csv'
+        rows = reload_cycle(0.05, 0.1, 5.0)
+        rows += countdown(0x0635, 20, 0.02, 0.1, 5.0)     # PRE, every pass
+        rows += countdown(0x06C2, 4, 0.9, 1.0, 5.0)       # POST, one in ten
+        write_capture(p, 0.01, [0x0635, gts.RELOAD, 0x06C2, 0x06D9],
+                      {0x0635: 20, gts.RELOAD: 9, 0x06C2: 4, 0x06D9: 3}, rows,
+                      5.0)
+
+        rc, out, err = run_quietly(str(p), str(p))
+        self.assertEqual(rc, 1)
+        self.assertIn(f'{str(p)!r} is given twice', err)
+        self.assertIn('A capture given twice is one capture and not two', err)
+        # Refused before `grade()`, so there is no half-printed report and the
+        # two lines that make the damage legible are both absent.
+        for absent in ('the step is not resolved', 'period / step',
+                       'step interval'):
+            self.assertNotIn(absent, out)
+
+        # The message is about the period, not about windows: this grader has
+        # none, and a reader who took it for the door grader's would be sent
+        # looking for a window count that was never going to move.
+        self.assertIn('period / step', err)
+        self.assertNotIn('window', err)
+
+        # And the same capture once is the graded run it would have been: the
+        # refusal is pinned to the duplicate, not to this invocation.
+        rc, out = run(str(p))
+        self.assertEqual(rc, 0)
+        self.assertIn('period / step = 10.00', out)
+
+    def test_two_distinct_captures_are_still_one_run(self):
+        # What the refusal is *not*: `capture.csv [capture2.csv ...]` is this
+        # tool's documented usage, and `load()` merges the files, so two
+        # captures of the same sweep taken either side of a suspend are a
+        # legitimate command line. Refusing it would be a contract change
+        # rather than a fix, and the test is what holds the difference.
+        first, second = self.dir / 'first.csv', self.dir / 'second.csv'
+        for path, (t0, stop) in ((first, (0.05, 5.0)), (second, (20.0, 25.0))):
+            rows = reload_cycle(t0, 0.1, stop)
+            rows += countdown(0x0635, 20, t0 + 0.02, 0.1, stop)
+            write_capture(path, 0.01, [0x0635, gts.RELOAD],
+                          {0x0635: 20, gts.RELOAD: 9}, rows, stop)
+        rc, out = run(str(first), str(second))
+        self.assertEqual(rc, 0)
+        # Merged, not graded twice: one span covering both, and the step
+        # resolved to the sweep's own 100 ms rather than collapsed by the gap.
+        self.assertIn('span 25.000s', out)
+        self.assertIn('median 100.0 ms', out)
+        self.assertIn('period / step = 10.00', out)
 
 
 if __name__ == '__main__':
