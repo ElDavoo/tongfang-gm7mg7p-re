@@ -32,6 +32,13 @@ Three things this holds that nothing else here does:
     the message would pass if the wrong input were refused for the wrong
     reason. Each case below asserts both, on a fixture with exactly one thing
     wrong with it.
+  * **What counts as a reference.** The self-test's answer is 35 names over 52
+    sites, and the three rules that would each be wrong about it do not agree
+    on a wrong answer: a qualified-only scan gives 15 names over 27 sites, an
+    unbounded bare scan 27 over 49, and one that drops the scope and qualifier
+    attribution 37 over 76. The totals therefore discriminate, and
+    `AslReferenceTests` holds one fixture per rule anyway -- a count two rules
+    can share by accident is not what pins the rule behind it.
 
 No hardware, no firmware image, no Ghidra and no network: the committed
 `evidence/acpi/dsdt.dsl` and fixtures built here are the whole corpus. Run it
@@ -42,6 +49,7 @@ import contextlib
 import csv
 import io
 import os
+import re
 import subprocess
 import sys
 import unittest
@@ -69,6 +77,31 @@ def fixture(*body: str) -> list:
 def elements(*body: str) -> list:
     """The parsed elements of a fixture, as the tool returns them."""
     return D.extract(fixture(*body), "<test fixture>", "TST")["elements"]
+
+
+# The ASL half needs a *scope*, not just a list, because a bare name is only a
+# reference where ASL would resolve it. A whole device written the way iasl
+# writes one -- header, `{`, the region, its list, `}` -- with `after` landing
+# between the list and the device and `tail` past the device. The list is
+# closed before `after`: a method nested inside the list's braces would put
+# every reference it makes inside the declaring span, which is a different
+# case from the one these fixtures are about.
+def scoped(*body: str, after: list = (), tail: list = (), node: str = "EC0") -> list:
+    return [f"    Device ({node})", "    {",
+            "        OperationRegion (TST, SystemMemory, 0x10000000, 0x10000)",
+            "        Field (TST, AnyAcc, NoLock, Preserve)", "        {",
+            *body, "        }", *after, "    }", *tail]
+
+
+def references(lines: list) -> dict:
+    """The reference table for a fixture, as the tool returns it."""
+    code = D.strip_comments(lines)
+    return D.references(code, D.declarations(code))
+
+
+def declarations(lines: list) -> dict:
+    code = D.strip_comments(lines)
+    return D.declarations(code)
 
 
 class BitCursorTests(unittest.TestCase):
@@ -198,6 +231,177 @@ class RefusalTests(unittest.TestCase):
             "no Field (TST, ...) list")
 
 
+class AslReferenceTests(unittest.TestCase):
+    """What counts as a reference, which is the whole of the ASL half.
+
+    The `--self-test` answers for the committed .dsl are 35 names over 52
+    sites, and the three rules that would each be wrong about that number
+    each produce a *different* wrong total, measured the same way against the
+    committed .dsl: a qualified-only scan gives 15 names over 27 sites, a
+    bare scan with no scope bound 27 over 49, and one that drops the scope
+    and qualifier attribution altogether 37 over 76. So the totals do
+    discriminate, and what these fixtures add is that each rule is pinned on
+    its own rather than inferred from a total -- two rules can agree on a
+    number by accident, and the next rule to be relaxed is the one a
+    count-only assertion would not notice. A fourth wrong rule, a count keyed
+    on the `^^PCI0.LPCB.EC0.` path, merges the regions that share it rather
+    than miscounting within one, and is held by
+    `test_two_regions_in_one_device_keep_their_references_apart` below.
+
+    Line numbers are asserted, not just counts, because a reference *is* a
+    line: the committed table's `asl_sites` column is a list of `dsdt.dsl`
+    lines, and a rule that counted the right occurrences on the wrong lines
+    would satisfy every count-only assertion in this file.
+    """
+
+    def test_a_nested_scope_ends_at_its_own_brace(self):
+        # The failure `parse_lists()` already guards against, for the scope
+        # rule this file adds: the enclosing scope is found by walking out of
+        # the braces, so a `}` closes it and does not carry on into the scope
+        # around it. The list sits inside `Device (SUB)`, the name resolves in
+        # SUB, and the method in EC0 past SUB's `}` is outside it however
+        # plainly the two devices nest. Written out rather than built from
+        # `scoped()` because that helper closes its list before `after`, which
+        # is the case the next test is about and not this one.
+        lines = [
+            "    Device (EC0)", "    {",
+            "        Device (SUB)", "        {",
+            "            OperationRegion (TST, SystemMemory, 0x10000000, 0x10000)",
+            "            Field (TST, AnyAcc, NoLock, Preserve)", "            {",
+            "                Offset (0x0040),", "                NNAM, 8",
+            "            }",
+            "            Method (M1, 0, NotSerialized)", "            {",
+            "                Local0 = NNAM", "            }", "        }",
+            "        Method (M2, 0, NotSerialized)", "        {",
+            "            Local0 = NNAM", "        }", "    }"]
+        self.assertEqual(declarations(lines)["NNAM"][2:5], (10, 4, 15))
+        self.assertEqual(references(lines)["NNAM"], (1, [13]))
+
+    def test_a_bare_name_inside_the_declaring_scope_counts(self):
+        # The shape of `UCEV` (dsdt.dsl:52947-52962): a name reached with no
+        # path at all, which is legal only where ASL would resolve it. A
+        # qualified-only scan calls all twenty of those names declared-only.
+        lines = scoped("    Offset (0x0040),", "    NNAM, 8",
+                       after=["    Method (M1, 0, NotSerialized)", "    {",
+                              "        Local0 = NNAM", "    }"])
+        self.assertEqual(references(lines)["NNAM"], (1, [11]))
+
+    def test_a_bare_name_outside_the_declaring_scope_does_not_count(self):
+        # The `THOT`-shaped false positive. The committed file's `THOT` is a
+        # `Name` and the issue's path-keyed scan filed it as a reference; a
+        # bare name a method two scopes up reads is the same mistake in a form
+        # no reader would catch by eye.
+        lines = scoped("    Offset (0x0040),", "    NNAM, 8",
+                       tail=["    Method (M2, 0, NotSerialized)", "    {",
+                             "        Local0 = NNAM", "    }"])
+        self.assertEqual(references(lines)["NNAM"], (0, []))
+
+    def test_a_qualified_reference_inside_the_declaring_list_does_not_count(self):
+        # The declaring span is excluded whatever the form. This fixture cannot
+        # go through `extract()` -- a field element line cannot carry a path
+        # and `parse_body()` refuses one -- so it drives the two functions the
+        # exclusion actually lives in, on a body line they both read.
+        lines = scoped("    Offset (0x0040),", "    NNAM, 8",
+                       "    ^^PCI0.LPCB.EC0.NNAM, 8")
+        self.assertEqual(declarations(lines)["NNAM"][0], "TST")
+        self.assertEqual(references(lines)["NNAM"], (0, []))
+
+    def test_a_redeclaration_in_a_later_list_is_not_a_reference(self):
+        # `WUSB` is declared in `OGNV` (dsdt.dsl:1493) and again in `ECXP`
+        # (:52417), and OGNV's scope runs to :53348 -- so the second element
+        # line sits inside the scope the *first* declaration resolves in while
+        # being outside the list that first declaration is written in. It is a
+        # declaration, and counting it would report a field list as a use of
+        # its own name. `declarations()` alone cannot see this: it keeps the
+        # first declaration and drops the second, and the drop is what leaves
+        # the line countable.
+        lines = [
+            "    Device (SUB)", "    {",
+            "        OperationRegion (OGN, SystemMemory, 0x10000000, 0x10000)",
+            "        Field (OGN, AnyAcc, NoLock, Preserve)", "        {",
+            "            NNAM, 8", "        }",
+            "        OperationRegion (TSR, EmbeddedControl, Zero, 0xFF)",
+            "        Field (TSR, ByteAcc, Lock, Preserve)", "        {",
+            "            NNAM, 8", "        }",
+            "        Method (M1, 0, NotSerialized)", "        {",
+            "            Local0 = NNAM", "        }", "    }"]
+        self.assertEqual(declarations(lines)["NNAM"][0], "OGN")
+        self.assertEqual(references(lines)["NNAM"], (1, [15]))
+
+    def test_a_name_after_another_path_separator_is_not_a_bare_reference(self):
+        # `^^^^UBTC.MGI0` at dsdt.dsl:52947 writes an `External
+        # (_SB_.UBTC.MGI0, IntObj)` that merely shares a spelling with ECMG's
+        # MGI0. Counting it would put a phantom reference on the same byte the
+        # right-hand side of that line legitimately reads.
+        lines = scoped("    Offset (0x0040),", "    NNAM, 8",
+                       after=["    Method (M1, 0, NotSerialized)", "    {",
+                              "        ^^^^UBTC.NNAM = NNAM", "    }"])
+        self.assertEqual(references(lines)["NNAM"], (1, [11]))
+
+    def test_two_regions_in_one_device_keep_their_references_apart(self):
+        # The conflation this change exists to stop: ECMG and ECXP are declared
+        # in the same `Device (EC0)` and reached through the same
+        # `^^PCI0.LPCB.EC0.` path, so a path-keyed count files an ECXP read on
+        # an ECMG row. Neither name is in the other's list here, as the
+        # committed file's two lists do not overlap.
+        lines = [
+            "    Device (EC0)", "    {",
+            "        OperationRegion (TST, SystemMemory, 0x10000000, 0x10000)",
+            "        Field (TST, AnyAcc, NoLock, Preserve)", "        {",
+            "            Offset (0x0040),", "            ECMGN, 8", "        }",
+            "        OperationRegion (TSR, EmbeddedControl, Zero, 0xFF)",
+            "        Field (TSR, ByteAcc, Lock, Preserve)", "        {",
+            "            Offset (0x0050),", "            XPAN, 8", "        }",
+            "        Method (M1, 0, NotSerialized)", "        {",
+            "            ^^PCI0.LPCB.EC0.ECMGN = One", "            XPAN = One",
+            "        }", "    }"]
+        decls, refs = declarations(lines), references(lines)
+        self.assertEqual((decls["ECMGN"][0], decls["XPAN"][0]), ("TST", "TSR"))
+        self.assertEqual((refs["ECMGN"], refs["XPAN"]), ((1, [17]), (1, [18])))
+
+    def test_a_name_declaration_no_field_list_declares_is_unplaceable(self):
+        # `Name (THOT, Zero)` at dsdt.dsl:52190 sits under the EC0 path with no
+        # field list behind it. Reported, not dropped and not attached to a
+        # field -- a name with no field is not a reference to nothing.
+        lines = scoped("    Name (TNAM, Zero)", "    Offset (0x0040),",
+                       "    NNAM, 8")
+        decls = declarations(lines)
+        self.assertNotIn("TNAM", decls)
+        self.assertEqual(D.unplaceable(D.strip_comments(lines), decls, 2, 10),
+                         [(6, "TNAM")])
+
+    def test_all_three_attribution_routes_agree(self):
+        # The qualified form, the bare form, and iasl's own alias comment --
+        # iasl wrote the third from the resolved path, independently of the
+        # code this tool reads, so a scope rule that is subtly too narrow is
+        # the one error the three cannot all make at once.
+        alias = re.compile(r"/\*\s*\\_SB_\.PCI0\.LPCB\.EC0_\.(\w+)\s*\*/")
+        lines = scoped("    Offset (0x0040),", "    NNAM, 8",
+                       after=["    Method (M1, 0, NotSerialized)", "    {",
+                              "        ^^PCI0.LPCB.EC0.NNAM = One",
+                              "        Local0 = NNAM", "    }",
+                              "    Method (M2, 0, NotSerialized)", "    {",
+                              "        Local0 = NNAM "
+                              "/* \\_SB_.PCI0.LPCB.EC0_.NNAM */", "    }"])
+        self.assertEqual(references(lines)["NNAM"], (3, [11, 12, 16]))
+        for i, route in ((11, "qualified"), (12, "bare"), (16, "alias")):
+            code = D.strip_comments([lines[i - 1]])[0]
+            kinds = [k for n, k, _q in D.scan_line(code) if n == "NNAM"]
+            self.assertTrue(kinds or alias.search(lines[i - 1]),
+                            f"no route reaches NNAM at :{i} (looked for {route})")
+
+    def test_a_name_with_two_reads_on_one_line_counts_both(self):
+        # `PDIN` is read three times in one `||` chain at dsdt.dsl:50774. A
+        # count that kept one occurrence per line would report 8 where the ASL
+        # spells 18, and the site list is what says which of the two it is.
+        lines = scoped("    Offset (0x0040),", "    NNAM, 8",
+                       after=["    Method (M1, 0, NotSerialized)", "    {",
+                              "        If (((NNAM == 0x08) || (NNAM == 0x07)))",
+                              "        {", "            Local0 = NNAM",
+                              "        }", "    }"])
+        self.assertEqual(references(lines)["NNAM"], (3, [11, 13]))
+
+
 class CommittedFileTests(unittest.TestCase):
     """The committed .dsl and the committed table, as the tool reads them."""
 
@@ -244,6 +448,73 @@ class CommittedFileTests(unittest.TestCase):
             with contextlib.redirect_stderr(io.StringIO()):
                 rc = D.check_table("x\n", os.path.join(d, "absent.csv"))
         self.assertEqual(rc, 1)
+
+    def test_a_committed_row_says_how_many_times_the_asl_reads_the_name(self):
+        # The two new columns are read back off disk, like the grade assertions
+        # below, so a hand-edited cell is caught here rather than by a human
+        # who remembers `--check`. A row claiming a reference the site list does
+        # not carry is the failure that matters: the count and the sites are
+        # two measurements of one thing and they have to agree.
+        with open(D.FIELDS_CSV, newline="") as f:
+            rows = list(csv.DictReader(f))
+        self.assertEqual(len(rows), len(self.ecmg["elements"]))
+        for r in rows:
+            n, sites = int(r["asl_refs"]), r["asl_sites"]
+            if n == 0:
+                self.assertEqual(sites, D.NOT_REFERENCED, r["name"])
+                continue
+            self.assertNotEqual(sites, D.NOT_REFERENCED, r["name"])
+            got = [int(s) for s in sites.split()]
+            self.assertTrue(got, r["name"])
+            self.assertEqual(got, sorted(set(got)), r["name"])
+            self.assertTrue(all(s != int(r["dsdt_line"]) for s in got), r["name"])
+
+    def test_the_two_columns_disagree_where_the_sweep_says_they_should(self):
+        # The cross-column claim the finding rests on, and the only assertion
+        # here that needs the image: on the 0x0Exx page, `MGI8` is the single
+        # byte the ASL reads *and* the EC image names, and `CTL0`-`CTL7` are
+        # the single run the EC image names and the ASL never reads. Both
+        # directions matter -- a sweep that could only produce agreement
+        # between the two axes would not be evidence of anything.
+        with open(D.FIELDS_CSV, newline="") as f:
+            rows = [r for r in csv.DictReader(f)
+                    if 0x0E00 <= int(r["addr"], 16) <= 0x0EFC]
+        read = {r["name"] for r in rows if int(r["asl_refs"])}
+        site = {r["name"] for r in rows if int(r["static_refs"])}
+        self.assertEqual(len(rows), 59)
+        self.assertEqual(site & read, {"MGI8"})
+        self.assertEqual(sorted(site - read),
+                         ["CTL0", "CTL1", "CTL2", "CTL3", "CTL4", "CTL5",
+                          "CTL6", "CTL7"])
+
+    def test_the_committed_table_proposes_no_reference_status_either(self):
+        # `not-referenced-by-this-method` sits in the same position
+        # `not-found-by-this-method` does, and for the same reason: a zero is
+        # what the method did not find, not a status anyone proposed. Asserted
+        # absent from registers.yaml's vocabulary so a cell cannot be lifted
+        # into an entry by someone reading the CSV for candidates.
+        with open(D.DEFAULT_REGISTERS) as f:
+            statuses = {r["status"] for r in yaml.safe_load(f)["registers"]}
+        self.assertNotIn(D.NOT_REFERENCED, statuses)
+        self.assertNotIn(D.NOT_REFERENCED, D.NOT_JOINED)
+
+    def test_the_two_not_referenced_arms_of_t1wr_agree_with_the_derivation(self):
+        # The one-off-line case. The self-test compares the whole table, so a
+        # row that moves a single line in the .dsl has to turn it red; this
+        # perturbs exactly that and asserts the comparison notices, because a
+        # comparison that passes on a wrong line is a table nothing is holding.
+        code = D.strip_comments(self.lines)
+        decls = D.declarations(code)
+        addrs = {e[0]: e[1] for e in self.ecmg["elements"]}
+        for other in ("ECXP", "ECMP", "IO"):
+            addrs.update({e[0]: e[1] for e in
+                          D.extract(self.lines, D.DEFAULT_DSDT, other)["elements"]})
+        derived = D.t1wr_table(D.arg0_arms(code, 50636, 50746, decls), addrs,
+                               D.load_registers(D.DEFAULT_REGISTERS))
+        self.assertEqual(derived, D.T1WR_ARMS)
+        drifted = list(derived)
+        drifted[3] = (drifted[3][0], drifted[3][1] + 1, drifted[3][2])
+        self.assertNotEqual(drifted, D.T1WR_ARMS)
 
     def test_no_row_in_the_committed_table_claims_an_ec_site_without_one(self):
         # The grade column is the file's only proposed status, and a

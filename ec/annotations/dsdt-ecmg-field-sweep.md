@@ -184,11 +184,19 @@ The last one is the test that matters. It recomputes all three count columns
 for all 208 addresses from the committed image and fails on any mismatch, so
 the 16 new rows' numbers are reproduced rather than trusted.
 
-`--self-test` is run by hand rather than from `../../.github/scripts/agent-gates.sh`:
-that file lives under `.github/`, which this repository's pipeline push token
-cannot write, so adding the mode to the gate's tool loop is a human's change
-to a template file. `../tools/test_dsdt_ec_fields.py` holds the parser's edge
-cases and the `--check` failure path, and is runnable standalone the same way.
+Both modes above are **prepared for a gate, not in one**:
+`../../docs/ci/agent-gates-disasm8051-self-test.patch` carries the arm, which
+runs `--csv --check` and then `--self-test`, because
+`../../.github/scripts/agent-gates.sh` lives under `.github/`, which this
+repository's pipeline push token cannot write, so adding the modes to the gate's
+tool loop is a human's change to a template file and the patch is the
+deliverable. It folds into that patch rather than shipping as a file of its own
+because the free hunks in the tool list are spent — the union of the three
+patches holding it is the whole list — and its own header says so. **Until a
+human lands it, both commands above are run by hand, and a CSV that has drifted
+from `registers.yaml` merges green.** `../tools/test_dsdt_ec_fields.py` holds
+the parser's edge cases and the `--check` failure path, and is runnable
+standalone the same way.
 
 **Why bit-granular.** `Offset (0x7C4)` is three unnamed bits, `DBEN`, one
 unnamed bit, `DBST` — so `DBEN` is bit 3 and `DBST` is bit 5, and a parser
@@ -413,6 +421,15 @@ addresses it audited, and its scope statement was true when written. Re-run
   table, `--csv`, `--check`, `--self-test`, `--region {ecmg,gnvs}`, `--out`.
 - `../tools/test_dsdt_ec_fields.py` — the bit arithmetic, the refusals and the
   `--check` failure path.
+- `../../docs/ci/agent-gates-disasm8051-self-test.patch` — **prepared, not
+  landed.** It is the whole of the gate arm for both modes above: one entry in
+  the `for tool in` list and one `case` arm, folding a third tool into an
+  existing patch's hunks rather than shipping a patch of its own, because the
+  free tool-list hunks are spent. `tools/test_agent_gates_patches.py` holds
+  both halves of every tool's arm there, so a re-cut that lands some of them
+  and drops the rest fails that suite rather than quietly handing a tool back
+  to the `*)` default arm. Its header carries what the modes buy and, in the
+  house form, what they do not.
 - `dsdt-ecmg-fields.csv` — generated, 98 rows, one per named element. Columns:
   `region, addr, bit, width, name, dsdt_line, static_refs,
   static_refs_main_ec, static_refs_pd_image, in_registers, grade`. Written by

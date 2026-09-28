@@ -563,10 +563,16 @@ class ScopeTests(unittest.TestCase):
         # census must not acquire the column either. Run against a capture of
         # its stdout rather than reading its source, so a header added in
         # Python rather than in a literal is caught too.
+        #
+        # The row is built by hand, so it carries every key write_csv() reads.
+        # `earlier_record` came with issue #1110's column and this fixture
+        # would have raised a KeyError rather than a wrong answer, which is the
+        # cheap direction to fail in.
         import audit_call_targets
         rows = [{"region": "common", "file_offset": 0, "runtime": 0,
                  "opcode": "ljmp", "target": 0x70, "bucket": "A",
-                 "frame_onto": 0, "frame_over": 0, "calls_stub": None,
+                 "frame_onto": 0, "frame_over": 0, "earlier_record": "",
+                 "calls_stub": None,
                  "calls_trampoline": None, "own_bank": "", "other_bank": ""}]
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):

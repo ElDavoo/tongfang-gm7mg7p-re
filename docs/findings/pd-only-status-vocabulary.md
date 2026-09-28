@@ -158,6 +158,44 @@ nor a store, and whether the byte is touched at all is not established". Rule
 and widening it that way would make it a rule about something other than the
 reference count. **Open.**
 
+> **Answered 2026-09-28 (issue #1105).** The sentence above stays as written;
+> this is the measurement and the decision beside it, per `docs/findings.md`
+> §4a-4d. The paragraph above is not edited, because its reasoning holds and
+> its conclusion does not.
+>
+> **The count in issue #1105's own reading of this sentence is one short.**
+> Reading "one EC-side site" off the issue's table gives three addresses, not
+> the two it names: `0x0410`, `0x0420` and `0x0733` each carry
+> `static_refs_main_ec: 1`. The issue's own table says so; only its prose says
+> two. **Answered** in `docs/findings/handoff-site-warrant.md` §5, where the
+> measured figures sit beside the issue's.
+>
+> **What the sites actually are.** `register_ref_table.py --callee-depth 1`
+> resolves **nine of the ten** addresses issue #1105 names. The ten are exactly
+> the `present-untested` addresses whose EC-side sites are all DPTR handoffs or
+> `none` cells at depth 0. Nine of them hand DPTR to one of four six-byte pair
+> accessors in bank1 (`0x8886`/`0x888C`/`0x8892`/`0x889E`) or to `0xB939`
+> `store_a_to_dptr_b939`, each a plain `movx` — so the handoffs resolve, and
+> the addresses have a direction. `0x0420` is the exception, for a reason
+> stated in its own note: the site passes the address across a `ret` in R1:R2,
+> which `--callee-depth` does not model.
+>
+> **The decision, and where it lives.** A handoff that resolves to a direction
+> at the callee's entry **is** a legitimate warrant; a `none` cell is not. So
+> rule 2 is not widened — that would make it a rule about something other than
+> the reference count, as the paragraph above says — and a **third, separately
+> named rule** was added to the `# status values:` header instead, enforced by
+> `ec/tools/check_status_vocabulary.py` and pinned under its `--self-test`.
+> Measured over the whole `present-untested` population, that rule refuses
+> **exactly one address**, `0x0420`, which it holds by a named exemption with
+> its own expiry. The reasoning, the per-site table and the function each site
+> sits in are in [`handoff-site-warrant.md`](handoff-site-warrant.md).
+>
+> **No `status:` moved.** `present-untested` is still the right grade for all
+> nine, which is what its own gloss says it means: static-scan finds real
+> references, not yet exercised live. A resolved direction is a static
+> instruction, not behaviour.
+
 ## Re-running it
 
 Every command below reads committed inputs only — no image, no Ghidra, no

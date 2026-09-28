@@ -132,19 +132,81 @@ class MarkCsvTests(unittest.TestCase):
     def test_mark_lands_in_the_csv_between_the_change_rows(self):
         rc, rows, _ = self.run_watch('--mark')
         self.assertEqual(rc, 0)
-        self.assertEqual(rows[0], 'ts,addr,old,new')
+        self.assertEqual(rows[0], 'ts,addr,old,new,provenance')
         self.assertEqual([r.split(',', 1)[1] for r in rows[1:]],
                          ['0x0701,0x00,0x11',
-                          'MARK,,wrote 0x0751=0xA0',
+                          'MARK,,wrote 0x0751=0xA0,',
                           '0x0702,0x00,0x22'])
 
-    def test_mark_row_parses_as_the_grader_expects(self):
+    def grader_marks(self, rows):
+        """The marks `grader.read_capture` reads out of `rows`.
+
+        The reader takes a path and these cases hold the capture as text, so
+        it is written back out and read through it rather than split here --
+        the shape `AppendNoticeTests.graders_own_message` uses for the same
+        reason. What a five-way split is, without any reader in it: the writer
+        agreeing with itself, which cannot see a row the reader refuses.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_text(''.join(row + '\n' for row in rows))
+            return grader.read_capture(str(path))[0]
+
+    def test_the_grader_reads_this_runs_mark_as_the_write_it_names(self):
+        _, rows, _ = self.run_watch('--mark')
+        marks = self.grader_marks(rows)
+        self.assertEqual(len(marks), 1)
+        self.assertEqual(marks[0].label, 'wrote 0x0751=0xA0')
+        # The verdict, asked of `parse_mark` rather than spelled out here, and
+        # the whole of what a split cannot say: §3's `wrote 0x0751=0xA0` is
+        # the write under test, so a `wrote` form that stopped being read, or
+        # a value that stopped being taken out of the label, goes red here.
+        # `RefusedLabelTests` asks the same function of a label it refuses.
+        self.assertEqual(grader.parse_mark(marks[0].label), ('write', 0xA0))
+        # The century, which reaching `read_capture`'s return does not
+        # establish: `parse_ts` is `fromisoformat` and takes a 1999 stamp, so
+        # it is asked of the `datetime` rather than of a raw prefix, as before.
+        self.assertEqual(marks[0].ts.year // 100, 20)
+
+    def test_the_fifth_column_is_read_off_the_row_and_not_through_the_reader(self):
+        # Split out because this is the one field the reader cannot answer: it
+        # reads four of them and never the fifth, so it is asked of the row
+        # itself, and the name says so rather than implying the reader covers
+        # it. A five-field mark row parses as the four-field one did -- #719's
+        # measurement, and the reason the shape was chosen over a comment row.
         _, rows, _ = self.run_watch('--mark')
         mark = [r for r in rows if ',MARK,' in r][0]
-        ts, addr, old, label = mark.split(',')
-        self.assertEqual((addr, old, label), ('MARK', '', 'wrote 0x0751=0xA0'))
-        # The grader keys every window off this timestamp.
-        self.assertTrue(ts.startswith('20'))
+        provenance = mark.split(',')[4]
+        # The fifth is the provenance column, empty because this run held no
+        # `--label-vocab`. Empty is not absent: this is state 2 of the three a
+        # reader has to tell apart, where a four-column row would be state 1,
+        # *not recorded*. `MarkProvenanceTests` in the grader's own suite is
+        # where the three are pinned.
+        self.assertEqual(provenance, '')
+
+    def test_a_run_holding_the_vocabulary_names_itself_in_the_mark_row(self):
+        # The one writer in this tree that can populate the column, and the
+        # whole of what the column buys: which program wrote a mark, and that
+        # that program held the vocabulary. So a `gpu_block_watch.py` mark is
+        # told from an `ec_watch.py` one, and a mark typed under the vocabulary
+        # from one typed without it -- and `warn_unchecked_marks`, which can
+        # name a foreign mark only as one "placed by a process that did not
+        # type them here", is the reader that could not say which.
+        #
+        # What it does not buy is which of §3's three consoles wrote a mark.
+        # All three run this same program with the same vocabulary, so all
+        # three write the byte-identical field, and the three captures are
+        # told apart by their `--csv` filenames rather than by anything in the
+        # row. It still cannot say the label was checked -- `parse_mark` and
+        # `unplaceable_marks` are what say that, and they are per-label.
+        _, rows, _ = self.run_watch('--mark', '--label-vocab', '0751')
+        got = [r.split(',')[4] for r in rows if ',MARK,' in r]
+        self.assertEqual(len(got), 1)
+        # The program name is `Path(sys.argv[0]).name`, so it is whatever
+        # runner invoked this suite; the vocabulary is the part that says the
+        # process was checking, and the name is only checked for being there.
+        self.assertTrue(got[0].startswith('prog='))
+        self.assertIn('label-vocab=0751', got[0])
 
     def test_without_mark_the_csv_holds_changes_only(self):
         ec = FakeEc()
@@ -205,7 +267,7 @@ class BlankMarkTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertEqual([r.split(',', 1)[1] for r in rows[1:]],
                          ['0x0701,0x00,0x11',
-                          'MARK,,wrote 0x0751=0xA0',
+                          'MARK,,wrote 0x0751=0xA0,',
                           '0x0702,0x00,0x22'])
         # The whole capture rather than the row counted above: the shape the
         # grader refuses is a substituted mark anywhere in the file, and the
@@ -374,10 +436,19 @@ class RefusedLabelTests(unittest.TestCase):
         rc, rows, _ = self.run_watch(['wrote 0x0751=\n',
                                       'wrote 0x0751=0xA0\n'])
         self.assertEqual(rc, 0)
-        self.assertEqual([r.split(',', 1)[1] for r in rows[1:]],
+        # Fields 1 to 3, which is the row without its timestamp and without
+        # its provenance: this class runs with `--label-vocab`, so the mark
+        # row's fifth field names whichever runner invoked this suite and is
+        # checked on its own below rather than spelled into a list of rows.
+        self.assertEqual([','.join(r.split(',')[1:4]) for r in rows[1:]],
                          ['0x0701,0x00,0x11',
                           'MARK,,wrote 0x0751=0xA0',
                           '0x0702,0x00,0x22'])
+        # And the fifth records the one thing a reader of this capture could
+        # not otherwise tell: the process that wrote this mark held the
+        # vocabulary. It still does not say the label was checked.
+        mark = [r for r in rows if ',MARK,' in r][0]
+        self.assertIn('label-vocab=0751', mark.split(',')[4])
         self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],
                          ['wrote 0x0751=0xA0'])
 

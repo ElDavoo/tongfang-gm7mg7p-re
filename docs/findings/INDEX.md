@@ -5,11 +5,12 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-129 write-ups.
+159 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
 - [`0751-capture-row-shape.md`](0751-capture-row-shape.md) — One row stream for the 0751 capture readers, and a byte-order mark retired at the shape (issue #750)
+- [`0751-dump-pair-battery-names.md`](0751-dump-pair-battery-names.md) — The 0x0400 pair's "other" bucket, on a mover the capture recorded (issue #219)
 - [`0751-early-exit-row.md`](0751-early-exit-row.md) — The grader dropped the probe's "the run ended early" row, and a 5-second arm graded as a 30-second one (issue #664)
 - [`0751-grader-block-scope-claims.md`](0751-grader-block-scope-claims.md) — A `--block` run said "consistent with the static prediction" for the whole capture (issue #497)
 - [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md) — A `--block` run exited 1 over a window it neither printed nor withheld, and did not say why (issue #498)
@@ -19,15 +20,19 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-grader-unplaced-window-checks.md`](0751-grader-unplaced-window-checks.md) — A stray `restore` the consoles spelled two ways, or that one console missed, was graded in full (issue #529)
 - [`0751-grader-unplaced-window-scope.md`](0751-grader-unplaced-window-scope.md) — The sentence §7's verdict is read from did not say which windows are a window of a value under test (issue #530)
 - [`0751-grader-withheld-count-denominators.md`](0751-grader-withheld-count-denominators.md) — The withheld banner counted one way over windows numbered another (issue #500)
+- [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md) — A fifth `provenance` column on the mark row, and the reader that makes it worth writing (issue #739)
 - [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) — Which process wrote this mark: a fifth column measured against a `# provenance` row (issue #719)
 - [`0751-notice-two-moments.md`](0751-notice-two-moments.md) — The 0751 startup notice described two moments as one (issue #749)
 - [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md) — The two path-taking readers are kept, and their docstrings name their callers (issue #771)
 - [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md) — §3's three unlabelled mark rounds were a fourth class of mark, and the block model had no place for them (issue #472)
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
+- [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
+- [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
 - [`bucket-c-codemap.md`](bucket-c-codemap.md) — Bucket C against a recovered code map: 16 of the 140 sites are on an instruction boundary, and 14 of those 16 sit inside spans already listed as data tables
 - [`call-graph-unresolved.md`](call-graph-unresolved.md) — The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (issue #456)
+- [`capture-claims-docstring-surface.md`](capture-claims-docstring-surface.md) — The capture-claims docstring quotes its own run, so a test now holds it to the run (issue #991)
 - [`capture-filename-date-prefix.md`](capture-filename-date-prefix.md) — The capture root's date prefix and its flatness are measured, and a name breaking either is refused (issue #973)
 - [`charge-target-caller-chain.md`](charge-target-caller-chain.md) — Who reaches `0xB158` — the charge-target caller chain, and how often it runs (issue #89)
 - [`checkout-claim-corpus.md`](checkout-claim-corpus.md) — The checkout-depth sweep derived its own population, and a retraction quotes the sentence it retracts
@@ -49,11 +54,18 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) — Which of the census checklist's figures a check actually holds, measured (issue #849)
 - [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md) — What `tools/check_doc_patch_refs.py` reads, in both directions (issue #955)
 - [`doc-patch-reference-gate.md`](doc-patch-reference-gate.md) — The names prose gives a prepared gate patch, and what now holds them (issue #777)
+- [`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) — `walk()`'s reload guard covers every way an 8051 rebuilds DPTR, and 21 sites in the image render their `access` cell with the wrong direction, 2 of them in a committed table
 - [`dump-pair-block-attribution.md`](dump-pair-block-attribution.md) — A whole-block bracket is not a second reading of the same bytes (issue #475)
 - [`dump-reads-for-a-refused-block.md`](dump-reads-for-a-refused-block.md) — A read taken for a block whose windows were refused (issue #499)
+- [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
+- [`ecmg-asl-references.md`](ecmg-asl-references.md) — Which of the 98 ECMG names the ASL reaches for, and what the two `0x71` arms are (issue #1159)
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
+- [`findings-index-staleness.md`](findings-index-staleness.md) — The index is hand-edited by merges and nothing runs the check that would catch it (issue #1137)
+- [`fixture-empty-pointer-cells.md`](fixture-empty-pointer-cells.md) — The fixture's six empty cells are not a count, and the set is derivable where the six is not (issue #1006)
 - [`group-proxy-populations.md`](group-proxy-populations.md) — What the banking rule discards, and how much of it (issue #455)
+- [`handoff-site-warrant.md`](handoff-site-warrant.md) — A DPTR handoff that resolves is a warrant, and the one address whose sites do not resolve
+- [`hardware-test-artifact-handoff.md`](hardware-test-artifact-handoff.md) — Every procedure's "Where the output goes" is now held to its own commands, in both directions (issue #1190)
 - [`history-checkout-claim-per-workflow.md`](history-checkout-claim-per-workflow.md) — A depth claim is judged per workflow, not per sentence
 - [`history-checkout-claims.md`](history-checkout-claims.md) — The checkout-depth claim, corrected at seven sites and re-derived by a checker
 - [`history-checkout-prompt-reach.md`](history-checkout-prompt-reach.md) — A gate reached from a `prompt:` was outside the invariant, and the count was three where the prose says four (issue #1032)
@@ -61,28 +73,39 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`history-checkout-site-identity.md`](history-checkout-site-identity.md) — The four corrected sites are held by value, and the check is shown going red
 - [`history-checkouts-gate-wiring.md`](history-checkouts-gate-wiring.md) — The checkout-depth check is prepared for the cheap gate, in a patch that had to fold (issue #1033)
 - [`ifr-charge-and-battery-options.md`](ifr-charge-and-battery-options.md) — The charge and battery questions in the Setup IFR, and what hides them
+- [`landed-gate-patch-state.md`](landed-gate-patch-state.md) — A landed gate patch is not a stale one: the four states, and the two-step landing (issue #772)
+- [`mmrd-unaligned-escape.md`](mmrd-unaligned-escape.md) — The unaligned `MMRD` escape, and the two sources that would have to say it is safe (issue #439)
 - [`name-basis-and-groups.md`](name-basis-and-groups.md) — What grounds a name, and what a group is (issue #135)
+- [`name-shape.md`](name-shape.md) — A hand name is a citation wherever its words appear, so it is held to a shape before it is committed (issue #436)
 - [`named-without-a-row.md`](named-without-a-row.md) — The 25 functions that carry a name no CSV row wrote (issue #601)
+- [`native-c-census.md`](native-c-census.md) — Census the retained 56 MB export, and reconcile the manifest row that calls it zero (issue #370)
 - [`neighbour-edge-attribution.md`](neighbour-edge-attribution.md) — Does the kept citation name the neighbour's call site? Fifteen rows and two, decided (issue #681)
 - [`no-append-logs.md`](no-append-logs.md) — A document every merge must edit is a lock nobody holds, and this repository has now hit that three times
 - [`oem4-bit-map-and-bit0.md`](oem4-bit-map-and-bit0.md) — The `0x07A6` (`OEM_4`) bit map, and bit 0's owner (issue #93)
 - [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md) — The opcode-table bounds census: every `OPCODE_LEN[d[i]]` in `ec/tools/`, and what holds the index in
 - [`opcode-table-coverage.md`](opcode-table-coverage.md) — The opcode table's coverage and a differential decode: 254 of 256 rows, 0 disagreements against two decoders that are not independent — and 8 against the manual, which is the finding — independent
 - [`paged-trampoline-hits-by-hand.md`](paged-trampoline-hits-by-hand.md) — All 18 paged-trampoline hits, read one by one (issue #54)
+- [`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md) — The six `pd 0x07D0` accessors that were not functions, and what naming them did to the census (issue #1101)
 - [`pd-callers-status-intersection.md`](pd-callers-status-intersection.md) — A caller's literals are not index-register loads unless the site indexes on those registers
 - [`pd-common-address-attribution.md`](pd-common-address-attribution.md) — A `pd` caller's edge was attributed to a `common` row it never reached (issue #471)
 - [`pd-common-address-spaces.md`](pd-common-address-spaces.md) — The lone `pd` proxy edge was a missing annotation, not a cross-program call (issue #470)
+- [`pd-direct-offset-pointer-add.md`](pd-direct-offset-pointer-add.md) — The PD image keeps a 16-bit base in direct `0x0D`/`0x0E`: a literal at init, rewritten by an 81-caller add-and-store-back (issue #69)
+- [`pd-e2e4-entry-forms.md`](pd-e2e4-entry-forms.md) — The `pd` 0xE2E4 entry set: one entry at the first byte, and 35 bytes the export does not cover (issue #340)
 - [`pd-image-census.md`](pd-image-census.md) — The `ITE8850-PD` image: a consolidated map, a positive provenance answer, and one null worth the wording
+- [`pd-index-geometry-address-contract.md`](pd-index-geometry-address-contract.md) — The three address flags on `pd_index_geometry.py` have one contract, and this is the change that made it legible from `--help` rather than from a findings file
 - [`pd-index-low8-propagation.md`](pd-index-low8-propagation.md) — The `low8` truncation is in the template; what was left was two summaries that had not been told
 - [`pd-inline-arg-trampoline.md`](pd-inline-arg-trampoline.md) — The PD image's `lcall 0x104D` carries a 4-byte constant inline, deposits it in XDATA, and resumes four bytes on (issue #36)
 - [`pd-only-status-vocabulary.md`](pd-only-status-vocabulary.md) — `0x07CC` is re-graded, and the rule that grades it is now written down and
 - [`pd-sites-address-range.md`](pd-sites-address-range.md) — `--sites` refuses an address outside the PD region, and the arithmetic the census's row 10 declined to guard becomes a statement about the code
+- [`pd-unannotated-listings.md`](pd-unannotated-listings.md) — Every `pd` listing now has a row, and #471's figures did not move (issue #489)
 - [`pin-table-by-cited-file.md`](pin-table-by-cited-file.md) — Which test file the corpus's pins name, and the indexed suites none of them does (issue #941)
 - [`pin-table-row-reconciliation.md`](pin-table-row-reconciliation.md) — The per-pin table's four mechanical columns are now reconciled against the run, and its fifth is not read (issue #942)
+- [`power-profile-gm7mg7p.md`](power-profile-gm7mg7p.md) — A `0x0751`-only platform profile would report a new mode and not move the machine's power limits
 - [`prepared-gate-patches.md`](prepared-gate-patches.md) — The prepared gate patches: the set composes, and a test says so
 - [`probe-0700-whole-page-arm.md`](probe-0700-whole-page-arm.md) — The probe's watch set can be §3's first watcher, whole (issue #666)
 - [`probe-hold-mark-merge.md`](probe-hold-mark-merge.md) — A `--csv` probe run's `hold` is held to the grader's mark-merge window (issue #665)
 - [`prose-line-citations-held.md`](prose-line-citations-held.md) — The prose's line citations, and what now holds them (issue #801)
+- [`provenance-clone-depth-behaviour.md`](provenance-clone-depth-behaviour.md) — Both clone depths run: `--verify-provenance` measured rather than asserted (issue #421)
 - [`rel8-displacement-bound.md`](rel8-displacement-bound.md) — What holds the rel8 displacement read in range: a constant in another module, and a marker check three frames away
 - [`reset-vector-dptr-targets.md`](reset-vector-dptr-targets.md) — The reset vector's two DPTR-only bank-0 targets, `0xD89F` and `0xD96C` (issue #559)
 - [`runner-red-suite-set.md`](runner-red-suite-set.md) — The runner's red set, and the third of #162's blocker that was a missing table row (issue #751)
@@ -90,6 +113,8 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
+- [`test-name-grader-coupling.md`](test-name-grader-coupling.md) — A test name that claims a coupling the test does not make
+- [`test-site-fits-guard.md`](test-site-fits-guard.md) — `test_site()` bounds the index at `:217` and reads three bytes underneath it, and the second bound is now there
 - [`testdata-addr-column-claim.md`](testdata-addr-column-claim.md) — A claim about a capture is columnar, and a claim about a fixture is not (issue #975)
 - [`testdata-index-check.md`](testdata-index-check.md) — `ec/tools/testdata/README.md` is now held to the tree under it (issue #727)
 - [`testdata-index-evidence-column.md`](testdata-index-evidence-column.md) — The fixture CSVs' `evidence` column is resolved against the real tree, and eight cells that named nothing there are empty (issue #780)
@@ -100,6 +125,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`testdata-row-claims-multi-date-sentence.md`](testdata-row-claims-multi-date-sentence.md) — A sentence naming two dated captures is refused whole, and not read from the first (issue #979)
 - [`testdata-row-claims-repair-measurement.md`](testdata-row-claims-repair-measurement.md) — What the two testdata checkers do over a hand-repair's pre-repair tree (issue #978)
 - [`testdata-row-claims-report-naming.md`](testdata-row-claims-report-naming.md) — The carrier, the searched root, and the two file sets are named, and the closing sentence stops reading the same either way (issue #974)
+- [`testdata-row-claims-shape-list-source.md`](testdata-row-claims-shape-list-source.md) — The testdata row-claims shape list has one source, and the summary line reads it rather than restating it (issue #998)
 - [`testdata-third-column-claims.md`](testdata-third-column-claims.md) — The third column of the testdata index is now held to the fixtures it names (issue #747)
 - [`thunk-prefix-collision.md`](thunk-prefix-collision.md) — Seven rows whose names Ghidra owned (issue #602)
 - [`tools-readme-totals.md`](tools-readme-totals.md) — The runner's totals, re-derived from a run, and why a red suite moves them (issue #817)
@@ -116,17 +142,20 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-census-totals.md`](xdata-census-totals.md) — The census totals: 1,171 addresses / 14,819 references, and how to re-derive them (issue #557)
 - [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md) — The guard-off census, built by the flag instead of by patching a copy of the tool (issue #753)
 - [`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md) — `deciles()` had a floor in its docstring and none in its code, and the report was already printing the stretch (issue #889)
+- [`xdata-dispatch-position-pins.md`](xdata-dispatch-position-pins.md) — The three dispatch positions the docstring names are pinned on synthetic source
 - [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md) — The dispatch reader reads statement position too, and one boundary it does not
 - [`xdata-export-ownership-page-census.md`](xdata-export-ownership-page-census.md) — Re-deriving the export-ownership page: every figure on `xdata-export-ownership.md`, from a fresh run (issue #654)
 - [`xdata-export-ownership-refusal-contract.md`](xdata-export-ownership-refusal-contract.md) — The `--export-ownership` refusal contract
 - [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) — The 94 flipped clusters: both named mechanisms are refuted, and what the working page does show instead (issue #884)
 - [`xdata-green-set.md`](xdata-green-set.md) — The green set is empty, and the four sentences that said otherwise (issue #819)
 - [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md) — The guard-off generation's `cluster_key` distinctness had no case behind it, and the coverage sentences named two of the four censuses (issue #962)
+- [`xdata-most-cited-cluster-count.md`](xdata-most-cited-cluster-count.md) — The most-cited-cluster count, and the claim that does not need one (issue #842)
 - [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) — The 427-row census is stale at `e6c88864` and unreadable at `1fcd5f1e`, and the guard's per-address effect is measured a third time (issue #885)
 - [`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md) — The `cluster_key` collision check covered the moving part of each census, and `keyed_by`'s docstring said it covered all of it (issue #929)
 - [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) — Why the guard-off regeneration's moved-rank count fell from 366 to 315, measured (issue #852)
 - [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md) — A duplicated `cluster_key` was a quieter number, and the count that read it is now keyed on the rank (issue #888)
 - [`xdata-moved-ranks-pin-decisions.md`](xdata-moved-ranks-pin-decisions.md) — The two pins into `xdata_moved_ranks.py` are decided, and both were carried by real trees (issue #961)
+- [`xdata-moved-ranks-population-denominator.md`](xdata-moved-ranks-population-denominator.md) — `cause`'s membership line counted the population under a pronoun the 408 also answered to, and the two are now named on their own lines (issue #904)
 - [`xdata-moved-ranks-second-count.md`](xdata-moved-ranks-second-count.md) — The `--swept` summary's second-holder count was taken over one generation, and the rows were over both (issue #886)
 - [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md) — Which census `xdata-cluster-names.csv` is anchored to, and what a carry line is a claim about (issue #851)
 - [`xdata-no-eq-guard-census-scale-join.md`](xdata-no-eq-guard-census-scale-join.md) — What `--no-eq-guard` moves at census scale, joined one register row at a time

@@ -658,27 +658,35 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # The margin, since "weaker" is doing a lot of work in that sentence:
         # **three** of the nine names move rank with key and membership intact
         # — `countdown-06c6`, `fan-step-08a0`, `flag-pair-0442` — and
-        # `counter-sweep` is not one of them. It is at `main-ec-003` in both
-        # censuses now; the `main-ec-002` the paragraph above leaves it at is
-        # itself a superseded reading, kept here rather than edited out for the
-        # same reason. It is the most-cited cluster in the tree all the same
-        # (`xdata-register-map.md:1156` records the count that line was written
-        # against — `grep -rl 'main-ec-003\b' --include=*.md .` naming nine
-        # files, against seven for `main-ec-002` — and the tenth is
-        # `docs/findings/xdata-cluster-names-guard-off-recipe.md`, whose
-        # comparison transcript names `counter-sweep` on both sides, so the
-        # numeral is that line's figure rather than a current one), so
-        # the exhibit this case fell back on is the one the ranking happens to
-        # spare. The assertion stays `assertTrue(movers, …)`
+        # `counter-sweep` is not one of them, which the derivation settles
+        # without a count of anything:
+        # `docs/findings/xdata-cluster-names-guard-off-recipe.md:258-268` reads
+        # `counter-sweep` `main-ec-003` in the committed column and in the
+        # guard-off one with `same same same`, and closes with `movers: 3 of 9`
+        # naming the three. It is at `main-ec-003` in both censuses now; the
+        # `main-ec-002` the paragraph above leaves it at is itself a superseded
+        # reading, kept here rather than edited out for the same reason. What
+        # the cluster *is* is a question a file answers and a tally does not:
+        # `main-ec-003` is `counter-sweep` in the committed census —
+        # `ec/annotations/xdata-clusters.csv`, `cluster_name=counter-sweep` at
+        # `cluster_key=k733222e83898`, 43 addresses — and
+        # `ec/annotations/xdata-06c2-06db-timers.md` is the page that makes a
+        # membership claim about that block, §1 sweeping exactly those 43. A
+        # most-cited-cluster count stood in this comment until 2026-09-28: it
+        # quoted one `grep` and two figures the `grep` does not give, taken
+        # over two different file sets, and neither figure survives the next
+        # merge. The retraction and the measurement are in
+        # `docs/findings/xdata-most-cited-cluster-count.md`. So the exhibit
+        # this case fell back on is the one the ranking happens to spare. The
+        # assertion stays `assertTrue(movers, …)`
         # on purpose: pinning the count would be the hazard this class's own
         # docstring exists to record — a total pasted into a file is a snapshot
         # of the merge it was measured on — and it would go red on any
         # re-derivation for a reason that says nothing about the design being
-        # argued here. The count is recorded as prose in
-        # `docs/findings/xdata-cluster-names-guard-off-recipe.md`, which is
-        # where the derivation behind it is printed; the floor this case does
-        # hold is the census-wide one in
-        # `test_the_regeneration_really_moves_the_ranks`.
+        # argued here. The mover set is derived in
+        # `docs/findings/xdata-cluster-names-guard-off-recipe.md`, which prints
+        # both the script and the transcript; the floor this case does hold is
+        # the census-wide one in `test_the_regeneration_really_moves_the_ranks`.
         old_by_name = {r["cluster_name"]: r for r in self.committed.values()
                        if r["cluster_name"]}
         movers = sorted(
@@ -1112,6 +1120,149 @@ class TheGuardOffKeyDistinctness(unittest.TestCase):
         # whatever ran next -- and the assertion above would be a lie about
         # which census it had just checked.
         self.assertEqual(ranks.duplicate_keys(self.rows), {})
+
+
+class TheNamesShape(unittest.TestCase):
+    """`cluster_name_shape.py`'s four rules, each shown capable of refusing.
+
+    A name is read as a citation wherever its words appear in a unit that makes
+    a membership claim (`check_cluster_citations.py`'s `name_re()`), so the
+    eleventh row of a file `ec/README.md` says is "a one-row edit" is the place
+    this surfaces. `TheNamesFile` holds the file to the census; this class holds
+    it to a shape, one case per refusal and two over the whole set.
+
+    **Each case adds one constructed row to the committed names rather than
+    replacing them, for the reason `TheGuardOffKeyDistinctness`'s forged
+    collision gives: a rule that has only ever returned an empty list has not
+    been shown capable of returning anything else.** The committed nine are in
+    the set every time, so a case also fails if the rule it is testing has
+    started firing on a name the file is supposed to keep -- which is the
+    failure that would make the check unusable and get it deleted.
+
+    The four refusal cases each call their own rule rather than `problems()`, so
+    a rule that has gone quiet is distinguishable from a name that happened to
+    trip a different one. The last two call `problems()`, because the wiring is
+    its own thing to be wrong.
+
+    **This class is last in the file, and that is load-bearing rather than
+    incidental** -- see `setUpClass` below.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        # Loaded here rather than at module scope, and last in the file rather
+        # than beside the class it shares a subject with. Both are the same
+        # constraint: `test_census_test_line_pins.py` censuses the prose pins
+        # into this file's line numbers, so **any** line added above an
+        # existing class lands each of those pins on a different line and moves
+        # a set of figures four other files hold. The module-level loaders for
+        # `xrm` and `ranks` sit at the top for the same reason, and this class
+        # and the loader below it go at the end for the same reason again --
+        # which is why the sibling tool is loaded in a `setUpClass` where the
+        # file's own idiom would put it at line 34.
+        spec_ = importlib.util.spec_from_file_location(
+            "cluster_name_shape", HERE / "cluster_name_shape.py")
+        shape = importlib.util.module_from_spec(spec_)
+        spec_.loader.exec_module(shape)
+        cls.shape = shape
+        with open(NAMES, newline="") as f:
+            cls.committed = [r["cluster_name"] for r in csv.DictReader(f)]
+        cls.identifiers, cls.addresses = shape.vocabulary()
+
+    def refused(self, rule, name, *rest):
+        """`{offender: what_would_pass}` for one rule over the committed names
+        plus `name`."""
+        return dict(rule([*self.committed, name], *rest))
+
+    def test_a_single_token_name_is_refused(self):
+        # `gate` is the shape the issue means: a word, not a name. It is also
+        # the word prefix of a long list of real functions, so the case names
+        # R1's own reason rather than accepting whatever the rule happened to
+        # report for it.
+        found = self.refused(self.shape.multi_slug, "gate")
+        self.assertIn("gate", found)
+        self.assertIn("multi-slug", found["gate"])
+
+    def test_a_name_inside_another_name_is_refused(self):
+        # `level-block` is inside the committed `level-block-086x`, and
+        # `name_re()` keeps the two apart today by sorting longest-first rather
+        # than by any rule. The refusal names both halves, because a message
+        # naming only the offender leaves the person choosing a name unable to
+        # see which committed name to move.
+        found = self.refused(self.shape.inside_another_name, "level-block")
+        self.assertIn("level-block", found)
+        self.assertIn("level-block-086x", found["level-block"])
+        # And the longer one is not itself the offender: it is the container.
+        self.assertNotIn("level-block-086x", found)
+
+    def test_a_name_colliding_with_a_symbol_or_an_address_is_refused(self):
+        # Two sub-shapes of one rule, both constructed to trip nothing else, so
+        # a change to R1 or R4 cannot be what made this case pass.
+        for name, because in (("xdata-0442", "XDATA_0442"),
+                              ("0x0442-target", "0x0442")):
+            with self.subTest(name=name):
+                self.assertNotIn(name, self.shape.multi_slug(self.committed + [name]),
+                                 f"{name} is a refusal R1 already makes, so "
+                                 "it cannot show R3")
+                found = self.refused(self.shape.collides_with_a_known_token, name,
+                                     self.identifiers, self.addresses)
+                self.assertIn(name, found)
+                self.assertIn(because, found[name],
+                              "the refusal has to name what it collided with, "
+                              "not only that it collided")
+
+    def test_a_word_prefix_of_a_known_identifier_is_refused(self):
+        # The issue's own example, and the reason R4 exists. `charge-target` is
+        # two slugs, is inside nothing committed and is not an address, so the
+        # three rules the issue spells out all pass it; what the tree already
+        # uses the same words for is the thing that catches it.
+        found = self.refused(self.shape.prefixes_a_known_identifier, "charge-target",
+                             self.identifiers)
+        self.assertIn("charge-target", found)
+        # Both halves of the vocabulary, which is the claim: the function the
+        # issue names and the symbol at 0x0522/0x0523.
+        for because in ("charge_target_update", "CHARGE_TARGET_MV_0"):
+            self.assertIn(because, found["charge-target"])
+        # And equality would not have caught it, which is why the rule is a
+        # prefix rule: the name is strictly shorter than every identifier it
+        # collides with.
+        self.assertEqual(
+            self.shape.collides_with_a_known_token(
+                self.committed + ["charge-target"],
+                self.identifiers, self.addresses),
+            [],
+            "if the equality rule now refuses charge-target, the word-prefix "
+            "rule is doing nothing R3 was not already doing")
+
+    def test_every_committed_name_passes_all_four_rules(self):
+        # The claim the gate makes, held here as a case so a name that trips a
+        # rule is caught by the suite and not only by the next
+        # `xdata_register_map.py --self-test` run. Asserted over the rules
+        # rather than a count of names: a tenth row is a legitimate edit, and a
+        # tenth row that trips a rule is not.
+        self.assertEqual(
+            self.shape.problems(self.committed), [],
+            f"{len(self.committed)} committed name(s) do not pass the four "
+            f"shape rules: {self.shape.problems(self.committed)}")
+
+    def test_and_fan_level_is_still_refused_by_nothing(self):
+        # The issue's second example, and the one this change does not close.
+        # Asserted rather than left as a sentence in a docstring, because a
+        # stated limit nobody checks is a limit that quietly stops being true
+        # in either direction: a reader cannot tell whether the tool grew a
+        # rule that catches it or the file grew a name that does.
+        #
+        # **Red here is an improvement, not a defect.** It would mean one of
+        # the four rules had started reading something it does not read today,
+        # and the response is to move the exemption out of the docstring --
+        # `cluster_name_shape.py`'s and `docs/findings/name-shape.md`'s
+        # -- not to weaken the rule that caught it.
+        self.assertEqual(
+            self.shape.problems(self.committed + ["fan-level"]), [],
+            "fan-level is now refused; a name this generic is what the rules "
+            "were for, so record it in cluster_name_shape.py and "
+            "docs/findings/name-shape.md and drop the claim that it is "
+            "not caught")
 
 
 if __name__ == "__main__":

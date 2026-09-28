@@ -23,7 +23,7 @@ void store_0a94_0a97_then_add_0a94_times_60
   DAT_EXTMEM_0a96 = param_1;
   DAT_EXTMEM_0a97 = param_2;
   read4xdata_to_r4_r7(0xa98,param_4);
-  FUN_CODE_3883(param_4);
+  set_b_60_and_dptr_0400_then_return(param_4);
                     /* WARNING: Subroutine does not return */
   add_full_product_to_dptr();
 }

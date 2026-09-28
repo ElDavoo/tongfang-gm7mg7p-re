@@ -23,6 +23,79 @@ register `status:` changed, no listing was re-read, no live test ran, and
 nothing was observed on hardware: this is a text measurement over the committed
 listings and the committed image.
 
+*** CORRECTION 2026-09-27 (issue #489), leaving every figure above as it was
+written.*** **The population is 96 citing rows and 121 `(callee, citer)` pairs,
+not 99 / 124, and the three pairs it lost were retired rather than answered.**
+Issue #489 gave a name of its own to 37 `pd` listings, and
+`call_graph.citations()` proposes a candidate only while the address a comment
+names still resolves to a row whose name begins `FUN_` (`call_graph.py:343`) — so
+a **callee** that stops being anonymous leaves the population with no citing
+comment changing at all. The three pairs that left
+`ec/ghidra/gap-citation-scan.csv` are `pd 0x06EA` cited by `bank0 0xD045`,
+`pd 0x39E6` by `pd 0x39E7`, and `pd 0xE930` by `bank1 0xE924`; all three citers
+are byte-for-byte what they were, and each is still a row in
+`call-graph-callees.csv`. All three were `no-transfer` rows, which is this
+scan's verdict that the citing listing's window carries no transfer to the named
+callee, so **naming the callee settles nothing about that reach** — each of the
+three wants its own reading, and
+[`pd-unannotated-listings.md`](pd-unannotated-listings.md) records that as still
+open. **No citing comment was edited and no listing was re-read to get here.**
+
+**`EXPECT_ROWS`/`EXPECT_PAIRS` are now pinned to 96 / 121, so the "fails
+`--self-test` if the count is not 99 / 124" below is a statement about a tree
+this file no longer measures.** Every figure the *Re-deriving* transcripts print
+moved with it, and this table is the whole of the delta — each right-hand cell
+is a measurement, `python3 ec/tools/citation_gap_scan.py` for all but the last:
+
+| figure | as written above | on this tree |
+|---|---|---:|
+| citing rows in the population | 99 | **96** |
+| `(callee, citer)` pairs | 124 | **121** |
+| the resolved-target predicate instead | 101 / 126 | **98 / 123** |
+| citers by scope: `bank0` / `bank1` / `common` / `pd` | 63 / 22 / 10 / 4 | **62 / 21 / 10 / 3** |
+| zero-byte window, pairs (rows) | 110 (86) | **108 (84)** |
+| non-zero window, pairs | 14 | **13** |
+| windows carrying no transfer of any kind | 112 | **109** |
+| `no-transfer` (the other two verdicts unchanged at 2 and 1) | 121 | **118** |
+| pairs whose callee is already reached by another function | 32 | **31** |
+| windows whose linear walk did not tile the buffer | 28 | **27** |
+| ranked rows in `call-graph-callees.csv`, and their `cited_by == inbound` agreements | 124, 90 | **104, 74** |
+
+**Everything else the split rests on is untouched, which is the point worth
+keeping.** `boundary-cut` is still 2 and still `bank1,E5D6` and `common,3459`,
+`not-code` is still 1, the 10 `common` citers are the same 10, the
+bank-scope-nearer count is still 0, and `--self-test` still runs its 47
+assertions. **The non-zero-gap table below loses exactly one row, `pd,39E7`,
+whose only named callee was the now-named `pd 0x39E6`** — so 13 rows becomes 12
+and 14 pairs becomes 13. The other two retired pairs were zero-gap, which is
+why the zero-gap figures fall by two rather than three.
+
+**The last row of that table is a wider mechanism and a bigger move, in a
+different file.** The `FUN_` predicate runs on every citation, not only on this
+scan's population, so #489's naming also took 20 `pd` rows out of
+`call-graph-callees.csv`'s ranked set outright — each was a `FUN_CODE_*` callee
+whose `cited_by` is now 0, and none was replaced — and `sum(cited_by)` with it,
+147 → **126**. The 15 agreements this scan finds among its neighbour-edge pairs
+are unchanged; the denominator they are counted against is not. That figure is
+stated in [`call-graph.md`](../../ec/annotations/call-graph.md) and is corrected
+there.
+
+**Which other files quote the 99 / 124 above, and what each got.** This file,
+[`citing-listing-evidence.md`](citing-listing-evidence.md) (whose own census
+moves by the same three rows),
+[`neighbour-edge-attribution.md`](neighbour-edge-attribution.md) and
+`../../ec/annotations/call-graph.md` each carry a correction paragraph.
+`../../ec/README.md` carries the figures in the same paragraph as its own
+corrections. **Two places are deliberately left alone.**
+`../findings.md` §35 is a summary whose first line is already a pointer to this
+file, and it is frozen with this issue's correction recorded once in §21;
+rewriting its correction chain in place to fit a line budget would edit history
+this repository's §4a-4d asks be left visible. `../agent-pipeline.md`'s
+statement is inside a dated per-merge record for #560 and quotes a population
+*as it was measured then* — the shape
+[`no-append-logs.md`](no-append-logs.md) exists to stop growing. A reader
+following either is sent here.
+
 ## The lead: 86 of the 99 rows have no gap at all
 
 **The issue's premise is the exception.** It describes "bytes stranded between
@@ -100,7 +173,7 @@ real transfer.
 **The oracle is committed and independent.** `ec/decompiled/bank1/E57E.asm` is a
 single `c0 07` — `push 0x07` — so the listing ends at 0xE580;
 `ec/annotations/bank-call-targets.csv:5766` reads
-`0x16580,bank1,0xE580,lcall,0xE5D6,B,24,0,,,entry,entry`. The window's five
+`0x16580,bank1,0xE580,lcall,0xE5D6,B,24,0,,,,entry,entry`. The window's five
 bytes are `12 e5 d6 d0 07`, and the walk reads them as the `lcall` plus the
 matching `pop 0x07` at 0xE583.
 
@@ -449,7 +522,11 @@ about the heading, not the sets.
   its own reason.
 - **`call_graph.py` is not changed, and neither is its table.**
   `ec/annotations/call-graph-callees.csv` is byte-identical across this change,
-  which is the proof that no number in the ranking moved.
+  which is the proof that no number in the ranking moved. **Corrected 2026-09-27,
+  issue #489: `call_graph.py` is still unchanged, but the table is no longer
+  byte-identical on this tree** — naming 37 `pd` rows retired 20 of its ranked
+  rows through the same `FUN_` predicate, and the correction at the top of this
+  file is where the figures it moved are recorded.
 
 ## Re-deriving
 

@@ -163,7 +163,17 @@ least the Office-vs-Turbo pair with the vendor service stopped, §3a of
 the service up, a `0x086x` move is not yet the EC's, because
 `../findings.md` §7 records that the service rewrites the whole bundle on every
 switch. With it stopped, whatever moves is the EC's. Use a separate file for
-that pass so the two are not windowed together.
+that pass so the two are not windowed together, and it is a separate file
+because §6 names one — the `--csv` below is the name §6 lists:
+
+```console
+rem  the Office-vs-Turbo pair, service stopped, into §6's second file. The
+rem  no-op control arm and the restore are the tool's own, as above.
+python windows\tools\manual_fan_ctrl_probe.py 0xA0 30 --level-block ^
+        --csv <date>-086x-level-block-service-stopped.csv
+python windows\tools\manual_fan_ctrl_probe.py 0x10 30 --level-block ^
+        --csv <date>-086x-level-block-service-stopped.csv
+```
 
 ### Reading the capture
 
@@ -172,17 +182,32 @@ that pass so the two are not windowed together.
 input with no conversion (issue #124):
 
 ```console
+rem  One invocation per capture, and never both files in one. The grader's
+rem  contract is one capture per watcher -- its --help says the cross-console
+rem  checks key off how many captures there are. The two files are two passes
+rem  of this one watcher, not two watchers, so handing it both grades nothing:
+rem  every action reports "in 1 of 2 capture(s) -- did not record it", every
+rem  block prints NOT GRADED, and it exits 1.
 python ec\tools\grade_0751_isolation.py <date>-086x-level-block.csv
+python ec\tools\grade_0751_isolation.py <date>-086x-level-block-service-stopped.csv
 ```
 
-Know what that does with it before you read its output. Its `WATCHED` set is the
-`0x0751` question only — PL1/PL2/PL4, the fan table, the reload mailbox and
-`0x07C6` — so **`0x0860`-`0x086E` and `0x06E6` land in its deliberate "other
-addresses, not graded here" bucket.** That is an honest landing for them, not a
-gap to work around: teaching the grader about the level block is issue #124's
-change, not this one's. The grader is useful here for what it does share — the
-per-window `window delta` lines for `0x075B`/`0x075C` and the two temperatures,
-which are the record of whether the load held flat across an arm.
+Know what that does with it before you read its output. **Each run grades its
+own file and only that file's blocks** — the first `0xA0`/`0x00`/`0x10` as
+`block 1..3 of 3`, the second `0xA0`/`0x10` as `block 1..2 of 2`. The numbering
+restarts per invocation, so `block 1` is `0xA0` in both runs and is two different
+arms; the `of M` and the `value under test` on the same line are what tell them
+apart, and a capture that fails still fails on its own terms rather than as part
+of a merged run. Each also prints that the cross-console checks did not run,
+which is the right reading for a single capture rather than a gap: there is no
+second console for a mark to be missing from. Its `WATCHED` set is the `0x0751`
+question only — PL1/PL2/PL4, the fan table, the reload mailbox and `0x07C6` — so
+**`0x0860`-`0x086E` and `0x06E6` land in its deliberate "other addresses, not
+graded here" bucket.** That is an honest landing for them, not a gap to work
+around: teaching the grader about the level block is issue #124's change, not
+this one's. The grader is useful here for what it does share — the per-window
+`window delta` lines for `0x075B`/`0x075C` and the two temperatures, which are
+the record of whether the load held flat across an arm.
 
 ## 4. What to read off
 
@@ -309,14 +334,17 @@ together:
 
 ```
 evidence/ec-watch/<date>-086x-level-block.csv
+evidence/ec-watch/<date>-086x-level-block-service-stopped.csv
 ```
 
 `<date>` is that run's YYYY-MM-DD. `--csv` appends to a file that already
 exists rather than replacing it, so a run stopped and resumed extends the
-capture, and the three runs of §3 land in one file with their `MARK` rows
+capture, and the first pass's three runs land in one file with their `MARK` rows
 telling them apart. The service-stopped second pass goes in its own file
-(`<date>-086x-level-block-service-stopped.csv`) rather than the same one, so the
-grader does not window the two conditions together.
+(`<date>-086x-level-block-service-stopped.csv`) rather than the same one, and
+that is a requirement rather than a preference: the grader takes one capture per
+watcher, so the two conditions are two files and two invocations and cannot be
+windowed together at all. §3's second pass gives the `--csv` that writes it.
 
 Add the file to `evidence/README.md`, which is the index every findings claim
 cites through, and say in that entry what the run was: which modes, service up

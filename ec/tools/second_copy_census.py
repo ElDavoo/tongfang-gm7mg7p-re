@@ -2,10 +2,10 @@
 """Census the exported functions that carry a name no `ghidra-functions.csv`
 row wrote, and say where each of those names came from.
 
-`build_ec_decompile.py --check` already counts the population: 25 index rows are
+`build_ec_decompile.py --check` already counts the population: 21 index rows are
 marked `annotated=yes` with no annotation row behind them, which is
 `docs/findings.md` §18's figure. What it could not do was say *why* each one
-holds a name, so the seven readable ones sat in prose with nothing to check the
+holds a name, so the six readable ones sat in prose with nothing to check the
 count against. This tool answers that per address, from committed files only,
 and fails on the ones it cannot answer.
 
@@ -14,16 +14,16 @@ and fails on the ones it cannot answer.
   target-of-a-transfer   the committed bytes at the address are exactly one
                          unconditional `ljmp`/`ajmp`/`lcall`/`acall`, and the
                          target is an exported function a CSV row backs under
-                         *this same name*. 11 of the 25: 7 jump, 4 call. A body
-                         that is nothing but a transfer of control decompiles to
-                         what the transfer reaches, so the name at the stub is
-                         the target's name and the target's row is committed
-                         text.
+                         *this same name*. 7 of the 21, and all 7 are jumps. A
+                         body that is nothing but a transfer of control
+                         decompiles to what the transfer reaches, so the name at
+                         the stub is the target's name and the target's row is
+                         committed text.
   ghidra-switch-entry    the committed `.c` declares the function inside a
                          `switchD_*` namespace -- Ghidra's own switch-analysis
                          namespace, and the same `switchD_` prefix
                          `ExportDecompile.java:339` keys `isPlaceholderName()`
-                         on. 14 of the 25, and this is the bucket the name
+                         on. 14 of the 21, and this is the bucket the name
                          belongs to whatever the bytes are.
   unexplained            anything else. `--check` **fails** here, and
                          "unexplained" is a refusal: it says this method found
@@ -31,15 +31,22 @@ and fails on the ones it cannot answer.
                          project-only, or absent.
 
 **Why the two are separated by the target's name and not by the shape of the
-instruction.** Measured over the 25: 23 of them begin with a single `ljmp` or
+instruction.** Measured over the 21: 19 of them begin with a single `ljmp` or
 `lcall`, and 12 of those reach somewhere real -- `bank1 0x8A80`'s
 `ljmp 0x8AA7` is `clear_06f9_bits_0_3_then_call_abee` -- while the name at the
 site is still Ghidra's, not the target's. So "it is a jump" carries almost no
-information here, and a classifier built on it would call 23 of 25 explained
+information here, and a classifier built on it would call 19 of 21 explained
 while explaining none of the 12. The discriminator is the name *and* the row
 behind it, and the two are tried in that order: name equality with a row-backed
 target first, the switch namespace second, `unexplained` only after both have
 failed.
+
+**The population is not a constant, and the figures above move.** Five `pd`
+addresses read here once -- `0x0000`, `0x3497`, `0x998B`, `0x9C1B` and `0x9C4D`
+-- left it in issue #489, which gave each a row of its own; a row is what puts
+an address in this population, so adding one takes it out. `--check` and
+`--self-test` are what say so, and `docs/findings/named-without-a-row.md` has
+the reading.
 
 **Where the bytes come from.** Runtime addresses are mapped to file offsets with
 `trace_xdata_refs.offset_for_runtime()`, off that file's own `REGIONS` table,
@@ -64,8 +71,9 @@ that would settle it.
 **Where the frame is, relative to the committed functions.** That read is then
 turned into an answer of its own -- `vector`, `mid-instruction`,
 `after-a-function` or `inside-a-function` -- by looking the landing instruction
-up in the committed listings. It is a partition of the eleven transfer rows
-(4/1/5/1) and it is what says, per address, whether the frame begins a statement
+up in the committed listings. It is a partition of the seven transfer rows
+(4 `mid-instruction`, 1 `inside-a-function`, 2 `after-a-function`, no
+`vector`) and it is what says, per address, whether the frame begins a statement
 or splits one. It says nothing about *which tool drew the frame*, and the
 docstring's last paragraph is where that stays open.
 
@@ -726,7 +734,7 @@ def same_decompile(stub_path, target_path):
         # Stripped before the plate, not after: the header is followed by a blank
         # line, `^` anchors at the start of the string, and a plate that is not
         # stripped is a difference on every row -- which would make this report
-        # "they differ" for all 25 and teach nothing.
+        # "they differ" for all 21 and teach nothing.
         return PLATE.sub("", text.strip(), count=1).strip()
     a, b = code(stub_path), code(target_path)
     return None if a is None or b is None else a == b
@@ -767,7 +775,7 @@ def _fixture_tree(scratch, fw):
             anns.append({"scope": "common", "addr": addr, "name": name})
 
     # A stub and the row-backed function it transfers into, under one name: the
-    # shape the seven readable ones have.
+    # shape the six readable ones have.
     add(0x0100, b"\x12\x00\x20", "0100     12 00 20 lcall    0x0020",
         "void twice(void)\n\n{\n  twice();\n}", "twice", backed=True)
     add(0x0020, b"\x22", "0020     22 - -   ret",
@@ -803,8 +811,9 @@ def self_test() -> int:
     """Today's measured answers, and the refusals that make them worth anything.
 
     The known answers are the population, the three verdicts it falls into, the
-    bytes and target of each of the seven readable transfers, and the framing
-    read on those seven. The refusals are the half that matters: a classifier
+    bytes and target of each of the six readable transfers, the five `pd`
+    addresses that left the population, and the framing read on those six. The
+    refusals are the half that matters: a classifier
     that had quietly degraded into "a row with a name is a target-of-a-transfer"
     would still print every known answer, so what is pinned beside them is a
     second copy that is not a transfer, a stub whose target has no row, a jump
@@ -829,23 +838,23 @@ def self_test() -> int:
     by_key = {(v["program"], v["addr"]): v for v in verdicts}
     counts = collections.Counter(v["bucket"] for v in verdicts)
 
-    check("the population is the 25 index rows the exporter prints", len(named) == 25,
+    check("the population is the 21 index rows the exporter prints", len(named) == 21,
           "got %d" % len(named))
-    check("11 target a transfer, 14 are switch entries, 0 unexplained",
+    check("7 target a transfer, 14 are switch entries, 0 unexplained",
           (counts["target-of-a-transfer"], counts["ghidra-switch-entry"],
-           counts["unexplained"]) == (11, 14, 0),
+           counts["unexplained"]) == (7, 14, 0),
           "got %d, %d, %d" % (counts["target-of-a-transfer"],
                               counts["ghidra-switch-entry"], counts["unexplained"]))
     jumps = [v for v in verdicts if v["bucket"] == "target-of-a-transfer"
              and v["transfer"]["text"].startswith(JUMP_PREFIX)]
     calls = [v for v in verdicts if v["bucket"] == "target-of-a-transfer"
              and v["transfer"]["text"].startswith(CALL_PREFIX)]
-    check("7 of the 11 matched transfers are jumps and 4 are calls",
-          (len(jumps), len(calls)) == (7, 4),
+    check("all 7 of the matched transfers are jumps and none is a call",
+          (len(jumps), len(calls)) == (7, 0),
           "got %d and %d" % (len(jumps), len(calls)))
-    check("23 of the 25 are a single transfer, and 12 of those carry a name "
+    check("19 of the 21 are a single transfer, and 12 of those carry a name "
           "that is not the target's",
-          sum(1 for v in verdicts if v["transfer"]) == 23
+          sum(1 for v in verdicts if v["transfer"]) == 19
           and sum(1 for v in verdicts if v["transfer"]
                   and v["bucket"] != "target-of-a-transfer") == 12,
           "got %d and %d" % (sum(1 for v in verdicts if v["transfer"]),
@@ -854,7 +863,7 @@ def self_test() -> int:
     check("no row is unexplained and --check reports no problem", not found,
           "; ".join(found[:3]))
 
-    # The seven readable ones, each read out of the committed listing: bytes,
+    # The six readable ones, each read out of the committed listing: bytes,
     # instruction, target, the target's committed row, and the decompilation.
     want = {
         ("bank0", "031C"): ("02 d2 36", "ljmp 0xd236", "D236"),
@@ -863,7 +872,6 @@ def self_test() -> int:
         ("bank1", "703A"): ("02 e7 22", "ljmp 0xe722", "E722"),
         ("common", "0512"): ("01 03", "ajmp 0x0003", "0003"),
         ("common", "1207"): ("02 11 00", "ljmp 0x1100", "1100"),
-        ("pd", "0000"): ("02 05 00", "ljmp 0x0500", "0500"),
     }
     for key, (raw, text, target) in sorted(want.items()):
         v = by_key[key]
@@ -882,13 +890,20 @@ def self_test() -> int:
               same_decompile(os.path.join(DECOMPILED, key[0], key[1] + ".c"),
                              os.path.join(DECOMPILED, v["target"]["program"],
                                           v["target"]["addr"] + ".c")) is True)
-    check("the four pd call sites all reach pd 0x10BC `add_full_product_to_dptr`",
-          sorted(v["program"] + " " + v["addr"] for v in calls) == ["pd 3497",
-                                                                   "pd 998B",
-                                                                   "pd 9C1B",
-                                                                   "pd 9C4D"]
-          and {("%04X" % v["transfer"]["target"]) for v in calls} == {"10BC"},
-          "got " + repr([(v["addr"], "%04X" % v["transfer"]["target"]) for v in calls]))
+    # The five `pd` addresses issue #489 gave rows to, which is what took them
+    # out of the population. The claim is the other way round from the six
+    # above: absent here, and backed by a CSV row -- the row is the reason the
+    # name at the address stopped being a second copy, so the pair
+    # ("in the population", "carries a row") cannot both hold.
+    pd_left = ("0000", "3497", "998B", "9C1B", "9C4D")
+    ann_keys = {(r["scope"], norm_addr(r["addr"])) for r in ann_rows}
+    check("the five pd addresses #489 gave rows to are out of the population, "
+          "and each carries a CSV row",
+          not any(("pd", a) in by_key for a in pd_left)
+          and all(("pd", a) in ann_keys for a in pd_left),
+          "got in the population %r and with a row %r"
+          % (sorted(k for k in by_key if k[0] == "pd"),
+             sorted(a for a in pd_left if ("pd", a) in ann_keys)))
 
     # The framing read, which is what the write-up's per-address verdicts rest
     # on. `covered` is converges_from()'s not-found-by-this-method case and is
@@ -896,7 +911,6 @@ def self_test() -> int:
     for key, want_framing, needle in (
             (("common", "1207"), "entered", "`mov  dptr,#0xbf62`"),
             (("bank0", "805B"), "entered", "`jb   acc.7,0x805e`"),
-            (("pd", "0000"), "image-start", ""),
             (("bank0", "031C"), "covered", "`sjmp 0x031f`"),
             (("bank1", "703A"), "covered", "`jnc  0x703d`"),
             (("common", "0512"), "covered", "`cjne a,#0x01,0x0517`")):
@@ -908,7 +922,7 @@ def self_test() -> int:
               "got " + repr(v["framing"]))
 
     # The boundary read, which is the per-address adjudication. It is a
-    # partition of the eleven, so the whole split is pinned rather than one
+    # partition of the seven, so the whole split is pinned rather than one
     # member of each class: a fourth class appearing, or one of these moving,
     # is the kind of change a reader of the write-up needs told about.
     want_boundary = {
@@ -917,17 +931,13 @@ def self_test() -> int:
         ("bank1", "031C"): "mid-instruction",
         ("bank1", "703A"): "mid-instruction",
         ("common", "0512"): "mid-instruction",
+        ("common", "10FA"): "after-a-function",
         ("common", "1207"): "after-a-function",
-        ("pd", "0000"): "vector",
-        ("pd", "3497"): "after-a-function",
-        ("pd", "998B"): "after-a-function",
-        ("pd", "9C1B"): "after-a-function",
-        ("pd", "9C4D"): "after-a-function",
     }
     got_boundary = {(v["program"], v["addr"]): v["boundary"][0] for v in verdicts
                     if v["bucket"] == "target-of-a-transfer"}
-    check("the eleven partition 4 mid-instruction, 5 after-a-function, "
-          "1 inside-a-function and 1 vector", got_boundary == want_boundary,
+    check("the seven partition 4 mid-instruction, 2 after-a-function and "
+          "1 inside-a-function", got_boundary == want_boundary,
           "got " + repr(sorted(got_boundary.items())))
     check("common 0x1207 is measured against the committed function that ends "
           "immediately before it, and bank0 0x805B against the one it sits inside",
@@ -937,13 +947,6 @@ def self_test() -> int:
           and "0x8054-0x806B" in by_key[("bank0", "805B")]["boundary"][1],
           "got " + repr([by_key[("common", "1207")]["boundary"][1],
                          by_key[("bank0", "805B")]["boundary"][1]]))
-    check("the three pd call sites at 0x3497/0x998B/0x9C1B follow a committed "
-          "function that ends one byte earlier",
-          all(by_key[("pd", a)]["boundary"][1].split()[1].endswith(
-              "%04X" % (int(a, 16) - 3))
-              for a in ("3497", "998B", "9C1B")),
-          "got " + repr([by_key[("pd", a)]["boundary"][1]
-                         for a in ("3497", "998B", "9C1B")]))
 
     # --- the refusals ---
     with tempfile.TemporaryDirectory() as scratch:
@@ -1000,9 +1003,10 @@ def self_test() -> int:
     if bad:
         print("self-test FAILED: %d check(s) disagree with the readings above" % bad)
         return 1
-    print("self-test passed: 25 rows in 11/14/0, the seven readable transfers "
-          "with their bytes, targets and decompilations, the framing reads and "
-          "the boundary partition, and the refusals")
+    print("self-test passed: 21 rows in 7/14/0, the six readable transfers "
+          "with their bytes, targets and decompilations, the five `pd` "
+          "addresses that left the population, the framing reads and the "
+          "boundary partition, and the refusals")
     return 0
 
 

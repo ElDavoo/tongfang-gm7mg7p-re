@@ -1147,6 +1147,30 @@ grade walk of eight handlers is a separate piece of work, and if any of these
 bodies turns out to reach further than its window shows, this table is what
 would have to be revisited.
 
+**CORRECTION (2026-09-27, issue #60): that walk has now been done**, and the
+paragraph above stands as written rather than being rewritten — the table is
+unchanged and every one of its eight rows is confirmed. What the walk adds is
+in [`bank0-8038-handler-flow.md`](bank0-8038-handler-flow.md), with the
+per-arm table in
+[`bank0-8038-handler-arms.csv`](bank0-8038-handler-arms.csv) behind it. Two
+bodies do reach past their window, which is the case this paragraph named:
+case `0x05` leaves by the two-byte PC-relative `sjmp` at `0x81DD` into the
+epilogue, and case `0x07` runs on into `0x8274`. Neither changes an
+attribution. One value is wrong: this section's skeleton paragraph says the
+handlers leave "with `a` holding `0x81 + case`", which holds for cases `0x00`-
+`0x06` (`0x81` `0x82` `0x83` `0x84` `0x85` `0x86` `0x87`) and **not** for case
+`0x07`, whose immediate at `0x826C` is `0x80`. The sentence is left above as
+written and the walk's reading is here. The bit-7-clear arm turns out to be a
+single `ljmp 0x8274` in all eight — which a linear window decode could not have
+shown — while the bit-7-set arm leaves in three distinct shapes rather than
+one, and **no edge in the eighteen arms clears bit 7 of a gate byte**, which is
+why issue #60's "whoever sets bit 7 of a gate byte is what decides whether a
+channel runs" has no answer in that form, and why the paragraph above's "Bit 7
+of a gate byte clear sends the handler straight to the default" reads here as a
+description of the arms rather than as a discriminator between channels.
+Nothing here is a claim about execution, order or hardware, and no `status:`
+in [`registers.yaml`](registers.yaml) moves.
+
 **Where a handler goes afterwards, and what the default does.** Cases `0x00`
 through `0x06` end in a jump to the shared epilogue at `0x821F`, which
 advances the selector:

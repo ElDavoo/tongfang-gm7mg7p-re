@@ -1,99 +1,99 @@
-region,addr,bit,width,name,dsdt_line,static_refs,static_refs_main_ec,static_refs_pd_image,in_registers,grade
-ECMG,0x043E,0,8,CPTM,52197,15,15,0,CPU_TEMP,confirmed-working
-ECMG,0x044F,0,8,VGAT,52199,14,14,0,GPU_TEMP,confirmed-working
-ECMG,0x0460,0,4,FFAN,52201,24,24,0,XDATA_0460,present-untested
-ECMG,0x0468,0,4,SDAN,52203,17,17,0,XDATA_0468,present-untested
-ECMG,0x0743,0,1,GNEN,52205,7,7,0,CTGP_DB_CTRL / OFFSET,confirmed-working
-ECMG,0x0743,1,1,ECDC,52206,7,7,0,CTGP_DB_CTRL / OFFSET,confirmed-working
-ECMG,0x0744,0,8,CTVA,52208,1,1,0,CTGP_DB_CTRL / OFFSET,confirmed-working
-ECMG,0x0745,0,8,DBCT,52209,1,1,0,CTGP_DB_CTRL / OFFSET,confirmed-working
-ECMG,0x0746,0,8,MXDB,52210,1,1,0,CTGP_DB_CTRL / OFFSET,confirmed-working
-ECMG,0x0747,0,8,MIDB,52211,0,0,0,,not-found-by-this-method
-ECMG,0x074C,0,4,PDIN,52213,9,9,0,PDIN,present-untested
-ECMG,0x0783,0,8,APL1,52216,5,5,0,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested
-ECMG,0x0784,0,8,APL2,52217,5,5,0,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested
-ECMG,0x0785,0,8,APL4,52218,5,5,0,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested
-ECMG,0x0786,0,7,APTC,52219,4,4,0,CPU_TCC_OFFSET (APTC/APTN),present-untested
-ECMG,0x0786,7,1,APTN,52220,4,4,0,CPU_TCC_OFFSET (APTC/APTN),present-untested
-ECMG,0x0788,0,8,CTWA,52222,4,4,0,CTWA,present-untested
-ECMG,0x07A4,2,1,GC6S,52225,4,4,0,GC6S,present-untested
-ECMG,0x07B3,0,16,PMAX,52227,0,0,0,,not-found-by-this-method
-ECMG,0x07B5,0,16,PBSS,52228,0,0,0,,not-found-by-this-method
-ECMG,0x07B7,0,8,PSRC,52229,0,0,0,,not-found-by-this-method
-ECMG,0x07B8,0,8,DTTF,52230,0,0,0,,not-found-by-this-method
-ECMG,0x07BA,0,16,VBNL,52232,0,0,0,,not-found-by-this-method
-ECMG,0x07BC,0,16,RBHF,52233,0,0,0,,not-found-by-this-method
-ECMG,0x07BE,0,16,CMPP,52234,0,0,0,,not-found-by-this-method
-ECMG,0x07C0,0,8,AP01,52235,1,0,1,AP01,unknown-not-absent
-ECMG,0x07C1,0,8,AP02,52236,1,0,1,AP02,unknown-not-absent
-ECMG,0x07C2,0,8,AP10,52237,1,0,1,AP10,unknown-not-absent
-ECMG,0x07C4,3,1,DBEN,52240,8,5,3,"GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)",present-untested
-ECMG,0x07C4,5,1,DBST,52242,8,5,3,"GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)",present-untested
-ECMG,0x07C5,5,1,WHMS,52245,10,10,0,WHMS,present-untested
-ECMG,0x07C6,0,2,WMS0,52247,12,12,0,AP_OEM_6 (whisper status / universal fan control),present-untested
-ECMG,0x07D0,0,8,DBD1,52249,254,0,254,DBD1 (DSDT name; ECSpec calls the same byte BATTERY_CHARGE_LIMIT_DOWN),unknown-not-absent-DO-NOT-WRITE-BLIND
-ECMG,0x07D1,0,8,DBD2,52250,76,0,76,"DBD2 (DSDT name; no vendor constant, no committed Windows writer)",unknown-not-absent-DO-NOT-WRITE-BLIND
-ECMG,0x07D3,4,3,GFID,52253,11,4,7,GFID (DSDT bits 4-6),present-untested
-ECMG,0x07D4,0,8,CPUA,52255,70,2,68,CPUA (DSDT),present-untested
-ECMG,0x07D5,0,8,DBAP,52256,28,4,24,DBAP (DSDT),present-untested
-ECMG,0x07D6,0,8,DBSP,52257,142,0,142,DBSP (DSDT),unknown-not-absent
-ECMG,0x07D7,0,8,CGCT,52258,71,0,71,CGCT (DSDT),unknown-not-absent
-ECMG,0x0E0D,0,8,CPUT,52260,0,0,0,,not-found-by-this-method
-ECMG,0x0E0E,0,8,PCHT,52261,0,0,0,,not-found-by-this-method
-ECMG,0x0E10,0,8,SN1T,52263,0,0,0,,not-found-by-this-method
-ECMG,0x0E12,0,8,SN2T,52265,0,0,0,,not-found-by-this-method
-ECMG,0x0E14,0,8,SN3T,52267,0,0,0,,not-found-by-this-method
-ECMG,0x0E16,0,8,SN4T,52269,0,0,0,,not-found-by-this-method
-ECMG,0x0E18,0,8,SN5T,52271,0,0,0,,not-found-by-this-method
-ECMG,0x0E1C,0,8,F1SH,52273,0,0,0,,not-found-by-this-method
-ECMG,0x0E1D,0,8,F1SL,52274,0,0,0,,not-found-by-this-method
-ECMG,0x0E8C,0,7,F1DC,52276,0,0,0,,not-found-by-this-method
-ECMG,0x0E8C,7,1,F1CM,52277,0,0,0,,not-found-by-this-method
-ECMG,0x0E9D,0,7,F2DC,52279,0,0,0,,not-found-by-this-method
-ECMG,0x0E9D,7,1,F2CM,52280,0,0,0,,not-found-by-this-method
-ECMG,0x0EA0,0,16,UVER,52282,0,0,0,,not-found-by-this-method
-ECMG,0x0EA2,0,16,RESV,52283,0,0,0,,not-found-by-this-method
-ECMG,0x0EA4,0,8,CCI0,52284,0,0,0,,not-found-by-this-method
-ECMG,0x0EA5,0,8,CCI1,52285,0,0,0,,not-found-by-this-method
-ECMG,0x0EA6,0,8,CCI2,52286,0,0,0,,not-found-by-this-method
-ECMG,0x0EA7,0,8,CCI3,52287,0,0,0,,not-found-by-this-method
-ECMG,0x0EA8,0,8,CTL0,52288,3,3,0,CTL0,present-untested
-ECMG,0x0EA9,0,8,CTL1,52289,1,1,0,CTL1,present-untested
-ECMG,0x0EAA,0,8,CTL2,52290,1,1,0,CTL2,present-untested
-ECMG,0x0EAB,0,8,CTL3,52291,1,1,0,CTL3,present-untested
-ECMG,0x0EAC,0,8,CTL4,52292,1,1,0,CTL4,present-untested
-ECMG,0x0EAD,0,8,CTL5,52293,1,1,0,CTL5,present-untested
-ECMG,0x0EAE,0,8,CTL6,52294,1,1,0,CTL6,present-untested
-ECMG,0x0EAF,0,8,CTL7,52295,1,1,0,CTL7,present-untested
-ECMG,0x0EB0,0,8,MGI0,52296,0,0,0,,not-found-by-this-method
-ECMG,0x0EB1,0,8,MGI1,52297,0,0,0,,not-found-by-this-method
-ECMG,0x0EB2,0,8,MGI2,52298,0,0,0,,not-found-by-this-method
-ECMG,0x0EB3,0,8,MGI3,52299,0,0,0,,not-found-by-this-method
-ECMG,0x0EB4,0,8,MGI4,52300,0,0,0,,not-found-by-this-method
-ECMG,0x0EB5,0,8,MGI5,52301,0,0,0,,not-found-by-this-method
-ECMG,0x0EB6,0,8,MGI6,52302,0,0,0,,not-found-by-this-method
-ECMG,0x0EB7,0,8,MGI7,52303,0,0,0,,not-found-by-this-method
-ECMG,0x0EB8,0,8,MGI8,52304,1,1,0,MGI8,present-untested
-ECMG,0x0EB9,0,8,MGI9,52305,0,0,0,,not-found-by-this-method
-ECMG,0x0EBA,0,8,MGIA,52306,0,0,0,,not-found-by-this-method
-ECMG,0x0EBB,0,8,MGIB,52307,0,0,0,,not-found-by-this-method
-ECMG,0x0EBC,0,8,MGIC,52308,0,0,0,,not-found-by-this-method
-ECMG,0x0EBD,0,8,MGID,52309,0,0,0,,not-found-by-this-method
-ECMG,0x0EBE,0,8,MGIE,52310,0,0,0,,not-found-by-this-method
-ECMG,0x0EBF,0,8,MGIF,52311,0,0,0,,not-found-by-this-method
-ECMG,0x0EC0,0,8,MGO0,52312,0,0,0,,not-found-by-this-method
-ECMG,0x0EC1,0,8,MGO1,52313,0,0,0,,not-found-by-this-method
-ECMG,0x0EC2,0,8,MGO2,52314,0,0,0,,not-found-by-this-method
-ECMG,0x0EC3,0,8,MGO3,52315,0,0,0,,not-found-by-this-method
-ECMG,0x0EC4,0,8,MGO4,52316,0,0,0,,not-found-by-this-method
-ECMG,0x0EC5,0,8,MGO5,52317,0,0,0,,not-found-by-this-method
-ECMG,0x0EC6,0,8,MGO6,52318,0,0,0,,not-found-by-this-method
-ECMG,0x0EC7,0,8,MGO7,52319,0,0,0,,not-found-by-this-method
-ECMG,0x0EC8,0,8,MGO8,52320,0,0,0,,not-found-by-this-method
-ECMG,0x0EC9,0,8,MGO9,52321,0,0,0,,not-found-by-this-method
-ECMG,0x0ECA,0,8,MGOA,52322,0,0,0,,not-found-by-this-method
-ECMG,0x0ECB,0,8,MGOB,52323,0,0,0,,not-found-by-this-method
-ECMG,0x0ECC,0,8,MGOC,52324,0,0,0,,not-found-by-this-method
-ECMG,0x0ECD,0,8,MGOD,52325,0,0,0,,not-found-by-this-method
-ECMG,0x0ECE,0,8,MGOE,52326,0,0,0,,not-found-by-this-method
-ECMG,0x0ECF,0,8,MGOF,52327,0,0,0,,not-found-by-this-method
+region,addr,bit,width,name,dsdt_line,static_refs,static_refs_main_ec,static_refs_pd_image,in_registers,grade,asl_refs,asl_sites
+ECMG,0x043E,0,8,CPTM,52197,15,15,0,CPU_TEMP,confirmed-working,0,not-referenced-by-this-method
+ECMG,0x044F,0,8,VGAT,52199,14,14,0,GPU_TEMP,confirmed-working,0,not-referenced-by-this-method
+ECMG,0x0460,0,4,FFAN,52201,24,24,0,XDATA_0460,present-untested,0,not-referenced-by-this-method
+ECMG,0x0468,0,4,SDAN,52203,17,17,0,XDATA_0468,present-untested,0,not-referenced-by-this-method
+ECMG,0x0743,0,1,GNEN,52205,7,7,0,CTGP_DB_CTRL / OFFSET,confirmed-working,0,not-referenced-by-this-method
+ECMG,0x0743,1,1,ECDC,52206,7,7,0,CTGP_DB_CTRL / OFFSET,confirmed-working,0,not-referenced-by-this-method
+ECMG,0x0744,0,8,CTVA,52208,1,1,0,CTGP_DB_CTRL / OFFSET,confirmed-working,0,not-referenced-by-this-method
+ECMG,0x0745,0,8,DBCT,52209,1,1,0,CTGP_DB_CTRL / OFFSET,confirmed-working,0,not-referenced-by-this-method
+ECMG,0x0746,0,8,MXDB,52210,1,1,0,CTGP_DB_CTRL / OFFSET,confirmed-working,0,not-referenced-by-this-method
+ECMG,0x0747,0,8,MIDB,52211,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x074C,0,4,PDIN,52213,9,9,0,PDIN,present-untested,18,50774 50786 50801 50813 50828 50829 50841 50856
+ECMG,0x0783,0,8,APL1,52216,5,5,0,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,1,50639
+ECMG,0x0784,0,8,APL2,52217,5,5,0,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,1,50643
+ECMG,0x0785,0,8,APL4,52218,5,5,0,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,1,50648
+ECMG,0x0786,0,7,APTC,52219,4,4,0,CPU_TCC_OFFSET (APTC/APTN),present-untested,1,50653
+ECMG,0x0786,7,1,APTN,52220,4,4,0,CPU_TCC_OFFSET (APTC/APTN),present-untested,1,50652
+ECMG,0x0788,0,8,CTWA,52222,4,4,0,CTWA,present-untested,4,50662 50663 50670 52787
+ECMG,0x07A4,2,1,GC6S,52225,4,4,0,GC6S,present-untested,0,not-referenced-by-this-method
+ECMG,0x07B3,0,16,PMAX,52227,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x07B5,0,16,PBSS,52228,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x07B7,0,8,PSRC,52229,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x07B8,0,8,DTTF,52230,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x07BA,0,16,VBNL,52232,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x07BC,0,16,RBHF,52233,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x07BE,0,16,CMPP,52234,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x07C0,0,8,AP01,52235,1,0,1,AP01,unknown-not-absent,0,not-referenced-by-this-method
+ECMG,0x07C1,0,8,AP02,52236,1,0,1,AP02,unknown-not-absent,0,not-referenced-by-this-method
+ECMG,0x07C2,0,8,AP10,52237,1,0,1,AP10,unknown-not-absent,0,not-referenced-by-this-method
+ECMG,0x07C4,3,1,DBEN,52240,8,5,3,"GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)",present-untested,2,50702 52796
+ECMG,0x07C4,5,1,DBST,52242,8,5,3,"GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)",present-untested,0,not-referenced-by-this-method
+ECMG,0x07C5,5,1,WHMS,52245,10,10,0,WHMS,present-untested,2,50727 52817
+ECMG,0x07C6,0,2,WMS0,52247,12,12,0,AP_OEM_6 (whisper status / universal fan control),present-untested,0,not-referenced-by-this-method
+ECMG,0x07D0,0,8,DBD1,52249,254,0,254,DBD1 (DSDT name; ECSpec calls the same byte BATTERY_CHARGE_LIMIT_DOWN),unknown-not-absent-DO-NOT-WRITE-BLIND,1,50687
+ECMG,0x07D1,0,8,DBD2,52250,76,0,76,"DBD2 (DSDT name; no vendor constant, no committed Windows writer)",unknown-not-absent-DO-NOT-WRITE-BLIND,1,50688
+ECMG,0x07D3,4,3,GFID,52253,11,4,7,GFID (DSDT bits 4-6),present-untested,4,50772 50799 50826 50854
+ECMG,0x07D4,0,8,CPUA,52255,70,2,68,CPUA (DSDT),present-untested,2,50707 52801
+ECMG,0x07D5,0,8,DBAP,52256,28,4,24,DBAP (DSDT),present-untested,2,50708 52802
+ECMG,0x07D6,0,8,DBSP,52257,142,0,142,DBSP (DSDT),unknown-not-absent,0,not-referenced-by-this-method
+ECMG,0x07D7,0,8,CGCT,52258,71,0,71,CGCT (DSDT),unknown-not-absent,1,50732
+ECMG,0x0E0D,0,8,CPUT,52260,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E0E,0,8,PCHT,52261,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E10,0,8,SN1T,52263,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E12,0,8,SN2T,52265,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E14,0,8,SN3T,52267,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E16,0,8,SN4T,52269,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E18,0,8,SN5T,52271,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E1C,0,8,F1SH,52273,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E1D,0,8,F1SL,52274,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E8C,0,7,F1DC,52276,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E8C,7,1,F1CM,52277,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E9D,0,7,F2DC,52279,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0E9D,7,1,F2CM,52280,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EA0,0,16,UVER,52282,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EA2,0,16,RESV,52283,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EA4,0,8,CCI0,52284,0,0,0,,not-found-by-this-method,1,52963
+ECMG,0x0EA5,0,8,CCI1,52285,0,0,0,,not-found-by-this-method,1,52964
+ECMG,0x0EA6,0,8,CCI2,52286,0,0,0,,not-found-by-this-method,1,52965
+ECMG,0x0EA7,0,8,CCI3,52287,0,0,0,,not-found-by-this-method,1,52966
+ECMG,0x0EA8,0,8,CTL0,52288,3,3,0,CTL0,present-untested,0,not-referenced-by-this-method
+ECMG,0x0EA9,0,8,CTL1,52289,1,1,0,CTL1,present-untested,0,not-referenced-by-this-method
+ECMG,0x0EAA,0,8,CTL2,52290,1,1,0,CTL2,present-untested,0,not-referenced-by-this-method
+ECMG,0x0EAB,0,8,CTL3,52291,1,1,0,CTL3,present-untested,0,not-referenced-by-this-method
+ECMG,0x0EAC,0,8,CTL4,52292,1,1,0,CTL4,present-untested,0,not-referenced-by-this-method
+ECMG,0x0EAD,0,8,CTL5,52293,1,1,0,CTL5,present-untested,0,not-referenced-by-this-method
+ECMG,0x0EAE,0,8,CTL6,52294,1,1,0,CTL6,present-untested,0,not-referenced-by-this-method
+ECMG,0x0EAF,0,8,CTL7,52295,1,1,0,CTL7,present-untested,0,not-referenced-by-this-method
+ECMG,0x0EB0,0,8,MGI0,52296,0,0,0,,not-found-by-this-method,1,52947
+ECMG,0x0EB1,0,8,MGI1,52297,0,0,0,,not-found-by-this-method,1,52948
+ECMG,0x0EB2,0,8,MGI2,52298,0,0,0,,not-found-by-this-method,1,52949
+ECMG,0x0EB3,0,8,MGI3,52299,0,0,0,,not-found-by-this-method,1,52950
+ECMG,0x0EB4,0,8,MGI4,52300,0,0,0,,not-found-by-this-method,1,52951
+ECMG,0x0EB5,0,8,MGI5,52301,0,0,0,,not-found-by-this-method,1,52952
+ECMG,0x0EB6,0,8,MGI6,52302,0,0,0,,not-found-by-this-method,1,52953
+ECMG,0x0EB7,0,8,MGI7,52303,0,0,0,,not-found-by-this-method,1,52954
+ECMG,0x0EB8,0,8,MGI8,52304,1,1,0,MGI8,present-untested,1,52955
+ECMG,0x0EB9,0,8,MGI9,52305,0,0,0,,not-found-by-this-method,1,52956
+ECMG,0x0EBA,0,8,MGIA,52306,0,0,0,,not-found-by-this-method,1,52957
+ECMG,0x0EBB,0,8,MGIB,52307,0,0,0,,not-found-by-this-method,1,52958
+ECMG,0x0EBC,0,8,MGIC,52308,0,0,0,,not-found-by-this-method,1,52959
+ECMG,0x0EBD,0,8,MGID,52309,0,0,0,,not-found-by-this-method,1,52960
+ECMG,0x0EBE,0,8,MGIE,52310,0,0,0,,not-found-by-this-method,1,52961
+ECMG,0x0EBF,0,8,MGIF,52311,0,0,0,,not-found-by-this-method,1,52962
+ECMG,0x0EC0,0,8,MGO0,52312,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EC1,0,8,MGO1,52313,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EC2,0,8,MGO2,52314,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EC3,0,8,MGO3,52315,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EC4,0,8,MGO4,52316,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EC5,0,8,MGO5,52317,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EC6,0,8,MGO6,52318,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EC7,0,8,MGO7,52319,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EC8,0,8,MGO8,52320,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0EC9,0,8,MGO9,52321,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0ECA,0,8,MGOA,52322,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0ECB,0,8,MGOB,52323,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0ECC,0,8,MGOC,52324,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0ECD,0,8,MGOD,52325,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0ECE,0,8,MGOE,52326,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method
+ECMG,0x0ECF,0,8,MGOF,52327,0,0,0,,not-found-by-this-method,0,not-referenced-by-this-method

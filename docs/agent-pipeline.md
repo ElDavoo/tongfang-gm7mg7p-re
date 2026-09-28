@@ -539,6 +539,62 @@ only covers what's specific to *this* copy.
      (`tools/test_doc_patch_refs.py`) needs no wiring to be run at all, for
      item 5's reason: `tools/run-tests.sh` discovers every `test_*.py` in the
      repository, so it is already collected by the runner above.
+  14. **`dsdt_ec_fields.py --csv --check` and `--self-test` are added to the
+     tool list in `check_ghidra_tooling`, and a re-copy drops them**
+     (2026-09-27, issue #1161). `--csv --check` is the mode that matters: it
+     is what holds `ec/annotations/dsdt-ecmg-fields.csv` to
+     `evidence/acpi/dsdt.dsl` and the committed image, so the `in_registers`
+     and `grade` columns cannot drift as `registers.yaml` moves — and
+     `ec/annotations/dsdt-ecmg-field-sweep.md` §2 records that both of that
+     table's summary figures are functions of *when* the tool runs, which is
+     what `--check` is for. Its `--self-test` pins the bit arithmetic against
+     oracles from opposite ends of the stack (`registers.yaml` and
+     `windows/tools/gpu_block_watch.py`) and the six parser refusals. Neither
+     mode ran in a gate, in either tier. It is the only tool in this loop that
+     takes an argument — `ECMG` is in `XDATA_REGIONS`, so its three
+     `static_refs*` columns are functions of the image and both `--check` and
+     the bare table refuse to run without one — so the path is spelled out
+     rather than taken from `$scratch`, the way the `*)` default does:
+
+     ```sh
+           *dsdt_ec_fields.py)
+             python3 "$tool" ec/firmware/GMxMGxx_11.800 --csv --check && \
+             python3 "$tool" --self-test || rc=1
+             ;;
+     ```
+
+     Cheap tier for item 4's reason: the committed image, the committed DSDT,
+     `registers.yaml` and the committed CSV, no Ghidra, no network and no
+     assembler. It measures **0.74 s** for `--csv --check` and **0.16 s** for
+     `--self-test` here over three runs on 2026-09-27, against a cheap tier
+     the paragraph above records at 5.9 s, on item 6's caveat that the ratio is
+     the point; the two commands are the two lines of the arm, so re-derive
+     them rather than quote those numbers. It is not here for item 4's reason,
+     template-copied file and no `workflow` scope on the token, and **until a
+     human lands it, no commit runs either mode** and a drifted CSV arrives in
+     a green tree. Its own suite (`ec/tools/test_dsdt_ec_fields.py`) needs no
+     wiring to be run at all, for item 5's reason: `tools/run-tests.sh`
+     discovers every `test_*.py` in the repository, so it is already collected
+     by the runner above.
+     **The whole of it is prepared in
+     `docs/ci/agent-gates-disasm8051-self-test.patch` — folded into item 11's
+     patch rather than shipped as a file of its own**, because by the time it
+     came the free hunks in the tool list were spent: the union of the three
+     patches holding that list is the whole list plus the `case` line, so a
+     new file had no boundary left to cut against, and the one line outside the
+     other two windows is the cut that does not compose in every ordered pair.
+     So **a re-copy restores the list without this entry**, and item
+     11's patch, this item and
+     `tools/test_agent_gates_patches.py::ArmRetentionTests.REQUIRED` are the
+     only things carrying it. That class holds both halves of *each* tool's
+     change in that patch, so a re-cut that lands this tool's arm and drops the
+     others' fails there rather than quietly handing a tool back to the `*)`
+     default — which is item 11's original argument, now with three tools to
+     make it. Both of this tool's placements are cosmetic, for the same reason
+     the patch header gives: the list entry is at the end of the list and the
+     arm is after `*xdata_register_map.py)`, and tidying either back to where
+     a reader expects it breaks every-ordered-pair landing while the patch
+     still applies on its own.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,

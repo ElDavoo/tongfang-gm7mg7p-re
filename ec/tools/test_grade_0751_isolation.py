@@ -869,16 +869,16 @@ class GradeTests(unittest.TestCase):
 
         # The issue's other criterion: across all three pairs the report
         # shows exactly the addresses the captures record moving -- 0x0751
-        # and the sensor-looking 0x0796 in the "other" bucket, 0x0402 from
-        # the temperature range, the §4.4 duty pair and the §4.5
+        # and the sensor-looking 0x0796 in the "other" bucket, 0x0438 from
+        # the battery page (the byte #219 put there, which the 2026-09-18
+        # capture of it records moving), the §4.4 duty pair and the §4.5
         # temperatures under their own heading, printed and not graded.
-        # Checked against the captures and the dumps rather than a literal
-        # list, so a fixture edit on either side of this fails.
+        # Checked against the captures and the dumps, not a literal list.
         self.assertEqual(differing_addresses(section),
                          dumped_change_addresses())
         self.assertEqual(differing_addresses(section),
                          {'0x0751', '0x075B', '0x075C', '0x0796',
-                          '0x0402', '0x043E', '0x044F'})
+                          '0x0438', '0x043E', '0x044F'})
         self.assertIn('fan duty 0x075B/0x075C -- MAIN_FAN_L/R_DUTY '
                       '(§4.4)', section)
         self.assertIn('other addresses that differ (2), not graded here',
@@ -4371,6 +4371,172 @@ class ExistingMarkLabelTests(unittest.TestCase):
         self.assertTrue(all(m.source.endswith('capture.csv') for m in marks))
 
 
+class MarkProvenanceTests(unittest.TestCase):
+    # `existing_mark_provenance`: the mark row's position and its fifth
+    # field. #739, and the reader that makes the column worth writing -- the
+    # two things it returns over `existing_mark_labels` are the position,
+    # which #719 measured as the sharpest limit of the shape that was chosen
+    # over a `# provenance` row, and the column itself.
+    #
+    # The three states are what the cases below are about, because they are
+    # what the format exists to keep apart: absent (a pre-change file), empty
+    # (a process that held no flag) and populated (one that did). A
+    # four-column row read as the second would turn a pre-change capture into
+    # evidence about a console that was never asked.
+    #
+    # The preflight contract is `existing_mark_labels`' and is not restated
+    # here: the file is one a watcher is about to append to, so a reader that
+    # would not open it loses the one warning the notice exists to print. The
+    # last case is the anti-drift guard, and it is over the committed corpus
+    # rather than a fixture written for it.
+    #
+    # Offline throughout: a temp directory and the committed captures under
+    # `testdata/`. No EC, no capture taken, no register read.
+
+    def capture(self, rows, tmp):
+        path = Path(tmp) / 'capture.csv'
+        path.write_text(''.join(row + '\n' for row in rows))
+        return str(path)
+
+    def test_the_three_states_are_three_different_answers(self):
+        # One mark row per state in one file, so the reader is asked to tell
+        # them apart rather than to recognise a shape: four fields, five with
+        # nothing in the fifth, and five with the text a `--label-vocab`
+        # console writes. The first is a pre-change file and the second is
+        # `gpu_block_watch.py`, and the difference between them is the whole
+        # of what the backward-compatibility case is.
+        rows = ['ts,addr,old,new',
+                '2026-01-01T12:00:00.000+01:00,MARK,,wrote 0x0751=0xA0',
+                '2026-01-01T12:00:10.000+01:00,MARK,,settled,',
+                '2026-01-01T12:00:20.000+01:00,MARK,,held,'
+                'prog=ec_watch.py label-vocab=0751']
+        with tempfile.TemporaryDirectory() as tmp:
+            got = grade.existing_mark_provenance(self.capture(rows, tmp))
+        self.assertEqual([prov for _, _, _, prov in got],
+                         [None, '', 'prog=ec_watch.py label-vocab=0751'])
+        # `None` and not `""` for the first, named rather than left to the
+        # list above: a reader that answered "" for a four-field row would be
+        # reporting that a process held no flag, where nothing recorded
+        # whether it held one.
+        self.assertIsNone(got[0][3])
+        # The label is untouched by all three: the column is additive, and a
+        # provenance that moved a field would be a format change the readers
+        # above this one would have had to be reopened for.
+        self.assertEqual([label for _, _, label, _ in got],
+                         ['wrote 0x0751=0xA0', 'settled', 'held'])
+
+    def test_the_ordinal_counts_every_row_the_csv_yields(self):
+        # A `#` row, the header and a blank ahead of the marks, because the
+        # ordinal is a position in the *row stream* rather than a line
+        # number: each of those three is a record the reader consumed and
+        # `skippable_row` dropped, and a position that skipped them would
+        # not be a position a caller could find the row at.
+        rows = ['# 0751 isolation, 0xA0 block',
+                'ts,addr,old,new',
+                '',
+                '2026-01-01T12:00:05.000+01:00,0x0701,0x00,0x11',
+                '# the operator noted the settle here',
+                '2026-01-01T12:00:00.000+01:00,MARK,,wrote 0x0751=0xA0,',
+                '2026-01-01T12:00:30.000+01:00,MARK,,settled,']
+        with tempfile.TemporaryDirectory() as tmp:
+            got = grade.existing_mark_provenance(self.capture(rows, tmp))
+        # 5 and 6, against line numbers 6 and 7: the `#` row, the header and
+        # the blank are three records and three lines, and the ordinal counts
+        # the records.
+        self.assertEqual([ordinal for ordinal, _, _, _ in got], [5, 6])
+
+    def test_the_ordinal_is_a_row_ordinal_and_not_a_line_number(self):
+        # The reason the two are named apart, on the one input where they
+        # differ: a quoted field can carry an embedded newline and `csv` is
+        # what decided where the record ended. A hand-annotated capture whose
+        # label wraps is one mark at one position and two physical lines, so
+        # a reader that reported a line number would point an operator into
+        # the middle of a label.
+        rows = ['ts,addr,old,new',
+                '2026-01-01T12:00:00.000+01:00,MARK,,"held',
+                'over",',
+                '2026-01-01T12:00:30.000+01:00,MARK,,settled,']
+        with tempfile.TemporaryDirectory() as tmp:
+            got = grade.existing_mark_provenance(self.capture(rows, tmp))
+        self.assertEqual([ordinal for ordinal, _, _, _ in got], [1, 2])
+        self.assertEqual(got[0][2], 'held\nover')
+        # The second mark is on line 4 and is at position 2, which is the
+        # gap the docstring's "not a line number" is about.
+        self.assertEqual(got[1][2], 'settled')
+
+    def test_it_does_not_raise_on_what_read_capture_refuses(self):
+        # Three of the four things `read_capture` refuses -- a timestamp
+        # `parse_ts` cannot read, a short row, and (in the case below) a byte
+        # outside the declared codec -- plus a two-column mark row, which is
+        # not a refusal at all and must still come back rather than raise an
+        # IndexError. `existing_mark_labels`' tolerance, carried over rather
+        # than re-decided: the file is one a run is about to append to.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(['ts,addr,old,new',
+                                 '2026-01-01 12:00,MARK,,held',
+                                 '2026-01-01T12:01:00.000+01:00,MARK,',
+                                 '2026-01-01T12:02:00.000+01:00,MARK',
+                                 '2026-01-01T12:03:00.000+01:00,MARK,,settled,'],
+                                tmp)
+            # The same file really is one `read_capture` refuses, so the
+            # leniency above is a difference and not a row shape that never
+            # occurs.
+            with self.assertRaises(ValueError):
+                grade.read_capture(path)
+            got = grade.existing_mark_provenance(path)
+        self.assertEqual([(ts, label, prov) for _, ts, label, prov in got],
+                         [('2026-01-01 12:00', 'held', None),
+                          ('2026-01-01T12:01:00.000+01:00', '', None),
+                          ('2026-01-01T12:02:00.000+01:00', '', None),
+                          ('2026-01-01T12:03:00.000+01:00', 'settled', '')])
+
+    def test_a_byte_the_encoding_cannot_read_does_not_stop_it(self):
+        # The other thing the file can hold that `read_capture` refuses and
+        # this must not: bytes. `CsvSink` appends to a path without ever
+        # decoding it, so a capture written before the codec was declared, or
+        # annotated in an editor that saved something else, is still there at
+        # startup -- 0xE9, as latin-1 and cp1252 both write for `café`, and
+        # as a capture cannot hold. Under the declared codec and with
+        # iteration lazy the raise comes out of the loop rather than the
+        # open, and it came out of the startup path.
+        #
+        # Both marks, not just the one before the bad byte: a reader that
+        # swallowed the decode error to survive it would swallow the rest of
+        # the file with it. And the column is still read, because the byte is
+        # in a label rather than in it.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_bytes(b'ts,addr,old,new\n'
+                             b'2026-01-01T12:00:00.000+01:00,MARK,,caf\xe9,\n'
+                             b'2026-01-01T12:00:30.000+01:00,MARK,,settled,\n')
+            got = grade.existing_mark_provenance(str(path))
+        self.assertEqual([label for _, _, label, _ in got],
+                         ['caf\ufffd', 'settled'])
+        self.assertEqual([prov for _, _, _, prov in got], ['', ''])
+
+    def test_it_agrees_with_the_reader_the_notice_lists_marks_from(self):
+        # The anti-drift guard. The skip rule and the mark branch are spelled
+        # in this reader as well as in `mark_labels_of`, and over the
+        # committed corpus rather than a fixture written for it: every
+        # capture under `testdata/` has to come back as the same `(ts, label)`
+        # pairs, in the same order, from both. A reader that reached a mark
+        # the notice does not list, or skipped one it does, fails here over a
+        # file neither was written for -- which is the failure the position
+        # and the column make worse, not better, if the two ever part.
+        seen = 0
+        for path in sorted((HERE / 'testdata').rglob('*.csv')):
+            with self.subTest(capture=path.name):
+                got = grade.existing_mark_provenance(str(path))
+                self.assertEqual([(ts, label) for _, ts, label, _ in got],
+                                 grade.existing_mark_labels(str(path)))
+                seen += len(got)
+        # Counted rather than left to the loop: a walk that found no captures
+        # would pass every case above without having checked one, and "the
+        # corpus is inert to the format change" has to be a claim somebody
+        # can fail rather than a vacuous one.
+        self.assertGreater(seen, 0)
+
+
 class SelfTestModeTests(unittest.TestCase):
     # The mode the gate calls, and the one
     # `docs/ci/agent-gates-0751-self-test.patch` wires in. Driven through its
@@ -4455,6 +4621,184 @@ class SelfTestModeTests(unittest.TestCase):
         self.assertIn('usage:', err.getvalue())
         self.assertIn('the following arguments are required: csv',
                       err.getvalue())
+
+
+# The "other addresses" bucket, named (issue #219). These cases sit at the end
+# of the file rather than beside the reader each one exercises, and that is
+# deliberate. Lines of this suite are cited by number from the write-ups under
+# `docs/findings/`, and `census_test_line_pins.py` classifies every target line
+# as a header, an assertion, a comment or prose -- so an insertion anywhere
+# above the last of them moves those citations onto a different line, and onto
+# a different class, and the shape census in `test_census_test_line_pins.py`
+# goes red over a change that never edited it. Appending is the placement that
+# leaves every existing citation naming what it says it names, which is worth
+# more than a case sitting next to its siblings. See
+# `docs/findings/0751-dump-pair-battery-names.md`.
+#
+# `PAIR` is a class attribute for the same reason: the module's shared fixture
+# block is at the top, and one more name there shifts the pins below it exactly
+# as a case would.
+class OtherBucketNameTests(unittest.TestCase):
+    # The `0x0400` page again, this time with the battery bytes in it, for the
+    # names the bucket prints under an address no watched or context group
+    # claims. `0751-isolation-run/`'s own `0x0400` pair moves `0x0438` with a
+    # high byte of `0x00`, which a little-endian assembly and a zero-padded low
+    # byte cannot be told apart by; this pair's `0x0434`/`0x0435` and
+    # `0x0438`/`0x0439` carry a non-zero high byte, and the two quotients and
+    # `0x044C` move beside them, so every entry in `grade.XDATA_NAMES` is
+    # reached by a committed fixture.
+    PAIR = (str(HERE / 'testdata'
+                / '0751-isolation-example-moved-battery-before-0400.txt'),
+            str(HERE / 'testdata'
+                / '0751-isolation-example-moved-battery-after-0400.txt'))
+
+    # The bucket, over §6's own set. Its mover is the byte
+    # evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv records
+    # moving, which is what #219 was about: the bucket's only
+    # demonstration used to be a mover no capture has ever seen move, and
+    # four undifferentiated addresses besides.
+    def test_the_other_bucket_names_a_byte_and_assembles_its_pair(self):
+        rc, out, _ = run(*RUN_CAPTURES,
+                         '--dump', RUN_BEFORE, '--dump', RUN_AFTER,
+                         '--dump-pair', RUN_BEFORE, RUN_AFTER,
+                         '--dump-pair', RUN_BEFORE_0F00, RUN_AFTER_0F00,
+                         '--dump-pair', RUN_BEFORE_0400, RUN_AFTER_0400,
+                         '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # The 0x0400 pair's bucket, in one assertion, because the three
+        # things it holds are the three that are load-bearing: the flat
+        # address list on its own line under the heading (which is what
+        # `differing_addresses` reads, and what would break the cross-check
+        # `GradeTests` holds if a name joined it), the register name, and
+        # the pair assembled little-endian from the two dumps' own bytes.
+        # `0x0097 -> 0x00AE` is what the fixture holds -- the capture's
+        # `0x97 -> 0xAE` for a byte whose high half it leaves at zero -- so
+        # the reading is nonsense as a voltage and the header says so. It
+        # is the assembly under test, not a battery.
+        self.assertIn('      0x0438\n'
+                      '      0x0438  BAT_VOLTAGE_MV 0x0438/0x0439 -- pack '
+                      'terminal voltage, little-endian mV\n'
+                      '        0x0097 -> 0x00AE  (151 -> 174 mV)', section)
+        # And the bucket still says what it said: these are printed and not
+        # graded. The name is a label, not a verdict about 0x0751.
+        self.assertIn('other addresses that differ (1), not graded here',
+                      section)
+        # An address the table does not name prints exactly as it did
+        # before the table existed -- the flat list and a blank line, with
+        # nothing under it. Most of a dump is such an address, so this is
+        # what keeps the naming an aid rather than a claim that every
+        # address on the page has a name.
+        self.assertIn('      0x0751 0x0796\n\n', section)
+
+    def test_every_named_byte_on_the_battery_page_is_printed(self):
+        rc, out, _ = run(QUIET, '--dump-pair', *self.PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # Both 16-bit pairs carry a non-zero high byte here, which §6's own
+        # 0x0400 pair cannot: with 0x0439 at 0x00 a little-endian assembly
+        # and a zero-padded low byte print the same thing, and the fixture
+        # that cannot tell them apart is not the one to hold the claim.
+        self.assertIn('      0x0434  BAT_CURRENT_MA 0x0434/0x0435 -- '
+                      'battery current, little-endian mA\n'
+                      '        0x07F8 -> 0x083C  (2040 -> 2108 mA)', section)
+        self.assertIn('      0x0438  BAT_VOLTAGE_MV 0x0438/0x0439 -- pack '
+                      'terminal voltage, little-endian mV\n'
+                      '        0x3E95 -> 0x3F32  (16021 -> 16178 mV)', section)
+        # The two quotients the firmware computes, each named with the
+        # routine that computes it -- a byte the EC derived is not a
+        # sensor reading, and the name is where that says so. Both names
+        # carry the branch their routine takes on a nonzero selector,
+        # because registers.yaml's own XDATA_0448 note hedges and a headline
+        # that dropped the hedge would call a constant a voltage on a run
+        # where the constant is what landed: the sweep summary's
+        # 0x0448,4,0x8B,0xBE row is that value in committed evidence. A byte
+        # registers.yaml defines on its own gets no assembled line, because
+        # there is no pair to assemble, so `0x044C` is asserted not to be
+        # followed by one.
+        self.assertIn('0x0448  XDATA_0448 -- battery voltage / 100, computed '
+                      'by scale_0438_into_0448 (bank1 0xF416) when its '
+                      'selector is 0, and the constant 0xBE when it is not',
+                      section)
+        self.assertIn('0x0449  XDATA_0449 -- battery current / 100, computed '
+                      'by store_scaled_quotient_0449 (bank1 0xF3D7) when its '
+                      "selector is 0, and from 0x060C/0x060D when it is not",
+                      section)
+        self.assertIn('0x044C  XDATA_044C -- the busiest byte on this page '
+                      'in evidence/ec-watch/'
+                      '2026-09-18-profile-switch-0400-07ff.csv\n\n', section)
+        # Eight addresses differ: the six named ones, and the two
+        # temperatures, which stay in the context bucket where they were.
+        self.assertIn('other addresses that differ (8), not graded here',
+                      section)
+
+    def test_the_unnamed_pair_prints_the_placeholder_and_not_the_name(self):
+        rc, out, _ = run(QUIET, '--dump-pair', *self.PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # 0x0436/0x0437 is the one entry whose upstream name registers.yaml
+        # records and declines, so this is the check in the direction that
+        # matters: the placeholder is printed, and the name is not. A report
+        # is something an operator acts on, and printing the name would put
+        # a claim this board has already refuted into the one output meant
+        # to be read under time pressure. The absence is over the whole
+        # report, not just the line, so the note under the placeholder
+        # cannot smuggle it back in either.
+        self.assertIn('      0x0436  XDATA_0436_PAIR 0x0436/0x0437 -- '
+                      '16-bit, and deliberately unnamed (see below)\n'
+                      '        0x0070 -> 0x00C0  (112 -> 192)', section)
+        self.assertNotIn('EC_ADDR_BAT_REMAIN_CAPACITY', out)
+        # No unit either, which is the same statement: nothing here says
+        # what the number is.
+        self.assertNotIn('(112 -> 192 mA', out)
+
+    def test_the_derived_bytes_say_which_branch_they_are_on(self):
+        rc, out, _ = run(QUIET, '--dump-pair', *self.PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # The headline carries the branch; this holds the rest, which is the
+        # part a report cannot be acted on without. Each routine branches on
+        # a selector neither listing sets, so "which path ran" is not knowable
+        # from a dump pair and the report has to say that rather than leave a
+        # quotient reading as one unqualified kind of number.
+        self.assertIn('writes the constant 0xBE', section)
+        self.assertIn('of the selector is not established', section)
+        # 0xBE is not a hypothetical branch: a committed capture has already
+        # recorded this byte ending a window on exactly that value, so the
+        # note names the row rather than asserting the constant could occur.
+        self.assertIn('summary.csv carries 0x0448,4,0x8B,0xBE', section)
+        # The 0x0449 branch is a different pair by a different divisor, not a
+        # second reading of the battery current, and the row that records it
+        # is named so the claim can be followed.
+        self.assertIn('which reads 0x060C/0x060D,\n      masks the high byte',
+                      section)
+        self.assertIn('bank1,0xF3D7,store_scaled_quotient_0449', section)
+        # The register note carries the first path only, which is why the
+        # branch is printed here as well; stated rather than left for a
+        # reader to reconcile against the two files.
+        self.assertIn('note there carries the first path and not this one',
+                      section)
+
+    # The §6 set's own third address, in the windowed reader rather than the
+    # whole-block one. It moved from 0x0402 to 0x0438 (#219), so the flat
+    # list this reads now names the byte
+    # evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv records
+    # moving, in place of the one that file has no row for. The windowed
+    # reader prints no name under it -- the naming went to
+    # `report_dump_pairs` -- so this is the shape that left behind, pinned
+    # so that giving it names too is a decision rather than a drift.
+    def test_the_run_set_other_addresses_line_names_the_captured_byte(self):
+        _, out, _ = run(*RUN_CAPTURES)
+        lines = out.splitlines()
+        hits = [re.findall(r'0x[0-9A-F]{4}', lines[i + 1])
+                for i, l in enumerate(lines)
+                if l.lstrip().startswith('other addresses that moved')]
+        # Three such rows in the §6 set: the battery byte in the control
+        # window, where the 0x0400-0x045F capture moves it at 12:00:26, and
+        # 0x0751 in the write and restore windows, which the 0x0700 capture
+        # records. Read as a list rather than searched for, so a fourth
+        # window carrying one would fail here too.
+        self.assertEqual(hits, [['0x0438'], ['0x0751'], ['0x0751']])
 
 
 if __name__ == '__main__':

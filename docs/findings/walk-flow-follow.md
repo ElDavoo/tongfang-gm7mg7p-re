@@ -216,7 +216,37 @@ entries hold no row at all, so of the 14 edges the census carries 1. The one
 it does carry is the `0x4B1D` site, which `pd/4D6F.asm` spells as
 `lcall 0x4c20`; the other 13 sites have no committed listing that spells
 them, and `call_graph.py` parses listings, so it had nothing to read them
-from. Regenerating the census to carry all 14 is a follow-up.
+from.
+
+**The six entries are functions now, and the census still reads one row — for a
+different reason.** Issue #1101 gave `0x4C12`, `0x4C19`, `0x52EF`, `0x531F`,
+`0x7B0D` and `0x856F` their `ghidra-functions.csv` rows and their listings, so
+the missing-row property above is no longer "these are not functions" but the
+census's own shape: `call_graph.py` writes a row per callee a committed listing
+reaches, so a callee nothing reaches gets no row at all rather than a row
+reading `inbound=0`, and seeding six more *callees* adds no caller. The
+regenerated census moves one line and it is not one of the seven — `0xF739`
+goes `inbound` 18 → 24 and `callers` 10 → 16, because each of the six new
+listings contributes its one `lcall 0xf739` to it — while `0x4C20` is unmoved
+and the file is still 1,841 rows. So **1 of the 14 stands, and the reason is
+which edges are still unspelled** rather than the wrong-anchor property
+retracted above: the thirteen caller addresses below are still in no listing
+that spells them, and naming the targets did not and could not add them. Taking
+the census to 14 of 14 means seeding those thirteen *caller* functions, which is
+the follow-up. The write-up is
+[`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md).
+
+**One of those thirteen is inside a listing's span without being spelled by
+it**, which is the trap that makes a span test and a parse test disagree here.
+`pd/4D6F.asm` runs `0x4A12`–`0x4E58`, covering `0x4B1D` (spelled, at
+`4D6F.asm:13`) and `0x4AE9` (not spelled, because the listing's `ajmp 0x4b12`
+at `0x4A12` skips the block holding it). A listing spanning an address is not a
+listing containing an instruction; only the parse tells them apart, and the
+span has to be measured in `pd`'s own address space — seven more of the
+fourteen reach a span only if a `common`, `bank0` or `bank1` listing is allowed
+to cover a `pd` address, which is the conflation
+[`pd-common-address-attribution.md`](pd-common-address-attribution.md) is
+about.
 
 **So the 7 cells are: the walk gives up, and not because the method ran out.**
 It reached a `ret` and stopped, which is the correct answer for a single-path

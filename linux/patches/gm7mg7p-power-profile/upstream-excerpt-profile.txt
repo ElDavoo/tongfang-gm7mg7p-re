@@ -1,0 +1,498 @@
+========================================================================
+upstream-excerpt-profile.txt -- the evidence the GM7MG7P platform
+profile is built on
+========================================================================
+
+The committed source of every upstream spelling `profile-map.csv` cites and of
+every `#define` the patch in this directory uses. The `gm7mg7p-dmi-entry`
+excerpt beside this one covers the feature bits, the cTGP block, the charge
+block and the DMI table, and contains **none** of what this patch is built on
+-- checked for `0x0751`, `0x0782`, `0x0742`, `MANUAL_FAN`, `DEFAULT_MODE`,
+`PERFORMANCE_MODE`, `0xB0` and `platform_profile`, the only hit is
+`KBD_TURBO_LEVEL_MASK`. This file is the other half, and
+`tools/check_power_profile.py` checks the map and the patch against it byte
+for byte so a reviewer can do that offline, with no network and no re-fetch.
+`fetch-upstream-profile.sh` re-derives the fragments below from a fresh fetch
+to prove they are still what the source says.
+
+  Project      : Wer-Wolf/uniwill-laptop
+  Base rev     : 5a24248f6422a0b673a47cbfd65e19a98eb4c8a9
+  Fetched from : https://codeload.github.com/Wer-Wolf/uniwill-laptop/tar.gz/5a24248f6422a0b673a47cbfd65e19a98eb4c8a9
+
+That rev is `linux/patches/BASE_COMMIT` and is the same rev
+`linux/nix/uniwill-laptop.nix` pins, so it is both the source this patch is
+diffed against and the source the local build fetches.
+`check_power_profile.py` re-asserts that agreement.
+
+  Observed by  : the implement stage of issue #102, 2026-09-27
+  uniwill-acpi.c : 90,721 bytes, 3,386 lines
+                 sha256 914d876fa3255e6ad8f8669162eaa844b23eaf9f41fd181113447c49c3ecc2a7
+
+  Tarball      : 27,605 bytes, sha256 1e18e580b8444c99baf42a004b909697af7dc2d3acb7b5276ccce51b09348675
+
+The `uniwill-acpi.c` digest is the one worth failing on, and only that one. A
+git tree at a fixed rev is immutable, so a re-fetch must reproduce it. The
+**tarball's** hash is recorded as an observation and nothing is failed on it,
+because it is not a stable artifact: codeload regenerates the archive, and
+`gm7mg7p-dmi-entry/upstream-excerpt.txt` records two fetches of this same rev
+on the same day returning 27,634 and 27,605 bytes with different digests while
+`uniwill-acpi.c` came back byte-identical both times. The 27,605-byte figure
+here is the same second one, re-fetched independently for this directory.
+Pinning the tarball hash would fail a re-fetch for a reason that has nothing to
+do with the source having changed.
+
+`uniwill-acpi.c` is GPL-2.0-only; see the `MODULE_LICENSE` line at the foot of
+this excerpt and `LICENSE` in the fetched tree. It is quoted here as the
+evidence a claim is checkable, in fragments small enough to review in a diff.
+The full 90 KB file is deliberately *not* vendored; `fetch-upstream-profile.sh`
+is how to get all of it.
+
+
+THE FINDING THAT CHANGED THE SHAPE OF THIS WORK
+-----------------------------------------------
+
+**Upstream has no platform-profile support at this rev.** The plan issue #102
+was written on the assumption that it did: it asked for a `platform_profile`
+handler written against "the `platform_profile` struct, the
+`UNIWILL_PLATFORM_PROFILE_UNK`/low-power/balanced/performance enum and the
+existing profile store/cycle helpers". None of the three is present at this
+rev, on the two measurements below, which are of different weight.
+
+  - `struct uniwill_device_descriptor` is quoted in full at 428-436 below --
+    five members, closing brace included -- with no `platform_profile` member
+    in it. That is the struct the callback would go in, read rather than
+    searched for, and it is the quotation that establishes the missing member.
+  - A scan for the names, which is a scan of four spellings and not a reading
+    of the file:
+
+        $ grep -rn 'platform_profile\|PLATFORM_PROFILE\|profile_cycles\|profile_available' .
+        (no output)
+
+    run over the whole extracted tree, every file of it. So: none of those
+    four names occurs anywhere at this rev. That is what this measurement
+    shows, and it is not on its own a statement about functionality the scan
+    did not look for.
+
+What *is* there is the one line quoted at 470-482 below, commented
+"Reported when user wants to cycle the platform profile" and mapped to
+`KEY_F14` -- an event with nothing to cycle. So the patch in this directory
+has to add the framework, not only a callback, and every one of the the
+three names above is a name this patch introduces rather than one it reads.
+
+Two consequences, both recorded rather than smoothed over:
+
+  - The patch is larger than the issue asked for, and the upstream PR body says
+    so in its own first paragraph instead of letting a reviewer discover it.
+  - The plan's "the existing profile store/cycle helpers" is not a thing the
+    excerpt can quote, so this excerpt does not quote one. The two things a
+    handler is written *against* -- `EC_ADDR_MANUAL_FAN_CTRL` with its
+    `FAN_MODE_*` bits, and `EC_ADDR_BIOS_OEM_2` with `DEFAULT_MODE` -- are at
+    181-190 and 240-254, and those are what the map cites.
+
+One more thing the fragments are here to show, because it is easy to miss and
+it decides whether the patch applies at all: the regmap is gated. Every
+address has to be added to `uniwill_writeable_reg` (597-612),
+`uniwill_readable_reg` (626-640) and, for anything the EC may change under
+the driver, `uniwill_volatile_reg` (674-690) before a `regmap_read` or
+`regmap_write` of it returns anything but `-EIO`. `0x0751`, `0x049F` and the
+PL default blocks are in none of the three at `5a24248`. The patch adds them;
+a handler that skipped the gate would compile, apply, and write nothing.
+
+--- fragments below this line are verbatim from uniwill-acpi.c ---
+
+  [The #include list -- the header set this patch builds against, which adds none]
+  uniwill-acpi.c lines 36-52
+     36: #include <linux/list.h>
+     37: #include <linux/minmax.h>
+     38: #include <linux/module.h>
+     39: #include <linux/mutex.h>
+     40: #include <linux/notifier.h>
+     41: #include <linux/platform_device.h>
+     42: #include <linux/pm.h>
+     43: #include <linux/printk.h>
+     44: #include <linux/regmap.h>
+     45: #include <linux/string.h>
+     46: #include <linux/sysfs.h>
+     47: #include <linux/types.h>
+     48: #include <linux/units.h>
+     49: 
+     50: #include <acpi/battery.h>
+     51: 
+     52: #include "uniwill-wmi.h"
+
+  [EC_ADDR_AP_OEM (0x0741), the EC_ADDR_SUPPORT_5 / FAN_TURBO_SUPPORTED block -- the Turbo gate this patch does NOT use -- and the cTGP block this one does not write]
+  uniwill-acpi.c lines 143-162
+    143: #define PROJECT_ID_PHXPXXX		0x18
+    144: 
+    145: #define EC_ADDR_AP_OEM			0x0741
+    146: #define	ENABLE_MANUAL_CTRL		BIT(0)
+    147: #define ITE_KBD_EFFECT_REACTIVE		BIT(3)
+    148: #define FAN_ABNORMAL			BIT(5)
+    149: 
+    150: #define EC_ADDR_SUPPORT_5		0x0742
+    151: #define FAN_TURBO_SUPPORTED		BIT(4)
+    152: #define FAN_SUPPORT			BIT(5)
+    153: 
+    154: #define EC_ADDR_CTGP_DB_CTRL		0x0743
+    155: #define CTGP_DB_GENERAL_ENABLE		BIT(0)
+    156: #define CTGP_DB_DB_ENABLE		BIT(1)
+    157: #define CTGP_DB_CTGP_ENABLE		BIT(2)
+    158: 
+    159: #define EC_ADDR_CTGP_DB_CTGP_OFFSET	0x0744
+    160: 
+    161: #define EC_ADDR_CTGP_DB_TPP_OFFSET	0x0745
+    162: 
+
+  [EC_ADDR_MANUAL_FAN_CTRL (0x0751) and the FAN_MODE_* bits the three vendor values are spelled in]
+  uniwill-acpi.c lines 181-190
+    181: #define EC_ADDR_MANUAL_FAN_CTRL		0x0751
+    182: #define FAN_LEVEL_MASK			GENMASK(2, 0)
+    183: #define FAN_MODE_TURBO			BIT(4)
+    184: #define FAN_MODE_HIGH			BIT(5)
+    185: #define FAN_MODE_BOOST			BIT(6)
+    186: #define FAN_MODE_USER			BIT(7)
+    187: 
+    188: #define EC_ADDR_PWM_1			0x075B
+    189: 
+    190: #define EC_ADDR_PWM_2			0x075C
+
+  [EC_ADDR_BIOS_OEM_2 (0x0782) / DEFAULT_MODE, the PL registers, EC_ADDR_FAN_DEFAULT (0x0786)]
+  uniwill-acpi.c lines 240-254
+    240: #define EC_ADDR_BIOS_OEM_2		0x0782
+    241: #define FAN_V2_NEW			BIT(0)
+    242: #define FAN_QKEY			BIT(1)
+    243: #define FAN_TABLE_OFFICE_MODE		BIT(2)
+    244: #define FAN_V3				BIT(3)
+    245: #define DEFAULT_MODE			BIT(4)
+    246: #define ENABLE_CHINA_MODE		BIT(6)
+    247: 
+    248: #define EC_ADDR_PL1_SETTING		0x0783
+    249: 
+    250: #define EC_ADDR_PL2_SETTING		0x0784
+    251: 
+    252: #define EC_ADDR_PL4_SETTING		0x0785
+    253: 
+    254: #define EC_ADDR_FAN_DEFAULT		0x0786
+
+  [PWM_MAX / FAN_TABLE_LENGTH -- the fan-table row length, and where this patch's own constants go]
+  uniwill-acpi.c lines 344-352
+    344:  * registers, so we emulate this behaviour for maximum compatibility.
+    345:  */
+    346: #define UNIWILL_EC_DELAY_US	6000
+    347: 
+    348: #define PWM_MAX			200
+    349: #define FAN_TABLE_LENGTH	16
+    350: 
+    351: #define LED_CHANNELS		3
+    352: 
+
+  [struct uniwill_data]
+  uniwill-acpi.c lines 378-420
+    378: struct uniwill_data {
+    379: 	struct device *dev;
+    380: 	acpi_handle handle;
+    381: 	struct regmap *regmap;
+    382: 	unsigned int features;
+    383: 	u8 project_id;
+    384: 	struct acpi_battery_hook hook;
+    385: 	struct mutex battery_lock;	/* Protects the list of currently registered batteries */
+    386: 	union {
+    387: 		struct {
+    388: 			/* Protects writes to last_charge_type */
+    389: 			struct mutex charge_type_lock;
+    390: 			enum power_supply_charge_type last_charge_type;
+    391: 		};
+    392: 		unsigned int last_charge_ctrl;
+    393: 	};
+    394: 	bool last_fn_lock_state;
+    395: 	bool last_super_key_enable_state;
+    396: 	bool last_touchpad_toggle_enable_state;
+    397: 	bool last_usb_powershare_high_state;
+    398: 	struct mutex super_key_lock;	/* Protects the toggling of the super key lock state */
+    399: 	struct list_head batteries;
+    400: 	struct mutex led_lock;		/* Protects writes to the lightbar registers */
+    401: 	u8 lightbar_max_brightness;
+    402: 	struct led_classdev_mc led_mc_cdev;
+    403: 	struct mc_subled led_mc_subled_info[LED_CHANNELS];
+    404: 	bool kbd_led_single_color;
+    405: 	u8 kbd_led_max_brightness;
+    406: 	unsigned int last_kbd_status;
+    407: 	union {
+    408: 		struct {
+    409: 			/* Protects writes to the RGB keyboard backlight registers */
+    410: 			struct mutex kbd_rgb_led_lock;
+    411: 			struct led_classdev_mc kbd_led_mc_cdev;
+    412: 			struct mc_subled kbd_led_mc_subled_info[KBD_LED_CHANNELS];
+    413: 		};
+    414: 		struct led_classdev kbd_led_cdev;
+    415: 	};
+    416: 	struct mutex input_lock;	/* Protects input sequence during notify */
+    417: 	struct input_dev *input_device;
+    418: 	struct notifier_block nb;
+    419: 	struct mutex usb_c_power_priority_lock; /* Protects dependent bit write and state safe */
+    420: 	enum usb_c_power_priority_options last_usb_c_power_priority_option;
+
+  [struct uniwill_device_descriptor -- the field this patch adds a callback to]
+  uniwill-acpi.c lines 428-436
+    428: struct uniwill_device_descriptor {
+    429: 	unsigned int features;
+    430: 	bool kbd_led_single_color;
+    431: 	u8 kbd_led_max_brightness;
+    432: 	u8 lightbar_max_brightness;
+    433: 	/* Executed during driver probing */
+    434: 	int (*probe)(struct uniwill_data *data);
+    435: };
+    436: 
+
+  [uniwill_keymap around UNIWILL_OSD_PERFORMANCE_MODE_TOGGLE (0xB0) and its KEY_F14 mapping]
+  uniwill-acpi.c lines 470-482
+    470: 	{ KE_IGNORE,	UNIWILL_OSD_SUPER_KEY_STATE_CHANGED,	{ KEY_UNKNOWN }},
+    471: 
+    472: 	/* Reported in manual mode when toggling the airplane mode status */
+    473: 	{ KE_KEY,       UNIWILL_OSD_RFKILL,                     { KEY_RFKILL }},
+    474: 	{ KE_IGNORE,    UNIWILL_OSD_RADIOON,                    { KEY_UNKNOWN }},
+    475: 	{ KE_IGNORE,    UNIWILL_OSD_RADIOOFF,                   { KEY_UNKNOWN }},
+    476: 
+    477: 	/* Reported when user wants to cycle the platform profile */
+    478: 	{ KE_KEY,       UNIWILL_OSD_PERFORMANCE_MODE_TOGGLE,    { KEY_F14 }},
+    479: 
+    480: 	/* Reported when the user wants to adjust the brightness of the keyboard */
+    481: 	{ KE_KEY,       UNIWILL_OSD_KBDILLUMDOWN,               { KEY_KBDILLUMDOWN }},
+    482: 	{ KE_KEY,       UNIWILL_OSD_KBDILLUMUP,                 { KEY_KBDILLUMUP }},
+
+  [uniwill_writeable_reg -- the gate every new written address has to be added to]
+  uniwill-acpi.c lines 597-612
+    597: 	switch (reg) {
+    598: 	case EC_ADDR_OEM_9:
+    599: 	case EC_ADDR_AP_OEM:
+    600: 	case EC_ADDR_LIGHTBAR_AC_CTRL:
+    601: 	case EC_ADDR_LIGHTBAR_AC_RED:
+    602: 	case EC_ADDR_LIGHTBAR_AC_GREEN:
+    603: 	case EC_ADDR_LIGHTBAR_AC_BLUE:
+    604: 	case EC_ADDR_BIOS_OEM:
+    605: 	case EC_ADDR_TRIGGER:
+    606: 	case EC_ADDR_RGB_RED:
+    607: 	case EC_ADDR_RGB_GREEN:
+    608: 	case EC_ADDR_RGB_BLUE:
+    609: 	case EC_ADDR_BIOS_OEM_2:
+    610: 	case EC_ADDR_KBD_STATUS:
+    611: 	case EC_ADDR_OEM_4:
+    612: 	case EC_ADDR_CHARGE_CTRL:
+
+  [uniwill_readable_reg]
+  uniwill-acpi.c lines 626-640
+    626: }
+    627: 
+    628: static bool uniwill_readable_reg(struct device *dev, unsigned int reg)
+    629: {
+    630: 	switch (reg) {
+    631: 	case EC_ADDR_CPU_TEMP:
+    632: 	case EC_ADDR_GPU_TEMP:
+    633: 	case EC_ADDR_MAIN_FAN_RPM_1:
+    634: 	case EC_ADDR_MAIN_FAN_RPM_2:
+    635: 	case EC_ADDR_SECOND_FAN_RPM_1:
+    636: 	case EC_ADDR_SECOND_FAN_RPM_2:
+    637: 	case EC_ADDR_BAT_ALERT:
+    638: 	case EC_ADDR_OEM_9:
+    639: 	case EC_ADDR_PROJECT_ID:
+    640: 	case EC_ADDR_AP_OEM:
+
+  [uniwill_volatile_reg]
+  uniwill-acpi.c lines 674-690
+    674: static bool uniwill_volatile_reg(struct device *dev, unsigned int reg)
+    675: {
+    676: 	switch (reg) {
+    677: 	case EC_ADDR_CPU_TEMP:
+    678: 	case EC_ADDR_GPU_TEMP:
+    679: 	case EC_ADDR_MAIN_FAN_RPM_1:
+    680: 	case EC_ADDR_MAIN_FAN_RPM_2:
+    681: 	case EC_ADDR_SECOND_FAN_RPM_1:
+    682: 	case EC_ADDR_SECOND_FAN_RPM_2:
+    683: 	case EC_ADDR_BAT_ALERT:
+    684: 	case EC_ADDR_BIOS_OEM:
+    685: 	case EC_ADDR_PWM_1:
+    686: 	case EC_ADDR_PWM_2:
+    687: 	case EC_ADDR_SUPPORT_2:
+    688: 	case EC_ADDR_TRIGGER:
+    689: 	case EC_ADDR_SWITCH_STATUS:
+    690: 	case EC_ADDR_KBD_STATUS:
+
+  [uniwill_ec_config]
+  uniwill-acpi.c lines 700-712
+    700: static const struct regmap_config uniwill_ec_config = {
+    701: 	.reg_bits = 16,
+    702: 	.val_bits = 8,
+    703: 	.writeable_reg = uniwill_writeable_reg,
+    704: 	.readable_reg = uniwill_readable_reg,
+    705: 	.volatile_reg = uniwill_volatile_reg,
+    706: 	.can_sleep = true,
+    707: 	.max_register = 0xFFF,
+    708: 	.cache_type = REGCACHE_MAPLE,
+    709: 	.use_single_read = true,
+    710: 	.use_single_write = true,
+    711: };
+    712: 
+
+  [uniwill_attrs -- where this patch adds the two profile attributes]
+  uniwill-acpi.c lines 1250-1270
+   1250: 
+   1251: static DEVICE_ATTR_RW(usb_powershare_high);
+   1252: 
+   1253: static struct attribute *uniwill_attrs[] = {
+   1254: 	/* Keyboard-related */
+   1255: 	&dev_attr_fn_lock.attr,
+   1256: 	&dev_attr_super_key_enable.attr,
+   1257: 	&dev_attr_touchpad_toggle_enable.attr,
+   1258: 	/* Lightbar-related */
+   1259: 	&dev_attr_rainbow_animation.attr,
+   1260: 	&dev_attr_breathing_in_suspend.attr,
+   1261: 	/* Power-management-related */
+   1262: 	&dev_attr_ctgp_offset.attr,
+   1263: 	&dev_attr_usb_c_power_priority.attr,
+   1264: 	&dev_attr_ac_auto_boot.attr,
+   1265: 	&dev_attr_usb_powershare_high.attr,
+   1266: 	NULL
+   1267: };
+   1268: 
+   1269: static umode_t uniwill_attr_is_visible(struct kobject *kobj, struct attribute *attr, int n)
+   1270: {
+
+  [uniwill_attr_is_visible and uniwill_group]
+  uniwill-acpi.c lines 1287-1325
+   1287: 	}
+   1288: 
+   1289: 	if (attr == &dev_attr_rainbow_animation.attr ||
+   1290: 	    attr == &dev_attr_breathing_in_suspend.attr) {
+   1291: 		if (uniwill_device_supports(data, UNIWILL_FEATURE_LIGHTBAR))
+   1292: 			return attr->mode;
+   1293: 	}
+   1294: 
+   1295: 	if (attr == &dev_attr_ctgp_offset.attr) {
+   1296: 		if (uniwill_device_supports(data, UNIWILL_FEATURE_NVIDIA_CTGP_CONTROL))
+   1297: 			return attr->mode;
+   1298: 	}
+   1299: 
+   1300: 	if (attr == &dev_attr_usb_c_power_priority.attr) {
+   1301: 		if (uniwill_device_supports(data, UNIWILL_FEATURE_USB_C_POWER_PRIORITY))
+   1302: 			return attr->mode;
+   1303: 	}
+   1304: 
+   1305: 	if (attr == &dev_attr_ac_auto_boot.attr) {
+   1306: 		if (uniwill_device_supports(data, UNIWILL_FEATURE_AC_AUTO_BOOT))
+   1307: 			return attr->mode;
+   1308: 	}
+   1309: 
+   1310: 	if (attr == &dev_attr_usb_powershare_high.attr) {
+   1311: 		if (uniwill_device_supports(data, UNIWILL_FEATURE_USB_POWERSHARE))
+   1312: 			return attr->mode;
+   1313: 	}
+   1314: 
+   1315: 	return 0;
+   1316: }
+   1317: 
+   1318: static const struct attribute_group uniwill_group = {
+   1319: 	.is_visible = uniwill_attr_is_visible,
+   1320: 	.attrs = uniwill_attrs,
+   1321: };
+   1322: 
+   1323: static const struct attribute_group *uniwill_groups[] = {
+   1324: 	&uniwill_group,
+   1325: 	NULL
+
+  [The default: arm of uniwill_notify, which is where 0xB0 is intercepted]
+  uniwill-acpi.c lines 2238-2250
+   2238: 		if (!uniwill_device_supports(data, UNIWILL_FEATURE_KEYBOARD_BACKLIGHT))
+   2239: 			return NOTIFY_DONE;
+   2240: 
+   2241: 		return notifier_from_errno(uniwill_notify_kbd_led(data, 4));
+   2242: 	default:
+   2243: 		mutex_lock(&data->input_lock);
+   2244: 		sparse_keymap_report_event(data->input_device, action, 1, true);
+   2245: 		mutex_unlock(&data->input_lock);
+   2246: 
+   2247: 		return NOTIFY_OK;
+   2248: 	}
+   2249: }
+   2250: 
+
+  [uniwill_probe, where the profile is initialised]
+  uniwill-acpi.c lines 2344-2350
+   2344: 	 * Some devices might need to perform some device-specific initialization steps
+   2345: 	 * before the supported features are initialized. Because of this we have to call
+   2346: 	 * this callback just after the EC itself was initialized.
+   2347: 	 */
+   2348: 	if (device_descriptor.probe) {
+   2349: 		ret = device_descriptor.probe(data);
+   2350: 		if (ret < 0)
+
+  [uniwill_driver]
+  uniwill-acpi.c lines 2648-2664
+   2648: static const struct acpi_device_id uniwill_id_table[] = {
+   2649: 	{ "INOU0000" },
+   2650: 	{ },
+   2651: };
+   2652: 
+   2653: static struct platform_driver uniwill_driver = {
+   2654: 	.driver = {
+   2655: 		.name = DRIVER_NAME,
+   2656: 		.dev_groups = uniwill_groups,
+   2657: 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
+   2658: 		.acpi_match_table = uniwill_id_table,
+   2659: 		.pm = pm_sleep_ptr(&uniwill_pm_ops),
+   2660: 	},
+   2661: 	.probe = uniwill_probe,
+   2662: 	.shutdown = uniwill_shutdown,
+   2663: };
+   2664: 
+
+  [A real descriptor, for the field-initialiser style]
+  uniwill-acpi.c lines 2805-2814
+   2805: static struct uniwill_device_descriptor phxtxx1_descriptor __initdata = {
+   2806: 	.features = UNIWILL_FEATURE_FN_LOCK |
+   2807: 		    UNIWILL_FEATURE_SUPER_KEY |
+   2808: 		    UNIWILL_FEATURE_BATTERY_CHARGE_MODES |
+   2809: 		    UNIWILL_FEATURE_CPU_TEMP |
+   2810: 		    UNIWILL_FEATURE_PRIMARY_FAN |
+   2811: 		    UNIWILL_FEATURE_USB_C_POWER_PRIORITY,
+   2812: 	.probe = phxtxx1_probe,
+   2813: };
+   2814: 
+
+  [The head of uniwill_dmi_table, for the row syntax]
+  uniwill-acpi.c lines 2862-2872
+   2862: 
+   2863: static const struct dmi_system_id uniwill_dmi_table[] __initconst = {
+   2864: 	{
+   2865: 		.ident = "AiStone X4SP4NAL",
+   2866: 		.matches = {
+   2867: 			DMI_MATCH(DMI_SYS_VENDOR, "AiStone"),
+   2868: 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "X4SP4NAL"),
+   2869: 		},
+   2870: 		.driver_data = &x4sp4nal_descriptor,
+   2871: 	},
+   2872: 	{
+
+  [The end of uniwill_dmi_table and the { } terminator]
+  uniwill-acpi.c lines 3310-3321
+   3310: 	},
+   3311: 	{
+   3312: 		.ident = "TUXEDO Pulse 15 Gen2 AMD",
+   3313: 		.matches = {
+   3314: 			DMI_MATCH(DMI_SYS_VENDOR, "TUXEDO"),
+   3315: 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "PF5LUXG"),
+   3316: 		},
+   3317: 		.driver_data = &tux_featureset_1_descriptor,
+   3318: 	},
+   3319: 	{ }
+   3320: };
+   3321: MODULE_DEVICE_TABLE(dmi, uniwill_dmi_table);
+
+  [MODULE_AUTHOR / MODULE_LICENSE]
+  uniwill-acpi.c lines 3380-3386
+   3380: 	platform_driver_unregister(&uniwill_driver);
+   3381: }
+   3382: module_exit(uniwill_exit);
+   3383: 
+   3384: MODULE_AUTHOR("Armin Wolf <W_Armin@gmx.de>");
+   3385: MODULE_DESCRIPTION("Uniwill notebook driver");
+   3386: MODULE_LICENSE("GPL");

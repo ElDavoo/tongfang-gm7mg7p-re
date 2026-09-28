@@ -37,7 +37,7 @@ void loop_256_passes_over_07cf(void)
     write4xdata_from_r4_r7();
     cVar2 = scaled_lookup_from_a_times_5e_plus_f8(uVar1);
     if (cVar2 == '\0') {
-      FUN_CODE_e8d4(BANK0_R3);
+      index_07d0_by_0x17_then_fill_128d_and_call_f604(BANK0_R3);
     }
     cVar2 = DAT_EXTMEM_07cf;
     DAT_EXTMEM_07cf = DAT_EXTMEM_07cf + '\x01';

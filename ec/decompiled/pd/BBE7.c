@@ -69,7 +69,7 @@ void branch_on_ram_r5_then_set_indirect_bits(byte *param_1)
   write4xdata_from_r4_r7(0x7da,0,0,0,cVar3 == '\0');
   BANK0_R7 = cVar2;
   DAT_EXTMEM_07de = cVar1;
-  FUN_CODE_f775();
+  write_r7_to_xdata_07d9();
   return;
 }
 

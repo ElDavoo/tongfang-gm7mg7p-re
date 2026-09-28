@@ -112,23 +112,27 @@ whose `attr` is a name in `MODES`; on the committed tree it is `[]`, and a mode
 reached that way fails **loudly** rather than being missed quietly. That is the
 difference between a shape-independence the check has and one it is hoped for.
 
-`TripwireCoverage` now holds four cases, each pinning one of those claims:
+`TripwireCoverage` holds a case for each of those claims, and a case per
+dispatch position the reader reaches beyond the two shapes above, added by
+issue #696:
 
 | case | pins |
 |---|---|
 | `test_modes_is_every_entry_point_main_dispatches_to` | the committed dispatch is `MODES` — unchanged, and evidence the fix did not over-collect |
 | `test_a_mode_dispatched_as_a_statement_is_collected_too` | the issue's shape, on synthetic source |
+| `test_every_position_the_docstring_names_is_collected_too` | the assignment right-hand side, the `with` header and the bare comprehension — one `subTest` each, on the sources `DISPATCH_POSITIONS` keys under those words; see [`xdata-dispatch-position-pins.md`](xdata-dispatch-position-pins.md) |
 | `test_the_dispatch_reaches_no_mode_as_an_attribute` | the boundary is clean on the committed tree |
 | `test_a_mode_reached_as_an_attribute_is_caught_by_the_other_reader` | the shape is actually caught, so the case above is a property and not a helper that answers `[]` to anything |
 
-**The two synthetic cases are the regression pins, and they are on synthetic
+**The synthetic-source cases are the regression pins, and they are on synthetic
 source for a reason that is the point.** The committed `main()` dispatches all
 nine of its modes as a `return`, so an edit narrowing the reader back to
 `visit_Return` would leave `test_modes_is_every_entry_point_main_dispatches_to`
 green. Only a source that does not come from the tool can show the reader stopped
 depending on that shape. Measured: with the reader narrowed back to
-`visit_Return`, the committed-dispatch case stays green and the
-statement-position case goes red with `Lists differ: [] != ['demo_mode']`.
+`visit_Return`, the committed-dispatch case stays green, the statement-position
+case goes red with `Lists differ: [] != ['demo_mode']`, and since #696 each of
+the three position `subTest`s goes red with that same string.
 
 ## Shown to fail, not merely shown to pass
 
@@ -232,7 +236,7 @@ not disturb the tripwire the reader exists to keep complete.
 
 - **The check holds for a bare-name call in statement or return position, and
   for a call reached through a wrapper it holds the wrapper's name.** All three
-  are measurements on the committed tree and on the two synthetic sources named
+  are measurements on the committed tree and on the synthetic sources named
   as constants in the suite, not readings of the AST module.
 - **It does not hold for an attribute-qualified dispatch, and that is asserted
   rather than left open.** `mode_attributes` is `[]` on the committed tree and
@@ -259,7 +263,7 @@ not disturb the tripwire the reader exists to keep complete.
   in `ec/annotations/registers.yaml` changes.
 - **It does not touch `--export-ownership`'s pair of refusals.** That is #604,
   and it is already landed — this suite's `Refusals` cases loop over both flags.
-  The change here is confined to the `Dispatch` reader, the two synthetic-source
+  The change here is confined to the `Dispatch` reader, the synthetic-source
   constants, and the cases in `TripwireCoverage`; `MODES`, `Refusals`,
   `AcceptedWrite` and the module docstring are untouched.
 - **It is not a gate arm.** `.github/scripts/agent-gates.sh` compiles

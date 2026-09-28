@@ -22,11 +22,12 @@ what a single run cannot distinguish -- run it again with and without the action
 before believing any of it.
 
 With both --mark and --csv, each mark is written into the CSV as its own row
-(`ts,MARK,,label`) as well as printed, so the capture alone says when the
-operator acted -- see ec/tools/grade_0751_isolation.py, which grades a capture
-by what moved between one mark and the next. A blank line is not a mark: the
-prompt records nothing, says so, and asks again, so no capture holds a mark
-the operator did not describe. `ec_watch-marks.md` is why.
+(`ts,MARK,,label,provenance`) as well as printed, so the capture alone says
+when the operator acted and, under --label-vocab, which program wrote it, not which console -- see
+ec/tools/grade_0751_isolation.py, which grades a capture by what moved between
+one mark and the next. A blank line is not a mark: the prompt records nothing,
+says so, and asks again, so no capture holds a mark the operator did not
+describe. `ec_watch-marks.md` is why.
 
 `--label-vocab 0751` is that refusal one step earlier, and opt-in: the prompt
 refuses a label the 0751 grader's own `parse_mark` cannot read, quotes §3's
@@ -54,7 +55,7 @@ the three CSVs as one set for the whole run -- blocks 2 and 3 are meant to land
 on the marks block 1 left there. So a file can carry marks this
 process did not type and could not have checked: a pre-`--label-vocab` run, a
 console started without the flag, a watcher restarted mid-block, or a
-`manual_fan_ctrl_probe.py` capture, which writes the same `ts,MARK,,label` row.
+`manual_fan_ctrl_probe.py` capture, which writes that row and no fifth field.
 A run that finds any says so, naming them, above the file and a long way above
 the EC -- a warning rather than a refusal, because §3's own second block is
 that collision and because no process can check a mark another one already
@@ -145,7 +146,13 @@ class CsvSink:
         self._writer = csv.writer(self._fh)
         self._lock = threading.Lock()
         if self._fh.tell() == 0:
-            self.row(["ts", "addr", "old", "new"])
+            # Five names over rows of four or five fields, which is the shape
+            # and not a mistake: `provenance` is a mark-row column and a
+            # change row is still `ts,addr,old,new`. Every reader in the tree
+            # drops this row on `row[0] == "ts"` or through `skippable_row`, so
+            # a name the change rows do not use costs none of them, and a
+            # header naming four would document a five-field mark row wrongly.
+            self.row(["ts", "addr", "old", "new", "provenance"])
 
     def row(self, values):
         with self._lock:
@@ -417,14 +424,24 @@ class Marker:
     and both default to None rather than to a rule: this class is imported by
     `gpu_block_watch.py`, which takes free-form labels a 0751 check would
     refuse, so a default that checked anything would break it.
+
+    `provenance` is the mark row's fifth column, and the same defaulting is
+    what makes the reader's second state reachable at all. The three states are
+    absent (a pre-change file), present and empty (a process that held no
+    flag) and present and populated (one that did); a writer that omitted the
+    column when it had nothing to put in it would make the second
+    indistinguishable from the first, and `gpu_block_watch.py`'s marks are the
+    case that would pay for it. See `existing_mark_provenance`, and #719's
+    measurement of why the column was not on the row before.
     """
 
-    def __init__(self, sink=None, check=None, forms=None):
+    def __init__(self, sink=None, check=None, forms=None, provenance=None):
         self.marks = []
         self._n = 0
         self._sink = sink
         self._check = check
         self._forms = forms or ()
+        self._provenance = provenance
 
     def start(self):
         t = threading.Thread(target=self._loop, daemon=True)
@@ -470,7 +487,11 @@ class Marker:
             ts = now()
             self.marks.append((ts, label))
             if self._sink:
-                self._sink.row([ts, "MARK", "", label])
+                # Five fields always, the fifth empty rather than missing: a
+                # column written only when there is something to put in it
+                # would collapse "held no flag" into "not recorded".
+                self._sink.row([ts, "MARK", "", label,
+                                self._provenance or ""])
             print(f"--- {ts}  MARK: {label} ---", flush=True)
 
 
@@ -519,7 +540,7 @@ def main(argv=None):
     # the same promise seen from the file's side rather than the process's: it
     # names what the --csv already holds, and the file has to exist to be
     # read, so the fresh path of §3's block 1 stays quiet on both counts.
-    check = forms = None
+    check = forms = provenance = None
     if args.grader and not args.label_vocab:
         # The same shape as the one below, and for the same reason: it is a
         # modifier of --label-vocab, and a grader path beside a run that reads
@@ -532,6 +553,14 @@ def main(argv=None):
                      "place a label is typed")
         check, forms, existing_marks, existing_findings = load_label_vocab(
             ap, args.label_vocab, args.grader)
+        # A record rather than a dump of sys.argv. The two facts a reader of a
+        # capture cannot get any other way are which program wrote the mark
+        # and whether it held the vocabulary; a raw join would also carry
+        # commas, path bytes that are not the format's charset, and a length no
+        # reader needs, and a pid would make a committed capture differ every
+        # time it was taken.
+        provenance = (f"prog={Path(sys.argv[0]).name} "
+                      f"label-vocab={args.label_vocab}")
         if args.csv and Path(args.csv).is_file():
             warn_unchecked_marks(args.csv, existing_findings)
 
@@ -541,7 +570,7 @@ def main(argv=None):
 
     sink = CsvSink(args.csv) if args.csv else None
 
-    marker = Marker(sink, check, forms)
+    marker = Marker(sink, check, forms, provenance)
     if args.mark:
         marker.start()
 

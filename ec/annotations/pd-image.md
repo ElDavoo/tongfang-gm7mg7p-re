@@ -56,8 +56,8 @@ zip inflated — which is the point of §5.1, not a limitation of the transcript
 | in use | `0x0000`-`0xF7B7` |
 | erased | `0xF7B8`-`0xFFFF` (2,120 bytes) |
 | `0xFF` bytes in total | 3,705 |
-| committed listings | 535 (`ec/decompiled/pd/*.asm`), 0 overlapping addresses |
-| annotated rows | 498 (`../annotations/ghidra-functions.csv`, `scope` = `pd`) |
+| committed listings | 541 (`ec/decompiled/pd/*.asm`), 0 overlapping addresses |
+| annotated rows | 541 (`../annotations/ghidra-functions.csv`, `scope` = `pd`) |
 
 The single erased run in the region is the tail. There is no other 64-byte
 `0xFF` gap anywhere in it, so the image is packed: Keil/SDCC constant pools sit
@@ -342,24 +342,25 @@ separate columns rather than summing them.
 
 ### 4.1 What is decoded
 
-18 of the 498 `pd`-scoped annotation rows are typed `dispatch`:
+20 of the 541 `pd`-scoped annotation rows are typed `dispatch`:
 
 | addr | name | addr | name |
 |---|---|---|---|
-| `0x0180` | `dispatch_r5_write_083b_0300` | `0xA339` | `stash_args_dispatch_code_table` |
+| `0x0180` | `dispatch_r5_write_083b_0300` | `0x4E84` | `dispatch_case_09` |
+| `0x0B85` | `index_from_r5_r3_then_jmp_at_0b05` | `0xA339` | `stash_args_dispatch_code_table` |
 | `0x0F45` | `read4_ptr_kind_dispatch` | `0xA571` | `dispatch_on_state_07d0` |
 | `0x10FD` | `read3_ptr_kind_dispatch` | `0xA8AE` | `event_dispatch_ff80_ffe0` |
 | `0x119C` | `dispatch_code_table` | `0xADAB` | `copy_0809_to_080a_then_dispatch_0805` |
 | `0x11C2` | `dispatch_code_table_2byte_key` | `0xB24C` | `load_r3_r0_jmp_0f0e` |
 | `0x133F` | `clear_0807_0808_dispatch_0805` | `0xC901` | `dispatch_on_r3_then_add_product_to_0699` |
-| `0x4C27` | `dispatch_entry` | `0xE458` | `store_07d8_and_dispatch_07da` |
-| `0x4D6F` | `dispatch_case_06` | `0xEF59` | `stage_07d6_call_715e_6faf_tail_e5b3` |
-| `0x4E84` | `dispatch_case_09` | `0xEF79` | `stage_07d6_call_716c_6faf_tail_e5b3` |
+| `0x1EFE` | `gate_0803_then_dispatch_through_code_table` | `0xE458` | `store_07d8_and_dispatch_07da` |
+| `0x4C27` | `dispatch_entry` | `0xEF59` | `stage_07d6_call_715e_6faf_tail_e5b3` |
+| `0x4D6F` | `dispatch_case_06` | `0xEF79` | `stage_07d6_call_716c_6faf_tail_e5b3` |
 
 Three of those — `0x0F45`, `0x10FD` and `0xB24C` — dispatch on a *pointer
 kind* register (R3 = 1 / 0 / `0xFE` / default), which selects XDATA versus
 internal RAM versus CODE for a load. They are dispatchers and they are not
-host-facing, and a count of "18 dispatch routines" that did not say which
+host-facing, and a count of "20 dispatch routines" that did not say which
 would be a number without a referent.
 
 ### 4.2 The XDATA block a host would touch
@@ -502,7 +503,7 @@ tell which sentences are load-bearing will over-read the ones that are.
    vocabulary accepts, and none of the string-derived anchors is anchored to
    the referring routine yet, because §3.1 has not found the referrers. Doing
    it now would be a rename with no evidence behind it, and a rename churns
-   `ec/decompiled/pd/*.c` paths across 535 functions.
+   `ec/decompiled/pd/*.c` paths across 541 functions.
 
 ## 7. Pinned figures
 
@@ -533,10 +534,10 @@ pool_candidates = 43
 pool_referrers = 0
 code_table_inline = 0x119C=9site/0open_a_string 0x11C2=16site/0open_a_string
 identity_strings = ITE8850-PD@0x0040 ProtoVer:01.00@0x0160 DriverVer:01.00@0x0170 UsbPdVer:01.00@0xE1C0
-pd_listings = 535
+pd_listings = 541
 pd_listing_overlaps = 0
-pd_annotation_rows = 498
-pd_dispatch_rows = 18
+pd_annotation_rows = 541
+pd_dispatch_rows = 20
 host_block = 0xFF80=5 0xFFE0=6 0xFFE1=4 0xFFE2=4 0xFFE3=0 0xFFD0=2 0xFFD1=0 0xFFD5=2
 prov_ec_member_sha256 = 158d1c6416426939a814146b766a44e2ff0e9286b0abd237e70e51a0c03399c4
 prov_ec_member_is_committed = True
@@ -570,8 +571,8 @@ prov_zip_other_members = 6
 - [`pd-base-strides.csv`](pd-base-strides.csv) — the 448 XDATA bases §2.1 names
   five of.
 - [`../ghidra/manifest.csv`](../ghidra/manifest.csv) — the `pd` row: this image
-  is already the third program of the committed `ec.gpr`, 535 functions, 535
-  decompiled, 0 failed, 499 seeds, 498 annotations applied. Issue #26 asked
+  is already the third program of the committed `ec.gpr`, 541 functions, 541
+  decompiled, 0 failed, 541 seeds, 541 annotations applied. Issue #26 asked
   whether it belongs in #20's Ghidra scope; it does, and has.
 - [`../../docs/findings/pd-image-census.md`](../../docs/findings/pd-image-census.md)
   — the write-up, in the house shape.

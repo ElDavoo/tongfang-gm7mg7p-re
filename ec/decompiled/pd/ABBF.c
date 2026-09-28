@@ -57,7 +57,7 @@ void build_masked_indexed_table_bytes(byte r7_value)
     bVar1 = 1;
     set_or_clear_bits_1_2_6_via_9028(BANK0_R5);
   }
-  FUN_CODE_b8db(DAT_EXTMEM_07d7);
+  init_07d8_indexed_flags_to_ff(DAT_EXTMEM_07d7);
   pbVar6 = &DAT_EXTMEM_07d7;
   bVar2 = DAT_EXTMEM_07d7;
   make_dptr_a_minus_3_col_12(DAT_EXTMEM_07d7);

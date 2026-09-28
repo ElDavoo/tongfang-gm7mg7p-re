@@ -498,6 +498,17 @@ have no committed listing that spells them, and `call_graph.py` parses
 listings. Carrying all 14 is a follow-up, so the census's silence here should
 not be read as the bytes being in dispute.
 
+**The six entries are functions now, and 1 of the 14 still stands** — for a
+different reason, which is the census's shape rather than their being unnamed.
+Issue #1101 gave `0x4C12`, `0x4C19`, `0x52EF`, `0x531F`, `0x7B0D` and `0x856F`
+their rows and their listings, and the regenerated census moved one line that is
+not one of the seven: `0xF739` goes `inbound` 18 → 24, because each new listing
+contributes its one `lcall 0xf739`. `0x4C20` is unmoved, the six still hold no
+row — `call_graph.py` writes a row per callee a committed listing *reaches*, so
+naming more callees adds no caller — and the file is still 1,841 rows. The
+thirteen unspelled *caller* addresses are what a follow-up has to seed. Write-up:
+[`../../docs/findings/pd-07d0-accessor-stubs.md`](../../docs/findings/pd-07d0-accessor-stubs.md).
+
 **So the warning above holds after the change, and holds for seven cells
 rather than eleven.** A `none` cell is "this method stopped", and a method that
 stops at a `ret` has not learned that the register is untouched. The full

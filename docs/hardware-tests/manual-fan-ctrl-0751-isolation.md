@@ -287,11 +287,21 @@ itself is worth less than no block.
 `--mark` is what makes the CSV readable afterwards: without a timestamp for
 "I wrote it now", a byte that moves 400 ms later and one that moves 40 s
 later look the same in the log. With `--csv` it writes each mark into the
-capture itself as a `ts,MARK,,label` row, so the CSV is self-contained — type
-what you just did as the label — one of the six forms the block above names,
-`rem mark each console:` under each round — rather than keeping the timing
-in separate notes. **A blank line records nothing: the mark prompt says so and
-asks again**, so there is no such thing as an unnamed mark in a capture
+capture itself as a `ts,MARK,,label,provenance` row, so the CSV is
+self-contained — type what you just did as the label, one of the six forms
+the block above names, `rem mark each console:` under each round, rather
+than keeping the timing in separate notes. **The fifth field records which
+program wrote the mark and whether that process held `--label-vocab`**: it
+is empty unless the console was started with the flag, and where it is set
+it names the program and the vocabulary. **It does not tell the three §3
+consoles apart.** All three run the same `ec_watch.py` with the same
+`--label-vocab 0751`, so all three write the byte-identical
+`prog=ec_watch.py label-vocab=0751`; nothing in the file says which window
+a mark was typed in. The three captures are told apart by their
+`--csv` filenames, as the block above names them, and a mark's window
+within a capture is still whatever the operator remembers. **A blank line
+records nothing: the mark prompt says so and asks again**, so there is no
+such thing as an unnamed mark in a capture
 ([`../../windows/tools/ec_watch-marks.md`](../../windows/tools/ec_watch-marks.md)).
 Mark the same action in all three consoles within a few
 seconds of each other; the grader treats marks less than five seconds apart as
@@ -812,8 +822,10 @@ to take for no reason:
   is given a second time as the two `--dump`s §4.6's readback is taken from.
 - **The snapshot is the human's.** Nothing in the tool reads it, because it
   is `#`-comment header text and `read_dump` skips comment lines rather than
-  parsing them. It is in the set because §3's step 0 writes it and because
-  it is the only record of which mode a block started from.
+  parsing them. It is in the set because §2's last bullet has the operator
+  write it, in the format it names, and because it is the only record of which
+  mode a block started from. §3's step 0 is three `ecrw.py dump` calls
+  redirected to the `-before-` dumps, and writes none of this.
 
 Pass one block's dumps, with the `after` one last — the §4.6 readback
 check is taken from the final `--dump`, and before-then-after is the order
@@ -938,7 +950,27 @@ stronger one: a byte that moved and was back where it started by the
 after-dump reads unchanged here whether or not the captures recorded it.
 Each read has a gap the other does not close. An address one dump covers and
 the other does not is a coverage gap, never a change, and the section emits
-no status of its own.
+no status of its own. The `0x0400` pair's *other addresses that differ* is
+expected on a real run to carry the battery's own numbers rather than a fan
+byte: `0x0438`/`0x0439` and `0x0434`/`0x0435`, which the firmware divides
+by 100 into `0x0448` and `0x0449` respectively, and only on one branch of
+`scale_0438_into_0448` and `store_scaled_quotient_0449`, so the two
+quotients are in the bucket in their own right; and two more that
+`../../ec/annotations/xdata-0400-045f.md` §8 tabulates for that page and
+that land in this bucket rather than in the §4.5 one, `0x0436` and
+`0x044C`; §8's six moved bytes split four here, those two and the `0x0438`
+and `0x0449` above, and the other two are the temperatures `0x043E` and
+`0x044F`, which print as context. That is an expectation and not a result,
+drawn from `../../evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv`
+and from what step 3 asks of the load; nothing here reports a bracket that a
+run has produced. On a run those bytes are expected to differ, and a
+difference there says nothing about the write: a fixed CPU load is one thing
+that would move them, and the capture this paragraph cites is a battery-mode
+cycle rather than step 3's fixed-load block, with §8 naming no cause for what
+moved there — `0x0449` and `0x044C` as sensor-scale jitter in both
+directions. So the load is one candidate reason and not an established one,
+and the section names the bytes and their 16-bit readings for you and still
+grades none of them.
 `0x0F5D-0x0F5F`, the three bytes at the end of a `0x0F00-0x0F5F` dump, is
 reported under a heading of its own rather than under §4.2's, because they
 are the mailbox `../../ec/annotations/manual-fan-ctrl-0751.md` §6 decodes at

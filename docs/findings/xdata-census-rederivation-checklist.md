@@ -372,6 +372,18 @@ measurement.
 > flip — which is what turns a per-cell number into a null rather than a
 > mechanism.
 
+> **Note (2026-09-28, issue #904): `79 in 408` is a rate over the 408 that
+> reappear, not over the 439.** *"The whole census"* names the population, and
+> the figure under it is conditional on reappearance — the row above prints
+> `408/439` and divides by 439. The number is right and the label is not, and
+> the parenthetical pins the number without repairing the label, so this is the
+> same defect the other three instances of it carry. The mode now brackets that
+> cell (`[of the 408 that reappear, not of the population]`). **No figure
+> moves**: the `10 of the 60`, the `19.4%` and the null are exactly as they
+> were. See
+> [`xdata-moved-ranks-population-denominator.md`](xdata-moved-ranks-population-denominator.md)
+> §3.
+
 > **There is no third pair to find, and the count above is the floor's to this
 > day** (issue #885).
 > [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) went looking

@@ -1049,11 +1049,13 @@ def print_helpers(d: bytes, entries=None) -> None:
         print(f"{len(HELPERS)} helper entries named by "
               "../annotations/pd-xdata-overlap.md 3 and 5.2\n")
     else:
-        print(f"{len(entries)} helper entry/entries named on the command line\n")
         # Over the whole run first, as site_rows() does, so one bad entry in a
-        # multi-entry call is the diagnostic rather than a partial listing.
+        # multi-entry call is the diagnostic rather than a partial listing --
+        # and ahead of the count line, not behind it, so that a refusal leaves
+        # stdout empty on a redirect as it does for --sites and --callers.
         for entry in entries:
             check_site_addr(entry)
+        print(f"{len(entries)} helper entry/entries named on the command line\n")
     for entry in entries:
         terms, listing, note, _ = walk_helper(d, entry)
         # Terms *and* a note is the ordinary case for a mid-routine entry that
@@ -2180,6 +2182,25 @@ def self_test(fw_path: str) -> int:
               and f"0x{lo:05X}-0x{hi - 1:05X}" in msg,
               f"--helpers 0x{entry:05X} is refused naming {PD_REGION} and both "
               f"ranges (got {msg!r})")
+    # The third mode, and the one whose refusal it inherits rather than
+    # declares: caller_rows() has no check_site_addr() call of its own and
+    # reaches one through the site_rows(d, [site]) it already makes to decode
+    # the site's index registers. So an edit to caller_rows() that stopped
+    # calling site_rows() would drop --callers' refusal silently, and this is
+    # the only assertion that would notice -- the other two pin their own
+    # modes' checks directly. Suppressed because that edit's failure is to
+    # start printing a caller list where the diagnostic belongs.
+    for site in (0x1FFFF, 0x23478):
+        try:
+            with redirect_stdout(io.StringIO()):
+                print_callers(d, [site])
+            msg = "<no refusal>"
+        except ValueError as exc:
+            msg = str(exc)
+        check(PD_REGION in msg and "0x0000-0xFFFF" in msg
+              and f"0x{lo:05X}-0x{hi - 1:05X}" in msg,
+              f"--callers 0x{site:05X} is refused naming {PD_REGION} and both "
+              f"ranges (got {msg!r})")
 
     # A count bounds work, not the buffer: the region end bounds the walk and
     # the count stays the cap. 0xFFFF is a legal address and the fill past the
@@ -2356,17 +2377,27 @@ def main() -> int:
                     help="raw EC firmware image (e.g. ec/firmware/GMxMGxx_11.800)")
     ap.add_argument("--helpers", nargs="*", metavar="ADDR",
                     help="decode each named index helper and report its DPTR "
-                         "term(s); with no argument, the eleven named ones")
+                         "term(s); with no argument, the eleven named ones. ADDR "
+                         "is a PD runtime address like --sites' and --callers', "
+                         "one outside 0x0000-0xFFFF is refused the same way, and "
+                         "one inside the file range is answered with the runtime "
+                         "address at that file_offset")
     ap.add_argument("--bases", nargs="?", const=BASE_RUN, metavar="SPAN",
                     help="every PD site whose MOV DPTR immediate is in SPAN "
                          "(`all`, or 0xLO-0xHI); with no argument, the low "
                          f"base run 0x{BASE_RUN[0]:04X}-0x{BASE_RUN[1]:04X}")
     ap.add_argument("--sites", nargs="+", metavar="ADDR",
-                    help="decode forward from these PD runtime addresses, e.g. 0xC2FA")
+                    help="decode forward from these PD runtime addresses, e.g. 0xC2FA. "
+                         "One outside 0x0000-0xFFFF is refused, and one inside the "
+                         "file range is answered with the runtime address at that "
+                         "file_offset")
     ap.add_argument("--strides", nargs="?", const=BASE_RUN, metavar="SPAN",
                     help="census of the stride constants the decode resolves over SPAN")
     ap.add_argument("--callers", nargs="+", metavar="ADDR",
-                    help="bound the caller set of these PD runtime sites, e.g. 0x7421")
+                    help="bound the caller set of these PD runtime sites, e.g. 0x7421. "
+                         "One outside 0x0000-0xFFFF is refused, and one inside the "
+                         "file range is answered with the runtime address at that "
+                         "file_offset")
     ap.add_argument("--reached", nargs="?", const=BASE_RUN, metavar="SPAN",
                     help="every entry the base sites in SPAN hand DPTR to, with "
                          "the decode outcome each gets; with no argument, the "

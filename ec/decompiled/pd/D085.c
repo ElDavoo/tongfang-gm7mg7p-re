@@ -27,7 +27,7 @@ char decrement_00e2_and_tail_jump_to_d07b(char param_1)
   cVar3 = DAT_EXTMEM_00e2 - 2;
   if (DAT_EXTMEM_00e2 < 2) {
     bVar2 = 1;
-    bVar4 = FUN_CODE_0cf7(0,0xae3);
+    bVar4 = add_a_and_b_to_16bit_at_dptr_return_high(0,0xae3);
     cVar1 = ((bVar2 < 100) << 7) >> 7;
     cVar3 = bVar4 + cVar1;
     if ((byte)-cVar1 <= bVar4) {

@@ -120,20 +120,27 @@ failure being looked for:
     ecrw.py dump 0x0750 0x04 --block             # one MMRD at 0xFE410750
     ecrw.py read 0x0751 0x0752 0x0753 0x0754     # the same four, one byte on
     ecrw.py dump 0x0750 0x08 --block             # 0x0750-0x0757, two MMRDs
+    ecrw.py mmrd 0x0751                          # the unaligned one
 
 Compare each `dump --block` line against the `read` above it, byte for byte at
 the four addresses it names. Issue #147 words the check as one `MMRD` at
-`0xFE410000 + 0x0751`, which is **unaligned** -- `0x0751 % 4 == 1` -- and this
-tool cannot ask that question: `read_dword` refuses an unaligned start and
-`readmany` covers the enclosing block instead, so the block path only ever
-issues the aligned shape. The aligned rows are therefore the ones that bear on
-`--block`. Issuing an unaligned `MMRD` would take a `--mmrd` escape in
-`ecrw.py` that this tool does not have, and an aligned pass beside an
-unaligned fail would be a real result about the access width rather than
-about the flag. Even four matching readbacks at one address would not be proof
-that a wider read is safe across the window: per CLAUDE.md a readback that
-matches is not evidence the EC acts on the access the way it acts on the byte
-one, and #94 is still the open question of what this traffic does to a fan.
+`0xFE410000 + 0x0751`, which is **unaligned** -- `0x0751 % 4 == 1` -- and the
+block path above still only ever issues the aligned shape: `read_dword` refuses
+an unaligned start and `readmany` covers the enclosing block. The `mmrd` line
+is how that question gets put -- `ecrw.py read_dword_unaligned`, the only path
+in either tool that can issue an unaligned `MMRD`, and one that has never been
+run against the driver either. Compare its four bytes against the last `dump
+--block` line on `0x0751`-`0x0754`; an aligned pass beside an unaligned fail
+would be a real result about the access width rather than about the flag. They
+print in the order the copy-back produced them and carry no EC offset of their
+own, because which of the four is the lowest address is a reading of the
+marshalling (`../native/ACPIDriver.sys.analysis.md`) and a tool that labelled
+them would settle it by assumption -- so the comparison is against the `dump`
+line, not against what each byte is called. Even four matching readbacks at one
+address would not be proof that a wider read is safe across the window: per
+CLAUDE.md a readback that matches is not evidence the EC acts on the access the
+way it acts on the byte one, and #94 is still the open question of what this
+traffic does to a fan.
 
 `--level-block` adds 16 more -- `0x0860`-`0x086E` and `0x06E6`, 222 reads per
 sweep -- and is opt-in for exactly that reason: the #99/#122 run's footprint and
@@ -157,9 +164,9 @@ reported, neither is graded: whether the results track fan speed is a human's
 reading of a capture on the machine, and `0x086E` carries no clamps at all, so
 a `0x23` there means nothing of the kind one on `0x086B` means.
 
-`--csv` writes what `ec_watch.py --mark --csv` writes -- `ts,addr,old,new`, with
-this run's three marks as the `MARK` rows -- so the capture is read by
-`ec/tools/grade_0751_isolation.py` with no conversion (issue #124). The marks
+`--csv` keeps the four-column mark row on purpose: this run's three marks
+are `ts,MARK,,label` where `ec_watch.py --mark --csv` now writes five
+fields (#739) -- both are read with no conversion (issue #124). The marks
 are free here: this tool performs both writes and the restore itself and so
 already knows when each landed, which is the one thing `ec_watch.py` needs a
 stdin thread for. The restore's mark is the one that closes the block: the
@@ -401,7 +408,7 @@ def arm_labels(orig, target):
 
 
 class MarkCsv:
-    """Append-only capture in `ec_watch.py --mark --csv`'s row shape.
+    """Append-only capture, four columns where #739 made ec_watch.py's five.
 
     `ts,addr,old,new` with the arm boundaries as `ts,MARK,,label`, which is
     what `ec/tools/grade_0751_isolation.py` already reads -- the format is not

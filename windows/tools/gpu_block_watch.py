@@ -36,10 +36,10 @@ list declaring two named bits and registers.yaml describing three. The
 ec/annotations/registers.yaml" is a statement about that file, never about the
 address.
 
-The CSV schema is `ts,addr,old,new` with a mark as `ts,MARK,,label` -- the
-schema `ec_watch.py` and ec/tools/grade_0751_isolation.py already read, kept
-byte-identical so the offline grader of this procedure's capture,
-`ec/tools/grade_gpu_door.py` (issue #283), needs no parser for this file.
+The CSV schema is `ts,addr,old,new,provenance`, a mark as
+`ts,MARK,,label,provenance` -- the five-field row `ec_watch.py` writes and
+grade_0751_isolation.py reads, kept byte-identical so grade_gpu_door.py
+(#283) needs no new parser; `Marker(sink)` leaves the fifth empty.
 
 The `--interval` default is ec_watch.py's 0.25 s and is a starting point, not a
 safe one: `ecrw.Ec.read` is one ECRR DeviceIoControl per byte with nothing

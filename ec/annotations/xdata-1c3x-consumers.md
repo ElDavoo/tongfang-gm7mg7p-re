@@ -87,7 +87,7 @@ byte the rows the `0x086x` page already published.
 | `0x1C37` | 1 | 1 | 0 | 0 | 1 | — |
 | `0x1C38` | 1 | 1 | 0 | 0 | 1 | — |
 | `0x1C01` | 16 | 1 | 15 | 0 | 16 | nine routines, §4 |
-| `0x1C02` | 13 | 1 | 12 | 0 | 13 | eight routines, §4 — the classifier's two `read`s are not reads of this byte, §4.1 |
+| `0x1C02` | 13 | 1 | 12 | 0 | 13 | eight routines, §4 — the two reads §4.1 describes are no longer in the table, 2026-09-28 |
 | `0x1C03` | 14 | 1 | 13 | 0 | 14 | nine routines, §4 |
 
 The census agrees on the direction and not on the denominator, which is the
@@ -195,13 +195,26 @@ Five of the nine write the literal `0x48` to `0x1C01` — the same constant
 co-occurrence of a constant, and a wrong unit baked into a symbol outlives
 the note that would correct it, so nothing is renamed.
 
-### 4.1 The two `0x1C02` sites the classifier calls reads
+### 4.1 The two `0x1C02` sites the classifier called reads
 
 `0x1C02`'s thirteen sites are eleven `write x1` and two
 `read x1, write x1`. Both of the two are **writes**, and the `movx a,@dptr`
 the classifier counted as a read is of a different address. Only the listing
 settles it, which is the point of `ec/README.md`'s instruction to read `.asm`
 for anything load-bearing.
+
+**Correction, 2026-09-28 (issue #517): both `read x1, write x1` cells are
+gone from the table, and this section is why they were wrong rather than why
+they are right.** `trace_xdata_refs.walk()`'s reload guard tested only
+`mov DPTR,#imm16`, so it ran past the `mov DPL,A` at `0xE378` and the
+`mov DPH,R4` / `mov DPL,R3` at `0xE4B2` and filed the `movx` behind either
+one as a read of `0x1C02`. The guard now stops at every construction that
+replaces DPTR, so `xdata-1c3x-consumers-sites.csv` holds **thirteen `write
+x1` and no `read` at all** for this byte, and §2's `read` column of 0 is now
+what the sweep itself says rather than what this page had to correct it to.
+The decodes below are unchanged and are what the corrected cells were read
+against; the census of what the widening cost across the whole image is
+[`dptr-rebuild-walk-guard.md`](../../docs/findings/dptr-rebuild-walk-guard.md).
 
 `ec/decompiled/bank1/E2D3.asm` at `0xE36E`, inside `FUN_CODE_e2d3`:
 

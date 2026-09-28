@@ -332,14 +332,14 @@ OWNERSHIP_CSV = os.path.join(EC_DIR, "annotations", "xdata-export-ownership.csv"
 OUT_REGISTERS = os.path.join(EC_DIR, "annotations", "xdata-registers.csv")
 OUT_CLUSTERS = os.path.join(EC_DIR, "annotations", "xdata-clusters.csv")
 
-# export_ownership is a sibling tool in this directory, imported by bare module
-# name the way check_site_census.py imports this one. The path is put on
-# sys.path here rather than at the call site so a test loading this file by
-# path -- which does not set sys.path[0] the way running it as a script does --
-# resolves it too.
+# export_ownership and cluster_name_shape are sibling tools here, imported by bare
+# module name the way check_site_census.py imports this one; sys.path is set for
+# them above. This block is four lines: `ASSIGN` is below it, and a fifth would
+# move an anchor `check_eq_guard_citations.py` resolves and five files cite.
 if TOOL_DIR not in sys.path:
     sys.path.insert(0, TOOL_DIR)
 import export_ownership  # noqa: E402
+import cluster_name_shape  # noqa: E402
 
 # The EC firmware proper: common area plus the two CODE banks that have
 # callers in this build (ec/README.md's bank table). Never "pd" -- the two
@@ -4563,6 +4563,19 @@ def self_test(args) -> int:
           f"file is not attached to a membership that has gone (stale: "
           f"{', '.join(stale) or 'none'})",
           not stale)
+    # The other half of the names file, and the half that is about a row that
+    # *is* anchored: a name is read as a citation wherever its words appear, so
+    # one too generic to be distinctive turns ordinary prose about charging
+    # into a membership claim. The rules and the "not found by this method" list
+    # are the sibling module's; the label names the offender and the shape that
+    # would pass, the way the `stale:` above names its own.
+    shaped = cluster_name_shape.problems()
+    check(f"every name in {os.path.relpath(NAMES_CSV, EC_DIR)} is multi-slug, "
+          f"inside no other name, and not an address, a symbol or a word "
+          f"prefix of one, so a name cannot read as a citation in a unit that "
+          f"only means the words (refused: "
+          f"{'; '.join(f'{n} -- {w}' for n, w in shaped) or 'none'})",
+          not shaped)
 
     on_disk_ok = True
     for _rows, _columns, path, text in outputs(

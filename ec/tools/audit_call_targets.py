@@ -65,6 +65,16 @@ trampoline's DPTR-carried target are invisible to any byte scan, and banks 2
 and 3 are taken as unused on the word of find_banks.py rather than
 re-derived.
 
+Every row of all three CSVs also carries an `earlier_record` column: the
+record that starts one or two bytes before the site and spans it, which is the
+shape #54 read 18 `calls_trampoline` paged rows into by hand and the defence
+in depth its write-up asks for. It is a *column and not a filter* -- no row is
+dropped and the byte-scan upper bound every count above rests on is untouched
+-- and it is a candidate generator, not an adjudicator: an empty cell means no
+candidate was found by this rule, never that the row is real. It is derived
+per family rather than once for all three, because the three censuses are
+separate scans and neither is evidence for the others.
+
 Usage:
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --csv > sites.csv
@@ -79,7 +89,7 @@ import sys
 
 from data_regions import load as load_data_regions, region_at
 from disasm8051 import (OPCODE_LEN, REL_OPCODES, REL_SITES, converges_from,
-                        paged_target, relative_target)
+                        mnemonic, paged_target, relative_target)
 from find_banks import START_OPCODES, STUB_PROLOGUE, find_stubs
 from trace_xdata_refs import (PD_MARKER, REGIONS, offset_for_runtime,
                               runtime_addr)
@@ -179,6 +189,60 @@ def relative_sites(d: bytes, lo: int, hi: int):
                                          runtime_addr(i, True))
 
 
+def earlier_record(d: bytes, off: int, lo: int) -> str:
+    """The record that starts one or two bytes before `off` and spans it, as
+    `0xOFFSET bytes mnemonic`, or "" when no such candidate exists.
+
+    A **candidate** for `off` inside region `[lo, hi)` is an offset `j` that
+
+      1. is `off - 1` or `off - 2` -- the shape #54 read its 18 sites into;
+      2. is at or after `lo`, so the record is inside the *caller's own*
+         region. The same region-relative discipline every loop in this tool
+         already has: reading a candidate out of the neighbouring program
+         would be a different claim;
+      3. spans the site strictly, `j < off < j + OPCODE_LEN[d[j]]`, never
+         starts at it. The strictness is #54's own, and
+         `test_paged_trampoline_framing.py` pins it for all 18 owners; and
+      4. is not itself paged-shaped (`d[j] & 0x1F` not in `PAGED_OPCODES`) --
+         the non-circularity check, for #54's reason: a phantom explained by a
+         neighbouring phantom is not an explanation.
+
+    **The tie-break is a stated choice among named alternatives, not a
+    verdict.** A site can have two surviving candidates -- at `0x12C0` the
+    owner is `0x12BE mov dptr,#0xbf81` and the decoy is
+    `0x12BF cjne r7,#0x81,0x12c4`, both spanning the site -- so something has
+    to choose, and the issue does not say what. Three rules were measured
+    against the 18 owners #54 transcribed: nearest start (lowest offset) 14/18,
+    furthest back (highest offset) 15/18, furthest end (highest end offset,
+    i.e. the record reaching furthest past the site) then lowest offset 12/18,
+    and highest `converges_from()` score then lowest offset **18/18**. The last
+    is what this does, and the ablation is in
+    `docs/findings/earlier-record-column.md` and in
+    `test_earlier_record_column.py`, which pins the three losers to *failing*
+    so a later refactor cannot swap in a simpler rule that looks equivalent.
+
+    What it does not settle is the thing `converges_from()`'s own docstring
+    says: a site everybody syncs onto is not thereby real. A higher score
+    picks a better-evidenced *candidate*; it does not adjudicate the row, and
+    no row's `bucket`, `frame_onto`, `frame_over`, `target` or `in_region`
+    moves because of it.
+
+    The mnemonic is `disasm8051.mnemonic()`'s own output with its column
+    padding squeezed, because that padding is a rendering choice and the column
+    is the instruction rather than the layout.
+    """
+    cands = [j for j in (off - 1, off - 2)
+             if j >= lo
+             and j < off < j + OPCODE_LEN[d[j]]
+             and d[j] & 0x1F not in PAGED_OPCODES]
+    if not cands:
+        return ""
+    j = max(cands, key=lambda j: (converges_from(d, j)[0], -j))
+    span = OPCODE_LEN[d[j]]
+    return "0x%05X %s %s" % (j, d[j:j + span].hex(" "),
+                             " ".join(mnemonic(d, j, runtime_addr(j, True)).split()))
+
+
 def edge_distance(off: int, lo: int, hi: int) -> int:
     """Bytes from `off` to the nearer edge of [lo, hi)."""
     return min(off - lo, hi - 1 - off)
@@ -242,6 +306,7 @@ def survey(d: bytes):
                 "anchored": onto > 0,
                 "frame_onto": onto,
                 "frame_over": over,
+                "earlier_record": earlier_record(d, off, lo),
                 "calls_stub": stubs.get(target),
                 "calls_trampoline": tramp[target][0] if target in tramp else None,
                 "own_bank": "",
@@ -287,6 +352,7 @@ def paged_survey(d: bytes):
                 "anchored": onto > 0,
                 "frame_onto": onto,
                 "frame_over": over,
+                "earlier_record": earlier_record(d, off, lo),
                 "calls_stub": stubs.get(target),
                 "calls_trampoline": tramp[target][0] if target in tramp else None,
             })
@@ -327,6 +393,7 @@ def relative_survey(d: bytes):
                 "anchored": onto > 0,
                 "frame_onto": onto,
                 "frame_over": over,
+                "earlier_record": earlier_record(d, off, lo),
                 "calls_stub": stubs.get(target),
                 "calls_trampoline": tramp[target][0] if target in tramp else None,
             })
@@ -612,14 +679,15 @@ def print_relative(rows) -> None:
 def write_csv(rows) -> None:
     w = csv.writer(sys.stdout)
     w.writerow(["file_offset", "region", "runtime", "opcode", "target", "bucket",
-                "frame_onto", "frame_over", "calls_stub", "calls_trampoline",
-                "own_bank", "other_bank"])
+                "frame_onto", "frame_over", "earlier_record", "calls_stub",
+                "calls_trampoline", "own_bank", "other_bank"])
     for r in rows:
         w.writerow([
             f"0x{r['file_offset']:05X}", r["region"],
             f"0x{r['runtime']:04X}" if r["runtime"] is not None else "",
             r["opcode"], f"0x{r['target']:04X}", r["bucket"],
             r["frame_onto"], r["frame_over"],
+            r["earlier_record"],
             "" if r["calls_stub"] is None else r["calls_stub"],
             "" if r["calls_trampoline"] is None else r["calls_trampoline"],
             r["own_bank"], r["other_bank"],
@@ -633,7 +701,7 @@ def write_paged_csv(rows) -> None:
     w = csv.writer(sys.stdout)
     w.writerow(["file_offset", "region", "runtime", "opcode", "target",
                 "target_offset", "in_region", "target_class", "frame_onto",
-                "frame_over", "calls_stub", "calls_trampoline"])
+                "frame_over", "earlier_record", "calls_stub", "calls_trampoline"])
     for r in rows:
         w.writerow([
             f"0x{r['file_offset']:05X}", r["region"], f"0x{r['runtime']:04X}",
@@ -641,6 +709,7 @@ def write_paged_csv(rows) -> None:
             f"0x{r['target_offset']:05X}" if r["target_offset"] is not None else "",
             "yes" if r["in_region"] else "no", r["target_class"],
             r["frame_onto"], r["frame_over"],
+            r["earlier_record"],
             "" if r["calls_stub"] is None else r["calls_stub"],
             "" if r["calls_trampoline"] is None else r["calls_trampoline"],
         ])
@@ -654,7 +723,8 @@ def write_relative_csv(rows) -> None:
     w = csv.writer(sys.stdout)
     w.writerow(["file_offset", "region", "runtime", "opcode", "length", "disp",
                 "target", "target_offset", "in_region", "target_class",
-                "frame_onto", "frame_over", "calls_stub", "calls_trampoline"])
+                "frame_onto", "frame_over", "earlier_record", "calls_stub",
+                "calls_trampoline"])
     for r in rows:
         w.writerow([
             f"0x{r['file_offset']:05X}", r["region"], f"0x{r['runtime']:04X}",
@@ -663,6 +733,7 @@ def write_relative_csv(rows) -> None:
             f"0x{r['target_offset']:05X}" if r["target_offset"] is not None else "",
             "yes" if r["in_region"] else "no", r["target_class"],
             r["frame_onto"], r["frame_over"],
+            r["earlier_record"],
             "" if r["calls_stub"] is None else r["calls_stub"],
             "" if r["calls_trampoline"] is None else r["calls_trampoline"],
         ])
@@ -691,6 +762,43 @@ PAGED_SITES = (
 # is what would catch relative_sites() reading the displacement from the wrong
 # byte while relative_target() stayed correct. Transcripts in 8 of
 # ../annotations/bank-call-audit.md.
+
+# The earlier_record() cases --self-test runs, on a scratch buffer rather than
+# at an address in the image. A fixture anchored in the firmware keeps testing
+# what it was written to test only until those bytes change, and these are
+# about the *rule*, not about this dump; `test_walk_branch_arms.py` gives the
+# same reason for building its terminator fixtures the same way.
+#
+# Module-level because `check_doc_figure_pins.py` reads every int constant
+# inside an asserting call across `ec/tools/*.py` as a pin for a figure in
+# some document, so a bare 0x12BE written into a `check()` would make this
+# module a second, uncited pin. A constant is invisible to that search.
+#
+# Each is a whole `common`-region buffer, where file offset == runtime address,
+# so an offset in a case is both. The three cases are the three ways the
+# answer comes out, and the third has to be a *skip* rather than an absence:
+# `test_earlier_record_column.py` asserts the same layout with a non-paged
+# opcode in front of the site does get named, which is what makes the empty
+# cell the non-circularity check rather than the rule having found nothing.
+#
+#   NAMED      a site at 0x02 with `mov dptr,#0x0001` at 0x00 spanning it and
+#              the `nop` at 0x01 ending where the site begins, so there is
+#              exactly one candidate and no tie to break: the shape #54 read
+#              its 18 owners into, and the whole of the column.
+#   BARE       a site at 0x01 whose only in-region predecessor is that same
+#              1-byte `nop`, which ends *at* the site rather than spanning it.
+#              Strictness is the whole of this -- `0x00 < 0x01` is false -- so
+#              the cell is empty, and the answer has to be an emptiness rather
+#              than the name of the record that merely touches the site.
+#   CIRCULAR   a site at 0x01 with `acall` at 0x00 spanning it. That candidate
+#              is paged-shaped itself and is skipped, so the cell is empty
+#              rather than naming a neighbouring phantom: a phantom explained
+#              by a neighbouring phantom is not an explanation.
+EARLIER_FIXTURES = (
+    ("NAMED", b"\x90\x00\x01\x00", 0x02, "0x00000 90 00 01 mov dptr,#0x0001"),
+    ("BARE", b"\x00\x01\x00\x00", 0x01, ""),
+    ("CIRCULAR", b"\x11\x22\x00\x00", 0x01, ""),
+)
 
 
 def self_test(d: bytes) -> int:
@@ -840,6 +948,26 @@ def self_test(d: bytes) -> int:
           f"their own address inside the block's 0x{lo0:04X}-0x{hi0 + TRAMP_STRIDE:04X}, "
           f"so none of them is a branch reaching the block from outside it"
           f"{'' if not outside else ' -- reached it from outside at ' + ', '.join(outside[:8])}")
+
+    # The earlier_record() column, on scratch bytes rather than in the image.
+    # The three cases are the three ways the answer comes out, and the
+    # non-circularity one is here so the tool is self-checking about it: an
+    # empty cell has to mean "the rule skipped it", and only a fixture paired
+    # with its non-paged contrast can say which. #1094 owns getting this mode
+    # into a gate; until then this is the only place these run.
+    for name, buf, off, want in EARLIER_FIXTURES:
+        got = earlier_record(buf, off, 0)
+        check(got == want,
+              f"earlier_record() {name}: site 0x{off:02X} of `{buf.hex(' ')}` is "
+              f"{got or '(empty)'!r} (expected {want or '(empty)'!r})")
+
+    circular = dict((n, (b, o)) for n, b, o, _ in EARLIER_FIXTURES)["CIRCULAR"]
+    contrast = bytearray(circular[0])
+    contrast[0] = 0x74  # `mov a,#imm8` -- the same two-byte span, not paged
+    check(earlier_record(bytes(contrast), circular[1], 0) != "",
+          "and the CIRCULAR fixture's empty cell is the non-circularity skip "
+          "rather than an absence: the same layout with a non-paged opcode in "
+          "front of the site is named")
 
     print()
     print("self-test FAILED" if bad else "self-test passed")

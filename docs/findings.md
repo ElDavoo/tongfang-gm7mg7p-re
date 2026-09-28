@@ -6283,6 +6283,32 @@ section measured about the ordering bug is
 unchanged** — the six same-scope joins, the `scope == "common"` guard, and the
 fixture that fails on the unfixed tool.
 
+*** CORRECTION 2026-09-27 (issue #489), leaving the paragraphs above as they
+were written.*** **"Latent today" is now a measurement rather than a prediction,
+and the prediction it was standing in for did not come true.** Every `pd`
+listing under `ec/decompiled/pd/` now carries a `ghidra-functions.csv` row, and
+**no figure this section watches moved**: `group_functions.py --report` prints
+`proxy_edges` 198, 38 distinct `common` targets, 98/100,
+`reached_only_by_bank` 20 and `cross_region` 27 — identical before and after.
+**Do not read that as the bug being harmless.** The reason is the one this
+section already gives, now confirmed against the whole population rather than
+the two addresses it could check at the time: all 39 edges into those listings
+have a `pd` caller, so seeding each takes the same-scope join, a same-scope join
+is never proxied, and `reached_only_by_bank` is a subset test over the banks —
+a `pd` row can move neither. Only `0x0000` and `0x0012` carry a `common` row at
+all, and neither is reached by an `lcall`/`ljmp` in any listing — the reader
+these figures are built on. **"Latent" described this tree,
+not the logic, and the tree has now been changed in the one direction that
+leaves it latent**; a `common` row that a `pd` caller and a bank caller both
+reach would still be needed to observe the fix.
+
+**The `38 unannotated pd listings` figure above is now 37 and then none**, and
+the population is no longer a subtraction: `ec/tools/pd_unannotated_census.py`
+derives it as a set difference over matched addresses and reports both halves
+separately, because netting a commit that annotates one listing against one that
+drops a row reads as a finished population. The write-up is
+`docs/findings/pd-unannotated-listings.md`.
+
 ## 22. The whole-block bracket was filed under whatever block the run named (2026-09-25, issue #475)
 
 The write-up is `docs/findings/dump-pair-block-attribution.md`; this is the
@@ -7802,7 +7828,7 @@ retracted in place beside itself; the write-up is
 Nothing here asserts any site "cannot raise", no live test ran, no capture was
 opened, and no EC or hardware was involved; the sweep bounds the table the way
 `ec/annotations/registers.yaml` bounds a zero-result scan, and the
-`converges_from` retraction at `docs/findings/citation-gap-scan.md:443-446` and
+`converges_from` retraction at `docs/findings/citation-gap-scan.md:516-519` and
 `citation_gap_scan.py:26-46` both stay exactly as they are.
 
 ## 54. The census re-derivation's cost is written down where the procedure is (2026-09-25, issue #820)
@@ -8420,6 +8446,30 @@ the code as it was, and one of them goes through `across_report` so the
 [`xdata-decile-small-set-contract.md`](findings/xdata-decile-small-set-contract.md).
 No figure, threshold, CSV or gate changes, and this section's `pair` and
 `across` output is unchanged on the committed pair.
+
+**Correction, 2026-09-27 (issue #904): the "79 in 408" above is the
+population's, conditional on reappearing, and it is now named that way.** The
+`#884` paragraph calls it *"**79 in 408** for the census as a whole"* beside
+*"the population's rate"*, and the mode's rate table prints it as `79/408` in a
+column headed `population` — where the row above it prints `408/439` and
+divides by 439. So the one rate the whole rank-displacement null is read
+against sat under a label naming a set 31 keys larger than the one it was
+measured over, and the `10 of the 60` it is compared with is conditioned the
+same way. **The figures and the conclusion are unchanged** — `92.9%`, `19.4%`,
+`10 of the 60` and the null are all exactly as they were, and the
+`population (439)` row in
+[`xdata-flip-cause-derivation.md`](findings/xdata-flip-cause-derivation.md) §4
+is right of its first cell and mislabelled only of its second. What moves is
+the labelling, in three places: the mode now prints the population's and the
+408's membership **on two lines that each name their set** rather than one
+line opening with a bare `their`, the reappearing cell carries `[of the 408
+that reappear, not of the population]`, and this section's sentence above is
+corrected here rather than edited in place, per §4a-4d. The write-up is
+[`xdata-moved-ranks-population-denominator.md`](findings/xdata-moved-ranks-population-denominator.md);
+§6's `37.4%` / `19.1%` and its size-9+ `30.5%` are read against the **439** and
+were re-derived unmoved on the merged tree, so the section's one surviving
+result does not rest on the labelling at all. `pair` and `across` output is
+byte-unchanged and no CSV, YAML, threshold or gate is touched.
 
 **The one-data-point limit above is confirmed, and the third point is not there
 — see §69.** It is not there because neither 427-row commit can be paired: at

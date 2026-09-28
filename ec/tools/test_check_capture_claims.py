@@ -23,10 +23,12 @@ import contextlib
 import importlib.util
 import io
 import os
+import re
 from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 HERE = Path(__file__).parent
 # check_capture_claims imports its walker from check_cluster_citations, the
@@ -69,6 +71,89 @@ def drifted(text, index=None):
     """(count, address) for the first disagreement, for the compact cases."""
     problems, _ = claims(text, index)
     return len(problems), problems[0][3] if problems else None
+
+
+# A row of the docstring's surface table. Anchored on the pipe, so a bullet or
+# a sentence mentioning a file with a number beside it cannot become a row.
+SURFACE_ROW = re.compile(
+    r"^\|\s*`(?P<path>[^`]+)`\s*\|\s*(?P<claims>\d+)\s*\|\s*"
+    r"(?P<presence>\d+)\s*\|\s*(?P<count>\d+)\s*\|\s*$")
+
+# The `--verbose` line for a file that yielded a claim. The other self-report
+# line ends in the same words, so the count is matched before that phrase
+# rather than the line being filtered on it afterwards.
+VERBOSE_CLAIMING = re.compile(r"^\s*(?P<path>\S+):\s*(?P<claims>\d+)\s+claim")
+
+# A pattern that matches nothing, so patching it over `ccc.COUNT` makes the
+# count rule's `finditer` yield nothing while the presence rule stands, which
+# is what separates the two figures in `derives_presence_split`.
+NEVER = re.compile(r"(?!x)x")
+
+
+# Every capture under `evidence/ec-watch/`, as `main()` builds it. The two
+# index constants above are the fixtures and the one capture the count cases
+# are argued about; the docstring's table is about the real corpus, so it
+# needs the real one.
+def committed_index():
+    """{path: (per-address, rows, distinct)} for every committed capture."""
+    watch = os.path.join(ccc.REPO, ccc.WATCH)
+    return {ccc.WATCH + '/' + name: ccc.read_capture(os.path.join(watch, name))
+            for name in sorted(os.listdir(watch)) if name.endswith('.csv')}
+
+
+def docstring_surface():
+    """{path: (claims, presence, count)} from the docstring's own table.
+
+    A table is a hand-kept figure like any other, and a regex that matches
+    nothing and asserts nothing is exactly the "checker that passes by
+    checking nothing" failure this suite's own docstring opens on: the
+    membership and per-file cases below would go green against an empty dict.
+    So an empty parse raises here, at the one place that knows the table is
+    supposed to be there.
+    """
+    named = {m.group('path'): (int(m.group('claims')), int(m.group('presence')),
+                                int(m.group('count')))
+             for m in (SURFACE_ROW.match(line)
+                       for line in (ccc.__doc__ or '').splitlines()) if m}
+    if not named:
+        raise AssertionError("the docstring's surface table parsed as no rows")
+    return named
+
+
+def verbose_surface(verbose_output):
+    """{path: claims} from a `--verbose` run.
+
+    Only the total, because the total is all `--verbose` prints: the split
+    between the two rules is not in the output, and `derives_presence_split`
+    is how this suite gets it rather than reading it back off the same line.
+
+    The empty parse raises for the same reason `docstring_surface()` raises on
+    one: a run that printed no claiming file at all is a tool that has stopped
+    reporting, and returning `{}` would let every membership case read as a
+    docstring that names nothing the run confirms.
+    """
+    surface = {m.group('path'): int(m.group('claims'))
+               for m in (VERBOSE_CLAIMING.match(line)
+                         for line in verbose_output.splitlines()) if m}
+    if not surface:
+        raise AssertionError("a --verbose run parsed as no claiming file")
+    return surface
+
+
+def derives_presence_split(path, index):
+    """(presence, count) for one file, by dropping the count rule in turn.
+
+    `COUNT` is a module global looked up at call time inside `check()`, so
+    neutering it takes the count rule out and leaves the presence rule
+    standing: the second total is the presence claims, and the difference is
+    the row counts. Which is the only way to get the split without counting
+    it off the sentences, and the sentences are the thing under suspicion.
+    """
+    full = os.path.join(ccc.REPO, path)
+    _, _, total = ccc.check(full, index, False)
+    with mock.patch.object(ccc, "COUNT", NEVER):
+        _, _, without = ccc.check(full, index, False)
+    return without, total - without
 
 
 class ReportsRealDrift(unittest.TestCase):
@@ -167,8 +252,9 @@ class SkipsDeliberately(unittest.TestCase):
         self.assertEqual(drifted(text), (0, None))
 
     def test_txt_capture_is_reported_not_passed_over(self):
-        # A .txt capture has no row-per-change shape to count, so it is out of
-        # the oracle -- but it says so on stderr rather than looking like
+        # A .txt capture is out of the oracle -- `main()` indexes the .csv
+        # files and this one is not among them, so there is no row set to hold
+        # a claim against -- but it says so on stderr rather than looking like
         # nothing to check.
         text = ('`0x07A6` moved in '
                 'evidence/ec-watch/2026-09-23-power-mode-cycle-0f00-final.txt.\n')
@@ -342,9 +428,10 @@ class TheFileLevelSelfReport(unittest.TestCase):
     no claim looked exactly like a file nobody opened -- which is most of the
     corpus, and how a whole column of claims stayed invisible to a reader who
     had every reason to look. The count is at **file** granularity and not at
-    unit granularity deliberately: the corpus is 27,032 units, so a per-unit
-    line is not a `--verbose` anyone runs, and the invisibility the issue
-    names is a property of the file, not of the sentence.
+    unit granularity deliberately: a line per unit would name every unit in
+    `ROOTS` that yields no claim, which is not a `--verbose` anyone runs, and
+    the invisibility the issue names is a property of the file, not of the
+    sentence.
     """
 
     NO_CLAIM = 'A paragraph that names no capture at all.\n'
@@ -428,6 +515,123 @@ class TheFileLevelSelfReport(unittest.TestCase):
         # number after ` lines / ` on the line that has always held it.
         checked = int(head.split(' lines / ')[1].split(' ')[0])
         self.assertIn(f'{checked} capture claims checked', head)
+
+
+class TheDocstringSurface(unittest.TestCase):
+    """The docstring's own table, held to what a run prints on the same tree.
+
+    The tool reports on itself at file granularity (the class above), and the
+    docstring quotes that self-report back. That makes the same surface read
+    twice, and the two reads had drifted: the paragraph named five presence
+    claims and two row counts in two files where the run reports nine claims
+    in three. Issue #991 corrected the paragraph; this class is what stops the
+    correction going stale in the other direction.
+
+    **Subset, not equality, and the direction is the whole argument.** A file
+    is named in that table because a claim in it was checked, so membership is
+    a real invariant and equality is not -- the next capture a human commits
+    into the prose adds a row to the run and to nobody's table. And a stale
+    docstring has only ever drifted by *gaining* a file it does not name,
+    which is the same direction a run then confirms and the table does not.
+    So a fourth claiming file in the output, unnamed in the docstring, is a
+    green case here and the case below says so on purpose.
+
+    A floor would be the wrong shape for the same reason the row-claim suite
+    asserts a decomposition rather than a figure: an expected total turns
+    every added capture into a red suite.
+
+    The per-file figures are held as well, because a file can stay named and
+    go wrong, and the presence/count split is re-derived from the walk rather
+    than read off the sentences -- the sentences being the thing under
+    suspicion. Three of the cases are synthetic and doctored deliberately: an
+    assertion nobody has seen fail is not evidence of anything.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        # One real run, shared by the class. `--verbose` is the only thing
+        # that prints a per-file count, and it is a whole-corpus walk; three
+        # cases reading the same output do not need three walks, and the run
+        # is the tree's, so there is nothing to keep fresh between them.
+        out, err = io.StringIO(), io.StringIO()
+        argv = sys.argv
+        sys.argv = ['check_capture_claims.py', '--check', '--verbose']
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                cls.rc = ccc.main()
+        finally:
+            sys.argv = argv
+        cls.claimed = verbose_surface(err.getvalue())
+        cls.named = docstring_surface()
+        cls.index = committed_index()
+
+    def assert_named_files_yield_claims(self, named, run, why):
+        """Every file the docstring names is one a run reports a claim for."""
+        for path in sorted(named):
+            self.assertIn(path, run,
+                          f"{why}: {path} is named and no run confirms it")
+            self.assertGreaterEqual(run[path], 1,
+                                    f"{why}: {path} is named and yields no claim")
+
+    def assert_quoted_figures_match(self, named, run, why):
+        """Each total the docstring quotes is the one the run prints."""
+        for path, (claims, _presence, _count) in sorted(named.items()):
+            self.assertEqual(run.get(path), claims, f"{why}: {path}")
+
+    def test_every_file_the_docstring_names_yields_a_claim(self):
+        self.assert_named_files_yield_claims(self.named, self.claimed, "docstring")
+
+    def test_each_figure_the_docstring_quotes_is_the_one_the_run_prints(self):
+        self.assert_quoted_figures_match(self.named, self.claimed, "docstring")
+
+    def test_the_split_is_the_one_the_walk_derives(self):
+        # Re-derived rather than read off the sentences, because the sentence
+        # is what went wrong: the old paragraph said five presence claims for
+        # `registers.yaml` where the walk finds four, its `XDATA_0449` note
+        # yielding both a count and a presence claim for the `0x044C` it names.
+        for path, (_claims, presence, count) in sorted(self.named.items()):
+            self.assertEqual(derives_presence_split(path, self.index),
+                             (presence, count), path)
+
+    def test_neutering_the_count_rule_is_what_moves_the_split(self):
+        # The sibling suite's drop-it-in-turn, inverted: loosening the count
+        # rule checks *fewer* claims, which is the direction the split moves.
+        # A derivation answering the same way under both walks would make every
+        # row count above zero by accident, and this is what says they are
+        # measured rather than read back.
+        for path, (_claims, presence, _count) in sorted(self.named.items()):
+            full = os.path.join(ccc.REPO, path)
+            without, _delta = derives_presence_split(path, self.index)
+            self.assertEqual(without, presence, path)
+            self.assertLess(without, ccc.check(full, self.index, False)[2], path)
+
+    def test_the_membership_case_fails_on_a_file_no_run_confirms(self):
+        # Sharpness. The same assertion that is green against the tree above,
+        # given a file the run says nothing about.
+        named = dict(self.named)
+        named['docs/hardware-tests/never-opened-by-this-tool.md'] = (1, 1, 0)
+        with self.assertRaises(AssertionError):
+            self.assert_named_files_yield_claims(named, self.claimed, "synthetic")
+
+    def test_the_figure_case_fails_on_a_total_the_run_disagrees_with(self):
+        # Sharpness the other way: the file is real and named, and the figure
+        # beside it is not the one the run prints.
+        named = dict(self.named)
+        path = sorted(self.named)[0]
+        claims, presence, count = self.named[path]
+        named[path] = (claims + 1, presence, count)
+        with self.assertRaises(AssertionError):
+            self.assert_quoted_figures_match(named, self.claimed, "synthetic")
+
+    def test_a_claiming_file_the_docstring_does_not_name_still_passes(self):
+        # The direction a stale docstring has always drifted, held green. A
+        # new capture committed into the prose lands here first and in the
+        # table only when somebody writes it down, and nothing in this case
+        # makes that somebody's failure.
+        run = dict(self.claimed)
+        run['docs/hardware-tests/a-capture-committed-after-this-table.md'] = 3
+        self.assert_named_files_yield_claims(self.named, run, "synthetic")
+        self.assert_quoted_figures_match(self.named, run, "synthetic")
 
 
 class TheCommittedTree(unittest.TestCase):

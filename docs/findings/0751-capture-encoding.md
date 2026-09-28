@@ -223,6 +223,9 @@ on a runner whose default differs.
 The check is not a check that cannot fail. Against a constructed tree it
 reports a BOM, reports a capture that is not UTF-8-decodable, and reports a
 disagreement between the two reads — three distinct problems, named by path.
+Each of the three is a case in `ec/tools/test_check_capture_encoding.py`, over
+a `--root` tree the case builds, held beside the clean committed corpus that
+says the three cannot be satisfied by a tool failing on everything.
 
 ## 7. The gate this makes redder, measured rather than hidden
 

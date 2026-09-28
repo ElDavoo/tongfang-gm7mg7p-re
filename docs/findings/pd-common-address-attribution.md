@@ -36,6 +36,34 @@ program-boundary question is answered, and the answer is that the edge was a
 missing annotation rather than a question `region_of()` could not express. See
 [`pd-common-address-spaces.md`](pd-common-address-spaces.md).
 
+*** CORRECTION 2026-09-27 (issue #489), leaving every paragraph above exactly as
+written.*** **The closing section's prediction has been carried out, and its
+conclusion was right to be stated as a prediction.** "Annotating the 38
+unannotated `pd` listings is what would turn 'latent' into a live figure change"
+— all 37 of them now carry a row, and **no figure moved**: `proxy_edges` 198,
+38 distinct `common` targets, 98/100, `reached_only_by_bank` 20 and
+`cross_region` 27 are identical before and after. The reason is structural and
+this file already contains it: all 39 of the edges into that population have a
+`pd` caller, so seeding each takes the same-scope join, a same-scope join is
+never proxied, and `reached_only_by_bank` is a subset test over the banks. A
+`pd` row can move neither population, and only two addresses in it
+(`0x0000`, `0x0012`) carry a `common` row at all — neither reached from
+either program by an `lcall`/`ljmp` in any committed listing, which is the
+reader this section's figures are built on. `pd/0180.asm` carries five
+`ajmp 0x0012`, so under the paged forms a `pd` row does reach `pd 0x0012`;
+`group_functions.listing_calls()` reads only the three-byte absolute forms.
+
+**Two numbers in the body below are corrected by this.** The "Two corrections to
+the issue's own numbers" section states **38** from `535 − 497`; the population
+was **37** (it says so correctly in the #470 paragraph above, and 497 is a
+figure from one merge earlier — `pd 0x11C2` closed the gap), and it is now
+**none**, every `pd` listing having a row. The population is also no longer
+derived by subtraction: `ec/tools/pd_unannotated_census.py` computes it as a set
+difference over matched addresses and reports both halves separately, because a
+subtraction of two totals nets to zero a commit that annotates one listing and
+drops one row. **Everything else this file measured is untouched**, and the
+write-up is [`pd-unannotated-listings.md`](pd-unannotated-listings.md).
+
 ---
 
 ## The bug, stated precisely

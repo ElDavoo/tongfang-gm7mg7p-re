@@ -17,8 +17,11 @@ before it means anything:
      count silently adds the two together.
   2. *What does the site do?* Direction is taken from the opcodes that
      follow (0xE0 `movx a,@dptr` read, 0xF0 `movx @dptr,a` write, 0xA3
-     `inc dptr` sequential walk into the following bytes). Where the site
-     hands DPTR to a subroutine (`lcall`/`acall`, or the `ljmp`/`ajmp`
+     `inc dptr` sequential walk into the following bytes), and only over
+     instructions that still ride the DPTR the site loaded: the window ends at
+     every construction `is_dptr_rebuild()` names, so an `access` cell never
+     counts an access made through a pointer the site did not set. Where the
+     site hands DPTR to a subroutine (`lcall`/`acall`, or the `ljmp`/`ajmp`
      tail-call forms) instead, that is reported as exactly that --
      unresolved -- not guessed at.
   3. *Why did the window stop?* A window that ended at a real terminator and
@@ -29,7 +32,9 @@ before it means anything:
      vocabulary `docs/findings/opcode-len-bounds-census.md`'s reproducing
      snippet already counts in, which had to re-implement this loop to tally
      them. `../docs/findings/walk-window-terminators.md` is the census of
-     which committed rows the budget truncates.
+     which committed rows the budget truncates, and
+     `../docs/findings/dptr-rebuild-walk-guard.md` is the census of what
+     widening the reload guard did to committed rows.
   4. *What does the C-level census say about the same site?* `--census-column`
      appends a `census` column to the `--csv` table carrying
      `../annotations/xdata-0860-census-sites.csv`'s per-site correspondence:
@@ -101,6 +106,81 @@ R2_IMAGE = {"common": "bank0.bin", "bank0": "bank0.bin",
 
 MOV_DPTR = 0x90
 
+# DPTR's two bytes. `disasm8051.mnemonic()` prints 0x82/0x83 as `DPL`/`DPH`
+# nowhere -- it renders them as bare `0x82`/`0x83` in the `direct` forms
+# below -- so the names here are the tool's, and a reader comparing the two
+# renderings is comparing two spellings of one address rather than two
+# addresses. The 8051 has no other 16-bit register a `movx @dptr` can ride,
+# so these two bytes are the whole of the question `is_dptr_rebuild()` asks.
+DPL = 0x82
+DPH = 0x83
+
+# The opcodes that store a value into a *directly addressed* byte, and so can
+# replace DPTR. Three of them name their destination at `d[i+1]`; `0x85` is
+# the one that does not, which is why it is a separate case below and why the
+# bounds check the predicate carries is not the same for every member.
+#   0xF5     mov  0xnn,a
+#   0x75     mov  0xnn,#0xmm
+#   0x88-8F  mov  0xnn,rN
+#   0xD0     pop  0xnn
+DIRECT_STORE_OPS = frozenset((0x75, 0xD0, 0xF5)) | frozenset(range(0x88, 0x90))
+# `mov 0xnn,0xmm` is `0x85 src dst`: the *source* is `d[i+1]` and the
+# destination is `d[i+2]`, the reverse of every opcode above.
+MOV_DIRECT_DIRECT = 0x85
+
+
+def is_dptr_rebuild(d: bytes, i: int) -> bool:
+    """Whether the instruction at `d[i]` replaces DPTR rather than using it.
+
+    `MOV DPTR,#imm16` is one of six ways an 8051 rebuilds the pointer, and
+    `walk_why()`'s guard tested only that one. Every construction in this
+    table replaces the whole pointer or one of its two bytes, so a walk that
+    runs past one charges the `movx` behind it to the address the site's own
+    `MOV DPTR` named -- a window that reads as this register's access and is
+    in fact another's. `0xE372` and `0xDE8E` are the two the `.asm` listings
+    settle, in `../../docs/findings/dptr-rebuild-walk-guard.md`.
+
+    **Keyed on bytes, never on the mnemonic.** `mnemonic()` renders the
+    `0x54`/`0x55`/`0x64`/`0x65` group as A-operand forms -- `0x54` prints
+    `anl a,#0x82` where the 8051 has `anl direct,#imm` -- so a text-matching
+    guard would be wrong on exactly the in-place-modify instructions below.
+
+    **What is deliberately not here.** The instructions that *modify* DPTR in
+    place rather than replace it: `anl`/`orl`/`xrl direct,#imm`, `inc 0x82`,
+    `dec 0x83`, and `xch a,0x82`. They change the address the following
+    `movx` reaches, so this is a real limit and not a clean line -- but they
+    are masking or arithmetic on the pointer that is already there, and the
+    tool already treats `inc dptr` (`0xA3`) as a span walk rather than a
+    terminator. Calling them rebuilds is a second judgement about what
+    "reloaded" means; the write-up states the decision and its reason rather
+    than leaving it implicit, and §3 of that file is where the broader reading
+    belongs. The instructions that only *read* DPTR or touch A -- `mov a,0x82`
+    (`0xE5`), `push 0x82` (`0xC0`), `swap a` (`0xC4`) -- replace nothing at
+    all and are the negative cases `test_dptr_rebuild_guard.py` pins. `0xC4`
+    in particular is named in issue #517's own list, and it is not a DPTR
+    instruction: there is no 8051 opcode that swaps DPTR.
+
+    The **operand** bytes are bounds-checked here rather than left to the
+    caller. `walk_why()` establishes `i + 2 < len(d)` immediately before
+    asking, so `d[i+1]` and `d[i+2]` are in range there; a caller holding a
+    shorter buffer gets False rather than an `IndexError`, which is the same
+    latent-hole shape `inline_arg_len()`'s comment documents and the reason
+    the two-byte and three-byte forms cannot share one index. The opcode byte
+    itself is not checked, because every caller has it -- `d[i]` is the
+    instruction, and a buffer with no instruction in it is not a question
+    this function answers.
+    """
+    op = d[i]
+    if op == MOV_DPTR:
+        return True
+    if op == MOV_DIRECT_DIRECT:
+        # The destination, which for this one form is not the first operand.
+        return i + 2 < len(d) and d[i + 2] in (DPL, DPH)
+    if op in DIRECT_STORE_OPS:
+        return i + 1 < len(d) and d[i + 1] in (DPL, DPH)
+    return False
+
+
 # Why a walk stopped, in the five tokens walk_why() can return. Four are
 # constants; the fifth carries the budget that ran out, so it is a function of
 # one rather than a fifth string, and a caller holding a token can recover the
@@ -114,6 +194,23 @@ MOV_DPTR = 0x90
 # them, which is the duplication point 3 of the docstring retires: with the
 # names here, the --terminator-column output and the 119530 that census commits
 # are one measurement in two places rather than two vocabularies for one event.
+#
+# **`DPTR reloaded` is a wider claim than the census's own 26257.** That is
+# the `d[i] == MOV_DPTR -- the DPTR test` row of
+# ../../docs/findings/opcode-len-bounds-census.md's drive from all 262144
+# offsets, and the guard has since grown to every construction
+# `is_dptr_rebuild()` names: re-running that same drive puts the token at
+# 31655. The 119530 in the same tally is a *different* row --
+# `max_insns (8) exhausted` -- and it fell, to 117520, as it had to: a wider
+# reload guard can move a walk off the instruction budget, never onto it.
+# §5 and §9 of ../../docs/findings/dptr-rebuild-walk-guard.md carry both pairs
+# and the command that reproduces them.
+#
+# The token is unchanged -- it already meant "DPTR reloaded", and the five
+# forms that were missing were reloads the old name was silent about -- so a
+# sixth token would have split one event into two vocabularies, the duplication
+# these names exist to retire. The committed tables re-cut under the wider
+# guard are the census of what that costs.
 FLOW_END = "flow opcode"
 RELOAD_END = "DPTR reloaded"
 BUFFER_END = "end of buffer"
@@ -338,8 +435,11 @@ def walk_why(d: bytes, start: int, max_insns: int = 8):
             why = BUFFER_END
             break
         # The second test is safe because the first has just run, and it says
-        # DPTR was reloaded -- a different access, not a longer window.
-        if d[i] == MOV_DPTR:
+        # DPTR was reloaded -- a different access, not a longer window. Which
+        # instruction did the reloading is `is_dptr_rebuild()`'s question and
+        # not this one's: every construction it names ends the window the same
+        # way, so `RELOAD_END` covers all of them.
+        if is_dptr_rebuild(d, i):
             why = RELOAD_END
             break
     return out, why

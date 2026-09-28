@@ -37,7 +37,8 @@ Usage (root, CONFIG_DEVMEM):
   ec_timer_capture.py --addrs 0x06d6 --interval 0.002 --seconds 60 --csv out.csv
   ec_timer_capture.py --addrs 0x06c2-0x06db,0x0440 --interval 0.01 --seconds 120 \\
       --csv out.csv --note "idle, AC"
-  ec_timer_capture.py ... --mark     # each line on stdin stamps ts,MARK,,label
+  ec_timer_capture.py ... --mark     # each line on stdin stamps
+                                     #   ts,MARK,,label,provenance
   ec_timer_capture.py ... --auto-mark --mark-input /dev/input/event7
                                      # MARK rows stamped from the machine itself
   ec_timer_capture.py --census       # which 256-byte pages hold anything but 0xFF
@@ -139,6 +140,13 @@ class Sink:
     # bytes it puts on the box are the format's and not this process locale's
     # -- otherwise a `§` in a comment or a mark is a byte the grader refuses
     # the capture over, written by a tool that had no way to know.
+    #
+    # A mark row is five fields here, the fifth being `ec_watch.Marker`'s
+    # provenance column and always empty, because this tool has no
+    # `--label-vocab` to record. It is not padding: a four-field mark row
+    # reads as *not recorded* where an empty one reads as *held no flag*, and
+    # a capture taken after the change is then distinguishable from one taken
+    # before it. See docs/findings/0751-mark-provenance-column.md.
     def __init__(self, path):
         self._fh = open(path, "w", newline="", encoding="utf-8")
         self._w = csv.writer(self._fh, lineterminator="\n")
@@ -166,7 +174,7 @@ def mark_loop(sink):
         n += 1
         label = line.strip() or f"mark {n}"
         ts = now()
-        sink.row([ts, "MARK", "", label])
+        sink.row([ts, "MARK", "", label, ""])
         print(f"--- {ts}  MARK: {label} ---", flush=True)
 
 
@@ -201,13 +209,13 @@ def auto_mark_loop(sink, period=0.05):
         cur, g = machine_state(), suspend_gap()
         if g - gap > 0.5:
             label = f"auto: resumed, ~{g - gap:.1f} s suspended"
-            sink.row([now(), "MARK", "", label])
+            sink.row([now(), "MARK", "", label, ""])
             print(f"--- MARK: {label} ---", flush=True)
         gap = g
         for k in cur:
             if cur[k] != prev.get(k):
                 label = f"auto: {k} {prev.get(k)} -> {cur[k]}"
-                sink.row([now(), "MARK", "", label])
+                sink.row([now(), "MARK", "", label, ""])
                 print(f"--- MARK: {label} ---", flush=True)
         prev = cur
 
@@ -229,7 +237,7 @@ def input_mark_loop(sink, dev):
                 label = f"auto: {os.path.basename(dev)} scan {value & 0xFFFFFFFF:#x}"
             else:
                 continue
-            sink.row([now(), "MARK", "", label])
+            sink.row([now(), "MARK", "", label, ""])
             print(f"--- MARK: {label} ---", flush=True)
 
 
@@ -305,7 +313,12 @@ def main(argv=None):
     prev = {a: m[a] for a in addrs}
     sink.comment(f"baseline {ts}: "
                  + " ".join(f"0x{a:04X}=0x{prev[a]:02X}" for a in addrs))
-    sink.row(["ts", "addr", "old", "new"])
+    # Five names over rows of four or five fields, for the reason
+    # `ec_watch.py`'s `CsvSink` gives: `provenance` is a mark-row column
+    # and a change row is still `ts,addr,old,new`, and a header that
+    # named four would document a five-field mark row wrongly. Every
+    # reader of this family skips the row it is on.
+    sink.row(["ts", "addr", "old", "new", "provenance"])
     if args.mark:
         threading.Thread(target=mark_loop, args=(sink,), daemon=True).start()
     if args.auto_mark:

@@ -46,11 +46,12 @@ void stash_args_dispatch_code_table
     *param_2 = bVar2;
     *param_2 = *param_2 + 1;
     cVar1 = (char)((ushort)param_8 * (ushort)param_1 >> 8);
-    cVar3 = FUN_CODE_a000((char)((ushort)param_8 * (ushort)param_1),pbVar6 + 2,cVar1,param_2 + -1,
-                          param_7 + '\x01',param_8 + 1);
+    cVar3 = begins_mid_statement_write_then_index_0a8c_and_dispatch
+                      ((char)((ushort)param_8 * (ushort)param_1),pbVar6 + 2,cVar1,param_2 + -1,
+                       param_7 + '\x01',param_8 + 1);
     nop();
     and_16bit_fields_write_07d2_07d3(cVar3 * cVar1 + BANK2_R2);
-    FUN_CODE_e757();
+    set_0832_bit0_then_dispatch_b17d_from_r5_and_call_0180();
     read4xdata_to_r4_r7(0xa6d,DAT_EXTMEM_0a6b,DAT_EXTMEM_0a6c);
     write4xdata_from_r4_r7(0x836);
     dispatch_entry(DAT_EXTMEM_0a6a,DAT_EXTMEM_0a69);
@@ -62,7 +63,7 @@ void stash_args_dispatch_code_table
             (0x859,BANK0_R1,bVar2 + 0x9f,(param_1 - (((0x60 < bVar2) << 7) >> 7)) + '\b',1);
   BANK0_R7 = uStackX_0;
   BANK0_R6 = in_stack_000000ff;
-  FUN_CODE_0b85();
+  index_from_r5_r3_then_jmp_at_0b05();
   pcVar4 = &DAT_EXTMEM_085c;
   cVar1 = DAT_EXTMEM_085c + '\x01';
   read_xdata_0852();

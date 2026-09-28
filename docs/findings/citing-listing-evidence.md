@@ -344,6 +344,23 @@ dependency, not a frame artefact — carries over to whatever ranks first now, a
   here was observed on hardware. The `fill-at-citer` name is a *reason string in
   a report*, not a claim about what the EC does.
 
+*** CORRECTION 2026-09-27 (issue #489), leaving every figure above as it was
+written.*** **The population both pages count is 96 citing rows and 121
+`(callee, citer)` pairs, split 2 / 118 / 1 — not 99 / 124, 2 / 121 / 1.** This
+page's own figure moves with it, and by the same count: the census in
+*Re-deriving* prints **97** transfer-free citers of which 96 survive the `fill`
+veto, where it printed 100 and 99, with `commented rows` 1,872 → **1,951** and
+`transfer-free listings` 998 → **1,042**. The cause is not a call site.
+`call_graph.citations()` proposes a candidate only while the address a comment
+names still resolves to an anonymous `FUN_*` export (`call_graph.py:343`), so
+naming a **callee** retires its pairs with no citing comment edited — three here
+(`pd 0x06EA`, `pd 0x39E6`, `pd 0xE930`), and the twenty `FUN_CODE_*` rows that
+left `call-graph-callees.csv`'s ranked set besides. **Nothing on this page was
+re-derived to find that**: every figure here is what the committed tool prints
+on this tree. The full table of what moved is in
+[`citation-gap-scan.md`](citation-gap-scan.md), and the two `boundary-cut` pairs
+this page names by name — `bank1,E5D6` and `common,3459` — are unchanged.
+
 ## Re-deriving
 
 Four commands, run from the repository root. The first and second come from the

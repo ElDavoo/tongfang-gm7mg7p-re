@@ -5,13 +5,20 @@
 # after the 0700 capture's marks so the grader sees one action marked in every
 # watcher and three windows. CPU_TEMP and GPU_TEMP climb throughout, which is
 # what makes the PWM drift beside them thermal rather than a response to the
-# write. 0x0402 is context, not one of the two confirmed bytes. Not a
-# prediction that a die warms like this.
+# write. 0x0438 is the third address, and is not one of the two confirmed
+# bytes: it is one of the four the 2026-09-18 capture of this page records
+# moving that these two are not -- 0x0436, 0x0438, 0x0449 and 0x044C, which
+# ec/annotations/xdata-0400-045f.md section 8 tabulates -- and the one of
+# those four that is the low byte of a 16-bit pair, so the whole-block read's
+# "other" bucket has a mover the evidence has actually seen rather than an
+# invented one (#219).
+# The row is that capture's only 0x0438 row, 0x97 -> 0xAE. Not a prediction
+# that a die warms like this, or that a battery reads that.
 ts,addr,old,new
 2026-01-01T12:00:04.000+01:00,0x043E,0x32,0x33
 2026-01-01T12:00:12.000+01:00,MARK,,no-op wrote 0x0751=0x10
 2026-01-01T12:00:19.000+01:00,0x043E,0x33,0x35
-2026-01-01T12:00:26.000+01:00,0x0402,0x11,0x12
+2026-01-01T12:00:26.000+01:00,0x0438,0x97,0xAE
 2026-01-01T12:00:36.000+01:00,0x044F,0x30,0x31
 2026-01-01T12:00:42.000+01:00,MARK,,wrote 0x0751=0xA0
 2026-01-01T12:00:50.000+01:00,0x043E,0x35,0x36

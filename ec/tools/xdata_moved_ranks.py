@@ -993,18 +993,49 @@ def cause_report(label_a, committed_a_path, off_a_path,
         return {a for row in off.values() for a in addrs_of(row)
                 if lo <= int(a, 16) <= hi}
 
-    pop_addrs = {a for row in off_a.values() for a in addrs_of(row)}
-    pop_page = page_addrs(off_a)
-    pop_page_memberships = sum(1 for row in off_a.values() for a in addrs_of(row)
-                               if lo <= int(a, 16) <= hi)
-    out.append(f"    their members: {sum(len(addrs_of(r)) for r in off_a.values())} "
-               f"membership(s) over {len(pop_addrs)} distinct address(es); "
-               f"{len(pop_page)} of them in the page, held "
-               f"{pop_page_memberships} time(s)"
-               + ("" if pop_page_memberships == len(pop_page) else
-                  " -- one address is in two rows, which is a `pd` holder and a "
-                  "`main-ec` holder of the same byte")
-               + f"; {label_b}'s holds {len(page_addrs(off_b))}")
+    # Two sets, two lines, and each line names its own. The word this pair of
+    # lines replaced was `their`, and the two lines above it are both scoped to
+    # the reappearing keys -- so a reader who resolved the pronoun to *those*
+    # read the population's 1219 memberships as 408 keys' worth, with nothing
+    # on the page to correct it. Which set is which is not a matter of taste
+    # here: the rate table's `population` column divides by the first of the
+    # two throughout, so the first is the set every rate is read against, and
+    # the second is what the `reappears` sentences above it are about and had
+    # no membership figure of its own at all.
+    def member_set(rows):
+        """(memberships, distinct addresses, distinct page addresses, page
+        memberships) over one set of guard-off rows.
+
+        Keyed by row rather than by key so the caller passes the set and this
+        cannot re-derive a different one; the two lines below and the two rate
+        denominators share `pop_memberships` for the same reason. `rows` is read
+        four times, so it is materialised rather than taken as a generator.
+        """
+        rows = list(rows)
+        addrs = {a for row in rows for a in addrs_of(row)}
+        return (sum(len(addrs_of(row)) for row in rows), addrs,
+                {a for a in addrs if lo <= int(a, 16) <= hi},
+                sum(1 for row in rows for a in addrs_of(row)
+                    if lo <= int(a, 16) <= hi))
+
+    pop_memberships, pop_addrs, pop_page, pop_page_memberships = member_set(
+        off_a.values())
+    both_memberships, both_addrs, both_page, both_page_memberships = member_set(
+        keys_a[k] for k in both)
+
+    def member_line(label, nkeys, memberships, addrs, page, page_memberships):
+        return (f"    {label} {nkeys} key(s) in {label_a}: {memberships} "
+                f"membership(s) over {len(addrs)} distinct address(es); "
+                f"{len(page)} of them in the page, held {page_memberships} time(s)"
+                + ("" if page_memberships == len(page) else
+                   " -- one address is in two rows, which is a `pd` holder and a "
+                   "`main-ec` holder of the same byte")
+                + f"; {label_b}'s holds {len(page_addrs(off_b))}")
+
+    out.append(member_line("the population's", len(keys_a), pop_memberships,
+                           pop_addrs, pop_page, pop_page_memberships))
+    out.append(member_line("the reappearing", len(both), both_memberships,
+                           both_addrs, both_page, both_page_memberships))
     out.append(cause_pd_report(committed_a, committed_b, off_a, off_b))
     out.append("")
     # Every cell below is a list of keys drawn from the same join `across`
@@ -1123,13 +1154,21 @@ def cause_report(label_a, committed_a_path, off_a_path,
                + f" {rate(len(both), len(keys_a)):>14}")
     out.append(f"    {'reappears within 2':<22} "
                + " ".join(f"{cell_rate(c, near_rep, is_rep):>14}" for c in cells)
-               + f" {rate(spread[0] + spread[1] + spread[2], len(both)):>14}")
+               + f" {rate(spread[0] + spread[1] + spread[2], len(both)):>14}"
+               # The one cell in this column that does not divide by the
+               # population, and the header does not say so: it is a rate *of
+               # the rows that came back*, the conditional the row above counts
+               # unconditionally. Two denominators in one column is the same
+               # defect the membership lines above it had, so it is named on the
+               # cell the way the `intact in both` substitution is named on its
+               # own line.
+               + f"  [of the {len(both)} that reappear, not of the population]")
     out.append(f"    {'members in the page':<22} "
                + " ".join(f"{cell_rate(c, page, size):>14}" for c in cells)
-               + f" {rate(len(pop_page), sum(len(addrs_of(r)) for r in off_a.values())):>14}")
+               + f" {rate(len(pop_page), pop_memberships):>14}")
     out.append(f"    {'members of the added':<22} "
                + " ".join(f"{cell_rate(c, added_n, size):>14}" for c in cells)
-               + f" {rate(0, sum(len(addrs_of(r)) for r in off_a.values())):>14}")
+               + f" {rate(0, pop_memberships):>14}")
     out.append("    (the population's added count is 0 by construction: the added")
     out.append("     set is the difference between the two guard-on universes, so no")
     out.append("     address in it is a member of any row of the older census.)")
@@ -1560,6 +1599,57 @@ def self_test() -> int:
                   for ln in lines),
           "the population a cell's rate is read against is printed, with the "
           "one-sided keys named and the survivors' rank deltas spread")
+
+    # The two membership lines name the set each one counts. The line used to
+    # open with a bare `their`, and the two lines above it are scoped to the
+    # reappearing keys -- so a reader who took it for *those* read the
+    # population's figure as 408 keys' worth on the real pair, with nothing on
+    # the page to say otherwise. The fixture makes the two different by
+    # construction rather than by luck: the four one-sided A rows (k2, k10, k5,
+    # k12) carry six memberships that are on one line and on no other, so the
+    # two sets are 12 over 10 and 6 over 6 and a line that named neither would
+    # still print 12. `pop != rep` is what holds a merge of the two back to one
+    # line red, since the figures would then be on one index.
+    pop_i = next((i for i, ln in enumerate(lines)
+                  if "the population's 6 key(s) in A" in ln), -1)
+    rep_i = next((i for i, ln in enumerate(lines)
+                  if "the reappearing 2 key(s) in A" in ln), -1)
+    check(0 <= pop_i and 0 <= rep_i and pop_i != rep_i
+          and "12 membership(s) over 10 distinct address(es)" in lines[pop_i]
+          and "6 membership(s) over 6 distinct address(es)" in lines[rep_i]
+          and "6 membership(s) over 6" not in lines[pop_i]
+          and "12 membership(s)" not in lines[rep_i],
+          "each membership line names the set it counts -- A's 6 guard-off "
+          "keys over 12 memberships, the 2 that reappear over 6 -- so the "
+          "population's figure is not read as the reappearing keys' worth")
+
+    # The rate table's own denominators, so a refactor that narrowed the
+    # population column to the reappearing set goes red on the table as well
+    # as on the line above it. Found by the padded measure label rather than by
+    # a substring -- `reappears` is a prefix of `reappears within 2`, so the two
+    # rows are only separable on the padding -- and read as the last two
+    # whitespace-separated fields, because `rate` pads its percentage to five
+    # and a check written on the rendered spacing is a check on the padding.
+    def rate_row(measure):
+        return next((ln for ln in lines if ln.startswith(f"    {measure:<22} ")), "")
+
+    def population_cell(measure):
+        """The `num/den` and percentage of one row's last column, with any
+        bracketed qualifier after it dropped -- the cell is the number."""
+        return rate_row(measure).split("[", 1)[0].split()[-2:]
+
+    check(population_cell("reappears") == ["2/6", "33.3%"]
+          and population_cell("members in the page") == ["0/12", "0.0%"]
+          and population_cell("members of the added") == ["0/12", "0.0%"],
+          "every membership rate in the table's population column divides by "
+          "the 6 population key(s) -- narrowed to the 2 that reappear, the "
+          "last two read 0/6 here rather than 0/12")
+    check(population_cell("reappears within 2") == ["2/2", "100.0%"]
+          and "[of the 2 that reappear, not of the population]"
+          in rate_row("reappears within 2"),
+          "the one population cell that divides by the reappearing set says so "
+          "on the cell: it is a rate of the rows that came back, and a header "
+          "reading `population` over it is the two denominators side by side")
 
     # Mechanism 1, the reading that was going to be the answer: a substitution
     # that reappears at a neighbouring rank. k9 sits at main-ec-001 in A and

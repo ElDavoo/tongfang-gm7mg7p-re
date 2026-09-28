@@ -76,18 +76,18 @@ into `r2 -a 8051` with no stitching needed.
   load-bearing, a 3-byte `lcall` straddling the boundary only completes by
   reading past it — decodes the window with `disasm8051.py`, and returns one of
   three verdicts: `boundary-cut`, `no-transfer` or `not-code`. 99 citing rows
-  and 124 pairs split 2 / 121 / 1, and 86 of the 99 rows turn out to have no
-  gap at all, so the window is the head of the neighbouring export. It walks
+  and 124 pairs split 2 / 121 / 1, 86 zero-gap — **Corrected 2026-09-27, issue
+  #489: 96 / 121, 2 / 118 / 1, 84** — three `pd` callees retired, not answered.
+  The window is the head of the neighbouring export. It walks
   `disasm8051.py`'s own opcode and mnemonic tables rather than calling its
   `decode()`. ~~The reason was that `decode()` raises `IndexError` on a window
   ending in a 1-byte opcode.~~ **Corrected 2026-09-25, issue #679**: that was
   the reason until #679 put the end-of-buffer check ahead of the index it
   guards, so `decode()` stops cleanly on a short window now. `walk()` stays for
   the two things it carries that `decode()` does not produce: the
-  per-instruction map-unassigned flag and the `truncated` column. The
-  retraction in full is in `../../docs/findings/citation-gap-scan.md`, and the
-  bounds contract that pins it has a suite of its own at
-  `tools/test_disasm8051.py`.
+  per-instruction map-unassigned flag and the `truncated` column. The retraction
+  in full is in `../../docs/findings/citation-gap-scan.md`, and the bounds
+  contract that pins it has a suite of its own at `tools/test_disasm8051.py`.
   `--report` writes `ghidra/gap-citation-scan.csv` and nothing else does;
   `--check` recomputes every per-pair verdict and fails on any diff;
   `--self-test` runs the known answers. `call_graph.py` is not changed by it and
@@ -249,11 +249,15 @@ into `r2 -a 8051` with no stitching needed.
   than a race. It imports `check_cluster_citations.units` rather than writing a
   second sentence splitter, so a fix to the splitting logic (issue #273) lands
   once and both checkers get it. Committed files only: no image, no Ghidra, no
-  network — `.csv` captures only, as the four `.txt` files in that directory are
-  `ecrw.py dump` output with no row-per-change shape. The limits it earns the
-  right to state are in its own docstring, in the sibling's style, and the two
-  that matter most: a sentence that *denies* movement is skipped, which is what
-  keeps #270's correction green and is exactly why a stale denial is not caught;
+  network — `.csv` captures only: the index is built from
+  `evidence/ec-watch/*.csv` and a unit naming a `.txt` is skipped before either
+  rule runs, so there is no row set to hold a claim against.
+  `evidence/README.md` indexes what an individual capture holds — every `.txt`
+  file there but `2026-09-23-ctgp-live.txt`.
+  The limits it earns the right to state are in its own docstring, in the
+  sibling's style, and the two that matter most: a sentence that *denies*
+  movement is skipped, which is what keeps #270's correction green and is
+  exactly why a stale denial is not caught;
   and a table row is its own unit, so `annotations/xdata-0400-045f.md` §8's
   `changes` column — six true counts — is not read, because the capture is named
   in the paragraph above the table. The run prints how many claims it checked
@@ -734,6 +738,28 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   window names. Produced by `tools/decode_index_table.py --csv`, and written
   without a comment header so a later region map can read it with
   `csv.DictReader` and fold it in or supersede it.
+- **`annotations/bank0-8038-handler-flow.md`** — the control-flow walk of the
+  eight handlers that table dispatches to, which §9's per-case table said was
+  still outstanding: the two arms of each case's bit-7 test, the shared
+  epilogue at `0x821F`, the default at `0x8274`, and the thirteen helpers the
+  cases share. It answers two separate questions about two separate sets of
+  addresses. What the sixteen `0x08D0`-`0x08DF` word slots hold: a straight
+  copy of one of **four** source words, high byte at the lower address, so each
+  slot is byte-swapped against the source word it copies, and — by that
+  section's own scans — no reader in either bank. Who reads the sixteen
+  `0x0600`-`0x060F` accumulator bytes those slots are folded into: sixteen
+  sites outside the handler block, in three `bank0` places and nine `bank1`
+  routines, of which `bank1,0xF3D7` writes a byte `registers.yaml` also derives
+  from battery current.
+  §9's per-case table is confirmed on every column, and the one wrong value in
+  its skeleton paragraph — `0x81 + case` for case `0x07` — is corrected beside
+  it. It deliberately does **not** name a subsystem: the eight channels have no
+  name and no unit in `registers.yaml`, and the one consumer that reaches a
+  named byte is reported as a lead with what it does not establish attached,
+  rather than as an answer.
+  `annotations/bank0-8038-handler-arms.csv` is the per-arm table behind §3-§7,
+  produced by `tools/walk_branch_arms.py --csv`; all eighteen arms are
+  `complete`.
 - **`annotations/index-table-entries.csv`** — the same per-entry decode for all
   15 tables of that family, with a leading `site` column naming the `lcall`
   each table follows. Produced by `tools/decode_index_table.py --all-csv`;

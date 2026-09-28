@@ -432,6 +432,33 @@ way. Written up in
 the per-row verdicts in
 [`../../docs/findings/neighbour-edge-attribution.md`](../../docs/findings/neighbour-edge-attribution.md).
 
+**Corrected 2026-09-27, issue #489: the population and the denominator moved; the
+fifteen rows the reading is over did not.** The figures above are **96 citing
+rows and 121 `(callee, citer)` pairs** — not 99 / 124 — and **31** of those
+pairs, not 32, already have a same-scope transfer booked to a different
+function. The cause is not a call site: `citations()` proposes a candidate only
+while the address a comment names still resolves to an anonymous `FUN_*` export
+(`call_graph.py:343`), and #489 gave 37 `pd` rows a name of their own, so
+`pd 0x06EA` (`bank0 0xD045`), `pd 0x39E6` (`pd 0x39E7`) and `pd 0xE930`
+(`bank1 0xE924`) left the population with no citing comment edited.
+
+**The pool the fifteen are counted against fell from 90 `cited_by == inbound`
+agreements to 74, and the fifteen are the same fifteen.** #489's naming took 20
+`pd` rows out of the ranked set outright — each was a `FUN_CODE_*` callee whose
+`cited_by` is now 0, and none was replaced — and `sum(cited_by)` 147 → 126.
+**Every one of the fifteen was already named, so the 9/6 reading above is
+unaffected and stands whole**; only the pool they are counted against is
+smaller. Two consequences for the sentences above: `pd,06EA` is **no longer
+one of the two population callees carrying no such signal** (its `cited_by` is
+0, so it is in neither the 74 nor the 31), leaving `common,451A` as the only
+one on this tree; and "one of the 32 neighbour-edge pairs" is one of 31.
+`bank1,E5D6` is untouched by all of this — still `cited_by=3` / `inbound=1`,
+still rank 3. `call_graph.py` is still unchanged, but the 1,841-row table is no
+longer byte-identical on this tree, for the reason above; it was byte-identical
+across the measurement this section records. The correction in full, with the
+rest of what moved, is
+[`../../docs/findings/citation-gap-scan.md`](../../docs/findings/citation-gap-scan.md).
+
 **No register `status:` changed and no behavioural test was run.** Naming a
 helper is not a finding about a register, so `registers.yaml` and
 `ghidra/xdata-symbols.csv` are untouched. Nothing here was observed on

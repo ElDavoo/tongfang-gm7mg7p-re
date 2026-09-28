@@ -322,25 +322,54 @@ OWNERSHIP_ORACLE = {
     # four `bank0`-scoped rows seed 0xC278, 0xC2C2, 0xC33C and 0xC4E7, and all
     # four are short enough to be counted as tiny bodies, so the second figure
     # moves by the same four.
-    "rows": 2714,
+    # 2,714 -> 2,720, and 1,276 -> 1,282, both moved by issue #1101 alone for
+    # the same reason: its six `pd 0x07D0` accessor stubs are 7-byte bodies,
+    # so every one of the six lands in the tiny count. None of the other eight
+    # figures moved, and that is the point worth recording -- a `pd` row cannot
+    # reach a class figure, because a class is a set of bodies that contain one
+    # another and six identical forwarders make a class of seven, not a
+    # re-partition of an existing one.
+    "rows": 2720,
     "classes": 56,
     "shared_rows": 146,
     "largest_class": 42,
     # The floor's cost, both measured as classes whose two largest members are
     # *not* contained in each other -- classes that hold together only through
-    # a chain. Without the floor the count is 13 and the largest of them is 562
+    # a chain. Without the floor the count is 14 and the largest of them is 562
     # members; with it, 7, all of them small. See the docstring.
+    #
+    # 13 -> 14 on 2026-09-28, issue #489: naming the 37 unannotated `pd`
+    # listings. Both floor-1 figures moved, and `classes_no_floor` with them,
+    # because `body_of` builds a body from the statements between the braces, so
+    # a rename changes the text containment is measured on. `pd` 0x10BC is the
+    # worked case: four of this issue's rows -- 0x3497, 0x998B, 0x9C1B, 0x9C4D --
+    # are one-instruction forwarders to it that had carried the *callee's* name
+    # `add_full_product_to_dptr` and are now `call_10bc`. Everyone calling one
+    # of them had that call statement renamed with them, whether directly or by
+    # jumping into a body that makes it: 0x4402 (`lcall 0x3497`), 0xC901
+    # (`lcall 0x9C1B`), 0xF22E (`lcall 0x998B`), and 0x4800 and 0xF79F, which
+    # `ljmp` into 0x4402. Those five left the 193-member floor-1 class. The four
+    # forwarders kept the body `add_full_product_to_dptr();` -- they still call
+    # 0x10BC under its own name -- and with 0xB263, a fifth forwarder to 0x10BC
+    # that #489 did not name, plus 0xCCB7 and 0xEDB5, which merely contain that
+    # statement, they stopped folding into that class and form one of their own.
+    # One class net, and one more of them held together only through a chain.
+    # `bridged` (7) and `flood_no_floor` (562) did not move, so the floor is
+    # doing the same work it was pinned for.
     "bridged": 7,
-    "bridged_no_floor": 13,
+    "bridged_no_floor": 14,
     # The largest class a floor of 1 produces, and how many classes it produces
     # at all, both at this tool's own threshold rather than at 0.0. The floor-1
     # flood is the whole argument for the floor, so both are measured where the
     # table above measures them and pinned.
-    "classes_no_floor": 28,
+    "classes_no_floor": 29,
     "flood_no_floor": 562,
     # The body-size floor's own justification, as a count so a reader does not
     # have to take "half the tree's smallest exports are `return`" on trust.
-    "tiny_bodies": 1276,
+    # 1,276 -> 1,282 with issue #1101's six 7-byte `pd` accessor stubs, all six
+    # of them below the floor -- which is what makes this figure the one that
+    # moves alongside `rows` and a reader should not treat it as independent.
+    "tiny_bodies": 1282,
 }
 
 

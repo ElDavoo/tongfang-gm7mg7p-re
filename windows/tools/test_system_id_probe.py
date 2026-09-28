@@ -133,6 +133,19 @@ spec = importlib.util.spec_from_file_location(
 probe = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(probe)
 
+# The reader a `ts,MARK,,label` row is written for, loaded by path the way
+# `ec_watch.py`'s own `load_label_vocab` loads it, so the mark row this probe
+# writes is asked of the reader that has to place it rather than of a split
+# this file makes itself. The grader imports nothing outside the standard
+# library and registers no `sys.modules` entry, so loading it here cannot
+# change what the shared `ecrw` setdefault above resolves to.
+grader_path = Path(__file__).resolve().parents[2] / 'ec/tools' \
+    / 'grade_0751_isolation.py'
+grader_spec = importlib.util.spec_from_file_location('grade_0751_isolation',
+                                                     grader_path)
+grader = importlib.util.module_from_spec(grader_spec)
+grader_spec.loader.exec_module(grader)
+
 
 class ArithmeticTests(unittest.TestCase):
     """The model, checked against the listings it is read from."""
@@ -300,16 +313,42 @@ class RunTests(unittest.TestCase):
         at = [i for i, r in enumerate(rows) if ',MARK,' in r]
         self.assertEqual(len(at), 1)
         i = at[0]
-        self.assertEqual(rows[i].split(',', 1)[1], 'MARK,,GPU mode -> dGPU')
+        # The fifth field is `ec_watch.Marker`'s provenance column, empty
+        # because this process has no `--label-vocab` to record: a mark row is
+        # the 0751 capture shape whatever wrote it, and `CSV_HEADER` above is
+        # this tool's own schema and is a different one.
+        self.assertEqual(rows[i].split(',', 1)[1], 'MARK,,GPU mode -> dGPU,')
         self.assertEqual(rows[i - 1].split(",")[1], "4")
         self.assertEqual(rows[i + 1].split(",")[1], "5")
 
-    def test_a_mark_row_parses_as_the_grader_expects(self):
+    def grader_marks(self, rows):
+        """The marks `grader.read_capture` reads out of `rows`.
+
+        The reader takes a path and these cases hold the capture as text, so
+        it is written back out and read through it. Every row goes to it --
+        the sample rows are this tool's own `CSV_HEADER` and hex-parse as
+        addresses -- and the mark row is the only one the assertions name.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_text(''.join(row + '\n' for row in rows))
+            return grader.read_capture(str(path))[0]
+
+    def test_the_grader_places_no_role_in_this_runs_free_form_label(self):
         _, _, _, rows = self.run_probe('--mark', label='GPU mode -> dGPU')
-        mark = [r for r in rows if ',MARK,' in r][0]
-        ts, addr, old, label = mark.split(',')
-        self.assertEqual((addr, old, label), ('MARK', '', 'GPU mode -> dGPU'))
-        self.assertTrue(ts.startswith('20'))
+        marks = self.grader_marks(rows)
+        self.assertEqual(len(marks), 1)
+        self.assertEqual(marks[0].label, 'GPU mode -> dGPU')
+        # (None, None), and that is the run's design rather than a defect: the
+        # probe is started without `--label-vocab`, so the label is free-form
+        # and no §3 form leads it. `ec_watch.py`'s own `RefusedLabelTests`
+        # refuses an unplaceable label only while a vocabulary is held, which
+        # is this same distinction read from the other side. Asserting a role
+        # here instead would claim a placement this run never made. The
+        # century is not read off the return -- `parse_ts` is `fromisoformat`
+        # and takes a 1999 stamp -- so it is asked of the `datetime` instead.
+        self.assertEqual(grader.parse_mark(marks[0].label), (None, None))
+        self.assertEqual(marks[0].ts.year // 100, 20)
 
     def test_without_a_csv_nothing_is_written_to_disk(self):
         rc, _, out, _ = self.run_probe(want_csv=False)

@@ -16,7 +16,7 @@
 undefined1 call_7ce0_with_r5_0b(void)
 
 {
-  FUN_CODE_7ce0(0xb);
+  dispatch_on_0a8c_command_then_write_0a8b_record(0xb);
   return DAT_EXTMEM_07d2;
 }
 
