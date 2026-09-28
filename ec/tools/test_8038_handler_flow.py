@@ -680,8 +680,9 @@ class TheEpilogueAndDefault(unittest.TestCase):
 
 class WhoReachesTheDispatcher(unittest.TestCase):
     """§8's bounded answer: nothing in the committed call census reaches
-    0x8031, and the rows that look like callers are phantoms or land
-    mid-instruction. `bank1,0x1A98` is the one committed annotation naming it."""
+    bank0's 0x8031, and the rows that look like callers are phantoms or land
+    mid-instruction. `bank1,0x1A98` is the one committed annotation about it;
+    the rows naming the number without being about it are not callers."""
 
     def test_a_ret_sits_between_the_initialiser_and_the_dispatch(self):
         self.assertEqual(hexat(BANK0, 0x802E, 3), "a3" "f0" "22")

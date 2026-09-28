@@ -764,15 +764,23 @@ census row outside that count names `0x8031` too —
 phantom again, in the other bank: the `02` at `0xCD05` is the displacement of
 the `jc 0xcd08` at `0xCD04`, and the `80 31` behind it that the census read as
 the rest of the `ljmp` is the operand of the `sjmp` at `0xCD06`, which goes to
-`0xCD39`. Its `frame_onto` is 0 of 24, as §9's retired `0xAA19`'s is. The one
-committed *annotation* that names `0x8031` at all is the
-cross-bank trampoline
+`0xCD39`. Its `frame_onto` is 0 of 24, as §9's retired `0xAA19`'s is. Of the
+committed *annotations*, the one that is about **bank0's** `0x8031` — the
+selector read — is the cross-bank trampoline
 [`bank1,0x1A98,trampoline_bank0_8031`](ghidra-functions.csv) —
 `mov dptr,#0x8031` then `ljmp 0x1100` — which reaches the selector read through
 the BL51 bank-switch stub rather than through a call, and whose `0x1100` body is
-outside that listing. This section therefore **ends at "not determined"**: by
+outside that listing. Two further rows carry the number without being about it:
+`bank1,802D,branch_if_acc_zero_to_8031` branches to **bank1's** `0x8031`, a
+different address in a different bank —
+[`802D  60 02  -  jz  0x8031`](../decompiled/bank1/802D.asm) lands on
+`90 06 36 e0` at [`8031.asm`](../decompiled/bank1/8031.asm), `mov dptr,#0x0636`
+then `movx a,@dptr`, nothing like the selector read and no path into bank0 — and
+`bank0,0x8026`'s comment names `0x8031` to say the selector read is *not* part
+of that listing. This section therefore **ends at "not determined"**: by
 these three CSVs, these two `lcall` byte scans and the committed trampoline
-annotation, `0x8031` is reached by the trampoline and by nothing else found.
+annotation, bank0's `0x8031` is reached by the trampoline and by nothing else
+found.
 A `ret`-based thunk or a computed target would be invisible to all of them, as
 §9's blind-spot list says for the reader at `0x7151`.
 
@@ -787,7 +795,7 @@ image rather than restating it.
 
 | address | refs | reader fns | writer fns | functions touched | address-taken | what this walk adds |
 |---|---:|---:|---:|---:|---:|---|
-| `0x0610` | 17 | 3 | 3 | 12 | 0 | the eight `orl a,#0xNN` / `lcall 0xBA3D` sites of §4; the census's three writers are the same block seen from the two listing boundaries §3 names. `bank1,0xB728` and `bank1,0xD4D3` are the two bank-1 consumers |
+| `0x0610` | 17 | 3 | 3 | 12 | 0 | the eight `orl a,#0xNN` / `lcall 0xBA3D` sites of §4, **none of which the census counts as a write** — each hands the ORed byte to `0xBA3D` as an *argument*, so the `write` column is 0 and the three in `writers` are `bank0,0x8294` and the two bank-1 read-modify-write sites `bank1,0xB728` and `bank1,0xD4D3`, none of them in this block. The same row's `functions` cell nonetheless tags eight functions `[writer]`, §4's seven case entries and the `0x806C` boundary of §3 among them, so the two columns of one row disagree and only the `write`/`read+write` pair above explains why |
 | `0x1904` | 12 | 4 | 2 | 7 | 5 | the `orl a,#0x80` at `0x8303` (§7.1), which is an OR and not a whole-byte write; five of the twelve references are the address being taken rather than a `movx` |
 | `0x08E1` | 18 | 4 | 8 | 8 | 1 | — |
 | `0x0600` | 5 | 2 | 3 | 3 | 0 | — |
