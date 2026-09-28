@@ -53,6 +53,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`doc-patch-reference-gate.md`](doc-patch-reference-gate.md) — The names prose gives a prepared gate patch, and what now holds them (issue #777)
 - [`dump-pair-block-attribution.md`](dump-pair-block-attribution.md) — A whole-block bracket is not a second reading of the same bytes (issue #475)
 - [`dump-reads-for-a-refused-block.md`](dump-reads-for-a-refused-block.md) — A read taken for a block whose windows were refused (issue #499)
+- [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
 - [`fixture-empty-pointer-cells.md`](fixture-empty-pointer-cells.md) — The fixture's six empty cells are not a count, and the set is derivable where the six is not (issue #1006)
