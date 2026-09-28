@@ -51,7 +51,7 @@ void set_0476_bit1_then_branch_on_r7(char param_1)
     return;
   }
   DAT_EXTMEM_08e3 = 7;
-  if ((DAT_EXTMEM_07a4 & 1) != 0) {
+  if ((GC6S & 1) != 0) {
     DAT_EXTMEM_08e3 = 7;
     return;
   }

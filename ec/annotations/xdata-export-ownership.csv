@@ -930,12 +930,12 @@ bank1/8E91.c,bank1,8E91,25,bank1/8E91.c,8E91,dispatch_on_049d_049e_05e0,no,1.00
 bank1/8ECC.c,bank1,8ECC,16,bank1/8E91.c,8E91,dispatch_on_049d_049e_05e0,yes,0.94
 bank1/8F37.c,bank1,8F37,5,bank1/8F37.c,8F37,write_047f_and_arm_06d1_fa,no,1.00
 bank1/8F54.c,bank1,8F54,4,bank1/8F54.c,8F54,write_047f_and_arm_06d2_fa,no,1.00
-bank1/8F6B.c,bank1,8F6B,31,bank1/8F6B.c,8F6B,FUN_CODE_8f6b,no,1.00
+bank1/8F6B.c,bank1,8F6B,31,bank1/8F6B.c,8F6B,gate_06c2_0472_0801_then_count_06ce,no,1.00
 bank1/9000.c,bank1,9000,2,bank1/9000.c,9000,store_a_to_xdata_at_dptr,no,1.00
 bank1/9001.c,bank1,9001,1,bank1/9001.c,9001,ret_only_fragment,no,1.00
-bank1/9004.c,bank1,9004,16,bank1/8F6B.c,8F6B,FUN_CODE_8f6b,yes,0.94
-bank1/9007.c,bank1,9007,16,bank1/8F6B.c,8F6B,FUN_CODE_8f6b,yes,0.94
-bank1/9008.c,bank1,9008,15,bank1/8F6B.c,8F6B,FUN_CODE_8f6b,yes,1.00
+bank1/9004.c,bank1,9004,16,bank1/8F6B.c,8F6B,gate_06c2_0472_0801_then_count_06ce,yes,0.94
+bank1/9007.c,bank1,9007,16,bank1/8F6B.c,8F6B,gate_06c2_0472_0801_then_count_06ce,yes,0.94
+bank1/9008.c,bank1,9008,15,bank1/8F6B.c,8F6B,gate_06c2_0472_0801_then_count_06ce,yes,1.00
 bank1/9081.c,bank1,9081,20,bank1/9081.c,9081,count_down_06e4_and_toggle_06e3,no,1.00
 bank1/90B0.c,bank1,90B0,14,bank1/9081.c,9081,count_down_06e4_and_toggle_06e3,yes,0.93
 bank1/90B8.c,bank1,90B8,14,bank1/9081.c,9081,count_down_06e4_and_toggle_06e3,yes,0.93
@@ -1152,7 +1152,7 @@ bank1/B679.c,bank1,B679,16,bank1/B679.c,B679,gate_0572_bit0_set,no,1.00
 bank1/B68C.c,bank1,B68C,5,bank1/B68C.c,B68C,gate_0571_0573_eq_1,no,1.00
 bank1/B6A8.c,bank1,B6A8,5,bank1/B6A8.c,B6A8,snapshot_0432_043c_04f2_04fc,no,1.00
 bank1/B6C9.c,bank1,B6C9,4,bank1/B6C9.c,B6C9,cmp32_hi16_lt_lo16_at_dptr,no,1.00
-bank1/B6DE.c,bank1,B6DE,6,bank1/B6DE.c,B6DE,FUN_CODE_b6de,no,1.00
+bank1/B6DE.c,bank1,B6DE,6,bank1/B6DE.c,B6DE,gate_0564_against_4_and_0563_high_nibble,no,1.00
 bank1/B728.c,bank1,B728,10,bank1/B728.c,B728,clear_0610_bit5_and_dispatch,no,1.00
 bank1/B784.c,bank1,B784,21,bank1/B784.c,B784,FUN_CODE_b784,no,1.00
 bank1/B80A.c,bank1,B80A,8,bank1/B80A.c,B80A,arm_05f5_countdown_0490_bit5,no,1.00
@@ -1316,7 +1316,7 @@ bank1/DACC.c,bank1,DACC,8,bank1/DACC.c,DACC,FUN_CODE_dacc,no,1.00
 bank1/DB0B.c,bank1,DB0B,64,bank1/DB0B.c,DB0B,FUN_CODE_db0b,no,1.00
 bank1/DC50.c,bank1,DC50,1,bank1/DC50.c,DC50,FUN_CODE_dc50,no,1.00
 bank1/DC52.c,bank1,DC52,18,bank1/DC52.c,DC52,FUN_CODE_dc52,no,1.00
-bank1/DE3C.c,bank1,DE3C,23,bank1/DE3C.c,DE3C,FUN_CODE_de3c,no,1.00
+bank1/DE3C.c,bank1,DE3C,23,bank1/DE3C.c,DE3C,stage_0563_0564_pair_and_commit_1c04,no,1.00
 bank1/DE9E.c,bank1,DE9E,2,bank1/DE9E.c,DE9E,FUN_CODE_de9e,no,1.00
 bank1/DEA5.c,bank1,DEA5,7,bank1/DEA5.c,DEA5,FUN_CODE_dea5,no,1.00
 bank1/DEC4.c,bank1,DEC4,6,bank1/DEC4.c,DEC4,FUN_CODE_dec4,no,1.00

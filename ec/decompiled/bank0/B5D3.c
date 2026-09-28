@@ -22,7 +22,7 @@ void FUN_CODE_b5d3(undefined1 param_1,undefined1 param_2)
   cVar4 = (DAT_EXTMEM_06e6 == '\0') << 7;
   DAT_EXTMEM_0875 = bVar3;
   if (((DAT_EXTMEM_06e6 != '\x01') || (-1 < MANUAL_FAN_CTRL)) ||
-     (pbVar5 = &DAT_EXTMEM_07c5, (DAT_EXTMEM_07c5 >> 4 & 1) != 0)) {
+     (pbVar5 = &WHMS, (WHMS >> 4 & 1) != 0)) {
     clear_08eb_bit3_09e6_09e7_08a2_089e_089f();
     return;
   }

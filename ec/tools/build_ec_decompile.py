@@ -2218,16 +2218,19 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # 1,951 -> 1,957 with issue #1101's six `pd 0x07D0` accessor stubs, the last
     # 37 having been issue #489's. Six rows and no retype, so unlike #456 this
     # one does move the pin; the write-up is
-    # docs/findings/pd-07d0-accessor-stubs.md.
-    # 1,957 -> 1,958 with issue #1183's one `common 0D7B` row, the divide-down
-    # scheduler whose cycle
+    # docs/findings/pd-07d0-accessor-stubs.md. Then 1,957 -> 1,960 with issue
+    # #1296's three `bank1` seeds -- 0xDE3C, 0xB6DE and 0x8F6B, all of them
+    # call-target-seeded listings that carried no row -- which is #1101's case
+    # again and for the same reason: the listing was there, the row was not.
+    # Then 1,960 -> 1,961 with issue #1183's one `common 0D7B` row, the
+    # divide-down scheduler whose cycle
     # (docs/findings/scheduler-divide-down-cycle.md) is what that row records.
     # A `common`-scoped row at an address both banks carry, so it is the shape
     # #603's 37 were, and it moves annotations_applied and functions_named below
     # the same way and for the same reason.
-    check("EC: annotations/ghidra-functions.csv is 1,958 records, no short row "
+    check("EC: annotations/ghidra-functions.csv is 1,961 records, no short row "
           "and no duplicate (scope, addr)",
-          len(_ann) == 1958 and not structure_problems("ghidra-functions.csv", _ann,
+          len(_ann) == 1961 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
     # The function layer's three counters, on the committed files, which is where
@@ -2284,13 +2287,15 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     #   from 535 to 541, the second such tranche and for the same reason: its
     #   six `pd 0x07D0` accessor stubs equally carried no row, and each seed
     #   handed a `pd`-scoped row to the PD program alone.
-    #   Then 827 -> 828 and 721 -> 722 with issue #1183's one `common 0D7B`
-    #   row, which is handed to both bank programs and so moves both by one
-    #   for the reason #603's 37 did; `pd` stays at 541, that row being
-    #   EC-scoped.
-    _want_applied = {"bank0": 828, "bank1": 722, "pd": 541}
+    # 721 -> 724 with issue #1296's three `bank1` seeds, and the `common` row
+    # still borrowing bank0's 827 because none of the three is `common`-scoped.
+    # Then 827 -> 828 and 724 -> 725 with issue #1183's one `common 0D7B` row,
+    # which is `common`-scoped and so is handed to both bank programs, moving
+    # both by one and `common` with bank0 for the reason #603's 37 did; `pd`
+    # stays at 541, that row being EC-scoped.
+    _want_applied = {"bank0": 828, "bank1": 725, "pd": 541}
     check("EC: the manifest's annotations_applied is what the exporter's reports "
-          "said -- 828 / 722 / 541 across the three programs, with `common` "
+          "said -- 828 / 725 / 541 across the three programs, with `common` "
           "borrowing bank0's",
           {r["program"]: int(r["annotations_applied"]) for r in _mr
            if r["program"] in _want_applied} == _want_applied
@@ -2308,15 +2313,17 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # and the sum to 1,972, and issue #1101's six `pd 0x07D0` accessor stubs
     # take it to 541 and 1,978 -- again all six, for #489's reason: those
     # listings carried no row at all, so nothing else could name them. Issue
-    # #1183's one `common 0D7B` row then takes `common` from 135 to 136 and the
-    # sum to 1,979, and no bank's own figure, for the reason the paragraph above
-    # gives: a `common`-scoped row at an address both banks carry is
-    # de-duplicated into `common` and lands there and nowhere else.
-    _want_named = {"bank0": 697, "bank1": 605, "common": 136, "pd": 541}
+    # #1296's three `bank1` seeds then take bank1 from 605 to 608 and the sum
+    # to 1,981, for the same reason and no other. Issue #1183's one
+    # `common 0D7B` row then takes `common` from 135 to 136 and the sum to
+    # 1,982, and no bank's own figure: a `common`-scoped row at an address both
+    # banks carry is de-duplicated into `common` and lands there and nowhere
+    # else.
+    _want_named = {"bank0": 697, "bank1": 608, "common": 136, "pd": 541}
     check("EC: functions_named is the index's own annotated=yes count per "
-          "program, 697 / 605 / 136 / 541, summing to 1,979",
+          "program, 697 / 608 / 136 / 541, summing to 1,982",
           {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
-          and sum(_want_named.values()) == 1979
+          and sum(_want_named.values()) == 1982
           and not annotation_ledger_mismatches(_mr, _ir, _ann),
           str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
     # The two-way ledger on the committed files, which is the whole substance of
@@ -2382,8 +2389,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "predates the row",
           _abu == [],
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
-    check("EC: the two ledger directions close the arithmetic -- 1,957 - 0 + 21 "
-          "= the 1,978 functions named",
+    check("EC: the two ledger directions close the arithmetic -- 1,960 - 0 + 21 "
+          "= the 1,981 functions named",
           len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
           "%d - %d + %d = %d, not %d"
           % (len(_ann), len(_abu), len(_nwr),
@@ -2429,7 +2436,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1958
+          == len({annotation_key(r) for r in _ann}) == 1961
           and len({(r["file_offset"], r["target"]) for r in _ct})
           == len({call_target_key(r) for r in _ct}) == 5998)
 

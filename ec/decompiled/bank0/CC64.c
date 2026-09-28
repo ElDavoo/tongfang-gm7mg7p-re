@@ -16,8 +16,8 @@
    trampoline that sets DPTR to this entry and jumps to the bank-0 select stub; the exact thunk is
    cited in the evidence. The 1 written to 0x06E6 is the discriminator that separates this entry
    from its two siblings, which write 3 and 5; what the three values select is not shown here.
-   0x07C5, 0x0787, 0x0788, 0x200D, 0x08A5, 0x08A6, 0x0490, 0x06E6 and 0x0988 have no entry in
-   ec/annotations/registers.yaml.
+   0x07C5 and 0x0788 are in ec/annotations/registers.yaml as WHMS and CTWA (issue #30). 0x0787,
+   0x200D, 0x08A5, 0x08A6, 0x0490, 0x06E6 and 0x0988 have no entry in ec/annotations/registers.yaml.
    type: init
    evidence: ec/decompiled/bank0/CC64.asm; ec/decompiled/bank0/CC64.c;
    ec/annotations/bank-call-audit.md; ec/annotations/ec-07c4-07d5-sites.md
@@ -28,8 +28,8 @@ void init_06e6_1_clear_0743_07c5_and_07d5_ff(void)
 
 {
   CTGP_DB_CTRL = CTGP_DB_CTRL & 0xfa;
-  DAT_EXTMEM_07c5 = DAT_EXTMEM_07c5 & 0xdf;
-  DAT_EXTMEM_0788 = 0xff;
+  WHMS = WHMS & 0xdf;
+  CTWA = 0xff;
   DBAP = 0xff;
   bEXTMEM200d = bEXTMEM200d | 200;
   clear_iram_6d_7f_then_xdata_b00_bfe();

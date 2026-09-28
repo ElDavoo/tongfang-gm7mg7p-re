@@ -489,6 +489,11 @@ class TheCommittedTree(unittest.TestCase):
         # a change that adds a record to a file the table already carries
         # reweights that file, where a change that adds one to a *new* file
         # leaves the two rows the concentration argument rests on alone.
+        # **And one more row, for #774**, which is the first case this suite
+        # has of the other shape: `deep-schedule-lint-baseline.md` cites
+        # `tools/test_agent_gates_patches.py` at `:82-86` and `:121`, and no
+        # committed markdown had cited a line of that suite, so it enters the
+        # table whole at `(2, 0)` — two occurrences, none charged.
         self.assertEqual(
             {row[0]: (row[1], row[3]) for row in tool.rows(table)},
             {"ec/tools/test_xdata_cluster_names.py": (33, 10),
@@ -504,7 +509,8 @@ class TheCommittedTree(unittest.TestCase):
              "ec/tools/test_citation_gap_scan.py": (1, 0),
              "ec/tools/test_measure_index_repair_visibility.py": (1, 0),
              "ec/tools/test_check_history_checkouts.py": (1, 0),
-             "tools/test_readme_suite_table.py": (1, 0)})
+             "tools/test_readme_suite_table.py": (1, 0),
+             "tools/test_agent_gates_patches.py": (2, 0)})
 
     def test_the_committed_concentration_is_the_figure_the_argument_rests_on(self):
         # 44 of 106 occurrences name one suite and 80 of 106 name the two, read
@@ -565,7 +571,12 @@ class TheCommittedTree(unittest.TestCase):
         # #1009's own paragraph describes.
         self.assertEqual([row[4] for row in cited[:2]], [43, 39])
         self.assertEqual(cited[0][4] + cited[1][4], 82)
-        self.assertEqual(len(records), 129)
+        # `129 -> 131` is #774's two records, and the two rows the argument
+        # above rests on are unmoved at `43` and `39` because both records name
+        # a suite this table did not carry: a pin naming a new file is invisible
+        # in the concentration and visible only in the denominator, which is the
+        # same shape #421's own step above records.
+        self.assertEqual(len(records), 131)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
         # Three figures, and each moves by construction the moment a suite
@@ -631,7 +642,11 @@ class TheCommittedTree(unittest.TestCase):
         # `ec/tools/test_verify_provenance_clone_depth.py`, is the other side of
         # the same step and moves nothing: nothing cites a line of it, so it is
         # in the tail rather than the named count.
-        self.assertEqual(len(files) - len(tail), 14)
+        # `14 -> 15` is #774's, and it is the same shape as #421's rather than
+        # as the re-anchorings above: `deep-schedule-lint-baseline.md` cites
+        # `tools/test_agent_gates_patches.py` at `:82-86` and `:121`, so that
+        # suite leaves the tail and enters the named table.
+        self.assertEqual(len(files) - len(tail), 15)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be
