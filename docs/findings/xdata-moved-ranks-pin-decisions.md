@@ -83,10 +83,10 @@ $ grep -rno 'xdata_moved_ranks\.py:[0-9-]*' --include=*.md . | grep -v '^\./vend
 
 **Eight spellings on eight lines, and that is a floor.** The same sentences carry
 **elided** pins the pattern cannot see — `tools/README.md:372`'s `:277` and
-`:332`, `tools/README.md:462`'s `:436`, `:485` and `:255`, and
-`xdata-write-direction-correction.md:38`'s `:270-283` and `:1215-1277`. The table
-below is therefore a reading of the **citing lines whole**, with the grep as the
-enumerator and the elided forms named as elided.
+`:332`, `tools/README.md:462`'s `:436`, `:485` and `:255`, and the
+"values to cite" sentence of `xdata-write-direction-correction.md`'s `:270-283`
+and `:1215-1277`. The table below is therefore a reading of the **citing lines
+whole**, with the grep as the enumerator and the elided forms named as elided.
 
 **This file is excluded from its own population by name**, the way
 [`test-line-pin-census.md`](test-line-pin-census.md) excludes itself, so the
@@ -108,12 +108,22 @@ present tree** — which is the §4a-4d shape, so the growth is the treatment
 working rather than the tree drifting further. The eight originals are all still
 present at the lines this table cites.
 
+**The citing-line column is as of this commit, and two of its rows have moved
+since the transcript above was run.** The §4a-4d correction
+[`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) records was
+inserted into `xdata-write-direction-correction.md` above both of the lines
+this table names there, so those rows are repointed to where the same sentences
+now sit and the transcript at §2 is left as it was run. A correction has to sit
+next to the sentence it corrects, and this one is a paragraph rather than a
+clause, so §6's line-count neutrality is the thing that gave way — see that
+bullet.
+
 | citing line | spelled | resolves to | what `:NNN` is now | decision |
 |---|---|---|---|---|
-| [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):38 | `:181` | `write_movement` at **`:257`** | prose inside `collision_line`'s docstring (`collision_line` at `:170`, `moved_ranks` at `:200`) — prose #929 added | **carries** → repointed to `:257` |
-| [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):155 | `:181` | same | same | **carries** → repointed to `:257` |
-| [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):38 (elided) | `:270-283` | `pair_report` at **`:306`** | prose inside `write_movement`'s docstring (closes at `:284`) | **carries** → repointed to `:306-313` |
-| [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):38 (elided) | `:1215-1277` | `self_test` at **`:1220`** | the tail of `write_census` and the head of `self_test`; the four cases are `+199` lower, the `write_movement` one at `:1455` | **carries** → repointed to `:1413-1476` |
+| [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):54 | `:181` | `write_movement` at **`:257`** | prose inside `collision_line`'s docstring (`collision_line` at `:170`, `moved_ranks` at `:200`) — prose #929 added | **carries** → repointed to `:257` |
+| [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):180 | `:181` | same | same | **carries** → repointed to `:257` |
+| [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):54 (elided) | `:270-283` | `pair_report` at **`:306`** | prose inside `write_movement`'s docstring (closes at `:284`) | **carries** → repointed to `:306-313` |
+| [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):54 (elided) | `:1215-1277` | `self_test` at **`:1220`** | the tail of `write_census` and the head of `self_test`; the four cases are `+199` lower, the `write_movement` one at `:1455` | **carries** → repointed to `:1413-1476` |
 | [`../../tools/README.md`](../../tools/README.md):372 | `:243` | `deciles` at **`:487`** | prose inside `rank_of`'s docstring (`rank_of` at `:234`) | **records another line** |
 | [`../../tools/README.md`](../../tools/README.md):372 (elided) | `:277`, `:332` | `deciles` at `:487` | — | **records another line**; §5 confirms both were real values, on `d62730e1` and `bdfddcfd` |
 | [`../../tools/README.md`](../../tools/README.md):462 | `:243` | `deciles` at **`:487`** | same | **records another line** — but the sentence is *also* making a live claim, amended in §4 |
@@ -148,10 +158,10 @@ census that would have held it.
 
 ## 3. `:181` — **carries**, and is repointed to `:257`
 
-[`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):155
+[`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):180
 sits under `## What the code does now`, so the citation is live prose about the
 tool as it stands and wants repointing. `def write_movement(` is at
-`ec/tools/xdata_moved_ranks.py:257`. `:38` names the same line and moves with it.
+`ec/tools/xdata_moved_ranks.py:257`. `:54` names the same line and moves with it.
 
 `:181` stays written beside the correction per §4a-4d, together with **what
 `:181` turned out to be** — prose inside `collision_line`'s docstring, added by
@@ -159,7 +169,7 @@ tool as it stands and wants repointing. `def write_movement(` is at
 function that is 87 lines further down.
 
 **Two more drifted pins into the same module, in the same sentence, which the
-issue's own scope clause assigns here.** `:38` also says *"the `pair_report` block
+issue's own scope clause assigns here.** `:54` also says *"the `pair_report` block
 at `:270-283` and the four cases at `:1215-1277`"*, and both are drifted the same
 way:
 
@@ -287,7 +297,7 @@ the trees that carry them**, which is all this establishes: it does not follow
 that the write-ups were measured on those two commits, and `a4f967ed` being
 unreachable means the write-up's own account of which commit it cited cannot be
 checked at all. What can be said is that §"The values to cite" in
-[`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):38
+[`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):54
 names values that some commit in this history really did carry, and that the
 sentence is right about that tree and wrong about this one.
 
@@ -307,6 +317,17 @@ commit that was rewritten, or two different commits of which one is not reachabl
 from this branch. **That is a separate open question, not a finding**, and it is
 recorded here so the next pass does not re-derive it.
 
+**Answered 2026-09-28, issue #971: the same change recorded twice.** `a4f967ed`
+is a real commit — the first of the two on PR #923's branch, with `d62730e1` for
+a parent exactly as the walk above assumed, superseded by `2dd0f187` and
+squash-merged as `bdfddcfd`. The walk could not have found it: a commit no ref
+points at is invisible to `git cat-file`, and the only lookup that sees one is a
+plain object read on the remote. Decided in
+[`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md), which carries the
+transcripts. The three options the sentence above leaves open were: the first
+of them, and the other two are excluded — it is not a rewritten commit's alias
+and not a second, different change.
+
 ## 6. The §4a-4d treatment, file by file
 
 Per [`../findings.md`](../findings.md) §4a-4d the superseded text stays visible
@@ -323,6 +344,15 @@ on**, which §5 now shows for `:181` and `:243` by commit.
   [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md)'s
   "the repoint was line-count-neutral above the second of them". Kept neutral so
   `:155` stays `:155` and §2's citing-line column is not self-invalidating.
+  **That neutrality no longer holds, and the neutrality itself was the claim
+  that broke.** The §4a-4d correction
+  [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) records had to be
+  inserted into that file beside the sentence it corrects, and it is a paragraph
+  rather than a clause, so it pushed both cited lines down: `:38` and `:155` are
+  now `:54` and `:180`, and §2's column and every prose reference are repointed
+  to match. A §4a-4d treatment that adds prose cannot hold a line-count
+  invariant, so the invariant is the thing to drop, not the correction — the
+  alternative is leaving pins that name blank lines.
 - **[`../../tools/README.md`](../../tools/README.md)** — in place, because the
   citations are there. `:372` gets the records-another-line marker; `:462` gets
   the amendment and the `:436` → `:487` correction; one pointer, after `:462` so
@@ -377,7 +407,10 @@ true); [`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md
   §"What this opens" already files it as a separate defect, and fixing it is not
   this change's to do.
 - **`a4f967ed`**, per §5, is unreached and its relationship to `bdfddcfd` is not
-  settled here.
+  settled here. **Settled since**, in
+  [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md): the same change,
+  `a4f967ed` being the first commit on PR #923's branch and `bdfddcfd` the
+  squash that replaced it. The bullet stands as this file left it.
 
 ## 8. The test that proves it
 

@@ -34,12 +34,37 @@ in this file are its own and nothing was superseded.** #900's `rank_of()`,
 in `d62730e1`; `a4f967ed` adds `write_movement()` and the four cases on top of
 it, and `diff <(git show a4f967ed:ec/tools/xdata_moved_ranks.py)
 ec/tools/xdata_moved_ranks.py` is empty, so the tool was never edited on two
-sides and no merge needed reconciling. **The values to cite are
+sides and no merge needed reconciling.
+
+**Settled 2026-09-28, issue #971: the `a4f967ed` above is a real commit, and
+the sentence above it is true.** It is the first of the two commits on the
+branch of PR #923, superseded by `2dd0f187` and squash-merged as `bdfddcfd` —
+so the branch *was* one commit on `d62730e1` and the `diff` above did come out
+empty when it was run, which is why the paragraph can say it. It reads as
+*unreproduced* now only because the squash left that branch commit with no ref
+pointing at it, so `git cat-file` cannot see it from a checkout. The
+"unreproduced" marking is **withdrawn, not the transcript retired**: the
+transcript was correct and the later reading of it was not.
+`git diff d62730e1 bdfddcfd -- ec/tools/xdata_moved_ranks.py` adds one
+`def write_movement` and exactly four `check(` lines, and the file at
+`a4f967ed` is byte-identical to the file at `bdfddcfd`. Decided, with the
+transcripts, in [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md).
+
+**The values to cite are
 `write_movement()` at `ec/tools/xdata_moved_ranks.py:257`, the `pair_report`
 block at `:306-313` and the four cases at `:1413-1476`**, repointed per §4a-4d:
 `:181`, `:270-283` and `:1215-1277` are what this file cited and each is true of
 `bdfddcfd`; `a4f967ed` is not reachable from this tree, so the diff above is
 unreproduced. Decided in [`xdata-moved-ranks-pin-decisions.md`](xdata-moved-ranks-pin-decisions.md).
+
+**The "unreproduced" above is superseded, and the premise of it stands.** Not
+reachable from this tree is true and always will be: a squash merge leaves the
+branch commit it replaced unreferenced. What does not follow is that the
+`diff` was not reproduced, and that clause is withdrawn —
+[`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) §"What is wrong,
+precisely" carries the replacement and the transcripts behind it. The repointed
+values above are unaffected either way: `:181`, `:270-283` and `:1215-1277`
+are each true of `bdfddcfd`, and `bdfddcfd` is the same change.
 
 **Nothing here is a hardware claim.** No image is opened, no register is
 read back, and no laptop, EC or Windows machine is involved. Both censuses

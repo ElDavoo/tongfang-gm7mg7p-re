@@ -370,7 +370,7 @@ register rows, 439 cluster rows, both exit 0), and the CSVs are not touched.
   `:487`. **Both are now decided**, in
   [`xdata-moved-ranks-pin-decisions.md`](xdata-moved-ranks-pin-decisions.md):
   `:181` is repointed to `:257`, because
-  [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):155
+  [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):180
   is live prose under its own "What the code does now"; and
   `tools/README.md`'s `xdata_moved_ranks.py:243` is recorded as **records
   another line**, because that sentence is quoting a past tree. **The walk
@@ -435,7 +435,11 @@ each is corrected beside itself rather than edited down, and none is deleted:
   is not reachable from this tree — `git cat-file -t a4f967ed` is
   `fatal: Not a valid object name` — so the `diff` it is an argument for is
   marked unreproduced there rather than left asserting a result no run here
-  produces.
+  produces. **The `fatal` is right and the marking is withdrawn.** `a4f967ed` is
+  a real commit, the first of the two on PR #923's branch, which is exactly why
+  no ref points at it; the `diff` was reproduced where it was run.
+  [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) carries the
+  lookup that finds it and the empty diff beside it.
 
 The argument §5 makes is unchanged by any of this. Deciding what a drifted pin
 was meant to name was a next pass's call; this is that pass, it took the two
