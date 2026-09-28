@@ -49,7 +49,7 @@ addr,file_offset,region,runtime,frame_onto,frame_over,access,window,census
 0x0867,0x25D88,pd-image,0x5D88,24,0,read x1,"movx a,@dptr ; clr c ; subb a,r7 ; jc +0x03",not recorded
 0x0867,0x25DFF,pd-image,0x5DFF,23,1,DPTR handed to lcall 0x903c -- direction unresolved here,lcall 0x903c,not recorded
 0x0867,0x25E10,pd-image,0x5E10,22,2,"read x1, write x1","movx a,@dptr ; inc a ; movx @dptr,a ; ljmp 0x5d83",not recorded
-0x0867,0x29056,pd-image,0x9056,21,3,read x1,"movx a,@dptr ; mov 0xf0,#0x04 ; mul ab ; mov 0x82,a ; mov 0x83,0xf0 ; ljmp 0x0f65",not recorded
+0x0867,0x29056,pd-image,0x9056,21,3,read x1,"movx a,@dptr ; mov 0xf0,#0x04 ; mul ab",not recorded
 0x0868,0x09DBC,bank0,0x9DBC,24,0,write x1,"movx @dptr,a",not recorded
 0x0868,0x09DE5,bank0,0x9DE5,24,0,write x1,"movx @dptr,a",not recorded
 0x0868,0x09EA5,bank0,0x9EA5,24,0,write x1,"movx @dptr,a",not recorded

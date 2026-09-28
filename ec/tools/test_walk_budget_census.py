@@ -380,16 +380,38 @@ class VerdictTests(unittest.TestCase):
         for cls in ("A:", "B:", "undecided"):
             self.assertNotIn(cls, token)
 
-    def test_is_direct_dp_store_is_two_bytes_of_the_right_opcodes(self):
+    def test_is_direct_dp_store_agrees_with_the_widened_guard(self):
+        """The census's own name for the widened predicate, on the forms the
+        two opcodes it used to name -- and on the four families it did not.
+
+        **2026-09-28 (issue #517):** the last two assertions below are what
+        changed, and both are corrections of a wrong claim rather than a
+        widened rule. It used to assert that a `mov DPTR,#imm16` and a longer
+        instruction whose second byte is 0x82 are both *not* a DPTR store,
+        which was right under `len(raw) == 2 and raw[0] in (0xF5, 0x8F)` and
+        is now false in both cases: `mov dptr,#0x8200` names no operand and
+        replaces the whole pointer, and the guard asks the opcode rather than
+        the length. `test_dptr_rebuild_guard.py` holds the full opcode map;
+        this case keeps the census's own two forms under the name the census
+        reads them by.
+        """
         self.assertTrue(W.is_direct_dp_store(DPL_FROM_A))
         self.assertTrue(W.is_direct_dp_store(DPL_FROM_R7))
         self.assertTrue(W.is_direct_dp_store(DPH_FROM_A))
+        # r0-r6, `mov direct,#imm`, `mov direct,direct` and `pop direct` --
+        # the four families the old `(0xF5, 0x8F)` tuple could not see.
+        for raw in (bytes([0x88, 0x82]), bytes([0x8A, 0x83]),
+                    bytes([0x75, 0x83, 0x03]), bytes([0x85, 0x90, 0x83]),
+                    bytes([0xD0, 0x83])):
+            with self.subTest(insn=raw.hex(" ")):
+                self.assertTrue(W.is_direct_dp_store(raw))
         self.assertFalse(W.is_direct_dp_store(NOP))
-        self.assertFalse(W.is_direct_dp_store(SITE))
         self.assertFalse(W.is_direct_dp_store(READ))
-        # A longer instruction whose second byte is 0x82 is not one of these,
-        # which is why OPCODE_LEN is not asked here: the length is checked.
-        self.assertFalse(W.is_direct_dp_store(bytes([0x90, 0x82, 0x00])))
+        # A `mov DPTR,#imm16` *is* a rebuild, which the name
+        # "is_direct_dp_store" does not say and the answer now does. No row in
+        # this census can reach it: the widened guard stops the extend-budget
+        # walk on a `MOV DPTR` before the extra region can hold one.
+        self.assertTrue(W.is_direct_dp_store(SITE))
 
 
 class ReadSitesTests(unittest.TestCase):
@@ -415,6 +437,12 @@ class ReadSitesTests(unittest.TestCase):
 
 class CommittedCensusTests(unittest.TestCase):
     """`--check` against the committed census, and what it refuses."""
+
+    # The figures issue #517's widened DPTR-reload guard replaced, kept
+    # beside the current ones rather than deleted with them. See
+    # `test_the_superseded_45_and_the_13_are_kept_beside_their_replacement`
+    # and ../../docs/findings/dptr-rebuild-walk-guard.md.
+    SUPERSEDED_45_AND_THE_13 = {"rows": 45, "moves": 13, "A": 10, "B": 3}
 
     def _run(self, *args):
         return subprocess.run(
@@ -469,30 +497,77 @@ class CommittedCensusTests(unittest.TestCase):
         self.assertIn("at least 1", out.stderr)
 
     def test_the_committed_census_holds_the_45_and_the_13(self):
+        """The census's own figures, at the committed run.
+
+        **2026-09-28 (issue #517), leaving the figures this case asserted
+        before visible:** it read 45 rows, 13 moving, 10 class A and 3 class
+        B. The committed census now holds **15** rows, 3 moving, **0** class A
+        and 3 class B, and the difference is entirely the widened DPTR-reload
+        guard rather than a re-measurement: thirty rows that used to run to the
+        budget now stop on `DPTR reloaded` before the budget is gone, and the
+        ten class-A rows were exactly the ones whose `access` cell a larger
+        budget would have got wrong. A verdict class that empties is the
+        clearest confirmation available that the diagnosis was right. The
+        previous figures are held in `SUPERSEDED_45_AND_THE_13` below rather
+        than overwritten, and
+        `../../docs/findings/dptr-rebuild-walk-guard.md` carries the census
+        and the reasoning.
+        """
         rows = rows_of('walk-budget-census.csv')
-        self.assertEqual(len(rows), 45)
-        self.assertEqual(sum(1 for r in rows if r["moves"] == "yes"), 13)
+        self.assertEqual(len(rows), 15)
+        self.assertEqual(sum(1 for r in rows if r["moves"] == "yes"), 3)
         self.assertEqual(sum(1 for r in rows
-                             if r["verdict"].startswith("A: ")), 10)
+                             if r["verdict"].startswith("A: ")), 0)
         self.assertEqual(sum(1 for r in rows
                              if r["verdict"].startswith("B: ")), 3)
         # Every row is a row of a committed table, at the budget that table
         # was cut with, and no row's committed cell differs from the re-derived
-        # one -- the census's own loud check, as a fact about the data.
+        # one -- the census's own loud check, as a fact about the data. The
+        # per-row property rather than a count of the population: every merge
+        # that widens the guard again moves the totals and not this.
         for r in rows:
             self.assertIn(r["table"], W.TABLES)
             self.assertEqual(r["access_at_budget"],
                              self._committed_access(r["table"], r["file_offset"]))
             self.assertEqual(r["terminator_at_budget"], T.budget_end(W.BUDGET))
 
+    def test_the_superseded_45_and_the_13_are_kept_beside_their_replacement(self):
+        # CLAUDE.md asks for a superseded claim to stay visible with a
+        # correction next to it rather than be edited away, and a figure that
+        # only ever appeared in a deleted assertion is visible only until the
+        # next reader tidies it up. Held as a constant rather than a comment so
+        # that removing the correction has to delete code, not prose.
+        self.assertEqual(self.SUPERSEDED_45_AND_THE_13,
+                         {"rows": 45, "moves": 13, "A": 10, "B": 3})
+        rows = rows_of('walk-budget-census.csv')
+        # And the replacement is not the same numbers, which is the whole of
+        # what a correction asserts: the guard moved them.
+        self.assertNotEqual(len(rows), self.SUPERSEDED_45_AND_THE_13["rows"])
+        self.assertEqual(
+            sum(1 for r in rows if r["verdict"].startswith("A: ")), 0)
+        self.assertNotEqual(
+            sum(1 for r in rows if r["verdict"].startswith("A: ")),
+            self.SUPERSEDED_45_AND_THE_13["A"])
+
     def test_the_four_issue_addresses_are_three_class_b_and_one_class_a(self):
-        # The four rows issue #846 named, each at the committed and larger
-        # values it quotes. It said four of the 45 move their `access` cell;
-        # the measurement is thirteen, and these four are a correct subset.
+        """Issue #846's four rows, each at the committed and larger-budget
+        values it quotes.
+
+        **2026-09-28 (issue #517):** only one of the four is still in the
+        committed census, and it is the class-B one. The class-A row
+        `0x2C2FA` and the two `ec-0x07d1` rows are gone from the file because
+        their windows no longer run to the budget -- the widened guard stops
+        them on `DPTR reloaded`, which is the point of the change and is
+        recorded in `../../docs/findings/dptr-rebuild-walk-guard.md`. Their
+        committed `access` cells are unchanged and are re-derivable from the
+        image, so the case below asserts both halves: what is still in the
+        census, and that the three that left are gone *because* their
+        terminator moved rather than because a row was deleted.
+        """
+        # The three issue-#846 rows that are still truncated, each at the
+        # committed and larger-budget values the issue quotes.
         want = {
-            ("ec-0x07d0-sites.csv", "0x2C2FA"): ("write x1", "read x1, write x1", "A"),
             ("ec-0x07d0-sites.csv", "0x2E8D4"): ("write x1", "read x1, write x1", "B"),
-            ("ec-0x07d1-sites.csv", "0x28B8B"): ("read x1", "read x2", "A"),
             ("xdata-0400-045f-sites.csv", "0x0DD4A"): ("read x2, write x1", "read x2, write x2", "B"),
         }
         rows = {(r["table"], r["file_offset"]): r
@@ -504,6 +579,26 @@ class CommittedCensusTests(unittest.TestCase):
             self.assertEqual(row["access_at_extend"], at64, key)
             self.assertTrue(row["verdict"].startswith(f"{cls}: "),
                             f"{key} is not class {cls}: {row['verdict']}")
+
+        # The three that left, and why. Every one is a row of a committed
+        # table and none of its `access` cell moved -- what moved is the
+        # terminator, from the budget token to a real one. A row dropped for
+        # any other reason would fail the first assertion; a cell quietly
+        # changed would fail the second.
+        left = {
+            ("ec-0x07d0-sites.csv", "0x2C2FA"): "write x1",
+            ("ec-0x07d1-sites.csv", "0x28B8B"): "read x1",
+            ("ec-0x07d1-sites.csv", "0x2B344"): "read x1",
+        }
+        d = firmware()
+        for key, access in left.items():
+            self.assertNotIn(key, rows, f"{key} left the census for a reason "
+                                         f"this case does not name")
+            self.assertEqual(self._committed_access(*key), access, key)
+            token = T.walk_why(d, int(key[1], 16))[1]
+            self.assertEqual(token, T.RELOAD_END,
+                             f"{key} is not in the census because its window "
+                             f"now ends on {token}")
 
     def _committed_access(self, table, offset):
         with open(ANNOT / table, newline="") as f:
@@ -602,11 +697,25 @@ class ReCutTests(unittest.TestCase):
         self.assertNotIn("file_offset", arms[0])
 
     def test_the_only_window_cell_that_moved_is_the_preexisting_drift(self):
-        # Stated as a count over BASELINE's version of each table, so a future
-        # re-cut that moves a second cell fails here rather than in a
-        # reviewer's eye. A baseline that cannot be read is a failure and not a
-        # skip: this test is cited for the diff it measures, and a gate that
-        # compares a table with nothing measures nothing while reporting green.
+        """The `frame_onto`/`frame_over` pairs #36's re-cut moved, and nothing
+        else of that kind.
+
+        Stated as a diff over BASELINE's version of each table, so a future
+        re-cut that moves a second cell of either column fails here rather
+        than in a reviewer's eye. A baseline that cannot be read is a failure
+        and not a skip: this test is cited for the diff it measures, and a
+        gate that compares a table with nothing measures nothing while
+        reporting green.
+
+        **2026-09-28 (issue #517):** this case's name and its failure message
+        both said "the only `window` cell that moved", and the widened
+        DPTR-reload guard moved 27 more. They are held by
+        `test_the_widened_guard_only_shortens_windows_and_moves_no_access_cell`
+        below, by a rule rather than by a list: 27 more addresses in the
+        tuple here would be a value every re-cut has to edit, which is the
+        shape CLAUDE.md warns against, where a rule is a claim and this list
+        is a census.
+        """
         moved = []
         for name in self.RECUT:
             before = self._committed_at_baseline(name)
@@ -614,7 +723,7 @@ class ReCutTests(unittest.TestCase):
             old = list(csv.DictReader(io.StringIO(before)))
             self.assertEqual(len(old), len(after), f"{name} row count moved")
             for a, b in zip(old, after):
-                for col in a:
+                for col in ("frame_onto", "frame_over"):
                     if a[col] != b[col]:
                         moved.append((name, a["file_offset"], col, a[col], b[col]))
         self.assertEqual(
@@ -739,14 +848,86 @@ class ReCutTests(unittest.TestCase):
             ('ec-0x07d1-sites.csv', '0x2D76C', 'frame_onto', '0', '18'),
             ('ec-0x07d1-sites.csv', '0x2D76C', 'frame_over', '24', '6')
             ],
-            "a cell moved that this re-cut did not name. The load-bearing "
-            "claim of a re-cut is that no `access` cell and no `window` cell "
-            "changed, and the whole of what this one moved is the 59 sites' "
-            "`frame_onto`/`frame_over` pairs in the list above: #36 taught "
-            "`disasm8051.py` to frame across `lcall 0x104D`, so the three "
-            "tables it re-cut count the inline arguments the old frame "
-            "stopped short of. An `access` or `window` cell in the moved set "
-            "is the failure this is here to catch.")
+            "a cell moved that this re-cut did not name. The claim about these "
+            "two columns is #36's: it taught `disasm8051.py` to frame across "
+            "`lcall 0x104D`, so the three tables it re-cut count the inline "
+            "arguments the old frame stopped short of, and that is the whole "
+            "of what they moved.")
+
+    def test_the_widened_guard_only_shortens_windows_and_moves_no_access_cell(self):
+        """The rule governing every `window` and `terminator` cell this
+        work's re-cut moved, in place of a list of addresses.
+
+        **2026-09-28 (issue #517):** the widened DPTR-reload guard ended 27
+        windows in the six re-cut tables that previously ran on, and turned
+        30 of their terminators from one token into another. Every one of them
+        is the same event, and its shape is checkable without naming the 27:
+
+        - a `window` cell that moved is **shorter**, and the instruction it
+          was cut at writes DPTR -- so the truncation is at a pointer rebuild
+          and not at a budget, which is the distinction the whole census turns
+          on;
+        - a `terminator` cell that moved ends on `DPTR reloaded`, the token
+          that means the window stopped at a rebuild rather than running out
+          of instructions;
+        - **no `access` cell moved in any of the six.** That is the claim that
+          matters: a re-cut that changed a cell's direction would be putting a
+          different finding into a committed table. The two tables whose
+          `access` cells *did* change are deliberately not among the six --
+          they are in `UNCUT`, and the two rows behind them are
+          `xdata-1c3x-consumers-sites.csv`'s `0x1C02` and `0x086x-dispatch`-
+          `sites.csv`'s `0x0867` row, corrected against their `.asm` in
+          `../../docs/findings/dptr-rebuild-walk-guard.md`.
+        """
+        d = firmware()
+        shortened = retokenized = 0
+        for name in self.RECUT:
+            old = {r["file_offset"]: r for r in csv.DictReader(io.StringIO(
+                self._committed_at_baseline(name)))}
+            for row in rows_of(name):
+                before = old[row["file_offset"]]
+                if before["window"] != row["window"]:
+                    shortened += 1
+                    # The new window is the old one's leading instructions, and
+                    # the first one it dropped is a DPL store -- which is the
+                    # instruction the guard now stops on. Compared as
+                    # instruction lists rather than as text, so a re-cut that
+                    # cut somewhere else fails rather than one whose
+                    # `disasm8051.py` rendering moved.
+                    old_insns = before["window"].split(" ; ")
+                    new_insns = row["window"].split(" ; ")
+                    self.assertEqual(old_insns[:len(new_insns)], new_insns,
+                                     f"{name} row {row['file_offset']}: the "
+                                     f"new window is not a prefix of the old")
+                    self.assertLess(len(new_insns), len(old_insns),
+                                    f"{name} row {row['file_offset']}: the "
+                                    f"widened guard lengthened a window")
+                    self.assertRegex(
+                        old_insns[len(new_insns)], r"^mov +0x8[23],|^pop +0x8[23]",
+                        f"{name} row {row['file_offset']}: the window was cut "
+                        f"at {old_insns[len(new_insns)]!r}, which is not a "
+                        f"DPTR store")
+                if before["terminator"] != row["terminator"]:
+                    retokenized += 1
+                    self.assertEqual(
+                        row["terminator"], T.RELOAD_END,
+                        f"{name} row {row['file_offset']}: its terminator "
+                        f"moved to {row['terminator']!r}, not to a reload")
+                self.assertEqual(
+                    before["access"], row["access"],
+                    f"{name} row {row['file_offset']}: an `access` cell moved, "
+                    f"{before['access']!r} -> {row['access']!r}")
+        # Both counts are non-zero, so the rules above are exercised rather
+        # than vacuous -- a re-cut that moved nothing would pass them.
+        self.assertGreater(shortened, 0)
+        self.assertGreater(retokenized, 0)
+        # And every committed terminator is what the image gives, so the
+        # column and the guard are one measurement rather than two.
+        for name in self.RECUT:
+            for row in rows_of(name):
+                self.assertEqual(
+                    T.walk_why(d, int(row["file_offset"], 16))[1],
+                    row["terminator"], f"{name} row {row['file_offset']}")
 
     def test_no_access_cell_moved_in_any_of_the_six(self):
         # The census's own check, run over the tables rather than over the
@@ -833,9 +1014,17 @@ class FifteenAddressSweepTests(unittest.TestCase):
         self.assertIn("reproduces it byte for byte", out.stdout)
 
     def test_the_sweep_terminators_are_the_75_39_and_0_the_census_committed(self):
-        # #805's own tally for this table, which the census of terminators
-        # reproduces: 75 DPTR reloads, 39 flow opcodes, no exhausted budget
-        # over its 114 rows.
+        """#805's own tally for this table, reproduced through the guard.
+
+        **2026-09-28 (issue #517):** 75 DPTR reloads and 39 flow opcodes
+        becomes **76** and **38**. One row moved across from the flow column
+        to the reload column, because a `movx` past a pointer rebuild is no
+        longer decoded and the window ends on the rebuild rather than on the
+        branch behind it. The totals are unchanged at 114 and no row's
+        `access` or `window` cell moved, so #805's claim that this table is
+        free of budget-truncated rows still holds -- which is the part of it
+        the two guards are being measured against.
+        """
         rows = rows_of('xdata-086x-dispatch-sites.csv')
         self.assertEqual(len(rows), 114)
         d = firmware()
@@ -843,7 +1032,12 @@ class FifteenAddressSweepTests(unittest.TestCase):
         for row in rows:
             token = T.walk_why(d, int(row["file_offset"], 16))[1]
             tokens[token] = tokens.get(token, 0) + 1
-        self.assertEqual(tokens, {T.RELOAD_END: 75, T.FLOW_END: 39})
+        self.assertEqual(tokens, {T.RELOAD_END: 76, T.FLOW_END: 38})
+        # The partition itself is the claim, not either half of it: 114 rows
+        # and no exhausted budget over them, which is what makes "this table's
+        # cells are not summaries of a cut" a measurement.
+        self.assertEqual(sum(tokens.values()), len(rows))
+        self.assertNotIn(T.budget_end(T.walk.__defaults__[0]), tokens)
 
     def test_the_terminator_column_is_opt_in(self):
         # The sweep above is what keeps the default output free of a column,

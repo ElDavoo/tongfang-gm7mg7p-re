@@ -63,6 +63,21 @@ measurement.
 
 ## The issue's four, and the thirteen
 
+**Correction (2026-09-28, issue #517): the census above is a pre-#517
+measurement, and its budget column is the only stale part of it.** The six
+subtotal rows read 16 / 13 / 10 / 4 / 1 / 1 `max_insns (8) exhausted`; the
+committed tables now hold **7 / 3 / 2 / 1 / 1 / 1**, and the total is **15**
+rather than 45. `walk()`'s reload guard now stops at every construction that
+replaces DPTR and not only at `mov DPTR,#imm16`, so thirty rows that used to
+run to the instruction budget end on `DPTR reloaded` before the budget is
+gone. Everything else here stands — the same 1288 rows, the same nine
+tables, the same budget, the same two-class split — and the thirteen moving
+`access` cells below are now three, because the ten class-A rows are no
+longer truncated at all. What the widening cost is censused in
+[`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md); the `0x2C2FA`
+decode in §A below is the case that decided it, because that row's window
+now ends at the `mov 0x82,a` whose indexed access that section is about.
+
 The issue said "**Four** of the 45 change their committed `access` cell" at a
 64-instruction budget. All four are among the thirteen, with exactly the
 committed and budget-64 values the issue quotes — so it is a correct subset,

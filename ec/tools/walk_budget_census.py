@@ -8,7 +8,7 @@ one of the image's 262144 start offsets to count where it stops: `max_insns (8)
 exhausted` fires 119530 times. That figure is a property of the file, and
 nothing in the tree had asked what it means for the nine committed tables whose
 `window` column this same function produces. This asks, and the answer is that
-45 of their rows are truncated, so their windows are shorter than the code
+**15** of their rows are truncated, so their windows are shorter than the code
 around them and their `access` cells are summaries of a cut.
 
 **The terminator is re-derived here, not re-implemented.** Every row goes
@@ -27,15 +27,18 @@ them mechanically:
 
 - `A` -- a direct store to DPL (`0x82`) or DPH (`0x83`) sits in the
   instructions the budget-8 window does not include, between the cut and the
-  `movx` whose direction changed the cell. `walk()`'s guard tests
-  `d[i] == MOV_DPTR` and cannot see the `mov 0x82,a` / `mov 0x83,a` form, so
-  at a larger budget the cell counts an access through an *indexed* DPTR as
-  though it were the site register's own. Ten of the thirteen moving rows are
-  this. `../annotations/pd-index-geometry.md` records the refutation for the
-  `0xC2FA` row and `pd_index_geometry.py --self-test` asserts it, so the
-  repository already holds the contrary reading for at least one of them.
+  `movx` whose direction changed the cell. **Nothing in the committed census is
+  class A**, and that is a finding rather than a hole: `walk()`'s guard once
+  tested `d[i] == MOV_DPTR` and could not see the `mov 0x82,a` /
+  `mov 0x83,a` form, so at a larger budget the cell counted an access through
+  an *indexed* DPTR as though it were the site register's own. Issue #517
+  widened the guard to every construction that replaces DPTR, so those rows
+  are no longer truncated at all -- their window ends on `DPTR reloaded`
+  before the budget is gone, and there is nothing for a larger budget to get
+  wrong. See `../../docs/findings/dptr-rebuild-walk-guard.md`.
 - `B` -- no such store. The budget-8 window was simply short, and the larger
-  cell counts this same site's own further accesses. Three of the thirteen.
+  cell counts this same site's own further accesses. All three of the rows
+  that move.
 
 `undecided` is the third answer and it is a real one, not a formality: the
 diagnosis needs a window long enough to hold the store, so a `--extend` too
@@ -48,8 +51,20 @@ instructions it happened to be shown. Nothing in the committed census is
 because that is the figure issue #846's own table used, kept as a named
 default so the diagnosis column is re-derivable and a reader can re-run it at
 another value; it is not a recommendation, and the `moves` column is the
-finding that a budget of 64 would rewrite 13 committed `access` cells, 10 of
-them wrongly. `walk()`'s own `max_insns` stays 8.
+finding that a budget of 64 rewrites 3 committed `access` cells, none of them
+wrongly. `walk()`'s own `max_insns` stays 8.
+
+**2026-09-28 (issue #517), leaving the figures this docstring gave before
+visible.** It said 45 truncated rows of 1288 and 13 moving, 10 of them class
+A; the census emits 15 and 3, none class A. Both numbers are the same
+measurement at the same budget of 8 over the same nine tables, and the
+difference is entirely the widened guard -- thirty rows that used to run to
+the budget now stop on `DPTR reloaded`, and ten of those thirty had a cell
+that changed if a reader had believed it. The prose above is the corrected
+text; the sentence about the refutation at `0x2C2FA` is retired rather than
+moved, because `../annotations/pd-index-geometry.md` still holds that row's
+contradicting reading and it is now settled by the window ending where the
+indexed access begins.
 
 **Two populations, kept apart.** The nine tables below are every committed
 `window` column that `trace_xdata_refs.walk()` produces, all keyed on
@@ -80,8 +95,8 @@ import io
 import os
 import sys
 
-from trace_xdata_refs import (budget_end, classify, is_terminator, walk,
-                              walk_why)
+from trace_xdata_refs import (DPL, DPH, MOV_DIRECT_DIRECT, budget_end, classify,
+                              is_dptr_rebuild, is_terminator, walk, walk_why)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.join(HERE, os.pardir, os.pardir)
@@ -120,12 +135,17 @@ COLUMNS = ("table", "addr", "file_offset", "max_insns", "extend",
            "terminator_at_budget", "terminator_at_extend", "access_at_budget",
            "access_at_extend", "moves", "verdict")
 
-# `mov 0x82,a` is 0xF5 0x82 and `mov 0x82,rn` is 0x8F 0x82; the DPH pair is
-# the same opcodes with 0x83. These are the forms walk()'s `d[i] == MOV_DPTR`
-# guard cannot see, and they are the whole of the class A/B split below.
-DPL = 0x82
-DPH = 0x83
-DIRECT_STORE_OPCODES = (0xF5, 0x8F)
+# The opcode list behind the class A/B split is `trace_xdata_refs`'s, not this
+# file's: `is_dptr_rebuild()` names every construction that replaces DPTR, and
+# a second copy here is a second thing to widen. `test_dptr_rebuild_guard.py`
+# holds the two to one answer over the whole opcode map, which is what stops
+# the narrower `(0xF5, 0x8F)` this used to carry from coming back -- it covered
+# `mov direct,a` and `mov direct,r7` only, missing r0-r6 and `0x75`, `0x85`
+# and `0xD0` outright.
+#
+# DPL and DPH are imported rather than re-declared for the same reason. The
+# 8051's DPL is 0x82 and its DPH is 0x83; that is one fact about one
+# architecture, and a census that spelled it twice had two places to be right.
 
 MOVX_READ = 0xE0
 MOVX_WRITE = 0xF0
@@ -137,15 +157,38 @@ def repo_path(path: str) -> str:
 
 
 def is_direct_dp_store(raw: bytes) -> bool:
-    """A store to DPL or DPH that `walk()`'s guard cannot see.
+    """A store to DPL or DPH -- the census's own name for
+    `trace_xdata_refs.is_dptr_rebuild()`.
 
-    Two bytes, `0xF5 nn` (`mov nn,a`) and `0x8F nn` (`mov nn,rn`), with `nn` a
-    direct SFR address. `OPCODE_LEN` is asked rather than `raw[1] ==` tested,
-    so a 3-byte instruction whose second byte happens to be 0x82 is not
-    mistaken for one of these.
+    Applied to one instruction's bytes rather than to a buffer and an index,
+    and a separate function rather than a call site only because
+    `verdict_for()` reads better against it and because a test holds the two
+    names to one answer.
+
+    **2026-09-28 (issue #517), leaving what it answered before visible:** it
+    was named for a store `walk()`'s guard *cannot see* and tested
+    `len(raw) == 2 and raw[0] in (0xF5, 0x8F)`, which covered `mov direct,a`
+    and `mov direct,r7` and missed `mov direct,r0` through `r6`,
+    `mov direct,#imm`, `mov direct,direct` and `pop direct` entirely. The
+    guard that could not see them now sees them, so the qualifier is gone from
+    the name and this is a rebuild test. The name is still slightly wider
+    than its wording, because a `mov DPTR,#imm16` is a rebuild too and this
+    answers True for one; no row in this census can reach that case, because
+    the widened guard stops the extend-budget walk on a `MOV DPTR` before the
+    extra region can hold one.
     """
-    return (len(raw) == 2 and raw[0] in DIRECT_STORE_OPCODES
-            and raw[1] in (DPL, DPH))
+    return is_dptr_rebuild(raw, 0)
+
+
+def dptr_store_byte(raw: bytes) -> int:
+    """The DPTR byte a rebuild-form instruction writes, from its opcode.
+
+    `raw[1]` for every form except `mov direct,direct` (`0x85`), which names
+    its source first and its destination second. `is_dptr_rebuild()` already
+    makes that same distinction, and a verdict cell that read the wrong operand
+    would name the half of DPTR the instruction did not touch.
+    """
+    return raw[2] if raw[0] == MOV_DIRECT_DIRECT else raw[1]
 
 
 def verdict_for(extra, why_at_extend: str, budget: int, extend: int,
@@ -186,11 +229,12 @@ def verdict_for(extra, why_at_extend: str, budget: int, extend: int,
         return ("B: no store to DPL/DPH precedes the first extra `movx`, so the "
                 "larger budget counts this site's own further accesses and the "
                 "committed cell is short rather than wrong")
-    half = "DPL" if extra[store][1][1] == DPL else "DPH"
+    written = dptr_store_byte(extra[store][1])
+    half = "DPL" if written == DPL else "DPH"
     direction = "read" if extra[first_movx][1][0] == MOVX_READ else "write"
-    return (f"A: `mov 0x{extra[store][1][1]:02X},…` ({half}) at "
+    return (f"A: `mov 0x{written:02X},…` ({half}) at "
             f"0x{extra[store][0]:05X} precedes the extra {direction} at "
-            f"0x{extra[first_movx][0]:05X}, and walk()'s MOV_DPTR guard cannot "
+            f"0x{extra[first_movx][0]:05X}, and walk()'s reload guard cannot "
             f"see that form, so the larger budget files an indexed access "
             f"under the site register")
 
@@ -327,13 +371,14 @@ def check_table(generated: str, path: str) -> int:
 
 
 def print_summary(tallies, moving: int, classes, budget: int, extend: int) -> None:
-    """The per-table terminator tally, then the 45, then the 13.
+    """The per-table terminator tally, then the truncated total, then the
+    classes the cells that move fall into.
 
-    The four tables with no truncated row are printed with the rest rather
-    than left out. A zero is the other half of the finding, and a table that
-    does not appear cannot be told from a table that was not looked at -- so
+    The tables with no truncated row are printed with the rest rather than
+    left out. A zero is the other half of the finding, and a table that does
+    not appear cannot be told from a table that was not looked at -- so
     `xdata-086x-dispatch-sites.csv`'s 0 is the same kind of claim as
-    `ec-0x07d0-sites.csv`'s 4, and both are re-derived on this run."""
+    `ec-07c4-07d5-sites.csv`'s 7, and both are re-derived on this run."""
     total = 0
     rows = 0
     for name in TABLES:
@@ -350,7 +395,7 @@ def print_summary(tallies, moving: int, classes, budget: int, extend: int) -> No
     print(f"A budget of {extend} changes {moving} of their `access` cells: "
           + ", ".join(f"{k} {v}" for k, v in sorted(classes.items()))
           + f", and the other {total - moving} keep the cell they have.")
-    print("`A` means a store to DPL/DPH that walk()'s MOV_DPTR guard cannot see "
+    print("`A` means a store to DPL/DPH that walk()'s reload guard cannot see "
           "sits in\nthe instructions the budget hides, so the larger budget "
           "files an indexed access under\nthe site register. `B` means the "
           "window was short and the larger cell is this same\nsite's own "
