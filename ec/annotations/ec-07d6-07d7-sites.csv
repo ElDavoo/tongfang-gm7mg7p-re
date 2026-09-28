@@ -42,15 +42,15 @@ addr,file_offset,region,runtime,frame_onto,frame_over,access,window,terminator
 0x07D6,0x233E0,pd-image,0x33E0,22,2,read x1,"movx a,@dptr ; mov r7,a ; lcall 0xf5c3",flow opcode
 0x07D6,0x233EB,pd-image,0x33EB,24,0,read x1,"movx a,@dptr ; mov r7,a ; lcall 0xf22e",flow opcode
 0x07D6,0x233F8,pd-image,0x33F8,22,2,read x1,"movx a,@dptr ; mov r7,a ; lcall 0x9e86",flow opcode
-0x07D6,0x23403,pd-image,0x3403,24,0,read x1,"movx a,@dptr ; mov 0xf0,#0x77 ; mul ab ; add a,#0x9b ; mov 0x82,a ; clr a ; addc a,#0x08",max_insns (8) exhausted
-0x07D6,0x23426,pd-image,0x3426,24,0,read x1,"movx a,@dptr ; mov 0xf0,#0x77 ; mul ab ; add a,#0xda ; mov 0x82,a ; clr a ; addc a,#0x08",max_insns (8) exhausted
+0x07D6,0x23403,pd-image,0x3403,24,0,read x1,"movx a,@dptr ; mov 0xf0,#0x77 ; mul ab ; add a,#0x9b",DPTR reloaded
+0x07D6,0x23426,pd-image,0x3426,24,0,read x1,"movx a,@dptr ; mov 0xf0,#0x77 ; mul ab ; add a,#0xda",DPTR reloaded
 0x07D6,0x2343B,pd-image,0x343B,24,0,read x1,"movx a,@dptr ; mov r7,a ; clr a ; mov r5,a ; lcall 0xf407",flow opcode
 0x07D6,0x23449,pd-image,0x3449,24,0,read x1,"movx a,@dptr ; mov r7,a ; lcall 0xf755",flow opcode
 0x07D6,0x23455,pd-image,0x3455,24,0,read x1,"movx a,@dptr ; mov r7,a ; lcall 0xf75c",flow opcode
 0x07D6,0x2345E,pd-image,0x345E,24,0,read x1,"movx a,@dptr ; mov r7,a ; clr a ; mov r5,a ; lcall 0xf407",flow opcode
 0x07D6,0x2346C,pd-image,0x346C,24,0,read x1,"movx a,@dptr ; mov r7,a ; lcall 0xebe4",flow opcode
 0x07D6,0x23474,pd-image,0x3474,24,0,no movx found in the decoded window,ret,flow opcode
-0x07D6,0x234D6,pd-image,0x34D6,24,0,read x1,"movx a,@dptr ; mov 0xf0,#0x5e ; mul ab ; add a,#0xfc ; mov 0x82,a ; clr a ; addc a,#0x08",max_insns (8) exhausted
+0x07D6,0x234D6,pd-image,0x34D6,24,0,read x1,"movx a,@dptr ; mov 0xf0,#0x5e ; mul ab ; add a,#0xfc",DPTR reloaded
 0x07D6,0x23562,pd-image,0x3562,24,0,read x1,"movx a,@dptr",DPTR reloaded
 0x07D6,0x23612,pd-image,0x3612,24,0,read x1,"movx a,@dptr ; mov r5,a",DPTR reloaded
 0x07D6,0x236CB,pd-image,0x36CB,24,0,read x1,"movx a,@dptr ; mov r7,a ; mov r6,#0x00 ; mov r4,#0x02 ; mov r5,#0x60 ; ljmp 0x0c7a",flow opcode
@@ -72,10 +72,10 @@ addr,file_offset,region,runtime,frame_onto,frame_over,access,window,terminator
 0x07D6,0x26F83,pd-image,0x6F83,23,1,read x1,"movx a,@dptr ; mov r7,a ; lcall 0x8866",flow opcode
 0x07D6,0x2806F,pd-image,0x806F,24,0,"write x2, walks 2 consecutive bytes (inc dptr)","movx @dptr,a ; clr a ; mov r6,a ; inc dptr ; movx @dptr,a",DPTR reloaded
 0x07D6,0x287DA,pd-image,0x87DA,24,0,read x1,"movx a,@dptr",DPTR reloaded
-0x07D6,0x288BE,pd-image,0x88BE,24,0,"read x1, write x1","mov a,r7 ; movx @dptr,a ; movx a,@dptr ; mov r3,a ; mov 0xf0,#0x5e ; mul ab ; add a,#0x00",max_insns (8) exhausted
+0x07D6,0x288BE,pd-image,0x88BE,24,0,"read x1, write x1","mov a,r7 ; movx @dptr,a ; movx a,@dptr ; mov r3,a ; mov 0xf0,#0x5e ; mul ab ; add a,#0x00",DPTR reloaded
 0x07D6,0x288FC,pd-image,0x88FC,24,0,read x1,"movx a,@dptr ; lcall 0x6fd4",flow opcode
 0x07D6,0x2890A,pd-image,0x890A,24,0,read x1,"movx a,@dptr ; jc +0x12",flow opcode
-0x07D6,0x2893A,pd-image,0x893A,24,0,read x1,"movx a,@dptr ; mov 0xf0,#0x5e ; mul ab ; add a,#0x08 ; mov 0x82,a ; clr a ; addc a,#0x09",max_insns (8) exhausted
+0x07D6,0x2893A,pd-image,0x893A,24,0,read x1,"movx a,@dptr ; mov 0xf0,#0x5e ; mul ab ; add a,#0x08",DPTR reloaded
 0x07D6,0x2894E,pd-image,0x894E,22,2,DPTR handed to lcall 0x70f8 -- direction unresolved here,lcall 0x70f8,flow opcode
 0x07D6,0x2895E,pd-image,0x895E,24,0,DPTR handed to lcall 0x70ba -- direction unresolved here,lcall 0x70ba,flow opcode
 0x07D6,0x2897C,pd-image,0x897C,20,4,read x1,"movx a,@dptr ; mov r7,a ; lcall 0x701a",flow opcode
@@ -89,13 +89,13 @@ addr,file_offset,region,runtime,frame_onto,frame_over,access,window,terminator
 0x07D6,0x28A3D,pd-image,0x8A3D,24,0,read x1,"movx a,@dptr ; mov r7,a ; clr a ; mov r3,a ; mov r2,a ; mov r5,#0x06 ; ljmp 0xa339",flow opcode
 0x07D6,0x2951B,pd-image,0x951B,24,0,DPTR handed to lcall 0xb2f7 -- direction unresolved here,lcall 0xb2f7,flow opcode
 0x07D6,0x29585,pd-image,0x9585,24,0,DPTR handed to lcall 0x10c8 -- direction unresolved here,lcall 0x10c8,flow opcode
-0x07D6,0x2A0E6,pd-image,0xA0E6,24,0,"read x1, write x1","mov a,r7 ; movx @dptr,a ; movx a,@dptr ; mov r7,a ; mov 0xf0,#0x5e ; mul ab ; add a,#0xf1",max_insns (8) exhausted
+0x07D6,0x2A0E6,pd-image,0xA0E6,24,0,"read x1, write x1","mov a,r7 ; movx @dptr,a ; movx a,@dptr ; mov r7,a ; mov 0xf0,#0x5e ; mul ab ; add a,#0xf1",DPTR reloaded
 0x07D6,0x2A125,pd-image,0xA125,24,0,read x1,"movx a,@dptr ; lcall 0xacd3",flow opcode
 0x07D6,0x2A184,pd-image,0xA184,24,0,read x1,"movx a,@dptr ; lcall 0xace6",flow opcode
 0x07D6,0x2A198,pd-image,0xA198,24,0,read x1,"movx a,@dptr ; lcall 0xace6",flow opcode
 0x07D6,0x2A1AC,pd-image,0xA1AC,24,0,read x1,"movx a,@dptr ; lcall 0xace6",flow opcode
 0x07D6,0x2A1EE,pd-image,0xA1EE,24,0,read x1,"movx a,@dptr ; lcall 0xace6",flow opcode
-0x07D6,0x2ACCE,pd-image,0xACCE,24,0,read x1,"movx a,@dptr ; mov r7,a ; mov 0xf0,#0x17 ; mul ab ; add a,#0x2c ; mov 0x82,a ; clr a",max_insns (8) exhausted
+0x07D6,0x2ACCE,pd-image,0xACCE,24,0,read x1,"movx a,@dptr ; mov r7,a ; mov 0xf0,#0x17 ; mul ab ; add a,#0x2c",DPTR reloaded
 0x07D6,0x2B73F,pd-image,0xB73F,24,0,"write x2, walks 2 consecutive bytes (inc dptr)","mov a,r7 ; movx @dptr,a ; clr a ; inc dptr ; movx @dptr,a ; mov r4,#0x02 ; mov r5,#0x60",max_insns (8) exhausted
 0x07D6,0x2B7AA,pd-image,0xB7AA,23,1,read x1,"movx a,@dptr ; mov r7,a ; pop 0x01 ; pop 0x02 ; lcall 0x04c0",flow opcode
 0x07D6,0x2B7C5,pd-image,0xB7C5,24,0,read x1,"movx a,@dptr",DPTR reloaded
@@ -118,7 +118,7 @@ addr,file_offset,region,runtime,frame_onto,frame_over,access,window,terminator
 0x07D6,0x2BEFB,pd-image,0xBEFB,22,2,read x1,"movx a,@dptr ; xrl a,#0x01 ; jnz +0x42",flow opcode
 0x07D6,0x2C6C4,pd-image,0xC6C4,24,0,DPTR handed to lcall 0xb2f1 -- direction unresolved here,lcall 0xb2f1,flow opcode
 0x07D6,0x2C6D1,pd-image,0xC6D1,24,0,DPTR handed to lcall 0xb293 -- direction unresolved here,lcall 0xb293,flow opcode
-0x07D6,0x2C6EB,pd-image,0xC6EB,24,0,read x1,"movx a,@dptr ; mov r6,a ; clr a ; add a,#0x01 ; mov r7,a ; mov a,r6 ; addc a,#0xfd",max_insns (8) exhausted
+0x07D6,0x2C6EB,pd-image,0xC6EB,24,0,read x1,"movx a,@dptr ; mov r6,a ; clr a ; add a,#0x01 ; mov r7,a ; mov a,r6 ; addc a,#0xfd",DPTR reloaded
 0x07D6,0x2C724,pd-image,0xC724,24,0,read x1,"movx a,@dptr ; jz +0x03",flow opcode
 0x07D6,0x2CFA0,pd-image,0xCFA0,24,0,DPTR handed to lcall 0x1041 -- direction unresolved here,lcall 0x1041,flow opcode
 0x07D6,0x2CFB0,pd-image,0xCFB0,23,1,DPTR handed to lcall 0x0faf -- direction unresolved here,lcall 0x0faf,flow opcode
@@ -176,7 +176,7 @@ addr,file_offset,region,runtime,frame_onto,frame_over,access,window,terminator
 0x07D7,0x29F78,pd-image,0x9F78,24,0,DPTR handed to lcall 0x56a0 -- direction unresolved here,lcall 0x56a0,flow opcode
 0x07D7,0x29F94,pd-image,0x9F94,18,6,read x1,"movx a,@dptr ; mov r7,a ; pop 0x05 ; mov r3,#0x02 ; mov r2,#0x07 ; lcall 0xccb7",flow opcode
 0x07D7,0x29FA5,pd-image,0x9FA5,24,0,DPTR handed to lcall 0x56a0 -- direction unresolved here,lcall 0x56a0,flow opcode
-0x07D7,0x2A0FB,pd-image,0xA0FB,24,0,write x1,"movx @dptr,a ; mov a,r7 ; mov 0xf0,#0x5e ; mul ab ; add a,#0xf2 ; mov 0x82,a ; clr a",max_insns (8) exhausted
+0x07D7,0x2A0FB,pd-image,0xA0FB,24,0,write x1,"movx @dptr,a ; mov a,r7 ; mov 0xf0,#0x5e ; mul ab ; add a,#0xf2",DPTR reloaded
 0x07D7,0x2A11A,pd-image,0xA11A,23,1,read x1,"movx a,@dptr ; cjne a,#0x02,+0x0e",flow opcode
 0x07D7,0x2A12F,pd-image,0xA12F,24,0,read x1,"movx a,@dptr ; cjne a,#0x02,+0x0b",flow opcode
 0x07D7,0x2A141,pd-image,0xA141,23,1,read x1,"movx a,@dptr ; jnz +0x0e",flow opcode
@@ -186,7 +186,7 @@ addr,file_offset,region,runtime,frame_onto,frame_over,access,window,terminator
 0x07D7,0x2A1D7,pd-image,0xA1D7,23,1,read x1,"movx a,@dptr ; jnz +0x11",flow opcode
 0x07D7,0x2ABBF,pd-image,0xABBF,23,1,write x1,"mov a,r7 ; movx @dptr,a ; lcall 0xe458",flow opcode
 0x07D7,0x2ABC7,pd-image,0xABC7,24,0,read x1,"movx a,@dptr ; mov r5,a ; mov r7,#0x00 ; mov r6,a ; clr a ; add a,r7 ; lcall 0x906d",flow opcode
-0x07D7,0x2ABFF,pd-image,0xABFF,24,0,read x1,"movx a,@dptr ; mov 0xf0,#0x5e ; mul ab ; add a,#0x0c ; mov 0x82,a ; clr a ; addc a,#0x09",max_insns (8) exhausted
+0x07D7,0x2ABFF,pd-image,0xABFF,24,0,read x1,"movx a,@dptr ; mov 0xf0,#0x5e ; mul ab ; add a,#0x0c",DPTR reloaded
 0x07D7,0x2AC13,pd-image,0xAC13,24,0,read x1,"movx a,@dptr ; mov r7,a ; mov r5,#0x01 ; lcall 0xec5e",flow opcode
 0x07D7,0x2AC1D,pd-image,0xAC1D,24,0,read x1,"movx a,@dptr ; lcall 0x909a",flow opcode
 0x07D7,0x2AC29,pd-image,0xAC29,24,0,read x1,"movx a,@dptr ; mov r5,a ; mov r6,a ; clr a ; add a,#0x00 ; lcall 0x9028",flow opcode
