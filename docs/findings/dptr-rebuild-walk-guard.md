@@ -317,7 +317,7 @@ naming both misattributed sites) and needed no edit.
 `common`-region fixtures, no firmware image and no hardware, the house
 pattern. **It fails on the pre-fix guard** — reverting the one line in
 `walk_why()` turns 21 of its 27 cases red, which was checked rather than
-assumed, by running the suite against `HEAD^`'s `walk_why()` with the new
+assumed, by running the suite against `b0b0c09c`'s `walk_why()` with the new
 predicate grafted onto it.
 
 It holds the guard per construction, the negatives (`swap a`, `xch a,0x82`,
@@ -369,10 +369,13 @@ python3 ec/tools/walk_budget_census.py ec/firmware/GMxMGxx_11.800 --check
 PYTHONPATH=ec/tools python3 - <<'EOF'
 import collections, importlib.util, sys, subprocess
 import trace_xdata_refs as T
-# HEAD^'s walk_why: a before-state that is not this commit's fix. Not `HEAD`
-# and not `origin/main` -- both hold the re-cut once this lands, and a baseline
-# that already contains the change compares each walk with itself and prints 0.
-src = subprocess.run(["git", "show", "HEAD^:ec/tools/trace_xdata_refs.py"],
+# b0b0c09c's walk_why: a before-state that is not this file's fix. A pinned
+# SHA, this work's parent and the tip of main before it, rather than `HEAD^`:
+# `HEAD^` names the pre-fix guard only on a branch's first commit, and a later
+# fix round that does not touch this file still moves it onto a commit that
+# already holds the widened guard -- this branch's own `5fb7581e` does -- at
+# which point the sweep compares each walk with itself and prints 0.
+src = subprocess.run(["git", "show", "b0b0c09c:ec/tools/trace_xdata_refs.py"],
                      capture_output=True, text=True).stdout
 open("/tmp/old_tref.py", "w").write(src)
 spec = importlib.util.spec_from_file_location("old_tref", "/tmp/old_tref.py")
@@ -462,13 +465,30 @@ Steps 6-7 are the two that would catch a mistake in the other direction. Step
 **not** re-cut under the terminator column, and it is what makes "the default
 output has no column in it" checkable. Step 9's sweep is the only place the
 whole-image figures are derived, and it takes its "before" from `git show`
-rather than from a hand-copied loop. **The ref is `HEAD^` and not `HEAD` or
-`origin/main`** — this recipe originally read `HEAD`, which on the merged tree
-*is* the fixed file, so it compared each walk with itself and printed
-`0 rows move` / `0 access cells move` while the figures this file reports
-stood. The
-same trap `tools/README.md` records for `test_walk_budget_census.py`'s
-baseline ref, and for the same reason: both `HEAD` and `origin/main` hold the
-re-cut once this lands, and a baseline that already contains the change pins
-nothing. `HEAD^` holds the pre-fix guard on this branch and on the merged tree
-alike.
+rather than from a hand-copied loop. **The ref is the pinned SHA `b0b0c09c`**,
+this work's parent and the tip of `main` before it, rather than anything
+derived from where the branch happens to sit. The three relative refs each
+fail, and each was checked rather than reasoned about:
+
+- **`HEAD`** is this file once the work lands, so the sweep compares each
+  walk with itself and prints `0 rows move` / `0 access cells move` while the
+  figures this file reports stand.
+- **`HEAD^`** holds the pre-fix guard only on a branch's *first* commit. This
+  branch's review rounds are not: `5fb7581e` does not touch
+  `trace_xdata_refs.py`, so from `2abd4cf5` onward `HEAD^` already holds the
+  widened guard — the same `0 rows move`, arriving by the ref that was meant
+  to exclude it. A fix round is exactly the event that moves a commit under
+  a relative ref, and only one that edits this file would have kept it honest.
+- **`git merge-base HEAD origin/main`** reads correctly today and fails the
+  same way afterwards. Checked by merging this branch into `main` locally:
+  the merge-base is `b0b0c09c` only while `origin/main` still sits behind the
+  merge. Once it advances to the merge commit — which is what a merged tree
+  looks like to the person running the recipe — the merge-base *is* that
+  commit, and it holds the re-cut.
+
+A SHA is the only one of the four that is the same object on the branch, in a
+rebase, and on the merged tree, and `b0b0c09c` is reachable in the full-depth
+`gates` job. It is the same remedy `tools/README.md` records for
+`test_walk_budget_census.py`'s baseline ref, which pins `5672042a` for the
+same reason: both `HEAD` and `origin/main` hold the re-cut once a change
+lands, and a baseline that already contains the change pins nothing.
