@@ -9,10 +9,16 @@ rests on looks re-derivable while nothing re-derives it. #748 said this tool
 is not a check that cannot fail, and said it having driven `report()` by
 hand. A sentence in a merge body is not a case, and this is the case.
 
-So the three problems `report()` can append are held separately -- a BOM, a
-capture the declared reader refuses, and two reads that disagree -- each over
-a tree built here, each asserted to be named by the path it was found at. The
-clean half is held too, and it is the half that does the work: three cases
+So the three problems the *corpus* half of `report()` appends are held
+separately -- a BOM, a capture the declared reader refuses, and two reads that
+disagree -- each over a tree built here, each asserted to be named by the path
+it was found at. The writer half's two (`put bytes on disk that are not
+utf-8`, and `did not write the probe label`) are **not** held, and naming the
+gap is the calibrated version rather than dropping the claim: reaching either
+needs a committed fixture module standing in for the real writers, and #765
+left that out of scope.
+
+The clean half is held too, and it is the half that does the work: three cases
 that a tool reporting every file would also pass are not evidence of a
 checker, and a temp tree with a good capture beside a broken one is what says
 this one is sharp.

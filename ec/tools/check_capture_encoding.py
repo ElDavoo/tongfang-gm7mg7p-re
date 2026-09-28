@@ -35,8 +35,8 @@ What this does not do:
     crashes on a tuple of the wrong length (`:601`) and is red on `main` for
     reasons that have nothing to do with encoding, so nothing here imports it
     -- a measurement that cannot run is not a control.
-  * *Prove its own exit code is reachable.* Each of `report()`'s three problems
-    is a case in `test_check_capture_encoding.py`, on its own `--root` tree.
+  * *Prove its own exit code is reachable* for the corpus half: its three
+    are cases in `test_check_capture_encoding.py`; the writer's two are not.
 """
 
 import argparse
