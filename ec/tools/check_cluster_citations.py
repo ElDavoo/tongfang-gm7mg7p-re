@@ -83,8 +83,16 @@ the figures would be about.
   * *A name too generic to be distinctive.* Names are matched as whole tokens
     wherever they appear in a unit that also makes a membership claim, so a
     name like `charge-target` would be read as a citation in a sentence that
-    only means the words. The ten committed names are all multi-token slugs;
-    this is a limit on how a name should be chosen, not a check.
+    only means the words. What a name may **look** like is a check rather than
+    advice: `ec/tools/cluster_name_shape.py`, run from
+    `xdata_register_map.py --self-test`, refuses a name that is not a
+    multi-slug, one that sits inside another name, and one that collides with a
+    known address, a known function or symbol, or a word prefix of one. What
+    that cannot see is a name already being read as a citation in the prose
+    this file walks -- it reads the names file and four CSVs, and the corpus is
+    not among them -- so `fan-level`, which none of its rules catches, is still
+    a limit on how a name should be chosen rather than a check. A smaller limit
+    than the one this bullet used to carry, not none of one.
   * *Anything outside the three roots*, and any address the census does not
     know, so a code address that collides with an XDATA one is not examined.
 
