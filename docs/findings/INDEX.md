@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-134 write-ups.
+136 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -76,6 +76,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-callers-status-intersection.md`](pd-callers-status-intersection.md) — A caller's literals are not index-register loads unless the site indexes on those registers
 - [`pd-common-address-attribution.md`](pd-common-address-attribution.md) — A `pd` caller's edge was attributed to a `common` row it never reached (issue #471)
 - [`pd-common-address-spaces.md`](pd-common-address-spaces.md) — The lone `pd` proxy edge was a missing annotation, not a cross-program call (issue #470)
+- [`pd-direct-offset-pointer-add.md`](pd-direct-offset-pointer-add.md) — The PD image keeps a 16-bit base in direct `0x0D`/`0x0E`: a literal at init, rewritten by an 81-caller add-and-store-back (issue #69)
 - [`pd-image-census.md`](pd-image-census.md) — The `ITE8850-PD` image: a consolidated map, a positive provenance answer, and one null worth the wording
 - [`pd-index-low8-propagation.md`](pd-index-low8-propagation.md) — The `low8` truncation is in the template; what was left was two summaries that had not been told
 - [`pd-inline-arg-trampoline.md`](pd-inline-arg-trampoline.md) — The PD image's `lcall 0x104D` carries a 4-byte constant inline, deposits it in XDATA, and resumes four bytes on (issue #36)

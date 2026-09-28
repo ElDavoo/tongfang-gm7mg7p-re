@@ -214,7 +214,11 @@ it. So `0x9DFE lcall 0x9a71` in `pd-xdata-overlap.md` §3.2 is the second half
 of that site's 16-bit store, completed inside the callee — and the DPTR it
 leaves behind belongs to a different access. The tool reports it `unmodelled`
 with its listing rather than inventing a term for it, and nothing in §3 rests
-on it.
+on it. **[Who fills that pair, and the fact that the DPTR it leaves behind is
+read by the very next instruction, are in
+`../../docs/findings/pd-direct-offset-pointer-add.md` §3 and §5](../../docs/findings/pd-direct-offset-pointer-add.md)** —
+`0x0D`/`0x0E` are the PD image's own internal RAM and not EC XDATA, and nothing
+in that file changes a term, a base or a stride here.
 
 ### 2.3 Beyond the eleven
 
