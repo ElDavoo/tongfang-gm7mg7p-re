@@ -87,16 +87,31 @@ GUARDED_FLAGS = ("--no-eq-guard", "--export-ownership")
 REFUSED_WITH_A_MODE = "cannot be combined with --check or --self-test"
 REFUSED_AT_THE_DEFAULTS = "would overwrite the committed census"
 
-# The two `main()` shapes `TripwireCoverage` pins its readers on, kept as
+# The `main()` shapes `TripwireCoverage` pins its readers on, kept as
 # strings rather than written out per case so the reading and the pin cannot
-# drift apart. Neither is reachable from the committed dispatch, which is the
-# point: the real one dispatches all nine modes as `return`, so only a
+# drift apart. None of them is reachable from the committed dispatch, which is
+# the point: the real one dispatches all nine modes as `return`, so only a
 # synthetic source can show that a reader stopped depending on that shape.
 STATEMENT_DISPATCH = ("def main():\n"
                       "    if args.demo_mode:\n"
                       "        demo_mode(args)\n"
                       "        return 0\n")
+ASSIGNMENT_DISPATCH = "def main():\n    rc = demo_mode(args)\n    return rc\n"
+WITH_DISPATCH = ("def main():\n"
+                 "    with demo_mode(args):\n"
+                 "        pass\n"
+                 "    return 0\n")
+COMPREHENSION_DISPATCH = "def main():\n    xs = [demo_mode(a) for a in y]\n    return 0\n"
 ATTRIBUTE_DISPATCH = "def main():\n    return xrm.write(args)\n"
+
+# The dispatch positions `TripwireCoverage`'s docstring names, keyed by the
+# words it uses for each. A key is the `subTest` label, so a failure names the
+# phrase the claim was written in rather than an index into a tuple.
+DISPATCH_POSITIONS = {
+    "assignment right-hand side": ASSIGNMENT_DISPATCH,
+    "`with` header": WITH_DISPATCH,
+    "bare comprehension": COMPREHENSION_DISPATCH,
+}
 
 
 def run_main(*argv):
@@ -222,7 +237,10 @@ class TripwireCoverage(unittest.TestCase):
     `main()` that is not another call's argument -- which is an assignment
     right-hand side, a `with` header and a bare comprehension as much as a
     statement or a `return` -- and a tenth mode fails here rather than going
-    unmocked.
+    unmocked. The enumeration is a claim the suite holds rather than one a
+    reader has to take on trust: `DISPATCH_POSITIONS` carries a source for each
+    of the three the committed `main()` cannot show, keyed by the words above,
+    and the case below walks it.
 
     Statement position is in that sentence because it was not, until issue
     #608: the reader then implemented `visit_Return`, and a tenth mode reached
@@ -242,6 +260,20 @@ class TripwireCoverage(unittest.TestCase):
         # `dispatch_names` back to `visit_Return` would leave the case above
         # green. This is the issue's shape verbatim.
         self.assertEqual(dispatch_names(STATEMENT_DISPATCH), ["demo_mode"])
+
+    def test_every_position_the_docstring_names_is_collected_too(self):
+        # The rest of that sentence, and on synthetic source for the same
+        # reason the case above is: the committed `main()` dispatches all nine
+        # modes as a `return`, so the committed tree cannot show a reader
+        # stopped reaching the other positions. Equality, not the membership
+        # the attribute reader needs -- each source carries exactly one
+        # bare-name call, so this says the reader records that one and no
+        # other, where a membership check would pass a reader that
+        # over-collected. The committed-dispatch case is what holds the reader
+        # against over-collection on a real `main()`.
+        for position, source in DISPATCH_POSITIONS.items():
+            with self.subTest(position=position):
+                self.assertEqual(dispatch_names(source), ["demo_mode"])
 
     def test_the_dispatch_reaches_no_mode_as_an_attribute(self):
         # The real tree, against the assertion the docstring claims for it.
