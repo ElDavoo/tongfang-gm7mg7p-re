@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-136 write-ups.
+137 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -106,6 +106,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`testdata-row-claims-multi-date-sentence.md`](testdata-row-claims-multi-date-sentence.md) — A sentence naming two dated captures is refused whole, and not read from the first (issue #979)
 - [`testdata-row-claims-repair-measurement.md`](testdata-row-claims-repair-measurement.md) — What the two testdata checkers do over a hand-repair's pre-repair tree (issue #978)
 - [`testdata-row-claims-report-naming.md`](testdata-row-claims-report-naming.md) — The carrier, the searched root, and the two file sets are named, and the closing sentence stops reading the same either way (issue #974)
+- [`testdata-row-claims-shape-list-source.md`](testdata-row-claims-shape-list-source.md) — The testdata row-claims shape list has one source, and the summary line reads it rather than restating it (issue #998)
 - [`testdata-third-column-claims.md`](testdata-third-column-claims.md) — The third column of the testdata index is now held to the fixtures it names (issue #747)
 - [`thunk-prefix-collision.md`](thunk-prefix-collision.md) — Seven rows whose names Ghidra owned (issue #602)
 - [`tools-readme-totals.md`](tools-readme-totals.md) — The runner's totals, re-derived from a run, and why a red suite moves them (issue #817)

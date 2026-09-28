@@ -8,8 +8,8 @@ reader who has already been misled -- which is how the index's third column
 needed hand-repair four times, in #182, #502, #720 and #736, with no check
 reading that column at any of them. So what
 is pinned here is the line between what the tool claims and what it declines
-to check, from both sides: each rule that makes it strict, each of the five
-shapes and the two dated refusals that make it conservative, and then
+to check, from both sides: each rule that makes it strict, each of the closed
+reasons in `ctrc.SHAPES` that make it conservative, and then
 **each of the nine rules dropped in turn** -- eight of them asserted to make
 the run check *more* and the ninth, the dated-capture resolution, in the other
 direction, because a rule that stops changing the answer has stopped
@@ -74,6 +74,29 @@ def a_csv(*addresses):
     rows = "".join(f"2026-01-01T12:02:00,0x{a:04X},0x00,0x01\n"
                    for a in addresses)
     return CSV_HEADER + rows
+
+
+def check_every_shape(case, reasons):
+    """The two-way comparison a run's reasons make against `ctrc.SHAPES`.
+
+    A `unittest` assertion over the set difference on its own would report the
+    sets and not say which way the disagreement runs, so each direction carries
+    a message naming the reasons in it. That is the whole of what the rewrite
+    of the committed case bought: a reason that appeared or stopped appearing
+    is named, where a literal list of five could only say how many there were.
+    The helper takes the `TestCase` rather than returning a pair so the two
+    synthetic cases drive the same code the committed one does, instead of a
+    second reading of it.
+    """
+    named, seen = set(ctrc.SHAPES), set(reasons)
+    case.assertEqual(
+        named - seen, set(ctrc.DATED_REFUSALS),
+        "these reasons are in SHAPES and nothing in the run exercises them: "
+        f"{sorted(named - seen)}")
+    case.assertEqual(
+        seen - named, set(),
+        "the run produced these reasons and SHAPES does not name them: "
+        f"{sorted(seen - named)}")
 
 
 class ScratchIndex:
@@ -232,8 +255,7 @@ class ReportsRealDrift(ScratchIndex, unittest.TestCase):
 
 
 class SkipsDeliberately(ScratchIndex, unittest.TestCase):
-    """The five shapes, the two dated refusals, and the entry predicate,
-    each as a case saying so.
+    """`ctrc.SHAPES` and the entry predicate, each as a case saying so.
 
     Every one of them would otherwise report a row which is true today, and a
     skip that is not deliberate is the bug. Each rule gets both halves where
@@ -428,7 +450,7 @@ class SkipsDeliberately(ScratchIndex, unittest.TestCase):
         # The other half of the whole change, and the calibration line made
         # mechanical: a date whose `<date>-*` glob is empty has no file set to
         # hold the sentence's literals to, so the answer is the one the other
-        # five shapes give -- "not checked by this method", never absent --
+        # shapes give -- "not checked by this method", never absent --
         # and the report line names the glob that came back empty, so a reader
         # can see *which* date failed rather than only that one did.
         self.set("example.csv", 0x0F58)
@@ -511,7 +533,7 @@ class SkipsDeliberately(ScratchIndex, unittest.TestCase):
         # at a sentence the tool has just said it cannot read -- and neither
         # day carrying the bytes is a fact about two capture sets rather than
         # about what the sentence claims, which is the same thing the other
-        # six shapes say when they pass a literal over.
+        # `SHAPES` entries say when they pass a literal over.
         self.set("example.csv", 0x0F5D)
         self.capture("2026-09-23-cycle-0f00-0f5f.csv", 0x0F0A)
         self.capture("2026-09-24-06d6-reload-linux.csv", 0x0F5A)
@@ -881,12 +903,12 @@ class EachRuleIsLoadBearing(unittest.TestCase):
     assertion is the same claim with the other sign; what changed is which way
     the answer moves.
 
-    Three of the five shapes cannot make the run *red* by being dropped, and
-    saying so is part of the case: `0x07C4`/`0x07D7` really are in the file
-    row 11 names, `0x0750`/`0x0010` in the dumps row 22 names, and `0x888D` in
-    the fixture header row 8 names. What dropping those rules does is
-    under-report, which is what the assertion is about. The sixth and seventh
-    entries of the shape list -- both dated refusals, a capture that resolved
+    Three of the shapes with an instance in the committed tree cannot make the
+    run *red* by being dropped, and saying so is part of the case: `0x07C4`/
+    `0x07D7` really are in the file row 11 names, `0x0750`/`0x0010` in the
+    dumps row 22 names, and `0x888D` in the fixture header row 8 names. What
+    dropping those rules does is under-report, which is what the assertion is
+    about. The two entries of `ctrc.DATED_REFUSALS` -- a capture that resolved
     to nothing and a sentence naming two of them -- have no instance in the
     committed tree at all, so each is pinned in a scratch case instead. **The
     multi-date rule is not dropped here and cannot be**: loosening it needs a
@@ -954,9 +976,10 @@ class EachRuleIsLoadBearing(unittest.TestCase):
 
     def test_the_dated_capture_rule(self):
         # The inverted one. With the capture root emptied, row 7's date
-        # resolves to nothing, both of its literals become the sixth shape, and
-        # the run checks two fewer claims -- which is the whole of what the
-        # resolution is for, asserted in the direction it now works.
+        # resolves to nothing, both of its literals become the
+        # `dated capture not found` shape, and the run checks two fewer claims
+        # -- which is the whole of what the resolution is for, asserted in the
+        # direction it now works.
         empty = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, empty)
         self.assert_the_rule_costs_less_without(
@@ -976,6 +999,54 @@ class EachRuleIsLoadBearing(unittest.TestCase):
             "reading an address in running prose as a claim checks mentions "
             "the index never made claims about",
             BACKTICKED=re.compile(r"([^\s`]+)"))
+
+
+class TheShapeListHasOneSource(unittest.TestCase):
+    """`SHAPES`, `DATED_REFUSALS` and the label `main()` counts under.
+
+    The constants are where a new refusal is now a one-line edit, which is
+    only worth what it is worth if the three of them cannot drift apart: a
+    repeated entry would make the label subtract twice, and a dated refusal
+    `SHAPES` does not name would make the summary line count a shape the list
+    does not have. What the *run* exercises is the committed tree's business,
+    in `test_the_committed_tree_exercises_every_shape`; what is here is what
+    the constants owe each other before that comparison is made at all.
+    """
+
+    def test_the_two_lists_are_joinable(self):
+        # No repeated entry, and the refusals a subset: `shape_label()`
+        # subtracts one length from the other, so a duplicate would make the
+        # printed count wrong while the set difference still held.
+        self.assertEqual(len(set(ctrc.SHAPES)), len(ctrc.SHAPES), ctrc.SHAPES)
+        self.assertLessEqual(set(ctrc.DATED_REFUSALS), set(ctrc.SHAPES),
+                             ctrc.DATED_REFUSALS)
+
+    def test_the_label_falls_back_to_a_numeral_rather_than_raising(self):
+        # A reporting line must not fail a run over a bookkeeping change. The
+        # words cover zero through eight and a count outside that is rendered
+        # as a numeral rather than raising out of the line that only reports.
+        # `-1` is in range for a caller: `shape_label()` subtracts one length
+        # from the other and only the committed pair is held to being a
+        # subset, by the case above.
+        #
+        # Every count here is written into the list rather than read out of
+        # `SHAPES`, so what the case asserts is the fallback and not today's
+        # `len(SHAPES)`. No expected string mentions the committed list, so
+        # **adding an eighth reason to `SHAPES` leaves this case green** --
+        # which is what requirement 3 of the issue asked for. Naming the
+        # reason that changed is `test_the_committed_tree_exercises_every_shape`'s
+        # job, and it does it by name.
+        #
+        # The list is synthetic because the committed one is too short to
+        # reach the fallback, and reaching it by editing `SHAPES` is the very
+        # edit this issue exists to make painless.
+        self.assertEqual(ctrc.count_word(2), "two")
+        self.assertEqual(ctrc.count_word(8), "eight")
+        self.assertEqual(ctrc.count_word(9), "9")
+        self.assertEqual(ctrc.count_word(-1), "-1")
+        self.assertEqual(
+            ctrc.shape_label(("a",) * 9, ()),
+            "the 9 shapes and the zero dated refusals")
 
 
 class TheCommittedTree(unittest.TestCase):
@@ -1061,8 +1132,7 @@ class TheCommittedTree(unittest.TestCase):
                             ('checked claims', 'claim(s) checked'),
                             ('claiming rows', 'claiming row(s)'),
                             ('passed-over literals',
-                             'passed over under the five shapes and the two '
-                             'dated refusals')):
+                             'passed over under ' + ctrc.SHAPE_LABEL)):
             self.assertGreater(
                 counts.get(label, 0), 0,
                 f"the run reached no {name}: a run that checked nothing and a "
@@ -1103,20 +1173,47 @@ class TheCommittedTree(unittest.TestCase):
         self.assertEqual(self.result.rows, ctdi.check(ctdi.TESTDATA).rows)
 
     def test_the_committed_tree_exercises_every_shape(self):
-        # Each of the five has an instance in the committed index, so none of
-        # them is a rule that only ever runs in a scratch tree -- and an eighth
-        # entry appearing here is a change to the docstring rather than a
-        # silent widening of the check. Neither dated refusal is named, the
-        # sixth and seventh entries of the docstring's list: the one dated
-        # sentence in the tree names one date and resolves, so both have no
-        # instance here by construction, and each is pinned in a scratch case
-        # instead. **The count stays at five** -- a sixth instance here is a
-        # sentence in the index naming two bare dates, which is a change to
-        # what this tree exercises and not a reason to widen the check.
-        self.assertEqual(
-            sorted({reason for _, _, reason in self.result.shapes}),
-            sorted(["capture/window bound", "denial", "dump-command argument",
-                    "firmware code address", "watched-set span"]))
+        # The set difference rather than a hand-written list of the shapes
+        # that have an instance here, and in **both** directions, because the
+        # two failures a count used to arrive as are different defects: a
+        # reason `SHAPES` names that the tree no longer exercises is a rule
+        # that has stopped firing, and a reason the tree exercises that
+        # `SHAPES` does not name is a rule added to `reason_for()` without
+        # being written down. Either is reported by name rather than as a
+        # changed figure.
+        #
+        # The expected value is `DATED_REFUSALS`, and its value is what the
+        # census supports: the one dated sentence in the index names one date
+        # and resolves, so neither dated refusal has an instance by
+        # construction, and each is pinned in a scratch case instead. A
+        # sentence naming two bare dates appearing in the index would make a
+        # dated refusal exercised, and would be reported here as the extra
+        # name rather than as a count that moved.
+        check_every_shape(self,
+                          {reason for _, _, reason in self.result.shapes})
+
+    def test_the_difference_names_a_reason_the_run_never_exercised(self):
+        # The first direction, from an input the committed tree cannot
+        # produce. The case above reaches the same branch for the two dated
+        # refusals, but the tree can only ever reach those two, so what is
+        # pinned here is the branch: a reason with an instance elsewhere in the
+        # list is named, not counted, when nothing in this run exercises it.
+        seen = ("capture/window bound", "denial") + ctrc.DATED_REFUSALS
+        with self.assertRaises(AssertionError) as caught:
+            check_every_shape(self, seen)
+        self.assertIn("watched-set span", str(caught.exception))
+
+    def test_the_difference_names_a_reason_shapes_does_not_list(self):
+        # The other direction, and the one the committed tree cannot reach at
+        # all: every reason it produces is in the list today, so the case
+        # adds one that is not -- which is what a rule added to `reason_for()`
+        # without being added to `SHAPES` looks like from here. The committed
+        # run's own reasons are kept, so the first direction still holds and
+        # only this one fails.
+        seen = [reason for _, _, reason in self.result.shapes]
+        with self.assertRaises(AssertionError) as caught:
+            check_every_shape(self, seen + ["a reason nobody wrote down"])
+        self.assertIn("a reason nobody wrote down", str(caught.exception))
 
     def test_the_dated_claims_resolve_in_the_addr_column(self):
         # Row 7's two literals are `resolved` under **both** readings, and

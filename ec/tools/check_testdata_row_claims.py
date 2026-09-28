@@ -22,7 +22,7 @@ unit attributes to the capture has to have a row in it. What does not is the
 `MOVEMENT` predicate -- 18 of the 54 literals in this column sit in a sentence
 carrying none of its verbs, and most of those are genuine claims, so gating on
 it would skip two thirds of the column. The predicate here is a backticked
-literal plus the five shapes and the two dated refusals below.
+literal plus the closed list of reasons below, which `SHAPES` writes down.
 
 **The search is across the files a row's first column resolves to, never per
 file.** `0x075B` occurs 16 times in one of `0751-isolation-run-staged/`'s
@@ -63,28 +63,34 @@ naming two or more bare dates is refused whole rather than read from either of
 them.** Which of the two a literal belongs to is not a thing the prose says, so
 reading the first is how the run came to report `missing` on a sentence that is
 true, or `resolved` against a day the sentence never named. The refusal is a
-count of matches and never a choice among them, and it is the seventh entry of
-the list below.
+count of matches and never a choice among them, and it is the
+`two dated captures in one sentence` entry of the list below.
 
-**The five shapes and the two dated refusals, which are the whole of the
-conservative half.** They are counted, printed with the reason, and do not
-fail the run -- a checker that reported its own parser's blind spot as a broken
-index would be pushed to grow a rule for whatever it could not read, and would
-end up inventing the thing it is checking. The list is closed and each entry
-has a case in `test_check_testdata_row_claims.py`; an eighth entry appearing in
-the tree is a change to this docstring, not an invitation to add a regex:
+**The closed shape list, which is the whole of the conservative half.** They
+are counted, printed with the reason, and do not fail the run -- a checker
+that reported its own parser's blind spot as a broken index would be pushed to
+grow a rule for whatever it could not read, and would end up inventing the
+thing it is checking. The list is closed, and `SHAPES` is the one place it is
+written down as a value -- the bullets below restate each reason in prose and
+`reason_for()` returns it as a literal, and those two copies are checked by
+the eye rather than by a comparison, so a reason appearing in the tree that
+`SHAPES` does not name is a change to this docstring and to the constant, not
+an invitation to add a regex. Each entry has a case in
+`test_check_testdata_row_claims.py`. **Each bullet opens with the reason
+string `SHAPES` gives it**, so the prose below and the constant are joinable
+by eye:
 
-  * *a capture or window bound* -- a page-aligned literal naming the swept
+  * `capture/window bound` -- a page-aligned literal naming the swept
     page rather than a byte in it, spelled either as a range whose start is
     page-aligned (`0x0700-0x07FF`) or as a bare page-aligned address the
     sentence calls a capture or a page (the `0x0700` and `0x0400` captures);
-  * *a watched-set span* -- `` `0x07C4`-`0x07D7` ``, two separately
+  * `watched-set span` -- `` `0x07C4`-`0x07D7` ``, two separately
     backticked bounds. The corpus writes a byte range as one token and a set as
     two, and a set the grader watches is not a byte the fixture holds;
-  * *a denial* -- `no row at all for` and `not by a committed run`, both
+  * `denial` -- `no row at all for` and `not by a committed run`, both
     saying where an address is **not**;
-  * *a dump-command argument* -- `0x0750`/`0x0010` in `` `ecrw.py dump ...` ``;
-  * *a firmware code address* -- `0x888D`, which is in
+  * `dump-command argument` -- `0x0750`/`0x0010` in `` `ecrw.py dump ...` ``;
+  * `firmware code address` -- `0x888D`, which is in
     `ec/annotations/ghidra-functions.csv` and is a handler in the EC image
     rather than a byte in a capture. Filtered against that census **minus**
     `xdata-registers.csv`, because on this firmware the same 4-digit token is
@@ -92,15 +98,16 @@ the tree is a change to this docstring, not an invitation to add a regex:
     `FUN_CODE_07d0` in the annotation index and a door byte in the register
     map, and it is a claim in two rows. A threshold invented here would have
     got one of those two wrong;
-  * *a dated capture that resolved to nothing* -- a bare date whose
-    `<date>-*` glob is empty. There is no file set to hold the sentence's
-    literals to, and the honest answer is the one the other five give: not
-    checked by this method, never absent. It is printed with the glob that was
-    searched, so a reader can see which date failed to resolve rather than
-    only that a sentence did. This is the whole of what is left of the
-    `another capture's address` exemption issue #794 removed, and the commit
-    that removed it is where the before is written down;
-  * *two dated captures in one sentence* -- a sentence naming two or more bare
+  * `dated capture not found` -- a bare date whose `<date>-*` glob is empty,
+    which is what "a dated capture that resolved to nothing" means. There is
+    no file set to hold the sentence's literals to, and the honest answer is
+    the one the other shapes give: not checked by this method, never absent.
+    It is printed with the glob that was searched, so a reader can see which
+    date failed to resolve rather than only that a sentence did. This is the
+    whole of what is left of the `another capture's address` exemption issue
+    #794 removed, and the commit that removed it is where the before is
+    written down;
+  * `two dated captures in one sentence` -- a sentence naming two or more bare
     dates, refused whole. Its literals come off `checked` and onto this line
     rather than being read against the first of the globs, and **every** glob
     the sentence named is printed beside them, so a reader sees which dates
@@ -110,8 +117,10 @@ the tree is a change to this docstring, not an invitation to add a regex:
     sweep, so a sentence about one of them held to both is handed a
     twelve-file set of two unrelated families -- the same misattribution the
     date exists to prevent, along a second axis. **No such sentence is in the
-    committed index**, so what pins this is scratch cases, as the sixth
-    entry's are.
+    committed index**, so what pins this is scratch cases, as the
+    `dated capture not found` entry's are -- and
+    `test_the_committed_tree_exercises_every_shape` is what holds the absence
+    of both, against `DATED_REFUSALS`.
 
 **What this does not check, which is as much of the point:**
 
@@ -182,16 +191,16 @@ the tree is a change to this docstring, not an invitation to add a regex:
     `evidence/ec-watch/<date>-*` and the sentence's literals are held to
     those files, so row 7's `0x0F58`/`0x0F5C` are checked against the six
     2026-09-23 captures and both are present in one of them. What survives of
-    it is the dated capture that *resolves to nothing*, which is the sixth
-    entry of the shape list above, is counted and printed with the glob it
-    searched, and does not fail the run. The cost that replaced the old
-    exemption -- one address in any file of a date satisfies a claim about
-    that date -- is in the paragraph above and in
-    `docs/findings/testdata-row-claims-dated-capture.md`. **The seventh entry
-    is a later decision** (issue #979, in
-    `docs/findings/testdata-row-claims-multi-date-sentence.md`) and is about a
-    *second* date in one sentence rather than about a first that resolved to
-    nothing.
+    it is the dated capture that *resolves to nothing*, which is the
+    `dated capture not found` entry of `SHAPES` above, is counted and printed
+    with the glob it searched, and does not fail the run. The cost that
+    replaced the old exemption -- one address in any file of a date satisfies
+    a claim about that date -- is in the paragraph above and in
+    `docs/findings/testdata-row-claims-dated-capture.md`. **The
+    `two dated captures in one sentence` entry is a later decision** (issue
+    #979, in `docs/findings/testdata-row-claims-multi-date-sentence.md`) and
+    is about a *second* date in one sentence rather than about a first that
+    resolved to nothing.
 
 **What this does over the two hand-repairs it was pointed at, measured and not
 assumed (issue #978).** `measure_index_repair_visibility.py` ran this check
@@ -339,9 +348,9 @@ COMMAND = re.compile(r"\S+\.py\b")
 # what changed is what a match *does*. It was the reason a sentence's literals
 # were not checked at all, and it is now the selector of the file set they are
 # checked against -- see `captures_for()`. **A second match in one sentence is
-# not a second file set**: it is the seventh entry of the docstring's shape
-# list, and what decides it is the count of the matches rather than what any of
-# them resolves to.
+# not a second file set**: it is the `two dated captures in one sentence` entry
+# of `SHAPES`, and what decides it is the count of the matches rather than what
+# any of them resolves to.
 DATED_CAPTURE = re.compile(r"(?<!`)\b20\d\d-\d\d-\d\d\b(?!`)")
 
 # The three answers, kept as strings because they are what a report prints and
@@ -379,6 +388,72 @@ Claim = collections.namedtuple(
 Result = collections.namedtuple(
     "Result", "rows literal_rows literals resolved missing unresolved checked "
     "claiming_rows claims shapes dated captures")
+
+# The closed list of reasons a literal can be passed over, in `reason_for()`'s
+# own order, and the one place they are written down. `reason_for()` returns
+# string literals rather than reading an index into this, because a branch that
+# says `return SHAPES[3]` is less readable than the reason it returns; the copy
+# is a *checked* copy, and what checks it is the two-direction set difference
+# in `test_the_committed_tree_exercises_every_shape` -- a reason added to the
+# function without being added here is named by name, rather than arriving as
+# a changed count. The order is the function's, which is not the docstring's
+# bullet order; the two disagree for the reason they disagreed before, and
+# reconciling them is issue #987's ground, not this constant's.
+SHAPES = (
+    "two dated captures in one sentence",
+    "capture/window bound",
+    "watched-set span",
+    "denial",
+    "dump-command argument",
+    "firmware code address",
+    "dated capture not found",
+)
+
+# The two *dated* entries of `SHAPES` -- a sentence naming two or more dates,
+# and a date whose glob resolved to nothing. They are the two the summary line
+# counts apart from the rest, which is why the number it prints is not
+# `len(SHAPES)`, and it is that line which calls them "dated refusals", so the
+# membership is stated as the dated ones rather than as a second criterion the
+# output does not use. **Dated is not the same set as reads-the-file-set**,
+# and the difference is worth writing down: only `dated capture not found`
+# reads the file set, over `capture`; `two dated captures in one sentence` is
+# decided by the date count in the sentence and opens no file, which is what
+# `reason_for()`'s docstring says of the last of its reasons. What does hold
+# of both is that neither has an instance in the committed index, because the
+# one dated sentence in it names one date and resolves -- so what pins them is
+# scratch cases rather than the run. That is a fact about this tree and not
+# about the tool, so it is a name with a value here and the suite compares
+# against the name.
+DATED_REFUSALS = ("two dated captures in one sentence", "dated capture not found")
+
+# The words the label below is spelled with, and no more than these. A count
+# outside the range they cover is rendered as a numeral rather than raising:
+# a reporting line must not fail a run over a bookkeeping change, and an
+# eighth shape is exactly that. The nine-word bound is arbitrary and the
+# fallback is what matters -- see `test_the_label_falls_back_to_a_numeral`.
+WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven",
+         "eight")
+
+
+def count_word(count: int) -> str:
+    """`5` as `five` where `WORDS` covers it, and as `5` where it does not."""
+    return WORDS[count] if 0 <= count < len(WORDS) else str(count)
+
+
+def shape_label(shapes=None, refusals=None) -> str:
+    """`main()`'s summary label, from the two lengths rather than written out.
+
+    The arguments are defaulted rather than bound, so a caller can drive it
+    with a longer list than the committed one and read what a future shape
+    would print without editing anything.
+    """
+    shapes = SHAPES if shapes is None else shapes
+    refusals = DATED_REFUSALS if refusals is None else refusals
+    return (f"the {count_word(len(shapes) - len(refusals))} shapes and the "
+            f"{count_word(len(refusals))} dated refusals")
+
+
+SHAPE_LABEL = shape_label()
 
 
 def normalise(address: str) -> str:
@@ -541,12 +616,13 @@ def denied(address: str, sentence: str, offset: int) -> bool:
 def reason_for(address, token, sentence, offset, code, capture):
     """Why this literal is not checked, or None when it is a claim.
 
-    The seven in a fixed order, cheapest and least committal first. Six of
-    them are a property of how the sentence is written, so the same sentence
-    is classified the same way whether or not the row's fixtures happen to
-    carry the address; the seventh is the one that reads the file set, and only
-    its emptiness -- `capture` is the `<date>-*` glob when that date resolved
-    to nothing, and `None` when it resolved, which is not a reason at all.
+    The reasons are `SHAPES`, in the order they are returned, cheapest and
+    least committal first. All but the last are a property of how the sentence
+    is written, so the same sentence is classified the same way whether or not
+    the row's fixtures happen to carry the address; the last is the one that
+    reads the file set, and only its emptiness -- `capture` is the `<date>-*`
+    glob when that date resolved to nothing, and `None` when it resolved,
+    which is not a reason at all.
 
     The multi-date refusal is first because it is a property of the sentence
     as a whole rather than of one literal, so every literal of such a sentence
@@ -665,9 +741,9 @@ def with_column(paths):
     column at all -- and then the columnar read has nothing to ask. That is
     the row 6 and row 8 shape and it is a fact about the *file set* rather
     than about any literal's spelling, so it is reported in the dated block
-    beside the file count rather than added to the closed shape list, whose
-    docstring says an eighth entry appearing in the tree is a change to that
-    docstring and not an invitation to add a regex.
+    beside the file count rather than added to the closed `SHAPES` list, whose
+    docstring says a reason appearing in the tree that the list does not name
+    is a change to that docstring and not an invitation to add a regex.
     """
     return sum(1 for path in paths
                if path.endswith(".csv") and os.path.isfile(path))
@@ -950,7 +1026,7 @@ def closing_line(result) -> str:
     **A claim is dated by membership in the globs `result.dated` already
     carries**, which needs no field of its own: `Claim.files` is what the claim
     was held against, and a claim's `files` can be a pattern only when the
-    date resolved. A claim the five shapes passed over is `unresolved` and so
+    date resolved. A claim the shape list passed over is `unresolved` and so
     reaches neither count, which is correct -- it was never held to either
     set -- and is why the split is over the *checked* claims.
 
@@ -1000,12 +1076,10 @@ def main() -> int:
           f"{result.literals} literal(s), {result.resolved} resolved, "
           f"{result.missing} missing, {result.unresolved} unresolved")
     print(f"{result.checked} claim(s) checked, {result.claiming_rows} claiming "
-          f"row(s), {len(result.shapes)} passed over under the five shapes and "
-          "the two dated refusals, each of them: not checked, not absent")
-    # Five, not seven: the two dated refusals are the other two entries of the
-    # docstring's list, and the one dated sentence in the committed index names
-    # one date and resolves. The `shapes:` line below is where the instances
-    # are, and a reader who wants the list is one line further down.
+          f"row(s), {len(result.shapes)} passed over under {SHAPE_LABEL}, "
+          "each of them: not checked, not absent")
+    # The `shapes:` line below is where the instances are, and a reader who
+    # wants the list is one line further down.
     print("shapes: " + ", ".join(
         f"{reason} {count}" for reason, count
         in sorted(by_shape.items(), key=lambda kv: (-kv[1], kv[0]))))
