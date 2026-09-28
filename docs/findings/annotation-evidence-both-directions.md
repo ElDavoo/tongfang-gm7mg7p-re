@@ -164,6 +164,13 @@ that is a subtraction is a coincidence.
 - *not yet exported* — the listing's `.c` sibling is absent from `index.csv`'s
   `out_file`. 0 here, and the resolution base is the other one (below).
 
+The last three columns are **one condition, not three measurements**.
+`unannotated` and the *no `.asm` at all* exit are both tested ahead of them, so a
+listing reaches the `0xFF` fill and not-yet-exported tests only by having a row at
+its address that names a *different* `.asm` — the same population as the `names
+another listing` exit, and that population is 0 here, which is what makes all
+three read 0 together.
+
 The four are **disjoint and sum to the uncited set**, which is the claim the
 suite asserts on the committed tree rather than the numeral: `822` is a value
 every annotation moves, and asserting it is the trap `CLAUDE.md` names four
@@ -268,7 +275,7 @@ commands named above.
 
 Three of the four areas are identical between the two tips and only `pd/` moved.
 The `common/` figure the issue leans on — 626 uncited of 753, where `0x07D0`'s
-callers, the `0x018C`/`0x029B` pair and `0x0CE1` live — **reproduces exactly**.
+callers and the `0x018C`/`0x029B` pair live — **reproduces exactly**.
 `pd/` is 34 of the 822, every one of them `cited elsewhere` rather than
 unannotated: the 34 `pd` rows that cite a document and no listing, which is the
 figure `test_pd_unannotated_census.py` already records.

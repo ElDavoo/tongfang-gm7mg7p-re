@@ -72,7 +72,7 @@ and three lines below it:
 >
 > This paragraph is a second movement in the same file, and there is one pin
 > below it: the `ec/tools/test_check_site_census.py` citation whose target is
-> its line `:449` was at `:166` and is `:187` now, for the twenty-one lines
+> its line `:449` was at `:166` and is `:189` now, for the twenty-three lines
 > above it. Its line's text is byte-identical, so its verdict is carried rather
 > than re-read, and `test-line-pin-census.md`'s table follows it. Re-pointing
 > both together is the point of doing it in one edit: a re-point that fixes the
