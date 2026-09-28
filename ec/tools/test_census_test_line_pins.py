@@ -713,6 +713,25 @@ class TheCommittedTree(unittest.TestCase):
         # put there. A control that has to be re-run to keep being a control
         # is worth saying so beside, rather than restating the figure it used
         # to give.
+        #
+        # **And once more for #485, whose edits to the same two test files move
+        # every pin into them and re-anchor each one: every figure here is
+        # unmoved except the spelling count and the target count, which each
+        # take one.** Records, files, both verdict counts and the whole
+        # `0/24/22/5/45` split are the tree as it stood, so no re-anchoring
+        # changed a landing shape. The two that move are the same event seen
+        # twice: a line two write-ups cited for two different claims is now
+        # two lines, because one of those claims is about a
+        # `mark.split(',')` that reading the row through the grader deleted.
+        # `test_system_id_probe.py`'s old `:317` carried
+        # `0751-mark-provenance-column.md`'s movement row and the shapes
+        # page's single-quoted-MARK example, and those are now `:341` and
+        # `:320`, so one spelling is two; `test_ec_watch.py`'s old `:148`
+        # carried the movement row and the same shapes-page example, now
+        # `:159` and `:452`, so one target is two. Neither is a pin added or
+        # lost: `94 + 1 = 95` and `70 + 1 = 71`, and the control the rest of
+        # this comment is about -- nothing left over to attribute to somebody
+        # -- is what says it.
         records, _files = census.census(census.REPO)
         # **And re-derived once more, same issue, same day, for the fence
         # rule rather than the new page: +2, not +20.** Re-running
@@ -735,7 +754,7 @@ class TheCommittedTree(unittest.TestCase):
         # `out_of_range`, `unresolved` or `ambiguous` appears.
         self.assertEqual(len(records), 129)
         self.assertEqual(len({r[0] for r in records}), 30)
-        self.assertEqual(len({r[2] for r in records}), 94)
+        self.assertEqual(len({r[2] for r in records}), 95)
         self.assertEqual(verdicts(records), {
             census.RESOLVES: 96, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 33})
@@ -769,7 +788,7 @@ class TheCommittedTree(unittest.TestCase):
         # so it adds a `(file, line)` pair rather than reweighting one.
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 70)
+                 if r[3] == census.RESOLVES}), 71)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

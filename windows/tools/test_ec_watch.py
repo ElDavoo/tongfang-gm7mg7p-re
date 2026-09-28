@@ -138,22 +138,51 @@ class MarkCsvTests(unittest.TestCase):
                           'MARK,,wrote 0x0751=0xA0,',
                           '0x0702,0x00,0x22'])
 
-    def test_mark_row_parses_as_the_grader_expects(self):
+    def grader_marks(self, rows):
+        """The marks `grader.read_capture` reads out of `rows`.
+
+        The reader takes a path and these cases hold the capture as text, so
+        it is written back out and read through it rather than split here --
+        the shape `AppendNoticeTests.graders_own_message` uses for the same
+        reason. What a five-way split is, without any reader in it: the writer
+        agreeing with itself, which cannot see a row the reader refuses.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_text(''.join(row + '\n' for row in rows))
+            return grader.read_capture(str(path))[0]
+
+    def test_the_grader_reads_this_runs_mark_as_the_write_it_names(self):
+        _, rows, _ = self.run_watch('--mark')
+        marks = self.grader_marks(rows)
+        self.assertEqual(len(marks), 1)
+        self.assertEqual(marks[0].label, 'wrote 0x0751=0xA0')
+        # The verdict, asked of `parse_mark` rather than spelled out here, and
+        # the whole of what a split cannot say: §3's `wrote 0x0751=0xA0` is
+        # the write under test, so a `wrote` form that stopped being read, or
+        # a value that stopped being taken out of the label, goes red here.
+        # `RefusedLabelTests` asks the same function of a label it refuses.
+        self.assertEqual(grader.parse_mark(marks[0].label), ('write', 0xA0))
+        # The century, which reaching `read_capture`'s return does not
+        # establish: `parse_ts` is `fromisoformat` and takes a 1999 stamp, so
+        # it is asked of the `datetime` rather than of a raw prefix, as before.
+        self.assertEqual(marks[0].ts.year // 100, 20)
+
+    def test_the_fifth_column_is_read_off_the_row_and_not_through_the_reader(self):
+        # Split out because this is the one field the reader cannot answer: it
+        # reads four of them and never the fifth, so it is asked of the row
+        # itself, and the name says so rather than implying the reader covers
+        # it. A five-field mark row parses as the four-field one did -- #719's
+        # measurement, and the reason the shape was chosen over a comment row.
         _, rows, _ = self.run_watch('--mark')
         mark = [r for r in rows if ',MARK,' in r][0]
-        # The grader reads the first four of these and never the fifth, so a
-        # five-field mark row parses as the four-field one did -- #719's
-        # measurement, and the reason the shape was chosen over a comment row.
-        ts, addr, old, label, provenance = mark.split(',')
-        self.assertEqual((addr, old, label), ('MARK', '', 'wrote 0x0751=0xA0'))
+        provenance = mark.split(',')[4]
         # The fifth is the provenance column, empty because this run held no
         # `--label-vocab`. Empty is not absent: this is state 2 of the three a
         # reader has to tell apart, where a four-column row would be state 1,
         # *not recorded*. `MarkProvenanceTests` in the grader's own suite is
         # where the three are pinned.
         self.assertEqual(provenance, '')
-        # The grader keys every window off this timestamp.
-        self.assertTrue(ts.startswith('20'))
 
     def test_a_run_holding_the_vocabulary_names_itself_in_the_mark_row(self):
         # The one writer in this tree that can populate the column, and the
