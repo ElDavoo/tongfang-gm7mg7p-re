@@ -1,0 +1,123 @@
+# The prepared nightly gets linted by the `workflows:` job, before a human has
+# to land it.
+# Prepared here rather than landed, for the reason every other file in
+# `docs/ci/` gives: `.github/` is copied from the agent-pipeline template and
+# the pipeline's push token has no `workflow` scope, so a branch editing
+# `.github/workflows/ci.yml` fails at the end of a PR rather than the start.
+#
+# To land it:
+#
+#   git apply docs/ci/ci-workflow-lint-docs-ci.patch
+#
+# and that is the whole change. One step, appended to the `workflows:` job.
+#
+# What it adds. `docs/ci/agent-gates-deep-schedule.yml` claims in its own header
+# to be written to pass the linters `ci.yml` runs. Nothing was enforcing that:
+# `/tmp/actionlint -color` takes no path, so it reads `.github/workflows/`, and
+# `/tmp/zizmor --offline --color=always .github/workflows/` names one path, and
+# neither of them reaches `docs/ci/`. The first machine to see this file through
+# either linter was a human's, on the day they ran the `cp` -- which is the
+# expensive moment its header says to avoid. This step moves that forward to
+# every pull request.
+#
+# **The form was not settled by a measurement, because the measurement could not
+# be run.** The plan for this issue had the two linters downloaded at the
+# versions and checksums `ci.yml` pins and run over the file both where it is
+# prepared and at its landing path, and had the result decide between an
+# in-place invocation and this copy-then-lint one. The stage that wrote this
+# patch had no network, so neither binary could be fetched and neither could
+# run; `docs/findings/deep-schedule-lint-baseline.md` records the attempt, the
+# one check of the three that actionlint performs which *was* measurable here
+# (shellcheck over every `run:` block, clean), and what is therefore still
+# unmeasured. **Do not read a "passes" claim into this header: there is none.**
+#
+# The copy is used anyway, and not as a guess, because it is right under either
+# answer. The claim being protected is that this file passes the linters *in the
+# state it will be linted in*, and the state it will be linted in is a copy at
+# `.github/workflows/agent-gates-deep.yml` -- that is what the human's `cp` does
+# and what the step above already lints. The in-place form tests a state the file
+# will never be in, and has one failure mode the copy does not: the file
+# carries `uses: ./.github/actions/project-setup`, so a linter resolving a local
+# `uses:` against the file's own directory would report it missing at
+# `docs/ci/` and find it at the landing path. That would be a finding about
+# where the file is kept, and the wrong response to it -- rewriting the `uses:`
+# to satisfy a linter -- would break the real landing.
+#
+# **And it cannot make CI reder than the human's `cp` already would.** If
+# actionlint does report the local action as missing, it reports it for this
+# copy at the landing path too, and it will report it on the day the file is
+# actually landed, with or without this patch. This step surfaces the same
+# finding a few weeks earlier; it does not create one. What it buys is that the
+# finding arrives as a red pull request rather than as a human's review
+# comment on the day they copy the file in.
+#
+# **Run it before landing it, and read the output.** A patch that turns a green
+# job red is the cheapest way to get a lint switched off, and the copy-then-lint
+# step here has never been executed -- not in this repository, and not by the
+# stage that wrote it, which had no network. Clone, apply, and push a branch
+# with it. If both linters are silent, land it. If either reports something,
+# that is the answer this header does not have, and it belongs in
+# `docs/findings/deep-schedule-lint-baseline.md` before the patch lands.
+#
+# Why this is not in `tools/test_agent_gates_patches.py`'s set, and it is not an
+# omission. That suite's `PATCHES` list, its `classify()` and its `scratch_tree()`
+# are all against one pre-image, `.github/scripts/agent-gates.sh`. A patch
+# cutting `ci.yml` would fail `git apply --check` against that file, have none
+# of its added lines in it, and classify as `STALE` -- a red that means nothing.
+# The file name is chosen so neither existing discovery picks it up either:
+# `test_agent_gates_patches.py:121` globs `agent-gates-*.patch` and
+# `check_doc_patch_refs.py`'s `on_disk()` globs the same family, so
+# `ci-workflow-lint-docs-ci.patch` is invisible to both and **no shared suite is
+# edited to accommodate it.** The cost is stated rather than hidden: nothing
+# holds this patch against staleness, which is the same gap that suite's own
+# docstring records for anything in `docs/ci/`, and a follow-up issue names it.
+#
+# What it does not do. It is not a gate over `docs/ci/` as a directory: it names
+# this one file, because the other prepared artifacts there are `.patch` and a
+# linter has nothing to say about them. It is not in the cheap tier either, and
+# not per-commit coverage from `agent-gates.sh`; it is a `ci.yml` step, and
+# `ci.yml` runs on every push to `main` and every pull request. Between now and
+# the day a human lands it, nothing lints this file, and
+# `tools/check_deep_schedule_shape.py` is what holds its shape in the meantime.
+# That is a floor, not this.
+#
+# Added 2026-09-28, issue #774. The write-up is
+# `docs/findings/deep-schedule-lint-baseline.md`.
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -88,3 +88,33 @@
+           echo "${ZIZMOR_SHA256}  /tmp/zizmor.tar.gz" | sha256sum -c -
+           tar -xzf /tmp/zizmor.tar.gz -C /tmp zizmor
+           /tmp/zizmor --offline --color=always .github/workflows/
++
++      # The prepared nightly, linted at the path a human lands it at rather than
++      # at the path it is prepared in.
++      # `docs/ci/agent-gates-deep-schedule.yml` is a `cp` into
++      # `.github/workflows/agent-gates-deep.yml`, so the state the step above
++      # lints -- and will lint for real the day that `cp` is run -- is the state
++      # this reproduces. Linting it where it is prepared asks a different
++      # question, and the difference is not academic: the file carries
++      # `uses: ./.github/actions/project-setup`, so a linter that resolves a
++      # local `uses:` against the file's own directory would report it missing
++      # at `docs/ci/` and find it at the landing path. That difference is a
++      # fact about where the file is kept, not a defect in it, and "fixing" it
++      # by rewriting the `uses:` would break the real landing.
++      #
++      # The two binaries are the ones the step above downloaded and checksum-
++      # pinned, reused rather than fetched again: this step runs only if that
++      # one succeeded, so a missing `/tmp/actionlint` means the job is already
++      # red one step up with the cause already named. The `trap` rather than a
++      # trailing `rm` so the copy does not outlive a non-zero exit -- and
++      # because both linters above read every file in `.github/workflows/`,
++      # leaving it there would put one file through both of them twice.
++      - name: Check the prepared nightly
++        run: |
++          set -euo pipefail
++
++          copy=.github/workflows/agent-gates-deep.yml
++          trap 'rm -f "$copy"' EXIT
++          cp docs/ci/agent-gates-deep-schedule.yml "$copy"
++          /tmp/actionlint -color "$copy"
++          /tmp/zizmor --offline --color=always "$copy"

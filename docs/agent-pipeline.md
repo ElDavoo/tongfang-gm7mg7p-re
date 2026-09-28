@@ -77,6 +77,15 @@ only covers what's specific to *this* copy.
      edit; verifying it is still the re-encode's job, and the re-encode is
      still unscheduled. Per-commit coverage is therefore less than before the
      split, and more than the split left it.
+     **What the `workflows:` job lints, and what it does not** (2026-09-28,
+     issue #774). The schedule's own header claims it is written to pass the
+     linters `ci.yml` runs, and the job enforces none of that — `ci.yml:82`
+     takes no path and `ci.yml:90` names `.github/workflows/`, so neither
+     reaches `docs/ci/`, and this item never said otherwise. A step that lints
+     the file is prepared at `docs/ci/ci-workflow-lint-docs-ci.patch`; until a
+     human lands it, `tools/check_deep_schedule_shape.py` holds the two audits
+     zizmor runs over a file like this one, and neither linter could be run to
+     measure it — see [`findings/deep-schedule-lint-baseline.md`](findings/deep-schedule-lint-baseline.md).
   2. **The cheap tier's checks were strengthened, not moved.** The Windows
      tool gained duplicate-key, strict-CSV, coverage and controlled-vocabulary
      checks; nothing that catches a stale or silently-failed export was
