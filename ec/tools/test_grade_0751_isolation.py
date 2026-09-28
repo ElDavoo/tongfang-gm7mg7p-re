@@ -4707,14 +4707,23 @@ class OtherBucketNameTests(unittest.TestCase):
                       '        0x3E95 -> 0x3F32  (16021 -> 16178 mV)', section)
         # The two quotients the firmware computes, each named with the
         # routine that computes it -- a byte the EC derived is not a
-        # sensor reading, and the name is where that says so. A byte
+        # sensor reading, and the name is where that says so. Both names
+        # carry the branch their routine takes on a nonzero selector,
+        # because registers.yaml's own XDATA_0448 note hedges and a headline
+        # that dropped the hedge would call a constant a voltage on a run
+        # where the constant is what landed: the sweep summary's
+        # 0x0448,4,0x8B,0xBE row is that value in committed evidence. A byte
         # registers.yaml defines on its own gets no assembled line, because
         # there is no pair to assemble, so `0x044C` is asserted not to be
         # followed by one.
         self.assertIn('0x0448  XDATA_0448 -- battery voltage / 100, computed '
-                      'by scale_0438_into_0448 (bank1 0xF416)', section)
+                      'by scale_0438_into_0448 (bank1 0xF416) when its '
+                      'selector is 0, and the constant 0xBE when it is not',
+                      section)
         self.assertIn('0x0449  XDATA_0449 -- battery current / 100, computed '
-                      'by store_scaled_quotient_0449 (bank1 0xF3D7)', section)
+                      'by store_scaled_quotient_0449 (bank1 0xF3D7) when its '
+                      "selector is 0, and from 0x060C/0x060D when it is not",
+                      section)
         self.assertIn('0x044C  XDATA_044C -- the busiest byte on this page '
                       'in evidence/ec-watch/'
                       '2026-09-18-profile-switch-0400-07ff.csv\n\n', section)
@@ -4742,6 +4751,33 @@ class OtherBucketNameTests(unittest.TestCase):
         # No unit either, which is the same statement: nothing here says
         # what the number is.
         self.assertNotIn('(112 -> 192 mA', out)
+
+    def test_the_derived_bytes_say_which_branch_they_are_on(self):
+        rc, out, _ = run(QUIET, '--dump-pair', *self.PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # The headline carries the branch; this holds the rest, which is the
+        # part a report cannot be acted on without. Each routine branches on
+        # a selector neither listing sets, so "which path ran" is not knowable
+        # from a dump pair and the report has to say that rather than leave a
+        # quotient reading as one unqualified kind of number.
+        self.assertIn('writes the constant 0xBE', section)
+        self.assertIn('of the selector is not established', section)
+        # 0xBE is not a hypothetical branch: a committed capture has already
+        # recorded this byte ending a window on exactly that value, so the
+        # note names the row rather than asserting the constant could occur.
+        self.assertIn('summary.csv carries 0x0448,4,0x8B,0xBE', section)
+        # The 0x0449 branch is a different pair by a different divisor, not a
+        # second reading of the battery current, and the row that records it
+        # is named so the claim can be followed.
+        self.assertIn('which reads 0x060C/0x060D,\n      masks the high byte',
+                      section)
+        self.assertIn('bank1,0xF3D7,store_scaled_quotient_0449', section)
+        # The register note carries the first path only, which is why the
+        # branch is printed here as well; stated rather than left for a
+        # reader to reconcile against the two files.
+        self.assertIn('note there carries the first path and not this one',
+                      section)
 
     # The §6 set's own third address, in the windowed reader rather than the
     # whole-block one. It moved from 0x0402 to 0x0438 (#219), so the flat

@@ -951,9 +951,9 @@ the other does not is a coverage gap, never a change, and the section emits
 no status of its own. The `0x0400` pair's *other addresses that differ* is
 expected on a real run to carry the battery's own numbers rather than a fan
 byte: `0x0434`/`0x0435` and `0x0438`/`0x0439`, the two the firmware divides
-by 100 into `0x0448` and `0x0449`, and the three others
+by 100 into `0x0448` and `0x0449`, and the two others
 `../../ec/annotations/xdata-0400-045f.md` §8 tabulates for that page that land
-in this bucket rather than in the §4.5 one, `0x0436`, `0x0449` and `0x044C` —
+in this bucket rather than in the §4.5 one, `0x0436` and `0x044C` —
 of §8's six bytes the other two are `0x043E` and `0x044F`, which are the
 temperatures and print as context. That is an expectation and not a result,
 drawn from `../../evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv`

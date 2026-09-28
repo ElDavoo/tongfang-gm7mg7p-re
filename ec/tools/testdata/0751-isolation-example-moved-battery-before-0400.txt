@@ -11,12 +11,15 @@
 # 0x044F move as the run set's do and stay context. The 2040 mA at
 # 0x0434/0x0435 and the 16021 mV at 0x0438/0x0439 are the two live figures
 # registers.yaml records, and the 0x0448 and 0x0449 values are those two
-# divided by 100 as the bank1 writers it names would divide them, so the page
-# is internally consistent with what the annotation says the EC does -- and
-# every one of those values is still invented, since the annotation records the
-# wiring and not a reading. The companion after dump differs at every one of
-# the addresses this header names but 0x0437, and nowhere else. Not a
-# prediction that a battery reads this, or that it moved because of the load.
+# divided by 100 as the bank1 writers it names would divide them on their
+# selector-zero branch, so the page is internally consistent with what the
+# annotation says the EC does. What is invented here is their placement and
+# not the figures: registers.yaml records those two as live readings, and
+# this pair is a construction that puts both of them at one moment, so the
+# file is not a reading of anything. The companion after dump differs at
+# every one of the addresses this header names but 0x0437, and nowhere
+# else. Not a prediction that a battery reads this, or that it moved because
+# of the load.
 0400: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 0410: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 0420: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

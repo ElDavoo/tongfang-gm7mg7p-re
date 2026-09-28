@@ -31,7 +31,8 @@ summary of a `0x0000-0x07FF` sweep over a window of its own
 there is no row for `0x0402` in it either. What that second file supports is a
 per-address change count and two endpoints, and nothing about order or timing —
 the 32,499-row log it summarises is not committed — which is the same limit
-`docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` §6 records for the same file.
+the preamble of `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` records for
+the same file.
 So the one demonstration of this bucket was an invented mover in a report whose
 job is to be the mechanical first pass, and nothing about the output would have
 told the operator so.
@@ -124,8 +125,8 @@ The other committed file covering the page,
 byte **does** move there: "the high byte never moves" is a statement about one
 capture and not about the pair, and neither file is a capacity reading. That
 summary supports a change count and two endpoints and no more, its 32,499-row
-log being uncommitted — the limit
-`docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` §6 writes down for the same
+log being uncommitted — the limit the preamble of
+`docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` writes down for the same
 file. The name therefore stays declined for the reason the first file gives and
 not for a stronger one, and both files are named in `registers.yaml` and in the
 report so that a reader is not left with the page's whole story in one capture's
@@ -183,9 +184,12 @@ they do: `test_section6s_file_list_is_the_fixture_set` holds §6's ten file name
 and that directory equal, and §6's command line is unchanged by this work. The
 `2040 mA` and `16021 mV` it carries are the two live figures `registers.yaml`
 records for this board, and the `0x0448`/`0x0449` values are those two divided by
-100 as the bank1 writers it names would divide them — so the page is internally
-consistent with the annotation's account of the wiring, while every value in it
-is still invented, because the annotation records the wiring and not a reading.
+100 as the bank1 writers it names would divide them on their selector-zero
+branch — so the page is internally consistent with the annotation's account of
+the wiring. What is invented is the placement, not the figures:
+`registers.yaml` records those two as live readings, and the pair is a
+construction that puts both at one moment, so the file is not a reading of
+anything.
 
 ### Where the new cases are, and why it is not beside the reader each one exercises
 

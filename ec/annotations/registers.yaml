@@ -1094,14 +1094,14 @@ registers:
       somewhere and "0x0437 never moving" is a statement about the
       profile-switch capture and not about the pair. That summary supports a
       per-address change count and two endpoints and nothing about order or
-      timing -- the 32,499-row log it summarizes is not committed, which
-      docs/hardware-tests/gpu-tgp-07c4-07d7-door.md 6 records for the same
-      file -- and it is not a capacity reading either, so the name is declined
-      for the reason the profile-switch capture gives and not for a stronger
-      one. docs/findings.md 4g groups 0x0436 with
-      0x0438 as "voltage"; the capture is what says otherwise, and the
-      correction is recorded there. Until a live read puts the value beside a
-      WMI RemainingCapacity the name stays a placeholder, and nothing has been
+      timing -- the 32,499-row log it summarizes is not committed, which the
+      preamble of docs/hardware-tests/gpu-tgp-07c4-07d7-door.md records for
+      the same file -- and it is not a capacity reading either, so the name
+      is declined for the reason the profile-switch capture gives and not for
+      a stronger one. docs/findings.md 4g groups 0x0436 with 0x0438 as
+      "voltage"; the capture is what says otherwise, and the correction is
+      recorded there. Until a live read puts the value beside a WMI
+      RemainingCapacity the name stays a placeholder, and nothing has been
       run to produce one.
       The 0x0403 cross-reference, corrected: it is 10 of 0x0403's 11 direct
       reads that subtract 0x14 from the byte, not 11. The 11th, bank1 0xA269, is

@@ -594,6 +594,16 @@ CONTEXT = (
 # capture held. Every one of them is `present-untested` in registers.yaml,
 # so what is printed here is the name and the two bytes -- not a reading of
 # what the EC does with them.
+#
+# A headline names what the byte is. The two derived bytes are not one
+# thing: each named routine branches on a selector and computes something
+# different on each branch, so a headline giving only one of them states as
+# settled what registers.yaml's own note for 0x0448 already hedges ("0xBE
+# when its selector is nonzero"). Both headlines therefore carry the
+# branch, and the notes below carry the rest, naming
+# ec/annotations/ghidra-functions.csv as the row that records it -- a
+# register note is one path of the two, and the annotation row is where
+# the second is written down.
 XDATA_NAMES = {
     0x0434: (0x0435, "mA", "BAT_CURRENT_MA 0x0434/0x0435 -- battery current, "
              "little-endian mA"),
@@ -602,24 +612,38 @@ XDATA_NAMES = {
     0x0438: (0x0439, "mV", "BAT_VOLTAGE_MV 0x0438/0x0439 -- pack terminal "
              "voltage, little-endian mV"),
     0x0448: (None, None, "XDATA_0448 -- battery voltage / 100, computed by "
-             "scale_0438_into_0448 (bank1 0xF416)"),
+             "scale_0438_into_0448 (bank1 0xF416) when its selector is 0, "
+             "and the constant 0xBE when it is not"),
     0x0449: (None, None, "XDATA_0449 -- battery current / 100, computed by "
-             "store_scaled_quotient_0449 (bank1 0xF3D7)"),
+             "store_scaled_quotient_0449 (bank1 0xF3D7) when its selector is "
+             "0, and from 0x060C/0x060D when it is not"),
     0x044C: (None, None, "XDATA_044C -- the busiest byte on this page in "
              "evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv"),
 }
 
-# The one entry whose name is withheld, printed when the pair reaches the
-# bucket. registers.yaml records the name upstream gives 0x0436/0x0437 and
-# declines it: in 2026-09-18-profile-switch-0400-07ff.csv the low byte steps
-# by exactly +0x14 every ~35 s, which reads as a counter rather than as a
-# charge level. The name itself is not printed, because a report is
-# something an operator acts on and this one has been retracted on this
-# board; saying who proposed it and what refutes it is what is left. Every
-# clause of that reason is scoped to the file that carries it, because the
-# page has a second committed file and it does not say the same thing --
-# see the note. The experiment that would settle it is a live read beside
-# WMI's RemainingCapacity (#172), and it has not been run.
+# What a name on its own line cannot carry, printed under the entry when the
+# pair reaches the bucket. Three shapes, one mechanism.
+#
+# 0x0436 is the entry whose name is withheld. registers.yaml records the name
+# upstream gives 0x0436/0x0437 and declines it: in
+# 2026-09-18-profile-switch-0400-07ff.csv the low byte steps by exactly +0x14
+# every ~35 s, which reads as a counter rather than as a charge level. The
+# name itself is not printed, because a report is something an operator acts
+# on and this one has been retracted on this board; saying who proposed it
+# and what refutes it is what is left. Every clause of that reason is scoped
+# to the file that carries it, because the page has a second committed file
+# and it does not say the same thing -- see the note. The experiment that
+# would settle it is a live read beside WMI's RemainingCapacity (#172), and
+# it has not been run.
+#
+# 0x0448 and 0x0449 are the two names that are printed, where what the
+# headline cannot fit is which branch produced the byte and whether this run
+# is on it. Both routines branch on R7 and neither sets it, so the branch is
+# not knowable from a dump pair; the note says so rather than leaving the
+# quotient reading as one unqualified kind of number. The 0xBE is in evidence
+# rather than hypothetical -- the sweep summary's 0x0448 row ends on exactly
+# it -- so a report that named only the quotient would be wrong about a value
+# a committed file has already recorded.
 XDATA_NAME_NOTE = {
     0x0436: (
         "The name upstream gives this pair is not printed, and the reason "
@@ -639,6 +663,38 @@ XDATA_NAME_NOTE = {
         "until a live read puts the pair beside WMI's RemainingCapacity "
         "(issue #172, not run); ec/annotations/registers.yaml carries the "
         "record."),
+    0x0448: (
+        "The quotient above is one of two things the named routine writes "
+        "here, and this report cannot say which one a run took. "
+        "scale_0438_into_0448 branches on R7: at 0 it reads 0x0438/0x0439 "
+        "and divides by 100, and at any nonzero value it reads nothing at "
+        "all and writes the constant 0xBE. That branch is recorded in the "
+        "bank1,0xF416,scale_0438_into_0448 row of "
+        "ec/annotations/ghidra-functions.csv, and it is what "
+        "ec/annotations/registers.yaml's XDATA_0448 note carries as the "
+        "parenthetical it does. R7 is set nowhere in that listing or in "
+        "the 0x198A it calls, so the origin of the selector is not "
+        "established and neither is the branch. The constant is not a "
+        "hypothetical: evidence/ec-watch/2026-09-18-ac-plugin-sweep-"
+        "summary.csv carries 0x0448,4,0x8B,0xBE, so a committed file has "
+        "already recorded this byte ending a window on exactly 0xBE. Read "
+        "0xBE as the branch the routine took and not as a voltage."),
+    0x0449: (
+        "The same branch, and the same gap. store_scaled_quotient_0449 at "
+        "R7 = 0 reads 0x0434/0x0435 and divides by 100, and at any nonzero "
+        "value it calls bank1 0xF3C9 instead, which reads 0x060C/0x060D, "
+        "masks the high byte, multiplies by 10 and divides by 0x22 or 0x44 "
+        "according to bit 6 of SYSTEM_ID (0x0456) -- a different pair and "
+        "a different divisor, neither of them the battery current. That "
+        "call is recorded in the bank1,0xF3D7,store_scaled_quotient_0449 "
+        "row of ec/annotations/ghidra-functions.csv, and the bit-6 "
+        "dependence is recorded under SYSTEM_ID in "
+        "ec/annotations/registers.yaml; the XDATA_0449 note there carries "
+        "the first path and not this one, which is why the branch is named "
+        "here as well. The selector's origin is not established either. So "
+        "the name above is the selector-zero path, and a value on the "
+        "other is a different computation of a different pair rather than "
+        "a second reading of this one."),
 }
 
 
