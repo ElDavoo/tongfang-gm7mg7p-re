@@ -822,8 +822,10 @@ to take for no reason:
   is given a second time as the two `--dump`s §4.6's readback is taken from.
 - **The snapshot is the human's.** Nothing in the tool reads it, because it
   is `#`-comment header text and `read_dump` skips comment lines rather than
-  parsing them. It is in the set because §3's step 0 writes it and because
-  it is the only record of which mode a block started from.
+  parsing them. It is in the set because §2's last bullet has the operator
+  write it, in the format it names, and because it is the only record of which
+  mode a block started from. §3's step 0 is three `ecrw.py dump` calls
+  redirected to the `-before-` dumps, and writes none of this.
 
 Pass one block's dumps, with the `after` one last — the §4.6 readback
 check is taken from the final `--dump`, and before-then-after is the order

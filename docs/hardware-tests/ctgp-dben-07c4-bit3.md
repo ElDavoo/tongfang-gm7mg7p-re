@@ -141,9 +141,17 @@ python windows\tools\ecrw.py read 0x07D5
 
 rem  --- 2. the run. --interval 0.5 is a starting point, not a
 rem  ---    validated-safe one; see the pacing note above before leaving it
-rem  ---    there. --seconds 30 is the per-arm hold.
+rem  ---    there. --seconds 30 is the per-arm hold. Two runs and two files:
+rem  ---    the first with 0x0743 as the machine is standing, the second with
+rem  ---    it at 0x00. §6 names both, spelled the same way.
 python windows\tools\ctgp_dben_probe.py --seconds 30 --interval 0.5 ^
-       --csv <date>-ctgp-dben-07c4-bit3.csv --i-mean-it
+       --csv <date>-ctgp-dben-07c4-bit3-ac.csv --i-mean-it
+
+rem  --- 3. the same command again, once with 0x0743 at 0x00. Its banner says
+rem  ---    `bit 0 was clear`; it goes in its own CSV, never appended to the
+rem  ---    first.
+python windows\tools\ctgp_dben_probe.py --seconds 30 --interval 0.5 ^
+       --csv <date>-ctgp-dben-07c4-bit3-gate-closed.csv --i-mean-it
 ```
 
 The tool writes arm A, samples for 30 s, writes arm B, samples for 30 s, and

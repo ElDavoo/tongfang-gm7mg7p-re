@@ -67,8 +67,10 @@ reading from a counter, and that is the whole reason this procedure exists.
 ## 3. The run, Windows arm
 
 ```console
-rem  <date> is that run's YYYY-MM-DD. §7 names the finished file the same way,
-rem  so following this produces the §7 set with no rename step.
+rem  <date> is that run's YYYY-MM-DD. The name below is bare, and ec_validate.py
+rem  resolves --csv against the directory the command was started in, so this
+rem  does NOT land the capture under evidence\ec-watch\ where §7 lists it.
+rem  Give the full path, or start this command from inside evidence\ec-watch\.
 
 rem  <samples> is however many seconds the discharge needs to fall by a few
 rem  hundred mWh, at --interval 1. It is load-dependent and this file does not
@@ -235,12 +237,26 @@ together:
 evidence/ec-watch/<date>-0436-capacity.csv
 ```
 
-`<date>` is that run's YYYY-MM-DD. Both probes take the path as their first
-argument, and `ec_validate.py --csv` appends to a file that already exists
-(rather than replacing it), so a run stopped and resumed extends the capture
-instead of overwriting it. Follow the argument in §3 or §4 and the file lands
-under `evidence/ec-watch/` already named — no rename step, and no second file to
-reconcile.
+`<date>` is that run's YYYY-MM-DD. Each arm is given the path the way its own
+tool takes it — a `--csv` to `ec_validate.py` in §3, a first argument to
+`remain-capacity-probe` in §4 — and both spellings are **bare** names, so
+neither arm lands its capture under `evidence/ec-watch/` as §3 and §4 stand.
+The two resolve differently, and neither lands where this section says:
+`ec_validate.py` resolves `--csv` against the directory the command was started
+in, so a §3 run started from the repository root puts the capture there, and
+`remain-capacity-probe` `cd`s to the repository root on the way in, so §4's
+capture lands there whatever directory the command was run from. Give the path
+in full in either arm — or start §3 from inside `evidence/ec-watch/` — and the
+file lands already named: no rename step, and no second file to reconcile. §4's
+probe does carry a default of
+`evidence/ec-watch/$(date +%F)-0436-capacity.csv` for the case where it is given
+no argument at all, and §4 gives it one, so that default is not what §4 produces.
+
+`ec_validate.py --csv` appends to a file that already exists rather than
+replacing it, so a §3 run stopped and resumed extends the capture instead of
+overwriting it. §4's probe does the opposite — it opens its `$OUT` with `>` and
+truncates — so a re-run there is a fresh file rather than an extension of the
+one before it.
 
 Add the files to `evidence/README.md`, which is the index every findings claim
 cites through, and say in that entry what the run was: which arm, AC or battery
