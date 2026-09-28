@@ -20,7 +20,7 @@ is the standing §4a-4d gives every figure here, and the trees differ: the count
 has been `105`, `106` and `107` at different points, and the paragraphs that
 say `106` and the paragraphs that say `107` are each true of the tree they were
 measured on. **The figures for the tree this file is in now are the ones in the
-transcript under *The measurement*, and they are `128 / 29 / 93 / 69`.** Every
+transcript under *The measurement*, and they are `129 / 30 / 94 / 70`.** Every
 other number in this file is a record of a tree, not a claim about this one.
 
 That is a real weakness in the file's shape rather than a disagreement in its
@@ -52,10 +52,10 @@ census, and the count it starts from.
 
 ```console
 $ python3 ec/tools/census_test_line_pins.py
-128 pin(s) in 29 markdown file(s): 93 distinct spelling(s), 69 distinct resolved target(s)
-  95 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 33 declined
-  0 def test_, 24 assertion, 22 comment, 5 blank, 44 other (of the pins that resolve)
-  read 214 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 65 test file(s) in it
+129 pin(s) in 30 markdown file(s): 94 distinct spelling(s), 70 distinct resolved target(s)
+  96 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 33 declined
+  0 def test_, 24 assertion, 22 comment, 5 blank, 45 other (of the pins that resolve)
+  read 226 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 73 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -1272,6 +1272,7 @@ the half this table exists to record.
 | [`history-checkout-claims.md`](history-checkout-claims.md):330 | `ec/tools/test_measure_index_repair_visibility.py:373-391` | by-path | other | carries — re-anchored from `:327` by the tool's current run on 2026-09-27; the verdict is the reading recorded against the old line and has not been re-read. **The cell previously held 338 words tracing this one row's citing line across four merges** — `:262` → `:278` → `:291` → `:314` → `:327` → `:330`, each step measured on a different tree because a different merge's correction sat above the pin. That arithmetic is in this file's git log. It is a log of line numbers, and it is worth exactly one sentence here: the row is re-anchored and it carries
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):71 | `ec/tools/test_disasm8051.py:52` | — | — | **declined** (fenced) |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):228 | `test_disasm8051.py:52` | by-name | comment | carries  — **re-anchored from `:169` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read**
+| [`provenance-clone-depth-behaviour.md`](provenance-clone-depth-behaviour.md):37 | `ec/tools/test_check_history_checkouts.py:438` | by-path | other | carries |
 | [`runner-red-suite-set.md`](runner-red-suite-set.md):103 | `tools/test_readme_suite_table.py:11-20` | by-path | other | carries |
 | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):47 | `ec/tools/test_check_testdata_index.py:1180-1184` | by-path | other | **records another line** |
 | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):166 | `ec/tools/test_check_site_census.py:449` | by-path | assertion | carries |

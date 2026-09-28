@@ -503,6 +503,7 @@ class TheCommittedTree(unittest.TestCase):
              "ec/tools/test_check_testdata_index.py": (1, 0),
              "ec/tools/test_citation_gap_scan.py": (1, 0),
              "ec/tools/test_measure_index_repair_visibility.py": (1, 0),
+             "ec/tools/test_check_history_checkouts.py": (1, 0),
              "tools/test_readme_suite_table.py": (1, 0)})
 
     def test_the_committed_concentration_is_the_figure_the_argument_rests_on(self):
@@ -553,9 +554,18 @@ class TheCommittedTree(unittest.TestCase):
         # control: neither record names `test_xdata_cluster_names.py`, so a
         # reader can see the step is a weight on the second row and not a
         # shift between the two.
+        # **And +1 for #421, which is #1009's step once more.** Its write-up
+        # cites `ec/tools/test_check_history_checkouts.py:438` -- the fixture
+        # line that is the only `--verify-provenance` string in any suite, and
+        # the evidence the page's "nothing runs the mode" rests on. That is a
+        # suite this table did not carry, so the two rows the comment above
+        # says the argument rests on are untouched at `43` and `39` and the sum
+        # holds at `82`: a pin naming a new file is invisible in the
+        # concentration and visible only in the denominator, which is the case
+        # #1009's own paragraph describes.
         self.assertEqual([row[4] for row in cited[:2]], [43, 39])
         self.assertEqual(cited[0][4] + cited[1][4], 82)
-        self.assertEqual(len(records), 128)
+        self.assertEqual(len(records), 129)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
         # Three figures, and each moves by construction the moment a suite
@@ -614,7 +624,14 @@ class TheCommittedTree(unittest.TestCase):
         # names the assertion it repaired. The comment above this assertion is
         # about not holding the two absolutes; this one is a named count and
         # moves by construction for the same reason the other two axes do.
-        self.assertEqual(len(files) - len(tail), 13)
+        # `13 -> 14` is #421's write-up, and the same shape: its citation of
+        # `ec/tools/test_check_history_checkouts.py:438` names a suite no
+        # committed markdown had cited a line of, so one suite enters the named
+        # table. The suite this change *landed*,
+        # `ec/tools/test_verify_provenance_clone_depth.py`, is the other side of
+        # the same step and moves nothing: nothing cites a line of it, so it is
+        # in the tail rather than the named count.
+        self.assertEqual(len(files) - len(tail), 14)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

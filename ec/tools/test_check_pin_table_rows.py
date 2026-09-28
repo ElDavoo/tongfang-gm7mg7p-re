@@ -579,7 +579,12 @@ class TheCommittedTree(unittest.TestCase):
         # note on that pair). It is a re-derivation, not a lowering: the
         # row that fails to place is named by the tool, and the other 127
         # are held by the two assertions beside this one.
-        self.assertEqual(placed, 127)
+        # `127 -> 128` is #421, and it is the same relationship rather than a
+        # new one: its write-up cites `test_check_history_checkouts.py:438`,
+        # which places, so the record count and this one each take exactly the
+        # one and the gap against the record count stays at the pair named
+        # above.
+        self.assertEqual(placed, 128)
 
     def test_the_committed_read_and_shape_cells_are_the_census_vocabulary(self):
         # The two vocabularies the table's own cells have to be drawn from, and
@@ -616,7 +621,11 @@ class TheCommittedTree(unittest.TestCase):
         # `by-beside` unmoved -- which is the control, because neither of the
         # two is the transcript's fence and nothing about the corpus changed
         # but its size.
-        self.assertEqual(read, {census.BY_PATH: 74, census.BY_NAME: 19,
+        # **+1 again for #421, the same shape: one new `by-path` row and
+        # nothing else.** Its write-up names the path rather than a bare module
+        # name, so `by-path` takes the one, `74 -> 75`, and `by-name`,
+        # `by-beside` and the declined `-` are the control.
+        self.assertEqual(read, {census.BY_PATH: 75, census.BY_NAME: 19,
                                 census.BY_BESIDE: 2, "-": 33})
         # The shape split is re-derived rather than lowered, twice. #962 adds a
         # class to `test_xdata_cluster_names.py` and corrects a docstring above
@@ -661,8 +670,12 @@ class TheCommittedTree(unittest.TestCase):
         # as `other` -- so `0/24/22/5/43` becomes `0/24/22/5/44` and the
         # declined `-` 32 -> 33, with `assertion`, `comment` and `blank` the
         # control that the two rows are not any of those three.
+        # And +1 for #421, landing on `other` for #1009's reason: the line
+        # cited is a step in a hand-built workflow fixture rather than an
+        # assertion, a `def test_` header or a comment, so the shape rule reads
+        # it as prose. `44 -> 45`, with the three beside it unmoved.
         self.assertEqual(shape, {census.ASSERTION: 24, census.COMMENT: 22,
-                                 census.BLANK: 5, census.OTHER: 44,
+                                 census.BLANK: 5, census.OTHER: 45,
                                  "-": 33})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
