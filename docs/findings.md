@@ -8430,6 +8430,30 @@ the code as it was, and one of them goes through `across_report` so the
 No figure, threshold, CSV or gate changes, and this section's `pair` and
 `across` output is unchanged on the committed pair.
 
+**Correction, 2026-09-27 (issue #904): the "79 in 408" above is the
+population's, conditional on reappearing, and it is now named that way.** The
+`#884` paragraph calls it *"**79 in 408** for the census as a whole"* beside
+*"the population's rate"*, and the mode's rate table prints it as `79/408` in a
+column headed `population` — where the row above it prints `408/439` and
+divides by 439. So the one rate the whole rank-displacement null is read
+against sat under a label naming a set 31 keys larger than the one it was
+measured over, and the `10 of the 60` it is compared with is conditioned the
+same way. **The figures and the conclusion are unchanged** — `92.9%`, `19.4%`,
+`10 of the 60` and the null are all exactly as they were, and the
+`population (439)` row in
+[`xdata-flip-cause-derivation.md`](findings/xdata-flip-cause-derivation.md) §4
+is right of its first cell and mislabelled only of its second. What moves is
+the labelling, in three places: the mode now prints the population's and the
+408's membership **on two lines that each name their set** rather than one
+line opening with a bare `their`, the reappearing cell carries `[of the 408
+that reappear, not of the population]`, and this section's sentence above is
+corrected here rather than edited in place, per §4a-4d. The write-up is
+[`xdata-moved-ranks-population-denominator.md`](findings/xdata-moved-ranks-population-denominator.md);
+§6's `37.4%` / `19.1%` and its size-9+ `30.5%` are read against the **439** and
+were re-derived unmoved on the merged tree, so the section's one surviving
+result does not rest on the labelling at all. `pair` and `across` output is
+byte-unchanged and no CSV, YAML, threshold or gate is touched.
+
 **The one-data-point limit above is confirmed, and the third point is not there
 — see §69.** It is not there because neither 427-row commit can be paired: at
 `e6c88864` the committed file is stale, and at `1fcd5f1e`, the only other one,

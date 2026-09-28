@@ -55,7 +55,7 @@ $ python3 ec/tools/census_test_line_pins.py
 129 pin(s) in 30 markdown file(s): 94 distinct spelling(s), 70 distinct resolved target(s)
   96 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 33 declined
   0 def test_, 24 assertion, 22 comment, 5 blank, 45 other (of the pins that resolve)
-  read 226 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 73 test file(s) in it
+  read 229 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 75 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -67,10 +67,10 @@ and excludes only `.git/`, `vendor/` and `.claude/`, so an **untracked**
 markdown file in a worktree is counted and the figure reads one higher. The
 run above is the committed tree — `git ls-files | xargs cp --parents` into a
 scratch directory, which is `git archive` without the export attributes — and
-that is what makes `214` and `65` the two numbers a reader re-running it gets.
+that is what makes `229` and `75` the two numbers a reader re-running it gets.
 Run in place in a worktree carrying a `.claude-pr/` or any other untracked
-notes, it reads `215`; the difference is the untracked file and nothing else.
-The `65` is `len(suites(REPO))` and moves only when a suite is added.)*
+notes, it reads `230`; the difference is the untracked file and nothing else.
+The `75` is `len(suites(REPO))` and moves only when a suite is added.)*
 
 *(Re-run 2026-09-27 for #739, whose write-up
 [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md) names the
@@ -181,6 +181,68 @@ for. The mapping this paragraph lists stays written where it was measured, per
 `#1033` × `#1030` paragraph below records, stay written where those merges
 measured them, per [`../findings.md`](../findings.md) §4a-4d — each was a
 different tree.
+
+**Correction, 2026-09-28, at the `#904` merge: the block above is a run of the
+merged tree, and this change's whole share of what moved in it is one markdown
+file.** It is re-run rather than differenced, and `origin/main` is re-run beside
+it: this merged tree reads **`229`** markdown files and **`75`** test files,
+`origin/main` at `b0b0c09c` reads **`228`** and **`75`**, and the step is
+`228 + 1 = 229` with the test-file count unmoved. **The `+1` is #904's own
+[`xdata-moved-ranks-population-denominator.md`](xdata-moved-ranks-population-denominator.md)**,
+which cites no `test_*.py:NNN` of its own and adds no suite, so it moves the
+denominator without the headcount. **The `214` and the `65` the block carried
+were stale on `main` before either side touched it** — `228` and `75` against
+`214` and `65` is fourteen markdown files and ten suites, every one of them
+`main`'s — so the re-transcription above supersedes those two figures rather
+than stepping from them, and the only part of the move that is this change's is
+the `+1` above.
+
+**Everything above the denominators is `main`'s and is unmoved by #904**: `129`
+pins in `30` citing files, `94` spellings, `70` targets, `96` resolves against
+`33` declined and the `0/24/22/5/45` split, so the 129-row table reconciles
+against 129 records and the reconciled count is `128` placed. `127`→`128` is
+#421's own `provenance-clone-depth-behaviour.md:37` row placing, and not a
+re-registration of the unplaced row below.
+
+**Two rows in the table below are re-registered, and neither is corrected.**
+`main`'s `#489` correction paragraph put 26 lines into `../findings.md` at
+`:6269` and #904 put 24 more at `:8433`, both above the `§62` row, so
+`:9411`→`:9437` and then `:9437`→`:9461`; #904's correction blocks are above
+[`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md)'s row too,
+so `:401`→`:469`. Each of the three shifts is byte-identical to the line it
+replaces — `git show 4e697871:docs/findings.md` at `:9411` reads the same text
+`:9461` holds here — so the verdict against each is re-read rather than carried.
+**No row is re-registered a second time**, because `main` has touched none of
+the three files those rows are cited in: `git diff 66e61be6 b0b0c09c` is empty
+for `../findings.md`, `docs/agent-pipeline.md` and
+`xdata-flip-cause-derivation.md`. The `#93` block's `:4328`→`:4368`,
+`:4330`→`:4370`, `:7329`→`:7369`, `:7550`→`:7590` and `:7611`→`:7651`, and
+`#489`'s `:7369`→`:7395`, `:7590`→`:7616` and `:7611`→`:7677` beside the
+`:4368`/`:4370` pair, all sit above #904's insertion points and are unmoved by
+them. `check_pin_table_rows.py` agrees: `0` `read-differs`, `shape-differs`,
+`path-differs` and `duplicate-key` on the merged table.
+
+**One row is left unplaced, and it is `main`'s and not #904's.**
+`docs/agent-pipeline.md:409` is a `main`-side row the run reads at `:410` — the
+sentence opens on `:409` and the spelling sits one line below — and it
+reproduces on a clean `origin/main`. `test_check_pin_table_rows.py` **pins it**:
+`test_the_committed_table_places_something` asserts `128 placed` and its own
+comment names "the record count on this tree, which is `docs/agent-pipeline.md`'s
+`:409`/`:410` pair and reproduces on a clean `origin/main`". So the one-short
+state is a held figure with a written reason, `test_every_class_is_zero_on_the_committed_tree`
+is red on `main` for it, and re-registering the row here would move a pin #904
+did not move, to make a checker green on a defect it did not introduce. **It is
+left as `main` has it, and the row records the omission above** rather than the
+row being quietly repaired. Fixing it is a one-cell re-registration plus the
+`128`→`129` beside it, and it belongs to whichever change moves
+`docs/agent-pipeline.md` next.
+
+The reasoning behind each figure above — which re-measurement was run against
+which tree, and the `xdata_moved_ranks.py` and `INDEX.md` counts beside them —
+is in
+[`xdata-moved-ranks-population-denominator.md`](xdata-moved-ranks-population-denominator.md)
+§8, which is where a merge of this change records itself. This file carries the
+re-registration and the `+1` and nothing else.
 
 **Correction, 2026-09-26, at the `#929` × `#962` × `#794` × `#780` merge: the
 `156` above is the one figure on the block that this tree moves, and it moves
@@ -1176,13 +1238,13 @@ the claim it is cited for", which is the half no tool in this tree can make and
 the half this table exists to record.
 
 | citing | cited target | read | shape | verdict |
-| `docs/agent-pipeline.md:409` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries — **re-anchored from `:397` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read**
+| `docs/agent-pipeline.md:409` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries — **re-anchored from `:397` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read. Left at `:409` rather than re-registered to `:410`, where the spelling now sits, because `test_check_pin_table_rows.py` pins the placed count against this row by name — `128` placed on this tree, and `129` is what re-registering it would cost — and #904 did not cause it; see the 2026-09-28 correction above**
 | [`../findings.md`](../findings.md):4368 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** — **re-anchored from `:4328` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
 | [`../findings.md`](../findings.md):4370 | `test_ec_watch.py:86-89` | by-name | other | **records another line** — **re-anchored from `:4330` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
 | [`../findings.md`](../findings.md):7395 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** — **re-anchored from `:7369` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
 | [`../findings.md`](../findings.md):7616 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries  — **re-anchored from `:7590` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
 | [`../findings.md`](../findings.md):7677 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries  — **re-anchored from `:7651` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
-| [`../findings.md`](../findings.md):9437 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** — **re-anchored from `:9411` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):9461 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** — **re-anchored twice, once by each side of this merge: `:9411`→`:9437` by #489's 26 added lines in `../findings.md` above it, then `:9437`→`:9461` by #904's 24-line correction, also above it; `:9411` on the merge base is the byte-identical "`ec/tools/test_xdata_cluster_names.py:400`, the 15 ranks of headroom are as they" line `:9461` is here, so the verdict is re-read rather than carried**
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |
@@ -1291,7 +1353,7 @@ the half this table exists to record.
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):165 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | comment | **records another line** |
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334 | `ec/tools/test_xdata_cluster_names.py:596` | by-path | other | **does not carry** — this merge's shift moved the `> 300` floor it names to `:630` |
 | [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):376 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
-| [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):401 | `test_xdata_cluster_names.py:425` | by-name | comment | **does not carry** |
+| [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):469 | `test_xdata_cluster_names.py:425` | by-name | comment | **does not carry** — **re-anchored from `:401` by #904, whose §2 and §3 correction blocks were inserted above it**
 | [`xdata-green-set.md`](xdata-green-set.md):283 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | other | **does not carry** — this merge's shift moved the case it names to `:381` |
 | [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md):622 | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15 | `ec/tools/test_xdata_cluster_names.py:425` | by-path | comment | **does not carry** |

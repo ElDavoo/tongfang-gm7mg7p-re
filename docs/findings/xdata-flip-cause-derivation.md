@@ -125,6 +125,35 @@ cause the 430-row pair -> the 439-row pair
 > §3, and [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) §2 for the same
 > correction to the two `pair` blocks there.
 
+> **Correction (2026-09-27, issue #904): the block's fourth line is two lines
+> now, and neither figure in them moves.** It read `their members:` — a bare
+> pronoun sitting under two lines that are both scoped to the **408**, while the
+> figure under them is the **439's**. Both readings were available and the
+> output did not say which, and it mattered because §6's surviving result is
+> read against this figure. The population is kept and named, and the 408's own
+> membership is printed beside it:
+>
+> ```console
+>     the population's 439 key(s) in the 430-row pair: 1219 membership(s) over 1171 distinct address(es); 274 of them in the page, held 275 time(s) -- one address is in two rows, which is a `pd` holder and a `main-ec` holder of the same byte; the 439-row pair's holds 425
+>     the reappearing 408 key(s) in the 430-row pair: 984 membership(s) over 946 distinct address(es); 137 of them in the page, held 137 time(s); the 439-row pair's holds 425
+> ```
+>
+> **`1219 membership(s) over 1171 distinct address(es)`, `274` held `275` times
+> and `425` in the 439-row pair are unchanged** — the first line is the same sum
+> under a label that names its set, and the second is a figure that had nowhere
+> to be printed at all. The `235` memberships and `225` addresses between the
+> two lines are the 31 one-sided keys the line above puts *"only in the first"*,
+> which is the arithmetic that shows the two lines are over the sets their
+> labels claim. **No rate in §3 or §4 moves, and `22.5%` in §6 does not.** The
+> rate table's one cell that divides by the 408 rather than the 439 is now
+> bracketed on the cell — `79/408 19.4%  [of the 408 that reappear, not of the
+> population]` — for the reason §4 below is corrected on. The `the population:`
+> line itself and the `pd side:` line below it are byte-unchanged. Re-derived on
+> the merged tree, and `pair` and `across` output is byte-unchanged. See
+> [`xdata-moved-ranks-population-denominator.md`](xdata-moved-ranks-population-denominator.md)
+> §2 for why the population is the set kept and the 408 the set added, and §5
+> for the re-derivation.
+
 **Three things are established here and every rate below is read against them.**
 
 - **A guard-off row reappears in the other generation 408 times in 439 — 92.9%** —
@@ -209,6 +238,21 @@ parenthetical rather than leaving a bare `0/1219` to be read: the added set is
 the difference between the two guard-on universes, so no address in it is a
 member of any row of the older census.
 
+> **Correction (2026-09-27, issue #904): the last column is not one
+> denominator, and only three of its four rows share one.** The `reappears` row
+> divides by the **439 population keys**, the `reappears within 2` row divides
+> by the **408 that reappear** — it is a rate *of the rows that came back*, the
+> conditional the row above counts unconditionally — and the two membership
+> rows divide by the **1219 memberships** of the 439. Each cell is
+> self-labelling (`408/439`, `79/408`, `274/1219`), so the table was never
+> wrong; what it did not do was say so, and a column header reading
+> `population` over `79/408` is the same two-denominators-one-label shape §2's
+> `their members:` had. The mode now brackets that cell
+> (`[of the 408 that reappear, not of the population]`). **No figure in the
+> table moves.** See
+> [`xdata-moved-ranks-population-denominator.md`](xdata-moved-ranks-population-denominator.md)
+> §3.
+
 ## 4. Rank displacement — a null, and the control is what makes it one
 
 The issue's first mechanism: *"if that exact row reappears in the 439-row
@@ -225,6 +269,17 @@ sit at the same rate:
 | moved → intact (71) | **84.5%** | **16.7%** |
 | moved in both (266) | 94.7% | 11.5% |
 | population (439) | 92.9% | 19.4% |
+
+> **Correction (2026-09-27, issue #904): that row's two cells divide by two
+> different sets, and its label names only the first.** `92.9%` is `408/439` —
+> over the 439 population keys. `19.4%` is `79/408` — over the **408 that
+> reappear**, because a rate *"of those, within 2 ranks"* has nothing to divide
+> by among the 31 that did not come back. So `population (439)` is right of the
+> first cell and is the wrong label for the second; the set is **the population,
+> conditional on reappearance**, and the mode now says so on the cell itself. The
+> two figures and the comparison drawn from them below are unchanged. See
+> [`xdata-moved-ranks-population-denominator.md`](xdata-moved-ranks-population-denominator.md)
+> §3.
 
 **So the "neighbouring rank" reading accounts for at most 10 of the 71, and it
 does so at the rate at which the whole census reappears.** The 71 are, on this
@@ -244,6 +299,19 @@ those 71.** It accounts for at most 10 of them, landing within two ranks at
 19.4%. The rows did reorder — the mean displacement of +6.80 in §2 is real and
 large — but reordering is what happened to *every* guard-off row in the census,
 and so it cannot be what distinguishes these 71 from the 266 that kept moving.
+
+> **Correction (2026-09-27, issue #904): the rate this is read against is
+> `79 in 408` **of the 408 that reappear**, not of the 439.** The sentence above
+> reads *"against the population's **79 in 408**"*, and the `intact → moved`
+> paragraph's reads *"against 19.4% for the population"* — both put a figure
+> taken over the reappearing keys under the word naming the whole population.
+> The numbers are right and the comparison is unchanged: `16.7%`, `19.4%`, and
+> the null they support all stand, because a rate *"of those, within 2 ranks"*
+> has nothing to divide by among the 31 that did not come back. What was
+> ambiguous is the set, and it is now named in the mode's own output — the cell
+> carries `[of the 408 that reappear, not of the population]`. See
+> [`xdata-moved-ranks-population-denominator.md`](xdata-moved-ranks-population-denominator.md)
+> §3.
 
 ## 5. The 155 added addresses — a null for the 71, and one key of the 23
 
