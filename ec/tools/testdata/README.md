@@ -160,10 +160,15 @@ are now given to `--dump-pair` in §6's command, so all six dumps are
 consumed and every pair names both §4.4/§4.5 context groups — as value
 pairs where the range covers them, as *not covered by this pair* where it
 does not. The `0x0400` pair's third differing address is `0x0438`, the low
-byte of the pack's terminal voltage and the one address on that page the
-committed 2026-09-18 capture records moving that the two confirmed bytes
-are not, so the whole-block read's *other addresses that differ* bucket
-has a mover the evidence has actually seen.
+byte of the pack's terminal voltage, and one of the four addresses on that
+page that the committed 2026-09-18 capture records moving and that are not
+the two confirmed bytes — `ec/annotations/xdata-0400-045f.md` §8 tabulates
+all four as `0x0436`, `0x0438`, `0x0449` and `0x044C` — so the whole-block
+read's *other addresses that differ* bucket has a mover the evidence has
+actually seen. It is the one of those four that reaches the 16-bit assembly
+path, which is the other half of #219: a byte pair printed as two flat
+addresses leaves the reading an addition to do by hand in the one report
+meant to save the hand work.
 Every file in the directory carries a `constructed` header saying no EC was
 read; `../test_grade_0751_isolation.py` asserts that the list in §6 and
 `0751-isolation-run/` are the same set, so a rename on one side and not the

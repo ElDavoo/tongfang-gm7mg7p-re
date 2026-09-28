@@ -6,9 +6,12 @@
 # watcher and three windows. CPU_TEMP and GPU_TEMP climb throughout, which is
 # what makes the PWM drift beside them thermal rather than a response to the
 # write. 0x0438 is the third address, and is not one of the two confirmed
-# bytes: it is the one the 2026-09-18 capture of this page records moving
-# that these two are not, so the whole-block read's "other" bucket has a
-# mover the evidence has actually seen rather than an invented one (#219).
+# bytes: it is one of the four the 2026-09-18 capture of this page records
+# moving that these two are not -- 0x0436, 0x0438, 0x0449 and 0x044C, which
+# ec/annotations/xdata-0400-045f.md section 8 tabulates -- and the one of
+# those four that is the low byte of a 16-bit pair, so the whole-block read's
+# "other" bucket has a mover the evidence has actually seen rather than an
+# invented one (#219).
 # The row is that capture's only 0x0438 row, 0x97 -> 0xAE. Not a prediction
 # that a die warms like this, or that a battery reads that.
 ts,addr,old,new
