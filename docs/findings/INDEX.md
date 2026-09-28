@@ -46,6 +46,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`common-runtime-tranche.md`](common-runtime-tranche.md) — The unannotated `common` pool, ordered, and its first 37 rows (issue #603)
 - [`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md) — A count is a budget on work, not a bound on the buffer: the region end bounds `walk_helper` and `chain_from`
 - [`counter-sweep-entry-set.md`](counter-sweep-entry-set.md) — The counter sweep's entry set: 180 call sites, one of them a call (issue #555)
+- [`de3c-1c04-to-0563.md`](de3c-1c04-to-0563.md) — The store at `bank1,0xDE96` writes the `0x1C04` byte to the address the bytes at XDATA `0x0563`/`0x0564` spell, and that pair is staged by the same routine from two CODE tables — an indexed set, not one address and not the caller's
 - [`deep-schedule-lint-baseline.md`](deep-schedule-lint-baseline.md) — What the linters say about the prepared nightly, and what now holds it
 - [`deep-schedule-row-csv.md`](deep-schedule-row-csv.md) — What a landed nightly would leave, and what its first reading is
 - [`descend-index-guard.md`](descend-index-guard.md) — `descend()` reads `d[off]` two lines above the test that would catch it, and the invariant that held it was not the one the census named

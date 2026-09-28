@@ -503,6 +503,17 @@ handoff class is not narrowed by this pass, it is only bounded. The seven
 **Excluded:** everything a `DPTR` handoff can carry, and every helper reached
 through a function-pointer table or a return address.
 
+**One instance of the excluded class, worked, since §7's first row excludes
+"a DPTR built from a register" as a matter of method rather than of fact.**
+The `movx @DPTR,A` at `bank1:0xDE96` assembles its pointer with `mov DPH,R2`
+/ `mov DPL,R1` from a callee's `mov R1,A` / `mov R2,A`, and the byte it writes
+is the one at XDATA `0x1C04` — a trio byte. It lands in a bounded set of
+addresses staged by the same routine from two CODE tables, not in the eleven
+this document is about, so it changes no row here; it is recorded because it
+shows the exclusion is reachable rather than vacuous, and
+[`de3c-1c04-to-0563.md`](../../docs/findings/de3c-1c04-to-0563.md) is where
+the address set and the method that found it are.
+
 ## 7. What consumes the eleven bytes: the method-by-method negatives
 
 Each row is a method, its count, and **what it does not exclude**. The

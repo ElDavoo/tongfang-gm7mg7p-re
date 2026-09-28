@@ -10,9 +10,10 @@
    cleared, it writes 0x18 to 0x1063, calls 0xD065, writes 0x55/0xAA/0x5A to 0x07FE/0x07FF/0x07FD,
    and then spins forever on an sjmp to itself. If instead 0x077E reads 0xA5 and 0x077F reads 0x78,
    it zeroes both, calls 0xD73D, 0x5597 with R7=0, 0xD6F4, 0x0EA2 with R7=0x0A and 0xD065, and also
-   spins forever; with neither condition it returns. 0x07C5, 0x1106, 0x08E2, 0x1063, 0x077E/0x077F
-   and the 0x07FE-0x07FF triple have no entry in ec/annotations/registers.yaml; 0x08EB is now
-   carried there as XDATA_08EB.
+   spins forever; with neither condition it returns. 0x07C5 is in ec/annotations/registers.yaml as
+   WHMS at bit 5 (issue #30), and the bit cleared above is bit 7, not that one. 0x1106, 0x08E2,
+   0x1063, 0x077E/0x077F and the 0x07FE-0x07FF triple have no entry in
+   ec/annotations/registers.yaml; 0x08EB is now carried there as XDATA_08EB.
    type: init
    evidence: ec/decompiled/bank0/CCFC.asm; ec/decompiled/bank0/CCFC.c; ec/annotations/registers.yaml
    basis: hand-decoded
@@ -28,7 +29,7 @@ void power_on_init_and_two_hang_paths(void)
   set_0988_1();
   clear_iram_6d_7f_then_xdata_b00_bfe();
   OEM_4_CHARGING_PROFILE = OEM_4_CHARGING_PROFILE & 0xbf;
-  DAT_EXTMEM_07c5 = DAT_EXTMEM_07c5 & 0x7f;
+  WHMS = WHMS & 0x7f;
   AP_OEM_6 = AP_OEM_6 & 0xfb;
   DAT_EXTMEM_1106 = DAT_EXTMEM_1106 & 0xfd;
   DAT_EXTMEM_08e2 = DAT_EXTMEM_08e2 & 0xf7;

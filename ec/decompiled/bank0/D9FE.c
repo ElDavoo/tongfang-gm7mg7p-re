@@ -61,10 +61,10 @@ void seed_07d3_gfid_and_08xx_defaults(void)
     GFID = 0x30;
   }
   if ((XDATA_1665 >> 6 & 1) == 0) {
-    DAT_EXTMEM_07a4 = DAT_EXTMEM_07a4 & 0xef;
+    GC6S = GC6S & 0xef;
   }
   else {
-    DAT_EXTMEM_07a4 = DAT_EXTMEM_07a4 | 0x10;
+    GC6S = GC6S | 0x10;
   }
   DAT_EXTMEM_083a = 0;
   DAT_EXTMEM_083b = 0x10;

@@ -6,17 +6,18 @@
 
 /* Loads DPTR with XDATA 0x07C5, reads the byte, xrl's it with 0x01 and returns. The result is 1
    when bit 0 of that byte is clear and 0 when it is set; the other seven bits are scrambled by the
-   xor and carry no information. 0x07C5 has no entry in ec/annotations/registers.yaml, so what the
-   bit gates is not determined here.
+   xor and carry no information. 0x07C5 is in ec/annotations/registers.yaml as WHMS at bit 5 (issue
+   #30); bit 0, the bit tested here, is one of the five the DSDT's field list declares unnamed and
+   unallocated, so what it gates is not determined here.
    type: reader
    evidence: ec/decompiled/bank0/BB81.asm; ec/decompiled/bank0/BB81.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 byte is_07c5_bit0_clear(void)
 
 {
-  return DAT_EXTMEM_07c5 ^ 1;
+  return WHMS ^ 1;
 }
 
 

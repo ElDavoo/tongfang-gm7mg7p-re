@@ -21,7 +21,7 @@ void stage_0769_076e_convert_to_1803(void)
   if ((((((DAT_EXTMEM_073c & 1) != 0) && ((DAT_EXTMEM_073c >> 1 & 1) != 1)) &&
        ((DAT_EXTMEM_073c & 0xf8) == 0)) &&
       (((((SUPPORT_2 >> 4 & 1) == 1 || ((SUPPORT_2 >> 5 & 1) == 1)) || ((BIOS_OEM_2 >> 6 & 1) != 0))
-       && (((KBD_STATUS >> 1 & 1) != 1 && (-1 < TRIGGER)))))) && ((DAT_EXTMEM_07c5 & 7) == 0)) {
+       && (((KBD_STATUS >> 1 & 1) != 1 && (-1 < TRIGGER)))))) && ((WHMS & 7) == 0)) {
     if (DAT_EXTMEM_076b == '\0' && (DAT_EXTMEM_0769 == '\0' && DAT_EXTMEM_076a == '\0')) {
       DAT_EXTMEM_0769 = DAT_EXTMEM_076c;
       DAT_EXTMEM_076a = DAT_EXTMEM_076d;

@@ -10,16 +10,16 @@
    type: gate
    evidence: ec/decompiled/bank0/F221.asm; ec/decompiled/bank0/F221.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 byte gate_on_0x12_update_0xeb8(void)
 
 {
-  if (DAT_EXTMEM_0ea8 == 0x12) {
-    DAT_EXTMEM_0eb8 = DAT_EXTMEM_0eb8 & 0xfc | 1;
-    return DAT_EXTMEM_0eb8;
+  if (CTL0 == 0x12) {
+    MGI8 = MGI8 & 0xfc | 1;
+    return MGI8;
   }
-  return DAT_EXTMEM_0ea8;
+  return CTL0;
 }
 
 

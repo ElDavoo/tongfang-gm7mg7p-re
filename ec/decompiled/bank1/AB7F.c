@@ -14,7 +14,7 @@
 void call_8f6b_98cc(void)
 
 {
-  FUN_CODE_8f6b();
+  gate_06c2_0472_0801_then_count_06ce();
   dispatch_0680_low3_via_98b4_table();
   return;
 }

@@ -732,12 +732,12 @@ ORACLE = {
     # settles it; the 155 the pass adds are new `program=main-ec` rows, of which
     # `0x03DE` and `0x03B8` are two. (A shared address *number* is not a shared
     # byte, which is the collision `program=both` exists to carry.)
-    "extmem_distinct": 1021, "extmem_refs": 8675,
-    "extmem_raw": 8684, "extmem_commented": 9,
-    "extmem_main_distinct": 901, "extmem_main_refs": 7817,
+    "extmem_distinct": 1015, "extmem_refs": 8623,
+    "extmem_raw": 8632, "extmem_commented": 9,
+    "extmem_main_distinct": 895, "extmem_main_refs": 7765,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
-    # What the decompiler named, which the issue's grep could not see.
-    "symbol_main_distinct": 161, "symbol_main_refs": 6147,
+    # Named by the decompiler. The 2026-09-28 move is at the END OF THIS FILE.
+    "symbol_main_distinct": 167, "symbol_main_refs": 6199,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1326, "refs": 15696,
@@ -5099,3 +5099,50 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+# 2026-09-28, issue #1296 -- the history of the six ORACLE values moved on this
+# date, kept at the end of the file on purpose. It belongs beside the values
+# and cannot be: `check_eq_guard_citations.py` holds twenty-two line-number
+# citations into this file from `docs/findings.md`,
+# `ec/annotations/xdata-register-map.md`,
+# `docs/findings/xdata-no-eq-guard-refusal-contract.md` and
+# `docs/findings/xdata-4-4-identity-rederivation.md`, every one of them above
+# the last line of this note, so a paragraph inserted in the ORACLE comment
+# block shifts all twenty-two and turns a decompilation into an edit to four
+# unrelated documents. The rule the blocks above follow is *the pin moves, and
+# the pin says why*; this is the pin saying why, placed where saying it costs
+# nothing.
+#
+# The move is a **catch-up, not a new address.** Issue #1296 seeds three
+# `bank1` functions -- 0xDE3C, 0xB6DE and 0x8F6B -- and a seeded row has to be
+# re-exported to carry its name. That export is the first this tree has run
+# since issue #250's nine `XDATA_*` symbols landed in `xdata-symbols.csv`
+# without one, so their renames reach the `.c` text at last, by exactly the
+# mechanism every earlier block here names:
+#
+#   extmem_distinct       1021 -> 1015      symbol_main_distinct   161 -> 167
+#   extmem_refs            8675 -> 8623      symbol_main_refs      6147 -> 6199
+#   extmem_raw             8684 -> 8632      extmem_commented          9 -> 9
+#   extmem_main_distinct    901 ->  895      extmem_pd_*         157/858 unmoved
+#   extmem_main_refs       7817 -> 7765      extmem_both               37 unmoved
+#
+# The cross-check is the one the blocks above have used four times now, and it
+# holds: 8632 raw against 7765 main-EC and 858 PD leaves `extmem_commented` at
+# 9, and the full address/reference census below the ORACLE values does not
+# move at all -- the addresses and the references did not change, only which
+# token spells them. What #1296 adds on its own sits inside the symbol tally
+# rather than beside it.
+#
+# One of those newly exported functions is also where the *disjointness*
+# assertion first bites, which is why the export was run whole rather than
+# trimmed to the three files: 0x8F6B's decompile reads XDATA 0x07A4, which
+# carries the name `GC6S`. With the other 24 files left on the pre-#250
+# spelling, 0x07A4 would be spelled both ways at once and the assertion would
+# fire on a tree that is merely half-regenerated. The full export settles that
+# by making the tree consistent rather than by moving the assertion.
+#
+# The pins `build_ec_decompile.py --self-test` moved on the same date (1,957 ->
+# 1,960 rows, bank1 `annotations_applied` 721 -> 724 and `functions_named`
+# 605 -> 608, sum 1,978 -> 1,981) and the `subsystems.md` census bullets it
+# recounts are in `docs/findings/de3c-1c04-to-0563.md` section 7.

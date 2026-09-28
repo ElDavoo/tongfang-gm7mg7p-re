@@ -29,12 +29,12 @@ void index_table_base(char *param_1)
     return_trampoline_83ff();
     return;
   }
-  if ((DAT_EXTMEM_07c5 >> 6 & 1) != 0) {
-    DAT_EXTMEM_07c5 = DAT_EXTMEM_07c5 & 0xbf;
+  if ((WHMS >> 6 & 1) != 0) {
+    WHMS = WHMS & 0xbf;
     load_dptr_88f0_tail_jump_1114(0x85);
   }
-  if (DAT_EXTMEM_09e9 != DAT_EXTMEM_0788) {
-    DAT_EXTMEM_0788 = DAT_EXTMEM_09e9;
+  if (DAT_EXTMEM_09e9 != CTWA) {
+    CTWA = DAT_EXTMEM_09e9;
     load_dptr_88f0_tail_jump_1114(0x83);
   }
   if (((CTGP_DB_CTRL & 1) != 0) &&
