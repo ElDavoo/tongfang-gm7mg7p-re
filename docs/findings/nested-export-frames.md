@@ -217,12 +217,12 @@ measurements rather than restatements of the issue's list:
   `bank1 0x703F forwarder_to_e322` and `bank1 0xE490` as `unframed`. The
   column is not overcounting here.
 - **The remaining rows are a separate population, and this change rules on
-  neither.** The `auto`-seeded remainder is Ghidra's own frames. `common 0x6A02`
-  and `common 0x6D46` are the mutually nested pair §3 is about; `common 0x65A6`
-  is the other frame whose listing reaches back below its own entry point, and it
-  holds two rows that `common 0x60C2` holds as well. What Ghidra's own frames
-  should be is a question about the export, and this is a measurement of it — a
-  named follow-up, not a verdict.
+  neither.** The `auto`- and `call-target`-seeded remainder is Ghidra's own
+  frames. `common 0x6A02` and `common 0x6D46` are the mutually nested pair §3 is
+  about; `common 0x65A6` is the other frame whose listing reaches back below its
+  own entry point, and it holds two rows that `common 0x60C2` holds as well.
+  What Ghidra's own frames should be is a question about the export, and this is
+  a measurement of it — a named follow-up, not a verdict.
 - **`bank0 0xF002` `FUN_CODE_f002`** (listed `0xEF96`-`0xF011`, holding
   `0xEFDC` and `0xEFF0`, both annotation rows) is **#577**. The tool reports it
   as a row like any other; it is read, cited and not relitigated here.

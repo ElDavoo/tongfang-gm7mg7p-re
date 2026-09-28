@@ -693,8 +693,8 @@ def self_test() -> int:
     for key in sorted(want):
         r = by_key[key]
         at, span_text = want[key]
-        check("%s %s %s is nested in bank0 0x%s, listed %s"
-              % (key[0], key[1], r["name"], at, span_text),
+        check("%s %s %s is nested in %s 0x%s, listed %s"
+              % (key[0], key[1], r["name"], key[0], at, span_text),
               r["verdict"] == "nested"
               and any(e["container_addr"] == at
                       and "%04X-%04X" % e["container_span"] == span_text
