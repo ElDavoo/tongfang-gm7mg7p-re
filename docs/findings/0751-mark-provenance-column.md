@@ -266,13 +266,13 @@ happened to the version that was there before it.
 |---|---|---|
 | `windows/tools/test_ec_watch.py:135` | the header equality, naming five columns | it asserted `ts,addr,old,new` — four names |
 | `windows/tools/test_ec_watch.py:138` | the mark row in a row-list assertion, with its trailing comma | the list ended at the label, so the row's text did not match |
-| `windows/tools/test_ec_watch.py:147` | a five-way unpack of the mark row, the fifth the provenance | it was a **four**-way unpack, and a five-field row raises `ValueError: too many values to unpack (expected 4)` **before any assertion in the test runs** |
-| `windows/tools/test_ec_watch.py:241` | the same row list, in the blank-press class | the same |
-| `windows/tools/test_ec_watch.py:414` | the same row list in a run holding `--label-vocab`, compared without the fifth field | the row's fifth field named whichever runner invoked the suite, so a literal list of rows could not hold it |
+| `windows/tools/test_ec_watch.py:179` | the fifth field read off the raw row by index, in the test split out for it | it was a **four**-way unpack, and a five-field row raises `ValueError: too many values to unpack (expected 4)` **before any assertion in the test runs** |
+| `windows/tools/test_ec_watch.py:270` | the same row list, in the blank-press class | the same |
+| `windows/tools/test_ec_watch.py:443` | the same row list in a run holding `--label-vocab`, compared without the fifth field | the row's fifth field named whichever runner invoked the suite, so a literal list of rows could not hold it |
 | `windows/tools/test_gpu_block_watch.py:869` | the header equality, naming five columns | it asserted four names — `gpu_block_watch.py:59,166` imports `CsvSink` and `Marker` from `ec_watch` and constructs `Marker(sink)` |
 | `windows/tools/test_gpu_block_watch.py:872` | the mark row, with its trailing comma | the list ended at the label |
-| `windows/tools/test_system_id_probe.py:307` | the mark row, with its trailing comma | the assertion's right side was the four-field row |
-| `windows/tools/test_system_id_probe.py:316` | a five-way unpack, as `test_ec_watch.py:147` | a four-way unpack |
+| `windows/tools/test_system_id_probe.py:320` | the mark row, with its trailing comma | the assertion's right side was the four-field row |
+| `windows/tools/test_system_id_probe.py:339` | the capture handed to `grader.read_capture`, where `test_ec_watch.py:179` was a five-way unpack | a four-way unpack |
 | `windows/tools/test_manual_fan_ctrl_probe.py:508` | `mark_rows`'s `len(r) == 4` filter | **unchanged**, and it would fail *silently* — an empty list rather than an exception |
 | `windows/tools/test_manual_fan_ctrl_probe.py:513` | the header equality, four names | **unchanged** — only if the probe is widened, which this change does not do |
 | `windows/tools/test_manual_fan_ctrl_probe.py:515` | `self.assertEqual(len(row), 4, row)` | **unchanged**, and the loudest of the three: it is the first to raise |
@@ -379,9 +379,9 @@ what makes them one.
 | `ec/tools/grade_0751_isolation.py:1477` | `:1406` |
 | `ec/tools/grade_0751_isolation.py:3065` | `:2994` |
 | `ec/tools/check_capture_claims.py:576` | `:514` (drifted before this change) |
-| `windows/tools/test_ec_watch.py:148` | `:145` |
-| `windows/tools/test_system_id_probe.py:317` | `:311` |
-| `windows/tools/test_ec_watch.py:1176` | `:1134` (landed at `:1168` first) |
+| `windows/tools/test_ec_watch.py:159` | `:145` |
+| `windows/tools/test_system_id_probe.py:341` | `:311` |
+| `windows/tools/test_ec_watch.py:1205` | `:1134` (landed at `:1168` and `:1176`) |
 
 **The last three rows are this change's edits to the two test files, and every
 one of them is a pin two write-ups this change does not own also carry** — two
@@ -401,16 +401,17 @@ lines move with the prose — which is the note at the head of
 declined pin whose line nothing else names is a lost record rather than a
 declined duplicate. The rule is what holds; the two sides move together.
 
-**The `:1176` is a second landing, and it is this change's own doing.** The
+**`:1205` is a third landing, and each is this change's own doing.** The
 repair of `test_a_run_holding_the_vocabulary_names_itself_in_the_mark_row` put
-eight comment lines into `test_ec_watch.py` above it, which is what carried
-`:1168` to `:1176` — named here because a pin moved by this change's own later
-edit is the one kind of drift the table above cannot show by itself. Its
-`before` column stays `:1134` because that is where the line stood on
-`origin/main`, and a before/after pair records where a pin came from and where
-it ends rather than each hop: the two re-anchored write-ups moved with it, and
-`0751-path-taking-reader-fates.md`'s `grep` transcript now prints `:1176` too,
-which is what a transcript is for.
+comment lines into `test_ec_watch.py` above it, and a later change on the same
+issue put more there by reading both mark-row tests through the grader, which
+is what carried `:1168` to `:1176` and then to `:1205` — named here because a
+pin moved by this change's own later edit is the one kind of drift the table
+above cannot show by itself. Its `before` column stays `:1134` because that is
+where the line stood on `origin/main`, and a before/after pair records where a
+pin came from and where it ends rather than each hop: the two re-anchored
+write-ups moved with it, and `0751-path-taking-reader-fates.md`'s `grep`
+transcript now prints `:1205` too, which is what a transcript is for.
 
 With that done, the census over a tree carrying this page moved out reads
 `origin/main` figure for figure — `106` records, `28` files, `79` spellings,
@@ -442,7 +443,11 @@ about itself, and this change is the case it was written for. Two lines of the
 section-5 transcript are the exception, and they are the two this change's
 re-anchoring of the tool's own `CITATIONS` moved: a transcript naming a line
 the tool no longer cites would leave the page disagreeing with the tool about
-the tool's own output, which is the one thing a quotation is for.
+the tool's own output, which is the one thing a quotation is for. That
+re-anchoring is this change's own: the tool cited the two `assertEqual` tuple
+unpacks that reading the mark row through the reader deleted, so its two
+`CITATIONS` rows now name the single-quoted MARK assertions that outlived them,
+one in each suite.
 
 ---
 

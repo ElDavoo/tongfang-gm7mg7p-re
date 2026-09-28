@@ -600,12 +600,12 @@ CITATIONS = [
      'if len(r) == 4 and r[1] == "MARK"]',
      "reader: the only exact-column-count filter in the tree"),
     # -- the spelling the literal scan cannot see ----------------------------
-    ("windows/tools/test_ec_watch.py", 148,
-     "('MARK', '', 'wrote 0x0751=0xA0')",
+    ("windows/tools/test_ec_watch.py", 452,
+     "self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],",
      "a single-quoted MARK the scan cannot match: a test assertion, not a "
      "writer"),
-    ("windows/tools/test_system_id_probe.py", 317,
-     "('MARK', '', 'GPU mode -> dGPU')",
+    ("windows/tools/test_system_id_probe.py", 320,
+     "'MARK,,GPU mode -> dGPU,'",
      "the same in the other suite, so the blind side is the tree's and not "
      "one file's"),
     # -- the lines the read-side claim rests on -----------------------------

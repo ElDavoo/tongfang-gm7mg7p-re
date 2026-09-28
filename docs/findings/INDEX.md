@@ -109,6 +109,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
+- [`test-name-grader-coupling.md`](test-name-grader-coupling.md) — A test name that claims a coupling the test does not make
 - [`test-site-fits-guard.md`](test-site-fits-guard.md) — `test_site()` bounds the index at `:217` and reads three bytes underneath it, and the second bound is now there
 - [`testdata-addr-column-claim.md`](testdata-addr-column-claim.md) — A claim about a capture is columnar, and a claim about a fixture is not (issue #975)
 - [`testdata-index-check.md`](testdata-index-check.md) — `ec/tools/testdata/README.md` is now held to the tree under it (issue #727)
