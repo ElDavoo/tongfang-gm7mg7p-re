@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-143 write-ups.
+144 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -140,6 +140,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) — Why the guard-off regeneration's moved-rank count fell from 366 to 315, measured (issue #852)
 - [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md) — A duplicated `cluster_key` was a quieter number, and the count that read it is now keyed on the rank (issue #888)
 - [`xdata-moved-ranks-pin-decisions.md`](xdata-moved-ranks-pin-decisions.md) — The two pins into `xdata_moved_ranks.py` are decided, and both were carried by real trees (issue #961)
+- [`xdata-moved-ranks-population-denominator.md`](xdata-moved-ranks-population-denominator.md) — `cause`'s membership line counted the population under a pronoun the 408 also answered to, and the two are now named on their own lines (issue #904)
 - [`xdata-moved-ranks-second-count.md`](xdata-moved-ranks-second-count.md) — The `--swept` summary's second-holder count was taken over one generation, and the rows were over both (issue #886)
 - [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md) — Which census `xdata-cluster-names.csv` is anchored to, and what a carry line is a claim about (issue #851)
 - [`xdata-no-eq-guard-census-scale-join.md`](xdata-no-eq-guard-census-scale-join.md) — What `--no-eq-guard` moves at census scale, joined one register row at a time

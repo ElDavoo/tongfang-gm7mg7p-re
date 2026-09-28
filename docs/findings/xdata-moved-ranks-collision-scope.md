@@ -206,6 +206,18 @@ table, the page-rate bands and a per-key table, and none of that is pasted. The
 whole of the collision evidence is inside the quoted part — the two
 `cluster_key COLLISION` lines the next paragraph is about.
 
+> **Note (2026-09-27, issue #904). The block is left as the record of the run
+> that produced it, and its last line is no longer what the tool prints.** The
+> `their members:` line became two lines that each name their set — the
+> population's and the reappearing keys' — because a bare pronoun under two
+> lines scoped to the *reappearing* set was readable as either. The two
+> `cluster_key COLLISION` lines above it, the `the population:` line, and
+> everything the paragraph below this one argues are byte-unchanged; the two
+> membership lines were not the evidence and are not re-transcribed here. See
+> [`xdata-moved-ranks-population-denominator.md`](xdata-moved-ranks-population-denominator.md)
+> §3, which quotes the new pair over the real 430/439 pair rather than this
+> fixture's.
+
 The two lines sit **above** the block they qualify, not beside it, because the
 figure two lines below them is the one that is short.
 
