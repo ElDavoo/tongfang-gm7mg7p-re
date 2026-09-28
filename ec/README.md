@@ -744,8 +744,9 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   epilogue at `0x821F`, the default at `0x8274`, and the thirteen helpers the
   cases share. It answers two separate questions about two separate sets of
   addresses. What the sixteen `0x08D0`-`0x08DF` word slots hold: a straight
-  copy of one of **four** source words, low byte at the lower address, and — by
-  that section's own scans — no reader in either bank. Who reads the sixteen
+  copy of one of **four** source words, high byte at the lower address, so each
+  slot is byte-swapped against the source word it copies, and — by that
+  section's own scans — no reader in either bank. Who reads the sixteen
   `0x0600`-`0x060F` accumulator bytes those slots are folded into: sixteen
   sites outside the handler block, in three `bank0` places and nine `bank1`
   routines, of which `bank1,0xF3D7` writes a byte `registers.yaml` also derives

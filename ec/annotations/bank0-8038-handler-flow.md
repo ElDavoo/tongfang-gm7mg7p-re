@@ -385,10 +385,12 @@ byte into a high one, so `0x0A58` is the high byte, `0x0A59` the low one, `r6`
 the **high** half of `V` and `r7` the low. The shift then agrees rather than
 decides: `clr c ; rrc a` runs twice, `r6` first and `r7` consuming the carry
 out of it, which is the shape of a 16-bit `>> 1` — the high byte is shifted
-first and its bit 0 rotates into the top of the low byte. The carry out of
-`r7`, the top, is dropped by the `clr c` at `0xB973`. It writes the result
-back to `0x0A58`/`0x0A59` in that same order and returns the new high byte in
-`a`.
+first and its bit 0 rotates into the top of the low byte. The `clr c` at
+`0xB973` is what makes the shift logical rather than arithmetic — it clears the
+carry *in* to it — and nothing reads the carry out of the `rrc` on `r7` at
+`0xB977`, so the bit that leaves the top of the pair is simply discarded. It
+writes the result back to `0x0A58`/`0x0A59` in that same order and returns the
+new high byte in `a`.
 
 That `0x0A58` is the high byte of the *pair* comes from the caller's own
 stores, not from the address: case `0x00` fills `0x0A59` from `[0x0600]` at
@@ -691,9 +693,10 @@ held (the store inside `0xBAFD`), then bits 0 and 1 of `0x1900` and bit 0 of
 `0x1901` (`0xBAFD`), then `0x08E1` = `6` and `0x08E0` = `0` (`0xBCB1`), then
 `ret`.
 
-**The default arms `0x1904` on every path through its zero arm, and disarms the
-other three to `0x9F`** — which, per §6.3, has bit 7 *set*. The `0x80` and the
-`0x9F` differ only in bits 0-6. So the byte-level answer to the issue's arming
+**The default writes `0x80` to `0x1904` on every path through its zero arm,
+and `0x9F` to the other three** — which, per §6.3, has bit 7 *set*. The `0x80`
+and the `0x9F` differ only in bits 0-6, and what those bits mean is not
+established by this walk. So the byte-level answer to the issue's arming
 question is: the four helpers and the default all write values whose bit 7 is
 set, and no edge in the eighteen arms clears it. **Whether bit 7 has a meaning
 here at all, and what does gate these channels, is not determined by this
