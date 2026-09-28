@@ -204,9 +204,14 @@ ANNOTATION_COLUMNS = ["scope", "addr", "name", "signature", "type", "comment",
 # edge: `region` is the column that decides which bank a site belongs to, and a
 # wrong bank here means disassembling from an address that is not a function
 # entry there (call_target_seeds' docstring).
+# `earlier_record` arrived with issue #1110, which is the case this list
+# exists for: adding a column to the census is not a one-file change, and
+# test_data_regions.py's `test_audit_call_targets_leaves_write_csv_untouched`
+# is where the warning about that was written down.
 CALL_TARGET_COLUMNS = ["file_offset", "region", "runtime", "opcode", "target",
-                       "bucket", "frame_onto", "frame_over", "calls_stub",
-                       "calls_trampoline", "own_bank", "other_bank"]
+                       "bucket", "frame_onto", "frame_over", "earlier_record",
+                       "calls_stub", "calls_trampoline", "own_bank",
+                       "other_bank"]
 
 
 def sha256(path):

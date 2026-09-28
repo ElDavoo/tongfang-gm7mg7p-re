@@ -173,7 +173,7 @@ real transfer.
 **The oracle is committed and independent.** `ec/decompiled/bank1/E57E.asm` is a
 single `c0 07` — `push 0x07` — so the listing ends at 0xE580;
 `ec/annotations/bank-call-targets.csv:5766` reads
-`0x16580,bank1,0xE580,lcall,0xE5D6,B,24,0,,,entry,entry`. The window's five
+`0x16580,bank1,0xE580,lcall,0xE5D6,B,24,0,,,,entry,entry`. The window's five
 bytes are `12 e5 d6 d0 07`, and the walk reads them as the `lcall` plus the
 matching `pop 0x07` at 0xE583.
 
