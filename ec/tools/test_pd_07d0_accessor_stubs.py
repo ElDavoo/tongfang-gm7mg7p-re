@@ -280,10 +280,14 @@ class TestCensusRelationship(unittest.TestCase):
 
         "Spells" means the listing's disassembly carries a transfer *at that
         address*, not that the address falls inside the function's span. The
-        difference is the whole reason the census reads 1 of 14 while the span
-        test says 10: `pd/4D6F.asm` runs 0x4A12-0x4E58, but its `ajmp 0x4b12`
-        at 0x4A12 skips the block holding 0x4AE9, so nothing in that listing
-        spells it. Asking `parse_listing` is what keeps the two apart.
+        difference is the whole reason the census reads 1 of 14 while a
+        `pd`-only span test says 2: `pd/4D6F.asm` runs 0x4A12-0x4E58, but its
+        `ajmp 0x4b12` at 0x4A12 skips the block holding 0x4AE9, so nothing in
+        that listing spells it -- one of the thirteen unspelled sites sits
+        inside a span. The span has to be read in `pd`'s own address space; let
+        it cross into `common` or the banks and seven more of the fourteen
+        appear to fall in one, none of them at a `pd` instruction.
+        Asking `parse_listing` is what keeps the two apart.
         """
         wanted = set(self.keys)
         out = set()

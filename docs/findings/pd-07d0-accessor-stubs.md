@@ -105,16 +105,27 @@ than a missing-*callee* one.
 number both write-ups now carry.
 
 The reason thirteen caller addresses are in no listing is not that they are
-hard to find. **Nine of them fall inside the address span of a listing that
-does not spell them**, and the span test and the parse test disagree by nine:
+hard to find, and an address span is not where they are hiding either.
+**Measured against the `pd` listings' own spans, exactly one of the thirteen
+falls inside a listing that does not spell it**, so the parse test and the
+span test disagree by one:
 
-- `pd/4D6F.asm` runs `0x4A12`–`0x4E58`, which covers `0x4B1D` (spelled, at
-  `4D6F.asm:13`) *and* `0x4AE9` (not spelled).
+- `pd/4D6F.asm` runs `0x4A12`–`0x4E58`, which covers two of the fourteen:
+  `0x4B1D` (spelled, at `4D6F.asm:13`) *and* `0x4AE9` (not spelled).
 - It does not spell `0x4AE9` because its `ajmp 0x4b12` at `0x4A12` skips the
   block holding it. A listing spanning an address is not a listing containing
-  an instruction, and treating the first as the second is how a "10 of 14"
-  reading appears.
-- The remaining sites are outside every listing's span entirely.
+  an instruction, and treating the first as the second is the whole error.
+- The other twelve are outside every `pd` listing's span entirely.
+
+Run the span test across *all* programs instead of `pd` alone and nine of the
+fourteen are inside some listing's span, seven of them inside a `common`,
+`bank0` or `bank1` listing and none of those seven at a `pd` instruction.
+That larger number is an address-space conflation rather than a finding:
+`pd`, `common` and the banks are separate programs, as every `pd` listing
+header says and as
+[`pd-common-address-attribution.md`](pd-common-address-attribution.md)
+measures the cost of reading across them. The figure this page carries is the
+`pd`-only one, and it is a count of spans, not a count of instructions.
 
 That is also why the test asks `call_graph.parse_listing()` rather than
 comparing addresses: the parse is what distinguishes *spelled* from *covered*,

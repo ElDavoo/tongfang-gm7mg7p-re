@@ -236,12 +236,17 @@ the census to 14 of 14 means seeding those thirteen *caller* functions, which is
 the follow-up. The write-up is
 [`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md).
 
-**Nine of those thirteen are inside a listing's span without being spelled by
+**One of those thirteen is inside a listing's span without being spelled by
 it**, which is the trap that makes a span test and a parse test disagree here.
 `pd/4D6F.asm` runs `0x4A12`–`0x4E58`, covering `0x4B1D` (spelled, at
 `4D6F.asm:13`) and `0x4AE9` (not spelled, because the listing's `ajmp 0x4b12`
 at `0x4A12` skips the block holding it). A listing spanning an address is not a
-listing containing an instruction; only the parse tells them apart.
+listing containing an instruction; only the parse tells them apart, and the
+span has to be measured in `pd`'s own address space — seven more of the
+fourteen reach a span only if a `common`, `bank0` or `bank1` listing is allowed
+to cover a `pd` address, which is the conflation
+[`pd-common-address-attribution.md`](pd-common-address-attribution.md) is
+about.
 
 **So the 7 cells are: the walk gives up, and not because the method ran out.**
 It reached a `ret` and stopped, which is the correct answer for a single-path
