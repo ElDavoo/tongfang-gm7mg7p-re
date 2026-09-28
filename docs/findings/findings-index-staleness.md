@@ -1,53 +1,66 @@
-# The findings index went stale because nothing calls its check, not because the generator miscomputes (issue #1137)
+# The index is hand-edited by merges and nothing runs the check that would catch it (issue #1137)
 
-**Written 2026-09-28, against `d96676d`,** which is the commit this change
-branches from. Every figure below is that commit's, measured over the 149
-write-ups indexable there; none of them is a standing number, and this file is
-the 150th — which is the reason regenerating `INDEX.md` in the same commit is
-part of the change rather than bookkeeping. Nothing here is a hardware,
-firmware or Windows claim: no image is opened, no register is read back, no
-capture is taken. What is read is committed markdown, one prepared patch and a
-directory listing; what is run is `--check`, `git apply --check`, and one
-counting loop.
+**Written 2026-09-28, against `30144f0b`,** the commit this change branches
+from. Every figure below is that commit's, measured over the 150 write-ups
+indexable there; none of them is a standing number, and this file is the 151st
+— which is the reason regenerating `INDEX.md` in the same commit is part of the
+change rather than bookkeeping. Nothing here is a hardware, firmware or
+Windows claim: no image is opened, no register is read back, no capture is
+taken. What is read is committed markdown, one prepared patch and a directory
+listing; what is run is `--check`, `git apply --check`, and one counting loop.
 
 ## What the issue asked, and what is left of it
 
-The issue was filed against an older tree and **its headline condition no
-longer holds**:
+The issue was filed against an older tree, and its headline condition is **red
+on this one** — not by a fault of the generator's, but by the very mechanism it
+names. At the branch point:
 
 ```
 $ python3 ec/tools/gen_findings_index.py --check
-docs/findings/INDEX.md: 149 write-up(s), current.
+docs/findings/INDEX.md is out of date: a write-up was added, removed or retitled. Regenerate with `python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md`.
 $ echo $?
-0
+1
 ```
 
-151 `*.md` sit under `docs/findings/`; the generator is willing to index 149,
+152 `*.md` sit under `docs/findings/`; the generator is willing to index 150,
 and `checkout-claim-corpus.md` — the write-up the issue names as missing — is
 one of them, at `INDEX.md:37`. The two it skips are the skip set at
 `ec/tools/gen_findings_index.py:35`: the index itself, and the pin census.
 
+**The proximate cause is one commit old, and it is a hand-edit.** `30144f0b`
+(#1212) added a write-up and touched `INDEX.md` by `1 0` lines
+(`git show 30144f0b --numstat -- docs/findings/INDEX.md`): the entry line for
+`ecmg-asl-references.md`, typed in by hand, with the header left reading
+`149 write-ups.` over 150 entries. The banner at `INDEX.md:3` says "do not
+edit", and the entry it added is the one the generator would have written — it
+is only the count that was never regenerated. **This is the issue's failure
+mode, reproduced one commit before this branch adds anything to it**, and the
+counterfactual is one commit further back: at `d96676d4` the index read
+`149 write-ups.` over 149 entries and `--check` exited 0.
+
 The issue's arithmetic is 115 → 116 entries, and that is a **per-commit figure
 rather than a wrong one**: #1291 regenerated the index in the same commit that
-added the write-up, which is the rule stated below. Three of the issue's
-citations are dated the same way, and are corrected here rather than in the
-files they point at — a re-cut moves a patch header's own line numbers, so
-correcting one in a file a human is meant to `git apply` is churn in a shared
-file for no reader's benefit.
+added the write-up — `git show d96676d4 --numstat -- docs/findings/INDEX.md` is
+`2 1` — which is the rule stated below, and the one #1212 did not follow. Three
+of the issue's citations are dated the same way, and are corrected here rather
+than in the files they point at — a re-cut moves a patch header's own line
+numbers, so correcting one in a file a human is meant to `git apply` is churn
+in a shared file for no reader's benefit.
 
-| issue says | `d96676d` |
-|---|---|
-| 115 entries; `checkout-claim-corpus.md` missing | 149; present; `--check` exits 0 |
-| `docs/ci/agent-gates-findings-frozen.patch:78` (the call) | `:112` — the header grew |
-| same file `:37` ("here for the") | `:43` |
-| `tools/README.md:3535-3536` | `:33-34` — the file shed the append log |
+| issue says | `d96676d4` | `30144f0b` (branch point) |
+|---|---|---|
+| 115 entries; `checkout-claim-corpus.md` missing | 149; present; `--check` exits 0 | 150; present; `--check` **exits 1** |
+| `docs/ci/agent-gates-findings-frozen.patch:78` (the call) | `:112` — the header grew | `:112` |
+| same file `:37` ("here for the") | `:43` | `:43` |
+| `tools/README.md:3535-3536` | `:33-34` — the file shed the append log | `:33-34` |
 
-What is left is therefore the narrowest useful reading of the issue:
-**regenerating the index is a step this change performs, not a defect this
-change repairs**, and the durable half is item 3 — what made it stale, and
-which half of the #1135/#1137 pair is true.
+What is left is therefore the narrowest useful reading of the issue: the
+regeneration is **both** a step this change performs **and** the repair of the
+hand-edit one commit above it — the same two lines, fixed for both — and the
+durable half is item 3, what made it stale, and which half of the #1135/#1137
+pair is true.
 
-## Why a merge that added a write-up was green
+## Why a merge that hand-edited the index shipped green
 
 Re-measured rather than taken from the issue, because this answer is a negative
 one and negative answers drift:
@@ -67,12 +80,20 @@ direction. Every other mention is prose or a reproduction block a reader pastes
 by hand — `test-site-fits-guard.md:328` is one, under a comment reading "the
 two gates this touches" — and none of them runs on a merge.
 
-**That is the whole cause, and it is worth putting in its plainest form: the
-index is correct, the check is correct, and nothing calls the check.** A stale
-index is what an unrun check looks like from the outside. The same is true of
-`check_findings_frozen.py` beside it, so `CLAUDE.md`'s "`docs/findings.md` is
-closed, and this is enforced rather than advised" is, on this tree, enforced by
-two tools that no merge runs.
+**Put in its plainest form, there are two causes and both are needed: the
+index is a generated file that a merge hand-edited, and the check that would
+have said so is correct and has no caller.** Neither alone tells the story. A
+hand-edit alone is a one-line slip a reviewer may or may not catch, which is
+why it happens; an unrun check alone would leave the index correct, as
+`d96676d4` shows, and leave a finding with nothing to point at. What this tree
+holds is the pair — `30144f0b` hand-edited, and nothing noticed, because
+`bash .github/scripts/agent-gates.sh` exits 0 with "All gates passed" at that
+same commit, against that same red index. That is the write-up's own claim,
+demonstrated rather than argued.
+
+The same is true of `check_findings_frozen.py` beside it, so `CLAUDE.md`'s
+"`docs/findings.md` is closed, and this is enforced rather than advised" is, on
+this tree, enforced by two tools that no merge runs.
 
 ## Which half of the pair is true: all three of #1135's defects are latent here
 
@@ -123,7 +144,7 @@ print(len(fenced), len(corrupted))  # 20 0
 `ec/tools/gen_findings_index.py:56`'s `if line.strip(): continue` is a
 trailing `continue` in a loop body: whether or not the condition holds, the
 next thing the loop does is read the next line, so the statement cannot alter
-behaviour. It is never reached in this tree either — **0 of the 149** write-ups
+behaviour. It is never reached in this tree either — **0 of the 150** write-ups
 have a non-blank line before their first `# ` heading, so every title is set on
 a file's opening line and the loop never gets to `:59`. The two-line comment
 under it, about a file that opens with prose, describes a case the set does not
@@ -141,7 +162,8 @@ It is #1135's to fix, and it is the only one of the three with a failure mode
 that reaches a reader.
 
 Fixing all three would not have made this merge red, and leaving them does not
-make it green. **The tool is fine; nobody called it.**
+make it green. **The generator is fine; a merge hand-edited its output, and no
+check was called to notice.**
 
 ## Who checks the index, in the meantime
 
@@ -167,7 +189,8 @@ This change is the rule's own demonstration: it adds a write-up, and it
 regenerates `INDEX.md` in the same commit. `--check` goes red the moment a
 write-up lands without that, which makes it a regression test for this finding
 rather than a tidiness check — adding a write-up is precisely what made the
-index stale the first time.
+index stale the first time. `30144f0b` is the counterexample in the tree
+itself: the same step, skipped, and the header left behind.
 
 ## The prepared patch, measured rather than refreshed
 
