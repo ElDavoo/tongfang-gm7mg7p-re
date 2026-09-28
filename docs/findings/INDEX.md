@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-148 write-ups.
+149 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -58,6 +58,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`dump-reads-for-a-refused-block.md`](dump-reads-for-a-refused-block.md) — A read taken for a block whose windows were refused (issue #499)
 - [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
+- [`ecmg-asl-references.md`](ecmg-asl-references.md) — Which of the 98 ECMG names the ASL reaches for, and what the two `0x71` arms are (issue #1159)
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
 - [`fixture-empty-pointer-cells.md`](fixture-empty-pointer-cells.md) — The fixture's six empty cells are not a count, and the set is derivable where the six is not (issue #1006)
 - [`group-proxy-populations.md`](group-proxy-populations.md) — What the banking rule discards, and how much of it (issue #455)

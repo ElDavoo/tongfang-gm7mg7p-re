@@ -64,9 +64,35 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 IOCTL_CODES = [0x9C40A4D0, 0x9C40A4D4, 0x9C40A4D8,
                0x9C40A4DC, 0x9C40A4E0, 0x9C40A4E4]
 
-# The Arg0 values T1WR dispatches on for the GPU block (dsdt.dsl:50658-50718),
-# as written in ASL and as they would appear as a decimal constant.
-ACPI_ARGS = [0x1171, 0x1172, 0x1173, 0x2273]
+# The Arg0 values T1WR dispatches on for the GPU block, plus `0x1175` and
+# `0x1176`, as written in ASL and as they would appear as a decimal constant.
+#
+# T1WR dispatches on nineteen distinct values (`ec/tools/dsdt_ec_fields.py`
+# tabulates all of them in `T1WR_ARMS`, and its `--self-test` re-derives the
+# table from the .dsl). The other thirteen are deliberately *not* here, and
+# that is a measured decision rather than a gap: each is two hex digits and
+# three decimal ones, and each was measured against the committed trees
+# before being left out, where it matched literals that are not `T1WR` calls
+# --
+#
+#   * `0x81`-`0x85` match `ECSpec.User_Fan_Level1`..`Level5` (for example
+#     windows/decompiled/v3.1.39.0/GCUService/Define/ECSpec.cs:27-31), a fan
+#     enumeration in a different namespace that happens to share the value.
+#   * `0x83`, `0x84`, `0x85` also match ILSpy's own
+#     `Invalid MethodBodyBlock: Invalid method header: 0xNN` markers, which
+#     quote a raw method-header byte.
+#   * The decimal forms are worse: `97` alone matches 94 times in
+#     windows/decompiled/v3.9.18.0 and 24 times in the decrypted service.
+#
+# A caller search that cannot tell a `T1WR` argument from a fan level or an
+# error marker is not a search, so those values are left out and the reason is
+# written down here. What a caller of the CPU-PL or `0x75` arms would look
+# like is therefore still open -- it needs a term list keyed on the method
+# name and the call site, not on the argument value, and that is a separate
+# piece of work. `0x1175` and `0x1176` are four hex digits and five decimal
+# ones, which is long enough to discriminate, and they are the two arms the
+# GPU-block four left out that `registers.yaml` now holds a name for.
+ACPI_ARGS = [0x1171, 0x1172, 0x1173, 0x1175, 0x1176, 0x2273]
 
 # A hit must be a whole word, and -- for a number -- must not be a slice of
 # a longer hex number. That last guard is what keeps a disassembly listing
@@ -435,7 +461,8 @@ EXPECTED_TEXT = {
     "CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)": {
         "T[123]WR": 3, "DBD1": 2, "DBD2": 2, "AMAT": 5, "AMIT": 2,
         "ATPP": 4, "CTGP": 2, "UOCT": 4, "DBAC": 7, "NPCF": 54,
-        "0x1171": 1, "0x1172": 1, "0x1173": 1, "0x2273": 1},
+        "0x1171": 1, "0x1172": 1, "0x1173": 1, "0x1175": 1, "0x1176": 1,
+        "0x2273": 1},
 }
 
 EXPECTED_BINARY = {
@@ -500,8 +527,10 @@ def self_check(c):
         for d in drift:
             print("  " + d, file=sys.stderr)
         print("\nIf a committed input genuinely changed, re-run the census, "
-              "update docs/findings.md to match, and re-bake the EXPECTED_* "
-              "tables here.", file=sys.stderr)
+              "re-bake the EXPECTED_* tables here, and write the new figure "
+              "up in a file under docs/findings/ -- docs/findings.md is "
+              "frozen, so the section that quotes this census (4o) is the "
+              "record of what it said, not a page to edit.", file=sys.stderr)
         return 1
     print("t1wr_callers: census matches the committed tree -- "
           f"{len(EXPECTED_TEXT)} text inputs, {len(EXPECTED_BINARY)} binary "
