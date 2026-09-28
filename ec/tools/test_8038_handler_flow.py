@@ -14,15 +14,36 @@ change to either tool's spelling cannot make a claim pass or fail. It also
 sidesteps a real disagreement the document records: at `bank1,0xDAF3` the two
 bytes `a8 01` are `mov r0, r1` to r2 and `mov r0,0x01` to `disasm8051`, which
 is the base 8051's own `MOV Rn,direct` reading. Pinning the byte is the only way
-to assert anything there that is not a choice between two readings.
+to assert anything there that is not a choice between two readings. The one
+assertion that cannot be expressed as a byte is the arms table's `window`
+column, which is a transcript and has to be compared with one; that comparison
+still takes its bytes from the image, and `TheCommittedArmsTable` is where it
+is.
 
 Two other things it deliberately does not do.
 
-It does not re-run `walk_branch_arms.py`. That would assert the tool against
-itself, and a regenerated `bank0-8038-handler-arms.csv` would then be free to
-disagree with the image. Where this suite reads that CSV at all, it compares it
-to the image recomputed here, so a regeneration that changed either fails
-loudly instead of passing on a stale pair.
+It does not re-run `walk_branch_arms.py`, and it does not re-derive the walk
+either -- re-running the tool would assert it against itself, and re-deriving it
+would be a second implementation of the same idea that could agree with the
+first and be wrong the same way. What it does instead is decode `BANK0` again
+and hold the table to that, which is the check that survives a regeneration.
+`TheCommittedArmsTable` re-decodes **every row** of
+`bank0-8038-handler-arms.csv` instruction by instruction and compares the
+result to its `window` cell; takes each arm's `callees` cell to be the
+`lcall`/`ljmp` targets the bytes that cell names actually hold; derives each
+`arm_start` from the branch opcode in the image; and requires every address an
+`xdata` cell names to be a `mov dptr,#imm` inside that row's own decode. So a
+byte that changes what an arm calls, or how it decodes, fails here rather than
+passing on a stale pair.
+
+That is four of the table's columns, and it is **not** the whole table.
+`insns` is checked against the `window` cell beside it rather than against the
+image, which is a weaker check than the four above. `status` and the `callee`
+names are pinned to constants transcribed from the image, and a transcription
+that had drifted from it would not be caught. `addr`, `region`, `test`,
+`unattributed`, `code_pointers` and `code_immediates` are not read at all --
+the last two are empty in every row -- and `ends` appears only in a failure
+message. A change to any of those would pass here.
 
 And it writes no `test_*.py:<line>` citation, and names no other test file by
 line. `census_test_line_pins.py` counts those spellings in markdown across the
@@ -39,6 +60,7 @@ HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE))
 
 import verify_gap_text as G
+from disasm8051 import OPCODE_LEN, mnemonic, relative_target
 
 ANNOTATIONS = HERE.parent / 'annotations'
 DECOMPILED = HERE.parent / 'decompiled'
@@ -75,6 +97,74 @@ def hexat(image, addr, length):
     """The bytes at `addr` as the hex string a transcript would quote, so a
     failure prints something a reader can look up rather than a repr."""
     return image[addr:addr + length].hex()
+
+
+MOV_DPTR = 0x90      # mov dptr,#imm16 -- the only way an XDATA address is named
+OPCODE_LEN_MAX = max(OPCODE_LEN)   # 3; the width the range check below uses
+
+
+def window_blocks(row):
+    """A `window` cell as a list of blocks, each a list of instruction
+    addresses -- the ` | ` the writer puts between them is where the walk
+    stopped following and started following again, so the grouping is part of
+    what the column says and not a formatting detail.
+
+    Ranged, because every helper below indexes the image with what this
+    returns: a cell that had been hand-edited to name an address past the end
+    should fail as a disagreement, not as an IndexError out of a decode."""
+    blocks = [[int(item.split(' ', 1)[0], 16) for item in block.split(' ; ')]
+              for block in row['window'].split(' | ')]
+    for block in blocks:
+        for pc in block:
+            if not 0 <= pc < len(BANK0) - OPCODE_LEN_MAX:
+                raise AssertionError(
+                    "0x%s names 0x%04X, which is not a decodable instruction "
+                    "in bank0" % (row['site_runtime'], pc))
+    return blocks
+
+
+def window_addrs(row):
+    """Every instruction address a `window` cell names, in its order and with
+    its repeats kept -- a walk that loops names a block twice, and dropping the
+    second naming would quietly change the edge list below."""
+    return [pc for block in window_blocks(row) for pc in block]
+
+
+def redecoded_window(row):
+    """`row['window']` as the image would render it today.
+
+    The addresses are the only thing taken from the cell; every length, every
+    mnemonic and every operand is read from `BANK0`. That is the whole point
+    of the comparison -- a cell that had drifted, or a byte that had moved
+    under it, renders differently here and fails. The renderer is
+    `disasm8051.mnemonic`, the one `walk_branch_arms.py` writes the column
+    with, so the two agree on spelling by construction; the bytes they are
+    spelled from do not agree by construction, and that is what is being
+    checked."""
+    return " | ".join(
+        " ; ".join("0x%04X %s" % (pc, " ".join(mnemonic(BANK0, pc, pc).split()))
+                   for pc in block)
+        for block in window_blocks(row))
+
+
+def window_edges(row):
+    """The `lcall`/`ljmp` targets the addresses a `window` cell names actually
+    hold, in that order, decoded from `BANK0` and repeated where the walk
+    repeats. `callees` is this list written out, which is the whole claim the
+    document's control flow makes, so the comparison below is the check on
+    it rather than a spelling comparison."""
+    return ['0x%04X' % be16(BANK0, pc + 1) for pc in window_addrs(row)
+            if BANK0[pc] in (LCALL, LJMP)]
+
+
+def window_dptr_immediates(row):
+    """Every address a `mov dptr,#imm16` inside the row points at, decoded from
+    `BANK0`. The `xdata` column is the set of the ones a `movx` actually
+    reaches, so this is a superset of it by construction -- which is the form
+    the check can take without re-deriving DPTR tracking, and which still fails
+    on an address the cell names that no instruction in the row loads."""
+    return {be16(BANK0, pc + 1) for pc in window_addrs(row)
+            if BANK0[pc] == MOV_DPTR}
 
 
 def rows(path):
@@ -1170,9 +1260,80 @@ class TheAccumulatorConsumerSet(unittest.TestCase):
 
 
 class TheCommittedArmsTable(unittest.TestCase):
-    """The CSV is the machine-readable half of the document. It is compared to
-    the image here rather than to `walk_branch_arms.py`, so a regeneration that
-    changed either side fails instead of agreeing with itself."""
+    """The CSV is the machine-readable half of the document, and the two halves
+    are only worth having if a reader can tell which is which. It is held to
+    `BANK0` here rather than to `walk_branch_arms.py`, so a regeneration that
+    changed either side fails instead of the two agreeing with each other.
+
+    The first tests below do that by re-deriving each cell from `BANK0` rather
+    than by pinning it: `window`, `callees`, `arm_start`, and the addresses in
+    `xdata`, with `insns` checked against the `window` cell beside it. A *new*
+    column would not be covered by them -- there is no general rule that catches
+    a column this suite has not heard of -- and the file's docstring names what
+    is and is not held to the image rather than implying the whole table. The
+    rest of the class is the pinned remainder, which cannot catch a byte that
+    has moved."""
+
+    def sub_rows(self, row):
+        return dict(kind=row['kind'], site=row['site_runtime'],
+                    arm=row['arm'], callee=row['callee'])
+
+    def test_every_row_of_the_table_re_decodes_from_the_image(self):
+        table = rows(ARMS)
+        self.assertTrue(table, "the arms table is empty")
+        for row in table:
+            with self.subTest(**self.sub_rows(row)):
+                self.assertEqual(redecoded_window(row), row['window'])
+
+    def test_an_arms_callees_are_the_edges_its_own_bytes_hold(self):
+        for row in rows(ARMS):
+            if row['kind'] != 'arm':
+                # A `callee` row is a row about the callee, reached through the
+                # arm that names it, and its `callees` cell is empty by design.
+                self.assertEqual(row['callees'], '',
+                                 msg=str(self.sub_rows(row)))
+                continue
+            with self.subTest(**self.sub_rows(row)):
+                self.assertEqual(' ; '.join(window_edges(row)), row['callees'])
+
+    def test_an_arms_start_is_where_its_branch_sends_it(self):
+        for row in rows(ARMS):
+            if row['kind'] != 'arm':
+                continue
+            with self.subTest(**self.sub_rows(row)):
+                branch = int(row['branch'], 16)
+                op = BANK0[branch]
+                # The branch sits four bytes into every site's `mov dptr,#gate`
+                # and two-byte test, so this is also a check that `branch` names
+                # the branch and not some other site address.
+                self.assertEqual(branch, int(row['site_runtime'], 16) + 4)
+                if row['arm'] == 'taken':
+                    want = relative_target(op, BANK0[branch + OPCODE_LEN[op] - 1],
+                                           branch)
+                else:
+                    want = branch + OPCODE_LEN[op]
+                self.assertEqual(int(row['arm_start'], 16), want,
+                                 "0x%04X's %s arm" % (branch, row['arm']))
+
+    def test_the_xdata_cells_name_only_addresses_the_row_loads(self):
+        for row in rows(ARMS):
+            with self.subTest(**self.sub_rows(row)):
+                named = {int(cell.split(' ', 1)[0], 16)
+                         for cell in row['xdata'].split(' ; ') if cell}
+                self.assertTrue(named <= window_dptr_immediates(row),
+                                "not loaded by a mov dptr in this row: %s"
+                                % sorted('0x%04X' % a for a in
+                                         named - window_dptr_immediates(row)))
+
+    def test_the_instruction_count_agrees_with_the_window_it_counts(self):
+        # `insns` and `window` are two cells of one fact, and a regeneration
+        # that moved one without the other would leave `insns` describing a
+        # decode the row no longer shows. This is a check between two cells,
+        # not against the image: what the image says about that decode is the
+        # first test's, and adding it here would only restate it.
+        for row in rows(ARMS):
+            with self.subTest(**self.sub_rows(row)):
+                self.assertEqual(int(row['insns']), len(window_addrs(row)))
 
     def test_every_arm_row_is_complete_and_covers_nine_sites(self):
         seen = set()
