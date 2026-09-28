@@ -193,9 +193,9 @@ carries both sides' work, re-measured rather than assumed.
 the `docs/agent-pipeline.md:409/410` pair: the table names `:409` against a
 record the run reads at `:410`. It reproduces on a clean `origin/main` —
 measured, not assumed — which is why the reconciler still exits 1 here and why
-`ec/tools/test_check_pin_table_rows.py`'s `TheCommittedTree` is two failures red
-on this branch, against a `main` that read two at this change's base and reads
-three now. *(On the merged tree the reconciler names **two** pairs: the
+`ec/tools/test_check_pin_table_rows.py`'s `TheCommittedTree` is red on this
+branch: three failures, the same three `main` reads now and one more than it
+read at this change's base. *(On the merged tree the reconciler names **two** pairs: the
 `agent-pipeline.md:409/410` one above, and
 `0751-append-unchecked-marks.md:221/246`, the second a line `main` shifted
 rather than a row this change or that one added. `TheCommittedTree` is
