@@ -2869,16 +2869,20 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None):
 
     The "everything else" bucket names what registers.yaml names, and only
     that. The `0x0400` pair is the one that reaches it, and on a real run it
-    is expected to: §3 holds a fixed CPU load through the block, and the
-    bytes on that page that are a battery's own numbers move because of the
-    load. Four undifferentiated addresses left the operator to go and look
-    them up, and split a byte pair across two rows leaves the 16-bit reading
-    an addition to do by hand in the one report meant to save the hand work
-    (#219). So each address `XDATA_NAMES` covers gets a line of its own
-    under the flat list, and a pair is also printed assembled. That is the
-    name and the two bytes read out of the two dumps, and it does not grade
-    them: the heading keeps its "not graded here", and §3's own question is
-    about `0x0751` and not about the battery.
+    is expected to: the bytes on that page that are a battery's own numbers
+    move while a run watches it. §3's fixed CPU load is one thing that would
+    move them and is not an established reason for it — the one committed
+    capture of this page is a battery-mode cycle with no load step in it, four
+    of the nine addresses XDATA_NAMES covers moved in it, and
+    xdata-0400-045f.md §8 names no cause for any of them. Four
+    undifferentiated addresses left the operator to go and look them up, and
+    split a byte pair across two rows leaves the 16-bit reading an addition
+    to do by hand in the one report meant to save the hand work (#219). So
+    each address `XDATA_NAMES` covers gets a line of its own under the flat
+    list, and a pair is also printed assembled. That is the name and the two
+    bytes read out of the two dumps, and it does not grade them: the heading
+    keeps its "not graded here", and §3's own question is about `0x0751` and
+    not about the battery.
 
     Pairs are grouped by the block they name, the way `report_dumps` groups
     the dumps, and a `--block` run takes no read from another block's. The
