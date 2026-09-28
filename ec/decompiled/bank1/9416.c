@@ -24,7 +24,7 @@ void adjust_0627_index_against_gpu_temp(void)
   char cVar2;
   undefined2 uVar3;
   
-  if ((DAT_EXTMEM_074c & 0xf) == 0) {
+  if ((PDIN & 0xf) == 0) {
     if ((MANUAL_FAN_CTRL & 0x80) == 0) {
       uVar3 = 0x93b6;
     }

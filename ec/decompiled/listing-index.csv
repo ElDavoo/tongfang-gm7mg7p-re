@@ -930,7 +930,7 @@ bank1,8E91,dispatch_on_049d_049e_05e0,59,annotation,no,yes,dispatch,hand-decoded
 bank1,8ECC,select_r4_from_cpu_temp_and_0620_0626,107,annotation,no,yes,dispatch,hand-decoded,ec/decompiled/bank1/8ECC.asm; ec/decompiled/bank1/8ECC.c; ec/annotations/registers.yaml,,bank1/8ECC.asm
 bank1,8F37,write_047f_and_arm_06d1_fa,29,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/8F37.asm; ec/decompiled/bank1/8F37.c,,bank1/8F37.asm
 bank1,8F54,write_047f_and_arm_06d2_fa,23,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/8F54.asm; ec/decompiled/bank1/8F54.c,,bank1/8F54.asm
-bank1,8F6B,FUN_CODE_8f6b,151,call-target,no,no,,,,,bank1/8F6B.asm
+bank1,8F6B,gate_06c2_0472_0801_then_count_06ce,151,annotation,no,yes,state,hand-decoded,ec/decompiled/bank1/8F6B.asm; ec/decompiled/bank1/8F6B.c,,bank1/8F6B.asm
 bank1,9000,store_a_to_xdata_at_dptr,1,annotation,no,yes,unresolved,hand-decoded,ec/decompiled/bank1/9000.asm; ec/decompiled/bank1/9000.c,,bank1/9000.asm
 bank1,9001,ret_only_fragment,1,annotation,no,yes,unresolved,hand-decoded,ec/decompiled/bank1/9001.asm; ec/decompiled/bank1/9001.c,,bank1/9001.asm
 bank1,9004,load_dptr_06ce,3,annotation,no,yes,unresolved,hand-decoded,ec/decompiled/bank1/9004.asm; ec/decompiled/bank1/9004.c,,bank1/9004.asm
@@ -1152,7 +1152,7 @@ bank1,B679,gate_0572_bit0_set,19,annotation,no,yes,gate,hand-decoded,ec/decompil
 bank1,B68C,gate_0571_0573_eq_1,28,annotation,no,yes,gate,hand-decoded,ec/decompiled/bank1/B68C.asm; ec/decompiled/bank1/B68C.c,,bank1/B68C.asm
 bank1,B6A8,snapshot_0432_043c_04f2_04fc,33,annotation,no,yes,copy,hand-decoded,ec/decompiled/bank1/B6A8.asm; ec/decompiled/bank1/B6A8.c,,bank1/B6A8.asm
 bank1,B6C9,cmp32_hi16_lt_lo16_at_dptr,21,annotation,no,yes,math,hand-decoded,ec/decompiled/bank1/B6C9.asm; ec/decompiled/bank1/B6C9.c,,bank1/B6C9.asm
-bank1,B6DE,FUN_CODE_b6de,52,call-target,no,no,,,,,bank1/B6DE.asm
+bank1,B6DE,gate_0564_against_4_and_0563_high_nibble,52,annotation,no,yes,gate,hand-decoded,ec/decompiled/bank1/B6DE.asm; ec/decompiled/bank1/B6DE.c,,bank1/B6DE.asm
 bank1,B728,clear_0610_bit5_and_dispatch,51,annotation,no,yes,dispatch,hand-decoded,ec/decompiled/bank1/B728.asm; ec/decompiled/bank1/B728.c,,bank1/B728.asm
 bank1,B784,FUN_CODE_b784,134,call-target,no,no,,,,,bank1/B784.asm
 bank1,B80A,arm_05f5_countdown_0490_bit5,55,annotation,no,yes,state,hand-decoded,ec/decompiled/bank1/B80A.asm; ec/decompiled/bank1/B80A.c,,bank1/B80A.asm
@@ -1316,7 +1316,7 @@ bank1,DACC,FUN_CODE_dacc,63,call-target,no,no,,,,,bank1/DACC.asm
 bank1,DB0B,FUN_CODE_db0b,322,call-target,no,no,,,,,bank1/DB0B.asm
 bank1,DC50,FUN_CODE_dc50,2,call-target,no,no,,,,,bank1/DC50.asm
 bank1,DC52,FUN_CODE_dc52,106,call-target,no,no,,,,,bank1/DC52.asm
-bank1,DE3C,FUN_CODE_de3c,98,call-target,no,no,,,,,bank1/DE3C.asm
+bank1,DE3C,stage_0563_0564_pair_and_commit_1c04,98,annotation,no,yes,state,hand-decoded,ec/decompiled/bank1/DE3C.asm; ec/decompiled/bank1/DE3C.c,,bank1/DE3C.asm
 bank1,DE9E,FUN_CODE_de9e,7,call-target,no,no,,,,,bank1/DE9E.asm
 bank1,DEA5,FUN_CODE_dea5,31,call-target,no,no,,,,,bank1/DEA5.asm
 bank1,DEC4,FUN_CODE_dec4,36,call-target,no,no,,,,,bank1/DEC4.asm

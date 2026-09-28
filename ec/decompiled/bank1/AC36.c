@@ -6,8 +6,11 @@
 
 /* Tests two bits of the byte at XDATA 0x490. Only when bit 1 is set and bit 2 is clear does it
    tail-jump to 0xDE3C, with no write in this frame; in every other case it writes 0xFF to XDATA
-   0x1C00, writes 0x04 to XDATA 0x680, and returns. What 0xDE3C does is not decoded here. None of
-   0x490, 0x1C00 and 0x680 is documented in ec/annotations/registers.yaml.
+   0x1C00, writes 0x04 to XDATA 0x680, and returns. What 0xDE3C does is decoded in
+   docs/findings/de3c-1c04-to-0563.md: on the arm this tail-jump enters it stages the XDATA
+   0x0564:0x0563 pair from two CODE tables, then stores the byte at 0x1C04 through that pair and
+   writes 0xFF to 0x1C00. None of 0x490, 0x1C00 and 0x680 is documented in
+   ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank1/AC36.asm; ec/decompiled/bank1/AC36.c
    basis: hand-decoded
@@ -17,7 +20,7 @@ void write_1c00_ff_and_0680_04(void)
 
 {
   if (((DAT_EXTMEM_0490 >> 1 & 1) != 0) && ((DAT_EXTMEM_0490 >> 2 & 1) != 1)) {
-    FUN_CODE_de3c();
+    stage_0563_0564_pair_and_commit_1c04();
     return;
   }
   DAT_EXTMEM_1c00 = 0xff;

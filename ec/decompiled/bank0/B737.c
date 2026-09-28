@@ -18,7 +18,7 @@ byte FUN_CODE_b737(undefined1 param_1,byte param_2)
   cVar1 = read_06e6_xor_01();
   if ((((cVar1 != '\0') || (-1 < MANUAL_FAN_CTRL)) || ((DAT_EXTMEM_0490 & 1) == 0)) ||
      ((cVar1 = (DAT_EXTMEM_04ab < 100) << 7, DAT_EXTMEM_04ab != 100 ||
-      (pbVar4 = &DAT_EXTMEM_07c5, (DAT_EXTMEM_07c5 >> 4 & 1) != 0)))) {
+      (pbVar4 = &WHMS, (WHMS >> 4 & 1) != 0)))) {
     bVar2 = clear_08eb_bit6_and_zero_08a0();
     return bVar2;
   }

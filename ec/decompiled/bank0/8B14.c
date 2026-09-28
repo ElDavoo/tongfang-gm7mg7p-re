@@ -136,7 +136,7 @@ void FUN_CODE_8b14(undefined1 param_1,char param_2,byte param_3)
      (XDATA_0440 == '\0')) {
     DAT_EXTMEM_0670 = 0xa0;
   }
-  if (-1 < DAT_EXTMEM_07c5) {
+  if (-1 < WHMS) {
     ramp_1804_toward_0670_and_set_1809();
     return;
   }

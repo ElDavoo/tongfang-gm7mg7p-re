@@ -8,11 +8,14 @@
    value 0xB9D8 returns must be zero, and bit 5 of 0x074C must be clear. Past them it sets bit 5 of
    0x074C, calls 0x7151 with the low nibble of 0x074C, then acalls 0x94AF and 0x94B5 and jumps to
    0x9091. The listing ends at that jump and does not show 0x9091's body; the decompiled C's
-   switch_case_dispatch is the call to 0x7151. 0x074C has no entry in ec/annotations/registers.yaml.
+   switch_case_dispatch is the call to 0x7151. 0x074C is in ec/annotations/registers.yaml as PDIN
+   (issue #30): the DSDT gives that name to the byte's low four bits, which is the nibble passed to
+   0x7151, and leaves bits 4 and up unnamed -- and bit 4 is one of the two gates here. What the bit
+   gates is not determined here.
    type: gate
    evidence: ec/decompiled/bank0/9167.asm; ec/decompiled/bank0/9167.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void gate_on_074c_then_dispatch(void)
 
@@ -20,7 +23,7 @@ void gate_on_074c_then_dispatch(void)
   byte bVar1;
   char cVar2;
   
-  if ((DAT_EXTMEM_074c >> 4 & 1) != 1) {
+  if ((PDIN >> 4 & 1) != 1) {
     bare_ret_924b();
     return;
   }
@@ -29,12 +32,12 @@ void gate_on_074c_then_dispatch(void)
     bare_ret_924b();
     return;
   }
-  if ((DAT_EXTMEM_074c >> 5 & 1) != 0) {
+  if ((PDIN >> 5 & 1) != 0) {
     bare_ret_924b();
     return;
   }
-  bVar1 = DAT_EXTMEM_074c & 0xf;
-  DAT_EXTMEM_074c = DAT_EXTMEM_074c | 0x20;
+  bVar1 = PDIN & 0xf;
+  PDIN = PDIN | 0x20;
   switch_case_dispatch(bVar1);
   store_r7_to_098c_and_0463();
   nop();

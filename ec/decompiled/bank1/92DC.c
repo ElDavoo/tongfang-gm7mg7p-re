@@ -11,12 +11,12 @@
    type: dispatch
    evidence: ec/decompiled/bank1/92DC.asm; ec/decompiled/bank1/92DC.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void select_table_920c_or_923c_by_074c(void)
 
 {
-  if ((DAT_EXTMEM_074c & 0xf) == 0) {
+  if ((PDIN & 0xf) == 0) {
     return;
   }
   return;

@@ -5,9 +5,9 @@
 
 
 /* One instruction: writes the incoming accumulator to the XDATA address the caller left in DPTR.
-   Execution then falls into 0xBB81, which reads XDATA 0x07C5; 0x07C5 has no entry in
-   ec/annotations/registers.yaml. The decompiled C's param_2 pointer is a reading of the store, not
-   a proven parameter.
+   Execution then falls into 0xBB81, which reads XDATA 0x07C5, a byte in
+   ec/annotations/registers.yaml as WHMS at bit 5 (issue #30). The decompiled C's param_2 pointer is
+   a reading of the store, not a proven parameter.
    type: writer
    evidence: ec/decompiled/bank0/BB80.asm; ec/decompiled/bank0/BB80.c
    basis: hand-decoded
@@ -17,7 +17,7 @@ byte store_a_then_read_07c5(undefined1 value_a,undefined1 *entry_dptr)
 
 {
   *entry_dptr = value_a;
-  return DAT_EXTMEM_07c5 ^ 1;
+  return WHMS ^ 1;
 }
 
 

@@ -5,17 +5,18 @@
 
 
 /* Loads DPTR with 0x074C, reads that XDATA byte and returns its low nibble in A, the upper four
-   bits being discarded. Nothing is written back, so 0x074C is left unchanged. 0x074C has no entry
-   in ec/annotations/registers.yaml.
+   bits being discarded. Nothing is written back, so 0x074C is left unchanged. The nibble returned
+   is named: 0x074C is in ec/annotations/registers.yaml as PDIN (issue #30), and the DSDT gives that
+   name to the byte's low four bits.
    type: reader
    evidence: ec/decompiled/bank0/BA36.asm; ec/decompiled/bank0/BA36.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 byte read_low_nibble_074c(void)
 
 {
-  return DAT_EXTMEM_074c & 0xf;
+  return PDIN & 0xf;
 }
 
 

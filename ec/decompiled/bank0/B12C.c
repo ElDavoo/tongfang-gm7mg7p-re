@@ -5,9 +5,13 @@
 
 
 /* Sets CHARGING_PROFILE in FAN_CTRL then, if AP_OEM ENABLE_MANUAL_CTRL is clear, masks OEM_4 bits
-   4-5 to force the profile back to High Capacity. The tick that runs it is not identified; the file
-   notes uniwill-laptop clears that bit at shutdown so the reset fires on every module unload by
-   design
+   4-5 to force the profile back to High Capacity. The period of the tick that runs it is still not
+   established; the file notes uniwill-laptop clears that bit at shutdown so the reset fires on
+   every module unload by design. What does reach this routine is now traced, and the caller chain
+   the tick arrives on is at docs/findings/charge-target-caller-chain.md -- the addresses are kept
+   there rather than here, because a comment's bare addresses are what ec/tools/citation_gap_scan.py
+   censuses and naming them here would move ec/annotations/gap-citation-scan.csv, which this branch
+   does not regenerate
    type: gate
    evidence: ec/annotations/charge-profile-flow.md
    basis: hand-decoded
