@@ -813,7 +813,8 @@ def self_test() -> int:
     check("what the method could not read is reported rather than failed, and "
           "both shapes are on the tree",
           not any(p in " ".join(found) for p in ("not read", "no committed"))
-          and len(told) > 0,
+          and any("no committed listing" in p for p in told)
+          and any("opens below its" in p for p in told),
           "got %d note(s)" % len(told))
 
     # --- the refusals, all on fixtures ---
