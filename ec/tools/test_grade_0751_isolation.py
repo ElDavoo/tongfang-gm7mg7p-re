@@ -4643,10 +4643,10 @@ class OtherBucketNameTests(unittest.TestCase):
     # names the bucket prints under an address no watched or context group
     # claims. `0751-isolation-run/`'s own `0x0400` pair moves `0x0438` with a
     # high byte of `0x00`, which a little-endian assembly and a zero-padded low
-    # byte cannot be told apart by; this pair's `0x0434`/`0x0435`,
-    # `0x0436`/`0x0437` and `0x0438`/`0x0439` all carry a non-zero high byte,
-    # and the two quotients and `0x044C` move beside them, so every entry in
-    # `grade.XDATA_NAMES` is reached by a committed fixture.
+    # byte cannot be told apart by; this pair's `0x0434`/`0x0435` and
+    # `0x0438`/`0x0439` carry a non-zero high byte, and the two quotients and
+    # `0x044C` move beside them, so every entry in `grade.XDATA_NAMES` is
+    # reached by a committed fixture.
     PAIR = (str(HERE / 'testdata'
                 / '0751-isolation-example-moved-battery-before-0400.txt'),
             str(HERE / 'testdata'

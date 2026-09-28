@@ -4,18 +4,19 @@
 # per line, and the `0751-isolation-run` page with the battery bytes filled in.
 # That set's `0751-isolation-run/` pair moves 0x0438 with a high byte of 0x00,
 # so it cannot tell a little-endian assembly from a padded low byte; this pair
-# moves 0x0434/0x0435, 0x0436/0x0437 and 0x0438/0x0439 with a non-zero high
-# byte, and moves the two derived bytes 0x0448 and 0x0449 and 0x044C beside
-# them, so every name the grader prints for that page is reached by a
-# committed fixture. 0x043E and 0x044F move as the run set's do and stay
-# context. The 2040 mA at 0x0434/0x0435 and the 16021 mV at 0x0438/0x0439 are
-# the two live figures registers.yaml records, and the 0x0448 and 0x0449
-# values are those two divided by 100 as the bank1 writers it names would
-# divide them, so the page is internally consistent with what the annotation
-# says the EC does -- and every one of those values is still invented, since
-# the annotation records the wiring and not a reading. The companion after
-# dump differs at those eight addresses and nowhere else. Not a prediction
-# that a battery reads this, or that it moved because of the load.
+# moves 0x0434/0x0435 and 0x0438/0x0439 with a non-zero high byte, moves
+# 0x0436 with the 0x00 high byte 0x0437 has throughout, and moves the two
+# derived bytes 0x0448 and 0x0449 and 0x044C beside them, so every name the
+# grader prints for that page is reached by a committed fixture. 0x043E and
+# 0x044F move as the run set's do and stay context. The 2040 mA at
+# 0x0434/0x0435 and the 16021 mV at 0x0438/0x0439 are the two live figures
+# registers.yaml records, and the 0x0448 and 0x0449 values are those two
+# divided by 100 as the bank1 writers it names would divide them, so the page
+# is internally consistent with what the annotation says the EC does -- and
+# every one of those values is still invented, since the annotation records the
+# wiring and not a reading. The companion after dump differs at every one of
+# the addresses this header names but 0x0437, and nowhere else. Not a
+# prediction that a battery reads this, or that it moved because of the load.
 0400: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 0410: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 0420: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

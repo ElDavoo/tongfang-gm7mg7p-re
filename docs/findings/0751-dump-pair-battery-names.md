@@ -168,9 +168,13 @@ both is green.
 is new, and it exists because §6's own `0x0400` pair cannot test the assembly.
 With `0x0439` at `0x00`, `0x0097 -> 0x00AE` is what a little-endian assembly and a
 zero-padded low byte *both* print, so a fixture with a zero high byte cannot hold
-the claim. This pair moves all three named pairs with a non-zero high byte and
-the two ÷100 quotients and `0x044C` beside them, so every entry in the table is
-reached by a committed fixture.
+the claim. This pair moves the two named pairs with a non-zero high byte,
+`0x0434`/`0x0435` and `0x0438`/`0x0439`, and the two ÷100 quotients and `0x044C`
+beside them, so every entry in the table is reached by a committed fixture.
+Only `0x0436`'s low byte moves, and the pair is in the fixture for the name
+`XDATA_NAMES` prints for it rather than for the assembly: `0x0437` is `0x00` in
+both dumps, which is what `2026-09-18-profile-switch-0400-07ff.csv` shows, since
+that file has no `0x0437` row at all.
 
 It is the same construction the three existing example pairs use — a copy of the
 `0751-isolation-run` page with the smallest edit that reaches a branch §6's own
