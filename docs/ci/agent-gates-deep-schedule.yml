@@ -13,9 +13,51 @@
 # the run's log and its per-row results as two artifacts.
 #
 # Why it is written to pass the `workflows:` job in ci.yml (actionlint and
-# zizmor) before it lands: that job audits every file in this directory, so
+# zizmor) before it lands, and what "written to pass" has actually been
+# measured as. *(Corrected 2026-09-28, issue #774. This paragraph previously
+# read "...before it lands: that job audits every file in this directory, so
 # getting the action pin and the permissions right now is cheaper than getting
-# them reviewed after a human has copied the file.
+# them reviewed after a human has copied the file." Nothing in it was false
+# about why the file is written this way. One half of it was false about what
+# the job does: `ci.yml:82` runs `/tmp/actionlint -color` with no path and
+# `ci.yml:90` runs `/tmp/zizmor --offline --color=always .github/workflows/`,
+# and neither reaches `docs/ci/`. So nothing was enforcing the claim it made,
+# and the first machine to see this file through either linter was a human's,
+# on the day they ran the `cp` -- the moment this paragraph calls the expensive
+# one. Left visible per `docs/findings.md` §4a-4d. The claim is now enforced
+# twice over, neither part landed: a step that lints this file from
+# `ci.yml`'s own `workflows:` job is prepared at
+# `docs/ci/ci-workflow-lint-docs-ci.patch`, and the two audits zizmor runs
+# over a file like this one -- the `uses:` pins and the `permissions:` width --
+# are held offline, from committed bytes and with no network, by
+# `tools/check_deep_schedule_shape.py`.)*
+#
+# **Measured 2026-09-28, and the measurement is partial. Neither linter was
+# run.** actionlint v1.7.12 and zizmor v1.29.0, at the SHA-256s `ci.yml:73-74`
+# pins, could not be fetched: the stage that tried had no network, so the
+# `curl` in `ci.yml:78-89` never ran and neither binary was on `PATH`. That is
+# the result, and it is the whole of it -- nothing below should be read, or
+# quoted, as saying either linter would pass this file. The attempt, and what
+# it leaves unmeasured, are written up in
+# `docs/findings/deep-schedule-lint-baseline.md`.
+#
+# What was measured is the one check of actionlint's three that needs no
+# download: shellcheck over every `run:` block, which is what actionlint runs
+# internally. All three of this file's blocks -- "Name the assembler", "Deep
+# gates", "Emit the per-row CSV" -- at `/usr/bin/shellcheck` 0.9.0, under
+# actionlint's own invocation:
+#
+#   shellcheck --norc -f gcc -x --shell=bash -e SC1091,SC2086 <block>
+#
+# exit 0 on each, with no output, both where this file is prepared and on a
+# byte-identical copy at `.github/workflows/agent-gates-deep.yml` in a scratch
+# tree carrying `.github/actions/project-setup`. That shellcheck is the one this
+# stage happened to carry, which is not necessarily the one `ubuntu-latest`
+# ships, so this is a lower bound on what the job would say and not a
+# substitute for running it. actionlint's other two checks -- every `${{ }}`
+# type-checked against the event payload, and the syntax of each `run:` block
+# -- were not run, and neither were zizmor's audits beyond the two the offline
+# checker holds.
 
 name: Deep gates
 
