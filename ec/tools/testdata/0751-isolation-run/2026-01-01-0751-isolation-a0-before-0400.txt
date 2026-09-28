@@ -2,13 +2,14 @@
 # byte below was written by hand. See ../README.md.
 # Shape: `ecrw.py dump 0x0400 0x0060` as §3's step 0 takes it, one 16-byte row
 # per line, for the a0 block's before dump. CPU_TEMP 0x043E and GPU_TEMP 0x044F
-# read the first and the last value the 0x0400-0x045F capture records for them,
-# and 0x0438 -- the one other address that capture moves on this page -- reads
-# 0x97, its old value in the single row the capture has for it. The companion
-# after dump differs at those three and nowhere else. The address is the one
-# the capture recorded and the value is the one it recorded; every other byte
-# here, and 0x0439 beside it, is invented. Not a prediction that a real page
-# looks like this, or that a battery reads 151 mV.
+# read 0x32 and 0x30, both invented: the 0x0400-0x045F capture runs 0x043E
+# 0x52 -> 0x39 and 0x044F 0x33 -> 0x33, and this fixture takes neither endpoint
+# for them. 0x0438 -- the one other address that capture moves on this page --
+# reads 0x97, its old value in the single row the capture has for it. The
+# companion after dump differs at those three and nowhere else. The address is
+# the one the capture recorded and the value is the one it recorded; every other
+# byte here, and 0x0439 beside it, is invented. Not a prediction that a real
+# page looks like this, or that a battery reads 151 mV.
 0400: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 0410: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 0420: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

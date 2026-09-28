@@ -4652,10 +4652,11 @@ class OtherBucketNameTests(unittest.TestCase):
             str(HERE / 'testdata'
                 / '0751-isolation-example-moved-battery-after-0400.txt'))
 
-    # The bucket, over §6's own set. Its mover is the byte the 2026-09-18
-    # capture of the page records moving, which is what #219 was about: the
-    # bucket's only demonstration used to be a mover no capture has ever
-    # seen move, and four undifferentiated addresses besides.
+    # The bucket, over §6's own set. Its mover is the byte
+    # evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv records
+    # moving, which is what #219 was about: the bucket's only
+    # demonstration used to be a mover no capture has ever seen move, and
+    # four undifferentiated addresses besides.
     def test_the_other_bucket_names_a_byte_and_assembles_its_pair(self):
         rc, out, _ = run(*RUN_CAPTURES,
                          '--dump', RUN_BEFORE, '--dump', RUN_AFTER,
@@ -4714,8 +4715,9 @@ class OtherBucketNameTests(unittest.TestCase):
                       'by scale_0438_into_0448 (bank1 0xF416)', section)
         self.assertIn('0x0449  XDATA_0449 -- battery current / 100, computed '
                       'by store_scaled_quotient_0449 (bank1 0xF3D7)', section)
-        self.assertIn('0x044C  XDATA_044C -- the busiest byte in the one '
-                      'committed capture of this page\n\n', section)
+        self.assertIn('0x044C  XDATA_044C -- the busiest byte on this page '
+                      'in evidence/ec-watch/'
+                      '2026-09-18-profile-switch-0400-07ff.csv\n\n', section)
         # Eight addresses differ: the six named ones, and the two
         # temperatures, which stay in the context bucket where they were.
         self.assertIn('other addresses that differ (8), not graded here',
@@ -4743,8 +4745,9 @@ class OtherBucketNameTests(unittest.TestCase):
 
     # The §6 set's own third address, in the windowed reader rather than the
     # whole-block one. It moved from 0x0402 to 0x0438 (#219), so the flat
-    # list this reads now names the byte the 2026-09-18 capture of that
-    # page records moving instead of one it never records. The windowed
+    # list this reads now names the byte
+    # evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv records
+    # moving, in place of the one that file has no row for. The windowed
     # reader prints no name under it -- the naming went to
     # `report_dump_pairs` -- so this is the shape that left behind, pinned
     # so that giving it names too is a decision rather than a drift.

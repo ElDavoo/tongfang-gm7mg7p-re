@@ -951,11 +951,14 @@ the other does not is a coverage gap, never a change, and the section emits
 no status of its own. The `0x0400` pair's *other addresses that differ* is
 expected on a real run to carry the battery's own numbers rather than a fan
 byte: `0x0434`/`0x0435` and `0x0438`/`0x0439`, the two the firmware divides
-by 100 into `0x0448` and `0x0449`, and the rest of the bytes
-`../../ec/annotations/xdata-0400-045f.md` §8 tabulates for that page. That is
-an expectation and not a result, drawn from the one committed capture of the
-page and from what step 3 asks of the load; nothing here reports a bracket a
-run has produced. On a run those bytes move because step 3 held a fixed CPU
+by 100 into `0x0448` and `0x0449`, and the two others
+`../../ec/annotations/xdata-0400-045f.md` §8 tabulates for that page that land
+in this bucket rather than in the §4.5 one, `0x0436` and `0x044C` — of §8's six
+bytes the other two are `0x043E` and `0x044F`, which are the temperatures and
+print as context. That is an expectation and not a result, drawn from
+`../../evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv` and from
+what step 3 asks of the load; nothing here reports a bracket a run has
+produced. On a run those bytes move because step 3 held a fixed CPU
 load across the whole block, which is the load registering and not a
 consequence of the write, so the section names them and their 16-bit readings
 for you and still grades none of them.

@@ -605,28 +605,40 @@ XDATA_NAMES = {
              "scale_0438_into_0448 (bank1 0xF416)"),
     0x0449: (None, None, "XDATA_0449 -- battery current / 100, computed by "
              "store_scaled_quotient_0449 (bank1 0xF3D7)"),
-    0x044C: (None, None, "XDATA_044C -- the busiest byte in the one committed "
-             "capture of this page"),
+    0x044C: (None, None, "XDATA_044C -- the busiest byte on this page in "
+             "evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv"),
 }
 
 # The one entry whose name is withheld, printed when the pair reaches the
 # bucket. registers.yaml records the name upstream gives 0x0436/0x0437 and
-# declines it: the low byte steps by exactly +0x14 every ~35 s in the one
-# committed capture of this page, with the high byte never moving, which
-# reads as a counter rather than as a charge level. The name itself is not
-# printed, because a report is something an operator acts on and this one
-# has been retracted on this board; saying who proposed it and what
-# refutes it is what is left. The experiment that would settle it is a live
-# read beside WMI's RemainingCapacity (#172), and it has not been run.
+# declines it: in 2026-09-18-profile-switch-0400-07ff.csv the low byte steps
+# by exactly +0x14 every ~35 s, which reads as a counter rather than as a
+# charge level. The name itself is not printed, because a report is
+# something an operator acts on and this one has been retracted on this
+# board; saying who proposed it and what refutes it is what is left. Every
+# clause of that reason is scoped to the file that carries it, because the
+# page has a second committed file and it does not say the same thing --
+# see the note. The experiment that would settle it is a live read beside
+# WMI's RemainingCapacity (#172), and it has not been run.
 XDATA_NAME_NOTE = {
     0x0436: (
-        "The name upstream gives this pair is not printed: in the one "
-        "committed capture of this page the low byte steps by exactly +0x14 "
-        "every ~35 s while the high byte never moves, which is a periodic "
-        "ramp and not a charge reading, and no unit is claimed for it here "
-        "either. The name stays a placeholder until a live read puts the "
-        "pair beside WMI's RemainingCapacity (issue #172, not run); "
-        "ec/annotations/registers.yaml carries the record."),
+        "The name upstream gives this pair is not printed, and the reason "
+        "is one file's, not the page's. In "
+        "evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv the low "
+        "byte steps 0x70 -> 0x84 -> 0x98 -> 0xAC -> 0xC0, exactly +0x14 "
+        "every ~35 s, which is a periodic ramp rather than a charge "
+        "reading, and that file has no 0x0437 row. The other committed "
+        "file covering this page, "
+        "evidence/ec-watch/2026-09-18-ac-plugin-sweep-summary.csv, "
+        "summarises a window the first does not cover: it records 13 "
+        "changes of 0x0436 and 1 of 0x0437, so the high byte does move "
+        "somewhere, and it supports that change count and those two "
+        "endpoints and nothing else, the 32,499-row log behind it not "
+        "being committed. Neither file says what the value is, so no unit "
+        "is claimed for it here either. The name stays a placeholder "
+        "until a live read puts the pair beside WMI's RemainingCapacity "
+        "(issue #172, not run); ec/annotations/registers.yaml carries the "
+        "record."),
 }
 
 

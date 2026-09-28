@@ -19,22 +19,33 @@ temperatures are `CONTEXT`, so the bucket's sole demonstration rested on `0x0402
 — the low byte of `BAT_DESIGN_CAPACITY`, `present-untested`, and the one address
 in that file set no committed capture has ever recorded moving.
 
-`evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv` is the only committed
-capture of this page, and `ec/annotations/xdata-0400-045f.md` §8 tabulates what it
-found there: six bytes moved, the two busiest `0x044C` and `0x0449` in constant
-jitter in both directions, and the quietest `0x0438`, which moved once, from
-`0x97` to `0xAE` at 23:03:49. `0x0402` is in none of the six, and no second
-committed capture of the page exists. So the one demonstration of this bucket was
-an invented mover in a report whose job is to be the mechanical first pass, and
-nothing about the output would have told the operator so.
+`evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv` is one of two
+committed files carrying rows for this page, and
+`ec/annotations/xdata-0400-045f.md` §8 tabulates what it found there: six bytes
+moved, the two busiest `0x044C` and `0x0449` in constant jitter in both
+directions, and the quietest `0x0438`, which moved once, from `0x97` to `0xAE`
+at 23:03:49. The other is
+`evidence/ec-watch/2026-09-18-ac-plugin-sweep-summary.csv`, the per-address
+summary of a `0x0000-0x07FF` sweep over a window of its own
+(`22:49:29`–`22:53:00`); its rows for the page run `0x0432` to `0x044F`, and
+there is no row for `0x0402` in it either. What that second file supports is a
+per-address change count and two endpoints, and nothing about order or timing —
+the 32,499-row log it summarises is not committed — which is the same limit
+`docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` §6 records for the same file.
+So the one demonstration of this bucket was an invented mover in a report whose
+job is to be the mechanical first pass, and nothing about the output would have
+told the operator so.
 
-**`0x0438` is now the mover**, taking `0x97 -> 0xAE` from the capture's one row for
-it (23:03:49). Both `CONSTRUCTED INPUT` headers say what that means and only that:
-the *address* is one the capture recorded and the *values* in that row are the
-capture's, while every other byte in the file is still invented. `0x0439`, the
-high half, stays `0x00` because the capture has no row for it and the fixture has
-no other source for the byte — which is the same treatment `0x044F` has always
-had beside it.
+**`0x0438` is now the mover**, taking `0x97 -> 0xAE` from the profile-switch
+capture's one row for it (23:03:49). Both `CONSTRUCTED INPUT` headers say what
+that means and only that: the *address* is one that capture recorded and the
+*values* in that row are its own, while every other byte in the file is still
+invented. `0x0439`, the high half, stays `0x00` because that capture has no row
+for it and the fixture has no other source for the byte — which is the same
+treatment `0x044F` has always had beside it. The sweep summary is a different
+window and does carry a `0x0439` row (`0x0439,7,0x36,0x3F`); it is not a source
+for this fixture, and the high half's zero is a property of the bytes written
+by hand.
 
 `0x0402` is **removed** from that fixture's run set rather than kept alongside.
 Keeping it would have kept the defect: a second mover in the bucket, still
@@ -46,7 +57,11 @@ Worth being exact, because the fixture change leans on it.
 
 **Established:** that `0x0438` moved, once, from `0x97` to `0xAE`, at 23:03:49 on
 2026-09-18, in a run where the vendor service was cycling the three battery
-modes. That is a fact about a capture, and the fixture now rests on it.
+modes. That is a fact about
+`evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv`, and the fixture now
+rests on it. "Once" is that file's figure: the sweep summary records 28 changes
+of the byte in its own window, which is a fact about a second window and not
+about the file the fixture borrows from.
 
 **Not established:** that `0x0438` moves because `0x0751` was written, or moves
 during a §3 block at all. The capture was a profile-switch sweep, not a §3 run,
@@ -96,14 +111,32 @@ that every address on the page has a name.
 ### The one name withheld
 
 `0x0436`/`0x0437` prints the placeholder and **not** the name upstream gives it.
-`registers.yaml` records `EC_ADDR_BAT_REMAIN_CAPACITY` and declines it: in the one
-committed capture of this page the low byte steps by exactly `+0x14` every ~35 s
-while the high byte never moves, which reads as a periodic counter and not as a
-charge level. The report prints the placeholder, says no unit for the assembled
-value, and prints the reason in full — who proposed the name, what refutes it,
-and that the live read that would settle it is [#172](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/172)'s
-and has not been run. Printing the name would put a claim this board has already
-retracted into the output an operator acts on.
+`registers.yaml` records `EC_ADDR_BAT_REMAIN_CAPACITY` and declines it, and the
+reason it records is one file's rather than the page's: in
+`evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv` the low byte steps by
+exactly `+0x14` every ~35 s — `0x70 -> 0x84 -> 0x98 -> 0xAC -> 0xC0` — and that
+file has no `0x0437` row at all, which reads as a periodic counter and not as a
+charge level.
+
+The other committed file covering the page,
+`evidence/ec-watch/2026-09-18-ac-plugin-sweep-summary.csv`, carries
+`0x0436,13,0x58,0x0C` and `0x0437,1,0x02,0x03` for its own window, so the high
+byte **does** move there: "the high byte never moves" is a statement about one
+capture and not about the pair, and neither file is a capacity reading. That
+summary supports a change count and two endpoints and no more, its 32,499-row
+log being uncommitted — the limit
+`docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` §6 writes down for the same
+file. The name therefore stays declined for the reason the first file gives and
+not for a stronger one, and both files are named in `registers.yaml` and in the
+report so that a reader is not left with the page's whole story in one capture's
+voice.
+
+The report prints the placeholder, says no unit for the assembled value, and
+prints the reason in full — who proposed the name, what refutes it, the second
+file that qualifies it, and that the live read which would settle it is
+[#172](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/172)'s and has not
+been run. Printing the name would put a claim this board has already retracted
+into the output an operator acts on.
 `test_the_unnamed_pair_prints_the_placeholder_and_not_the_name` asserts its
 absence over the whole report, not just the line.
 
