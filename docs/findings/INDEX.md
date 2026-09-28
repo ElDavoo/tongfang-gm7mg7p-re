@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-169 write-ups.
+170 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -110,6 +110,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pin-table-row-reconciliation.md`](pin-table-row-reconciliation.md) — The per-pin table's four mechanical columns are now reconciled against the run, and its fifth is not read (issue #942)
 - [`power-profile-gm7mg7p.md`](power-profile-gm7mg7p.md) — A `0x0751`-only platform profile would report a new mode and not move the machine's power limits
 - [`prepared-gate-patches.md`](prepared-gate-patches.md) — The prepared gate patches: the set composes, and a test says so
+- [`presence-check-container-shape.md`](presence-check-container-shape.md) — Two of the three presence checks key their per-file container and pin that shape; the third has nothing to scan (issue #371)
 - [`probe-0700-whole-page-arm.md`](probe-0700-whole-page-arm.md) — The probe's watch set can be §3's first watcher, whole (issue #666)
 - [`probe-hold-mark-merge.md`](probe-hold-mark-merge.md) — A `--csv` probe run's `hold` is held to the grader's mark-merge window (issue #665)
 - [`prose-line-citations-held.md`](prose-line-citations-held.md) — The prose's line citations, and what now holds them (issue #801)
