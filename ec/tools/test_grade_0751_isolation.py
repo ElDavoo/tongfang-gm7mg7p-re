@@ -869,16 +869,16 @@ class GradeTests(unittest.TestCase):
 
         # The issue's other criterion: across all three pairs the report
         # shows exactly the addresses the captures record moving -- 0x0751
-        # and the sensor-looking 0x0796 in the "other" bucket, 0x0402 from
-        # the temperature range, the §4.4 duty pair and the §4.5
+        # and the sensor-looking 0x0796 in the "other" bucket, 0x0438 from
+        # the battery page (the byte #219 put there, which the 2026-09-18
+        # capture of it records moving), the §4.4 duty pair and the §4.5
         # temperatures under their own heading, printed and not graded.
-        # Checked against the captures and the dumps rather than a literal
-        # list, so a fixture edit on either side of this fails.
+        # Checked against the captures and the dumps, not a literal list.
         self.assertEqual(differing_addresses(section),
                          dumped_change_addresses())
         self.assertEqual(differing_addresses(section),
                          {'0x0751', '0x075B', '0x075C', '0x0796',
-                          '0x0402', '0x043E', '0x044F'})
+                          '0x0438', '0x043E', '0x044F'})
         self.assertIn('fan duty 0x075B/0x075C -- MAIN_FAN_L/R_DUTY '
                       '(§4.4)', section)
         self.assertIn('other addresses that differ (2), not graded here',
@@ -4621,6 +4621,184 @@ class SelfTestModeTests(unittest.TestCase):
         self.assertIn('usage:', err.getvalue())
         self.assertIn('the following arguments are required: csv',
                       err.getvalue())
+
+
+# The "other addresses" bucket, named (issue #219). These cases sit at the end
+# of the file rather than beside the reader each one exercises, and that is
+# deliberate. Lines of this suite are cited by number from the write-ups under
+# `docs/findings/`, and `census_test_line_pins.py` classifies every target line
+# as a header, an assertion, a comment or prose -- so an insertion anywhere
+# above the last of them moves those citations onto a different line, and onto
+# a different class, and the shape census in `test_census_test_line_pins.py`
+# goes red over a change that never edited it. Appending is the placement that
+# leaves every existing citation naming what it says it names, which is worth
+# more than a case sitting next to its siblings. See
+# `docs/findings/0751-dump-pair-battery-names.md`.
+#
+# `PAIR` is a class attribute for the same reason: the module's shared fixture
+# block is at the top, and one more name there shifts the pins below it exactly
+# as a case would.
+class OtherBucketNameTests(unittest.TestCase):
+    # The `0x0400` page again, this time with the battery bytes in it, for the
+    # names the bucket prints under an address no watched or context group
+    # claims. `0751-isolation-run/`'s own `0x0400` pair moves `0x0438` with a
+    # high byte of `0x00`, which a little-endian assembly and a zero-padded low
+    # byte cannot be told apart by; this pair's `0x0434`/`0x0435` and
+    # `0x0438`/`0x0439` carry a non-zero high byte, and the two quotients and
+    # `0x044C` move beside them, so every entry in `grade.XDATA_NAMES` is
+    # reached by a committed fixture.
+    PAIR = (str(HERE / 'testdata'
+                / '0751-isolation-example-moved-battery-before-0400.txt'),
+            str(HERE / 'testdata'
+                / '0751-isolation-example-moved-battery-after-0400.txt'))
+
+    # The bucket, over §6's own set. Its mover is the byte
+    # evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv records
+    # moving, which is what #219 was about: the bucket's only
+    # demonstration used to be a mover no capture has ever seen move, and
+    # four undifferentiated addresses besides.
+    def test_the_other_bucket_names_a_byte_and_assembles_its_pair(self):
+        rc, out, _ = run(*RUN_CAPTURES,
+                         '--dump', RUN_BEFORE, '--dump', RUN_AFTER,
+                         '--dump-pair', RUN_BEFORE, RUN_AFTER,
+                         '--dump-pair', RUN_BEFORE_0F00, RUN_AFTER_0F00,
+                         '--dump-pair', RUN_BEFORE_0400, RUN_AFTER_0400,
+                         '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # The 0x0400 pair's bucket, in one assertion, because the three
+        # things it holds are the three that are load-bearing: the flat
+        # address list on its own line under the heading (which is what
+        # `differing_addresses` reads, and what would break the cross-check
+        # `GradeTests` holds if a name joined it), the register name, and
+        # the pair assembled little-endian from the two dumps' own bytes.
+        # `0x0097 -> 0x00AE` is what the fixture holds -- the capture's
+        # `0x97 -> 0xAE` for a byte whose high half it leaves at zero -- so
+        # the reading is nonsense as a voltage and the header says so. It
+        # is the assembly under test, not a battery.
+        self.assertIn('      0x0438\n'
+                      '      0x0438  BAT_VOLTAGE_MV 0x0438/0x0439 -- pack '
+                      'terminal voltage, little-endian mV\n'
+                      '        0x0097 -> 0x00AE  (151 -> 174 mV)', section)
+        # And the bucket still says what it said: these are printed and not
+        # graded. The name is a label, not a verdict about 0x0751.
+        self.assertIn('other addresses that differ (1), not graded here',
+                      section)
+        # An address the table does not name prints exactly as it did
+        # before the table existed -- the flat list and a blank line, with
+        # nothing under it. Most of a dump is such an address, so this is
+        # what keeps the naming an aid rather than a claim that every
+        # address on the page has a name.
+        self.assertIn('      0x0751 0x0796\n\n', section)
+
+    def test_every_named_byte_on_the_battery_page_is_printed(self):
+        rc, out, _ = run(QUIET, '--dump-pair', *self.PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # Both 16-bit pairs carry a non-zero high byte here, which §6's own
+        # 0x0400 pair cannot: with 0x0439 at 0x00 a little-endian assembly
+        # and a zero-padded low byte print the same thing, and the fixture
+        # that cannot tell them apart is not the one to hold the claim.
+        self.assertIn('      0x0434  BAT_CURRENT_MA 0x0434/0x0435 -- '
+                      'battery current, little-endian mA\n'
+                      '        0x07F8 -> 0x083C  (2040 -> 2108 mA)', section)
+        self.assertIn('      0x0438  BAT_VOLTAGE_MV 0x0438/0x0439 -- pack '
+                      'terminal voltage, little-endian mV\n'
+                      '        0x3E95 -> 0x3F32  (16021 -> 16178 mV)', section)
+        # The two quotients the firmware computes, each named with the
+        # routine that computes it -- a byte the EC derived is not a
+        # sensor reading, and the name is where that says so. Both names
+        # carry the branch their routine takes on a nonzero selector,
+        # because registers.yaml's own XDATA_0448 note hedges and a headline
+        # that dropped the hedge would call a constant a voltage on a run
+        # where the constant is what landed: the sweep summary's
+        # 0x0448,4,0x8B,0xBE row is that value in committed evidence. A byte
+        # registers.yaml defines on its own gets no assembled line, because
+        # there is no pair to assemble, so `0x044C` is asserted not to be
+        # followed by one.
+        self.assertIn('0x0448  XDATA_0448 -- battery voltage / 100, computed '
+                      'by scale_0438_into_0448 (bank1 0xF416) when its '
+                      'selector is 0, and the constant 0xBE when it is not',
+                      section)
+        self.assertIn('0x0449  XDATA_0449 -- battery current / 100, computed '
+                      'by store_scaled_quotient_0449 (bank1 0xF3D7) when its '
+                      "selector is 0, and from 0x060C/0x060D when it is not",
+                      section)
+        self.assertIn('0x044C  XDATA_044C -- the busiest byte on this page '
+                      'in evidence/ec-watch/'
+                      '2026-09-18-profile-switch-0400-07ff.csv\n\n', section)
+        # Eight addresses differ: the six named ones, and the two
+        # temperatures, which stay in the context bucket where they were.
+        self.assertIn('other addresses that differ (8), not graded here',
+                      section)
+
+    def test_the_unnamed_pair_prints_the_placeholder_and_not_the_name(self):
+        rc, out, _ = run(QUIET, '--dump-pair', *self.PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # 0x0436/0x0437 is the one entry whose upstream name registers.yaml
+        # records and declines, so this is the check in the direction that
+        # matters: the placeholder is printed, and the name is not. A report
+        # is something an operator acts on, and printing the name would put
+        # a claim this board has already refuted into the one output meant
+        # to be read under time pressure. The absence is over the whole
+        # report, not just the line, so the note under the placeholder
+        # cannot smuggle it back in either.
+        self.assertIn('      0x0436  XDATA_0436_PAIR 0x0436/0x0437 -- '
+                      '16-bit, and deliberately unnamed (see below)\n'
+                      '        0x0070 -> 0x00C0  (112 -> 192)', section)
+        self.assertNotIn('EC_ADDR_BAT_REMAIN_CAPACITY', out)
+        # No unit either, which is the same statement: nothing here says
+        # what the number is.
+        self.assertNotIn('(112 -> 192 mA', out)
+
+    def test_the_derived_bytes_say_which_branch_they_are_on(self):
+        rc, out, _ = run(QUIET, '--dump-pair', *self.PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # The headline carries the branch; this holds the rest, which is the
+        # part a report cannot be acted on without. Each routine branches on
+        # a selector neither listing sets, so "which path ran" is not knowable
+        # from a dump pair and the report has to say that rather than leave a
+        # quotient reading as one unqualified kind of number.
+        self.assertIn('writes the constant 0xBE', section)
+        self.assertIn('of the selector is not established', section)
+        # 0xBE is not a hypothetical branch: a committed capture has already
+        # recorded this byte ending a window on exactly that value, so the
+        # note names the row rather than asserting the constant could occur.
+        self.assertIn('summary.csv carries 0x0448,4,0x8B,0xBE', section)
+        # The 0x0449 branch is a different pair by a different divisor, not a
+        # second reading of the battery current, and the row that records it
+        # is named so the claim can be followed.
+        self.assertIn('which reads 0x060C/0x060D,\n      masks the high byte',
+                      section)
+        self.assertIn('bank1,0xF3D7,store_scaled_quotient_0449', section)
+        # The register note carries the first path only, which is why the
+        # branch is printed here as well; stated rather than left for a
+        # reader to reconcile against the two files.
+        self.assertIn('note there carries the first path and not this one',
+                      section)
+
+    # The §6 set's own third address, in the windowed reader rather than the
+    # whole-block one. It moved from 0x0402 to 0x0438 (#219), so the flat
+    # list this reads now names the byte
+    # evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv records
+    # moving, in place of the one that file has no row for. The windowed
+    # reader prints no name under it -- the naming went to
+    # `report_dump_pairs` -- so this is the shape that left behind, pinned
+    # so that giving it names too is a decision rather than a drift.
+    def test_the_run_set_other_addresses_line_names_the_captured_byte(self):
+        _, out, _ = run(*RUN_CAPTURES)
+        lines = out.splitlines()
+        hits = [re.findall(r'0x[0-9A-F]{4}', lines[i + 1])
+                for i, l in enumerate(lines)
+                if l.lstrip().startswith('other addresses that moved')]
+        # Three such rows in the §6 set: the battery byte in the control
+        # window, where the 0x0400-0x045F capture moves it at 12:00:26, and
+        # 0x0751 in the write and restore windows, which the 0x0700 capture
+        # records. Read as a list rather than searched for, so a fourth
+        # window carrying one would fail here too.
+        self.assertEqual(hits, [['0x0438'], ['0x0751'], ['0x0751']])
 
 
 if __name__ == '__main__':

@@ -1086,10 +1086,22 @@ registers:
       -> 0x84 -> 0x98 -> 0xAC -> 0xC0, exactly +0x14 every ~35 s, with 0x0437
       never moving. A perfectly periodic ramp is a counter, not a charge
       reading, and naming it a capacity on that basis would be the "reads as"
-      overclaim CLAUDE.md warns about. docs/findings.md 4g groups 0x0436 with
-      0x0438 as "voltage"; the capture is what says otherwise, and the
-      correction is recorded there. Until a live read puts the value beside a
-      WMI RemainingCapacity the name stays a placeholder, and nothing has been
+      overclaim CLAUDE.md warns about. The page's other committed file,
+      evidence/ec-watch/2026-09-18-ac-plugin-sweep-summary.csv, qualifies that
+      and is recorded here so this note is not read as the page's whole story:
+      for a 0x0000-0x07FF window of its own (22:49:29..22:53:00) it carries
+      0x0436,13,0x58,0x0C and 0x0437,1,0x02,0x03, so 0x0437 does move
+      somewhere and "0x0437 never moving" is a statement about the
+      profile-switch capture and not about the pair. That summary supports a
+      per-address change count and two endpoints and nothing about order or
+      timing -- the 32,499-row log it summarizes is not committed, which the
+      preamble of docs/hardware-tests/gpu-tgp-07c4-07d7-door.md records for
+      the same file -- and it is not a capacity reading either, so the name
+      is declined for the reason the profile-switch capture gives and not for
+      a stronger one. docs/findings.md 4g groups 0x0436 with 0x0438 as
+      "voltage"; the capture is what says otherwise, and the correction is
+      recorded there. Until a live read puts the value beside a WMI
+      RemainingCapacity the name stays a placeholder, and nothing has been
       run to produce one.
       The 0x0403 cross-reference, corrected: it is 10 of 0x0403's 11 direct
       reads that subtract 0x14 from the byte, not 11. The 11th, bank1 0xA269, is

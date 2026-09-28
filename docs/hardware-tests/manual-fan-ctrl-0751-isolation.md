@@ -948,7 +948,27 @@ stronger one: a byte that moved and was back where it started by the
 after-dump reads unchanged here whether or not the captures recorded it.
 Each read has a gap the other does not close. An address one dump covers and
 the other does not is a coverage gap, never a change, and the section emits
-no status of its own.
+no status of its own. The `0x0400` pair's *other addresses that differ* is
+expected on a real run to carry the battery's own numbers rather than a fan
+byte: `0x0438`/`0x0439` and `0x0434`/`0x0435`, which the firmware divides
+by 100 into `0x0448` and `0x0449` respectively, and only on one branch of
+`scale_0438_into_0448` and `store_scaled_quotient_0449`, so the two
+quotients are in the bucket in their own right; and two more that
+`../../ec/annotations/xdata-0400-045f.md` §8 tabulates for that page and
+that land in this bucket rather than in the §4.5 one, `0x0436` and
+`0x044C`; §8's six moved bytes split four here, those two and the `0x0438`
+and `0x0449` above, and the other two are the temperatures `0x043E` and
+`0x044F`, which print as context. That is an expectation and not a result,
+drawn from `../../evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv`
+and from what step 3 asks of the load; nothing here reports a bracket that a
+run has produced. On a run those bytes are expected to differ, and a
+difference there says nothing about the write: a fixed CPU load is one thing
+that would move them, and the capture this paragraph cites is a battery-mode
+cycle rather than step 3's fixed-load block, with §8 naming no cause for what
+moved there — `0x0449` and `0x044C` as sensor-scale jitter in both
+directions. So the load is one candidate reason and not an established one,
+and the section names the bytes and their 16-bit readings for you and still
+grades none of them.
 `0x0F5D-0x0F5F`, the three bytes at the end of a `0x0F00-0x0F5F` dump, is
 reported under a heading of its own rather than under §4.2's, because they
 are the mailbox `../../ec/annotations/manual-fan-ctrl-0751.md` §6 decodes at
