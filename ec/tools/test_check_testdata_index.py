@@ -1345,9 +1345,9 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
         self.assertEqual((counts['named in the index'], counts['self-indexed'],
                           counts['gap(s)']), (12, 1, 0))
         self.assertEqual((counts['table row(s)'], counts['path token(s)']),
-                         (27, 34))
+                         (28, 36))
         self.assertEqual((counts['Feeds cell(s)'], counts['tool pointer(s)']),
-                         (27, 29))
+                         (28, 30))
         self.assertEqual((counts['self-indexed README(s)'], counts['table(s)'],
                           counts['row(s)'], counts['check(s)']),
                          (1, 3, 19, 21))
@@ -1367,12 +1367,14 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
     def test_the_committed_feeds_column_carries_a_flag_suffix(self):
         # The issue's "also asserted over the committed tree, where three rows
         # carry it": the flag suffix is not a shape this suite invented. The
-        # three rows are also the reason the cut is not optional -- without it
-        # this column reports three misses on the day the check lands.
+        # count is today's and takes one with every dump-pair fixture the index
+        # gains; the clause below it is the one that is a property rather than
+        # a tally, because a row that carried the flag and named a different
+        # tool would be the defect this column exists to catch.
         with open(ctti.INDEX, encoding='utf-8') as f:
             cells = ctti.table_cells(f.read(), column=2)
         flagged = [cell for cell in cells if '--dump-pair' in cell]
-        self.assertEqual(len(flagged), 3)
+        self.assertEqual(len(flagged), 4)
         for cell in flagged:
             self.assertEqual(ctti.feeds_pointers(cell),
                              ['../grade_0751_isolation.py'])

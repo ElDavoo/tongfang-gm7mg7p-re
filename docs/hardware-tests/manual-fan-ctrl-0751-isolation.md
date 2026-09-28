@@ -948,7 +948,17 @@ stronger one: a byte that moved and was back where it started by the
 after-dump reads unchanged here whether or not the captures recorded it.
 Each read has a gap the other does not close. An address one dump covers and
 the other does not is a coverage gap, never a change, and the section emits
-no status of its own.
+no status of its own. The `0x0400` pair's *other addresses that differ* is
+expected on a real run to carry the battery's own numbers rather than a fan
+byte: `0x0434`/`0x0435` and `0x0438`/`0x0439`, the two the firmware divides
+by 100 into `0x0448` and `0x0449`, and the rest of the bytes
+`../../ec/annotations/xdata-0400-045f.md` §8 tabulates for that page. That is
+an expectation and not a result, drawn from the one committed capture of the
+page and from what step 3 asks of the load; nothing here reports a bracket a
+run has produced. On a run those bytes move because step 3 held a fixed CPU
+load across the whole block, which is the load registering and not a
+consequence of the write, so the section names them and their 16-bit readings
+for you and still grades none of them.
 `0x0F5D-0x0F5F`, the three bytes at the end of a `0x0F00-0x0F5F` dump, is
 reported under a heading of its own rather than under §4.2's, because they
 are the mailbox `../../ec/annotations/manual-fan-ctrl-0751.md` §6 decodes at

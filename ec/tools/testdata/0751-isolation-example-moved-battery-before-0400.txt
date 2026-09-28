@@ -1,0 +1,24 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte below was written by hand. See README.md.
+# Shape: `ecrw.py dump 0x0400 0x0060` as §3's step 0 takes it, one 16-byte row
+# per line, and the `0751-isolation-run` page with the battery bytes filled in.
+# That set's `0751-isolation-run/` pair moves 0x0438 with a high byte of 0x00,
+# so it cannot tell a little-endian assembly from a padded low byte; this pair
+# moves 0x0434/0x0435, 0x0436/0x0437 and 0x0438/0x0439 with a non-zero high
+# byte, and moves the two derived bytes 0x0448 and 0x0449 and 0x044C beside
+# them, so every name the grader prints for that page is reached by a
+# committed fixture. 0x043E and 0x044F move as the run set's do and stay
+# context. The 2040 mA at 0x0434/0x0435 and the 16021 mV at 0x0438/0x0439 are
+# the two live figures registers.yaml records, and the 0x0448 and 0x0449
+# values are those two divided by 100 as the bank1 writers it names would
+# divide them, so the page is internally consistent with what the annotation
+# says the EC does -- and every one of those values is still invented, since
+# the annotation records the wiring and not a reading. The companion after
+# dump differs at those eight addresses and nowhere else. Not a prediction
+# that a battery reads this, or that it moved because of the load.
+0400: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0410: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0420: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0430: 00 00 00 00 f8 07 70 00 95 3e 00 00 00 00 32 00
+0440: 00 00 00 00 00 00 00 00 a0 14 00 00 75 00 00 30
+0450: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

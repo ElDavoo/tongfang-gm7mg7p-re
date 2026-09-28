@@ -575,6 +575,94 @@ CONTEXT = (
      (0x043E, 0x044F)),
 )
 
+# What the "other addresses" bucket prints under an address none of the two
+# tuples above claims, transcribed from ec/annotations/registers.yaml for the
+# same reason CONTEXT is transcribed: this is a report an operator runs
+# against a capture and two dumps, and it takes no repository file as an
+# input, so there is no path by which it could read the YAML. A name is
+# copied here or not at all, and registers.yaml stays the one place a name
+# is argued for.
+#
+# Each entry, keyed by its low address, is (partner, unit, headline).
+# `partner` is the high byte of a little-endian 16-bit value registers.yaml
+# defines, or None for a byte it defines alone; `unit` is what the assembled
+# reading is in, empty where no unit is established -- which is itself the
+# point for 0x0436. The six are the battery bytes on the 0x0400 page that
+# the tuple above does not already carry: §3's main arm holds a fixed CPU
+# load, and these are what a battery reads while it does, so the pair that
+# dumps 0x0400-0x045F lands in this bucket on a real run whatever the
+# capture held. Every one of them is `present-untested` in registers.yaml,
+# so what is printed here is the name and the two bytes -- not a reading of
+# what the EC does with them.
+XDATA_NAMES = {
+    0x0434: (0x0435, "mA", "BAT_CURRENT_MA 0x0434/0x0435 -- battery current, "
+             "little-endian mA"),
+    0x0436: (0x0437, "", "XDATA_0436_PAIR 0x0436/0x0437 -- 16-bit, and "
+             "deliberately unnamed (see below)"),
+    0x0438: (0x0439, "mV", "BAT_VOLTAGE_MV 0x0438/0x0439 -- pack terminal "
+             "voltage, little-endian mV"),
+    0x0448: (None, None, "XDATA_0448 -- battery voltage / 100, computed by "
+             "scale_0438_into_0448 (bank1 0xF416)"),
+    0x0449: (None, None, "XDATA_0449 -- battery current / 100, computed by "
+             "store_scaled_quotient_0449 (bank1 0xF3D7)"),
+    0x044C: (None, None, "XDATA_044C -- the busiest byte in the one committed "
+             "capture of this page"),
+}
+
+# The one entry whose name is withheld, printed when the pair reaches the
+# bucket. registers.yaml records the name upstream gives 0x0436/0x0437 and
+# declines it: the low byte steps by exactly +0x14 every ~35 s in the one
+# committed capture of this page, with the high byte never moving, which
+# reads as a counter rather than as a charge level. The name itself is not
+# printed, because a report is something an operator acts on and this one
+# has been retracted on this board; saying who proposed it and what
+# refutes it is what is left. The experiment that would settle it is a live
+# read beside WMI's RemainingCapacity (#172), and it has not been run.
+XDATA_NAME_NOTE = {
+    0x0436: (
+        "The name upstream gives this pair is not printed: in the one "
+        "committed capture of this page the low byte steps by exactly +0x14 "
+        "every ~35 s while the high byte never moves, which is a periodic "
+        "ramp and not a charge reading, and no unit is claimed for it here "
+        "either. The name stays a placeholder until a live read puts the "
+        "pair beside WMI's RemainingCapacity (issue #172, not run); "
+        "ec/annotations/registers.yaml carries the record."),
+}
+
+
+def xdata_name_lines(addr, common, before, after):
+    """The register name for one "other" address, and the value it makes.
+
+    Empty for an address this table does not name, so the naming is
+    additive: an address registers.yaml gives no name to prints exactly as
+    it did before this table existed, a bare `0xNNNN` on the flat list and
+    nothing under it. Most of a dump is such an address, and the table is
+    an aid rather than a claim that every address on the page has one.
+
+    The 16-bit value is little-endian and assembled from the pair's own two
+    dumps. Both halves are in `common` whenever the low one is, so the high
+    byte's *unchanged* value is a byte this section has already read rather
+    than a new one, and the assembly is the subtraction registers.yaml
+    describes, done once here instead of by eye at the terminal. It is
+    printed when `common` holds both halves and skipped otherwise, since
+    `common` is the intersection and a byte one dump does not reach is the
+    coverage gap the section already prints above.
+    """
+    entry = XDATA_NAMES.get(addr)
+    if entry is None:
+        return []
+    partner, unit, headline = entry
+    lines = [f"      0x{addr:04X}  {headline}"]
+    if partner is not None and partner in common:
+        lo = before[addr] | before[partner] << 8
+        hi = after[addr] | after[partner] << 8
+        suffix = f" {unit}" if unit else ""
+        lines.append(f"        0x{lo:04X} -> 0x{hi:04X}"
+                     f"  ({lo} -> {hi}{suffix})")
+    if addr in XDATA_NAME_NOTE:
+        lines.extend(note_lines(XDATA_NAME_NOTE[addr]))
+    return lines
+
 
 class Change:
     def __init__(self, ts, addr, old, new, source):
@@ -2711,6 +2799,19 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None):
     windowed read's silence, not this branch's, and the §6 fixture never
     reaches it.
 
+    The "everything else" bucket names what registers.yaml names, and only
+    that. The `0x0400` pair is the one that reaches it, and on a real run it
+    is expected to: §3 holds a fixed CPU load through the block, and the
+    bytes on that page that are a battery's own numbers move because of the
+    load. Four undifferentiated addresses left the operator to go and look
+    them up, and split a byte pair across two rows leaves the 16-bit reading
+    an addition to do by hand in the one report meant to save the hand work
+    (#219). So each address `XDATA_NAMES` covers gets a line of its own
+    under the flat list, and a pair is also printed assembled. That is the
+    name and the two bytes read out of the two dumps, and it does not grade
+    them: the heading keeps its "not graded here", and §3's own question is
+    about `0x0751` and not about the battery.
+
     Pairs are grouped by the block they name, the way `report_dumps` groups
     the dumps, and a `--block` run takes no read from another block's. The
     bracket is wider than the window and answers the same question, so a
@@ -2898,6 +2999,17 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None):
                       "not graded here -- read them against §4.4 and §4.5 "
                       "by hand:")
                 print("      " + " ".join(f"0x{a:04X}" for a in others))
+                # The names go on their own lines *under* that list and not
+                # beside it. The suite's `differing_addresses()` recovers the
+                # set of differing addresses by reading the line immediately
+                # after this heading and nothing else, so a register name or
+                # a `0x0438/0x0439` partner spelled on that line would be
+                # read as one more differing address and break the
+                # cross-check against the captures (#219).
+                for a in others:
+                    for line in xdata_name_lines(a, set(common), before,
+                                                 after):
+                        print(line)
 
     if block_value is not None and not any(v == block_value
                                            for v, _, _ in groups):
