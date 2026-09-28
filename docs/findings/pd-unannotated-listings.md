@@ -282,14 +282,22 @@ is not duplicated here.
 **Three committed generated artefacts this change had to bring back into
 agreement, each regenerated rather than hand-corrected.** None of the three is
 run by `agent-gates.sh`, which is why the first pass did not see them; all
-three are green here, and each is re-runnable by the name given. Two of them
-this change turned red, by renaming a callee and by remeasuring a pinned
-figure, and both are named below. `docs/findings/INDEX.md` is the third, and
-it is the one that was **not** red here: on the merge base `4e69787165` the
-check prints `docs/findings/INDEX.md: 136 write-up(s), current.`, and this
-write-up moved it to 137, so the diff against the merge base is the count line
-and this file's alphabetical entry together, not the count line alone — fixed
-by `python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md`.
+three are green on the tree this branch ships, and each is re-runnable by the
+name given. Two of them this change turned red, by renaming a callee and by
+remeasuring a pinned figure, and both are named below. `docs/findings/INDEX.md`
+is the third, and the way it went red is worth recording, because the cause was
+the merge and not the work: `main` advanced from this branch's original base
+`4e69787165` to `39007b05` (#1224), which landed
+`docs/findings/testdata-row-claims-shape-list-source.md` and moved the count
+136 → 137. The resolution took that count line and this branch's alphabetical
+entry, so the entry list matched and the count did not — 137 committed against
+138 write-ups on disk, over two lines that are one edit. On the merge base
+`39007b05` the check prints `docs/findings/INDEX.md: 137 write-up(s),
+current.`, this write-up moves it to 138, and the diff against the merge base
+is the count line and this file's entry together, not the count line alone —
+fixed by `python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md`.
+What the other side brought was a count line, and what the resolution kept of
+it was the part that had not moved.
 `ec/ghidra/gap-text-check.csv` still carried the pre-rename `FUN_CODE_*` callee
 names in four surviving rows (`pd 0x06EA`, `0x1EFE`, `0x6673`, `0xD72E`) —
 `python3 ec/tools/verify_gap_text.py --report`, whose diff is those four
@@ -324,11 +332,15 @@ is named here instead, so that the 13 and 28 in it are not read as current.
 **The drift that index did carry is main's own, and it is named here rather
 than dropped.** At `637b5dc1` the committed count was 134 against 135
 generated, because #1231 landed a write-up there and did not move the count
-with it; `4e69787165`, this branch's merge base, is the commit that fixed it.
-So the check is green on the tree this branch merges onto, this change neither
-inherits nor absorbs that red, and the figures quoted for the index here are
-the 136 and 137 measured on `4e69787165` and on this branch rather than the 134
-and 135 that were true at `637b5dc1`.
+with it; `4e69787165` is the commit that fixed it, printing
+`docs/findings/INDEX.md: 136 write-up(s), current.` So the check was green on
+the tree this branch merges onto, and this change neither inherited nor
+absorbed that red. The figures quoted for the index here are the ones the
+check itself prints — 138 on this branch against 137 on the merge base
+`39007b05`, rather than the 136 of `4e69787165` or the 134 committed against
+135 generated at `637b5dc1` — so a reader who disagrees can re-run
+`python3 ec/tools/gen_findings_index.py --check` rather than take them from
+here.
 
 **Those three retired, and none of them was answered.** **No citing comment
 changed**: `bank0 0xD045` still reads *"It then clears 0x06EA and 0x06EB to
