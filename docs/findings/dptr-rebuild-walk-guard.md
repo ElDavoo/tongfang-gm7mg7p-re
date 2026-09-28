@@ -1,4 +1,4 @@
-# `walk()`'s reload guard covers every way an 8051 rebuilds DPTR, and 21 committed `access` cells said otherwise
+# `walk()`'s reload guard covers every way an 8051 rebuilds DPTR, and 21 sites in the image render their `access` cell with the wrong direction, 2 of them in a committed table
 
 (2026-09-28, issue #517. Static reading of committed bytes through
 `trace_xdata_refs.py`'s own `walk_why()` and `classify()`. No capture opened,
@@ -18,12 +18,17 @@ past the rest, so `classify()`'s `reads`/`writes` counters charged the
 DPTR,#imm16` named. The guard is now `is_dptr_rebuild()`, which names all
 six.
 
-**The number this exists to record: 21 committed `access` cells across 14
-XDATA addresses had the wrong direction**, 7 in the common area, 4 in bank 0
-and 10 in bank 1. The `0x1C00`-`0x1C3F` page alone carries 197 sites over 26
-addresses and three of its rows changed direction, across two addresses.
-The whole-image sweep moves 197 of 10,414 mapped `MOV DPTR,#imm16` sites;
-the other 176 move only the `terminator` token.
+**The number this exists to record: 21 sites in the image render their
+`access` cell with the wrong direction**, across 14 XDATA addresses, 7 in the
+common area, 4 in bank 0 and 10 in bank 1. **Two of the 21 are rows in a
+committed table** — file offsets `0x16372` and `0x164AE`, both in
+`xdata-1c3x-consumers-sites.csv`, the two §6 measures. The other 19 are sites
+in the image that no committed table carries, so the 21 is a claim about what
+this method renders over the image, not a census of the committed CSVs. The
+`0x1C00`-`0x1C3F` page alone carries 197 sites over 26 addresses and three of
+its rows changed direction, across two addresses. The whole-image sweep moves
+197 of 10,414 mapped `MOV DPTR,#imm16` sites; the other 176 move only the
+`terminator` token.
 
 ## 1. The six constructions, and the ones that are not among them
 
@@ -126,8 +131,7 @@ The chain was walked and what it shows is recorded rather than resolved:
   `0x8A22`.
 - Decoding every instruction on that path (`0x8A04`-`0x8A26`, `0xAB7F`-
   `0xAB86`, `0x8F6B`, `0x98CC`-`0x98E5`, `0xAC36`-`0xAC43`, `0xDE3C`-
-  `0xDE9E`) finds **no instruction that writes `R1` or `R2`** — none of the
-  256 `R1`/`R2` write sites in the bank-1 image falls in it.
+  `0xDE9E`) finds **no instruction that writes `R1` or `R2`**.
 - So `R2:R1` is whatever the caller *above* `0x8A04` left in those registers,
   and that caller's arguments are not recoverable from this path.
 
@@ -266,9 +270,10 @@ naming both misattributed sites) and needed no edit.
 - **Nothing about what the EC does.** Every input is a committed file: a site
   table and `ec/firmware/GMxMGxx_11.800`. An `access` cell is a reading aid
   over at most 8 instructions of a linear window that cannot follow a branch.
-  "21 cells had the wrong direction" is a claim about what this method
-  renders, not about the firmware's intent — and a window that ends earlier
-  is not a window that is now right about everything behind it.
+  "21 sites render their `access` cell with the wrong direction" is a claim
+  about what this method renders, not about the firmware's intent — and a
+  window that ends earlier is not a window that is now right about everything
+  behind it.
 - **Nothing about the in-place-modify forms** (§3). A real limit, named.
 - **What `R2:R1` addresses at `0xDE8E`** (§2). Not established, and not
   guessed.
@@ -302,7 +307,7 @@ naming both misattributed sites) and needed no edit.
 `common`-region fixtures, no firmware image and no hardware, the house
 pattern. **It fails on the pre-fix guard** — reverting the one line in
 `walk_why()` turns 21 of its 27 cases red, which was checked rather than
-assumed, by running the suite against `HEAD`'s `walk_why()` with the new
+assumed, by running the suite against `HEAD^`'s `walk_why()` with the new
 predicate grafted onto it.
 
 It holds the guard per construction, the negatives (`swap a`, `xch a,0x82`,
@@ -354,8 +359,10 @@ python3 ec/tools/walk_budget_census.py ec/firmware/GMxMGxx_11.800 --check
 PYTHONPATH=ec/tools python3 - <<'EOF'
 import collections, importlib.util, sys, subprocess
 import trace_xdata_refs as T
-# HEAD's walk_why, so the "before" column is the committed code and not a copy
-src = subprocess.run(["git", "show", "HEAD:ec/tools/trace_xdata_refs.py"],
+# HEAD^'s walk_why: a before-state that is not this commit's fix. Not `HEAD`
+# and not `origin/main` -- both hold the re-cut once this lands, and a baseline
+# that already contains the change compares each walk with itself and prints 0.
+src = subprocess.run(["git", "show", "HEAD^:ec/tools/trace_xdata_refs.py"],
                      capture_output=True, text=True).stdout
 open("/tmp/old_tref.py", "w").write(src)
 spec = importlib.util.spec_from_file_location("old_tref", "/tmp/old_tref.py")
@@ -383,6 +390,10 @@ print(n, "sites;", sum(rows.values()), "rows move", dict(rows))
 print(sum(acc.values()), "access cells move", dict(acc))
 print("constructions:", dict(cons.most_common()))
 EOF
+# which prints, verbatim, and is the derivation of §1's table and the 197 / 21:
+#   10414 sites; 197 rows move {'common': 25, 'bank0': 61, 'bank1': 18, 'pd-image': 93}
+#   21 access cells move {'common': 7, 'bank0': 4, 'bank1': 10}
+#   constructions: {'0xF5': 141, '0xD0': 25, '0x8F': 20, '0x8A': 5, '0x8D': 3, '0x75': 1, '0x8C': 1, '0x85': 1}
 
 # 10. the suites: this work's own, the census's, and the runner's total
 python3 -m unittest discover -s ec/tools -p test_dptr_rebuild_guard.py
@@ -395,5 +406,13 @@ Steps 6-7 are the two that would catch a mistake in the other direction. Step
 **not** re-cut under the terminator column, and it is what makes "the default
 output has no column in it" checkable. Step 9's sweep is the only place the
 whole-image figures are derived, and it takes its "before" from `git show`
-rather than from a hand-copied loop, so a reader re-running it measures this
-commit's guard against its own parent's.
+rather than from a hand-copied loop. **The ref is `HEAD^` and not `HEAD` or
+`origin/main`** — this recipe originally read `HEAD`, which on the merged tree
+*is* the fixed file, so it compared each walk with itself and printed
+`0 rows move` / `0 access cells move` while the figures this file reports
+stood. The
+same trap `tools/README.md` records for `test_walk_budget_census.py`'s
+baseline ref, and for the same reason: both `HEAD` and `origin/main` hold the
+re-cut once this lands, and a baseline that already contains the change pins
+nothing. `HEAD^` holds the pre-fix guard on this branch and on the merged tree
+alike.
