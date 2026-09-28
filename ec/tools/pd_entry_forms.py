@@ -338,8 +338,12 @@ def transfers(d, lo, hi, into):
 
 
 def listing_transfers(listings, into):
-    """The same enumeration over the committed listings' own instruction stream:
-    one entry per *decoded* transfer, so no operand byte can appear.
+    """The listing population restricted to transfers whose *site* is in the
+    body, over the committed listings' own instruction stream: one entry per
+    *decoded* transfer, so no operand byte can appear. The restriction is the
+    reason this is smaller than the population the write-up defines -- the
+    `lcall 0xE2E4` at 0xDA78 is a member of that population and cannot be in
+    this one, its site being outside the body.
 
     This is a separate pass rather than a filter on the byte scan because it is
     the narrower of the two claims and the one that can be trusted outright: a
@@ -763,9 +767,10 @@ def self_test(d, index, starts, listings, rows, first, last, raw, gaps,
     listed = listing_transfers(listings, BODY)
     listed_sites = {a for a, _f, _t, _x, _n in listed}
     check(listed_sites <= {r["site"] for r in rows if r["status"] == "start"},
-          f"the listing population ({len(listed)} transfer(s) in committed "
-          f"pd listings targeting the body) is a subset of the byte population, "
-          f"which is what makes the two comparable")
+          f"the {len(listed)} transfer(s) whose *site* is in the body are the "
+          f"in-body half of the listing population, and a subset of the byte "
+          f"population, which is what makes the two comparable -- this pass "
+          f"cannot see the one whose site is outside it, 0xDA78's `lcall 0xE2E4`")
 
     check(eligible == ORACLE["eligible_table_rows"] and not found,
           f"{eligible} index-table row(s) are pd-scoped and {discarded} are not, "

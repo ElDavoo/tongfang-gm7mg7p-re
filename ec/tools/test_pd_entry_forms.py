@@ -183,7 +183,10 @@ class TheBody(unittest.TestCase):
         self.assertEqual(len(block), 35)
         self.assertEqual(block[-1], 0x22)
         self.assertEqual(block[-3:-1], b"\x7f\x00")     # mov R7,#0x00
-        self.assertIn(b"\xff", block)                  # mov R7,A at 0xE300
+        # Pinned to its address, not merely present: the write-up's claim is
+        # positional, and a 0xFF that moved inside the block would satisfy
+        # assertIn() and leave the claim untested.
+        self.assertEqual(block[0xE300 - lo:0xE301 - lo], b"\xff")  # mov R7,A
         # ... and none of it is in a committed listing, which is the whole of
         # what is being claimed about it.
         for a in range(lo, hi):

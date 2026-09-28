@@ -60,9 +60,15 @@ it. That is what the `pd,0xDA44` row already said and it stays said.
 Two populations, reported together and never exchanged for one another.
 
 **The listing population** is every transfer instruction in the committed
-`ec/decompiled/pd/*.asm` files whose target is in the body: **two**, the
-`lcall 0xE2E4` at 0xDA78 and the body's own `jz 0xE31B` at 0xE2EC / `cjne
+`ec/decompiled/pd/*.asm` files whose target is in the body: **three**, the
+`lcall 0xE2E4` at 0xDA78 and the body's own `jz 0xE31B` at 0xE2EC and `cjne
 A,#0x1,0xE2E6` at 0xE31D. These are decoded, so no operand byte can appear.
+They are the three `population=listing` rows of
+[`../../ec/annotations/pd-entry-forms.csv`](../../ec/annotations/pd-entry-forms.csv),
+and that table's `origin` column is what holds them apart: only 0xDA78 is
+`outside` and can enter the body, the other two are `inside` and are the
+routine's own control flow. That is why the population is three and the entry
+count below is one.
 
 **The byte population** is every position in the image's 64 KiB whose bytes
 spell a transfer form targeting the body: **eleven**, of which **three** sit
