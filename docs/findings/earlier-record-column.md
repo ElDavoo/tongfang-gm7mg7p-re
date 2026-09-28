@@ -65,7 +65,7 @@ transcribed owners:
 |---|---:|
 | nearest start (lowest offset) | 14/18 |
 | furthest back (highest offset) | 15/18 |
-| longest span, then lowest offset | 12/18 |
+| furthest end (reaches furthest past the site), ties to the lower offset | 12/18 |
 | **highest `converges_from()` score, then lowest offset** | **18/18** |
 
 So the rule is: among surviving candidates, take the one with the higher
@@ -79,18 +79,25 @@ on one image, nothing more. The write-up it appears in is
 [#54's](paged-trampoline-hits-by-hand.md), and the three alternatives are named
 here so a reader who prefers a different rule can see what it costs. Of the
 **337 paged rows** that leave two candidates, nearest start would name a
-different record on **129** of them, longest span on **150**, and furthest back
+different record on **129** of them, furthest end on **150**, and furthest back
 on **208** — so this is not a rule that agrees with its alternatives almost
 everywhere, and the ablation is the evidence rather than a formality.
 [`test_earlier_record_column.py`](../../ec/tools/test_earlier_record_column.py)
 asserts each of the three to *fail* on at least one owner, so a later refactor
 cannot swap in a simpler rule that happens to look equivalent.
 
-The rule that needs the ablation most is **longest span**. It looks the most
-principled, and it is the one a reader re-deriving this would reach for — at
-`0x12C0` both candidates are three bytes long, so a length rule has nothing to
-separate them, falls through to its own tie-break, and lands on the decoy. That
-case is named in the suite for the same reason.
+The rule that needs the ablation most is **furthest end**, and it is named for
+what it measures rather than for what it sounds like. Its key is the
+candidate's **end offset**, not its length, so it takes the record reaching
+furthest *past the site* — which is the same `max` this column uses, with the
+score swapped for extent, and is what a reader re-deriving this reaches for
+first. At `0x12C0` it lands on the decoy, and not because the decoy is
+longer: both candidates are three bytes, and the decoy wins because its edge
+sits one byte further past the site. A rule that maximised the record's
+*length* would have nothing to separate them there, fall to its own tie-break,
+and land on the owner — it is a real alternative, and it is the one this
+ablation does **not** measure. The case is named in the suite for the same
+reason.
 
 ## A column, not a filter
 
@@ -193,12 +200,16 @@ asserted by its `--self-test`, which runs in the cheap gate, so the list gains
 hand to run `write_csv()` against, so its fixture gains the key — it would
 otherwise raise `KeyError`, which is the cheap direction to fail in.
 
-The two `sed -n '5766p;4420p'` transcripts in
-[`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) and
-[`citation-gap-scan.md`](citation-gap-scan.md) read a whole row and are quoted
-in prose. The rows themselves gain a field and the surrounding discussion
-still holds; the transcripts are left as the record of the rows as they were
-read, which is what a transcript is.
+Two documents quote a whole row of `bank-call-targets.csv`, and the two are
+treated differently because they are not the same kind of thing. The
+`sed -n '5766p;4420p'` block in
+[`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) is a transcript:
+it is left as the record of the rows as they were read, which is what a
+transcript is, and the surrounding discussion still holds. The quote in
+[`citation-gap-scan.md`](citation-gap-scan.md) is prose, and is brought up to
+date with the empty `earlier_record` field — a row quoted in prose is evidence
+a reader is meant to be able to `grep` for, and one that resolves to nothing
+is not evidence.
 
 ## Out of scope, and deliberately so
 

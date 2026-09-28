@@ -137,17 +137,23 @@ TWO_CANDIDATE = (
 # a choice, it is an accident that happens to be stable, so the alternatives
 # are part of the claim and each is asserted to *lose* below.
 #
-# `span` is the one that looks most principled and is the one to watch: at
-# 0x12C0 both candidates are 3 bytes long, so a length-based rule falls through
-# to its tie-break and lands on the decoy. That is the case the write-up names
-# and the reason the ablation exists.
+# `furthest end` is the one to watch, and it is named for what its key
+# measures rather than for what it sounds like. The key is the candidate's *end
+# offset* `j + OPCODE_LEN[d[j]]`, so it takes the record reaching furthest
+# **past the site**, which is not the same as the longest record. The two come
+# apart wherever the candidates are the same length -- at 0x12C0, where a
+# length rule falls to its own tie-break and lands on the owner while this one
+# lands on the decoy. That is the case the write-up names and the reason the
+# ablation exists, and it is also the reason the name here has to match the
+# key: a name that said "longest" would have left the write-up describing a
+# rule this table does not measure.
 ALT_RULES = (
     ("nearest start", lambda c, d: min(c)),
     ("furthest back", lambda c, d: max(c)),
-    ("longest span", lambda c, d: min(c, key=lambda j: (-(j + disasm8051.OPCODE_LEN[d[j]]), j))),
+    ("furthest end", lambda c, d: min(c, key=lambda j: (-(j + disasm8051.OPCODE_LEN[d[j]]), j))),
 )
 
-# The case that separates `longest span` from the rule this column uses, named
+# The case that separates `furthest end` from the rule this column uses, named
 # at module level for the reason `test_paged_trampoline_framing.py` gives its
 # `CLR_BIT`: `check_doc_figure_pins.py` reads every int constant inside an
 # asserting call across `ec/tools/*.py` as a pin for a figure in some document,
@@ -158,13 +164,22 @@ ALT_RULES = (
 # *inside asserting calls* for literals.
 #
 # The case is worth naming rather than only the outcome because it is the one
-# a reader re-deriving the rule would get wrong: at 0x12C0 both surviving
-# candidates are three bytes long, so a length rule has nothing to separate
-# them, falls through to its own tie-break and lands on the decoy. The owner is
-# the `mov dptr` at 0x12BE, which is what #54 settled.
+# a reader re-deriving the rule would get wrong, and because it is where the
+# two length-shaped readings come apart. At 0x12C0 both surviving candidates
+# are three bytes long, so a rule that maximised the record's *length* would
+# have nothing to separate them, fall to its own tie-break and land on the
+# owner; the decoy wins under `furthest end` for the other reason, that it
+# reaches one byte further past the site. The owner is the `mov dptr` at
+# 0x12BE, which is what #54 settled.
 ABLATION_SITE = 0x12C0
 ABLATION_DECOY = 0x12BF
 ABLATION_OWNER = 0x12BE
+
+# How much further past the site the decoy's edge reaches than the owner's, on
+# the two equal-length candidates above. Module-level for the reason
+# ABLATION_SITE is: an int written into an `assertEqual` is a figure-pin
+# candidate, and this one belongs to no document.
+ABLATION_END_GAP = 1
 
 # What the three alternatives cost on the paged census, and how many rows
 # leave two candidates at all. Module-level, and asserted rather than left in
@@ -176,7 +191,7 @@ ABLATION_OWNER = 0x12BE
 # than to the column's behaviour.
 ALT_COST_TWO_CANDIDATE = 337
 ALT_COST_DISAGREE = {"nearest start": 129, "furthest back": 208,
-                     "longest span": 150}
+                     "furthest end": 150}
 
 # A site in the committed image whose only look-back candidate is itself
 # paged-shaped, so the non-circularity skip is what empties the cell rather
@@ -357,16 +372,24 @@ class TheTieBreakIsAChoice(unittest.TestCase):
                                          IMAGE))
         self.assertEqual(disagree, ALT_COST_DISAGREE)
 
-    def test_longest_span_is_the_rule_that_needs_the_ablation(self):
-        # The one that looks most principled, and the one a reader
-        # re-deriving this for themselves reaches for first. Both candidates
-        # here are the same length, so it has nothing to separate them and
-        # falls through to its own tie-break -- which lands on the decoy.
+    def test_furthest_end_is_the_rule_that_needs_the_ablation(self):
+        # The one a reader re-deriving this for themselves reaches for: the
+        # same `max` this column uses, with the score replaced by how far the
+        # record reaches past the site. The assertions are the shape of the
+        # case. Both candidates are the same length here, so the rule is
+        # not choosing on span at all; it chooses on the edge, and the edge
+        # favours the decoy by a byte. A rule that maximised the *length*
+        # would instead fall to its own tie-break and agree with this column
+        # -- which is why the alternative is named for the end offset and not
+        # for the span it is easy to mistake it for.
         spans = {j: disasm8051.OPCODE_LEN[IMAGE[j]]
                  for j in candidates(IMAGE, ABLATION_SITE)}
         self.assertEqual(set(spans.values()), {disasm8051.OPCODE_LEN[IMAGE[ABLATION_OWNER]]})
-        longest = min(spans, key=lambda j: (-(j + spans[j]), j))
-        self.assertEqual(longest, ABLATION_DECOY)
+        ends = {j: j + spans[j] for j in spans}
+        self.assertEqual(ends[ABLATION_DECOY] - ends[ABLATION_OWNER],
+                         ABLATION_END_GAP)
+        self.assertEqual(min(spans, key=lambda j: (-ends[j], j)), ABLATION_DECOY)
+        self.assertEqual(min(spans, key=lambda j: (-spans[j], j)), ABLATION_OWNER)
         self.assertEqual(chosen(candidates(IMAGE, ABLATION_SITE), IMAGE),
                          ABLATION_OWNER)
 
@@ -612,7 +635,7 @@ class WhatThisDoesNotClaim(unittest.TestCase):
         # choice among named alternatives would be overclaiming by 18 rows.
         text = squeezed(WRITEUP)
         for phrase in ("stated choice among named alternatives",
-                       "not thereby real", "nearest start", "longest span",
+                       "not thereby real", "nearest start", "furthest end",
                        "furthest back"):
             self.assertIn(phrase, text)
 

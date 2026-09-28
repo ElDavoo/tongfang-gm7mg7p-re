@@ -213,7 +213,8 @@ def earlier_record(d: bytes, off: int, lo: int) -> str:
     `0x12BF cjne r7,#0x81,0x12c4`, both spanning the site -- so something has
     to choose, and the issue does not say what. Three rules were measured
     against the 18 owners #54 transcribed: nearest start (lowest offset) 14/18,
-    furthest back (highest offset) 15/18, longest span then lowest offset 12/18,
+    furthest back (highest offset) 15/18, furthest end (highest end offset,
+    i.e. the record reaching furthest past the site) then lowest offset 12/18,
     and highest `converges_from()` score then lowest offset **18/18**. The last
     is what this does, and the ablation is in
     `docs/findings/earlier-record-column.md` and in
