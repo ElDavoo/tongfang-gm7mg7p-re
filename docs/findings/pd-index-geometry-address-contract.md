@@ -21,11 +21,12 @@ own anywhere, despite being the mode whose check it inherits most indirectly.
 ## What the issue's table said, and what this tree does
 
 The left column is the issue's own table, as filed. The right column was
-re-measured at `HEAD` before this change was made. The left column is already
-stale for six of its nine rows, which is itself the finding: the issue was
-accurate when written and the tool moved under it.
+re-measured at `49158e83`, this branch's first parent, before this change was
+made — the same commit the reproduction block below diffs against. The left
+column is already stale for six of its nine rows, which is itself the finding:
+the issue was accurate when written and the tool moved under it.
 
-| command | as filed in #860 | re-measured at `HEAD` |
+| command | as filed in #860 | re-measured at `49158e83` |
 |---|---|---|
 | `--sites zzz` | exit 2, `invalid literal for int() with base 16: 'zzz'` | **unchanged** |
 | `--helpers zzz` | exit 1, unhandled `ValueError` traceback | **exit 2**, same message |
@@ -86,14 +87,16 @@ rather than to a new rule, and after it every one of the nine combinations in
 the table above leaves stdout at 0 bytes.
 
 **Nothing on the legal range moved.** The pre-change file was extracted from
-`HEAD` and both copies run over the same image; `--helpers`, `--helpers` with
-addresses, `--bases all`, `--strides all`, `--callers 0x0860`, `--accesses` and
-`--helpers-csv` are byte-identical, and the six-command diff is in
-"Reproducing it" below. The multi-entry command-line branch was compared too,
-since that is the branch that moved: `--helpers 0x0860` and
-`--helpers 0x0860 0x0C2E` are byte-identical, `--helpers 0x1FFE9 0x0860` differs
-by the two lost stdout lines and **nothing else** — stderr is byte-identical and
-the exit is still 2.
+`49158e83` — this branch's first parent, the commit that carries the pre-change
+`pd_index_geometry.py` and is named by hash rather than by a moving ref so the
+recipe still works after this one lands — and both copies run over the same
+image; `--helpers`, `--helpers` with addresses, `--bases all`, `--strides all`,
+`--callers 0x0860`, `--accesses` and `--helpers-csv` are byte-identical, and
+the eight-command diff is in "Reproducing it" below. The multi-entry
+command-line branch was compared too, since that is the branch that moved:
+`--helpers 0x0860` and `--helpers 0x0860 0x0C2E` are byte-identical,
+`--helpers 0x1FFE9 0x0860` differs by the two lost stdout lines and **nothing
+else** — stderr is byte-identical and the exit is still 2.
 
 ## Item 3: the anchor is checked, the image's own targets are not
 
@@ -116,13 +119,24 @@ $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --helpers 0xF
     ...
 ```
 
-23 listing lines, all of them the `0xFF` fill past the region's end. **#843
-stays open, is not touched here, and is not pre-empted.** What the deferral now
-rests on is worth stating because it is not the reason the issue gave: the
-walker itself no longer discards `pd_bounds()`'s `hi`. `walk_helper()` takes
-both ends and clamps `hi = min(hi, len(d))`, so the region end bounds the walk —
-that is `count-bounded-walk-invariant.md`, which is what the self-test's own
-comment points at.
+23 listing lines, and they are the `0xFF` fill at the region's **top**, not
+past its end. `pd_bounds()` puts the region at file `0x20000-0x2FFFF`, runtime
+`0xFFE9` is file `0x2FFE9`, so the listing runs `0x2FFE9`-`0x2FFFF` — the last
+23 bytes *inside* the region, which are the same fill the erased area beyond it
+holds. The walk stops **at** the region end rather than crossing it, and that
+is what the run's own note says: runtime `0x10000` is file `0x30000`, the first
+byte beyond the region, and it is not listed. (`0xFFE8` is the address that
+lists 24, one more byte of the same fill, and the one the self-test's comment
+at `../../ec/tools/pd_index_geometry.py:2171` counts.)
+
+**#843 was closed by the `count-bounded-walk-invariant.md` work this same
+paragraph credits; this change touches no walker, so it neither reopens #843
+nor pre-empts what is left of it.** What the deferral now rests on is worth
+stating because it is not the reason the issue gave: the walker itself no
+longer discards `pd_bounds()`'s `hi`. `walk_helper()` takes both ends and
+clamps `hi = min(hi, len(d))`, so the region end bounds the walk — that is
+`count-bounded-walk-invariant.md`, which is what the self-test's own comment
+points at.
 
 **The issue's "the only two" premise is stale in the same way, and correcting
 it is a retraction rather than an addition.**
@@ -213,17 +227,27 @@ $T --helpers 0xFFE9
 # the tool's own suite, which now pins --callers too
 $T --self-test
 
-# the legal range, byte-for-byte against HEAD. The extracted copy imports its
-# siblings by module name, so PYTHONPATH is what makes it runnable outside
-# ec/tools.
-git show HEAD:ec/tools/pd_index_geometry.py >/tmp/old.py
+# the legal range, byte-for-byte against the pre-change file. 49158e83 is this
+# branch's first parent and the last commit before this change; a hash rather
+# than a ref because HEAD is this file once the change lands. The extracted
+# copy keeps the real basename, since argparse's prog is the file's name and
+# the stderr comparison below depends on it, and imports its siblings by module
+# name, so PYTHONPATH is what makes it runnable outside ec/tools.
+mkdir -p /tmp/pd-pre && git show 49158e83:ec/tools/pd_index_geometry.py \
+  >/tmp/pd-pre/pd_index_geometry.py
 for m in "--helpers" "--helpers 0x0860" "--helpers 0x0860 0x0C2E" \
          "--bases all" "--strides all" "--callers 0x0860" \
          "--accesses" "--helpers-csv"; do
-  PYTHONPATH=ec/tools python3 /tmp/old.py ec/firmware/GMxMGxx_11.800 $m >/tmp/before.txt 2>&1
+  PYTHONPATH=ec/tools python3 /tmp/pd-pre/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 $m >/tmp/before.txt 2>&1
   $T $m >/tmp/after.txt 2>&1
   diff -q /tmp/before.txt /tmp/after.txt && echo "IDENTICAL $m"
 done
+
+# the one branch that must differ, and only on stdout: the old copy writes the
+# 50-byte count line before refusing, the new one refuses first
+PYTHONPATH=ec/tools python3 /tmp/pd-pre/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --helpers 0x1FFE9 0x0860 >/tmp/b.out 2>/tmp/b.err; echo "old exit=$? stdout=$(wc -c </tmp/b.out)"
+$T --helpers 0x1FFE9 0x0860 >/tmp/a.out 2>/tmp/a.err; echo "new exit=$? stdout=$(wc -c </tmp/a.out)"
+diff /tmp/b.err /tmp/a.err && echo "STDERR IDENTICAL"
 
 # #843's count, re-derived from the committed source: fourteen at this tree,
 # and neither walk_helper nor chain_from in it

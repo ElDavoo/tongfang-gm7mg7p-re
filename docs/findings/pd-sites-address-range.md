@@ -225,8 +225,9 @@ guessing at a question the bytes do not answer.
   repeated: the two arguments' declarations are now one contract, and
   [`pd-index-geometry-address-contract.md`](pd-index-geometry-address-contract.md)
   carries the re-measured table and the three `--help` strings that make it
-  legible. `:1792-1796` was this tree's line numbers then, and `--callers` is
-  still declared there.)*
+  legible. `:1792-1796` was this tree's line numbers when this section was
+  written; the declaration is at `../../ec/tools/pd_index_geometry.py:2394`
+  now.)*
 - **It does not fix `walk_helper`.** `--helpers 0x1FFE9` raises, measured above,
   and is left raising. A blanket range check there would also have to cover the
   targets `chain_from()` decodes out of the image's own branch operands and
@@ -243,10 +244,11 @@ guessing at a question the bytes do not answer.
   preamble's own count line already says so. What is left is narrower and is
   #843's: the *image-derived* targets are still unchecked, `chain_from()`
   handing a decoded `branch_target()` to `walk_helper()` at `:645`, so
-  `--helpers 0xFFE9` exits 0 and lists the 23 fill bytes past the region with
-  the region-exit note. `:546` was that handoff's address when this section was
-  written; the distinction between a caller's anchor and the image's own
-  operands is the part that still stands.)*
+  `--helpers 0xFFE9` exits 0 and lists 23 lines of the `0xFF` fill at the top
+  of the region — file `0x2FFE9`-`0x2FFFF`, inside it — and stops at the region
+  end, with the region-exit note saying so. `:546` was that handoff's address
+  when this section was written; the distinction between a caller's anchor and
+  the image's own operands is the part that still stands.)*
 - **It does not cover `print_sites()`'s own `pd_bounds()` call** at `:898`, which
   discards `hi` and uses `lo` only to print. Its `hi` is not load-bearing and
   there is nothing to change; it is counted in the next section and recorded as
