@@ -117,7 +117,11 @@ reads four bytes per call through the driver's `MMRD` instead, which is
 **off by default and has never been run**: `../native/ACPIDriver.sys.analysis.md`
 walks the handler, and the one comparison that would tell a human with the
 machine whether the BIOS answers as four single reads would is written out in
-`tools/manual_fan_ctrl_probe.py`'s docstring. `tools/ec_watch.py`
+`tools/manual_fan_ctrl_probe.py`'s docstring. `mmrd ADDR` is the one exception
+to the block path's alignment rule — a single `MMRD` at an unaligned offset,
+reachable from no sweep, and never run against the driver either;
+`../docs/findings/mmrd-unaligned-escape.md` is what it is for and what it does
+not settle. `tools/ec_watch.py`
 sweeps a range of it and reports what moved while you do something else in the
 vendor UI, with `--mark` rows so the capture says when you acted.
 `tools/manual_fan_ctrl_probe.py`'s `--watch-page` is that sweep's
