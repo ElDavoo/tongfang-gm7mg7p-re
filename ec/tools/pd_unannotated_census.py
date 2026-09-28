@@ -32,13 +32,17 @@ clustering does. Importing it is what makes "39 edges" and the clustering's
 edge set the same 39 by construction rather than by agreement.
 
 **`norm_addr` is the other import, and it is the one that could go wrong
-quietly.** Two exist under that name and they do not agree: `citation_callers`'
-strips the `0x` and zero-fills to four digits, `group_functions`' strips the
-prefix and does not. A CSV row written `0x06EA` matches its listing under the
-first and reads as `6EA` under the second, so a census built on the wrong one
-declares every prefixed row unannotated and reports a population too large by
-however many rows happen to carry a prefix. The listing filename is the key and
-it is the four-digit spelling, so this is `citation_callers`'.
+quietly.** Two exist under that name: `citation_callers`' strips the `0x` and
+zero-fills to four digits, `group_functions`' strips the prefix and does not.
+On an address of four digits or more the two are the same function -- `0x06EA`
+reads `06EA` under either, not `6EA` -- so the choice is not load-bearing for
+any row as this CSV spells them today. They part company below four digits:
+`0x1` is `0001` under the first and `1` under the second, and a row spelled
+that way matches its listing under one and matches no listing at all under the
+other, which reports a population too large by however many rows are spelled
+short. The listing filename is the key and it is the four-digit spelling, so
+this is `citation_callers`' either way; the `--self-test` asserts both the
+agreement and the divergence so the choice is pinned rather than assumed.
 
 **And the second half of the report is the null.** Issue #471's fix only shows
 where a bank caller and a `pd` caller reach the same `common` row, and
@@ -351,9 +355,15 @@ def self_test(fh=sys.stdout):
     rc = 0
 
     # norm_addr is the key the whole population is matched on, and the CSV
-    # spells an address with or without its 0x and in either case.
+    # spells an address with or without its 0x and in either case. The two
+    # norm_addr in this repository agree at four digits and part company below
+    # it, so the two cases below are the pair that pins which one this is: the
+    # first passes under either implementation, the second does not.
     rc += check("norm_addr lower-cases, strips 0x and zero-fills",
                 norm_addr("0x0ea2"), "0EA2")
+    rc += check("norm_addr zero-fills a sub-four-digit address, which is what "
+                "group_functions' would not do",
+                norm_addr("0x1"), "0001")
     rc += check("norm_addr leaves a bare address alone",
                 norm_addr("3497"), "3497")
 

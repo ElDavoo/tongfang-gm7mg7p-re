@@ -9,7 +9,7 @@
    R7; R6 is incremented only when R7 is nonzero, and if (R7 | R6) is zero the routine jumps to
    0x0B51. It then tests R5 + 2 and R3 + 2 against 4 in turn, jumping to the same 0x0B51 from each,
    and only then rotates A left three times, ORs in DPL and loads DPTR with 0x0B05. **The listing
-   begins at 0x0B51, before its own entry**, and those seven instructions are the tail of the
+   begins at 0x0B51, before its own entry**, and those six instructions are the tail of the
    preceding export (`mov A,R4 / mov R2,A / mov R1,B / mov A,R5 / mov R3,A / ret`); the three
    branches to 0x0B51 are jumps back into them, not calls. Which table the index selects and what
    the values mean is not shown here.

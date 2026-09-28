@@ -16,8 +16,9 @@
    reached 0x0000 because the only instruction here is a jump to it, which
    `docs/findings/named-without-a-row.md` records and which this tree replaces with the row's own
    `ljmp_0500`, following the convention its neighbours in the vector table already use (`ljmp_0056`
-   at 0x0003). The R0-R7 save and the call to 0x0050 that the C body shows belong to the target at
-   0x0500 (`c_startup_idata_clear`), not to these bytes.
+   at 0x0003). The internal-RAM clear from 0x7F down and the single call to
+   `poll_0208_0209_then_spin` that the C body shows belong to the target at 0x0500
+   (`c_startup_idata_clear`), not to these bytes.
    type: forwarder
    evidence: ec/decompiled/pd/0000.asm; ec/decompiled/pd/0000.c
    basis: hand-decoded
