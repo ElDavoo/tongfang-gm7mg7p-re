@@ -841,6 +841,18 @@ class TheOtherReadersAndWriters(unittest.TestCase):
         self.assertNotIn(0x08DE, census())
         # ... while the image has the site, at case 0x07's slot store.
         self.assertEqual(hexat(BANK0, 0x823E, 3), "9008de")
+        # 0x08DF is the second half of that same two-byte store, so the
+        # census misses it for the same reason -- which is why §9 says the
+        # census covers thirty of the thirty-two rather than all of them.
+        self.assertNotIn(0x08DF, census())
+        self.assertEqual(hexat(BANK0, 0x8243, 3), "a3" "ef" "f0")
+
+    def test_the_two_missing_rows_are_the_only_two_of_the_thirty_two(self):
+        # §9 opens by naming exactly which addresses the census lacks, so the
+        # set is pinned here rather than a count: the 32 the block touches,
+        # minus the two named in the document, are all present.
+        named = {0x0600 + i for i in range(16)} | {0x08D0 + i for i in range(16)}
+        self.assertEqual(named - set(census()), {0x08DE, 0x08DF})
 
     def test_the_census_has_no_writer_for_0x060e_and_the_image_has_two_sites(self):
         self.assertEqual(census()[0x060E]['writers'], '0')

@@ -258,9 +258,10 @@ at `0x80CA`, gate helper `0xBB9A`, `mov a,#0x82` at `0x80D2`, `ljmp 0x821F` at
 
 `0xBDC6` then `0xB9EA`; slots `0x08D6`/`0x08D7`, pair `0x0606`/`0x0607`,
 `orl a,#0x08` at `0x8150`, gate helper `0xBE92`, `mov a,#0x84` at `0x8158`,
-`ljmp 0x821F` at `0x815A`. §9's row confirmed. §6's separate note that
-`0x811A` also decodes as plausible code in `bank1` is untouched: everything here
-is a `bank0` reading of the `bank0` image.
+`ljmp 0x821F` at `0x815A`. §9's row confirmed.
+[`bank-call-audit.md`](bank-call-audit.md) §4's separate note that `0x811A`
+also decodes as plausible code in `bank1` is untouched: everything here is a
+`bank0` reading of the `bank0` image.
 
 ### 4.5 Case `0x04` — `0x815D`
 
@@ -546,11 +547,11 @@ direct `mov dptr` site per slot and no `movx a,@dptr` naming any of the sixteen
 in either bank. (The odd bytes, `0x08D1` and `0x08DF` among them, get no direct
 site of their own: they are written by the `inc dptr` after the first, which the
 scan reports as a two-byte consecutive write. `0x08DE` does have a direct site,
-`0x823E`; it is the *census* CSV that has no row for it — §9.) So the slots are
-written here and, by these scans, read nowhere in the committed tree. That is
-"not found by this method", not "unused": the walk is byte-level,
-DPTR-tracking and bounded, and it cannot see a pointer handed to another routine
-that this image's call graph does not name.
+`0x823E`; it is the *census* CSV that has no row for it, or for `0x08DF` above
+it — §9.) So the slots are written here and, by these scans, read nowhere in the
+committed tree. That is "not found by this method", not "unused": the walk is
+byte-level, DPTR-tracking and bounded, and it cannot see a pointer handed to
+another routine that this image's call graph does not name.
 
 ### 6.3 The four gate helpers are one rotating routine
 
@@ -795,8 +796,10 @@ A `ret`-based thunk or a computed target would be invisible to all of them, as
 
 ## 9. The other readers and writers of the 32 addresses
 
-[`xdata-registers.csv`](xdata-registers.csv) already carries a census for all
-thirty-two, and it is the cheapest starting point for the issue's item 3. It is
+[`xdata-registers.csv`](xdata-registers.csv) already carries a census for
+thirty of the thirty-two, and the two it is missing — `0x08DE` and `0x08DF`, the
+last pair of the `0x08D0` slot — are the two the table below gives **no row**.
+It is still the cheapest starting point for the issue's item 3, but read it as
 a census of the **decompiled C** — one reading of the bytes, which cannot see a
 pointer that is built at run time or handed to a routine the listing does not
 contain — so §1's `trace_xdata_refs.py` run re-derives the direct sites from the
@@ -811,6 +814,7 @@ image rather than restating it.
 | `0x060E` | 3 | 3 | 0 | 3 | 0 | the census has **no writer** for this byte; the image has two, both in case `0x07` (`0x8249` read, `0x825F` write), for the reason in the row below |
 | `0x08D0` | 2 | 0 | 2 | 2 | 0 | one direct site and one `mov dptr` (`0x8061`), writing two consecutive bytes; the census's two "writers" are not two sites but the two Ghidra entries `0x8048` and `0x8054` its decompile split one run across, and §3's finding is that those listing boundaries are **not** control-flow boundaries — `0x8048` is a mid-stream entry over table bytes the walk never reaches, and the committed `8048.c` says itself that the body Ghidra produced there "is a reading of bytes outside this window, not of these instructions". **Read by nothing either method finds** |
 | `0x08DE` | **no row** | — | — | — | — | written by case `0x07` at `0x8242`; the census has no row at all, because the committed project exports no function at `0x8231` (§4.8) |
+| `0x08DF` | **no row** | — | — | — | — | written by the same store one byte up — `inc dptr` at `0x8243`, then `mov a,r7` / `movx @dptr,a` at `0x8244`-`0x8245` — and absent for the same reason as the row above |
 | `0x0A59` | 68 | 16 | 40 | 43 | 1 | the shared scratch byte of §4 and §5; far too widely used for the census to say anything about it *here* |
 
 Three results from that table are worth stating as results rather than as rows.
@@ -997,15 +1001,22 @@ on readback would not be one either.
   **writes the committed `.gpr`/`.rep`**: two branches that both rebuild one
   cannot merge, and `.gitattributes` makes git refuse rather than text-merge the
   database. §4.8 decodes the address from the bank image without any of that.
-- **Renaming `bank0,0x805B`.** It is annotated `index_table_default`, and the
+- **Renaming `bank0,0x805B`.** It wears the name `index_table_default`, and the
   walk confirms what §9 suspected: `0x805B` is a three-byte `ljmp 0x8274` — the
   case `0x00` bit-7-clear arm — while the same name also sits on `0x8274`
-  itself, the block the jump lands in. A rename means editing a 1 MB CSV every
-  open agent PR also edits, re-exporting so `index.csv` and the `.c` banners
-  follow, and regenerating `xdata-registers.csv` and `xdata-cluster-names.csv`
-  through `xdata_register_map.py`, all under a gate that recounts them. That is
-  a large shared-file diff for a naming correction, and it is a separate piece
-  of work. **Reported here, not applied.**
+  itself, the block the jump lands in. The two names do not come from the same
+  place, which is why this is not simply a row to edit: `0x8274` carries it from
+  the `bank0,0x8274` row of [`ghidra-functions.csv`](ghidra-functions.csv),
+  while `0x805B` has no row there at all and takes the name from the sdas8051
+  reassembly match recorded in [`ghidra/reassembly.csv`](../ghidra/reassembly.csv),
+  which `decompiled/index.csv` gives the source of as `call-target`. So which
+  file a rename has to be made in is itself part of what is unestablished, and
+  a rename on the `0x8274` side does mean editing a 1 MB CSV every open agent PR
+  also edits, re-exporting so `index.csv` and the `.c` banners follow, and
+  regenerating `xdata-registers.csv` and `xdata-cluster-names.csv` through
+  `xdata_register_map.py`, all under a gate that recounts them. That is a large
+  shared-file diff for a naming correction, and it is a separate piece of work.
+  **Reported here, not applied.**
 - **Renaming `0x806C`** (`store_byte_through_0a59_into_0600`) and the other
   mid-block entries, for the same reason and the same additional finding: §3
   shows `0x806C` is an instruction inside case `0x00`'s single linear block, not
