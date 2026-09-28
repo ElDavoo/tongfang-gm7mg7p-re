@@ -63,7 +63,7 @@ void dispatch_on_state_07d0(byte param_1,byte param_2,char param_3,byte param_4,
       DAT_EXTMEM_07d3 = bVar2 & param_4;
       sVar6 = 2000;
       DAT_EXTMEM_07d2 = param_5;
-      FUN_CODE_9965(DAT_EXTMEM_07d0);
+      add_a_times_0c_to_16bit_r1r2(DAT_EXTMEM_07d0);
       store_a_to_r2();
       read_xdata_byte_to_r7((char *)(sVar6 + 1));
       param_1 = 0;

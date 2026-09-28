@@ -42,7 +42,7 @@ void store_07d8_and_dispatch_07da(char param_1,undefined1 param_2,byte param_3,b
     nop();
     DAT_EXTMEM_07de = 0;
     bVar2 = DAT_EXTMEM_07d8;
-    FUN_CODE_f775();
+    write_r7_to_xdata_07d9();
     pbVar5 = (byte *)0x827;
     bVar3 = write4_inline_args();
     nop();
@@ -70,7 +70,7 @@ void store_07d8_and_dispatch_07da(char param_1,undefined1 param_2,byte param_3,b
     if (param_1 == '\0') break;
     param_4 = param_4 | param_3;
   }
-  FUN_CODE_d435(1,param_4);
+  gate_0827_against_1388_then_set_0ffd4_bit0(1,param_4);
   return;
 }
 

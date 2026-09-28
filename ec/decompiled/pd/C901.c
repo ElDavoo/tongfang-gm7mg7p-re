@@ -24,22 +24,22 @@ void dispatch_on_r3_then_add_product_to_0699(char param_1,char param_2,undefined
   if (param_1 == '\x05') {
     set_b_67_dptr_066e(param_3);
                     /* WARNING: Subroutine does not return */
-    add_full_product_to_dptr();
+    call_10bc();
   }
   if (param_1 == '\v') {
     store_then_clear_0817_and_add_r6_times_0x67(param_3);
   }
   else if (param_1 == '\x01') {
                     /* WARNING: Subroutine does not return */
-    add_full_product_to_dptr(0x675,0x67,param_3);
+    call_10bc(0x675,0x67,param_3);
   }
   if (DAT_EXTMEM_0815 == '\0') {
     read_xdata_to_r7_set_dptr_066c();
                     /* WARNING: Subroutine does not return */
-    add_full_product_to_dptr();
+    call_10bc();
   }
                     /* WARNING: Subroutine does not return */
-  add_full_product_to_dptr(0x699,0x67,DAT_EXTMEM_0814);
+  call_10bc(0x699,0x67,DAT_EXTMEM_0814);
 }
 
 

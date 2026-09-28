@@ -47,7 +47,7 @@ void and_16bit_fields_write_07d2_07d3
     DAT_EXTMEM_07d3 = bVar2 & bVar3;
     sVar5 = 2000;
     DAT_EXTMEM_07d2 = param_6;
-    FUN_CODE_9965(DAT_EXTMEM_07d0);
+    add_a_times_0c_to_16bit_r1r2(DAT_EXTMEM_07d0);
     store_a_to_r2();
     read_xdata_byte_to_r7((char *)(sVar5 + 1));
     param_2 = 0;

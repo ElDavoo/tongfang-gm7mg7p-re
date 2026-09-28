@@ -55,9 +55,9 @@ Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
 - `exported functions` — 2714
-- `annotated function rows` — 1914
-- `rows the index marks annotated` — 1940
-- `unresolved rows` — 160
+- `annotated function rows` — 1951
+- `rows the index marks annotated` — 1972
+- `unresolved rows` — 173
 
 By program, as exported minus annotated minus the rest:
 
@@ -65,7 +65,7 @@ By program, as exported minus annotated minus the rest:
 |---|---|---|---|
 | `bank0` | 750 | 697 | 53 (7%) |
 | `bank1` | 676 | 605 | 71 (11%) |
-| `pd` | 535 | 503 | 32 (6%) |
+| `pd` | 535 | 535 | 0 (0%) |
 | `common` | 753 | 135 | 618 (82%) |
 
 **The common area is the finding.** It is 28% of the export by row count and
@@ -78,38 +78,47 @@ interrupt entry, which is what §3 is. The tranche is
 block that issue #574 owns, which is where the rest of the 656 was.
 
 **The three counts disagree, and the difference is measured rather than
-smoothed.** `index.csv` marks 1940 rows `annotated=yes` and the CSV holds 1914
-rows: a gap of 26. Both sides are enumerated. 26 index rows are marked
+smoothed.** `index.csv` marks 1972 rows `annotated=yes` and the CSV holds 1951
+rows: a gap of 21. Both sides are enumerated. 21 index rows are marked
 `annotated=yes` with no CSV row at all, and no CSV row is recorded by the index
-as `annotated=no`; 26 − 0 = 26.
+as `annotated=no`; 21 − 0 = 21.
 
-Of the 26, 14 carry a name no CSV row has — `caseD_0` at eleven bank1
+Of the 21, 14 carry a name no CSV row has — `caseD_0` at eleven bank1
 addresses, plus `caseD_6`, `caseD_1` and `default` — which is the switch-case
-naming Ghidra applies to a `switch` it framed, not an annotation. The other 12
+naming Ghidra applies to a `switch` it framed, not an annotation. The other 7
 are second copies of a name that does have a CSV row, and each is worth a
 sentence of its own because the copy is a fact about the framing:
 
 - `bank0` `0x031C` and `bank0` `0x805B` repeat `poll_d6c2_then_branch` and
   `index_table_default` from `0xD236` and `0x8274`;
 - `bank1` `0x031C` and `bank1` `0x703A` repeat `0xD236` and `0xE722`;
-- `pd` `0x3497`, `0x998B`, `0x9C1B` and `0x9C4D` all repeat
-  `add_full_product_to_dptr` from `pd` `0x10BC`, which is the one address in
-  that family that is an entry;
-- `pd` `0x0000` repeats `0x0500`;
 - and the three in the common area, `0x0512`, `0x10FA` and `0x1207`, are
   discussed in §3, because all three are visible from the bytes and none is
-  settled. `0x10FA` is the twelfth copy and the newest: it is a bare `ljmp
+  settled. `0x10FA` is the newest of the seven: it is a bare `ljmp
   0x0A74`, and the exporter renamed it when issue #603's tranche named
   `0x0A74` `rearm_timer1_then_set_bit_4_of_internal_41`, so a three-byte thunk
   picked up a name for the routine it jumps to.
 
-**That list of 12 is a pinned figure, not the authority.**
-`python3 ec/tools/second_copy_census.py --check` derives it: 12 of the 26 are a
-body that is nothing but a transfer of control into a function this CSV backs
-under the same name (8 `ljmp`/`ajmp`, 4 `lcall`), and 14 are Ghidra's own
-`switchD_*` namespace, read from the committed `.c`. `--check` fails on a row it
-cannot account for, so a 27th named-without-row function that is neither shape
-turns this red rather than quietly extending the list above.
+**Five `pd` addresses left this list, and what moved them was a row rather than
+a discovery.** `pd` `0x0000` and the four one-instruction `lcall 0x10BC` thunks
+at `0x3497`, `0x998B`, `0x9C1B` and `0x9C4D` were here until issue #489 gave
+each a row of its own, which is what took them out: an address is in this
+population precisely when no CSV row backs it, so adding the row retires it.
+That is a statement about the annotation layer and not about the bytes, and the
+bytes are unchanged — the four thunks are still one `lcall` each, and the naming
+rule above still prefers the stub's own name over its callee's. Issue #489's
+write-up is
+[`docs/findings/pd-unannotated-listings.md`](../../docs/findings/pd-unannotated-listings.md).
+
+**That list of 7 is a pinned figure, not the authority.**
+`python3 ec/tools/second_copy_census.py --check` derives it, and prints its own
+tally over exactly the population this section describes:
+`21 row(s): 7 target-of-a-transfer, 14 ghidra-switch-entry, 0 unexplained`. The
+7 are a body that is nothing but a transfer of control into a function this CSV
+backs under the same name, and the 14 are Ghidra's own `switchD_*` namespace,
+read from the committed `.c`. `--check` fails on a row it cannot account for,
+so a 22nd named-without-row function that is neither shape turns this red
+rather than quietly extending the list above.
 [`docs/findings/named-without-a-row.md`](../../docs/findings/named-without-a-row.md)
 has the per-address reading.
 
@@ -130,7 +139,7 @@ basis rather than the presence of a name.
 > naming rule is in `README.md`, and a check now refuses the collision from
 > either side.
 
-**160 of the 1914 rows are `type: unresolved`, and 279 carry a name that
+**173 of the 1951 rows are `type: unresolved`, and 279 carry a name that
 describes a shape rather than a job.** Each is counted on the whole prefix, not
 a narrower one, and the six prefixes below are the whole scope of that 279 — a
 family that is not a row here is outside the total rather than quietly
@@ -138,13 +147,13 @@ uncounted:
 
 | prefix | rows | of which |
 |---|---|---|
-| `call_` | 88 | |
+| `call_` | 92 | |
 | `load_` | 120 | 83 `load_dptr_`, 37 register and table |
 | `trampoline_` | 29 | |
 | `ret_` | 27 | 19 `ret_only_`, 8 named beside them |
 | `nop_` | 9 | |
 | `seed_` | 6 | |
-| **total** | **279** | |
+| **total** | **283** | |
 
 `--check` recounts that table off `ghidra-functions.csv` and holds every row,
 every breakdown and the total to it, so a tranche that moves a prefix tally
@@ -551,9 +560,10 @@ named functions:
 - `pd` `0x998F` `dbl_a_add_dph_write_dph`
 - `pd` `0x9A1B` `a_r3_b_60_tail_10bc`
 
-The other seven rows of that CSV carry no annotation row of their own: six are
-not exported functions at all, and `pd` `0x998B` is exported but carries only
-the inherited name of `pd` `0x10BC`, which §2 records. And the four *site*
+The other seven rows of that CSV: six are not exported functions at all, and
+`pd` `0x998B` is exported, carried only the inherited name of `pd` `0x10BC` with
+no row of its own — which §2 records — until issue #489 gave it one, named for
+the jump rather than the callee. And the four *site*
 accessors the issue's phrase points at —
 `0x7421`, `0x9DEC`, `0xB5D3` and `0xE9F5` — **are not exported functions at
 all**: each is a code site inside a larger routine that no `lcall` names.
@@ -601,9 +611,9 @@ own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
 - `exported functions` — 2714
-- `annotated function rows` — 1914
-- `rows the index marks annotated` — 1940
-- `unresolved rows` — 160
+- `annotated function rows` — 1951
+- `rows the index marks annotated` — 1972
+- `unresolved rows` — 173
 
 **618 of the 753 common-area functions are unannotated, and that is still the
 largest single block of undecoded firmware in this repository** — larger than

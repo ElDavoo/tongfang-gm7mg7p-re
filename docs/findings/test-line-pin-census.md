@@ -164,7 +164,19 @@ file above them and #93 puts 19 more, so `:4328`→`:4368`, `:4330`→`:4370`,
 `:7329`→`:7369`, `:7550`→`:7590`, `:7611`→`:7651` and `:9371`→`:9411`, each of
 which is byte-identical to the line it replaces — `git show
 b2afcda4:docs/findings.md` at the six originals reads the same text — so the
-verdict against each is re-read rather than carried. The `181` and the `47` the
+verdict against each is re-read rather than carried. **A later pass moves four
+of the six again, and no count with them.** `docs/findings.md`'s §21 CORRECTION
+paragraph at `:6269` is **26** lines and lands above four of these rows and
+below the other two, so `:7369 + 26 = :7395`, `:7590 + 26 = :7616`,
+`:7651 + 26 = :7677` and `:9411 + 26 = :9437`, and `:4368` and `:4370` hold
+because they sit above the insertion. What moves a pin is whether an edit adds
+lines above it, not which section the edit is in, which is the correction the
+tenth note further down this file records. The diff to that file is a single
+hunk of 26 insertions, so each of the four new lines carries the text the line
+it replaces carried, and the four verdicts, the read and shape columns and the
+`106` headcount all come back identical — which is the check a repoint is run
+for. The mapping this paragraph lists stays written where it was measured, per
+[`../findings.md`](../findings.md) §4a-4d. The `181` and the `47` the
 `#1032` × `#1031` paragraph above records, and the `180`/`181` and the `46` the
 `#1033` × `#1030` paragraph below records, stay written where those merges
 measured them, per [`../findings.md`](../findings.md) §4a-4d — each was a
@@ -1167,10 +1179,10 @@ the half this table exists to record.
 | `docs/agent-pipeline.md:409` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries — **re-anchored from `:397` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read**
 | [`../findings.md`](../findings.md):4368 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** — **re-anchored from `:4328` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
 | [`../findings.md`](../findings.md):4370 | `test_ec_watch.py:86-89` | by-name | other | **records another line** — **re-anchored from `:4330` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
-| [`../findings.md`](../findings.md):7369 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** — **re-anchored from `:7329` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
-| [`../findings.md`](../findings.md):7590 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries  — **re-anchored from `:7550` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
-| [`../findings.md`](../findings.md):7651 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries  — **re-anchored from `:7611` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
-| [`../findings.md`](../findings.md):9411 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** — **re-anchored from `:9371` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):7395 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** — **re-anchored from `:7369` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):7616 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries  — **re-anchored from `:7590` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):7677 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries  — **re-anchored from `:7651` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):9437 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** — **re-anchored from `:9411` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |

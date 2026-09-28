@@ -128,29 +128,41 @@ UNASSIGNED = (0x06, 0x07, 0x16, 0x17)
 #     newly-commented listings -- `common,2B6C`, `355E`, `3BDD`, `4368`, `4AFB`,
 #     `5A55` -- are citing rows themselves, because a comment naming a callee
 #     over a listing that transfers to nothing is the predicate.
+#   * issue #489's 37 `pd` rows took it to 96 / 121, by the first of those two
+#     mechanisms again but **not** for the same reason, and the difference is
+#     why this note is here at all. `call_graph.citations()` proposes a
+#     candidate only when the address a comment names still resolves to a row
+#     whose name begins `FUN_` (`call_graph.py:343`), so #489 naming `pd 06EA`,
+#     `39E6` and `E930` stopped the predicate firing for the three pairs whose
+#     callee each is. **No citing comment changed** -- `bank0 D045`, `pd 39E7`
+#     and `bank1 E924` are byte-for-byte what they were, and each is still a
+#     citer in `call-graph-callees.csv`. So these three are *retired, not
+#     answered*: all three were `no-transfer` rows, and the question each asks
+#     is whether the citing listing can reach the address its own comment names,
+#     which naming the callee does not decide. They want their own reading.
 #
 # `docs/findings/citation-gap-scan.md` carries the correction in place.
-EXPECT_ROWS = 99
-EXPECT_PAIRS = 124
+EXPECT_ROWS = 96
+EXPECT_PAIRS = 121
 # The second cut is `common,3459` cited by `common,355E` -- #603's own rank-1
 # tranche row, whose one-`ret` listing is followed by 25 bytes before the next
 # common entry, and whose `ljmp 0x3459` sits at that boundary. It is the
 # zero-gap case the write-up describes, turning out to carry a real transfer.
 EXPECT_CUT = 2
 EXPECT_NOT_CODE = 1
-EXPECT_NO_TRANSFER = 121
-# The issue's premise is the exception: 86 of the 99 citing rows have a
+EXPECT_NO_TRANSFER = 118
+# The issue's premise is the exception: 84 of the 96 citing rows have a
 # zero-byte window, so for most of the population the question is the head of
-# the neighbouring export rather than bytes stranded between two. 110 of the
-# 124 pairs, counting a comment that names three callees three times.
-EXPECT_ZERO_GAP_ROWS = 86
-EXPECT_ZERO_GAP_PAIRS = 110
+# the neighbouring export rather than bytes stranded between two. 108 of the
+# 121 pairs, counting a comment that names three callees three times.
+EXPECT_ZERO_GAP_ROWS = 84
+EXPECT_ZERO_GAP_PAIRS = 108
 # Pairs where the callee's edge list already books a same-scope transfer under a
 # *different* function -- the graph attributing to a neighbour what the comment
 # attaches elsewhere. Up on #603 for the same reason the cut count is: the
 # tranche's rows are `common`, and the six new citers each name callees whose
 # inbound already sits on a neighbour.
-EXPECT_NEIGHBOUR_EDGE = 32
+EXPECT_NEIGHBOUR_EDGE = 31
 EXPECT_COMMON_CITERS = 10
 # How many of the common citers have a zero-byte window. This used to be all of
 # them, and saying so was the point: a common listing abutting the next common

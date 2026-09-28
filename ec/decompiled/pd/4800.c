@@ -51,7 +51,7 @@ char increment_dptr_byte_and_jump_back_to_4408(char *param_1,char *param_2,char 
           call_0faf_0f00_then_jump_0dbc();
           read_xdata_to_r3_set_dptr_0400(1999);
                     /* WARNING: Subroutine does not return */
-          add_full_product_to_dptr();
+          call_10bc();
         }
       }
       param_1 = &DAT_EXTMEM_07cf;

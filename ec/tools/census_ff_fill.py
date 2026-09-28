@@ -3,9 +3,12 @@
 
 `citation_callers.is_fill` answers one question about a committed listing: is
 every one of its instruction lines a `0xFF` first byte? Thirty listings answer
-yes. Twenty-nine now carry an `ec/annotations/ghidra-functions.csv` row saying
-so; one -- `pd,0012` -- is issue #489's, and this tool reports it without
-touching it. The seventeen `common` rows are issue #561's, and the reason they
+yes, and every one of them now carries an `ec/annotations/ghidra-functions.csv`
+row saying so. The last of them to get one was `pd,0012`, issue #489's, and this
+docstring is where that used to be recorded as the single unannotated member of
+the population -- a count of the tree that every annotation had to edit, and
+exactly the kind of figure `--self-test` now asserts as a claim instead. The
+seventeen `common` rows are issue #561's, and the reason they
 existed at all is the question this tool exists to answer: nothing in the
 project put them there but a *byte scan*. All seventeen carry
 `seed_basis=call-target` in `ec/decompiled/index.csv`, so the address is where a
@@ -83,9 +86,18 @@ PRE_EXISTING_FILL_ROWS = (
     ("bank1", "FF63"),
 )
 
-# The one fill listing this issue leaves alone. `seed_basis=annotation`, a
-# different program, and #489's row -- named here so the census can report it
-# as the unannotated remainder rather than the reader having to notice.
+# The one fill listing this census's population had as its unannotated member.
+# `seed_basis=annotation` and a different program, and issue #489's row -- named
+# here because it is the one address in the population whose listing exists for
+# a reason other than a call-target byte scan, so it is the one a reader checking
+# the provenance split below cannot derive from the other 29.
+#
+# **It was the population's one *unannotated* member until #489 annotated it, and
+# the self-test asserted that.** The census is a census, not a check, and a
+# count of how many of its listings have no row is a count of the tree that
+# every annotation has to edit -- so what the self-test holds now is the claim
+# that *every* fill listing carries a row, which is true of the tree and stays
+# true as it grows, rather than the number 29 that it replaced.
 PD_FILL_ROW = ("pd", "0012")
 
 
@@ -514,12 +526,14 @@ def self_test() -> int:
           all(k in annotated for k in PRE_EXISTING_FILL_ROWS),
           "missing " + ", ".join(f"{p},{a}" for p, a in PRE_EXISTING_FILL_ROWS
                                  if (p, a) not in annotated))
-    check("29 of the 30 are annotated, 1 is not",
-          sum(1 for r in rows if (r["program"], r["addr"]) in annotated) == 29,
-          "got %d" % sum(1 for r in rows if (r["program"], r["addr"]) in annotated))
-    check("the one unannotated is pd,0012, issue #489's",
-          [k for k in keys if k not in annotated] == [PD_FILL_ROW],
-          "got " + ", ".join(f"{p},{a}" for p, a in sorted(keys - annotated)))
+    check("every one of the 30 fill listings carries a row",
+          all((r["program"], r["addr"]) in annotated for r in rows),
+          "unannotated: "
+          + ", ".join(f"{p},{a}" for p, a in sorted(keys - annotated)))
+    check("pd,0012 is among them, annotated by #489",
+          PD_FILL_ROW in keys and PD_FILL_ROW in annotated,
+          f"{PD_FILL_ROW[0]},{PD_FILL_ROW[1]} in keys="
+          f"{PD_FILL_ROW in keys}, annotated={PD_FILL_ROW in annotated}")
 
     # The seventeen, their instruction counts, and the band they sit in. The
     # counts are `index.csv`'s `size` re-read out of the listing, so a listing
@@ -602,17 +616,17 @@ def self_test() -> int:
             f.write("; a header and nothing else\n")
         check("refusal: a listing that parses to no instruction is not fill",
               listing_span(empty) is None and not is_fill(empty))
-    check("refusal: the pd row is reported and left unannotated",
-          PD_FILL_ROW in keys and PD_FILL_ROW not in annotated,
+    check("refusal: the pd listing is in the population, not skipped for it",
+          PD_FILL_ROW in keys,
           f"{PD_FILL_ROW[0]},{PD_FILL_ROW[1]} in keys="
-          f"{PD_FILL_ROW in keys}, annotated={PD_FILL_ROW in annotated}")
+          f"{PD_FILL_ROW in keys}")
 
     print()
     if bad:
         print(f"self-test FAILED: {bad} check(s) disagree with the hand "
               "transcriptions above")
         return 1
-    print("self-test passed: 30 fill listings, 29 annotated, the 17 common "
+    print("self-test passed: 30 fill listings, all annotated, the 17 common "
           "rows and their counts, the 0x728F-0x7FFF band, the 28/0/22/6 "
           "provenance split and the three refusals")
     return 0

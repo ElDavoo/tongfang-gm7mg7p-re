@@ -40,7 +40,7 @@ void step_state_07d0_07d1(byte param_1)
       cVar2 = copy_a_to_r5_r4();
       if (cVar2 != '\0') {
                     /* WARNING: Subroutine does not return */
-        add_full_product_to_dptr(0x420,0x60,DAT_EXTMEM_07d0);
+        call_10bc(0x420,0x60,DAT_EXTMEM_07d0);
       }
     }
     puVar4 = &DAT_EXTMEM_07d0;
@@ -84,7 +84,7 @@ LAB_CODE_8695:
   cVar2 = call_f22e_with_07d0();
   if (cVar2 == '\0') {
     bVar1 = DAT_EXTMEM_07d0;
-    FUN_CODE_6673(DAT_EXTMEM_07d0);
+    dispatch_on_07f5_record_after_staging_07d2(DAT_EXTMEM_07d0);
   }
   read_byte_to_r7_base_0408(2000);
   dph_plus_double_a_349b(bVar1);
@@ -97,7 +97,7 @@ LAB_CODE_8695:
     dph_plus_double_a_349b(bVar1);
     call_0faf_0f00_then_jump_0dbc();
                     /* WARNING: Subroutine does not return */
-    add_full_product_to_dptr(0x40c,0x60,DAT_EXTMEM_07d0);
+    call_10bc(0x40c,0x60,DAT_EXTMEM_07d0);
   }
   return;
 }

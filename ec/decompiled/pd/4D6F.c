@@ -102,12 +102,12 @@ LAB_CODE_4dee:
                     /* WARNING: Subroutine does not return */
           puVar4['\x02'] = 0x1e;
           puVar4['\x03'] = 0x90;
-          add_full_product_to_dptr(0x677,0x67,*puVar8);
+          call_10bc(0x677,0x67,*puVar8);
         }
                     /* WARNING: Subroutine does not return */
         puVar4['\x02'] = 0x17;
         puVar4['\x03'] = 0x90;
-        add_full_product_to_dptr(0x677,0x67,*puVar8);
+        call_10bc(0x677,0x67,*puVar8);
       }
 code_c0x4dd2:
                     /* WARNING: Subroutine does not return */
@@ -238,7 +238,7 @@ code_c0x4dd2:
                     /* WARNING: Subroutine does not return */
   puVar5['\x01'] = 0x26;
   puVar5['\x02'] = 0x4b;
-  add_full_product_to_dptr();
+  call_10bc();
 }
 
 

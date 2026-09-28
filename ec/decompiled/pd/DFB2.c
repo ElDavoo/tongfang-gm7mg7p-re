@@ -31,7 +31,7 @@ void store_0x14_at_0810_and_write_0000(undefined1 *param_1,undefined1 param_2)
   set_dptr_0d0e_c1d6(0,0);
   param_1 = param_1 + 2;
   load_xdata_to_r0_r1_r2_or_r3();
-  FUN_CODE_0dc9();
+  mul8_partial_products_accumulate_into_r4r7();
   call_0e54_with_dc_then_reenter_with_26();
   set_dptr_0d0e_c1d6();
   *param_1 = uVar2;

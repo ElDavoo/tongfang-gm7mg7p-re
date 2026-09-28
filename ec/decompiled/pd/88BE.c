@@ -64,7 +64,7 @@ void update_07d6_table_entries(byte param_1)
     uVar8 = 0x8c;
   }
   mul32_accumulate_r4_r7(0x3f,uVar8,uVar2,uVar3);
-  FUN_CODE_06ea();
+  test_r4r5_bit15_then_rrc_40bit_and_negate_32bit();
   write4xdata_from_r4_r7
             (CONCAT11('\t' - (((0xf7 < DAT_EXTMEM_07d6 * '^') << 7) >> 7),DAT_EXTMEM_07d6 * '^' + 8)
             );

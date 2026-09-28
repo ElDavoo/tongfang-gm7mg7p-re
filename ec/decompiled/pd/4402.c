@@ -51,7 +51,7 @@ void run_body_while_07cf_is_zero(void)
         call_0faf_0f00_then_jump_0dbc();
         read_xdata_to_r3_set_dptr_0400(1999);
                     /* WARNING: Subroutine does not return */
-        add_full_product_to_dptr();
+        call_10bc();
       }
     }
     DAT_EXTMEM_07cf = DAT_EXTMEM_07cf + '\x01';

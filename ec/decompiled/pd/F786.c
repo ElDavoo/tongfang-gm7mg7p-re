@@ -15,7 +15,7 @@
 void tailcall_7b14_with_r7_zero(void)
 
 {
-  FUN_CODE_7b14(0);
+  stage_07c9_index_then_dispatch_on_flag_bits(0);
   return;
 }
 

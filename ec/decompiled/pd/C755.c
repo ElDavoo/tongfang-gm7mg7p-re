@@ -28,9 +28,9 @@ void latch_07d2_07d3_then_zero_23_bytes(undefined1 param_1,byte param_2)
   dptr_08fb_plus_5e_times_a(param_2);
   *puVar3 = param_1;
   call_ec36_if_6faf_zero(0);
-  FUN_CODE_b73f(DAT_EXTMEM_07d2);
+  stage_07d6_index_and_store_args_at_07dc(DAT_EXTMEM_07d2);
   set_0832_through_5874_58ab_ed46_56cb(DAT_EXTMEM_07d2);
-  FUN_CODE_b9a1(DAT_EXTMEM_07d2);
+  stage_07d4_07d5_then_dispatch_and_tail_f035(DAT_EXTMEM_07d2);
   stage_07d4_07d5_then_call_ef59(DAT_EXTMEM_07d3,DAT_EXTMEM_07d2);
   uVar1 = read_07d2_into_r7_r5_zero();
   store_4_zero_bytes_at_0904_plus_0809_times_5e(uVar1);

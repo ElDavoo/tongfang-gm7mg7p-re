@@ -19,6 +19,27 @@ committed export. The one Ghidra run involved is the export-only re-export in
 §9, which was run to confirm that this change leaves the generated tree alone;
 it produced nothing new and is not the source of any claim above.
 
+**Correction, 2026-09-27 (issue #489): five of the addresses below have since
+been given rows, and the population is 21 rather than the 25 this document
+counts.** `pd` `0x0000` and the four `lcall 0x10BC` thunks `0x3497`, `0x998B`,
+`0x9C1B` and `0x9C4D` each carry a `ghidra-functions.csv` row now. An address is
+in this population precisely when no row backs it, so the row is the whole
+reason each of them left — **not** a question answered, and not a change to the
+bytes, which are still the single transfer §2 and §3 read. What the tool derives
+is what the population is:
+`python3 ec/tools/second_copy_census.py --check` prints `21 row(s): 7
+target-of-a-transfer, 14 ghidra-switch-entry, 0 unexplained`, and
+`--self-test` is where that split is pinned. The 25 below was already one short
+of the tool's 26 before that — `common 0x10FA`, which `subsystems.md` §2 counts
+among the second copies, is not in this document's list — and closing that is
+the tool's business, not this paragraph's. **The five are still named below
+where the reading they were found by is set out, and they are named as rows
+now, not as a second copy.** Everything below is otherwise the per-address
+reading as it stood before those five rows, kept because the frames and
+transfers it argues about are unchanged; the rows themselves, and the reading of
+the bytes behind them, are in
+[`pd-unannotated-listings.md`](pd-unannotated-listings.md).
+
 ## 1. The two questions, and only one of them had an answer
 
 Issue #601 asks for each of the seven either a `ghidra-functions.csv` row, or
@@ -38,7 +59,11 @@ backs**, and the address's own bytes say which one.
 ## 2. The seven, read out of the committed listings
 
 Each row is the committed listing's own line, and the target column is checked
-against the firmware and against the target's committed row by the tool.
+against the firmware and against the target's committed row by the tool. The
+last row is the one the correction above is about: `pd` `0x0000` carries a row
+of its own now (`ljmp_0500`, named for the jump rather than the callee), so it
+is no longer a second copy and `--self-test` no longer pins it. The six above it
+are the ones the tool still derives.
 
 | address | bytes | instruction | target | the target's committed row |
 |---|---|---|---|---|
@@ -48,15 +73,18 @@ against the firmware and against the target's committed row by the tool.
 | `bank1` `0x703A` `write_r1_to_tmod_and_jump_8801` | `02 e7 22` | `ljmp 0xE722` | `bank1` `0xE722` | `write_r1_to_tmod_and_jump_8801` |
 | `common` `0x0512` `int0_vector_forwarder_to_052f` | `01 03` | `ajmp 0x0003` | `common` `0x0003` | `int0_vector_forwarder_to_052f` |
 | `common` `0x1207` `bl51_bank_select_0` | `02 11 00` | `ljmp 0x1100` | `common` `0x1100` | `bl51_bank_select_0` (`name_basis: abi-symbol`) |
-| `pd` `0x0000` `c_startup_idata_clear` | `02 05 00` | `ljmp 0x0500` | `pd` `0x0500` | `c_startup_idata_clear` |
+| `pd` `0x0000` `c_startup_idata_clear` — *left this population in #489, which gave it a row* | `02 05 00` | `ljmp 0x0500` | `pd` `0x0500` | `c_startup_idata_clear` |
 
 The same fact is visible from the other side, and it is the one worth having: a
 body that is nothing but a transfer of control decompiles to what the transfer
 reaches, so the stub's `.c` **is** the target's decompilation. Measured over the
-seven, `ec/decompiled/<stub>.c` and `ec/decompiled/<target>.c` are identical
+six the tool still derives, `ec/decompiled/<stub>.c` and
+`ec/decompiled/<target>.c` are identical
 once each file's `//` header and the target's annotation plate are off — the
 plate is the only reason they differ as files, and the target carries it because
-it has a row. `second_copy_census.py --self-test` pins all seven.
+it has a row. `second_copy_census.py --self-test` pins all six, and pins the
+`pd` `0x0000` row the other way round: out of the population, and backed by a
+CSV row.
 
 `common` `0x0512` is a two-hop forwarder and the name is right about the end of
 it: `ajmp 0x0003` reaches the int0 vector slot, and `common 0x0003` is
@@ -71,27 +99,33 @@ same read applied to the whole population finds **four more**: `pd` `0x3497`,
 `0x998B`, `0x9C1B` and `0x9C4D`, each exactly `12 10 bc` — `lcall 0x10BC` — into
 `pd` `0x10BC` `add_full_product_to_dptr`, which is a CSV row's function. A `mov
 B,#0xNN` immediately precedes each, which is the argument setup for the helper
-the call reaches.
+the call reaches. **All four carry a row of their own now** (`call_10bc`, named
+for the call rather than the callee), so like `pd` `0x0000` they are no longer
+second copies — see the correction above.
 
-So the honest figure is 11, not 7, and `ec/annotations/subsystems.md` §2 already
-counted them: its hand-list of "the other 11 are second copies of a name that
-does have a CSV row" is this set. That hand-list is now derived rather than
-transcribed (§7).
+So the honest figure was 11, not 7, and `ec/annotations/subsystems.md` §2 already
+counted them — under the wording that stood when this was written, "the other
+11 are second copies of a name that does have a CSV row". That hand-list is now
+derived rather than transcribed (§7), and issue #489's five rows took it from
+12 to 7.
 
 The 14 that remain are Ghidra's own: the committed `.c` declares each inside a
 `switchD_CODE:<addr>::` namespace — `caseD_0` at eleven bank1 addresses, plus
 `caseD_6`, `caseD_1` and `default`. That is the namespace Ghidra's switch
 analysis creates and the prefix `ExportDecompile.java:339` already keys
 `isPlaceholderName()` on. §18 counted these 14 as automatic; that stands, and
-§4 says what the bytes at them are *not* evidence of.
+§4 says what the bytes at them are *not* evidence of. **These 14 did not move**,
+and that is the point of §4: nothing about them is a fact about a row.
 
 ## 4. What the bytes are not evidence of
 
-Measured over the 25: **23 of them begin with a single `ljmp` or `lcall`.**
+Measured over the 21 the tool now derives, and over the 25 this document
+counts: **19 of the 21 (23 of the 25) begin with a single `ljmp` or `lcall`.**
 Twelve of those reach somewhere real — `bank1 0x8A80` is `ljmp 0x8AA7`, and
 `0x8AA7` is `clear_06f9_bits_0_3_then_call_abee` — while the name at the site is
-still Ghidra's. So a classifier built on "it is a jump" would call 23 of 25
-explained and explain none of the 12 it should not have. The discriminator is
+still Ghidra's. So a classifier built on "it is a jump" would call 19 of 21
+(23 of 25) explained and explain none of the 12 it should not have. The
+discriminator is
 the name *and* the row behind it, and the tool tries them in that order: name
 equality against a row-backed target first, the switch namespace second,
 `unexplained` only after both fail.
@@ -200,7 +234,15 @@ row at `pd 0x10BC`, and the committed project holds that string
 (`grep -c add_full_product_to_dptr` over `~00000002.db/db.1.gbf` finds it), but
 no script here writes a name at a rowless address, so the same exhaustion
 argument applies to them as to the seven. The census answers *what* the name is
-worth; it does not claim to know which tool set it.
+worth; it does not claim to know which tool set it. **Issue #489 answered this
+one for the four, and by answering it changed the export rather than the
+project:** each address now has a row naming the call (`call_10bc`) instead of
+the callee, and `ec/decompiled/pd/3497.c` opens
+`// pd @ 3497   call_10bc   [named]` where it used to open with the callee's
+name. So what is still open is narrower than it was — the string in the
+committed project database is still `add_full_product_to_dptr`, and which tool
+put *that* there, before any row of this repository existed, is untouched by
+adding a row that supersedes it.
 
 **A re-measurement of §18's grep, unchanged.** `index_table_default` and
 `bl51_bank_select_0` are in `~00000000.db/db.1.gbf` and `~00000001.db/db.1.gbf`,
@@ -212,8 +254,11 @@ on grep.
 ## 7. The branch taken, and why the other one was declined
 
 The exemption branch, for all eleven — recorded where the ledger reads it
-(`subsystems.md` §2) and made checkable. A row at a stub address has only two
-possible contents and neither is an improvement:
+(`subsystems.md` §2) and made checkable. **Five of the eleven have since taken a
+row anyway, by issue #489 and on the third reason below rather than this one**;
+the argument here is the one that was declined at the time, and it still
+describes what a row *at one of these addresses* would assert. A row at a stub
+address has only two possible contents and neither is an improvement:
 
 - **Restate the target's name.** At an address whose committed bytes are one
   transfer and nothing else, that asserts a mechanism where the mechanism is the
@@ -277,7 +322,10 @@ python3 ec/tools/grade_name_basis.py --check
 `build_ec_decompile.py --check` is unchanged in its numbers — 25
 named-without-row, 7 applied-but-unflagged, 1,872 rows each backing one index
 row, 1,890 functions named, 0 `annotation_ledger_mismatches()` — and now prints
-the verdict beside each of the 25 and fails on an unexplained one.
+the verdict beside each of the 25 and fails on an unexplained one. **Those are
+the numbers as they stood when this was written; on the current tree the ledger
+is 21 named-without-row, 1,951 rows each backing one index row and 1,972
+functions named, for the five rows the correction above is about.**
 `grade_name_basis.py --check` is a clean no-op, which is the evidence that
 `ghidra-functions.csv` was not disturbed.
 

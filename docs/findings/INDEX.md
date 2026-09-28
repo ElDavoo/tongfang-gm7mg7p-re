@@ -82,6 +82,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-inline-arg-trampoline.md`](pd-inline-arg-trampoline.md) — The PD image's `lcall 0x104D` carries a 4-byte constant inline, deposits it in XDATA, and resumes four bytes on (issue #36)
 - [`pd-only-status-vocabulary.md`](pd-only-status-vocabulary.md) — `0x07CC` is re-graded, and the rule that grades it is now written down and
 - [`pd-sites-address-range.md`](pd-sites-address-range.md) — `--sites` refuses an address outside the PD region, and the arithmetic the census's row 10 declined to guard becomes a statement about the code
+- [`pd-unannotated-listings.md`](pd-unannotated-listings.md) — Every `pd` listing now has a row, and #471's figures did not move (issue #489)
 - [`pin-table-by-cited-file.md`](pin-table-by-cited-file.md) — Which test file the corpus's pins name, and the indexed suites none of them does (issue #941)
 - [`pin-table-row-reconciliation.md`](pin-table-row-reconciliation.md) — The per-pin table's four mechanical columns are now reconciled against the run, and its fifth is not read (issue #942)
 - [`power-profile-gm7mg7p.md`](power-profile-gm7mg7p.md) — A `0x0751`-only platform profile would report a new mode and not move the machine's power limits
