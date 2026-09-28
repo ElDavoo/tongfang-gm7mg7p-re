@@ -625,7 +625,12 @@ class TheCommittedTree(unittest.TestCase):
         # nothing else.** Its write-up names the path rather than a bare module
         # name, so `by-path` takes the one, `74 -> 75`, and `by-name`,
         # `by-beside` and the declined `-` are the control.
-        self.assertEqual(read, {census.BY_PATH: 75, census.BY_NAME: 19,
+        # **+1 again for #491, and this one is the `by-name` column rather than
+        # `by-path`**: its write-up cites a bare module name,
+        # `test_grade_0751_isolation.py`, rather than a path, so `by-name` takes
+        # the one, `19 -> 20`, and `by-path`, `by-beside` and the declined `-`
+        # are the control.
+        self.assertEqual(read, {census.BY_PATH: 75, census.BY_NAME: 20,
                                 census.BY_BESIDE: 2, "-": 33})
         # The shape split is re-derived rather than lowered, twice. #962 adds a
         # class to `test_xdata_cluster_names.py` and corrects a docstring above
@@ -674,9 +679,14 @@ class TheCommittedTree(unittest.TestCase):
         # cited is a step in a hand-built workflow fixture rather than an
         # assertion, a `def test_` header or a comment, so the shape rule reads
         # it as prose. `44 -> 45`, with the three beside it unmoved.
-        self.assertEqual(shape, {census.ASSERTION: 24, census.COMMENT: 22,
-                                 census.BLANK: 5, census.OTHER: 45,
-                                 "-": 33})
+        # And +1 for #491, which is the first `def test_` row this table
+        # carries at all: `test_grade_0751_isolation.py:1118` is a
+        # `def test_a_capture_given_twice_is_refused` header, so the column the
+        # four paragraphs above kept at zero is the one that takes the one.
+        # The other four are the control.
+        self.assertEqual(shape, {census.DEF_TEST: 1, census.ASSERTION: 24,
+                                 census.COMMENT: 22, census.BLANK: 5,
+                                 census.OTHER: 45, "-": 33})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing

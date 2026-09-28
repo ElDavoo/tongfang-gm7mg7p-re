@@ -38,6 +38,27 @@ own docstring warns against. Two marks close together are reported as two
 windows, and their distance is printed so a reader can see that they were close
 and judge for itself whether they were one action.
 
+**A capture is named once.** §3 runs one watcher on one console, so a file
+listed twice is one console and not two, and `main` refuses it -- by resolved
+path, so `x.csv`, `./x.csv` and a symlink to it are one repeat -- before it
+reads anything. The rule is `grade_0751_isolation.distinct_captures`, the same
+one the 0751 grader ships and tests, because the premise under it is the same
+one: one file is one console however many times it is listed. What a repeat
+costs is *not* the same, which is why this is not that grader's message copied.
+There, a file agreeing with itself satisfies every cross-console check, so a
+fat-fingered duplicate reads as a passing comparison. Here nothing is compared
+between files at all: a repeat puts one console's marks in twice as many
+windows, the duplicates landing on one timestamp, so half the windows are
+zero-length, empty, and print `????` for every address; every change row prints
+twice and is counted as `2 change rows`; and `report_close_marks` is handed two
+marks 0.0s apart to hand back as a question about the operator's pacing. The
+paragraph above is itself the argument for the rule: marks stay unfused
+*because* there is one console, so one console's marks twice is not two sets of
+action boundaries. Refusing a repeat rather than a second positional outright
+is also what leaves `grade_timer_sweep.py`'s documented "one or more CSVs" alone.
+Both decisions, and what a repeat costs each, are written up in
+docs/findings/grader-repeated-capture.md.
+
 **The ms figure is a sweep, not a clock.** Both timestamps are the sweeps that
 saw the change, so the delta between them is good to about one `--interval`
 (0.25 s by default) and no better. It is printed in milliseconds because §5's
@@ -413,11 +434,48 @@ def main(argv=None):
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("csv", nargs="+",
-                    help="gpu_block_watch.py --csv --mark capture(s)")
+                    help="gpu_block_watch.py --csv --mark capture(s), and "
+                         "never the same file twice -- §3 runs one watcher on "
+                         "one console, so a file listed twice is one console "
+                         "and not two, and its marks would open windows that "
+                         "are empty. By resolved path, so ./x.csv and x.csv "
+                         "are the same repeat")
     args = ap.parse_args(argv)
 
+    # Before the read loop rather than inside it: a report printed over four
+    # windows and then refused is a half-right report, and the operator has to
+    # be told which files they handed in before any of them is read rather than
+    # left to infer it. The same input shape the 0751 grader refuses, for the
+    # same reason and by the same one spelling of the test.
+    paths, repeats = fan.distinct_captures(args.csv)
+    if repeats:
+        for given, first, resolved in repeats:
+            if given == first:
+                print(f"\n{given!r} is given twice, and both times it is "
+                      f"{resolved}.", file=sys.stderr)
+            else:
+                print(f"\n{given!r} and {first!r} are both {resolved}.",
+                      file=sys.stderr)
+        # The consequences named are this grader's own, so the reader is not
+        # sent looking for damage somewhere else -- and the one figure a repeat
+        # does *not* move is named as firmly, because `first_change` takes the
+        # earliest timestamp and rows duplicated at one timestamp collapse.
+        print("A capture given twice is one console and not two, so nothing "
+              "was read: its two marks would have opened four windows, two of "
+              "them zero-length and empty, with all 24 addresses printing as "
+              "`????` because a window that spans no sweep has no level to "
+              "print; every change row would have been counted twice as `2 "
+              "change rows`; and `report_close_marks` would have been handed "
+              "two marks 0.0s apart to hand back as a question about the "
+              "operator's pacing rather than as a duplicate. What a repeat does "
+              "not change is §5's millisecond figure: the first change in a "
+              "block is the earliest timestamp, so rows duplicated at one "
+              "timestamp collapse and the ordering comes out the same. Name "
+              "the capture once.", file=sys.stderr)
+        return 1
+
     marks, changes = [], []
-    for path in args.csv:
+    for path in paths:
         m, c = fan.read_capture(path)
         marks += m
         changes += c

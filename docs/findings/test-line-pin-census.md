@@ -20,7 +20,7 @@ is the standing §4a-4d gives every figure here, and the trees differ: the count
 has been `105`, `106` and `107` at different points, and the paragraphs that
 say `106` and the paragraphs that say `107` are each true of the tree they were
 measured on. **The figures for the tree this file is in now are the ones in the
-transcript under *The measurement*, and they are `129 / 30 / 95 / 71`.** Every
+transcript under *The measurement*, and they are `130 / 31 / 96 / 72`.** Every
 other number in this file is a record of a tree, not a claim about this one.
 
 That is a real weakness in the file's shape rather than a disagreement in its
@@ -52,10 +52,10 @@ census, and the count it starts from.
 
 ```console
 $ python3 ec/tools/census_test_line_pins.py
-129 pin(s) in 30 markdown file(s): 95 distinct spelling(s), 71 distinct resolved target(s)
-  96 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 33 declined
-  0 def test_, 24 assertion, 22 comment, 5 blank, 45 other (of the pins that resolve)
-  read 229 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 75 test file(s) in it
+130 pin(s) in 31 markdown file(s): 96 distinct spelling(s), 72 distinct resolved target(s)
+  97 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 33 declined
+  1 def test_, 24 assertion, 22 comment, 5 blank, 45 other (of the pins that resolve)
+  read 242 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 80 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -67,10 +67,10 @@ and excludes only `.git/`, `vendor/` and `.claude/`, so an **untracked**
 markdown file in a worktree is counted and the figure reads one higher. The
 run above is the committed tree — `git ls-files | xargs cp --parents` into a
 scratch directory, which is `git archive` without the export attributes — and
-that is what makes `229` and `75` the two numbers a reader re-running it gets.
+that is what makes `242` and `80` the two numbers a reader re-running it gets.
 Run in place in a worktree carrying a `.claude-pr/` or any other untracked
-notes, it reads `230`; the difference is the untracked file and nothing else.
-The `75` is `len(suites(REPO))` and moves only when a suite is added.)*
+notes, it reads `243`; the difference is the untracked file and nothing else.
+The `80` is `len(suites(REPO))` and moves only when a suite is added.)*
 
 *(Re-run 2026-09-27 for #739, whose write-up
 [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md) names the
@@ -204,6 +204,54 @@ against 129 records and the reconciled count is `128` placed. `127`→`128` is
 #421's own `provenance-clone-depth-behaviour.md:37` row placing, and not a
 re-registration of the unplaced row below.
 
+**Correction, 2026-09-28, at the `#491` merge: the block above is a run of the
+merged tree, and it is the third measurement in this series where two sides'
+movements compose rather than one superseding the other — after the
+`#778 × #780` one and the `#929` × `#962` × `#794` × `#780` one, both of which
+stand further down this file. **It is the first of the three on axes other than
+the shape split**, which is what makes it a different kind rather than a third
+instance: the two earlier compositions moved the landing shapes and left the
+spelling and target counts alone, and here it is those two that take both sides
+and the shapes that take one. It is re-run rather than differenced, and
+`origin/main` is re-run beside it: this merged tree reads
+**`242`** markdown files and **`80`** test files, `origin/main` reads
+**`241`** and **`80`**, and the step is `241 + 1 = 242` with the test-file count
+unmoved. **The `+1` is #491's own
+[`grader-repeated-capture.md`](grader-repeated-capture.md)**, which cites one
+`test_*.py:NNN` and adds no suite, so it moves the denominator and takes a
+record with it. **The `229` and the `75` the block carried were stale on `main`
+before either side touched it** — `241` and `80` against `229` and `75` is twelve
+markdown files and five suites, every one of them `main`'s own — so the
+re-transcription supersedes those two figures rather than stepping from them,
+and the only part of the move that is this merge's is the `+1` above.
+
+**Above the denominators the two sides' steps are of two different kinds, and
+the two axes that take both are the ones the earlier compositions left alone.**
+`origin/main` reads `129` pins in `30`
+citing files, `95` spellings, `71` targets, `96` resolves against `33` declined
+and the `0/24/22/5/45` split, and this tree reads **`130` / `31` / `96` / `72` /
+`97` / `33`** and the **`1/24/22/5/45`** split. The `+1` record, the `+1` file,
+the `+1` resolve and the `0 -> 1` on `def test_` are #491's alone, because its
+write-up is a new file carrying exactly one pin, which resolves, lands on a
+`def test_` header, and names a module the tree already cited. **The spelling
+and the target take one each from *both* sides**, and that is the composition:
+`main`'s `#485` split one line that two write-ups cited into two, and #491's
+record is a name in a third file, so the two add rather than overlap — `94 + 1 +
+1 = 96` and `70 + 1 + 1 = 72`. Records, files, both verdict counts and the whole
+shape split take one side's step only, because #485 re-anchored pins without
+adding a record and #491 added a record without re-anchoring one. `33` declined,
+`24` assertions, `22` comments, `5` blanks and `45` other are unmoved by either.
+**The `130`-row table below reconciles against 130 records**, and
+`check_pin_table_rows.py` reads
+**`130` rows, `130` records, `128` placed, `0` `read-differs`, `0`
+`shape-differs`, `0` `path-differs` and `0` `duplicate-key`** on this tree. The
+**two** `unplaced-row`/`row-without-record` pairs it also reports are the two the
+paragraphs below name, and **both belong to `main`**: `origin/main` reads `129`
+rows, `129` records, `127` placed and the same two pairs, so #491's row places
+and the count goes `127` → `128` while the number of unplaced rows is unmoved.
+`test_the_committed_table_places_something`, which pins `128 placed` and was red
+on `main` against its own tree, comes back green here for that reason alone.
+
 **Two rows in the table below are re-registered, and neither is corrected.**
 `main`'s `#489` correction paragraph put 26 lines into `../findings.md` at
 `:6269` and #904 put 24 more at `:8433`, both above the `§62` row, so
@@ -236,6 +284,26 @@ left as `main` has it, and the row records the omission above** rather than the
 row being quietly repaired. Fixing it is a one-cell re-registration plus the
 `128`→`129` beside it, and it belongs to whichever change moves
 `docs/agent-pipeline.md` next.
+
+**A second row is left unplaced beside it, of the same shape and the same
+ownership, and it is named here because the run reports two and this paragraph
+above said one.** `docs/findings/0751-append-unchecked-marks.md:221` is the
+citing line the table registers; the run reads the pin at **`:246`**, for the
+same reason the first pair has it — the sentence the pin belongs to opens
+twenty-five lines above the spelling. It is `main`'s rather than this merge's:
+`origin/main` reads the same `unplaced-row`/`row-without-record` pair, and
+`main` has not touched
+[`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) since, so
+nothing here moves it. **The pin itself is not defective** — the row's verdict
+cell is a reading and this census does not make readings — so what is recorded
+is the mechanical fact and not a claim about the cited line. The one-cell
+re-registration is the same repair as the first, and it belongs to whichever
+change next edits that file; **it is left as `main` has it** for the reason the
+paragraph above gives. With both pairs recorded, the two figures
+`test_the_committed_table_places_something` and
+`test_every_class_is_zero_on_the_committed_tree` turn on are `128` placed of
+`130` and `2`/`2` rather than zero — the latter is red on `origin/main` for the
+same two rows and is not made red by anything in this file.
 
 The reasoning behind each figure above — which re-measurement was run against
 which tree, and the `xdata_moved_ranks.py` and `INDEX.md` counts beside them —
@@ -1331,6 +1399,7 @@ the half this table exists to record.
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):190 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | comment | **records another line** |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):194 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):202 | `test_xdata_cluster_names.py:307` | by-name | comment | **records another line** |
+| [`grader-repeated-capture.md`](grader-repeated-capture.md):114 | `test_grade_0751_isolation.py:1118-1163` | by-name | def test_ | carries — **a new record rather than a re-registration: no line moved here, the write-up is new and this is its one pin. `:1118` reads `def test_a_capture_given_twice_is_refused(self):` and the range it opens is the case the citing sentence names — the grader refusing a repeated capture — so the shape is a `def test_` header and the verdict is read against it rather than carried** |
 | [`history-checkout-claims.md`](history-checkout-claims.md):330 | `ec/tools/test_measure_index_repair_visibility.py:373-391` | by-path | other | carries — re-anchored from `:327` by the tool's current run on 2026-09-27; the verdict is the reading recorded against the old line and has not been re-read. **The cell previously held 338 words tracing this one row's citing line across four merges** — `:262` → `:278` → `:291` → `:314` → `:327` → `:330`, each step measured on a different tree because a different merge's correction sat above the pin. That arithmetic is in this file's git log. It is a log of line numbers, and it is worth exactly one sentence here: the row is re-anchored and it carries
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):71 | `ec/tools/test_disasm8051.py:52` | — | — | **declined** (fenced) |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):228 | `test_disasm8051.py:52` | by-name | comment | carries  — **re-anchored from `:169` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read**

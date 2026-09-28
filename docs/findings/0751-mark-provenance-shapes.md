@@ -101,13 +101,13 @@ remembered to update:
      ec/tools/grade_0751_isolation.py:1064  if addr == "MARK":
      ec/tools/grade_0751_isolation.py:1086  if len(row) > 1 and row[1] == "MARK":
      ec/tools/grade_0751_isolation.py:1121  if addr == "MARK":
-     ec/tools/grade_timer_sweep.py:138  if r[1] == "MARK":
+     ec/tools/grade_timer_sweep.py:153  if r[1] == "MARK":
      windows/tools/test_manual_fan_ctrl_probe.py:508  if len(r) == 4 and r[1] == "MARK"]
    6 call(s) of the grader's readers, none of which writes the literal:
      ec/tools/check_capture_claims.py:514  index[WATCH + "/" + name] = read_capture(os.path.join(REPO, WATCH, name))
      ec/tools/grade_0751_isolation.py:2990  m, c = read_capture(path)
      ec/tools/grade_0751_isolation.py:2999  rows = read_early_exits(path)
-     ec/tools/grade_gpu_door.py:421  m, c = fan.read_capture(path)
+     ec/tools/grade_gpu_door.py:479  m, c = fan.read_capture(path)
      windows/tools/manual_fan_ctrl_probe.py:701  marks, changes = grader.read_capture(str(path))
      windows/tools/manual_fan_ctrl_probe.py:707  void_marks, void_changes = grader.read_capture(str(void_path))
    48 further call(s) inside `test_*.py` suites, counted and not listed.
@@ -142,7 +142,7 @@ above cannot see it. Six call sites of the grader's readers do not:
      ec/tools/check_capture_claims.py:514  index[WATCH + "/" + name] = read_capture(os.path.join(REPO, WATCH, name))
      ec/tools/grade_0751_isolation.py:2990  m, c = read_capture(path)
      ec/tools/grade_0751_isolation.py:2999  rows = read_early_exits(path)
-     ec/tools/grade_gpu_door.py:421  m, c = fan.read_capture(path)
+     ec/tools/grade_gpu_door.py:479  m, c = fan.read_capture(path)
      windows/tools/manual_fan_ctrl_probe.py:701  marks, changes = grader.read_capture(str(path))
      windows/tools/manual_fan_ctrl_probe.py:707  void_marks, void_changes = grader.read_capture(str(void_path))
    48 further call(s) inside `test_*.py` suites, counted and not listed.
@@ -212,7 +212,7 @@ so a writer the scan *does* find cannot drop out unnoticed either.
 ## Five sites the issue does not name
 
 The issue names two other writers and readers: `manual_fan_ctrl_probe.py` and
-`grade_gpu_door.py:421`. Measuring against the scan rather than against that
+`grade_gpu_door.py:479`. Measuring against the scan rather than against that
 list is what turned up the four below that predate this page's second run, and
 all five are in scope for a change to the row's shape.
 
@@ -224,7 +224,7 @@ all five are in scope for a change to the row's shape.
    not one this measurement makes by omission.
 2. **`ec/tools/ec_timer_capture.py:169`, `:204`, `:210`, `:232` — a fourth
    writer at four sites.** The rows are the same shape in files the 0751 grader
-   would also open, and `grade_timer_sweep.py:138` reads them under a different
+   would also open, and `grade_timer_sweep.py:153` reads them under a different
    label convention (`resumed` at `:139`, not §3's forms). The row shape is
    genuinely shared across two procedures, which is the strongest argument
    there is for measuring before changing it.
@@ -342,7 +342,7 @@ those lines would be reading the table upside down.
 
 Per reader. The first three rows and the last are the ones the tool *calls*;
 the middle three it does not, and their cells follow from a citation the tool
-verifies — `grade_gpu_door.py:421` and `check_capture_claims.py:514` call the
+verifies — `grade_gpu_door.py:479` and `check_capture_claims.py:514` call the
 `read_capture` the first row measured, and `grade_0751_isolation.py:2990`
 counts that function's return. That is a checked link rather than a second
 measurement, and it is worth saying so rather than presenting seven rows as
@@ -353,10 +353,10 @@ though seven calls happened.
 | `read_capture` (`:852`) | zero — `:1061` is `len(row) < 4` and `:1063` indexes `row[0..3]`, so the tail is dropped and `Window` is identical | zero — caught by the `row[0].startswith("#")` half of `skippable_row` at `:845` |
 | `existing_mark_labels` (`:896`) | zero — `mark_labels_of` at `:1087` returns `(row[0], row[3] if len(row) > 3 else "")`, identical at 4 or 5 columns | zero, same predicate, called at `:1084` |
 | `read_early_exits` (`:1364`) | zero — `:1406` tests `row[0]`, and a mark row's `row[0]` is a timestamp, which cannot open with a `#` | zero *by the invariant* documented at `grade_0751_isolation.py:428`, not by the skip: the phrase test is a prefix test, and the safety is that a hand annotation does not open with that phrase |
-| `grade_gpu_door.py:421` | zero — it unpacks `read_capture`'s two-tuple, which is what the first row measured | zero, same reason |
+| `grade_gpu_door.py:479` | zero — it unpacks `read_capture`'s two-tuple, which is what the first row measured | zero, same reason |
 | `grade_0751_isolation.py:2990` | zero — `f"{path}: {len(m)} mark(s), {len(c)} change row(s)"` counts and never spells the row | zero, same reason |
 | `check_capture_claims.py:514` | zero — it calls the same `read_capture` over committed captures | zero, same reason |
-| `grade_timer_sweep.py:138` | zero — `r[1] == "MARK"` then `"resumed" in r[3]` at `:139`; both index, `r[4]` is never read | zero — `:115` drops every `#` line before the CSV parse and only three phrase regexes survive it |
+| `grade_timer_sweep.py:153` | zero — `r[1] == "MARK"` then `"resumed" in r[3]` at `:154`; both index, `r[4]` is never read | zero — `:130` drops every `#` line before the CSV parse and only three phrase regexes survive it |
 
 **The preflight returning the same list under both shapes is the real limit of
 this measurement, and it is a limit on the notice, not on the format.** It is
@@ -612,7 +612,7 @@ a line number to a file.
    ok   ec/tools/grade_0751_isolation.py:1121  reader: partition_capture_rows recognising the row -- the fourth site over this shape, and the one the notice partitions its own read with, so a mark row is never hex-read there either
    ok   ec/tools/grade_0751_isolation.py:1086  reader: mark_labels_of recognising the row, existing_mark_labels' own extraction
    ok   ec/tools/grade_0751_isolation.py:986  the partition's docstring quoting that branch, which the scan matches because it is the same literal spelled in prose
-   ok   ec/tools/grade_timer_sweep.py:138  reader: grade_timer_sweep.load recognising the row
+   ok   ec/tools/grade_timer_sweep.py:153  reader: grade_timer_sweep.load recognising the row
    ok   ec/tools/check_capture_encoding.py:166  reader: the encoding check's own mark/change census, written against the same shape and declared against the same codec
    ok   ec/tools/check_capture_encoding.py:243  a constructed row rather than a writer: `check_capture_encoding` builds one to hand a writer that takes a label alone, and the literal scan counts it as a consumer because the `.row(` call is on the next line
    ok   windows/tools/test_manual_fan_ctrl_probe.py:508  reader: the only exact-column-count filter in the tree
@@ -632,10 +632,10 @@ a line number to a file.
    ok   ec/tools/grade_0751_isolation.py:1406  the phrase test: a mark's row[0] is a timestamp
    ok   ec/tools/grade_0751_isolation.py:428  the one machine phrase the `#` namespace spends in this family
    ok   ec/tools/grade_0751_isolation.py:2994  the per-capture census line, which counts rather than spells
-   ok   ec/tools/grade_gpu_door.py:421  the second consumer of read_capture's two-tuple
+   ok   ec/tools/grade_gpu_door.py:479  the second consumer of read_capture's two-tuple
    ok   ec/tools/check_capture_claims.py:514  a third, and the only one that reads every committed capture
-   ok   ec/tools/grade_timer_sweep.py:115  grade_timer_sweep drops every `#` line before the CSV parse
-   ok   ec/tools/grade_timer_sweep.py:139  the one phrase grade_timer_sweep reads a MARK row for
+   ok   ec/tools/grade_timer_sweep.py:130  grade_timer_sweep drops every `#` line before the CSV parse
+   ok   ec/tools/grade_timer_sweep.py:154  the one phrase grade_timer_sweep reads a MARK row for
    ok   windows/tools/ec_watch.py:288  the notice the measurement exists for
    ok   windows/tools/ec_watch.py:361  the notice's one call into the grader's reader
    ok   windows/tools/test_manual_fan_ctrl_probe.py:515  the canary: the only committed assertion of an exact column count

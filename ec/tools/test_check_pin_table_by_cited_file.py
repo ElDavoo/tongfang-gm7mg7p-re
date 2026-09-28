@@ -489,10 +489,14 @@ class TheCommittedTree(unittest.TestCase):
         # a change that adds a record to a file the table already carries
         # reweights that file, where a change that adds one to a *new* file
         # leaves the two rows the concentration argument rests on alone.
+        # **#491 is the second half of that sentence rather than the first**:
+        # its write-up's one pin names `test_grade_0751_isolation.py`, which
+        # this table already carried, so the row takes `23 -> 24` and no file
+        # enters the table -- which is why the other thirteen rows are unmoved.
         self.assertEqual(
             {row[0]: (row[1], row[3]) for row in tool.rows(table)},
             {"ec/tools/test_xdata_cluster_names.py": (33, 10),
-             "ec/tools/test_grade_0751_isolation.py": (23, 16),
+             "ec/tools/test_grade_0751_isolation.py": (24, 16),
              "windows/tools/test_manual_fan_ctrl_probe.py": (11, 3),
              "ec/tools/test_disasm8051.py": (4, 1),
              "windows/tools/test_ec_watch.py": (11, 2),
@@ -563,9 +567,15 @@ class TheCommittedTree(unittest.TestCase):
         # holds at `82`: a pin naming a new file is invisible in the
         # concentration and visible only in the denominator, which is the case
         # #1009's own paragraph describes.
-        self.assertEqual([row[4] for row in cited[:2]], [43, 39])
-        self.assertEqual(cited[0][4] + cited[1][4], 82)
-        self.assertEqual(len(records), 129)
+        # **#491 is the case above, read the other way round.** Its record
+        # names a file the table *does* carry rather than one it does not, so
+        # the second row takes one, `39 -> 40`, and the first row is unmoved
+        # at `43` -- which is the control that says the step is a weight on the
+        # second row and not a shift between the two. The denominator takes it
+        # as well, `129 -> 130`.
+        self.assertEqual([row[4] for row in cited[:2]], [43, 40])
+        self.assertEqual(cited[0][4] + cited[1][4], 83)
+        self.assertEqual(len(records), 130)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
         # Three figures, and each moves by construction the moment a suite

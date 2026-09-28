@@ -6,7 +6,12 @@ Input is one or more CSVs in `ec_watch.py`'s `ts,addr,old,new` format --
 `ec/tools/ec_timer_capture.py` writes them on Linux -- with `#` comment lines
 skipped, except that `ec_timer_capture.py`'s `# interval ... addresses:` and
 `# baseline ...:` lines are read when present, so a byte that never moved is
-still graded against the value it held.
+still graded against the value it held. Several captures are the documented
+shape and `load()` merges their rows into one run, so what is refused is the
+same file named twice rather than a second capture: a repeat doubles every
+change row, which collapses each step interval to 0 and the median step with
+it, and `period / step` then divides by that zero. See
+docs/findings/grader-repeated-capture.md.
 
 What the grading is measured against is the code, and it is re-derivable from
 the committed image (`python3 disasm8051.py ../firmware/GMxMGxx_11.800 --at
@@ -55,6 +60,16 @@ import datetime
 import re
 import statistics
 import sys
+
+# `distinct_captures` is the one spelling of "the same file twice", and it is
+# borrowed rather than copied so the three `nargs="+"` capture graders in this
+# directory cannot disagree about which captures a run has. It is free here for
+# the same reason `grade_gpu_door.py` imports the module: it is stdlib-only, so
+# nothing it pulls in is unavailable offline, and it imports no grader, so the
+# import cannot cycle. The comment is here so the second copy cannot appear by
+# accident -- a copy would be a third rule, and a third rule is the defect this
+# refusal exists to close.
+import grade_0751_isolation as fan
 
 PRE = [0x06C6, 0x06CD, 0x06D1, 0x06D2, 0x06F3, 0x0635, 0x0636, 0x0637,
        0x0638, 0x0639, 0x063A, 0x0890, 0x07F6]
@@ -303,9 +318,40 @@ def grade(paths, out=None):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("csv", nargs="+")
+    ap.add_argument("csv", nargs="+",
+                    help="ec_timer_capture.py capture(s), and never the same "
+                         "file twice -- every file's rows are merged into one "
+                         "run, so a file listed twice doubles them and the "
+                         "step interval collapses to zero. By resolved path, "
+                         "so ./x.csv and x.csv are the same repeat")
     args = ap.parse_args(argv)
-    return grade(args.csv)
+
+    # Before `grade`, so the refusal costs nothing: with the rows doubled every
+    # interval between two of 0x06D6's own steps is 0, the median step prints
+    # as 0.0 ms under the "not resolved" warning, and `period / step` then
+    # divides by that zero. That is a crash on a command line a fat finger
+    # produces, and a crash is not a refusal.
+    paths, repeats = fan.distinct_captures(args.csv)
+    if repeats:
+        for given, first, resolved in repeats:
+            if given == first:
+                print(f"\n{given!r} is given twice, and both times it is "
+                      f"{resolved}.", file=sys.stderr)
+            else:
+                print(f"\n{given!r} and {first!r} are both {resolved}.",
+                      file=sys.stderr)
+        print("A capture given twice is one capture and not two, so nothing "
+              "was read: `load()` merges the rows of every file it is given, "
+              "so one file listed twice would have doubled every change row, "
+              "collapsed each interval between two 0x06D6 steps to 0, printed "
+              "a median step of 0.0 ms under the 'the step is not resolved' "
+              "warning, and then divided by that zero at `period / step` -- a "
+              "traceback, not a number. Several captures are this tool's "
+              "documented shape, so what is refused is one file named twice, "
+              "not a second capture. Name it once.", file=sys.stderr)
+        return 1
+
+    return grade(paths)
 
 
 if __name__ == "__main__":
