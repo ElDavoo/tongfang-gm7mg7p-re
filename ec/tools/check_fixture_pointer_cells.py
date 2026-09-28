@@ -4,17 +4,17 @@
 Issue #780 emptied six `evidence` cells in this fixture's two CSVs rather than
 point them at a listing the real tree does not have, and wrote the six down in
 the fixture's own `README.md` in the same edit. Both halves of that are
-hand-kept and nothing held either. A reader who counts the cells the file's
-own sentence describes finds twenty-three, not six, and the sentence is worded
-so that its "so" presents the six as a count of them -- `CLAUDE.md`'s "assert
-the claim, not the census" one level down. The correction is in
-`docs/findings/fixture-empty-pointer-cells.md`; this is what holds the corrected
-prose true.
+hand-kept and nothing held either. The six are not a count of the cells
+carrying no value -- the run's own tallies print how many that is, and it is
+more -- and the sentence is worded so that its "so" presents the six as a count
+of them: `CLAUDE.md`'s "assert the claim, not the census" one level down. The
+correction is in `docs/findings/fixture-empty-pointer-cells.md`; this is what
+holds the corrected prose true.
 
 **The derivation, and the claim, are different kinds of thing.** Which cells
 carry no value is a function of two committed CSVs and no prose at all. Which
 six of them #780 meant is a record of a decision, and there is no predicate in
-either CSV that separates the six from the other seventeen: the write-up carries
+either CSV that separates the six from the rest of the set: the write-up carries
 the search that established that, over every column of both files, so the next
 reader does not run it again. So the set and the kinds are derived here, the
 addresses stay in the prose, and the three rules below are what hold one to the
@@ -111,14 +111,14 @@ well as emptied without the prose going stale.
     here; that write-up measures it at 2,711 files and 11 tokens.
   * *A column emptied in every cell.* The qualification rule above is what a
     fixture's `evidence` column is read by, and it needs one cell that names a
-    path: the committed fixture's five populated cells are the only reason the
-    other 22 are read at all. Empty every one and the column stops qualifying,
-    its cells become invisible, and the run reaches nothing -- which it says,
-    in the tallies and again as a finding, because the README's claim then has
-    nothing behind it. What it cannot do is notice that a column used to be a
-    pointer column and no longer is; the suite's own scratch corpus is built
-    with a populated cell for the same reason, which is the second time that
-    detail has turned out to be load-bearing.
+    path: the populated cells the committed fixture carries are the only reason
+    its empty ones are read at all. Empty every one and the column stops
+    qualifying, its cells become invisible, and the run reaches nothing --
+    which it says, in the tallies and again as a finding, because the README's
+    claim then has nothing behind it. What it cannot do is notice that a
+    column used to be a pointer column and no longer is; the suite's own
+    scratch corpus is built with a populated cell for the same reason, which is
+    the second time that detail has turned out to be load-bearing.
 
 **Nothing here reads a capture, an EC, or a laptop**, and nothing here reads a
 file outside the fixture: three committed files, two CSVs and the markdown

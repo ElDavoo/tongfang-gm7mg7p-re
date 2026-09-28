@@ -137,7 +137,7 @@ The nearest miss is `seed_basis=annotation`, which covers three of the six
 (`0x0D20`, `0x0071`, `0x10E0`) and misses the other three: `0x0D40` and
 `0xF6A0` are `call-target` rows exactly like the seventeen, and `0x0EA3` is in
 a CSV with no `seed_basis` column at all. `also_in=bank1` is shared with
-thirteen of the seventeen. So **no value in any column of either file puts all
+fifteen of the seventeen. So **no value in any column of either file puts all
 six on one side**, and the six are a record of #780's decision, not a class
 anything derives. The tool keeps them as prose and derives only the set.
 
@@ -276,12 +276,12 @@ sibling issue inheriting a number rather than a rumour.
 - **The declared limit, found by writing this suite.** The qualification rule
   needs one path-shaped cell per pointer column, so a CSV whose every
   `evidence` cell is empty has no pointer column at all and its empties are
-  invisible. The committed fixture's five populated cells are the only reason
-  its other 22 are read. The suite's own scratch corpus is built with a
-  populated cell for the same reason, which is the second time that detail has
-  turned out to be load-bearing; the degenerate case is pinned as red rather
-  than green, because the README's claim then has nothing behind it and the
-  run says so.
+  invisible. The populated cells the committed fixture carries are the only
+  reason its empty ones are read at all. The suite's own scratch corpus is
+  built with a populated cell for the same reason, which is the second time
+  that detail has turned out to be load-bearing; the degenerate case is pinned
+  as red rather than green, because the README's claim then has nothing behind
+  it and the run says so.
 
 ## Left out on purpose
 

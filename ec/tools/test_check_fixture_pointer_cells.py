@@ -63,10 +63,10 @@ GHIDRA_HEADER = "scope,addr,name,signature,type,comment,evidence,basis\n"
 # One row of each CSV whose `evidence` cell carries a value, which is what makes
 # an `evidence` column readable at all: the rule qualifies a column on a cell
 # that names a path, so a CSV whose every `evidence` cell is empty has no
-# pointer column and its empties are invisible. The committed fixture's five
-# populated cells are its own version of this and the only reason its other 22
-# are read. Every scratch CSV below carries one of these, and the degenerate
-# case is pinned on its own in `ThePointerColumnRule`.
+# pointer column and its empties are invisible. The populated cells the
+# committed fixture carries are its own version of this and the only reason its
+# empty ones are read. Every scratch CSV below carries one of these, and the
+# degenerate case is pinned on its own in `ThePointerColumnRule`.
 POPULATED = ("bank0,0EA2,delay_calls_0ee8,42,annotation,yes,yes,delay,"
              "hand-decoded,ec/decompiled/bank0/0EA2.asm,,bank0/0EA2.c\n")
 POPULATED_GHIDRA = ('common,018C,chan_arm_1709,,unresolved,"One arm of a '
