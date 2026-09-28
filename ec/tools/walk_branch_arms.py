@@ -208,7 +208,16 @@ def test_site(d: bytes, region: str, off: int, rt: int, target: int, pd_verified
     site with no branch after it gets None rather than a branch borrowed from
     the next routine. The branch has to be testing the accumulator the site
     just loaded -- otherwise it is somebody else's branch and the two arms
-    would not be the mode-bit arms this tool is about."""
+    would not be the mode-bit arms this tool is about.
+
+    Two bounds keep the scan inside the buffer and they answer different
+    questions: the pre-read test holds the *index* readable, and the fits test
+    holds the whole *instruction* present, which is what the operand reads
+    underneath need. `None` therefore covers three things -- no branch within
+    the budget, a branch that is not a mode-bit test, and a scan that reached
+    an instruction the buffer does not hold whole. The first two are
+    "no branch"; the third is a window that ended early, and
+    docs/findings/test-site-fits-guard.md records what that costs."""
     dptr = None
     loaded_from = None       # xdata address `a` was last read from
     prev = None              # (opcode, immediate) of the instruction before
@@ -218,6 +227,15 @@ def test_site(d: bytes, region: str, off: int, rt: int, target: int, pd_verified
             return None
         op = d[off]
         n = OPCODE_LEN[op]
+        # A different question, and it stays: this asks whether the
+        # *instruction* fits, which `off + n == len(d)` satisfies, so a
+        # one-byte opcode at the very last byte decodes and the scan is
+        # allowed to land exactly on len(d). The test above is what holds the
+        # index; deleting this one would not make the operand reads beneath it
+        # safe -- `d[off + n - 1]` and `d[off + 2]` are the bytes this bounds,
+        # and neither of them is the one the index test covers.
+        if off + n > len(d):
+            return None
         if op == MOV_DPTR:
             dptr = (d[off + 1] << 8) | d[off + 2]
             loaded_from = None

@@ -250,7 +250,7 @@ in the function that walks.
 | # | site | bound | `len(d)`? | reached | measurement | settled by |
 |---|---|---|---|---|---|---|
 | 1 | `disasm8051.py:311` `decode()` | `range(count)`, `if i >= len(d): return` at `:309` | **is** | yes | #679's own fix; `test_disasm8051.py` pins it | existing guard + docstring `:303-306` |
-| 2 | `walk_branch_arms.py:212-213` `test_site()` | `range(SCAN_INSNS)`, `if off < 0 or off >= len(d): return None` at `:210` | **is** | yes | the check is on the line *before* the read | existing guard |
+| 2 | `walk_branch_arms.py:212-213` `test_site()` | `range(SCAN_INSNS)`, `if off < 0 or off >= len(d): return None` at `:210` | **is** | yes | the check is on the line *before* the read | two guards: the pre-read index test, plus a fits test at `:237` — [`test-site-fits-guard.md`](test-site-fits-guard.md) |
 | 3 | `citation_gap_scan.py:234` `walk()` | `while i < len(window)` | **is** | yes | — | existing docstring `:227-229` |
 | 4 | `pd_index_geometry.py:1294` `access_walk()` | `while used < budget`, `if not lo <= i < hi: break` at `:1287`, `hi = min(hi, len(d))` at `:1272` | region, clamped to `len(d)` | yes | — | existing guard |
 | 5 | `pd_index_geometry.py:1385` `reaches_template()` | `range(HELPER_MAX_INSNS)`, `if not lo <= i < hi: return False` at `:1383` | region | yes | — | existing guard |
