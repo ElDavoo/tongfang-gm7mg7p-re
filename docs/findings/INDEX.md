@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-133 write-ups.
+134 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -93,6 +93,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
+- [`test-site-fits-guard.md`](test-site-fits-guard.md) — `test_site()` bounds the index at `:217` and reads three bytes underneath it, and the second bound is now there
 - [`testdata-addr-column-claim.md`](testdata-addr-column-claim.md) — A claim about a capture is columnar, and a claim about a fixture is not (issue #975)
 - [`testdata-index-check.md`](testdata-index-check.md) — `ec/tools/testdata/README.md` is now held to the tree under it (issue #727)
 - [`testdata-index-evidence-column.md`](testdata-index-evidence-column.md) — The fixture CSVs' `evidence` column is resolved against the real tree, and eight cells that named nothing there are empty (issue #780)

@@ -148,7 +148,11 @@ class DptrTests(unittest.TestCase):
 class BoundTests(unittest.TestCase):
     """Every bound has to stop the walk and say so. A bound hit silently is
     the difference between "no arm reaches X" and "the walk stopped before it
-    got to X", and only one of those is a finding."""
+    got to X", and only one of those is a finding.
+
+    The cases at the end bound `test_site()` rather than the walk, and call it
+    directly for the reason the `pd-image` case above does: `walk()` pins the
+    region to `common` *and* descends, and these are about the scan."""
 
     def test_a_self_referential_branch_terminates(self):
         arm = walk(wba.LOOP_FIXTURE, start=wba.LOOP_SITE)
@@ -222,6 +226,41 @@ class BoundTests(unittest.TestCase):
         arm = walk(fixture(bytes([0x12, 0x81, 0x00]), bytes([0x90, 0x07, 0x51, 0xF0, 0x22])))
         self.assertEqual(arm.callees, [0x8100])
         self.assertEqual(arm.writes(), {0x0751})
+
+    def test_a_site_scan_stops_at_an_instruction_the_buffer_does_not_hold_whole(self):
+        # `test_site()`'s index guard covers `d[off]`, and a `mov dptr` is
+        # three bytes: on the last two of a buffer the guard is satisfied and
+        # `d[off + 2]` is not there. Ten one-byte opcodes then a `90 07`, which
+        # is the opcode with one of its two operand bytes, walked at the
+        # opcode -- the same fixture shape the other cases here build.
+        cut = b"\x00" * 10 + bytes([0x90, 0x07])
+        self.assertIsNone(wba.test_site(cut, "common", 10, 10, 0x0751, True))
+
+        # The other half, and the reason the guard is `>` and not `>=`: the
+        # `jnb` ends on the last byte of the buffer, which is a whole
+        # instruction, so it has to decode. An over-bounding guard would
+        # refuse it and lose a real site, which is the quiet way to be wrong
+        # in the other direction.
+        whole = b"\x00" * 10 + bytes([0x90, 0x07, 0x51, 0xE0, 0x30, 0xE7, 0x02])
+        found = wba.test_site(whole, "common", 10, 10, 0x0751, True)
+        self.assertIsNotNone(found)
+        self.assertEqual(len(found["raw"]), wba.OPCODE_LEN[found["raw"][0]])
+        self.assertIn("USER (bit 7)", found["test"])
+
+    def test_a_site_scan_does_not_read_a_mask_past_its_own_operand(self):
+        # The other end of the scan, and the same bound from the other
+        # direction: `anl a,#imm` is the previous instruction of the bank1
+        # `anl ; jnz` shape and its immediate is `d[off + 1]`, so a buffer
+        # ending on the `54` has an index the guard accepts and an operand it
+        # does not hold.
+        cut = bytes([0x90, 0x07, 0x51, 0xE0, 0x54])
+        self.assertIsNone(wba.test_site(cut, "common", 0, 0, 0x0751, True))
+
+        whole = bytes([0x90, 0x07, 0x51, 0xE0, 0x54, 0x80, 0x70, 0x05])
+        found = wba.test_site(whole, "common", 0, 0, 0x0751, True)
+        self.assertIsNotNone(found)
+        self.assertEqual(len(found["raw"]), wba.OPCODE_LEN[found["raw"][0]])
+        self.assertIn("anl a,#0x80", found["test"])
 
 
 class SiteTests(unittest.TestCase):
