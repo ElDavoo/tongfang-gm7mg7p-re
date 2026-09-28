@@ -92,6 +92,28 @@ to it. An **empty** value is neither -- it yields no pointer at all, the same
 limit the first-column rules carry, because a rule invented here would be a
 parser guessing.
 
+**And the annotation CSV, which is a named source rather than a discovered
+one.** The CSVs above are found through a self-indexed directory's tables and
+there are two of them, holding eleven tokens between them.
+`ec/annotations/ghidra-functions.csv` is the one `CLAUDE.md` calls mandatory and
+non-empty, and nothing read it in either direction until this. It is read here
+rather than by a second reader in
+`ec/tools/census_evidence_citations.py`, which is the whole requirement: same
+`evidence_pointers()`, same `;`, same three verdicts, same wording. It is the
+**sixth** source and the first outside `testdata/`, and it is a source of its
+own rather than a sixth direction *over the index*, so it is read in `main()`
+and reported on its own line: `check()`'s `Result` is a statement about one
+testdata tree, and adding a field for a second one would have `Result`'s
+twenty-four positions mean that for every reader of it. A `missing` here fails
+the run, and that is intended -- a cell naming a path nothing holds is a broken
+promise a pull request made, exactly as in the fixture direction, and the value
+of a 0 is that the next row added with a bad path turns it red.
+
+The **reverse** direction over the same column -- every committed `.asm` no
+cell names -- is not here, and is declined for the reason the write-up records:
+it is a census that exits 0 and is printed by `census_evidence_citations.py`
+beside this tool's forward direction over the same file.
+
 **What this does not check, which is as much of the point:**
 
   * *Whether a fixture is what its row says it is.* This is index/tree
@@ -118,11 +140,16 @@ parser guessing.
     table are covered in the other direction, as rows, and a *new* one added
     beside them is not caught until a row names it.
   * *The reverse direction for any of the three sources added later.* A `.py`
-    under `ec/tools/` carrying no `Feeds` row; a committed `.asm` or CSV row
-    carrying no table row in its directory's `README.md`; and a real
-    `ec/decompiled/**` listing that no `evidence` cell names. All three are the
+    under `ec/tools/` carrying no `Feeds` row, and a committed `.asm` or CSV row
+    carrying no table row in its directory's `README.md`. Both are the
     "top-level files with no row" gap above, in the directions added later, and
-    all three are declined for the same reason.
+    both are declined for the same reason. The third clause this bullet used to
+    carry -- a real `ec/decompiled/**` listing that no `evidence` cell names --
+    is no longer declined, and its place is
+    `ec/tools/census_evidence_citations.py`: the annotation CSV is read for the
+    forward direction here, so a second reader was never the answer, and the
+    other way is a census that prints and no gate holds rather than a check,
+    for the reason its docstring gives.
   * *Program/scope identity in the nested CSV lookup.* A row that exists at the
     address resolves even when it says something other than the cell claims.
     The invariant is "the row the index names is in the file it names", and
@@ -139,7 +166,7 @@ parser guessing.
     disk nor reported as unchecked, which is the one place a reader could take
     silence for agreement.
 
-All five tallies print whether or not they found anything, because a run that
+All six tallies print whether or not they found anything, because a run that
 checked nothing and a run that found nothing look the same from the exit code
 alone. There is no floor on any of them, for the reason
 `docs/agent-pipeline.md` records about gates: an expected count turns every
@@ -164,6 +191,14 @@ INDEX = os.path.join(TESTDATA, "README.md")
 # default: the suite's `run_tool()` patches it the way it patches `TESTDATA`,
 # and a default would bind at def-time and make that patch inert.
 REPO = os.path.join(HERE, os.pardir, os.pardir)
+
+# The annotation CSV, and the directory it is named from. Both are relative and
+# both are joined onto `repo` at call time, for the reason the `REPO` global
+# carries: a suite that patches the base to point the widened source at a
+# scratch tree has to reach the scratch tree's `ec/annotations/`, and a path
+# bound at import time would silently keep answering about the committed one.
+ANNOTATIONS_CSV = "ghidra-functions.csv"
+ANNOTATIONS = os.path.join("ec", "annotations")
 
 
 def repo_path(path: str) -> str:
@@ -575,6 +610,31 @@ def evidence_pointers(csvname, directory, repo):
     return Evidence(cells, tokens, missing, unresolved, [])
 
 
+def annotation_evidence(repo=None):
+    """What `ec/annotations/ghidra-functions.csv`'s `evidence` column names.
+
+    The sixth source, and a wrapper over the same `evidence_pointers()` the
+    fixture CSVs go through rather than a reader of its own: the token split, the
+    by-name column read, the three verdicts and the "not checked, not absent"
+    calibration are then one implementation, and a second one is how two tools
+    come to disagree about whether a citation is sound.
+
+    It is a *named* source where the others are discovered, which is the whole
+    of the difference between this call and `nested_index()`'s: the directory
+    here is `ec/annotations/` rather than a self-indexed directory a table
+    happened to name. Nothing discovers the annotation CSV and nothing should --
+    it is the one `CLAUDE.md` calls mandatory, so a run that found it by
+    accident would be a run whose subject changed.
+
+    `repo` is the base both the CSV and its tokens resolve against, defaulted to
+    the module global **at call time** for the reason `check()` gives.
+    """
+    if repo is None:
+        repo = REPO
+    return evidence_pointers(ANNOTATIONS_CSV, os.path.join(repo, ANNOTATIONS),
+                             repo)
+
+
 def nested_index(path, repo):
     """What one self-indexed directory's own README named, and what is not there.
 
@@ -710,6 +770,31 @@ def check(root, repo=None):
                   tokens_read)
 
 
+def report_evidence(missing, unresolved, columnless):
+    """Print one `evidence` column's three finding lists, in the tool's wording.
+
+    Two callers and one wording: the fixture CSVs a self-indexed directory's
+    table named, and the annotation CSV `annotation_evidence()` reads. The
+    finding is the same kind of thing in both -- a cell naming a path the
+    repository does not hold -- and a second spelling of it would be a second
+    claim about the same column, drifting the way every other pair of readers of
+    one has.
+
+    `where` is carried by each finding rather than taken from a caller, because
+    it is the file holding the disagreeing cell and each of the two callers
+    names a different one.
+    """
+    for where, token, note in missing:
+        print(f"{where}: the `evidence` column names `{token}` (read as "
+              f"`{note}`), which is not on disk", file=sys.stderr)
+    for where, token, note in unresolved:
+        print(f"{where}: the `evidence` column names `{token}`, which this tool "
+              f"cannot resolve to a path ({note}) -- not checked, not absent",
+              file=sys.stderr)
+    for where, token, note in columnless:
+        print(f"{where}: {note} -- not checked, not absent", file=sys.stderr)
+
+
 def report(gaps, missing, unresolved, feeds, nested, evidence, columnless):
     """Print each disagreement, and return how many there were.
 
@@ -754,15 +839,7 @@ def report(gaps, missing, unresolved, feeds, nested, evidence, columnless):
     for where, token, note in nested[1]:
         print(f"{where}: the table names `{token}`, which this tool cannot "
               f"resolve ({note}) -- not checked, not absent", file=sys.stderr)
-    for where, token, note in evidence[0]:
-        print(f"{where}: the `evidence` column names `{token}` (read as "
-              f"`{note}`), which is not on disk", file=sys.stderr)
-    for where, token, note in evidence[1]:
-        print(f"{where}: the `evidence` column names `{token}`, which this tool "
-              f"cannot resolve to a path ({note}) -- not checked, not absent",
-              file=sys.stderr)
-    for where, token, note in columnless:
-        print(f"{where}: {note} -- not checked, not absent", file=sys.stderr)
+    report_evidence(evidence[0], evidence[1], columnless)
     total = (len(gaps) + len(missing) + len(feeds[0]) + len(nested[0])
              + len(evidence[0]))
     if total:
@@ -782,13 +859,22 @@ def main() -> int:
                          "(the default, and the gate's entry point)")
     ap.parse_args()
 
+    # The sixth source, read before the five so its findings head the report
+    # rather than sitting under the testdata tree's own summary line. It is
+    # read here rather than in `check()` for the reason the docstring gives, and
+    # it is read unconditionally: a no-argument run is the gate's entry point
+    # and the annotation CSV is the one `CLAUDE.md` calls mandatory, so a flag
+    # would make the one that matters the one a caller has to remember.
+    annotations = annotation_evidence()
+    report_evidence(annotations.missing, annotations.unresolved,
+                    annotations.columnless)
+
     result = check(TESTDATA)
-    if report(result.gaps, result.missing, result.unresolved,
-              (result.feeds_missing, result.feeds_unresolved),
-              (result.nested_missing, result.nested_unresolved),
-              (result.evidence_missing, result.evidence_unresolved),
-              result.evidence_columnless):
-        return 1
+    total = report(result.gaps, result.missing, result.unresolved,
+                   (result.feeds_missing, result.feeds_unresolved),
+                   (result.nested_missing, result.nested_unresolved),
+                   (result.evidence_missing, result.evidence_unresolved),
+                   result.evidence_columnless)
     print(f"{result.directories} testdata/ director"
           f"{'y' if result.directories == 1 else 'ies'}: {result.named} named in "
           f"the index, {result.self_indexed} self-indexed, {len(result.gaps)} gap(s)")
@@ -818,6 +904,26 @@ def main() -> int:
           f"{result.evidence_tokens - len(result.evidence_missing) - len(result.evidence_unresolved)} "
           f"resolved, {len(result.evidence_missing)} missing, "
           f"{len(result.evidence_unresolved)} unresolved")
+    # The annotation CSV's own line, and the labels on it are `annotation …`
+    # rather than bare `evidence …` because the suite parses what a run printed
+    # into one flat dict keyed by label: two lines calling themselves the same
+    # thing would leave whichever came last to answer for both.
+    print(f"ec/annotations/{ANNOTATIONS_CSV}: {annotations.cells} annotation "
+          f"cell(s), {annotations.tokens} annotation path token(s): "
+          f"{annotations.tokens - len(annotations.missing) - len(annotations.unresolved)} "
+          f"resolved, {len(annotations.missing)} missing, "
+          f"{len(annotations.unresolved)} unresolved")
+    if total:
+        return 1
+    if annotations.missing:
+        # Its own total line rather than being folded into the index's. The
+        # index and this column disagree about different files, and a combined
+        # count would send a reader to `ec/tools/testdata/README.md` to fix a
+        # row in `ec/annotations/`.
+        print(f"{len(annotations.missing)} citation(s) in "
+              f"ec/annotations/{ANNOTATIONS_CSV} name a path this repository "
+              f"does not hold", file=sys.stderr)
+        return 1
     return 0
 
 

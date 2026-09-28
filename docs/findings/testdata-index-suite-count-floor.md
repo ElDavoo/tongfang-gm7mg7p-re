@@ -44,7 +44,7 @@ and three lines below it:
 > line pin used to sit on them and the census kept resolving it, but it had
 > stopped carrying the claim, and #780's additions above that point moved it
 > off the shape the census recorded it as. The live successor is
-> `ec/tools/test_check_testdata_index.py:1180-1184`, the docstring of the rule
+> `ec/tools/test_check_testdata_index.py:1189-1193`, the docstring of the rule
 > that replaced both lines, and the census pin now points there — which moves
 > the census one record from `assertion` to `other` and moves nothing else.
 > Per §4a-4d the wrong version is left visible above rather than edited into.
@@ -57,6 +57,29 @@ and three lines below it:
 > census records is still `other` and the census moves by nothing — which is
 > the point of re-measuring rather than assuming: the span moved and the split
 > did not.
+>
+> **Re-pointed again, same shape, same split.** Issue #1004 widened
+> `check_testdata_index.py` to read `ec/annotations/ghidra-functions.csv` and
+> added the sixth source's cases above this one, which took the class down by
+> nine: the pin is `:1189-1193` now. It is a re-point and not a re-measurement
+> of a different claim, and the two are worth telling apart: the *shape* the
+> census records is unmoved (a `class` line reads as prose, as it did before),
+> so `test_census_test_line_pins.py`'s committed split takes nothing and the
+> assertion is red on nothing. Had the pin been left at `:1180-1184` it would
+> have resolved to a blank line, moved one record from `other` to `blank`, and
+> read as a finding about the citation when it is a stale line number — which is
+> the shape of defect this census exists to find.
+>
+> This paragraph is a second movement in the same file, and there is one pin
+> below it: the `ec/tools/test_check_site_census.py` citation whose target is
+> its line `:449` was at `:166` and is `:187` now, for the twenty-one lines
+> above it. Its line's text is byte-identical, so its verdict is carried rather
+> than re-read, and `test-line-pin-census.md`'s table follows it. Re-pointing
+> both together is the point of doing it in one edit: a re-point that fixes the
+> pin it noticed and leaves the one it did not is how a table ends up describing
+> two different trees. (The target is spelled in two pieces on purpose — a
+> `test_*.py:NNN` written the ordinary way is a *new* pin, and adding one while
+> re-pointing another is how a repoint quietly becomes a second edit.)
 
 **What that costs.** The event is a new fixture directory arriving. The correct
 response to it — add `ec/tools/testdata/0751-isolation-run-<case>/` and a row
