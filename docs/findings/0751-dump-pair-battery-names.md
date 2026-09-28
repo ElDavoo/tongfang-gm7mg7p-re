@@ -152,11 +152,11 @@ assembled readings go on lines **under** it. A name or a `0x0438/0x0439` partner
 spelled on that line would be read as a differing address and break the check.
 
 That is a decision, not an accident: putting the names beside the addresses is the
-more natural shape, and it would have cost a second edit to a 4,700-line shared
-file to teach the helper the new form. The lines under are also the shape
-`report_window`'s context section already uses — a named line at six spaces and
-its values at eight — so the output reads as something the rest of the report
-already does.
+more natural shape, and it would have cost a second edit to a shared file this
+repository cites by line number to teach the helper the new form. The lines under
+are also the shape `report_window`'s context section already uses — a named line
+at six spaces and its values at eight — so the output reads as something the rest
+of the report already does.
 
 `differing_addresses()` is unchanged, and the half-edit property was checked by
 hand: editing the CSV alone (moving the row to `0x0439`) fails two cases, editing
