@@ -1344,7 +1344,7 @@ the half this table exists to record.
 | [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):475 | `ec/tools/test_xdata_cluster_names.py:363-378` | by-path | other | **records another line** |
 | [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md):87 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):20 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | other | **does not carry** — this merge's shift moved the case it names to `:381` |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):131 | `ec/tools/test_xdata_cluster_names.py:799` | by-path | comment | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):131 | `ec/tools/test_xdata_cluster_names.py:799` | by-path | other | carries — **shape re-derived from this tree's run, and #842's comment edit above the pin moved what `:799` holds; the verdict is the reading recorded before that and has not been re-read** |
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):137 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):138 | `ec/tools/test_xdata_cluster_names.py:498` | by-path | comment | carries |
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):139 | `ec/tools/test_xdata_cluster_names.py:515` | by-path | other | carries |
@@ -1363,10 +1363,10 @@ the half this table exists to record.
 | [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):406 | `test_xdata_cluster_names.py:596` | by-name | other | **does not carry** — this merge's shift moved the `> 300` floor it names to `:630`, and moved this row's own citing line `:389` → `:406` |
 | [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):28 | `ec/tools/test_xdata_cluster_names.py:898` | by-path | comment | carries |
 | [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):132 | `test_xdata_cluster_names.py:149-153` | by-name | other | **does not carry** — this merge's shift moved the case it names to `:183` |
-| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):149 | `test_xdata_cluster_names.py:910-916` | by-name | other | **does not carry** — this merge's shift moved the case it names to `:944` |
+| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):149 | `test_xdata_cluster_names.py:910-916` | by-name | comment | **does not carry** — this merge's shift moved the case it names to `:944`; the shape is re-derived from this tree's run, and #842's comment edit above the pin moved what the span holds, so neither has been re-read |
 | [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md):22 | `ec/tools/test_xdata_cluster_names.py:88` | by-path | other | carries |
-| [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1340 | `../tools/test_xdata_cluster_names.py:54` | beside | comment | **does not carry** |
-| [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2665 | `../tools/test_xdata_cluster_names.py:68-90` | beside | other | carries |
+| [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1362 | `../tools/test_xdata_cluster_names.py:54` | beside | comment | **does not carry** — re-anchored `:1340` → `:1362` by this tree's run, byte-identical at both |
+| [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2687 | `../tools/test_xdata_cluster_names.py:68-90` | beside | other | carries — re-anchored `:2665` → `:2687` by this tree's run, byte-identical at both |
 
 **44 carry, 2 carry on the adjacent line, 19 do not carry, 10 record another line
 on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
