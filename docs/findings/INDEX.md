@@ -147,6 +147,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) — The 94 flipped clusters: both named mechanisms are refuted, and what the working page does show instead (issue #884)
 - [`xdata-green-set.md`](xdata-green-set.md) — The green set is empty, and the four sentences that said otherwise (issue #819)
 - [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md) — The guard-off generation's `cluster_key` distinctness had no case behind it, and the coverage sentences named two of the four censuses (issue #962)
+- [`xdata-most-cited-cluster-count.md`](xdata-most-cited-cluster-count.md) — The most-cited-cluster count, and the claim that does not need one (issue #842)
 - [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) — The 427-row census is stale at `e6c88864` and unreadable at `1fcd5f1e`, and the guard's per-address effect is measured a third time (issue #885)
 - [`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md) — The `cluster_key` collision check covered the moving part of each census, and `keyed_by`'s docstring said it covered all of it (issue #929)
 - [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) — Why the guard-off regeneration's moved-rank count fell from 366 to 315, measured (issue #852)
