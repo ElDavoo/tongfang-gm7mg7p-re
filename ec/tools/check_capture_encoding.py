@@ -26,17 +26,17 @@ it writes nothing into the tree.
 What this does not do:
 
   * *Open a capture on a Windows box, or reach the EC.* Nothing here runs
-    anywhere but this checkout. The claim that a stock Windows Python would
+    anywhere but this checkout, so the claim that a stock Windows Python would
     have written `§` as a single 0xA7 stays a prediction from the documented
-    default; nothing here confirms or refutes it, and the round-trip does not
-    stand in for having done so.
+    default -- the round-trip does not stand in for having done so.
   * *Check that a writer class declares the codec*, only that it puts the
-    declared bytes on disk. The declarations themselves are in the diff, and
-    `grep` reads them; what this checks is the consequence.
+    declared bytes on disk; `grep` reads the declarations, this the consequence.
   * *Depend on `measure_mark_provenance.py`.* That tool's citation check
     crashes on a tuple of the wrong length (`:601`) and is red on `main` for
     reasons that have nothing to do with encoding, so nothing here imports it
     -- a measurement that cannot run is not a control.
+  * *Prove its own exit code is reachable* for the corpus half: its three
+    are cases in `test_check_capture_encoding.py`; the writer's two are not.
 """
 
 import argparse
@@ -185,14 +185,14 @@ def _decodes(raw, encoding):
         return False
 
 
-def walk_captures():
-    """(path, byte count, BOM, high byte, decodes, marks, changes, agrees).
-
+def walk_captures(roots=ROOTS):
+    """(path, byte count, BOM, high byte, decodes, marks, changes, agrees),
+    one per capture under `roots` -- `ROOTS` unless a caller says else.
     `agrees` is the load-bearing column: the declared read and the locale-
     default read, compared on what came out of them. A file that both readers
     accept and both agree on is a file the declaration changed nothing about.
     """
-    for root in ROOTS:
+    for root in roots:
         for base, _, names in os.walk(root):
             for name in sorted(names):
                 if not name.endswith(".csv"):
@@ -212,7 +212,7 @@ def walk_captures():
                     # file this cannot compare is a gap in the check.
                     declared = inherited = None
                     agree = False
-                yield (os.path.relpath(path, REPO), len(raw), bom, high,
+                yield (_shown(path), len(raw), bom, high,
                        decodes, declared, inherited, agree)
 
 
@@ -248,6 +248,22 @@ def round_trip(path, cls, tmp):
     finally:
         sink.close()
     return open(os.path.join(tmp, f"{cls}.csv"), "rb").read()
+
+
+def _shown(path):
+    """The path a problem should name: repo-relative if the file is in it.
+
+    `os.path.relpath` against `REPO` unconditionally would hand a `--root` run
+    a `../../../../../tmp/...` chain for a file that has a perfectly good name,
+    and a report nobody can paste into an editor is a report nobody opens.
+    `REPO` is compared resolved because it is built with two `..` in it and the
+    test below is a string one.
+    """
+    repo = os.path.abspath(REPO)
+    full = os.path.abspath(path)
+    if full.startswith(repo + os.sep):
+        return os.path.relpath(full, repo)
+    return path
 
 
 def report(captures, writers):
@@ -300,7 +316,7 @@ def report(captures, writers):
               f"any other codec would have broken.")
 
     print("\n== a § mark through each writer class ==\n")
-    for path, cls in WRITERS:
+    for path, cls in writers:
         with tempfile.TemporaryDirectory() as tmp:
             raw = round_trip(path, cls, tmp)
         try:
@@ -320,18 +336,21 @@ def report(captures, writers):
     return problems
 
 
-def main() -> int:
+def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--quiet", action="store_true",
                     help="print only the problems, not the per-file table")
-    args = ap.parse_args()
+    ap.add_argument("--root", action="append", metavar="DIR",
+                    help="walk this directory instead of the two committed "
+                         "corpora; repeatable")
+    args = ap.parse_args(argv)
 
     if args.quiet:
         out = sys.stdout
         sys.stdout = io.StringIO()
     try:
-        problems = report(list(walk_captures()), WRITERS)
+        problems = report(list(walk_captures(args.root or ROOTS)), WRITERS)
     finally:
         if args.quiet:
             sys.stdout = out
