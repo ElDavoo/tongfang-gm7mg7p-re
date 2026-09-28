@@ -218,6 +218,16 @@ about, and the token now says what it always meant more often. A sixth token
 would split one event in two. `--terminator-column`'s help text still reads
 "which of the **five** `walk_why()` terminators", and it is still true.
 
+Measured the way that census measured its four rows — `walk()` driven from all
+262144 offsets of the image, both guards, §9 step 9b — the token's population
+went from that census's own **26257** to **31655**, and the
+`max_insns (8) exhausted` row went the other way, **119530** to **117520**.
+The direction is stated rather than left to be inferred, because the opposite
+is the intuitive one: a wider reload guard can only stop a walk *sooner*, so
+it moves walks off the budget and off `flow opcode` (116347 → 112959) and onto
+the reload row, never the reverse. The two deltas are 2010 and 3388, and they
+sum to the 5398 the reload row gained.
+
 The `terminator` column already carried `DPTR reloaded` at these rows; what
 was missing is that the **default** `--csv` output has no `terminator` column,
 so the `access` cell has to be right on its own. That is the whole of why the
@@ -394,6 +404,52 @@ EOF
 #   10414 sites; 197 rows move {'common': 25, 'bank0': 61, 'bank1': 18, 'pd-image': 93}
 #   21 access cells move {'common': 7, 'bank0': 4, 'bank1': 10}
 #   constructions: {'0xF5': 141, '0xD0': 25, '0x8F': 20, '0x8A': 5, '0x8D': 3, '0x75': 1, '0x8C': 1, '0x85': 1}
+
+# 9b. §5's four rows under both guards. This is
+# opcode-len-bounds-census.md's own all-offsets drive, re-run with the guard
+# as a parameter rather than pasted in, so the 26257/119530 the census commits
+# and the 31655/117520 §5 quotes are one script rather than two transcriptions.
+python3 - <<'EOF'
+import collections, sys
+sys.path.insert(0, "ec/tools")
+import trace_xdata_refs as T
+d = open("ec/firmware/GMxMGxx_11.800", "rb").read()
+
+def census(buf, guard):
+    ended = collections.Counter()
+    for start in range(len(buf)):
+        i = start
+        for _ in range(8):
+            n = T.OPCODE_LEN[buf[i]]
+            if i + n > len(buf):
+                ended["instruction does not fit"] += 1; break
+            if buf[i] in T.FLOW_OPCODES:
+                ended["flow opcode"] += 1; break
+            i += n
+            if i + 2 >= len(buf):
+                ended[T.BUFFER_END] += 1; break
+            if guard(buf, i):
+                ended[guard.__name__] += 1; break
+        else:
+            ended[T.budget_end(8)] += 1
+    return ended
+
+def before(buf, i):
+    """The census's `d[i] == MOV_DPTR` disjunct, the guard as it was."""
+    return buf[i] == T.MOV_DPTR
+before.__name__ = "d[i] == MOV_DPTR -- the DPTR test"
+
+for guard in (before, T.is_dptr_rebuild):
+    ended = census(d, guard)
+    print("walk() driven from all %d offsets, %s:" % (len(d), guard.__name__))
+    for why, n in ended.most_common():
+        print("  %8d  %s" % (n, why))
+    print()
+EOF
+# which prints, verbatim, the census's own four rows under `before` and the
+# widened four under `is_dptr_rebuild`:
+#   119530 max_insns (8) exhausted / 116347 flow opcode / 26257 the DPTR test / 10 end of buffer
+#   117520 max_insns (8) exhausted / 112959 flow opcode / 31655 is_dptr_rebuild / 10 end of buffer
 
 # 10. the suites: this work's own, the census's, and the runner's total
 python3 -m unittest discover -s ec/tools -p test_dptr_rebuild_guard.py

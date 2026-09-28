@@ -3528,8 +3528,25 @@ registers:
       0x03(A&0x7F) at bank1 0xE372 in FUN_CODE_e2d3, and the XDATA address
       named by a CODE table at bank1 0xE4AE in
       stage_1c00_block_from_code_table_indexed_03c4. Read the .asm, not the
-      access column, for this one. It is the destination byte of all three
-      staging routines: 0x0862 is copied into it by stage_1c03_1c02_1c01.
+      access column, for this one.
+      *** CORRECTION 2026-09-28 (issue #517), stated in place: the classifier
+      clause above is now history rather than the sweep's output.
+      trace_xdata_refs.walk()'s reload guard used to test only
+      "mov DPTR,#imm16" and ran past the "mov DPL,A" at bank1 0xE378 and the
+      "mov DPH,R4" / "mov DPL,R3" at 0xE4B2, so the "movx" behind either one
+      was filed as a read of THIS byte -- which is what the clause above
+      worked around. The guard now stops at every construction that replaces
+      DPTR, so trace_xdata_refs.classify over the thirteen 0x1C02 sites
+      returns thirteen "write x1" and no read at all. The 0 read and 13 write
+      in the second sentence of this note are therefore what the sweep now
+      says rather than a reading taken against it, and "read the .asm, not
+      the access column" stands, qualifying the direction totals rather than
+      the classifier's output. Nothing else in this row moves: static_refs,
+      the 1 bank0 / 12 bank1 split, and present-untested are what the sweep
+      confirms. See ec/annotations/xdata-1c3x-consumers.md 4.1 and
+      docs/findings/dptr-rebuild-walk-guard.md. ***
+      It is the destination byte of all three staging routines: 0x0862 is
+      copied into it by stage_1c03_1c02_1c01.
       UNITS NOT DETERMINED. NO CONSUMER IS NAMED by any of the ten methods
       in ec/annotations/xdata-1c3x-consumers.md 7. Per-address table:
       ec/annotations/xdata-1c3x-consumers.md.

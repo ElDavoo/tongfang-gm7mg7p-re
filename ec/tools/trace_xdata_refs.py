@@ -195,15 +195,22 @@ def is_dptr_rebuild(d: bytes, i: int) -> bool:
 # names here, the --terminator-column output and the 119530 that census commits
 # are one measurement in two places rather than two vocabularies for one event.
 #
-# **`DPTR reloaded` is a wider claim than the census's 119530.** That figure
-# counted the `d[i] == MOV_DPTR` disjunct alone, and the guard has since grown
-# to every construction `is_dptr_rebuild()` names, so the same token now fires
-# at offsets the 119530 did not count. The token is unchanged -- it already
-# meant "DPTR reloaded", and the five forms that were missing were reloads the
-# old name was silent about -- so a sixth token would have split one event into
-# two vocabularies, the duplication these names exist to retire. The committed
-# tables re-cut under the wider guard are the census of what that costs;
-# `../../docs/findings/dptr-rebuild-walk-guard.md` carries the figures.
+# **`DPTR reloaded` is a wider claim than the census's own 26257.** That is
+# the `d[i] == MOV_DPTR -- the DPTR test` row of
+# ../../docs/findings/opcode-len-bounds-census.md's drive from all 262144
+# offsets, and the guard has since grown to every construction
+# `is_dptr_rebuild()` names: re-running that same drive puts the token at
+# 31655. The 119530 in the same tally is a *different* row --
+# `max_insns (8) exhausted` -- and it fell, to 117520, as it had to: a wider
+# reload guard can move a walk off the instruction budget, never onto it.
+# §5 and §9 of ../../docs/findings/dptr-rebuild-walk-guard.md carry both pairs
+# and the command that reproduces them.
+#
+# The token is unchanged -- it already meant "DPTR reloaded", and the five
+# forms that were missing were reloads the old name was silent about -- so a
+# sixth token would have split one event into two vocabularies, the duplication
+# these names exist to retire. The committed tables re-cut under the wider
+# guard are the census of what that costs.
 FLOW_END = "flow opcode"
 RELOAD_END = "DPTR reloaded"
 BUFFER_END = "end of buffer"

@@ -873,10 +873,11 @@ class ReCutTests(unittest.TestCase):
         - **no `access` cell moved in any of the six.** That is the claim that
           matters: a re-cut that changed a cell's direction would be putting a
           different finding into a committed table. The two tables whose
-          `access` cells *did* change are deliberately not among the six --
+          cells *did* change are deliberately not among the six --
           they are in `UNCUT`, and the two rows behind them are
           `xdata-1c3x-consumers-sites.csv`'s `0x1C02` and `0x086x-dispatch`-
-          `sites.csv`'s `0x0867` row, corrected against their `.asm` in
+          `sites.csv`'s `0x0867` row, whose `access` and `window` cells
+          respectively changed, corrected against their `.asm` in
           `../../docs/findings/dptr-rebuild-walk-guard.md`.
         """
         d = firmware()

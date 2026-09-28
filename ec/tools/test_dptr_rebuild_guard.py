@@ -347,10 +347,11 @@ class BoundsTests(unittest.TestCase):
         # but not the destination there is nothing to read.
         self.assertFalse(T.is_dptr_rebuild(bytes([0x85, 0x90]), 0))
         # And the one that would be a false positive without the length test:
-        # `85 90 82` truncated to two bytes leaves 0x90 as the *source*, and
-        # a guard that read `d[i+1]` unconditionally would call that a write
-        # to DPL. It is not -- the destination byte is the missing one.
-        self.assertFalse(T.is_dptr_rebuild(bytes([0x85, 0x90]), 0))
+        # `85 82` puts a DPL where a `d[i+1]` read would look for this
+        # opcode's destination, and the byte the destination actually lives
+        # in -- `d[i+2]` -- is the one missing. A guard that read `d[i+1]`
+        # unconditionally would call that a write to DPL. It is not.
+        self.assertFalse(T.is_dptr_rebuild(bytes([0x85, 0x82]), 0))
         self.assertTrue(T.is_dptr_rebuild(bytes([0x85, 0x90, 0x82]), 0))
 
     def test_a_truncated_mov_dptr_imm16_still_counts(self):
@@ -404,7 +405,10 @@ class TerminatorVocabularyTests(unittest.TestCase):
     def test_the_mov_dptr_case_still_reads_the_same(self):
         # The pre-existing behaviour, so a guard that kept only the new
         # constructions would go red here rather than quietly changing what
-        # `opcode-len-bounds-census.md`'s 119530 counted.
+        # `opcode-len-bounds-census.md`'s `d[i] == MOV_DPTR -- the DPTR test`
+        # row counted -- 26257 over the all-offsets drive that page prints,
+        # and the floor this token's population cannot fall below now that the
+        # guard is wider (`dptr-rebuild-walk-guard.md` §5 puts it at 31655).
         self.assertEqual(why(fixture(SITE, NOP, SITE, NOP, NOP, NOP, NOP)),
                          T.RELOAD_END)
 
