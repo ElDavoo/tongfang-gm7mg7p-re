@@ -42,11 +42,12 @@ capture's one row for it (23:03:49). Both `CONSTRUCTED INPUT` headers say what
 that means and only that: the *address* is one that capture recorded and the
 *values* in that row are its own, while every other byte in the file is still
 invented. `0x0439`, the high half, stays `0x00` because that capture has no row
-for it and the fixture has no other source for the byte — which is the same
-treatment `0x044F` has always had beside it. The sweep summary is a different
-window and does carry a `0x0439` row (`0x0439,7,0x36,0x3F`); it is not a source
-for this fixture, and the high half's zero is a property of the bytes written
-by hand.
+for it and the fixture has no other source for the byte — invented on the same
+terms as `0x044F` beside it, whose value this fixture also does not take from
+the capture, though there it is an invented `0x30 -> 0x32` that moves rather
+than a zero in both dumps. The sweep summary is a different window and does
+carry a `0x0439` row (`0x0439,7,0x36,0x3F`); it is not a source for this
+fixture, and the high half's zero is a property of the bytes written by hand.
 
 `0x0402` is **removed** from that fixture's run set rather than kept alongside.
 Keeping it would have kept the defect: a second mover in the bucket, still
@@ -264,3 +265,12 @@ experiment, and the tools for it are already written and unrun.
   test file by number, and then classifying that line, is a coupling this
   repository chose; the write-up that would fix it is about the census rather
   than about any one branch's four re-pointed citations.
+- **`ec/annotations/xdata-0400-045f.md` §8 still says "the one committed
+  capture" and is stale the same way.** Its §8 heading and the sentence above
+  its table both scope the page to one file, where the sweep summary carries
+  `0x0432`–`0x044F` rows of its own (§2 above). Every figure §8 tabulates is
+  from the profile-switch capture and is unaffected; the overstatement is in
+  what the section calls its scope, and correcting a shared file's heading is
+  another branch's conflict to carry, so it is left here rather than edited in
+  place. The report's own docstring is now scoped to the row-level capture for
+  the same reason.

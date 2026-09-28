@@ -2872,8 +2872,8 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None):
     is expected to: the bytes on that page that are a battery's own numbers
     move while a run watches it. §3's fixed CPU load is one thing that would
     move them and is not an established reason for it — the one committed
-    capture of this page is a battery-mode cycle with no load step in it, four
-    of the nine addresses XDATA_NAMES covers moved in it, and
+    row-level capture of this page is a battery-mode cycle with no load step in
+    it, four of the nine addresses XDATA_NAMES covers moved in it, and
     xdata-0400-045f.md §8 names no cause for any of them. Four
     undifferentiated addresses left the operator to go and look them up, and
     split a byte pair across two rows leaves the 16-bit reading an addition
