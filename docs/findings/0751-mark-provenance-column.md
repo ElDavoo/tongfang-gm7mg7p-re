@@ -91,8 +91,8 @@ omission.
 
 `ec/tools/ec_timer_capture.py:177`, `:212`, `:218` and `:240`. A different
 capture family, in files the 0751 grader would also open, read by
-`grade_timer_sweep.py:138` under a different label convention
-(`resumed` at `ec/tools/grade_timer_sweep.py:139`).
+`grade_timer_sweep.py:153` under a different label convention
+(`resumed` at `ec/tools/grade_timer_sweep.py:154`).
 
 That reader indexes `r[1]` and `r[3]` and never `r[4]`, so the cost of the
 column here is zero — which was the measurement's point 2, and the reason to
@@ -232,7 +232,7 @@ rows are unchanged — `ts,addr,old,new`, four fields, as before.
 That is the right trade rather than a compromise, and the reason is that
 every reader in the tree drops the header anyway. `skippable_row` at
 `ec/tools/grade_0751_isolation.py:845` takes it on `row[0] == "ts"`, and so do
-`grade_timer_sweep.py:136` and `check_capture_encoding.py:164` with their own
+`grade_timer_sweep.py:151` and `check_capture_encoding.py:164` with their own
 spelling of the same test. A name the change rows do not use costs none of
 them, and a header that named four would document a five-field mark row
 wrongly, which is the failure this column's whole point is to avoid.

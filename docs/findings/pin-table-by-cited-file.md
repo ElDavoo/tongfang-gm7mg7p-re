@@ -217,7 +217,7 @@ file the census write-up records **finding 6's four pins across two citing
 files** in,
 [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) and
 [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) — the four bullets at
-[`test-line-pin-census.md:1451-1466`](test-line-pin-census.md), and two is what
+[`test-line-pin-census.md:1452-1467`](test-line-pin-census.md), and two is what
 the census itself counts, because that write-up's own per-pin table copies those
 four spellings rather than citing them independently and so is not a third. Its
 roll-up further down puts **findings 6 and 8's six pins in four files**

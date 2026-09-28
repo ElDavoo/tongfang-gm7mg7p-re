@@ -20,6 +20,7 @@ they disagree.
 import contextlib
 import importlib.util
 import io
+import os
 from pathlib import Path
 import re
 import sys
@@ -349,6 +350,72 @@ class ReportTests(unittest.TestCase):
             # would otherwise invite a reader to skip.
             self.assertIn("good to about one `--interval` (0.25 s by default)",
                           flat)
+
+
+class RefusalTests(unittest.TestCase):
+    # One file agreeing with itself is a §3 run that never happened, and this
+    # grader turns it into something that reads like one: two marks become four
+    # windows, the duplicate windows are zero-length and empty, every change
+    # row is counted twice, and `report_close_marks` prints the 0.0s gap as a
+    # question for the reader about the operator's pacing. §5's millisecond
+    # figure is the one thing a repeat does *not* move, so the refusal message
+    # says that too, and a test that only checked the wrong things would let the
+    # stronger claim back in.
+    def test_a_capture_given_twice_is_refused(self):
+        rc, out, err = run(ONE_BLOCK, ONE_BLOCK)
+        self.assertEqual(rc, 1)
+        self.assertIn(f'{ONE_BLOCK!r} is given twice', err)
+        self.assertIn('A capture given twice is one console and not two', err)
+        # Refused before a single mark is read, so there is no report to be
+        # half-right: no per-file counts, no window count, no per-address
+        # lines. Each of those is a different section of the report, so one
+        # being absent does not stand in for the others.
+        for absent in ('mark(s),', 'window(s), one per mark', 'window delta',
+                       '=== §5\'s ten columns ==='):
+            self.assertNotIn(absent, out)
+        # The message names this grader's own damage, and the one figure a
+        # repeat leaves alone, so a reader is not sent looking for the wrong
+        # figure. `first_change` takes the earliest timestamp, so rows
+        # duplicated at one timestamp collapse.
+        for named in ('four windows', '????', '2 change rows', '0.0s apart',
+                      "§5's millisecond figure"):
+            self.assertIn(named, err)
+        # One file is one console however many times it is listed, and that
+        # holds for a single-mark capture as much as for a two-mark one.
+        rc, out, err = run(QUIET, QUIET)
+        self.assertEqual(rc, 1)
+        self.assertIn('is given twice', err)
+        self.assertNotIn('window delta', out)
+
+        # Identity is by resolved path, not by the string: `./x.csv` and
+        # `x.csv` are one file, and so is a symlink to it. Copied into a
+        # temporary directory rather than spelled inside the fixture tree,
+        # which `test_every_door_fixture_is_one_this_suite_runs` holds equal to
+        # the suite's list and must not gain a name.
+        with tempfile.TemporaryDirectory() as tmp:
+            copy = Path(tmp) / Path(ONE_BLOCK).name
+            copy.write_bytes(Path(ONE_BLOCK).read_bytes())
+            dotted = os.path.join(tmp, '.', copy.name)
+            rc, out, err = run(str(copy), dotted)
+            self.assertEqual(rc, 1)
+            # Both spellings, and the one file they are, so the operator can
+            # see which of the two their command line dropped.
+            self.assertIn(f'{dotted!r} and {str(copy)!r}', err)
+            self.assertIn(os.path.realpath(copy), err)
+            self.assertNotIn('window(s), one per mark', out)
+            os.symlink(copy, Path(tmp) / 'linked.csv')
+            rc, out, err = run(str(copy), str(Path(tmp) / 'linked.csv'))
+            self.assertEqual(rc, 1)
+            self.assertIn('linked.csv', err)
+            self.assertIn(os.path.realpath(copy), err)
+            self.assertNotIn('window(s), one per mark', out)
+
+        # And the same command line without the repeat is the graded run it
+        # would have been: the refusal is pinned to the duplicate, not to this
+        # invocation.
+        rc, out, _ = run(ONE_BLOCK)
+        self.assertEqual(rc, 0)
+        self.assertIn('=== 2 window(s), one per mark, none merged ===', out)
 
 
 if __name__ == '__main__':

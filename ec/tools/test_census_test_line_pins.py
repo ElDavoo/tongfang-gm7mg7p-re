@@ -760,11 +760,23 @@ class TheCommittedTree(unittest.TestCase):
         # with `main` the spellings figure reads one above the `96` this change
         # was measured at, because `main` itself reads `95` where its base read
         # `94`: the two are counts of different trees and add.
-        self.assertEqual(len(records), 131)
-        self.assertEqual(len({r[0] for r in records}), 31)
-        self.assertEqual(len({r[2] for r in records}), 97)
+        # **And once more for #491, whose delta is one record and is the whole
+        # of it.** Its write-up, `grader-repeated-capture.md`, cites
+        # `test_grade_0751_isolation.py:1118-1163`: one record, in a markdown
+        # file no pin named before, which is why `files` takes one as well as
+        # `records`. It resolves, so `resolves` takes the one and `declined` is
+        # unmoved at `33`; it is a new spelling, so `spellings` takes one; and
+        # it lands on a `def test_` header, so the `def test_` column below
+        # takes the one and `other` is unmoved. On the merge with #774 above
+        # the two compose without overlapping: #774's two records land in
+        # `tools/test_agent_gates_patches.py` and this one in
+        # `test_grade_0751_isolation.py`, so each figure is one side's step on
+        # top of the other's.
+        self.assertEqual(len(records), 132)
+        self.assertEqual(len({r[0] for r in records}), 32)
+        self.assertEqual(len({r[2] for r in records}), 98)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 98, census.OUT_OF_RANGE: 0,
+            census.RESOLVES: 99, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 33})
         # Re-derived for #962, then again here, and not lowered either time.
         # #962's class and a docstring above it grew, so every pin into
@@ -793,8 +805,13 @@ class TheCommittedTree(unittest.TestCase):
         # assertion and not a `def test_` header, so `other` takes it. The three
         # columns beside them are unmoved, which is the check that both records
         # are citations rather than re-anchorings of existing ones.
+        # **#491's record is the one that lands as `def test_`**, against both
+        # of the paragraphs above -- `test_grade_0751_isolation.py:1118` is
+        # literally a `def test_a_capture_given_twice_is_refused` header, so
+        # this axis is the only one it touches: `0 -> 1`, and the four beside
+        # it are unmoved again.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 0, census.ASSERTION: 24, census.COMMENT: 23,
+            census.DEF_TEST: 1, census.ASSERTION: 24, census.COMMENT: 23,
             census.BLANK: 5, census.OTHER: 46})
         # `69 -> 70` is the same #421 record, and it takes this axis for the
         # reason the comment above gives for the split: a record that resolves
@@ -806,9 +823,12 @@ class TheCommittedTree(unittest.TestCase):
         # adds a `(file, line)` pair rather than reweighting one. On the merge
         # with `main` it reads `73`: `main` asserts `71` where this change's
         # base asserted `70`, and the two pairs are added on top of that one.
+        # `73 -> 74` is #491's, and it is the same step rather than a second
+        # kind: its record resolves onto a line no other pin in the tree names,
+        # so it adds the pair rather than reweighting one.
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 73)
+                 if r[3] == census.RESOLVES}), 74)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

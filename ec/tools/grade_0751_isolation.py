@@ -1643,7 +1643,7 @@ def read_early_exits(path):
 
     A second reader rather than a change to `read_capture`, for two
     independent reasons. Its two-tuple is a contract with a second tool --
-    `grade_gpu_door.py` imports this module and unpacks it at `:421` -- and its
+    `grade_gpu_door.py` imports this module and unpacks it at `:479` -- and its
     skip rule is the invariant this has to be added beside rather than
     through: `#` rows are skipped *so that* an operator can annotate a capture
     by hand without breaking this, and every committed fixture under
