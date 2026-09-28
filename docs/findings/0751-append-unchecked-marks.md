@@ -207,7 +207,31 @@ which process wrote each one, which is not in the file.
 `bash tools/run-tests.sh windows/tools` and, from `ec/tools`,
 `python3 -m unittest test_grade_0751_isolation`. Both offline, both on fakes;
 no EC, no driver. `windows/tools/test_ec_watch.py` goes 21 tests to 29 and
-`ec/tools/test_grade_0751_isolation.py` goes 88 to 92.
+`ec/tools/test_grade_0751_isolation.py` goes 88 to 93.
+
+> **Corrected 2026-09-28 (issue #722): the grader step is 88 to 93, and the
+> table below was one row short.** The sentence above read "88 to 92"; the
+> endpoint at the commit it describes, `1e0bc0f2`, is **93** — recorded
+> independently at
+> [`0751-grader-unplaced-window-scope.md`](0751-grader-unplaced-window-scope.md):288-291,
+> and re-measured here by `git show` of each side's
+> `ec/tools/test_grade_0751_isolation.py` over `grep -c "^    def test_"`,
+> which read 88 and 93. The `test_ec_watch.py` half of the same sentence,
+> "21 tests to 29", is a second and separate error, and is **left as written**:
+> the sibling measures it at :292-295 as low at both endpoints, because #549's
+> ten grader-lookup cases landed in between at `0a1fef97`, so that step is 31
+> to 39 — re-measured here too, as 21 → 31 across `0a1fef97` and 31 → 39 across
+> `1e0bc0f2`. Which of the two baselines the sentence meant, 21 or 31, it does
+> not say, so rewriting it would assert a reading the sentence never made; it is
+> recorded here instead. No "the suite has N tests today" figure is written
+> anywhere in this change: a step anchored to a merge does not go stale, and a
+> total anchored to today is the thing every merge then has to correct, which is
+> what [no-append-logs.md](no-append-logs.md) is about.
+
+The rows are the coverage **this change added** — the five grader and eight
+`ec_watch` methods `1e0bc0f2` added, not every method the two classes hold
+today. `grep -c "    def test_"` over a class re-derives what the class holds
+now, which is a different question and moves with later changes.
 
 | test | what it holds |
 |---|---|
@@ -221,6 +245,7 @@ no EC, no driver. `windows/tools/test_ec_watch.py` goes 21 tests to 29 and
 | `test_the_reader_is_the_graders_own` | `load_label_vocab` hands back the grader's function — asserted on `__module__`, the shape `test_manual_fan_ctrl_probe.py:905` uses for `read_capture`, and then on what it does |
 | `ExistingMarkLabelTests.test_the_skip_rule_is_read_captures_and_only_marks_come_back` | `#`, blank and `ts` header skipped; change rows are not marks |
 | `...test_a_row_read_capture_would_raise_on_comes_back_as_a_label` | a hand-edited timestamp and a truncated mark row come back rather than raising, and `read_capture` raises on that same file — the difference is the point |
+| `...test_a_byte_the_encoding_cannot_read_does_not_stop_the_preflight` | a lone `0xE9` raises out of the lazy iteration loop **at startup**, on the file the run was about to append to — the one case here that is a startup death rather than a grading refusal. `errors="replace"` keeps the prefix and both marks (`café`'s `caf�` and the `settled` after it, laziness being what made it a crash rather than a truncated notice), and the grading still refuses the same file over the same byte |
 | `...test_a_file_with_no_marks_comes_back_empty` | the quiet side, from the grader's side |
 | `...test_read_capture_is_unchanged` | the reader is additive: `read_capture` still skips the same rows, returns `(marks, changes)` and still raises |
 
