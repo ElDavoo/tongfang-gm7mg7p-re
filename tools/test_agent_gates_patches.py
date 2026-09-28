@@ -31,11 +31,25 @@ shell that still parses. It runs `git`, which the cheap tier already requires
 mutation happens in a `tempfile` scratch tree -- nothing here writes to
 `.github/`, because `.github/` is what the patches exist to avoid editing.
 
+**And it has an answer for the state a landing creates.** A patch that has
+been applied and committed has by definition stopped applying, so every "must
+apply" case above goes red on the day the first landing lands -- and that day
+is expected rather than hypothetical, because every header in `docs/ci/` tells
+a human how to create it. The patch file is kept after a landing, as a record
+of what it was rather than of what is left to do, so each patch is classified
+against the committed script into one of four states and each state carries
+its own expectation. A landed patch's header is marked `# LANDED in <sha>`,
+which is what stops it reading as "apply this" once applying it a second time
+would add a second `check_*()` and a second `gate` line. The decision, its
+rejected alternative, and the two-step landing procedure are in
+`docs/findings/landed-gate-patch-state.md`.
+
 What this is not: it is not in the cheap tier, and it is not per-commit
 coverage. `docs/agent-pipeline.md` records that `tools/run-tests.sh` has no
 gate call for the same template-copied-file reason, and that stays true. This
 is a suite that runs when someone runs the runner.
 """
+import difflib
 import re
 import shutil
 import subprocess
@@ -76,6 +90,32 @@ PATCHES = [
 # path this checks.
 GIT_APPLY = re.compile(r'git apply (\S+\.patch)')
 
+# How a landed patch's header says so: `# LANDED in <sha>`, naming the commit
+# whose `git apply` put the content in the gate script. The sha is what makes
+# it checkable -- a marker naming no commit is a marker the next re-cut
+# quietly drops, which is exactly the moment it is for.
+#
+# **The marker must not contain a `git apply <path>.patch` string.** `GIT_APPLY`
+# captures the whole header, so such a line becomes a second apply target and
+# `test_each_header_applies_its_own_path` fails on a marker that landed
+# correctly. The existing capture already enforces that; the marker only has
+# to respect it.
+LANDED_MARKER = re.compile(r'^#\s*LANDED in ([0-9a-f]{7,40})\b', re.M)
+
+# The four cells a patch can be in against the committed gate script, and none
+# of them undefined. Two facts pick the cell: `git apply --check` says whether
+# the patch still applies, and whether the lines it adds are already in the
+# file says whether its work is done. Either fact alone is ambiguous -- a
+# patch that stopped applying is stale *or* landed, and telling those apart is
+# the whole of the work, because today's rule reads the first as the second
+# and tells a human to re-cut a patch whose content is in the file and apply
+# it again. A patch whose content is already there and which still applies is
+# a fourth thing: it would be applied twice.
+PREPARED = 'prepared'
+LANDED = 'landed'
+STALE = 'stale'
+DOUBLE_LANDED = 'landed, still applies'
+
 
 def discover_patches():
     """The `docs/ci/agent-gates-*.patch` files on disk, relative to the repo."""
@@ -101,6 +141,23 @@ def apply_targets(text):
     return GIT_APPLY.findall(text)
 
 
+def added_lines(text):
+    """The lines a patch adds, from its diff body alone.
+
+    `+++ b/…` is a `+` line that names the file rather than contributing to
+    it, and a `+` carrying nothing but the newline adds a blank line, so both
+    are dropped -- kept, the first would have to appear in the gate script and
+    would never, and the second would match anything. Each line is compared
+    stripped, so a landing that reindents is not read as a patch that is still
+    prepared.
+    """
+    cut = text.find('diff --git ')
+    body = text[cut:] if cut >= 0 else text
+    return [line[1:].strip() for line in body.splitlines()
+            if line.startswith('+') and not line.startswith('+++')
+            and line[1:].strip()]
+
+
 def git(*args, cwd):
     return subprocess.run(['git', *args], cwd=cwd, capture_output=True,
                           text=True)
@@ -111,7 +168,7 @@ def has_git():
 
 
 @contextmanager
-def scratch_tree():
+def scratch_tree(gate_text=None):
     """A throwaway repo holding nothing but a copy of the gate script.
 
     Every case that applies a patch is mutating, and the composition cases
@@ -121,14 +178,43 @@ def scratch_tree():
     the working-tree file, because that is the file a human's `git apply`
     would meet; `CommittedBaseTests` below is what keeps that seed equal to
     the commit the patches name.
+
+    `copy2` rather than a byte write, because `write_bytes` creates the file
+    0644 and every patch in this set carries `… 100755` on its `index` line.
+    `git apply` compares the mode of the file it is patching, prints
+    `warning: … has type 100644, expected 100755` at every call, and **exits
+    0 anyway** -- so the mode bit the patches carry was being carried and
+    never exercised, and the only trace was a warning nothing read. Passing
+    `gate_text` writes over that copy rather than replacing it, which keeps
+    the mode: a truncating open does not change a file's permissions, so the
+    synthetic trees below are seeded as the committed one is.
     """
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         target = root / GATE
         target.parent.mkdir(parents=True)
-        target.write_bytes((REPO / GATE).read_bytes())
+        shutil.copy2(REPO / GATE, target)
+        if gate_text is not None:
+            target.write_text(gate_text)
         git('init', '-q', '.', cwd=root)
         yield root
+
+
+def committed_mode():
+    """The mode git has recorded for the gate script, or None without a commit.
+
+    `ls-tree` rather than `stat`, because the mode under test is the one the
+    patches' `index` lines were cut against, which is a property of the commit
+    and not of whichever checkout the suite happens to be running in. The
+    working tree's mode is deliberately not the fallback: `copy2` would copy
+    it, so comparing against it asserts that `copy2` copies, which is not the
+    claim. Without a commit there is no committed mode to compare, and the
+    case holding this says so out loud rather than passing on a tautology.
+    """
+    listed = git('ls-tree', 'HEAD', '--', GATE, cwd=REPO)
+    if listed.returncode != 0 or not listed.stdout.strip():
+        return None
+    return int(listed.stdout.split()[0], 8) & 0o7777
 
 
 def apply_patch(tree, patch, *extra):
@@ -142,6 +228,89 @@ def land(tree, patches):
         if done.returncode != 0:
             return patch, done
     return None
+
+
+def state_of(applies, present):
+    """The cell two facts put a patch in: four of them, and never None."""
+    if applies and present:
+        return DOUBLE_LANDED
+    if applies:
+        return PREPARED
+    return LANDED if present else STALE
+
+
+def classify(patch, gate_text):
+    """`(applies, present)` for one patch against one gate script.
+
+    The two halves are deliberately not folded into the cell here: the cases
+    below assert on the facts themselves, so a predicate that answered the
+    question for them would make the assertions tautological.
+    """
+    with scratch_tree(gate_text) as tree:
+        applies = apply_patch(tree, patch, '--check').returncode == 0
+    present = all(line in gate_text
+                  for line in added_lines((REPO / patch).read_text()))
+    return applies, present
+
+
+# Classified once per run. The pair cases below would otherwise re-run
+# `git apply --check` for every ordered pair they visit, which is most of the
+# suite's runtime spent re-deriving an answer that cannot change inside a run.
+_CLASSIFIED = {}
+
+
+def patch_facts(patch):
+    """`(applies, present)` for `patch` against the committed gate script."""
+    if patch not in _CLASSIFIED:
+        _CLASSIFIED[patch] = classify(patch, (REPO / GATE).read_text())
+    return _CLASSIFIED[patch]
+
+
+def prepared_patches():
+    """The patches still waiting to be landed, in `PATCHES` order.
+
+    The landed ones are excluded rather than skipped, because the cases that
+    compose the set can only ask whether *these* still compose: the content of
+    a landed one is already in the seed they are applied to.
+    """
+    return [p for p in PATCHES if state_of(*patch_facts(p)) == PREPARED]
+
+
+@contextmanager
+def retention_gate(patch, gate_text=None):
+    """The gate script to read a patch's retention strings out of, and why not.
+
+    Yields `(path, problem)`. `problem` is '' when there is nothing to say.
+
+    Prepared, that is the scratch tree the patch was applied to, because the
+    content is not in the committed file yet and there is nowhere else to look
+    for it. Landed, it is the committed file itself: the content went there,
+    that is what landing *is*, and a scratch tree seeded from it in that state
+    would hold the seed and nothing else. A caller passing its own
+    `gate_text` gets that text seeded instead, which is how the synthetic
+    landed tree below reaches this branch at all.
+
+    The `problem` is the point of the whole thing. A landed patch does not
+    apply, and the two retention cases below used to assert that it did
+    before they read anything -- so on the day the first landing lands, the
+    one case in this suite that exists to notice a half-landed fold went red
+    on the apply and **never looked at the landed file at all**. A fold that
+    had lost half its checks would have read exactly the same as a whole one.
+    Here the apply is only a problem in the state where applying is the claim.
+    """
+    facts = (patch_facts(patch) if gate_text is None
+             else classify(patch, gate_text))
+    if state_of(*facts) == PREPARED:
+        with scratch_tree(gate_text) as tree:
+            done = apply_patch(tree, patch)
+            problem = (f'{patch} no longer applies:\n{done.stderr.strip()}'
+                       if done.returncode else '')
+            yield tree / GATE, problem
+    elif gate_text is None:
+        yield REPO / GATE, ''
+    else:
+        with scratch_tree(gate_text) as tree:
+            yield tree / GATE, ''
 
 
 class HeaderParseTests(unittest.TestCase):
@@ -242,27 +411,90 @@ class CommittedBaseTests(unittest.TestCase):
             'every other case here measures. Commit it and re-cut the patches, '
             'or drop the edit.')
 
+    def test_the_seeded_gate_script_keeps_the_committed_mode(self):
+        # The half of "the committed file" that is not its bytes. Every patch
+        # in this set whose `index` line exists says `100755`, and the seed
+        # used to be created 0644, so `git apply` warned on every single call
+        # and returned 0 -- a suite in which the mode the patches carry can
+        # only ever be wrong in the direction that still passes.
+        expected = committed_mode()
+        if expected is None:
+            self.skipTest('no HEAD to read the committed mode from; there is '
+                          'no mode at the commit to hold the seed to')
+        with scratch_tree() as tree:
+            seeded = (tree / GATE).stat().st_mode & 0o7777
+        self.assertEqual(
+            seeded, expected,
+            f'scratch_tree() seeds the gate script {oct(seeded)}, and the '
+            f'committed one is {oct(expected)}. Every `git apply` here then '
+            'prints "has type %s, expected %s" and exits 0, so the mode the '
+            'patches carry is exercised only in the direction that passes. '
+            'Seed it with `shutil.copy2` (which keeps the mode) rather than '
+            'writing the bytes.' % (oct(seeded)[2:], oct(expected)[2:]))
+
 
 @unittest.skipUnless(has_git(), 'no git on PATH')
 class SinglePatchTests(unittest.TestCase):
-    """Each patch alone, against the seeded gate script."""
+    """Each patch alone, against the seeded gate script.
 
-    def test_each_patch_applies_on_its_own(self):
-        # The header's own claim, one patch at a time. This is the case that
-        # catches a template re-copy: the hunk's context is gone and
-        # `git apply` says so here instead of at a human's `git apply`.
+    One case per patch rather than four, because the four are not four
+    independent checks: they are one check whose *answer* depends on the
+    cell, and a case that asserted only `applies` would go red on the day the
+    first landing lands, having told a human to re-cut a patch whose content
+    is already in the file and apply it a second time. So the expectation
+    branches on the cell, and so does the advice.
+    """
+
+    def test_each_patch_is_in_a_state_the_suite_has_an_answer_for(self):
         for patch in PATCHES:
             with self.subTest(patch=patch):
-                with scratch_tree() as tree:
-                    done = apply_patch(tree, patch, '--check')
-                self.assertEqual(
-                    done.returncode, 0,
-                    f'{patch} does not apply to the committed {GATE}:\n'
-                    f'{done.stderr.strip()}\n'
-                    'Its header tells a human to run exactly that. Re-cut it '
-                    'against the current file; the context a hunk needs is '
-                    'whatever the file has today, not whatever it had when the '
-                    'patch was cut.')
+                applies, present = patch_facts(patch)
+                state = state_of(applies, present)
+                if state == PREPARED:
+                    self.assertTrue(
+                        applies,
+                        f'{patch} is in the {PREPARED} cell but does not '
+                        f'apply to the committed {GATE}. Re-cut it against '
+                        'the current file; the context a hunk needs is '
+                        'whatever the file has today, not whatever it had '
+                        'when the patch was cut.')
+                elif state == LANDED:
+                    # The landing is done. What is left to check is that it
+                    # is not done twice, and the header's claim is checked in
+                    # `HeaderInstructionTests`; asserting the apply here would
+                    # be asserting the state that put us in this branch.
+                    self.assertFalse(
+                        applies,
+                        f'{patch} is {LANDED}: its content is already in '
+                        f'{GATE} and it still applies. Following its header '
+                        'would add a second copy of every line it carries -- a '
+                        'second check_*() definition and a second `gate` line, '
+                        'and the gate list admits no free anchor for either. '
+                        'If this is a re-cut whose content is genuinely still '
+                        'needed, take the lines back out of the script, or cut '
+                        'the patch against a file that does not have them.')
+                elif state == STALE:
+                    self.assertTrue(
+                        applies,
+                        f'{patch} does not apply to the committed {GATE} and '
+                        f'none of the lines it adds are in the file either, so '
+                        'there is no landing to have happened:\n'
+                        f'{_applies_message(patch)}\n'
+                        'Its header tells a human to run exactly that. Re-cut '
+                        'it against the current file; the context a hunk needs '
+                        'is whatever the file has today, not whatever it had '
+                        'when the patch was cut.')
+                else:
+                    self.fail(
+                        f'{patch} is {DOUBLE_LANDED}: every line it adds is '
+                        f'already in {GATE}, *and* it still applies cleanly. '
+                        'Those are the two states that look identical from the '
+                        'patch and are not: a landing is expected to stop '
+                        'applying, and one that does not means the script and '
+                        'the patch disagree about what "landed" is. Following '
+                        'the header would add a second copy of every line it '
+                        'carries, and `git apply` would not stop it -- it '
+                        'prints nothing and exits 0.')
 
 
 @unittest.skipUnless(has_git(), 'no git on PATH')
@@ -277,11 +509,29 @@ class CompositionTests(unittest.TestCase):
     under test, and recording it is not the fix -- a human would have to know
     it, and a reader of the headers has no way to infer it. Every ordered pair
     is checked, so no order has to be written down anywhere.
+
+    The set these cases walk is the *prepared* one. A landing takes a patch
+    out of it, which is what a landing is: its content is in the seed, so
+    composing it against that seed would be composing the seed with itself.
     """
 
     def test_every_ordered_pair_lands(self):
-        for first in PATCHES:
-            for second in PATCHES:
+        # Over the *prepared* patches only. A landed one is already in the
+        # seed, so asking whether it composes is asking whether the seed
+        # composes with itself -- and the honest answer to "what does this
+        # suite still have to say about a landed patch" is nothing about
+        # ordering, because ordering is what a landing spends.
+        prepared = prepared_patches()
+        if len(prepared) < 2:
+            left = f' ({prepared[0]})' if prepared else ''
+            self.skipTest(
+                f'only {len(prepared)} patch(es) in the set are still prepared'
+                f'{left}, so there is no ordered pair left to compose. This is '
+                'the state a tree is in once its landings are done -- the case '
+                'has nothing to say, and says that rather than passing on an '
+                'empty loop.')
+        for first in prepared:
+            for second in prepared:
                 if first == second:
                     continue
                 with self.subTest(first=first, second=second):
@@ -301,14 +551,19 @@ class CompositionTests(unittest.TestCase):
         # `git apply` will not tell you. `bash -n` is the cheap half of that;
         # the gate's own `shellcheck` is the rest, and it runs over this file
         # the moment the patches land, with no edit here.
+        #
+        # Once every patch is landed this applies nothing and lints the
+        # committed script, which is not a vacuous degradation: that is the
+        # check running on the thing a human just landed, which is the moment
+        # it has anything to say.
         with scratch_tree() as tree:
-            failed = land(tree, PATCHES)
+            failed = land(tree, prepared_patches())
             self.assertIsNone(failed, _landed_message(failed))
             parsed = subprocess.run(['bash', '-n', str(tree / GATE)],
                                     capture_output=True, text=True)
             self.assertEqual(
                 parsed.returncode, 0,
-                f'the full set applies, but the result does not parse:\n'
+                f'the prepared set applies, but the result does not parse:\n'
                 f'{parsed.stderr.strip()}')
 
     def test_the_landed_result_is_shellcheck_clean(self):
@@ -319,12 +574,12 @@ class CompositionTests(unittest.TestCase):
         if shutil.which('shellcheck') is None:
             self.skipTest('no shellcheck on PATH')
         with scratch_tree() as tree:
-            failed = land(tree, PATCHES)
+            failed = land(tree, prepared_patches())
             self.assertIsNone(failed, _landed_message(failed))
             linted = subprocess.run(['shellcheck', str(tree / GATE)],
                                     capture_output=True, text=True)
             self.assertEqual(linted.returncode, 0,
-                             f'the full set lands a shellcheck failure:\n'
+                             f'the prepared set lands a shellcheck failure:\n'
                              f'{linted.stdout.strip()}')
 
 
@@ -342,6 +597,13 @@ class FoldTests(unittest.TestCase):
     a later re-cut that keeps two functions and drops the third would apply
     cleanly, pass every case above, and quietly lose a gate. This is the case
     that says so, and it grows a line per fold for the same reason.
+
+    It reads whichever file the patch's state says the content is in -- the
+    scratch tree while the patch is prepared, the committed script once it is
+    landed -- so it keeps saying this after the landing rather than going red
+    on the apply that the landing makes stop working. `LandedStateTests` below
+    builds that second state and holds the case against it, so the reading
+    has been seen go red before anyone relies on it.
     """
 
     FOLDED = 'docs/ci/agent-gates-capture-claims.patch'
@@ -355,14 +617,17 @@ class FoldTests(unittest.TestCase):
     ]
 
     def test_all_three_checks_and_all_three_gate_lines_land(self):
-        with scratch_tree() as tree:
-            done = apply_patch(tree, self.FOLDED)
-            self.assertEqual(done.returncode, 0, done.stderr)
-            landed = (tree / GATE).read_text()
+        with retention_gate(self.FOLDED) as (gate, problem):
+            self.assertFalse(problem, problem)
+            landed = gate.read_text()
         for line in self.REQUIRED:
             with self.subTest(line=line):
-                self.assertIn(
-                    line, landed,
+                # `assertTrue(line in landed, …)` rather than `assertIn`:
+                # `assertIn` prints the whole container on failure, and the
+                # container is the gate script -- 17 KB of shell ahead of the
+                # sentence that says what to do about it.
+                self.assertTrue(
+                    line in landed,
                     f'{self.FOLDED} no longer lands {line!r}. That patch has '
                     'absorbed two others -- agent-gates-testdata-index.patch '
                     'in #745, and the history-checkouts check in #1033 -- '
@@ -370,7 +635,9 @@ class FoldTests(unittest.TestCase):
                     'anchors as separate patches. A re-cut that keeps some '
                     'halves and drops others still applies, still composes, '
                     'and still passes every other case here, so nothing else '
-                    'in this suite would notice.')
+                    'in this suite would notice. If the patch is already '
+                    'landed, this is saying the landing lost it: the string is '
+                    'the one the landed script is supposed to carry.')
 
 
 @unittest.skipUnless(has_git(), 'no git on PATH')
@@ -387,7 +654,10 @@ class ArmRetentionTests(unittest.TestCase):
     three flags `--self-test` does not take. That is the whole reason the arm
     exists, and it is the reason the same is checked in both directions here:
     a patch that dropped the list entry instead would carry an arm the loop
-    never reaches.
+    never reaches. It reads the committed script once the patch is landed,
+    for the reason `FoldTests`' docstring gives -- the arm is what the landed
+    script is missing, and a case that stops reading it at the landing has
+    stopped watching the one thing it was written to watch.
 
     **Three tools since issue #50**, folded into this one file rather than
     shipped as a seventh and an eighth, because the free hunks in
@@ -440,18 +710,21 @@ class ArmRetentionTests(unittest.TestCase):
     ]
 
     def test_both_the_list_entry_and_the_arm_land(self):
-        with scratch_tree() as tree:
-            done = apply_patch(tree, self.PATCH)
-            self.assertEqual(done.returncode, 0, done.stderr)
-            landed = (tree / GATE).read_text()
+        with retention_gate(self.PATCH) as (gate, problem):
+            self.assertFalse(problem, problem)
+            landed = gate.read_text()
         for line in self.REQUIRED:
             with self.subTest(line=line):
-                self.assertIn(
-                    line, landed,
+                # `assertTrue`, not `assertIn` -- see the note in `FoldTests`.
+                self.assertTrue(
+                    line in landed,
                     f'{self.PATCH} no longer lands {line!r}. Each tool\'s two '
                     'halves are what keep it off the `*)` default arm, and a '
                     're-cut that lands some of the tools and drops the rest '
-                    'still applies, so nothing else here would notice.')
+                    'still applies, so nothing else here would notice. If the '
+                    'patch is already landed, this is saying the landing lost '
+                    'it -- the tool would be running the `*)` default, which '
+                    'passes `--work "$scratch"` and a flag it does not take.')
 
 
 class HeaderInstructionTests(unittest.TestCase):
@@ -482,6 +755,253 @@ class HeaderInstructionTests(unittest.TestCase):
                     'it reads as a working instruction and lands the wrong '
                     'gate edit, or none.')
 
+    def test_a_header_says_whether_it_is_landed(self):
+        # Checked in both directions, so neither half passes on an empty
+        # loop. A prepared patch must not claim to be landed -- that would
+        # tell a human its work is done while the content is not in the file
+        # -- and a landed one must, because the `git apply` line above it is
+        # the rest of the header and it is no longer a thing to do. This is
+        # the cost of keeping a patch after landing it, and it is the reason
+        # the alternative -- deleting the file -- was rejected; the marker is
+        # not free, it is one more thing a landing has to do, and
+        # `docs/findings/landed-gate-patch-state.md` records that trade.
+        for patch in PATCHES:
+            with self.subTest(patch=patch):
+                text = header((REPO / patch).read_text())
+                marked = LANDED_MARKER.search(text)
+                if state_of(*patch_facts(patch)) == LANDED:
+                    self.assertIsNotNone(
+                        marked,
+                        f'{patch} has been landed -- every line it adds is '
+                        f'already in {GATE} and it no longer applies -- and '
+                        'its header still says "git apply this, and that is '
+                        'the whole change". That is the one line in the file '
+                        'that is now false, and it is the line a human reads '
+                        'first. Add `# LANDED in <sha of the landing commit>` '
+                        'to the header; do not add a `git apply` line, which '
+                        'the capture above would read as a second target.')
+                else:
+                    self.assertIsNone(
+                        marked,
+                        f'{patch} carries the marker `LANDED in '
+                        f'{marked.group(1) if marked else ""}` but is still '
+                        'prepared, so the marker is wrong rather than the '
+                        'header being incomplete. Nothing has landed it, and a '
+                        'reader who trusts the marker skips a gate edit that '
+                        'is still waiting.')
+
+
+@unittest.skipUnless(has_git(), 'no git on PATH')
+@unittest.skipUnless(has_git(), 'no git on PATH')
+class LandedStateTests(unittest.TestCase):
+    """The landed state, built here, because nobody has watched it go red.
+
+    A landed tree is a real state with a real answer, and every case above
+    only reaches it once something has actually been applied and committed --
+    which is a human's `git apply` and a commit, and the first of those has
+    not happened yet. So the state is built instead, in a `tempfile`, and the
+    production helpers are driven over it: the classifier says `landed`, and
+    the retention case reads the landed text rather than a tree the patch did
+    not apply to.
+
+    **The fixture is synthetic on purpose.** Borrowing the real
+    `agent-gates-capture-claims.patch` cannot work, and the reason is the
+    point: in a tree where that patch is already landed, applying it to the
+    committed script is impossible -- which is the very state this case exists
+    to describe. A fixture is the only pre-image that is the same in every
+    state, and it is the `HeaderParseTests` shape for the same reason, one
+    bad assumption away from passing vacuously.
+
+    The half-landed case is the discipline
+    `docs/findings/prepared-gate-patches.md` already records for this suite:
+    a case nobody has seen go red is worth
+    nothing. It lands the fixture's first hunk and drops its second, which is
+    a landing that went half-right -- it still applies, it still composes, and
+    the functions it defines are no longer in the `gate` list, so nothing runs
+    them.
+    """
+
+    # A seed with two widely separated insertion points, so `difflib` cuts the
+    # patch into two hunks rather than one. Seven unchanged lines is the most
+    # that can separate two `n=3` context windows without them merging.
+    SEED = """# a synthetic gate script
+
+check_doc_links() {
+  true
+}
+
+gate 'python syntax'  check_python_syntax
+gate 'shellcheck'  check_shellcheck
+gate 'doc links'  check_doc_links
+gate 'doc patch refs'  check_doc_patch_refs
+gate 'ghidra tooling'  check_ghidra_tooling
+gate 'findings frozen'  check_findings_frozen
+gate 'conflict markers'  check_no_conflict_markers
+gate 'append logs'  check_no_append_logs
+gate 'suite table'  test_readme_suite_table
+
+for check in "${GATES[@]}"; do
+  "$check" || rc=1
+done
+exit "$rc"
+"""
+    FUNCTIONS = """check_synthetic_one() {
+  true
+}
+
+check_synthetic_two() {
+  true
+}
+
+"""
+    GATE_LINES = """gate 'synthetic one'  check_synthetic_one
+gate 'synthetic two'  check_synthetic_two
+"""
+    # Two per hunk, so dropping either hunk loses exactly two and the case can
+    # say which hunk went rather than only that something did.
+    REQUIRED = [
+        'check_synthetic_one() {',
+        'check_synthetic_two() {',
+        "gate 'synthetic one'  check_synthetic_one",
+        "gate 'synthetic two'  check_synthetic_two",
+    ]
+
+    # The two insertion points, as whole lines. Named rather than inlined
+    # because `setUpClass` asserts each is in the seed before replacing it: a
+    # seed edited under one of them would otherwise build a landed script
+    # identical to the seed, and every case below would pass on a patch that
+    # adds nothing.
+    ANCHOR_FUNCTION = 'check_doc_links() {\n  true\n}\n'
+    ANCHOR_GATE = "gate 'suite table'  test_readme_suite_table\n"
+
+    @classmethod
+    def setUpClass(cls):
+        # The patch is cut from the seed rather than transcribed, so it applies
+        # by construction in any state of the repository and any of the lines
+        # above can be edited without a second cut to keep in step.
+        for anchor in (cls.ANCHOR_FUNCTION, cls.ANCHOR_GATE):
+            if anchor not in cls.SEED:
+                raise AssertionError(
+                    f'the fixture seed no longer holds {anchor!r}, so the '
+                    'landed script this class builds would be identical to the '
+                    'seed and every case in it would pass on a patch that '
+                    'adds nothing')
+        landed = cls.SEED.replace(cls.ANCHOR_FUNCTION,
+                                  cls.ANCHOR_FUNCTION + cls.FUNCTIONS, 1)
+        landed = landed.replace(cls.ANCHOR_GATE,
+                                cls.ANCHOR_GATE + cls.GATE_LINES, 1)
+        cls.landed = landed
+        cls.patch = (f'diff --git a/{GATE} b/{GATE}\n'
+                     + ''.join(difflib.unified_diff(
+                         cls.SEED.splitlines(True), landed.splitlines(True),
+                         fromfile='a/' + GATE, tofile='b/' + GATE)))
+
+    def _seeded(self, gate_text):
+        """A scratch tree holding `gate_text`, and this class's patch in it."""
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        root = Path(tmp)
+        target = root / GATE
+        target.parent.mkdir(parents=True)
+        target.write_text(gate_text)
+        patch = root / 'synthetic.patch'
+        patch.write_text(self.patch)
+        git('init', '-q', '.', cwd=root)
+        return root, patch
+
+    def test_the_applied_patch_classifies_as_landed_not_stale(self):
+        # The classifier in one assertion. A patch whose content is already in
+        # the file and which no longer applies is *landed*; read by the old
+        # rule -- applies or it does not -- that is indistinguishable from a
+        # template re-copy, and the advice is to re-cut it and apply it again.
+        root, patch = self._seeded(self.SEED)
+        self.assertEqual(
+            state_of(*classify(patch, self.SEED)), PREPARED,
+            'the fixture patch does not apply to the seed it was cut from, so '
+            'this case is not building what it claims to build')
+        applied = git('apply', str(patch), cwd=root)
+        self.assertEqual(applied.returncode, 0, applied.stderr)
+        landed = (root / GATE).read_text()
+        self.assertEqual(landed, self.landed, 'applying the fixture patch did '
+                         'not reproduce the landed text it was cut for')
+        applies, present = classify(patch, landed)
+        self.assertEqual(
+            state_of(applies, present), LANDED,
+            f'the applied patch classifies as {state_of(applies, present)} '
+            f'(applies={applies}, its lines already present={present}). '
+            'Applying a patch is what landing one is, so the content is there '
+            'by construction and the state has to be `landed`; `stale` is what '
+            'would tell a human to re-cut a patch whose content is in the '
+            'file and apply it a second time.')
+
+    def test_the_retention_check_reads_the_landed_script(self):
+        # Seeded only to get the patch onto disk at a path `retention_gate`
+        # can read; the landed branch builds its own tree from `self.landed`
+        # and never applies it, which is the whole point of the state.
+        _, patch = self._seeded(self.SEED)
+        with retention_gate(patch, self.landed) as (gate, problem):
+            self.assertFalse(
+                problem, problem or
+                'a patch in the landed state raised a problem here. The apply '
+                'is only a problem while applying is the claim; past that the '
+                'content is where the landing put it.')
+            landed = gate.read_text()
+        for line in self.REQUIRED:
+            with self.subTest(line=line):
+                # `assertTrue`, not `assertIn` -- the container is the gate
+                # script, and the sentence is what a reader needs.
+                self.assertTrue(
+                    line in landed,
+                    f'the landed script is missing {line!r}, which is the '
+                    'string the retention case exists to hold. This is the '
+                    'check reading a landed file for the first time, and if it '
+                    'is reading something else it finds nothing here.')
+
+    def test_a_half_landed_patch_is_caught(self):
+        # First hunk only: the two functions, without the `gate` lines that
+        # call them. Both facts are asserted before the retention case is held
+        # against the result, because a case that cannot fail is worth nothing
+        # and one that fails for the wrong reason is worse.
+        hunks = [m.start() for m in re.finditer(r'^@@ ', self.patch, re.M)]
+        self.assertEqual(
+            len(hunks), 2,
+            f'the fixture patch has {len(hunks)} hunk(s) where this case '
+            'needs 2 to halve. Its two insertion points are too close for '
+            '`difflib` to cut them apart, so the half-landing below would be '
+            'a whole one.')
+        half = self.patch[:hunks[1]]
+        root, patch = self._seeded(self.SEED)
+        (root / 'half.patch').write_text(half)
+        done = git('apply', str(root / 'half.patch'), cwd=root)
+        self.assertEqual(
+            done.returncode, 0,
+            f'the first hunk of the fixture patch does not apply alone:\n'
+            f'{done.stderr.strip()}')
+        landed = (root / GATE).read_text()
+        for line in self.REQUIRED[:2]:
+            with self.subTest(line=line):
+                self.assertIn(
+                    line, landed,
+                    f'the first hunk did not land {line!r}, so this is not '
+                    'the half-landing this case is about')
+        for line in self.REQUIRED[2:]:
+            with self.subTest(line=line):
+                self.assertNotIn(
+                    line, landed,
+                    f'the first hunk already carried {line!r}, so dropping the '
+                    'second hunk loses nothing and this case would be '
+                    'checking a landing that is not half-right')
+        with retention_gate(patch, landed) as (gate, problem):
+            self.assertFalse(problem, problem)
+            read_back = gate.read_text()
+        missing = [line for line in self.REQUIRED if line not in read_back]
+        self.assertEqual(
+            missing, self.REQUIRED[2:],
+            f'the retention case found {missing!r} missing in a half-landed '
+            'patch, where it must find exactly the `gate` lines the dropped '
+            'hunk carried. Either it is not reading the file it is supposed '
+            'to read, or the halves are not where this case thinks they are.')
+
 
 def _landed_message(failed):
     """The `git apply` output of the patch that failed, with its name."""
@@ -489,6 +1009,18 @@ def _landed_message(failed):
         return ''
     patch, done = failed
     return f'{patch} failed:\n{done.stderr.strip()}'
+
+
+def _applies_message(patch):
+    """What `git apply --check` says about one patch.
+
+    Re-derived rather than carried out of `classify()`, so that the facts do
+    not have to hold git's prose around them; only a failing branch asks for
+    it, so the extra apply costs nothing a passing run notices.
+    """
+    with scratch_tree() as tree:
+        done = apply_patch(tree, patch, '--check')
+    return done.stderr.strip()
 
 
 if __name__ == '__main__':

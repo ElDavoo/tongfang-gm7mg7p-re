@@ -422,3 +422,20 @@ that wants a third `ec/tools/` entry in the tool list has no free line left at
 all, and the honest move at that point is upstream in
 [`ElDavoo/agent-pipeline`](https://github.com/ElDavoo/agent-pipeline) rather
 than a seventh local patch.
+
+**2026-09-28, issue #772 — what this suite does once a patch is landed.** A
+patch that has been applied and committed has, by definition, stopped
+applying, so every "must apply" case above went red on the day the first
+landing landed — the state every header in `docs/ci/` tells a human to create.
+Each patch is now classified into one of four states from two facts it already
+had (`git apply --check`, and whether the patch's added lines are in the
+committed script), and the decision is **inversion rather than retirement**:
+the patch file is kept after a landing as a record of what it was, its header
+is marked `# LANDED in <sha>`, and a landed patch's expectation is "must
+already be there" rather than "must apply". Retirement was the alternative and
+is recorded with its one real advantage — that it needs no marker — so the
+choice is reversible rather than merely asserted. The classifier, the
+two-step landing procedure, and the six places elsewhere in the tree that
+argue from "the `gate` list is seven lines long" and will need re-deriving
+on the day are in
+[`landed-gate-patch-state.md`](landed-gate-patch-state.md).
