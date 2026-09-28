@@ -59,18 +59,25 @@ readable than the reason it returns, and the copy is a *checked* copy rather
 than a second source — what checks it is the two-direction set difference in
 the suite, described below.
 
-**`DATED_REFUSALS`** is the pair of entries that read the file set rather than
-the sentence, and the two the summary line counts apart from the rest, which
-is the whole of what `# Five, not seven:` used to explain. It is the constant
-the committed-tree case compares against, so "the two refusals that have no
-instance" is a name with a value rather than a figure in a test body.
+**`DATED_REFUSALS`** is the pair of *dated* entries — a sentence naming two or
+more dates, and a date whose glob resolved to nothing — and the two the
+summary line counts apart from the rest, which is the whole of what
+`# Five, not seven:` used to explain. It is the constant the committed-tree
+case compares against, so "the two refusals that have no instance" is a name
+with a value rather than a figure in a test body. **Dated is not the same set
+as reads-the-file-set**, and only `dated capture not found` reads the file
+set: `two dated captures in one sentence` is decided by the date count in the
+sentence and opens no file, which is what `reason_for()`'s docstring says of
+the last of its reasons. The membership is stated as *dated* because that is
+the name the printed line gives the two, not because the tool tests for it.
 
 **`SHAPE_LABEL`** is the summary line's label, composed from
 `len(SHAPES) - len(DATED_REFUSALS)` and `len(DATED_REFUSALS)` through
 `count_word()`. The words cover zero through eight and a count outside that
-range renders as a numeral, so a ninth shape reads "the 9 shapes" rather than
-raising out of a line whose only job is to report: a reporting line must not
-fail a run over a bookkeeping change.
+range renders as a numeral, so an eleventh entry — eleven minus the two
+refusals leaves nine — reads "the 9 shapes" rather than raising out of a
+line whose only job is to report: a reporting line must not fail a run over a
+bookkeeping change.
 
 The prose changed to a pointer, never to a smaller number. "The seventh entry
 of the list below" is now the `two dated captures in one sentence` entry;
@@ -156,21 +163,29 @@ produced by the run:       the run produced these reasons and SHAPES does not
 before any of that: no repeated entry and the refusals a subset, because
 `shape_label()` subtracts one length from the other and a duplicate would
 make the printed count wrong while the set difference still held; and the
-numeral fallback, driven through `shape_label()` with a longer list rather
-than by editing `SHAPES`, so the case says what a future entry would print
-without this tree being changed to find out.
+numeral fallback, driven from a list **written into the case** rather than
+from `SHAPES`, so what it asserts is the fallback rule and not today's
+`len(SHAPES)`. It reads `count_word` at the top of the word range and just
+past it, and below zero — the last reachable, because only the committed pair
+is held to being a subset — and drives `shape_label()` with a synthetic
+nine-entry list, so **an eighth reason added to `SHAPES` leaves it green** and
+`test_the_committed_tree_exercises_every_shape` does the naming. That is
+requirement 3 of the issue: a bookkeeping change cannot turn into a red run
+saying only that a count moved.
 
 `test_the_run_reached_something` reads its label out of `ctrc.SHAPE_LABEL`
 rather than re-spelling it, and that is joinability rather than a wording
 guard: the case parses the summary line and splits each entry on `[:,]`, so
 re-spelling the label in the test would be a fourth copy of the same string
-free to drift from the run's. It follows the derivation, and so cannot fail
-when the derivation changes — **the wording is pinned by
-`test_the_label_falls_back_to_a_numeral_rather_than_raising`**, which
-hard-codes `"the six shapes and the two dated refusals"`. What this case does
-pin is the parse: a label carrying a comma or a colon splits into pieces the
-`number, _, label` reading does not recover, and the entry goes missing from
-`counts` and fails the case with "the run reached no passed-over literals".
+free to drift from the run's. **No case pins the committed label's wording**,
+because a case that spelled it out would have to spell out its count too, and
+a count is what every merge adding a reason has to edit. What holds the
+wording is the byte-identical reproduction in *The run, before and after*
+above. What this case holds is the join between the constant and the line the
+run actually printed, plus the parse: a label carrying a comma or a colon
+splits into pieces the `number, _, label` reading does not recover, and the
+entry goes missing from `counts` and fails the case with "the run reached no
+passed-over literals".
 
 ## What this deliberately does not change
 

@@ -1024,20 +1024,29 @@ class TheShapeListHasOneSource(unittest.TestCase):
     def test_the_label_falls_back_to_a_numeral_rather_than_raising(self):
         # A reporting line must not fail a run over a bookkeeping change. The
         # words cover zero through eight and a count outside that is rendered
-        # as a numeral, so an eleventh entry reads "the 9 shapes" rather than
-        # raising out of the line that only reports. Driven through
-        # `shape_label()` with a longer list rather than by editing `SHAPES`,
-        # so the case says what a future entry would print without this tree
-        # being changed to find out.
+        # as a numeral rather than raising out of the line that only reports.
+        # `-1` is in range for a caller: `shape_label()` subtracts one length
+        # from the other and only the committed pair is held to being a
+        # subset, by the case above.
+        #
+        # Every count here is written into the list rather than read out of
+        # `SHAPES`, so what the case asserts is the fallback and not today's
+        # `len(SHAPES)`. No expected string mentions the committed list, so
+        # **adding an eighth reason to `SHAPES` leaves this case green** --
+        # which is what requirement 3 of the issue asked for. Naming the
+        # reason that changed is `test_the_committed_tree_exercises_every_shape`'s
+        # job, and it does it by name.
+        #
+        # The list is synthetic because the committed one is too short to
+        # reach the fallback, and reaching it by editing `SHAPES` is the very
+        # edit this issue exists to make painless.
         self.assertEqual(ctrc.count_word(2), "two")
+        self.assertEqual(ctrc.count_word(8), "eight")
+        self.assertEqual(ctrc.count_word(9), "9")
+        self.assertEqual(ctrc.count_word(-1), "-1")
         self.assertEqual(
-            ctrc.shape_label(ctrc.SHAPES + ("a new reason",),
-                             ctrc.DATED_REFUSALS),
-            "the six shapes and the two dated refusals")
-        self.assertEqual(
-            ctrc.shape_label(ctrc.SHAPES + ("a", "b", "c", "d"),
-                             ctrc.DATED_REFUSALS),
-            "the 9 shapes and the two dated refusals")
+            ctrc.shape_label(("a",) * 9, ()),
+            "the 9 shapes and the zero dated refusals")
 
 
 class TheCommittedTree(unittest.TestCase):

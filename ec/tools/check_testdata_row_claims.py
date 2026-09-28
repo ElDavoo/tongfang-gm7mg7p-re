@@ -409,13 +409,21 @@ SHAPES = (
     "dated capture not found",
 )
 
-# The two entries of `SHAPES` that read the file set rather than the sentence,
-# and the two the summary line counts apart from the rest -- which is why the
-# number it prints is not `len(SHAPES)`. Neither has an instance in the
-# committed index, because the one dated sentence in it names one date and
-# resolves, so what pins them is scratch cases rather than the run. That is a
-# fact about this tree and not about the tool, so it is a name with a value
-# here and the suite compares against the name.
+# The two *dated* entries of `SHAPES` -- a sentence naming two or more dates,
+# and a date whose glob resolved to nothing. They are the two the summary line
+# counts apart from the rest, which is why the number it prints is not
+# `len(SHAPES)`, and it is that line which calls them "dated refusals", so the
+# membership is stated as the dated ones rather than as a second criterion the
+# output does not use. **Dated is not the same set as reads-the-file-set**,
+# and the difference is worth writing down: only `dated capture not found`
+# reads the file set, over `capture`; `two dated captures in one sentence` is
+# decided by the date count in the sentence and opens no file, which is what
+# `reason_for()`'s docstring says of the last of its reasons. What does hold
+# of both is that neither has an instance in the committed index, because the
+# one dated sentence in it names one date and resolves -- so what pins them is
+# scratch cases rather than the run. That is a fact about this tree and not
+# about the tool, so it is a name with a value here and the suite compares
+# against the name.
 DATED_REFUSALS = ("two dated captures in one sentence", "dated capture not found")
 
 # The words the label below is spelled with, and no more than these. A count
