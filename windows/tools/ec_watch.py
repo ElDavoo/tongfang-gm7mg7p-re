@@ -351,6 +351,19 @@ def warn_unchecked_marks(path, existing_findings):
     used to say, and an operator was handed two remedies on one line, the
     second of them contradicting the first.
 
+    That list is an order and not a set, because the first two of them can
+    hold the same file at once (#784). An operator whose capture carries both
+    a mark and a byte the codec cannot read meets the **mark** first: the
+    grader's strict reader asks the mark before it reads a row, and this
+    notice's reader asks it in that order too, so the reason printed here and
+    the error the grading raises are one sentence. Both sentences stay true
+    of such a file -- the mark is in it and the undecodable byte is in it --
+    so nothing is held back: an operator re-saves without the mark, reads the
+    file again, and meets the codec next. What the order settles is that this
+    notice cannot contradict the grading about the file it is looking at. The
+    third refusal is last by construction rather than by choice, being the
+    one a file has to get past the first two to reach.
+
     The closing paragraph is unchanged from #548 and its wording is
     load-bearing, so it is printed as it was whatever the sections above did.
     On a file holding no mark at all and only a bad row, its "those marks" has
@@ -382,6 +395,9 @@ def warn_unchecked_marks(path, existing_findings):
             # and the grader has three of those: a byte its declared codec
             # cannot decode, a byte-order mark, and the one place the strict
             # pass and the partition disagree and the failure ties to no row.
+            # The first two can be the same file, and a file carrying both is
+            # named by the mark -- the order the strict reader decides the
+            # file in, and the docstring above is where that is said.
             print(f"    {'the file itself' if row is None else repr(row)}  "
                   f"-- {reason}")
         if any(row is not None for row, _ in refused):

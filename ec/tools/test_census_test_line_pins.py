@@ -752,11 +752,19 @@ class TheCommittedTree(unittest.TestCase):
         # file, so the files figure takes one, and a new spelling, so that one
         # does too; it resolves, so `declined` is unmoved at `33` and no
         # `out_of_range`, `unresolved` or `ambiguous` appears.
-        self.assertEqual(len(records), 129)
-        self.assertEqual(len({r[0] for r in records}), 30)
-        self.assertEqual(len({r[2] for r in records}), 95)
+        # +2 records, and both are #774's `deep-schedule-lint-baseline.md`
+        # citing `tools/test_agent_gates_patches.py` (`:82-86` and `:121`). They
+        # are new records in a new write-up, so the files figure takes one and
+        # the spellings figure two; both resolve, so `declined` is unmoved and
+        # no `out_of_range`, `unresolved` or `ambiguous` appears. On the merge
+        # with `main` the spellings figure reads one above the `96` this change
+        # was measured at, because `main` itself reads `95` where its base read
+        # `94`: the two are counts of different trees and add.
+        self.assertEqual(len(records), 131)
+        self.assertEqual(len({r[0] for r in records}), 31)
+        self.assertEqual(len({r[2] for r in records}), 97)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 96, census.OUT_OF_RANGE: 0,
+            census.RESOLVES: 98, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 33})
         # Re-derived for #962, then again here, and not lowered either time.
         # #962's class and a docstring above it grew, so every pin into
@@ -779,16 +787,28 @@ class TheCommittedTree(unittest.TestCase):
         # hand-built workflow fixture rather than an assertion or a `def
         # test_` header, and the shape rule reads it as prose. So the `other`
         # column takes the one, `44 -> 45`, and the four beside it are unmoved.
+        # The same two #774 records, one to each of the two columns the shape
+        # rule reads them as: `:82-86` lands on a `#` comment, so `comment`
+        # takes it, and `:121` lands on a module docstring, which is not an
+        # assertion and not a `def test_` header, so `other` takes it. The three
+        # columns beside them are unmoved, which is the check that both records
+        # are citations rather than re-anchorings of existing ones.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 0, census.ASSERTION: 24, census.COMMENT: 22,
-            census.BLANK: 5, census.OTHER: 45})
+            census.DEF_TEST: 0, census.ASSERTION: 24, census.COMMENT: 23,
+            census.BLANK: 5, census.OTHER: 46})
         # `69 -> 70` is the same #421 record, and it takes this axis for the
         # reason the comment above gives for the split: a record that resolves
         # names a target, and this one lands in a file the axis did not carry,
         # so it adds a `(file, line)` pair rather than reweighting one.
+        # `70 -> 72` is the same pair, and each takes this axis the way #421's
+        # record did: both resolve, and both land in `tools/
+        # test_agent_gates_patches.py`, a file this axis did not carry, so each
+        # adds a `(file, line)` pair rather than reweighting one. On the merge
+        # with `main` it reads `73`: `main` asserts `71` where this change's
+        # base asserted `70`, and the two pairs are added on top of that one.
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 71)
+                 if r[3] == census.RESOLVES}), 73)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a
