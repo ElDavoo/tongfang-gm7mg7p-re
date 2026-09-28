@@ -9,7 +9,7 @@ docstring says in as many words that it says nothing about whether a status is
 right. This is the other half, and it is a new file rather than a mode on that
 one for the reason CLAUDE.md gives -- a second question, a second set of rules.
 
-**Two rules, both transcribed from the header comment, neither of them new.**
+**Three rules, all transcribed from the header comment, none of them new.**
 
   1. **Vocabulary closure.** Every `status:` is a value the header declares,
      optionally carrying a declared suffix (`-DO-NOT-WRITE-BLIND`). The
@@ -27,8 +27,17 @@ one for the reason CLAUDE.md gives -- a second question, a second set of rules.
      stated per address rather than per entry so a partly-split entry is
      caught on the address that fails, and not excused by a neighbour that
      passes.
+  3. **Resolution warrant** (issue #1105). Rule 2 asks whether an EC-side
+     site *exists*; this asks what the site is *worth*, and the two are not
+     the same question -- widening rule 2 to cover it would make it a rule
+     about something other than the reference count, which is what rule 2's
+     own contract says it is. A `present-untested` address must have at least
+     one EC-side site that `register_ref_table.py --callee-depth 1` resolves
+     to a read, a write, or both. Those verdicts are read out of the
+     committed `ec/annotations/site-resolution.csv`, so this tool still opens
+     no image; the census behind it is `ec/tools/check_site_resolution.py`.
 
-**The exemption is the part that must not be quietly dropped.**
+**The two exemptions are the part that must not be quietly dropped.**
 `confirmed-working`, `confirmed-working-partially`, `confirmed-inert` and
 `confirmed-not-this-mechanism` are live-warranted and exempt from rule 2,
 because a live observation is a different kind of evidence from a scan: a
@@ -42,33 +51,50 @@ BLUE` is the committed proof the exemption has a user, so the exemption is
 stated rather than implied -- and `--self-test` pins the case that would
 re-introduce the error.
 
+Rule 3's exemption is one entry and is a *tool* limit rather than an evidence
+one, which is why it is named rather than reasoned around. `XDATA_0420`'s
+single EC-side site hands the address across a `ret` in R1:R2 instead of
+through an `lcall`, and `resolve_handoff()` models a DPTR passed to a call --
+so the verdict is what the instrument cannot follow, not what the byte is.
+#1103 owns the R1:R2 propagation; **when `0x0420`'s direction is established,
+this exemption is deleted**, and the refusal below reappears with it.
+
 **What this does not check, which is as much of the point:**
 
-  * *Whether a status is the right grade.* Both rules are about the shape of
-    a claim, never its strength. Nothing here distinguishes a well-argued
-    `present-untested` from a badly-argued one, and rule 2 passing is not a
-    status being correct.
-  * *Whether the counts are right.* That is `check_register_counts.py` and
-    the image; this tool opens no image. Run the two together, because a
-    status can satisfy rule 2 against a count that no longer describes the
-    firmware.
-  * *What a site is worth once found.* Rule 2 asks whether an EC-side site
-    exists, not whether it reads, writes or hands DPTR onward. Several
-    `present-untested` entries rest on a single site that resolves no further
-    -- `0x0420` is the clearest, and its own note says whether the byte is
-    touched at all is not established. That is a different question, left
-    open in docs/findings/pd-only-status-vocabulary.md.
+  * *Whether a status is the right grade.* All three rules are about the shape
+    of a claim, never its strength. Nothing here distinguishes a well-argued
+    `present-untested` from a badly-argued one, and rule 3 passing is not a
+    status being correct. A resolved direction is a static instruction, not
+    evidence the EC acts on the byte, so rule 3 moving no `status:` is the
+    rule working, not the rule doing nothing.
+  * *Whether the counts are right, or whether the census is.* That is
+    `check_register_counts.py` and `check_site_resolution.py --check` and the
+    image; this tool opens no image. Run the three together, because a status
+    can satisfy rules 2 and 3 against a census that no longer describes the
+    firmware. An address with no row in the census at all is reported rather
+    than passed, so a missing or truncated table cannot make this rule pass
+    vacuously.
   * *`absent` on a zero-in-both-images count.* Two entries carry it, while
     `0x07B9`, `0x07C7` and `0x07C8` carry `unknown-not-absent` on the
     identical shape. That is a second decision about a second value, recorded
     as a follow-up in the same write-up; folding it in here would make this
     tool a rule about something the header does not state.
 
+**Corrected 2026-09-28 (issue #1105): this file no longer leaves "what a site
+is worth once found" open.** It used to carry a fourth bullet saying exactly
+that, and naming `0x0420` as the clearest case of an entry resting on a single
+site that resolves no further -- the question two documents had deferred to
+each other (`pd-only-status-vocabulary.md` 2, `walk-flow-follow.md` 4).
+Rule 3 is the answer, `docs/findings/handoff-site-warrant.md` is the
+reasoning, and the wrong sentence is left standing there beside its
+correction per `docs/findings.md` §4a-4d rather than deleted from the record.
+
 Usage:
     python3 ec/tools/check_status_vocabulary.py --check
     python3 ec/tools/check_status_vocabulary.py --self-test
 """
 import argparse
+import csv
 import os
 import re
 import sys
@@ -79,8 +105,14 @@ import yaml
 # reads a scalar-or-list YAML value, and the two must not come to disagree
 # about what a bare `static_refs_main_ec: 0` on a four-address entry means.
 # `check_capture_names.py` imports `WATCH` from `check_capture_claims.py` for
-# the same reason.
+# the same reason. `RESOLVED` and the two unresolved labels come from
+# `check_site_resolution.py` for the same third reason: which labels count as
+# a resolved direction is that tool's judgement, and a second copy of the
+# list in this file is how a renamed label would leave rule 3 passing against
+# a census it no longer understands. Importing it opens no image.
 from check_register_counts import as_list
+from check_site_resolution import (COMMITTED_CSV as SITE_CSV, RESOLVED,
+                                   UNRESOLVED_HANDOFF, UNRESOLVED_NONE)
 
 DEFAULT_YAML = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             os.pardir, "annotations", "registers.yaml")
@@ -109,6 +141,20 @@ LIVE_WARRANTED = ("confirmed-working", "confirmed-working-partially",
 
 # The one value whose warrant is the count itself.
 COUNT_WARRANTED = ("present-untested",)
+
+# Rule 3's one exemption, named rather than reasoned around, with the reason it
+# is a limit of the instrument instead of a property of the byte. Keyed on the
+# entry name because that is what registers.yaml calls it and what a reader
+# will grep for; a name that no longer exists is a stale exemption, which is
+# reported below rather than silently ignored.
+RESOLUTION_EXEMPT = {
+    "XDATA_0420":
+        "its single EC-side site hands the address across a `ret` in R1:R2 "
+        "rather than through an lcall, and --callee-depth models a DPTR passed "
+        "to a call, so the unresolved verdict is a limit of the tool (#1103) "
+        "and not evidence about the byte. Delete this exemption when 0x0420's "
+        "direction is established",
+}
 
 
 def parse_declared(text):
@@ -193,7 +239,70 @@ def is_partly_split(sites):
             and any(m == 0 and p > 0 for _, m, p in sites))
 
 
-def entry_problems(entry, values, suffixes):
+def load_resolutions(path: str = SITE_CSV):
+    """address -> {resolution label: count}, from the committed site census.
+
+    Read rather than re-derived so this tool keeps opening no image, which is
+    the whole reason rule 3 is here at all: a check that had to decode the
+    firmware could not run in the gate beside the two that already do.
+
+    A malformed `addr` cell raises rather than being skipped. A census that
+    silently dropped a row would leave the address looking like one with no
+    site, and rule 3 would then pass it for the wrong reason -- the vacuous
+    pass `tools/run-tests.sh` documents, one level up.
+    """
+    out = {}
+    with open(path, newline="") as f:
+        for row in csv.DictReader(f):
+            addr = int(row["addr"], 16)
+            tally = out.setdefault(addr, {})
+            label = row["resolution"]
+            tally[label] = tally.get(label, 0) + 1
+    return out
+
+
+def resolution_problems(entry, resolutions):
+    """Rule 3's refusals for one entry, as a list of strings.
+
+    Stated per address, for the same reason rule 2 is: an entry's worth comes
+    from the weakest address in it, and a neighbour that resolves does not
+    excuse one that does not.
+    """
+    name = entry.get("name", "?")
+    problems = []
+    if name in RESOLUTION_EXEMPT:
+        return problems
+    for addr, _main, _pd in addrs_and_sites(entry):
+        tally = resolutions.get(addr)
+        if not tally:
+            # Rule 2 has already refused a `present-untested` with no EC-side
+            # site, so reaching here with no row means the census and this
+            # entry disagree. Reported rather than passed, because a passing
+            # rule over a missing row is a rule that has stopped reading.
+            problems.append(
+                f"{name} 0x{addr:04X}: {COUNT_WARRANTED[0]} needs an EC-side "
+                "site that resolves to a direction, and ec/annotations/"
+                f"site-resolution.csv has no row for this address at all. "
+                "Run check_site_resolution.py --check; a missing row is not a "
+                "resolved one")
+            continue
+        if any(tally.get(label) for label in RESOLVED):
+            continue
+        tally_txt = ", ".join(f"{k} {v}" for k, v in sorted(tally.items()))
+        problems.append(
+            f"{name} 0x{addr:04X}: {COUNT_WARRANTED[0]} needs an EC-side site "
+            f"that resolves to a direction and this address's sites resolve to "
+            f"none ({tally_txt}). A DPTR handoff the callee's entry point "
+            f"settles is a warrant; {UNRESOLVED_HANDOFF} and "
+            f"{UNRESOLVED_NONE} are not -- a handoff is positive evidence the "
+            "address is passed somewhere, a `none` cell is not evidence of "
+            "anything. Neither is a statement that the EC does not touch the "
+            f"byte: 0x07B9 is the standing counter-example. See "
+            "docs/findings/handoff-site-warrant.md")
+    return problems
+
+
+def entry_problems(entry, values, suffixes, resolutions):
     """What one entry breaks, as a list of strings. Empty is a pass."""
     name = entry.get("name", "?")
     problems = []
@@ -227,15 +336,44 @@ def entry_problems(entry, values, suffixes):
                 "there is no EC-side site to warrant it with. A status whose "
                 "warrant is a live observation (" + ", ".join(LIVE_WARRANTED)
                 + ") is exempt from that; this is not one")
+    # Rule 3 runs even when rule 2 already spoke: a refused entry is still an
+    # entry a reader is being shown, and the second reason is a different one
+    # from the first.
+    problems.extend(resolution_problems(entry, resolutions))
     return problems
 
 
-def report(regs, values, suffixes):
+def stale_exemptions(regs):
+    """Exemptions naming an entry that is gone, or one that would pass anyway.
+
+    An exemption that stops being needed is the failure mode a named exemption
+    has: nothing breaks, and the next reader inherits a carve-out for a case
+    nobody remembers. Reported rather than removed, because deleting a rule is
+    not this tool's call to make.
+    """
+    names = {e.get("name", "?") for e in regs}
+    out = []
+    for name, why in sorted(RESOLUTION_EXEMPT.items()):
+        if name not in names:
+            out.append(
+                f"rule 3's exemption names {name}, which no entry carries any "
+                "more. The carve-out outlived its case; delete it rather than "
+                "leaving it to be inherited by the next reader")
+        elif (name, "present-untested") not in {
+                (e.get("name", "?"), e.get("status", "")) for e in regs}:
+            out.append(
+                f"rule 3's exemption names {name}, which no longer carries "
+                f"present-untested: {why}. Delete the exemption, it is no "
+                "longer holding anything")
+    return out
+
+
+def report(regs, values, suffixes, resolutions):
     """Print the PD-only sweep, then return the refusals."""
     problems = []
     pd_only = 0
     for entry in regs:
-        problems.extend(entry_problems(entry, values, suffixes))
+        problems.extend(entry_problems(entry, values, suffixes, resolutions))
         sites = addrs_and_sites(entry)
         if is_pd_only(sites):
             pd_only += 1
@@ -248,6 +386,15 @@ def report(regs, values, suffixes):
     print(f"count rule: {', '.join(COUNT_WARRANTED)} needs static_refs_main_ec "
           ">= 1 on every address; exempt, because their warrant is a live "
           f"observation: {', '.join(LIVE_WARRANTED)}")
+    unresolved = sorted(a for a in resolutions
+                        if not any(resolutions[a].get(l) for l in RESOLVED))
+    print(f"resolution rule: {', '.join(COUNT_WARRANTED)} needs one EC-side "
+          f"site per address that resolves to {', '.join(RESOLVED)}; "
+          f"{len(unresolved)} address(es) in the census resolve to nothing"
+          + (f" ({', '.join(f'0x{a:04X}' for a in unresolved)}), held by the "
+             f"named exemption: {', '.join(sorted(RESOLUTION_EXEMPT))}"
+             if unresolved and RESOLUTION_EXEMPT else ""))
+    problems.extend(stale_exemptions(regs))
     for p in problems:
         print(f"  REFUSED  {p}", file=sys.stderr)
     if problems:
@@ -286,11 +433,31 @@ def self_test():
                 "static_refs_pd_image": pd if n > 1 else pd[0],
                 "status": status}
 
-    def refused(e, status=None):
+    # A constructed census, not the committed one, for the reason the docstring
+    # gives: a rule tested only against the data it was derived from is not
+    # tested, and site-resolution.csv moves every time an entry's grade does.
+    # The labels are `check_site_resolution.py`'s, so a rename there is a
+    # failure here rather than a silent pass.
+    census = {
+        0x043E: {"read": 14},
+        0x0402: {"read": 1, "write": 2},
+        0x0743: {"read": 5, "read+write": 2},
+        0x0744: {"read": 1},
+        0x07E2: {"read": 7, "write": 4},
+        0x07E3: {"read": 2, "write": 2},
+        0x07E4: {"read": 3, "write": 1},
+        0x07E5: {"read": 5, "write": 3},
+        0x0400: {"write": 1, UNRESOLVED_HANDOFF: 3, UNRESOLVED_NONE: 1},
+        0x0410: {UNRESOLVED_HANDOFF: 1},
+        0x0420: {UNRESOLVED_NONE: 1},
+        0x0408: {"write": 1, UNRESOLVED_NONE: 1},
+    }
+
+    def refused(e, status=None, sites=None):
         e = dict(e)
         if status is not None:
             e["status"] = status
-        return bool(entry_problems(e, values, suffixes))
+        return bool(entry_problems(e, values, suffixes, sites or census))
 
     # --- rule 1: the header is the vocabulary ------------------------------
     header = "\n".join([
@@ -386,6 +553,73 @@ def self_test():
           not refused(entry("PD_ONLY_OK", [0x07D0], [0], [254],
                             "unknown-not-absent")))
 
+    # --- rule 3: a site has to be worth something once it is found ---------
+    # The half of rule 2 that decides an entry is fine is not enough: 0x0402's
+    # three sites are all handoffs, and a handoff that resolves one call away
+    # is a plain store or load at the callee's entry.
+    check("a present-untested whose sites resolve to a direction is not refused",
+          not refused(entry("RESOLVED", [0x0402], [3], [0],
+                            "present-untested")),
+          "(1 read and 2 writes reached through the pair accessors -- a "
+          "handoff the callee settles is a warrant, not a gap)")
+    check("one resolved site among unresolved ones is enough",
+          not refused(entry("MOSTLY_UNRESOLVED", [0x0408], [2], [7],
+                            "present-untested")),
+          "(the rule asks whether the address has a warrant, not whether "
+          "every site resolves; 0x0408 is one of the ten issue #1105 names "
+          "and the write-up says so)")
+    check("an address whose only site is an unresolved handoff is refused",
+          refused(entry("UNRESOLVED_HANDOFF", [0x0410], [1], [5],
+                        "present-untested")),
+          "(DPTR goes to 0x889E, whose entry point --callee-depth does not "
+          "read as a direction; that is a limit of the method, not a store)")
+    check("an address whose only site is a none cell is refused",
+          refused(entry("UNRESOLVED_NONE", [0x0420], [1], [11],
+                        "present-untested")),
+          "(`no movx in window` is not evidence in either direction, which is "
+          "why it cannot be the whole warrant for a grade)")
+    check("the exemption holds the committed XDATA_0420 entry",
+          not resolution_problems(
+              entry("XDATA_0420", [0x0420], [1], [11], "present-untested"),
+              census),
+          "(the one committed user of rule 3's carve-out, held by name so the "
+          "exemption is stated rather than implied)")
+    check("the exemption is the R1:R2 handoff, not a blank cheque",
+          "R1:R2" in RESOLUTION_EXEMPT["XDATA_0420"]
+          and "1103" in RESOLUTION_EXEMPT["XDATA_0420"],
+          "(the reason has to name the tool limit that causes it and the issue "
+          "that owns removing it, or the carve-out outlives its case)")
+    check("an exemption naming an entry that no longer exists is reported",
+          any("XDATA_0420" in p for p in
+              stale_exemptions([entry("OTHER", [0x043E], [14], [0],
+                                      "present-untested")])),
+          "(a named exemption that stops being needed breaks nothing, which "
+          "is exactly why it has to be checked)")
+    check("an address with no row in the census is refused, not passed",
+          refused(entry("NOT_CENSUSED", [0x0999], [1], [0],
+                        "present-untested")),
+          "(a passing rule over a missing row is a rule that has stopped "
+          "reading; the refusal names the check that produces the row)")
+    check("a live-warranted value is not held to the resolution rule",
+          not refused(entry("LIGHTBAR_AC", [0x0748, 0x0749, 0x074A, 0x074B],
+                            [0, 0, 0, 0], [0, 0, 0, 0],
+                            "confirmed-not-this-mechanism")),
+          "(rule 3 keys on the count-warranted value, so a live-refuted byte "
+          "with no site in either image is never held to it -- the exemption "
+          "is on the value, not on the census)")
+
+    # --- the census loader, which is what keeps this tool image-free -------
+    check("the committed census parses into per-address label tallies",
+          bool((lambda t: t and all(isinstance(v, dict) for v in t.values()))(
+              load_resolutions(SITE_CSV))),
+          "(an empty or malformed table would make rule 3 pass vacuously, so "
+          "the loader is checked against the committed file even though the "
+          "cases above are not)")
+    check("the committed census has the one address the exemption names",
+          0x0420 in load_resolutions(SITE_CSV),
+          "(an exemption whose address has no row is a rule that cannot be "
+          "exercised on the case it was written for)")
+
     if failures:
         for f in failures:
             print(f"  FAIL  {f}")
@@ -406,6 +640,11 @@ def main() -> int:
     ap.add_argument("--registers", default=DEFAULT_YAML,
                     help="registers.yaml to check (default: the one beside "
                          "this tool)")
+    ap.add_argument("--site-csv", default=SITE_CSV,
+                    help="ec/annotations/site-resolution.csv to read rule 3's "
+                         "verdicts from; a path is taken so the positive "
+                         "control can run against a constructed copy without "
+                         "editing the committed census")
     ap.add_argument("--self-test", action="store_true",
                     help="pin both rules, the exemption and the header "
                          "parser against constructed entries")
@@ -424,7 +663,7 @@ def main() -> int:
     with open(args.registers) as f:
         regs = yaml.safe_load(f)["registers"]
 
-    problems = report(regs, values, suffixes)
+    problems = report(regs, values, suffixes, load_resolutions(args.site_csv))
     if args.check and problems:
         return 1
     return 0

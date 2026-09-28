@@ -380,6 +380,138 @@ class EcrwTests(unittest.TestCase):
                                 for start, length in ecrw.block_runs(addrs))
                             for o in K32.offsets()))
 
+    # 8. The unaligned escape, `read_dword_unaligned` and the `mmrd` command.
+    #    Issue #147 words its check as one MMRD at 0xFE410000 + 0x0751, where
+    #    0x0751 % 4 == 1, and the block path cannot put that question. These
+    #    hold what the escape does, and -- the half that matters -- what it
+    #    cannot reach: an escape that leaked into a sweep would issue unaligned
+    #    four-byte reads over the fan-tach page, which is the access #94 is
+    #    about, so the watch sets are swept here against the real
+    #    decomposition rather than argued for in a docstring.
+    def test_the_escape_marshals_the_physical_address_as_read_dword_does(self):
+        self.ec.read_dword_unaligned(0x0751)
+        # One address, one IOCTL, and nothing else: this is the whole reason
+        # it is a command rather than a mode. A sweep that could reach it
+        # would issue as many as it liked.
+        self.assertEqual(K32.codes(), [FAKE_IOCTL_MMRD])
+        (buf,) = [b for _, b in K32.calls]
+        # Byte for byte what read_dword(0x0750) puts on the wire, one byte
+        # along in the address: the ASL hands an MMRD operand to MMRW
+        # unchanged (dsdt.dsl:50481), so the tool still adds EC_BASE itself.
+        self.assertEqual(buf[:4], (FAKE_EC_BASE + 0x0751).to_bytes(4, "little"))
+        self.assertEqual(int.from_bytes(buf[:4], "little"), 0xFE410751)
+        self.assertNotEqual(int.from_bytes(buf[:4], "little"),
+                            int.from_bytes((FAKE_EC_BASE + 0x0750)
+                                           .to_bytes(4, "little"), "little"))
+        # And the same zeroed tail the byte path and the aligned dword send,
+        # not a second address.
+        self.assertEqual(buf[4:], b"\x00" * 4)
+
+    def test_the_escape_returns_the_four_bytes_from_its_own_start(self):
+        self.assertEqual(self.ec.read_dword_unaligned(0x0751),
+                         K32.ram[0x0751:0x0755])
+        # "The same four the aligned block at 0x0750 returns" is read here as
+        # the *overlap*, not as byte equality: the two reads are a one-byte
+        # shift, so against this fixture they share three positions and differ
+        # at the two ends, and an equality assertion would fail an
+        # implementation that is correct. Held against the real read_dword
+        # rather than against the fixture directly, so it is the two methods
+        # that are pinned to each other.
+        aligned = self.ec.read_dword(0x0750)
+        unaligned = self.ec.read_dword_unaligned(0x0751)
+        self.assertEqual(unaligned[:3], aligned[1:])
+        # The ends differ here because the fake's RAM is a 0x00..0xFF ramp and
+        # 0x0750 != 0x0754. That is what makes the overlap above a check: a
+        # fixture that could not tell the two reads apart would satisfy it
+        # whatever the escape did.
+        self.assertNotEqual(unaligned[3], aligned[0])
+        # The limit of the same claim: on RAM that does not move under either
+        # read, an unaligned dword and the aligned dword covering it return
+        # the same four bytes. Which of the four is the lowest address is a
+        # reading of the marshalling, not something this can settle -- the
+        # fake answers in the order the bytes are indexed by offset, which is
+        # the very assumption under test.
+        K32.ram = bytes(0x10000)
+        self.assertEqual(self.ec.read_dword_unaligned(0x0751),
+                         self.ec.read_dword(0x0750))
+
+    def test_the_aligned_paths_still_refuse_the_unaligned_start(self):
+        # The escape existing is not the escape being on. The escape is
+        # called first, and read_dword then still refuses the address the
+        # escape exists to reach -- so the refusal is a property of the
+        # method, not of whether the other one has been used. K32.calls is
+        # empty at the end, so it is a bound and not a failed IOCTL.
+        # (test_a_dword_start_off_the_block_grid_is_refused holds the same
+        # refusal on its own; this is that case again with the escape run
+        # first, which is the adjacency that is new.)
+        self.ec.read_dword_unaligned(0x0751)
+        K32.calls = []
+        for addr in (0x0751, 0x0751 % 4):
+            with self.assertRaises(ValueError):
+                self.ec.read_dword(addr)
+        self.assertEqual(K32.calls, [])
+
+    def test_the_escape_is_the_only_unaligned_mmrd_any_block_path_issues(self):
+        # The escape, called, and then the three real watch sets swept. If
+        # `readmany` or `read_dword` could reach the unaligned path, one of
+        # these offsets would be odd -- and an odd offset is a four-byte
+        # access whose last byte is somewhere else, which over the fan-tach
+        # page is the #94 access the default sets are built to avoid.
+        self.ec.read_dword_unaligned(0x0751)
+        self.assertEqual(K32.offsets(), [0x0751])
+        for addrs in (probe.watch_set(), probe.watch_set(level_block=True),
+                      probe.watch_set(watch_page=True)):
+            K32.calls = []
+            got = self.read_runs(addrs)
+            offsets = K32.offsets()
+            self.assertTrue(offsets)
+            self.assertEqual([hex(o) for o in offsets if o % 4], [],
+                             "an unaligned MMRD reached a block sweep")
+            self.assertEqual(got, {a: K32.ram[a] for a in addrs})
+        # And readmany's own cover of an unaligned range is unchanged by the
+        # escape: same keys, and still two aligned blocks rather than one
+        # unaligned read. (test_an_unaligned_start_is_covered_and_the_lead_
+        # dropped holds the same pair on its own; this is that case again
+        # after the escape has run, which is the adjacency that matters.)
+        K32.calls = []
+        self.assertEqual(sorted(self.ec.readmany(0x0751, 4)),
+                         list(range(0x0751, 0x0755)))
+        self.assertEqual(K32.offsets(), [0x0750, 0x0754])
+
+    def test_the_escape_loosens_alignment_and_not_the_window(self):
+        # 0xFFFD is the last unaligned start that still ends inside the
+        # mapped region, and it is accepted; 0xFFFE would end at 0x10001, one
+        # byte into 0xFE420000, which is not EC RAM. So the window bound is
+        # the one read_dword holds, moved by the single byte the looser
+        # alignment makes room for. Asserted as an offset the wire carried and
+        # not as the four bytes back: the fake's RAM ends at 0xFFFF, so its own
+        # answer there is three real bytes and a padding zero, which is the
+        # fixture's edge rather than anything read_dword_unaligned did.
+        self.assertEqual(len(self.ec.read_dword_unaligned(0xFFFD)), 4)
+        self.assertEqual(K32.offsets(), [0xFFFD])
+        K32.calls = []
+        for addr in (0xFFFE, 0x10000, -1):
+            with self.assertRaises(ValueError):
+                self.ec.read_dword_unaligned(addr)
+        self.assertEqual(K32.calls, [])
+
+    def test_the_mmrd_command_prints_the_physical_address_and_four_bare_bytes(self):
+        # The command line is a separate thing from the method: argparse
+        # accepts a string, `EC_BASE` is added here rather than by the
+        # operator, and the line printed is where the byte-order question
+        # would otherwise get settled by assumption. The whole output is
+        # asserted, so a per-byte EC-offset label added later -- the shape that
+        # would make this a confirmation of the reading rather than a
+        # measurement of it -- fails here.
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(ecrw.main(["mmrd", "0x0751"]), 0)
+        self.assertEqual(K32.codes(), [FAKE_IOCTL_MMRD])
+        self.assertEqual(K32.offsets(), [0x0751])
+        # 0x0751, 0x0752, 0x0753 and 0x0754 out of the fake's ramp, and the
+        # physical address 0xFE410000 + 0x0751 as the label.
+        self.assertEqual(out.getvalue(), "0xFE410751: 51 52 53 54\n")
+
 
 if __name__ == "__main__":
     unittest.main()

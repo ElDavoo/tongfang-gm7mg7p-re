@@ -216,6 +216,18 @@ guessing at a question the bytes do not answer.
   It has no traceback to replace, and its output is the over-counting the module
   preamble already documents. Recorded so that nobody reads the two arguments'
   identical argparse declarations (`:1792-1796`) as an identical contract.
+  *(**Correction, 2026-09-28, issue #860.** False at this tree, and left here
+  because it was true when measured. `caller_rows()` reaches
+  `check_site_addr()` through the `site_rows(d, [site])` it already makes to
+  decode each site's index registers, so `--callers 0x1FFFF` **exits 2** with
+  the diagnostic `--sites` gives — re-measured, and `--callers 0x23478` with the
+  `file_offset` second line. The warning above is answered rather than
+  repeated: the two arguments' declarations are now one contract, and
+  [`pd-index-geometry-address-contract.md`](pd-index-geometry-address-contract.md)
+  carries the re-measured table and the three `--help` strings that make it
+  legible. `:1792-1796` was this tree's line numbers when this section was
+  written; the declaration is at `../../ec/tools/pd_index_geometry.py:2394`
+  now.)*
 - **It does not fix `walk_helper`.** `--helpers 0x1FFE9` raises, measured above,
   and is left raising. A blanket range check there would also have to cover the
   targets `chain_from()` decodes out of the image's own branch operands and
@@ -223,10 +235,26 @@ guessing at a question the bytes do not answer.
   question of what invariant a count-bounded walk is meant to enforce is the
   census's own open follow-up 1, which deferred it as a design question rather
   than a bug report. Fixing it here would pre-empt that.
+  *(**Correction, 2026-09-28, issue #860.** False at this tree on both counts.
+  `--helpers 0x1FFE9` **exits 2** now rather than raising bare, and the walker
+  itself no longer discards `pd_bounds()`'s `hi` at all: `walk_helper()` takes
+  both ends and clamps `hi = min(hi, len(d))`, which is
+  [`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md) — the
+  answer to the follow-up this bullet was still waiting on, and the module
+  preamble's own count line already says so. What is left is narrower and is
+  #843's: the *image-derived* targets are still unchecked, `chain_from()`
+  handing a decoded `branch_target()` to `walk_helper()` at `:645`, so
+  `--helpers 0xFFE9` exits 0 and lists 23 lines of the `0xFF` fill at the top
+  of the region — file `0x2FFE9`-`0x2FFFF`, inside it — and stops at the region
+  end, with the region-exit note saying so. `:546` was that handoff's address
+  when this section was written; the distinction between a caller's anchor and
+  the image's own operands is the part that still stands.)*
 - **It does not cover `print_sites()`'s own `pd_bounds()` call** at `:898`, which
   discards `hi` and uses `lo` only to print. Its `hi` is not load-bearing and
   there is nothing to change; it is counted in the next section and recorded as
-  display-only, not as "fixed".
+  display-only, not as "fixed". *(`:898` was this tree's line number when
+  written; the re-measured table below has it at `:1126`. The claim is
+  unchanged, and re-checked: `hi` is still not load-bearing there.)*
 
 ## #843's "the only two" is twelve, and four under the narrower test
 
@@ -244,18 +272,20 @@ $ grep -n 'lo, _ = pd_bounds()' ec/tools/pd_index_geometry.py
 
 | line | function | the issue's narrower test |
 |---|---|---|
-| 344 | `walk_helper` | **named by #843** |
-| 516 | `chain_from` | **named by #843** |
-| 620 | `site_rows` | **the one that raised** — row 10 |
-| 734 | `reaches` | no |
-| 761 | `is_entry_shaped` | no |
-| 782 | `caller_rows` | no |
-| 850 | `print_helpers` | no |
-| 898 | `print_sites` | `site_rows()`'s caller; `lo` is display-only |
-| 956 | `write_helpers_csv` | no |
-| 1057 | `access_frames` | no |
-| 1208 | `access_rows` | no |
-| 1640 | `self_test` | no |
+| 725 | `site_rows` | **the one that raised** — row 10 |
+| 768 | `reached_entries` | no — entries are the image's own, from `base_sites(d, span)` |
+| 928 | `reaches` | no |
+| 955 | `is_entry_shaped` | no |
+| 976 | `caller_rows` | no — reaches the check through `site_rows()` |
+| 1046 | `print_helpers` | no — checks each entry itself |
+| 1079 | `print_reached` | no |
+| 1126 | `print_sites` | `site_rows()`'s caller; `lo` is display-only |
+| 1188 | `write_helpers_csv` | no |
+| 1220 | `reached_csv_row` | no |
+| 1322 | `access_frames` | no |
+| 1473 | `access_rows` | no |
+| 1801 | `access_self_test` | no |
+| 2105 | `self_test` | no |
 
 **Twelve** under the literal grep. **Four** under the narrower test the issue
 applies — *the discarded `hi` would have bounded an address that arrives from
@@ -264,12 +294,41 @@ the command line* — which are `site_rows` (reached by `--sites`),
 that produces each are here, so whichever test #843 meant, the right count is on
 the page and the premise is corrected rather than inherited.
 
+*(**Correction, 2026-09-28, issue #860.** Both figures above are stale, and the
+table has been re-measured — the old table's line numbers (`:344`, `:516` and so
+down) are not this tree's. **The literal grep is fourteen**, not twelve, and the
+two functions #843 names are **no longer in it at all**: both `walk_helper()` and
+`chain_from()` now take both ends of `pd_bounds()`, and `walk_helper()` further
+clamps `hi = min(hi, len(d))`. That is
+[`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md), which
+answered the census's follow-up 1 that the old table's third paragraph was still
+waiting on, and the module preamble's own count line already records it. So #843's
+premise has changed shape rather than merely grown — the two functions it names
+are no longer candidates — and **the narrower total is deliberately not
+restated here**, because its definition is #843's and the two entries it was
+counting have left it. The third column above is per-function evidence and
+carries the narrower judgement for the functions still in the list, so whoever
+picks #843 up can read the count off it rather than take a stale figure on
+trust. What remains unchecked is not a discarded `hi` at all: it is the
+*image-derived* targets `chain_from()` hands `walk_helper()` at `:645`, which
+discarding `hi` would never have covered either. Re-measured command and table
+in [`pd-index-geometry-address-contract.md`](pd-index-geometry-address-contract.md).)*
+
 A branch cannot edit another issue, so the correction is committed here under
 this heading and the follow-ups pass is what files it against #843. Whoever
 picks it up needs to know three things, and they are all above: the two
 functions it names are not the only two; one of the others is the census's own
 row 10; and `walk_helper`'s count-bounded walk — the open part — is measured in
 this file rather than argued from the table.
+*(**Correction, 2026-09-28, issue #860.** The first and third of those are
+superseded by the correction above, and this paragraph is left as it was rather
+than rewritten, because what changed is #843's premise and not this section's
+reason for existing. The two functions #843 names are no longer in the set at
+all rather than merely outnumbered; and `walk_helper`'s count-bounded walk is
+no longer the open part — it is answered in
+[`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md), which is
+what the third bullet under "What the check does not do" above is now waiting
+on. The middle one still stands: `site_rows` is the census's row 10.)*
 
 ## What this does not establish
 
