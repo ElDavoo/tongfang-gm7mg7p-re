@@ -120,6 +120,3 @@ common,492D,common,4A76,no-transfer,0,4A77,4A77,75f00f,,,,,common:4825 ljmp,0,0,
 common,4A77,common,4A76,no-transfer,0,4A77,4A77,75f00f,,,,,common:43A5 lcall,0,0,no,24,0
 common,4A83,common,4A76,no-transfer,0,4A77,4A77,75f00f,,,,,common:43A5 lcall,0,0,no,24,0
 common,5A5A,common,5A55,no-transfer,0,5A5A,5A5A,8caac8,,,,,common:0046 lcall,0,0,no,24,0
-pd,06EA,bank0,D045,no-transfer,0,D053,D053,9006e7,,,,,,0,0,no,24,0
-pd,39E6,pd,39E7,no-transfer,11,39EE,39F9,743b2ff974043efa7b012275f060,,,,,pd:6673 lcall,0,0,no,24,0
-pd,E930,bank1,E924,no-transfer,0,E931,E931,221a7c,,,,,,0,0,yes,24,0

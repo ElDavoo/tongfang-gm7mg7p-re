@@ -26,7 +26,7 @@ void stage_07d6_call_716c_6faf_tail_e5b3(undefined1 param_1,undefined1 param_2)
   *puVar2 = param_1;
   cVar1 = scaled_lookup_from_a_times_5e_plus_f8(param_2);
   if (cVar1 == '\0') {
-    FUN_CODE_cbb0(DAT_EXTMEM_07d6);
+    write_r4_r5_indexed_flag_bits(DAT_EXTMEM_07d6);
   }
   store_080e_and_accumulate_r6(DAT_EXTMEM_07d6);
   return;

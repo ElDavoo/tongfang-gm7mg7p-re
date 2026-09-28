@@ -39,7 +39,7 @@ void poll_0208_0209_then_spin(char r7_from_e2e4)
         count_07cf_and_conditional_call_122d();
         cVar2 = ljmp_d085();
       }
-      FUN_CODE_e902(cVar2);
+      if_0bc4_result_below_6_then_read3_at_r7_times_3_32(cVar2);
       ret_only_f7b7();
     } while (DAT_EXTMEM_0ae8 == '\0');
     poll_d78a_for_indices_0_and_1();

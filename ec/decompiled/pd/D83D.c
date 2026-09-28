@@ -25,7 +25,7 @@ void store_4_zero_bytes_at_0904_plus_0809_times_5e(byte param_1,byte param_2,cha
   if (0x15U - (((param_2 < 0x7d) << 7) >> 7) <= param_1) {
     shl32_16_iters(0,param_1,param_2,0,0);
     mul32_accumulate_r4_r7(0x3f,0x4c,0xcc,0xcd);
-    FUN_CODE_06ea();
+    test_r4r5_bit15_then_rrc_40bit_and_negate_32bit();
   }
   write4xdata_from_r4_r7
             (CONCAT11('\t' - (((0xfbU < (byte)(DAT_EXTMEM_0809 * '^')) << 7) >> 7),

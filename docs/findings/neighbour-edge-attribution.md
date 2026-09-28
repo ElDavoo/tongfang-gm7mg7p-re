@@ -280,6 +280,22 @@ reproduces both without moving either. What moves is the **reading** of the 15,
 and that is what `ec/annotations/call-graph.md` §"What is left, and the two
 limits a reader must carry" now points here for.
 
+*** CORRECTION 2026-09-27 (issue #489), leaving every figure above as it was
+written.*** **The derivation below now reproduces 121 pairs and 31 carrying a
+`neighbour_edge`, and 74 agreements overall — the 15 and the 9 / 6 split are
+unchanged.** The gap-scan population fell from 99 citing rows / 124 pairs to
+96 / 121, and the neighbour-edge count with it; the 90 fell further than the
+population did, to 74, because the `FUN_` predicate
+(`call_graph.citations()`, `call_graph.py:343`) retires a *callee* the moment it
+is named, and #489 named 37 `pd` rows — 20 of them `FUN_CODE_*` callees the
+ranking still counted, each with `cited_by` now 0 and none replaced. **The
+fifteen read one at a time are the same fifteen**, all of them already named, so
+nothing in the reading above is withdrawn — the 7 / 8 split over them included;
+only the pool they are counted against is smaller. The full table of what moved
+is in [`citation-gap-scan.md`](citation-gap-scan.md), and the two counting rules
+this page turns on — the neighbour's own site / a different one, and the
+`cited_by == inbound` coincidence — are unchanged.
+
 ## Re-deriving
 
 One command, from the repository root, over the two committed CSVs. It

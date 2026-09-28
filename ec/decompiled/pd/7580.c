@@ -43,7 +43,7 @@ void set_07d2_and_return_r7_zero_or_one(undefined1 param_1,byte param_2,byte par
     cVar1 = call_e4d0_return_r7(0x11,0x94);
     if (cVar1 != '\0') {
       read_07d1_07d2_into_r7_r5();
-      FUN_CODE_a0e6();
+      stage_07d6_07d7_07d8_then_tail_to_f654();
       return;
     }
     return;
@@ -85,7 +85,7 @@ void set_07d2_and_return_r7_zero_or_one(undefined1 param_1,byte param_2,byte par
                                      DAT_EXTMEM_07d1 * '^' - 4),DAT_EXTMEM_07d1);
         cVar1 = zero_extend_a_into_r4_r7(param_3 & 0x20);
         if (cVar1 != '\0') {
-          FUN_CODE_e6c0(0,BANK0_R3);
+          set_or_clear_706b_byte_bit2_then_call_f1b0_if_6faf_zero(0,BANK0_R3);
           uVar4 = read_07d1_into_r7_r5_zero();
           store_4_zero_bytes_at_0904_plus_0809_times_5e(uVar4);
           bVar3 = DAT_EXTMEM_07d1;
@@ -166,13 +166,13 @@ LAB_CODE_763d:
     read_07d1_into_r7_r5_zero();
     puVar5['\x01'] = 0x4f;
     puVar5['\x02'] = 0x76;
-    FUN_CODE_e6c0();
+    set_or_clear_706b_byte_bit2_then_call_f1b0_if_6faf_zero();
     puVar5['\x01'] = 0x52;
     puVar5['\x02'] = 0x76;
     read_07d1_07d2_into_r7_r5();
     puVar5['\x01'] = 0x55;
     puVar5['\x02'] = 0x76;
-    FUN_CODE_a0e6();
+    stage_07d6_07d7_07d8_then_tail_to_f654();
     puVar5['\x01'] = 0x58;
     puVar5['\x02'] = 0x76;
     set_dptr_07d1();

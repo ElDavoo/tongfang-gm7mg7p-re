@@ -21,7 +21,7 @@ void read_04a3_then_call_9a90(void)
   load_a_from_r7_9987();
   load_a_from_r7_stub(*puVar1);
                     /* WARNING: Subroutine does not return */
-  add_full_product_to_dptr();
+  call_10bc();
 }
 
 

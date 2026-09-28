@@ -26,10 +26,10 @@ void write_07d0_then_run_indexed_state_chain(char param_1,byte param_2)
   
   DAT_EXTMEM_07d0 = param_2;
   if (*(char *)CONCAT11('\b' - (((7 < param_2 * '^') << 7) >> 7),param_2 * '^' - 8) == '\0') {
-    FUN_CODE_8a4a(param_2);
+    dispatch_on_07d1_bits_then_update_07d1_07d2(param_2);
   }
   bVar1 = DAT_EXTMEM_07d0;
-  FUN_CODE_ee8b();
+  set_r6_07_r7_06_after_6faf_zero_test_and_pair_compare();
   cVar2 = (bVar1 == 0) << 7;
   if (bVar1 == 1) {
     bVar1 = DAT_EXTMEM_07d0;
@@ -56,7 +56,7 @@ void write_07d0_then_run_indexed_state_chain(char param_1,byte param_2)
       set_r7_r5_from_iram_then_read_07d0();
       write_07d2_then_dispatch_on_07d1(param_1);
       if (bVar1 == 1) {
-        FUN_CODE_d72e(DAT_EXTMEM_07d0);
+        stage_07d1_set_0ffd4_bit5_then_tail_c755(DAT_EXTMEM_07d0);
       }
     }
   }

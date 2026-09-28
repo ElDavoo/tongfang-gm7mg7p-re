@@ -6266,6 +6266,32 @@ section measured about the ordering bug is
 unchanged** — the six same-scope joins, the `scope == "common"` guard, and the
 fixture that fails on the unfixed tool.
 
+*** CORRECTION 2026-09-27 (issue #489), leaving the paragraphs above as they
+were written.*** **"Latent today" is now a measurement rather than a prediction,
+and the prediction it was standing in for did not come true.** Every `pd`
+listing under `ec/decompiled/pd/` now carries a `ghidra-functions.csv` row, and
+**no figure this section watches moved**: `group_functions.py --report` prints
+`proxy_edges` 198, 38 distinct `common` targets, 98/100,
+`reached_only_by_bank` 20 and `cross_region` 27 — identical before and after.
+**Do not read that as the bug being harmless.** The reason is the one this
+section already gives, now confirmed against the whole population rather than
+the two addresses it could check at the time: all 39 edges into those listings
+have a `pd` caller, so seeding each takes the same-scope join, a same-scope join
+is never proxied, and `reached_only_by_bank` is a subset test over the banks —
+a `pd` row can move neither. Only `0x0000` and `0x0012` carry a `common` row at
+all, and neither is reached by an `lcall`/`ljmp` in any listing — the reader
+these figures are built on. **"Latent" described this tree,
+not the logic, and the tree has now been changed in the one direction that
+leaves it latent**; a `common` row that a `pd` caller and a bank caller both
+reach would still be needed to observe the fix.
+
+**The `38 unannotated pd listings` figure above is now 37 and then none**, and
+the population is no longer a subtraction: `ec/tools/pd_unannotated_census.py`
+derives it as a set difference over matched addresses and reports both halves
+separately, because netting a commit that annotates one listing against one that
+drops a row reads as a finished population. The write-up is
+`docs/findings/pd-unannotated-listings.md`.
+
 ## 22. The whole-block bracket was filed under whatever block the run named (2026-09-25, issue #475)
 
 The write-up is `docs/findings/dump-pair-block-attribution.md`; this is the
@@ -7785,7 +7811,7 @@ retracted in place beside itself; the write-up is
 Nothing here asserts any site "cannot raise", no live test ran, no capture was
 opened, and no EC or hardware was involved; the sweep bounds the table the way
 `ec/annotations/registers.yaml` bounds a zero-result scan, and the
-`converges_from` retraction at `docs/findings/citation-gap-scan.md:443-446` and
+`converges_from` retraction at `docs/findings/citation-gap-scan.md:516-519` and
 `citation_gap_scan.py:26-46` both stay exactly as they are.
 
 ## 54. The census re-derivation's cost is written down where the procedure is (2026-09-25, issue #820)

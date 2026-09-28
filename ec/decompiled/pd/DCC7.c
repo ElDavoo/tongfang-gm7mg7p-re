@@ -23,7 +23,7 @@ void store_then_clear_0817_and_add_r6_times_0x67(undefined1 param_1,undefined1 p
   read_xdata_to_r6_set_dptr_069a();
   *puVar1 = 0;
                     /* WARNING: Subroutine does not return */
-  add_full_product_to_dptr(param_1,0x69b,0x67);
+  call_10bc(param_1,0x69b,0x67);
 }
 
 

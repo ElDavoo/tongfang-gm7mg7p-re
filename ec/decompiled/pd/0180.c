@@ -41,7 +41,7 @@ undefined1 dispatch_r5_write_083b_0300(char param_1,undefined1 param_2)
     nop();
     nop();
     nop();
-    uVar1 = FUN_CODE_0012();
+    uVar1 = ff_filler_not_a_function_0012();
     return uVar1;
   }
   if (param_1 == '\x02') {
@@ -55,7 +55,7 @@ undefined1 dispatch_r5_write_083b_0300(char param_1,undefined1 param_2)
         nop();
         nop();
         nop();
-        uVar1 = FUN_CODE_0012();
+        uVar1 = ff_filler_not_a_function_0012();
         return uVar1;
       }
       if (param_1 == '\x05') {
@@ -64,7 +64,7 @@ undefined1 dispatch_r5_write_083b_0300(char param_1,undefined1 param_2)
         nop();
         nop();
         nop();
-        uVar1 = FUN_CODE_0012();
+        uVar1 = ff_filler_not_a_function_0012();
         return uVar1;
       }
       if (param_1 != '\0') {
@@ -74,7 +74,7 @@ undefined1 dispatch_r5_write_083b_0300(char param_1,undefined1 param_2)
         nop();
         nop();
         nop();
-        uVar1 = FUN_CODE_0012();
+        uVar1 = ff_filler_not_a_function_0012();
         return uVar1;
       }
       load_a_with_03();
@@ -82,7 +82,7 @@ undefined1 dispatch_r5_write_083b_0300(char param_1,undefined1 param_2)
       nop();
       nop();
       nop();
-      uVar1 = FUN_CODE_0012();
+      uVar1 = ff_filler_not_a_function_0012();
       return uVar1;
     }
     uVar1 = 0xec;

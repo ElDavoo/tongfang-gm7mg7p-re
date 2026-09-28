@@ -24,7 +24,7 @@ void store_r7_12_clear_bit_4d_tailcall(undefined1 param_1)
   nop();
   BANK2_R2 = param_1;
   read_xdata_to_r7_set_r3_r2(0x803);
-  FUN_CODE_7ce0(5);
+  dispatch_on_0a8c_command_then_write_0a8b_record(5);
   return;
 }
 

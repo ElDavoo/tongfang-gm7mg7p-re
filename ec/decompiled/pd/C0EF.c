@@ -61,8 +61,9 @@ void store_0845_0847_then_return_ff_or_00
         bVar6 = DAT_EXTMEM_0847;
         read_xdata_byte(0x845,DAT_EXTMEM_0846,DAT_EXTMEM_0847);
         load_dptr_d9ef_tail_jump_10f1();
-        FUN_CODE_987f(bVar4 + bVar7 + '\x05',0x848,
-                      cVar5 + (bVar3 - ((CARRY1(bVar4,bVar7) << 7) >> 7)));
+        set_r1_from_a_then_add_carry_into_r2
+                  (bVar4 + bVar7 + '\x05',0x848,cVar5 + (bVar3 - ((CARRY1(bVar4,bVar7) << 7) >> 7)))
+        ;
         call_0d8f_then_take_r7(bVar1,bVar6);
         read_xdata_byte(0x845);
         load_dptr_d9ef_tail_jump_10f1();

@@ -100,7 +100,7 @@ void update_07d4_state(byte param_1)
       nop();
       bVar1 = false;
     }
-    FUN_CODE_f1b0(bVar1);
+    set_or_clear_0ffd4_bit5_from_r5_when_r7_zero(bVar1);
     call_returns_with_dptr_loaded();
     dptr_07d4_then_fall_through();
     dptr_from_a_add_17_second_half();
@@ -114,7 +114,7 @@ void update_07d4_state(byte param_1)
       nop();
       nop();
       nop();
-      FUN_CODE_f1b0(0,BANK0_R3);
+      set_or_clear_0ffd4_bit5_from_r5_when_r7_zero(0,BANK0_R3);
     }
   }
   bVar4 = (byte)((ushort)DAT_EXTMEM_07d4 * 0x17);
