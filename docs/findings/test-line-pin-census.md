@@ -55,7 +55,7 @@ $ python3 ec/tools/census_test_line_pins.py
 132 pin(s) in 32 markdown file(s): 98 distinct spelling(s), 74 distinct resolved target(s)
   99 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 33 declined
   1 def test_, 24 assertion, 23 comment, 5 blank, 46 other (of the pins that resolve)
-  read 248 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 82 test file(s) in it
+  read 249 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 83 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -67,10 +67,10 @@ and excludes only `.git/`, `vendor/` and `.claude/`, so an **untracked**
 markdown file in a worktree is counted and the figure reads one higher. The
 run above is the committed tree — `git ls-files | xargs cp --parents` into a
 scratch directory, which is `git archive` without the export attributes — and
-that is what makes `248` and `82` the two numbers a reader re-running it gets.
+that is what makes `249` and `83` the two numbers a reader re-running it gets.
 Run in place in a worktree carrying a `.claude-pr/` or any other untracked
-notes, it reads `249`; the difference is the untracked file and nothing else.
-The `82` is `len(suites(REPO))` and moves only when a suite is added.)*
+notes, it reads `250`; the difference is the untracked file and nothing else.
+The `83` is `len(suites(REPO))` and moves only when a suite is added.)*
 
 *(Re-run 2026-09-27 for #739, whose write-up
 [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md) names the
@@ -205,11 +205,11 @@ against 129 records and the reconciled count is `128` placed. `127`→`128` is
 re-registration of the unplaced row below.
 
 **Correction, 2026-09-28, at the `#491` merge: the block above is a run of the
-merged tree, re-run rather than differenced, and `origin/main` (`efa47a98`) is
+merged tree, re-run rather than differenced, and `origin/main` (`ed8b9e9f`) is
 run beside it by the same method** — `git ls-files | xargs cp --parents` into a
 scratch directory for the merged tree and `git archive` for `origin/main`. This
-merged tree reads **`248`** markdown files and **`82`** test files,
-`origin/main` reads **`247`** and **`82`**, and the step is `247 + 1 = 248` with
+merged tree reads **`249`** markdown files and **`83`** test files,
+`origin/main` reads **`248`** and **`83`**, and the step is `248 + 1 = 249` with
 the test-file count unmoved. **The `+1` is #491's own
 [`grader-repeated-capture.md`](grader-repeated-capture.md)**, which cites one
 `test_*.py:NNN` and adds no suite, so it moves the denominator and takes a
