@@ -4155,6 +4155,108 @@ class ExistingMarkLabelTests(unittest.TestCase):
                          ['2026-01-01T12:00:00.000+01:00'])
         self.assertEqual(unplaceable, [])
 
+    def test_a_marked_and_undecodable_file_is_refused_by_the_mark(self):
+        # The case the anti-drift contract was unverified at, and the one the
+        # sibling above cannot reach. That case's fixture is a BOM'd file
+        # that *decodes*, so the two readers could only ever be asked the
+        # question on the one-condition input -- and on the two-condition one
+        # they disagreed: `read_capture` asks the mark first, the notice asked
+        # the decode first, and a file carrying both got two sentences with
+        # two remedies that said the file was wrong in two different ways.
+        # Nothing in the tree seeded a fixture that was both, so the contract
+        # `bom_refusal`'s docstring states was true on every input the suite
+        # happened to build and false on the one an operator can actually
+        # produce (a spreadsheet export written as utf-8-with-BOM, with a
+        # cp1252 label in it -- `check_capture_encoding.py` is the census
+        # that says such labels are what the writer round-trip leaves).
+        #
+        # A sibling rather than a second fault folded into the case above:
+        # that one is named for the *header* not being refused as a hex
+        # complaint, which is a claim about a file with one fault, and giving
+        # it a second would make the name false and drop the coverage of "a
+        # BOM'd file that is otherwise perfect".
+        #
+        # Written as bytes for the reason the neighbouring fixtures give: the
+        # point of the first half is the three bytes, and a fixture that typed
+        # a BOM as a character would be testing something else.
+        bom, header = b'\xef\xbb\xbf', b'ts,addr,old,new\n'
+        # `0xE9` is the byte latin-1 and cp1252 both write for `café`, and the
+        # one UTF-8 cannot decode.
+        row = b'2026-01-01T12:00:00.000+01:00,MARK,,caf\xe9\n'
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_bytes(bom + header + row)
+            with self.assertRaises(ValueError) as caught:
+                grade.read_capture(str(path))
+            accepted, refused, unplaceable = grade.existing_mark_findings(
+                str(path))
+            # The control, in the same case and from the same bytes: the three
+            # mark bytes taken off and nothing else changed. Without it a
+            # reader that refused *every* file with a reason would be green
+            # here, and the order would be a coincidence rather than the
+            # assertion this is for. With the mark gone there is no mark
+            # refusal to make, so the decode sentence is the one that has to
+            # come back.
+            unmarked = Path(tmp) / 'unmarked.csv'
+            unmarked.write_bytes(header + row)
+            bare_exc = None
+            try:
+                grade.read_capture(str(unmarked))
+            except UnicodeDecodeError as e:
+                bare_exc = e
+            bare_accepted, bare_refused, bare_unplaceable = \
+                grade.existing_mark_findings(str(unmarked))
+        message = str(caught.exception)
+        # The strict reader's own sentence, on a file with two faults: named
+        # as the mark it is, with the remedy, and not as the codec.
+        self.assertEqual(message, grade.bom_refusal(str(path)))
+        self.assertIn('byte-order mark', message.lower())
+        self.assertIn('re-save', message.lower())
+        self.assertNotIn('codec', message.lower())
+        # The anti-drift contract at the input where it was false: one
+        # sentence, one verdict, exactly equal rather than containing one
+        # another -- the equality, not the containment the decode refusal is
+        # held to separately, because `read_capture` raises a bare
+        # `UnicodeDecodeError` on a file with only a bad byte and so has no
+        # sentence of its own to quote there.
+        self.assertEqual(len(refused), 1)
+        self.assertIsNone(refused[0][0])
+        self.assertEqual(refused[0][1], message)
+        # Every mark still named, through the lenient reader: the file the
+        # refusal is about has to stay readable or the operator is told the
+        # grader will not take it and not what is in it. The label carries
+        # the byte as U+FFFD, which is how the operator finds the fault.
+        self.assertEqual([ts for ts, _ in accepted],
+                         ['2026-01-01T12:00:00.000+01:00'])
+        self.assertTrue(accepted[0][1].startswith('caf'), accepted[0][1])
+        self.assertEqual(unplaceable, [])
+        # And the control, which is what makes the first half an assertion
+        # about the order rather than about the mark: the same bytes with the
+        # mark removed are refused over the codec instead, and by the
+        # containment contract, since that is the exception the strict reader
+        # raises there.
+        self.assertIsNotNone(bare_exc)
+        self.assertEqual(len(bare_refused), 1)
+        self.assertIsNone(bare_refused[0][0])
+        self.assertIn(str(bare_exc), bare_refused[0][1])
+        self.assertNotIn('byte-order mark', bare_refused[0][1])
+        self.assertEqual([ts for ts, _ in bare_accepted],
+                         [ts for ts, _ in accepted])
+        self.assertEqual(bare_unplaceable, [])
+        # One `open()` on the mark's path as well. `has_bom` is asked of the
+        # buffer `capture_snapshot` had to read anyway, so the reorder
+        # bought an order and not a second read of a file three watchers are
+        # appending to -- which is what `test_the_capture_is_opened_once_on_
+        # both_paths` holds, and which now has a both-faults input too.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_bytes(bom + header + row)
+            (_, again, _), opens = self.count_opens(
+                str(path), lambda: grade.existing_mark_findings(str(path)))
+        self.assertEqual(opens, 1)
+        self.assertEqual(len(again), 1)
+        self.assertIsNone(again[0][0])
+
     def test_on_a_file_the_strict_reader_accepts_the_two_readers_agree(self):
         # The success path reuses `existing_mark_labels` rather than adding a
         # second label-extraction rule, so a file the grader takes whole reads
