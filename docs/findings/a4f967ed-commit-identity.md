@@ -138,6 +138,57 @@ $ gh api repos/ElDavoo/tongfang-gm7mg7p-re/commits/00000000000000000000000000000
 ### exit 1
 ```
 
+### 3a. Which statuses the probe reads, and which it does not
+
+The refusal above is a **422**, and that is the code `not-an-object` is reached
+by. It is recorded here rather than asserted in the source because a probe that
+recognises a status this endpoint never returns is a probe whose central verdict
+is unreachable: matching only a 404 makes every genuinely-absent id report
+`remote-unknown`, which reads as *nobody asked* when in fact the remote had
+answered and said no. `gh` writes the status into `(HTTP NNN)` on the error line
+it exits with, and these are the four shapes, each run against this repository:
+
+```console
+$ gh api repos/ElDavoo/tongfang-gm7mg7p-re/commits/deadbeef 2>&1 >/dev/null
+gh: No commit found for SHA: deadbeef (HTTP 422)
+### exit 1
+
+$ gh api repos/ElDavoo/definitely-not-a-real-repo-xyz/commits/deadbeef 2>&1 >/dev/null
+gh: Not Found (HTTP 404)
+### exit 1
+
+$ GH_TOKEN=ghp_notarealtoken0000000000000000000000 \
+    gh api repos/ElDavoo/tongfang-gm7mg7p-re/commits/deadbeef 2>&1 >/dev/null
+gh: Bad credentials (HTTP 401)
+### exit 1
+
+$ GH_HOST=127.0.0.1:1 gh api repos/ElDavoo/tongfang-gm7mg7p-re/commits/deadbeef 2>&1 >/dev/null
+Get "https://127.0.0.1:1/api/v3/repos/ElDavoo/tongfang-gm7mg7p-re/commits/deadbeef": dial tcp 127.0.0.1:1: connect: connection refused
+### exit 1
+```
+
+**No sha probed against this endpoint produced a 404.** The 404 above is a slug
+the API does not serve, and that is the whole of its reach: it speaks about the
+resource the request *named*, so a wrong or invisible repository would answer it
+for every id and the probe would report every sha absent. The 422 is the one
+that speaks about the sha, so it is the primary refusal, and the 404 is kept as
+a second because a completed 404 is still a completed answer.
+
+**The last two are the distinction the tool exists for, and neither is
+absence.** A rejected token, a rate limit, a 5xx and an error with no
+`(HTTP NNN)` in it are `gh` failing to ask rather than the remote answering, and
+all four are `remote-unknown`. 422 is matched on its message as well as its
+status, because 422 is GitHub's validation code in general and only the message
+says what was wrong — a 422 that arrives for some other reason falls to
+`remote-unknown` too, which is the direction that cannot be misread.
+
+So the rule the tool applies is: **a completed HTTP response that says no is
+absence; everything else is an unanswered question.** The sibling suite drives
+each of the four strings above through `_remote_serves` by stubbing `_run`, not
+by asserting a verdict against a stubbed return value — the latter is the seam
+that leaves the detection itself untested, which is how a status this endpoint
+never sends went unchallenged in the first place.
+
 ### 4. Which pull request, and where did it go?
 
 The advertised-ref sweep from step 3 finds nothing, for the reason given above:
@@ -237,15 +288,22 @@ $ python3 ec/tools/commit_id_probe.py a4f967ed          # the verdict line, abov
 $ python3 ec/tools/test_commit_id_probe.py -v
 ```
 
-Thirteen cases over throwaway repositories, covering every verdict in the
-vocabulary — a full sha and its abbreviation resolving, an ambiguous prefix
-built from real colliding objects, a dangling object reported as
-`resolves-unreferenced` rather than absent, and an API stubbed to fail
-returning `remote-unknown` **and not one of the two verdicts it must never fall
-through to**. The suite is discovered by `bash tools/run-tests.sh`, so it needs
-no CI edit. The probe's own `--self-test` is not in a gate, because wiring a
-new tool into `agent-gates.sh` is a `.github/` change and the pipeline token has
-no `workflow` scope; the committed transcripts above are what stands in for it.
+Cases over throwaway repositories, covering every verdict in the vocabulary — a
+full sha and its abbreviation resolving, an ambiguous prefix built from real
+colliding objects, a dangling object reported as `resolves-unreferenced` rather
+than absent — and the remote half twice over, at two different seams. The
+decision is stubbed, to check that `probe` turns a refusal into `not-an-object`
+and prints the status that decided it; the **detection is not**, because each of
+the four `gh` error transcripts in §3a is handed to `_remote_serves` through a
+stubbed `_run` with the store half left real, so the 422 reaches
+`not-an-object` and a rejected token, a rate limit, a 422 about something else
+and a connection failure each return `remote-unknown` **and not one of the two
+verdicts they must never fall through to**. The count is the suite's own last
+line, not a figure kept in this paragraph. The suite is discovered by
+`bash tools/run-tests.sh`, so it needs no CI edit. The probe's own `--self-test`
+is not in a gate, because wiring a new tool into `agent-gates.sh` is a
+`.github/` change and the pipeline token has no `workflow` scope; the committed
+transcripts above are what stands in for it.
 
 **The tool is the contribution, not the lookup.** A census pass over the tree's
 commit citations needs a vocabulary to report into and a rule for when a

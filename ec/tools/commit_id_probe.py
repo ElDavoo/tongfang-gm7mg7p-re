@@ -21,10 +21,11 @@ amount of re-running it will reveal. The split that matters:
   - in the store, on no reachable ref       -> `resolves-not-ancestor-of-HEAD`
   - in the store, fsck reports it dangling  -> `resolves-unreferenced`
   - prefix matches more than one object     -> `ambiguous`
-  - not in the store, remote 404s           -> `not-an-object`
+  - not in the store, remote answers 404 or
+    422 for that sha                        -> `not-an-object`
   - not in the store, remote serves it      -> `remote-only`
-  - the API was not consulted or did not
-    answer                                  -> `remote-unknown`
+  - the API was not consulted, or answered
+    401, a rate limit, or nothing at all    -> `remote-unknown`
 
 **`remote-unknown` is not a fallback for `not-an-object`.** It means *no verdict
 is implied* — the local evidence is printed above it and a reader may weigh it,
@@ -53,6 +54,7 @@ tool's own vocabulary is defined by.
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 
@@ -152,18 +154,69 @@ def _advertised(repo, remote):
     return [(parts[0], parts[1]) for parts in refs if len(parts) == 2], None
 
 
+# The statuses this tool reads as *the remote answered, and the answer is no*,
+# each with the message it is required to carry; the empty string means the
+# status alone is enough. Both come from `gh api repos/<slug>/commits/<sha>`
+# against this repository and are transcribed in
+# `docs/findings/a4f967ed-commit-identity.md`, which is where a reader who
+# wants to check them goes: the endpoint answers **422** `"No commit found for
+# SHA: ..."` for a well-formed sha that names no commit, and no sha observed
+# here produced a 404 at all. 422 is matched on its message as well as its
+# status because 422 is GitHub's general validation code and only the message
+# says *what* was wrong; a 422 saying something else falls through to
+# `remote-unknown`, which is the direction that cannot be read as absence.
+#
+# 401, 403, 429, 5xx and a status with no message are absent from this table on
+# purpose. An unauthenticated, rate-limited or offline `gh` has not shown the
+# object is missing, it has shown nobody asked, and turning that into
+# `not-an-object` is the conflation the whole tool is built against.
+#
+# The honest limit on the 404: it speaks about the *resource* the request
+# named, so a slug that is wrong or a repository this token cannot see also
+# answers 404 and would report every sha as `not-an-object`. The 422 is the one
+# that speaks about the sha itself, which is why it is the code the committed
+# transcripts show and why the 404 is kept as a second refusal rather than
+# presented as the primary evidence of absence.
+REFUSALS = (("404", ""), ("422", "No commit found for SHA"))
+
+# `gh` writes `... (HTTP NNN)` on the error line it exits with, and it puts the
+# response body on stdout, so this reads the status out of the tool's own
+# wording rather than parsing a body the caller never sees.
+HTTP_STATUS = re.compile(r"\(HTTP (\d{3})\)")
+
+
+def _refusal(err):
+    """The refusal status in `gh`'s error text, or None when it is not one.
+
+    None is the common answer and the load-bearing one: it is what an auth
+    failure, a rate limit, a dropped connection and a 127 for a missing `gh`
+    all produce, and each of those must reach `remote-unknown` rather than
+    `not-an-object`.
+    """
+    found = HTTP_STATUS.search(err)
+    if not found:
+        return None
+    for code, needed in REFUSALS:
+        if found.group(1) == code and needed in err:
+            return code
+    return None
+
+
 def _remote_serves(repo, slug, sha, remote="origin"):
-    """(True, None) / (False, None) / (None, why-unknown) for the remote half.
+    """(True, None) / (False, status) / (None, why-unknown) for the remote half.
 
     Three outcomes rather than a boolean, and the third is the one that has to
     exist: `gh` absent, unauthenticated, rate-limited or offline all mean the
-    question was not asked, which is not the same answer as "no".
+    question was not asked, which is not the same answer as "no". The second
+    element of the `False` is the status that decided it, so the evidence a
+    reader weighs names the response rather than this tool's reading of it.
     """
     code, _out, err = _run(("gh", "api", f"repos/{slug}/commits/{sha}"), cwd=repo)
     if code == 0:
         return True, None
-    if "404" in err:
-        return False, None
+    status = _refusal(err)
+    if status is not None:
+        return False, status
     return None, (err.strip().splitlines() or ["gh exited %d" % code])[0]
 
 
@@ -238,8 +291,9 @@ def probe(sha, repo=REPO, ref="HEAD", slug=SLUG, remote="origin",
         evidence.append(f"remote        : the API serves {slug}/commits/{sha}")
         return "remote-only", evidence
     if served is False:
-        evidence.append(f"remote        : the API 404s for {slug}/commits/"
-                        f"{sha}")
+        evidence.append(f"remote        : the API answered HTTP {why} for "
+                        f"{slug}/commits/{sha} — a completed response saying "
+                        f"no, which is absence rather than a failure to ask")
         return "not-an-object", evidence
     evidence.append(f"remote        : not consulted ({why}); **no verdict is "
                     f"implied** and this is not evidence of absence")

@@ -6,7 +6,7 @@ never been seen to fire is a rule nobody can trust to have stayed put: five of
 the seven verdicts are reachable only by building a repository in the shape that
 produces them, and two of them are reachable only by making the remote answer in
 a particular way. Every case here is therefore a scratch tree, a stubbed
-`_remote_serves`, or both.
+`_remote_serves` or `_run`, or both.
 
 The negative cases matter more than the positives. A probe that cannot tell
 "the object is not here" from "nobody asked" is the failure the tool was written
@@ -109,9 +109,19 @@ class _NoRemote(unittest.TestCase):
         self.addCleanup(setattr, probe_mod, "_remote_serves", self._serves)
         self.addCleanup(setattr, probe_mod, "_advertised", self._advertised)
 
-    def stub_remote(self, served=None, why="gh: not found"):
-        """`_remote_serves` returns one fixed answer. None means "did not ask"."""
-        probe_mod._remote_serves = lambda *a, **k: (served, None if served is not None else why)
+    def stub_remote(self, served=None, why="gh: not found", status="422"):
+        """`_remote_serves` returns one fixed answer. None means "did not ask".
+
+        The second element follows the shape the tool returns: a status for a
+        refusal, the reason for an unanswered question, nothing for a hit.
+        """
+        if served is None:
+            answer = (None, why)
+        elif served is False:
+            answer = (False, status)
+        else:
+            answer = (True, None)
+        probe_mod._remote_serves = lambda *a, **k: answer
         probe_mod._advertised = lambda *a, **k: ([], None)
 
 
@@ -184,11 +194,18 @@ class TheRemoteHalf(_NoRemote):
         self.root, self.head = scratch_repo()
         self.absent = "0" * 39 + "1"
 
-    def test_a_404_is_not_an_object(self):
-        self.stub_remote(served=False)
+    def test_a_refusal_is_not_an_object(self):
+        # The *decision* half, with the decision stubbed: `probe` has to turn
+        # `_remote_serves`' refusal into `not-an-object` and print the status
+        # that decided it. Which statuses count as a refusal is the other half,
+        # and it is `_RealGhStderr` below rather than this case — stubbing the
+        # return value leaves the line that reads `gh`'s error untested, and
+        # that line is the one that made the verdict unreachable when it only
+        # matched a 404 the endpoint does not answer with.
+        self.stub_remote(served=False, status="422")
         verdict, evidence = probe_mod.probe(self.absent, repo=self.root)
         self.assertEqual(verdict, "not-an-object")
-        self.assertTrue(any("404s" in line for line in evidence))
+        self.assertTrue(any("HTTP 422" in line for line in evidence))
 
     def test_the_api_serving_an_absent_id_is_remote_only(self):
         self.stub_remote(served=True)
@@ -228,6 +245,115 @@ class TheRemoteHalf(_NoRemote):
         self.assertEqual(verdict, "resolves-ancestor-of-HEAD")
 
 
+class _RealGhStderr(_NoRemote):
+    """The remote half driven by recorded `gh` error text, not by a return value.
+
+    The seam here is `_run`, so `_remote_serves` reads the error the way it
+    reads the real one. Stubbing `_remote_serves` instead — which is what the
+    other cases do — asserts only that a verdict comes out of a two-tuple, and
+    never touches the line deciding whether an error *is* a refusal; that line
+    is what decides whether `not-an-object` is reachable at all, and it is what
+    read "404" while this endpoint answers 422, so that a genuinely-absent id
+    reported `remote-unknown` against the live API.
+
+    Every string below is a transcript of
+    `gh api repos/<slug>/commits/<sha> 2>&1 >/dev/null` against this
+    repository, and the ones committed in
+    `docs/findings/a4f967ed-commit-identity.md` §"Does the remote serve it?"
+    are the same runs.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.root, self.head = scratch_repo()
+        self.absent = "0" * 39 + "1"
+
+    def gh_answers(self, stderr, code=1):
+        """`_run` gives the remote step this `gh` answer and defers otherwise.
+
+        Everything that is not the `gh api` call goes to the real `_run`, so
+        the store half of the probe is a real git against a real scratch
+        repository and a case passing here has passed the whole way through.
+        """
+        real = probe_mod._run
+        self.addCleanup(setattr, probe_mod, "_run", real)
+
+        def _routed(argv, cwd=None):
+            if tuple(argv[:2]) == ("gh", "api"):
+                return code, "", stderr
+            return real(argv, cwd=cwd)
+
+        probe_mod._run = _routed
+        probe_mod._advertised = lambda *a, **k: ([], None)
+
+    def assert_refused(self, verdict, evidence):
+        self.assertEqual(verdict, "not-an-object")
+        self.assertTrue(any("the API answered HTTP" in line
+                            for line in evidence))
+
+    def assert_unanswered(self, verdict, evidence):
+        self.assertEqual(verdict, "remote-unknown")
+        self.assertNotIn(verdict, ("not-an-object", "remote-only"))
+        self.assertTrue(any("no verdict is implied" in line
+                            for line in evidence))
+
+    def test_the_422_the_endpoint_answers_is_absence(self):
+        # The transcript the write-up commits. This is the code that carries
+        # the whole `not-an-object` half of the vocabulary, so it is the case
+        # that has to exist rather than a 404 nobody has watched this endpoint
+        # produce.
+        self.gh_answers("gh: No commit found for SHA: %s (HTTP 422)\n"
+                        % self.absent)
+        verdict, evidence = probe_mod.probe(self.absent, repo=self.root)
+        self.assert_refused(verdict, evidence)
+        self.assertTrue(any("HTTP 422" in line for line in evidence))
+
+    def test_a_404_is_also_a_refusal(self):
+        # Observed for a slug the API does not serve, not for a sha, and kept
+        # as a second refusal because a completed 404 is still a completed
+        # answer. The limit is recorded rather than papered over: it speaks
+        # about the resource the request named, so a wrong or invisible slug
+        # would answer 404 for every sha.
+        self.gh_answers("gh: Not Found (HTTP 404)\n")
+        verdict, evidence = probe_mod.probe(self.absent, repo=self.root)
+        self.assert_refused(verdict, evidence)
+
+    def test_a_422_about_something_else_is_not_absence(self):
+        # 422 is GitHub's validation code in general, so only the message says
+        # what was wrong; the match takes both, and a 422 that arrives for
+        # another reason has to fall to `remote-unknown` rather than be read
+        # as the refusal this case's neighbour is.
+        self.gh_answers("gh: Invalid request (HTTP 422)\n")
+        verdict, evidence = probe_mod.probe(self.absent, repo=self.root)
+        self.assert_unanswered(verdict, evidence)
+
+    def test_a_rejected_token_is_not_absence(self):
+        # Observed: `gh api` with a bad token exits 1 having answered nothing
+        # about the sha. Nobody asked, so the probe must not answer.
+        self.gh_answers("gh: Bad credentials (HTTP 401)\n")
+        verdict, evidence = probe_mod.probe(self.absent, repo=self.root)
+        self.assert_unanswered(verdict, evidence)
+
+    def test_a_rate_limited_api_is_not_absence(self):
+        # 403 is GitHub's rate limit *and* its "you may not see this", which
+        # is why it is not a refusal: reading it as absence is the conflation
+        # the tool exists to stop, and erring the other way costs a re-run
+        # rather than a wrong verdict.
+        self.gh_answers("gh: API rate limit exceeded for user ID 1. (HTTP 403)\n")
+        verdict, evidence = probe_mod.probe(self.absent, repo=self.root)
+        self.assert_unanswered(verdict, evidence)
+
+    def test_a_transport_failure_carries_no_status_and_is_not_absence(self):
+        # `gh` missing, offline, or a connection that dropped: there is no
+        # `(HTTP NNN)` in the error at all. This is also the case that a
+        # substring match reads worst — matching nothing can only be read as
+        # "not a refusal", and the point of the case is that the tool says so
+        # rather than deciding it by absence of evidence.
+        self.gh_answers("error connecting to api.github.com\n")
+        verdict, evidence = probe_mod.probe(self.absent, repo=self.root)
+        self.assert_unanswered(verdict, evidence)
+
+
 class TheCommittedTree(unittest.TestCase):
     def test_this_repository_probes_offline_without_a_verdict_it_cannot_earn(self):
         # `a4f967ed` is the id the write-up under repair names, and
@@ -235,9 +361,28 @@ class TheCommittedTree(unittest.TestCase):
         # what was found. Run here with the remote off, because the committed
         # suite must be offline: a run that reached the network would be a test
         # whose result depends on the day.
-        verdict, evidence = probe_mod.probe("a4f967ed", repo=REPO,
+        #
+        # What is asserted is the *property* and not the verdict this checkout
+        # happens to produce. The object is absent from a plain clone, which is
+        # the finding's whole point, but it is a real commit and one
+        # `fetch refs/pull/*/head` away — so a verdict-only assertion would
+        # fail on a checkout change for a reason that says nothing about the
+        # probe. What must hold either way is that turning the remote off
+        # cannot produce a verdict about absence.
+        verdict, _evidence = probe_mod.probe("a4f967ed", repo=REPO,
+                                             consult_remote=False)
+        self.assertNotIn(verdict, ("not-an-object", "remote-only"))
+
+    def test_the_offline_flag_answers_remote_unknown_for_a_sha_nothing_can_hold(self):
+        # The same claim, on a sha this suite controls, so it cannot be decided
+        # by what the tree's fetch shape has brought down: an all-zero-ish sha
+        # no checkout will contain, which is the shape that must read
+        # `remote-unknown` and not one of the two verdicts that would be a
+        # claim about a remote nobody consulted.
+        verdict, evidence = probe_mod.probe("0" * 39 + "1", repo=REPO,
                                             consult_remote=False)
         self.assertEqual(verdict, "remote-unknown")
+        self.assertNotIn(verdict, ("not-an-object", "remote-only"))
         self.assertIn("not consulted", " ".join(evidence))
 
     def test_the_verdict_list_is_the_one_the_page_documents(self):

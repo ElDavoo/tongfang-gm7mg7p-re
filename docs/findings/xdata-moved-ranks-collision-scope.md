@@ -370,7 +370,7 @@ register rows, 439 cluster rows, both exit 0), and the CSVs are not touched.
   `:487`. **Both are now decided**, in
   [`xdata-moved-ranks-pin-decisions.md`](xdata-moved-ranks-pin-decisions.md):
   `:181` is repointed to `:257`, because
-  [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):155
+  [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md):180
   is live prose under its own "What the code does now"; and
   `tools/README.md`'s `xdata_moved_ranks.py:243` is recorded as **records
   another line**, because that sentence is quoting a past tree. **The walk
