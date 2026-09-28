@@ -163,7 +163,7 @@ claim, which stays a reading somebody looked at — and this change moved four o
 its rows. Its class counts, over one table that is 128 rows at `4e697871` and
 129 on the merged tree:
 
-| | `origin/main` at `4e697871` | this branch, before re-deriving | after | the merged tree |
+| | `origin/main` at `4e697871` | this branch, before re-deriving, on the pre-`main` base | after | the merged tree |
 |---|---|---|---|---|
 | placed | 127 | 125 | 127 | 127 |
 | `unplaced-row` | 1 | 3 | 1 | 2 |
@@ -200,10 +200,11 @@ three now. *(On the merged tree the reconciler names **two** pairs: the
 `0751-append-unchecked-marks.md:221/246`, the second a line `main` shifted
 rather than a row this change or that one added. `TheCommittedTree` is
 therefore three failures red rather than two. Measured on each tree rather than
-inferred — the branch reads two, `main` reads three — and neither pair is in a
-region this change edits.)* `placed` is a re-derivation and not a lowering: the
-rows that fail to place are the ones the tool names, and the other 127 are held
-by the two assertions beside it.
+inferred — `4e697871` reads two, and `main` and this branch read three and name
+the identical two pairs, so neither pair is in a region this change edits.)*
+`placed` is a re-derivation and not a lowering: the rows that fail to place are
+the ones the tool names, and the other 127 are held by the two assertions beside
+it.
 
 ## What was deliberately not done
 
