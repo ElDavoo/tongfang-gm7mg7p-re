@@ -47,6 +47,7 @@ is recorded there in the same §4a-4d form. In short:
 
 ```console
 $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin
+$ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 1 0x10000 /tmp/bank1.bin
 $ python3 ec/tools/walk_branch_arms.py ec/firmware/GMxMGxx_11.800 \
           0x1904 0x1906 0x1909 0x190C --callee-depth 1 --csv \
           > ec/annotations/bank0-8038-handler-arms.csv
@@ -58,8 +59,10 @@ $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 \
 All eight handlers open with `mov dptr,#<gate>` and branch on bit 7 of the byte
 they just read, so seeding `walk_branch_arms.py` on the four gate bytes reaches
 every handler **and** the `0x1904` site inside the default's own neighbourhood
-(§7). Every load-bearing excerpt below is re-checked against the same bank
-image with `r2 -a 8051`, and the command line is printed beside it.
+(§7). Every load-bearing excerpt below is re-checked against the bank image its
+own command builds, with `r2 -a 8051`, and that command is printed beside it —
+which is why the `bank1` transcripts in §9 need the `0x10000` offset above
+rather than the `0x08000` one.
 
 [`bank0-8038-handler-arms.csv`](bank0-8038-handler-arms.csv) is the per-arm
 table `--csv` writes: 18 `arm` rows and 63 `callee` rows. **All 18 arms report
@@ -218,11 +221,12 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x805e; pd 26' /tmp/bank0
 ```
 
 Five steps: load the source word into `r6:r7` (§6), copy it into the word slot
-`0x08D0`/`0x08D1` high byte first, fold the accumulator pair `0x0600`/`0x0601`
-through `0xB965` (§5), set bit `0x01` of `0x0610` through `0xBA3D`, and re-arm
-the gate through `0xBE7E`. The `movx @dptr,a` at `0x8082` is followed by a
-`mov dptr` with no intervening read, so DPTR is still `0x0600` and the store
-lands there; the byte `0x0A59` is the one just stored at `0x8070`.
+`0x08D0`/`0x08D1` with `r6` at the lower address, fold the accumulator pair
+`0x0600`/`0x0601` through `0xB965` (§5), set bit `0x01` of `0x0610` through
+`0xBA3D`, and re-arm the gate through `0xBE7E`. The `movx @dptr,a` at `0x8082`
+is followed by a `mov dptr` with no intervening read, so DPTR is still `0x0600`
+and the store lands there; the byte `0x0A59` is the one just stored at
+`0x8070`.
 
 ### 4.2 Case `0x01` — `0x8094`
 
@@ -343,25 +347,29 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xb965; pd 24' /tmp/bank0
             0x0000b982      22             ret
 ```
 
-`0xB965` is entered with DPTR holding the high byte of the accumulator pair
+`0xB965` is entered with DPTR holding the **low** byte of the accumulator pair
 (`0x0601`, `0x0603`, `0x0605`, `0x0607`, `0x0609`, `0x060B`, `0x060D`, `0x060F`
 — one `lcall 0xB965` in each of the eight, at `0x8074`, `0x80B7`, `0x80FA`,
-`0x813D`, `0x817D`, `0x81C0`, `0x8202`, `0x8251`). It reads it into `0x0A58`,
-adds the 16-bit pair `0x0A58`/`0x0A59` to `r6:r7` (high into `r6`, low into
-`r7`), shifts the sum right by one with `clr c ; rrc a` twice — discarding the
-carry out of the high byte — writes the result back to `0x0A58`/`0x0A59` in
-the same order, and returns the new high byte in `a`.
+`0x813D`, `0x817D`, `0x81C0`, `0x8202`, `0x8251`). It reads it into `0x0A58`
+and adds the 16-bit pair `0x0A58`/`0x0A59` to `r6:r7` — `0x0A58` into `r6`,
+`0x0A59` into `r7`, the carry running from `0x0A59` to `0x0A58`. Which of
+`r6`/`r7` is the high byte is settled by the shift and not by the add: `clr c ;
+rrc a` runs twice, `r6` first and `r7` consuming the carry out of it, so `r6`
+is the **low** byte of the sum and `r7` the high one. The carry out of the high
+byte is discarded. It writes the result back to `0x0A58`/`0x0A59` in that same
+order and returns the new low byte in `a`.
 
 Written in the arithmetic the bytes perform, and with the byte order read off
 the caller's own stores rather than assumed:
 
-> the accumulator pair `P` := `(P + V) >> 1`, where `V` is the `r6:r7` word the
-> handler just copied to its slot, `P` is 16-bit big-endian in
-> `<high>:<low> = 0x0600:0x0601` (and the other seven pairs), and the floor of
-> one bit is dropped.
+> the accumulator pair `P` := `(P + V) >> 1`, where `P` is 16-bit big-endian in
+> `<high>:<low> = 0x0600:0x0601` (and the other seven pairs), `V` is the
+> `r6:r7` word the handler just copied to its slot, big-endian in
+> `<high>:<low> = 0x1918:0x1919` because `0xB9DF` leaves `r6` holding `0x1919`
+> and `r7` holding `0x1918` (§6.1), and the floor of one bit is dropped.
 
-The handler completes the round trip itself: `a` (the new high byte) goes back
-to `0x0601`, and `0x0A59` (the new low byte) is copied to `0x0600`. **Nothing
+The handler completes the round trip itself: `a` (the new low byte) goes back
+to `0x0601`, and `0x0A59` (the new high byte) is copied to `0x0600`. **Nothing
 in this repository establishes that the EC performs any filtering with it.** The
 name "accumulator" here is for the shape — a value carried across calls and
 halved against a fresh sample — and a write being accepted is not evidence the
@@ -445,7 +453,7 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xb9df; pd 16' /tmp/bank0
 `0xB9DF` reads XDATA `0x1918` into the scratch byte `0x0A57` and `0x1919` into
 `0x0A56`, then the shared tail at `0xB9EF` loads `r6` from `0x0A56` and `r7`
 from `0x0A57`. `0xB9EA` is that routine entered at its `movx a,@dptr`: the
-caller has already staged the low byte at `0x0A57` and left DPTR on the high
+caller has already staged the high byte at `0x0A57` and left DPTR on the low
 byte, so `0xB9EA` completes the same job for a *different* pair. The `lcall`
 census over the bank image:
 
@@ -458,7 +466,7 @@ census over the bank image:
 | `0xBDC6` | `0x8124`, `0x8238` | `0x190D` |
 
 Each staging routine reads its byte, stores it to `0x0A57`, and **leaves DPTR
-pointing at the high byte of the same word**, which is what makes the `0xB9EA`
+pointing at the low byte of the same word**, which is what makes the `0xB9EA`
 that follows read the other half:
 
 ```console
@@ -470,18 +478,19 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xbdae; pd 5' /tmp/bank0.
             0x0000bdb6      901908         mov dptr, #0x1908
 ```
 
-So, read off the bytes:
+So, read off the bytes, with each word written `<high>:<low>` as §5.1 defines
+the accumulator pair:
 
-| case | source word (big-endian, high address first) | gate | relation to the gate |
+| case | source word `<high>:<low>` | gate | relation to the gate |
 |---:|---|---|---|
-| `0x00` | `0x1919`:`0x1918` | `0x1904` | elsewhere in the same page |
-| `0x01` | `0x1908`:`0x1907` | `0x1906` | `gate + 1` |
-| `0x02` | `0x190B`:`0x190A` | `0x1909` | `gate + 1` |
-| `0x03` | `0x190E`:`0x190D` | `0x190C` | `gate + 1` |
-| `0x04` | `0x1919`:`0x1918` | `0x1904` | same word as `0x00` |
-| `0x05` | `0x1908`:`0x1907` | `0x1906` | same word as `0x01` |
-| `0x06` | `0x190B`:`0x190A` | `0x1909` | same word as `0x02` |
-| `0x07` | `0x190E`:`0x190D` | `0x190C` | same word as `0x03` |
+| `0x00` | `0x1918`:`0x1919` | `0x1904` | elsewhere in the same page |
+| `0x01` | `0x1907`:`0x1908` | `0x1906` | `gate + 1` |
+| `0x02` | `0x190A`:`0x190B` | `0x1909` | `gate + 1` |
+| `0x03` | `0x190D`:`0x190E` | `0x190C` | `gate + 1` |
+| `0x04` | `0x1918`:`0x1919` | `0x1904` | same word as `0x00` |
+| `0x05` | `0x1907`:`0x1908` | `0x1906` | same word as `0x01` |
+| `0x06` | `0x190A`:`0x190B` | `0x1909` | same word as `0x02` |
+| `0x07` | `0x190D`:`0x190E` | `0x190C` | same word as `0x03` |
 
 **There are four distinct source words across eight cases, paired exactly the
 way the four gate bytes are paired.** Each case still has its own accumulator
@@ -494,16 +503,25 @@ this image.
 ### 6.2 What the `0x08D0`-`0x08DE` slot holds
 
 The store is unconditional once the arm is taken — `mov dptr,#<slot> ; mov a,r6
-; movx @dptr,a ; inc dptr ; mov a,r7 ; movx @dptr,a` — so `r6` is the **high**
-byte at the slot's own address and `r7` the low byte at the next one up. Since
-§6.1 already fixed `r6` as the high byte of the source word, the slot holds
+; movx @dptr,a ; inc dptr ; mov a,r7 ; movx @dptr,a` — so `r6` is the **low**
+byte at the slot's own address and `r7` the high byte at the next one up. Since
+§6.1 already fixed `r6` as the low byte of the source word, the slot holds
 
-> a straight big-endian 16-bit copy of the source word: `0x08D0` = `0x1919`,
-> `0x08D1` = `0x1918` for cases `0x00`/`0x04`; `0x08D2`/`0x08D3` =
-> `0x1908`/`0x1907` for `0x01`/`0x05`; `0x08D4`/`0x08D5` = `0x190B`/`0x190A` for
-> `0x02`/`0x06`; `0x08D6`/`0x08D7` = `0x190E`/`0x190D` for `0x03`/`0x07`;
-> `0x08D8`/`0x08D9`, `0x08DA`/`0x08DB`, `0x08DC`/`0x08DD` and
+> a straight 16-bit copy of the source word, low byte at the lower address:
+> `0x08D0` = `0x1919`, `0x08D1` = `0x1918` for cases `0x00`/`0x04`;
+> `0x08D2`/`0x08D3` = `0x1908`/`0x1907` for `0x01`/`0x05`; `0x08D4`/`0x08D5` =
+> `0x190B`/`0x190A` for `0x02`/`0x06`; `0x08D6`/`0x08D7` = `0x190E`/`0x190D` for
+> `0x03`/`0x07`; `0x08D8`/`0x08D9`, `0x08DA`/`0x08DB`, `0x08DC`/`0x08DD` and
 > `0x08DE`/`0x08DF` repeating the first four in the same order.
+
+The copy is the same 16-bit value `V` §5.1 names, laid down the other way
+round: the source word sits in XDATA with its high byte at the *lower* address
+(`0x1918` before `0x1919`) and the slot with its low byte there (`0x08D0`
+before `0x08D1`), while the accumulator pair is big-endian like the source
+(`0x0600` before `0x0601`). Two comparisons follow and they come out
+differently: the slot against its source is one value byte-swapped, and the
+slot against the accumulator pair is a different value in a different order —
+which is what §5.1's `P := (P + V) >> 1` rests on.
 
 **No byte in this image writes those sixteen addresses other than the eight
 handlers themselves**, by the two scans in §1 — `trace_xdata_refs.py` finds one
@@ -672,6 +690,29 @@ Whether it is the routine the issue was looking for, and in what order any of
 it runs, is not determined here. It is reported because it is in the bytes and
 because it is the natural place a follow-up should start.
 
+**The same routine holds one direct write to a gate byte that neither arm
+reaches, and it is named here because §10's answer is bounded by it.**
+`trace_xdata_refs.py` on `0x190C` reports a write site at `0x82B1`; the two
+`0x82D8` rows of the arms CSV list `0x1900`, `0x1904`, `0x1918`, `0x1919` and
+`0x1944` among the addresses their arms touch, and `0x190C` is not one of them.
+`0x82B1` sits in the straight-line run the `jc 0x82A1` at `0x829C` takes, and
+`a` there is not free — the `lcall 0xBB99` at `0x82AD` leaves it at `0x9F` on
+the way back, and nothing between that call and the store changes it:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x82aa; pd 5' /tmp/bank0.bin
+            0x000082aa      901904         mov dptr, #0x1904
+            0x000082ad      12bb99         lcall 0xbb99
+            0x000082b0      f0             movx @dptr, a
+            0x000082b1      90190c         mov dptr, #0x190c
+            0x000082b4      f0             movx @dptr, a
+```
+
+So it is `0x9F` to `0x190C`, bit 7 set like the values §6.3 and §7 read off the
+helpers and the default. **That is one site outside one routine, not a sweep of
+the image**: it says what this write holds, not that no byte in the bank can
+clear the bit.
+
 ## 8. Who reaches the dispatcher
 
 `0x8031` — the selector read and its `lcall 0x7151` — sits immediately after the
@@ -739,7 +780,7 @@ Three results from that table are worth stating as results rather than as rows.
 
 **`0x08DE` missing from the census, and `0x060E` having no writer in it, are
 the same blind spot twice.** The census is built from exported decompiled
-functions; case `0x07` has none, so both its word slot and its accumulator's low
+functions; case `0x07` has none, so both its word slot and its accumulator's high
 byte are missing or wrong in the file that is otherwise the natural index for
 these thirty-two addresses. Re-derived from the image, `0x060E` is read at
 `0x8249` and written at `0x825F` by case `0x07`, and `0x08DE` is written at
@@ -819,8 +860,8 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xb728; pd 8' /tmp/bank1.
 
 It tests bit 5 of `0x0610` — case `0x05`'s done bit, per §9's table and §4.6's
 `orl a,#0x20` — and on it being set, loads the 16-bit big-endian word at
-`0x060A` (case `0x05`'s accumulator, low byte first in XDATA and moved into
-`r1`/`r2` by `0x8886`) and compares it against `0x03E8`. This is the one place
+`0x060A` (case `0x05`'s accumulator, whose two bytes `0x8886` moves into `r1`
+and `r2` in that order) and compares it against `0x03E8`. This is the one place
 in the tree where a value a `0x8038` handler computes is read by different
 code, and it makes case `0x05` the most connected of the eight. It is a byte
 reading: `0x060A` holds a 16-bit word and that word is compared with `1000`.
@@ -866,9 +907,14 @@ them:
   the thirty-two addresses here is one of them.
 
 So the honest answer is: **eight accumulating channels fed by four 16-bit
-words, behind a gate bit this image never clears, with no name, no unit and no
-identified consumer — and no basis for calling it thermal, fan, battery or
-power.** Naming a subsystem here would be a guess wearing the grammar of a
+words, behind a gate bit that no edge in the walk's eighteen arms clears, with
+no name, no unit and no identified consumer — and no basis for calling it
+thermal, fan, battery or power.** The gate clause stops where the evidence
+stops, and the stop is named rather than assumed: the one direct write to a
+gate byte that no arm reaches is at `0x82B1`, it holds `0x9F`, and it sets bit
+7 like the rest (§7.1) — which is a decode of one site, **not** a sweep for
+every writer of `0x1904`/`0x1906`/`0x1909`/`0x190C`, and this document runs no
+such sweep. Naming a subsystem here would be a guess wearing the grammar of a
 finding, which is what `CLAUDE.md`'s calibration rule is written against. If a
 follow-up wants to close this, the cheapest next step is named in §11 and is a
 human's, not this pipeline's.

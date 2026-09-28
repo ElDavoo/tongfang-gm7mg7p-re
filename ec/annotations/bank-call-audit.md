@@ -1164,9 +1164,12 @@ written and the walk's reading is here. The bit-7-clear arm turns out to be a
 single `ljmp 0x8274` in all eight — which a linear window decode could not have
 shown — while the bit-7-set arm leaves in three distinct shapes rather than
 one, and **no edge in the eighteen arms clears bit 7 of a gate byte**, which is
-why this section's "whoever sets bit 7 decides whether a channel runs" reading
-has no answer in that form. Nothing here is a claim about execution, order or
-hardware, and no `status:` in [`registers.yaml`](registers.yaml) moves.
+why issue #60's "whoever sets bit 7 of a gate byte is what decides whether a
+channel runs" has no answer in that form, and why the paragraph above's "Bit 7
+of a gate byte clear sends the handler straight to the default" reads here as a
+description of the arms rather than as a discriminator between channels.
+Nothing here is a claim about execution, order or hardware, and no `status:`
+in [`registers.yaml`](registers.yaml) moves.
 
 **Where a handler goes afterwards, and what the default does.** Cases `0x00`
 through `0x06` end in a jump to the shared epilogue at `0x821F`, which

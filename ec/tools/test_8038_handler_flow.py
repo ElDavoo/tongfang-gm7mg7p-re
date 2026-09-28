@@ -170,7 +170,7 @@ EXIT = {
 SOURCE_WORD = {0x00: 0x1918, 0x01: 0x1907, 0x02: 0x190A, 0x03: 0x190D,
                0x04: 0x1918, 0x05: 0x1907, 0x06: 0x190A, 0x07: 0x190D}
 
-# The `lcall 0xB965` site in each case, and the accumulator high byte it is
+# The `lcall 0xB965` site in each case, and the accumulator low byte it is
 # called with -- eight sites, one per case, in case order.
 B965_CALLS = {0x8074: 0x0601, 0x80B7: 0x0603, 0x80FA: 0x0605,
               0x813D: 0x0607, 0x817D: 0x0609, 0x81C0: 0x060B,
@@ -291,7 +291,7 @@ class ThePerCaseWalk(unittest.TestCase):
             self.assertEqual(len(hits), 1, "case 0x%02X" % case)
             found.add(hits[0])
         self.assertEqual(found, set(B965_CALLS))
-        # Three bytes earlier is the `mov dptr` naming the pair's high byte,
+        # Three bytes earlier is the `mov dptr` naming the pair's low byte,
         # so the average of §5.1 is over the pair and not one byte of it.
         for site, pair in B965_CALLS.items():
             with self.subTest(site="0x%04X" % site):
@@ -306,7 +306,7 @@ class ThePerCaseWalk(unittest.TestCase):
 
     def test_each_case_stores_r6_then_r7_into_its_slot(self):
         # `mov dptr,#<slot> ; mov a,r6 ; movx @dptr,a ; inc dptr ;
-        #  mov a,r7 ; movx @dptr,a` -- r6 high, r7 low, and the increment is
+        #  mov a,r7 ; movx @dptr,a` -- r6 low, r7 high, and the increment is
         # what puts r7 at slot+1.
         for case, _t, _g, slot, _p, _f, _a, _h, _h2 in CASES:
             with self.subTest(case="0x%02X" % case):
@@ -426,10 +426,13 @@ class TheWordSlot(unittest.TestCase):
     """What the 0x08D0-0x08DE slots hold, and the 16-bit word `r6:r7` is
     loaded with before they get it."""
 
-    def test_r6_is_the_high_byte_of_the_source_word(self):
+    def test_r6_is_the_low_byte_of_the_word_it_loads(self):
         # 0xB9DF's tail loads r6 from 0x0A56 and r7 from 0x0A57, and the
-        # staging routines put the source word's high byte in 0x0A56. So the
-        # slot store of §6.2 is a straight big-endian copy, not a swap.
+        # staging routines put the source word's low byte in 0x0A56. r6 is
+        # the low half of the pair: 0xB965's `clr c ; rrc a` pair shifts it
+        # first and lets r7 consume its carry. So the slot store of §6.2 is a
+        # straight copy of the value, laid down low byte at the lower
+        # address.
         self.assertEqual(hexat(BANK0, 0xB9DF, 21),
                          "901918"     # mov dptr,#0x1918
                          "e0"         # movx a,@dptr
@@ -455,16 +458,19 @@ class TheWordSlot(unittest.TestCase):
             with self.subTest(entry="0x%04X" % entry):
                 self.assertEqual(BANK0[0xB9F4], RET)   # one shared `ret`
 
-    def test_each_staging_routine_leaves_dptr_on_the_high_byte(self):
+    def test_each_staging_routine_leaves_dptr_on_the_second_byte(self):
         # 0xBDAE stores 0x1907 at 0x0A57 and leaves DPTR on 0x1908; that is
-        # what makes the `lcall 0xB9EA` after it read the other half.
-        for entry, low, high in ((0xBDAE, 0x1907, 0x1908),
-                                 (0xBDBA, 0x190A, 0x190B),
-                                 (0xBDC6, 0x190D, 0x190E),
-                                 (0xB9DF, 0x1918, 0x1919)):
+        # what makes the `lcall 0xB9EA` after it read the other half. The two
+        # names are address order only -- 0x1907 is the word's high byte and
+        # 0x1908 its low one, so DPTR is left on the low byte.
+        for entry, first, second in ((0xBDAE, 0x1907, 0x1908),
+                                     (0xBDBA, 0x190A, 0x190B),
+                                     (0xBDC6, 0x190D, 0x190E),
+                                     (0xB9DF, 0x1918, 0x1919)):
             with self.subTest(entry="0x%04X" % entry):
                 self.assertEqual(hexat(BANK0, entry, 11),
-                                 "90%04x" % low + "e0" "900a57" "f0" "90%04x" % high)
+                                 "90%04x" % first + "e0" "900a57" "f0"
+                                 "90%04x" % second)
 
     def test_four_source_words_across_eight_cases(self):
         self.assertEqual(len(set(SOURCE_WORD.values())), 4)
@@ -491,9 +497,9 @@ class TheWordSlot(unittest.TestCase):
                                  case not in (0x00, 0x04))
 
     def test_the_byte_pair_round_trip_through_0a58_0a59(self):
-        # Case 0x00's shape: the pair's low byte to 0x0A59, its high byte read
-        # by 0xB965, the returned high byte back to the pair, and 0x0A59 to
-        # the pair's low byte. Asserted as the six instructions they are,
+        # Case 0x00's shape: the pair's high byte to 0x0A59, its low byte read
+        # by 0xB965, the returned low byte back to the pair, and 0x0A59 to
+        # the pair's high byte. Asserted as the six instructions they are,
         # because it is why §5.1 can say the pair is halved in place.
         self.assertEqual(hexat(BANK0, 0x8069, 8), "900600" "e0" "900a59" "f0")
         self.assertEqual(hexat(BANK0, 0x8077, 12),
@@ -507,8 +513,9 @@ class TheSharedHelpers(unittest.TestCase):
     def test_b965_is_a_16_bit_sum_shifted_right_by_one(self):
         # Read the caller's DPTR byte into 0x0A58, add the 16-bit pair
         # 0x0A58/0x0A59 into r6:r7 low byte first, then `clr c ; rrc a` twice
-        # -- high byte first, so it is a plain >>1 with the carry out of the
-        # top discarded -- write it back and return the new high byte in `a`.
+        # -- r6 first, with r7 consuming its carry, so r6 is the low byte of
+        # the sum and it is a plain >>1 with the carry out of r7, the top,
+        # discarded -- write it back and return the new low byte in `a`.
         self.assertEqual(hexat(BANK0, 0xB965, 30),
                          "e0"                 # movx a,@dptr
                          "900a58" "f0"        # 0x0A58 = the caller's byte
