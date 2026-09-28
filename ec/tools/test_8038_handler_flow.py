@@ -12,9 +12,9 @@ rendering of them, and that is a choice rather than a shortcut. The document
 quotes `r2 -a 8051`; this suite compares what the image actually holds, so a
 change to either tool's spelling cannot make a claim pass or fail. It also
 sidesteps a real disagreement the document records: at `bank1,0xDAF3` the two
-bytes `a8 01` are `mov r0, r1` to r2, `mov r0,0x01` to `disasm8051`, and
-`mov r0,@r0` on the base instruction set. Pinning the byte is the only way to
-assert anything there that is not a choice between three readings.
+bytes `a8 01` are `mov r0, r1` to r2 and `mov r0,0x01` to `disasm8051`, which
+is the base 8051's own `MOV Rn,direct` reading. Pinning the byte is the only way
+to assert anything there that is not a choice between two readings.
 
 Two other things it deliberately does not do.
 
@@ -171,7 +171,7 @@ EXIT = {
 SOURCE_WORD = {0x00: 0x1918, 0x01: 0x1907, 0x02: 0x190A, 0x03: 0x190D,
                0x04: 0x1918, 0x05: 0x1907, 0x06: 0x190A, 0x07: 0x190D}
 
-# The `lcall 0xB965` site in each case, and the accumulator low byte it is
+# The `lcall 0xB965` site in each case, and the accumulator high byte it is
 # called with -- eight sites, one per case, in case order.
 B965_CALLS = {0x8074: 0x0601, 0x80B7: 0x0603, 0x80FA: 0x0605,
               0x813D: 0x0607, 0x817D: 0x0609, 0x81C0: 0x060B,
@@ -292,7 +292,7 @@ class ThePerCaseWalk(unittest.TestCase):
             self.assertEqual(len(hits), 1, "case 0x%02X" % case)
             found.add(hits[0])
         self.assertEqual(found, set(B965_CALLS))
-        # Three bytes earlier is the `mov dptr` naming the pair's low byte,
+        # Three bytes earlier is the `mov dptr` naming the pair's high byte,
         # so the average of §5.1 is over the pair and not one byte of it.
         for site, pair in B965_CALLS.items():
             with self.subTest(site="0x%04X" % site):
@@ -307,7 +307,7 @@ class ThePerCaseWalk(unittest.TestCase):
 
     def test_each_case_stores_r6_then_r7_into_its_slot(self):
         # `mov dptr,#<slot> ; mov a,r6 ; movx @dptr,a ; inc dptr ;
-        #  mov a,r7 ; movx @dptr,a` -- r6 low, r7 high, and the increment is
+        #  mov a,r7 ; movx @dptr,a` -- r6 high, r7 low, and the increment is
         # what puts r7 at slot+1.
         for case, _t, _g, slot, _p, _f, _a, _h, _h2 in CASES:
             with self.subTest(case="0x%02X" % case):
@@ -458,12 +458,16 @@ class TheWordSlot(unittest.TestCase):
     """What the 0x08D0-0x08DE slots hold, and the 16-bit word `r6:r7` is
     loaded with before they get it."""
 
-    def test_r6_is_the_low_byte_of_the_word_it_loads(self):
+    def test_r6_is_the_high_byte_of_the_word_it_loads(self):
         # 0xB9DF's tail loads r6 from 0x0A56 and r7 from 0x0A57, and the
-        # staging routines put the source word's low byte in 0x0A56. r6 is
-        # the low half of the pair: 0xB965's `clr c ; rrc a` pair shifts it
-        # first and lets r7 consume its carry. So the slot store of §6.2 is a
-        # straight copy of the value, laid down low byte at the lower
+        # staging routines put the source word's high byte in 0x0A56. r6 is
+        # the high half of the pair, and it is 0xB965's *add* that settles it
+        # rather than its shift: `add a,r7` runs first, on 0x0A59, and
+        # `addc a,r6` second, on 0x0A58, so the carry runs low to high and
+        # 0x0A58 is the high byte. The `clr c ; rrc a` pair then agrees --
+        # a 16-bit `>> 1` shifts the high byte first and rotates its bit 0
+        # into the top of the low byte. So the slot store of §6.2 is a
+        # straight copy of the value, laid down high byte at the lower
         # address.
         self.assertEqual(hexat(BANK0, 0xB9DF, 21),
                          "901918"     # mov dptr,#0x1918
@@ -493,8 +497,8 @@ class TheWordSlot(unittest.TestCase):
     def test_each_staging_routine_leaves_dptr_on_the_second_byte(self):
         # 0xBDAE stores 0x1907 at 0x0A57 and leaves DPTR on 0x1908; that is
         # what makes the `lcall 0xB9EA` after it read the other half. The two
-        # names are address order only -- 0x1907 is the word's high byte and
-        # 0x1908 its low one, so DPTR is left on the low byte.
+        # names are address order only -- 0x1907 is the word's low byte and
+        # 0x1908 its high one, so DPTR is left on the high byte.
         for entry, first, second in ((0xBDAE, 0x1907, 0x1908),
                                      (0xBDBA, 0x190A, 0x190B),
                                      (0xBDC6, 0x190D, 0x190E),
@@ -529,9 +533,9 @@ class TheWordSlot(unittest.TestCase):
                                  case not in (0x00, 0x04))
 
     def test_the_byte_pair_round_trip_through_0a58_0a59(self):
-        # Case 0x00's shape: the pair's high byte to 0x0A59, its low byte read
-        # by 0xB965, the returned low byte back to the pair, and 0x0A59 to
-        # the pair's high byte. Asserted as the six instructions they are,
+        # Case 0x00's shape: the pair's low byte to 0x0A59, its high byte read
+        # by 0xB965, the returned high byte back to the pair, and 0x0A59 to
+        # the pair's low byte. Asserted as the six instructions they are,
         # because it is why §5.1 can say the pair is halved in place.
         self.assertEqual(hexat(BANK0, 0x8069, 8), "900600" "e0" "900a59" "f0")
         self.assertEqual(hexat(BANK0, 0x8077, 12),
@@ -544,10 +548,12 @@ class TheSharedHelpers(unittest.TestCase):
 
     def test_b965_is_a_16_bit_sum_shifted_right_by_one(self):
         # Read the caller's DPTR byte into 0x0A58, add the 16-bit pair
-        # 0x0A58/0x0A59 into r6:r7 low byte first, then `clr c ; rrc a` twice
-        # -- r6 first, with r7 consuming its carry, so r6 is the low byte of
-        # the sum and it is a plain >>1 with the carry out of r7, the top,
-        # discarded -- write it back and return the new low byte in `a`.
+        # 0x0A58/0x0A59 into r6:r7 low byte first -- 0x0A59 into r7, then
+        # 0x0A58 into r6 with the carry -- so 0x0A58 is the high byte and r6
+        # the high half. Then `clr c ; rrc a` twice, r6 first with r7
+        # consuming its carry, which is a plain >>1 of the whole word with
+        # the carry out of r7, the top, discarded. Write both back and return
+        # the new high byte in `a`.
         self.assertEqual(hexat(BANK0, 0xB965, 30),
                          "e0"                 # movx a,@dptr
                          "900a58" "f0"        # 0x0A58 = the caller's byte
@@ -894,16 +900,16 @@ class TheOtherReadersAndWriters(unittest.TestCase):
         # either cannot make the claim pass on its own.
         #
         # `bank0,0xBAAE` reads the pair high byte last into r7 and the low one
-        # into r6 -- the accumulator's own order, §5.1's -- and returns the
-        # byte at 0x0399. The census names neither address here, and
-        # BAAE.c's own comment gives the reason, so that is asserted too.
+        # into r6 -- the reverse of §5.1's register order, like 0xB5D3 -- and
+        # returns the byte at 0x0399. The census names neither address here,
+        # and BAAE.c's own comment gives the reason, so that is asserted too.
         self.assertEqual(hexat(BANK0, 0xBAAE, 17),
                          "900609" "e0" "fc" "900608" "e0" "ff"
                          "ec" "fe" "900399" "e0" "22")
         self.assertIn('drops the two register loads',
                       (DECOMPILED / 'bank0' / 'BAAE.c').read_text(
                           errors="replace"))
-        # `bank0,0xB5D3` is the other order: r6 takes 0x0602, the high byte.
+        # `bank0,0xB5D3` is the other order: r6 takes 0x0602, the low byte.
         # The document reports the reversal and stops there.
         self.assertEqual(hexat(BANK0, 0xB5D3, 11),
                          "900602" "e0" "fe" "a3" "e0" "ff" "128399")
@@ -913,7 +919,8 @@ class TheOtherReadersAndWriters(unittest.TestCase):
         # §9.1's third `bank0` place has no listing and no annotation row, so
         # the document says what its bytes do and invents no name. The claim
         # is that it reads 0x0606/0x0607, puts the low byte in r6 and the high
-        # one in r7 -- §5.1's order, where 0xB965 adds -- and `subb`s the pair
+        # one in r7 -- the reverse of §5.1's order, where 0xB965 adds, and
+        # here the high byte is subtracted first -- and `subb`s the pair
         # out of 0x0A33/0x0A34.
         self.assertEqual(hexat(BANK0, 0xDAFD, 13),
                          "900607" "e0" "fa" "900606" "e0" "ff" "ea" "fe" "c3")
@@ -949,8 +956,8 @@ class TheOtherReadersAndWriters(unittest.TestCase):
         self.assertEqual(hexat(BANK1, 0xD97F, 6), "530203" "900378")
         self._assert_the_listing_does_not_read_r2_before_d9c1()
         # 0xDAED hands the word to 0xA5A7 with two constants. The two
-        # bytes at 0xDAF3/0xDAF5 are the ones the three disassemblers in this
-        # tree read three ways, so they are asserted as bytes and the document
+        # bytes at 0xDAF3/0xDAF5 are the ones the two disassemblers in this
+        # tree read two ways, so they are asserted as bytes and the document
         # says nothing about which registers hold the word afterwards.
         self.assertEqual(hexat(BANK1, 0xDAF3, 11), "a801" "a902" "7b17" "7a75" "12a5a7")
 
@@ -1001,8 +1008,8 @@ class TheAccumulatorConsumerSet(unittest.TestCase):
     arms CSV: a tool checked against itself agrees with whatever it last
     printed. `mov dptr,#imm16` is a three-byte `90 lo hi`, so the derivation
     is a byte search, and it covers both halves of each pair -- two of the
-    sixteen sites are reached by an immediate of the pair's *low* byte
-    (`0xDAFD` and `0xBAAE`), which a table keyed on the high byte would drop.
+    sixteen sites are reached by an immediate of the pair's *high* byte
+    (`0xDAFD` and `0xBAAE`), which a table keyed on the low byte would drop.
 
     It is a set and not a count. A count of the tree is a value every new
     finding has to edit, which is the shape of assertion `CLAUDE.md` warns
@@ -1085,16 +1092,16 @@ class TheAccumulatorConsumerSet(unittest.TestCase):
             with self.subTest(pair="0x%04X" % pair):
                 self.assertEqual(sorted(found), sorted(expected))
 
-    def test_two_of_the_sites_are_immediates_of_a_pairs_low_byte(self):
+    def test_two_of_the_sites_are_immediates_of_a_pairs_high_byte(self):
         # The two `bank0` places that read the pair in the other order are
-        # reached by `mov dptr` of the low byte, which is why the derivation
+        # reached by `mov dptr` of the high byte, which is why the derivation
         # above scans both halves. Pinned so a future edit that narrows it to
-        # the high byte fails here rather than silently losing two sites.
+        # the low byte fails here rather than silently losing two sites.
         images = {'bank0': BANK0, 'bank1': BANK1}
-        for bank, site, low in (('bank0', 0xDAFD, 0x0607),
-                                ('bank0', 0xBAAE, 0x0609)):
+        for bank, site, high in (('bank0', 0xDAFD, 0x0607),
+                                 ('bank0', 0xBAAE, 0x0609)):
             with self.subTest(site="0x%04X" % site):
-                self.assertEqual(hexat(images[bank], site, 3), "90%04x" % low)
+                self.assertEqual(hexat(images[bank], site, 3), "90%04x" % high)
 
     def test_the_census_names_exactly_what_the_table_says_it_names(self):
         # The third column of §9.1's table is the census's own `functions`

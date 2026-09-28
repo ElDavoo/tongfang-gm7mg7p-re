@@ -76,12 +76,13 @@ which is why the `bank1` transcripts in §9 need the `0x10000` offset above
 rather than the `0x08000` one.
 
 [`bank0-8038-handler-arms.csv`](bank0-8038-handler-arms.csv) is the per-arm
-table `--csv` writes: 18 `arm` rows and 63 `callee` rows. **All 18 arms report
-`status: complete`** — none hit the depth limit, the instruction budget, the
-indirect-jump cut or the end-of-image cut, which is what lets the negatives
-below be stated without a hedge. Sixteen of those arms are the eight handlers'
-two arms each; the other two are the `0x82D8` site of §7.1. The doc-plus-CSV
-shape is the one [`xdata-0400-045f.md`](xdata-0400-045f.md)/`.csv` established.
+table `--csv` writes, one `arm` row and its `callee` rows per site. **All 18
+arms report `status: complete`** — none hit the depth limit, the instruction
+budget, the indirect-jump cut or the end-of-image cut, which is what lets the
+negatives below be stated without a hedge. Sixteen of those arms are the eight
+handlers' two arms each; the other two are the `0x82D8` site of §7.1. The
+doc-plus-CSV shape is the one
+[`xdata-0400-045f.md`](xdata-0400-045f.md)/`.csv` established.
 
 ## 2. The dispatch site, and the one edge no byte scan can see
 
@@ -371,29 +372,49 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xb965; pd 24' /tmp/bank0
             0x0000b982      22             ret
 ```
 
-`0xB965` is entered with DPTR holding the **low** byte of the accumulator pair
+`0xB965` is entered with DPTR holding the **high** byte of the accumulator pair
 (`0x0601`, `0x0603`, `0x0605`, `0x0607`, `0x0609`, `0x060B`, `0x060D`, `0x060F`
 — one `lcall 0xB965` in each of the eight, at `0x8074`, `0x80B7`, `0x80FA`,
 `0x813D`, `0x817D`, `0x81C0`, `0x8202`, `0x8251`). It reads it into `0x0A58`
 and adds the 16-bit pair `0x0A58`/`0x0A59` to `r6:r7` — `0x0A58` into `r6`,
-`0x0A59` into `r7`, the carry running from `0x0A59` to `0x0A58`. Which of
-`r6`/`r7` is the high byte is settled by the shift and not by the add: `clr c ;
-rrc a` runs twice, `r6` first and `r7` consuming the carry out of it, so `r6`
-is the **low** byte of the sum and `r7` the high one. The carry out of the high
-byte is discarded. It writes the result back to `0x0A58`/`0x0A59` in that same
-order and returns the new low byte in `a`.
+`0x0A59` into `r7`, the carry running from `0x0A59` to `0x0A58`. **The add
+chain settles which of the two is the high byte, and it settles it before the
+shift is read at all:** `0xB96C add a,r7` runs *first*, on `0x0A59`, and
+`0xB972 addc a,r6` runs second, on `0x0A58`. A carry can only run from a low
+byte into a high one, so `0x0A58` is the high byte, `0x0A59` the low one, `r6`
+the **high** half of `V` and `r7` the low. The shift then agrees rather than
+decides: `clr c ; rrc a` runs twice, `r6` first and `r7` consuming the carry
+out of it, which is the shape of a 16-bit `>> 1` — the high byte is shifted
+first and its bit 0 rotates into the top of the low byte. The carry out of
+`r7`, the top, is dropped by the `clr c` at `0xB973`. It writes the result
+back to `0x0A58`/`0x0A59` in that same order and returns the new high byte in
+`a`.
+
+That `0x0A58` is the high byte of the *pair* comes from the caller's own
+stores, not from the address: case `0x00` fills `0x0A59` from `[0x0600]` at
+`0x806D`/`0x8070` and passes DPTR = `0x0601`, so `0x0A58` = `[0x0601]` and
+`0x0A59` = `[0x0600]`. `0x0A58` being the high byte makes the pair
+little-endian — `0x0600` low, `0x0601` high.
 
 Written in the arithmetic the bytes perform, and with the byte order read off
 the caller's own stores rather than assumed:
 
-> the accumulator pair `P` := `(P + V) >> 1`, where `P` is 16-bit big-endian in
-> `<high>:<low> = 0x0600:0x0601` (and the other seven pairs), `V` is the
-> `r6:r7` word the handler just copied to its slot, big-endian in
-> `<high>:<low> = 0x1918:0x1919` because `0xB9DF` leaves `r6` holding `0x1919`
+> the accumulator pair `P` := `(P + V) >> 1`, where `P` is 16-bit little-endian
+> in `<high>:<low> = 0x0601:0x0600` (and the other seven pairs), `V` is the
+> `r6:r7` word the handler just copied to its slot, little-endian in
+> `<high>:<low> = 0x1919:0x1918` because `0xB9DF` leaves `r6` holding `0x1919`
 > and `r7` holding `0x1918` (§6.1), and the floor of one bit is dropped.
 
-The handler completes the round trip itself: `a` (the new low byte) goes back
-to `0x0601`, and `0x0A59` (the new high byte) is copied to `0x0600`. **Nothing
+Two things outside this routine check the reading without being told by it.
+§9's `bank1,0xB728` hands `0x060A` to the pair loader `0x8886`, which puts
+`0x060A` in `r1` and `0x060B` in `r2` and is then compared by `0x8863` against
+`r3`/`r4` = `0xE8`/`0x03` in that order — `subb a,r1` then `subb a,r2`, a
+16-bit subtract low byte first, so the lower address is the low byte, which is
+what `0x0A58` being the high byte says. And §9's `anl r2,#0x03` at `0xD97F`
+masks the high byte of another pair, the same way round.
+
+The handler completes the round trip itself: `a` (the new high byte) goes back
+to `0x0601`, and `0x0A59` (the new low byte) is copied to `0x0600`. **Nothing
 in this repository establishes that the EC performs any filtering with it.** The
 name "accumulator" here is for the shape — a value carried across calls and
 halved against a fresh sample — and a write being accepted is not evidence the
@@ -482,7 +503,7 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xb9df; pd 16' /tmp/bank0
 `0xB9DF` reads XDATA `0x1918` into the scratch byte `0x0A57` and `0x1919` into
 `0x0A56`, then the shared tail at `0xB9EF` loads `r6` from `0x0A56` and `r7`
 from `0x0A57`. `0xB9EA` is that routine entered at its `movx a,@dptr`: the
-caller has already staged the high byte at `0x0A57` and left DPTR on the low
+caller has already staged the low byte at `0x0A57` and left DPTR on the high
 byte, so `0xB9EA` completes the same job for a *different* pair. The `lcall`
 census over the bank image:
 
@@ -495,7 +516,7 @@ census over the bank image:
 | `0xBDC6` | `0x8124`, `0x8238` | `0x190D` |
 
 Each staging routine reads its byte, stores it to `0x0A57`, and **leaves DPTR
-pointing at the low byte of the same word**, which is what makes the `0xB9EA`
+pointing at the high byte of the same word**, which is what makes the `0xB9EA`
 that follows read the other half:
 
 ```console
@@ -512,14 +533,21 @@ the accumulator pair:
 
 | case | source word `<high>:<low>` | gate | relation to the gate |
 |---:|---|---|---|
-| `0x00` | `0x1918`:`0x1919` | `0x1904` | elsewhere in the same page |
-| `0x01` | `0x1907`:`0x1908` | `0x1906` | `gate + 1` |
-| `0x02` | `0x190A`:`0x190B` | `0x1909` | `gate + 1` |
-| `0x03` | `0x190D`:`0x190E` | `0x190C` | `gate + 1` |
-| `0x04` | `0x1918`:`0x1919` | `0x1904` | same word as `0x00` |
-| `0x05` | `0x1907`:`0x1908` | `0x1906` | same word as `0x01` |
-| `0x06` | `0x190A`:`0x190B` | `0x1909` | same word as `0x02` |
-| `0x07` | `0x190D`:`0x190E` | `0x190C` | same word as `0x03` |
+| `0x00` | `0x1919`:`0x1918` | `0x1904` | elsewhere in the same page |
+| `0x01` | `0x1908`:`0x1907` | `0x1906` | `gate + 1` |
+| `0x02` | `0x190B`:`0x190A` | `0x1909` | `gate + 1` |
+| `0x03` | `0x190E`:`0x190D` | `0x190C` | `gate + 1` |
+| `0x04` | `0x1919`:`0x1918` | `0x1904` | same word as `0x00` |
+| `0x05` | `0x1908`:`0x1907` | `0x1906` | same word as `0x01` |
+| `0x06` | `0x190B`:`0x190A` | `0x1909` | same word as `0x02` |
+| `0x07` | `0x190E`:`0x190D` | `0x190C` | same word as `0x03` |
+
+The column is high byte first because that is where `r6` puts it: `0x0A56`
+feeds `r6`, and `r6` is the high half of the sum at `0xB965` (§5.1), so
+`0x1919` is the high byte and the word sits in XDATA low byte first. The gate
+column is unaffected either way — `0x1907` is still the byte at `gate + 1` —
+which is why the pairing argument below is about addresses and not about which
+half of a word is which.
 
 **There are four distinct source words across eight cases, paired exactly the
 way the four gate bytes are paired.** Each case still has its own accumulator
@@ -532,11 +560,11 @@ this image.
 ### 6.2 What the `0x08D0`-`0x08DE` slot holds
 
 The store is unconditional once the arm is taken — `mov dptr,#<slot> ; mov a,r6
-; movx @dptr,a ; inc dptr ; mov a,r7 ; movx @dptr,a` — so `r6` is the **low**
-byte at the slot's own address and `r7` the high byte at the next one up. Since
-§6.1 already fixed `r6` as the low byte of the source word, the slot holds
+; movx @dptr,a ; inc dptr ; mov a,r7 ; movx @dptr,a` — so `r6` is the **high**
+byte at the slot's own address and `r7` the low byte at the next one up. Since
+§6.1 already fixed `r6` as the high byte of the source word, the slot holds
 
-> a straight 16-bit copy of the source word, low byte at the lower address:
+> a straight 16-bit copy of the source word, high byte at the lower address:
 > `0x08D0` = `0x1919`, `0x08D1` = `0x1918` for cases `0x00`/`0x04`;
 > `0x08D2`/`0x08D3` = `0x1908`/`0x1907` for `0x01`/`0x05`; `0x08D4`/`0x08D5` =
 > `0x190B`/`0x190A` for `0x02`/`0x06`; `0x08D6`/`0x08D7` = `0x190E`/`0x190D` for
@@ -544,13 +572,13 @@ byte at the slot's own address and `r7` the high byte at the next one up. Since
 > `0x08DE`/`0x08DF` repeating the first four in the same order.
 
 The copy is the same 16-bit value `V` §5.1 names, laid down the other way
-round: the source word sits in XDATA with its high byte at the *lower* address
-(`0x1918` before `0x1919`) and the slot with its low byte there (`0x08D0`
-before `0x08D1`), while the accumulator pair is big-endian like the source
-(`0x0600` before `0x0601`). Two comparisons follow and they come out
-differently: the slot against its source is one value byte-swapped, and the
-slot against the accumulator pair is a different value in a different order —
-which is what §5.1's `P := (P + V) >> 1` rests on.
+round: the source word sits in XDATA with its **low** byte at the *lower*
+address (`0x1918` before `0x1919`) and the slot with its **high** byte there
+(`0x08D0` before `0x08D1`), while the accumulator pair is little-endian like
+the source (`0x0600` before `0x0601`). Two comparisons follow and they come
+out differently: the slot against its source is one value byte-swapped, and
+the slot against the accumulator pair is a different value in a different
+order — which is what §5.1's `P := (P + V) >> 1` rests on.
 
 **No byte in this image writes those sixteen addresses other than the eight
 handlers themselves**, by the two scans in §1 — `trace_xdata_refs.py` finds one
@@ -822,7 +850,7 @@ image rather than restating it.
 | `0x1904` | 12 | 4 | 2 | 7 | 5 | the `orl a,#0x80` at `0x8303` (§7.1), which is an OR and not a whole-byte write; five of the twelve references are the address being taken rather than a `movx` |
 | `0x08E1` | 18 | 4 | 8 | 8 | 1 | — |
 | `0x0600` | 5 | 2 | 3 | 3 | 0 | — |
-| `0x060E` | 3 | 3 | 0 | 3 | 0 | the census has **no writer** for this byte; the image has two, both in case `0x07` (`0x8249` read, `0x825F` write), for the reason in the row below |
+| `0x060E` | 3 | 3 | 0 | 3 | 0 | the census has **no writer** for this byte; the image has two direct `movx` sites, both in case `0x07` (`0x8249` read, `0x825F` write), for the reason in the row below |
 | `0x08D0` | 2 | 0 | 2 | 2 | 0 | one direct site and one `mov dptr` (`0x8061`), writing two consecutive bytes; the census's two "writers" are not two sites but the two Ghidra entries `0x8048` and `0x8054` its decompile split one run across, and §3's finding is that those listing boundaries are **not** control-flow boundaries — `0x8048` is a mid-stream entry over table bytes the walk never reaches, and the committed `8048.c` says itself that the body Ghidra produced there "is a reading of bytes outside this window, not of these instructions". **Read by nothing either method finds** |
 | `0x08DE` | **no row** | — | — | — | — | written by case `0x07` at `0x8242`; the census has no row at all, because the committed project exports no function at `0x8231` (§4.8) |
 | `0x08DF` | **no row** | — | — | — | — | written by the same store one byte up — `inc dptr` at `0x8243`, then `mov a,r7` / `movx @dptr,a` at `0x8244`-`0x8245` — and absent for the same reason as the row above |
@@ -884,15 +912,19 @@ the result.** `bank1,0xDAED` follows with `a8 01` and `a9 02` and then calls
 `0xA5A7` with `r2` = `0x75` and `r3` = `0x17`.
 
 Those two bytes are worth stopping on, because the two disassemblers in this
-tree read them differently and the base 8051 says a third thing. `r2 -a 8051`
-gives `mov r0, r1` / `mov r1, r2`; `ec/tools/disasm8051.py` gives `mov r0,0x01`
-/ `mov r1,0x02`; `0xA8`/`0xA9` are `MOV Rn,@R0` on the base instruction set. So
-what is claimed here is only the bytes and their position — the word is loaded
-by `0x8886` and passed to `0xA5A7` beside two constants, and **which registers
-hold it afterwards is not determined**. Neither site is decoded further here,
-and neither is named in a `ghidra-functions.csv` row this document could
-check; the shape is the result, and nothing is claimed about what `0x0378`
-holds or what `0xA5A7` does with the pair.
+tree read them differently. `r2 -a 8051` gives `mov r0, r1` / `mov r1, r2`;
+`ec/tools/disasm8051.py` gives `mov r0,0x01` / `mov r1,0x02`. The base 8051 map
+is on the second one's side rather than a third: `0xA8+n` is `MOV Rn,direct`
+over internal RAM `0x00`-`0x7F`, `MOV Rn,@Ri` is `0x08`-`0x0F`, and the base set
+has no `MOV Rn,Rm` at all — which is why `bank1,0xDAED`'s `a8 01 a9 02` reads
+as `mov r0,0x01` / `mov r1,0x02` and why a register-to-register move needs `A`.
+So there are two spellings of the bytes rather than three, and what is claimed
+here is only the bytes and their position — the word is loaded by `0x8886` and
+passed to `0xA5A7` beside two constants, and **which registers hold it
+afterwards is not determined**. Neither site is decoded further here, and
+neither is named in a `ghidra-functions.csv` row this document could check;
+the shape is the result, and nothing is claimed about what `0x0378` holds or
+what `0xA5A7` does with the pair.
 
 **`bank1,0xB728` is a cross-bank consumer of case `0x05`'s accumulator,
 compared against a constant.** It is not the only one, and it is not the only
@@ -912,9 +944,11 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xb728; pd 8' /tmp/bank1.
 ```
 
 It tests bit 5 of `0x0610` — case `0x05`'s done bit, per §9's table and §4.6's
-`orl a,#0x20` — and on it being set, loads the 16-bit big-endian word at
+`orl a,#0x20` — and on it being set, loads the 16-bit little-endian word at
 `0x060A` (case `0x05`'s accumulator, whose two bytes `0x8886` moves into `r1`
-and `r2` in that order) and compares it against `0x03E8`. It is a byte
+and `r2` in that order — `0x060A` low, `0x060B` high, which is the order
+`0x8863`'s `subb a,r1` then `subb a,r2` against `r3`/`r4` = `0xE8`/`0x03` is
+already a 16-bit compare in) and compares it against `0x03E8`. It is a byte
 reading: `0x060A` holds a 16-bit word and that word is compared with `1000`.
 Nothing here says the comparison's outcome means anything, and §9.1 shows it is
 not the only place a value a `0x8038` handler computes is read by other code —
@@ -952,12 +986,14 @@ Two of the three `bank0` places have committed listings, and one does not:
   from a `call-target` boundary that [`bank-call-audit.md`](bank-call-audit.md)
   §1 calls an upper bound. It reads `0x0602` into `R6` and `0x0603` into `R7`,
   calls `0x8399`, and stores `R7` to `0x0875`. That is the reverse of §5.1's
-  register order, where `r6` is the low byte of the folded sum; the bytes are
+  register order, where `r6` is the high byte of the folded sum; the bytes are
   what they are and this document does not say what the reversal is for.
 - **`bank0,0xBAAE`** — [`BAAE.asm`](../decompiled/bank0/BAAE.asm), the named
-  `load_r7_r6_from_0608_and_return_0399`. It loads `0x0608`/`0x0609` into
-  `R7:R6` in the accumulator's own order and returns the byte at `0x0399` in
-  `a`. **The census does not name it for either address**, and the committed
+  `load_r7_r6_from_0608_and_return_0399`. It loads the pair's high byte
+  `0x0608` into `R7` and its low byte `0x0609` into `R6` — the reverse of
+  §5.1's register order, like `0xB5D3` above — and returns the byte at
+  `0x0399` in `a`. **The census does not name it for either address**, and the
+  committed
   [`BAAE.c`](../decompiled/bank0/BAAE.c) says why in its own comment: "The
   decompiled C reports only the 0x0399 return and drops the two register
   loads." It is the sharpest illustration of the caveat this section opens
@@ -969,7 +1005,10 @@ Two of the three `bank0` places have committed listings, and one does not:
   bytes do is visible: it reads `0x0607` into `R2`, `0x0606` into `R7`, copies
   `R2` into `R6`, and **subtracts** the pair from the 16-bit value at
   `0x0A33`/`0x0A34` (`subb a,r7` then `subb a,r6` — `r6` the low byte, `r7`
-  the high one, §5.1's order, where `0xB965` adds). Case `0x03`'s accumulator
+  the high one, the **reverse** of §5.1's order, where `0xB965` adds, and
+  here the high byte is the one subtracted first, at `0x0A34` rather than
+  `0x0A33`; the `movx` between the two `subb`s touch no flag, so the borrow
+  still reaches the low byte). Case `0x03`'s accumulator
   is a *minuend* here rather than the addend the handler folds it as. No
   function boundary covers these bytes, so there is no name for the routine and
   this document does not invent one.
@@ -1038,9 +1077,13 @@ changed:
   `registers.yaml` row whose own note says it is *"Derived from
   0x0434/0x0435: store_scaled_quotient_0449 (bank1 0xF3D7) reads the battery
   current pair and divides by 100 into this byte"*, and `0x0434`/`0x0435` is
-  `BAT_CURRENT_MA`, the one address in this repository whose value is
-  established live and agreed upstream. So the issue's "EC-internal half of
-  something `registers.yaml` tracks from the host side" hypothesis now has one
+  `BAT_CURRENT_MA`, whose value is established live and agreed upstream, so a
+  human at the machine has something to read `0x0449` against. It is not the
+  only such row — `BAT_VOLTAGE_MV` at `0x0438`/`0x0439` is in the same
+  position, among others — and it is named here rather than those because
+  `0x0449`'s own note is the one that derives it from the current pair. So the
+  issue's "EC-internal half of something `registers.yaml` tracks from the host
+  side" hypothesis now has one
   committed link behind it, and this document's earlier answer — that it "has no
   support" — was wrong on the strength of a narrow scan.
   **What that link is not:** the routine's own selector between the two paths
