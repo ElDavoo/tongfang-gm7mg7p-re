@@ -84,8 +84,9 @@ the prose *call* each set.
 Four edits, all inside `cause_report`. `pair_report`, `across_report`,
 `swept_report`, `cause_pd_report`, `rank_shift_report` and `collapse_line` are
 untouched, and `pair` and `across` output is byte-identical — checked by
-diffing `git show 4e697871:ec/tools/xdata_moved_ranks.py` (this change's parent,
-which is the file before it) against the new file over five invocations
+diffing `git show b0b0c09c:ec/tools/xdata_moved_ranks.py` (this change's parent,
+which is the file before it — and `main` does not touch it, so the same blob
+every earlier merge base named) against the new file over five invocations
 including `--rows`, `--swept` and the registers pair, §5. The commit is named
 rather than `HEAD` because `HEAD` is this change once it is committed, so a
 reader re-running the `HEAD` spelling would diff the file against itself and
@@ -146,8 +147,9 @@ over the sets their labels claim and not over each other.
 
 Note also what the sibling line does **not** carry: the `-- one address is in
 two rows` caveat is absent from it, correctly, because 137 page memberships
-over 137 distinct page addresses is a page that no `pd` holder shares. The
-caveat is a per-set fact, and it is now computed per set.
+over 137 distinct page addresses is 137 over 137 — no page address in the
+reappearing set's rows is in two of them, so the per-set computation finds no
+split to report. The caveat is a per-set fact, and it is now computed per set.
 
 ## 4. The cases, and what each is red against
 
@@ -212,11 +214,14 @@ register rows, 439 cluster rows, both exit 0**), `git worktree add --detach
 they are and this paragraph is the record that they were checked. The `#884`
 blockquote in
 [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md)
-— *"at the rate the whole census reappears at (**79 in 408**)"* — already names
-the reappearing set rather than the 439, so it is correct under either reading
-and is not edited. The §2 console block of the derivation write-up is left as
-the record of the run that produced it and gains a correction block beneath its
-own, in the shape #929's already is.
+— *"at the rate the whole census reappears at (**79 in 408**)"* — is **not**
+among them: *"the whole census"* names the population, and the figure under it
+is conditioned on reappearance, which is the same defect §5's other three
+instances carry. It gets the same one-line note rather than an exemption, since
+the parenthetical pins the number without repairing the label. The §2 console
+block of the derivation write-up is left as the record of the run that produced
+it and gains a correction block beneath its own, in the shape #929's already
+is.
 
 ## 6. Declared, and not taken
 
@@ -274,14 +279,16 @@ than an assertion.
 > the **citing** lines those two rows record moved, and
 > `check_pin_table_rows.py` reports a row the run does not describe — the
 > sixth re-anchoring the tool's own docstring names, and the reason it exists.
-> `docs/findings.md`'s §62 row moved `:9392` → `:9416` and the derivation
-> write-up's row `:401` → `:469`, each with the shift recorded beside it.
+> The derivation write-up's row moved `:401` → `:469`, and `docs/findings.md`'s
+> §62 row moved twice — `:9411` → `:9437` by `main`'s `#489` correction
+> paragraph and then `:9437` → `:9461` by this change's own, both of them above
+> it — with each shift recorded beside the row it moves.
 > **Pins into `xdata_moved_ranks.py` above line 996 do move, and this
 > paragraph does not claim otherwise.** An earlier draft of it said *no pin into
 > `xdata_moved_ranks.py` moves*, on the grounds that every edit in the file is
 > below line 996 and the highest pin into it is `:733`; **both halves are
 > false**, and the correction is worth stating as a bound rather than a
-> reassurance. The diff's hunks are at this change's merge base `4e697871` — and
+> reassurance. The diff's hunks are at this change's merge base `b0b0c09c` — and
 > therefore at `origin/main`, which does not touch the file — lines **996,
 > 1126, 1129, 1132 and 1563**, so the true bound is that **no edit is above
 > 1563**. Pins below 996 are unmoved: `:181`, `:243`, `:257`, `:436`, `:487`,
@@ -306,51 +313,31 @@ than an assertion.
 > here.**
 >
 > None of this reaches the *test*-pin table: `census_test_line_pins.py` reports
-> the same **128 pins in 29 markdown files** on this tree, on `origin/main` and
-> on the merge base, so nothing that table records needed re-registering for
-> this change — which is the claim the paragraph was reaching for, and the one
-> that is actually checkable.
+> the same **129 pins in 30 markdown files** on this tree and on `origin/main`
+> at `b0b0c09c` — #421's `provenance-clone-depth-behaviour.md` is what carries
+> them now — and its `read` line's population is `229` markdown files and `75`
+> test files on this tree against `228` and `75` on `main`, the whole of the
+> difference being this write-up, which cites no `test_*.py:NNN` and adds no
+> suite. So nothing that table records needed re-registering for this change,
+> which is the claim the paragraph was reaching for, and the one that is
+> actually checkable; the re-registration the `read` line's own step does force
+> is carried in [`test-line-pin-census.md`](test-line-pin-census.md), which is
+> where it belongs.
 >
 > `docs/findings/INDEX.md` is a third thing, and the figure it is given here
-> needed checking rather than restating — an earlier draft of this paragraph
-> gave it as *123 write-ups* against 124 rows, failing `--check` on `main`, and
-> **that was wrong on both counts**: the merge base carried `136` against 136
-> rows, not 123 against 124. What is true is narrower. The merge base is
-> `4e697871` and it is `origin/main` itself; an earlier draft of this paragraph
-> named `637b5dc1` instead, which is that tree's parent and one merge behind
-> it. Measured on `git archive` trees: the merge base lists **136** rows,
-> reads `136 write-ups.` and **exits 0**; this branch, with its own write-up
-> added, lists **137** rows, reads `137 write-ups.` and **exits 0**. So the
-> count line moved `136` → `137` across this diff, and its one step is
-> accounted for here: this change's own write-up. **That step is the one
-> row**, and the count is a function of the tree — the generator reads the
-> first `# ` heading of every `*.md` under `docs/findings/` less this index and
-> `test-line-pin-census.md`, so a tree's figure is its markdown file count
-> **less two** — which is why no hand-kept number in a shared file survives a
-> merge here, and why the figure is regenerated rather than typed: adding the
-> row and leaving `136 write-ups.` standing is precisely the staleness
-> `--check` exists to catch, and it is the state this change's own first draft
-> shipped.
-
-> **Correction (2026-09-28, at the `#904` × `main` merge onto `b0b0c09c`): the
-> three figures §8 above gives are its author's tree, and this merge re-runs all
-> of them rather than differencing.** The merge base of *this* merge is
-> `66e61be6`, not `4e697871` — that was the base when §8 was written, and it is
-> five commits behind this one, so the two paragraphs above and this one are
-> measuring two different `origin/main`.
-> Measured on `git archive` trees, `gen_findings_index.py` reads **`140`** at
-> `66e61be6` — whose committed `139` is stale there, so `--check` exits **1** on
-> that tree, and `main` is where that was fixed — **`143`** at `b0b0c09c` and
-> **`144`** on the merged tree, with `--check` passing on the last two, so the
-> step is `143 + 1 = 144` and its one row is this write-up. The `136`/`137` pair
-> above stays written where it was measured.
-> `census_test_line_pins.py` on those same three trees reads `128 / 29`,
-> `129 / 30` and `129 / 30`, so **`main`'s #421 write-up is what carries the
-> census figures now** and the `128 / 29` above is a record of the branch's
-> tree; the `read` line's population is `229` markdown files and `75` test files
-> on the merged tree against `228` and `75` on `main`, the whole of the
-> difference being this write-up, which cites no `test_*.py:NNN` and adds no
-> suite.
+> needed checking rather than restating. Measured on `git archive` trees: the
+> merge base `b0b0c09c` is `origin/main` itself, lists **143** rows, reads
+> `143 write-ups.` and **exits 0**; this tree, with its own write-up added,
+> lists **144** rows, reads `144 write-ups.` and **exits 0**. So the count line
+> moved `143` → `144` across this diff, and its one step is accounted for here:
+> this change's own write-up. **That step is the one row**, and the count is a
+> function of the tree — the generator reads the first `# ` heading of every
+> `*.md` under `docs/findings/` less this index and `test-line-pin-census.md`,
+> so a tree's figure is its markdown file count **less two** — which is why no
+> hand-kept number in a shared file survives a merge here, and why the figure is
+> regenerated rather than typed: adding the row and leaving `143 write-ups.`
+> standing is precisely the staleness `--check` exists to catch, and it is the
+> state this change's own first draft shipped.
 >
 > **The red set is unchanged, and re-counted rather than carried**: `bash
 > tools/run-tests.sh` on the merged tree runs **75 suites and 2202 tests** and
@@ -365,7 +352,7 @@ than an assertion.
 > `provenance-clone-depth-behaviour.md:37` row placing and not a
 > re-registration of the row they name, which stays where it is.
 >
-> **`xdata_moved_ranks.py` is byte-identical to the branch's** — `main` does not
+> **`xdata_moved_ranks.py` is byte-identical on both sides** — `main` does not
 > touch it, so every pin into it this write-up makes is unmoved, the `1043` and
-> `1058`/`1059`/`1060` §8 predicts are what the file reads here, and the `53` →
-> `56` `--self-test` count is `56` on this tree against `53` on `main`.
+> `1058`/`1059`/`1060` above predicts are what the file reads here, and the
+> `53` → `56` `--self-test` count is `56` on this tree against `53` on `main`.
