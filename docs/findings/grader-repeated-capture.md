@@ -43,9 +43,9 @@ as a §3 run that happened:
   was never performed.
 - **Half the windows are empty.** The duplicate marks land at one timestamp, so
   `build_windows` gives each a zero-length span: all 24 addresses print
-  `???? -> ????` with "nothing in this block moved". A single watcher on a
-  single console cannot emit a mark at the same instant twice, so this is a
-  fingerprint of a repeated capture.
+  `???? -> ????` with "nothing in this block moved". One console typing two
+  labels puts two marks seconds apart, so a shared timestamp points at a
+  duplicate rather than pacing -- not proof: `_loop` does not refuse a paste.
 - **Every change row is counted twice**, which is where the `2 change rows`
   suffix comes from: `report_window` prints the row count when it exceeds the
   distinct-address count, and here one address moved on two rows.

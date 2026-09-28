@@ -1140,11 +1140,13 @@ census read back from `xdata-clusters.csv` — its 439 keys, the ones every
 **The 15 that a key cannot carry include the two largest clusters in the
 committed census, which is why the key is not the answer.** `main-ec-001` (152
 addresses) and `main-ec-002` (92) are two of them, and `main-ec-002` is the
-cluster `mode-oem-init` names, cited by seven pages of the tree for a membership
-it holds. A key-only design hands the two biggest a brand-new identity under
-exactly the regeneration this section is about. Of the 15, **10 reach a new
-cluster on overlap and 5 do not reach one at all** by this rule (best scores
-0.50-0.97 for the ten, 0.02-0.33 for the five).
+cluster `mode-oem-init` names at `kefb63d82f8c7` — 92 addresses in the
+committed census, a membership the tree's prose makes a claim about, and
+`annotations/xdata-cluster-names.csv` is what carries the name onto it. A
+key-only design hands the two biggest a brand-new identity under exactly the
+regeneration this section is about. Of the 15, **10 reach a new cluster on
+overlap and 5 do not reach one at all** by this rule (best scores 0.50-0.97
+for the ten, 0.02-0.33 for the five).
 
 *(Correction, 2026-09-25, issue #582's re-run. This paragraph used to read "The
 18 that a key cannot carry include the two the prose cares about most …
@@ -1158,6 +1160,26 @@ in the tree (`grep -rl 'main-ec-003\b' --include=*.md .` names nine files,
 against seven for `main-ec-002`), so the "largest" claim and the "a key cannot
 carry" claim were never about the same set. The old sentence is kept in this
 correction rather than deleted, per `../../docs/findings.md` §4a.)*
+
+*(Correction, 2026-09-28, issue #842. The "most-cited cluster in the tree"
+clause above, and the nine/seven pair it quotes, do not survive their own
+command. `grep -rlE 'main-ec-003\b' --include=*.md . | wc -l` does not name
+nine files, the same command over `main-ec-002` does not name seven, and the
+two figures were not measured over one file set.
+`../../docs/findings/xdata-cluster-names-guard-off-recipe.md` is the tenth file
+on the `main-ec-003` side and has cited `main-ec-002` since it was written —
+two occurrences in its pre-merge text, `:191` and `:200`, where it cited
+`main-ec-003` not at all — so excluding it moves one figure and leaves the
+other where it already was. The clause is kept for the same reason the
+2026-09-25 block above is. What the sentence needs instead is a claim a file
+carries rather than one a tally carries: `main-ec-003` is `counter-sweep` in
+the committed census — `annotations/xdata-clusters.csv`,
+`cluster_name=counter-sweep` at `cluster_key=k733222e83898`, 43 addresses —
+and `xdata-06c2-06db-timers.md` is the page that makes a membership claim
+about that block, §1 sweeping exactly those 43. The measurement, and what the
+two figures read on a named tree state, is in
+`../../docs/findings/xdata-most-cited-cluster-count.md`; they are that file's
+dated observation, not a standing total, and nothing here pins them.)*
 
 **`cluster_name` is the half that does.** `annotations/xdata-cluster-names.csv`
 is a hand-edited `cluster_key,cluster_name,note` file — the one place a human

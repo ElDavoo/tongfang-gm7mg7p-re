@@ -752,32 +752,31 @@ class TheCommittedTree(unittest.TestCase):
         # file, so the files figure takes one, and a new spelling, so that one
         # does too; it resolves, so `declined` is unmoved at `33` and no
         # `out_of_range`, `unresolved` or `ambiguous` appears.
+        # +2 records, and both are #774's `deep-schedule-lint-baseline.md`
+        # citing `tools/test_agent_gates_patches.py` (`:82-86` and `:121`). They
+        # are new records in a new write-up, so the files figure takes one and
+        # the spellings figure two; both resolve, so `declined` is unmoved and
+        # no `out_of_range`, `unresolved` or `ambiguous` appears. On the merge
+        # with `main` the spellings figure reads one above the `96` this change
+        # was measured at, because `main` itself reads `95` where its base read
+        # `94`: the two are counts of different trees and add.
         # **And once more for #491, whose delta is one record and is the whole
         # of it.** Its write-up, `grader-repeated-capture.md`, cites
         # `test_grade_0751_isolation.py:1118-1163`: one record, in a markdown
         # file no pin named before, which is why `files` takes one as well as
         # `records`. It resolves, so `resolves` takes the one and `declined` is
-        # unmoved at `33`; it is a new spelling, so `targets` takes one; and it
-        # lands on a `def test_` header, so the `def test_` column below takes
-        # the one and `other` is unmoved. The resolved-target count takes it
-        # too, on the reasoning its own comment gives -- a pin naming a
-        # `(file, line)` pair that pair did not already carry.
-        # **Composed with #485 above rather than replacing it, which is the
-        # merge's whole arithmetic.** The two sides reach a spelling and a
-        # target by different routes -- #485 split one line that two write-ups
-        # cited for two claims into two, and #491 adds a name in a file no pin
-        # named before -- but the two land on different files
-        # (`test_system_id_probe.py` and `test_ec_watch.py` against
-        # `test_grade_0751_isolation.py`), so neither overlaps the other and
-        # the axes add: `94 + 1 + 1 = 96` and `70 + 1 + 1 = 72`. Records, files,
-        # both verdict counts and the whole shape split take one side's step
-        # only, because #485 re-anchored pins without adding a record and #491
-        # added a record without re-anchoring any.
-        self.assertEqual(len(records), 130)
-        self.assertEqual(len({r[0] for r in records}), 31)
-        self.assertEqual(len({r[2] for r in records}), 96)
+        # unmoved at `33`; it is a new spelling, so `spellings` takes one; and
+        # it lands on a `def test_` header, so the `def test_` column below
+        # takes the one and `other` is unmoved. On the merge with #774 above
+        # the two compose without overlapping: #774's two records land in
+        # `tools/test_agent_gates_patches.py` and this one in
+        # `test_grade_0751_isolation.py`, so each figure is one side's step on
+        # top of the other's.
+        self.assertEqual(len(records), 132)
+        self.assertEqual(len({r[0] for r in records}), 32)
+        self.assertEqual(len({r[2] for r in records}), 98)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 97, census.OUT_OF_RANGE: 0,
+            census.RESOLVES: 99, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 33})
         # Re-derived for #962, then again here, and not lowered either time.
         # #962's class and a docstring above it grew, so every pin into
@@ -800,27 +799,36 @@ class TheCommittedTree(unittest.TestCase):
         # hand-built workflow fixture rather than an assertion or a `def
         # test_` header, and the shape rule reads it as prose. So the `other`
         # column takes the one, `44 -> 45`, and the four beside it are unmoved.
+        # The same two #774 records, one to each of the two columns the shape
+        # rule reads them as: `:82-86` lands on a `#` comment, so `comment`
+        # takes it, and `:121` lands on a module docstring, which is not an
+        # assertion and not a `def test_` header, so `other` takes it. The three
+        # columns beside them are unmoved, which is the check that both records
+        # are citations rather than re-anchorings of existing ones.
         # **#491's record is the one that lands as `def test_`**, against both
         # of the paragraphs above -- `test_grade_0751_isolation.py:1118` is
         # literally a `def test_a_capture_given_twice_is_refused` header, so
         # this axis is the only one it touches: `0 -> 1`, and the four beside
         # it are unmoved again.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 1, census.ASSERTION: 24, census.COMMENT: 22,
-            census.BLANK: 5, census.OTHER: 45})
+            census.DEF_TEST: 1, census.ASSERTION: 24, census.COMMENT: 23,
+            census.BLANK: 5, census.OTHER: 46})
         # `69 -> 70` is the same #421 record, and it takes this axis for the
         # reason the comment above gives for the split: a record that resolves
         # names a target, and this one lands in a file the axis did not carry,
         # so it adds a `(file, line)` pair rather than reweighting one.
-        # `70 -> 71` is #491's, and it is the same step rather than a second
-        # kind: its record resolves onto a line no other pin in the tree
-        # names, so it adds the pair rather than reweighting one. `71 -> 72` is
-        # the merge's, and it is #485's own step again -- the other half of
-        # the re-anchor its comment above describes, on a different file, so
-        # the two compose into one line each rather than one between them.
+        # `70 -> 72` is the same pair, and each takes this axis the way #421's
+        # record did: both resolve, and both land in `tools/
+        # test_agent_gates_patches.py`, a file this axis did not carry, so each
+        # adds a `(file, line)` pair rather than reweighting one. On the merge
+        # with `main` it reads `73`: `main` asserts `71` where this change's
+        # base asserted `70`, and the two pairs are added on top of that one.
+        # `73 -> 74` is #491's, and it is the same step rather than a second
+        # kind: its record resolves onto a line no other pin in the tree names,
+        # so it adds the pair rather than reweighting one.
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 72)
+                 if r[3] == census.RESOLVES}), 74)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

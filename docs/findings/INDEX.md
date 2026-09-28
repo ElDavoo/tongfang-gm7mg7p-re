@@ -5,13 +5,14 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-156 write-ups.
+162 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
 - [`0751-capture-row-shape.md`](0751-capture-row-shape.md) — One row stream for the 0751 capture readers, and a byte-order mark retired at the shape (issue #750)
 - [`0751-dump-pair-battery-names.md`](0751-dump-pair-battery-names.md) — The 0x0400 pair's "other" bucket, on a mover the capture recorded (issue #219)
 - [`0751-early-exit-row.md`](0751-early-exit-row.md) — The grader dropped the probe's "the run ended early" row, and a 5-second arm graded as a 30-second one (issue #664)
+- [`0751-file-refusal-order.md`](0751-file-refusal-order.md) — Which of the two refusals names a file that is both (issue #784)
 - [`0751-grader-block-scope-claims.md`](0751-grader-block-scope-claims.md) — A `--block` run said "consistent with the static prediction" for the whole capture (issue #497)
 - [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md) — A `--block` run exited 1 over a window it neither printed nor withheld, and did not say why (issue #498)
 - [`0751-grader-moved-unplaced-scope.md`](0751-grader-moved-unplaced-scope.md) — A run that moved and graded a window in no block printed the movement over the whole capture and nothing that said so (issue #725)
@@ -45,6 +46,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`common-runtime-tranche.md`](common-runtime-tranche.md) — The unannotated `common` pool, ordered, and its first 37 rows (issue #603)
 - [`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md) — A count is a budget on work, not a bound on the buffer: the region end bounds `walk_helper` and `chain_from`
 - [`counter-sweep-entry-set.md`](counter-sweep-entry-set.md) — The counter sweep's entry set: 180 call sites, one of them a call (issue #555)
+- [`deep-schedule-lint-baseline.md`](deep-schedule-lint-baseline.md) — What the linters say about the prepared nightly, and what now holds it
 - [`deep-schedule-row-csv.md`](deep-schedule-row-csv.md) — What a landed nightly would leave, and what its first reading is
 - [`descend-index-guard.md`](descend-index-guard.md) — `descend()` reads `d[off]` two lines above the test that would catch it, and the invariant that held it was not the one the census named
 - [`digest-docs-and-timings.md`](digest-docs-and-timings.md) — The digest step the two component READMEs were missing, the message that calls the repository's own convention corruption, and a timing figure with three generations (issue #372)
@@ -75,11 +77,13 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`history-checkouts-gate-wiring.md`](history-checkouts-gate-wiring.md) — The checkout-depth check is prepared for the cheap gate, in a patch that had to fold (issue #1033)
 - [`ifr-charge-and-battery-options.md`](ifr-charge-and-battery-options.md) — The charge and battery questions in the Setup IFR, and what hides them
 - [`landed-gate-patch-state.md`](landed-gate-patch-state.md) — A landed gate patch is not a stale one: the four states, and the two-step landing (issue #772)
+- [`mmrd-unaligned-escape.md`](mmrd-unaligned-escape.md) — The unaligned `MMRD` escape, and the two sources that would have to say it is safe (issue #439)
 - [`name-basis-and-groups.md`](name-basis-and-groups.md) — What grounds a name, and what a group is (issue #135)
 - [`name-shape.md`](name-shape.md) — A hand name is a citation wherever its words appear, so it is held to a shape before it is committed (issue #436)
 - [`named-without-a-row.md`](named-without-a-row.md) — The 25 functions that carry a name no CSV row wrote (issue #601)
 - [`native-c-census.md`](native-c-census.md) — Census the retained 56 MB export, and reconcile the manifest row that calls it zero (issue #370)
 - [`neighbour-edge-attribution.md`](neighbour-edge-attribution.md) — Does the kept citation name the neighbour's call site? Fifteen rows and two, decided (issue #681)
+- [`nested-export-frames.md`](nested-export-frames.md) — Frames the export nests inside its own functions (issue #622)
 - [`no-append-logs.md`](no-append-logs.md) — A document every merge must edit is a lock nobody holds, and this repository has now hit that three times
 - [`oem4-bit-map-and-bit0.md`](oem4-bit-map-and-bit0.md) — The `0x07A6` (`OEM_4`) bit map, and bit 0's owner (issue #93)
 - [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md) — The opcode-table bounds census: every `OPCODE_LEN[d[i]]` in `ec/tools/`, and what holds the index in
@@ -92,6 +96,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-direct-offset-pointer-add.md`](pd-direct-offset-pointer-add.md) — The PD image keeps a 16-bit base in direct `0x0D`/`0x0E`: a literal at init, rewritten by an 81-caller add-and-store-back (issue #69)
 - [`pd-e2e4-entry-forms.md`](pd-e2e4-entry-forms.md) — The `pd` 0xE2E4 entry set: one entry at the first byte, and 35 bytes the export does not cover (issue #340)
 - [`pd-image-census.md`](pd-image-census.md) — The `ITE8850-PD` image: a consolidated map, a positive provenance answer, and one null worth the wording
+- [`pd-index-geometry-address-contract.md`](pd-index-geometry-address-contract.md) — The three address flags on `pd_index_geometry.py` have one contract, and this is the change that made it legible from `--help` rather than from a findings file
 - [`pd-index-low8-propagation.md`](pd-index-low8-propagation.md) — The `low8` truncation is in the template; what was left was two summaries that had not been told
 - [`pd-inline-arg-trampoline.md`](pd-inline-arg-trampoline.md) — The PD image's `lcall 0x104D` carries a 4-byte constant inline, deposits it in XDATA, and resumes four bytes on (issue #36)
 - [`pd-only-status-vocabulary.md`](pd-only-status-vocabulary.md) — `0x07CC` is re-graded, and the rule that grades it is now written down and
@@ -147,6 +152,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) — The 94 flipped clusters: both named mechanisms are refuted, and what the working page does show instead (issue #884)
 - [`xdata-green-set.md`](xdata-green-set.md) — The green set is empty, and the four sentences that said otherwise (issue #819)
 - [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md) — The guard-off generation's `cluster_key` distinctness had no case behind it, and the coverage sentences named two of the four censuses (issue #962)
+- [`xdata-most-cited-cluster-count.md`](xdata-most-cited-cluster-count.md) — The most-cited-cluster count, and the claim that does not need one (issue #842)
 - [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) — The 427-row census is stale at `e6c88864` and unreadable at `1fcd5f1e`, and the guard's per-address effect is measured a third time (issue #885)
 - [`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md) — The `cluster_key` collision check covered the moving part of each census, and `keyed_by`'s docstring said it covered all of it (issue #929)
 - [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) — Why the guard-off regeneration's moved-rank count fell from 366 to 315, measured (issue #852)

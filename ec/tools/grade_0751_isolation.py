@@ -875,9 +875,22 @@ def bom_refusal(path):
     strict reader raises it, and `existing_mark_findings` reports the very
     same string as the file's refusal. That is the anti-drift contract the
     notice runs on -- the warning an operator reads and the error the
-    grading raises are one verdict, not two that have to agree
-    (`ExistingMarkLabelTests.test_a_leading_bom_is_refused_by_name_and_not_
-    as_a_bad_hex_row` asserts the equality, so the two cannot drift)."""
+    grading raises are one verdict, not two that have to agree.
+
+    The equality is held for a file that is *both* marked and not
+    utf-8-decodable, because the mark is refused first on both sides, so
+    this sentence is the one that names a file carrying two faults and not
+    only a file carrying one. A function is the whole of that contract: the
+    notice's reader cannot call `read_capture` (#749), so it cannot ask the
+    reader what it would say and quote it -- the sentence has to be the same
+    string for the two to be the same, and the *order* has to be stated in
+    both places rather than discovered by running one of them. The order is
+    pinned in `ExistingMarkLabelTests` at both inputs, by
+    `test_a_leading_bom_is_refused_by_name_and_not_as_a_bad_hex_row` over a
+    marked file that decodes and by
+    `test_a_marked_and_undecodable_file_is_refused_by_the_mark` over one that
+    does not -- the second of which carries the control that makes the order
+    an assertion rather than a coincidence."""
     return (f"{path}: starts with a byte-order mark, so its first field is "
             f"'{BOM}ts' and not 'ts'. A capture is utf-8 with no BOM; "
             f"re-save this one without one.")
@@ -1027,11 +1040,18 @@ def read_capture(path):
     the header would be graded as a data row and refused on
     `int("addr", 16)` -- a complaint about a hex literal on a line that is
     not a change, offered for deletion along with the rows above it. Named
-    before any row is read, with the remedy, the way the decode refusal
-    below names the codec. `path_starts_with_bom` rather than a test on the
-    row because `capture_rows` has already taken the mark off the first
-    field by the time a row could be tested, and it is the file that carries
-    it.
+    before any row is read, with the remedy, the way a decode refusal names
+    the codec. `path_starts_with_bom` rather than a test on the row because
+    `capture_rows` has already taken the mark off the first field by the
+    time a row could be tested, and it is the file that carries it.
+
+    *First* of the two file-level refusals, and by rule rather than by
+    position: on a file that is both marked and not utf-8-decodable this is
+    the sentence, and `existing_mark_findings` names it there too, because
+    the mark is decidable from three bytes without the file decoding at all
+    and the decode failure is not -- and because this reader has to have the
+    mark before it reads a row. `bom_refusal`'s docstring is where that
+    agreement is stated; this is where it is one side of.
 
     Whether the format should ever *accept* a BOM is a separate question
     this does not decide. What is decided is that a capture carrying one is
@@ -1504,14 +1524,27 @@ def existing_mark_findings(path):
     observed rather than predicting one, which is the half of #748's
     correction that does not depend on what the codec turns out to be.
 
-    A leading byte-order mark is the second refusal of the file rather than
-    of a row, and it arrives the same way: `read_capture` raises before it
-    reads anything, this function is told `has_bom` off the buffer it had to
-    read anyway, and a file-level refusal short-circuits as the decode one
-    above it does: the partition does not run, so a second bad row in the
-    same file goes unnamed for the reason the second list is empty. For the
-    notice, the reason names the mark and the remedy, no row is attached to
-    offer for deletion, and every mark in the file is still listed.
+    A leading byte-order mark is the other refusal of the file rather than of
+    a row, and it arrives the same way: `read_capture` raises before it reads
+    anything, this function is told `has_bom` off the buffer it had to read
+    anyway, and a file-level refusal short-circuits as the decode one below it
+    does: the partition does not run, so a second bad row in the same file
+    goes unnamed for the reason the second list is empty. For the notice, the
+    reason names the mark and the remedy, no row is attached to offer for
+    deletion, and every mark in the file is still listed.
+
+    **Which of the two names a file carrying both is a rule, and it is the
+    mark.** Each branch is a single-condition test over one buffer, so nothing
+    forced an order, and the two callers had drifted apart: the strict reader
+    asked the mark first, this one asked the decode first, and a file that is
+    both a BOM'd and not utf-8-decodable got two sentences that disagreed
+    about what was wrong with it. The mark goes first on both sides because it
+    is the cheaper and always-decidable test -- three bytes, no decode -- and
+    because it is the one the strict reader must have before it reads a row.
+    The decode branch is still reached, by every file that has no mark and a
+    byte the codec cannot read, and on those the two readers still differ by
+    contract: the notice's reason contains the exception rather than being it,
+    and the suite holds that separately.
 
     `build_windows` is deliberately not on the label path: it indexes
     `windows[0]`, so it needs a mark list and the change rows, and neither is
@@ -1522,6 +1555,30 @@ def existing_mark_findings(path):
     """
     accepted, refused, unplaceable = [], [], []
     rows, decode_failure, has_bom = capture_snapshot(path)
+    if has_bom:
+        # The mark is asked of the bytes this had to read anyway, and it is
+        # asked *first*, before the decode below -- not for tidiness but
+        # because `read_capture` asks it first too, and the two have to name
+        # one file one way. The mark is a fact about the first three bytes,
+        # decidable without the file decoding at all, and the strict reader
+        # has to have it before it reads a row; the decode failure is the fact
+        # that costs the whole buffer. So the cheaper and always-decidable test
+        # goes first on both sides, and a file that is both a BOM'd and not
+        # utf-8-decodable is named by `bom_refusal` on both -- the one
+        # sentence, so the warning the operator reads and the error the grading
+        # raises are the same words and the two cannot drift. This cannot call
+        # `read_capture` to learn that, because the whole of #749 is that it
+        # does not; the order is stated here and pinned by the case
+        # `test_a_marked_and_undecodable_file_is_refused_by_the_mark` in this
+        # module's own suite.
+        #
+        # The mark is off the first field by now, `capture_snapshot` having
+        # applied the same rule `capture_rows` does, so the header is the
+        # header and the marks below it are all still named: the reason and
+        # the remedy come out, and the row carrying the column names is not
+        # offered for deletion.
+        refused.append((None, bom_refusal(path)))
+        return mark_labels_of(rows), refused, unplaceable
     if decode_failure is not None:
         # A refusal of the file rather than of a row, and on firmer ground
         # than the lazy loop this replaces: the strict decode is over the
@@ -1532,6 +1589,14 @@ def existing_mark_findings(path):
         # stopped it. The codec is the exception's own `encoding` rather than
         # a re-derivation of what the format declares, so it is the answer
         # from the decode that failed and cannot disagree with it.
+        #
+        # Asked second, and that is not the same as retired: a file with no
+        # mark and a byte the codec cannot read still lands here, and that
+        # file is the one `read_capture` reports as the bare
+        # `UnicodeDecodeError` rather than a sentence of its own. What the
+        # reorder changed is only which of the two names a file carrying both
+        # -- and `read_capture` names the mark there too, so the two agree
+        # either way.
         refused.append((None, "the grader's reader cannot decode a byte of "
                               f"this file in the {decode_failure.encoding} a "
                               f"capture is defined to be, and raises before it "
@@ -1539,22 +1604,6 @@ def existing_mark_findings(path):
                               f"utf-8; this one is written in something else. "
                               f"Re-save it as utf-8, or re-run the capture "
                               f"with a writer that declares the codec."))
-        return mark_labels_of(rows), refused, unplaceable
-    if has_bom:
-        # The second refusal of the file rather than of a row, and asked of
-        # the bytes this had to read anyway: `read_capture` refuses such a
-        # capture before it reads a row, and this cannot call `read_capture`
-        # because the whole of #749 is that it does not. So it is refused
-        # here, off `capture_snapshot`'s own `has_bom`, with `bom_refusal` --
-        # the one sentence, so the warning the operator reads and the error
-        # the grading raises are the same words and the two cannot drift.
-        #
-        # The mark is off the first field by now, `capture_snapshot` having
-        # applied the same rule `capture_rows` does, so the header is the
-        # header and the marks below it are all still named: the reason and
-        # the remedy come out, and the row carrying the column names is not
-        # offered for deletion.
-        refused.append((None, bom_refusal(path)))
         return mark_labels_of(rows), refused, unplaceable
     marks, changes = [], []
     try:

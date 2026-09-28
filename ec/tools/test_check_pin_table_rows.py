@@ -584,7 +584,16 @@ class TheCommittedTree(unittest.TestCase):
         # which places, so the record count and this one each take exactly the
         # one and the gap against the record count stays at the pair named
         # above.
-        self.assertEqual(placed, 128)
+        # `128 -> 129` is #774's two rows, and it is a measurement of this
+        # tree and not just their sum: `origin/main` measures `127` against the
+        # `128` asserted here, because the reconciler names a second unplaced
+        # pair (`0751-append-unchecked-marks.md:221/246`) beside the
+        # `agent-pipeline.md` one. So the gap against the record count is two
+        # rather than the one named above, and two new records that both place
+        # take `127` to `129`.
+        # `129 -> 130` is #491's one record, which places: the gap against the
+        # record count stays at the two pairs named above.
+        self.assertEqual(placed, 130)
 
     def test_the_committed_read_and_shape_cells_are_the_census_vocabulary(self):
         # The two vocabularies the table's own cells have to be drawn from, and
@@ -625,12 +634,17 @@ class TheCommittedTree(unittest.TestCase):
         # nothing else.** Its write-up names the path rather than a bare module
         # name, so `by-path` takes the one, `74 -> 75`, and `by-name`,
         # `by-beside` and the declined `-` are the control.
+        # **#774's two rows, one of each:** `deep-schedule-lint-baseline.md`
+        # cites `tools/test_agent_gates_patches.py:82-86` by path and
+        # `test_agent_gates_patches.py:121` by bare module name, so `by-path`
+        # takes `75 -> 76` and `by-name` `19 -> 20`, with the two `beside` rows
+        # and the declined `-` unmoved.
         # **+1 again for #491, and this one is the `by-name` column rather than
         # `by-path`**: its write-up cites a bare module name,
         # `test_grade_0751_isolation.py`, rather than a path, so `by-name` takes
-        # the one, `19 -> 20`, and `by-path`, `by-beside` and the declined `-`
+        # the one, `20 -> 21`, and `by-path`, `by-beside` and the declined `-`
         # are the control.
-        self.assertEqual(read, {census.BY_PATH: 75, census.BY_NAME: 20,
+        self.assertEqual(read, {census.BY_PATH: 76, census.BY_NAME: 21,
                                 census.BY_BESIDE: 2, "-": 33})
         # The shape split is re-derived rather than lowered, twice. #962 adds a
         # class to `test_xdata_cluster_names.py` and corrects a docstring above
@@ -679,14 +693,18 @@ class TheCommittedTree(unittest.TestCase):
         # cited is a step in a hand-built workflow fixture rather than an
         # assertion, a `def test_` header or a comment, so the shape rule reads
         # it as prose. `44 -> 45`, with the three beside it unmoved.
+        # And +2 for #774, one on each of two shapes: `:82-86` is the exclusion
+        # comment block, so `comment` takes `22 -> 23`, and `:121` is the
+        # continuation line of a wrapped `sorted(...)` expression, which the
+        # shape rule reads as prose, so `other` takes `45 -> 46`.
         # And +1 for #491, which is the first `def test_` row this table
         # carries at all: `test_grade_0751_isolation.py:1118` is a
         # `def test_a_capture_given_twice_is_refused` header, so the column the
-        # four paragraphs above kept at zero is the one that takes the one.
-        # The other four are the control.
+        # paragraphs above kept at zero is the one that takes the one. The
+        # other four are the control.
         self.assertEqual(shape, {census.DEF_TEST: 1, census.ASSERTION: 24,
-                                 census.COMMENT: 22, census.BLANK: 5,
-                                 census.OTHER: 45, "-": 33})
+                                 census.COMMENT: 23, census.BLANK: 5,
+                                 census.OTHER: 46, "-": 33})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing

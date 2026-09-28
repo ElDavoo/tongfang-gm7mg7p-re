@@ -177,7 +177,7 @@ held before and after, rather than by assuming neutrality worked:
 | citing site | was | now | why |
 |---|---|---|---|
 | `test-line-pin-census.md:1006` | `xdata-register-map.md:1341` | `:1340` | the `:1340`-`:1342` reflow moved the `GUARD` pin up one line |
-| `test-line-pin-census.md:1708` | `xdata-register-map.md:1341` | `:1340` | the same pin, named in prose beside the table |
+| `test-line-pin-census.md:1707` | `xdata-register-map.md:1341` | `:1340` | the same pin, named in prose beside the table |
 | `test-line-pin-census.md:980`, `:981`, `:982` | `xdata-4-4…:403`, `:447`, `:460` | `:418`, `:462`, `:475` | this change's `>` note in that file, 15 lines |
 | `xdata-moved-ranks-fall.md:523` | `xdata-4-4…:401-411` | `:415-426` | the same note, cited as a span |
 

@@ -658,27 +658,35 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # The margin, since "weaker" is doing a lot of work in that sentence:
         # **three** of the nine names move rank with key and membership intact
         # — `countdown-06c6`, `fan-step-08a0`, `flag-pair-0442` — and
-        # `counter-sweep` is not one of them. It is at `main-ec-003` in both
-        # censuses now; the `main-ec-002` the paragraph above leaves it at is
-        # itself a superseded reading, kept here rather than edited out for the
-        # same reason. It is the most-cited cluster in the tree all the same
-        # (`xdata-register-map.md:1156` records the count that line was written
-        # against — `grep -rl 'main-ec-003\b' --include=*.md .` naming nine
-        # files, against seven for `main-ec-002` — and the tenth is
-        # `docs/findings/xdata-cluster-names-guard-off-recipe.md`, whose
-        # comparison transcript names `counter-sweep` on both sides, so the
-        # numeral is that line's figure rather than a current one), so
-        # the exhibit this case fell back on is the one the ranking happens to
-        # spare. The assertion stays `assertTrue(movers, …)`
+        # `counter-sweep` is not one of them, which the derivation settles
+        # without a count of anything:
+        # `docs/findings/xdata-cluster-names-guard-off-recipe.md:258-268` reads
+        # `counter-sweep` `main-ec-003` in the committed column and in the
+        # guard-off one with `same same same`, and closes with `movers: 3 of 9`
+        # naming the three. It is at `main-ec-003` in both censuses now; the
+        # `main-ec-002` the paragraph above leaves it at is itself a superseded
+        # reading, kept here rather than edited out for the same reason. What
+        # the cluster *is* is a question a file answers and a tally does not:
+        # `main-ec-003` is `counter-sweep` in the committed census —
+        # `ec/annotations/xdata-clusters.csv`, `cluster_name=counter-sweep` at
+        # `cluster_key=k733222e83898`, 43 addresses — and
+        # `ec/annotations/xdata-06c2-06db-timers.md` is the page that makes a
+        # membership claim about that block, §1 sweeping exactly those 43. A
+        # most-cited-cluster count stood in this comment until 2026-09-28: it
+        # quoted one `grep` and two figures the `grep` does not give, taken
+        # over two different file sets, and neither figure survives the next
+        # merge. The retraction and the measurement are in
+        # `docs/findings/xdata-most-cited-cluster-count.md`. So the exhibit
+        # this case fell back on is the one the ranking happens to spare. The
+        # assertion stays `assertTrue(movers, …)`
         # on purpose: pinning the count would be the hazard this class's own
         # docstring exists to record — a total pasted into a file is a snapshot
         # of the merge it was measured on — and it would go red on any
         # re-derivation for a reason that says nothing about the design being
-        # argued here. The count is recorded as prose in
-        # `docs/findings/xdata-cluster-names-guard-off-recipe.md`, which is
-        # where the derivation behind it is printed; the floor this case does
-        # hold is the census-wide one in
-        # `test_the_regeneration_really_moves_the_ranks`.
+        # argued here. The mover set is derived in
+        # `docs/findings/xdata-cluster-names-guard-off-recipe.md`, which prints
+        # both the script and the transcript; the floor this case does hold is
+        # the census-wide one in `test_the_regeneration_really_moves_the_ranks`.
         old_by_name = {r["cluster_name"]: r for r in self.committed.values()
                        if r["cluster_name"]}
         movers = sorted(
