@@ -154,7 +154,7 @@ keeping: it is the one that exercises the whole-block read's *unchanged*
 branch, which the `0x0700` pair — always carrying the four addresses the
 captures record moving — cannot reach. The `0x0400` pair is what puts
 §4.5's two temperatures in the whole-block read at all, and it differs at
-`0x0402` and at the two confirmed bytes, so it reaches the context group the
+the two confirmed bytes, so it reaches the context group the
 `0x0700` and `0x0F00` pairs have to name as out of reach. All three pairs
 are now given to `--dump-pair` in §6's command, so all six dumps are
 consumed and every pair names both §4.4/§4.5 context groups — as value
