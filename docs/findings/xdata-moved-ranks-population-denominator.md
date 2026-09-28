@@ -301,10 +301,10 @@ than an assertion.
 >
 > **That table is left uncorrected here, and the reason is worth recording
 > rather than hiding.** Its §1 enumeration is a single `grep` run, and it was
-> **already five stale on `main` before this change** — the `keyed_by` calls read
-> 444/738/850/946/1027/1028/1029 there, against the `:439`/`:733`/`:845`/`:941`/
-> `:1022`/`:1023`/`:1024` the table prints, and `collapse_line`'s call reads 1012
-> against the printed `:1007`. So this change moves four already-wrong numbers
+> **already off by five lines on `main` before this change** — the `keyed_by`
+> calls read 444/738/850/946/1027/1028/1029 there, against the `:439`/`:733`/`:845`/
+> `:941`/`:1022`/`:1023`/`:1024` the table prints, and `collapse_line`'s call reads
+> 1012 against the printed `:1007`. So this change moves four already-wrong numbers
 > further from right rather than breaking correct ones. Re-anchoring only the
 > three `keyed_by` ones would leave a single `grep` enumeration holding two
 > vintages, which is worse than either; re-anchoring all of it is a correction
@@ -352,7 +352,15 @@ than an assertion.
 > `provenance-clone-depth-behaviour.md:37` row placing and not a
 > re-registration of the row they name, which stays where it is.
 >
-> **`xdata_moved_ranks.py` is byte-identical on both sides** — `main` does not
-> touch it, so every pin into it this write-up makes is unmoved, the `1043` and
-> `1058`/`1059`/`1060` above predicts are what the file reads here, and the
-> `53` → `56` `--self-test` count is `56` on this tree against `53` on `main`.
+> **`xdata_moved_ranks.py` is not byte-identical on the two trees, and `main`
+> not touching it is only half of why.** The merge base `b0b0c09c` is
+> `origin/main` itself and does not touch the file, so the merge contributes
+> nothing to it — but the whole of the difference between the two trees is
+> **this change's own diff**, `105` insertions and `15` deletions by
+> `git diff --numstat`. Every pin this write-up makes into the file is therefore
+> in merged-tree numbering and was re-anchored to it: `main` reads
+> `collapse_line` at `:1012` and the three `keyed_by(` calls at
+> `:1027`/`:1028`/`:1029`, which read the `:1043` and `:1058`/`:1059`/`:1060` the
+> paragraph above predicts here — the **+31** the 996 hunk adds. The
+> `53` → `56` `--self-test` count is `56` on this tree against `53` on
+> `main`, and it is a difference at all only because of that same diff.
