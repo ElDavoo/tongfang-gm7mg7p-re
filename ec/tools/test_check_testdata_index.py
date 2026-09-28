@@ -130,6 +130,18 @@ class ScratchIndex:
         # `Feeds` cell names. Without it every row built here would report a
         # `Feeds` miss the moment that column started being read.
         self.write_tool("grade_0751_isolation.py")
+        # The sixth source, which every run now reads whether or not the case
+        # is about it, so the fixture has to carry one. Written in `setUp` and
+        # not in a helper, because a case that reaches the shared rule below
+        # without calling `self_indexed()` would otherwise read an annotations
+        # directory that is not there, print zeros, and be refused for a file
+        # the builder never made. The listing it cites is written here too and
+        # `self_indexed()` writes the same path, so a case may add or not add
+        # it and the citation resolves either way.
+        self.write_repo("ec/decompiled/common/00CF.asm")
+        self.write_repo("ec/annotations/ghidra-functions.csv",
+                        "scope,addr,name,evidence\n"
+                        "common,00CF,walker,ec/decompiled/common/00CF.asm\n")
         self.rows, self.below = [], ""
 
     def write_tool(self, name):
@@ -1206,7 +1218,8 @@ class TheReachedSomethingRule(RunsTheTool):
         relation between two tallies it did reach. Every label is unique across
         the printed lines, because the parse keys one flat dict by label --
         `row(s)` and `path token(s)` are already taken by the two directions
-        before it.
+        before it, and the annotation line carries `annotation …` rather than
+        bare `evidence …` for the same reason.
         """
         rc, out, err = self.run_tool(root, repo)
         self.assertEqual(rc, 0, err)
@@ -1225,7 +1238,9 @@ class TheReachedSomethingRule(RunsTheTool):
                             ('nested checks', 'check(s)'),
                             ('fixture CSVs', 'fixture CSV(s)'),
                             ('evidence cells', 'evidence cell(s)'),
-                            ('evidence tokens', 'evidence path token(s)')):
+                            ('evidence tokens', 'evidence path token(s)'),
+                            ('annotation cells', 'annotation cell(s)'),
+                            ('annotation tokens', 'annotation path token(s)')):
             self.assertGreater(
                 counts.get(label, 0), 0,
                 f"the run reached no {name}: a run that checked nothing and a "
@@ -1331,7 +1346,7 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
         # The figures are today's, and the claim is not that they have to stay:
         # it is that a run which reached nothing is distinguishable from a run
         # which found nothing. `TheTalliesAreNotAFloor` is what says the first
-        # of those two things, and this is the same five tallies on the real
+        # of those two things, and this is the same tallies on the real
         # tree rather than a scratch one.
         rc, out, err = self.run_tool(ctti.TESTDATA)
         self.assertEqual(rc, 0, err)
@@ -1359,10 +1374,14 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
         # Every pointer is resolved and nothing is unreadable, which is the
         # "the index and the tree currently agree" half. It is a statement
         # about today and not a floor: the tallies above are what a run that
-        # reached nothing would be caught by, in either direction.
+        # reached nothing would be caught by, in either direction. Five lines
+        # carry a `resolved, ` tally now that the annotation CSV is a source of
+        # its own, and the count of *directions* is what this is -- it moves
+        # when a direction is added deliberately, which is not the same as
+        # moving every time a fixture lands.
         self.assertEqual([line.rsplit(', ', 2)[1:] for line in out.splitlines()
                           if ' resolved, ' in line],
-                         [['0 missing', '0 unresolved']] * 4)
+                         [['0 missing', '0 unresolved']] * 5)
 
     def test_the_committed_feeds_column_carries_a_flag_suffix(self):
         # The issue's "also asserted over the committed tree, where three rows
@@ -1417,6 +1436,161 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
         # it, `tokens` and `cells` would be the same number over both files and
         # a reader could not tell the rule apart from a per-cell count.
         self.assertEqual(found.tokens, found.cells)
+
+
+class TheAnnotationCsvIsASixthSource(ScratchIndex, RunsTheTool,
+                                     unittest.TestCase):
+    """The annotation CSV, read by the same reader as the fixture ones.
+
+    #780 pointed the `evidence` column at two **fixture** CSVs holding eleven
+    tokens between them. `ec/annotations/ghidra-functions.csv` is the column
+    `CLAUDE.md` calls mandatory and non-empty, and reading it here rather than in
+    the census beside it is the point: it goes through the same
+    `evidence_pointers()`, the same `;`, the same three verdicts and the same
+    wording. A sixth reader would be the defect one level up, and the case that
+    would catch it is a token no path rule reads -- one this source must call
+    `unresolved` for the reason the fixture ones do.
+
+    **A check that has never been shown to fail is a check nothing has tested**,
+    which is why the first case here is a broken citation and not a sound one.
+    """
+    def point_at(self, evidence):
+        """Rewrite the scratch annotation CSV so its one cell holds `evidence`.
+
+        The header keeps every column the reader looks for and nothing else, so
+        the cell is the only thing a case varies. The scope and address match
+        the listing `setUp` writes, which is what makes a *sound* citation sound.
+        """
+        self.write_repo("ec/annotations/ghidra-functions.csv",
+                        "scope,addr,name,evidence\n"
+                        "common,00CF,walker,%s\n" % evidence)
+        return self.repo
+
+    def fixture(self, cell="`a.csv`", feeds=FEEDS):
+        """A one-row scratch tree with nothing wrong in it, written to disk.
+
+        `main()` opens `testdata/README.md` whatever else a case is about, so
+        every case here has to leave the index behind before a run can reach
+        the source under test -- and the row and the file are both sound, so a
+        red run below can only be the annotation citation.
+        """
+        self.row(cell, feeds=feeds)
+        self.write("a.csv")
+        self.write_index()
+
+    def test_a_citation_naming_a_path_the_tree_does_not_hold_fails_the_run(self):
+        # The forward direction's whole claim, on the column that carries the
+        # repository's own citations: a cell naming a path nothing holds is a
+        # broken promise a pull request made, and it is the next row added with
+        # a bad path that would turn this 0 red.
+        self.point_at("ec/decompiled/common/DEAD.asm")
+        self.fixture()
+        rc, out, err = self.run_tool(self.testdata, self.repo)
+        self.assertEqual(rc, 1, out)
+        self.assertIn('the `evidence` column names '
+                      '`ec/decompiled/common/DEAD.asm`', err)
+        self.assertIn('which is not on disk', err)
+        self.assertIn('1 missing', out)
+        # And the total is the annotation CSV's own, not folded into the index's:
+        # the two disagree about different files and a combined count would send
+        # a reader to `ec/tools/testdata/README.md` to fix a row in
+        # `ec/annotations/`.
+        self.assertIn('1 citation(s) in ec/annotations/'
+                      'ghidra-functions.csv', err)
+        self.assertNotIn('disagreement(s) between', err)
+
+    def test_a_token_matching_no_path_rule_is_unresolved_and_does_not_fail(self):
+        # The calibration line, in the sixth source, and the evidence that it
+        # went through the shared reader rather than a new one: an address range
+        # is "not resolved by this method" here exactly as it is in a fixture
+        # CSV, and the run is green with the finding printed.
+        self.point_at("0x0700-0x07FF")
+        self.fixture()
+        rc, out, err = self.run_tool(self.testdata, self.repo)
+        self.assertEqual(rc, 0, err)
+        self.assertIn('which this tool cannot resolve to a path', err)
+        self.assertIn('not checked, not absent', err)
+        self.assertIn('0 missing, 1 unresolved', out)
+
+    def test_the_column_resolves_against_the_repository_root_and_not_testdata(self):
+        # The base is the half that has to be exercised rather than asserted:
+        # the same relative path is a file under `testdata/` and not under the
+        # root, so a reader resolving against the wrong one would be green here.
+        self.write("decompiled/common/00CF.asm", "; a listing\n")
+        self.point_at("decompiled/common/00CF.asm")
+        self.fixture()
+        rc, out, err = self.run_tool(self.testdata, self.repo)
+        self.assertEqual(rc, 1, out)
+        self.assertIn('the `evidence` column names '
+                      '`decompiled/common/00CF.asm`', err)
+
+    def test_a_semicolon_joined_cell_is_two_annotation_pointers(self):
+        # The same `;` rule the fixture direction has, on the column where it
+        # does the most work: one cell naming a listing and its `.c` side. Read
+        # whole it is a single token no path rule can match, and the line would
+        # read `0 resolved` for a row that cites two real files.
+        self.write_repo("ec/decompiled/common/00CF.c", "; a decompile\n")
+        self.point_at("ec/decompiled/common/00CF.asm; "
+                      "ec/decompiled/common/00CF.c")
+        self.fixture()
+        rc, out, err = self.run_tool(self.testdata, self.repo)
+        self.assertEqual(rc, 0, err)
+        self.assertIn('1 annotation cell(s), 2 annotation path token(s): '
+                      '2 resolved, 0 missing, 0 unresolved', out)
+
+    def test_a_repository_with_no_annotation_csv_reads_nothing_and_says_so(self):
+        # The stated limit, as a case. This tool has no floor on any tally --
+        # `docs/agent-pipeline.md` records why, and an expected count turns
+        # every added fixture into a failure -- so a repository with no
+        # `ec/annotations/ghidra-functions.csv` in it is a run that reached
+        # nothing and printed zeros, not a red one. The census beside it is
+        # where "located nothing" is an exit code; a check that failed on its
+        # own subject being absent would be pushed to grow an exemption list.
+        os.remove(os.path.join(self.repo, "ec/annotations/ghidra-functions.csv"))
+        self.fixture()
+        rc, out, err = self.run_tool(self.testdata, self.repo)
+        self.assertEqual(rc, 0, err)
+        self.assertIn('ec/annotations/ghidra-functions.csv: 0 annotation '
+                      'cell(s), 0 annotation path token(s): 0 resolved, '
+                      '0 missing, 0 unresolved', out)
+
+
+class TheFixtureSourcesStillRunBesideIt(ScratchIndex, RunsTheTool,
+                                        unittest.TestCase):
+    """The original five, still reached, and undisturbed by the sixth.
+
+    A direction added to a checker that perturbs the others is a direction
+    nobody can read the effect of, and `docs/findings/testdata-index-evidence-column.md`
+    records the two ways to check that. The first is that a fixture defect is
+    still a red run with the annotation source clean; the second is that the
+    five lines the fixture run used to print are byte-identical whether the
+    annotation source found something or nothing -- which is the only way to
+    tell an addition from a change.
+    """
+    def setUp(self):
+        super().setUp()
+        self.row("`a.csv`", feeds="`../no_such_tool.py`")
+        self.write("a.csv")
+        self.write_index()
+
+    def test_a_fixture_missing_still_fails_the_run(self):
+        rc, out, err = self.run_tool(self.testdata, self.repo)
+        self.assertEqual(rc, 1, out)
+        self.assertIn('`Feeds` column names `../no_such_tool.py`', err)
+        self.assertIn('disagreement(s) between', err)
+        # The sixth source was clean over the same run, which is what says the
+        # two failures are independent rather than one mask over the other.
+        self.assertIn('0 missing, 0 unresolved', out)
+
+    def test_the_five_fixture_lines_do_not_move_when_the_sixth_one_does(self):
+        rc, before, _ = self.run_tool(self.testdata, self.repo)
+        self.assertEqual(rc, 1, before)
+        self.write_repo("ec/annotations/ghidra-functions.csv",
+                        "scope,addr,name,evidence\n"
+                        "common,00CF,walker,ec/decompiled/common/DEAD.asm\n")
+        rc, after, _ = self.run_tool(self.testdata, self.repo)
+        self.assertEqual(rc, 1, after)
+        self.assertEqual(before.splitlines()[:5], after.splitlines()[:5])
 
 
 class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
