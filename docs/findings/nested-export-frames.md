@@ -44,9 +44,9 @@ as *the* number:
 
 The two differ, and the difference is not a rounding: four rows are in the first
 and not the second, and each of the four is a shape the second reading cannot
-represent. Two of them are **longer than the listing that holds them** — their
-own listing runs past the container's end, so the two overlap without one
-holding the other — and two **nest in each other**, which §3 is about. A
+represent. Two of them have **a listing that runs past the container's end**, so
+the two overlap without one holding the other — and two **nest in each other**,
+which §3 is about. A
 container's span reaching an address is what "contains" has to mean for the
 first reading to be a question at all; a reader told a row is "contained" and
 not told which of the two was meant cannot tell an overlap from a nest.
@@ -180,10 +180,15 @@ a separate function."* Line 87 (`bank0`, `0x9016` `load_constant_14`): *"It
 writes nothing itself and lies inside FUN_CODE_8FDB's listed range
 (0x8FDB-0x903F), so it is a byte-aligned entry inside that routine's write
 sequence rather than a routine of its own."* Both are hand-decoded, both carry
-`evidence` paths to committed `.asm` and `.c` files, and both are read as
-functions downstream: `ec/annotations/xdata-registers.csv:132`, the `0x036C`
-row, reads `functions_touched 6` and names `bank1:0xE322` and `bank1:0xE332`
-among the six — two of the rows the tool reports as nested in `bank1 0xE2D3`.
+`evidence` paths to committed `.asm` and `.c` files, and both are enumerated as
+functions by a downstream table: `ec/annotations/function-groups.csv:80`
+(`bank0,0x9000`) and `:85` (`bank0,0x9016`) each carry a row for them, and both
+rows read `ungrouped` — so what that file shows is that the two addresses are
+rows a per-function table carries, and nothing about which group they belong
+to. A separate instance of a nested row this repository backs being consumed
+downstream is `ec/annotations/xdata-registers.csv:132`, the `0x036C` row, which
+reads `functions_touched 6` and names `bank1:0xE322` and `bank1:0xE332` among
+the six — two of the rows the tool reports as nested in `bank1 0xE2D3`.
 Dropping the rows would delete cited hand-decoding of real sites and silently
 change what a generated table means.
 
@@ -213,9 +218,16 @@ measurements rather than restatements of the issue's list:
   `set_036c_to_4_jump_e490` is a row, and is kept.
 - **The `xdata-registers.csv` overlap is `0xE322` and `0xE332`, not `0x703F` and
   `0xE322`.** Of the six functions that row names, the tool reports the two
-  above as nested, the container `bank1 0xE2D3` as `after-a-function`, and
-  `bank1 0x703F forwarder_to_e322` and `bank1 0xE490` as `unframed`. The
-  column is not overcounting here.
+  above as nested, the container `bank1 0xE2D3` and `bank1 0xE501` as
+  `after-a-function`, and `bank1 0x703F forwarder_to_e322` and `bank1 0xE490` as
+  `unframed`. Whether `functions_touched 6` *overcounts* there depends on what
+  the column is meant to count, which `xdata-registers.csv` does not define, so
+  both readings are given and neither is ruled on: counted as six distinct
+  function rows, each named once, it is six and no row is counted twice;
+  counted as frames that do not hold one another, `0xE322` and `0xE332` sit
+  inside `0xE2D3`'s listing and the six names cover four such frames (`0x703F`,
+  `0xE2D3`, `0xE490`, `0xE501` — none of the four has an edge in the tool's
+  output).
 - **The remaining rows are a separate population, and this change rules on
   neither.** The `auto`- and `call-target`-seeded remainder is Ghidra's own
   frames. `common 0x6A02` and `common 0x6D46` are the mutually nested pair §3 is

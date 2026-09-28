@@ -193,6 +193,13 @@ class TheTwoReadings(unittest.TestCase):
         self.assertEqual("%04X-%04X" % self.by_key[("bank0", "8054")]["span"],
                          "8054-806B")
 
+    def test_the_report_example_span_is_the_listing_it_names(self):
+        # The report prints `0x60ED-0x65A8` as `common 0x65A6` in its bucket
+        # gloss. That pair is written into the tool as a literal, so this is what
+        # turns a tree that moves into a red case and not a stale example.
+        self.assertEqual("%04X-%04X" % self.by_key[("common", "65A6")]["span"],
+                         "60ED-65A8")
+
 
 class TheBucketIsOnTheEdge(unittest.TestCase):
     """"The container" is not always a single row, and the report says so."""
