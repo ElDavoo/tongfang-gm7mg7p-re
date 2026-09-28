@@ -30,8 +30,9 @@ moved once between the issue text and the measurement. `--self-test` pins
 ## 1. The predicate, and the one it is not
 
 "Contained" is ambiguous over this export, and the two readings do not agree: a
-reader who assumed the other one is wrong about every row in §1's last paragraph.
-Both are measured and neither is presented as *the* number:
+reader who assumed the other one is wrong about the four rows the next paragraph
+is about, and right about the rest. Both are measured and neither is presented
+as *the* number:
 
 - **address-inside-a-listing** — this row's own **address** falls inside another
   row's committed listing span, in the **same program**. This is the reading
@@ -115,11 +116,13 @@ entry point and the other reaches back below it. **Each address is therefore
 held by a container that is itself held**, and the report is an **edge set**
 rather than a row-to-container map for exactly this reason.
 
-Seven rows in the run above carry two containers each: the mutually nested pair
-above, and five more that sit inside two *different* Ghidra frames — `common
-0x6A02` and `common 0x6D46` together hold `0x6B94`, `0x6BAE`, `0x6BFF`,
-`0x6C70` and `0x6C97`, and `common 0x60C2` and `common 0x65A6` together hold
-`0x6100` and `0x6116`. In **every one of the seven the two containers fall in
+Seven rows in the run above carry two containers each: five that sit inside two
+*different* Ghidra frames — `common 0x6A02` and `common 0x6D46` together hold
+`0x6B94`, `0x6BAE`, `0x6BFF`, `0x6C70` and `0x6C97` — and two more that `common
+0x60C2` and `common 0x65A6` hold between them, `0x6100` and `0x6116`. The
+mutually nested pair above is **not** among the seven: each of `0x6A02` and
+`0x6D46` has exactly one container, and it is the other one, so neither can be
+named the outer frame. In **every one of the seven the two containers fall in
 different buckets**, which is what makes the split a partition of the *edges*
 and not of the rows: a row-level bucket would have to pick one and be wrong
 about the other. A fixture in `--self-test` pins the mutual pair without
