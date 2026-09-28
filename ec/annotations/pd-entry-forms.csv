@@ -1,0 +1,12 @@
+form,population,site,file_offset,site_listing,target,landing,origin,frame_onto,frame_over,status,target_shape,note
+lcall,listing,0xDA78,0x2DA78,pd/DA44.asm,0xE2E4,first-byte,outside,23,1,start,instruction-start,"an instruction start in pd/DA44.asm; the target is an instruction start, `clr      A`"
+cjne,listing,0xE31D,0x2E31D,pd/E2E4.asm,0xE2E6,inner,inside,24,0,start,instruction-start,"an instruction start in pd/E2E4.asm; the target is an instruction start, `mov      R7, 0x02`"
+ajmp,bytes,0xE68B,0x2E68B,,0xE2EF,inner,outside,0,24,gap,mid-instruction,"no committed listing covers the site; the target is the 2nd byte of `mov      B, #0x60` at 0xE2EE"
+cjne,bytes,0xE2F7,0x2E2F7,pd/E2E4.asm,0xE30C,inner,inside,0,24,absolute,no-listing,3rd byte of the 3-byte `lcall    0x10bc` at 0xE2F5 in pd/E2E4.asm; no committed listing covers the target either
+jnz,bytes,0xE308,0x2E308,,0xE30D,inner,inside,24,0,gap,no-listing,no committed listing covers the site; no committed listing covers the target either
+jnz,bytes,0xE311,0x2E311,,0xE316,inner,inside,24,0,gap,no-listing,no committed listing covers the site; no committed listing covers the target either
+jz,listing,0xE2EC,0x2E2EC,pd/E2E4.asm,0xE31B,inner,inside,24,0,start,instruction-start,"an instruction start in pd/E2E4.asm; the target is an instruction start, `inc      R2`"
+jz,bytes,0xE304,0x2E304,,0xE31B,inner,inside,24,0,gap,instruction-start,"no committed listing covers the site; the target is an instruction start, `inc      R2`"
+jz,bytes,0xE30D,0x2E30D,,0xE31B,inner,inside,23,1,gap,instruction-start,"no committed listing covers the site; the target is an instruction start, `inc      R2`"
+jz,bytes,0xE316,0x2E316,,0xE31B,inner,inside,23,1,gap,instruction-start,"no committed listing covers the site; the target is an instruction start, `inc      R2`"
+ljmp,bytes,0x0BBA,0x20BBA,pd/0BAB.asm,0xE322,inner,outside,1,23,cjne,instruction-start,"3rd byte of the 3-byte `cjne     R3, #0xfe, 0x0bbd` at 0x0BB8 in pd/0BAB.asm; the target is an instruction start, `ret`"
