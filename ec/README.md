@@ -738,6 +738,20 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   window names. Produced by `tools/decode_index_table.py --csv`, and written
   without a comment header so a later region map can read it with
   `csv.DictReader` and fold it in or supersede it.
+- **`annotations/bank0-8038-handler-flow.md`** — the control-flow walk of the
+  eight handlers that table dispatches to, which §9's per-case table said was
+  still outstanding: the two arms of each case's bit-7 test, the shared
+  epilogue at `0x821F`, the default at `0x8274`, and the thirteen helpers the
+  cases share. It answers what the `0x08D0`-`0x08DE` word slots hold (a
+  big-endian copy of one of **four** source words, halved into eight
+  accumulators by `0xB965`) and who else reads those addresses, including the
+  two `bank1` sites §9's census does not name. §9's table is confirmed on every
+  column and its one wrong value is corrected beside it. It deliberately does
+  **not** name a subsystem: the eight channels have no name, no unit and no
+  identified consumer, and §10 says so in those words rather than guessing.
+  `annotations/bank0-8038-handler-arms.csv` is the per-arm table behind §3-§7,
+  produced by `tools/walk_branch_arms.py --csv`; all eighteen arms are
+  `complete`.
 - **`annotations/index-table-entries.csv`** — the same per-entry decode for all
   15 tables of that family, with a leading `site` column naming the `lcall`
   each table follows. Produced by `tools/decode_index_table.py --all-csv`;
