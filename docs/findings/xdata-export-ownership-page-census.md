@@ -201,6 +201,30 @@ own stdout rather than reconstructed. `--self-test` asserts
 is re-derived rather than carried forward, so it is not left stale beside a
 total that moved." The above is that re-derivation.
 
+*(Correction, 2026-09-28, issue #658. The paragraph above was true on the tree
+#654 measured, and it is the sentence that filed this issue: read as present
+tense, it says `--self-test` does not hold `OWNERSHIP["main_refs"]` and names a
+comment in the tool still saying the same. **Neither is true now, and the quoted
+comment no longer exists in `ec/tools/xdata_register_map.py` at all** — it is a
+quotation of a superseded comment, not of a live one, so a reader who greps for
+it finds nothing. #849 added the "and its main-EC half is" check, which reads
+both `main_distinct` and `main_refs` over the de-duplicated census — this
+table's own second row — and #279 then moved the figures, so the pins today are
+`1218` / `9320` against `ORACLE`'s `1218` / `14838` for the default side. The
+`13,964` and `8,546` above are still what the two runs printed and are left as
+they printed them, per the `#279` banner at the top of this file. The wrong
+version stays visible per [`../findings.md`](../findings.md) §4a-4d, and the
+`OWNERSHIP` comment's own correction is the one that names the defect: "a value
+in a constant that no check reads is a promise wearing the costume of a pin".)*
+
+The `--self-test` half of that is now held rather than asserted by prose: the
+"and its main-EC half is" check in the ownership block asserts both keys against
+this table's `--export-ownership` row. What is still not held is the `157`/`858`
+PD pair in the same table, which
+[`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md)
+§2b records as left open for a narrow reason — `ORACLE["extmem_pd_*"]` measures
+the **default** census and `OWNERSHIP` carries no `pd_*` key.
+
 ## The two `main-ec-002` rows, and why a lookup on `cluster_id` is the wrong recipe
 
 These are the page's §4 rows "the 43 addresses of `main-ec-002`" and

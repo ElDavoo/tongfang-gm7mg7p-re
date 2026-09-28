@@ -4366,9 +4366,14 @@ def self_test(args) -> int:
     # check read: it looked pinned and was not, which is the
     # docs/findings/xdata-census-rederivation-checklist.md §2b case.
     own_main_refs = sum(e["refs"] for e in groups_own["main-ec"].values())
+    # The expected slot carries the pinned value and the `got` slot the measured
+    # one, as the census-wide check above it does. Printing `own_main_refs` in
+    # both made a moved pin indistinguishable from a green run in the refs
+    # column -- the line read `9320/9320` and was marked FAIL, and the number
+    # the check actually holds was the only one not on it.
     check(f"and its main-EC half is {OWNERSHIP['main_distinct']} distinct / "
-          f"{own_main_refs} references, the per-program line the 6b console "
-          f"block prints (got {len(groups_own['main-ec'])}/{own_main_refs})",
+          f"{OWNERSHIP['main_refs']} references, the per-program line the 6b "
+          f"console block prints (got {len(groups_own['main-ec'])}/{own_main_refs})",
           len(groups_own["main-ec"]) == OWNERSHIP["main_distinct"]
           and own_main_refs == OWNERSHIP["main_refs"])
     check("and its bucket totals, "
