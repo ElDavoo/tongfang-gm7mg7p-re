@@ -26,8 +26,10 @@ and one record:
   would be the defect the repository's own rules are about.
 
 There is no third site. The pattern the fix copies is not invented here either:
-`test_gpu_block_watch.py` and `test_manual_fan_ctrl_probe.py` already load the
-grader by path, and `test_ec_watch.py` already had the block, so
+`test_manual_fan_ctrl_probe.py` already loads the grader by path,
+`test_gpu_block_watch.py` reaches the same module by name through
+`grade_gpu_door.py` (which is what it puts on `sys.path` and loads by path),
+and `test_ec_watch.py` already had the block, so
 `test_system_id_probe.py` takes the sibling file's shape rather than a third
 form.
 
@@ -110,7 +112,7 @@ would go red on a 1999 stamp.
 
 A change that edits these two test files moves every pin *into* them, and
 `ec/tools/test_census_test_line_pins.py` carries the protocol. Every pin was
-re-anchored, and six of the seven figures the run reports are unchanged:
+re-anchored, and five of the seven figures the run reports are unchanged:
 records, files, both verdict counts, and the whole `0/24/22/5/45` landing-shape
 split, which is the check that no re-anchoring landed on a line of a different
 kind.
@@ -127,6 +129,21 @@ two. In `test_ec_watch.py` the old `:148` carried the same pair; those are now
 This write-up cites both tests by file and test name and adds no `file:line`
 pin, which is why it moves none of the figures itself.
 
+The pins are also **published**, which is the part that is easy to re-anchor in
+the three pages a change edits and leave alone in the file that carries the rows
+for all of them.
+[`test-line-pin-census.md`](test-line-pin-census.md) holds a row per pin, and
+`ec/tools/check_pin_table_rows.py` is the gate that says whether a re-anchoring
+reached it. Fifteen of the rows are pins this change moved; their four
+mechanical columns are re-derived from `census_test_line_pins.py --verbose`
+rather than typed, because the tool never reads the fifth and a hand-typed
+target is the failure the gate exists to make loud. The gate is then back to
+the two `row-without-record` entries it reported before this change, at
+`docs/agent-pipeline.md:410` and in
+[`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md). Both
+pre-date this change and sit in files it does not touch, so they are somebody
+else's queue rather than a count this change has to explain away.
+
 ## What this is not
 
 No hardware and no Windows machine were involved, and no sentence above should
@@ -136,13 +153,35 @@ the whole of the evidence is that the two assertions go red when the grader
 changes. Nothing here says a register exists, that a write was read back, or
 that any observed behaviour was observed on this machine.
 
+**The run this change is measured by is not green, and is not described as
+green.** `.github/scripts/agent-gates.sh` reports `All gates passed`, which is
+the half of that claim that holds. `bash tools/run-tests.sh windows/tools
+ec/tools` finishes with five suites red —
+`ec/tools/test_check_cluster_citations.py`,
+`ec/tools/test_check_doc_figure_pins.py`,
+`ec/tools/test_check_eq_guard_citations.py`,
+`ec/tools/test_check_pin_table_rows.py` and
+`windows/tools/test_gpu_block_watch.py` — and the same five are red when the
+same command is run against `origin/main`, so this change adds none of them.
+The two suites this change edits are green run separately under
+`python3 -m unittest discover -s windows/tools` (49 and 32 tests), and the
+per-suite run is the way to run them: one discovery pass over the directory
+shares an interpreter between suites, is order-dependent, and comes back `4
+failures + 1 error` on this branch and on `origin/main` alike. The runner's
+totals line is quoted nowhere above, on the reasoning
+[`runner-red-suite-set.md`](runner-red-suite-set.md) gives: a total is a
+property of the merge rather than of any suite, it moves whenever a suite lands,
+and pasting one into a file is how a sentence about a run comes to be wrong.
+
 `measure_mark_provenance.py`'s citation check was re-run after the
 re-anchoring, because it reads two of the lines this change moves by line *and*
-by quoted text. Both of its rows into these two files resolve. The run also
-reports problems in `grade_0751_isolation.py`, `ec_timer_capture.py`,
-`check_capture_encoding.py` and three other files — drift that pre-dates this
-change, in files it does not touch, and left alone here rather than fixed in
-passing.
+by quoted text. Both of its rows into these two files resolve. The run reports
+28 citation problems and every one of them is in `grade_0751_isolation.py` — a
+file this change does not touch, and drift that pre-dates it, so the count is
+the same before and after and it is left alone here rather than fixed in
+passing. `ec_timer_capture.py` and `check_capture_encoding.py` appear in the
+run's *census* rows, as writers and readers of the row shape, not in its
+problem list.
 
 ## The follow-up this leaves
 

@@ -288,13 +288,13 @@ than in the file the measurement named. Reproduced with `origin/main`'s
 the header equality at `:135`, then
 `MarkCsvTests.test_mark_row_parses_as_the_grader_expects` **ERROR**
 `ValueError: too many values to unpack (expected 4)` at the four-way unpack the
-table names at `:147`, and last
+table names at `:179`, and last
 `RefusedLabelTests.test_a_refused_label_writes_no_row_and_leaves_the_real_mark_alone`
 **FAIL** on the row list at `:414`. `test_gpu_block_watch.py` raises nothing at
 all: with the same writers over `origin/main`'s test file, the one assertion
 the change breaks there is its own header equality.
 
-**The exception is still the finding, and the `:147` row's per-test claim
+**The exception is still the finding, and the `:179` row's per-test claim
 stands as the run shows it.** The unpack raises before its own test reaches an
 assertion, so it is the one failure here that no row-text assertion would have
 caught, and it is the one the canary scan cannot see — that scan matches one
