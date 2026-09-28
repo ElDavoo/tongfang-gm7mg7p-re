@@ -713,6 +713,25 @@ class TheCommittedTree(unittest.TestCase):
         # put there. A control that has to be re-run to keep being a control
         # is worth saying so beside, rather than restating the figure it used
         # to give.
+        #
+        # **And once more for #485, whose edits to the same two test files move
+        # every pin into them and re-anchor each one: every figure here is
+        # unmoved except the spelling count and the target count, which each
+        # take one.** Records, files, both verdict counts and the whole
+        # `0/24/22/5/45` split are the tree as it stood, so no re-anchoring
+        # changed a landing shape. The two that move are the same event seen
+        # twice: a line two write-ups cited for two different claims is now
+        # two lines, because one of those claims is about a
+        # `mark.split(',')` that reading the row through the grader deleted.
+        # `test_system_id_probe.py`'s old `:317` carried
+        # `0751-mark-provenance-column.md`'s movement row and the shapes
+        # page's single-quoted-MARK example, and those are now `:341` and
+        # `:320`, so one spelling is two; `test_ec_watch.py`'s old `:148`
+        # carried the movement row and the same shapes-page example, now
+        # `:159` and `:452`, so one target is two. Neither is a pin added or
+        # lost: `94 + 1 = 95` and `70 + 1 = 71`, and the control the rest of
+        # this comment is about -- nothing left over to attribute to somebody
+        # -- is what says it.
         records, _files = census.census(census.REPO)
         # **And re-derived once more, same issue, same day, for the fence
         # rule rather than the new page: +2, not +20.** Re-running
@@ -737,10 +756,13 @@ class TheCommittedTree(unittest.TestCase):
         # citing `tools/test_agent_gates_patches.py` (`:82-86` and `:121`). They
         # are new records in a new write-up, so the files figure takes one and
         # the spellings figure two; both resolve, so `declined` is unmoved and
-        # no `out_of_range`, `unresolved` or `ambiguous` appears.
+        # no `out_of_range`, `unresolved` or `ambiguous` appears. On the merge
+        # with `main` the spellings figure reads one above the `96` this change
+        # was measured at, because `main` itself reads `95` where its base read
+        # `94`: the two are counts of different trees and add.
         self.assertEqual(len(records), 131)
         self.assertEqual(len({r[0] for r in records}), 31)
-        self.assertEqual(len({r[2] for r in records}), 96)
+        self.assertEqual(len({r[2] for r in records}), 97)
         self.assertEqual(verdicts(records), {
             census.RESOLVES: 98, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 33})
@@ -781,10 +803,12 @@ class TheCommittedTree(unittest.TestCase):
         # `70 -> 72` is the same pair, and each takes this axis the way #421's
         # record did: both resolve, and both land in `tools/
         # test_agent_gates_patches.py`, a file this axis did not carry, so each
-        # adds a `(file, line)` pair rather than reweighting one.
+        # adds a `(file, line)` pair rather than reweighting one. On the merge
+        # with `main` it reads `73`: `main` asserts `71` where this change's
+        # base asserted `70`, and the two pairs are added on top of that one.
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 72)
+                 if r[3] == census.RESOLVES}), 73)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

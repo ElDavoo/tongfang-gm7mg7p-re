@@ -26,6 +26,19 @@ addresses, that a read straddling a boundary behaves, or that the path is any
 faster. The comparison that would answer the first of those is written down in
 `manual_fan_ctrl_probe.py`'s docstring, for a human with the machine.
 
+Every block path here reads at 4-aligned offsets and nothing else can: a range
+is covered by the aligned blocks enclosing it, and `read_dword` refuses
+anything else. The one exception is the `mmrd` subcommand and the
+`read_dword_unaligned` behind it, which exists to put issue #147's question —
+one `MMRD` at `0xFE410000 + 0x0751`, an unaligned operand — so that it can be
+asked. It issues exactly one IOCTL and is reachable from no sweep, by name
+rather than by flag. That too has never been run, and the four bytes it brings
+back are printed as they arrived rather than labelled with the EC offsets they
+are read as, because which of the four is the lowest address is a reading of
+the marshalling (`windows/native/ACPIDriver.sys.analysis.md`) and labelling
+them here would settle it by assumption. `docs/findings/mmrd-unaligned-escape.md`
+is the write-up; it settles nothing either.
+
 The DSDT's `ECRR` is `MMRW(0xFE410000 + Arg0, 0, 0, 0)` (`evidence/acpi/dsdt.dsl`
 :50497), so a read here and a read through `ec/tools/ecmem.py` on Linux are the
 same physical byte, reached two different ways.
@@ -41,6 +54,7 @@ Usage:
   ecrw.py dump  0x0700 0x100          # start, length
   ecrw.py dump  0x0700 0x100 --block  # 4 bytes per IOCTL, same output
   ecrw.py write 0x7b9=60 0x7d0=55     # requires --i-mean-it
+  ecrw.py mmrd  0x0751                # one MMRD at an unaligned offset
 
 Addresses and values accept 0x-prefixed hex or decimal.
 """
@@ -165,6 +179,57 @@ class Ec:
         self._ioctl(IOCTL_MMRD, buf)
         return buf.raw[:4]
 
+    def read_dword_unaligned(self, addr):
+        """One MMRD at an unaligned EC offset, one IOCTL. The escape, and
+        the only path in this module that can issue one.
+
+        Issue #147 words its check as one `MMRD` at `0xFE410000 + 0x0751`,
+        where `0x0751 % 4 == 1`. `read_dword` refuses that and `readmany`
+        covers the enclosing block instead, so without this method the
+        question is unaskable from here; `manual_fan_ctrl_probe.py`'s docstring
+        is where the comparison a human takes is written down.
+
+        A separate name rather than a keyword on `read_dword`, on purpose.
+        `readmany` calls `read_dword` at every block, so a flag that permitted
+        an unaligned start would put one within reach of every sweep in this
+        repository, and a distinct name makes the aligned path incapable of it
+        by construction rather than by discipline.
+
+        The marshalling is `read_dword`'s, unchanged: the same 8-byte buffer,
+        the same little-endian `EC_BASE + addr` -- the ASL adds nothing to a
+        `MMRD` operand (evidence/acpi/dsdt.dsl:50481-50483) -- and the same
+        `buf.raw[:4]` back. Only the bound differs. This loosens alignment and
+        nothing else: `addr + 3` must still be inside the window, so the last
+        unaligned start accepted is `0xFFFD` and `0xFFFE` raises the same
+        `ValueError`, before any IOCTL, that `read_dword` raises.
+
+        The four bytes come back in the order the copy-back put them there --
+        four byte stores out of the ACPI output buffer, in order, not one
+        dword store. Which of them is the lowest address is a reading of that
+        marshalling and not a measured one
+        (`../native/ACPIDriver.sys.analysis.md`); nothing here labels them
+        with an EC offset for exactly that reason.
+
+        Nothing in this repository has issued one of these either. The DSDT
+        has no alignment test on `MMRW` -- not found by the grep in
+        `docs/findings/mmrd-unaligned-escape.md` -- and neither the ACPI
+        specification nor `ACPI.sys` is in this tree, so whether the BIOS
+        answers an unaligned operand at all is a question for a human at the
+        machine.
+        """
+        if not 0 <= addr <= 0xFFFD:
+            # The same window read_dword holds, one byte further along: a dword
+            # starting at 0xFFFD ends at 0xFFFF, and one starting at 0xFFFE
+            # would run off the mapped region into 0xFE420000. The unaligned
+            # start is what is being allowed here, not the wider access.
+            raise ValueError(f"EC address 0x{addr:X} is not a dword start in "
+                             "0x0000-0xFFFD")
+        buf = ctypes.create_string_buffer(8)
+        for i in range(4):
+            buf[i] = (EC_BASE + addr) >> (8 * i) & 0xFF
+        self._ioctl(IOCTL_MMRD, buf)
+        return buf.raw[:4]
+
     def readmany(self, start, length):
         """`length` bytes from EC offset `start`, as {addr: byte}.
 
@@ -251,6 +316,19 @@ def main(argv=None):
     p_write.add_argument("--i-mean-it", action="store_true",
                          help="required: writes go to live EC RAM")
 
+    p_mmrd = sub.add_parser(
+        "mmrd", help="one MMRD (4 bytes) at an unaligned EC offset")
+    p_mmrd.add_argument(
+        "addr",
+        help="EC offset, not a physical address: EC_BASE is added here, as "
+             "it is for every other command. May be unaligned -- that is "
+             "the point, and no sweep can reach this. The four bytes print "
+             "in the order the copy-back produced them and are deliberately "
+             "not labelled with EC offsets: which of them is the lowest "
+             "address is a reading of the marshalling "
+             "(../native/ACPIDriver.sys.analysis.md) and not a measured one. "
+             "Nothing here has been run against the driver")
+
     args = ap.parse_args(argv)
 
     try:
@@ -271,6 +349,19 @@ def main(argv=None):
                     else:
                         row = [ec.read(base + i) for i in range(n)]
                     print(f"{base:04X}: " + " ".join(f"{b:02x}" for b in row))
+            elif args.cmd == "mmrd":
+                addr = _int(args.addr)
+                four = ec.read_dword_unaligned(addr)
+                # The physical address is what went on the wire, so it is the
+                # label; the four bytes print in the order the copy-back
+                # produced them and carry no EC offset of their own. Naming
+                # buf[0] as the byte at `addr` is the reading under test, and
+                # having the tool print it would make this output a
+                # confirmation of the assumption rather than a measurement of
+                # it -- so the comparison a human takes is the one against the
+                # aligned `dump --block` line, not against these four bytes.
+                print(f"0x{EC_BASE + addr:08X}: "
+                      + " ".join(f"{b:02x}" for b in four))
             elif args.cmd == "write":
                 if not args.i_mean_it:
                     print("refusing to write without --i-mean-it", file=sys.stderr)

@@ -584,7 +584,14 @@ class TheCommittedTree(unittest.TestCase):
         # which places, so the record count and this one each take exactly the
         # one and the gap against the record count stays at the pair named
         # above.
-        self.assertEqual(placed, 128)
+        # `128 -> 129` is #774's two rows, and it is a measurement of this
+        # tree and not just their sum: `origin/main` measures `127` against the
+        # `128` asserted here, because the reconciler names a second unplaced
+        # pair (`0751-append-unchecked-marks.md:221/246`) beside the
+        # `agent-pipeline.md` one. So the gap against the record count is two
+        # rather than the one named above, and two new records that both place
+        # take `127` to `129`.
+        self.assertEqual(placed, 129)
 
     def test_the_committed_read_and_shape_cells_are_the_census_vocabulary(self):
         # The two vocabularies the table's own cells have to be drawn from, and
@@ -625,7 +632,12 @@ class TheCommittedTree(unittest.TestCase):
         # nothing else.** Its write-up names the path rather than a bare module
         # name, so `by-path` takes the one, `74 -> 75`, and `by-name`,
         # `by-beside` and the declined `-` are the control.
-        self.assertEqual(read, {census.BY_PATH: 75, census.BY_NAME: 19,
+        # **#774's two rows, one of each:** `deep-schedule-lint-baseline.md`
+        # cites `tools/test_agent_gates_patches.py:82-86` by path and
+        # `test_agent_gates_patches.py:121` by bare module name, so `by-path`
+        # takes `75 -> 76` and `by-name` `19 -> 20`, with the two `beside` rows
+        # and the declined `-` unmoved.
+        self.assertEqual(read, {census.BY_PATH: 76, census.BY_NAME: 20,
                                 census.BY_BESIDE: 2, "-": 33})
         # The shape split is re-derived rather than lowered, twice. #962 adds a
         # class to `test_xdata_cluster_names.py` and corrects a docstring above
@@ -674,8 +686,12 @@ class TheCommittedTree(unittest.TestCase):
         # cited is a step in a hand-built workflow fixture rather than an
         # assertion, a `def test_` header or a comment, so the shape rule reads
         # it as prose. `44 -> 45`, with the three beside it unmoved.
-        self.assertEqual(shape, {census.ASSERTION: 24, census.COMMENT: 22,
-                                 census.BLANK: 5, census.OTHER: 45,
+        # And +2 for #774, one on each of two shapes: `:82-86` is the exclusion
+        # comment block, so `comment` takes `22 -> 23`, and `:121` is the
+        # continuation line of a wrapped `sorted(...)` expression, which the
+        # shape rule reads as prose, so `other` takes `45 -> 46`.
+        self.assertEqual(shape, {census.ASSERTION: 24, census.COMMENT: 23,
+                                 census.BLANK: 5, census.OTHER: 46,
                                  "-": 33})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
