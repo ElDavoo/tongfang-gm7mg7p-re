@@ -64,17 +64,24 @@ and a bucket that did not exist would let that decision read as an absence
 rather than as a choice.
 
 **The three tables are the whole byte-addressed `direct` map, and the one
-class left out is named rather than left out silently.** The base 8051 and
-the six instructions its 8052 extension adds have **49** opcodes between
-them whose operand is a byte address, and every one of them is in one of
+class left out is named rather than left out silently.** The base 8051 has
+**41** such opcodes and its 8052 extension adds **eight** -- the six
+`direct,A`/`direct,#data` rows of the logical group and the two `SUBB` forms
+`0x96`/`0x97`, the base 8051's `SUBB` group being `0x94`/`0x95` alone -- for
+**49** between them, and every one of them is in one of
 these three tables; `test_dptr_rebuild_forms.py` holds their union against
 that map written out a second time, because a hand-written list that is
-merely *nearly* complete reads exactly like a complete one. The oracle is the
-committed Ghidra listings under `ec/decompiled/*/*.asm`, which decode the
-`direct` position and are the reason nothing here is taken from
-`disasm8051.mnemonic()` -- that renderer mislabels the whole logical group,
-printing `54 82` as `anl a,#0x82` where the machine executes `anl a,#0x82`
-and touches no SFR, and `42 f0` as undefined where the machine writes B. The
+merely *nearly* complete reads exactly like a complete one. That map is
+written from the instruction set, and the committed Ghidra listings under
+`ec/decompiled/*/*.asm` corroborate it wherever they carry an instance --
+every entry except `0x96`/`0x97`, which appear nowhere in them and so rest on
+the instruction set alone. The listings are also the reason nothing here is
+taken from `disasm8051.mnemonic()`: that renderer is correct about the
+accumulator rows (`54 82` renders as `anl a,#0x82`, which is what the
+machine executes, and `OPCODE_LEN[0x54] == 2` is right), but it emits the
+`direct,A`/`direct,#data` rows `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63` as
+`db 0x42` and `db 0x63` where the machine writes a byte address, and its
+`OPCODE_LEN` is one short for `0x26`, `0x36`, `0x96` and `0x97`. The
 cross-check that did exist, over all 256 opcodes, could not be that oracle: it
 held the *store* table to `is_dptr_rebuild()`, which omitted the same two
 opcodes and so agreed on exactly the rows that were wrong, and it never
@@ -115,10 +122,14 @@ DEFAULT_FIRMWARE = os.path.join(HERE, os.pardir, "firmware", "GMxMGxx_11.800")
 
 # The three buckets, as opcode -> the disassembly's spelling of the form. The
 # names are the 8051's, and `disasm8051.mnemonic()` does not render all of them
-# (it prints the `0x44`/`0x45`/`0x54`/`0x55`/`0x64`/`0x65` group as A-operand
-# forms, so `54 82` reads `anl a,#0x82` where the machine writes DPL). That is
-# why nothing here keys on rendered text, and why the spellings below are
-# written out rather than generated from a table that has the defect.
+# (it emits the `direct,A`/`direct,#data` rows `0x42`/`0x43`/`0x52`/`0x53`/
+# `0x62`/`0x63` of the logical group as `db 0x42` and `db 0x63`, where the
+# machine writes a byte address). That is why nothing here keys on rendered
+# text, and why the spellings below are written out rather than generated from
+# a table that has the defect. The accumulator rows the renderer *does* get
+# right are not a reason to trust it: `0x44`/`0x54`/`0x64` are two-byte
+# `a,#imm` and `0x45`/`0x55`/`0x65` two-byte `a,direct`, exactly as it prints
+# them, which is why the defect is confined to the other side of the group.
 STORE_FORMS = dict(
     [(0x75, "mov  direct,#imm"),
      (0x85, "mov  direct,direct"),
@@ -151,12 +162,15 @@ READ_FORMS = dict(
 IN_PLACE_FORMS = {
     0x05: "inc  direct",          0x15: "dec  direct",
     0x26: "add  direct,a",        0x36: "addc direct,a",
-    # `0x42`/`0x52`/`0x62` and `0x43`/`0x53`/`0x63` are the 8052 additions to
-    # the logical group, and the only six entries here that a base-MCS-51
-    # opcode map does not have. They are the writing side of the
-    # `0x45`/`0x55`/`0x65` rows in `READ_FORMS`: two bytes for the `direct,A`
-    # form, three for `direct,#data`. The committed listings render them
-    # `42 f0 orl B, A` and `63 65 ff xrl 0x65, #0xff`.
+    # Eight entries here are 8052 additions a base-MCS-51 opcode map does not
+    # have: the `direct,A`/`direct,#data` rows of the logical group
+    # `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63`, and the `SUBB` pair
+    # `0x96`/`0x97` -- the base 8051's `SUBB` group is `0x94`/`0x95` alone.
+    # The logical-group six are the writing side of the `0x45`/`0x55`/`0x65`
+    # rows in `READ_FORMS`: two bytes for the `direct,A` form, three for
+    # `direct,#data`. The committed listings render them `42 f0 orl B, A` and
+    # `63 65 ff xrl 0x65, #0xff`; they carry no instance of `0x96` or `0x97`,
+    # so those two rest on the instruction set alone.
     0x42: "orl  direct,a",        0x43: "orl  direct,#imm",
     0x52: "anl  direct,a",        0x53: "anl  direct,#imm",
     0x62: "xrl  direct,a",        0x63: "xrl  direct,#imm",
@@ -291,9 +305,10 @@ def print_summary(found) -> None:
         "not a disassembly:\nthey include bytes that are data, table entries "
         "and the separate PD 8051 image, so read\nthem as found by this method "
         "and not as a count of executed instructions. The three tables\nare "
-        "the whole map of byte-addressed direct operands, the base 8051 plus\n"
-        "the six its 8052 extension adds. Two classes are out of them, and both\n"
-        "are out because of this file's keying rather than because of the 8051:\n"
+        "the whole map of byte-addressed direct operands: 41 in the base 8051\n"
+        "plus the eight its 8052 extension adds. Two classes are out of them,\n"
+        "and both are out because of this file's keying rather than because\n"
+        "of the 8051:\n"
         "the bit-addressed forms take a bit "
         "address, where 0x82 is\nthe low byte of SFR 0x88 rather than DPL, and "
         "`mov DPTR,#imm16` (0x90) names no direct operand at\nall.")

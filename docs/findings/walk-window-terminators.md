@@ -147,12 +147,14 @@ lines therefore read:
 
 - **`0x2C2FE`** did not end on `clr a`. This row's committed `window` cell is
   `mov a,r7 ; movx @dptr,a ; mov 0xf0,#0x5e ; mul ab ; add a,#0xf8` with
-  `terminator = DPTR reloaded`, so the window ends **before `0x2C305`** --
-  the `add a,#0xf8` is the fifth instruction and the sixth is never decoded.
-  That is the committed `file_offset` `0x2C2FA` row of
+  `terminator = DPTR reloaded`, so the window ends **before `0x2C305`**. That
+  is the committed `file_offset` `0x2C2FA` row of
   `ec-0x07d0-sites.csv`, and the section's own "budget-8 window ends; a
   64-instruction budget continues" line at `0x2C307` no longer describes
-  where anything ends.
+  where anything ends. The cell names five instructions where `walk_why()`
+  decodes six, because the CSV renderer drops the site's own
+  `mov dptr,#0x07d0` triple: on the walk's own numbering `add a,#0xf8` is
+  the sixth and the `mov 0x82,a` at `0x2C305` is the seventh, never decoded.
 - **`0x2C305`** is now exactly what the widened guard stops on. It is not a
   store the window runs past; it is the terminator, and the guard runs on
   the instruction *after* the one just decoded, so the `mov 0x82,a` is never

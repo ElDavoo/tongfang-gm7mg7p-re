@@ -101,25 +101,33 @@ rendered text has three failure modes, not two:
 3. **a target address mistaken for an operand** -- the new one.
 
 A fourth would follow from a sweep that reads `disasm8051.mnemonic()`'s text
-rather than bytes: the renderer gets the whole logical group wrong in both
-directions at once. It prints `54 82` as `anl a,#0x82` and **frames it as
-two bytes**, discarding the `0x7f` behind it where the machine's `0x54` is
-three bytes wide -- but the deeper error is that the group is
-miscaptioned as a set of A-operand forms, so `0x45`/`0x55`/`0x65` read as
-`orl a,#data`-style spellings of the accumulator when they are in fact
-`orl a,direct` and friends, and `0x42`/`0x52`/`0x62` render as `db 0x42`
-where the machine writes a byte address. A mnemonic-matching sweep built on
-it would classify the `direct` operand as the accumulator and put the
-logical group in the wrong bucket wholesale.
+rather than bytes, and the defect is narrower than "the logical group is
+miscaptioned": **the renderer is right about the accumulator rows and wrong
+about the other side of them.** It renders `0x44`/`0x54`/`0x64` correctly as
+`a,#imm` and `0x45`/`0x55`/`0x65` correctly as `a,direct`, both two bytes,
+which is what the machine does -- `disasm8051.OPCODE_LEN[0x54] == 2` is
+right, not a defect. What it does not render at all is the `direct,A` and
+`direct,#data` rows of the same group, `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/
+`0x63`, which it emits as `db 0x42` and `db 0x63` where the machine writes
+a byte address; alongside them, `OPCODE_LEN` is one byte short for
+`0x26`, `0x36`, `0x96` and `0x97`, so a length-driven walk would step into
+the operand byte. A mnemonic-matching sweep built on it would find the
+writing half of the logical group -- the six rows that are most of what
+`IN_PLACE_FORMS` is claiming for that group -- under no name at all, and
+would misstep on four arithmetic rows. That is the defect; the accumulator
+rows are not part of it.
 `dptr-rebuild-walk-guard.md` §1 records the rendering defect and
 `test_dptr_rebuild_guard.py` holds it as a fact about the tree; the reason
 it is named again here is that it is the reason this issue's sweep has to
 classify from bytes, and the reason the three tables are written out rather
 than generated. The committed Ghidra listings are what settles the group
-instead: they decode `45 82` as `orl A, DPL`, `42 f0` as `orl B, A`,
-`63 65 ff` as `xrl 0x65, #0xff` and `54 0f` as `anl A, #0xf`, which is to
-say the operand order and the operand's *kind* are both readable there and
-in neither of the two tools this repository carries.
+instead, and they are the reason the claim above is stated narrowly: `54 07
+- anl A, #0x7` and `42 f0 - orl B, A` are one accumulator row and one direct
+row of the same group, and they are what a byte census has to tell apart.
+The listings decode `45 82` as `orl A, DPL`, `63 65 ff` as
+`xrl 0x65, #0xff` and `54 0f` as `anl A, #0xf` as well, which is to say
+the operand order and the operand's *kind* are both readable there and in
+neither of the two tools this repository carries.
 
 ## 3. The read forms, counted and explicitly excluded
 
@@ -170,20 +178,29 @@ There is a third bucket, because a census whose subject is *every way the
 image names DPL or DPH* needs one: **76** references from the in-place
 forms (`0x05`/`0x15` `inc`/`dec direct`, the `0x26`/`0x36` add and addc
 pair, `0xC2` `clr direct`, `0xC5` `xch a,direct` and `0xD5` `djnz direct,rel`,
-plus the six 8052 forms of the logical group), which change the
-pointer without replacing it and which
+plus the eight 8052 forms in the map -- the six `direct,A`/`direct,#data`
+rows of the logical group and the two `0x96`/`0x97` `SUBB` forms), which
+change the pointer without replacing it and which
 [`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) §3 declines for
 a stated reason. Listing them is what keeps that decision reading as a
 choice rather than as a silence.
 
 **The three tables are the whole map of byte-addressed `direct` operands,
-and the two classes left out are named.** That map is **49** opcodes -- 43 in
-the base 8051 and the six its 8052 extension adds -- and the tool's three
+and the two classes left out are named.** That map is **49** opcodes -- 41 in
+the base 8051 and the eight its 8052 extension adds, which are the six
+`direct,A`/`direct,#data` rows of the logical group (`0x42`/`0x43`/
+`0x52`/`0x53`/`0x62`/`0x63`) **and the two `SUBB` forms `0x96`/`0x97`**:
+the base 8051's `SUBB` group is `0x94`/`0x95` alone, and `SUBB direct,#data`
+and `SUBB direct,A` are 8052 additions like the rest. The tool's three
 tables hold all 49, which
 `test_dptr_rebuild_forms.py` holds against a second transcription of that map
-written out from the instruction set and checked against those same
-listings, with a negative control beside the assertion so the check is shown
-able to reject a wrong union rather than only to accept this one. The check
+written out from the instruction set, with a negative control beside the
+assertion so the check is shown able to reject a wrong union rather than
+only to accept this one. That transcription is checked against the committed
+Ghidra listings **for the entries the listings actually carry**, which is
+most of the map but not all of it: `0x96` and `0x97` appear nowhere in them,
+so those two rows rest on the instruction set alone and are the rows no
+listing could have confirmed. The check
 that used to stand in that place could
 not be that oracle, and it is worth being exact about why: the 256-opcode
 sweep held the **store** table to `is_dptr_rebuild()`, and those two omitted
@@ -374,7 +391,8 @@ rather than by a sentence in this file.
   rows §1 lists. What changed is the guard, not the measurement's arithmetic.
 - **That no other form of DPTR reach exists.** The census covers every
   8051/8052 opcode whose `direct` operand is a byte address -- all 49 of
-  them, base plus the six the 8052 extension adds -- at every offset, and
+  them, 41 in the base 8051 plus the eight the 8052 extension adds -- at
+  every offset, and
   `mov DPTR,#imm16` separately. The two classes it leaves out are named
   in §3 and are exclusions of this keying, not of the 8051: the
   bit-addressed forms, where `0x82` is the low byte of SFR `0x88`, and

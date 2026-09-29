@@ -158,7 +158,9 @@ ORL_DPL_FROM_A = bytes([0x42, 0x82])     # orl 0x82,a -- in place
 # must decline the second, which is what keeps the immediate spellings out
 # of all three tables.
 ANL_DIRECT_DPL = bytes([0x53, 0x82, 0x7F])   # anl 0x82,#0x7f -- byte address
-ORL_A_LITERAL = bytes([0x54, 0x82, 0x7F])     # anl a,#0x7f  -- an immediate
+ORL_A_LITERAL = bytes([0x54, 0x82, 0x7F])     # anl a,#0x82  -- an immediate
+# `0x54` is two bytes, so the trailing `0x7F` is the *next* instruction's byte
+# and is not part of this one; the immediate this decodes is `0x82`.
 
 # In place: a direct operand naming DPL/DPH that changes it without replacing
 # it, with the byte after the operand laid down as well. `disasm8051` frames
@@ -188,18 +190,22 @@ DPL_STORE_AT_TARGET = bytes([0xF5, 0x82])
 # Two lists that share a source are one list counted twice.
 #
 # **`disasm8051.mnemonic()` is not the authority for writing it.** That
-# renderer mislabels the whole logical group -- it prints `54 82` as
-# `anl a,#0x82` and renders `42 f0` as undefined -- so a list read off it
-# carries the renderer's errors rather than the instruction set's. The
-# authority is the committed Ghidra listings under `ec/decompiled/*/*.asm`,
-# which decode the operand position: they render `45 82` as `orl A, DPL`,
-# `42 f0` as `orl B, A`, `63 65 ff` as `xrl 0x65, #0xff` and `54 0f` as
-# `anl A, #0xf`. Two consequences are visible in the list below, and neither
-# is a matter of taste: the accumulator forms `0x45`/`0x55`/`0x65` are
+# renderer gets the accumulator rows right -- `54 82` prints as
+# `anl a,#0x82` and `OPCODE_LEN[0x54] == 2` is correct -- but it renders
+# `42 f0` as `db 0x42` and `63 65 ff` as `db 0x63` where the machine writes
+# a byte address, and its `OPCODE_LEN` is one short for `0x26`, `0x36`,
+# `0x96` and `0x97`, so a list read off it carries the renderer's errors
+# rather than the instruction set's. The authority is the committed Ghidra
+# listings under `ec/decompiled/*/*.asm`, which decode the operand position:
+# they render `45 82` as `orl A, DPL`, `42 f0` as `orl B, A`, `63 65 ff` as
+# `xrl 0x65, #0xff` and `54 07` as `anl A, #0x7`. Two consequences are
+# visible in the list below, and neither is a matter of taste: the
+# accumulator forms `0x45`/`0x55`/`0x65` are
 # **here** (they load the byte) while the immediate forms `0x44`/`0x54`/
 # `0x64` are **not**, because their operand is a literal rather than an
-# address; and the six 8052 additions are here, because the listings decode
-# them and a base-MCS-51 list would be three short of the map.
+# address; and the eight 8052 additions are here, six logical-group rows the
+# listings decode and the two `SUBB` rows `0x96`/`0x97` that appear nowhere
+# in them, so a base-MCS-51 list would be eight short of the map.
 #
 # The bit-addressed forms are deliberately *not* here: `0x82` is the low byte
 # of SFR `0x88` in a bit address and is not DPL, and `BIT_ADDRESSED` below
@@ -529,14 +535,13 @@ class BucketShapeTests(unittest.TestCase):
 
     def test_every_form_the_census_names_is_the_8051_spelling_it_claims(self):
         # The three tables spell their forms out rather than generating them,
-        # because `disasm8051.mnemonic()` renders the logical group wrongly --
-        # it prints `54 82` as `anl a,#0x82` and `42 f0` as `db 0x42`, where
-        # the machine executes `anl a,#0x82` (touching no SFR at all) and
-        # `orl B, A` respectively. Asserting each table against
-        # `trace_xdata_refs.DIRECT_STORE_OPS` keeps the two honest about each
-        # other without this file depending on the defective rendering, and
-        # the rendering itself is asserted once below as a fact about the
-        # tree rather than as a note.
+        # because `disasm8051.mnemonic()` does not render all of them -- it
+        # prints `42 f0` as `db 0x42` and `63 65 ff` as `db 0x63` where the
+        # machine executes `orl B, A` and `xrl 0x65, #0xff`. Asserting each
+        # table against `trace_xdata_refs.DIRECT_STORE_OPS` keeps the two
+        # honest about each other without this file depending on the
+        # defective rendering, and the rendering itself is asserted once below
+        # as a fact about the tree rather than as a note.
         for op in F.STORE_FORMS:
             with self.subTest(op=hex(op)):
                 self.assertIn(op, T.DIRECT_STORE_OPS | {T.MOV_DIRECT_DIRECT}
@@ -551,14 +556,23 @@ class BucketShapeTests(unittest.TestCase):
         from disasm8051 import mnemonic
         self.assertEqual(F.IN_PLACE_FORMS[0x42], "orl  direct,a")
         self.assertEqual(F.READ_FORMS[0x45], "orl  a,direct")
-        # The renderer still frames `0x54` as two bytes and drops the byte
-        # after it, so it prints the literal as its own operand and discards
-        # `0x7f` entirely; the census declines the same bytes. Asserted as a
-        # pair because either half alone is satisfied by a table that simply
-        # omitted the group, and the dropped byte is the part of the defect
-        # that a length-driven walk would have gone on to decode.
+        # The renderer is right about this half of the group and the census
+        # declines it for a different reason, which is the point of holding
+        # both in one place: `0x54` is `ANL A,#data`, two bytes, and
+        # `54 82` really is `anl a,#0x82` -- the trailing `0x7F` is the next
+        # instruction's byte, not a third byte of this one. The census
+        # declines the same bytes because the operand is a *literal* and so
+        # names no byte address. Asserted as a pair because either half alone
+        # is satisfied by a table that simply omitted the group, and because a
+        # reader who thought the renderer wrong here would be "fixing" a row
+        # that is already correct.
         self.assertEqual(mnemonic(ORL_A_LITERAL, 0), "anl  a,#0x82")
         self.assertEqual(F.form_at(ORL_A_LITERAL, 0), [])
+        # And the half the renderer does get wrong, which is the other side of
+        # the same group: the `direct,A` and `direct,#data` rows it has no
+        # spelling for and emits as `db`.
+        self.assertEqual(mnemonic(bytes([0x42, 0xF0]), 0), "db   0x42")
+        self.assertEqual(mnemonic(bytes([0x63, 0x65, 0xFF]), 0), "db   0x63")
 
     def test_the_store_table_is_the_guard_opcode_set_plus_a_named_gap(self):
         # `DIRECT_STORE_OPS` plus the `0x85` exception is what
@@ -617,12 +631,13 @@ class BucketShapeTests(unittest.TestCase):
         # operand byte at all, and one of the five this table wrongly carried
         # before the correction the listings forced.
         self.assertNotEqual(tables | {0x2C}, set(DIRECT_BEARING))
-        # A whole group gone, rather than a lone member -- the six 8052
-        # additions. Reading the instruction set as base-8051-only misses
-        # `0x43`/`0x53`/`0x63` and puts `0x44`/`0x54`/`0x64` in their place,
-        # which is a nine-row error that still totals the right union.
+        # A whole class gone, rather than a lone member -- the eight 8052
+        # additions, which is what reading the instruction set as base-8051-
+        # only looks like: the six `direct,A`/`direct,#data` rows of the
+        # logical group *and* the two `SUBB` rows `0x96`/`0x97`, without
+        # which the list is eight short of the map.
         without_8052 = set(DIRECT_BEARING) - {0x42, 0x43, 0x52, 0x53,
-                                              0x62, 0x63}
+                                              0x62, 0x63, 0x96, 0x97}
         self.assertNotEqual(tables, without_8052)
 
 
