@@ -24,6 +24,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-mark-gap-report.md`](0751-mark-gap-report.md) — Two captures whose three consoles marked 0.2 s apart and 4.9 s apart graded identically, and said nothing about it (issue #676)
 - [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md) — A fifth `provenance` column on the mark row, and the reader that makes it worth writing (issue #739)
 - [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) — Which process wrote this mark: a fifth column measured against a `# provenance` row (issue #719)
+- [`0751-mark-split-boundary-gap.md`](0751-mark-split-boundary-gap.md) — Three consoles that marked one action 7 s apart were reported as two captures that never recorded it (issue #1372)
 - [`0751-notice-two-moments.md`](0751-notice-two-moments.md) — The 0751 startup notice described two moments as one (issue #749)
 - [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md) — The two path-taking readers are kept, and their docstrings name their callers (issue #771)
 - [`0751-readback-written-value-notice.md`](0751-readback-written-value-notice.md) — §4.6's second precondition, stated when nothing names the value that was written (issue #387)

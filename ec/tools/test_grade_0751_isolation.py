@@ -5194,5 +5194,393 @@ class ReadbackNoticeTests(unittest.TestCase):
         self.assertNotIn('something put it back', section)
 
 
+# The marks of one action falling *outside* the merge rather than inside it,
+# and the window length §4.4's control-vs-write comparison has no time base
+# without.
+#
+# Appended at the end of the file for the reason the comment above
+# `ReadbackNoticeTests` gives, and the same load-bearing reason: 21 line
+# numbers across five write-ups and 12 rows of the per-pin table in
+# `docs/findings/test-line-pin-census.md` cite into this file below
+# `GradeTests`, and inserting anywhere else moves all of them onto the wrong
+# line without changing a word of the sentences citing them. Placement is all
+# that costs, and appending costs none.
+#
+# Nothing here asserts a count of the tree or of this suite, for the reason
+# CLAUDE.md gives: each test asserts the claim its own fixture is about --
+# *this* one names 7.0 s, *this* one is 30 s long, *this* one has no mark at
+# all. A figure that moves on every merge is a figure every merge has to
+# edit, and four branches have already been made to do that.
+class MarkSplitBoundaryTests(unittest.TestCase):
+    """A day whose three consoles marked one action 7 s apart, the sentence
+    that used to call two of them captures that missed it, and the window
+    length §4.4's comparison is taken over.
+
+    Two temp-dir builders, described at their own definitions. The first is
+    §6's committed three captures with only the mark timestamps moved, so a
+    1 s day and a 7 s day are the same bytes; the second holds the consoles
+    still and varies only the gap between the actions, so the span band is
+    tested over window length and nothing else.
+
+    Nothing here is about an exit code changing. The split day is refused
+    before this change and refused after it -- a day that mis-shapes into
+    nine windows and three blocks has not produced §6's ten files -- and what
+    is under test is the *reason* it gives. The span note is the other way
+    round: it fires on runs that grade and exit 0, because a window that ran
+    at a time §3's pacing does not imply is a fact to report rather than
+    grounds for a refusal.
+
+    `MANUAL_FAN_CTRL` stays `present-untested` through all of it, and every
+    figure here is arithmetic over hand-built CSVs.
+    """
+
+    # A capture's mark row as the committed files carry it: a timestamp, the
+    # two empty address fields, and everything after them. Read rather than
+    # reassembled, so a fixture that grew a fifth column keeps it instead of
+    # being rewritten into a shape it does not have.
+    MARK_ROW = re.compile(r"^(\S+),MARK,,(.*)$")
+    # What the two arms of the `missing` problem say, so that "neither of
+    # these appears" is a claim about the whole report rather than about the
+    # window one test happened to look at.
+    MISSED_IT = 'The capture(s) that missed it'
+    DID_NOT = '-- did not record it'
+    REDO = 'Redo the block'
+    # The section the capture-level verdict lives in, and so the part two
+    # captures differing only in their mark spacing must not move between.
+    SETTLE = '=== what this does and does not settle ==='
+
+    def base_marks(self):
+        """The committed fixture's three action timestamps, in order.
+
+        Read out of `run/` rather than written here, so this class measures
+        the same day every other case in the suite does and an edit to the
+        fixture moves it too.
+        """
+        return [m.ts for m in grade.read_capture(RUN_CAPTURES[0])[0]]
+
+    def staggered(self, tmp, step):
+        """§6's three captures, copied into `tmp` with the consoles' marks
+        `step` seconds apart instead of the committed 1 s.
+
+        The committed bytes -- the same drift under the no-op, the same
+        climb, the same labels -- with only the mark timestamps moved, so the
+        two runs differ in nothing but how far apart the three consoles
+        marked. `step=1.0` is that fixture's own spacing and fuses, as it
+        does on the machine; `step=7.0` is the same day marked too slowly for
+        the merge, which is what the issue reproduces offline.
+
+        A file name per capture, as `MarkGapReportTests.captures` gives: three
+        files of one shape are a three-console day, one file read three times
+        is not.
+        """
+        base = self.base_marks()
+        paths = []
+        for n, path in enumerate(RUN_CAPTURES):
+            rows, seen = [], 0
+            for line in Path(path).read_text(encoding="utf-8").splitlines():
+                at = self.MARK_ROW.match(line)
+                if at is None:
+                    rows.append(line)
+                    continue
+                ts = base[seen] + grade.datetime.timedelta(seconds=step * n)
+                seen += 1
+                rows.append(ts.isoformat(timespec="milliseconds")
+                            + ",MARK,," + at.group(2))
+            copy = Path(tmp) / f"console-{n}.csv"
+            copy.write_text("".join(row + "\n" for row in rows),
+                            encoding="utf-8")
+            paths.append(str(copy))
+        return paths
+
+    def paced(self, tmp, spacing):
+        """Three one-console captures whose three action marks are `spacing`
+        seconds apart, with no change rows.
+
+        Window length is the only thing this varies, which is what the span
+        band is about. Every console marks at the same instant, so each action
+        fuses into one window and the day grades rather than being refused:
+        30 s is inside §3's own pacing, 6 s is under its floor and 300 s is
+        over the watcher's `--seconds 240`. The labels are the same three
+        `MarkGapReportTests` uses, so there is one spelling of §3's actions
+        in this file.
+        """
+        base = self.base_marks()
+        paths = []
+        for n in range(3):
+            rows = ["ts,addr,old,new"]
+            for i, label in enumerate(MarkGapReportTests.ACTIONS):
+                at = base[i] + grade.datetime.timedelta(
+                    seconds=(spacing - 30) * i)
+                rows.append(f"{at.isoformat(timespec='milliseconds')}"
+                            f",MARK,,{label}")
+            path = Path(tmp) / f"paced-{n}.csv"
+            path.write_text("".join(row + "\n" for row in rows),
+                            encoding="utf-8")
+            paths.append(str(path))
+        return paths
+
+    def marks_of(self, paths):
+        """Every mark in `paths`, read the way the report reads them."""
+        return [m for path in paths for m in grade.read_capture(path)[0]]
+
+    def test_three_consoles_7s_apart_name_the_distance_and_miss_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(*self.staggered(tmp, 7.0))
+        self.assertEqual(rc, 1)
+        flat = " ".join(out.split())
+        # The distance, per console, in the census. The third console is two
+        # gaps out and not one, so a rule that only looked at the neighbouring
+        # window would have named 7.0 s and left this row reading as a
+        # capture that never recorded the action -- half the fix, and the half
+        # that is on screen.
+        self.assertIn('recorded the same action 7.0s after this mark', out)
+        self.assertIn('recorded the same action 14.0s after this mark', out)
+        # What the issue's done-looks-like asks for: the run names the timing
+        # and says, anywhere in the report, that no capture missed the mark.
+        # Every capture recorded every mark; the merge is what split them.
+        self.assertNotIn(self.DID_NOT, out)
+        self.assertNotIn(self.MISSED_IT, out)
+        self.assertIn(self.REDO, flat)
+        # The instruction that replaces the search-for-an-exited-watcher: the
+        # distance and what to do about it, on the window itself.
+        self.assertIn('console-1.csv at 7.0s, console-2.csv at 14.0s', flat)
+        self.assertIn(f'within {grade.MARK_SPLIT_SECONDS:g}s of the others',
+                      flat)
+
+    def test_the_same_day_1s_apart_says_no_capture_missed_anything(self):
+        # The other end of `MARK_SPLIT_SECONDS`, and the issue's "the existing
+        # 1 s fixture still says nothing was wrong". The three consoles fuse,
+        # every capture records every mark, and nothing about this change
+        # reaches the report: the gap #676 added still prints and is still not
+        # named close, and neither the split wording nor a boundary distance
+        # appears anywhere -- including on a graded window, where a boundary
+        # figure would be a number with no absence to explain it.
+        rc, out, _ = run(*RUN_CAPTURES)
+        self.assertEqual(rc, 0)
+        self.assertNotIn(self.DID_NOT, out)
+        self.assertNotIn(self.MISSED_IT, out)
+        self.assertNotIn(self.REDO, out)
+        self.assertNotIn('recorded the same action', out)
+        self.assertIn('adjacent gap(s) 1.0s, 1.0s, window 5s',
+                      " ".join(out.split()))
+        self.assertNotIn('this report calls close', out)
+        self.assertEqual(marked_windows(out), [
+            (1, 'no-op wrote 0x0751=0x10'),
+            (2, 'wrote 0x0751=0xA0'),
+            (3, 'restored 0x0751=0x10')])
+        # The two days are the same bytes and differ only in the spacing, and
+        # their verdicts are not the same: a day that graded three windows and
+        # a day that graded none are what a 6 s stagger turns one into. This
+        # is the "the reports read differently" half, in the shape
+        # `MarkGapReportTests.test_the_two_fixtures_report_differently` uses.
+        with tempfile.TemporaryDirectory() as tmp:
+            split = run(*self.staggered(tmp, 7.0))[1]
+        self.assertNotEqual(out[out.index(self.SETTLE):],
+                            split[split.index(self.SETTLE):])
+
+    def test_a_capture_that_never_recorded_the_mark_is_still_told_so(self):
+        # The second arm's other half, and the mutation pin against printing
+        # the split wording whenever *a* capture is absent rather than when
+        # every absent capture recorded the same action. `missing-mark/` is
+        # the committed set whose 0x0F00 capture has no no-op arm at all, so
+        # there is no mark of that action anywhere near this window and the
+        # distance cannot be found for it. The existing sentence is right
+        # about this capture and has to survive verbatim.
+        rc, out, _ = run(*MISSING_MARK)
+        self.assertEqual(rc, 1)
+        flat = " ".join(out.split())
+        self.assertIn(self.DID_NOT, out)
+        self.assertIn(self.MISSED_IT, flat)
+        self.assertNotIn(self.REDO, out)
+        self.assertNotIn('recorded the same action', out)
+        # And the two arms are told apart by something a reader can act on
+        # rather than by which sentence they happened to get: one names the
+        # distance and the fix, the other names the search.
+        self.assertNotIn('just outside the', flat)
+
+    def test_naming_the_timing_moved_no_verdict_on_the_split_day(self):
+        # "A report and not a refusal" is already spent on the gap, so this
+        # pins the half that is new: the same day with the split wording in it
+        # is still refused, for the same reasons, with the same windows
+        # withheld and the same block verdicts. What changed is the sentence a
+        # withheld window carries, and a change that had moved a verdict or an
+        # exit code to accommodate the distance goes red here.
+        with tempfile.TemporaryDirectory() as tmp:
+            split = run(*self.staggered(tmp, 7.0))
+        rc, out, _ = split
+        self.assertEqual(rc, 1)
+        # The day mis-shapes into one window per console per action, so
+        # nothing in it is a window of a value under test and every one is
+        # withheld. The kinds are the mark set's own: a boundary figure is not
+        # a new kind and does not displace `missing` or `void`.
+        self.assertEqual(len(marked_windows(out)), 9)
+        for n, _ in marked_windows(out):
+            self.assertIn('-- NOT GRADED', window_body(out, n))
+        self.assertIn('block 1 of 3: value under test 0xA0, roles control, '
+                      'control, control, write -- NOT GRADED', out)
+        self.assertIn('problem(s): missing, void', out)
+        self.assertIn('9 of the 9 window(s) above were not graded', out)
+        # The census is whole-capture under `--block` while only the selected
+        # block's windows print, so a split in a block this run did not grade
+        # is visible there and nowhere else. This is the site the write-up
+        # names as the one that matters for a §6 per-block invocation.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc_block, blocked, _ = run(*self.staggered(tmp, 7.0),
+                                       '--block', '0xA0')
+        self.assertEqual(rc_block, 1)
+        self.assertIn('=== block 1 of 3, value under test 0xA0, 4 window(s) '
+                      'in it ===', blocked)
+        self.assertIn('recorded the same action 14.0s after this mark', blocked)
+        self.assertNotIn(self.DID_NOT, blocked)
+
+    def test_the_boundary_gap_is_one_mark_per_capture_of_the_same_action(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            marks = self.marks_of(self.staggered(tmp, 7.0))
+        windows = grade.coalesce_marks(marks)
+        every = {id(m) for m in marks}
+        seen_any = False
+        for w in windows:
+            action = grade.parse_mark(w.label)
+            sources = []
+            for m, seconds in w.boundary_gaps:
+                seen_any = True
+                # The mutation pin for the record itself: an empty
+                # `boundary_gaps` reddens this, and a report built on it would
+                # have no distance to print however the sentence read.
+                self.assertIn(id(m), every)
+                self.assertEqual(seconds, (m.ts - w.ts).total_seconds())
+                # A restore thirty seconds later is the next action, not a
+                # console that was slow with this one, and a boundary
+                # distance to it would put a number on every window of every
+                # run.
+                self.assertEqual(grade.parse_mark(m.label), action)
+                sources.append(m.source)
+            # One per capture: the report names which console was how far
+            # out, and a second entry for the same one would be a second
+            # answer to that question.
+            self.assertEqual(len(set(sources)), len(sources))
+        self.assertTrue(seen_any)
+        # A day whose three consoles fused has no mark of the same action
+        # outside the merge anywhere, so the ordinary window records none --
+        # claimed over the windows rather than as a list of three empty ones.
+        fused = grade.coalesce_marks(self.marks_of(RUN_CAPTURES))
+        self.assertTrue(fused)
+        self.assertFalse([w.boundary_gaps for w in fused if w.boundary_gaps])
+
+    def test_a_span_is_printed_on_every_window_graded_or_withheld(self):
+        # Both readers, and the claim rather than a count of windows: every
+        # window the report prints carries its length, whichever way it was
+        # printed. Withholding a window's verdict is not a reason to withhold
+        # a fact about the capture with it, which is the same argument
+        # `mark_gap_note` is reported under.
+        rc, out, _ = run(*RUN_CAPTURES)
+        self.assertEqual(rc, 0)
+        self.assertEqual(marked_windows(out),
+                         [(1, 'no-op wrote 0x0751=0x10'),
+                          (2, 'wrote 0x0751=0xA0'),
+                          (3, 'restored 0x0751=0x10')])
+        for n, _ in marked_windows(out):
+            self.assertIn('window span', window_body(out, n))
+        # The last window of a capture is a bound and says so on its face.
+        # `ec_watch.py` writes a row when a byte changes, so a quiet tail
+        # after the last one is in no row and the window's real end is not in
+        # the file; printing that as a length is the overclaim this
+        # repository's calibration rule exists to stop.
+        self.assertIn('window span at least', out)
+        self.assertIn('to the last row in the capture', out)
+        # And the two lines are kept apart: `window runs to` says where this
+        # read stops, which under `--block` is the end of the block rather
+        # than the end of the window. A reader who took it for the span would
+        # be reading a scoping fact as a measurement.
+        self.assertIn('window runs to the next mark', out)
+        self.assertIn('window runs to the end of block 1 of 1, which is '
+                      'where this read stops',
+                      run(*RUN_CAPTURES, '--block', '0xA0')[1])
+        # And the same on the withheld reader, whose windows never reach
+        # `window runs to` at all -- the span is the only length it prints.
+        rc, out, _ = run(*MISSING_MARK)
+        self.assertEqual(rc, 1)
+        self.assertTrue(marked_windows(out))
+        for n, _ in marked_windows(out):
+            self.assertIn('window span', window_body(out, n))
+
+    def test_a_span_inside_the_pacing_band_says_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(*self.paced(tmp, 30))
+        self.assertEqual(rc, 0)
+        for n in (1, 2):
+            self.assertIn('window span 30.0s', window_body(out, n))
+        # Absent from the whole report rather than from one window, because a
+        # note that fired on a well-paced day would be a warning on every
+        # report.
+        self.assertNotIn('this window ran', out)
+
+    def test_a_span_under_the_floor_and_over_the_ceiling_both_say_what_it_costs(self):
+        reports = {}
+        for spacing, edge in ((6.0, 'under the 10s'), (300.0, '240s')):
+            with tempfile.TemporaryDirectory() as tmp:
+                rc, out, _ = run(*self.paced(tmp, spacing))
+            # Both grade. A window that ran at a time §3's pacing does not
+            # imply is a fact about the capture to report, not grounds for a
+            # new exit code -- the line #676 drew and the issue drew again.
+            self.assertEqual(rc, 0)
+            flat = " ".join(out.split())
+            self.assertIn(edge, flat)
+            # What it costs, and that it is a report and not a refusal.
+            self.assertIn('control-vs-write comparison is taken over two '
+                          'windows', flat)
+            self.assertIn('This is a report and not a refusal', flat)
+            self.assertEqual(marked_windows(out),
+                             [(1, 'no-op wrote 0x0751=0x10'),
+                              (2, 'wrote 0x0751=0xA0'),
+                              (3, 'restored 0x0751=0x10')])
+            reports[spacing] = out
+        # The note moved no figure: the two runs differ in the spans and in
+        # which note fired, and every `window delta` line is the same in both
+        # -- a note that had reached a `total` would have moved one.
+        deltas = {s: [l for l in out.splitlines() if 'window delta' in l]
+                  for s, out in reports.items()}
+        self.assertEqual(deltas[6.0], deltas[300.0])
+        self.assertNotEqual(reports[6.0], reports[300.0])
+
+    def test_the_last_windows_bound_is_not_read_as_a_length(self):
+        # §3 paces the windows between marks and sets no length for the one
+        # after the last, which runs to the end of the capture. A bound of
+        # 0.0 s says the window was at least nothing, which is not evidence
+        # that it was short, so the floor note stays off it -- while the same
+        # figure over the ceiling still fires, because that much length is
+        # established however much longer the window was.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(*self.paced(tmp, 300))
+        self.assertEqual(rc, 0)
+        last = window_body(out, 3)
+        self.assertIn('window span at least 0.0s', last)
+        self.assertNotIn('this window ran', last)
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(*self.paced(tmp, 6))
+        self.assertEqual(rc, 0)
+        self.assertNotIn('this window ran', window_body(out, 3))
+        # ...and it is on the two measured windows of the same run, so what
+        # the above rules out is the bound and not the note.
+        self.assertIn('this window ran 6.0s', window_body(out, 1))
+
+    def test_the_band_is_two_transcribed_numbers_not_a_measurement(self):
+        # The pins on all three edges, read off the constants rather than
+        # restated, so moving one has to be a change here too.
+        self.assertGreater(grade.SPAN_FLOOR_SECONDS, 0)
+        # §3's own ~30 s hold has to land *inside* the band, or every
+        # well-run day carries the note and the note is a warning on every
+        # report. The committed staged fixture's windows are 30 s and 60 s,
+        # which is the same claim from the other side.
+        self.assertLess(grade.SPAN_FLOOR_SECONDS, 30.0)
+        # A window the watcher opened cannot outlast the watcher, so the lid
+        # is the `--seconds 240` §3 starts them with rather than a number
+        # invented to be reachable.
+        self.assertEqual(grade.SPAN_CEILING_SECONDS, 240.0)
+        # And the split threshold cannot be the merge window: a mark inside
+        # it was joined by construction, so nothing can ever be inside it.
+        self.assertGreater(grade.MARK_SPLIT_SECONDS, grade.MARK_MERGE_SECONDS)
+
+
 if __name__ == '__main__':
     unittest.main()

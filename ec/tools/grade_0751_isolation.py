@@ -199,6 +199,32 @@ comfortably inside it. That is a report and not a refusal: §3's three consoles
 are supposed to fuse, and the distance is there for a reader to judge the join
 by, not as grounds for a new exit code.
 
+**The other side of that boundary is the one that costs a day.** Three consoles
+marking one action 7 s apart is not a group that fused; it is three groups, so
+each console's mark opens its own window and the two that follow read as
+captures that never recorded the action at all. Nothing above says a mark was
+lost, and the mark-set check's `missing` sentence -- correct for a capture that
+really did not record it -- says it anyway, sending the operator after a
+watcher that exited early rather than after three consoles that were a few
+seconds slow. So the marks of the same action that fell *outside* the join are
+recorded too, as `boundary_gaps`, one per capture, and when every capture a
+window is short a mark for did record that action within `MARK_SPLIT_SECONDS`
+of it the sentence is replaced by one that says what is true: the consoles were
+marked further apart than the merge, here is how far, redo the block. The two
+arms are the point -- a capture that recorded the mark and a capture that did
+not send the operator to different terminals.
+
+**A window's `total` carries no time base of its own.** §4.4's comparison is
+the duty byte's total movement under the control arm against its total
+movement under the write, and a byte that drifts for 30 s and one that drifts
+for 3 s have totals that are not two answers to the same question. Every
+window therefore prints its span, and a span outside the band §3's own pacing
+implies says what that costs the comparison. It is a report and not a
+refusal, as the gap above is: the window is graded on the rows it holds and
+the exit code does not turn on how long it ran. The last window of a capture
+is a lower bound rather than a length, because `ec_watch.py` writes a row when
+a byte changes and a quiet tail after the last one is in no row at all.
+
 **The closing section has four cases, not two.** A run that graded nothing
 says so, a run that graded every one of its windows -- and every one of those
 is a window of a value under test -- reports its movement and compares it to
@@ -298,6 +324,43 @@ MARK_MERGE_SECONDS = 5
 # that grader does not fuse, so its number says nothing about where a fuse
 # came close.
 CLOSE_GAP_SECONDS = 4.0
+
+# How far a mark of the *same* action may sit outside the merge window and
+# still read as that action having been marked too slowly rather than as a
+# capture that never recorded it. §3 says to mark each console "within a few
+# seconds of each other" and paces the arms themselves ~30 s apart, so 15 s is
+# transcribed from that: half the shortest stretch the procedure leaves
+# between two of its own marks, past which a mark is more plausibly the next
+# arm than a slow press on this one. A judgement rather than a measurement --
+# no run of the day has been timed, and the number is here to be moved when
+# one is.
+#
+# Deliberately not `MARK_MERGE_SECONDS`, and for a stronger reason than
+# `CLOSE_GAP_SECONDS` gives: a mark inside the merge window is *joined* by
+# construction, so there is no mark of the same action inside it and a
+# threshold equal to it could never fire. The distance this bounds is the one
+# on the other side of the boundary, where every mark of the same action is by
+# definition further away than the merge.
+MARK_SPLIT_SECONDS = 15.0
+
+# The band a window's span is expected to land in, as a floor and a ceiling
+# rather than a target. Both are transcribed from §3 and are judgements, not
+# measurements, for the reason `MARK_SPLIT_SECONDS` gives.
+#
+# The floor is §3's own "~10 s settle" -- the shortest stretch of time the
+# procedure budgets for anything, so a window shorter than it is one the
+# operator closed faster than the procedure's own pacing, and §4.4's two arms
+# are then not two windows of a comparable length.
+#
+# The ceiling is §3's `--seconds 240`, the whole of what one set of three
+# watchers runs for. A window the watcher opened cannot be longer than that,
+# so a real `--seconds 240` day does not reach it: what does is a capture that
+# was cut short, edited, or written by something other than that watcher, and
+# the freeze-and-thaw hole `evidence/README.md` records for a suspend is the
+# shape that would land one. The band is a floor and a lid rather than a
+# target because §3 sets a length for neither end of the stream.
+SPAN_FLOOR_SECONDS = 10.0
+SPAN_CEILING_SECONDS = 240.0
 
 # The bytes §4 asks about, in its order. Everything else in the sweep is
 # reported as context only: §4.4 says to read the whole 0x0700-0x07FF range
@@ -797,9 +860,21 @@ class Window:
         self.source = source
         self.changes = []
         self.levels = {}
+        # How long the window is, in seconds, from its own mark to the mark
+        # that closes it -- or for the last window of a capture to the last
+        # row the capture holds, which is a lower bound and not a length.
+        # `span_is_bound` is what tells the two apart and is read by
+        # `span_note` and by the line `report_window` prints: a bound that is
+        # small says the window was *at least* that long and nothing more, so
+        # nothing may be concluded from its being under the band. Set by
+        # `build_windows`, which is the only place that knows where the next
+        # mark is.
+        self.span = 0.0
+        self.span_is_bound = False
         # The raw per-capture marks this window was merged from, the gap each
-        # adjacent pair of them was joined on, and the block it fell in. All
-        # three are set by `coalesce_marks` and `assign_blocks` rather than at
+        # adjacent pair of them was joined on, the marks of the same action
+        # that fell *outside* the join, and the block it fell in. All four are
+        # set by `coalesce_marks` and `assign_blocks` rather than at
         # construction: a mark read out of a CSV has no block until the whole
         # mark stream has been walked, and `coalesce_marks` is the only place
         # that knows which raw rows one action was recorded as. The gaps ride
@@ -807,6 +882,7 @@ class Window:
         # the join -- of two consoles' rows together -- and not of either row.
         self.marks = []
         self.mark_gaps = []
+        self.boundary_gaps = []
         self.block = None
 
 
@@ -1793,6 +1869,15 @@ def coalesce_marks(marks):
     is a property of the join -- of two consoles' rows together -- and not of
     any one of them. A group of one mark has none, and that is the ordinary
     case.
+
+    `boundary_gaps` is the same quantity on the other side of the boundary:
+    the marks of the *same* action that did not join, as `(mark, seconds)`
+    measured from this group's earliest mark, one per capture and never a mark
+    of a different action -- a restore thirty seconds later is not a boundary
+    for a control arm, and recording it would put a number on every window of
+    every run. Per capture rather than per side because the report has to name
+    *which* console was how far out, and one mark for the side cannot say that
+    for the second and third console of a three-console day.
     """
     groups = []
     for m in sorted(marks, key=lambda w: w.ts):
@@ -1806,11 +1891,58 @@ def coalesce_marks(marks):
                       " / ".join(dict.fromkeys(m.label for m in g)),
                       ", ".join(dict.fromkeys(m.source for m in g)))
                for g in groups]
-    for w, g in zip(windows, groups):
+    for n, (w, g) in enumerate(zip(windows, groups)):
         w.marks = g
         w.mark_gaps = [(a, b, (b.ts - a.ts).total_seconds())
                        for a, b in zip(g, g[1:])]
+        w.boundary_gaps = boundary_marks(w, groups, n)
     return windows
+
+
+def boundary_marks(w, groups, index):
+    """The marks of this window's action that fell outside the merge.
+
+    The run of consecutive groups either side of this one that carry the same
+    action, walked outwards until one does not. Not only the two adjacent
+    groups: three consoles marking one action 7 s apart open three windows, and
+    the first of them is 14 s from the third -- so a neighbour-only rule would
+    answer for the second console and leave the third looking like a capture
+    that never recorded the action, which is the half of the same day this
+    exists to correct.
+
+    A group counts only when `parse_mark` reads it as the same `(role, value)`
+    as this window's own label, and a window whose own label does not read
+    yields nothing: a neighbouring mark of a different action is the next arm
+    rather than a console that was slow with this one, and recording it would
+    put a distance on every window of every run. The chain stops at the first
+    group that is a different action, so a restore thirty seconds later is
+    never a boundary for a control arm.
+
+    One mark per capture, the nearer of the two sides, because the question
+    the report asks is per console: `window_mark_problems` has to say that
+    *this* capture recorded the action 7.0 s out, and one mark for the side
+    cannot answer that for the second and third console.
+
+    Empty for a window whose whole action fused into one group, which is the
+    ordinary case: there is then no other mark of this action anywhere in the
+    capture, and no boundary to describe.
+    """
+    action = parse_mark(w.label)
+    if action == (None, None):
+        return []
+    seen = {}
+    for step in (-1, 1):
+        n = index + step
+        while 0 <= n < len(groups):
+            if parse_mark(groups[n][0].label) != action:
+                break
+            for m in groups[n]:
+                away = (m.ts - w.ts).total_seconds()
+                here = seen.get(m.source)
+                if here is None or abs(away) < abs(here[1]):
+                    seen[m.source] = (m, away)
+            n += step
+    return [seen[source] for source in sorted(seen)]
 
 
 def build_windows(marks, changes):
@@ -1824,6 +1956,20 @@ def build_windows(marks, changes):
     without them a byte that moved while the sweep settled and then held still
     would print as level-unknown, when the captures in hand do say what it
     settled to. One time-ordered pass does both.
+
+    Each window's `span` is recorded here rather than left to the two readers
+    to work out, because it is a property of the window and both print it. A
+    window but the last runs to the next mark, and that is a length.
+
+    The last window has no next mark, and its `span` is measured to the last
+    change row it holds, which is a **lower bound and not a length**:
+    `ec_watch.py` writes a row when a byte changes, so a quiet tail after the
+    last change is in no row and the capture cannot say how long it ran.
+    `span_is_bound` is set with it, and `span_note` reads that before drawing
+    anything from a span under the band -- a small bound says the window was
+    at least that long and nothing more, so calling it short would be a
+    conclusion the figure does not carry. A window with no change row of its
+    own bounds at zero, which is the same fact rather than a missing one.
     """
     windows = coalesce_marks(marks)
     ordered = sorted(changes, key=lambda c: c.ts)
@@ -1838,6 +1984,12 @@ def build_windows(marks, changes):
             w.changes.append(ordered[i])
             last[ordered[i].addr] = ordered[i].new
             i += 1
+        if end is not None:
+            w.span = (end - w.ts).total_seconds()
+        else:
+            w.span = ((w.changes[-1].ts - w.ts).total_seconds()
+                      if w.changes else 0.0)
+            w.span_is_bound = True
     return windows
 
 
@@ -2010,11 +2162,12 @@ def unplaceable_marks(unplaced):
 def unplaced_window_problems(unplaced, captures):
     """The agreement problems on the windows in no block, per window.
 
-    `labels` and `missing` come along, and `void` does not: the void check is
-    a block's last recorded mark in a capture, and a window in no block has no
-    block to have one in. That is a property of what the check is defined over
-    rather than a limit found by looking and not finding a case, and it is
-    said here rather than left for a reader to infer from the check's absence.
+    `labels` and `missing` come along, both of `missing`'s arms, and `void`
+    does not: the void check is a block's last recorded mark in a capture, and
+    a window in no block has no block to have one in. That is a property of
+    what the check is defined over rather than a limit found by looking and not
+    finding a case, and it is said here rather than left for a reader to infer
+    from the check's absence.
 
     The agreement checks engage at two or more captures, exactly as they do
     over a block: with one there is no other console for the mark to be
@@ -2034,6 +2187,30 @@ def unplaced_window_problems(unplaced, captures):
     return out
 
 
+def split_mark_gaps(w, names, by_source):
+    """`{capture: seconds}` for every absent capture that marked the same
+    action just outside the merge, or `{}` when the sentence stands.
+
+    The second arm of the `missing` check, and the condition that chooses
+    between the two. It is `{}` unless **every** capture this window is short
+    a mark for recorded that same action within `MARK_SPLIT_SECONDS` of it: one
+    capture that recorded the action and one that never did are two different
+    days' worth of trouble, and a sentence naming the second would be false
+    about the first.
+
+    `by_source` is the caller's own grouping of this window's marks, so both
+    readers ask the same question of the same rows and cannot disagree about
+    which capture is absent.
+    """
+    absent = [p for p in names if p not in by_source]
+    if not absent:
+        return {}
+    near = {m.source: seconds for m, seconds in w.boundary_gaps}
+    if any(p not in near or near[p] > MARK_SPLIT_SECONDS for p in absent):
+        return {}
+    return {p: near[p] for p in absent}
+
+
 def window_mark_problems(w, names, known):
     """One window's agreement problems, as `check_block_marks` returns them.
 
@@ -2046,6 +2223,15 @@ def window_mark_problems(w, names, known):
     `names` and `known` are the run's, passed in rather than re-derived per
     window so that every window is read against the same capture list the
     census counted, and cannot disagree with it.
+
+    The `missing` problem has two arms and they are not the same claim. The
+    one below is a capture that did not record the action, and it is right
+    for that. It is **false** when every absent capture recorded the same
+    action just outside the merge: nothing was missed, the three consoles
+    marked one action further apart than the merge fuses, and the split opened
+    a window per console that each later window then reads as a capture that
+    missed it. `split_mark_gaps` decides, and the other arm says what is true
+    in its place.
     """
     by_source = {}
     for m in w.marks:
@@ -2060,15 +2246,30 @@ def window_mark_problems(w, names, known):
             f"the captures spell this action differently -- {said} -- so "
             "the window it opens is not the action any of them recorded")))
     if len(names) > 1 and set(by_source) != known:
-        absent = ", ".join(os.path.basename(p)
-                           for p in names if p not in by_source)
-        problems.append(("missing", w, (
-            f"recorded in {len(by_source)} of {len(names)} capture(s), "
-            f"absent from {absent}. The capture(s) that missed it have "
-            "their rows for this arm filed under whichever window their "
-            "timestamps fall in, and nothing in the result ties them to "
-            "the arm whose mark is gone -- so this arm can read quiet for "
-            "want of a mark rather than because nothing moved")))
+        absent = [os.path.basename(p) for p in names if p not in by_source]
+        split = split_mark_gaps(w, names, by_source)
+        if split:
+            how = ", ".join(f"{os.path.basename(p)} at {d:.1f}s"
+                            for p, d in split.items())
+            problems.append(("missing", w, (
+                f"recorded in {len(by_source)} of {len(names)} capture(s), "
+                f"absent from {', '.join(absent)} -- and every one of them "
+                f"recorded this same action just outside the "
+                f"{MARK_MERGE_SECONDS}s merge ({how}). That is the consoles "
+                f"marking one action further apart than the merge fuses, not "
+                f"captures losing it: the split opened a window per console "
+                f"and each later one reads as a capture that missed the mark. "
+                f"Redo the block, marking each console within "
+                f"{MARK_SPLIT_SECONDS:g}s of the others")))
+        else:
+            problems.append(("missing", w, (
+                f"recorded in {len(by_source)} of {len(names)} capture(s), "
+                f"absent from {', '.join(absent)}. The capture(s) that missed "
+                "it have their rows for this arm filed under whichever "
+                "window their timestamps fall in, and nothing in the result "
+                "ties them to the arm whose mark is gone -- so this arm can "
+                "read quiet for want of a mark rather than because nothing "
+                "moved")))
     return problems
 
 
@@ -2084,7 +2285,10 @@ def check_block_marks(block, captures):
         it missed -- and the other two consoles' marks usually cover for it,
         which is what makes the failure invisible rather than what prevents
         it. A control arm whose marks went missing can read as quiet for
-        want of a mark rather than because nothing moved.
+        want of a mark rather than because nothing moved. It has a second
+        arm, for the case where the capture did record the action and the
+        merge split it away from the other two; `window_mark_problems` says
+        which of the two applies.
       * an action the captures spelled differently. Same failure, found one
         step earlier: `coalesce_marks` joins the labels with ' / ', so the
         window opens on a label no console typed.
@@ -2283,6 +2487,67 @@ def mark_gap_note(w):
     return lines
 
 
+def span_line(w):
+    """How long the window is, as the one line both readers print it on.
+
+    The last window of a capture is marked as a bound rather than a length,
+    and says what it is a bound to: `build_windows` measures it to the last
+    change row, and `ec_watch.py` writes a row when a byte changes, so a
+    quiet tail after that row is in no row of the file and the window's true
+    end is not in the capture. The figure is arithmetic over the rows, and
+    printing it as a length would be the overclaim `docs/findings.md` §4 is a
+    record of.
+    """
+    if w.span_is_bound:
+        return (f"    window span at least {w.span:.1f}s, to the last row in "
+                "the capture")
+    return f"    window span {w.span:.1f}s"
+
+
+def span_note(w):
+    """The lines that say what a span outside §3's own pacing costs.
+
+    §4.4's control-vs-write comparison is `total` over one window against
+    `total` over another, and neither figure carries a time base: a duty byte
+    that drifts for 30 s and one that drifts for 3 s have totals that are not
+    two answers to the same question. Before `build_windows` recorded the
+    span there was nothing in the report to notice that with, so the
+    comparison was taken over windows of unequal and unknown length and read
+    as though it had not been.
+
+    A report and not a refusal, on the line `mark_gap_note` draws: the window
+    is graded on the rows it holds, the exit code does not turn on it, and no
+    `window delta` figure changes. What changes is that the reader has the
+    number before taking the comparison.
+
+    Empty for a span inside the band, and for a bound that is under it: a
+    lower bound says the window was at least that long and nothing more, so
+    calling it short would be a conclusion the figure does not carry. A bound
+    over the ceiling still fires -- that much length is established however
+    much longer the window was.
+    """
+    if w.span >= SPAN_CEILING_SECONDS:
+        why = (f"this window ran {w.span:.1f}s, at or above the "
+               f"{SPAN_CEILING_SECONDS:g}s the three watchers are started "
+               f"with. A capture records no suspend, so the likeliest way a "
+               f"window runs that long is a freeze the rows do not cover, and "
+               f"every row after it is filed in here")
+    elif w.span_is_bound or w.span >= SPAN_FLOOR_SECONDS:
+        return []
+    else:
+        why = (f"this window ran {w.span:.1f}s, under the "
+               f"{SPAN_FLOOR_SECONDS:g}s §3's own pacing budgets for its "
+               f"shortest stretch, so the arm it is a window of ran for a "
+               f"fraction of the ~30s one beside it")
+    return textwrap.wrap(
+        f"{why}. §4.4's control-vs-write comparison is taken over two "
+        f"windows, and a difference in `total` between two of unequal length "
+        f"is a difference in how long each byte was watched rather than one "
+        f"the write made. This is a report and not a refusal: the window is "
+        f"graded on the rows it holds and the figure is here to judge it by.",
+        width=72, initial_indent="    ", subsequent_indent="    ")
+
+
 def report_census(captures, windows, blocks, unplaced, unreads, selected):
     """What the marks say, before anything is read over them.
 
@@ -2292,6 +2557,14 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
     or a label two consoles spelled differently, is visible as such. Per
     action: how many of the N captures recorded it and whether they agree,
     which is the comparison §6 asks for in a sentence rather than in prose.
+
+    A capture the per-action listing says did not record an action reads
+    `-- did not record it` unless every absent capture recorded the same
+    action just outside the merge, in which case it reads as the distance
+    that says so. This is the site that matters most under `--block`: the
+    census is whole-capture while only the selected block's windows print, so
+    a split in a block this run did not grade is visible here and nowhere
+    else.
 
     Printed whole even under `--block`, because a run that scoped itself and
     said so is the point: the blocks it did not grade are named here as not
@@ -2343,10 +2616,26 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
             print(head + ", one label each")
         else:
             print(head + ":")
+            # `-- did not record it` is the sentence that sends the operator
+            # looking for a watcher that exited early, and it is false of a
+            # capture that recorded the action a few seconds too far from the
+            # other two for the merge to fuse. `split_mark_gaps` is the same
+            # condition the `missing` problem takes its second arm from, so
+            # the line under a capture and the sentence on its window cannot
+            # disagree about which of the two this is. The `in N of M` head
+            # above is a fact about the group either way and stays.
+            split = split_mark_gaps(w, names, said)
             for path in names:
                 got = said.get(path)
-                print(f"    {os.path.basename(path):44} "
-                      + (repr(got) if got else "-- did not record it"))
+                if got:
+                    line = repr(got)
+                elif path in split:
+                    d = split[path]
+                    line = (f"recorded the same action {abs(d):.1f}s "
+                            f"{'after' if d > 0 else 'before'} this mark")
+                else:
+                    line = "-- did not record it"
+                print(f"    {os.path.basename(path):44} {line}")
         # The per-action entry, not the per-capture rows above: a gap is
         # between two consoles' rows and printing it under either one of them
         # would attribute it to that console alone. And the census is the
@@ -2454,14 +2743,19 @@ def report_withheld_window(w, n, total, where, problems):
     `unplaced` for a mark no block could take -- and `problems` this window's
     own, so a block whose problem is on another mark says so here too rather
     than leaving a bare refusal with no diagnosis on it. The mark gap a
-    graded window reports is reported here as well: a group that only just
-    stayed one window is a fact about the capture, and withholding the
-    window's verdict is not a reason to withhold that with it.
+    graded window reports is reported here as well, and so is the span and
+    its note: a group that only just stayed one window, and a window that ran
+    for a time §3's pacing does not imply, are both facts about the capture,
+    and withholding the window's verdict is not a reason to withhold those
+    with it.
     """
     print(f"\n--- mark {n}/{total}: {w.ts.isoformat()}  {w.label!r} "
           f"({w.source})")
     print(f"    block: {where} -- NOT GRADED")
     for line in mark_gap_note(w):
+        print(line)
+    print(span_line(w))
+    for line in span_note(w):
         print(line)
     for text in problems:
         print(wrap_note(f"not graded -- {text}.", indent=4))
@@ -2484,6 +2778,13 @@ def report_window(w, n, total, block, total_blocks, end=None):
     the same reason: a window built from more than one raw mark says so, and
     the verdicts below are about the group rather than about any one of the
     rows that formed it.
+
+    The span is on a line of its own, below `window runs to`, and the two are
+    kept apart on purpose. That line says where this *read* stops, which under
+    `--block` is the end of the block rather than the end of the window; the
+    span is how long the window is in the capture. A reader who took the first
+    for the second would be reading a scoping fact as a measurement, which is
+    the one thing the second is not.
     """
     end = end or ("the next mark" if n < total else "the end of the capture")
     print(f"\n--- mark {n}/{total}: {w.ts.isoformat()}  {w.label!r} "
@@ -2494,6 +2795,9 @@ def report_window(w, n, total, block, total_blocks, end=None):
     for line in mark_gap_note(w):
         print(line)
     print(f"    window runs to {end}")
+    print(span_line(w))
+    for line in span_note(w):
+        print(line)
 
     # The group names that had hits, in WATCHED order, so main can say which
     # bytes moved rather than only that some did: a mailbox poke and a
