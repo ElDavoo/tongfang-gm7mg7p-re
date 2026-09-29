@@ -334,9 +334,13 @@ too, because `./ec/tools/…` normalises to itself against a citing directory an
 lands nowhere.
 
 `os.path.normpath()` on the spelled path alone puts **all thirty-two** in
-`by-path`, and the issue's table comes back exactly. That is the whole of what
-this tool adds over the census for a declined record, and it is deliberately
-narrower than a repair:
+`by-path`, and the issue's table comes back exactly. That was the whole of what
+this tool added over the census for a declined record, and **it is no longer the
+whole of it** — [#952](pin-table-beside-the-citing-file.md) gave `place()` the
+census's second reading as well, so a declined `../`-relative spelling is now
+charged to the file it resolves beside its citing file rather than reported as a
+path that is not in the tree. Either way this is deliberately narrower than a
+repair:
 
 * it is a **spelling** normalisation, and the docstring says so in those words.
   `./ec/tools/x.py` and `ec/tools/x.py` are one path written two ways;
@@ -655,9 +659,14 @@ optional.
    whether that should be a figure anything is responsible for is a decision for
    a later issue rather than a list to freeze here.
 2. **The `normpath` normalisation is a second reader of the census's
-   spellings.** Today the only difference it erases is a `grep -rn` `./` prefix,
-   and if a future write-up spells a pin that way in live prose the two readers
-   could drift. Whether the normalisation belongs *inside*
+   spellings.** The only difference it erased when this file landed was a
+   `grep -rn` `./` prefix; since
+   [#952](pin-table-beside-the-citing-file.md) it erases the census's
+   beside-the-citing-file candidate as well, so the drift asked about here is no
+   longer hypothetical — though no declined record on the tree takes it yet, and
+   that zero is a fact about the corpus rather than a measurement. If a future
+   write-up spells a pin either way in live prose the two readers could drift.
+   Whether the normalisation belongs *inside*
    `census_test_line_pins.py` instead is worth deciding; it is deliberately not
    done here, because that is a change to the census's own behaviour and this
    issue is a second reader of it, not a rewrite of it.

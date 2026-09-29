@@ -43,11 +43,15 @@ the fence rule declines before resolution runs, so a declined record has no
 target to charge. This file normalises the *spelling* of a declined record with
 `os.path.normpath()` and looks the result up:
 
-  * a **path** spelling is placed by-path and by nothing else. `./ec/tools/x.py`
-    and `ec/tools/x.py` are one path written two ways, and `normpath` erases the
+  * a **path** spelling is placed by-path where the tree has it, and beside the
+    file that wrote it where the tree does not. `./ec/tools/x.py` and
+    `ec/tools/x.py` are one path written two ways, and `normpath` erases the
     difference -- sixteen `grep -rn` transcript pins are spelled the first way and
-    are the same pins as sixteen live ones. It is a **spelling** normalisation
-    and not a path repair: a spelling naming a file that is somewhere else is
+    are the same pins as sixteen live ones. The second reading is the census's
+    own second step, in its own order, because
+    `ec/annotations/xdata-register-map.md` writes `../tools/…` for its own
+    neighbour and a tree-only reading reports those as missing files. **Neither
+    reading is a repair**: a spelling naming a file that is somewhere else is
     *not* repaired into the file that is here, which is the guess
     `census.resolve()` refuses and which `test-line-pin-census.md` records as
     having cost four sound citations.
@@ -56,10 +60,11 @@ target to charge. This file normalises the *spelling* of a declined record with
     pin spelled `test_x.py:4` is charged to the one file of that name -- or to
     `ambiguous-path`, when two could answer to it.
   * anything else lands in a **named** `unresolved-path` or `ambiguous-path`
-    bucket, counted and printed with the spelling that landed there. There is
-    **no basename fallback**: falling back to a base name is the guess
-    `ambiguous-path` exists to refuse, and a second reader that made it here
-    would put the guess back through the front door.
+    bucket, counted and printed with the spelling that landed there and with the
+    beside candidate that was tried for it. There is **no basename fallback**:
+    falling back to a base name is the guess `ambiguous-path` exists to refuse,
+    and a second reader that made it here would put the guess back through the
+    front door.
 
 **What the negatives are.** `unresolved-path` says *no file of that path is in
 this tree*, which is a statement about a directory walk, and a suite in the tail
@@ -134,14 +139,38 @@ def place(record, files, index):
             return (census.DECLINED, normalised,
                     f"the spelling is written {spelling!r} and normalises to it "
                     f"({census.BY_PATH})")
+        # The census's second reading, in its own words and its own order: a path
+        # the tree does not have is retried beside the file that wrote it, because
+        # `ec/annotations/xdata-register-map.md` writes `../tools/…` for its own
+        # neighbour. `normalised` is joined rather than the raw spelling -- the
+        # census joins the raw one and the two are equivalent, the join's result
+        # being `normpath`ed either way, and this file's spelling is already
+        # normalised, which keeps the `how` above honest about what was compared.
+        # `beside in files` is the whole gate: `files` holds `walk()` results with
+        # no `..` and no leading `./`, so a candidate that did not resolve cannot
+        # satisfy it, and `beside != normalised` is about the message rather than
+        # the outcome -- it keeps a path the tree *does* have out of a sentence
+        # saying the tree does not have it.
+        beside = os.path.normpath(
+            os.path.join(os.path.dirname(citing), normalised))
+        if beside != normalised and beside in files:
+            return (census.DECLINED, beside,
+                    f"the spelling is written {spelling!r}, is not in the tree, "
+                    f"and is the file {beside!r} beside the citing file "
+                    f"({census.BY_BESIDE})")
         elsewhere = index.get(os.path.basename(spelling), [])
         hint = (f"; the only file of that name in the tree is {elsewhere[0]}"
                 if len(elsewhere) == 1 else
                 "; no file of that name is in the tree" if not elsewhere else
                 "; the files of that name are " + ", ".join(elsewhere))
+        # Both candidates named, in the census's shape and for the census's
+        # reason: a wrong directory prefix and a deleted file look identical from
+        # a row of this table and have opposite fixes, and the beside candidate is
+        # the one a reader cannot derive from the spelling alone.
         return (census.UNRESOLVED, None,
                 f"the pin names the path {spelling!r}, which normalises to "
-                f"{normalised!r} and is not in the tree, and the path is not "
+                f"{normalised!r} and is not in the tree, and {beside!r} beside "
+                f"the citing file is not either, and the path is not "
                 f"repaired" + hint)
     # A bare module name is what `by-name` reads, and the census's index is
     # where that reading lives. The bucket stays `declined` even where the
