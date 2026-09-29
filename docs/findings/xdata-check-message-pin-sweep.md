@@ -12,7 +12,12 @@ of `ec/tools/` that is reverted in the same working tree.
 `--self-test` prints one line per assertion, and a reader turning a red line
 into a failing argument needs the **pinned** figure and the **measured** one
 both on it. The property is therefore: *every `check()` whose predicate
-subscripts a module-level constant names that key in its message's f-string.*
+subscripts a module-level UPPER_CASE **dict** names that key in its message's
+f-string.* The limit is the tool's own and is deliberate — a lowercase table is
+a local working table, and the target holds module-level maps that are not pin
+tables at all — so a reader does not have to take the population on trust:
+`--verbose` names all 14 constants it treated, against the 89 `check()` calls
+swept.
 
 **A substring test does not detect it, and the reason is the case this file
 exists to record.** The message fixed here said "440 clusters" and "400 of the
@@ -120,7 +125,7 @@ covers the check itself and is what the three perturbations above exercise.
 
 ## What this opens
 
-- **The stale comment above the constant.** `:1430-1431` still reads "the flip
+- **The stale comment above the constant.** `:1428-1430` still reads "the flip
   moves `cluster_key` on 35 of the 430 clusters, breaks 5 of the 10 hand names
   in xdata-cluster-names.csv, and adds 2 clusters" against pins of
   `440`/`400`/`4` and a committed 439 keys and 9 names. It is a pre-#279
@@ -137,19 +142,26 @@ covers the check itself and is what the three perturbations above exercise.
   census assertion, and a version that resolves the callee per module is a
   different tool. This one needs no self-exclusion for reading its own suite the
   way `check_doc_figure_pins.py` does, because it is not in the set it reads.
-- **What this change did to the line pins elsewhere.** It adds six lines to
-  `xdata_register_map.py`, and three suites hold hand-written line numbers into
-  that file: `test_check_doc_figure_pins.py`, `test_check_eq_guard_citations.py`
-  and `test_check_cluster_citations.py`. **`bash tools/run-tests.sh` runs 85
-  suites on this branch and six of them are red** — those three plus
-  `test_check_pin_table_rows.py`, `test_check_site_resolution.py` and
-  `windows/tools/test_gpu_block_watch.py`. **Every one of the six is red at the
-  same count on a pristine `git archive` of `5b5b7f2`**, measured in the same
-  run: 1, 2, 3, 2, 1 and 4 failures. So nothing here turns a green run red.
-  What this change does is widen a drift three of them already carry
-  (`test_check_doc_figure_pins.py` was 5 lines out before this change and is 11
-  after). Re-cutting them is a separate piece of work on files this one does not
-  otherwise touch, and is named rather than done.
+- **What this change did to the line pins elsewhere.** It adds a net six lines to
+  `xdata_register_map.py`, and **two** suites hold hand-written line numbers
+  into that file: `test_check_doc_figure_pins.py`, which pins the fixed check's
+  span at `:4414-4420`, and `test_check_eq_guard_citations.py`, whose
+  `:4984`/`:4985` are fixture strings written into a scratch tree rather than
+  read off this one, so this change moves neither.
+  `test_check_cluster_citations.py` is **not** one of the two: it names
+  `xdata_register_map.py` once, in a docstring at `:566`, and never opens the
+  tool. Its red is cluster-membership citation checking against two other
+  committed files. **`bash tools/run-tests.sh` runs 85 suites on this branch and
+  six of them are red** — `test_check_doc_figure_pins.py` (2 failures),
+  `test_check_eq_guard_citations.py` (3), `test_check_cluster_citations.py` (1),
+  `test_check_pin_table_rows.py` (2), `test_check_site_resolution.py` (1) and
+  `windows/tools/test_gpu_block_watch.py` (4). **Every one of the six is red at
+  the same count on a pristine `git archive` of `5b5b7f2`**, measured in the
+  same run, so nothing here turns a green run red. What this change does is
+  widen one drift — the `test_check_doc_figure_pins.py` pin, which resolved to
+  `:4419-4425` on the base and `:4425-4431` here against a pin of `:4414-4420`,
+  so 5 lines out before and 11 after. Re-cutting it is a separate piece of work
+  on a file this one does not otherwise touch, and is named rather than done.
 
 ## What is not claimed here
 
