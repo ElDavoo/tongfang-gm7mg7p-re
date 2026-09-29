@@ -255,6 +255,38 @@ def normalise(address: str) -> str:
     return "0x" + address[2:].upper()
 
 
+def capture_lines(path: str):
+    """A capture's lines with the `#` header block dropped.
+
+    A sibling of `read_capture()` rather than a copy of two lines inside it,
+    because `has_addr_column()` below reads a header too and a second reader
+    of the same `#` filter is a second thing to fall out of date -- which is
+    the whole of what this module's importers borrow it for.
+    """
+    with open(path, newline="", encoding="utf-8") as f:
+        return [line for line in f if not line.lstrip().startswith("#")]
+
+
+def has_addr_column(path: str) -> bool:
+    """Whether a capture's header names an `addr` column to read a claim in.
+
+    Read off the **fieldnames** rather than out of `read_capture()`'s `per`,
+    and the difference is a committed file rather than a subtlety: a capture
+    with an `addr` header and no rows is empty in `per`, and a caller that
+    asked `per` would report such a file as carrying no column at all.
+
+    The `#` lines are dropped before the header is read, or the header *is*
+    the comment block -- see `read_capture()`'s docstring for what that
+    misreads as.
+
+    **A file that cannot be decoded is left to raise**, as every reader here
+    does. Guarding it into a silent `False` would be the worse of the two
+    errors: a loud failure at the file becomes a quiet "this capture has no
+    column" printed beside a claim that was then never read.
+    """
+    return "addr" in (csv.DictReader(capture_lines(path)).fieldnames or ())
+
+
 def read_capture(path: str):
     """(count per address, rows, distinct addresses) for one capture.
 
@@ -269,7 +301,8 @@ def read_capture(path: str):
     `2026-09-18-ac-plugin-sweep-summary.csv` opens with three of them, and a
     naive DictReader takes a comment as the header and yields three garbage
     fieldnames -- which reads as "the file has no addr column" rather than as
-    a parser that skipped what it should not have.
+    a parser that skipped what it should not have. The filter itself is
+    `capture_lines()`, shared with `has_addr_column()` for that reason.
 
     `utf-8` is declared, as every other reader and writer of this shape
     declares it. This is the reader that walks the whole committed corpus, so
@@ -277,9 +310,7 @@ def read_capture(path: str):
     the codec is the format's rather than whatever this process's locale
     prefers.
     """
-    with open(path, newline="", encoding="utf-8") as f:
-        lines = [line for line in f if not line.lstrip().startswith("#")]
-    rows = list(csv.DictReader(lines))
+    rows = list(csv.DictReader(capture_lines(path)))
     derived = bool(rows) and "change_count" in rows[0]
     per = {}
     for row in rows:

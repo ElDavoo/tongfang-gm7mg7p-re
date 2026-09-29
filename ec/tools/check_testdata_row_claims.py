@@ -75,10 +75,13 @@ written down as a value -- the bullets below restate each reason in prose and
 `reason_for()` returns it as a literal, and those two copies are checked by
 the eye rather than by a comparison, so a reason appearing in the tree that
 `SHAPES` does not name is a change to this docstring and to the constant, not
-an invitation to add a regex. Each entry has a case in
-`test_check_testdata_row_claims.py`. **Each bullet opens with the reason
-string `SHAPES` gives it**, so the prose below and the constant are joinable
-by eye:
+an invitation to add a regex. **One reason is returned by `no_column_reason()`
+rather than by `reason_for()`** -- it is decided by the date's file set too,
+but asked only where `reason_for()` has said nothing, so a sentence's own
+shape still wins; it is listed and counted like the rest. Each entry has a
+case in `test_check_testdata_row_claims.py`. **Each bullet opens with the
+reason string `SHAPES` gives it**, so the prose below and the constant are
+joinable by eye:
 
   * `capture/window bound` -- a page-aligned literal naming the swept
     page rather than a byte in it, spelled either as a range whose start is
@@ -107,6 +110,23 @@ by eye:
     whole of what is left of the `another capture's address` exemption issue
     #794 removed, and the commit that removed it is where the before is
     written down;
+  * `dated capture has no addr column` -- a bare date that resolved, to a
+    file set with no `addr` column in it: `ecrw.py dump` output, or a change
+    log whose header is `ts,note`. The columnar read below has nothing to
+    ask, so the literal is not checked rather than found wanting, and the
+    count the dated block prints beside the file count is the one that says
+    so. `missing` would be the wrong word for it -- that asserts the index is
+    wrong, and on a dump that carries the address in its text the assertion
+    is false. **The sentence's own shape still wins over this one**, the same
+    precedence the multi-date refusal gets: it is asked only where
+    `reason_for()` has said nothing. **No dated file set in the committed
+    corpus is in this state** -- every one of the ten `.csv` captures under
+    `evidence/ec-watch/` carries an `addr` header -- so what pins it is
+    scratch cases, as the entry above's are, and the census is in
+    `docs/findings/testdata-row-claims-no-addr-column.md`. **A `.txt` set was
+    already the row 6 and row 8 shape** and was reported beside the file
+    count without a verdict; the count clause is unchanged and now reads a
+    real number;
   * `two dated captures in one sentence` -- a sentence naming two or more bare
     dates, refused whole. Its literals come off `checked` and onto this line
     rather than being read against the first of the globs, and **every** glob
@@ -146,8 +166,13 @@ by eye:
     `.csv` members and a hex token in a `#` header block or a comment does not
     satisfy it. Every other claim keeps the textual read above, and a date
     resolving to `.txt` dumps alone has no column to ask, which is the row 6
-    and row 8 shape and is reported beside the file count rather than passed
-    over. **A claim about a fixture is textual; a claim about a capture is
+    and row 8 shape ~~and is reported beside the file count rather than passed
+    over~~ **and is now both: the count beside it on the block says the set has
+    no column, and the literal itself is passed over as the `dated capture has
+    no addr column` shape rather than called `missing`. The count clause was
+    already there and the verdict was not -- and the count was reading
+    extensions, which is `with_column()`'s own docstring to give up.**
+    **A claim about a fixture is textual; a claim about a capture is
     columnar, and the date in the sentence is what tells them apart.**
   * *Row counts, timestamps and mark values.* Row 18's `0x0F0A` row *at*
     12:00:08.500 is a count-and-timestamp claim, decidable in principle and
@@ -175,11 +200,11 @@ by eye:
     the file it names is the one that *satisfied* the claim rather than the one
     the sentence was about. A sentence claiming a byte of one capture is still
     satisfied by that byte in **any** of the date's files that can carry it --
-    and after `carried_by_column()` that is the date's `.csv` members rather
-    than all of them, so the union is narrower than it was by the `.txt` half
-    and no narrower than that. Reading the prose to tell the files apart is the
-    parser guessing, declined above for the same reason the date is taken
-    whole.
+    and after `carried_by_column()` that is the date's files that *have* the
+    column rather than all of them, so the union is narrower than it was by
+    the columnless half and no narrower than that. Reading the prose to tell
+    the files apart is the parser guessing, declined above for the same reason
+    the date is taken whole.
   * ~~*A whole sentence that names a capture in prose.* That is what the
     other-capture shape is, and it is the widest exemption here: none of a
     sentence's literals is checked once it names a dated capture in running
@@ -248,7 +273,12 @@ from check_cluster_citations import REGISTERS, units
 # already drops `#` header blocks before the header is read and already knows
 # the `change_count` schema, so borrowing it is what keeps this tool from
 # growing a second parser that has to learn both of those separately.
-from check_capture_claims import WATCH, read_capture
+# `has_addr_column()` comes on the same line for the same reason: "this file
+# has an `addr` column" is asked twice below -- once to decide whether a
+# dated claim is checked at all, and once to decide which of the date's files
+# are read for it -- and one definition of it is what keeps the count the
+# dated block prints and the set the columnar read walks from disagreeing.
+from check_capture_claims import WATCH, has_addr_column, read_capture
 
 # The one listing of the capture root, and the prefix rule the dated glob is
 # reached by, imported from the tool that owns both. `dated_report()` reads a
@@ -396,9 +426,11 @@ Result = collections.namedtuple(
 # is a *checked* copy, and what checks it is the two-direction set difference
 # in `test_the_committed_tree_exercises_every_shape` -- a reason added to the
 # function without being added here is named by name, rather than arriving as
-# a changed count. The order is the function's, which is not the docstring's
-# bullet order; the two disagree for the reason they disagreed before, and
-# reconciling them is issue #987's ground, not this constant's.
+# a changed count, and `no_column_reason()` is the one reason returned from
+# somewhere else, so it is checked in the other direction too. The order is
+# the function's, which is not the docstring's bullet order; the two disagree
+# for the reason they disagreed before, and reconciling them is issue #987's
+# ground, not this constant's.
 SHAPES = (
     "two dated captures in one sentence",
     "capture/window bound",
@@ -407,24 +439,30 @@ SHAPES = (
     "dump-command argument",
     "firmware code address",
     "dated capture not found",
+    "dated capture has no addr column",
 )
 
-# The two *dated* entries of `SHAPES` -- a sentence naming two or more dates,
-# and a date whose glob resolved to nothing. They are the two the summary line
-# counts apart from the rest, which is why the number it prints is not
-# `len(SHAPES)`, and it is that line which calls them "dated refusals", so the
-# membership is stated as the dated ones rather than as a second criterion the
-# output does not use. **Dated is not the same set as reads-the-file-set**,
-# and the difference is worth writing down: only `dated capture not found`
-# reads the file set, over `capture`; `two dated captures in one sentence` is
-# decided by the date count in the sentence and opens no file, which is what
-# `reason_for()`'s docstring says of the last of its reasons. What does hold
-# of both is that neither has an instance in the committed index, because the
-# one dated sentence in it names one date and resolves -- so what pins them is
-# scratch cases rather than the run. That is a fact about this tree and not
-# about the tool, so it is a name with a value here and the suite compares
-# against the name.
-DATED_REFUSALS = ("two dated captures in one sentence", "dated capture not found")
+# The *dated* entries of `SHAPES` -- a sentence naming two or more dates, a
+# date whose glob resolved to nothing, and a date whose file set has no column
+# to read a claim in. They are the ones the summary line counts apart from the
+# rest, which is why the number it prints is not `len(SHAPES)`, and it is that
+# line which calls them "dated refusals", so the membership is stated as the
+# dated ones rather than as a second criterion the output does not use.
+# **Dated is not the same set as reads-the-file-set**, ~~only `dated capture
+# not found` reads the file set, over `capture`~~ **and that was half the
+# picture: `dated capture has no addr column` reads the file set too, over
+# its headers, and finds nothing to ask. The difference is worth writing down
+# anyway: `two dated captures in one sentence` is decided by the date count in
+# the sentence and opens no file, which is what `reason_for()`'s docstring
+# says of the last of its reasons. What does hold of the dated ones is that
+# none has an instance in the committed index, because the one dated sentence
+# in it names one date and resolves to a set that has the column -- so what
+# pins them is scratch cases rather than the run. That is a fact about this
+# tree and not about the tool, so it is a name with a value here and the suite
+# compares against the name.
+DATED_REFUSALS = ("two dated captures in one sentence",
+                  "dated capture not found",
+                  "dated capture has no addr column")
 
 # The words the label below is spelled with, and no more than these. A count
 # outside the range they cover is rendered as a numeral rather than raising:
@@ -624,6 +662,14 @@ def reason_for(address, token, sentence, offset, code, capture):
     glob when that date resolved to nothing, and `None` when it resolved,
     which is not a reason at all.
 
+    **Not every entry of `SHAPES` is one of this function's reasons.**
+    `dated capture has no addr column` is decided by the same file set but
+    asked elsewhere: `no_column_reason()` answers it, and `check()` calls that
+    only where this returned `None`, so a sentence's own shape still wins over
+    the file set's. It is not first here for the same reason the multi-date
+    refusal is -- the two do not compete, because one of them has already
+    spoken by then.
+
     The multi-date refusal is first because it is a property of the sentence
     as a whole rather than of one literal, so every literal of such a sentence
     reads as the same refusal, and because it precedes the one reason it
@@ -716,9 +762,19 @@ def carried_by_column(address: str, paths):
     so that `Claim.carriers` means the same thing whichever reader answered:
     `dated_report()` names the file a claim was satisfied in, and a date whose
     two captures both have the row would print one name and understate the
-    cost. `.txt` members of the set are skipped rather than read -- they have
-    no column to ask, and `with_column()` is what tells the reader how many
-    of the set that was.
+    cost. Members of the set with no column are skipped rather than read --
+    there is nothing in them to ask, and `with_column()` is what tells the
+    reader how many of the set that was.
+
+    **Skipped by the column rather than by the extension.** `.csv` was the
+    test this used to carry, and it is a guess about the file's contents
+    wearing the file's name: it is right for every capture in the corpus, and
+    it is right for the wrong reason, which is the failure `read_capture()`'s
+    docstring spends a paragraph on. A `ts,note` log ends in `.csv` and has no
+    `addr` column, and an extension test counts it as one that does.
+    `has_addr_column()` asks the file instead, so the count `dated_report()`
+    prints and the set walked here come off one definition and cannot drift
+    apart.
 
     `read_capture()` is the sibling's, imported at the top rather than
     re-derived: it is already the reader that drops `#` lines before the
@@ -727,7 +783,7 @@ def carried_by_column(address: str, paths):
     """
     found = []
     for path in paths:
-        if not path.endswith(".csv") or not os.path.isfile(path):
+        if not os.path.isfile(path) or not has_addr_column(path):
             continue
         if read_capture(path)[0].get(address):
             found.append(path)
@@ -737,16 +793,53 @@ def carried_by_column(address: str, paths):
 def with_column(paths):
     """How many of `paths` have an `addr` column to read a claim against.
 
-    A date can resolve to `.txt` dumps alone -- `ecrw.py dump` output, with no
-    column at all -- and then the columnar read has nothing to ask. That is
-    the row 6 and row 8 shape and it is a fact about the *file set* rather
-    than about any literal's spelling, so it is reported in the dated block
-    beside the file count rather than added to the closed `SHAPES` list, whose
-    docstring says a reason appearing in the tree that the list does not name
-    is a change to that docstring and not an invitation to add a regex.
+    **Counted columns, not counted extensions.** ~~A date can resolve to
+    `.txt` dumps alone -- `ecrw.py dump` output, with no column at all -- and
+    then the columnar read has nothing to ask. That is the row 6 and row 8
+    shape and it is a fact about the *file set* rather than about any
+    literal's spelling, so it is reported in the dated block beside the file
+    count rather than added to the closed `SHAPES` list, whose docstring says
+    a reason appearing in the tree that the list does not name is a change to
+    that docstring and not an invitation to add a regex.~~ **The count clause
+    was right and is kept -- it now reads a real number, which the clause it
+    was arguing about did not -- and what it counted is what was wrong.** A
+    date resolving to a `ts,note` log has a `.csv` member and no column, and
+    this printed `1` for it: a figure about the corpus's spelling rather than
+    about the column the read beside it then walks. It opens a file now, once
+    per member of the set, and the cost is stated rather than assumed in
+    `docs/findings/testdata-row-claims-no-addr-column.md`.
+
+    It feeds two places and they have to be asking the same question: this
+    clause on the block, and `carried_by_column()`'s skip. Both go through the
+    sibling's `has_addr_column()`, so no file can be counted here and skipped
+    there.
     """
     return sum(1 for path in paths
-               if path.endswith(".csv") and os.path.isfile(path))
+               if os.path.isfile(path) and has_addr_column(path))
+
+
+def no_column_reason(paths):
+    """`SHAPES`' reason for a file set with no column, or `None`.
+
+    One condition, and both of the reds fall out of it: a date resolving to
+    `.txt` dumps alone and a date resolving to `.csv` files that carry no
+    `addr` column are the same answer to one question, so the two cannot
+    drift apart the way two branches would.
+
+    It is `unresolved` and not `missing` because `missing` asserts the index
+    is wrong, and on a `.txt` dump that genuinely carries the address in its
+    text that assertion is false -- the tool did not disagree with the index,
+    it had no way to ask. It is the vocabulary `check_testdata_index.py`
+    established: printed as "not checked, not absent", counted in the shapes
+    line, and `report()` still returning 0.
+
+    **Whether a `.txt` dump's text would have satisfied the claim is a
+    different question and is not asked here.** It would be the textual read,
+    the sibling's question for fixtures, and re-introducing it for captures is
+    the rule #975 removed. The claim is *not checked*, which is not the same
+    sentence as *satisfied*.
+    """
+    return None if with_column(paths) else "dated capture has no addr column"
 
 
 def code_addresses(functions=FUNCTIONS, registers=REGISTERS):
@@ -798,6 +891,29 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
     report to read off the module constant, because this parameter exists and
     callers use it: a block that named the committed directory for a
     directory the run never opened would be a sentence with nothing behind it.
+
+    **A dated file set with no column to read in is not checked, and that is
+    the `carriers = (carried_by_column(...)` branch's other half.** The
+    branch reads a date's captures for an `addr` row; before it, a date whose
+    file set has no such column -- `ecrw.py dump` output, or a change log
+    whose header is `ts,note` -- has nothing to ask, and the literal is
+    `unresolved` with the `dated capture has no addr column` reason rather
+    than `missing`. `missing` would assert the index is wrong, and on a dump
+    that carries the address in its text that assertion is false: the tool did
+    not disagree with the index, it could not ask. The two states are one
+    condition rather than two branches, so a date that is neither a pure
+    `.txt` set nor a pure columnless `.csv` set does not have to be reasoned
+    about twice, and a set with at least one columned member is still read
+    whole -- the condition is about the file set, not about the literal.
+
+    It is asked **only where `reason_for()` returned `None`**, so a sentence's
+    own shape still wins: a page-aligned bound the sentence calls a capture is
+    a page whatever the date resolved to, which is the same precedence
+    `reason_for()`'s docstring argues for the multi-date refusal. No committed
+    case reaches that ordering -- every shape case in the suite is undated, so
+    `about_capture` is false and this reason is unreachable there -- and
+    `test_a_dated_shape_still_wins_over_the_no_column_refusal` is what holds
+    it.
     """
     index_path = os.path.join(root, "README.md")
     with open(index_path, encoding="utf-8") as f:
@@ -827,6 +943,12 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
                 literal_rows.add(number)
                 reason = reason_for(address, token, sentence, offset, code,
                                     dates[0][0] if found == MISSING else None)
+                # The sentence's own shape wins over the file set's: a
+                # page-aligned bound the sentence calls a capture is a page
+                # whatever the date resolved to, so this runs only where
+                # `reason_for()` has already said nothing.
+                if not reason and about_capture:
+                    reason = no_column_reason(held)
                 # Every glob the sentence named, never only its first, so a
                 # reader of a refused sentence's report line sees which dates
                 # were skipped -- and a dated claim still cannot be read as one

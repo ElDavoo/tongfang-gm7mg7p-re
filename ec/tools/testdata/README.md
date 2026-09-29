@@ -204,9 +204,10 @@ checks above do not: an address a row attributes to its fixture has to occur in
 a file that row names, searched across the whole set the first column resolves
 to rather than per file. The closed shape list is counted, printed with the
 reason and does not fail the run — "not checked, not absent" — and its dated
-refusals, a capture named in prose that resolves to nothing and a sentence
-naming two of them, are counted with the rest; the rest of the column is free
-prose that no rule reaches. Its wiring is prepared at
+refusals, a capture named in prose that resolves to nothing, a sentence naming
+two of them, and a date whose captures carry no `addr` column to read a claim
+in, are counted with the rest; the rest of the column is free prose that no
+rule reaches. Its wiring is prepared at
 `docs/ci/agent-gates-testdata-row-claims.patch`. All four of the top-level
 table's hand-repairs were to this column (#182, #502, #720 and #736; the count
 is measured in issue #1008, `docs/findings/testdata-index-repair-census.md`,
