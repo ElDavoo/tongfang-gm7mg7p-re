@@ -231,9 +231,13 @@ class UsageBlockTests(unittest.TestCase):
         # One line in the block as committed does take the `--check` branch and
         # does not reproduce -- `0x0860 --csv --census-column --check` asks for
         # one address against the fifteen `xdata-086x-dispatch-sites.csv`
-        # carries, so it prints 0 lines and reports 105 of that table's 114
-        # rows as not produced. That is pre-existing, it is a finding of its
-        # own, and `docs/findings/csv-column-usage-advice.md` carries it with
+        # carries, so the run produces a header and the 9 `0x0860` rows and the
+        # diff reports the other 105 of that table's 114 data rows as not
+        # produced. The run's own stdout is those ten lines; the `--check` path
+        # prints nothing there because `check_table()` writes the verdict and
+        # the diff to stderr, which is what the branch below reads. That is
+        # pre-existing, it is a finding of its own, and
+        # `docs/findings/csv-column-usage-advice.md` carries it with
         # the reproduction. It is not fixed here: the two fixes available are a
         # 193-character line naming all fifteen addresses, or the
         # `--check`-implies-`--census-column` defect this change explicitly

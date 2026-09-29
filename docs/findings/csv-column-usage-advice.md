@@ -154,10 +154,11 @@ reading each header (the producing command is in *Reproducing it*):
 
 Six carry the column and three do not, which is exactly the premise of the
 issue's note — and the three that do not are why an unconditional note would be
-wrong half the time. The `addresses` column is what makes the "every requested
-address" rule necessary rather than decorative: `xdata-0400-045f-sites.csv`
-covers 57 addresses, so a reader asking for one of them and one other thing gets
-a table with no committed counterpart at all.
+wrong for three of the nine committed tables this tool reproduces. The
+`addresses` column is what makes the "every requested address" rule necessary
+rather than decorative: `xdata-0400-045f-sites.csv` covers 57 addresses, so a
+reader asking for one of them and one other thing gets a table with no committed
+counterpart at all.
 
 **Six is a measurement, not a constant.** Nothing in the tool or the suite
 carries it, and the table above is a transcript of a run rather than a list
@@ -186,8 +187,11 @@ whether the flag is discoverable.
 **The `--check` example in the block does not reproduce its default table.**
 `python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x0860 --csv
 --census-column --check` asks for one address against the fifteen
-`xdata-086x-dispatch-sites.csv` carries, so it prints zero lines and its diff
-reports 105 of that table's 114 rows as not produced, exit 1. This is the same
+`xdata-086x-dispatch-sites.csv` carries, so the run produces a header and the 9
+`0x0860` rows — ten lines, and its diff reports the other 105 of that table's
+114 data rows as not produced, exit 1. The `--check` invocation prints nothing
+of its own on stdout: `check_table()` sends the verdict and the unified diff to
+stderr, where the hunk reads `@@ -11,105 +10,0 @@`. This is the same
 class of defect as the one this change fixes — a `Usage:` line a reader can copy
 that does not do what it appears to do — and it is the reason the suite's
 per-line contract is *runs and accounts for its own output* rather than a
@@ -282,7 +286,7 @@ PY
 python3 -m unittest discover -s ec/tools -p test_trace_xdata_refs_usage.py
 bash tools/run-tests.sh ec/tools
 python3 ec/tools/gen_findings_index.py --check
-python3 ec/tools/check_findings_frozen.py --check
+python3 ec/tools/check_findings_frozen.py
 ```
 
 ## Follow-ups this opens
