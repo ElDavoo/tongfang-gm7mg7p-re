@@ -91,9 +91,12 @@ adds 27 lines at that file's `:1022`, and everything below it moves by that much
 `:1031-1032` no longer names the no-op reproduction paragraph but this branch's
 own correction, and the sentence the pin is about — *"red on `main` at the time of
 writing"* — is at `:1079`, not `:1052`. **No other pin in the tree is affected**:
-rows 1–9 name files this branch does not edit, and a `git grep` for the pins into
-the timers file puts every one of them that is not this row's at `:989` or below —
-above the append, and unmoved by it. The
+rows 1–9 name files this branch does not edit, and a `git grep` for *this chain's*
+pins into the timers file —
+`xdata-cluster-names-guard-off-recipe.md:138` → `:952`,
+`xdata-census-self-test-gate.md:218` → `:972-973` and
+`xdata-green-set.md:392` → `:973` — puts every one of them that is not this row's
+at `:952` or above: above the append, and unmoved by it. The
 pin in `xdata-census-self-test-gate.md` is itself left alone, being in the file
 rows 9–11 say is not edited here, so a reader checking it there should shift it by
 the same 27 lines. **That is the drift this census measures, reproduced by the
@@ -181,8 +184,14 @@ The issue locates the timers blockquote at `:946`; the blockquote opens fifty-fi
 lines later than that. In `xdata-green-set.md` it gives `:119`/`:130`/
 `:132-136`/`:139-142` for four things that are the two `#815` rows of the
 superseded-claims table, the paragraph under that table, and the file's **The
-five sentences corrected in place, and where** rule — off by about fifty-five
-lines there too. Its pin for the recipe sentence, `:405-408`, lands inside the
+five sentences corrected in place, and where** rule. Two of the four are off by
+about fifty-five lines on this tree — the two rows are at `:174` and `:186` — and
+the other two are not on that figure: the paragraph is at `:219` and the rule's
+heading at `:271` (this branch's correction quotes it at `:216`), so `:132-136`
+is 87 lines out and `:139-142` is 132, this branch's own two dated corrections
+below that table accounting for most of the difference (`main` reads `:188` and
+`:219`, 56 and 80). That no single offset describes the four is the claim being
+made of them. Its pin for the recipe sentence, `:405-408`, lands inside the
 `#816` "Closed" blockquote rather than on the bullet. **The issue names the recipe
 sentence correctly and locates it wrongly, which is the exact failure the issue is
 filed about** — and the reason the four green-set places are named by their
@@ -249,10 +258,16 @@ $ git grep -n "that is #815's to decide" -- ec/annotations/
 $ git grep -n "deliberateness is unchanged" -- docs/findings/
 ```
 
-The first pattern is two words where the phrase it stands for is five, and it is
-two rather than five **because the five wrap across a line break** — the
-`"genuinely not in the gate"` the issue used prints nothing at all, which is the
-trap the last section of this file is about.
+The first pattern is two words where the phrase it stands for is five, and on
+`main` it matched where the five-word form did not **because the five wrap across
+a line break** — at `xdata-06c2-06db-timers.md:1013` the sentence reads "genuinely
+not" / "in the gate", so the `"genuinely not in the gate"` the issue used printed
+nothing at all, which is the trap the last section of this file is about. On the
+tree this branch lands in both counts move by one, in the same direction: the
+five-word form now prints this branch's own correction at `:1026` once, and the
+two-word form that file twice, at `:1013` and `:1026`. The correction quotes the
+sentence inline instead of across a break, so the wrap argument is about the
+original and holds of it, not of the sentence quoting it.
 
 And that the decision is findable by text rather than by pin:
 
@@ -268,8 +283,29 @@ The gates that must stay green are
 `bash .github/scripts/agent-gates.sh` — whose `doc links` gate resolves every
 relative `.md` link, so every file this one names has to exist.
 
-**`bash tools/run-tests.sh` is red on this tree and is not made greener by this
-change.** It fails on
+**`bash tools/run-tests.sh` is red on this tree, and is not made greener by this
+change: six of its suites are, and every one of them is red on `main` at the same
+count.** Measured 2026-09-29, `python3 <suite>` on this tree and in a clean
+`origin/main` worktree at `66c97ba0`:
+
+| suite | failures, both trees |
+|---|---|
+| `ec/tools/test_check_cluster_citations.py` | 1 |
+| `ec/tools/test_check_doc_figure_pins.py` | 2 |
+| `ec/tools/test_check_eq_guard_citations.py` | 3 |
+| `ec/tools/test_check_pin_table_rows.py` | 2 |
+| `ec/tools/test_check_site_resolution.py` | 1 |
+| `windows/tools/test_gpu_block_watch.py` | 4 |
+
+That comparison is the evidence for the one claim the table exists to support:
+**this branch adds no failure.** It touches no suite, no CSV and no tool, and every
+count is the same on the tree it was written on as on the tree it lands in. The
+whole set is named rather than the one member of it that this change is *about*,
+which is the *"the set is empty"* shape
+[`runner-red-suite-set.md`](runner-red-suite-set.md) and
+`xdata-green-set.md`'s own superseded rows exist to correct.
+
+**The one this change is about, in full.** It fails on
 `ec/tools/test_check_cluster_citations.py::TheCommittedTree::test_committed_prose_matches_committed_census`
 with three disagreements: the two at
 `docs/findings/xdata-cluster-names-guard-off-recipe.md:220` that the `#820`
