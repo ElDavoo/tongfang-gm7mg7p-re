@@ -66,6 +66,22 @@ it is a message that reads as self-consistent. The sibling check just above it
 `OWNERSHIP['refs']`, so this was one check departing from the block's own
 convention rather than a block-wide style.
 
+> **Corrected 2026-09-28 (issue #1363): the `:4359-4362` half is right and the
+> "block-wide style" half is falsified by the same file.** The sentence above is
+> **left as it was written**, the way §4a-4d asks. The check it describes is
+> the *first* of the block's `expected-then-got` departures, not the only one:
+> `:4411` -- the cost-of-the-flip line, four checks further down the same
+> ownership block -- printed the **measured** cluster triple in both slots and
+> named none of `OWNERSHIP['clusters']` / `['cluster_keys_kept']` /
+> `['hand_names_kept']`, which is three pins missing rather than one, and on the
+> check that holds the argument for why the default census stays off. It is
+> fixed there, with the three perturbations printed in the PR body; the
+> property and the sweep that found it are
+> [`xdata-check-message-pin-sweep.md`](xdata-check-message-pin-sweep.md).
+> **What survives of the sentence is the first clause**: `:4359-4362` does use
+> expected-then-got properly, and the departure was a property of this file's
+> checks rather than of any one block.
+
 The same perturbation on this tree, after the change:
 
 ```
