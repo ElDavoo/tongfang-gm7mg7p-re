@@ -1,0 +1,336 @@
+# Issue #1027's 27 is a pre-#517 measurement of the same six tables, and a rendered `window` cell has three ways to be miscounted rather than two
+
+(2026-09-29, issue #1027. Static reading of committed bytes through
+`trace_xdata_refs.py`'s own `walk_why()` and a new `dptr_rebuild_forms.py`.
+No capture opened, no EC, no hardware, no Windows, no `registers.yaml` row
+touched.)
+
+Issue #1027 asked what `walk_why()`'s reload guard cannot see, and counted
+what it could not see: **27 rows** across the six tables, each one with a
+direct DPL/DPH store inside its `window` and each one recording
+`terminator = max_insns (8) exhausted`. It also warned about the counting
+trap in a `grep` for `0x82` in the same column, which returns **31**.
+
+**Both numbers are correct and both measure a tree this repository no longer
+has.** They were taken under `walk_why()`'s pre-#517 guard, which tested
+`d[i] == MOV_DPTR` and nothing else. #517 widened it to
+`is_dptr_rebuild()`, re-cut the six tables from the tool, and recorded the
+result in [`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) §6 --
+the 27 are the rows whose `window` *and* `terminator` moved, per table
+**9 + 7 + 8 + 3**, which is the issue's own table digit for digit. The `31`
+is a `grep` over cells that have since been re-rendered; the same search
+returns **5** today, and one of those five is a class the issue does not
+name.
+
+So the blind spot #1027 names is real, was real, and has been closed. What
+is left for it is a write-down and the one part of its item 1 that no one
+had done -- the census of the **read** forms, counted and explicitly
+excluded -- and that is what this file and
+`ec/tools/dptr_rebuild_forms.py` are.
+
+## 1. The 27, re-measured against both guards
+
+Restored the pre-#517 guard in a scratch copy of `walk_why()` and ran every
+committed row of the six tables under each. The reproduction is §5; it
+prints, verbatim:
+
+```
+table                        before: budget  of those, +store  today: budget  +store
+ec-07c4-07d5-sites.csv                   16                 9              7       0
+ec-07d6-07d7-sites.csv                   13                 7              3       0
+ec-0x07d1-sites.csv                      10                 8              2       0
+ec-0x07d0-sites.csv                       4                 3              1       0
+manual-fan-ctrl-0751-sites.csv            1                 0              1       0
+xdata-0400-045f-sites.csv                 1                 0              1       0
+total                                    45                27             15       0
+```
+
+The pre-#517 column reproduces the issue's 27 exactly, and the per-table
+split reproduces its table (9 / 7 / 8 / 3 / 0 / 0). **The 27 is a real
+measurement of a real tree**, not a miscount: it is `dptr-rebuild-walk-guard.md`
+§6's re-cut, restated as a census.
+
+The `today` column is the half the issue did not have. It is **15 rows on
+the budget and none of them with a store**, and the `before` 45 against the
+`today` 15 is `walk-window-terminators.md`'s own 45-then-15 correction
+restated per table.
+
+### No store can be in a window today, which is stronger than "none of the 15"
+
+`walk_why()` runs its reload guard on the instruction *after* the one it has
+just decoded, so it stops **at** a DPTR store without decoding it. A window
+therefore cannot contain one at all, whatever the terminator. The issue's
+item 2 asked whether any `access` cell moves: none does, and the reason is
+structural rather than a per-row result -- there is no committed window for a
+larger budget to reach past a rebuild.
+`ec/tools/test_dptr_rebuild_forms.py::CommittedWindowTests` holds that as a
+rule over the six tables rather than as a list of addresses, and the case
+was checked against the pre-#517 guard, where it fails on the first row.
+
+## 2. The counting trap: three ways, not two
+
+The issue names the right trap and describes two of the three failures. A
+sweep for `0x82`/`0x83` in the `window` column over the six tables returns
+**5** rows today:
+
+| table | `file_offset` | `window` cell | what the `0x82`/`0x83` is |
+|---|---|---|---|
+| `ec-07c4-07d5-sites.csv` | `0x0AD99` | `movx @dptr,a ; mov r7,#0xe1 ; ljmp 0x83d6` | **a jump target address** |
+| `xdata-0400-045f-sites.csv` | `0x13F42` | `mov r3,0x82 ; mov r4,0x83 ; mov a,r6 ; ...` | a read |
+| `xdata-0400-045f-sites.csv` | `0x13F52` | `mov r5,0x82 ; mov r6,0x83` | a read |
+| `xdata-0400-045f-sites.csv` | `0x14CBB` | `mov r1,0x82 ; mov r2,0x83` | a read |
+| `xdata-0400-045f-sites.csv` | `0x16779` | `mov r2,0x83 ; mov r1,0x82 ; ret` | a read |
+
+The four reads are the ones the issue names, and its list is otherwise
+right -- with one small transcription slip, corrected here because this
+file quotes the cells: `0x13F52` reads `mov r5,0x82`, not the
+`mov r3,0x82` the issue gives.
+
+**The fifth is the class the issue does not name, and it is a byte, not an
+operand.** `ec-07c4-07d5-sites.csv` `0x0AD99`'s window ends on
+`02 83 d6` -- `ljmp 0x83d6` -- and the `0x83` is the high byte of a **jump
+target address**. A sweep that looks for the byte finds it; a sweep that
+looks for an *operand* in a `direct` position does not. So a search over
+rendered text has three failure modes, not two:
+
+1. **a read mistaken for a store** -- the issue's, from the operand order
+   (`mov <dst>,0x82` loads, `mov 0x82,<src>` stores);
+2. **a store missed because the cell was re-cut** -- the 27 moving to `DPTR
+   reloaded`, which is what happened to the number this whole section is
+   about;
+3. **a target address mistaken for an operand** -- the new one.
+
+A fourth would follow from a sweep that reads `disasm8051.mnemonic()`'s text
+rather than bytes: the `0x44`/`0x45`/`0x54`/`0x55`/`0x64`/`0x65` group
+renders as **A-operand** forms, so `54 82` prints `anl a,#0x82` where the
+machine writes DPL, and a mnemonic-matching sweep would classify the
+in-place forms as reads of the accumulator.
+`dptr-rebuild-walk-guard.md` §1 records that defect and
+`test_dptr_rebuild_guard.py` holds it as a fact about the tree; the reason
+it is named again here is that it is the reason this issue's sweep has to
+classify from bytes.
+
+## 3. The read forms, counted and explicitly excluded
+
+Nothing in the tree counted them. `ec/tools/dptr_rebuild_forms.py` is the
+census, and over the committed image at every offset it reports **534**
+read-form references to `0x82`/`0x83` against **1351** store-form ones:
+
+| bucket | opcode group | count |
+|---|---|---:|
+| read | `0xE5` `mov a,direct` | 62 |
+| read | `0xA8`-`0xAF` `mov rN,direct` | 204 |
+| read | `0xC0` `push direct` | 268 |
+| store | `0xF5` `mov direct,a` | 766 |
+| store | `0x88`-`0x8F` `mov direct,rN` | 282 |
+| store | `0xD0` `pop direct` | 258 |
+| store | `0x85` `mov direct,direct` | 35 |
+| store | `0x75` `mov direct,#imm` | 10 |
+
+There is a third bucket, because a census whose subject is *every way the
+image names DPL or DPH* needs one: **74** references from the in-place
+forms (`0x05`/`0x15` `inc`/`dec direct`, the `0x44`/`0x45`/`0x54`/`0x55`/
+`0x64`/`0x65` logical group, and `0xC5` `xch a,direct`), which change the
+pointer without replacing it and which
+[`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) §3 declines for
+a stated reason. Listing them is what keeps that decision reading as a
+choice rather than as a silence.
+
+**What these numbers are, precisely.** They are a **byte census over every
+offset of the file**, not a disassembly. Every offset is examined rather
+than every instruction boundary, because the sweep has no way to know where
+the boundaries are without a decode -- so these are byte pairs at every
+offset, and they include bytes that are data, bytes in a lookup table, and
+bytes in the separate PD 8051 image. Read them as *found by this method*,
+never as a count of executed instructions. `mov DPTR,#imm16` (`0x90`) is in
+none of the three tables because it names no `direct` operand at all, and
+the bit-addressed forms are excluded because a bit address `0x82` is the low
+byte of SFR `0x88` and not DPL.
+
+The same caution applies to the 10,414 of
+[`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) §1. That census
+sweeps for `0x90` at every offset of this same file, and a raw byte count of
+`0x90` over this image is also 10,414 -- so its "mapped sites" are a byte
+census over the same population as this one, not a smaller one. The two
+figures are **labelled rather than added together**: 10,414 + 1,351 + 534 +
+74 would count overlapping offsets of one file, and means nothing.
+
+## 4. What the issue's items 2, 3 and 4 already had
+
+Stated rather than re-done, because re-cutting six CSVs that the measurement
+above shows do not move is churn and a sixth terminator token is a decision
+#517 already made:
+
+- **Item 2, "re-derive the 27 with a store-aware guard and report whether
+  any `access` cell moves":** done, §1 above and
+  `dptr-rebuild-walk-guard.md` §6. No `access` cell moved in the six; every
+  `window` cell that moved got shorter.
+- **Item 3, "either a sixth terminator token or a recorded blind spot":**
+  decided, `dptr-rebuild-walk-guard.md` §5. No sixth token. The five-token
+  vocabulary stands, and `test_dptr_rebuild_guard.py` holds the count.
+- **Item 4, "the case that says which contract it holds":** done in
+  `test_dptr_rebuild_guard.py`, and the `BothGuards` pattern is applied here
+  too -- to the discriminator the issue names at its counting trap rather
+  than to the guard, in `test_dptr_rebuild_forms.py::DiscriminatorTests`. One
+  fixture with the store, one with the jump target where the store was, and
+  the verdicts asserted to differ.
+
+## 5. Reproducing it
+
+From the repository root. `python3` and the committed firmware are the whole
+toolchain -- no Ghidra, no `analyzeHeadless`, no `ilspycmd`, no radare2.
+
+```sh
+# 1. the census the issue's item 1 asked for and the tree had not taken
+python3 ec/tools/dptr_rebuild_forms.py ec/firmware/GMxMGxx_11.800
+python3 ec/tools/dptr_rebuild_forms.py ec/firmware/GMxMGxx_11.800 --csv
+
+# 2. the 27 against both guards, per table. The "before" walk is copied into
+#    the snippet rather than fetched from a pinned commit, because one line
+#    is the whole difference between the two guards and the pinned-SHA dance
+#    `dptr-rebuild-walk-guard.md` §9 needs is a risk a copied function does
+#    not carry: it is a transcription, and the transposition that would matter
+#    is `d[i] == MOV_DPTR` for `is_dptr_rebuild(d, i)`, which is the line a
+#    reader can see.
+python3 - <<'EOF'
+import csv, os, sys
+sys.path.insert(0, "ec/tools")
+import trace_xdata_refs as T
+from disasm8051 import FLOW_OPCODES, OPCODE_LEN, inline_arg_len, mnemonic
+
+TABLES = ("ec-07c4-07d5-sites.csv", "ec-07d6-07d7-sites.csv",
+          "ec-0x07d1-sites.csv", "ec-0x07d0-sites.csv",
+          "manual-fan-ctrl-0751-sites.csv", "xdata-0400-045f-sites.csv")
+
+
+def walk_why_before(d, start, max_insns=8):
+    """`walk_why()` with the pre-#517 guard, `d[i] == MOV_DPTR` and nothing
+    else. Copied from the current function rather than fetched from a pinned
+    commit, because one line is the whole difference between them."""
+    out, i, why = [], start, T.budget_end(max_insns)
+    for _ in range(max_insns):
+        n = OPCODE_LEN[d[i]]
+        if i + n > len(d):
+            why = T.SHORT_END; break
+        out.append((i, d[i:i + n], mnemonic(d, i)))
+        if d[i] in FLOW_OPCODES:
+            why = T.FLOW_END; break
+        i += n + inline_arg_len(d, i)
+        if i + 2 >= len(d):
+            why = T.BUFFER_END; break
+        if d[i] == T.MOV_DPTR:
+            why = T.RELOAD_END; break
+    return out, why
+
+
+def per_table(d, walk_why):
+    out = []
+    for name in TABLES:
+        ends = store = 0
+        with open(os.path.join("ec/annotations", name), newline="") as f:
+            for row in csv.DictReader(f):
+                insns, why = walk_why(d, int(row["file_offset"], 16))
+                if why != T.budget_end(T.walk.__defaults__[0]):
+                    continue
+                ends += 1
+                # The site's own `mov DPTR,#imm16` is the window's first
+                # triple, so the store that matters is a later one.
+                if any(T.is_dptr_rebuild(raw, 0) for _, raw, _ in insns[1:]):
+                    store += 1
+        out.append((name, ends, store))
+    return out
+
+
+d = open("ec/firmware/GMxMGxx_11.800", "rb").read()
+before, today = per_table(d, walk_why_before), per_table(d, T.walk_why)
+print(f"{'table':28s} {'before: budget':>14s} {'of those, +store':>17s} "
+      f"{'today: budget':>14s} {'+store':>7s}")
+for (name, be, bs), (_, te, ts) in zip(before, today):
+    print(f"{name:28s} {be:14d} {bs:17d} {te:14d} {ts:7d}")
+print(f"{'total':28s} {sum(r[1] for r in before):14d} "
+      f"{sum(r[2] for r in before):17d} {sum(r[1] for r in today):14d} "
+      f"{sum(r[2] for r in today):7d}")
+EOF
+
+# 3. the same five rows a `grep` finds, from the committed tables
+python3 - <<'EOF'
+import csv, os
+TABLES = ("ec-07c4-07d5-sites.csv", "ec-07d6-07d7-sites.csv",
+          "ec-0x07d1-sites.csv", "ec-0x07d0-sites.csv",
+          "manual-fan-ctrl-0751-sites.csv", "xdata-0400-045f-sites.csv")
+for name in TABLES:
+    with open(os.path.join("ec/annotations", name), newline="") as f:
+        for row in csv.DictReader(f):
+            w = row.get("window", "")
+            if "0x82" in w or "0x83" in w:
+                print(f"{name:28s} {row['file_offset']:>8s}  {w}")
+EOF
+
+# 4. the checks this change does not touch, which are what say the six tables
+#    are still what the tool produces
+python3 ec/tools/walk_budget_census.py ec/firmware/GMxMGxx_11.800 --check
+
+# 5. the suite, the shape gates, and the runner's total
+python3 -m unittest discover -s ec/tools -p test_dptr_rebuild_forms.py
+python3 ec/tools/gen_findings_index.py --check
+python3 ec/tools/check_findings_frozen.py
+python3 ec/tools/check_no_append_logs.py
+bash tools/run-tests.sh
+```
+
+Step 2 is the load-bearing one and its "before" is a **transcription on
+purpose**. `dptr-rebuild-walk-guard.md` §9 uses a pinned SHA and spends a
+page on why a relative ref fails; that is right where the difference is
+several lines of a module and a wrong ref prints a plausible zero. Here the
+difference is one line, it is the line under discussion, and a reader can
+see it in the snippet -- which is the property a pinned ref was reaching for
+and a transcription gets for free. Step 4 is the stronger gate than any
+figure above: it re-derives the census from the image and diffs it against
+the committed CSV, so a re-cut that moved a cell is caught by the tool
+rather than by a sentence in this file.
+
+## 6. What this does not establish
+
+- **Nothing about the hardware or the EC.** Every input is a committed file.
+  No capture was opened, no register read back, no EC or HID node touched, and
+  no sentence here should be read as a live observation. A count of byte
+  pairs is a fact about a file and about the method that read it.
+- **That the 27 were wrong.** They were right, for a tree this repository
+  has since changed. The distinction matters: the pre-#517 guard genuinely
+  could not see `mov 0x82,a`, and the rows it misfiled were genuinely the
+  rows §1 lists. What changed is the guard, not the measurement's arithmetic.
+- **That no other form of DPTR reach exists.** The census covers what
+  `direct` operands of `0x82`/`0x83` can be, at every offset, and
+  `mov DPTR,#imm16` separately. An indirect reach -- DPTR built through a
+  pointer, as `test_de3c_store_target.py`'s `0xDE3C` does with the
+  `0x0564:0x0563` pair staged out of CODE tables -- is in **none** of these
+  tables and no byte sweep would find it.
+  `dptr-rebuild-walk-guard.md` §2 is where that one is worked.
+- **The in-place forms as terminators.** They are counted here and excluded
+  there, and §3 of that file states why. This change does not reopen it.
+- **Anything about a register's status.** `ec/annotations/registers.yaml` is
+  untouched and no `status:` moves: a `mov DPL,A` is a reference to the byte
+  `0x82`, not to any XDATA address, and the `static_refs` counts are over
+  addresses. The same sentence
+  `dptr-rebuild-walk-guard.md` §6 gives, repeated here because this file too
+  quotes a byte count and a reader could join them up.
+- **#799** (a DPTR reassignment inside a *callee*, a different shape in a
+  different place) and **#846**'s decision that the budget stays 8. Both are
+  untouched here, and neither is cited as closing by this work.
+
+## 7. The stale sentence this found, and where it was corrected
+
+`docs/findings/walk-window-terminators.md` §A still read, in the present
+tense, that "`walk()`'s guard tests `d[i] == MOV_DPTR` and cannot see the
+`0xF5 0x82` / `0x8F 0x82` form", and annotated the `0x2C2FA` decode's
+`0x2C2FE` line "budget-8 window ends here on `clr a`". Both describe the
+pre-#517 guard. That row's committed `window` cell is now `mov a,r7 ;
+movx @dptr,a ; mov 0xf0,#0x5e ; mul ab ; add a,#0xf8` with
+`terminator = DPTR reloaded` -- the window ends **before** `0x2C305`, where
+`f5 82` writes DPL, which is the very instruction the old annotation said
+the guard could not see.
+
+The correction is **in place in that file, with the wrong text left
+visible**, per CLAUDE.md's §4a-4d pattern. It is the only place in the tree
+still asserting the blind spot in the present tense, and it is the document a
+reader is sent to for the terminator vocabulary.

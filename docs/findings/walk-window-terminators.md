@@ -138,6 +138,37 @@ what this work does not do.** Re-cutting at a larger budget is not a tidier
 version of the same table; for 10 of the 13 it would put a wrong `access` cell
 into a committed file.
 
+**Correction (2026-09-29, issue #1027), leaving the section above as it was
+written.** Its two annotations are pre-#517 and describe the guard as it
+stood then. `walk()`'s guard no longer tests `d[i] == MOV_DPTR`; it tests
+`is_dptr_rebuild()`, which names every construction that replaces DPTR **or
+one of its two bytes**, and `f5 82` is the first of them. The two annotated
+lines therefore read:
+
+- **`0x2C2FE`** did not end on `clr a`. This row's committed `window` cell is
+  `mov a,r7 ; movx @dptr,a ; mov 0xf0,#0x5e ; mul ab ; add a,#0xf8` with
+  `terminator = DPTR reloaded`, so the window ends **before `0x2C305`** --
+  the `add a,#0xf8` is the fifth instruction and the sixth is never decoded.
+  That is the committed `file_offset` `0x2C2FA` row of
+  `ec-0x07d0-sites.csv`, and the section's own "budget-8 window ends; a
+  64-instruction budget continues" line at `0x2C307` no longer describes
+  where anything ends.
+- **`0x2C305`** is now exactly what the widened guard stops on. It is not a
+  store the window runs past; it is the terminator, and the guard runs on
+  the instruction *after* the one just decoded, so the `mov 0x82,a` is never
+  itself decoded into the window. **A window therefore cannot contain a
+  DPL/DPH store at all**, whatever its terminator -- which is why
+  `dptr-guard-census-vs-1027.md` §1 can state that none of the six tables'
+  budget-truncated rows holds one, and hold it as a rule over the tables
+  rather than as a list of addresses.
+
+The bytes in the listing above are unchanged and still correct as a listing
+of `0x2C2FA`-`0x2C30D`; it is the two `<-` annotations that are about this
+file's own `walk()` rather than about the firmware. Nothing else in this
+section moves: the `0x07D0`-versus-R7 argument is the reading the re-cut
+preserved, which is why #517 settled this row the way §A said it would be
+settled.
+
 **Correction (issue #73), leaving the claim above as history.** The decode
 `pd_index_geometry.py --self-test` asserts is
 `DPTR ← 0x08F8 + low8(R7×0x5E)`, not the unrestricted product the sentence
