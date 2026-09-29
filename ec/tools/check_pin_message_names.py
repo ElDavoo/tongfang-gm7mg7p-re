@@ -64,7 +64,7 @@ cannot be until a human adds it there with a token that has `workflow` scope;
 its suite, which asserts the sweep over the committed tree, and by hand otherwise.
 
 **The scope is one module, and the reason is a name collision.** `check` is
-defined by twenty-one modules in `ec/tools/` with unrelated signatures --
+defined across `ec/tools/` with unrelated signatures --
 `check_capture_claims.check(path, index, verbose)` and
 `check_findings_frozen.check(repo)` among them -- so a tree-wide walk of the
 callee name `check` would read those as census assertions. What is measured is

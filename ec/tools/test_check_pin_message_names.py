@@ -417,7 +417,7 @@ def main(args):
         self.assertEqual(cpn.sweep(source)[1], 0)
 
     def test_another_callee_of_the_same_name_is_not_swept(self):
-        # The scope is one module precisely because twenty-one modules in `ec/tools/`
+        # The scope is one module precisely because many modules in `ec/tools/`
         # define `check` with unrelated signatures. The call is matched by the
         # bare name, so an attributed callee is not this census.
         source = source_with('''\

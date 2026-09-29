@@ -136,12 +136,12 @@ covers the check itself and is what the three perturbations above exercise.
   which would put a third and fourth hunk in the hottest file in the tree for a
   defect this issue did not open. Both are in the table above with the
   reasoning, so a follow-up can file from it rather than from a re-run.
-- **A tree-wide version of the sweep.** `check` is defined by twenty-one modules
-  in `ec/tools/` with unrelated signatures, so a directory-wide walk of the
-  callee name would read `check_capture_claims.check(path, index, verbose)` as a
-  census assertion, and a version that resolves the callee per module is a
-  different tool. This one needs no self-exclusion for reading its own suite the
-  way `check_doc_figure_pins.py` does, because it is not in the set it reads.
+- **A tree-wide version of the sweep.** `check` is defined across `ec/tools/`
+  with unrelated signatures, so a directory-wide walk of the callee name would
+  read `check_capture_claims.check(path, index, verbose)` as a census assertion,
+  and a version that resolves the callee per module is a different tool. This
+  one needs no self-exclusion for reading its own suite the way
+  `check_doc_figure_pins.py` does, because it is not in the set it reads.
 - **What this change did to the line pins elsewhere.** It adds a net six lines to
   `xdata_register_map.py`, and **two** suites hold hand-written line numbers
   into that file: `test_check_doc_figure_pins.py`, which pins the fixed check's
