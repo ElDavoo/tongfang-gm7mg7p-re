@@ -135,6 +135,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`testdata-index-feeds-and-call-graph.md`](testdata-index-feeds-and-call-graph.md) — The testdata index's `Feeds` column and its self-indexed nested tables are read too (issue #746)
 - [`testdata-index-repair-census.md`](testdata-index-repair-census.md) — How many edits the testdata index's third column has held (issue #1008)
 - [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md) — The testdata-index suite asserted three integers the tree happens to hold today (issue #744)
+- [`testdata-row-claims-closing-line-root.md`](testdata-row-claims-closing-line-root.md) — The closing line named the committed index for a run that read a scratch one, and the argument that excused it was a caller count (issue #1022)
 - [`testdata-row-claims-dated-capture.md`](testdata-row-claims-dated-capture.md) — A bare date in the testdata index's third column is resolved, and its literals are checked (issue #794)
 - [`testdata-row-claims-multi-date-sentence.md`](testdata-row-claims-multi-date-sentence.md) — A sentence naming two dated captures is refused whole, and not read from the first (issue #979)
 - [`testdata-row-claims-no-addr-column.md`](testdata-row-claims-no-addr-column.md) — A dated claim whose file set has no `addr` column is not checked, and `with_column()` counts columns rather than extensions (issue #990)
