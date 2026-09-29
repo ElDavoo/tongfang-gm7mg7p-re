@@ -9,17 +9,28 @@ its own answer to the question it was careful to ask.
 `../../docs/findings/dptr-guard-census-vs-1027.md` is the write-up and the
 counts; this is the part of it that has to stay true.
 
-Three things are held here, and the third is the one a re-cut can break:
+Four things are held here, and the last is the one a re-cut can break:
 
 - **Per form, from bytes.** Every opcode in each of the three buckets, driven
   through `form_at()` as a bare `bytes` fixture, asserted on the bucket *and*
   on the byte the instruction actually touches. The 8051's one form that names
   its operands in the other order, `mov direct,direct` (`0x85`), is a case of
-  its own: the byte this census keys on is its **second** operand there, so a
-  classifier reading `d[i+1]` reads the *source* and would find none of the 35
-  references this image has. The operand index is delegated to
+  its own twice over: the byte this census keys on for the **store** is its
+  second operand there, so a classifier reading `d[i+1]` would find none of
+  the 35 store references this image has; and its **source** is a read the same
+  instruction makes, which a form that can return one reference drops on the
+  floor. The operand index is delegated to
   `walk_budget_census.dptr_store_byte()`, and the case here is what stops this
   file growing a second opinion about it.
+- **That those three tables are the whole map, checked against a second
+  list.** The 256-opcode cross-check below holds the *store* table to
+  `is_dptr_rebuild()`, which is a store list: the two omitted `0x86`/`0x87`
+  together and so agreed on exactly the rows that were wrong, and a missing
+  *read* form was invisible to it twice over because it never looked at the
+  read table at all. The oracle here is `DIRECT_BEARING`, the MCS-51 map of
+  byte-addressed `direct` operands written out below from the instruction
+  set, which shares no source with any of the three tables or with the
+  guard, and is what makes the union a claim rather than a tautology.
 - **The discriminator, both ways.** A window that contains a real `mov 0x82,a`
   and a window that contains `ljmp 0x83d6` where that store stood are the same
   bytes to a substring search over a rendered `window` cell and not the same
@@ -98,10 +109,37 @@ DPH_IMM = bytes([0x75, 0x83, 0x03])   # mov 0x83,#0x03
 DPTRH_POPPED = bytes([0xD0, 0x83])    # pop 0x83
 DPH_FROM_P1 = bytes([0x85, 0x90, 0x83])  # mov 0x83,0x90 -- dst is d[i+2]
 
+# The two `mov direct,@Ri` forms. `direct` is the **destination** in both, so
+# they are stores, and they are the two a table held to `is_dptr_rebuild()`
+# silently left out.
+DPL_FROM_R0_PTR = bytes([0x86, 0x82])   # mov 0x82,@r0
+DPL_FROM_R1_PTR = bytes([0x87, 0x82])   # mov 0x82,@r1
+
 # The reads, which rebuild nothing and must never be swept in with the stores.
 READ_DPL = bytes([0xE5, 0x82])        # mov a,0x82
 READ_DPH_INTO_R5 = bytes([0xAD, 0x82])  # mov r5,0x82
 PUSH_DPL = bytes([0xC0, 0x82])        # push 0x82
+# The two `mov @Ri,direct` forms: `direct` is the **source**, so they are
+# reads. The other two half of the four the store and read tables both
+# omitted, and the reason a completeness claim could not be true of them.
+READ_DPL_VIA_R0 = bytes([0xA6, 0x82])   # mov @r0,0x82
+READ_DPL_VIA_R1 = bytes([0xA7, 0x82])   # mov @r1,0x82
+# `0x85`'s source, which is a read the same instruction that stores its
+# destination makes. `85 83 f0` is `mov B,DPH` in the committed Ghidra
+# listings; these two are `mov 0x0e,DPL` and `mov DPL,DPL`.
+READ_DPH_FROM_85 = bytes([0x85, 0x83, 0xF0])  # mov B,DPH   -- reads DPH
+READ_DPL_FROM_85 = bytes([0x85, 0x82, 0x0E])  # mov 0x0e,DPL -- reads DPL
+# ...and the case the review asked for and the two above do not reach: both
+# halves naming a DPTR byte. There is no such instruction in this image, so
+# nothing counts it -- the case is here because `form_at()` has to be able to
+# say so, and a fixture is the only place that is checkable.
+BOTH_HALVES_85 = bytes([0x85, 0x82, 0x82])    # mov DPL,DPL
+# The arithmetic group, which names DPL/DPH in the same `direct` position and
+# which the earlier tables carried only one member of (`0x45`, `0x64`).
+ADD_DPL_TO_A = bytes([0x25, 0x82])       # add a,0x82    -- read
+ADD_A_TO_DPL = bytes([0x26, 0x82])       # add 0x82,a    -- in place
+ADD_DPH_CARRY = bytes([0x35, 0x83])      # addc a,0x83   -- read
+CLR_DPH = bytes([0xC2, 0x83])            # clr 0x83      -- in place
 
 # In place: a direct operand naming DPL/DPH that changes it without replacing
 # it. `0x54` is here in the 8051's three-byte spelling, and the two-byte one
@@ -120,6 +158,58 @@ LJMP_TARGET = bytes([0x02, 0x83, 0xD6])
 # And the store that stood at the same place, which is the other half of the
 # pair: `0x2C305` after `0x0AD99`'s shape is `mov 0x82,a`.
 DPL_STORE_AT_TARGET = bytes([0xF5, 0x82])
+
+# The MCS-51 map of opcodes whose operand is a **byte** address, written out
+# here from the instruction set and deliberately derived from neither the
+# census's tables nor `trace_xdata_refs.is_dptr_rebuild()`. It is the oracle
+# for the claim the module docstring makes -- that the three tables are the
+# whole map -- and it exists because the 256-opcode cross-check could not be
+# that oracle: it held the store table to `is_dptr_rebuild()`, and the two
+# omitted the same four opcodes, so they agreed on exactly the rows that were
+# wrong. Two lists that share a source are one list counted twice.
+#
+# The bit-addressed forms are deliberately *not* here: `0x82` is the low byte
+# of SFR `0x88` in a bit address and is not DPL, and `BIT_ADDRESSED` below
+# names them so the exclusion is asserted rather than assumed.
+DIRECT_BEARING = frozenset(
+    (0x05, 0x15,                                    # inc / dec direct
+     0x25, 0x26, 0x27, 0x2C, 0x2D,                  # add / addc / xrl
+     0x35, 0x36, 0x3D, 0x3E, 0x3F,                  # addc / orl
+     0x42, 0x44, 0x45,                              # orl direct, #imm
+     0x52, 0x54, 0x55,                              # anl direct, #imm
+     0x62, 0x64, 0x65,                              # xrl direct, #imm
+     0x75, 0x85, 0x86, 0x87,                        # mov direct, <src>
+     0x95, 0x96, 0x97,                              # subb
+     0xA6, 0xA7,                                    # mov @Ri,direct
+     0xB5,                                          # cjne a,direct,rel
+     0xC0, 0xC2, 0xC5,                              # push / clr / xch
+     0xD0, 0xD5,                                    # pop / djnz
+     0xE5, 0xF5)                                    # mov a,direct / mov direct,a
+) | frozenset(range(0x88, 0x90)) | frozenset(range(0xA8, 0xB0))
+
+# The one class `DIRECT_BEARING` leaves out, held so the exclusion is a claim.
+# Every one of these takes a *bit* address, and `0x82` in that position is
+# the low byte of SFR `0x88` rather than DPL -- so counting them would be
+# counting a different address under the same two characters. The `jb`/`jnb`/
+# `jbc` rows and the `sjmp` displacement are on their own excluded class
+# rather than this one, which is why they are not listed.
+BIT_ADDRESSED = frozenset(
+    (0x0A, 0x2A,                                    # orl
+     0x4A, 0x5A,                                    # anl
+     0x6A, 0x72, 0x7A,                              # xrl / orl c,bit
+     0x82,                                          # anl c,bit
+     0x92, 0xA0, 0xA2,                              # mov bit,C / mov C,bit
+     0xB0,                                          # anl c,/bit
+     0xB2, 0xC1, 0xD2))                             # cpl / clr / setb bit
+
+# The two forms the census counts and `is_dptr_rebuild()` does not. `mov
+# direct,@Ri` replaces DPTR's byte by exactly the argument the rest of the
+# store table replaces it by, so leaving them out of the guard is a gap rather
+# than a decision -- and the census is not allowed to inherit it silently,
+# which is what naming them here is for. `dptr-rebuild-walk-guard.md` §3
+# records it against the guard and `dptr-guard-census-vs-1027.md` §3 counts
+# it; this file only holds the delta from being anything else.
+GUARD_GAP_OPS = frozenset((0x86, 0x87))
 
 
 def fixture(*insns: bytes, size: int = 0x40) -> bytes:
@@ -145,6 +235,19 @@ def form_at(img, insn):
     return F.form_at(img, 0)
 
 
+def one(insn, byte):
+    """The single reference `insn` is expected to make, in the list form.
+
+    Most forms make exactly one, and a case that wants one should say so
+    rather than writing the list out: a two-element result where the case
+    expected one is the failure this is here to make legible.
+    """
+    got = form_at(insn, 0)
+    assert len(got) == 1, "%s made %d references: %r" % (
+        insn.hex(" "), len(got), got)
+    return got[0]
+
+
 def window_forms(d, start, max_insns=BUDGET):
     """(every DPL/DPH reference inside `walk_why()`'s window, the token).
 
@@ -159,9 +262,9 @@ def window_forms(d, start, max_insns=BUDGET):
     insns, why = T.walk_why(d, start, max_insns)
     out = []
     for off, _, _ in insns:
-        hit = F.form_at(d, off)
-        if hit is not None and hit[2] in (T.DPL, T.DPH):
-            out.append(hit)
+        for hit in F.form_at(d, off):
+            if hit[2] in (T.DPL, T.DPH):
+                out.append(hit)
     return out, why
 
 
@@ -170,13 +273,15 @@ class StoreFormTests(unittest.TestCase):
     the byte it writes."""
 
     def test_each_store_form_is_a_store_and_names_the_byte_it_writes(self):
+        # `0x85` is not in this loop: it is two references rather than one,
+        # and the case below holds it. Every other form in the store table
+        # makes exactly one, which is what `one()` checks.
         for insn, byte in ((DPL_FROM_A, 0x82), (DPH_FROM_A, 0x83),
                            (DPL_FROM_R7, 0x82), (DPTRH_FROM_R4, 0x83),
                            (DPH_IMM, 0x83), (DPTRH_POPPED, 0x83),
-                           (DPH_FROM_P1, 0x83)):
+                           (DPL_FROM_R0_PTR, 0x82), (DPL_FROM_R1_PTR, 0x82)):
             with self.subTest(insn=insn.hex(" ")):
-                self.assertEqual(form_at(insn, 0),
-                                 ("store", insn[0], byte))
+                self.assertEqual(one(insn, 0), ("store", insn[0], byte))
 
     def test_the_operand_order_case_reads_its_second_operand(self):
         # `mov direct,direct` is `0x85 src dst`, so the byte the instruction
@@ -185,16 +290,42 @@ class StoreFormTests(unittest.TestCase):
         # matters: `85 90 83` writes DPH, and reading d[i+1] would name a
         # store to P1 (`0x90`) and find no DPTR reference at all.
         self.assertEqual(DPH_FROM_P1[1], 0x90)
-        self.assertEqual(form_at(DPH_FROM_P1, 0), ("store", 0x85, 0x83))
-        # The mirror: a `0x85` whose *source* is DPL writes whatever P1 holds.
-        # One form, two directions, and the cell names the destination both
-        # times.
-        self.assertEqual(form_at(bytes([0x85, 0x82, 0x90]), 0),
-                         ("store", 0x85, 0x90))
+        self.assertIn(("store", 0x85, 0x83), form_at(DPH_FROM_P1, 0))
+        # The mirror: a `0x85` whose *source* is DPL writes whatever P1 holds,
+        # and the store cell names the destination both times.
+        self.assertIn(("store", 0x85, 0x90),
+                      form_at(bytes([0x85, 0x82, 0x90]), 0))
         # And the operand index is the census's, not this file's, so the two
         # cannot disagree about it.
         self.assertEqual(DPH_FROM_P1[0], W.MOV_DIRECT_DIRECT)
         self.assertIs(F.dptr_store_byte, W.dptr_store_byte)
+
+    def test_the_operand_order_case_is_also_a_read_of_its_source(self):
+        # The other half of the same form, and the one a classifier that
+        # returns a single reference cannot express. `85 83 f0` is `mov B,DPH`:
+        # it reads DPH and writes B, so the source is a read-form reference
+        # and the destination is not a DPTR write at all. Classifying the
+        # instruction by its store half alone drops the read, and the store
+        # half is not optional -- `85 82 0e` reads DPL *and* writes 0x0e, so
+        # the instruction is in `READ_FORMS` and `STORE_FORMS` at once.
+        self.assertEqual(form_at(READ_DPH_FROM_85, 0),
+                         [("read", 0x85, 0x83), ("store", 0x85, 0xF0)])
+        self.assertEqual(form_at(READ_DPL_FROM_85, 0),
+                         [("read", 0x85, 0x82), ("store", 0x85, 0x0E)])
+        # The two halves need not agree on being DPTR bytes, and here neither
+        # the store half of the first nor the destination of the second is.
+        self.assertNotIn(("store", 0x85, T.DPL), form_at(READ_DPH_FROM_85, 0))
+        self.assertNotIn(("store", 0x85, T.DPH), form_at(READ_DPL_FROM_85, 0))
+        # And they need not even be *different* bytes: `85 82 82` is one
+        # instruction that both reads and writes DPL, so it is a read and a
+        # store of the same operand. Nothing in this image does that, which is
+        # exactly why it needs a fixture rather than a counted claim.
+        self.assertEqual(form_at(BOTH_HALVES_85, 0),
+                         [("read", 0x85, 0x82), ("store", 0x85, 0x82)])
+        # The two directions are distinguished only by the operand, so the
+        # read really is the source and not the destination re-sorted.
+        self.assertEqual(READ_DPL_FROM_85[1], T.DPL)
+        self.assertNotEqual(READ_DPL_FROM_85[1], READ_DPL_FROM_85[2])
 
     def test_every_opcode_the_guard_accepts_is_in_the_store_table(self):
         # The load-bearing structural case, and the reason the store table is
@@ -208,6 +339,12 @@ class StoreFormTests(unittest.TestCase):
         # bytes that can appear in a `direct` position, at three lengths, and
         # it is a set of opcodes rather than a list of byte strings so the
         # assertion names the disagreement instead of its encoding.
+        #
+        # **It is a one-way check and cannot be the completeness one.** Both
+        # lists omitted `0x86`/`0x87` before this was written, so they agreed
+        # on exactly the rows that were wrong -- the sweep had a blind spot
+        # and the tables had the same one, which is what
+        # `test_the_three_tables_are_the_whole_direct_map` is for.
         accepted = set()
         for op in range(0x100):
             for operand in (0x82, 0x83, 0x00):
@@ -215,7 +352,7 @@ class StoreFormTests(unittest.TestCase):
                              bytes([op, operand, operand]),
                              bytes([op, operand, operand, operand])):
                     if T.is_dptr_rebuild(insn, 0) and \
-                            F.form_at(insn, 0) != ("store", op, operand):
+                            ("store", op, operand) not in F.form_at(insn, 0):
                         accepted.add(op)
         # `mov DPTR,#imm16` is the one construction that names no operand at
         # all, so there is no byte for this census to key on and it is not a
@@ -229,14 +366,15 @@ class StoreFormTests(unittest.TestCase):
         # the file. A half-written instruction at the end of a buffer is not a
         # reference to anything, and returning the byte anyway would put a
         # store into a cell on the strength of a byte that is not there.
-        self.assertIsNone(F.form_at(bytes([0xF5]), 0))
-        self.assertIsNone(F.form_at(bytes([0xE5]), 0))
-        self.assertIsNone(F.form_at(bytes([0x05]), 0))
-        self.assertIsNone(F.form_at(bytes([0x85, 0x90]), 0))
+        self.assertEqual(F.form_at(bytes([0xF5]), 0), [])
+        self.assertEqual(F.form_at(bytes([0xE5]), 0), [])
+        self.assertEqual(F.form_at(bytes([0x05]), 0), [])
+        self.assertEqual(F.form_at(bytes([0x87]), 0), [])
+        self.assertEqual(F.form_at(bytes([0x85, 0x90]), 0), [])
         # The two-byte forms still answer on the same buffer, so the case is
         # about the missing operand and not about the length of the buffer.
         self.assertEqual(F.form_at(bytes([0xE5, 0x82]), 0),
-                         ("read", 0xE5, 0x82))
+                         [("read", 0xE5, 0x82)])
 
 
 class ReadFormTests(unittest.TestCase):
@@ -247,9 +385,11 @@ class ReadFormTests(unittest.TestCase):
 
     def test_each_read_form_is_a_read(self):
         for insn, byte in ((READ_DPL, 0x82), (READ_DPH_INTO_R5, 0x82),
-                           (PUSH_DPL, 0x82)):
+                           (PUSH_DPL, 0x82), (READ_DPL_VIA_R0, 0x82),
+                           (READ_DPL_VIA_R1, 0x82), (ADD_DPL_TO_A, 0x82),
+                           (ADD_DPH_CARRY, 0x83)):
             with self.subTest(insn=insn.hex(" ")):
-                self.assertEqual(form_at(insn, 0), ("read", insn[0], byte))
+                self.assertEqual(one(insn, 0), ("read", insn[0], byte))
 
     def test_no_read_form_is_a_rebuild(self):
         # The claim the two buckets being separate rests on. `mov a,0x82` and
@@ -257,7 +397,8 @@ class ReadFormTests(unittest.TestCase):
         # byte of DPTR read and written; a sweep that counted a window's
         # `0x82` references without asking which direction would charge a
         # window ending on a *load* to a pointer rebuild it never had.
-        for insn in (READ_DPL, READ_DPH_INTO_R5, PUSH_DPL):
+        for insn in (READ_DPL, READ_DPH_INTO_R5, PUSH_DPL, READ_DPL_VIA_R0,
+                     READ_DPL_VIA_R1, ADD_DPL_TO_A, ADD_DPH_CARRY):
             with self.subTest(insn=insn.hex(" ")):
                 self.assertFalse(T.is_dptr_rebuild(insn, 0))
         self.assertTrue(T.is_dptr_rebuild(DPL_FROM_A, 0))
@@ -273,7 +414,7 @@ class ReadFormTests(unittest.TestCase):
             for byte in (0x82, 0x83):
                 with self.subTest(op=hex(op), byte=hex(byte)):
                     self.assertEqual(F.form_at(bytes([op, byte]), 0),
-                                     ("read", op, byte))
+                                     [("read", op, byte)])
 
 
 class InPlaceFormTests(unittest.TestCase):
@@ -287,10 +428,10 @@ class InPlaceFormTests(unittest.TestCase):
 
     def test_each_in_place_form_is_neither_a_store_nor_a_read(self):
         for insn, byte in ((XCH_DPL, 0x82), (ANL_DIRECT_DPL, 0x82),
-                           (ANL_DPL_TWO_BYTE, 0x82), (INC_DPL, 0x82)):
+                           (ANL_DPL_TWO_BYTE, 0x82), (INC_DPL, 0x82),
+                           (ADD_A_TO_DPL, 0x82), (CLR_DPH, 0x83)):
             with self.subTest(insn=insn.hex(" ")):
-                self.assertEqual(form_at(insn, 0),
-                                 ("in place", insn[0], byte))
+                self.assertEqual(one(insn, 0), ("in place", insn[0], byte))
                 self.assertFalse(T.is_dptr_rebuild(insn, 0))
 
     def test_the_masking_forms_classify_the_same_at_both_spellings(self):
@@ -307,14 +448,17 @@ class InPlaceFormTests(unittest.TestCase):
 class BucketShapeTests(unittest.TestCase):
     """The three tables, as a shape rather than as a count."""
 
-    def test_the_three_buckets_are_disjoint(self):
+    def test_only_the_operand_order_form_is_in_two_buckets(self):
         # Two opcodes in two buckets would mean a window whose verdict depended
         # on the order the tables were consulted, which is the one thing a
-        # classifier keyed on bytes is supposed to make impossible.
-        buckets = [F.STORE_FORMS, F.READ_FORMS, F.IN_PLACE_FORMS]
-        for i, first in enumerate(buckets):
-            for second in buckets[i + 1:]:
-                self.assertEqual(set(first) & set(second), set())
+        # classifier keyed on bytes is supposed to make impossible. The one
+        # exception is the point rather than a leak: `mov direct,direct` makes
+        # a read and a store at one instruction, so it is held to *that* pair
+        # by name rather than being allowed anywhere.
+        self.assertEqual(set(F.STORE_FORMS) & set(F.READ_FORMS),
+                         {T.MOV_DIRECT_DIRECT})
+        self.assertEqual(set(F.STORE_FORMS) & set(F.IN_PLACE_FORMS), set())
+        self.assertEqual(set(F.READ_FORMS) & set(F.IN_PLACE_FORMS), set())
 
     def test_every_form_the_census_names_is_the_8051_spelling_it_claims(self):
         # The three tables spell their forms out rather than generating them,
@@ -327,21 +471,56 @@ class BucketShapeTests(unittest.TestCase):
         # about the tree rather than as a note.
         for op in F.STORE_FORMS:
             with self.subTest(op=hex(op)):
-                self.assertIn(op, T.DIRECT_STORE_OPS | {T.MOV_DIRECT_DIRECT})
+                self.assertIn(op, T.DIRECT_STORE_OPS | {T.MOV_DIRECT_DIRECT}
+                              | GUARD_GAP_OPS)
         for op in F.IN_PLACE_FORMS:
             with self.subTest(op=hex(op)):
                 self.assertNotIn(op, T.DIRECT_STORE_OPS)
         from disasm8051 import mnemonic
         self.assertEqual(mnemonic(ANL_DPL_TWO_BYTE, 0), "anl  a,#0x82")
-        self.assertEqual(F.form_at(ANL_DPL_TWO_BYTE, 0)[0], "in place")
+        self.assertEqual(F.form_at(ANL_DPL_TWO_BYTE, 0)[0][0], "in place")
 
-    def test_the_store_table_is_the_guard_opcode_set(self):
+    def test_the_store_table_is_the_guard_opcode_set_plus_a_named_gap(self):
         # `DIRECT_STORE_OPS` plus the `0x85` exception is what
         # `trace_xdata_refs.is_dptr_rebuild()` consults, and the census's
         # store table has to be that set or the census is counting something
         # else. Asserted as equality rather than as a count, so an opcode
         # added to one and not the other is red whichever way it went.
-        self.assertEqual(set(F.STORE_FORMS), set(T.DIRECT_STORE_OPS) | {0x85})
+        #
+        # The equality is against the guard's set **plus the two `mov
+        # direct,@Ri` forms the guard does not name**. That delta is
+        # `GUARD_GAP_OPS`, written out here so it is a decision on the page
+        # rather than a difference a reader has to notice themselves;
+        # `dptr-rebuild-walk-guard.md` §3 records what it is and
+        # `dptr-guard-census-vs-1027.md` §3 counts it.
+        self.assertEqual(set(F.STORE_FORMS),
+                         set(T.DIRECT_STORE_OPS) | {0x85} | GUARD_GAP_OPS)
+
+    def test_the_two_mov_direct_at_ri_forms_are_the_only_gap(self):
+        # The census counts the two forms the guard declines, and nothing
+        # else. Asserted against the guard's own set rather than as "two",
+        # so widening either list without the other is red whichever way it
+        # went -- and so the delta cannot quietly grow into a different claim.
+        self.assertEqual(GUARD_GAP_OPS, frozenset((0x86, 0x87)))
+        for op in GUARD_GAP_OPS:
+            with self.subTest(op=hex(op)):
+                self.assertFalse(T.is_dptr_rebuild(bytes([op, 0x82]), 0))
+
+    def test_the_three_tables_are_the_whole_direct_map(self):
+        # The completeness claim, against an oracle that shares no source with
+        # the tables. `DIRECT_BEARING` is written out above from the MCS-51
+        # instruction set; the three tables are written out in the tool. The
+        # two cannot drift together, which is the failure this case exists
+        # for: the store table and `is_dptr_rebuild()` omitted the same four
+        # opcodes and so agreed on every row that was wrong.
+        tables = set(F.STORE_FORMS) | set(F.READ_FORMS) | set(F.IN_PLACE_FORMS)
+        self.assertEqual(tables, set(DIRECT_BEARING))
+        # And the excluded class is the bit-addressed one, by name, rather
+        # than by whatever happened to be left over.
+        self.assertEqual(tables & set(BIT_ADDRESSED), set())
+        # `mov DPTR,#imm16` is the fourth thing that replaces the pointer and
+        # is in none of them, because it names no `direct` operand at all.
+        self.assertNotIn(T.MOV_DPTR, tables)
 
 
 class DiscriminatorTests(unittest.TestCase):
@@ -383,7 +562,7 @@ class DiscriminatorTests(unittest.TestCase):
         # The discriminator itself, on the bytes. `0x02` is in none of the
         # three form tables, so the `0x83` that follows it is a target address
         # and there is no reference to classify at all.
-        self.assertIsNone(F.form_at(fixture(LJMP_TARGET), 0))
+        self.assertEqual(F.form_at(fixture(LJMP_TARGET), 0), [])
         forms, why = window_forms(fixture(SITE, *self.AS_COMMITTED), 0)
         self.assertEqual(forms, [],
                          "the `0x83` of `ljmp 0x83d6` is a target address, "
@@ -400,7 +579,7 @@ class DiscriminatorTests(unittest.TestCase):
         # between the two verdicts is the discriminator and not the fixture's
         # length or its position in the window.
         self.assertEqual(F.form_at(fixture(SITE, *self.WITH_STORE), self.AT),
-                         ("store", 0xF5, 0x82))
+                         [("store", 0xF5, 0x82)])
         # And the window changes with it -- one instruction shorter, and it
         # stops on the reload rather than on the flow opcode. The store itself
         # is not decoded, which is why `window_forms` finds nothing here

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Census every way the image names DPL or DPH, and say which of them rebuild
-DPTR, which read it, and which do neither.
+"""Census every way the image names DPL or DPH in a byte-addressed `direct`
+operand, and say which of them rebuild DPTR, which read it, and which do
+neither.
 
 Issue #1027 asked for the census its own numbers implied and did not run: the
-store forms against `0x82`/`0x83` are `trace_xdata_refs.is_dptr_rebuild()`'s
+store forms against `0x82`/`0x83` were `trace_xdata_refs.is_dptr_rebuild()`'s
 list, and the *read* forms -- `mov a,0x82`, `mov r5,0x82`, `push 0x82` -- had
 never been counted anywhere in the tree, though the discriminator between the
 two directions is exactly the thing a sweep that searches rendered text gets
@@ -16,11 +17,19 @@ rather than this file's.** `mov 0x82,<src>` writes DPTR's low byte and
 (`0xF5` against `0xE5`, `0x75` against `0xA8`-`0xAF`, `0xD0` against `0xC0`),
 and only the byte says which is which. One 8051 form breaks the pattern
 inside itself: `mov direct,direct` (`0x85`) names its **source** first and its
-destination second, so the byte this file keys on is `d[i+2]` there and
-`d[i+1]` everywhere else. That is the distinction
-`walk_budget_census.dptr_store_byte()` already makes, so it is delegated to
-rather than written a second time -- a third copy of the same operand index is
-the kind of thing that gets one of them wrong later.
+destination second, so the byte this file keys on for the store is `d[i+2]`
+there and `d[i+1]` everywhere else. That is the distinction
+`walk_budget_census.dptr_store_byte()` already makes, so the store half is
+delegated to rather than written a second time -- a third copy of the same
+operand index is the kind of thing that gets one of them wrong later.
+
+**`0x85` is in two buckets because one instruction is two references.**
+`85 83 f0` is `mov B,DPH`: it reads DPH and writes B, so its source is a
+read-form reference and its destination is not a DPTR write at all. Classifying
+the instruction by its store half alone drops those four references in this
+image -- `form_at()` therefore returns *every* reference an instruction makes,
+and the two halves need not agree, because `85 82 82` would read and write the
+same byte.
 
 **This is a byte census, not a disassembly.** Every offset is examined rather
 than every instruction boundary, because this tool has no way to know where
@@ -41,24 +50,37 @@ method over this file, and calling it an absence is the overclaim
 `../../CLAUDE.md`'s calibration rule exists to prevent. It is not a claim that
 the firmware cannot contain the form.
 
-**Three buckets, and the third is not a rounding error.** `store` is every
-construction `is_dptr_rebuild()` names -- the forms that replace the pointer
-or one of its bytes. `read` is a load of one of the two bytes into A, an
-Rn or the stack, which rebuilds nothing and must not be swept in with the
-stores. `in place` is `anl`/`orl`/`xrl direct`, `inc`/`dec direct` and
-`xch a,direct`, which name DPL or DPH, change it, and replace neither; the
-guard declines all of them for a stated reason
-(`../../docs/findings/dptr-rebuild-walk-guard.md` §3), and a bucket that did
-not exist would let that decision read as an absence rather than as a
-choice.
+**Three buckets, and the third is not a rounding error.** `store` is the
+form that replaces the pointer or one of its bytes -- every construction
+`is_dptr_rebuild()` names, plus the two `mov direct,@Ri` forms it does not,
+which `../../docs/findings/dptr-rebuild-walk-guard.md` §3 records as a gap
+in the guard rather than a decision in it. `read` is a load of one of the
+two bytes into A, an Rn, an indirect cell or the stack, which rebuilds
+nothing and must not be swept in with the stores. `in place` is the
+arithmetic, logical, `inc`/`dec`, `clr`, `djnz` and `xch` group, which name
+DPL or DPH, change it, and replace neither; the guard declines all of them
+for a stated reason (`../../docs/findings/dptr-rebuild-walk-guard.md` §3),
+and a bucket that did not exist would let that decision read as an absence
+rather than as a choice.
 
-**Not counted, and named rather than left out silently.** The bit-addressed
-forms (`mov bit,C`, `orl C,bit`, `anl C,bit`, `setb`/`clr` bit) take a *bit*
-address, where `0x82` is the low byte of SFR `0x88` and not DPL at all, so a
-sweep that counted them would be counting a different address under the same
-spelling. `mov DPTR,#imm16` (`0x90`) is the one construction that replaces the
-pointer and names no `direct` operand, so it appears in none of the three
-tables. Both are facts about this file's keying, not about the 8051.
+**The three tables are the whole byte-addressed `direct` map, and the one
+class left out is named rather than left out silently.** The MCS-51 has 54
+opcodes whose operand is a byte address, and every one of them is in one of
+these three tables; `test_dptr_rebuild_forms.py` holds their union against
+that map written out a second time, because a hand-written list that is
+merely *nearly* complete reads exactly like a complete one. The cross-check
+that did exist, over all 256 opcodes, could not be that oracle: it held the
+*store* table to `is_dptr_rebuild()`, which omitted the same two opcodes and
+so agreed on exactly the rows that were wrong, and it never looked at the
+read or in-place tables at all. The excluded class is the bit-addressed forms
+(`0x0A`/`0x2A`/`0x4A`/`0x5A`/`0x6A`/`0x72`/`0x7A`/`0x82`/`0x92`/`0xA0`/`0xA2`/
+`0xB0`/`0xB2`/`0xC1`/`0xD2`, and the three `jb`/`jnb`/`jbc` rows), which take
+a *bit* address where `0x82` is the low byte of SFR `0x88` and not DPL at all,
+so a sweep that counted them would be counting a different address under the
+same spelling. `mov DPTR,#imm16` (`0x90`) is the one construction that
+replaces the pointer and names no `direct` operand, so it appears in none of
+the three tables. Both exclusions are facts about this file's keying, not
+about the 8051.
 
 **Nothing here is a claim about the EC.** Every input is a committed file.
 No register was read back, no capture opened, no hardware or Windows
@@ -93,26 +115,51 @@ DEFAULT_FIRMWARE = os.path.join(HERE, os.pardir, "firmware", "GMxMGxx_11.800")
 STORE_FORMS = dict(
     [(0x75, "mov  direct,#imm"),
      (0x85, "mov  direct,direct"),
+     (0x86, "mov  direct,@r0"),
+     (0x87, "mov  direct,@r1"),
      (0xD0, "pop  direct"),
      (0xF5, "mov  direct,a")]
     + [(op, "mov  direct,r%u" % (op - 0x88)) for op in range(0x88, 0x90)])
 READ_FORMS = dict(
-    [(0xE5, "mov  a,direct"),
-     (0xC0, "push direct")]
+    [(0x25, "add  a,direct"),
+     (0x27, "addc a,direct"),
+     (0x2C, "xrl  a,direct"),
+     (0x35, "addc a,direct"),
+     (0x3D, "orl  a,direct"),
+     (0x85, "mov  direct,direct"),
+     (0x95, "subb a,direct"),
+     (0xA6, "mov  @r0,direct"),
+     (0xA7, "mov  @r1,direct"),
+     (0xB5, "cjne a,direct,rel"),
+     (0xC0, "push direct"),
+     (0xE5, "mov  a,direct")]
     + [(op, "mov  r%u,direct" % (op - 0xA8)) for op in range(0xA8, 0xB0)])
 IN_PLACE_FORMS = {
     0x05: "inc  direct",          0x15: "dec  direct",
+    0x26: "add  direct,a",        0x2D: "xrl  direct,a",
+    0x36: "addc direct,a",        0x3E: "orl  direct,a",
+    # `0x42`/`0x52`/`0x62` are the `#data2` spellings of the `0x44`/`0x54`/
+    # `0x64` below: the same byte-addressed operand in the same position, a
+    # longer immediate this census never reads. They are listed apart only so
+    # the six do not read as one opcode repeated six times.
+    0x3F: "orl  direct,#imm",     0x42: "orl  direct,#imm2",
     0x44: "orl  direct,#imm",     0x45: "orl  direct,a",
-    0x54: "anl  direct,#imm",     0x55: "anl  direct,a",
+    0x52: "anl  direct,#imm2",    0x54: "anl  direct,#imm",
+    0x55: "anl  direct,a",        0x62: "xrl  direct,#imm2",
     0x64: "xrl  direct,#imm",     0x65: "xrl  direct,a",
-    0xC5: "xch  a,direct",
+    0x96: "subb direct,#imm",     0x97: "subb direct,a",
+    0xC2: "clr  direct",          0xC5: "xch  a,direct",
+    0xD5: "djnz direct,rel",
 }
 BUCKETS = (("store", STORE_FORMS,
-            "every construction `is_dptr_rebuild()` names: it replaces DPTR or "
-            "one of its two bytes"),
+            "it replaces DPTR or one of its two bytes -- every construction "
+            "`is_dptr_rebuild()` names, and the two `mov direct,@Ri` forms it "
+            "does not, which dptr-rebuild-walk-guard.md §3 records as a gap "
+            "in the guard rather than a decision in it"),
            ("read", READ_FORMS,
             "the other side of the operand order -- it loads one of the two "
-            "bytes, so it rebuilds nothing and ends no window"),
+            "bytes, so it rebuilds nothing and ends no window; `0x85` is here "
+            "as well as in `store`, because it is both at once"),
            ("in place", IN_PLACE_FORMS,
             "names DPL/DPH and changes it in place rather than replacing it; "
             "the guard declines all of these for the reason in "
@@ -128,33 +175,38 @@ def repo_path(path: str) -> str:
 
 
 def form_at(d: bytes, off: int):
-    """`(bucket, opcode, byte)` for the instruction at `d[off]`, else None.
+    """Every `(bucket, opcode, byte)` the instruction at `d[off]` names.
 
-    The byte is the one the form names, not the one a first operand read
-    would return: for `mov direct,direct` that is `d[off+2]`, and the call is
-    delegated to `walk_budget_census.dptr_store_byte()` so this file holds no
-    second opinion about which half of DPTR an instruction touched.
+    A list, and empty rather than None when the instruction is not a form,
+    because the list is the honest shape: `mov direct,direct` is a read of its
+    source *and* a store of its destination at one instruction, so a return
+    value that can carry only one of them has to drop the other. In
+    instruction operand order, which for `0x85` is source first.
+
+    The store half's byte is the one the form writes, not the one a first
+    operand read would return, and the call is delegated to
+    `walk_budget_census.dptr_store_byte()` so this file holds no second
+    opinion about which half of DPTR an instruction touched. The read half is
+    `d[off+1]` for every form in the three tables including `0x85`, so the
+    two delegates are complementary rather than two answers to one question.
     """
     op = d[off]
-    if op in STORE_FORMS:
-        # Two bytes carry the operand for every store form except `0x85`,
-        # whose destination is its second operand, and a form whose operand
-        # byte is past the end of the buffer is not a form at all -- the same
-        # bounds discipline `is_dptr_rebuild()` applies, and the reason this
-        # sweep can run to the last offset of the file.
+    if op in STORE_FORMS or op in READ_FORMS or op in IN_PLACE_FORMS:
+        # Two bytes carry the operand for every form in the three tables
+        # except `0x85`, whose destination is its second operand, and a form
+        # whose operand byte is past the end of the buffer is not a form at
+        # all -- the same bounds discipline `is_dptr_rebuild()` applies, and
+        # the reason this sweep can run to the last offset of the file.
         need = 2 if op != MOV_DIRECT_DIRECT else 3
         if off + need > len(d):
-            return None
-        return ("store", op, dptr_store_byte(d[off:off + need]))
-    if op in READ_FORMS or op in IN_PLACE_FORMS:
-        # `mov a,direct`, `mov rN,direct`, `push direct` and the whole
-        # in-place group name their one operand at d[off+1], and none of them
-        # is the `0x85` exception.
-        if off + 2 > len(d):
-            return None
-        bucket = "read" if op in READ_FORMS else "in place"
-        return (bucket, op, d[off + 1])
-    return None
+            return []
+        if op == MOV_DIRECT_DIRECT:
+            return [("read", op, d[off + 1]),
+                    ("store", op, dptr_store_byte(d[off:off + need]))]
+        bucket = ("store" if op in STORE_FORMS else
+                  "read" if op in READ_FORMS else "in place")
+        return [(bucket, op, d[off + 1])]
+    return []
 
 
 def census(d: bytes):
@@ -171,12 +223,9 @@ def census(d: bytes):
     found = collections.defaultdict(
         lambda: collections.defaultdict(collections.Counter))
     for off in range(len(d)):
-        hit = form_at(d, off)
-        if hit is None:
-            continue
-        bucket, op, byte = hit
-        if byte in (DPL, DPH):
-            found[bucket][op][byte] += 1
+        for bucket, op, byte in form_at(d, off):
+            if byte in (DPL, DPH):
+                found[bucket][op][byte] += 1
     return found
 
 
@@ -228,11 +277,12 @@ def print_summary(found) -> None:
         "\nEvery figure above is a byte census over every offset of the file, "
         "not a disassembly:\nthey include bytes that are data, table entries "
         "and the separate PD 8051 image, so read\nthem as found by this method "
-        "and not as a count of executed instructions. What is\nabsent from the "
-        "three tables is absent from this file's keying, which is a fact\nabout "
-        "the keying and not about the 8051: the bit-addressed forms take a bit\n"
-        "address, where 0x82 is the low byte of SFR 0x88 rather than DPL, and "
-        "`mov DPTR,#imm16`\n(0x90) names no direct operand at all.")
+        "and not as a count of executed instructions. The three tables\nare "
+        "the whole MCS-51 map of byte-addressed direct operands. Two classes\n"
+        "are out of them, and both are out because of this file's keying "
+        "rather than\nbecause of the 8051: the bit-addressed forms take a bit "
+        "address, where 0x82 is\nthe low byte of SFR 0x88 rather than DPL, and "
+        "`mov DPTR,#imm16` (0x90) names no direct operand at\nall.")
 
 
 def main() -> int:

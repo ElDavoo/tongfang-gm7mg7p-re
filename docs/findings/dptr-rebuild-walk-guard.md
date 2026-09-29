@@ -207,6 +207,23 @@ oversight. All of these are held as negative cases in
 named test rather than a silent one. **The broader reading is a follow-up
 issue.**
 
+**And one form the guard does not stop which is not a decision at all.**
+`mov direct,@Ri` (`0x86`/`0x87`) replaces DPTR's byte by exactly the
+argument every form in `DIRECT_STORE_OPS` replaces it by, and neither
+`is_dptr_rebuild()` nor the list above names it. That is an oversight rather
+than a reading of the word "reloaded", and it is recorded here rather than
+fixed here because widening the guard is a different change with a different
+census behind it -- the same argument as the paragraph above, arrived at from
+the other side. The measurement side is already done:
+[`dptr-guard-census-vs-1027.md`](dptr-guard-census-vs-1027.md) §3 counts the
+form and finds 11 byte pairs over the committed image, **all 11 of them
+mid-instruction** -- each is the middle and last byte of an `lcall 0x8782` --
+so no window this guard actually walks is affected today. That is a fact
+about this image and not a reason to leave the list wrong:
+`ec/tools/dptr_rebuild_forms.py` counts the form anyway, and
+`test_dptr_rebuild_forms.py` holds the difference between the two opcodes
+lists as `GUARD_GAP_OPS` so the census is not quietly inheriting it.
+
 ## 4. A second, narrower copy of the list, and the class that emptied
 
 `ec/tools/walk_budget_census.py` carried its own
