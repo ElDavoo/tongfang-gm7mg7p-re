@@ -21,12 +21,13 @@ The interesting half is the declined records. `census()` returns a path for
 every pin that resolves and `None` for every pin it declines -- the fence rule
 declines before resolution runs -- so the declined column is the one file
 `place()` has to do arithmetic for, and the cases below are that arithmetic: a
-`grep -rn` transcript's `./` prefix normalised away, a bare module name answered
-by the census's index, two files of one name refused, and a path nowhere in the
-tree landing in a *named* bucket rather than being repaired into the file that
-happens to share its base name. That last one is the case a basename fallback
-would fail, and it is here because a fallback is the obvious way to make the
-table's totals reconcile.
+`grep -rn` transcript's `./` prefix normalised away, a `../`-relative spelling
+answered beside the file that wrote it, a bare module name answered by the
+census's index, two files of one name refused, and a path nowhere in the tree
+landing in a *named* bucket rather than being repaired into the file that happens
+to share its base name. That last one is the case a basename fallback would
+fail, and it is here because a fallback is the obvious way to make the table's
+totals reconcile.
 
 The fixtures are small enough to write inline, so each case reads as the reading
 it is about. They are not the real pins, but they are the real shapes -- the
@@ -169,6 +170,83 @@ class ChargeTests(unittest.TestCase):
         counted, buckets = by_file(root)
         self.assertEqual(buckets, [])
         self.assertEqual(counted["ec/tools/test_a.py"][census.DECLINED], 1)
+
+    def test_a_declined_relative_path_that_resolves_beside_the_citing_file_is_charged_there(self):
+        # The census's second reading, which `place()` had none of: a `../tools/…`
+        # spelling is how a page writes its own neighbour, so a tree-only reading
+        # reports sound pins as files that are not in the tree, and `unresolved`
+        # is a statement about a directory walk this file can make a second one of.
+        # The fence is what makes the record this file's to place at all -- the
+        # census declined it before resolution ran, and the first fenced transcript
+        # of either live sentence is the record the two readings disagree on.
+        #
+        # **The citing file is nested on purpose.** A root-level `a.md` has an
+        # empty `dirname`, the join is the identity, `beside` is `normalised`, and
+        # the case would pass for the wrong reason -- by the no-answer path below.
+        # It is `d/a.md` writing `../tools/…`, which is `tools/…` beside it.
+        root = tree({"d/a.md": "```\n`../tools/test_a.py:1`\n```\n",
+                     "tools/test_a.py": "one\n"})
+        counted, buckets = by_file(root)
+        self.assertEqual(buckets, [])
+        self.assertEqual(counted, {"tools/test_a.py": {
+            census.RESOLVES: 0, census.OUT_OF_RANGE: 0, census.DECLINED: 1}})
+        # `report()` prints `how` only beside a bucket row, so a *placed* record's
+        # reading never reaches the output and is asserted from `place()` itself.
+        # The census suite reads the same field off its own records for the same
+        # reason, and the bucket stays `declined` either way: the census declined
+        # this record before resolution ran, so which file it would have resolved
+        # to is a different fact from what it did with it.
+        records, _files = census.census(root)
+        files, index = census.suites(root)
+        bucket, path, how = tool.place(records[0], files, index)
+        self.assertEqual((bucket, path), (census.DECLINED, "tools/test_a.py"))
+        self.assertIn(census.BY_BESIDE, how)
+
+    def test_the_tree_wins_when_a_beside_candidate_would_also_resolve(self):
+        # Not a choice between two files that both exist. A page that wrote a path
+        # the tree has meant that one, and the beside reading is for the page that
+        # wrote a path the tree does not have -- which is why the retry sits *after*
+        # the `normalised in files` check and this case is what holds it there.
+        # `test_census_test_line_pins.py` holds the same property of the census;
+        # keeping it here is what stops a later reordering from turning the
+        # fallback into a preference.
+        root = tree({"d/a.md": "```\n`ec/tools/test_a.py:1`\n```\n",
+                     "d/ec/tools/test_a.py": "beside\n",
+                     "ec/tools/test_a.py": "in the tree\n"})
+        counted, buckets = by_file(root)
+        self.assertEqual(buckets, [])
+        self.assertEqual(list(counted), ["ec/tools/test_a.py"])
+        records, _files = census.census(root)
+        files, index = census.suites(root)
+        _bucket, _path, how = tool.place(records[0], files, index)
+        self.assertIn(census.BY_PATH, how)
+
+    def test_a_declined_relative_path_with_no_beside_answer_is_still_unresolved(self):
+        # The other half of the case above, and the one that says the retry is a
+        # reading rather than a repair under a new name. The same spelling from the
+        # same nested citing file, with no file of that candidate beside it, fails
+        # the gate exactly as a wrong prefix does.
+        #
+        # `ec/tools/test_a.py` is in the tree on purpose: the base-name hint then
+        # names it, so the row says what the record would have been charged to had
+        # it been repaired, and the repair still does not happen. The two
+        # assertions this case must not break are the ones holding the
+        # `unresolved-path` message on the two cases below it -- "not repaired",
+        # and the file of that name named in the row.
+        root = tree({"d/a.md": "```\n`../tools/test_a.py:1`\n```\n",
+                     "ec/tools/test_a.py": "one\n"})
+        counted, buckets = by_file(root)
+        self.assertEqual(counted, {})
+        self.assertEqual([b[0] for b in buckets], [census.UNRESOLVED])
+        # The candidate that was tried, by value rather than by the words around
+        # it: a wrong directory prefix and a deleted file look identical from this
+        # row and have opposite fixes, and the beside candidate is the one a
+        # reader cannot derive from the spelling alone.
+        beside = os.path.normpath(os.path.join("d", "../tools/test_a.py"))
+        self.assertIn(repr(beside), buckets[0][3])
+        self.assertIn("beside the citing file", buckets[0][3])
+        self.assertIn("not repaired", buckets[0][3])
+        self.assertIn("ec/tools/test_a.py", buckets[0][3])
 
     def test_a_declined_bare_module_name_is_charged_by_name(self):
         # The counterpart of the ambiguity case below. Without it a resolver that
@@ -378,18 +456,21 @@ class ReconcileTests(unittest.TestCase):
     """
 
     # One resolving by-path pin, one out-of-range, two resolving by name, and
-    # three fenced records: one whose `./` prefix normalises away, one whose path
-    # is nowhere, and one bare name two files could answer to. Every column and
-    # both buckets, in one tree.
+    # four fenced records: one whose `./` prefix normalises away, one `../`
+    # spelling resolved beside the nested file that wrote it, one whose path is
+    # nowhere, and one bare name two files could answer to. Every column and both
+    # buckets, in one tree.
     FIXTURE = {"a.md": "`ec/tools/test_a.py:1` and `ec/tools/test_b.py:9`\n"
                         "and `test_b.py:2` and `test_c.py:1`\n"
                         "```\n`./ec/tools/test_a.py:3`\n`tools/test_gone.py:1`\n"
                         "`test_d.py:1`\n```\n",
+               "d/b.md": "```\n`../tools/test_e.py:1`\n```\n",
                "ec/tools/test_a.py": "one\ntwo\nthree\n",
                "ec/tools/test_b.py": "one\ntwo\n",
                "ec/tools/test_c.py": "one\n",
                "ec/tools/test_d.py": "one\n",
-               "tools/test_d.py": "other\n"}
+               "tools/test_d.py": "other\n",
+               "tools/test_e.py": "one\n"}
 
     def read(self, root):
         """({verdict: column total}, buckets, census counts, records) for `root`."""
