@@ -5200,11 +5200,11 @@ class ReadbackNoticeTests(unittest.TestCase):
 #
 # Appended at the end of the file for the reason the comment above
 # `ReadbackNoticeTests` gives, and the same load-bearing reason: 21 line
-# numbers across five write-ups and 12 rows of the per-pin table in
-# `docs/findings/test-line-pin-census.md` cite into this file below
-# `GradeTests`, and inserting anywhere else moves all of them onto the wrong
-# line without changing a word of the sentences citing them. Placement is all
-# that costs, and appending costs none.
+# numbers across five write-ups, and the per-pin table in
+# `docs/findings/test-line-pin-census.md` on top of them, cite into this file
+# below `GradeTests`, and inserting anywhere else moves all of them onto the
+# wrong line without changing a word of the sentences citing them. Placement is
+# all that costs, and appending costs none.
 #
 # Nothing here asserts a count of the tree or of this suite, for the reason
 # CLAUDE.md gives: each test asserts the claim its own fixture is about --
@@ -5319,6 +5319,44 @@ class MarkSplitBoundaryTests(unittest.TestCase):
             paths.append(str(path))
         return paths
 
+    def straddled(self, tmp, offsets):
+        """§6's three captures with the *first* action's three marks held at
+        explicit per-console `offsets` seconds from the first capture's.
+
+        `staggered` moves all three actions together, and because the
+        captures' marks stay in the same order every gap it makes is a
+        forward one, so the before side of a window is never the far one. The
+        sign of the distance is the whole of what this builder exists to
+        reach: `boundary_marks` records `m.ts - w.ts`, which is negative for
+        a mark the window looks *back* to, and a console that marked before
+        the window is the same distance as one that marked after it.
+
+        The later actions are left where the committed fixture has them, so
+        the first action splits the day and the rest fuses, and the two can
+        be told apart in the report by which sentence they got.
+        """
+        base = self.base_marks()
+        paths = []
+        for n, path in enumerate(RUN_CAPTURES):
+            rows, seen = [], 0
+            for line in Path(path).read_text(encoding="utf-8").splitlines():
+                at = self.MARK_ROW.match(line)
+                if at is None:
+                    rows.append(line)
+                    continue
+                ts = base[seen]
+                if seen == 0:
+                    ts = base[0] + grade.datetime.timedelta(
+                        seconds=offsets[n])
+                seen += 1
+                rows.append(ts.isoformat(timespec="milliseconds")
+                            + ",MARK,," + at.group(2))
+            copy = Path(tmp) / f"console-{n}.csv"
+            copy.write_text("".join(row + "\n" for row in rows),
+                            encoding="utf-8")
+            paths.append(str(copy))
+        return paths
+
     def marks_of(self, paths):
         """Every mark in `paths`, read the way the report reads them."""
         return [m for path in paths for m in grade.read_capture(path)[0]]
@@ -5342,8 +5380,13 @@ class MarkSplitBoundaryTests(unittest.TestCase):
         self.assertNotIn(self.MISSED_IT, out)
         self.assertIn(self.REDO, flat)
         # The instruction that replaces the search-for-an-exited-watcher: the
-        # distance and what to do about it, on the window itself.
-        self.assertIn('console-1.csv at 7.0s, console-2.csv at 14.0s', flat)
+        # distance and what to do about it, on the window itself. Magnitude
+        # and a side word, as the census's own line formats it -- a bare
+        # signed `-7.0s` in prose is the defect
+        # `test_a_mark_further_off_before_the_window_is_not_named_close` is
+        # about, one display over from the same root.
+        self.assertIn('console-1.csv at 7.0s after, console-2.csv at 14.0s '
+                      'after', flat)
         self.assertIn(f'within {grade.MARK_SPLIT_SECONDS:g}s of the others',
                       flat)
 
@@ -5397,6 +5440,37 @@ class MarkSplitBoundaryTests(unittest.TestCase):
         # rather than by which sentence they happened to get: one names the
         # distance and the fix, the other names the search.
         self.assertNotIn('just outside the', flat)
+
+    def test_a_mark_further_off_before_the_window_is_not_named_close(self):
+        # `MARK_SPLIT_SECONDS` is a distance, so it bounds the magnitude of
+        # the gap and not its sign. `boundary_marks` records `m.ts - w.ts`,
+        # which is negative for a mark a window looks *back* to, and a signed
+        # compare let a console that marked 20 s early past a 15 s bound --
+        # the report then told the operator to mark within 15 s of the others
+        # while naming the one that was 20 s out. The mutation pin: putting
+        # the `abs()` back reddens this.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(*self.straddled(tmp, {0: 0.0, 1: 7.0, 2: 20.0}))
+        self.assertEqual(rc, 1)
+        flat = " ".join(out.split())
+        # The third console's mark is 20 s from the first's, so every window
+        # that is short it a mark for is more than the threshold away and the
+        # existing sentence -- the one that is true about a capture that
+        # missed it -- stands instead of the split arm.
+        self.assertIn(self.MISSED_IT, flat)
+        # The sentence is printed once, and it is the second window's: that
+        # one's gaps are 7 s and 13 s, which is inside the bound, so naming
+        # the timing there is what the second arm is for. A fix that dropped
+        # the bound's near side along with its far side would print nothing.
+        self.assertEqual(flat.count(self.REDO), 1)
+        self.assertIn('just outside the', flat)
+        # The near side names its distance with a side word rather than a
+        # bare negative: `console-0.csv at 7.0s before`, not `-7.0s`. The
+        # census has always formatted it that way; the window sentence did
+        # not, and a signed number in prose asks the reader to do the sign
+        # arithmetic to learn which side of the mark the console marked on.
+        self.assertIn('console-0.csv at 7.0s before', flat)
+        self.assertNotRegex(flat, r'at -\d')
 
     def test_naming_the_timing_moved_no_verdict_on_the_split_day(self):
         # "A report and not a refusal" is already spent on the gap, so this

@@ -2201,12 +2201,22 @@ def split_mark_gaps(w, names, by_source):
     `by_source` is the caller's own grouping of this window's marks, so both
     readers ask the same question of the same rows and cannot disagree about
     which capture is absent.
+
+    The threshold is a **distance**, so it is compared against the magnitude:
+    `boundary_marks` records `m.ts - w.ts`, which is negative for a mark on
+    the *before* side of this window's mark, and `-20.0 > 15.0` is false. A
+    console that marked 20 s early is outside the 15 s this sentence tells
+    the operator to stay inside, so on a signed compare it passed a bound it
+    breaks, and the report named it as one of the consoles that came close.
+    The signed value is what comes back, because the readers say which side
+    of the mark the mark fell on.
     """
     absent = [p for p in names if p not in by_source]
     if not absent:
         return {}
     near = {m.source: seconds for m, seconds in w.boundary_gaps}
-    if any(p not in near or near[p] > MARK_SPLIT_SECONDS for p in absent):
+    if any(p not in near or abs(near[p]) > MARK_SPLIT_SECONDS
+           for p in absent):
         return {}
     return {p: near[p] for p in absent}
 
@@ -2249,8 +2259,15 @@ def window_mark_problems(w, names, known):
         absent = [os.path.basename(p) for p in names if p not in by_source]
         split = split_mark_gaps(w, names, by_source)
         if split:
-            how = ", ".join(f"{os.path.basename(p)} at {d:.1f}s"
-                            for p, d in split.items())
+            # Magnitude and a side word, the way the census's own line under a
+            # capture formats it. The distance is signed, and a sentence
+            # reading `console-0.csv at -7.0s` puts a bare negative in prose
+            # where the reader has to do the sign arithmetic to learn which
+            # side of the mark the console marked on.
+            how = ", ".join(
+                f"{os.path.basename(p)} at {abs(d):.1f}s "
+                f"{'after' if d > 0 else 'before'}"
+                for p, d in split.items())
             problems.append(("missing", w, (
                 f"recorded in {len(by_source)} of {len(names)} capture(s), "
                 f"absent from {', '.join(absent)} -- and every one of them "
@@ -2529,9 +2546,11 @@ def span_note(w):
     if w.span >= SPAN_CEILING_SECONDS:
         why = (f"this window ran {w.span:.1f}s, at or above the "
                f"{SPAN_CEILING_SECONDS:g}s the three watchers are started "
-               f"with. A capture records no suspend, so the likeliest way a "
-               f"window runs that long is a freeze the rows do not cover, and "
-               f"every row after it is filed in here")
+               f"with. The watchers are started without `--auto-mark`, so "
+               f"nothing in a §3 capture names a suspend that happened in it, "
+               f"and a freeze the rows do not cover is the likeliest way a "
+               f"window runs that long -- a guess, not a reading, and every "
+               f"row after the gap is filed in here")
     elif w.span_is_bound or w.span >= SPAN_FLOOR_SECONDS:
         return []
     else:
