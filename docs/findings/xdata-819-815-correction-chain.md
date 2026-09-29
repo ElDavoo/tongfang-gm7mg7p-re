@@ -154,9 +154,14 @@ resolved.** The bullet's `tools/run-tests.sh` half says *"is not in CI"*, and
 `.github/workflows/agent-conflicts.yml` runs `bash tools/run-tests.sh` after
 resolving a conflict. So that half is not literally true either, while what the
 bullet reaches for — that no gate the tree's green or red turns on runs the whole
-suite — is, and `#162` is still open for it. **Which of the two the sentence
-means is a question about a closed write-up, and it is the same question this
-decision is about, not a smaller one that can be answered beside it.** Nothing
+suite — is. **`#162` is closed**, and `docs/agent-pipeline.md:607-618` records it
+as that issue's `(2026-09-23, issue #162)` landing the runner *deliberately not
+the gate call*; [`citation-gap-scan.md`](citation-gap-scan.md)'s **Corrected
+2026-09-25, issue #679** block has drawn the consequence since it was written —
+the wiring is owned by no open issue, not by `#162`. **Which of the two the
+sentence means is a question about a closed write-up, and it is the same
+question this decision is about, not a smaller one that can be answered beside
+it.** Nothing
 here claims the workflow refutes the bullet; it is named because a decision that
 rests on "one half of it is still true" has to notice that it is not.
 

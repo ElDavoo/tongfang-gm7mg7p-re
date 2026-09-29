@@ -321,8 +321,8 @@ committed CSVs and not a re-derivation of the 32 and 6.
   A template-copied file and a deliberate decision, both owned elsewhere. *(The
   `--self-test` half of that decision has since been taken by #823, `244c992b`,
   which wired the mode in and rewrote the comment giving the reason; `tools/run-tests.sh`
-  is still unwired and #162 is still open for it. Recorded rather than edited,
-  per the same reason as the table above.)*
+  is still unwired and #162 is closed, so that half is owned by no open issue.
+  Recorded rather than edited, per the same reason as the table above.)*
 - **`tools/README.md` (#817), `xdata-no-eq-guard-refusal-contract.md` (#816),
   and the dated sections named in the table above.** Recorded, not edited:
   editing a closed PR's write-up or an already-dated section is rewriting a
