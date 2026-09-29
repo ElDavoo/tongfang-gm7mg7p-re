@@ -1104,6 +1104,24 @@ fixed here.
 > gate still declines to run the mode on a reason that is now stale; the
 > measurement is in
 > [`../../docs/findings/xdata-green-set.md`](../../docs/findings/xdata-green-set.md).
+>
+> **(Correction, 2026-09-28, issue #836) — the closing sentence above is
+> answered by the same landing, and is left as it was written.** **"The
+> `--self-test` half is `#815`'s, and the gate still declines to run the mode
+> on a reason that is now stale"** is false on both halves now, and the reason
+> is the one the correction above gives: `#815` was decided and landed as
+> #823, so there is no open decision left to hand on, and the arm that
+> correction names by its content runs `--check` and `--self-test` under a
+> comment opening *"`--self-test` used to be deliberately not run, and the
+> reason it gave is no longer true"* — the mode is wired, and the reason is
+> not stale but cleared, and recorded as cleared. **Nothing in the rest of
+> this block moves:** #504's figures stay standing as the record of what it
+> left behind, and the 0-difference result this paragraph rests on is
+> unchanged. This is a second phrasing of the sentence the correction above
+> answers rather than a second finding, which is why it is answered in one
+> paragraph instead of two. Its census entry, and the boundary the census
+> draws, are in
+> [`../../docs/findings/xdata-819-815-correction-chain.md`](../../docs/findings/xdata-819-815-correction-chain.md).
 
 The issue's own "`0x08A8` is recorded as 84 reads / 44 writes / 42 read+write,
 and 42 of its comparisons are `==`" is a second, independent misreading:

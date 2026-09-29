@@ -3,8 +3,8 @@
 The write-up for [issue
 #836](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/836), about a
 correction that asserted a gate state and left a decision open, both of which
-have since been settled. What this branch changes is two dated paragraphs
-beside those sentences and this file. **No tool, no CSV, no YAML, no suite and
+have since been settled. What this branch changes is a dated block beside each
+false sentence, and this file. **No tool, no CSV, no YAML, no suite and
 no gate script is edited** — the whole content is that eleven line pins in this
 chain no longer name the sentences they are about, and that one disagreement
 between two write-ups now has a written answer.
@@ -84,6 +84,25 @@ concurrent branch is as likely to be editing, and a pin that is named is a
 follow-up rather than a silent merge conflict. That is a scope decision and it is
 recorded as one.
 
+**One sentence in this chain is corrected and is deliberately not a row of that
+table, because nothing in it has drifted: there is no line number in it to
+drift.** The same file this branch already corrects carries a *second* `#819`
+blockquote — headed *"the same claim in a second phrasing, and the same
+answer"* — whose closing sentence, **"The `--self-test` half is `#815`'s, and
+the gate still declines to run the mode on a reason that is now stale"**, hands
+the reader the same open deferral this write-up says has been answered. Left
+alone it would have stood as a second `#819` claim about one decision carrying
+the opposite correction beside it, in the file this branch is editing, which is
+the defect the issue is filed about. It was found by
+`git grep -n -e "still declines" -e "does not wire the mode" -e "#815's to
+decide"` over the chain's own files — the same method the table above used, run
+as a text search rather than as a pin walk, because a pin census cannot reach a
+sentence that names no pin — and it is corrected by a second dated paragraph
+inside that blockquote, which cross-references the first rather than restating
+it. **A census of pins and a list of what was corrected are two different sets,
+and the two do not coincide**: the boundary below is stated over the first, and
+neither here claims to be the second.
+
 **Row 11 is the one pin in this list this branch moved itself, and the table above
 is transcribed on the merged tree rather than on the tree this branch was written
 on.** Appending the `#836` correction to `ec/annotations/xdata-06c2-06db-timers.md`
@@ -96,7 +115,8 @@ pins into the timers file —
 `xdata-cluster-names-guard-off-recipe.md:138` → `:952`,
 `xdata-census-self-test-gate.md:218` → `:972-973` and
 `xdata-green-set.md:392` → `:973` — puts every one of them that is not this row's
-at `:952` or above: above the append, and unmoved by it. The
+at `:952` or above: above both dated blocks this branch appends to that file,
+and unmoved by either. The
 pin in `xdata-census-self-test-gate.md` is itself left alone, being in the file
 rows 9–11 say is not edited here, so a reader checking it there should shift it by
 the same 27 lines. **That is the drift this census measures, reproduced by the
@@ -120,7 +140,14 @@ numbers. The boundary is explicit: it covers the pins naming sentences in the
 [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md)'s **A `file:line` check, of
 a kind this tree did not have** already records that nothing mechanical held a pin
 in this repository before that issue, so treat an unlisted pin as *not found by
-this method* rather than as correct.
+this method* rather than as correct. The same holds a line looser for the
+*other* direction, and this is the boundary's other half: the walk finds pins,
+so it cannot find a sentence in this chain that **asserts a gate state or an
+open decision while naming no line at all** — nothing for it to have drifted,
+and therefore no row, however false it is. One did, and it is named and
+corrected in the paragraph above rather than counted here. A chain that holds
+no uncounted sentence is a claim about a text search over the chain's own
+files, not about this table, and the two are not the same kind of evidence.
 
 ## The recorded decision
 
@@ -261,6 +288,7 @@ this issue:
 $ git grep -n "genuinely not" -- ec/annotations/
 $ git grep -n "that is #815's to decide" -- ec/annotations/
 $ git grep -n "deliberateness is unchanged" -- docs/findings/
+$ git grep -n "gate still declines" -- ec/annotations/
 ```
 
 The first pattern is two words where the phrase it stands for is five, and on
@@ -273,6 +301,12 @@ five-word form now prints this branch's own correction at `:1026` once, and the
 two-word form that file twice, at `:1013` and `:1026`. The correction quotes the
 sentence inline instead of across a break, so the wrap argument is about the
 original and holds of it, not of the sentence quoting it.
+
+The `"gate still declines"` pattern is the pinless sentence, and it is the one
+grep in this block that is how it was found: three words out of a sentence,
+printing both the false sentence and the dated paragraph that answers it, side
+by side in one range. No pin in either names the other, which is the whole
+reason the walk above could not have reached it.
 
 And that the decision is findable by text rather than by pin:
 
