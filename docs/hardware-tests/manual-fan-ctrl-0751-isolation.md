@@ -697,7 +697,10 @@ For each run, from the three CSVs plus the by-hand power readings:
    whether it does.
 6. **Does `0x0751` still hold your value at the end of the window**, or did
    something put it back? Compare the block's `*-before-0700.txt` and
-   `*-after-0700.txt` dumps (§6).
+   `*-after-0700.txt` dumps (§6). A section that ends without either of the
+   two answers names the precondition it was missing — the last `--dump` not
+   reaching `0x0751`, or nothing naming the value that was written — so read
+   that line before quoting the section as an answer.
 
 A run where *nothing* moves is a real result and should be recorded as one:
 it would mean a Linux driver has to write the whole bundle, which is the
@@ -910,7 +913,11 @@ own name, takes §4.6's readback from the last dump *of the block being
 graded*, and names that block in the section. A `--block 0x10` run handed the
 `a0` dumps says they belong to 0xA0 and takes no readback from them, rather
 than putting 0xA0's byte under 0x10's windows. Where a dump's name carries no
-value, the run falls back to `--block`/`--wrote` and says which it used.
+value, the run falls back to `--block`/`--wrote` and says which it used. Where
+neither the name nor a flag carries one, no block is named at all and the
+comparison against the write is not taken: the byte is still printed, and the
+section ends by saying that the comparison was not taken and naming the flag
+that takes it.
 
 The same rule covers the whole-block report, and it has to: a `--dump-pair`
 bracket is wider than a window and answers the same question, so a pair

@@ -64,7 +64,11 @@ several and the window report is still worth printing, where every section of
 this report is about the captures. And §4.6 is a coverage statement before it
 is a comparison -- when the last `--dump` does not cover `0x0751` the section
 says the readback was not taken, and names a `--dump-pair` that does cover
-it, whose after file is what §6 says to pass last. None of the three is a
+it, whose after file is what §6 says to pass last. The other precondition is
+stated on the same terms: when no file name and neither flag names the value
+that was written, the comparison has nothing to be against and the section
+says that too, on the dumps alone, because no file can stand in for a number
+the way one can stand in for a missing dump. None of the three is a
 claim about the machine; each is a claim about which files were handed in.
 
 One thing is read that is not a byte at all: §3's per-block integrity check.
@@ -2916,6 +2920,18 @@ def report_readback(here, wrote, pairs, value, marker=""):
     were still read; a block being `void` says the capture is short a mark,
     not that these bytes were never in evidence. The marker itself is
     already on the group line above and is not repeated here.
+
+    Two preconditions stand between these dumps and that sentence, and this
+    is where each one that is missing is said. The first is that the block's
+    last dump holds `0x0751` at all; the notice above covers that one, and a
+    `--dump-pair` can be named in its place because a file can stand in for
+    a missing file. The second is that something names the value that was
+    written -- the block's own, off a §6 file name, or off `--wrote` or
+    `--block` -- and no file can stand in for a number, so that notice is
+    printed on the dumps alone, whether or not a pair was given. When both
+    are missing the two notices print together: they are two independent
+    facts, and the second conditioned on the first would make the tail of
+    the section depend on a condition the reader cannot see.
     """
     if here[-1][1].get(MANUAL_FAN_CTRL) is None:
         print(f"  the last --dump does not cover 0x{MANUAL_FAN_CTRL:04X}, so "
@@ -2931,6 +2947,18 @@ def report_readback(here, wrote, pairs, value, marker=""):
                 break
     written = value if value is not None else wrote
     if written is None:
+        # The other precondition, and the same kind of fact as the coverage
+        # notice above: a claim about which files and which numbers were
+        # handed in. Not gated on `pairs` as that one is, because a pair can
+        # stand in for a missing --dump and not for a missing value -- and not
+        # gated on it having printed either, for the reason the docstring
+        # gives. The group line above has already said the files carry no
+        # block; that is an attribution, and this is the comparison, which is
+        # a different thing to have been left out.
+        print("  nothing here names the value that was written, so the §4.6 "
+              "readback was not taken -- no §6 <value> in these files' names, "
+              "and neither --wrote nor --block on the command line. Pass "
+              "--wrote 0xNN to take it; --block names a value too.")
         return
     if wrote is not None and value is not None and wrote != value:
         print(f"  these dumps are named for block 0x{value:02X} but --wrote "

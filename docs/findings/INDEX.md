@@ -26,6 +26,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) — Which process wrote this mark: a fifth column measured against a `# provenance` row (issue #719)
 - [`0751-notice-two-moments.md`](0751-notice-two-moments.md) — The 0751 startup notice described two moments as one (issue #749)
 - [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md) — The two path-taking readers are kept, and their docstrings name their callers (issue #771)
+- [`0751-readback-written-value-notice.md`](0751-readback-written-value-notice.md) — §4.6's second precondition, stated when nothing names the value that was written (issue #387)
 - [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md) — §3's three unlabelled mark rounds were a fourth class of mark, and the block model had no place for them (issue #472)
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
