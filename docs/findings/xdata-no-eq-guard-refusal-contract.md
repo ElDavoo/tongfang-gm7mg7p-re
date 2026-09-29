@@ -135,6 +135,24 @@ than going unmocked.
   > assumed away. The write-up is
   > [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md).
 
+> **Corrected 2026-09-29, issue #694.** The clause above naming the attribute
+> boundary "asserted rather than assumed away" over-claims, and it is left
+> standing with this beside it per §4a-4d rather than edited. The reader it
+> described — `mode_attributes` — then filtered by `MODES`, so it reported
+> nothing for a tenth mode dispatched attribute-qualified: that mode is not in
+> `MODES`, which is what makes it a tenth. Measured on synthetic source, both
+> readers answer `[]` to `return xrm.demo_mode(args)`, and the case asserting
+> `[]` was green. What was asserted was narrower and is still true: no name
+> *already in* `MODES` is reached as an attribute on the committed tree. The
+> reader is now the residue of the committed `main()`'s six benign attribute
+> calls, so the set it reports does not move when a mode is added, with a
+> derived guard holding that the benign set names nothing the tool itself
+> defines. Write-up:
+> [`xdata-attribute-dispatch-boundary.md`](xdata-attribute-dispatch-boundary.md).
+> This says nothing about a mode reached through a **wrapper** — that edge is
+> argued in `xdata-dispatch-tripwire-coverage.md` rather than measured, and
+> issue #694 does not close it.
+
 ## Shown to fail, not merely shown to pass
 
 A green suite proves nothing on its own, so each guard was broken in a scratch
