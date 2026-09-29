@@ -4099,7 +4099,16 @@ rows against 10,141 markers, 7.5 s for the whole check. The markers are keyed on
 address now and each row is a dict lookup. The defect was invisible in the
 output — the distinct-file count the check prints says 5 either way — so
 `--self-test` pins the **shape** of the per-file container, reading it back out
-of the module and asserting it is a dict keyed on address.
+of the module and asserting it is a dict keyed on address. **Two of the three
+copies of this check now carry that guard, and the third has no guard because
+it has nothing to scan:** Windows (`{address: {names}}`) and BIOS (a 2-tuple of
+two keyed sets) both hold a collection per `.c` and both assert its shape,
+while the EC's is a `(addr, name)` pair of scalars from one `readline()`, because
+`ec/decompiled/<program>/<addr>.c` is one function per file — a guard there
+would assert what is true by construction. The two keyed shapes are not the
+same shape, and deliberately so: a BIOS row's name is matched against the whole
+file rather than at its address, which is what the 171 figure below measures.
+`docs/findings/presence-check-container-shape.md`.
 
 A wall-clock assertion was tried first and **would not have caught it**: the
 quadratic form takes 0.18 s on that self-test's 2,000-row fixture, far inside

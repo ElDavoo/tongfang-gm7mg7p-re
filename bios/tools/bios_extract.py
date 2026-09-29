@@ -1432,6 +1432,44 @@ def index_structure_problems(index_rows, listing_rows):
 BIOS_C_SEPARATOR = re.compile(r"^// ==== (\S+) @ ([0-9A-Fa-f]+)[ \t]*$", re.M)
 
 
+def _c_markers(path):
+    """The `// ==== <name> @ <addr>` separators one `.c` declares, as
+    ({ADDRESS_UPPER, ...}, {name, ...}), or None if it is missing, unreadable,
+    or declares none.
+
+    A function in its own right rather than an inline block inside
+    c_presence_problems, because the SHAPE of the return value is a property
+    `--self-test` asserts: findall hands over a flat list of (name, addr)
+    pairs, and a row compared against that with a linear `in` is quadratic in
+    the size of the module -- Setup.c declares 293 of them. Two sets, keyed,
+    because the row is compared against two different columns.
+
+    NOT the Windows copy's shape, and the difference is not incidental. That
+    one is {address: {names}}, because a Windows row has to match one of the
+    names declared AT its address. Here a name is matched against the file as
+    a whole -- a name is a column of the row, and which separator produced it
+    is not recorded -- so the two columns are independent sets. Keying names
+    per address would redefine "a name match" and move the 171-of-955 figure
+    the caller reports. Both shapes are keyed, which is the half that matters
+    to §14a; that they are not the same shape is recorded rather than implied
+    away.
+
+    An explicit `is None`, not `or None`: a 2-tuple is always truthy, so
+    `x or None` never fired and a .c that exists, carries no separator at all
+    and is not empty was reported as "declares no function at <addr>" -- a
+    wrong-function export, which is a different and wrong accusation than "no
+    separator".
+    """
+    try:
+        with open(path, errors="replace") as f:
+            text = f.read()
+    except OSError:
+        return None
+    found = BIOS_C_SEPARATOR.findall(text)
+    return None if not found else (
+        {a.upper() for _n, a in found}, {n for n, _a in found})
+
+
 def c_presence_problems(index_rows, decompiled_dir):
     """Every index row's `.c` exists, is non-empty, and declares the address the
     index gives it.
@@ -1472,26 +1510,7 @@ def c_presence_problems(index_rows, decompiled_dir):
         if rel not in declared:
             path = os.path.join(decompiled_dir, rel)
             read.add(rel)
-            try:
-                with open(path, errors="replace") as f:
-                    text = f.read()
-            except OSError:
-                declared[rel] = None
-            else:
-                # findall yields (name, addr) pairs, in the separator's own
-                # order. Stored as two sets because they are compared against
-                # two different columns of the row, and both are keyed lookups
-                # rather than scans -- the 293-function module is the reason
-                # (setup_module's rows against a linear `in` would be quadratic
-                # in the size of the module).
-                found = BIOS_C_SEPARATOR.findall(text)
-                # An explicit `is None` test, not `or None`: a 2-tuple is always
-                # truthy, so `x or None` never fired and a .c that exists,
-                # carries no separator at all and is not empty was reported as
-                # "declares no function at <addr>" -- a wrong-function export,
-                # which is a different and wrong accusation than "no separator".
-                declared[rel] = None if not found else (
-                    {a.upper() for _n, a in found}, {n for n, _a in found})
+            declared[rel] = _c_markers(path)
         got = declared[rel]
         where = "index row %s %s" % (row.get("program", "?"), row.get("addr", "?"))
         if got is None:
@@ -1864,6 +1883,47 @@ def self_test():
         _p, _r, _n, _nm = c_presence_problems(_rows * 1000, _d)
         check("1,000 index rows naming one .c read it once, not 1,000 times",
               not _p and _r == 1, "%d read(s), %s" % (_r, _p[:1]))
+        # The other half of the same shape, which the fixture above cannot see
+        # because its file holds one marker. Reading a file once per row is
+        # only half of §14a; the other half is scanning a COLLECTION once per
+        # row, and a per-row linear `in` over Setup.c's 293 separators is
+        # quadratic in the size of the module.
+        #
+        # 300 markers, and the count is a literal rather than len() of the
+        # largest committed .c: pinning 293 would make a value every re-export
+        # has to edit, which is the shape of assertion that stops being checked
+        # the first time it is inconvenient. 300 is a full-size module for this
+        # tree -- Setup.c, at 293, is the largest -- so the two forms are
+        # genuinely different computations rather than the same one written
+        # twice.
+        #
+        # Pinned STRUCTURALLY, not by wall clock, for the reason §14j records
+        # at length for the Windows copy of this guard: a timing bound loose
+        # enough not to be flaky is loose enough to pass the regression it was
+        # written for. What distinguishes a keyed container from a scan is the
+        # CONTAINER, so that is what is asserted, by reading _c_markers() back
+        # out of the module. A scan-per-row implementation fails here on any
+        # machine, in milliseconds, and costs nothing to carry.
+        with open(_c, "w") as f:
+            for i in range(300):
+                _a = "%08X" % (0x200 + 8 * i)
+                f.write("// ==== FUN_%s @ %s\n" % (_a, _a))
+        _rows_m = [{"program": "DxeOverClock", "addr": "%08X" % (0x200 + 8 * i),
+                    "name": "FUN_%08X" % (0x200 + 8 * i),
+                    "out_file": "DxeOverClock.c"} for i in range(300)]
+        # Uppercase addresses throughout, because that is what the committed
+        # .c carry, so a lower-case fixture would fail on a case difference
+        # instead of on the container and pass for the wrong reason.
+        _p, _r, _n, _nm = c_presence_problems(_rows_m, _d)
+        check("300 index rows against 300 declared functions all pair",
+              not _p and _r == 1, "%d row(s), %d read(s), %s"
+              % (_n, _r, _p[:1]))
+        _markers = _c_markers(_c)
+        check("the per-file marker container is a 2-tuple of two keyed sets, so a "
+              "row is a lookup and not a scan of every declared function",
+              isinstance(_markers, tuple) and len(_markers) == 2
+              and all(isinstance(s, set) and len(s) == 300 for s in _markers),
+              "type %s" % (type(_markers).__name__,))
 
         # The committed tree, so the coverage figures --check reports are
         # measured here and not only in its output.
