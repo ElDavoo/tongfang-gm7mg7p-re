@@ -19,7 +19,10 @@ change, which is why this one needed a note and that one did not.
 
 ## The failure, re-measured on committed inputs
 
-No hardware, no Windows, no Ghidra. `python3` and the committed 256 KiB image:
+No hardware, no Windows, no Ghidra. `python3` and the committed 256 KiB image.
+**The transcript below was measured before this change**, which is the state it
+describes. At the commit this write-up lands on, the same command *also* prints
+the new note on stderr, and *Reproducing it* runs it again as it is now:
 
 ```sh
 $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 0x0751 --csv \
@@ -123,8 +126,9 @@ Three properties make it cheap and safe:
   it, not a figure any later change has to update.
 - **The column test is exact membership, not a substring.**
   `walk-budget-census.csv` carries `terminator_at_budget` and
-  `terminator_at_extend`; a `"terminator" in header` substring test would fire
-  on it and name a cell the file does not have.
+  `terminator_at_extend`; a substring test over the joined header would fire
+  on it and name a cell the file does not have. The test is membership in the
+  header list, so it does not.
 - **The whole scan is skipped whenever `--check` is given**, which the issue
   requires. On that path the old note is the only one that prints, and
   `test_trace_xdata_refs_usage.py` asserts the old note appears exactly once
@@ -224,8 +228,11 @@ census defect the expected behaviour.
   in and requiring the two stdouts to match.
 - **No exit code moved.** A note is not a status.
 - **No register claim.** `ec/annotations/registers.yaml` is untouched, and
-  `docs/findings.md` is not edited at all: the write-up is reachable from
-  `docs/findings/INDEX.md` and from the tool's own docstring.
+  `docs/findings.md` is not edited at all, per its frozen rule: this file is
+  the whole of the finding. It is reachable from `docs/findings/INDEX.md`, from
+  `tools/README.md`'s row for the new suite, and from that suite's module
+  docstring — and not from the tool's own docstring, which names the flag and
+  the two terminator censuses but not this write-up.
 - **No hardware, no Windows, no Ghidra.** Every command below reads a committed
   file. Nothing here is evidence about the EC.
 
