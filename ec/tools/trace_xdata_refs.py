@@ -140,10 +140,12 @@ def is_dptr_rebuild(d: bytes, i: int) -> bool:
     in fact another's. `0xE372` and `0xDE8E` are the two the `.asm` listings
     settle, in `../../docs/findings/dptr-rebuild-walk-guard.md`.
 
-    **Keyed on bytes, never on the mnemonic.** `mnemonic()` renders the
-    `0x54`/`0x55`/`0x64`/`0x65` group as A-operand forms -- `0x54` prints
-    `anl a,#0x82` where the 8051 has `anl direct,#imm` -- so a text-matching
-    guard would be wrong on exactly the in-place-modify instructions below.
+    **Keyed on bytes, never on the mnemonic.** `mnemonic()` has no spelling
+    for the `direct,A` / `direct,#data` rows -- `0x53` prints `db 0x53` where
+    the 8051 masks DPL -- so a text-matching guard would be blind on exactly
+    the in-place-modify instructions below. It is right about the accumulator
+    half of the same logical group: `0x54` prints `anl a,#0x82`, which is
+    `anl a,#data` and what the machine executes.
 
     **What is deliberately not here.** The instructions that *modify* DPTR in
     place rather than replace it: `anl`/`orl`/`xrl direct,#imm`, `inc 0x82`,
