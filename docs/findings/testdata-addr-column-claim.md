@@ -147,7 +147,16 @@ drop.** A date resolving only to `.txt` files contributes no column, and that is
 exactly the row-6/row-8 shape. The dated block already prints the file set —
 `(6 capture(s) under evidence/ec-watch)` — and it becomes `(6 capture(s) under
 evidence/ec-watch, 2 with an addr column)`. That is one clause in an existing
-line, not a seventh entry in the closed shape list. The shape list stays closed
+line, ~~not a seventh entry in the closed shape list~~ **and the second half
+of that is now wrong, while the first half is not. The count clause is still
+one clause, and the shape list stayed closed; what #990 added is that the
+*verdict* has an entry of its own, `dated capture has no addr column` — a date
+resolving to a columnless set is not checked, rather than called `missing` on a
+file that has no column to check it in. The reason this sentence gave for
+staying out of the list, "a fact about a *file set* is not a fact about a
+literal's spelling", was right about the count and silent about the verdict,
+and a claim that is not checked needs a reason to print. See
+`testdata-row-claims-no-addr-column.md`.** The shape list stays closed
 on purpose (its docstring: "a sixth shape appearing in the tree is a change to
 this docstring, not an invitation to add a regex"), and a fact about a *file
 set* is not a fact about a literal's spelling.

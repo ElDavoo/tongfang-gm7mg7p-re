@@ -166,6 +166,20 @@ class ScratchIndex:
         """An `ecrw.py dump` capture: text, with no column to read."""
         return self.write(rel, text, root=self.captures)
 
+    def columnless_capture(self, rel):
+        """A `.csv` capture whose header names no `addr` column.
+
+        The other way a date's file set comes to have nothing to read, and the
+        one an extension test cannot see: the file ends in `.csv` and carries
+        no column, so the `.txt` shape beside it is not the whole of the
+        state. The body is a real change log under a `ts,note` header, which
+        is what makes the shape reachable at all rather than a header with
+        nothing under it.
+        """
+        return self.write(rel, "ts,note\n"
+                                "2026-01-01T12:02:00,window opened\n",
+                          root=self.captures)
+
     def check(self):
         """The tool's `Result` for this scratch tree.
 
@@ -815,6 +829,16 @@ class TheDatedClaimIsHeldToTheColumn(ScratchIndex, unittest.TestCase):
     read would pass row 7's committed claims either way, because there the two
     readings agree, and the only thing that separates them is a capture that
     names an address somewhere a text search finds it and a column does not.
+
+    **The dated set has three states and the third was not anticipated.** A
+    date can resolve to a set with an `addr` column, to `ecrw.py dump` output
+    with no column at all, or -- the one that separates the first two by
+    something other than the file extension -- to a `.csv` whose header names
+    no column. The first is a real check; the other two are a real refusal, and
+    which of them it is decides the figure the dated block prints beside the
+    file count. The `resolved` control is kept throughout: a reader that
+    refused every dated claim, or every set containing a columnless file,
+    would pass the two refusal cases and is caught here.
     """
 
     SENTENCE = ("is the shape the 2026-09-23 power-mode-cycle capture shows, "
@@ -850,10 +874,14 @@ class TheDatedClaimIsHeldToTheColumn(ScratchIndex, unittest.TestCase):
 
     def test_a_txt_only_date_reports_that_it_has_no_column_to_read(self):
         # A date can resolve to `ecrw.py dump` output alone, and then the
-        # columnar read has nothing to ask. That is the row 6 and row 8 shape,
-        # and it is a fact about the *file set* rather than about any
-        # literal's spelling, so it is reported on the file-count line beside
-        # the count and not added to the closed shape list.
+        # columnar read has nothing to ask. That is the row 6 and row 8 shape.
+        # It used to be a *fact about the file set* with no verdict of its own
+        # -- printed on the file-count line and left out of the closed shape
+        # list -- and the literal came out `missing` while the block said the
+        # set had no column. The two disagreed, and the `missing` was the
+        # false half: the dump carries `0x0F58` in its text, so nothing here
+        # disagrees with the index. Hence `unresolved`, and a reason a reader
+        # can see rather than a clause they have to connect to a verdict.
         self.dated_row("0x0F58")
         self.txt_capture("2026-09-23-dump.txt", "0x0F58: 0x00 -> 0x6e\n")
         out = io.StringIO()
@@ -862,6 +890,66 @@ class TheDatedClaimIsHeldToTheColumn(ScratchIndex, unittest.TestCase):
         block = out.getvalue()
         self.assertIn("2026-09-23-* (1 capture(s)", block)
         self.assertIn(", 0 with an addr column)", block)
+        self.assertEqual(self.verdicts(), {"0x0F58": "unresolved"})
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(ctrc.report(self.check()), 0)
+        self.assertIn("not checked -- dated capture has no addr column",
+                      err.getvalue())
+        self.assertIn("not absent", err.getvalue())
+
+    def test_a_csv_with_no_addr_column_leaves_the_dated_claim_not_checked(self):
+        # The same verdict reached the other way, and the one an extension
+        # test cannot see: the file ends in `.csv` and carries no column, so
+        # the count beside the file count was `1 with an addr column` -- a
+        # figure about the corpus's spelling rather than about the column the
+        # read then walked. Held on the number as well as the verdict, since
+        # the number is the thing a reader of the block would take away.
+        self.dated_row("0x0F58")
+        self.columnless_capture("2026-09-23-note.csv")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ctrc.dated_report(self.check())
+        self.assertIn(", 0 with an addr column)", out.getvalue())
+        self.assertEqual(self.verdicts(), {"0x0F58": "unresolved"})
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(ctrc.report(self.check()), 0)
+
+    def test_a_columnless_csv_beside_one_with_the_column_does_not_refuse_the_claim(self):
+        # The control in its sharpest form, and what makes the case above
+        # unfalsifiable by a blunt rule. The condition is about the file
+        # *set* and not about the file, so a `.ts,note` log sitting beside a
+        # capture that has the row is not a refusal -- the set has a column to
+        # ask, the row is in it, and the claim is resolved. A reader that
+        # refused every set containing a columnless file fails here while
+        # passing both cases above, which is the whole of what the pair buys.
+        self.dated_row("0x0F58")
+        self.columnless_capture("2026-09-23-a-note.csv")
+        self.capture("2026-09-23-cycle-0f00-0f5f.csv", 0x0F58)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ctrc.dated_report(self.check())
+        self.assertIn(", 1 with an addr column)", out.getvalue())
+        self.assertEqual(self.verdicts(), {"0x0F58": "resolved"})
+
+    def test_a_dated_shape_still_wins_over_the_no_column_refusal(self):
+        # The precedence, and the reason the helper is called only where
+        # `reason_for()` returned `None`. A page-aligned bound the sentence
+        # calls a capture is a page whatever the date resolved to, and the
+        # date's file set having no column is not a reason to stop reading
+        # how the sentence is written. **Nothing else holds this**: every
+        # other shape case in the suite is undated, so `about_capture` is
+        # false and the new reason is unreachable in all of them -- without
+        # this case the ordering is a sentence in a docstring, and it could
+        # invert silently.
+        self.set("example.csv", 0x0F5D)
+        self.row("example.csv", "is the shape the 2026-09-23 `0x0F00` "
+                                "capture shows, where they track `0x0F58`.")
+        self.txt_capture("2026-09-23-dump.txt", "0x0F00-0x0F5f swept\n")
+        self.assertEqual(self.shapes(), {"0x0F00": "capture/window bound",
+                                         "0x0F58": "dated capture has no "
+                                         "addr column"})
+        self.assertEqual(self.verdicts()["0x0F58"], "unresolved")
 
     def test_the_rule_is_load_bearing_rather_than_asserted_to_be(self):
         # The refusal, in the form the suite uses elsewhere: put the wrong
@@ -880,6 +968,24 @@ class TheDatedClaimIsHeldToTheColumn(ScratchIndex, unittest.TestCase):
                 "reverting the dated claim to the textual read satisfies a "
                 "claim the capture has no row for, so this case would not "
                 "have failed before the rule and does now")
+
+    def test_the_no_column_refusal_is_load_bearing_rather_than_asserted_to_be(self):
+        # The same drop-it-in-turn form for the new reason, and the same
+        # flip. Patched where it is *defined* rather than at either of its
+        # two uses, so one patch reaches both -- answering yes for every file
+        # takes the refusal out of the verdict and puts the columnar read back
+        # in, and the `.txt` dump that carries the address in its text then
+        # reads as a disagreement. A refusal that stopped changing the answer
+        # would have stopped mattering, and nothing else here would notice.
+        self.dated_row("0x0F58")
+        self.txt_capture("2026-09-23-dump.txt", "0x0F58: 0x00 -> 0x6e\n")
+        with mock.patch.object(ctrc, "has_addr_column", lambda path: True):
+            self.assertEqual(
+                self.verdicts(), {"0x0F58": "missing"},
+                "claiming every file in the set has the column puts the "
+                "columnar read back in, and the dump has no `addr` row for "
+                "the address whatever its text says, so the case above would "
+                "not have failed before the refusal and does now")
 
 
 class EachRuleIsLoadBearing(unittest.TestCase):
@@ -908,9 +1014,10 @@ class EachRuleIsLoadBearing(unittest.TestCase):
     `0x07D7` really are in the file row 11 names, `0x0750`/`0x0010` in the
     dumps row 22 names, and `0x888D` in the fixture header row 8 names. What
     dropping those rules does is under-report, which is what the assertion is
-    about. The two entries of `ctrc.DATED_REFUSALS` -- a capture that resolved
-    to nothing and a sentence naming two of them -- have no instance in the
-    committed tree at all, so each is pinned in a scratch case instead. **The
+    about. The entries of `ctrc.DATED_REFUSALS` -- a capture that resolved
+    to nothing, a sentence naming two of them, and a file set with no column
+    to read in -- have no instance in the committed tree at all, so each is
+    pinned in a scratch case instead. **The
     multi-date rule is not dropped here and cannot be**: loosening it needs a
     two-date sentence, and the committed index has none for the shape to be
     exercised on. The scratch cases are the pinning, which is why this class's
@@ -1194,8 +1301,8 @@ class TheCommittedTree(unittest.TestCase):
 
     def test_the_difference_names_a_reason_the_run_never_exercised(self):
         # The first direction, from an input the committed tree cannot
-        # produce. The case above reaches the same branch for the two dated
-        # refusals, but the tree can only ever reach those two, so what is
+        # produce. The case above reaches the same branch for the dated
+        # refusals, but the tree can only ever reach those, so what is
         # pinned here is the branch: a reason with an instance elsewhere in the
         # list is named, not counted, when nothing in this run exercises it.
         seen = ("capture/window bound", "denial") + ctrc.DATED_REFUSALS

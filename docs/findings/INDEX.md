@@ -129,6 +129,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md) — The testdata-index suite asserted three integers the tree happens to hold today (issue #744)
 - [`testdata-row-claims-dated-capture.md`](testdata-row-claims-dated-capture.md) — A bare date in the testdata index's third column is resolved, and its literals are checked (issue #794)
 - [`testdata-row-claims-multi-date-sentence.md`](testdata-row-claims-multi-date-sentence.md) — A sentence naming two dated captures is refused whole, and not read from the first (issue #979)
+- [`testdata-row-claims-no-addr-column.md`](testdata-row-claims-no-addr-column.md) — A dated claim whose file set has no `addr` column is not checked, and `with_column()` counts columns rather than extensions (issue #990)
 - [`testdata-row-claims-repair-measurement.md`](testdata-row-claims-repair-measurement.md) — What the two testdata checkers do over a hand-repair's pre-repair tree (issue #978)
 - [`testdata-row-claims-report-naming.md`](testdata-row-claims-report-naming.md) — The carrier, the searched root, and the two file sets are named, and the closing sentence stops reading the same either way (issue #974)
 - [`testdata-row-claims-shape-list-source.md`](testdata-row-claims-shape-list-source.md) — The testdata row-claims shape list has one source, and the summary line reads it rather than restating it (issue #998)
