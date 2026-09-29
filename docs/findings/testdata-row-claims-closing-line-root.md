@@ -22,9 +22,9 @@ whose §(b) is the capture-root half of this one.
 `closing_line()` ended its f-string with `repo_path(INDEX)` where `INDEX` is
 `check_testdata_index.py`'s module constant — the committed
 `ec/tools/testdata/README.md` — while `check()` takes `root=` as a parameter
-(`check_testdata_row_claims.py:794`) and passes it to `row_files()` and to
-`files_for()`. `Result` carried `captures` and not `root`
-(`:400`), so nothing on the object held the tree the run had actually read.
+(`check_testdata_row_claims.py:887`) and passes it to `row_files()` (`:946`),
+the reader that calls `files_for()` (`:561`). `Result` carried `captures` and
+not `root`, so nothing on the object held the tree the run had actually read.
 
 Pointing the check at a scratch tree printed the committed path for it:
 
@@ -50,9 +50,9 @@ green run can show and no reader of the output can see.
 ## What the fix is, and what it is not
 
 `Result` gains `root` as its **last** field, after `captures`
-(`check_testdata_row_claims.py:400`), and `check()` passes the `root` it was
-handed (`:883`). `closing_line()` builds the label from it (`:1080`). The file
-name itself is now the module constant `INDEX_NAME` (`:282`) rather than a
+(`check_testdata_row_claims.py:430`), and `check()` passes the `root` it was
+handed (`:1006`). `closing_line()` builds the label from it (`:1203`). The file
+name itself is now the module constant `INDEX_NAME` (`:312`) rather than a
 second literal in `check()` and a third in the f-string, so the reader that
 opens the index and the reader that names it build the same path from one
 spelling.
@@ -116,10 +116,21 @@ that the change moved no output, and it is a relation between two values the
 code derives — a label and a path — rather than a count of the tree, so a row
 added to the index next month does not redden it.
 
-Neither case pins a number. The suite's existing case that the two readings of
-the committed tree cannot be told apart compares the text before `"-- "` across
-two runs, so it fails if the label moves either way; and the case that the two
-per-set counts sum to `checked` reads the counts half only, so it is untouched.
+Neither case pins a number, and one existing case is easy to over-read here.
+`test_the_committed_tree_cannot_tell_the_two_readings_apart` compares the text
+before `"-- "` across two runs of the *same* committed tree, so what it holds
+is that the two readings agree about the wording, and not one word about where
+the label points. It reddens if their wording diverges, and it is blind to a
+label that moves in both — measured, not assumed: dropping the
+repository-relative prefix from `closing_line()` leaves it green, because both
+of its labels lose the same prefix and the equality still holds. What holds "no
+output moved" against a label that moves in both is
+`test_the_closing_line_still_labels_the_committed_index`, which compares one
+run's label against the committed index rather than two labels against each
+other, and which that same prefix-dropping does redden. The stdout/stderr diff
+measured in the first section is the other half of it, and that is a capture
+rather than an assertion at all. The case that the two per-set counts sum to
+`checked` reads the counts half only, so it is untouched.
 
 ## What is left open
 

@@ -721,9 +721,11 @@ class SkipsDeliberately(ScratchIndex, unittest.TestCase):
         # The scratch root is named through `repo_path()` for the reason the
         # case above is: `closing_line()` reports repository-relative, and a
         # scratch root is reached as a chain of `..` out of the repository.
-        # What distinguishes the two labels is the scratch directory's own
-        # name, and both roots end in `testdata`, so the negative below is
-        # what carries the case rather than the positive.
+        # The positive is what carries the case: it is the assertion that goes
+        # red under either way of getting the root wrong. The negative is
+        # what tells the two labels apart -- both roots end in `testdata`, so
+        # only the scratch directory's own name separates them, and the pair
+        # together is what makes the positive unambiguous.
         self.assertIn(ctrc.repo_path(os.path.join(self.testdata,
                                                   ctrc.INDEX_NAME)), line)
         self.assertNotIn(ctrc.repo_path(ctdi.INDEX), line)
