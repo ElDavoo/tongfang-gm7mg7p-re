@@ -617,12 +617,19 @@ def committed_terminator_tables(directory: str, addrs) -> list:
 
     **The tables are found by a scan and never listed**, which is the whole
     point: a seventh committed table carrying the column needs no edit to any
-    file here, and no count of them appears in this source. What comes back is
-    a measurement over the tree in front of the tool, which is why a
-    directory that does not exist, or a `.csv` that cannot be read, is an empty
-    result rather than an error -- an unreadable committed table is
-    `check_table()`'s to report, and that is on the `--check` path, where the
-    reader is already being told.
+    file here. What comes back is a measurement over the tree in front of the
+    tool, which is why a directory that does not exist, or a `.csv` that
+    cannot be read, is an empty result rather than an error -- an unreadable
+    committed table is `check_table()`'s to report, and that is on the
+    `--check` path, where the reader is already being told.
+
+    **"Never listed" is a claim about the scan, not about this file.** Two
+    places in the prose here count the tables that carried the column when
+    they were written -- a line of `csv_table()`'s docstring, and the comment
+    over the `--check` note below. Both describe a past measurement, no code
+    reads either, and a seventh table makes one of them wrong without breaking
+    anything. Only the scan has to stay list-free, and only the scan decides
+    what a run says.
 
     **An empty result is not a verdict.** An address in no committed table, one
     in a table with no `terminator` column, and one where a *second* requested

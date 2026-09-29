@@ -121,9 +121,9 @@ because the second is the half that decides whether the advice gets read.
 Three properties make it cheap and safe:
 
 - **The tables are found by a scan and never listed.** A seventh committed table
-  carrying the column needs no edit to any file, and no count of them appears in
-  the tool's source. The census below is a measured run with its command beside
-  it, not a figure any later change has to update.
+  carrying the column needs no edit to `committed_terminator_tables()` or to any
+  test. The census below is a measured run with its command beside it, not a
+  figure any later change has to update.
 - **The column test is exact membership, not a substring.**
   `walk-budget-census.csv` carries `terminator_at_budget` and
   `terminator_at_extend`; a substring test over the joined header would fire
@@ -160,9 +160,16 @@ rather than decorative: `xdata-0400-045f-sites.csv` covers 57 addresses, so a
 reader asking for one of them and one other thing gets a table with no committed
 counterpart at all.
 
-**Six is a measurement, not a constant.** Nothing in the tool or the suite
-carries it, and the table above is a transcript of a run rather than a list
-anything maintains. Re-cutting a table moves it and the test that would notice
+**Six is a measurement, not a constant.** The scan holds no list of them, so
+the table above is a transcript of a run rather than a list anything maintains.
+The figure *is* written down in two places, both prose in
+`trace_xdata_refs.py` and both predating this issue — a line of
+`csv_table()`'s docstring, and the comment over the `--check` note below it.
+They record what was true where they were written, no code reads either, and a
+seventh table makes one of them stale without breaking anything. Only the scan
+has to stay list-free, and the suite holds that by finding a table the scan
+locates rather than by counting the tables it found. Re-cutting a table moves
+the measurement and the test that would notice
 is the one asserting that the note is *quiet* for 0x0860, which fails the day
 that table grows the column.
 

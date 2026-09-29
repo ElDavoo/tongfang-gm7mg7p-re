@@ -20,13 +20,15 @@ help string). Every case below is about the `Usage:` block specifically, and
 `UsageBlockTests.test_the_check_is_over_the_usage_block_and_not_the_docstring`
 is the case that says so.
 
-**The defect is load-bearing in the tool's own commands.** Six committed tables
+**The defect is load-bearing in the tool's own commands.** Committed tables
 carry a `terminator` column; a bare `--csv` run has none, so a diff against one
-is a line of "-" per row and nothing about why. `--check` has said so since
-`--terminator-column` landed, but only on the `--check` path, where the reader
-hands the tool the file to diff against. The `| diff -` command a reader
-actually writes has no such hand-off, and
-`docs/findings/csv-column-usage-advice.md` is the write-up.
+is a line of "-" per row and nothing about why. Which tables those are is a
+measurement over the committed tree rather than a figure kept here; the census
+and the command that produces it are in
+`docs/findings/csv-column-usage-advice.md`, which is also the write-up for this.
+`--check` has said so since `--terminator-column` landed, but only on the
+`--check` path, where the reader hands the tool the file to diff against. The
+`| diff -` command a reader actually writes has no such hand-off.
 
 **No hardware, no Ghidra, no network.** The firmware is the committed 256 KiB
 image and the tables are the committed `*.csv` files; six subprocesses over it
@@ -405,8 +407,8 @@ class CheckPathIsUnchangedTests(unittest.TestCase):
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertIn("reproduces it byte for byte", out.stdout)
         # The 0x086x table is the regression test that no `access` or `window`
-        # cell moved when the other six tables gained a column, and it can only
-        # stay that while the default output has no column in it.
+        # cell moved when the other `terminator` tables gained a column, and it
+        # can only stay that while the default output has no column in it.
         self.assertNotIn("terminator", out.stdout.splitlines()[0])
 
     def test_a_check_against_a_terminator_table_prints_the_old_note_once(self):
