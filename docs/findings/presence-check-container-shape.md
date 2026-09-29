@@ -42,10 +42,10 @@ branch acts on it by leaving the EC alone.
 The BIOS's largest module is `Setup.c` at 293 separators; `OemServiceSmm.c` is
 118 and `OverClockSmiHandler.c` is 41, over 955 rows naming 38 files. The
 Windows `ACPIDriverDll.c` declares 10,141 separators. The BIOS exposure is
-roughly a quarter of the Windows one in rows and a small fraction in the widest
-single scan — so **nothing here says a 5.4 s bug is sitting in the BIOS run
-today.** The claim is narrower: the BIOS had the identical unguarded shape, at a
-scale where the guard costs nothing to carry.
+roughly a tenth of the Windows one in rows (955 against 10,141) and roughly 3%
+in the widest single scan (293 against 10,141) — so **nothing here says a 5.4 s
+bug is sitting in the BIOS run today.** The claim is narrower: the BIOS had the
+identical unguarded shape, at a scale where the guard costs nothing to carry.
 
 ## The two keyed shapes are NOT the same shape, and this branch does not unify them
 
@@ -168,9 +168,9 @@ re-anchoring does now.
 At `HEAD` this suite is **already red**, on two unplaced pairs this change does
 not touch: `docs/agent-pipeline.md:409/419` and
 `0751-append-unchecked-marks.md:221/246`. The full suite's failure set is
-identical with and without this branch — 12 failures either way, the same 12
-names — so this is verified not to have made a pre-existing red redder. Those
-two pairs are somebody else's in flight and are left alone.
+identical with and without this branch — same failing test names, on both trees
+— so this is verified not to have made a pre-existing red redder. Those two
+pairs are somebody else's in flight and are left alone.
 
 ## What this opens
 
