@@ -4403,10 +4403,16 @@ def self_test(args) -> int:
     hand_keys = load_cluster_names()
     kept = len(committed_keys & own_keys)
     hand_kept = sum(1 for k in hand_keys if k in own_keys)
-    check(f"and the flip would renumber: {len(own_clusters)} clusters against "
-          f"the committed {len(committed_keys)}, {kept} of the committed "
-          f"cluster_keys surviving, {hand_kept} of the {len(hand_keys)} hand "
-          f"names in {os.path.relpath(NAMES_CSV, EC_DIR)} (got "
+    # The expected slot carries the three pinned figures and the `got` slot the
+    # measured ones, as the census-wide check above does. Printing the measured
+    # triple in both made a moved pin indistinguishable from a green run in
+    # every column -- the line read `440/400/4` and was marked FAIL, and the
+    # three numbers the check actually holds were the only ones not on it.
+    check(f"and the flip would renumber: {OWNERSHIP['clusters']} clusters "
+          f"against the committed {len(committed_keys)}, "
+          f"{OWNERSHIP['cluster_keys_kept']} of the committed cluster_keys "
+          f"surviving, {OWNERSHIP['hand_names_kept']} of the {len(hand_keys)} "
+          f"hand names in {os.path.relpath(NAMES_CSV, EC_DIR)} (got "
           f"{len(own_clusters)}/{kept}/{hand_kept})",
           len(own_clusters) == OWNERSHIP["clusters"]
           and kept == OWNERSHIP["cluster_keys_kept"]

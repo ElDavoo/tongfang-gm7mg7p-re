@@ -104,12 +104,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Hourly cron, five-hourly stall retries: a usage window takes about five hours to reset.
-          # Only a hand dispatch retries off the mark; the event-driven runs are as frequent as runs.
-          if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] && [ $(( 10#$(date -u +%H) % 5 )) -ne 0 ]; then
-            echo "not a five-hour mark — leaving stalled runs for the next one"
-            exit 0
-          fi
+          # A usage window takes about five hours to reset, so a stall is retried once its newest
+          # marker is five hours old. LOCAL CHANGE: this was a wall-clock gate (UTC hour % 5 == 0),
+          # and GitHub throttles this repository's hourly cron to a run every few hours at
+          # arbitrary minutes, so the gate was hit about once a day and stalled PRs sat idle.
+          # Measuring per issue makes every sweep that runs eligible. A hand dispatch skips the wait.
+          MIN_AGE=$(( 5 * 3600 ))
+          now=$(date -u +%s)
+          # ...and at most this many per sweep, so a backlog drains instead of re-running at once
+          # into the same usage limit that stalled it, which would spend every one's retries.
+          PER_SWEEP=3
+          rerun=0
 
           stalled=$(gh issue list --state open --label 'agent:stalled' --json number --jq '.[].number')
           if [ -z "$stalled" ]; then
@@ -118,6 +123,10 @@ jobs:
           fi
 
           for issue in $stalled; do
+            if [ "$rerun" -ge "$PER_SWEEP" ]; then
+              echo "re-ran $rerun this sweep — leaving the rest for the next one"
+              break
+            fi
             echo "::group::issue $issue"
 
             labels=$(gh issue view "$issue" --json labels --jq '[.labels[].name] | join(",")')
@@ -142,10 +151,16 @@ jobs:
             # are not legal in a GitHub username, so no human account can hold that login, and
             # user.type confirms it. gh issue view does not expose either field -- it reports the
             # login as plain `github-actions` -- so this goes through the REST API instead.
-            comments=$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/issues/${issue}/comments" \
+            raw=$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/issues/${issue}/comments" \
               | jq -c '[.[] | .[]
-                        | select(.user.login == "github-actions[bot]" and .user.type == "Bot")
-                        | .body]')
+                        | select(.user.login == "github-actions[bot]" and .user.type == "Bot")]')
+            comments=$(jq -c '[.[].body]' <<<"$raw")
+            stalled_at=$(jq -r '[.[] | select(.body | test("<!-- agent-stall run=")) | .created_at] | last // empty' <<<"$raw")
+            if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] && [ -n "$stalled_at" ] \
+               && [ $(( now - $(date -u -d "$stalled_at" +%s) )) -lt "$MIN_AGE" ]; then
+              echo "stalled at $stalled_at, under five hours ago — leaving for a later sweep"
+              echo "::endgroup::" ; continue
+            fi
             # capture emits nothing for a comment with no marker, so this is the list of stalls
             # in order. The last one is what to re-run; the count is of that stage's stalls only,
             # because every stage writes here and a flat count of the pile measures how eventful
@@ -205,6 +220,7 @@ jobs:
             gh issue edit "$issue" --remove-label 'agent:stalled'
             [ -n "$pr" ] && gh pr edit "$pr" --remove-label 'agent:stalled'
 
+            rerun=$(( rerun + 1 ))
             echo "re-running run $run_id — ${stage:-unnamed} stage, stall $attempts of $MAX_RETRIES"
             if ! gh run rerun "$run_id" --failed 2>&1; then
               # A run older than GitHub's re-run window, or one whose branch has gone. Nothing

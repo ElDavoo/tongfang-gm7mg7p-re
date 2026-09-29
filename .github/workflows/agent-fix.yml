@@ -344,6 +344,8 @@ jobs:
           # cannot be pushed by a token without `workflow` scope, and main moving during a run
           # is enough to cause that. Rebasing also keeps the round counter honest, since it
           # counts commits in origin/main..HEAD.
+          # LOCAL CHANGE: the helper regenerates docs/findings/INDEX.md when that is the only conflict.
+          # Read from main, not the working tree: a branch cut before the helper landed lacks it.
           git fetch --quiet origin main
-          git rebase origin/main
+          bash <(git show origin/main:.github/scripts/rebase-onto-main.sh)
           git push --force-with-lease origin "HEAD:agent/issue-${ISSUE}"
