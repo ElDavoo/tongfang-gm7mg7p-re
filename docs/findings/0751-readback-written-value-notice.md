@@ -31,21 +31,21 @@ each:
 
 | source | where it is read | what the report says |
 |---|---|---|
-| the block's own value, from the `<value>` in a §6 file name | `dump_block` (`:2663`) | `block 0xA0, from the <value> in these files' §6 names` |
-| `--wrote` | the command line, `:2856` | `from --block/--wrote; these files carry no <value> of their own` |
+| the block's own value, from the `<value>` in a §6 file name | `dump_block` (`:2755`) | `block 0xA0, from the <value> in these files' §6 names` |
+| `--wrote` | the command line, `:2948` | `from --block/--wrote; these files carry no <value> of their own` |
 | `--block` | the command line, via the same fallback | as above |
 
-What the branch looked like, at `report_readback` (`:2809`):
+What the branch looked like, at `report_readback` (`:2901`):
 
 ```python
-    if here[-1][1].get(MANUAL_FAN_CTRL) is None:      # :2844, the coverage half
+    if here[-1][1].get(MANUAL_FAN_CTRL) is None:      # :2936, the coverage half
         print("  the last --dump does not cover 0x0751, so the §4.6 readback "
               "was not taken -- ...")
         for before_path, after_path, before, after in pairs:
             ...
     written = value if value is not None else wrote
     if written is None:
-        return                                          # :2857, before this change
+        return                                          # :2949, before this change
 ```
 
 The first precondition is checked and stated. The second was checked and
@@ -167,22 +167,31 @@ The notice is inside `report_readback` rather than in `report_dumps`, so it
 fires only for the group the readback belongs to — a run over three blocks
 gets one notice for the block that needed it, not one per group — and it
 inherits `--block` scoping for free, since `report_dumps` has already skipped
-the groups of other blocks (`:2788-2793`) before calling in.
+the groups of other blocks (`:2880-2885`) before calling in.
 
 **`report_dump_pairs` is left alone**, and the reason is that it has no
 analogous silence: its `wrote` is a fallback for *filing* a pair under a block
-(`:2994`) and it never compares a byte against a written value. A pair is a
+(`:3086`) and it never compares a byte against a written value. A pair is a
 bracket of two files. There is no comparison there to leave unstated.
 
 ## The tests
 
-Three cases in `GradeTests`
-(`ec/tools/test_grade_0751_isolation.py`), beside
-`test_readback_not_taken_when_nothing_here_covers_0751` (`:1194`), which is the
-same branch's coverage half.
+Three cases in `ReadbackNoticeTests`
+(`ec/tools/test_grade_0751_isolation.py`), the last class in that file. The
+same branch's coverage half is
+`test_readback_not_taken_when_nothing_here_covers_0751` (`:1194`), in
+`GradeTests` — the three belong beside it, and are not there for a reason worth
+stating rather than leaving for the next reader to infer: 21 line numbers
+across five findings write-ups, and 12 rows of the per-pin table in
+[`test-line-pin-census.md`](test-line-pin-census.md), cite into that file below
+`GradeTests`, and `census_test_line_pins.py` reads the shape each of them lands
+on. Adding 94 lines above them moved all of those onto the wrong line without
+changing a word of the sentences citing them — the failure that write-up
+exists to record, and the only cost of placing these at the end of the file is
+the adjacency.
 
 1. **`test_a_named_value_takes_the_readback_and_the_notice_is_not_printed`**
-   (`:1208`) — the two directions over the committed `a0` dumps, since a notice
+   (`:5107`) — the two directions over the committed `a0` dumps, since a notice
    that fired on the common path would be a line on every §6 run. The
    `still holds` direction is what §6's own order gives; `not the written` is
    the same two files in the order §6's `rem` warns about, the before-dump
@@ -190,21 +199,21 @@ same branch's coverage half.
    `--wrote` over a name that carries none, which pins the property that the
    flag the notice tells the operator to pass is the flag that silences it.
 2. **`test_the_readback_is_not_taken_when_nothing_names_the_written_value`**
-   (`:1242`) — the path the notice is for, with and without a `--dump-pair`,
+   (`:5141`) — the path the notice is for, with and without a `--dump-pair`,
    asserting the two sections are identical; and the absence of every verdict
    phrasing on that section.
 3. **`test_both_readback_notices_print_when_neither_precondition_holds`**
-   (`:1281`) — the decision above.
+   (`:5180`) — the decision above.
 
 **The unnamed dumps are written into a `tempfile.TemporaryDirectory()`, and
 this is the one place the issue's "over the committed fixtures" is not
 literally satisfiable.** Every committed fixture in
 `ec/tools/testdata/0751-isolation-run/` carries a §6 `<value>` in its name, so
 none of them can reach the branch, and
-`test_section6s_file_list_is_the_fixture_set` (`:1322`) holds that directory's
+`test_section6s_file_list_is_the_fixture_set` (`:1228`) holds that directory's
 file set *equal* to §6's list — adding a fixture breaks it. The suite already
 writes dump-shaped one-liners into a temp directory for exactly this reason
-(`:1303-1308`), so this adds no committed input. The committed fixtures still
+(`:1209-1214`), so this adds no committed input. The committed fixtures still
 carry the direction the issue asks for in the other half, the two verdict lines
 unchanged.
 
@@ -217,12 +226,12 @@ pass by breaking the verdict lines.
 
 - **§6's command line is unchanged.** It keeps `--block <value> --wrote
   <value>` (`:883`), and
-  `test_section6s_command_reads_every_dump_it_lists` (`:1335`) reads it. The
+  `test_section6s_command_reads_every_dump_it_lists` (`:1241`) reads it. The
   issue is
   explicit about that, and a run that takes the verdict does not need a line
   saying it did not.
-- **The two already-silent paths in `report_dumps`** — `:2753` "no dump given"
-  and `:2804` "no dump was given for block N" — are left as they are. Both
+- **The two already-silent paths in `report_dumps`** — `:2845` "no dump given"
+  and `:2896` "no dump was given for block N" — are left as they are. Both
   already say what was not taken.
 - **No register's status changes.** `ec/annotations/registers.yaml` is not
   touched: the notice is about a command line, not about `0x0751`.
@@ -240,7 +249,8 @@ pass by breaking the verdict lines.
   the paragraph that function's docstring now carries on the two
   preconditions and the clause the module docstring's "coverage statement
   before it is a comparison" sentence gained.
-- `ec/tools/test_grade_0751_isolation.py` — the three cases in `GradeTests`.
+- `ec/tools/test_grade_0751_isolation.py` — the three cases in
+  `ReadbackNoticeTests`, the last class in the file.
 - `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` — §4.6 item 6
   (`:698`) and the sentence on a dump whose name carries no value (`:915`),
   which now carries the third case: neither the name nor a flag.
