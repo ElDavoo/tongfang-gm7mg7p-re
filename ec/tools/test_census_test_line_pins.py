@@ -810,9 +810,24 @@ class TheCommittedTree(unittest.TestCase):
         # literally a `def test_a_capture_given_twice_is_refused` header, so
         # this axis is the only one it touches: `0 -> 1`, and the four beside
         # it are unmoved again.
+        # **And once more for #387, which is the case above moved rather than
+        # added to.** Its three cases went into `GradeTests` beside the sibling
+        # case they belong with, 94 lines above every pin into
+        # `test_grade_0751_isolation.py` that the tree names below that point,
+        # so the whole split turns over and the total does not: `99` records
+        # resolve before and after, and `def test_`/`assertion`/`comment`/
+        # `blank`/`other` reads `1/24/23/5/46` where it now reads
+        # `2/20/31/6/40`. All twelve of the pins that moved land on a line the
+        # shape rule reads a different way: one onto a `def test_` header
+        # (`:2232-2233`), one the other way onto an assertion (`:3858`), eight
+        # onto `#` comments (`:3736`, `:3795`, `:3796`, `:3926`, `:4049`,
+        # `:4057`, `:4356`, and `:3608` in its bare-module spelling), one onto
+        # a blank (`:4374`) and one onto prose (`:3580`). Every one is a shift
+        # and none is a re-anchoring, which is what the record, spelling and
+        # pair counts around this one being unmoved is the check for.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 1, census.ASSERTION: 24, census.COMMENT: 23,
-            census.BLANK: 5, census.OTHER: 46})
+            census.DEF_TEST: 2, census.ASSERTION: 20, census.COMMENT: 31,
+            census.BLANK: 6, census.OTHER: 40})
         # `69 -> 70` is the same #421 record, and it takes this axis for the
         # reason the comment above gives for the split: a record that resolves
         # names a target, and this one lands in a file the axis did not carry,

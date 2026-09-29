@@ -1200,6 +1200,100 @@ class GradeTests(unittest.TestCase):
         self.assertIn('§4.6 readback was not taken', section)
         self.assertNotIn('a --dump-pair does cover it', section)
 
+    # The other precondition of the same comparison, and its two directions.
+    # A notice that fired where a value was named would be a line on every
+    # §6 run, and the verdict sentence is the one this section exists to
+    # produce -- so both are pinned here, over the committed named dumps, and
+    # the notice's absence is asserted rather than left to the next reader.
+    def test_a_named_value_takes_the_readback_and_the_notice_is_not_printed(self):
+        rc, out, _ = run(QUIET, *dumps(RUN_BEFORE, RUN_AFTER), '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('the last dump still holds the written 0xA0', section)
+        self.assertIn('readback, not evidence', section)
+        self.assertNotIn('nothing here names the value that was written',
+                         section)
+        # The other direction, over the same two files in the order §6's own
+        # `rem` warns about: the before-dump holds the value the block starts
+        # in, so the last --dump disagrees with the write.
+        rc, out, _ = run(QUIET, *dumps(RUN_AFTER, RUN_BEFORE), '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('the last dump holds 0x10, not the written 0xA0', section)
+        self.assertIn('something put it back', section)
+        self.assertNotIn('nothing here names the value that was written',
+                         section)
+        # And the flag the notice tells the operator to pass is the flag that
+        # silences it. The name is only one of the three sources of a written
+        # value, so a notice that fired here would contradict its own advice.
+        with tempfile.TemporaryDirectory() as tmp:
+            after = Path(tmp) / 'after-0700.txt'
+            after.write_text('0750: 00 a0 02 03 04 05 06 07\n')
+            rc, out, _ = run(QUIET, '--dump', str(after), '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        self.assertNotIn('nothing here names the value that was written',
+                         dumps_section(out))
+
+    # The path the notice is for. Every committed fixture in `run/` carries a
+    # §6 <value> in its name, so none of them can reach it -- that set is held
+    # equal to §6's list -- and the dump is written into a temporary directory
+    # under a name that carries nothing, the shape
+    # `test_a_pair_whose_before_alone_covers_0751_is_not_named` already uses.
+    def test_the_readback_is_not_taken_when_nothing_names_the_written_value(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            before = Path(tmp) / 'before-0700.txt'
+            before.write_text('0750: 00 10 00 00 00 00 00 00\n')
+            after = Path(tmp) / 'after-0700.txt'
+            after.write_text('0750: 00 a0 00 00 00 00 00 00\n')
+            rc, out, _ = run(QUIET, *dumps(str(before), str(after)))
+            # The same command line with a --dump-pair. The coverage notice
+            # names a pair only when one covers the address, because a file
+            # can stand in for a missing file; this notice is about a number,
+            # and no file carries one -- so the section has to come out the
+            # same either way. Compared whole rather than line by line, which
+            # is what "byte-identical" has to mean here.
+            rc_paired, paired, _ = run(QUIET,
+                                       *dumps(str(before), str(after)),
+                                       '--dump-pair', str(before), str(after))
+        self.assertEqual(rc, 0)
+        self.assertEqual(rc_paired, 0)
+        section = dumps_section(out)
+        # Why it was not taken, and what takes it, in the one line: a reader
+        # who has only this line still has the condition and the fix.
+        self.assertIn('nothing here names the value that was written', section)
+        self.assertIn("no §6 <value> in these files' names", section)
+        self.assertIn('neither --wrote nor --block', section)
+        self.assertIn('Pass --wrote 0xNN to take it', section)
+        # The byte is printed above and the notice says nothing about what it
+        # means: a second claim about 0x0751 is what this change is not.
+        self.assertIn('0x0751 = 0xA0', section)
+        self.assertNotIn('the last dump still holds', section)
+        self.assertNotIn('the last dump holds', section)
+        self.assertNotIn('something put it back', section)
+        self.assertNotIn('readback, not evidence', section)
+        self.assertEqual(dumps_section(paired), section)
+
+    # Both preconditions failing at once. The two notices are two independent
+    # facts, and a gate on the second would make the section's tail depend on
+    # a condition the reader cannot see -- so this is the decision made into a
+    # test rather than left in a comment. It also fixes the wording: neither
+    # line may refer to a byte printed above, because on this path none is.
+    def test_both_readback_notices_print_when_neither_precondition_holds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fan = Path(tmp) / 'before-0f00.txt'
+            fan.write_text('0f00: 00 01 02 03\n')
+            rc, out, _ = run(QUIET, '--dump', str(fan))
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('the last --dump does not cover 0x0751', section)
+        self.assertIn('nothing here names the value that was written', section)
+        # Neither notice is standing in for the other.
+        self.assertIn('nothing here says what the byte held after the write',
+                      section)
+        self.assertNotIn('the byte printed above', section)
+        self.assertNotIn('still holds', section)
+        self.assertNotIn('something put it back', section)
+
     # A pair whose before-dump alone reaches 0x0751 is not named. The readback
     # is taken from a --dump and the after file is the one that can become
     # one, so naming that pair would point at a byte the operator's last
