@@ -116,8 +116,11 @@ the defect; the accumulator rows are not part of it, and neither is
 `OPCODE_LEN`, which is right about `0x26`/`0x27`/`0x36`/`0x96`/`0x97` at one
 byte each for the reason §3 gives.
 `dptr-rebuild-walk-guard.md` §1 records the rendering defect and
-`test_dptr_rebuild_guard.py` holds it as a fact about the tree; the reason
-it is named again here is that it is the reason this issue's sweep has to
+`test_dptr_rebuild_guard.py` holds it as a fact about the tree -- though
+§1 states it wrongly, charging the accumulator rows for it, and carries a
+correction beside the wrong version as of this writing. This paragraph is
+the accurate account and §1 points here; the reason the defect is named
+again is that it is the reason this issue's sweep has to
 classify from bytes, and the reason the three tables are written out rather
 than generated. The committed Ghidra listings are what settles the group
 instead, and they are the reason the claim above is stated narrowly: `54 07
@@ -231,7 +234,7 @@ are facts about the keying, not about the 8051.
 This section first claimed the map was 49 opcodes -- 41 in the base 8051
 plus eight 8052 additions -- on the reasoning that the base 8051's `SUBB`
 group is `0x94`/`0x95` alone, so `0x96`/`0x97` must be 8052 additions like
-the logical group's six. **That reasoning was wrong, and so were four rows
+the logical group's six. **That reasoning was wrong, and so were three rows
 beside it.** The committed listings decode all five as one-byte,
 register-indirect, base-8051 forms naming no address at all:
 
@@ -258,7 +261,7 @@ the instruction set alone" was not merely imprecise but exactly inverted:
 they appear five times between them, and what they appear as is a refutation.
 
 `disasm8051.OPCODE_LEN` was named in the same place as defective for giving
-those four opcodes one byte. It gives one byte because one byte is right,
+those five opcodes one byte. It gives one byte because one byte is right,
 and that claim is withdrawn; the renderer's defect is the one still described
 above it, the `direct,A`/`direct,#data` rows it emits as `db`.
 
@@ -268,15 +271,22 @@ than every instruction boundary, because the sweep has no way to know where
 the boundaries are without a decode -- so these are byte pairs at every
 offset, and they include bytes that are data, bytes in a lookup table, and
 bytes in the separate PD 8051 image. Read them as *found by this method*,
-never as a count of executed instructions. Two of the forms with a
-non-zero count here have **no** real instruction start anywhere in the
-committed Ghidra listings -- `0x87` and `0xC2`, 14 byte pairs between them.
-This paragraph first named four and 19; the other two were `0x26` and
-`0x36`, whose five pairs the correction above removes rather than explains,
-because they were never instruction starts to begin with -- no opcode `0x26`
-or `0x36` appears at an instruction boundary anywhere in the image, which is
+never as a count of executed instructions. **None of the nineteen byte
+pairs this paragraph is about begins an instruction anywhere in the
+committed listings**: not one of the fourteen `87 82` and `c2 83` pairs, and
+not one of the five `26 82` and `36 83` pairs. That is a claim about the
+pairs and not about their opcodes, and the difference is not decorative: an
+earlier wording of this paragraph made it about the opcodes, and that
+version is false, because `0x87` does start three instructions
+(`0D1C 87 f0`, `A351 87 01`, `EB65 87 34` -- all three `mov direct,@R1`
+naming a byte that is not a DPTR one), `0x26` starts eleven (`add A, @R0`)
+and `0x36` starts fifteen (`addc A, @R0`). Only the pair-wise form is what
+the listings support, so that is the form kept.
+This paragraph first named four forms and 19 pairs; the other two were `0x26`
+and `0x36`, whose five pairs the correction above removes rather than
+explains, because they were never instruction starts to begin with, which is
 why they are gone from the tables and not merely absent from the listings.
-Of the two that remain, the `0x87` eleven are *established* as the
+Of the two forms that remain, the `0x87` eleven are *established* as the
 mid-instruction accident the `0x87` paragraph above describes: all eleven
 `87 82` pairs sit inside `12 87 82`, each the middle and last byte of an
 `lcall` target. The `0xC2` three are **not** established the same way, and

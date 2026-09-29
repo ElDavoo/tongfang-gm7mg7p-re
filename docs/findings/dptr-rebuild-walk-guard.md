@@ -67,6 +67,30 @@ keying makes it harmless here.
 `test_dptr_rebuild_guard.py` asserts the disagreement as a fact about the
 tree rather than as a note about it.
 
+**Correction (2026-09-29, issue #1027), leaving the paragraph above as it
+was written.** The rendering defect is not the one that paragraph
+describes. `0x54` is `anl a,#data`, two bytes, and the renderer is **right**
+about it: `mnemonic(54 82)` is `anl a,#0x82` and `OPCODE_LEN[0x54] == 2`,
+both correct for the instruction the machine executes. **`54 82` does not
+write DPL** — it masks the accumulator — and `anl direct,#imm` is `0x53`, a
+different opcode, not a three-byte spelling of `0x54`. The defect is
+narrower than "the logical group is miscaptioned": it is confined to the
+`direct,A` and `direct,#data` rows of that group, `0x42`/`0x43`/`0x52`/
+`0x53`/`0x62`/`0x63`, which the renderer has no spelling for at all and
+emits as `db 0x42` and `db 0x63` where the machine writes a byte address.
+That is the half a mnemonic-matching guard cannot see, so the paragraph's
+conclusion — that a text-matching guard would be wrong on exactly the
+in-place-modify instructions §3 declines to cover — stands, and stands on
+the corrected account rather than on the one above.
+[`dptr-guard-census-vs-1027.md`](dptr-guard-census-vs-1027.md) §2 is where
+the correct account is stated and this is worked out against the listings;
+`test_dptr_rebuild_forms.py` asserts both halves of it, the `db 0x42` and
+`db 0x63` the renderer emits for the direct rows and `OPCODE_LEN[0x53] == 3`
+for the three-byte one, beside `anl a,#0x82` for the two-byte accumulator
+row it gets right. Out of scope stays out of
+scope: fixing the table would move text other tools' committed output
+depends on, and the byte keying keeps it harmless here.
+
 ## 2. The three sites, read from the `.asm`
 
 The listings settle these and the tool's column does not, which is
@@ -186,9 +210,15 @@ deduction, and it is stated here so the follow-up starts from it.
 ## 3. What the guard deliberately still does not stop
 
 The instructions that **modify** DPTR in place rather than replace it:
-`anl`/`orl`/`xrl direct,#imm` (`0x54`/`0x44`/`0x64`), `inc 0x82` (`0x05`),
+`anl`/`orl`/`xrl direct,#data` (`0x53`/`0x43`/`0x63`) and the `direct,A`
+half of the same group (`0x52`/`0x42`/`0x62`), `inc 0x82` (`0x05`),
 `dec 0x83` (`0x15`), and `xch a,0x82` (`0xC5`). They change the address the
-following `movx` reaches, so this is a real limit and not a clean line.
+following `movx` reaches, so this is a real limit and not a clean line. (The
+six opcodes are corrected from the list this section first gave, which named
+`0x54`/`0x44`/`0x64` — the accumulator `#data` rows, which touch A rather
+than DPTR at all. `IN_PLACE_FORMS` in `dptr_rebuild_forms.py` already named
+the six correctly, and §1 carries the correction beside the sentence it
+belongs to.)
 
 They are excluded because they are masking or arithmetic **on the pointer
 that is already there**, and the tool already treats the sequential `inc dptr`
@@ -350,11 +380,14 @@ naming both misattributed sites) and needed no edit.
   `write x1`**, which is 8 reads plus the `0xDE8E` read the pre-fix window
   had folded into a read-modify-write. The figure is stated here as this
   method's output; the committed table that would back it does not exist.
-- **`disasm8051.mnemonic()`'s `0x44`/`0x45`/`0x54`/`0x55`/`0x64`/`0x65`
-  group**, which renders A-operand forms where the 8051 has direct forms
-  (§1). A real defect, held harmless here by the byte keying, and changing it
-  would move text other tools' committed output depends on. **Follow-up
-  issue.**
+- **`disasm8051.mnemonic()`'s `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63`
+  rows**, which it emits as `db 0x42` and `db 0x63` where the machine writes
+  a byte address (§1). A real defect, held harmless here by the byte keying,
+  and changing it would move text other tools' committed output depends on.
+  **Follow-up issue.** The accumulator half of the same logical group
+  (`0x44`/`0x45`/`0x54`/`0x55`/`0x64`/`0x65`) was named here before it, and
+  is **not** part of the defect: those render correctly. §1's first account,
+  still visible there, is the version being corrected.
 - **#399's `dptr-carried`.** Complementary, not overlapping: that is the
   `movx` in the **caller**, past the `lcall`; this is the `movx` in the
   **same** listing, after a pointer rebuild. Neither subsumes the other, and

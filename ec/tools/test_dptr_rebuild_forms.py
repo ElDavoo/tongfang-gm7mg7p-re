@@ -203,8 +203,12 @@ DPL_STORE_AT_TARGET = bytes([0xF5, 0x82])
 # tables nor `trace_xdata_refs.is_dptr_rebuild()`. It is the oracle for the
 # claim the module docstring makes -- that the three tables are the whole map
 # -- and it exists because the 256-opcode cross-check could not be that
-# oracle: it held the store table to `is_dptr_rebuild()`, and the two omitted
-# the same four opcodes, so they agreed on exactly the rows that were wrong.
+# oracle, for two separate reasons. It held the **store** table to
+# `is_dptr_rebuild()`, and those two omitted `0x86`/`0x87` `mov direct,@Ri`
+# together, so they agreed on exactly the rows that were wrong; and because it
+# compared a store list to a store list, it never looked at the read or
+# in-place tables at all, so the `0xA6`/`0xA7` `mov @Ri,direct` forms and the
+# whole arithmetic and logical group were outside what it could see.
 # Two lists that share a source are one list counted twice.
 #
 # **`disasm8051.mnemonic()` is not the authority for writing it.** That

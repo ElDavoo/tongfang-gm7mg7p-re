@@ -86,7 +86,7 @@ they can never be a reference to `0x82`/`0x83`. `disasm8051.OPCODE_LEN` agrees
 with all five, which is the other half of why nothing here is taken from
 `disasm8051.mnemonic()`: that renderer is correct about the accumulator rows
 (`54 82` renders as `anl a,#0x82`, which is what the machine executes, and
-`OPCODE_LEN[0x54] == 2` is right) and about the four register-indirect rows,
+`OPCODE_LEN[0x54] == 2` is right) and about the five register-indirect rows,
 but it emits the `direct,A`/`direct,#data` rows `0x42`/`0x43`/`0x52`/`0x53`/
 `0x62`/`0x63` as `db 0x42` and `db 0x63` where the machine writes a byte
 address. The cross-check that did exist, over all 256 opcodes, could not be
