@@ -109,13 +109,12 @@ which is what the machine does -- `disasm8051.OPCODE_LEN[0x54] == 2` is
 right, not a defect. What it does not render at all is the `direct,A` and
 `direct,#data` rows of the same group, `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/
 `0x63`, which it emits as `db 0x42` and `db 0x63` where the machine writes
-a byte address; alongside them, `OPCODE_LEN` is one byte short for
-`0x26`, `0x36`, `0x96` and `0x97`, so a length-driven walk would step into
-the operand byte. A mnemonic-matching sweep built on it would find the
-writing half of the logical group -- the six rows that are most of what
-`IN_PLACE_FORMS` is claiming for that group -- under no name at all, and
-would misstep on four arithmetic rows. That is the defect; the accumulator
-rows are not part of it.
+a byte address. A mnemonic-matching sweep built on it would find the writing
+half of the logical group -- the six rows that are most of what
+`IN_PLACE_FORMS` is claiming for that group -- under no name at all. That is
+the defect; the accumulator rows are not part of it, and neither is
+`OPCODE_LEN`, which is right about `0x26`/`0x27`/`0x36`/`0x96`/`0x97` at one
+byte each for the reason §3 gives.
 `dptr-rebuild-walk-guard.md` §1 records the rendering defect and
 `test_dptr_rebuild_guard.py` holds it as a fact about the tree; the reason
 it is named again here is that it is the reason this issue's sweep has to
@@ -175,33 +174,46 @@ a jump target's middle byte is indistinguishable from one that is an
 operand. Counting them is what §2's third class looks like from the inside.
 
 There is a third bucket, because a census whose subject is *every way the
-image names DPL or DPH* needs one: **76** references from the in-place
-forms (`0x05`/`0x15` `inc`/`dec direct`, the `0x26`/`0x36` add and addc
-pair, `0xC2` `clr direct`, `0xC5` `xch a,direct` and `0xD5` `djnz direct,rel`,
-plus the eight 8052 forms in the map -- the six `direct,A`/`direct,#data`
-rows of the logical group and the two `0x96`/`0x97` `SUBB` forms), which
-change the pointer without replacing it and which
+image names DPL or DPH* needs one: **71** references from the in-place
+forms (`0x05`/`0x15` `inc`/`dec direct`, `0xC2` `clr direct`, `0xC5`
+`xch a,direct` and `0xD5` `djnz direct,rel`, plus the six `direct,A`/
+`direct,#data` rows of the logical group that the 8052 adds), which change
+the pointer without replacing it and which
 [`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) §3 declines for
 a stated reason. Listing them is what keeps that decision reading as a
-choice rather than as a silence.
+choice rather than as a silence. The figure was **76** until the correction
+below; the five references that difference is made of were not references to
+a DPTR byte at all.
 
 **The three tables are the whole map of byte-addressed `direct` operands,
-and the two classes left out are named.** That map is **49** opcodes -- 41 in
-the base 8051 and the eight its 8052 extension adds, which are the six
+and the two classes left out are named.** That map is **44** opcodes -- 38 in
+the base 8051 and the six its 8052 extension adds, which are the
 `direct,A`/`direct,#data` rows of the logical group (`0x42`/`0x43`/
-`0x52`/`0x53`/`0x62`/`0x63`) **and the two `SUBB` forms `0x96`/`0x97`**:
-the base 8051's `SUBB` group is `0x94`/`0x95` alone, and `SUBB direct,#data`
-and `SUBB direct,A` are 8052 additions like the rest. The tool's three
-tables hold all 49, which
+`0x52`/`0x53`/`0x62`/`0x63`) and nothing else. The tool's three
+tables hold all 44, which
 `test_dptr_rebuild_forms.py` holds against a second transcription of that map
 written out from the instruction set, with a negative control beside the
 assertion so the check is shown able to reject a wrong union rather than
-only to accept this one. That transcription is checked against the committed
-Ghidra listings **for the entries the listings actually carry**, which is
-most of the map but not all of it: `0x96` and `0x97` appear nowhere in them,
-so those two rows rest on the instruction set alone and are the rows no
-listing could have confirmed. The check
-that used to stand in that place could
+only to accept this one. That transcription is then held against the
+committed Ghidra listings in the same file's `ListingCrossCheckTests`, which
+**decodes every one of the 44**: the check reads each instruction's length
+out of the listings' own byte columns, and a byte-addressed `direct` operand
+is a second byte, so a one-byte decode refutes the row outright.
+
+That check is the one this section used to describe in prose while no code
+performed it, and its absence is what let the five rows below survive three
+review rounds. Length is the property it checks because it is the one the
+listings state unambiguously; operand *kind* is not decidable from their
+text, since Ghidra renders the accumulator and direct address `0xE0` both as
+`A`, so `add A, @R0` and `xrl A, B` are spelled alike and only their length
+separates them. What a length decides is the one-byte class, and it decides
+that class soundly -- a one-byte instruction cannot carry a byte-addressed
+operand. What it does not decide is `0x24` against `0x25`, two `add` forms
+of the same length differing only in whether the operand is an immediate;
+that stays the operand-position claim the listings' own rendering supports
+and a length cannot.
+
+The check that used to stand in that place could
 not be that oracle, and it is worth being exact about why: the 256-opcode
 sweep held the **store** table to `is_dptr_rebuild()`, and those two omitted
 `0x86`/`0x87` `mov direct,@Ri` *together*, so they agreed on exactly the rows
@@ -214,28 +226,69 @@ address `0x82` is the low byte of SFR `0x88` and not DPL, and
 **`mov DPTR,#imm16` (`0x90`)**, which names no `direct` operand at all. Both
 are facts about the keying, not about the 8051.
 
+### The five rows the committed listings refute
+
+This section first claimed the map was 49 opcodes -- 41 in the base 8051
+plus eight 8052 additions -- on the reasoning that the base 8051's `SUBB`
+group is `0x94`/`0x95` alone, so `0x96`/`0x97` must be 8052 additions like
+the logical group's six. **That reasoning was wrong, and so were four rows
+beside it.** The committed listings decode all five as one-byte,
+register-indirect, base-8051 forms naming no address at all:
+
+| opcode | committed listing decode | instances | what it actually is |
+|---|---|---:|---|
+| `0x26` | `26 - - add A, @R0` | 11 | base 8051 `add A,@R0` |
+| `0x27` | `27 - - add A, @R1` | 11 | base 8051 `add A,@R1` |
+| `0x36` | `36 - - addc A, @R0` | 15 | base 8051 `addc A,@R0` |
+| `0x96` | `96 - - subb A, @R0` | 4 | base 8051 `subb A,@R0` |
+| `0x97` | `97 - - subb A, @R1` | 1 | base 8051 `subb A,@R1` |
+
+The error was reading the opcode *neighbourhood* rather than the operand:
+`0x26` and `0x36` sit beside `0x25` and `0x35`, and `0x96`/`0x97` beside
+`0x95`, so all five look like the same instructions with the accumulator
+spelled `direct`. Nothing does. The `-` in the middle column is the second
+byte column, and there is no second byte -- which is the whole finding, and
+is the property `ListingCrossCheckTests` now asserts.
+
+Three consequences, all mechanical. The map is 44 rather than 49, 38 plus
+six. The in-place bucket is 71 rather than 76, the five references being one
+`0x26` pair and four `0x36` pairs that named no DPTR byte. And the claim
+that `0x96`/`0x97` "appear nowhere in the listings, so those two rows rest on
+the instruction set alone" was not merely imprecise but exactly inverted:
+they appear five times between them, and what they appear as is a refutation.
+
+`disasm8051.OPCODE_LEN` was named in the same place as defective for giving
+those four opcodes one byte. It gives one byte because one byte is right,
+and that claim is withdrawn; the renderer's defect is the one still described
+above it, the `direct,A`/`direct,#data` rows it emits as `db`.
+
 **What these numbers are, precisely.** They are a **byte census over every
 offset of the file**, not a disassembly. Every offset is examined rather
 than every instruction boundary, because the sweep has no way to know where
 the boundaries are without a decode -- so these are byte pairs at every
 offset, and they include bytes that are data, bytes in a lookup table, and
 bytes in the separate PD 8051 image. Read them as *found by this method*,
-never as a count of executed instructions. Four of the forms with a
+never as a count of executed instructions. Two of the forms with a
 non-zero count here have **no** real instruction start anywhere in the
-committed Ghidra listings -- `0x26`, `0x36`, `0x87` and `0xC2`, 19 byte
-pairs between them. Two of the four are *established* as the
+committed Ghidra listings -- `0x87` and `0xC2`, 14 byte pairs between them.
+This paragraph first named four and 19; the other two were `0x26` and
+`0x36`, whose five pairs the correction above removes rather than explains,
+because they were never instruction starts to begin with -- no opcode `0x26`
+or `0x36` appears at an instruction boundary anywhere in the image, which is
+why they are gone from the tables and not merely absent from the listings.
+Of the two that remain, the `0x87` eleven are *established* as the
 mid-instruction accident the `0x87` paragraph above describes: all eleven
-`87 82` pairs sit inside `12 87 82`, and all four `36 83` pairs inside
-`12 36 83`, each the middle and last byte of an `lcall` target. The other
-two are **not** established the same way, and the difference is the point
-rather than a footnote: two of the three `c2 83` pairs likewise sit in an
-`lcall` (`12 11 c2`), but the third, at `0x06AEF`, decodes as `clr 0x83` if
-the `c0 c2` in front of it is `push 0xc2` -- so it is a reference the census
-may well be right about and that no listing happens to cover. The listings
-are 45,661 instruction lines of a 262,144-byte file, so **absence from them
-is not absence from the image**. That is what makes these four rows the
-place where the byte-census framing above does the most work, and it is why
-they are named individually rather than summarised as one accident.
+`87 82` pairs sit inside `12 87 82`, each the middle and last byte of an
+`lcall` target. The `0xC2` three are **not** established the same way, and
+the difference is the point rather than a footnote: two of the three `c2 83`
+pairs likewise sit in an `lcall` (`12 11 c2`), but the third, at `0x06AEF`,
+decodes as `clr 0x83` if the `c0 c2` in front of it is `push 0xc2` -- so it
+is a reference the census may well be right about and that no listing
+happens to cover. The listings are 45,661 instruction lines of a 262,144-byte
+file, so **absence from them is not absence from the image**. That is what
+makes these two rows the place where the byte-census framing above does the
+most work, and it is why they are named individually rather than summarised
+as one accident.
 
 The same caution applies to the 10,414 of
 [`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) §1. That census
@@ -243,7 +296,7 @@ sweeps for `0x90` at every offset of this same file, and a raw byte count of
 `0x90` over this image is also 10,414 -- so its "mapped sites" are a byte
 census over the same population as this one, not a smaller one. The two
 figures are **labelled rather than added together**: 10,414 + 1,362 + 602 +
-76 would count overlapping offsets of one file, and means nothing.
+71 would count overlapping offsets of one file, and means nothing.
 
 ## 4. What the issue's items 2, 3 and 4 already had
 
@@ -390,8 +443,8 @@ rather than by a sentence in this file.
   could not see `mov 0x82,a`, and the rows it misfiled were genuinely the
   rows §1 lists. What changed is the guard, not the measurement's arithmetic.
 - **That no other form of DPTR reach exists.** The census covers every
-  8051/8052 opcode whose `direct` operand is a byte address -- all 49 of
-  them, 41 in the base 8051 plus the eight the 8052 extension adds -- at
+  8051/8052 opcode whose `direct` operand is a byte address -- all 44 of
+  them, 38 in the base 8051 plus the six the 8052 extension adds -- at
   every offset, and
   `mov DPTR,#imm16` separately. The two classes it leaves out are named
   in §3 and are exclusions of this keying, not of the 8051: the
@@ -400,6 +453,14 @@ rather than by a sentence in this file.
   pointer, as `test_de3c_store_target.py`'s `0xDE3C` does with the
   `0x0564:0x0563` pair staged out of CODE tables -- is in **none** of these
   tables and no byte sweep would find it.
+- **That the length cross-check settles operand *kind*.** It settles that
+  each of the 44 is decoded at the length a byte-addressed `direct` operand
+  forces, which is what rules out the one-byte register-indirect rows the
+  correction above removes. It does not separate `0x24 add a,#imm` from
+  `0x25 add a,direct` -- both are two-byte `add` forms, and only the
+  listings' rendering tells them apart. What separates those is quoted
+  evidence in §3 and the renderer's behaviour in §2, not a check that can
+  fail if one of the two moved into the other's row.
   `dptr-rebuild-walk-guard.md` §2 is where that one is worked.
 - **The in-place forms as terminators.** They are counted here and excluded
   there, and §3 of that file states why. This change does not reopen it.

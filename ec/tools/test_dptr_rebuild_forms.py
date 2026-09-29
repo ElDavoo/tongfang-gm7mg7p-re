@@ -9,7 +9,7 @@ its own answer to the question it was careful to ask.
 `../../docs/findings/dptr-guard-census-vs-1027.md` is the write-up and the
 counts; this is the part of it that has to stay true.
 
-Four things are held here, and the last is the one a re-cut can break:
+Five things are held here, and the last is the one a re-cut can break:
 
 - **Per form, from bytes.** Every opcode in each of the three buckets, driven
   through `form_at()` as a bare `bytes` fixture, asserted on the bucket *and*
@@ -29,11 +29,22 @@ Four things are held here, and the last is the one a re-cut can break:
   *read* form was invisible to it twice over because it never looked at the
   read table at all. The oracle here is `DIRECT_BEARING`, the 8051/8052 map
   of byte-addressed `direct` operands written out below from the instruction
-  set and checked against the committed Ghidra listings, which shares no
-  source with any of the three tables or with the guard, and is what makes
-  the union a claim rather than a tautology. It is held by a case with a
-  **negative control** beside it, because a completeness check that has only
-  ever accepted one union is indistinguishable from one that cannot fail.
+  set, which shares no source with any of the three tables or with the
+  guard, and is what makes the union a claim rather than a tautology. It is
+  held by a case with a **negative control** beside it, because a
+  completeness check that has only ever accepted one union is
+  indistinguishable from one that cannot fail.
+- **That second map against the committed Ghidra listings**, in
+  `ListingCrossCheckTests`. Two transcriptions of the instruction set can
+  still be wrong in the same place, and were: the map above once carried
+  `0x26`/`0x27`/`0x36`/`0x96`/`0x97`, which the listings decode `add A, @R0`
+  and `subb A, @R1` -- one byte, register-indirect, naming no address. So
+  the listings are opened rather than quoted, and the check reads each
+  instruction's length out of their byte columns: a byte-addressed `direct`
+  operand is a second byte, so a one-byte decode refutes the row. That is
+  the whole of what a length decides and it is what this class asserts;
+  `0x24` against `0x25` is not something a length separates, and stays the
+  operand-position claim the prose states.
 - **The discriminator, both ways.** A window that contains a real `mov 0x82,a`
   and a window that contains `ljmp 0x83d6` where that store stood are the same
   bytes to a substring search over a rendered `window` cell and not the same
@@ -65,7 +76,9 @@ Four things are held here, and the last is the one a re-cut can break:
 its own fixtures; the rule half reads the committed firmware and the six
 committed CSVs, which is a stronger gate than a fixture asserting a count.
 """
+import collections
 import csv
+import re
 import subprocess
 import sys
 import tempfile
@@ -140,7 +153,7 @@ BOTH_HALVES_85 = bytes([0x85, 0x82, 0x82])    # mov DPL,DPL
 # The arithmetic group, which names DPL/DPH in the same `direct` position and
 # which the earlier tables carried only one member of (`0x45`, `0x64`).
 ADD_DPL_TO_A = bytes([0x25, 0x82])       # add a,0x82    -- read
-ADD_A_TO_DPL = bytes([0x26, 0x82])       # add 0x82,a    -- in place
+DEC_DPL = bytes([0x15, 0x82])            # dec 0x82      -- in place
 ADD_DPH_CARRY = bytes([0x35, 0x83])      # addc a,0x83   -- read
 CLR_DPH = bytes([0xC2, 0x83])            # clr 0x83      -- in place
 
@@ -163,13 +176,18 @@ ORL_A_LITERAL = bytes([0x54, 0x82, 0x7F])     # anl a,#0x82  -- an immediate
 # and is not part of this one; the immediate this decodes is `0x82`.
 
 # In place: a direct operand naming DPL/DPH that changes it without replacing
-# it, with the byte after the operand laid down as well. `disasm8051` frames
-# `0x26` as one byte where the 8051 has two, so the two spellings below are
-# what that table decodes and what the machine executes; they differ only
-# after the operand and this census never looks at the length.
+# it, with the byte after the operand laid down as well. The two spellings
+# differ only after the operand, and this census keys on the operand byte
+# rather than on a decode, so it never looks at the length.
 XCH_DPL = bytes([0xC5, 0x82])         # xch a,0x82
 INC_DPL = bytes([0x05, 0x82])         # inc 0x82
-ADD_DPL_THEN_NEXT = bytes([0x26, 0x82, 0x7F])   # add 0x82,a and what follows
+# `0x53` is three bytes -- `anl direct,#data` -- so the trailing `0x7F` here
+# is the *next* instruction's byte and not part of this one. It is the
+# three-byte case rather than a two-byte one because a two-byte form's
+# following byte is indistinguishable from an operand of a different
+# instruction to a length-driven walk, and the point of the case below is
+# that this census is not length-driven.
+ANL_DPL_THEN_NEXT = bytes([0x53, 0x82, 0x7F])   # anl 0x82,#0x7f and what follows
 
 # `ec-07c4-07d5-sites.csv` 0x0AD99, verbatim: the committed window cell reads
 # `movx @dptr,a ; mov r7,#0xe1 ; ljmp 0x83d6`, and the `0x83` in it is a jump
@@ -193,32 +211,44 @@ DPL_STORE_AT_TARGET = bytes([0xF5, 0x82])
 # renderer gets the accumulator rows right -- `54 82` prints as
 # `anl a,#0x82` and `OPCODE_LEN[0x54] == 2` is correct -- but it renders
 # `42 f0` as `db 0x42` and `63 65 ff` as `db 0x63` where the machine writes
-# a byte address, and its `OPCODE_LEN` is one short for `0x26`, `0x36`,
-# `0x96` and `0x97`, so a list read off it carries the renderer's errors
-# rather than the instruction set's. The authority is the committed Ghidra
-# listings under `ec/decompiled/*/*.asm`, which decode the operand position:
-# they render `45 82` as `orl A, DPL`, `42 f0` as `orl B, A`, `63 65 ff` as
+# a byte address, so a list read off it carries the renderer's errors rather
+# than the instruction set's. The authority is the committed Ghidra listings
+# under `ec/decompiled/*/*.asm`, which decode the operand position: they
+# render `45 82` as `orl A, DPL`, `42 f0` as `orl B, A`, `63 65 ff` as
 # `xrl 0x65, #0xff` and `54 07` as `anl A, #0x7`. Two consequences are
 # visible in the list below, and neither is a matter of taste: the
 # accumulator forms `0x45`/`0x55`/`0x65` are
 # **here** (they load the byte) while the immediate forms `0x44`/`0x54`/
 # `0x64` are **not**, because their operand is a literal rather than an
-# address; and the eight 8052 additions are here, six logical-group rows the
-# listings decode and the two `SUBB` rows `0x96`/`0x97` that appear nowhere
-# in them, so a base-MCS-51 list would be eight short of the map.
+# address; and the six 8052 additions -- the logical group's `direct,A`/
+# `direct,#data` rows, which the listings decode and which are the *only*
+# 8052 additions naming a byte address -- are here, so a base-MCS-51 list
+# would be six short of the map.
+#
+# **`0x26`, `0x27`, `0x36`, `0x96` and `0x97` are deliberately *not* here,
+# and that is the row this list was corrected on.** A transcription read off
+# the opcode neighbourhood rather than off the operand puts them in beside
+# `0x25`/`0x35`/`0x95`, on the reasoning that the base 8051's `SUBB` group is
+# `0x94`/`0x95` alone so `0x96`/`0x97` must be 8052 additions. The committed
+# listings say otherwise: `0x26` decodes `26 - - add A, @R0`, `0x27` decodes
+# `27 - - add A, @R1`, `0x36` decodes `36 - - addc A, @R0`, `0x96` decodes
+# `96 - - subb A, @R0` and `0x97` decodes `97 - - subb A, @R1` -- one byte
+# each, register-indirect, naming no address at all. They are the base 8051's
+# own `@Ri` forms, so there is no `direct`-operand spelling of them to be
+# corroborated anywhere, and `disasm8051.OPCODE_LEN` -- which was called
+# defective for agreeing -- agrees with all five.
 #
 # The bit-addressed forms are deliberately *not* here: `0x82` is the low byte
 # of SFR `0x88` in a bit address and is not DPL, and `BIT_ADDRESSED` below
 # names them so the exclusion is asserted rather than assumed.
 DIRECT_BEARING = frozenset(
     (0x05, 0x15,                                    # inc / dec direct
-     0x25, 0x26, 0x27,                              # add, addc -- both sides
-     0x35, 0x36,                                    # addc, the other half
+     0x25, 0x35,                                    # add a,direct / addc a,direct
      0x42, 0x43, 0x45,                              # orl direct,A / ,#data / a,direct
      0x52, 0x53, 0x55,                              # anl, the same three
      0x62, 0x63, 0x65,                              # xrl, the same three
      0x75, 0x85, 0x86, 0x87,                        # mov direct, <src>
-     0x95, 0x96, 0x97,                              # subb
+     0x95,                                          # subb a,direct
      0xA6, 0xA7,                                    # mov @Ri,direct
      0xB5,                                          # cjne a,direct,rel
      0xC0, 0xC2, 0xC5,                              # push / clr / xch
@@ -249,6 +279,75 @@ BIT_ADDRESSED = frozenset(
 # records it against the guard and `dptr-guard-census-vs-1027.md` §3 counts
 # it; this file only holds the delta from being anything else.
 GUARD_GAP_OPS = frozenset((0x86, 0x87))
+
+# The committed Ghidra listings, which are the authority `DIRECT_BEARING` is
+# checked against. Read from disk rather than transcribed: the whole point of
+# the check is that the oracle shares no source with the thing it is checking,
+# and a handful of decoded lines quoted in a comment is not an oracle.
+LISTINGS = HERE.parent / "decompiled"
+
+# **The check is on instruction length, and that is stated rather than
+# smuggled.** Every byte-addressed `direct` form is two bytes, or three where
+# the form carries a second operand byte as well -- the `direct,#data` rows,
+# `mov direct,direct`, and the two relative forms. A form carrying no address
+# is one byte or is not this map at all. Length is the property checked
+# because it is the one the listings state unambiguously: operand *kind* is
+# not decidable from their text, since Ghidra renders the accumulator and
+# direct address `0xE0` both as `A`, so `add A, @R0` and `xrl A, B` are
+# spelled alike and only their length separates them.
+#
+# What this decides is the class the five corrected rows came from, and it
+# decides it soundly: a one-byte instruction cannot carry a byte-addressed
+# operand, so any opcode in this map that the listings decode at one byte is
+# wrong by construction. What it does **not** decide is `0x24` against `0x25`
+# -- both `add` two-byte forms, one immediate and one direct -- which stays
+# the operand-position claim the prose above states rather than something a
+# length can separate.
+DIRECT_LENGTH = {op: 2 for op in DIRECT_BEARING} | {
+    0x43: 3, 0x53: 3, 0x63: 3,   # the logical group's direct,#data rows
+    0x75: 3,                      # mov direct,#data
+    0x85: 3,                      # mov direct,direct
+    0xB5: 3,                      # cjne a,direct,rel
+    0xD5: 3,                      # djnz direct,rel
+}
+
+# The five rows the committed listings refute, named rather than written only
+# inside the prose above: the base 8051's register-indirect forms, which sit
+# in the opcode neighbourhood of the `direct` arithmetic rows and share none
+# of their shape. They are held here so the negative control below can drive
+# the real mistake instead of an invented one.
+REFUTED_REGISTER_INDIRECT = frozenset((0x26, 0x27, 0x36, 0x96, 0x97))
+
+
+def listing_instruction_lengths() -> dict:
+    """`{opcode: {length, ...}}` -- every committed listing instruction.
+
+    A listing line is `ADDR  BB BB|- BB|-  MNEMONIC  operands`, so the three
+    byte columns are positional and a `-` marks a byte the instruction does
+    not have. Counting the non-`-` columns gives the instruction's length
+    without decoding anything, which is what keeps this an oracle rather than
+    a second opinion: it reads the listings' own bytes and nothing else.
+
+    A line that does not parse is collected and returned beside the map rather
+    than skipped, so a listing format that drifts fails the check instead of
+    quietly shrinking the population it is drawn from.
+    """
+    lengths = collections.defaultdict(set)
+    unparsed = []
+    for path in sorted(LISTINGS.glob("*/*.asm")):
+        for line in path.read_text(encoding="utf-8",
+                                   errors="replace").splitlines():
+            f = line.split()
+            if not f or f[0].startswith(";") or not re.fullmatch(r"[0-9A-F]+",
+                                                                  f[0]):
+                continue
+            cols = f[1:4]
+            if len(f) < 5 or not all(
+                    c == "-" or re.fullmatch(r"[0-9a-f]{2}", c) for c in cols):
+                unparsed.append(f"{path.name}: {line}")
+                continue
+            lengths[int(cols[0], 16)].add(sum(1 for c in cols if c != "-"))
+    return dict(lengths), unparsed
 
 
 def fixture(*insns: bytes, size: int = 0x40) -> bytes:
@@ -496,26 +595,28 @@ class InPlaceFormTests(unittest.TestCase):
 
     def test_each_in_place_form_is_neither_a_store_nor_a_read(self):
         for insn, byte in ((XCH_DPL, 0x82), (ANL_DIRECT_DPL, 0x82),
-                           (INC_DPL, 0x82), (ADD_A_TO_DPL, 0x82),
+                           (INC_DPL, 0x82), (DEC_DPL, 0x82),
                            (ORL_DPL_FROM_A, 0x82), (CLR_DPH, 0x83)):
             with self.subTest(insn=insn.hex(" ")):
                 self.assertEqual(one(insn, 0), ("in place", insn[0], byte))
                 self.assertFalse(T.is_dptr_rebuild(insn, 0))
 
     def test_a_form_classifies_the_same_at_both_spellings(self):
-        # `disasm8051.OPCODE_LEN` gives the `0x26` group one byte where the
-        # 8051 has two, and this census keys on the operand byte rather than
-        # on a decode, so the two spellings of the same instruction agree.
-        # A census that walked instruction boundaries would put the byte after
-        # the operand where the next instruction begins and count it; the byte
-        # keying is what makes the length irrelevant here. The defect is
-        # asserted as a fact about the tree rather than assumed, because a
-        # case guarding against a length table that is already right is
-        # guarding against nothing.
+        # This census keys on the operand byte rather than on a decode, so
+        # the same instruction classifies the same whether or not the byte
+        # that follows it is present. A census that walked instruction
+        # boundaries would have to know the instruction is three bytes to
+        # know that `0x7F` starts the next one; the byte keying is what makes
+        # the length irrelevant here.
+        #
+        # `disasm8051.OPCODE_LEN[0x53] == 3` is asserted alongside it because
+        # a case guarding against a length table that is already right is
+        # guarding against nothing, and this one is right: the committed
+        # listings decode `53 00 07` as `anl 0x00, #0x7`, three bytes.
         from disasm8051 import OPCODE_LEN
-        self.assertEqual(OPCODE_LEN[0x26], 1)
-        self.assertEqual(form_at(ADD_DPL_THEN_NEXT, 0),
-                         form_at(ADD_A_TO_DPL, 0))
+        self.assertEqual(OPCODE_LEN[0x53], 3)
+        self.assertEqual(form_at(ANL_DPL_THEN_NEXT, 0),
+                         form_at(ANL_DIRECT_DPL, 0))
 
 
 class BucketShapeTests(unittest.TestCase):
@@ -631,14 +732,87 @@ class BucketShapeTests(unittest.TestCase):
         # operand byte at all, and one of the five this table wrongly carried
         # before the correction the listings forced.
         self.assertNotEqual(tables | {0x2C}, set(DIRECT_BEARING))
-        # A whole class gone, rather than a lone member -- the eight 8052
-        # additions, which is what reading the instruction set as base-8051-
-        # only looks like: the six `direct,A`/`direct,#data` rows of the
-        # logical group *and* the two `SUBB` rows `0x96`/`0x97`, without
-        # which the list is eight short of the map.
+        # A whole class gone, rather than a lone member -- the 8052 additions,
+        # which is what reading the instruction set as base-MCS-51-only looks
+        # like: the six `direct,A`/`direct,#data` rows of the logical group,
+        # without which the list is six short of the map.
         without_8052 = set(DIRECT_BEARING) - {0x42, 0x43, 0x52, 0x53,
-                                              0x62, 0x63, 0x96, 0x97}
+                                              0x62, 0x63}
         self.assertNotEqual(tables, without_8052)
+
+
+class ListingCrossCheckTests(unittest.TestCase):
+    """`DIRECT_BEARING` against the committed Ghidra listings, for real.
+
+    The completeness case above compares the tool's three tables against a
+    transcription of the opcode map, and both were 49 members written by the
+    same reading of the instruction set -- so it passed by construction on the
+    five rows the listings refute. This is the check that does not share a
+    source with what it checks: it opens `ec/decompiled/*/*.asm` and reads the
+    instruction's own length out of the listing's byte columns.
+
+    Read once for the class rather than per case; the parse is asserted here
+    so a listing format that drifts is a failure of *this* class and not a
+    mysterious disagreement in the cases below it.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.lengths, cls.unparsed = listing_instruction_lengths()
+
+    def _refuted(self, lengthmap):
+        """`[(opcode, decoded lengths, required)]` the listings refute.
+
+        The comparison itself, written once so the case below and the negative
+        control beside it cannot drift into checking different things. It is
+        handed the map rather than reading the global so the control can drive
+        a map the committed one does not contain.
+        """
+        return [(op, sorted(self.lengths.get(op, ())), lengthmap[op])
+                for op in sorted(lengthmap)
+                if self.lengths.get(op) != {lengthmap[op]}]
+
+    def test_every_listing_line_was_read(self):
+        # The population the cases below are drawn from. A parse that
+        # silently skipped half the listings would leave them passing on a
+        # fraction of the evidence, which is the shape of claim
+        # `CLAUDE.md` warns about rather than a bug in a tool.
+        self.assertEqual(self.unparsed, [])
+        self.assertGreater(sum(len(v) for v in self.lengths.values()), 0)
+
+    def test_every_direct_bearing_opcode_is_decoded_in_the_listings(self):
+        # The check's trigger, asserted per opcode: a member of the map that
+        # no listing decodes cannot be corroborated by the listings, and a
+        # whole class of them being absent would leave this class passing on
+        # the members that happen to survive.
+        for op in sorted(DIRECT_BEARING):
+            with self.subTest(op=hex(op)):
+                self.assertIn(op, self.lengths,
+                              f"0x{op:02X} is in DIRECT_BEARING but no "
+                              f"committed listing decodes it, so the map's "
+                              f"claim about it rests on the transcription "
+                              f"alone")
+
+    def test_no_direct_bearing_opcode_decodes_at_one_byte(self):
+        # The claim itself, and the whole of it: a byte-addressed `direct`
+        # operand is a second byte, so a one-byte decode refutes the row.
+        self.assertEqual(self._refuted(DIRECT_LENGTH), [])
+
+    def test_the_cross_check_rejects_the_map_this_one_corrected(self):
+        # The negative control, driven through the *same* comparison as the
+        # case above, and over the mistake this file actually made rather than
+        # an invented one: the pre-correction map carried `0x26`, `0x27`,
+        # `0x36`, `0x96` and `0x97`, which the listings decode `add A, @R0`,
+        # `add A, @R1`, `addc A, @R0`, `subb A, @R0` and `subb A, @R1`. All
+        # five are one byte, all five are refused, and the assertion names
+        # each of them so a check that quietly stopped refusing some of them
+        # is red here rather than silently weaker.
+        #
+        # A completeness check that has only ever accepted one map is
+        # indistinguishable from one that cannot fail.
+        pre = {**DIRECT_LENGTH, **{op: 2 for op in REFUTED_REGISTER_INDIRECT}}
+        self.assertEqual([op for op, _, _ in self._refuted(pre)],
+                         sorted(REFUTED_REGISTER_INDIRECT))
 
 
 class DiscriminatorTests(unittest.TestCase):
