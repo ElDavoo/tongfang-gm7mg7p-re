@@ -1019,6 +1019,33 @@ green light, and closing it belongs with whoever regenerates the CSVs.
 > file copied from `ElDavoo/agent-pipeline`, and the correction is to the
 > sentence rather than to the gate. The measurement is transcribed in
 > [`../../docs/findings/xdata-green-set.md`](../../docs/findings/xdata-green-set.md).
+>
+> **(Correction, 2026-09-28, issue #836) — the two sentences above about the
+> `--self-test` half no longer hold, and the three pins this block puts into
+> `agent-gates.sh` have moved; nothing here is reworded or deleted.** The
+> sentence reading **"Only `--self-test` is genuinely not in the gate, and that
+> is deliberate rather than an oversight — the comment at `:218-234` gives the
+> reason"** is false on both halves now. `#815` decided and landed, and the arm
+> this block calls the `*xdata_register_map.py)` case — named by its content
+> rather than by a line, because naming it by a line is what has gone stale —
+> reads `python3 "$tool" --check && python3 "$tool" --self-test`, so both modes
+> are wired. The comment above that arm says so in its own words: *"issue #256
+> wired `--check` and issue #815 wired `--self-test`"*, and its first line is
+> now **"`--self-test` used to be deliberately not run, and the reason it gave
+> is no longer true."** The second sentence, **"This correction does not wire
+> the mode: that is #815's to decide"**, named a decision that has since been
+> taken; it stands because it was true when written, not because it still
+> describes anything. **Of the pins into the gate script this block carries, one
+> still holds**: `:127` is still the `for tool in` list entry, and `:138` is
+> still the `*decompile_native.py)` case and was never this tool's arm. The
+> other three — the arm, its comment, and the reason inside that comment — are
+> named above by what they say rather than by where they sit, and the comment
+> now ends *"So the honest description of what is gated here is no longer the
+> two CSVs"*, so what `--check` gates is no longer the whole of what the arm
+> gates. Re-derived 2026-09-28 with `git grep -n -- '--self-test' --
+> .github/scripts/agent-gates.sh`; the pin census across this chain, and the one
+> decision it left open, are in
+> [`../../docs/findings/xdata-819-815-correction-chain.md`](../../docs/findings/xdata-819-815-correction-chain.md).
 
 **Whoever that is: the census re-derivation has a checklist, and it is
 [`../../docs/findings/xdata-census-rederivation-checklist.md`](../../docs/findings/xdata-census-rederivation-checklist.md).**

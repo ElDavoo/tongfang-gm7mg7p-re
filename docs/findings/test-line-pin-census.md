@@ -1409,7 +1409,7 @@ the half this table exists to record.
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334 | `ec/tools/test_xdata_cluster_names.py:596` | by-path | other | **does not carry** — this merge's shift moved the `> 300` floor it names to `:630` |
 | [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):376 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
 | [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):469 | `test_xdata_cluster_names.py:425` | by-name | comment | **does not carry** — **re-anchored from `:401` by #904, whose §2 and §3 correction blocks were inserted above it**
-| [`xdata-green-set.md`](xdata-green-set.md):283 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | other | **does not carry** — this merge's shift moved the case it names to `:381` |
+| [`xdata-green-set.md`](xdata-green-set.md):335 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | other | **does not carry** — this merge's shift moved the case it names to `:381`; re-anchored from `:283` by #836, which appended two corrections above it |
 | [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md):622 | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15 | `ec/tools/test_xdata_cluster_names.py:425` | by-path | comment | **does not carry** |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):436 | `test_xdata_cluster_names.py:425` | by-name | comment | **does not carry** |
@@ -2357,7 +2357,8 @@ struck out of it.)*
    `:347` for `test_the_census_is_the_one_6a_measured` (**now `:381`**) —
    [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):20
    and `:156`, and
-   [`xdata-green-set.md`](xdata-green-set.md):283. Three name `:596` for the
+   [`xdata-green-set.md`](xdata-green-set.md):335 *(re-anchored from `:283` by
+   #836, which appended two corrections above it)*. Three name `:596` for the
    `> 300` floor (**now `:630`**) —
    [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334,
    and
