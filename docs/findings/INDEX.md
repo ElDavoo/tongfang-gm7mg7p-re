@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-166 write-ups.
+169 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -36,6 +36,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`call-graph-unresolved.md`](call-graph-unresolved.md) — The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (issue #456)
 - [`capture-claims-docstring-surface.md`](capture-claims-docstring-surface.md) — The capture-claims docstring quotes its own run, so a test now holds it to the run (issue #991)
 - [`capture-filename-date-prefix.md`](capture-filename-date-prefix.md) — The capture root's date prefix and its flatness are measured, and a name breaking either is refused (issue #973)
+- [`capture-prefix-vs-contents.md`](capture-prefix-vs-contents.md) — The date in a capture's name, held to the dates the capture carries: 15 captures, 14 agreeing, 1 stating none, 0 disagreeing (issue #1000)
 - [`charge-target-caller-chain.md`](charge-target-caller-chain.md) — Who reaches `0xB158` — the charge-target caller chain, and how often it runs (issue #89)
 - [`checkout-claim-corpus.md`](checkout-claim-corpus.md) — The checkout-depth sweep derived its own population, and a retraction quotes the sentence it retracts
 - [`citation-code-vs-data.md`](citation-code-vs-data.md) — A citation is a code frame, not an address (issue #453)
@@ -58,6 +59,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) — Which of the census checklist's figures a check actually holds, measured (issue #849)
 - [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md) — What `tools/check_doc_patch_refs.py` reads, in both directions (issue #955)
 - [`doc-patch-reference-gate.md`](doc-patch-reference-gate.md) — The names prose gives a prepared gate patch, and what now holds them (issue #777)
+- [`dptr-guard-census-vs-1027.md`](dptr-guard-census-vs-1027.md) — Issue #1027's 27 is a pre-#517 measurement of the same six tables, and a rendered `window` cell has three ways to be miscounted rather than two
 - [`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) — `walk()`'s reload guard covers every way an 8051 rebuilds DPTR, and 21 sites in the image render their `access` cell with the wrong direction, 2 of them in a committed table
 - [`dump-pair-block-attribution.md`](dump-pair-block-attribution.md) — A whole-block bracket is not a second reading of the same bytes (issue #475)
 - [`dump-reads-for-a-refused-block.md`](dump-reads-for-a-refused-block.md) — A read taken for a block whose windows were refused (issue #499)
@@ -147,6 +149,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md) — The xdata census re-derivation checklist: what a re-export moves, and what to do about it (issue #820)
 - [`xdata-census-self-test-gate.md`](xdata-census-self-test-gate.md) — `xdata_register_map.py --self-test` was switched off for a reason that had
 - [`xdata-census-totals.md`](xdata-census-totals.md) — The census totals: 1,171 addresses / 14,819 references, and how to re-derive them (issue #557)
+- [`xdata-check-message-pin-sweep.md`](xdata-check-message-pin-sweep.md) — Six `check()` calls read a pin their message never names, and the sweep that found them (issue #1363)
 - [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md) — The guard-off census, built by the flag instead of by patching a copy of the tool (issue #753)
 - [`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md) — `deciles()` had a floor in its docstring and none in its code, and the report was already printing the stretch (issue #889)
 - [`xdata-dispatch-position-pins.md`](xdata-dispatch-position-pins.md) — The three dispatch positions the docstring names are pinned on synthetic source
