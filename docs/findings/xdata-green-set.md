@@ -185,6 +185,37 @@ overrule that at a cost of one line each**:
 | `xdata-cluster-names-guard-off-recipe.md:289-292` | "No gate is wired … `--check`/`--self-test`, which are red on `main`" | both green; `--check` *is* wired | a **closed** issue's write-up; its "What this does not do" records that PR's scope, not a live claim |
 | `.github/scripts/agent-gates.sh:218-234` | "`--self-test` is deliberately not run … It is red on `main` for a reason no census change can clear" | the decision stands, **the reason is gone** | **#815**; template-copied, so a change is upstream and a re-copy |
 
+> **(Correction, 2026-09-28, issue #836) — the two rows above whose owner column
+> reads `#815` are answered, and the pins those rows and one of their
+> neighbours carry no longer name the sentences they are about.** The row
+> quoting "`--self-test` is red on `main` … `index.csv` still spells all three
+> `FUN_CODE_*`" is answered **in place**, by #815's own `CORRECTION (2026-09-25,
+> issue #815)` blockquote in `xdata-register-map.md`, which says the mode "is
+> wired, and the reason this bullet gave for not wiring it no longer holds".
+> **That page is not stale and needs nothing here; the row's pin does.** The
+> range that row names in it is the `read` / `passed-to-call` call-site
+> paragraph, and the sentence the row is about is the `--self-test` bullet
+> further down the same file. The row whose *now* cell reads "the decision
+> stands, **the reason is gone**" is false on **both** halves: the decision did
+> not stand, it was taken, so the only half of that row still true is the one
+> about the reason. One more row of this table is touched by the same thing and
+> its *now* cell is **incomplete rather than false** — the row quoting "No gate
+> is wired … `--check`/`--self-test`, which are red on `main`" says `both green;
+> --check *is* wired`, and in fact **both** modes are wired now, `--check` and
+> `--self-test` alike; `tools/run-tests.sh` is still not in the cheap gate,
+> which is the half of that row that holds. Its pin has the same shape as the
+> first row's, and whether the sentence it names is a live claim at all is a
+> **recorded decision rather than a correction**.
+>
+> **The pins in this table, in *The three owning issues* above it, and in the
+> `agent-gates.sh` paragraph above that are re-derived — the range each one
+> names beside the range its sentence is actually on — in
+> [`xdata-819-815-correction-chain.md`](xdata-819-815-correction-chain.md).**
+> That census is a dated measurement and nothing depends on its numbers staying
+> put. What a reader should take from it is the rule this file already set at
+> **The five sentences corrected in place, and where**: quote the sentence, do
+> not pin its line.
+
 **The last row is the one that is false on its condition rather than on its
 conclusion.** The gate still declines to run `--self-test`, and the
 deliberateness is unchanged; what has gone is the justification. Correcting it
@@ -192,6 +223,27 @@ is a change to a file copied from `ElDavoo/agent-pipeline`, and this repository'
 push token has no `workflow` scope, so it is named here instead. *(Superseded in
 turn by #823, `244c992b`, which wired `--self-test` in and rewrote the comment; the
 row is left as the #819 measurement.)*
+
+> **(Correction, 2026-09-28, issue #836) — this paragraph is now false on its
+> condition and on its conclusion, and the block above it answers both.** The
+> sentence "**The last row is the one that is false on its condition rather
+> than on its conclusion.** The gate still declines to run `--self-test`, and
+> the deliberateness is unchanged" was true of the tree it was written on. The
+> gate no longer declines to run `--self-test`: the arm named by its content in
+> the block above runs both modes, and the comment over it opens "`--self-test`
+> used to be deliberately not run, and the reason it gave is no longer true".
+> So the *condition* moved and the *conclusion* with it — which is the second
+> half of a sentence that had predicted exactly this, and the reason it is worth
+> keeping above rather than deleting.
+>
+> **One clause in it is named rather than answered, so the silence is not read as
+> agreement.** The paragraph's reason for not correcting the row is that this
+> repository's "push token has no `workflow` scope", and *Left out on purpose* in
+> this same file already disproves that for the file the row is about:
+> **`.github/scripts/` is pushable — only `.github/workflows/` and
+> `.github/actions/` are not**. That premise is a separately filed issue and this
+> correction does not touch it. The row is left where it is for the other reasons
+> in that list, and for the one the block above now gives.
 
 **Every `now` cell in that table that reads "30 of 30", "none red", "no
 failures", "the set is empty" or "neither remains" was true when this issue was
@@ -269,8 +321,8 @@ committed CSVs and not a re-derivation of the 32 and 6.
   A template-copied file and a deliberate decision, both owned elsewhere. *(The
   `--self-test` half of that decision has since been taken by #823, `244c992b`,
   which wired the mode in and rewrote the comment giving the reason; `tools/run-tests.sh`
-  is still unwired and #162 is still open for it. Recorded rather than edited,
-  per the same reason as the table above.)*
+  is still unwired and #162 is closed, so that half is owned by no open issue.
+  Recorded rather than edited, per the same reason as the table above.)*
 - **`tools/README.md` (#817), `xdata-no-eq-guard-refusal-contract.md` (#816),
   and the dated sections named in the table above.** Recorded, not edited:
   editing a closed PR's write-up or an already-dated section is rewriting a
