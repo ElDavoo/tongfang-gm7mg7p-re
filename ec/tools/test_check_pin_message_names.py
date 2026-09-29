@@ -5,12 +5,14 @@
 Issue #1363's check printed the measured triple in both slots and the three
 `OWNERSHIP` pins in neither, while its prose said "440 clusters" and "400 of the
 committed cluster_keys". A sweep that credited a key by a word appearing in the
-message would find two of the three names there and report the line as naming
-one, on a line where none is interpolated. `TheLineItWasWrittenFor` pastes the
-pre-#1363 text verbatim, line breaks and quoting included, and asserts that all
-three keys come out; the case beside it renders that same label and asserts the
-words really are in it, so this is a control for the wrong implementation and
-not only for this one.
+message would find the words `clusters` and `cluster_keys` there -- the second
+a prefix of the key `cluster_keys_kept` rather than the key itself, so a sweep
+matching the key strings would credit only `clusters` -- and report the line as
+naming one key, on a line where none is interpolated.
+`TheLineItWasWrittenFor` pastes the pre-#1363 text verbatim, line breaks and
+quoting included, and asserts that all three keys come out; the case beside it
+renders that same label and asserts the words really are in it, so this is a
+control for the wrong implementation and not only for this one.
 
 **The sweep is asserted as a set, never as a count.** What the committed tree
 has to satisfy is that the cases still violating the property are exactly the

@@ -40,11 +40,15 @@ cannot decay into a standing exemption. That is the failure mode that would make
 this tool worse than no tool: a checker whose allowlist only ever grows, exempting
 `ORACLE["main_refs"]` from a check nobody reads any more.
 
-**The five entries, and what each is.** `ORACLE["extmem_refs"]` and
-`DIRECTION_INVARIANT["assign_shaped"]` are real: neither the pin nor the
-measured quantity it is compared against appears on its line, so a perturbation
-yields a `FAIL` whose content is about a different half of the assertion.
-`ORACLE["both"]` and `ORACLE["main_distinct"]`/`["main_refs"]` are mitigated --
+**The five entries, and what each is.** `ORACLE["extmem_refs"]` is real but
+mitigated: the measured sum is printed and the pin is not, but the two component
+pins are printed expected-then-got on this same line, so a moved sum localises
+to a component that did not move -- which is itself the evidence the sum moved.
+`DIRECTION_INVARIANT["assign_shaped"]` is real and unmitigated: neither the pin
+nor the measured `sum(shaped.values())` it was compared against appears on its
+line, so a perturbation yields a `FAIL` whose whole content is about the
+`*`-dereference stores. `ORACLE["both"]` and
+`ORACLE["main_distinct"]`/`["main_refs"]` are mitigated --
 each is named, as expected-then-got, by a sibling check over a different
 measurement of the same key, so a moved pin turns both lines red.
 `PER_PROGRAM["both_main_buckets"]`/`["both_pd_buckets"]` share a line with
