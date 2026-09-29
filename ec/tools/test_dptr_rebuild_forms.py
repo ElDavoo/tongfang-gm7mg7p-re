@@ -27,10 +27,13 @@ Four things are held here, and the last is the one a re-cut can break:
   `is_dptr_rebuild()`, which is a store list: the two omitted `0x86`/`0x87`
   together and so agreed on exactly the rows that were wrong, and a missing
   *read* form was invisible to it twice over because it never looked at the
-  read table at all. The oracle here is `DIRECT_BEARING`, the MCS-51 map of
-  byte-addressed `direct` operands written out below from the instruction
-  set, which shares no source with any of the three tables or with the
-  guard, and is what makes the union a claim rather than a tautology.
+  read table at all. The oracle here is `DIRECT_BEARING`, the 8051/8052 map
+  of byte-addressed `direct` operands written out below from the instruction
+  set and checked against the committed Ghidra listings, which shares no
+  source with any of the three tables or with the guard, and is what makes
+  the union a claim rather than a tautology. It is held by a case with a
+  **negative control** beside it, because a completeness check that has only
+  ever accepted one union is indistinguishable from one that cannot fail.
 - **The discriminator, both ways.** A window that contains a real `mov 0x82,a`
   and a window that contains `ljmp 0x83d6` where that store stood are the same
   bytes to a substring search over a rendered `window` cell and not the same
@@ -141,14 +144,30 @@ ADD_A_TO_DPL = bytes([0x26, 0x82])       # add 0x82,a    -- in place
 ADD_DPH_CARRY = bytes([0x35, 0x83])      # addc a,0x83   -- read
 CLR_DPH = bytes([0xC2, 0x83])            # clr 0x83      -- in place
 
+# The logical group's two halves, which the committed Ghidra listings decode
+# as `45 82 orl A, DPL` and `42 f0 orl B, A` respectively. The accumulator is
+# the destination in the first and the byte at `0x82` is in the second, which
+# is the whole reason one is a read and the other an in-place modify. Both
+# spellings name `0x82` in the same position, so nothing about the byte
+# separates them -- the operand order does.
+ORL_A_FROM_DPL = bytes([0x45, 0x82])     # orl a,0x82 -- read
+ORL_DPL_FROM_A = bytes([0x42, 0x82])     # orl 0x82,a -- in place
+# The three-byte `direct,#data` form of the 8052 addition, and -- the
+# contrast the case below turns on -- the base-8051 accumulator form of the
+# same group, which names a *literal* rather than a byte address. The census
+# must decline the second, which is what keeps the immediate spellings out
+# of all three tables.
+ANL_DIRECT_DPL = bytes([0x53, 0x82, 0x7F])   # anl 0x82,#0x7f -- byte address
+ORL_A_LITERAL = bytes([0x54, 0x82, 0x7F])     # anl a,#0x7f  -- an immediate
+
 # In place: a direct operand naming DPL/DPH that changes it without replacing
-# it. `0x54` is here in the 8051's three-byte spelling, and the two-byte one
-# the length table decodes is asserted beside it, because the two differ only
+# it, with the byte after the operand laid down as well. `disasm8051` frames
+# `0x26` as one byte where the 8051 has two, so the two spellings below are
+# what that table decodes and what the machine executes; they differ only
 # after the operand and this census never looks at the length.
 XCH_DPL = bytes([0xC5, 0x82])         # xch a,0x82
-ANL_DIRECT_DPL = bytes([0x54, 0x82, 0x7F])   # anl 0x82,#0x7f -- the 8051's form
-ANL_DPL_TWO_BYTE = bytes([0x54, 0x82])        # what OPCODE_LEN frames
 INC_DPL = bytes([0x05, 0x82])         # inc 0x82
+ADD_DPL_THEN_NEXT = bytes([0x26, 0x82, 0x7F])   # add 0x82,a and what follows
 
 # `ec-07c4-07d5-sites.csv` 0x0AD99, verbatim: the committed window cell reads
 # `movx @dptr,a ; mov r7,#0xe1 ; ljmp 0x83d6`, and the `0x83` in it is a jump
@@ -159,25 +178,39 @@ LJMP_TARGET = bytes([0x02, 0x83, 0xD6])
 # pair: `0x2C305` after `0x0AD99`'s shape is `mov 0x82,a`.
 DPL_STORE_AT_TARGET = bytes([0xF5, 0x82])
 
-# The MCS-51 map of opcodes whose operand is a **byte** address, written out
-# here from the instruction set and deliberately derived from neither the
-# census's tables nor `trace_xdata_refs.is_dptr_rebuild()`. It is the oracle
-# for the claim the module docstring makes -- that the three tables are the
-# whole map -- and it exists because the 256-opcode cross-check could not be
-# that oracle: it held the store table to `is_dptr_rebuild()`, and the two
-# omitted the same four opcodes, so they agreed on exactly the rows that were
-# wrong. Two lists that share a source are one list counted twice.
+# The map of opcodes whose operand is a **byte** address, written out here
+# from the instruction set and deliberately derived from neither the census's
+# tables nor `trace_xdata_refs.is_dptr_rebuild()`. It is the oracle for the
+# claim the module docstring makes -- that the three tables are the whole map
+# -- and it exists because the 256-opcode cross-check could not be that
+# oracle: it held the store table to `is_dptr_rebuild()`, and the two omitted
+# the same four opcodes, so they agreed on exactly the rows that were wrong.
+# Two lists that share a source are one list counted twice.
+#
+# **`disasm8051.mnemonic()` is not the authority for writing it.** That
+# renderer mislabels the whole logical group -- it prints `54 82` as
+# `anl a,#0x82` and renders `42 f0` as undefined -- so a list read off it
+# carries the renderer's errors rather than the instruction set's. The
+# authority is the committed Ghidra listings under `ec/decompiled/*/*.asm`,
+# which decode the operand position: they render `45 82` as `orl A, DPL`,
+# `42 f0` as `orl B, A`, `63 65 ff` as `xrl 0x65, #0xff` and `54 0f` as
+# `anl A, #0xf`. Two consequences are visible in the list below, and neither
+# is a matter of taste: the accumulator forms `0x45`/`0x55`/`0x65` are
+# **here** (they load the byte) while the immediate forms `0x44`/`0x54`/
+# `0x64` are **not**, because their operand is a literal rather than an
+# address; and the six 8052 additions are here, because the listings decode
+# them and a base-MCS-51 list would be three short of the map.
 #
 # The bit-addressed forms are deliberately *not* here: `0x82` is the low byte
 # of SFR `0x88` in a bit address and is not DPL, and `BIT_ADDRESSED` below
 # names them so the exclusion is asserted rather than assumed.
 DIRECT_BEARING = frozenset(
     (0x05, 0x15,                                    # inc / dec direct
-     0x25, 0x26, 0x27, 0x2C, 0x2D,                  # add / addc / xrl
-     0x35, 0x36, 0x3D, 0x3E, 0x3F,                  # addc / orl
-     0x42, 0x44, 0x45,                              # orl direct, #imm
-     0x52, 0x54, 0x55,                              # anl direct, #imm
-     0x62, 0x64, 0x65,                              # xrl direct, #imm
+     0x25, 0x26, 0x27,                              # add, addc -- both sides
+     0x35, 0x36,                                    # addc, the other half
+     0x42, 0x43, 0x45,                              # orl direct,A / ,#data / a,direct
+     0x52, 0x53, 0x55,                              # anl, the same three
+     0x62, 0x63, 0x65,                              # xrl, the same three
      0x75, 0x85, 0x86, 0x87,                        # mov direct, <src>
      0x95, 0x96, 0x97,                              # subb
      0xA6, 0xA7,                                    # mov @Ri,direct
@@ -387,7 +420,7 @@ class ReadFormTests(unittest.TestCase):
         for insn, byte in ((READ_DPL, 0x82), (READ_DPH_INTO_R5, 0x82),
                            (PUSH_DPL, 0x82), (READ_DPL_VIA_R0, 0x82),
                            (READ_DPL_VIA_R1, 0x82), (ADD_DPL_TO_A, 0x82),
-                           (ADD_DPH_CARRY, 0x83)):
+                           (ADD_DPH_CARRY, 0x83), (ORL_A_FROM_DPL, 0x82)):
             with self.subTest(insn=insn.hex(" ")):
                 self.assertEqual(one(insn, 0), ("read", insn[0], byte))
 
@@ -398,10 +431,39 @@ class ReadFormTests(unittest.TestCase):
         # `0x82` references without asking which direction would charge a
         # window ending on a *load* to a pointer rebuild it never had.
         for insn in (READ_DPL, READ_DPH_INTO_R5, PUSH_DPL, READ_DPL_VIA_R0,
-                     READ_DPL_VIA_R1, ADD_DPL_TO_A, ADD_DPH_CARRY):
+                     READ_DPL_VIA_R1, ADD_DPL_TO_A, ADD_DPH_CARRY,
+                     ORL_A_FROM_DPL):
             with self.subTest(insn=insn.hex(" ")):
                 self.assertFalse(T.is_dptr_rebuild(insn, 0))
         self.assertTrue(T.is_dptr_rebuild(DPL_FROM_A, 0))
+
+    def test_the_logical_group_splits_on_the_operand_order(self):
+        # The discriminator applied to the one group where nothing about the
+        # byte separates the two directions. `0x45` and `0x42` both name
+        # `0x82` in the same position and both take a byte address; the
+        # accumulator is the destination in the first and the source in the
+        # second, so the first reads DPL and the second rewrites it. The
+        # committed Ghidra listings decode them as `45 82 orl A, DPL` and
+        # `42 f0 orl B, A`, and that is the authority for the operand order --
+        # `disasm8051.mnemonic()` renders the first as `orl a,0x82` and the
+        # second as `db 0x42`, so neither the label nor the bucket can be
+        # read off it.
+        self.assertEqual(form_at(ORL_A_FROM_DPL, 0),
+                         [("read", 0x45, 0x82)])
+        self.assertEqual(form_at(ORL_DPL_FROM_A, 0),
+                         [("in place", 0x42, 0x82)])
+        # Same byte, same position, opposite buckets, and neither is a store:
+        # one rewrites DPL with A and the other only ever reads it.
+        self.assertFalse(T.is_dptr_rebuild(ORL_A_FROM_DPL, 0))
+        self.assertFalse(T.is_dptr_rebuild(ORL_DPL_FROM_A, 0))
+        # The immediate spellings of the same group name a *literal* rather
+        # than a byte address, so `54 82` is not a reference to DPL at all and
+        # the census has to decline it. This is the assertion the correction
+        # turned on: the byte is `0x82`, the opcode sits in the middle of the
+        # logical group, and there is nothing to count.
+        self.assertEqual(form_at(ORL_A_LITERAL, 0), [])
+        self.assertEqual(form_at(bytes([0x44, 0x82]), 0), [])
+        self.assertEqual(form_at(bytes([0x64, 0x82]), 0), [])
 
     def test_the_rn_and_the_accumulator_forms_are_both_reads(self):
         # `0xE5 mov a,direct` and `0xA8`-`0xAF mov rN,direct` are the same
@@ -428,21 +490,26 @@ class InPlaceFormTests(unittest.TestCase):
 
     def test_each_in_place_form_is_neither_a_store_nor_a_read(self):
         for insn, byte in ((XCH_DPL, 0x82), (ANL_DIRECT_DPL, 0x82),
-                           (ANL_DPL_TWO_BYTE, 0x82), (INC_DPL, 0x82),
-                           (ADD_A_TO_DPL, 0x82), (CLR_DPH, 0x83)):
+                           (INC_DPL, 0x82), (ADD_A_TO_DPL, 0x82),
+                           (ORL_DPL_FROM_A, 0x82), (CLR_DPH, 0x83)):
             with self.subTest(insn=insn.hex(" ")):
                 self.assertEqual(one(insn, 0), ("in place", insn[0], byte))
                 self.assertFalse(T.is_dptr_rebuild(insn, 0))
 
-    def test_the_masking_forms_classify_the_same_at_both_spellings(self):
-        # `disasm8051.OPCODE_LEN` gives the `0x54` group two bytes where the
-        # 8051 has three, and this census keys on the operand byte rather than
+    def test_a_form_classifies_the_same_at_both_spellings(self):
+        # `disasm8051.OPCODE_LEN` gives the `0x26` group one byte where the
+        # 8051 has two, and this census keys on the operand byte rather than
         # on a decode, so the two spellings of the same instruction agree.
-        # A census that walked instruction boundaries would put the immediate
-        # of the three-byte form where the next instruction begins and count
-        # it; the byte keying is what makes the length irrelevant here.
-        self.assertEqual(form_at(ANL_DIRECT_DPL, 0),
-                         form_at(ANL_DPL_TWO_BYTE, 0))
+        # A census that walked instruction boundaries would put the byte after
+        # the operand where the next instruction begins and count it; the byte
+        # keying is what makes the length irrelevant here. The defect is
+        # asserted as a fact about the tree rather than assumed, because a
+        # case guarding against a length table that is already right is
+        # guarding against nothing.
+        from disasm8051 import OPCODE_LEN
+        self.assertEqual(OPCODE_LEN[0x26], 1)
+        self.assertEqual(form_at(ADD_DPL_THEN_NEXT, 0),
+                         form_at(ADD_A_TO_DPL, 0))
 
 
 class BucketShapeTests(unittest.TestCase):
@@ -462,13 +529,14 @@ class BucketShapeTests(unittest.TestCase):
 
     def test_every_form_the_census_names_is_the_8051_spelling_it_claims(self):
         # The three tables spell their forms out rather than generating them,
-        # because `disasm8051.mnemonic()` renders the `0x44`/`0x45`/`0x54`/
-        # `0x55`/`0x64`/`0x65` group as A-operand forms -- `54 82` prints
-        # `anl a,#0x82` where the machine writes DPL. Asserting each table
-        # against `trace_xdata_refs.DIRECT_STORE_OPS` keeps the two honest
-        # about each other without this file depending on the defective
-        # rendering, and the rendering itself is asserted once below as a fact
-        # about the tree rather than as a note.
+        # because `disasm8051.mnemonic()` renders the logical group wrongly --
+        # it prints `54 82` as `anl a,#0x82` and `42 f0` as `db 0x42`, where
+        # the machine executes `anl a,#0x82` (touching no SFR at all) and
+        # `orl B, A` respectively. Asserting each table against
+        # `trace_xdata_refs.DIRECT_STORE_OPS` keeps the two honest about each
+        # other without this file depending on the defective rendering, and
+        # the rendering itself is asserted once below as a fact about the
+        # tree rather than as a note.
         for op in F.STORE_FORMS:
             with self.subTest(op=hex(op)):
                 self.assertIn(op, T.DIRECT_STORE_OPS | {T.MOV_DIRECT_DIRECT}
@@ -476,9 +544,21 @@ class BucketShapeTests(unittest.TestCase):
         for op in F.IN_PLACE_FORMS:
             with self.subTest(op=hex(op)):
                 self.assertNotIn(op, T.DIRECT_STORE_OPS)
+        # And the spellings the tables write out are the machine's, not the
+        # renderer's: the three table rows that name the accumulator forms
+        # say `a,direct` where the renderer would agree only by accident,
+        # and the two-byte `direct,a` row says what `42 f0` actually is.
         from disasm8051 import mnemonic
-        self.assertEqual(mnemonic(ANL_DPL_TWO_BYTE, 0), "anl  a,#0x82")
-        self.assertEqual(F.form_at(ANL_DPL_TWO_BYTE, 0)[0][0], "in place")
+        self.assertEqual(F.IN_PLACE_FORMS[0x42], "orl  direct,a")
+        self.assertEqual(F.READ_FORMS[0x45], "orl  a,direct")
+        # The renderer still frames `0x54` as two bytes and drops the byte
+        # after it, so it prints the literal as its own operand and discards
+        # `0x7f` entirely; the census declines the same bytes. Asserted as a
+        # pair because either half alone is satisfied by a table that simply
+        # omitted the group, and the dropped byte is the part of the defect
+        # that a length-driven walk would have gone on to decode.
+        self.assertEqual(mnemonic(ORL_A_LITERAL, 0), "anl  a,#0x82")
+        self.assertEqual(F.form_at(ORL_A_LITERAL, 0), [])
 
     def test_the_store_table_is_the_guard_opcode_set_plus_a_named_gap(self):
         # `DIRECT_STORE_OPS` plus the `0x85` exception is what
@@ -508,7 +588,7 @@ class BucketShapeTests(unittest.TestCase):
 
     def test_the_three_tables_are_the_whole_direct_map(self):
         # The completeness claim, against an oracle that shares no source with
-        # the tables. `DIRECT_BEARING` is written out above from the MCS-51
+        # the tables. `DIRECT_BEARING` is written out above from the
         # instruction set; the three tables are written out in the tool. The
         # two cannot drift together, which is the failure this case exists
         # for: the store table and `is_dptr_rebuild()` omitted the same four
@@ -521,6 +601,29 @@ class BucketShapeTests(unittest.TestCase):
         # `mov DPTR,#imm16` is the fourth thing that replaces the pointer and
         # is in none of them, because it names no `direct` operand at all.
         self.assertNotIn(T.MOV_DPTR, tables)
+
+    def test_the_completeness_check_can_reject_a_wrong_union(self):
+        # The negative control for the case above, and the reason the case
+        # above is not a tautology that happens to pass. A completeness check
+        # that has only ever accepted one union is indistinguishable from one
+        # that cannot fail, so each way of getting the union wrong is driven
+        # through the same comparison and asserted to be caught.
+        tables = set(F.STORE_FORMS) | set(F.READ_FORMS) | set(F.IN_PLACE_FORMS)
+        # One member missing from the oracle -- the shape of a list that is
+        # *nearly* complete, which is what this file's own lead names as the
+        # failure a hand-written list cannot detect by eye.
+        self.assertNotEqual(tables, set(DIRECT_BEARING) - {0x45})
+        # One non-member added. `0x2C` is `add a,r4`: a register form with no
+        # operand byte at all, and one of the five this table wrongly carried
+        # before the correction the listings forced.
+        self.assertNotEqual(tables | {0x2C}, set(DIRECT_BEARING))
+        # A whole group gone, rather than a lone member -- the six 8052
+        # additions. Reading the instruction set as base-8051-only misses
+        # `0x43`/`0x53`/`0x63` and puts `0x44`/`0x54`/`0x64` in their place,
+        # which is a nine-row error that still totals the right union.
+        without_8052 = set(DIRECT_BEARING) - {0x42, 0x43, 0x52, 0x53,
+                                              0x62, 0x63}
+        self.assertNotEqual(tables, without_8052)
 
 
 class DiscriminatorTests(unittest.TestCase):

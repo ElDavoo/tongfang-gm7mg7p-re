@@ -64,15 +64,22 @@ and a bucket that did not exist would let that decision read as an absence
 rather than as a choice.
 
 **The three tables are the whole byte-addressed `direct` map, and the one
-class left out is named rather than left out silently.** The MCS-51 has 54
-opcodes whose operand is a byte address, and every one of them is in one of
+class left out is named rather than left out silently.** The base 8051 and
+the six instructions its 8052 extension adds have **49** opcodes between
+them whose operand is a byte address, and every one of them is in one of
 these three tables; `test_dptr_rebuild_forms.py` holds their union against
 that map written out a second time, because a hand-written list that is
-merely *nearly* complete reads exactly like a complete one. The cross-check
-that did exist, over all 256 opcodes, could not be that oracle: it held the
-*store* table to `is_dptr_rebuild()`, which omitted the same two opcodes and
-so agreed on exactly the rows that were wrong, and it never looked at the
-read or in-place tables at all. The excluded class is the bit-addressed forms
+merely *nearly* complete reads exactly like a complete one. The oracle is the
+committed Ghidra listings under `ec/decompiled/*/*.asm`, which decode the
+`direct` position and are the reason nothing here is taken from
+`disasm8051.mnemonic()` -- that renderer mislabels the whole logical group,
+printing `54 82` as `anl a,#0x82` where the machine executes `anl a,#0x82`
+and touches no SFR, and `42 f0` as undefined where the machine writes B. The
+cross-check that did exist, over all 256 opcodes, could not be that oracle: it
+held the *store* table to `is_dptr_rebuild()`, which omitted the same two
+opcodes and so agreed on exactly the rows that were wrong, and it never
+looked at the read or in-place tables at all. The excluded class is the
+bit-addressed forms
 (`0x0A`/`0x2A`/`0x4A`/`0x5A`/`0x6A`/`0x72`/`0x7A`/`0x82`/`0x92`/`0xA0`/`0xA2`/
 `0xB0`/`0xB2`/`0xC1`/`0xD2`, and the three `jb`/`jnb`/`jbc` rows), which take
 a *bit* address where `0x82` is the low byte of SFR `0x88` and not DPL at all,
@@ -123,9 +130,16 @@ STORE_FORMS = dict(
 READ_FORMS = dict(
     [(0x25, "add  a,direct"),
      (0x27, "addc a,direct"),
-     (0x2C, "xrl  a,direct"),
      (0x35, "addc a,direct"),
-     (0x3D, "orl  a,direct"),
+     # `0x45`/`0x55`/`0x65` are the *source* form of the logical group: the
+     # accumulator is the destination, so they load the byte and change
+     # nothing at the address they name. The committed Ghidra listings say so
+     # directly -- `45 82` decodes `orl A, DPL` and `65 f0` decodes
+     # `xrl A, B` -- and the `0x42`/`0x52`/`0x62` rows below are the same
+     # group with the operand on the other side, which is why the two halves
+     # of the group belong in different buckets.
+     (0x45, "orl  a,direct"),     (0x55, "anl  a,direct"),
+     (0x65, "xrl  a,direct"),
      (0x85, "mov  direct,direct"),
      (0x95, "subb a,direct"),
      (0xA6, "mov  @r0,direct"),
@@ -136,17 +150,16 @@ READ_FORMS = dict(
     + [(op, "mov  r%u,direct" % (op - 0xA8)) for op in range(0xA8, 0xB0)])
 IN_PLACE_FORMS = {
     0x05: "inc  direct",          0x15: "dec  direct",
-    0x26: "add  direct,a",        0x2D: "xrl  direct,a",
-    0x36: "addc direct,a",        0x3E: "orl  direct,a",
-    # `0x42`/`0x52`/`0x62` are the `#data2` spellings of the `0x44`/`0x54`/
-    # `0x64` below: the same byte-addressed operand in the same position, a
-    # longer immediate this census never reads. They are listed apart only so
-    # the six do not read as one opcode repeated six times.
-    0x3F: "orl  direct,#imm",     0x42: "orl  direct,#imm2",
-    0x44: "orl  direct,#imm",     0x45: "orl  direct,a",
-    0x52: "anl  direct,#imm2",    0x54: "anl  direct,#imm",
-    0x55: "anl  direct,a",        0x62: "xrl  direct,#imm2",
-    0x64: "xrl  direct,#imm",     0x65: "xrl  direct,a",
+    0x26: "add  direct,a",        0x36: "addc direct,a",
+    # `0x42`/`0x52`/`0x62` and `0x43`/`0x53`/`0x63` are the 8052 additions to
+    # the logical group, and the only six entries here that a base-MCS-51
+    # opcode map does not have. They are the writing side of the
+    # `0x45`/`0x55`/`0x65` rows in `READ_FORMS`: two bytes for the `direct,A`
+    # form, three for `direct,#data`. The committed listings render them
+    # `42 f0 orl B, A` and `63 65 ff xrl 0x65, #0xff`.
+    0x42: "orl  direct,a",        0x43: "orl  direct,#imm",
+    0x52: "anl  direct,a",        0x53: "anl  direct,#imm",
+    0x62: "xrl  direct,a",        0x63: "xrl  direct,#imm",
     0x96: "subb direct,#imm",     0x97: "subb direct,a",
     0xC2: "clr  direct",          0xC5: "xch  a,direct",
     0xD5: "djnz direct,rel",
@@ -278,9 +291,10 @@ def print_summary(found) -> None:
         "not a disassembly:\nthey include bytes that are data, table entries "
         "and the separate PD 8051 image, so read\nthem as found by this method "
         "and not as a count of executed instructions. The three tables\nare "
-        "the whole MCS-51 map of byte-addressed direct operands. Two classes\n"
-        "are out of them, and both are out because of this file's keying "
-        "rather than\nbecause of the 8051: the bit-addressed forms take a bit "
+        "the whole map of byte-addressed direct operands, the base 8051 plus\n"
+        "the six its 8052 extension adds. Two classes are out of them, and both\n"
+        "are out because of this file's keying rather than because of the 8051:\n"
+        "the bit-addressed forms take a bit "
         "address, where 0x82 is\nthe low byte of SFR 0x88 rather than DPL, and "
         "`mov DPTR,#imm16` (0x90) names no direct operand at\nall.")
 
