@@ -312,6 +312,18 @@ the committed file then fails for a reason that has nothing to do with this
 change. `--callee-depth 1` **is** in `walk_branch_arms.py`'s usage list, on the
 `--csv` example.
 
+**Correction, at the #1020 merge: the flag is in the usage list now.** The
+sentence above was true when written and is the reason that issue was filed;
+`trace_xdata_refs.py`'s block carries a `0x0751 --csv --terminator-column |
+diff - ../annotations/manual-fan-ctrl-0751-sites.csv` example, and
+`ec/tools/test_trace_xdata_refs_usage.py` now fails if any option the parser
+declares goes unnamed in it. **The commands below are unchanged and still work
+as printed** — they already passed the flag, which was always the point: the
+defect was that the flag was undiscoverable from the surface a reader reaches
+first, not that this file's reproduce command was wrong. The finding, its
+reproduction and the second defect it turned up are in
+[`csv-column-usage-advice.md`](csv-column-usage-advice.md).
+
 ```sh
 # the two new cases, and the whole suite
 python3 ec/tools/test_walk_branch_arms.py

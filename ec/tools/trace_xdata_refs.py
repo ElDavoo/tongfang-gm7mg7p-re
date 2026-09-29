@@ -66,6 +66,7 @@ Usage:
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x07E2 --r2-commands
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x07D0 --csv > sites.csv
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x0860 --csv --census-column
+    python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x0751 --csv --terminator-column | diff - ../annotations/manual-fan-ctrl-0751-sites.csv
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x0860 --csv --census-column --check
 """
 import argparse
@@ -605,6 +606,59 @@ def committed_columns(path: str):
     return header
 
 
+def committed_terminator_tables(directory: str, addrs) -> list:
+    """Committed tables that would need `--terminator-column` to be reproduced.
+
+    Each entry is a `(path, addresses)` pair: a `*.csv` under `directory`
+    whose header carries a `terminator` column and whose `addr` column has a
+    row for **every** address in `addrs`, and the requested addresses in the
+    spelling `csv_table()` gives them. Sorted by path, so the notes a run
+    prints do not come out in directory order.
+
+    **The tables are found by a scan and never listed**, which is the whole
+    point: a seventh committed table carrying the column needs no edit to any
+    file here, and no count of them appears in this source. What comes back is
+    a measurement over the tree in front of the tool, which is why a
+    directory that does not exist, or a `.csv` that cannot be read, is an empty
+    result rather than an error -- an unreadable committed table is
+    `check_table()`'s to report, and that is on the `--check` path, where the
+    reader is already being told.
+
+    **An empty result is not a verdict.** An address in no committed table, one
+    in a table with no `terminator` column, and one where a *second* requested
+    address is uncovered all come back empty, and a caller that says anything
+    on that basis is guessing. Nothing here can tell a reader who is writing a
+    fresh table from one about to diff a committed one, so the answer is a fact
+    about the tree and never a diagnosis of the run.
+
+    `addrs` are the caller's own strings and are re-spelled here rather than
+    compared, so `0x7d0` and `0x07D0` are the same request and the note quotes
+    the address the way the table it names spells it. An address that is not
+    hex raises, which is what `csv_table()` has already done with it by the
+    time any caller gets here.
+    """
+    wanted = {f"0x{int(text, 16):04X}" for text in addrs}
+    out = []
+    if not wanted or not os.path.isdir(directory):
+        return out
+    for name in sorted(os.listdir(directory)):
+        if not name.endswith(".csv"):
+            continue
+        path = os.path.join(directory, name)
+        try:
+            with open(path, newline="") as f:
+                reader = csv.DictReader(f)
+                fields = reader.fieldnames or []
+                if "terminator" not in fields or "addr" not in fields:
+                    continue
+                covered = {(row.get("addr") or "").strip() for row in reader}
+        except (OSError, csv.Error):
+            continue
+        if wanted <= covered:
+            out.append((path, sorted(wanted)))
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -659,6 +713,27 @@ def main() -> int:
             print(f"note: {sum(unmapped.values())} site(s) have no row in "
                   f"{repo_path(CENSUS_MAP)} and read 'not recorded': {by_addr}\n",
                   file=sys.stderr)
+        if args.check is None and not args.terminator_column:
+            # The same omission as the note below, told without a `--check` to
+            # read the committed header out of. On that path the tool is handed
+            # the file; on this one it is not, so the file is found instead --
+            # scanned, not listed, and only the tables that carry the column
+            # and already have a row for every address asked for. Skipped
+            # entirely under `--check`, which is the path this issue froze and
+            # whose own note says the same thing with the table in hand.
+            #
+            # Phrased as a fact about the tree and not as a diagnosis: the
+            # reader may be writing a new table, which is exactly right without
+            # the flag, so nothing here says the run was wrong. An address this
+            # cannot place says nothing at all, which is the property
+            # `committed_terminator_tables()`'s docstring states and
+            # test_trace_xdata_refs_usage.py holds in both directions.
+            for path, covered in committed_terminator_tables(ANNOT, args.addrs):
+                print(f"note: {repo_path(path)} carries a `terminator` column "
+                      f"and covers {', '.join(covered)}; a diff against it "
+                      "needs --terminator-column, and this run did not pass "
+                      "it, so every row is short that cell.\n",
+                      file=sys.stderr)
         if args.check is not None:
             # The one direction a diff cannot explain by itself. Six tables
             # carry a `terminator` column and a bare run has none, so the diff
