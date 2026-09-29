@@ -4915,5 +4915,175 @@ class MarkBeforeCodecTests(unittest.TestCase):
         self.assertIsNone(again[0][0])
 
 
+class MarkGapReportTests(unittest.TestCase):
+    """The gap `coalesce_marks` decided each join on, recorded and reported.
+
+    A report and not a refusal: §3's three consoles are supposed to fuse, so
+    nothing here is about an exit code changing. It is about two fixtures
+    that differ only in how far apart the three consoles' marks landed
+    reading differently from each other, and about the two mutations the
+    issue names -- dropping the recorded gap, and printing the close note
+    on every fused group -- each of which turns this class red on its own.
+    """
+
+    # §3's three actions, 30 s apart so that no two of them fuse. The labels
+    # are the committed three-console run's, so the block these build is the
+    # one `--block` selects and the windows grade rather than get withheld.
+    ACTIONS = ("no-op wrote 0x0751=0x10",
+               "wrote 0x0751=0xA0",
+               "restored 0x0751=0x10")
+    # The first action's three marks, seconds apart per console. 0.0, 1.0 and
+    # 5.9 give adjacent gaps of 1.0 s and 4.9 s; 0.0, 1.0 and 1.2 give 1.0 s
+    # and 0.2 s. Both are under the window, which is the point -- neither
+    # fixture is one the merge refused, so what separates their reports is
+    # the gap and nothing else.
+    WIDE = (0.0, 1.0, 5.9)
+    TIGHT = (0.0, 1.0, 1.2)
+    # The closing section, which is where the capture-level verdict lives and
+    # so the part two captures differing only in their mark spacing must not
+    # move between.
+    SETTLE = '=== what this does and does not settle ==='
+
+    def captures(self, tmp, offsets):
+        """Three one-console captures, the first action spread by `offsets`.
+
+        The other two actions are staggered a second apart per console, the
+        way the committed `0751-isolation-run/` fixture is, so a close note
+        anywhere in the report is the first action's and cannot have come
+        from an action that was never under test. A file name per capture,
+        which `capture`'s fixed one would not give: three files of one shape
+        are what makes this a three-console day rather than one capture read
+        three times.
+        """
+        paths = []
+        for n, offset in enumerate(offsets):
+            rows = ['ts,addr,old,new']
+            for i, label in enumerate(self.ACTIONS):
+                secs = 30 * i + (offset if i == 0 else float(n))
+                rows.append(f'2026-01-01T12:{int(secs) // 60:02d}:'
+                            f'{secs % 60:06.3f}+01:00,MARK,,{label}')
+            path = Path(tmp) / f'console-{n}.csv'
+            path.write_text(''.join(row + '\n' for row in rows))
+            paths.append(str(path))
+        return paths
+
+    def marks_of(self, paths):
+        """Every mark in `paths`, read the way the report reads them."""
+        return [m for path in paths for m in grade.read_capture(path)[0]]
+
+    def test_marks_4_9s_apart_report_the_gap_and_are_named_close(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(*self.captures(tmp, self.WIDE))
+        self.assertEqual(rc, 0)
+        flat = " ".join(out.split())
+        # A measured distance between two recorded rows, printed as such.
+        # `flat` because the headline is wrapped to the file's 72 columns and
+        # the figures are what this is about, not where the break fell.
+        self.assertIn('joined 3 mark row(s), adjacent gap(s) 1.0s, 4.9s, '
+                      'window 5s', flat)
+        self.assertIn('is at or above the 4.0s this report calls close', flat)
+
+    def test_marks_0_2s_apart_report_the_gap_and_are_not_named_close(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(*self.captures(tmp, self.TIGHT))
+        self.assertEqual(rc, 0)
+        flat = " ".join(out.split())
+        self.assertIn('joined 3 mark row(s), adjacent gap(s) 1.0s, 0.2s, '
+                      'window 5s', flat)
+        # The mutation pin for the note itself. Printed on every fused group
+        # rather than on the ones that came close, it lands here too and this
+        # goes red; and the case it would mis-report is the ordinary one --
+        # three consoles agreeing within 0.2 s is what §3 looks like when it
+        # is working, and calling that close is a warning on every report.
+        self.assertNotIn('this report calls close', flat)
+
+    def test_the_two_fixtures_report_differently(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            wide = run(*self.captures(tmp, self.WIDE))
+            tight = run(*self.captures(tmp, self.TIGHT))
+        self.assertNotEqual(wide[1], tight[1])
+        # And the difference is the gap alone. This is the "a report, not a
+        # refusal" half of the issue in one test: a change that moved a
+        # verdict, or an exit code, or a mark header, to accommodate the
+        # note is a change this goes red on.
+        self.assertEqual(wide[0], tight[0])
+        self.assertEqual(wide[1][wide[1].index(self.SETTLE):],
+                         tight[1][tight[1].index(self.SETTLE):])
+        self.assertEqual(marked_windows(wide[1]), marked_windows(tight[1]))
+
+    def test_a_group_of_one_mark_says_nothing_extra(self):
+        rc, out, _ = run(QUIET)
+        self.assertEqual(rc, 0)
+        # The committed quiet fixture's two marks are 60 s apart, so both of
+        # its groups are one mark and neither has a join to report. Absent
+        # from the whole report rather than from one window, because a note
+        # that fired on a single-mark group would be a line on every window
+        # of every capture.
+        self.assertNotIn('adjacent gap(s)', out)
+        self.assertNotIn('this report calls close', out)
+
+    def test_the_gap_is_recorded_per_adjacent_pair(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            windows = grade.coalesce_marks(
+                self.marks_of(self.captures(tmp, self.WIDE)))
+        self.assertEqual(len(windows), 3)
+        for w in windows:
+            # The mutation pin for the record itself: an empty `mark_gaps`
+            # reddens this, and a report built on it would have nothing to
+            # print whatever the note said.
+            self.assertEqual(len(w.mark_gaps), len(w.marks) - 1)
+            # Each gap names two *adjacent* marks of this window, in time
+            # order and by identity. The gaps are a property of the join and
+            # are recorded beside `marks` rather than inside it, so `marks`
+            # stays the per-capture record the mark-set checks and
+            # `window_mark_problems` read.
+            self.assertEqual([(a, b) for a, b, _ in w.mark_gaps],
+                             list(zip(w.marks, w.marks[1:])))
+            for a, b, gap in w.mark_gaps:
+                self.assertEqual(gap, (b.ts - a.ts).total_seconds())
+                self.assertLessEqual(gap, grade.MARK_MERGE_SECONDS)
+        # The figure the report prints is the one recorded here, not a second
+        # computation of it that could drift from the first.
+        self.assertAlmostEqual(windows[0].mark_gaps[1][2], 4.9, places=6)
+
+    def test_a_three_mark_group_names_every_gap_not_just_the_widest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            first = grade.coalesce_marks(
+                self.marks_of(self.captures(tmp, self.WIDE)))[0]
+        self.assertEqual(len(first.marks), 3)
+        lines = grade.mark_gap_note(first)
+        # Both gaps, in time order. The narrow one is the one that says the
+        # three consoles agreed at once and the third then hesitated, and a
+        # headline carrying only the widest would not show that at all.
+        self.assertIn('adjacent gap(s) 1.0s, 4.9s', lines[0])
+        # The close note names the widest and only the widest, which is the
+        # same figure the headline already leads with; it is here to say what
+        # the number means, not to repeat it.
+        self.assertIn('4.9s', lines[1])
+        self.assertNotIn('1.0s', " ".join(lines[1:]))
+
+    def test_block_selection_is_unchanged(self):
+        rc, out, _ = run(*RUN_CAPTURES, '--block', '0xA0')
+        # `main` filters with `shown = [i for i, w in enumerate(windows) if
+        # w.block is selected]` after `build_windows`, so the new attribute
+        # rides along rather than taking part in the selection. The header,
+        # the whole-stream mark numbering and the exit code are what a
+        # `--block` run is read by, and none of the three moved.
+        self.assertEqual(rc, 0)
+        self.assertIn('=== block 1 of 1, value under test 0xA0, 3 window(s) '
+                      'in it ===', out)
+        self.assertEqual(marked_windows(out),
+                         [(1, 'no-op wrote 0x0751=0x10'),
+                          (2, 'wrote 0x0751=0xA0'),
+                          (3, 'restored 0x0751=0x10')])
+        # The census is whole-capture under `--block` while only this
+        # block's windows print, so a fused group anywhere in the day is
+        # visible there and nowhere else. The committed fixture's consoles
+        # are a second apart per adjacent pair, comfortably inside.
+        self.assertIn('adjacent gap(s) 1.0s, 1.0s, window 5s',
+                      " ".join(out.split()))
+        self.assertNotIn('this report calls close', out)
+
+
 if __name__ == '__main__':
     unittest.main()

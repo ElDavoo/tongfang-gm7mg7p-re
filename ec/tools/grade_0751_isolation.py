@@ -188,7 +188,12 @@ by hand from HWiNFO (§4.5) and is in no capture. What this script says is
 comes from a human holding the rest of the notes.
 
 One action is marked in every watcher, so the same write appears as a MARK row
-per capture; marks within `MARK_MERGE_SECONDS` are one window, not several.
+per capture; marks within `MARK_MERGE_SECONDS` are one window, not several. The
+gap each of those joins was made on is recorded and reported, so a group that
+closed just inside the window reads differently from one that closed
+comfortably inside it. That is a report and not a refusal: §3's three consoles
+are supposed to fuse, and the distance is there for a reader to judge the join
+by, not as grounds for a new exit code.
 
 **The closing section has four cases, not two.** A run that graded nothing
 says so, a run that graded every one of its windows -- and every one of those
@@ -273,6 +278,22 @@ TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 # consoles; a window that opened twice for one action would report "nothing
 # moved" for half of it.
 MARK_MERGE_SECONDS = 5
+
+# How wide a gap has to be, of that window, before a fused group is called
+# close -- a floor and not a ceiling, which is the whole point of it. The
+# committed three-console fixture puts one action at 12:00:10, :11 and :12,
+# so being three consoles costs ~1 s per adjacent pair and a group that fused
+# for that reason alone is comfortably inside, which is not the case a reader
+# needs warning about. 4.0 s is a hesitation rather than a press, and it sits
+# 1 s short of the edge at which the group would have been two windows, so
+# that edge is named rather than left to the reader to compute. Deliberately
+# not `MARK_MERGE_SECONDS`: every group here is already at or under that by
+# construction, so a threshold equal to it would call every group in every
+# report close. Deliberately not `grade_gpu_door.py`'s `CLOSE_MARKS_SECONDS`
+# of 5 either -- that one equals its own window meaningfully only because
+# that grader does not fuse, so its number says nothing about where a fuse
+# came close.
+CLOSE_GAP_SECONDS = 4.0
 
 # The bytes §4 asks about, in its order. Everything else in the sweep is
 # reported as context only: §4.4 says to read the whole 0x0700-0x07FF range
@@ -772,13 +793,16 @@ class Window:
         self.source = source
         self.changes = []
         self.levels = {}
-        # The raw per-capture marks this window was merged from, and the
-        # block it fell in. Both are set by `coalesce_marks` and
-        # `assign_blocks` rather than at construction: a mark read out of a
-        # CSV has no block until the whole mark stream has been walked, and
-        # `coalesce_marks` is the only place that knows which raw rows one
-        # action was recorded as.
+        # The raw per-capture marks this window was merged from, the gap each
+        # adjacent pair of them was joined on, and the block it fell in. All
+        # three are set by `coalesce_marks` and `assign_blocks` rather than at
+        # construction: a mark read out of a CSV has no block until the whole
+        # mark stream has been walked, and `coalesce_marks` is the only place
+        # that knows which raw rows one action was recorded as. The gaps ride
+        # beside `marks` rather than inside it because a gap is a property of
+        # the join -- of two consoles' rows together -- and not of either row.
         self.marks = []
+        self.mark_gaps = []
         self.block = None
 
 
@@ -1756,6 +1780,15 @@ def coalesce_marks(marks):
     The raw rows ride along on the window in `marks` rather than only their
     joined label. A joined label cannot say which console recorded which
     spelling of an action, and the mark-set checks are per capture.
+
+    The gap each adjacent pair was joined on rides along in `mark_gaps` as
+    well, as `(earlier mark, later mark, seconds)`. It is the distance the
+    close test above measures between the same two marks, carried onto the
+    window rather than left to be worked out again by whoever reads the
+    report. It is recorded beside `marks` rather than inside it because a gap
+    is a property of the join -- of two consoles' rows together -- and not of
+    any one of them. A group of one mark has none, and that is the ordinary
+    case.
     """
     groups = []
     for m in sorted(marks, key=lambda w: w.ts):
@@ -1771,6 +1804,8 @@ def coalesce_marks(marks):
                for g in groups]
     for w, g in zip(windows, groups):
         w.marks = g
+        w.mark_gaps = [(a, b, (b.ts - a.ts).total_seconds())
+                       for a, b in zip(g, g[1:])]
     return windows
 
 
@@ -2205,6 +2240,45 @@ def wrap_note(text, indent=2):
                                    subsequent_indent=pad))
 
 
+def mark_gap_note(w):
+    """The lines that say how close a fused group came to splitting.
+
+    `coalesce_marks` fuses marks that land within `MARK_MERGE_SECONDS` of
+    each other and records on the window the gap it decided each join on.
+    This is where that surfaces. A report that names a group and its verdict
+    without the distance reads the same whether three consoles agreed at once
+    or one hesitated for five seconds, and a reader who expected one action
+    boundary has nothing to judge the join by.
+
+    A measured distance between two recorded rows, and only that. Not a claim
+    that the operator took two actions -- `probe-hold-mark-merge.md` records
+    what the writer side of the distance costs (the probe's `hold` plus the
+    inter-arm re-snapshot) as unmeasured, and a figure measured on the reader
+    side does not measure it.
+
+    Empty for a group of one mark: there is no join to describe, and a line
+    saying there was none would be noise on the ordinary window.
+    """
+    if not w.mark_gaps:
+        return []
+    gaps = [gap for _, _, gap in w.mark_gaps]
+    widest = max(gaps)
+    listed = ", ".join(f"{g:.1f}s" for g in gaps)
+    lines = textwrap.wrap(
+        f"joined {len(w.marks)} mark row(s), adjacent gap(s) {listed}, "
+        f"window {MARK_MERGE_SECONDS}s", width=72, initial_indent="    ",
+        subsequent_indent="    ")
+    if widest >= CLOSE_GAP_SECONDS:
+        lines += textwrap.wrap(
+            f"the widest of those, {widest:.1f}s, is at or above the "
+            f"{CLOSE_GAP_SECONDS}s this report calls close: the group stayed "
+            f"together by under a second of the {MARK_MERGE_SECONDS}s "
+            f"window, so a reader who expected two actions has the distance "
+            f"here to judge the join rather than take it on trust",
+            width=72, initial_indent="    ", subsequent_indent="    ")
+    return lines
+
+
 def report_census(captures, windows, blocks, unplaced, unreads, selected):
     """What the marks say, before anything is read over them.
 
@@ -2263,12 +2337,20 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
                 f"{w.label!r} in {len(said)} of {len(names)} capture(s)")
         if len(said) == len(names) and len(set(said.values())) == 1:
             print(head + ", one label each")
-            continue
-        print(head + ":")
-        for path in names:
-            got = said.get(path)
-            print(f"    {os.path.basename(path):44} "
-                  + (repr(got) if got else "-- did not record it"))
+        else:
+            print(head + ":")
+            for path in names:
+                got = said.get(path)
+                print(f"    {os.path.basename(path):44} "
+                      + (repr(got) if got else "-- did not record it"))
+        # The per-action entry, not the per-capture rows above: a gap is
+        # between two consoles' rows and printing it under either one of them
+        # would attribute it to that console alone. And the census is the
+        # whole capture under `--block` while only the selected block's
+        # windows print, so this is where a fused group in a block this run
+        # did not grade stays visible.
+        for line in mark_gap_note(w):
+            print(line)
 
     for i, b in enumerate(blocks, 1):
         line = (f"  block {i} of {len(blocks)}: value under test {b.name}, "
@@ -2367,11 +2449,16 @@ def report_withheld_window(w, n, total, where, problems):
     `where` is the `block:` line's tail -- a block's name and position, or
     `unplaced` for a mark no block could take -- and `problems` this window's
     own, so a block whose problem is on another mark says so here too rather
-    than leaving a bare refusal with no diagnosis on it.
+    than leaving a bare refusal with no diagnosis on it. The mark gap a
+    graded window reports is reported here as well: a group that only just
+    stayed one window is a fact about the capture, and withholding the
+    window's verdict is not a reason to withhold that with it.
     """
     print(f"\n--- mark {n}/{total}: {w.ts.isoformat()}  {w.label!r} "
           f"({w.source})")
     print(f"    block: {where} -- NOT GRADED")
+    for line in mark_gap_note(w):
+        print(line)
     for text in problems:
         print(wrap_note(f"not graded -- {text}.", indent=4))
 
@@ -2389,7 +2476,10 @@ def report_window(w, n, total, block, total_blocks, end=None):
     count marks back to the one that opened it. A window in no block says
     `unplaced` rather than nothing: there is no §3 shape to check it against,
     and a bare absence of the line would read as an older report rather than
-    as a mark the walk could not place.
+    as a mark the walk could not place. The mark gap goes beside it and for
+    the same reason: a window built from more than one raw mark says so, and
+    the verdicts below are about the group rather than about any one of the
+    rows that formed it.
     """
     end = end or ("the next mark" if n < total else "the end of the capture")
     print(f"\n--- mark {n}/{total}: {w.ts.isoformat()}  {w.label!r} "
@@ -2397,6 +2487,8 @@ def report_window(w, n, total, block, total_blocks, end=None):
     where = "unplaced" if block is None else \
         f"{block.name} (block {block.index} of {total_blocks})"
     print(f"    block: {where}")
+    for line in mark_gap_note(w):
+        print(line)
     print(f"    window runs to {end}")
 
     # The group names that had hits, in WATCHED order, so main can say which
