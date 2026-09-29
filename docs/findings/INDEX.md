@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-170 write-ups.
+176 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -151,6 +151,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md) — §4.4's identity figures, re-run against the committed census (issue #582)
 - [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md) — §6a's per-direction rows and §6b's cluster split are held now, and what is still not (issue #850)
 - [`xdata-819-815-correction-chain.md`](xdata-819-815-correction-chain.md) — Two gate claims #819 corrected were settled by #815 and #823, and eleven pins across the chain no longer land (issue #836)
+- [`xdata-attribute-dispatch-boundary.md`](xdata-attribute-dispatch-boundary.md) — The attribute reader is measured against the six benign calls in `main()`, not filtered by `MODES`
 - [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md) — The xdata census re-derivation checklist: what a re-export moves, and what to do about it (issue #820)
 - [`xdata-census-self-test-gate.md`](xdata-census-self-test-gate.md) — `xdata_register_map.py --self-test` was switched off for a reason that had
 - [`xdata-census-totals.md`](xdata-census-totals.md) — The census totals: 1,171 addresses / 14,819 references, and how to re-derive them (issue #557)

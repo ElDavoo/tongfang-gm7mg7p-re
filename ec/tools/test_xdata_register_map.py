@@ -102,7 +102,29 @@ WITH_DISPATCH = ("def main():\n"
                  "        pass\n"
                  "    return 0\n")
 COMPREHENSION_DISPATCH = "def main():\n    xs = [demo_mode(a) for a in y]\n    return 0\n"
-ATTRIBUTE_DISPATCH = "def main():\n    return xrm.write(args)\n"
+# `demo_mode` and not `write`, and the difference is the whole of issue #694: a
+# tenth mode is by definition not in `MODES`, so pinning the reader on a name
+# that is in it measures a filter the reader already had rather than the path
+# that fails. `xrm` is not a name either reader resolves, so the terminal is the
+# whole of what is under test.
+ATTRIBUTE_DISPATCH = "def main():\n    return xrm.demo_mode(args)\n"
+
+# The attribute calls the committed `main()` makes, which is the whole of the
+# benign set, measured off that `main()`'s own AST rather than named from a
+# reading of it. It is a maintained list and it is wrong the first time it is
+# written down -- it is, against the four names the issue proposed, which are
+# all here but for `ArgumentParser` and `parse_args` -- so it is held as a
+# partition in both directions by the case that owns the name, and
+# `test_the_benign_set_names_nothing_the_tool_defines` holds the other failure
+# a list has: widening it to cover a name the tool itself defines.
+BENIGN_ATTRIBUTES = frozenset({
+    "ArgumentParser",                 # `argparse.ArgumentParser(...)`
+    "add_argument",                   # every flag, on the parser and the group
+    "add_mutually_exclusive_group",   # the group carrying the two guarded flags
+    "error",                          # the four refusal guards
+    "join",                           # the default `--registers` path
+    "parse_args",                     # `ap.parse_args()`
+})
 
 # The dispatch positions `TripwireCoverage`'s docstring names, keyed by the
 # words it uses for each. A key is the `subTest` label, so a failure names the
@@ -206,22 +228,79 @@ def dispatch_names(source):
     return dispatch.names
 
 
-def mode_attributes(source):
-    """The `MODES` names `main()` in `source` reaches as an attribute, sorted.
+def attribute_calls(source):
+    """Every attribute call `main()` in `source` makes, terminal names, sorted.
 
-    The other half of the boundary `dispatch_names` cannot close by itself. A
-    mode dispatched as `return xrm.write(args)` is not a bare-name call and so
-    records nothing; widening the reader to attribute calls brings back every
-    `ap.error`, `ap.add_argument` and `os.path.join` on the way, which is the
-    fragile list the second reader was meant to replace. So the boundary is
-    stated as its own assertion instead: no attribute in `main()` may be
-    spelled like a mode, and a mode reached that way fails here loudly rather
-    than being missed quietly.
+    Unfiltered, and that is the point: there is no `MODES` in here, so the set
+    this returns does not move when a mode is added. The reader it replaces
+    filtered by `call.func.attr in MODES`, which is the one filter a tenth mode
+    cannot pass -- it is a tenth because it is not in `MODES`, so it was dropped
+    before the set was built and the boundary was green for exactly the case it
+    exists to catch.
+
+    It uses `ast.walk` rather than the visitor `dispatch_names` needs, because
+    a full descent is right here: the `list(...)` defaults nested inside
+    `ap.add_argument(...)` are bare names, not attributes, so descending costs
+    this reader nothing that the positional rule was built to keep out. There
+    is no ordering property to hold either, and the result is sorted so a
+    failure names a set rather than a position.
     """
     return sorted({call.func.attr for call in ast.walk(main_of(source))
                    if isinstance(call, ast.Call)
-                   and isinstance(call.func, ast.Attribute)
-                   and call.func.attr in MODES})
+                   and isinstance(call.func, ast.Attribute)})
+
+
+def module_level_names(source):
+    """The names `source` binds at module level, sorted.
+
+    The derived half of the attribute rule, and it is the half a maintained
+    list cannot argue with. The rule is: *an attribute call in `main()` is
+    suspicious if and only if its terminal name is bound at module level in the
+    tool's own source*, because that is what a mode is -- a top-level `def` in
+    `xdata_register_map.py` that `main()` dispatches to. Measured on the
+    committed tool, the rule separates the two sets cleanly: no name in
+    `BENIGN_ATTRIBUTES` is bound at module level, and every name in `MODES` is.
+    So a maintainer who widens the benign set to silence a red has to add a name
+    the tool itself defines, and this is what says so.
+
+    Only the tool's own top-level bindings count. The walk is over
+    `ast.parse(source).body` and does not descend, so a `def` nested in a
+    top-level `if` is not among them and neither is a name bound inside a
+    function. A name the source reaches under a spelling it does not bind is not
+    covered either, and nothing here claims it is.
+    """
+    bound = set()
+    for node in ast.parse(source).body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            bound.add(node.name)
+        elif isinstance(node, ast.Assign):
+            bound.update(t.id for t in node.targets if isinstance(t, ast.Name))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            bound.add(node.target.id)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            # `import a.b` binds `a`, and `import a.b as c` binds `c`.
+            bound.update((a.asname or a.name).split(".")[0] for a in node.names)
+    return sorted(bound)
+
+
+def mode_attributes(source):
+    """The attribute calls in `main()` of `source` that are not benign, sorted.
+
+    The other half of the boundary `dispatch_names` cannot close by itself: a
+    mode dispatched as `return xrm.demo_mode(args)` is not a bare-name call, so
+    that reader records nothing for it. This one is a *residue* --
+    `attribute_calls` less the committed tree's own `BENIGN_ATTRIBUTES` -- so
+    it reports every attribute call the benign set does not account for, whether
+    or not it could be a mode. A tenth mode reached that way is a name the tool
+    defines, so it is in the residue, and it fails here loudly rather than
+    being missed quietly.
+
+    It is the residue rather than `attribute_calls` under a different name so
+    that a red here says *which* call: the failure carries the offending
+    terminal name, which is the difference between a reader that reports and
+    one that answers `[]`.
+    """
+    return sorted(set(attribute_calls(source)) - BENIGN_ATTRIBUTES)
 
 
 class TripwireCoverage(unittest.TestCase):
@@ -276,8 +355,17 @@ class TripwireCoverage(unittest.TestCase):
                 self.assertEqual(dispatch_names(source), ["demo_mode"])
 
     def test_the_dispatch_reaches_no_mode_as_an_attribute(self):
-        # The real tree, against the assertion the docstring claims for it.
-        self.assertEqual(mode_attributes(TOOL.read_text()), [])
+        # The real tree, against the assertion the docstring claims for it. The
+        # message carries the residue rather than a bare `Lists differ`: the
+        # whole of issue #694 is that this reader used to answer `[]` to the
+        # one call it existed to catch, so a failure that does not say which
+        # name would leave the reader a step from that again.
+        residue = mode_attributes(TOOL.read_text())
+        self.assertEqual(
+            residue, [],
+            f"main() reaches {residue} as an attribute, and the benign calls "
+            f"are {sorted(BENIGN_ATTRIBUTES)}: a name outside them is a call "
+            "into the tool's own module, which is what a mode is")
 
     def test_a_mode_reached_as_an_attribute_is_caught_by_the_other_reader(self):
         # So the case above is a property of the committed dispatch and not a
@@ -285,8 +373,82 @@ class TripwireCoverage(unittest.TestCase):
         # nothing for this shape -- that is the whole reason `mode_attributes`
         # exists, and pinning it here keeps the residual boundary stated as a
         # measurement rather than as a sentence a reader has to trust.
+        #
+        # `demo_mode`, and not `write`: the reader used to filter by `MODES`, so
+        # a source naming a tenth mode was dropped before the set was built and
+        # this case measured the filter rather than the path that fails. The
+        # assertion below is the precondition that says which path is under
+        # test, and without it a `write` here would have gone on passing.
+        self.assertNotIn("demo_mode", MODES)
         self.assertEqual(dispatch_names(ATTRIBUTE_DISPATCH), [])
-        self.assertEqual(mode_attributes(ATTRIBUTE_DISPATCH), ["write"])
+        self.assertEqual(mode_attributes(ATTRIBUTE_DISPATCH), ["demo_mode"])
+
+    def test_the_benign_attribute_set_is_exactly_the_committed_one(self):
+        # `BENIGN_ATTRIBUTES` is a maintained list, and a maintained list is
+        # wrong the first time it is written down: it was written two names
+        # short against the committed `main()`. Both directions are asserted
+        # because each has its own failure. A new attribute call nobody
+        # classified is the one that matters and is the residue; a name nothing
+        # calls is dead weight that hides a later widening. A set, not a count,
+        # because neither side is a number any merge has to edit.
+        committed = set(attribute_calls(TOOL.read_text()))
+        benign = set(BENIGN_ATTRIBUTES)
+        self.assertEqual(
+            committed - benign, set(),
+            f"main() reaches {sorted(committed - benign)} as an attribute and "
+            "BENIGN_ATTRIBUTES does not account for it: add the name, or read "
+            "the call as a defect")
+        self.assertEqual(
+            benign - committed, set(),
+            f"BENIGN_ATTRIBUTES names {sorted(benign - committed)}, which "
+            "main() does not reach: a name nothing calls cannot be benign, and "
+            "carrying it only widens the residue's blind spot")
+
+    def test_the_benign_set_names_nothing_the_tool_defines(self):
+        # The derived guard, and the failure a list has that the partition
+        # above cannot see. Adding `demo_mode` to `BENIGN_ATTRIBUTES` would make
+        # the residue `[]` for a tenth mode forever, and the partition case
+        # would stay green with it; this is the case that goes red instead,
+        # because `demo_mode` is a name the tool defines at module level and a
+        # mode is exactly that.
+        module_level = set(module_level_names(TOOL.read_text()))
+        self.assertEqual(
+            sorted(BENIGN_ATTRIBUTES & module_level), [],
+            f"BENIGN_ATTRIBUTES covers {sorted(BENIGN_ATTRIBUTES & module_level)}, "
+            "which the tool defines at module level: an attribute call whose "
+            "terminal name the tool binds is a call into the tool's own module, "
+            "and the benign set is for the calls that are not")
+        # And the non-vacuity control, in the spirit of a checker that located
+        # nothing having to say so rather than exit 0: the intersection above is
+        # empty on this tree because the two sets separate, not because the
+        # reader found nothing. Every `MODES` name *is* a module-level binding.
+        self.assertEqual(
+            sorted(set(MODES) - module_level), [],
+            f"MODES names {sorted(set(MODES) - module_level)}, which the tool "
+            "does not bind at module level: the guard above is then holding an "
+            "empty intersection for want of a subject, and the reader it uses is "
+            "not reaching the tool's own bindings")
+
+    def test_a_dispatched_name_the_tool_defines_is_a_suspect(self):
+        # The rule the derived guard states, in both directions, on synthetic
+        # source -- the committed `main()` cannot show either, because it makes
+        # no attribute call the tool does not already define. The same call in a
+        # tool that defines `demo_mode` and in one that does not, so the case is
+        # a statement of what makes an attribute call suspicious rather than a
+        # restatement that the committed tree happens to satisfy.
+        defining = ("def demo_mode(args):\n    return 0\n\n\n"
+                    "def main():\n    return xrm.demo_mode(args)\n")
+        not_defining = "def main():\n    return xrm.demo_mode(args)\n"
+        for tool_defines_it, source, expected in (
+                (True, defining, ["demo_mode"]), (False, not_defining, [])):
+            with self.subTest(tool_defines_the_name=tool_defines_it):
+                self.assertEqual(mode_attributes(source), ["demo_mode"])
+                self.assertEqual(
+                    sorted(set(mode_attributes(source))
+                           & set(module_level_names(source))),
+                    expected,
+                    "a residue is a suspect only where the tool binds the name "
+                    "at module level")
 
 
 class Refusals(unittest.TestCase):

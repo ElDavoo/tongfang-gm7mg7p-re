@@ -112,6 +112,23 @@ the new cases go through the same `refuse()`.
 > business, not `main()`'s dispatch), not a gap in it: the entry point
 > `main()` dispatches to has changed, so `MODES` has to change with it.
 
+> **Corrected 2026-09-29, issue #694.** The blockquote above carries the same
+> over-claim its sibling does, and it is corrected in place here for the same
+> reason. "Asserted by `mode_attributes` rather than assumed away" was not true
+> of a tenth mode: the reader filtered by `MODES`, so a mode dispatched
+> attribute-qualified was not in the set it collected and the case asserting it
+> empty stayed green. The sentence "the claim is still bounded after that"
+> survives — the bounding was always the real content — but the boundary it
+> bounds against was `MODES` rather than the committed `main()`. `mode_attributes`
+> is now the residue of that `main()`'s six benign attribute calls, with a
+> derived guard holding that the benign set names nothing the tool defines, so
+> the set does not move when a mode is added. Write-up:
+> [`xdata-attribute-dispatch-boundary.md`](xdata-attribute-dispatch-boundary.md).
+> The `return check(demo_mode(args))` edge the block above measures is
+> unchanged: neither call in it is attribute-qualified, so the new reader does
+> not reach it either, and it remains the documented edge of the positional rule
+> rather than something issue #694 settles.
+
 What that buys is the property rather than the consequence: the refusal happens
 *before* any mode runs, so **a failing run of this suite cannot damage the
 repository.** The new accepted run is the deliberate exception and is confined

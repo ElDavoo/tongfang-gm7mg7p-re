@@ -10,6 +10,35 @@ now, the reading that got it there, the one shape dependence that survives and
 is asserted rather than hoped away, and the three mutations that show it going
 red.
 
+> **Corrected 2026-09-29, issue #694.** The clause above — "the one shape
+> dependence that survives and is **asserted** rather than hoped away" — is the
+> sixth occurrence of an over-claim this page corrected for a narrower reason in
+> 2026-09-25, and it was over-claimed for the same reason as the other five.
+> `mode_attributes` then read:
+>
+> ```python
+>     return sorted({call.func.attr for call in ast.walk(main_of(source))
+>                    if isinstance(call, ast.Call)
+>                    and isinstance(call.func, ast.Attribute)
+>                    and call.func.attr in MODES})
+> ```
+>
+> so it was green for exactly the case it existed to catch: a tenth mode
+> dispatched attribute-qualified is by definition **not** in `MODES`, so the
+> filter dropped it before the set was built. Measured on synthetic source, both
+> readers answer `[]` to `def main():\n    return xrm.demo_mode(args)\n`, and
+> the case below asserting `[]` stayed green. What was actually asserted was
+> narrower: *no name already in `MODES` is reached as an attribute on the
+> committed tree* — a real property, and not the one the sentences said.
+>
+> Issue #694 replaced the reader with an unfiltered one and made the boundary
+> its **residue**: `attribute_calls` less the committed `main()`'s own six
+> benign calls, with a derived guard on the benign set beside it. The same
+> sentence is corrected in place below, at the two case-table rows and at the
+> calibration bullet; all are left standing per §4a-4d. The write-up is
+> [`xdata-attribute-dispatch-boundary.md`](xdata-attribute-dispatch-boundary.md),
+> and this page's own three-mutation table is unchanged.
+
 Its predecessor is
 [`xdata-no-eq-guard-refusal-contract.md`](xdata-no-eq-guard-refusal-contract.md),
 which argues the tripwire design this is one reading of; the
@@ -112,6 +141,18 @@ whose `attr` is a name in `MODES`; on the committed tree it is `[]`, and a mode
 reached that way fails **loudly** rather than being missed quietly. That is the
 difference between a shape-independence the check has and one it is hoped for.
 
+> **Corrected 2026-09-29, issue #694.** The paragraph above is left standing and
+> is not what the reader did. The `MODES` clause is in the middle of the
+> comprehension, and it is the whole defect: a tenth mode reached as
+> `return xrm.demo_mode(args)` is not in `MODES`, so the reader reported `[]` and
+> the case below asserting `[]` was green — **the boundary was not asserted for
+> the case it exists to catch**. What it asserted, and still is worth keeping, is
+> that no name already in `MODES` is reached as an attribute on the committed
+> tree. `mode_attributes` is now the residue — every attribute call in `main()`
+> less the committed `main()`'s own `BENIGN_ATTRIBUTES` — so the set it reports
+> does not move when a mode is added, and a tenth mode is in it. See
+> [`xdata-attribute-dispatch-boundary.md`](xdata-attribute-dispatch-boundary.md).
+
 `TripwireCoverage` holds a case for each of those claims, and a case per
 dispatch position the reader reaches beyond the two shapes above, added by
 issue #696:
@@ -123,6 +164,20 @@ issue #696:
 | `test_every_position_the_docstring_names_is_collected_too` | the assignment right-hand side, the `with` header and the bare comprehension — one `subTest` each, on the sources `DISPATCH_POSITIONS` keys under those words; see [`xdata-dispatch-position-pins.md`](xdata-dispatch-position-pins.md) |
 | `test_the_dispatch_reaches_no_mode_as_an_attribute` | the boundary is clean on the committed tree |
 | `test_a_mode_reached_as_an_attribute_is_caught_by_the_other_reader` | the shape is actually caught, so the case above is a property and not a helper that answers `[]` to anything |
+
+> **Corrected 2026-09-29, issue #694.** Both rows above are left standing; the
+> second is the one that was untrue, and it is where the sentence went wrong
+> rather than where the reader did. Its `ATTRIBUTE_DISPATCH` source was
+> `xrm.write`, and `write` **is** in `MODES` — so on the `MODES`-filtered reader
+> the case measured a filter the reader already had. On the new-name path, the one
+> the case exists to measure, `mode_attributes` **did** answer `[]`, and nothing
+> on this page said so. The source is now `xrm.demo_mode` with
+> `assertNotIn("demo_mode", MODES)` as an explicit precondition, and three cases
+> were added beside them: the benign set held as a partition in both directions,
+> a derived guard that the benign set names nothing the tool itself defines (with
+> its non-vacuity control), and the rule that guard implements, on synthetic
+> source, in both directions. The first row is now the residue case, and its
+> failure message carries the offending name.
 
 **The synthetic-source cases are the regression pins, and they are on synthetic
 source for a reason that is the point.** The committed `main()` dispatches all
@@ -243,6 +298,17 @@ not disturb the tripwire the reader exists to keep complete.
   reports `['write']` for `return xrm.write(args)`. A mode reached that way goes
   red; what it cannot do is report a *list* that reads naturally, which is why
   the assertion is membership rather than equality.
+
+  > **Corrected 2026-09-29, issue #694.** "Asserted rather than left open" was
+  > the over-claim, and the last sentence is the reason: the reader filtered by
+  > `MODES`, so `return xrm.write(args)` was a *known* name being reported. A
+  > tenth mode — `return xrm.demo_mode(args)`, with `demo_mode` not in `MODES` —
+  > reported `[]`, and the bullet's own property did not survive it. The reader
+  > is now the residue of the committed `main()`'s six benign attribute calls, so
+  > it holds for a name the list does not contain, and the "list that reads
+  > naturally" is still true of it. The bullet is not a claim that
+  > `mode_attributes` covers a mode reached through a **wrapper**; that edge is
+  > argued above rather than measured, and it is still open.
 - **The pre-order property is stated as pre-order.** It coincides with source
   order for the flat dispatch the committed tool has, and would fire on a
   wrapped call — correctly, since a wrapper changes which entry point `main()`
