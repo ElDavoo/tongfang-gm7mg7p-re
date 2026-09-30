@@ -2982,6 +2982,68 @@ registers:
       upstream name. Per-address table:
       ec/annotations/xdata-06c2-06db-timers.md.
 
+  - name: XDATA_07FD
+    addr: 0x07FD
+    sources: [static-scan, xdata-refs]
+    static_refs: 7
+    static_refs_main_ec: 7
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The odd byte out of the 0x07FD-0x07FF triple, and the one the block's
+      only branching reader tests. 7 EC-side sites and no PD-image site, the
+      fewest of the three; the cluster's generated rows
+      (xdata-registers.csv main-ec-086) read refs 8, the extra 1 being a PD
+      site that is another program's XDATA. Five routines touch the triple and
+      only three are in a committed table: bank0 0xCCFC and bank0 0xD673 write
+      0x5A here, bank0 0xD856 and bank1 0x8624 write 0x00, and bank1 0xA69F
+      writes 0x5A and jumps the reset vector. 0x94FA reads it and branches:
+      0x5A takes ljmp 0x95b7, anything else clears 0x0045, 0x07FD and XDATA_1F07.
+      The census carries only 0x94FA, and the two sites the census misses are
+      both a 0x00 store. No upstream name, and the block is not given one here
+      because a name is an upstream-mechanism judgement these static bytes do
+      not settle. Read as a block:
+      docs/findings/xdata-07fd-07ff-witness-triple.md.
+
+  - name: XDATA_07FE
+    addr: 0x07FE
+    sources: [static-scan, xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 7
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      First byte of the 0x55 the block's readers test for. 7 EC-side sites and
+      2 in the PD image, which is another program's XDATA and says nothing
+      about the EC's use of this address; the cluster's generated row
+      (xdata-registers.csv main-ec-086) reads refs 10, the extra 3 being PD
+      sites. The same five routines touch it as 0x07FD -- bank0 0xCCFC,
+      0xD673 and 0xD856, bank1 0x8624 and 0xA69F -- and the first three write
+      0x55 to it. 0x94FA and 0xA69F both read it and both clear it on a match,
+      0x94FA in the arm that also clears 0x07FF. The census carries only
+      0x94FA of the five. No upstream name. Read as a block:
+      docs/findings/xdata-07fd-07ff-witness-triple.md.
+
+  - name: XDATA_07FF
+    addr: 0x07FF
+    sources: [static-scan, xdata-refs]
+    static_refs: 8
+    static_refs_main_ec: 7
+    static_refs_pd_image: 1
+    status: present-untested
+    note: >
+      Second byte of the 0xAA the block's readers test for, and the last address
+      the boot clear at 0xD96C would have reached had its setb c at 0xD982 not
+      made the upper bound read 0x0800. 7 EC-side sites and 1 in the PD image,
+      which is another program's XDATA; the cluster's generated row
+      (xdata-registers.csv main-ec-086) reads refs 10, the extra 3 being PD
+      sites. The same five routines touch it as 0x07FD -- bank0 0xCCFC,
+      0xD673 and 0xD856, bank1 0x8624 and 0xA69F -- and the first three write
+      0xAA to it. 0x94FA and 0xA69F both read it for 0xAA, and 0x94FA clears it
+      on a match. The census carries only 0x94FA of the five. No upstream name.
+      Read as a block:
+      docs/findings/xdata-07fd-07ff-witness-triple.md.
+
   - name: XDATA_0809
     addr: 0x0809
     sources: [xdata-refs]

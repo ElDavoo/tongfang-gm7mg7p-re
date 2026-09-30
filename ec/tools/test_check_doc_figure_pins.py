@@ -506,12 +506,23 @@ class TheOracleRule(unittest.TestCase):
         # #713's twelve per-program count columns and their pin block landed
         # above it, `:4414-4420` after #713's docstring had its column count
         # corrected and the corrected sentence took one line more than the one
-        # it replaced. Re-measured, not shifted by arithmetic.
+        # it replaced, and `:4432-4438` after #573's `named_in_tree` note
+        # landed above it.
+        #
+        # **`:4453-4459` on the merged tree, and the note says why it is neither
+        # side's number.** #573 and #333 both moved this span from the same
+        # `:4414-4420` -- they are siblings, not one another -- and the merge
+        # carries both notes, so it moves by both. That `4414-4420` had already
+        # gone stale before either of them: it measures `:4425-4431` on the base
+        # and `:4436-4442` on main, which is the two pre-existing failures in
+        # this file's own run, so #333's landing is why main reads 22 lines past
+        # it and the branch's re-pin is what caught it. Asserting the measured
+        # span here fixes both. Re-measured, not shifted by arithmetic.
         self.assertEqual(
             cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
                                   "largest_class", 1, 2, found["texts"],
                                   found["asserted"])),
-            "ec/tools/xdata_register_map.py:4414-4420")
+            "ec/tools/xdata_register_map.py:4453-4459")
 
     def test_the_census_csvs_are_read_from_the_tool_that_writes_them(self):
         # Derived from `OUT_REGISTERS`/`OUT_CLUSTERS` rather than named here, so
@@ -538,21 +549,27 @@ class TheOracleRule(unittest.TestCase):
         # `#3545` when the docstring's column count was corrected and cost one
         # more line, and then `:3609-3626` / `#3599` when #1059's `NOT_IN_TREE`
         # block and `named_in_tree` oracle landed above the sum and not above
-        # the check, and then `:3620-3637` / `#3610` when #333's `named_in_tree`
-        # 181 -> 182 comment landed above both. **The reported span did not move
-        # and the sum did**, which is the point of holding both: an edit below
-        # the `check(` and above the sum shifts one and not the other, and only
-        # asserting the pair shows which. All four re-read against the file
-        # rather than taken from the tool's new numbers on trust.
-        self.assertIn("3620-3637", detail)
+        # the check, and then `:3616-3633` / `#3606` when #573's `named_in_tree`
+        # note landed above both, and `:3620-3637` / `#3610` when #333's 181 ->
+        # 182 comment did the same on its own branch. **The reported span did
+        # not move and the sum did** the first time, and **both moved together**
+        # on each of the two after it, which is the point of holding both: the
+        # pair is what says *which* side of the `check(` an edit landed on, and
+        # asserting the span alone would have accepted a pin that had quietly
+        # started pointing somewhere else. On the merged tree, which carries
+        # both notes, `:3637-3654` / `#3627` -- re-read against the file rather
+        # than shifted by adding the two siblings' moves, which would have given
+        # the same answer here for the wrong reason. All five re-read against
+        # the file rather than taken from the tool's new numbers on trust.
+        self.assertIn("3637-3654", detail)
         self.assertNotIn(":3599", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3609])
-        self.assertIn("check(", lines[3619])
+        self.assertIn("extmem_both", lines[3626])
+        self.assertIn("check(", lines[3636])
         self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3636])
+                      lines[3653])
 
 
 class SectionSelection(unittest.TestCase):
