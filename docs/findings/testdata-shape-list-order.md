@@ -95,9 +95,9 @@ print, and in the correction below.
 `testdata-third-column-claims.md:236` reads "the entry ahead of it in the list
 was `another capture's address`". In the table it cites, the row ahead of
 `firmware code address` (`:180`) is `watched-set span` (`:179`);
-`another capture's address` is at `:177`, two rows up, with
-`dump-command argument` (`:178`) between them. The issue's reading of the table
-is exact.
+`another capture's address` is at `:177`, three rows up, with
+`dump-command argument` (`:178`) and `watched-set span` (`:179`) between them.
+The issue's reading of the table is exact.
 
 **The issue's own explanation of the sentence does not hold, and this is
 checkable rather than asserted.** It says the sentence "is true of the tool's
