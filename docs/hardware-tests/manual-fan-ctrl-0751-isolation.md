@@ -213,6 +213,25 @@ so the last label on the screen can be one the capture never received. The
 by-eye check above is still the fastest one to do at the machine; run the
 tool over the committed CSVs as well, before they are filed.
 
+**A suspend during the block costs the run.** Do not close the lid or let the
+machine sleep between two mark rounds. The watcher cannot read the EC while
+the host is asleep, so the capture simply has no rows for the gap and the two
+marks that bracket it are further apart than §3 asked for:
+`evidence/ec-watch/2026-09-24-06c2-06db-suspend-linux.csv` has a 12.3 s hole
+across a `systemctl suspend` to S3, the freeze and the thaw, in a capture that
+is otherwise complete (`../../evidence/README.md`). That capture *does* name
+its suspend — a stdin `MARK` records the command and `--auto-mark` the resume
+(`../../evidence/README.md`) — but it was taken with `ec_timer_capture.py`,
+which offers `--auto-mark`. §3 starts `ec_watch.py` with `--mark
+--label-vocab 0751 --csv` and that watcher has no `--auto-mark` at all, so
+nothing in a §3 capture names a suspend and the block is not *refused* — the
+arm is just longer than its ~30 s hold, every `total` in it was accumulated
+over a longer stretch than the arm it is compared against, and the report
+prints that window's length without being able to say what made it. What the
+tool does call out is a window at or above the lid, and there it offers a
+freeze the rows do not cover as a guess, not a named suspend. Either way the
+block is lost: redo it, the same as a mark typed after the watcher exited.
+
 **And it checks the marks themselves, per block and per capture, before it
 prints a window.** A window is every change after a mark up to the next one,
 and which mark that is comes from the timestamps alone. So a mark one console
@@ -304,7 +323,7 @@ records nothing: the mark prompt says so and asks again**, so there is no
 such thing as an unnamed mark in a capture
 ([`../../windows/tools/ec_watch-marks.md`](../../windows/tools/ec_watch-marks.md)).
 Mark the same action in all three consoles within a few
-seconds of each other; the grader treats marks less than five seconds apart as
+seconds of each other; the grader treats marks five seconds apart or less as
 one action, which is what keeps three consoles from reporting one write as
 three windows.
 
