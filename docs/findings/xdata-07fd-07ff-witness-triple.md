@@ -73,8 +73,10 @@ Of the five, **`0x8624` and `0xA69F` sit in no exported listing at all** — no
 `ec/decompiled/` file covers them, and the regenerated
 `ec/annotations/site-resolution.csv` records their containing function as
 `not exported`, which is that tool's own way of saying the same thing. The
-census's `main-ec-086` cluster carries none of the five sites individually;
-`0xD856` is reachable only because it falls inside the exported `0xD757`.
+census's `main-ec-086` cluster (`ec/annotations/xdata-clusters.csv:87`) names
+`0xD673` and `0xD757` — the latter being the routine `0xD856` falls inside — and
+neither `0xCCFC`, `0x8624` nor `0xA69F`; of the five, only those two are
+carried, and neither as a byte site of its own.
 
 The two writers that store `0x00` — `0xD856` and `0x8624` — are
 byte-identical in that third store, and it is `mov a,#0x00` where `0xCCFC` and

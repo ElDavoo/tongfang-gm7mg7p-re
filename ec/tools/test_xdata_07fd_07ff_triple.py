@@ -137,12 +137,18 @@ class TheSiteSet(unittest.TestCase):
         # half of `scan_refs.py`'s own 7/9/8 -- its `refs` is already EC + PD,
         # so they are *inside* that figure and are not the difference between
         # it and the census's 8/10/10. The two are not two views of one number:
-        # the census's `refs_pd` reads 1/3/3 because it also counts reference
-        # forms a literal `90 xx xx` byte scan cannot see (`&DAT_EXTMEM_xxxx`
-        # address-taken at ec/decompiled/pd/6673.c:85, and DPTR handed to a
-        # call), which is why 0x07FD has a PD reference and no `90 07 fd` byte
-        # in the PD image at all. So: 7/9/8 is literal MOV DPTR sites, already
-        # including 0/2/1 PD ones; 8/10/10 is 7 EC plus those non-literal forms.
+        # the census's `refs_pd` reads 1/3/3 because it reads the PD routine's
+        # stores and reads rather than its `mov dptr` bytes, and that routine
+        # walks the triple with `inc dptr` off a single literal load --
+        # `ec/decompiled/pd/6673.asm:117` is `673C 90 07 fc mov DPTR,#0x7fc`
+        # followed by `a3` before each of the three stores at 0x7FD/0x7FE/0x7FF,
+        # and `:245` is `6831 90 07 fe` / `6834 a3` / `6835 movx a,@dptr` off
+        # the 0x7FF read. The decompiled C spells those as plain assignments
+        # (ec/decompiled/pd/6673.c:85, `DAT_EXTMEM_07fd = bVar4;`, a store), so
+        # 0x07FD has a PD reference and no `90 07 fd` byte in the PD image at
+        # all. So: 7/9/8 is literal MOV DPTR sites, already including 0/2/1 PD
+        # ones; 8/10/10 is 7 EC plus the ones only the DP routine's DPTR
+        # arithmetic reaches.
         for addr, expected in PD_SITES.items():
             self.assertEqual(sites_for(IMAGES['pd'], addr), set(expected))
         self.assertEqual([len(PD_SITES[a]) for a in (0x07FD, 0x07FE, 0x07FF)],

@@ -561,8 +561,12 @@ class TheOracleRule(unittest.TestCase):
         # than shifted by adding the two siblings' moves, which would have given
         # the same answer here for the wrong reason. All five re-read against
         # the file rather than taken from the tool's new numbers on trust.
+        # The negative guard is re-pinned with them: `:3599` stopped being
+        # producible when #573's note moved the sum, and a guard that can
+        # never fail is not a guard, so it names the merged tree's `:3627` --
+        # the sum the `lines[3626]` assertion below points at.
         self.assertIn("3637-3654", detail)
-        self.assertNotIn(":3599", detail)
+        self.assertNotIn(":3627", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
