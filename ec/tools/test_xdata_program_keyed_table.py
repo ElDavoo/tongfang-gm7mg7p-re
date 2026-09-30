@@ -1,0 +1,517 @@
+#!/usr/bin/env python3
+"""§2's two split tables and the partition under both keys, held to the figures
+already published (issue #714).
+
+`xdata_program_keyed_table.py` re-keys `xdata-register-map.md` §2's split table
+and its three-way partition from the union `spelled_as` column onto the
+committed `spellings_by_program` column. That is a **presentation** change with
+a published figure behind every cell, and the risk in it is specific: a page
+that prints two tables and a paragraph of arithmetic between them can drift
+away from the CSV without any of the three moving, which is exactly what §2's
+own rule ("re-measure the *table body*, not just its total row") exists to
+catch and had not caught before this change.
+
+**The load-bearing class is `TheMapAgrees`** and it is why this suite is not
+just the tool's `--check` run twice. `--check` asserts relations *inside* one
+derivation; it cannot notice that the markdown beside it says something else.
+So every table §2 prints is parsed back out of the page and compared to a
+regeneration, and the partition's blockquote is parsed with it. A page edit that
+drops a row, changes a cell or restores a superseded figure fails here.
+
+**`ThePublishedFigures` holds the page's numbers as constants typed from the
+page**, not re-derived from the tool — the distinction
+`test_xdata_guard_off_row_join.py` records from #753, where a suite compared a
+tool against itself and passed through three re-pointings of the recipe. What
+is asserted here is "the committed CSV still says what these pages say", which
+is a claim about two artifacts rather than an identity inside one.
+
+**What is deliberately *not* held is a census.** `1,375`, `850` and `7,534` are
+values that move when the census is re-derived, and a suite holding one becomes
+a number every landing branch has to bump. The tool's `--check` asserts the
+relations instead, and this suite asserts that `--check` passes — so what a
+re-derivation can break here is a relation or a page/CSV disagreement, never a
+constant that quietly describes last month's tree.
+
+Nothing here resolves anything against the firmware. The inputs are one
+committed CSV, one committed markdown page and the sibling tool's `ORACLE`
+block; no image is opened, no Ghidra run, no network, and no laptop, EC or
+Windows machine is involved.
+"""
+import csv
+import hashlib
+import importlib.util
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+import unittest
+
+HERE = Path(__file__).resolve().parent
+EC = HERE.parent
+REPO = EC.parent
+TOOL = HERE / "xdata_program_keyed_table.py"
+REGISTERS = EC / "annotations" / "xdata-registers.csv"
+MAP = EC / "annotations" / "xdata-register-map.md"
+
+_spec = importlib.util.spec_from_file_location("xdata_program_keyed_table", TOOL)
+keyed = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(keyed)
+
+# `open(..., "w")` and its two other write modes. Held against the tool's source
+# rather than described in its docstring, because a description is the thing
+# that goes stale when the next mode is added.
+WRITE_OPEN = re.compile(r"open\([^)]*['\"][wax]")
+
+# The figures §2 and the write-up publish, typed from those pages. A page edit
+# and a census re-derivation are then both visible: the first by
+# `TheMapAgrees`, the second by these.
+PER_PROGRAM_SPLIT = [
+    ("main-ec", "DAT_EXTMEM", 850, 7534),
+    ("main-ec", "DAT_EXTMEM+pair-literal", 45, 499),
+    ("main-ec", "pair-literal", 156, 468),
+    ("main-ec", "symbol", 154, 6150),
+    ("main-ec", "symbol+pair-literal", 13, 187),
+    ("pd", "DAT_EXTMEM", 157, 858),
+]
+PER_PROGRAM_TOTAL = (1375, 15696)
+
+UNION_SPLIT = [
+    ("main-ec", "DAT_EXTMEM", 816, 7282),
+    ("main-ec", "DAT_EXTMEM+pair-literal", 42, 394),
+    ("main-ec", "pair-literal", 155, 461),
+    ("main-ec", "symbol", 143, 5567),
+    ("main-ec", "symbol+pair-literal", 13, 187),
+    ("both", "DAT_EXTMEM", 34, 349),
+    ("both", "DAT_EXTMEM+pair-literal", 4, 139),
+    ("both", "symbol+DAT_EXTMEM", 11, 714),
+    ("pd", "DAT_EXTMEM", 108, 603),
+]
+UNION_TOTAL = (1326, 15696)
+
+# §2's three-way partition of the main EC, per program and on the union key,
+# each `(named, DAT_EXTMEM, pair-only)` in distinct addresses. The two differ in
+# the last two terms by the one address the two keyings disagree about.
+PER_PROGRAM_PARTITION = (167, 895, 156)
+UNION_PARTITION = (167, 896, 155)
+
+# The one address whose partition bucket moves, and the two directions.
+MOVED = [("0x04A3", "DAT_EXTMEM", "pair-only")]
+
+
+def section_two(text):
+    """§2's text, from its heading to the next `## ` one.
+
+    Found by heading rather than by line number on purpose: a checker that
+    pinned its own section's line numbers would be invalidated by exactly the
+    class of edit it exists to catch, and the map's §2 grew a table under this
+    change.
+    """
+    start = text.index("\n## 2. ")
+    end = text.index("\n## 3. ", start)
+    return text[start:end]
+
+
+def markdown_rows(text, header):
+    """Every `| a | b | n | n |` row under `header`, as (a, b, n, n).
+
+    The header is matched exactly rather than by position, because §2 prints
+    two tables with the same shape and the pair is the whole point: the
+    per-program one is headed `program | spelling` and the union one
+    `program | spelled_as`. Matching on the wrong one would compare the union
+    table against the per-program figures and fail for a reason that has nothing
+    to do with either.
+
+    Cells are stripped of the emphasis markdown and the backticks, so a table
+    that starts bolding its cells is the same table. The header is looked for
+    *before* the blank-cell and rule rows are skipped, because a header row is
+    neither -- skipping first is what made an earlier version of this function
+    return nothing at all for a table that was present and correct.
+    """
+    rows, seen = [], False
+    for line in text.splitlines():
+        if not line.startswith("|"):
+            # A non-table line ends the table. Without this the parser would
+            # keep collecting into the next table on the page and the two §2
+            # prints would arrive as one list.
+            if rows:
+                break
+            continue
+        cells = [c.strip().strip("*").strip().strip("`").strip()
+                 for c in line.strip().strip("|").split("|")]
+        if not seen:
+            seen = [c.strip("`*").strip() for c in cells] == header
+            continue
+        if all(set(c) <= set("-: ") for c in cells):
+            continue
+        rows.append(tuple(cells[:2]) + tuple(
+            int(c.replace(",", "")) for c in cells[2:]))
+    return rows
+
+
+def blockquote(text, first_words):
+    """The `>` block whose first line contains `first_words`, as its integers.
+
+    Joined across the block's lines rather than read off the first one: the
+    quoted sentence wraps, and taking only the line that matched made the count
+    of figures depend on where the wrap fell, which is a line number a reflow
+    would move.
+
+    `§N` references are stripped before the figures are read, for the reason
+    `check_doc_figure_pins.py` gives for stripping them there: §4.7 is a
+    cross-reference, not a claim about how many addresses anything reaches, and
+    a reader who counted it as a figure would be right about the prose and
+    wrong about the partition.
+    """
+    block, taking = [], False
+    for line in text.splitlines():
+        if line.startswith(">"):
+            if taking:
+                block.append(line)
+            elif first_words in line:
+                taking = True
+                block.append(line)
+        elif taking:
+            break
+    if not taking:
+        raise AssertionError(f"no blockquote containing {first_words!r} in §2")
+    joined = re.sub(r"§\s*[\d.]+[a-z]?", " ", " ".join(block))
+    return tuple(int(n.replace(",", ""))
+                 for n in re.findall(r"\b\d[\d,]*\b", joined))
+
+
+def run(*args):
+    return subprocess.run([sys.executable, str(TOOL), *args],
+                          capture_output=True, text=True, check=False)
+
+
+class TheToolChecksTheRelations(unittest.TestCase):
+    """`--check` and `--self-test`, over the committed CSV and over fixtures.
+
+    The gate that runs these is `bash tools/run-tests.sh`, not
+    `.github/scripts/agent-gates.sh`: the agent-push token has no `workflow`
+    scope, so a branch that edits the gate fails at the end rather than the
+    start, and this is how `check_doc_figure_pins.py` and
+    `check_pin_table_rows.py` are covered today.
+    """
+
+    def test_check_passes_against_the_committed_csv(self):
+        proc = run("--check")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertNotIn("FAIL", proc.stdout)
+
+    def test_self_test_passes(self):
+        proc = run("--self-test")
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertNotIn("FAIL", proc.stdout)
+
+    def test_check_prints_the_pin_it_cross_checked(self):
+        # A check that skipped its cross-check and passed would be
+        # indistinguishable from one that ran it, so the skip line is asserted
+        # absent rather than the count of checks asserted present.
+        self.assertNotIn("skip", run("--check").stdout)
+
+    def test_the_bare_run_prints_both_keyings_under_one_provenance_line(self):
+        proc = run()
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual(proc.stdout.count("<!-- source:"), 1)
+        self.assertIn("sha256", proc.stdout)
+        # The SHA-256 is of the bytes the numbers came from, so it is derived
+        # rather than transcribed: a page holding a stale digest would not pass
+        # `TheMapAgrees`, and one holding a mis-derived one would not pass here.
+        digest = re.search(r"sha256 ([0-9a-f]{64})", proc.stdout).group(1)
+        self.assertEqual(digest,
+                         hashlib.sha256(REGISTERS.read_bytes()).hexdigest())
+
+    def test_check_fails_on_a_census_that_no_longer_reconciles(self):
+        # A scratch CSV whose `refs_main_ec` column has been short by one on a
+        # single row: every published figure still adds up and only the
+        # relation between the two reference columns fails, which is the shape
+        # a regeneration bug would have and the shape a hard-coded total would
+        # not have caught.
+        rows = keyed.read_rows(REGISTERS)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "tampered.csv"
+            header = ("addr,program,spelled_as,refs,spellings_by_program,"
+                      "refs_main_ec,refs_pd").split(",")
+            with open(path, "w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=header,
+                                        extrasaction="ignore")
+                writer.writeheader()
+                for index, row in enumerate(rows):
+                    short = dict(row)
+                    if index == 0:
+                        short["refs_main_ec"] = str(
+                            int(row["refs_main_ec"]) - 1)
+                    writer.writerow(short)
+            proc = subprocess.run(
+                [sys.executable, str(TOOL), "--check", "--registers", str(path)],
+                capture_output=True, text=True, check=False)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("FAIL", proc.stdout)
+
+    def test_check_fails_on_a_csv_naming_an_undeclared_program(self):
+        rows = keyed.read_rows(REGISTERS)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "third-program.csv"
+            header = ("addr,program,spelled_as,refs,spellings_by_program,"
+                      "refs_main_ec,refs_pd").split(",")
+            with open(path, "w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=header,
+                                        extrasaction="ignore")
+                writer.writeheader()
+                for row in rows:
+                    writer.writerow(row)
+                # A second main-EC-only image, which the report cannot print a
+                # reference column for and must therefore refuse rather than
+                # quietly total over.
+                writer.writerow({
+                    "addr": "0xFFFF", "program": "both", "spelled_as": "DAT_EXTMEM",
+                    "refs": 2, "spellings_by_program": "main-ec=DAT_EXTMEM;ps2=DAT_EXTMEM",
+                    "refs_main_ec": 2, "refs_pd": 0})
+            proc = subprocess.run(
+                [sys.executable, str(TOOL), "--check", "--registers", str(path)],
+                capture_output=True, text=True, check=False)
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("undeclared", proc.stdout)
+
+
+class TheToolWritesNothing(unittest.TestCase):
+    """The same standing `test_xdata_guard_off_row_join.py` holds.
+
+    Every mode here reports; none of them may write, because the census CSVs
+    are committed and a report that measured the census by regenerating it is a
+    report one argument away from overwriting the input it is reading.
+    """
+
+    def test_no_write_mode_in_the_source(self):
+        source = TOOL.read_text(encoding="utf-8")
+        self.assertIsNone(WRITE_OPEN.search(source),
+                          "the tool opens a file for writing")
+
+    def test_no_output_argument_over_the_argument_parser(self):
+        # Over the parser rather than the docstring, which names `--out-` and
+        # the write modes to say there are none: a grep over the prose would
+        # read its own explanation as the thing it forbids. The scope is
+        # `main()` and below, so a module constant cannot satisfy it either.
+        source = TOOL.read_text(encoding="utf-8")
+        parser = source[source.index("def main()"):]
+        for flag in ("--write", "--out", "--out-registers", "--out-csv"):
+            self.assertNotIn(f'"{flag}"', parser,
+                             f"{flag} would give this tool a way to touch the "
+                             f"committed census")
+
+    def test_a_full_run_leaves_the_tree_byte_identical(self):
+        before = self._status()
+        for mode in ([], ["--check"], ["--self-test"], ["--moved"]):
+            self.assertEqual(run(*mode).returncode, 0, mode)
+        self.assertEqual(self._status(), before)
+
+    @staticmethod
+    def _status():
+        proc = subprocess.run(["git", "status", "--porcelain"], cwd=REPO,
+                              capture_output=True, text=True, check=False)
+        if proc.returncode != 0:
+            raise unittest.SkipTest("git is not available here")
+        return proc.stdout
+
+
+class ThePublishedFigures(unittest.TestCase):
+    """The committed CSV still says what §2 and the write-up say it says.
+
+    Constants typed from the pages, compared against a derivation from the
+    committed CSV — the distinction `test_xdata_guard_off_row_join.py` records
+    from #753. A re-derivation that moved the census makes these red, and that
+    is the point: the pages have to be re-measured with it, which is what
+    `TheMapAgrees` then makes mechanical.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.rows = keyed.read_rows(REGISTERS)
+
+    def test_the_per_program_split(self):
+        counts, refs = keyed.per_program_split(self.rows)
+        self.assertEqual(
+            [(k[0], k[1], counts[k], refs[k]) for k in sorted(counts)],
+            sorted(PER_PROGRAM_SPLIT))
+        self.assertEqual((sum(counts.values()), sum(refs.values())),
+                         PER_PROGRAM_TOTAL)
+
+    def test_the_union_split(self):
+        counts, refs = keyed.union_split(self.rows)
+        self.assertEqual(
+            [(k[0], k[1], counts[k], refs[k]) for k in sorted(counts)],
+            sorted(UNION_SPLIT))
+        self.assertEqual((sum(counts.values()), sum(refs.values())), UNION_TOTAL)
+
+    def test_the_two_totals_differ_by_the_both_rows_and_nothing_else(self):
+        # The identity the page states as "1,375 is 1,326 + 49". Asserted as a
+        # relation and not as a typed 1,375, because the per-program total is a
+        # value a re-derivation moves and `both` is a value it moves with it.
+        per, _ = keyed.per_program_split(self.rows)
+        union, _ = keyed.union_split(self.rows)
+        both = sum(1 for r in self.rows if r["program"] == "both")
+        self.assertEqual(sum(per.values()) - sum(union.values()), both)
+
+    def test_the_partition_under_both_keys(self):
+        per_part, _ = keyed.partition(self.rows, True)
+        union_part, _ = keyed.partition(self.rows, False)
+        self.assertEqual(tuple(per_part[t][0] for t in keyed.TERMS),
+                         PER_PROGRAM_PARTITION)
+        self.assertEqual(tuple(union_part[t][0] for t in keyed.TERMS),
+                         UNION_PARTITION)
+
+    def test_one_address_and_one_only_changes_partition_term(self):
+        # The 155-vs-156 claim, pinned to the address that causes it. Held by
+        # value because the *address* is the claim; the count that moves with it
+        # is not asserted anywhere.
+        moves = [(a, was, now) for a, was, now, _, _ in keyed.bucket_moves(self.rows)]
+        self.assertEqual(moves, MOVED)
+
+    def test_the_named_term_is_the_sibling_tools_own_pin(self):
+        # The two partition terms the re-key introduces are cross-checked
+        # against pins that already gate rather than typed here, so a
+        # re-derivation shows up as the sibling's `--check` going red — where
+        # it already had a dated note — instead of as three constants in this
+        # file that every landing branch has to bump.
+        oracle = keyed.read_oracle()
+        per_part, _ = keyed.partition(self.rows, True)
+        self.assertEqual(oracle["symbol_main_distinct"], PER_PROGRAM_PARTITION[0])
+        self.assertEqual(oracle["extmem_main_distinct"], PER_PROGRAM_PARTITION[1])
+        self.assertEqual(per_part["named"][0], oracle["symbol_main_distinct"])
+        self.assertEqual(per_part["DAT_EXTMEM"][0], oracle["extmem_main_distinct"])
+
+    def test_the_oracle_is_read_by_ast_and_not_by_import(self):
+        # An `ORACLE` value the sibling computes rather than declaring is
+        # skipped, so a skipped cross-check says so rather than passing
+        # silently; the reader must also survive a source with no ORACLE at all.
+        self.assertIsInstance(keyed.read_oracle(), dict)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "sibling.py"
+            path.write_text("ORACLE = {}\nX = 1 + 1\n", encoding="utf-8")
+            self.assertEqual(keyed.read_oracle(path), {})
+            path.write_text("ORACLE = {'a': 2 + 2}\n", encoding="utf-8")
+            self.assertEqual(keyed.read_oracle(path), {},
+                             "a non-literal value must not be evaluated here")
+
+
+class TheMapAgrees(unittest.TestCase):
+    """§2's tables and its partition blockquote, read back out of the page.
+
+    `--check` asserts relations inside one derivation and cannot see the
+    markdown beside it, so a page edit that changes a cell, drops a row or
+    restores a superseded figure passes every gate in the tree. This class is
+    that gap closed, and it is why the suite is more than the tool's own two
+    modes run twice.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = section_two(MAP.read_text(encoding="utf-8"))
+
+    def test_the_per_program_table_is_the_first_one_and_holds(self):
+        rows = markdown_rows(self.text, ["program", "spelling",
+                                         "distinct", "references"])
+        self.assertEqual(
+            [(program, spelling, distinct, refs)
+             for program, spelling, distinct, refs in rows],
+            PER_PROGRAM_SPLIT + [("total", "", PER_PROGRAM_TOTAL[0],
+                                  PER_PROGRAM_TOTAL[1])],
+            "§2's per-program table has drifted from the committed CSV")
+
+    def test_the_union_table_is_the_second_one_and_holds(self):
+        rows = markdown_rows(self.text, ["program", "spelled_as",
+                                         "distinct", "references"])
+        self.assertEqual(
+            [(program, spelling, distinct, refs)
+             for program, spelling, distinct, refs in rows],
+            UNION_SPLIT + [("total", "", UNION_TOTAL[0], UNION_TOTAL[1])],
+            "§2's union table has drifted from the committed CSV")
+
+    def test_the_per_program_table_comes_first(self):
+        # Order is the claim being made — the per-program reading is the one the
+        # section is argued from — and a table swap would leave both tables'
+        # contents right.
+        self.assertLess(self.text.index("| program | spelling |"),
+                        self.text.index("| `program` | `spelled_as` |"))
+
+    def test_the_partition_blockquote_holds_the_per_program_reading(self):
+        # The quoted sentence is §2's restatement of the issue's claim, so it
+        # has to be the reading the per-program table supports: 167 named of
+        # 1,218, the other 1,051 split 895 / 156. The order of the figures is
+        # the order the sentence reads them in, which is the only thing that
+        # makes the tuple below mean anything.
+        named, total, other, extmem, pair = blockquote(
+            self.text, "of the 1,218 XDATA addresses")
+        self.assertEqual((named, total, other, extmem, pair),
+                         (167, 1218, 1051, 895, 156))
+        self.assertEqual(named + other, total)
+        self.assertEqual(extmem + pair, other)
+
+    def test_the_rekey_did_not_retract_a_superseded_figure(self):
+        # The calibration rule is the reason §2 keeps its history, so the
+        # versions the re-key sits beside must still be there: a well-meaning
+        # tidy-up that deleted them would pass every other check here.
+        for figure in ("1,171", "14,819", "1,172", "14,801", "147", "6,201",
+                       "41", "448", "161", "902", "155", "6,416", "1,057",
+                       "6,337", "6,468"):
+            self.assertIn(figure, self.text,
+                          f"§2 no longer carries {figure} visibly")
+        # And the corrections that replace them are dated and attributed, not
+        # bare replacements.
+        self.assertIn("*(Correction, 2026-09-30, issue #714.", self.text)
+        # The two stale cells are named as wrong, not silently overwritten.
+        self.assertIn("822 / 7,334", self.text)
+        self.assertIn("137 / 5,515", self.text)
+
+    def test_the_cpu_temp_transcript_is_the_one_the_tree_prints_now(self):
+        # §2's opening claim is a shell transcript, so it is re-runnable, and a
+        # transcript that no longer reproduces is evidence that has gone stale
+        # under a reader without anybody noticing a table had moved. Held by
+        # re-running the two commands rather than by holding the number, which
+        # is the whole reason §2 shows them.
+        tree = REPO / "ec" / "decompiled"
+        hit = subprocess.run(["grep", "-n", "CPU_TEMP", "bank0/8749.c"],
+                             cwd=tree, capture_output=True, text=True, check=False)
+        third = hit.stdout.splitlines()[2]
+        mentions = subprocess.run(
+            "grep -rhoE '\\bCPU_TEMP\\b' common/*.c bank0/*.c bank1/*.c | wc -l",
+            cwd=tree, shell=True, capture_output=True, text=True, check=False)
+        count = mentions.stdout.strip()
+        console = self.text.split("```console")[1].split("```")[0]
+        self.assertIn(third, console)
+        self.assertRegex(console, rf"\|\s*wc -l\n{count}\n",
+                         f"the transcript says {count} mentions but the "
+                         f"committed tree prints {count}")
+        # The `DAT_EXTMEM_043e` half of the sentence is a negative claim about
+        # the same three trees, so it is re-run rather than trusted too.
+        # `-l` and not `-c`: `-c` prints `file:0` for every clean file, so a
+        # count-based check reads a tree with no matches as a tree full of them.
+        stale = subprocess.run(
+            "grep -rl 'DAT_EXTMEM_043e' common bank0 bank1 || true",
+            cwd=tree, shell=True, capture_output=True, text=True, check=False)
+        self.assertEqual(stale.stdout.split(), [],
+                         "a DAT_EXTMEM_043e spelling appeared in the EC tree")
+
+    def test_the_row_counts_the_map_still_prints_stay_row_counts(self):
+        # The two 1,326s that are *not* program-addresses, and the header rule
+        # that says which is which. Both count CSV rows, so the re-key must
+        # leave them alone; a change here would be the re-key claiming a
+        # figure it does not own.
+        text = MAP.read_text(encoding="utf-8")
+        self.assertIn("0 of 1,326 addresses", text)
+        self.assertIn("the 1,326 register rows", text)
+
+    def test_the_writeup_and_the_index_are_present(self):
+        page = REPO / "docs" / "findings" / "xdata-register-map-per-program-keying.md"
+        self.assertTrue(page.exists(), "the write-up for this change is missing")
+        index = (REPO / "docs" / "findings" / "INDEX.md").read_text(
+            encoding="utf-8")
+        self.assertIn("xdata-register-map-per-program-keying.md", index,
+                      "docs/findings/INDEX.md is stale; run "
+                      "python3 ec/tools/gen_findings_index.py")
+
+
+if __name__ == "__main__":
+    unittest.main()

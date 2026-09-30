@@ -7207,6 +7207,28 @@ per program, which would take that table's `distinct` total from 1,326 to
 1,375 and invalidate three superseded-table blocks — its own change, with its
 own corrections.
 
+*(Correction, 2026-09-30, issue #714. **Both halves of that sentence have now
+landed**, in that order and separately, so it is kept as written rather than
+edited: issue #713 added the per-program `refs` and bucket columns, and issue
+#714 re-keyed §2's `both` rows per program. §2 now prints the per-program
+table first — 1,375 program-addresses, 1,218 main-EC + 157 pd — with the union
+table kept beside it at 1,326 rows. **Neither total is the correction of the
+other**: one address number both images touch is one CSV row and two
+program-addresses, so 1,375 is 1,326 + the 49 `both` rows, and the 1,326 is
+still what the H1 and the row-counting tables carry. What "would invalidate"
+turned out to mean is not that the superseded-table blocks were wrong: none was
+retracted, and each gained a sentence saying what the re-key does and does not
+do to the version it keeps visible. The partition's third term is 156 within the
+main EC against 155 on the union key, and the one address that decides it is
+`0x04A3`. Re-measuring §2 for the re-key also found two cells of its union
+table stale since #1296's export, and a `CPU_TEMP` transcript, a named-address
+count and the 161/902/155 partition downstream of them — the total row stayed
+right throughout, which is what hid them. The write-up is
+`docs/findings/xdata-register-map-per-program-keying.md`; §2 is
+`ec/annotations/xdata-register-map.md`, and
+`python3 ec/tools/xdata_program_keyed_table.py` re-derives both keyings from
+the committed CSV.)*
+
 ## 40. The 107 `inc DPTR`-only bytes: the rule stated, the 73 declined, all 107 accounted (2026-09-25, issue #707)
 
 The write-up is `ec/annotations/xdata-inc-dptr-only.md`; this is the summary.

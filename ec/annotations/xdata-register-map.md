@@ -35,6 +35,29 @@
 > every superseded figure in this file is, each beside the correction that
 > replaces it.
 
+> **Correction, 2026-09-30 (issue #714).** §2's split table and its three-way
+> partition are re-keyed **per program** onto the committed
+> `spellings_by_program` column, so every row of that table is a statement
+> about one program. **This moves no census figure.** 1,326 / 15,696 is still
+> what the H1 says and still the CSV's row count, because an address number
+> both images touch is **one row of the CSV and two program-addresses**; the
+> per-program total is **1,375** (1,218 main-EC + 157 pd), larger by exactly the
+> 49 `both` rows. §2 prints both side by side rather than one replacing the
+> other. The other two 1,326s in this file count **register rows** — "0 of
+> 1,326 addresses" and "over the 1,326 register rows" — and stay correct.
+>
+> **§2's table body was stale in two cells before the re-key, and the
+> correction sits in §2 beside the table rather than only here.** Its `main-ec`
+> `DAT_EXTMEM` and `symbol` rows read 822 / 7,334 and 137 / 5,515 against the
+> committed CSV's 816 / 7,282 and 143 / 5,567. The cause is dated and
+> attributable: `xdata_register_map.py`'s own 2026-09-28 note (issue #1296)
+> records a re-export that moved `symbol_main_distinct` 161 -> 167 and
+> `extmem_main_distinct` 901 -> 895 — "the addresses and the references did
+> not change, only which token spells them". The total row stayed right for
+> exactly that reason, which is what hid the stale body; the rule below says to
+> re-measure the *table body* and not just its total row, and §2 is the first
+> place in this file where not doing so cost anything.
+
 > **Census update, 2026-09-24 (merge of issue #133, PR #238; settled by issue
 > #259).** The figures below say 1,172 addresses / 14,801 references; the
 > committed tree is now **1,171 / 14,792** (main EC 1,062 / 13,931, PD
@@ -467,19 +490,53 @@ anywhere in the export. That is visible in one line:
 $ grep -n 'CPU_TEMP' ec/decompiled/bank0/8749.c | sed -n '3p'
 97:      if ((CPU_TEMP < 0x51) && (GPU_TEMP < 0x51)) {
 $ grep -rhoE '\bCPU_TEMP\b' ec/decompiled/common/*.c ec/decompiled/bank0/*.c ec/decompiled/bank1/*.c | wc -l
-54
+56
 ```
 
-Fifty-four mentions of `CPU_TEMP` in the EC programs, and **zero** of them
-under a `DAT_EXTMEM_043e`. The same holds for the other 146 named main-EC
-addresses. The split, from `xdata-registers.csv`:
+Fifty-six mentions of `CPU_TEMP` in the EC programs, and **zero** of them
+under a `DAT_EXTMEM_043e`. The same holds for the other 166 named main-EC
+addresses.
+
+**Per program, the split is a statement about one program.** Keying each row's
+`spellings_by_program` clause, so a `main-ec` row is spelled one way *by the
+main EC* whatever the PD image does with the same address number:
+
+| program | spelling | distinct | references |
+|---|---|---:|---:|
+| main-ec | `DAT_EXTMEM` | 850 | 7,534 |
+| main-ec | `DAT_EXTMEM+pair-literal` | 45 | 499 |
+| main-ec | `pair-literal` | 156 | 468 |
+| main-ec | `symbol` | 154 | 6,150 |
+| main-ec | `symbol+pair-literal` | 13 | 187 |
+| pd | `DAT_EXTMEM` | 157 | 858 |
+| **total** | | **1,375** | **15,696** |
+
+The references are `refs_main_ec` and `refs_pd` (columns 22–23), so no row here
+double-counts a `both` address across the two spaces, and there is no `both`
+row to double-count: an address number both images reach is **two rows** of
+this table and **one row** of the CSV. That is the whole of the 1,375 against
+the 1,326 below — 1,326 + 49 `both` rows = 1,375 — and it is why the 1,326 is
+the right figure for the H1, §3's table and §4.1's table, which count rows and
+addresses in the CSV's own terms. **Neither total is the correction of the
+other.** There is no `symbol+DAT_EXTMEM` row here because that label is the
+union of two halves and no single program produces it; the eleven addresses are
+`symbol` in the main EC and `DAT_EXTMEM` in the PD image. `0x04A3` is the same
+shape with a different main-EC half — `pair-literal` there, `DAT_EXTMEM` in the
+PD image — and it is the one address whose partition term moves between the two
+tables below. The re-runnable derivation, with the input's path, row count and
+SHA-256, is `python3 ec/tools/xdata_program_keyed_table.py`.
+
+**The same split on the union key** — `program` and `spelled_as`, the two
+columns the census writes, with the one `refs` cell a row carries — kept so a
+reader comparing this section against the CSV has the table that reads it
+directly:
 
 | `program` | `spelled_as` | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 822 | 7,334 |
+| main-ec | `DAT_EXTMEM` | 816 | 7,282 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 42 | 394 |
 | main-ec | `pair-literal` | 155 | 461 |
-| main-ec | `symbol` | 137 | 5,515 |
+| main-ec | `symbol` | 143 | 5,567 |
 | main-ec | `symbol+pair-literal` | 13 | 187 |
 | both | `DAT_EXTMEM` | 34 | 349 |
 | both | `DAT_EXTMEM+pair-literal` | 4 | 139 |
@@ -487,16 +544,18 @@ addresses. The split, from `xdata-registers.csv`:
 | pd | `DAT_EXTMEM` | 108 | 603 |
 | **total** | | **1,326** | **15,696** |
 
-**A `both` row's `spelled_as` is the union across the two programs, and cannot
-be read per-program.** `build()` absorbs a `both` row's two per-program entries
-into one, and the cell holds every spelling either image gives that address
-number — which is a statement about two programs, not about one. The CSV
-carries the per-program halves in a second column, `spellings_by_program`
-(column 21, appended last so the positional `awk -F,` commands in
-`../../docs/findings/xdata-census-totals.md` keep meaning what they mean), so
-a per-program question is read from that. Its contract, the 15 `both` rows
-whose halves differ, and the reconciliation below are
-`../../docs/findings/xdata-spelled-as-union.md`. The four `both` rows this
+**A `both` row's `spelled_as` — the second table above — is the union across the
+two programs, and cannot be read per-program.** `build()` absorbs a `both`
+row's two per-program entries into one, and the cell holds every spelling
+either image gives that address number, which is a statement about two programs
+rather than about one. That is why §2 now prints the per-program table first:
+the first table is keyed on the column that answers the per-program question,
+and the second is kept beside it because it is the key the CSV itself is
+written on. The column carrying the halves is `spellings_by_program` (column 21,
+appended last so the positional `awk -F,` commands in
+`../../docs/findings/xdata-census-totals.md` keep meaning what they mean). Its
+contract, the 15 `both` rows whose halves differ, and the reconciliation below
+are `../../docs/findings/xdata-spelled-as-union.md`. The four `both` rows this
 matters for are the `DAT_EXTMEM+pair-literal` ones, and **only three of them
 are mixed inside the main EC**:
 
@@ -514,13 +573,17 @@ address is also reached as a literal *argument* to one of the pair accessors
 alongside a token spelling **within a program** (59 counting the CSV's union
 across both, which differs on `0x04A3` alone), and `symbol` and `DAT_EXTMEM`
 are still never both on one row within a program, which is the invariant the
-self-test asserts. The distinct column now sums to more than the count of
-`symbol` rows because an address reached three ways is three rows of this table
-and one row of the CSV; the `refs` column does not double-count, since each row
-carries that address's whole reference count once — and on a `both` row that
-count is still the sum over both programs, which `spellings_by_program` does
-not split (the twelve per-program columns after it, 22–33, do:
-`docs/findings/xdata-per-program-counts.md`).
+self-test asserts. In the first table above the distinct column sums to more
+than the count of `symbol` rows for the same reason the CSV has fewer rows than
+that total: an address reached three ways is three rows of that table and one
+row of the CSV, and here the reference column comes from `refs_main_ec` and
+`refs_pd` separately (the twelve per-program columns, 22–33, of
+`docs/findings/xdata-per-program-counts.md`), so each row carries its own
+program's count once and there is nothing to sum over. **In the second table
+that caveat inverts**, and it is the reason the two are not interchangeable: a
+`both` row's one `refs` cell is the sum over both programs, so the reference
+column there double-counts those 49 addresses across the two address spaces,
+and `spellings_by_program` does not split it — columns 22–33 do.
 
 *(Correction, 2026-09-25, issue #557, re-transcribed against the tree #279
 superseded. Every cell of the table above is read from the committed CSV. The
@@ -540,17 +603,59 @@ the rest of the way to 146, and the committed CSV carried 147. The second is
 row is unchanged in kind — it is the whole census — and moves only with the
 census.)*
 
+*(Correction, 2026-09-30, issue #714. Two cells of the **union** table above
+were stale and are corrected in place, which is what this file's own rule
+requires of a current table: main-ec `DAT_EXTMEM` was 822 / 7,334 and is
+**816 / 7,282**; main-ec `symbol` was 137 / 5,515 and is **143 / 5,567**. The
+other seven rows and the total row were exact. The cause is dated and
+attributable — `xdata_register_map.py`'s own 2026-09-28 note (issue #1296)
+records a re-export that moved `symbol_main_distinct` 161 -> 167 and
+`extmem_main_distinct` 901 -> 895, six addresses from one token spelling to the
+other and no reference count changed — and §2's body was not re-measured when
+the tool's pins moved. The total row stayed right precisely because nothing
+about the census moved, which is what hid it: this file's rule says to
+re-measure the *table body* and not just its total row, and this is the first
+place here that not doing so cost anything.*
+
+*(Correction, 2026-09-30, issue #714, on the re-key. The version this block
+keeps visible is the **union key's** history and the re-key does not touch it:
+every figure in the block above is a union-keyed one, and all of them stay
+right about the table they were measured on. What the re-key does is add the
+per-program table beside it, which is why the stale-cell correction above names
+the union table and not the new one — **no per-program cell in this section has
+ever been stale, because the per-program table did not exist before this
+change.** The union table is kept rather than retired because a reader
+comparing §2 against `xdata-registers.csv` needs the key the CSV is written
+on, and the 1,171 / 14,819 and 1,172 / 14,801 versions above it stay for the
+same reason the per-program key does not replace the union one: they are the
+history of a table that still exists. The write-up is
+`docs/findings/xdata-register-map-per-program-keying.md` and
+`python3 ec/tools/xdata_program_keyed_table.py` re-derives both keyings.)*
+
 Read the `symbol` rows as the addresses the issue's grep could not see. **On
 §3's basis** — every row the main EC touches, which is the 1,218 the tool
-prints rather than the 1,169 `program=main-ec` rows above, the 49 difference
-being the `program=both` rows — that is **161 addresses in 6,416 references**.
-The corrected form of the issue's claim is therefore a *three*-way split, not a
-two-way one:
+prints rather than the 1,169 `program=main-ec` rows of the second table above,
+the 49 difference being the `program=both` rows — that is **167 addresses in
+6,337 references**, counted per program. The corrected form of the issue's claim
+is therefore a *three*-way split, not a two-way one:
 
-> 161 of the 1,218 XDATA addresses the main EC touches carry a name from
-> `ec/ghidra/xdata-symbols.csv`. Of the other 1,057, **902** read as
-> `DAT_EXTMEM_xxxx` and **155** are named nowhere and reach the census only as a
+> 167 of the 1,218 XDATA addresses the main EC touches carry a name from
+> `ec/ghidra/xdata-symbols.csv`. Of the other 1,051, **895** read as
+> `DAT_EXTMEM_xxxx` and **156** are named nowhere and reach the census only as a
 > literal argument to one of the pair accessors of §4.7.
+
+167 + 895 + 156 is 1,218 exactly, and the references are 6,337 + 8,033 + 468 =
+the main EC's own 14,838.
+
+**The same partition on the union key is 167 / 896 / 155**, and both readings
+are right about different things: counted within the main EC the last term is
+156, not 155, because the main EC reaches `0x04A3` as a `pair-literal` and
+nothing else, and it is the PD image that spells it `DAT_EXTMEM_xxxx` — so the
+union folds it into the 896 and leaves 155 here. `0x04A3` is the **only**
+address whose term moves between the two keyings, which
+`python3 ec/tools/xdata_program_keyed_table.py --moved` prints. The eleven
+`both` rows carrying both token spellings are counted in the 167 and not again
+in the middle term under either key.
 
 *(Two superseded versions, both kept rather than deleted. The 2026-09-25 one,
 against the tree #279 superseded: **147 addresses, 6,201 references**, and "147
@@ -562,21 +667,48 @@ a name … the other 1,022 read as `DAT_EXTMEM_xxxx`", with "1,022 is unchanged 
 the issue's main-EC distinct count is right, and its coverage of it was not".
 Both corrections were right on their own trees and both are still the
 correction §2 exists for; only the size of the gap has moved, and 1,022 is no
-longer unchanged. The 161/902/155 above is a partition — 161 + 902 + 155 is
-1,218 exactly, and the eleven `both` rows that carry both token spellings are
-counted in the 161 and not again in the 902. **That partition is worked on the
-union column, and `0x04A3` is the row where the distinction bites**: counted
-within the main EC the last term is **156**, not 155, because the main EC
-reaches `0x04A3` as a `pair-literal` and nothing else, and it is the PD image
-that spells it `DAT_EXTMEM_xxxx` — so the union moves it into the 902 and
-leaves 155 here. Both thirds are right, and the row's `spellings_by_program`
-cell is where a reader of this paragraph goes for the split;
-`../../docs/findings/xdata-spelled-as-union.md` has the whole reconciliation.)*
+longer unchanged.)*
+
+*(Correction, 2026-09-30, issue #714, on the 161/902/155 this paragraph was
+written against, kept visible because a superseded figure is not deleted. **The
+committed CSV reads 167 / 896 / 155 on the union key and 167 / 895 / 156 per
+program**, with 6,337 references for the named term against the 6,416 printed
+above, and the "other 1,057" against 1,051. The 161 matches the tool's own
+pre-#1296 `symbol_main_distinct` exactly and is the stale half of the pair; the
+902 is **not reproducible from this tree on either key** and sits one above the
+901 that same pin held for `extmem_main_distinct`, so where it came from cannot
+be recovered here and it is recorded as measured rather than explained. The
+6,416 is exactly what the stale table body above implies (5,515 + 187 + 714),
+which is the clearest sign that the partition was re-derived from the stale
+rows rather than measured independently. It was also on the `refs` column,
+which on a `both` row is a sum over both programs, so it was never a main-EC
+figure: the main EC's named references are 6,337 on either key, and the same
+partition on the `refs` column reads 6,468 / 8,164 / 461 = 15,093, which is
+the main EC's addresses carrying the PD half's references with it and is
+neither a main-EC total nor the census total.)*
+
+*(Correction, 2026-09-30, issue #714, on the re-key. The versions this block
+keeps visible are the union key's history and the re-key does not move any of
+them — every one was right about the union-keyed table it was measured on. What
+the re-key does is state the per-program partition above them, which is the
+reading §2's first table supports and the one a `spellings_by_program` cell
+answers directly. **Nothing above is retracted by that**, because a partition on
+one key is not a wrong version of the same partition on another: 167 + 895 + 156
+and 167 + 896 + 155 both sum to 1,218, and the difference is one address,
+`0x04A3`, in one term. The row's `spellings_by_program` cell is still where a
+reader of this paragraph goes for the split, and
+`../../docs/findings/xdata-spelled-as-union.md` still has the whole
+reconciliation.)*
 The gap is still the blocker the issue describes, and it is still why this
 issue is on the critical path:
 **74%** of the register file the main EC actually uses is still spelled
 `DAT_EXTMEM_xxxx` rather than carrying a name, against 96% when this was
-written. That is better and it is not good enough — the exporter catches up with
+written. That percentage is the union-keyed one above; **counted per program it
+is 73%**, because `0x04A3` leaves the middle term for the pair-literal-only one
+and one address out of 1,218 is exactly the difference between the two
+roundings. That is the whole of what the re-key moves in this section, and it
+is worth one address's worth of precision to have it stated rather than
+implied. That is better and it is not good enough — the exporter catches up with
 a symbol table that has been growing faster than the census is re-derived,
 which is the thing to fix. §4.7 closes 155 more addresses and closes none of
 this gap: it gives a *count* where there was none, and a count is not a name.
@@ -612,6 +744,15 @@ side. The point the paragraph makes is unchanged and is better supported by the
 eleven than by the three: a `name` in the CSV is not a statement about how the
 committed `.c` spells the byte.)*
 
+*(Correction, 2026-09-30, issue #714. The set of eleven is unchanged and no
+address here moved, but §2's per-program table has **no `symbol+DAT_EXTMEM`
+row**, and a reader arriving here from that table needs to know why rather than
+reading the absence as a dropped row: the label is the union of two halves, so
+it exists only on the union key, where each of the eleven is `symbol` in the
+main EC and `DAT_EXTMEM_xxxx` in the PD image. `0x04A3` is the same shape one
+step further, its main-EC half being `pair-literal`; it is also the only
+address whose partition term moves between the two keyings.)*
+
 ## 3. Two programs, and the split the clustering never crosses
 
 `ec/decompiled/pd/` is the self-contained `ITE8850-PD` image at file `0x20000`
@@ -631,9 +772,18 @@ once per program.
 
 34 of the 49 both-programs addresses are `DAT_EXTMEM_`-spelled in both; the
 other eleven are named in the EC and written as `DAT_EXTMEM_` in the PD image
-(§2's `symbol+DAT_EXTMEM` row), and four are `DAT_EXTMEM+pair-literal`. A
-shared address *number* is not a shared byte, and the `program` column is on
-every row so no downstream reader can lose that.
+(§2's second table, its `symbol+DAT_EXTMEM` row — the per-program table has no
+such row, because no single program produces that label), and four are
+`DAT_EXTMEM+pair-literal`. A shared address *number* is not a shared byte, and
+the `program` column is on every row so no downstream reader can lose that.
+
+**The per-program reading of this table is 1,218 + 157 = 1,375**, because the
+distinct column here counts each program's own addresses and 49 numbers are
+counted by both. 1,375 is also 1,326 + 49, the row count plus the `both` rows,
+which is the identity `ec/tools/xdata_program_keyed_table.py --check` asserts
+rather than this file restating a census; nothing in this table moves under
+that re-key, and 1,326 / 15,696 stays the right total for a table whose rows are
+CSV rows.
 
 **The `both` count moved 48 -> 49 and the PD-only count 109 -> 108, and neither
 is the pair pass touching the PD image.** Its own `read_be16_from_dptr` at
@@ -664,6 +814,17 @@ double-counts the 48 `both` addresses by construction, as it always has. 45 + 3
 was 48 there exactly as 34 + 11 + 4 is 49 here: the three groups are disjoint
 and all three come straight from §2's `both` rows. The 109 PD-only and 48 both
 figures are unchanged between that correction and this one.)*
+
+*(Correction, 2026-09-30, issue #714, on the re-key. Nothing in this table moves
+under it, and the version kept visible above is untouched by it for the same
+reason: every row here is a count of CSV rows or of the two programs' own
+addresses, and §2's re-key changed how §2's *split table* is keyed rather than
+what the census contains. The 34 / 11 / 4 reading stays the union-keyed one —
+the per-program view of the same 49 rows is 37 spelled `DAT_EXTMEM_` in both
+programs, 11 named in the main EC and `DAT_EXTMEM_` in the PD image, and the one
+`0x04A3` whose main-EC half is a bare `pair-literal` — and 1,375, the figure §2
+now prints per program, is this table's 1,218 + 157 and its 1,326 + 49 at the
+same time.)*
 
 ## 4. The method, where it can be argued with, and one correction to it
 
