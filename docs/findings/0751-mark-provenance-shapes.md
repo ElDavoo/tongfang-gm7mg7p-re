@@ -201,7 +201,7 @@ were found — none of which the issue names.
 It matches the double-quoted `"MARK"` the seven above spell the row with, so a
 line quoting it the other way is invisible to it. The two such lines are
 `windows/tools/test_ec_watch.py:452` and
-`windows/tools/test_system_id_probe.py:320`, both `assertEqual` comparisons in
+`windows/tools/test_system_id_probe.py:322`, both `assertEqual` comparisons in
 test suites. Neither constructs a row, so seven is the right count — but that is
 a reading of those two files rather than a result of the scan, and a writer
 spelling the row `'MARK'` would not be counted. The anti-staleness is enforced
@@ -617,7 +617,7 @@ a line number to a file.
    ok   ec/tools/check_capture_encoding.py:243  a constructed row rather than a writer: `check_capture_encoding` builds one to hand a writer that takes a label alone, and the literal scan counts it as a consumer because the `.row(` call is on the next line
    ok   windows/tools/test_manual_fan_ctrl_probe.py:508  reader: the only exact-column-count filter in the tree
    ok   windows/tools/test_ec_watch.py:452  a single-quoted MARK the scan cannot match: a test assertion, not a writer
-   ok   windows/tools/test_system_id_probe.py:320  the same in the other suite, so the blind side is the tree's and not one file's
+   ok   windows/tools/test_system_id_probe.py:322  the same in the other suite, so the blind side is the tree's and not one file's
    ok   ec/tools/grade_0751_isolation.py:852  read_capture
    ok   ec/tools/grade_0751_isolation.py:845  the one skip rule, where a `# provenance` row goes
    ok   ec/tools/grade_0751_isolation.py:886  read_capture refusing a byte-order mark before it reads a row, which is what keeps the header out of the row shape's data rows

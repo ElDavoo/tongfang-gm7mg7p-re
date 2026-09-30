@@ -240,16 +240,21 @@ annotation leaves its header on row 1 rather than row 0.
 `ecrw` — the module binds kernel32 at import time and only loads on Windows —
 which is also what makes the arms scriptable; the charge-target and
 battery-trace suites fake the `powershell` call behind their WMI lines as well.
-The probe, `ec_watch`, GPU-block, cTGP/DBEN and battery-trace suites use the
-shared `tools/ecrw_fake.py`; the other three still carry fakes of their own.
+Every suite here exercising a tool that imports `ecrw` installs one shared
+fake, `tools/ecrw_fake.py`, with `ecrw_fake.install()`; a suite with bytes of
+its own keeps its own class and patches it over the tool after import.
+(`tools/test_census_native_c.py` is a second non-installer: its subject is the
+`.c` census and it never touches `ecrw` at all.)
 `tools/test_ecrw.py` is the exception
 and the reason the others can be: it puts a fake `ctypes.WinDLL` in front of
 the *real* `ecrw.py`, so the `MMRD` marshalling, the aligned-block arithmetic
 and the unchanged per-byte buffer are checked against the code that ships
 rather than against a stand-in. `../tools/README.md` is the canonical
-home for the command, and records why the runner gives each suite its own
-interpreter: until those three are moved onto the shared fake, a single
-discovery over this directory is order-dependent (`docs/findings.md` §16).
+home for the command, and records why the runner still gives each suite its own
+interpreter: it is now insurance, not load-bearing, and a single discovery over
+this directory runs because
+`../tools/test_windows_tools_shared_interpreter.py` asserts it
+(`docs/findings.md` §16 for the history).
 
 ## What's proven vs. what needs a Windows box
 

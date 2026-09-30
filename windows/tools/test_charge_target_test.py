@@ -64,10 +64,6 @@ REGS = {
 WMI_TOKENS = "1 1 0 24928 22394 82"
 
 
-class FakeEcError(RuntimeError):
-    pass
-
-
 class FakeEc:
     """A byte map, so the tool's own u16/w16 pair is the one under test.
 
@@ -144,13 +140,17 @@ class Clock:
         self.slept.append(s)
 
 
-fake_ecrw = types.ModuleType('ecrw')
-fake_ecrw.Ec = lambda: None
-# charge_target_test.py:59 imports both names, so this shell has to export
-# both: an EcError the fakes raise has to be the class the tool bound at
-# import, or `except EcError` never sees it.
-fake_ecrw.EcError = FakeEcError
-sys.modules.setdefault('ecrw', fake_ecrw)
+# The tool's own `from ecrw import Ec, EcError` has to resolve, and the
+# directory is the import root whether or not the runner was started from here.
+sys.path.insert(0, str(Path(__file__).parent))
+
+# The shared offline stand-in for `ecrw` (windows/tools/ecrw_fake.py), installed
+# by assignment like the other suites in this directory do. charge_target_test.py
+# binds `EcError` at import, so the raise below has to be `ecrw_fake`'s class
+# and not a lookalike: `except EcError` catches the name the tool bound, and a
+# second class of the same shape is not caught by it.
+import ecrw_fake  # noqa: E402  (needs the sys.path entry above)
+ecrw_fake.install()
 
 spec = importlib.util.spec_from_file_location(
     'charge_target_test', Path(__file__).with_name('charge_target_test.py'))
@@ -273,11 +273,12 @@ class ChargeTargetTests(unittest.TestCase):
     # 5. The same restore when the run fails. boom_on=1 is the in-loop WMI
     #    call, which is after the write and inside the try the finally belongs
     #    to -- and the raise is the fake module's own EcError, because the tool
-    #    binds that name at import and a plain RuntimeError would go out of
-    #    main() instead of becoming a return code.
+    #    binds that name at import and any other class of the same shape --
+    #    `ecrw_fake.EcError`'s own base included -- would go out of main()
+    #    instead of becoming a return code.
     def test_an_ec_error_partway_still_restores_the_target(self):
         ec = FakeEc()
-        wmi = FakeWmi(boom_on=1, exc=FakeEcError("WMI query failed"))
+        wmi = FakeWmi(boom_on=1, exc=ecrw_fake.EcError("WMI query failed"))
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'run.csv'
             rc, ec, out, err = self.run_tool([*BASE, '--csv', str(path)],

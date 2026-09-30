@@ -271,8 +271,8 @@ happened to the version that was there before it.
 | `windows/tools/test_ec_watch.py:443` | the same row list in a run holding `--label-vocab`, compared without the fifth field | the row's fifth field named whichever runner invoked the suite, so a literal list of rows could not hold it |
 | `windows/tools/test_gpu_block_watch.py:869` | the header equality, naming five columns | it asserted four names — `gpu_block_watch.py:59,166` imports `CsvSink` and `Marker` from `ec_watch` and constructs `Marker(sink)` |
 | `windows/tools/test_gpu_block_watch.py:872` | the mark row, with its trailing comma | the list ended at the label |
-| `windows/tools/test_system_id_probe.py:320` | the mark row, with its trailing comma | the assertion's right side was the four-field row |
-| `windows/tools/test_system_id_probe.py:339` | the capture handed to `grader.read_capture`, where `test_ec_watch.py:179` was a five-way unpack | a four-way unpack |
+| `windows/tools/test_system_id_probe.py:322` | the mark row, with its trailing comma | the assertion's right side was the four-field row |
+| `windows/tools/test_system_id_probe.py:341` | the capture handed to `grader.read_capture`, where `test_ec_watch.py:179` was a five-way unpack | a four-way unpack |
 | `windows/tools/test_manual_fan_ctrl_probe.py:508` | `mark_rows`'s `len(r) == 4` filter | **unchanged**, and it would fail *silently* — an empty list rather than an exception |
 | `windows/tools/test_manual_fan_ctrl_probe.py:513` | the header equality, four names | **unchanged** — only if the probe is widened, which this change does not do |
 | `windows/tools/test_manual_fan_ctrl_probe.py:515` | `self.assertEqual(len(row), 4, row)` | **unchanged**, and the loudest of the three: it is the first to raise |
@@ -380,7 +380,7 @@ what makes them one.
 | `ec/tools/grade_0751_isolation.py:3065` | `:2994` |
 | `ec/tools/check_capture_claims.py:576` | `:514` (drifted before this change) |
 | `windows/tools/test_ec_watch.py:159` | `:145` |
-| `windows/tools/test_system_id_probe.py:341` | `:311` |
+| `windows/tools/test_system_id_probe.py:343` | `:341` (and `:311` before #739) |
 | `windows/tools/test_ec_watch.py:1205` | `:1134` (landed at `:1168` and `:1176`) |
 
 **The last three rows are this change's edits to the two test files, and every

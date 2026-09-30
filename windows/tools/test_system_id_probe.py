@@ -19,7 +19,6 @@ from pathlib import Path
 import sys
 import tempfile
 import threading
-import types
 import unittest
 from unittest.mock import patch
 
@@ -47,10 +46,6 @@ SWEEPS = [
     {0x0456: 0x40, 0x060C: 0x00, 0x060D: 0x00, 0x0449: 0x00,
      0x0434: 0x00, 0x0435: 0x00},
 ]
-
-
-class FakeEcError(RuntimeError):
-    pass
 
 
 class FakeEc:
@@ -123,10 +118,16 @@ class FakeStdin:
         return ""
 
 
-fake_ecrw = types.ModuleType('ecrw')
-fake_ecrw.Ec = FakeEc
-fake_ecrw.EcError = FakeEcError
-sys.modules.setdefault('ecrw', fake_ecrw)
+# The tool's own `from ecrw import ...` has to resolve, and the directory is the
+# import root whether or not the runner was started from here.
+sys.path.insert(0, str(Path(__file__).parent))
+
+# The shared offline stand-in for `ecrw` (windows/tools/ecrw_fake.py), installed
+# by assignment like the other suites in this directory do. It supplies the names
+# the tool binds at import; `FakeEc` above, the one that scripts the sweeps, is
+# patched over the probe's own `Ec` in each test below.
+import ecrw_fake  # noqa: E402  (needs the sys.path entry above)
+ecrw_fake.install()
 
 spec = importlib.util.spec_from_file_location(
     'system_id_probe', Path(__file__).with_name('system_id_probe.py'))
@@ -138,7 +139,8 @@ spec.loader.exec_module(probe)
 # writes is asked of the reader that has to place it rather than of a split
 # this file makes itself. The grader imports nothing outside the standard
 # library and registers no `sys.modules` entry, so loading it here cannot
-# change what the shared `ecrw` setdefault above resolves to.
+# change what the shared `ecrw` above resolves to for any other suite in this
+# directory.
 grader_path = Path(__file__).resolve().parents[2] / 'ec/tools' \
     / 'grade_0751_isolation.py'
 grader_spec = importlib.util.spec_from_file_location('grade_0751_isolation',

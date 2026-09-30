@@ -19,7 +19,6 @@ import io
 from pathlib import Path
 import sys
 import tempfile
-import types
 import unittest
 from unittest.mock import patch
 
@@ -43,9 +42,16 @@ class FakeEc:
         return self.mem.get(addr, 0xFF)
 
 
-fake_ecrw = types.ModuleType('ecrw')
-fake_ecrw.Ec = FakeEc
-sys.modules.setdefault('ecrw', fake_ecrw)
+# The tool's own `from ecrw import ...` has to resolve, and the directory is the
+# import root whether or not the runner was started from here.
+sys.path.insert(0, str(Path(__file__).parent))
+
+# The shared offline stand-in for `ecrw` (windows/tools/ecrw_fake.py), installed
+# by assignment like the other suites in this directory do. It supplies the names
+# the tool binds at import; `FakeEc` above, the one with the bytes, is patched
+# over the tool's own `Ec` below.
+import ecrw_fake  # noqa: E402  (needs the sys.path entry above)
+ecrw_fake.install()
 
 spec = importlib.util.spec_from_file_location(
     'ec_validate', Path(__file__).with_name('ec_validate.py'))

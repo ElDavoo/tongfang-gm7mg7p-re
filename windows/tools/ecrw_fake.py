@@ -50,12 +50,12 @@ def block_runs(addrs):
 class Ec:
     """The real signatures and the whole protocol, and no behaviour.
 
-    No suite calls these bodies: both suites that exist replace `Ec` wholesale
-    with a class of their own once the tool module is imported, so the defaults
-    here only have to keep an import -- or an accidentally unpatched call --
-    from failing on a missing attribute. A suite that needs bytes has to say so
-    by supplying its own class rather than by finding a default it likes, which
-    is why `read` returns 0x00 and nothing else here does anything.
+    No suite calls these bodies: every suite that installs this replaces `Ec`
+    wholesale with a class of its own once the tool module is imported, so the
+    defaults here only have to keep an import -- or an accidentally unpatched
+    call -- from failing on a missing attribute. A suite that needs bytes has
+    to say so by supplying its own class rather than by finding a default it
+    likes, which is why `read` returns 0x00 and nothing else here does anything.
     """
 
     def __init__(self):
@@ -86,10 +86,13 @@ class Ec:
 def install():
     """Put the fake in `sys.modules` under the name `ecrw`, and return it.
 
-    Assignment rather than `setdefault`, deliberately. Both suites install these
-    same two class objects, so nothing can depend on which of them got there
-    first, and the unconditional write means a suite can never inherit a stale
-    sibling's shape -- which is the whole of what the two per-suite fakes did.
+    Assignment rather than `setdefault`, deliberately. Every suite that
+    installs the fake installs these same class objects, so nothing can depend
+    on which of them got there first, and the unconditional write means a suite
+    can never inherit a stale sibling's shape -- which is the whole of what the
+    per-suite fakes did, and what makes one interpreter able to run this whole
+    directory. `tools/test_windows_tools_shared_interpreter.py` holds both
+    halves of that.
     """
     module = types.ModuleType('ecrw')
     module.Ec = Ec

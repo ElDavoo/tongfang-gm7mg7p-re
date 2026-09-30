@@ -33,24 +33,32 @@ tests=0
 failed=0
 
 # One interpreter per FILE -- not per directory, and not one for the lot.
-# The reason is a live landmine rather than a preference, and it is only
-# partly defused -- read docs/findings.md §16 before changing this loop.
 #
-# The windows/tools suites used to install a fake ecrw into sys.modules with
-# setdefault, and the fakes were not the same shape; ec_validate's exported
-# only Ec, while ec_watch.py does `from ecrw import Ec, EcError`. In one
-# shared interpreter, whichever suite imported first won that setdefault, and
+# The reason this was load-bearing is history, not preference: the
+# windows/tools suites used to install a fake ecrw into sys.modules with
+# setdefault, and the fakes were not the same shape -- ec_validate's exported
+# only Ec, while ec_watch.py does `from ecrw import Ec, EcError` -- so in one
+# shared interpreter whichever suite imported first won that setdefault and
 # the other died on
 #   ImportError: cannot import name 'EcError' from 'ecrw' (unknown location)
+# Per-directory isolation would not have helped; they all share one directory.
+# docs/findings.md §16 has the reproduction.
 #
-# test_manual_fan_ctrl_probe.py, test_ec_watch.py, test_gpu_block_watch.py,
-# test_ctgp_dben_probe.py and test_battery_trace.py install
-# windows/tools/ecrw_fake.py now, one shape by assignment. test_ec_validate.py,
-# test_system_id_probe.py and
-# test_charge_target_test.py still setdefault their own fakes, so a single
-# discovery run is still order-dependent for them. Do not collapse this into
-# one discovery run until they are moved over.
-# Per-directory isolation would not help: they all share one directory.
+# It is insurance now, not the thing keeping a red build away. Every suite in
+# that directory exercising a tool that imports ecrw installs
+# windows/tools/ecrw_fake.py, one shape, by assignment, and that is the only
+# way a suite there installs the fake -- ecrw_fake.install() installs the names
+# the tools bind at import, and a suite with bytes of its own keeps that class
+# and patches it over the tool afterwards, as every suite installing it does.
+# tools/test_windows_tools_shared_interpreter.py is where that is asserted
+# rather than promised: it runs the discovery over windows/tools in one
+# interpreter, on a mirror renamed to sort both ways first.
+#
+# So this loop is NOT being collapsed here, and the reconciliation is not an
+# invitation to. Per-file isolation is still worth keeping for reasons that
+# have nothing to do with ecrw: any suite that leaves global state behind is
+# contained by it, and one discovery run would turn that suite's residue into
+# everyone else's failure.
 #
 # Process substitution rather than a pipe, because a pipe would run the loop in
 # a subshell and the tally below would not survive back out. `sort -z` because
