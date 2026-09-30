@@ -15,8 +15,10 @@ catch and had not caught before this change.
 just the tool's `--check` run twice. `--check` asserts relations *inside* one
 derivation; it cannot notice that the markdown beside it says something else.
 So every table §2 prints is parsed back out of the page and compared to a
-regeneration, and the partition's blockquote is parsed with it. A page edit that
-drops a row, changes a cell or restores a superseded figure fails here.
+regeneration, the partition's blockquote is parsed with it, and the shell
+transcripts beside the tool are re-run rather than believed. A page edit that
+drops a row, changes a cell, restores a superseded figure or prints a figure
+its own command no longer produces fails here.
 
 **`ThePublishedFigures` holds the page's numbers as constants typed from the
 page**, not re-derived from the tool — the distinction
@@ -53,6 +55,8 @@ REPO = EC.parent
 TOOL = HERE / "xdata_program_keyed_table.py"
 REGISTERS = EC / "annotations" / "xdata-registers.csv"
 MAP = EC / "annotations" / "xdata-register-map.md"
+WRITEOUT = (REPO / "docs" / "findings" /
+            "xdata-register-map-per-program-keying.md")
 
 _spec = importlib.util.spec_from_file_location("xdata_program_keyed_table", TOOL)
 keyed = importlib.util.module_from_spec(_spec)
@@ -178,6 +182,38 @@ def blockquote(text, first_words):
     joined = re.sub(r"§\s*[\d.]+[a-z]?", " ", " ".join(block))
     return tuple(int(n.replace(",", ""))
                  for n in re.findall(r"\b\d[\d,]*\b", joined))
+
+
+def console_pairs(text, containing):
+    """The `$ ` commands of the console block holding `containing`, each with
+    the lines printed under it.
+
+    Keyed on a substring of the block rather than on its position or its first
+    command: the write-up's other blocks hold `awk` programs written across
+    several lines, so a `$ ` line inside one of those is a fragment of a
+    command rather than one. A block chosen by index would run half an `awk`
+    program and fail for a reason that has nothing to do with the transcript.
+
+    A command with nothing printed under it is still returned, with an empty
+    output, so a `$ ` line that lost its figure is visible rather than dropped
+    from the pairing.
+    """
+    body = None
+    for chunk in text.split("```console")[1:]:
+        block = chunk.split("```")[0]
+        if containing in block:
+            body = block
+            break
+    if body is None:
+        raise AssertionError(f"no console block containing {containing!r}")
+    pairs, printed = [], None
+    for line in body.splitlines():
+        if line.startswith("$ "):
+            pairs.append((line[2:].strip(), []))
+            printed = pairs[-1][1]
+        elif printed is not None and line.strip():
+            printed.append(line)
+    return [(command, "\n".join(out)) for command, out in pairs]
 
 
 def run(*args):
@@ -397,13 +433,16 @@ class ThePublishedFigures(unittest.TestCase):
 
 
 class TheMapAgrees(unittest.TestCase):
-    """§2's tables and its partition blockquote, read back out of the page.
+    """§2's tables, its partition blockquote and its shell transcripts, read
+    back out of the pages beside the tool.
 
     `--check` asserts relations inside one derivation and cannot see the
     markdown beside it, so a page edit that changes a cell, drops a row or
     restores a superseded figure passes every gate in the tree. This class is
     that gap closed, and it is why the suite is more than the tool's own two
-    modes run twice.
+    modes run twice. The two transcripts are here for the same reason: a figure
+    printed under a command a reader can paste is a claim about the committed
+    tree, and holding it means re-running the command.
     """
 
     @classmethod
@@ -503,9 +542,33 @@ class TheMapAgrees(unittest.TestCase):
         self.assertIn("0 of 1,326 addresses", text)
         self.assertIn("the 1,326 register rows", text)
 
+    def test_the_writeup_shell_transcript_still_reproduces(self):
+        # The write-up's four shell one-liners are the same *kind* of claim as
+        # §2's `CPU_TEMP` transcript: a command and the figure it prints, so a
+        # reader can re-run it instead of taking the page's word for it. One of
+        # the four was wrong once — `NR - 1` undercounts a stream `tail` has
+        # already shortened, and it printed 1325 under a 1326 — and nothing in
+        # the tree noticed, so the block is re-run rather than held by the
+        # figures it prints.
+        pairs = console_pairs(WRITEOUT.read_text(encoding="utf-8"), "{s+=$6}")
+        # Four, because a `$ ` line quietly dropped from the block would leave
+        # the survivors reproducing and the page one figure short. The count is
+        # of this block and not of the tree, so no landing branch bumps it.
+        self.assertEqual(len(pairs), 4,
+                         "the four-command transcript is not four commands")
+        for command, printed in pairs:
+            hit = subprocess.run(command, cwd=REPO, shell=True,
+                                 capture_output=True, text=True, check=False)
+            self.assertEqual(
+                hit.stdout.strip(), printed.strip(),
+                f"the transcript no longer reproduces:\n"
+                f"  $ {command}\n"
+                f"  the page prints {printed!r}, the committed tree prints "
+                f"{hit.stdout.strip()!r}")
+
     def test_the_writeup_and_the_index_are_present(self):
-        page = REPO / "docs" / "findings" / "xdata-register-map-per-program-keying.md"
-        self.assertTrue(page.exists(), "the write-up for this change is missing")
+        self.assertTrue(WRITEOUT.exists(),
+                        "the write-up for this change is missing")
         index = (REPO / "docs" / "findings" / "INDEX.md").read_text(
             encoding="utf-8")
         self.assertIn("xdata-register-map-per-program-keying.md", index,

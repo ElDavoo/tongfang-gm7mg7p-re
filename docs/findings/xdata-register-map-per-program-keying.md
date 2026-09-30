@@ -93,12 +93,16 @@ union key:
 References are `refs_main_ec` on both, so each column sums to the main EC's own
 14,838: 6,337 / 8,033 / 468 and 6,337 / 8,040 / 461.
 
-**The 155-vs-156 the sibling pages refused to reconcile is one address**, and it
-is `0x04A3`. The main EC reaches it as a bare `pair-literal` and nothing else;
-it is the PD image that spells it `DAT_EXTMEM_xxxx`. The union label folds the
-PD half in, so the union counts it in the middle term and the per-program key
-counts it in the pair-literal-only one. `--moved` prints every address whose
-term moves rather than asserting there is one:
+**The 155-vs-156 is one address, and the sibling page had already named it.**
+[`xdata-spelled-as-union.md`](xdata-spelled-as-union.md) reconciled the same
+`pair-literal` split as its 58-versus-59 table and pinned the difference to
+`0x04A3` alone, in both directions; what lands here is that §2's own three-way
+*partition* now carries the per-program reading beside the union one. The main
+EC reaches `0x04A3` as a bare `pair-literal` and nothing else, and it is the PD
+image that spells it `DAT_EXTMEM_xxxx`, so the union label folds the PD half in
+and the union counts it in the middle term where the per-program key counts it
+in the pair-literal-only one. `--moved` re-derives the address on demand rather
+than the page asserting that there is one:
 
 ```console
 $ python3 ec/tools/xdata_program_keyed_table.py --moved
@@ -191,7 +195,7 @@ $ tail -n +2 ec/annotations/xdata-registers.csv | awk -F, '{r+=$7;w+=$8;rw+=$9;p
 read 8826 write 3587 read+write 2482 passed-to-call 534 address-taken 267
 $ tail -n +2 ec/annotations/xdata-registers.csv | awk -F, '{n+=gsub(/=/,"&",$21)} END{print n}'
 1375
-$ tail -n +2 ec/annotations/xdata-registers.csv | awk -F, 'END{print NR-1}'
+$ tail -n +2 ec/annotations/xdata-registers.csv | wc -l
 1326
 ```
 
@@ -265,7 +269,10 @@ rather than to the 15,093 the `refs` column would give.
 - the per-program and union partitions differ in the pair-literal term by
   exactly the addresses `--moved` reports.
 
-`1,375`, `850` and `7,534` appear nowhere in the tool. A constant in a check is
+**No *check* holds a census total as a constant.** `grep` finds no `1375` and no
+`7534` in the tool and no numeric `850` anywhere in it; the three figures the
+write-up quotes appear there once each, inside `check()`'s own docstring, in the
+sentence that says why they are not constants. A constant in a check is
 a value every landing branch has to remember to bump, which is the defect
 `CLAUDE.md` names under "no hand-kept totals"; here a re-derivation shows up as
 a relation failing or as `TheMapAgrees` reading a stale page, not as a number
@@ -376,6 +383,16 @@ split `test_xdata_guard_off_row_join.py` records and this follows:
   above would otherwise have left open.
 
 It also holds that no superseded figure was deleted, that the `CPU_TEMP`
-transcript still reproduces when re-run, and — in `TheToolWritesNothing` — that
-the tool has no write mode and no `--out-` argument over its parser, and that a
-full run of every mode leaves the tree byte-identical.
+transcript and **the four one-liners in the shell transcript above** both
+reproduce when re-run, and — in `TheToolWritesNothing` — that the tool has no
+write mode and no `--out-` argument over its parser, and that a full run of every
+mode leaves the tree byte-identical.
+
+Holding that block by re-running it rather than by holding its four figures is
+what caught a small error in it. The fourth command was `awk -F, 'END{print
+NR-1}'`, which printed `1325` under a page saying `1326`: `tail -n +2` has already
+removed the header, so `NR` is the row count and the `- 1` subtracted it a second
+time. It is the house `wc -l` idiom now, as at
+[`xdata-census-totals.md`](xdata-census-totals.md). Holding the block by re-running
+it is also the point — a transcript which stops reproducing is then a red run
+rather than something a reader has to be the one to notice.
