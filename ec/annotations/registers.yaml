@@ -3019,9 +3019,11 @@ registers:
       (xdata-registers.csv main-ec-086) reads refs 10, the extra 3 being PD
       sites. The same five routines touch it as 0x07FD -- bank0 0xCCFC,
       0xD673 and 0xD856, bank1 0x8624 and 0xA69F -- and the first three write
-      0x55 to it. 0x94FA and 0xA69F both read it and both clear it on a match,
-      0x94FA in the arm that also clears 0x07FF. The census carries only
-      0x94FA of the five. No upstream name. Read as a block:
+      0x55 to it. 0x94FA and 0xA69F both read it for 0x55, and 0x94FA clears
+      it on a match, in the arm that also clears 0x07FF; 0xA69F only reads it,
+      and its match arm writes 0x5A to 0x07FD and jumps the reset vector
+      instead. The census carries only 0x94FA of the five. No upstream name.
+      Read as a block:
       docs/findings/xdata-07fd-07ff-witness-triple.md.
 
   - name: XDATA_07FF
