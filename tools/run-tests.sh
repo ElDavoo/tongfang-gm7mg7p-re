@@ -134,10 +134,9 @@ fi
 # What this runner does not run, printed unconditionally including on a
 # failing run, for the same reason the cheap tier prints its note: a check
 # nobody can see is a check that gets dropped.
-printf '\nnote  no gate and no workflow call this. CI runs\n'
-printf '      .github/scripts/agent-gates.sh, which is copied from\n'
-printf '      ElDavoo/agent-pipeline; docs/agent-pipeline.md has the line\n'
-printf '      that wires this in, and why it is not in this repository yet.\n'
+printf '\nnote  CI runs this as the tests job in .github/workflows/ci.yml,\n'
+printf '      beside the gates job; .github/scripts/agent-gates.sh, which the\n'
+printf '      agent stages run every round, does not call it.\n'
 printf 'note  and none of this is hardware evidence. The suites mock device\n'
 printf '      discovery, file opening and ioctls against hand-built fixtures:\n'
 printf '      no EC is opened, no register is read back, and no HID node is\n'

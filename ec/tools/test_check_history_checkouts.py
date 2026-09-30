@@ -167,7 +167,7 @@ EXPECTED_CHECKOUTS = {
     "agent-implement.yml": [("implement", 0, True)],
     "agent-plan.yml": [("plan", 1, False)],
     "agent-review.yml": [("review", 0, True)],
-    "ci.yml": [("gates", 0, True), ("workflows", 1, False)],
+    "ci.yml": [("gates", 0, True), ("tests", 0, True), ("workflows", 1, False)],
     "claude.yml": [("claude", 1, True)],
 }
 

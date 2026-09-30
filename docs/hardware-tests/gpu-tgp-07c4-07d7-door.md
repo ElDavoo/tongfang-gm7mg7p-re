@@ -388,14 +388,14 @@ names and bits come from the `ECMG` field list at
 | `0x0745` | `DBCT` (`dsdt.dsl:52207`) | `confirmed-working` — `CTGP_DB_CTRL` | `xdata-registers.csv`: `main-ec`, `main-ec-002`, no `[writer]`-tagged site in the row |
 | `0x0746` | `MXDB` (`dsdt.dsl:52207`) | `confirmed-working` — `CTGP_DB_CTRL` | `xdata-registers.csv`: `main-ec`, `main-ec-002`, no `[writer]`-tagged site in the row |
 | `0x07C4` | `DBEN` b3, `DBST` b5 (`dsdt.dsl:52238`) | `present-untested` — `GPU_DYNAMIC_BOOST_STATUS` | `xdata-registers.csv`: `main-ec`, `main-ec-002`, writer `bank0:0x94C0=set_07c4_bit4_from_r7`; that is the one site the row's own tag names, not the only one in the image — `../../ec/annotations/ec-07c4-07d5-sites.md` §2-§4.1 is the full EC-image census: four sites in `bank0:0x83FF=sync_0788_and_07d4_from_09e9` (`bank0:0x843D` read, `bank0:0x844A` read, `bank0:0x8483` and `bank0:0x8490` read-modify-write of bit 3) and `bank0:0x94C1`, a read-modify-write of bit 4 inside `0x94C0=set_07c4_bit4_from_r7`, fed from bit 1 of `CTGP_DB_CTRL` by its one caller at `bank0:0x9711` |
-| `0x07C5` | `WHMS` b5 (`dsdt.dsl:52243`) | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `main-ec`, `main-ec-002`, writer `bank0:0xBB80=store_a_then_read_07c5` |
+| `0x07C5` | `WHMS` b5 (`dsdt.dsl:52243`) | `present-untested` — `WHMS` | `xdata-registers.csv`: `main-ec`, `main-ec-002`, writer `bank0:0xBB80=store_a_then_read_07c5` |
 | `0x07C6` | `WMS0` b0-1 (`dsdt.dsl:52246`) | `present-untested` — `AP_OEM_6` | `xdata-registers.csv`: `main-ec`, `main-ec-002`, no `[writer]`-tagged site in the row |
 | `0x07C7` | none declared | `unknown-not-absent` — `XDATA_07C7` | no row in `../../ec/annotations/xdata-registers.csv`; `../../ec/annotations/ec-07d6-07d7-sites.md` §1, §5 is the full census: **0** direct `MOV DPTR` sites in either image, which is "not found by this method" and not `absent` — §4c and #110 |
 | `0x07C8` | none declared | `unknown-not-absent` — `XDATA_07C8` | no row in `../../ec/annotations/xdata-registers.csv`; `../../ec/annotations/ec-07d6-07d7-sites.md` §1, §5 is the full census: **0** direct `MOV DPTR` sites in either image, which is "not found by this method" and not `absent` — §4c and #110 |
 | `0x07C9` | none declared | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `pd`, `pd-001`, no `[writer]`-tagged site in the row |
 | `0x07CA` | none declared | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `pd`, `pd-001`, no `[writer]`-tagged site in the row |
 | `0x07CB` | none declared | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `pd`, `pd-001`, no `[writer]`-tagged site in the row |
-| `0x07CC` | none declared | `present-untested` — `USB_C_POWER_PRIORITY` | `xdata-registers.csv`: `pd`, `pd-001`, writer `pd:0xF63F=store_r7_to_07cc_r5_to_0945` |
+| `0x07CC` | none declared | `unknown-not-absent` — `USB_C_POWER_PRIORITY` | `xdata-registers.csv`: `pd`, `pd-001`, writer `pd:0xF63F=store_r7_to_07cc_r5_to_0945` |
 | `0x07CD` | none declared | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `pd`, `pd-001`, no `[writer]`-tagged site in the row |
 | `0x07CE` | none declared | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `pd`, `pd-001`, no `[writer]`-tagged site in the row |
 | `0x07CF` | none declared | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `pd`, `pd-018`, no `[writer]`-tagged site in the row |
@@ -412,18 +412,18 @@ Four notes on reading the table, each of which is a place a table like this
 gets misread:
 
 - **"No row" is a statement about `registers.yaml`, not about the address.** It
-  is 8 of the 24, and it is the §4c retraction in table form
+  is 7 of the 24, and it is the §4c retraction in table form
   (`../../docs/findings.md` §4c retracted a "does not exist" claim built on a
-  zero-reference scan). 8 cells saying "no row" is the sentence most
-  likely to be read back as 8 claims of absence; they are not. The per-site
+  zero-reference scan). 7 cells saying "no row" is the sentence most
+  likely to be read back as 7 claims of absence; they are not. The per-site
   EC-side census of the six rows that do have one is
   `../../ec/annotations/ec-07c4-07d5-sites.md` and
   `../../ec/annotations/ec-07d6-07d7-sites.md`, which walk the fifteen
   main-EC sites of `0x07C4`/`0x07D3`/`0x07D4`/`0x07D5` and the 213 sites
   that `0x07D6`/`0x07D7` have in a *different* firmware image — a write
   *class* in the instruction stream, not evidence the EC acts on the byte.
-  The four `0x07C7`/`0x07C8`/`0x07D6`/`0x07D7` rows are all
-  `unknown-not-absent`, which is the status value for "the references that
+  The five `0x07C7`/`0x07C8`/`0x07CC`/`0x07D6`/`0x07D7` rows are all
+  `unknown-not-absent` (`0x07CC` since #1104 re-graded it, 2026-09-27), which is the status value for "the references that
   made it look present turned out to belong to the PD image" and is not a
   softer spelling of `absent`.
 - **`0x07C4`'s `DBEN` is bit 3, not bit 0.** §4o writes the gate as "`DBEN`

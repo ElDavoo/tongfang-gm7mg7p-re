@@ -212,13 +212,19 @@ class ADriftedNumber(unittest.TestCase):
     """The negative case, on a copy of a real page."""
 
     def test_a_cited_number_moved_by_one_is_rejected_and_names_the_fix(self):
+        # The line is read from the tool rather than spelled here (2026-10-01).
+        # Spelled as `:4985`/`:4984`, this case went red the moment the tool
+        # grew, and it did not do the job it exists for: it failed on the
+        # committed tree instead of on the nudge.
+        line = anchor_line("committed_output_refusal")
+
         def nudge(rel, text):
             # The `xdata-4-4` page's committed-output refusal, moved up one
             # line -- the exact shape a commit inserting a line above it
             # produces, and the shape that reads correctly in the prose.
             return text.replace(
-                'OUT_REGISTERS` at `ec/tools/xdata_register_map.py:4985`',
-                'OUT_REGISTERS` at `ec/tools/xdata_register_map.py:4984`', 1) \
+                f'OUT_REGISTERS` at `ec/tools/xdata_register_map.py:{line}`',
+                f'OUT_REGISTERS` at `ec/tools/xdata_register_map.py:{line - 1}`', 1) \
                 if rel.endswith("xdata-4-4-identity-rederivation.md") else text
 
         root = scratch_tree(nudge)
@@ -229,21 +235,23 @@ class ADriftedNumber(unittest.TestCase):
         # right. A report that named only the first sends the reader back to
         # `grep` to do the half of the job this tool exists to do.
         self.assertIn(
-            f"cites :4984 for committed_output_refusal, which is "
-            f"{cge.TOOL}:4985", err)
+            f"cites :{line - 1} for committed_output_refusal, which is "
+            f"{cge.TOOL}:{line}", err)
         self.assertNotIn('name the line their code is on', out)
 
     def test_the_rest_of_the_run_is_still_reported(self):
         # A red run that stops reporting is not a better report. Every other
         # citation is still resolved, held and counted.
+        line = anchor_line('flip')  # read, not spelled; see the case above
+
         def nudge(rel, text):
-            return text.replace('at `:3148`', 'at `:3147`', 1) \
+            return text.replace(f'at `:{line}`', f'at `:{line - 1}`', 1) \
                 if rel.endswith("xdata-no-eq-guard-refusal-contract.md") else text
 
         root = scratch_tree(nudge)
         self.addCleanup(shutil.rmtree, root)
         problems, resolved, held, declined, skipped = run_check(root)[:5]
-        self.assertTrue(saying(problems, 'cites :3147 for flip',
+        self.assertTrue(saying(problems, f'cites :{line - 1} for flip',
                                f"{cge.TOOL}:{anchor_line('flip')}"))
         self.assertEqual(resolved, len(cge.ANCHORS))
         self.assertGreater(held, 0)

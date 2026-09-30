@@ -58,10 +58,10 @@ import time
 from ecrw import Ec, EcError
 from ec_watch import CsvSink, Marker, now
 
-# The 8 addresses here have no row in registers.yaml. That is a claim about
+# The 7 addresses here have no row in registers.yaml. That is a claim about
 # the file, not about the address: docs/findings.md §4c retracted a "does not
 # exist" reading of a zero-reference scan, and a table that says "no row"
-# eight times is the sentence most likely to be misread back into one.
+# seven times is the sentence most likely to be misread back into one.
 NO_ROW = "no row in ec/annotations/registers.yaml"
 
 # (addr, DSDT field list name and bit, registers.yaml status, citation)
@@ -76,7 +76,8 @@ WATCH = [
      "dsdt.dsl:52207, registers.yaml CTGP_DB_CTRL"),
     (0x07C4, "DBEN b3, DBST b5", "present-untested",
      "dsdt.dsl:52238, registers.yaml GPU_DYNAMIC_BOOST_STATUS"),
-    (0x07C5, "WHMS b5", NO_ROW, "dsdt.dsl:52243"),
+    (0x07C5, "WHMS b5", "present-untested",
+     "dsdt.dsl:52243, registers.yaml WHMS"),
     (0x07C6, "WMS0 b0-1", "present-untested",
      "dsdt.dsl:52246, registers.yaml AP_OEM_6"),
     (0x07C7, "(no DSDT field)", "unknown-not-absent",
@@ -86,7 +87,7 @@ WATCH = [
     (0x07C9, "(no DSDT field)", NO_ROW, "dsdt.dsl:52194"),
     (0x07CA, "(no DSDT field)", NO_ROW, "dsdt.dsl:52194"),
     (0x07CB, "(no DSDT field)", NO_ROW, "dsdt.dsl:52194"),
-    (0x07CC, "(no DSDT field)", "present-untested",
+    (0x07CC, "(no DSDT field)", "unknown-not-absent",
      "dsdt.dsl:52194, registers.yaml USB_C_POWER_PRIORITY"),
     (0x07CD, "(no DSDT field)", NO_ROW, "dsdt.dsl:52194"),
     (0x07CE, "(no DSDT field)", NO_ROW, "dsdt.dsl:52194"),

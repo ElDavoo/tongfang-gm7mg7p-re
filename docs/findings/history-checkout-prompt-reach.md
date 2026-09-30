@@ -52,7 +52,7 @@ had *any* text on it would count `review` — and that mistake was made and caug
 while this was written, which is why the rule is stated this way and why the
 suite has a case that rejects the looser form (see below).
 
-| site | shape | a reader? |
+| site (line as of `6b5bf965`, the commit this was written against) | shape | a reader? |
 |---|---|---|
 | `agent-conflicts.yml:248` | alone on an indented line | **yes** — this is the change |
 | `agent-fix.yml:220`, `:279` | alone on an indented line | already counted via `run:` at `:316-317` |

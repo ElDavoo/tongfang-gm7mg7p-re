@@ -301,8 +301,18 @@ class ReadsTheFigure(unittest.TestCase):
         # correctly reported as one -- so `44` stopped being a number this tool
         # has no opinion about. The shape under test is unchanged: a hex address
         # is not a figure, and the decimal run beside it is two of them.
-        self.assertEqual(self.verdicts_of("`0x08A8` `84/86`"), {84: ("unheld", "unheld"),
-                                                                 86: ("unheld", "unheld")})
+        #
+        # And then `86` went the same way as `44`: a later merge gave it a
+        # check literal too, and this case went red on main with the shape
+        # still intact. So the verdicts are no longer spelled out. Each figure
+        # is compared with the verdict the same figure gets on its own, which is
+        # the claim (the hex address and the run do not change how the run is
+        # read), and no merge elsewhere in the tree can move it.
+        got = self.verdicts_of("`0x08A8` `84/86`")
+        self.assertEqual(set(got), {84, 86})
+        for figure in (84, 86):
+            self.assertEqual(got[figure], self.verdicts_of(f"`{figure}`")[figure],
+                             figure)
 
     def test_a_decimal_is_not_a_figure(self):
         # `at threshold 0.5` is a threshold, not a count, and `DEFAULT_THRESHOLD`

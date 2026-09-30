@@ -642,6 +642,13 @@ only covers what's specific to *this* copy.
   what ran and asserts no test count, for the reason §14e gives for the
   printed-not-asserted elapsed line, and a floor added here is the one that
   gets deleted after a bad afternoon.
+
+  **Wired in on 2026-10-01, and not by the gate line above.** `ci.yml` has a
+  `tests` job beside `gates` that runs `bash tools/run-tests.sh`, and
+  `agent-gates.sh` is unchanged. The 0.77 s figure above was measured on four
+  suites; the runner now collects every `test_*.py` in the repository and
+  takes minutes, too slow for every agent fix round. Main had gone red on four
+  suites that nothing ran.
 - **`.github/workflows/agent-plan.yml`**'s `CUSTOMISE` section — added the
   hardware/Windows-access constraint from `CLAUDE.md`, so the plan stage
   scopes issues needing the physical laptop or a Windows box down to

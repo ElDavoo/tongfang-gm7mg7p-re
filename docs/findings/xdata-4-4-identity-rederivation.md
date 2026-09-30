@@ -15,8 +15,8 @@ argument is that a name is a human addition and an id is a rank, so a
 regeneration that rewrote the committed census to match the prose would invert
 the thing the section is about. Every run below writes to `/tmp`, and that is
 structural rather than a promise this file makes: `args.out_registers ==
-OUT_REGISTERS` at `ec/tools/xdata_register_map.py:4985` refuses `--no-eq-guard`
-with them, not the `--check` refusal at `:4976`.
+OUT_REGISTERS` at `ec/tools/xdata_register_map.py:5091` refuses `--no-eq-guard`
+with them, not the `--check` refusal at `:5082`.
 
 ## What the committed census holds, with a parser rather than a summary
 
@@ -392,7 +392,7 @@ same drift §4.4's transcript had: `GUARD`
 (`test_xdata_cluster_names.py:54`) is the literal
 `'    if stripped.startswith("=="):\n        return False\n'`, and the guard in
 the tool is now `if eq_guard and stripped.startswith("==")` at
-`xdata_register_map.py:1753` — issue #302 parameterised it so `--no-eq-guard`
+`xdata_register_map.py:1835` — issue #302 parameterised it so `--no-eq-guard`
 could be a flag instead of a source edit. The test's own comment says it is
 built this way "rather than quietly regenerating the same census twice", and it
 is doing exactly that: six cases want a guard-off regeneration and the

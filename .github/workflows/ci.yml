@@ -44,6 +44,31 @@ jobs:
       - name: Gates
         run: .github/scripts/agent-gates.sh
 
+  # LOCAL CHANGE (2026-10-01, not in the agent-pipeline template): the repository's own unittest
+  # suites, as the slow leg the header above describes. Until this, no workflow ran
+  # tools/run-tests.sh (docs/agent-pipeline.md, "tools/run-tests.sh, and the gate line that
+  # would call it"). main went red on four suites nobody saw, because each merge moved a line
+  # number another file's test or prose pinned. Every review then had to tell those failures
+  # apart from the branch's own. A job of its own rather than a line in agent-gates.sh: that
+  # script is the template's, and the agent stages run it on every fix round, where a suite
+  # this size does not belong. A failure here still reaches agent-fix-ci.yml, which watches
+  # this workflow by name.
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up the toolchain
+        uses: ./.github/actions/project-setup
+
+      - name: Unittest suites
+        run: bash tools/run-tests.sh
+
   # The pipeline is eight workflow files whose only test is running them, and a mistake in one
   # is discovered by an issue quietly doing nothing. actionlint type-checks every ${{ }}
   # expression against the event payload and runs shellcheck over each `run:` block; zizmor

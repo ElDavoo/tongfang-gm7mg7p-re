@@ -34,7 +34,7 @@ issue's own reading of that is right on both counts. Checked on this tree:
   appears anywhere else in the file either — the sole `test_*.py` in it is at
   `:257`, inside a comment explaining why a mode is refused, not a call.
 - `tools/run-tests.sh` is named in the pipeline in **exactly one place**:
-  `agent-conflicts.yml:249`, inside the `resolve` job's prompt, two lines below
+  `agent-conflicts.yml:249` (as of `48887fa0`), inside the `resolve` job's prompt, two lines below
   the `.github/scripts/agent-gates.sh` it is told to run. It is reached only
   when a merge leaves conflict markers to fix, and it is reached *as prose to
   an agent*, not as a `run:` step — which is also why

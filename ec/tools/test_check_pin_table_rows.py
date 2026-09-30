@@ -550,8 +550,8 @@ class TheCommittedTree(unittest.TestCase):
         # `unplaced-row` this tool exists to name. Re-derived, not lowered --
         # `test_census_test_line_pins.py` carries the same delta with every
         # counter in it.
-        self.assertIn("128 table row(s) against 128 census record(s)", out)
-        self.assertIn("127 placed", out)
+        # 2026-10-01: rows, records and placed are equal, not a spelled count.
+        self.assertRegex(out, r"(\d+) table row\(s\) against \1 census record\(s\)[^\n]*: \1 placed")
 
     def test_every_class_is_zero_on_the_committed_tree(self):
         # Not left to a prose figure. Zero is the measurement here -- the
@@ -593,7 +593,12 @@ class TheCommittedTree(unittest.TestCase):
         # take `127` to `129`.
         # `129 -> 130` is #491's one record, which places: the gap against the
         # record count stays at the two pairs named above.
-        self.assertEqual(placed, 130)
+        # **2026-10-01: the gap is closed, and the count is no longer spelled.**
+        # Both pairs above were re-anchored in the census table and re-read, so
+        # every record places. The claim is that equality, which no merge that
+        # adds a pin has to edit. A spelled `130` was why the stale rows had to
+        # stay stale, and why `main` was red on the two cases above.
+        self.assertEqual(placed, len(records))
 
     def test_the_committed_read_and_shape_cells_are_the_census_vocabulary(self):
         # The two vocabularies the table's own cells have to be drawn from, and

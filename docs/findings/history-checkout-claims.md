@@ -31,6 +31,7 @@ transcription of a run, not a summary of one:
 |---|---|---|---|
 | `ci.yml` / `gates` | 0 | `fetch-depth: 0` | yes — `agent-gates.sh` at `:45` |
 | `ci.yml` / `workflows` | 1 | *absent* (the action's default) | no — actionlint and zizmor |
+| `ci.yml` / `tests` *(added 2026-10-01, after this page counted nine; transcribed from that day's run)* | 0 | `fetch-depth: 0` | not by this method — `tools/run-tests.sh` is not one of its markers |
 | `agent-implement.yml` / `implement` | 0 | `fetch-depth: 0` | yes |
 | `agent-fix.yml` / `fix` | 0 | `fetch-depth: 0` | yes |
 | `agent-review.yml` / `review` | 0 | `fetch-depth: 0` | no |
