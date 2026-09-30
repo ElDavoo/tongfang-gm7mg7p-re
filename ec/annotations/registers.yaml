@@ -2163,6 +2163,32 @@ registers:
       on the byte, and whether it reads them back is still unestablished.
       Per-site table: ec/annotations/site-resolution.csv. status stays
       present-untested.
+      *** ADDENDUM (issue #111, 2026-09-30) *** Which routine seeds this block
+      is settled, and it is not the fixed-byte arm. The seeding routine is
+      bank0/94D0, whose two writers for 0x0730 are 0x9527 `movc A,@A+DPTR`,
+      which copies table byte 0, and 0x95CD `mov A,#0x2D`, in the fixed arm at
+      0x95C0. The discriminator is GFID (0x07D3, below), which picks one of
+      three seed pairs -- 0x61/0xFE, 0x61/0xC8, 0x61/0x92 -- stored at 0x0A51
+      and 0x0A52 and used as a CODE pointer big-endian. All three seed tables
+      are BYTE-IDENTICAL over the sixteen bytes the copy reads:
+      3C 3C A5 00 23 23 A5 00 23 23 A5 00 4B 4B A5 00 at 0x61FE, 0x61C8 and
+      0x6192. The copy's `+1` at 0x9547 and 0x9570 turns the three `00` bytes
+      into `01`, so the movc path yields 3C 3C A5 01 / 23 23 A5 01 /
+      4B 4B A5 01 -- which is exactly the live reading above, all three
+      four-byte groups. The `0x0782` bit-2 index group is neutral for the same
+      reason: indices 0x04-0x07 and 0x08-0x0B hold the same four bytes.
+      So the discriminator is real and gates the routine, and it does not
+      change the values written. The fixed arm is gated on 0x0770 == 0x04
+      through 0xB8C0, with the polarity running the opposite way to the
+      obvious reading (0xB8C0 returns 1 for that value and 0x95BB `jnz` sends
+      THAT case into the block), so the arm runs when 0x0770 == 0x04; nothing
+      static says what that byte holds, and this addendum does not claim the
+      arm did or did not run. Full derivation, with the r2 transcripts:
+      docs/findings/mode-defaults-variant-selector.md. The live read that
+      would settle the gate is
+      docs/hardware-tests/mode-defaults-variant-read.md, and it has not been
+      run. Nothing here changes the status above: a derived value agreeing with
+      a recorded one is consistency, not a measurement.
 
   - name: MODE_TCC_OFFSET_DEFAULTS
     addr: [0x07D8, 0x07D9, 0x07DA]
@@ -4361,6 +4387,33 @@ registers:
       question and the procedure that would settle it are in
       docs/hardware-tests/gpu-tgp-07c4-07d7-door.md, which is marked NOT
       RUN.
+      *** ADDENDUM (issue #111, 2026-09-30) *** The paragraph above names
+      GFID as 0x94D0's discriminator and stops there. Two things follow that
+      are worth having in this file rather than only in the write-up. First,
+      GFID is a RUN-TIME value and not a build-time constant: 0xD9FE
+      seed_07d3_gfid_and_08xx_defaults writes this whole byte as 0x30, 0x40,
+      0x50 or 0x70 -- GFID 3, 4, 5 or 7 -- choosing by bit 2 of 0x1666 and bit
+      4 of 0x166A, so what the firmware branches on is computed by the EC from
+      the 0x16xx board-identification block. That THIS machine's GFID is 3 is a
+      live value nobody has read; the procedure is
+      docs/hardware-tests/mode-defaults-variant-read.md, marked NOT RUN.
+      Second, the choice does not change the values that get written: all three
+      seed tables hold the same sixteen bytes over the indices 0x94D0 reads,
+      so 0x0730 comes out 0x3C whichever arm ran. The discriminator gates the
+      routine; it does not vary the result. That is a fact about the three
+      tables, not about the field, and it is why this entry can say the
+      discriminator is named without saying which variant is live -- the
+      question does not arise for these twelve bytes.
+      A decoding caution, recorded because it is the shape of error this
+      repository has had to retract twice: the `jnb` at 0x957C is `30 e2 1a`,
+      and 0xE2 is the bit address of ACC.2, not the P2 latch (P2.2 is 0xA2).
+      The accumulator still holds the 0x0782 byte read at 0x9578, so the
+      branch is bit 2 of 0x0782 -- which is what the 0x94D0 row of
+      ghidra-functions.csv has always said, and no correction to it was made.
+      r2, disasm8051.py and Ghidra's own decompile of the routine
+      (`BIOS_OEM_2 >> 2 & 1`) agree. The same reading settles 0xDA26/0xDA30,
+      which the XDATA_1666 and XDATA_166A notes above already record as bit 2
+      of 0x1666 and bit 4 of 0x166A.
       Bits 0-3 therefore have two EC-side writers that touch only
       that nibble and two that overwrite the whole byte with a value whose
       low nibble is zero, so the two groups do not contradict each other.
