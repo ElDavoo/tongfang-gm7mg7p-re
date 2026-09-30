@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-176 write-ups.
+177 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -61,6 +61,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) — Which of the census checklist's figures a check actually holds, measured (issue #849)
 - [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md) — What `tools/check_doc_patch_refs.py` reads, in both directions (issue #955)
 - [`doc-patch-reference-gate.md`](doc-patch-reference-gate.md) — The names prose gives a prepared gate patch, and what now holds them (issue #777)
+- [`door-grader-same-timestamp-marks.md`](door-grader-same-timestamp-marks.md) — Two marks on one timestamp open a phantom window in the door grader, and the grader refuses it rather than the writer catching it (issue #1376)
 - [`dptr-guard-census-vs-1027.md`](dptr-guard-census-vs-1027.md) — Issue #1027's 27 is a pre-#517 measurement of the same six tables, and a rendered `window` cell has three ways to be miscounted rather than two
 - [`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) — `walk()`'s reload guard covers every way an 8051 rebuilds DPTR, and 21 sites in the image render their `access` cell with the wrong direction, 2 of them in a committed table
 - [`dump-pair-block-attribution.md`](dump-pair-block-attribution.md) — A whole-block bracket is not a second reading of the same bytes (issue #475)

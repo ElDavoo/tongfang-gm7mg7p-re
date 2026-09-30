@@ -18,6 +18,7 @@ four stale cells in #266: two copies of a table, and one test that fails when
 they disagree.
 """
 import contextlib
+from datetime import timedelta
 import importlib.util
 import io
 import os
@@ -52,6 +53,53 @@ FIXTURES = (ACPI_FIRST, HOST_FIRST, ONE_BLOCK, QUIET, MOVED_AND_BACK,
 # than typed out, so a bounds edit on either side moves the expected line count
 # with it instead of leaving a stale 24 behind.
 WATCHED = sum(hi - lo + 1 for _, lo, hi in door.WINDOWS)
+
+# `ec_watch.py`'s `now()` and `ec_timer_capture.py`'s are both this, and a
+# capture whose rows are spelled at microseconds is not the schema §3 takes.
+MS = "milliseconds"
+
+# The pair the collision tests are over: two labels on the same instant, in
+# §3's own vocabulary. `write_capture` puts the change rows after them. Built
+# into a temporary directory rather than added to testdata/ because every
+# capture the collision tests use is one the grader is asked to *refuse*, and a
+# file in `FIXTURES` is by definition one some run grades -- which is what
+# `test_every_door_fixture_is_one_this_suite_runs` holds the directory equal
+# to.
+COLLIDING_MARKS = (
+    ('2026-01-01T12:00:10.000+01:00', 'fn mode balanced->performance'),
+    ('2026-01-01T12:00:10.000+01:00', 'gpu tgp 115W->130W'),
+)
+# 2026-01-01T12:00:10.000+01:00 is the placeholder instant testdata/README.md
+# reserves for constructed inputs, so a real capture pasted over one of these
+# would change the date before anything else.
+
+
+def write_capture(directory, name, marks):
+    """A §3-schema capture: `marks` as (ts, label) pairs, then two change rows.
+
+    The rows land 0.4 s and 1.9 s after the *first* mark rather than at fixed
+    timestamps, so the capture stays a capture whichever instant the caller
+    wrote its marks on -- which is the whole question the spelling variants
+    turn on. A capture that keeps both windows therefore reports a 1500 ms
+    ordering, and that is the figure the single-mark control has to come out
+    with: the phantom is a property of the duplicate mark, not of the rows
+    around it.
+
+    `parse_ts` is the grader's own, so the timestamps here go through the same
+    reader the capture will, and the rows are written at
+    `timespec="milliseconds"` because that is the spelling `ec_watch.py`'s
+    `now()` puts in a capture and this one is meant to be in that schema.
+    """
+    first = door.fan.parse_ts(marks[0][0])
+    rows = ['ts,addr,old,new']
+    rows += [f'{ts},MARK,,{label}' for ts, label in marks]
+    rows += [f'{(first + timedelta(milliseconds=ms)).isoformat(timespec=MS)},'
+             f'{row}'
+             for ms, row in ((400, '0x07C4,0x08,0x28'),
+                             (1900, '0x0743,0x00,0x0A'))]
+    path = Path(directory) / name
+    path.write_text('\n'.join(rows) + '\n')
+    return str(path)
 
 
 def run(*argv):
@@ -416,6 +464,128 @@ class RefusalTests(unittest.TestCase):
         rc, out, _ = run(ONE_BLOCK)
         self.assertEqual(rc, 0)
         self.assertIn('=== 2 window(s), one per mark, none merged ===', out)
+
+    def test_two_marks_at_one_timestamp_are_refused(self):
+        # A shared timestamp is what `build_windows` cannot grade, and it is
+        # reachable from one file: the repeat refusal above is positional and
+        # says nothing about a command line that is perfectly well formed.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, err = run(write_capture(tmp, 'collide.csv',
+                                             COLLIDING_MARKS))
+        self.assertEqual(rc, 1)
+        # Both labels and the instant they share, so the operator can see which
+        # pair of marks to look at rather than being told only that there is
+        # one.
+        self.assertIn("'fn mode balanced->performance' and 'gpu tgp 115W->130W'"
+                      " are both 2026-01-01T12:00:10+01:00", err)
+        # The consequences are this grader's own, so a reader is not sent
+        # looking for damage somewhere else, and the one figure a collision
+        # leaves alone is named as firmly as those that move.
+        for named in ('????', '0.0s apart', "§5's millisecond figure"):
+            self.assertIn(named, err)
+        self.assertIn(f'all {WATCHED} watched addresses', err)
+        # And it does not claim the movement was absent where there was a
+        # window to have found it. A window that spans no sweep has no level to
+        # print; that is a different sentence, and it is the one used.
+        for word in ('absent', 'unused', 'unreferenced'):
+            self.assertNotIn(word, err)
+        # Refused before any window is built, so there is no report to be
+        # half-right. The four window sections are checked as four: one being
+        # absent does not stand in for the others.
+        for absent in ('window(s), one per mark', 'window delta',
+                       "=== §5's ten columns ===",
+                       '=== what this does and does not settle ==='):
+            self.assertNotIn(absent, out)
+        # The per-file line is *not* on that list, and its being on stdout is
+        # the placement rather than a leak: this refusal needs the marks, so it
+        # runs after `read_capture` where the repeat refusal above cannot. The
+        # #491 test asserts `mark(s),` absent; this one asserts it present, and
+        # neither is right for the other.
+        self.assertIn('mark(s),', out)
+
+    def test_the_single_mark_control_of_a_collided_capture_is_graded(self):
+        # The same capture with the second mark deleted, which is the control
+        # the issue asks for: the phantom belongs to the duplicate mark, not
+        # to the change rows or the labels around it.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(write_capture(tmp, 'control.csv',
+                                           COLLIDING_MARKS[:1]))
+        self.assertEqual(rc, 0)
+        self.assertIn('=== 1 window(s), one per mark, none merged ===', out)
+        # The one window carries the movement the collided pair would have put
+        # in the second of the two, with the offsets it really has.
+        self.assertIn('0x07C4  0x08 -> 0x28   (+0.4s)   DBEN b3, DBST b5', out)
+        self.assertIn('0x0743  0x00 -> 0x0A   (+1.9s)   GNEN b0, ECDC b1', out)
+        # Every address gets its line, as in any window: a refusal upstream is
+        # not a reason to drop the address table the control is here to check.
+        self.assertEqual(out.count('window delta'), WATCHED)
+        # And the figure the refusal's message says a collision does not move
+        # is in this one-window report, so the claim is checkable against
+        # something rather than asserted.
+        self.assertEqual(ordering_lines(out), [
+            '    which block moved first: 0x07C4-0x07D7 (0x07C4, +0.4s after '
+            'the mark)',
+            '      led 0x0743-0x0746 (0x0743, +1.9s after the mark) by 1500 ms',
+        ])
+
+    def test_two_marks_a_millisecond_apart_are_two_windows(self):
+        # The near-miss guard, and the reason the check compares for equality
+        # rather than for proximity. A widened check would take over
+        # `CLOSE_MARKS_SECONDS`' job and undo "marks are not merged, on
+        # purpose"; this holds the width at nothing at all.
+        near = (COLLIDING_MARKS[0],
+                ('2026-01-01T12:00:10.001+01:00', 'gpu tgp 115W->130W'))
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, err = run(write_capture(tmp, 'near.csv', near))
+        self.assertEqual(rc, 0)
+        self.assertEqual(err, '')
+        self.assertIn('=== 2 window(s), one per mark, none merged ===', out)
+        # The one-millisecond window is still a window: 1 ms is a small
+        # fraction of the 0.25 s `--interval` that decides what a sweep is, so
+        # it takes no change row and says so, and a merge would have hidden
+        # exactly that.
+        self.assertIn('no ordering to report: neither block moved in this '
+                      'window', out)
+        # The movement is in the second window, and the ms figure the refusal
+        # says a collision does not move is the same one the control reported.
+        self.assertEqual(ordering_lines(out), [
+            '    which block moved first: 0x07C4-0x07D7 (0x07C4, +0.4s after '
+            'the mark)',
+            '      led 0x0743-0x0746 (0x0743, +1.9s after the mark) by 1500 ms',
+        ])
+
+    def test_a_collision_written_two_ways_is_one_instant(self):
+        # The check is on the parsed datetime, not on the string, which is what
+        # "assembled by hand from two files" means in practice: the same
+        # instant written without its milliseconds, and again at another UTC
+        # offset. A string compare would call each of these two marks and
+        # report a run whose windows cannot be told apart.
+        spellings = (
+            ('no milliseconds', '2026-01-01T12:00:10+01:00'),
+            ('another UTC offset', '2026-01-01T11:00:10.000+00:00'),
+        )
+        for why, second_ts in spellings:
+            with self.subTest(why):
+                marks = (COLLIDING_MARKS[0], (second_ts, 'gpu tgp 115W->130W'))
+                with tempfile.TemporaryDirectory() as tmp:
+                    rc, out, err = run(write_capture(tmp, 'spelled.csv',
+                                                     marks))
+                self.assertEqual(rc, 1, why)
+                self.assertIn("'fn mode balanced->performance' and "
+                              "'gpu tgp 115W->130W' are both", err)
+                self.assertNotIn('window(s), one per mark', out)
+        # And the near-miss half of the same spelling question: a real
+        # millisecond at either spelling is still a millisecond, so the
+        # equality is on the instant and not on a canonical string.
+        for second_ts in ('2026-01-01T12:00:10.001+01:00',
+                          '2026-01-01T11:00:10.001+00:00'):
+            with self.subTest(second_ts):
+                marks = (COLLIDING_MARKS[0], (second_ts, 'gpu tgp 115W->130W'))
+                with tempfile.TemporaryDirectory() as tmp:
+                    rc, out, _ = run(write_capture(tmp, 'offset.csv', marks))
+                self.assertEqual(rc, 0, second_ts)
+                self.assertIn('=== 2 window(s), one per mark, none merged ===',
+                              out)
 
 
 if __name__ == '__main__':
