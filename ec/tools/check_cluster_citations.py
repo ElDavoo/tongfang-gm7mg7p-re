@@ -58,6 +58,20 @@ the figures would be about.
   * *Denials.* A unit that says an address is **not** in a cluster is skipped
     rather than checked, so "X is not in main-ec-003" is never verified and a
     denial that has itself gone stale is not caught.
+  * *A census-regeneration transcript.* A unit inside a fenced block that runs
+    `ec/tools/xdata_register_map.py` under a flag which **changes** the census
+    (`--no-eq-guard`, `--export-ownership`) is passed over, and the reason is
+    counted and printed rather than left silent. A `main-ec-NNN` in such a
+    block is a rank in a census the reader cannot open, and a `k<12 hex>` in
+    one is not a key of the committed census at all — `kc0f2a0be0103` has zero
+    rows in `xdata-clusters.csv`. That is "not found by this method" rather
+    than a disagreement, and it is the same verdict `cited_clusters()` already
+    gives a key or a name this generation does not carry. `--map` and
+    `--check` are deliberately **not** in it: both are keyed to the committed
+    identifiers, so a membership claim beside one of those is a claim about
+    the committed census and is still checked. It is the fence that scopes it,
+    not the prose around it — a sentence naming the same command in running
+    text is an ordinary citation.
   * *Proximity.* A unit that mentions a cluster word without claiming
     membership ("the `0x06E6`/`0x0860` gate block" in a `main-ec-002` table row,
     where `0x06E6` is a byte the shared function reads and not a member) is
@@ -134,6 +148,7 @@ Usage:
     python3 ec/tools/check_cluster_citations.py --clusters /tmp/after-clusters.csv
 """
 import argparse
+import collections
 import csv
 import os
 import re
@@ -179,6 +194,35 @@ DISCLAIM = re.compile(
     r"|\bsingleton\b",
     re.IGNORECASE,
 )
+
+# A fenced block, opened or closed. Every fence line in the committed corpus
+# is exactly three backticks -- 2067 of them, measured -- so the width is not
+# read off a variable here, but a block closes on a fence of *its own* width
+# rather than on the next one of any, which is the rule that keeps an outer
+# ```` block from being closed by an inner ``` one. The corpus has no nested
+# fence to exercise that, so it is a claim about today's prose and not a
+# guarantee; the unterminated case below is the one the corpus does reach.
+FENCE = re.compile(r"^\s*(?P<fence>`{3,})")
+
+# The one tool whose flags *change* the census rather than report it, so a
+# fenced block running one of them is showing a generation this run is not
+# holding prose to. `--map` and `--check` are excluded on purpose: both are
+# keyed to the committed identifiers, so a membership claim beside one of
+# those commands is a claim about the committed census and is checked like any
+# other. The fence is what scopes this, so the command has to be *inside* the
+# block -- the same command named in running prose is an ordinary citation.
+REGENERATES = re.compile(
+    r"xdata_register_map\.py[^\n]*--(?:no-eq-guard|export-ownership)\b")
+
+# The closed list of reasons a unit is passed over rather than checked, in
+# `skip_reason()`'s own order, and the one place they are written down. A skip
+# that cannot be named is a blind spot nobody is looking at, so the run counts
+# them per reason and prints the counts rather than staying quiet; the suite
+# holds this list to the reasons the committed run actually exercised, in both
+# directions, so a reason added to `skip_reason()` without being added here is
+# named by name rather than arriving as a figure that moved.
+SKIPS = ("census-regeneration transcript", "disclaims membership",
+         "no membership claim")
 
 # The preposition that turns two tokens into one claim. Both orders occur in
 # the corpus -- "`0x06C6` in `main-ec-121`", and "`main-ec-011` is the
@@ -308,17 +352,73 @@ def census(clusters_csv=None, registers_csv=None):
     return members, known, counts, by_key, by_name
 
 
+def fence_spans(lines):
+    """[(open, close)] line numbers of every properly-paired fenced block.
+
+    A block still open at the end of the file is not one, and its lines are
+    left to the ordinary walk. That is not a hypothetical: the seven fence
+    lines of `pd-only-status-vocabulary.md` do not pair the way the prose
+    between them reads -- one closes a block whose opener is not there, and so
+    every later fence in the file is off by one -- and the last of them opens a
+    block that runs to the end. Reading the tail of that page as block body
+    would join thirty lines of prose into one unit nothing can adjudicate,
+    which is the opposite of what a conservative walk is for. An unterminated
+    block is not found by this method, and the unit boundary it would have
+    made is a boundary this walk does not claim to know.
+    """
+    spans, start, width = [], None, None
+    for lineno, line in enumerate(lines, 1):
+        m = FENCE.match(line)
+        if not m:
+            continue
+        if start is None:
+            start, width = lineno, m.group("fence")
+        elif m.group("fence") == width:
+            spans.append((start, lineno))
+            start, width = None, None
+    return spans
+
+
+def transcript_lines(text):
+    """{line} of every line inside a fenced block that regenerates the census.
+
+    A set of line numbers rather than a predicate over the unit, because the
+    sentence that gets skipped is not the sentence carrying the command: the
+    command is on the block's first line and the membership it produced is
+    lines later, and joining them is what makes the skip mean anything. The
+    walk in `units()` is what puts them in one block; this is the one place
+    that says which blocks those are.
+
+    Empty for a file with no fence at all, which is most of the corpus, so
+    `check()` computes it behind the same cheap pre-filter that skips the
+    files naming no cluster.
+    """
+    lines = text.split("\n")
+    return {lineno
+            for open_at, close_at in fence_spans(lines)
+            for lineno in range(open_at, close_at + 1)
+            if REGENERATES.search("\n".join(lines[open_at:close_at]))}
+
+
 def units(text):
     """(line number, unit) for each attribution-sized piece of prose.
 
     A table row is its own unit: the columns of a census table mean different
     things, and letting a row run into the next would make the unit's addresses
-    mean nothing in particular. Everything else is joined per paragraph and cut
-    into sentences, because this corpus wraps sentences across lines and a
-    line-based scan misses an attribution that straddles a wrap -- which is
-    exactly how the `manual-fan-ctrl-0751.md` one hides.
+    mean nothing in particular. A fenced block is a paragraph boundary for the
+    same reason and by the same route, but it is still cut into sentences
+    inside itself -- `reset-vector-dptr-targets.md:451` puts a membership claim
+    in a fence and a second, unrelated claim in the sentence after it *inside
+    that fence*, and the split between them is the whole of the #605 fix.
+    Making the block one uncut unit would put both claims back in one sentence
+    and report `0x0800`, which is the shape that fix took out. Everything else
+    is joined per paragraph and cut into sentences, because this corpus wraps
+    sentences across lines and a line-based scan misses an attribution that
+    straddles a wrap -- which is exactly how the `manual-fan-ctrl-0751.md` one
+    hides.
     """
     lines = text.split("\n")
+    closes = {open_at: close_at for open_at, close_at in fence_spans(lines)}
 
     def sentences(buf):
         joined = " ".join(t for _, t in buf)
@@ -338,22 +438,38 @@ def units(text):
                 yield line_at(start), chunk
             start = end
 
+    def flush(buf):
+        if buf:
+            yield from sentences(buf)
+
     buf = []
-    for lineno, line in enumerate(lines, 1):
-        stripped = line.strip()
-        if stripped.startswith("|") and stripped.endswith("|"):
-            if buf:
-                yield from sentences(buf)
-                buf = []
+    lineno = 1
+    while lineno <= len(lines):
+        stripped = lines[lineno - 1].strip()
+        if lineno in closes:
+            # The delimiters themselves are not unit text: a fence line names
+            # no cluster and no address, and the block's own lines are what
+            # the rules read. Inside the block the sentence split still runs,
+            # which is the point the docstring makes.
+            yield from flush(buf)
+            body = [(n, lines[n - 1].strip())
+                    for n in range(lineno + 1, closes[lineno])
+                    if lines[n - 1].strip()]
+            yield from sentences(body)
+            lineno = closes[lineno] + 1
+        elif stripped.startswith("|") and stripped.endswith("|"):
+            yield from flush(buf)
+            buf = []
             yield lineno, stripped
+            lineno += 1
         elif not stripped:
-            if buf:
-                yield from sentences(buf)
-                buf = []
+            yield from flush(buf)
+            buf = []
+            lineno += 1
         else:
             buf.append((lineno, stripped))
-    if buf:
-        yield from sentences(buf)
+            lineno += 1
+    yield from flush(buf)
 
 
 def line_of_address(unit, address):
@@ -492,12 +608,44 @@ def cited_clusters(unit, by_key, by_name, names):
     return sorted(found)
 
 
+def skip_reason(lineno, unit, transcripts):
+    """Why this unit is passed over rather than checked, or None to check it.
+
+    `SKIPS`, in the order they are returned, most specific first. A unit inside
+    a census-regeneration transcript is not a citation about the committed
+    census at all -- its `main-ec-NNN` is a rank in a generation the reader
+    cannot open -- so whether it also disclaims membership or merely mentions a
+    cluster is not the question, and it is asked first. The other two are
+    properties of the unit's own words and are decided from the text alone,
+    which is why they take no `transcripts`.
+
+    Ordered the other way round, the transcript reason would be a fact about
+    the corpus rather than about the rule: a block that disclaims membership
+    would be counted as a denial, and a reader counting skip reasons would be
+    counting the prose instead of the blind spot.
+    """
+    if lineno in transcripts:
+        return "census-regeneration transcript"
+    if DISCLAIM.search(unit):
+        return "disclaims membership"
+    if not MEMBERSHIP.search(unit):
+        return "no membership claim"
+    return None
+
+
 def check(path, members, counts, known, by_key=None, by_name=None, verbose=False):
-    """(problems, lines read) for one file."""
+    """(problems, lines read, skip reasons) for one file.
+
+    The skip reasons come back rather than being counted here, so `main()` can
+    print one figure for the whole corpus instead of one per file. They are the
+    reasons and not the units, because a count of units is the hand-kept total
+    `docs/findings.md` §4a warns about: the run prints what it found and the
+    suite asserts that the reason is exercised, never how many times.
+    """
     by_key = by_key or {}
     by_name = by_name or {}
     names = name_re(by_name)
-    problems = []
+    problems, skipped = [], []
     with open(path, encoding="utf-8") as f:
         text = f.read()
     # The cheap pre-filter, for the same reason the old one existed: most of the
@@ -505,7 +653,8 @@ def check(path, members, counts, known, by_key=None, by_name=None, verbose=False
     # difference between a check a human runs and one they do not.
     if ("main-ec-" not in text and not CLUSTER_KEY.search(text)
             and not (names and names.search(text))):
-        return problems, len(text.split("\n"))
+        return problems, len(text.split("\n")), skipped
+    transcripts = transcript_lines(text)
     for lineno, unit in units(text):
         ids = cited_clusters(unit, by_key, by_name, names)
         if not ids:
@@ -515,18 +664,21 @@ def check(path, members, counts, known, by_key=None, by_name=None, verbose=False
                             if "0x" + a.upper() in known})
         if not addresses:
             continue
-        if DISCLAIM.search(unit):
+        # The exemption is the membership rule's, so it is applied where the
+        # membership rule is: the count rule above has already read this unit,
+        # and a hand-typed census row inside a fence is still held to the
+        # committed CSV. The two rules stay apart the way the docstring's
+        # second one is.
+        reason = skip_reason(lineno, unit, transcripts)
+        if reason:
+            skipped.append(reason)
             if verbose:
-                print(f"  skip (disclaims membership) {path}:{lineno}", file=sys.stderr)
+                print(f"  skip ({reason}) {path}:{lineno}", file=sys.stderr)
             continue
-        if not MEMBERSHIP.search(unit):
-            if verbose:
-                print(f"  skip (no membership claim) {path}:{lineno}", file=sys.stderr)
-            continue
-        # Ordered after the two skips above: a denial is not a claim, and a
-        # pairing rule reached first would read "a size-1 cluster of its own"
-        # as an attribution. The fallback is per address, not per unit, so a
-        # unit that pairs one byte still has its other addresses checked.
+        # Ordered after the skips above: a denial is not a claim, and a pairing
+        # rule reached first would read "a size-1 cluster of its own" as an
+        # attribution. The fallback is per address, not per unit, so a unit
+        # that pairs one byte still has its other addresses checked.
         pairs = pairings(unit, addresses) if len(ids) > 1 else {}
         for address in addresses:
             expected = [pairs[address]] if address in pairs else ids
@@ -534,7 +686,7 @@ def check(path, members, counts, known, by_key=None, by_name=None, verbose=False
                 at = line_of_address(unit, address)
                 problems.append((path, at or lineno, ids, address, "membership",
                                  pairs.get(address)))
-    return problems, len(text.split("\n"))
+    return problems, len(text.split("\n")), skipped
 
 
 def main() -> int:
@@ -562,11 +714,22 @@ def main() -> int:
 
     problems = []
     read = 0
+    skipped = []
     for path in paths:
-        found, lines = check(path, members, counts, known, by_key, by_name,
-                             args.verbose)
+        found, lines, reasons = check(path, members, counts, known, by_key,
+                                      by_name, args.verbose)
         problems += found
         read += lines
+        skipped += reasons
+
+    # Printed before the problems rather than with the closing line, because
+    # the reason a run is red is sometimes one of these skips having stopped
+    # firing: a reader who sees two citations disagree needs to be able to see
+    # that a third unit was passed over and why, in the same run.
+    by_skip = collections.Counter(skipped)
+    print("skipped: " + ", ".join(
+        f"{reason} {count}" for reason, count
+        in sorted(by_skip.items(), key=lambda kv: (-kv[1], kv[0]))))
 
     for path, lineno, ids, what, kind, paired in problems:
         where = f"{os.path.relpath(path, REPO)}:{lineno}"
@@ -587,7 +750,9 @@ def main() -> int:
     print(f"{len(paths)} files / {read} lines: every checked cluster citation "
           f"(`main-ec-NNN`, `cluster_key` or `cluster_name`) resolves to the "
           f"membership it names, and every hand-typed census count agrees "
-          f"with {os.path.relpath(args.clusters, REPO)}")
+          f"with {os.path.relpath(args.clusters, REPO)}; {len(skipped)} unit(s) "
+          f"passed over under the {len(SKIPS)} reasons above, each of them: "
+          f"not checked, not absent")
     return 0
 
 

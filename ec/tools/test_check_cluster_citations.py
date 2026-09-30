@@ -18,6 +18,15 @@ The fixtures are small enough to write inline, which keeps each case readable
 as the sentence it is about rather than as a diff against a stored file. The
 census they check against is not the real one; the last case is, and it is
 what says the tree's prose currently agrees with the CSVs beside it.
+
+A fenced block is a third shape of unit, and it is scoped rather than skipped
+outright: `Transcripts` holds both halves of that, the census-regeneration
+transcript that is passed over and the ordinary fenced membership claim that
+is still reported, because the exemption is worth exactly the difference
+between them. The cases are perturbed in the write-up's own terms -- a real
+membership error put inside a `--no-eq-guard` fence and each case watched for
+the red -- because a case that cannot fail has not been shown to check
+anything.
 """
 import contextlib
 import importlib.util
@@ -89,7 +98,7 @@ def _problems(text, members=None, counts=None, by_key=None, by_name=None,
         f.write(text)
         path = f.name
     try:
-        problems, _ = ccc.check(
+        problems, _, _ = ccc.check(
             path, members or MEMBERS, counts or COUNTS,
             KNOWN if known is None else known,
             BY_KEY if by_key is None else by_key,
@@ -98,6 +107,27 @@ def _problems(text, members=None, counts=None, by_key=None, by_name=None,
     finally:
         os.unlink(path)
     return problems
+
+
+def _skipped(text, verbose=False):
+    """(skip reasons, what `--verbose` printed) for one piece of prose.
+
+    The reasons *and* the prose that named them, because the second half of the
+    contract is that a skip says why: a caller reading only the exit code cannot
+    tell a passed-over unit from a checked one, and the reason is the whole of
+    what it has to go on.
+    """
+    with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+        f.write(text)
+        path = f.name
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err):
+            _, _, reasons = ccc.check(path, MEMBERS, COUNTS, KNOWN, BY_KEY,
+                                      BY_NAME, verbose)
+    finally:
+        os.unlink(path)
+    return reasons, err.getvalue()
 
 
 def cited(text, members=None, counts=None, by_key=None, by_name=None,
@@ -153,7 +183,7 @@ class ReportsRealDrift(unittest.TestCase):
             f.write(text)
             path = f.name
         try:
-            problems, _ = ccc.check(path, MEMBERS, COUNTS, KNOWN,
+            problems, _, _ = ccc.check(path, MEMBERS, COUNTS, KNOWN,
                                     BY_KEY, BY_NAME, False)
         finally:
             os.unlink(path)
@@ -429,6 +459,147 @@ class SkipsDeliberately(unittest.TestCase):
         self.assertEqual(counted(text), (0, None))
 
 
+# The committed transcript, at the scale of the fixture census: a `console`
+# fence whose first line runs the census-regenerating flag and whose body then
+# reports the membership that run produced. `0x06C6` is in neither fixture
+# cluster, which is the whole of the disagreement -- the same reason the split
+# fixtures above cannot be satisfied by "close enough".
+TRANSCRIPT = (
+    '```console\n'
+    '$ python3 ec/tools/xdata_register_map.py --no-eq-guard \\\n'
+    '      --out-clusters /tmp/off-clusters.csv\n'
+    '  names: seeded 8, exact 0, carried by overlap 1\n'
+    'mode-oem-init: k0a0b0c0d0e0f -> k1a1b1c1d1e1f, 3 -> 4 addrs, '
+    "joined ['0x06C6'], left ['0x08A8']\n"
+    '```\n')
+
+
+class Transcripts(unittest.TestCase):
+    """A census-regeneration transcript, which is not a citation (#996).
+
+    `xdata-cluster-names-guard-off-recipe.md:269` reports what a
+    `--no-eq-guard` run did to `mode-oem-init`'s membership, inside the fence
+    the run itself is printed in. A `main-ec-NNN` there is a rank in a census the
+    reader cannot open and a `k<12 hex>` is not a key of the committed one at
+    all, so the membership rule cannot adjudicate the line against anything --
+    it was being held to the "before" for reporting the "after". These are the
+    two halves of the exemption: what it covers, and the fence that stops it
+    being a blanket fence-drop.
+    """
+
+    def test_a_guard_off_transcript_is_skipped(self):
+        # Silent, and skipped for a named reason rather than by accident: the
+        # unit names a cluster and an address and says "addrs", so every other
+        # gate in `check()` is open and only the transcript one closes.
+        self.assertEqual(cited(TRANSCRIPT), (0, None))
+        reasons, _ = _skipped(TRANSCRIPT)
+        self.assertIn('census-regeneration transcript', reasons)
+
+    def test_the_skip_names_its_reason(self):
+        # The contract the issue asked for: a second guard-off transcript must
+        # not go red in silence, and a skip nobody can name is the blind spot
+        # this exemption creates. `--verbose` is where the reason is legible;
+        # `SKIPS` is the closed list it is drawn from.
+        reasons, printed = _skipped(TRANSCRIPT, verbose=True)
+        self.assertEqual(reasons, ['census-regeneration transcript'])
+        self.assertIn('skip (census-regeneration transcript)', printed)
+        self.assertIn(reasons[0], ccc.SKIPS)
+
+    def test_a_transcript_naming_a_wrong_cluster_is_still_silent(self):
+        # The sharpest direction, and the one a later reader is most likely to
+        # "fix" into a check. The line is wrong about its own generation: it
+        # reports the guard-off key `k1a1b1c1d1e1f` as where `0x06C6` went,
+        # while the committed census puts that address nowhere near either. This
+        # rule adjudicates against the committed census and cannot adjudicate
+        # against one it has not got, so it has nothing to say here -- which is
+        # "not found by this method", not "verified". `REGENERATES` is what
+        # decides that, and it reads the command rather than the ids.
+        wrong = TRANSCRIPT.replace("joined ['0x06C6']", "joined ['0x08A8']")
+        self.assertNotEqual(wrong, TRANSCRIPT)
+        self.assertEqual(cited(wrong), (0, None))
+
+    def test_a_fenced_membership_claim_is_still_checked(self):
+        # The `reset-vector-dptr-targets.md:451` shape, and the case that keeps
+        # this exemption from becoming "ignore every fence". That page puts a
+        # membership claim in a fence on purpose -- "in a fenced block rather
+        # than a blockquote so that the split does not depend on where the line
+        # breaks fall", which is the #605 fix -- and this fence runs no
+        # census-changing command, so it is an ordinary claim and is reported.
+        text = ('```\nthe clustering put `0x0860` in `main-ec-003`.\n```\n')
+        self.assertEqual(cited(text), (1, '0x0860'))
+
+    def test_a_fence_is_still_split_into_sentences(self):
+        # What the case above is protected by, and what making a fence one
+        # uncut unit would undo. The real page's two sentences: the first names
+        # `main-ec-081` and only its members, the second names no cluster and
+        # carries `0x0800`, which the census puts in `main-ec-100`. Read as one
+        # unit they are one claim and `0x0800` is reported; read as two, the
+        # second is not a citation at all. Both halves are asserted, because a
+        # change that split the fence would pass the case above on its own.
+        text = ('```\n'
+                'those three are the whole of the `main-ec-081` cluster.\n'
+                'The `setb c` at `0xD982` makes the second bound `0x0800`.\n'
+                '```\n')
+        self.assertEqual(cited(text, CLEAR_MEMBERS, known=CLEAR_KNOWN),
+                         (0, None))
+        self.assertEqual(len([u for u in ccc.units(text)]), 2)
+
+    def test_a_map_transcript_is_still_checked(self):
+        # `--map` is deliberately outside the exemption, and the reason is what
+        # it takes rather than what it prints: it is `--map OLD_CSV`, a report of
+        # where each row of an older census went *in this one*, so its
+        # `new_cluster` column is this generation's committed id and a
+        # membership claim beside one is a claim about the committed census.
+        # Scoping it would lose a real check to save a bookkeeping one.
+        # `--check` is the same and is left out for the same reason -- it
+        # diffs in memory against the committed CSVs -- and neither can appear
+        # with `--no-eq-guard` at all, which the tool refuses precisely because
+        # both are gates.
+        for flag in ('--map', '--check'):
+            with self.subTest(flag=flag):
+                text = (f'```console\n$ python3 ec/tools/xdata_register_map.py '
+                        f'{flag}\nthe clustering put `0x0860` in '
+                        f'`main-ec-003`.\n```\n')
+                self.assertEqual(cited(text), (1, '0x0860'))
+
+    def test_the_command_named_in_prose_is_not_a_transcript(self):
+        # The fence is what scopes this, and a sentence that only mentions the
+        # same command in running text is an ordinary citation -- otherwise
+        # every write-up that *describes* a guard-off run would lose its own
+        # membership claims, and there are several in the corpus.
+        text = ('`xdata_register_map.py --no-eq-guard` moved the clustering, '
+                'and `0x0860` is in `main-ec-003`.\n')
+        self.assertEqual(cited(text), (1, '0x0860'))
+
+    def test_an_unterminated_fence_is_not_a_fence(self):
+        # `pd-only-status-vocabulary.md` reaches this: one of its seven fence
+        # lines closes a block whose opener is not there, so every later fence
+        # in the file is off by one and the last one opens a block running to
+        # the end. Reading that tail as block body would join thirty lines of
+        # prose into one unit, so an unterminated block is not found by this
+        # method and its lines go back to the ordinary walk -- where the
+        # claim below is reported, because nothing scoped it.
+        text = ('```console\n$ python3 ec/tools/xdata_register_map.py '
+                '--no-eq-guard\nthe clustering put `0x0860` in '
+                '`main-ec-003`.\n')
+        self.assertEqual(cited(text), (1, '0x0860'))
+        self.assertEqual(ccc.fence_spans(text.split('\n')), [])
+
+    def test_a_nested_fence_does_not_close_its_outer_block(self):
+        # Not reachable from the committed corpus -- every fence line in it is
+        # exactly three backticks -- so this pins the same-width rule that
+        # keeps the walk right if that ever stops being true. An inner three-
+        # backtick fence has to leave the outer four-backtick one open, or the
+        # block would end early and the rest would be scoped by a command that
+        # is no longer in it.
+        text = ('````console\n```console\n$ python3 '
+                'ec/tools/xdata_register_map.py --no-eq-guard\n```\n'
+                "mode-oem-init: joined ['0x06C6']\n````\n")
+        spans = ccc.fence_spans(text.split('\n'))
+        self.assertEqual([(b - a) for a, b in spans], [5])
+        self.assertEqual(cited(text), (0, None))
+
+
 class CensusCounts(unittest.TestCase):
     """The figures issue #272 put a hand-typed census table behind.
 
@@ -587,7 +758,7 @@ class AnAlternateCensus(unittest.TestCase):
             f.write('The clustering put `0x0860` in `main-ec-002`.\n')
             path = f.name
         try:
-            problems, _ = ccc.check(path, members, counts, known,
+            problems, _, _ = ccc.check(path, members, counts, known,
                                     by_key, by_name, False)
         finally:
             os.unlink(path)
@@ -615,7 +786,7 @@ class AnAlternateCensus(unittest.TestCase):
             f.write('| `main-ec-002` | 2 | 10 | `0x0860`-`0x086E` | 99 | a row |\n')
             path = f.name
         try:
-            problems, _ = ccc.check(path, members, counts, known,
+            problems, _, _ = ccc.check(path, members, counts, known,
                                     by_key, by_name, False)
         finally:
             os.unlink(path)
@@ -642,6 +813,95 @@ class TheCommittedTree(unittest.TestCase):
             sys.argv = argv
         self.assertEqual(rc, 0, err.getvalue())
         self.assertIn('every checked', out.getvalue())
+
+
+def check_every_skip(case, reasons):
+    """The two-way comparison a run's reasons make against `ccc.SKIPS`.
+
+    A plain assertion over the set difference would report the sets without
+    saying which way the disagreement runs, so each direction carries a message
+    naming the reasons in it -- which is the whole of the point. The two
+    failures are different defects: a reason `SKIPS` names that nothing
+    exercises any more is a rule that has stopped firing, and a reason the run
+    produced that `SKIPS` does not name is a rule added to `skip_reason()`
+    without being written down. Either arrives here as a name rather than as a
+    count that moved.
+
+    The helper takes the `TestCase` so the two synthetic cases below drive the
+    same comparison the committed one does, rather than a second reading of it.
+    """
+    named, seen = set(ccc.SKIPS), set(reasons)
+    case.assertEqual(
+        named - seen, set(),
+        "these reasons are in SKIPS and nothing in the run exercises them: "
+        f"{sorted(named - seen)}")
+    case.assertEqual(
+        seen - named, set(),
+        "the run produced these reasons and SKIPS does not name them: "
+        f"{sorted(seen - named)}")
+
+
+class TheSkipListHasOneSource(unittest.TestCase):
+    """`SKIPS`, the one place a reason is written down, and what it owes.
+
+    The run prints one figure per reason, so a list and the function that
+    returns from it cannot drift apart without the summary being quietly wrong.
+    What the *run* exercises is the committed tree's business and is
+    `TheCommittedTree`'s; what is here is what the constant owes before that
+    comparison is made at all.
+    """
+
+    def test_the_reasons_are_distinct(self):
+        # The summary counts per reason, so a repeated entry would report one
+        # reason twice and hide the other.
+        self.assertEqual(len(set(ccc.SKIPS)), len(ccc.SKIPS), ccc.SKIPS)
+
+    def test_the_transcript_reason_is_one_of_them(self):
+        # The direction the other two cannot reach: only the transcript reason
+        # is decided from outside the unit's own words, so it is the one a
+        # reader checking the list against `skip_reason()` would most plausibly
+        # have spelled differently.
+        self.assertIn('census-regeneration transcript', ccc.SKIPS)
+
+    def test_the_run_exercises_every_reason(self):
+        # Asserted over the set, and never over a figure: an expected count
+        # turns every added fixture into a failure, and the count belongs to
+        # `run-tests.sh`'s last line. Non-emptiness is the claim that is true of
+        # the tree rather than of the tool.
+        seen = set()
+        members, known, counts, by_key, by_name = ccc.census()
+        for root in ccc.ROOTS:
+            for dirpath, dirnames, filenames in os.walk(
+                    os.path.join(ccc.REPO, root)):
+                dirnames[:] = [d for d in dirnames if not d.startswith('.')]
+                for name in sorted(filenames):
+                    if name.endswith('.md'):
+                        path = os.path.join(dirpath, name)
+                        _, _, reasons = ccc.check(path, members, counts, known,
+                                                  by_key, by_name, False)
+                        seen |= set(reasons)
+        self.assertTrue(seen, "the walk reached no unit to skip at all")
+        check_every_skip(self, seen)
+
+    def test_the_difference_names_a_reason_nothing_exercised(self):
+        # The first direction, from an input the committed tree cannot produce.
+        # What is pinned here is the branch: a reason with an instance
+        # elsewhere in the list is named, not counted, when nothing in this run
+        # exercises it.
+        with self.assertRaises(AssertionError) as caught:
+            check_every_skip(self, ('disclaims membership',))
+        self.assertIn('no membership claim', str(caught.exception))
+
+    def test_the_difference_names_a_reason_skips_does_not_list(self):
+        # The other direction, and the one the committed tree cannot reach at
+        # all: every reason it produces is in the list today, so the case adds
+        # one that is not -- which is what a rule added to `skip_reason()`
+        # without being added to `SKIPS` looks like from here. The committed
+        # run's own reasons are kept, so the first direction still holds and
+        # only this one fails.
+        with self.assertRaises(AssertionError) as caught:
+            check_every_skip(self, ccc.SKIPS + ('a reason nobody wrote down',))
+        self.assertIn('a reason nobody wrote down', str(caught.exception))
 
 
 if __name__ == '__main__':

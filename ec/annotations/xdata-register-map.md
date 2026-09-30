@@ -475,9 +475,24 @@ were merged and exported the same way; the `DAT_EXTMEM_`-only figures fall accor
 not move.) The same regeneration moved 17 references from the
 `DAT_EXTMEM_` spelling to those names, so the `DAT_EXTMEM_`-only oracle reads
 13,878 raw and 979/13,005 for the main EC; the full census is unchanged. In §5
-below, `main-ec-002`'s "named inside" is 33 for the same reason — 29 was the
+below, `main-ec-002`'s "named inside" is 32 for the same reason — 29 was the
 figure in the table this note was written against, and issue #272 settled the
-row at the census's 33.)*
+row at the census's 33.*
+
+> **CORRECTION (2026-09-30, issue #996): the 33 above was itself superseded, and
+> this note is the second thing to have gone stale about that one cell.** The
+> note is dated 2026-09-24 and the census it read has moved three times since —
+> to 27 under #683 on 2026-09-25, to 31 under #1059 on 2026-09-27, and to 32
+> under #1438 on 2026-09-30 — while the sentence kept saying 33, so from the
+> first of those dates the note and the row it describes disagreed with each
+> other as well as with the census. **The 33 stays visible here**, per
+> `../../docs/findings.md` §4a-4d: a reader who wants to know what the census
+> said on 2026-09-24 has it, and the figure it supersedes is on the row's own
+> drift record above, which states the sequence 19 → 43 → 27 → 31 → 32 with the
+> commits that moved it. This is the third correction of this figure and none
+> was a transcription slip: each time the census moved and the hand-typed prose
+> did not, which is what `check_cluster_citations.py`'s count rule now catches
+> for the row and what nothing catches for a sentence in a note.)*
 
 ## 2. The two token spellings, a third value that is not a spelling, and what the issue's "six" actually counted
 
@@ -2158,6 +2173,38 @@ symbol table.
 > either — all 26 of its addresses are inside the 152-address `main-ec-001`
 > (§4.7) — so `main-ec-004` is the gate block and there is no 26-address row
 > left to name.*
+>
+> **CORRECTION (2026-09-30, issue #996): `main-ec-002`'s "named inside" cell
+> read 27 and the census read 31; the cell was right when #683 wrote it and the
+> census moved under it twice afterwards.** `6bf9c234` set the cell to 27 in the
+> same commit that set the census to 27, so this is not a transcription slip and
+> nothing was wrong with the row at the time. What moved it the first time was
+> #1059 (`31147ccc`, 2026-09-27), which named 72 addresses `registers.yaml` did
+> not hold; four of the new names fall inside `main-ec-002` — `0x074C` `PDIN`,
+> `0x0788` `CTWA`, `0x07A4` `GC6S`, `0x07C5` `WHMS` — and the census's
+> `named_addrs` column went from 27 to 31. The hand-typed table did not follow,
+> because the only thing that noticed was `check_cluster_citations.py`'s count
+> rule, and the suite carrying it was red on this tree for an unrelated reason
+> and so had not been run to green. **The 27 stays in the record above rather
+> than being deleted**: `git log -L` over this file's `main-ec-002` row is what
+> carries the sequence otherwise (19, then 43, then 27, then 31, now 32), and a
+> drift record that deletes the drift records nothing.
+>
+> **A second move, landed on main rather than here, is why the row reads 32 and
+> not the 31 this correction was written against.** #1438 (`7245cc0f`) added
+> `XDATA_086C` at `0x086C` to `registers.yaml` for issue #333; that address is a
+> member of `main-ec-002`, so the name took the census's `named_addrs` from 31
+> to 32, and #1438 corrected the row to 32 in the same commit. **The 31 this
+> paragraph was written against is kept here rather than silently dropped**,
+> because it is a real reading of the census — the one that held from
+> 2026-09-27 until #1438 — and a drift record that erases the step between two
+> surviving figures is not a drift record. Neither the 27→31 move nor the 31→32
+> one was a transcription slip: each time the census moved and the hand-typed
+> prose did not, which is what the count rule catches for a row and what
+> nothing catches for a sentence in a note. **The 32 is re-derived, not
+> re-typed**: `xdata_register_map.py` run with the committed tree reproduces
+> `xdata-clusters.csv` byte for byte, and `xdata-registers.csv` independently
+> carries exactly 32 named rows for `main-ec-002`.
 
 | cluster | key | name | size | refs | range | named inside | co-reading (§4.5) | the functions the cluster's addresses share |
 |---|---|---|---:|---:|---|---|---|---|
