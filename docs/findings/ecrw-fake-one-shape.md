@@ -30,7 +30,7 @@ with `test_charge_target_test.FakeEcError: WMI query failed` escaping `main()`.
 `charge_target_test.py:59` binds `EcError` at import; by the time that suite ran,
 `test_battery_trace.py` — which sorts ahead of it — had already installed the
 shared fake by assignment (`ecrw_fake.install()`, which is the
-`sys.modules['ecrw'] =` at `windows/tools/ecrw_fake.py:98`). No `setdefault` won
+`sys.modules['ecrw'] =` at `windows/tools/ecrw_fake.py:101`). No `setdefault` won
 the name: that suite's own `setdefault` was the no-op, so the class the tool
 bound was `ecrw_fake.EcError` and the one that went on to escape was the
 suite-local `test_charge_target_test.FakeEcError`. The per-file runner never
@@ -72,8 +72,13 @@ second way is how the three shapes came about.
 `windows/tools/ecrw_fake.py` needed no code change — only two sentences that had
 gone stale by counting. `Ec`'s said "both suites that exist replace `Ec`
 wholesale", and `install()`'s said "Both suites install these same two class
-objects"; both were true of two suites and are now true of every suite in the
-directory, so they are reworded to the property rather than to a number.
+objects"; both were true of two suites and are now true of every suite that
+installs the fake, so they are reworded to the property rather than to a
+number. Scoped that way rather than to "every suite in the directory" because
+the directory also holds two non-installers: `test_census_native_c.py`, whose
+subject never imports `ecrw`, and `test_ecrw.py`, which borrows the name to put
+the real module in front of a fake `ctypes.WinDLL`. A census restated as
+"every suite" is the stale figure again in new words.
 
 ## The negative control
 

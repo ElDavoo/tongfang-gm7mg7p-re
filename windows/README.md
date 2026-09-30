@@ -240,9 +240,11 @@ annotation leaves its header on row 1 rather than row 0.
 `ecrw` — the module binds kernel32 at import time and only loads on Windows —
 which is also what makes the arms scriptable; the charge-target and
 battery-trace suites fake the `powershell` call behind their WMI lines as well.
-All of them install one shared fake, `tools/ecrw_fake.py`, with
-`ecrw_fake.install()`; a suite with bytes of its own keeps its own class and
-patches it over the tool after import.
+Every suite here exercising a tool that imports `ecrw` installs one shared
+fake, `tools/ecrw_fake.py`, with `ecrw_fake.install()`; a suite with bytes of
+its own keeps its own class and patches it over the tool after import.
+(`tools/test_census_native_c.py` is a second non-installer: its subject is the
+`.c` census and it never touches `ecrw` at all.)
 `tools/test_ecrw.py` is the exception
 and the reason the others can be: it puts a fake `ctypes.WinDLL` in front of
 the *real* `ecrw.py`, so the `MMRD` marshalling, the aligned-block arithmetic

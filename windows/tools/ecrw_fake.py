@@ -50,7 +50,7 @@ def block_runs(addrs):
 class Ec:
     """The real signatures and the whole protocol, and no behaviour.
 
-    No suite calls these bodies: every suite in this directory replaces `Ec`
+    No suite calls these bodies: every suite that installs this replaces `Ec`
     wholesale with a class of its own once the tool module is imported, so the
     defaults here only have to keep an import -- or an accidentally unpatched
     call -- from failing on a missing attribute. A suite that needs bytes has

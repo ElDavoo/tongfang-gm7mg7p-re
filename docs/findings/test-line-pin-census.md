@@ -314,11 +314,16 @@ ones. **Measured on both sides rather than differenced**, the merged tree and
 `origin/main` read the same `132` pins in `32` files, `98` spellings, `74`
 targets, `99` resolves, `33` declined and the **`1/24/23/5/46`** split, and
 `check_pin_table_rows.py` reads `132` rows, `132` records, `130` placed, `2`
-`unplaced-row`, `2` `row-without-record` and `0` `shape-differs` on both; the two
-markdown files and the one test file the run reads more of are `#364`'s own
+`unplaced-row`, `2` `row-without-record` and `0` `shape-differs` on both; the one
+markdown file and the one test file this branch adds are `#364`'s own
 [`ecrw-fake-one-shape.md`](ecrw-fake-one-shape.md) and
 `tools/test_windows_tools_shared_interpreter.py`, and the first carries no
 `test_*.py:NNN` pin at all, which is why the record count does not take one.
+Counted by what the branch adds, because the census's own file count is a
+directory walk and the two sides of that comparison are not the same tree: it
+prunes `.git`, `vendor/` and `.claude/`, but not `.claude-pr/`, which a
+pipeline checkout carries as an untracked, `.git/info/exclude`d `CLAUDE.md` and
+a `git worktree` at `origin/main` does not have.
 
 **Left alone, the same merge would have read `2/21/25/5/46` with four
 `shape-differs` — and that would have been a stale citation rather than a change
