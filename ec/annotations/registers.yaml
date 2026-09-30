@@ -3541,6 +3541,35 @@ registers:
       byte gate_06e6_442_then_sync_046a_from_086b syncs 0x046A from. UNITS
       NOT DETERMINED. Per-address table: ec/annotations/xdata-086x-dispatch.md.
 
+  - name: XDATA_086C
+    addr: 0x086C
+    sources: [xdata-refs]
+    static_refs: 14
+    static_refs_main_ec: 14
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      14 EC-side sites in bank0, no PD site. The 26-reference, 12-read,
+      12-write, 2-address-taken, 7-reader, 6-writer, 9-function census on this
+      address is xdata_register_map.py's C-level occurrence count over the
+      decompiled tree and is NOT the static_refs figure above, which is the
+      MOV DPTR site count scan_refs.py reports -- the same distinction
+      XDATA_0860 draws. This byte is the middle of the three results
+      FUN_CODE_9d9b computes, clamped by the same three MANUAL_FAN_CTRL (0x0751)
+      values as 0x086B but routed through 0xBC7B/0xBC7E instead of inline, and
+      unlike the other two it then reads and writes 0x0A47, which is compared
+      against 0x09EF and, on a change, published through 0xA73F with R7 = 0xBC
+      -- a publish blocks one and three do not have. 0xD2BF/0xD2C2 copy the
+      caller's DPTR byte in and return it masked with 0x7E, reached with DPTR
+      0x1C00 or 0x1C35. The BOOST-set arm at 0x8942 compares this byte against
+      0x50 (80) beside CPU_TEMP and GPU_TEMP against 0x46 (70 C), cited to
+      docs/findings.md 7. That is the only constant comparison of this byte
+      anywhere in the record and the closest thing to a unit the block has,
+      which is a reason for caution and not a unit: nothing else fixes the
+      scale, and a co-occurrence with a temperature threshold is not a
+      demonstrated mechanism. UNITS NOT DETERMINED. Cluster ruling:
+      docs/findings/xdata-086c-cluster-ruling.md.
+
   - name: XDATA_086D
     addr: 0x086D
     sources: [xdata-refs]

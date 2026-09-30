@@ -366,7 +366,11 @@ only one closes the issue.** Concretely:
   the relationship plus a guess at the units. Note that **`0x086C` has no
   `registers.yaml` entry at all** — the middle of the three results is the one
   the census did not enter — so naming it means adding one, in the same change,
-  with the same `status:` discipline as the other two.
+  with the same `status:` discipline as the other two. *(2026-09-30, issue #333:
+  the entry now exists — `XDATA_086C`, `present-untested`, `UNITS NOT DETERMINED`
+  — so this discipline is already satisfied for all three results, and a result
+  from §4.1 names it the way it names the other two. Nothing in this runbook has
+  been observed; its status banner above is unchanged.)*
 - **§4.1 shows a constant, or nothing resembling the fan curve.** The block is
   not a level. That is a finding, it is worth recording as one, and the entries
   say so rather than staying ambiguously unnamed. If one of the three tracks and
