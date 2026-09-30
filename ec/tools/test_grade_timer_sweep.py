@@ -43,12 +43,16 @@ def ts(sec):
     return f"2026-01-01T{h:02d}:{m:02d}:{s:02d}.{ms:03d}+00:00"
 
 
-def write_capture(path, interval, addrs, baseline, rows, end):
+def write_capture(path, interval, addrs, baseline, rows, end, baseline_at=0):
+    """`baseline_at` is the second on the `# baseline` line, and it exists so a
+    second file can state its levels at its own t0 rather than at the first
+    file's. A level a byte really held at the start of its own capture is not
+    the same claim as a level it held at the start of someone else's."""
     with open(path, 'w') as f:
         f.write(HEADER)
         f.write(f"# interval {interval}s  seconds {end}  {len(addrs)} addresses: "
                 + " ".join(f"{a:#06x}" for a in addrs) + "\n")
-        f.write(f"# baseline {ts(0)}: "
+        f.write(f"# baseline {ts(baseline_at)}: "
                 + " ".join(f"0x{a:04X}=0x{baseline[a]:02X}" for a in addrs) + "\n")
         f.write("ts,addr,old,new\n")
         for t, a, o, n in sorted(rows):
@@ -72,6 +76,65 @@ def reload_cycle(t0, step, stop, start=9):
         rows.append((t, gts.RELOAD, v, n))
         v, t = n, t + step
     return rows
+
+
+def one_capture_contradicting_itself(dirpath, address=0x0635, levels=(0x14, 0x04),
+                                    intervals=(0.01,)):
+    """One file stating one of its own header figures twice, and its path.
+
+    The second shape `merged_capture_refusal` refuses: no second file, the
+    file disagreeing with itself. `write_capture` cannot build it, because
+    `ec_timer_capture.py` cannot produce it -- its levels come out of a dict
+    keyed by address (`:314`), so the committed writer says each address once
+    and states each `# interval` line once (`:278` takes `--interval` per
+    invocation). Which is the point of writing this out longhand. The refusal
+    is not hypothetical because a second file happens to exist; it is
+    hypothetical because a capture gets hand-edited or written by something
+    else, and `load()` collects a repeated entry in one header exactly as it
+    collects two files that disagree -- `intervals` and `levels` are appended
+    per entry, and nothing downstream knows which file an entry came from
+    beyond the path it is filed under.
+
+    Two figures, two shapes: `levels` longer than one contradicts the file's
+    `# baseline`, `intervals` longer than one contradicts its `# interval`, and
+    both reach the same sentence.
+    """
+    path = dirpath / 'dup.csv'
+    with open(path, 'w') as f:
+        f.write(HEADER)
+        for interval in intervals:
+            f.write(f"# interval {interval}s  seconds 1.1  1 addresses: "
+                    f"{address:#06x}\n")
+        f.write(f"# baseline {ts(0)}: "
+                + " ".join(f"0x{address:04X}=0x{v:02X}" for v in levels) + "\n")
+        f.write("ts,addr,old,new\n")
+        f.write(f"{ts(0.05)},0x{address:04X},0x{levels[0]:02X},0x13\n")
+        f.write(f"{ts(0.15)},0x{address:04X},0x13,0x12\n")
+        f.write(f"# ended {ts(1.1)}  constructed\n")
+    return str(path)
+
+
+def two_captures(dirpath, intervals, levels, baseline_at=(0, 0)):
+    """Two captures of the same sweep either side of a suspend, and their paths.
+
+    The pair every merged-run case here builds, so the only thing that varies
+    between them is the field under test: what each `# interval` line states
+    and what each `# baseline` line states. A file's rows start at the level
+    its own header gives 0x06D6, because a level a byte held at the start of
+    its own capture is the claim the header is making; `baseline_at` is per
+    file, so the second file's levels can sit at its own t0 rather than the
+    first file's.
+    """
+    paths = []
+    for i, interval in enumerate(intervals):
+        t0, stop = 0.05 + 20 * i, 5.0 + 20 * i
+        rows = reload_cycle(t0, 0.1, stop, start=levels[i][gts.RELOAD])
+        rows += countdown(0x0635, 20, t0 + 0.02, 0.1, stop)
+        path = dirpath / f'part{i}.csv'
+        write_capture(path, interval, [0x0635, gts.RELOAD], levels[i], rows,
+                      stop, baseline_at[i])
+        paths.append(str(path))
+    return paths
 
 
 def run(*paths):
@@ -263,6 +326,304 @@ class Grading(unittest.TestCase):
         self.assertIn('span 25.000s', out)
         self.assertIn('median 100.0 ms', out)
         self.assertIn('period / step = 10.00', out)
+
+    def test_an_interval_disagreement_is_refused(self):
+        # `load()` took the sample interval from whichever file was named
+        # last, so this pair graded a median step taken over both files
+        # against one of their two `--interval` values, and said so with a
+        # number. Nothing forces two captures to agree on it: the writer
+        # takes `--interval` per invocation, and the 0x8001 sweep procedure
+        # runs it at 0.01, 0.0005 and 0.002 across its arms.
+        agreed = {0x0635: 20, gts.RELOAD: 9}
+        first, second = two_captures(self.dir, [0.01, 0.05], [agreed, agreed])
+        rc, out, err = run_quietly(first, second)
+        self.assertEqual(rc, 1)
+        # Both values, in both files, so the operator can see which is which
+        # without re-running anything.
+        for named in ("0.01s in", "0.05s in", str(self.dir / 'part0.csv'),
+                      str(self.dir / 'part1.csv')):
+            self.assertIn(named, err)
+        # The merge half of the interval clause: two files, so the sentence may
+        # count them. The one-file case below cannot, and says "this run's
+        # rows" instead.
+        self.assertIn('over all 2 files', err)
+        # Refused before `grade()`, so there is no half-printed report.
+        for absent in ('span ', 'step interval', 'period / step'):
+            self.assertNotIn(absent, out)
+
+        # The control: the same two files, the same level, the same rows, with
+        # the intervals equal. So the refusal is pinned to the disagreement and
+        # not to naming two captures.
+        first, second = two_captures(self.dir, [0.01, 0.01], [agreed, agreed])
+        rc, out = run(first, second)
+        self.assertEqual(rc, 0)
+        self.assertIn('period / step = 10.00', out)
+
+    def test_a_baseline_level_disagreement_is_refused(self):
+        # The same defect one level down. The first file's `# baseline` was
+        # kept and the second's dropped without a word, so a byte would have
+        # been reported as held at the level a *first* capture read it at, over
+        # a span the second capture's rows sit inside -- and 0x06C5 in §4b of
+        # the sweep procedure is a byte that moved across exactly such a
+        # boundary.
+        first_level = {0x0635: 20, gts.RELOAD: 9}
+        second_level = {0x0635: 20, gts.RELOAD: 4}
+        first, second = two_captures(self.dir, [0.01, 0.01],
+                                     [first_level, second_level],
+                                     baseline_at=(0, 20))
+        rc, out, err = run_quietly(first, second)
+        self.assertEqual(rc, 1)
+        self.assertIn('0x06D6', err)
+        self.assertIn('0x09', err)
+        self.assertIn('0x04', err)
+        self.assertIn(str(self.dir / 'part0.csv'), err)
+        self.assertIn(str(self.dir / 'part1.csv'), err)
+        # 0x0635 is watched by both files and both give it the same level, so
+        # it is not a disagreement and does not belong in the sentence.
+        self.assertNotIn('0x0635', err)
+        for absent in ('span ', 'step interval', 'period / step'):
+            self.assertNotIn(absent, out)
+        # The merge half of the clause, pinned here so the one-file case below
+        # cannot quietly take it over: this is two files disagreeing, so the
+        # sentence is allowed to talk about the other file's rows.
+        self.assertIn('over a span that includes the other file', err)
+        # And it does not claim nothing was read -- `load()` has opened and
+        # parsed both files by the time it can know they disagree.
+        self.assertNotIn('nothing was read', err)
+        self.assertIn('so no run was built', err)
+
+        # The control again, and the one the other refusal's case also needs:
+        # agreeing levels over the same two files grade, and 0x0635 -- which
+        # both files gave the same level for -- is not named in the refusal.
+        first, second = two_captures(self.dir, [0.01, 0.01],
+                                     [first_level, first_level],
+                                     baseline_at=(0, 20))
+        rc, out, err = run_quietly(first, second)
+        self.assertEqual(rc, 0)
+        self.assertEqual(err, '')
+        self.assertIn('period / step = 10.00', out)
+
+    def test_a_single_capture_contradicting_itself_is_refused(self):
+        # The other shape `merged_capture_refusal` reaches. One file, no
+        # second file to disagree with, and the sentence said "1 captures
+        # disagree about a figure a merged run can only take from one file ...
+        # over a span that includes the other file ... Grade them one at a
+        # time" -- a merge asserted where none happened, and an operator sent
+        # looking for a file that is not there. So each of those four clauses
+        # says what is true of one capture instead, and this pins that it does.
+        p = one_capture_contradicting_itself(self.dir)
+        rc, out, err = run_quietly(p)
+        self.assertEqual(rc, 1)
+        self.assertEqual(out, '')
+        # Both values, in the one file that states both, so the operator can
+        # see which is which without re-running anything.
+        for named in ('0x14', '0x04', '0x0635', p):
+            self.assertIn(named, err)
+        self.assertIn('1 capture contradicts itself', err)
+        self.assertIn('so no run was built', err)
+        self.assertIn('over the whole of that capture', err)
+        self.assertIn('Grade it on its own', err)
+        # The four the shape cannot support, each asserted as absent rather
+        # than left unread: a merge that did not happen, the ungrammatical
+        # "1 captures", the merge's own span and closer, and the repeat
+        # refusal's true-on-that-path claim that nothing was read.
+        for absent in ('the other file', '1 captures', 'over all 1 files',
+                       'Grade them', 'nothing was read', 'merged run'):
+            self.assertNotIn(absent, err)
+        # Still one ordered sentence, not one per conflict, and still refused
+        # before `grade()`.
+        self.assertEqual(err.strip().count('\n'), 0)
+
+        # The control: the same file with one value for that address grades.
+        # So what is refused is the contradiction and not the file.
+        single = one_capture_contradicting_itself(self.dir, levels=(0x14,))
+        rc, out, err = run_quietly(single)
+        self.assertEqual(rc, 0)
+        self.assertEqual(err, '')
+        self.assertIn('0x0635  0x14 -> 0x12', out)
+        # One capture, so neither clause the merge added may appear.
+        self.assertNotIn('union', out)
+        self.assertNotIn('stated by', out)
+
+        # And the same file shape saying the *interval* twice rather than the
+        # level, which reaches the other half of the sentence. "over all 1
+        # files" was the merge's clause with the count left in it, and the
+        # count is the only thing that was wrong.
+        clash = one_capture_contradicting_itself(self.dir, levels=(0x14,),
+                                                 intervals=(0.01, 0.05))
+        rc, out, err = run_quietly(clash)
+        self.assertEqual(rc, 1)
+        self.assertEqual(out, '')
+        for named in ('0.01s', '0.05s', clash, 'over this run\'s rows'):
+            self.assertIn(named, err)
+        for absent in ('over all 1 files', '1 captures', 'Grade them',
+                       'the other file', 'nothing was read'):
+            self.assertNotIn(absent, err)
+
+    def test_one_refusal_names_every_disagreement_in_a_stated_order(self):
+        # A refusal per disagreement discovered serially would cost the
+        # operator a run each, and the order between them would be whatever
+        # the loop happened to reach first. So all three are in one sentence,
+        # intervals first and levels by ascending address -- which is the order
+        # `merged_capture_refusal` states in its docstring, pinned here rather
+        # than left to be discovered by running the thing.
+        first_level = {0x0635: 20, gts.RELOAD: 9}
+        second_level = {0x0635: 12, gts.RELOAD: 4}
+        first, second = two_captures(self.dir, [0.01, 0.05],
+                                     [first_level, second_level],
+                                     baseline_at=(0, 20))
+        rc, out, err = run_quietly(first, second)
+        self.assertEqual(rc, 1)
+        self.assertEqual(err.strip().count('\n'), 0,
+                         'every disagreement belongs in the one sentence')
+        clauses = ['0.01s', '0.05s', '0x0635', '0x06D6']
+        for named in clauses:
+            self.assertIn(named, err)
+        where = [err.index(named) for named in clauses]
+        self.assertEqual(where, sorted(where),
+                         'intervals first, then levels by ascending address')
+        self.assertEqual(out, '')
+
+    def test_an_accepted_merged_run_says_where_its_figures_came_from(self):
+        # What the two refusals leave, and the reason they can leave it: the
+        # span is a union and says so, the sample interval says how many of
+        # the files state it, and the numbers underneath are the merged run's.
+        # The two files here are 0.05-5.0s and 20.05-25.0s with each one's
+        # `# baseline` at its own t0, as `ec_timer_capture.py` stamps it, so
+        # neither window contains the other and 15s of the merged span is a
+        # hole neither file watched: `which none of them covers` is true of
+        # them. `baseline_at` matters here and not in the two refusal cases --
+        # a pair whose second file also claims a baseline at the first file's
+        # t0 has a window that does cover the union, and gets the other half.
+        agreed = {0x0635: 20, gts.RELOAD: 9}
+        first, second = two_captures(self.dir, [0.01, 0.01], [agreed, agreed],
+                                     baseline_at=(0, 20))
+        rc, out = run(first, second)
+        self.assertEqual(rc, 0)
+        self.assertIn('span 25.000s (the union of the 2 captures given, which '
+                      'none of them covers)', out)
+        self.assertIn('stated by 2 of 2 files', out)
+        self.assertIn('span 25.000s', out)
+        self.assertIn('median 100.0 ms', out)
+        self.assertIn('period / step = 10.00', out)
+
+    def test_the_interval_clause_counts_files_and_not_interval_lines(self):
+        # The count and the denominator were two different units. `INTERVALS`
+        # holds one entry per `# interval` **line** and the clause divided it by
+        # `len(paths)`, which counts files, so a file stating its interval
+        # twice at the same value printed `stated by 3 of 2 files` -- a run
+        # built by `cat`ing two captures of one sweep together, grading, and
+        # reporting a numerator above its own denominator. In the one sentence
+        # whose whole job is saying where a figure came from, and the
+        # self-contradiction the issue exists to close. The count is of files.
+        #
+        # The repeat has to be at the *same* value: that is graded rather than
+        # refused, because `merged_capture_refusal` groups the entries by
+        # value and a duplicate of one value collapses to one key, so only a
+        # genuine conflict reaches its `len(said) > 1` test. `ec_timer_capture`
+        # cannot write this file -- it states each `# interval` line once, from
+        # `--interval` per invocation -- which is why it is written longhand.
+        agreed = {0x0635: 20, gts.RELOAD: 9}
+        dup = one_capture_contradicting_itself(self.dir, levels=(0x14,),
+                                               intervals=(0.01, 0.01))
+        # One real capture beside it, agreeing on both figures -- 0x14 is 20,
+        # so the level `countdown` starts 0x0635 at, and the intervals match.
+        second = two_captures(self.dir, [0.01], [agreed])[0]
+        rc, out = run(dup, second)
+        self.assertEqual(rc, 0)
+        # Both files state it, three lines say so, two files were given.
+        self.assertIn('stated by 2 of 2 files', out)
+        self.assertNotIn('stated by 3 of 2 files', out)
+        # Still an accepted merge: the refusal groups by value, so a repeat of
+        # one value is not a disagreement. Pinned because the count above could
+        # have been fixed by refusing the repeat instead, and refusing it is
+        # the shape the other case in this file already covers.
+        self.assertIn('the union of the 2 captures given', out)
+
+        # The other direction, and the write-up's "a file with no `# interval`
+        # line contributes no interval": one file stating the interval twice
+        # beside one that states it not at all. Counted by lines this reads 2
+        # of 2, which credits the silent file with an interval it never wrote;
+        # counted by files it is the 1 of 2 the write-up quotes. So the two
+        # halves pin both ends of the range -- a numerator above the
+        # denominator, and one inside it that names the wrong file.
+        silent = Path(two_captures(self.dir, [0.01, 0.01],
+                                   [agreed, agreed], baseline_at=(0, 20))[1])
+        # `ec_timer_capture.py` always writes the line, so this capture is
+        # hand-stripped into a shape no committed writer produces -- which is
+        # what the write-up says of it, and why the reader has to be the one
+        # that reads it. `addresses:` rides on the same line, so this file
+        # states no watched list either and contributes its rows alone.
+        silent.write_text(''.join(
+            l for l in silent.read_text().splitlines(keepends=True)
+            if not l.startswith('# interval')))
+        rc, out = run(dup, str(silent))
+        self.assertEqual(rc, 0)
+        self.assertIn('stated by 1 of 2 files', out)
+        self.assertNotIn('stated by 2 of 2 files', out)
+
+        # The control: the same file shape with its two lines at *different*
+        # values. That is the one case here that is refused rather than
+        # counted, and the refusal names all three values across both files --
+        # so the count above is not what decides this pair, and a fix that had
+        # taught the clause to count lines would still have to leave this
+        # alone. Merged, so the shape is the merge's: the one-file clause is
+        # covered by `test_a_single_capture_contradicting_itself_is_refused`.
+        clash = one_capture_contradicting_itself(self.dir, levels=(0x14,),
+                                                 intervals=(0.01, 0.05))
+        rc, out, err = run_quietly(clash, second)
+        self.assertEqual(rc, 1)
+        self.assertEqual(out, '')
+        for named in ('0.01s', '0.05s', clash, second):
+            self.assertIn(named, err)
+        self.assertNotIn('stated by', err)
+
+    def test_a_merged_run_says_which_none_covers_only_when_none_does(self):
+        # The clause is a claim about the captures, and a merge of two nested
+        # windows falsifies it: `first`/`last` are min/max'd across files, so
+        # a 0-30s file merged with a 10-20s one of the same sweep gives a
+        # 30s span that the 0-30s file covers on its own. Printed
+        # unconditionally -- which is how this read -- that run asserted the
+        # opposite of what its own construction shows. So the half is printed
+        # only when no single file's window is the merged pair, and the union
+        # half is printed either way.
+        rows = reload_cycle(0.05, 0.1, 30.0)
+        rows += countdown(0x0635, 20, 0.07, 0.1, 30.0)
+        levels = {0x0635: 20, gts.RELOAD: 9}
+        outer, inner = self.dir / 'outer.csv', self.dir / 'inner.csv'
+        write_capture(outer, 0.01, [0x0635, gts.RELOAD], levels, rows, 30.0)
+        # The same sweep's rows between 10s and 20s, with this file's
+        # `# baseline` at its own start the way `ec_timer_capture.py` stamps
+        # it, so its window is 10-20s and lies wholly inside the first's
+        # 0-30s. Both state the same interval and the same levels, so this is
+        # an accepted merge and not a refusal.
+        write_capture(inner, 0.01, [0x0635, gts.RELOAD], levels,
+                      [r for r in rows if 10.0 <= r[0] <= 20.0], 20.0,
+                      baseline_at=10.0)
+        rc, out = run(str(outer), str(inner))
+        self.assertEqual(rc, 0)
+        # Still graded as the one union it is, and still says it is a union.
+        self.assertIn('span 30.000s (the union of the 2 captures given), ',
+                      out)
+        # And it does not claim a coverage the outer file contradicts.
+        self.assertNotIn('which none of them covers', out)
+        self.assertIn('stated by 2 of 2 files', out)
+        self.assertIn('period / step = 10.00', out)
+
+    def test_a_single_capture_report_is_byte_identical(self):
+        # The gate on both new clauses. One capture has no other file for
+        # either to point at, so the header has to be exactly what it was --
+        # asserted as a whole line rather than in pieces, because a clause
+        # that crept in one fragment at a time would satisfy any of them.
+        p = self.dir / 'one.csv'
+        write_capture(p, 0.01, [gts.RELOAD], {gts.RELOAD: 9},
+                      reload_cycle(0.05, 0.1, 1.0), 1.1)
+        rc, out = run(str(p))
+        self.assertEqual(rc, 0)
+        self.assertIn('span 1.100s, 10 change rows, sample interval 0.01s, '
+                      '1 addresses watched', out)
+        self.assertNotIn('union', out)
+        self.assertNotIn('stated by', out)
 
 
 if __name__ == '__main__':
