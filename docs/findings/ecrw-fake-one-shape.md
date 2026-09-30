@@ -28,12 +28,15 @@ reported four `test_gpu_block_watch` failures *and* one error,
 `test_charge_target_test.ChargeTargetTests.test_an_ec_error_partway_still_restores_the_target`,
 with `test_charge_target_test.FakeEcError: WMI query failed` escaping `main()`.
 `charge_target_test.py:59` binds `EcError` at import; by the time that suite ran,
-another suite's `setdefault` had already won the name, so the class it raised
-was not the class the tool's `except EcError` clause was holding. The per-file
-runner never showed this, because one file per process meant the tool always
-bound the exception class from its own suite. The existing
-restore-on-injected-failure case was already the thing that noticed: it is the
-one that raises.
+`test_battery_trace.py` — which sorts ahead of it — had already installed the
+shared fake by assignment (`ecrw_fake.install()`, which is the
+`sys.modules['ecrw'] =` at `windows/tools/ecrw_fake.py:98`). No `setdefault` won
+the name: that suite's own `setdefault` was the no-op, so the class the tool
+bound was `ecrw_fake.EcError` and the one that went on to escape was the
+suite-local `test_charge_target_test.FakeEcError`. The per-file runner never
+showed this, because one file per process meant the tool always bound the
+exception class from its own suite. The existing restore-on-injected-failure
+case was already the thing that noticed: it is the one that raises.
 
 So the divergence had two faces — a missing name, which dies at import, and a
 *different* class object for a name that exists, which fails later and only

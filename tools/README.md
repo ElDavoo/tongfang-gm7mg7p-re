@@ -131,10 +131,11 @@ makes skipping it fail, by name, on a full run.
 
 `windows/tools/ecrw_fake.py` is a shared fixture rather than a suite — it is
 the offline stand-in for the `ecrw` module, and every suite in that directory
-installs it with `ecrw_fake.install()` (the `test_*.py` pattern above does not
-pick the fixture up, so it costs no suite count). `windows/tools/test_ecrw.py`
-is the one exception and installs nothing: it puts a fake `ctypes.WinDLL` in
-front of the real `ecrw.py`, because a suite that only ever exercises the fake
+exercising a tool that imports `ecrw` installs it with `ecrw_fake.install()`
+(the `test_*.py` pattern above does not pick the fixture up, so it costs no
+suite count). `windows/tools/test_ecrw.py` is the one exception and installs
+nothing: it puts a fake `ctypes.WinDLL` in front of the real `ecrw.py`, because
+a suite that only ever exercises the fake
 is not testing the file whose arithmetic #147 is about.
 [`tools/test_windows_tools_shared_interpreter.py`](test_windows_tools_shared_interpreter.py)
 holds that as a property — see the next section.

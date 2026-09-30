@@ -325,11 +325,12 @@ class InstallShapeTests(unittest.TestCase):
         offenders = {name: lines for name, lines in offenders.items() if lines}
         self.assertFalse(offenders, f"sys.modules.setdefault in {offenders}")
 
-    def test_a_suite_writing_the_ecrw_name_is_one_of_the_two_that_may(self):
-        # `ecrw_fake.install()` writes it by assignment, and `test_ecrw.py`
-        # borrows the name to put the real module in front of a fake
-        # `ctypes.WinDLL` and puts back whatever was there in a `finally`. Any
-        # third suite writing it is building a shape of its own again.
+    def test_a_suite_writing_the_ecrw_name_is_the_one_that_may(self):
+        # `test_ecrw.py` borrows the name to put the real module in front of a
+        # fake `ctypes.WinDLL` and puts back whatever was there in a `finally`.
+        # Any other suite writing it is building a shape of its own again. The
+        # other file that writes the name is `ecrw_fake.py`, the fixture rather
+        # than a suite, and `sources()` reads suites only.
         allowed = {'test_ecrw'}
         writers = set()
         for name, text in self.sources():
