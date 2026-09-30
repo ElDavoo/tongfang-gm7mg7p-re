@@ -423,7 +423,7 @@ coupling holds and the case still passes, but "unedited" no longer describes the
 method: #472 renamed it, in `619afcb2`, to
 `test_a_mark_that_is_not_one_of_the_forms_is_an_error` — the "three" is gone
 because §3's forms went from three to six, and the case now quotes all six
-rather than three. It is at `ec/tools/test_grade_0751_isolation.py:2694` under
+rather than three. It is at `ec/tools/test_grade_0751_isolation.py:2875` under
 the new name and is in the 94 above. The pre-rename spelling is left in the
 paragraph above so the reference is still findable.
 [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):165 and :189

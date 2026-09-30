@@ -259,7 +259,7 @@ Measured rather than asserted. This branch's tool and
 were diffed. **All 48 are byte-identical and no exit code moved.**
 
 ```
-git show HEAD:ec/tools/grade_0751_isolation.py > /tmp/before_tool.py
+git show 126a67c8:ec/tools/grade_0751_isolation.py > /tmp/before_tool.py
 for d in ec/tools/testdata/0751-isolation-run*/; do
   for mode in "" "--block 0xA0" "--block 0x10" "--block 0x00"; do
     python3 /tmp/before_tool.py $d/*.csv $mode > /tmp/b.out; echo "rc=$?" >> /tmp/b.out
