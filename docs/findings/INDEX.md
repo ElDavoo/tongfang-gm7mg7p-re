@@ -71,6 +71,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
 - [`ecmg-asl-references.md`](ecmg-asl-references.md) — Which of the 98 ECMG names the ASL reaches for, and what the two `0x71` arms are (issue #1159)
+- [`ecrw-fake-one-shape.md`](ecrw-fake-one-shape.md) — One fake for `ecrw`, one way to install it, and one interpreter that proves it
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
 - [`findings-index-staleness.md`](findings-index-staleness.md) — The index is hand-edited by merges and nothing runs the check that would catch it (issue #1137)

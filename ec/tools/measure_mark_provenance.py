@@ -604,7 +604,9 @@ CITATIONS = [
      "self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],",
      "a single-quoted MARK the scan cannot match: a test assertion, not a "
      "writer"),
-    ("windows/tools/test_system_id_probe.py", 320,
+    # `:320` -> `:322` by #364's edit to that suite, which put two lines above
+    # it; the text the site quotes is unchanged.
+    ("windows/tools/test_system_id_probe.py", 322,
      "'MARK,,GPU mode -> dGPU,'",
      "the same in the other suite, so the blind side is the tree's and not "
      "one file's"),

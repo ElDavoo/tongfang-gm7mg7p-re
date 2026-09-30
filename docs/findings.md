@@ -4443,6 +4443,21 @@ with it — `test_ec_validate.py`, `test_system_id_probe.py`,
 "insurance rather than load-bearing" reading of the per-file loop below does not
 yet hold. Moving those three onto `ecrw_fake.install()` is an open follow-up.)*
 
+*(**Correction, 2026-09-30, issue #364.** The scope note above is what was true on
+2026-09-24 and is left as it was written. All three suites now install
+`windows/tools/ecrw_fake.py` by assignment, `ecrw_fake.install()` is the only way
+a suite in that directory installs the fake, and
+`tools/test_windows_tools_shared_interpreter.py` asserts both — one interpreter
+over `windows/tools` must fail nothing the per-file loop does not, and the same
+directory renamed to sort first and last must report the same problems. The
+"insurance rather than load-bearing" reading below now holds for the whole
+directory, and it is asserted rather than promised. The mechanism was in the
+existing case rather than in a new one: `test_charge_target_test.py` raised a
+suite-local `EcError` lookalike, so under one interpreter it escaped `main()`
+instead of becoming a return code, and `tools/test_windows_tools_shared_interpreter.py`
+notices it as a failure the per-file run does not report. The write-up is
+`docs/findings/ecrw-fake-one-shape.md`.*
+
 Two consequences, and the second is the one to carry forward:
 
 1. **The runner isolates per *file*.** Per-directory isolation would not have
@@ -4457,7 +4472,11 @@ Two consequences, and the second is the one to carry forward:
    about. It is a follow-up, and the isolation is what keeps it from biting
    meanwhile. **Where that deferral ended:** issue #186 is that follow-up, and
    the reconciliation is `windows/tools/ecrw_fake.py`. The isolation stayed, as
-   belt-and-braces.
+   belt-and-braces. **Where that deferral also ended:** issue #364 reconciled the
+   three suites that arrived after #186, so the deferred fix is no longer
+   deferred; the "where that deferral ended" clause above recorded only the first
+   half of it, and the isolation stayed for the second and final reason, which is
+   not this one.
 
 **What this does and does not buy.** The suites are now one command a human or a
 future gate can call, and the runner is shellchecked for free by the existing
