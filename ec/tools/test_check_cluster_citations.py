@@ -560,7 +560,7 @@ class Transcripts(unittest.TestCase):
         # opener with no blank line between ends there, and the paragraph after
         # the closing fence starts a fresh one. `docs/agent-pipeline.md` and
         # `docs/findings/pd-only-status-vocabulary.md` are the committed pages
-        # that reach the first shape -- sixteen units between them, and a
+        # that reach the first shape, and a
         # missing `buf = []` is invisible in the tool's output precisely because
         # the corpus happens not to put a wrong claim in one of them.
         #

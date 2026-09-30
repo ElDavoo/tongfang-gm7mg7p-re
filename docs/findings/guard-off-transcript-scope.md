@@ -78,11 +78,10 @@ committed CSVs, and passing the same paths relatively would slip past the
 comparison. The transcripts here name scratch outputs, which is the form the
 guard is asking for.
 
-At this tree that predicate matches 21 fenced blocks across 15 files
-(`grep -rhoE '^\s*`{3,}'` over `ec/`, `docs/` and `evidence/` returns 2131 fence
-lines, every one of them exactly three backticks, so the width is a
-measurement and not an assumption). The count is what the run prints; the
-predicate is what the code reads.
+At this tree that predicate matches 21 fenced blocks across 15 files. Every fence
+line `grep -rhoE '^\s*`{3,}'` finds over `ec/`, `docs/` and `evidence/` is
+exactly three backticks, so the width is a measurement and not an assumption.
+The count is what the run prints; the predicate is what the code reads.
 
 ## The part that was not in the plan: a fence is a boundary, not a unit
 
