@@ -32,14 +32,21 @@ with the line that decided it.
 
 ### 1. `windows/tools/ec_watch.py` `Marker._loop` — widened, and the column is populated
 
-`windows/tools/ec_watch.py:493` now writes
+`windows/tools/ec_watch.py:509` now writes
 `self._sink.row([ts, "MARK", "", label, self._provenance or ""])`, and
-`Marker.__init__` at `windows/tools/ec_watch.py:438` takes a defaulted
-`provenance=None` that `main` fills in at `windows/tools/ec_watch.py:562`
-when `--label-vocab` is given and passes at `windows/tools/ec_watch.py:573`.
+`Marker.__init__` at `windows/tools/ec_watch.py:454` takes a defaulted
+`provenance=None` that `main` fills in at `windows/tools/ec_watch.py:578`
+when `--label-vocab` is given and passes at `windows/tools/ec_watch.py:589`.
 `--label-vocab` is the only flag in the tree that produces a populated
 column, because it is the only one that says the process is checking
 anything.
+
+*(Re-anchored at issue #762, from `:493`/`:438`/`:562`/`:573`, which are the
+lines this page carried on the tree #739 landed on and which
+[`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) still quotes
+in its frozen section-5 transcript. Nothing about the decision changed; the
+four lines moved. #739's own after/before table below is left as it was
+written, because it is the record of that change rather than of this one.)*
 
 **What the column holds is `prog=<basename of argv[0]> label-vocab=<name>`,
 and that is a decision rather than a shortened `sys.argv`.** Three reasons, and
@@ -91,8 +98,8 @@ omission.
 
 `ec/tools/ec_timer_capture.py:177`, `:212`, `:218` and `:240`. A different
 capture family, in files the 0751 grader would also open, read by
-`grade_timer_sweep.py:153` under a different label convention
-(`resumed` at `ec/tools/grade_timer_sweep.py:154`).
+`grade_timer_sweep.py:354` under a different label convention
+(`resumed` at `ec/tools/grade_timer_sweep.py:355`).
 
 That reader indexes `r[1]` and `r[3]` and never `r[4]`, so the cost of the
 column here is zero — which was the measurement's point 2, and the reason to
@@ -107,7 +114,7 @@ covered below.
 
 ### 4. `windows/tools/manual_fan_ctrl_probe.py` `MarkCsv.mark` — **not** widened
 
-`windows/tools/manual_fan_ctrl_probe.py:443` is unchanged, and this is a
+`windows/tools/manual_fan_ctrl_probe.py:450` is unchanged, and this is a
 decision rather than an oversight. Four reasons, in the order they decided
 it:
 
@@ -119,7 +126,7 @@ it:
   this writer therefore already has a documented reading, and a populated
   column could never appear there to contradict it.
 - **It holds no flag, so the column would be empty there too.** Its labels
-  come from `arm_labels` at `windows/tools/manual_fan_ctrl_probe.py:382` in a
+  come from `arm_labels` at `windows/tools/manual_fan_ctrl_probe.py:389` in a
   process that never runs `--label-vocab`. Widening it would add a field to
   every mark it writes in order to say nothing, and it would move a fourth
   writer's captures from state 1 to state 2 for no reader's benefit.
@@ -231,8 +238,8 @@ rows are unchanged — `ts,addr,old,new`, four fields, as before.
 
 That is the right trade rather than a compromise, and the reason is that
 every reader in the tree drops the header anyway. `skippable_row` at
-`ec/tools/grade_0751_isolation.py:845` takes it on `row[0] == "ts"`, and so do
-`grade_timer_sweep.py:151` and `check_capture_encoding.py:164` with their own
+`ec/tools/grade_0751_isolation.py:1123` takes it on `row[0] == "ts"`, and so do
+`grade_timer_sweep.py:352` and `check_capture_encoding.py:164` with their own
 spelling of the same test. A name the change rows do not use costs none of
 them, and a header that named four would document a five-field mark row
 wrongly, which is the failure this column's whole point is to avoid.
@@ -510,7 +517,7 @@ what has been verified.
   50 still read the same. **That last half has a check behind it, and the tool
   is not the one this section used to name.** `check_capture_claims.py`'s
   `read_capture` index is built from `WATCH = "evidence/ec-watch"` alone
-  (`ec/tools/check_capture_claims.py:181`, the one call at `:576`), and a run
+  (`ec/tools/check_capture_claims.py:181`, the one call at `:607`), and a run
   there reports *9 capture claims checked against 10 committed captures*: it
   reads the two, and never the 48. What walks the 48 is
   `MarkProvenanceTests.test_it_agrees_with_the_reader_the_notice_lists_marks_from`

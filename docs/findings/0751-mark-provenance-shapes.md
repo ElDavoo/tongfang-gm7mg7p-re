@@ -647,6 +647,113 @@ a line number to a file.
    ok   docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:163  §3 block 3
 ```
 
+The transcript above is the run as taken and is left as the correction at the
+foot of this page says it is. **It is no longer what the tool prints.** 26 of
+the tool's 48 pins had drifted by the time issue #762 ran, every one
+re-anchored by re-reading its own quoted text in the file it names, and the tool
+now exits 0 on this tree rather than reporting 26 DRIFT. The record of the move
+— including the one pin whose *claim* had to be re-worded rather than moved — is
+[`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md).
+
+**The 19 `grade_0751_isolation.py` lines below then moved twice more, and the
+`now` column is the tree after all three.** #1409 landed after that
+re-anchor and added reporting to the grader without touching a line the pins
+quote, so the same arithmetic ran again: `take_capture_row`'s `if addr ==
+"MARK":` went from `:1268` to `:1344` and `refused_capture_rows`' docstring from
+`:1190` to `:1266`, with the same +76 shift across `read_capture` and
+`mark_labels_of` and a larger one past `read_early_exits`. The other seven rows
+name files #1409 did not touch and did not move. #1437 moved them a third time
+and is a smaller shift than either of the other two: five lines into the
+grader's module docstring, above every pin, for the same reason —
+`take_capture_row`'s `if addr == "MARK":` `:1344`→`:1349` and
+`refused_capture_rows`' docstring `:1266`→`:1271`, and `:3741`→`:3746` past it.
+Nothing about any pin's *claim* changed on any of the three moves — only where
+it points — so the table is re-anchored and the write-up above is not.
+
+**The three `grade_timer_sweep.py` pins then moved a fourth time, on a file the
+three moves above did not touch, and they are the last three rows of the table
+below.** #1406 landed on `main` after this re-anchor and grew the timer grader
+— its merged run now names where its interval, its levels and its span came
+from, which is its own change and
+[`grader-merged-capture-sources.md`](grader-merged-capture-sources.md) its own
+write-up — by four hunks, **+197** above the `#`-skip and **+201** above the
+mark branch, and by none of them touching a line a pin quotes. So
+`if line.startswith("#")` went `:130`→`:327`, `if r[1] == "MARK":` `:153`→`:354`
+and `if "resumed" in r[3]` `:154`→`:355`, the same arithmetic for the fourth
+time and with the same result: nothing about what any of the three claims, only
+where it points. **They needed the live table for the reason the other 26 did,
+and the reason is `check_page`** — the tool's own pins were moved with the code,
+so a pin at `:354` that no row here named is a citation the pages cannot
+account for, and a red run. It is the fourth time the same failure has been
+caught by re-running the tool rather than by a page noticing.
+
+**And one `grade_0751_isolation.py` pin moved a fifth time, on this merge and
+not on any of the four above.** #1450 landed on `main` after #762's re-anchor
+and made the grader's census count a capture the way its per-action line does —
+one file under two spellings is one file, which is its own subject in
+[`0751-census-capture-identity.md`](0751-census-capture-identity.md) — and it
+put nine hunks into the file, the running shift **+27** by the second and a
+**+38** past the last, every one of them at or below old `:1826`. So **exactly
+one** of the 19 moved: the census line `:3746`→`:3784`, and the other eighteen
+are unmoved because all of them sit above the first hunk. Nothing about its
+*claim* changed, the table's `now` column is re-anchored, and no `what` needed
+re-wording. **A table that had re-anchored all 19 by one arithmetic would have
+reddened eighteen of them on lines that did not move**, which is the other half
+of what the four moves above are for: a shift is measured per hunk, not per
+file.
+
+`check_page` holds this page to the lines the tool cites today, so the moved
+pins are named here in live prose rather than as a second transcript: a fenced
+copy of section 5 would re-state the four `test_*.py` pins the block above
+already carries, and `census_test_line_pins.py` counts a pin per occurrence
+whether or not it is inside a fence. These are the 26 that moved when the
+re-anchor ran and the 3 that moved after it, `old` on the tree this page was
+written against:
+
+| now | before |
+|---|---|
+| `ec/tools/grade_0751_isolation.py:1130` | `:852` |
+| `ec/tools/grade_0751_isolation.py:1123` | `:845` |
+| `ec/tools/grade_0751_isolation.py:1171` | `:886` |
+| `ec/tools/grade_0751_isolation.py:1175` | `:890` |
+| `ec/tools/grade_0751_isolation.py:1181` | `:896` |
+| `ec/tools/grade_0751_isolation.py:1271` | `:986` |
+| `ec/tools/grade_0751_isolation.py:1346` | `:1061` |
+| `ec/tools/grade_0751_isolation.py:1348` | `:1063` |
+| `ec/tools/grade_0751_isolation.py:1349` | `:1064` |
+| `ec/tools/grade_0751_isolation.py:1369` | `:1084` |
+| `ec/tools/grade_0751_isolation.py:1371` | `:1086` |
+| `ec/tools/grade_0751_isolation.py:1372` | `:1087` |
+| `ec/tools/grade_0751_isolation.py:1441` | `:1156` |
+| `ec/tools/grade_0751_isolation.py:1464` | `:1179` |
+| `ec/tools/grade_0751_isolation.py:1477` | `:1192` |
+| `ec/tools/grade_0751_isolation.py:1749` | `:1435` |
+| `ec/tools/grade_0751_isolation.py:1791` | `:1477` |
+| `ec/tools/grade_0751_isolation.py:521` | `:428` |
+| `ec/tools/grade_0751_isolation.py:3784` | `:3065` |
+| `ec/tools/grade_gpu_door.py:520` | `:479` |
+| `ec/tools/check_capture_claims.py:607` | `:576` |
+| `windows/tools/ec_watch.py:381` | `:368` |
+| `windows/tools/ec_watch.py:509` | `:493` |
+| `windows/tools/manual_fan_ctrl_probe.py:264` | `:257` |
+| `windows/tools/manual_fan_ctrl_probe.py:450` | `:443` |
+| `windows/tools/manual_fan_ctrl_probe.py:934` | `:927` |
+| `ec/tools/grade_timer_sweep.py:327` | `:130` |
+| `ec/tools/grade_timer_sweep.py:354` | `:153` |
+| `ec/tools/grade_timer_sweep.py:355` | `:154` |
+
+**The prose above still carries the pre-re-anchor numbers, and that is a
+correction rather than an oversight.** `:845`, `:890`, `:1061`, `:1063`, `:852`,
+`:896`, `:1087` and `:1084` in the sections above name the same functions the
+table above names at `:1123`, `:1175`, `:1346`, `:1348`, `:1130`, `:1181`,
+`:1372` and `:1369`. They were left where the measurement put them because this
+page's #739 correction already freezes its transcripts as taken, and a reader
+told to re-run rather than trust the quotations is told the same about the
+`:NNN` shorthand that ties them to those quotations. **The table is the live
+half and the shorthand is the frozen one**, and only the table is what
+`check_page` reads — which is why a stale `:845` above does not redden the tool
+and a stale table would have.
+
 What it does not check: whether either shape is a good idea; what a widened
 shape should mean for `system_id_probe.py`, `ec_timer_capture.py` or
 `manual_fan_ctrl_probe.py`; whether the readers are right about anything but
