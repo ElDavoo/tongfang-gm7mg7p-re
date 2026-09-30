@@ -462,6 +462,19 @@ per-program `refs` / bucket columns, and re-keying §2's `both` rows per
 program" — is **left exactly as written**, because the re-keying half is still
 open. The new summary section names which half landed.
 
+*(Correction, 2026-09-30, issue #714: **the re-keying half has now landed**, on
+2026-09-30, and the sentence above is kept as written rather than edited. The
+first half — the per-program `refs` / bucket columns — is this page. The second
+is `ec/annotations/xdata-register-map.md` §2, whose split table and three-way
+partition are now keyed per program on `spellings_by_program` and print
+1,375 program-addresses beside the union table's 1,326 rows; the write-up is
+[`xdata-register-map-per-program-keying.md`](xdata-register-map-per-program-keying.md).
+**No figure on this page moves** and no column is added: the partition's third
+term is 156 within the main EC against 155 on the union key, differing on
+`0x04A3` alone, which is the same address this page's `pair-literal`
+reconciliation rests on. The function counts this page lists as unsplit are
+still unsplit.)*
+
 Nothing here is a restatement of a previously wrong number. No figure in the
 tree moved, so there is no wrong version to keep visible: the numbers
 `xdata-spelled-as-union.md` publishes for `0x04A3` and `0x0834` are the same

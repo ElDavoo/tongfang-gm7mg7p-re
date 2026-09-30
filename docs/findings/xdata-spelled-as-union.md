@@ -243,6 +243,21 @@ it is now also 947 main-EC + 255 pd. The write-up is
 places in the tree that said no per-program count exists carry the same dated
 correction beside the original sentence.)*
 
+*(Correction, 2026-09-30, issue #714. The closing clause above — "of §2's
+table, which the re-keying half of this issue's follow-up has not done" — is
+now **done**, and nothing else in that paragraph is wrong. `ec/annotations/
+xdata-register-map.md` §2's split table is re-keyed per program onto
+`spellings_by_program`: the per-program table comes first at **1,375**
+program-addresses and the union-keyed table is kept beside it at **1,326** rows,
+which is 1,326 + the 49 `both` rows rather than a correction of it. **No figure
+on this page moves** — the 1,202, the 947 + 255 and the four rows' halves are
+all `refs`-column readings and are untouched. What the re-key does bear on is
+the claim this page has been carrying: the unsuffixed `refs` on a `both` row is
+still a sum over both programs, and §2 now says so of its own second table
+rather than leaving a reader to work it out from the first. The function counts
+listed above are still unsplit and still the open item. The write-up is
+[`xdata-register-map-per-program-keying.md`](xdata-register-map-per-program-keying.md).)*
+
 ## What this does not establish
 
 The column says how each program **spells** an address, not what either one
