@@ -585,7 +585,7 @@ CITATIONS = [
      '`addr == "MARK"` before the `int()` calls, and so does this',
      "the partition's docstring quoting that branch, which the scan matches "
      "because it is the same literal spelled in prose"),
-    ("ec/tools/grade_timer_sweep.py", 153, 'if r[1] == "MARK":',
+    ("ec/tools/grade_timer_sweep.py", 354, 'if r[1] == "MARK":',
      "reader: grade_timer_sweep.load recognising the row"),
     ("ec/tools/check_capture_encoding.py", 166,
      'if len(row) > 1 and row[1] == "MARK":',
@@ -650,9 +650,9 @@ CITATIONS = [
     ("ec/tools/check_capture_claims.py", 576,
      "read_capture(os.path.join(REPO, WATCH, name))",
      "a third, and the only one that reads every committed capture"),
-    ("ec/tools/grade_timer_sweep.py", 130, 'if line.startswith("#"):',
+    ("ec/tools/grade_timer_sweep.py", 327, 'if line.startswith("#"):',
      "grade_timer_sweep drops every `#` line before the CSV parse"),
-    ("ec/tools/grade_timer_sweep.py", 154, 'if "resumed" in r[3]:',
+    ("ec/tools/grade_timer_sweep.py", 355, 'if "resumed" in r[3]:',
      "the one phrase grade_timer_sweep reads a MARK row for"),
     # -- the notice, the canary, and the `#` namespace -----------------------
     ("windows/tools/ec_watch.py", 295,
