@@ -305,30 +305,23 @@ of `held at 0xNN over 25.0s` has no way to see through.
 ## Correction: the precedent the issue cites is at a different line
 
 The issue names `bom_refusal` as being at `ec/tools/grade_0751_isolation.py:871`.
-The claim is right and the line is not. On the tree this was written against,
-**`bom_refusal` was at `:899`**, `:871` was `starts_with_bom` — the three-byte
-question `bom_refusal`'s caller asks of the bytes — and the raise beside it,
-`read_capture`'s `raise ValueError(bom_refusal(path))`, was at `:1091`.
+The claim is right and the line is not. On this tree `bom_refusal` is at
+**`:980`**, `starts_with_bom` — the three-byte question `bom_refusal`'s caller
+asks of the bytes — is at `:952`, and the raise beside it, `read_capture`'s
+`raise ValueError(bom_refusal(path))`, is at `:1172`. `:871` is none of the
+three: it is a comment line inside `class Window.__init__`, with the class
+opening at `:859` and `self.span = 0.0` at `:877`. The line the issue named
+lands in a different class entirely, and stays there.
 
-**#1409 then moved all three.** It added 369 lines to
-`grade_0751_isolation.py`, and on the tree this section was first written
-against `bom_refusal` was at **`:975`**, `starts_with_bom` at `:947` and the
-raise at `:1167` — each 76 lines lower than above. (Superseded: **#1437** added
-5 more lines above all three, so on the merged tree `bom_refusal` is at
-**`:980`**, `starts_with_bom` at `:952` and the raise at `:1172` — each 81 lines
-lower than the first pair. The earlier figures are left visible per §4a-4d.)
-
-`:871` is not either of them on either tree. On the tree this section was first
-written against it was `self.span = 0.0` inside `class Window` — at `:872`, with
-the class opening at `:854`; on the merged tree `:871` is a comment line inside
-`class Window.__init__`, with the class opening at `:859` and `self.span = 0.0`
-at `:877`. Either way the line the issue named lands in a different class
-entirely, and stays there. The correction is a *line* correction and a line is
-a rank into a file that keeps growing, which is
+That is a *line* correction, and a line is a rank into a file that keeps
+growing, which is
 [`check_citation_lines.py`](../ec/tools/check_citation_lines.py)'s stated
-principle applied to a `.py` rather than to a generated CSV — so the figures
-above are dated rather than silently restated, and the finding is that the
-issue's line was wrong, which no later commit makes right.
+principle applied to a `.py` rather than to a generated CSV — so the three
+figures above are dated to this tree, and where the symbols sat on the trees
+this was drafted against is `git log -p ec/tools/grade_0751_isolation.py`, not
+a paragraph restating each merge. On every tree measured, `bom_refusal` has
+been at some line other than `:871`; the finding is that the issue's line was
+wrong, which no later commit makes right.
 
 The claim is kept and the line corrected here rather than dropped, per the
 `docs/findings.md` §4a-4d pattern.
@@ -443,23 +436,21 @@ one the file's own docstring predicts: two branches that both add a write-up
 and both regenerate produce two different counts for the same tree, and the
 resolution belongs in the content rather than in the prose.
 
-**The count this merge regenerates to is 184, and getting there took one more
-pass than it should have.** An earlier revision of this paragraph put
-`origin/main` at 182 and the merged tree at 183; both were measured on a tree
-that was not the one this lands on, and each is one short. What is true,
-measured on the trees named: at `origin/main` the committed count and the
-generated count agree, and `gen_findings_index.py --check` exits 0 there; on
-this tree the generator produces **184** and the committed header said 183,
-because the new row was added and the count line above it was not — which
-`gen_findings_index.py | diff - docs/findings/INDEX.md` reported as a single
-`8c8` line, and which `docs/findings/INDEX.md:8` now reads 184 to match.
-`--check` exits 0 on this tree after that regeneration, which is the
-"green by construction" this paragraph originally claimed and now measures.
-The supersession is left visible rather than restated, per the
-`docs/findings.md` §4a-4d pattern, because the failure being described here —
-a hand-added row leaving the header count behind, which is the same shape
-`findings-index-staleness.md` measured at #1212 — is one this write-up
-committed itself before the fix.
+**The index is generated, and the generated count is the only one that has to
+be right.** This write-up adds a row, so the fix is to run
+`python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md` and let the
+header fall out of the tree: `python3 ec/tools/gen_findings_index.py --check`
+exits 0 here, and `gen_findings_index.py | diff - docs/findings/INDEX.md` is
+empty. A total written into this paragraph would be a value every later
+write-up has to come back and edit — the shape CLAUDE.md rules out — so the
+tool's output stands in for it and no figure is kept here.
+
+That is also the shape of the failure described above: a hand-added row
+leaving the header count behind, the same thing
+`findings-index-staleness.md` measured at #1212, and one this write-up
+committed itself before the regeneration. What made it survivable is that
+`--check` catches it — the count is generated, so nothing has to remember it,
+and the only claim worth making about it is that the check is green.
 
 Note for the record that the check is wired into the gate only by
 `docs/ci/agent-gates-findings-frozen.patch`, which is prepared and not applied
