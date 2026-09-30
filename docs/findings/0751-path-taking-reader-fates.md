@@ -120,11 +120,11 @@ $ grep -rn "\.existing_mark_labels" --include=*.py .
 ./ec/tools/test_grade_0751_isolation.py:4683:                    self.assertEqual(grade.existing_mark_labels(path), [])
 ./ec/tools/test_grade_0751_isolation.py:4858:                                 grade.existing_mark_labels(str(path)))
 ./ec/tools/measure_mark_provenance.py:468:            ("existing_mark_labels", GRADER, grader.existing_mark_labels,
-./ec/tools/measure_mark_provenance.py:841:        if pairs != grader.existing_mark_labels(path):
-./ec/tools/measure_mark_provenance.py:844:                            f"{grader.existing_mark_labels(path)}")
-./ec/tools/measure_mark_provenance.py:891:        base = grader.existing_mark_labels(os.path.join(tmp, "0751-none.csv"))
-./ec/tools/measure_mark_provenance.py:893:            got = grader.existing_mark_labels(
-./ec/tools/measure_mark_provenance.py:904:        if grader.existing_mark_labels(empty) != [
+./ec/tools/measure_mark_provenance.py:843:        if pairs != grader.existing_mark_labels(path):
+./ec/tools/measure_mark_provenance.py:846:                            f"{grader.existing_mark_labels(path)}")
+./ec/tools/measure_mark_provenance.py:893:        base = grader.existing_mark_labels(os.path.join(tmp, "0751-none.csv"))
+./ec/tools/measure_mark_provenance.py:895:            got = grader.existing_mark_labels(
+./ec/tools/measure_mark_provenance.py:906:        if grader.existing_mark_labels(empty) != [
 ```
 
 Twelve of those are the grader's own suite, which is not what the question is
@@ -274,6 +274,14 @@ write-up — `docs/findings.md` §6a records it as reproducing on a clean
 > this page records moves — both functions are still kept, the three call sites
 > are still the three the table names, and `measure_mark_provenance.py` still
 > exits 0 on 44 `ok` rows. What was red was this page's own housekeeping.
+>
+> The second of the two assertions is stale in the same way and in the other
+> direction: `test_grade_0751_isolation.py` is **146** tests on a clean
+> worktree at `origin/main` and **149** on this tree, not the 111 both are
+> reported as. It was already wrong where it was written rather than moved
+> here, so the sentence above is left as written and this put beside it per
+> §4a-4d, and the counts are a measurement of those two trees rather than a
+> property of the suite — they move with it.
 
 *(The plan this page was written against recorded **two** pre-existing
 failures, the second being `test_walk_budget_census.py` on a baseline ref
@@ -319,9 +327,14 @@ a text search, a line-number census and a test suite.
 `grade_0751_isolation.py` lines in the first were already stale on `main` —
 this change's own edits to that file begin at `:1826`, below all four — so
 they are refreshed here rather than carried, and the block is the run again
-instead of one that had quietly stopped being it. `ec_watch.py`,
-`test_ec_watch.py` and `measure_mark_provenance.py` are untouched by this
-change, so the second transcript's other eight lines carry. This note sits at
+instead of one that had quietly stopped being it. Five of the second
+transcript's eight were stale on `main` as well, and for a reason the first
+four did not have: this change touches none of the three files that block
+names, so nothing here moved them, and `untouched by this change` is not
+`correct`. They are refreshed on the same terms rather than carried —
+`measure_mark_provenance.py`'s `:841`, `:844`, `:891`, `:893` and `:904`
+become the `:843`, `:846`, `:893`, `:895` and `:906` the run now prints — and
+the other three hold on both trees. This note sits at
 the end rather than under the first transcript so that adding it moves no
 citing line above it — every `file:NNN` on this page is a record the census
 resolves, and a note inserted mid-page would have invalidated the twenty rows
