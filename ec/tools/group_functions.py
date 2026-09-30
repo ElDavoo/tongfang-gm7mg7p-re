@@ -14,7 +14,13 @@ function:
 `group_basis` is closed: `type` (the existing `type` column already names a
 family), `vector` (the 0x0000 interrupt table), `module` (the BIOS, where the
 module IS the grouping), `callgraph` (a connected component of the call
-graph), `shared`, and `ungrouped`.
+graph), and `ungrouped`. The list used to carry a sixth value, `shared`,
+between `callgraph` and `ungrouped`, and it has been dropped: no rule in this
+file emitted it, on either component, at any point -- so it was a member of a
+closed vocabulary that nothing could produce, which is a closure that holds in
+one direction only. What would have to exist for it to come back is written
+down at `GROUP_BASES` and at `cross_bank_groups`, and
+`docs/findings/group-check-drift-and-shared-basis.md` has the measurement.
 
 **A `callgraph` group is a connected component, not a subsystem.** Union-find
 over `lcall`/`ljmp` edges answers "are these mutually reachable", and on this
@@ -122,17 +128,43 @@ REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, HERE)
 
 from audit_call_targets import OTHER_BANK, bucket_of  # noqa: E402,F401
+# The comparison `check()` runs against a fresh `group_rows()`, in its own
+# file. It imports nothing from here -- it takes both sides already keyed by
+# `norm_addr`, which keeps the drift logic out of this file without a cycle.
+from group_drift import drift_problems  # noqa: E402
 
 EC_CSV = os.path.join(REPO, "ec", "annotations", "ghidra-functions.csv")
 EC_GROUPS = os.path.join(REPO, "ec", "annotations", "function-groups.csv")
 BIOS_CSV = os.path.join(REPO, "bios", "annotations", "ghidra-functions.csv")
 BIOS_GROUPS = os.path.join(REPO, "bios", "annotations", "function-groups.csv")
 
+# The pair `--report`, `--apply` and `--check` all work over. A constant rather
+# than a literal repeated in each of the three, because `--check` now takes it
+# as an argument and the fixture needs to hand it something else.
+COMMITTED_SOURCES = ((EC_CSV, EC_GROUPS, False), (BIOS_CSV, BIOS_GROUPS, True))
+
 # The closed vocabulary, and the order --report prints in. `ungrouped` is a
 # result, not a failure: it is what a row the method did not reach is, and
 # having it in the list is what makes saying so cost nothing -- the same
 # argument `unresolved` makes in the `type` vocabulary.
-GROUP_BASES = ("type", "vector", "module", "callgraph", "shared", "ungrouped")
+#
+# `shared` WAS a sixth value here, and it is gone. `seed_groups` emits
+# `vector`/`type`, the BIOS branch emits `module`, and `group_rows` ends in
+# `callgraph` or `ungrouped` -- five producers, and `shared` was not one of
+# them. So a hand-written `shared` row passed `--check`, was deleted by
+# `--apply`, and no `--self-test` fixture ever reached the branch meant to police
+# it; see `cross_bank_groups` for why that branch could not have.
+# `test_group_functions.py` now asserts the closure from both sides, so
+# re-adding the value without a rule that emits it fails there.
+#
+# The issue offers the other half of the choice -- give `shared` a producer --
+# and it is declined deliberately: the value is meant to say "this name is
+# common to both banks on purpose", and inventing a rule that decides when a
+# name qualifies is a design decision about the vocabulary, not a missing line.
+# For it to come back, all three of these have to exist: a rule in
+# `group_rows()` that emits the value, a committed row (or a fixture) that
+# carries it, and a fixture that reaches the `cross_bank_groups` exemption.
+GROUP_BASES = ("type", "vector", "module", "callgraph", "ungrouped")
 
 # `type` values that already name a family, mapped to the group they imply.
 # The two hand-written charge-target rows and the two `ec-io` rows are here
@@ -685,24 +717,35 @@ def check_group_row(row, banks_by_addr, repo=REPO):
 def cross_bank_groups(grows):
     """Group names that collect rows out of more than one bank *by clustering*.
 
-    The whole-file form of the caveat, and it is deliberately scoped to the
-    bases where a span is a MERGE rather than a coincidence:
+    The whole-file form of the caveat, and it is scoped to the bases where a
+    span is a MERGE rather than a coincidence. There is exactly one such basis
+    left:
 
       * `callgraph` -- the only basis that asserts the two functions are
         connected. One component spanning bank0 and bank1 is exactly the join
         the caveat forbids, because the edge that made them one component
         could have been a same-bank call.
-      * `ungrouped` -- asserts no membership at all; the method did not reach
-        the row.
-      * `shared` -- the explicit way this file says a name is common to both
-        banks on purpose.
 
     `type` and `vector` are exempt, and the reason is that they are not
     merges. A `type=math` row in bank0 and a `type=math` row in bank1 are two
     different functions that happen to do the same kind of work, which is
     what a role-based grouping means; nothing connected them. Refusing those
     would be refusing the vocabulary the issue asks for. A `vector` group is
-    the 0x0000 table, which both banks carry identically by construction."""
+    the 0x0000 table, which both banks carry identically by construction.
+
+    This list used to name three exemptions, not one. The other two were
+    `ungrouped` -- asserts no membership at all, so a span is not a merge --
+    and `shared`, which read "the explicit way this file says a name is common
+    to both banks on purpose". **Neither entry was reachable, and the reason
+    is in the loop below rather than in this docstring:** it `continue`s on
+    every row whose basis is not `callgraph` before anything is bucketed, so no
+    non-`callgraph` row has ever entered this function's accounting. They were
+    exempt by omission rather than by a branch. `shared` was the worse half of
+    that: it named a value `group_rows()` never emitted, so the row it was
+    written for could not exist (see `GROUP_BASES`). `ungrouped` is still
+    exempt and still means what it said -- asserting no membership really is
+    not a merge -- but that is now what the `continue` says about it rather
+    than a second thing this function checks."""
     regions = collections.defaultdict(set)
     for row in grows:
         if (row.get("group_basis") or "").strip() != "callgraph":
@@ -1266,6 +1309,67 @@ def self_test():
                "group_basis": "type"}]),
           "(a type-seeded name is not a callgraph name to begin with)")
 
+    # --check's drift half, on the exact shape that made its sibling dead: a
+    # committed cell compared with the value the same run has just computed is
+    # a tautology, and a tautology passes whatever the file says. So the
+    # fixture drives the real `check()` over a scratch pair of CSVs that AGREE
+    # with the rule, then poisons ONE cell at a time -- the `group`, and then
+    # the `group_basis`, each to a value the vocabulary, cross-bank and
+    # evidence checks all accept -- and asserts the same call refuses. It goes
+    # through `_run_check` because the local `check` above is this fixture's
+    # own recorder, and through `sources` because `check()` otherwise reads the
+    # committed pair, which is the one thing a fixture must not be editing.
+    #
+    # The expected failure prints its own diagnostic; that is the real
+    # `check()` writing to stdout, and it is left alone rather than silenced,
+    # so a run of --self-test still shows what it is refusing.
+    def drift_fixture(addr=None, group="ungrouped", basis="ungrouped"):
+        """`check()`'s exit status over a scratch pair of CSVs, with the
+        `group`/`group_basis` cells of row `addr` hand-edited to `group` and
+        `basis` when an address is named.
+
+        Two rows with no calls between them, so both fall out as `ungrouped`
+        at the default `min_size` and the untouched pair agrees with the rule
+        without the fixture depending on how the clusterer happens to group
+        anything."""
+        ann = os.path.join(scratch, "drift_annotations.csv")
+        groups = os.path.join(scratch, "drift_groups.csv")
+        annotated = [{"scope": "bank0", "addr": "8000", "name": "drift_a",
+                      "type": "logic", "evidence": os.path.relpath(
+                          asm("drift_a.asm", [RET]), REPO)},
+                     {"scope": "bank0", "addr": "8100", "name": "drift_b",
+                      "type": "logic", "evidence": os.path.relpath(
+                          asm("drift_b.asm", [RET]), REPO)}]
+        committed = [{"scope": r["scope"], "addr": r["addr"],
+                      "group": group if r["addr"] == addr else "ungrouped",
+                      "group_basis": basis if r["addr"] == addr else "ungrouped",
+                      "comment": "", "evidence": r["evidence"]}
+                     for r in annotated]
+        for path, fields, records in (
+                (ann, ["scope", "addr", "name", "type", "evidence"], annotated),
+                (groups, ["scope", "addr", "group", "group_basis", "comment",
+                          "evidence"], committed)):
+            with open(path, "w", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=fields,
+                                        lineterminator="\n")
+                writer.writeheader()
+                writer.writerows(records)
+        return _run_check(repo=REPO, sources=[(ann, groups, False)])
+
+    check("check refuses a committed group cell the rule disagrees with",
+          drift_fixture("8000", group="arithmetic") == 1,
+          "(hand-editing one `group` cell to another in-vocabulary value must "
+          "not pass --check; --apply reverts it in silence)")
+    check("check refuses a committed basis the rule disagrees with",
+          drift_fixture("8000", basis="type") == 1,
+          "(`type` is in the closed list, so the vocabulary check accepts it "
+          "and only the recompute can say the rule did not write it)")
+    check("check accepts committed cells that agree with the rule",
+          drift_fixture() == 0,
+          "(the paired case: if the two keys were ever collapsed back into "
+          "one, the two refusals above would return 0 and this would still "
+          "pass -- which is why they are here as a pair)")
+
     if failures:
         for f in failures:
             print("  FAIL  %s" % f)
@@ -1399,17 +1503,69 @@ def report(grouped, stats, rows, repo=REPO, is_bios=False):
              stats.proxy_edges))
 
 
-def check(repo=REPO):
-    """Refuse a group file that breaks the vocabulary, leaves a function
-    ungrouped, or names one address in two banks."""
+def drift_for(rows, grows, repo=REPO, is_bios=False):
+    """The two keyed maps `check()`'s drift half compares: what the file says,
+    and what the rule says now.
+
+    `committed` comes out of the group file and `computed` out of a fresh
+    `group_rows()` over the annotation file, in two separate passes over two
+    separate sources. **They must not be the same value.** A comparison that
+    hands a value both sides cannot fail, whatever the file holds -- that is
+    the `grade_name_basis.py` bug this half exists not to repeat, and the
+    reason this is a function returning two things rather than a loop inline in
+    `check()`.
+
+    `min_size` is left at `group_rows()`'s own default and deliberately so.
+    That default is what `--apply` writes with, so it is what a check has to
+    agree with; a check run at some other cluster threshold invents
+    disagreements that are not drift at all, and a gate that invents failures
+    is a gate people route around.
+
+    A committed row with no annotated function at its key gets an empty name,
+    so its refusal reads `bank0 8000 ()`: there is no annotation row to name,
+    which is the same fact the refusal is about.
+    """
+    names = {(r["scope"].strip(), norm_addr(r["addr"])): (r.get("name") or "")
+             for r in rows}
+    committed = {}
+    for grow in grows:
+        key = (grow["scope"].strip(), norm_addr(grow["addr"]))
+        # Whitespace off both cells, the way `grade_name_basis` strips its
+        # committed grade: a csv cell's padding is how someone typed it, not
+        # something the rule decided.
+        committed[key] = ((grow.get("group") or "").strip(),
+                          (grow.get("group_basis") or "").strip(),
+                          names.get(key, ""))
+    computed, _stats = group_rows(rows, repo, is_bios)
+    return committed, computed
+
+
+def check(repo=REPO, sources=None):
+    """Refuse a group file that has drifted from the rule, breaks the
+    vocabulary, leaves a function ungrouped, or names one address in two
+    banks.
+
+    `sources` is the `(annotations, groups, is_bios)` triples to check, and it
+    is a parameter so that `--self-test` can drive this whole function over a
+    fixture tree instead of the committed one -- the same reason
+    `grade_name_basis.check()` takes its graded rows as an argument. What it
+    defaults to is the committed pair."""
     problems = []
     for annotations, groups_path, is_bios in (
-            (EC_CSV, EC_GROUPS, False), (BIOS_CSV, BIOS_GROUPS, True)):
+            sources if sources is not None else COMMITTED_SOURCES):
         rows = read_csv(annotations)
         if not os.path.isfile(groups_path):
             problems.append("no %s; run --apply" % os.path.relpath(groups_path, repo))
             continue
         grows = read_csv(groups_path)
+        # The drift half, and the reason it is a separate function: the five
+        # checks below all read the committed file and never ask whether it
+        # still says what the rule would say, so a `group` cell hand-edited to
+        # any other in-vocabulary value passed all of them and was reverted by
+        # `--apply` in silence.
+        committed, computed = drift_for(rows, grows, repo, is_bios)
+        problems.extend(drift_problems(committed, computed,
+                                       os.path.relpath(groups_path, repo)))
         for name, why in misnamed_callgraph_groups(grows):
             problems.append("%s: group %r %s" % (
                 os.path.relpath(groups_path, repo), name, why))
@@ -1442,10 +1598,21 @@ def check(repo=REPO):
     if problems:
         print("  FAILURES ABOVE")
         return 1
-    print("  every annotated function has a group, every group_basis is in "
-          "the closed list, every evidence path is on disk, and no group row "
-          "spans two banks")
+    print("  every committed group and group_basis agrees with a fresh run of "
+          "the rule, every annotated function has a group, every group_basis "
+          "is in the closed list, every evidence path is on disk, and no group "
+          "row spans two banks")
     return 0
+
+
+# The module-level `check`, bound here so `--self-test` can exercise it: the
+# fixture defines a local `check` of its own, which shadows this name for the
+# rest of that function. It is bound after `check` rather than before
+# `self_test` because this file defines the two in the other order, and the
+# same name and the same reason are used in grade_name_basis.py -- where the
+# fixture is what stopped the drift half's two keys being collapsed back into
+# one.
+_run_check = check
 
 
 def main(argv=None):
@@ -1456,9 +1623,10 @@ def main(argv=None):
     ap.add_argument("--apply", action="store_true",
                     help="write both function-groups.csv files")
     ap.add_argument("--check", action="store_true",
-                    help="refuse a group file that breaks the vocabulary, "
-                         "leaves a function ungrouped, or names one address "
-                         "in two banks")
+                    help="refuse a group file whose committed cells disagree "
+                         "with a fresh run of the rule, or that breaks the "
+                         "vocabulary, leaves a function ungrouped, or names "
+                         "one address in two banks")
     ap.add_argument("--self-test", action="store_true",
                     help="pin the no-cross-bank rule on a fixture graph with "
                          "a known cross-region edge")
@@ -1467,8 +1635,7 @@ def main(argv=None):
         return self_test()
     if args.check:
         return check()
-    for annotations, groups_path, is_bios in (
-            (EC_CSV, EC_GROUPS, False), (BIOS_CSV, BIOS_GROUPS, True)):
+    for annotations, groups_path, is_bios in COMMITTED_SOURCES:
         rows = read_csv(annotations)
         grouped, stats = group_rows(rows, REPO, is_bios)
         if args.apply:

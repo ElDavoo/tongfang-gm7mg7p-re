@@ -82,7 +82,8 @@ Measured over the 788 rows here: 772 `code-shape`, 10 `register-map`, 6
 One row per annotated function — `scope,addr,group,group_basis,comment,
 evidence` — and the layer `ghidra-functions.csv` does not have: which
 functions work together. `group_basis` is closed: `type`, `vector`, `module`,
-`callgraph`, `shared`, `ungrouped`.
+`callgraph`, `ungrouped`. `shared` used to be a sixth and was dropped — nothing
+emitted it; see `ec/tools/group_functions.py` at `GROUP_BASES`.
 
 **The BIOS is the module-first case, and it is nearly free.** 666 of the 788
 rows are `group_basis=module`: the export is per-module and the module name is
