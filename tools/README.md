@@ -165,13 +165,13 @@ the winner lacks died with `ImportError: cannot import name 'EcError' from
 
 **There is now one shape and one way to install it.**
 `windows/tools/ecrw_fake.py` carries `Ec`, `EcError` and `block_runs` over the
-real module's whole surface, and every suite in that directory calls
-`ecrw_fake.install()` — by assignment, not `setdefault`. A suite with bytes of
-its own keeps its own class and patches it over the tool after import, which is
-what five of them do. `test_ecrw.py` is the one suite that installs nothing,
-because it puts a fake `ctypes.WinDLL` in front of the *real* `ecrw.py` and
-restores whatever was under the name in a `finally`; that is a borrow, not a
-third shape.
+real module's whole surface, and every suite in that directory exercising a tool
+that imports `ecrw` calls `ecrw_fake.install()` — by assignment, not
+`setdefault`. A suite with bytes of its own keeps its own class and patches it
+over the tool after import, which is what every suite installing the fake does.
+`test_ecrw.py` installs nothing, because it puts a fake `ctypes.WinDLL` in front
+of the *real* `ecrw.py` and restores whatever was under the name in a `finally`;
+that is a borrow, not a third shape.
 
 **So the per-file loop is insurance, and
 [`tools/test_windows_tools_shared_interpreter.py`](test_windows_tools_shared_interpreter.py)

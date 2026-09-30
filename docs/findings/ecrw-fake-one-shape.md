@@ -61,8 +61,8 @@ Each keeps `import sys`: the `sys.path.insert(0, ...)` the shared fake needs is
 a `sys` use, so the "drop `import sys`" that the shape-change suggests is not
 available where a `sys.path` entry replaces the `setdefault`.
 
-There is deliberately **no `install(Ec=...)` parameter**. Five suites already
-patch the byte-carrying class over the tool after import
+There is deliberately **no `install(Ec=...)` parameter**. Every suite that
+installs the fake patches its byte-carrying class over the tool after import
 (`patch.object(tool, 'Ec', lambda: ec)`), and that is the one way to do it; a
 second way is how the three shapes came about.
 
@@ -90,16 +90,16 @@ does the same as a live case: `windows/tools` is copied into a scratch root, the
 three formerly-`setdefault` suites are renamed to sort first and last, and the
 two runs are required to report the *same* problems.
 
-The mirror has to preserve the repo-relative depth the suites read, because six
-of them resolve `parents[2]` and then open committed files under `ec/`,
-`evidence/`, `docs/` and `windows/decompiled/`. It symlinks **every** other
-top-level entry in rather than a list of four: a list is a guess about what the
-suites touch, and a guess that turns out short fails on a missing directory,
-which reads as a broken mirror rather than as the property under test. Measured
-with a four-entry list, the mirror produced 38 spurious errors from
-`test_battery_trace.py` and `test_census_native_c.py`; with every entry symlinked
-in, both orders report the same four `test_gpu_block_watch` failures the
-committed tree reports and `Ran 335 tests` either way.
+The mirror has to preserve the repo-relative depth the suites read, because
+most of them resolve the repository by walking up from `__file__` and then open
+committed files under `ec/`, `evidence/`, `docs/` and `windows/decompiled/`. It
+symlinks **every** other top-level entry in rather than a list of four: a list is
+a guess about what the suites touch, and a guess that turns out short fails on a
+missing directory, which reads as a broken mirror rather than as the property
+under test. Measured with a four-entry list, the mirror produced 38 spurious
+errors from `test_battery_trace.py` and `test_census_native_c.py`; with every
+entry symlinked in, both orders report the same four `test_gpu_block_watch`
+failures the committed tree reports and `Ran 335 tests` either way.
 
 **Two renames are the honest bound of what a scratch copy can demonstrate.**
 First and last are the extremes of the sort order and nothing between them is

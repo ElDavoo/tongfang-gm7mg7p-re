@@ -45,10 +45,11 @@ failed=0
 # docs/findings.md §16 has the reproduction.
 #
 # It is insurance now, not the thing keeping a red build away. Every suite in
-# that directory installs windows/tools/ecrw_fake.py, one shape, by
-# assignment, and that is the only way a suite there installs the fake --
-# ecrw_fake.install() installs the names the tools bind at import, and a
-# suite with bytes of its own patches the tool afterwards, as five already do.
+# that directory exercising a tool that imports ecrw installs
+# windows/tools/ecrw_fake.py, one shape, by assignment, and that is the only
+# way a suite there installs the fake -- ecrw_fake.install() installs the names
+# the tools bind at import, and a suite with bytes of its own keeps that class
+# and patches it over the tool afterwards, as every suite installing it does.
 # tools/test_windows_tools_shared_interpreter.py is where that is asserted
 # rather than promised: it runs the discovery over windows/tools in one
 # interpreter, on a mirror renamed to sort both ways first.

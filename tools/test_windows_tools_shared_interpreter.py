@@ -216,15 +216,16 @@ class OrderingTests(unittest.TestCase):
     """A rename that reverses the sort order changes nothing. Live, on a mirror.
 
     The suites are copied rather than moved, and everything else in the
-    repository is symlinked in beside them: six of them resolve `parents[2]`
-    and then open committed files, so a bare copy of the directory fails on
-    missing paths and proves nothing about ordering. Symlinking *every* entry
-    rather than the handful this suite can enumerate is what keeps that honest
-    -- a suite that resolves a path nobody thought of has to fail the way it
-    would in the tree, not on a directory this file failed to guess. The
-    mirror is resolved before use, because `test_system_id_probe.py` calls
-    `Path(__file__).resolve()` and a `TemporaryDirectory` under a symlinked
-    `/tmp` would hand it back a path outside the root it just built.
+    repository is symlinked in beside them: most of them resolve the repository
+    by walking up from `__file__` and then open committed files, so a bare copy
+    of the directory fails on missing paths and proves nothing about ordering.
+    Symlinking *every* entry rather than the handful this suite can enumerate is
+    what keeps that honest -- a suite that resolves a path nobody thought of has
+    to fail the way it would in the tree, not on a directory this file failed to
+    guess. The mirror is resolved before use, because
+    `test_system_id_probe.py` calls `Path(__file__).resolve()` and a
+    `TemporaryDirectory` under a symlinked `/tmp` would hand it back a path
+    outside the root it just built.
 
     Two renames are the honest bound of what a scratch copy can demonstrate --
     first and last are the extremes, and nothing between them is claimed. They
