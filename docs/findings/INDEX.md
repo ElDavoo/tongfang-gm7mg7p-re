@@ -150,6 +150,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`testdata-row-claims-repair-measurement.md`](testdata-row-claims-repair-measurement.md) — What the two testdata checkers do over a hand-repair's pre-repair tree (issue #978)
 - [`testdata-row-claims-report-naming.md`](testdata-row-claims-report-naming.md) — The carrier, the searched root, and the two file sets are named, and the closing sentence stops reading the same either way (issue #974)
 - [`testdata-row-claims-shape-list-source.md`](testdata-row-claims-shape-list-source.md) — The testdata row-claims shape list has one source, and the summary line reads it rather than restating it (issue #998)
+- [`testdata-shape-list-order.md`](testdata-shape-list-order.md) — One order named once, and the printed line that carries none (issue #987)
 - [`testdata-third-column-claims.md`](testdata-third-column-claims.md) — The third column of the testdata index is now held to the fixtures it names (issue #747)
 - [`thunk-prefix-collision.md`](thunk-prefix-collision.md) — Seven rows whose names Ghidra owned (issue #602)
 - [`tools-readme-totals.md`](tools-readme-totals.md) — The runner's totals, re-derived from a run, and why a red suite moves them (issue #817)
