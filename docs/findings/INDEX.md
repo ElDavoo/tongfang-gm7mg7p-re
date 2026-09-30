@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-185 write-ups.
+186 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -152,6 +152,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`walk-bounds-guard-pinned.md`](walk-bounds-guard-pinned.md) — The bounds disjunct is pinned, by two cases — and the sweep that could have noticed it cannot see it
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
 - [`walk-window-terminators.md`](walk-window-terminators.md) — `walk()`'s stop reason is a column now, and the 45 rows its budget truncates are named
+- [`xdata-07fd-07ff-witness-triple.md`](xdata-07fd-07ff-witness-triple.md) — The `0x07FD`-`0x07FF` triple: a three-byte witness whose third byte discriminates (issue #573)
 - [`xdata-0860-census-sites-relined.md`](xdata-0860-census-sites-relined.md) — The four `0x0860` census citations move; the counts do not (issue #752)
 - [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md) — The `XDATA_0860` note's six live pointers, and what holds them (issue #870)
 - [`xdata-086c-cluster-ruling.md`](xdata-086c-cluster-ruling.md) — `0x086C` enters `registers.yaml`, and the clustering recorded something real (issue #333)

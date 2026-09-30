@@ -810,7 +810,24 @@ ORACLE = {
     # ec/decompiled/ tree, because a registers.yaml row renames the symbol
     # table and not a decompile: a re-export would spell them XDATA_086C, as
     # 0x086B's 22 sites already read XDATA_086B, and that is the other move.
-    "named_in_tree": 182,
+    # 182 -> 185, issue #573, and 212 - 27, the same arithmetic once more. Three
+    # names went into registers.yaml -- XDATA_07FD, XDATA_07FE and XDATA_07FF --
+    # and NOT_IN_TREE does not move, because all three have a `mov DPTR` seed in
+    # an *exported* function: 0x07FE/0x07FF under bank0 0xCCFC and 0xD673, and
+    # 0x07FD under bank0 0xCCFC plus bank1 0x94FA. So the count moves by the
+    # three that are, and the reading that put them there is
+    # `docs/findings/xdata-07fd-07ff-witness-triple.md`.
+    #
+    # **The step through 182 is a merge, and the pin is the measured value.**
+    # #333 and #573 both branched from the 181 this block used to end on, and
+    # each wrote its own 181 -> N: 182 for the one name, 184 for the three. Both
+    # rows are in registers.yaml on this tree and all four addresses are reached
+    # by an exported function, so the count is 181 + 4 = 185 and NOT_IN_TREE is
+    # still 27 -- neither side's number is right for the merged tree, and taking
+    # either one would have been the "looks pinned and is not" defect the check
+    # below exists to catch. 209 + 3 = 212 named addresses, 212 - 27 = 185,
+    # re-derived by `--self-test` rather than taken on trust.
+    "named_in_tree": 185,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # **Unmoved by issue #279, and worth saying why rather than leaving it as a
