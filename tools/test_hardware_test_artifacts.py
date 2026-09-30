@@ -131,6 +131,16 @@ HELD = {
                 ("## 2.", "is the format to copy for the snapshot"),
         },
     },
+    "oem4-07a6-bit0.md": {
+        "command_producers": True,
+        # The snapshot is the human's, and §2 is the only section that says so:
+        # §3's commands produce the two CSVs and the two load-defaults dumps and
+        # nothing else, so the record of the starting power mode and profile has
+        # to be an allowance tied to the step behind it rather than a blank.
+        "hand_saved": {
+            "*-snapshot.txt": ("## 2.", "in the snapshot style of"),
+        },
+    },
     "remain-capacity-0436.md": {
         "command_producers": True,
         "hand_saved": {},
