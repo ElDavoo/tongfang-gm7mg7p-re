@@ -196,12 +196,12 @@ DISCLAIM = re.compile(
 )
 
 # A fenced block, opened or closed. Every fence line in the committed corpus
-# is exactly three backticks -- 2067 of them, measured -- so the width is not
-# read off a variable here, but a block closes on a fence of *its own* width
-# rather than on the next one of any, which is the rule that keeps an outer
-# ```` block from being closed by an inner ``` one. The corpus has no nested
-# fence to exercise that, so it is a claim about today's prose and not a
-# guarantee; the unterminated case below is the one the corpus does reach.
+# is exactly three backticks, so the width is not read off a variable here, but
+# a block closes on a fence of *its own* width rather than on the next one of
+# any, which is the rule that keeps an outer ```` block from being closed by an
+# inner ``` one. The corpus has no nested fence to exercise that, so it is a
+# claim about today's prose and not a guarantee; the unterminated case below is
+# the one the corpus does reach.
 FENCE = re.compile(r"^\s*(?P<fence>`{3,})")
 
 # The one tool whose flags *change* the census rather than report it, so a
@@ -452,6 +452,7 @@ def units(text):
             # the rules read. Inside the block the sentence split still runs,
             # which is the point the docstring makes.
             yield from flush(buf)
+            buf = []
             body = [(n, lines[n - 1].strip())
                     for n in range(lineno + 1, closes[lineno])
                     if lines[n - 1].strip()]

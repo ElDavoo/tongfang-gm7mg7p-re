@@ -531,11 +531,21 @@ class Transcripts(unittest.TestCase):
     def test_a_fence_is_still_split_into_sentences(self):
         # What the case above is protected by, and what making a fence one
         # uncut unit would undo. The real page's two sentences: the first names
-        # `main-ec-081` and only its members, the second names no cluster and
-        # carries `0x0800`, which the census puts in `main-ec-100`. Read as one
-        # unit they are one claim and `0x0800` is reported; read as two, the
+        # `main-ec-086` and only its members, the second names no cluster and
+        # carries `0x0800`, which the census puts in `main-ec-104`
+        # (`xdata-clusters.csv:105`, as the page itself says at :445). Read as
+        # one unit they are one claim and `0x0800` is reported; read as two, the
         # second is not a citation at all. Both halves are asserted, because a
         # change that split the fence would pass the case above on its own.
+        #
+        # The fixture below spells that pair as `main-ec-081`/`main-ec-100`:
+        # it is pinned to the numbering #605 was filed against, when those were
+        # the ids, and the ids have since been reassigned to unrelated
+        # clusters. The *memberships* are the page's, which is what these cases
+        # turn on, so the fixture is left as it is rather than re-pinned -- but
+        # the comment above names the census's current ids, because a reader
+        # sent to look up `main-ec-081` finds `0x0004 0x1001 0x2006` and
+        # concludes the page says something it does not.
         text = ('```\n'
                 'those three are the whole of the `main-ec-081` cluster.\n'
                 'The `setb c` at `0xD982` makes the second bound `0x0800`.\n'
@@ -543,6 +553,32 @@ class Transcripts(unittest.TestCase):
         self.assertEqual(cited(text, CLEAR_MEMBERS, known=CLEAR_KNOWN),
                          (0, None))
         self.assertEqual(len([u for u in ccc.units(text)]), 2)
+
+    def test_a_fence_ends_the_paragraph_before_it(self):
+        # The other half of the boundary, and the one "for the same reason and
+        # by the same route" rests on: a paragraph that runs up to a fence
+        # opener with no blank line between ends there, and the paragraph after
+        # the closing fence starts a fresh one. `docs/agent-pipeline.md` and
+        # `docs/findings/pd-only-status-vocabulary.md` are the committed pages
+        # that reach the first shape -- sixteen units between them, and a
+        # missing `buf = []` is invisible in the tool's output precisely because
+        # the corpus happens not to put a wrong claim in one of them.
+        #
+        # Both halves are asserted because one missing clear produces both: the
+        # sentence before the fence is emitted a second time once the paragraph
+        # after it is flushed, so a wrong claim is reported twice, and that
+        # second copy is the one carrying text from both sides of the fence.
+        text = ('The clustering put `0x0860` in `main-ec-003`.\n'
+                '```\n'
+                'a fenced sentence naming no cluster of its own.\n'
+                '```\n'
+                'A second paragraph naming `main-ec-002` and nothing else.\n')
+        self.assertEqual(
+            list(ccc.units(text)),
+            [(1, 'The clustering put `0x0860` in `main-ec-003`.'),
+             (3, 'a fenced sentence naming no cluster of its own.'),
+             (5, 'A second paragraph naming `main-ec-002` and nothing else.')])
+        self.assertEqual(cited(text), (1, '0x0860'))
 
     def test_a_map_transcript_is_still_checked(self):
         # `--map` is deliberately outside the exemption, and the reason is what

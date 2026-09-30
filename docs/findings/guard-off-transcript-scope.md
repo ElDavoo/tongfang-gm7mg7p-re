@@ -59,8 +59,9 @@ mechanics, which is the order the argument is worth in:
 **A fenced block whose body invokes `ec/tools/xdata_register_map.py` under a
 flag that *changes* the census** — `--no-eq-guard` or `--export-ownership`.
 `xdata_register_map.py --help` is what settles which flags those are:
-`--no-eq-guard` "re-runs the census with the `==` rejection turned off", and
-`--export-ownership` reads each routine once from its own body.
+`--no-eq-guard` "count `==` as a store, the way the pre-#178 classifier did,
+so the guard's effect stays measurable", and `--export-ownership` "read each
+routine once, from the export that owns it".
 
 `--map` and `--check` are **excluded on purpose**, and the reason is what they
 take rather than what they print. `--map OLD_CSV` reports where each row of an
@@ -69,7 +70,13 @@ generation's committed id; `--check` diffs in memory against the committed
 CSVs. Both are keyed to the committed identifiers, so a membership claim beside
 either is a claim about the committed census. Scoping them would lose a real
 check to save a bookkeeping one. Neither can appear with `--no-eq-guard` at
-all — the tool refuses that combination precisely because both are gates.
+all — the tool refuses that combination precisely because both are gates. That
+refusal, and the separate one on `--no-eq-guard`'s own outputs, are a string
+comparison against the committed absolute defaults
+(`xdata_register_map.py:5074`): run bare, `--no-eq-guard` would overwrite the
+committed CSVs, and passing the same paths relatively would slip past the
+comparison. The transcripts here name scratch outputs, which is the form the
+guard is asking for.
 
 At this tree that predicate matches 21 fenced blocks across 15 files
 (`grep -rhoE '^\s*`{3,}'` over `ec/`, `docs/` and `evidence/` returns 2131 fence
@@ -92,23 +99,29 @@ the fence into sentences; a fence read as one uncut unit puts the membership
 claim and the `setb c` operand back in one sentence and reports `0x0800`, which
 is the shape #605 took out.
 
-Measured, over the whole corpus, on the same walk:
+Measured, over the whole corpus, on the same walk and against the same two
+committed CSVs. Only `units()` differs between the three; the two counterfactual
+walks are that one function swapped for the `units()` at `origin/main` and for
+the shipped one with its in-fence sentence split removed, each loaded as its
+own module so the swap is real rather than patched in place:
 
 | walk | problems | file affected |
 |---|---:|---|
-| before | 2 | — |
-| fence as one uncut unit | 3 | recipe 2 → 0, **`reset-vector-dptr-targets.md:451` 0 → 1** |
-| fence as a paragraph boundary, still sentence-split | 2 | recipe 2 → 0, nothing added |
+| before (`units()` at `origin/main`) | 2 | — |
+| fence as one uncut unit | 1 | recipe 2 → 0, **`reset-vector-dptr-targets.md:451` 0 → 1** |
+| fence as a paragraph boundary, still sentence-split | 0 | recipe 2 → 0, nothing added |
 
-**The "before" and "fence as a paragraph boundary" rows were 3 and 1 when this
-was first written, and the difference is main, not this change.** The third
-problem in both was the hand-typed `main-ec-002` count discussed below, and
-#1438 (`7245cc0f`) corrected that cell to 32 in the same commit that took the
-census to 32, so it is no longer among them. The *deltas* the argument rests on
-— recipe 2 → 0 under the paragraph-boundary walk, and
-`reset-vector-dptr-targets.md:451` 0 → 1 under the uncut one — are unchanged and
-were re-measured on the merged tree; only the absolute totals moved, and they
-moved because a defect on another axis was fixed.
+**These three totals are the merged tree's, and the "before" and "fence as a
+paragraph boundary" rows were 3 and 1 when this was first written.** The
+difference is main, not this change: the third problem in both was the
+hand-typed `main-ec-002` count discussed below, and #1438 (`7245cc0f`)
+corrected that cell to 32 in the same commit that took the census to 32, so it
+is no longer among them. The *deltas* the argument rests on — recipe 2 → 0
+under the paragraph-boundary walk, and `reset-vector-dptr-targets.md:451` 0 → 1
+under the uncut one — held then and hold now; what moved is the absolute
+totals, because a defect on another axis was fixed underneath them. The shipped
+walk is `python3 ec/tools/check_cluster_citations.py`, which exits 0 on this
+tree.
 
 So the fence is a **paragraph boundary** and not a unit: the walk stops at the
 delimiters and at nothing inside them. The sentence split inside a fence is
@@ -265,7 +278,8 @@ closed by one PR.
 - **Not a fix for the other red suites.** Each is a separate defect with its own
   owner, and this write-up does not claim to have moved any of them. **The red
   set was measured, not inherited** — on a clean clone of `edf0f4f2` before any
-  of this, `tools/run-tests.sh` reported six red suites, and five after:
+  of this, `tools/run-tests.sh` reported six red suites, and four after this
+  branch's base landed:
 
   | suite | at `edf0f4f2` | after this |
   |---|---|---|
@@ -273,14 +287,24 @@ closed by one PR.
   | `ec/tools/test_check_eq_guard_citations.py` | FAILED | FAILED |
   | `ec/tools/test_check_doc_figure_pins.py` | FAILED | FAILED |
   | `ec/tools/test_check_pin_table_rows.py` | FAILED | FAILED |
-  | `ec/tools/test_check_site_resolution.py` | FAILED | FAILED |
+  | `ec/tools/test_check_site_resolution.py` | FAILED | green — see below |
   | `windows/tools/test_gpu_block_watch.py` | FAILED | FAILED |
+
+  **`test_check_site_resolution.py` is the sixth row because it was red when
+  this was written, and it is green on this tree for a reason that is not this
+  branch's.** It reads `ec/annotations/site-resolution.csv`, which nothing here
+  touches (`git log 7245cc0f..HEAD -- ec/annotations/site-resolution.csv` is
+  empty); `7245cc0f` (#1438), the base this branch was merged onto, is what last
+  changed that CSV and what turned the suite green. The after-column is
+  therefore **four** red, and the after-column as first written said five
+  because it counted this one — a base-merge effect, not something this branch
+  inherited or fixed.
 
   `test_check_eq_guard_citations.py` is the one a reader might assume is close to
   this issue's subject, and it is not: `xdata_register_map.py` has grown and
   every prose pin of it is now roughly seventy-eight lines short, which is a
   re-pin sweep against a moved source and has nothing to do with how a
-  transcript is read. The other four are unrelated tools.
+  transcript is read. The other three are unrelated tools.
 
   **The plan this implements listed eight red suites, and two of the eight are
   green at `edf0f4f2`.** `test_census_index_third_column_edits` and

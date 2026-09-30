@@ -487,10 +487,12 @@ row at the census's 33.*
 > first of those dates the note and the row it describes disagreed with each
 > other as well as with the census. **The 33 stays visible here**, per
 > `../../docs/findings.md` §4a-4d: a reader who wants to know what the census
-> said on 2026-09-24 has it, and the figure it supersedes is on the row's own
-> drift record above, which states the sequence 19 → 43 → 27 → 31 → 32 with the
-> commits that moved it. This is the third correction of this figure and none
-> was a transcription slip: each time the census moved and the hand-typed prose
+> said on 2026-09-24 has it. It is not in the drift record §5 carries, which
+> stops at the 19 that record's own `main-ec-002` line names; the row's history
+> is in `git log -L` over it — 19, then 43, then 27, and now 32 — and the 31
+> between the last two is the census's reading, which the row never took. This
+> is the third correction of this figure and none was a transcription slip:
+> each time the census moved and the hand-typed prose
 > did not, which is what `check_cluster_citations.py`'s count rule now catches
 > for the row and what nothing catches for a sentence in a note.)*
 
@@ -2179,16 +2181,20 @@ symbol table.
 > census moved under it twice afterwards.** `6bf9c234` set the cell to 27 in the
 > same commit that set the census to 27, so this is not a transcription slip and
 > nothing was wrong with the row at the time. What moved it the first time was
-> #1059 (`31147ccc`, 2026-09-27), which named 72 addresses `registers.yaml` did
-> not hold; four of the new names fall inside `main-ec-002` — `0x074C` `PDIN`,
-> `0x0788` `CTWA`, `0x07A4` `GC6S`, `0x07C5` `WHMS` — and the census's
-> `named_addrs` column went from 27 to 31. The hand-typed table did not follow,
-> because the only thing that noticed was `check_cluster_citations.py`'s count
-> rule, and the suite carrying it was red on this tree for an unrelated reason
-> and so had not been run to green. **The 27 stays in the record above rather
-> than being deleted**: `git log -L` over this file's `main-ec-002` row is what
-> carries the sequence otherwise (19, then 43, then 27, then 31, now 32), and a
-> drift record that deletes the drift records nothing.
+> #1059 (`31147ccc`, 2026-09-27), which named 16 addresses `registers.yaml` did
+> not hold (`ec/annotations/dsdt-ecmg-field-sweep.md:11`, which is the same
+> commit's own account and reduces a larger subject-line figure of 72 to the 16
+> it actually landed); four of the new names fall inside `main-ec-002` —
+> `0x074C` `PDIN`, `0x0788` `CTWA`, `0x07A4` `GC6S`, `0x07C5` `WHMS` — and the
+> census's `named_addrs` column went from 27 to 31. The hand-typed table did
+> not follow, because the only thing that noticed was
+> `check_cluster_citations.py`'s count rule, and the suite carrying it was red
+> on this tree for an unrelated reason and so had not been run to green.
+> **The 27 stays in the record above rather than being deleted**: `git log -L`
+> over this file's `main-ec-002` row is what
+> carries the sequence otherwise (19, then 43, then 27, and now 32 — the 31 is
+> the census's reading and no commit ever put it in this row), and a drift
+> record that deletes the drift records nothing.
 >
 > **A second move, landed on main rather than here, is why the row reads 32 and
 > not the 31 this correction was written against.** #1438 (`7245cc0f`) added
