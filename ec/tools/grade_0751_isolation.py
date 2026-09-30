@@ -249,7 +249,12 @@ attributes a window to a block. So a plain unscoped run over a day with a
 stray mark in it can print "consistent with the static prediction" over a set
 that is not the whole capture's windows of anything. The closing section counts
 those windows, beside the note for a mark that could not be read at all, and
-declines the capture-level comparison over the rest. A `--block` run makes the
+declines the capture-level comparison over the rest: the "nothing moved"
+reading by narrowing the claim to the windows that do belong to a value under
+test, the "something moved" one by naming these windows as part of the set the
+movement is a claim over -- a union of group names over the windows printed,
+which is not a set it can narrow to -- and by declining the attribution
+underneath it over the capture rather than over them. A `--block` run makes the
 count structurally zero rather than by a guard -- `shown` is that block's own
 windows, and a window in no block is in none of them -- so the count never
 competes with the selected-block case below it. A day with a stray mark in it
@@ -3985,9 +3990,31 @@ def main(argv=None):
             # that decides what the fact is evidence of. Scoped here and not
             # left to the banner, so a reader who reads only the movement
             # line cannot take it for the whole run.
+            #
+            # The withheld window is the one exclusion this sentence can make,
+            # and it can make it for the reason #725's `elif graded_unplaced:`
+            # arm reasons from: a window that never reaches `report_window`
+            # cannot have fed `moved_groups`, so naming it as outside the set
+            # is true by construction, before the tool has to know anything.
+            # A window in no block that was *graded* is not in that position
+            # -- its rows do feed `moved_groups` -- so it is named as part of
+            # the set instead of being subtracted from it, and `placed` is not
+            # computed here. The same `0x0784` row inside block 1's write
+            # window and inside `unread-window/`'s 12:04 stray prints this
+            # sentence over the same `graded` and leaves the same
+            # `moved_groups`, so a narrower one would be true of the first
+            # placement and false of the second and the tool cannot say which
+            # one it is in.
+            unplaced_clause = ""
+            if graded_unplaced:
+                unplaced_clause = (
+                    f" The {graded_unplaced} graded window(s) in no block are "
+                    "part of it, and this run cannot say which arm they are a "
+                    "window of.")
             print(f"  That is the {graded} window(s) that were graded. The "
                   f"{withheld} window(s) withheld above are not part of it, "
-                  "and what they would have shown is not reported here.")
+                  "and what they would have shown is not reported here."
+                  f"{unplaced_clause}")
         elif selected is not None and len(blocks) > 1:
             # The same scoping, for a `--block` run that withheld nothing: a
             # clean block is graded whole, so the branch above has no count to
@@ -4059,6 +4086,38 @@ def main(argv=None):
                   "alone does not reload the table. The vendor service writes "
                   "that mailbox, so which arm it happened in is the first "
                   "thing to record.")
+        elif graded_unplaced:
+            # The one sentence under the movement that is a claim about the
+            # capture rather than about the windows printed, so it is the one
+            # the scope above cannot reach and this one has to take. What is
+            # kept and what is dropped is a reading, not a trimming: "capture
+            # it in full" is advice and stays, and so does the observation
+            # that something here contradicts §5 or §4.2 -- scoped to the
+            # windows this run read, which is what the run can support.
+            # Scoping is not retracting, and a PL that moved is still the
+            # more interesting outcome on either reading.
+            #
+            # The scope is `graded` and the count rather than `placed`, for
+            # #725's reason rather than its wording: `moved_groups` carries no
+            # window identity, so the same row in a block's own window and in
+            # an unattributed one leave the same sentence here.
+            #
+            # After the trigger-group split and not before it, because that
+            # sentence says *what* moved -- a mailbox poke rather than a table
+            # move -- and says on static evidence why, which is a claim over
+            # the row that moved and not over the capture. Taking it here
+            # would trade the only attribution this branch gives for a second
+            # copy of the scope printed above.
+            #
+            # Unreachable from a `--block` run, as the count's own comment
+            # says: that run's `shown` is the block's own windows.
+            print("  That contradicts the static prediction in "
+                  "ec/annotations/manual-fan-ctrl-0751.md §5 if it is the "
+                  "PLs, or §4.2 if it is the fan table -- over the "
+                  f"{graded} window(s) above, not over the capture as a "
+                  f"whole: {graded_unplaced} of them are a window of an arm "
+                  "this run cannot name. Capture it in full, it is the more "
+                  "interesting outcome.")
         else:
             print("  That contradicts the static prediction in "
                   "ec/annotations/manual-fan-ctrl-0751.md §5 if it is the "

@@ -196,7 +196,7 @@ has one caller, and the tool's own self-test is that caller.
 **The skip rule and the `MARK` predicate are spelled in its own body**, as
 the third and fourth such spellings do. The guard against that drifting is a
 test rather than a refactor: `MarkProvenanceTests` at
-`ec/tools/test_grade_0751_isolation.py:4374` holds this reader to
+`ec/tools/test_grade_0751_isolation.py:4555` holds this reader to
 `mark_labels_of` over **every committed fixture** under `ec/tools/testdata/`,
 so a mark this reaches and a mark the notice lists cannot part. That is the
 same idiom `ExistingMarkLabelTests` uses, and the same reason: merging the

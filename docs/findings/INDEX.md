@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-184 write-ups.
+185 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -16,6 +16,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-grader-block-scope-claims.md`](0751-grader-block-scope-claims.md) — A `--block` run said "consistent with the static prediction" for the whole capture (issue #497)
 - [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md) — A `--block` run exited 1 over a window it neither printed nor withheld, and did not say why (issue #498)
 - [`0751-grader-moved-unplaced-scope.md`](0751-grader-moved-unplaced-scope.md) — A run that moved and graded a window in no block printed the movement over the whole capture and nothing that said so (issue #725)
+- [`0751-grader-movement-path-claims.md`](0751-grader-movement-path-claims.md) — A run that moved said "that is the 7 window(s) that were graded" under a count saying one of the 7 is a window of nothing (issue #551)
 - [`0751-grader-partial-grade-claims.md`](0751-grader-partial-grade-claims.md) — A partly-graded run said "consistent with the static prediction" anyway (issue #477)
 - [`0751-grader-self-test-gate.md`](0751-grader-self-test-gate.md) — The 0x0751 grader had 74 tests on main, no entry point, and no gate (issue #532)
 - [`0751-grader-unplaced-window-checks.md`](0751-grader-unplaced-window-checks.md) — A stray `restore` the consoles spelled two ways, or that one console missed, was graded in full (issue #529)
