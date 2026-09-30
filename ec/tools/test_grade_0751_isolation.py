@@ -5265,9 +5265,12 @@ class MarkSplitBoundaryTests(unittest.TestCase):
         The committed bytes -- the same drift under the no-op, the same
         climb, the same labels -- with only the mark timestamps moved, so the
         two runs differ in nothing but how far apart the three consoles
-        marked. `step=1.0` is that fixture's own spacing and fuses, as it
-        does on the machine; `step=7.0` is the same day marked too slowly for
-        the merge, which is what the issue reproduces offline.
+        marked. `step=1.0` is that fixture's own spacing and it fuses: 1 s is
+        at or under `MARK_MERGE_SECONDS`, so the three marks are one window,
+        and the `adjacent gap(s) 1.0s, 1.0s, window 5s` line the committed
+        run prints records it. That is arithmetic over hand-built bytes, not
+        a reading of a machine. `step=7.0` is the same day marked too slowly
+        for the merge, which is what the issue reproduces offline.
 
         A file name per capture, as `MarkGapReportTests.captures` gives: three
         files of one shape are a three-console day, one file read three times
