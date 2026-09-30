@@ -27,7 +27,7 @@ repository's file to edit.
 
 | the issue says | this tree has |
 |---|---|
-| six reason strings | **eight** — `SHAPES`; #973 and #979 added `dated capture has no addr column` and `two dated captures in one sentence` |
+| six reason strings | **eight** — `SHAPES`; #1370 (issue #990) added `dated capture has no addr column` and #983 (issue #979) added `two dated captures in one sentence` |
 | `reason_for()` reads `denial` before `watched-set span` | **already the other way round** — `reason_for()` reads `watched-set span` first, and so does the docstring. One of the issue's two order complaints was already fixed when it was filed |
 | `by_shape` is a `Counter`, so the printed line keeps first-seen order, which is a property of the index's row order | **already changed** — `main()` sorts by `(-count, name)`, so the printed order is a function of the counts and the names |
 | `--check` prints `16, 3, 2, 2, 1` | prints **`17, 3, 2, 2, 1`** — `capture/window bound` grew by one |

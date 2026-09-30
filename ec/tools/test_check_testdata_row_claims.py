@@ -1246,10 +1246,13 @@ class TheShapeListHasOneSource(unittest.TestCase):
     def printed_shapes(self, result):
         """The reason names off `main()`'s own `shapes:` line, as a set.
 
-        Read off the print rather than rebuilt from the sort beside it, so the
-        case goes red when the print changes rather than agreeing with a copy
-        of it. `sys.argv` is the caller's to set: `main()` parses it, and a
-        `unittest` run's own arguments are not this tool's.
+        Read off the print rather than rebuilt from the sort beside it, so a
+        print whose names stop being the shapes goes red here rather than
+        agreeing with a copy of the sort that produced it. The names come back
+        as a set, so a *reordering* of them on the line is not what this pins
+        and is not asserted anywhere in this case. `sys.argv` is the caller's
+        to set: `main()` parses it, and a `unittest` run's own arguments are
+        not this tool's.
         """
         out = io.StringIO()
         with mock.patch.object(ctrc, 'check', return_value=result), \
