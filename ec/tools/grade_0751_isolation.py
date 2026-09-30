@@ -1826,6 +1826,33 @@ def read_dump(path):
     return values
 
 
+def capture_key(path):
+    """Which file this path names, as the one key every comparison shares.
+
+    A path is what the operator hands in and the identity is what the file
+    resolves to, so `x.csv`, `./x.csv` and a symlink to it are one capture --
+    the reason `report_dump_pairs` gives.
+
+    It is a function rather than a rule written into each caller because
+    `read_capture` stores `m.source` as the path *as given*, while
+    `distinct_captures` keys the count on the resolved one. A run handed one
+    file twice under two spellings therefore holds two `m.source` values for
+    one file, and a comparison that mixes the two -- marking a window's rows
+    against the run's capture list -- reads one file as two captures, or as a
+    capture missing from itself. Both sides of every such comparison go
+    through here, or the two sections of the report count captures
+    differently, which is the defect `capture_key` is here to prevent.
+
+    The key is for looking up, not for printing. Every site that names a
+    capture prints `os.path.basename` of a path `distinct_captures` kept, and
+    what that keeps is the first spelling *as it was handed in* rather than a
+    resolved one, so a capture is still named the way the operator typed it.
+    Resolving cannot be folded into the print, because a symlink resolves to
+    a different filename than the one the operator gave.
+    """
+    return os.path.realpath(path)
+
+
 def distinct_captures(paths):
     """The capture paths that are each one file, and the repeats dropped.
 
@@ -1834,15 +1861,16 @@ def distinct_captures(paths):
     caller can name all three: two spellings of one file is one file, and the
     operator has to be able to see which of the two was dropped.
 
-    Keyed on `os.path.realpath` rather than on the string, for the reason
-    `report_dump_pairs` gives -- a path is what the operator hands in, and
-    `x.csv`, `./x.csv` and a symlink to it are one capture. One spelling of
-    the test, so `main` and the readers cannot disagree about which captures
-    a run has.
+    Keyed on `capture_key` rather than on the string, for the reason it gives.
+    Through it rather than on `os.path.realpath` directly, so there is one
+    spelling of "which file is this" in the module instead of a rule stated
+    here and re-derived by every caller that has to agree with it. One
+    spelling of the test, so `main` and the readers cannot disagree about
+    which captures a run has.
     """
     kept, seen, repeats = [], {}, []
     for path in paths:
-        resolved = os.path.realpath(path)
+        resolved = capture_key(path)
         if resolved in seen:
             repeats.append((path, seen[resolved], resolved))
         else:
@@ -2183,7 +2211,7 @@ def unplaced_window_problems(unplaced, captures):
     `unplaceable_marks` returns, and the one the branch reading it expects.
     """
     names, _ = distinct_captures(path for path, _ in captures)
-    known = set(names)
+    known = {capture_key(p) for p in names}
     out = {}
     for w in unplaced:
         problems = window_mark_problems(w, names, known)
@@ -2205,7 +2233,11 @@ def split_mark_gaps(w, names, by_source):
 
     `by_source` is the caller's own grouping of this window's marks, so both
     readers ask the same question of the same rows and cannot disagree about
-    which capture is absent.
+    which capture is absent. It is keyed on `capture_key`, and so is `near`
+    below: `m.source` is a path as given and one file can have been handed in
+    under two spellings, so a `near` keyed on the string would fail to find
+    the boundary mark of a capture the caller had already found under its
+    other spelling.
 
     The threshold is a **distance**, so it is compared against the magnitude:
     `boundary_marks` records `m.ts - w.ts`, which is negative for a mark on
@@ -2216,14 +2248,15 @@ def split_mark_gaps(w, names, by_source):
     The signed value is what comes back, because the readers say which side
     of the mark the mark fell on.
     """
-    absent = [p for p in names if p not in by_source]
+    absent = [p for p in names if capture_key(p) not in by_source]
     if not absent:
         return {}
-    near = {m.source: seconds for m, seconds in w.boundary_gaps}
-    if any(p not in near or abs(near[p]) > MARK_SPLIT_SECONDS
+    near = {capture_key(m.source): seconds for m, seconds in w.boundary_gaps}
+    if any(capture_key(p) not in near
+           or abs(near[capture_key(p)]) > MARK_SPLIT_SECONDS
            for p in absent):
         return {}
-    return {p: near[p] for p in absent}
+    return {p: near[capture_key(p)] for p in absent}
 
 
 def window_mark_problems(w, names, known):
@@ -2250,18 +2283,19 @@ def window_mark_problems(w, names, known):
     """
     by_source = {}
     for m in w.marks:
-        by_source.setdefault(m.source, []).append(m.label)
+        by_source.setdefault(capture_key(m.source), []).append(m.label)
     spellings = {label for labels in by_source.values() for label in labels}
     problems = []
     if len(spellings) > 1:
         said = "; ".join(
-            f"{os.path.basename(p)}: {by_source[p][0]!r}"
-            for p in names if p in by_source)
+            f"{os.path.basename(p)}: {by_source[capture_key(p)][0]!r}"
+            for p in names if capture_key(p) in by_source)
         problems.append(("labels", w, (
             f"the captures spell this action differently -- {said} -- so "
             "the window it opens is not the action any of them recorded")))
     if len(names) > 1 and set(by_source) != known:
-        absent = [os.path.basename(p) for p in names if p not in by_source]
+        absent = [os.path.basename(p) for p in names
+                  if capture_key(p) not in by_source]
         split = split_mark_gaps(w, names, by_source)
         if split:
             # Magnitude and a side word, the way the census's own line under a
@@ -2329,9 +2363,13 @@ def check_block_marks(block, captures):
     """
     # `main` refuses a repeated capture before this runs; the line is held here
     # too, because these are the checks a repeat would switch on and a reader
-    # reached directly still has one capture counted once.
+    # reached directly still has one capture counted once. `known` is keyed on
+    # `capture_key` for the same reason, and the two sites that build it -- this
+    # one and the one in `unplaced_window_problems` -- have to agree: they are
+    # the same set of the same run, and the windows a block walk could not
+    # place are held to the same mark set as the ones it could.
     names, _ = distinct_captures(path for path, _ in captures)
-    known = set(names)
+    known = {capture_key(p) for p in names}
     problems = []
     for w in block.windows:
         problems += window_mark_problems(w, names, known)
@@ -2632,7 +2670,7 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
     for i, w in enumerate(windows, 1):
         said = {}
         for m in w.marks:
-            said.setdefault(m.source, m.label)
+            said.setdefault(capture_key(m.source), m.label)
         where = f"block {w.block.name}" if w.block else "unplaced"
         head = (f"  action {i} at {w.ts.isoformat(sep=' ')}  {where}: "
                 f"{w.label!r} in {len(said)} of {len(names)} capture(s)")
@@ -2650,7 +2688,7 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
             # above is a fact about the group either way and stays.
             split = split_mark_gaps(w, names, said)
             for path in names:
-                got = said.get(path)
+                got = said.get(capture_key(path))
                 if got:
                     line = repr(got)
                 elif path in split:

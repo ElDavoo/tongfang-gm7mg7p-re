@@ -62,14 +62,14 @@ production or in the suite."* Re-measured on this tree:
 
 ```console
 $ grep -rn "refused_capture_rows" --include=*.py .
-./ec/tools/grade_0751_isolation.py:754:    `existing_mark_labels`, `refused_capture_rows` and `read_early_exits`.
-./ec/tools/grade_0751_isolation.py:828:    `read_capture`, `existing_mark_labels` and `refused_capture_rows` -- the
-./ec/tools/grade_0751_isolation.py:841:    `refused_capture_rows` -- and merging them would delete the preflight
-./ec/tools/grade_0751_isolation.py:957:def refused_capture_rows(path):
-./ec/tools/test_grade_0751_isolation.py:3917:            accepted, refused = grade.refused_capture_rows(path)
-./ec/tools/test_grade_0751_isolation.py:3976:            accepted, refused = grade.refused_capture_rows(path)
-./ec/tools/test_grade_0751_isolation.py:4097:        # `refused_capture_rows` directly, and checks the reason on the row
-./ec/tools/test_grade_0751_isolation.py:4107:            accepted, refused = grade.refused_capture_rows(path)
+./ec/tools/grade_0751_isolation.py:1032:    `existing_mark_labels`, `refused_capture_rows` and `read_early_exits`.
+./ec/tools/grade_0751_isolation.py:1106:    `read_capture`, `existing_mark_labels` and `refused_capture_rows` -- the
+./ec/tools/grade_0751_isolation.py:1119:    `refused_capture_rows` -- and merging them would delete the preflight
+./ec/tools/grade_0751_isolation.py:1242:def refused_capture_rows(path):
+./ec/tools/test_grade_0751_isolation.py:4063:            accepted, refused = grade.refused_capture_rows(path)
+./ec/tools/test_grade_0751_isolation.py:4122:            accepted, refused = grade.refused_capture_rows(path)
+./ec/tools/test_grade_0751_isolation.py:4243:        # `refused_capture_rows` directly, and checks the reason on the row
+./ec/tools/test_grade_0751_isolation.py:4253:            accepted, refused = grade.refused_capture_rows(path)
 ```
 
 The definition, three comments that name it as one of the readers — which the
@@ -86,12 +86,12 @@ and one with a hypothetical caller in its docstring. The three cases:
 | `test_a_change_row_bad_in_two_hex_fields_names_the_earlier_one` | partitions **directly**, and its own comment says why |
 
 Those three cases are the three call lines the transcript above prints:
-`ec/tools/test_grade_0751_isolation.py:3917`,
-`ec/tools/test_grade_0751_isolation.py:3976` and
-`ec/tools/test_grade_0751_isolation.py:4107`, in the order the table gives
+`ec/tools/test_grade_0751_isolation.py:4063`,
+`ec/tools/test_grade_0751_isolation.py:4122` and
+`ec/tools/test_grade_0751_isolation.py:4253`, in the order the table gives
 them. The comment that credits the last with reaching the function *directly*
 rather than through the wrapper is the fourth of that transcript's lines,
-`ec/tools/test_grade_0751_isolation.py:4097`, and it is the only one of the
+`ec/tools/test_grade_0751_isolation.py:4243`, and it is the only one of the
 four that is prose in the suite rather than a call. That last one is the
 load-bearing case and the reason the function earns its place. `existing_mark_findings` pastes `read_capture`'s own exception over the
 *first* reason, so no fixture whose only bad row is the first one can show
@@ -107,39 +107,39 @@ it is an API or a test fixture. Every executable reference to it is:
 $ grep -rn "\.existing_mark_labels" --include=*.py .
 ./windows/tools/test_ec_watch.py:1205:                             grader.existing_mark_labels(str(out)))
 ./windows/tools/ec_watch.py:282:                     grader.existing_mark_labels,
-./ec/tools/test_grade_0751_isolation.py:3681:            self.assertEqual(grade.existing_mark_labels(path),
-./ec/tools/test_grade_0751_isolation.py:3701:            self.assertEqual(grade.existing_mark_labels(path),
-./ec/tools/test_grade_0751_isolation.py:3732:            marks = grade.existing_mark_labels(str(path))
-./ec/tools/test_grade_0751_isolation.py:3761:            self.assertEqual(len(grade.existing_mark_labels(path)), 7)
-./ec/tools/test_grade_0751_isolation.py:3916:            labels = grade.existing_mark_labels(path)
-./ec/tools/test_grade_0751_isolation.py:3977:            labels = grade.existing_mark_labels(path)
-./ec/tools/test_grade_0751_isolation.py:4039:            lenient = grade.existing_mark_labels(str(path))
-./ec/tools/test_grade_0751_isolation.py:4230:                    self.assertIsInstance(grade.existing_mark_labels(path), list)
-./ec/tools/test_grade_0751_isolation.py:4238:            self.assertEqual(len(grade.existing_mark_labels(str(path))), 1)
-./ec/tools/test_grade_0751_isolation.py:4347:            lenient = grade.existing_mark_labels(path)
-./ec/tools/test_grade_0751_isolation.py:4537:                    self.assertEqual(grade.existing_mark_labels(path), [])
-./ec/tools/test_grade_0751_isolation.py:4712:                                 grade.existing_mark_labels(str(path)))
+./ec/tools/test_grade_0751_isolation.py:3827:            self.assertEqual(grade.existing_mark_labels(path),
+./ec/tools/test_grade_0751_isolation.py:3847:            self.assertEqual(grade.existing_mark_labels(path),
+./ec/tools/test_grade_0751_isolation.py:3878:            marks = grade.existing_mark_labels(str(path))
+./ec/tools/test_grade_0751_isolation.py:3907:            self.assertEqual(len(grade.existing_mark_labels(path)), 7)
+./ec/tools/test_grade_0751_isolation.py:4062:            labels = grade.existing_mark_labels(path)
+./ec/tools/test_grade_0751_isolation.py:4123:            labels = grade.existing_mark_labels(path)
+./ec/tools/test_grade_0751_isolation.py:4185:            lenient = grade.existing_mark_labels(str(path))
+./ec/tools/test_grade_0751_isolation.py:4376:                    self.assertIsInstance(grade.existing_mark_labels(path), list)
+./ec/tools/test_grade_0751_isolation.py:4384:            self.assertEqual(len(grade.existing_mark_labels(str(path))), 1)
+./ec/tools/test_grade_0751_isolation.py:4493:            lenient = grade.existing_mark_labels(path)
+./ec/tools/test_grade_0751_isolation.py:4683:                    self.assertEqual(grade.existing_mark_labels(path), [])
+./ec/tools/test_grade_0751_isolation.py:4858:                                 grade.existing_mark_labels(str(path)))
 ./ec/tools/measure_mark_provenance.py:468:            ("existing_mark_labels", GRADER, grader.existing_mark_labels,
-./ec/tools/measure_mark_provenance.py:841:        if pairs != grader.existing_mark_labels(path):
-./ec/tools/measure_mark_provenance.py:844:                            f"{grader.existing_mark_labels(path)}")
-./ec/tools/measure_mark_provenance.py:891:        base = grader.existing_mark_labels(os.path.join(tmp, "0751-none.csv"))
-./ec/tools/measure_mark_provenance.py:893:            got = grader.existing_mark_labels(
-./ec/tools/measure_mark_provenance.py:904:        if grader.existing_mark_labels(empty) != [
+./ec/tools/measure_mark_provenance.py:843:        if pairs != grader.existing_mark_labels(path):
+./ec/tools/measure_mark_provenance.py:846:                            f"{grader.existing_mark_labels(path)}")
+./ec/tools/measure_mark_provenance.py:893:        base = grader.existing_mark_labels(os.path.join(tmp, "0751-none.csv"))
+./ec/tools/measure_mark_provenance.py:895:            got = grader.existing_mark_labels(
+./ec/tools/measure_mark_provenance.py:906:        if grader.existing_mark_labels(empty) != [
 ```
 
 Twelve of those are the grader's own suite, which is not what the question is
-about — `ec/tools/test_grade_0751_isolation.py:3681`,
-`ec/tools/test_grade_0751_isolation.py:3701`,
-`ec/tools/test_grade_0751_isolation.py:3732`,
-`ec/tools/test_grade_0751_isolation.py:3761`,
-`ec/tools/test_grade_0751_isolation.py:3916`,
-`ec/tools/test_grade_0751_isolation.py:3977`,
-`ec/tools/test_grade_0751_isolation.py:4039`,
-`ec/tools/test_grade_0751_isolation.py:4230`,
-`ec/tools/test_grade_0751_isolation.py:4238`,
-`ec/tools/test_grade_0751_isolation.py:4347`,
-`ec/tools/test_grade_0751_isolation.py:4537` and
-`ec/tools/test_grade_0751_isolation.py:4712`. The other **eight** are three
+about — `ec/tools/test_grade_0751_isolation.py:3827`,
+`ec/tools/test_grade_0751_isolation.py:3847`,
+`ec/tools/test_grade_0751_isolation.py:3878`,
+`ec/tools/test_grade_0751_isolation.py:3907`,
+`ec/tools/test_grade_0751_isolation.py:4062`,
+`ec/tools/test_grade_0751_isolation.py:4123`,
+`ec/tools/test_grade_0751_isolation.py:4185`,
+`ec/tools/test_grade_0751_isolation.py:4376`,
+`ec/tools/test_grade_0751_isolation.py:4384`,
+`ec/tools/test_grade_0751_isolation.py:4493`,
+`ec/tools/test_grade_0751_isolation.py:4683` and
+`ec/tools/test_grade_0751_isolation.py:4858`. The other **eight** are three
 files that do not belong to it, and they are why the answer is API rather than
 fixture:
 
@@ -274,6 +274,14 @@ write-up — `docs/findings.md` §6a records it as reproducing on a clean
 > this page records moves — both functions are still kept, the three call sites
 > are still the three the table names, and `measure_mark_provenance.py` still
 > exits 0 on 44 `ok` rows. What was red was this page's own housekeeping.
+>
+> The second of the two assertions is stale in the same way and in the other
+> direction: `test_grade_0751_isolation.py` is **146** tests on a clean
+> worktree at `origin/main` and **149** on this tree, not the 111 both are
+> reported as. It was already wrong where it was written rather than moved
+> here, so the sentence above is left as written and this put beside it per
+> §4a-4d, and the counts are a measurement of those two trees rather than a
+> property of the suite — they move with it.
 
 *(The plan this page was written against recorded **two** pre-existing
 failures, the second being `test_walk_budget_census.py` on a baseline ref
@@ -314,3 +322,20 @@ with a date on it.)*
 
 Nothing in this change needs hardware. The whole of it is offline behaviour of
 a text search, a line-number census and a test suite.
+
+*(Both transcripts above are re-run on this tree. The four
+`grade_0751_isolation.py` lines in the first were already stale on `main` —
+this change's own edits to that file begin at `:1826`, below all four — so
+they are refreshed here rather than carried, and the block is the run again
+instead of one that had quietly stopped being it. Five of the second
+transcript's eight were stale on `main` as well, and for a reason the first
+four did not have: this change touches none of the three files that block
+names, so nothing here moved them, and `untouched by this change` is not
+`correct`. They are refreshed on the same terms rather than carried —
+`measure_mark_provenance.py`'s `:841`, `:844`, `:891`, `:893` and `:904`
+become the `:843`, `:846`, `:893`, `:895` and `:906` the run now prints — and
+the other three hold on both trees. This note sits at
+the end rather than under the first transcript so that adding it moves no
+citing line above it — every `file:NNN` on this page is a record the census
+resolves, and a note inserted mid-page would have invalidated the twenty rows
+that name the lines below it.)*

@@ -810,9 +810,26 @@ class TheCommittedTree(unittest.TestCase):
         # literally a `def test_a_capture_given_twice_is_refused` header, so
         # this axis is the only one it touches: `0 -> 1`, and the four beside
         # it are unmoved again.
+        # **#492's record is the second `def test_`, and it is the only record
+        # on this change that moves a column at all.** Its 33 re-anchorings in
+        # `docs/findings/test-line-pin-census.md` are a uniform `+146` -- the
+        # two hunks this change adds to `test_grade_0751_isolation.py` sit
+        # above every pin it moves -- so each lands on a line carrying the same
+        # text and therefore the same shape, and the four columns beside this
+        # one staying put is the check for that. The one that moves is
+        # `0751-capture-row-shape.md:41`, and it moves because its pin was
+        # already stale before this change: `main` recorded `:3789` where the
+        # header sat at `:3805`, a 16-line drift no earlier re-anchoring had
+        # accounted for. Correcting it to `:3951` is `+162`, `146` of it this
+        # change and `16` of it the old drift, and the line it lands on is
+        # `def test_the_refusal_reasons_are_read_captures_own` -- a header,
+        # where `:3789` was a statement inside the test. So it leaves `other`
+        # for `def test_`: `1 -> 2` and `46 -> 45`, with `assertion`,
+        # `comment` and `blank` unmoved again, which is the check that this is
+        # one record moving between columns and not one added or dropped.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 1, census.ASSERTION: 24, census.COMMENT: 23,
-            census.BLANK: 5, census.OTHER: 46})
+            census.DEF_TEST: 2, census.ASSERTION: 24, census.COMMENT: 23,
+            census.BLANK: 5, census.OTHER: 45})
         # `69 -> 70` is the same #421 record, and it takes this axis for the
         # reason the comment above gives for the split: a record that resolves
         # names a target, and this one lands in a file the axis did not carry,

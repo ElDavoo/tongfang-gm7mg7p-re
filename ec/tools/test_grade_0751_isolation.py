@@ -2976,6 +2976,147 @@ class MarkSetTests(unittest.TestCase):
         self.assertEqual([kind for kind, _, _ in problems], ['void'])
         self.assertIn('ends this block on', problems[0][2])
 
+    # The repeat above is handed in twice as the *same string*, so every
+    # `m.source` in the run is one value and the defect cannot appear: the
+    # per-action line counts spellings, and one spelling held twice is one
+    # key however many rows sit under it. Two spellings of one file is the
+    # case that reaches it -- `read_capture` stores the path as given, so the
+    # run holds two `m.source` values for one file, the numerator counts two,
+    # and the denominator (`distinct_captures`, which keys on the resolved
+    # path) counts one. `2 of 1 capture(s)` over a listing naming one console
+    # is the line that came out.
+    #
+    # Both argument orders are run because the count has to come out the same
+    # either way: `distinct_captures` keeps the *first* spelling as given, so
+    # which one survives decides what the per-capture listing is built from.
+    #
+    # What this fixture cannot show is the other half of the fix -- keying
+    # `said` by resolved path while the lookup under it still asks for the
+    # spelling in `names`. Every action here takes the `one label each`
+    # short-circuit, so that lookup is never reached and the two orders print
+    # the same bytes whether or not it is resolved. The next test is the one
+    # that pins it.
+    def test_the_census_counts_two_spellings_of_one_file_as_one_capture(self):
+        # Built from a string so nothing normalises the `.` out of it: the two
+        # paths have to reach the readers as different strings, and a
+        # `pathlib` join collapses them back into one before the test runs.
+        dotted = os.path.join(HERE, 'testdata', os.curdir,
+                              os.path.basename(QUIET))
+        self.assertNotEqual(dotted, QUIET)
+        self.assertEqual(os.path.realpath(dotted), os.path.realpath(QUIET))
+        for given in ([QUIET, dotted], [dotted, QUIET]):
+            captures, windows, blocks, unplaced = as_main_reads(given)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                grade.report_census(captures, windows, blocks, unplaced,
+                                    {}, None)
+            printed = census(out.getvalue())
+            # The numerator and the denominator are the same count, and the
+            # header agrees with the ratio -- the header is what says how many
+            # captures the run has, so a ratio that disagrees with it is the
+            # same defect one line up.
+            self.assertIn('1 capture(s), 2 mark row(s), 2 action(s)', printed)
+            self.assertIn("'wrote 0x0751=0xA0' in 1 of 1 capture(s), "
+                          "one label each", printed)
+            # The per-capture listing is the other half of it: one console
+            # under the capture, not the same one under two headings. The
+            # per-action rows themselves are not asserted here -- they only
+            # print on the arm a genuine disagreement takes, and the ratio
+            # above is what decides that.
+            self.assertEqual(
+                printed.count('0751-isolation-example-quiet.csv (2 mark(s)):'),
+                1)
+
+    # The lookup under the `one label each` short-circuit, which the test
+    # above cannot reach: one capture whose two spellings agree about every
+    # action takes the short-circuit every time, so the line under a capture
+    # never prints and the order the two spellings were handed in is invisible
+    # there. This one is a genuine disagreement between two captures, so the
+    # per-action line takes the other arm and asks `said` for each capture by
+    # the spelling `names` holds.
+    #
+    # That is the case the numerator-only fix breaks, and the one the
+    # two-argument-order loop on the quiet fixture does not: `said` keyed by
+    # resolved path against a lookup asking for the spelling in `names` misses
+    # every time the surviving spelling is the one the marks were not read
+    # under. `-- did not record it` under a capture that did record it, on the
+    # arm whose whole subject is that the captures disagree.
+    def test_the_census_names_a_capture_the_way_the_capture_read_itself(self):
+        a, b = DISAGREEING[0], DISAGREEING[2]
+        # The disagreeing pair really does disagree, checked the way
+        # `report_census` decides which arm to take -- per window, across the
+        # captures that recorded it -- so a fixture edit that made the two
+        # agree fails here instead of quietly turning this into a second copy
+        # of the test above.
+        _, windows, _, _ = as_main_reads((a, b))
+        self.assertTrue(
+            any(len({m.label for m in w.marks}) > 1 for w in windows),
+            'fixture no longer disagrees about an action')
+        dotted = os.path.join(os.path.dirname(a), os.curdir, os.path.basename(a))
+        self.assertNotEqual(dotted, a)
+        self.assertEqual(os.path.realpath(dotted), os.path.realpath(a))
+        # The repeated file first and under the spelling that is *not* the one
+        # `m.source` holds for the rows already in the run, so `names` keeps a
+        # spelling the lookup cannot find by string. The other order keeps the
+        # one the marks were read under, which is why the defect needs this
+        # order to appear -- and why both are run, so a fix that only worked
+        # for the surviving spelling would fail the other arm.
+        for given in ([dotted, b, a], [a, b, dotted]):
+            caps, wins, blocks, unplaced = as_main_reads(given)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                grade.report_census(caps, wins, blocks, unplaced, {}, None)
+            printed = census(out.getvalue())
+            # Each capture is named with the label it really recorded, so the
+            # two rows disagree with each other exactly as the two captures do.
+            self.assertIn('2026-01-01-0751-isolation-0700-07ff.csv      '
+                          "'wrote 0x0751=0xA0'", printed)
+            self.assertIn('2026-01-01-0751-isolation-0400-045f.csv      '
+                          "'wrote 0x0751=0x10'", printed)
+            # And neither is named as not having recorded an action both of
+            # them recorded -- the sentence that sends an operator looking for
+            # a watcher that exited early, printed here for a run where every
+            # watcher was fine.
+            self.assertNotIn('did not record it', printed)
+
+    # The same identity has to hold for the checks that *withhold* a block,
+    # not only for the lines that count. `check_block_marks` compared a
+    # `by_source` keyed on `m.source` against a `known` keyed on the resolved
+    # path, so a two-console run with one file repeated under a second
+    # spelling put three keys against a two-element set: the `missing` check
+    # engaged, every window of a clean run came back "recorded in 3 of 2
+    # capture(s), absent from " -- naming no capture at all, because the
+    # absent list was the same mismatch filtered -- and the block was withheld
+    # and the exit code moved on a run with nothing wrong with it.
+    #
+    # The control arm is the same pair without the repeat, so a fix that
+    # simply switched the check off would pass the repeat case and fail this
+    # one: both files really do record every action, and both really are
+    # absent from nothing.
+    def test_a_repeated_capture_does_not_manufacture_a_missing_mark(self):
+        a, b = FIXED_LOAD
+        control, _, control_blocks, _ = as_main_reads([a, b])
+        self.assertEqual([p for bl in control_blocks
+                          for p in grade.check_block_marks(bl, control)], [])
+        # The repeat under a second spelling: three `m.source` values across
+        # two files, which is what a spelling-keyed comparison cannot survive.
+        repeated = os.path.join(os.path.dirname(b), os.curdir,
+                                os.path.basename(b))
+        self.assertNotEqual(repeated, b)
+        captures, _, blocks, unplaced = as_main_reads([a, b, repeated])
+        problems = [p for bl in blocks
+                    for p in grade.check_block_marks(bl, captures)]
+        # Not merely quiet: no `missing` problem was manufactured, so nothing
+        # is withheld and the exit code does not move.
+        self.assertEqual([kind for kind, _, _ in problems], [])
+        self.assertEqual([kind for kind, _, _ in grade.unplaced_window_problems(
+            unplaced, captures)], [])
+        # The block is graded rather than held, which is the consequence the
+        # operator would have seen: a run of two healthy consoles reported as
+        # ungraded.
+        self.assertEqual([bl.name for bl in blocks if bl.problems], [])
+        self.assertEqual(len(blocks), 1)
+
     # The per-window agreement checks are properties of the marks, not of the
     # block a window falls in, and a window the block walk could not place was
     # reaching neither of them: `main` handed `check_block_marks` the blocks
@@ -3134,11 +3275,16 @@ class MarkSetTests(unittest.TestCase):
         for w, texts in problems.items():
             self.assertEqual(len(texts), 1, f'{w.label!r}')
         # The kinds, in mark order, and each window's own text carrying the
-        # fact that named it.
+        # fact that named it. `known` is built through `capture_key` because
+        # that is how both of its callers build it, and a hand-written
+        # `set(names)` is only the same set while the fixture paths hold no
+        # symlink -- it would then be testing a set the tool never compares
+        # against, and pass on a day the two had come apart.
         names, _ = grade.distinct_captures(path for path, _ in captures)
         self.assertEqual(
             [kind for w in unplaced for kind, _, _
-             in grade.window_mark_problems(w, names, set(names))],
+             in grade.window_mark_problems(
+                 w, names, {grade.capture_key(n) for n in names})],
             ['labels', 'missing'])
         disagree, absent = (problems[w][0] for w in unplaced)
         self.assertIn('the captures spell this action differently', disagree)
