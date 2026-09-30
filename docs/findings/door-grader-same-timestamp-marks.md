@@ -38,8 +38,8 @@ grader is the only place that sees the result.
 
 And this grader is the one place that *needs* the rule, because
 `grade_0751_isolation.py` cannot produce the shape. Its `build_windows`
-(`:1816`) calls `coalesce_marks` (`:1773`) first, which fuses anything within
-`MARK_MERGE_SECONDS` (`:284`, 5 s) into one window. That fusion is correct
+(`:1981`) calls `coalesce_marks` (`:1882`) first, which fuses anything within
+`MARK_MERGE_SECONDS` (`:315`, 5 s) into one window. That fusion is correct
 there — §3 of *that* procedure runs one watcher per console, so one action
 lands as three MARK rows and the alternative is a window reporting "nothing
 moved" for a write that did move things. This procedure runs one watcher on one
@@ -48,6 +48,40 @@ mistake here. The 0751 grader is immune to a phantom window because it fuses by
 default; this one cannot fuse without attributing one action's movement to
 another, so the collision has to be refused instead.
 
+> **Corrected 2026-09-30, review of #1432: the three anchors in the paragraph
+> above were `:1816`, `:1773` and `:284`, and none of them named what it was
+> cited for.** In `ec/tools/grade_0751_isolation.py` today `def build_windows`
+> is at `:1981`, `def coalesce_marks` at `:1882`, and `MARK_MERGE_SECONDS = 5`
+> at `:315`; the three lines the old anchors landed on are a `with open(path…)`
+> inside a capture reader, a sentence of a docstring, and the module's own
+> `--wrote` example. Corrected in place per `docs/findings.md` §4a rather than
+> edited silently, and nothing else in the paragraph is disturbed. The three
+> old anchors were correct in the tree #1416 merged (`edf0f4f2`), and the drift
+> came afterwards: #1409's `126a67c8` added 346 lines to that file and moved the
+> three to `:1948`, `:1849` and `:310`, #1437's `6b58bc17` moved them again to
+> `:1953`, `:1854` and `:315`, and #1450's `ab594a22` to the three above.
+> Three commits moved that file and no page re-read its pins, so re-derive
+> them with
+> `grep -n -e "def build_windows" -e "def coalesce_marks" -e "^MARK_MERGE_SECONDS" ec/tools/grade_0751_isolation.py`
+> rather than by shifting the previous set: the moves are not the same size.
+> #1450 moved the two functions +28 and left `MARK_MERGE_SECONDS` at `:315`, so
+> a read that stops at #1437 leaves `:1953` and `:1854` — and both of those are
+> blank lines today. Review of #1432 is only what put these three in the same
+> screen as the path correction below.
+>
+> **All three edits to this page are outside #1432's stated scope, and are kept
+> anyway.** The issue lists *Editing
+> `docs/findings/door-grader-same-timestamp-marks.md`* under *Not taken*, and
+> the plan said it did not. What is here is the qualification of "no run has
+> been taken" — that one is #1432's own, since the capture it records is what
+> #1432 is about — beside two pre-existing errors this PR read past and then
+> cited: these three anchors, and the `windows/tools/` directory in the bullet
+> further down. Both were already wrong on `origin/main`, and a page about wrong
+> pins leaving two of them standing behind new ones is not a state this
+> repository should merge, so they are corrected and disclosed here rather than
+> dropped. Reverting either is one `git checkout origin/main --` away, and the
+> call belongs to the maintainer rather than to the branch that noticed.
+
 ## How two marks reach one instant, from the writers' own source
 
 Stated as what the committed code does. **This is not a frequency claim, and
@@ -55,19 +89,53 @@ nothing here measures how often it happens** — a capture with two marks at one
 instant can be constructed, and the writers below can produce one, but no run
 has been taken and no operator has been observed.
 
+> **Qualified in place, 2026-09-30, by issue #1432:** the second half of that
+> — "no run has been taken and no operator has been observed" — was written
+> about §3's *door* procedure, a `gpu_block_watch.py --csv --mark` capture with
+> one watcher on one console, and for that procedure it still holds. It does
+> not hold for the second writer named below, `input_mark_loop`
+> (`ec/tools/ec_timer_capture.py:227`), which has since produced one committed
+> instance of the collision, in
+> `evidence/ec-watch/2026-09-24-06c2-06db-perturb-linux.csv` lines 1711-1712:
+> `auto: event7 scan 0xb0` and `auto: event7 key 184 pressed`, both at
+> `2026-09-24T21:21:11.447+02:00`, written by one run of that loop on a
+> machine. The first half is untouched by this: one instance is not a rate, and
+> nothing here or there measures how often this happens. The paragraph above is
+> kept as it stood rather than edited out, per `docs/findings.md` §4a; the
+> reconciliation is
+> [`perturb-arm-colliding-marks.md`](perturb-arm-colliding-marks.md).
+
 - `windows/tools/ec_watch.py:121` stamps a mark with
   `datetime.datetime.now().astimezone().isoformat(timespec="milliseconds")`.
   Millisecond resolution, and `Marker._loop` (`:466`) writes one row per
   `sys.stdin.readline()` unconditionally once the label is accepted — one line
   in, one row out, with nothing between two lines that arrive in the same
   millisecond.
-- `windows/tools/ec_timer_capture.py:78` is the same `now()`. `auto_mark_loop`
+- `ec/tools/ec_timer_capture.py:78` is the same `now()`. `auto_mark_loop`
   (`:205`) calls it once per changed key inside a single poll, so one AC or lid
   transition that moves two keys writes two marks back to back;
   `input_mark_loop` (`:227`) writes one mark per evdev record, and one
   keypress arrives as `EV_MSC`/`MSC_SCAN` and then `EV_KEY`, so a capture
   taken with the operator's hands on the machine writes a mark for each of
   those.
+
+> **Corrected 2026-09-30, review of #1432: the bullet above named the file
+> `windows/tools/ec_timer_capture.py`, and no such file has ever existed here** —
+> `git log --all -- windows/tools/ec_timer_capture.py` is empty and
+> `find . -name 'ec_timer_capture*'` returns only the one copy. The capture is
+> Linux-side and lives at `ec/tools/ec_timer_capture.py`; it names itself that
+> way in the banner it writes at the top of its own CSV (`:304`), and every
+> other citation of it in the tree spells it the same way —
+> `grade_timer_sweep.py`, `measure_mark_provenance.py`,
+> `docs/hardware-tests/xdata-06c2-06db-sweep.md`, and the other files under
+> `docs/findings/` that name it. The line numbers were never the problem:
+> `now()`, `auto_mark_loop` and `input_mark_loop` sit at `:78`, `:205` and
+> `:227` in the real file, and the blockquote above already cites `:227` for
+> the third. So this was one directory prefix, and correcting it is what keeps
+> the page from carrying two homes for one symbol — the blockquote above and
+> this bullet name the same two functions. Corrected in place per
+> `docs/findings.md` §4a rather than edited silently, since #1416 merged the
+> bullet as written.
 
 `docs/findings/grader-repeated-capture.md:47-48` already recorded the route
 and declined to close it: "`_loop` does not refuse a paste". It is recorded

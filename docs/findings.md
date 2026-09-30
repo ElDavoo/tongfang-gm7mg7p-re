@@ -5197,8 +5197,10 @@ measured. The in-window bytes of `0x976E` and `0x9817` changed the way their
 `ghidra-functions.csv` annotations say, down to `0x0490` becoming
 `(old OR 1) AND 0x77`. No pre-return countdown was loaded by anything, so the
 100 ms half of the ratio is still unseen. The Fn key arrives as `KEY_F14`
-(scan `0xb0`) and moved nothing the capture watched: `0x0751` held `0x10`. The
-lid did not suspend the machine, because logind treats it as docked.
+(scan `0xb0`) and moved nothing the capture watched: `0x0751` held `0x10`
+for the whole capture, not over any window — that capture carries two marks
+at that one instant (`perturb-arm-colliding-marks.md`). The lid did not
+suspend the machine, because logind treats it as docked.
 `XDATA_06D8` and `XDATA_070B` move to `confirmed-working` on the same narrow
 scope as `0x06D6`. Both notes said "decremented on every pass", which is wrong
 for a post-return byte, and each now carries a correction beside the original.

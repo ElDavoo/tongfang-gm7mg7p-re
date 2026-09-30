@@ -20,7 +20,7 @@ is the standing §4a-4d gives every figure here, and the trees differ: the count
 has been `105`, `106` and `107` at different points, and the paragraphs that
 say `106` and the paragraphs that say `107` are each true of the tree they were
 measured on. **The figures for the tree this file is in now are the ones in the
-transcript under *The measurement*, and they are `130 / 31 / 96 / 72`.** Every
+transcript under *The measurement*, and they are `132 / 32 / 98 / 74`.** Every
 other number in this file is a record of a tree, not a claim about this one.
 
 That is a real weakness in the file's shape rather than a disagreement in its
@@ -55,7 +55,7 @@ $ python3 ec/tools/census_test_line_pins.py
 132 pin(s) in 32 markdown file(s): 98 distinct spelling(s), 74 distinct resolved target(s)
   99 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 33 declined
   2 def test_, 24 assertion, 23 comment, 5 blank, 45 other (of the pins that resolve)
-  read 249 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 83 test file(s) in it
+  read 278 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 92 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -67,10 +67,10 @@ and excludes only `.git/`, `vendor/` and `.claude/`, so an **untracked**
 markdown file in a worktree is counted and the figure reads one higher. The
 run above is the committed tree — `git ls-files | xargs cp --parents` into a
 scratch directory, which is `git archive` without the export attributes — and
-that is what makes `249` and `83` the two numbers a reader re-running it gets.
+that is what makes `278` and `92` the two numbers a reader re-running it gets.
 Run in place in a worktree carrying a `.claude-pr/` or any other untracked
-notes, it reads `250`; the difference is the untracked file and nothing else.
-The `83` is `len(suites(REPO))` and moves only when a suite is added.)*
+notes, it reads `279`; the difference is the untracked file and nothing else.
+The `92` is `len(suites(REPO))` and moves only when a suite is added.)*
 
 *(Re-run 2026-09-27 for #739, whose write-up
 [`0751-mark-provenance-column.md`](0751-mark-provenance-column.md) names the
@@ -348,7 +348,11 @@ by this merge and are left as `#491`'s own tree recorded them: the census's file
 count is a directory walk, so it reads `276` on a clean `origin/main` checkout
 and `277` here whatever this block says, which is the same caveat the note under
 the block already gives for an untracked file. That divergence predates this
-merge and is not corrected by it.
+merge and is not corrected by it. **The `#1432` merge below does correct it, and
+the block now carries that re-transcription's figures rather than `#491`'s**, so
+the block's `278`/`92` and this paragraph's `249`/`83` are records of two trees
+rather than a disagreement about one; both stay written, per
+[`../findings.md`](../findings.md) §4a-4d.
 
 **Left alone, the same merge would have read `2/21/25/5/46` with four
 `shape-differs` — and that would have been a stale citation rather than a change
@@ -362,6 +366,60 @@ re-anchored `:320`→`:322` on the same grounds, with the re-anchoring noted in 
 tool; its run is otherwise identical to `origin/main`'s, at the same `43`
 citation problems, and the tool's own `DRIFT` verdict for the site is what named
 it.
+
+**Correction, 2026-09-30, at the `#1432` merge: the two denominators move by this
+change's `+1` each and not one count about pins moves, so the block above is
+re-run rather than differenced, and `origin/main` is run beside it by the same
+method — a `git archive` of each tree into a scratch directory, because the
+census's own population is a directory walk and only an extraction gives both
+sides the same one.** `origin/main` at `ab594a22` reads **`277`** markdown files
+and **`91`** test files, and this tree reads **`278`** and **`92`**, so the step
+is `277 + 1 = 278` and `91 + 1 = 92`. **The two `+1`s are this change's own
+[`perturb-arm-colliding-marks.md`](perturb-arm-colliding-marks.md) and
+`ec/tools/test_scan_mark_collisions.py`**, and neither takes a record with it:
+the write-up names its suite by path and writes no `test_*.py:NNN` anywhere in
+it, which is the same bargain
+[`ecrw-fake-one-shape.md`](ecrw-fake-one-shape.md) took one commit ago and for
+the reason the `#985` correction below gives — a line pin would add a record here
+and a row in `check_pin_table_rows.py` for no bearing on this axis. **Every count
+the tool prints about pins comes back identical on both sides** — `132` pins in
+`32` citing files, `98` spellings, `74` targets, `99` resolves and `33` declined —
+which is the check a denominator's move is run for, and
+`check_pin_table_rows.py` reads **`132` rows, `132` records, `130` placed, the
+same `2` `unplaced-row` and `2` `row-without-record` on both and `0`
+`read-differs`, `shape-differs`, `path-differs`, `duplicate-key` and
+`unparsed-row`**, so no row of the table was added or dropped by either side.
+**The shape split is the one count on the block this merge does not leave where
+`main` had it, and it is `main`'s move rather than this change's**: this change
+writes no `test_*.py:NNN`, so it cannot move a record between columns, whereas
+`#492`'s re-anchoring sits below and reads **`2/24/23/5/45`** on both sides of
+this merge. The `1/24/23/5/46` this paragraph's earlier draft carried is what
+`origin/main` read at the fork point `1628ad44`, not what either side reads now,
+and it stays in the `#364` and `#491` paragraphs beside it as a record of their
+trees.
+
+**The `249` and the `83` the block above carried until this merge were stale on
+`main` before this change touched it** — `origin/main` reads `277` and `91` — so
+the re-transcription supersedes them rather than stepping from them, the same
+arithmetic the `#904` correction above records. They stay written in the `#491`
+paragraph, each true of the tree it was measured on, per
+[`../findings.md`](../findings.md) §4a-4d.
+
+**Four rows of the table below are re-registered once more, and both sides moved
+the same four rows this time, so the two steps compose into a sum rather than one
+superseding the other.** `#364` moved the four `../findings.md` citing lines by
+`+19` and this change moved the same four by `+2` above them, so each row reads
+**`main`'s own value plus two** — `:7464`, `:7685`, `:7746` and `:9530` — and each
+is byte-identical to the line it replaces, so every verdict against it is re-read
+rather than carried. **The merged tree has both edits above the same four lines
+and so has a `:7464` neither side could have reached**, which is why each cell
+above writes both readings beside it rather than either side's alone; the two
+sides composing rather than one superseding the other is the `#93` correction's
+shape rather than a new one, and there the six rows reconciled at `main`'s lines
+because #93's addition landed below them where this merge's landed above. The
+`2` unplaced pairs
+are the two the 2026-09-28 corrections name, both `main`'s, and this merge moves
+neither.
 
 **Correction, 2026-09-26, at the `#929` × `#962` × `#794` × `#780` merge: the
 `156` above is the one figure on the block that this tree moves, and it moves
@@ -1360,10 +1418,10 @@ the half this table exists to record.
 | `docs/agent-pipeline.md:409` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries — **re-anchored from `:397` by the tool's current run; the verdict is the reading recorded against the old line and has not been re-read. Left at `:409` rather than re-registered to `:410`, where the spelling now sits, because `test_check_pin_table_rows.py` pins the placed count against this row by name — `128` placed on this tree, and `129` is what re-registering it would cost — and #904 did not cause it; see the 2026-09-28 correction above**
 | [`../findings.md`](../findings.md):4394 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** — **re-anchored `:4385`→`:4394` by #371's 9-line amendment of §14j above it, and before that `:4368`→`:4385` by #1183's 17-line correction in `../findings.md` above it (§4m), and before that from `:4328` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
 | [`../findings.md`](../findings.md):4396 | `test_ec_watch.py:86-89` | by-name | other | **records another line** — **re-anchored `:4387`→`:4396` by #371's 9-line amendment of §14j above it, and before that `:4370`→`:4387` by #1183's 17-line correction in `../findings.md` above it (§4m), and before that from `:4330` by `main`'s 21 and #93's 19 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
-| [`../findings.md`](../findings.md):7462 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** — **re-anchored `:7443`→`:7462` by #364's 19-line §16 correction in `../findings.md` above it (`+15` at `@@ -4443,6 +4443,21 @@` and `+4` at `@@ -4457,7 +4472,11 @@`), and before that `:7421`→`:7443` by #714's dated §39 correction in `../findings.md` above it, and before that `:7412`→`:7421` by #371's 9-line amendment of §14j above it, and before that `:7395`→`:7412` by #1183's 17-line correction in `../findings.md` above it (§4m), and before that from `:7369` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
-| [`../findings.md`](../findings.md):7683 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries  — **re-anchored `:7664`→`:7683` by #364's 19-line §16 correction in `../findings.md` above it (`+15` at `@@ -4443,6 +4443,21 @@` and `+4` at `@@ -4457,7 +4472,11 @@`), and before that `:7642`→`:7664` by #714's dated §39 correction in `../findings.md` above it, and before that `:7633`→`:7642` by #371's 9-line amendment of §14j above it, and before that `:7616`→`:7633` by #1183's 17-line correction in `../findings.md` above it (§4m), and before that from `:7590` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
-| [`../findings.md`](../findings.md):7744 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries  — **re-anchored `:7725`→`:7744` by #364's 19-line §16 correction in `../findings.md` above it (`+15` at `@@ -4443,6 +4443,21 @@` and `+4` at `@@ -4457,7 +4472,11 @@`), and before that `:7703`→`:7725` by #714's dated §39 correction in `../findings.md` above it, and before that `:7694`→`:7703` by #371's 9-line amendment of §14j above it, and before that `:7677`→`:7694` by #1183's 17-line correction in `../findings.md` above it (§4m), and before that from `:7651` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
-| [`../findings.md`](../findings.md):9528 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** — **re-anchored `:9509`→`:9528` by #364's 19-line §16 correction in `../findings.md` above it (`+15` at `@@ -4443,6 +4443,21 @@` and `+4` at `@@ -4457,7 +4472,11 @@`), and before that `:9487`→`:9509` by #714's dated §39 correction in `../findings.md` above it, and before that `:9478`→`:9487` by #371's 9-line amendment of §14j above it, and before that `:9461`→`:9478` by #1183's 17-line correction in `../findings.md` above it (§4m), and before that twice, once by each side of this merge: `:9411`→`:9437` by #489's 26 added lines in `../findings.md` above it, then `:9437`→`:9461` by #904's 24-line correction, also above it; `:9411` on the merge base is the byte-identical "`ec/tools/test_xdata_cluster_names.py:400`, the 15 ranks of headroom are as they" line `:9461` is here, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):7464 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** — **re-anchored `:7443`→`:7464` by two sides' additions to `../findings.md` above it, composing rather than one superseding the other — #364's 19-line §16 correction (`+15` at `@@ -4443,6 +4443,21 @@` and `+4` at `@@ -4457,7 +4472,11 @@`) and this change's own 2 added lines (`+2` at `@@ -5197,8 +5197,10 @@`, the hunk widening §17a's Fn-arm sentence to say `0x0751` held `0x10` for the whole capture rather than over any window, which sit above every pin below `:5200`), so `:7443 + 19 + 2 = :7464` and `main`'s `:7462` and the branch's `:7445` are the two halves, and before that `:7421`→`:7443` by #714's dated §39 correction in `../findings.md` above it, and before that `:7412`→`:7421` by #371's 9-line amendment of §14j above it, and before that `:7395`→`:7412` by #1183's 17-line correction in `../findings.md` above it (§4m), and before that from `:7369` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):7685 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries  — **re-anchored `:7664`→`:7685` by two sides' additions to `../findings.md` above it, composing rather than one superseding the other — #364's 19-line §16 correction (`+15` at `@@ -4443,6 +4443,21 @@` and `+4` at `@@ -4457,7 +4472,11 @@`) and this change's own 2 added lines (`+2` at `@@ -5197,8 +5197,10 @@`, the hunk widening §17a's Fn-arm sentence to say `0x0751` held `0x10` for the whole capture rather than over any window, which sit above every pin below `:5200`), so `:7664 + 19 + 2 = :7685` and `main`'s `:7683` and the branch's `:7666` are the two halves, and before that `:7642`→`:7664` by #714's dated §39 correction in `../findings.md` above it, and before that `:7633`→`:7642` by #371's 9-line amendment of §14j above it, and before that `:7616`→`:7633` by #1183's 17-line correction in `../findings.md` above it (§4m), and before that from `:7590` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):7746 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries  — **re-anchored `:7725`→`:7746` by two sides' additions to `../findings.md` above it, composing rather than one superseding the other — #364's 19-line §16 correction (`+15` at `@@ -4443,6 +4443,21 @@` and `+4` at `@@ -4457,7 +4472,11 @@`) and this change's own 2 added lines (`+2` at `@@ -5197,8 +5197,10 @@`, the hunk widening §17a's Fn-arm sentence to say `0x0751` held `0x10` for the whole capture rather than over any window, which sit above every pin below `:5200`), so `:7725 + 19 + 2 = :7746` and `main`'s `:7744` and the branch's `:7727` are the two halves, and before that `:7703`→`:7725` by #714's dated §39 correction in `../findings.md` above it, and before that `:7694`→`:7703` by #371's 9-line amendment of §14j above it, and before that `:7677`→`:7694` by #1183's 17-line correction in `../findings.md` above it (§4m), and before that from `:7651` by #489's 26 added lines in `../findings.md` above it; that line's text is byte-identical, so the verdict is re-read rather than carried**
+| [`../findings.md`](../findings.md):9530 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** — **re-anchored `:9509`→`:9530` by two sides' additions to `../findings.md` above it, composing rather than one superseding the other — #364's 19-line §16 correction (`+15` at `@@ -4443,6 +4443,21 @@` and `+4` at `@@ -4457,7 +4472,11 @@`) and this change's own 2 added lines (`+2` at `@@ -5197,8 +5197,10 @@`, the hunk widening §17a's Fn-arm sentence to say `0x0751` held `0x10` for the whole capture rather than over any window, which sit above every pin below `:5200`), so `:9509 + 19 + 2 = :9530` and `main`'s `:9528` and the branch's `:9511` are the two halves, and before that `:9487`→`:9509` by #714's dated §39 correction in `../findings.md` above it, and before that `:9478`→`:9487` by #371's 9-line amendment of §14j above it, and before that `:9461`→`:9478` by #1183's 17-line correction in `../findings.md` above it (§4m), and before that twice, once by each side of this merge: `:9411`→`:9437` by #489's 26 added lines in `../findings.md` above it, then `:9437`→`:9461` by #904's 24-line correction, also above it; `:9411` on the merge base is the byte-identical "`ec/tools/test_xdata_cluster_names.py:400`, the 15 ranks of headroom are as they" line `:9461` is here, so the verdict is re-read rather than carried**
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3951` | by-name | def test_ | carries — **re-anchored `:3789`→`:3951`, and this is the one record on this change that is not a `+146` shift of a line whose text did not move. The pin was already stale before it: `main` recorded `:3789` where the test's header sat at `:3805`, a 16-line drift no re-anchoring had accounted for, which is why the old reading was `**records another line**` — `:3789` was a statement inside the test rather than the test. Correcting it to `:3951` is `+162`, of which `146` is this change's two hunks (`+141` at `@@ -2976,6 +2976,147 @@`, which adds the two capture-identity tests, and `+5` at `@@ -3134,11 +3275,16 @@`, which threads `capture_key` through `known`) and `16` is the pre-existing drift. The line it now names is `def test_the_refusal_reasons_are_read_captures_own`, the test the sentence names, so the verdict is re-read as `carries` rather than carried** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2413-2414` | by-path | assertion | **does not carry** — **re-anchored `:2232`→`:2413` by this change's own 181 added lines in `ec/tools/test_grade_0751_isolation.py` — `+9` at `@@ -2038,7 +2038,16 @@` and `+172` at `@@ -2102,6 +2111,178 @@`, the hunk that adds `test_a_movement_beside_a_withheld_window_names_the_unattributed_ones` and `test_a_partly_unplaced_movement_declines_the_capture_comparison` — which sit above every pin below `:2111`; the target line's text is byte-identical and the citing sentence changed only in the `file:NNN` it names, so the verdict is re-read from the old line rather than carried** |
