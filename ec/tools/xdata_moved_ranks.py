@@ -80,12 +80,12 @@ Usage:
     python3 xdata_moved_ranks.py across --old-a A --new-a B --old-b C --new-b D \\
         --swept 0x0460 0x0468 ...
     python3 xdata_moved_ranks.py cause --old-a A --new-a B --old-b C --new-b D \\
-        --old-a-registers ONa.csv --new-a-registers OFFa.csv \\
-        --old-b-registers ONb.csv --new-b-registers OFFb.csv
+        --old-a-registers ONa.csv --old-b-registers ONb.csv
     python3 xdata_moved_ranks.py cause --old-a A --new-a B --old-b C --new-b D \\
-        --old-a-registers ONa.csv --new-a-registers OFFa.csv \\
-        --old-b-registers ONb.csv --new-b-registers OFFb.csv \\
+        --old-a-registers ONa.csv --old-b-registers ONb.csv \\
         --page 0x0300 0x05FF --rows
+    # cause reads neither --new-*-registers, however many are passed;
+    # the two it was handed are named back on stderr
     python3 xdata_moved_ranks.py across --old-a A --new-a B --old-b C --new-b D \\
         --cell intact-both --rows
     python3 xdata_moved_ranks.py --self-test
@@ -827,13 +827,29 @@ def rank_delta(old, new):
 def added_addresses(registers):
     """`set(on_b) - set(on_a)`: the addresses a re-derivation added.
 
-    `registers_report` already prints the *size* of this set; the page test
-    needs the membership, so it is derived here from the same two guard-on
-    registers CSVs rather than read out of
-    `annotations/xdata-cluster-names.csv`'s prose about it, which keeps
-    editing that note from being able to move a count.
+    `registers` is the pair of **guard-on** registers CSVs, which is all this
+    reads. `registers_report` already prints the *size* of this set from the
+    same two files; the page test needs the membership, so it is derived here
+    rather than read out of `annotations/xdata-cluster-names.csv`'s prose
+    about it, which keeps editing that note from being able to move a count.
+
+    **Why the guard-off pair is not a second input, and it is not a choice of
+    method.** The writer axis would be the next thing this could be computed
+    over: `xdata_register_map.py` builds it with
+    `touches(group[a], "write") | touches(group[a], "read+write")` inside
+    `components()`, and `touches()` reads `entry["dirs"]` -- a per-address
+    `{function: {bucket, ...}}` map that no column of
+    `annotations/xdata-registers.csv` carries. The two columns that look like
+    it are not it: `functions` is a flat sorted touch list and `writers` is
+    `len(writers)`, an integer. So a committed registers CSV cannot
+    reconstruct the incidence matrix the §6 proxy would need to be promoted
+    past a proxy, and the set below is membership-level for that reason.
+
+    That limit is about *this* input, not about the promotion: a new column in
+    `xdata_register_map.py` and a regeneration of a committed 1,326-row CSV
+    would carry it. That is a different change, and it is not this one.
     """
-    on_a, _off_a, on_b, _off_b = (registers_of(path) for path in registers)
+    on_a, on_b = (registers_of(path) for path in registers)
     return set(on_b) - set(on_a)
 
 
@@ -930,7 +946,9 @@ def cause_report(label_a, committed_a_path, off_a_path,
     `registers` is required rather than optional here, unlike `across`: the
     added-address count is one of the two mechanism tests, and printing `0`
     for a set the mode was not given would be a wrong answer rather than an
-    absent one.
+    absent one. It is the two **guard-on** registers CSVs, and nothing else
+    -- what this mode does with the guard-off pair is nothing, for the reason
+    `added_addresses` records.
     """
     committed_a, off_a = clusters_of(committed_a_path), clusters_of(off_a_path)
     committed_b, off_b = clusters_of(committed_b_path), clusters_of(off_b_path)
@@ -1582,7 +1600,7 @@ def self_test() -> int:
 
     lines, _t, cells = cause_report("A", committed_d, off_d, "B", committed_e,
                                     off_e, rows=True,
-                                    registers=(d_on, d_off, e_on, e_off))
+                                    registers=(d_on, e_on))
     check([r["key"] for r in cells["moved -> intact"]] == [key(1)]
           and [r["key"] for r in cells["intact -> moved"]] == [key(2), key(5)]
           and [r["key"] for r in cells["moved in both"]] == [key(3), key(8)]
@@ -1734,7 +1752,7 @@ def self_test() -> int:
                                 if r[0] != "main-ec-003"])
     _short_lines, _t2, short_cells = cause_report(
         "A", committed_d, off_d_short, "B", committed_e, off_e,
-        registers=(d_on, d_off, e_on, e_off))
+        registers=(d_on, e_on))
     check(absent_ranks(clusters_of(committed_d), clusters_of(off_d_short))
           == ["main-ec-003"]
           and [r["key"] for r in short_cells["moved in both"]] == [key(8)]
@@ -2034,7 +2052,7 @@ def self_test() -> int:
     # 3 rows over 2 keys and nothing else in the output moves.
     lines, _t, _cells = cause_report("A", intact_committed, intact_off,
                                      "B", intact_committed, intact_off,
-                                     registers=(on_a, off_a, on_b, off_b))
+                                     registers=(on_a, on_b))
     guard = [i for i, ln in enumerate(lines)
              if "cluster_key COLLISION" in ln and "of the 3 guard-off keys" in ln]
     population = next((i for i, ln in enumerate(lines)
@@ -2063,7 +2081,7 @@ def self_test() -> int:
                                flip_table(dup_c, dup_o, dup_c, dup_o), ["0x0E"])
     cause_lines, _t, _c = cause_report("A", dup_committed, dup_off,
                                        "B", dup_committed, dup_off,
-                                       registers=(on_a, off_a, on_b, off_b))
+                                       registers=(on_a, on_b))
     covered = (("pair", pair_lines, "of the 4 committed keys"),
                ("pair", pair_lines, "of the 4 guard-off keys"),
                ("across", across_lines, "the counts below are keys"),
@@ -2075,6 +2093,84 @@ def self_test() -> int:
           "`pair` for both of the two it reads, `across`, `--swept` and `cause` "
           "for the committed pair, and `cause` for the guard-off one -- which is "
           "the claim `keyed_by`'s docstring makes about the file")
+
+    # ------------------------------------------------------------------------
+    # Which files `cause` reads, driven through `main()` rather than through
+    # the report function, because the decision of which files to hand it is
+    # `main()`'s and the two are the only place a caller can be wrong about
+    # it. `d_off`/`e_off` are the two files that used to be bound to names
+    # prefixed `_` in `added_addresses` and never read, so they are the
+    # natural fixture here -- and they are *built to be wrong*, which is the
+    # property that makes the assertion mean something: an address neither
+    # guard-on universe holds, and a `write` column that would move a
+    # perturbation count had the mode read it.
+    wrong_d = write_registers(tmp, "d-guard-wrong.csv",
+                              [("0xDEAD", "7"), ("0xBEEF", "1")])
+    wrong_e = write_registers(tmp, "e-guard-wrong.csv",
+                              [("0xDEAD", "7"), ("0xBEEF", "1")])
+
+    def run_cause(on=(True, True), off=False):
+        """(rc, stdout, stderr) for one `cause` invocation over the D/E
+        fixtures. `on` says which of the two guard-on flags is passed and
+        `off` whether the guard-off pair is as well, so the one-flag case is
+        a flag that is absent rather than one whose path is empty."""
+        import contextlib
+        import io
+        argv = ["xdata_moved_ranks.py", "cause",
+                "--old-a", committed_d, "--new-a", off_d,
+                "--old-b", committed_e, "--new-b", off_e]
+        for wanted, flag, path in ((on[0], "--old-a-registers", d_on),
+                                   (on[1], "--old-b-registers", e_on)):
+            if wanted:
+                argv += [flag, path]
+        if off:
+            argv += ["--new-a-registers", wrong_d, "--new-b-registers", wrong_e]
+        out, err = io.StringIO(), io.StringIO()
+        saved = sys.argv
+        sys.argv = argv
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                rc = main()
+        except SystemExit as exit:
+            rc = exit.code
+        finally:
+            sys.argv = saved
+        return rc, out.getvalue(), err.getvalue()
+
+    rc_two, out_two, err_two = run_cause()
+    rc_four, out_four, err_four = run_cause(off=True)
+    check(rc_two == 0 and rc_four == 0 and out_two == out_four
+          and "the added set is 2 address(es)" in out_two,
+          "a guard-off registers pair built to be wrong leaves `cause`'s report "
+          "byte-identical: the mode does not read it, and the added set is the "
+          "difference between the two guard-on universes either way")
+    check("--new-a-registers" in err_four and "--new-b-registers" in err_four
+          and "not read" in err_four and err_two == "",
+          "the flags the mode was handed are named back on stderr, and the "
+          "two-flag run -- which passes neither -- says nothing there")
+    rc_one, out_one, err_one = run_cause(on=(True, False))
+    # Read past argparse's usage block, which lists every option this parser
+    # has -- a substring test over the whole stream is satisfied by the usage
+    # dump whether or not the message names anything, so the line under test
+    # is the `error:` one and the run has to have produced it.
+    said = err_one.rpartition("error:")[2]
+    check(rc_one == 2 and out_one == "" and said
+          and "--old-a-registers" in said and "--old-b-registers" in said,
+          "`cause` handed one guard-on flag stops and names both it wants, so "
+          "the missing one is named rather than reported as an added set from "
+          "half an input")
+
+    # The two copies of `set(on_b) - set(on_a)` in this file, compared while
+    # the fixture is in hand. `registers_report` prints its size and
+    # `added_addresses` returns the membership, over the same two files; a
+    # refactor that moved one of them to a different pair would leave both
+    # printing a number and this red.
+    reported = next(ln for ln in registers_report("A", "B",
+                                                  (on_a, off_a, on_b, off_b))
+                    if "B adds" in ln)
+    check(f"B adds {len(added_addresses((on_a, on_b)))} address(es)" in reported,
+          "the added set `cause` counts against is the same set the size "
+          "`registers_report` prints, over the same two guard-on CSVs")
 
     print(f"  {'FAILED' if bad else 'all checks passed'}"
           + (f" ({bad})" if bad else ""))
@@ -2145,23 +2241,42 @@ def main() -> int:
         ap.error(f"{args.mode} needs " + ", ".join(missing))
     quad = (args.old_a_registers, args.new_a_registers,
             args.old_b_registers, args.new_b_registers)
-    if any(quad) and not all(quad):
-        ap.error("the four --*-registers flags go together, and across needs "
-                 "both generations' guard-on and guard-off registers CSVs")
     if args.mode == "cause":
         # Not optional, unlike across: the added-address count is one of the
         # two mechanism tests, and a mode that printed 0 for a set it was
-        # never handed would be wrong rather than silent about it.
-        if not all(quad):
-            ap.error("cause needs both generations' guard-on and guard-off "
-                     "registers CSVs; the added-address count is one of the "
+        # never handed would be wrong rather than silent about it. The two
+        # guard-on CSVs are the whole of it, and the count is their set
+        # difference -- so a guard-off file is not a worse answer here, it is
+        # not an input at all.
+        if not all((args.old_a_registers, args.old_b_registers)):
+            ap.error("cause needs --old-a-registers and --old-b-registers, the "
+                     "two guard-on registers CSVs; the added set is "
+                     "set(guard-on B) - set(guard-on A) and it is one of the "
                      "two mechanism tests")
+        # Handed a guard-off pair, this mode reads neither file. Naming them
+        # back is the whole of the difference between a stale one and a right
+        # one, and it goes to stderr so a run that passes four flags still
+        # prints the report of a run that passes two.
+        off_passed = (("--new-a-registers", args.new_a_registers),
+                      ("--new-b-registers", args.new_b_registers))
+        named = [flag for flag, path in off_passed if path]
+        if named:
+            print(f"note: cause reads neither guard-off registers CSV; "
+                  f"{' and '.join(named)} {'were' if len(named) > 1 else 'was'} "
+                  f"parsed and not read", file=sys.stderr)
         lines, table, _cells = cause_report(
             args.label_a or args.old_a, args.old_a, args.new_a,
             args.label_b or args.old_b, args.old_b, args.new_b, rows=args.rows,
-            registers=quad, page=tuple(args.page))
+            registers=(args.old_a_registers, args.old_b_registers),
+            page=tuple(args.page))
         print("\n".join(lines))
         return 0
+    # `across` is the mode that reads all four, and the gate names only it --
+    # which was true of the message while the condition also stood above the
+    # `cause` branch, where a two-flag `cause` run tripped it.
+    if any(quad) and not all(quad):
+        ap.error("the four --*-registers flags go together, and across needs "
+                 "both generations' guard-on and guard-off registers CSVs")
     lines, table = across_report(args.label_a or args.old_a, args.old_a,
                                  args.new_a, args.label_b or args.old_b,
                                  args.old_b, args.new_b, rows=args.rows,
