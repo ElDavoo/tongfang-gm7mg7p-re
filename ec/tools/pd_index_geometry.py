@@ -126,6 +126,14 @@ import re
 import sys
 
 from disasm8051 import FLOW_OPCODES, OPCODE_LEN, converges_from, mnemonic, paged_target
+# `band_faults` is the one implementation of "is this band all 0xFF" in the
+# tree, imported rather than rewritten so the self-test's floor below and
+# check_image_map.py's own --check cannot come to disagree about it. The
+# vocabulary comes with it for a second reason: the band predicate only knows
+# how to test the `how` strings that tool declares a test for, so asking
+# through `CHECKED` is what keeps an edited row from being measured against a
+# claim it no longer makes.
+from check_image_map import CHECKED, band_faults
 from trace_xdata_refs import (MOV_DPTR, PD_MARKER, REGIONS, offset_for_runtime,
                               runtime_addr)
 
@@ -1706,6 +1714,22 @@ def fixture(chunks, end=None):
     return bytes(image)
 
 
+def erased_band_holds(d: bytes, lo: int, hi: int) -> bool:
+    """True when the `REGIONS` row spanning `lo`-`hi` really is what it claims.
+
+    The premise the `--sites 0xFFFF` floor and the `0x1FFF1` boundary both rest
+    on, asked of the table rather than of a comment: the row is looked up by
+    its own bounds, and its `how` is put to `band_faults` only if it is a claim
+    `CHECKED` declares a test for. A row whose `how` has been edited therefore
+    answers false here rather than being measured against a claim the table no
+    longer makes -- the self-test goes red on a figure whose source moved, which
+    is the failure a longer comment would have hidden.
+    """
+    row = next((r for r in REGIONS if r[1] == lo and r[2] == hi), None)
+    return (row is not None and row[4] in CHECKED
+            and not band_faults(d, lo, hi, row[4]))
+
+
 def reached_self_test(d, check):
     """Pin ../annotations/pd-reached-helpers.csv against a fresh decode.
 
@@ -2148,6 +2172,25 @@ def self_test(fw_path: str) -> int:
     # whole window: the last read lands at 0x3000E here, inside the 0x3002C
     # ../../docs/findings/opcode-len-bounds-census.md row 10 puts at the end of
     # it as the worst case of 15 three-byte instructions.
+    #
+    # 0x3002C is that census's arithmetic and 0x3000E is these bytes, and the
+    # two do not have the same backing: 0x3000E is `0x2FFFF + 15`, one byte per
+    # instruction, and it is only right because the 15 bytes past the region are
+    # the ("erased", 0x30000, 0x40000, None, "all 0xFF") row of
+    # trace_xdata_refs.REGIONS and disasm8051.OPCODE_LEN[0xFF] == 1. That row
+    # was a string in a column every consumer of REGIONS discards, so the floor
+    # below used to rest on a comment. It is asserted now, immediately above
+    # the assertion that needs it, through the same predicate
+    # check_image_map.py measures the whole column with -- imported, not
+    # rewritten, for the reason census_ff_fill.py gives about is_fill -- and
+    # `python3 ec/tools/check_image_map.py <image>` is the named command that
+    # prints the band's size, its distinct byte values and its 0x90 count.
+    erased = erased_band_holds(d, 0x30000, 0x40000)
+    check(erased and OPCODE_LEN[0xFF] == 1,
+          "the 0x30000-0x3FFFF band is the 0xFF fill "
+          "trace_xdata_refs.REGIONS calls `all 0xFF` and 0xFF is a one-byte "
+          "opcode, so the floor below is these bytes "
+          f"(got band holds {erased}, OPCODE_LEN[0xFF] == {OPCODE_LEN[0xFF]})")
     hi = pd_bounds()[1]
     top = site_rows(d, [0xFFFF])[0]
     peak = top["listing"][-1][0]
@@ -2157,6 +2200,27 @@ def self_test(fw_path: str) -> int:
     # 0x1FFF1 is the first address whose window ran off the end of this image
     # before the check, and 0x23478 is a file_offset out of
     # ../annotations/ec-0x07d0-sites.csv -- the plausible wrong column.
+    #
+    # 0x1FFF1 is `0x40000 - 15 - 0x20000` -- the same arithmetic as 0x3000E
+    # above, read from the other end, and it came from the same place: the run
+    # of 0xFF from 0x30000 with disasm8051.OPCODE_LEN[0xFF] == 1 puts the
+    # pre-change boundary at 0x1FFF1 rather than at the 0x1FFFB the issue
+    # predicted, which predicted it on three-byte instructions. 0x3002C is that
+    # worst case and 0x1FFF1 is this image's realised figure, so
+    # ../../docs/findings/pd-sites-address-range.md's correction 1 carries
+    # both, and both now cite the ("erased", 0x30000, 0x40000, None,
+    # "all 0xFF") row asserted above.
+    #
+    # **What the arithmetic above explains is not what makes these two
+    # assertions pass, and the difference is the point.** The refusal is
+    # check_site_addr()'s, which bounds the caller's *argument* by the width of
+    # a DPTR and the region's extent -- not a property of the fill past
+    # 0x30000 at all. Measured: splicing 0x00, 0x74 or 0x90 into 0x30000 of a
+    # copy of this image moves the `--sites 0xFFFF` peak by one or two bytes
+    # and leaves both refusals here exactly as they are, while the premise
+    # assertion above goes red. So 0x1FFF1 is where the pre-change walk
+    # stopped, and it is still the right arithmetic for that; what the fill
+    # decides is the peak, not the boundary.
     for addr in (0x1FFF1, 0x23478):
         try:
             site_rows(d, [addr])

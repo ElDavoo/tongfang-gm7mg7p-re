@@ -134,6 +134,64 @@ the realised peak is `0x3000E` and `0x3002C` is its ceiling. The row's cell now
 says so, and the self-test pins the realised figure as a floor, with the bound
 beside it.
 
+**Where the `0xFF` premise comes from, and what now holds it (issue #861).**
+When this section was written, the sentence "every byte from file `0x30000` to
+`0x40000` is `0xFF`" had the image as its only citation, while `0x3002C` beside
+it cited a census row. That is two levels of backing for the three constants
+one assertion holds up. The missing citation is the
+`("erased", 0x30000, 0x40000, None, "all 0xFF")` row of
+`../../ec/tools/trace_xdata_refs.py`'s `REGIONS` — the map of the image, whose
+`how` column every consumer of that table discards, so it was a string in a
+column nothing read. It is now read:
+
+```sh
+python3 ec/tools/check_image_map.py ec/firmware/GMxMGxx_11.800
+```
+
+which measures the band in full, prints its size, its distinct byte values and
+its `0x90` count, and reports the four rows it does not check as `unchecked`
+with the tool that owns each. The measurement is
+[`erased-band-fill-claim.md`](erased-band-fill-claim.md).
+
+Two changes followed from the citation, and both are in
+`../../ec/tools/pd_index_geometry.py`. The comments above the `0x3000E` floor
+and above the `0x1FFF1` boundary now name the row, `OPCODE_LEN[0xFF] == 1` and
+the command, so all three constants cite the same thing. And the premise is
+**asserted rather than described**: the self-test asks the band predicate
+imported from `check_image_map.py` whether the row still holds, immediately
+before trusting `0x3000E` as a floor, so a dump whose `0x30000` band is not
+`0xFF` goes red on the premise instead of quietly changing what the floor
+means. It reads the same predicate that tool measures the whole column with,
+so the two cannot come to disagree.
+
+That is the whole of what changed in the arithmetic, and the figures above are
+unchanged on the committed image: `0x1FFF1` is still the boundary, `0x3000E` is
+still the realised peak and `0x3002C` is still the ceiling.
+
+**What a doctored image does, measured, because "the premise is now asserted"
+is worth nothing if nothing else would have moved anyway.** One byte changed at
+`0x30000` of a copy of the firmware:
+
+| byte at `0x30000` | new assertion | `--sites 0xFFFF` peak | `0x1FFF1` refusal |
+|---|---|---|---|
+| `0xFF` (the committed image) | ok | `0x3000E` | unchanged |
+| `0x00` `nop` | **red** | `0x3000E` | unchanged |
+| `0x74` `mov a,#imm` (2 bytes) | **red** | `0x3000F` | unchanged |
+| `0x90` `mov dptr,#imm` (3 bytes) | **red** | `0x30010` | unchanged |
+
+Three things are visible there and worth separating. The **premise** goes red in
+every case, which is the change #861 was for. The **peak** moves by one or two
+bytes with the replaced instruction's length and the range assertion still
+passes — that is the `0x3000E <= peak <= 0x3002C` *range* doing its job rather
+than a figure being re-derived, and it is why the self-test pins a floor and a
+ceiling rather than `0x3000E` alone. And the **`0x1FFF1` boundary does not move
+at all**, which is the correction to a natural wrong reading: since #848 that
+refusal is `check_site_addr()`'s, a property of the *argument's* 16-bit width
+and the region's extent, so it holds whatever the fill beyond `0x30000` is
+made of. `0x1FFF1` is where the pre-change walk ran off the end, and it is
+still the right arithmetic for that, but the code no longer depends on the fill
+to produce it.
+
 **One consequence of the change itself, stated here because it is not what a
 reader of the issue's transcript would expect.** The check refuses anything
 `>= 0x10000`, so `--sites 0x1FFF0` is now **exit 2 as well**, not exit 0. That
