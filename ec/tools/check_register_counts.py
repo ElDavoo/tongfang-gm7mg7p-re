@@ -99,6 +99,25 @@ def check(d: bytes, regs, pd_verified: bool) -> int:
             if main + pd != total:
                 # Sites in the erased regions would land here; the image map
                 # would be wrong, not the YAML.
+                #
+                # The branch above is a true guard and an unreachable one on
+                # the committed image, and both halves are worth keeping. It
+                # fires only if a `MOV DPTR` byte lands in an erased band, and
+                # the two bands in trace_xdata_refs.REGIONS that call
+                # themselves `all 0xFF` hold 32768 and 65536 bytes of 0xFF
+                # between them -- so no 0x90 can be in either, and the count
+                # check_register_counts.py cannot make is printed by
+                #     python3 ec/tools/check_image_map.py <image>
+                # as the 0x90 column, which is 0 for both on this image. So
+                # "sites in the erased regions would land here" is a statement
+                # about the *code*, correct against a re-derived map and
+                # vacuous against this one, and the image is what makes the
+                # difference -- see ../../docs/findings/erased-band-fill-claim.md.
+                # Left as a comment rather than a check because the premise is
+                # this image's, and a guard written on a committed input that
+                # can change is the mistake docs/findings.md 4 is about;
+                # pd_index_geometry.py's --self-test asserts the same premise
+                # where the 0x3000E floor rests on it.
                 print(f"{name} 0x{addr:04X}: {main} + {pd} sites do not add "
                       f"up to {total} -- some site is outside the mapped "
                       "regions, re-derive them with find_banks.py",
