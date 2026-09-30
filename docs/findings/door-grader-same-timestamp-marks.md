@@ -38,7 +38,7 @@ grader is the only place that sees the result.
 
 And this grader is the one place that *needs* the rule, because
 `grade_0751_isolation.py` cannot produce the shape. Its `build_windows`
-(`:1953`) calls `coalesce_marks` (`:1854`) first, which fuses anything within
+(`:1981`) calls `coalesce_marks` (`:1882`) first, which fuses anything within
 `MARK_MERGE_SECONDS` (`:315`, 5 s) into one window. That fusion is correct
 there — §3 of *that* procedure runs one watcher per console, so one action
 lands as three MARK rows and the alternative is a window reporting "nothing
@@ -51,16 +51,36 @@ another, so the collision has to be refused instead.
 > **Corrected 2026-09-30, review of #1432: the three anchors in the paragraph
 > above were `:1816`, `:1773` and `:284`, and none of them named what it was
 > cited for.** In `ec/tools/grade_0751_isolation.py` today `def build_windows`
-> is at `:1953`, `def coalesce_marks` at `:1854`, and `MARK_MERGE_SECONDS = 5`
+> is at `:1981`, `def coalesce_marks` at `:1882`, and `MARK_MERGE_SECONDS = 5`
 > at `:315`; the three lines the old anchors landed on are a `with open(path…)`
 > inside a capture reader, a sentence of a docstring, and the module's own
 > `--wrote` example. Corrected in place per `docs/findings.md` §4a rather than
 > edited silently, and nothing else in the paragraph is disturbed. The three
 > old anchors were correct in the tree #1416 merged (`edf0f4f2`), and the drift
 > came afterwards: #1409's `126a67c8` added 346 lines to that file and moved the
-> three to `:1948`, `:1849` and `:310`, and a later commit moved them again to
-> the three above without updating this page. Review of #1432 is only what put
-> these three in the same screen as the path correction below.
+> three to `:1948`, `:1849` and `:310`, #1437's `6b58bc17` moved them again to
+> `:1953`, `:1854` and `:315`, and #1450's `ab594a22` to the three above.
+> Three commits moved that file and no page re-read its pins, so re-derive
+> them with
+> `grep -n -e "def build_windows" -e "def coalesce_marks" -e "^MARK_MERGE_SECONDS" ec/tools/grade_0751_isolation.py`
+> rather than by shifting the previous set: the moves are not the same size.
+> #1450 moved the two functions +28 and left `MARK_MERGE_SECONDS` at `:315`, so
+> a read that stops at #1437 leaves `:1953` and `:1854` — and both of those are
+> blank lines today. Review of #1432 is only what put these three in the same
+> screen as the path correction below.
+>
+> **All three edits to this page are outside #1432's stated scope, and are kept
+> anyway.** The issue lists *Editing
+> `docs/findings/door-grader-same-timestamp-marks.md`* under *Not taken*, and
+> the plan said it did not. What is here is the qualification of "no run has
+> been taken" — that one is #1432's own, since the capture it records is what
+> #1432 is about — beside two pre-existing errors this PR read past and then
+> cited: these three anchors, and the `windows/tools/` directory in the bullet
+> further down. Both were already wrong on `origin/main`, and a page about wrong
+> pins leaving two of them standing behind new ones is not a state this
+> repository should merge, so they are corrected and disclosed here rather than
+> dropped. Reverting either is one `git checkout origin/main --` away, and the
+> call belongs to the maintainer rather than to the branch that noticed.
 
 ## How two marks reach one instant, from the writers' own source
 
