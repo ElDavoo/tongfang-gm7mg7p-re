@@ -2038,7 +2038,16 @@ class MarkSetTests(unittest.TestCase):
         # whatever this run can say about where.
         self.assertIn('At least one of the §4.1-§4.3 bytes moved after a '
                       'mark: PL1/PL2/PL4 (§4.1).', out)
-        self.assertIn('That contradicts the static prediction', out)
+        # The attribution under it carries the same decline the scope line
+        # above states, so the two are not separated: this asserted the bare
+        # sentence while the line above it said the capture-level reading was
+        # not being made.
+        self.assertIn('That contradicts the static prediction in '
+                      'ec/annotations/manual-fan-ctrl-0751.md §5 if it is the '
+                      'PLs, or §4.2 if it is the fan table -- over the 8 '
+                      'window(s) above, not over the capture as a whole',
+                      flat)
+        self.assertNotIn('fan table -- capture it in full', flat)
         self.assertNotIn('host-written reload mailbox', out)
         # And between them, the scope: the whole graded set rather than a
         # subset of it, with the unattributed windows named as *part* of that
@@ -2101,6 +2110,178 @@ class MarkSetTests(unittest.TestCase):
                       'window(s).', " ".join(section.split()))
         self.assertNotIn('That is the 3 window(s) that were graded', section)
         self.assertNotIn('graded window(s) above are in no block', section)
+
+    # #725's counterpart and not its fix: the same movement, over a run that
+    # also withheld a window. `unread-window/` is the one committed set where
+    # a withheld window and a graded window in no block hold at once, and it
+    # moves nothing, so the sentence `if withheld:` prints -- "That is the N
+    # window(s) that were graded" -- was reached by no committed run over a
+    # set that holds one. The `0x0784` row makes it reachable, and the
+    # sentence then names a set the count line directly above it had just said
+    # holds an unattributed window. Copies rather than a directory of their
+    # own, for the reason `copies_of`'s docstring gives.
+    def test_a_movement_beside_a_withheld_window_names_the_unattributed_ones(
+            self):
+        # `3blocks-moved/`'s row again, and the same two anchors: this base's
+        # 12:04 stray is graded, its 12:00 one is the window withheld, so the
+        # one row moves the run without changing which windows are in no
+        # block.
+        def moved_copy(tmp, anchor, ts):
+            return copies_of(tmp, UNREAD_WINDOW, {
+                '2026-01-01-0751-isolation-0700-07ff.csv':
+                insert_after(anchor, f'{ts},0x0784,0x50,0x28')})
+
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = moved_copy(
+                tmp, '2026-01-01T12:00:40.000+01:00,MARK,,wrote 0x0751=0xA0',
+                '2026-01-01T12:00:43.000+01:00')
+            rc, out, err = run(*paths)
+        # rc 1, and for the reason it was before the row: the unreadable label
+        # is still there. A run that moves is not a run that passes.
+        self.assertEqual(rc, 1, err)
+        section = out.split('=== what this does and does not settle ===')[1]
+        flat = " ".join(section.split())
+        # Both counts, over the two denominators they are taken at, and the
+        # sentence underneath the movement over the second of them: 8 windows
+        # shown, 1 withheld, 7 graded, and 1 of those 7 in no block.
+        self.assertIn('1 of the 8 window(s) above were not graded', flat)
+        self.assertIn('1 of the 7 graded window(s) above are in no block', flat)
+        # The movement line is the run's own and untouched by any of this --
+        # scoping a sentence under it cannot reach a positive fact over the
+        # windows printed, which is the argument `moved_groups` being a union
+        # of group names makes.
+        self.assertIn('At least one of the §4.1-§4.3 bytes moved after a '
+                      'mark: PL1/PL2/PL4 (§4.1).', out)
+        # The withheld window stays outside the set, and stays outside it for
+        # the reason this branch has always used: a window that never reached
+        # `report_window` cannot have fed `moved_groups`, so that exclusion is
+        # true by construction rather than by the tool knowing which window it
+        # was.
+        self.assertIn('That is the 7 window(s) that were graded. The 1 '
+                      'window(s) withheld above are not part of it', flat)
+        self.assertIn('what they would have shown is not reported here', flat)
+        # And the graded window in no block is named as part of that set rather
+        # than subtracted from it, with the reason its arm cannot be named.
+        self.assertIn('The 1 graded window(s) in no block are part of it, and '
+                      'this run cannot say which arm they are a window of.',
+                      flat)
+        # The negatives are the point. `placed = graded - graded_unplaced` is
+        # 6 here, so a narrowing prints "That is the 6 window(s)" and fails
+        # here -- and the phrase the no-movement withheld arm narrows with is
+        # the one a copy of that branch would bring, which is why it is
+        # asserted shorter than #725's test above asserts it.
+        self.assertNotIn('That is the 6 window(s)', flat)
+        self.assertNotIn('belong to a value under test', flat)
+        # And the attribution under the movement carries the same decline, so
+        # the two sentences below the count do not disagree about the set.
+        self.assertIn('That contradicts the static prediction in '
+                      'ec/annotations/manual-fan-ctrl-0751.md §5 if it is the '
+                      'PLs, or §4.2 if it is the fan table -- over the 7 '
+                      'window(s) above, not over the capture as a whole: 1 of '
+                      'them are a window of an arm this run cannot name.',
+                      flat)
+        # Scoping is not retracting: the more interesting outcome is still
+        # named as the one to go and capture, and the mailbox attribution is
+        # still not reached by a PL move.
+        self.assertIn('Capture it in full, it is the more interesting '
+                      'outcome.', flat)
+        self.assertNotIn('host-written reload mailbox', out)
+
+        # The same run with the same row inside the 12:04 stray rather than
+        # inside block 1's write window: same marks, same block structure, same
+        # `moved_groups`, same two counts, and the withheld arm prints the same
+        # bytes. Pinned as an equality over the closing section because the two
+        # placements are what decide the wording -- "that is the 6 window(s)
+        # that belong to a value under test" is true of the first and false of
+        # the second, and a sentence that cannot tell them apart is the defect.
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = moved_copy(
+                tmp, '2026-01-01T12:04:00.000+01:00,MARK,,restored 0x0751=0x99',
+                '2026-01-01T12:04:05.000+01:00')
+            rc, out, err = run(*paths)
+        self.assertEqual(rc, 1, err)
+        self.assertEqual(
+            out.split('=== what this does and does not settle ===')[1],
+            section)
+
+        # `--block` cannot reach either of these clauses, structurally rather
+        # than by a guard: that run's `shown` is the block's own windows, and
+        # neither a window in no block nor the count above them can be in it.
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = moved_copy(
+                tmp, '2026-01-01T12:00:40.000+01:00,MARK,,wrote 0x0751=0xA0',
+                '2026-01-01T12:00:43.000+01:00')
+            rc, out, err = run(*paths, '--block', '0xA0')
+        self.assertEqual(rc, 1, err)
+        section = out.split('=== what this does and does not settle ===')[1]
+        self.assertIn('That is block 1 of 2, value under test 0xA0, over its 3 '
+                      'window(s).', " ".join(section.split()))
+        self.assertNotIn('graded window(s) above are in no block', section)
+        self.assertNotIn('are part of it, and this run cannot say', section)
+
+    # The attribution itself, on the run #725's test above already reaches. Its
+    # scope line declines the prediction and the line under it was still making
+    # it -- #725 fixed one of the two and left the other, so the fix put the
+    # contradiction one line apart rather than removing it. Both placements are
+    # run because the sentence cannot name which window moved, so the decline
+    # has to hold over the graded set as a whole in either.
+    def test_a_partly_unplaced_movement_declines_the_capture_comparison(self):
+        def moved_copy(tmp, anchor, ts):
+            return copies_of(tmp, UNPLACED_WINDOW, {
+                '2026-01-01-0751-isolation-0700-07ff.csv':
+                insert_after(anchor, f'{ts},0x0784,0x50,0x28')})
+
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = moved_copy(
+                tmp, '2026-01-01T12:00:40.000+01:00,MARK,,wrote 0x0751=0xA0',
+                '2026-01-01T12:00:43.000+01:00')
+            rc, out, err = run(*paths)
+        self.assertEqual(rc, 0, err)
+        section = out.split('=== what this does and does not settle ===')[1]
+        flat = " ".join(section.split())
+        # The scope line above it, #725's, unchanged -- the attribution is a
+        # second statement of the same decline rather than a replacement for
+        # it, so both have to be here or one of them is redundant.
+        self.assertIn('this output does not make it over a run in which 2 of '
+                      'its 8 graded window(s) are in no block', flat)
+        # And the attribution, which is the line the issue's `:2076` is about:
+        # the observation and the advice both stay, over the windows this run
+        # read, and the whole-capture reading of "contradicts" goes.
+        self.assertIn('That contradicts the static prediction in '
+                      'ec/annotations/manual-fan-ctrl-0751.md §5 if it is the '
+                      'PLs, or §4.2 if it is the fan table -- over the 8 '
+                      'window(s) above, not over the capture as a whole: 2 of '
+                      'them are a window of an arm this run cannot name.',
+                      flat)
+        self.assertIn('Capture it in full, it is the more interesting '
+                      'outcome.', flat)
+        # The un-scoped sentence, absent. Before, the line read "... or §4.2 if
+        # it is the fan table -- capture it in full", which is the capture-
+        # level claim the line above it had just declined.
+        self.assertNotIn('fan table -- capture it in full', flat)
+        # And the scope is said once, by this sentence and not by the one
+        # above it: two sentences declining the same capture-level reading over
+        # the same count is the redundancy a reader notices first.
+        self.assertEqual(flat.count('not over the capture as a whole'), 1)
+        # The mailbox attribution is untouched by this branch: it says what
+        # moved rather than what it contradicts, and it is the one sentence
+        # here that would be a loss rather than an overclaim to take away.
+        self.assertNotIn('host-written reload mailbox', out)
+
+        # The same run with the row in the 12:00 stray rather than in block 1's
+        # write window, and the closing sections asserted equal -- the same
+        # equality #725's test pins for the scope line above this one, run
+        # again because a narrowing is equally available here and would be
+        # just as false in the second placement.
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = moved_copy(
+                tmp, '2026-01-01T12:00:02.000+01:00,MARK,,restored 0x0751=0x99',
+                '2026-01-01T12:00:05.000+01:00')
+            rc, out, err = run(*paths)
+        self.assertEqual(rc, 0, err)
+        self.assertEqual(
+            out.split('=== what this does and does not settle ===')[1],
+            section)
 
     # The other half of the same hole, found one step earlier: two consoles
     # that disagree about what an action was. A mistyped digit in one of three
