@@ -19,8 +19,8 @@ No EC, no firmware image, no laptop, and no row of
 
 ## What the issue says, and what this tree has
 
-The issue was filed against an older tree, and **five of its measurements have
-moved since**. They are recorded here rather than restated silently, because a
+The issue was filed against an older tree, and **its measurements have moved
+since**. They are recorded here rather than restated silently, because a
 reader comparing the issue to the shipped run needs to know why the figures do
 not match; the wrong ones stay written in the issue, which is not this
 repository's file to edit.
@@ -146,11 +146,13 @@ new shape must break these by *name*, or not at all.
    would agree with the print for as long as nobody changed the print — driven
    from a scratch `Result` holding one instance of every reason.
 
-**The direction deliberately not asserted in the second case is equality.** A
-reason with no instance is absent from the line rather than printed as a zero,
-so the bullets are a *superset* of what a run can print, and asserting equality
-would fail on the first shape nothing exercises. The case asserts the subset
-and states the superset, which is the direction the issue asked for.
+**What the second case deliberately does not assert is equality on a committed
+run.** A reason with no instance is absent from the line rather than printed as
+a zero, so the bullets are a *superset* of what a run can print, and asserting
+equality would fail on the first shape nothing exercises. It does assert
+equality, over the scratch `Result` holding one instance of every reason; for a
+run it asserts the subset and states the superset, which is the direction the
+issue asked for.
 
 Both were checked by mutation, in both directions: reordering one bullet fails
 the first and names the two that disagree, and dropping a bullet from the

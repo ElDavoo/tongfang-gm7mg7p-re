@@ -1218,7 +1218,7 @@ class TheShapeListHasOneSource(unittest.TestCase):
         try:
             printed = self.printed_shapes(result)
             self.assertEqual(
-                printed, set(ctrc.SHAPES),
+                printed, set(docstring_bullets()),
                 "the printed line and the docstring's bullets are not the "
                 f"same set of reasons; printed {sorted(printed)}, bullets "
                 f"{sorted(docstring_bullets())}")
