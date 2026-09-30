@@ -113,7 +113,20 @@ Cite the clusters by `cluster_key` and hand name, not by `main-ec-NNN` rank.
 identity — one change anywhere in the size-then-references ranking reshuffles
 every id below it — and that the key and the name are the durable forms. The
 membership claims in this section are held to `ec/annotations/xdata-clusters.csv`
-by that tool, tree-wide.
+by that tool, tree-wide, and none of them is among its disagreements.
+
+**The tool is red on this branch, and saying so is the point.** It exits 1
+with two disagreements, both at
+`docs/findings/xdata-cluster-names-guard-off-recipe.md:220` (`0x0464` and
+`0x0465`, which that line names under the wrong ids) and both pre-date this
+change — they are what it reports on `origin/main` too, at the same count.
+A third was this change's to move: entering `0x086C` in `registers.yaml` put
+it in `main-ec-002`'s `named_addrs`, which took the census figure from 31 to
+32, and §5's "named inside" cell at `ec/annotations/xdata-register-map.md:2165`
+was left at 27. It was already four stale before that, so the disagreement is
+not a regression in kind; this change re-pins the cell to the census's 32,
+which is the direction `check_cluster_citations.py` exists to hold, and the
+report is down to the two pre-existing ones.
 
 ## 3. The new entry, and what it deliberately does not say
 
@@ -130,10 +143,14 @@ counts over the decompiled tree, and are **not** the `static_refs*` numbers,
 which are the `MOV DPTR,#addr` opcode sites `scan_refs.py` reports.
 
 It records the `0x50` (80) comparison and says in the same sentence that this
-is the only constant comparison of this byte anywhere in the record and the
-closest thing to a unit the block has — **which is a reason for caution and
-not a unit**. Nothing else fixes the scale. The `0x086B` note makes the same
-kind of statement about the `0x48`/`0x4C` seeds.
+is the only comparison of this byte outside the level-block computation and
+the only one beside a temperature threshold — **which is a reason for caution
+and not a unit**. It fixes no scale either: the three clamps are the same
+`0x23`/`0x14`/`0x0F` that `0x086B` gets, so all four are numbers the firmware
+compares against and nothing here fixes the scale. The `0x48`/`0x4C` seeds
+`ec/annotations/xdata-086x-dispatch.md` §5 records are a statement about
+`0x0865`, not about `0x086B`, and neither constant appears in
+`ec/decompiled/bank0/9D9B.asm`.
 
 `UNITS NOT DETERMINED` is carried over verbatim, and the name stays
 `XDATA_086C`. The name is not earned: there is no live observation and no
@@ -142,12 +159,13 @@ exactly the same reason. A constant that appears in a comparison is a number
 the firmware compares against, which is a fact about the comparison and not
 about the unit.
 
-Three shapes the note records, none of which the block's own §5 clamp table
-describes: the clamps are the same three `MANUAL_FAN_CTRL` (`0x0751`) values
-`0x086B` gets (`0x23`, `0x14`, `0x0F`) but routed through `0xBC7B`/`0xBC7E`
-rather than inline; the `0xD2BF`/`0xD2C2` pair copies the caller's DPTR byte in
-and returns it masked with `0x7E`, reached with DPTR `0x1C00` or `0x1C35`; and
-the `0x0A47`/`0x09EF` publish described next.
+Three shapes the note records. §5's clamp table already carries the first —
+the clamps are the same three `MANUAL_FAN_CTRL` (`0x0751`) values `0x086B`
+gets (`0x23`, `0x14`, `0x0F`) but routed through `0xBC7B`/`0xBC7E` rather than
+inline — and the paragraph under it already carries the `0x0A47`/`0x09EF`
+publish described next. The one §5 does not describe is the `0xD2BF`/`0xD2C2`
+staging/borrow shape: the pair copies the caller's DPTR byte in and returns it
+masked with `0x7E`, reached with DPTR `0x1C00` or `0x1C35`.
 
 ## 4. An open question about `0xA73F`, not about this byte
 
@@ -202,7 +220,10 @@ for the same question. This change opens and edits no tracker item.
 - **The `0xA73F` `R7=0xBC` command code is unresolved** (§4).
 
 The commands that reproduce every figure here, all offline from committed
-inputs:
+inputs. All six exit 0. The seventh, `check_cluster_citations.py`, **exits 1**
+and is listed for that reason rather than as a clean run: it reports the two
+pre-existing disagreements §2 names, and the figures it holds this file's
+cluster claims to are green either way.
 
 ```console
 $ python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800

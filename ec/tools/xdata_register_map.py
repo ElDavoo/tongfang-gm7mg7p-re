@@ -806,10 +806,10 @@ ORACLE = {
     # docs/findings/xdata-086c-cluster-ruling.md. The symbol_main_* pair
     # above does NOT move, which is the distinction worth recording: that
     # pair counts what the *decompiler* spells, and every one of 0x086C's
-    # sites still reads DAT_EXTMEM_086C in the committed ec/decompiled/ tree
-    # because a registers.yaml row renames the symbol table and not a
-    # decompile. Adding the name is what moved named_in_tree; re-exporting
-    # with it is what would move the other.
+    # sites still reads DAT_EXTMEM_086c (lower-case c) in the committed
+    # ec/decompiled/ tree, because a registers.yaml row renames the symbol
+    # table and not a decompile: a re-export would spell them XDATA_086C, as
+    # 0x086B's 22 sites already read XDATA_086B, and that is the other move.
     "named_in_tree": 182,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))

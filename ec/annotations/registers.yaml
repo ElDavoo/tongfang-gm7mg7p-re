@@ -3563,11 +3563,13 @@ registers:
       caller's DPTR byte in and return it masked with 0x7E, reached with DPTR
       0x1C00 or 0x1C35. The BOOST-set arm at 0x8942 compares this byte against
       0x50 (80) beside CPU_TEMP and GPU_TEMP against 0x46 (70 C), cited to
-      docs/findings.md 7. That is the only constant comparison of this byte
-      anywhere in the record and the closest thing to a unit the block has,
-      which is a reason for caution and not a unit: nothing else fixes the
-      scale, and a co-occurrence with a temperature threshold is not a
-      demonstrated mechanism. UNITS NOT DETERMINED. Cluster ruling:
+      docs/findings.md 7. That is the only comparison of this byte outside
+      the level-block computation and the only one beside a temperature
+      threshold, and it fixes no scale either: the three clamps are the same
+      0x23/0x14/0x0F that 0x086B gets, so all four are numbers the firmware
+      compares against and a reason for caution, not a unit. A co-occurrence
+      with a temperature threshold is not a demonstrated mechanism. UNITS NOT
+      DETERMINED. Cluster ruling:
       docs/findings/xdata-086c-cluster-ruling.md.
 
   - name: XDATA_086D
