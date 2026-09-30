@@ -60,8 +60,8 @@ it, which is what keeps the capture in timestamp order; the tool reads
 timestamps and not file order, so the position is only what makes the file
 readable. #725 measured the append instead and got the same report.
 
-"Before" is the tool at `126a67c8`, this branch's merge base with `main`; the
-lines below are `git show 126a67c8:ec/tools/grade_0751_isolation.py` on those
+"Before" is the tool at `7245cc0f`, this branch's merge base with `main`; the
+lines below are `git show 7245cc0f:ec/tools/grade_0751_isolation.py` on those
 two commands. **Shape (b), `unread-window/` with the row** — the `if withheld:`
 arm, and the issue's `:2045`:
 
@@ -253,13 +253,13 @@ placement.
 ## What must not change, and did not
 
 Measured rather than asserted. This branch's tool and
-`git show 126a67c8:ec/tools/grade_0751_isolation.py` were run over **every**
+`git show 7245cc0f:ec/tools/grade_0751_isolation.py` were run over **every**
 `ec/tools/testdata/0751-isolation-run*/` directory four ways — unscoped, and
 `--block` at each of `0xA0`, `0x10` and `0x00` — and all **48** pairs of reports
 were diffed. **All 48 are byte-identical and no exit code moved.**
 
 ```
-git show 126a67c8:ec/tools/grade_0751_isolation.py > /tmp/before_tool.py
+git show 7245cc0f:ec/tools/grade_0751_isolation.py > /tmp/before_tool.py
 for d in ec/tools/testdata/0751-isolation-run*/; do
   for mode in "" "--block 0xA0" "--block 0x10" "--block 0x00"; do
     python3 /tmp/before_tool.py $d/*.csv $mode > /tmp/b.out; echo "rc=$?" >> /tmp/b.out
@@ -333,7 +333,7 @@ write-up):
 
 ```
 rm -rf /tmp/pin-base && mkdir -p /tmp/pin-base
-git archive 126a67c8 | tar -x -C /tmp/pin-base
+git archive 7245cc0f | tar -x -C /tmp/pin-base
 
 dump () {  # $1 = tree root, $2 = where the per-pin record map goes
   python3 -c "
@@ -387,7 +387,7 @@ to be untrue of, and it is kept only so a non-empty `moved` would have to name
 the grader suite.)
 `ec/tools/check_pin_table_rows.py` agrees from its own direction, reconciling
 the per-pin table row by row against the same run — `0 shape-differs`, `0
-read-differs`, `0 path-differs` on this branch and on `126a67c8` alike. Its
+read-differs`, `0 path-differs` on this branch and on `7245cc0f` alike. Its
 `2 unplaced-row` / `2 row-without-record` are the same two on both trees, and
 are not this change's.
 
@@ -402,8 +402,15 @@ both the fenced `grep` transcript and its live-prose twin in
 the check rather than tidying it: the table is matched to the run on the target
 spelling as well as the citing line, so a re-anchored citation left with a
 stale row would surface as an `unplaced-row` and its `row-without-record`
-twin. Each re-anchored row carries the old and new `file:NNN` and the reason in
-its verdict cell, in the form that table already uses elsewhere.
+twin. Each of those 36 rows carries its old and new line number and this
+change's reason for the move in its verdict cell, in the form that table
+already uses elsewhere — "re-anchored `:OLD`→`:NEW` by this change's own 181
+added lines in `ec/tools/test_grade_0751_isolation.py`" — and the step is the
+same for every one of them: `+9` at the `@@ -2038,7 +2038,16 @@` hunk and
+`+172` at the `@@ -2102,6 +2111,178 @@` hunk that adds this change's two new
+tests, above every pin below `:2111`. The line each one names is byte-identical
+on the two trees, so what moved is the address and not the text, and each
+citing sentence changed only in the `file:NNN` it names.
 
 So there are no `shape` cells to re-register, and no re-registration deferred to
 a follow-up. What was preserved is the shape — every pin still resolves, to the
