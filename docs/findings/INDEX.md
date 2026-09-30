@@ -5,7 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
-183 write-ups.
+184 write-ups.
 
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -153,6 +153,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`walk-window-terminators.md`](walk-window-terminators.md) — `walk()`'s stop reason is a column now, and the 45 rows its budget truncates are named
 - [`xdata-0860-census-sites-relined.md`](xdata-0860-census-sites-relined.md) — The four `0x0860` census citations move; the counts do not (issue #752)
 - [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md) — The `XDATA_0860` note's six live pointers, and what holds them (issue #870)
+- [`xdata-086c-cluster-ruling.md`](xdata-086c-cluster-ruling.md) — `0x086C` enters `registers.yaml`, and the clustering recorded something real (issue #333)
 - [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md) — §4.4's identity figures, re-run against the committed census (issue #582)
 - [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md) — §6a's per-direction rows and §6b's cluster split are held now, and what is still not (issue #850)
 - [`xdata-819-815-correction-chain.md`](xdata-819-815-correction-chain.md) — Two gate claims #819 corrected were settled by #815 and #823, and eleven pins across the chain no longer land (issue #836)

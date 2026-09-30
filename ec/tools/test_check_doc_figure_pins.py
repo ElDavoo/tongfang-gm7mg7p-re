@@ -538,20 +538,21 @@ class TheOracleRule(unittest.TestCase):
         # `#3545` when the docstring's column count was corrected and cost one
         # more line, and then `:3609-3626` / `#3599` when #1059's `NOT_IN_TREE`
         # block and `named_in_tree` oracle landed above the sum and not above
-        # the check. **The reported span did not move and the sum did**, which is
-        # the point of holding both: an edit below the `check(` and above the
-        # sum shifts one and not the other, and only asserting the pair shows
-        # which. All three re-read against the file rather than taken from the
-        # tool's new numbers on trust.
-        self.assertIn("3609-3626", detail)
+        # the check, and then `:3620-3637` / `#3610` when #333's `named_in_tree`
+        # 181 -> 182 comment landed above both. **The reported span did not move
+        # and the sum did**, which is the point of holding both: an edit below
+        # the `check(` and above the sum shifts one and not the other, and only
+        # asserting the pair shows which. All four re-read against the file
+        # rather than taken from the tool's new numbers on trust.
+        self.assertIn("3620-3637", detail)
         self.assertNotIn(":3599", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3598])
-        self.assertIn("check(", lines[3608])
+        self.assertIn("extmem_both", lines[3609])
+        self.assertIn("check(", lines[3619])
         self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3625])
+                      lines[3636])
 
 
 class SectionSelection(unittest.TestCase):

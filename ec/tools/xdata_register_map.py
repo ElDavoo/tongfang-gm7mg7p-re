@@ -799,7 +799,18 @@ ORACLE = {
     # reason that has nothing to do with the run. 0x07C0-0x07C2's only site is
     # in the PD image. Their reasons are in NOT_IN_TREE, and that is the
     # measurement the next block above asks for, not the count alone.
-    "named_in_tree": 181,
+    # 181 -> 182, issue #333, and 209 - 27, the same arithmetic once more:
+    # registers.yaml gained XDATA_086C and that address is reached by nine
+    # decompiled functions, so it is in the tree and NOT_IN_TREE does not
+    # move. It is the middle of the three results 0x9D9B computes; see
+    # docs/findings/xdata-086c-cluster-ruling.md. The symbol_main_* pair
+    # above does NOT move, which is the distinction worth recording: that
+    # pair counts what the *decompiler* spells, and every one of 0x086C's
+    # sites still reads DAT_EXTMEM_086c (lower-case c) in the committed
+    # ec/decompiled/ tree, because a registers.yaml row renames the symbol
+    # table and not a decompile: a re-export would spell them XDATA_086C, as
+    # 0x086B's 22 sites already read XDATA_086B, and that is the other move.
+    "named_in_tree": 182,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # **Unmoved by issue #279, and worth saying why rather than leaving it as a
