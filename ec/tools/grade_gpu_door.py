@@ -38,6 +38,26 @@ own docstring warns against. Two marks close together are reported as two
 windows, and their distance is printed so a reader can see that they were close
 and judge for itself whether they were one action.
 
+**A shared timestamp is refused, not fused.** There is no interval to judge
+there, so the paragraph above's answer -- two windows, and let the reader
+decide -- has nothing to decide with: `build_windows` gives the first of the
+pair a span of `[t, t)`, it takes no change row, and every watched address
+prints `????` for want of a level. The window count then reads one higher than
+the number of actions in the capture, and `report_close_marks` hands the 0.0s
+gap back as a question about pacing that this file cannot answer. `main` stops
+before it builds any window.
+
+**The grader owns that, not the writer**, for the reason the repeat refusal
+below gives its own: a rule at the writer is a rule in `Marker`, whose contract
+is to take whatever the operator types because `gpu_block_watch.py` hands it
+free-form labels, and a capture assembled by hand from two files never passes a
+writer at all. Refusing rather than fusing is the same answer the paragraph
+above gives for a different reason -- fusing these two would assert they were
+one action, and the 0751 grader fuses at `MARK_MERGE_SECONDS` because *that*
+procedure runs one watcher per console and knows its three rows are one press.
+The decision, and what a shared timestamp costs here, are in
+docs/findings/door-grader-same-timestamp-marks.md.
+
 **A capture is named once.** §3 runs one watcher on one console, so a file
 listed twice is one console and not two, and `main` refuses it -- by resolved
 path, so `x.csv`, `./x.csv` and a symlink to it are one repeat -- before it
@@ -161,6 +181,27 @@ def name_of(addr):
         if a == addr:
             return name
     raise KeyError(f"0x{addr:04X} has no ECMG field-list name in DS_NAMES")
+
+
+def collided_marks(marks):
+    """The adjacent pairs of marks carrying one instant, over a sorted list.
+
+    Equality and nothing else. `CLOSE_MARKS_SECONDS` owns how close is too
+    close, and it stays a flag the reader judges over; this owns only the case
+    where there is no interval at all, and widening it to a proximity test
+    would quietly take over the 5s threshold's job and undo the deliberate
+    no-merge decision above it.
+
+    Sorted first, so two marks at one timestamp are neighbours and one linear
+    pass finds every pair -- `main` sorts before calling.
+
+    On the parsed datetime rather than on the string, because that is what the
+    reader produced: `12:00:10.000+01:00` and `12:00:10+01:00` are one instant,
+    and so is the same instant written at another UTC offset. A capture
+    assembled by hand spells both, and a string compare would call them two
+    marks.
+    """
+    return [(a, b) for a, b in zip(marks, marks[1:]) if a.ts == b.ts]
 
 
 def build_windows(marks, changes):
@@ -490,6 +531,50 @@ def main(argv=None):
         return 1
 
     marks = sorted(marks, key=lambda w: w.ts)
+
+    # After the read, where the repeat refusal above cannot be: a shared
+    # timestamp is a property of the marks, so there is nothing about the
+    # command line to look at first. And before `build_windows`, so no
+    # zero-length window reaches `report_window` -- a report over one is
+    # half-right rather than wrong, which is the shape the no-marks refusal
+    # above is written against too.
+    collisions = collided_marks(marks)
+    if collisions:
+        watched = sum(hi - lo + 1 for _, lo, hi in WINDOWS)
+        for a, b in collisions:
+            print(f"\nmarks {a.label!r} and {b.label!r} are both "
+                  f"{a.ts.isoformat()}, to the millisecond.", file=sys.stderr)
+        # The consequences named are this grader's own and the figures that
+        # move are named as firmly as those that do not: `first_change` takes
+        # the earliest timestamp and the phantom window has no changes to take
+        # it over, so §5's ms column comes out the same as the single-mark
+        # control. And how the pair got there is left to the reader -- the
+        # committed writers stamp at millisecond resolution and do not hold
+        # marks apart, so naming a route here would name one of several and
+        # read as a finding about which.
+        print("§3 opens one window per mark so each action's movement can be "
+              "told from the next one's, and two marks at one instant cannot "
+              "be told apart: the capture does not say which action this was, "
+              "so nothing was graded. The damage refusing avoids is this "
+              "grader's own. The first of the pair would have been given a "
+              "span of [t, t), taken no change row at all, and printed "
+              f"`????` for all {watched} watched addresses, because a window "
+              "that spans no sweep has no level to print. The window count "
+              "would have read one per mark, none of which is a boundary any "
+              "action took, and the closing line reads its 'Both blocks moved "
+              "in N of the windows' over exactly that count. And "
+              "`report_close_marks` would have been handed two marks 0.0s "
+              "apart and offered that as a question about the operator's "
+              "pacing rather than as a timestamp the grader could not use. "
+              "What it does not change is §5's millisecond figure: the first "
+              "change in a block is the earliest timestamp, so a window with "
+              "no changes in it contributes no ordering to take the min over "
+              "and the figure comes out the same as it does with the second "
+              "mark deleted. Two marks a millisecond apart are two windows "
+              "and are graded as two; nothing is fused here. Give the two "
+              "actions two instants.", file=sys.stderr)
+        return 1
+
     build_windows(marks, changes)
     print(f"\n=== {len(marks)} window(s), one per mark, none merged ===")
     orders = []
