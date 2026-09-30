@@ -15,7 +15,7 @@
 byte set_dptr_1c00_then_d2c2(void)
 
 {
-  DAT_EXTMEM_086c = DAT_EXTMEM_1c00;
+  XDATA_086C = DAT_EXTMEM_1c00;
   return DAT_EXTMEM_1c00 & 0x7e;
 }
 

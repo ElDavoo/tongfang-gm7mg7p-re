@@ -6,18 +6,21 @@
 
 /* Stores the caller's A to the XDATA address the caller left in DPTR (0x0A47 if entered from the
    preceding fragment at 0xBC7B), then reads XDATA 0x086C into A, sets the carry with SETB CY and
-   returns. The carry is left set for a following SUBB; 0x086C has no entry in
-   ec/annotations/registers.yaml.
+   returns. The carry is left set for a following SUBB; 0x086C had no entry in
+   ec/annotations/registers.yaml when this row was written, which was then true. 2026-09-30, issue
+   #333: the YAML now carries XDATA_086C, at status present-untested with UNITS NOT DETERMINED --
+   what the byte's use here, in 0x8931 and in 0x9D9B supports, and no more; the name and the status
+   are unchanged by the entry, and see docs/findings/xdata-086c-cluster-ruling.md.
    type: writer
    evidence: ec/decompiled/bank0/BC7E.asm; ec/decompiled/bank0/BC7E.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 undefined1 store_a_then_read_086c_set_cy(undefined1 value_a,undefined1 *param_2)
 
 {
   *param_2 = value_a;
-  return DAT_EXTMEM_086c;
+  return XDATA_086C;
 }
 
 

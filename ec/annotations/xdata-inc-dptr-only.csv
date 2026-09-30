@@ -56,7 +56,7 @@ addr,seed,direction,accessor,census_refs,census_read,census_write,census_read_wr
 0x0439,0x0438,read+write,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair;write_r3r4_to_xdata_pair,19,11,8,0,0,0,3,0,yes
 0x043B,0x043A,read,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4,6,6,0,0,0,0,0,2,no
 0x04A1,0x04A0,write,write_r1r2_to_xdata_pair,9,6,3,0,0,0,5,3,no
-0x04A3,0x04A2,read+write,read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair,7,4,3,0,0,0,1,5,no
+0x04A3,0x04A2,read+write,read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair,7,4,3,0,0,0,1,5,yes
 0x04A5,0x04A4,write,write_r1r2_to_xdata_pair,7,0,7,0,0,0,0,3,no
 0x04A7,0x04A6,write,write_r1r2_to_xdata_pair,5,2,3,0,0,0,2,0,yes
 0x04A9,0x04A8,write,write_r1r2_to_xdata_pair,2,0,2,0,0,0,0,0,no

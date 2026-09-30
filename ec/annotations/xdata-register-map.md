@@ -520,11 +520,11 @@ main EC* whatever the PD image does with the same address number:
 
 | program | spelling | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 850 | 7,534 |
-| main-ec | `DAT_EXTMEM+pair-literal` | 45 | 499 |
+| main-ec | `DAT_EXTMEM` | 846 | 7,487 |
+| main-ec | `DAT_EXTMEM+pair-literal` | 44 | 490 |
 | main-ec | `pair-literal` | 156 | 468 |
-| main-ec | `symbol` | 154 | 6,150 |
-| main-ec | `symbol+pair-literal` | 13 | 187 |
+| main-ec | `symbol` | 158 | 6,197 |
+| main-ec | `symbol+pair-literal` | 14 | 196 |
 | pd | `DAT_EXTMEM` | 157 | 858 |
 | **total** | | **1,375** | **15,696** |
 
@@ -550,14 +550,14 @@ directly:
 
 | `program` | `spelled_as` | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 816 | 7,282 |
-| main-ec | `DAT_EXTMEM+pair-literal` | 42 | 394 |
+| main-ec | `DAT_EXTMEM` | 815 | 7,256 |
+| main-ec | `DAT_EXTMEM+pair-literal` | 41 | 385 |
 | main-ec | `pair-literal` | 155 | 461 |
-| main-ec | `symbol` | 143 | 5,567 |
-| main-ec | `symbol+pair-literal` | 13 | 187 |
-| both | `DAT_EXTMEM` | 34 | 349 |
+| main-ec | `symbol` | 144 | 5,593 |
+| main-ec | `symbol+pair-literal` | 14 | 196 |
+| both | `DAT_EXTMEM` | 31 | 321 |
 | both | `DAT_EXTMEM+pair-literal` | 4 | 139 |
-| both | `symbol+DAT_EXTMEM` | 11 | 714 |
+| both | `symbol+DAT_EXTMEM` | 14 | 742 |
 | pd | `DAT_EXTMEM` | 108 | 603 |
 | **total** | | **1,326** | **15,696** |
 
@@ -652,19 +652,19 @@ history of a table that still exists. The write-up is
 Read the `symbol` rows as the addresses the issue's grep could not see. **On
 §3's basis** — every row the main EC touches, which is the 1,218 the tool
 prints rather than the 1,169 `program=main-ec` rows of the second table above,
-the 49 difference being the `program=both` rows — that is **167 addresses in
-6,337 references**, counted per program. The corrected form of the issue's claim
+the 49 difference being the `program=both` rows — that is **172 addresses in
+6,393 references**, counted per program. The corrected form of the issue's claim
 is therefore a *three*-way split, not a two-way one:
 
-> 167 of the 1,218 XDATA addresses the main EC touches carry a name from
-> `ec/ghidra/xdata-symbols.csv`. Of the other 1,051, **895** read as
+> 172 of the 1,218 XDATA addresses the main EC touches carry a name from
+> `ec/ghidra/xdata-symbols.csv`. Of the other 1,046, **890** read as
 > `DAT_EXTMEM_xxxx` and **156** are named nowhere and reach the census only as a
 > literal argument to one of the pair accessors of §4.7.
 
-167 + 895 + 156 is 1,218 exactly, and the references are 6,337 + 8,033 + 468 =
+172 + 890 + 156 is 1,218 exactly, and the references are 6,393 + 7,977 + 468 =
 the main EC's own 14,838.
 
-**The same partition on the union key is 167 / 896 / 155**, and both readings
+**The same partition on the union key is 172 / 891 / 155**, and both readings
 are right about different things: counted within the main EC the last term is
 156, not 155, because the main EC reaches `0x04A3` as a `pair-literal` and
 nothing else, and it is the PD image that spells it `DAT_EXTMEM_xxxx` — so the
@@ -710,22 +710,65 @@ them — every one was right about the union-keyed table it was measured on. Wha
 the re-key does is state the per-program partition above them, which is the
 reading §2's first table supports and the one a `spellings_by_program` cell
 answers directly. **Nothing above is retracted by that**, because a partition on
-one key is not a wrong version of the same partition on another: 167 + 895 + 156
-and 167 + 896 + 155 both sum to 1,218, and the difference is one address,
+one key is not a wrong version of the same partition on another: 172 + 890 + 156
+and 172 + 891 + 155 both sum to 1,218, and the difference is one address,
 `0x04A3`, in one term. The row's `spellings_by_program` cell is still where a
 reader of this paragraph goes for the split, and
 `../../docs/findings/xdata-spelled-as-union.md` still has the whole
 reconciliation.)*
+*(Correction, 2026-09-30, issue #1425. **The named term moves again, and only
+because `0x04A2` left the `DAT_EXTMEM` term for `symbol`**: 167 / 895 / 156 per
+program is **172 / 890 / 156** and 167 / 896 / 155 on the union key is **172 /
+891 / 155**, with the named term's references 6,337 -> **6,393** and the middle
+term's 8,033 -> **7,977**. The version corrected here was right about the tree
+it was measured on and every figure in it is left standing above.
+
+Two of the five addresses that moved are this issue's and three are not, and
+the split is worth stating because it is the whole content of the change. The
+`PACK_TEMP_DK` rows over `0x04A2`/`0x04A3` named the pair, and a re-export
+carried the name into the text; the same re-export also caught drift that
+**issue #333** (`XDATA_086C`) and **issue #573** (`XDATA_07FD`/`07FE`/`07FF`)
+left behind, because each of those added a `registers.yaml` row without a
+re-export and the row renames the symbol table and not a decompile -- which
+this file's own 0x086C note predicted in as many words. Per address, measured
+against the parent commit, with every `refs` cell unmoved:
+
+| address | `spelled_as` | refs | whose |
+|---|---|---:|---|
+| `0x04A2` | `DAT_EXTMEM+pair-literal` -> `symbol+pair-literal` | 9 | #1425 |
+| `0x04A3` | `DAT_EXTMEM+pair-literal` (**unmoved**) | 8 | #1425 |
+| `0x086C` | `DAT_EXTMEM` -> `symbol` | 26 | #333 |
+| `0x07FD` | `DAT_EXTMEM` -> `symbol+DAT_EXTMEM` | 8 | #573 |
+| `0x07FE` | `DAT_EXTMEM` -> `symbol+DAT_EXTMEM` | 10 | #573 |
+| `0x07FF` | `DAT_EXTMEM` -> `symbol+DAT_EXTMEM` | 10 | #573 |
+
+**`0x04A3` is the one address whose partition term does not move, and it does
+not for the reason §2's own per-program keying already recorded**: its main-EC
+half is a bare `pair-literal` and the `DAT_EXTMEM` spelling is the PD image's,
+so the name lands without the spelling changing. `python3
+ec/tools/xdata_program_keyed_table.py --moved` still prints `0x04A3` alone, and
+the full census is unmoved at 1,326 distinct / 15,696 references, main EC
+1,218 / 14,838, PD 157 / 858 -- which is the cross-check that says the token
+half moved and the addresses did not. The per-program `symbol+DAT_EXTMEM` count
+of 11 becomes 14 for the same reason the union `both · symbol+DAT_EXTMEM` row
+goes 11 / 714 -> 14 / 742, and the `both · DAT_EXTMEM` row 34 / 349 -> 31 / 321
+because three `both` addresses are named in the main EC now. The write-up is
+`docs/findings/pack-temp-producer-chain.md` and the pins are
+`ec/tools/xdata_register_map.py`'s dated block above `named_in_tree`.)*
+
 The gap is still the blocker the issue describes, and it is still why this
 issue is on the critical path:
-**74%** of the register file the main EC actually uses is still spelled
+**73%** of the register file the main EC actually uses is still spelled
 `DAT_EXTMEM_xxxx` rather than carrying a name, against 96% when this was
-written. That percentage is the union-keyed one above; **counted per program it
-is 73%**, because `0x04A3` leaves the middle term for the pair-literal-only one
-and one address out of 1,218 is exactly the difference between the two
-roundings. That is the whole of what the re-key moves in this section, and it
-is worth one address's worth of precision to have it stated rather than
-implied. That is better and it is not good enough — the exporter catches up with
+written. *(The figure read **74%** here until issue #1425, and the sentence
+below it explained the one-address gap between the two keyings as the reason
+the two roundings differed. They no longer differ: 891 of 1,218 on the union
+key and 890 per program both round to 73%, because `0x04A2` joined the named
+term and the `DAT_EXTMEM` share fell by five. The two-keying distinction this
+paragraph made is still real and is still in the table above -- `0x04A3` is
+still the one address whose term moves between them -- it just no longer
+changes the rounding, and a sentence that said otherwise was describing a gap
+that had closed.)* That is better and it is not good enough — the exporter catches up with
 a symbol table that has been growing faster than the census is re-derived,
 which is the thing to fix. §4.7 closes 155 more addresses and closes none of
 this gap: it gives a *count* where there was none, and a count is not a name.

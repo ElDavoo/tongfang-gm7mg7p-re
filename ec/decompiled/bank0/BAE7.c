@@ -6,17 +6,18 @@
 
 /* Reads XDATA 0x04A3 into R6 and XDATA 0x04A2 into R7, leaving the pair in R7 (low) and R6 (high)
    and returning the R7 byte in A. The ADD A,#0x00 between the two reads only sets the carry and
-   overflow flags and does not change A. Neither address has an entry in
-   ec/annotations/registers.yaml.
+   overflow flags and does not change A. Both addresses are the low and high byte of the one
+   register ec/annotations/registers.yaml names PACK_TEMP_DK, which had no row for either address
+   when this comment was written; see issue #1425.
    type: reader
    evidence: ec/decompiled/bank0/BAE7.asm; ec/decompiled/bank0/BAE7.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 undefined1 load_r6_r7_from_04a3_04a2(void)
 
 {
-  return DAT_EXTMEM_04a2;
+  return PACK_TEMP_DK_0;
 }
 
 

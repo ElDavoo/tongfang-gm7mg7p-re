@@ -61,14 +61,14 @@ void gate_0751_0741_blocks_then_tail_jump_8c46(char param_1,byte param_2)
       DAT_EXTMEM_085f = 0;
       if ((DAT_EXTMEM_0490 & 1) == 0) {
         load_0434_0438_pairs_mul16_and_tailcall();
-        DAT_EXTMEM_086c = param_2;
+        XDATA_086C = param_2;
       }
       else {
         load_0434_0438_pairs_mul16_and_tailcall();
-        DAT_EXTMEM_086c = x044c_minus_r7();
+        XDATA_086C = x044c_minus_r7();
       }
-      bVar2 = (DAT_EXTMEM_086c < 0x50) << 7;
-      if (((DAT_EXTMEM_086c < 0x50) && (bVar2 = (CPU_TEMP < 0x46) << 7, CPU_TEMP < 0x46)) &&
+      bVar2 = (XDATA_086C < 0x50) << 7;
+      if (((XDATA_086C < 0x50) && (bVar2 = (CPU_TEMP < 0x46) << 7, CPU_TEMP < 0x46)) &&
          (bVar2 = (GPU_TEMP < 0x46) << 7, GPU_TEMP < 0x46)) {
         MANUAL_FAN_CTRL = MANUAL_FAN_CTRL & 0xbf;
         param_2 = 0xac;

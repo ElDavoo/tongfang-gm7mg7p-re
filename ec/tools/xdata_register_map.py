@@ -732,12 +732,13 @@ ORACLE = {
     # settles it; the 155 the pass adds are new `program=main-ec` rows, of which
     # `0x03DE` and `0x03B8` are two. (A shared address *number* is not a shared
     # byte, which is the collision `program=both` exists to carry.)
-    "extmem_distinct": 1015, "extmem_refs": 8623,
-    "extmem_raw": 8632, "extmem_commented": 9,
-    "extmem_main_distinct": 895, "extmem_main_refs": 7765,
+    "extmem_distinct": 1013, "extmem_refs": 8574,
+    "extmem_raw": 8583, "extmem_commented": 9,
+    "extmem_main_distinct": 890, "extmem_main_refs": 7716,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
-    # Named by the decompiler. The 2026-09-28 move is at the END OF THIS FILE.
-    "symbol_main_distinct": 167, "symbol_main_refs": 6199,
+    # Named by the decompiler. The 2026-09-30 move is recorded in the dated
+    # block above `named_in_tree`, and the 2026-09-28 one at the END OF FILE.
+    "symbol_main_distinct": 172, "symbol_main_refs": 6248,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1326, "refs": 15696,
@@ -827,7 +828,64 @@ ORACLE = {
     # either one would have been the "looks pinned and is not" defect the check
     # below exists to catch. 209 + 3 = 212 named addresses, 212 - 27 = 185,
     # re-derived by `--self-test` rather than taken on trust.
-    "named_in_tree": 185,
+    #
+    # 185 -> 187, issue #1425, and 212 -> 214, the same arithmetic once more.
+    # `PACK_TEMP_DK` added two `registers.yaml` rows over `0x04A2`/`0x04A3` and
+    # `gen_xdata_symbols.py` turned them into `PACK_TEMP_DK_0`/`_1` through
+    # `ec/ghidra/xdata-overrides.csv` -- a two-address entry needs the indexed
+    # name `BAT_CYCLE_COUNT_0`/`_1` already carries, because the name does not
+    # split on ` / ` and the generator refuses to guess. NOT_IN_TREE does not
+    # move: both addresses are reached by exported functions, `0xBAE5`/`0xBAE7`
+    # in bank0 and `0xAF06`/`0xAF32`/`0xB0D1` in bank1, so the count moves by
+    # the two that are.
+    #
+    # **The re-export that put those two names in the text also caught drift
+    # from two other issues, and the movement below is all five addresses, not
+    # two.** The pins that move here are the token half; the full census is
+    # unmoved at 1326/15696, main EC 1218/14838, PD 157/858, and every one of
+    # the five rows keeps its own `refs` cell, so this is a rename and not five
+    # new addresses. Per address, measured against this branch's parent:
+    #
+    #   0x04A2  DAT_EXTMEM+pair-literal -> symbol+pair-literal   9 refs unmoved
+    #   0x04A3  DAT_EXTMEM+pair-literal (unchanged)               8 refs unmoved
+    #   0x07FD  DAT_EXTMEM             -> symbol+DAT_EXTMEM       8 refs unmoved
+    #   0x07FE  DAT_EXTMEM             -> symbol+DAT_EXTMEM      10 refs unmoved
+    #   0x07FF  DAT_EXTMEM             -> symbol+DAT_EXTMEM      10 refs unmoved
+    #   0x086C  DAT_EXTMEM             -> symbol                 26 refs unmoved
+    #
+    # Only `0x04A2` and `0x04A3` are #1425's. The other four are **drift this
+    # change caught rather than caused**: #333 added `XDATA_086C` and #573 added
+    # the `0x07FD`-`0x07FF` triple to `registers.yaml`, and -- exactly as the
+    # 0x086C block above predicted in as many words -- "a registers.yaml row
+    # renames the symbol table and not a decompile: a re-export would spell them
+    # XDATA_086C, as 0x086B's 22 sites already read XDATA_086B, and that is the
+    # other move." This is that other move, and it is recorded here rather than
+    # claimed as #1425's because attributing four addresses to the issue that
+    # happened to run the export is the same defect as taking one side's number
+    # in a merge. A branch that wanted only the two would have to hand-edit the
+    # export back, which is why the honest record is the whole delta.
+    #
+    # The arithmetic: `extmem_main_distinct` 895 -> 890 and
+    # `symbol_main_distinct` 167 -> 172 is +5/-5, which is the five rows above
+    # moving between the two token spellings, and `extmem_main_refs` 7765 -> 7716
+    # against `symbol_main_refs` 6199 -> 6248 is -49/+49, which is
+    # 9 + 8 + 8 + 10 + 10 = 45 plus the four `0x04A2` references the
+    # pair-accessor pass reaches -- the census's own `refs` column, which does
+    # not move, is the cross-check that says so. `extmem_raw` moves 8632 -> 8583
+    # and `extmem_commented` stays at 9, because the nine are annotation prose
+    # quoting the decompile and no prose changed.
+    #
+    # `0x04A3` is the one address whose *term* does not move, and it is unmoved
+    # for the reason the 2026-09-30 per-program re-key recorded: its main-EC half
+    # is a bare `pair-literal` and the `DAT_EXTMEM` spelling is the PD image's,
+    # so the name lands without the spelling changing and `--moved` still prints
+    # `0x04A3` alone. The PD half is unmoved for the reason it always is: the PD
+    # image is never given a symbol table, so `pd/F22E.c` still spells it
+    # `DAT_EXTMEM_04a3`. `0x04A2` is the one address that leaves the
+    # `DAT_EXTMEM` term for `symbol` in the main EC, which is what moves §2's
+    # `main-ec · DAT_EXTMEM` and `main-ec · symbol` rows and the three-way
+    # partition; see the correction in xdata-register-map.md §2.
+    "named_in_tree": 187,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # **Unmoved by issue #279, and worth saying why rather than leaving it as a

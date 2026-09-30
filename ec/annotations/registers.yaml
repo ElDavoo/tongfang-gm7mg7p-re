@@ -1737,6 +1737,57 @@ registers:
       mV/cell (ec/annotations/charge-target-derating.md). Read 450 live on
       2026-09-19, which puts it in the 200 mV/cell tier by count alone.
 
+  - name: PACK_TEMP_DK (pack temperature, decikelvin)
+    addr: [0x04A2, 0x04A3]
+    sources: [static-scan, xdata-refs]
+    static_refs: [11, 6]
+    static_refs_main_ec: [6, 1]
+    static_refs_pd_image: [5, 5]
+    status: present-untested
+    note: >
+      16-bit little-endian, 0x04A2 low, 0x04A3 high: bank0 0xBAE5
+      batt_temp_dK returns it as decikelvin and 0xBAE7 reads 0x04A3 into R6
+      and 0x04A2 into R7 (ec/decompiled/bank0/BAE7.c:7). The consumer side
+      is settled and is cited, not re-derived: the 3030/3130 dK thresholds
+      that weight the stress counter behind the charge-target derating are
+      in ec/annotations/charge-target-derating.md:48, and that file is
+      deliberately not edited by the work that added this row. Callers
+      bank0 0x8B14 and 0x8C46; word comparisons against 0x0CEE at bank1
+      0xC3A0 and 0xC392, and against a CODE table entry at bank1 0xB0D1.
+      **The producer chain is a static reading of committed listings and
+      two committed scans, and no part of it is a behaviour** -- nothing
+      was watched move, no byte was read back, and no status here rests on
+      a live run; `confirmed-working` would need the `uniwill-laptop,
+      live` source BAT_CYCLE_COUNT carries and this work does not produce
+      one. The chain, hop by hop and cited to line, is
+      docs/findings/pack-temp-producer-chain.md, which also carries the
+      suite (ec/tools/test_pack_temp_producer_chain.py) that pins the byte
+      facts it stands on. What it establishes: the main EC has two store
+      sites, bank1 0xAF28 and 0xAF39, and the census's third `write` for
+      0x04A2 is 0xAF06's rendered twice because bank1 0xAD7D is a bare
+      three-byte `ljmp 0xAF06` whose decompile is the decompiler following
+      it. 0xAF32's store is a literal in the listing -- `mov DPTR,#0xb72`
+      split into R1/R2 -- so that route writes 0x0B72 (2930 dK, 100 dK
+      below the 0x04A2 consumer's first threshold) whatever the caller left
+      in R1:R2, and whether the EC ever reaches it with a real temperature
+      is **not** established. 0xAF06's third route copies 0x0502/0x0503,
+      whose four writers are bank1 0xAC84, 0xDB0B, 0xE100 and 0xE8A4 --
+      two of which compute `value x 10 + 0x0AAA` and one `value x 10 +
+      0x0A46`, so the word is at minimum overwritten by scaled arithmetic
+      on four paths. Whether the pair tracks the pack, and what the 0x04FF
+      bit 3 / 0x0505 gate selects, need the physical machine; that is the
+      issue's own hardware question and nothing here answers it.
+      **The PD half is a collision of address numbers, not shared bytes.**
+      All five PD `0x04A3` sites hand DPTR to a helper that RETURNS, adding
+      a stride term; the one that dereferences, pd 0xF22E, reads
+      0x04A3 + R7x0x60 + 0xE0 and not the byte, so the PD wants a strided
+      field in its own 0x04A1-0x04A6 block. The `BAT_CYCLE_COUNT` note
+      above answers the same question for 0x04A6 and transfers here in the
+      sharper form. Static evidence only, and this status is unaffected
+      either way. Same caveat the header states: a `write` is an
+      instruction, not evidence the EC acts on the byte, and a zero would
+      be "not found by this method", never "absent".
+
   - name: CHARGE_TARGET_MV (charger constant-voltage target)
     addr: [0x0522, 0x0523]
     sources: [live, mech-forza-control(ADDR_BATTERY_CHARGE_TARGET)]

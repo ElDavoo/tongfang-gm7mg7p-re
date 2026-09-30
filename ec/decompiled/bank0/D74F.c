@@ -76,9 +76,9 @@ LAB_CODE_d79a:
         DAT_EXTMEM_103d = 0;
       }
       else if (DAT_EXTMEM_1514 == -4) {
-        DAT_EXTMEM_07fe = 0x55;
-        DAT_EXTMEM_07ff = 0xaa;
-        DAT_EXTMEM_07fd = 0;
+        XDATA_07FE = 0x55;
+        XDATA_07FF = 0xaa;
+        XDATA_07FD = 0;
         DAT_EXTMEM_0045 = 0x33;
         post_05e8_sp_0c0_init_1042_16e7_3105();
         return;

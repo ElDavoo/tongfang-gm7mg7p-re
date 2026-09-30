@@ -12,8 +12,9 @@
    it zeroes both, calls 0xD73D, 0x5597 with R7=0, 0xD6F4, 0x0EA2 with R7=0x0A and 0xD065, and also
    spins forever; with neither condition it returns. 0x07C5 is in ec/annotations/registers.yaml as
    WHMS at bit 5 (issue #30), and the bit cleared above is bit 7, not that one. 0x1106, 0x08E2,
-   0x1063, 0x077E/0x077F and the 0x07FE-0x07FF triple have no entry in
-   ec/annotations/registers.yaml; 0x08EB is now carried there as XDATA_08EB.
+   0x1063 and 0x077E/0x077F have no entry in ec/annotations/registers.yaml; 0x08EB is now carried
+   there as XDATA_08EB, and the 0x07FE-0x07FF triple written above is carried as XDATA_07FD,
+   XDATA_07FE and XDATA_07FF (issue #573).
    type: init
    evidence: ec/decompiled/bank0/CCFC.asm; ec/decompiled/bank0/CCFC.c; ec/annotations/registers.yaml
    basis: hand-decoded

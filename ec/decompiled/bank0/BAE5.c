@@ -14,7 +14,7 @@
 undefined1 batt_temp_dK(void)
 
 {
-  return DAT_EXTMEM_04a2;
+  return PACK_TEMP_DK_0;
 }
 
 

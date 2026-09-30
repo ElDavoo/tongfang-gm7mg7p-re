@@ -253,7 +253,7 @@ bank0,BAD4,sub_input_from_cpu_temp_043e,annotation,4,043E,,043E,disagree
 bank0,BADB,load_dptr_08ce,annotation,1,08CE,,08CE,disagree
 bank0,BADE,tailcall_70e4_add_0100_at_dptr,annotation,2,,,,vacuous
 bank0,BAE5,batt_temp_dK,annotation,1,,,,vacuous
-bank0,BAE7,load_r6_r7_from_04a3_04a2,annotation,7,04A2 04A3,04A2,04A3,disagree
+bank0,BAE7,load_r6_r7_from_04a3_04a2,annotation,7,04A2 04A3,,04A2 04A3,disagree
 bank0,BAF4,store_r4_and_a_to_xdata_pair,annotation,8,,,,vacuous
 bank0,BAFD,store_a_then_set_bits_1_and_0_of_1900,annotation,7,1900,1900,,agree
 bank0,BB08,store_a_then_set_bit0_1901,annotation,5,1901,1901,,agree

@@ -10,7 +10,7 @@ counted. This page is the answer, the list, and the accounting.
 addresses the pair pass reaches are *only ever* the `inc DPTR` half of an
 accessor's pair, and that 73 of those have no `MOV DPTR,#addr` encoding in
 `common`, `bank0` or `bank1`. The 107 split **73 / 34**, and the 34 split
-**7 entered / 27 not**. All 107 are in
+**8 entered / 26 not**. All 107 are in
 [`xdata-inc-dptr-only.csv`](xdata-inc-dptr-only.csv), one row each, and §1
 prints the command that regenerates it.
 
@@ -69,10 +69,13 @@ would shrink `S1 - S` and the summary would say so.
 | pd-image sites only, none in the main EC | **2** | `0x043B` (2 sites), `0x04A5` (3 sites) -- another program's byte at the same address number |
 | **= the 73** | **73** | no main-EC `MOV DPTR` site; §3 declines them |
 | main-EC `MOV DPTR` site, entered in `registers.yaml` | **7** | `0x030F 0x0403 0x0435 0x0437 0x0439 0x04A7 0x0523` |
-| main-EC `MOV DPTR` site, **not** entered | **27** | the shape §6's rule admits; §5 |
+| entered with **no** main-EC `MOV DPTR` site | **1** | `0x04A3`, since issue #1425 -- see below |
+| main-EC `MOV DPTR` site, **not** entered | **26** | the shape §6's rule admits; §5 |
 | **total** | **107** | |
 
-71 + 2 = 73, and 7 + 27 = 34, and 73 + 34 = 107. Every row of
+71 + 2 = 73, and 8 + 26 = 34, and 73 + 34 = 107. *(The 7 / 27 split this table
+carried until issue #1425 is left in the version above rather than deleted; it
+was right of the tree it was measured on.)* Every row of
 `xdata-inc-dptr-only.csv` falls in exactly one of the four, and the
 `population_of()` classification the summary prints is read back off the row
 rather than recomputed, so this table and the CSV cannot drift apart silently.
@@ -228,25 +231,36 @@ from both sides: `add_full_product_to_dptr` is not a selected accessor and
 names still reads back as the direction the table recorded, out of the committed
 `.asm` rather than out of the accessor table.
 
-## 5. The 27: entered by §6's rule, and left for a follow-up
+## 5. The 26: entered by §6's rule, and left for a follow-up
 
-The 34 that *do* have a main-EC `MOV DPTR` site are 7 already entered and 27
-not, and the 27 are:
+The 34 that *do* have a main-EC `MOV DPTR` site are 8 already entered and 26
+not, and the 26 are:
 
 ```
-0x0315 0x0319 0x0344 0x0383 0x0389 0x0393 0x03F7 0x03F9 0x04A1 0x04A3
+0x0315 0x0319 0x0344 0x0383 0x0389 0x0393 0x03F7 0x03F9 0x04A1
 0x04AF 0x04BF 0x0503 0x0505 0x0507 0x0509 0x050B 0x050D 0x0519 0x051B
 0x0529 0x0609 0x060B 0x060D 0x060F 0x0835 0x0837
 ```
 
-They have the shape §6's existing rule admits, and they are not entered here for
-a reason that is about coverage rather than about the rule: **none of the 27 is
-on the `0x0400`-`0x045F` page**, and no other page's rule covers them. The four
-page addresses among the 34 are `0x0403`, `0x0435`, `0x0437` and `0x0439`, and
-**all four are already entered** -- which is why §6's rule, applied to this
-population, changes nothing on the page at all.
+**`0x04A3` is the one address that left this list**, in issue #1425, and it is
+the one row of the 34 that is entered on the strength of a *name* rather than a
+main-EC `MOV DPTR` site: it is the high half of the `0x04A2` pair, reached in
+the main EC only as the `inc DPTR` half of a pair accessor, and its own
+`mov_dptr_main_ec` column reads 1 -- that one site being the PD image's, which
+`§3` counts as another program's byte. `registers.yaml` now names it
+`PACK_TEMP_DK_1`, and the whole chain that naming documents is in
+[`docs/findings/pack-temp-producer-chain.md`](../../docs/findings/pack-temp-producer-chain.md).
+`test_inc_dptr_sites.py` holds it out **by name** rather than by weakening the
+invariant, so a ninth row entering with no main-EC site still fails.
 
-So each of the 27 needs its own `name`/`note` decision, off-page, with no
+The remaining 26 have the shape §6's existing rule admits, and they are not
+entered here for a reason that is about coverage rather than about the rule:
+**none of the 26 is on the `0x0400`-`0x045F` page**, and no other page's rule
+covers them. The four page addresses among the 34 are `0x0403`, `0x0435`,
+`0x0437` and `0x0439`, and **all four are already entered** -- which is why
+§6's rule, applied to this population, changes nothing on the page at all.
+
+So each of the 26 needs its own `name`/`note` decision, off-page, with no
 existing rule to lean on. That is an issue, not a footnote, and it is named as
 the follow-up this pass opens rather than folded in as a silent extra diff
 against a file several other branches are editing.

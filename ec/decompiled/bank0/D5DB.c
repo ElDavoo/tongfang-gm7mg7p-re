@@ -48,9 +48,9 @@ code_c0xd5db:
           nop();
           TXCNTH = 1;
           nop();
-          DAT_EXTMEM_07fe = 0x55;
-          DAT_EXTMEM_07ff = 0xaa;
-          puVar1 = &DAT_EXTMEM_07fd;
+          XDATA_07FE = 0x55;
+          XDATA_07FF = 0xaa;
+          puVar1 = &XDATA_07FD;
           write_a_to_dptr_set_1f06(0x5a,(undefined1 *)0x7fd);
           *puVar1 = 3;
           timer1_counted_delay_using_0a56(-6);

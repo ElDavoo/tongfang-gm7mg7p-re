@@ -294,6 +294,13 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x045F,XDATA_045F,0x16341,bank1,0xE341,read,read,0xE2D3 dispatch_036c_low3_then_seed_1c00_block,,
 0x045F,XDATA_045F,0x16357,bank1,0xE357,read,read,0xE2D3 dispatch_036c_low3_then_seed_1c00_block,,
 0x045F,XDATA_045F,0x163B5,bank1,0xE3B5,read,read,0xE3B5 copy_03cd_03ce_03cf_to_1c02_1c04_1c05,,
+0x04A2,"PACK_TEMP_DK (pack temperature, decikelvin)",0x0BAEC,bank0,0xBAEC,read,read,0xBAE7 load_r6_r7_from_04a3_04a2,,
+0x04A2,"PACK_TEMP_DK (pack temperature, decikelvin)",0x12F28,bank1,0xAF28,handed to lcall/ljmp -> callee writes,write,0xAF06 gate_0490_04ff_0505_then_call_b0d1,0x888C,0x888C write_r1r2_to_xdata_pair
+0x04A2,"PACK_TEMP_DK (pack temperature, decikelvin)",0x12F39,bank1,0xAF39,handed to lcall/ljmp -> callee writes,write,0xAF32 FUN_CODE_af32,0x888C,0x888C write_r1r2_to_xdata_pair
+0x04A2,"PACK_TEMP_DK (pack temperature, decikelvin)",0x13134,bank1,0xB134,handed to lcall/ljmp -> callee reads,read,0xB0D1 step_index_056b_update_0495_0493,0x8892,0x8892 read_xdata_pair_to_r3r4
+0x04A2,"PACK_TEMP_DK (pack temperature, decikelvin)",0x13145,bank1,0xB145,handed to lcall/ljmp -> callee reads,read,0xB0D1 step_index_056b_update_0495_0493,0x8892,0x8892 read_xdata_pair_to_r3r4
+0x04A2,"PACK_TEMP_DK (pack temperature, decikelvin)",0x143A7,bank1,0xC3A7,handed to lcall/ljmp -> callee reads,read,0xC3A0 dec_0622_when_04a2_below_0cee,0x8892,0x8892 read_xdata_pair_to_r3r4
+0x04A3,"PACK_TEMP_DK (pack temperature, decikelvin)",0x0BAE7,bank0,0xBAE7,read,read,0xBAE7 load_r6_r7_from_04a3_04a2,,
 0x030E,SBS_CHARGING_VOLTAGE (pack-requested charge voltage),0x0B297,bank0,0xB297,read,read,0xB1F0 charge_stress_update,,
 0x030E,SBS_CHARGING_VOLTAGE (pack-requested charge voltage),0x133BB,bank1,0xB3BB,handed to lcall/ljmp -> callee reads,read,0xB33B FUN_CODE_b33b,0x8886,0x8886 read_xdata_pair_to_r1r2
 0x030E,SBS_CHARGING_VOLTAGE (pack-requested charge voltage),0x14C47,bank1,0xCC47,handed to lcall/ljmp -> callee reads,read,0xCC2D FUN_CODE_cc2d,0x8892,0x8892 read_xdata_pair_to_r3r4

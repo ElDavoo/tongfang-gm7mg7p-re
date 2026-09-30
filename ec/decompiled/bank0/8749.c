@@ -184,14 +184,14 @@ LAB_CODE_88e7:
       DAT_EXTMEM_085f = 0;
       if ((DAT_EXTMEM_0490 & 1) == 0) {
         load_0434_0438_pairs_mul16_and_tailcall();
-        DAT_EXTMEM_086c = bVar2;
+        XDATA_086C = bVar2;
       }
       else {
         load_0434_0438_pairs_mul16_and_tailcall();
-        DAT_EXTMEM_086c = x044c_minus_r7();
+        XDATA_086C = x044c_minus_r7();
       }
-      bVar3 = (DAT_EXTMEM_086c < 0x50) << 7;
-      if (((DAT_EXTMEM_086c < 0x50) && (bVar3 = (CPU_TEMP < 0x46) << 7, CPU_TEMP < 0x46)) &&
+      bVar3 = (XDATA_086C < 0x50) << 7;
+      if (((XDATA_086C < 0x50) && (bVar3 = (CPU_TEMP < 0x46) << 7, CPU_TEMP < 0x46)) &&
          (bVar3 = (GPU_TEMP < 0x46) << 7, GPU_TEMP < 0x46)) {
         MANUAL_FAN_CTRL = MANUAL_FAN_CTRL & 0xbf;
         bVar2 = 0xac;

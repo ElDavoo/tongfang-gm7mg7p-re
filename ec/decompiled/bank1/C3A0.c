@@ -12,7 +12,7 @@
    type: writer
    evidence: ec/decompiled/bank1/C3A0.asm; ec/decompiled/bank1/C3A0.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void dec_0622_when_04a2_below_0cee(void)
 

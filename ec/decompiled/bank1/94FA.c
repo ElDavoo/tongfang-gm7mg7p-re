@@ -21,15 +21,15 @@ void magic_55aa_and_0704_countdown(char param_1)
 
 {
   trampoline_to_c10c();
-  if (((param_1 == '\0') && (DAT_EXTMEM_07fe == 'U')) && (DAT_EXTMEM_07ff == -0x56)) {
-    DAT_EXTMEM_07fe = '\0';
-    DAT_EXTMEM_07ff = '\0';
-    if (DAT_EXTMEM_07fd == 'Z') {
+  if (((param_1 == '\0') && (XDATA_07FE == 'U')) && (XDATA_07FF == -0x56)) {
+    XDATA_07FE = '\0';
+    XDATA_07FF = '\0';
+    if (XDATA_07FD == 'Z') {
       load_0704_from_045d_then_branch();
       return;
     }
     DAT_EXTMEM_0045 = 0;
-    DAT_EXTMEM_07fd = '\0';
+    XDATA_07FD = '\0';
     XDATA_1F07 = 0;
   }
   if (DAT_EXTMEM_0470 != '\0') {
