@@ -293,9 +293,9 @@ from check_capture_names import census
 # the union rule. Changing it would mean editing a tool that is not at fault
 # along with its suite, so `files_for()` follows the same branches and the
 # suite asserts the two agree on the committed tree.
-from check_testdata_index import (INDEX, MISSING, RESOLVED, TESTDATA,
-                                  UNRESOLVED, as_address, below, names_a_file,
-                                  repo_path, table_cells)
+from check_testdata_index import (MISSING, RESOLVED, TESTDATA, UNRESOLVED,
+                                  as_address, below, names_a_file, repo_path,
+                                  table_cells)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 EC = os.path.join(HERE, os.pardir)
@@ -304,6 +304,12 @@ EC = os.path.join(HERE, os.pardir)
 # root is: `captures_for()` is handed a scratch directory by the suite and the
 # committed one by everything else, exactly as `check()`'s `root` is.
 CAPTURES = os.path.normpath(os.path.join(EC, os.pardir, WATCH))
+
+# The index file's name inside whichever root a run was handed. `check()` opens
+# it and `closing_line()` names it, so it is written once here rather than
+# spelled in both -- one place decides where the index is, the same reason
+# `units()` and `WATCH` are imported rather than written out a second time.
+INDEX_NAME = "README.md"
 
 # The census of firmware code addresses. A literal in it names a routine in
 # the EC image, never a byte in a capture, and reading it out of the
@@ -414,10 +420,16 @@ Claim = collections.namedtuple(
 # beside each of its claims, the denominator the block closes with, and
 # `closing_line()` all name the tree they were measured against rather than the
 # module-level `CAPTURES`, which every scratch case replaces and which a report
-# naming would misattribute.
+# naming would misattribute. `root` is that argument one root over: it is the
+# tree the index was read from, and `closing_line()` labels the line from it
+# rather than from the sibling's module constant `INDEX` -- which named the
+# committed index for every run pointed elsewhere (issue #1022). Both are
+# appended at the end and neither carries a default, so a construction that has
+# not learned the new field raises on the arity rather than reading past the
+# end.
 Result = collections.namedtuple(
     "Result", "rows literal_rows literals resolved missing unresolved checked "
-    "claiming_rows claims shapes dated captures")
+    "claiming_rows claims shapes dated captures root")
 
 # The closed list of reasons a literal can be passed over, in `reason_for()`'s
 # own order, and the one place they are written down. `reason_for()` returns
@@ -887,10 +899,13 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
     fixture is two claims over two file sets, and reading the row's own files
     for both would be the misattribution the date is there to prevent.
 
-    **The `captures` root is carried on the `Result`** rather than left to the
-    report to read off the module constant, because this parameter exists and
-    callers use it: a block that named the committed directory for a
-    directory the run never opened would be a sentence with nothing behind it.
+    **Both roots are carried on the `Result`** rather than left to the report
+    to read off a module constant, because both parameters exist and callers
+    use them: a block or a closing line that named the committed directory for
+    one the run never opened would be a sentence with nothing behind it.
+    `captures` is the capture tree the dated read walked, and `root` is the
+    tree the index was read from, which the closing line now names from there
+    rather than from the sibling's module constant `INDEX`.
 
     **A dated file set with no column to read in is not checked, and that is
     the `carriers = (carried_by_column(...)` branch's other half.** The
@@ -915,7 +930,7 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
     `test_a_dated_shape_still_wins_over_the_no_column_refusal` is what holds
     it.
     """
-    index_path = os.path.join(root, "README.md")
+    index_path = os.path.join(root, INDEX_NAME)
     with open(index_path, encoding="utf-8") as f:
         index = f.read()
 
@@ -988,7 +1003,7 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
                   len(per_row), claims, shapes,
                   [(pattern, where[0], where[1])
                    for pattern, where in dated.items()],
-                  captures)
+                  captures, root)
 
 
 def report(result):
@@ -1159,11 +1174,24 @@ def closing_line(result) -> str:
     two per-set figures then sum to less than `result.checked`, which is the
     whole of the shortfall.
 
-    `main()` still labels the index with `repo_path(INDEX)`, which is the
+    ~~`main()` still labels the index with `repo_path(INDEX)`, which is the
     same class of constant, and that is left alone on purpose: it is the only
     caller of `check()` and it always passes the default root, so no run that
     prints this line ever searched another tree. Carrying the root for the
-    index as well would be a change with no wrong output to fix.
+    index as well would be a change with no wrong output to fix.~~ **The
+    premise is false on this tree, and the field is carried anyway (issue
+    #1022): `measure_index_repair_visibility.measure()` calls
+    `check(root=root)` in-process against whatever tree it is handed, so
+    `main()` is not the only caller and a run that read a scratch index was
+    printing the committed one.** What the sentence did establish is still
+    true -- no `main()` output was wrong, and none moved, which is measured in
+    `docs/findings/testdata-row-claims-closing-line-root.md` rather than
+    asserted here. What it argued from is the failure `docs/findings.md` §4a
+    records from the other side: a caller count is a static claim about a tree,
+    and this tree already refutes this one. The label now comes from
+    `result.root`, so it names the file `check()` read whatever called it, and
+    a scratch-root case holds that rather than an argument about who calls
+    what.
 
     Extracted from `main()` so a case can render it from a scratch `Result`
     the way `report()` and `dated_report()` already can.
@@ -1172,7 +1200,8 @@ def closing_line(result) -> str:
     agreed = [claim for claim in result.claims if claim.verdict == RESOLVED]
     own = [claim for claim in agreed if claim.files not in dated]
     captures = [claim for claim in agreed if claim.files in dated]
-    return (f"{repo_path(INDEX)}: every address claim in the third column "
+    index = repo_path(os.path.join(result.root, INDEX_NAME))
+    return (f"{index}: every address claim in the third column "
             f"agrees with the files it was held to -- {len(own)} with the "
             f"fixtures their row names, {len(captures)} with the captures a "
             f"bare date in their sentence names")

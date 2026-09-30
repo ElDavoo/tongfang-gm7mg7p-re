@@ -708,6 +708,28 @@ class SkipsDeliberately(ScratchIndex, unittest.TestCase):
         self.assertIn(ctrc.repo_path(self.captures), block)
         self.assertNotIn(ctrc.repo_path(ctrc.CAPTURES), block)
 
+    def test_the_closing_line_names_the_index_root_the_run_was_given(self):
+        # The mirror of the case above, on the other root. `closing_line()`
+        # ended its f-string with `repo_path(INDEX)`, the module constant,
+        # while `check()` takes `root=` as a parameter -- so every run pointed
+        # at a scratch tree named the committed index for a file it never
+        # opened. `Result.root` carries what the run was handed, and this is
+        # the case that fails if the constant comes back.
+        self.set("example.csv", 0x0F5D)
+        self.row("example.csv", "The `0x0F5D` poke lands inside the window.")
+        line = ctrc.closing_line(self.check())
+        # The scratch root is named through `repo_path()` for the reason the
+        # case above is: `closing_line()` reports repository-relative, and a
+        # scratch root is reached as a chain of `..` out of the repository.
+        # The positive is what carries the case: it is the assertion that goes
+        # red under either way of getting the root wrong. The negative is
+        # what tells the two labels apart -- both roots end in `testdata`, so
+        # only the scratch directory's own name separates them, and the pair
+        # together is what makes the positive unambiguous.
+        self.assertIn(ctrc.repo_path(os.path.join(self.testdata,
+                                                  ctrc.INDEX_NAME)), line)
+        self.assertNotIn(ctrc.repo_path(ctdi.INDEX), line)
+
     def test_the_closing_line_splits_the_two_file_sets(self):
         # "agrees with the fixtures its row names" was a sentence about all
         # thirty claims once a bare date started redirecting two of them
@@ -1359,6 +1381,18 @@ class TheCommittedTree(unittest.TestCase):
             int(found.group(1)) + int(found.group(2)), self.result.checked,
             f"the split covers only the claims that agree, so a shortfall is "
             f"the run's own {self.result.missing} disagreement(s)")
+
+    def test_the_closing_line_still_labels_the_committed_index(self):
+        # The change that put the root on `Result` moved no output, and this is
+        # what holds it: over the committed tree -- the only run `main()` makes
+        # -- the label is still the committed index, and the `Result` names the
+        # tree that label was built from. A relation between two values the
+        # code derives, not a count of the tree, so an index row added later
+        # cannot redden it.
+        line = ctrc.closing_line(self.result)
+        self.assertEqual(self.result.root, ctdi.TESTDATA)
+        self.assertTrue(line.startswith(ctrc.repo_path(ctdi.INDEX) + ":"),
+                        f"the committed label moved: {line!r}")
 
     def test_the_committed_tree_cannot_tell_the_two_readings_apart(self):
         # The premise the closing line's split rests on, asserted rather than
