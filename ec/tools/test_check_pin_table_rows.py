@@ -702,9 +702,23 @@ class TheCommittedTree(unittest.TestCase):
         # `def test_a_capture_given_twice_is_refused` header, so the column the
         # paragraphs above kept at zero is the one that takes the one. The
         # other four are the control.
-        self.assertEqual(shape, {census.DEF_TEST: 1, census.ASSERTION: 24,
+        # And +1 for #492, on the same column and for a different reason. The
+        # 33 rows this change re-anchors are a uniform `+146` -- both hunks it
+        # adds to `test_grade_0751_isolation.py` sit above every pin they move
+        # -- so each lands on a line of the same text and the same shape, and
+        # the five columns beside this one holding still is the control for
+        # that. The row that moves is `0751-capture-row-shape.md:41`, and it
+        # moves because its pin was stale before this change: `main` recorded
+        # `:3789` where the header sat at `:3805`. Correcting it to `:3951` is
+        # `+162` -- `146` this change and `16` of pre-existing drift -- and the
+        # line it lands on is `def test_the_refusal_reasons_are_read_captures_own`,
+        # a header, where `:3789` was a statement inside the test. So it is
+        # `other` -> `def test_`: `1 -> 2` and `46 -> 45`, with `assertion`,
+        # `comment`, `blank` and the declined `-` unmoved, which is the control
+        # that this is a row changing column and not one added or dropped.
+        self.assertEqual(shape, {census.DEF_TEST: 2, census.ASSERTION: 24,
                                  census.COMMENT: 23, census.BLANK: 5,
-                                 census.OTHER: 46, "-": 33})
+                                 census.OTHER: 45, "-": 33})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing
