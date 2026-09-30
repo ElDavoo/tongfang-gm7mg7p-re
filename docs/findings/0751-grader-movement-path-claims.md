@@ -312,36 +312,24 @@ gets the per-block sentence, as both new tests' third legs show.
 dump groups, not the closing section's cases, so nothing there goes stale —
 and leaving it alone is one fewer shared file open against the other agent PRs.
 
-## One suite outside the gates goes red on this change, and it is not a claim
+## What growing the grader suite did to the census, and what it did not
 
-**Read this before deciding the change is cheap.** Adding tests to
+**Read this before deciding the change is cheap.** Growing
 `ec/tools/test_grade_0751_isolation.py` moves the lines every committed
 citation *into that file* lands on, and
 `ec/tools/test_census_test_line_pins.py`'s
 `test_the_committed_counts_are_the_ones_the_write_up_publishes` holds the
-aggregate of exactly that:
-
-```
-FAIL: AssertionError: {'def test_': 1, 'assertion': 19, 'comment': 28,
-                        'blank': 5, 'other': 46}
-                    != {'def test_': 1, 'assertion': 24, 'comment': 23,
-                        'blank': 5, 'other': 46}
-```
+aggregate of exactly that. **Nothing went red for it.** The effect is real —
+the census reads a tree from the filesystem, and that tree's lines are what
+moved — but it stops at the address, and the measurement below is what says
+so.
 
 Measured, not guessed. Both trees censused with
-`census_test_line_pins.py`'s own `census()` and compared record by record:
-
-| axis | merge base | this branch |
-|---|---|---|
-| resolving pins / declined | 99 / 33 | 99 / 33 |
-| `out-of-range`, `unresolved-path`, `ambiguous-path` | 0 / 0 / 0 | 0 / 0 / 0 |
-| distinct `(file, line)` pairs | 74 | 74 |
-| shape split `assertion` / `comment` | 24 / 23 | 19 / 28 |
-
-Every row of that table, and the 15 below it, is what this prints — the census
-reads a tree from the filesystem rather than from git, so the merge base is
-unpacked rather than diffed, and both trees get the same tool and the same
-exclusions (`.git/`, `vendor/`, `.claude/`, and the census's own write-up):
+`census_test_line_pins.py`'s own `census()` and compared record by record —
+the census reads a tree from the filesystem rather than from git, so the merge
+base is unpacked rather than diffed, and both trees get the same tool and the
+same exclusions (`.git/`, `vendor/`, `.claude/`, and the census's own
+write-up):
 
 ```
 rm -rf /tmp/pin-base && mkdir -p /tmp/pin-base
@@ -381,28 +369,45 @@ print('every one into the grader suite:',
 PY
 ```
 
-**Only the shape split moved**, and every pin whose landing shape moved is one
-into the grader suite — **15** of them, and the net is `assertion -5`,
-`comment +5`, `other` and `blank` and `def test_` unmoved. Every pin still
-*resolves*, to the same file and the same cited line; what moved is which line
-of that file the number now lands on. `ec/tools/check_pin_table_rows.py` names
-all 15 on its own, as `shape-differs` rows 1302, 1306, 1341-1344, 1358-1362 and
-1365-1368 of `docs/findings/test-line-pin-census.md`; it asks a different
-question — reconciling the committed per-pin table row by row, rather than
-totalling the shapes — and it **loads** the census rather than restating it, by
-its own docstring's design, so this is a second path to the same 15 and not a
-second opinion. It prints 0 `shape-differs` on the merge base.
+which prints:
 
-**The figure is not re-derived here, on purpose.** `CLAUDE.md`'s
-"No hand-kept totals in prose" is explicit about this shape — *"a test that
-asserts a count of the tree is a value every merge has to edit … Assert the
-claim, not the census"* — and this is that test. The alternative is re-deriving
-the census, and that is not a one-number edit: the 15 rows
-`check_pin_table_rows.py` names above carry a `shape` cell in
-`docs/findings/test-line-pin-census.md`'s per-pin table, and the write-ups that
-cite those lines carry the `file:NNN` spelling, so the two move together or the
-re-registration is fiction. It is its own piece of work and it belongs in its
-own change, where the write-ups can be read.
+```
+merge base: 99 resolving, 33 declined, 74 distinct (file, line) pairs, {'blank': 5, 'comment': 23, 'other': 46, 'assertion': 24, 'def test_': 1}
+this branch: 99 resolving, 33 declined, 74 distinct (file, line) pairs, {'blank': 5, 'comment': 23, 'other': 46, 'assertion': 24, 'def test_': 1}
+0 moved; net {}
+every one into the grader suite: True
+```
+
+**`0 moved` is the whole result.** Not one pin's landing **shape** differs
+between the two trees, so the aggregate
+`test_the_committed_counts_are_the_ones_the_write_up_publishes` asserts is
+untouched and `python3 ec/tools/test_census_test_line_pins.py` is green. (The
+last line prints `True` vacuously: with nothing moved there is nothing for it
+to be untrue of, and it is kept only so a non-empty `moved` would have to name
+the grader suite.)
+`ec/tools/check_pin_table_rows.py` agrees from its own direction, reconciling
+the per-pin table row by row against the same run — `0 shape-differs`, `0
+read-differs`, `0 path-differs` on this branch and on `126a67c8` alike. Its
+`2 unplaced-row` / `2 row-without-record` are the same two on both trees, and
+are not this change's.
+
+**What moved is the cited line, and this diff moved the rows with it.** A pin
+names a `file:NNN`, and a grown grader suite pushes down every pin whose target
+lands inside it. This change re-anchored those in the five write-ups that
+carry them — `0751-capture-row-shape.md`, `0751-grader-block-scoping.md`,
+`0751-grader-unplaced-window-scope.md`, `0751-mark-provenance-column.md`, and
+both the fenced `grep` transcript and its live-prose twin in
+`0751-path-taking-reader-fates.md` — and updated the matching per-pin rows in
+`docs/findings/test-line-pin-census.md` to match. That second half carries
+the check rather than tidying it: the table is matched to the run on the target
+spelling as well as the citing line, so a re-anchored citation left with a
+stale row would surface as an `unplaced-row` and its `row-without-record`
+twin. Each re-anchored row carries the old and new `file:NNN` and the reason in
+its verdict cell, in the form that table already uses elsewhere.
+
+So there are no `shape` cells to re-register, and no re-registration deferred to
+a follow-up. What was preserved is the shape — every pin still resolves, to the
+same file, on a line of the same kind — and the address moved with it.
 
 The suite is not in any gate, and says so itself:
 `test_the_tool_is_not_in_the_cheap_gate` asserts
@@ -412,8 +417,14 @@ and `.github/scripts/agent-gates.sh` passes with this change in the tree. It is
 a census, by its own docstring: "a census and not a check … it exits 0 on a
 tree where every pin is wrong."
 
-Nothing here is weakened to make it pass. Nothing was edited in that suite, in
-the census, or in any write-up's citations.
+Nothing here is weakened to make it pass. `test_census_test_line_pins.py` and
+`census_test_line_pins.py` are untouched, and no committed figure was edited to
+fit a run. What the diff does touch is citations, and only in the one way
+growing the grader suite forces: the `file:NNN` a pin names, re-anchored in the
+five write-ups above and carried into the matching rows of
+`docs/findings/test-line-pin-census.md`. That is a change of address, and it
+preserved every shape the census reads — which is the same `0 moved` the
+measurement above reports.
 
 ## Left out on purpose
 
