@@ -110,10 +110,33 @@ fix.
 
 **There are two `known = set(names)` sites**, one in
 `unplaced_window_problems` and one in `check_block_marks`, and they look up the
-same set of the same run. A first attempt fixed one and broke 56 tests,
-because the windows a block walk could not place are held to the same mark set
-as the ones it could. This is the single most important thing to hand to
-whoever reads the diff: they are one set, and they move together.
+same set of the same run: both build it from `distinct_captures` over the same
+`captures`, and the windows a block walk could not place are held to the same
+mark set as the ones it could. That is why they move together, and it is a
+design reason rather than a measured one — **the committed suite does not
+discriminate the two sites.** The suite does build un-normalised spellings
+(`os.curdir`, and a symlink it creates itself), but no test that reaches these
+two sites ever hands a capture in under a spelling `distinct_captures` does not
+then **keep**, so the string-keyed set and the resolved-keyed set come out the
+same set and the two keyings are interchangeable on this tree. Reverting either
+site to `set(names)`, or both at once, leaves
+`grade_0751_isolation.py --self-test` green.
+
+The difference is reachable, though, and simply is not reached. Measured with
+each site's `known` reverted to `set(names)`, over the committed fixtures, and
+then over the same captures with **every** one of them handed in a second time
+under a second spelling placed **first** in the list:
+
+| site | committed fixtures | every capture given a 2nd spelling, first |
+|---|---|---|
+| `check_block_marks` | no problems | 3 × `missing` |
+| `unplaced_window_problems` | `labels`, `missing` | `labels`, `missing`, `missing` |
+
+Only the list handed to the readers differs between the two columns; the
+fixtures on disk are the same ones in both. So this is the single most important
+thing to hand to whoever reads the diff: **not** because a test here pins the
+two sites, but because none of them does, and a reader who trusts a count of
+failing tests here would be trusting one this tree cannot produce.
 
 The key is for looking up, not for printing. Every site that names a capture
 prints `os.path.basename` of a path `distinct_captures` kept, and what that
