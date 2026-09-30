@@ -206,8 +206,28 @@ once the four actions were done, and its `# ended` line is intact.
 |---|---|---|
 | AC out | 21:18:55.967 | at 21:18:55.590, 0.38 s *before* the mark: `0x06D8` and `0x070B` `0x00` → `0x0A`; `0x0723` `0x00` → `0x20`; `0x0480` `0x03` → `0x02`; `0x05F0` `0x01` → `0x28`; `0x0490` `0x0F` → `0x0E` |
 | AC in | 21:20:03.785 | at 21:20:03.280: `0x0480` `0x02` → `0x03`; `0x05F0` `0x28` → `0x01` over about 190 ms; `0x0490` `0x06` → `0x07` → `0x0F` |
-| Fn power-mode key | 21:21:11.447: `MSC_SCAN 0xb0`, key 184 (`KEY_F14`) | nothing; `0x0751` held `0x10` |
+| Fn power-mode key | 21:21:11.447: `MSC_SCAN 0xb0`, key 184 (`KEY_F14`) | nothing; `0x0751` held `0x10` over the whole capture, so not over any window this row's mark opens — see the note under the table |
 | lid closed about 20 s, then opened | 21:22:03.719 / 21:22:23.506 | nothing. The machine did not suspend: logind reports `Docked=true` and `HandleLidSwitchDocked=ignore` |
+
+**Row 3's "nothing" is a whole-capture negative, and the capture carries two
+marks for that one press.** The Fn arm's window is ambiguous in a way the
+other three are not: lines 1711-1712 of the capture are `MSC_SCAN 0xb0` and
+`key 184 pressed` at `21:21:11.447`, one instant, so a one-mark-per-action
+reading gives that arm a window of `[21:21:11.447, 21:21:11.447)` and "nothing
+moved" over no time. The negative does not rest on that reading. `0x0751` is
+one of the 35 watched addresses, and it has **no change row anywhere in the
+file** — the only value the file carries for it is the `0x0751=0x10` on the
+`# baseline` line — so it holds over all 369.5 s whatever boundary is drawn.
+Under the other
+reading — the second mark to the next, 52.272 s and 525 change rows later — the
+window is empty of anything but the `0x06D6` sweep, which is the routine's own
+counter rather than a response to a key. Both readings give the same negative,
+and neither makes this row wrong; what was missing was the interval, so it is
+named here. `ec/tools/grade_gpu_door.py` refuses this capture over the pair if
+it is pointed at it, which is the door procedure's own rule and not a statement
+about this one. Re-derived and measured by `ec/tools/scan_mark_collisions.py`;
+the write-up is
+[`perturb-arm-colliding-marks.md`](../findings/perturb-arm-colliding-marks.md).
 
 **The two countdowns the unplug loaded tick at the post-return rate.** `0x06D8`
 and `0x070B` each made 12 decrements. The median interval between consecutive
