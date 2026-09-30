@@ -688,13 +688,18 @@ jobs:
           # LOCAL CHANGE (2026-09-26): 2 -> 8, in step with agent-plan.yml. At 2 the check below
           # was not a cap but a deadlock: the count is never enforced, so it had drifted to 6
           # open agent PRs and this step declined on every single run.
-          MAX_OPEN_AGENT_PRS: '8'
+          #
+          # LOCAL CHANGE (2026-10-01): 8 -> 4 with agent-plan.yml, counting only pull requests
+          # that are neither drafts nor `agent:stuck` -- the reasoning is there.
+          MAX_OPEN_AGENT_PRS: '4'
         run: |
           set -euo pipefail
 
           . "$RUNNER_TEMP/slots.sh"
-          open=$(gh pr list --state open --json headRefName \
-                   --jq '[.[] | select(.headRefName | startswith("agent/"))] | length')
+          open=$(gh pr list --state open --limit 200 --json headRefName,isDraft,labels \
+                   --jq '[.[] | select(.headRefName | startswith("agent/"))
+                              | select(.isDraft | not)
+                              | select([.labels[].name] | index("agent:stuck") | not)] | length')
           if [ "$open" -ge "$MAX_OPEN_AGENT_PRS" ]; then
             echo "$open agent pull requests open, at the cap — not planning anything new"
             exit 0

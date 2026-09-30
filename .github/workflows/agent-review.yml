@@ -69,7 +69,7 @@ jobs:
       && !contains(github.event.pull_request.labels.*.name, 'agent:stop')
       && !contains(github.event.pull_request.labels.*.name, 'agent:stuck')
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60  # LOCAL CHANGE (2026-10-01): was 30; docs/agent-pipeline.md, "Loops that never ended"
     outputs:
       approved: ${{ steps.unpack.outputs.approved }}
       rejected: ${{ steps.unpack.outputs.rejected }}
@@ -183,6 +183,13 @@ jobs:
             planned again from scratch, with your summary and findings in front of the new
             plan, so write the `fix` fields as guidance for that new attempt: what it must do
             differently, not how to patch this diff.
+
+            Time: this job is stopped at 60 minutes, and a review that is stopped records
+            nothing, so the pull request waits for a restart. Check claims against the tree as
+            it is now. For a claim about history ("false since X", "on every tree since"), a
+            few spot-checked commits are enough. Do not replay a tool over every commit in a
+            range. If a claim could only be settled by that sweep, block on it as unsupported
+            and ask for it to be narrowed or removed.
 
             Do not block on style, naming, or preference. You may leave those as non-blocking
             suggestions; keep them few and worth the author's time. A change that is correct and

@@ -693,6 +693,21 @@ only covers what's specific to *this* copy.
   `agent-followups.yml` now files the preparation for a run as a separate
   issue without the label. The `Refs`-not-`Closes` logic below is still in
   place, for an issue labelled after its PR was opened.
+- **Loops that never ended** (2026-10-01, not in the template). Four changes,
+  made after #1448 took 11 change-request rounds and #1434 took 8:
+  - `agent-fix.yml`'s round counter is the larger of the branch's commit count
+    and the bot's change-request reviews. `agent-conflicts.yml` squashes a
+    branch to one commit, which had reset the count to 1 on every resolution,
+    so the round-9 escalation and round-10 hand-off never fired.
+  - `MAX_OPEN_AGENT_PRS` is 4, down from the 8 it was raised to on 2026-09-26.
+    Drafts and `agent:stuck` pull requests no longer count, which is what
+    deadlocked the earlier cap of 2.
+  - The review's `timeout-minutes` is 60 (was 30), and its prompt caps
+    history replays to spot checks. The fix prompt says to delete or cut back
+    a sentence a finding is about rather than reword it.
+  - `gen_findings_index.py` no longer writes a `N write-ups.` line. Every
+    pull request bumped it, so any two conflicted, and `CLAUDE.md` asks for
+    code to be cited by name rather than by line number.
 - **`MAX_OPEN_AGENT_PRS` is 2** (2026-09-24), in `agent-plan.yml` and
   `agent-retry.yml`, down from 5 in the entry below. With 5 open, most merges
   left the other agent PRs conflicting, since nearly all of them edit

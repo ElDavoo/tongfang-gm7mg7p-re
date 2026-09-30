@@ -10,8 +10,10 @@ name: Agent · conflicts
 # commits into the very conflicts resolved here. So the branch's net change is squash-merged
 # onto current main, Claude resolves that one conflicted tree, and the result is force-pushed as
 # a single commit on top of main. The push re-triggers CI and the review, and the PR's armed
-# auto-merge does the rest. (Side effect: the fix stage's round counter, which counts commits in
-# origin/main..HEAD, restarts at 1 for that branch.)
+# auto-merge does the rest. (Side effect: the branch's commit count restarts at 1. The fix
+# stage's round counter used to be that count, so every resolution handed the pull request a
+# fresh ten rounds; since 2026-10-01 it also counts the bot's change-request reviews, which a
+# squash cannot reset. See "Count the round" in agent-fix.yml.)
 #
 # Bounded: at most three attempts per PR head commit, recorded as markers on the PR. After that
 # the PR is labelled agent:stuck and left for a human.

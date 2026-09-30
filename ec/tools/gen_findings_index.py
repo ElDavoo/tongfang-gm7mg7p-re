@@ -9,6 +9,14 @@ produce the same file, so the conflict is resolved once in the content and never
 in the prose. That is the difference between a shared file that collides and a
 shared file that is merely shared.
 
+**Why there is no count line.** The index used to open with `N write-ups.`.
+Every pull request that adds a write-up changes that line, so any two in flight
+conflicted on it even when their rows merged cleanly, and a clean merge left it
+one short and `--check` red. Six of the blocking review findings on the open
+pull requests of 2026-09-30 were that line. The rows are sorted by file name
+and merge on their own; the count is `--check`'s output, where nobody commits
+it.
+
 **What it reads.** The first `# ` heading of every `*.md` directly under
 `docs/findings/`, minus this index and the census write-up that is a table of
 the repository's own pins rather than a finding. Nothing else is read, so the
@@ -70,8 +78,6 @@ def render(repo):
         "write-up under `docs/findings/`, by file name. `docs/findings.md` is",
         "frozen at §97 and is the record of what came before this directory was",
         "the place a finding went; `check_findings_frozen.py` holds that.",
-        "",
-        "%d write-ups." % len(found),
         "",
     ]
     for name, title in found:

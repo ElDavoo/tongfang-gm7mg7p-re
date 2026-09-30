@@ -163,6 +163,19 @@ trusting one of theirs: every row says whether it was verified against
   held one that four concurrent branches each bumped from a different base.
   Assert the claim (`twelve suites are cited by line`), not the census
   (`fifty-nine suites exist`) — the second moves on every landing suite.
+- **Cite code by name, not by line number.** Write
+  `grade_0751_isolation.py`'s `build_windows`, not `grade_0751_isolation.py:1981`.
+  If the line itself is the point, pin it to a commit:
+  `grade_0751_isolation.py:1981 at 0a088444`. A bare `file:NNN` in prose is
+  true only until the next merge that grows the file above it. On the open
+  pull requests of 2026-09-30, many of the blocking review findings were
+  such a pin, or a test count in prose (`Ran 147 tests`), that another
+  merge had moved. Each fix round reworded the sentence and brought a new
+  number the next review had to check, so the loops never closed. For the same
+  reason, a write-up does not restate how many tests a suite has; that is
+  `bash tools/run-tests.sh`'s output. Existing pins and the census that tracks
+  them (`docs/findings/test-line-pin-census.md`) stay as they are; this is for
+  new prose.
 - **A merge conflict is never committed; it is resolved.**
   `ec/tools/check_no_conflict_markers.py` fails any committed file carrying
   `<<<<<<< ` or `>>>>>>> `, and a `=======` in a file that has one of those.

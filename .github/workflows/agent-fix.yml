@@ -130,12 +130,29 @@ jobs:
       # Rounds are counted in pushes by the agent, deliberately, not in CI runs. The instrumented
       # matrix is the one job here that fails for reasons unrelated to the diff, and a flaky
       # emulator must not be able to spend the budget of a branch that was fine.
+      #
+      # LOCAL CHANGE (2026-10-01): the count is the larger of the branch's commits and the bot's
+      # change-request reviews on the pull request. Commits alone could be reset:
+      # agent-conflicts.yml squashes the branch to one commit on every resolution, which put the
+      # counter back to 1, so the round-9 escalation and the round-10 hand-off never fired. #1448
+      # took 11 change-request rounds on 2 commits and #1406 took 6 on 2. The reviews live on
+      # the pull request, so no rewrite of the branch can undo them. Bot-authored only: anyone
+      # can review a public pull request, and a stranger's review must not spend its budget.
       - name: Count the round
         id: round
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ inputs.pr }}
         run: |
           set -euo pipefail
           commits=$(git rev-list --count origin/main..HEAD)
-          round=$(( commits ))          # the implement commit is 1, so this run is fix round $commits
+          reviews=$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/pulls/${PR}/reviews" \
+            | jq '[.[] | .[] | select(.user.login == "github-actions[bot]" and .user.type == "Bot"
+                                     and .state == "CHANGES_REQUESTED")] | length')
+          echo "commits on the branch: $commits, change-request reviews by the bot: $reviews"
+          # the implement commit is 1, so this run is fix round $commits -- or $reviews, when a
+          # squash has hidden rounds the reviews still record.
+          round=$(( commits > reviews ? commits : reviews ))
           echo "round=$round" >> "$GITHUB_OUTPUT"
           # Round 9 is the escalation round; 10 is the last. See README.md.
           if [ "$round" -gt 10 ]; then echo "stuck=true"  >> "$GITHUB_OUTPUT"
@@ -188,6 +205,11 @@ jobs:
         run: printf '%s\n' "$PAYLOAD" > /tmp/failure.txt
 
       # Rounds 1-8 and 10: fix the failure in front of you.
+      #
+      # LOCAL CHANGE (2026-10-01): the paragraph on deleting rather than rewording. On the open
+      # PRs of 2026-09-30, many blocking findings were about a figure or `file:line` a previous
+      # fix round had written: the round reworded the sentence, and the new wording carried a
+      # new unchecked number.
       - name: Fix
         id: fix
         if: steps.round.outputs.stuck != 'true' && steps.round.outputs.escalate != 'true'
@@ -222,6 +244,14 @@ jobs:
             Do not weaken a gate to pass it. Lowering a coverage floor, adding a lint
             suppression or baseline, deleting a failing assertion, or skipping a test is not a
             fix and will be rejected by review.
+
+            When a finding is about a sentence this pull request added (a wrong figure, a
+            drifted `file:line`, a test count, a claim about history), the fix that converges
+            is usually to delete the sentence or cut it back to what you have just re-measured,
+            not to reword it. A rewritten sentence carries new figures, and the next review has
+            to check those as well. Do not add a new count, line number or "on every tree since"
+            claim in a fix round unless the finding asks for one. Cite code by function or
+            heading name rather than by line number (see CLAUDE.md, "Cite code by name").
 
             Do not commit or push. Leave your work in the working tree.
           claude_args: >-

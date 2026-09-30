@@ -91,7 +91,15 @@ env:
   # forever: both queue sweeps declined at it on every run. 8 sits above the observed steady
   # state with headroom, and stays a hard gate -- over the cap this stage still declines, rather
   # than proceeding quietly.
-  MAX_OPEN_AGENT_PRS: '8'
+  #
+  # LOCAL CHANGE (2026-10-01): 8 -> 4, and a pull request that is a draft or labelled
+  # `agent:stuck` no longer counts. The 2026-09-26 deadlock came from parked pull requests
+  # holding the count up: nothing moves them, so they cannot drain. With those excluded, the
+  # count is only pull requests that are still being reviewed, fixed or rebased. Those are what
+  # every merge invalidates, because nearly every one touches docs/findings/INDEX.md, the pin
+  # census or registers.yaml. On 2026-09-30, eight open meant each merge sent the other seven
+  # back through conflicts and review.
+  MAX_OPEN_AGENT_PRS: '4'
 
 jobs:
   # Who filed it decides whether this runs unattended, and the question asked is "could this
@@ -260,8 +268,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          open=$(gh pr list --state open --json headRefName \
-                   --jq '[.[] | select(.headRefName | startswith("agent/"))] | length')
+          # Drafts and `agent:stuck` are parked for a human and move nothing; see the cap above.
+          open=$(gh pr list --state open --limit 200 --json headRefName,isDraft,labels \
+                   --jq '[.[] | select(.headRefName | startswith("agent/"))
+                              | select(.isDraft | not)
+                              | select([.labels[].name] | index("agent:stuck") | not)] | length')
           echo "open=$open" >> "$GITHUB_OUTPUT"
           echo "$open agent PR(s) open"
 
