@@ -59,39 +59,73 @@ open needs to be able to see which of its claims survived.
    the routine starts at `0x8931`, and `0x8942` is inside its first block.
 
 The issue's *figures* for `0x086C` are right: 26 references, 12 read, 12
-write, 2 address-taken, 7 readers, 6 writers, 9 functions. So is its
-observation that `0x086B` is 22/12/8 across 5 and `0x086E` is 7/1/3 across 2.
+write, 2 address-taken, 7 readers, 6 writers, 9 functions. Every one of them
+is a census figure over the decompiled tree, and the last is a count of C
+files rather than of routines, which §2 is about. So is its observation that
+`0x086B` is 22/12/8 across 5 and `0x086E` is 7/1/3 across 2.
 
 ## 2. The ruling: `0x086C` is not misfiled
 
-**The clustering recorded something real.** `0x086C` shares exactly three
-routines with `0x085F` — the mode tick, the fan-table mailbox handler and the
-fan-boost gate, which is the mode/OEM set the cluster's hand name
-`mode-oem-init` describes:
+**The clustering recorded something real, and the co-occurrence is one
+routine, not three.** Read in machine code, `0x085F` and `0x086C` share
+exactly one routine — `bank0:0x8931`
+`gate_0751_0741_blocks_then_tail_jump_8c46`, the fan-boost gate, which reads
+`0x085F` at `0x8949` and `0x8999` and `0x086C` at `0x8961`/`0x896A`/`0x896F`
+(`ec/decompiled/bank0/8931.asm:14,26,30,33,56`). That body is the gate the
+cluster's hand name `mode-oem-init` points at, and one routine reading both
+bytes is still a co-occurrence — which is all §4.2 of
+`ec/annotations/xdata-register-map.md` claims a cluster is evidence about. The
+ruling below needs one shared routine, not three.
 
-- `bank0:0x8749` `mode_tick_084c_07a5_09ee`
-- `bank0:0x888D` `fan_table_mailbox_handler`
-- `bank0:0x8931` `gate_0751_0741_blocks_then_tail_jump_8c46`
+**Why the census's `functions` column says three, and the machine code says
+one.** That column is a count of **decompiled C files**, not of routines, and
+`ec/tools/xdata_register_map.py:115` warns about exactly this ("A source count
+is a count of files, and 42 files can be one routine"); `:225` says the same
+of `refs`, which is "an upper bound on *distinct* references". Ghidra
+**inlined** the `0x8931` body into its two callers, so both `.c` files spell
+four `DAT_EXTMEM_086c` occurrences each that no instruction in either `.asm`
+backs. `888D.asm:11,16,22,26` are all `ljmp 0x8931`, and `8749.asm:12` and
+`8749.asm:171` are `ljmp 0x8939` and `ljmp 0x893e` — jumps into the middle of
+the same routine. `grep -c "0x86c" ec/decompiled/bank0/8749.asm` and
+`.../888D.asm` both return `0`. The same inlining costs `0x085F` its third
+file (`888D.c` names `DAT_EXTMEM_085f` four times, `8749.c` five, against one
+instruction at `8749.asm:81` and two at `8931.asm:14,56`), and it costs
+`0x086C` the `0xBC7B` and `0xD2BF` stubs, whose listings are a single
+`mov DPTR` each and whose bodies are `0xBC7E` and `0xD2C2`
+(`ghidra-functions.csv:296,481,482`). `0x8749` is still the one routine that
+really does read `0x085F` outside the gate — but it reads `0x085F`, not
+`0x086C`.
+
+In machine code `0x086C`'s instruction sites are **five** functions, which is
+what `ec/annotations/site-resolution.csv:716-729` already records and what the
+census's nine does not: `0x8931` (3), `0x9CA6` (2, at `9CA6.asm:69,94`),
+`0x9D9B` (7, the `0x9EE8`-`0x9F14` block), `0xBC7E` (1, at `0xBC7F`) and
+`0xD2C2` (1, at `0xD2C3`).
 
 `0x0873` and `0x087B` sit in the same cluster (`kefb63d82f8c7`,
-`main-ec-002`, `mode-oem-init`) and carry 10 functions each, the `0x95DD`
-`fill_08xx_from_code_table` and `0x96AD`
-`apply_oem_overrides_then_fill_08xx` pair among them. That is what co-reads
-`0x086C` with `0x085F` and with the two heavily-read OEM-rewritten override
-sources: one working set of bytes that a mode tick, a fan-table mailbox handler
-and the OEM override path all read. `0x086B` and `0x086E` are touched only by
-the `0x9D9B`/`0x9CA6`/`0xD091`/`0xD28E` set, they have no such tie to `0x085F`,
-and they sit with the low-traffic override sources in `ka39cda99615f`
-(`main-ec-004`, `level-block-086x`).
+`main-ec-002`, `mode-oem-init`) and carry 10 census functions each, the
+`0x95DD` `fill_08xx_from_code_table` and `0x96AD`
+`apply_oem_overrides_then_fill_08xx` pair among them. In machine code they
+touch `0x086C` in one place as well — `0x9D9B`, at `9D9B.asm:41` and `:160`
+beside the `0x086C` reads — and **not** in the OEM routines, which name
+neither byte. The two heavily-read OEM-rewritten override sources therefore
+join `0x086C` in the level-block routine, not in the OEM path; the cluster
+still holds all four, and the working set is one routine per pair rather than
+a mode tick, a mailbox handler and an OEM routine sharing one. `0x086B` and
+`0x086E` are touched only by the `0x9CA6`/`0x9D9B`/`0xD091`/`0xD28E` set, they
+have no such tie to `0x085F`, and they sit with the low-traffic override
+sources in `ka39cda99615f` (`main-ec-004`, `level-block-086x`).
 
 Two consequences are worth stating, because they are the point:
 
-- **`0x086C` is the only one of the three result bytes that the mode tick and
-  the fan-table mailbox handler touch.** Cross-tabulating the census's own
-  `functions` column over the four addresses gives three pairs — `0x085F` with
-  `0x086C` alone, and `0x086B`/`0x086C`/`0x086E` together in `0x9CA6` and
-  `0x9D9B` — with no routine touching `0x085F` and either other result. That
-  is a **shape, not a meaning**: `CLAUDE.md` and
+- **`0x085F` reaches the mode tick and the boost gate; `0x086B` and `0x086E`
+  reach neither.** Cross-tabulating the *instruction sites* over the four
+  addresses gives three pairs — `0x085F` with `0x086C` in `0x8931` alone, and
+  `0x086B`/`0x086C`/`0x086E` together in `0x9CA6` and `0x9D9B` — with no
+  routine touching `0x085F` and either other result. That is the census's
+  three-pair shape with one routine in the first pair instead of three, so
+  the correction costs the shape nothing. It is a **shape, not a meaning**:
+  `CLAUDE.md` and
   `ec/annotations/xdata-register-map.md` §4.2 both say a cluster is evidence
   about which addresses co-occur, and a co-occurrence is not a mechanism. It
   says these four bytes are read together somewhere. It does not say the
@@ -143,8 +177,9 @@ counts over the decompiled tree, and are **not** the `static_refs*` numbers,
 which are the `MOV DPTR,#addr` opcode sites `scan_refs.py` reports.
 
 It records the `0x50` (80) comparison and says in the same sentence that this
-is the only comparison of this byte outside the level-block computation and
-the only one beside a temperature threshold — **which is a reason for caution
+is the only site comparing this byte against a **constant** outside the
+level-block computation, naming the one other comparison — `0x9CA6` against
+`0x046B`, for the `0x046A`/`0x046B` sync — **which is a reason for caution
 and not a unit**. It fixes no scale either: the three clamps are the same
 `0x23`/`0x14`/`0x0F` that `0x086B` gets, so all four are numbers the firmware
 compares against and nothing here fixes the scale. The `0x48`/`0x4C` seeds
@@ -220,12 +255,16 @@ for the same question. This change opens and edits no tracker item.
 - **The `0xA73F` `R7=0xBC` command code is unresolved** (§4).
 
 The commands that reproduce every figure here, all offline from committed
-inputs. All six exit 0. The seventh, `check_cluster_citations.py`, **exits 1**
-and is listed for that reason rather than as a clean run: it reports the two
+inputs. The first two are the machine-code cross-tabulation §2 rests on, and
+they print the five and the two rather than the census's nine and three. All
+eight exit 0. The ninth, `check_cluster_citations.py`, **exits 1** and is
+listed for that reason rather than as a clean run: it reports the two
 pre-existing disagreements §2 names, and the figures it holds this file's
 cluster claims to are green either way.
 
 ```console
+$ grep -cE "DPTR, #0x86c$" ec/decompiled/bank0/*.asm | grep -v ':0$'
+$ grep -cE "DPTR, #0x85f$" ec/decompiled/bank0/*.asm | grep -v ':0$'
 $ python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
 $ python3 ec/tools/gen_xdata_symbols.py --check
 $ python3 ec/tools/xdata_register_map.py --check
