@@ -70,11 +70,12 @@ generation's committed id; `--check` diffs in memory against the committed
 CSVs. Both are keyed to the committed identifiers, so a membership claim beside
 either is a claim about the committed census. Scoping them would lose a real
 check to save a bookkeeping one. Neither can appear with `--no-eq-guard` at
-all — the tool refuses that combination precisely because both are gates. That
-refusal, and the separate one on `--no-eq-guard`'s own outputs, are a string
-comparison against the committed absolute defaults
-(`xdata_register_map.py:5074`): run bare, `--no-eq-guard` would overwrite the
-committed CSVs, and passing the same paths relatively would slip past the
+all — the tool refuses that combination precisely because both are gates. Both
+refusals stand before any mode runs (`xdata_register_map.py:5082` for the
+`--check`/`--self-test` one, `:5091-5092` for the other), and only the second
+is the string comparison against the committed absolute defaults
+`OUT_REGISTERS` / `OUT_CLUSTERS`: run bare, `--no-eq-guard` would overwrite the
+committed CSVs, and passing the same paths relatively would slip past that
 comparison. The transcripts here name scratch outputs, which is the form the
 guard is asking for.
 
@@ -292,12 +293,13 @@ closed by one PR.
   **`test_check_site_resolution.py` is the sixth row because it was red when
   this was written, and it is green on this tree for a reason that is not this
   branch's.** It reads `ec/annotations/site-resolution.csv`, which nothing here
-  touches (`git log 7245cc0f..HEAD -- ec/annotations/site-resolution.csv` is
-  empty); `7245cc0f` (#1438), the base this branch was merged onto, is what last
-  changed that CSV and what turned the suite green. The after-column is
-  therefore **four** red, and the after-column as first written said five
-  because it counted this one — a base-merge effect, not something this branch
-  inherited or fixed.
+  touches (`git log origin/main..HEAD -- ec/annotations/site-resolution.csv` is
+  empty); both of its recent changes are main's: `7245cc0f` (#1438), which
+  added the `0x086C` rows and turned the suite green, and after it
+  `18ab7ce7` (#1423), which added the `0x07FD`-`0x07FF` rows and is what last
+  changed the CSV. The after-column is therefore **four** red, and the
+  after-column as first written said five because it counted this one — a
+  base-merge effect, not something this branch inherited or fixed.
 
   `test_check_eq_guard_citations.py` is the one a reader might assume is close to
   this issue's subject, and it is not: `xdata_register_map.py` has grown and
