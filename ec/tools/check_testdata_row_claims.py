@@ -72,17 +72,40 @@ that reported its own parser's blind spot as a broken index would be pushed to
 grow a rule for whatever it could not read, and would end up inventing the
 thing it is checking. The list is closed, and `SHAPES` is the one place it is
 written down as a value -- the bullets below restate each reason in prose and
-`reason_for()` returns it as a literal, and those two copies are checked by
-the eye rather than by a comparison, so a reason appearing in the tree that
-`SHAPES` does not name is a change to this docstring and to the constant, not
-an invitation to add a regex. **One reason is returned by `no_column_reason()`
+`reason_for()` returns it as a literal, and those two copies are compared
+rather than eyeballed, so a reason appearing in the tree that `SHAPES` does
+not name is a change to this docstring and to the constant, not an invitation
+to add a regex. **The order is named once, and it is `reason_for()`'s own:
+first match wins.** The bullets below are in that order and `SHAPES` copies it,
+so the prose here and the constant are the same *sequence* rather than the
+same set -- `test_the_docstring_bullets_are_shapes_in_order` holds them to it
+and names a reason added to one and not the other. **The `shapes:` line
+`main()` prints is the one list here that is not in this order**, because it
+is sorted by count and carries no ordinal; see the comment at that print.
+**One reason is returned by `no_column_reason()`
 rather than by `reason_for()`** -- it is decided by the date's file set too,
 but asked only where `reason_for()` has said nothing, so a sentence's own
 shape still wins; it is listed and counted like the rest. Each entry has a
 case in `test_check_testdata_row_claims.py`. **Each bullet opens with the
 reason string `SHAPES` gives it**, so the prose below and the constant are
-joinable by eye:
+joinable by name:
 
+  * `two dated captures in one sentence` -- a sentence naming two or more bare
+    dates, refused whole. Its literals come off `checked` and onto this line
+    rather than being read against the first of the globs, and **every** glob
+    the sentence named is printed beside them, so a reader sees which dates
+    were skipped rather than only that a sentence was. **The union of two days
+    is declined rather than taken**, and not as a matter of taste: on this tree
+    `2026-09-23-*` is the power-mode-cycle set and `2026-09-24-*` is a plug-in
+    sweep, so a sentence about one of them held to both is handed a
+    twelve-file set of two unrelated families -- the same misattribution the
+    date exists to prevent, along a second axis. **It is first here because
+    `reason_for()` returns it first**, which is a property of the sentence as a
+    whole rather than of one literal. **No such sentence is in the committed
+    index**, so what pins this is scratch cases, as the
+    `dated capture not found` entry's are -- and
+    `test_the_committed_tree_exercises_every_shape` is what holds the absence
+    of both, against `DATED_REFUSALS`.
   * `capture/window bound` -- a page-aligned literal naming the swept
     page rather than a byte in it, spelled either as a range whose start is
     page-aligned (`0x0700-0x07FF`) or as a bare page-aligned address the
@@ -127,20 +150,6 @@ joinable by eye:
     already the row 6 and row 8 shape** and was reported beside the file
     count without a verdict; the count clause is unchanged and now reads a
     real number;
-  * `two dated captures in one sentence` -- a sentence naming two or more bare
-    dates, refused whole. Its literals come off `checked` and onto this line
-    rather than being read against the first of the globs, and **every** glob
-    the sentence named is printed beside them, so a reader sees which dates
-    were skipped rather than only that a sentence was. **The union of two days
-    is declined rather than taken**, and not as a matter of taste: on this tree
-    `2026-09-23-*` is the power-mode-cycle set and `2026-09-24-*` is a plug-in
-    sweep, so a sentence about one of them held to both is handed a
-    twelve-file set of two unrelated families -- the same misattribution the
-    date exists to prevent, along a second axis. **No such sentence is in the
-    committed index**, so what pins this is scratch cases, as the
-    `dated capture not found` entry's are -- and
-    `test_the_committed_tree_exercises_every_shape` is what holds the absence
-    of both, against `DATED_REFUSALS`.
 
 **What this does not check, which is as much of the point:**
 
@@ -440,9 +449,9 @@ Result = collections.namedtuple(
 # function without being added here is named by name, rather than arriving as
 # a changed count, and `no_column_reason()` is the one reason returned from
 # somewhere else, so it is checked in the other direction too. The order is
-# the function's, which is not the docstring's bullet order; the two disagree
-# for the reason they disagreed before, and reconciling them is issue #987's
-# ground, not this constant's.
+# the function's, and the module docstring's bullets are in it too, so the
+# three copies are one sequence named once rather than three lists a reader has
+# to line up by eye (issue #987).
 SHAPES = (
     "two dated captures in one sentence",
     "capture/window bound",
@@ -1230,7 +1239,16 @@ def main() -> int:
           f"row(s), {len(result.shapes)} passed over under {SHAPE_LABEL}, "
           "each of them: not checked, not absent")
     # The `shapes:` line below is where the instances are, and a reader who
-    # wants the list is one line further down.
+    # wants the list is one line further down. **It is count-descending and
+    # then alphabetical, which is a property of the counts and the names
+    # rather than of the index's row order** -- so a shipped run is
+    # reproducible from the tree it was run over, which is the whole of what
+    # this line is for. **It is deliberately not `SHAPES`' order and it
+    # carries no ordinal**: a reason
+    # with no instance is simply absent, so a document may transcribe the line
+    # but must not number its entries or read a neighbour off it, and
+    # `docs/findings/testdata-shape-list-order.md` is where that was got wrong
+    # and is now held.
     print("shapes: " + ", ".join(
         f"{reason} {count}" for reason, count
         in sorted(by_shape.items(), key=lambda kv: (-kv[1], kv[0]))))

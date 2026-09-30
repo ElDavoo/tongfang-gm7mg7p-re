@@ -76,6 +76,21 @@ def a_csv(*addresses):
     return CSV_HEADER + rows
 
 
+def docstring_bullets():
+    """The reason strings the module docstring's shape bullets open with.
+
+    The bullets are the prose copy of `SHAPES`, and this is what reads them
+    back. The pattern is anchored on the ``  * `reason` -- `` opener rather
+    than on the backticked name alone, because the docstring's *other* bullet
+    list -- "What this does not check" -- opens ``  * *italic* `` instead, and
+    a looser pattern would read those as shapes and fail on prose that is not
+    claiming to be one. So the two lists are told apart by how they are
+    spelled, the same way the index tells a backticked file from a capture
+    named in running text.
+    """
+    return re.findall(r"^  \* `([^`]+)` --", ctrc.__doc__, re.M)
+
+
 def check_every_shape(case, reasons):
     """The two-way comparison a run's reasons make against `ctrc.SHAPES`.
 
@@ -1149,6 +1164,100 @@ class TheShapeListHasOneSource(unittest.TestCase):
         self.assertEqual(len(set(ctrc.SHAPES)), len(ctrc.SHAPES), ctrc.SHAPES)
         self.assertLessEqual(set(ctrc.DATED_REFUSALS), set(ctrc.SHAPES),
                              ctrc.DATED_REFUSALS)
+
+    def test_the_docstring_bullets_are_shapes_in_order(self):
+        # The sequence, not the set. The two copies of the closed list were
+        # equal as sets and disagreed at one position -- the multi-date
+        # refusal is first in `reason_for()` and last in the bullets -- and a
+        # set comparison cannot see a reordering, so this is the assertion
+        # that discharges it. Issue #987.
+        #
+        # **A relation between two things in this file, and no count**: a
+        # reason added to either list without the other is named in the
+        # message, so the failure is the reason's name rather than a figure
+        # every merge has to bump. That is the same rule
+        # `test_the_committed_tree_exercises_every_shape` works by, and the
+        # reason both avoid writing today's length down.
+        self.assertEqual(
+            docstring_bullets(), list(ctrc.SHAPES),
+            "the docstring's bullets and SHAPES are the same reasons in a "
+            "different order; SHAPES is reason_for()'s return order, and the "
+            f"bullets are:\n  " + "\n  ".join(
+                f"{b!r} vs {s!r}"
+                for b, s in zip(docstring_bullets(), ctrc.SHAPES) if b != s)
+            + f"\nbullets: {len(docstring_bullets())}, "
+              f"SHAPES: {len(ctrc.SHAPES)}")
+
+    def test_the_printed_shapes_line_carries_no_ordinal(self):
+        # The third list, and the one that cannot follow the other two: the
+        # `shapes:` line is sorted by count and then by name, so it is a
+        # function of the counts rather than of `SHAPES`. It is not the
+        # precedence order and this case does not pretend it is.
+        #
+        # What is asserted is the **relation the issue asks for**: every name
+        # the line can print is named by a bullet. It is driven off a scratch
+        # `Result` rather than the committed run so the case is a relation
+        # between two things in this file and not a census of the tree -- a
+        # fixture row added to `ec/tools/testdata/` moves a count and changes
+        # nothing here, which is the point.
+        #
+        # The line is read off `main()`'s own stdout rather than rebuilt from
+        # the sort beside it: a second reading of that sort would agree with
+        # the print for as long as nobody changed the print, which is the
+        # failure this whole class is about. One instance of every reason, so
+        # the line is printed in full and every name on it has to be one a
+        # bullet names -- a reason `reason_for()` returns that the prose
+        # forgot breaks this.
+        result = ctrc.Result(
+            rows=0, literal_rows=0, literals=0, resolved=0, missing=0,
+            unresolved=0, checked=0, claiming_rows=0, claims=[],
+            shapes=[(1, "0x0700", reason) for reason in ctrc.SHAPES],
+            dated=[], captures=ctrc.CAPTURES, root=ctrc.TESTDATA)
+        argv = sys.argv
+        sys.argv = ['check_testdata_row_claims.py', '--check']
+        try:
+            printed = self.printed_shapes(result)
+            self.assertEqual(
+                printed, set(ctrc.SHAPES),
+                "the printed line and the docstring's bullets are not the "
+                f"same set of reasons; printed {sorted(printed)}, bullets "
+                f"{sorted(docstring_bullets())}")
+
+            # The superset, stated rather than assumed. A reason with no
+            # instance is absent from the line rather than printed as a zero,
+            # so a run holding one of them prints strictly fewer names than
+            # there are bullets -- and **equality is the wrong assertion to
+            # make about the two**, which is why this half compares sizes
+            # rather than sets: the line is a subset of the bullets by
+            # construction, never a re-ordering of them, and a document may
+            # transcribe it but must not number its entries.
+            fewer = result._replace(
+                shapes=[s for s in result.shapes
+                        if s[2] != "two dated captures in one sentence"])
+            dropped = self.printed_shapes(fewer)
+            self.assertLess(
+                len(dropped), len(docstring_bullets()),
+                "a reason with no instance is still printed, so the line is "
+                "not the subset of the bullets the docstring now says it is")
+            self.assertLessEqual(dropped, set(docstring_bullets()))
+        finally:
+            sys.argv = argv
+
+    def printed_shapes(self, result):
+        """The reason names off `main()`'s own `shapes:` line, as a set.
+
+        Read off the print rather than rebuilt from the sort beside it, so the
+        case goes red when the print changes rather than agreeing with a copy
+        of it. `sys.argv` is the caller's to set: `main()` parses it, and a
+        `unittest` run's own arguments are not this tool's.
+        """
+        out = io.StringIO()
+        with mock.patch.object(ctrc, 'check', return_value=result), \
+                contextlib.redirect_stdout(out):
+            ctrc.main()
+        return {piece.rsplit(' ', 1)[0] for line in out.getvalue().splitlines()
+                if line.startswith('shapes: ')
+                for piece in line[len('shapes: '):].split(', ')}
 
     def test_the_label_falls_back_to_a_numeral_rather_than_raising(self):
         # A reporting line must not fail a run over a bookkeeping change. The

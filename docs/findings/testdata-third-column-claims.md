@@ -241,6 +241,17 @@ door byte in `registers.yaml`, and it is a claim in two rows.
 > from a claim only by `ec/annotations/ghidra-functions.csv` holding a row at
 > that address and `xdata-registers.csv` not, and the filter has to be the
 > *difference* because `0x07D0` is in both.
+>
+> **Correction, 2026-09-30, on issue #987: the entry ahead of
+> `firmware code address` in the table above is `watched-set span`, not
+> `another capture's address`.** The struck row is two rows up from it, with
+> `dump-command argument` between them, so the ordinal above is right for the
+> table and the neighbour it names is not. What the ordinal counts is
+> unchanged — `firmware code address` is fifth among the live rows, and
+> `another capture's address` is retracted either way. The sentence above is
+> left written per `docs/findings.md` §4a-4d; the three orders this file and
+> the tool's docstring disagree about, and which one the sentence was reading,
+> are in `docs/findings/testdata-shape-list-order.md`.
 
 ### The three rules that took a measurement to write
 
