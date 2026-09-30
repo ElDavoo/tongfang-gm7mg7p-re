@@ -68,11 +68,17 @@ arm, and the issue's `:2045`:
 ```
 === what this does and does not settle ===
   1 of the 8 window(s) above were not graded: ...
+  ...
   1 of the 7 graded window(s) above are in no block: ...
   At least one of the §4.1-§4.3 bytes moved after a mark: PL1/PL2/PL4 (§4.1).
   That is the 7 window(s) that were graded. The 1 window(s) withheld above are not part of it, and what they would have shown is not reported here.
   That contradicts the static prediction in ec/annotations/manual-fan-ctrl-0751.md §5 if it is the PLs, or §4.2 if it is the fan table -- capture it in full, it is the more interesting outcome.
 ```
+
+The `...` on its own line is the one line elided whole — "A mark this cannot
+read is a mark no block can be attributed to …", the unreadable-label refusal,
+which is unchanged boilerplate between the two counts and nothing turns on it.
+The other two `...` are the tool's own, truncating the two count lines.
 
 The `7` on the fourth line is a window the third line has just said is a window
 of no value under test. That is the shape [#530](0751-grader-unplaced-window-scope.md)
@@ -316,7 +322,7 @@ citation *into that file* lands on, and
 aggregate of exactly that:
 
 ```
-FAIL: AssertionError: {'def test_': 1, 'assertion': 21, 'comment': 26,
+FAIL: AssertionError: {'def test_': 1, 'assertion': 19, 'comment': 28,
                         'blank': 5, 'other': 46}
                     != {'def test_': 1, 'assertion': 24, 'comment': 23,
                         'blank': 5, 'other': 46}
@@ -330,23 +336,73 @@ Measured, not guessed. Both trees censused with
 | resolving pins / declined | 99 / 33 | 99 / 33 |
 | `out-of-range`, `unresolved-path`, `ambiguous-path` | 0 / 0 / 0 | 0 / 0 / 0 |
 | distinct `(file, line)` pairs | 74 | 74 |
-| shape split `assertion` / `comment` | 24 / 23 | 21 / 26 |
+| shape split `assertion` / `comment` | 24 / 23 | 19 / 28 |
+
+Every row of that table, and the 15 below it, is what this prints — the census
+reads a tree from the filesystem rather than from git, so the merge base is
+unpacked rather than diffed, and both trees get the same tool and the same
+exclusions (`.git/`, `vendor/`, `.claude/`, and the census's own write-up):
+
+```
+rm -rf /tmp/pin-base && mkdir -p /tmp/pin-base
+git archive 126a67c8 | tar -x -C /tmp/pin-base
+
+dump () {  # $1 = tree root, $2 = where the per-pin record map goes
+  python3 -c "
+import json, sys; sys.path.insert(0, '$1/ec/tools')
+import census_test_line_pins as c
+records, _ = c.census(c.REPO)
+json.dump({f'{r[0]}:{r[1]} {r[2]}': [r[3], r[4], r[6], r[2].rsplit(':', 1)[1]]
+           for r in records}, open('$2', 'w'), indent=1, sort_keys=True)"
+}
+dump /tmp/pin-base /tmp/pin-base.json
+dump .          /tmp/pin-head.json
+
+python3 - <<'PY'
+import collections, json
+base = json.load(open('/tmp/pin-base.json'))
+head = json.load(open('/tmp/pin-head.json'))
+for name, tree in (('merge base', base), ('this branch', head)):
+    live = {k: v for k, v in tree.items() if v[0] == 'resolves'}
+    print(f"{name}: {len(live)} resolving, "
+          f"{sum(1 for v in tree.values() if v[0] == 'declined')} declined, "
+          f"{len({(v[1], v[3]) for v in live.values()})} distinct (file, line) "
+          f"pairs, {dict(collections.Counter(v[2] for v in live.values()))}")
+moved = [(k, base[k][2], head[k][2]) for k in sorted(base)
+         if k in head and base[k][2] != head[k][2]]
+for k, b, h in moved:
+    print('   moved', k, f'{b} -> {h}')
+net = collections.Counter(h for _, _, h in moved)
+net.subtract(b for _, b, _ in moved)
+print(f"{len(moved)} moved; net", {k: v for k, v in net.items() if v})
+print('every one into the grader suite:',
+      all(head[k][1] == 'ec/tools/test_grade_0751_isolation.py'
+          for k, _, _ in moved))
+PY
+```
 
 **Only the shape split moved**, and every pin whose landing shape moved is one
-into the grader suite — 14 of them, and the net is `assertion -3`, `comment +3`,
-`other` and `blank` and `def test_` unmoved. Every pin still *resolves*, to the
-same file and the same cited line; what moved is which line of that file the
-number now lands on.
+into the grader suite — **15** of them, and the net is `assertion -5`,
+`comment +5`, `other` and `blank` and `def test_` unmoved. Every pin still
+*resolves*, to the same file and the same cited line; what moved is which line
+of that file the number now lands on. `ec/tools/check_pin_table_rows.py` names
+all 15 on its own, as `shape-differs` rows 1302, 1306, 1341-1344, 1358-1362 and
+1365-1368 of `docs/findings/test-line-pin-census.md`; it asks a different
+question — reconciling the committed per-pin table row by row, rather than
+totalling the shapes — and it **loads** the census rather than restating it, by
+its own docstring's design, so this is a second path to the same 15 and not a
+second opinion. It prints 0 `shape-differs` on the merge base.
 
 **The figure is not re-derived here, on purpose.** `CLAUDE.md`'s
 "No hand-kept totals in prose" is explicit about this shape — *"a test that
 asserts a count of the tree is a value every merge has to edit … Assert the
 claim, not the census"* — and this is that test. The alternative is re-deriving
-the census, and that is not a one-number edit: 14 rows of
-`docs/findings/test-line-pin-census.md`'s per-pin table carry a `shape` cell
-and the write-ups that cite those lines carry the `file:NNN` spelling, so the
-two move together or the re-registration is fiction. It is its own piece of
-work and it belongs in its own change, where the write-ups can be read.
+the census, and that is not a one-number edit: the 15 rows
+`check_pin_table_rows.py` names above carry a `shape` cell in
+`docs/findings/test-line-pin-census.md`'s per-pin table, and the write-ups that
+cite those lines carry the `file:NNN` spelling, so the two move together or the
+re-registration is fiction. It is its own piece of work and it belongs in its
+own change, where the write-ups can be read.
 
 The suite is not in any gate, and says so itself:
 `test_the_tool_is_not_in_the_cheap_gate` asserts
