@@ -341,6 +341,137 @@ class GroupFileCheck(unittest.TestCase):
                           group_basis='type')]
         self.assertEqual(gf.cross_bank_groups(rows), [])
 
+    def test_every_basis_is_produced_by_a_fixture_or_declared_unreachable(self):
+        # The vocabulary end of the issue, and the relation is both ways: a
+        # closed list is only closed if every value in it can be produced, and
+        # one that cannot is a name rather than a vocabulary. `shared` was
+        # exactly that -- in `GROUP_BASES`, emitted by nothing, and exempted by
+        # a `cross_bank_groups` branch that skips every non-`callgraph` row.
+        #
+        # Each basis is read off a fixture that makes `group_rows()` return it
+        # rather than written down beside it, so the two sets cannot drift into
+        # agreeing with each other the way a hand-kept list does.
+        def emitted(rows, **kw):
+            grouped, _ = gf.group_rows(rows, repo=gf.REPO, **kw)
+            return {v[1] for v in grouped.values()}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            # A same-region call, and one listing per function, because that is
+            # the shape that clusters: a bank0 -> common edge is cut by the
+            # per-bank proxy rule and lands on `ungrouped` instead, which would
+            # make this fixture's `callgraph` a claim about the wrong rule.
+            caller = listing(tmp, 'closure_caller.asm', LCALL_8100, RET)
+            callee = listing(tmp, 'closure_callee.asm', RET)
+            produced = (
+                emitted([row('common', '0000', 'reset_vector_forwarder_to_0070',
+                             '', type='entry')])                        # vector
+                | emitted([row('bank0', '163C', 'switch', '',
+                               type='bank-switch')])                     # type
+                | emitted([row('bank0', '163C', 'mystery', '',
+                               type='reader')])                          # ungrouped
+                | emitted([row('bank0', '8000', 'caller', caller),
+                           row('bank0', '8100', 'callee', callee)],
+                          min_size=2)                                   # callgraph
+                | emitted([row('Setup', '260', 'entry', '',
+                               type='module-entry')], is_bios=True))    # module
+        # Where a basis with no rule behind it goes: out of the closed list,
+        # into this map with the reason it cannot be produced. It is empty,
+        # and that is the point -- `shared` belonged here, and a closed list
+        # with nowhere to say so is what the issue is about.
+        declared_unreachable = {}
+        self.assertEqual(
+            set(gf.GROUP_BASES) - produced, set(declared_unreachable),
+            "a basis in the closed list that no rule emits and no fixture "
+            "produces")
+        for basis, why in declared_unreachable.items():
+            self.assertTrue(why.strip(),
+                            '%s is declared unreachable with no reason' % basis)
+        self.assertEqual(
+            produced - set(gf.GROUP_BASES), set(),
+            "a rule emits a basis the closed list does not name, so --check "
+            "would refuse the rows the rule itself wrote")
+
+
+class CommittedDrift(unittest.TestCase):
+    """`--check`'s drift half against the committed files.
+
+    The two directions have to be true at once on the same tree, and neither
+    one implies the other: the committed cells have to agree with a fresh run
+    of the rule, and a single poisoned cell has to be *named* rather than
+    counted. A comparison that is quiet because it is comparing a value with
+    itself passes the first and fails nothing else, which is the shape of the
+    bug this half of the check exists to stop.
+    """
+
+    def maps(self, is_bios=False):
+        """The committed and computed maps for one component, keyed the way
+        `check()` keys them. Freshly built per test, because the poisoning
+        below edits the committed map in place."""
+        return gf.drift_for(
+            gf.read_csv(gf.BIOS_CSV if is_bios else gf.EC_CSV),
+            gf.read_csv(gf.BIOS_GROUPS if is_bios else gf.EC_GROUPS),
+            gf.REPO, is_bios)
+
+    def a_callgraph_row(self, committed):
+        """The first committed `callgraph` key and its cells.
+
+        A `callgraph` row because its `group` is a name a reader takes
+        seriously -- `callgraph_<scope>_<addr>` is checked by
+        `misnamed_callgraph_groups`, so a wrong one here is the edit most worth
+        being caught."""
+        for key in sorted(committed):
+            if committed[key][1] == 'callgraph':
+                return key, committed[key]
+        self.fail('no callgraph row in %s' % gf.EC_GROUPS)
+
+    def test_the_committed_cells_agree_with_a_fresh_run(self):
+        for is_bios, path in ((False, gf.EC_GROUPS), (True, gf.BIOS_GROUPS)):
+            committed, computed = self.maps(is_bios)
+            self.assertEqual(
+                gf.drift_problems(committed, computed,
+                                  os.path.relpath(path, gf.REPO)),
+                [], path)
+
+    def test_a_hand_edited_group_cell_is_named(self):
+        # The issue's demonstration. `arithmetic` is a real group name, so the
+        # edit is the plausible kind: it breaks no vocabulary rule, trips no
+        # naming rule, and `--apply` would revert it without saying so.
+        committed, computed = self.maps()
+        key, cells = self.a_callgraph_row(committed)
+        committed[key] = ('arithmetic',) + cells[1:]
+        problems = gf.drift_problems(committed, computed,
+                                     os.path.relpath(gf.EC_GROUPS, gf.REPO))
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn('%s %s' % (key[0], key[1]), problems[0])
+        self.assertIn(cells[2], problems[0], 'the refusal names the function')
+        self.assertIn('committed group arithmetic/', problems[0])
+        self.assertIn('the rule gives %s/%s' % (cells[0], cells[1]),
+                      problems[0])
+
+    def test_a_hand_edited_basis_cell_is_named(self):
+        # `type` is in the closed list, so the vocabulary check accepts it and
+        # only the recompute can say the rule did not write it.
+        committed, computed = self.maps()
+        key, cells = self.a_callgraph_row(committed)
+        committed[key] = cells[:1] + ('type',) + cells[2:]
+        problems = gf.drift_problems(committed, computed,
+                                     os.path.relpath(gf.EC_GROUPS, gf.REPO))
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn('committed group_basis %s/type' % cells[0], problems[0])
+
+    def test_a_committed_row_the_rule_does_not_produce_is_named(self):
+        # The other direction, and the one that is not a cell comparison: a
+        # group row whose function the annotation file no longer carries.
+        # Nothing else in `check()` looks for it -- the "no group for annotated"
+        # rule asks the other way round -- so it is the drift half's to name.
+        committed, computed = self.maps()
+        key, cells = self.a_callgraph_row(committed)
+        del computed[key]
+        problems = gf.drift_problems(committed, computed,
+                                     os.path.relpath(gf.EC_GROUPS, gf.REPO))
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn('%s %s' % (key[0], key[1]), problems[0])
+
 
 class CommittedFiles(unittest.TestCase):
     """The last case is the real thing: the two committed group files.
@@ -354,8 +485,8 @@ class CommittedFiles(unittest.TestCase):
         with contextlib.redirect_stderr(err), contextlib.redirect_stdout(out):
             rc = gf.check()
         self.assertEqual(rc, 0, err.getvalue() + out.getvalue())
-        self.assertIn('every annotated function has a group',
-                      out.getvalue())
+        self.assertIn('every committed group and group_basis agrees with a '
+                      'fresh run of the rule', out.getvalue())
 
     def test_every_committed_group_row_names_a_group_and_a_basis(self):
         for path in (gf.EC_GROUPS, gf.BIOS_GROUPS):

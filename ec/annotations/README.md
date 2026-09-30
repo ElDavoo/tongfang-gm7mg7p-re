@@ -198,11 +198,13 @@ corrects.
 One row per annotated function — `scope,addr,group,group_basis,comment,
 evidence` — and the layer `ghidra-functions.csv` does not have: which
 functions work together. `../tools/group_functions.py` builds it and
-`--check` holds it, refusing a `group_basis` outside the closed list
-(`type`, `vector`, `module`, `callgraph`, `shared`, `ungrouped`), an annotated
-function with no group, an **`evidence` path that is not on disk**, a
-**`callgraph` name whose scope token is not its component's dominant scope**,
-and a **`callgraph` group spanning two banks**.
+`--check` holds it, refusing a committed `group`/`group_basis` cell that
+**disagrees with a fresh run of the rule**, a `group_basis` outside the closed
+list (`type`, `vector`, `module`, `callgraph`, `ungrouped` — `shared` used to
+be a sixth and was dropped: nothing emitted it), an annotated function with no
+group, an **`evidence` path that is not on disk**, a **`callgraph` name whose
+scope token is not its component's dominant scope**, and a **`callgraph` group
+spanning two banks**.
 
 The `evidence` guard is the one `build_ec_decompile.py` already applies to
 `ghidra-functions.csv`, and it is here for the same reason: the group row
