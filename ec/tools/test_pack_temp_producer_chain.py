@@ -352,10 +352,10 @@ class TheProbeSweepAndTheOtherThreeWriters(unittest.TestCase):
 class ThePdAdjudication(unittest.TestCase):
     """The five PD `0x04A3` sites want a strided field, not the byte. Each
     hands DPTR to a helper that *returns*, and every term the helper adds is
-    non-zero for some register value -- so the one site that does dereference
-    does so at a rebased address. Asserted as helper bytes rather than as a
-    second implementation of `pd_index_geometry.py`'s term algebra, which that
-    tool pins in its own `--self-test`."""
+    non-zero for some register value -- so the sites that dereference do so at
+    a rebased address. Asserted as helper bytes rather than as a second
+    implementation of `pd_index_geometry.py`'s term algebra, which that tool
+    pins in its own `--self-test`."""
 
     def test_the_five_sites_and_the_helper_each_one_calls(self):
         # The census records five PD sites and one EC-side; the five addresses
@@ -431,8 +431,49 @@ class ThePdAdjudication(unittest.TestCase):
         self.assertNotIn(b"\x25\xe0", PD[0x9A3F:0x9A3F + 6])
         self.assertNotIn(b"\x25\xe0", PD[0x10BC:0x10BC + 12])
 
+    def test_three_of_the_five_dereference_and_two_do_not(self):
+        # A helper that only *returns* does not by itself prove the site reads
+        # nothing: what follows the `lcall` is the site's own code. Three of
+        # the five dereference the pointer the helper handed back, and the
+        # write-up's count is the tool's, not a reading of the call shape --
+        # so the count is pinned here against the bytes. `movx A,@DPTR` is
+        # 0xE0 and `movx @DPTR,A` is 0xF0, and each sits where the term below
+        # says it does.
+        site_tail = {
+            0x917A: b"\x90\x04\xa3\x02\x10\xbc\x75\xf0\x1f\x02\x10\xbc\x90\x08\x23",
+            0x9DA6: b"\x90\x04\xa3\x12\x99\x8b\xe0\x12\x99\xb8\xf0\x12\xed\xb5\xef",
+            0x9E52: b"\x90\x04\xa3\x12\x9a\x3f\xee\x12\x99\x8f\xef\xf0\xee\x12\x9a",
+            0xEDB7: b"\x90\x04\xa3\x12\x9a\x1b\xeb\x12\x99\x8f\x12\x99\xd4\xeb\x12",
+            0xF22E: b"\x90\x04\xa3\x12\x99\x87\xe0\xfe\x12\x9a\x90\x12\x99\x8b\xe0",
+        }
+        for a, blob in site_tail.items():
+            self.assertEqual(PD[a:a + len(blob)], blob,
+                             "pd 0x04A3 site 0x%04X moved" % a)
+        # 0x9DA6 and 0xF22E read the rebased pointer at site+6; 0x9E52's first
+        # `movx` at +6 is the R6-indirect `movx A,@R6`, and the DPTR store is
+        # the 0xF0 at +11, after the `lcall 0x998F` adds the page term.
+        self.assertEqual((PD[0x9DA6 + 6], PD[0xF22E + 6], PD[0x9E52 + 11]),
+                         (0xE0, 0xE0, 0xF0))
+        # 0x917A's chain ends at the tail call into 0x10BC, and 0xEDB7's ends
+        # unmodelled at 0x99D4 -- neither reaches a `movx` under this model,
+        # and neither site carries one in its own bytes above. The two are not
+        # classified by a scan for the opcode (0xE5 is also `mov a,direct`, so
+        # a byte scan cannot tell the two apart); they are classified by the
+        # chain ends the tool prints, and only the *count* is asserted here.
+        self.assertEqual(PD[0x917A + 3], 0x02)          # ljmp, a tail call
+        self.assertNotIn(b"\xe0", site_tail[0x917A])    # no movx A,@DPTR
+        self.assertNotIn(b"\xf0", site_tail[0xEDB7])    # no movx @DPTR,A
+        dereferencing = (0x9DA6, 0x9E52, 0xF22E)
+        self.assertEqual(len(dereferencing), 3)
+        # ...and the write-up says three, so the document cannot drift back to
+        # the count the call shape used to suggest.
+        finding = FINDING.read_text()
+        self.assertIn('**three of the five dereference the', finding)
+        self.assertIn('three, not one', finding)
+
     def test_f22e_reads_the_rebased_address_and_not_the_byte(self):
-        # The one site that dereferences, and what it dereferences: DPTR is
+        # The clearest of the three dereferencing sites, and what it
+        # dereferences: DPTR is
         # 0x04A3, 0x9987 adds R7x0x60 and 0xE0 to DPH, and only then does
         # `movx A,@DPTR` run. The term is R7's, so the address read is
         # 0x04A3 + R7x0x60 + 0xE0 whenever R7 is non-zero.

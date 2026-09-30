@@ -1779,9 +1779,11 @@ registers:
       issue's own hardware question and nothing here answers it.
       **The PD half is a collision of address numbers, not shared bytes.**
       All five PD `0x04A3` sites hand DPTR to a helper that RETURNS, adding
-      a stride term; the one that dereferences, pd 0xF22E, reads
-      0x04A3 + R7x0x60 + 0xE0 and not the byte, so the PD wants a strided
-      field in its own 0x04A1-0x04A6 block. The `BAT_CYCLE_COUNT` note
+      a stride term; three of the five then dereference the returned pointer
+      (pd 0x9DA6, 0x9E52, 0xF22E), and each of the three dereferences at a
+      rebased address -- 0xF22E reads 0x04A3 + R7x0x60 + 0xE0 -- rather than
+      at the byte, so the PD wants a strided field in its own 0x04A1-0x04A6
+      block. The `BAT_CYCLE_COUNT` note
       above answers the same question for 0x04A6 and transfers here in the
       sharper form. Static evidence only, and this status is unaffected
       either way. Same caveat the header states: a `write` is an

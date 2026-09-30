@@ -247,9 +247,8 @@ access the byte**. For `0x04A3` the question is sharper, because
 `movx A,@DPTR` / `mov R6,A`. The byte-level reading settles it, and it settles
 it **in favour of the precedent, for a reason the `0x04A6` answer did not need**.
 
-All five sites hand DPTR to a helper, and every helper **returns** — a
-returned DPTR is a computed address, and none of the five is a store or a
-read of the byte at `0x04A3` itself:
+All five sites hand DPTR to a helper, and every helper **returns** — it adds
+a stride term and hands the caller back a computed address:
 
 ```console
 $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 \
@@ -261,17 +260,24 @@ $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 \
 0x9A3F  (file 0x29A3F)  DPTR += A×0x60
 ```
 
-| site | helper | term the helper adds to DPTR | the byte at `0x04A3` |
-|---|---|---|---|
-| `0x917A` | `0x10BC` (direct `ljmp`) | `A×B` | never dereferenced here |
-| `0x9DA6` | `0x998B` | `A×B + 0x200×R7` | never dereferenced here |
-| `0x9E52` | `0x9A3F` | `A×0x60` | never dereferenced here |
-| `0xEDB7` | `0x9A1B` | `R3×0x60` | never dereferenced here |
-| `0xF22E` | `0x9987` | `R7×0x60 + 0x200×R7` | **dereferenced, at the rebased address** |
+A returning helper is not by itself the answer, because what follows the
+`lcall` is the site's own code — and **three of the five dereference the
+pointer the helper handed back.** `0x9DA6` is `90 04 a3 | 12 99 8b | e0`, and
+`0xE0` is `movx A,@DPTR`; `0x9E52` is `90 04 a3 | 12 9a 3f | ee | 12 99 8f |
+ef | f0`, ending in `0xF0`, `movx @DPTR,A`. So the question is not *whether*
+a site dereferences but *which address* — and `--bases 0x0400-0x04FF` answers
+that for all five:
 
-`--bases 0x0400-0x04FF` prints the fifth row's outcome in the tool's own
-words, and the tool's own census of the block says which of the five ended at
-a `movx`:
+| site | helper | term the helper adds to DPTR | the site dereferences DPTR? |
+|---|---|---|---|
+| `0x917A` | `0x10BC` (direct `ljmp`) | `A×B` | no — the chain ends at the tail call into `0x10BC` |
+| `0x9DA6` | `0x998B` | `A×B + 0x200×R7` | **yes, at the rebased address** |
+| `0x9E52` | `0x9A3F` | `A×0x60` | **yes, at the rebased address** |
+| `0xEDB7` | `0x9A1B` | `R3×0x60` | no — the chain stops unmodelled at `0x99D5`, so it reaches no `movx` *under this model* |
+| `0xF22E` | `0x9987` | `R7×0x60 + 0x200×R7` | **yes, at the rebased address** |
+
+The tool's own census of the block says, in its own words, which of the five
+ended at a `movx` — **three, not one**:
 
 ```console
 $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --bases 0x0400-0x04FF
@@ -284,24 +290,28 @@ $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --bases 0x040
 ```
 
 **Every effective address is `0x04A3 + n`, for an `n` the tool's terms make
-non-zero in general.** The `movx` at `0xF234` reads `0x04A3 + R7×0x60 +
-0x200×R7` — the value R7 held at the site — and not the byte the site names.
-`0xF22E` is a *strided read of a field*, exactly the `0x04A6` shape, and the
-`&DAT_EXTMEM_04a3` in `F22E.c:20` is the decompiler spelling the **base**, not
-the address the `movx` touches. The PD image is never given a symbol table
-(`gen_xdata_symbols.py`'s own refusal), which is why the base is the only thing
-in that file named at all.
+non-zero in general** — and that, not the count of dereferencing sites, is
+what decides the question. The `movx` at `0xF234` reads `0x04A3 + R7×0x60 +
+0x200×R7` — the value R7 held at the site — and not the byte the site names;
+`0x9DA6`'s `movx A,@DPTR` reads `0x04A3 + A×0x60 + 0x200×R7`, and `0x9E52`'s
+`movx @DPTR,A` writes `0x04A3 + A×0x60 + 0x200×R6`. None of the three reaches
+`0x04A3` itself. `0xF22E` is a *strided read of a field*, exactly the `0x04A6`
+shape, and the `&DAT_EXTMEM_04a3` in `F22E.c:20` is the decompiler spelling
+the **base**, not the address the `movx` touches. The PD image is never given a
+symbol table (`gen_xdata_symbols.py`'s own refusal), which is why the base is
+the only thing in that file named at all.
 
 **The answer, in the three words the issue offers:** the PD wants **a third
 thing** — a field at a strided offset inside the PD's own `0x04A1`-`0x04A6`
 block, with `0x04A3` as the base rather than as the datum. It does not want
 the EC's high byte, and the `BAT_CYCLE_COUNT` answer **does** transfer here,
-with the sharper form that even the one site which reads does so at a rebased
-address. Two caveats the transfer does not erase: the `0x200×` term's
-coefficient is `0xE0` added to the carry-adjusted DPH (`9987.asm` line
-`0x998f 25e0`), which is `pd-index-geometry.md`'s `0x200×` naming and not
-something derived here; and one of the five chains stops **unmodelled** at
-`0x99D5`, so its own term is a lower bound.
+with the sharper form that all three sites which dereference do so at a
+rebased address, and the two that do not are the two whose chains reach no
+`movx` under this model. Two caveats the transfer does not erase: the
+`0x200×` term's coefficient is `0xE0` added to the carry-adjusted DPH
+(`9987.asm` line `0x998f 25e0`), which is `pd-index-geometry.md`'s `0x200×`
+naming and not something derived here; and one of the five chains stops
+**unmodelled** at `0x99D5`, so its own term is a lower bound.
 
 `ec/annotations/pd-index-geometry.md:329-330` needs no edit: five `0x04A3`
 sites and four with the `0x200×` term is what `--strides` still reports, and

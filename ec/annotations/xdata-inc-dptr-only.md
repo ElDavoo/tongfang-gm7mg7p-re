@@ -68,14 +68,11 @@ would shrink `S1 - S` and the summary would say so.
 | no `MOV DPTR` site in any image | **71** | the §3 rule has nothing to admit on, and the byte scan found nothing anywhere |
 | pd-image sites only, none in the main EC | **2** | `0x043B` (2 sites), `0x04A5` (3 sites) -- another program's byte at the same address number |
 | **= the 73** | **73** | no main-EC `MOV DPTR` site; §3 declines them |
-| main-EC `MOV DPTR` site, entered in `registers.yaml` | **7** | `0x030F 0x0403 0x0435 0x0437 0x0439 0x04A7 0x0523` |
-| entered with **no** main-EC `MOV DPTR` site | **1** | `0x04A3`, since issue #1425 -- see below |
+| main-EC `MOV DPTR` site, entered in `registers.yaml` | **8** | `0x030F 0x0403 0x0435 0x0437 0x0439 0x04A3 0x04A7 0x0523` |
 | main-EC `MOV DPTR` site, **not** entered | **26** | the shape §6's rule admits; §5 |
 | **total** | **107** | |
 
-71 + 2 = 73, and 8 + 26 = 34, and 73 + 34 = 107. *(The 7 / 27 split this table
-carried until issue #1425 is left in the version above rather than deleted; it
-was right of the tree it was measured on.)* Every row of
+71 + 2 = 73, and 8 + 26 = 34, and 73 + 34 = 107. Every row of
 `xdata-inc-dptr-only.csv` falls in exactly one of the four, and the
 `population_of()` classification the summary prints is read back off the row
 rather than recomputed, so this table and the CSV cannot drift apart silently.
@@ -242,16 +239,26 @@ not, and the 26 are:
 0x0529 0x0609 0x060B 0x060D 0x060F 0x0835 0x0837
 ```
 
-**`0x04A3` is the one address that left this list**, in issue #1425, and it is
-the one row of the 34 that is entered on the strength of a *name* rather than a
-main-EC `MOV DPTR` site: it is the high half of the `0x04A2` pair, reached in
-the main EC only as the `inc DPTR` half of a pair accessor, and its own
-`mov_dptr_main_ec` column reads 1 -- that one site being the PD image's, which
-`§3` counts as another program's byte. `registers.yaml` now names it
+**`0x04A3` is the one address that left this list**, in issue #1425. It is
+entered like any other row of the 34, on a main-EC `MOV DPTR` site of its own:
+its `mov_dptr_main_ec` column reads 1, and `trace_xdata_refs.py` names that
+site — `file 0x0BAE7 bank0`, where `BAE7.asm:7` is `mov DPTR, #0x4a3`
+followed by `movx A,@DPTR`. That is a **read** of the high half, and it is
+what makes `0x04A3` a row here at all: `BAE7.asm`'s routine, named
+`load_r6_r7_from_04a3_04a2`, loads `0x04A3` and then `MOV DPTR,#0x4a2` five
+bytes on at `0xBAEC`, which is the pair a `mov_dptr_main_ec` site is the seed
+of. The five PD-image sites are counted separately, in `mov_dptr_pd_image`,
+and the two columns are never added together. `registers.yaml` now names it
 `PACK_TEMP_DK_1`, and the whole chain that naming documents is in
 [`docs/findings/pack-temp-producer-chain.md`](../../docs/findings/pack-temp-producer-chain.md).
-`test_inc_dptr_sites.py` holds it out **by name** rather than by weakening the
-invariant, so a ninth row entering with no main-EC site still fails.
+
+One thing does make `0x04A3` unlike the other seven entered rows, and it is
+worth recording as what it is rather than as an exception: it is the only one
+that is a **high** half. The other seven are low halves of a pair their seed is,
+which is what "entered" has meant here throughout — a name on the byte a `MOV
+DPTR` would have to find. `0x04A3` is the byte *above* the one its `MOV DPTR`
+names. The invariant `test_inc_dptr_sites.py` asserts is unweakened and now
+covers it: every entered row, this one included, has a main-EC site.
 
 The remaining 26 have the shape §6's existing rule admits, and they are not
 entered here for a reason that is about coverage rather than about the rule:

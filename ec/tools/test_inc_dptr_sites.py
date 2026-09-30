@@ -106,10 +106,10 @@ PD_ONLY_ADDRESSES = {"0x043B": 2, "0x04A5": 3}
 # that is a *high* half: `0x04A3` is `PACK_TEMP_DK_1`, the byte above
 # `0x04A2`. The other seven are all low halves of a pair their seed is, which
 # is what "entered" has meant here throughout -- a name on the byte a `MOV
-# DPTR` would have to find. `0x04A3` is reached by no `MOV DPTR` in the main
-# EC at all (its column reads 1, and that one is the PD image's), so it is the
-# first row here entered on the strength of a *name* alone, which is exactly
-# the case the check below exists to keep honest.
+# DPTR` would have to find. `0x04A3` has a main-EC `MOV DPTR` site of its own
+# (`bank0:0xBAE7`, a read of the high half), so it is an ordinary entered row
+# and the invariant below covers it like the other seven; being a high half is
+# a fact about the byte, not a reason to hold it out of the check.
 ENTERED_ADDRESSES = ("0x030F", "0x0403", "0x0435", "0x0437", "0x0439",
                      "0x04A3", "0x04A7", "0x0523")
 
@@ -368,15 +368,14 @@ class TheSplit(unittest.TestCase):
     def test_the_eight_entered_are_the_eight_named(self):
         entered = [r["addr"] for r in self.rows if r["entered"] == "yes"]
         self.assertEqual(entered, list(ENTERED_ADDRESSES))
-        # Seven of the eight are low halves and each has a main-EC `MOV DPTR`
-        # site of its own. `0x04A3` is the eighth and is entered on the
-        # strength of the name alone -- it is the high half of the `0x04A2`
-        # pair and the main EC never loads DPTR with it -- so it is held out
-        # by name rather than by a loosened assertion: a ninth row entering
-        # with no main-EC site and no place on this list still fails.
-        named = set(ENTERED_ADDRESSES) - {"0x04A3"}
+        # Every one of the eight, `0x04A3` included, has a main-EC `MOV DPTR`
+        # site of its own -- so this is asserted for all of them rather than
+        # for seven of them. `0x04A3` is the only entered row that is a high
+        # half, which is a fact about the byte and not a reason to hold it out:
+        # its site is `bank0:0xBAE7`, a read of the high half, and the pin below
+        # is what keeps that from being re-read as an exception.
         for r in self.rows:
-            if r["entered"] == "yes" and r["addr"] in named:
+            if r["entered"] == "yes":
                 self.assertNotEqual(r["mov_dptr_main_ec"], "0",
                                     f"{r['addr']} is entered with no main-EC "
                                     "`MOV DPTR` site, so §6's rule and this "
@@ -386,6 +385,19 @@ class TheSplit(unittest.TestCase):
                 self.assertEqual(r["mov_dptr_main_ec"], "1")
                 self.assertEqual(r["mov_dptr_pd_image"], "5")
                 self.assertIn(0x04A3, ids.entered_addrs())
+
+    def test_04a3_main_ec_site_is_bank0_bae7_reading_the_high_half(self):
+        # The site behind that `1`, read out of the image rather than asserted
+        # as a number: `mov DPTR,#0x4a3` / `movx A,@DPTR` in bank0. The two
+        # columns are separate counts and are never added together, so the `5`
+        # in `mov_dptr_pd_image` does not make this row a PD-only one.
+        with open(FIRMWARE, "rb") as f:
+            d = f.read()
+        off = tref.offset_for_runtime(0xBAE7, "bank0")
+        self.assertEqual(d[off:off + 5], b"\x90\x04\xa3\xe0\xfe")
+        listing = (EC / "decompiled" / "bank0" / "BAE7.asm").read_text()
+        self.assertIn("BAE7     90 04 a3 mov      DPTR, #0x4a3", listing)
+        self.assertIn("BAEA     e0 - -   movx     A, @DPTR", listing)
 
     def test_no_address_is_both_a_seed_and_only_an_inc_half(self):
         # The same relation from the other side, on the seed column rather than
