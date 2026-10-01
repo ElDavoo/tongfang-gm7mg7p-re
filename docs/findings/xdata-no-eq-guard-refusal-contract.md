@@ -51,7 +51,7 @@ the tree is keyed to.
 
 **That run is caught, but loudly and by other tools — not silently, and not by
 these two files agreeing with each other.** `--check` is refused with
-`--no-eq-guard` (guard 1, `args.check or args.self_test` at `:5140`), so it
+`--no-eq-guard` (guard 1, `args.check or args.self_test` at `:5177`), so it
 always regenerates the *guard-on* census and compares the on-disk file to that.
 A guard-off file can never match it, by construction: an on-disk guard-off file
 and a fresh guard-on generation disagree by definition. So the harm a bare run
@@ -321,8 +321,8 @@ Its `GUARD` recipe is the literal line pair
 
 and that pair **no longer exists in the tool.** #528 threaded the flag through
 as a parameter — `def store_target(text, start, end, eq_guard=True)` at
-`:1870`, `if eq_guard and stripped.startswith("==")` at `:1893`, carried to
-`def scan()` at `:2507` and flipped by `not args.no_eq_guard` at `:3288` — so
+`:1907`, `if eq_guard and stripped.startswith("==")` at `:1930`, carried to
+`def scan()` at `:2544` and flipped by `not args.no_eq_guard` at `:3325` — so
 deleting the two lines no longer removes the rejection; it removes a
 conditional and the guard stays on for every run. The suite's own guard
 against exactly this fires first, which is why the error is an

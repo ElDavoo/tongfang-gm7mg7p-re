@@ -1306,11 +1306,11 @@ re-run over the committed tree, and the recipe is
 `xdata-06c2-06db-timers.md` §6a's with the `==` guard issue #178 added
 **removed** instead — the classifier-and-everything-it-counts regeneration, in
 its cheapest form. That is the `--no-eq-guard` flag
-(`ap.add_argument("--no-eq-guard"`, `../tools/xdata_register_map.py:5111`) with
+(`ap.add_argument("--no-eq-guard"`, `../tools/xdata_register_map.py:5148`) with
 scratch outputs, which is what §6a and this block's transcript now do rather
 than a source edit: the flag is refused with the committed output paths
-(`args.out_registers == OUT_REGISTERS`, `:5149`, not the `--check` refusal at
-`:5140`), so everything below is a report about the committed census and not a
+(`args.out_registers == OUT_REGISTERS`, `:5186`, not the `--check` refusal at
+`:5177`), so everything below is a report about the committed census and not a
 replacement for it. The derivation, with the commands and their output, is
 `../../docs/findings/xdata-4-4-identity-rederivation.md`.
 
@@ -1469,13 +1469,13 @@ tool into `/tmp`, symlinked the inputs back, and deleted the `==` guard from
 the copy's source, because when the block was written nothing else removed it.
 It was a workaround one rename away from silently regenerating the guard-on
 census instead, and the tree has since taken that step: issue #302
-parameterised the guard (`../tools/xdata_register_map.py:1893` is `if eq_guard
+parameterised the guard (`../tools/xdata_register_map.py:1930` is `if eq_guard
 and stripped.startswith("==")`) so `--no-eq-guard` could be a flag. A
 regeneration now writes to a scratch path and reads the committed decompile in
 place, with no copy of the tool and no source edit. The `--out-*` flags are not
 decoration either: the tool refuses `--no-eq-guard` with the committed output
-paths (`args.out_registers == OUT_REGISTERS`, `:5149`, not the `--check`
-refusal at `:5140`), which keeps this transcript from overwriting the census.
+paths (`args.out_registers == OUT_REGISTERS`, `:5186`, not the `--check`
+refusal at `:5177`), which keeps this transcript from overwriting the census.
 
 *(Correction, 2026-09-25, issue #582's re-run. The transcript above is the same
 experiment re-run against the tree as it now stands; the one it supersedes
@@ -1581,7 +1581,7 @@ by key" is not what the committed census would give anyway — `level-block-086x
 is `seeded` there, key and membership both unchanged, and `main-ec-002` is the
 only one of the two carried on overlap (0.97). The suite's own recipe is two
 generations behind: `GUARD` (`../tools/test_xdata_cluster_names.py:54`) is a
-literal the parameterised guard at `../tools/xdata_register_map.py:1893` —
+literal the parameterised guard at `../tools/xdata_register_map.py:1930` —
 `eq_guard and` — no longer contains, and its two-largest case pairs `main-
 ec-001` with `mode-oem-init` and `main-ec-002` with `level-block-086x`, which
 the committed census puts at `main-ec-002` and `main-ec-004`. **The suite is
@@ -2258,7 +2258,7 @@ symbol table.
 | cluster | key | name | size | refs | range | named inside | co-reading (§4.5) | the functions the cluster's addresses share |
 |---|---|---|---:|---:|---|---|---|---|
 | `main-ec-001` | `ke794087e13a6` | — | 152 | 873 | `0x0300`-`0x097B` | 10 | 37/100 fns, 479 (55%) | `FUN_CODE_dee8`, `FUN_CODE_def1`, `FUN_CODE_db0b` — **new, and the pass is what made it**: §4.7's 155 addresses are spread across this same `0x0300`-`0x05xx` working page, and the three routines whose `FUN_CODE_0402`/`FUN_CODE_0408` calls the pass resolves are the ones this cluster's addresses share. The old `0x0300`-page row is inside it (§4.7) |
-| `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 92 | 1,130 | `0x0456`-`0x1809` | 32 | 25/136 fns, 294 (26%) | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
+| `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 92 | 1,130 | `0x0456`-`0x1809` | 34 | 25/136 fns, 294 (26%) | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
 | `main-ec-003` | `k733222e83898` | `counter-sweep` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | **63/127 fns, 4,642 (93%)** | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
 | `main-ec-004` | `ka39cda99615f` | `level-block-086x` | 28 | 181 | `0x045C`-`0x1C3A` | 14 | 8/21 fns, 66 (36%) | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `compute_level_blocks_086b_086c_086e` — the `0x06E6`/`0x0860` gate block |
 | `main-ec-005` | `ka07bfc4f80cd` | — | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | 6/22 fns, 34 (36%) | `FUN_CODE_9b3c`, `FUN_CODE_9c53`, `stage_3000_block_then_probe_3000_3007` |

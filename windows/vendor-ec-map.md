@@ -73,10 +73,10 @@ What each bundle writes is traced, and confirmed live, under
 | | `SetCpuTccOffset` | `0x0786` | |
 | | `SetFanSwitchSpeed` | `0x0787` | |
 | | `SetCpuVrmCurrentLimit` | `0x0753`, `0x0754` | AMD path only; not called on this Intel board |
-| | `SetGPUdstate`, `SetGPUdstateByGpuMode` | `0x078B` | private and **never called** in this class |
-| | `SetFanQuietModeEnable`, `SetOverBoostMode`, `SetPowerLedStatus`, `SetPowerStatus` | `0x07A5` | four features share this byte, bitwise; all private and **never called** in this class |
-| | `SetOverBoostByDynamicTemp` | `0x07A6` | the charge-profile byte, another bit; private and **never called** in this class |
-| | `SkipOfficeModeSafetyProtect` | `0x07C5` | private and **never called** in this class |
+| | `SetGPUdstate`, `SetGPUdstateByGpuMode` | `0x078B` bits 0-2 | both private and **never called in this class, or in any `RamFan1p5` sibling**; `SetGPUdstateByGpuMode` is called in `*_QC`/`*_Intel`, and `SetGPUdstate` is dead in every class in the tree |
+| | `SetFanQuietModeEnable`, `SetOverBoostMode`, `SetPowerLedStatus`, `SetPowerStatus` | `0x07A5` bits 2, 4, 0-1, 7 | four features share this byte, bitwise; all private and **never called in this class** (called in `*_QC`/`*_Intel`) |
+| | `SetOverBoostByDynamicTemp` | `0x07A6` bit 1 | the charge-profile byte, another bit; private and **never called in this class**. Bit 1 is **active-low**: `:2237` sets it when the argument is *false*. Bit map is issue #93 |
+| | `SkipOfficeModeSafetyProtect` | `0x07C5` bit 4 | private and **never called in this class**; the only one of these eight with no second reference in the whole tree |
 | `FanTable_Manager1p5` | `SetEcFanTable(_Cpu/_Gpu)`, `ClearFanTableAll` | `0x0F00-0x0F5F` | CPU table `0x0F00/10/20`, GPU `0x0F30/40/50` (the same bases `mech-forza-control` names up-temp/down-temp/duty) |
 | | `RefreshDefaultFanTable` | `0x0F5D-0x0F5F` | |
 | | `SetEcFanControlRespective` | `0x07C5` bit 7 | split CPU/GPU tables; upstream `SPLIT_TABLES` |
@@ -186,10 +186,40 @@ shows the same `0x02` → `0x03` step.
 **Not called, though defined in this class:** `SetPowerLedStatus`,
 `SetFanQuietModeEnable`, `SetOverBoostMode`, `SetPowerStatus` (all `0x07A5`),
 `SetOverBoostByDynamicTemp` (`0x07A6` bit 1), `SetGPUdstate*` (`0x078B`) and
-`SkipOfficeModeSafetyProtect` (`0x07C5` bit 4). Each is `private`, and the
-file's only reference to each is its definition. `SetCpuVrmCurrentLimit`
+`SkipOfficeModeSafetyProtect` (`0x07C5` bit 4). Each is `private`, and none has
+a call site in this class. `SetCpuVrmCurrentLimit`
 (`0x0753/0x0754`) runs only on the AMD path. In line with that, `0x07A5`,
 `0x078B` and `0x0753/0x0754` never moved in the capture.
+
+**Three corrections to that list, from issue #106** (write-up:
+`docs/findings/uncalled-vendor-setters.md`, which carries the per-setter
+`file:line`, the counts and the commands):
+
+- **"the file's only reference to each is its definition" was wrong for seven of
+  the eight.** Each has a second hit: the method-name string literal passed to
+  `LogCtrl.TraceMessage` inside its own body
+  (`MyFanManager_RamFan1p5.cs:2094, 2117, 2177, 2190, 2214, 2227, 2240`).
+  That is a log label, not a call, so the conclusion stands and the sentence
+  did not. `SkipOfficeModeSafetyProtect` is the one with exactly one hit
+  tree-wide (`:2322`).
+- **"never called" is scoped to this class, and for six of the eight it is also
+  true of the sibling `RamFan1p5` classes this board never instantiates.**
+  `SetFanQuietModeEnable`, `SetOverBoostMode`, `SetPowerLedStatus`,
+  `SetPowerStatus`, `SetOverBoostByDynamicTemp` and `SetGPUdstateByGpuMode` *are*
+  called from `MyFanManager_QC` (`MyFanManager_QC.cs:846, 869, 888, 889, 903,
+  909, 920, 1621`) and `MyFanManager_Intel` (`MyFanManager_Intel.cs:1405,
+  1421, 1440, 1441, 1451, 1465, 1471, 2149`). On the `RamFan1p5` path,
+  `MyFanCtrl` instantiates only `RamFan1p5`, `_NV`, `_Normal` and `_CML`
+  (`MyFanCtrl.cs:50-68`), so those two are other boards' classes. The distinction
+  is the one that matters to a driver: **the vendor ships these features, on
+  hardware this machine is not.** `SetGPUdstate` is the exception — dead in
+  every class in the tree.
+- **A dead setter says nothing about the byte.** For `0x07A5` the EC's direct
+  sites write a bit of it that no setter here touches: `bank0:0x8749` drives
+  bit 3 from CPU and GPU temperature (`ec/decompiled/bank0/8749.c:93-102`),
+  against the setters' bits 0-1, 2, 4 and 7. `0x078B` is read by `bank1:0xA916`
+  and `bank0:0x96AD`. Both bytes have EC-side writers in the image; it is the
+  service's path to them that is dead.
 
 **Something else writes `0x07C6` bits 0-1** (DSDT `WMS0`). In every switch
 into Office they went 0 → 3 1.1-1.4 s after `0x0751`, and back to 0 on the
