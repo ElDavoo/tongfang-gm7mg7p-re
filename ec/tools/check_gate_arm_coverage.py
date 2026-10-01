@@ -34,14 +34,16 @@ same failure one level down, inside a single function.
 docstrings in this repository that name the gate are *disavowing* a place in
 it — "it is not in `.github/scripts/agent-gates.sh`, and cannot be from an
 agent branch" is a sentence several tools open with, and it is true. A
-predicate that matched on the path alone would fire on fourteen files and
-teach everyone to ignore the check, so the claim is read per *clause*: a
-clause naming the gate, carrying a membership phrasing, carrying no negation.
+predicate that matched on the path alone would fire on every docstring in the
+tree that names the gate and teach everyone to ignore the check, so the claim
+is read per *clause*: a clause naming the gate, carrying a membership
+phrasing, carrying no negation.
 "run under" is deliberately not a membership phrasing —
-`pd_image_census.py`'s claim that it runs under the gate's `python3 syntax`
-check is true, and it is not a tool-list claim. Only `xdata_register_map.py`
-makes the affirmative claim on the committed tree, which is the honest reading:
-the rest of the tree either declines membership or does not discuss it.
+`ec/tools/test_pd_image_census.py`'s claim that it runs under the gate's
+`python3 syntax` check is true, and it is not a tool-list claim. Only
+`xdata_register_map.py` makes the affirmative claim on the committed tree,
+which is the honest reading: the rest of the tree either declines membership
+or does not discuss it.
 
 **What this does not check.** It reads no figure and asserts no count of the
 tree — not how many tools the list carries, not how many arms there are. Every
@@ -97,8 +99,8 @@ GATE_PATH = re.compile(r"\.github\s*/\s*scripts\s*/\s*agent-gates\.sh")
 
 # Membership phrasings. `live in`, `wired into`, `listed in`, `registered in`,
 # `part of` the gate, and the bare `is in the gate`. What is absent on purpose:
-# "run under", which is `pd_image_census.py`'s true claim about the gate's
-# `python3 syntax` check and not a tool-list claim at all.
+# "run under", which is `ec/tools/test_pd_image_census.py`'s true claim about
+# the gate's `python3 syntax` check and not a tool-list claim at all.
 MEMBERSHIP = re.compile(
     r"\b(?:live[sd]?|lives|living|wired|listed|registered|part)\b"
     r"(?:\s+\w+){0,3}?\s+\b(?:in|into|of)\b"
@@ -294,7 +296,7 @@ def claims(docstring):
     A claim is a clause that names the gate, carries a membership phrasing, and
     carries no negation. The third clause is what makes this usable: most of
     this tree's docstrings name the gate to decline it, and a predicate that
-    fired on the path alone would be red on fourteen correct files.
+    fired on the path alone would be red on every one of those files.
     """
     flat = " ".join(docstring.split())
     if not GATE_PATH.search(flat):

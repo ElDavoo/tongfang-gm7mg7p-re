@@ -84,8 +84,8 @@ would be sent to edit the checker rather than the arm that is already correct.
 Most docstrings in this tree that name the gate are *declining* a place in it —
 "It is not in `.github/scripts/agent-gates.sh`, and cannot be from an agent
 branch" is a sentence several tools open with, and it is **true**. A predicate
-that matched on the path alone fires on fourteen correct files, which is how a
-gate teaches everyone to ignore it.
+that matched on the path alone fires on every docstring in the tree that names
+the gate, which is how a gate teaches everyone to ignore it.
 
 So the claim is read per **clause**: a clause naming the gate, carrying a
 membership phrasing, carrying no negation. On the committed tree that leaves
@@ -94,9 +94,10 @@ this tree: the rest either declines membership or does not discuss it.
 
 Two boundaries are load-bearing and both are pinned:
 
-- **"run under" is not a membership phrasing.** `pd_image_census.py`'s claim
-  that it runs under the gate's `python3 syntax` check is true, and it is not a
-  tool-list claim. Reading it as one would be a false positive on a correct file.
+- **"run under" is not a membership phrasing.**
+  `ec/tools/test_pd_image_census.py`'s claim that it runs under the gate's
+  `python3 syntax` check is true, and it is not a tool-list claim. Reading it
+  as one would be a false positive on a correct file.
 - **A path split across two lines is still a path.** Several docstrings wrap
   `.github/scripts/agent-gates.sh`, and one that names the gate across a line
   break is still naming it.

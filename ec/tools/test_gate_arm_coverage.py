@@ -379,9 +379,9 @@ class DirectionThreeClaimsAgainstReality(ScratchTreeCase):
                              % (docstring, out))
 
     def test_a_claim_about_the_syntax_check_is_not_a_tool_list_claim(self):
-        # `pd_image_census.py`'s true claim that it runs under the gate's
-        # `python3 syntax` check. "run under" is deliberately not a membership
-        # phrasing, so the real tree and this fixture agree.
+        # `ec/tools/test_pd_image_census.py`'s true claim that it runs under the
+        # gate's `python3 syntax` check. "run under" is deliberately not a
+        # membership phrasing, so the real tree and this fixture agree.
         rc, out = self.scratch_gate(docstrings={
             "ec/tools/syntax_checked.py":
                 "It does run under `.github/scripts/agent-gates.sh`'s "
