@@ -1359,10 +1359,11 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
         self.assertEqual(counts['testdata/ directories'], 13)
         self.assertEqual((counts['named in the index'], counts['self-indexed'],
                           counts['gap(s)']), (12, 1, 0))
+        # Not a floor -- see the class name.
         self.assertEqual((counts['table row(s)'], counts['path token(s)']),
-                         (28, 36))
+                         (29, 38))
         self.assertEqual((counts['Feeds cell(s)'], counts['tool pointer(s)']),
-                         (28, 30))
+                         (29, 31))
         self.assertEqual((counts['self-indexed README(s)'], counts['table(s)'],
                           counts['row(s)'], counts['check(s)']),
                          (1, 3, 19, 21))

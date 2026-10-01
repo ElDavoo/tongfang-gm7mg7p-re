@@ -79,6 +79,21 @@ is also what leaves `grade_timer_sweep.py`'s documented "one or more CSVs" alone
 Both decisions, and what a repeat costs each, are written up in
 docs/findings/grader-repeated-capture.md.
 
+**A capture is its own run.** A path may name more than one, and each file is
+graded as a run of its own: windows are cut inside the file that headed them,
+so a change row can only be filed under a mark from the capture that recorded
+it, and each capture's §6 closing counts its own windows. The premise is the
+one above -- one watcher on one console, one mark per action boundary -- read
+one file at a time, and the alternative (one path, full stop) was declined in
+`docs/findings/grader-repeated-capture.md` so that the three `nargs="+"`
+capture graders keep one rule over one input shape. The whole of it is that a
+capture's rows are graded against its own marks and nothing else, so a change
+row of one file falling between two marks of another is a row of the first,
+filed under a mark of the first, exactly as it would be if the other capture
+had not been named. Nothing here depends on the two captures being far apart in
+time, which is the shape `ec_watch.py` and `gpu_block_watch.py` produce when
+both are run at once.
+
 **The ms figure is a sweep, not a clock.** Both timestamps are the sweeps that
 saw the change, so the delta between them is good to about one `--interval`
 (0.25 s by default) and no better. It is printed in milliseconds because §5's
@@ -204,15 +219,67 @@ def collided_marks(marks):
     return [(a, b) for a, b in zip(marks, marks[1:]) if a.ts == b.ts]
 
 
-def build_windows(marks, changes):
-    """Assign every change to the last mark at or before it, marks unmerged.
+def capture_runs(paths, marks, changes):
+    """[(source, marks, changes)] per capture, in the order they were read.
 
-    `grade_0751_isolation.build_windows` is this pass and starts by calling
-    `coalesce_marks`; the merge is the only thing wrong with it here, and its
-    docstring says the fusing exists for a three-console run this procedure
-    does not have. So the pass is repeated rather than the module edited --
-    issue #169 is open on that file, and a change to it made from here would
-    collide with that work in review for no gain.
+    The grouping, and it is the whole of what makes a capture its own run: a
+    window may only be cut from marks and change rows that came out of the
+    same file, so a row from one capture can never be filed under a mark from
+    another. Keyed on `fan.capture_key` rather than on `source`, for the
+    reason that function gives -- `read_capture` stores the path *as given*
+    while `distinct_captures` keys the resolved one, so a run handed one file
+    under two spellings would otherwise come back as two captures and each
+    half would report itself as the whole of a run it is not.
+
+    Seeded from `paths` rather than from the rows, so a capture carrying
+    neither a mark nor a change row is still one run. A file the operator
+    named is a run they expect §6 to say something about, and building the
+    list from the rows alone would drop it from the report without saying so
+    -- a §6 reading missing rather than a §6 reading of "nothing was
+    recorded", which is the difference `docs/findings.md` §4c is about.
+
+    Read order rather than sorted, so the report walks the captures the way
+    the command line named them and the per-capture closings stay beside the
+    windows they close. Marks and rows inside a capture are sorted by
+    `main`, which is where the order of one capture is decided.
+    """
+    order, runs = [], {}
+    for path in paths:
+        key = fan.capture_key(path)
+        if key not in runs:
+            runs[key] = (path, [], [])
+            order.append(key)
+    for row, is_mark in [(m, True) for m in marks] + [(c, False)
+                                                       for c in changes]:
+        key = fan.capture_key(row.source)
+        if key not in runs:
+            # A row whose capture is not in `paths` cannot happen through
+            # `main`, which reads the rows out of exactly those files. The
+            # branch is here rather than an index error because a caller
+            # passing one path list and rows from another should get a run
+            # for the file the row names, not a KeyError three functions up.
+            runs[key] = (row.source, [], [])
+            order.append(key)
+        runs[key][1 if is_mark else 2].append(row)
+    return [runs[key] for key in order]
+
+
+def build_windows(runs):
+    """Assign every change to the last mark at or before it, per capture.
+
+    `capture_runs`' triple in, `(source, marks)` out, one entry per capture.
+    The same pass as `grade_0751_isolation.build_windows` and for the same
+    reason it is repeated rather than that module edited: it starts by calling
+    `coalesce_marks`, and the merge is the only thing wrong with it here,
+    because its docstring says the fusing exists for a three-console run this
+    procedure does not have. Issue #169 is open on that file, and a change to
+    it made from here would collide with that work in review for no gain.
+
+    The other difference from that pass is the grouping, and it is this
+    module's own: it is handed one capture at a time rather than everything
+    the command line named. Concatenating first is what filed `b.csv`'s rows
+    21 hours after `a.csv`'s last mark and under it, with nothing in the
+    report saying two captures had been handed in at all.
 
     Changes before the first mark belong to no window, exactly as they do
     there: §3 lets the sweep settle before the operator marks, so they are the
@@ -220,19 +287,23 @@ def build_windows(marks, changes):
     opened on, which is what lets a held byte print its level instead of
     `????`.
     """
-    ordered = sorted(changes, key=lambda c: c.ts)
-    last, i = {}, 0
-    while i < len(ordered) and ordered[i].ts < marks[0].ts:
-        last[ordered[i].addr] = ordered[i].new
-        i += 1
-    for n, w in enumerate(marks):
-        w.levels = dict(last)
-        end = marks[n + 1].ts if n + 1 < len(marks) else None
-        while i < len(ordered) and (end is None or ordered[i].ts < end):
-            w.changes.append(ordered[i])
+    out = []
+    for source, marks, changes in runs:
+        ordered = sorted(changes, key=lambda c: c.ts)
+        marks = sorted(marks, key=lambda w: w.ts)
+        last, i = {}, 0
+        while i < len(ordered) and ordered[i].ts < marks[0].ts:
             last[ordered[i].addr] = ordered[i].new
             i += 1
-    return marks
+        for n, w in enumerate(marks):
+            w.levels = dict(last)
+            end = marks[n + 1].ts if n + 1 < len(marks) else None
+            while i < len(ordered) and (end is None or ordered[i].ts < end):
+                w.changes.append(ordered[i])
+                last[ordered[i].addr] = ordered[i].new
+                i += 1
+        out.append((source, marks))
+    return out
 
 
 def first_change(w, addrs):
@@ -249,7 +320,16 @@ def first_change(w, addrs):
 
 
 def report_window(w, n, total):
-    end = "the next mark" if n < total else "the end of the capture"
+    # The file is named on the "runs to" line as well as on the heading
+    # above it, and that is the repetition the per-capture cut needs rather
+    # than a stylistic one: the line says where this window *ends*, and after
+    # the cut that is a mark in `w.source` or the end of `w.source`, so a
+    # reader who took "the next mark" to mean the next mark in the whole run
+    # would be reading a mark a day away into a window that does not contain
+    # it. The last window of a capture runs to that capture's end, not to a
+    # mark another file recorded later.
+    end = (f"the next mark in {w.source}" if n < total
+           else f"the end of {w.source}")
     print(f"\n--- mark {n}/{total}: {w.ts.isoformat()}  {w.label!r} "
           f"({w.source})")
     print(f"    window runs to {end}")
@@ -328,18 +408,65 @@ def report_window(w, n, total):
     return moved
 
 
-def report_close_marks(windows):
-    """Call out adjacent marks that landed within CLOSE_MARKS_SECONDS.
+def report_close_marks(runs):
+    """Call out a file boundary, and adjacent marks within CLOSE_MARKS_SECONDS.
 
-    Not a merge, and not a warning about the capture: the two stay two
-    windows, because §3 paces them ~30 s apart and a run where they are not
-    is a run whose pacing is worth seeing. What it is for is the reader who
-    expected one action boundary and got two -- the first window's figure is
-    the one to distrust, and this is where that is said out loud rather than
-    left to be worked out.
+    Two checks over one flat sequence of marks, the sequence carrying each
+    capture's own boundaries and the line between two captures. A boundary is
+    a fact about the command line whatever the marks say, and the marks either
+    side of it are not adjacent marks in one capture at all -- there is no
+    interval between them to be close or far. The boundary note names both
+    files and says they are two runs, which is what a reader of two day-apart
+    captures needs and what nothing else in the report says.
+
+    A pair spanning a boundary gets the boundary note and not the threshold
+    one, and that is the whole of the ordering: `CLOSE_MARKS_SECONDS` asks
+    whether two action boundaries were close, which is a question about one
+    console's hands, and it has no answer to give about where one capture
+    ended and the next began. Every pair inside a capture is still walked, the
+    last capture's included -- one sequence rather than a loop per capture, so
+    a run of one file walks its own pairs exactly as it did before.
+
+    Captures are walked in the order the command line named them, not in
+    chronological order, and the gap is taken as a distance for that reason.
+    Naming them the other way round is a well-formed command line and prints
+    the same note with the same two files in it; a boundary is a fact about
+    the command line either way.
+
+    The threshold check is unchanged and is not a merge, and not a warning
+    about the capture: the two stay two windows, because §3 paces them ~30 s
+    apart and a run where they are not is a run whose pacing is worth seeing.
+    What it is for is the reader who expected one action boundary and got two
+    -- the first window's figure is the one to distrust, and this is where that
+    is said out loud rather than left to be worked out.
     """
-    for a, b in zip(windows, windows[1:]):
-        gap = (b.ts - a.ts).total_seconds()
+    flat = [w for _, marks in runs for w in marks]
+    for a, b in zip(flat, flat[1:]):
+        # By absolute value, because this walk follows the order the captures
+        # were named in rather than the order they happened: grading
+        # `later.csv` then `earlier.csv` puts the later capture's last mark
+        # first, and the difference comes out negative. A gap is a distance
+        # between two instants and has no sign, and the note says "apart".
+        # Sorting the flat sequence by timestamp instead would fix the figure
+        # for captures that are far apart and make it worse for the ones that
+        # overlap: their marks interleave, so the boundary is crossed more
+        # than once and the crossings after the first are negative anyway.
+        gap = abs((b.ts - a.ts).total_seconds())
+        if fan.capture_key(a.source) != fan.capture_key(b.source):
+            print(f"\n  note  {a.source} ends at {a.label!r} and {b.source} "
+                  f"begins at {b.label!r}, {gap:.1f}s apart.")
+            print("    They are two captures and two runs, graded one after "
+                  "the other. No window")
+            print("    crosses the line between them: each capture's windows "
+                  "are cut from its own")
+            print("    marks, so a change row is filed only under a mark from "
+                  "the file that recorded it,")
+            print("    and each closing below counts one capture's windows. A "
+                  "figure over both would")
+            print("    be a figure over a run that was not performed, which "
+                  "is what the per-capture")
+            print("    count is there to prevent.")
+            continue
         if gap <= CLOSE_MARKS_SECONDS:
             print(f"\n  note  marks {a.label!r} and {b.label!r} are {gap:.1f}s "
                   f"apart, inside the {CLOSE_MARKS_SECONDS}s flag threshold.")
@@ -351,8 +478,8 @@ def report_close_marks(windows):
                   "console with one mark per")
             print("    action boundary, so fusing them here would file the "
                   "second action's movement")
-            print(f"    under the first. If they were one action after all, "
-                  f"the window headed")
+            print("    under the first. If they were one action after all, the "
+                  "window headed")
             print(f"    by {a.label!r} is the one to distrust.")
 
 
@@ -385,49 +512,81 @@ def report_columns():
     print("    verdict                        col 10")
 
 
-def report_settle(orders):
+def report_settle(runs, orders):
     """The closing section, in §6's own order of what it does and does not do.
 
-    `orders` is the per-window list of which blocks moved, so each shape is
-    described from the capture rather than from a template. The three branches
-    are deliberately not collapsed: "one block moved" is neither of §6's other
-    two readings, and a closing line that said §6's third bullet for a run in
-    which the ACPI half moved twice would be the tool making the human's call.
+    `orders` is one per-capture list of which blocks moved, so each shape is
+    described from its own capture rather than from a template. The three
+    branches are deliberately not collapsed: "one block moved" is neither of
+    §6's other two readings, and a closing line that said §6's third bullet for
+    a run in which the ACPI half moved twice would be the tool making the
+    human's call.
+
+    A closing per capture, and the counts in it are that capture's own
+    windows. Summed over two day-apart files they read as one run's figures
+    over a run nobody performed -- "3 of 3 moved one block only" across two
+    days -- and every count in the section is a denominator over windows, so
+    the closing is where the per-capture cut is most load-bearing.
     """
     print("\n=== what this does and does not settle ===")
-    ranked = [o for o in orders if len(o) == len(WINDOWS)]
-    if ranked:
-        print(f"  Both blocks moved in {len(ranked)} of the windows above, so "
-              "§5's ordering column has a")
-        print("  number in them. That is the half of §6's first bullet this "
-              "capture can carry:")
-        print("  the other half -- that `0x07D0` moved under a GPU-only change "
-              "with no host `ECRW` at")
-        print("  the mark -- needs the PID and the IOCTL code, which are §4a's "
-              "and in no capture.")
-    elif any(orders):
-        one = sum(1 for o in orders if len(o) == 1)
-        print(f"  No window had both blocks moving ({one} of {len(orders)} "
-              "moved one block only), so §5's")
-        print("  ordering column has no number in any of them, and that "
-              "matches none of §6's three")
-        print("  readings as written: the first needs both halves of a "
-              "movement and the PID with it,")
-        print("  the second is movement only when the Fn bundle runs, the third "
-              "is no movement at")
-        print("  all. Which of them a one-block run is comes down to the mark "
-              "labels, and the verdict")
-        print("  column is the human's call against §6.")
-    else:
-        print("  Neither block moved in any window above, so §6's third "
-              "bullet -- no movement at")
-        print("  all under all three actions -- applies, and the clobber "
-              "hazard stands where §4o")
-        print("  records it. Whether the actions were in fact taken is the "
-              "operator's record, not")
-        print("  this file's: a mark is the only evidence that anything "
-              "happened, and this tool")
-        print("  reads marks.")
+    for (source, _), own in zip(runs, orders):
+        print(f"  -- {source} --")
+        ranked = [o for o in own if len(o) == len(WINDOWS)]
+        if not own:
+            # Stated rather than passed over. A capture with no mark row has
+            # no window and so no §6 reading, and the "Neither block moved in
+            # any window above" branch would say exactly that while implying
+            # a result -- the shape docs/findings.md §4c is about, arrived at
+            # through a window count of zero rather than a zero movement. The
+            # capture holds no rows either, so there is nothing it could have
+            # shown; that is what this says, and it is not a claim that the
+            # bytes held still.
+            print("  This capture carries no MARK row and no change row, so it "
+                  "has no window and")
+            print("  §6 has nothing to read here. That is a statement about "
+                  "the file, not about the")
+            print("  bytes: nothing was recorded, which is not the same as "
+                  "nothing moved.")
+            continue
+        if ranked:
+            print(f"  Both blocks moved in {len(ranked)} of the windows above,"
+                  " so §5's ordering column has a")
+            print("  number in them. That is the half of §6's first bullet "
+                  "this capture can carry:")
+            print("  the other half -- that `0x07D0` moved under a GPU-only "
+                  "change with no host `ECRW` at")
+            print("  the mark -- needs the PID and the IOCTL code, which are "
+                  "§4a's and in no capture.")
+        elif any(own):
+            one = sum(1 for o in own if len(o) == 1)
+            print(f"  No window had both blocks moving ({one} of {len(own)} "
+                  "moved one block only), so §5's")
+            print("  ordering column has no number in any of them, and that "
+                  "matches none of §6's three")
+            print("  readings as written: the first needs both halves of a "
+                  "movement and the PID with it,")
+            print("  the second is movement only when the Fn bundle runs, the "
+                  "third is no movement at")
+            print("  all. Which of them a one-block run is comes down to the "
+                  "mark labels, and the verdict")
+            print("  column is the human's call against §6.")
+        else:
+            print("  Neither block moved in any window above, so §6's third "
+                  "bullet -- no movement at")
+            print("  all under all three actions -- applies, and the clobber "
+                  "hazard stands where §4o")
+            print("  records it. Whether the actions were in fact taken is the "
+                  "operator's record, not")
+            print("  this file's: a mark is the only evidence that anything "
+                  "happened, and this tool")
+            print("  reads marks.")
+
+    if len(runs) > 1:
+        print(f"  The {len(runs)} captures above are separate runs. Each "
+              "closing above counts one file's")
+        print("  windows and the caveats below hold for every one of them; a "
+              "figure over the lot is")
+        print("  not a figure over any run that was performed.")
 
     for line in (
         "  Two caveats belong next to the table rather than in a footnote.",
@@ -480,7 +639,14 @@ def main(argv=None):
                          "one console, so a file listed twice is one console "
                          "and not two, and its marks would open windows that "
                          "are empty. By resolved path, so ./x.csv and x.csv "
-                         "are the same repeat")
+                         "are the same repeat. Two or more files are two runs, "
+                         "graded one after the other: each file's windows are "
+                         "cut from its own marks and each file's closing "
+                         "counts its own windows, so a change row is never "
+                         "filed under a mark from another file. A file's rows "
+                         "are graded the same way whether or not they fall "
+                         "between another file's marks: one is filed under a "
+                         "mark of the file that recorded it")
     args = ap.parse_args(argv)
 
     # Before the read loop rather than inside it: a report printed over four
@@ -522,23 +688,53 @@ def main(argv=None):
         changes += c
         print(f"{path}: {len(m)} mark(s), {len(c)} change row(s)")
 
-    if not marks:
-        print("\nno MARK rows in these captures. gpu_block_watch.py writes "
-              "them only with --mark,", file=sys.stderr)
-        print("and without them a window has no start, so which action a "
-              "movement belongs to is", file=sys.stderr)
-        print("not knowable and §5 cannot be filled at all.", file=sys.stderr)
-        return 1
+    # One run per capture, and the per-file census above is what says so: the
+    # counts are per file because `read_capture` is called per file, and the
+    # two have to agree about what a run is or the reader has a per-file count
+    # over a window count taken some other way.
+    runs = capture_runs(paths, marks, changes)
+    for _, own_marks, _ in runs:
+        own_marks.sort(key=lambda w: w.ts)
 
-    marks = sorted(marks, key=lambda w: w.ts)
+    # The no-marks refusal, per capture rather than over the whole run. The
+    # old check asked only whether *any* capture had a mark, which was the
+    # question a single-capture invocation could ask and is the wrong one the
+    # moment a second file is named: a capture carrying change rows and no
+    # mark row has rows that belong to no window of its own, and under the
+    # per-`source` cut below they cannot be filed under another capture's mark
+    # either. §5 has no column for them, so the run is refused by name rather
+    # than reported over silently.
+    #
+    # A capture with neither marks nor rows is not refused: it contributes no
+    # windows and no movement, so there is nothing to misfile and nothing to
+    # leave out of a table. It is said so on its census line above, which is
+    # where a reader looks, rather than refused over a file that holds nothing.
+    markless = [source for source, own_marks, own_changes in runs
+                if own_changes and not own_marks]
+    if markless:
+        for source in markless:
+            print(f"\n{source} has change rows and no MARK rows. "
+                  "gpu_block_watch.py writes", file=sys.stderr)
+            print("marks only with --mark.", file=sys.stderr)
+        print("A window has no start without a mark, so which action those "
+              "rows belong to is not knowable", file=sys.stderr)
+        print("and §5 cannot be filled at all -- for that capture or, since "
+              "its rows cannot be read as", file=sys.stderr)
+        print("another capture's either, for the others. Nothing was graded.",
+              file=sys.stderr)
+        return 1
 
     # After the read, where the repeat refusal above cannot be: a shared
     # timestamp is a property of the marks, so there is nothing about the
     # command line to look at first. And before `build_windows`, so no
     # zero-length window reaches `report_window` -- a report over one is
     # half-right rather than wrong, which is the shape the no-marks refusal
-    # above is written against too.
-    collisions = collided_marks(marks)
+    # above is written against too. Per capture, and per capture is the whole
+    # of the change: a mark in one file and a mark in another are two
+    # windows in two runs, and only two marks *in one capture* are the
+    # ambiguity this refusal is about.
+    collisions = [pair for source, own_marks, _ in runs
+                  for pair in collided_marks(own_marks)]
     if collisions:
         watched = sum(hi - lo + 1 for _, lo, hi in WINDOWS)
         for a, b in collisions:
@@ -575,14 +771,23 @@ def main(argv=None):
               "actions two instants.", file=sys.stderr)
         return 1
 
-    build_windows(marks, changes)
-    print(f"\n=== {len(marks)} window(s), one per mark, none merged ===")
+    built = build_windows(runs)
     orders = []
-    for i, w in enumerate(marks, 1):
-        orders.append(report_window(w, i, len(marks)))
-    report_close_marks(marks)
+    for source, windows in built:
+        # The count is this capture's, and the capture is named on the same
+        # line: with two files on the command line a bare "=== 3 window(s) ==="
+        # is a total over two runs, which is the figure this change exists to
+        # stop being printed. Parenthetical, the way `report_window` names a
+        # window's own capture. Appended rather than worked into the sentence
+        # so the line still reads the same for the one-capture case every
+        # other assertion in the suite is written against.
+        print(f"\n=== {len(windows)} window(s), one per mark, none merged ==="
+              f" ({source})")
+        orders.append([report_window(w, i, len(windows))
+                       for i, w in enumerate(windows, 1)])
+    report_close_marks(built)
     report_columns()
-    report_settle(orders)
+    report_settle(built, orders)
     return 0
 
 

@@ -259,8 +259,8 @@ def reader_call_sites():
     three readers.
 
     The second half of the census, and it is a second scan because the first
-    one has a blind side worth naming: `grade_gpu_door.py:421` never writes
-    `"MARK"`. It takes `read_capture`'s two-tuple and counts it, so a
+    one has a blind side worth naming: `grade_gpu_door.py`'s `main` never
+    writes `"MARK"`. It takes `read_capture`'s two-tuple and counts it, so a
     consumer that never decides whether a row is a mark is invisible to the
     literal scan. This one has the opposite blind side -- it cannot see a
     reader that opened the CSV itself rather than going through the grader --
@@ -647,7 +647,7 @@ CITATIONS = [
     ("ec/tools/grade_0751_isolation.py", 3824,
      'read = f"{path}: {len(m)} mark(s), {len(c)} change row(s)"',
      "the per-capture census line, which counts rather than spells"),
-    ("ec/tools/grade_gpu_door.py", 520, "m, c = fan.read_capture(path)",
+    ("ec/tools/grade_gpu_door.py", 686, "m, c = fan.read_capture(path)",
      "the second consumer of read_capture's two-tuple"),
     ("ec/tools/check_capture_claims.py", 914,
      "read_capture(os.path.join(REPO, WATCH, name))",

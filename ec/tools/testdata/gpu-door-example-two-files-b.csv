@@ -1,0 +1,16 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte and timestamp below was written by hand so ec/tools/grade_gpu_door.py
+# can be run over a capture in the shape §3 of
+# docs/hardware-tests/gpu-tgp-07c4-07d7-door.md takes. See ../README.md.
+# Shape: the second of the two-capture pair `...-two-files-a.csv` is graded
+# beside, the day after that file's 2026-01-01T marks, so neither file's rows
+# fall between two marks of the other. One mark and two change rows *before* it,
+# which is what a capture of a quiet action looks like when the sweep settled
+# first: both rows set the level its one window opens on and it reports no
+# movement of its own. It is not a prediction that a capture will be graded
+# beside another, that a quiet day follows a busy one, or that these two bytes
+# move at all.
+ts,addr,old,new
+2026-01-02T09:00:02.000+01:00,0x07C6,0x00,0x01
+2026-01-02T09:00:05.000+01:00,0x07C4,0x28,0x38
+2026-01-02T09:00:20.000+01:00,MARK,,gpu tgp 115W->130W
