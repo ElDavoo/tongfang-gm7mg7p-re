@@ -176,6 +176,16 @@ HELD = {
                 ("## 5.", "it is a placeholder, not a shell expansion"),
         },
     },
+    "uniwill-var-memoc-efivarfs.md": {
+        "command_producers": True,
+        # The observation file, and the reason this procedure exists at all: the
+        # four dumps say the write landed, and only a person looking at the BIOS
+        # setup can say the "Memory" entry appeared. §4.4 is the section that
+        # says so, and that is what the allowance is tied to.
+        "hand_saved": {
+            "*-linux-observation.md": ("### 4.4", "the owner's own words"),
+        },
+    },
 }
 
 # The two documents the helpers cannot read, excluded by a stated rule rather
