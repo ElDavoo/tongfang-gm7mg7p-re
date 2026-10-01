@@ -24,6 +24,19 @@ is the same class of claim as
 where the file-granularity census lives, and one step further from the data:
 nothing here is a statement about the firmware at all.
 
+**Correction, issue #328 — the surface has moved since this was measured.**
+Everything below describes the tree as it stood while the denial rule still
+skipped, and `check_capture_claims.py` no longer skips one: a denial is now
+checked with the presence rule inverted. The per-file figures quoted below
+therefore under-report — `ec/annotations/registers.yaml` alone goes from the
+five claims named here to the several dozen its notes yield — and the tool's
+own surface table and docstring have been re-derived from a run against the
+new rule. What replaced this measurement is
+[`capture-claim-denials-are-checks.md`](capture-claim-denials-are-checks.md).
+This file is left as written rather than edited, because what it measured is
+still what it measured and #328 did not re-run #991's derivation against the
+new rule.
+
 ## The three wrong claims, quoted beside their corrections
 
 Per `docs/findings.md` §4a-4d the wrong version stays visible rather than
