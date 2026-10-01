@@ -172,6 +172,32 @@ Making it run-wide would turn a `--block 0xA0` fold-in attachment into exit 1
 over a defect in a window that attachment does not print, which is a stronger
 claim than the evidence supports.
 
+> **Correction (2026-09-29, issue
+> [#539](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/539)), leaving
+> the section above and the table below as they were written.** The reasoning
+> above stands and the choice was the right one; what was missing is anywhere
+> for it to be *held*. The table is a measurement someone ran once, and the
+> sentence about hoisting `unagreed` described a change that would have moved
+> all three of §6's per-value attachments from 0 to 1 with **nothing in the
+> tree failing** — `UNPLACED_FAILURES` was reached in exactly two places in
+> the suite and neither passed `--block`, while the two run-wide refusals
+> beside it were both pinned over `--block`. So a real alternative was
+> recorded and unpinned, and which reading a later change took was a matter of
+> what it happened to read.
+>
+> It is window-scoped, and that is now a property of the suite:
+> `test_a_disagreeing_stray_is_refused_by_the_whole_capture_run_and_not_by_a_
+> block_run` runs this fixture under each `--block` value and pins the exit
+> code, the block graded, and the census still naming both strays. "Census-only
+> is enough" also turned out to need a word in it — the census said what the
+> captures disagreed about but not what this run did with the windows, so a
+> scoped attachment carried the diagnosis and no outcome for it, and the
+> `unplaced:` line gained a `-- NOT GRADED, N problem(s): kinds` clause. Both
+> halves, and what the run-wide reading would have cost, are in
+> [`0751-grader-unplaced-window-block-scope.md`](0751-grader-unplaced-window-block-scope.md).
+> The table below is the measurement the decision was taken from and stays
+> visible as that.
+
 Measured, over the same fixture:
 
 | run | exit | what the window section says |
@@ -233,13 +259,22 @@ fixture has a window graded or withheld differently.
 ## Left out on purpose
 
 - **The `rem` block in §6 of the procedure doc**
-  (`docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:635-640`) describes
-  the refusal in block terms and is now incomplete. The section's §3 text
-  (`:176-181`) and that `rem` block's first sentence already say *"every action
-  in all three CSVs, every capture spelling it the same way"* — the contract
-  this change makes the tool meet, and nothing there is falsified — so the
-  repair is a sentence in a long shared file this branch has no reason to be
+  (`docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:879-884`) describes
+  the refusal in whole-capture terms and is now incomplete. The section's §3
+  text (`:244-252`) and that `rem` block's first sentence already say *"every
+  action in all three CSVs, every capture spelling it the same way"* — the
+  contract this change makes the tool meet, and nothing there is falsified — so
+  the repair is a sentence in a long shared file this branch has no reason to be
   near. Named as a follow-up instead.
+
+  *(Correction, 2026-09-30: the two line numbers this bullet cited,
+  `:635-640` and `:176-181`, named the wrong lines of the procedure doc —
+  `:635-640` is inside §4 and `:176-181` is §3's step-4 watch and step-5
+  restore. `:879-884` is the `rem` block in §6 and `:244-252` is §3's
+  statement of the contract; the substance above was right and the
+  citations are corrected here. The same wrong pair was inherited by
+  [`0751-grader-unplaced-window-block-scope.md`](0751-grader-unplaced-window-block-scope.md),
+  which corrected its own copy in the same pass.)*
 - **`windows/tools/ec_watch-marks.md`.** `:107-108` (*"the mistyped digit that
   survives is what the three-console comparison is for"*) is *supported* by this
   change, and `:109-111` names `parse_mark`, `unplaceable_marks` and
@@ -247,8 +282,16 @@ fixture has a window graded or withheld differently.
 - **`ec/annotations/registers.yaml` is not touched**: no register status is in
   question, and `MANUAL_FAN_CTRL` stays `present-untested` with its
   `static_refs*` counts at 29/29/0. A refusal is not a verdict.
-- **Making the new refusal run-wide** — named and argued against above; one term
-  in the exit expression if read the other way.
+- **Making the new refusal run-wide** — named and argued against above, and
+  since **decided**: the refusal stays window-scoped, and the decision is held
+  rather than left as the alternative it was. It was also more than the one
+  term the sentence above used to call it — a fourth clause in the exit
+  expression, a run-wide note that would have had to tell this refusal apart
+  from `UNREAD_MARK_NOTE`'s because the two are fatal for different reasons and
+  send the operator to different terminals, and the census clause's scope
+  reworded from a property of the marks to a property of the run.
+  [`0751-grader-unplaced-window-block-scope.md`](0751-grader-unplaced-window-block-scope.md)
+  says what each of those would cost.
 - **Extending `void` to windows in no block** — it has no meaning there, and the
   docstring says so rather than the check being quietly skipped.
 - **A second fixture directory for the second defect kind.** The two defects are

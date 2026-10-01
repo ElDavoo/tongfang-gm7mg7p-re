@@ -810,26 +810,36 @@ class TheCommittedTree(unittest.TestCase):
         # literally a `def test_a_capture_given_twice_is_refused` header, so
         # this axis is the only one it touches: `0 -> 1`, and the four beside
         # it are unmoved again.
-        # **#492's record is the second `def test_`, and it is the only record
-        # on this change that moves a column at all.** Its 33 re-anchorings in
-        # `docs/findings/test-line-pin-census.md` are a uniform `+146` -- the
-        # two hunks this change adds to `test_grade_0751_isolation.py` sit
-        # above every pin it moves -- so each lands on a line carrying the same
-        # text and therefore the same shape, and the four columns beside this
-        # one staying put is the check for that. The one that moves is
-        # `0751-capture-row-shape.md:41`, and it moves because its pin was
-        # already stale before this change: `main` recorded `:3789` where the
-        # header sat at `:3805`, a 16-line drift no earlier re-anchoring had
-        # accounted for. Correcting it to `:3951` is `+162`, `146` of it this
-        # change and `16` of it the old drift, and the line it lands on is
-        # `def test_the_refusal_reasons_are_read_captures_own` -- a header,
-        # where `:3789` was a statement inside the test. So it leaves `other`
-        # for `def test_`: `1 -> 2` and `46 -> 45`, with `assertion`,
-        # `comment` and `blank` unmoved again, which is the check that this is
-        # one record moving between columns and not one added or dropped.
+        # **#492's 33 re-anchorings in `docs/findings/test-line-pin-census.md`
+        # move no column at all.** They are a uniform shift of every pin they
+        # touch -- the hunks #492 adds to `test_grade_0751_isolation.py` sit
+        # above all of them -- so each lands on a line carrying the same text
+        # and therefore the same shape.
+        # **The one record that did move a column, `0751-capture-row-shape.md`:41,
+        # is back where it started, and both sides of this merge are why.**
+        # Its pin is *qualified by a commit* -- *"`...(:3608` at `c9e72c1`)"*
+        # -- so `:3608` is the line in that revision and no merge can make it
+        # stale. `main` re-anchored it to `:3951` and read that as `def test_`
+        # (`1 -> 2`); the branch re-anchored it to `:3748`. Neither re-anchor
+        # was owed, and each was measured against a live line the sentence does
+        # not name: at `c9e72c1`, `:3608` *is*
+        # `def test_the_refusal_reasons_are_read_captures_own`, the test the
+        # sentence names, and `:3951` there is an unrelated comment about other
+        # suites. `:3608` is restored here, so `def test_` gives `2 -> 1` and
+        # the record lands wherever the merged tree's own `:3608` reads.
+        # **It reads `other`, and that is a third value neither side recorded**:
+        # `main`'s tree holds code there and the branch's holds a `#` comment, so
+        # the branch's `comment` at `24` was a measurement of its own line and
+        # `main`'s `def test_` a measurement of a line this pin does not name.
+        # On the merged tree `:3608` is `"'NOT GRADED'), 0, kind)"`, so `comment`
+        # is `23` and `other` is `46`, with `assertion` and `blank` unmoved --
+        # the control that this is one record changing column and not one added
+        # or dropped. **The gap between the record's verdict and its shape is
+        # the verdict**: the row reads *records another line* precisely because a
+        # commit-qualified pin names the line of that revision, not this one.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 2, census.ASSERTION: 24, census.COMMENT: 23,
-            census.BLANK: 5, census.OTHER: 45})
+            census.DEF_TEST: 1, census.ASSERTION: 24, census.COMMENT: 23,
+            census.BLANK: 5, census.OTHER: 46})
         # `69 -> 70` is the same #421 record, and it takes this axis for the
         # reason the comment above gives for the split: a record that resolves
         # names a target, and this one lands in a file the axis did not carry,

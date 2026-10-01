@@ -542,6 +542,31 @@ def census(out):
     return out.split('=== mark census (§3/§6) ===', 1)[1].split('\n=== ', 1)[0]
 
 
+def after_census(out):
+    """Everything the census is not: the window section and the ones below it.
+
+    Its own cut, because the census carries `NOT GRADED` by design now -- on
+    the `unplaced:` line of a window the run refused. So a refusal that should
+    have been announced in the window section is checked in everything that is
+    not the census, rather than over the whole output, where the clause that
+    names it deliberately would satisfy the search for it. `census(out)` is
+    the other half of the same split.
+    """
+    return out.split('=== mark census (§3/§6) ===', 1)[1].split('\n=== ', 1)[1]
+
+
+def unplaced_census_lines(out):
+    """The census's `unplaced:` lines, whole, in the order they printed.
+
+    Not the whole section and not a substring search: what is being held here
+    is one line per stray, carrying the window it is about and what this run
+    did with it, and the block lines around them legitimately differ between a
+    scoped and an unscoped run.
+    """
+    return [line for line in census(out).splitlines()
+            if line.startswith('  unplaced: ')]
+
+
 def dumps_section(out):
     """The §4.6 section, and nothing after it."""
     return out.split('=== 0x0751 across the dumps (§4.6) ===', 1)[1] \
@@ -2952,7 +2977,8 @@ class MarkSetTests(unittest.TestCase):
         with contextlib.redirect_stdout(out):
             problems = [p for b in blocks
                         for p in grade.check_block_marks(b, captures)]
-            grade.report_census(captures, windows, blocks, unplaced, {}, None)
+            grade.report_census(captures, windows, blocks, unplaced, {},
+                                {}, None)
         printed = out.getvalue()
         # A mark is not missing from a console that is not there, and the one
         # file's labels agree with themselves, so nothing is withheld.
@@ -3009,7 +3035,7 @@ class MarkSetTests(unittest.TestCase):
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
                 grade.report_census(captures, windows, blocks, unplaced,
-                                    {}, None)
+                                    {}, {}, None)
             printed = census(out.getvalue())
             # The numerator and the denominator are the same count, and the
             # header agrees with the ratio -- the header is what says how many
@@ -3065,7 +3091,7 @@ class MarkSetTests(unittest.TestCase):
             caps, wins, blocks, unplaced = as_main_reads(given)
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
-                grade.report_census(caps, wins, blocks, unplaced, {}, None)
+                grade.report_census(caps, wins, blocks, unplaced, {}, {}, None)
             printed = census(out.getvalue())
             # Each capture is named with the label it really recorded, so the
             # two rows disagree with each other exactly as the two captures do.
@@ -3296,6 +3322,120 @@ class MarkSetTests(unittest.TestCase):
         self.assertEqual(len(unplaced), 2)
         self.assertEqual(
             grade.unplaced_window_problems(unplaced, captures), {})
+
+    # The scope of the refusal above, which was a real fork and had been
+    # measured once into a table rather than held. #529 counts it into
+    # `withheld`, `withheld` is accumulated over `shown`, and `shown` under
+    # `--block` is the selected block's own windows -- so a `--block 0xA0`
+    # attachment passes over a stray it does not print, and hoisting
+    # `unagreed` into a fourth term in the exit expression would move all
+    # three of §6's per-value attachments from 0 to 1 without failing
+    # anything in the tree.
+    #
+    # The shape the suite already holds for the refusal above it and did not
+    # hold for this one: the unreadable-mark case is run-wide, says so where
+    # the exit code is read, and pins both directions. Which of the two this
+    # refusal is, is a decision, so it is pinned as one -- the block graded,
+    # and the census still naming both strays.
+    def test_a_disagreeing_stray_is_refused_by_the_whole_capture_run_and_not_by_a_block_run(self):
+        # The unscoped run first, because it is the half that makes the other
+        # half a claim about the scope rather than about this fixture: the two
+        # differ by nothing but `--block`.
+        rc, whole, _ = run(*UNPLACED_FAILURES)
+        self.assertEqual(rc, 1)
+        self.assertEqual(whole.count('block: unplaced -- NOT GRADED'), 2)
+        self.assertIn('2 of the 8 window(s) above were not graded', whole)
+        whole_lines = unplaced_census_lines(whole)
+
+        for value, index, marks in (
+                ('0xA0', 1, [(2, 'no-op wrote 0x0751=0x10'),
+                             (3, 'wrote 0x0751=0xA0'),
+                             (4, 'restored 0x0751=0x10')]),
+                ('0x10', 2, [(6, 'no-op wrote 0x0751=0x00'),
+                             (7, 'wrote 0x0751=0x10'),
+                             (8, 'restored 0x0751=0x00')])):
+            with self.subTest(block=value):
+                rc, out, _ = run(*UNPLACED_FAILURES, '--block', value)
+                self.assertEqual(rc, 0)
+                # Everything after the census, which is where a refusal would
+                # have to announce itself: the window section and the closing
+                # one. Not the whole output, because the census clause below
+                # carries `NOT GRADED` by design and an absence asserted over
+                # the whole run would be an absence asserted against the very
+                # thing this change adds.
+                after = after_census(out)
+                self.assertNotIn('NOT GRADED', after)
+                self.assertNotIn('were not graded', after)
+                # The selected block is graded, all three of its windows in
+                # the usual format, still numbered where they sit in the
+                # whole mark stream, and the movement sentence below names
+                # this block rather than the capture the stray is in.
+                self.assertIn(f'=== block {index} of 2, value under test '
+                              f'{value}, 3 window(s) in it ===', out)
+                self.assertEqual(marked_windows(out), marks)
+                self.assertIn(f'block {index}/2: intact', out)
+                closing = " ".join(out.split('=== what this does and does '
+                                             'not settle ===')[1].split())
+                self.assertIn(f'None of the §4.1-§4.3 bytes moved in any of '
+                              f'the 3 window(s) in block {index} of 2, value '
+                              f'under test {value}', closing)
+                self.assertNotIn('in any window: consistent with the static '
+                                 'prediction', closing)
+
+                # What survives is the diagnosis, and the whole of it: the two
+                # strays still named, still said to be out of the void check's
+                # reach, the disagreement read per capture and the absent one
+                # read against the console that missed it.
+                section = census(out)
+                flat = " ".join(section.split())
+                self.assertEqual(section.count('`--block` cannot select it'), 2)
+                self.assertEqual(section.count('the void check cannot'), 2)
+                self.assertIn("2026-01-01-0751-isolation-0700-07ff.csv "
+                              "'restored 0x0751=0x0a'", flat)
+                self.assertIn("2026-01-01-0751-isolation-0400-045f.csv "
+                              "'restored 0x0751=0x99'", flat)
+                self.assertIn('2026-01-01-0751-isolation-0f00-0f5f.csv '
+                              '-- did not record it', flat)
+
+                # And what this run did with those windows, which the window
+                # section above cannot say under `--block`. The kinds rather
+                # than a bare count: a reader of a fold-in has to be able to
+                # tell a capture short a mark from two spellings of one, and
+                # the two send the operator to different terminals.
+                lines = unplaced_census_lines(out)
+                self.assertEqual(
+                    [line.partition('either -- ')[2] for line in lines],
+                    ['NOT GRADED, 1 problem(s): labels',
+                     'NOT GRADED, 1 problem(s): missing'])
+                # Each clause is on the line of the window it is about. The
+                # kinds are read off the same line as the label rather than
+                # counted in the section, so a report that put the two the
+                # wrong way round -- which would send a reader to fix the
+                # wrong window -- fails here.
+                self.assertIn("'restored 0x0751=0x0a / restored 0x0751=0x99'",
+                              lines[0])
+                self.assertIn("'restored 0x0751=0x99'", lines[1])
+
+                # Byte-identical to the unscoped run's two lines, which is
+                # what "the diagnosis is the thing that survives under
+                # `--block`" has to be as a property rather than as two
+                # strings that happen to be in this output. Cut to the
+                # `unplaced:` lines and not to the whole section, because the
+                # block lines legitimately differ: the block this run did not
+                # select is named as not selected.
+                self.assertEqual(lines, whole_lines)
+
+        # The clean half, and it is the half that fails if the checks ever
+        # start firing on marks that agree -- the only way this could have
+        # been got wrong the other way round. `unplaced-window/` is this same
+        # day with both stray labels whole, so under either value the run is
+        # exit 0 and names no refusal anywhere, the new clause included.
+        for value in ('0xA0', '0x10'):
+            with self.subTest(block=value, clean=True):
+                rc, out, _ = run(*UNPLACED_WINDOW, '--block', value)
+                self.assertEqual(rc, 0)
+                self.assertNotIn('NOT GRADED', out)
+                self.assertNotIn('were not graded', out)
 
 
 class StageBoundaryTests(unittest.TestCase):
