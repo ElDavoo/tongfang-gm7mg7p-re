@@ -113,11 +113,16 @@ line above — but that is a statement about `02.00`, not about the build the
 committed rows came from.
 
 `evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv` already records both
-rows moving `assembler-gap` → `match` under this build, and
-`bank1/D946` (the 47th row, 148 instructions in before it stops — walked off
-the committed `ec/decompiled/bank1/D946.asm`, which ends at 0xDA6D before the
-0xDA6E its `detail` names) with them. It records the outcomes; it does not
-commit a listing, which is what it would take to read one.
+rows moving `assembler-gap` → `match` under this build, and `bank1/D946` with
+them. It records the outcomes; it does not commit a listing, which is what it
+would take to read one.
+
+`D946` stops at 0xDA6E after 148 instructions in, and that 148 is walked off
+the committed `ec/decompiled/bank1/D946.asm` rather than read out of the row:
+the listing runs 0xD946–0xDAAC, the 148 instructions below the 0xDA6E its
+`detail` names end at 0xDA6D, and 28 further instructions follow them. The
+listing is not exhausted at the address the comparison stopped at, so running
+out of source is not among the candidates.
 
 ## Reproduce
 
