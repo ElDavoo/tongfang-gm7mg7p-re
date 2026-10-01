@@ -167,11 +167,10 @@ the comparison is meant to measure.
 Telling the two apart means reading each `.c` and deciding what its pointer
 algebra means. A regex proxy does produce buckets — `*param_N`, `+ 0x..`,
 neither — but they are not the issue's two, because **a function is not
-reliably one or the other**: `bank1 0xED02 data_run_1a_1e` takes five `byte *`
-parameters and stores through `*param_4`, and in the same body folds
-`BANK3_R6` and a carry chain into a pointer offset. Three of the 97 rows carry
-both shapes. The proxy would be a guess about intent wearing a count's
-clothes.
+reliably one or the other**: `bank1 0xED02 data_run_1a_1e` stores through
+`*param_4`, and in the same body folds `BANK3_R6` and a carry chain into a
+pointer offset. Three of the 97 rows carry both shapes. The proxy would be a
+guess about intent wearing a count's clothes.
 
 So the class states the thing that is true of every row in it — the function
 holds no `mov dptr,#imm` naming any address its C names, so the address is
@@ -315,7 +314,7 @@ inputs alone, so refreshing it needs python3 and no Ghidra run.
 - **The walk is linear over the listing's extent.** It is a decode of bytes
   from the entry, not a traversal: a literal in a block this walk desyncs onto
   is not found, and the listing's extent is an upper bound where the boundary
-  came from a call-target byte scan (`ec/annotations/bank-call-audit.md` 1).
+  came from a call-target byte scan (`ec/annotations/bank-call-audit.md` §1).
 - **The annotation comment is stripped, and the census does not depend on
   that.** `--self-test` asserts the four counts are identical when every block
   comment is removed instead, so the rule is a choice rather than a reading —

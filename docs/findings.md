@@ -3985,9 +3985,8 @@ compared 1047 of 2057 functions, 1008 vacuous; 719 agreed, 328 disagreed, 2 no-e
 ```
 
 so `940 vacuous out of 1,957` is `1008 vacuous out of 2,057`. The sample grew
-because the annotation layer grew — every annotated function the listing index
-carries is a backbone row — and none of it moved the method: same window, same
-four outcomes, same `--check`. The per-program table above shares the 1,957
+because the annotation layer grew, and none of it moved the method: same window,
+same four outcomes, same `--check`. The per-program table above shares the 1,957
 denominator and is stale on the same axis; read out of the committed report it
 is `bank0 702/444/258/103`, `bank1 604/345/257/108`, `common 210/73/137/40`,
 `pd 541/185/356/77` over `sampled/compared/vacuous/disagree`. This is the same
