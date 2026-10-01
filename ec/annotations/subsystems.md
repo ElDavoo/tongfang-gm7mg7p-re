@@ -312,10 +312,16 @@ down. It settles three ways:
 `ec/ghidra/reassembly.csv` records all three as `match` and
 `verify_reassembly.py --check` reports 0 disagreements, so this is a statement
 about the bytes and not about Ghidra's opinion of them. `0x0022` is the one
-exception worth naming: the reassembler emits no bytes for it at all
-(`assembler-gap`, "no bytes emitted at 0022"), which is a property of the
-`sdas8051` used to re-assemble the listing, not a disagreement about the `ret`
-that is there.
+exception worth naming: its row reads `assembler-gap`, "no bytes emitted at
+0022", which records that `read_lst()`'s parse of the listing the assembler
+printed carried no entry at `0x0022`. That is not a statement about the `ret`
+that is there, and not a disagreement. Whether the assembler emitted nothing
+or printed something that parse cannot see is not settled — the committed
+`assembler-gap` spelling predates `check_one()` splitting the two cases, and
+under it that shape is a `listing-gap`, about what the listing carried rather
+than what the assembler can express. The three candidates and what would settle
+each are in
+[`reassembly-checked-counts-comparisons.md`](../../docs/findings/reassembly-checked-counts-comparisons.md).
 
 **What that does not establish, stated plainly.** "The vector target is one
 `reti`" is a claim about this image. It is *not* "int0 and serial 0 are

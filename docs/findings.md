@@ -2831,6 +2831,22 @@ functions have every instruction verified; a further 73 have all but 143
 between them. Reproduced unchanged on two SDCC versions (4.5.0 and 4.6.0,
 `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14`).
 
+*(**Corrected in place, 2026-10-01, issue #229.** The figure above is how many
+instructions `to_sdas()` translated and handed to the assembler, which is not
+how many had their bytes compared against the image — the report's
+`instructions_checked` column counts the first and the second was not counted at
+all. For most rows the two coincide. For the rows whose `detail` reads `no bytes
+emitted at <addr>`, they do not: 48 rows of the committed
+`ec/ghidra/reassembly.csv` report 702 instructions checked and compared none of
+them, because `read_lst()`'s parse of the listing their assembler printed
+carried no entry at the very address the comparison reached first. So the claim
+the committed file supports is a **ceiling**, and
+`ec/tools/reassembly_checked_bound.py --check` prints it: at `d456411`, at most
+44,816 of the 45,661 instructions in the listings. The paragraph above is left as
+measured. What the ceiling is and is not, the 14 rows whose `.org` anchor is not
+their own address, and the three causes this does not distinguish are in
+[`findings/reassembly-checked-counts-comparisons.md`](findings/reassembly-checked-counts-comparisons.md).)*
+
 *(2,705 to 2,707 rows of the reassembly report, and 2,708 to 2,710 listings in
 the index, with two seeded routines: issue #285's bank0 0xCC64, 58 instructions,
 and issue #262's bank1 0xC1E7, 29 instructions, all re-encoded and 0 unchecked.
@@ -3003,6 +3019,16 @@ thing about bytes that are not in question. **The claim stays 45,481 of 45,624
 (99.69%).** What changes is coverage: all 45,624 instructions are now read by
 an independent check, and adding the two into a single 100% would assert
 something neither establishes.
+
+*(Corrected in place, 2026-10-01, issue #229: same correction as the section's
+opening paragraph, and the number there is a count of instructions handed to the
+assembler rather than of bytes compared, so what is restated here as "the claim"
+is a ceiling — `ec/tools/reassembly_checked_bound.py --check` prints it. What
+this paragraph does get right, and gets right because of the byte check rather
+than the re-encode, is the last sentence: every instruction in the committed
+listing is read by an independent check, and neither kind of evidence licenses a
+single percentage. That part is unchanged and is the reason the cross-decode is
+worth having at all.)*
 
 **Two decoders rarely spell an instruction the same way,** so the comparison
 needs a canonical form, and the interesting part is what it may *not* fold.
@@ -3199,6 +3225,13 @@ the honest way to get one is an encoder whose oracle is r2 or the firmware
 bytes, not `sdas8051` agreeing with an agent's own table. Writing such an
 encoder is still not started; §11 is the record of what happens when a gap list
 is hand-built instead.
+
+*(Corrected in place, 2026-10-01, issue #229: "the 45,481 by re-encode" is a
+count of instructions handed to the assembler, and what reached a comparison is
+the ceiling `ec/tools/reassembly_checked_bound.py --check` prints. The
+distinction this paragraph draws — the two kinds of evidence may not be added
+into one percentage — survives it, and is why the ceiling is printed as a
+ceiling rather than restated as a percentage here.)*
 
 **Everything about the hardware.** No live test has been run in any of this.
 
@@ -3493,6 +3526,19 @@ column and by nothing beneath it. `08b72e2` therefore carries the anchors: 2,705
 rows, `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` on every one, 45,394 checked +
 143 unchecked, 2,574 `match` / 73 `partial` / 58 `assembler-gap`.
 
+*(Corrected in place, 2026-10-01, issue #229. "45,394 of 45,537 re-encoding to
+the firmware bytes" above is the report's `instructions_checked` total, which
+counts the instructions handed to the assembler rather than the bytes that
+reached a comparison against the image; 48 of the 58 `assembler-gap` rows carry
+702 of them and compared none, because `read_lst()`'s parse of the listing
+carried no entry where one was expected. The figure is a measurement of
+`08b72e2` and stays; what the committed file supports is the ceiling
+`ec/tools/reassembly_checked_bound.py --check` prints. Nothing in this section's
+conclusion rests on the difference — it is about the digest column and the
+history window, which the row count and the digest compare identically as well —
+and [`findings/reassembly-checked-counts-comparisons.md`](findings/reassembly-checked-counts-comparisons.md)
+has the correction.)*
+
 On a full clone, the comparison is two commands:
 
 ```
@@ -3631,6 +3677,20 @@ right**, and the run does not say so either: a moved category is a measurement,
 "the assembler got better" is not, and nothing in this repository can support
 the second — two ASxxxx builds are two different things being measured, and
 which of them is right is a question about the disassembly.
+
+*(Corrected in place, 2026-10-01, issue #229. The `instructions_checked` row
+above is 45,394 in both columns and the paragraph below reads that as the count
+being unaffected by the build. It is unaffected because it was never a
+measurement of comparison: it counts what was handed to the assembler, and the
+702 instructions in the 48 committed rows whose listing parse carried no entry
+at their own anchor are inside the 45,394 of both. On `02.00` those 702
+*were* compared and matched, so the two defects were cancelling and the
+agreement above is real. The ceiling the committed file supports is what
+`ec/tools/reassembly_checked_bound.py --check` prints — at `d456411`, at most
+44,816 of 45,661 — and
+[`findings/reassembly-checked-counts-comparisons.md`](findings/reassembly-checked-counts-comparisons.md)
+has it. The 47/5/6 split is unaffected: those are `outcome` cells, and an
+outcome is not what moved.)*
 
 **It also corrects a claim this file's tool made about itself.**
 `assembler_version()`'s docstring said the match count "is not expected to move
@@ -3775,7 +3835,7 @@ reports for itself.
 | `partial` | 73 | 78 |
 | `assembler-gap` | 58 | 6 |
 | `mismatch` / `assembler-error` | 0 / 0 | 0 / 0 |
-| re-encoded | 45,394 of 45,537 (99.69%) | 45,394 of 45,537 (99.69%) |
+| translated for the assembler (issue #229) | 45,394 of 45,537 | 45,394 of 45,537 |
 | unchecked | 143 | 143 |
 
 Six years apart in SDCC, and not the same ASxxxx: `02.00` is not a prefix of

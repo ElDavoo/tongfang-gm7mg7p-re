@@ -165,7 +165,7 @@ cutting `.github/scripts/agent-gates.sh` at `:64`, plus the one `.yml`. This
 branch adds a ninth, `ci-workflow-lint-docs-ci.patch`, which cuts
 `.github/workflows/ci.yml` — which is the next paragraph.
 
-The exclusion comment at `tools/test_agent_gates_patches.py:83-87` (the issue
+The exclusion comment at `tools/test_agent_gates_patches.py:84-88` (the issue
 cites `:64-66`) is right about *staleness* and says nothing about the lint, and
 the issue is right that the patch route does not cover the `.yml` at all.
 

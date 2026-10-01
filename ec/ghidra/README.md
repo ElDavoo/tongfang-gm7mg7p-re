@@ -358,6 +358,15 @@ and its assembler are the ones the report was measured with. A run on a
 runner's own assembler prints a disagreement in place of that agreement, and the
 paragraph below has what it says.
 
+**Its `reassembly, by instruction` block has since split in two, and the reason
+is the correction below.** `check_one()` returns the number of instructions it
+translated *and*, separately, the number of bytes that reached a comparison
+against the image, and the run prints both; it also counts a fifth outcome,
+`listing-gap`, for a row whose assembled listing parse carried no entry where one
+was expected — which is not the same thing as `assembler-gap`, meaning a form
+`sdas8051` cannot express. The single line above is therefore the translation
+count under its old label, and it is the higher of the two.
+
 **Seven rows are not from the same run as the other 2,704.** `bank0,CC64`, the
 listing issue #285 added, and `bank1,C1E7`, the listing issue #262 added, were
 both measured with the runner's `sdas8051 02.00` and their `assembler` cells say
@@ -394,6 +403,27 @@ sentence below: the pinned build is still what a new listing wants.
 **45,500 of 45,643 instructions re-encode to the exact bytes in the firmware,
 and no function disagrees.** 2,580 of 2,711 have every instruction verified; a
 further 73 have all but 143 between them.
+
+*(Corrected in place, 2026-10-01, issue #229. That sentence counts the
+instructions `to_sdas()` translated and handed to `sdas8051`, and it is the
+higher of two numbers rather than the lower: the bytes that actually reached a
+comparison against the image were not counted at all, because `check_one()`
+returned one count for both. For most rows the two coincide. The 52 committed
+rows whose `detail` reads `no bytes emitted at <addr>` are where they do not:
+every instruction translated, the assembler ran, and `read_lst()`'s parse of the
+listing it printed carried no entry at the address the comparison reached first.
+The 48 of those 52 that stop at their own `.org` anchor compared nothing at all,
+and the 702 instructions counted for them were none of them compared. What the
+committed file supports is a **ceiling**, and
+`ec/tools/reassembly_checked_bound.py --check` prints it; at `d456411` it is at
+most 44,816 of the 45,661 instructions in the listings. The paragraph above is
+left as measured.
+`../docs/findings/reassembly-checked-counts-comparisons.md` has the derivation,
+the anchor census that widens the correction from the 46 rows a naive
+row-address reading finds, and the three causes this does not distinguish. This
+is prose beside the correction rather than a `*(Superseded …)*` note: this file
+is outside `docs/findings/`, and a per-merge note accumulating in it is the
+shape `check_no_append_logs.py` exists to stop.)*
 
 The 143 are 74 `AJMP`, 36 `ACALL`, 19 `MOV bit,C`, 13 `CPL bit` and one
 `DJNZ A`. `AJMP` and `ACALL` are gaps because `sdas8051` encodes them
@@ -435,6 +465,14 @@ categories are reported and neither is adjudicated: a branch that has re-reporte
 its listings and not yet committed the CSV moves the tally legitimately, and
 this tool cannot tell that from a regression. `docs/findings.md` §14g has the
 calibration, and the question it leaves open.
+
+**`instructions_checked` being identical in both is not robustness, and it is
+what the correction above is about.** Those two columns are computed by
+`to_sdas()` before the assembler is invoked, so they cannot move with the build
+— and they count what was handed over rather than what was compared, which is
+why the 702 instructions in rows whose listing parse had no entry are inside the
+45,394 of both. On `02.00` those 702 *were* compared and matched. The two
+figures being equal is two properties cancelling, not a third property holding.
 
 **Adding a listing therefore cannot be finished on a runner, and the gap is
 narrower than it looks.** `verify_reassembly.py:check` fails any listing in
@@ -533,6 +571,14 @@ arbitrate, constructively. For the 143 the bytes are already settled by the
 byte check, and what is agreed is the *text*, between two decoders reading the
 same byte column. It is a weaker form of the same claim, and it inherits the
 byte check's premise rather than escaping it.
+
+*(Corrected in place, 2026-10-01, issue #229: "45,500 by re-encode" counts what
+was handed to the assembler, so it is the translation count and not the reach —
+the correction above applies to this restatement too, and the reach is the
+ceiling `ec/tools/reassembly_checked_bound.py --check` prints. The last two
+sentences are why neither number belongs in a percentage: one is a ceiling and
+the other is a set `sdas8051` declines, and this paragraph's own advice against
+adding them together is the right reading of both.)*
 
 ### How the two renderings are compared
 

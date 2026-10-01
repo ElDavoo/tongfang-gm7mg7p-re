@@ -439,3 +439,49 @@ two-step landing procedure, and the six places elsewhere in the tree that
 argue from "the `gate` list is seven lines long" and will need re-deriving
 on the day are in
 [`landed-gate-patch-state.md`](landed-gate-patch-state.md).
+
+## A patch in the tail of `check_ghidra_tooling()`
+
+**2026-10-01, issue #229.** `docs/ci/agent-gates-reassembly-bound-check.patch`
+wires `ec/tools/reassembly_checked_bound.py --check` into the cheap tier, and
+its placement answers a question the collision table above leaves open: **is
+there anywhere left in `agent-gates.sh` a prepared patch can be cut that reads
+like it belongs there?**
+
+The answer for the two obvious places is no, and now exhaustively rather than
+partly. Every gap in the `for tool in` list is already another patch's context
+— `0751-self-test`, `gap-text-check` and `disasm8051-self-test` between them
+cover the list from its head to its foot, and `0751-writer-census` writes into
+the same function just above the `for` for the same reason — and the `gate`
+list is jointly held by capture-claims, pin-table-rows and testdata-row-claims
+from `gate 'registers.yaml'` to `gate 'doc links'`, the three being the only
+patches that add a `gate` line at all. That is also what
+`check_findings_frozen` moved out of `check_doc_links()` to avoid; its own
+hunks sit either side of that function rather than in the list. The
+paragraph above says the honest move at that point is upstream; that was about
+a *third* `ec/tools/` entry in the tool list and stands.
+
+What is new is that the free region is not empty. `check_ghidra_tooling()`'s
+tail — after the `done`, before `rm -rf "$scratch"` — is reachable by no
+prepared patch's hunk, and it is inside the gate this tool belongs to anyway:
+every arm of that loop is a committed-text check under `python3` with no
+assembler and no Ghidra, and `reassembly_checked_bound.py --check` reads the
+committed report, the committed `.asm` listings and the standard library. So
+this patch is one hunk, it composes with the rest of the set in every order,
+and `tools/test_agent_gates_patches.py` holds both the set and that — its
+`PATCHES` list is the index of what is prepared, and `len(PATCHES)` is the
+number of patches, rather than a figure typed into this prose and re-derivable
+from neither.
+
+**The other half of the placement is `--check`'s polarity, and it is the thing
+to know before landing it.** It fails on what a commit can fix — a cell that
+does not hold an integer, a `detail` shape it does not recognise, an anchor it
+could not read — and *prints* the overclaim rather than failing on it, because
+the strict form would be red on the tree it is landed onto and would stay red
+until issue #157 re-reports `ec/ghidra/reassembly.csv` under the pinned nix
+build. That is the §"A deviation" heading above, arriving from the other
+direction: a gate that is red on the day it lands is the cheapest way to get a
+gate switched off, and `ec/tools/test_reassembly_checked_bound.py` holds the
+strict form red on the committed tree so `--fail-on-overclaim` is not a flag
+nobody can tell works. The census it derives from is
+[`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md).

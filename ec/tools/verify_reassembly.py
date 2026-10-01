@@ -59,12 +59,19 @@ these bytes and SDCC does not emit Keil's code generation. See
 
 Outcomes per function, kept apart because they mean different things:
 
-  match       every instruction re-encodes to the firmware bytes
-  partial     some do; the rest use a form sdas8051 cannot express
-  gap         none of them do
-  mismatch    sdas assembled something and it is not what the firmware holds.
-              The only outcome that threatens the claim, and disasm8051.py is
-              the tie-breaker.
+  match         every instruction re-encodes to the firmware bytes
+  partial       some do; the rest use a form sdas8051 cannot express
+  assembler-gap none of them do: no instruction in the function is a form
+                sdas8051 can express
+  listing-gap   every instruction translated, sdas8051 ran, and the listing it
+                printed has no entry at an address the comparison reached. What
+                was observed is the absence of an entry in read_lst()'s parse --
+                not that the assembler refused the form, which is what
+                assembler-gap above means, and not that it emitted nothing,
+                which nothing here establishes.
+  mismatch      sdas assembled something and it is not what the firmware holds.
+                The only outcome that threatens the claim, and disasm8051.py is
+                the tie-breaker.
 
 Requires `sdas8051` (SDCC) for the full run. Without it the tool says so and
 `--check` still runs.
@@ -241,7 +248,19 @@ def find_assembler(explicit=None):
 def parse_listing(path):
     """-> [(addr, bytes_hex, mnemonic, operands)], in file order."""
     out = []
-    for line in open(path, errors="replace"):
+    # The handle is closed here rather than left to the garbage collector,
+    # because this is called once per listing and a full run holds 2,717 of
+    # them at once. That leaked silently -- CPython collects an unreferenced
+    # file promptly, so no run ever complained -- until a unit test called it
+    # under unittest's warning filters and printed one ResourceWarning per
+    # listing. Three suites carry a comment about this and one reads listings
+    # with its own reader to avoid it; #229's census cannot, since the claim it
+    # makes is that this reader and check_one() agree on a listing's first
+    # address. `out` already holds a tuple per instruction, so holding the
+    # lines is not the part that costs.
+    with open(path, errors="replace") as handle:
+        lines = list(handle)
+    for line in lines:
         if line.startswith(";") or not line.strip():
             continue
         m = LINE_RE.match(line.rstrip("\n"))
@@ -457,23 +476,42 @@ def check_one(row, image, work, sdas):
     checked. That is why the outcome is a pair (outcome, detail) plus counts:
     a function is only `match` when every instruction in it re-encoded.
 
-    Returns (outcome, detail, n_checked, n_skipped, digest). The digest is
-    computed here, off the listing this call has already parsed, rather than by
-    a second parse in write_report: #138 made this parse-once, and reading it
-    twice to add a column would give the saving back. It is empty for the two
-    outcomes that never reach a listing, because there is nothing to digest."""
+    Returns (outcome, detail, n_compared, n_checked, n_skipped, digest,
+    anchor). The digest is computed here, off the listing this call has already
+    parsed, rather than by a second parse in write_report: #138 made this
+    parse-once, and reading it twice to add a column would give the saving
+    back. It is empty for the two outcomes that never reach a listing, because
+    there is nothing to digest.
+
+    `n_compared` is bytes, and it is the only one of the three counts that is a
+    measurement of verification rather than of translation: it is accumulated
+    inside the comparison loop, once per byte that reached the `got != want`
+    test. A byte the listing has no entry for never reaches that test, so a
+    function that translates everything and compares nothing counts zero -- which
+    is what `assembler-gap` used to report as `len(checked)` instructions, and
+    what made "45,394 of 45,537 re-encode to the firmware bytes" an
+    overstatement rather than a bound (docs/findings/
+    reassembly-checked-counts-comparisons.md).
+
+    `n_checked` stays an instruction count, so `instructions_checked` keeps the
+    meaning the committed report's column has always had and the rows above it
+    keep their numbers. `anchor` is `insns[0][0]`, the address the `.org` is
+    emitted at and therefore the first one a listing entry can be read at. It is
+    not the row's own address for 14 rows, so a `listing-gap` detail that names
+    an address below the row that reports it is this and not a mis-parse."""
     rel = row["out_file"]
     if not rel or rel.startswith("("):
-        return "skipped", rel, 0, 0, ""
+        return "skipped", rel, 0, 0, 0, "", 0
     path = os.path.join(DECOMPILED, rel)
     if not os.path.isfile(path):
-        return "missing-listing", rel, 0, 0, ""
+        return "missing-listing", rel, 0, 0, 0, "", 0
     insns = parse_listing(path)
     digest = digest_of(insns)
     if not insns:
-        return "empty-listing", rel, 0, 0, digest
+        return "empty-listing", rel, 0, 0, 0, digest, 0
 
     lines = ["\t.area CODE (ABS)", "\t.org 0x%04x" % insns[0][0]]
+    anchor = insns[0][0]
     prev_end = None
     area = 0
     checked, skipped = [], []
@@ -511,7 +549,13 @@ def check_one(row, image, work, sdas):
             # optional here.
             pass
     if not checked:
-        return "assembler-gap", (skipped[0][2] if skipped else ""), 0, len(skipped), digest
+        # A genuine expressiveness gap, and the only place that gets the name:
+        # nothing in this function translated, so there was never anything to
+        # hand the assembler. The other case that used to answer to it -- a
+        # listing with no entry where one was expected -- returns
+        # `listing-gap` below.
+        return ("assembler-gap", (skipped[0][2] if skipped else ""),
+                0, 0, len(skipped), digest, anchor)
 
     start = insns[0][0]
     end = insns[-1][0] + len(insns[-1][1]) // 2
@@ -522,7 +566,8 @@ def check_one(row, image, work, sdas):
     r = subprocess.run([sdas, "-lxosgff", src], capture_output=True, text=True)
     if r.returncode != 0:
         tail = (r.stdout + r.stderr).strip().splitlines()
-        return "assembler-error", (tail[-1] if tail else "failed"), len(checked), len(skipped), digest
+        return ("assembler-error", (tail[-1] if tail else "failed"),
+                0, len(checked), len(skipped), digest, anchor)
     mem = read_lst(stem + ".lst")
     for addr, nbytes, _why in skipped:
         for i in range(max(1, nbytes)):
@@ -530,19 +575,38 @@ def check_one(row, image, work, sdas):
                 # The assembler emitted something here after all, from a
                 # neighbouring instruction. Not a reason to fail.
                 pass
+    compared = 0
     for addr, nbytes in checked:
         for i in range(max(1, nbytes)):
             a = addr + i
             want = image[a] if a < len(image) else None
             got = mem.get(a)
             if got is None:
-                return "assembler-gap", "no bytes emitted at %04X" % a, len(checked), len(skipped), digest
+                # Every instruction above translated and the assembler ran and
+                # exited 0, so this is not a refusal: read_lst()'s parse of the
+                # listing has no entry at an address the comparison reached.
+                # Which of the three causes that is -- an expressiveness
+                # refusal, a listing shape this build does not produce, or an
+                # anchor read_lst()'s regex cannot see -- is not settled here and
+                # is not settled by anything in this file; docs/findings/
+                # reassembly-checked-counts-comparisons.md names all three.
+                # The anchor is in the detail because a detail naming an
+                # address below its own row is the anchor and not the failure:
+                # 14 rows of the committed report anchor somewhere else.
+                return ("listing-gap",
+                        "no bytes emitted at %04X (anchored at %04X)"
+                        % (a, anchor),
+                        compared, len(checked), len(skipped), digest, anchor)
+            compared += 1
             if got != want:
-                return "mismatch", "%04X: assembled %02X, firmware %02X" % (a, got, want), len(checked), len(skipped), digest
+                return ("mismatch",
+                        "%04X: assembled %02X, firmware %02X" % (a, got, want),
+                        compared, len(checked), len(skipped), digest, anchor)
     if skipped:
-        return "partial", "%d of %d instruction(s) unchecked, first: %s" % (
-            len(skipped), len(checked) + len(skipped), skipped[0][2]), len(checked), len(skipped), digest
-    return "match", "", len(checked), 0, digest
+        return ("partial", "%d of %d instruction(s) unchecked, first: %s" % (
+            len(skipped), len(checked) + len(skipped), skipped[0][2]),
+            compared, len(checked), len(skipped), digest, anchor)
+    return "match", "", compared, len(checked), 0, digest, anchor
 
 
 def scratch_dir(work, index):
@@ -590,7 +654,7 @@ def run_rows(rows, work, images, sdas, jobs, check=None):
                 row, images.get(row["program"]) or images["bank0"],
                 scratch_dir(work, idx), sdas)
         except Exception as exc:                       # a crash is a result
-            return row, "error", "%s: %s" % (type(exc).__name__, exc), 0, 0, ""
+            return row, "error", "%s: %s" % (type(exc).__name__, exc), 0, 0, 0, "", 0
 
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         return [tuple(r) for r in pool.map(one, list(enumerate(rows)))]
@@ -617,10 +681,11 @@ def verify(limit=None, jobs=8, work=None, sdas=None, quiet=False):
     results = run_rows(rows, work, loaded, sdas, jobs)
 
     tally = {}
-    for _row, outcome, _detail, _c, _s, _d in results:
+    for _row, outcome, _detail, _b, _c, _s, _d, _a in results:
         tally[outcome] = tally.get(outcome, 0) + 1
-    checked = sum(r[3] for r in results)
-    skipped = sum(r[4] for r in results)
+    compared = sum(r[3] for r in results)
+    checked = sum(r[4] for r in results)
+    skipped = sum(r[5] for r in results)
     insn_total = checked + skipped
     version = assembler_version(sdas)
     if not quiet:
@@ -637,8 +702,13 @@ def verify(limit=None, jobs=8, work=None, sdas=None, quiet=False):
         for outcome in sorted(tally, key=lambda o: -tally[o]):
             print("    %-16s %d" % (outcome, tally[outcome]))
         print("\n  reassembly, by instruction:")
-        print("    re-encode to the firmware bytes : %d of %d (%.2f%%)"
+        print("    translated into sdas8051 source : %d of %d (%.2f%%)"
               % (checked, insn_total, 100.0 * checked / insn_total if insn_total else 0))
+        # The byte count is the one worth reading, because it is the one that
+        # says how much was verified rather than how much was handed over. It
+        # is short of the instruction count by whatever a `listing-gap` row
+        # reached first and never got past.
+        print("    bytes compared to the firmware  : %d" % compared)
         print("    unchecked (sdas8051 cannot express the form): %d" % skipped)
         print("\n  %d function(s) have every instruction re-encode byte-exactly; "
               "%d more have all but %d instruction(s) verified."
@@ -660,15 +730,28 @@ def assembler_version(sdas):
     reader comparing two reports needs to know whether they used the same tool.
 
     What moves with the version is the *split* -- which rows read `match` and
-    which read `assembler-gap` -- because which of those two a row gets is
-    decided by what the assembler can express rather than by the firmware. What
-    does not move is `mismatch`: the firmware bytes are the arbiter there, and a
-    different ASxxxx changing that number would be a finding. Measured between
-    the committed report's `05.50.4+NoICE+SDCCmods-WIP-R14` and the Ubuntu
-    `sdas8051 02.00` on this repository's runner: `match` 2,574 -> 2,621,
-    `assembler-gap` 58 -> 6, `mismatch` 0 -> 0, and `instructions_checked`
-    45,394 -> 45,394. The match count is therefore not a fact about the
-    firmware alone, and this file previously said it was."""
+    which read `assembler-gap` or `listing-gap` -- because which of those three
+    a row gets is decided by what the assembler emits rather than by the
+    firmware. What does not move is `mismatch`: the firmware bytes are the
+    arbiter there, and a different ASxxxx changing that number would be a
+    finding. Measured between the committed report's
+    `05.50.4+NoICE+SDCCmods-WIP-R14` and the Ubuntu `sdas8051 02.00` on this
+    repository's runner: `match` 2,574 -> 2,621, `assembler-gap` 58 -> 6,
+    `mismatch` 0 -> 0, and `instructions_checked` 45,394 -> 45,394. The match
+    count is therefore not a fact about the firmware alone, and this file
+    previously said it was.
+
+    The figure quoted here is the one its run measured, on a report that has
+    since grown; `reassembly_checked_bound.py --check` prints the census
+    against the committed CSV, which is the one to read for the tree as it is
+    now. The `instructions_checked` total being *identical* across the two
+    builds is not a robustness result either -- it is that the column counts
+    what was handed to sdas8051 rather than what was compared against the
+    firmware. The 702 instructions in the 48 committed rows whose listing parse
+    had no entry at their own anchor are inside the 45,394 both runs report, and
+    the 02.00 run did compare and match every one of them --
+    `evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv` is where.
+    docs/findings/reassembly-checked-counts-comparisons.md."""
     try:
         r = subprocess.run([sdas], capture_output=True, text=True, timeout=20)
         for line in (r.stdout + r.stderr).splitlines():
@@ -688,10 +771,21 @@ def write_report(results, sdas, path=REPORT, version=None):
     version = version if version is not None else assembler_version(sdas)
     with open(path, "w", newline="") as f:
         w = csv.writer(f, lineterminator="\n")
+        # The column set is the committed report's, byte for byte, and it is
+        # the byte count that must stay that way rather than a preference:
+        # tools/check_deep_schedule_emit.py holds emit_csv()'s header against
+        # the first line of ec/ghidra/reassembly.csv, because a column on one
+        # side only is how the (program, addr) join the nightly artifact exists
+        # for stops working. `check_one()` returns the bytes it compared and the
+        # address it anchored at; both belong in this header, and both wait for
+        # the re-report that #157 owes, the same way listing_digest waited for
+        # --add-digest-column. The anchor is in the `detail` of every
+        # `listing-gap` row instead, so a report that has been re-run under this
+        # code says where it looked without a column for it.
         w.writerow(["program", "addr", "name", "outcome", "listing_digest",
                     "instructions_checked", "instructions_unchecked", "detail",
                     "assembler"])
-        for row, outcome, detail, checked, skipped, digest in results:
+        for row, outcome, detail, _compared, checked, skipped, digest, _a in results:
             w.writerow([row["program"], row["addr"], row["name"], outcome,
                         digest, checked, skipped, detail,
                         "sdas8051 %s" % version])
@@ -880,10 +974,17 @@ def compare_digests(report, digests, live):
 # The outcomes `check()` and the report comparison both count, in this order, so
 # the two lines read alike. A row carrying anything else is a residual, and is
 # named rather than dropped: a summary that counted three of the categories and
-# then printed "(of 2705)" is the arithmetic error the four-way line exists to
-# remove, and quietly leaving a fifth category out would reintroduce it one row
-# over.
-OUTCOMES = ("match", "partial", "assembler-gap", "mismatch")
+# then printed "(of 2705)" is the arithmetic error this line exists to remove,
+# and quietly leaving another category out would reintroduce it one row over.
+#
+# `assembler-gap` and `listing-gap` are one word apart because the distinction
+# is the whole of issue #229. The first says the assembler cannot express the
+# form and nothing was handed to it; the second says everything translated, the
+# assembler ran and exited 0, and read_lst()'s parse of the listing it printed
+# has no entry at an address the comparison reached. One used to answer to both,
+# which made a measured `match` split look like a statement about what sdas8051
+# can do.
+OUTCOMES = ("match", "partial", "assembler-gap", "listing-gap", "mismatch")
 
 # The most moved rows the comparison names before it says how many more. The cap
 # compare_digests() uses, for the same reason: a reader acts on the first few,
@@ -894,10 +995,10 @@ MOVED_CAP = 20
 def split_tally(counts):
     """-> ([(outcome, n)] in OUTCOMES order, [(outcome, n)] for everything else).
 
-    Two halves because both are needed. The four are this file's vocabulary for
-    a re-encode, and a report that used a fifth is describing a run in terms
-    check_one() can produce: `assembler-error`, `error`, `missing-listing`,
-    `empty-listing`."""
+    Two halves because both are needed. The ordered ones are this file's
+    vocabulary for a re-encode, and a report that used another is describing a
+    run in terms check_one() can produce: `assembler-error`, `error`,
+    `missing-listing`, `empty-listing`, `skipped`."""
     ordered = [(o, counts.get(o, 0)) for o in OUTCOMES]
     residual = sorted((o, n) for o, n in counts.items() if o not in OUTCOMES)
     return ordered, residual
@@ -1026,7 +1127,7 @@ def compare_assembler(version, committed, sdas=None, path=REPORT):
         return lines, False
     lines.append("    NOTE the two differ: %s against %s." % (bare, theirs))
     lines.append("      Which forms an assembler can express decides the "
-                 "match/partial/assembler-gap")
+                 "match/partial/assembler-gap/listing-gap")
     lines.append("      split, so a different ASxxxx is expected to move it; "
                  "`mismatch` is the outcome")
     lines.append("      the firmware arbitrates and the one worth watching. "
@@ -1099,12 +1200,19 @@ def compare_tally(results, tally, committed, limited=False):
     lines.append("    %-20s %9d %10d"
                  % ("rows", len(results), committed["rows"]))
     lines.append(cell_line("instructions checked",
-                           sum(r[3] for r in results), committed["checked"]))
+                           sum(r[4] for r in results), committed["checked"]))
     lines.append(cell_line("instructions unchecked",
-                           sum(r[4] for r in results), committed["unchecked"]))
+                           sum(r[5] for r in results), committed["unchecked"]))
+    # The bytes this run actually compared, against the committed report's
+    # instruction count. There is nothing to compare it *to* -- the column does
+    # not exist yet, and reassembly_checked_bound.py derives the ceiling the
+    # committed file does support -- so this prints the run's own figure beside
+    # the number it is routinely mistaken for rather than diffing it.
+    lines.append("    %-20s %9d %10s" % ("bytes compared", sum(r[3] for r in results),
+                                         "no column"))
 
     moved = []
-    for row, outcome, _detail, _c, _s, _d in results:
+    for row, outcome, _detail, _b, _c, _s, _d, _a in results:
         was = committed["by_key"].get(row["addr"] + "|" + row["program"])
         if was is None:
             moved.append((row["program"], row["addr"], row["name"], outcome,
@@ -1136,14 +1244,18 @@ def run_status(tally):
     """The full run's exit status: zero unless a function re-encodes to different
     bytes than the firmware holds.
 
-    Only that, and deliberately. Two things this run now reports are not
+    Only that, and deliberately. Three things this run reports are not
     adjudicated here: a warning that its assembler differs from the one the
-    committed report was measured with, and a category that moved since. Both
-    are measured, neither is actionable by whoever is not watching -- a branch
-    that re-reported the listings and has not committed its CSV yet moves the
-    tally legitimately, and this tool cannot tell that from a regression. A
-    scheduled run that failed on a difference nobody could action would be
-    noise, not a gate. What fails is the one outcome the firmware arbitrates.
+    committed report was measured with, a category that moved since, and a
+    `listing-gap`. All three are measured, and none is actionable by whoever is
+    not watching -- a branch that re-reported the listings and has not committed
+    its CSV yet moves the tally legitimately, and this tool cannot tell that from
+    a regression. A `listing-gap` is the same shape: the row says the listing it
+    read had no entry at an address, and what that is about -- a build that
+    cannot express the form, a listing this build does not print, or a `read_lst`
+    regex that cannot see what it did -- is settled by the pinned build rather
+    than by any runner here. Failing a scheduled run on it would be noise, not a
+    gate. What fails is the one outcome the firmware arbitrates.
     """
     return 0 if tally.get("mismatch", 0) == 0 else 1
 
@@ -1187,7 +1299,7 @@ def check():
             print("  FAIL %s is in the reassembly report but not in the listing "
                   "index: the report is stale" % key)
             ok = False
-    # All four outcomes, in one order, so the line adds up to the row count it
+    # Every outcome, in one order, so the line adds up to the row count it
     # prints. It said 2,632 of 2,705 until `partial` was counted, which is the
     # whole defect: `partial` is an outcome this file's own check_one() returns
     # and §14e and §14f both quote, and a summary that omits it understates the
@@ -1201,8 +1313,10 @@ def check():
         # committed row saying `error` probably should fail and today does not;
         # docs/findings.md §14g names that as a question this change raises and
         # does not settle. What this line does is make the row countable, so the
-        # summary describes the report it is summarizing.
-        print("  and %s, which are not in the four above"
+        # summary describes the report it is summarizing. The sentence counts
+        # nothing -- OUTCOMES is the list and this points at it -- because a
+        # number here is one more thing for the next outcome to edit.
+        print("  and %s, which are outside OUTCOMES"
               % ", ".join("%d %s" % (n, o) for o, n in residual))
     mism = dict(ordered)["mismatch"]
     if mism:
@@ -1963,9 +2077,10 @@ def self_test():
 
     def run_row(prog, addr, name, outcome, checked=0, unchecked=0):
         """One result in the shape verify() returns, so compare_tally() is
-        handed the same tuple it gets in a real run."""
+        handed the same tuple it gets in a real run: the bytes compared and the
+        anchor are carried whether or not a caller here reads them."""
         return ({"program": prog, "addr": addr, "name": name},
-                outcome, "", checked, unchecked, "")
+                outcome, "", 0, checked, unchecked, "", 0)
 
     def note_text(lines):
         return " ".join(l for l in lines if l.strip().startswith("NOTE"))
@@ -2011,7 +2126,7 @@ def self_test():
                 "outcomes")
     assert_that({o: d for o, _a, _b, d in deltas}
                 == {"match": -1, "partial": 1, "assembler-gap": 0,
-                    "mismatch": 0},
+                    "listing-gap": 0, "mismatch": 0},
                 "every category is compared, and only the two that moved carry "
                 "a delta")
     named = [l for l in lines if "agrees" in l and " here, " in l]
@@ -2083,7 +2198,7 @@ def self_test():
                 "against its own: the bank1 row moved, and the bank0 row, whose "
                 "committed outcome differs, did not")
 
-    # An outcome outside the four is counted and named rather than dropped, and
+    # An outcome outside OUTCOMES is counted and named rather than dropped, and
     # the two halves still add up to the row count. check_one() can return all
     # four of these, so this is the shape a real race or crash produces.
     odd = synth([row(10, 0), row(5, 0, addr="0042", outcome="assembler-error"),
@@ -2092,11 +2207,18 @@ def self_test():
     assert_that([o for o, _ in ordered] == list(OUTCOMES)
                 and residual == [("assembler-error", 1), ("error", 1)]
                 and sum(n for _o, n in ordered + residual) == 3,
-                "an outcome outside the four is named by the residual, and the "
-                "four plus the residual add up to the report's own row count")
+                "an outcome outside OUTCOMES is named by the residual, and the "
+                "two halves add up to the report's own row count")
     assert_that(run_status({"assembler-error": 1, "error": 2}) == 0,
                 "an assembler-error or error row is counted and named, not "
                 "failed on -- docs/findings.md §14g names that as still open")
+    # `listing-gap` is measured and not adjudicated, for the reason run_status()
+    # gives: what it says is about the listing a run read, and the pinned build
+    # settles it rather than whichever runner this is.
+    assert_that(run_status({"listing-gap": 1}) == 0
+                and run_status({"listing-gap": 1, "mismatch": 1}) == 1,
+                "a listing-gap is counted and named, not failed on, and it does "
+                "not stand in for the mismatch that is")
 
     # Nothing to compare against is a reading, not a crash.
     absent = committed_report(os.path.join(cmpdir.name, "not-written.csv"))
@@ -2118,7 +2240,8 @@ def self_test():
     assert_that(moved == [] and deltas == []
                 and any("1 of the committed report's 3 rows" in l for l in lines)
                 and any("committed report: 2 match, 0 partial, 1 "
-                        "assembler-gap, 0 mismatch (of 3)" in l for l in lines),
+                        "assembler-gap, 0 listing-gap, 0 mismatch (of 3)"
+                        in l for l in lines),
                 "a --limit run prints the committed tally as a reference and "
                 "compares nothing against it")
 
@@ -2131,6 +2254,66 @@ def self_test():
                 and scratch_dir(cmpdir.name, 1) == dirs[0],
                 "every function gets its own scratch directory, and it is the "
                 "same one when asked twice")
+
+    # A listing that parses to nothing, with no assembler in the room. This is
+    # the shape issue #229 is about -- every instruction translated, the
+    # assembler run and exited 0, and the listing it printed carried no entry
+    # at the address the comparison reached -- and it is reachable here with a
+    # stub rather than a real sdas8051, so it runs in the cheap tier on every
+    # commit instead of only where one is installed. What used to answer to it
+    # was `assembler-gap`, which says the form is inexpressible, and it is not:
+    # the fixture's four instructions are textbook forms and the image agrees
+    # with every one of them.
+    stub_dir = tempfile.mkdtemp(prefix="rasm-empty-lst-")
+    stub = os.path.join(stub_dir, "sdas-empty-lst")
+    with open(stub, "w") as f:
+        f.write('#!/usr/bin/env python3\n'
+                '"""Stand in for sdas8051: exit 0 having printed an empty listing.\n\n'
+                "The committed `no bytes emitted at %04X` detail is written from\n"
+                "inside check_one()'s comparison loop, so reproducing it needs an\n"
+                "assembler that succeeds and a listing carrying no entry at the\n"
+                "address the comparison reaches. Writing the file rather than\n"
+                "skipping it is deliberate: read_lst() returns {} either way, and\n"
+                "the case that is still open -- a listing this build prints in a\n"
+                'shape the regex cannot see -- needs the file present."\n'
+                '"""\n'
+                "import os\n"
+                "import sys\n\n"
+                "src = sys.argv[-1]\n"
+                "open(os.path.splitext(src)[0] + '.lst', 'w').close()\n")
+    os.chmod(stub, 0o755)
+    empty_img = bytearray(b"\x00" * 0x100)
+    empty_img[0x40:0x48] = bytes.fromhex("7412 0200 4522 00".replace(" ", ""))
+    empty_row = {"program": "bank0", "addr": "0040", "name": "t",
+                 "out_file": "listing-index.csv.tmp-empty"}
+    empty_real = os.path.join(DECOMPILED, "listing-index.csv.tmp-empty")
+    with open(empty_real, "w") as f:
+        f.write("0040  74 12 -     mov   a,#0x12\n"
+                "0042  02 00 45    ljmp  0x0045\n"
+                "0045  22  -  -    ret\n"
+                "0046  00  -  -    nop\n")
+    try:
+        outcome, detail, compared, nchecked, nskip, _d, anchor = check_one(
+            empty_row, bytes(empty_img), scratch_dir(stub_dir, 0), stub)
+        assert_that(outcome == "listing-gap",
+                    "an empty assembled listing is `listing-gap`, not "
+                    "`assembler-gap`: nothing about it says the form is "
+                    "inexpressible (%s)" % outcome)
+        assert_that(compared == 0 and nchecked == 4 and nskip == 0,
+                    "and it reports 0 bytes compared against %d instruction(s) "
+                    "translated, so a row that compared nothing cannot report a "
+                    "checked instruction" % nchecked)
+        assert_that(detail.endswith("(anchored at 0040)")
+                    and anchor == 0x0040,
+                    "the detail names where the `.org` put the function, which "
+                    "is not the row's own address for 14 rows of the committed "
+                    "report (%r)" % detail)
+        assert_that(run_status({"listing-gap": 1}) == 0,
+                    "and a listing-gap run exits 0: it is measured, not "
+                    "adjudicated, for the reason run_status() gives")
+    finally:
+        os.remove(empty_real)
+        shutil.rmtree(stub_dir, ignore_errors=True)
     cmpdir.cleanup()
 
     # The comparison itself, against a byte string we control. A check that
@@ -2157,10 +2340,18 @@ def self_test():
                 "0045  22  -  -    ret\n"
                 "0046  00  -  -    nop\n")
     try:
-        outcome, detail, nchk, nskip, digest = check_one(row, bytes(img), work, sdas)
+        outcome, detail, compared, nchecked, nskip, digest, _a = check_one(
+            row, bytes(img), work, sdas)
         assert_that(outcome == "match",
                     "a correct listing re-encodes to the image bytes (%s %s)"
                     % (outcome, detail))
+        # The whole point of the byte count: on the agreeing path it is every
+        # byte of every translated instruction, so it is not a column that only
+        # reads sensibly when something is wrong.
+        assert_that(compared == 7 and nchecked == 4,
+                    "an agreeing row reports 7 bytes compared across 4 "
+                    "instruction(s), so the two counts are not the same number "
+                    "(%d, %d)" % (compared, nchecked))
         assert_that(digest == digest_of(parse_listing_str(
                         "0040  74 12 -     mov   a,#0x12\n"
                         "0042  02 00 45    ljmp  0x0045\n"
@@ -2170,9 +2361,12 @@ def self_test():
                     "the report is written without a second parse")
         # Corrupt one byte of the image: the check must notice.
         img[0x41] = 0x13
-        outcome = check_one(row, bytes(img), work, sdas)[0]
-        assert_that(outcome == "mismatch",
-                    "a wrong image byte is reported as a mismatch, not a pass")
+        outcome, _d, compared, _c, _s, _g, _an = check_one(
+            row, bytes(img), work, sdas)
+        assert_that(outcome == "mismatch" and compared == 2,
+                    "a wrong image byte is reported as a mismatch, not a pass, "
+                    "and the byte it disagreed on is counted as compared, "
+                    "because it reached the comparison (%d)" % compared)
     finally:
         os.remove(real)
         shutil.rmtree(work, ignore_errors=True)

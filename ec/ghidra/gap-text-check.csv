@@ -54,7 +54,7 @@ common,011C,FUN_CODE_011c,011C,1101,acall 0x0001,acall 0x0001,acall 0x0001,acall
 common,0504,FUN_CODE_0504,0509,01f0,ajmp 0x00f0,ajmp 0x00f0,ajmp 0x00f0,ajmp 0x00f0,GAP_MNEMONICS ajmp,agree
 common,0512,int0_vector_forwarder_to_052f,0512,0103,ajmp 0x0003,ajmp 0x0003,ajmp 0x0003,ajmp 0x0003,GAP_MNEMONICS ajmp,agree
 common,0713,FUN_CODE_0713,071D,0104,ajmp 0x0004,ajmp 0x0004,ajmp 0x0004,ajmp 0x0004,GAP_MNEMONICS ajmp,agree
-common,0D7B,FUN_CODE_0d7b,0DE6,010c,ajmp 0x080c,ajmp 0x080c,ajmp 0x080c,ajmp 0x080c,GAP_MNEMONICS ajmp,agree
+common,0D7B,divide_down_scheduler_counters_44_45_47,0DE6,010c,ajmp 0x080c,ajmp 0x080c,ajmp 0x080c,ajmp 0x080c,GAP_MNEMONICS ajmp,agree
 common,156B,FUN_CODE_156b,156E,1100,acall 0x1000,acall 0x1000,acall 0x1000,acall 0x1000,GAP_MNEMONICS acall,agree
 common,1602,FUN_CODE_1602,1602,4102,ajmp 0x1202,ajmp 0x1202,ajmp 0x1202,ajmp 0x1202,GAP_MNEMONICS ajmp,agree
 common,1706,FUN_CODE_1706,1706,1100,acall 0x1000,acall 0x1000,acall 0x1000,acall 0x1000,GAP_MNEMONICS acall,agree

@@ -1,0 +1,8 @@
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (Intel 8051), page 1.
+Hexadecimal [24-Bits]
+
+
+
+                                      1 	.area CODE (ABS)
+      00AB6D                          2 	.org 0xab6d
+      00AB6D 22               [24]    3 	ret	
