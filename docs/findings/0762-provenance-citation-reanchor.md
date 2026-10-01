@@ -345,11 +345,27 @@ measurement is a sweep: `python3 ec/tools/measure_mark_provenance.py` run at
 each of the **130 first-parent commits** in `368e9e52^..origin/main`, one
 worktree checkout per commit. **113 red, 17 green**, and the 17 are contiguous:
 
+> **Correction (2026-09-30, issue #762 review), leaving the range above as it
+> was written.** The range as named does not hold 130 commits:
+> `git rev-list --first-parent --count 368e9e52^..origin/main` returns **132**,
+> and the sweep stopped at the `ab594a22` below — the two first-parent commits
+> past it, `0a088444` (#1448) and `83b6e01f` (#1457), were never measured, so
+> the sentence above asserted a range it did not cover. Both have since been
+> swept on the same one-worktree-per-commit basis and **each exits 1 with the
+> same 43 citation problems `ab594a22` carries**, which is the whole of the
+> difference: over the full range the split is **132 commits, 115 red, 17
+> green**. The endpoint is written as `83b6e01f` rather than as `origin/main`
+> because a moving ref is what let the range and the count describe different
+> sweeps — `368e9e52^..83b6e01f` is the interval a reader can re-run, and
+> neither commit changes the conclusion, both being red and contiguous with the
+> final red stretch.
+
 | from | to | commits | |
 |---|---|---|---|
 | `368e9e52` (#982, 2026-09-26) | `4f0bcc2f` (#1220) | 65 | red |
 | `00836c06` (#1208, 2026-09-28) | `55ded4c1` (#1300) | 17 | **green** |
 | `5ad88d8d` (#1292, 2026-09-28) | `ab594a22` (#1450, 2026-09-30) | 48 | red — 28 problems at `5ad88d8d`, 43 at `ab594a22` |
+| `ab594a22` (#1450, 2026-09-30) | `83b6e01f` (#1457, 2026-09-30) | 2 | red — 43 at both, swept after the correction above |
 
 So the sentence was false on **two separate stretches**, not one unbroken run,
 and that is this page's own mechanism running the other way: `00836c06` widened
@@ -359,7 +375,7 @@ the row-site join closes both ways` at `00836c06` and again at `55ded4c1`, the
 same figure and the same closure this change arrives at. It is the one merge in
 the range that fixed the pins instead of breaking them, which is why the green
 stretch is the best evidence the rest of this page has rather than a hole in
-it: a re-anchor that worked is exactly what the 113 red trees were missing, and
+it: a re-anchor that worked is exactly what the 115 red trees were missing, and
 why "false on every tree since" is the one phrasing the sweep rules out. The
 two non-universal halves of the withdrawn claim survive re-measurement: the
 eleven commits from `84a89d9a` (#771) to `9a3b78d3` all exit 0 and `368e9e52`

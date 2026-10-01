@@ -389,6 +389,31 @@ which is against the tree the change starts from as the column says.
 > the full sweep are recorded in
 > [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md),
 > which carries the same correction for the same reason.
+>
+> **Correction to the correction's range and count (2026-09-30, issue #762
+> review), leaving the block above as it was written.** Its range and its count
+> described two different sweeps. `git rev-list --first-parent --count
+> 368e9e52^..origin/main` returns **132**, while the run above stopped at its
+> own `ab594a22` endpoint, so the two first-parent commits past it — `0a088444`
+> (#1448) and `83b6e01f` (#1457) — were never measured and the sentence claims
+> a coverage it did not have. Both are swept now, on the same
+> one-worktree-per-commit basis, and **each exits 1 with the same 43 citation
+> problems `ab594a22` carries**, which is a fourth row and the whole of the
+> difference:
+>
+> | from | to | |
+> |---|---|---|
+> | `ab594a22` (#1450, 2026-09-30) | `83b6e01f` (#1457, 2026-09-30) | red, 2 commits — 43 at both |
+>
+> So the full range is **132 commits, 115 red, 17 green**, and the `113` in
+> "the other 113 trees" above is `115` over it. Nothing in the conclusion
+> moves: both commits are red and contiguous with the final red stretch, so the
+> two stretches and the `#1208`–`#1300` green run stand exactly as written
+> above. The endpoint is written as `83b6e01f` and not as `origin/main` because
+> a moving ref is what let the two disagree in the first place —
+> `368e9e52^..83b6e01f` is the interval a reader can re-run, and it is the range
+> [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md)
+> now states.
 
 ### The measurement tool's pins, and the problems it already had
 
