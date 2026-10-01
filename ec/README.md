@@ -906,13 +906,28 @@ where the reading came from — those names come from
 `annotations/ghidra-functions.csv`, which is the editable surface. And the
 committed disassembly re-encodes to the firmware bytes: 45,481 of 45,624
 instructions, measured by `tools/verify_reassembly.py` and recorded in
-`ghidra/reassembly.csv`. The other 143 use five forms `sdas8051` cannot
+`ghidra/reassembly.csv`.
+
+*(Corrected in place, 2026-10-01, issue #229: that figure counts the
+instructions translated and handed to `sdas8051`, not bytes compared against
+the firmware image, and at least 48 committed rows report checked instructions
+without having compared any — so what the committed report supports is a
+ceiling, and `tools/reassembly_checked_bound.py --check` prints it. The
+derivation is in
+[`../docs/findings/reassembly-checked-counts-comparisons.md`](../docs/findings/reassembly-checked-counts-comparisons.md);
+the sentence above is left standing.)*
+
+The other 143 use five forms `sdas8051` cannot
 express, so no assembler reaches them; they are covered instead by
 `tools/verify_gap_text.py`, which cross-decodes each one with
 `tools/disasm8051.py` and records the verdict per instruction in
 `ghidra/gap-text-check.csv` — all 143 agreeing. That does **not** make the
 claim 100%: the re-encode figure stays 45,481 of 45,624, and the two are
-different kinds of evidence. Both are claims about the machine code, not about
+different kinds of evidence. *(Corrected in place, 2026-10-01, issue #229:
+"stays 45,481 of 45,624" restates the translation count, so the correction
+above applies to this sentence too — what is bounded is the ceiling
+`tools/reassembly_checked_bound.py --check` prints, and neither number belongs
+in a percentage.)* Both are claims about the machine code, not about
 the C, and `ghidra/README.md` says at length what it is not. See the repo's GitHub issues for the
 concrete next steps, several of which are independently useful (e.g. the 254
 call sites referencing `0x07D0`, which `trace_xdata_refs.py` places in the PD

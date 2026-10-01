@@ -43,6 +43,15 @@ bigger ([`docs/MISSION.md`](docs/MISSION.md) is the canonical copy):
   committed disassembly re-encodes to the firmware bytes — 45,481 of 45,624
   instructions, checked by `ec/tools/verify_reassembly.py`.
 
+*(Corrected in place, 2026-10-01, issue #229: that figure counts the
+instructions translated and handed to `sdas8051`, not bytes compared against
+the firmware image, and at least 48 committed rows report checked instructions
+without having compared any — so what the committed report supports is a
+ceiling, and `ec/tools/reassembly_checked_bound.py --check` prints it. The
+derivation is in
+[`docs/findings/reassembly-checked-counts-comparisons.md`](docs/findings/reassembly-checked-counts-comparisons.md);
+the sentence above is left standing.)*
+
 No single change finishes it. Progress is one more register's behaviour
 confirmed, one more Windows class decrypted, one more BIOS menu entry
 understood, one more upstream contribution prepared. The

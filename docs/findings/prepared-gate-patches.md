@@ -440,7 +440,7 @@ argue from "the `gate` list is seven lines long" and will need re-deriving
 on the day are in
 [`landed-gate-patch-state.md`](landed-gate-patch-state.md).
 
-## An eighth patch, in the tail of `check_ghidra_tooling()`
+## A patch in the tail of `check_ghidra_tooling()`
 
 **2026-10-01, issue #229.** `docs/ci/agent-gates-reassembly-bound-check.patch`
 wires `ec/tools/reassembly_checked_bound.py --check` into the cheap tier, and
@@ -450,11 +450,14 @@ like it belongs there?**
 
 The answer for the two obvious places is no, and now exhaustively rather than
 partly. Every gap in the `for tool in` list is already another patch's context
-— the union of the gap-text and 0751 windows plus disasm8051's rewritten last
-entry covers the list from `:119` to the end — and the `gate` list is jointly
-held by capture-claims, pin-table-rows and testdata-row-claims from
-`gate 'registers.yaml'` to `gate 'doc links'`, which is what
-`check_findings_frozen` moved out of `check_doc_links()` to avoid. The
+— `0751-self-test`, `gap-text-check` and `disasm8051-self-test` between them
+cover the list from its head to its foot, and `0751-writer-census` writes into
+the same function just above the `for` for the same reason — and the `gate`
+list is jointly held by capture-claims, pin-table-rows and testdata-row-claims
+from `gate 'registers.yaml'` to `gate 'doc links'`, the three being the only
+patches that add a `gate` line at all. That is also what
+`check_findings_frozen` moved out of `check_doc_links()` to avoid; its own
+hunks sit either side of that function rather than in the list. The
 paragraph above says the honest move at that point is upstream; that was about
 a *third* `ec/tools/` entry in the tool list and stands.
 
@@ -464,8 +467,11 @@ prepared patch's hunk, and it is inside the gate this tool belongs to anyway:
 every arm of that loop is a committed-text check under `python3` with no
 assembler and no Ghidra, and `reassembly_checked_bound.py --check` reads the
 committed report, the committed `.asm` listings and the standard library. So
-the eighth patch is one hunk, it composes with the other seven in every order,
-and `tools/test_agent_gates_patches.py` holds that.
+this patch is one hunk, it composes with the rest of the set in every order,
+and `tools/test_agent_gates_patches.py` holds both the set and that — its
+`PATCHES` list is the index of what is prepared, and `len(PATCHES)` is the
+number of patches, rather than a figure typed into this prose and re-derivable
+from neither.
 
 **The other half of the placement is `--check`'s polarity, and it is the thing
 to know before landing it.** It fails on what a commit can fix — a cell that
