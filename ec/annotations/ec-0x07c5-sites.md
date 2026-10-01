@@ -156,8 +156,8 @@ CSV. §7 of the door procedure's cell now points here instead.
 
 ## 3. Bit by bit
 
-The ten sites between them touch five distinct bit positions. Nothing sets any
-of them.
+The ten sites between them touch every bit position except bit 3. Nothing sets
+any of them.
 
 ### 3.1 The four writes: bits 7, 5, 5, 7
 
