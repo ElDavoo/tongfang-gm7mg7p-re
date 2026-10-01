@@ -227,8 +227,9 @@ setup bit, behind a flag it clears as it goes.
 only blind one.** `0xA812` is the whole-byte write of `0x00` — the accumulator
 is cleared at `0xA811`, before the site's own `MOV DPTR`, so nothing in the
 window was read from `0x0751` and a bit a host set does not survive it. The
-other twelve stores over the ten sites are read-modify-writes, each a
-single-bit edit; the table is `../annotations/manual-fan-ctrl-0751-writers.csv`,
+other twelve stores over the ten sites are read-modify-writes, ten of them
+single-bit edits and two clearing USER and TURBO together; the table is
+`../annotations/manual-fan-ctrl-0751-writers.csv`,
 the tool is `../tools/census_xdata_writers.py`, and the reasoning is
 `../../docs/findings/0751-writer-census.md`.
 

@@ -67,13 +67,12 @@ documents. The listing there is worth repeating for what the window does *not*
 contain: the accumulator is zeroed by `clr a` at `0xA811`, which is in the
 *previous* window, before the site's own `mov dptr,#0x0751`. So the site
 writes `0x00` over the whole byte without having read it, and a bit a host set
-in `0x0751` does not survive it. It is also the only store in the ten that
-touches more than one bit, and it is the only one that is not a bit edit — so
-"the EC only ever edits single bits of this byte" is true of the twelve
-read-modify-writes and **not** of the thirteenth.
+in `0x0751` does not survive it. It is the only one of the thirteen that is
+not a bit edit at all — a whole-byte write rather than a masked one.
 
-**The other twelve are all single-bit edits.** `mask` is what the store did to
-the accumulator between the load and the store, rendered:
+**Ten of the other twelve are single-bit edits; two clear USER and TURBO
+together.** `mask` is what the store did to the accumulator between the load
+and the store, rendered:
 
 | mask | stores | what it does to `0x0751` |
 |---|---|---|
@@ -83,17 +82,17 @@ the accumulator between the load and the store, rendered:
 | `orl a,#0x80` | 1 | set bit 7, USER |
 | `anl a,#0x7f` | 2 | clear bit 7, USER |
 | `orl a,#0x10` | 2 | set bit 4, TURBO |
-| `anl a,#0x6f` | 2 | clear bits 4, 5, 6 |
+| `anl a,#0x6f` | 2 | clear bits 7 and 4, USER and TURBO |
 
 Two things a driver author should take from that table rather than from the
 count. `xrl a,#0x40` is a **toggle**, not a set and not a clear: three sites
 invert FAN BOOST rather than driving it to a value, so a read-modify-write
 guarantee does not extend to "the bit ends up where the EC wants it" — it
 extends to "the bit the EC did not name survives". And `anl a,#0x6f` clears
-three bits at once, so a host that has set bit 4 and bit 5 to express a mode
-loses both to two of the ten sites.
+USER and TURBO together, so a host that has set either of those two to express
+a mode loses it to two of the ten sites.
 
-**`0xA818` carries two stores and it is the only site that does.** Its window
+**`0xA818` carries two stores, one of three sites that do.** Its window
 ends on `max_insns (8) exhausted` rather than on a control-flow opcode, so it
 is the one row whose `status` is `window-truncated` and the one row where a
 larger window might hold more — `walk_budget_census.py` is where that mechanism
@@ -114,14 +113,15 @@ vocabulary is closed, and a condition with no evidence cell is refused.
 |---|---|---|
 | `boot-default` | 2 | `BIOS_OEM_2` (`0x0782`) bit 4, `DEFAULT_MODE`, behind the bit-5 one-shot |
 | `temperature-gate` | 1 | CPU and GPU under `0x46` (70 °C) |
-| `mode-decode` | 7 | two on `BIOS_INFO_3` (`0x049F`) bit 1, "Turbo mode supported"; two on a mode decoder's return compared against `0x10`; one on `TRIGGER` (`0x0767`) bit 2 alone; two on an `XDATA_0440` test combined with another flag |
+| `mode-decode` | 7 | two on `BIOS_INFO_3` (`0x049F`) bit 1, "Turbo mode supported"; two on the mode getter's return with bit 7 flipped, reached by a `jnz` that the `cjne` beside the store does not gate; one on `TRIGGER` (`0x0767`) bit 2 alone; two on an `XDATA_0440` test combined with another flag |
 | `host-write-through` | **0** | see below |
 
 **`mode-decode` is a category, not a claim that seven sites all decode the power
-mode.** It is the bucket for a store whose gate is resolved from outside
-`0x0751`, and the evidence column is what says which kind: of the seven, two
-gate on a bit `registers.yaml` names as *Turbo mode supported*, two gate on a
-mode decoder returning something other than `0x10`, one on a `TRIGGER` bit whose
+mode.** It is the bucket for a store whose gate turns on which mode is selected,
+and the evidence column is what says which kind: of the seven, two gate on a
+bit `registers.yaml` names as *Turbo mode supported*, two on the mode getter
+`0xBB40`/`0xCA4C` — which reads `0x0751` itself and returns it masked with
+`0x90`, so its input is this byte — one on a `TRIGGER` bit whose
 relationship to the power mode is not established, and two on `XDATA_0440`
 being non-zero combined with a second flag. A reader who wants "the sites that
 decode the mode" is looking for the evidence cells, not the bucket.
@@ -137,15 +137,19 @@ nobody looked for are the same file. **This is "not found by this method", never
 
 What follows for a `platform_profile` implementation is narrow and worth
 stating because the scoping question was the point of the issue: **a host write
-to `0x0751` has no instruction in the image that reverts it.** Every store found
-here is gated on a temperature, a BIOS setup bit, a mode decode, or a named
-flag bit — and not one of the ten gates on the byte's own previous value. So
-the reads at the other nineteen sites are consumers rather than a write-back
-loop, as far as this method can see. That is consistent with the 2026-09-23 live
-capture already recorded in the `MANUAL_FAN_CTRL` note, where a silent write
-persisted; this adds the static counterpart. It does **not** establish that a
-host write persists, which is a behavioural question and belongs to the
-hardware run that is issue #167.
+to `0x0751` is reverted by some of these stores.** `0xAC06` and `0xC75F` clear
+USER and TURBO, so a bit a host set in either of those two does not survive
+them; `0x8990` clears bit 6 whenever both sensors are under 70 °C, without
+ever testing bit 6. Every store found here is gated on a temperature, a BIOS
+setup bit, a mode decode, or a named flag bit — and not one of the ten gates
+on the byte's own previous value, which is why a read-modify-write reverts
+rather than compares. So the reads at the other nineteen sites are consumers
+rather than a write-back loop, as far as this method can see. That is
+consistent with the 2026-09-23 live capture already recorded in the
+`MANUAL_FAN_CTRL` note, where a silent write persisted; this adds the static
+counterpart. What it does **not** establish is how often any of those stores
+runs, so whether a host write persists is a behavioural question and belongs
+to the hardware run that is issue #167.
 
 ## 4. Why the number is not closed, with a figure
 
@@ -233,8 +237,9 @@ green.**
 - **The `TRIGGER` bit and `0x0440`** gate three of the ten stores and neither
   register's relationship to the power mode is established. `XDATA_0440` has no
   name and 43 references.
-- **The mode decoder at `0xBB40` and `0xCA4C`** is called by two of the ten and
-  its return compared against `0x10`, which is the vendor's Turbo encoding. What
-  it decodes from is not established here, and §3 of
-  `manual-fan-ctrl-0751.md` covers the mode setters from the other side.
+- **The mode getter at `0xBB40` and `0xCA4C`** is called by two of the ten. It
+  reads `0x0751` and returns it masked with `0x90`, the two bits that separate
+  the three vendor modes, so its input is this byte rather than another
+  register. §3 of `manual-fan-ctrl-0751.md` covers the mode setters from the
+  other side.
 - **Issue #34.** The 100 unattributed stores are the reason the count is open.

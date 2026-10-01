@@ -4,7 +4,7 @@
 `trace_xdata_refs.classify()` answers "what happens in an 8-instruction window
 around this `MOV DPTR,#addr`", and what it prints is a **direction**: `read x1`,
 `write x1`, `read x1, write x1`. A direction is not a writer. The `0x0751` site
-table carries 29 such cells and 9 of them say `write`, and neither the cell nor
+table carries 29 such cells and 8 of them say `write`, and neither the cell nor
 the `static_refs: 29` beside it in `registers.yaml` says *which* of those sites
 store, *what* they store, or *under what condition they run*. That is the gap
 `ec/annotations/manual-fan-ctrl-0751.md` 9 and the `MANUAL_FAN_CTRL` note both

@@ -1932,8 +1932,9 @@ registers:
       by a site scan over MOV DPTR,#0x0751 plus one branch-followed segment
       per site whose own window holds no movx. One store is a blind store
       (0xA815, the boot-time Gaming default, which writes 0x00 over the whole
-      byte without reading it) and twelve are read-modify-writes, each a
-      single-bit anl/orl/xrl -- the three xrl a,#0x40 sites TOGGLE bit 6, they
+      byte without reading it) and twelve are read-modify-writes, ten of them
+      single-bit anl/orl/xrl and two clearing USER and TURBO together
+      (anl a,#0x6f) -- the three xrl a,#0x40 sites TOGGLE bit 6, they
       do not drive it to a value. Conditions, read off the gate each site
       sits behind: 2 boot-default (0x0782 bit 4), 1 temperature-gate
       (0x898A, both sensors under 0x46), 7 mode-decode, and
@@ -1942,7 +1943,10 @@ registers:
       **That is the answer #102 and #104 needed, and it is a statement about
       this method, not an absence**: no store found gates on the byte's own
       previous value, and the 19 read-only sites read it without writing it
-      back. **The count is not closed.** walk_branch_arms charges 100 stores
+      back. A host write need not persist -- 0xAC06/0xC75F clear USER and
+      TURBO, and 0x8990 clears bit 6 whenever both sensors are under 0x46
+      -- but how often any of those runs is behavioural, not static.
+      **The count is not closed.** walk_branch_arms charges 100 stores
       to no address across its 171 0x0751 rows, any of which could be a
       0x0751 writer no site scan can name -- that blind spot is issue #34 and
       stays open. Nothing here moves static_refs (the census reads the same
