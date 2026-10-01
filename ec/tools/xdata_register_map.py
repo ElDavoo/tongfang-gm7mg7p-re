@@ -868,12 +868,12 @@ ORACLE = {
     # The arithmetic: `extmem_main_distinct` 895 -> 890 and
     # `symbol_main_distinct` 167 -> 172 is +5/-5, which is the five rows above
     # moving between the two token spellings, and `extmem_main_refs` 7765 -> 7716
-    # against `symbol_main_refs` 6199 -> 6248 is -49/+49, which is
-    # 9 + 8 + 8 + 10 + 10 = 45 plus the four `0x04A2` references the
-    # pair-accessor pass reaches -- the census's own `refs` column, which does
-    # not move, is the cross-check that says so. `extmem_raw` moves 8632 -> 8583
-    # and `extmem_commented` stays at 9, because the nine are annotation prose
-    # quoting the decompile and no prose changed.
+    # against `symbol_main_refs` 6199 -> 6248 is -49/+49, which is the
+    # `DAT_EXTMEM` tokens the five rows above carried in this branch's parent,
+    # not the sum of their `refs` cells -- the census's own `refs` column,
+    # which does not move, is the cross-check that says so. `extmem_raw` moves
+    # 8632 -> 8583 and `extmem_commented` stays at 9, because the nine are
+    # annotation prose quoting the decompile and no prose changed.
     #
     # `0x04A3` is the one address whose *term* does not move, and it is unmoved
     # for the reason the 2026-09-30 per-program re-key recorded: its main-EC half

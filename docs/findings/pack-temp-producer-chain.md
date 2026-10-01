@@ -186,8 +186,11 @@ temperature. It is a second writer reached from a different path.
 ### `0xDB0B` and `0xE100` — the same shape, and the same caveat
 
 `DB0B.asm:125-126` stores `R3:R4` to `0x0502` through `0x889E`, where `R3:R4`
-is `R3 × 10 + 0x0AAA` computed at `DBE3-DBF1` from the R3 `0xCBF3` returned
-(`DB0B.c:85`). `E100.asm:105-108` stores `R1:R2` to `0x0502` and `0x0504`
+is `R3 × 10 + 0x0AAA` computed at `DBE3-DBF1` from the `R3` `DB0B` was entered
+with — the parameter the decompile renders `param_1` at `DB0B.c:82`, which is
+what the store's own operands are built from at `DB0B.c:85`. Where that entry
+value comes from is a separate hop and is **unresolved here**.
+`E100.asm:105-108` stores `R1:R2` to `0x0502` and `0x0504`
 through `0x888c`, where the value is `DAT_EXTMEM_0391 × 10 + 0x0AAA` built at
 `E1A0-E1B0` (`E100.c:60-63`), guarded by bit 4 of `0x04FE` and bit 3 of `0x03FF`
 both clear and bit 1 of `0x0367` clear. **Both are the same
