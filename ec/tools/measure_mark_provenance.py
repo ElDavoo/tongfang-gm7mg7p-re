@@ -259,8 +259,8 @@ def reader_call_sites():
     three readers.
 
     The second half of the census, and it is a second scan because the first
-    one has a blind side worth naming: `grade_gpu_door.py:421` never writes
-    `"MARK"`. It takes `read_capture`'s two-tuple and counts it, so a
+    one has a blind side worth naming: `grade_gpu_door.py`'s `main` never
+    writes `"MARK"`. It takes `read_capture`'s two-tuple and counts it, so a
     consumer that never decides whether a row is a mark is invisible to the
     literal scan. This one has the opposite blind side -- it cannot see a
     reader that opened the CSV itself rather than going through the grader --

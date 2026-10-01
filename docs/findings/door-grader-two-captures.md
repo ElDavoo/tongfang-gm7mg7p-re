@@ -215,8 +215,7 @@ committed inputs or a `tempfile`:
 
 Cases 1-6 fail against the pre-change grader, which is how a test for a defect
 is told apart from a test that describes the code it ships with. Cases 7 and 8
-are the two the cut created; case 7 crashes the pre-change grader on its
-input, which is the other way a case can be worth having.
+are the two the cut created, and they fail against it on the same footing.
 
 ## Not taken, and why
 
