@@ -722,10 +722,10 @@ For each run, from the three CSVs plus the by-hand power readings:
    that line before quoting the section as an answer.
 
    **If it moved back, the byte that came back names the writer.**
-   `../../ec/annotations/manual-fan-ctrl-0751-writers.csv` is the ten sites this
-   firmware image has for `0x0751`, each with the store's own address, its
-   `mask`, and the branch it sits behind — so a value that came back can be
-   matched against a store rather than guessed at. A match is a site *reached*,
+   `../../ec/annotations/manual-fan-ctrl-0751-writers.csv` is the ten writer
+   sites this method finds for `0x0751` in this image, each with the store's own
+   address, its `mask`, and the gate or gates it sits behind — so a value that
+   came back can be matched against a store rather than guessed at. A match is a site *reached*,
    which is a statement about this run and this load and nothing more: the
    table records no frequency, and one arm being taken once is not a mechanism.
    A value matching **no** row in that table is not a contradiction of it — it

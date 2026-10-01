@@ -5,10 +5,13 @@ three committed tables, plus the mode decode around each writer read in
 `r2 -a 8051`. No capture opened, no EC, no hardware, no Windows.)
 
 Issue #196 asked for every write site for `0x0751`, blind stores separated from
-read-modify-writes, and the condition each store fires under. The
-`MANUAL_FAN_CTRL` note in `ec/annotations/registers.yaml` and §9 of
-`ec/annotations/manual-fan-ctrl-0751.md` both say **"at least three paths"**, and
-nothing in the tree had counted them. This is that count.
+read-modify-writes, and the condition each store fires under. What the tree
+carried before this: the Fan Boost paragraph in
+`ec/annotations/manual-fan-ctrl-0751.md` §9 said **"at least three paths"**,
+`docs/findings.md` said **"there are now three paths on which the EC writes
+`0x0751`"**, and the `MANUAL_FAN_CTRL` note in `ec/annotations/registers.yaml`
+named the boot-time and Turbo writers without a count at all. Nothing in the
+tree had counted them. This is that count.
 
 **Ten writer sites, thirteen store instructions**, committed as
 [`ec/annotations/manual-fan-ctrl-0751-writers.csv`](../../ec/annotations/manual-fan-ctrl-0751-writers.csv)
@@ -21,9 +24,11 @@ attached — see §4.
 **"At least three" is corrected in place, not replaced.** §9's third path — the
 `0x8942` arm clearing FAN BOOST at `0x8990` when both sensors are under 70 °C —
 is one of the ten, and it is the only one of the ten whose gate is a
-temperature. The other nine are the two boot-time defaults and seven stores
-reached from a mode decode or a named flag bit. Both original sentences stay
-where they were, each with this file named beside it.
+temperature. The other nine sites are the two boot-time defaults and seven
+reached from a mode decode or a named flag bit. The correction sits beside the
+one sentence it corrects, in `manual-fan-ctrl-0751.md` §9, which names this file.
+`docs/findings.md` is left alone: "three paths" is a true statement about three
+paths, and this count is a larger one, not a different answer to it.
 
 ## 1. What the count is a count *of*, and what it is not
 
@@ -103,8 +108,9 @@ window was cut. The row count is the site's, not the instruction count's, and
 ## 3. The condition each store fires under
 
 `condition` is hand-filled off the listing, from a closed four-value vocabulary,
-and every row carries a `condition_evidence` cell naming the branch it was read
-from. `--check` carries the two hand-filled columns through rather than
+and every row carries a `condition_evidence` cell naming the gate or gates that
+reach the store — read off the branch, not asserted as the store's only
+precondition. `--check` carries the two hand-filled columns through rather than
 regenerating them — the arrangement `xdata-0860-census-sites.csv` and
 `check_site_census.py` already use — and holds them by two rules instead: the
 vocabulary is closed, and a condition with no evidence cell is refused.
@@ -113,7 +119,7 @@ vocabulary is closed, and a condition with no evidence cell is refused.
 |---|---|---|
 | `boot-default` | 2 | `BIOS_OEM_2` (`0x0782`) bit 4, `DEFAULT_MODE`, behind the bit-5 one-shot |
 | `temperature-gate` | 1 | CPU and GPU under `0x46` (70 °C) |
-| `mode-decode` | 7 | two on `BIOS_INFO_3` (`0x049F`) bit 1, "Turbo mode supported"; two on the mode getter's return with bit 7 flipped, reached by a `jnz` that the `cjne` beside the store does not gate; one on `TRIGGER` (`0x0767`) bit 2 alone; two on an `XDATA_0440` test combined with another flag |
+| `mode-decode` | 7 | two on `BIOS_INFO_3` (`0x049F`) bit 1, "Turbo mode supported"; two reached by **either** of two gates — the mode getter's return with bit 7 flipped, or that same `BIOS_INFO_3` bit 1 clear — with the `cjne` beside the store gating neither; one on `TRIGGER` (`0x0767`) bit 2 alone; two on an `XDATA_0440` test combined with another flag |
 | `host-write-through` | **0** | see below |
 
 **`mode-decode` is a category, not a claim that seven sites all decode the power
@@ -123,8 +129,10 @@ bit `registers.yaml` names as *Turbo mode supported*, two on the mode getter
 `0xBB40`/`0xCA4C` — which reads `0x0751` itself and returns it masked with
 `0x90`, so its input is this byte — one on a `TRIGGER` bit whose
 relationship to the power mode is not established, and two on `XDATA_0440`
-being non-zero combined with a second flag. A reader who wants "the sites that
-decode the mode" is looking for the evidence cells, not the bucket.
+being non-zero combined with a second flag. The two mode-getter sites are
+counted once each although each store has two gates: the second gate is that
+same *Turbo mode supported* bit, clear rather than set. A reader who wants "the
+sites that decode the mode" is looking for the evidence cells, not the bucket.
 
 **`host-write-through` is empty, and that is the answer issues #102 and #104
 need.** The host writes `0x0751` over `ECRR`; that path is not a

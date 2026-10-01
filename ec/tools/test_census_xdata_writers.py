@@ -313,6 +313,11 @@ class DerivationTests(unittest.TestCase):
             tally[shape] = tally.get(shape, 0) + len(site["stores"])
         self.assertEqual(sum(tally.values()), self.summary["stores"])
         self.assertEqual(set(tally), {cxw.BLIND, cxw.RMW})
+        # The summary's own bucket is what `report()` prints beside the store
+        # total, so it has to be this tally and not a per-site one: a counter
+        # tallied per site printed under a store label, and the line's parts
+        # did not sum to the number in front of them.
+        self.assertEqual(dict(self.summary["shapes"]), tally)
 
     def test_no_reconciliation_problem(self):
         _, problems = cxw.census(image(), ADDRESS, True)

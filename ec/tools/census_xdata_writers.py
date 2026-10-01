@@ -40,8 +40,10 @@ instead of being folded into a shape there is no vocabulary for.
 **The condition columns are hand-filled, and that is the arrangement
 `xdata-0860-census-sites.csv` and `check_site_census.py` already use.** The
 mechanical columns are derived from the image on every run; `condition` and
-`condition_evidence` are read off the branch that gates each site by a person
-reading the listing, and `--check` carries them through rather than
+`condition_evidence` are read off the gate or gates that reach each store by a
+person reading the listing -- two of the ten stores here are reached by two
+branches, and a cell that named only one of them would read as a precondition
+it is not -- and `--check` carries them through rather than
 regenerating them. Two rules make that safe: the vocabulary is closed, and a
 condition with no evidence cell is refused rather than rendered into a row that
 would read as an answer.
@@ -710,7 +712,12 @@ def census(d: bytes, addr: int, pd_verified: bool):
         "rows": rows, "all_sites": all_sites, "read_only": read_only,
         "writers": writers,
         "stores": sum(len(s["stores"]) for s in writers),
-        "shapes": collections.Counter(s["stores"][0][1] for s in writers),
+        # Per store, not per site: this is reported under a store-instruction
+        # label beside `stores`, and a site that carries two stores of one shape
+        # is two entries here. Tallying per site made the line's own parts fail
+        # to sum to the number printed in front of them.
+        "shapes": collections.Counter(shape for s in writers
+                                      for _, shape, _ in s["stores"]),
         "followed": [s for s in writers if s["followed"]],
         "truncated": [s for s in writers if s["status"] == TRUNCATED],
         "unresolved": [s for s in writers if s["status"] == UNRESOLVED],
