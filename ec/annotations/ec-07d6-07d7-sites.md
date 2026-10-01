@@ -179,10 +179,11 @@ another program.
 
 ## 3. The three functions the census tags `[writer]`, and what the values come from
 
-`xdata-registers.csv` tags three of the fifteen `0x07D6` functions `[writer]`
-and two of the five `0x07D7` ones. All five are already named, seeded and
-exported in `../decompiled/pd/`, so this section reads committed decompiles
-rather than hand-decoding anything new.
+`xdata-registers.csv` tags three of the fourteen `0x07D6` functions `[writer]`
+(**CORRECTION**, issue #323, 2026-10-01: §1 carries the superseded figure
+beside its own correction) and two of the five `0x07D7` ones. All five are
+already named, seeded and exported in `../decompiled/pd/`, so this section reads
+committed decompiles rather than hand-decoding anything new.
 
 ### 3.1 `pd:0xBECB` — the one site that writes both bytes
 

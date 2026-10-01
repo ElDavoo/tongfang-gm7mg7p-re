@@ -8,9 +8,11 @@ changed, and no committed CSV was regenerated — the four grades this file
 writes down were already in the table when it was planned, and what was missing
 was the record of them.)
 
-`docs/findings.md` mentions `0x07D6` or `0x07D7` on eight lines — five in §4o,
-two in §7c and one in §47 — and **not one of the eight states the result**.
-Six are block-level statements about `0x07C4`-`0x07D7` as a whole, one uses the
+`docs/findings.md` mentioned `0x07D6` or `0x07D7` on eight lines when this was
+written — five in §4o, two in §7c and one in §47 — and **not one of the eight
+stated the result**. The ninth is §4o's `*** CORRECTION 2026-10-01 (issue
+#323)`, which this change adds below and which does state it. Six of the eight
+are block-level statements about `0x07C4`-`0x07D7` as a whole, one uses the
 pair as a fixture pair in an unrelated suite, and the last is §4o's ASL table,
 whose `| 0x1176 | 50730-50733 | CGCT = Arg1 (0x07D7) | Notify PEGP | — |` row
 carries the `CGCT` writer and no scan result at all. The load-bearing number is
@@ -79,9 +81,9 @@ way it is wrong is the whole content of this finding:
 - For `0x07D7`, the scan's zero would hide a **writer that exists** — the ASL
   one. The scan reads the two firmware images and not the DSDT, so its zero is
   a statement about the EC firmware and says nothing about who writes the byte.
-- For `0x07D6`, there is no writer on either side to hide. Naming it in a table
-  of the pair would import `0x07D7`'s conclusion onto it, and `0x07D6` does not
-  have one.
+- For `0x07D6`, there is no writer this method found on either side to hide.
+  Naming it in a table of the pair would import `0x07D7`'s conclusion onto it,
+  and `0x07D6` does not have one.
 
 The same reason governs the 213. Those are **the PD program's own variables at
 its own `0x07D6`/`0x07D7`** — a second 8051 program with its own reset vectors
