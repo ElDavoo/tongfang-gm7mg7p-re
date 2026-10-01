@@ -2117,12 +2117,68 @@ registers:
       step below the 0xC8 the table calls 100 %. A span that reaches 200 in
       the byte and 0x32 at the low end is not a 0-100 register.
 
+      The 0x14 is the EC's own constant rather than a thermal difference
+      between two fans (issue #247). The instruction that produces the
+      second channel from the first is ec/decompiled/bank0/8DE0.asm's
+      "add A, #0xec" at 8EF4 -- 0xEC is -0x14 -- whose other arm at 8EFE
+      clears A first and is where the 0x00 samples come from, so the two
+      observed values are the two branches of one comparison. A difference
+      that is *always* exactly a firmware literal is that literal reaching
+      the published bytes, which is what excludes the reading that the two
+      bytes are two fans in different environments. Not established by
+      this: which physical fan either byte is, and that the pair tracks the
+      two fans' speeds -- the three writers listed above each byte are other
+      paths to the same addresses, so the observed difference is the net of
+      whichever write ran last rather than a read of 0x1804 and 0x1809.
+      Correction to the branch this note used to cite for the constant: the
+      "mov A, #0x14" at 8E01 stores into 0x0672, a separate arming byte
+      that diverts the routine to 0xBEB4, and is not the source of the
+      observed difference. ec/tools/fan_pair_correlation.py reproduces every
+      figure in this paragraph, and adds a third capture
+      (2026-09-18-profile-switch-0400-07ff.csv, 193 paired samples: 0x00 in
+      142, 0x14 in 51, nothing else).
+      Correction to the same paragraph's arm count, leaving the sentence it
+      corrects as written: 0x8DE0 has three arms into the store at 8EFF, not
+      two. 8EF0 subtracts 0xEC (-0x14) and is where the 0x14 samples come
+      from; 8EF8 copies 0x1804 through unchanged; 8EFE clears A. The 0x00
+      samples match 8EF8, not 8EFE, and the captures rule 8EFE out as their
+      source: it would publish 0x1809 = 0 and 8F0F copies that byte into
+      0x075C, yet no row of 0x075C is zero in any of the three captures, and
+      every equal-difference sample is equal-and-non-zero. So the observed
+      difference is the choice between the 8EF0 bias and the 8EF8 copy, with
+      8EFE the third branch the captures do not show -- which is the reading
+      the older sentence above this one already gave. The constant itself is
+      unaffected: the 0x14 is still 0x8DE0's own, and neither sentence
+      established which physical fan either byte is.
+
       The name is not settled, and the disagreement is left visible
       rather than resolved. ECSpec calls the pair L and R (left/right);
       FanInfo reads the same two bytes as CPU and GPU. One vendor
       codebase, two readings of one hardware pair, and nothing here
       decides between them. docs/related-projects.md was checked first per
       CLAUDE.md and no sibling board names either byte.
+
+      What issue #247 adds is that the committed captures cannot decide it
+      either, and which live observation would. The proposed route -- the
+      two channels against CPU_TEMP and GPU_TEMP -- is not available in the
+      two captures named above, which are 0x0700-0x07FF only and carry no
+      row of 0x043E or 0x044F; it runs on the third capture above, which
+      carries both temperature registers beside the two duty bytes. There
+      0x075B correlates with CPU_TEMP at r = 0.468 and 0x075C at r = 0.507
+      over 179 paired samples each -- both weak, and the gap inside the
+      sampling noise, so neither is distinguishable from the other this
+      way. GPU_TEMP yields no coefficient at all: it moves 0x33-0x35 across
+      that whole sweep, and a coefficient against a register that moved two
+      counts describes a handful of coincidental samples rather than a
+      relationship. ec/tools/fan_pair_correlation.py prints that refusal
+      with the span that caused it instead of printing a number. So the
+      L/R-versus-CPU/GPU split is not recoverable from committed inputs,
+      and what would decide it is a human at the machine holding or
+      unplugging one fan and watching which of 0x075B and 0x075C stops
+      moving -- named as the next step in
+      docs/findings/fan-duty-channel-075b-075c.md, not run here. The status
+      stays present-untested: a name is not a behaviour, and nothing in
+      this paragraph tests the EC acting on these bytes.
 
       Not confirmed-working, and the reason is narrow: nothing has
       exercised these as a control, and the vendor's /2 readback is the
@@ -2192,6 +2248,42 @@ registers:
       same as these; the table is reached indirectly, which is the
       long-standing question of ec/annotations/manual-fan-ctrl-0751.md 6
       and is not settled by this.
+
+      The issue #247 result holds here as the entry above says it does,
+      and one part of it is about this byte's own neighbourhood rather
+      than about the byte. Nothing in committed evidence names which
+      physical fan 0x075C is: the temperature route returns r = 0.507 for
+      this byte against 0.468 for its pair, a gap inside the noise over
+      179 paired samples, and GPU_TEMP moves two counts across that sweep,
+      so the split is not recoverable from the committed captures. The
+      named next step is the live one in
+      docs/findings/fan-duty-channel-075b-075c.md -- hold or unplug one
+      fan and watch which byte stops moving -- and it is not run here.
+
+      Adjacent to it, GetEcGpuFanRpm's pairing is in doubt, which is a
+      fact about the vendor's code rather than about this register.
+      FanInfo.GetEcGpuFanRpm reads 1132/1131 = 0x046C/0x046B as one 16-bit
+      value, while the EC writes 0x046C and 0x046D together --
+      store_r6_r7_to_046c_046d (bank0 0xE024) stores R6 and R7 across the
+      two, and be16_046c_046d_minus_100 (bank0 0xBD6B) subtracts 100 from
+      0x046D into 0x046C through the borrow, so the EC's own reading is
+      0x046C/0x046D. ec/annotations/xdata-clusters.csv agrees: main-ec-138
+      holds 0x046C 0x046D across six routines, while 0x046B sits in
+      main-ec-004 with 0x046A 0x046E 0x046F, synced from 0x086B-0x086E by
+      gate_06e6_442_then_sync_046a_from_086b. The committed captures agree
+      too: 0x046B has no row at all in any of the three, so the service's
+      own read cannot be assembled from committed evidence, and across the
+      committed 0x0000-0x07FF sweep (evidence/ec-watch/
+      2026-09-18-ac-plugin-sweep-summary.csv) 0x046C changed 154 times
+      against 0x046B's once and 0x046D's 536 -- and against 0x0464's 126
+      and 0x0465's 540 for the first tachometer, the pair that is not in
+      dispute. Recorded as a lead, not closed: confirming it needs either
+      an EC-side read of how that value is assembled or a live tach read.
+      ECSpec's own names for these are ADDR_EC_MAIN_FAN_RPM_BYTE1/BYTE2 and
+      ADDR_EC_SECOND_FAN_RPM_BYTE1/BYTE2 -- first and second, an ordinal
+      naming with no left/right or CPU/GPU in it -- so the L/R-versus-CPU/GPU
+      disagreement is confined to the duty bytes and FanInfo's method names,
+      not to the register file.
 
   - name: BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE)
     addr: 0x0782
