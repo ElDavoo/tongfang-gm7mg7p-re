@@ -132,8 +132,14 @@ window, in the vocabulary a block's verdict line already uses:
 One function, one argument, one clause. `report_census` takes the `unagreed`
 dict alongside `unreads`, and `main` passes it at the call site; the kinds come
 from `window_mark_problems` — the function `unplaced_window_problems` itself
-calls, over the same capture list the census counted — so a window cannot be
-named here under a kind the refusal did not carry.
+calls, over a capture set keyed the way that function compares — so a window
+cannot be named here under a kind the refusal did not carry. The keying is the
+whole of it, and it is not free: a `known` built from the paths *as handed in*
+rather than from `capture_key` is a set that is false against the keys for any
+spelling that is not already the resolved one, and it fires a `missing` no
+capture earned — beside a count computed with the right keys, so the line names
+two kinds and a count of one. `test_a_disagreeing_stray_is_refused_by_the_whole_capture_run_and_not_by_a_block_run`
+holds the clause against both spellings for that reason.
 
 **It says `NOT GRADED`, not "the mark was wrong."** The clause is what the run
 did, not a verdict about the bytes. `unreads`' reason is fatal because a mark
@@ -257,24 +263,14 @@ claim and not as a count of directories on purpose: a directory census is a
 number every landing fixture has to edit, which is the trap `CLAUDE.md` names
 by name. Re-run the loop to check it against whatever the tree holds then.
 
-**`bash tools/run-tests.sh` does not pass on this tree, and did not before
-this change.** Eleven cases fail across `test_check_eq_guard_citations`,
-`test_check_doc_figure_pins`, `test_check_cluster_citations`,
-`test_gpu_block_watch` and `test_check_pin_table_rows` — every one a citation
-or census check over `ec/annotations/registers.yaml`, `docs/agent-pipeline.md`
-and `0751-append-unchecked-marks.md`, none of which this change touches. Each
-was run against an unmodified checkout of this branch's base and fails there
-with the same name, so they are recorded rather than fixed here: repairing them
-is another issue's work and folding it in would put four unrelated trees into
-one diff. The same base run carries a twelfth,
-`test_check_history_checkouts_corpus.CommittedCorpusTests.test_each_decline_rule_still_holds_on_the_committed_tree`,
-which this change's re-anchoring **removed**: it fails on `origin/main` and is
-green here, so the eleven above are the whole of what this branch leaves
-failing and one is fewer than it found. `test_census_test_line_pins.py` and
-`test_check_pin_table_rows.TheCommittedTree.test_the_committed_table_places_something`
-were failing *because* of this change and are green now — that is the
-re-anchoring below, and they are the two that say whether the citations this
-change moved were left wrong.
+**`bash tools/run-tests.sh` passes on this tree, and passed on this branch
+before the change.** `test_census_test_line_pins.py` and
+`test_check_pin_table_rows.py` were red for part of the way here — the two that
+say whether the citations this change moved were left wrong — and are green
+again now that the re-anchoring below is done. Which suites are green is a
+property of a tree rather than a claim this page can carry into the next merge,
+so re-run it against whatever the tree holds then rather than reading the state
+off here.
 
 ## The citations this move, and how they were repaired
 
@@ -301,32 +297,27 @@ corpus; the rows carry their own cause, and
 [`test-line-pin-census.md`](test-line-pin-census.md)'s note under the table
 carries the rest.
 
-## The suite's own count
+## The suite's own addition
 
-At the tip, 2026-09-29:
-
-    $ cd ec/tools && python3 -m unittest test_grade_0751_isolation
-    ...............................................................................................................................................
-    ----------------------------------------------------------------------
-    Ran 147 tests in 0.460s
-
-    OK
-
-    $ grep -c "    def test_" ec/tools/test_grade_0751_isolation.py
-    147
-
-The two agreeing is the point, and it is the figure to compare against the
-chain in
+One named method in `MarkSetTests`,
+`test_a_disagreeing_stray_is_refused_by_the_whole_capture_run_and_not_by_a_block_run`,
+is the only thing this change adds to
+`ec/tools/test_grade_0751_isolation.py` — the path-spelling half named above
+is asserted inside that same method, not as a second one. The count the suite
+holds is `bash tools/run-tests.sh`'s output, not a figure restated here: a test
+count in this file is a value the next merge invalidates without touching this
+page, and the chain in
 [`0751-grader-unplaced-window-scope.md`](0751-grader-unplaced-window-scope.md):229-282
-rather than the stale `72`/`74` in
-[`0751-grader-unplaced-window-checks.md`](0751-grader-unplaced-window-checks.md)'s
-"What is pinned" — which was true when written and is left as written, because
-correcting it there would be editing a merge surface to say something the chain
-already says. **The 146 pre-existing tests stay green and exactly one line among
-them changed**: the direct `report_census` call in
-`test_the_readers_count_a_capture_given_twice_as_one_capture`, which passes
-positional arguments and needs the new one. That is the evidence that nothing
-else moved.
+is where a figure about this suite is argued from.
+
+**The pre-existing tests stay green, and the only lines this change edits among
+them are the three `report_census(...)` calls that pass positional arguments**
+— in `test_the_readers_count_a_capture_given_twice_as_one_capture`,
+`test_the_census_counts_two_spellings_of_one_file_as_one_capture` and
+`test_the_census_names_a_capture_the_way_the_capture_read_itself`, each of
+which needs the new argument the section now takes. That is the checkable form
+of the claim: `git diff -U0 origin/main...HEAD -- ec/tools/test_grade_0751_isolation.py`
+returns those removals and nothing else, so nothing else moved.
 
 ## Left out on purpose
 
@@ -366,8 +357,9 @@ else moved.
   numbers themselves.** The re-anchoring is a line-number repair; it re-reads
   no claim and rewords no sentence, and a broader edit of a merge surface
   would be this branch asserting things about pages that are not its own.
-- **The eleven pre-existing suite failures** named above. They are another
-  issue's work and this branch has no standing on them.
+- **Any suite failure the tree happens to be carrying.** The run is green here,
+  and a suite that goes red is another issue's work that this branch has no
+  standing on — not something to fold into this diff.
 
 ## **None of this is a live test.**
 

@@ -2733,13 +2733,13 @@ def report_census(captures, windows, blocks, unplaced, unreads, unagreed,
         print(line)
     if unplaced:
         # The kinds are named from `window_mark_problems`, the function
-        # `unplaced_window_problems` called, over the same capture list this
-        # section counted -- so a window cannot be named here under a kind the
-        # refusal did not carry. `unagreed` is what decides that the run
-        # refused the window at all, and it is handed in rather than re-derived
-        # because that is `main`'s decision to make and this section is only
-        # reporting it.
-        known = set(names)
+        # `unplaced_window_problems` called, so they cannot name a kind the
+        # refusal did not carry -- and what makes the two agree is the key
+        # rather than the shared `names`, `known` being compared against
+        # `capture_key`, so it is built the way `unplaced_window_problems`
+        # and `check_block_marks` build it, for the reason the latter gives.
+        # `unagreed` is `main`'s decision to refuse the window, only reported.
+        known = {capture_key(p) for p in names}
         for w in unplaced:
             role, _ = parse_mark(w.label)
             if role is not None:

@@ -3437,6 +3437,23 @@ class MarkSetTests(unittest.TestCase):
                 self.assertNotIn('NOT GRADED', out)
                 self.assertNotIn('were not graded', out)
 
+        # And the spelling of the path, which is the one variable the runs
+        # above hold constant and this is what they would miss. `UNPLACED_*`
+        # is built from `HERE`, so every run above named a path that is
+        # already the resolved one -- and the kinds are read by comparing
+        # against `capture_key`, so a path handed in any other way
+        # (`os.path.relpath` here, a symlink, `./`) is a set that is false
+        # against the keys, which is a `missing` that no capture earned, on
+        # a line whose own count is computed with the right ones. The clause
+        # is a claim about captures, so it cannot depend on how they were
+        # named; asserted against `whole_lines` rather than a restated
+        # string, so it is the same text the runs above pinned.
+        rel = tuple(os.path.relpath(p) for p in UNPLACED_FAILURES)
+        rc, out, _ = run(*rel, '--block', '0xA0')
+        self.assertEqual(rc, 0)
+        self.assertNotEqual(rel, UNPLACED_FAILURES)
+        self.assertEqual(unplaced_census_lines(out), whole_lines)
+
 
 class StageBoundaryTests(unittest.TestCase):
     """§3's six mark rounds, and the three of them that are not writes.
