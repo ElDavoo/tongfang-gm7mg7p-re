@@ -1359,14 +1359,7 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
         self.assertEqual(counts['testdata/ directories'], 13)
         self.assertEqual((counts['named in the index'], counts['self-indexed'],
                           counts['gap(s)']), (12, 1, 0))
-        # The two `gpu-door-example-two-files-*.csv` fixtures took this from
-        # 28 rows / 36 path tokens to 29 / 38 (one row, two tokens: the pair
-        # is one row naming both files, as `...-0400-045f.csv` above does) and
-        # from 28 `Feeds` cells / 30 tool pointers to 29 / 31, since the pair
-        # is one row with one `Feeds` cell. The figures move because a
-        # fixture arrived, which is the event `TheTalliesAreNotAFloor` was
-        # written for; nothing here is a floor and the exact numbers are
-        # still pinned.
+        # Not a floor -- see the class name.
         self.assertEqual((counts['table row(s)'], counts['path token(s)']),
                          (29, 38))
         self.assertEqual((counts['Feeds cell(s)'], counts['tool pointer(s)']),

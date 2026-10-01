@@ -160,9 +160,6 @@ the write-up's own fixtures are why:
   `build_windows` then places every one of that capture's rows: under a mark of
   its own capture when it follows one, and as the opening `levels` of its first
   window when it precedes them.
-- A brute force over every two-capture shape on a minute grid (9,016 shapes,
-  5,940 of which interleave) finds **no** change row in neither a window's
-  `changes` nor a window's opening `levels`.
 - The refusal cost the operator workflow this change exists to enable. The
   argument for keeping `nargs="+"` is that `ec_watch.py` and
   `gpu_block_watch.py` write the same schema and can be graded side by side —

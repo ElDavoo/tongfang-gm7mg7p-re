@@ -643,10 +643,10 @@ def main(argv=None):
                          "graded one after the other: each file's windows are "
                          "cut from its own marks and each file's closing "
                          "counts its own windows, so a change row is never "
-                         "filed under a mark from another file. A file whose "
-                         "rows fall between another file's marks is refused, "
-                         "because the marks that would say which action they "
-                         "belong to are in the other file")
+                         "filed under a mark from another file. A file's rows "
+                         "are graded the same way whether or not they fall "
+                         "between another file's marks: one is filed under a "
+                         "mark of the file that recorded it")
     args = ap.parse_args(argv)
 
     # Before the read loop rather than inside it: a report printed over four

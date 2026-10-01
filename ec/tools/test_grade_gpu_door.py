@@ -115,6 +115,49 @@ def run(*argv):
     return rc, out.getvalue(), err.getvalue()
 
 
+def help_text():
+    """`main()`'s own stdout and exit code for a run that prints its help.
+
+    `--help` is the one surface a reader reaches before running anything, and
+    it is argparse's: the description is the module docstring and the argument
+    block is built inside `main`, so there is no parser object to read the
+    argument's own help string off. This runs it instead, which is also the
+    only way to see the text as an operator sees it.
+    """
+    out, err = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        try:
+            door.main(['--help'])
+        except SystemExit as stop:
+            return stop.code, out.getvalue(), err.getvalue()
+    raise AssertionError('--help returned instead of exiting')
+
+
+def csv_help():
+    """The `csv` positional's help block, as one line.
+
+    **The slice, and not the whole help output.** The module docstring is the
+    parser's `description` and it names refusals this tool does ship ("A shared
+    timestamp is refused", "`main` refuses it"), so a search over the whole
+    `--help` text would find those and say nothing about this positional --
+    which is where a sentence outlived the refusal it described. The block is
+    what sits under `positional arguments:` up to the next section heading, and
+    both are required rather than defaulted: if argparse's layout moves, the
+    heading is not found and this fails instead of handing back the description
+    and passing vacuously.
+
+    Unwrapped for the reason `unwrapped` gives -- the block is laid out in
+    ~72 columns, so a phrase can be split anywhere.
+    """
+    rc, out, err = help_text()
+    assert rc == 0, err
+    assert 'positional arguments:' in out, out
+    lines = out.split('positional arguments:', 1)[1].splitlines()
+    end = next((i for i, line in enumerate(lines)
+                if line and not line[0].isspace()), len(lines))
+    return ' '.join(' '.join(lines[:end]).split())
+
+
 def unwrapped(section):
     """A report section as one line, so a check is on the sentence.
 
@@ -749,6 +792,31 @@ class RefusalTests(unittest.TestCase):
     # figure is the one thing a repeat does *not* move, so the refusal message
     # says that too, and a test that only checked the wrong things would let the
     # stronger claim back in.
+
+    def test_the_csv_help_promises_no_refusal_this_tool_does_not_make(self):
+        # `--help` is where the tool states its own rule to an operator before
+        # the run, and the reversal the write-up's "Captures that overlap in
+        # time are graded, not refused" records took the interleave refusal out
+        # of the code and left its sentence in this help string: a reader who
+        # relied on it would have been told the run was refused when both files
+        # were graded. `test_rows_that_interleave_another_captures_marks_are_graded`
+        # holds the behaviour that sentence has to agree with; this holds the
+        # sentence, which nothing else read.
+        block = csv_help()
+        # The block is the help string and not an empty slice, or every
+        # assertion below would pass on a layout change.
+        self.assertIn('gpu_block_watch.py --csv --mark', block)
+        self.assertIn('graded one after the other', block)
+        # One word, one direction: the help may not promise a refusal the code
+        # does not perform. It says nothing about the three refusals the tool
+        # does ship -- a capture given twice, a capture with rows and no mark,
+        # two marks at one timestamp -- which `main` decides after the
+        # argument is parsed and prints to stderr by name, each with a case in
+        # this suite. Documenting one of those here later fails this, and that
+        # is the re-read to do rather than a word to drop: a refusal claimed in
+        # this string is the shape of the defect.
+        self.assertNotIn('refus', block.lower())
+
     def test_a_capture_given_twice_is_refused(self):
         rc, out, err = run(ONE_BLOCK, ONE_BLOCK)
         self.assertEqual(rc, 1)
