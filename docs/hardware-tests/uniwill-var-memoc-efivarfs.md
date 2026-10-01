@@ -57,7 +57,7 @@ new knowledge about `OemOcDxe`.
 
 - **The machine must have booted UEFI, not CSM.**
   `/sys/firmware/efi/efivars` does not exist on a CSM boot and never will. If
-  `ls /sys/firmware/efivars` says no such directory, stop: this procedure does
+  `ls /sys/firmware/efi/efivars` says no such directory, stop: this procedure does
   not apply and no amount of retrying will create it.
 - **Root.** efivarfs is root-only.
 - **`python3` from the repository root**, and a checkout of this repository at

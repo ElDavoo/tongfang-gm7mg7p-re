@@ -2,11 +2,11 @@
 r"""`NVRAM_STRUCT`'s field table and offsets, importable on any platform.
 
 No I/O and no `ctypes.WinDLL` here, which is the only reason this table is
-repeated rather than imported. `windows/tools/uefi_var.py:37-40` builds its
-`kernel32`/`advapi32`/`ntdll` handles at module scope, so that file cannot be
-imported off Windows at all and a Linux tool that reached for it would fail at
-import on every machine this repository's tests run on. The table is 20 lines
-of literals; the duplication is what the costs.
+repeated rather than imported. `windows/tools/uefi_var.py` builds its
+`kernel32`/`advapi32`/`ntdll` handles with three module-scope `ctypes.WinDLL`
+calls, so that file cannot be imported off Windows at all and a Linux tool that
+reached for it would fail at import on every machine this repository's tests
+run on. The table is 20 lines of literals; the duplication is what the costs.
 
 The cost is paid off here instead, in `test_uniwill_var.py`, which `ast`-reads
 both copies and the decompiled `NVRAM_STRUCT.cs` and holds all three to the
@@ -49,8 +49,8 @@ UNIWILL_GUID_HEX = UNIWILL_GUID.strip("{}").replace("-", "")
 EFIVARS_DIR = "/sys/firmware/efi/efivars"
 
 # The 4-byte little-endian attribute word efivarfs puts in front of the data,
-# same map as `windows/tools/uefi_var.py:84-85`. EFI_VARIABLE_* per the UEFI
-# spec; `HW_ERR` is `EFI_VARIABLE_RUNTIME_ERROR` under its other name.
+# same map as `windows/tools/uefi_var.py`'s `ATTRS`. EFI_VARIABLE_* per the
+# UEFI spec; `HW_ERR` is `EFI_VARIABLE_RUNTIME_ERROR` under its other name.
 ATTRS = {0x1: "NV", 0x2: "BS", 0x4: "RT", 0x8: "HW_ERR", 0x10: "AUTH_WRITE",
          0x20: "TIME_AUTH_WRITE", 0x40: "APPEND"}
 
