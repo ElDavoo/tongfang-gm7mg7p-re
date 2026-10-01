@@ -178,9 +178,8 @@ is the shape every tool below it has, because that shape is not available here:
 every position in that list and every line of the `gate` list is another
 prepared patch's context in `docs/ci/`, and an insertion into any of them stops
 that patch applying — which `tools/test_agent_gates_patches.py` holds, so the
-insertion would be a red run rather than a wiring. The two calls already
-sitting outside the loop are outside it for this reason and say so in their own
-comments. The placement is the one the prepared-patch set leaves free.
+insertion would be a red run rather than a wiring. The placement is the one the
+prepared-patch set leaves free.
 
 **`tools/README.md` is not a guide to which suites are gated.** Its suite
 table's ungated rows are the large majority; a handful name the reason

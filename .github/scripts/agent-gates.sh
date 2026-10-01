@@ -104,12 +104,12 @@ check_ghidra_tooling() {
   # loop below dispatches anything: a tool listed with no arm falls to `*)` and
   # is handed `--work "$scratch"`, and whether that is a red run or a silently
   # different one is then decided by the tool's own parser rather than by a
-  # person. Called here rather than as a `for tool in` entry for the reason the
-  # two calls below the loop give: every position in that list, and every line
-  # of the `gate` list, is another prepared patch's context in `docs/ci/`, and
-  # an insertion there stops that patch applying -- which
-  # tools/test_agent_gates_patches.py holds, so an insertion that composed
-  # against no patch but this one would be a red run and not a wiring.
+  # person. Called here rather than as a `for tool in` entry because every
+  # position in that list, and every line of the `gate` list, is another
+  # prepared patch's context in `docs/ci/`, and an insertion there stops that
+  # patch applying -- which tools/test_agent_gates_patches.py holds, so an
+  # insertion that composed against no patch but this one would be a red run
+  # and not a wiring.
   # It reads committed text only -- this script and the tool docstrings under
   # ec/tools, bios/tools, windows/tools and tools. No image, no Ghidra, no
   # network, no assembler, so by the split above it is cheap-tier work.
