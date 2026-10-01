@@ -1833,6 +1833,28 @@ rather than closing on it:
   a `registers.yaml` row and a reference split (76 sites, all PD image, none
   in the EC firmware — `ec/annotations/static-refs-audit.md` §6) but no
   per-site decode, and that is a real gap rather than a formality.
+  *** CORRECTION 2026-10-01 (issue #323), leaving the bullet above as it was
+  written.*** **"but no per-site decode, and that is a real gap rather than a
+  formality" is no longer true of `0x07D1`.** The per-site decode is
+  `ec/annotations/ec-0x07d1-sites.md`, with `ec-0x07d1-sites.csv` beside it,
+  and §3d of this same file has linked it since 2026-09-24 (issue #185).
+  **The 76/76-all-PD split this bullet cites is unchanged** — the walk
+  enumerates all 76 and every row is `pd-image` — and **nothing here moves a
+  figure, a `status:` or a conclusion**; it changes the state of one to-do item
+  and no register's. The `DBSP`/`CGCT` half of the same bullet is answered by
+  `ec/annotations/ec-07d6-07d7-sites.md` and its `ec-07d6-07d7-sites.csv`:
+  **142 direct `MOV DPTR` sites for `0x07D6` and 71 for `0x07D7`, all in the
+  `ITE8850-PD` image and none in the main EC firmware**, with `0x07C7` and
+  `0x07C8` at 0 in both images. Those four rows are `unknown-not-absent`, which
+  is a static-scan classification and not a live test — §4c retracted
+  "does not exist" from a zero-reference scan, and #110 owns the blind spot
+  that would have to close first. The write-up that puts that result in the
+  record is `docs/findings/07d6-07d7-pd-image-census.md`. **The bullet is
+  otherwise open**, and this does not close it: which of the two GPU blocks the
+  host writes is unanswered, `0x07C9`-`0x07CB`, `0x07CD`-`0x07CF` and `0x07D2`
+  still have no row (`0x07D2` is #226's), and
+  `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` §7 is where the cell-by-cell
+  list is kept.
 - A `uniwill-laptop`-side question feeding #96: if the charge-limit write
   path is revisited, should it read `0x07D0` before writing it? The answer
   depends on what a human observes, and the upstream correction in #96

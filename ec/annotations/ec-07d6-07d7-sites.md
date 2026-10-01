@@ -94,6 +94,15 @@ functions). The scan is additionally inflated by `inc dptr` walks, DPTR
 re-loads, and byte patterns that are not instructions at all, so 142 against
 37 is the expected relation and not a discrepancy to reconcile away.
 
+**CORRECTION** (issue #323, 2026-10-01), leaving the figures above as they
+were written. `pd-028` has drifted and now reads **36**, and its buckets are
+**4** read, **11** write, **0** read+write, **14** passed-to-call, **7**
+address-taken, over **14** functions — the committed `refs` column is the
+sum, and the three figures the paragraph above gets wrong (the total, the
+address-taken count and the function count) are the three that moved.
+`pd-029`'s 35 and its buckets are unchanged. The reconciling point is
+unaffected: 142 against 36 is still two different units.
+
 Which number each claim rests on is stated where the claim is made. The four
 `registers.yaml` rows carry **the scan's** numbers, because
 `check_register_counts.py` measures those and the line above is what it
@@ -170,10 +179,11 @@ another program.
 
 ## 3. The three functions the census tags `[writer]`, and what the values come from
 
-`xdata-registers.csv` tags three of the fifteen `0x07D6` functions `[writer]`
-and two of the five `0x07D7` ones. All five are already named, seeded and
-exported in `../decompiled/pd/`, so this section reads committed decompiles
-rather than hand-decoding anything new.
+`xdata-registers.csv` tags three of the fourteen `0x07D6` functions `[writer]`
+(**CORRECTION**, issue #323, 2026-10-01: §1 carries the superseded figure
+beside its own correction) and two of the five `0x07D7` ones. All five are
+already named, seeded and exported in `../decompiled/pd/`, so this section reads
+committed decompiles rather than hand-decoding anything new.
 
 ### 3.1 `pd:0xBECB` — the one site that writes both bytes
 
@@ -680,6 +690,18 @@ a follow-up rather than a line in this change. **Whether `0x1176` is ever
 issued on this board is not established by anything here** — a decoded ASL
 branch is not an observed one, and the test that would decide it is a human's.
 
+**CORRECTION** (issue #323, 2026-10-01), leaving the paragraph above as it was
+written. The gap it names has been closed since, and the two claims about the
+tool are stale rather than open: `ACPI_ARGS` now reads
+`[0x1171, 0x1172, 0x1173, 0x1175, 0x1176, 0x2273]`, `EXPECTED_TEXT`'s
+`CONTROL evidence/acpi/dsdt.dsl` entry carries `"0x1176": 1`, and
+`--self-check` passes against the committed tree with `dnfile` installed. The
+census reports **one `0x1176` hit, in the DSDT control**, which is the
+`ElseIf` branch quoted above and not a caller of it, so **no caller of `T1WR`
+with `Arg0 = 0x1176` was found by this method** — the census is quoted in §4o,
+not §4f. The last sentence above stands: whether `0x1176` is ever issued is
+still not established, and that is a human's live test either way.
+
 ## 8. What is still open
 
 - **Whether `0x1176` is ever issued, and what the EC then does with `CGCT`.**
@@ -706,6 +728,15 @@ branch is not an observed one, and the test that would decide it is a human's.
   walk's, and `ec-07c4-07d5-sites.md` §9 sets that precedent.
 - **Widening `t1wr_callers.py` to `0x1176`** (§7), with its `EXPECTED_*` and
   `docs/findings.md` §4f re-bake.
+
+  > **CORRECTION** (issue #323, 2026-10-01), leaving the bullet above as it was
+  > written. The widening is done — `ACPI_ARGS` carries `0x1176` and
+  > `--self-check` passes against the committed tree, which is what §7's
+  > correction above says in full — and the re-bake names the wrong section: the
+  > census is quoted in `docs/findings.md` §4o, and §4f does not mention the
+  > tool. What genuinely remains is the live half, whether `0x1176` is ever
+  > issued and what the EC then does with `CGCT`, which is this section's first
+  > bullet.
 - **The other eight `no row` cells in §7 of the door doc** — `0x07C9`-
   `0x07CF` and `0x07D2` — and the rest of the `0x07C4`-`0x07D7` block. Named,
   not done.

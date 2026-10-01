@@ -4739,7 +4739,13 @@ registers:
       ec/annotations/xdata-registers.csv's census (cluster pd-028: 37 refs
       -- 4 read, 11 write, 14 passed-to-call, 8 address-taken, over 15
       functions -- a different unit from 142 raw byte patterns, and
-      section 1 of that file says which claim rests on which). Of the 142,
+      section 1 of that file says which claim rests on which). *** CORRECTION
+      (issue #323, 2026-10-01), stated in place: pd-028 has drifted and the
+      committed xdata-registers.csv now reads 36 refs -- 4 read, 11 write,
+      0 read+write, 14 passed-to-call, 7 address-taken, over 14 functions --
+      so the total, the address-taken count and the function count above are
+      each stale. The 142 this entry carries is the scan's own figure and is
+      unaffected. *** Of the 142,
       85 read, 10 write, 3 are read-modify-write, 5 walk on through inc
       dptr into the following bytes (four of them stores, one a read), 3
       are the window stopping before any movx, and 36 hand DPTR to a
@@ -4781,6 +4787,17 @@ registers:
       docs/findings.md 4f's figures, so it is a follow-up rather than a
       line here; the gap is recorded in
       ec/annotations/ec-07d6-07d7-sites.md section 8.
+      *** CORRECTION (issue #323, 2026-10-01), stated in place: the
+      sentences above are stale, not open. ACPI_ARGS now reads
+      [0x1171, 0x1172, 0x1173, 0x1175, 0x1176, 0x2273], EXPECTED_TEXT's
+      CONTROL evidence/acpi/dsdt.dsl entry carries "0x1176": 1, and
+      --self-check passes against the committed tree with dnfile installed;
+      the census reports one 0x1176 hit, in the DSDT control, which is the
+      ElseIf branch itself and not a caller of it. So no caller of T1WR
+      with Arg0 == 0x1176 was found by this method, and the census it comes
+      from is docs/findings.md 4o rather than 4f. The branch is still
+      decoded ASL and not observed, so whether 0x1176 is ever issued on this
+      board is not established here either. ***
       All 71 direct MOV DPTR sites are in the ITE8850-PD image and none is
       in the EC firmware, so the 71 are the PD program's own variable and
       not references to an EC register. Status is unknown-not-absent for
