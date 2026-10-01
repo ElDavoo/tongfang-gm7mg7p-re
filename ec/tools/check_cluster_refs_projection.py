@@ -62,10 +62,11 @@ REPO = os.path.join(EC, os.pardir)
 CLUSTERS = os.path.join(EC, "annotations", "xdata-clusters.csv")
 REGISTERS = os.path.join(EC, "annotations", "xdata-registers.csv")
 
-# The named input, as the two columns the registers CSV carries them in. Built
-# from the `program` column's own values rather than written out, so the
-# clusters CSV's vocabulary cannot acquire a third program this tool does not
-# know how to read a half of -- the same argument `program_suffix()` makes in
+# The named input, as the two columns the registers CSV carries them in. A
+# written-out two-entry literal rather than a table derived from the `program`
+# column, chosen so that a `program` value it has no half for is a refusal at
+# `check()`'s `column is None` branch and not a silent fallback. The spelling is
+# `_pd` and not `_pd_image` for the reason `program_suffix()` gives in
 # `xdata_register_map.py`, which is where these two were generated.
 PER_PROGRAM_REFS = {"main-ec": "refs_main_ec", "pd": "refs_pd"}
 

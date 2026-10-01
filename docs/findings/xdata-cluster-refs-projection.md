@@ -60,10 +60,10 @@ is frozen. How large the set is today is the tool's to report, not this
 write-up's to carry: `python3 ec/tools/check_eq_guard_citations.py` ends with the
 citations it resolved and the files they are in, and the number belongs to that
 line, because the next citation added moves it. The tool's own end-of-file note
-makes the same argument about itself — quoted here with the count it has carried
-since issue #1296, which is not a figure this write-up claims: *"a paragraph
-inserted in the ORACLE comment block shifts all twenty-two ... this is the pin
-saying why, placed where saying it costs nothing."* Re-pinning them instead was
+makes the same argument about itself, and keeps its count there too rather than
+in a document that would have to be edited with it: *"a paragraph inserted in
+the ORACLE comment block shifts all ... this is the pin saying why, placed where
+saying it costs nothing."* Re-pinning them instead was
 the alternative, and CLAUDE.md's rule on citing by name rather than by line
 number is what that runs into: the pins are a hand-kept set of numbers spread
 across shared files, which is the shape this repository has already had to
@@ -98,14 +98,17 @@ broke it rather than rediscovered later as a mystery:
 | every member present in the registers CSV | every member, and no non-`both` member's `program` differs from its cluster's |
 | `refs == Σ members' refs_<program>` | every row |
 
-**`refs` is therefore the only counted column in the clusters CSV a reader
-cannot reproduce from `addrs` and the registers CSV's per-program columns**,
-which is what made the other three worth asserting: they are the counter-examples
-that make this one the exception rather than the rule. The columns that come
-from the call graph rather than either CSV — `functions_touched`, `co_reading`
-and `co_reading_refs` — are outside that comparison, which is why it is stated
-over `addrs` and the two per-program columns rather than over the registers CSV
-alone.
+**`refs` is the one counted column this comparison cannot reproduce**:
+`size`, `addr_range` and membership all fall out of `addrs` and the two
+per-program columns, and this one does not — which is what made the other three
+worth asserting, as the counter-examples that make this one the exception rather
+than the rule. What makes it more than a fifth instance of the same thing is
+that the registers CSV carries a column of the same name, so `refs` reads as
+reproducible from the file beside it and is not. The columns built from the call
+graph and the symbol table rather than from either CSV — `functions_touched`,
+`shared_functions`, `callees`, `named_addrs`, `co_reading`, `co_reading_refs` —
+are outside the comparison, which is why it is stated over `addrs` and the two
+per-program columns rather than over the registers CSV alone.
 
 ## The oracle that could not see it
 
@@ -161,7 +164,7 @@ living claim:
 
 Same offenders, same shape, and the gap is the same fixed per-member cost: a
 `both` member's count minus its own program's share. The `pd-002` row is the
-sharpest instance on the committed tree, and it is the one §5.1 mentions:
+sharpest instance on the committed tree, and it is the one §5 mentions:
 
 | cluster | `refs` | Σ members' `refs` | Σ members' `refs_<program>` |
 |---|---:|---:|---:|
@@ -177,7 +180,7 @@ middle column is the number a reader gets from the obvious arithmetic, and it is
 dominated by the `both` members — invisible on a large cluster, everything on a
 singleton.
 
-**`xdata-register-map.md` §5.1's `pd-002` sentence is deliberately not
+**`xdata-register-map.md` §5's `pd-002` sentence is deliberately not
 edited.** It states a size and a range — "`pd-002` (20, `0x07F3`-`0x080C`)" —
 and no reference figure, so nothing in it is wrong today and there is no
 number there for the definition to contradict. Its silence is not an oversight,
