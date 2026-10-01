@@ -16,7 +16,10 @@ For every unit naming an `evidence/ec-watch/*.csv` capture it holds two
 things against that file:
 
   * **address presence** -- an address the unit attributes to the capture
-    has to have a row in it;
+    has to have a row in it, and an address the unit says did *not* move in
+    it has to have none. Both are one rule: the clause the address is named
+    in sets the polarity, so "0x0436 moving 4 times ... and 0x0437 never
+    moving" is two claims in one sentence and both are read;
   * **row count** -- a count the unit states for an address has to equal the
     real count for that address in that file.
 
@@ -24,16 +27,59 @@ Both are decidable against a fixed committed artifact, which is what makes
 them worth automating: a capture does not move under a re-run, so a
 disagreement is a fact about the prose rather than a race to be re-tried.
 
+A denial is checked rather than skipped because a denial is the only shape a
+retraction takes: #265 and the `0x07D4` clause issue #270 withdrew were both
+written as "this did not happen", and a checker that reads only attributions
+would not see either of them come back. What it costs is stated under *A
+denial about an address the capture never watched*, below.
+
 **What this does not check, which is as much of the point:**
 
-  * *Denials.* A unit that says an address did *not* move in a capture is
-    skipped rather than checked, so "0x07D4 did not move" is never verified
-    and a denial that has itself gone stale is not caught. That is the rule
-    that keeps `registers.yaml`'s `0x07D1` correction -- a 24-address denial
-    naming the capture -- green, and it is the one skip with a known blind
-    side to it. It costs real coverage, not hypothetical: the same rule
-    skips `findings.md` §4g's "`0x0436` moving 4 times ... and `0x0437`
-    never moving", because the denial is in the same sentence.
+  * *A denial about an address the capture never watched.* The presence rule
+    with its polarity inverted is only meaningful inside a window, and the
+    window is the capture's own name (`-0700-07ff` in the power-mode and
+    profile-switch captures) unioned with the ranges the unit itself names. An
+    address outside all of them is a **skip**, printed in `--verbose` as
+    `denial outside the watched window` and never counted as a check:
+    `registers.yaml`'s `XDATA_09EB` note says the capture watched
+    `0x0700-0x07FF` and never saw `0x09EB`, and "not covered" is a different
+    statement from "absent from what was watched". A capture with no window
+    in either place is not windowed at all, and every address is checked.
+  * *Which clause a denial's subject is in.* `denied_addresses()` walks out
+    from each cue rather than reading every address in the clause. The walk
+    starts at the nearest address either side and **stops at a connective**,
+    in either direction: the gap out of the cue may not hold a comma or a
+    coordinating word, where every later gap has to. A later gap also has to
+    hold no predicate of its own, which is the same clause carrying both
+    polarities the other way round and is what makes the two directions agree.
+    So `it has no row in that file at all, in a window where 0x0743 bit 0 went
+    set` denies what the first clause is about and not the byte the second
+    names; "`0x07D4` did not move in C and `0x07D5` moved" binds `0x07D4`
+    alone rather than reaching the address the clause attributes a movement to;
+    and "`0x07C4` moved, `0x07D4` never moved" binds `0x07D4` alone rather than
+    reaching back over the comma to the address before it. The twenty-two
+    addresses `registers.yaml`'s #265 correction lists are a listing rather
+    than twenty-two denials. An address inside parentheses is never bound.
+  * *A preceding clause whose predicate is not one of `MOVEMENT`'s.* The
+    predicate guard reads this module's own movement vocabulary rather than
+    the grammar, so "`0x07D0` held steady and `0x07D4` never moved" still
+    binds `0x07D0` to the denial. The walk is stopped at a connective and at a
+    movement, not at a clause, and an address bound that way is judged by the
+    inverted rule -- reported against a sentence that agrees with the capture.
+    This is the over-reach the rule does not exclude, stated beside the
+    under-reach above rather than left to the reader to assume the first hop's
+    stop rules it out.
+  * *A quoted cue.* `findings.md` §4g's "`0x0436` moving 4 times ... and
+    `0x0437` never moving" is one sentence and both halves are read, but
+    `registers.yaml`'s `XDATA_0436_PAIR` note quotes `"0x0437 never
+    moving"` to characterise it, and that is a citation of the claim rather
+    than a new one. Quoted spans are blanked before the cue search, so the
+    address falls back to the affirmative rule and is checked there.
+  * *A denial whose subject is named outside its clause.* "No row for the
+    byte", where the byte is three clauses back, is checked only where the
+    walk binds an address in the cue's own clause. The addresses such a
+    sentence lists are left to the affirmative rule, so it is coverage that
+    is given up rather than a claim that is missed.
   * *A table whose capture is named above it.* `units()` makes a table row
     its own unit, so the six-row `changes` column in
     `xdata-0400-045f.md` §8 -- 247/238/180/4/4/1, all of them correct -- is
@@ -43,7 +89,9 @@ disagreement is a fact about the prose rather than a race to be re-tried.
     looking at that column should not assume this tool read it.
   * *Range bounds.* An address that is a bound of an `A-B` range in the unit
     (`0x0700-0x07FF`, the `0x07C0-0x07D7` block) names a watched window, not
-    a byte that moved, and neither bound is expected to have a row. 4 units.
+    a byte that moved, and neither bound is expected to have a row. How many
+    units say so is `--verbose`'s `skip (range bound)` lines to say, and it is
+    a count of the tree rather than a fact about the rule.
   * *Word numerals.* The count rule reads digits, so a count spelled out --
     "carries two rows" -- is held by the presence rule alone. Reading
     numerals would go the other way too: "changed exactly one non-sensor
@@ -108,21 +156,30 @@ disagreement is a fact about the prose rather than a race to be re-tried.
 Every one of those is "not found by this method", never "absent" -- the same
 caveat `ec/annotations/registers.yaml` carries for a static scan. The
 `0x07B9`/`0x07D0`/`0x07D1` absence `docs/findings.md` §4g rests on is a
-*finding*, not a defect: this tool never prints it, and never touches a
-`status:`. Passing means the checked sentences agree with the CSVs beside
-them; it does not mean the prose is right about the firmware.
+*finding*, not a defect, and it is now held to
+`2026-09-18-ac-plugin-sweep-summary.csv` by the denial rule rather than by a
+re-reading: the sentence names the sweep's `0x0000-0x07FF` window, all three
+addresses are inside it, and none has a row in that file. A later capture
+that gave one of them a row turns the sentence red here. Passing still does
+not mean the prose is right about the firmware, and this tool never touches a
+`status:`.
 
 The surface is small, and every file in it is a file `--verbose` names. These
-are the figures a run prints, per file, with the two rules told apart -- a
-split re-derived from the run rather than read off the sentences, because
-`XDATA_0449`'s note yields both kinds from one unit: a count bound to the
-entry's own `addr:`, and a presence claim for the `0x044C` it names as the
-comparison. In `ec/annotations/registers.yaml` the two entries are
-`XDATA_0449` and `GPU_DYNAMIC_BOOST_STATUS`.
+are the figures a run prints, per file, with the address rules told apart
+from the count rule -- a split re-derived from the run rather than read off
+the sentences, because `XDATA_0449`'s note yields both kinds from one unit: a
+count bound to the entry's own `addr:`, and a presence claim for the `0x044C`
+it names as the comparison. In `ec/annotations/registers.yaml` the two
+entries are `XDATA_0449` and `GPU_DYNAMIC_BOOST_STATUS`. The address column
+covers both polarities, so it holds the #265 correction's `0x07D4`/`0x07D5`
+as well as the attributions beside them: the two are one rule read from the
+clause, and splitting the column further would need a drop-in-turn that the
+out-of-window skip makes unsound -- neutering the denial binding turns two
+skips into claims and the arithmetic stops decomposing.
 
-| file | `--verbose` | presence | row count |
+| file | `--verbose` | address | row count |
 |---|---|---|---|
-| `ec/annotations/registers.yaml` | 5 | 4 | 1 |
+| `ec/annotations/registers.yaml` | 35 | 34 | 1 |
 | `docs/hardware-tests/system-id-0456-bit6-divisor.md` | 2 | 1 | 1 |
 | `docs/hardware-tests/xdata-06c2-06db-sweep.md` | 2 | 1 | 1 |
 
@@ -135,8 +192,9 @@ by gaining a file. Each figure is a number to read, not a target: a re-run
 prints it against its own file, so a change that widens or narrows the
 surface is visible rather than silent. The rest are the skips above, several
 of which are deliberate and one of which -- the `xdata-0400-045f.md` §8 table
--- holds true claims this tool cannot reach. The measurement behind the table,
-and the figures it deliberately does not carry, are in
+-- holds true claims this tool cannot reach. The measurement behind the table
+is in `docs/findings/capture-claim-denials-are-checks.md`, and #991's, which
+predates the denial rule, is in
 `docs/findings/capture-claims-docstring-surface.md`.
 
 **The run also reports on itself at file granularity, and that is #975's
@@ -204,8 +262,11 @@ MOVEMENT = re.compile(
     re.IGNORECASE,
 )
 
-# Phrases that take an address *out* of a capture's movement. These units are
-# skipped, not checked: see the docstring.
+# Phrases that take an address *out* of a capture's movement. A unit one of
+# these matches is not skipped: the presence rule runs with its polarity
+# inverted over the addresses `denied_addresses()` binds. The match itself says
+# only that the unit denies *something*; which address that is, is the walk's
+# job and not this regex's.
 DENIAL = re.compile(
     r"\b(?:did|does|do|was|were|has|have|had)\s+not\b"
     r"|\bnever\b"
@@ -234,8 +295,55 @@ COUNT_WINDOW = 60
 # `A-B` bounds a range, and a range bounds a window rather than naming bytes
 # that moved in it. The spaces matter: "0x075B - 0x075C" in a sentence about
 # a difference is the same shape as a window, and both are skipped.
-RANGE = re.compile(
-    r"0x[0-9A-Fa-f]{4}\s*(?:-|–|—|to)\s*`?0x[0-9A-Fa-f]{4}`?")
+RANGE_SPAN = re.compile(
+    r"0[xX]([0-9A-Fa-f]{4})\s*(?:-|–|—|to)\s*`?0[xX]([0-9A-Fa-f]{4})`?")
+
+# The window a capture's *own name* states, as `-0700-07ff`. Most committed
+# captures carry one and several do not, which is why the window a denial is
+# judged against is the name's span unioned with the ranges its unit names
+# rather than either alone.
+WINDOW_NAME = re.compile(r"-([0-9A-Fa-f]{4})-([0-9A-Fa-f]{4})(?=\.csv$)")
+
+# A unit cut into clauses, for the polarity split. The boundaries are the
+# ones this corpus already writes with -- an em or en dash, the ASCII `--`
+# `registers.yaml` uses beside a correction, a colon, a semicolon, and a comma
+# before a coordinating word. A bare comma is *not* one: "carries `0x0436,13`
+# and `0x0437,1`" and "the page run `0x0432` to `0x044F`, and there is no row
+# for `0x0402`" both put a claim on each side of one, and cutting the first
+# would put two digits of a hex pair in a clause of its own.
+CLAUSE = re.compile(
+    r"[—–]"
+    r"|(?<=\s)--(?=\s)"
+    r"|[:;]"
+    r"|\.\s+(?=[A-Z`*_|-])"
+    r"|,\s+(?:and|but|so|which|while|whereas|though|although|yet|neither)\b",
+    re.IGNORECASE)
+
+# A quoted span, with its offsets preserved. A cue inside quotation marks is a
+# citation of somebody else's claim rather than this file's, and both places
+# the corpus does that (`registers.yaml`'s XDATA_0436_PAIR note quoting
+# "0x0437 never moving" in order to characterise it) would otherwise be read
+# as this file denying an address the very capture it names has a row for.
+QUOTED = re.compile(r"\"[^\"]*\"|“[^”]*”|‘[^’]*’")
+
+# What joins two addresses in a denial. A comma or a coordinating word makes
+# them one coordinated subject -- "`0x07B9`, `0x07D0` and `0x07D1` did not
+# change once" -- and a bare space makes them a listing instead, which is what
+# tells the #265 correction's own twenty-two addresses from the byte it is
+# about.
+#
+# This is also what a *first* hop out of a cue may not cross, which is the half
+# that used to stop at a comma alone and let a bare connective through.
+# `it has no row in that file at all, in a window where 0x0743 bit 0 went set`
+# is one sentence about two things, and "`0x07D4` did not move in C and
+# `0x07D5` moved" is one clause saying two opposite things: a subject reached
+# over `and` is the *next* clause's, so judging it by the inverted rule would
+# pass a claim the capture contradicts. The first hop has to be adjacent; it is
+# the continuations that walk a coordinated subject, and those are what the
+# connective is for -- which also means a bare comma is a connective, and runs
+# a backward continuation out of the denial's own phrase. That is what
+# `crosses_a_movement()` is for.
+CONNECTOR = re.compile(r",|\b(?:and|or|nor)\b", re.IGNORECASE)
 
 # A registers.yaml entry, and the `addr:` key inside one. Tracked over the raw
 # lines rather than through pyyaml because pyyaml discards line numbers, and
@@ -356,9 +464,170 @@ def address_tokens(unit: str):
 def range_bounds(unit: str):
     """The addresses that bound an `A-B` range, which are not movers."""
     bounds = set()
-    for m in RANGE.finditer(unit):
-        bounds |= {address for address, _ in address_tokens(m.group(0))}
+    for m in RANGE_SPAN.finditer(unit):
+        bounds |= {normalise("0x" + m.group(1)), normalise("0x" + m.group(2))}
     return bounds
+
+
+def range_spans(unit: str):
+    """[(lo, hi)] for each `A-B` range the unit names, either order."""
+    return [tuple(sorted((int(m.group(1), 16), int(m.group(2), 16))))
+            for m in RANGE_SPAN.finditer(unit)]
+
+
+def clauses(unit: str):
+    """The unit cut at CLAUSE, as the pieces a polarity is read from.
+
+    Strings rather than `(offset, text)`: the report's line comes from
+    `unit_lines()` and its `spoken` map, which already maps an address to the
+    line it is on, so a clause needs no offset of its own.
+    """
+    return [piece.strip() for piece in CLAUSE.split(unit) if piece.strip()]
+
+
+def bare_clause(clause: str) -> str:
+    """The clause with its quoted spans blanked, at the offsets they held.
+
+    Blanked rather than deleted so an address's offset still indexes the same
+    text, which is what the walk outward from a cue needs.
+    """
+    return QUOTED.sub(lambda m: " " * len(m.group(0)), clause)
+
+
+def crosses_a_movement(gap: str) -> bool:
+    """Whether a gap asserts a movement of its own, so ends the phrase.
+
+    The connective alone does not tell one subject from the next: "`<addr>`
+    moved twice, `<addr>` never moved" puts a comma between two clauses exactly
+    as "`<addr>`, `<addr>` and `<addr>` did not change once" puts one between
+    three subjects of a single denial. What separates them is the rest of the
+    gap, and `MOVEMENT` is already this module's reading of "this text says
+    something changed": " moved twice, " is a clause with a predicate of its
+    own, and "`, `" and "` and `" are not. It is a test against `MOVEMENT`'s
+    vocabulary rather than against the grammar, so a predicate the vocabulary
+    does not name (" held steady ") is crossed: the walk is stopped at a
+    connective and at a movement, not at a clause, because it has no grammar
+    to stop at. What it cannot separate, it binds.
+
+    Symmetric, unlike the connective test it sits beside -- the same gap is
+    read the same way whichever side of the cue it is on. That is the half the
+    connective stop never covered: a *backward* continuation crossing a comma
+    walks backwards out of the denial's own phrase, into a preceding clause
+    whose address the sentence attributes a movement to. Bound, that address is
+    judged by the inverted rule and prose that agrees with the capture is
+    reported as one it contradicts -- the false positive, on the one shape of
+    sentence this walk exists to hold up.
+    """
+    return bool(MOVEMENT.search(gap))
+
+
+def denied_addresses(clause: str):
+    """The addresses a denial in this clause is *about*.
+
+    A cue binds the nearest address either side of it and the run keeps going
+    while the gap between two consecutive ones is a connector, because
+    "`0x07B9`, `0x07D0` and `0x07D1` did not change once" is one denial with
+    three subjects and reading only the last of them would check one address
+    where the prose is about three.
+
+    **At a connective the first hop stops, either way.** The gap out of the
+    cue may not hold one, where every later gap has to. That is what keeps the
+    walk inside the phrase the cue is in: "`0x07D4` did not move in C and
+    `0x07D5` moved" is a single clause carrying both polarities, and a walk
+    that carried the denial over the `and` would bind `0x07D5` to it -- so an
+    address the sentence says *moved* would be judged by the inverted rule, and
+    a claim the capture contradicts would pass silently. The connective is what
+    a *continuation* runs along, not what the first step may cross.
+
+    **A continuation crosses no predicate of its own**, which is
+    `crosses_a_movement()` and is what stops the same clause carrying both
+    polarities the other way round -- "`<addr>` moved, `<addr>` never moved" --
+    where the first hop out of the cue crosses only a backtick and the
+    continuation would otherwise go on over " moved, ". What that guard does
+    not cover is in this module's docstring, under *A preceding clause whose
+    predicate is not one of `MOVEMENT`'s*.
+
+    An address inside parentheses is never bound. The #265 correction lists a
+    capture's own twenty-two distinct addresses and then says they "omit the
+    byte", and the byte is named three clauses earlier rather than in the
+    list; reading the list as twenty-two denials would report every address
+    the capture does hold as one it says it does not.
+    """
+    bare = bare_clause(clause)
+    inside = []
+    stack = []
+    for i, ch in enumerate(bare):
+        if ch == "(":
+            stack.append(i)
+        elif ch == ")" and stack:
+            inside.append((stack.pop(), i))
+    tokens = [(address, at) for address, at in address_tokens(bare)
+              if not any(lo <= at and at + len(address) <= hi
+                         for lo, hi in inside)]
+    bound = set()
+    for m in DENIAL.finditer(bare):
+        lo, hi = m.span()
+        for address, at in tokens:
+            if lo <= at < hi:
+                bound.add(address)
+        for forward in (True, False):
+            edge = hi if forward else lo
+            first = True
+            while tokens:
+                side = [t for t in tokens if (t[1] >= edge) == forward]
+                if not side:
+                    break
+                address, at = (min(side, key=lambda t: t[1]) if forward
+                               else max(side, key=lambda t: t[1]))
+                gap = bare[min(at, edge):max(at, edge)]
+                if first and CONNECTOR.search(gap):
+                    break
+                if not first and (not CONNECTOR.search(gap)
+                                  or crosses_a_movement(gap)):
+                    break
+                bound.add(address)
+                first = False
+                edge = at
+    return bound
+
+
+def capture_window(capture: str, spans):
+    """[(lo, hi)] the capture watched: its own name's span, plus the unit's.
+
+    Neither source is enough alone. The name alone cannot tell `0x09EB` from
+    `0x07D4` against the power-mode capture, whose name carries `-0700-07ff`
+    while the AC-plugin sweep summary has no name to read at all -- and there
+    the ranges its own sentences name are the only thing that puts its
+    `0x07B9` denial in scope. `0x09EB` sits above the power-mode capture's
+    span entirely, so a filename-only window would skip every denial in it.
+    """
+    m = WINDOW_NAME.search(os.path.basename(capture))
+    out = list(spans)
+    if m:
+        out.append(tuple(sorted((int(m.group(1), 16), int(m.group(2), 16)))))
+    return out
+
+
+def in_window(address: str, window) -> bool:
+    """Whether a capture watched this address, or whether nothing says.
+
+    **An empty window answers `True`**, because nothing says the capture did
+    *not* watch it. That is the reading the window guard rests on: it exists
+    to skip an address a capture demonstrably watched elsewhere --
+    `XDATA_09EB`'s "the capture watched `0x0700-0x07FF` and never saw
+    `0x09EB`" -- and not to skip everything said about a capture whose
+    filename states no window and whose unit names no range. `any()` over no
+    spans is `False`, which inverted the guard's sense and skipped every
+    denial against the six captures that carry no name window at all --
+    including the four `2026-09-24-06xx` ones, which are the captures a future
+    denial is likeliest to be written about. The `0x0751` claim in
+    `perturb-arm-colliding-marks.md` is one such denial, and it holds: that
+    capture has no `0x0751` row, which is what that file's own claim is.
+    """
+    if not window:
+        return True
+    at = int(address[2:], 16)
+    return any(lo <= at <= hi for lo, hi in window)
 
 
 def unit_lines(lines, lineno, unit):
@@ -458,10 +727,10 @@ def check(path, index, verbose):
     """(problems, lines read, claims checked) for one file.
 
     Each problem is (repo-relative path, lineno, capture, address, kind,
-    stated, real) -- `kind` is `presence` or `count`, `stated` is the count
-    the prose gave or None, and `real` is what the file has. The path is made
-    relative here rather than in `main`, so the report can name a file it has
-    already walked.
+    stated, real) -- `kind` is `presence`, `denial` or `count`, `stated` is
+    the count the prose gave or None, and `real` is what the file has. The
+    path is made relative here rather than in `main`, so the report can name
+    a file it has already walked.
 
     The third element of the return is what keeps the tool honest about
     itself: a run that checked nothing prints `0`, and a reader who sees
@@ -487,10 +756,6 @@ def check(path, index, verbose):
             continue
         if not captures:
             continue
-        if DENIAL.search(unit):
-            if verbose:
-                print(f"  skip (denies movement) {where}:{lineno}", file=sys.stderr)
-            continue
         if not MOVEMENT.search(unit):
             if verbose:
                 print(f"  skip (no movement claim) {where}:{lineno}", file=sys.stderr)
@@ -510,27 +775,66 @@ def check(path, index, verbose):
         # also named in XDATA_0449's note, where the mention is a claim and
         # this check is the one that holds it to 247 rows.
         spoken = {}
+        declared = set()
         for n, chunk in unit_lines(lines, lineno, unit):
             if ADDR_KEY.match(lines[n - 1]):
+                declared |= {address for address, _ in address_tokens(chunk)}
                 continue
             for address, _ in address_tokens(chunk):
                 spoken.setdefault(address, n)
 
         bounds = range_bounds(unit)
-        for address, at in spoken.items():
-            if address in bounds:
-                if verbose:
-                    print(f"  skip (range bound) {where}:{at} {address}",
-                          file=sys.stderr)
-                continue
-            checked += 1
-            if any(index[c][0].get(address) for c in captures):
-                continue
-            for capture in captures:
-                _, rows, distinct = index[capture]
-                problems.append((where, at, capture, address,
-                                 "presence", None,
-                                 f"{rows} rows, {distinct} distinct addresses"))
+        spans = range_spans(unit)
+        # Polarity is a property of an *address*, not of a clause: whether a
+        # unit denies `0x07D0` is a fact about `0x07D0` everywhere in it. The
+        # split is still what finds it -- one sentence carries both halves of
+        # `findings.md` §4g's "`0x0436` moving 4 times ... and `0x0437` never
+        # moving", and one unit-wide search over DENIAL can only see the denial
+        # -- but taking the union over clauses rather than reading whichever
+        # clause an address happens to be named in is what stops the gpu-tgp
+        # door note's opening "**The `0x07D0`, `0x07D1` and `0x07C4` notes are
+        # updated ...**" from asserting that two bytes the capture is said to
+        # hold steady moved.
+        denied = set()
+        for text in clauses(unit):
+            if MOVEMENT.search(text):
+                denied |= denied_addresses(text)
+
+        seen = set()
+        for text in clauses(unit):
+            for address, _at in address_tokens(text):
+                if address in declared:
+                    continue
+                if address in bounds:
+                    if verbose:
+                        print(f"  skip (range bound) {where}:{spoken.get(address, lineno)} "
+                              f"{address}", file=sys.stderr)
+                    continue
+                if address in seen:
+                    continue
+                seen.add(address)
+                # The presence rule with its polarity set by the clause: a
+                # denial holds when the capture has no row, an attribution
+                # holds when it has one, and both are the same comparison.
+                denies = address in denied
+                if denies and not any(in_window(address, capture_window(c, spans))
+                                      for c in captures):
+                    if verbose:
+                        print(f"  skip (denial outside the watched window) "
+                              f"{where}:{spoken.get(address, lineno)} {address}",
+                              file=sys.stderr)
+                    continue
+                checked += 1
+                held = any(index[c][0].get(address) for c in captures)
+                if held != denies:
+                    continue
+                line = spoken.get(address, lineno)
+                for capture in captures:
+                    _, rows, distinct = index[capture]
+                    problems.append((where, line, capture, address,
+                                     "denial" if denies else "presence",
+                                     None,
+                                     f"{rows} rows, {distinct} distinct addresses"))
 
         subject = entry_subject(lines, subjects, lineno)
         for m in COUNT.finditer(unit):
@@ -576,7 +880,10 @@ def report(problems):
     """
     for path, lineno, capture, address, kind, stated, real in problems:
         where = f"{path}:{lineno}"
-        if kind == "presence":
+        if kind == "denial":
+            print(f"{where}: {address} is said not to have moved in `{capture}`, "
+                  f"and that file carries it ({real})", file=sys.stderr)
+        elif kind == "presence":
             print(f"{where}: {address} is attributed to a change in `{capture}`, "
                   f"and this read of that file found no row for it ({real})",
                   file=sys.stderr)

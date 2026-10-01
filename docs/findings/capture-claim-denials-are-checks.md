@@ -1,0 +1,171 @@
+# A denial is the only shape a retraction takes, so `check_capture_claims.py` checks it instead of skipping it (issue #328)
+
+`ec/tools/check_capture_claims.py` used to short-circuit a unit on `DENIAL`
+before either rule ran: a sentence saying an address did *not* move in a named
+capture was reported as a skip, never checked. This inverts that — an address
+a unit says did not move in a capture the capture watched has to have **no**
+row in it — and the tree goes green without a single word of prose edited.
+Every figure below is read off a command in this tree, not carried forward.
+
+**Nothing here reads hardware.** No EC, BIOS or Windows binary is read, no
+image is loaded, no register is touched, and no laptop is involved: the
+captures are read as committed `.csv` files on disk. If a later capture makes
+a checked denial disagree, fixing that prose is a human's edit against a real
+run.
+
+## Why the skip cost real coverage rather than hypothetical coverage
+
+A denial is the shape both retractions in this tool's history took. Issue #265
+and the `0x07D4` clause issue #270 withdrew were both written as *this did not
+happen*: "`0x07D4` moved at the AC plug-in" was wrong because the capture has
+no `0x07D4` row, and the correction that replaced it is "`0x07D4` did not
+move". A checker that reads only attributions cannot see either version of
+that sentence, so a withdrawn claim that came back in its corrected form would
+have gone unnoticed. Worse, the skip took the affirmative half with it:
+`docs/findings.md` §4g's "`0x0436` moving 4 times … and `0x0437` never
+moving" is one sentence, so **neither half was read** — the 4 is a real count
+and it is the number the #265 correction turns on.
+
+## The measurement that settled the design
+
+Taking `DENIAL` out of the rule entirely and re-running gives **14 problems,
+every one of them a true denial being read backwards by the presence rule**.
+That is the evidence the fix is an inversion of polarity rather than a
+loosening of the check: the tree goes green with no prose edit because all
+fourteen are true and only the direction was wrong. The count also decides
+*where* the split has to happen — with `DENIAL` neutralised the affirmative
+half of §4g's sentence alone yields checked claims and no problems, so
+`0x0436`'s 4 binds through the nearest-address fallback and agrees with the
+capture, and so does `0x0438`'s once.
+
+The seventeen `skip (denies movement)` lines the before-tree printed are
+**units**, not claims: some are sentences the rule reaches several times over,
+and some name no capture-scoped address to reach at all — the `no MARK row`
+sentences and the twenty-two-address listing among them. So that figure and the
+one this section reports do not subtract into anything.
+
+## What the split is, and why it is local
+
+The clause split is **local to this tool**, not in
+`check_cluster_citations.units()`. That walker is capture-agnostic by design:
+it splits on sentence terminators so a cluster citation has exactly one owner,
+and the cluster checker knows nothing about captures, movement or polarity. A
+boundary defined by *denial versus affirmation* is a capture-claims concept,
+and putting it in the shared walker would make that tool split on a
+distinction it has no use for and perturb its own output — the mis-paired-split
+problem #273 is about. It also keeps this branch out of a file other open
+branches are editing.
+
+What is **not** duplicated is the line bookkeeping: `unit_lines()` already maps
+an offset in the unit back to a source line, so the report still points at the
+line an address is *on* rather than the unit's first line, and
+`test_reported_line_is_the_address_line_not_the_unit_start` still holds.
+
+## The rule, and the case it declines
+
+Polarity is a property of an **address**, not of a clause: whether a unit
+denies `0x07D0` is a fact about `0x07D0` everywhere in it. `denied_addresses()`
+walks outward from each denial cue and binds the nearest address either side,
+continuing across a connective so a coordinated subject stays one subject
+("`0x07B9`, `0x07D0` and `0x07D1` did not change once"), and never binding an
+address inside parentheses. Quoted spans are blanked before the cue search,
+because `registers.yaml`'s `XDATA_0436_PAIR` note quotes `"0x0437 never
+moving"` in order to characterise the claim rather than to make a new one.
+
+**At a connective the first hop stops, in either direction.** The gap out of
+the cue may not hold a comma or a coordinating word, where every later gap has
+to. That is what keeps the walk inside the phrase its cue is in, and it is the
+difference between the two halves of a clause that carries both polarities. In
+`` `0x07D4` did not move in C and `0x07D5` moved `` a walk that carried the
+denial over the `and` would bind `0x07D5` to it, so an address the sentence
+says **moved** would be judged by the inverted rule — and since the capture
+has no row for either address, that claim would pass silently. The connective
+is what a *continuation* runs along, not what the first step may cross.
+
+**And a continuation crosses no predicate of its own**, which is
+`crosses_a_movement()` and is the same clause carrying both polarities in the
+other order. In `` `0x07C4` moved, `0x07D4` never moved `` the gap out of the
+cue is a backtick, so only a *continuation* could reach the address before it —
+over " moved, ", whose comma is a connective and therefore passes the test the
+first hop is held to. Without the second guard the walk binds `0x07C4` to a
+denial the sentence attributes a **movement** to, and since the capture has two
+rows for it, prose that agrees with the capture is reported as one it
+contradicts. The guard is `MOVEMENT`, the same vocabulary the walk already
+reads a unit's claim with, so the gap that stops it is one asserting a
+movement of its own. A stricter guard — the gap may hold the connective and
+nothing else — was tried and does not work, because the gap a continuation
+measures includes the address token at its own edge, so every gap holds word
+characters and every continuation is refused. That costs the coordinated
+subjects the walk exists for, `docs/findings.md` §4g's `0x07B9` among them,
+and turns a true denial into a presence problem.
+
+One denial in the tree is **skipped**, with its own `--verbose` reason,
+`skip (denial outside the watched window)`: `ec/annotations/registers.yaml`'s
+`XDATA_09EB` note against `2026-09-23-power-mode-cycle-0700-07ff.csv`. The
+capture's name states `-0700-07ff` and the note says so itself — "the capture
+watched `0x0700-0x07FF` and never saw `0x09EB`". That is a statement about
+**coverage**, not about movement, and "not covered" is a different claim from
+"absent from what was watched". It is a skip, never a pass and never a failure.
+
+The window a denial is judged against is the capture's own name unioned with
+the ranges its unit names, because neither source is enough alone. Most
+committed captures carry a span in the filename and several carry none; the
+AC-plugin sweep summary is one with no name to read, and there the sentence's
+own `0x0000-0x07FF` is the only thing that puts `0x07B9` in scope at all.
+`0x09EB` sits above the power-mode capture's span, so a filename-only window
+would skip that note entirely. **A capture with no window in either place is
+not windowed at all, and every address is checked** — nothing says the capture
+did not watch the address, which is the only thing the guard exists to catch.
+
+## The surface, before and after
+
+`--verbose` now reports a denial as a claim **checked**, and the total rises
+from what it printed before — a run reaching nothing still prints `0`, and the
+figure is asserted non-empty rather than held to a literal, because it is a
+count over the tree and every merge moves it.
+
+- Before: 15 capture claims checked, in six files.
+- After: 65, in nine files. `docs/findings.md`,
+  `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` and
+  `docs/hardware-tests/remain-capacity-0436.md` each yield claims for the
+  first time.
+
+Every in-window denial the rule now reaches is **true**, which is the whole of
+what the tree held to say here: a disagreement would have been a defect in the
+prose, and there is none. That includes the #265 correction itself, whose own
+note lists that capture's 22 distinct addresses and names no row for either
+`0x07D4` or `0x07D5`. It is why `ec/annotations/registers.yaml` is not edited:
+no `note:`, no `status:` and no correction moves, because there is nothing to
+correct.
+
+## What is still not checked
+
+Nothing was taken away to make room for this. The documented limits stay
+limits and are restated in the docstring: a table whose capture is named above
+it, `.txt` captures (outside the oracle), word numerals, the bare-date `addr`
+column, and a denial whose subject is named outside its own clause — coverage
+given up, rather than a claim missed. Each is "not found by this method", never
+"absent", and the new skip reason is worded the same way for the same reason:
+`0x09EB` is **not covered**, which is a fact about the method's reach rather
+than about the firmware. A denial the walk does not reach across a connective
+is in the same category: a claim the rule cannot see, not one it has cleared.
+
+Both directions of the walk's reach are stated rather than only the harmless
+one. That is **under**-reach. The **over**-reach is narrowed, not excluded:
+`crosses_a_movement()` reads the module's `MOVEMENT` vocabulary and not the
+grammar, so in `` `0x07D0` held steady and `0x07D4` never moved `` the backward
+continuation still crosses the `and`, because `held steady` is a predicate and
+not a `MOVEMENT` word. The walk is stopped at a connective and at a movement,
+not at a clause, because it has no grammar to stop at; an address bound that
+way is judged by the inverted rule and can be reported against a sentence that
+agrees with the capture. That is a limit of the rule in one direction, and it
+is stated here so an audit of the coverage is not told the walk stays in its
+phrase when the guard is narrower than that.
+
+The `0x07B9`/`0x07D0`/`0x07D1` absence `docs/findings.md` §4g rests on is now
+held to `2026-09-18-ac-plugin-sweep-summary.csv` by a check rather than by a
+re-reading: the sentence names the sweep's `0x0000-0x07FF` window, all three
+addresses are inside it, and none has a row in that file. A later capture that
+gave one of them a row turns §4g red here. This **adds** a check and retracts
+nothing, so §4a's wrong figures and their corrections stay exactly as they
+were, and no `status:` is touched.

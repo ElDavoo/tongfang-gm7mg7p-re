@@ -54,6 +54,21 @@ INDEX = {name: ccc.read_capture(os.path.join(ccc.REPO, name))
 PROFILE = 'evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv'
 REAL_INDEX = {PROFILE: ccc.read_capture(os.path.join(ccc.REPO, PROFILE))}
 
+# The committed capture whose *name* states a window: `-0700-07ff`. It is what
+# the out-of-window case is argued about, because an address above that window
+# is a denial the capture has no opinion about and one below it is not.
+POWER_CYCLE = 'evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv'
+CYCLE_INDEX = {POWER_CYCLE: ccc.read_capture(os.path.join(ccc.REPO, POWER_CYCLE))}
+
+# A committed capture whose *name* states no window -- no `-XXXX-YYYY` span
+# before `.csv` -- which is what the empty-window case is argued about. Most
+# committed captures are like this, so a rule that skipped denials for want of
+# a window would skip most of the corpus. `0x06D6` has 602 rows in it and
+# `0x0751` none, which is the pair the two empty-window cases turn on.
+NO_WINDOW_CAPTURE = 'evidence/ec-watch/2026-09-24-06d9-hold-linux.csv'
+NO_WINDOW_INDEX = {NO_WINDOW_CAPTURE: ccc.read_capture(
+    os.path.join(ccc.REPO, NO_WINDOW_CAPTURE))}
+
 
 def claims(text, index=None, suffix='.md'):
     """(problems, claims checked) the tool reports for one piece of prose."""
@@ -228,14 +243,229 @@ class ReportsRealDrift(unittest.TestCase):
         self.assertEqual(problems[0][1], 2)
 
 
-class SkipsDeliberately(unittest.TestCase):
-    """Every rule that makes the tool conservative, as a case saying so."""
+class ChecksDenials(unittest.TestCase):
+    """A denial is a claim, and it is checked with the polarity inverted.
 
-    def test_denial_is_skipped(self):
-        # The rule that keeps the corrected tree green, and the one with a
-        # known blind side: a stale denial is not caught.
+    A denial is the only shape a retraction takes: #265 and the `0x07D4`
+    clause issue #270 withdrew were both written as "this did not happen",
+    and while the tool skipped denials a checker that could only see
+    attributions would not have noticed either of them coming back. So the
+    fixture below is the same pair the presence cases argue about --
+    `0x07C4` with two rows and `0x07D4` with none in both committed example
+    captures -- read the other way round, which is why no new `.csv` is
+    needed for the negative case.
+    """
+
+    # findings.md §4g's shape: a swept window, a capture, and three addresses
+    # said to have stood still.
+    SWEEP_SENTENCE = (
+        'Over a sweep of the whole `0x0000-0x07FF` space — 32499 recorded byte\n'
+        'changes (' + SWEEP + ') — `0x07B9`, `0x07D0` and `0x07D1` did not\n'
+        'change once.\n')
+
+    # findings.md §4g's other shape, and the reason the split exists at all.
+    MIXED = (
+        '`evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv` has\n'
+        '`0x0436` moving 4 times — `0x70 -> 0x84 -> 0x98` — with no scatter\n'
+        'and `0x0437` never moving — and `0x0438` moving exactly **once**.\n')
+
+    def test_a_false_denial_fails_and_names_the_address(self):
+        # The issue's required negative fixture: §4g's sentence with one half
+        # false. `0x07C4` really does carry two rows, so saying it never moved
+        # is the disagreement, and it has to be reported against that address
+        # rather than passing because the sentence also carries two true
+        # denials.
+        text = '`0x07C4` never moved in ' + POWER + '.\n'
+        n, addr = drifted(text)
+        self.assertEqual((n, addr), (1, '0x07C4'))
+
+    def test_the_false_denial_names_the_real_row_count(self):
+        text = '`0x07C4` never moved in ' + POWER + '.\n'
+        problems, _ = claims(text)
+        self.assertEqual(problems[0][4:], ('denial', None,
+                                           f'{INDEX[POWER][1]} rows, '
+                                           f'{INDEX[POWER][2]} distinct addresses'))
+        self.assertEqual(problems[0][2], POWER)
+
+    def test_a_true_denial_is_silent(self):
+        # The same sentence with the address that really has no row. A
+        # checker that only ever fails is not calibrated either.
         text = '`0x07D4` did not move in ' + POWER + '.\n'
         self.assertEqual(drifted(text), (0, None))
+
+    def test_the_sweep_summary_absence_is_checked_and_silent(self):
+        # §4g's `0x07B9`/`0x07D0`/`0x07D1`, against the capture it names.
+        # The window in the sentence is what puts them in scope: the capture's
+        # own name carries none, so without it these would be skipped as
+        # unwatched and the finding the section rests on would go unchecked.
+        problems, checked = claims(self.SWEEP_SENTENCE)
+        self.assertEqual(problems, [])
+        self.assertEqual(checked, 3, "one checked denial per named address")
+
+    def test_one_of_those_three_gaining_a_row_would_go_red(self):
+        # Sharpness for the case above, and the whole reason to check it: a
+        # later capture that gave `0x07D1` a row turns §4g's sentence red.
+        text = self.SWEEP_SENTENCE.replace('`0x07D1` did not', '`0x07C6` did not')
+        n, addr = drifted(text)
+        self.assertEqual((n, addr), (1, '0x07C6'))
+
+    def test_the_pre_265_sentence_still_fails(self):
+        # The shape the #265 correction withdrew, and the bug the tool was
+        # written for: `0x07D4` attributed to a capture that has no row for
+        # it. Gaining the denial rule must not have cost the presence one --
+        # a checker that stopped catching this is not calibrated.
+        text = ('0x07D4 moved at the AC plug-in in ' + POWER + ', the same\n'
+                'window in which 0x07C4 and 0x07C6 moved.\n')
+        n, addr = drifted(text)
+        self.assertEqual((n, addr), (1, '0x07D4'))
+
+    def test_the_mixed_sentence_reads_both_halves(self):
+        problems, checked = claims(self.MIXED, REAL_INDEX)
+        self.assertEqual(problems, [])
+        self.assertEqual(checked, 4, "0x0436, 0x0437, 0x0438 and the row count")
+
+    def test_the_affirmative_half_is_not_skipped_with_the_denial(self):
+        # The other half of the mixed case: `0x0436`'s 4 is a real count and
+        # it is the number the #265 correction turns on, so a split that read
+        # the denial and dropped the attribution would lose it silently.
+        problems, _ = claims(self.MIXED.replace('moving 4 times',
+                                                'moving 5 times'), REAL_INDEX)
+        self.assertEqual([(p[3], p[4], p[5], p[6]) for p in problems],
+                         [('0x0436', 'count', 5, 4)])
+
+    def test_a_denial_outside_the_watched_window_is_a_named_skip(self):
+        # The `XDATA_09EB` shape. The capture's own name says `-0700-07ff` and
+        # the note says so itself -- "the capture watched 0x0700-0x07FF and
+        # never saw 0x09EB" -- so this is a statement about coverage rather
+        # than about movement, and reading it as the second is how "not
+        # covered" turns into "absent".
+        text = (f'Byte {POWER_CYCLE} watched 0x0700-0x07FF and never saw '
+                '0x09EB.\n')
+        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+            f.write(text)
+            path = f.name
+        err = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err):
+                problems, _, checked = ccc.check(path, CYCLE_INDEX, True)
+        finally:
+            os.unlink(path)
+        self.assertEqual((problems, checked), ([], 0), "neither a problem nor a check")
+        self.assertIn('denial outside the watched window', err.getvalue())
+        self.assertIn('0x09EB', err.getvalue())
+
+    def test_the_window_skip_is_not_a_way_for_a_false_denial_through(self):
+        # Sharpness. The same sentence about a byte the capture *did* watch is
+        # checked, and `0x07C4` has two rows in that file, so it fails: the
+        # skip is scoped to coverage and does not swallow the rule.
+        text = (f'Byte {POWER_CYCLE} watched 0x0700-0x07FF and never saw '
+                '0x07C4.\n')
+        n, addr = drifted(text, CYCLE_INDEX)
+        self.assertEqual((n, addr), (1, '0x07C4'))
+
+    def test_a_movement_after_a_bare_connective_is_not_bound_by_the_denial(self):
+        # "X did not move in C and Y moved" is one clause carrying both
+        # polarities, and `Y` is the subject of the second. A walk that
+        # carried the denial over the `and` would judge it by the inverted
+        # rule -- and `0x07D5` has no row in that capture, so the presence
+        # rule is what has to catch it, as it does on the sentence alone.
+        text = (f'`0x07D4` did not move in {POWER_CYCLE} and `0x07D5` moved.\n')
+        n, addr = drifted(text, CYCLE_INDEX)
+        self.assertEqual((n, addr), (1, '0x07D5'),
+                         "the attribution, not the true denial beside it")
+
+    def test_a_true_movement_after_a_bare_connective_is_not_reported(self):
+        # The mirror of the case above, and the direction that matters: the
+        # sentence is right, and `0x07C4` has two rows in that file. Bound to
+        # the denial it would be reported as one the capture contradicts,
+        # which is a false positive about a sentence that agrees.
+        text = (f'`0x07D4` did not move in {POWER_CYCLE} and `0x07C4` moved.\n')
+        self.assertEqual(drifted(text, CYCLE_INDEX), (0, None))
+
+    def test_a_movement_before_a_bare_comma_is_not_bound_by_the_denial(self):
+        # The mirror of the two above, and the direction nothing caught: the
+        # movement comes first, so the gap out of the cue is a backtick and
+        # the *continuation* is what would cross into the clause before it.
+        # "`0x07D5` moved, `0x07D4` never moved" has both polarities in one
+        # clause and `0x07D5` is the subject of the first, so a walk that
+        # carried the denial backwards over the comma would judge it by the
+        # inverted rule -- and it has no row in that capture either, so the
+        # attribution is what has to catch it, as it does on the sentence.
+        text = (f'`0x07D5` moved, `0x07D4` never moved in {POWER_CYCLE}.\n')
+        n, addr = drifted(text, CYCLE_INDEX)
+        self.assertEqual((n, addr), (1, '0x07D5'),
+                         "the attribution, not the true denial beside it")
+
+    def test_a_true_movement_before_a_bare_comma_is_not_reported(self):
+        # The true-prose twin, and the false positive the backward walk used
+        # to produce: `0x07C4` has two rows in that file and the sentence says
+        # it moved, so binding it to the denial reports a sentence that agrees
+        # with the capture as one it contradicts.
+        text = (f'`0x07C4` moved, `0x07D4` never moved in {POWER_CYCLE}.\n')
+        self.assertEqual(drifted(text, CYCLE_INDEX), (0, None))
+
+    def test_the_em_dash_form_was_never_in_the_denial_walk(self):
+        # The negative half of the case above, and the reason it is worth
+        # keeping: `CLAUSE` splits an em or en dash, so this shape has always
+        # put the movement in a clause of its own and the gap the continuation
+        # would have crossed is not one the walk sees. It holds for a boundary
+        # the splitter makes rather than for a rule in the walk, which is
+        # exactly the difference the bare comma above does not get.
+        text = (f'`0x07D5` moved — `0x07D4` never moved in {POWER_CYCLE}.\n')
+        n, addr = drifted(text, CYCLE_INDEX)
+        self.assertEqual((n, addr), (1, '0x07D5'))
+
+    def test_a_coordinated_subject_still_binds_across_its_connective(self):
+        # Sharpness for the two above: the connective has to stop the *first*
+        # hop, not the walk. "`0x07B9`, `0x07D0` and `0x07D1` did not change
+        # once" is one coordinated subject of three, and reading only the
+        # nearest of them would check one address where the prose is about
+        # three.
+        text = ('Over a sweep of the whole `0x0000-0x07FF` space — 32499 '
+                f'recorded byte changes ({SWEEP}) — `0x07B9`, `0x07D0` and '
+                '`0x07D1` did not change once.\n')
+        problems, checked = claims(text)
+        self.assertEqual(problems, [])
+        self.assertEqual(checked, 3, "one checked denial per coordinated address")
+
+    def test_a_denial_in_a_capture_with_no_window_is_checked_not_skipped(self):
+        # A capture whose name carries no span and whose unit names no range
+        # is not windowed at all, so there is no address it is said not to
+        # have watched and the denial is checked like any other. `0x06D6` has
+        # 602 rows in that file, so it fails: an empty window is not a way
+        # through, and not being windowed is not an excuse.
+        text = f'`0x06D6` never moved in {NO_WINDOW_CAPTURE}.\n'
+        n, addr = drifted(text, NO_WINDOW_INDEX)
+        self.assertEqual((n, addr), (1, '0x06D6'))
+
+    def test_a_true_denial_in_a_capture_with_no_window_is_silent(self):
+        # The other half of the pair above: the same capture, an address it
+        # really has no row for, checked rather than passed over. Skipping it
+        # left a skip line standing where a check belonged.
+        text = f'`0x0751` never moved in {NO_WINDOW_CAPTURE}.\n'
+        self.assertEqual(drifted(text, NO_WINDOW_INDEX), (0, None))
+
+    def test_verbose_reports_a_denial_as_checked_rather_than_skipped(self):
+        # The inventory line. While denials were skipped this read
+        # `skip (denies movement)`, and a reader auditing what is covered had
+        # no way to tell a checked denial from an unchecked one.
+        text = '`0x07D4` did not move in ' + POWER + '.\n'
+        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+            f.write(text)
+            path = f.name
+        err = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err):
+                problems, _, checked = ccc.check(path, INDEX, True)
+        finally:
+            os.unlink(path)
+        self.assertEqual((problems, checked), ([], 1))
+        self.assertIn('1 claim(s) checked', err.getvalue())
+        self.assertNotIn('denies movement', err.getvalue())
+
+
+class SkipsDeliberately(unittest.TestCase):
+    """Every rule that makes the tool conservative, as a case saying so."""
 
     def test_range_bound_is_skipped(self):
         # 0x0700-0x07FF names the watched window, not two bytes that moved in
