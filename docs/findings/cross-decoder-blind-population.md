@@ -46,10 +46,10 @@ The committed report is 2,057 rows today, not the 1,901/1,957 the issue and
 | | 716 | **292** |
 
 The issue's shape carries over intact: rows whose C names no XDATA address
-outnumber the ones whose C does by about five to three, and the smaller half is
-the population the `agree` figure says nothing about — the part worth
-classifying. Every count has moved, and `docs/findings.md` §14i's denominator
-paragraph is corrected in place with the old figure beside it, per §4a-4d.
+outnumber the ones whose C does, and the smaller half is the population the
+`agree` figure says nothing about — the part worth classifying. Every count has
+moved, and `docs/findings.md` §14i's denominator paragraph is corrected in place
+with the old figure beside it, per §4a-4d.
 
 What follows is the same split cut a second way: not "is the window empty" but
 "what is the absence made of". The two questions are not redundant, because
@@ -256,9 +256,8 @@ charges 100 stores to no address over its 171 rows for 0x0751.
 The case for it rests entirely on the 97. `named-past-first-branch` (62) would
 be closed by a longer window and nothing else; `no-xdata-named` (493) is not a
 blind spot; `entry-is-branch` (356) is a window definition. **So the second
-method is worth exactly what the residue is worth, and the residue is the
-smallest of the three classes that are blind spots at all** — 97 rows, of which
-four are in the PD image. That is the honest size of the case for a DPTR-tracking
+method is worth exactly what the residue is worth** — 97 rows, of which four
+are in the PD image. That is the honest size of the case for a DPTR-tracking
 walk, and it is smaller than the issue expected.
 
 Against that: a second walk over the same bytes is a second thing to keep in

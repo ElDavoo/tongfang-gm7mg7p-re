@@ -439,8 +439,9 @@ def partition_problems(rows, parent):
 # `bank0 0xACB4` is the case worth reading. The issue filed it as the residue,
 # on the ground that its C "names neither 0x07C5 nor 0x075E". That is a claim
 # about two named addresses; this classifier asks whether the *function* loads
-# an address its C names, and `ACB4`'s own 238-byte listing extent loads twenty
-# and its C names ten of them -- so it reads `named-past-first-branch` here.
+# an address its C names, and `ACB4`'s own 238-byte listing extent loads
+# twenty-one and its C names ten of them -- so it reads
+# `named-past-first-branch` here.
 # Pinned at what it reads. `docs/findings/cross-decoder-blind-population.md`
 # says why it moved and what answering the issue's question would take.
 KNOWN_ANSWERS = [
