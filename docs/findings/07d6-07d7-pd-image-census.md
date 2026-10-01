@@ -46,9 +46,10 @@ with no EC-side reference anywhere is written by ASL, which is the shape of the
 — Windows writes it and it works, with no direct reference in the image to show
 how. Two limits belong beside that, rather than assumed away: the branch is
 *decoded* ASL and not an observed one, so whether `0x1176` is ever issued on
-this board is not established; and `windows/tools/t1wr_callers.py` has never
-searched for a caller of `0x1176`, so §4f's figures say nothing about this
-branch at all.
+this board is not established; and §4o's census searches for `0x1176` and
+finds no caller — its one hit is the DSDT control the branch above is part
+of, so **no caller of `T1WR` with `Arg0 = 0x1176` was found by this
+method**, in the same form §4o states the negative for `0x1173`.
 
 ## `0x07D6` — a name in the field list, and no ASL site at all
 
@@ -158,7 +159,7 @@ $ python3 -c "import csv, collections; \
 
 The blank lines are the tool's own — `trace_xdata_refs.py --counts-only` emits
 one block per address. The 142 and 71 are a count of raw `90 07 D6` / `90 07 D7`
-byte patterns; they are a different unit from the 37 and 35 that
+byte patterns; they are a different unit from the 36 and 35 that
 `ec/annotations/xdata-registers.csv` reports for `cluster pd-028` and
 `pd-029`, which count classified statements in the decompiled PD sources, and
 `ec-07d6-07d7-sites.md` §1 reconciles the two and says which claim rests on
@@ -209,9 +210,9 @@ cited its sites that way, and has already drifted.
   agent has. Nothing in this file or the walk it summarises should be read as an
   observed write.
 - **Whether `0x1176` is ever issued, and what the EC then does with `CGCT`.** A
-  decoded ASL branch is not an observed one. Widening `t1wr_callers.py` to
-  `0x1176` re-bakes that tool's `EXPECTED_*` tables and §4f's figures, so it is
-  a calibration change of its own rather than a line here.
+  decoded ASL branch is not an observed one. §4o's census is the negative that
+  says no *caller* of the branch was found, and it says nothing about whether
+  the branch is ever taken.
 - **What `DBSP` is for**, given that nothing in the ASL touches it. The field
   list allocates it 8 bits and that is the whole of it.
 - **The rest of the census §4o asks for.** `0x07C9`-`0x07CB`, `0x07CD`-`0x07CF`

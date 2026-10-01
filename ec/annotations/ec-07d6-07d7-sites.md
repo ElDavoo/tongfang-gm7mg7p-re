@@ -94,6 +94,15 @@ functions). The scan is additionally inflated by `inc dptr` walks, DPTR
 re-loads, and byte patterns that are not instructions at all, so 142 against
 37 is the expected relation and not a discrepancy to reconcile away.
 
+**CORRECTION** (issue #323, 2026-10-01), leaving the figures above as they
+were written. `pd-028` has drifted and now reads **36**, and its buckets are
+**4** read, **11** write, **0** read+write, **14** passed-to-call, **7**
+address-taken, over **14** functions — the committed `refs` column is the
+sum, and the three figures the paragraph above gets wrong (the total, the
+address-taken count and the function count) are the three that moved.
+`pd-029`'s 35 and its buckets are unchanged. The reconciling point is
+unaffected: 142 against 36 is still two different units.
+
 Which number each claim rests on is stated where the claim is made. The four
 `registers.yaml` rows carry **the scan's** numbers, because
 `check_register_counts.py` measures those and the line above is what it
@@ -679,6 +688,17 @@ corresponding figures, which is a calibration change with its own review and
 a follow-up rather than a line in this change. **Whether `0x1176` is ever
 issued on this board is not established by anything here** — a decoded ASL
 branch is not an observed one, and the test that would decide it is a human's.
+
+**CORRECTION** (issue #323, 2026-10-01), leaving the paragraph above as it was
+written. The gap it names has been closed since, and the two claims about the
+tool are stale rather than open: `ACPI_ARGS` now reads
+`[0x1171, 0x1172, 0x1173, 0x1175, 0x1176, 0x2273]`, `0x1176` is in
+`EXPECTED_CONTROL`, and `--self-check` passes against the committed tree. The
+census reports **one `0x1176` hit, in the DSDT control**, which is the
+`ElseIf` branch quoted above and not a caller of it, so **no caller of `T1WR`
+with `Arg0 = 0x1176` was found by this method** — the census is quoted in §4o,
+not §4f. The last sentence above stands: whether `0x1176` is ever issued is
+still not established, and that is a human's live test either way.
 
 ## 8. What is still open
 
