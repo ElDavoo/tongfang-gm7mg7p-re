@@ -339,12 +339,12 @@ def temperature_correlation(rows, duty_addr, temp_addr, label):
 
     if result["temp_range"] < MIN_TEMP_RANGE:
         result["reason"] = (
-            "GPU_TEMP moved %d counts across this capture (%d-%d), below the "
-            "floor of %d, so a coefficient against it would describe the "
+            "%s (0x%04X) moved %d counts across this capture (%d-%d), below "
+            "the floor of %d, so a coefficient against it would describe the "
             "shape of a handful of coincidental samples rather than any "
             "relationship"
-            % (result["temp_range"], result["temp_min"], result["temp_max"],
-               MIN_TEMP_RANGE))
+            % (label, temp_addr, result["temp_range"], result["temp_min"],
+               result["temp_max"], MIN_TEMP_RANGE))
         return result
     if len(pairs) < MIN_SAMPLES:
         result["reason"] = ("%d paired sample(s), below the floor of %d"
@@ -785,6 +785,12 @@ def self_test():
                   % report)
         if "below the floor of %d" % MIN_TEMP_RANGE not in report["reason"]:
             check("the narrow-range refusal did not name the floor: %r"
+                  % report["reason"])
+        # That refusal is the one this fixture above produced, and it is
+        # CPU_TEMP: a reason naming any other register would be a true
+        # sentence about the wrong byte, which is worse than no reason.
+        if "0x%04X" % CPU_TEMP not in report["reason"]:
+            check("the narrow-range refusal named the wrong register: %r"
                   % report["reason"])
 
         # A wide, well-populated temperature does produce a coefficient, so

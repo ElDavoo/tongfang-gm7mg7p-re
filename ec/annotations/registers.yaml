@@ -2142,8 +2142,11 @@ registers:
       two. 8EF0 subtracts 0xEC (-0x14) and is where the 0x14 samples come
       from; 8EF8 copies 0x1804 through unchanged; 8EFE clears A. The 0x00
       samples match 8EF8, not 8EFE, and the captures rule 8EFE out as their
-      source: it would publish 0x1809 = 0 and 8F0F copies that byte into
-      0x075C, yet no row of 0x075C is zero in any of the three captures, and
+      source: it would publish 0x1809 = 0 and copy_dptr_byte_to_075c at 8F09
+      copies that byte into 0x075C -- the 8DE0 fall-through reaching 8F09 by
+      way of call_bb28_on_1804 at 8F03, whose lcall of 0xBB28 returns into
+      it with DPTR still at 0x1809 -- yet no row of 0x075C is zero in any of
+      the three captures, and
       every equal-difference sample is equal-and-non-zero. So the observed
       difference is the choice between the 8EF0 bias and the 8EF8 copy, with
       8EFE the third branch the captures do not show -- which is the reading
@@ -2165,9 +2168,10 @@ registers:
       row of 0x043E or 0x044F; it runs on the third capture above, which
       carries both temperature registers beside the two duty bytes. There
       0x075B correlates with CPU_TEMP at r = 0.468 and 0x075C at r = 0.507
-      over 179 paired samples each -- both weak, and the gap inside the
-      sampling noise, so neither is distinguishable from the other this
-      way. GPU_TEMP yields no coefficient at all: it moves 0x33-0x35 across
+      over 179 paired samples each -- both weak, and both read off one
+      series: 0x075C == 0x075B - 0x14*mask at every anchor, so neither is
+      distinguishable from the other this way at any sample size. GPU_TEMP
+      yields no coefficient at all: it moves 0x33-0x35 across
       that whole sweep, and a coefficient against a register that moved two
       counts describes a handful of coincidental samples rather than a
       relationship. ec/tools/fan_pair_correlation.py prints that refusal
@@ -2253,9 +2257,11 @@ registers:
       and one part of it is about this byte's own neighbourhood rather
       than about the byte. Nothing in committed evidence names which
       physical fan 0x075C is: the temperature route returns r = 0.507 for
-      this byte against 0.468 for its pair, a gap inside the noise over
-      179 paired samples, and GPU_TEMP moves two counts across that sweep,
-      so the split is not recoverable from the committed captures. The
+      this byte against 0.468 for its pair over 179 paired samples, and
+      GPU_TEMP moves two counts across that sweep. The two duty series are
+      one channel and an offset -- 0x075C == 0x075B - 0x14*mask at every
+      anchor -- so no third register separates them at any sample size, and
+      the split is not recoverable from the committed captures. The
       named next step is the live one in
       docs/findings/fan-duty-channel-075b-075c.md -- hold or unplug one
       fan and watch which byte stops moving -- and it is not run here.

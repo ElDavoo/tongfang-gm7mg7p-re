@@ -87,6 +87,12 @@ MIN_TEMP_RANGE = 8
 TACH_SHARED = 210
 TACH_IDENTICAL = 4
 
+# The EC's own bias constant, named for the same reason as the figures above:
+# it appears inside an asserting call in
+# `test_the_two_series_are_one_channel_and_offset`, where a bare literal would
+# read as a pin for a census figure.
+FAN_BIAS = 0x14
+
 
 def capture(name):
     return fpc.read_capture(os.path.join(WATCH, name))
@@ -269,14 +275,44 @@ class TemperatureCorrelation(unittest.TestCase):
     def test_the_two_coefficients_do_not_separate(self):
         """The finding, held as a relation rather than as a threshold.
 
-        "About equally" is the write-up's word and this is what backs it: the
-        gap is smaller than the sampling uncertainty of either coefficient,
-        which is the reason the L/R-versus-CPU/GPU split is not recoverable
-        this way. Held as a comparison so it does not become a floor every
-        capture has to clear.
+        "About equally" is the write-up's word and this is what backs it.
+        Held as a comparison so it does not become a floor every capture has
+        to clear. What the write-up rests the *non-separability* on is not
+        this comparison but `test_the_two_series_are_one_channel_and_offset`
+        below; a close gap is consistent with one series being the other
+        plus a constant, and that is the stronger claim.
         """
         a, b = self.cpu[fpc.DUTY_A]["r"], self.cpu[fpc.DUTY_B]["r"]
         self.assertLess(abs(a - b), 0.05)
+
+    def test_the_two_series_are_one_channel_and_offset(self):
+        """Why no third register separates them, at any sample size.
+
+        The write-up does not rest this on the size of the gap between the
+        two coefficients -- two correlated coefficients have a smaller
+        standard error on their difference than either has on its own, so a
+        gap can be small *and* resolvable. It rests it on this instead: at
+        every anchor `0x075C == 0x075B - 0x14*mask`, so the second series
+        carries nothing the first does not, and a constant shift leaves a
+        correlation against any third variable where it was.
+
+        Held at the anchors the temperature comparison actually uses, which
+        is where the claim is made and where `deltas()` -- a shared-timestamp
+        pairing -- does not reach.
+        """
+        rows = self.rows
+        left = fpc.series(rows, fpc.DUTY_A)
+        right = fpc.series(rows, fpc.DUTY_B)
+        anchors = 0
+        for ts, _ in fpc.series(rows, fpc.CPU_TEMP):
+            a = fpc.value_at(left, ts)
+            b = fpc.value_at(right, ts)
+            if a is None or b is None:
+                continue
+            anchors += 1
+            mask = 1 if a - b == FAN_BIAS else 0
+            self.assertEqual(b, a - FAN_BIAS * mask)
+        self.assertEqual(anchors, PAIRED_CPU)
 
     def test_gpu_temp_yields_no_coefficient(self):
         for duty, report in self.gpu.items():
@@ -303,6 +339,25 @@ class TemperatureCorrelation(unittest.TestCase):
                 self.assertEqual((report["temp_min"], report["temp_max"]),
                                  (GPU_LOW, GPU_HIGH))
                 self.assertEqual(report["temp_range"], GPU_HIGH - GPU_LOW)
+
+    def test_a_refusal_names_the_register_it_is_about(self):
+        """A reason naming the wrong register is worse than none.
+
+        The narrow-range refusal is the one message here that has to be built
+        from its arguments rather than fixed in the prose: `CPU_TEMP` spans
+        33 counts and never reaches this branch, so nothing committed would
+        fail if the register name were hardcoded. Asserted on a fixture where
+        `CPU_TEMP` *is* the narrow one, so the case exists rather than being
+        assumed away.
+        """
+        rows = [("t%d" % i, fpc.CPU_TEMP, 0x40 + (i % 2), 0x41 + (i % 2))
+                for i in range(40)]
+        rows += [("t%d" % i, fpc.DUTY_A, 0x10, 0x10 + (i % 5))
+                 for i in range(40)]
+        report = fpc.temperature_correlation(rows, fpc.DUTY_A, fpc.CPU_TEMP,
+                                             "CPU_TEMP")
+        self.assertFalse(report["supported"])
+        self.assertIn("0x043E", report["reason"])
 
     def test_the_floor_sits_between_the_two_observed_spans(self):
         """The floor is a floor and not a refusal of everything.

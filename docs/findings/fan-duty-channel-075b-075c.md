@@ -19,10 +19,11 @@ and nothing here is a live test of either byte. Every figure is
    bytes, not two fans in different thermal environments. §2.
 2. **The temperature comparison the issue proposes cannot separate them, and
    the committed data says so rather than merely failing to.** One channel
-   correlates with `CPU_TEMP` at 0.468 and the other at 0.507 — both weak, the
-   gap inside the noise. `GPU_TEMP` moves three counts across the whole sweep,
-   so it carries no signal to separate anything, and the tool refuses to print
-   a coefficient against it rather than printing one. §3.
+   correlates with `CPU_TEMP` at 0.468 and the other at 0.507 — both weak, and
+   both read off one series that is the other plus an offset. `GPU_TEMP` moves
+   two counts across the whole sweep, so it carries no signal to separate
+   anything, and the tool refuses to print a coefficient against it rather
+   than printing one. §3.
 3. **The tachometer evidence is a real lead about the vendor's code and does
    not name a fan.** `GetEcGpuFanRpm` reads `0x046C`/`0x046B`; the EC writes
    `0x046C`/`0x046D` together. `0x046B` never moves in any committed capture.
@@ -96,10 +97,17 @@ committed annotation in `ec/annotations/ghidra-functions.csv` — "writes
 `0x1809` as either 0 or `0x1804-0x14`", a two-valued summary that omits the
 copy arm. The listing settles it the other way:
 
-- `0x8EFE` clears `A`, so that arm publishes `0x1809 = 0x00`, and `0x8F0F`
-  then copies that byte into the published `0x075C`. A clear at `0x8EFE`
-  would therefore show up at `0x075C` as `0x00` — **and no row of `0x075C`
-  is zero in any capture**, spanning 0x32-0xC7, 0x3C-0x84 and 0x33-0xC8.
+- `0x8EFE` clears `A`, so that arm publishes `0x1809 = 0x00`, and
+  `copy_dptr_byte_to_075c` then copies that byte into the published `0x075C`.
+  The `0x8DE0` fall-through reaches it: `0x8F02` is the last instruction of
+  that routine, `0x8F03` publishes `0x1804` through `call_bb28_on_1804`, and
+  the `ret` at the end of `0xBB28` lands in `copy_dptr_byte_to_075c` with
+  `DPTR` still addressing `0x1809`. (The other `0x075C` writer,
+  `store_a_to_dptr_then_075c_and_notify`, is entered from `0x89EB` and opens
+  by writing `A` through the caller's `DPTR`, so it does not carry `0x1809`
+  into `0x075C` and is not on this path.) A clear at `0x8EFE` would therefore
+  show up at `0x075C` as `0x00` — **and no row of `0x075C` is zero in any
+  capture**, spanning 0x32-0xC7, 0x3C-0x84 and 0x33-0xC8.
 - The `0x00` differences are equal-and-**non-zero** pairs: every one of the
   347, 297 and 142 equal-difference samples has `0x075B == 0x075C != 0`. That
   is the signature of `0x8EF8`, which copies `0x1804` through unchanged and
@@ -160,12 +168,19 @@ is the anchor and each duty series is read forward to it, so every pair is
 | `0x075B` | `GPU_TEMP` (`0x044F`) | no coefficient — `GPU_TEMP` spans 2 counts (51-53) |
 | `0x075C` | `GPU_TEMP` (`0x044F`) | no coefficient — same |
 
-**The gap is inside the noise.** 0.468 against 0.507 over 179 samples is a
-difference of 0.04, and the sampling uncertainty of a coefficient at that
-sample size is of the same order — the two bytes are not distinguishable by
-this measurement. Both are also *weak* correlations in absolute terms: duty
-follows temperature because the EC's fan curve is driven by temperature, and
-at r ≈ 0.5 neither byte is a clean readout of anything.
+**The gap is not what makes them inseparable — the two series are one
+channel.** 0.468 against 0.507 is a difference of 0.04, but the two duty
+series are not two measurements that a larger sample might pull apart: at
+every anchor `0x075C == 0x075B - 0x14·mask` exactly, so `0x075C` carries
+nothing `0x075B` does not already carry, plus which of the three arms of §2
+published. That is the same `{0x00, 0x14}` difference §2 establishes,
+arrived at here by a different route, and it is a statement about the
+firmware's branch rather than about two fans in different thermal
+environments. So no third register separates them at any sample size, and
+the size of the gap between the two coefficients is not the reason. Both are
+also *weak* correlations in absolute terms: duty follows temperature because
+the EC's fan curve is driven by temperature, and at r ≈ 0.5 neither byte is a
+clean readout of anything.
 
 **`GPU_TEMP` is not measured, and the tool says so rather than printing a
 number.** It records four rows spanning `0x33`-`0x35` across the whole sweep.
