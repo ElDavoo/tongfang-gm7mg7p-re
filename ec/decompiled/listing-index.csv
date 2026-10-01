@@ -495,7 +495,7 @@ bank0,CFB4,bank1_switch_thunk_to_81c5,3,annotation,no,yes,bank-switch,hand-decod
 bank0,CFB7,bank1_switch_thunk_to_823a,3,annotation,no,yes,bank-switch,hand-decoded,ec/decompiled/bank0/CFB7.asm; ec/decompiled/bank0/CFB7.c,,bank0/CFB7.asm
 bank0,CFBA,bank1_switch_thunk_to_8261,3,annotation,no,yes,bank-switch,hand-decoded,ec/decompiled/bank0/CFBA.asm; ec/decompiled/bank0/CFBA.c,,bank0/CFBA.asm
 bank0,CFBD,init_ccfc_then_bank1_thunk_818a,6,annotation,no,yes,init,hand-decoded,ec/decompiled/bank0/CFBD.asm; ec/decompiled/bank0/CFBD.c,,bank0/CFBD.asm
-bank0,CFC6,collect_two_flags_into_0816_then_raise_ap_oem_bit7,48,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/CFC6.asm; ec/decompiled/bank0/CFC6.c; ec/annotations/registers.yaml,,bank0/CFC6.asm
+bank0,CFC6,collect_two_flags_into_0816_then_raise_ap_oem_bit7,48,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/CFC6.asm; ec/decompiled/bank0/CFC6.c; ec/annotations/registers.yaml; docs/findings/0741-bit7-oc-recovery.md,,bank0/CFC6.asm
 bank0,CFF6,load_stride5_table_word_into_06e8_pair,15,annotation,no,yes,copy,hand-decoded,ec/decompiled/bank0/CFF6.asm; ec/decompiled/bank0/CFF6.c,,bank0/CFF6.asm
 bank0,D005,movc_two_code_bytes_into_06e8_06e9,21,annotation,no,yes,copy,hand-decoded,ec/decompiled/bank0/D005.asm; ec/decompiled/bank0/D005.c,,bank0/D005.asm
 bank0,D01A,indirect_code_jump_via_stride5_table_6cd9,15,annotation,no,yes,dispatch,hand-decoded,ec/decompiled/bank0/D01A.asm; ec/decompiled/bank0/D01A.c,,bank0/D01A.asm

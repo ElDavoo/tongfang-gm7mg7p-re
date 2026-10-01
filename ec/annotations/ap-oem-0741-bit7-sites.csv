@@ -1,0 +1,36 @@
+addr,file_offset,region,runtime,frame_onto,frame_over,access,window,terminator
+0x0741,0x08782,bank0,0x8782,24,0,"read x1, write x1","movx a,@dptr ; orl a,#0x20 ; movx @dptr,a ; lcall 0xe010",flow opcode
+0x0741,0x0879D,bank0,0x879D,24,0,"read x1, write x1","movx a,@dptr ; orl a,#0x20 ; movx @dptr,a",DPTR reloaded
+0x0741,0x087AC,bank0,0x87AC,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xdf ; movx @dptr,a ; lcall 0xb9d8",flow opcode
+0x0741,0x08A25,bank0,0x8A25,23,1,read x1,"movx a,@dptr ; jb acc.0,+0x03",flow opcode
+0x0741,0x08C53,bank0,0x8C53,24,0,read x1,"movx a,@dptr ; jnb acc.0,+0x0f",flow opcode
+0x0741,0x08CB3,bank0,0x8CB3,24,0,read x1,"movx a,@dptr ; jb acc.0,+0x03",flow opcode
+0x0741,0x09499,bank0,0x9499,22,2,read x1,"movx a,@dptr ; jnb acc.0,+0x0a",flow opcode
+0x0741,0x096AD,bank0,0x96AD,22,2,read x1,"movx a,@dptr ; jnb acc.0,+0x39",flow opcode
+0x0741,0x097D1,bank0,0x97D1,24,0,read x1,"movx a,@dptr ; jnb acc.0,+0x21",flow opcode
+0x0741,0x098BD,bank0,0x98BD,24,0,read x1,"movx a,@dptr ; jnb acc.0,+0x21",flow opcode
+0x0741,0x0A5E6,bank0,0xA5E6,23,1,read x1,"movx a,@dptr ; jb acc.2,+0x76",flow opcode
+0x0741,0x0A671,bank0,0xA671,24,0,read x1,"movx a,@dptr ; jb acc.2,+0x03",flow opcode
+0x0741,0x0A82B,bank0,0xA82B,23,1,read x1,"movx a,@dptr ; jb acc.0,+0x11",flow opcode
+0x0741,0x0A982,bank0,0xA982,24,0,read x1,"movx a,@dptr ; jnb acc.0,+0x0f",flow opcode
+0x0741,0x0A990,bank0,0xA990,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xfb ; movx @dptr,a ; ret",flow opcode
+0x0741,0x0A9A5,bank0,0xA9A5,22,2,read x1,"movx a,@dptr ; jnb acc.2,+0x57",flow opcode
+0x0741,0x0A9E1,bank0,0xA9E1,24,0,"read x1, write x1","movx a,@dptr ; orl a,#0x04 ; movx @dptr,a",DPTR reloaded
+0x0741,0x0ABC7,bank0,0xABC7,24,0,read x1,"movx a,@dptr ; jnb acc.0,+0x05",flow opcode
+0x0741,0x0AC5B,bank0,0xAC5B,24,0,read x1,"movx a,@dptr ; jb acc.0,+0x1f",flow opcode
+0x0741,0x0AD17,bank0,0xAD17,21,3,"read x1, write x1","movx a,@dptr ; anl a,#0xfb ; movx @dptr,a",DPTR reloaded
+0x0741,0x0AD46,bank0,0xAD46,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0x7f ; movx @dptr,a ; clr a",DPTR reloaded
+0x0741,0x0B133,bank0,0xB133,24,0,read x1,"movx a,@dptr ; jb acc.0,+0x07",flow opcode
+0x0741,0x0BD03,bank0,0xBD03,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xfe ; movx @dptr,a",DPTR reloaded
+0x0741,0x0C572,bank0,0xC572,23,1,read x1,"movx a,@dptr ; jnb acc.0,+0x04",flow opcode
+0x0741,0x0C5D0,bank0,0xC5D0,23,1,read x1,"movx a,@dptr ; jnb acc.0,+0x04",flow opcode
+0x0741,0x0C720,bank0,0xC720,23,1,read x1,"movx a,@dptr ; jnb acc.0,+0x05",flow opcode
+0x0741,0x0C92D,bank0,0xC92D,24,0,read x1,"movx a,@dptr ; jnb acc.0,+0x05",flow opcode
+0x0741,0x0CAEB,bank0,0xCAEB,24,0,read x1,"movx a,@dptr ; jnb acc.4,+0x07",flow opcode
+0x0741,0x0CF78,bank0,0xCF78,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0x7f ; movx @dptr,a ; clr a",DPTR reloaded
+0x0741,0x0CFEE,bank0,0xCFEE,24,0,"read x1, write x1","movx a,@dptr ; orl a,#0x80 ; movx @dptr,a ; ret",flow opcode
+0x0741,0x102D9,bank1,0x82D9,23,1,read x1,"movx a,@dptr ; anl a,#0x01 ; jnz +0x07",flow opcode
+0x0741,0x117D8,bank1,0x97D8,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jnz +0x12",flow opcode
+0x0741,0x11882,bank1,0x9882,23,1,read x1,"movx a,@dptr ; anl a,#0x01 ; jnz +0x19",flow opcode
+0x0741,0x121A9,bank1,0xA1A9,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jz +0x07",flow opcode
+0x0741,0x171BF,bank1,0xF1BF,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jz +0x0d",flow opcode

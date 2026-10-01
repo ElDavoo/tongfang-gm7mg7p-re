@@ -23,6 +23,7 @@ common,3609,FUN_CODE_3609,no,bank1,3,3,0,0,0,2,1,1,common:2F1D
 common,4397,FUN_CODE_4397,no,bank1,3,3,0,0,0,1,1,1,common:43A5
 common,4AC4,FUN_CODE_4ac4,no,bank1,3,3,0,0,0,2,1,1,bank1:4874
 bank0,C26E,FUN_CODE_c26e,no,,2,2,0,0,0,2,1,1,bank0:C278
+bank0,D078,FUN_CODE_d078,no,,2,2,0,0,0,1,1,1,bank0:CFC6
 bank0,D673,FUN_CODE_d673,no,,2,0,0,0,2,1,1,1,bank0:D091
 common,2A84,FUN_CODE_2a84,no,bank1,2,2,0,0,0,1,1,1,common:2990
 common,2CB3,FUN_CODE_2cb3,no,bank1,2,0,2,0,0,2,1,1,bank1:2C70
@@ -612,7 +613,6 @@ bank0,D01A,indirect_code_jump_via_stride5_table_6cd9,yes,,2,2,0,0,0,1,1,0,
 bank0,D041,read_06e7,yes,,2,2,0,0,0,2,2,0,
 bank0,D045,inc_06e7_clear_06ea_eb_read_06e8,yes,,2,2,0,0,0,2,2,0,
 bank0,D065,init_1f01_1f06_1f07,yes,,2,2,0,0,0,1,1,0,
-bank0,D078,FUN_CODE_d078,no,,2,2,0,0,0,1,1,0,
 bank0,D319,mask_dp_byte_7c_reset_dptr_0860,yes,,2,2,0,0,0,2,2,0,
 bank0,D3C8,zero_d0_d7_and_state,yes,,2,1,1,0,0,2,2,0,
 bank0,D567,set_bits_0_and_4_of_3206,yes,,2,2,0,0,0,1,1,0,
