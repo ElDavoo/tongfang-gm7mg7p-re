@@ -61,8 +61,8 @@ records *both* bytes:
 | `2026-09-23-power-mode-cycle-0700-07ff.csv` | 297 | 297 | — | none |
 | `2026-09-18-profile-switch-0400-07ff.csv` | 193 | 142 | 51 | none |
 
-The claim is the *third column from the right*: no capture shows a value
-outside `{0x00, 0x14}`. The power-mode sweep shows only `0x00` throughout,
+The claim is the "any other value" column: no capture shows a value outside
+`{0x00, 0x14}`. The power-mode sweep shows only `0x00` throughout,
 which is a fact about that sweep and not a counterexample — the suite asserts
 the subset and separately asserts that both sweeps which *do* carry a mode
 switch show both values, because a subset test alone would also be satisfied
@@ -95,7 +95,10 @@ rest.** An earlier version of this write-up read the middle arm as absent and
 put the `0x00` samples on `0x8EFE` instead, on the strength of the same
 routine's committed annotation in `ec/annotations/ghidra-functions.csv` —
 "writes `0x1809` as either 0 or `0x1804-0x14`", a two-valued summary that
-omits the copy arm. The two claims below are separate, and only the first is
+omits the copy arm. **That row is left uncorrected here and is a follow-up**
+rather than something this write-up fixes: the row's text is baked into
+`ec/decompiled/bank0/8DE0.c` by the export, so correcting it is a re-export
+rather than an edit. The two claims below are separate, and only the first is
 an exclusion:
 
 - `0x8EFE` clears `A`, so that arm publishes `0x1809 = 0x00`, and
@@ -148,13 +151,22 @@ for the second), so the observed difference is the net of whichever write ran
 last, not a direct read of `0x1804` and `0x1809`.
 
 **The method, because it is load-bearing.** The two series are paired at the
-timestamps they **share**, not at the union of theirs. The EC publishes the two
-bytes microseconds apart, so a union pairing reads one fresh value beside the
-other's stale one: on the profile sweep it manufactures **nine** distinct
-differences where the shared-timestamp pairing finds two, including `+1` and
-`-1` that no instant ever held. `test_union_pairing_manufactures_differences`
-holds that from the wrong side, so a reader who changed the method would see
-the suite go red rather than find a tool that still appeared to work.
+timestamps they **share**, not at the union of theirs. A capture records
+*changes only*, and the two bytes change independently, so a timestamp
+carrying a row for one byte and not the other pairs that byte's fresh value
+against the other's value carried forward from an earlier pass: on the profile
+sweep it manufactures **nine** distinct differences where the shared-timestamp
+pairing finds two, including `+1` and `-1` that no instant ever held.
+`test_union_pairing_manufactures_differences` holds that from the wrong side,
+so a reader who changed the method would see the suite go red rather than find
+a tool that still appeared to work.
+
+The write order is not the reason, and is not claimed to be: `8F03` publishes
+`0x075B` through `call_bb28_on_1804` and the `ret` inside it lands in
+`copy_dptr_byte_to_075c`, which publishes `0x075C` (`0xBB28`, `0x8F03` and
+`0x8F09`), so the two bytes are written on one pass in that order. Whatever
+separates the rows is the capture's own sampling, not a gap the firmware left
+between two stores.
 
 The bytes are read as carry-forward step functions throughout — a capture
 records *changes only*, so a byte's value between two rows is inferred rather
@@ -177,18 +189,22 @@ is the anchor and each duty series is read forward to it, so every pair is
 | `0x075C` | `GPU_TEMP` (`0x044F`) | no coefficient — same |
 
 **The gap is not what makes them inseparable — the two series are one
-channel.** 0.468 against 0.507 is a difference of 0.04, but the two duty
-series are not two measurements that a larger sample might pull apart: at
-every anchor `0x075C == 0x075B - 0x14·mask` exactly, so `0x075C` carries
-nothing `0x075B` does not already carry, plus the offset one of §2's writers
-published. That is the same `{0x00, 0x14}` difference §2 establishes,
-arrived at here by a different route, and it is a statement about the
-firmware's branch rather than about two fans in different thermal
-environments. So no third register separates them at any sample size, and
-the size of the gap between the two coefficients is not the reason. Both are
-also *weak* correlations in absolute terms: duty follows temperature because
-the EC's fan curve is driven by temperature, and at r ≈ 0.5 neither byte is a
-clean readout of anything.
+channel.** 0.468 against 0.507 is a difference of 0.04, and that gap is not
+the reason. At every anchor `0x075C == 0x075B - 0x14·mask` exactly, so the
+second series is the first plus the offset one of §2's writers published —
+the same `{0x00, 0x14}` difference §2 establishes, arrived at here by a
+different route. A temperature-style register reads both series as the same
+shape and names neither fan, and that is a statement about the firmware's
+branch rather than about two fans in different thermal environments.
+
+The offset is two-valued rather than fixed, so this is not a claim that no
+register at all could separate the pair. `mask` is what `0x8DE0`'s comparison
+chooses, and a register carrying that branch decision could in principle read
+the two series differently; the committed captures name none, and the
+observation that would is §6's. What the anchors do establish is that the
+temperature route adds nothing — and both coefficients are *weak* in absolute
+terms anyway: duty follows temperature because the EC's fan curve is driven
+by temperature, and at r ≈ 0.5 neither byte is a clean readout of anything.
 
 **`GPU_TEMP` is not measured, and the tool says so rather than printing a
 number.** It records four rows spanning `0x33`-`0x35` across the whole sweep.
@@ -258,8 +274,11 @@ becomes worse than none.
 **And the correlation, which is the reason this stays a lead.** Reconstructing
 both tachometer readings over the **210** samples at which all four bytes are
 live, `0x0464`/`0x0465` and `0x046C`/`0x046D` correlate at **r = 0.982**,
-agreeing on a value in 4 of 210. Two independently-loaded fans do not track
-each other that closely.
+agreeing on a value in 4 of 210. The correlation is the lead rather than the
+answer, and it is not anomalous on its face: two fans driven by one
+temperature-derived curve would be expected to track, with different RPM per
+duty — which is what the proportionality below is. What would settle it is
+named under "What this would take to close", below.
 
 **The byte order is a choice, and it is named here because it moves that
 figure.** Each pair is assembled **high byte first**, and for that pair the

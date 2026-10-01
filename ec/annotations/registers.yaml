@@ -2168,8 +2168,11 @@ registers:
       carries both temperature registers beside the two duty bytes. There
       0x075B correlates with CPU_TEMP at r = 0.468 and 0x075C at r = 0.507
       over 179 paired samples each -- both weak, and both read off one
-      series: 0x075C == 0x075B - 0x14*mask at every anchor, so neither is
-      distinguishable from the other this way at any sample size. GPU_TEMP
+      series: 0x075C == 0x075B - 0x14*mask at every anchor, so a
+      temperature register reads the two alike and names neither fan. The
+      offset is two-valued rather than fixed and 0x8DE0's comparison
+      chooses it, so that is not a claim that no register at all could
+      separate the pair; the committed captures name none. GPU_TEMP
       yields no coefficient at all: it moves 0x33-0x35 across
       that whole sweep, and a coefficient against a register that moved two
       counts describes a handful of coincidental samples rather than a
@@ -2259,8 +2262,8 @@ registers:
       this byte against 0.468 for its pair over 179 paired samples, and
       GPU_TEMP moves two counts across that sweep. The two duty series are
       one channel and an offset -- 0x075C == 0x075B - 0x14*mask at every
-      anchor -- so no third register separates them at any sample size, and
-      the split is not recoverable from the committed captures. The
+      anchor -- so the temperature route names neither fan and the split is
+      not recoverable by it from the committed captures. The
       named next step is the live one in
       docs/findings/fan-duty-channel-075b-075c.md -- hold or unplug one
       fan and watch which byte stops moving -- and it is not run here.

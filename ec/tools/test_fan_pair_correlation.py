@@ -280,21 +280,28 @@ class TemperatureCorrelation(unittest.TestCase):
         to clear. What the write-up rests the *non-separability* on is not
         this comparison but `test_the_two_series_are_one_channel_and_offset`
         below; a close gap is consistent with one series being the other
-        plus a constant, and that is the stronger claim.
+        plus the offset, and that is the stronger claim.
         """
         a, b = self.cpu[fpc.DUTY_A]["r"], self.cpu[fpc.DUTY_B]["r"]
         self.assertLess(abs(a - b), 0.05)
 
     def test_the_two_series_are_one_channel_and_offset(self):
-        """Why no third register separates them, at any sample size.
+        """Why the temperature route adds nothing on top of the pair.
 
         The write-up does not rest this on the size of the gap between the
         two coefficients -- two correlated coefficients have a smaller
         standard error on their difference than either has on its own, so a
         gap can be small *and* resolvable. It rests it on this instead: at
-        every anchor `0x075C == 0x075B - 0x14*mask`, so the second series
-        carries nothing the first does not, and a constant shift leaves a
-        correlation against any third variable where it was.
+        every anchor `0x075C == 0x075B - 0x14*mask`, so the second series is
+        the first plus the offset the 0x8DE0 branch published, and a
+        temperature-style register reads both as the same shape.
+
+        What this is not is a claim that no register at all could separate
+        the pair: the offset is two-valued rather than fixed, `mask` is what
+        0x8DE0's comparison chooses, and a register carrying that branch
+        decision could in principle read the two series differently. The
+        committed captures name none. The relation asserted here is the one
+        the anchors show, not a universal about every third register.
 
         Held at the anchors the temperature comparison actually uses, which
         is where the claim is made and where `deltas()` -- a shared-timestamp

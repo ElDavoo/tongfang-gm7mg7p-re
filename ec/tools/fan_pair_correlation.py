@@ -18,9 +18,10 @@ output rather than a number typed into prose.
    as a carry-forward step function per address and the two series are paired
    at the timestamps they **share**. Pairing at the union of their timestamps
    instead is the wrong method and is named as such in `deltas()`'s docstring
-   -- the EC writes the two bytes microseconds apart, so a union pairing reads
-   one fresh value beside the other's stale one and invents differences the
-   hardware never published.
+   -- a capture records changes only, so a timestamp carrying a row for one
+   byte and not the other pairs that byte's fresh value against the other's
+   carried forward from an earlier pass, inventing differences the hardware
+   never published.
 2. *Temperature correlation*, each duty byte against `CPU_TEMP` (0x043E) and
    `GPU_TEMP` (0x044F), on the same carry-forward reconstruction. A
    coefficient is printed only when the temperature register's own observed
@@ -268,15 +269,16 @@ def deltas(rows, a=DUTY_A, b=DUTY_B):
     """-> {delta: count} over the timestamps the two series share.
 
     **The union of the two timestamps is not the pairing, and this is the one
-    method choice that would have produced a different finding.** The EC
-    publishes both bytes a few microseconds apart, so a timestamp carrying one
-    byte and not the other describes a moment when one value was fresh and the
-    other was whatever the previous pass left. Pairing there yields spurious
-    differences of one or two counts -- and, on the profile sweep, nine
-    distinct values where the shared-timestamp pairing finds two. What is
-    compared is the two bytes' values at instants the capture records *both*
-    of, which is the only instant at which "these two bytes at once" is
-    something the file actually says.
+    method choice that would have produced a different finding.** A capture
+    records changes only, and the two bytes change independently, so a
+    timestamp carrying a row for one byte and not the other describes a moment
+    when that byte's value was fresh and the other was whatever an earlier
+    pass last left. Pairing there yields spurious differences of one or two
+    counts -- and, on the profile sweep, nine distinct values where the
+    shared-timestamp pairing finds two. What is compared is the two bytes'
+    values at instants the capture records *both* of, which is the only
+    instant at which "these two bytes at once" is something the file
+    actually says.
 
     The addresses are parameters so a caller can measure another pair, and are
     named rather than read from module globals, so a test measuring the
