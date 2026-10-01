@@ -1941,9 +1941,12 @@ registers:
       host-write-through EMPTY -- the host writes 0x0751 over ECRR, which is
       no MOV DPTR site, so no instruction for that path exists to be found.
       **That is the answer #102 and #104 needed, and it is a statement about
-      this method, not an absence**: no store found gates on the byte's own
-      previous value, and the 19 read-only sites read it without writing it
-      back. A host write need not persist -- 0xAC06/0xC75F clear USER and
+      this method, not an absence**: 2 of the 10 gate on the byte's own
+      previous value (0xAC00/0xC759, on (0x0751 & 0x90) ^ 0x80 from the
+      mode getter, so a host write that changes what that mask reads is
+      what steers execution into the store that clears USER and TURBO),
+      and the 19 read-only sites read it without writing it back. A host
+      write need not persist -- 0xAC06/0xC75F clear USER and
       TURBO, and 0x8990 clears bit 6 whenever both sensors are under 0x46
       -- but how often any of those runs is behavioural, not static.
       **The count is not closed.** walk_branch_arms charges 100 stores

@@ -141,10 +141,18 @@ to `0x0751` is reverted by some of these stores.** `0xAC06` and `0xC75F` clear
 USER and TURBO, so a bit a host set in either of those two does not survive
 them; `0x8990` clears bit 6 whenever both sensors are under 70 °C, without
 ever testing bit 6. Every store found here is gated on a temperature, a BIOS
-setup bit, a mode decode, or a named flag bit — and not one of the ten gates
-on the byte's own previous value, which is why a read-modify-write reverts
-rather than compares. So the reads at the other nineteen sites are consumers
-rather than a write-back loop, as far as this method can see. That is
+setup bit, a mode decode, or a named flag bit, and for **two of the ten the
+mode decode reads this byte**. The getter at `0xBB40` and at `0xCA4C` returns
+`0x0751 & 0x90`, and the `jnz` at `0xABE2` and at `0xC73B` is on that return
+with bit 7 flipped — so the store at `0xAC06` and at `0xC75F` clears USER and
+TURBO *because* the masked byte came back the way it did, and a host write
+that changes what that mask reads is what steers execution into the store
+that clears those two bits. That is a comparison against the byte's own
+previous value rather than a reversion of it, and for #102 and #104 it is the
+more useful half of the answer, not a weaker one. The other eight are gated
+on a temperature, a BIOS setup bit or a named flag bit. So the reads at the
+other nineteen sites are consumers rather than a write-back loop, as far as
+this method can see. That is
 consistent with the 2026-09-23 live capture already recorded in the
 `MANUAL_FAN_CTRL` note, where a silent write persisted; this adds the static
 counterpart. What it does **not** establish is how often any of those stores
