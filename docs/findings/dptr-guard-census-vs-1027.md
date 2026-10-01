@@ -115,12 +115,13 @@ half of the logical group -- the six rows that are most of what
 the defect; the accumulator rows are not part of it, and neither is
 `OPCODE_LEN`, which is right about `0x26`/`0x27`/`0x36`/`0x96`/`0x97` at one
 byte each for the reason §3 gives.
-`dptr-rebuild-walk-guard.md` §1 records the rendering defect and
-`test_dptr_rebuild_guard.py` holds it as a fact about the tree -- though
-§1 states it wrongly, charging the accumulator rows for it, and carries a
-correction beside the wrong version as of this writing. This paragraph is
-the accurate account and §1 points here; the reason the defect is named
-again is that it is the reason this issue's sweep has to
+`dptr-rebuild-walk-guard.md` §1 records the rendering defect --
+though §1 states it wrongly, charging the accumulator rows for it, and
+carries a correction beside the wrong version as of this writing. This
+paragraph is the accurate account and §1 points here, and
+`test_dptr_rebuild_guard.py` held the disagreement as a fact about the tree
+before this issue and asserts both renderings now. The reason the defect is
+named again is that it is the reason this issue's sweep has to
 classify from bytes, and the reason the three tables are written out rather
 than generated. The committed Ghidra listings are what settles the group
 instead, and they are the reason the claim above is stated narrowly: `54 07
@@ -130,6 +131,21 @@ The listings decode `45 82` as `orl A, DPL`, `63 65 ff` as
 `xrl 0x65, #0xff` and `54 0f` as `anl A, #0xf` as well, which is to say
 the operand order and the operand's *kind* are both readable there and in
 neither of the two tools this repository carries.
+
+**Correction (2026-09-29, issue #1294): the six now render as themselves, so
+what has gone stale is this section's account of *why* they could not be
+seen.** `disasm8051.mnemonic()` has rendered the `direct,A`/`direct,#data`
+rows since this issue gave it those six cases -- `42 f0` is `orl 0xf0,a` and
+`63 65 ff` is `xrl 0x65,#0xff` -- and the account is
+[`direct-address-opcode-rendering.md`](direct-address-opcode-rendering.md);
+the paragraph above is left as it was written. The conclusion it reaches is
+unchanged and rests on the renderer's being **free** rather than **wrong**:
+nothing obliges one spelling per instruction, so a sweep that classifies from
+rendered text reads an operand out of a spelling whether or not that spelling
+is the right one. The renderings are held against the committed Ghidra
+listings rather than against the decoder, in
+`ec/tools/test_direct_address_renderings.py`, and the three tables stay
+written out here for the reason they were always written out.
 
 ## 3. The read forms, counted and explicitly excluded
 

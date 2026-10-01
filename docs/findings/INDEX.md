@@ -58,6 +58,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`deep-schedule-row-csv.md`](deep-schedule-row-csv.md) — What a landed nightly would leave, and what its first reading is
 - [`descend-index-guard.md`](descend-index-guard.md) — `descend()` reads `d[off]` two lines above the test that would catch it, and the invariant that held it was not the one the census named
 - [`digest-docs-and-timings.md`](digest-docs-and-timings.md) — The digest step the two component READMEs were missing, the message that calls the repository's own convention corruption, and a timing figure with three generations (issue #372)
+- [`direct-address-opcode-rendering.md`](direct-address-opcode-rendering.md) — Six `direct`-destination opcodes the decoder printed as data, and the four committed tables that inherited it
 - [`disasm8051-oracle-from-the-annotations.md`](disasm8051-oracle-from-the-annotations.md) — The two hand transcriptions are re-read now, and the sentence the gate comment carries is true (2026-09-26, issue #811)
 - [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md) — `disasm8051.py --self-test` is the oracle for the opcode tables, and no gate
 - [`dmi-descriptor-evidence.md`](dmi-descriptor-evidence.md) — The DMI descriptor claims eight bits, and the source that names them was one fetch away (issue #10)

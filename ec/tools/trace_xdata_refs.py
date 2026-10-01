@@ -141,12 +141,16 @@ def is_dptr_rebuild(d: bytes, i: int) -> bool:
     in fact another's. `0xE372` and `0xDE8E` are the two the `.asm` listings
     settle, in `../../docs/findings/dptr-rebuild-walk-guard.md`.
 
-    **Keyed on bytes, never on the mnemonic.** `mnemonic()` has no spelling
-    for the `direct,A` / `direct,#data` rows -- `0x53` prints `db 0x53` where
-    the 8051 masks DPL -- so a text-matching guard would be blind on exactly
-    the in-place-modify instructions below. It is right about the accumulator
-    half of the same logical group: `0x54` prints `anl a,#0x82`, which is
-    `anl a,#data` and what the machine executes.
+    **Keyed on bytes, never on the mnemonic.** The guard reads the opcode and
+    `d[i+1]`, because a text-matching guard would have to parse an operand the
+    renderer is free to spell any of three ways -- and did spell none of them,
+    for the `direct,A` / `direct,#data` rows, until #1294 gave `mnemonic()` its
+    six `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63` cases. That reason is now
+    historical: `0x53` renders as `anl 0x82,#0x7f`, which names `0x82` as a
+    byte address, so a text-matching guard would today be *wrong* here rather
+    than blind. The keying stands on its own anyway, and more firmly -- bytes do
+    not change with the renderer. See
+    ../../docs/findings/direct-address-opcode-rendering.md.
 
     **What is deliberately not here.** The instructions that *modify* DPTR in
     place rather than replace it: `anl`/`orl`/`xrl direct,#imm`, `inc 0x82`,

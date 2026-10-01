@@ -103,6 +103,20 @@ replaces the pointer and names no `direct` operand, so it appears in none of
 the three tables. Both exclusions are facts about this file's keying, not
 about the 8051.
 
+**Correction (2026-09-29, issue #1294): the six render as themselves, and
+only the reason the tables are hand-written has changed.** The renderer had no
+spelling for the `direct,A`/`direct,#data` rows until this issue gave it one --
+`42 f0` is `orl 0xf0,a` and `63 65 ff` is `xrl 0x65,#0xff` today -- and
+`../../docs/findings/direct-address-opcode-rendering.md` holds the account; the
+paragraph above is left as it was written. What still stands is that nothing
+here keys on rendered text and the three tables spell their forms out rather
+than generating them, and the ground is now the renderer's being *free* rather
+than *wrong*: nothing obliges one spelling per instruction, so the operand
+position is not recoverable from the text whatever that text says. The
+authority for the spelling stays the committed Ghidra listings, which decode
+it, and it is why the renderings are asserted against those in
+`test_direct_address_renderings.py` rather than against this file.
+
 **Nothing here is a claim about the EC.** Every input is a committed file.
 No register was read back, no capture opened, no hardware or Windows
 involved, and no `registers.yaml` row changes: a `mov DPL,A` is a reference
@@ -128,15 +142,18 @@ REPO = os.path.join(HERE, os.pardir, os.pardir)
 DEFAULT_FIRMWARE = os.path.join(HERE, os.pardir, "firmware", "GMxMGxx_11.800")
 
 # The three buckets, as opcode -> the disassembly's spelling of the form. The
-# names are the 8051's, and `disasm8051.mnemonic()` does not render all of them
-# (it emits the `direct,A`/`direct,#data` rows `0x42`/`0x43`/`0x52`/`0x53`/
-# `0x62`/`0x63` of the logical group as `db 0x42` and `db 0x63`, where the
-# machine writes a byte address). That is why nothing here keys on rendered
-# text, and why the spellings below are written out rather than generated from
-# a table that has the defect. The accumulator rows the renderer *does* get
-# right are not a reason to trust it: `0x44`/`0x54`/`0x64` are two-byte
-# `a,#imm` and `0x45`/`0x55`/`0x65` two-byte `a,direct`, exactly as it prints
-# them, which is why the defect is confined to the other side of the group.
+# names are the 8051's, and they are written out rather than generated from
+# `disasm8051.mnemonic()`, which used not to render all of them: it emitted the
+# `direct,A`/`direct,#data` rows `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63` of
+# the logical group as `db 0x42` and `db 0x63` where the machine writes a byte
+# address, so a table read off it would have carried the renderer's errors.
+# **Corrected 2026-09-29, issue #1294**: the decoder has rendered those six
+# since, so the reason to write the tables out has changed and the reason not
+# to has not -- nothing obliges one spelling per instruction, so the operand
+# position is not recoverable from the text whatever the text says. The
+# accumulator rows beside it are right and are not a reason to trust it:
+# `0x44`/`0x54`/`0x64` are two-byte `a,#imm` and `0x45`/`0x55`/`0x65`
+# two-byte `a,direct`, exactly as it prints them.
 STORE_FORMS = dict(
     [(0x75, "mov  direct,#imm"),
      (0x85, "mov  direct,direct"),

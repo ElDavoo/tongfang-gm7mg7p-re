@@ -91,6 +91,21 @@ row it gets right. Out of scope stays out of
 scope: fixing the table would move text other tools' committed output
 depends on, and the byte keying keeps it harmless here.
 
+**Correction (2026-09-29, issue #1294), continuing the one above: the six now
+render as themselves, so what has gone stale is *why* they could not be seen.**
+`disasm8051.mnemonic()` has rendered the `direct,A`/`direct,#data` rows since
+this issue gave it those six cases — `42 f0` is `orl 0xf0,a` and `63 65 ff` is
+`xrl 0x65,#0xff` — and the account is
+[`direct-address-opcode-rendering.md`](direct-address-opcode-rendering.md); the
+paragraph above is left as it was written, including the cross-reference to
+what `test_dptr_rebuild_forms.py` asserted then. What this paragraph concludes
+does not change and rests on a stronger ground now: the renderer is **free**
+rather than **wrong**, since nothing obliges one spelling per instruction, so a
+text-matching guard would be reading an operand out of a spelling whether or
+not that spelling is the right one. The renderings are held against the
+committed Ghidra listings rather than against the decoder, in
+`ec/tools/test_direct_address_renderings.py`.
+
 ## 2. The three sites, read from the `.asm`
 
 The listings settle these and the tool's column does not, which is
@@ -237,6 +252,29 @@ oversight. All of these are held as negative cases in
 named test rather than a silent one. **The broader reading is a follow-up
 issue.**
 
+**What the class's population is, measured (2026-09-29, issue #1294).** The
+deferral above is now answered, and the answer is a null recorded as one. The
+twelve byte pairs `42 82`, `43 82`, `52 82`, `53 82`, `62 82`, `63 82` and their
+`… 83` equivalents occur **0 times each** in `ec/firmware/GMxMGxx_11.800`; and
+driving `trace_xdata_refs.walk_why()` from all **10,414** mapped
+`MOV DPTR,#imm16` sites finds **no** window containing an in-place modify of DPTR
+in any form — none of the six with an `0x82`/`0x83` operand, and none of `inc
+0x82`/`0x83`, `dec 0x82`/`0x83`, `xch a,0x82`/`0x83`. So no counted `movx` sits
+behind one.
+
+**What bounds that null**, because it is a statement about a method and not
+about the image. The walk stops where `walk_why()` stops — at a flow opcode
+(7,224 of the 10,414), at a DPTR reload (2,977) or at the 8-instruction budget
+(213). Raising the budget to 16, 32 and 64 while honouring the same two
+terminators still finds **zero**, so the bound is the terminator set rather than
+the budget; a walk that ignored both and ran 64 bytes regardless finds 26. The
+correct reading is "not found by this method", in this repository's usual sense.
+The measurement and its command are in
+[`direct-address-opcode-rendering.md`](direct-address-opcode-rendering.md), which
+is also where the six opcodes stopped being printed as `db`. The **decision** is
+unchanged — the guard still does not stop on these, and widening it remains the
+separate change with its own census behind it.
+
 **And one form the guard does not stop which is not a decision at all.**
 `mov direct,@Ri` (`0x86`/`0x87`) replaces DPTR's byte by exactly the
 argument every form in `DIRECT_STORE_OPS` replaces it by, and neither
@@ -381,10 +419,17 @@ naming both misattributed sites) and needed no edit.
   had folded into a read-modify-write. The figure is stated here as this
   method's output; the committed table that would back it does not exist.
 - **`disasm8051.mnemonic()`'s `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63`
-  rows**, which it emits as `db 0x42` and `db 0x63` where the machine writes
+  rows**, which it emitted as `db 0x42` and `db 0x63` where the machine writes
   a byte address (§1). A real defect, held harmless here by the byte keying,
   and changing it would move text other tools' committed output depends on.
-  **Follow-up issue.** The accumulator half of the same logical group
+  ~~**Follow-up issue.**~~ **Done 2026-09-29, issue #1294** — the six now
+  render as themselves, the four committed tables carrying that text have been
+  re-cut from the tools, and the account is
+  [`direct-address-opcode-rendering.md`](direct-address-opcode-rendering.md).
+  The byte keying this bullet was the reason for is unchanged and now rests on
+  a stronger ground: the renderer was *free* rather than *wrong*, which is a
+  better reason than a defect that could be fixed out from under a guard.
+  The accumulator half of the same logical group
   (`0x44`/`0x45`/`0x54`/`0x55`/`0x64`/`0x65`) was named here before it, and
   is **not** part of the defect: those render correctly. §1's first account,
   still visible there, is the version being corrected.

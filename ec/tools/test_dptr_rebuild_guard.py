@@ -91,22 +91,22 @@ PUSH_DPL = bytes([0xC0, 0x82])        # push 0x82
 # deliberate edit to this file rather than a silent one.
 #
 # `0x05` is `inc direct` at two bytes and the length table has it right.
-# The renderer's defect is narrower than "the logical group is miscaptioned":
-# it is **right** about the accumulator rows -- `54 82` renders as
+# The renderer is right about the accumulator rows -- `54 82` renders as
 # `anl a,#0x82` and `OPCODE_LEN[0x54] == 2`, both correct for `anl a,#data`,
-# which masks A and does **not** write DPL -- and it has no spelling at all
-# for the `direct,A` / `direct,#data` rows `0x42`/`0x43`/`0x52`/`0x53`/
-# `0x62`/`0x63`, which it emits as `db 0x53` where the machine writes a byte
-# address. So the pair below is one logical instruction written two ways:
-# `54 82` masks the accumulator and `53 82 7f` masks DPL, and the spellings
-# differ only in the operand the text does not show. The three-byte direct
-# form is therefore asserted here as a *predicate* answer only, where no
-# length is involved. Fixing the table is out of scope here (it would change
-# text other tools' committed output depends on); the point that matters for
-# this file is that the guard keys on the opcode and the operand byte, so it
-# is right on both spellings. `docs/findings/dptr-guard-census-vs-1027.md` §2
-# is the account; `dptr-rebuild-walk-guard.md` §1 corrects its own earlier
-# version of it.
+# which masks A and does **not** write DPL -- and it renders the `direct,A` /
+# `direct,#data` rows as themselves too, since #1294 gave it the six
+# `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63` cases it had been printing as `db`.
+# So the pair below is one logical instruction written two ways: `54 82` masks
+# the accumulator and `53 82 7f` masks DPL, and the spellings differ only in the
+# operand. The three-byte direct form is asserted here as a *predicate* answer
+# only, where no length is involved, and the renderings are asserted where they
+# belong -- `ec/tools/test_direct_address_renderings.py`, against the committed
+# Ghidra listings rather than against this file. What matters for this one is
+# that the guard keys on the opcode and the operand byte, so it is right on
+# both spellings and would be right on a third.
+# `docs/findings/dptr-guard-census-vs-1027.md` §2 is the account;
+# `dptr-rebuild-walk-guard.md` §1 corrects its own earlier version of it, and
+# `docs/findings/direct-address-opcode-rendering.md` is the renderer half.
 ANL_DPL = bytes([0x54, 0x82])         # anl a,#0x82 -- the two bytes the table decodes
 ANL_DIRECT_DPL = bytes([0x53, 0x82, 0x7F])   # anl 0x82,#0x7f -- the 8051's form
 INC_DPL = bytes([0x05, 0x82])         # inc 0x82
@@ -308,25 +308,25 @@ class NonConstructionTests(unittest.TestCase):
         # instead of the byte. The predicate keys on the opcode and `d[i+1]`,
         # so it gives the same answer on both spellings, which is the whole
         # argument for a byte-keyed guard over a mnemonic-matching one, made
-        # concrete: the text says `db 0x53` for this one and so names neither
-        # `anl` nor `0x82`, while it says `anl a,#0x82` for the other.
+        # concrete: the two forms differ in their opcode and their operand
+        # byte, and in nothing a renderer is obliged to preserve.
         self.assertFalse(T.is_dptr_rebuild(ANL_DIRECT_DPL, 0))
 
     def test_the_predicate_reads_the_operand_byte_and_not_the_mnemonic(self):
-        # The concrete case behind the byte-keying. What `disasm8051.mnemonic()`
-        # gets wrong here is the *other* half of the logical group, not this
-        # one: `54 82` renders as `anl a,#0x82`, which is right -- `0x54` is
-        # `anl a,#data`, two bytes, and it masks A rather than writing DPL, so
-        # a guard reading the text and a guard reading the bytes agree. The
-        # defect is that the same renderer says nothing usable for `0x53`,
-        # where the machine does write DPL (`ANL_DIRECT_DPL`, asserted above).
-        # Asserting the *rendering* is what makes this a test rather than a
-        # note; fixing the table is out of scope and would move text other
-        # tools' committed output depends on.
+        # The concrete case behind the byte-keying, which #1294 made sharper
+        # rather than obsolete. Both halves of the logical group now render
+        # correctly -- `54 82` as `anl a,#0x82`, `53 82 7f` as
+        # `anl 0x82,#0x7f` -- so nothing here rests on the renderer being
+        # wrong. It rests on the renderer being *free*: a text-matching guard
+        # would be reading an operand out of a spelling, and the same three
+        # bytes could be written `anl R2,#0x7f` or `anl 0x82,#0x7f` or
+        # `anl _DPL_,#0x7f` with the machine executing the same instruction
+        # every time. The predicate reads the bytes, so it does not care.
         from disasm8051 import mnemonic
-        # The rendering names `0x82` only as an immediate; the operand byte
-        # the guard keys on is the same byte, read from `d[i+1]`.
         self.assertEqual(mnemonic(ANL_DPL, 0), "anl  a,#0x82")
+        self.assertEqual(mnemonic(ANL_DIRECT_DPL, 0), "anl  0x82,#0x7f")
+        # The accumulator row names `0x82` only as an immediate; the operand
+        # byte the guard keys on is the same byte, read from `d[i+1]`.
         self.assertNotIn("0x82", mnemonic(ANL_DPL, 0).replace("#0x82", ""))
         # And the guard consults the bytes, where the two forms differ.
         self.assertFalse(T.is_dptr_rebuild(ANL_DPL, 0))
