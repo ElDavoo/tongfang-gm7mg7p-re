@@ -162,10 +162,12 @@ class TheThreeWritesAreTwoSites(unittest.TestCase):
         self.assertEqual((int(row['write_main_ec']), int(row['write'])), (3, 3))
         # ...and the three .c files that carry a store spelling, which is where
         # the 3 comes from. AD7D.c and AF06.c carry the same call text because
-        # they are the same bytes, which is the point.
+        # they are the same bytes, which is the point. AC84.c is correctly
+        # absent: its sweep writes through write_r3r4_to_xdata_pair(0x502),
+        # which never spells the pair's own address.
         stores = sorted(p.name for p in (DECOMPILED / 'bank1').glob('*.c')
                         if 'write_r1r2_to_xdata_pair(0x4a2' in p.read_text())
-        self.assertEqual(stores, ['AC84.c' and 'AD7D.c', 'AF06.c', 'AF32.c'])
+        self.assertEqual(stores, ['AD7D.c', 'AF06.c', 'AF32.c'])
 
     def test_the_image_has_two_store_sites_and_three_load_sites(self):
         # The six main-EC sites the census records, read off the committed

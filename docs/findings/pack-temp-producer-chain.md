@@ -12,13 +12,17 @@ does not restate it as settled.
 
 The pair is 16-bit little-endian with **`0x04A2` low**. Two things this file
 settles, one it declines to: the main EC's two store sites for the pair are
-both accounted for and neither is a measurement of the pack; the word
-`0x0502`/`0x0503` has at least two writers reached from two different call
-paths and is not the EC's pack temperature by any evidence here; and the PD
-image's five `0x04A3` sites want neither the EC's high byte nor its own
-`0x04A3` — they want a **strided field inside the PD's own
-`0x04A1`-`0x04A6` block**, and the byte at `0x04A3` itself is dereferenced by
-exactly one of the five, at a rebased address.
+both accounted for and neither settles a measurement of the pack — route 1
+stores the literal `0x0B72`, so it is not one whatever the caller left in
+`R1:R2`, and route 3 copies `0x0502`/`0x0503`, whose provenance section 3
+leaves open (two of that word's four writers compute `value × 10 + 0x0AAA`,
+one `value × 10 + 0x0A46`); the word `0x0502`/`0x0503` has at least two
+writers reached from two different call paths and is not the EC's pack
+temperature by any evidence here; and the PD image's five `0x04A3` sites want
+neither the EC's high byte nor its own `0x04A3` — they want a **strided field
+inside the PD's own `0x04A1`-`0x04A6` block**, and **three of the five
+dereference, each at the rebased address the helper computed** (section 4's
+table).
 
 ## 1. The consumer side, as already recorded
 
@@ -33,14 +37,15 @@ Cited, not re-derived.
 | `0xB0D1` loads the pair back and compares it against a CODE table entry's bytes 0 and 1 | `ec/decompiled/bank1/B0D1.c:11` |
 | the 3030 dK / 3130 dK thresholds that weight the stress counter | `ec/annotations/charge-target-derating.md:48` |
 
-`BAE7.c:9` and `C3A0.c:10` both said in their own text that the address had
-no `registers.yaml` entry. `BAE7`'s clause is now corrected at source — the
-annotation CSV carries the replacement and the re-export put it in the text —
-because a comment asserting a register does not exist is a claim the naming
-makes false, and leaving it would have been a stale sentence in a file about
-naming a register. `C3A0`'s weaker "not documented" clause is left as written:
-it is true of `0x0622` and `0x0805`, which still have no entry, and splitting
-it to exempt `0x04A2` would edit a shared file for one address's sake.
+Four annotation comments say, in their own text, that an address this change
+adds to `registers.yaml` has no entry there, and all four are corrected at
+source — the annotation CSV carries the replacement and the re-export put it in
+the text — because a comment asserting a register does not exist is a claim
+the naming makes false, and leaving it would have been a stale sentence in a
+file about naming a register. `BAE7`'s clause names only the two addresses;
+`AF06`, `B0D1` and `C3A0` name `0x04A2`/`0x04A3` inside a wider list of
+undocumented addresses, and each of those three now exempts the pair and names
+`PACK_TEMP_DK`.
 
 ## 2. Which sites write the pair — issue step 1
 
@@ -63,6 +68,10 @@ $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 0x04A2 \
   file 0x13145  bank1     runtime 0xB145      DPTR handed to lcall 0x8892
   file 0x143A7  bank1     runtime 0xC3A7      DPTR handed to lcall 0x8892
 ```
+
+(The block is that command's six main-EC rows; it also prints five `pd-image`
+rows, which are elided here, and each row's trailing file-mapping suffix is
+trimmed.)
 
 Two of the five bank1 sites write and three read, by what the *callee* does:
 `0x888c` is `write_r1r2_to_xdata_pair` and `0x8892` is
@@ -292,14 +301,18 @@ $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --bases 0x040
 **Every effective address is `0x04A3 + n`, for an `n` the tool's terms make
 non-zero in general** — and that, not the count of dereferencing sites, is
 what decides the question. The `movx` at `0xF234` reads `0x04A3 + R7×0x60 +
-0x200×R7` — the value R7 held at the site — and not the byte the site names;
-`0x9DA6`'s `movx A,@DPTR` reads `0x04A3 + A×0x60 + 0x200×R7`, and `0x9E52`'s
-`movx @DPTR,A` writes `0x04A3 + A×0x60 + 0x200×R6`. None of the three reaches
-`0x04A3` itself. `0xF22E` is a *strided read of a field*, exactly the `0x04A6`
-shape, and the `&DAT_EXTMEM_04a3` in `F22E.c:20` is the decompiler spelling
-the **base**, not the address the `movx` touches. The PD image is never given a
-symbol table (`gen_xdata_symbols.py`'s own refusal), which is why the base is
-the only thing in that file named at all.
+0x200×R7` — the value R7 held at the site; `0x9DA6`'s `movx A,@DPTR` reads
+`0x04A3 + A×0x60 + 0x200×R7`, and `0x9E52`'s `movx @DPTR,A` writes `0x04A3 +
+A×0x60 + 0x200×R6`. No *general* value of those terms lands on `0x04A3` — a
+site reads its own base back only when the registers in its term are zero,
+`A` and `R7` at `0x9DA6`, `A` and `R6` at `0x9E52`, `R7` at `0xF22E` — and
+nothing in the committed listings fixes what those registers hold at any of
+the three; no byte was watched move, which is what section 5 says. `0xF22E`
+is a *strided read of a field*, exactly the `0x04A6` shape, and the
+`&DAT_EXTMEM_04a3` in `F22E.c:20` is the decompiler spelling the **base**,
+which is the address the `movx` touches only when R7 is zero. The PD image is
+never given a symbol table (`gen_xdata_symbols.py`'s own refusal), which is
+why the base is the only thing in that file named at all.
 
 **The answer, in the three words the issue offers:** the PD wants **a third
 thing** — a field at a strided offset inside the PD's own `0x04A1`-`0x04A6`
