@@ -38,7 +38,7 @@ grade every crashed run as one that finished.
 ## The guard held the reasons, not the shape
 
 `test_the_refusal_reasons_are_read_captures_own`
-(`test_grade_0751_isolation.py:3625` at `c9e72c1`) pins four refusal reasons,
+(`test_grade_0751_isolation.py:3608` at `c9e72c1`) pins four refusal reasons,
 their order, and the first reason byte for byte against the exception
 `read_capture` raised. It holds what it claims. What it does not hold is the
 shape:

@@ -831,12 +831,13 @@ class TheCommittedTree(unittest.TestCase):
         # `main`'s tree holds code there and the branch's holds a `#` comment, so
         # the branch's `comment` at `24` was a measurement of its own line and
         # `main`'s `def test_` a measurement of a line this pin does not name.
-        # On the merged tree `:3608` is `"'NOT GRADED'), 0, kind)"`, so `comment`
-        # is `23` and `other` is `46`, with `assertion` and `blank` unmoved --
-        # the control that this is one record changing column and not one added
-        # or dropped. **The gap between the record's verdict and its shape is
-        # the verdict**: the row reads *records another line* precisely because a
-        # commit-qualified pin names the line of that revision, not this one.
+        # On this tree `:3608` is a statement rather than a `def test_` header, so
+        # `comment` is `23` and `other` is `46`, with `assertion` and `blank`
+        # unmoved -- the control that this is one record changing column and not
+        # one added or dropped. **The gap between the record's verdict and its
+        # shape is the verdict**: the row reads *records another line* precisely
+        # because a commit-qualified pin names the line of that revision, not this
+        # one.
         self.assertEqual(shapes(records), {
             census.DEF_TEST: 1, census.ASSERTION: 24, census.COMMENT: 23,
             census.BLANK: 5, census.OTHER: 46})

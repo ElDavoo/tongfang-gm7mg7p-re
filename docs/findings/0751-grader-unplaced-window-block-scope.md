@@ -274,26 +274,30 @@ off here.
 
 ## The citations this move, and how they were repaired
 
-The grader suite is cited by line from four write-ups, and 140 lines added
-above them moves every target below the insertion. **Leaving them would have
-made thirty citations name a line that is not the line they are cited for**, so
-they were re-anchored — the repair
+The grader suite is cited by line from four write-ups, and the lines added above
+them move every target below the insertion. **Leaving them would have made each
+of those citations name a line it is not cited for**, so they were re-anchored —
+the repair
 [`docs/findings/test-line-pin-census.md`](test-line-pin-census.md) records, and
 the one its `#485` paragraph records for the same reason.
 
-Every target was **checked, not assumed**: the two revisions were aligned line
-for line, and each re-anchored target was read to hold the byte-identical text
-its old line held. `:3520`'s `assertEqual(grade.existing_mark_labels(path)` is
-`:3660`'s, `:4356`'s is `:4496`'s, and both ends of `:1118-1163` are
-`:1143-1188`'s. So every verdict in those thirty rows is the one its old line
-carried, and **no shape moves either**, which is why
+Each re-anchored target was read against the line its citation held before,
+which is what a re-anchoring has to be rather than a guess: both ends of
+`:1118-1163` are `:1143-1188`'s, the same
+`def test_a_capture_given_twice_is_refused(self):` and the same
+`self.assertIn('3 capture(s)', out)`. So each row's verdict is the one its old
+line carried, and **no shape moves either**, which is why
 `test_census_test_line_pins.py`'s landing-shape split is unmoved — the reason
 it was the right repair rather than re-deriving the split is that re-deriving
-would have frozen thirty stale citations as though they were intended, and the
-split's whole purpose is to tell a re-anchoring from an addition.
+would have frozen stale citations as though they were intended, and the split's
+whole purpose is to tell a re-anchoring from an addition.
 
-Thirty is a count of the tree this change landed on and not a claim about the
-corpus; the rows carry their own cause, and
+Two records are the exception, and both are corrections rather than
+re-anchorings. `0751-mark-provenance-column.md`:206 named the class header and
+had been moved off it; it is put back on the header. `0751-capture-row-shape.md`:41
+is not re-anchored at all, its pin being qualified by a commit, and the values
+it carried in between are left visible in its census row rather than
+deleted. The rows carry their own cause, and
 [`test-line-pin-census.md`](test-line-pin-census.md)'s note under the table
 carries the rest.
 
