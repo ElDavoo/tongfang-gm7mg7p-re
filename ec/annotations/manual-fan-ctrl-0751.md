@@ -275,6 +275,37 @@ Worth flagging rather than smoothing over: `0x2D` is not the `0x3C` that
 with this block not being the branch that runs on this machine — but
 "consistent with" is all it is.
 
+> **Answered 2026-09-30 (issue #111), stated in place rather than replacing
+> the paragraph above.** The "branch that runs" framing turned out to rest on a
+> false premise, and the correction is worth more than the answer.
+>
+> First, this is not a separate guarded run. The `cjne r0,#…` chain §5 quotes
+> is not in `0x94D0` at all: its only `cjne` is `0x94F0 cjne R7,#0x3,0x94FC`,
+> on the low nibble of `0x074C`, and it selects the seed pair rather than a
+> block. What §5 called "several per-model variants" is one routine with three
+> seed pairs, gated on **GFID, `0x07D3`** — a byte `registers.yaml` already
+> names — which the EC computes at run time in `0xD9FE`.
+>
+> Second, and the reason the paragraph above cannot simply be confirmed: the
+> three seed tables are **byte-identical** over the sixteen bytes the copy
+> reads. `0x61FE`, `0x61C8` and `0x6192` all hold
+> `3C 3C A5 00 23 23 A5 00 23 23 A5 00 4B 4B A5 00`, and the copy's
+> `movc` path turns that into `3C 3C A5 01 / 23 23 A5 01 / 4B 4B A5 01` —
+> every value `registers.yaml` records live, all three four-byte groups. So the
+> `0x3C` this section could not account for comes from the `movc` path, and it
+> comes from it under **all three** seeds. The discriminator gates the routine
+> without changing the result, so there is no branch-versus-branch question to
+> answer and the "consistent with" above is better read as: the fixed arm at
+> `0x95C0` did not supply the live value, and the table did.
+>
+> What that does **not** say is that the fixed arm did not run. It is gated on
+> `0x0770 == 0x04`, and the polarity is the opposite of the obvious reading —
+> `0xB8C0` returns 1 for that value and `0x95BB jnz` sends *that* case into the
+> block — so the arm executes exactly when `0x0770` is `0x04`, and nothing
+> static settles what that byte holds. `docs/findings/mode-defaults-variant-selector.md`
+> is the full derivation; `docs/hardware-tests/mode-defaults-variant-read.md`
+> is the read that would, and has not been run.
+
 Not one read site is found for any of the twelve default bytes. The shape is
 the EC *publishing* its defaults for the host to fetch — which is precisely
 how the vendor uses them: §7 records `SetUserProfile` seeding its PL values
@@ -449,7 +480,13 @@ than only the listings quoted here.
   PL clear in §4 can fire after a host has written the PLs, or only before.
   Resolving `0x851B`'s framing (`bank-call-audit.md`) is the way in.
 - **The duplicated `0xABxx` / `0xC7xx` mode routines** — two copies, same
-  masks. Which one is live, and on what condition.
+  masks. Which one is live, and on what condition. Partly answered by
+  `docs/findings/mode-defaults-variant-selector.md` §7 (issue #111): the
+  shared tail is the same bytes modulo relocation, but the two copies are
+  entered under **different** gates — `0x0782` bit 1, `0x06E6 == 0x01` and
+  `0x1603` bit 5 on the `0xABxx` side, `0x0741` bit 0 on the `0xC7xx` side,
+  with `0x0440` the only gate byte in common, and **neither is GFID**. Which
+  copy runs is still open.
 - **The default fan tables themselves.** At least twenty CODE pointer pairs
   at `0x60F2`, of which the mailbox handler selects four (where the table
   ends was not determined). Decoding them and

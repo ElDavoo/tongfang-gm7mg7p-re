@@ -151,6 +151,19 @@ HELD = {
             "*-snapshot.txt": ("## 2.", "in the snapshot style of"),
         },
     },
+    "mode-defaults-variant-read.md": {
+        # The `ac-autoboot` case, and for the same reason: §3's command is a
+        # `for` over `ecmem.py read`, which prints to stdout and writes no
+        # file, so there is no producer anywhere outside the output section --
+        # and `run_sections()` excludes that section deliberately, so the
+        # redirection in §5 is not counted as one either. The capture is the
+        # operator's, and the anchor is the section that says so.
+        "command_producers": False,
+        "hand_saved": {
+            "*-mode-defaults-variant.txt":
+                ("## 5.", "it is a placeholder, not a shell expansion"),
+        },
+    },
 }
 
 # The two documents the helpers cannot read, excluded by a stated rule rather

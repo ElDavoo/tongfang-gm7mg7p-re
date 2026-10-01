@@ -92,6 +92,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`ifr-charge-and-battery-options.md`](ifr-charge-and-battery-options.md) — The charge and battery questions in the Setup IFR, and what hides them
 - [`landed-gate-patch-state.md`](landed-gate-patch-state.md) — A landed gate patch is not a stale one: the four states, and the two-step landing (issue #772)
 - [`mmrd-unaligned-escape.md`](mmrd-unaligned-escape.md) — The unaligned `MMRD` escape, and the two sources that would have to say it is safe (issue #439)
+- [`mode-defaults-variant-selector.md`](mode-defaults-variant-selector.md) — Which writer seeds the per-mode PL defaults, and what the `0xABxx`/`0xC7xx` gate is (issue #111)
 - [`name-basis-and-groups.md`](name-basis-and-groups.md) — What grounds a name, and what a group is (issue #135)
 - [`name-shape.md`](name-shape.md) — A hand name is a citation wherever its words appear, so it is held to a shape before it is committed (issue #436)
 - [`named-without-a-row.md`](named-without-a-row.md) — The 25 functions that carry a name no CSV row wrote (issue #601)
