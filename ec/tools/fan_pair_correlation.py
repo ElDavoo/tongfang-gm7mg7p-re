@@ -25,8 +25,14 @@ output rather than a number typed into prose.
    `GPU_TEMP` (0x044F), on the same carry-forward reconstruction. A
    coefficient is printed only when the temperature register's own observed
    range is wide enough to carry one; see `MIN_TEMP_RANGE`.
-3. *The tachometer pair*, as the big-endian 16-bit values the vendor's own
-   reads assemble, correlated with each other.
+3. *The tachometer pair*, correlated with each other. Each pair is assembled
+   **high byte first**, which is the EC's own order rather than this tool's
+   choice: `be16_046c_046d_minus_100` and `be16_0464_0465_minus_100` each
+   subtract 100 from the second address and carry the borrow into the first,
+   which is only a 16-bit subtract if the second is the low byte. Part 3
+   reports the coefficient under **both** orders with their spans beside
+   them, because the order moves the figure and a reader should see that
+   rather than take it on trust.
 
 **Why the third part is here when the issue asks about two duty bytes.** The
 duty bytes cannot be attributed from the committed captures, and the
@@ -93,6 +99,17 @@ CPU_TEMP, GPU_TEMP = 0x043E, 0x044F
 # a 16-bit tachometer whose high byte churns beside a low byte that moved once
 # is not the shape of a tachometer pair. So the tool reports both the vendor's
 # assembly (which cannot be built at all -- see below) and the EC's.
+#
+# **Every tuple is (high, low), and the order is not this tool's to pick.**
+# For `TACH_FIRST` the vendor settles it: `GetEcCpuFanRpm` reads 1124
+# (0x0464) then 1125 (0x0465) and returns `(num << 8) | b`. For the EC pair
+# there is no vendor read at all -- `FanInfo` never reads 0x046D, which has no
+# name in any of the three `ECSpec.cs` versions -- so the order there is the
+# EC's, read off the borrow chain: `be16_046c_046d_minus_100` does
+# `subb A,#0x64` on 0x046D and then `subb A,#0x0` on 0x046C, and a 16-bit
+# subtract puts the constant on the low byte and carries into the high one, so
+# 0x046D is low and 0x046C is high. That is the pair as written above.
+# `be16_0464_0465_minus_100` has the same shape over the first pair.
 TACH_FIRST = (0x0464, 0x0465)
 TACH_VENDOR_SECOND = (0x046C, 0x046B)
 TACH_EC_SECOND = (0x046C, 0x046D)
@@ -363,12 +380,26 @@ def temperature_correlation(rows, duty_addr, temp_addr, label):
 def sixteen_bit(rows, high_addr, low_addr, anchors=None):
     """A 16-bit big-endian value series: -> [(ts, value)], or `[]`.
 
-    The assembly is the vendor's own (`FanInfo.GetEcCpuFanRpm` and
-    `GetEcGpuFanRpm` each read the high byte, shift it left eight, and OR the
-    low byte in), so this reproduces what the service computes rather than
-    inventing a byte order. Either half missing yields `[]` rather than a
-    partial value: a 16-bit reading assembled from one live byte and one dead
-    one is not a smaller measurement, it is a different and wrong one.
+    `high_addr` is the high byte and `low_addr` the low one, and the order is
+    read off the code that uses the pair rather than chosen here. For
+    `TACH_FIRST` it is the vendor's own: `FanInfo.GetEcCpuFanRpm` reads 1124
+    (0x0464) then 1125 (0x0465) and returns `(num << 8) | b`. For
+    `TACH_EC_SECOND` there is **no vendor read of this pair at all** --
+    `GetEcGpuFanRpm` reads 1132/1131 = 0x046C/0x046B and never touches
+    0x046D, so citing `FanInfo` for its order would be citing a read that
+    does not exist. The order there is the EC's, from the borrow chain in
+    `be16_046c_046d_minus_100`: `subb A,#0x64` on 0x046D, then `subb A,#0x0`
+    on 0x046C. A 16-bit subtract subtracts the constant from the low byte and
+    carries the borrow into the high one, so 0x046D is the low byte and
+    0x046C the high. That routine is the evidence for this pair's order, and
+    it happens to agree with the vendor's order on the first pair.
+
+    Because the order moves the coefficient, `tachometer_comparison` is
+    measured both ways round and both are reported -- see `swapped_order`.
+
+    Either half missing yields `[]` rather than a partial value: a 16-bit
+    reading assembled from one live byte and one dead one is not a smaller
+    measurement, it is a different and wrong one.
 
     `anchors` is the set of instants to report at. It defaults to the union of
     this pair's own halves' steps, which is the right default for one series
@@ -430,6 +461,44 @@ def read_change_counts(path):
     return counts
 
 
+def swapped_order(rows, second=TACH_EC_SECOND):
+    """The same comparison with each pair's two bytes the other way round.
+
+    -> the same dict shape `tachometer_comparison` returns, or `None` when
+    that function refused to build the pair at all.
+
+    This is what the byte order is worth. Assembling high-byte-first is the
+    EC's order (`sixteen_bit`'s note carries the derivation), but a
+    correlation over a 16-bit value is a different number under the other
+    order, so quoting the first without the second reports a property of the
+    assembly rather than of the capture. Both are printed, with their spans
+    beside them: the spans are what decide the matter, because only one of
+    the two orders puts the readings in a range a fan could be turning at.
+    """
+    flipped_first = (TACH_FIRST[1], TACH_FIRST[0])
+    flipped_second = (second[1], second[0])
+    anchors = set()
+    for addr in flipped_first + flipped_second:
+        anchors.update(ts for ts, _ in series(rows, addr))
+    first = sixteen_bit(rows, *flipped_first, anchors=anchors)
+    other = sixteen_bit(rows, *flipped_second, anchors=anchors)
+    if not first or not other:
+        return None
+    left, right = dict(first), dict(other)
+    shared = sorted(set(left) & set(right))
+    if not shared:
+        return None
+    return {
+        "samples": len(shared),
+        "r": pearson([left[ts] for ts in shared],
+                     [right[ts] for ts in shared]),
+        "first_min": min(left.values()),
+        "first_max": max(left.values()),
+        "second_min": min(right.values()),
+        "second_max": max(right.values()),
+    }
+
+
 def tachometer_comparison(rows, second=TACH_EC_SECOND):
     """Two 16-bit tachometer readings against each other, and their shape.
 
@@ -461,6 +530,11 @@ def tachometer_comparison(rows, second=TACH_EC_SECOND):
         "identical": 0,
         "first_span": 0,
         "second_span": 0,
+        "first_min": 0,
+        "first_max": 0,
+        "second_min": 0,
+        "second_max": 0,
+        "swapped": None,
         "reason": "",
     }
     if not first or not other:
@@ -485,9 +559,14 @@ def tachometer_comparison(rows, second=TACH_EC_SECOND):
         return result
     result["first_span"] = max(left.values()) - min(left.values())
     result["second_span"] = max(right.values()) - min(right.values())
+    result["first_min"], result["first_max"] = (min(left.values()),
+                                                max(left.values()))
+    result["second_min"], result["second_max"] = (min(right.values()),
+                                                  max(right.values()))
     result["identical"] = sum(1 for ts in shared if left[ts] == right[ts])
     result["r"] = pearson([left[ts] for ts in shared],
                           [right[ts] for ts in shared])
+    result["swapped"] = swapped_order(rows, second)
     if result["r"] is None:
         result["reason"] = ("one of the two readings is constant across the "
                             "shared samples, so the correlation is undefined")
@@ -662,6 +741,17 @@ def print_report(reports, part="all", shape_report=None):
                         "%d counts\n"
                         % (tach["r"], tach["identical"], tach["samples"],
                            tach["first_span"], tach["second_span"]))
+                    out("      high byte first: %d-%d and %d-%d\n"
+                        % (tach["first_min"], tach["first_max"],
+                           tach["second_min"], tach["second_max"]))
+                    sw = tach["swapped"]
+                    if sw is not None:
+                        out("      the other byte order: r = %s over %d "
+                            "samples, %d-%d and %d-%d\n"
+                            % ("undefined" if sw["r"] is None
+                               else "%+.3f" % sw["r"], sw["samples"],
+                               sw["first_min"], sw["first_max"],
+                               sw["second_min"], sw["second_max"]))
                 else:
                     out("      no coefficient: %s\n" % tach["reason"])
         out("\n  Two series tracking each other is a fact about the capture,\n"
@@ -670,6 +760,14 @@ def print_report(reports, part="all", shape_report=None):
             "  value between two rows is inferred -- and a high correlation is\n"
             "  a statement about the shape of two series rather than about\n"
             "  what is spinning.\n")
+        out("\n  The byte order is named rather than assumed, and both orders\n"
+            "  are printed above. High byte first is the EC's own: the\n"
+            "  be16_* routines subtract 100 from the second address and carry\n"
+            "  the borrow into the first, which is a 16-bit subtract only if\n"
+            "  the second is the low byte. It is also the only one of the two\n"
+            "  orders whose readings land in a range a fan could turn at, and\n"
+            "  that range is the evidence for the order rather than a\n"
+            "  consequence of it.\n")
 
         shape = shape_report
         if shape is not None:

@@ -502,7 +502,13 @@ class Tachometer(unittest.TestCase):
                     self.assertEqual(wide[ts], narrow[ts])
 
     def test_the_16_bit_assembly_is_big_endian(self):
-        """High byte first, which is the vendor's own arithmetic.
+        """High byte first, which is the vendor's own arithmetic on this pair.
+
+        `GetEcCpuFanRpm` reads 1124 (0x0464) then 1125 (0x0465) and returns
+        `(num << 8) | b`, so `TACH_FIRST`'s order is the service's and not this
+        tool's choice. The EC pair's order rests on the `be16_*` borrow chain
+        instead -- `FanInfo` never reads 0x046D -- and is held by
+        `test_the_ec_pair_order_comes_from_the_borrow_chain_not_faninfo`.
 
         The bytes are written so that the two orders differ (`0x12 0x34` reads
         as 0x1234 here and 0x3412 the other way round), so this case fails if
@@ -515,6 +521,47 @@ class Tachometer(unittest.TestCase):
             ])
             values = fpc.sixteen_bit(fpc.read_capture(path), *fpc.TACH_FIRST)
             self.assertEqual([v for _, v in values], [0x1234])
+
+    def test_the_ec_pair_order_comes_from_the_borrow_chain_not_faninfo(self):
+        """`0x046D` is the low byte, so `0x046C` is the high one.
+
+        `be16_046c_046d_minus_100` is `clr CY` / `subb A,#0x64` on 0x046D /
+        `subb A,#0x0` on 0x046C. A 16-bit subtract takes the constant from the
+        low byte and carries into the high, so the address the constant comes
+        off is the low byte. Held here against the vendor's read as well,
+        because `GetEcGpuFanRpm` reads 1132/1131 = 0x046C/0x046B and never
+        touches 0x046D: a test that passed by citing `FanInfo` would be
+        asserting an order from a read that does not exist.
+        """
+        self.assertEqual(fpc.TACH_EC_SECOND, (0x046C, 0x046D))
+        self.assertNotIn(0x046D, (1124, 1125, 1132, 1131))
+        with tempfile.TemporaryDirectory() as tmp:
+            path = _capture(tmp, "ecpair.csv", [
+                ("t1", fpc.TACH_EC_SECOND[0], 0x00, 0x12),
+                ("t1", fpc.TACH_EC_SECOND[1], 0x00, 0x34),
+            ])
+            values = fpc.sixteen_bit(fpc.read_capture(path),
+                                     *fpc.TACH_EC_SECOND)
+            self.assertEqual([v for _, v in values], [0x1234])
+
+    def test_the_byte_order_is_reported_both_ways(self):
+        """The correlation is reported under both orders, not just the EC's.
+
+        The order moves the figure, so a reader given only the high-byte-first
+        coefficient is reading a property of the assembly and not of the
+        capture. `swapped` must be a real measurement over the same samples.
+        """
+        result = fpc.tachometer_comparison(self.rows, fpc.TACH_EC_SECOND)
+        sw = result["swapped"]
+        self.assertIsNotNone(sw, "the byte order is not reported both ways")
+        self.assertEqual(sw["samples"], result["samples"])
+        # The EC's order puts both readings in a range a fan could turn at; the
+        # other order spreads them across nearly the whole 16-bit space. That
+        # asymmetry is the evidence for the order, so it is held.
+        self.assertLess(result["first_max"], 0x10000)
+        self.assertGreater(result["first_min"], 0)
+        self.assertGreater(sw["first_max"], 0xF000)
+        self.assertGreater(sw["first_max"], result["first_max"])
 
     def test_a_half_present_pair_is_refused_rather_than_assembled(self):
         with tempfile.TemporaryDirectory() as tmp:

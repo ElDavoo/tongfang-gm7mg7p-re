@@ -248,13 +248,54 @@ have excluded a pair the EC's own code supports, which is how a shape test
 becomes worse than none.
 
 **And the correlation, which is the reason this stays a lead.** Reconstructing
-both tachometer readings as the big-endian 16-bit values the vendor's reads
-assemble, over the **210** samples at which all four bytes are live,
-`0x0464`/`0x0465` and `0x046C`/`0x046D` correlate at **r = 0.982**, agreeing
-on a value in 4 of 210. Two independently-loaded fans do not track each other
-that closely.
+both tachometer readings over the **210** samples at which all four bytes are
+live, `0x0464`/`0x0465` and `0x046C`/`0x046D` correlate at **r = 0.982**,
+agreeing on a value in 4 of 210. Two independently-loaded fans do not track
+each other that closely.
 
-That number is **not** "the two fans are the same fan". It is what one
+**The byte order is a choice, and it is named here because it moves that
+figure.** Each pair is assembled **high byte first**, and for that pair the
+order is the vendor's own: `GetEcCpuFanRpm` reads 1124 (`0x0464`) then 1125
+(`0x0465`) and returns `(num << 8) | b`. For `0x046C`/`0x046D` there is **no
+vendor read of the pair at all** — `GetEcGpuFanRpm` reads `0x046C`/`0x046B`
+and never touches `0x046D`, which has no constant in any of the three
+`ECSpec.cs` versions — so that pair's order is the EC's, and it comes off the
+borrow chain rather than off `FanInfo`:
+
+```
+BD6B  c3      clr   CY
+BD6C  90 04 6d mov   DPTR, #0x46d
+BD6F  e0      movx  A, @DPTR
+BD70  94 64   subb  A, #0x64      ; 100 comes off 0x046D
+BD72  90 04 6c mov   DPTR, #0x46c
+BD75  e0      movx  A, @DPTR
+BD76  94 00   subb  A, #0x0       ; the borrow lands in 0x046C
+```
+
+(`ec/decompiled/bank0/BD6B.asm`.) A 16-bit subtract takes the constant from
+the low byte and carries the borrow into the high one, so the address the
+constant comes off — `0x046D` — is the **low** byte and `0x046C` the high one.
+`be16_0464_0465_minus_100` has the same shape over the first pair, so both
+pairs take the same order and the annotation's own phrasing agrees: it calls
+`{0x046D,0x046C}` a value whose *low* byte is `0x046D`, which is this order
+and not its reverse.
+
+Both orders are measured and printed rather than one being asserted, because
+the order is doing real work in the number:
+
+| order | r | ranges |
+|---|---|---|
+| high byte first (the EC's) | **+0.982** | 2382-5689 and 1870-5615 |
+| the two bytes swapped | +0.165 | 787-65297 and 10-65290 |
+
+**The ranges are the evidence for the order, not a consequence of it.** Only
+one of the two orders puts the readings where a fan could be turning; the
+other spreads them across nearly the whole 16-bit space, which is not a fan
+speed. So the byte-swapped reading does not merely weaken the lead, it is not
+a reading of a tachometer at all — which is why `r = 0.982` is reported rather
+than `r = 0.165`, and why the order is stated instead of left implicit.
+
+The 0.982 is **not** "the two fans are the same fan". It is what one
 committed capture shows, over a carry-forward reconstruction with the blind
 spot named in §2, and 4-of-210 agreement on the actual value shows the two
 series are not the same series either. Both readings are near-perfectly
