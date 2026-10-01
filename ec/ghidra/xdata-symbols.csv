@@ -74,6 +74,8 @@ addr,name,from_register,register_status,derivation,programs
 0x045F,XDATA_045F,XDATA_045F,present-untested,scalar-name,bank0;bank1
 0x04A6,BAT_CYCLE_COUNT_0,BAT_CYCLE_COUNT,confirmed-working,override,bank0;bank1
 0x04A7,BAT_CYCLE_COUNT_1,BAT_CYCLE_COUNT,confirmed-working,override,bank0;bank1
+0x04A2,PACK_TEMP_DK_0,"PACK_TEMP_DK (pack temperature, decikelvin)",present-untested,override,bank0;bank1
+0x04A3,PACK_TEMP_DK_1,"PACK_TEMP_DK (pack temperature, decikelvin)",present-untested,override,bank0;bank1
 0x0522,CHARGE_TARGET_MV_0,CHARGE_TARGET_MV (charger constant-voltage target),confirmed-working,override,bank0;bank1
 0x0523,CHARGE_TARGET_MV_1,CHARGE_TARGET_MV (charger constant-voltage target),confirmed-working,override,bank0;bank1
 0x030E,SBS_CHARGING_VOLTAGE_0,SBS_CHARGING_VOLTAGE (pack-requested charge voltage),present-untested,override,bank0;bank1

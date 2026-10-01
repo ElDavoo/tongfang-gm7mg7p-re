@@ -483,6 +483,24 @@ So `0x04A1`-`0x04A6` reads as a set of field offsets into one strided
 structure, of which `0x04A6` is simply the last — a coherent object in the PD
 image's own allocation that happens to end on the EC's counter byte.
 
+**The five `0x04A3` sites above are now adjudicated, and the answer supports
+this section's reading.** Issue #1425 resolved each site's handoff to the byte
+rather than to the helper: all five hand DPTR to a helper that *returns*,
+adding a stride term, and **three of the five** then dereference the returned
+pointer — `pd 0x9DA6`, `0x9E52` and `0xF22E`, the `movx` the section above
+does not show. Each of the three dereferences at a rebased address rather than
+at the byte the site names; `0xF22E` reads `0x04A3 + R7×0x60 + 0xE0`. The
+other two reach no `movx` under the tool's model: `0x917A` tail-calls into
+`0x10BC`, and `0xEDB7`'s chain stops unmodelled at `0x99D5`. So the PD image is
+not a second reader of the EC's
+pack temperature, and the `BAT_CYCLE_COUNT` answer above transfers here in the
+sharper form: every one of the five wants a field at a strided offset in the
+PD's own block, with `0x04A3` as the base. Static evidence only, and nothing
+here watched a byte move; the full adjudication, its per-site table and the
+helpers' bytes are in
+[`docs/findings/pack-temp-producer-chain.md`](../../docs/findings/pack-temp-producer-chain.md)
+4, with the suite that pins them at `ec/tools/test_pack_temp_producer_chain.py`.
+
 ### 5.3 The PD image's `0xF000`-`0xFFFF` run, one page higher
 
 The block structure in §5.2 is over `0x0400`-`0x07FF`. The PD image's usage does

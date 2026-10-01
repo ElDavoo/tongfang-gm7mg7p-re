@@ -37,11 +37,11 @@ $ python3 ec/tools/xdata_program_keyed_table.py
 
 | program | spelling | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 850 | 7,534 |
-| main-ec | `DAT_EXTMEM+pair-literal` | 45 | 499 |
+| main-ec | `DAT_EXTMEM` | 846 | 7,487 |
+| main-ec | `DAT_EXTMEM+pair-literal` | 44 | 490 |
 | main-ec | `pair-literal` | 156 | 468 |
-| main-ec | `symbol` | 154 | 6,150 |
-| main-ec | `symbol+pair-literal` | 13 | 187 |
+| main-ec | `symbol` | 158 | 6,197 |
+| main-ec | `symbol+pair-literal` | 14 | 196 |
 | pd | `DAT_EXTMEM` | 157 | 858 |
 | **total** | | **1,375** | **15,696** |
 
@@ -85,13 +85,13 @@ union key:
 
 | term | per program | union key |
 |---|---:|---:|
-| named | 167 | 167 |
-| `DAT_EXTMEM_xxxx` | 895 | 896 |
+| named | 172 | 172 |
+| `DAT_EXTMEM_xxxx` | 890 | 891 |
 | pair-literal only | **156** | 155 |
 | total | 1,218 | 1,218 |
 
 References are `refs_main_ec` on both, so each column sums to the main EC's own
-14,838: 6,337 / 8,033 / 468 and 6,337 / 8,040 / 461.
+14,838: 6,393 / 7,977 / 468 and 6,393 / 7,984 / 461.
 
 **The 155-vs-156 is one address, and the sibling page had already named it.**
 [`xdata-spelled-as-union.md`](xdata-spelled-as-union.md) reconciled the same
@@ -159,7 +159,7 @@ Re-measuring the paragraph around the table found three more places that had
 gone the same way, all from the same cause:
 
 - the `CPU_TEMP` transcript at the top of §2 said 54 and now prints 56;
-- "the other 146 named main-EC addresses" is 166 — there are 167 named main-EC
+- "the other 146 named main-EC addresses" is 166 — there are 172 named main-EC
   addresses, `CPU_TEMP` among them;
 - the partition's own 161 / 902 / 155, its 6,416 references and its "other
   1,057" were all downstream of the two stale cells. 6,416 is exactly what the
@@ -216,11 +216,11 @@ $ tail -n +2 ec/annotations/xdata-registers.csv | awk -F, '{
       rows[k]++; ref[k] += (kv[1] == "pd" ? $23 : $22)
     }
   } END { for (k in rows) printf "%-34s %6d %9d\n", k, rows[k], ref[k] }' | sort
-main-ec DAT_EXTMEM                    850      7534
-main-ec DAT_EXTMEM+pair-literal        45       499
+main-ec DAT_EXTMEM                    846      7487
+main-ec DAT_EXTMEM+pair-literal        44       490
 main-ec pair-literal                  156       468
-main-ec symbol                        154      6150
-main-ec symbol+pair-literal            13       187
+main-ec symbol                        158      6197
+main-ec symbol+pair-literal            14       196
 pd DAT_EXTMEM                         157       858
 ```
 
@@ -233,16 +233,16 @@ $ tail -n +2 ec/annotations/xdata-registers.csv | awk -F, '{
     t = (index(s, "symbol") ? "named" : index(s, "DAT_EXTMEM") ? "DAT_EXTMEM" : "pair-only")
     n[t]++; r[t] += $22
   } END { for (t in n) printf "%-12s %6d %9d\n", t, n[t], r[t] }' | sort
-DAT_EXTMEM      895      8033
-named           167      6337
+DAT_EXTMEM      890      7977
+named           172      6393
 pair-only       156       468
 $ tail -n +2 ec/annotations/xdata-registers.csv | awk -F, '$2 != "pd" {
     s = $3
     t = (index(s, "symbol") ? "named" : index(s, "DAT_EXTMEM") ? "DAT_EXTMEM" : "pair-only")
     n[t]++; r[t] += $22
   } END { for (t in n) printf "%-12s %6d %9d\n", t, n[t], r[t] }' | sort
-DAT_EXTMEM      896      8040
-named           167      6337
+DAT_EXTMEM      891      7984
+named           172      6393
 pair-only       155       461
 ```
 
@@ -328,11 +328,48 @@ The calibration rule governs all of them, and none of them is a deletion.
   second table in §2 still double-counts the 49 shared addresses in its
   reference column. The re-key adds the reading that does not; it does not
   remove the one that does.
-- **A percentage moves with its key.** §2's "74% of the register file the main
-  EC uses is `DAT_EXTMEM_xxxx`" is the union-keyed 896 of 1,218; counted per
-  program it is 895 of 1,218, which rounds to 73%. One address out of 1,218 is
-  the entire difference, and it is stated rather than left to whichever table a
-  reader reached for first.
+- **A percentage moves with its key.** §2's "73% of the register file the main
+  EC uses is `DAT_EXTMEM_xxxx`" is the union-keyed 891 of 1,218; counted per
+  program it is 890 of 1,218, which rounds to 73% either way. One address out of
+  1,218 is the entire difference, and it is stated rather than left to whichever
+  table a reader reached for first.
+
+## The re-key's own figures moved once more (issue #1425), and only `0x04A2`
+
+Every table above is re-derived from the committed CSV and the version it was
+measured on is left standing, per the calibration rule this repository applies
+to a superseded figure. The movement is five addresses across three issues and
+one total that did not move:
+
+| | per program | union key | was |
+|---|---:|---:|---|
+| named | 172 | 172 | 167 |
+| `DAT_EXTMEM_xxxx` | 890 | 891 | 895 / 896 |
+| pair-literal only | 156 | 155 | 156 / 155 |
+
+`0x04A2` and `0x04A3` are issue #1425's — the `PACK_TEMP_DK` rows, whose
+re-export put the name into the text — and `0x04A2` is the one that **leaves**
+the `DAT_EXTMEM` term for `symbol` in the main EC. `0x086C` is issue #333's and
+`0x07FD`/`0x07FE`/`0x07FF` issue #573's: each added a `registers.yaml` row
+without a re-export, and this run's export carried all three into the text. The
+attribution is per address in `xdata-register-map.md` §2's correction, and the
+pins are the dated block above `named_in_tree` in `xdata_register_map.py`.
+
+**`0x04A3` is still the one address that moves between the two keys, and it
+still moves for this document's own reason.** Its main-EC half is a bare
+`pair-literal` and the `DAT_EXTMEM` spelling is the PD image's, so naming it
+changed its `name` column and nothing else:
+
+```console
+$ python3 ec/tools/xdata_program_keyed_table.py --moved
+0x04A3	DAT_EXTMEM -> pair-only	DAT_EXTMEM+pair-literal	pair-literal
+```
+
+**Nothing in the census moved.** Distinct addresses, references, the 1,375
+program-addresses, `pd 157 / 858` and the 49 `both` rows are all where they
+were; what moved is which token spells five addresses. That is the same
+cross-check `xdata_register_map.py`'s ORACLE block uses, and it is why the
+correction is a rename and not five new registers.
 
 ## Deliberately not done, and why
 

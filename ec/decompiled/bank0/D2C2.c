@@ -11,12 +11,12 @@
    type: reader
    evidence: ec/decompiled/bank0/D2C2.asm; ec/decompiled/bank0/D2C2.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 byte copy_dp_to_086c_return_masked_7e(byte *param_1)
 
 {
-  DAT_EXTMEM_086c = *param_1;
+  XDATA_086C = *param_1;
   return *param_1 & 0x7e;
 }
 

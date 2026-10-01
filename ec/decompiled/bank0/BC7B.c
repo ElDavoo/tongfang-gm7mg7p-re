@@ -17,7 +17,7 @@ undefined1 load_dptr_0a47_then_nothing(undefined1 param_1)
 
 {
   DAT_EXTMEM_0a47 = param_1;
-  return DAT_EXTMEM_086c;
+  return XDATA_086C;
 }
 
 

@@ -14,8 +14,8 @@
    compares again, and decrements 0x056B only if that second compare is also below and the byte is
    non-zero. Finally it ORs a byte indexed by the new low nibble from 0xAF91 or 0xB0B1 into 0x0495,
    keeping bits 0x43, and a byte from 0xAFA1 or 0xB0C1 into 0x0493, keeping bits 0x1F. None of these
-   addresses is documented in ec/annotations/registers.yaml, and the table contents are not decoded
-   here.
+   addresses is documented in ec/annotations/registers.yaml except 0x04A2/0x04A3, which it names
+   PACK_TEMP_DK (issue #1425), and the table contents are not decoded here.
    type: state
    evidence: ec/decompiled/bank1/B0D1.asm; ec/decompiled/bank1/B0D1.c
    basis: hand-decoded

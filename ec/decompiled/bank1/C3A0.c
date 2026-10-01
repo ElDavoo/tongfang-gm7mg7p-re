@@ -7,12 +7,13 @@
 /* Puts 0x0CEE in R1:R2, reads the 16-bit little-endian word at XDATA 0x04A2/0x04A3 into R3:R4 with
    the helper at 0x8892, and returns unless that word is below 0x0CEE as judged by the 16-bit
    compare at 0x8863. When it is, it decrements XDATA 0x0622 unless that byte is already zero, and
-   writes 0x04 to XDATA 0x0805. 0x04A2, 0x0622 and 0x0805 are not documented in
-   ec/annotations/registers.yaml.
+   writes 0x04 to XDATA 0x0805. 0x0622 and 0x0805 are not documented in
+   ec/annotations/registers.yaml, and 0x04A2 is the low byte of the PACK_TEMP_DK that file names
+   (issue #1425).
    type: writer
    evidence: ec/decompiled/bank1/C3A0.asm; ec/decompiled/bank1/C3A0.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void dec_0622_when_04a2_below_0cee(void)
 

@@ -35,3 +35,5 @@ addr,name,reason
 0x07D8,MODE_TCC_OFFSET_DEFAULTS_GAMING_0,"registers.yaml MODE_TCC_OFFSET_DEFAULTS; 3 addrs, one name -> index by address order; Gaming/Office/Turbo TCC offset defaults in degrees C, ECSpec ADDR_GAMING/OFFICE/TURBO_TCC_OFFSET_DEFAULT_VALUE"
 0x07D9,MODE_TCC_OFFSET_DEFAULTS_OFFICE_1,"registers.yaml MODE_TCC_OFFSET_DEFAULTS; 3 addrs, one name -> index by address order; Gaming/Office/Turbo TCC offset defaults in degrees C, ECSpec ADDR_GAMING/OFFICE/TURBO_TCC_OFFSET_DEFAULT_VALUE"
 0x07DA,MODE_TCC_OFFSET_DEFAULTS_TURBO_2,"registers.yaml MODE_TCC_OFFSET_DEFAULTS; 3 addrs, one name -> index by address order; Gaming/Office/Turbo TCC offset defaults in degrees C, ECSpec ADDR_GAMING/OFFICE/TURBO_TCC_OFFSET_DEFAULT_VALUE"
+0x04A2,PACK_TEMP_DK_0,"registers.yaml PACK_TEMP_DK; 16-bit, two addrs, one name -> index by address order; low byte, little-endian decikelvin (registers.yaml note)"
+0x04A3,PACK_TEMP_DK_1,"registers.yaml PACK_TEMP_DK; 16-bit, two addrs, one name -> index by address order; high byte, little-endian decikelvin; also reached in the PD image, which is never given a symbol table (registers.yaml note)"

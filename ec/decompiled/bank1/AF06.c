@@ -10,8 +10,8 @@
    R1, and a 0x0505 of 0 falls to the first route, a 0x0505 of 1 loads 0x0502/0x0503 into R1:R2 and
    stores them to 0x04A2/0x04A3 before the third route, and any other value returns at 0xAF31
    without reaching 0xB0D1. The R1 load from 0x0503 is dead in this listing. None of these addresses
-   is documented in ec/annotations/registers.yaml, and what 0xAF32 and 0xB0D1 do is not decoded
-   here.
+   is documented in ec/annotations/registers.yaml except 0x04A2/0x04A3, which it names PACK_TEMP_DK
+   (issue #1425), and what 0xAF32 and 0xB0D1 do is not decoded here.
    type: logic
    evidence: ec/decompiled/bank1/AF06.asm; ec/decompiled/bank1/AF06.c
    basis: hand-decoded

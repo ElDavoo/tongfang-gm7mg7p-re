@@ -105,6 +105,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`oem4-bit-map-and-bit0.md`](oem4-bit-map-and-bit0.md) — The `0x07A6` (`OEM_4`) bit map, and bit 0's owner (issue #93)
 - [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md) — The opcode-table bounds census: every `OPCODE_LEN[d[i]]` in `ec/tools/`, and what holds the index in
 - [`opcode-table-coverage.md`](opcode-table-coverage.md) — The opcode table's coverage and a differential decode: 254 of 256 rows, 0 disagreements against two decoders that are not independent — and 8 against the manual, which is the finding — independent
+- [`pack-temp-producer-chain.md`](pack-temp-producer-chain.md) — The pack-temperature producer chain at `0x04A2`/`0x04A3` (issue #1425)
 - [`paged-trampoline-hits-by-hand.md`](paged-trampoline-hits-by-hand.md) — All 18 paged-trampoline hits, read one by one (issue #54)
 - [`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md) — The six `pd 0x07D0` accessors that were not functions, and what naming them did to the census (issue #1101)
 - [`pd-callers-status-intersection.md`](pd-callers-status-intersection.md) — A caller's literals are not index-register loads unless the site indexes on those registers

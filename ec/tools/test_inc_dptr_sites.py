@@ -94,16 +94,24 @@ FIRMWARE = str(EC / "firmware" / "GMxMGxx_11.800")
 ONLY_INC = 107          # reached only as the `inc DPTR` half
 DECLINED = 73           # of those, no main-EC `MOV DPTR` site
 WITH_SITE = 34          # of those, at least one
-ENTERED = 7             # of the 34, in registers.yaml
-UNENTERED = 27          # of the 34, not in registers.yaml
+ENTERED = 8             # of the 34, in registers.yaml
+UNENTERED = 26          # of the 34, not in registers.yaml
 # The 73's own two-way cut, which is a different question from the 73 and is
 # kept apart: "found in no image" and "found in another program" are different
 # reasons to decline and the page says so.
 NOWHERE = 71
 PD_IMAGE_ONLY = 2
 PD_ONLY_ADDRESSES = {"0x043B": 2, "0x04A5": 3}
+# 7 -> 8 with issue #1425, which is the eighth and the only one of the eight
+# that is a *high* half: `0x04A3` is `PACK_TEMP_DK_1`, the byte above
+# `0x04A2`. The other seven are all low halves of a pair their seed is, which
+# is what "entered" has meant here throughout -- a name on the byte a `MOV
+# DPTR` would have to find. `0x04A3` has a main-EC `MOV DPTR` site of its own
+# (`bank0:0xBAE7`, a read of the high half), so it is an ordinary entered row
+# and the invariant below covers it like the other seven; being a high half is
+# a fact about the byte, not a reason to hold it out of the check.
 ENTERED_ADDRESSES = ("0x030F", "0x0403", "0x0435", "0x0437", "0x0439",
-                     "0x04A7", "0x0523")
+                     "0x04A3", "0x04A7", "0x0523")
 
 # The ten addresses `xdata-register-map.md` §4.7 spells, in order. See the
 # docstring for why this is ten and not the issue's eleven.
@@ -357,15 +365,39 @@ class TheSplit(unittest.TestCase):
         self.assertEqual(the73[len(NAMED_HEAD)], "0x0364")
         self.assertNotIn(the73[len(NAMED_HEAD)], NAMED_HEAD)
 
-    def test_the_seven_entered_are_the_seven_named(self):
+    def test_the_eight_entered_are_the_eight_named(self):
         entered = [r["addr"] for r in self.rows if r["entered"] == "yes"]
         self.assertEqual(entered, list(ENTERED_ADDRESSES))
+        # Every one of the eight, `0x04A3` included, has a main-EC `MOV DPTR`
+        # site of its own -- so this is asserted for all of them rather than
+        # for seven of them. `0x04A3` is the only entered row that is a high
+        # half, which is a fact about the byte and not a reason to hold it out:
+        # its site is `bank0:0xBAE7`, a read of the high half, and the pin below
+        # is what keeps that from being re-read as an exception.
         for r in self.rows:
             if r["entered"] == "yes":
                 self.assertNotEqual(r["mov_dptr_main_ec"], "0",
                                     f"{r['addr']} is entered with no main-EC "
                                     "`MOV DPTR` site, so §6's rule and this "
                                     "table disagree about what entering means")
+        for r in self.rows:
+            if r["addr"] == "0x04A3":
+                self.assertEqual(r["mov_dptr_main_ec"], "1")
+                self.assertEqual(r["mov_dptr_pd_image"], "5")
+                self.assertIn(0x04A3, ids.entered_addrs())
+
+    def test_04a3_main_ec_site_is_bank0_bae7_reading_the_high_half(self):
+        # The site behind that `1`, read out of the image rather than asserted
+        # as a number: `mov DPTR,#0x4a3` / `movx A,@DPTR` in bank0. The two
+        # columns are separate counts and are never added together, so the `5`
+        # in `mov_dptr_pd_image` does not make this row a PD-only one.
+        with open(FIRMWARE, "rb") as f:
+            d = f.read()
+        off = tref.offset_for_runtime(0xBAE7, "bank0")
+        self.assertEqual(d[off:off + 5], b"\x90\x04\xa3\xe0\xfe")
+        listing = (EC / "decompiled" / "bank0" / "BAE7.asm").read_text()
+        self.assertIn("BAE7     90 04 a3 mov      DPTR, #0x4a3", listing)
+        self.assertIn("BAEA     e0 - -   movx     A, @DPTR", listing)
 
     def test_no_address_is_both_a_seed_and_only_an_inc_half(self):
         # The same relation from the other side, on the seed column rather than

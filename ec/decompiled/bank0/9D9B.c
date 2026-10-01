@@ -111,20 +111,20 @@ void compute_level_blocks_086b_086c_086e(void)
   if (-1 < cVar3) {
     pcVar5 = (code *)&XDATA_0866;
   }
-  DAT_EXTMEM_086c = *pcVar5;
-  pcVar5 = (code *)&DAT_EXTMEM_086c;
+  XDATA_086C = *pcVar5;
+  pcVar5 = (code *)&XDATA_086C;
   sub_dptr_byte_from_0867();
   if (cVar3 < '\0') {
-    DAT_EXTMEM_086c = *pcVar5;
+    XDATA_086C = *pcVar5;
   }
-  pcVar5 = (code *)&DAT_EXTMEM_086c;
+  pcVar5 = (code *)&XDATA_086C;
   sub_dptr_byte_from_0868();
   if (cVar3 < '\0') {
-    DAT_EXTMEM_086c = *pcVar5;
+    XDATA_086C = *pcVar5;
   }
-  cVar3 = ((byte)XDATA_0869 < (byte)DAT_EXTMEM_086c) << 7;
-  if ((byte)XDATA_0869 < (byte)DAT_EXTMEM_086c) {
-    DAT_EXTMEM_086c = XDATA_0869;
+  cVar3 = ((byte)XDATA_0869 < (byte)XDATA_086C) << 7;
+  if ((byte)XDATA_0869 < (byte)XDATA_086C) {
+    XDATA_086C = XDATA_0869;
   }
   if (((MANUAL_FAN_CTRL < '\0') && (puVar6 = &AP_OEM_6, (AP_OEM_6 >> 1 & 1) != 1)) &&
      ((AP_OEM_6 & 1) != 0)) {

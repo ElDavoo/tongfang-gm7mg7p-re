@@ -10,7 +10,7 @@ counted. This page is the answer, the list, and the accounting.
 addresses the pair pass reaches are *only ever* the `inc DPTR` half of an
 accessor's pair, and that 73 of those have no `MOV DPTR,#addr` encoding in
 `common`, `bank0` or `bank1`. The 107 split **73 / 34**, and the 34 split
-**7 entered / 27 not**. All 107 are in
+**8 entered / 26 not**. All 107 are in
 [`xdata-inc-dptr-only.csv`](xdata-inc-dptr-only.csv), one row each, and §1
 prints the command that regenerates it.
 
@@ -68,11 +68,11 @@ would shrink `S1 - S` and the summary would say so.
 | no `MOV DPTR` site in any image | **71** | the §3 rule has nothing to admit on, and the byte scan found nothing anywhere |
 | pd-image sites only, none in the main EC | **2** | `0x043B` (2 sites), `0x04A5` (3 sites) -- another program's byte at the same address number |
 | **= the 73** | **73** | no main-EC `MOV DPTR` site; §3 declines them |
-| main-EC `MOV DPTR` site, entered in `registers.yaml` | **7** | `0x030F 0x0403 0x0435 0x0437 0x0439 0x04A7 0x0523` |
-| main-EC `MOV DPTR` site, **not** entered | **27** | the shape §6's rule admits; §5 |
+| main-EC `MOV DPTR` site, entered in `registers.yaml` | **8** | `0x030F 0x0403 0x0435 0x0437 0x0439 0x04A3 0x04A7 0x0523` |
+| main-EC `MOV DPTR` site, **not** entered | **26** | the shape §6's rule admits; §5 |
 | **total** | **107** | |
 
-71 + 2 = 73, and 7 + 27 = 34, and 73 + 34 = 107. Every row of
+71 + 2 = 73, and 8 + 26 = 34, and 73 + 34 = 107. Every row of
 `xdata-inc-dptr-only.csv` falls in exactly one of the four, and the
 `population_of()` classification the summary prints is read back off the row
 rather than recomputed, so this table and the CSV cannot drift apart silently.
@@ -228,25 +228,46 @@ from both sides: `add_full_product_to_dptr` is not a selected accessor and
 names still reads back as the direction the table recorded, out of the committed
 `.asm` rather than out of the accessor table.
 
-## 5. The 27: entered by §6's rule, and left for a follow-up
+## 5. The 26: entered by §6's rule, and left for a follow-up
 
-The 34 that *do* have a main-EC `MOV DPTR` site are 7 already entered and 27
-not, and the 27 are:
+The 34 that *do* have a main-EC `MOV DPTR` site are 8 already entered and 26
+not, and the 26 are:
 
 ```
-0x0315 0x0319 0x0344 0x0383 0x0389 0x0393 0x03F7 0x03F9 0x04A1 0x04A3
+0x0315 0x0319 0x0344 0x0383 0x0389 0x0393 0x03F7 0x03F9 0x04A1
 0x04AF 0x04BF 0x0503 0x0505 0x0507 0x0509 0x050B 0x050D 0x0519 0x051B
 0x0529 0x0609 0x060B 0x060D 0x060F 0x0835 0x0837
 ```
 
-They have the shape §6's existing rule admits, and they are not entered here for
-a reason that is about coverage rather than about the rule: **none of the 27 is
-on the `0x0400`-`0x045F` page**, and no other page's rule covers them. The four
-page addresses among the 34 are `0x0403`, `0x0435`, `0x0437` and `0x0439`, and
-**all four are already entered** -- which is why §6's rule, applied to this
-population, changes nothing on the page at all.
+**`0x04A3` is the one address that left this list**, in issue #1425. It is
+entered like any other row of the 34, on a main-EC `MOV DPTR` site of its own:
+its `mov_dptr_main_ec` column reads 1, and `trace_xdata_refs.py` names that
+site — `file 0x0BAE7 bank0`, where `BAE7.asm:7` is `mov DPTR, #0x4a3`
+followed by `movx A,@DPTR`. That is a **read** of the high half, and it is
+what makes `0x04A3` a row here at all: `BAE7.asm`'s routine, named
+`load_r6_r7_from_04a3_04a2`, loads `0x04A3` and then `MOV DPTR,#0x4a2` five
+bytes on at `0xBAEC`, which is the pair a `mov_dptr_main_ec` site is the seed
+of. The five PD-image sites are counted separately, in `mov_dptr_pd_image`,
+and the two columns are never added together. `registers.yaml` now names it
+`PACK_TEMP_DK_1`, and the whole chain that naming documents is in
+[`docs/findings/pack-temp-producer-chain.md`](../../docs/findings/pack-temp-producer-chain.md).
 
-So each of the 27 needs its own `name`/`note` decision, off-page, with no
+One thing does make `0x04A3` unlike the other seven entered rows, and it is
+worth recording as what it is rather than as an exception: it is the only one
+that is a **high** half. The other seven are low halves of a pair their seed is,
+which is what "entered" has meant here throughout — a name on the byte a `MOV
+DPTR` would have to find. `0x04A3` is the byte *above* the one its `MOV DPTR`
+names. The invariant `test_inc_dptr_sites.py` asserts is unweakened and now
+covers it: every entered row, this one included, has a main-EC site.
+
+The remaining 26 have the shape §6's existing rule admits, and they are not
+entered here for a reason that is about coverage rather than about the rule:
+**none of the 26 is on the `0x0400`-`0x045F` page**, and no other page's rule
+covers them. The four page addresses among the 34 are `0x0403`, `0x0435`,
+`0x0437` and `0x0439`, and **all four are already entered** -- which is why
+§6's rule, applied to this population, changes nothing on the page at all.
+
+So each of the 26 needs its own `name`/`note` decision, off-page, with no
 existing rule to lean on. That is an issue, not a footnote, and it is named as
 the follow-up this pass opens rather than folded in as a silent extra diff
 against a file several other branches are editing.
