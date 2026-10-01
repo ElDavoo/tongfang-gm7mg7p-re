@@ -8,13 +8,15 @@ that actually reached the comparison against the firmware image was not counted
 at all. For most rows the two coincide; for the rows this tool is about, they
 do not, and the difference is the whole of issue #229.
 
-The row that matters reads `assembler-gap`, `instructions_checked` 12,
-`instructions_unchecked` 0, and `detail` `no bytes emitted at 0042`. Every
+The shape that matters is a row reading `assembler-gap`, `instructions_checked`
+12, `instructions_unchecked` 0, and `detail` `no bytes emitted at 0042`. Every
 instruction in it translated, the assembler ran and exited 0, and `read_lst()`'s
 parse of the listing it printed carried no entry at the first address the
 comparison reached -- so zero of those twelve instructions reached a comparison.
 Nothing in the row says the form is inexpressible; that is what `assembler-gap`
-means everywhere else.
+means everywhere else. The address there is this file's own illustration rather
+than a row quoted out of the report; the census below counts rows of this
+shape, not this address.
 
 **The bound, and why it is an upper bound.** Every instruction in the committed
 listings is in one of three states: translated and compared, translated and not

@@ -10,6 +10,15 @@
 /windows/decompiled/**/inno/
 /windows/decompiled/**/msix/
 
+# bank images make_bank_image.py writes when it is run from inside this
+# directory, where its usage examples spell the output path bare
+# (`... 0 0x08000 bank0.bin`). Reproducible from ec/firmware/GMxMGxx_11.800
+# and from nothing else in the tree reads them -- build_ec_decompile.py keeps
+# its copies under its --work and verify_reassembly.py builds its own under
+# its own IMAGE_DIR -- so they are build output, not exports like the .asm
+# beside them.
+/ec/decompiled/*.bin
+
 # editor/OS noise
 .DS_Store
 *.swp
