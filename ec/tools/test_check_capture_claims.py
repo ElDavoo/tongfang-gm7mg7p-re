@@ -60,6 +60,15 @@ REAL_INDEX = {PROFILE: ccc.read_capture(os.path.join(ccc.REPO, PROFILE))}
 POWER_CYCLE = 'evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv'
 CYCLE_INDEX = {POWER_CYCLE: ccc.read_capture(os.path.join(ccc.REPO, POWER_CYCLE))}
 
+# A committed capture whose *name* states no window -- no `-XXXX-YYYY` span
+# before `.csv` -- which is what the empty-window case is argued about. Most
+# committed captures are like this, so a rule that skipped denials for want of
+# a window would skip most of the corpus. `0x06D6` has 602 rows in it and
+# `0x0751` none, which is the pair the two empty-window cases turn on.
+NO_WINDOW_CAPTURE = 'evidence/ec-watch/2026-09-24-06d9-hold-linux.csv'
+NO_WINDOW_INDEX = {NO_WINDOW_CAPTURE: ccc.read_capture(
+    os.path.join(ccc.REPO, NO_WINDOW_CAPTURE))}
+
 
 def claims(text, index=None, suffix='.md'):
     """(problems, claims checked) the tool reports for one piece of prose."""
@@ -353,6 +362,55 @@ class ChecksDenials(unittest.TestCase):
                 '0x07C4.\n')
         n, addr = drifted(text, CYCLE_INDEX)
         self.assertEqual((n, addr), (1, '0x07C4'))
+
+    def test_a_movement_after_a_bare_connective_is_not_bound_by_the_denial(self):
+        # "X did not move in C and Y moved" is one clause carrying both
+        # polarities, and `Y` is the subject of the second. A walk that
+        # carried the denial over the `and` would judge it by the inverted
+        # rule -- and `0x07D5` has no row in that capture, so the presence
+        # rule is what has to catch it, as it does on the sentence alone.
+        text = (f'`0x07D4` did not move in {POWER_CYCLE} and `0x07D5` moved.\n')
+        n, addr = drifted(text, CYCLE_INDEX)
+        self.assertEqual((n, addr), (1, '0x07D5'),
+                         "the attribution, not the true denial beside it")
+
+    def test_a_true_movement_after_a_bare_connective_is_not_reported(self):
+        # The mirror of the case above, and the direction that matters: the
+        # sentence is right, and `0x07C4` has two rows in that file. Bound to
+        # the denial it would be reported as one the capture contradicts,
+        # which is a false positive about a sentence that agrees.
+        text = (f'`0x07D4` did not move in {POWER_CYCLE} and `0x07C4` moved.\n')
+        self.assertEqual(drifted(text, CYCLE_INDEX), (0, None))
+
+    def test_a_coordinated_subject_still_binds_across_its_connective(self):
+        # Sharpness for the two above: the connective has to stop the *first*
+        # hop, not the walk. "`0x07B9`, `0x07D0` and `0x07D1` did not change
+        # once" is one coordinated subject of three, and reading only the
+        # nearest of them would check one address where the prose is about
+        # three.
+        text = ('Over a sweep of the whole `0x0000-0x07FF` space — 32499 '
+                f'recorded byte changes ({SWEEP}) — `0x07B9`, `0x07D0` and '
+                '`0x07D1` did not change once.\n')
+        problems, checked = claims(text)
+        self.assertEqual(problems, [])
+        self.assertEqual(checked, 3, "one checked denial per coordinated address")
+
+    def test_a_denial_in_a_capture_with_no_window_is_checked_not_skipped(self):
+        # A capture whose name carries no span and whose unit names no range
+        # is not windowed at all, so there is no address it is said not to
+        # have watched and the denial is checked like any other. `0x06D6` has
+        # 602 rows in that file, so it fails: an empty window is not a way
+        # through, and not being windowed is not an excuse.
+        text = f'`0x06D6` never moved in {NO_WINDOW_CAPTURE}.\n'
+        n, addr = drifted(text, NO_WINDOW_INDEX)
+        self.assertEqual((n, addr), (1, '0x06D6'))
+
+    def test_a_true_denial_in_a_capture_with_no_window_is_silent(self):
+        # The other half of the pair above: the same capture, an address it
+        # really has no row for, checked rather than passed over. Skipping it
+        # left a skip line standing where a check belonged.
+        text = f'`0x0751` never moved in {NO_WINDOW_CAPTURE}.\n'
+        self.assertEqual(drifted(text, NO_WINDOW_INDEX), (0, None))
 
     def test_verbose_reports_a_denial_as_checked_rather_than_skipped(self):
         # The inventory line. While denials were skipped this read

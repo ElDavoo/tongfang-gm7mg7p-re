@@ -38,6 +38,12 @@ half of §4g's sentence alone yields checked claims and no problems, so
 `0x0436`'s 4 binds through the nearest-address fallback and agrees with the
 capture, and so does `0x0438`'s once.
 
+The seventeen `skip (denies movement)` lines the before-tree printed are
+**units**, not claims: some are sentences the rule reaches several times over,
+and some name no capture-scoped address to reach at all — the `no MARK row`
+sentences and the twenty-two-address listing among them. So that figure and the
+one this section reports do not subtract into anything.
+
 ## What the split is, and why it is local
 
 The clause split is **local to this tool**, not in
@@ -55,39 +61,44 @@ an offset in the unit back to a source line, so the report still points at the
 line an address is *on* rather than the unit's first line, and
 `test_reported_line_is_the_address_line_not_the_unit_start` still holds.
 
-## The rule, and the two cases it declines
+## The rule, and the case it declines
 
 Polarity is a property of an **address**, not of a clause: whether a unit
 denies `0x07D0` is a fact about `0x07D0` everywhere in it. `denied_addresses()`
 walks outward from each denial cue and binds the nearest address either side,
 continuing across a connective so a coordinated subject stays one subject
-("`0x07B9`, `0x07D0` and `0x07D1` did not change once"), stopping at a comma
-and at a gap that is not a connective, and never binding an address inside
-parentheses. Quoted spans are blanked before the cue search, because
-`registers.yaml`'s `XDATA_0436_PAIR` note quotes `"0x0437 never moving"` in
-order to characterise the claim rather than to make a new one.
+("`0x07B9`, `0x07D0` and `0x07D1` did not change once"), and never binding an
+address inside parentheses. Quoted spans are blanked before the cue search,
+because `registers.yaml`'s `XDATA_0436_PAIR` note quotes `"0x0437 never
+moving"` in order to characterise the claim rather than to make a new one.
 
-Two of the seventeen denials the tree carried are **skipped**, each with its
-own `--verbose` reason, `skip (denial outside the watched window)`:
+**At a connective the first hop stops.** The gap out of the cue may not hold
+a comma or a coordinating word, where every later gap has to. That is what
+keeps the walk inside the phrase its cue is in, and it is the difference
+between the two halves of a clause that carries both polarities. In `` `0x07D4`
+did not move in C and `0x07D5` moved `` a walk that carried the denial over the
+`and` would bind `0x07D5` to it, so an address the sentence says **moved**
+would be judged by the inverted rule — and since the capture has no row for
+either address, that claim would pass silently. The connective is what a
+*continuation* runs along, not what the first step may cross.
 
-- `ec/annotations/registers.yaml`'s `XDATA_09EB` note against
-  `2026-09-23-power-mode-cycle-0700-07ff.csv`. The capture's name states
-  `-0700-07ff` and the note says so itself — "the capture watched
-  `0x0700-0x07FF` and never saw `0x09EB`". That is a statement about
-  **coverage**, not about movement, and "not covered" is a different claim
-  from "absent from what was watched". It is a skip, never a pass and never a
-  failure.
-- `docs/findings/perturb-arm-colliding-marks.md`'s `0x0751` against
-  `2026-09-24-06c2-06db-perturb-linux.csv`, which is outside `0x06C2-0x06DB`.
-  The quote it sits in is tool output inside a fence.
+One denial in the tree is **skipped**, with its own `--verbose` reason,
+`skip (denial outside the watched window)`: `ec/annotations/registers.yaml`'s
+`XDATA_09EB` note against `2026-09-23-power-mode-cycle-0700-07ff.csv`. The
+capture's name states `-0700-07ff` and the note says so itself — "the capture
+watched `0x0700-0x07FF` and never saw `0x09EB`". That is a statement about
+**coverage**, not about movement, and "not covered" is a different claim from
+"absent from what was watched". It is a skip, never a pass and never a failure.
 
 The window a denial is judged against is the capture's own name unioned with
-the ranges its unit names, because neither source is enough alone: seven of the
-ten committed captures carry `-0700-07ff` in the filename and three do not,
-and the AC-plugin sweep summary has no name to read — there the sentence's own
-`0x0000-0x07FF` is the only thing that puts `0x07B9` in scope at all. A
-capture with no window in either place is not windowed, and every address is
-checked.
+the ranges its unit names, because neither source is enough alone. Most
+committed captures carry a span in the filename and several carry none; the
+AC-plugin sweep summary is one with no name to read, and there the sentence's
+own `0x0000-0x07FF` is the only thing that puts `0x07B9` in scope at all.
+`0x09EB` sits above the power-mode capture's span, so a filename-only window
+would skip that note entirely. **A capture with no window in either place is
+not windowed at all, and every address is checked** — nothing says the capture
+did not watch the address, which is the only thing the guard exists to catch.
 
 ## The surface, before and after
 
@@ -97,17 +108,18 @@ figure is asserted non-empty rather than held to a literal, because it is a
 count over the tree and every merge moves it.
 
 - Before: 15 capture claims checked, in six files.
-- After: 64, in nine files. `docs/findings.md`,
+- After: 65, in nine files. `docs/findings.md`,
   `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` and
   `docs/hardware-tests/remain-capacity-0436.md` each yield claims for the
   first time.
 
-All twelve in-window denials the tree holds — fourteen address-level claims
-across eight units, the other two being the windowed skips above — are
-**true**. That includes the #265 correction itself, whose own note lists that
-capture's 22 distinct addresses and names no row for either `0x07D4` or
-`0x07D5`. It is why `ec/annotations/registers.yaml` is not edited: no `note:`,
-no `status:` and no correction moves, because there is nothing to correct.
+Every in-window denial the rule now reaches is **true**, which is the whole of
+what the tree held to say here: a disagreement would have been a defect in the
+prose, and there is none. That includes the #265 correction itself, whose own
+note lists that capture's 22 distinct addresses and names no row for either
+`0x07D4` or `0x07D5`. It is why `ec/annotations/registers.yaml` is not edited:
+no `note:`, no `status:` and no correction moves, because there is nothing to
+correct.
 
 ## What is still not checked
 
@@ -118,7 +130,8 @@ column, and a denial whose subject is named outside its own clause — coverage
 given up, rather than a claim missed. Each is "not found by this method", never
 "absent", and the new skip reason is worded the same way for the same reason:
 `0x09EB` is **not covered**, which is a fact about the method's reach rather
-than about the firmware.
+than about the firmware. A denial the walk does not reach across a connective
+is in the same category: a claim the rule cannot see, not one it has cleared.
 
 The `0x07B9`/`0x07D0`/`0x07D1` absence `docs/findings.md` §4g rests on is now
 held to `2026-09-18-ac-plugin-sweep-summary.csv` by a check rather than by a

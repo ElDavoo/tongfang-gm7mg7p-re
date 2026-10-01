@@ -37,8 +37,8 @@ denial about an address the capture never watched*, below.
 
   * *A denial about an address the capture never watched.* The presence rule
     with its polarity inverted is only meaningful inside a window, and the
-    window is the capture's own name (`-0700-07ff` in seven of the ten
-    committed captures) unioned with the ranges the unit itself names. An
+    window is the capture's own name (`-0700-07ff` in the power-mode and
+    profile-switch captures) unioned with the ranges the unit itself names. An
     address outside all of them is a **skip**, printed in `--verbose` as
     `denial outside the watched window` and never counted as a check:
     `registers.yaml`'s `XDATA_09EB` note says the capture watched
@@ -46,13 +46,16 @@ denial about an address the capture never watched*, below.
     statement from "absent from what was watched". A capture with no window
     in either place is not windowed at all, and every address is checked.
   * *Which clause a denial's subject is in.* `denied_addresses()` walks out
-    from each cue rather than reading every address in the clause, and stops
-    at a comma or at a gap that is not a connective. So `it has no row in
-    that file at all, in a window where 0x0743 bit 0 went set` denies what
-    the first clause is about and not the byte the second names, and the
-    twenty-two addresses `registers.yaml`'s #265 correction lists are a
-    listing rather than twenty-two denials. An address inside parentheses is
-    never bound.
+    from each cue rather than reading every address in the clause. The walk
+    starts at the nearest address either side and **stops at a connective**:
+    the gap out of the cue may not hold a comma or a coordinating word, where
+    every later gap has to. So `it has no row in that file at all, in a window
+    where 0x0743 bit 0 went set` denies what the first clause is about and not
+    the byte the second names, and "`0x07D4` did not move in C and `0x07D5`
+    moved" binds `0x07D4` alone rather than reaching the address the clause
+    attributes a movement to. The twenty-two addresses `registers.yaml`'s
+    #265 correction lists are a listing rather than twenty-two denials. An
+    address inside parentheses is never bound.
   * *A quoted cue.* `findings.md` §4g's "`0x0436` moving 4 times ... and
     `0x0437` never moving" is one sentence and both halves are read, but
     `registers.yaml`'s `XDATA_0436_PAIR` note quotes `"0x0437 never
@@ -282,10 +285,10 @@ COUNT_WINDOW = 60
 RANGE_SPAN = re.compile(
     r"0[xX]([0-9A-Fa-f]{4})\s*(?:-|–|—|to)\s*`?0[xX]([0-9A-Fa-f]{4})`?")
 
-# The window a capture's *own name* states, as `-0700-07ff`. Seven of the ten
-# committed captures carry one and the other three do not, which is why the
-# window a denial is judged against is the name's span unioned with the
-# ranges its unit names rather than either alone.
+# The window a capture's *own name* states, as `-0700-07ff`. Most committed
+# captures carry one and several do not, which is why the window a denial is
+# judged against is the name's span unioned with the ranges its unit names
+# rather than either alone.
 WINDOW_NAME = re.compile(r"-([0-9A-Fa-f]{4})-([0-9A-Fa-f]{4})(?=\.csv$)")
 
 # A unit cut into clauses, for the polarity split. The boundaries are the
@@ -315,13 +318,17 @@ QUOTED = re.compile(r"\"[^\"]*\"|“[^”]*”|‘[^’]*’")
 # change once" -- and a bare space makes them a listing instead, which is what
 # tells the #265 correction's own twenty-two addresses from the byte it is
 # about.
+#
+# This is also what a *first* hop out of a cue may not cross, which is the half
+# that used to stop at a comma alone and let a bare connective through.
+# `it has no row in that file at all, in a window where 0x0743 bit 0 went set`
+# is one sentence about two things, and "`0x07D4` did not move in C and
+# `0x07D5` moved" is one clause saying two opposite things: a subject reached
+# over `and` is the *next* clause's, so judging it by the inverted rule would
+# pass a claim the capture contradicts. The first hop has to be adjacent; it is
+# the continuations that walk a coordinated subject, and those are what the
+# connective is for.
 CONNECTOR = re.compile(r",|\b(?:and|or|nor)\b", re.IGNORECASE)
-
-# A comma between a cue and the nearest address ends the phrase the cue is
-# in. `it has no row in that file at all, in a window where 0x0743 bit 0 went
-# set` is one sentence about two things, and reading the second as the first's
-# subject would deny a byte the very sentence says went set.
-COMMA = re.compile(r",")
 
 # A registers.yaml entry, and the `addr:` key inside one. Tracked over the raw
 # lines rather than through pyyaml because pyyaml discards line numbers, and
@@ -481,6 +488,15 @@ def denied_addresses(clause: str):
     three subjects and reading only the last of them would check one address
     where the prose is about three.
 
+    **At a connective the first hop stops.** The gap out of the cue may not
+    hold one, where every later gap has to. That is what keeps the walk inside
+    the phrase the cue is in: "`0x07D4` did not move in C and `0x07D5` moved"
+    is a single clause carrying both polarities, and a walk that carried the
+    denial over the `and` would bind `0x07D5` to it -- so an address the
+    sentence says *moved* would be judged by the inverted rule, and a claim
+    the capture contradicts would pass silently. The connective is what a
+    *continuation* runs along, not what the first step may cross.
+
     An address inside parentheses is never bound. The #265 correction lists a
     capture's own twenty-two distinct addresses and then says they "omit the
     byte", and the byte is named three clauses earlier rather than in the
@@ -514,7 +530,7 @@ def denied_addresses(clause: str):
                 address, at = (min(side, key=lambda t: t[1]) if forward
                                else max(side, key=lambda t: t[1]))
                 gap = bare[min(at, edge):max(at, edge)]
-                if first and COMMA.search(gap):
+                if first and CONNECTOR.search(gap):
                     break
                 if not first and not CONNECTOR.search(gap):
                     break
@@ -527,12 +543,12 @@ def denied_addresses(clause: str):
 def capture_window(capture: str, spans):
     """[(lo, hi)] the capture watched: its own name's span, plus the unit's.
 
-    Neither source is enough alone. Seven of the ten committed captures carry
-    `-0700-07ff` in the filename and three do not, so the filename alone
-    cannot tell `0x09EB` from `0x07D4` against the power-mode capture; and the
-    AC-plugin sweep summary has no name to read, so the ranges its own
-    sentences name are the only thing that says its `0x07B9` denial was
-    watched at all.
+    Neither source is enough alone. The name alone cannot tell `0x09EB` from
+    `0x07D4` against the power-mode capture, whose name carries `-0700-07ff`
+    while the AC-plugin sweep summary has no name to read at all -- and there
+    the ranges its own sentences name are the only thing that puts its
+    `0x07B9` denial in scope. `0x09EB` sits above the power-mode capture's
+    span entirely, so a filename-only window would skip every denial in it.
     """
     m = WINDOW_NAME.search(os.path.basename(capture))
     out = list(spans)
@@ -542,7 +558,23 @@ def capture_window(capture: str, spans):
 
 
 def in_window(address: str, window) -> bool:
-    """Whether a capture watched this address, or whether nothing says."""
+    """Whether a capture watched this address, or whether nothing says.
+
+    **An empty window answers `True`**, because nothing says the capture did
+    *not* watch it. That is the reading the window guard rests on: it exists
+    to skip an address a capture demonstrably watched elsewhere --
+    `XDATA_09EB`'s "the capture watched `0x0700-0x07FF` and never saw
+    `0x09EB`" -- and not to skip everything said about a capture whose
+    filename states no window and whose unit names no range. `any()` over no
+    spans is `False`, which inverted the guard's sense and skipped every
+    denial against the six captures that carry no name window at all --
+    including the four `2026-09-24-06xx` ones, which are the captures a future
+    denial is likeliest to be written about. The `0x0751` claim in
+    `perturb-arm-colliding-marks.md` is one such denial, and it holds: that
+    capture has no `0x0751` row, which is what that file's own claim is.
+    """
+    if not window:
+        return True
     at = int(address[2:], 16)
     return any(lo <= at <= hi for lo, hi in window)
 
