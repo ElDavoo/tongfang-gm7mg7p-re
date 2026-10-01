@@ -22,7 +22,7 @@ and then answered from the committed tree.
 | issue claims | committed tree |
 |---|---|
 | tool list is `agent-gates.sh:119-124`, six tools, no `xdata_register_map.py` | `check_ghidra_tooling()`'s `for tool in` list carries twelve tools, and `ec/tools/xdata_register_map.py` is one of them |
-| `grep -c xdata_register_map` on the two gate scripts returns `0` and `0` | returns 3 in `agent-gates.sh` and 0 in `agent-gates-deep.sh`; the deep tier `exec`s the cheap one when `AGENT_GATES_DEEP=1`, so the arm runs there too |
+| `grep -c xdata_register_map` on the two gate scripts returns `0` and `0` | returns 3 in `agent-gates.sh` and 0 in `agent-gates-deep.sh`; `agent-gates.sh` `exec`s the deep tier when `AGENT_GATES_DEEP=1`, and the deep tier re-runs the cheap one with the switch off, so the arm runs in both |
 | the tool needs its own arm because `*)` passes `--work` it rejects | it has one, running `--check && --self-test`. The `*)` fallback is for `build_ec_decompile.py` and `bios_extract.py`, which the arm's own comment names |
 | neither `--check` nor `--self-test` has a caller in any workflow | `ci.yml` runs `agent-gates.sh`, which runs both; the arm's comment records that #256 wired `--check` and #815 wired `--self-test` |
 | the seven assertions sit between `:1720` and `:1940` | they are present in `self_test()` by name. The issue's line numbers belong to a version of the file that no longer exists — it has moved since, and editing to them would be editing to a phantom |
@@ -170,17 +170,27 @@ it.
 1
 ```
 
-## What is not done here, and what a human would do
+## What is wired here, and what a human would do
 
-**This checker is not wired into `agent-gates.sh`,** and the reason is the
-pipeline file-copy rule rather than an oversight: the gate script is copied from
-`ElDavoo/agent-pipeline`, so a gate call is upstream's change and a re-copy, not
-a line here. `tools/README.md` carries that note on every ungated row, and
-`bash tools/run-tests.sh`'s own closing note says the same thing about itself.
+**This checker is wired into `agent-gates.sh`,** as a direct call at the top of
+`check_ghidra_tooling()`. Not as a `for tool in` entry with a `case` arm, which
+is the shape every tool below it has, because that shape is not available here:
+every position in that list and every line of the `gate` list is another
+prepared patch's context in `docs/ci/`, and an insertion into any of them stops
+that patch applying — which `tools/test_agent_gates_patches.py` holds, so the
+insertion would be a red run rather than a wiring. The two calls already
+sitting outside the loop are outside it for this reason and say so in their own
+comments. The placement is the one the prepared-patch set leaves free.
 
-**The gate script is read, never written.** Nothing in this branch needed an
-edit to it — the arm is already correct — so the file several open PRs collide
-on is untouched.
+**`tools/README.md` is not a guide to which suites are gated.** Its suite
+table's ungated rows are the large majority; a handful name the reason
+individually, and a reader who takes the table as the convention will conclude
+the opposite of what it says. `bash tools/run-tests.sh`'s own closing note is
+the honest statement of what runs it.
+
+**The gate script is edited** — one call and the comment above it. It is the
+file several open PRs collide on, which is the reason the placement was
+measured against `docs/ci/` rather than chosen.
 
 **The same check is worth propagating to `ElDavoo/agent-pipeline`**, because a
 template re-copy of `agent-gates.sh` is what would drop an arm in the first
@@ -195,5 +205,7 @@ is a different subject from this issue's.
 
 The write-up for the census tool's gate arm, and the decision recorded there
 about `.github/scripts/` being pushable while only `.github/workflows/` and
-`.github/actions/` are not, is `xdata-census-self-test-gate.md`. The point is
-moot here: nothing needed editing.
+`.github/actions/` are not, is `xdata-census-self-test-gate.md`. That decision is
+what let this branch edit the gate script at all; the reason the edit is a
+direct call rather than a list entry is the prepared-patch composition above,
+which is a different constraint and neither confirms nor refutes the other.
