@@ -39,10 +39,10 @@ already-annotated bank0 routine `0xCFC6`,
 windows, and `0xCFEE` is the only row whose window contains an `orl a,#0x80`.
 
 The other 34 split cleanly by bit, and the committed table's `window` column
-is what the split is read from. 23 of them touch **only bit 0** — `anl a,#0x01`
-and `jb`/`jnb acc.0`, `AP_OEM`'s documented meaning. The remaining 11 set or
-clear bits 2, 4, 5, 6 or 7. **Not one of them touches bit 7 except the three
-in §5** — one setter and two clears.
+is what the split is read from: the majority test or clear **only bit 0** —
+`anl a,#0x01` and `jb`/`jnb acc.0`, `AP_OEM`'s documented meaning — while the
+rest work on bits 2, 4 and 5. Of the 34, **only the two clears in §5 touch
+bit 7.**
 
 ## 2. The condition, and what `0xD078` reads
 
@@ -277,9 +277,9 @@ $ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0xD078 -n 12
 $ python3 ec/tools/find_indirect_xdata.py ec/firmware/GMxMGxx_11.800 --page 0x0B
 ```
 
-The second command wrote the committed table; the first is the count that
-brief's own header carries, and the last exits non-zero because nothing
-resolvable reaches the page — which is the §7 result, not an error.
+The second command wrote the committed table; the first is the site count,
+and the last exits non-zero because nothing resolvable reaches the page —
+which is the §7 result, not an error.
 `ec/tools/test_0741_bit7_chain.py` re-runs the second against the committed CSV
 and holds the byte facts above against the image, so a stale pair fails rather
 than agreeing with itself.
