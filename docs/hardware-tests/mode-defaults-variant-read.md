@@ -43,8 +43,8 @@ question needs an answer rather than an inference.
 present, not which arm put it there. Two things stop that being a verdict:
 `0xD9FE` rewrites the pair on every seeding pass, so the byte is a record of
 the last pass rather than a property of the board; and **these two bytes have
-writers outside `0x94D0`** — `trace_xdata_refs.py` finds writes at `0x8731`
-and `0x966D` for `0x0A51`, and at `0xE3A5` and `0xE453` for `0x0A52`, all in
+writers outside `0x94D0`** — `trace_xdata_refs.py` finds writes at `0x873A`
+and `0xE7EA` for `0x0A51`, and at `0xE3A5` and `0xE453` for `0x0A52`, all in
 bank0. So a pair that disagrees with `0x07D3` is not a contradiction; it is
 this read's first question of the seeder.
 
@@ -97,11 +97,11 @@ Control Center 3.1.39.0. `windows/tools/ecrw.py`'s docstring has the setup.
 
 Record the three samples verbatim before interpreting any of them. Then:
 
-1. **`0x0770`** decides Q1. It has three direct read sites in the image and no
-   writer this repository can find, so it is a *configuration* byte in
-   practice — if it reads `0x04` at boot on this machine, the fixed arm runs
-   on every seeding pass, and `registers.yaml`'s live `0x3C` needs explaining
-   rather than the §3/Q1 table's first row being assumed.
+1. **`0x0770`** decides Q1. `ec/annotations/xdata-registers.csv` records readers
+   for it and no writer by either committed method, so it is a *configuration*
+   byte in practice — if it reads `0x04` at boot on this machine, the fixed arm
+   runs on every seeding pass, and `registers.yaml`'s live `0x3C` needs
+   explaining rather than the §3/Q1 table's first row being assumed.
 2. **`0x0A51`/`0x0A52`** decides Q2, against the three pairs in the finding.
    Report the pair, not "the arm" — the finding already establishes the three
    arms agree on the output.

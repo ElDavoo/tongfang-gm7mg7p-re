@@ -111,7 +111,7 @@ It is not. `0xE2` is the **bit address of ACC.2**; the P2 latch's bits are
 - `ec/tools/disasm8051.py` prints the same, from its own `BIT_SFR` table;
 - **Ghidra's decompile of this very routine** reads the branch as
   `if ((BIOS_OEM_2 >> 2 & 1) == 0)`, and `BIOS_OEM_2` is `registers.yaml`'s
-  name for `0x0782` (`ec/decompiled/bank0/94D0.c:64`).
+  name for `0x0782` (the decompiled `ec/decompiled/bank0/94D0.c`).
 
 `mov dptr,#0xa51` at `0x9579` does not touch the accumulator, so at `0x957C`
 `A` still holds the `0x0782` byte `0x9578` read. The branch is **bit 2 of
@@ -154,9 +154,10 @@ So the chain is:
 ```
 
 `0x0A51`/`0x0A52` are **not written only here** — `trace_xdata_refs.py` finds
-bank0 writes at `0x8731` and `0x966D` for the high byte and at `0xE3A5` and
-`0xE453` for the low one. So the chain above is what `0x94D0` does with the
-pair, not a claim that the pair's value always reflects it. That is why §8's
+bank0 writes at `0x873A` and `0xE7EA` for the high byte and at `0xE3A5` and
+`0xE453` for the low one, none of them inside `0x94D0`. So the chain above is
+what `0x94D0` does with the pair, not a claim that the pair's value always
+reflects it. That is why §8's
 read treats a pair disagreeing with `0x07D3` as a question rather than a
 contradiction, and why none of this file reads the live bytes.
 
@@ -285,8 +286,8 @@ not from `disasm8051.py` alone. Recording it here because the same decoder
 will be pointed at `0xC7xx` again.
 
 **Both copies are entered the same way**, which is what makes them one
-duplication rather than two coincidences. `bank-call-targets.csv:2687`
-buckets `0xAB9A lcall 0xAB9E` as an `entry`, and
+duplication rather than two coincidences. `bank-call-targets.csv`'s
+`0xAB9A lcall 0xAB9E` row buckets as an `entry`, and
 `task-call-table.csv` has thirteen `far-call-stub` rows reaching into the
 `0xC7xx` run — `0x16C0 → 0xC761`, `0x16EA → 0xC711`, `0x1708 → 0xC717` and ten
 more, indices 232–244. Nothing in the image `lcall`s or `ljmp`s to `0xC761`
@@ -484,5 +485,7 @@ the duplicated mode routines
 - **The `0x0A54` store at `0xC711`**, which the `0xABxx` copy has no
   counterpart for, and the eleven other `0xC7xx` routines the stub table
   reaches.
-- **Whether `0x0770` has a writer this tree can find.** It has three direct
-  read sites and no `registers.yaml` entry.
+- **Whether `0x0770` has a writer this tree can find.** Its
+  `xdata-registers.csv` row records readers and no writer, so that is "not
+  found by either committed method", not "absent" — and it has no
+  `registers.yaml` entry.
