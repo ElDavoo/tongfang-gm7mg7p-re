@@ -35,7 +35,7 @@ spellings gives **153**. The document is 902 lines at this commit.
 
 **The exact figure is not the claim and nothing here rests on it** — both the
 document and the counting pattern move the number. The claim is that every way
-of counting gives something two orders of magnitude wider than three.
+of counting gives something tens of times wider than three.
 
 ## What it is now
 
@@ -56,10 +56,10 @@ names the allowance either way.
 
 The alternative — scope the search to the sections that name the three (§3, §4,
 §4.1) — does not reach the same bar. Measured the same way, that scoping still
-admits **83 distinct values, 80 of which are not the three**, including
-`0x0743` (`CTGP_DB_CTRL`), `0x07D4`, `0x07D5` and `0x09E9`. A register address
-and a source byte are not sites, and §4's own heading names two of the four
-census registers.
+admits a long list of addresses that are not the three, among them `0x0743`
+(`CTGP_DB_CTRL`), `0x07D4`, `0x07D5` and `0x09E9`. A register address and a
+source byte are not sites, and §4's own heading names three of the four census
+registers.
 
 Enumeration is also the reading that survives an edit to the document: a scoped
 regex widens silently every time somebody writes a new section, and there is no
@@ -91,12 +91,13 @@ reverted, which is the failure this would otherwise have shipped.
 Adding the allowance block and the two perturbations put 152 lines above every
 pin the line-pin census holds into `windows/tools/test_gpu_block_watch.py`, so
 two rows there were re-registered against the same target lines at their new
-numbers. `0751-mark-provenance-column.md` §3 carries the citing prose for both,
-and its table row in `test-line-pin-census.md` carries the record, so the two
-move together; the cited lines are byte-identical to the ones they replace and
-the verdicts are the readings recorded against the old numbers. Recorded here
-because the write-up is where the shape of the edit is stated, not only in the
-two files' own re-registration notes.
+numbers. `0751-mark-provenance-column.md` carries the citing prose for both in
+the table under "The census had a blind side, and widening this row found the
+other three", and its table row in `test-line-pin-census.md` carries the record,
+so the two move together; the cited lines are byte-identical to the ones they
+replace and the verdicts are the readings recorded against the old numbers.
+Recorded here because the write-up is where the shape of the edit is stated, not
+only in the two files' own re-registration notes.
 
 ## Follow-up this opens
 
