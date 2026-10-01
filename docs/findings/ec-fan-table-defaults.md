@@ -10,7 +10,7 @@ reproducible with the commands in §7.)
 with open is now done, and the answer is that the EC's tables are not the
 vendor's.** They are the same *shape* — which is what
 `ec/annotations/manual-fan-ctrl-0751.md` §6 could already say from the bytes
-— and a different curve: the EC's `UpT` rows are a uniform 3–4 °C ladder
+— and a different curve: the EC's CPU `UpT` rows are a uniform 3–4 °C ladder
 where the service's are hand-set per level, and the top duty differs in every
 mode. A Linux driver that reads the EC's tables over the mailbox gets a real
 curve, and a quieter one than Windows applies in two modes out of three.
@@ -226,13 +226,16 @@ leaving it to the eye. Taking the distinct consecutive differences of a row:
 | `UpT`, Gaming CPU | `{3, 4}` | `{2, 4, 5, 8}` |
 | `Duty`, Gaming CPU | `{0, 5, 10, 15, 30}` | `{0, 2, 3, 5, 10, 15, 30}` |
 
-**The EC's `UpT` rows are a uniform 3–4 °C ladder on all six tables**; the
-service's are hand-set, with an 8 °C jump at level 8 of the Gaming CPU
-ramp. **The EC's `Duty` rows step by 5 %**; the service's step by 2, 3, 5,
-10, 15 and 30. The EC's `DownT` rows are the same ladder with one wider first
-jump — 48 → 50 → 61 on the CPU tables, 48 → 48 → 57 on the GPU ones — so
-"a uniform ladder" is a claim about `UpT` and about the steady state of
-`Duty`, and not about all three rows.
+**The three CPU `UpT` rows are a uniform 3–4 °C ladder**; the GPU rows
+repeat or nudge a level instead — `{0, 3, 4}` on Gaming and Turbo, `{1, 3, 4}`
+on Office. The service's `UpT` rows are hand-set, with an 8 °C jump at level 8
+of the Gaming CPU ramp. **The EC's `Duty` rows step in multiples of 5 %** —
+`{0, 5, 10, 15, 30}` on Gaming and Turbo, `{0, 5, 10, 30}` on Office — where
+the service's step by 2 and 3 as well. The EC's `DownT` rows are not claimed
+here beyond their first three entries, which are the Gaming/Turbo pair's,
+48 → 50 → 61 on CPU and 48 → 48 → 57 on GPU, with Office's at 48 → 50 → 63
+and 48 → 55 → 59. So "a uniform ladder" is a claim about `UpT` and about the
+steady state of `Duty`, and not about all three rows.
 
 The consequence for a driver is the one the issue was opened for. Reading
 the EC's own curve over the mailbox is clean and needs no shipped table, and
@@ -302,10 +305,9 @@ last paragraph of that section.
   treats a match as an acknowledgement is relying on that. The hazard is
   quantified in `docs/hardware-tests/fan-table-defaults-0f5d.md`.
 - **No `0x0F00` entry in `registers.yaml`, deliberately.**
-  `ec/tools/check_power_profile.py` names `0x0F00` as the one address
-  permitted to sit outside the file ("Only the fan table is allowed to be
-  outside the file") and `linux/patches/gm7mg7p-power-profile/profile-map.csv`
-  relies on that empty cell while citing this mechanism, so adding one flips
-  that gate's rule 1 from "empty is right" to a failure. Doing it properly is
-  its own issue against the open power-profile PR, and the byte-identity
-  result is the thing to say in it.
+  `check_power_profile.py` names `0x0F00` as the one address permitted to sit
+  outside the file ("Only the fan table is allowed to be outside the file") and
+  `linux/patches/gm7mg7p-power-profile/profile-map.csv` relies on that empty
+  cell while citing this mechanism, so adding one flips that gate's rule 1 from
+  "empty is right" to a failure. Doing it properly is its own issue against the
+  open power-profile PR, and the byte-identity result is the thing to say in it.

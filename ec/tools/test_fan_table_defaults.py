@@ -227,14 +227,37 @@ class TheComparison(unittest.TestCase):
         self.assertEqual(got[0], [0, 30, 30, 35, 45, 45, 50, 50, 50])
         self.assertEqual(got[1], [0, 30, 30, 35, 45, 48, 50, 55, 55])
 
-    def test_the_ec_up_t_ramp_is_a_uniform_ladder_and_the_services_is_not(self):
-        # The claim, measured on both sides rather than read off two rows of
-        # numbers. `UpT` is the row that carries it; `Duty` steps by five on
-        # the EC's and by 2/3/5/10/15 on the service's.
-        gaming = self.cmp[("gaming", "-")]["CPU"]
-        self.assertEqual(ftd.steps("UpT", gaming["UpT"][0]), "{3, 4}")
-        self.assertEqual(ftd.steps("UpT", gaming["UpT"][1]), "{2, 4, 5, 8}")
-        self.assertEqual(ftd.steps("Duty", gaming["Duty"][0]), "{0, 5, 10, 15, 30}")
+    def test_the_ec_up_t_ladder_is_uniform_on_cpu_and_not_on_gpu(self):
+        # `UpT` is the row the shape claim is about, and "a uniform ladder"
+        # is true of the three CPU rows and of neither GPU row -- they repeat
+        # or nudge a level. Held per row on purpose: a suite that checks the
+        # one row where the claim happens to hold will not catch a write-up
+        # widening it to all six tables.
+        gaming, office = self.cmp[("gaming", "-")], self.cmp[("office", "0")]
+        self.assertEqual(ftd.steps("UpT", gaming["CPU"]["UpT"][0]), "{3, 4}")
+        self.assertEqual(ftd.steps("UpT", office["CPU"]["UpT"][0]), "{3, 4}")
+        self.assertEqual(ftd.steps("UpT", gaming["GPU"]["UpT"][0]),
+                         "{0, 3, 4}")
+        self.assertEqual(ftd.steps("UpT", office["GPU"]["UpT"][0]),
+                         "{1, 3, 4}")
+        # The service's is hand-set, the 8 °C jump at level 8 being what
+        # the write-up names.
+        self.assertEqual(ftd.steps("UpT", gaming["CPU"]["UpT"][1]),
+                         "{2, 4, 5, 8}")
+
+    def test_the_ec_duty_rows_step_in_multiples_of_five(self):
+        # Not the same set everywhere -- Office's widest jump is 20 %, where
+        # Gaming's and Turbo's are 15 % -- so "steps by 5" is a statement
+        # about the multiples, not about one step set.
+        gaming, office = self.cmp[("gaming", "-")], self.cmp[("office", "0")]
+        self.assertEqual(ftd.steps("Duty", gaming["CPU"]["Duty"][0]),
+                         "{0, 5, 10, 15, 30}")
+        self.assertEqual(ftd.steps("Duty", office["CPU"]["Duty"][0]),
+                         "{0, 5, 10, 30}")
+        # And the service's does step by 2 and 3 as well, which is the half
+        # of the comparison that is not about the EC's own tables.
+        self.assertEqual(ftd.steps("Duty", gaming["CPU"]["Duty"][1]),
+                         "{0, 2, 3, 5, 10, 15, 30}")
 
     def test_gaming_and_turbo_really_do_decode_to_one_table(self):
         # The comparison reports each mode separately against a *different*
