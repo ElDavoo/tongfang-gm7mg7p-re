@@ -66,10 +66,10 @@ $ grep -rn "refused_capture_rows" --include=*.py .
 ./ec/tools/grade_0751_isolation.py:1106:    `read_capture`, `existing_mark_labels` and `refused_capture_rows` -- the
 ./ec/tools/grade_0751_isolation.py:1119:    `refused_capture_rows` -- and merging them would delete the preflight
 ./ec/tools/grade_0751_isolation.py:1242:def refused_capture_rows(path):
-./ec/tools/test_grade_0751_isolation.py:4063:            accepted, refused = grade.refused_capture_rows(path)
-./ec/tools/test_grade_0751_isolation.py:4122:            accepted, refused = grade.refused_capture_rows(path)
-./ec/tools/test_grade_0751_isolation.py:4243:        # `refused_capture_rows` directly, and checks the reason on the row
-./ec/tools/test_grade_0751_isolation.py:4253:            accepted, refused = grade.refused_capture_rows(path)
+./ec/tools/test_grade_0751_isolation.py:4220:            accepted, refused = grade.refused_capture_rows(path)
+./ec/tools/test_grade_0751_isolation.py:4279:            accepted, refused = grade.refused_capture_rows(path)
+./ec/tools/test_grade_0751_isolation.py:4400:        # `refused_capture_rows` directly, and checks the reason on the row
+./ec/tools/test_grade_0751_isolation.py:4410:            accepted, refused = grade.refused_capture_rows(path)
 ```
 
 The definition, three comments that name it as one of the readers — which the
@@ -86,12 +86,12 @@ and one with a hypothetical caller in its docstring. The three cases:
 | `test_a_change_row_bad_in_two_hex_fields_names_the_earlier_one` | partitions **directly**, and its own comment says why |
 
 Those three cases are the three call lines the transcript above prints:
-`ec/tools/test_grade_0751_isolation.py:4063`,
-`ec/tools/test_grade_0751_isolation.py:4122` and
-`ec/tools/test_grade_0751_isolation.py:4253`, in the order the table gives
+`ec/tools/test_grade_0751_isolation.py:4220`,
+`ec/tools/test_grade_0751_isolation.py:4279` and
+`ec/tools/test_grade_0751_isolation.py:4410`, in the order the table gives
 them. The comment that credits the last with reaching the function *directly*
 rather than through the wrapper is the fourth of that transcript's lines,
-`ec/tools/test_grade_0751_isolation.py:4243`, and it is the only one of the
+`ec/tools/test_grade_0751_isolation.py:4400`, and it is the only one of the
 four that is prose in the suite rather than a call. That last one is the
 load-bearing case and the reason the function earns its place. `existing_mark_findings` pastes `read_capture`'s own exception over the
 *first* reason, so no fixture whose only bad row is the first one can show
@@ -107,18 +107,18 @@ it is an API or a test fixture. Every executable reference to it is:
 $ grep -rn "\.existing_mark_labels" --include=*.py .
 ./windows/tools/test_ec_watch.py:1205:                             grader.existing_mark_labels(str(out)))
 ./windows/tools/ec_watch.py:282:                     grader.existing_mark_labels,
-./ec/tools/test_grade_0751_isolation.py:3827:            self.assertEqual(grade.existing_mark_labels(path),
-./ec/tools/test_grade_0751_isolation.py:3847:            self.assertEqual(grade.existing_mark_labels(path),
-./ec/tools/test_grade_0751_isolation.py:3878:            marks = grade.existing_mark_labels(str(path))
-./ec/tools/test_grade_0751_isolation.py:3907:            self.assertEqual(len(grade.existing_mark_labels(path)), 7)
-./ec/tools/test_grade_0751_isolation.py:4062:            labels = grade.existing_mark_labels(path)
-./ec/tools/test_grade_0751_isolation.py:4123:            labels = grade.existing_mark_labels(path)
-./ec/tools/test_grade_0751_isolation.py:4185:            lenient = grade.existing_mark_labels(str(path))
-./ec/tools/test_grade_0751_isolation.py:4376:                    self.assertIsInstance(grade.existing_mark_labels(path), list)
-./ec/tools/test_grade_0751_isolation.py:4384:            self.assertEqual(len(grade.existing_mark_labels(str(path))), 1)
-./ec/tools/test_grade_0751_isolation.py:4493:            lenient = grade.existing_mark_labels(path)
-./ec/tools/test_grade_0751_isolation.py:4683:                    self.assertEqual(grade.existing_mark_labels(path), [])
-./ec/tools/test_grade_0751_isolation.py:4858:                                 grade.existing_mark_labels(str(path)))
+./ec/tools/test_grade_0751_isolation.py:3984:            self.assertEqual(grade.existing_mark_labels(path),
+./ec/tools/test_grade_0751_isolation.py:4004:            self.assertEqual(grade.existing_mark_labels(path),
+./ec/tools/test_grade_0751_isolation.py:4035:            marks = grade.existing_mark_labels(str(path))
+./ec/tools/test_grade_0751_isolation.py:4064:            self.assertEqual(len(grade.existing_mark_labels(path)), 7)
+./ec/tools/test_grade_0751_isolation.py:4219:            labels = grade.existing_mark_labels(path)
+./ec/tools/test_grade_0751_isolation.py:4280:            labels = grade.existing_mark_labels(path)
+./ec/tools/test_grade_0751_isolation.py:4342:            lenient = grade.existing_mark_labels(str(path))
+./ec/tools/test_grade_0751_isolation.py:4533:                    self.assertIsInstance(grade.existing_mark_labels(path), list)
+./ec/tools/test_grade_0751_isolation.py:4541:            self.assertEqual(len(grade.existing_mark_labels(str(path))), 1)
+./ec/tools/test_grade_0751_isolation.py:4650:            lenient = grade.existing_mark_labels(path)
+./ec/tools/test_grade_0751_isolation.py:4840:                    self.assertEqual(grade.existing_mark_labels(path), [])
+./ec/tools/test_grade_0751_isolation.py:5015:                                 grade.existing_mark_labels(str(path)))
 ./ec/tools/measure_mark_provenance.py:468:            ("existing_mark_labels", GRADER, grader.existing_mark_labels,
 ./ec/tools/measure_mark_provenance.py:843:        if pairs != grader.existing_mark_labels(path):
 ./ec/tools/measure_mark_provenance.py:846:                            f"{grader.existing_mark_labels(path)}")
@@ -128,18 +128,18 @@ $ grep -rn "\.existing_mark_labels" --include=*.py .
 ```
 
 Twelve of those are the grader's own suite, which is not what the question is
-about — `ec/tools/test_grade_0751_isolation.py:3827`,
-`ec/tools/test_grade_0751_isolation.py:3847`,
-`ec/tools/test_grade_0751_isolation.py:3878`,
-`ec/tools/test_grade_0751_isolation.py:3907`,
-`ec/tools/test_grade_0751_isolation.py:4062`,
-`ec/tools/test_grade_0751_isolation.py:4123`,
-`ec/tools/test_grade_0751_isolation.py:4185`,
-`ec/tools/test_grade_0751_isolation.py:4376`,
-`ec/tools/test_grade_0751_isolation.py:4384`,
-`ec/tools/test_grade_0751_isolation.py:4493`,
-`ec/tools/test_grade_0751_isolation.py:4683` and
-`ec/tools/test_grade_0751_isolation.py:4858`. The other **eight** are three
+about — `ec/tools/test_grade_0751_isolation.py:3984`,
+`ec/tools/test_grade_0751_isolation.py:4004`,
+`ec/tools/test_grade_0751_isolation.py:4035`,
+`ec/tools/test_grade_0751_isolation.py:4064`,
+`ec/tools/test_grade_0751_isolation.py:4219`,
+`ec/tools/test_grade_0751_isolation.py:4280`,
+`ec/tools/test_grade_0751_isolation.py:4342`,
+`ec/tools/test_grade_0751_isolation.py:4533`,
+`ec/tools/test_grade_0751_isolation.py:4541`,
+`ec/tools/test_grade_0751_isolation.py:4650`,
+`ec/tools/test_grade_0751_isolation.py:4840` and
+`ec/tools/test_grade_0751_isolation.py:5015`. The other **eight** are three
 files that do not belong to it, and they are why the answer is API rather than
 fixture:
 

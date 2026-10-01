@@ -707,23 +707,24 @@ class TheCommittedTree(unittest.TestCase):
         # `def test_a_capture_given_twice_is_refused` header, so the column the
         # paragraphs above kept at zero is the one that takes the one. The
         # other four are the control.
-        # And +1 for #492, on the same column and for a different reason. The
-        # 33 rows this change re-anchors are a uniform `+146` -- both hunks it
-        # adds to `test_grade_0751_isolation.py` sit above every pin they move
-        # -- so each lands on a line of the same text and the same shape, and
-        # the five columns beside this one holding still is the control for
-        # that. The row that moves is `0751-capture-row-shape.md:41`, and it
-        # moves because its pin was stale before this change: `main` recorded
-        # `:3789` where the header sat at `:3805`. Correcting it to `:3951` is
-        # `+162` -- `146` this change and `16` of pre-existing drift -- and the
-        # line it lands on is `def test_the_refusal_reasons_are_read_captures_own`,
-        # a header, where `:3789` was a statement inside the test. So it is
-        # `other` -> `def test_`: `1 -> 2` and `46 -> 45`, with `assertion`,
-        # `comment`, `blank` and the declined `-` unmoved, which is the control
-        # that this is a row changing column and not one added or dropped.
-        self.assertEqual(shape, {census.DEF_TEST: 2, census.ASSERTION: 24,
+        # And #492's 33 re-anchorings move no column: a uniform shift of every
+        # pin they touch, so each lands on a line of the same text and the same
+        # shape, and the five columns holding still is the control for that.
+        # **The one row that did move a column, `0751-capture-row-shape.md`:41,
+        # is back where it started, and both sides of this merge are why**, for
+        # the reason `test_census_test_line_pins.py`'s own copy of this pin
+        # gives: its pin is commit-qualified, so `:3608` is the line in that
+        # revision and no merge can stale it. `main` re-anchored it to `:3951`
+        # and read that as `def test_` (`1 -> 2`); the branch re-anchored it to
+        # `:3748`. `:3608` is restored, and the merged tree's own `:3608` is
+        # code, so `comment` gives `24 -> 23` and `other` takes `45 -> 46` --
+        # a third value, because each side measured a different line. With
+        # `def test_`, `assertion`, `blank` and the declined `"-": 33` unmoved,
+        # that is the control that this is a row changing column, not one added
+        # or dropped.
+        self.assertEqual(shape, {census.DEF_TEST: 1, census.ASSERTION: 24,
                                  census.COMMENT: 23, census.BLANK: 5,
-                                 census.OTHER: 45, "-": 33})
+                                 census.OTHER: 46, "-": 33})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing

@@ -19,6 +19,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-grader-movement-path-claims.md`](0751-grader-movement-path-claims.md) — A run that moved said "that is the 7 window(s) that were graded" under a count saying one of the 7 is a window of nothing (issue #551)
 - [`0751-grader-partial-grade-claims.md`](0751-grader-partial-grade-claims.md) — A partly-graded run said "consistent with the static prediction" anyway (issue #477)
 - [`0751-grader-self-test-gate.md`](0751-grader-self-test-gate.md) — The 0x0751 grader had 74 tests on main, no entry point, and no gate (issue #532)
+- [`0751-grader-unplaced-window-block-scope.md`](0751-grader-unplaced-window-block-scope.md) — The refusal on a stray in no block was scoped by accident, and "census-only is enough" said nothing about what the run did with the window (issue #539)
 - [`0751-grader-unplaced-window-checks.md`](0751-grader-unplaced-window-checks.md) — A stray `restore` the consoles spelled two ways, or that one console missed, was graded in full (issue #529)
 - [`0751-grader-unplaced-window-scope.md`](0751-grader-unplaced-window-scope.md) — The sentence §7's verdict is read from did not say which windows are a window of a value under test (issue #530)
 - [`0751-grader-withheld-count-denominators.md`](0751-grader-withheld-count-denominators.md) — The withheld banner counted one way over windows numbered another (issue #500)

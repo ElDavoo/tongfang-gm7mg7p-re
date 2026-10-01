@@ -2610,7 +2610,8 @@ def span_note(w):
         width=72, initial_indent="    ", subsequent_indent="    ")
 
 
-def report_census(captures, windows, blocks, unplaced, unreads, selected):
+def report_census(captures, windows, blocks, unplaced, unreads, unagreed,
+                  selected):
     """What the marks say, before anything is read over them.
 
     Two listings, because they answer two questions. Per capture: the labels
@@ -2632,6 +2633,15 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
     said so is the point: the blocks it did not grade are named here as not
     selected, so a reader can see that the scoping is there and not that the
     other blocks are missing.
+
+    A window in no block carries its outcome here too, for the same reason and
+    a step further: under `--block` the window section prints the selected
+    block's own windows, so this is the only section that can say what the run
+    did with a stray the scope kept out of it. It names the refusal and the
+    kinds behind it rather than the defect, because it is the refusal the run
+    made and not a finding the marks make on their own -- and because the
+    clause is a property of the marks, it prints the same either way `--block`
+    scoped the run or not.
 
     Nothing here is a result. It is a statement about which labels the
     captures hold, and the windows below are only as good as it is.
@@ -2722,13 +2732,43 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
             line += f" -- NOT GRADED, {len(b.problems)} problem(s): {kinds}"
         print(line)
     if unplaced:
+        # The kinds are named from `window_mark_problems`, the function
+        # `unplaced_window_problems` called, so they cannot name a kind the
+        # refusal did not carry -- and what makes the two agree is the key
+        # rather than the shared `names`, `known` being compared against
+        # `capture_key`, so it is built the way `unplaced_window_problems`
+        # and `check_block_marks` build it, for the reason the latter gives.
+        # `unagreed` is `main`'s decision to refuse the window, only reported.
+        known = {capture_key(p) for p in names}
         for w in unplaced:
             role, _ = parse_mark(w.label)
             if role is not None:
-                print(f"  unplaced: {w.ts.isoformat(sep=' ')}  {w.label!r} -- "
-                      "in no block, so the void check cannot reach it -- there "
-                      "is no block whose last mark in a capture it could be "
-                      "-- and `--block` cannot select it either")
+                line = (f"  unplaced: {w.ts.isoformat(sep=' ')}  {w.label!r} "
+                        "-- in no block, so the void check cannot reach it -- "
+                        "there is no block whose last mark in a capture it "
+                        "could be -- and `--block` cannot select it either")
+                # What this run did with the window, which under `--block` the
+                # window section cannot say: only the selected block's windows
+                # print there, so a scoped attachment would otherwise carry the
+                # whole diagnosis and no outcome for it, and a reader holding
+                # the two attachments side by side would see `NOT GRADED` in
+                # one and not the other over a byte-identical census. It says
+                # NOT GRADED and not that the mark was wrong -- the refusal is
+                # what the captures disagree about, in a block's own words.
+                #
+                # A property of the marks, so it prints scoped and unscoped
+                # alike, and it never names a window in `unreads`: that guard
+                # is `parse_mark` returning no role, which is the predicate
+                # `unplaceable_marks` keys on, so the two are complementary
+                # over `unplaced` and the clause cannot reach a window whose
+                # unreadable label `main`'s earlier branch refused instead.
+                if w in unagreed:
+                    kinds = ", ".join(sorted(
+                        {k for k, _, _
+                         in window_mark_problems(w, names, known)}))
+                    line += (f" -- NOT GRADED, {len(unagreed[w])} problem(s): "
+                             f"{kinds}")
+                print(line)
 
 
 def report_early_exits(exits, placed, refused, windows, blocks):
@@ -3827,7 +3867,8 @@ def main(argv=None):
             return 1
         selected = next((b for b in blocks if b.value == wanted), None)
 
-    report_census(captures, windows, blocks, unplaced, unreads, selected)
+    report_census(captures, windows, blocks, unplaced, unreads, unagreed,
+                  selected)
     if exits:
         # Whole, and not scoped to the selected block, the way the census is:
         # §6 runs one `--block` per value, and an attachment for a good value
