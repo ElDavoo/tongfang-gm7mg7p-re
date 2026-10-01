@@ -382,6 +382,39 @@ class ChecksDenials(unittest.TestCase):
         text = (f'`0x07D4` did not move in {POWER_CYCLE} and `0x07C4` moved.\n')
         self.assertEqual(drifted(text, CYCLE_INDEX), (0, None))
 
+    def test_a_movement_before_a_bare_comma_is_not_bound_by_the_denial(self):
+        # The mirror of the two above, and the direction nothing caught: the
+        # movement comes first, so the gap out of the cue is a backtick and
+        # the *continuation* is what would cross into the clause before it.
+        # "`0x07D5` moved, `0x07D4` never moved" has both polarities in one
+        # clause and `0x07D5` is the subject of the first, so a walk that
+        # carried the denial backwards over the comma would judge it by the
+        # inverted rule -- and it has no row in that capture either, so the
+        # attribution is what has to catch it, as it does on the sentence.
+        text = (f'`0x07D5` moved, `0x07D4` never moved in {POWER_CYCLE}.\n')
+        n, addr = drifted(text, CYCLE_INDEX)
+        self.assertEqual((n, addr), (1, '0x07D5'),
+                         "the attribution, not the true denial beside it")
+
+    def test_a_true_movement_before_a_bare_comma_is_not_reported(self):
+        # The true-prose twin, and the false positive the backward walk used
+        # to produce: `0x07C4` has two rows in that file and the sentence says
+        # it moved, so binding it to the denial reports a sentence that agrees
+        # with the capture as one it contradicts.
+        text = (f'`0x07C4` moved, `0x07D4` never moved in {POWER_CYCLE}.\n')
+        self.assertEqual(drifted(text, CYCLE_INDEX), (0, None))
+
+    def test_the_em_dash_form_was_never_in_the_denial_walk(self):
+        # The negative half of the case above, and the reason it is worth
+        # keeping: `CLAUSE` splits an em or en dash, so this shape has always
+        # put the movement in a clause of its own and the gap the continuation
+        # would have crossed is not one the walk sees. It holds for a boundary
+        # the splitter makes rather than for a rule in the walk, which is
+        # exactly the difference the bare comma above does not get.
+        text = (f'`0x07D5` moved — `0x07D4` never moved in {POWER_CYCLE}.\n')
+        n, addr = drifted(text, CYCLE_INDEX)
+        self.assertEqual((n, addr), (1, '0x07D5'))
+
     def test_a_coordinated_subject_still_binds_across_its_connective(self):
         # Sharpness for the two above: the connective has to stop the *first*
         # hop, not the walk. "`0x07B9`, `0x07D0` and `0x07D1` did not change

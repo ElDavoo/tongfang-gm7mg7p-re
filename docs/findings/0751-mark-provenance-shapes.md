@@ -732,7 +732,7 @@ written against:
 | `ec/tools/grade_0751_isolation.py:521` | `:428` |
 | `ec/tools/grade_0751_isolation.py:3784` | `:3065` |
 | `ec/tools/grade_gpu_door.py:520` | `:479` |
-| `ec/tools/check_capture_claims.py:863` | `:576` |
+| `ec/tools/check_capture_claims.py:914` | `:863` |
 | `windows/tools/ec_watch.py:381` | `:368` |
 | `windows/tools/ec_watch.py:509` | `:493` |
 | `windows/tools/manual_fan_ctrl_probe.py:264` | `:257` |

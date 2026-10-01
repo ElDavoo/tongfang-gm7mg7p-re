@@ -47,15 +47,28 @@ denial about an address the capture never watched*, below.
     in either place is not windowed at all, and every address is checked.
   * *Which clause a denial's subject is in.* `denied_addresses()` walks out
     from each cue rather than reading every address in the clause. The walk
-    starts at the nearest address either side and **stops at a connective**:
-    the gap out of the cue may not hold a comma or a coordinating word, where
-    every later gap has to. So `it has no row in that file at all, in a window
-    where 0x0743 bit 0 went set` denies what the first clause is about and not
-    the byte the second names, and "`0x07D4` did not move in C and `0x07D5`
-    moved" binds `0x07D4` alone rather than reaching the address the clause
-    attributes a movement to. The twenty-two addresses `registers.yaml`'s
-    #265 correction lists are a listing rather than twenty-two denials. An
-    address inside parentheses is never bound.
+    starts at the nearest address either side and **stops at a connective**,
+    in either direction: the gap out of the cue may not hold a comma or a
+    coordinating word, where every later gap has to. A later gap also has to
+    hold no predicate of its own, which is the same clause carrying both
+    polarities the other way round and is what makes the two directions agree.
+    So `it has no row in that file at all, in a window where 0x0743 bit 0 went
+    set` denies what the first clause is about and not the byte the second
+    names; "`0x07D4` did not move in C and `0x07D5` moved" binds `0x07D4`
+    alone rather than reaching the address the clause attributes a movement to;
+    and "`0x07C4` moved, `0x07D4` never moved" binds `0x07D4` alone rather than
+    reaching back over the comma to the address before it. The twenty-two
+    addresses `registers.yaml`'s #265 correction lists are a listing rather
+    than twenty-two denials. An address inside parentheses is never bound.
+  * *A preceding clause whose predicate is not one of `MOVEMENT`'s.* The
+    predicate guard reads this module's own movement vocabulary rather than
+    the grammar, so "`0x07D0` held steady and `0x07D4` never moved" still
+    binds `0x07D0` to the denial. The walk is stopped at a connective and at a
+    movement, not at a clause, and an address bound that way is judged by the
+    inverted rule -- reported against a sentence that agrees with the capture.
+    This is the over-reach the rule does not exclude, stated beside the
+    under-reach above rather than left to the reader to assume the first hop's
+    stop rules it out.
   * *A quoted cue.* `findings.md` §4g's "`0x0436` moving 4 times ... and
     `0x0437` never moving" is one sentence and both halves are read, but
     `registers.yaml`'s `XDATA_0436_PAIR` note quotes `"0x0437 never
@@ -327,7 +340,9 @@ QUOTED = re.compile(r"\"[^\"]*\"|“[^”]*”|‘[^’]*’")
 # over `and` is the *next* clause's, so judging it by the inverted rule would
 # pass a claim the capture contradicts. The first hop has to be adjacent; it is
 # the continuations that walk a coordinated subject, and those are what the
-# connective is for.
+# connective is for -- which also means a bare comma is a connective, and runs
+# a backward continuation out of the denial's own phrase. That is what
+# `crosses_a_movement()` is for.
 CONNECTOR = re.compile(r",|\b(?:and|or|nor)\b", re.IGNORECASE)
 
 # A registers.yaml entry, and the `addr:` key inside one. Tracked over the raw
@@ -479,6 +494,33 @@ def bare_clause(clause: str) -> str:
     return QUOTED.sub(lambda m: " " * len(m.group(0)), clause)
 
 
+def crosses_a_movement(gap: str) -> bool:
+    """Whether a gap asserts a movement of its own, so ends the phrase.
+
+    The connective alone does not tell one subject from the next: "`<addr>`
+    moved twice, `<addr>` never moved" puts a comma between two clauses exactly
+    as "`<addr>`, `<addr>` and `<addr>` did not change once" puts one between
+    three subjects of a single denial. What separates them is the rest of the
+    gap, and `MOVEMENT` is already this module's reading of "this text says
+    something changed": " moved twice, " is a clause with a predicate of its
+    own, and "`, `" and "` and `" are not. It is a test against `MOVEMENT`'s
+    vocabulary rather than against the grammar, so a predicate the vocabulary
+    does not name (" held steady ") is crossed: the walk is stopped at a
+    connective and at a movement, not at a clause, because it has no grammar
+    to stop at. What it cannot separate, it binds.
+
+    Symmetric, unlike the connective test it sits beside -- the same gap is
+    read the same way whichever side of the cue it is on. That is the half the
+    connective stop never covered: a *backward* continuation crossing a comma
+    walks backwards out of the denial's own phrase, into a preceding clause
+    whose address the sentence attributes a movement to. Bound, that address is
+    judged by the inverted rule and prose that agrees with the capture is
+    reported as one it contradicts -- the false positive, on the one shape of
+    sentence this walk exists to hold up.
+    """
+    return bool(MOVEMENT.search(gap))
+
+
 def denied_addresses(clause: str):
     """The addresses a denial in this clause is *about*.
 
@@ -488,14 +530,22 @@ def denied_addresses(clause: str):
     three subjects and reading only the last of them would check one address
     where the prose is about three.
 
-    **At a connective the first hop stops.** The gap out of the cue may not
-    hold one, where every later gap has to. That is what keeps the walk inside
-    the phrase the cue is in: "`0x07D4` did not move in C and `0x07D5` moved"
-    is a single clause carrying both polarities, and a walk that carried the
-    denial over the `and` would bind `0x07D5` to it -- so an address the
-    sentence says *moved* would be judged by the inverted rule, and a claim
-    the capture contradicts would pass silently. The connective is what a
-    *continuation* runs along, not what the first step may cross.
+    **At a connective the first hop stops, either way.** The gap out of the
+    cue may not hold one, where every later gap has to. That is what keeps the
+    walk inside the phrase the cue is in: "`0x07D4` did not move in C and
+    `0x07D5` moved" is a single clause carrying both polarities, and a walk
+    that carried the denial over the `and` would bind `0x07D5` to it -- so an
+    address the sentence says *moved* would be judged by the inverted rule, and
+    a claim the capture contradicts would pass silently. The connective is what
+    a *continuation* runs along, not what the first step may cross.
+
+    **A continuation crosses no predicate of its own**, which is
+    `crosses_a_movement()` and is what stops the same clause carrying both
+    polarities the other way round -- "`<addr>` moved, `<addr>` never moved" --
+    where the first hop out of the cue crosses only a backtick and the
+    continuation would otherwise go on over " moved, ". What that guard does
+    not cover is in this module's docstring, under *A preceding clause whose
+    predicate is not one of `MOVEMENT`'s*.
 
     An address inside parentheses is never bound. The #265 correction lists a
     capture's own twenty-two distinct addresses and then says they "omit the
@@ -532,7 +582,8 @@ def denied_addresses(clause: str):
                 gap = bare[min(at, edge):max(at, edge)]
                 if first and CONNECTOR.search(gap):
                     break
-                if not first and not CONNECTOR.search(gap):
+                if not first and (not CONNECTOR.search(gap)
+                                  or crosses_a_movement(gap)):
                     break
                 bound.add(address)
                 first = False

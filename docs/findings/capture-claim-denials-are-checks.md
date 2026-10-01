@@ -72,15 +72,32 @@ address inside parentheses. Quoted spans are blanked before the cue search,
 because `registers.yaml`'s `XDATA_0436_PAIR` note quotes `"0x0437 never
 moving"` in order to characterise the claim rather than to make a new one.
 
-**At a connective the first hop stops.** The gap out of the cue may not hold
-a comma or a coordinating word, where every later gap has to. That is what
-keeps the walk inside the phrase its cue is in, and it is the difference
-between the two halves of a clause that carries both polarities. In `` `0x07D4`
-did not move in C and `0x07D5` moved `` a walk that carried the denial over the
-`and` would bind `0x07D5` to it, so an address the sentence says **moved**
-would be judged by the inverted rule — and since the capture has no row for
-either address, that claim would pass silently. The connective is what a
-*continuation* runs along, not what the first step may cross.
+**At a connective the first hop stops, in either direction.** The gap out of
+the cue may not hold a comma or a coordinating word, where every later gap has
+to. That is what keeps the walk inside the phrase its cue is in, and it is the
+difference between the two halves of a clause that carries both polarities. In
+`` `0x07D4` did not move in C and `0x07D5` moved `` a walk that carried the
+denial over the `and` would bind `0x07D5` to it, so an address the sentence
+says **moved** would be judged by the inverted rule — and since the capture
+has no row for either address, that claim would pass silently. The connective
+is what a *continuation* runs along, not what the first step may cross.
+
+**And a continuation crosses no predicate of its own**, which is
+`crosses_a_movement()` and is the same clause carrying both polarities in the
+other order. In `` `0x07C4` moved, `0x07D4` never moved `` the gap out of the
+cue is a backtick, so only a *continuation* could reach the address before it —
+over " moved, ", whose comma is a connective and therefore passes the test the
+first hop is held to. Without the second guard the walk binds `0x07C4` to a
+denial the sentence attributes a **movement** to, and since the capture has two
+rows for it, prose that agrees with the capture is reported as one it
+contradicts. The guard is `MOVEMENT`, the same vocabulary the walk already
+reads a unit's claim with, so the gap that stops it is one asserting a
+movement of its own. A stricter guard — the gap may hold the connective and
+nothing else — was tried and does not work, because the gap a continuation
+measures includes the address token at its own edge, so every gap holds word
+characters and every continuation is refused. That costs the coordinated
+subjects the walk exists for, `docs/findings.md` §4g's `0x07B9` among them,
+and turns a true denial into a presence problem.
 
 One denial in the tree is **skipped**, with its own `--verbose` reason,
 `skip (denial outside the watched window)`: `ec/annotations/registers.yaml`'s
@@ -132,6 +149,18 @@ given up, rather than a claim missed. Each is "not found by this method", never
 `0x09EB` is **not covered**, which is a fact about the method's reach rather
 than about the firmware. A denial the walk does not reach across a connective
 is in the same category: a claim the rule cannot see, not one it has cleared.
+
+Both directions of the walk's reach are stated rather than only the harmless
+one. That is **under**-reach. The **over**-reach is narrowed, not excluded:
+`crosses_a_movement()` reads the module's `MOVEMENT` vocabulary and not the
+grammar, so in `` `0x07D0` held steady and `0x07D4` never moved `` the backward
+continuation still crosses the `and`, because `held steady` is a predicate and
+not a `MOVEMENT` word. The walk is stopped at a connective and at a movement,
+not at a clause, because it has no grammar to stop at; an address bound that
+way is judged by the inverted rule and can be reported against a sentence that
+agrees with the capture. That is a limit of the rule in one direction, and it
+is stated here so an audit of the coverage is not told the walk stays in its
+phrase when the guard is narrower than that.
 
 The `0x07B9`/`0x07D0`/`0x07D1` absence `docs/findings.md` §4g rests on is now
 held to `2026-09-18-ac-plugin-sweep-summary.csv` by a check rather than by a
