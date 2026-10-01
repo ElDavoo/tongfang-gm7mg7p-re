@@ -113,8 +113,11 @@ $ echo $?
 ```
 
 no `NOT GRADED` in the window section, no `were not graded` in the closing one,
-`block 1/2: intact`, three windows in the usual format — over a census
-byte-identical to the unscoped run's. A reader holding the two attachments side
+`block 1/2: intact`, three windows in the usual format — over a census whose
+`unplaced:` lines and per-capture diagnosis are identical across the two
+attachments, the block line aside: there the census appends `-- not selected in
+this run` to the block this attachment did not take, which is the scoping said
+out loud rather than hidden. A reader holding the two attachments side
 by side, which is what §6 asks them to do, sees `block: unplaced -- NOT GRADED`
 in one and nothing in the other. That is the accident the issue is pointing
 at, and it is why "census-only" needed a word in it rather than the whole
