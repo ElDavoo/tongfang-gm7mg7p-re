@@ -116,14 +116,6 @@ replace and the verdicts are the readings recorded against the old numbers.
 Recorded here because the write-up is where the shape of the edit is stated, not
 only in the two files' own re-registration notes.
 
-**And the merge of #311 re-anchored both a second time.** #311 added its own
-lines to that file, from the other side of the same base, so the merged tree
-carries both sides' additions: `:869` was `:907` on the #311 side and `:1021`
-here, and the merged file has `:1069` (and `:1072` for the mark row). Both
-target lines hold byte-identical text across all three positions, so the
-verdicts are re-read rather than carried, and each row's verdict cell keeps this
-change's note, #312's and #311's rather than only the last one to touch it.
-
 ## Follow-up this opens
 
 The addresses are a shape the census has no vocabulary for: a routine entry, a
