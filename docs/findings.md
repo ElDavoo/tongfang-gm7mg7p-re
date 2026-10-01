@@ -3975,6 +3975,29 @@ exists and is exported, and there is no listing for the comparison to read. It
 is counted and reported rather than dropped, and it is a sampled row the
 previous sample never reached — not a new gap in the export.
 
+**CORRECTION 2026-10-01 (issue #350), to every figure above that is derived
+from the size of the sample.** The committed `ec/ghidra/cross-decoder.csv` is
+**2,057 rows** today, not the 1,957 this section and issue #350 both quote, and
+the denominator line is now
+
+```
+compared 1047 of 2057 functions, 1008 vacuous; 719 agreed, 328 disagreed, 2 no-export
+```
+
+so `940 vacuous out of 1,957` is `1008 vacuous out of 2,057`. The sample grew
+because the annotation layer grew, and none of it moved the method: same window,
+same four outcomes, same `--check`. The per-program table below shares the 1,957
+denominator and is stale on the same axis; read out of the committed report it
+is `bank0 702/444/258/103`, `bank1 604/345/257/108`, `common 210/73/137/40`,
+`pd 541/185/356/77` over `sampled/compared/vacuous/disagree`. This is the same
+drift the 2026-09-24 correction below records, on the denominator rather than
+on the tally. What `vacuous` *is* has not moved — it is still "the opening
+names no XDATA address" — but it is one answer covering several situations, and
+which of them a given row is, is measured in
+`docs/findings/cross-decoder-blind-population.md` and committed as a `blind`
+column in `ec/ghidra/cross-decoder-blindness.csv`. No outcome was added to
+`CROSS_DECODER_OUTCOMES` and no register status moved.
+
 **CORRECTION 2026-09-24 (issue #255), to the `disagree` tally this section
 first measured and to its composition further down.** The tally is now `701 agreed, 315
 disagreed`, and the composition's "of the rest" is 167 distinct addresses
