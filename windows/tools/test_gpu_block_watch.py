@@ -43,6 +43,7 @@ import contextlib
 import importlib
 import importlib.util
 import io
+from copy import deepcopy
 from pathlib import Path
 import re
 import sys
@@ -207,6 +208,73 @@ def bank_addresses(cell):
     be undone on the other side.
     """
     return {int(a, 16) for a in re.findall(r"bank\d+:(0x[0-9A-Fa-f]{4})", cell)}
+
+
+# The addresses a §7 cell may cite that the census has no row for, each with
+# why it is not a site. A dictionary rather than a pattern over the sites `.md`
+# because that document is a write-up of the whole walk: it names every
+# register address, every `MOV DPTR` operand and every byte of every listing in
+# it, so a shape drawn from it admits a cell citing `0x0743` or `0x09E9` and
+# calling it a site. These three are what the fallback was written for and are
+# named individually so that a fourth one has to be argued for. The allowance is
+# held to the data by
+# `test_the_fallback_is_exactly_the_addresses_the_census_does_not_carry`, so
+# neither this list nor a cell can grow alone.
+NON_SITE_CITATIONS = {
+    # The routine entry of the eight-site chain: cited because it *contains* the
+    # `0x07C4`/`0x07D4`/`0x07D5` sites rather than being one.
+    0x83FF: "routine entry `sync_0788_and_07d4_from_09e9`",
+    # A routine entry, and the window the 8-instruction walk stopped on -- the
+    # `MOV DPTR,#0x07C4` it walks past is the site, this is the instruction
+    # before it (sites `.md` §4.1).
+    0x94C0: "routine entry `set_07c4_bit4_from_r7`",
+    # The one `lcall 0x94C0` in the image: the caller, not an access at all.
+    0x9711: "the single `lcall 0x94C0`",
+}
+
+
+def cited_addresses_not_in_census(census, door, xref_col):
+    """The addresses a cell cites that no census row covers, as a set.
+
+    The derived fall-through, deliberately unfiltered by `NON_SITE_CITATIONS`:
+    the guard below compares this against that constant, and a helper that
+    already applied it would be checking the constant against itself.
+    """
+    out = set()
+    for addr, sites in census.items():
+        out |= bank_addresses(door[addr][xref_col]) - sites
+    return out
+
+
+def unaccounted_citations(census, door, xref_col):
+    """Direction A's failures as `[(cell address, cited address)]`, sorted.
+
+    Factored out of the test below so that the perturbation test drives the
+    check's own arithmetic rather than a second copy of it: a perturbation that
+    recomputes the verdict proves the *copy* has teeth, and passes just as
+    happily if the check itself is widened.
+    """
+    out = []
+    for addr, sites in sorted(census.items()):
+        allowed = sites | set(NON_SITE_CITATIONS)
+        out += [(addr, site) for site
+                in sorted(bank_addresses(door[addr][xref_col]) - allowed)]
+    return out
+
+
+def sites_missing_from_cells(census, door, xref_col):
+    """Direction B's failures as `[(cell address, census site)]`, sorted.
+
+    The converse of `unaccounted_citations`, and factored out for the same
+    reason: the drop perturbation has to exercise the check rather than restate
+    it, or reverting the check to a form that tolerates a dropped site would
+    leave the perturbation green.
+    """
+    out = []
+    for addr, sites in sorted(census.items()):
+        cited = bank_addresses(door[addr][xref_col])
+        out += [(addr, site) for site in sorted(sites - cited)]
+    return out
 
 
 def doc_section(text, heading):
@@ -556,23 +624,107 @@ class SiteCensusTests(unittest.TestCase):
         for addr in self.census:
             self.assertRegex(self.sites_md, rf"0x{addr:04X}", f"0x{addr:04X}")
 
+    def test_the_fallback_is_exactly_the_addresses_the_census_does_not_carry(self):
+        # Direction A's allowance, held against the data it allows -- set
+        # equality in both directions, so neither a cell citing a fourth
+        # non-site address nor an entry nobody cites goes unnoticed. Named for
+        # the fallback rather than for the census read above because it is the
+        # fallback it holds; the same reason `HUMAN_SAVED_SUFFIXES` is checked
+        # against the section behind it rather than trusted as a constant.
+        fallthrough = cited_addresses_not_in_census(self.census, self.door,
+                                                    self.xref_col)
+        self.assertEqual(
+            fallthrough, set(NON_SITE_CITATIONS),
+            "the addresses the census does not carry are not the ones the "
+            f"allowance names. Data: "
+            f"{sorted(f'0x{a:04X}' for a in fallthrough)}; allowance: "
+            f"{sorted(f'0x{a:04X}' for a in NON_SITE_CITATIONS)}")
+        # The `.md` is what backs the allowance, checked here rather than on
+        # every cited address in direction A: an entry that stops being named
+        # in the document is an allowlist entry with nothing behind it, and
+        # this is the one place that shows which.
+        for addr in sorted(NON_SITE_CITATIONS):
+            self.assertRegex(self.sites_md, rf"0x{addr:04X}(?![0-9A-Fa-f])",
+                             f"0x{addr:04X} is allowed but {SITES_MD.name} "
+                             f"does not name it")
+
+    def test_a_cell_citing_an_address_only_the_walk_names_in_prose_is_rejected(self):
+        # The tightening, shown by perturbing the table the check reads. The
+        # second assertion is the one that makes this a demonstration rather
+        # than a check that happens to fire: the same address against the
+        # `re.search` this replaced passes, which is why the fallback could
+        # not catch a citation that no longer resolves. `0x0743` is the
+        # `CTGP_DB_CTRL` byte the walk's own listings name, so it is inside
+        # the shape the old fallback matched on.
+        mutated = deepcopy(self.door)
+        cell = mutated[0x07C4][self.xref_col]
+        self.assertIn("bank0:0x94C0", cell)
+        mutated[0x07C4][self.xref_col] = cell.replace("bank0:0x94C0",
+                                                       "bank0:0x0743")
+        reported = unaccounted_citations(self.census, mutated, self.xref_col)
+        self.assertEqual(reported, [(0x07C4, 0x0743)],
+                         "the tightened direction A did not report the "
+                         f"perturbed citation, or reported {reported}")
+        self.assertTrue(
+            re.search(r"0x0743(?![0-9A-Fa-f])", self.sites_md, re.I),
+            "the address the tightened check rejected is not in "
+            f"{SITES_MD.name}, so this demonstrates nothing: the old "
+            "fallback would have rejected it too")
+        # The three still pass against the same mutated table, which is the
+        # other half of the narrowing: an allowance that survives only while
+        # nothing perturbs it is not one.
+        for addr in sorted(NON_SITE_CITATIONS):
+            self.assertNotIn(
+                addr, {site for _, site in reported},
+                f"0x{addr:04X} is an allowed non-site citation and the "
+                "tightened check reported it")
+
+    def test_dropping_a_genuine_site_from_a_cell_is_reported(self):
+        # The issue's requested perturbation, aimed at the direction that can
+        # see it. It cannot be aimed at direction A: that asks whether a
+        # *cited* address resolves, so removing a citation cannot fail it --
+        # dropping `bank0:0x843D` leaves A passing by construction. Direction
+        # B asks the converse and is the half that catches a census site the
+        # cell stopped crediting, which is the drift this table has actually
+        # shown (#266).
+        mutated = deepcopy(self.door)
+        cell = mutated[0x07C4][self.xref_col]
+        self.assertIn("bank0:0x843D", cell)
+        mutated[0x07C4][self.xref_col] = cell.replace("bank0:0x843D", "")
+        self.assertNotIn("bank0:0x843D",
+                         mutated[0x07C4][self.xref_col])
+        # Driven through the helper direction B itself reads, so this asserts the
+        # check's own arithmetic rather than a second copy of it. Compared as a
+        # list rather than inside the loop the check runs, because a loop over
+        # the missing sites asserts nothing at all when none is missing -- and
+        # "the drop went unnoticed" is exactly the outcome being demonstrated.
+        missing = sites_missing_from_cells(self.census, mutated, self.xref_col)
+        self.assertEqual(
+            missing, [(0x07C4, 0x843D)],
+            "dropping bank0:0x843D from the 0x07C4 cell was not reported by "
+            f"direction B; it saw {missing}")
+
     def test_every_bank_address_a_cell_cites_is_in_the_census_or_the_walk(self):
         # Direction A, doc -> census. What a citation carries here is that
         # the walk named that address, not that the walk was right about
         # it: `bank0:0x94C0` is a routine entry and `bank0:0x9711` its one
         # caller (sites `.md` §4.1), so both are named in prose and neither
-        # is a `MOV DPTR` site the CSV has a row for. The `.md` half is a
-        # fallback source, not a weaker census.
-        for addr, sites in self.census.items():
-            cell = self.door[addr][self.xref_col]
-            for site in sorted(bank_addresses(cell)):
-                if site in sites:
-                    continue
-                self.assertTrue(
-                    re.search(rf"0x{site:04X}(?![0-9A-Fa-f])", self.sites_md,
-                              re.I),
-                    f"0x{addr:04X} cites bank0:0x{site:04X}, which neither "
-                    f"{SITES.name} nor {SITES_MD.name} names")
+        # is a `MOV DPTR` site the CSV has a row for.
+        #
+        # The allowance is `NON_SITE_CITATIONS` and not "the sites `.md` names
+        # this address somewhere": that `.md` is a write-up of the whole walk,
+        # so a search over it admitted a cell citing `0x0743` or `0x09E9` --
+        # a register address and a source byte -- which is the citation this
+        # direction exists to catch. The `.md` still backs the allowance, but
+        # through the guard's set equality rather than on every address.
+        for addr, site in unaccounted_citations(self.census, self.door,
+                                                self.xref_col):
+            self.fail(
+                f"0x{addr:04X} cites bank0:0x{site:04X}, which neither "
+                f"{SITES.name} nor {SITES_MD.name} makes a site. If it is "
+                f"another routine entry or caller, add it to "
+                f"NON_SITE_CITATIONS with the reason; if it is not, the cell "
+                f"is citing an address this direction should reject")
 
     def test_every_bank0_site_the_census_names_is_in_the_cell(self):
         # Direction B, census -> doc, and the one that fails first when a
@@ -582,14 +734,14 @@ class SiteCensusTests(unittest.TestCase):
         # count itself is not pinned, because the two directions already pin
         # every address between them and a constant would only add an edit
         # to make on the next legitimate census change.
-        for addr, sites in self.census.items():
+        for addr, site in sites_missing_from_cells(self.census, self.door,
+                                                   self.xref_col):
             cited = bank_addresses(self.door[addr][self.xref_col])
-            for site in sorted(sites):
-                self.assertIn(
-                    site, cited,
-                    f"0x{site:04X} is a bank0 site for 0x{addr:04X} in "
-                    f"{SITES.name} and is not in the cell "
-                    f"({len(cited)} cited, {len(sites)} in the census)")
+            self.fail(
+                f"0x{site:04X} is a bank0 site for 0x{addr:04X} in "
+                f"{SITES.name} and is not in the cell "
+                f"({len(cited)} cited, {len(self.census[addr])} in the "
+                f"census)")
 
 
 class GraderAgreementTests(unittest.TestCase):
