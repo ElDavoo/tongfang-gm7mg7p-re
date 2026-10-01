@@ -14,19 +14,33 @@ score alone proves nothing (`../annotations/bank-call-audit.md` 1, and this
 tool's own `--self-test`).
 
 The result on the committed tree: 180 `bank1` census rows target into the run,
-70 distinct targets, and **exactly one** site is at an instruction start in a
-committed listing -- `bank1:0xABB8` `lcall 0x8001`, 24 of 24, corroborated by
-the annotated forwarder at that address. **135 of the other 179 are the rel8
-displacement byte of a `cjne`**, which the census's `0x02`/`0x12` byte scan
-cannot tell from an `ljmp` opcode; 39 more are the displacement byte of another
-PC-relative branch, one is the low target byte of an `ljmp`/`lcall` the listing
-already carries, two are an immediate operand of a non-branch, and two sit in a
-committed gap between two listings. That is
-`../annotations/bank-call-audit.md` 1's "`upper bound / anchored`" -- a byte
-scan that over-counts -- biting
+70 distinct targets, and **exactly one** site is at an instruction start --
+`bank1:0xABB8` `lcall 0x8001`, 24 of 24, corroborated by the annotated forwarder
+at that address. **Over all 180, 136 are the rel8 displacement byte of a
+`cjne`**, which the census's `0x02`/`0x12` byte scan cannot tell from an
+`ljmp` opcode, and 40 more are the displacement byte of another
+PC-relative branch. Those two buckets are 176 of the 179 non-`start` sites;
+the other three are one low target byte of an `ljmp`/`lcall` the listing
+already carries and two immediate operands of a non-branch. Two of the 176
+sit in a committed gap no listing covers and are counted on a decode rather
+than a listing -- see the `gap-decode` paragraph below, which is where they
+are labelled. That is
+`../annotations/bank-call-audit.md` 1's "`upper bound / anchored`" -- a
+byte scan that over-counts -- biting
 in one measurable place, and it is why "one confirmed caller" is the whole of
 the finding: **the 179 others are not 179 absent calls**, they are 179
 byte-scan sites this method did not confirm, in a scan with a named blind spot.
+
+**The two gap sites are the weaker class, and are labelled so.** 177 of the 179
+non-`start` sites are classified against a committed instruction that *names*
+the owning bytes; `0x81E7` and `0xA6DC` are classified against a *decode* of
+them, by `gap_span_decode.py` walking forward across the gap from the last
+committed instruction start before it. The decode reaches the same
+`bucket_of_site()` every other row reaches -- that predicate is one function
+for both classes -- and each row carries a `source` of `listing` or
+`gap-decode` so a reader can tell which is which.
+`docs/findings/counter-sweep-gap-sites.md` is the write-up, and it states what
+the walk cannot do.
 
 Two things this deliberately does not do. It does not delete the slice rows --
 every one of the 42 annotation addresses is also a census seed, so deleting
@@ -154,25 +168,49 @@ def owner_of(addr, starts, listings):
     return owner, addr - owner
 
 
-def site_shape(addr, starts, listings):
+def site_shape(addr, starts, listings, d=None):
     """How `addr` reads against the committed listings, as
-    (kind, owner, opcode, text, index). `kind` is one of
+    (kind, owner, opcode, text, index, evidence). `kind` is one of
 
-      start  -- the address is an instruction start in a committed listing
-      gap    -- no listing covers it
+      start  -- the address is an instruction start
+      gap    -- no listing covers it, and the gap decode named no owner
       operand -- it is the Nth byte of the instruction at `owner`
 
     The `operand` branch is the whole point of the exercise: a `0x02` byte that
     is a `cjne`'s displacement is not an `ljmp`. `index` is which byte, because
     whether the `0x02` is the instruction's last byte (a displacement) or its
-    second (an immediate) is the difference between a branch and a load."""
+    second (an immediate) is the difference between a branch and a load.
+
+    `evidence` says which method named the owner, and it is the honest half of
+    the tuple: a committed listing **names** the bytes, and `gap_span_decode`
+    only decodes them. A row classified by the second is a weaker claim than
+    the 178 beside it, so it is labelled rather than folded in, and
+    `docs/findings/counter-sweep-gap-sites.md` states the limit.
+
+    `d` is the firmware image, needed only for the gap branch; with no image
+    (or a gap the decode does not reach) the site stays a gap, which is where a
+    residual belongs. The import is deferred because `gap_span_decode` imports
+    *this* module for `read_listings`/`owner_of`; by the time `site_shape()`
+    runs, both modules are loaded."""
     owner, idx = owner_of(addr, starts, listings)
     if owner is None:
-        return "gap", None, None, None, None
+        if d is not None:
+            from gap_span_decode import decode_site
+            m = decode_site(d, addr, PROGRAM, starts, listings)
+            if m is not None:
+                # A decoded owner at index 0 is an instruction start the same
+                # way a listed one is, and the headline counts starts rather
+                # than listings. Neither site this reaches is at index 0, so
+                # the branch is here for the shape to stay true rather than
+                # for a number to move.
+                kind = "start" if m["owner_index"] == 0 else "operand"
+                return (kind, m["owner"], m["owner_opcode"], m["owner_text"],
+                        m["owner_index"], "gap-decode")
+        return "gap", None, None, None, None, "listing"
     raw, text = listings[owner]
     if idx == 0:
-        return "start", owner, raw[0], text, 0
-    return "operand", owner, raw[0], text, idx
+        return "start", owner, raw[0], text, 0, "listing"
+    return "operand", owner, raw[0], text, idx, "listing"
 
 
 def load_census():
@@ -217,7 +255,8 @@ def survey(d, census, starts, listings):
         foff = int(r["file_offset"], 16)
         runtime = runtime_addr(foff, True)
         onto, over = converges_from(d, foff)
-        kind, owner, op, text, idx = site_shape(runtime, starts, listings)
+        kind, owner, op, text, idx, evidence = site_shape(runtime, starts,
+                                                         listings, d)
         rows.append({
             "file_offset": foff,
             "runtime": runtime,
@@ -230,6 +269,7 @@ def survey(d, census, starts, listings):
             "owner_opcode": op,
             "owner_text": text,
             "owner_index": idx,
+            "evidence": evidence,
             "census_onto": int(r["frame_onto"]),
             "census_over": int(r["frame_over"]),
             "image_byte": d[foff],
@@ -244,7 +284,9 @@ def per_target(rows, starts, listings):
     *beside* `target_shape` rather than instead of it: a target no listing names
     as an instruction start is a byte scan pointing inside an instruction
     whatever its caller's score, which is the check that catches the
-    runner-up."""
+    runner-up. `site_source` is the best caller's `evidence`, so a row whose
+    best caller was named by the gap decode is not read here as one a listing
+    named -- the distinction `0x8017` turned on."""
     by = collections.defaultdict(list)
     for r in rows:
         by[r["target"]].append(r)
@@ -262,6 +304,7 @@ def per_target(rows, starts, listings):
             "frame_onto": best["frame_onto"],
             "frame_total": best["frame_onto"] + best["frame_over"],
             "site_shape": best["shape"],
+            "site_source": best["evidence"],
             "target_shape": "instruction-start" if idx == 0 else (
                 "no-listing" if owner is None else "mid-instruction"),
         })
@@ -306,11 +349,18 @@ def print_run(index, d):
 
 
 def bucket_of_site(r):
-    """What the byte at a census site is, given the instruction the committed
-    listings say owns it. The four operand buckets are the whole finding, and
-    they are distinguished by the owner's opcode and by *which* byte the site is
-    -- a `0x02` in the last byte of a 3-byte `cjne` is a displacement, and the
-    same byte in the second position of a `mov R1,#imm` is an immediate."""
+    """What the byte at a census site is, given the instruction that owns it.
+    The four operand buckets are the whole finding, and they are distinguished
+    by the owner's opcode and by *which* byte the site is -- a `0x02` in the
+    last byte of a 3-byte `cjne` is a displacement, and the same byte in the
+    second position of a `mov R1,#imm` is an immediate.
+
+    The predicate is one function for both evidence classes. A `gap-decode`
+    row reaches the same opcode and the same index a listed one does, so it is
+    bucketed by the same lines rather than by a hand-assigned special case --
+    which is what makes the `--self-test` assertions a check on the method
+    rather than a transcription of it. What differs is the strength of the
+    owner, and that is carried in `r["evidence"]`, not here."""
     if r["shape"] == "start":
         return "start"
     if r["shape"] == "gap":
@@ -342,23 +392,32 @@ SITE_BUCKETS = [
     ("absolute", "the low target byte of an `ljmp`/`lcall` the listing already "
                  "carries"),
     ("other", "an immediate operand of an instruction that is not a branch"),
-    ("gap", "in a committed gap, covered by no listing"),
+    ("gap", "in a committed gap, and named by neither a listing nor the gap "
+            "decode"),
 ]
 
 
 def print_sites(rows):
     hist = collections.Counter(bucket_of_site(r) for r in rows)
+    decoded = [r for r in rows if r["evidence"] == "gap-decode"]
     anchors = rows[0]["frame_onto"] + rows[0]["frame_over"] if rows else 0
-    print("## 2. What those sites are, against the committed listings")
+    print("## 2. What those sites are, and what names the bytes")
     print()
     print(f"  {len(rows)} site(s), {len({r['target'] for r in rows})} distinct "
           f"target(s), {sum(1 for r in rows if r['frame_onto'] == 0)} scoring "
           f"0/{anchors}")
     print()
-    print("| what the site is, in a committed listing | count |")
+    print("| what the site is | count |")
     print("|---|---:|")
     for key, label in SITE_BUCKETS:
         print(f"| {label} | {hist.get(key, 0)} |")
+    print()
+    print(f"  {len(rows) - len(decoded)} of the {len(rows)} are named by a "
+          f"committed `.asm` listing and {len(decoded)} by a decode across a "
+          "committed gap (`ec/tools/gap_span_decode.py`). The second is the "
+          "weaker of the two classes -- a listing names the owning bytes, a "
+          "decode reads them -- and `docs/findings/counter-sweep-gap-sites.md`"
+          " states its limit beside them.")
     print()
     print("A `cjne` is 3 bytes with its displacement last, so the opcode is"
           " 0xb4/0xb5 (`cjne A,#imm,rel` / `cjne A,direct,rel`) or 0xb8-0xbf"
@@ -369,11 +428,13 @@ def print_sites(rows):
     print()
     anchored = [r for r in rows if r["frame_onto"] > 0]
     print("The anchored sites, most-framed first. The frame score is"
-          " `converges_from()` and settles nothing by itself -- the listing"
-          " column beside it is the half that does:")
+          " `converges_from()` and settles nothing by itself -- the `source`"
+          " column beside it is the half that does. A `gap-decode` row reads"
+          " in `disasm8051.mnemonic()`'s own rendering rather than a listing's,"
+          " which is what distinguishes it in that row:")
     print()
-    print("| runtime | file | census says | frame | in a committed listing it is |")
-    print("|---|---|---|---:|---|")
+    print("| runtime | file | census says | frame | source | what the byte is |")
+    print("|---|---|---|---:|---|---|")
     for r in sorted(anchored, key=lambda r: (-r["frame_onto"],
                                              r["file_offset"]))[:10]:
         if r["shape"] == "start":
@@ -387,7 +448,7 @@ def print_sites(rows):
         print(f"| `0x{r['runtime']:04X}` | `0x{r['file_offset']:05X}` "
               f"| {r['opcode']} 0x{r['target']:04X} "
               f"| {r['frame_onto']}/{r['frame_onto'] + r['frame_over']} "
-              f"| {what} |")
+              f"| {r['evidence']} | {what} |")
     print()
 
 
@@ -406,14 +467,17 @@ def print_targets(targets, annotated):
           " preceding byte anchors. `target in a listing` is whether a committed"
           " `.asm` names the target as an instruction start; a `no` there is"
           " what disqualifies a framed call whose bytes point inside an"
-          " instruction.")
+          " instruction. `site source` is what named the *caller's* bytes, and"
+          " reads `gap-decode` where the best caller sits in a committed gap"
+          " and was named by decoding across it rather than by a listing.")
     print()
-    print("| target | callers | frame | best caller | target in a listing | annotation row |")
-    print("|---|---:|---:|---|---|---|")
+    print("| target | callers | frame | best caller | target in a listing | site source | annotation row |")
+    print("|---|---:|---:|---|---|---|---|")
     for t in targets:
         print(f"| `0x{t['target']:04X}` | {t['sites']} "
               f"| {t['frame_onto']}/{t['frame_total']} "
               f"| `0x{t['best_runtime']:04X}` | {TARGET_SHAPE[t['target_shape']]} "
+              f"| {t['site_source']} "
               f"| {'yes' if t['target'] in annotated else 'no'} |")
     print()
 
@@ -453,15 +517,15 @@ def write_csv(targets, annotated):
     w = csv.writer(sys.stdout)
     w.writerow(["target", "callers", "anchored_callers", "frame_onto",
                 "frame_total", "best_caller_file_offset", "best_caller_runtime",
-                "best_caller_opcode", "site_shape", "target_shape",
-                "annotation_row"])
+                "best_caller_opcode", "site_shape", "site_source",
+                "target_shape", "annotation_row"])
     for t in targets:
         w.writerow([
             f"0x{t['target']:04X}", t["sites"], t["anchored"],
             t["frame_onto"], t["frame_total"],
             f"0x{t['best_file_offset']:05X}", f"0x{t['best_runtime']:04X}",
-            t["best_opcode"], t["site_shape"], t["target_shape"],
-            "yes" if t["target"] in annotated else "no",
+            t["best_opcode"], t["site_shape"], t["site_source"],
+            t["target_shape"], "yes" if t["target"] in annotated else "no",
         ])
 
 
@@ -478,7 +542,10 @@ ORACLE = {
     "sites": 180,
     "targets": 70,
     "at_instruction_start": 1,
-    "cjne_displacement": 135,
+    "cjne_displacement": 136,
+    "relative_displacement": 40,
+    "gap_decode_sites": 2,
+    "undecoded_gap": 0,
     "absolute_low_target": 1,
     "annotated": 42,
     "entry_frame": (24, 24),
@@ -486,6 +553,13 @@ ORACLE = {
 }
 
 CJNE_OPCODES = (0xB4, 0xB5, 0xBA, 0xBF)
+
+# The sites no committed listing covers, and the bucket the gap decode is
+# expected to put each in. `bucket_of_site()` decides; this only says what the
+# answer is supposed to be, so a decode that drifts is a red run here rather
+# than a histogram cell that quietly moved. Pinned per address rather than as a
+# count, so swapping the two is a failure and not an unchanged total.
+GAP_DECODE_SITES = {0x81E7: "relative", 0xA6DC: "cjne"}
 
 
 def self_test(d, index, annotations, rows, targets) -> int:
@@ -536,17 +610,44 @@ def self_test(d, index, annotations, rows, targets) -> int:
 
     at_start = [r for r in rows if r["shape"] == "start"]
     check(len(at_start) == ORACLE["at_instruction_start"]
-          and at_start[0]["runtime"] == ENTRY_SITE_RUNTIME
+          and {r["runtime"] for r in at_start} == {ENTRY_SITE_RUNTIME}
           and at_start[0]["target"] == ENTRY_TARGET,
           f"exactly {ORACLE['at_instruction_start']} of the {len(rows)} sites "
-          f"is an instruction start in a committed listing, and it is "
-          f"0x{ENTRY_SITE_RUNTIME:04X} -> 0x{ENTRY_TARGET:04X}")
+          f"is at an instruction start, and that set is still "
+          f"{{0x{ENTRY_SITE_RUNTIME:04X}}} -> 0x{ENTRY_TARGET:04X}")
 
     cjne = sum(1 for r in rows if bucket_of_site(r) == "cjne")
     check(cjne == ORACLE["cjne_displacement"],
           f"{ORACLE['cjne_displacement']} of the {len(rows) - len(at_start)} "
           "others are the rel8 displacement byte of a `cjne` (0xb4/0xb5/"
           "0xba/0xbf), which a 0x02/0x12 byte scan cannot tell from an `ljmp`")
+
+    # The two sites the committed listings cannot reach, and the weaker class
+    # they are classified in. Their addresses are pinned rather than counted,
+    # because a third gap site reaching this run would leave the total at
+    # 180 and move two histogram cells.
+    decoded = sorted(r["runtime"] for r in rows if r["evidence"] == "gap-decode")
+    check(decoded == sorted(GAP_DECODE_SITES)
+          and len(decoded) == ORACLE["gap_decode_sites"],
+          f"{ORACLE['gap_decode_sites']} of the {len(rows)} sites are named by "
+          "a decode across a committed gap rather than by a listing, and they "
+          f"are {', '.join('0x%04X' % a for a in decoded)}")
+
+    check(all(bucket_of_site(r) == GAP_DECODE_SITES[r["runtime"]]
+              for r in rows if r["evidence"] == "gap-decode"),
+          "each of which lands in the bucket `bucket_of_site()` gives that same"
+          " decoded owner and index -- "
+          + ", ".join(f"0x{a:04X} is {b}"
+                      for a, b in sorted(GAP_DECODE_SITES.items())) + ".")
+
+    hist = collections.Counter(bucket_of_site(r) for r in rows)
+    check(hist.get("gap", 0) == ORACLE["undecoded_gap"]
+          and hist.get("relative", 0) == ORACLE["relative_displacement"]
+          and sum(hist.get(k, 0) for k, _ in SITE_BUCKETS) == ORACLE["sites"],
+          f"the `gap` bucket reads {ORACLE['undecoded_gap']} -- no site is left "
+          "unclassified by either method -- `relative` is "
+          f"{ORACLE['relative_displacement']}, and the six buckets still sum to "
+          f"the {ORACLE['sites']} sites")
 
     check(all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
               for r in rows if bucket_of_site(r) == "cjne"),
@@ -662,9 +763,9 @@ def main(argv=None) -> int:
                     help="write one row per distinct target on stdout instead "
                          "of the tables")
     ap.add_argument("--self-test", action="store_true",
-                    help="assert the entry, the slice scores, the cjne count "
-                         "and the two path/regex misreadings against the "
-                         "committed tree")
+                    help="assert the entry, the slice scores, the cjne count, "
+                         "the two gap-decode sites and the two path/regex "
+                         "misreadings against the committed tree")
     args = ap.parse_args(argv)
 
     d = open(args.firmware, "rb").read()
