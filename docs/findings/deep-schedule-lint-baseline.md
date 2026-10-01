@@ -165,7 +165,7 @@ cutting `.github/scripts/agent-gates.sh` at `:64`, plus the one `.yml`. This
 branch adds a ninth, `ci-workflow-lint-docs-ci.patch`, which cuts
 `.github/workflows/ci.yml` — which is the next paragraph.
 
-The exclusion comment at `tools/test_agent_gates_patches.py:82-86` (the issue
+The exclusion comment at `tools/test_agent_gates_patches.py:83-87` (the issue
 cites `:64-66`) is right about *staleness* and says nothing about the lint, and
 the issue is right that the patch route does not cover the `.yml` at all.
 
@@ -175,7 +175,7 @@ against one pre-image, `.github/scripts/agent-gates.sh`. A patch cutting
 `ci.yml` would fail `git apply --check` against that file, have none of its
 added lines in it, and classify as `STALE` — a red that means nothing. Adding
 it would be worse than leaving it out. The name is chosen so neither existing
-*discovery* picks it up: `test_agent_gates_patches.py:121` globs
+*discovery* picks it up: `test_agent_gates_patches.py:122` globs
 `agent-gates-*.patch` and `check_doc_patch_refs.py`'s `on_disk()` (`:262`)
 globs the same family, so `ci-workflow-lint-docs-ci.patch` is outside both,
 and **no shared suite is edited to accommodate it.**

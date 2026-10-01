@@ -721,6 +721,19 @@ For each run, from the three CSVs plus the by-hand power readings:
    reaching `0x0751`, or nothing naming the value that was written — so read
    that line before quoting the section as an answer.
 
+   **If it moved back, the byte that came back names the writer.**
+   `../../ec/annotations/manual-fan-ctrl-0751-writers.csv` is the ten sites this
+   firmware image has for `0x0751`, each with the store's own address, its
+   `mask`, and the branch it sits behind — so a value that came back can be
+   matched against a store rather than guessed at. A match is a site *reached*,
+   which is a statement about this run and this load and nothing more: the
+   table records no frequency, and one arm being taken once is not a mechanism.
+   A value matching **no** row in that table is not a contradiction of it — it
+   is a writer this method did not find, and
+   `../../docs/findings/0751-writer-census.md` §4 says which two blind spots
+   could hold one. Record it either way; the unreached row is the more useful
+   of the two results.
+
 A run where *nothing* moves is a real result and should be recorded as one:
 it would mean a Linux driver has to write the whole bundle, which is the
 expensive answer and the one worth being sure of.

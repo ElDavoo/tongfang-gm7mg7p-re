@@ -1925,6 +1925,29 @@ registers:
       platform profile has to write the PLs and the fan table itself, from
       the EC default blocks; 0x0751 alone will not.
 
+      2026-10-01 (issue #196), writer census, ec/annotations/
+      manual-fan-ctrl-0751-writers.csv and ec/tools/census_xdata_writers.py:
+      all 29 sites re-derived, and the ten that store are now a table rather
+      than an "at least three" -- 10 writer sites and 13 store instructions,
+      by a site scan over MOV DPTR,#0x0751 plus one branch-followed segment
+      per site whose own window holds no movx. One store is a blind store
+      (0xA815, the boot-time Gaming default, which writes 0x00 over the whole
+      byte without reading it) and twelve are read-modify-writes, each a
+      single-bit anl/orl/xrl -- the three xrl a,#0x40 sites TOGGLE bit 6, they
+      do not drive it to a value. Conditions, read off the gate each site
+      sits behind: 2 boot-default (0x0782 bit 4), 1 temperature-gate
+      (0x898A, both sensors under 0x46), 7 mode-decode, and
+      host-write-through EMPTY -- the host writes 0x0751 over ECRR, which is
+      no MOV DPTR site, so no instruction for that path exists to be found.
+      **That is the answer #102 and #104 needed, and it is a statement about
+      this method, not an absence**: no store found gates on the byte's own
+      previous value, and the 19 read-only sites read it without writing it
+      back. **The count is not closed.** walk_branch_arms charges 100 stores
+      to no address across its 171 0x0751 rows, any of which could be a
+      0x0751 writer no site scan can name -- that blind spot is issue #34 and
+      stays open. Nothing here moves static_refs (the census reads the same
+      29 sites and adds none) and nothing here is behavioural.
+
       Stays present-untested for one narrow reason: whether the fan-mode
       bits (4-7) change how the EC drives the fans along the (unchanged)
       curve was not isolated -- the live run was near-idle with roughly
