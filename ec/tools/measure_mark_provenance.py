@@ -517,7 +517,7 @@ def section_provenance_reader(grader, tmp: str) -> None:
 # claim was wrong, and the two need a reader, not a guess.
 CITATIONS = [
     # -- writers -------------------------------------------------------------
-    ("windows/tools/ec_watch.py", 493,
+    ("windows/tools/ec_watch.py", 509,
      'self._sink.row([ts, "MARK", "", label,',
      "writer: the Marker._loop the issue's shape A is scoped to"),
     ("windows/tools/system_id_probe.py", 268,
@@ -534,7 +534,7 @@ CITATIONS = [
     ("ec/tools/ec_timer_capture.py", 240,
      'sink.row([now(), "MARK", "", label, ""])',
      "writer: input_mark_loop"),
-    ("windows/tools/manual_fan_ctrl_probe.py", 443,
+    ("windows/tools/manual_fan_ctrl_probe.py", 450,
      'self.row([now() if ts is None else ts, "MARK", "", label])',
      "writer: MarkCsv.mark"),
     # -- the header, which this measurement did not record ------------------
@@ -566,25 +566,25 @@ CITATIONS = [
     # a row only one side wrote, and the lines they landed on are the merged
     # ones. The pins in the other files were drifted by #748 and #749 and are
     # re-anchored here too, so nothing is red on this tree.
-    ("ec/tools/grade_0751_isolation.py", 1064, 'if addr == "MARK":',
+    ("ec/tools/grade_0751_isolation.py", 1349, 'if addr == "MARK":',
      "reader: take_capture_row recognising the row, read_capture's own body"),
-    ("ec/tools/grade_0751_isolation.py", 1192, 'if addr == "MARK":',
+    ("ec/tools/grade_0751_isolation.py", 1477, 'if addr == "MARK":',
      "reader: partition_capture_rows recognising the row -- the fourth site "
      "over this shape, and the one the notice partitions its own read with, "
      "so a mark row is never hex-read there either"),
-    ("ec/tools/grade_0751_isolation.py", 1086,
+    ("ec/tools/grade_0751_isolation.py", 1371,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: mark_labels_of recognising the row, existing_mark_labels' own "
      "extraction"),
-    ("ec/tools/grade_0751_isolation.py", 1156,
+    ("ec/tools/grade_0751_isolation.py", 1441,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: existing_mark_provenance recognising the row -- #739's reader, "
      "the fifth site over this shape, and the one whose result is *supposed* "
      "to differ under the fifth column, which is why it is not in `families`"),
-    ("ec/tools/grade_0751_isolation.py", 986,
+    ("ec/tools/grade_0751_isolation.py", 1271,
      '`addr == "MARK"` before the `int()` calls, and so does this',
-     "the partition's docstring quoting that branch, which the scan matches "
-     "because it is the same literal spelled in prose"),
+"refused_capture_rows' docstring quoting that branch, which the scan "
+     "matches because it is the same literal spelled in prose"),
     ("ec/tools/grade_timer_sweep.py", 354, 'if r[1] == "MARK":',
      "reader: grade_timer_sweep.load recognising the row"),
     ("ec/tools/check_capture_encoding.py", 166,
@@ -611,45 +611,45 @@ CITATIONS = [
      "the same in the other suite, so the blind side is the tree's and not "
      "one file's"),
     # -- the lines the read-side claim rests on -----------------------------
-    ("ec/tools/grade_0751_isolation.py", 852, "def read_capture(path):",
+    ("ec/tools/grade_0751_isolation.py", 1130, "def read_capture(path):",
      "read_capture"),
-    ("ec/tools/grade_0751_isolation.py", 845,
+    ("ec/tools/grade_0751_isolation.py", 1123,
      'return not row or row[0].startswith("#") or row[0] == "ts"',
      "the one skip rule, where a `# provenance` row goes"),
-    ("ec/tools/grade_0751_isolation.py", 886, "if path_starts_with_bom(path):",
+    ("ec/tools/grade_0751_isolation.py", 1171, "if path_starts_with_bom(path):",
      "read_capture refusing a byte-order mark before it reads a row, which is "
      "what keeps the header out of the row shape's data rows"),
-    ("ec/tools/grade_0751_isolation.py", 890, "if skippable_row(row):",
+    ("ec/tools/grade_0751_isolation.py", 1175, "if skippable_row(row):",
      "read_capture calls that one skip rule rather than spelling it"),
-    ("ec/tools/grade_0751_isolation.py", 1061, "if len(row) < 4:",
+    ("ec/tools/grade_0751_isolation.py", 1346, "if len(row) < 4:",
      "read_capture's only length test: a fifth column passes it"),
-    ("ec/tools/grade_0751_isolation.py", 1063,
+    ("ec/tools/grade_0751_isolation.py", 1348,
      "ts, addr, old, new = row[0], row[1], row[2], row[3]",
      "explicit indexing, not an unpack of row -- the correction to the issue"),
-    ("ec/tools/grade_0751_isolation.py", 896,
+    ("ec/tools/grade_0751_isolation.py", 1181,
      "def existing_mark_labels(path):", "existing_mark_labels"),
-    ("ec/tools/grade_0751_isolation.py", 1084, "if skippable_row(row):",
+    ("ec/tools/grade_0751_isolation.py", 1369, "if skippable_row(row):",
      "mark_labels_of takes that one skip rule, so existing_mark_labels -- which "
      "delegates its extraction to it -- cannot spell a second copy"),
-    ("ec/tools/grade_0751_isolation.py", 1179, "if skippable_row(row):",
+    ("ec/tools/grade_0751_isolation.py", 1464, "if skippable_row(row):",
      "and so does the partition, over the notice's own read"),
-    ("ec/tools/grade_0751_isolation.py", 1087,
+    ("ec/tools/grade_0751_isolation.py", 1372,
      'out.append((row[0], row[3] if len(row) > 3 else ""))',
      "the (ts, label) pair: no position, and no fifth column either"),
-    ("ec/tools/grade_0751_isolation.py", 1435, "def read_early_exits(path):",
+    ("ec/tools/grade_0751_isolation.py", 1749, "def read_early_exits(path):",
      "read_early_exits"),
-    ("ec/tools/grade_0751_isolation.py", 1477,
+    ("ec/tools/grade_0751_isolation.py", 1791,
      "if not row or not row[0].startswith(EARLY_EXIT_TAG):",
      "the phrase test: a mark's row[0] is a timestamp"),
-    ("ec/tools/grade_0751_isolation.py", 428,
+    ("ec/tools/grade_0751_isolation.py", 521,
      'EARLY_EXIT_TAG = "# the run ended early:"',
      "the one machine phrase the `#` namespace spends in this family"),
-    ("ec/tools/grade_0751_isolation.py", 3065,
+    ("ec/tools/grade_0751_isolation.py", 3784,
      'read = f"{path}: {len(m)} mark(s), {len(c)} change row(s)"',
      "the per-capture census line, which counts rather than spells"),
-    ("ec/tools/grade_gpu_door.py", 479, "m, c = fan.read_capture(path)",
+    ("ec/tools/grade_gpu_door.py", 520, "m, c = fan.read_capture(path)",
      "the second consumer of read_capture's two-tuple"),
-    ("ec/tools/check_capture_claims.py", 576,
+    ("ec/tools/check_capture_claims.py", 607,
      "read_capture(os.path.join(REPO, WATCH, name))",
      "a third, and the only one that reads every committed capture"),
     ("ec/tools/grade_timer_sweep.py", 327, 'if line.startswith("#"):',
@@ -660,16 +660,16 @@ CITATIONS = [
     ("windows/tools/ec_watch.py", 295,
      "def warn_unchecked_marks(path, existing_findings):",
      "the notice the measurement exists for"),
-    ("windows/tools/ec_watch.py", 368,
+    ("windows/tools/ec_watch.py", 381,
      "accepted, refused, unplaceable = existing_findings(path)",
      "the notice's one call into the grader's reader"),
     ("windows/tools/test_manual_fan_ctrl_probe.py", 515,
      "self.assertEqual(len(row), 4, row)",
      "the canary: the only committed assertion of an exact column count"),
-    ("windows/tools/manual_fan_ctrl_probe.py", 257,
+    ("windows/tools/manual_fan_ctrl_probe.py", 264,
      'EARLY_EXIT_TAG = "# the run ended early:"',
      "the probe's own spelling of the same phrase"),
-    ("windows/tools/manual_fan_ctrl_probe.py", 927,
+    ("windows/tools/manual_fan_ctrl_probe.py", 934,
      'sink.row([f"{EARLY_EXIT_TAG} {now()}",',
      "the only machine-written `#` row in the 0751 family"),
     ("ec/tools/ec_timer_capture.py", 157, 'self._fh.write(f"# {text}\\n")',
@@ -704,6 +704,29 @@ COMMENT_PHRASES = [
 ]
 
 
+def site_arity(sites, who: str) -> None:
+    """Refuse a site set whose elements are not `(path, lineno)` pairs.
+
+    Both symmetric loops below walk their set by unpacking two, so an element
+    of any other width ends the run in a `ValueError` raised from a for-loop --
+    a traceback in the middle of section 5, naming a tuple rather than the
+    width that is wrong and not the site that carries it. That is what this
+    function exists to replace, and the reason it is worth a named check
+    rather than care in the unpacking: the whole of this tool's join is two
+    set differences, so the width is a property of the two sets agreeing, and
+    the cheapest place to say so is before either is walked."""
+    for site in sites:
+        if not isinstance(site, tuple) or len(site) != 2:
+            got = len(site) if isinstance(site, tuple) else type(site).__name__
+            raise ValueError(
+                f"{who} is walked as (path, lineno) pairs and {site!r} is not "
+                f"one: it has width {got}, not 2. A site set is built from "
+                "row_sites(), whose rows are (path, lineno, text) -- the text "
+                "is dropped when the set is built, so a set carrying it is one "
+                "that was never narrowed, and unpacking it here would raise "
+                "the same ValueError from a for-loop instead of naming it.")
+
+
 def check_citations(scan: set) -> list:
     """Every citation's problems: a line whose text has drifted, a row site
     the scan found and no citation names, and a row citation the scan no
@@ -720,6 +743,8 @@ def check_citations(scan: set) -> list:
                             "moved or the claim is wrong")
         if ROW_LITERAL in want:
             named.add((path, lineno))
+    site_arity(scan, "scan")
+    site_arity(named, "named")
     for path, lineno in sorted(scan - named):
         problems.append(f"{path}:{lineno}: a `ts,MARK,,label` site no citation "
                         "names, so the page's census is a hand-typed list and "

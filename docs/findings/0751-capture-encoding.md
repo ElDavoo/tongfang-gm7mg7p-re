@@ -263,6 +263,41 @@ would verify it is the thing that is broken. Fixing it belongs to its own
 issue, and this makes an already-red gate redder and says so rather than
 quietly editing pins to look tidy.
 
+> **Correction (2026-09-30, issue #762), leaving the section above as it was
+> written.** The paragraph above is right that the work was not this section's
+> and wrong on two counts that were measured rather than assumed. **The crash
+> was already fixed before this issue opened**, by #749: `check_citations` is at
+> `measure_mark_provenance.py:730`, its two symmetric loops unpack **two**, and
+> running the tool prints sections 1 through 5 and exits 1 with a count of
+> citation problems rather than a `ValueError` traceback. (This correction first
+> wrote `:728`; `:728` is a blank line on this tree and `:730` is the `def` — the
+> self-referential drift
+> [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md)
+> is written about.) What survived was the *named* half — the tool still had no
+> error that named a wrong width — so the issue this section predicted was real,
+> it was just not the one described.
+>
+> **The 37/29/23 figures were a measurement of a different tree and are not
+> this one's.** On the tree this correction lands on the tool holds **48**
+> citations, of which **26** had drifted, and the join reported **14** problems
+> in both directions — so `37`, `6`, `29` and `23` are the counts of
+> #748's merge, kept above as the record of that tree, and the current figures
+> are the re-measured ones in
+> [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md).
+> The two pins this section singles out as needing judgement are also decided
+> already: `ec_watch.py:254` and `:280` were taken as the renamed-parameter
+> `def` at `:295` and the three-value call at `:368`, both recorded in #749.
+> What needed judgement on this tree was a different pin —
+> `grade_0751_isolation.py:986`, whose `what` claimed "the partition's
+> docstring" for a line inside `refused_capture_rows`' — and that is the one
+> #762 decided.
+>
+> The verdict on the section's own reasoning does not change: this was a
+> pre-existing defect in another tool, it was unrelated to encoding, and
+> re-anchoring those entries inside an encoding PR was still not verifiable
+> from here. **What was settled is that it now has its own issue, that issue
+> has landed, and the tool exits 0 on this tree.**
+
 ## 8. The two places the tree promised otherwise
 
 Both promised that a capture grades identically at the machine or brought back.
@@ -285,6 +320,8 @@ locale default** and is corrected and extended, dated, in place.
 - **The three non-capture CSV appenders** (§2). Same gap, different column
   sets, a follow-up in their own right.
 - **`measure_mark_provenance.py`'s crash and its 29 drifted pins** (§7). Its
-  own issue.
+  own issue. **Settled at issue #762**: the pins are re-anchored and the tool
+  exits 0 on this tree. The figures this bullet carries are §7's, kept there as
+  the record of the tree they were measured on.
 - **Register behaviour of any kind.** Nothing here touches
   `ec/annotations/registers.yaml`; this is a file-format decision.

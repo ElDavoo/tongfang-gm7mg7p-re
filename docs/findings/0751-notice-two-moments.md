@@ -330,6 +330,91 @@ on this tree.
 Every citation in this file is from the merged tree, except the middle column,
 which is against the tree the change starts from as the column says.
 
+> **Correction (2026-09-30, issue #762), leaving the paragraph above as it was
+> written.** "That tool exits 0 on this tree" was true on the tree this change
+> landed on and **has been false on every tree since `368e9e52`** (#982,
+> 2026-09-26) — the day after `43241736` (#761) put the sentence here, and the
+> first red when the tool is run commit by commit from `84a89d9a` (#771), which
+> is still green. It was false by the same failure mode this page already
+> records below: pins are re-anchored by the change that moves the lines, and
+> nothing held the ones a later merge moved underneath them. On the tree this
+> correction lands on, `measure_mark_provenance.py` holds 48
+> citations, 26 of them DRIFT, and it exits 1 with citation problems — **43 on
+> this tree, 40 on the one the re-anchor ran against**, which is the same 26
+> `DRIFT` and the same 14 row-site problems either way, the difference being
+> three `grade_timer_sweep.py` pins that #1406 moved with the code and left
+> unnamed in these pages; the tool's reported total is all three counts, because
+> `main()` adds `check_page`'s to `check_citations`' before printing it. It is
+> not a crash, which #749 had already fixed, but
+> the silent half the tool had never checked. The tool exits 0 here again, and
+> this time the width of the join is a named error rather than a `ValueError`
+> out of a for-loop, so the next disagreement says what is wrong instead of
+> ending section 5. The record is
+> [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md);
+> the twelve citations this paragraph says were re-anchored here are re-anchored
+> again there, and the `refused_capture_rows` docstring pin is the one whose
+> `what` had to be re-worded rather than moved.
+
+> **Correction to the correction (2026-09-30, issue #762), leaving the block
+> above as it was written.** Its phrase "**has been false on every tree since
+> `368e9e52`**" is a universal the history refutes, and it is withdrawn.
+> Running `python3 ec/tools/measure_mark_provenance.py` at each of the 130
+> first-parent commits in `368e9e52^..origin/main` — one worktree checkout per
+> commit — measures **113 red and 17 green**, and the 17 green are a single
+> contiguous run rather than scattered exceptions:
+>
+> | from | to | |
+> |---|---|---|
+> | `368e9e52` (#982, 2026-09-26) | `4f0bcc2f` (#1220, 2026-09-28) | red, 65 commits |
+> | `00836c06` (#1208, 2026-09-28) | `55ded4c1` (#1300, 2026-09-28) | **green, 17 commits** |
+> | `5ad88d8d` (#1292, 2026-09-28) | `ab594a22` (#1450, 2026-09-30) | red, 48 commits — 28 problems at `5ad88d8d`, 43 at `ab594a22` |
+>
+> The two halves of the withdrawn sentence that are *not* universal stand, and
+> were re-measured rather than assumed: `368e9e52` is still the first red when
+> the tool is run commit by commit from `84a89d9a` (#771) — the eleven commits
+> from `84a89d9a` to `9a3b78d3` all exit 0 and `368e9e52` exits 1 — and it is
+> still the day after `43241736` (#761) put the sentence in the paragraph
+> above. What the sweep adds is that the sentence was false on **two separate
+> stretches**, which is the same "a later merge moved the lines" mechanism the
+> block above names, running the other way: `00836c06` widened the mark row,
+> moved every line the pins quoted, and re-anchored all 48 of them in the same
+> change. The tool prints `48 citations resolve at the line quoted, the
+> row-site join closes both ways` at `00836c06` and again at `55ded4c1` — the
+> same figure and the same closure this page's own re-anchor arrives at, by the
+> same mechanism. So the sentence that holds is the narrower one: the claim was
+> false from `368e9e52`, true again for the 17 commits that re-anchored it, and
+> false again after that — and the green stretch is the strongest evidence for
+> the rest of the correction rather than a hole in it, because a re-anchor that
+> worked is what the other 113 trees were missing. The interval boundaries and
+> the full sweep are recorded in
+> [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md),
+> which carries the same correction for the same reason.
+>
+> **Correction to the correction's range and count (2026-09-30, issue #762
+> review), leaving the block above as it was written.** Its range and its count
+> described two different sweeps. `git rev-list --first-parent --count
+> 368e9e52^..origin/main` returns **132**, while the run above stopped at its
+> own `ab594a22` endpoint, so the two first-parent commits past it — `0a088444`
+> (#1448) and `83b6e01f` (#1457) — were never measured and the sentence claims
+> a coverage it did not have. Both are swept now, on the same
+> one-worktree-per-commit basis, and **each exits 1 with the same 43 citation
+> problems `ab594a22` carries**, which is a fourth row and the whole of the
+> difference:
+>
+> | from | to | |
+> |---|---|---|
+> | `ab594a22` (#1450, 2026-09-30) | `83b6e01f` (#1457, 2026-09-30) | red, 2 commits — 43 at both |
+>
+> So the full range is **132 commits, 115 red, 17 green**, and the `113` in
+> "the other 113 trees" above is `115` over it. Nothing in the conclusion
+> moves: both commits are red and contiguous with the final red stretch, so the
+> two stretches and the `#1208`–`#1300` green run stand exactly as written
+> above. The endpoint is written as `83b6e01f` and not as `origin/main` because
+> a moving ref is what let the two disagree in the first place —
+> `368e9e52^..83b6e01f` is the interval a reader can re-run, and it is the range
+> [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md)
+> now states.
+
 ### The measurement tool's pins, and the problems it already had
 
 `measure_mark_provenance.py` pins the grader's lines by number and checks each
