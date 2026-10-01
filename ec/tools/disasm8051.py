@@ -223,7 +223,9 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         # of the three arbitrating the other two is why that is a comment and
         # not a correction. No committed instruction is affected either way:
         # 0xA0/0xB0 are the bit forms sdas8051 *does* express, so all 12
-        # occurrences sit inside the 45,394 the re-encode covers.
+        # occurrences sit among the instructions handed to the assembler rather
+        # than in the set it cannot express (verify_gap_text.py's, which is
+        # recomputed rather than counted here).
         name = {0xA0: "orl", 0xB0: "anl"}[op]
         return f"{name:<4} c,/{bit_name(d[i + 1])}"
     if op == 0xC1:

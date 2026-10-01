@@ -1,0 +1,3 @@
+	.area CODE (ABS)
+	.org 0x801f
+	movx	@dptr,a

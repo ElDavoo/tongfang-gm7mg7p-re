@@ -1968,9 +1968,9 @@ def read_asm(program: str) -> dict:
     **The framing is not checked here, and is checked where it can be.** One
     listing row is one decoded instruction, but whether the decoder started on
     an instruction boundary is `disasm8051.py`'s question and its `--self-test`
-    is the oracle; 149 of the 45,537 listing lines in this tree are not
-    contiguous, because a listing legitimately includes jump tables and string
-    data, so a blanket contiguity assertion would be false. `xdata_register_map
+    is the oracle; 149 of this tree's listing lines are not contiguous, because
+    a listing legitimately includes jump tables and string data, so a blanket
+    contiguity assertion would be false. `xdata_register_map
     --self-test` and `disasm8051.py --self-test` are both cheap and both run
     without Ghidra, the image or the network."""
     out = {}

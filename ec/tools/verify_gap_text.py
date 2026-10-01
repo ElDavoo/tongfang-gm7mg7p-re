@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """Cross-decode the instructions sdas8051 cannot re-encode.
 
-`verify_reassembly.py` covers 45,394 of the 45,537 committed instructions by
-having an assembler that never saw this firmware encode the listing back to
-bytes and letting the firmware arbitrate. The remaining 143 use five forms
-`sdas8051` either refuses outright or encodes differently from the 8051
-manual, so no assembler reaches them and they were read by no check at all.
+`verify_reassembly.py` re-encodes the committed listings by having an
+assembler that never saw this firmware encode them back to bytes and letting
+the firmware arbitrate. **How many instructions that reaches is at most** the
+figure `ec/tools/reassembly_checked_bound.py --check` prints, and it is a
+ceiling rather than a figure for the reason that file gives:
+`instructions_checked` counts the instructions handed to the assembler, not the
+bytes that reached a comparison, and for a row whose assembled listing carried
+no entry at all the two are something else and nothing. What this tool is for
+is the other end: the instructions that use one of the five forms `sdas8051`
+either refuses outright or encodes differently from the 8051 manual, which no
+assembler reaches and which were therefore read by no check at all.
 `docs/findings.md` 11a.
 
 This tool closes that by asking a different question of the same bytes, with
@@ -19,17 +25,20 @@ interchangeable.** The re-encode is constructive: an independent tool produces
 bytes, and the image says whether they are the right ones. This is
 comparative: two decoders, no code in common, read the same byte column. What
 is being agreed is the *text* -- the bytes were already settled, by
-`verify_reassembly.check_listing_bytes()`, which covers all 45,537 and needs
-no assembler. So a `disagree` here is a text error with a known-correct
-answer, and an `agree` is two decoders having said the same thing about bytes
-that are not in question. A listing whose bytes are right and whose mnemonic
-is wrong passes the byte check and is exactly what this tool is for.
+`verify_reassembly.check_listing_bytes()`, which covers every instruction in
+the committed listings and needs no assembler. So a `disagree` here is a text
+error with a known-correct answer, and an `agree` is two decoders having said
+the same thing about bytes that are not in question. A listing whose bytes are
+right and whose mnemonic is wrong passes the byte check and is exactly what
+this tool is for.
 
-**Nothing here makes the 1:1 claim 100%.** It stays 45,394 of 45,537
-(99.69%), because `sdas8051` still cannot express these five forms and no tool
-has changed that. What changes is coverage: every instruction in the committed
-listing is now read by an independent check, and this is the check for the
-last 0.31%.
+**Nothing here makes the 1:1 claim 100%, and nothing here widens the ceiling
+either.** The gap between what the re-encode reached and what it might have
+reached is a ceiling rather than a figure, and this tool does not narrow it:
+`sdas8051` still cannot express these five forms and no tool has changed that.
+What changes is coverage. Every instruction in the committed listing is now
+read by an independent check, and this is the check for the ones the re-encode
+cannot reach at all.
 
 **The set is recomputed, never transcribed.** It is whatever
 `to_sdas()` declines over a fresh walk of every listing, so it cannot drift
@@ -63,6 +72,7 @@ from collections import Counter
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import disasm8051 as D                                        # noqa: E402
+import reassembly_checked_bound as B                          # noqa: E402
 import verify_reassembly as V                                 # noqa: E402
 
 REPO = V.REPO
@@ -78,12 +88,27 @@ COLUMNS = ["program", "row_addr", "row_name", "insn_addr", "bytes",
 # from the thing it is testing asserts nothing -- see the note in
 # verify_reassembly.self_test(). A listing edit that moves any of them fails
 # --self-test rather than quietly re-basing the claim.
+#
+# There is deliberately no `EXPECT_CHECKED` beside them, and its removal is the
+# point rather than an omission. It was a hand-kept count of the whole
+# instruction stream, so every listing export that added a function made
+# `--self-test` red, and it had been red since the export at #229's base
+# measured 45,518 against its 45,394 without anything noticing -- it is in no
+# gate. The re-encode's reach is now *derived*, from the committed report this
+# tool already reads, by `reassembly_checked_bound.py`, and asserted against
+# the set recomputed here: two independent walks of the same listings, one
+# through `to_sdas()` and one through the CSV's own columns, that have to
+# agree. That is a claim rather than a census -- `fifty-nine suites exist` moves
+# on every landing suite, `these two derivations of the same file agree` does
+# not. What each figure means is in `reassembly_checked_bound.py`'s docstring;
+# the short version is that the report's `instructions_checked` counts what was
+# handed to the assembler and the ceiling counts what reached a comparison, and
+# those are not the same number.
 EXPECT_INSTRUCTIONS = 143
 EXPECT_ROWS = 84
 EXPECT_PARTIAL = 73
 EXPECT_ASSEMBLER_GAP = 11
 EXPECT_FORMS = 5
-EXPECT_CHECKED = 45394
 
 # Operands the 8051 manual gives as `bit` addresses, as opcode -> the operand
 # positions that are one. Needed so a bit operand can be canonicalised to the
@@ -477,9 +502,23 @@ def check():
             ok = False
     print("  gap text bytes: %d instruction(s) compared against the firmware"
           % byte_checked)
-    print("  gap text: %d instruction(s) in %d row(s), %d form(s), "
-          "%d checked by re-encode" % (totals["unchecked"], totals["rows"],
-                                       totals["forms"], totals["checked"]))
+    print("  gap text: %d instruction(s) in %d row(s), %d form(s); "
+          "%d of the %d instructions translated to sdas8051 source"
+          % (totals["unchecked"], totals["rows"], totals["forms"],
+             totals["checked"], totals["parsed"]))
+    # What the re-encode *reached* rather than translated, which is a different
+    # and lower number, and the one the coverage sentence above is about. Read
+    # from the committed report through the census rather than recomputed here,
+    # so the two tools cannot each have their own arithmetic for one file.
+    reach = B.census(B.read_report(), B.read_anchors())
+    print("  and the re-encode reached at most %d of those %d against the "
+          "firmware\n  image -- a ceiling, not a measurement: %d "
+          "instruction(s) sit in rows whose assembled listing\n  carried no "
+          "entry at all, and a further %d row(s) stopped part-way through, "
+          "so the\n  real figure is lower again and this file cannot say by "
+          "how much."
+          % (reach["bound"], reach["total"],
+             reach["own_anchor_instructions"], reach["classes"][B.STOPPED_LATER]))
     tally = Counter(r["verdict"] for r in rows)
     print("  gap text verdicts: %s"
           % (", ".join("%d %s" % (v, k) for k, v in sorted(tally.items())) or "none"))
@@ -661,11 +700,25 @@ def self_test():
                 "can name (%d unexplained)" % len(unclassified))
     assert_that(totals["unchecked"] == EXPECT_INSTRUCTIONS,
                 "%d unchecked instructions, measured" % totals["unchecked"])
-    assert_that(totals["checked"] == EXPECT_CHECKED,
-                "%d checked by re-encode" % totals["checked"])
-    assert_that(totals["parsed"] == EXPECT_CHECKED + EXPECT_INSTRUCTIONS,
-                "and the two together are the whole instruction stream (%d)"
+    # The derived replacement for the hand-kept EXPECT_CHECKED this file used to
+    # carry. Two walks of the same committed listings -- this one through
+    # to_sdas() over every .asm, that one through the CSV's own columns -- have
+    # to agree on where the stream divides, and the ceiling is below both
+    # because `instructions_checked` counts what was handed to the assembler.
+    reach = B.census(B.read_report(), B.read_anchors())
+    assert_that(totals["checked"] == reach["checked"],
+                "the %d instructions to_sdas() accepts are the committed "
+                "report's own instructions_checked total (%d), read two ways"
+                % (totals["checked"], reach["checked"]))
+    assert_that(totals["parsed"] == totals["checked"] + totals["unchecked"]
+                == reach["total"],
+                "and the two together are the whole instruction stream (%d), "
+                "which is what the report's rows add to as well"
                 % totals["parsed"])
+    assert_that(0 < reach["bound"] < reach["checked"],
+                "the re-encode reached at most %d of the %d, below the %d it "
+                "was handed: a ceiling and not a measurement"
+                % (reach["bound"], reach["total"], reach["checked"]))
     assert_that(totals["rows"] == EXPECT_ROWS,
                 "%d rows carry at least one of them" % totals["rows"])
     assert_that(totals["keys"] == EXPECT_INSTRUCTIONS,
