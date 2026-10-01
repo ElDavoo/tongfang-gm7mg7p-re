@@ -2120,39 +2120,38 @@ registers:
       The 0x14 is the EC's own constant rather than a thermal difference
       between two fans (issue #247). The instruction that produces the
       second channel from the first is ec/decompiled/bank0/8DE0.asm's
-      "add A, #0xec" at 8EF4 -- 0xEC is -0x14 -- whose other arm at 8EFE
-      clears A first and is where the 0x00 samples come from, so the two
-      observed values are the two branches of one comparison. A difference
-      that is *always* exactly a firmware literal is that literal reaching
-      the published bytes, which is what excludes the reading that the two
-      bytes are two fans in different environments. Not established by
-      this: which physical fan either byte is, and that the pair tracks the
-      two fans' speeds -- the three writers listed above each byte are other
-      paths to the same addresses, so the observed difference is the net of
-      whichever write ran last rather than a read of 0x1804 and 0x1809.
-      Correction to the branch this note used to cite for the constant: the
-      "mov A, #0x14" at 8E01 stores into 0x0672, a separate arming byte
-      that diverts the routine to 0xBEB4, and is not the source of the
-      observed difference. ec/tools/fan_pair_correlation.py reproduces every
-      figure in this paragraph, and adds a third capture
+      "add A, #0xec" at 8EF4 -- 0xEC is -0x14 -- and the observed difference
+      is the output of the comparison that chooses between that arm, a copy
+      arm at 8EF8 that passes 0x1804 through unchanged, and a clear at 8EFE.
+      A difference that is *always* exactly a firmware literal is that
+      literal reaching the published bytes, which is what excludes the
+      reading that the two bytes are two fans in different environments.
+      The captures rule 8EFE out as the source of any observed sample: it
+      would publish 0x1809 = 0 and copy_dptr_byte_to_075c at 8F09 copies
+      that byte into 0x075C -- the 8DE0 fall-through reaching 8F09 by way of
+      call_bb28_on_1804 at 8F03, whose lcall of 0xBB28 returns into it with
+      DPTR still at 0x1809 -- yet no row of 0x075C is zero in any of the
+      three captures, and every equal-difference sample is equal and
+      non-zero. Which writer produced a given equal-difference sample is not
+      something the committed captures can say: 8EF8 makes the pair equal by
+      construction, and so does store_a_to_dptr_then_075c_and_notify (bank0
+      0x8F0F), the byte's other writer, which reads back the byte it has
+      just written through the caller's DPTR and republishes it -- on the
+      route into it at 0x89EB the caller's DPTR is 0x1809, and 0x075B has
+      just taken the same 0x1804 byte. So the observed difference is the
+      choice between the 8EF0 bias and an equal pair, with 8EFE the third
+      arm the captures do not show. Not established by this: which physical
+      fan either byte is, and that the pair tracks the two fans' speeds --
+      the three writers listed above each byte are other paths to the same
+      addresses, so the observed difference is the net of whichever write ran
+      last rather than a read of 0x1804 and 0x1809. Correction to the branch
+      this note used to cite for the constant: the "mov A, #0x14" at 8E01
+      stores into 0x0672, a separate arming byte that diverts the routine to
+      0xBEB4, and is not the source of the observed difference.
+      ec/tools/fan_pair_correlation.py reproduces every figure in this
+      paragraph, and adds a third capture
       (2026-09-18-profile-switch-0400-07ff.csv, 193 paired samples: 0x00 in
       142, 0x14 in 51, nothing else).
-      Correction to the same paragraph's arm count, leaving the sentence it
-      corrects as written: 0x8DE0 has three arms into the store at 8EFF, not
-      two. 8EF0 subtracts 0xEC (-0x14) and is where the 0x14 samples come
-      from; 8EF8 copies 0x1804 through unchanged; 8EFE clears A. The 0x00
-      samples match 8EF8, not 8EFE, and the captures rule 8EFE out as their
-      source: it would publish 0x1809 = 0 and copy_dptr_byte_to_075c at 8F09
-      copies that byte into 0x075C -- the 8DE0 fall-through reaching 8F09 by
-      way of call_bb28_on_1804 at 8F03, whose lcall of 0xBB28 returns into
-      it with DPTR still at 0x1809 -- yet no row of 0x075C is zero in any of
-      the three captures, and
-      every equal-difference sample is equal-and-non-zero. So the observed
-      difference is the choice between the 8EF0 bias and the 8EF8 copy, with
-      8EFE the third branch the captures do not show -- which is the reading
-      the older sentence above this one already gave. The constant itself is
-      unaffected: the 0x14 is still 0x8DE0's own, and neither sentence
-      established which physical fan either byte is.
 
       The name is not settled, and the disagreement is left visible
       rather than resolved. ECSpec calls the pair L and R (left/right);

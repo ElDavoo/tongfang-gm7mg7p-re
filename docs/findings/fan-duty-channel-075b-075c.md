@@ -90,36 +90,44 @@ output of the comparison that chooses between them:
 constant, `0xEC` being `-0x14`, and it is the arm the `0x14` samples come
 from.
 
-**The `0x00` samples are the `0x8EF8` copy, not the `0x8EFE` clear.** An
-earlier version of this write-up read the middle arm as absent and put the
-`0x00` samples on `0x8EFE` instead, on the strength of the same routine's
-committed annotation in `ec/annotations/ghidra-functions.csv` — "writes
-`0x1809` as either 0 or `0x1804-0x14`", a two-valued summary that omits the
-copy arm. The listing settles it the other way:
+**The captures rule out the `0x8EFE` clear; they do not name a writer for the
+rest.** An earlier version of this write-up read the middle arm as absent and
+put the `0x00` samples on `0x8EFE` instead, on the strength of the same
+routine's committed annotation in `ec/annotations/ghidra-functions.csv` —
+"writes `0x1809` as either 0 or `0x1804-0x14`", a two-valued summary that
+omits the copy arm. The two claims below are separate, and only the first is
+an exclusion:
 
 - `0x8EFE` clears `A`, so that arm publishes `0x1809 = 0x00`, and
   `copy_dptr_byte_to_075c` then copies that byte into the published `0x075C`.
   The `0x8DE0` fall-through reaches it: `0x8F02` is the last instruction of
   that routine, `0x8F03` publishes `0x1804` through `call_bb28_on_1804`, and
   the `ret` at the end of `0xBB28` lands in `copy_dptr_byte_to_075c` with
-  `DPTR` still addressing `0x1809`. (The other `0x075C` writer,
-  `store_a_to_dptr_then_075c_and_notify`, is entered from `0x89EB` and opens
-  by writing `A` through the caller's `DPTR`, so it does not carry `0x1809`
-  into `0x075C` and is not on this path.) A clear at `0x8EFE` would therefore
-  show up at `0x075C` as `0x00` — **and no row of `0x075C` is zero in any
-  capture**, spanning 0x32-0xC7, 0x3C-0x84 and 0x33-0xC8.
+  `DPTR` still addressing `0x1809`. A clear at `0x8EFE` would therefore show
+  up at `0x075C` as `0x00` — **and no row of `0x075C` is zero in any
+  capture**, spanning 0x32-0xC7, 0x3C-0x84 and 0x33-0xC8. Nothing else is
+  needed for that, and no other writer is excluded by it.
 - The `0x00` differences are equal-and-**non-zero** pairs: every one of the
-  347, 297 and 142 equal-difference samples has `0x075B == 0x075C != 0`. That
-  is the signature of `0x8EF8`, which copies `0x1804` through unchanged and
-  so makes the two channels equal by construction.
+  347, 297 and 142 equal-difference samples has `0x075B == 0x075C != 0`. Two
+  committed writers produce exactly that signature, and the captures do not
+  say which of them ran. `0x8EF8` copies `0x1804` through unchanged, so it
+  makes the two channels equal by construction. So does
+  `store_a_to_dptr_then_075c_and_notify`, the byte's other writer: it writes
+  `A` through the caller's `DPTR` and then reads that same byte straight back
+  before publishing it, so it republishes whatever the caller's `DPTR` held —
+  and on the route into it at `0x89EB` the caller has just read `A` from
+  `0x1804` and loaded `DPTR` with `0x1809`, having put the same `0x1804`
+  byte into `0x075B` two instructions earlier. That route leaves the pair
+  equal and non-zero as well.
 
-So the difference is still firmware branch output — that part of the claim
-stands — but it is the choice between the `0x8EF0` bias and the `0x8EF8`
-copy, and `0x8EFE` is the third branch, the one the captures do not show.
-A third branch that would publish a zero nobody recorded is a fact about the
-branch, not evidence that the zero was never taken; it does not narrow the
-reading of the two values that were, and the fan identification stays where
-§6 leaves it.
+So the difference is still the EC's own constant reaching the published bytes
+rather than a thermal difference between two fans — that part of the claim
+stands. What the captures add is narrower than a naming: they rule out one of
+`0x8DE0`'s three arms, and they do not choose between the two writers that
+make the pair equal. `0x8EFE` is the branch they do not show, and a branch
+that would publish a zero nobody recorded is a fact about the branch, not
+evidence that the zero was never taken. Neither reading narrows what the two
+observed values were, and the fan identification stays where §6 leaves it.
 
 **One correction worth making, because the plan this issue came from had it
 wrong.** There are two `0x14` literals in `0x8DE0`, and they do different
@@ -172,7 +180,7 @@ is the anchor and each duty series is read forward to it, so every pair is
 channel.** 0.468 against 0.507 is a difference of 0.04, but the two duty
 series are not two measurements that a larger sample might pull apart: at
 every anchor `0x075C == 0x075B - 0x14·mask` exactly, so `0x075C` carries
-nothing `0x075B` does not already carry, plus which of the three arms of §2
+nothing `0x075B` does not already carry, plus the offset one of §2's writers
 published. That is the same `{0x00, 0x14}` difference §2 establishes,
 arrived at here by a different route, and it is a statement about the
 firmware's branch rather than about two fans in different thermal
@@ -362,8 +370,10 @@ The `0x14` reading that was already in the note is not retracted — it was
 recorded as "the offset the `0x8DE0` branch above produces", which is what §2
 confirms. What §2 adds is the exclusion of the alternative reading (two fans in
 different thermal environments), which the note had left open by not saying
-which explanation it favoured. Nothing is corrected *over*; the PR #237 text
-stays visible beside this.
+which explanation it favoured. That exclusion rests on the `0x8EFE` arm and on
+no writer being named for the rest, so the note records the arm count and the
+captures' refusal without naming a source for the equal-difference samples.
+Nothing is corrected *over*; the PR #237 text stays visible beside this.
 
 ## 8. Reproducing every figure
 
