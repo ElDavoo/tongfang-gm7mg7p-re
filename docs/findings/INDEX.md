@@ -81,6 +81,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
 - [`findings-index-staleness.md`](findings-index-staleness.md) — The index is hand-edited by merges and nothing runs the check that would catch it (issue #1137)
 - [`fixture-empty-pointer-cells.md`](fixture-empty-pointer-cells.md) — The fixture's six empty cells are not a count, and the set is derivable where the six is not (issue #1006)
+- [`gate-arm-coverage.md`](gate-arm-coverage.md) — What issue #318 asked for is already in the gate; what was missing is what holds it there (2026-10-01, issue #318)
 - [`grader-merged-capture-sources.md`](grader-merged-capture-sources.md) — The merged timer-sweep run took its sample interval and its byte levels from one file each, and now refuses a merge whose files disagree (issue #1377)
 - [`grader-repeated-capture.md`](grader-repeated-capture.md) — A repeated capture opens phantom windows in the door grader and a ZeroDivisionError in the timer grader, and the rule that closes it is identity rather than a single capture (issue #491)
 - [`group-check-drift-and-shared-basis.md`](group-check-drift-and-shared-basis.md) — `group_functions.py --check` re-runs the rule, and `shared` was a basis no rule emitted (issue #442)
