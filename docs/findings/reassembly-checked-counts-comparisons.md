@@ -13,12 +13,15 @@ the head of `docs/findings.md` §11, at the restatement in §11a, at §13, at §
 at §14g, at the §14h table row, and in `ec/ghidra/README.md`. This file is the
 derivation behind those corrections and the questions it leaves open.
 
-Every figure below is printed by a command, at run time, from the committed
-file. None is transcribed, and the reason is not tidiness:
-`ec/tools/verify_gap_text.py`'s `EXPECT_CHECKED = 45394` was a hand-kept count
-of the same stream, the export grew underneath it, and it was red on the tree
-this started from without anything noticing — it is in no gate, which is the
-whole of how a stale figure survives.
+Every census figure below is re-derived at run time by
+`ec/tools/reassembly_checked_bound.py --check` from the committed file and
+attributed to the commit it was measured at; the tables are transcriptions of
+that run, not values any gate holds. That is the property worth keeping, and
+the reason is not tidiness: `ec/tools/verify_gap_text.py`'s
+`EXPECT_CHECKED = 45394` was a hand-kept count of the same stream, the export
+grew underneath it, and it was red on the tree this started from without
+anything noticing — it is in no gate, which is the whole of how a stale figure
+survives.
 
 ## The two return sites, and what each one means
 
@@ -108,11 +111,18 @@ $ python3 ec/tools/reassembly_checked_bound.py --check
 **44,816 is a ceiling, not a figure, and the difference matters.** The 702 are
 the only instructions this file proves did not reach a comparison. The four
 rows in the middle class stopped part-way through — `bank0 D091` at 0xD169,
-`bank1 D946` at 0xDA6E after 176 instructions in, `bank1 ED3A` at 0xEDA7,
+`bank1 D946` at 0xDA6E after 148 instructions in, `bank1 ED3A` at 0xEDA7,
 `pd 4D6F` at 0x4B12 — and each contributed some number above zero that the
 committed file does not record, because a row's model is a count and the first
 address with no entry, not the set of them. The real figure is below 44,816 and
 this change cannot recover by how much.
+
+`D946`'s 148 is walked off the committed listing rather than read out of the
+row: `bank1/D946.asm` runs 0xD946–0xDAAC, and 148 of those instructions — 296
+bytes, ending at 0xDA6D — sit below the 0xDA6E its own `detail` names. The
+row's `instructions_checked` is 176, which is the whole row: the number the
+issue's "176 in" column carried, and exactly the translation count this file is
+about.
 
 **These numbers have already moved once.** The issue was filed against a file
 of 2,705 rows and 45,537 instructions; the committed CSV is now 2,717 rows and
@@ -232,9 +242,9 @@ line does not match; that is a statement about the regex, not about what any
 particular run produced.
 
 **The cause may be per-row rather than global.** `bank0 E9DE` is a one-address
-failure on a 35-instruction row and `bank1 D946` is a 176-instruction failure
-on a much longer one; a single global cause would have to explain both, and
-nothing measured here does.
+failure on a 35-instruction row and `bank1 D946` stops part-way into a much
+longer one; a single global cause would have to explain both, and nothing
+measured here does.
 
 **What would settle it.** Re-reporting `ec/ghidra/reassembly.csv` under the
 pinned build (#157) does one half: rows that move tell you the apt build's

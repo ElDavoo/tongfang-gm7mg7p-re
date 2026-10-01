@@ -114,9 +114,10 @@ committed rows came from.
 
 `evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv` already records both
 rows moving `assembler-gap` → `match` under this build, and
-`bank1/D946` (the 47th row, 176 instructions in before it stops) with them. It
-records the outcomes; it does not commit a listing, which is what it would
-take to read one.
+`bank1/D946` (the 47th row, 148 instructions in before it stops — walked off
+the committed `ec/decompiled/bank1/D946.asm`, which ends at 0xDA6D before the
+0xDA6E its `detail` names) with them. It records the outcomes; it does not
+commit a listing, which is what it would take to read one.
 
 ## Reproduce
 
