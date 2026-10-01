@@ -69,12 +69,12 @@ names the allowance either way.
 
 ## Why enumeration and not section scoping
 
-The alternative — scope the search to the sections that name the three (§3, §4,
-§4.1) — does not reach the same bar. Measured the same way, that scoping still
-admits a long list of addresses that are not the three, among them `0x0743`
-(`CTGP_DB_CTRL`), `0x07D4`, `0x07D5` and `0x09E9`. A register address and a
-source byte are not sites, and §4's own heading names three of the four census
-registers.
+The alternative — scope the search to the sections that name the entries in
+the table above (§3, §4, §4.1) — does not reach the same bar. Measured the same
+way, that scoping still admits a long list of addresses that are not in that
+table, among them `0x0743` (`CTGP_DB_CTRL`), `0x07D4`, `0x07D5` and `0x09E9`.
+A register address and a source byte are not sites, and §4's own heading names
+census registers rather than sites.
 
 Enumeration is also the reading that survives an edit to the document: a scoped
 regex widens silently every time somebody writes a new section, and there is no

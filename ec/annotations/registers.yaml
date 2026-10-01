@@ -5063,7 +5063,10 @@ registers:
       ec/annotations/ec-0x07c5-sites.md, with the table in
       ec/annotations/ec-0x07c5-sites.csv: all ten are in the main EC and none in
       the PD image, six read the byte and four read-modify-write it, and none
-      writes it outright. The four masks clear bit 7, bit 5, bit 5 and bit 7, so
+      writes it outright. A read there is what the per-site window reached, not
+      a statement that the site does not write: 0x8410's window stops at a
+      branch and the bit-6 clear is three bytes past it, and that file's §3.2
+      says so. The four masks clear bit 7, bit 5, bit 5 and bit 7, so
       two of them (0xAD8C and 0xCC6B, anl a,#0xdf) clear the bit position the
       ASL names WHMS, in two separately named init routines. That is a fact
       about the instruction stream and not that the EC acts on WHMS: no site

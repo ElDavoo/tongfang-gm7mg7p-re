@@ -3,11 +3,11 @@
 `0x07C5` is `WHMS` in the DSDT's ECMG field list (`evidence/acpi/dsdt.dsl:52243-52245`:
 `Offset (0x7C5)`, five unnamed bits, then `WHMS, 1`, so bit 5) and it is carried
 in `ec/annotations/registers.yaml` as `WHMS`, bit 5, `present-untested`. The
-four-byte block it sits in is the one `docs/findings.md` §4o reads as a GPU
-dynamic-boost control, and this file is the EC-side walk of its one member that
-[`ec-07c4-07d5-sites.md`](ec-07c4-07d5-sites.md) §9 handed to #106 and #101
-rather than doing: 10 direct `MOV DPTR` references in the main EC image, where
-each one is, what its bits do, and what the ten do not settle.
+`0x07C4`-`0x07D7` block it sits in is the one `docs/findings.md` §4o reads as
+a GPU dynamic-boost control, and this file is the EC-side walk of its one
+member that [`ec-07c4-07d5-sites.md`](ec-07c4-07d5-sites.md) §9 handed to #106
+and #101 rather than doing: 10 direct `MOV DPTR` references in the main EC
+image, where each one is, what its bits do, and what the ten do not settle.
 
 **Read the headline before the tables.** All ten sites are in the main EC
 firmware and **none** is in the separate `ITE8850-PD` image — the opposite of
