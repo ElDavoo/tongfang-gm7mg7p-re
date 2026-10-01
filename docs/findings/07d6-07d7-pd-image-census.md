@@ -55,9 +55,11 @@ method**, in the same form §4o states the negative for `0x1173`.
 
 `0x07D6` is `DBSP`, the field declared immediately after `CPUA` and `DBAP`
 (`dsdt.dsl:52257`), which allocates it 8 bits. **That declaration is the whole
-of its ASL life:** grepping the DSDT for the field name and for the address
-returns that one line and nothing else, so no ASL method reads or writes this
-byte.
+of its ASL life:** the field-name grep returns that one declaration line, and
+the address grep returns one other line — `OSYS = 0x07D6` at `dsdt.dsl:20942`,
+an `_OSI ("Windows 2006")` constant inside `_INI`'s OS-version probe, with
+nothing to do with the `ECMG` region. Neither line is an EC access, so no ASL
+method reads or writes this byte.
 
 The firmware scan finds **142** direct `MOV DPTR` sites for `0x07D6`, again all
 `pd-image`, and again `0` in the main EC firmware. So this byte has the mirror
@@ -109,7 +111,7 @@ in the direction `absent` invites. Issue #110 owns the specific blind spot that
 has to close first: the computed-`DPTR` form, where the EC reaches a page by
 building `DPH` at run time instead of with `mov dptr,#imm`, and which no
 `MOV DPTR` scan sees. `0x07B9` is writable and working with no direct reference
-anywhere in the image; `0x07D6` and `0x07D7` have a DSDT writer and a DSDT name
+anywhere in the image; `0x07D6` and `0x07D7` have a DSDT name and a DSDT writer
 respectively, so neither is the same case — but neither is a case the scan can
 rule on either.
 

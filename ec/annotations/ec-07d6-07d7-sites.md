@@ -692,8 +692,9 @@ branch is not an observed one, and the test that would decide it is a human's.
 **CORRECTION** (issue #323, 2026-10-01), leaving the paragraph above as it was
 written. The gap it names has been closed since, and the two claims about the
 tool are stale rather than open: `ACPI_ARGS` now reads
-`[0x1171, 0x1172, 0x1173, 0x1175, 0x1176, 0x2273]`, `0x1176` is in
-`EXPECTED_CONTROL`, and `--self-check` passes against the committed tree. The
+`[0x1171, 0x1172, 0x1173, 0x1175, 0x1176, 0x2273]`, `EXPECTED_TEXT`'s
+`CONTROL evidence/acpi/dsdt.dsl` entry carries `"0x1176": 1`, and
+`--self-check` passes against the committed tree with `dnfile` installed. The
 census reports **one `0x1176` hit, in the DSDT control**, which is the
 `ElseIf` branch quoted above and not a caller of it, so **no caller of `T1WR`
 with `Arg0 = 0x1176` was found by this method** — the census is quoted in §4o,

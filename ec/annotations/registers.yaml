@@ -4789,8 +4789,9 @@ registers:
       ec/annotations/ec-07d6-07d7-sites.md section 8.
       *** CORRECTION (issue #323, 2026-10-01), stated in place: the
       sentences above are stale, not open. ACPI_ARGS now reads
-      [0x1171, 0x1172, 0x1173, 0x1175, 0x1176, 0x2273], 0x1176 is in
-      EXPECTED_CONTROL, and --self-check passes against the committed tree;
+      [0x1171, 0x1172, 0x1173, 0x1175, 0x1176, 0x2273], EXPECTED_TEXT's
+      CONTROL evidence/acpi/dsdt.dsl entry carries "0x1176": 1, and
+      --self-check passes against the committed tree with dnfile installed;
       the census reports one 0x1176 hit, in the DSDT control, which is the
       ElseIf branch itself and not a caller of it. So no caller of T1WR
       with Arg0 == 0x1176 was found by this method, and the census it comes
