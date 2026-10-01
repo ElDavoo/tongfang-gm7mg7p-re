@@ -4,14 +4,24 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Runs three iterations of a counter held in R5; each iteration calls 0xD078 twice, and a first
-   return of 0x14 sets bit 0 of XDATA 0x0816 while a second return of 0x32 from the same call sets
-   bit 1 -- the two calls sit at the same point in the loop, so both tests see the same value. After
-   the loop, if XDATA 0x0816 reads exactly 3 it sets bit 7 of AP_OEM at XDATA 0x0741, which
-   registers.yaml documents as the BIOS overclock-recovery request. What address 0xD078 reads is not
-   determined from this listing, and 0x0816 has no entry in ec/annotations/registers.yaml.
+/* Scans XDATA 0x0B00-0x0BFC, 253 bytes, for the marker bytes 0x14 and 0x32, and raises bit 7 of
+   AP_OEM (0x0741) once both have been seen. It zeroes R5 and loops while R5 is not 0xFD -- the
+   back-edge is `b4 fd e1` at 0xCFE4 (`cjne A,#0xfd,0xcfc8`), so R5 counts 0x00 to 0xFC and the loop
+   runs 253 times. Each iteration calls 0xD078 twice, which reads XDATA[0x0B00 + R5]; R5 is not
+   advanced between the two calls, so both tests see the same byte and one byte cannot satisfy both.
+   0x14 sets bit 0 of 0x0816 and 0x32 sets bit 1, and after the loop `b4 03 07` at 0xCFEB (`cjne
+   A,#0x3`) reads 0x0816 with the equal case running `90 07 41 e0 44 80 f0 22` at 0xCFEE. The loop
+   count was previously annotated as three iterations, which the back-edge bytes falsify: the Ghidra
+   C renders `cjne A,#0xfd` as `cVar1 != -3`, and 0xFD read as a signed char is what made three
+   plausible. Under that reading the region looked like three bytes and the result was
+   uninterpretable; the correction is in place per CLAUDE.md's calibration rule and the argument is
+   docs/findings/0741-bit7-oc-recovery.md. 0x0816 has no entry in ec/annotations/registers.yaml, and
+   what puts 0x14 and 0x32 into the region is not determined by any method in this tree --
+   find_indirect_xdata.py resolves 0 of 91 anchored `movx @Ri` sites on page 0x0B, so no writer is
+   found, which is not the same as there being none.
    type: logic
-   evidence: ec/decompiled/bank0/CFC6.asm; ec/decompiled/bank0/CFC6.c; ec/annotations/registers.yaml
+   evidence: ec/decompiled/bank0/CFC6.asm; ec/decompiled/bank0/CFC6.c;
+   ec/annotations/registers.yaml; docs/findings/0741-bit7-oc-recovery.md
    basis: hand-decoded
    name_basis: code-shape */
 

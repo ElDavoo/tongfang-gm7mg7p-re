@@ -181,8 +181,20 @@ registers:
       0xA2 41, 0xA4). If bit 7 is set, it disables CpuSetup "OverClocking
       Feature", sets UniWillVariable.OverClockRecoveryFlag, and writes the
       byte back with bit 7 cleared (0xA5). So bit 7 reads as an
-      "overclock failed, recover" request from the EC. Which EC code sets it,
-      and when, is not traced; the status above is for bit 0 only.
+      "overclock failed, recover" request from the EC. The EC side is now
+      traced: one instruction sets it, at bank0 0xCFEE, at the tail of
+      collect_two_flags_into_0816_then_raise_ap_oem_bit7 at 0xCFC6. That
+      routine scans XDATA 0x0B00-0x0BFC for the marker bytes 0x14 and 0x32,
+      latching what it finds in the two-bit accumulator 0x0816, and sets
+      bit 7 only when 0x0816 reads exactly 3 -- that is, when both markers
+      have been seen at different offsets. This is a reading of the code,
+      not a statement that the EC ever ran it or that a recovery occurred:
+      what puts those two bytes in the region is not found by any method in
+      this tree, so whether the request reflects a real overclock outcome is
+      untested and needs the machine. The write-up, with the bank/address
+      citations and the searches that did not find a writer, is
+      docs/findings/0741-bit7-oc-recovery.md; the status above is for
+      bit 0 only.
 
   - name: CTGP_DB_CTRL / OFFSET
     addr: [0x0743, 0x0744, 0x0745, 0x0746]
