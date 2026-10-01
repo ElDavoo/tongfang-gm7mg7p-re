@@ -1,9 +1,22 @@
-# Direction A's fallback was a search over a whole write-up, and it is now three named addresses
+# Direction A's fallback was a search over a whole write-up, and it is now named addresses
 
 (2026-10-01. Static arithmetic over committed files at `2a7aad70`. No EC is
 opened, no register is read back, no laptop or Windows machine is involved:
 every figure below is a count of strings in a file in this repository, and each
 is given with the pattern that produces it. Nothing here is hardware evidence.)
+
+**Amendment, at the merge of #311.** The allowance had three entries when this
+was written and has four now. `bank0:0xBB80` joined it: #311 walked `0x07C5` in
+`ec/annotations/ec-0x07c5-sites.csv`/`.md` and corrected that cell's credit of
+`0xBB80` as this byte's only writer, but the cell still *cites* the address —
+it cites it precisely to say the `[writer]` tag is wrong — so the tightened
+direction A rejects a citation the census does not carry and the walk names.
+The count is restated where it appears below; the argument, the enumeration
+shape and the perturbations are unchanged, and the fourth entry is the same
+kind of thing as the first three. `0xBB80` is a fourth *kind*, though — a
+`movx @DPTR,A` against an inherited `DPTR` rather than a routine entry or a
+call — which is recorded here because it is the first entry the shape did not
+anticipate.
 
 ## What the fallback was, and what it admitted
 
@@ -13,7 +26,7 @@ census: an address a cell cites must either be a bank0 site in
 `ec/annotations/ec-07c4-07d5-sites.csv` or be something the walk named in
 prose.
 
-The second half is not a convenience. Three of the addresses the cells cite are
+The second half is not a convenience. Four of the addresses the cells cite are
 not `MOV DPTR` sites at all:
 
 | address | what it is | why the CSV has no row |
@@ -21,6 +34,7 @@ not `MOV DPTR` sites at all:
 | `bank0:0x83FF` | routine entry `sync_0788_and_07d4_from_09e9` | the routine *contains* the `0x07C4`/`0x07D4`/`0x07D5` sites; it is not one |
 | `bank0:0x94C0` | routine entry `set_07c4_bit4_from_r7` | the `MOV DPTR,#0x07C4` the 8-instruction walk stops on is at `0x94C1` |
 | `bank0:0x9711` | the single `lcall 0x94C0` | a caller, not an access |
+| `bank0:0xBB80` | `store_a_then_read_07c5`, a `movx @DPTR,A` | it stores against whatever `DPTR` the caller left and never loads the address; the `0x07C5` access in that pair is the read at `0xBB81`, which **is** a census row (`ec/annotations/ec-0x07c5-sites.md` §2.1) |
 
 That fallback was implemented as `re.search` for the address anywhere in
 `ec/annotations/ec-07c4-07d5-sites.md`. The document is a write-up of the whole
@@ -35,31 +49,32 @@ spellings gives **153**. The document is 902 lines at this commit.
 
 **The exact figure is not the claim and nothing here rests on it** — both the
 document and the counting pattern move the number. The claim is that every way
-of counting gives something tens of times wider than three.
+of counting gives something tens of times wider than the handful of addresses
+the data actually needs.
 
 ## What it is now
 
-`NON_SITE_CITATIONS` names those three addresses, each with a note saying what
+`NON_SITE_CITATIONS` names those four addresses, each with a note saying what
 it is, and direction A admits a citation on membership in it. The census is no
 weaker for it: the two directions between them still pin every address, and
 this narrows only the half that could not see a citation failing to resolve.
 
 The `.md` still backs the allowance — `test_the_fallback_is_exactly_the_
-addresses_the_census_does_not_carry` asserts each of the three is named in it,
+addresses_the_census_does_not_carry` asserts each of the four is named in it,
 and asserts the derived fall-through set equals the constant's keys in *both*
-directions. So a cell citing a fourth non-site address fails, and so does a
+directions. So a cell citing a fifth non-site address fails, and so does a
 constant grown past what the data needs. The `.md` naming is checked once, in
 the guard, rather than on every address in a 902-line document: the failure
 names the allowance either way.
 
 ## Why enumeration and not section scoping
 
-The alternative — scope the search to the sections that name the three (§3, §4,
-§4.1) — does not reach the same bar. Measured the same way, that scoping still
-admits a long list of addresses that are not the three, among them `0x0743`
-(`CTGP_DB_CTRL`), `0x07D4`, `0x07D5` and `0x09E9`. A register address and a
-source byte are not sites, and §4's own heading names three of the four census
-registers.
+The alternative — scope the search to the sections that name the entries in
+the table above (§3, §4, §4.1) — does not reach the same bar. Measured the same
+way, that scoping still admits a long list of addresses that are not in that
+table, among them `0x0743` (`CTGP_DB_CTRL`), `0x07D4`, `0x07D5` and `0x09E9`.
+A register address and a source byte are not sites, and §4's own heading names
+census registers rather than sites.
 
 Enumeration is also the reading that survives an edit to the document: a scoped
 regex widens silently every time somebody writes a new section, and there is no
@@ -71,8 +86,10 @@ edit to the `.md` that makes a scoped fallback report the right thing.
 substituted for `bank0:0x94C0` in the `0x07C4` cell, the tightened check
 reports it — and the test also asserts the old `re.search` *would* have admitted
 the same address. That second half is what makes it a demonstration rather than
-a check that happens to fire: it shows the tightening is the reason. The three
-real addresses are asserted to still pass against the same mutated table.
+a check that happens to fire: it shows the tightening is the reason. The
+allowance's own addresses are asserted to still pass against the same mutated
+table, which is a loop over `NON_SITE_CITATIONS` and so covers the fourth
+entry as well.
 
 **The drop, retargeted.** The issue asks for "drop a genuinely-cited site from
 a cell, and confirm the tightened direction A still fails it". That cannot hold
@@ -101,10 +118,11 @@ only in the two files' own re-registration notes.
 
 ## Follow-up this opens
 
-The three addresses are a shape the census has no vocabulary for: a routine
-entry, and a call site that is not itself a `MOV DPTR` site. Until the census
-can say so, direction A has to carry an exception list — and this change makes
-that list three explicit, checkable names rather than a document-wide regex.
-Whether `ec-07c4-07d5-sites.csv` should grow a row kind for a named entry point,
-which would retire the fallback rather than narrow it, is recorded here and not
-answered.
+The addresses are a shape the census has no vocabulary for: a routine entry, a
+call site that is not itself a `MOV DPTR` site, and — since #311 — a store
+against an inherited `DPTR` carrying a `[writer]` tag the walk found to be
+wrong. Until the census can say so, direction A has to carry an exception list —
+and this change makes that list explicit, checkable names rather than a
+document-wide regex. Whether `ec-07c4-07d5-sites.csv` should grow a row kind for
+a named entry point, which would retire the fallback rather than narrow it, is
+recorded here and not answered.
