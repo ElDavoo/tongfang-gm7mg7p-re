@@ -1085,6 +1085,20 @@ magnitude.
    functions call, capped at three with the overflow counted in the cell
    (`(+194 more called by the cluster's functions)`). A cap that is not printed
    reads as "covered" when it is not.
+6. A cluster row's `refs` is the sum of its members' **`refs_main_ec` or
+   `refs_pd`, whichever `program` that cluster carries** — the two per-program
+   columns at 22–23 of `xdata-registers.csv`, added by issue #713 and
+   documented in [`../../docs/findings/xdata-per-program-counts.md`](../../docs/findings/xdata-per-program-counts.md).
+   It is **not** the sum of their unsuffixed `refs`, which gives a `program=both`
+   address its whole count: a shared address inside a `main-ec` cluster
+   contributes only its main-EC half here and its pd half in whichever pd cluster
+   holds it. `size` and `addr_range` are the membership's own (`addr_range` bare
+   when the cluster is one address), so those two are reproducible from `addrs`
+   and this one is not. The two forms sum to the same figure over the whole
+   file, which is what the file's own total check sees and what this column's
+   meaning does not follow from;
+   `ec/tools/check_cluster_refs_projection.py` is what holds it, recomputing
+   every row from those two named columns.
 
 The threshold is a flag (`--threshold`, default **0.50**) and the whole curve.
 The first block is the current one; the second is the pre-#279 tree it
@@ -2269,6 +2283,14 @@ symbol table.
 | `main-ec-010` | `k733571bb7f66` | — | 12 | 35 | `0x00C0`-`0x2275` | none | 0/10 fns, 0 (0%) | `copy_direct_65_66_to_x00c0`, `copy_x00c0_pair_to_iram_67_68` |
 | `main-ec-011` | `k57522564ddd8` | — | 12 | 26 | `0x040A`-`0x0547` | 4 | 2/6 fns, 4 (15%) | `derive_scaled_values_from_0404`, `forwarder_to_ad8b`, `update_0492_from_0490_0524` — §4.7's `write_r1r2_to_xdata_pair(0x40a…)` block |
 | `main-ec-012` | `k2a30862cf8eb` | — | 11 | 43 | `0x045E`-`0x1F07` | 4 | 8/21 fns, 3 (7%) | `magic_55aa_and_0704_countdown`, `init_1f01_1f06_1f07`, `count_down_06e4_and_toggle_06e3` |
+
+**The `refs` column is the census's per-program figure** — each member's
+`refs_main_ec` or `refs_pd`, whichever this cluster's own `program` is, and
+**not** the sum of their unsuffixed `refs`, which `xdata-registers.csv` gives
+those same addresses whole. The two come to the same total over the whole file,
+which is what makes the difference invisible in a total and dominant on a small
+row; `check_cluster_refs_projection.py` recomputes every row of this column
+from those two per-program columns and asserts it.
 
 The `co-reading` column is §4.5's `co_reading / functions_touched` and
 `co_reading_refs` as a share, and it is a column rather than a re-sort because

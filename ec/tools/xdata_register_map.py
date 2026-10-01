@@ -5280,3 +5280,17 @@ if __name__ == "__main__":
 # 1,960 rows, bank1 `annotations_applied` 721 -> 724 and `functions_named`
 # 605 -> 608, sum 1,978 -> 1,981) and the `subsystems.md` census bullets it
 # recounts are in `docs/findings/de3c-1c04-to-0563.md` section 7.
+#
+# **`CLUSTER_COLUMNS`' `refs` is the per-program figure, and this is where that
+# is said** because the module docstring cannot say it. `cluster_rows_build()`,
+# called from `build()`, sums the cluster's own program's group, so a
+# `program=both` member of a `main-ec` cluster contributes only its
+# `refs_main_ec` half, and a cluster's `refs` is *not* the sum of its members'
+# unsuffixed `refs` in the registers CSV -- which gives such a member its whole
+# count. `self_test()`'s "the clusters CSV is a projection of the registers
+# CSV" oracle is one number for the whole file and cannot tell the two apart,
+# because the halves sum back to the same total;
+# `check_cluster_refs_projection.py` recomputes every cluster row from the two
+# named per-program columns (`refs_main_ec` / `refs_pd`) instead. The prose side
+# is `../../docs/findings/xdata-cluster-refs-projection.md`, which is also where
+# the arithmetic is.
