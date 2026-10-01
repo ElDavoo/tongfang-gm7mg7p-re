@@ -813,7 +813,7 @@ deciding what its pointer algebra means, which is the same refusal
 evidence that an address is absent** — the classes above are properties of one
 function's opening, and 0x07D0 stays at `unknown-not-absent-DO-NOT-WRITE-BLIND`.
 
-**One stale block above.** The run this section quotes is from
+**A stale block above.** The run this section quotes is from
 2026-09-24 and the tree has moved: the committed report is 2,057 rows and the
 denominator line reads `compared 1047 of 2057 functions, 1008 vacuous; 719
 agreed, 328 disagreed, 2 no-export`. `docs/findings.md` §14i carries the

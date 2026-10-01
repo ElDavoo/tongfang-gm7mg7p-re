@@ -224,8 +224,11 @@ later change that quietly made it fit the issue's reading would fail there.
 §14i leaves `ec/annotations/registers.yaml`'s 0x07D0 at
 `unknown-not-absent-DO-NOT-WRITE-BLIND`: the widened comparison finds 0x07D0 in
 seven PD functions' openings, all `agree`, and says nothing about whether the
-*main EC image* acts on the byte. This census does not move that, and the way
-to say so is a number rather than a reassurance.
+*main EC image* acts on the byte. That seven is §14i's own 2026-09-24 sample;
+the committed report now carries eight, the extra being `pd 0xE8D4`, also
+`agree` — a content count rather than a sample-size one, so §14i's correction
+does not reach it. This census does not move that, and the way to say so is a
+number rather than a reassurance.
 
 Searching the 1,008 `vacuous` rows' decompiles for 0x07D0 **as a symbol the
 body names**, two rows come back, and **both are `pd`** —
