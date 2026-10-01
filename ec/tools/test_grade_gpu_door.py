@@ -167,11 +167,15 @@ class FixtureTests(unittest.TestCase):
                           Path(path).name)
             # 2026-01-01 is the placeholder date this directory's README
             # reserves for constructed inputs, so a real capture pasted over a
-            # fixture would change the date before anything else. The header's
-            # "not a prediction" clause is what keeps the shape above it from
-            # being read as a claim about the machine, so it is checked by the
-            # one word every header carries rather than by the sentence, which
-            # the 72-column wrap can break anywhere.
+            # fixture would change it. It is read from the text because that is
+            # where the header writes it down, and the two-capture pair's
+            # second file is a day later: what it carries is its own header
+            # naming the first file's date, so that file is reached here
+            # through its header and not through its rows. The header's "not a
+            # prediction" clause is what keeps the shape above it from being
+            # read as a claim about the machine, so it is checked by the one
+            # word every header carries rather than by the sentence, which the
+            # 72-column wrap can break anywhere.
             self.assertIn('2026-01-01T', text, Path(path).name)
             self.assertIn('prediction', text, Path(path).name)
 

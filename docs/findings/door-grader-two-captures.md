@@ -12,9 +12,9 @@ that did not cause it, which is what the no-merge decision exists to prevent.
 **Nothing below is a hardware claim.** The evidence is two constructed CSVs in
 `ec/tools/testdata/`, built in a temporary directory where the case needs it,
 and the grader's own source. No image is opened, no register is read back, and
-no EC, laptop or Windows machine is involved. The pair is dated on the
-`2026-01-01` placeholder that directory reserves, so it can never be mistaken
-for a run.
+no EC, laptop or Windows machine is involved. What keeps either file from
+being mistaken for a run is the `CONSTRUCTED INPUT, NOT A CAPTURE` header it
+carries; the dates cannot, because the two are a day apart on purpose.
 
 ## What the concatenation did, on the committed fixtures
 
@@ -166,9 +166,13 @@ capture's contents.
   `test_no_report_moves_a_status_or_claims_an_absence` keeps holding over the
   new fixtures, since it iterates `FIXTURES`.
 - **The fixtures claim nothing.** Both carry the directory's
-  `CONSTRUCTED INPUT, NOT A CAPTURE` header, the `2026-01-01T` placeholder,
-  and the "not a prediction" clause every other row in
-  `ec/tools/testdata/README.md` carries.
+  `CONSTRUCTED INPUT, NOT A CAPTURE` header and the "not a prediction" clause
+  every other row in `ec/tools/testdata/README.md` carries, and
+  `test_each_fixture_is_a_constructed_capture_with_marks` asserts each of the
+  two. Their rows are dated `2026-01-01` and `2026-01-02` — a day apart, which
+  is what keeps either file's rows from falling between the other's marks —
+  and only the first is the placeholder date that test asserts, so the second
+  file's rows are described here rather than checked.
 - **Marks are not merged, on purpose.** `coalesce_marks` is still not called
   and `collided_marks` still compares for equality alone; the per-`source` cut
   assigns changes within a capture and widens no threshold.
