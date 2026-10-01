@@ -86,12 +86,13 @@ it, and each capture's §6 closing counts its own windows. The premise is the
 one above -- one watcher on one console, one mark per action boundary -- read
 one file at a time, and the alternative (one path, full stop) was declined in
 `docs/findings/grader-repeated-capture.md` so that the three `nargs="+"`
-capture graders keep one rule over one input shape. What is refused instead is
-the one case the cut cannot grade: a change row that falls *between* two marks
-of another file, where the marks that would say which action it belongs to are
-in the other file and no boundary between the two is knowable. That is the
-shape `ec_watch.py` and `gpu_block_watch.py` produce when both are run at once,
-which is why it is named rather than cut.
+capture graders keep one rule over one input shape. The whole of it is that a
+capture's rows are graded against its own marks and nothing else, so a change
+row of one file falling between two marks of another is a row of the first,
+filed under a mark of the first, exactly as it would be if the other capture
+had not been named. Nothing here depends on the two captures being far apart in
+time, which is the shape `ec_watch.py` and `gpu_block_watch.py` produce when
+both are run at once.
 
 **The ms figure is a sweep, not a clock.** Both timestamps are the sweeps that
 saw the change, so the delta between them is good to about one `--interval`
@@ -263,51 +264,6 @@ def capture_runs(paths, marks, changes):
     return [runs[key] for key in order]
 
 
-def interleaved_rows(runs):
-    """The (source, change, mark, next mark) quadruples that interleave.
-
-    A change row of one capture landing between two marks of **another**, and
-    never one of a capture's own rows between its own marks: that is what an
-    action's movement looks like, and refusing it would refuse every window
-    this tool exists to open. Compared on `capture_key` rather than on
-    `source`, so a file handed in under two spellings is one capture and its
-    rows are not another capture's.
-
-    It is the shape the per-`source` cut cannot grade rather than one it
-    merely grades differently. A row here belongs to no window of its own
-    capture (it is outside that capture's marks) and to no window of the other
-    (the cut keeps each capture's windows to its own marks), so it is
-    attributed to nothing while the report counts windows over both files.
-    Filing it under the mark it fell between is the other answer, and it is
-    the mis-attribution the no-merge decision above exists to prevent,
-    arrived at from the other side.
-
-    A two-file run whose files cover separate intervals is the two runs it
-    is, and is graded as such. That is the reachable operator case too:
-    `ec_watch.py` and `gpu_block_watch.py` write the same schema on purpose,
-    so a sweep graded beside a door capture is a well-formed command line --
-    and it interleaves exactly when both watchers were running at once, which
-    is the case where the marks that would say which action a row belongs to
-    are in the other file.
-
-    The marks are sorted per capture before this is called, by `main` and by
-    the same rule `build_windows` uses, so `zip(marks, marks[1:])` is a walk
-    over adjacent pairs. The comparison is on the parsed datetime, for the
-    reason `collided_marks` gives: a capture assembled by hand spells one
-    instant more than one way.
-    """
-    out = []
-    for source, marks, changes in runs:
-        for other, other_marks, _ in runs:
-            if fan.capture_key(other) == fan.capture_key(source):
-                continue
-            for a, b in zip(other_marks, other_marks[1:]):
-                for c in changes:
-                    if a.ts <= c.ts < b.ts:
-                        out.append((source, c, a, b))
-    return out
-
-
 def build_windows(runs):
     """Assign every change to the last mark at or before it, per capture.
 
@@ -471,6 +427,12 @@ def report_close_marks(runs):
     last capture's included -- one sequence rather than a loop per capture, so
     a run of one file walks its own pairs exactly as it did before.
 
+    Captures are walked in the order the command line named them, not in
+    chronological order, and the gap is taken as a distance for that reason.
+    Naming them the other way round is a well-formed command line and prints
+    the same note with the same two files in it; a boundary is a fact about
+    the command line either way.
+
     The threshold check is unchanged and is not a merge, and not a warning
     about the capture: the two stay two windows, because §3 paces them ~30 s
     apart and a run where they are not is a run whose pacing is worth seeing.
@@ -480,7 +442,16 @@ def report_close_marks(runs):
     """
     flat = [w for _, marks in runs for w in marks]
     for a, b in zip(flat, flat[1:]):
-        gap = (b.ts - a.ts).total_seconds()
+        # By absolute value, because this walk follows the order the captures
+        # were named in rather than the order they happened: grading
+        # `later.csv` then `earlier.csv` puts the later capture's last mark
+        # first, and the difference comes out negative. A gap is a distance
+        # between two instants and has no sign, and the note says "apart".
+        # Sorting the flat sequence by timestamp instead would fix the figure
+        # for captures that are far apart and make it worse for the ones that
+        # overlap: their marks interleave, so the boundary is crossed more
+        # than once and the crossings after the first are negative anyway.
+        gap = abs((b.ts - a.ts).total_seconds())
         if fan.capture_key(a.source) != fan.capture_key(b.source):
             print(f"\n  note  {a.source} ends at {a.label!r} and {b.source} "
                   f"begins at {b.label!r}, {gap:.1f}s apart.")
@@ -798,44 +769,6 @@ def main(argv=None):
               "mark deleted. Two marks a millisecond apart are two windows "
               "and are graded as two; nothing is fused here. Give the two "
               "actions two instants.", file=sys.stderr)
-        return 1
-
-    # The one case the per-capture cut does not grade, and the reason the cut
-    # is not a licence to hand in whatever two files are to hand. Also before
-    # `build_windows`, on the same grounds as the refusal above: a refusal
-    # that lands after a report is a half-right report, and a row filed under
-    # a mark from another file is the mis-attribution this module's whole
-    # argument is against.
-    crossings = interleaved_rows(runs)
-    if crossings:
-        for source, c, a, b in crossings:
-            print(f"\n{source} records 0x{c.addr:04X} at "
-                  f"{c.ts.isoformat()}, between the marks {a.label!r} "
-                  f"({a.ts.isoformat()})", file=sys.stderr)
-            print(f"and {b.label!r} ({b.ts.isoformat()}) in {a.source}.",
-                  file=sys.stderr)
-        print("Two captures are one run when one file's change rows fall "
-              "between two marks of", file=sys.stderr)
-        print("another, and nothing says which action those rows belong to: "
-              "the marks that would", file=sys.stderr)
-        print("say are in the other file, and the reader is left with a "
-              "movement filed under an", file=sys.stderr)
-        print("action that may not have caused it -- the same error this "
-              "grader refuses to", file=sys.stderr)
-        print("make between two marks one millisecond apart, arrived at from "
-              "the other side. So", file=sys.stderr)
-        print("nothing was graded. What this is not is a claim that the two "
-              "files cannot be read: run", file=sys.stderr)
-        print("them one at a time and each is a capture of its own, and this "
-              "says nothing about", file=sys.stderr)
-        print("whether any byte moved. It is also the shape two watchers "
-              "running at once produce,", file=sys.stderr)
-        print("since `ec_watch.py` and `gpu_block_watch.py` write the same "
-              "schema on purpose --", file=sys.stderr)
-        print("which is why it is named rather than silently cut. Grade one "
-              "capture per invocation,", file=sys.stderr)
-        print("or merge the two into one capture whose own marks bracket "
-              "both files' rows.", file=sys.stderr)
         return 1
 
     built = build_windows(runs)

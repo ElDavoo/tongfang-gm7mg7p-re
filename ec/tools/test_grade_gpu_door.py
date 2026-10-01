@@ -525,6 +525,23 @@ class TwoCaptureTests(unittest.TestCase):
         rc, out, _ = run(CLOSE_MARKS)
         self.assertEqual(rc, 0)
         self.assertIn("are 1.0s apart, inside the 5s flag threshold", out)
+        # The same pair named the other way round. The walk follows the order
+        # the command line gave rather than the order the captures happened,
+        # so the later capture's last mark comes first and the gap would come
+        # out negative; it is printed as a distance, which has no sign. The
+        # note itself is the same either way -- a boundary is a fact about the
+        # command line, not about which file is older.
+        rc, out, err = run(TWO_FILES_B, TWO_FILES_A)
+        self.assertEqual(rc, 0, out + err)
+        reversed_note = unwrapped(out.split('  note  ')[1])
+        self.assertIn('They are two captures and two runs', reversed_note)
+        # The distance is printed as a distance, so the figure carries no
+        # sign whichever file is named first. Which pair of marks the
+        # boundary falls between is not asserted here: naming the files the
+        # other way round puts the walk at a different mark pair, and the gap
+        # above is that walk's, not this one's.
+        self.assertNotRegex(reversed_note, r'-\d[\d.]*s apart')
+        self.assertRegex(reversed_note, r'(?<![\d.-])\d[\d.]*s apart')
 
     def test_the_closing_counts_each_capture_separately(self):
         # A closing per capture, over its own windows. Summed over the pair
@@ -561,9 +578,7 @@ class TwoCaptureTests(unittest.TestCase):
         # a file with change rows and no MARK row used to have those rows
         # filed under another capture's marks, which is the defect. Under the
         # cut they belong to no window at all, so the run is refused by name
-        # rather than reported over with a figure missing. The rows are placed
-        # outside the other capture's marks so this is the *no-marks* refusal
-        # and not the interleave one, which would otherwise be what caught it.
+        # rather than reported over with a figure missing.
         with tempfile.TemporaryDirectory() as tmp:
             marks = _write_rows(Path(tmp) / 'marks.csv',
                                 (('2026-01-01T12:00:10.000+01:00', 'ac plug'),
@@ -615,57 +630,68 @@ class TwoCaptureTests(unittest.TestCase):
         # window to have found movement in.
         self.assertNotIn('third bullet', close.split(f'-- {empty} --')[1])
 
-    def test_rows_that_interleave_another_captures_marks_are_refused(self):
-        # The case the per-capture cut does not grade, and the issue's second
-        # half of "Either way". Built in a temporary directory rather than
-        # added to testdata/, for the reason the `COLLIDING_MARKS` comment
-        # gives: a file in `FIXTURES` is by definition one some run grades,
-        # and this one is one the grader is asked to refuse.
+    def test_rows_that_interleave_another_captures_marks_are_graded(self):
+        # Two captures whose marks overlap in wall-clock time, which is the
+        # shape two watchers running at once produce and which this grades.
+        # Built in a temporary directory rather than added to testdata/, for
+        # the reason the `COLLIDING_MARKS` comment gives: the pair has to
+        # interleave, and the committed fixtures are a day apart so that
+        # neither can fall inside the other's marks.
         a = ('2026-01-01T12:00:10.000+01:00', 'gpu tgp 115W->130W')
         b = ('2026-01-01T12:00:40.000+01:00', 'ac unplug')
-        rows = [('2026-01-01T12:00:11.000+01:00', '0x07C4,0x08,0x28'),
-                ('2026-01-01T12:00:20.000+01:00', '0x07C6,0x00,0x01'),
-                ('2026-01-01T12:00:50.000+01:00', '0x07D3,0x40,0x50')]
+        c = ('2026-01-01T12:00:20.000+01:00', 'fn mode balanced')
+        d = ('2026-01-01T12:00:50.000+01:00', 'gpu tgp 130W->115W')
         with tempfile.TemporaryDirectory() as tmp:
-            first = _write_rows(Path(tmp) / 'marks.csv', (a, b), rows[:1])
-            # The other capture's row lands between the first capture's two
-            # marks, so it is inside a window of that capture and outside
-            # every window of its own -- its own marks are 21 hours away.
-            second = _write_rows(Path(tmp) / 'rows.csv', (a, b), rows[1:])
+            first = _write_rows(Path(tmp) / 'first.csv', (a, b),
+                                [('2026-01-01T12:00:11.000+01:00',
+                                  '0x07C4,0x08,0x28')])
+            # The second capture's marks fall between the first capture's two,
+            # and its rows fall inside the first capture's window. Each is
+            # filed under a mark of its own capture.
+            second = _write_rows(Path(tmp) / 'second.csv', (c, d),
+                                 [('2026-01-01T12:00:25.000+01:00',
+                                   '0x07C6,0x00,0x01'),
+                                  ('2026-01-01T12:00:45.000+01:00',
+                                   '0x07D3,0x40,0x50')])
             rc, out, err = run(str(first), str(second))
-        self.assertEqual(rc, 1)
-        # Unwrapped, for the reason `unwrapped` gives: the message is printed
-        # to ~72 columns, so a phrase a test reads as one sentence is three
-        # lines here.
-        flat = unwrapped(err)
-        # Both files named, the row, and the two marks it fell between, so
-        # the operator can see which pair of marks to look at rather than
-        # being told only that there is one.
-        self.assertIn(str(second), flat)
-        self.assertIn('records 0x07C6 at 2026-01-01T12:00:20', flat)
-        self.assertIn("between the marks 'gpu tgp 115W->130W'", flat)
-        self.assertIn("and 'ac unplug'", flat)
-        # The two are two runs, and the refusal says the reader can still
-        # grade them one at a time rather than being told the files are
-        # unreadable. It claims nothing about whether a byte moved.
-        self.assertIn('Two captures are one run', flat)
-        self.assertIn('run them one at a time and each is a capture of its '
-                      'own', flat)
-        self.assertIn('this says nothing about whether any byte moved', flat)
-        for word in ('absent', 'unused', 'unreferenced'):
-            self.assertNotIn(word, err)
-        # Refused before any window is built, so there is no report to be
-        # half-right. The four window sections are checked as four: one being
-        # absent does not stand in for the others.
-        for absent in ('window(s), one per mark', 'window delta',
-                       "=== §5's ten columns ===",
-                       '=== what this does and does not settle ==='):
-            self.assertNotIn(absent, out)
-        # The per-file census line is not on that list, and its being on
-        # stdout is the placement rather than a leak: this refusal needs the
-        # rows, so it runs after `read_capture` where the repeat refusal
-        # cannot.
-        self.assertIn('mark(s),', out)
+            # The data walk is inside the temporary directory rather than
+            # after it, so the two files it re-reads are still there.
+            marks, changes = [], []
+            for path in (first, second):
+                m, c = door.fan.read_capture(path)
+                marks += m
+                changes += c
+            runs = door.capture_runs((str(first), str(second)), marks, changes)
+            for _, own, _ in runs:
+                own.sort(key=lambda w: w.ts)
+            built = door.build_windows(runs)
+        self.assertEqual(rc, 0, out + err)
+        self.assertEqual(err, '')
+        # Each capture is a run of its own, with its own window count.
+        self.assertIn(f'=== 2 window(s), one per mark, none merged === '
+                      f'({first})', out)
+        self.assertIn(f'=== 2 window(s), one per mark, none merged === '
+                      f'({second})', out)
+        # Walked over the data rather than over the report, for the reason
+        # `test_no_window_carries_a_change_row_from_another_capture` gives.
+        seen = 0
+        for _source, windows in built:
+            for w in windows:
+                for c in w.changes:
+                    seen += 1
+                    self.assertEqual(door.fan.capture_key(c.source),
+                                     door.fan.capture_key(w.source),
+                                     f'window at {w.ts.isoformat()} carries a '
+                                     f'row from {Path(c.source).name}')
+        # All three rows are filed, one under the first capture's mark and
+        # two under the second's, so the walk above is not vacuous.
+        self.assertEqual(seen, len(changes))
+        self.assertEqual(len(changes), 3)
+        # And the second capture's rows are reported against its own marks,
+        # seconds after them -- the offsets are the second capture's mark to
+        # its own rows, not the first capture's mark to them.
+        self.assertIn('0x07C6  0x00 -> 0x01   (+5.0s)', out)
+        self.assertIn('0x07D3  0x40 -> 0x50   (+25.0s)', out)
 
     def test_each_capture_of_the_pair_is_a_run_on_its_own(self):
         # The control: each file graded alone still reports what it did

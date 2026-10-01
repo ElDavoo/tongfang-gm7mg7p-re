@@ -68,8 +68,7 @@ without pasting anything.
 ## The rule, and why this one rather than refusing a second path
 
 The issue offers two options. **This takes the second**: keep `nargs="+"` and
-cut windows per `source`, so each file is its own run with its own §6 closing,
-refusing a file whose changes interleave another's marks.
+cut windows per `source`, so each file is its own run with its own §6 closing.
 
 The first option — one positional, full stop — is **defensible and was
 already declined**, and the reason is on file rather than re-litigated here.
@@ -139,30 +138,42 @@ different road. The sentence says both halves: nothing was recorded, which is
 not nothing moved. Such a file is not refused, because there is nothing in it
 to misfile.
 
-## The interleave refusal, and what it is not
+## Captures that overlap in time are graded, not refused
 
-A file's change rows falling **between two marks of another file** are refused
-outright, with both files, the row, and the two marks named. This is the case
-the cut cannot grade rather than one it grades differently: the row belongs to
-no window of its own capture (it is outside that capture's marks) and to no
-window of the other (each capture's windows are cut from its own marks), so it
-is attributed to nothing while the report counts windows over both files.
-Filing it under the mark it fell between is the other answer, and it is the
-same mis-attribution arriving from the other side.
+A file's change rows falling **between two marks of another file** are the
+shape two watchers running at once produce, and the cut grades them: each
+capture's windows are cut from its own marks, so such a row is filed under a
+mark of the capture that recorded it, exactly as it would be if the other
+capture had not been named. `test_rows_that_interleave_another_captures_marks_are_graded`
+is that shape — the second capture's marks fall between the first's two and its
+rows fall inside the first's window — and it asserts the rows land under its
+own marks.
 
-The refusal is deliberately **not** a claim that the two files cannot be read.
-It says so in its own text: run them one at a time and each is a capture of its
-own, and it says nothing about whether any byte moved. That matters because
-the two files' rows interleave exactly when both watchers were running at once,
-which is a question about how the operator ran the tools and not about the
-capture's contents.
+An earlier draft of this change **refused** that case instead, on the stated
+ground that the row "is attributed to nothing". That ground does not hold, and
+the write-up's own fixtures are why:
+
+- The refusal was justified as *the one case the cut cannot grade*. It is not
+  the one case, because there is no such case. The no-marks refusal runs first
+  and refuses a capture carrying rows with no mark, so by the time any interleave
+  check could run every capture carrying rows carries a mark — and
+  `build_windows` then places every one of that capture's rows: under a mark of
+  its own capture when it follows one, and as the opening `levels` of its first
+  window when it precedes them.
+- A brute force over every two-capture shape on a minute grid (9,016 shapes,
+  5,940 of which interleave) finds **no** change row in neither a window's
+  `changes` nor a window's opening `levels`.
+- The refusal cost the operator workflow this change exists to enable. The
+  argument for keeping `nargs="+"` is that `ec_watch.py` and
+  `gpu_block_watch.py` write the same schema and can be graded side by side —
+  and those two files interleave exactly when both watchers ran at once, so
+  the refusal rejected the reachable case while the write-up claimed to have
+  kept it.
 
 ## Calibration
 
 - **A zero is "not moved by this method under this action", never "absent".**
-  The new refusal and closing sentences were written to that rule, and
-  `test_rows_that_interleave_another_captures_marks_are_refused` asserts the
-  absence words are absent from the refusal while
+  The new closing sentences were written to that rule, and
   `test_no_report_moves_a_status_or_claims_an_absence` keeps holding over the
   new fixtures, since it iterates `FIXTURES`.
 - **The fixtures claim nothing.** Both carry the directory's
@@ -200,20 +211,18 @@ committed inputs or a `tempfile`:
    file as the case the threshold check still runs.
 4. **The closing** — a closing per capture, the denominators each capture's,
    and the "2 of 3" sum absent.
-5. **The interleave refusal** — a `tempfile` pair whose rows land inside
-   another file's marks, refused before any window is built, with the absence
-   words absent from the message. Built in a temporary directory rather than
-   added to `FIXTURES` for the reason the `COLLIDING_MARKS` comment already
-   gives: a file in `FIXTURES` is by definition one some run grades, and this
-   one is one the grader is asked to refuse.
+5. **Captures that overlap in time** — a `tempfile` pair whose second file's
+   marks fall between the first's two and whose rows fall inside the first's
+   window, graded with each row under its own capture's mark. Built in a
+   temporary directory rather than added to `FIXTURES` for the reason the
+   `COLLIDING_MARKS` comment already gives: a file in `FIXTURES` is by
+   definition one some run grades, and these two have to interleave, which the
+   committed day-apart pair does not.
 6. **The single-capture control** — each new fixture graded alone still
-   reports what it did before, so the per-capture figures and the refusal are
-   pinned to the multi-capture command line and not to the fixture. This is
-   what `test_a_capture_given_twice_is_refused` already does with its own
-   control.
-7. **A capture with rows and no marks is refused** by name, placed outside the
-   other capture's marks so it is the no-marks refusal and not the interleave
-   one.
+   reports what it did before, so the per-capture figures are pinned to the
+   multi-capture command line and not to the fixture. This is what
+   `test_a_capture_given_twice_is_refused` already does with its own control.
+7. **A capture with rows and no marks is refused** by name.
 8. **A capture with nothing in it is still a run** — zero windows, and a §6
    reading that says what is missing rather than being dropped.
 
