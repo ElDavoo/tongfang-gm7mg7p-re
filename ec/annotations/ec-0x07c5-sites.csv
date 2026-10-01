@@ -1,0 +1,11 @@
+addr,file_offset,region,runtime,frame_onto,frame_over,access,window,terminator
+0x07C5,0x08410,bank0,0x8410,24,0,read x1,"movx a,@dptr ; jnb acc.6,+0x09",flow opcode
+0x07C5,0x08CA9,bank0,0x8CA9,24,0,read x1,"movx a,@dptr ; jb acc.7,+0x03",flow opcode
+0x07C5,0x0A777,bank0,0xA777,22,2,read x1,"movx a,@dptr ; anl a,#0x07 ; jnz +0x48",flow opcode
+0x07C5,0x0ACFF,bank0,0xACFF,20,4,"read x1, write x1","movx a,@dptr ; anl a,#0x7f ; movx @dptr,a",DPTR reloaded
+0x07C5,0x0AD8C,bank0,0xAD8C,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xdf ; movx @dptr,a",DPTR reloaded
+0x07C5,0x0B5F1,bank0,0xB5F1,24,0,read x1,"movx a,@dptr ; jnb acc.4,+0x03",flow opcode
+0x07C5,0x0B751,bank0,0xB751,24,0,read x1,"movx a,@dptr ; jnb acc.4,+0x03",flow opcode
+0x07C5,0x0BB81,bank0,0xBB81,24,0,read x1,"movx a,@dptr ; xrl a,#0x01 ; ret",flow opcode
+0x07C5,0x0CC6B,bank0,0xCC6B,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xdf ; movx @dptr,a",DPTR reloaded
+0x07C5,0x0CD18,bank0,0xCD18,23,1,"read x1, write x1","movx a,@dptr ; anl a,#0x7f ; movx @dptr,a",DPTR reloaded

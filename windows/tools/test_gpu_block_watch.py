@@ -9,7 +9,8 @@ the sweep scriptable byte by byte.
 
 Unlike most of the `windows/tools` suites this one reads committed inputs,
 `evidence/acpi/dsdt.dsl`, `ec/annotations/registers.yaml`,
-`ec/annotations/ec-07c4-07d5-sites.csv`/`.md` and this procedure's own table
+`ec/annotations/ec-07c4-07d5-sites.csv`/`.md`,
+`ec/annotations/ec-0x07c5-sites.csv`/`.md` and this procedure's own table
 in `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md`, resolved relative to this
 file. It therefore has to run from inside the repository, which
 `tools/run-tests.sh` guarantees (it cds to the repo root), and a suite copied
@@ -23,8 +24,8 @@ being a hand-typed table nothing holds still. That procedure prints a second
 copy of the same table as prose, which is what drifted in #266 while the
 tool's copy was held, so the third class checks the doc's copy against the
 tool's rather than leaving the two to agree by hand. The fourth grades that
-copy's EC-side cross-reference column for the four rows the per-site census
-covers, against ec/annotations/ec-07c4-07d5-sites.csv and its `.md`: the doc
+copy's EC-side cross-reference column for the rows the per-site censuses
+cover, against the two site CSVs and their `.md`s: the doc
 was free to credit `0x07C4` with one cross-reference where the walk had found
 five, and a re-walk that finds a sixth would move the census the same way
 without the doc moving with it. The fifth is the same hold one copy further
@@ -60,6 +61,13 @@ DSDT = REPO / "evidence" / "acpi" / "dsdt.dsl"
 REGISTERS = REPO / "ec" / "annotations" / "registers.yaml"
 SITES = REPO / "ec" / "annotations" / "ec-07c4-07d5-sites.csv"
 SITES_MD = REPO / "ec" / "annotations" / "ec-07c4-07d5-sites.md"
+# `0x07C5` is walked in its own per-register file rather than in the four-address
+# one above: one CSV and one `.md` per register is the modular shape two single
+# addresses already use, and it keeps this census from growing a file several
+# open PRs are in. Both halves of the pairing are read, so neither direction
+# below gets weaker for the split.
+SITES_07C5 = REPO / "ec" / "annotations" / "ec-0x07c5-sites.csv"
+SITES_07C5_MD = REPO / "ec" / "annotations" / "ec-0x07c5-sites.md"
 DOOR = REPO / "docs" / "hardware-tests" / "gpu-tgp-07c4-07d7-door.md"
 
 # The tool's own `from ec_watch import ...` has to resolve, and the directory
@@ -177,23 +185,42 @@ def read_registers():
 
 
 def read_site_census():
-    """`ec-07c4-07d5-sites.csv` as {addr: {site address}}, `bank0` rows only.
+    """The site CSVs as {addr: {site address}}, `bank0` rows only.
 
-    The `region` filter is load-bearing, not a tidiness choice: the same
-    file's 102 `pd-image` rows are a *different* 8051 program's variables at
-    its own `0x07C4` (sites `.md` §1), with its own XDATA map, and folding
-    them into a main-EC census would credit the main EC with sites in an
-    image it is not in. Keyed by the row's own `addr` and valued by
-    `runtime`, the site address inside that region -- the two are the same
-    sixteen-bit space for a `bank0` row, and the `pd-image` rows are the
-    ones where the file offset and the runtime address part company.
+    Reads `SITES` and `SITES_07C5` into one census. The `region` filter is
+    load-bearing, not a tidiness choice: the first file's 102 `pd-image` rows
+    are a *different* 8051 program's variables at its own `0x07C4` (sites
+    `.md` §1), with its own XDATA map, and folding them into a main-EC
+    census would credit the main EC with sites in an image it is not in.
+    Keyed by the row's own `addr` and valued by `runtime`, the site address
+    inside that region -- the two are the same sixteen-bit space for a
+    `bank0` row, and the `pd-image` rows are the ones where the file offset
+    and the runtime address part company.
+
+    One address in two files is a merge here rather than a collision: the
+    keys are register addresses and a register is walked in one file, so a
+    second file carrying the same address is a second walk of it and the two
+    walks' sites land in one set rather than one replacing the other.
     """
     out = {}
-    for r in csv.DictReader(SITES.read_text(encoding="utf-8").splitlines()):
-        if r["region"] == "bank0":
-            out.setdefault(int(r["addr"], 16), set()).add(
-                int(r["runtime"], 16))
+    for path in (SITES, SITES_07C5):
+        for r in csv.DictReader(path.read_text(encoding="utf-8").splitlines()):
+            if r["region"] == "bank0":
+                out.setdefault(int(r["addr"], 16), set()).add(
+                    int(r["runtime"], 16))
     return out
+
+
+def read_site_walks():
+    """The walk `.md`s direction A falls back on, as one text.
+
+    Concatenated rather than searched one at a time so a citation either
+    walk names is found, which is the whole of what the fallback is for:
+    a routine entry the CSV has no row for (`bank0:0x94C0`) is named in
+    prose by whichever file walked it.
+    """
+    return "\n".join(p.read_text(encoding="utf-8")
+                     for p in (SITES_MD, SITES_07C5_MD))
 
 
 def bank_addresses(cell):
@@ -210,14 +237,13 @@ def bank_addresses(cell):
     return {int(a, 16) for a in re.findall(r"bank\d+:(0x[0-9A-Fa-f]{4})", cell)}
 
 
-# The addresses a §7 cell may cite that the census has no row for, each with
-# why it is not a site. A dictionary rather than a pattern over the sites `.md`
-# because that document is a write-up of the whole walk: it names every
+# The addresses a §7 cell may cite that no census row covers, each with why it
+# is not a site. A dictionary rather than a pattern over the walks' `.md`s
+# because those documents are write-ups of the whole walks: they name every
 # register address, every `MOV DPTR` operand and every byte of every listing in
-# it, so a shape drawn from it admits a cell citing `0x0743` or `0x09E9` and
-# calling it a site. These three are what the fallback was written for and are
-# named individually so that a fourth one has to be argued for. The allowance is
-# held to the data by
+# them, so a shape drawn from them admits a cell citing `0x0743` or `0x09E9`
+# and calling it a site. Each entry is named individually so that another one
+# has to be argued for. The allowance is held to the data by
 # `test_the_fallback_is_exactly_the_addresses_the_census_does_not_carry`, so
 # neither this list nor a cell can grow alone.
 NON_SITE_CITATIONS = {
@@ -230,6 +256,13 @@ NON_SITE_CITATIONS = {
     0x94C0: "routine entry `set_07c4_bit4_from_r7`",
     # The one `lcall 0x94C0` in the image: the caller, not an access at all.
     0x9711: "the single `lcall 0x94C0`",
+    # A `movx @DPTR,A` against whatever `DPTR` the caller left, carrying
+    # `xdata-registers.csv`'s `[writer]` tag for `0x07C5` and named
+    # `store_a_then_read_07c5`. The cell cites it to *correct* that tag, and the
+    # access of this byte is the `movx a,@dptr` that follows it at `0xBB81`,
+    # which is a census row (0x07C5 walk §2.1). A tag the walk found to be wrong
+    # is not a writer of the byte, so it is allowed here rather than in the CSV.
+    0xBB80: "`store_a_then_read_07c5`, a store against an inherited `DPTR`",
 }
 
 
@@ -581,16 +614,17 @@ class DoorTableTests(unittest.TestCase):
 
 
 class SiteCensusTests(unittest.TestCase):
-    """The four census-covered cells are graded against the site census.
+    """The census-covered cells are graded against the site census.
 
     `DoorTableTests` above holds the status column; this holds the other
-    one, for the four rows `ec-07c4-07d5-sites.md` walks. Both directions,
-    because the drift is symmetric: a cell crediting `0x07C4` with one
-    cross-reference where the walk found five is a doc that has not caught
-    up with a census, and a re-walk that finds a sixth is a census the doc
-    has not caught up with. The other twenty cells' `xdata-registers.csv`
-    cluster citations and every `pd:` citation are #272's different census
-    question and are not read here.
+    one, for the rows the per-register walks cover -- `0x07C4`, `0x07D3`,
+    `0x07D4` and `0x07D5` from `ec-07c4-07d5-sites.md`, and `0x07C5` from
+    `ec-0x07c5-sites.md`. Both directions, because the drift is symmetric: a
+    cell crediting `0x07C4` with one cross-reference where the walk found
+    five is a doc that has not caught up with a census, and a re-walk that
+    finds a sixth is a census the doc has not caught up with. The other
+    cells' `xdata-registers.csv` cluster citations and every `pd:` citation
+    are #272's different census question and are not read here.
     """
 
     @classmethod
@@ -598,7 +632,7 @@ class SiteCensusTests(unittest.TestCase):
         cls.section = door_section(DOOR.read_text(encoding="utf-8"))
         cls.door = parse_door_table(cls.section)
         cls.census = read_site_census()
-        cls.sites_md = SITES_MD.read_text(encoding="utf-8")
+        cls.sites_md = read_site_walks()
         # Asked for by heading and found from the rows, the same way
         # DoorTableTests finds the status column.
         cls.xref_col = next((c for c in sorted({c for row in cls.door.values()
@@ -609,28 +643,36 @@ class SiteCensusTests(unittest.TestCase):
         # The same vacuity guard the three parsers above get: a reader that
         # found nothing would leave both directions below passing on a table
         # that says nothing. Every census address present and carrying the
-        # column, the split sites `.md` §2 states in prose ("The five
-        # `0x07C4` sites, the two `0x07D4` and four `0x07D5` sites and the
-        # four `0x07D3` sites") rather than constants invented here, and a
-        # `.md` naming all four so direction A's fallback is a real source
-        # and not an empty string everything passes against.
+        # column, the split each walk's `.md` states in prose rather than
+        # constants invented here, and a walk naming every one so direction
+        # A's fallback is a real source and not an empty string everything
+        # passes against.
+        #
+        # The per-address counts are the *claim* -- this census holds these
+        # sites for these addresses -- and not a census of the tree: they are
+        # what a re-walk of an address has to re-derive, so the next
+        # legitimate re-walk edits this line, by design. What no re-walk
+        # should be able to do is change one side and not the other, which
+        # is what the two directions below are for.
         self.assertTrue(self.xref_col, "§7 has no cross-reference column")
         for addr in self.census:
             self.assertIn(addr, self.door, f"0x{addr:04X}")
             self.assertIn(self.xref_col, self.door[addr], f"0x{addr:04X}")
         self.assertEqual({a: len(s) for a, s in self.census.items()},
-                         {0x07C4: 5, 0x07D3: 4, 0x07D4: 2, 0x07D5: 4})
-        self.assertTrue(self.sites_md, f"{SITES_MD.name} is empty")
+                         {0x07C4: 5, 0x07C5: 10, 0x07D3: 4,
+                          0x07D4: 2, 0x07D5: 4})
+        self.assertTrue(self.sites_md, "the walks read as empty text")
         for addr in self.census:
             self.assertRegex(self.sites_md, rf"0x{addr:04X}", f"0x{addr:04X}")
 
     def test_the_fallback_is_exactly_the_addresses_the_census_does_not_carry(self):
         # Direction A's allowance, held against the data it allows -- set
-        # equality in both directions, so neither a cell citing a fourth
-        # non-site address nor an entry nobody cites goes unnoticed. Named for
-        # the fallback rather than for the census read above because it is the
-        # fallback it holds; the same reason `HUMAN_SAVED_SUFFIXES` is checked
-        # against the section behind it rather than trusted as a constant.
+        # equality in both directions, so neither a cell citing a non-site
+        # address the allowance does not name nor an entry nobody cites goes
+        # unnoticed. Named for the fallback rather than for the census read
+        # above because it is the fallback it holds; the same reason
+        # `HUMAN_SAVED_SUFFIXES` is checked against the section behind it
+        # rather than trusted as a constant.
         fallthrough = cited_addresses_not_in_census(self.census, self.door,
                                                     self.xref_col)
         self.assertEqual(
@@ -639,14 +681,16 @@ class SiteCensusTests(unittest.TestCase):
             f"allowance names. Data: "
             f"{sorted(f'0x{a:04X}' for a in fallthrough)}; allowance: "
             f"{sorted(f'0x{a:04X}' for a in NON_SITE_CITATIONS)}")
-        # The `.md` is what backs the allowance, checked here rather than on
+        # The walks are what back the allowance, checked here rather than on
         # every cited address in direction A: an entry that stops being named
-        # in the document is an allowlist entry with nothing behind it, and
-        # this is the one place that shows which.
+        # in them is an allowlist entry with nothing behind it, and this is
+        # the one place that shows which. Each entry is named by whichever walk
+        # covered the row citing it -- `0xBB80` by the `0x07C5` walk, the
+        # other three by the four-address one -- which is why this reads the
+        # concatenated text rather than either file.
         for addr in sorted(NON_SITE_CITATIONS):
             self.assertRegex(self.sites_md, rf"0x{addr:04X}(?![0-9A-Fa-f])",
-                             f"0x{addr:04X} is allowed but {SITES_MD.name} "
-                             f"does not name it")
+                             f"0x{addr:04X} is allowed but no walk names it")
 
     def test_a_cell_citing_an_address_only_the_walk_names_in_prose_is_rejected(self):
         # The tightening, shown by perturbing the table the check reads. The
@@ -667,12 +711,12 @@ class SiteCensusTests(unittest.TestCase):
                          f"perturbed citation, or reported {reported}")
         self.assertTrue(
             re.search(r"0x0743(?![0-9A-Fa-f])", self.sites_md, re.I),
-            "the address the tightened check rejected is not in "
-            f"{SITES_MD.name}, so this demonstrates nothing: the old "
-            "fallback would have rejected it too")
-        # The three still pass against the same mutated table, which is the
-        # other half of the narrowing: an allowance that survives only while
-        # nothing perturbs it is not one.
+            "no walk names the address the tightened check rejected, so this "
+            "demonstrates nothing: the old fallback would have rejected it "
+            "too")
+        # The allowance still passes against the same mutated table, which is
+        # the other half of the narrowing: an allowance that survives only
+        # while nothing perturbs it is not one.
         for addr in sorted(NON_SITE_CITATIONS):
             self.assertNotIn(
                 addr, {site for _, site in reported},
@@ -709,27 +753,31 @@ class SiteCensusTests(unittest.TestCase):
         # the walk named that address, not that the walk was right about
         # it: `bank0:0x94C0` is a routine entry and `bank0:0x9711` its one
         # caller (sites `.md` §4.1), so both are named in prose and neither
-        # is a `MOV DPTR` site the CSV has a row for.
+        # is a `MOV DPTR` site the CSVs have a row for.
         #
-        # The allowance is `NON_SITE_CITATIONS` and not "the sites `.md` names
-        # this address somewhere": that `.md` is a write-up of the whole walk,
-        # so a search over it admitted a cell citing `0x0743` or `0x09E9` --
-        # a register address and a source byte -- which is the citation this
-        # direction exists to catch. The `.md` still backs the allowance, but
-        # through the guard's set equality rather than on every address.
+        # The allowance is `NON_SITE_CITATIONS` and not "a walk's `.md` names
+        # this address somewhere": those `.md`s are write-ups of the whole
+        # walks, so a search over them admitted a cell citing `0x0743` or
+        # `0x09E9` -- a register address and a source byte -- which is the
+        # citation this direction exists to catch. The `.md`s still back the
+        # allowance, but through the guard's set equality rather than on every
+        # address.
         for addr, site in unaccounted_citations(self.census, self.door,
                                                 self.xref_col):
             self.fail(
-                f"0x{addr:04X} cites bank0:0x{site:04X}, which neither "
-                f"{SITES.name} nor {SITES_MD.name} makes a site. If it is "
-                f"another routine entry or caller, add it to "
-                f"NON_SITE_CITATIONS with the reason; if it is not, the cell "
-                f"is citing an address this direction should reject")
+                f"0x{addr:04X} cites bank0:0x{site:04X}, which no site CSV "
+                f"nor walk makes a site. If it is another routine entry or "
+                f"caller, add it to NON_SITE_CITATIONS with the reason; if it "
+                f"is not, the cell is citing an address this direction should "
+                f"reject")
 
     def test_every_bank0_site_the_census_names_is_in_the_cell(self):
         # Direction B, census -> doc, and the one that fails first when a
         # re-walk lands: the census grows and the doc's credit for the row
-        # stays what it was. The two set sizes ride along in the message so
+        # stays what it was. `0x07C5` is the case that earned it -- the cell
+        # credited one writer, `bank0:0xBB80`, which is not a writer of that
+        # byte at all, and this direction is what makes that a failure rather
+        # than a stale sentence. The two set sizes ride along in the message so
         # that failure says which side moved and by how much -- the citation
         # count itself is not pinned, because the two directions already pin
         # every address between them and a constant would only add an edit
@@ -738,8 +786,8 @@ class SiteCensusTests(unittest.TestCase):
                                                    self.xref_col):
             cited = bank_addresses(self.door[addr][self.xref_col])
             self.fail(
-                f"0x{site:04X} is a bank0 site for 0x{addr:04X} in "
-                f"{SITES.name} and is not in the cell "
+                f"0x{site:04X} is a bank0 site for 0x{addr:04X} in a site "
+                f"census and is not in the cell "
                 f"({len(cited)} cited, {len(self.census[addr])} in the "
                 f"census)")
 
