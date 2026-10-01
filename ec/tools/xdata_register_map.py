@@ -885,7 +885,44 @@ ORACLE = {
     # `DAT_EXTMEM` term for `symbol` in the main EC, which is what moves §2's
     # `main-ec · DAT_EXTMEM` and `main-ec · symbol` rows and the three-way
     # partition; see the correction in xdata-register-map.md §2.
-    "named_in_tree": 187,
+    #
+    # 187 -> 189, issue #106, and 214 -> 216, the same arithmetic once more.
+    # registers.yaml gained XDATA_07A5 and XDATA_078B, the two bytes the
+    # uncalled vendor setters write, and NOT_IN_TREE does not move: both are
+    # reached by exported functions -- 0x07A5's five sites are all under
+    # bank0 0x8749 and 0x078B's three under bank0 0x96AD, bank0 0xA7C8 and
+    # bank1 0xA916 (ec/annotations/site-resolution.csv). So the count moves by
+    # the two that are. What makes this pair worth recording next to the others
+    # is that the *reason* they were missing is the issue's subject rather than
+    # a naming gap: no DSDT field names either byte, so they reached
+    # registers.yaml from the Windows service's dead setters rather than from
+    # the sweep, and `docs/findings/uncalled-vendor-setters.md` is the write-up.
+    # The EC was already using 0x07A5 bit 3 before this change; the setters
+    # that named it never run.
+    #
+    # **The step through 185 is a merge too, and it is the same shape as the
+    # one above.** #1425 and #106 both branched from the 185 this block used to
+    # end on and each wrote its own 185 -> 187: two names each, from a parent
+    # that held 212. All four rows -- PACK_TEMP_DK over `0x04A2`/`0x04A3` and
+    # XDATA_07A5 over `0x07A5`, XDATA_078B over `0x078B` -- are in
+    # registers.yaml on this tree, and all four are reached by exported
+    # functions, so the count is 185 + 4 = 189 and NOT_IN_TREE is still 27.
+    # Neither side's 187 is the merged tree's number, and taking either one is
+    # the "looks pinned and is not" defect the check below exists to catch.
+    # 212 + 4 = 216 named addresses, 216 - 27 = 189, re-derived by `--self-test`
+    # rather than taken on trust.
+    #
+    # **The two branches' other halves do not stack, and the reason is worth
+    # writing down rather than leaving as an apparent contradiction.** #1425's
+    # block above moves five addresses out of the `DAT_EXTMEM` term because its
+    # re-export renamed them in `ec/decompiled/`. #106 adds two names to
+    # `registers.yaml` and renames the symbol table without a re-export, so
+    # those two addresses keep the `DAT_EXTMEM` spelling in the committed
+    # decompile -- exactly the distinction the 0x086C block above draws, "a
+    # registers.yaml row renames the symbol table and not a decompile". The
+    # census pins above are therefore the ones #1425 measured and this block
+    # leaves them at; only `named_in_tree` moves here.
+    "named_in_tree": 189,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # **Unmoved by issue #279, and worth saying why rather than leaving it as a

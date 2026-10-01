@@ -4780,6 +4780,44 @@ registers:
       ec/tools/check_register_counts.py. A count is not behaviour -- see the
       sweep's calibration section. No hardware was involved.
 
+  - name: XDATA_078B
+    addr: 0x078B
+    sources: [vendor-3.1.39.0, static-scan, xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not named by the DSDT and not reachable through one. The ECMG field list
+      gives Offset (0x788) one byte, CTWA, eight bits wide (dsdt.dsl:52221-52222),
+      and then steps straight to Offset (0x7A4) (dsdt.dsl:52223) -- so bytes
+      0x0789-0x07A3 are an unnamed gap, and this address is one of them. That
+      is a statement about the ASL, not about the byte: an unnamed byte in a
+      region ASL can still address numerically, and this search is not a proof
+      that no ASL statement reaches it by another route. The four ASL
+      references the sweep records for CTWA (dsdt-ecmg-fields.csv, sites
+      50662, 50663, 50670, 52787) all read or write CTWA itself, which is byte
+      0x0788 and not this one. The DSDT is therefore a null for this address
+      as searched, which is a weaker statement than "the DSDT never writes it".
+      On the EC side the byte is used, under names the EC's own annotations
+      already carry: bank1:0xA916=clamp_078b_level_into_0804 reads it and
+      decrements it into 0x0804, and bank0:0x96AD=apply_oem_overrides_then_fill_08xx
+      decrements it into 0x08BB when it is not '\0' (ec/decompiled/bank0/96AD.c:48-49),
+      with one direct write at bank0:0xA7C8. On the Windows side the service has
+      two private setters for it, SetGPUdstate and SetGPUdstateByGpuMode, both
+      writing bits
+      0-2 through the mask 0xF8, and the two differ in scope. SetGPUdstate is
+      uncalled in every class in windows/decompiled/v3.1.39.0/;
+      SetGPUdstateByGpuMode is uncalled in the RamFan1p5 family and called
+      from MyFanManager_QC and MyFanManager_Intel, two classes MyFanCtrl never
+      instantiates -- see docs/findings/uncalled-vendor-setters.md, which
+      carries the per-setter file:line and the command that reproduces the
+      count. So the byte is not inert and the vendor's setter for it is not
+      the reason: it is live in the firmware, and its only live service path
+      is in classes this board does not construct. 3 direct MOV DPTR,#0x078B
+      sites, all in the main EC, recounted by ec/tools/check_register_counts.py;
+      a count is not behaviour. No hardware was involved.
+
   - name: GC6S
     addr: 0x07A4
     bit: 2
@@ -4804,6 +4842,42 @@ registers:
       ec/tools/check_register_counts.py; the count is per byte, so it does
       not separate GC6S from bit 4. No hardware was involved.
 
+  - name: XDATA_07A5
+    addr: 0x07A5
+    sources: [vendor-3.1.39.0, static-scan, xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not named by the DSDT. The ECMG field list gives Offset (0x7A4) two
+      unnamed bits and then GC6S, one bit (dsdt.dsl:52224-52225), and steps to
+      Offset (0x7B3) (dsdt.dsl:52226) -- GC6S is bit 2 of 0x07A4, not a byte of
+      its own, so this address falls in the unnamed gap 0x07A5-0x07B2 and
+      carries no ASL field name. As with XDATA_078B, that is what this search
+      over this file found and not a proof that no ASL statement reaches the
+      byte numerically.
+      The EC's direct MOV DPTR sites write one bit of this byte between them,
+      bit 3, and that bit is one the Windows service's setters do not touch:
+      bank0:0x8749=mode_tick_084c_07a5_09ee clears it (anl a,#0xf7) when
+      XDATA_0440 is zero or read_06e6_xor_01() is non-zero, and in the other
+      arm clears it below the CPU/GPU temperature thresholds and sets it
+      (orl a,#0x08) above them (ec/decompiled/bank0/8749.c:91-106). A writer
+      reaching the byte through a computed DPTR is outside that count; see the
+      find_indirect_xdata.py caveat in this file's header.
+      The four uncalled setters in the service take bits 0-1, 2, 4 and 7.
+      Those sets are disjoint, which is the point worth keeping: a dead setter
+      in the service is evidence about the setter and not about the byte, and
+      here the firmware demonstrably drives a bit of the byte the service never
+      reaches. Whether the EC acts on bit 3 the way its name suggests is a
+      separate, unexercised question and is left open rather than answered
+      here. The Windows side and the per-setter file:line are in
+      docs/findings/uncalled-vendor-setters.md; 0x07A6 bit 1, the fifth setter,
+      belongs to issue #93 and is not claimed here. 5 direct MOV DPTR,#0x07A5
+      sites, all in the main EC, recounted by
+      ec/tools/check_register_counts.py; a count is not behaviour. No hardware
+      was involved.
+
   - name: WHMS
     addr: 0x07C5
     bit: 5
@@ -4826,6 +4900,18 @@ registers:
       question, not this file's. No hardware was involved, and
       windows/tools/gpu_block_watch.py's rows are a prepared capture, not a
       capture that has been run.
+      The Windows service also has a private setter for bit 4 of this byte,
+      SkipOfficeModeSafetyProtect, which clears bit 4 through the mask 0xEF and
+      sets it when its argument is 1 (MyFanManager_RamFan1p5.cs:2322-2332).
+      It has exactly one reference in the whole v3.1.39.0 tree, its own
+      definition, so it is uncalled rather than dormant. The byte's other
+      setter is SetEcFanControlRespective on bit 7, which lives in
+      FanTable_Manager1p5 (FanTable_Manager1p5.cs:1006) and is called there
+      (:270, :289, :417); FanTable_Manager1p5 is a different class, built by
+      MyFanTableCtrl (MyFanTableCtrl.cs:25) rather than by MyFanCtrl. The count
+      above is per byte and so separates neither bit 5 from bit 4 nor bit 4
+      from bit 7 -- docs/findings/uncalled-vendor-setters.md carries the
+      per-setter file:line and the grep that reproduces the single hit.
 
   - name: AP01
     addr: 0x07C0
