@@ -1,0 +1,101 @@
+# ec/tools/census_xdata_writers.py --check and --self-test, wired into the
+# cheap gate.
+# Prepared here rather than landed, for the reason
+# docs/ci/agent-gates-0751-self-test.patch gives:
+# `.github/scripts/agent-gates.sh` is copied from the agent-pipeline template
+# and the pipeline's push token has no `workflow` scope, so a branch editing it
+# fails at the end of the PR rather than at the start of it.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-0751-writer-census.patch
+#
+# and that is the whole change.
+#
+# What it buys. `--check` re-derives
+# `ec/annotations/manual-fan-ctrl-0751-writers.csv` from
+# `ec/firmware/GMxMGxx_11.800` and diffs it, so the ten writer sites, their
+# store addresses, their masks, their statuses and their hand-filled conditions
+# are a red run when any of them moves rather than a sentence a reader has to
+# trust. `--self-test` is the half that matters and it needs no image at all:
+# the store classifier is graded on ten byte fixtures transcribed by hand from
+# `r2 -a 8051`, so a scan that stopped telling a blind store from a
+# read-modify-write is caught by a second disassembler rather than agreeing
+# with its own decode.
+#
+# Why the cheap tier and not agent-gates-deep.sh: what the two modes read is
+# the committed firmware image, two committed CSVs and the standard library.
+# No Ghidra, no network, no assembler, no sdas8051, nothing re-derived from the
+# decompiled C. `docs/agent-pipeline.md` item 6 carries the same caveat for
+# the timings this header does not quote: those are one runner's, and the
+# ratio is the durable part.
+#
+# **Why it does not go in the `for tool in` list.** Every entry of that list
+# from `gen_xdata_symbols.py` down is inside some other prepared patch's
+# context -- `agent-gates-gap-text-check.patch` at its head,
+# `agent-gates-0751-self-test.patch` in the middle and
+# `agent-gates-disasm8051-self-test.patch` at its foot -- and an insertion into
+# any of those three runs stops the other patch applying. The same is true of
+# the `gate` call list, which three patches have taken between them. The one
+# insertion point that composes with all seven prepared patches is the line
+# above the `for`, so the call goes there and writes into the loop's own `rc`.
+# That is not a preference: `tools/test_agent_gates_patches.py`'s composition
+# cases sweep every candidate point and this is the only one left, and the
+# comment at the call site says so where the next reader of the gate will see
+# it. Were it folded into another prepared patch instead, that patch's own
+# header would carry this gate and
+# `docs/findings/prepared-gate-patches.md` owns the decision; this change
+# leaves that file alone.
+#
+# **Until a human lands this, nothing runs `--check` or `--self-test` per
+# commit, and a PR that breaks one of them merges green.** The suite behind it
+# is `ec/tools/test_census_xdata_writers.py`, which `tools/run-tests.sh` finds
+# on its own; this patch does not gate that either, which is the whole reason
+# this file exists.
+#
+# Cut whole against the committed `.github/scripts/agent-gates.sh` on
+# 2026-10-01, issue #196, from a scratch clone so the hunk is what `git apply`
+# will accept rather than a transcription, and shellcheck-clean in the state it
+# produces. It carries an `index` line for the same reason
+# `docs/ci/agent-gates-0751-self-test.patch` does.
+#
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index ce9f0964..7fc24d9a 100755
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -116,6 +116,35 @@ check_ghidra_tooling() {
+   # self-test does assemble a four-instruction fixture, and does it after every
+   # assertion, so it cannot change the verdict either way -- see the case below.
+   scratch=$(mktemp -d)
++  # The 0x0751 writer census: the one committed table that says which of the 29
++  # sites store, rather than only what direction each of them reads in.
++  # `--check` re-derives ec/annotations/manual-fan-ctrl-0751-writers.csv from
++  # the image and diffs it, so a re-cut of trace_xdata_refs, or a hand-filled
++  # condition that drifted off its closed vocabulary, is a red run here rather
++  # than a reader's problem. `--self-test` is the half that matters and it
++  # needs no image at all: the store classifier is graded on byte fixtures
++  # transcribed by hand from `r2 -a 8051`, so a scan that stopped telling a
++  # blind store from a read-modify-write is caught by a second disassembler
++  # instead of agreeing with its own decode. Cheap tier by what it reads -- the
++  # committed firmware image, two committed CSVs, the standard library -- and
++  # no Ghidra, no network, no assembler.
++  #
++  # It runs here rather than as a `for tool in` entry because every entry from
++  # gen_xdata_symbols.py down is inside some other prepared patch's context in
++  # docs/ci/, and an insertion there stops that patch applying;
++  # tools/test_agent_gates_patches.py's composition cases are what decided the
++  # placement. `rc` is the loop's own, declared at the top of this function.
++  #
++  # It prints its own deferral, and it is a real one: a store is an instruction
++  # and not an event. Nothing it checks is hardware evidence, no EC is opened,
++  # no register is read back, and MANUAL_FAN_CTRL stays present-untested. The
++  # count of stores it could not place -- the arm walk's unattributed figure,
++  # which is issue #34 -- is printed on every run, so the gap that keeps the
++  # writer census open is a number that moves rather than a caveat copied
++  # forward. No test count is asserted here; the exit code decides, for the
++  # reason tools/run-tests.sh gives.
++  python3 ec/tools/census_xdata_writers.py --check && \
++  python3 ec/tools/census_xdata_writers.py --self-test || rc=1
+   for tool in ec/tools/gen_xdata_symbols.py \
+               ec/tools/build_ec_decompile.py \
+               ec/tools/verify_reassembly.py \

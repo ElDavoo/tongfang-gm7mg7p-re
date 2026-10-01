@@ -71,6 +71,7 @@ GATE = '.github/scripts/agent-gates.sh'
 # in docs/findings/prepared-gate-patches.md.
 PATCHES = [
     'docs/ci/agent-gates-0751-self-test.patch',
+    'docs/ci/agent-gates-0751-writer-census.patch',
     'docs/ci/agent-gates-capture-claims.patch',
     'docs/ci/agent-gates-disasm8051-self-test.patch',
     'docs/ci/agent-gates-findings-frozen.patch',

@@ -223,6 +223,16 @@ that leaves `HIGH` (bit 5) as it found it, so it only lands on the vendor's
 established here. So the EC does set the mode byte itself — once, off a BIOS
 setup bit, behind a flag it clears as it goes.
 
+**2026-10-01 (issue #196): these are two of ten writer sites, and this is the
+only blind one.** `0xA812` is the whole-byte write of `0x00` — the accumulator
+is cleared at `0xA811`, before the site's own `MOV DPTR`, so nothing in the
+window was read from `0x0751` and a bit a host set does not survive it. The
+other twelve stores over the ten sites are read-modify-writes, ten of them
+single-bit edits and two clearing USER and TURBO together; the table is
+`../annotations/manual-fan-ctrl-0751-writers.csv`,
+the tool is `../tools/census_xdata_writers.py`, and the reasoning is
+`../../docs/findings/0751-writer-census.md`.
+
 **This is the closest thing in the image to the mechanism the issue asks
 about, and it is not that mechanism.** The PL clear at `0xA833-0xA83B` is in
 the same routine, a dozen instructions after the mode write, and it is the
@@ -1017,6 +1027,20 @@ beside §4's `0xA812`/`0xA818` boot-time defaults: the EC writes `0x0751` on
 at least three paths, and only one of them is the host. `0x93CA` and `0xB73C`
 read `0x044F` and `0x043E` too, so the temperature dependency is not confined
 to the Fan Boost arms.
+
+**Corrected 2026-10-01 (issue #196), and the original claim is kept above.** The
+"at least three paths" wording of the sentence above was a lower bound on a
+hand-picked set, not a count: the third path it found — `0x8942`'s arm clearing
+FAN BOOST at `0x8990` — is one of **ten writer sites and thirteen store
+instructions**, catalogued with the condition each fires under in
+`../annotations/manual-fan-ctrl-0751-writers.csv` (`ec/tools/census_xdata_writers.py`,
+`../../docs/findings/0751-writer-census.md`). It is the only one of the ten whose
+gate is a temperature; the rest are the two boot-time defaults of §4 and seven
+sites reached from a mode decode or a named flag bit. The count is **not
+closed**: §9's own arm walk charges 100 stores to no address over its 171 rows,
+and any of them could be a `0x0751` writer. §9.5 is unchanged, and the arm walk
+is still not a writer census — this was a site scan with a store classifier on
+it, and the two miss different things.
 
 **`0x8E8B`'s two arms differ only in a tachometer threshold.** USER set tests
 `0x0460` and `0x0468` against `0x04`/`0x08`; USER clear tests the same two
