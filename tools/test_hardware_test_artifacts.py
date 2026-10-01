@@ -111,6 +111,18 @@ HELD = {
         "command_producers": True,
         "hand_saved": {},
     },
+    "fan-table-defaults-0f5d.md": {
+        "command_producers": True,
+        # Every capture is an `ec_watch --csv`, and the two `.txt` anchors are
+        # `ecrw dump ... >` redirections, so nothing here needs an allowance.
+        # The one thing the commands cannot produce is the operator's note --
+        # the starting mode, the fan-speed reading per handshake and which row
+        # of the results table the run turned out to be -- and that is prose
+        # in the output section rather than a file, so there is no glob to
+        # tie. The restore in section 4 reads the `before` anchor back, which
+        # is why it is listed rather than left implicit.
+        "hand_saved": {},
+    },
     "gpu-tgp-07c4-07d7-door.md": {
         "command_producers": True,
         # The door's own `.pml` allowance, carried over as a table entry rather

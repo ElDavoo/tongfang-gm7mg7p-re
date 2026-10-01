@@ -70,6 +70,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`dump-reads-for-a-refused-block.md`](dump-reads-for-a-refused-block.md) — A read taken for a block whose windows were refused (issue #499)
 - [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
+- [`ec-fan-table-defaults.md`](ec-fan-table-defaults.md) — The EC's own fan tables: where they live, what they say, and how far they are from the vendor's
 - [`ecmg-asl-references.md`](ecmg-asl-references.md) — Which of the 98 ECMG names the ASL reaches for, and what the two `0x71` arms are (issue #1159)
 - [`ecrw-fake-one-shape.md`](ecrw-fake-one-shape.md) — One fake for `ecrw`, one way to install it, and one interpreter that proves it
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading
