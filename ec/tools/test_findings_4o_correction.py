@@ -40,6 +40,13 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent.parent
 FINDINGS = REPO / "docs" / "findings.md"
 CORRECTION_FILE = REPO / "docs" / "findings" / "07d6-07d7-pd-image-census.md"
+WALK = REPO / "ec" / "annotations" / "ec-07d6-07d7-sites.md"
+
+# The heading the walk document's open-work list sits under, and the tool whose
+# work §7's correction closes. Spelled as a heading prefix so a retitled §8
+# does not silently turn the case below into a vacuous pass.
+STILL_OPEN = "## 8. What is still open"
+CLOSED_TOOL = "t1wr_callers.py"
 
 # The clause §4o's census bullet carried before #323 corrected it, and the
 # marker of the correction beside it. Both are spelled as fragments of the
@@ -140,6 +147,75 @@ def correction_block():
     if start is None:
         return ""
     return "\n".join(rows[start:bullet_end(rows, start)])
+
+
+def walk_rows():
+    return WALK.read_text(encoding="utf-8").splitlines()
+
+
+def prose(block):
+    """`block` as one line, with markdown blockquote markers stripped.
+
+    A correction nested inside a bullet is written as a `> ` quote, so a phrase
+    that spans a wrap picks the marker up in the middle of itself and `flatten`
+    alone will not match it. Stripping the marker first is what keeps a rewrap
+    from reading as a change to the prose, which is the reason the text is
+    flattened at all.
+    """
+    stripped = [re.sub(r"^\s*(?:>\s*)?", "", line)
+                for line in block.splitlines()]
+    return flatten("\n".join(stripped))
+
+
+def still_open_bullets():
+    """Each bullet under the walk document's open-work heading, with its body.
+
+    A bullet runs from its `- ` line to the next `- ` at column 0, which is
+    what makes the correction nested inside it part of the bullet: a correction
+    written beside the claim but outside the list item renders as a sibling
+    paragraph, and the reader sees a to-do that nothing corrects. Returned
+    whole rather than line by line for that reason.
+    """
+    rows = walk_rows()
+    start = next((i for i, line in enumerate(rows)
+                  if line.startswith(STILL_OPEN)), None)
+    if start is None:
+        return []
+    blocks, current = [], None
+    for line in rows[start + 1:]:
+        if line.startswith("- "):
+            if current is not None:
+                blocks.append("\n".join(current))
+            current = [line]
+        elif current is not None:
+            current.append(line)
+    if current is not None:
+        blocks.append("\n".join(current))
+    return blocks
+
+
+def walk_corrections():
+    """Every correction paragraph in the walk document, in file order.
+
+    Scanned over the whole file rather than over §8's bullets: §1 and §7 each
+    carry one too, and a pin check that quietly read only the last section
+    would be a weaker check wearing the stronger check's name.
+    """
+    rows, blocks, current = walk_rows(), [], None
+    for line in rows:
+        if "CORRECTION" in line:
+            current = [line]
+        elif current is not None:
+            # A correction runs until the next blank line, which is what ends
+            # the paragraph; a bullet is a list, not a paragraph.
+            if not line.strip():
+                blocks.append("\n".join(current))
+                current = None
+            else:
+                current.append(line)
+    if current is not None:
+        blocks.append("\n".join(current))
+    return blocks
 
 
 class TheRetractedSentenceIsStillThere(unittest.TestCase):
@@ -265,6 +341,12 @@ class NoBareLinePinInTheNewProse(unittest.TestCase):
         self.assertEqual(hits, [], "the correction carries a bare line pin: %r"
                          % (hits,))
 
+    def test_the_walk_document_corrections_cite_by_name(self):
+        for block in walk_corrections():
+            hits = bare_pins(block)
+            self.assertEqual(hits, [], "a walk-document correction carries a "
+                                       "bare line pin: %r" % (hits,))
+
     def test_a_pin_with_a_commit_is_the_exemption_and_passes(self):
         # The negative control for the case above: a rule that fires on the
         # spelling CLAUDE.md permits is worse than no rule, because it trains
@@ -273,6 +355,74 @@ class NoBareLinePinInTheNewProse(unittest.TestCase):
                                    "0a088444` says"), [])
         self.assertEqual(bare_pins("as `grade_0751_isolation.py:1981` says"),
                          ["`grade_0751_isolation.py:1981`"])
+
+
+class TheOpenListDoesNotResurrectClosedWork(unittest.TestCase):
+    """§4a-4d's shape, one level down: a corrected claim is not still open.
+
+    A correction in one section does not reach a to-do list in another. §7's
+    correction closes the `t1wr_callers.py` widening; §8's list kept naming it
+    as open work, twenty lines below the paragraph saying it was done, and a
+    reader arriving at "what is still open" is sent to re-bake a tool that
+    self-checks clean. The stale bullet stays visible with its correction
+    beside it, exactly as §7's does, so the fix is the shape and not a deletion
+    -- what these cases hold is that the two sections cannot disagree again.
+    """
+
+    def setUp(self):
+        self.blocks = still_open_bullets()
+        self.assertTrue(self.blocks,
+                        "the walk document has no bullets under %r; the cases "
+                        "below would pass vacuously" % STILL_OPEN)
+
+    def test_the_heading_the_cases_read_is_the_one_that_is_there(self):
+        # Guards the vacuous pass above: a retitled or renumbered §8 must fail
+        # loudly here rather than leave the sweep below matching nothing.
+        headings = [line for line in WALK.read_text(
+            encoding="utf-8").splitlines() if line.startswith("## ")]
+        self.assertTrue(any(flatten(h).startswith(STILL_OPEN) for h in headings),
+                        "the walk document's open-work heading is not %r"
+                        % STILL_OPEN)
+
+    def test_the_bullet_naming_the_closed_work_carries_a_correction(self):
+        naming = [b for b in self.blocks if CLOSED_TOOL in b]
+        self.assertTrue(naming,
+                        "no bullet under %r names %s any more; if the to-do "
+                        "was deleted rather than corrected, the record that it "
+                        "was ever open is gone"
+                        % (STILL_OPEN, CLOSED_TOOL))
+        for block in naming:
+            self.assertIn("CORRECTION", block,
+                          "a bullet under %r still lists the %s widening as "
+                          "open work with no correction beside it; §7's "
+                          "correction closes it"
+                          % (STILL_OPEN, CLOSED_TOOL))
+
+    def test_no_bullet_under_the_open_list_names_the_closed_work_uncorrected(self):
+        # The same claim as a sweep rather than as a lookup, so a second bullet
+        # naming the same closed work is caught rather than passing because the
+        # first one is corrected.
+        offenders = [b for b in self.blocks
+                     if CLOSED_TOOL in b and "CORRECTION" not in b]
+        self.assertEqual(offenders, [],
+                         "these bullets under %r name %s with no correction: "
+                         "%r" % (STILL_OPEN, CLOSED_TOOL, offenders))
+
+    def test_the_correction_says_the_re_bake_names_the_right_section(self):
+        # The stale bullet attributes the re-bake to `docs/findings.md` §4f.
+        # The tool's census is quoted in §4o and §4f does not mention the tool,
+        # so a correction that fixes only the "still open" half leaves the
+        # reader with a to-do pointed at a section that never carried it.
+        for block in self.blocks:
+            if CLOSED_TOOL not in block or "CORRECTION" not in block:
+                continue
+            self.assertIn("§4o", prose(block),
+                          "the correction does not name §4o as the section "
+                          "carrying the census")
+            self.assertIn("does not mention the tool", prose(block),
+                          "the correction does not say that §4f does not "
+                          "mention the tool, so the wrong attribution stands "
+                          "uncorrected beside it")
 
 
 if __name__ == "__main__":

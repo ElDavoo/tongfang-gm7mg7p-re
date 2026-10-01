@@ -727,6 +727,15 @@ still not established, and that is a human's live test either way.
   walk's, and `ec-07c4-07d5-sites.md` §9 sets that precedent.
 - **Widening `t1wr_callers.py` to `0x1176`** (§7), with its `EXPECTED_*` and
   `docs/findings.md` §4f re-bake.
+
+  > **CORRECTION** (issue #323, 2026-10-01), leaving the bullet above as it was
+  > written. The widening is done — `ACPI_ARGS` carries `0x1176` and
+  > `--self-check` passes against the committed tree, which is what §7's
+  > correction above says in full — and the re-bake names the wrong section: the
+  > census is quoted in `docs/findings.md` §4o, and §4f does not mention the
+  > tool. What genuinely remains is the live half, whether `0x1176` is ever
+  > issued and what the EC then does with `CGCT`, which is this section's first
+  > bullet.
 - **The other eight `no row` cells in §7 of the door doc** — `0x07C9`-
   `0x07CF` and `0x07D2` — and the rest of the `0x07C4`-`0x07D7` block. Named,
   not done.
