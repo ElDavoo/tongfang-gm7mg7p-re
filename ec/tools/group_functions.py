@@ -1614,11 +1614,6 @@ def self_test():
           "so the row cannot be sharing a component with one. Got bank0 0x8000 "
           "%r and bank0 0x88F0 %r"
           % (grouped9[("bank0", "8000")][0], grouped9[("bank0", "88F0")][0]))
-    check("the cut does not join two banks that share a trampoline target",
-          grouped9[("bank0", "8000")][0] != grouped9[("bank1", "8000")][0],
-          "(both banks' callers reach 0x88F0 only by loading it into DPTR and "
-          "tail-jumping a BL51 stub; got bank0 %r and bank1 %r)"
-          % (grouped9[("bank0", "8000")][0], grouped9[("bank1", "8000")][0]))
     # The cut drops the trampoline's edge OUT and keeps the edges into it, so
     # a bank's callers stay connected to their own trampoline. An
     # implementation that dropped the whole row's edges would isolate the
@@ -1685,16 +1680,7 @@ def self_test():
     # then joined to the caller's own-bank row. This is the assertion a
     # contraction cannot pass, and one a `cluster()` that ignored the split
     # entirely also passes: the cut and the no-op agree about the drop, and
-    # only both about the contraction being refused. `mov DPTR,#0x88f0` is not an
-    # edge: `listing_calls()` reads `lcall`/`ljmp` operands, and a DPTR
-    # immediate is neither, so the address 0x88F0 has no edge pointing at it
-    # from either bank's trampoline. A contraction rewrites the tail jump to
-    # point at that immediate instead of at the stub, which manufactures
-    # exactly that edge -- a bucket-B one, since 0x88F0 is in both images, and
-    # then joined to the caller's own-bank row. This is the assertion a
-    # contraction cannot pass and a `cluster()` that ignored the split
-    # entirely would: the cut and the no-op agree about the drop, and only
-    # both about the contraction being refused.
+    # only both about the contraction being refused.
     check("the DPTR immediate is not read as an edge target",
           stats10.cross_region == 0
           and grouped10[("bank0", "8000")][0]

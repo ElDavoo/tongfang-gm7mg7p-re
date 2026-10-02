@@ -278,8 +278,12 @@ group is *for*.
 Those three figures were the uncut ones and they no longer describe the
 committed file. `group_functions.py --split trampoline` is now the default, so
 the graph the union walks has the BL51 bank-select trampoline boundary removed
-from it, and the three `callgraph` groups are **370 / 309 / 307**. The
-largest did not move at all, which is the finding rather than a correction, and
+from it. Re-derived on 2026-10-02 with `--report --split=none` and `--report`,
+the three large `callgraph` groups go **327 / 323 / 370 → 307 / 309 / 370** for
+`callgraph_bank0_0EA2`, `callgraph_bank1_1738` and `callgraph_pd_0003`: the
+largest does not move at all, which is the finding rather than a correction.
+The 321 and 303 in the paragraphs on either side are that older tree's
+figures, not the uncut ones.
 [`group-split-at-the-bl51-trampoline.md`](group-split-at-the-bl51-trampoline.md)
 has the before/after table, the command that produced it, and why the cut is a
 partial cause of two of these components and no cause of the third.
@@ -309,8 +313,10 @@ components of 50 or more were `callgraph_bank0_0EA2` (327, all `bank0`),
 `callgraph_bank1_1738` (321, all `bank1`) and `callgraph_pd_0003` (303, all
 `pd`). Every large component being a single scope is the visible consequence of
 the fix; it is a structural fact about the graph, not a claim that the banks do
-separate jobs. Those three sizes were themselves the uncut ones; the cut
-described above gives 307 / 309 / 370 for the same three names.
+separate jobs. Those three sizes were themselves the uncut ones as of that
+merge, and the 321 and 303 here are that tree's: re-derived uncut, `bank1_1738`
+is 323 and `pd_0003` is 370, so the uncut side of the arrow above is those two
+figures and not these.
 
 456 EC rows are `ungrouped`: no typed seed and no component at or above the
 minimum size. That is *not found by this method*, never "these functions have
@@ -372,7 +378,7 @@ number into generated output, and `check_site_census.py` is what caught it.
   [`group-split-at-the-bl51-trampoline.md`](group-split-at-the-bl51-trampoline.md)
   cuts the graph at the BL51 bank-select trampoline, which is now the default
   mode of `group_functions.py`, and the three large `callgraph` groups go
-  327 / 321 / 303 → 307 / 309 / 370 — the largest does not move at all, so
+  327 / 323 / 370 → 307 / 309 / 370 — the largest does not move at all, so
   whatever holds that one together is not the trampoline boundary. Strong
   articulation points are the route left, and they have no committed oracle
   here, which is the thing a follow-up would have to build first.
