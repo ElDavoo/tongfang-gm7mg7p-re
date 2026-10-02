@@ -203,7 +203,7 @@ has one caller, and the tool's own self-test is that caller.
 **The skip rule and the `MARK` predicate are spelled in its own body**, as
 the third and fourth such spellings do. The guard against that drifting is a
 test rather than a refactor: `MarkProvenanceTests` at
-`ec/tools/test_grade_0751_isolation.py:4858` holds this reader to
+`ec/tools/test_grade_0751_isolation.py:5021` holds this reader to
 `mark_labels_of` over **every committed fixture** under `ec/tools/testdata/`,
 so a mark this reaches and a mark the notice lists cannot part. That is the
 same idiom `ExistingMarkLabelTests` uses, and the same reason: merging the
@@ -379,12 +379,12 @@ what makes them one.
 | `ec/tools/ec_timer_capture.py:218` | `:210` |
 | `ec/tools/ec_timer_capture.py:240` | `:232` |
 | `ec/tools/ec_timer_capture.py:321` | — (the header is new to the census) |
-| `ec/tools/grade_0751_isolation.py:1156` | — (the reader is new) |
-| `ec/tools/grade_0751_isolation.py:1179` | `:1108` |
-| `ec/tools/grade_0751_isolation.py:1192` | `:1121` |
-| `ec/tools/grade_0751_isolation.py:1435` | `:1364` |
-| `ec/tools/grade_0751_isolation.py:1477` | `:1406` |
-| `ec/tools/grade_0751_isolation.py:3065` | `:2994` |
+| `ec/tools/grade_0751_isolation.py:1195` | — (the reader is new) |
+| `ec/tools/grade_0751_isolation.py:1218` | `:1108` |
+| `ec/tools/grade_0751_isolation.py:1231` | `:1121` |
+| `ec/tools/grade_0751_isolation.py:1474` | `:1364` |
+| `ec/tools/grade_0751_isolation.py:1516` | `:1406` |
+| `ec/tools/grade_0751_isolation.py:3105` | `:2994` |
 | `ec/tools/check_capture_claims.py:576` | `:514` (drifted before this change) |
 | `windows/tools/test_ec_watch.py:159` | `:145` |
 | `windows/tools/test_system_id_probe.py:343` | `:341` (and `:311` before #739) |

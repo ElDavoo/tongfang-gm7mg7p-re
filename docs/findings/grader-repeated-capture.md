@@ -111,7 +111,7 @@ which keys on `os.path.realpath` and returns `(kept, repeats)` with each repeat
 as a `(given, first, resolved)` triple. Three reasons, in order of weight:
 
 1. **It is the rule the 0751 grader already ships *and* tests**
-   (`test_grade_0751_isolation.py:1143-1188`), so one rule covers the tree
+   (`test_grade_0751_isolation.py:1306-1351`), so one rule covers the tree
    rather than three graders growing three spellings of "the same file twice".
 2. **It is strictly more permissive than refusing a second positional**, so it
    cannot break `grade_timer_sweep.py`'s *documented* contract. Its docstring

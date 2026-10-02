@@ -39,9 +39,15 @@ wanders in both arms and the wander cannot separate them, while how far the
 byte actually travelled can. Max excursion is the read for a write arm whose
 response is a ramp to a new duty followed by wander.
 
-A byte that held still is a line of zeros, not a missing line: absence would
-read as missing data rather than as the strongest negative result the
-procedure can produce.
+A byte with no change row in a window is a line of zeros, not a missing line:
+absence would read as missing data, and "no line" is the shape a correct
+`confirmed-inert` answer takes. What the zero does not carry is the other
+half, and it is the half that decides the status call: the figures are
+arithmetic over the rows this capture holds, so they say what was recorded
+between these samples and nothing about the byte between them. `ZERO_SCOPE_NOTE`
+is that sentence, in the words both printed homes and the runbook's §4.4, §6
+and §7 use -- the `--dump-pair` paragraph below states the same fact from the
+other end, over the wider bracket.
 
 `--dump-pair` reads the same §4.1-§4.3 bytes a second, wider way, from a
 before/after dump pair per range -- the range dumps §3's steps 0 and 6 take,
@@ -666,6 +672,39 @@ CONTEXT = (
      range(0x075B, 0x075D)),
     ("CPU_TEMP 0x043E / GPU_TEMP 0x044F -- confirmed (§4.5)",
      (0x043E, 0x044F)),
+)
+
+# What a zero on one of those lines is a zero of, in the words the two printed
+# homes and the runbook's §4.4, §6 and §7 all carry. One constant because the
+# claim is made in three places and cashed in at a fourth, and four spellings
+# of it is four chances to fix the grammar and leave the gap.
+#
+# The gap: `ec_watch.py` writes a change row when a byte *differs* between two
+# of its sweeps, so a capture is a log of recorded transitions rather than a
+# sampling of levels. A duty byte that wobbles and returns between two sweeps
+# is in no row, and what this tool knows about it is that no row was written
+# -- not that it did not move. §3's own pacing note puts a number on the
+# interval and declines to put one on the sweep: `--interval` is slept
+# *between sweeps*, one sweep of the three watchers is 448 ECRR reads, and
+# issue #94 owns how long that takes. So the per-byte period is `--interval`
+# plus a duration nothing here measures, and the wider bracket that closes
+# part of it is `--dump-pair` -- complementary, not stronger.
+#
+# The parenthetical token beside the figures (`(0 changes)`) is left as it is:
+# it counts what the report counted, which is true, and two committed cases
+# assert it literally. What the sentence adds is what the token does not say,
+# which is the difference between "no row was written" and "the byte held
+# still". No `--dump-pair` sentence needs it and the two readers that print
+# these figures never print together, so it goes in neither.
+ZERO_SCOPE_NOTE = (
+    "A zero here is a zero of observed transitions, not a measurement of the "
+    "byte: `ec_watch.py` writes a change row only when a byte differs between "
+    "two of its sweeps, `--interval` is slept between sweeps rather than "
+    "between bytes, and the per-byte sampling period is `--interval` plus a "
+    "sweep duration nothing in this repo measures (issue #94), so a move that "
+    "completes inside one sampling period is in no change row at all. The "
+    "wider bracket, `--dump-pair`, closes part of that gap and is "
+    "complementary rather than stronger."
 )
 
 # What the "other addresses" bucket prints under an address none of the two
@@ -2931,9 +2970,10 @@ def report_window(w, n, total, block, total_blocks, end=None):
           "window at. §4.4")
     print("    keys the control-vs-write comparison on total. Every context "
           "byte gets a")
-    print("    line in every window, so a byte that held still is a zero here "
-          "and not a")
-    print("    missing line.")
+    print("    line in every window, so a byte with no change row in it is a "
+          "zero here and")
+    print("    not a missing line.")
+    print(wrap_note(ZERO_SCOPE_NOTE, indent=4))
     for name, addrs in CONTEXT:
         print(f"      {name}:")
         for a in addrs:
@@ -4384,6 +4424,7 @@ def main(argv=None):
           "not the call itself. `confirmed-inert` as a standalone control "
           "additionally needs all three values, with and without the vendor "
           "service (§3a).")
+    print(wrap_note(ZERO_SCOPE_NOTE))
     # Six ways a run can be refused rather than graded, and they are six
     # facts about the input rather than six verdicts about the machine: a
     # block short its restore, a mark set that cannot support a block's
