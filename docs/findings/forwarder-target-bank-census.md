@@ -118,9 +118,10 @@ and `0xC48F` — and three have no listing in either bank (`0x8567`, `0x8588`,
 Where a `ghidra-functions.csv` row carries the bank-0 listing, the symbol that
 row gives: `0xC1E7` is `test_1664_bit0`, `0xC389` is `clear_1607_bit2`, `0xC349`
 is `test_1667_bit0`, `0xC0AD` is `init_1615_1807_then_clear_1601_bit5`, `0xC48F`
-is `clear_160a_bit0`. The two that carry no such row are `0x8294` and `0xC4C9`,
-both still `FUN_CODE_*` in `ec/decompiled/listing-index.csv` because they were
-seeded by a call-target byte scan rather than annotated.
+is `clear_160a_bit0`. Of the subset's bank-0 listings, the two that carry no such
+row are `0x8294` and `0xC4C9`, both still `FUN_CODE_*` in
+`ec/decompiled/listing-index.csv` because they were seeded by a call-target byte
+scan rather than annotated.
 
 Three addresses are worth naming individually, because they are the ones that
 would have been argued about:
@@ -150,7 +151,7 @@ narrowed would be visible rather than silent.
 
 `no-listing` is the class, not a verdict, so the bytes are printed beside it.
 Two of them were already transcribed by hand and are what
-`ghidra-variables.csv` `bank1,0xA389` and the `bank1,19A8` row rest on:
+`ghidra-variables.csv` `bank1,0xA4CF` and the `bank1,19A8` row rest on:
 
 - `0xC118` is `12 c0 e7 ef 60 03 7f 01 22 7f 00 22` — `lcall 0xC0E7` then the
   six-instruction restatement of its answer in R7 as 1 or 0. That is an entry
