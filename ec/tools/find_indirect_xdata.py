@@ -19,10 +19,10 @@ offset whose byte is one of those four, and it over-counts by about 8x: 0xE2,
 0xE3, 0xF2 and 0xF3 are common *operand* bytes inside `mov dptr,#imm16`,
 `jnb bit,rel` and `cjne a,#data,rel`, so most of what a byte scan finds is
 somebody's immediate. The anchored pass walks each region from its base with
-`OPCODE_LEN` and `inline_arg_len` and keeps only the offsets that walk reaches
-as an instruction start. The anchored set is the population every other number
-here is about; the raw count is printed beside it so the gap is visible rather
-than silently filtered.
+`OPCODE_LEN`, `inline_arg_len` and `case_table_len` and keeps only the offsets
+that walk reaches as an instruction start. The anchored set is the population
+every other number here is about; the raw count is printed beside it so the gap
+is visible rather than silently filtered.
 
 **The window resolves an address, or it says which half it could not.** For
 each site this walks back a bounded window of the *anchored* decode -- the
@@ -82,7 +82,8 @@ import io
 import os
 import sys
 
-from disasm8051 import OPCODE_LEN, converges_from, inline_arg_len, mnemonic
+from disasm8051 import (OPCODE_LEN, case_table_len, converges_from,
+                        inline_arg_len, mnemonic)
 from trace_xdata_refs import (PD_MARKER, REGIONS, check_table, region_of,
                               repo_path, runtime_addr)
 
@@ -251,10 +252,17 @@ def anchored_starts(d: bytes, lo: int, hi: int) -> list:
 
     The one framing decision this tool makes, and `disasm8051.py` holds the
     tables: `OPCODE_LEN` for the length, `inline_arg_len()` for the PD
-    image's inline-argument block, and a one-byte re-sync where an
-    instruction would run past the region's end. Nothing else re-frames
-    anything, so a site's framing evidence (`converges_from()`) and the
-    window behind it come from the same walk."""
+    image's inline-argument block, `case_table_len()` for the main EC's
+    `0x7151` case tables, and a one-byte re-sync where an instruction would run
+    past the region's end. Nothing else re-frames anything, so a site's framing
+    evidence (`converges_from()`) and the window behind it come from the same
+    walk.
+
+    `case_table_len()` fires here and not in a 24-byte window: this walks the
+    whole region from `lo`, so a table of up to `MAX_CASE_ENTRIES` entries is
+    inside the buffer it is handed. The 24-byte window is a look-*back* bound,
+    not a framing bound, and none of this changes what a window behind a site
+    can contain."""
     starts, i = [], lo
     while i < hi and i < len(d):
         n = OPCODE_LEN[d[i]]
@@ -262,7 +270,7 @@ def anchored_starts(d: bytes, lo: int, hi: int) -> list:
             i += 1
             continue
         starts.append(i)
-        i += n + inline_arg_len(d, i)
+        i += n + inline_arg_len(d, i) + case_table_len(d, i)
     return starts
 
 

@@ -4,10 +4,13 @@ subroutine consumes -- the bank-0 table at runtime 0x8038 in particular.
 
 ec/annotations/bank-call-audit.md section 8 met that table as a side effect:
 four PC-relative branch sites resolve outside their region, and one of them,
-file 0x0803B, scores 24 of 24 anchors while plainly sitting in data. That
-section read the bytes from 0x8038 as `sjmp` + `index, address` triples.
-This tool reads them against the code that consumes them instead, and the
-two readings disagree -- section 9 corrects section 8 in place.
+file 0x0803B, plainly sits in data. Section 8 read the bytes from 0x8038 as
+`sjmp` + `index, address` triples. This tool reads them against the code that
+consumes them instead, and the two readings disagree -- section 9 corrects
+section 8 in place. (Section 8 also scored that site 24 of 24 on the anchor
+walk; the walk now steps over the case table the site is inside, so it scores
+5 of 24. Section 8's second correction says so, and §4's `0x00686` carries
+the "a high frame score is not a branch" argument instead.)
 
 **How the table is found, and why it is not a DPTR scan.** Nothing in this
 image loads DPTR with #0x8038 or #0x803A: the reader takes its pointer off

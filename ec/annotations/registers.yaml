@@ -33,8 +33,15 @@
 #                    The INDIRECT addressing mode is a separate scan and a
 #                    separate caveat: ec/tools/find_indirect_xdata.py looks for
 #                    `movx @Ri`, whose page is in P2 and whose low byte is in a
-#                    register, and finds 44 such sites in the EC image of which
-#                    none resolves to an address -- `mov p2,#imm` occurs 0 times
+#                    register, and finds 37 such sites in the EC image of which
+#                    none resolves to an address. (Correction: this caveat said
+#                    44. The walk did not know about the main EC's `0x7151`
+#                    case tables and decoded their bytes as instructions; the
+#                    seven lost rows were table data, and the corrected walk
+#                    removes them. docs/findings/7151-case-tables-in-the-walk.md
+#                    is the write-up, and the population is that tool's output
+#                    rather than a figure to carry here.)
+#                    `mov p2,#imm` occurs 0 times
 #                    in this image, with the same query finding 529 for
 #                    `mov b,#imm`, so the common literal-P2 idiom is not in
 #                    this firmware at all. That is a fact about the FORM, not
@@ -42,7 +49,11 @@
 #                    across a call, `mov @Ri,#data` and @dptr walks are all
 #                    outside that scan, and the 12 `mov p2,register` it does
 #                    report turn out to be a data table its own walk decoded as
-#                    code. ec/annotations/indirect-xdata-sites.md 5 is the full
+#                    code. The smaller population is a WEAKER negative, not a
+#                    cleaner one: no site behind it was ever checked for being
+#                    real code, and the two single-site `P2` rows that survive
+#                    look like ascending-step data by a second route.
+#                    ec/annotations/indirect-xdata-sites.md 5 is the full
 #                    list of what it does not establish. No `status:` below
 #                    moves on the strength of it, in either direction.
 #
