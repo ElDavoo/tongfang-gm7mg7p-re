@@ -181,7 +181,17 @@ What this predicts, and what was then observed:
   not decoded. "4 cells" is backed by the pack's own 15200 mV design voltage
   (4 × 3.8 V) and by the 1000 mV arithmetic above, not by that helper.
 - **`check_0xB112`** and the `0x0490` gate bits were not decoded. `0x0490`
-  reads `0x0F` live, so bits 0 and 2 are both set.
+  reads `0x0F` live, so bits 0 and 2 are both set. One bit is placed since:
+  **bit 1 is cleared by the routine that zeroes `0x04AE`/`0x04AF`**, in the same
+  breath — `bank1` `0xB841` `arm_05f2_countdown_0575_clears_0490` runs
+  `anl A,#0xf9` on `0x0490` and then stores `0x0000` to `0x04AE`/`0x04AF`, and
+  `0xB8E1` `arm_05f4_countdown_0576_clears_0490` is the same shape on bit 5 for
+  `0x04BE`/`0x04BF`. So the two words sit in the bit-1 sequence. Whether they
+  feed the derating is **not** established: the committed decompiles show them
+  counted once per `0x3C` ticks and compared against a byte times `0x3C`, with
+  no unit, and the setter side of those gate bits is still unread. See
+  [`docs/findings/xdata-04a0-run-elapsed-counters.md`](../../docs/findings/xdata-04a0-run-elapsed-counters.md);
+  nothing here was observed on hardware.
 - **Consequence for "battery health".** The fuel gauge learns full-charge
   capacity from charges that now end at 4.1 V/cell. The 2000 mAh
   `charge_full` (§1, "~49% health") is therefore capacity to 4.1 V/cell,

@@ -5435,3 +5435,106 @@ registers:
       EC does not touch, and one static method cannot tell those apart. The
       other 31 are "not found by this method", never absent. No hardware was
       involved.
+
+  - name: XDATA_04A0_MIRROR_OF_0524
+    addr: [0x04A0, 0x04A1]
+    sources: [xdata-refs]
+    static_refs: [9, 8]
+    static_refs_main_ec: [9, 5]
+    static_refs_pd_image: [0, 3]
+    status: present-untested
+    note: >
+      Read as a 16-bit mirror of 0x0524/0x0525, not as a staging slot, and the
+      name is the reading rather than a decoded field layout. bank1
+      0xD0C4=update_0524_0526_4a0_and_0497_flags copies 0x0524 into 0x0526
+      and 0x04A0 and clears 0x0525, 0x0527 and 0x04A1, then writes 0x20 to
+      0x0524, 0x0526, 0x04A0 and 0x0492 together (ec/decompiled/bank1/D0C4.c:29-33,
+      87-91); bank1 0xB2D5=copy_0514_0516_to_04ab_04ac_then_probe stores the
+      16-bit value at 0x0524/0x0525 through the 16-bit writer 0x888C
+      (ec/decompiled/bank1/B2D5.asm), reached through
+      bank1 0xAD82=forwarder_to_b2d5. The readers test individual bits across
+      the two bytes, which is what a mirror predicts and a staging slot does
+      not: 0x04A0 bit 5 at 0xB2A0 and 0xAD8B, 0x04A1 bit 6 at 0xBA43, and
+      0x04A1 & 0x90 at 0xBA43 and 0xC11C, and 0xBA43 reads 0x04A0 into a
+      parameter in the same condition that tests 0x04A1 bit 6 -- one reader
+      pulling from both bytes at once. Issue #732's "staging area of 16-bit
+      slots" for the
+      0x04A0-0x04C0 run is the weaker inference the copy sites alone support,
+      and the bit tests are what displace it. No unit is at stake here and none
+      is claimed: this pair is a copy of a value the EC counts elsewhere, not a
+      count of its own. 0x04A1's three PD-image sites are
+      **another program's bytes at the same address numbers**, split rather
+      than summed, as PACK_TEMP_DK's note records for the same collision at
+      0x04A3. Nothing was observed on hardware: no register was read, written
+      or read back and no site was seen run, and this entry is a static reading
+      of committed listings. A register the EC keeps in step with another is
+      not thereby a Linux driver should write, and nothing here makes this pair
+      a driver-write target. docs/findings/xdata-04a0-run-elapsed-counters.md
+      carries the byte facts and the commands.
+
+  - name: XDATA_04AE_COUNTER_A
+    addr: [0x04AE, 0x04AF]
+    sources: [xdata-refs]
+    static_refs: [6, 1]
+    static_refs_main_ec: [6, 1]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      16-bit, 0x04AE low, 0x04AF high. An up-counter the 0x0490 gate arms and
+      clears, and **no unit is claimed**: 0x3C is 60 as arithmetic on the
+      committed decompiles, and nothing committed establishes how often
+      bank1 0xBFBB=FUN_CODE_bfbb is entered, so this is not named in seconds
+      or minutes. Three committed routines store 0x0000 to the word and one
+      increments it, all in the bank1 listings: 0xB841
+      =arm_05f2_countdown_0575_clears_0490 clears bits 0, 1, 2 and 6 of
+      0x0490 and stores 0x0000 to 0x04AE in the same breath
+      (ec/decompiled/bank1/B841.asm:25-34) -- **bit 1 is the gate
+      charge_target_update is reached on**, bank0 0xB141 doing `jb 0xe1,
+      0xb158` on 0x0490 (ec/decompiled/bank0/B12C.asm); 0xB8E1
+      =arm_05f4_countdown_0576_clears_0490 is the same shape on bit 5 for
+      0x04BE; 0xBFD9=zero_04ae_and_04be is the same two stores and nothing
+      else (ec/decompiled/bank1/BFD9.asm:7-13). 0xBFBB counts it once per
+      0x3C ticks of the byte in front of it, 0x04AD, under 0x0490 bit 3,
+      carrying into the high byte, then compares it against 0x057B * 0x3C --
+      0x057C when 0x0472 bit 5 is set, 0x057D on the second path -- and sets
+      or clears bits of 0x0494 (ec/decompiled/bank1/BFBB.c:21-26, 35-40,
+      45-52, 63, 69). Issue #732 asked this note to record that no committed
+      routine has been read setting it non-zero; that sentence does not
+      survive its own check, and 0xBFBB and 0xC0A8 both increment a word of
+      this shape. Nothing was observed on hardware: no register was read,
+      written or read back and no site was seen run, so the increment is a
+      static reading and not a measured behaviour. A register the EC arms and
+      disarms is not thereby a Linux driver should write, and nothing here
+      makes this pair a driver-write target; 0x0522's host-read-only note is
+      how this file words the refusal.
+      docs/findings/xdata-04a0-run-elapsed-counters.md carries the byte facts,
+      the commands, and the open questions.
+
+  - name: XDATA_04BE_COUNTER_B
+    addr: [0x04BE, 0x04BF]
+    sources: [xdata-refs]
+    static_refs: [3, 1]
+    static_refs_main_ec: [3, 1]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      16-bit, 0x04BE low, 0x04BF high, and the +0x10 column translation of
+      XDATA_04AE_COUNTER_A: 0x04AD/0x04AE/0x04AF become 0x04BD/0x04BE/0x04BF,
+      the two flag bytes the comparison feeds are the +0x08 pair 0x0494 and
+      0x049C, and the census puts the two triples in different span groups.
+      **No unit is claimed**, for the reason XDATA_04AE_COUNTER_A gives and
+      not a second one: bank1 0xC0A8=FUN_CODE_c0a8 counts this word once per
+      0x3C ticks of 0x04BD and nothing committed says how often it is
+      entered. 0xB8E1=arm_05f4_countdown_0576_clears_0490 clears bits 5 and 6
+      of 0x0490 and stores 0x0000 to this word in the same breath
+      (ec/decompiled/bank1/B8E1.asm:25-34), and 0xBFD9=zero_04ae_and_04be
+      zeroes it as its only other store. The word is reached through
+      XDATA_04AE_COUNTER_A's routines as well: 0xBFBB compares and clears
+      0x04BE on its non-bit-3 path (ec/decompiled/bank1/BFBB.c:80-81) and
+      calls 0xC0A8. What the +0x10 spacing is -- a column of paired slots or
+      two unrelated fields ten apart -- is not established here. Nothing was
+      observed on hardware: no register was read, written or read back and no
+      site was seen run. A register the EC arms and disarms is not thereby
+      a Linux driver should write, and nothing here makes this pair a
+      driver-write target. docs/findings/xdata-04a0-run-elapsed-counters.md
+      carries the byte facts and the commands.

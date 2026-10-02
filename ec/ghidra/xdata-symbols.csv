@@ -216,3 +216,9 @@ addr,name,from_register,register_status,derivation,programs
 0x0EAE,CTL6,CTL6,present-untested,scalar-name,bank0;bank1
 0x0EAF,CTL7,CTL7,present-untested,scalar-name,bank0;bank1
 0x0EB8,MGI8,MGI8,present-untested,scalar-name,bank0;bank1
+0x04A0,XDATA_04A0_MIRROR_OF_0524_0,XDATA_04A0_MIRROR_OF_0524,present-untested,override,bank0;bank1
+0x04A1,XDATA_04A0_MIRROR_OF_0524_1,XDATA_04A0_MIRROR_OF_0524,present-untested,override,bank0;bank1
+0x04AE,XDATA_04AE_COUNTER_A_0,XDATA_04AE_COUNTER_A,present-untested,override,bank0;bank1
+0x04AF,XDATA_04AE_COUNTER_A_1,XDATA_04AE_COUNTER_A,present-untested,override,bank0;bank1
+0x04BE,XDATA_04BE_COUNTER_B_0,XDATA_04BE_COUNTER_B,present-untested,override,bank0;bank1
+0x04BF,XDATA_04BE_COUNTER_B_1,XDATA_04BE_COUNTER_B,present-untested,override,bank0;bank1

@@ -2,7 +2,7 @@
 """The four figures `ec/annotations/xdata-inc-dptr-only.md` is written on, and
 the refusal that keeps the tool behind them harmless (issue #707).
 
-The page states a split -- 107 / 73 / 34 / 27, the 73's own 71 + 2, and the
+The page states a split -- 107 / 73 / 34 / 23, the 73's own 71 + 2, and the
 ten addresses §4.7 names as the head of the 73 -- and every one of those is
 arithmetic over two committed corpora that can both move. `--check` holds the
 committed table against a fresh generation, which is the reproducibility claim;
@@ -94,24 +94,24 @@ FIRMWARE = str(EC / "firmware" / "GMxMGxx_11.800")
 ONLY_INC = 107          # reached only as the `inc DPTR` half
 DECLINED = 73           # of those, no main-EC `MOV DPTR` site
 WITH_SITE = 34          # of those, at least one
-ENTERED = 8             # of the 34, in registers.yaml
-UNENTERED = 26          # of the 34, not in registers.yaml
+ENTERED = 11            # of the 34, in registers.yaml
+UNENTERED = 23          # of the 34, not in registers.yaml
 # The 73's own two-way cut, which is a different question from the 73 and is
 # kept apart: "found in no image" and "found in another program" are different
 # reasons to decline and the page says so.
 NOWHERE = 71
 PD_IMAGE_ONLY = 2
 PD_ONLY_ADDRESSES = {"0x043B": 2, "0x04A5": 3}
-# 7 -> 8 with issue #1425, which is the eighth and the only one of the eight
-# that is a *high* half: `0x04A3` is `PACK_TEMP_DK_1`, the byte above
-# `0x04A2`. The other seven are all low halves of a pair their seed is, which
-# is what "entered" has meant here throughout -- a name on the byte a `MOV
-# DPTR` would have to find. `0x04A3` has a main-EC `MOV DPTR` site of its own
-# (`bank0:0xBAE7`, a read of the high half), so it is an ordinary entered row
-# and the invariant below covers it like the other seven; being a high half is
-# a fact about the byte, not a reason to hold it out of the check.
+# Four of these are *high* halves -- the byte above the one their seed names --
+# and that is a fact about the byte, not a reason to hold one out of the check.
+# `0x04A3` came in under issue #1425 (`bank0:0xBAE7`, a read of the high half
+# of `PACK_TEMP_DK`); `0x04A1`, `0x04AF` and `0x04BF` under issue #732, as the
+# high halves of the three 16-bit pairs that pass entered. Each has a main-EC
+# `MOV DPTR` site of its own, so each is an ordinary entered row and the
+# invariant below covers all of them the same way as the seven low halves.
 ENTERED_ADDRESSES = ("0x030F", "0x0403", "0x0435", "0x0437", "0x0439",
-                     "0x04A3", "0x04A7", "0x0523")
+                     "0x04A1", "0x04A3", "0x04A7", "0x04AF", "0x04BF",
+                     "0x0523")
 
 # The ten addresses `xdata-register-map.md` §4.7 spells, in order. See the
 # docstring for why this is ten and not the issue's eleven.
@@ -365,21 +365,29 @@ class TheSplit(unittest.TestCase):
         self.assertEqual(the73[len(NAMED_HEAD)], "0x0364")
         self.assertNotIn(the73[len(NAMED_HEAD)], NAMED_HEAD)
 
-    def test_the_eight_entered_are_the_eight_named(self):
+    def test_every_entered_row_is_one_this_table_names_and_has_a_site(self):
         entered = [r["addr"] for r in self.rows if r["entered"] == "yes"]
         self.assertEqual(entered, list(ENTERED_ADDRESSES))
-        # Every one of the eight, `0x04A3` included, has a main-EC `MOV DPTR`
-        # site of its own -- so this is asserted for all of them rather than
-        # for seven of them. `0x04A3` is the only entered row that is a high
-        # half, which is a fact about the byte and not a reason to hold it out:
-        # its site is `bank0:0xBAE7`, a read of the high half, and the pin below
-        # is what keeps that from being re-read as an exception.
+        # The property, not the census: among the rows that have a main-EC
+        # `MOV DPTR` site, `entered` is exactly the list above; among the rows
+        # that have none, nothing is entered, so §3's rule cannot be sidestepped
+        # by a census row alone. Asserted over the whole population rather than
+        # over a named handful, so a high half -- `0x04A3`, `0x04A1`, `0x04AF`,
+        # `0x04BF` -- is held to the same rule as a low one rather than being an
+        # exception. The two directions the first half of this list does not
+        # reach: a row with a site that is *not* entered is the 23 §5 defers,
+        # and is left to `xdata-inc-dptr-only.md` to name.
         for r in self.rows:
             if r["entered"] == "yes":
                 self.assertNotEqual(r["mov_dptr_main_ec"], "0",
                                     f"{r['addr']} is entered with no main-EC "
                                     "`MOV DPTR` site, so §6's rule and this "
                                     "table disagree about what entering means")
+            elif r["mov_dptr_main_ec"] == "0":
+                self.assertEqual(r["entered"], "no",
+                                 f"{r['addr']} is entered with no main-EC "
+                                 "`MOV DPTR` site at all, which is what §3 "
+                                 "declines")
         for r in self.rows:
             if r["addr"] == "0x04A3":
                 self.assertEqual(r["mov_dptr_main_ec"], "1")
