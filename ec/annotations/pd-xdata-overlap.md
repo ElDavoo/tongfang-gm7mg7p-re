@@ -516,10 +516,30 @@ sees about half of it: the PD image has **23 census addresses at or above
 mechanical — three of the 23, `0xFFC1`, `0xFFD1` and `0xFFDB`, are reached only
 by an `inc DPTR` from the address below and are not `MOV DPTR` operands at all,
 so a byte scan cannot find them (see `xdata-register-map.md` §5.1) — and the
-rest are the ordinary lower bound: a function that did not decompile carries its
-sites nowhere. The byte-scan count is a supporting measurement here, **not a
-second census**, and reconciling 45 against 23 is its own issue if the
-follow-up pass wants one.
+rest are ~~the ordinary lower bound: a function that did not decompile carries
+its sites nowhere~~ **Corrected 2026-10-02, issue #430: there is no such
+function, because there is no function there.** The 45 and the 23 are also two
+populations and not one: only 20 of the 23 are byte-scan targets, so the
+residue is 45 − 20 = **25** rather than 45 − 23 = 22. The PD image's listings
+decode 9,277 distinct instruction addresses of its 0x20000-byte image (7.1%)
+and stop at runtime `0xF7B7`, below the whole region, and `manifest.csv`
+records the PD row as `functions=541, decompiled=541, failed=0` — nothing Ghidra
+found in the PD image failed to decompile. Of the 102 byte-scan sites belonging
+to the residue, 86 are in bytes no listing covers at all, because they are not
+inside any function's span. What the region needs is function *entries* at
+addresses that are currently raw bytes, which is a seeding question and not a
+diagnosis of one. `ec/tools/pd_high_xdata_probe.py` classifies all 25 address by
+address, and the largest group of them is neither case: at those sites
+`mov DPTR,#0xFFFF` is handed to `pd/122F.asm`, `add_dptr_to_word_0d0e_ea_guard`,
+which adds DPTR into the internal-RAM word at `0x0D`/`0x0E` and contains no
+`movx` at all, so DPTR is consumed there as an integer rather than as a
+pointer. The per-address table, the eleven a dereferencing `movx` is found
+behind, and the reasoning are in
+[`docs/findings/pd-high-xdata-census-gap.md`](../../docs/findings/pd-high-xdata-census-gap.md).
+The byte-scan count is a supporting measurement here, **not a second census**,
+and it is not extended by any of that: `XSPACE_PD_HIGH` is unchanged, and
+carrying more addresses in the census would need new Ghidra seeds and a project
+rebuild.
 
 ### 5.3.1 The ten `pd-001` addresses, and what settles their address space
 
