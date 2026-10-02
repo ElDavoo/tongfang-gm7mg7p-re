@@ -127,7 +127,7 @@ it is the same list `--check` prints.
 
 **So: a rebuild re-derives six of the seven, and the seventh is a finding
 rather than a negative answer.** `bank1` `0x031C` comes back holding a Ghidra
-placeholder — `FUN_CODE_`, one of the twelve forms `isPlaceholderName()` in
+placeholder — `FUN_CODE_`, one of the forms `isPlaceholderName()` in
 `TongFang.java` tests for, read here by parsing that Java rather than by keeping
 a second list of the prefixes. A placeholder at a rowless address is a name
 **no committed input produces**, which is precisely the case §6 records having no
@@ -199,12 +199,9 @@ finding about the firmware would be reading a rename of Ghidra's own output as
 though it were a change in what the code is.
 
 The two index CSVs are compared row by row and the manifest column by column, so
-a difference names the row and the field rather than a byte offset. The 56
-`missing-from-copy` and 59 `new-in-copy` are files, and they pair up: the export
-holds the same number of `.c` files on both sides, with fourteen rows on one
-side of the index and fourteen on the other.
+a difference names the row and the field rather than a byte offset.
 
-The counters say which of those fourteen matter:
+The manifest's own counters say which of these differences matter:
 
 | program | `functions` | `seeds_applied` | `annotations_applied` | `annotations_unmatched` | `functions_named` |
 |---|---|---|---|---|---|

@@ -69,13 +69,16 @@ Usage:
 
 import argparse
 import collections
+import contextlib
 import csv
+import io
 import os
 import shutil
 import signal
 import subprocess
 import sys
 import tempfile
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -138,6 +141,12 @@ TRUNCATION_FLOOR = 0.9
 # than a budget, and a run that reaches it is reported as not measured rather
 # than as an answer.
 DEFAULT_TIMEOUT = 7200
+
+# How long to wait for a signalled build to be gone before giving up on reaping
+# it. It is a bound on the wait, not a second ceiling: a run that reaches the
+# timeout is reported as not measured either way, and this only decides whether
+# the tool leaves a zombie behind on its way out.
+KILL_GRACE = 30
 
 # What the copy must not carry, and why each is here. `.git` is the repository
 # history, which no build input reads and which is the largest single thing in
@@ -423,12 +432,7 @@ def name_answers(have_rows, want_rows, sites, title):
 
 
 def run_build(copy_root, ghidra, timeout):
-    """The rebuild, in the copy, with the owner supplied to the JVM.
-
-    `start_new_session` so the timeout can take the whole process group: Ghidra's
-    launcher spawns a JVM, and killing only the launcher leaves that JVM holding
-    the copied project open for the rest of the run.
-    """
+    """The rebuild, in the copy, with the owner supplied to the JVM."""
     env = dict(os.environ)
     existing = env.get("JAVA_TOOL_OPTIONS", "").strip()
     env["JAVA_TOOL_OPTIONS"] = (existing + " " + OWNER_OPTION).strip()
@@ -441,35 +445,53 @@ def run_build(copy_root, ghidra, timeout):
           "copied project.prp without editing any file" % (env["JAVA_TOOL_OPTIONS"],
                                                             OWNER_OPTION))
     try:
-        proc = subprocess.run(cmd, cwd=copy_root, env=env, timeout=timeout,
-                              start_new_session=True)
-        return proc.returncode
-    except subprocess.TimeoutExpired:
-        _kill_group(cmd)
-        return None
+        return _wait_for(cmd, copy_root, env, timeout)
     finally:
         if existing:
             print("  note: the caller's own JAVA_TOOL_OPTIONS (%r) was kept and "
                   "the owner option appended to it" % existing)
 
 
-def _kill_group(cmd):
-    """Signal the whole group a timed-out build left running.
+def _wait_for(cmd, cwd, env, timeout):
+    """`cmd`'s exit code, or None when the ceiling arrived first.
 
-    A launcher killed on its own orphans the JVM it started, and that JVM keeps
-    the copied project locked -- so the next run in the same scratch directory
-    fails for a reason that has nothing to do with the code being measured.
+    The handle is held rather than left to `subprocess.run`, because the handle
+    is the only thing that names the group a timed-out build has to be taken
+    down with. `start_new_session=True` is what makes that possible: the child
+    leads a group of its own, so the group is the child's pid.
     """
+    proc = subprocess.Popen(cmd, cwd=cwd, env=env, start_new_session=True)
     try:
-        group = os.getpgid(os.getpid())
-    except OSError:
-        return
+        return proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _kill_group(proc, timeout)
+        return None
+
+
+def _kill_group(proc, timeout):
+    """Signal the group a timed-out build left running, and reap the leader.
+
+    `proc.pid` and never `os.getpgid(os.getpid())`. The child was started with
+    `start_new_session=True` and is therefore a group leader in its own right,
+    so it cannot be in this process's group: our own group is the caller's --
+    the shell, the CI step, whatever invoked the tool -- and signalling it
+    would take that down instead, leaving the launcher and the JVM untouched.
+
+    Signalling the group rather than the process is the second half, and it is
+    why this is not `proc.terminate()`: a launcher signalled on its own orphans
+    the JVM it started, and that JVM keeps the copied project locked, so the
+    next run in the same scratch directory fails for a reason that has nothing
+    to do with the code being measured.
+    """
     print("  the rebuild reached the %.0f-minute ceiling; stopping it and "
-          "reporting the run as not measured"
-          % (DEFAULT_TIMEOUT / 60.0))
+          "reporting the run as not measured" % (timeout / 60.0))
     try:
-        os.killpg(group, signal.SIGTERM)
+        os.killpg(proc.pid, signal.SIGTERM)
     except OSError:
+        pass
+    try:
+        proc.wait(timeout=KILL_GRACE)
+    except subprocess.TimeoutExpired:
         pass
 
 
@@ -648,16 +670,76 @@ def _clone_fixture(root, scratch, name):
     return copy
 
 
+# A launcher that starts a child of its own and then hangs -- the shape of
+# `analyzeHeadless`, without Ghidra -- and a child that says so when it is
+# signalled. Sources rather than inline programs, so what the self-test spawns
+# can be read next to the assertion it is there to fail.
+#
+# The child has to announce itself rather than be inspected: a pid belonging to
+# a process this one did not fork says nothing reliable about whether the
+# process behind it is still running, and nothing at all about whether it was
+# ever signalled.
+_LAUNCHER = """
+import subprocess, sys, time
+
+child = subprocess.Popen([sys.executable, sys.argv[3], sys.argv[1], sys.argv[2]])
+open(sys.argv[4], "w").write(str(child.pid))
+time.sleep(600)
+"""
+
+_GRANDCHILD = """
+import signal, sys, time
+
+def signalled(*_):
+    with open(sys.argv[2], "w") as f:
+        f.write("SIGTERM")
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, signalled)
+with open(sys.argv[1], "w") as f:
+    f.write("ready")
+time.sleep(600)
+"""
+
+
+def _hanging_launcher(box):
+    """`box`'s launcher and child scripts, written out. Their paths, in order."""
+    out = []
+    for name, source in (("launcher.py", _LAUNCHER), ("grandchild.py", _GRANDCHILD)):
+        path = os.path.join(box, name)
+        with open(path, "w") as f:
+            f.write(source)
+        out.append(path)
+    return out[0], out[1]
+
+
+def _await_file(path, seconds=30.0):
+    """Whether `path` appears within `seconds`, polled.
+
+    A file rather than a pipe, because what is being waited for is a process
+    announcing that it is up, and a pipe's other end would be held by a process
+    this one does not own.
+    """
+    end = time.time() + seconds
+    while time.time() < end:
+        if os.path.isfile(path):
+            return True
+        time.sleep(0.02)
+    return os.path.isfile(path)
+
+
 def self_test() -> int:
-    """The classifier and the refusal, which are the two things that can be
-    wrong on a machine that never runs Ghidra.
+    """What can be wrong on a machine that never runs Ghidra.
 
     Everything the run answers needs a rebuild, and a rebuild needs Ghidra and
-    an hour. The two things that do not are the diff classification and the
-    refusal that keeps a rebuild out of the tree, and both of those are wrong in
-    a way that only shows when they are exercised: a classifier that returned
+    an hour. What does not are the parts around it -- the diff classification,
+    the refusal that keeps a rebuild out of the tree, and the timeout that has
+    to take a build's whole process group down -- and each of those is wrong in
+    a way that only shows when it is exercised: a classifier that returned
     nothing would report an empty diff beside a rebuild that changed everything,
-    and a refusal that came after the copy would have already made one.
+    a refusal that came after the copy would have already made one, and a
+    timeout aimed at the wrong process group would leave the JVM holding the
+    copy it was meant to release.
     """
     bad = 0
     print("rebuild_provenance.py --self-test")
@@ -781,6 +863,33 @@ def self_test() -> int:
               "exactly rather than by the floor",
               len(gone) == 1 and "not exported" in gone[0], str(gone))
 
+        # The timeout path, the one place the tool signals a process group it
+        # is not itself part of. `_kill_group` is driven directly rather than
+        # through a wall-clock ceiling, so the fixture is known to be up -- the
+        # launcher reports readiness only once its own child is -- instead of
+        # the test racing the clock to catch it.
+        launcher, grandchild = _hanging_launcher(box)
+        ready, marker = os.path.join(box, "ready"), os.path.join(box, "signalled")
+        proc = subprocess.Popen(
+            [sys.executable, launcher, ready, marker, grandchild,
+             os.path.join(box, "grandchild.pid")], start_new_session=True)
+        try:
+            check("a child started with start_new_session leads a group of its "
+                  "own, so the group to signal is never this process's",
+                  _await_file(ready)
+                  and os.getpgid(proc.pid) != os.getpgid(os.getpid()))
+            with contextlib.redirect_stdout(io.StringIO()):
+                _kill_group(proc, DEFAULT_TIMEOUT)
+            check("the timeout takes the process the launcher started, not "
+                  "only the launcher", _await_file(marker))
+            proc.wait(timeout=KILL_GRACE)
+        finally:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except OSError:
+                pass
+            proc.wait()
+
         # The counter table, which is where Q3's shape is accounted for. A
         # column that held still and a column that moved must be told apart:
         # printing a held-still counter as `1549 -> 1549` would read as a
@@ -842,6 +951,8 @@ def self_test() -> int:
           "and reads an identical pair as no differences at all; the partial-run "
           "guard refuses a short count, a non-zero exit, a missing manifest and "
           "a program that was never exported, and lets a finished run through; "
+          "the timeout signals the build's own process group, so the launcher "
+          "and the JVM it started go together; "
           "the counter table tells a moved counter from one that held still; "
           "the name tables read a re-derived name, a dropped address and a "
           "Ghidra placeholder apart; and a rebuild into the tree is refused "
@@ -862,8 +973,9 @@ def main(argv=None):
                         help="copy the tree to scratch, rebuild there, and read "
                              "the answers back out. Needs Ghidra and an hour")
     parser.add_argument("--self-test", action="store_true",
-                        help="the classifier and the refusal, from fixtures; no "
-                             "Ghidra, no network, no copy of this repository")
+                        help="the parts of a run that need no Ghidra, from "
+                             "fixtures; no Ghidra, no network, no copy of this "
+                             "repository")
     parser.add_argument("--scratch", default=None,
                         help="where the copy goes (default: a directory under "
                              "the system temp dir). Refused if it is inside "
