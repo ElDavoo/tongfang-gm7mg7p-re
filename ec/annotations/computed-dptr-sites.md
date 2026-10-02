@@ -266,9 +266,11 @@ page 0x07, by the sites whose page this tool can establish:
     0x2F3E4  pd-image  not established; the instruction before it is `mov a,r6`
     0x2F3ED  pd-image  not established; the instruction before it is `mov a,r6`
 
-So the main EC reaches page 0x07 by any of the scans named in `registers.yaml`,
-and the PD image's computed DPTR is a different program's byte either way. That is
-"not found by these methods", and it is a statement about the methods.
+So the main EC does not reach page 0x07 by any of the scans
+named in `registers.yaml`, and the PD image's computed DPTR is a
+different program's byte either way. That is "not found by these methods", and it is
+a statement about the methods.
+$ echo $?
 1
 ```
 

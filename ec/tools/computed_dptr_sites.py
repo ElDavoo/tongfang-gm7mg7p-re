@@ -20,8 +20,8 @@ compatibility rather than taste.** That tool's `--csv` default is what
 docstring says in so many words that the default carries no extra column *so
 that the other tables reproduce unchanged*. A new bucket in that output would
 change the meaning of a number the rest of the repository quotes without
-changing its value. This file imports the region map and nothing else from it,
-so there is one definition of where the PD image starts and no shared output.
+changing its value. This file imports the region map from it, so there is one
+definition of where the PD image starts and no shared output.
 
 **The population is the eight `DPH` builds the issue names, found with no
 seeding, and the window width does not decide that.** Every anchored
@@ -726,10 +726,10 @@ def page_report(d: bytes, pd_verified: bool, page: int, back: int = WINDOW) -> i
     main_rows = [r for region in MAIN_EC_REGIONS for r in hits.get(region, [])]
     main_ec = len(main_rows)
     if not main_ec:
-        print(f"\nSo the main EC reaches page 0x{page:02X} by any of the scans "
-              "named in `registers.yaml`,\nand the PD image's computed DPTR is a "
-              "different program's byte either way. That is\n\"not found by "
-              "these methods\", and it is a statement about the methods.")
+        print(f"\nSo the main EC does not reach page 0x{page:02X} by any of the "
+              "scans\nnamed in `registers.yaml`, and the PD image's computed DPTR "
+              "is a\ndifferent program's byte either way. That is \"not found by "
+              "these methods\", and it is\na statement about the methods.")
     elif all(access_of(r["access"]) == CODE_ONLY for r in main_rows):
         print(f"\nEvery one of those sites uses the pointer it built as a CODE "
               f"pointer rather than an XDATA\none, so no XDATA byte on page "

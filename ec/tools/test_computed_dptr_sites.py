@@ -60,10 +60,11 @@ EIGHT = [0x08AC6, 0x08AD8, 0x08AF3, 0x08B0C, 0x0BCE3, 0x0BDEC, 0x0E86B, 0x0F312]
 # and that filter is the specific mistake `TheEightSitesTests` holds.
 HANDOFF = [0x08AD8, 0x08AF3]
 HANDOFF_TARGET = 0xBDF2
-# The window widths the summary prints, and the range the case below sweeps.
-# The sweep runs one past the widest so a width at which the count would change
-# if it were going to is inside it.
-WIDTHS = C.SENSITIVITY_WIDTHS
+# The window widths the case below sweeps. It is the whole range the summary
+# prints -- which skips one width in the middle, so the sweep is a range and not
+# the printed list -- and the sweep then runs one past the widest, so a width at
+# which the count would change if it were going to is inside it.
+WIDTHS = tuple(range(min(C.SENSITIVITY_WIDTHS), max(C.SENSITIVITY_WIDTHS) + 1))
 
 
 def clr_a() -> bytes:
@@ -632,7 +633,7 @@ class RegionSplitTests(unittest.TestCase):
         # even though the page is not empty.
         out, rc = capture(C.page_report, self.image_with(0x20020), True, 0x0F)
         self.assertEqual(rc, 1)
-        self.assertIn("the main EC reaches page 0x0F by any of the scans",
+        self.assertIn("the main EC does not reach page 0x0F by any of the scans",
                       out)
         self.assertIn("building 0x0F", out)
 
@@ -775,12 +776,19 @@ class CommittedTableTests(unittest.TestCase):
         # **no** computed-`DPH` site reaches page `0x07` in any image, which is
         # what narrows what the zero in `registers.yaml`'s `0x07B9` and `0x07D0`
         # rows licenses. The exit code is the claim; the wording is the shape.
+        #
+        # The `not` in the closing sentence is pinned rather than left to the
+        # sentence after it: this branch only runs when the main EC established
+        # no site on the page, so an un-negated "reaches" would state the
+        # opposite of the measurement at the point a reader stops reading.
         out = subprocess.run(
             [sys.executable, str(HERE / "computed_dptr_sites.py"),
              str(FIRMWARE), "--page", "0x07"],
             capture_output=True, text=True, cwd=REPO)
         self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
         self.assertIn("not reached by any site with an established page", out.stdout)
+        self.assertIn("the main EC does not reach page 0x07 by any of the scans",
+                      out.stdout)
         self.assertIn('"not found by these methods"', out.stdout)
 
 
