@@ -41,6 +41,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
+- [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
 - [`bucket-c-codemap.md`](bucket-c-codemap.md) — Bucket C against a recovered code map: 16 of the 140 sites are on an instruction boundary, and 14 of those 16 sit inside spans already listed as data tables
@@ -135,6 +136,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`paged-trampoline-hits-by-hand.md`](paged-trampoline-hits-by-hand.md) — All 18 paged-trampoline hits, read one by one (issue #54)
 - [`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md) — The six `pd 0x07D0` accessors that were not functions, and what naming them did to the census (issue #1101)
 - [`pd-11c2-dispatch-key-selector.md`](pd-11c2-dispatch-key-selector.md) — The `pd 0x11C2` dispatch key is `0x0424 + 0x260 * R7`, and only three key pairs ever leave the default record (issue #647)
+- [`pd-call-site-table-framing.md`](pd-call-site-table-framing.md) — Five `pd` dispatch call sites whose tables the annotation rows read as instructions (issue #643)
 - [`pd-callers-status-intersection.md`](pd-callers-status-intersection.md) — A caller's literals are not index-register loads unless the site indexes on those registers
 - [`pd-common-address-attribution.md`](pd-common-address-attribution.md) — A `pd` caller's edge was attributed to a `common` row it never reached (issue #471)
 - [`pd-common-address-spaces.md`](pd-common-address-spaces.md) — The lone `pd` proxy edge was a missing annotation, not a cross-program call (issue #470)

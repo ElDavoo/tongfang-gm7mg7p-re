@@ -685,6 +685,29 @@ only covers what's specific to *this* copy.
   (`MAX_REJECTIONS`, counted by `<!-- agent-rejected -->` markers) gets
   `agent:stuck` instead. Before this, the only ways out were ten fix rounds
   ending in a draft, or a human's `agent:stop`, and neither was a decision.
+- **A stricter merge gate** (2026-10-02, not in the template). The review
+  prompt in `agent-review.yml` now starts with one question: what does this
+  diff tell us about the firmware, the BIOS, the Windows stack or the driver
+  that main did not already know? If the answer is nothing, and the diff only
+  reworks the repository's own text, tables, censuses or checkers without
+  unblocking named work, the review rejects it instead of requesting changes.
+  It also rejects a fix loop that is not converging. That is a pull request
+  already sent back three or more times whose new blocking findings are the
+  same kind as before. The `Identify the issue behind the branch` step passes
+  that count in as `rounds`. Before this change, the prompt said many findings
+  were never a reason to reject. Of the 147 agent pull requests open or merged
+  on 2026-10-02, none had been rejected, and the most common blocking findings
+  were stale figures and line pins.
+- **A self-check before the first push** (2026-10-02, not in the template).
+  `agent-implement.yml`'s prompt now has the agent hold its own diff to the
+  review prompt's list and answer the same first question. It also rewrites the
+  pull request description to `/tmp/pr-body-final.md`, re-deriving every figure
+  from the tree, and `Open the pull request` uses that file in place of the
+  plan's `pr_body`. The plan writes its description before anything is
+  measured, which is where the stale figures the review kept blocking on came
+  from. The separate review stays the merge gate: an author checking its own
+  work shares its own blind spots, so this saves rounds and does not replace
+  the gate.
 - **`Refs`, not `Closes`, for `needs-hardware-test` issues** (2026-09-24, not in
   the template). Both `agent-implement.yml` (opening the pull request) and the
   review's `Approve` step (rewriting the body into the squash message) write
