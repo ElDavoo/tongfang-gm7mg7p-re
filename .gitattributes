@@ -55,13 +55,15 @@ windows/decompiled/**/*.c  -text -diff
 # reason the warning above gives.
 #
 # So why two forms rather than one? Because the annotation tree is not one
-# thing. The CRLF files are not drift -- they are these tools' correct output:
-# every one of walk_budget_census.py, trace_xdata_refs.py, walk_flow_follow.py,
-# pd_entry_forms.py, pd_image_census.py, pd_direct_offset_sites.py,
-# find_indirect_xdata.py, inc_dptr_sites.py, census_xdata_writers.py and
-# code_pointer_sites.py passes a bare csv.writer() no lineterminator, so csv's
-# default \r\n is what they render, and each of their --check runs is green
-# today. For those, -text is the only correct form: it stops autocrlf
+# thing. The CRLF files are not drift -- they are their generators' correct
+# output: those tools pass a bare csv.writer() no lineterminator, so csv's
+# default \r\n is what they render, and a --check of one is green today. The
+# tools are deliberately not enumerated here, because the list moves with them
+# and a stale name in this file is a claim nothing checks;
+# ec/tools/test_gitattributes_coverage.py names the ones it re-reads and fails
+# if one stops being a CRLF emitter.
+#
+# For those files, -text is the only correct form: it stops autocrlf
 # normalising CRLF->LF on the way IN, which would be a whole-file diff and a
 # red check, and it leaves the worktree bytes exactly what the tool wrote.
 # Marking one of them `text eol=lf` would send it out as LF and break the green

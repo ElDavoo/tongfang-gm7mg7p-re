@@ -58,6 +58,12 @@ GITATTRIBUTES = os.path.join(REPO, ".gitattributes")
 # the comparison. Read off each tool's --check arm, not off the tree: a file
 # nobody --checks is not a coverage obligation, and covering it anyway would
 # make this list a census of the annotations directory instead.
+#
+# The CRLF half of the set is here as well, and not only under `CRLF_EMITTERS`.
+# A tool that byte-compares a CRLF table needs the `-text` blanket for exactly
+# the reason `call_graph.py`'s LF table needs `eol=lf`, so leaving those tables
+# out would leave the coverage case holding a set that skips every table most
+# able to need covering.
 BYTE_COMPARED = {
     "ec/annotations/call-graph-callees.csv": "call_graph.py",
     "ec/annotations/dsdt-ecmg-fields.csv": "dsdt_ec_fields.py",
@@ -73,15 +79,40 @@ BYTE_COMPARED = {
     "ec/ghidra/gap-citation-scan.csv": "citation_gap_scan.py",
     "bios/ifr/charge-questions.csv": "ifr_census.py",
     "windows/ghidra/c-census.csv": "census_native_c.py",
+    # The byte-compared CRLF tables. Each is a `--check` input or output like
+    # the ones above and is covered by the blanket for the same reason; the
+    # `test_a_crlf_emitters_table_is_not_marked_eol_lf` case is what keeps them
+    # on the other attribute.
+    "ec/annotations/walk-budget-census.csv": "walk_budget_census.py",
+    "ec/annotations/xdata-086x-dispatch-sites.csv": "trace_xdata_refs.py",
+    "ec/annotations/flow-follow-none-sites.csv": "walk_flow_follow.py",
+    "ec/annotations/pd-entry-forms.csv": "pd_entry_forms.py",
+    "ec/annotations/pd-image-strings.csv": "pd_image_census.py",
+    "ec/annotations/pd-direct-offset-sites.csv": "pd_direct_offset_sites.py",
+    "ec/annotations/indirect-xdata-sites.csv": "find_indirect_xdata.py",
+    "ec/annotations/xdata-inc-dptr-only.csv": "inc_dptr_sites.py",
+    "ec/annotations/manual-fan-ctrl-0751-writers.csv": "census_xdata_writers.py",
+    "ec/annotations/code-pointer-sites.csv": "code_pointer_sites.py",
+    "ec/annotations/pd-inline-arg-sites.csv": "pd_inline_arg_sites.py",
+    "ec/annotations/pd-0x07d0-07cc-clusters.csv": "pd_site_clusters.py",
+    # `--check` takes the path as an argument here rather than defaulting to it,
+    # so `_compared_table` resolves nothing for this tool and the entry is named
+    # rather than derived. The table is the one the tool is pointed at in
+    # `docs/findings/pd-xdata-collision-survey.md`.
+    "ec/annotations/pd-xdata-span-sites.csv": "xdata_span_survey.py",
 }
 
-# The CRLF-emitting tools whose tables the `ec/annotations/*.csv -text` line
-# exists for. Named because the reason for the form is these tools' renderers:
-# each passes a bare `csv.writer()` no `lineterminator`, so csv's default
-# `\r\n` is what they write, and marking one `eol=lf` would send it out as LF
-# and break a check that is green today. Not a coverage obligation of their own
-# -- several are reachable only through `--check PATH` rather than in the gate --
-# so they are held as the negative cases instead.
+# The CRLF-emitting tools this suite re-reads. Named because the reason for the
+# form is these tools' renderers: each passes a bare `csv.writer()` no
+# `lineterminator`, so csv's default `\r\n` is what they write, and marking one
+# `eol=lf` would send it out as LF and break a check that is green today.
+#
+# A named subset of the tools that produce a CRLF table, not a census of them:
+# other CRLF tables are written by a tool whose stdout is redirected into the
+# file rather than by a `--check` default, and growing this list to name every
+# one would be a value every new table has to edit. What holds the ones not
+# named here is test_an_eol_lf_line_matches_only_an_LF_table_today, which reads
+# the CR bytes of every committed CSV an `eol=lf` line covers.
 CRLF_EMITTERS = (
     "walk_budget_census.py",
     "trace_xdata_refs.py",
@@ -93,6 +124,9 @@ CRLF_EMITTERS = (
     "inc_dptr_sites.py",
     "census_xdata_writers.py",
     "code_pointer_sites.py",
+    "pd_inline_arg_sites.py",
+    "pd_site_clusters.py",
+    "xdata_span_survey.py",
 )
 
 # A `.gitattributes` line: a pattern, then attributes. Comments and blanks are

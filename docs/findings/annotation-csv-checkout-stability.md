@@ -78,9 +78,36 @@ byte-compared tables are:
 | `gen_xdata_symbols.py` | `ec/ghidra/xdata-symbols.csv` |
 | `ifr_census.py` (`bios/`) | `bios/ifr/charge-questions.csv` |
 | `census_native_c.py` (`windows/`) | `windows/ghidra/c-census.csv` |
+| `walk_budget_census.py` | `ec/annotations/walk-budget-census.csv` |
+| `trace_xdata_refs.py` | `ec/annotations/xdata-086x-dispatch-sites.csv` |
+| `walk_flow_follow.py` | `ec/annotations/flow-follow-none-sites.csv` |
+| `pd_entry_forms.py` | `ec/annotations/pd-entry-forms.csv` |
+| `pd_image_census.py` | `ec/annotations/pd-image-strings.csv` |
+| `pd_direct_offset_sites.py` | `ec/annotations/pd-direct-offset-sites.csv` |
+| `find_indirect_xdata.py` | `ec/annotations/indirect-xdata-sites.csv` |
+| `inc_dptr_sites.py` | `ec/annotations/xdata-inc-dptr-only.csv` |
+| `census_xdata_writers.py` | `ec/annotations/manual-fan-ctrl-0751-writers.csv` |
+| `code_pointer_sites.py` | `ec/annotations/code-pointer-sites.csv` |
+| `pd_inline_arg_sites.py` | `ec/annotations/pd-inline-arg-sites.csv` |
+| `pd_site_clusters.py` | `ec/annotations/pd-0x07d0-07cc-clusters.csv` |
+| `xdata_span_survey.py` | `ec/annotations/pd-xdata-span-sites.csv` |
+
+The rows from `walk_budget_census.py` down are the CRLF half, and they are
+in the covering set for the same reason as the rest: a `--check` that compares
+a CRLF table is a check the blanket has to reach, not a special case of it.
+`xdata_span_survey.py` is the row that makes the reading a per-tool one rather
+than a pattern — its `--check` takes the path as an argument instead of
+defaulting to it, so the table it compares is named where it is pointed at
+rather than on an argparse line.
 
 Plus the two `call_graph.py` reads above, which are inputs rather than
 comparisons but carry the same hazard for the reason the third row gives.
+
+A tool that grows a `--check` is a deliberate addition to this table and to
+`BYTE_COMPARED` in `test_gitattributes_coverage.py`, which is the moment
+someone looks at it. That is why the list is named rather than discovered: a
+regex that guessed which tables are byte-compared would report a coverage
+property over a set it invented.
 
 Of these, four appear in `.github/scripts/agent-gates.sh`: `call_graph.py`,
 `citation_gap_scan.py`, `gen_xdata_symbols.py`, `xdata_register_map.py`. The
@@ -96,12 +123,17 @@ that the tree is safe for one.
 
 ## Why the form is per file, and not one rule
 
-The CRLF tables are not drift. They are **correct output**: these tools pass a
-bare `csv.writer(buf)` with no `lineterminator`, so csv's default `\r\n` is
-precisely what they render, and their checks are green today. Ten tools are
-named in `CRLF_EMITTERS` in `test_gitattributes_coverage.py`, and each is
-re-read and asked for the property it is named for, so the list cannot quietly
-stop being true:
+The CRLF tables are not drift. They are **correct output**: their generators
+pass a bare `csv.writer(buf)` with no `lineterminator`, so csv's default `\r\n`
+is precisely what they render, and a `--check` of one is green today. That is a
+claim about the mechanism, and the set of tools doing it is larger than any list
+here: some of these tables are written by a tool reached through `--check PATH`
+rather than through a `--check` default, and some by a tool whose stdout is
+redirected into the file. `CRLF_EMITTERS` in `test_gitattributes_coverage.py`
+names the ones the suite re-reads, each asked for the property it is named for
+so the list cannot quietly stop being true, and the ones it does not name are
+held by the table-wide case — no `eol=lf` line may cover a file carrying a CR —
+which reads the bytes rather than a list:
 
 ```
 $ python3 ec/tools/walk_budget_census.py --check
@@ -166,19 +198,19 @@ property that had to be measured rather than assumed:
 Two were wrong, and the first is why the naive fix would have broken checks
 that are green today:
 
-1. **"Do not silently renormalise the other 20 files."** The population is **39**
-   CRLF-carrying and **18** LF across `ec/annotations/*.csv` plus
-   `ec/decompiled/index.csv` — 57 files, not 21. A renormalisation scoped off
-   an undercount is the failure this issue is about, so the correction matters
-   more than the arithmetic:
+1. **"Do not silently renormalise the other 20 files."** The population is every
+   CRLF-carrying CSV under `ec/annotations/` plus `ec/decompiled/index.csv` —
+   several times the issue's count, and nearly all of it CRLF. A
+   renormalisation scoped off an undercount is the failure this issue is about,
+   so the correction matters more than the arithmetic, and the split moves as
+   tools are added, so it is printed rather than written down:
 
    ```sh
    python3 - <<'PY'
    import glob
-   crlf = [f for f in sorted(glob.glob('ec/annotations/*.csv')) +
-                      ['ec/decompiled/index.csv']
-           if b'\r' in open(f, 'rb').read()]
-   print(len(crlf), 'CRLF of 57')
+   files = sorted(glob.glob('ec/annotations/*.csv')) + ['ec/decompiled/index.csv']
+   crlf = [f for f in files if b'\r' in open(f, 'rb').read()]
+   print(len(crlf), 'CRLF of', len(files))
    PY
    ```
 
@@ -215,15 +247,14 @@ clean.
 ## Follow-ups this opens
 
 - **The CRLF-emitting tools should pass `lineterminator="\n"`, and their output
-  be renormalised** — `walk_budget_census`, `trace_xdata_refs`,
-  `walk_flow_follow`, `pd_entry_forms`, `pd_image_census`,
-  `pd_direct_offset_sites`, `find_indirect_xdata`, `inc_dptr_sites`,
-  `census_xdata_writers` and `code_pointer_sites`. That is the change which
-  makes one rule possible instead of two, and it has to regenerate each table,
-  so it is a commit with its own diff. `test_gitattributes_coverage.py` names
-  the tools today and will say so when one of them stops emitting CRLF, which is
-  the signal to move it.
-- **`task_call_table.py` should write with `newline=""`**, as the three
+  be renormalised.** The scope is every tool whose committed table is CRLF, not
+  the subset `CRLF_EMITTERS` names: the other tables are the same shape by the
+  same mechanism, and a change scoped to the named subset would leave the tree
+  with the two forms and no rule. That is the change which makes one rule
+  possible instead of two, and it has to regenerate each table, so it is a
+  commit with its own diff. `test_gitattributes_coverage.py` will say so when a
+  tool it re-reads stops emitting CRLF, which is the signal to move that one.
+- **`task_call_table.py` should write with `newline=""`**, as the other two
   `check_table` siblings already do. It is a CRLF producer on Windows today,
   which no read-side attribute addresses. It is also not in `agent-gates.sh`; if
   it is to be gated, that is a separate change.

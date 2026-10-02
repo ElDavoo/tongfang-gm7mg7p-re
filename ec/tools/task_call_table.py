@@ -347,7 +347,7 @@ def check_table(have, want):
     that attribute does not reach, both worth stating rather than leaving to be
     discovered: this tool's `--check` is not in `agent-gates.sh`, so the
     hazard it guards was latent rather than gate-reachable, and its `--write`
-    opens `CSV_PATH` without `newline=""` where the three `check_table`
+    opens `CSV_PATH` without `newline=""` where the other two `check_table`
     siblings do -- so on Windows it *produces* CRLF, and `-text` or `eol=lf`
     on the read side cannot address that. The writer is the remaining gap, and
     it belongs with the other tools' `lineterminator` work rather than here.
