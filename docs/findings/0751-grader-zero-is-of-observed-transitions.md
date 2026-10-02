@@ -113,7 +113,7 @@ where three values are present (unscoped and `--block` at each), recording exit
 codes:
 
 ```
-git show HEAD:ec/tools/grade_0751_isolation.py > /tmp/base_tool.py
+git show $(git merge-base HEAD origin/main):ec/tools/grade_0751_isolation.py > /tmp/base_tool.py
 for d in ec/tools/testdata/0751-isolation-run*/; do
   csvs=$(ls "$d"/*.csv)
   for w in unscoped $(grep -ho '0x0751=0x[0-9A-F][0-9A-F]' $csvs | sort -u | sed 's/.*=//'); do
@@ -125,16 +125,16 @@ for d in ec/tools/testdata/0751-isolation-run*/; do
 done
 ```
 
-Measured over the **47 pairs** that recipe produces:
+Measured over the **46 pairs** that recipe produces:
 
-- **every exit code agrees**, on all 47;
+- **every exit code agrees**, on all 46;
 - every changed line falls into one of three classes — the reworded preamble
   sentence in `report_window`, the note added under it, and the note added to
   the closing block;
 - **no changed line carries a digit, an address, a figure or a count**: no
   numeric figure, no count, no exit code, no group name and no verdict
   sentence moved on any run;
-- every `window delta` line is **byte-identical in all 47 pairs**, which is the
+- every `window delta` line is **byte-identical in all 46 pairs**, which is the
   arithmetic half of the claim stated as a check rather than as an assertion.
 
 Any pair differing in anything else would be a hunk reaching further than
