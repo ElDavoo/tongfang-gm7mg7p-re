@@ -203,8 +203,11 @@ a row under another name — is where it is exercised now.
 **The re-export also produced six `.c` files this change does not touch.**
 `bank0/8749.c`, `bank0/95DD.c`, `bank0/96AD.c`, `bank0/A7C8.c` and
 `bank1/A916.c` came back printing `XDATA_078B` / `XDATA_07A5` where the committed
-copies still print `DAT_EXTMEM_078b` / `DAT_EXTMEM_07a5`, and `bank0/ACB4.c`
-came back carrying an annotation plate that predates issue #311's correction.
+copies still print `DAT_EXTMEM_078b` / `DAT_EXTMEM_07a5`, and `bank0/ACB4.c`,
+whose committed copy carries no annotation plate at all although
+`ec/annotations/ghidra-functions.csv` has a comment row for it, came back
+carrying one. Which correction that plate holds, and which it predates, is not
+something this tree shows.
 This is **pre-existing staleness in the committed export, not drift caused by
 this change**: the committed `ec/ghidra/xdata-symbols.csv` already carries
 `XDATA_078B` and `XDATA_07A5`, so the committed `.c` files contradict their own
@@ -257,9 +260,10 @@ so `tools/run-tests.sh` is what reaches it.
 
 1. **The six stale `.c` files in §5.** `bank0/8749.c`, `bank0/95DD.c`,
    `bank0/96AD.c`, `bank0/A7C8.c` and `bank1/A916.c` print XDATA names their own
-   committed symbol table has already replaced, and `bank0/ACB4.c` carries an
-   annotation plate predating issue #311's correction. The next EC re-export
-   picks them up; nothing here needs deciding, only running.
+   committed symbol table has already replaced, and `bank0/ACB4.c` carries no
+   annotation plate though `ec/annotations/ghidra-functions.csv` has a comment
+   row for it. The next EC re-export picks them up; nothing here needs deciding,
+   only running.
 2. **The same widening over the BIOS and Windows projects.** Measured as zero
    rows in both committed indexes (§3), so re-exporting is not needed to make
    the claim true. It would confirm the widening is harmless in two more

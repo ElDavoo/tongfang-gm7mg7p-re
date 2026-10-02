@@ -54,6 +54,25 @@ placeholder names, and a row that starts a name with one of them has answered
 that question wrong. The annotation is applied, the name is honest, the comment
 is cited, and the export reports `annotated=no`.
 
+> **Correction, 2026-10-02 (#631): the bold gloss above is not what the column
+> answers, and the same gloss recurs below as "the tool that answers 'did Ghidra
+> name this, or did a person'".** Both sentences are left as written. The column
+> answers whether the name is one Ghidra reserves — `isPlaceholderName(name) ?
+> "no" : "yes"` reads the *name* and nothing else — and seven rows are reported
+> `annotated=yes` while holding no person's name: `bank0 0x031C` and `0x805B`,
+> `bank1 0x031C` and `0x703A`, `common 0x0512`, `0x10FA` and `0x1207`, where the
+> export propagated a bare transfer's target's name onto each.
+> `second_copy_census.py --check` files all seven as `target-of-a-transfer`.
+>
+> The restated reading — "is this name one Ghidra reserves, or is it a person's",
+> not "did a person choose it" — is in `ec/ghidra/README.md`'s annotation-layer
+> section with the seven named beside it, and `build_ec_decompile.py`'s
+> `annotation_ledger()` docstring says the same. The per-address reading is
+> [`named-without-a-row.md`](named-without-a-row.md). Nothing #602 argued is
+> retracted: the reserved-namespace fault, the `thunk_` renames and the ledger
+> argument all stand, and the paragraph below is still right about the fault it
+> describes.
+
 That is why the fault was so quiet. There is no error to read and nothing to
 grep for: the row resolves, `annotations_unmatched` stays 0, the `.c` exists
 and declares the function the index names, and every existence check in
