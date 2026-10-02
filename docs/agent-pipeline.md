@@ -715,6 +715,22 @@ only covers what's specific to *this* copy.
   - `gen_findings_index.py` no longer writes a `N write-ups.` line. Every
     pull request bumped it, so any two conflicted, and `CLAUDE.md` asks for
     code to be cited by name rather than by line number.
+- **One start per issue, and an un-stuck issue starts again**
+  (2026-10-02, not in the template).
+  - `run-name` in `agent-plan.yml` and `agent-implement.yml` is quoted.
+    Unquoted, YAML took ` #${{ inputs.issue }}` for a comment, so every run was
+    titled plain "Plan issue" or "Implement issue". `busy_issue` in
+    `agent-retry.yml` finds an in-flight run by that number, so it never found
+    one: successive sweeps dispatched the same issue again, each queued
+    dispatch cancelled the one before it ("Canceling since a higher priority
+    waiting request ... exists"), and an issue spent all three starts in a few
+    minutes and was handed over as `agent:stuck`. #702 was planned three times
+    in five minutes, then started three times in five more.
+  - The queue sweeps count starts only since the last hand-off comment, which
+    now carries `<!-- agent-handoff -->`. Counted over the whole thread, an
+    issue a human un-stuck, as the hand-off comment asks, was stuck again by
+    the next sweep.
+
 - **The fix stage edits the title and description, and more runs at once**
   (2026-10-02, not in the template).
   - `agent-fix.yml` writes the pull request's title and description to

@@ -33,7 +33,12 @@ on:
         type: string
 
 # Carries the issue number so agent-retry.yml can tell which issues already have a run in flight.
-run-name: Implement issue #${{ inputs.issue }}
+# LOCAL CHANGE (2026-10-02): quoted. Unquoted, YAML read ` #...` as a comment, every run was
+# titled plain "Implement issue", and agent-retry.yml's busy_issue -- which finds an in-flight run by
+# the "issue #N" at the end of this title -- never matched. Each sweep then dispatched the same
+# issue again, each dispatch cancelled the one queued before it, and an issue spent all three of
+# its starts in minutes and was handed over as agent:stuck.
+run-name: "Implement issue #${{ inputs.issue }}"
 
 # Granted per job rather than here: a workflow-level block hands the same token to the gate
 # as to the stage that runs the agent, and the gate exists precisely to decide whether the
