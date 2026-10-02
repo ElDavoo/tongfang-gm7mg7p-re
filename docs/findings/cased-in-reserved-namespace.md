@@ -38,12 +38,15 @@ filed against a base several annotation tranches behind `main`, so its numbers d
 not reconcile here and none of the difference has anything to do with the
 predicate:
 
-| | issue says | measured here, 2026-10-02 |
+| | issue says | measured here, 2026-10-02, before → after this change |
 |---|---|---|
-| ledger population | 25 (11 `auto` / 9 `call-target` / 1 `vector`) | 21 (11 `auto` / 10 `call-target`) |
-| arithmetic | 1,872 − 0 + 11 = 1,883 | 1,961 − 0 + 7 = 1,968 |
-| sum | 1,897 | 1,982 |
+| ledger population | 25 (11 `auto` / 9 `call-target` / 1 `vector`) | 21 (11 `auto` / 10 `call-target`) → 7 (all `call-target`) |
+| arithmetic | 1,872 − 0 + 11 = 1,883 | 1,961 − 0 + 21 = 1,982 → 1,961 − 0 + 7 = 1,968 |
+| sum | 1,897 | 1,982 → 1,968 |
 | bank1 `functions_named` | 605 → 591 | 608 → 594 |
+
+`ghidra-functions.csv` is byte-untouched, so the 1,961 that opens both
+arithmetic terms is the same number in each; only the last term moves.
 
 The fourteen addresses the issue lists are correct and all `bank1`. Its second
 correction — that a self-test comment misdescribed its bucket as 15 `auto` rows
@@ -203,11 +206,13 @@ a row under another name — is where it is exercised now.
 **The re-export also produced six `.c` files this change does not touch.**
 `bank0/8749.c`, `bank0/95DD.c`, `bank0/96AD.c`, `bank0/A7C8.c` and
 `bank1/A916.c` came back printing `XDATA_078B` / `XDATA_07A5` where the committed
-copies still print `DAT_EXTMEM_078b` / `DAT_EXTMEM_07a5`, and `bank0/ACB4.c`,
-whose committed copy carries no annotation plate at all although
-`ec/annotations/ghidra-functions.csv` has a comment row for it, came back
-carrying one. Which correction that plate holds, and which it predates, is not
-something this tree shows.
+copies still print `DAT_EXTMEM_078b` / `DAT_EXTMEM_07a5`, and `bank0/ACB4.c` came
+back with an annotation plate differing from the committed one by a single added
+sentence — the one opening "Corrected 2026-10-01 (issue #311): four of that
+second list have since gained rows", which the `bank0,0xACB4` comment in
+`ec/annotations/ghidra-functions.csv` now carries and the committed plate does
+not. That file's plate is **stale, not absent**: it is present, and a re-export
+replaces its text rather than supplying a plate the file lacked.
 This is **pre-existing staleness in the committed export, not drift caused by
 this change**: the committed `ec/ghidra/xdata-symbols.csv` already carries
 `XDATA_078B` and `XDATA_07A5`, so the committed `.c` files contradict their own
@@ -260,10 +265,10 @@ so `tools/run-tests.sh` is what reaches it.
 
 1. **The six stale `.c` files in §5.** `bank0/8749.c`, `bank0/95DD.c`,
    `bank0/96AD.c`, `bank0/A7C8.c` and `bank1/A916.c` print XDATA names their own
-   committed symbol table has already replaced, and `bank0/ACB4.c` carries no
-   annotation plate though `ec/annotations/ghidra-functions.csv` has a comment
-   row for it. The next EC re-export picks them up; nothing here needs deciding,
-   only running.
+   committed symbol table has already replaced, and `bank0/ACB4.c`'s plate is
+   stale — it is missing the "Corrected 2026-10-01 (issue #311)" sentence its
+   `ec/annotations/ghidra-functions.csv` row now carries. The next EC re-export
+   picks them up; nothing here needs deciding, only running.
 2. **The same widening over the BIOS and Windows projects.** Measured as zero
    rows in both committed indexes (§3), so re-exporting is not needed to make
    the claim true. It would confirm the widening is harmless in two more
