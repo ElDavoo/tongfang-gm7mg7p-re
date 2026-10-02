@@ -126,6 +126,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-common-address-spaces.md`](pd-common-address-spaces.md) — The lone `pd` proxy edge was a missing annotation, not a cross-program call (issue #470)
 - [`pd-direct-offset-pointer-add.md`](pd-direct-offset-pointer-add.md) — The PD image keeps a 16-bit base in direct `0x0D`/`0x0E`: a literal at init, rewritten by an 81-caller add-and-store-back (issue #69)
 - [`pd-e2e4-entry-forms.md`](pd-e2e4-entry-forms.md) — The `pd` 0xE2E4 entry set: one entry at the first byte, and 35 bytes the export does not cover (issue #340)
+- [`pd-high-xdata-census-gap.md`](pd-high-xdata-census-gap.md) — Every `MOV DPTR` target in the PD image's `0xFFxx` region has a per-address verdict, and the largest group hands DPTR to a routine that adds it to a word rather than dereferencing it (issue #430)
 - [`pd-image-census.md`](pd-image-census.md) — The `ITE8850-PD` image: a consolidated map, a positive provenance answer, and one null worth the wording
 - [`pd-index-geometry-address-contract.md`](pd-index-geometry-address-contract.md) — The three address flags on `pd_index_geometry.py` have one contract, and this is the change that made it legible from `--help` rather than from a findings file
 - [`pd-index-low8-propagation.md`](pd-index-low8-propagation.md) — The `low8` truncation is in the template; what was left was two summaries that had not been told
