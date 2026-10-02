@@ -151,8 +151,7 @@ class TheSixteenHaveSixteenAnswers(unittest.TestCase):
 
 
 class TheNineHaveNineAnswers(unittest.TestCase):
-    """The same for `lcall 0x119C`, which the older file said seven committed
-    listings answer and which the image-wide scan answers too."""
+    """The same for `lcall 0x119C`, which the image-wide scan answers too."""
 
     def test_all_nine_sites_carry_a_row(self):
         self.assertEqual(sorted(rows_for(0x119C)), list(L119C))

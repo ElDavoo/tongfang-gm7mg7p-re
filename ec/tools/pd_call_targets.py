@@ -510,7 +510,6 @@ def decode_block(region: bytes, pc: int, depth: int, max_depth: int,
             out["ends"].append(f"{END_IMAGE} at 0x{pc:04X}")
             return
         budget[0] -= 1
-        out["insns"] += 1
         out["starts"][pc] = op
         extra = inline_arg_len(region, pc)
         table = case_table_len(region, pc)
@@ -563,10 +562,13 @@ def walk(region: bytes, entries, starts, max_depth: int = MAX_DEPTH,
     prints as the `discovered` row, and the fact that the loop closed over its
     own output rather than running one pass and stopping.
 
-    Every seeded walk gets its own terminator list and its own budget, and they
-    share one `seen` set: an address reached from two seeds is one decoded
-    instruction, and the `ends` a reader reads on a row is the terminator of
-    the walk that owns the listing the row is in.
+    Every seeded walk gets its own terminator list, its own budget and its own
+    `seen` set, so code two seeds share is decoded once per seed; the `ends` a
+    reader reads on a row is the terminator of the walk that owns the listing
+    the row is in. `insns` is therefore the *distinct* decoded starts rather
+    than a sum over the seeds: `starts` is one dict, so an address two seeds
+    reach is one entry, and it is that entry count `--report` prints beside
+    `extent`, so the instruction count and the byte count describe one decode.
     """
     out = {"starts": {}, "operands": set(), "sites": {}, "targets": set(),
            "ends": [], "by_entry": {}, "insns": 0, "max_insns": max_insns,
@@ -588,6 +590,7 @@ def walk(region: bytes, entries, starts, max_depth: int = MAX_DEPTH,
         out["by_entry"][addr] = out["ends"][before:]
     for pc, op in out["starts"].items():
         out["extent"].update(range(pc, pc + OPCODE_LEN[op]))
+    out["insns"] = len(out["starts"])
     seeded = {a for a, _ in entries}
     return out, sorted(t for t in out["targets"] if t not in seeded)
 
@@ -848,6 +851,7 @@ def survey(region: bytes, index_rows, callee_rows, data_regions,
         "terminators": dict(terminators),
         "by_entry": result["by_entry"],
         "decoded_sites": set(result["sites"]),
+        "decoded_starts": set(result["starts"]),
         "byte_scan": len(candidate_sites(region)),
         # Vocabulary-complete rather than only the verdicts some row happens to
         # carry. A counter built from the rows omits a term nothing hit, and an
@@ -1251,15 +1255,21 @@ def print_for_target(region: bytes, target: int, rows) -> int:
 
 
 def seed_verdicts(region: bytes, rows, context, index_rows) -> list:
-    """[{listing, seed_basis, seeded, reached, frame, verdict}] for the eight
-    listings whose `.c` files claim a call-target-scan boundary.
+    """[{listing, seed_basis, seeded, reached, decoded_call, frame}] for the
+    eight listings whose `.c` files claim a call-target-scan boundary.
 
     The issue asks "a control-flow pass says which of those seeds survive", and
-    this is the measurement that answers it. It is three questions per listing
-    rather than one, because they come apart: is the listing an entry in its
-    own right (`seeded`), does a walk from the stated entries decode anything
-    at it (`reached`), and does `converges_from()` frame its first instruction
-    (`frame`).
+    this is the measurement that answers it. It is several questions per listing
+    rather than one, because they come apart: is the listing an entry in its own
+    right (`seeded`), did a walk decode an instruction at its first address
+    (`reached`), was that instruction a call or a jump (`decoded_call`), and does
+    `converges_from()` frame it (`frame`).
+
+    `reached` reads the walk's own `starts`, so it is false for a listing start
+    no walk decoded -- `--report` counts those in its section 6, and there are
+    more than none -- and a column that cannot be false is not a measurement.
+    `decoded_call` is the weaker, narrower fact kept beside it: most listings
+    open with something that is not a transfer, so the two are not one column.
 
     `seed_basis` is read from `listing-index.csv` and not from the `.c`
     comment, because the column is the machine-readable half and the comment
@@ -1270,15 +1280,13 @@ def seed_verdicts(region: bytes, rows, context, index_rows) -> list:
     seeded = {a for a, _ in context["entries"]}
     out = []
     for addr in SEED_LISTINGS:
-        decoded = addr in context["decoded_sites"]
-        starts_here = addr in listing_starts(region)
         onto, over = converges_from(region, addr)
         out.append({
             "listing": addr,
             "seed_basis": basis.get(addr, "not a listing row"),
             "seeded": addr in seeded,
-            "reached": decoded or starts_here,
-            "decoded_call": decoded,
+            "reached": addr in context["decoded_starts"],
+            "decoded_call": addr in context["decoded_sites"],
             "frame": f"{onto}/{onto + over}",
             "name": listing_name(addr),
         })
@@ -1308,9 +1316,10 @@ def print_seed_verdicts(seeds) -> None:
     print("boundary \"came from a call-target byte scan and is a hypothesis\". "
           "`seed_basis` is")
     print("`listing-index.csv`'s own column. `reached` says a walk from the "
-          "stated entries decoded")
-    print("something at the listing's first instruction; `frame` is "
-          "`converges_from()`.")
+          "stated entries decoded an")
+    print("instruction at the listing's first address, which is not the same "
+          "as that instruction being a")
+    print("call or a jump; `frame` is `converges_from()`.")
     print()
     for s in seeds:
         print(f"  0x{s['listing']:04X} {s['name'] or '':<28} "

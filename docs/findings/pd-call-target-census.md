@@ -131,9 +131,10 @@ The `lcall 0x119C` sites:
 | `0xADE6` | `decoded-lcall` | yes | `0xADAB` | 24/24 |
 | `0xC879` | `decoded-lcall` | yes | `0xC873` | 24/24 |
 
-`--for-target 0x11C2` and `--for-target 0x119C` print exactly these two tables
-from the committed CSV, decoded at each site's own offset, so neither is a
-number in prose that nothing re-derives.
+`--for-target 0x11C2` and `--for-target 0x119C` print exactly these two tables,
+re-derived from the image at each site's own offset rather than read back from
+the CSV. `--check` is what holds the two together: it regenerates the committed
+table and diffs it, so a row that moved shows up there rather than in prose.
 
 ### `0x8288` is the site this census adds
 
@@ -179,12 +180,16 @@ coverage would be the failure `docs/findings.md` §4 records:
 ```
 $ python3 ec/tools/pd_call_targets.py --report
 2. Coverage, and it is two methods'
-  this walk decoded 20723 of 65536 bytes (31.62%) as 25052 instructions
+  this walk decoded 20723 of 65536 bytes (31.62%) as 11447 instructions
     what a stated entry set reaches. It is not a claim that the rest is data, and the
     budget named in any `max_insns` cell is why this is not the figure below.
   the committed `pd` listings hold 16423 bytes (25.06%)
     what has a committed listing for it, counted from the listings' own instruction streams.
-    [...three more lines, the rest of section 2...]
+    `listing-index.csv`'s `size` column gives the same number on the committed tree, and
+    that is not a coincidence -- `size` is a listing's instruction bytes -- but the figure is
+    derived from the listings here so a hand-edited cell cannot move it quietly.
+    `pd-common-address-spaces.md` measured the same quantity over an earlier, smaller set of
+    listings. Neither figure is "these bytes are code".
 ```
 
 The first is what a stated entry set decodes to; the second is what a quarter of
@@ -365,7 +370,7 @@ entry_vector = 6
 entry_listing = 541
 entry_callgraph = 505
 entry_discovered = 162
-walk_instructions = 25052
+walk_instructions = 11447
 walk_decoded_bytes = 20723
 walk_coverage_pct = 31.62
 listing_starts = 9277
