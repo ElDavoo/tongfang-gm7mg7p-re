@@ -893,16 +893,17 @@ $ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xd979; pd 6' /tmp/bank1.
 ```
 
 **The three bytes at `0xD97F` are `53 02 03`, and this document does not pick
-one reading of them.** The two renderings in the tree are `anl r2, #0x03`
+one reading of them.** The two renderings transcribed here are `anl r2, #0x03`
 (`r2 -a 8051`, the transcript above) and `anl 0x02, #0x3` (the committed
 [`ec/decompiled/bank1/D946.asm`](../decompiled/bank1/D946.asm), which prints
-`D97F 53 02 03 anl 0x02, #0x3`); `ec/tools/disasm8051.py` decodes no
-instruction there at all and prints `db 0x53`. The first two are **one
-instruction under two spellings** rather than a disagreement about it: `0x53` is
+`D97F 53 02 03 anl 0x02, #0x3`); `ec/tools/disasm8051.py` used to decode no
+instruction there at all and print `db 0x53`, and since #1294 renders it as
+`anl 0x02, #0x03`. The three are **one instruction under three spellings**
+rather than a disagreement about it: `0x53` is
 `ANL direct,#data` on the base 8051 map, three bytes, and direct address `0x02`
-*is* `R2`, so both spend the same three bytes on the same operand. `0x8886`
-puts the low byte of the word in `r1` and the high byte in `r2`, so on either
-spelling the instruction masks the **high** byte with `0x03` — the top two bits
+*is* `R2`, so all three spend the same three bytes on the same operand. `0x8886`
+puts the low byte of the word in `r1` and the high byte in `r2`, so on any of
+the three spellings the instruction masks the **high** byte with `0x03` — the top two bits
 of the 16-bit value. That much is the bytes.
 
 **What the masked value is then used for is not.** The `mov dptr,#0x0378` that

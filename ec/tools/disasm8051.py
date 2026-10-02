@@ -192,6 +192,37 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         name = {0x55: "anl", 0x45: "orl", 0x65: "xrl",
                 0x25: "add", 0x35: "addc", 0x95: "subb"}[op]
         return f"{name:<4} a,0x{d[i + 1]:02x}"
+    # The `direct` half of the same four-way group, and the six opcodes this
+    # table had no spelling for at all: `0x42`/`0x52`/`0x62` fell through to
+    # `db` at the end of this function, so four committed annotation tables
+    # rendered as data what the committed Ghidra listings transcribe as an
+    # instruction with a byte-addressed destination -- `42 f0 orl B, A` in
+    # ec/decompiled/common/70FA.asm is the shortest of them. They sit one byte
+    # above the branch opcodes, so the growth is a real risk rather than a
+    # formality: a decoder that widened `0x42` into the `0x40` row would read
+    # `jc`/`jnc`/`jz`/`jnz` as data.
+    #
+    # **OPCODE_LEN is not changed, and the dual-encoding is why.** The Intel
+    # manual's opcode table admits a three-byte `direct,#data` / `direct,@DPTR`
+    # reading of `0x25`/`0x35`/`0x45`/`0x55`/`0x65`/`0x95`, the bytes above as
+    # `direct,A`; every assembler and compiler emits those six as the two-byte
+    # `a,direct` forms, and that is the reading the committed listings'
+    # framing rests on. Nothing here resolves that disagreement and this table
+    # does not take a side on it: the accumulator rows keep two bytes, and the
+    # two rows below key on the opcode rather than on the operand, so the two
+    # readings cannot collide. `opcode_coverage.py`'s `MCS51_LEN` takes the
+    # same reading on all twelve (verified equal to `OPCODE_LEN` for each),
+    # which is precisely why `--divergence` cannot see the disagreement -- the
+    # boundary with #1155, recorded here rather than left implicit. Same shape
+    # as the 0xA0/0xB0 comment below: an unresolved reading, stated rather than
+    # settled by fiat. The write-up, with the census and its command, is
+    # ../../docs/findings/direct-address-opcode-rendering.md.
+    if op in (0x42, 0x52, 0x62):
+        name = {0x42: "orl", 0x52: "anl", 0x62: "xrl"}[op]
+        return f"{name:<4} 0x{d[i + 1]:02x},a"
+    if op in (0x43, 0x53, 0x63):
+        name = {0x43: "orl", 0x53: "anl", 0x63: "xrl"}[op]
+        return f"{name:<4} 0x{d[i + 1]:02x},#0x{d[i + 2]:02x}"
     if 0x28 <= op <= 0x9F and (op & 0x0F) >= 0x08 and (op & 0xF0) in (0x20, 0x30, 0x40, 0x50, 0x60, 0x90):
         name = {0x20: "add", 0x30: "addc", 0x40: "orl",
                 0x50: "anl", 0x60: "xrl", 0x90: "subb"}[op & 0xF0]

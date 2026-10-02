@@ -792,13 +792,17 @@ def self_test():
                 "whose listing ends at 0x3AF0 and the next bank0 entry is "
                 "0x445E -- a 2,417-byte window, not a boundary slip")
     assert_that(nc["window"].startswith("170017041708170c")
-                and int(nc["unassigned"]) == 9 and int(nc["db"]) == 74,
+                and int(nc["unassigned"]) == 9 and int(nc["db"]) == 25
+                and int(nc["db"]) != int(nc["unassigned"]),
                 "and whose window opens `17 00 17 04 17 08 17 0c`: 0x17 is a "
                 "byte the MCS-51 map assigns to no instruction, and 9 of the "
-                "walk's instruction starts land on one. The `db` count is 74, "
+                "walk's instruction starts land on one. The `db` count is 25, "
                 "not 9 -- the two counts differ, and the criterion reads the "
                 "byte so it does not depend on disasm8051's table happening to "
-                "print `db` for exactly those four")
+                "print `db` for exactly those four. It was 74 until #1294 gave "
+                "`mnemonic()` its six `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63` "
+                "cases; the disagreement between the two counts, which is what "
+                "this case is for, is the same either side of that change")
     assert_that(len(by_verdict["no-transfer"]) == EXPECT_NO_TRANSFER,
                 "%d no-transfer pairs" % EXPECT_NO_TRANSFER)
     zero = [r for r in by_verdict["no-transfer"]

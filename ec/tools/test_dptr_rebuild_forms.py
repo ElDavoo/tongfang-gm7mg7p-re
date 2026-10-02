@@ -212,12 +212,17 @@ DPL_STORE_AT_TARGET = bytes([0xF5, 0x82])
 # Two lists that share a source are one list counted twice.
 #
 # **`disasm8051.mnemonic()` is not the authority for writing it.** That
-# renderer gets the accumulator rows right -- `54 82` prints as
-# `anl a,#0x82` and `OPCODE_LEN[0x54] == 2` is correct -- but it renders
-# `42 f0` as `db 0x42` and `63 65 ff` as `db 0x63` where the machine writes
-# a byte address, so a list read off it carries the renderer's errors rather
-# than the instruction set's. The authority is the committed Ghidra listings
-# under `ec/decompiled/*/*.asm`, which decode the operand position: they
+# renderer used to get the accumulator rows right and the `direct` rows
+# wrong -- `54 82` printed as `anl a,#0x82` and `OPCODE_LEN[0x54] == 2` was
+# correct, while `42 f0` printed as `db 0x42` and `63 65 ff` as `db 0x63`
+# where the machine writes a byte address, so a list read off it carried the
+# renderer's errors rather than the instruction set's. **Corrected 2026-09-29,
+# issue #1294**: the decoder has rendered the six `direct` rows since
+# (`docs/findings/direct-address-opcode-rendering.md`), so the reason below has
+# changed and the reason *not to* has not -- the renderer is one of three
+# decoders descended from a common lineage, none of which has seen the manual.
+# The authority is and remains the committed Ghidra listings under
+# `ec/decompiled/*/*.asm`, which decode the operand position: they
 # render `45 82` as `orl A, DPL`, `42 f0` as `orl B, A`, `63 65 ff` as
 # `xrl 0x65, #0xff` and `54 07` as `anl A, #0x7`. Two consequences are
 # visible in the list below, and neither is a matter of taste: the
@@ -639,14 +644,19 @@ class BucketShapeTests(unittest.TestCase):
         self.assertEqual(set(F.READ_FORMS) & set(F.IN_PLACE_FORMS), set())
 
     def test_every_form_the_census_names_is_the_8051_spelling_it_claims(self):
-        # The three tables spell their forms out rather than generating them,
-        # because `disasm8051.mnemonic()` does not render all of them -- it
-        # prints `42 f0` as `db 0x42` and `63 65 ff` as `db 0x63` where the
-        # machine executes `orl B, A` and `xrl 0x65, #0xff`. Asserting each
-        # table against `trace_xdata_refs.DIRECT_STORE_OPS` keeps the two
-        # honest about each other without this file depending on the
-        # defective rendering, and the rendering itself is asserted once below
-        # as a fact about the tree rather than as a note.
+        # The three tables spell their forms out rather than generating them.
+        # They used to have to: `disasm8051.mnemonic()` did not render all of
+        # them, printing `42 f0` as `db 0x42` and `63 65 ff` as `db 0x63`
+        # where the machine executes `orl B, A` and `xrl 0x65, #0xff`, so
+        # asserting each table against the renderer would have been asserting
+        # the defect. **Corrected 2026-09-29, issue #1294** -- the decoder has
+        # had those six cases since, so this file can now hold the tables
+        # against a renderer that renders them, and the line above is left as
+        # it was written. Asserting each table against
+        # `trace_xdata_refs.DIRECT_STORE_OPS` is unchanged and is what keeps
+        # the two honest about each other; the renderings themselves are
+        # pinned where their oracle is, in
+        # `ec/tools/test_direct_address_renderings.py`.
         for op in F.STORE_FORMS:
             with self.subTest(op=hex(op)):
                 self.assertIn(op, T.DIRECT_STORE_OPS | {T.MOV_DIRECT_DIRECT}
@@ -673,11 +683,14 @@ class BucketShapeTests(unittest.TestCase):
         # that is already correct.
         self.assertEqual(mnemonic(ORL_A_LITERAL, 0), "anl  a,#0x82")
         self.assertEqual(F.form_at(ORL_A_LITERAL, 0), [])
-        # And the half the renderer does get wrong, which is the other side of
-        # the same group: the `direct,A` and `direct,#data` rows it has no
-        # spelling for and emits as `db`.
-        self.assertEqual(mnemonic(bytes([0x42, 0xF0]), 0), "db   0x42")
-        self.assertEqual(mnemonic(bytes([0x63, 0x65, 0xFF]), 0), "db   0x63")
+        # And the `direct,A` / `direct,#data` rows, which the renderer used to
+        # emit as `db` -- it had no spelling for them until #1294, so the pair
+        # was asserted here as a defect. The two bytes and the three are the
+        # spellings the committed Ghidra listings transcribe (`orl B, A` and
+        # `xrl 0x65, #0xff`), which is where the oracle for them lives; this
+        # file asserts the census agrees with the decoder, not the reverse.
+        self.assertEqual(mnemonic(bytes([0x42, 0xF0]), 0), "orl  0xf0,a")
+        self.assertEqual(mnemonic(bytes([0x63, 0x65, 0xFF]), 0), "xrl  0x65,#0xff")
 
     def test_the_store_table_is_the_guard_opcode_set_plus_a_named_gap(self):
         # `DIRECT_STORE_OPS` plus the `0x85` exception is what
