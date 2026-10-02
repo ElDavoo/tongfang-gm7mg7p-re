@@ -148,7 +148,7 @@ score was low":
   files, and the ledger's job is to make sure that reading exists for every
   row and has not drifted from the map it was recorded against.
 
-## The window a floor would have to land in, and why it ships off
+## There is no window a floor can land in, and why it ships off
 
 `--min-share` refuses an edge when the member accounts for less than the named
 share of its owner. Measured on this tree:
@@ -164,19 +164,30 @@ At 0.30 the 42-file class is untouched, and the 13 files handed back to
 `xdata_register_map.py --export-ownership` account for 78 address tokens — of
 which the three stubs are three files and no tokens.
 
-**The separating window is narrow, and that is the reason the column ships
-committed and the floor ships measured-and-off.** A member has to reach
-`0.34` of its owner to keep the 42-file class whole — `bank1/80EF.c`, 16
-fragments against `bank1/8001.c`'s 47, the lowest share of any member of that
-class — while the smallest real fragment reaches `0.18`, the three stubs'
-4-of-22. Any floor that separates the two shapes has to land between those two
-numbers, and a floor outside that window is either free (nothing to refuse) or
-destructive (the class stops being a class, and every `bank1:0x8001` citation
-in the tree with it). That is a narrow margin to make a default out of, which
-is why `SHARE_ORACLE` in `export_ownership.py` pins the cost at a *named*
-candidate value instead: enabling the floor is then a decision somebody makes
-with the numbers in front of them, and re-pins
-`xdata_register_map.py`'s `OWNERSHIP` oracle deliberately.
+**There is no separating window, and that is the reason the column ships
+committed and the floor ships measured-and-off.** `member_share` does not
+order the two shapes. The `fragment` verdicts in the ledger run from
+`common/3239.c`'s `0.06` — 3 fragments against `common/30FB.c`'s 53 — up to
+`bank0/BB78.c`'s `0.50`, 3 against `bank0/BB6A.c`'s 6; `0.18` is the three
+stubs' 4-of-22 and the smallest share among *those three*, not among
+fragments. And the two shapes meet at the top instead of sitting either side
+of a line: `bank0/BB78.c` is a `fragment` at `0.50` and `common/3BBF.c` is a
+`re-export` at the same `0.50`. Refusing every `fragment` edge needs a floor
+above `0.50`, and at that floor the `re-exports` go with them. No value on
+this column separates the two shapes; it measures size, and the fold needs
+something no size ratio answers.
+
+`0.34` — `bank1/80EF.c`, 16 fragments against `bank1/8001.c`'s 47 — is the
+lowest share among the 42-file class's *members*, and it does not bound a
+window either. The floor conditions the edge while the class is a connected
+component, so a member under the floor is still held in the class by a chain
+of edges that each clear it — the same non-composition caveat as the eight
+`bank0/F0*.c` members above, and why the class survives floors well past
+`0.34`. That is why `SHARE_ORACLE` in `export_ownership.py` pins the cost at
+a *named* candidate value instead: there is no threshold for the map to hand
+over, so enabling the floor is a decision somebody makes with the numbers in
+front of them, and it re-pins `xdata_register_map.py`'s `OWNERSHIP` oracle
+deliberately.
 
 ## What is deliberately not here
 

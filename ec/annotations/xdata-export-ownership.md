@@ -154,14 +154,15 @@ that spells those four statements, and the column cannot tell that from a
 re-export of one routine. `member_share` is the ratio it normalises away —
 `|A| / |B|`, how much of the **owner** the non-owner accounts for — with
 `owner_body_lines` beside it so the ratio is checkable against the two bodies
-it came from. A re-export scores near `1.00` on both; a fragment inside a long
-routine scores `1.00` and `0.18`. `--min-share` is that ratio as a switch: it
+it came from. A re-export scores near `1.00` on both; the three timer stubs
+score `1.00` and `0.18`. `--min-share` is that ratio as a switch: it
 refuses an edge whose smaller body reaches less of the larger than the named
-share. It ships **off**, because the window that would separate the two shapes
-is narrow and was measured rather than guessed, and because turning it on
+share. It ships **off**, because the ratio does not separate the two shapes —
+a `fragment` and a `re-export` both sit at `0.50`, so no floor refuses every
+fragment and keeps every re-export — and because turning it on
 re-keys which files the census reads.
-(`docs/findings/export-ownership-relative-containment.md` is the measurement,
-the per-row verdicts, and the window.)
+(`docs/findings/export-ownership-relative-containment.md` is the measurement
+and the per-row verdicts.)
 
 ## 4. What the committed tool measures on this tree
 

@@ -61,20 +61,21 @@ number, and `MIN_BODY_STMTS` does not separate them because it is a floor and
 the cases are four to six statements. `member_share` divides the same two
 bodies by the other side: `|A| / |B|`, how much of the *owner* the non-owner
 accounts for, which is the ratio `containment`'s direction normalises away.
-A re-export of one routine scores near `1.00` on both; a stub inside a long
-routine scores `1.00` and `0.18`. `owner_body_lines` is carried beside it so
+A re-export of one routine scores near `1.00` on both; the three timer stubs
+score `1.00` and `0.18`. `owner_body_lines` is carried beside it so
 the ratio is checkable against the two bodies it came from rather than taken
 on trust.
 
 **`--min-share` is that ratio as a switch, and it ships off.** A containment
 edge is refused when the member accounts for less than the named share of its
 owner, which is the check the committed strict-subset derivation declines to
-make by itself. The default is no floor because the window that would separate
-the two shapes is narrow and was measured rather than guessed: on this tree a
-member has to reach `0.34` of its owner to keep the 42-file class whole
-(`bank1/80EF.c`, 16 fragments against `bank1/8001.c`'s 47), while the smallest
-real fragment reaches `0.18`, so any floor has to land in between. Enabling one
-is its own change with its own re-pinned oracles
+make by itself. The default is no floor because `member_share` does not
+separate the two shapes, which was measured rather than guessed: the
+`fragment` verdicts run from `common/3239.c`'s `0.06` to `bank0/BB78.c`'s
+`0.50`, and `common/3BBF.c` is a `re-export` at that same `0.50`, so a floor
+high enough to refuse every fragment refuses re-exports with it and no value
+on the column is a separator. Enabling one is its own change with its own
+re-pinned oracles
 (docs/findings/export-ownership-relative-containment.md), and writing a scratch
 map with `--map --min-share` is how to look at what one costs first.
 
@@ -450,12 +451,13 @@ OWNERSHIP_ORACLE = {
 # deliberately rather than a number that quietly moves. Issue #589, and
 # docs/findings/export-ownership-relative-containment.md is the write-up.
 #
-# The window this candidate sits in is narrow and that is the finding, not a
-# tuning note: a member has to reach 0.34 of its owner to keep the 42-file
-# class whole, and the smallest real fragment reaches 0.18, so the floor
-# separates the two shapes only between those. `largest_class` is unchanged
-# because a class is a connected component and the 42-file class is still one;
-# `newly_read` is what the census would open again.
+# The finding is that this candidate is not a separator rather than that it is
+# a well-placed one: the `fragment` verdicts run from 0.06 (`common/3239.c`) to
+# 0.50 (`bank0/BB78.c`), and `common/3BBF.c` is a `re-export` at that same
+# 0.50, so no floor refuses every fragment and keeps every re-export.
+# `largest_class` is unchanged because a class is a connected component and
+# the 42-file class is still one; `newly_read` is what the census would open
+# again.
 SHARE_ORACLE = {
     "classes": 50,
     "shared_rows": 133,
