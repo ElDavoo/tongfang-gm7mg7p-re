@@ -43,7 +43,7 @@ Three things follow, and every corrected row rests on the first of them.
    first `MOVC` runs. There is no prologue in the caller and no header in the
    table: the first record begins at the byte after the `lcall`.
 2. **Neither dispatcher returns.** The only exit of `0x119C` is `JMP @A+DPTR` at
-   `0x11B1`, and `pd CB2A`'s row already records that `0x11C2`'s only exit is the
+   `0x11B6`, and `pd CB2A`'s row already records that `0x11C2`'s only exit is the
    indirect jump at `0x11DC`. Nothing after the `lcall` is this function's
    continuation, so a `ret`, a `dec R6` or an `ajmp` rendered there is a byte of
    a record that a linear disassembler read as an instruction.
@@ -247,12 +247,14 @@ wrong: the table at `0x1F30` is `1f 4c 01`, three bytes, not the four
 - **`pd 0xA339`'s boundary.** Its row says the bytes "between `0xA34E` and
   `0xA36D`" are not a fall-through path, and places the decompile's calls to
   `0xA5B3` and `0xE757` inside that region. The table's last byte is `0xA366`,
-  so `0xA367` (`acall 0xA5B3`), `0xA36A` (`lcall 0xE757`) and `0xA36D`
-  (`ljmp 0xA435`) are past it: the first is the record keyed `0x00`'s target
-  and the rest are that handler's continuation and the default's. The row does
-  not claim those bytes are this function's instructions, so it satisfies the
-  issue's Done criterion and is left alone here — but its range is six bytes
-  too wide, and narrowing it is a separate edit.
+  so `0xA367`, `0xA36A` (`lcall 0xE757`) and `0xA36D` (`ljmp 0xA435`) are
+  past it: the first is the record keyed `0x00`'s target — the listing's
+  `acall 0xA5B3` is at `0xA368`, `0xA367` being the second byte of the
+  two-byte instruction it starts at `0xA366` — and the rest are that handler's
+  continuation and the default's. The row does not claim those bytes are this
+  function's instructions, so it satisfies the issue's Done criterion and is
+  left alone here — but its range is seven bytes too wide, and narrowing it is
+  a separate edit.
 - **`pd 0x4C27`'s reachability.** The row already declines to establish who
   reaches `0x4C27`, whether reset reaches it, or whether any selector occurs.
   Reading its table changes none of that.
