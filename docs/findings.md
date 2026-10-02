@@ -267,15 +267,15 @@ Reading both spellings — `../ec/tools/xdata_register_map.py` — gives
 |---|---:|---:|---:|
 | distinct addresses | 1,218 | 157 | 1,326 |
 | references | 14,838 | 858 | 15,696 |
-| of which named from `registers.yaml` | 184 | 6 | 190 |
+| of which named from `registers.yaml` | 185 | 6 | 191 |
 
 *(Corrected 2026-10-02, issue #342. The three rows above read `1,063 | 157 |
 1,172`, `13,937 | 864 | 14,801` and `41 | 0 | 41`, kept here as the wrong
 version. `python3 ec/tools/check_census_figures.py --print` derives the current
 three from `ec/annotations/xdata-registers.csv` and holds this table to them.)*
 
-So the corrected claim is that **184 of the 1,218 XDATA addresses the main EC
-touches carry a name, and 1,034 do not** — read as `DAT_EXTMEM_xxxx` or as a
+So the corrected claim is that **185 of the 1,218 XDATA addresses the main EC
+touches carry a name, and 1,033 do not** — read as `DAT_EXTMEM_xxxx` or as a
 bare literal argument rather than as a name. The blocking problem the issue
 described is real; what was wrong was the size of the named minority, and with
 it any argument that the
