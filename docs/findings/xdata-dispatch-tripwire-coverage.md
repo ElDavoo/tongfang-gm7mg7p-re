@@ -127,21 +127,27 @@ and would put the trailing `return write(args)` first) was about the wrong
 walker for the job; the visitor is the right one and the comment now says why.
 
 > **Corrected 2026-10-02, issue #1407.** "and that is correct rather than a
-> gap" is measured now, and it holds for the bare-name wrapper named above and
-> for nothing else in the family. There, registering `run` in `MODES` where the
-> reader found it really does make the exact-tuple equality green again, so the
-> coverage change fires exactly as this paragraph says. Every other shape in the
-> family records nothing, so nothing turns up and the exact-tuple equality is
-> **green** with a tenth mode unmocked — and it is green for the same reason in
-> all of them. For a wrapper reached on a receiver —
-> `return self.run(demo_mode(args))` — `self.run` is an `ast.Attribute` and the
-> walk does not descend into a call's arguments either, so `demo_mode` is never
-> reached at all; for the table, `getattr` and lambda dispatches neither reader
-> reaches the shape, so there is not even a residue to classify on the way to
-> the same place. `MODES` needs no new entry in either case. That is the failure
-> this class exists to prevent. The paragraph is left standing per
-> `../findings.md` §4a-4d; the measurement, the other shapes and the docstring
-> correction are in
+> gap" is measured now, and it holds for the two shapes a reader records a name
+> for — the bare-name wrapper named above, and the attribute wrapper
+> `return run(xrm.demo_mode(args))`, which records `run` as well. Registering
+> `run` in `MODES` where the reader found it really does make the exact-tuple
+> equality green again, so the coverage change fires exactly as this paragraph
+> says, and a tenth mode behind either of them turns a name up rather than
+> running unmocked. **The other four shapes in the family record nothing**, so
+> nothing turns up and the exact-tuple equality is **green** with a tenth mode
+> unmocked — and it is green for the same reason in all of them. For a wrapper
+> reached on a receiver — `return self.run(demo_mode(args))` — `self.run` is an
+> `ast.Attribute` and the walk does not descend into a call's arguments either,
+> so `demo_mode` is never reached at all; for the table, `getattr` and lambda
+> dispatches neither reader reaches the shape, so there is not even a residue
+> to classify on the way to the same place. `MODES` needs no new entry in
+> either case. That is the failure this class exists to prevent. The attribute
+> wrapper is also the one of the two reds whose residue a classification cannot
+> silence: the residue names `demo_mode`, and
+> `test_the_benign_attribute_set_is_exactly_the_committed_one` refuses a benign
+> set carrying a name `main()` does not reach. The paragraph is left standing
+> per `../findings.md` §4a-4d; the measurement, the other shapes and the
+> docstring correction are in
 > [`xdata-dispatch-indirect-shapes.md`](xdata-dispatch-indirect-shapes.md).
 
 ## The residual boundary: asserted, not hoped away

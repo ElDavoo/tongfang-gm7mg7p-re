@@ -281,19 +281,25 @@ def dispatch_names(source):
     with it and a tenth name turning up is the coverage change firing.
 
     **Corrected 2026-10-02, issue #1407.** "and that is correct rather than a
-    gap" is measured now, and it holds for the bare-name wrapper and for
-    nothing else in the family. There, registering `run` in `MODES` where this
-    reader found it does make the exact-tuple equality green, so the coverage
-    change really does fire. Every other shape in the family records nothing, so
-    nothing turns up, `MODES` needs no new entry, the equality is green and a
-    tenth mode runs unmocked -- which is the failure `TripwireCoverage` exists
-    to prevent, reached through the shapes this sentence calls correct. For a
+    gap" is measured now, and it holds for the two shapes a reader records a name
+    for -- the bare-name wrapper, and the attribute wrapper `return
+    run(xrm.demo_mode(args))`, which this reader answers `['run']` for as well.
+    Registering `run` in `MODES` where this reader found it does make the
+    exact-tuple equality green, so the coverage change really does fire. **The
+    other four shapes in the family record nothing**, so nothing turns up,
+    `MODES` needs no new entry, the equality is green and a tenth mode runs
+    unmocked -- which is the failure `TripwireCoverage` exists to prevent,
+    reached through four of the six shapes this sentence calls correct. For a
     wrapper on a receiver, `return self.run(demo_mode(args))`, `self.run` is an
     `ast.Attribute` and this reader's own rule does not descend into a call's
     arguments, so `demo_mode` is never reached either; for the table, `getattr`
-    and lambda dispatches neither reader reaches the shape at all. The sentence
-    above is left standing per `../../docs/findings.md` §4a-4d; the measurement
-    is in `test_a_tenth_mode_behind_each_shape_is_caught_or_is_not` and
+    and lambda dispatches neither reader reaches the shape at all. The
+    attribute wrapper is also the one of the two reds whose residue a
+    classification cannot silence: the residue names `demo_mode`, and
+    `test_the_benign_attribute_set_is_exactly_the_committed_one` refuses a
+    benign set carrying a name `main()` does not reach. The sentence above is
+    left standing per `../../docs/findings.md` §4a-4d; the measurement is in
+    `test_a_tenth_mode_behind_each_shape_is_caught_or_is_not` and
     `test_the_derived_rule_does_not_object_to_a_self_receiver_name`, and the
     write-up is `../../docs/findings/xdata-dispatch-indirect-shapes.md`.
     """

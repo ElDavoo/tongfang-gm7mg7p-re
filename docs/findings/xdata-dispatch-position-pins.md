@@ -146,6 +146,20 @@ would have gone red on all three, not slipped through on two of them.
   the wrapper, which this page's predecessor argues and
   [`xdata-dispatch-indirect-shapes.md`](xdata-dispatch-indirect-shapes.md)
   measures is correct rather than a gap. That is unchanged.
+
+  > **Corrected 2026-10-02, issue #1407.** The last two sentences are the
+  > over-claim, and the pointer is what settles it. "That is unchanged" is not
+  > what the page it cites says: measured, the sentence is **correct for the
+  > bare-name wrapper**, where registering `run` in `MODES` at the position the
+  > reader found it does make the exact-tuple equality green again, and a **hole
+  > for the shapes that record nothing**, where a tenth mode runs unmocked with
+  > the equality green. The two wrappers a reader records a name for — the bare-
+  > name one and the attribute wrapper — turn a tenth mode up and go red; the
+  > receiver and the three shapes with no reader at all record nothing and go
+  > green. The bullet is left standing per `../findings.md` §4a-4d; the
+  > measurement and the six shapes are in
+  > [`xdata-dispatch-indirect-shapes.md`](xdata-dispatch-indirect-shapes.md).
+
 - **This is a measurement of the test's own reading, not an EC finding.** The
   suite reads the same committed text the tool reads, offline, and the dispatch
   it reads is a CLI contract rather than anything about the machine.
