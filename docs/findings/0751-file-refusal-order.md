@@ -126,6 +126,18 @@ question attached, but it costs more than the defect:
   byte comes out of the loop at its row") and adding an `open` site to a tree
   that counts them (`check_site_census.py`).
 
+> **Answered by #786 (2026-10-02), leaving the option above as it was
+> written.** The second bullet turns on a conflation this change removes:
+> **reading a file into bytes is not decoding it.** The fold #786 took keeps
+> the stream a generator over a *lazily-iterated* `TextIOWrapper`, so the
+> laziness this option says would be abandoned is intact — measured, on a
+> capture past 200 KB with an undecodable byte near its end, 969 rows come out
+> of the loop before the byte stops it, which a whole-buffer decode could not
+> have done. The first bullet is untouched: nothing here makes `read_capture`
+> name the decode failure, so this option was rejected on the right ground and
+> only its second reason needed correcting. See
+> `docs/findings/0751-strict-reader-two-moments.md`.
+
 The issue preferred the codec first. That cannot be had without the D
 regression, and the table above is the measurement rather than the argument
 for saying so.
@@ -194,6 +206,18 @@ opens the file once, and the new case asserts it — the mark is asked of the
 buffer that read had to have anyway, and `path_starts_with_bom` remains
 `read_capture`'s own three-byte open rather than a third read. The sibling
 `test_the_capture_is_opened_once_on_both_paths` is unchanged and still green.
+
+> **Correction (2026-10-02, issue #786), leaving the paragraph above as it was
+> written.** `path_starts_with_bom` is deleted and `read_capture` asks
+> `starts_with_bom` of the buffer its one open returned, so the strict reader
+> no longer has a separate three-byte open of its own — and the last sentence
+> above, that the sibling is unchanged, is still true: it is unchanged and
+> green, and `StrictReaderOpenCountTests` is a new class beside it rather than
+> an edit to it. #786 also strengthened the paragraph's own principle: with one
+> buffer, the mark is asked of the raw bytes *before any decode is attempted*,
+> so "the mark is a fact about the file's first three bytes, decidable without
+> the file decoding at all" now holds structurally rather than by program
+> order. See `docs/findings/0751-strict-reader-two-moments.md`.
 
 ## One pre-existing condition, reported and not fixed
 

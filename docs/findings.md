@@ -4892,6 +4892,20 @@ has an unreadable timestamp" with a delete-the-header remedy.
 > it is told `has_bom` off the buffer it had to read anyway, by the same
 > `starts_with_bom` test over those bytes. One question, two callers, one open
 > either way.
+>
+> **Correction (2026-10-02, issue #786), leaving the paragraph above as it was
+> written.** There is no seventh open. `path_starts_with_bom` is deleted:
+> `read_capture` reads the file once in binary and asks `starts_with_bom` of
+> that buffer before it decodes a byte of it, so the mark and the rows are one
+> moment on the strict reader as well as on the notice's. What survives of the
+> paragraph: the count of declared sites is *still* unchanged
+> (`path_starts_with_bom` declared no `encoding=`), the strict reader still
+> refuses a marked capture by name before it reads a row, and the strip is
+> still what lets the preflights read such a capture. What is withdrawn is the
+> sentence that needed a seventh open to exist at all, and with it the reading
+> that `capture_rows` is where a capture is *opened* rather than where its
+> rows are shaped. See
+> `docs/findings/0751-strict-reader-two-moments.md`.
 
 The anti-drift guard is extended past the reasons to the shape: all four
 readers on a fixture carrying `#` rows, blanks and a header; the partition's
