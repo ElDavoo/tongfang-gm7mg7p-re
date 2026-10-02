@@ -112,7 +112,7 @@ class RecordTable(unittest.TestCase):
     def test_code_resumes_after_the_last_record(self):
         after = pdk.TABLE_RUNTIME + pdk.RECORD * len(RECORDS)
         self.assertEqual(after, 0xCB5D)
-        # `eb 64 02` is `mov a,r3 / mov a,@r4 / inc r0`, which is what
+        # `eb 64 02` is `mov a,r3 / xrl a,#0x02`, which is what
         # `store_0803_0805_then_jump_c808`'s decompile reads past its own
         # table. A table that ran further would be claiming these bytes are
         # records.

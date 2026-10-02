@@ -141,7 +141,7 @@ transcribed:
     0xCB51: cb 66 02 06      key (B, R0) = (0x02, 0x06)   -> 0xCB66
     0xCB55: cb 6f 02 07      key (B, R0) = (0x02, 0x07)   -> 0xCB6F
     0xCB59: 00 00 cb 76      default                      -> 0xCB76
-    0xCB5D: eb 64 02         code resumes: mov a,r3 / mov a,@r4 / inc r0
+    0xCB5D: eb 64 02         code resumes: mov a,r3 / xrl a,#0x02
 
 **The two target conventions are different and both are right.** `pd 0x11C2`
 tests `CODE[+0]` and `CODE[+1]` for zero *first*; when either is nonzero it
@@ -263,14 +263,15 @@ return is decoded; what any caller passes in R3, R5 and R7 is not.
 
 **The function name against the bytes.** `store_0803_0805_then_jump_c808`
 describes neither what happens at 0xCB4D (which is the table) nor where control
-goes. All four targets are code and none of them is 0xC808: `0xCB5D`,
-`0xCB66` and `0xCB6F` each open `mov a,r3 / mov a,@r4 / mov r0,a / xrl a,r0`
-with a different immediate after it, and `0xCB76` opens `mov a,r7 /
-add a,#0xfe / mov r7,a / ajmp`. None of the four has a
-`ec/annotations/ghidra-functions.csv` row. The existing row for `pd 0xCB2A`
-already records the discrepancy. Renaming it ripples through the generated
-call-graph, group and listing-index CSVs, several of which other agent PRs are
-open against, so it is left as a follow-up rather than done here.
+goes. All four targets are code and none of them is 0xC808. Decoded with
+`ec/tools/disasm8051.py` against the image, `0xCB5D`, `0xCB66` and `0xCB6F` each
+open `mov a,r3` then `xrl a,#0x02` / `#0x03` / `#0x06` respectively, then
+`jz 0xcb76`, and on a miss load `mov r7,#0x01` / `#0x01` / `#0x02` before
+reaching `0xCB76`; `0xCB76` opens `mov a,r7 / add a,#0xfe / jz 0xcb92`. None of
+the four has a `ec/annotations/ghidra-functions.csv` row. The existing row for
+`pd 0xCB2A` already records the discrepancy. Renaming it ripples through the
+generated call-graph, group and listing-index CSVs, several of which other agent
+PRs are open against, so it is left as a follow-up rather than done here.
 
 **Nothing about the EC.** Every address in this write-up is the PD image's own
 XDATA, which `ec/annotations/registers.yaml`'s header is explicit is a different
