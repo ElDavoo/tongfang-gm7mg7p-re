@@ -91,6 +91,7 @@ Usage:
         # history reader, so it never reaches this mode
 """
 import argparse
+import collections
 import csv
 import hashlib
 import os
@@ -111,6 +112,34 @@ REPORT = os.path.join(REPO, "ec", "ghidra", "reassembly.csv")
 # Where build_images() puts the flat per-bank images, so --check can compare a
 # listing against the firmware without a full Ghidra run.
 IMAGE_DIR = os.path.join(tempfile.gettempdir(), "ec-verify-images")
+
+# The modes that answer without running the re-encode, so there are no per-row
+# results for --emit-csv to write. `spelled` is what the refusal prints and what
+# --help names, `dest` is what argparse calls it, and `remedy` is the other thing
+# the user can type instead -- which is not the same sentence for all of them:
+# --verify-provenance reads git history and has no verify path to be offered, so
+# the "--work <dir>" tail the verify modes carry would name a flag that does
+# nothing for it.
+#
+# A list rather than a condition in main() because the condition was written for
+# the three modes that existed when it was added and a fourth early return was
+# then added beside it, which is how --verify-provenance reached the emit path
+# with --emit-csv set and honoured neither. --self-test's own completeness hold
+# is what keeps the two equal. What is not a boolean mode is a different fact
+# and is not in here: --limit re-encodes, and truncates, which
+# refuses_emit_csv() asks about separately.
+Mode = collections.namedtuple("Mode", "spelled dest remedy")
+NO_RE_ENCODE = (
+    Mode("--check", "check",
+         "the read-only verify path is `--work <dir>`"),
+    Mode("--self-test", "self_test",
+         "the read-only verify path is `--work <dir>`"),
+    Mode("--add-digest-column", "add_digest_column",
+         "the read-only verify path is `--work <dir>`"),
+    Mode("--verify-provenance", "verify_provenance",
+         "run it on its own, without --emit-csv; it reads git history and "
+         "re-encodes nothing, so there is nothing to compare against"),
+)
 
 # Instruction layout: `addr  b1 b2 b3  mnemonic  operands`, `;` for comments.
 # The byte slots are fixed width and an absent byte is `-`, because the 8051's
@@ -818,6 +847,40 @@ def refuses_committed_report(path):
           "for the\n     first one; write it somewhere else."
           % os.path.relpath(REPORT, REPO))
     return True
+
+
+def refuses_emit_csv(args):
+    """-> (Mode or "--limit", why) if --emit-csv cannot be honoured, else None.
+
+    Two reasons, and they are different facts rather than one rule. A mode that
+    does not re-encode has no per-row results to write at all. A `--limit` does
+    re-encode, and writes a subset of the rows under the full report's header:
+    a file a reader cannot tell from the whole thing by looking at it, and the
+    one artefact a reader is likely to diff against the committed one, where
+    every absent row would read as a disagreement rather than as the limit.
+
+    Neither is written, because writing something that looks like a report and is
+    not one is worse than the run having said so: the whole point of the flag
+    is that two runs can be compared, and a comparison against a truncated file
+    is not one. The refusal-over-marker choice is argued in
+    docs/findings/emit-csv-flag-honesty.md, from the two tools that hold
+    emit_csv()'s header byte-identical to the committed report's.
+
+    One predicate rather than a check per caller, for the reason
+    `refuses_committed_report` is one: which modes exist is a fact about main()'s
+    dispatch, and a second copy of it would be a second answer to it. The set is
+    NO_RE_ENCODE, and --self-test holds that set equal to the branches main()
+    actually dispatches on.
+    """
+    if args.limit is not None:
+        # is not None rather than truthiness: `--limit 0` is not a limit on
+        # nothing, it is a request for zero rows, and it would write a header
+        # with none of the report under it.
+        return ("--limit", "truncates")
+    for mode in NO_RE_ENCODE:
+        if getattr(args, mode.dest):
+            return (mode, "no-re-encode")
+    return None
 
 
 def emit_csv(results, sdas, path):
@@ -1893,6 +1956,110 @@ def self_test():
         if os.path.exists(epath):
             os.remove(epath)
 
+    # The flag combinations --emit-csv cannot be honoured with, driven through
+    # main() rather than through refuses_emit_csv(), because main() is where the
+    # flag combination is decided and a refusal the dispatch steps over is the
+    # failure this is about. Three things per case, and each is load-bearing:
+    #
+    #   the status is 2, which the run could also reach by finding no assembler,
+    #     so it is the sentence below that says which refusal answered;
+    #   the destination does not exist afterwards -- a different one per case,
+    #     under a scratch directory this loop owns and removes -- so the guard
+    #     is observed to stop the write rather than to be believed to. A test
+    #     that performs the write it is about is worse than no test;
+    #   and the printed sentence names the offending flag, so a guard that fires
+    #     for some other reason, or silently, is not what passes.
+    #
+    # argv is patched rather than main() given a list, because main() builds its
+    # own parser from sys.argv and taking a list would be a second entry point.
+    def main_says(argv):
+        """-> (status, stdout) for one argument vector, argv[0] filled in."""
+        import contextlib
+        import io
+        buf = io.StringIO()
+        saved = sys.argv
+        sys.argv = ["verify_reassembly.py"] + list(argv)
+        try:
+            with contextlib.redirect_stdout(buf):
+                status = main()
+        finally:
+            sys.argv = saved
+        return status, buf.getvalue()
+
+    no_emit_dir = tempfile.mkdtemp(prefix="emit-refused-")
+    try:
+        for label, extra, named in (
+                ("--check", ["--check"], "--check"),
+                ("--self-test", ["--self-test"], "--self-test"),
+                ("--add-digest-column", ["--add-digest-column"],
+                 "--add-digest-column"),
+                # Revisions that resolve to nothing, on purpose: this case must
+                # be refused by the guard rather than run and reach its own
+                # history failure, which is the status-1 path a reader would
+                # otherwise be told to go and fix by fetching a full clone.
+                ("--verify-provenance", ["--verify-provenance",
+                                         "--base", "no-such-revision-a",
+                                         "--migration", "no-such-revision-b"],
+                 "--verify-provenance"),
+                ("--limit", ["--limit", "40"], "--limit")):
+            dest = os.path.join(no_emit_dir, "%s.csv" % label.strip("-"))
+            status, said = main_says(["--emit-csv", dest] + extra)
+            assert_that(status == 2 and not os.path.exists(dest)
+                        and named in said,
+                        "--emit-csv is refused with %s (status %r, wrote %s, "
+                        "named it: %s)"
+                        % (label, status, os.path.exists(dest), named in said))
+    finally:
+        shutil.rmtree(no_emit_dir, ignore_errors=True)
+
+    # The control, so a guard that refuses everything passes nothing above: --emit-
+    # csv set with every other mode off is the whole of what the flag is for, and
+    # it must reach the write. The write itself is the case above this one.
+    bare = argparse.Namespace(emit_csv="x.csv", limit=None, report=False,
+                              work=None, assembler=None, jobs=8,
+                              check=False, self_test=False,
+                              add_digest_column=False, verify_provenance=False,
+                              base=None, migration=None, listings_from=None)
+    assert_that(refuses_emit_csv(bare) is None,
+                "--emit-csv alone is honoured: a guard that refuses everything "
+                "would pass every case above")
+    # --limit 0 is a request for no rows rather than for all of them, and it is
+    # the spelling a truthiness test would wave through.
+    assert_that(refuses_emit_csv(argparse.Namespace(**dict(
+                vars(bare), limit=0))) == ("--limit", "truncates"),
+                "--limit 0 is refused too: it is zero rows, not every row")
+
+    # The completeness hold, and the one that matters: NO_RE_ENCODE must be the
+    # set of flags main() actually dispatches on before the committed report's
+    # own check, so the tuple cannot drift into being a hand-kept list again --
+    # which is the shape the bug had. Set equality, both directions, so it can
+    # neither miss a mode (one added beside the condition rather than into it)
+    # nor name one that does not early-return (a flag listed and never
+    # dispatched on).
+    #
+    # Read from main()'s own source rather than from its flags, because the
+    # question is what the dispatch does and not what the parser accepts: a
+    # boolean that is accepted and never consulted belongs in neither set.
+    # Matched on the `if args.<dest>` token rather than on a line number, so a
+    # rewrap does not redden this, and anchored on the `if` so a validation
+    # clause that merely mentions a flag -- `if not args.base or not
+    # args.migration:` -- is not counted as a mode. Its limit is the mirror:
+    # a branch that leads with a negation, `if not args.check and args.report`,
+    # is not counted either. That is a conjunction of a listed mode with
+    # something else rather than a mode of its own, so nothing is lost here;
+    # a branch written that way and needing to be listed wants rewriting.
+    import inspect
+    dispatch = inspect.getsource(main)
+    dispatch = dispatch[:dispatch.index("refuses_committed_report(args.emit_csv)")]
+    branches = set(re.findall(r"^\s*if\s+args\.(\w+)\b", dispatch, re.M))
+    branches -= {"emit_csv"}
+    assert_that(branches == {m.dest for m in NO_RE_ENCODE},
+                "every mode main() dispatches on before the emit is in "
+                "NO_RE_ENCODE and every entry in it is one main() dispatches "
+                "on\n     (main() has %s; NO_RE_ENCODE has %s)"
+                % (", ".join("--" + d.replace("_", "-") for d in sorted(branches)),
+                   ", ".join(m.spelled for m in NO_RE_ENCODE)))
+
     # The comparison, not the hash: a check that cannot fail is not a check.
     # Written to a temporary report and read back through the same DictReader
     # check() uses, so a misspelled column name shows up here rather than as a
@@ -2396,7 +2563,10 @@ def main():
                     help="write ec/ghidra/reassembly.csv")
     ap.add_argument("--emit-csv", metavar="PATH",
                     help="write the per-row results to PATH, for comparing two "
-                         "runs; refuses the committed report")
+                         "runs; refuses the committed report, and refuses --check, "
+                         "--self-test, --add-digest-column, --verify-provenance "
+                         "and --limit, none of which produce a full set of rows "
+                         "to write")
     ap.add_argument("--check", action="store_true",
                     help="CI: the report still describes the listings (no assembler)")
     ap.add_argument("--add-digest-column", action="store_true",
@@ -2413,16 +2583,25 @@ def main():
                          "listings, for the positive control (default: <base>^)")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
-    if args.emit_csv and (args.check or args.self_test or args.add_digest_column):
-        # Those three do not re-encode, so there are no per-row results for
-        # --emit-csv to write. Saying so beats exiting 0 having written
-        # nothing, which is the whole failure mode the flag exists to avoid.
-        print("  --emit-csv needs the full re-encode, and --%s does not run "
-              "it.\n  Drop one of the two flags; the read-only verify path is "
-              "`--work <dir>`." % ("check" if args.check else
-                                   "self-test" if args.self_test else
-                                   "add-digest-column"))
-        return 2
+    if args.emit_csv:
+        # Checked here rather than in emit_csv(), for the reason the committed
+        # report's check below is: a refused combination should cost a
+        # millisecond rather than the whole re-encode that follows, and --limit
+        # is the expensive one to discover late.
+        refused = refuses_emit_csv(args)
+        if refused:
+            flag, why = refused
+            if why == "truncates":
+                print("  --limit %d makes --emit-csv write part of a report "
+                      "under the whole\n  report's header, and nothing in the "
+                      "file says which part. Run it without\n  --limit, or read "
+                      "the tally this run prints rather than a CSV."
+                      % args.limit)
+            else:
+                print("  --emit-csv needs the full re-encode, and %s does not "
+                      "run it.\n  Drop one of the two flags; %s."
+                      % (flag.spelled, flag.remedy))
+            return 2
     if args.self_test:
         return self_test()
     if args.verify_provenance:
