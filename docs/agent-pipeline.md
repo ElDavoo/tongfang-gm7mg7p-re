@@ -698,6 +698,14 @@ only covers what's specific to *this* copy.
   were never a reason to reject. Of the 147 agent pull requests open or merged
   on 2026-10-02, none had been rejected, and the most common blocking findings
   were stale figures and line pins.
+- **A green CI run no longer cancels a pending review** (2026-10-02, not in
+  the template). `agent-fix-ci.yml` runs on every finished CI run on an agent
+  branch, because its trigger cannot filter on conclusion. It used to hold that
+  branch's `agent-pipeline/<branch>` group from its first job, and a group keeps
+  one pending run, so a green or cancelled CI run's no-op displaced the pending
+  review of the branch's newest commit. That review never ran, and nothing
+  re-queued it. Only a failed CI run now takes the branch's group; any other
+  run takes a group of its own.
 - **Off-mission issues are parked, not re-planned** (2026-10-02, not in the
   template). The plan stage can again decline an issue, for one reason only:
   finishing it would move none of the EC, the BIOS, the Windows stack or the
