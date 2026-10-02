@@ -159,17 +159,24 @@ understates the population by 45 rows.
 Measuring the 45 above turned up a second finding, in the other tool.
 `walk_branch_arms._dptr_write()` and
 `trace_xdata_refs.is_dptr_rebuild()` do not give the same answer for every
-opcode, and over all 256 crossed with `0x82`, `0x83` and `0x00` there are two
+opcode, and over all 256 crossed with `0x82`, `0x83` and `0x00` there are three
 kinds of disagreement:
 
 - **`pop direct` (`0xD0`).** `is_dptr_rebuild()` answers True for
   `pop 0x82`; `_dptr_write()` answers False. #517 is what added `0xD0` to the
-  census side, and `pop 0x82 ; pop 0x83` is exactly the sequence
-  `trace_xdata_refs.py`'s own docstring names. **This one is live here.**
+  census side, and `pop 0x82 ; pop 0x83` is the sequence
+  [`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md)'s `0xD0` row
+  spells out and `ec/tools/test_dptr_rebuild_guard.py`'s module docstring
+  names ("past `pop 0x83`"). **This one is live here.**
 - **`0xA8`–`0xAF` (`mov @Ri,A`).** `_dptr_write()` groups these with the
   direct stores, but their operand byte is the register number rather than a
   direct address, and `is_dptr_rebuild()` correctly answers False. **This one
   is latent**: no such instruction reaches a walked arm on this image.
+- **`0x90` (`mov dptr,#imm16`).** Also False against True, and it does not
+  count, because nothing asks: `descend()` takes `MOV_DPTR` in its own branch,
+  where it sets `dp` from the immediate rather than clearing it, so
+  `_dptr_write()` is never reached with it. **This one is not reachable in the
+  walk.**
 
 Adding `0xD0` to `_dptr_write()` and re-running the reproducing command moves
 **`ends` on 5 of the 171 rows** and **drops a `code_pointers` entry of `0x0A49`
@@ -228,11 +235,12 @@ whole-arm reachability walk that must not.
 ### One citation of the issue's does not land
 
 The issue points at `trace_xdata_refs.py:316` for the shape a census cannot
-see. **That line is blank**; `offset_for_runtime()` is defined just below it
-and has nothing to do with DPTR. The symbols that carry the shape are
-`is_dptr_rebuild()`, `RELOAD_END` and `TERMINATORS`, and `budget_end()`. They
-are cited here by name for that reason, and this repository's own rule is to
-cite by name rather than by line anyway.
+see. **That pointer does not land on anything DPTR-related**; the line number
+has moved since the issue was filed, and re-pinning it to whatever is there
+now would make this page the kind of citation it is correcting. The symbols
+that carry the shape are `is_dptr_rebuild()`, `RELOAD_END` and `TERMINATORS`,
+and `budget_end()`. They are cited here by name for that reason, and this
+repository's own rule is to cite by name rather than by line anyway.
 
 ## 4. What this does not establish
 
