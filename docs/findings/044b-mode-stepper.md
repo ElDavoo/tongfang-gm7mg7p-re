@@ -32,6 +32,21 @@ The instructions themselves are unchanged by the re-export — only the header
 and the name differ — which is the check that this page read bytes rather than
 re-transcribing them.
 
+The same re-export re-phases which rows the cross-decoder comparison samples,
+and that is worth naming here because it looks like data loss in a diff and is
+not. The comparison samples every annotated function plus every eighth of the
+remainder, in sorted address order. Adding one annotation row takes one key out
+of that remainder, so every eighth picked after it is a different row. Two
+`common`-scope rows — `common,1228` and `common,4BB0` — fell out of the sample
+and `common,1204` and `common,50DE` fell into it. No function boundary moved and
+no row was dropped: both addresses are still exported, still in
+`ec/decompiled/index.csv` at the same address and the same size, and the
+`common` rows of the listing index are byte-identical to `origin/main`'s. The
+two pinned known answers in `cross_decoder_disagreement.py` moved with the
+sample, `common,1228` to `pd 0xDB89` and `common,4BB0` to `common 0x50DE`, each
+onto a row the export actually produces with the same cause and the same body
+shape.
+
 The prologue runs first and the dispatch opens at `0x9B33`:
 
 ```
