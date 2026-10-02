@@ -404,21 +404,21 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # dropped an address is not the same measurement in a small way.
         self.assertEqual(set(off), set(on))
 
-        # 833: §6a's "references entering `write`, all three programs", the
-        # figure its table prints in bold. The word was "leaving" and the
-        # arithmetic was a signed sum of `off - on` throughout, so the label
-        # named a direction the sum did not check; it is corrected in place at
+        # 834: §6a's "references entering `write`, all three programs", the
+        # figure its table prints in bold. The word was "leaving" and the sum
+        # was signed `off - on` throughout, so the label named a direction the
+        # sum did not check; it is corrected in place at
         # `xdata-06c2-06db-timers.md:785` and at
-        # `docs/findings/xdata-write-direction-correction.md`, and the figure
-        # itself is unchanged, because the terms are all non-negative and a net
-        # that happens to equal a gross is a property of these 1,326 rows
-        # rather than of the sum.
+        # `docs/findings/xdata-write-direction-correction.md`. The terms are
+        # all non-negative, so a net that happens to equal a gross is a
+        # property of these 1,326 rows rather than of the sum. 833 -> 834 is
+        # issue #424: the `&&` site is now a read, so it reaches `write` too.
         self.assertEqual(
-            sum(int(off[a]["write"]) - int(on[a]["write"]) for a in off), 833)
+            sum(int(off[a]["write"]) - int(on[a]["write"]) for a in off), 834)
 
         # The half of that the figure alone cannot say: not one of the 1,326
-        # addresses has a *lower* `write` under the guard-off run. The 833
-        # above is a net, and a net cannot distinguish "833 arrived, none left"
+        # addresses has a *lower* `write` under the guard-off run. The 834
+        # above is a net, and a net cannot distinguish "834 arrived, none left"
         # from "900 arrived and 67 left" -- the two are the same number with
         # opposite meanings for what the guard does, and only the per-address
         # sign separates them. A decrease would be a defect rather than a
@@ -426,7 +426,7 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # `==` occurrences the pre-#178 classifier counted as stores and cannot
         # take one away. The direction is measured here and asserted as what it
         # is -- a property of this census against this flag -- which is what
-        # makes 833 a gross figure a reader can bank rather than a net that
+        # makes 834 a gross figure a reader can bank rather than a net that
         # happens to agree with one.
         decreased = {a: (int(on[a]["write"]), int(off[a]["write"]))
                      for a in on if int(off[a]["write"]) < int(on[a]["write"])}
@@ -436,7 +436,7 @@ class TheGuardOffRegeneration(unittest.TestCase):
             f"--no-eq-guard, which the guard's own removal of the `==` "
             f"rejection cannot cause")
 
-        # 210 of 1,326, and 0 of 1,326: the other two lines of the heredoc, with
+        # 211 of 1,326, and 0 of 1,326: the other two lines of the heredoc, with
         # the denominators it prints alongside them. The 0 is the load-bearing
         # half of §6a's whole claim -- the guard moves references between
         # direction buckets and out of none of them, which is what makes every
@@ -461,7 +461,7 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # `unheld` there is "not found by this method", never "absent".
         self.assertEqual(
             (sum(1 for a in on if off[a]["write"] != on[a]["write"]), len(on)),
-            (210, 1326), "§6a: 'addresses whose write changes: 210 of 1326'")
+            (211, 1326), "§6a: 'addresses whose write changes: 211 of 1326'")
         self.assertEqual(
             (sum(1 for a in on if off[a]["refs"] != on[a]["refs"]), len(on)),
             (0, 1326), "§6a: 'addresses whose refs changes: 0 of 1326'")
@@ -470,13 +470,13 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # `program` partition rather than over all 1,326 rows
         # (xdata-06c2-06db-timers.md:781-784). `program` is a partition --
         # every register row is `main-ec`, `pd` or `both`, and the three arms
-        # sum to the same 1,326 the 210/0 denominators above already pin -- so
-        # these are the *terms* of the 833 rather than a second reading of it.
+        # sum to the same 1,326 the 211/0 denominators above already pin -- so
+        # these are the *terms* of the 834 rather than a second reading of it.
         # That is what makes a re-export which moves a direction between the PD
         # set and the main-EC set go red here: on its own it moves a pair of
         # per-subset figures and leaves every aggregate above it standing.
         # §6a prints each figure over a stated denominator, so the denominator
-        # is pinned in the same assertion, for the same reason the 210 and the
+        # is pinned in the same assertion, for the same reason the 211 and the
         # 0 are: a re-derivation that changes it changed what the row is over.
         # Each denominators assertion says which figures the page prints and
         # which are this assertion's, because the three arms are not alike
@@ -512,10 +512,10 @@ class TheGuardOffRegeneration(unittest.TestCase):
         with self.subTest(program="main-ec", direction="write"):
             measured = arm_sum("main-ec", "write")
             self.assertEqual(
-                measured, (3948, 3206),
+                measured, (3949, 3206),
                 f"§6a 'main-ec `write` references', guard removed / as "
                 f"committed: measured {measured[0]} / {measured[1]} against "
-                f"the page's 3948 / 3206")
+                f"the page's 3949 / 3206")
             for rows, label in ((off, "guard-off"), (on, "committed")):
                 denominators = arm_denominators("main-ec", rows)
                 self.assertEqual(
@@ -529,10 +529,10 @@ class TheGuardOffRegeneration(unittest.TestCase):
         with self.subTest(program="main-ec", direction="read"):
             measured = arm_sum("main-ec", "read")
             self.assertEqual(
-                measured, (7189, 7935),
+                measured, (7189, 7936),
                 f"§6a 'main-ec `read` references', guard removed / as "
                 f"committed: measured {measured[0]} / {measured[1]} against "
-                f"the page's 7189 / 7935")
+                f"the page's 7189 / 7936")
             for rows, label in ((off, "guard-off"), (on, "committed")):
                 denominators = arm_denominators("main-ec", rows)
                 self.assertEqual(
@@ -580,16 +580,16 @@ class TheGuardOffRegeneration(unittest.TestCase):
                     f"{len(on)}` above is the same fact over all three arms, so "
                     "this localises it to one")
 
-        # 833 is the sum of the three `write` arms, which §6a states rather
+        # 834 is the sum of the three `write` arms, which §6a states rather
         # than shows. Asserted because it is a claim about the partition: a
         # `program` column that stopped partitioning would leave the total at
-        # 833 and the terms not adding to it, which is the shape a table takes
+        # 834 and the terms not adding to it, which is the shape a table takes
         # when a row has been transcribed from the wrong column.
         deltas = [sum(int(off[a]["write"]) - int(on[a]["write"]) for a in off
                       if off[a]["program"] == program)
                   for program in ("main-ec", "pd", "both")]
         self.assertEqual(
-            sum(deltas), 833,
+            sum(deltas), 834,
             "§6a 'references entering `write`, all three programs' (`:785`): the "
             f"three per-program deltas are {deltas}, which sum to "
             f"{sum(deltas)}; the page prints that sum in bold, so a set that "

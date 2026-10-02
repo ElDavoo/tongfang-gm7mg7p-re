@@ -56,15 +56,15 @@ Seven of these were here when this file was written; the last four arrived with
 
 | figure | what it is | where §6a prints it |
 |---|---|---|
-| `833` | references entering `write`, all three programs † | `xdata-06c2-06db-timers.md:785` |
-| `210` of `1,326` | addresses whose `write` column changes | `:786` |
+| `834` | references entering `write`, all three programs † | `xdata-06c2-06db-timers.md:785` |
+| `211` of `1,326` | addresses whose `write` column changes | `:786` |
 | `0` of `1,326` | addresses whose `refs` column changes | `:969` |
 | `0x08A8` `84/44` guard-off, `126/2` committed | read / write | `:787` |
 | `0x0843` `84/42` guard-off, `126/0` committed | read / write | `:788` |
 | `394` guard-off, `389` committed | main-EC clusters at threshold 0.50 | `:789` |
 | `set(off) == set(on)` | the 1,326-row address universe both runs are over | the heredoc's two `of 1326` denominators, `:952-969` |
-| **`3,948` / `3,206`** | **main-EC `write` references, over the 1,169 `program=main-ec` rows** | **`:781`** |
-| **`7,189` / `7,935`** | **main-EC `read` references, over that same arm** | **`:782`** |
+| **`3,949` / `3,206`** | **main-EC `write` references, over the 1,169 `program=main-ec` rows** | **`:781`** |
+| **`7,189` / `7,936`** | **main-EC `read` references, over that same arm** | **`:782`** |
 | **`193` / `142`** | **PD-image `write` references, over the 108 `program=pd` rows** | **`:783`** |
 | **`279` / `239`** | **`write` references for the 49 `program=both` rows** | **`:784`** |
 
@@ -74,15 +74,15 @@ always a signed sum of *guard-off minus committed*, which is positive: the
 references **enter** `write` and none leave, because `--no-eq-guard` lifts one
 exclusion and lifting an exclusion only admits. §6a's row is corrected in place
 with the wrong wording left visible, and the measurement behind the word — over
-both censuses, 210 addresses' `write` rises and none falls — is in
+both censuses, 211 addresses' `write` rises and none falls — is in
 [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md).
 Nothing else in either table changes.
 
 The four bold rows carry their arm's denominators in the same assertion, for the
-reason the `210` and the `0` carry theirs: `1,169` addresses / `13,891` refs,
+reason the `211` and the `0` carry theirs: `1,169` addresses / `13,891` refs,
 `108` / `603`, and `49` / `1,202`, each equal in the guard-off and the committed
 census because the guard re-buckets occurrences and moves no address. `program`
-is a **partition** of the 1,326, so these are the *terms* of the `833` rather
+is a **partition** of the 1,326, so these are the *terms* of the `834` rather
 than a second reading of it — which is what a re-export that moved a direction
 between the PD set and the main-EC set, or moved an address from one arm to
 another, now trips. Before #850 it moved the `210` and left the `833` standing.
@@ -134,8 +134,8 @@ part of the table below:
 
 | figure | what it is | line | verdict | pin |
 |---|---|---|---|---|
-| `3,948` / `3,206` | main-EC `write` references, guard removed / as committed | `:781` | held | `ec/tools/test_xdata_cluster_names.py:481`, `test_the_census_is_the_one_6a_measured` — **#850** |
-| `7,189` / `7,935` | main-EC `read` references | `:782` | held | `ec/tools/test_xdata_cluster_names.py:498`, same case — **#850** |
+| `3,949` / `3,206` | main-EC `write` references, guard removed / as committed | `:781` | held | `ec/tools/test_xdata_cluster_names.py:481`, `test_the_census_is_the_one_6a_measured` — **#850** |
+| `7,189` / `7,936` | main-EC `read` references | `:782` | held | `ec/tools/test_xdata_cluster_names.py:498`, same case — **#850** |
 | `193` / `142` | PD-image `write` references | `:783` | held | `ec/tools/test_xdata_cluster_names.py:515`, same case — **#850** |
 | `279` / `239` | references in `write` for the 49 addresses in both images | `:784` | held | `ec/tools/test_xdata_cluster_names.py:532`, same case — **#850** |
 | 43 addresses, `4,966` refs | `main-ec-003` (this block), **identical either way** | `:790` | held | the `size` and `refs` cells of `main-ec-003`, `ec/annotations/xdata-clusters.csv:4`, compared cell-for-cell by `check()` at `ec/tools/xdata_register_map.py:3289` (`:3304`) |
@@ -146,7 +146,7 @@ are computed inline in §6a's heredoc, and the census they come from is the
 guard-off run, which is written to `/tmp` and committed nowhere — so there was no
 committed cell for `--check` to hold them to either, and the method read them
 `unheld` however carefully a case looked at them. #850 made them the **terms of
-the `833`**, which is what §2a says above and what makes them trip at all, and
+the `834`**, which is what §2a says above and what makes them trip at all, and
 asserted each with the denominator §6a prints beside it.
 
 *(The paragraph this one replaces said the same thing in the present tense, and

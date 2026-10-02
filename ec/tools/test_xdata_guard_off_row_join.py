@@ -196,13 +196,17 @@ class ThePublishedFigures(unittest.TestCase):
 
     def test_the_6a_write_and_refs_figures_are_reproduced(self):
         # §6a's own heredoc, printed at `xdata-06c2-06db-timers.md:988-989`:
-        # "addresses whose 'write' changes: 210 of 1326" and "addresses whose
+        # "addresses whose 'write' changes: 211 of 1326" and "addresses whose
         # 'refs' changes: 0 of 1326". The second is the one that matters most
         # -- it is the figure that does not move, and a report that stopped
         # comparing the column would print nothing for it rather than a wrong
         # number, which is the failure this assertion is shaped to catch.
+        # 210 -> 211 is issue #424: the `&&` site the classifier used to file
+        # `address-taken` is now a read, so under `--no-eq-guard` it reaches
+        # `write` like the other 832 `==` sites instead of being the one that
+        # did not.
         self.assertEqual(self.report.figure("rows whose write differs"),
-                         (210, 1326))
+                         (211, 1326))
         self.assertEqual(self.report.figure("rows whose refs differs"),
                          (0, 1326))
 
