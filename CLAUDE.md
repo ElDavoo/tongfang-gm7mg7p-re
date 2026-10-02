@@ -132,7 +132,9 @@ trusting one of theirs: every row says whether it was verified against
   longer a summary to add anywhere.** Retractions of an
   existing section still go in place, per the calibration rule above. The
   same applies to code: a new tool is a new file, not another mode bolted
-  onto an existing one. Structured sources of truth (`registers.yaml`, the
+  onto an existing one. A new test suite is a new `test_*.py` whose module docstring
+  says what it stands in for: the runner finds it, `tools/list_suites.py`
+  lists it, and there is no shared table to add a row to. Structured sources of truth (`registers.yaml`, the
   annotation CSVs) stay single files: edit the rows you need and nothing
   else.
 - **No hand-kept totals in prose, and never a correction chain.**
