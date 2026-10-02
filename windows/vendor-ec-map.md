@@ -358,9 +358,13 @@ routine runs, which is unresolved.
   the byte. That is the CPU TCC offset, from the EC's own instructions rather
   than from three sources agreeing on a name. So `EC_ADDR_FAN_DEFAULT` with
   its `FAN_CURVE_LENGTH 5` describes a five-element array this EC does not
-  have at that address, and `ADDR_L1_PWM_DEFAULT_MYFAN3` is the same wrong
-  name by another road: 3.1.39.0 declares it at `1926` and its own
-  `SetCpuTccOffset` writes `1926` the same way. `0x0786` stays
+  have at that address. On the service side the same block is read **both**
+  ways and the disagreement is not settled: `SetCpuTccOffset` writes `1926` as
+  a TCC offset, and `GetFanTablePWMDefault` in `MyFanManager_QC.cs`,
+  `MyFanManager_Intel.cs` and `MyFanManager.cs` reads `1926`-`1930` into a
+  five-element `DefaultPWM` array that is then used as PWM values, so
+  `ADDR_L1_PWM_DEFAULT_MYFAN3` names a block this service version does read
+  the way the constant says. `0x0786` stays
   `present-untested` — see
   [`../docs/findings/xdata-0786-tcc-offset-verdict.md`](../docs/findings/xdata-0786-tcc-offset-verdict.md).
 - Upstream's cTGP init writes a DynamicBoost offset of 25 W to `0x0746`.

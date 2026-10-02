@@ -580,15 +580,18 @@ For each run, from the three CSVs plus the by-hand power readings:
    **Corrected 2026-10-02 (issue #702):** the second half of that reason —
    "`0x0786` in it is a live naming conflict, `EC_ADDR_FAN_DEFAULT` upstream,
    APTC/APTN in the DSDT and in 3.1.39.0, `ADDR_L1_PWM_DEFAULT_MYFAN3` in
-   ECSpec, three names and no agreement" — no longer holds. The EC's own
-   bytes settle it for the CPU TCC offset: at bank0 `0x9492`-`0x94A9` the
-   value replaces an already-computed TCC target behind a bit-7 enable and an
-   `AP_OEM` bit-0 gate, and nothing indexes with it. So a `--watch-page` run
-   will produce a `0x0786` change row with a name to read it against. **The
-   instruction itself is unchanged and still wanted** — the neighbourhood is
-   the least mapped part of the page, and the rest of the `0x0786`-`0x078D`
-   block is open: `0x0789` and `0x078A` have no direct `MOV DPTR` site by the
-   scan, which is "not found by this method" and not "unused". The write-up is
+   ECSpec, three names and no agreement" — is narrower than it was. The EC's
+   own bytes settle what the *EC* does with the byte: at bank0
+   `0x9492`-`0x94A9` the value replaces an already-computed TCC target behind
+   a bit-7 enable and an `AP_OEM` bit-0 gate, and nothing indexes with it. So
+   a `--watch-page` run will produce a `0x0786` change row with a name to read
+   it against. What is *not* settled is the vendor service, which reads the
+   same five bytes as a default-PWM curve. **The instruction itself is
+   unchanged and still wanted** — the neighbourhood is the least mapped part
+   of the page, the naming conflict is not fully closed, and the rest of the
+   `0x0786`-`0x078D` block is open: `0x0789` and `0x078A` have no direct
+   `MOV DPTR` site by the scan, which is "not found by this method" and not
+   "unused". The write-up is
    [`../findings/xdata-0786-tcc-offset-verdict.md`](../findings/xdata-0786-tcc-offset-verdict.md).
    The audible fan is evidence too — write down whether it changed, and when.
 

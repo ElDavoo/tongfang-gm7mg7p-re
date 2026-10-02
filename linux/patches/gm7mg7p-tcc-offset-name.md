@@ -11,9 +11,9 @@ submission and a human does it. See `CLAUDE.md`.
 
 ## 1. The upstream quote, verbatim
 
-From `uniwill-acpi.c` at `BASE_COMMIT` (`5a24248`), quoted in
-[`upstream-excerpt.txt:172-175`](gm7mg7p-dmi-entry/upstream-excerpt.txt)
-(the excerpt's own lines; `uniwill-acpi.c` lines 254-255):
+From `uniwill-acpi.c` at `BASE_COMMIT` (`5a24248`), lines 254-255, quoted in
+[`upstream-excerpt.txt`](gm7mg7p-dmi-entry/upstream-excerpt.txt) (a partial
+quotation, so the excerpt's own line numbers are not a stable citation):
 
 ```c
   254: #define EC_ADDR_FAN_DEFAULT		0x0786
@@ -78,13 +78,18 @@ The full walk, its caveats, and what it does *not* establish are in
 |---|---|---|
 | this machine's DSDT `ECMG` field list | `APTC` (7 bits) + `APTN` (bit 7) | CPU TCC offset with an enable bit |
 | Control Center Service 3.1.39.0, `MyFanManager_RamFan1p5.SetCpuTccOffset` | `1926` | CPU TCC offset, written `value \| 0x80` |
-| ECSpec 3.1.6.0 and 3.1.39.0 | `ADDR_L1_PWM_DEFAULT_MYFAN3 = 1926` | fan default — and the constant has **no reference** in either service |
-| upstream `uniwill-laptop` | `EC_ADDR_FAN_DEFAULT`, `FAN_CURVE_LENGTH 5` | fan default, also unreferenced |
+| Control Center Service 3.1.39.0, `MyFanManager*.GetFanTablePWMDefault` | `1926`-`1930` | five default-PWM values, read into `DefaultPWM` and used as PWM |
+| ECSpec 3.1.6.0 and 3.1.39.0 | `ADDR_L1_PWM_DEFAULT_MYFAN3 = 1926` | fan default — and `GetFanTablePWMDefault` reads that block as a fan default in the same build |
+| upstream `uniwill-laptop` | `EC_ADDR_FAN_DEFAULT`, `FAN_CURVE_LENGTH 5` | fan default, unreferenced upstream |
 
-So the EC agrees with the DSDT and with the *method* on 3.1.39.0, and
-disagrees with two constants that nothing calls. The disagreement is between
-live readings and dead names on both sides — which is what makes a rename the
-whole of the upstream change rather than a semantic argument.
+So the EC agrees with the DSDT and with `SetCpuTccOffset` on 3.1.39.0, and
+disagrees with two constants — one of which the same service version honours
+the other way. Upstream's is the odd one out: nothing at `5a24248` reads or
+writes the address at all, so the rename has no upstream behaviour to preserve
+either way. On the vendor side the block is read **both** ways and this note
+does not claim to settle which the vendor intended; the upstream argument does
+not depend on it, because it rests on what the EC's own instructions do with
+the byte.
 
 ## 4. Draft upstream PR body
 
@@ -108,13 +113,22 @@ should not carry it:
 > address from it. It sits in the routine that also seeds the per-mode TCC
 > offset defaults (`0x07D8`-`0x07DA`), and overrides the selected one.
 >
-> This is corroborated from three independent directions on that board: the
+> This is corroborated from two independent directions on that board: the
 > DSDT's `ECMG` field list declares `APTC` as 7 bits followed by a 1-bit
-> `APTN`; the vendor's own service writes `value | 0x80` to the same address
-> from a method called `SetCpuTccOffset`; and the two constants that disagree
-> — `EC_ADDR_FAN_DEFAULT` here, `ADDR_L1_PWM_DEFAULT_MYFAN3` in the vendor's
-> `ECSpec` — have no reference in either tree at `5a24248`, so there is no
-> behaviour to preserve either way.
+> `APTN`, and the vendor's own service writes `value | 0x80` to the same
+> address from a method called `SetCpuTccOffset`. Nothing in either tree reads
+> or writes `0x0786` at `5a24248`, so there is no upstream behaviour to
+> preserve either way and the change is a rename plus its uses.
+>
+> One caveat I do not want to paper over: that same vendor service *also* reads
+> `0x0786`-`0x078A` as a five-element array of default fan PWM values
+> (`GetFanTablePWMDefault`, in three of its fan-manager classes, each feeding a
+> `DefaultPWM` field that is then used as PWM). So on this board the block is
+> read both ways — as a TCC offset and as a fan curve — and I cannot tell you
+> from the decompilation which the vendor intended. What I can show is that the
+> *EC* never treats the address as a base: no site adds to it, indexes it, or
+> builds an address from it, which is what the array reading would require.
+> That is the whole basis of the rename.
 >
 > The read is static. I have not written the address on hardware and confirmed
 > the EC acts on it; what I have is the instruction sequence, which is

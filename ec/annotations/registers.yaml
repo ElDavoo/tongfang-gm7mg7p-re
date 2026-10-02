@@ -2444,6 +2444,16 @@ registers:
       scan_refs.py and trace_xdata_refs.py. What would move it is a live
       write with bit 7 and 0x0741 bit 0 both set, reading 0x098C and 0x0463
       back, which is a human's step at the machine.
+      What the verdict does NOT settle is the service side, and the walk is
+      explicit about it: 3.1.39.0 reads 0x0786-0x078A both ways.
+      SetCpuTccOffset writes 0x0786 as a TCC offset, and
+      MyFanManager*.GetFanTablePWMDefault reads 0x0786-0x078A into a
+      five-element DefaultPWM array that is then used as PWM values, so
+      ADDR_L1_PWM_DEFAULT_MYFAN3 names a block this service version does read
+      the way the constant says. Which reading the vendor intended is not
+      answerable from the committed decompilations. This does not move the
+      EC-side verdict above, which is about what the EC's instructions do
+      with the byte, and it does not move the status.
 
   - name: AP_OEM_6 (whisper status / universal fan control)
     addr: 0x07C6

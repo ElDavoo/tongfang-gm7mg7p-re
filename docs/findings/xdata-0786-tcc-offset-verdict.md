@@ -17,13 +17,15 @@ nothing adds to it.**
 That is the answer to the issue's question, and it is a reading of the
 instructions rather than of the function names around them: upstream
 `uniwill-laptop`'s `EC_ADDR_FAN_DEFAULT` with `FAN_CURVE_LENGTH 5`
-(`upstream-excerpt.txt:174-175`, quoting `uniwill-acpi.c` lines 254-255)
-describes a five-element array of fan-curve defaults, which needs the byte to
-*index* something and to be added to a base. Neither happens here. The EC
-treats `0x0786` as the CPU TCC offset — which is what the DSDT
-(`APTC:7`/`APTN:1`, `evidence/acpi/dsdt.dsl:52219-52220`) and the 3.1.39.0
-vendor service already said, and what ECSpec's `ADDR_L1_PWM_DEFAULT_MYFAN3` and
-the upstream name contradict.
+(`uniwill-acpi.c` lines 254-255 at `5a24248`, quoted in
+`upstream-excerpt.txt`) describes a five-element array of fan-curve defaults,
+which needs the byte to *index* something and to be added to a base. Neither
+happens here. The EC treats `0x0786` as the CPU TCC offset — which is what the
+DSDT (`APTC:7`/`APTN:1`, `evidence/acpi/dsdt.dsl:52219-52220`) and
+`MyFanManager_RamFan1p5.SetCpuTccOffset` already said, and what ECSpec's
+`ADDR_L1_PWM_DEFAULT_MYFAN3` and the upstream name disagree with. §5 is where
+that disagreement gets its complication: the same five bytes are read the
+other way too, by the same service version.
 
 `0x0786` **stays `present-untested`** in `ec/annotations/registers.yaml`. §6
 is what that costs and why nothing here moves it.
@@ -195,21 +197,41 @@ power-on init passes. This is what makes the 2026-09-23 `live` reading of
 routine, in the state the default leaves it in.
 
 **ECSpec's `ADDR_L1..L5_PWM_DEFAULT_MYFAN3` is the same wrong name by another
-road.** The five constants are `1926`-`1930`, i.e. `0x0786`-`0x078A`, with
-`ADDR_L1..L5_PWM_DEFAULT_MYFAN2` a second five-byte block at `0x078D`-`0x0791`.
-Neither is read: nothing in either decompiled service *uses* the MYFAN3
-constants — they are `const` declarations with no reference — while
-`MyFanManager_RamFan1p5.SetCpuTccOffset` writes `1926` the same way in the same
-service version. The constant is the stale thing on 3.1.39.0, not the method.
+road, and the block is read both ways.** The five MYFAN3 constants are
+`1926`-`1930`, i.e. `0x0786`-`0x078A`; `ADDR_L1..L5_PWM_DEFAULT_MYFAN2` is a
+second five-byte block at `1929`-`1933`, i.e. **`0x0789`-`0x078D`**
+(`ECSpec.cs`, both sets), so the two blocks **overlap by two bytes** — `0x0789`
+and `0x078A` are the MYFAN3 block's last two and the MYFAN2 block's first two.
+
+`0x0786` is read as a TCC offset *and* as a five-element curve in the same
+service version, and this write-up does not settle which the vendor meant.
+`MyFanManager_RamFan1p5.SetCpuTccOffset` writes `1926` as `value | 0x80`, the
+shape §2 reads. But `GetFanTablePWMDefault` in `MyFanManager_QC.cs`,
+`MyFanManager_Intel.cs` and `MyFanManager.cs` reads `1926`-`1930` into an
+`int[5]` and returns it, each class assigns the result to a `DefaultPWM` field
+at the top of its init path, and `MyFanManager_QC.cs` then consumes
+`DefaultPWM[0]` through `DefaultPWM[4]` as PWM values (`DefaultPWM[0] / 2` and
+so on) — the service's own `ec-callsites.csv` books those reads. So the block
+is live as a default-PWM curve here, not a dead name.
+
+That does not move the EC-side verdict, which rests on the `0x9492`-`0x94A9`
+listing: nothing in the *EC* treats `0x0786` as a base, whatever the service
+that fronts it believes the five bytes mean. It does mean the two readings
+collide on the same addresses in one shipped build, and that is a real
+unresolved conflict in the vendor stack rather than a stale constant beside a
+live method. Which reading is intended — a TCC offset the service happens to
+also seed from a curve, or one address doing two jobs — is not answerable from
+the committed decompilations, and nothing here claims to answer it.
 
 `0x0787` is the byte ECSpec calls `ADDR_L2_PWM_DEFAULT_MYFAN3` and it has five
 direct sites; `0x0788` is `CTWA` in the DSDT and has four. `0x0789` and
 `0x078A` have **no direct `MOV DPTR` site by the scan in §7**, which is "not
-found by this method" and not "unused" (§6). So the two bytes a five-element
-array at `0x0786` would need past `0x0788` are not found by the scan — which is
-the same lower bound as everywhere else in this file, not a positive finding
-about them. The rest of the `0x0786`-`0x078D` block is a separate question this
-write-up stops short of, and
+found by this method" and not "unused" (§6). Those are the two bytes a
+five-element array at `0x0786` would need past `0x0788`, and under the
+corrected range they are exactly `ADDR_L1`/`ADDR_L2_PWM_DEFAULT_MYFAN2` — the
+fan reading's own constants name them, which is a sharper reason to keep the
+question open than the scan's silence was. The rest of the `0x0786`-`0x078D`
+block is a separate question this write-up stops short of, and
 `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` §4 item 4 still asks
 for it.
 
