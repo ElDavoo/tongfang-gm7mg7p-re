@@ -29,23 +29,13 @@ import ctypes
 import struct
 import sys
 import uuid
-from ctypes import wintypes
+try:
+    from ctypes import wintypes
+except ImportError:  # pragma: no cover - only on a Python without the module
+    wintypes = None
 
 UNIWILL_NAME = "UniWillVariable"
 UNIWILL_GUID = "{9f33f85c-13ca-4fd1-9c4a-96217722c593}"
-
-_k32 = ctypes.WinDLL("kernel32", use_last_error=True)
-_adv = ctypes.WinDLL("advapi32", use_last_error=True)
-_nt = ctypes.WinDLL("ntdll")
-
-_k32.GetFirmwareEnvironmentVariableExW.argtypes = [
-    wintypes.LPCWSTR, wintypes.LPCWSTR, ctypes.c_void_p, wintypes.DWORD,
-    ctypes.POINTER(wintypes.DWORD)]
-_k32.GetFirmwareEnvironmentVariableExW.restype = wintypes.DWORD
-_k32.GetCurrentProcess.restype = wintypes.HANDLE
-_nt.NtEnumerateSystemEnvironmentValuesEx.argtypes = [
-    wintypes.ULONG, ctypes.c_void_p, ctypes.POINTER(wintypes.ULONG)]
-_nt.NtEnumerateSystemEnvironmentValuesEx.restype = wintypes.LONG
 
 
 class LUID(ctypes.Structure):
@@ -57,26 +47,76 @@ class TOKEN_PRIVILEGES(ctypes.Structure):
                 ("Attributes", wintypes.DWORD)]
 
 
-_adv.OpenProcessToken.argtypes = [wintypes.HANDLE, wintypes.DWORD,
-                                  ctypes.POINTER(wintypes.HANDLE)]
-_adv.LookupPrivilegeValueW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR,
-                                       ctypes.POINTER(LUID)]
-_adv.AdjustTokenPrivileges.argtypes = [wintypes.HANDLE, wintypes.BOOL,
-                                       ctypes.POINTER(TOKEN_PRIVILEGES),
-                                       wintypes.DWORD, ctypes.c_void_p,
-                                       ctypes.c_void_p]
+_dlls = None
+
+
+def _load():
+    """(kernel32, advapi32, ntdll), loaded and declared on first use.
+
+    `ctypes.WinDLL` exists only on Windows, so binding the three at module
+    scope made this file loadable only there -- and `uniwill_set.py` with it,
+    which imports this one. Loading on first call instead keeps the parts that
+    are platform-neutral importable anywhere: `UNIWILL_NAME`, `UNIWILL_GUID`,
+    `NVRAM_FIELDS`, `layout()` and the two `ctypes.Structure`s above, which is
+    what lets `uniwill_set.py` compute an offset offline.
+    `windows/tools/test_import_off_windows.py` holds that.
+
+    Cached, so one process binds each handle once and the `argtypes`/`restype`
+    writes happen once rather than per call.
+
+    The `wintypes` guard is belt-and-braces, as in `ecrw.py`: the module
+    imports cleanly on Linux and the resolver checks it again.
+    """
+    global _dlls
+    if _dlls is not None:
+        return _dlls
+    if wintypes is None:
+        raise SystemExit("error: ctypes.wintypes is unavailable on this "
+                         "interpreter, so the Win32 signatures this tool needs "
+                         "cannot be built")
+    try:
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        adv = ctypes.WinDLL("advapi32", use_last_error=True)
+        nt = ctypes.WinDLL("ntdll")
+    except AttributeError:
+        raise SystemExit("error: ctypes.WinDLL does not exist on this "
+                         "platform -- UEFI variables are read through "
+                         "GetFirmwareEnvironmentVariableExW and this tool is "
+                         "Windows-only. Nothing here was read") from None
+
+    k32.GetFirmwareEnvironmentVariableExW.argtypes = [
+        wintypes.LPCWSTR, wintypes.LPCWSTR, ctypes.c_void_p, wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD)]
+    k32.GetFirmwareEnvironmentVariableExW.restype = wintypes.DWORD
+    k32.GetCurrentProcess.restype = wintypes.HANDLE
+    nt.NtEnumerateSystemEnvironmentValuesEx.argtypes = [
+        wintypes.ULONG, ctypes.c_void_p, ctypes.POINTER(wintypes.ULONG)]
+    nt.NtEnumerateSystemEnvironmentValuesEx.restype = wintypes.LONG
+
+    adv.OpenProcessToken.argtypes = [wintypes.HANDLE, wintypes.DWORD,
+                                     ctypes.POINTER(wintypes.HANDLE)]
+    adv.LookupPrivilegeValueW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR,
+                                          ctypes.POINTER(LUID)]
+    adv.AdjustTokenPrivileges.argtypes = [wintypes.HANDLE, wintypes.BOOL,
+                                          ctypes.POINTER(TOKEN_PRIVILEGES),
+                                          wintypes.DWORD, ctypes.c_void_p,
+                                          ctypes.c_void_p]
+
+    _dlls = (k32, adv, nt)
+    return _dlls
 
 
 def enable_privilege(name="SeSystemEnvironmentPrivilege"):
+    k32, adv, _ = _load()
     tok = wintypes.HANDLE()
-    if not _adv.OpenProcessToken(_k32.GetCurrentProcess(), 0x0020 | 0x0008,
-                                 ctypes.byref(tok)):
+    if not adv.OpenProcessToken(k32.GetCurrentProcess(), 0x0020 | 0x0008,
+                                ctypes.byref(tok)):
         raise SystemExit("error: OpenProcessToken failed")
     luid = LUID()
-    if not _adv.LookupPrivilegeValueW(None, name, ctypes.byref(luid)):
+    if not adv.LookupPrivilegeValueW(None, name, ctypes.byref(luid)):
         raise SystemExit(f"error: LookupPrivilegeValue({name}) failed")
     tp = TOKEN_PRIVILEGES(1, luid, 0x2)
-    _adv.AdjustTokenPrivileges(tok, False, ctypes.byref(tp), 0, None, None)
+    adv.AdjustTokenPrivileges(tok, False, ctypes.byref(tp), 0, None, None)
     if ctypes.get_last_error():
         raise SystemExit(f"error: could not enable {name}; run elevated")
 
@@ -86,10 +126,11 @@ ATTRS = {0x1: "NV", 0x2: "BS", 0x4: "RT", 0x8: "HW_ERR", 0x10: "AUTH_WRITE",
 
 
 def read_var(name, guid):
+    k32, _, _ = _load()
     buf = ctypes.create_string_buffer(0x10000)
     attr = wintypes.DWORD()
-    n = _k32.GetFirmwareEnvironmentVariableExW(name, guid, buf, len(buf),
-                                               ctypes.byref(attr))
+    n = k32.GetFirmwareEnvironmentVariableExW(name, guid, buf, len(buf),
+                                              ctypes.byref(attr))
     if n == 0:
         err = ctypes.get_last_error()
         raise SystemExit(f"error: {name} {guid}: win32 error {err}"
@@ -99,10 +140,11 @@ def read_var(name, guid):
 
 
 def list_vars():
+    _, _, nt = _load()
     size = wintypes.ULONG(0)
-    _nt.NtEnumerateSystemEnvironmentValuesEx(1, None, ctypes.byref(size))
+    nt.NtEnumerateSystemEnvironmentValuesEx(1, None, ctypes.byref(size))
     buf = ctypes.create_string_buffer(size.value or 0x100000)
-    st = _nt.NtEnumerateSystemEnvironmentValuesEx(1, buf, ctypes.byref(size))
+    st = nt.NtEnumerateSystemEnvironmentValuesEx(1, buf, ctypes.byref(size))
     if st < 0:
         raise SystemExit(f"error: NtEnumerateSystemEnvironmentValuesEx 0x{st & 0xFFFFFFFF:08X}")
     raw, off, out = buf.raw, 0, []

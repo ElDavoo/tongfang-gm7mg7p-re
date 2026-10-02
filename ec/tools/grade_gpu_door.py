@@ -166,53 +166,33 @@ import sys
 # `Window` and `window_delta` are the schema and the three movement figures
 # both graders print, and re-deriving them here would be a second copy to
 # drift. `grade_0751_isolation` imports nothing but stdlib, so importing it
-# costs an offline grader nothing -- the reason
-# `windows/tools/gpu_block_watch.py` cannot be imported for the same job is
-# written where it matters, over DS_NAMES below.
+# costs an offline grader nothing.
 import grade_0751_isolation as fan
 
-# The two blocks, in the order §5's result table reads them. Held against
-# `gpu_block_watch.WINDOWS` by windows/tools/test_gpu_block_watch.py, because
-# an ordering read off one set of bounds and captured against another is the
-# drift #266 found in the procedure's own copy of the watch table.
-WINDOWS = (("0x07C4-0x07D7", 0x07C4, 0x07D7),
-           ("0x0743-0x0746", 0x0743, 0x0746))
+# The watcher's own table, for the same reason and once more: `WINDOWS` and
+# `DS_NAMES` below used to be transcribed from it here, and a transcription is
+# a second copy to drift. `gpu_block_watch` does `from ecrw import Ec,
+# EcError`, and `ecrw` binds kernel32 on the first `Ec()` rather than at import,
+# so importing it costs this grader nothing either --
+# `windows/tools/test_import_off_windows.py` holds that for every module in
+# that directory. It is a plain `import`, not a by-path spec load, so a module
+# already loaded under that name is the same object rather than a second copy.
+#
+# This inverts the direction `windows/tools/test_gpu_block_watch.py` reaches
+# this way: it loads the grader by path because a suite cannot import a grader
+# out of another tree, whereas a tool in `ec/tools` may insert that tree's
+# directory and import a module from it. That asymmetry is the point -- the
+# copy that drifted is gone, and what holds the chain now is that the DSDT is
+# read once, in the watcher.
+_WATCHER_TOOLS = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              os.pardir, os.pardir, "windows", "tools")
+if _WATCHER_TOOLS not in sys.path:
+    sys.path.insert(0, _WATCHER_TOOLS)
+import gpu_block_watch  # noqa: E402
 
-# §5's column 3 ends in "(DSDT name)", so a movement without its ECMG
-# field-list name is not the cell. Transcribed here rather than imported:
-# `gpu_block_watch` does `from ecrw import Ec, EcError`, and `ecrw` binds
-# kernel32 at import time, so it loads only on Windows -- importing it would
-# make an offline grader Windows-only, which is the one thing a grader that
-# has to be runnable before a human owns a laptop cannot be. The same test
-# holds these 24 pairs against the watcher's own `WATCH` table, which
-# CitationTableTests holds against evidence/acpi/dsdt.dsl, so the chain from
-# the DSDT to this file is checked rather than assumed.
-DS_NAMES = (
-    (0x0743, "GNEN b0, ECDC b1"),
-    (0x0744, "CTVA"),
-    (0x0745, "DBCT"),
-    (0x0746, "MXDB"),
-    (0x07C4, "DBEN b3, DBST b5"),
-    (0x07C5, "WHMS b5"),
-    (0x07C6, "WMS0 b0-1"),
-    (0x07C7, "(no DSDT field)"),
-    (0x07C8, "(no DSDT field)"),
-    (0x07C9, "(no DSDT field)"),
-    (0x07CA, "(no DSDT field)"),
-    (0x07CB, "(no DSDT field)"),
-    (0x07CC, "(no DSDT field)"),
-    (0x07CD, "(no DSDT field)"),
-    (0x07CE, "(no DSDT field)"),
-    (0x07CF, "(no DSDT field)"),
-    (0x07D0, "DBD1"),
-    (0x07D1, "DBD2"),
-    (0x07D2, "(no DSDT field)"),
-    (0x07D3, "GFID b4-6"),
-    (0x07D4, "CPUA"),
-    (0x07D5, "DBAP"),
-    (0x07D6, "DBSP"),
-    (0x07D7, "CGCT"),
-)
+WINDOWS = gpu_block_watch.WINDOWS
+DS_NAMES = tuple((addr, name) for addr, name, _status, _cite
+                 in gpu_block_watch.WATCH)
 
 # How close two marks have to be to be worth flagging, in seconds. A warning
 # and nothing else: the marks stay separate windows whatever this says, and the

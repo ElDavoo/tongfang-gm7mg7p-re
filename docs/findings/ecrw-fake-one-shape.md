@@ -128,6 +128,11 @@ is why the suite holds both rather than picking one.
 - **It is not #353.** Making `ecrw.py` importable off Windows is the root fix and
   stays its own issue. This change does not depend on it, does not touch
   `ecrw.py`, and is still correct if #353 lands first.
+  > **Corrected 2026-10-02 (issue #353):** `ecrw.py` binds kernel32 on its
+  > first `Ec()` rather than at import, so it imports on a non-Windows
+  > runner. `windows/tools/test_import_off_windows.py` holds that, and
+  > `docs/findings/offline-import-ecrw.md` is the write-up. The rest of
+  > this paragraph stands as it was written.
 - **It is not in any gate.** `.github/scripts/agent-gates.sh` is copied from
   `agent-pipeline` and the pipeline token has no `workflow` scope.
   `check_python_syntax` globs the four component `tools/` directories and not

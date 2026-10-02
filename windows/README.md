@@ -237,8 +237,10 @@ two a shell script in `linux/battery-trace/` still writes and the one whose `#`
 annotation leaves its header on row 1 rather than row 0.
 (`tools/test_system_id_probe.py` covers the `0x0456` probe;
 `../tools/README.md` lists it.) All but one of them work by faking
-`ecrw` — the module binds kernel32 at import time and only loads on Windows —
-which is also what makes the arms scriptable; the charge-target and
+`ecrw` — `ecrw` itself imports anywhere now
+(`test_import_off_windows.py` holds that for every tool here), so the fake is
+what makes the arms scriptable rather than what makes the module loadable; the
+charge-target and
 battery-trace suites fake the `powershell` call behind their WMI lines as well.
 Every suite here exercising a tool that imports `ecrw` installs one shared
 fake, `tools/ecrw_fake.py`, with `ecrw_fake.install()`; a suite with bytes of

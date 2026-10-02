@@ -32,8 +32,16 @@ three names rather than one. The suite works from the measurement above, not
 from the issue's table.
 
 `ecrw.py` cannot be imported off Windows — `ctypes.WinDLL("kernel32", …)` runs
-at module scope — which is the whole reason the fixture exists and the reason
-this comparison has to be static. The suite therefore imports neither file:
+at module scope — which was the whole reason the fixture existed and the reason
+this comparison was static.
+
+> **Corrected 2026-10-02 (issue #353):** the premise is gone. `ecrw.py` binds
+> kernel32 on its first `Ec()`, so it imports on a non-Windows runner
+> (`windows/tools/test_import_off_windows.py`), and the fixture's remaining job
+> is scriptability rather than importability.
+> `docs/findings/offline-import-ecrw.md` is the write-up. The suite still
+> imports neither file, for the reason below. The suite therefore imports
+> neither file:
 `ast.parse` over the two sources is enough, and staying static keeps it clear of
 the shared-interpreter machinery in
 `tools/test_windows_tools_shared_interpreter.py` (see "Shared-file rules").
@@ -190,6 +198,13 @@ they apply to any new `test_*.py` in `windows/tools/` automatically:
   inherits. Reading through `Path(__file__).with_name(...)` also makes the suite
   correct inside `OrderingTests`' scratch mirror, which copies
   `windows/tools` wholesale and symlinks everything above it.
+
+  > **Corrected 2026-10-02 (issue #353):** the parenthetical reason no longer
+  > holds — `ecrw.py` binds kernel32 on its first `Ec()`, so it imports anywhere
+  > (`windows/tools/test_import_off_windows.py`). The *rule* still does, and for
+  > the reason the rest of this item gives: `install()` under one interpreter
+  > leaves `sys.modules['ecrw']` pointing at the fixture.
+  > `docs/findings/offline-import-ecrw.md` is the write-up.
 - Its placement in `windows/tools/` is correct here, unlike
   `tools/test_windows_tools_shared_interpreter.py`'s: that suite lives in
   `tools/` because it runs `unittest discover` over the directory it is in and
@@ -202,7 +217,12 @@ they apply to any new `test_*.py` in `windows/tools/` automatically:
   cannot be imported off Windows, and the `ValueError` guards and the
   open-failure `EcError` are only ever read here as source. Nothing in this
   change is hardware evidence and nothing in it implies a live run.
-- **Giving the fixture `ValueError` guards.** The issue lists this as optional,
+  **Corrected 2026-10-02 (issue #353):** `ecrw.py` and the other Windows
+  tools that bound a DLL at module scope bind on first use now, so they
+  import on a non-Windows runner
+  (`windows/tools/test_import_off_windows.py`). `docs/findings/offline-import-ecrw.md`
+  is the write-up. The rest of this item stands as it was written.
+  - **Giving the fixture `ValueError` guards.** The issue lists this as optional,
   and it is the wrong side to close. Copying the bounds into `ecrw_fake.py`
   would make the fixture a second implementation of `ecrw.py`, which is the one
   thing its own docstring says it is not. The guards are already pinned against
