@@ -15,13 +15,14 @@ widens the survey from the span to the whole XDATA range.
 
 The two halves answer differently, and the difference is the point.
 
-**The decode.** At 29 of the 39 the PD image does not dereference the byte at
-all: every PD site hands DPTR to a helper and dereferences whatever comes
-back. That is §5.2's "field offset into one strided structure" reading,
-measured over the whole collision set rather than inferred from `0x04A6` and
-`0x04A3`. The issue's falsifier — *a collision where both images increment the
-same byte* — **is not present**: no address has a read-modify-write in place on
-both sides, and the `0x07D4` case that comes closest is a PD increment loop
+**The decode.** At 29 of the 39, no `movx` at the address is found in any PD
+site this scan sees: every PD site hands DPTR to a helper, and what the helper
+dereferences afterwards is the part a `90 hi lo` byte scan cannot follow. That
+is §5.2's "field offset into one strided structure" reading, measured over the
+whole collision set rather than inferred from `0x04A6` and `0x04A3`. The
+issue's falsifier — *a collision where both images increment the same byte* —
+**does not appear in this scan**: no address has a read-modify-write in place
+on both sides, and the `0x07D4` case that comes closest is a PD increment loop
 against an EC mirror register that has already been named in this repository.
 
 **The wider count.** Across `0x0000`-`0xFFFF` there are **138** addresses with
@@ -222,8 +223,11 @@ pages in turn to show no other single page does anything like it: every other
 removal leaves the remainder between +5.1σ and +7.7σ. So the concentration is
 a property of that page and not of the choice to single it out — had the
 excess been spread, every leave-one-out would have stayed high. On the page
-itself the two images' address choices are correlated at +3σ against a null
-computed over that page alone.
+itself the two images' address choices exceed a null computed over that page
+alone, which is the same uniform model the full-range row has already
+discounted one scale up: the excess is measured here, not explained, and it is
+the leave-one-out above rather than the page's own z that carries the
+conclusion.
 
 That is a statement about the low 4 KiB, which is what this section measures.
 The wider range is not scanned page by page here, so nothing is claimed about
@@ -233,10 +237,10 @@ The wider range is not scanned page by page here, so nothing is claimed about
 repository: `pd-base-strides.csv` already records the PD image's second stride
 family (`0x5E`) on nine bases at `0x08E7`-`0x08FC`, and `xdata-086x-dispatch.md`
 is about the EC's `0x086x` handlers. Both images allocate there heavily and
-they collide there more than chance, and **this work does not say why** —
-naming what either image keeps at `0x0800`-`0x08FF` needs the control-flow
-recovery §6 lists as missing, and `pd-index-geometry.md` §8 is where that
-question is already carried. It is a follow-up, not a result.
+they collide there more than that page's own null predicts, and **this work
+does not say why** — naming what either image keeps at `0x0800`-`0x08FF` needs
+the control-flow recovery §6 lists as missing, and `pd-index-geometry.md` §8 is
+where that question is already carried. It is a follow-up, not a result.
 
 ## 3. The 39, with §4's three tests applied to each
 
@@ -342,11 +346,14 @@ addresses with an in-place increment in BOTH images: none
 The three tests, answered:
 
 **Byte access, or index base?** At 24 of the 39 the PD column is entirely
-`index` — DPTR handed on and never dereferenced at the address — and at five
-more (`0x0400`, `0x0408`, `0x0410`, `0x0434`, `0x04A4`) it is `index` plus
-`none`, still no `movx` at the address. **29 of the 39 are never dereferenced
-by the PD image at all.** The ten that are all sit on the `0x07xx` page, and
-that is not the collision-concentration effect §2 measures:
+`index` — DPTR handed on, with no `movx` at the address in the window — and at
+five more (`0x0400`, `0x0408`, `0x0410`, `0x0434`, `0x04A4`) it is `index`
+plus `none`, still no `movx` at the address. **At the other 29, no `movx` at
+the address is found in any PD site this scan sees**, and §5's caveat is what
+governs that wording: `0x04A3`, one of the 29, is an address whose PD sites do
+dereference, at a rebased address this scan cannot see. The ten that are
+dereferenced all sit on the `0x07xx` page, and that is not the
+collision-concentration effect §2 measures:
 `xdata-registers.csv` already marks all ten of them `program=both`, so a page
 this heavily used on both sides is where a plain `movx` is expected to turn up
 rather than an index base.
@@ -388,21 +395,23 @@ functions, not an unaligned byte scan — and this file does not reconcile its
 magnitudes. Its *set* nearly agrees with the scan's, and the near-agreement is
 worth the sentence: the census marks eleven addresses `program=both`, and this
 survey finds the PD image dereferencing the byte at ten of those eleven, all
-on `0x07xx`. The exception is `0x04A3`, whose PD column above is `5 index` and
-no `byte`, and the file already has the reason: `pack-temp-producer-chain.md`
-§4 adjudicated that address as a base whose PD-side dereferences land at a
-rebased address (`0x04A3 + R7×0x60 + 0x200×R7` and the like), which a `90 hi
-lo` byte scan cannot see — §5's blind spot, operating in the direction that
-makes the two projections agree rather than disagree. The census marks the
-other 25 `program=main-ec`, with three of the 39 carrying no census row at all.
+on `0x07xx`. The eleventh, `0x04A3`, has a PD column of `5 index` and no
+`byte`, and that is the caveat above rather than a disagreement between the two:
+`pack-temp-producer-chain.md` §4 adjudicated that address as a base whose
+PD-side dereferences land at a rebased address (`0x04A3 + R7×0x60 + 0x200×R7`
+and the like), which a `90 hi lo` byte scan cannot see — §5's blind spot,
+operating in the direction that makes the two projections agree rather than
+disagree. The census marks the other 25 `program=main-ec`, with three of the 39
+carrying no census row at all.
 Ten of eleven, plus one the file can account for, is corroboration from two
 projections with different units; §5's `unresolved` caveat is what governs it.
 
 ## 4. `0x07D4`, the closest the two images come
 
-The falsifier is absent, so the address worth writing up is the one where a
-PD-side in-place increment sits opposite an EC-side write. That is `0x07D4`,
-and both halves are already understood, from opposite directions.
+The falsifier does not turn up in this scan, so the address worth writing up
+is the one where a PD-side in-place increment sits opposite an EC-side write.
+That is `0x07D4`, and both halves are already understood, from opposite
+directions.
 
 The load-bearing windows below are `r2 -a 8051` listings, not this repository's
 linear decoder, and the images are the ones `pd-xdata-overlap.md` §1 builds:
@@ -438,8 +447,8 @@ $ r2 -a 8051 -e scr.color=0 -q -c 's 0xee03; pd 16' /tmp/pd.bin
 `clr c ; subb a,#1 ; jnc` leaves the loop on the first non-zero read, so the
 shape is `while 0x07D4 == 0 { call 0xf28d; call 0xb293; call 0x1041; 0x07D4++ }`
 — a bounded poll over a byte it expects something else to fill in. The
-`movx a,@dptr ; inc a ; movx @dptr,a` is the only in-place `+1` in either
-image across all 39.
+`movx a,@dptr ; inc a ; movx @dptr,a` is the only in-place `+1` this scan
+finds in either image across all 39.
 
 The EC image's two sites at `0x07D4` are a compare-and-copy, not an
 increment:
@@ -522,8 +531,8 @@ produce this listing pair exactly as it stands — and it is still open.
 ## 6. What follows
 
 - **The `0x0800`-`0x08FF` page**, where both images allocate heavily and
-  collide at +3σ against a null computed over that page alone, and where this
-  work says nothing about what either image keeps. §2 names it; naming it
+  collide more than a null computed over that page alone would give, and where
+  this work says nothing about what either image keeps. §2 names it; naming it
   needs the same recovery §6 of `pd-xdata-overlap.md` lists as missing, and
   `pd_index_geometry.py --bases 0x0800-0x08FF` is the mode already built
   for it.
