@@ -715,6 +715,23 @@ only covers what's specific to *this* copy.
   - `gen_findings_index.py` no longer writes a `N write-ups.` line. Every
     pull request bumped it, so any two conflicted, and `CLAUDE.md` asks for
     code to be cited by name rather than by line number.
+- **The fix stage edits the title and description, and more runs at once**
+  (2026-10-02, not in the template).
+  - `agent-fix.yml` writes the pull request's title and description to
+    `/tmp/pr/` before the agent runs and posts any change after it, before the
+    push. #1461 was stuck after round 7 on a blocker in its description: a fix
+    round could only change the tree, so it pushed nothing and no review ever
+    followed. A round that changes only the title or description restarts the
+    review by closing and reopening the pull request, the handle
+    `agent-retry.yml` already uses, and re-arms auto-merge. The agent still
+    has no `gh`.
+  - `MAX_PARALLEL_AGENTS` is 16 (was 8), in `agent-retry.yml` and
+    `agent-conflicts.yml`, which had been left at 5. `INTAKE_RESERVED` is 4
+    (was 2). The ceiling is the Free plan's 20 concurrent Actions jobs, shared
+    with CI; above it, runs queue.
+  - `MAX_OPEN_AGENT_PRS` is 12 (was 4). More open branches means more
+    conflicts per merge, which is what the earlier cuts were for. Turn it back
+    down if `agent-conflicts.yml` runs start taking most of the slots.
 - **`MAX_OPEN_AGENT_PRS` is 2** (2026-09-24), in `agent-plan.yml` and
   `agent-retry.yml`, down from 5 in the entry below. With 5 open, most merges
   left the other agent PRs conflicting, since nearly all of them edit

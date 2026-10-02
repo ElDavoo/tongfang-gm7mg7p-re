@@ -204,6 +204,24 @@ jobs:
           PAYLOAD: ${{ inputs.payload }}
         run: printf '%s\n' "$PAYLOAD" > /tmp/failure.txt
 
+      # LOCAL CHANGE (2026-10-02): the agent may rewrite the pull request's title and description.
+      # #1461 sat after round 7 on a blocker that was in its description, not its diff: a fix
+      # round could only change the tree, so it changed nothing, pushed nothing, and nothing
+      # started another review. Both are written outside the checkout, so `git add -A` cannot
+      # commit them, and "Apply the title and description" below posts them -- the agent itself
+      # still gets no `gh`.
+      - name: Write the pull request out
+        if: steps.round.outputs.stuck != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ inputs.pr }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/pr /tmp/pr-before
+          gh pr view "$PR" --json title --jq .title > /tmp/pr/title.txt
+          gh pr view "$PR" --json body --jq .body > /tmp/pr/body.md
+          cp /tmp/pr/title.txt /tmp/pr/body.md /tmp/pr-before/
+
       # Rounds 1-8 and 10: fix the failure in front of you.
       #
       # LOCAL CHANGE (2026-10-01): the paragraph on deleting rather than rewording. On the open
@@ -252,6 +270,13 @@ jobs:
             to check those as well. Do not add a new count, line number or "on every tree since"
             claim in a fix round unless the finding asks for one. Cite code by function or
             heading name rather than by line number (see CLAUDE.md, "Cite code by name").
+
+            The pull request's title and description are in /tmp/pr/title.txt and
+            /tmp/pr/body.md, outside the checkout. When a finding is about the title or the
+            description, or your change makes something they say untrue, edit those two files
+            in place; they are posted to the pull request after you finish, and a change to
+            them alone is a complete fix round. Keep the title to one line. Do not copy either
+            file into the repository.
 
             Do not commit or push. Leave your work in the working tree.
           claude_args: >-
@@ -313,6 +338,13 @@ jobs:
             being handed to a human with a clear explanation is a better outcome than a tenth
             round of noise.
 
+            The pull request's title and description are in /tmp/pr/title.txt and
+            /tmp/pr/body.md, outside the checkout. When a finding is about the title or the
+            description, or your change makes something they say untrue, edit those two files
+            in place; they are posted to the pull request after you finish, and a change to
+            them alone is a complete fix round. Keep the title to one line. Do not copy either
+            file into the repository.
+
             Do not commit or push. Leave your work in the working tree.
           claude_args: >-
             --model stealth/space-bunny-alpha
@@ -347,12 +379,42 @@ jobs:
             .github/scripts/agent-gates.sh || true
           fi
 
+      # Before the push, so the review that the push starts reads the new description. An empty
+      # file is ignored rather than posted: a blank title is refused by GitHub, and a blank body
+      # is a deletion no finding asks for.
+      - name: Apply the title and description
+        id: describe
+        if: steps.round.outputs.stuck != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ inputs.pr }}
+        run: |
+          set -euo pipefail
+          changed=false
+          title=$(head -n 1 /tmp/pr/title.txt 2>/dev/null | tr -d '\r' || true)
+          if [ -n "$title" ] && [ "$title" != "$(cat /tmp/pr-before/title.txt)" ]; then
+            gh pr edit "$PR" --title "$title"
+            echo "title changed"
+            changed=true
+          fi
+          if [ -s /tmp/pr/body.md ] && ! cmp -s /tmp/pr/body.md /tmp/pr-before/body.md; then
+            gh pr edit "$PR" --body-file /tmp/pr/body.md
+            echo "description changed"
+            changed=true
+          fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
       - name: Commit and push
         if: steps.round.outputs.stuck != 'true'
         env:
           ROUND: ${{ steps.round.outputs.round }}
           REASON: ${{ inputs.reason }}
           ISSUE: ${{ inputs.issue }}
+          PR: ${{ inputs.pr }}
+          DESCRIBED: ${{ steps.describe.outputs.changed }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The PAT: a close and reopen by GITHUB_TOKEN triggers no workflow. See below.
+          PUSH_TOKEN: ${{ secrets.AGENT_PUSH_TOKEN }}
         run: |
           set -euo pipefail
           # Scratch identity: these commits are squashed away at merge, and GitHub attributes
@@ -362,6 +424,19 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           if git diff --cached --quiet; then
+            # A round that changed only the title or description has no push to start the next
+            # review, so it is restarted the way agent-retry.yml restarts one: close and reopen
+            # with the PAT, then re-arm auto-merge, which closing disarms. The round counter
+            # still advances, because the counter reads the bot's change-request reviews.
+            if [ "$DESCRIBED" = true ]; then
+              echo "Round ${ROUND} changed only the title or description — restarting the review."
+              gh pr comment "$PR" --body "Fix round ${ROUND} changed only the title or description, so there is no push to start a review. Restarting it."
+              GH_TOKEN="$PUSH_TOKEN" gh pr close "$PR"
+              GH_TOKEN="$PUSH_TOKEN" gh pr reopen "$PR"
+              GH_TOKEN="$PUSH_TOKEN" gh pr merge --auto --squash "$PR" \
+                || echo "::warning::could not re-arm auto-merge on PR #$PR"
+              exit 0
+            fi
             echo "::warning::Round ${ROUND} changed nothing. Leaving the branch as it is; the next failure will escalate the round count."
             exit 0
           fi
