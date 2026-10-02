@@ -2729,6 +2729,36 @@ within those the two this file has always named:
   below being the worked example. Reconciling them is its own issue; the
   numbers are recorded here so the next reader does not have to re-derive that
   they exist.
+
+  **Correction, 2026-10-02 (issue #429): "nothing here says why" stopped being
+  true before this paragraph was written, and the reason is #279.** Eight of
+  the ten now carry a row here — `spelled_as=pair-literal`, `pair_role=seed` —
+  because §4.7's pass resolves a literal first argument through the callee's own
+  `movx`. That is this bullet's second possibility, a spelling the census does
+  not read, and the `0x0733` worked example below is the same possibility
+  reached by a different spelling. All ten carry a dated per-address reason in
+  `registers.yaml`, and
+  `../annotations/site-resolution.csv` carries a row per site with the resolved
+  callee. The other two fail for two different reasons, not one. `0x0420`'s
+  single site copies the address into R1:R2 and returns, with no `lcall` in the
+  routine at `../decompiled/bank1/E769.asm`, so no seed-to-helper category
+  would reach it, and the decompiled `.c` beside that listing drops the store
+  entirely and so spells the address nowhere for the census to match.
+  `0x0457`'s four sites sit in routine no export covers, and the one committed
+  `.c` that names the address does so inside a comment, which this tool's
+  `strip_comments()` blanks. A run today, against the committed image:
+
+  ```console
+  $ python3 ec/tools/xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800 2>&1 >/dev/null
+  217 addresses: 62 agree on the main-EC count, 12 have main-EC sites the decompiled tree does not contain, 143 differ another way. A zero in the 'this tool' column is 'not found by this method' -- a function that did not decompile carries its references nowhere -- never 'absent'.
+  ```
+
+  Which committed artifact carries which of these ten addresses, which method
+  cannot see it, and why a census row was not added for the two — including the
+  decision not to add a third place for the shape — is
+  `../../docs/findings/dptr-seed-census-gap.md`. The sentence above is left
+  standing because it was true when this section's run was taken, and because
+  a correction with the wrong text beside it is the form this repository keeps.
 - **`0x0733`** and **`0x0735`** (both `MODE_PL_DEFAULTS`, the
   `0x0730`-`0x0737` block's one register name) are
   the two gaps this file has always named, and they fail in
