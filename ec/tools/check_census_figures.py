@@ -28,9 +28,9 @@ keeps this from becoming the next hand-kept total -- a census pass moves the
 prose, not this file.
 
 The constants are read **by name**. `xdata_register_map.py` has a second
-module-level dict, `OWNERSHIP`, and it shares six key names with `ORACLE`;
-`OWNERSHIP["distinct"]` agrees with `ORACLE["distinct"]` and
-`OWNERSHIP["refs"]` is 10178 against `ORACLE["refs"]`'s 15696, so a reader that
+module-level dict, `OWNERSHIP`, and it shares key names with `ORACLE` while
+disagreeing on two of them -- `main_refs`, where `OWNERSHIP` reads 9320 against
+`ORACLE`'s 14838, and `refs`, where it reads 10178 against 15696. A reader that
 picked up whichever dict it found first would be comparing two different censuses
 and would report agreement or disagreement at random. `check_doc_figure_pins.py`
 says the same thing about `counter_sweep_entry.ORACLE` and this one.

@@ -58,12 +58,12 @@ decline list from quietly becoming a place where inconvenient figures go to
 die.
 
 `xdata_register_map.py` has a second module-level dict, `OWNERSHIP`, and it
-shares six key names with `ORACLE` while disagreeing on at least two of them --
-`OWNERSHIP["distinct"]` agrees with `ORACLE["distinct"]` and `OWNERSHIP["refs"]`
-does not agree with `ORACLE["refs"]`. Both constants are therefore read **by
-name**. A reader that took whichever dict it found first would be comparing two
-censuses and reporting agreement or disagreement at random, which is a worse
-failure than reading nothing.
+shares key names with `ORACLE` while disagreeing on two of them: `main_refs`,
+where `OWNERSHIP` reads 9320 against `ORACLE`'s 14838, and `refs`, where it
+reads 10178 against 15696. Both constants are therefore read **by name**. A
+reader that took whichever dict it found first would be comparing two censuses
+and reporting agreement or disagreement at random, which is a worse failure than
+reading nothing.
 
 ## The three readings a site can have, and why two of them are not checked
 
@@ -142,11 +142,18 @@ all still pinned" had already been corrected once, in #557's note, and *that*
 correction had drifted since: it named 147 symbol-spelled main-EC addresses
 (172 today) and called `pd_only` / `both` unchanged at 109 / 48 (108 / 49). The
 note stays; a second dated correction carries the current figures and says that
-only the top-two pair is still unchanged. The same page's §2 sentence had a
-figure no census key expresses -- "the same holds for the other 166 named
-main-EC addresses" is the total less the one address the sentence is about -- so
-it now names the total, which is derivable, and the reader can do the
-subtraction. §5's two narrative figures beside the `main-ec-002` table row --
+only the top-two pair is still unchanged. The same page's §2 sentence carried a
+figure no census key expressed -- "the same holds for the other 166 named
+main-EC addresses" is the total less the one address the sentence is about --
+and calling that "the total" would not have repaired it, because the sentence
+is a claim about *spelling*: **zero** of an address's mentions sit under a
+`DAT_EXTMEM_xxxx` token. That is true of the addresses the main EC writes under
+their symbol and false of the named ones, three of which carry a name and are
+still written `DAT_EXTMEM_` (`0x078B`, `0x07A5`, `0x0803`). So the sentence now
+reads over the set the figure measures -- the addresses the main EC spells by
+symbol -- rather than calling those "named main-EC addresses", which is the
+naming/spelling conflation the `named_main` derivation above already separates.
+§5's two narrative figures beside the `main-ec-002` table row --
 "33 named registers land" and "109 addresses reached by one mode tick" -- had
 drifted behind the row they sit under, which already read 34 and 92.
 

@@ -5378,6 +5378,7 @@ if __name__ == "__main__":
 # **Placed here rather than on `diff()` because this module is cited by line.**
 # `check_eq_guard_citations.py` resolves the nine `--no-eq-guard` anchors to
 # line numbers and holds every page that cites them to what it finds there, so
-# growing `diff()`'s docstring by even one line moves nine anchors and turns a
-# dozen citations across four documents red. A note about a message belongs at
-# the end of the file for the same reason the `named_in_tree` block above does.
+# growing `diff()`'s docstring by even one line moves the anchors below it and
+# turns a dozen citations across four documents red. A note about a message
+# belongs at the end of the file for the same reason the `named_in_tree` block
+# above does.

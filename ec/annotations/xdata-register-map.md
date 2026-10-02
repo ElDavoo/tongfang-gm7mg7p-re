@@ -541,8 +541,8 @@ $ grep -rhoE '\bCPU_TEMP\b' ec/decompiled/common/*.c ec/decompiled/bank0/*.c ec/
 ```
 
 Fifty-six mentions of `CPU_TEMP` in the EC programs, and **zero** of them
-under a `DAT_EXTMEM_043e`. The same holds for every other named main-EC
-address — 172 in the committed census, `CPU_TEMP` one of them.
+under a `DAT_EXTMEM_043e`. The same holds for every other address the main EC
+spells by symbol — 172 in the committed census, `CPU_TEMP` one of them.
 
 **Per program, the split is a statement about one program.** Keying each row's
 `spellings_by_program` clause, so a `main-ec` row is spelled one way *by the
