@@ -855,9 +855,15 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   (`main-ec=…;pd=…`), and the twelve columns after it (22–33) are the same
   split over the counts: `refs_<program>` and each of the five buckets once per
   program, written on every row, so a per-program question about a reference or
-  a direction is read from those rather than from the summed cell. The unsuffixed
-  columns stay the row's own figures, which is what every existing reader of
-  `$6`-`$11` gets; `../docs/findings/xdata-per-program-counts.md` has the
+  a direction is read from those rather than from the summed cell. Column 34,
+  `pair_role`, is what a `pair-literal` row does not say on its own: `seed` for
+  the `addr` a committed call site passes, `inc-dptr` for the byte the
+  accessor's own `inc DPTR` walks onto, empty where no pair call reaches the
+  address — which is the split `scan()` folds together, now readable off the
+  file. `../docs/findings/xdata-pair-role-column.md` has it and its limits. The
+  unsuffixed columns stay the row's own figures, which is what every existing
+  reader of `$6`-`$11` gets;
+  `../docs/findings/xdata-per-program-counts.md` has the
   worked rows, and `../docs/findings/xdata-spelled-as-union.md` the
   reconciliation the two together have to close.
 - **`annotations/xdata-clusters.csv`** — one row per cluster: the addresses,

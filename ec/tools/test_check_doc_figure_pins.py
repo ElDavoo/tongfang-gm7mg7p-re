@@ -538,11 +538,16 @@ class TheOracleRule(unittest.TestCase):
         # **`:4612-4618` since issue #1364**, whose `pd_distinct`/`pd_refs`
         # block in `OWNERSHIP`, the note above it, and the "and its pd half is"
         # `check()` that reads those two keys all landed above this span.
+        # **`:4778-4784` since issue #734**, whose `pair_role` column added its
+        # `REGISTER_COLUMNS` entry, its vocabulary, its `pair_role_of()`
+        # renderer, its two census-side edits in `scan()` and `build()` and the
+        # `#734` assertion block, every one of them above this span. Same
+        # move-and-not-an-edit shape as each of the steps above it.
         self.assertEqual(
             cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
                                   "largest_class", 1, 2, found["texts"],
                                   found["asserted"])),
-            "ec/tools/xdata_register_map.py:4612-4618")
+            "ec/tools/xdata_register_map.py:4778-4784")
 
     def test_the_census_csvs_are_read_from_the_tool_that_writes_them(self):
         # Derived from `OUT_REGISTERS`/`OUT_CLUSTERS` rather than named here, so
@@ -597,17 +602,23 @@ class TheOracleRule(unittest.TestCase):
         # and each moved both members of the pair, which is what the pair is for.
         # The negative guard is re-pinned with them: `:3599` stopped being
         # producible when #573's note moved the sum, and a guard that can
-        # never fail is not a guard, so it names this tree's `:3771` --
-        # the sum the `lines[3770]` assertion below points at.
-        self.assertIn("3781-3798", detail)
-        self.assertNotIn(":3771", detail)
+        # never fail is not a guard, so it names this tree's `:3833` --
+        # the sum the `lines[3833]` assertion below points at.
+        # **`:3844-3861` / `#3833` since issue #734**, whose `pair_role`
+        # column added its `REGISTER_COLUMNS` entry, its vocabulary, its
+        # `pair_role_of()` renderer, its two census-side edits in `scan()` and
+        # `build()`, and the `#734` assertion block, all above this span. That
+        # is the fifth merge-shaped step here, and like the four before it both
+        # members of the pair moved together.
+        self.assertIn("3844-3861", detail)
+        self.assertNotIn(":3833", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3770])
-        self.assertIn("check(", lines[3780])
+        self.assertIn("extmem_both", lines[3833])
+        self.assertIn("check(", lines[3843])
         self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3797])
+                      lines[3860])
 
 
 class SectionSelection(unittest.TestCase):
