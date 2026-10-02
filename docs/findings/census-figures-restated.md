@@ -27,10 +27,10 @@ fragment, so a page can cite a command instead of carrying a number.
 It reads the two CSVs, the two constants, and the site list. It refuses
 `ec/decompiled/`, and that refusal is the interesting half.
 
-Five `ORACLE` keys cannot be derived from the committed CSVs: `extmem_refs`,
+These `ORACLE` keys cannot be derived from the committed CSVs: `extmem_refs`,
 `extmem_raw`, `extmem_commented`, `extmem_main_refs` and `symbol_main_refs`.
-Four of the five are reference counts **split by token spelling**, and the
-reason is one property of the data rather than five: an address the decompile
+The reference counts among them are **split by token spelling**, and the reason
+is one property of the data rather than one per key: an address the decompile
 spells two ways is one row of `xdata-registers.csv` carrying one `refs` for the
 address, not a split of it. `0x07D8` is `symbol+DAT_EXTMEM` on one row, and
 nothing in the committed CSV says which of its references took which token.
@@ -42,7 +42,7 @@ Deriving them would mean re-reading `ec/decompiled/` with a second regex, which
 is how this file's own preamble describes the trap: the census is always a lower
 bound on the machine code, and a second reader of the tree would have its own
 answer, so a disagreement between the two would arrive as a red run naming a
-prose sentence that had done nothing wrong. So the tool declines all five and
+prose sentence that had done nothing wrong. So the tool declines them and
 prints the reason beside each. **That is "not read by this method", never
 "absent"** -- the caveat `ec/annotations/registers.yaml` and
 `check_doc_figure_pins.py` both carry, and here it is the load-bearing half of
@@ -107,13 +107,26 @@ re-measured rather than taken from it. `python3 ec/tools/check_census_figures.py
 
 `docs/findings.md` §3c's table read `1,063 | 157 | 1,172` /
 `13,937 | 864 | 14,801` / `41 | 0 | 41`. The committed census reads **1,218** /
-**157** / **1,326**, **14,838** / **858** / **15,696**, and **172** / **0** /
-**172**. Its sentence under the table read "41 of the 1,063 XDATA addresses the
-main EC touches carry a name, and 1,022 do not"; the same figures are **172** of
-**1,218**, and **1,046** do not. The `96% of the register file is still
+**157** / **1,326**, **14,838** / **858** / **15,696**, and **184** / **6** /
+**190**. Its sentence under the table read "41 of the 1,063 XDATA addresses the
+main EC touches carry a name, and 1,022 do not"; the same figures are **184** of
+**1,218**, and **1,034** do not. The `96% of the register file is still
 DAT_EXTMEM_xxxx` that went with it is gone rather than restated: a percentage
 whose rounding the sentence never gave is a figure that cannot be re-derived,
 which is a decline, not a correction.
+
+The named row is a third kind of error rather than a staler copy of the two above
+it: its **label** decides which figure it takes. `172` is
+`ORACLE["symbol_main_distinct"]` -- the rows the main EC writes *under* the
+symbol in the exported C -- which is the spelling question, not the naming one,
+and it does not belong under a row called "named from `registers.yaml`". The
+two differ wherever an address carries a name and is still written
+`DAT_EXTMEM_xxxx`, and that is every address the PD image reaches:
+`gen_xdata_symbols.py` refuses to name that program, so the PD cell is **6**
+where the spelled count is zero. The census does publish a whole-corpus naming
+count after all, `named_in_tree`, and `derive()` now splits it the way the row
+does -- a partition rather than two halves, since a `both` row is already in the
+main EC's cell.
 
 The load-bearing false sentence was §3c's #181 parenthetical -- "*the other
 number here -- the 41 main-EC addresses the decompile spells by symbol -- is

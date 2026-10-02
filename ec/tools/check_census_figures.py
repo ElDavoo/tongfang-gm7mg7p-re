@@ -38,16 +38,16 @@ says the same thing about `counter_sweep_entry.ORACLE` and this one.
 **Every `ORACLE` key is either derived here or declined with a reason.** That
 partition is asserted rather than assumed, so a census pass that adds a key
 gets a red run asking whether this tool can see it -- and a key that is dropped
-gets one too, rather than quietly ceasing to be anybody's problem. The declined
-five are the reference counts *split by spelling*, and the reason is the same
-for all of them: an address the decompile spells two ways is one CSV row, and
-the row records one `refs` for the address rather than a split of it, so the
-committed CSV cannot say which reference took which token. `xdata-clusters.csv`
-cannot help either -- it sums addresses, not tokens. Anything finer needs
-`scan()`, which is the census tool's own reader of `ec/decompiled/`, and
-re-reading the decompiled tree here would make this a second census whose
-answer could part company with the first for reasons that have nothing to do
-with prose drift.
+gets one too, rather than quietly ceasing to be anybody's problem. The declines
+are the reference counts *split by spelling*, plus `extmem_raw` and its comment
+delta, and the first kind's reason is one property of the data: an address the
+decompile spells two ways is one CSV row, and the row records one `refs` for the
+address rather than a split of it, so the committed CSV cannot say which
+reference took which token. `xdata-clusters.csv` cannot help either -- it sums
+addresses, not tokens. Anything finer needs `scan()`, which is the census tool's
+own reader of `ec/decompiled/`, and re-reading the decompiled tree here would
+make this a second census whose answer could part company with the first for
+reasons that have nothing to do with prose drift.
 
 **Every declined figure is "not read by this method", never "absent".** The
 caveat `ec/annotations/registers.yaml` and `check_doc_figure_pins.py` both
@@ -139,12 +139,14 @@ WHY_SKIPPED = {
 # list to keep in step: a census pass that adds a key fails until this says
 # which side of the line it is on.
 #
-# All five are reference counts split by *spelling*. An address the decompile
+# The reference counts here are split by *spelling*. An address the decompile
 # spells two ways is one row of `xdata-registers.csv` carrying one `refs` for
 # the address, not a split of it -- `0x07D8` is `symbol+DAT_EXTMEM` on one row,
 # and nothing in the committed CSV says which of its references took which
 # token. The distinct counts split cleanly because `spellings_by_program` is a
-# set, and the reference counts do not because it is not.
+# set, and the reference counts do not because it is not. `extmem_raw` and
+# `extmem_commented` are declined for a different reason each, printed beside the
+# key: both are counts over `ec/decompiled/`, which this tool does not read.
 DECLINED = {
     "extmem_refs": "the committed CSVs carry no per-spelling reference split",
     "extmem_raw": "a raw token count over ec/decompiled/*.c, which this tool "
@@ -318,6 +320,25 @@ def derive(registers, clusters):
         # carries one exactly when the symbol table names an address the census
         # reaches -- which is the set `ORACLE["named_in_tree"]` counts.
         "named_in_tree": sum(1 for row in rows if (row.get("name") or "").strip()),
+        # The same cell split by program, as a **partition** rather than as two
+        # halves: a `both` row is already in the main EC's cell, so the other
+        # half is the `pd` rows alone and the two sum to `named_in_tree`. A
+        # `program` value outside those three would fall out of both halves and
+        # out of the sum, which is where a row held to all three goes red.
+        #
+        # This is *naming*, and it is not `symbol_main_distinct`: that counts the
+        # rows the decompile writes under the symbol, and an address can carry a
+        # name and still be written `DAT_EXTMEM_07d0` -- which is what every
+        # address the PD image reaches is, `xdata_register_map.py` says so of
+        # them. A page whose "named" figure is the spelled one answers a
+        # different question under the wrong label, and on the PD side that
+        # question reads 0 where the naming one does not.
+        "named_main": sum(1 for row in rows
+                          if (row.get("name") or "").strip()
+                          and row.get("program") in main),
+        "named_pd_only": sum(1 for row in rows
+                             if (row.get("name") or "").strip()
+                             and row.get("program") == "pd"),
         "extmem_distinct": sum(1 for seen in per
                                if any("DAT_EXTMEM" in s for s in seen.values())),
         "extmem_main_distinct": len(spelled("DAT_EXTMEM", "main-ec")),
@@ -611,6 +632,8 @@ def fragment(figures, oracle):
         "pd_only": "rows whose `program` is `pd`",
         "both": "rows whose `program` is `both`",
         "named_in_tree": "rows with a non-empty `name`",
+        "named_main": "rows with a non-empty `name` the main EC reaches",
+        "named_pd_only": "rows with a non-empty `name` only the PD image reaches",
         "extmem_distinct": "rows any program spells `DAT_EXTMEM`",
         "extmem_main_distinct": "rows the main EC spells `DAT_EXTMEM`",
         "extmem_pd_distinct": "rows the PD image spells `DAT_EXTMEM`",

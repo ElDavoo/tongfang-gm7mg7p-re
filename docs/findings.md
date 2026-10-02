@@ -267,15 +267,15 @@ Reading both spellings — `../ec/tools/xdata_register_map.py` — gives
 |---|---:|---:|---:|
 | distinct addresses | 1,218 | 157 | 1,326 |
 | references | 14,838 | 858 | 15,696 |
-| of which named from `registers.yaml` | 172 | 0 | 172 |
+| of which named from `registers.yaml` | 184 | 6 | 190 |
 
 *(Corrected 2026-10-02, issue #342. The three rows above read `1,063 | 157 |
 1,172`, `13,937 | 864 | 14,801` and `41 | 0 | 41`, kept here as the wrong
 version. `python3 ec/tools/check_census_figures.py --print` derives the current
 three from `ec/annotations/xdata-registers.csv` and holds this table to them.)*
 
-So the corrected claim is that **172 of the 1,218 XDATA addresses the main EC
-touches carry a name, and 1,046 do not** — read as `DAT_EXTMEM_xxxx` or as a
+So the corrected claim is that **184 of the 1,218 XDATA addresses the main EC
+touches carry a name, and 1,034 do not** — read as `DAT_EXTMEM_xxxx` or as a
 bare literal argument rather than as a name. The blocking problem the issue
 described is real; what was wrong was the size of the named minority, and with
 it any argument that the
@@ -290,12 +290,15 @@ is unchanged, and it is a different question: an address being in
 `xdata-symbols.csv` and an address being *spelled* by that symbol in the
 committed `.c` are two facts, and only the second one has moved. *(Corrected
 2026-10-02, issue #342: "is unchanged" is no longer true of this tree.
-`ORACLE["symbol_main_distinct"]` reads 172, so `41 of the 1,063 … and 1,022 do
-not` above is superseded too, and the "96% of the register file is still
-`DAT_EXTMEM_xxxx`" that went with it is gone rather than re-stated: a
-percentage whose rounding the sentence never gave is a figure that cannot be
-re-derived, which is what `check_census_figures.py` declines rather than
-checks. The wrong version above is kept, which is §4a-4d.)*)*
+`ORACLE["symbol_main_distinct"]` reads 172 — the addresses the decompile
+*spells* by symbol, which is not the figure the named row above carries and
+does not belong under that label: an address can carry a name and still be
+written `DAT_EXTMEM_xxxx`. "is unchanged" is therefore false of both. The
+"96% of the register file is still `DAT_EXTMEM_xxxx`" that went with the
+old reading is gone rather than re-stated: a percentage whose rounding the
+sentence never gave is a figure that cannot be re-derived, which is what
+`check_census_figures.py` declines rather than checks. The wrong versions
+above are kept, which is §4a-4d.)*)*
 
 Two smaller corrections travel with it, both pinned by the tool's `--self-test`
 so neither can drift unnoticed:

@@ -214,6 +214,34 @@ class Derivation(unittest.TestCase):
     def test_named_in_tree_is_the_name_cell(self):
         self.assertEqual(FIGURES["named_in_tree"], 3)
 
+    def test_naming_and_spelling_are_two_figures_and_a_pd_row_holds_both(self):
+        # The distinction a page's "of which named" row turns on, and the reason
+        # `named_main` / `named_pd_only` exist beside `symbol_*_distinct`: an
+        # address can carry a name and still be written `DAT_EXTMEM_xxxx`, which
+        # is what every address the PD image reaches is -- `gen_xdata_symbols.py`
+        # refuses to name that program. So a named PD row has to move
+        # `named_pd_only` and nothing at all in `symbol_pd_distinct`. Reading one
+        # figure for the other puts a zero in a row labelled "named", and a
+        # `--print` that published only the spelling half could not show it.
+        named_pd = dict(REGISTERS[7], name="DBD1")  # 0x0801, program pd
+        figures = ccf.derive([named_pd], [])
+        self.assertEqual(
+            (figures["named_in_tree"], figures["named_main"],
+             figures["named_pd_only"]), (1, 0, 1))
+        self.assertEqual(
+            (figures["symbol_pd_distinct"], figures["symbol_pd_refs"]), (0, 0))
+
+    def test_a_shared_named_row_is_in_the_main_ec_half_and_not_the_pd_one(self):
+        # The partition, not two halves: `named_main` takes a `both` row because
+        # the main EC reaches it, so `named_pd_only` is `pd` rows alone and the
+        # two still add up to `named_in_tree`. Summing the halves the way the
+        # distinct-address row does would double-count it.
+        shared = dict(REGISTERS[6], name="TCC_OFF")  # 0x07D8, program both
+        figures = ccf.derive([shared], [])
+        self.assertEqual(
+            (figures["named_main"], figures["named_pd_only"],
+             figures["named_in_tree"]), (1, 0, 1))
+
     def test_buckets_are_column_sums_and_sum_to_the_reference_count(self):
         self.assertEqual(FIGURES["read"], 26)
         self.assertEqual(FIGURES["write"], 11)
@@ -556,6 +584,15 @@ class Fragment(unittest.TestCase):
         # has one, and it is a different census -- so the fragment has to say
         # so rather than leaving a reader to assume a pin exists.
         self.assertIn("| `pd_distinct` | 4 | -- |", text)
+
+    def test_it_publishes_the_naming_halves_as_well_as_their_total(self):
+        # `--print` is what a page cites instead of transcribing, so a figure a
+        # declared site is held to and the fragment does not print is one a
+        # reader cannot check without re-reading the CSVs. Both halves carry no
+        # pin of their own name, which the `--` column has to say.
+        text = ccf.fragment(FIGURES, ORACLE)
+        self.assertIn("| `named_main` | 3 | -- |", text)
+        self.assertIn("| `named_pd_only` | 0 | -- |", text)
 
 
 if __name__ == "__main__":
