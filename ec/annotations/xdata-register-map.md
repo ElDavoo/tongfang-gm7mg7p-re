@@ -168,19 +168,37 @@ follow-up issue's job, not this file's.
 
 ## 1. Reproducing it
 
-The issue's evidence, re-run unchanged, and the tool beside it:
+### 1a. The current run
+
+The issue's evidence, re-run against the committed tree on 2026-10-02
+(issue #342), and the tool beside it. The `--check` pair is the census tool's
+own; the two `grep` lines are the corpus-wide token count the issue measured,
+run with the issue's own command over the whole of `ec/decompiled/*/*.c` and
+counting comments, which is what makes the first of them larger than the
+census's own comment-stripped `DAT_EXTMEM_` tally.
 
 ```console
 $ python3 ec/tools/xdata_register_map.py --check
 /home/runner/.../ec/annotations/xdata-registers.csv: 1326 rows match a fresh generation from the committed tree at threshold 0.5
 /home/runner/.../ec/annotations/xdata-clusters.csv: 439 rows match a fresh generation from the committed tree at threshold 0.5
+$ grep -rhoE 'DAT_EXTMEM_[0-9a-fA-F]{4}' ec/decompiled/*/*.c | wc -l
+8583
+$ grep -rhoE 'DAT_EXTMEM_[0-9a-fA-F]{4}' ec/decompiled/*/*.c | sort -u | wc -l
+1013
 ```
 
-The two lines above are the current ones. **Everything below them is the
-transcript this section was written with**, kept whole and with its own dated
-corrections, because the issue's evidence is the point of the section and
-rewriting it would destroy the comparison. The pair-accessor pass of §4.7 is
-what moved the last three figures in it; re-derive rather than remember:
+Those are the current ones. `python3 ec/tools/check_census_figures.py` derives
+the register count and the distinct-token count from the committed CSVs and
+holds this block to both; the raw count is `ORACLE["extmem_raw"]`, which is a
+count over `ec/decompiled/` rather than over a CSV, so the check declines it and
+the command beside it is what holds it.
+
+### 1b. The transcript this section was written with
+
+Kept whole and with its own dated corrections, because the issue's evidence is
+the point of the section and rewriting it would destroy the comparison. The
+pair-accessor pass of §4.7 is what moved the last three figures in it;
+re-derive rather than remember:
 
 ```console
 $ grep -rhoE 'DAT_EXTMEM_[0-9a-fA-F]{4}' ec/decompiled/*/*.c | wc -l
@@ -211,7 +229,10 @@ lines, 374 of the 428 cluster lines. **Every count in this parenthetical is the
 including the `1,172`/`428` in it: `--check`'s mismatch line counts the header
 on both sides, so the `428 on disk vs 431 generated` here is 427 clusters on
 disk against 430 generated, while the `1172 rows match` line in the transcript
-above counts data rows and is that tree's own 1,172. The
+above counts data rows and is that tree's own 1,172. Since issue #342 the tool
+says so itself — that message now reads `428 lines on disk vs 431 lines
+generated` — so the two messages in one tool no longer print the same noun for
+two different quantities. The
 second-pass correction immediately below is the one that supersedes this
 paragraph, and the correction at the top of this file carries the figures from
 there to the committed CSVs. This is pre-existing rather than this
@@ -313,6 +334,15 @@ against the 41 above, because `.c` files *have* been re-exported since, by
 #194 and #179/#180/#183. The 109 PD-only, 48 both and the top two addresses
 are unchanged and still pinned. The wrong version is kept above rather than
 deleted.)*
+
+*(Correction, 2026-10-02, issue #342. Two more of that note's figures have moved
+since it was written, so "unchanged and still pinned" now names only the top
+two addresses: the committed census has 172 symbol-spelled main-EC addresses
+and splits `pd_only` / `both` 108 / 49. The top-two pair is
+`xdata_register_map.py`'s `ORACLE_TOP_MAIN` and still holds.
+`python3 ec/tools/check_census_figures.py` derives each of those three from
+`ec/annotations/xdata-registers.csv` and holds this paragraph to them; the
+figures it corrects are kept above.)*
 
 The self-test is the oracle, and it pins the issue's numbers *and* the
 corrections, so a change to what counts as a reference fails loudly instead of
@@ -511,8 +541,8 @@ $ grep -rhoE '\bCPU_TEMP\b' ec/decompiled/common/*.c ec/decompiled/bank0/*.c ec/
 ```
 
 Fifty-six mentions of `CPU_TEMP` in the EC programs, and **zero** of them
-under a `DAT_EXTMEM_043e`. The same holds for the other 166 named main-EC
-addresses.
+under a `DAT_EXTMEM_043e`. The same holds for every other address the main EC
+spells by symbol — 172 in the committed census, `CPU_TEMP` one of them.
 
 **Per program, the split is a statement about one program.** Keying each row's
 `spellings_by_program` clause, so a `main-ec` row is spelled one way *by the
@@ -2383,10 +2413,10 @@ produces — `--check` exits 0 on this tree, where it exited 1 on both sides of
 this merge.)*
 
 `main-ec-002` is the one that matters most and the one most likely to be
-misread. It is where 33 named registers land, so it looks like "the named
+misread. It is where 34 named registers land, so it looks like "the named
 registers, discovered again", but what the clustering actually found is that
 the *initialisation* routines touch them all: a cluster is a co-occurrence, and
-109 addresses reached by one mode tick and one OEM override pass is a statement
+92 addresses reached by one mode tick and one OEM override pass is a statement
 about init order, not about the registers' purposes. Reading it is one issue.
 The top ten addresses by reference count (`0x0440` 181, `0x08A8` 170,
 `0x0843` 168, `0x0844` 168, `0x0706` 160, `0x06D6` 148, then `0x080D` 137,

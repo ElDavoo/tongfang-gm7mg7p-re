@@ -233,7 +233,10 @@ def site_rows(d: bytes, entry, addr: int, pd_verified: bool,
         depth1 = bucket(classify(insns))
         callee = None
         if depth1 == HANDOFF:
-            depth1, callee, _window = resolve_handoff(d, off, insns, pd_verified)
+            # The chain and stop reason resolve_handoff() also returns are
+            # depth-N columns; this scan is the depth-1 one and drops them.
+            depth1, callee, _window, _chain, _stop = resolve_handoff(
+                d, off, insns, pd_verified)
         yield (addr, name, off, region, runtime, depth1, resolution(depth1),
                containing(functions, PROGRAM_FOR_REGION[region], runtime),
                callee,
