@@ -96,6 +96,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`ecrw-fake-one-shape.md`](ecrw-fake-one-shape.md) — One fake for `ecrw`, one way to install it, and one interpreter that proves it
 - [`emit-csv-flag-honesty.md`](emit-csv-flag-honesty.md) — `--emit-csv` refused the three modes it knew about, and honoured nothing on the fourth
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading
+- [`export-ownership-refusal-figures.md`](export-ownership-refusal-figures.md) — The `--export-ownership` refusal's figures, and why they are no longer written down (issue #833)
 - [`fan-duty-channel-075b-075c.md`](fan-duty-channel-075b-075c.md) — The 0x14 between 0x075B and 0x075C is the EC's own constant, and the committed captures cannot name either fan (issue #247)
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
 - [`findings-index-staleness.md`](findings-index-staleness.md) — The index is hand-edited by merges and nothing runs the check that would catch it (issue #1137)

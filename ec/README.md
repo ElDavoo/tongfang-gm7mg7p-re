@@ -370,10 +370,10 @@ into `r2 -a 8051` with no stitching needed.
   `--self-test` running on committed text alone (no image, no Ghidra, no
   network). Reach for it when the question is "which addresses exist, which
   routines share them, and is this number a read or a write" — the whole
-  `registers.yaml` list is 153 addresses, and this census is 1,171. Two limits
-  it earns the right to state: it splits the main EC from the separate
-  `ITE8850-PD` program rather than mixing them, and a cluster is a
-  co-occurrence in static code, not a purpose —
+  `registers.yaml` list is 153 addresses, and this census is every address the
+  decompiled text touches. Two limits it earns the right to state: it splits
+  the main EC from the separate `ITE8850-PD` program rather than mixing them,
+  and a cluster is a co-occurrence in static code, not a purpose —
   `annotations/xdata-register-map.md` §6 is the boundary, and §7 reconciles
   its counts against `register_ref_table.py`'s. Its per-address columns are
   also an upper bound on *distinct* references wherever one routine is exported
@@ -393,9 +393,10 @@ into `r2 -a 8051` with no stitching needed.
   fixtures plus the tree-wide figures. `xdata_register_map.py
   --export-ownership` reads each routine once, from its owner; the default is
   **off**, because the pass is a text heuristic rather than a function boundary
-  and flipping it re-keys 35 of 430 clusters (`xdata-export-ownership.md` §5).
-  The root cause needs a project rebuild — see `xdata-06c2-06db-timers.md` §8
-  item 7 — so this is the measurement, not the fix.
+  and flipping it renumbers the tree's `cluster_key`s; what that costs is
+  measured in `xdata-export-ownership.md` §5. The root cause needs a project
+  rebuild — see `xdata-06c2-06db-timers.md` §8 item 7 — so this is the
+  measurement, not the fix.
 - **`tools/xdata_register_map.py --map OLD.csv`** — one row per cluster of an
   older `xdata-clusters.csv` saying where it went in this generation: the old
   and new id, whether the `cluster_key` changed, the carried name and *how* it
@@ -415,15 +416,15 @@ into `r2 -a 8051` with no stitching needed.
   hand, and this must not be added to the generated list in
   `.github/workflows/agent-conflicts.yml` for exactly that reason. Adding a
   name is a one-row edit; the `note` column records the evidence for it, the
-  same rule `ghidra-functions.csv` follows. Ten of the 427 clusters have one,
-  and they are the ten the committed prose already makes a membership claim
-  about; the rest have a key and no name, which is not coverage. A name is
-  carried across a regeneration *in changed form* by membership overlap, and
-  how a given name was carried is reported by the tool rather than recorded in
-  the cell — a name that clears 0.50 on Jaccard is a guess about which cluster
-  it is, and a cluster nothing matched is **not carried by this method**,
-  never *gone*: a function that stopped decompiling and a cluster that stopped
-  existing are different things.
+  same rule `ghidra-functions.csv` follows. A cluster the committed prose
+  makes a membership claim about has a name, and the rest have a key and no
+  name, which is not coverage. A name is carried across a regeneration *in
+  changed form* by membership overlap, and how a given name was carried is
+  reported by the tool rather than recorded in the cell — a name that clears
+  0.50 on Jaccard is a guess about which cluster it is, and a cluster
+  nothing matched is **not carried by this method**, never *gone*: a
+  function that stopped decompiling and a cluster that stopped existing are
+  different things.
 - **`tools/disasm8051.py`** — the opcode tables `trace_xdata_refs.py` decodes
   with, plus a CLI for reading a window of instructions at a file offset
   (`--at`) and for measuring how many nearby anchors a linear walk syncs onto

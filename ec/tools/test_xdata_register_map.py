@@ -529,8 +529,11 @@ class Refusals(unittest.TestCase):
     def test_it_is_refused_bare_with_the_default_outputs(self):
         # The hazard: run bare, it writes a census the committed CSVs do not
         # match -- the pre-#178 one for `--no-eq-guard`, the de-duplicated one
-        # for `--export-ownership`, which re-keys 35 of the 430 clusters and
-        # breaks 5 of the 10 hand names. That is caught, but only afterwards and
+        # for `--export-ownership`, which renumbers the whole tree's
+        # `cluster_key`s. What the flip costs is measured in
+        # `annotations/xdata-export-ownership.md` §5 and held by `OWNERSHIP`;
+        # `test_export_ownership_refusal_figures.py` is what holds the prose
+        # that quotes it to those two. That is caught, but only afterwards and
         # by other tools -- `--check` is refused with the flag, so it
         # regenerates default and goes red, and so do the citations. The
         # guard's job is to stop the write, not to leave the repository to be

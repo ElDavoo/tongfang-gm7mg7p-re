@@ -66,9 +66,11 @@ the `lost` set pinned in `xdata_register_map.py`'s `OWNERSHIP` oracle is empty.
 That set is a measurement, not an absence -- the plan stage's detector did
 lose 0x05E0, by folding that same file into a larger body
 (annotations/xdata-export-ownership.md 4). The default stays off for the
-measured reason instead: the flip re-keys 35 of the 430 clusters and breaks 5
-of the 10 hand names. Nothing here says a byte is absent, and a row this pass
-leaves alone is "not found by this method".
+measured reason instead: the flip renumbers the whole tree's `cluster_key`s,
+and what that costs is measured in annotations/xdata-export-ownership.md 5
+and held by `xdata_register_map.py`'s `OWNERSHIP` rather than restated here.
+Nothing here says a byte is absent, and a row this pass leaves alone is "not
+found by this method".
 
 **The `body_lines` column counts statements, not lines.** It is the cardinality
 of the set the containment score divides by, which is the only figure the rule
