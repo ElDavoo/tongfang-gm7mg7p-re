@@ -143,8 +143,9 @@ would have gone red on all three, not slipped through on two of them.
   real `main()`.
 - **The positions are real, but the reader still does not promise to survive an
   arbitrary rewrite of the dispatch.** A mode reached through a wrapper records
-  the wrapper, which this page's predecessor measures and argues is correct
-  rather than a gap. That is unchanged.
+  the wrapper, which this page's predecessor argues and
+  [`xdata-dispatch-indirect-shapes.md`](xdata-dispatch-indirect-shapes.md)
+  measures is correct rather than a gap. That is unchanged.
 - **This is a measurement of the test's own reading, not an EC finding.** The
   suite reads the same committed text the tool reads, offline, and the dispatch
   it reads is a CLI contract rather than anything about the machine.

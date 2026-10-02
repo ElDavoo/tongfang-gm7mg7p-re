@@ -181,6 +181,26 @@ INDIRECT_DISPATCHES = {
     "lambda dispatch": (LAMBDA_DISPATCH, ([], [])),
 }
 
+# What a tenth mode behind each of those shapes does to the two readers, keyed
+# by the same words: the names it turns up beyond what the committed `main()`
+# already records, and what the residue reports on the same mirror. Only the
+# shapes a reader records the wrapper for turn a name up, and a name turning up
+# is what makes the tripwire's exact-tuple equality go red -- so the empty
+# entries are shapes where it stays green with a tenth mode in place. That is
+# the same fact as the `[]` in the mapping above seen from the other side: not
+# reached by these two functions, so nothing turns up. For two of them the
+# residue says something too; for the rest there is nothing to say and nothing
+# in the suite objects. Measured by the case below, one mirror per shape, so
+# this is the reading rather than a second copy of it.
+TENTH_VERDICTS = {
+    "bare-name wrapper": (["run"], []),
+    "attribute wrapper": (["run"], ["demo_mode"]),
+    "`self` receiver": ([], ["run"]),
+    "table dispatch": ([], []),
+    "`getattr` dispatch": ([], []),
+    "lambda dispatch": ([], []),
+}
+
 
 def run_main(*argv):
     """(exit code, stdout, stderr) for one `main()` under `argv`.
@@ -264,16 +284,18 @@ def dispatch_names(source):
     gap" is measured now, and it holds for the bare-name wrapper and for
     nothing else in the family. There, registering `run` in `MODES` where this
     reader found it does make the exact-tuple equality green, so the coverage
-    change really does fire. For a wrapper reached on a receiver --
-    `return self.run(demo_mode(args))` -- `self.run` is an `ast.Attribute` and
-    records nothing here, and this reader's own rule does not descend into a
-    call's arguments, so `demo_mode` is never reached either: the recorded list
-    is unchanged, `MODES` needs no new entry, the equality is green, and a
-    tenth mode runs unmocked. That is the failure `TripwireCoverage` exists to
-    prevent, reached through the shape this sentence calls correct. The
-    sentence above is left standing per `../../docs/findings.md` §4a-4d; the
-    measurement is in `test_the_derived_rule_does_not_object_to_a_self_receiver_name`
-    and the write-up is `../../docs/findings/xdata-dispatch-indirect-shapes.md`.
+    change really does fire. Every other shape in the family records nothing, so
+    nothing turns up, `MODES` needs no new entry, the equality is green and a
+    tenth mode runs unmocked -- which is the failure `TripwireCoverage` exists
+    to prevent, reached through the shapes this sentence calls correct. For a
+    wrapper on a receiver, `return self.run(demo_mode(args))`, `self.run` is an
+    `ast.Attribute` and this reader's own rule does not descend into a call's
+    arguments, so `demo_mode` is never reached either; for the table, `getattr`
+    and lambda dispatches neither reader reaches the shape at all. The sentence
+    above is left standing per `../../docs/findings.md` §4a-4d; the measurement
+    is in `test_a_tenth_mode_behind_each_shape_is_caught_or_is_not` and
+    `test_the_derived_rule_does_not_object_to_a_self_receiver_name`, and the
+    write-up is `../../docs/findings/xdata-dispatch-indirect-shapes.md`.
     """
     class Dispatch(ast.NodeVisitor):
         def __init__(self):
@@ -533,14 +555,14 @@ class TripwireCoverage(unittest.TestCase):
                     "at module level")
 
     def mirror_with_a_tenth(self, branch):
-        """The committed tool with one extra dispatch branch, for the two cases
+        """The committed tool with one extra dispatch branch, for the cases
         below that need a tenth mode to *exist* rather than to be described.
 
         The edit is to the source text this process holds and to nothing else,
         so the mirror's own census CSVs are not the property under test and no
         tree outside this process moves. The anchor is asserted rather than
         assumed: a `main()` that stopped ending in `return write(args)` would
-        otherwise leave both cases below green on a mirror with no tenth in it.
+        otherwise leave every case below green on a mirror with no tenth in it.
         """
         head, sep, tail = TOOL.read_text().partition(TENTH_BRANCH_ANCHOR)
         self.assertTrue(
@@ -548,6 +570,29 @@ class TripwireCoverage(unittest.TestCase):
                  "mirror was built and this case would pass without measuring "
                  "anything")
         return head + branch + sep + tail
+
+    def tenth_branch(self, source):
+        """`main()`'s own dispatch in `source`, re-indented behind a tenth mode.
+
+        Derived from the source rather than written out once per shape: the
+        branch has to carry that shape's expression and nothing else, and a
+        second copy of every expression is a second thing to edit when one of
+        the sources moves. The shape of the source is asserted rather than
+        assumed, so a source this cannot read fails here rather than quietly
+        building a mirror with no tenth mode in it -- the same reason the
+        anchor above is asserted.
+        """
+        lines = source.splitlines()
+        head = lines[0] if lines else ""
+        body = lines[1] if len(lines) > 1 else ""
+        self.assertEqual(
+            (len(lines), head, body.startswith("    return ")),
+            (2, "def main():", True),
+            f"{source!r} is not `main()` returning one expression, so a branch "
+            "derived from it would put no tenth mode behind the shape its key "
+            "names")
+        return (f"    if args.demo_mode:\n"
+                f"        return {body[len('    return '):]}\n")
 
     def test_every_indirect_shape_the_docstrings_name_is_measured(self):
         # The six, each paired with what its two readers answered. The table is
@@ -679,6 +724,45 @@ class TripwireCoverage(unittest.TestCase):
             "the derived guard did not object to a `run` bound at module level, "
             "so the empty intersection above is the guard being unreachable "
             "rather than this shape being outside its subject")
+
+    def test_a_tenth_mode_behind_each_shape_is_caught_or_is_not(self):
+        # What the six-shape table above cannot answer on its own. A shape that
+        # records nothing is a shape a tenth mode runs through unmocked, and
+        # `[]` in that table is that one fact seen from the other side: not
+        # reached by these two functions, so nothing turns up, so the tripwire's
+        # exact-tuple equality holds. Whether that is a hole or a correct reading
+        # is a question about the *shape*, so each one goes behind a tenth mode
+        # on a mirror and the readers are asked, rather than the verdict being
+        # inferred from an empty cell.
+        #
+        # What a tenth mode turns up is measured against what the committed
+        # `main()` records rather than against `MODES` directly. On the readers
+        # as merged those are the same question, and `MODES` is what the
+        # committed case above holds them to, but a reader that over-collects
+        # the committed dispatch is a different failure and letting it decide
+        # this verdict would bury the shape rather than hold it.
+        #
+        # The branch is derived from the shape's own source, so what is measured
+        # is that expression and not a second copy of it that could drift.
+        committed = dispatch_names(TOOL.read_text())
+        for shape, (source, _) in INDIRECT_DISPATCHES.items():
+            with self.subTest(shape=shape):
+                mirror = self.mirror_with_a_tenth(self.tenth_branch(source))
+                recorded = dispatch_names(mirror)
+                turns_up, residue = TENTH_VERDICTS[shape]
+                self.assertEqual(
+                    [n for n in recorded if n not in committed], turns_up,
+                    f"the mirror recorded {recorded} where the committed "
+                    f"main() records {committed}, so a tenth mode behind this "
+                    "shape turns up "
+                    f"{sorted(set(recorded) - set(committed))} and the "
+                    "tripwire's exact-tuple equality is "
+                    f"{'red' if turns_up else 'green'} here, against the "
+                    "reading this case holds")
+                self.assertEqual(
+                    mode_attributes(mirror), residue,
+                    f"the residue on this mirror is not the one "
+                    f"TENTH_VERDICTS holds for {shape}")
 
 
 class Refusals(unittest.TestCase):

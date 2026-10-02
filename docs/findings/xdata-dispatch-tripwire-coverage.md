@@ -130,14 +130,18 @@ walker for the job; the visitor is the right one and the comment now says why.
 > gap" is measured now, and it holds for the bare-name wrapper named above and
 > for nothing else in the family. There, registering `run` in `MODES` where the
 > reader found it really does make the exact-tuple equality green again, so the
-> coverage change fires exactly as this paragraph says. For a wrapper reached
-> on a receiver — `return self.run(demo_mode(args))` — `self.run` is an
-> `ast.Attribute` and records nothing, and the walk does not descend into a
-> call's arguments either, so `demo_mode` is never reached: the recorded list
-> is unchanged, `MODES` needs no new entry, the equality is **green**, and a
-> tenth mode runs unmocked. That is the failure this class exists to prevent.
-> The paragraph is left standing per `../findings.md` §4a-4d; the measurement,
-> the other four shapes and the docstring correction are in
+> coverage change fires exactly as this paragraph says. Every other shape in the
+> family records nothing, so nothing turns up and the exact-tuple equality is
+> **green** with a tenth mode unmocked — and it is green for the same reason in
+> all of them. For a wrapper reached on a receiver —
+> `return self.run(demo_mode(args))` — `self.run` is an `ast.Attribute` and the
+> walk does not descend into a call's arguments either, so `demo_mode` is never
+> reached at all; for the table, `getattr` and lambda dispatches neither reader
+> reaches the shape, so there is not even a residue to classify on the way to
+> the same place. `MODES` needs no new entry in either case. That is the failure
+> this class exists to prevent. The paragraph is left standing per
+> `../findings.md` §4a-4d; the measurement, the other shapes and the docstring
+> correction are in
 > [`xdata-dispatch-indirect-shapes.md`](xdata-dispatch-indirect-shapes.md).
 
 ## The residual boundary: asserted, not hoped away
@@ -333,6 +337,10 @@ not disturb the tripwire the reader exists to keep complete.
   > because a name reached as a method on a receiver is not a module-level
   > binding and so falls outside the rule's subject rather than inside it. Suite
   > green, tenth mode unmocked, guard relocated below the dispatch reaches it.
+  > The receiver is not the only shape that lands there: the table, `getattr`
+  > and lambda dispatches record nothing on either reader, so the equality is
+  > green for the same reason and there is not even a residue to classify on the
+  > way. Only the two wrappers a reader records a name for go red.
   > The bullet's standing claim — that the residue covers a name the benign set
   > does not account for — is untouched by this and still true; what changes is
   > that the wrapper edge it deferred is now a measured escape rather than an

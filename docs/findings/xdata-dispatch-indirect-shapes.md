@@ -1,12 +1,13 @@
-# Three of the six indirect dispatch shapes have no reader, and a `self`-receiver wrapper closes the tripwire green
+# Two of the six indirect dispatch shapes turn a tenth mode up; the `self` receiver and the three with no reader close the tripwire green
 
 **Issue #1407, 2026-10-02.** `dispatch_names` and `mode_attributes` in
 `ec/tools/test_xdata_register_map.py` are the two readers that hold the
 `TripwireCoverage` claim, and between them their docstrings name six ways a
 mode can be reached that neither is a bare-name call in `main()`. No case
 pinned any of them. This page measures all six on synthetic source against the
-readers **as merged**, says which reader owns which shape, and records one
-shape where the two layers disagree in a way that closes the tripwire green.
+readers **as merged**, says which reader owns which shape, and records which
+of them close the tripwire green with a tenth mode sitting behind them — four
+of the six, and one of those four is a shape where the two layers disagree.
 
 Its predecessors, all three in this family and none of whose figures are a
 figure for this one:
@@ -31,14 +32,21 @@ Every cell is the readers' own answer, imported from the suite and run over
 synthetic source — not read off the `ast` module. The source is the whole of
 each case: `main()` and nothing else.
 
-| source in `main()` | `dispatch_names` | residue (`mode_attributes`) | residue ∩ `module_level_names` |
-|---|---|---|---|
-| `return run(demo_mode(args))` | `['run']` | `[]` | `[]` |
-| `return run(xrm.demo_mode(args))` | `['run']` | `['demo_mode']` | `[]` |
-| `return self.run(demo_mode(args))` | `[]` | `['run']` | `[]` |
-| `return TABLE[args.mode](args)` | `[]` | `[]` | `[]` |
-| `return getattr(xrm, args.mode)(args)` | `[]` | `[]` | `[]` |
-| `return (lambda f: f(args))(demo_mode)` | `[]` | `[]` | `[]` |
+The last column is what a tenth mode behind that shape does to the tripwire's
+own equality, and it is measured rather than read off the cells beside it: each
+shape's own expression goes into a mirror of the committed tool behind a tenth
+mode, and the recorded list is compared with what the committed `main()`
+records. A name turning up is exactly what makes the exact-tuple equality go
+red; nothing turning up is exactly what leaves it green with the mode unmocked.
+
+| source in `main()` | `dispatch_names` | residue (`mode_attributes`) | residue ∩ `module_level_names` | a tenth mode behind it |
+|---|---|---|---|---|
+| `return run(demo_mode(args))` | `['run']` | `[]` | `[]` | **red** — records the wrapper `run` |
+| `return run(xrm.demo_mode(args))` | `['run']` | `['demo_mode']` | `[]` | **red** — records the wrapper `run` |
+| `return self.run(demo_mode(args))` | `[]` | `['run']` | `[]` | **green** |
+| `return TABLE[args.mode](args)` | `[]` | `[]` | `[]` | **green** |
+| `return getattr(xrm, args.mode)(args)` | `[]` | `[]` | `[]` | **green** |
+| `return (lambda f: f(args))(demo_mode)` | `[]` | `[]` | `[]` | **green** |
 
 Which reader owns which, read off that table rather than asserted:
 
@@ -57,7 +65,12 @@ Which reader owns which, read off that table rather than asserted:
   and not about what the tool could grow: `mode_attributes` reports any
   attribute call the benign set does not account for, and a `getattr` dispatch
   reaches `getattr` only as a bare-name call, so the one reader with a residue
-  to report has nothing to report for it.
+  to report has nothing to report for it. **And that is the whole of why they
+  are green in the last column**: nothing is recorded, so nothing turns up, so
+  the equality holds — the same mechanism as the receiver below, reached one
+  step earlier. A tenth mode behind any of the three turns up nothing for the
+  tripwire to catch, and unlike the receiver there is not even a residue for a
+  maintainer to classify on the way there.
 
 ## The derived rule's subject is not what the rule is about
 
@@ -130,30 +143,55 @@ records `run`, a tenth name turns up, the coverage change fires — and once
 `run` is registered in `MODES` at the position the reader found it, **the
 equality is green and the residue is `[]`.** So "that is correct rather than a
 gap" is not merely unmeasured; measured, it is true for that shape and false
-for the receiver one, and the sentence says neither.
+for every shape that records nothing — which is the other four — and the
+sentence says neither.
+
+### Why the other three land in the same column
+
+Because the mechanism above is one sentence long: **an empty recorded list
+leaves the exact-tuple equality green**, because there is nothing in it that
+could differ from `MODES`. The table, `getattr` and lambda dispatches record
+nothing for exactly the reason the receiver records nothing, so a tenth mode
+behind any of them leaves the list at the nine and the tripwire holds. The
+receiver gets a further step the other three do not — a residue that reports
+`['run']` and hands the maintainer a classification — and that step is the only
+thing distinguishing them, so it is the only reason to talk about the receiver
+as a separate shape rather than as the fourth instance of the same thing.
+
+It is also why the three are the ones a maintainer is most likely to grow:
+there is no name to register in `MODES` for them, because nothing was
+recorded, and no residue to classify. A tenth mode behind any of them is
+unmocked, and the two readers have nothing to say about it.
 
 ### What this says about the issue's own calibration
 
-The issue is careful, and its caution is right where it applies: on five of the
-six shapes the exact-tuple equality does go red for a tenth mode, so the
-tripwire's load-bearing sentence is *expected* to hold and no silent hole is
-claimed for them. **The sixth row is not that.** For `return
-self.run(demo_mode(args))` the equality is green with the tenth mode in place —
-measured above, not argued. The one shape where the layers disagree is also the
-one where the issue's table records the wrong verdict in its own calibration
-column.
+The issue is careful, and its caution is right where it applies: a negative
+here means *not reached by these two functions*, so for the shapes the readers
+do reach the tripwire's load-bearing sentence is *expected* to hold and no
+silent hole is claimed for them. **Measured, it holds for two of the six, and
+the four it does not hold for are green by one mechanism.** The two reds are
+the rows that record the wrapper `run`: a tenth name turns up, the equality
+goes red, and the coverage change fires. The four greens are the receiver and
+the three shapes with no reader at all, and each of them is green because
+nothing is recorded — not because anything reasoned its way to silence. For
+`return self.run(demo_mode(args))` the equality is green with the tenth mode in
+place, measured above rather than argued, and it is the one of the four where
+the residue still has something to say. The one shape where the layers disagree
+is also the one where the issue's table records the wrong verdict in its own
+calibration column.
 
-Both of those are measurements on synthetic source with the configuration
+Each of those is a measurement on synthetic source with the configuration
 named. Nothing here is a statement about the committed tree, which dispatches
 all nine modes as a `return` and is unchanged.
 
 ## What each case holds
 
-Three cases in `TripwireCoverage`, alongside the existing ones:
+Cases added to `TripwireCoverage`, alongside the existing ones:
 
 | case | pins |
 |---|---|
 | `test_every_indirect_shape_the_docstrings_name_is_measured` | all six shapes, each against the `(dispatch_names, mode_attributes)` pair it answered — one `subTest` per shape, keyed by the words the docstrings use |
+| `test_a_tenth_mode_behind_each_shape_is_caught_or_is_not` | the last column of the table above, measured rather than read off the cells beside it: each shape's own expression goes behind a tenth mode on a mirror, and what it turns up beyond what the committed `main()` records is what decides red from green |
 | `test_registering_a_wrapper_makes_the_equality_green` | the docstring's instruction, followed: a wrapper recorded in `MODES` at the position the reader found it does make the equality green, while the residue is `[]` |
 | `test_the_derived_rule_does_not_object_to_a_self_receiver_name` | the escape above, step by step, on a mirror rather than on a description of one — including the non-vacuity control that shows the derived guard *does* object to the same name when it is bound at module level |
 
@@ -165,7 +203,16 @@ apart, and a failure names the claim rather than an index into a tuple. It is a
 positions `dispatch_names` reaches, and every entry here is a shape it may not
 reach at all. Folding them together would assert one equality over two
 populations that do not share a subject, and the empty recorded lists would
-read as over-collection rather than as what they are.
+read as over-collection rather than as what they are. `TENTH_VERDICTS` is keyed
+by those same words for the same reason, and the branch each shape is put behind
+is derived from its own source rather than written out again, so a shape and
+the expression measured on it cannot come apart.
+
+That case compares against **what the committed `main()` records** rather than
+against `MODES` directly. On the readers as merged the two are the same
+question — `MODES` is what the committed-dispatch case holds the reader to — but
+a reader that over-collects the committed dispatch is a different failure, and
+letting it decide this verdict would bury the shape instead of holding it.
 
 The assertions are equalities, not memberships, for the same reason the
 position cases give: `[]` is the finding for three of these shapes, and a
@@ -198,18 +245,24 @@ other two stay green:
 
 Those two greens are the useful part rather than a gap in the pin: they are the
 two shapes where descending into the arguments is *not* the right answer, so a
-fix that widened the reader that way would be wrong exactly there.
+fix that widened the reader that way would be wrong exactly there. The
+tenth-mode case answers to the same mutation on the same split — red where the
+reading moved, green where it did not — which is the second case seeing the
+table rather than a second claim about it.
 
-Both of the new consequence cases go red under it as well, and so does the
-committed-dispatch case, which is the pre-existing protection rather than
-anything this change adds: `Tuples differ`, with `list` at index 0, which is
-the over-collection `xdata-dispatch-tripwire-coverage.md` §"The reading"
-records and the reason the rule is positional.
+`test_registering_a_wrapper_makes_the_equality_green` and
+`test_the_derived_rule_does_not_object_to_a_self_receiver_name` go red under it
+as well, and so does the committed-dispatch case, which is the pre-existing
+protection rather than anything this change adds: `Tuples differ`, with `list`
+at index 0, which is the over-collection
+`xdata-dispatch-tripwire-coverage.md` §"The reading" records and the reason the
+rule is positional.
 
 **Mutation B** restores the pre-`#694` reader — the residue filtered by `MODES`
 again rather than by the benign set. The two attribute-dependent `subTest`s go
 red, `[] != ['demo_mode']` and `[] != ['run']`, along with the new
-self-receiver case and the two cases issue #694 added. The other four shapes
+self-receiver case and the two cases issue #694 added; the tenth-mode case
+reports the same two messages on the same two shapes. The other four shapes
 stay green, because their residues were `[]` before the mutation too: a filter
 that drops a name not in `MODES` cannot change an answer that was already
 empty. **The two shapes that move are exactly the two whose residue was doing
@@ -225,11 +278,17 @@ work**, which is the point of pinning them by name rather than as a set.
   also changes its subject is not a measurement. A measurement that also fixes
   its subject would leave nothing to compare the fix against.
 - **The empty cells are "not reached by these two functions"**, never "absent".
-  The table, `getattr` and lambda rows are a statement about what was run.
+  The table, `getattr` and lambda rows are a statement about what was run. They
+  are also the shapes a tenth mode runs through unmocked, which is the same
+  fact seen from the other side rather than a stronger claim: nothing was
+  recorded, so nothing turns up, so the equality holds.
 - **The `self`-receiver escape is a measurement on a named configuration** — a
   mirror carrying the committed nine plus a tenth behind that shape — not a
   claim that the tripwire is broken. On the committed tree it cannot fire,
-  because the committed `main()` dispatches all nine modes as a `return`.
+  because the committed `main()` dispatches all nine modes as a `return`. The
+  red/green column is the same kind of measurement: one mirror per shape, the
+  configuration named, and no case asserting that any of them fires on the
+  committed tree.
 - **The `if and only if` correction is stated in the direction it over-calls.**
   It is a false red, not a silent miss, and the population figure above is a
   measurement of this tree with the command that derives it beside it, not a

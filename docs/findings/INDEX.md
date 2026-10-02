@@ -216,7 +216,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md) — The guard-off census, built by the flag instead of by patching a copy of the tool (issue #753)
 - [`xdata-cluster-refs-projection.md`](xdata-cluster-refs-projection.md) — A cluster's `refs` is the sum of its members' `refs_<program>`, and not of their `refs` (issue #343)
 - [`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md) — `deciles()` had a floor in its docstring and none in its code, and the report was already printing the stretch (issue #889)
-- [`xdata-dispatch-indirect-shapes.md`](xdata-dispatch-indirect-shapes.md) — Three of the six indirect dispatch shapes have no reader, and a `self`-receiver wrapper closes the tripwire green
+- [`xdata-dispatch-indirect-shapes.md`](xdata-dispatch-indirect-shapes.md) — Two of the six indirect dispatch shapes turn a tenth mode up; the `self` receiver and the three with no reader close the tripwire green
 - [`xdata-dispatch-position-pins.md`](xdata-dispatch-position-pins.md) — The three dispatch positions the docstring names are pinned on synthetic source
 - [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md) — The dispatch reader reads statement position too, and one boundary it does not
 - [`xdata-export-ownership-page-census.md`](xdata-export-ownership-page-census.md) — Re-deriving the export-ownership page: every figure on `xdata-export-ownership.md`, from a fresh run (issue #654)
