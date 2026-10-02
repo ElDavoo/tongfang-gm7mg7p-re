@@ -1343,43 +1343,19 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
             self.assertFalse(line.startswith('/'), line)
 
     def test_the_committed_run_reads_all_five_sources(self):
-        # The figures are today's, and the claim is not that they have to stay:
-        # it is that a run which reached nothing is distinguishable from a run
-        # which found nothing. `TheTalliesAreNotAFloor` is what says the first
-        # of those two things, and this is the same tallies on the real
-        # tree rather than a scratch one.
+        # No tally from the run is asserted here. What says a run reached
+        # something is `assert_the_run_reached_something`, which the sibling
+        # test above calls and which holds every tally to being non-zero
+        # rather than to a value; pinning the values instead would be a
+        # census of the tree, and a census is a number every merge has to
+        # edit.
         rc, out, err = self.run_tool(ctti.TESTDATA)
         self.assertEqual(rc, 0, err)
-        counts = {}
-        for line in out.splitlines():
-            for piece in re.split(r'[:,]', line):
-                number, _, label = piece.strip().partition(' ')
-                if number.isdigit() and label:
-                    counts[label] = int(number)
-        self.assertEqual(counts['testdata/ directories'], 15)
-        self.assertEqual((counts['named in the index'], counts['self-indexed'],
-                          counts['gap(s)']), (12, 3, 0))
-        # Not a floor -- see the class name.
-        self.assertEqual((counts['table row(s)'], counts['path token(s)']),
-                         (31, 40))
-        self.assertEqual((counts['Feeds cell(s)'], counts['tool pointer(s)']),
-                         (31, 33))
-        self.assertEqual((counts['self-indexed README(s)'], counts['table(s)'],
-                          counts['row(s)'], counts['check(s)']),
-                         (3, 5, 29, 31))
-        # Ten cells carry a value and eleven tokens are checked over them: the
-        # one `;`-joined cell is the difference, and it is a decidable fact
-        # about the two committed CSVs. Not a floor -- see the comment above.
-        self.assertEqual((counts['fixture CSV(s)'], counts['evidence cell(s)'],
-                          counts['evidence path token(s)']), (2, 10, 11))
         # Every pointer is resolved and nothing is unreadable, which is the
-        # "the index and the tree currently agree" half. It is a statement
-        # about today and not a floor: the tallies above are what a run that
-        # reached nothing would be caught by, in either direction. Five lines
-        # carry a `resolved, ` tally now that the annotation CSV is a source of
-        # its own, and the count of *directions* is what this is -- it moves
-        # when a direction is added deliberately, which is not the same as
-        # moving every time a fixture lands.
+        # "the index and the tree currently agree" half. The count of
+        # *directions* is what the `* 5` is: it moves when a direction is
+        # added deliberately, which is not the same as moving every time a
+        # fixture lands.
         self.assertEqual([line.rsplit(', ', 2)[1:] for line in out.splitlines()
                           if ' resolved, ' in line],
                          [['0 missing', '0 unresolved']] * 5)

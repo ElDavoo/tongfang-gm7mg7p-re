@@ -39,9 +39,15 @@
 #
 # The checks are cheap-tier by the split in that script's own header: both
 # read committed text and `ec/firmware/GMxMGxx_11.800`, and neither needs
-# Ghidra, the network or an assembler. `--check` on each is the reproducibility
-# claim in one command -- the report is a function of the committed files, so a
-# CSV or an image that no longer agrees fails here rather than in prose.
+# Ghidra, the network or an assembler. The two `--check` arms are not the same
+# claim, so it is worth saying what each one refuses rather than leaving
+# "reproducible from the committed inputs" to cover both:
+# `bank_map_score.py --check` refuses a `calls_stub` row the image does not
+# support and a population it cannot reproduce from the image it was handed,
+# and `firmware_regions.py --check` fails only on a block whose verdict is
+# outside the three its classifier can produce. Neither compares its report
+# against a stored one, so a firmware image that has changed under them is not
+# what either arm catches.
 # `--self-test` is the half that matters, and it is the same half the other
 # arms in `check_ghidra_tooling` are there for: it pins the refusals. A census
 # that had quietly started calling a block `code`, and a scorer that had
