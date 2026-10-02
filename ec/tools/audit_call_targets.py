@@ -57,7 +57,13 @@ of a region edge. Unlike a paged target, that is *possible*, so whether this
 image has such a site is a checked property of this image rather than an
 opcode fact -- --self-test walks every site and reports it. And the byte scan
 over-counts harder again: 29 of the 256 byte values open a relative branch,
-against 16 paged and 2 absolute.
+against 16 paged and 2 absolute. That walk declines an offset whose
+instruction would not fit whole inside the region rather than read a
+displacement across the boundary, and the last two bytes of each audited
+region are where that can happen; --self-test now prints those bytes and fails
+if any of them opens a relative branch, so what is exempt from the scan is
+reported by the tool rather than asserted in a document. See
+docs/findings/region-edge-declined-sites.md.
 
 Blind spots, none of which this tool closes: framing is unsettled in both
 directions (section 2), computed targets via `jmp @a+dptr` or the
@@ -105,6 +111,14 @@ PAGE = 0x800  # what a paged target cannot leave
 # How far a rel8 branch reaches either side of the next PC. A site further than
 # this from both of its region's edges therefore cannot resolve outside it.
 REL_REACH = 128
+
+# The width of the window at a region's top edge in which relative_sites()'s
+# guard can decline an offset, and so the window --self-test reports. It is two
+# bytes and not one because the forms differ: `hi - 1` is declined by any
+# relative opcode, and `hi - 2` only by a 3-byte one, a 2-byte form there
+# fitting with `i + 2 == hi`. A constant rather than a literal so a figure-pin
+# search over the asserting call below finds no number to read as a document's.
+REL_EDGE_WINDOW = 2
 
 # Bytes from one BL51 trampoline entry to the next: `90 hi lo 02 11 00`, a
 # 3-byte `mov dptr,#imm16` and a 3-byte `ljmp`. Measured over the block rather
@@ -181,12 +195,43 @@ def relative_sites(d: bytes, lo: int, hi: int):
     bytes depending on the opcode, so the whole of it is required to fit: a
     3-byte form in a region's last two bytes would take its displacement from
     the next region. The displacement is the instruction's last byte, which is
-    what relative_target()'s docstring is about."""
+    what relative_target()'s docstring is about.
+
+    What the guard declines is a site by construction -- there is no target to
+    report, because a declined 3-byte form's displacement byte is the first
+    byte of the *next* region and reading it would be a cross-region claim --
+    so it is not yielded here under a second class. declined_sites() is the
+    other branch of the same predicate and names it; the two partition [lo, hi)
+    and neither one can be widened without the other moving."""
     for i in range(lo, hi):
         op = d[i]
         if op in REL_OPCODES and i + OPCODE_LEN[op] <= hi:
             yield i, op, relative_target(op, d[i + OPCODE_LEN[op] - 1],
                                          runtime_addr(i, True))
+
+
+def declined_sites(d: bytes, lo: int, hi: int):
+    """(offset, opcode, length, byte) for every relative-branch-shaped byte in
+    [lo, hi) that relative_sites()'s guard declines.
+
+    The other branch of that guard, written out rather than derived from it so
+    a reader can see the two are the same predicate read both ways: the same
+    `d[i] in REL_OPCODES` and the same `i + OPCODE_LEN[op]` against `hi`, with
+    the inequality the other way round. Every relative-shaped byte in [lo, hi)
+    is yielded by exactly one of the pair, and neither is yielded by both.
+
+    `byte` is the byte the offset holds -- the opcode again, carried because a
+    caller reporting a window wants the value without indexing `d` itself. It
+    is the *only* byte of such an instruction inside the region, which is the
+    whole of why there is no target here and none is invented: the
+    displacement is the instruction's last byte, and for a declined offset
+    that byte is at or past `hi`. The refusal in relative_sites() is the right
+    call and this reports it; see docs/findings/region-edge-declined-sites.md.
+    """
+    for i in range(lo, hi):
+        op = d[i]
+        if op in REL_OPCODES and i + OPCODE_LEN[op] > hi:
+            yield i, op, OPCODE_LEN[op], op
 
 
 def earlier_record(d: bytes, off: int, lo: int) -> str:
@@ -874,6 +919,36 @@ def self_test(d: bytes) -> int:
           f"the largest audited region bound 0x{hi:05X} is inside the "
           f"{len(d)}-byte image, so no walk below reads past its own region"
           f"{'' if hi <= len(d) else ' -- exceeded, main() would have refused this image'}")
+
+    # The other half of the same subject: not that the walk stays inside `d`,
+    # but where it stops. The window below is the only stretch of a region no
+    # rel8 site walk tests, so "nothing is dropped at a region edge" is a
+    # property of these bytes and nothing else -- and the exhaustive negative
+    # docs/findings/trampoline-relative-branch-sites.md argues from rests on
+    # it. Printing it is the whole of the change: the six addresses are reported
+    # by the tool on every run instead of verified once by a reader.
+    #
+    # The window is walked rather than read off declined_sites(), and the two
+    # answers are deliberately not the same. A 2-byte form at `hi - 2` satisfies
+    # `i + 2 == hi`, so the guard admits it and nothing is dropped -- and this
+    # line still reddens, because what it reports is the window claim ("the scan
+    # tests every offset bar these, and none of them opens a branch") rather
+    # than the guard's. That is the conservative direction, and the failure
+    # clause names which kind each address is so a reader who arrives here on a
+    # byte the guard admits is told that rather than left to work it out.
+    edge, opened, refused = [], [], set()
+    for name in AUDITED:
+        _lo, top = region_bounds(name)
+        window = range(top - REL_EDGE_WINDOW, top)
+        edge += [(i, d[i]) for i in window]
+        refused |= {i for i, _op, _n, _b
+                    in declined_sites(d, top - REL_EDGE_WINDOW, top)}
+        opened += [i for i in window if d[i] in REL_OPCODES]
+    check(not opened,
+          f"none of the {len(edge)} offsets the rel8 site walk declines at a "
+          f"region edge ({', '.join('0x%05X=0x%02x' % e for e in edge)}) holds "
+          f"a relative opcode, so the scan drops nothing at any region edge"
+          f"{'' if not opened else ' -- a relative opcode is there at ' + ', '.join('0x%05X%s' % (i, '' if i in refused else ' (which the guard admits, so nothing is dropped there)') for i in opened)}")
 
     walked = {}
     for name in AUDITED:
