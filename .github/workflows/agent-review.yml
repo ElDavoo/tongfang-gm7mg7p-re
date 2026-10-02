@@ -89,11 +89,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: ${{ github.head_ref }}
+          PR: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
           issue=${BRANCH#agent/issue-}
           echo "issue=$issue" >> "$GITHUB_OUTPUT"
           echo "author=$(gh issue view "$issue" --json author --jq .author.login)" >> "$GITHUB_OUTPUT"
+          # LOCAL CHANGE (2026-10-02): how many times this stage has already sent the pull
+          # request back. The prompt weighs a fix loop that is not converging as a reason to
+          # reject; docs/agent-pipeline.md, "A stricter merge gate".
+          rounds=$(gh pr view "$PR" --json reviews \
+            --jq '[.reviews[] | select(.state == "CHANGES_REQUESTED")] | length')
+          echo "rounds=$rounds" >> "$GITHUB_OUTPUT"
 
       # The verdict, as data: a merge gate must be a value the workflow can branch on rather than
       # prose someone has to parse. Its findings are data too, and rendered to markdown below,
@@ -125,6 +132,22 @@ jobs:
             There is no human reviewer after you. If you approve, this merges to main once CI is
             green. Read CLAUDE.md — it documents the invariants that lint and the tests will not
             catch a change breaking, and it is the standard you are holding this to.
+
+            This stage has already requested changes on this pull request
+            ${{ steps.ctx.outputs.rounds }} time(s).
+
+            First, before any of the checks below, ask whether the change is worth merging at
+            all. CLAUDE.md's mission is to understand three closed components (the EC firmware,
+            the BIOS, the Windows vendor stack) and to write the Linux driver for what they
+            expose. Work is judged by whether it moves one of those closer, not by whether the
+            issue's wording was met. Say in `summary`, in one sentence, what this diff tells us
+            about the firmware, the BIOS, the Windows stack or the driver that main did not
+            already know. If the honest answer is "nothing": the diff only re-counts,
+            re-anchors, re-pins, re-words or re-checks the repository's own text, tables,
+            censuses or checkers, and it unblocks no named piece of EC, BIOS, Windows or driver
+            work, then reject it. Do not request changes on it, because no fix makes it worth
+            having. Tooling that a named finding or a named next step depends on is worth
+            having. Say which one in `summary`.
 
             Block on, and only on:
             - an overclaim -- the rule CLAUDE.md puts above every other. That means: a zero-hit
@@ -180,15 +203,27 @@ jobs:
               recorded known-answer run against the committed firmware, when its output is what
               the PR's claims rest on.
 
-            Reject, rather than request changes, only when fixing the findings would mean
-            starting over: the approach cannot deliver what the issue asks, the issue was
-            misread so the diff answers a different question, or the claim the pull request
-            rests on is false and nothing around it stands without it. Many findings, or
-            laborious ones, are not a reason to reject; findings the fix stage can work through
-            are a request for changes. A rejected pull request is closed and the issue is
+            Reject, rather than request changes, when any of these holds:
+            - the change fails the first question above: it adds nothing about the firmware,
+              the BIOS, the Windows stack or the driver, and unblocks nothing that does;
+            - fixing the findings would mean starting over: the approach cannot deliver what
+              the issue asks, the issue was misread so the diff answers a different question,
+              or the claim the pull request rests on is false and nothing around it stands
+              without it;
+            - the fix loop is not converging. That means this stage has already sent the pull
+              request back three or more times, and this round's blocking findings are again
+              stale figures, line pins, or the same kind of defect as before. Another round
+              would cost a CI run and a review and buy nothing new.
+            Otherwise, findings the fix stage can work through are a request for changes. Do
+            not approve a pull request with an open blocking finding to save a round. A
+            rejected pull request is closed and the issue is
             planned again from scratch, with your summary and findings in front of the new
             plan, so write the `fix` fields as guidance for that new attempt: what it must do
             differently, not how to patch this diff.
+            When you reject on the first question, the `fix` fields say what the issue
+            would have to deliver about the firmware, the BIOS, the Windows stack or the
+            driver to be worth doing. A second rejection of the same issue hands it to a
+            human.
 
             Time: this job is stopped at 60 minutes, and a review that is stopped records
             nothing, so the pull request waits for a restart. Check claims against the tree as
