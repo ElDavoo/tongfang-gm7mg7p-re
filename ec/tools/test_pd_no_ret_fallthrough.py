@@ -12,18 +12,19 @@ reading stands on.
 that would let a regenerated census pass on a stale pair. Every assertion here
 is recomputed from the committed firmware, the committed `.asm` listings and
 the committed annotation tables, and the generated CSV is read by predicate and
-compared against those. It does not duplicate the tool's own oracle, which
-holds the population totals from inside the tool: the two are read together,
-this one from outside so a change to the tool that moves a number fails here
-even when the tool's oracle was updated with it.
+compared against those. It does not duplicate the tool's own oracle either: the
+two are read together, this one from outside, so a change to the tool that
+moves a byte fails here even when the tool's own check was updated with it.
 
 **And it holds claims, not censuses.** A test that asserts how many rows the
 family has is a value every merge has to edit, and this repository has been
-burned by that four times. What is asserted here is each *byte* claim, and the
-population sizes are held by the tool's `ORACLE` and by `--check` against the
-committed CSV -- where they live in one place rather than in two that can
-drift. `docs/findings/no-append-logs.md` is the write-up; the same rule is in
-`CLAUDE.md`.
+burned by that four times. What is asserted here is each *byte* claim and each
+*relationship*, and the population lives in one place -- the committed CSV,
+which `--check` reproduces and which this suite reads by predicate. The tool's
+`--self-test` is run for its exit code, so whatever it asserts is asserted
+here transitively too, which is why it asserts byte facts, membership and
+shape rather than either arm's size. `docs/findings/no-append-logs.md` is the
+write-up; the same rule is in `CLAUDE.md`.
 """
 import csv
 import subprocess
@@ -272,9 +273,11 @@ class TheAnnotationRow(unittest.TestCase):
 
     def test_the_3632_precedent_is_untouched(self):
         # `pd,3632`'s comment calls the pair "one routine split by the
-        # function boundary", which `pd,3635` being separately callable makes
-        # a half-statement. This change does not edit that row and says so in
-        # the write-up, so the row is held as it stands.
+        # function boundary". The byte scan's `lcall 0x3635` at 0x44A1 is a
+        # candidate no committed listing decodes, so whether that makes the
+        # comment a half-statement is not settled here and this change does not
+        # edit the row. It is held as it stands so a merge that quietly took it
+        # fails.
         self.assertEqual(function_row('pd', 0x3632)['name'],
                          'set_dptr_042f_then_fall_through')
         self.assertIn("split by the function boundary",

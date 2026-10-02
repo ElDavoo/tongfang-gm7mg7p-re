@@ -25,34 +25,37 @@ off the end of the export.
 tool's own counts are what the write-up quotes.** Its filter -- take the next
 address as `addr + listing-index.csv`'s `size`, decode one instruction there,
 keep the rows whose comment carries a "not decoded here" or "no ret" clause
-and whose successor begins a `ljmp`/`jmp`/`sjmp`/`ajmp` -- finds four rows on
-the committed tree, and 0x34EF is not one of them: 0x34F2 begins
-`mov B,#0x60` and the `ljmp` is an instruction later. The byte arm is the
-predicate that does contain 0x34EF. Its `198`-row clause population and the
-`80` rows the clause arm and the byte arm agree on are the tool's, printed
-with the predicate beside each so a reader can re-derive or reject them.
+and whose successor begins a `ljmp`/`jmp`/`sjmp`/`ajmp` -- misses 0x34EF on the
+committed tree: 0x34F2 begins `mov B,#0x60` and the `ljmp` is an instruction
+later. The byte arm is the predicate that does contain 0x34EF. Neither arm's
+population is written down here or in `ORACLE`, because a comment or a listing
+that arrives moves both; `--check` against the committed CSV is what holds
+them, and `--self-test` asserts their membership and their relationship to
+each other rather than their sizes.
 
 **`pd,34F2` is not merely 0x34EF's tail -- it is `lcall`ed in its own right
 at 0x6782**, in the same listing `pd,6673` that holds the `lcall 0x34EF` at
 0x67E0. So the pair is two entries sharing a tail rather than one routine
 split by a function boundary, and that is what decides 0x34EF's verdict
-below. `pd,3632`/`pd,3635` are the same shape (`lcall 0x3635` at 0x44A1
-against `lcall 0x3632` at 0x8D50), which is a half-statement in `pd,3632`'s
-existing comment rather than a licence to merge the two rows; that row is not
-this tool's to edit and is not edited here.
+below. `pd,3632`/`pd,3635` are the same shape *of row* -- a listing that ends
+without a return beside a successor that is a listing of its own -- but the
+`lcall 0x3635` the byte scan names at 0x44A1 is a candidate no committed
+listing decodes at that address, so 0x3635's reachability in its own right is
+`not found by this method` and not established. That is why `pd,3632`'s own
+comment is left alone: the correction belongs with whatever reads 0x3632 next,
+and that row is not this tool's to edit.
 
 **The entry census is a byte scan over the whole 64 KiB, de-duplicated by
 site address, and it is `not found by this method` in both directions.** A
 byte pattern cannot tell code from data, so a site it finds may be an operand
 byte, and a target it does not find may still be reached by a paged or
 relative form or from a byte the export never covers. The de-duplication is
-not a nicety: a per-listing walk over the listings' own spans counts the 26
+not a nicety: a per-listing walk over the listings' own spans counts the
 `lcall`/`ljmp` sites in 0x4C12-0x4D18 twice, because `pd/4D6F.asm` spans
 0x4A12-0x4E58 and carries its own rows at those addresses *and* they are the
 subject of `pd/4C12.asm`, `pd/4C19.asm`, `pd/4C20.asm` and `pd/4C27.asm`. One
-address, two listings, one site -- and a census that reported 2066 where the
-image holds 2040 in those spans would be wrong by a number it could not
-explain.
+address, two listings, one site -- and a per-listing walk reporting more sites
+than those spans hold would be wrong by a difference it could not explain.
 
 **The two populations of *entry sites* are reported together and never
 exchanged for one another.** The byte scan is the wide half; a walk over the
@@ -311,7 +314,7 @@ def byte_sites(pd):
 
     Keyed on the site address, not on the listing it was found through, and
     that is the load-bearing part: a per-listing walk over the listings' own
-    spans finds 26 sites in 0x4C12-0x4D18 twice, because `pd/4D6F.asm` spans
+    spans finds the sites in 0x4C12-0x4D18 twice, because `pd/4D6F.asm` spans
     0x4A12-0x4E58 and holds rows at those addresses while `pd/4C12.asm`,
     `pd/4C19.asm`, `pd/4C20.asm` and `pd/4C27.asm` are the same bytes under
     other names. A byte scan walks each position once by construction, so the
@@ -370,7 +373,9 @@ def is_clause_arm(ann_row):
     """Whether the row's comment carries one of the two clauses. `True` for a
     row with no annotation at all would be a claim about the program, so it is
     `False` and the family is the byte arm's membership that carries the
-    weight; `--self-test` holds both arms apart on the counts."""
+    weight; `--self-test` holds `pd,34EF` in both arms and the byte arm wider
+    than the clause arm, which is membership and shape rather than either
+    population's size."""
     return ann_row is not None and CLAUSE_RE.search(ann_row["comment"]) is not None
 
 
@@ -455,11 +460,10 @@ def print_arms(rows):
           "transfer, and `addr + size` is another listing's entry")
     print(f"  both arms: {len(both)} row(s)")
     print()
-    print("  The family is the byte arm. `pd,34EF` is in it, and it is not in "
-          "the")
-    print("  issue's stated filter's four rows, because `pd,34F2` begins "
-          "`mov B,#0x60`")
-    print("  and the `ljmp` is an instruction later.")
+    print("  The family is the byte arm. `pd,34EF` is in it, and the issue's "
+          "stated filter misses it, because")
+    print("  `pd,34F2` begins `mov B,#0x60` and the `ljmp` is an instruction "
+          "later.")
     print()
 
 
@@ -487,7 +491,7 @@ def print_table(rows, limit=None):
     print()
 
 
-def print_sites(rows, dec, byts):
+def print_sites(rows, dec, byts, pd, listings, tails):
     print("## 3. The entry-site census, and why it is de-duplicated")
     print()
     print(f"  byte scan over the image's {PD_LEN} bytes: "
@@ -497,18 +501,20 @@ def print_sites(rows, dec, byts):
           f"{sum(len(v) for v in dec.values())} site(s) naming "
           f"{len(dec)} distinct target(s)")
     print()
+    total, distinct, doubled = span_walk(pd, listings, tails)
     print("  A per-listing walk over the listings' spans is neither of these "
           "and is")
-    print("  wrong by a number it could not explain: `pd/4D6F.asm` spans "
+    print("  wrong by a difference it could not explain: `pd/4D6F.asm` spans "
           "0x4A12-0x4E58 and")
     print("  carries its own rows at 0x4C12-0x4D18, which are the same bytes "
           "`pd/4C12.asm`,")
     print("  `pd/4C19.asm`, `pd/4C20.asm` and `pd/4C27.asm` are the subjects "
-          "of, so those")
-    print("  26 sites are counted twice and 2040 become 2066. The byte scan "
-          "walks each")
-    print("  position once by construction, which is what makes the two halves "
-          "comparable.")
+          "of. That walk")
+    print(f"  finds {total} site(s) where the spans hold {distinct}, and the "
+          f"{len(doubled)} address(es) it counts")
+    print("  twice are the ones in 0x4C12-0x4D18. The byte scan walks each "
+          "position once by")
+    print("  construction, which is what makes the two halves comparable.")
     print()
     print("  **A byte pattern cannot tell code from data**, so a site the scan "
           "finds may")
@@ -631,47 +637,49 @@ def check_table(generated, path):
 # Self-test
 # --------------------------------------------------------------------------
 
-# The answer, as `--self-test` asserts it. Every figure is a property of the
-# committed tree, re-derived here from the image and the committed tables
-# rather than quoted, so a regenerated index that moved one of them fails
-# instead of being held.
+# The answer, as `--self-test` asserts it. Everything here is a byte fact over
+# the committed firmware or an address in it: `CLAUDE.md`'s "No totals of the
+# repository's own text" is why neither arm's population is here. A comment or
+# a listing that lands moves those, so a figure held in this dict is a value
+# every other open branch has to edit; `--check` against the committed CSV
+# already holds the population, and what `--self-test` asserts about the arms
+# is membership and relationship, which survive a row arriving.
 ORACLE = {
-    # The two arms. Held apart on purpose: they are different questions, and
-    # a single "candidates" figure would hide which predicate produced it.
-    "clause_arm": 198,
-    "byte_arm": 95,
-    "both_arms": 80,
-    "listings": 541,
-    # The entry-site census, both populations.
+    # The entry-site census over the image, and the only counts in this dict:
+    # 64 KiB of committed firmware that no change to this repository moves.
     "byte_sites": 7266,
     "byte_targets": 1866,
-    "listing_sites": 1923,
-    "listing_targets": 1038,
     # The pair, in bytes rather than in counts.
     "pair": (0x34EF, 3, 0x34F2, 6),
     "pair_span": 9,
     "ret_at": 0x10C7,
     "call_34ef": (0x67E0, 0xCB40),
     "call_34f2": (0x6782,),
-    # The double-count the de-duplication exists for.
+    # The span whose overlap the de-duplication exists for. Where the
+    # over-count is, not how much of it there is.
     "overlap_span": (0x4C12, 0x4D18),
-    "overlap_sites": 26,
-    "overlap_sites_dedup": 2040,
 }
 
 
 def span_walk(pd, listings, tails):
-    """(total, distinct) entry sites over every committed listing's own span,
-    walked position by position -- the per-listing walk `--self-test` shows
-    over-counting. Never used to decide anything; it exists so the
-    de-duplication has a measurement behind it rather than a claim."""
+    """(total, distinct, doubled) entry sites over every committed listing's
+    own span, walked position by position -- the per-listing walk `--self-test`
+    shows over-counting.
+
+    `doubled` is the set of addresses more than one listing's span carries, so
+    the over-count is reported as *where* it is rather than as a size: which
+    addresses two listings both cover moves with the export, and how many there
+    are need not be written down anywhere. Never used to decide anything; it
+    exists so the de-duplication has a measurement behind it rather than a
+    claim."""
     seen = {}
     for head in sorted(tails):
         (last, last_addr) = tails[head][1]
         for i in range(head, last_addr + len(last[0])):
             if pd[i] in ABS_OPCODES:
                 seen[i] = seen.get(i, 0) + 1
-    return sum(seen.values()), len(seen)
+    return (sum(seen.values()), len(seen),
+            {a for a, n in seen.items() if n > 1})
 
 
 def self_test(pd, rows, dec, byts, index, listings, tails, ann) -> int:
@@ -689,18 +697,11 @@ def self_test(pd, rows, dec, byts, index, listings, tails, ann) -> int:
     cl = clause_rows(rows)
     both = [r for r in fam if r["clause"] == "yes"]
 
-    check(len(cl) == ORACLE["clause_arm"],
-          f"the clause arm is {ORACLE['clause_arm']} row(s) — a text match over "
-          f"the comment, not a decode, and labelled as one wherever it is "
-          f"printed")
-    check(len(fam) == ORACLE["byte_arm"],
-          f"the byte arm is {ORACLE['byte_arm']} row(s): the listing's last "
-          f"instruction is neither a return nor a transfer and `addr + size` is "
-          f"another listing's entry")
-    check(len(both) == ORACLE["both_arms"] and 0x34EF in {r["addr"] for r in both},
-          f"the two arms agree on {ORACLE['both_arms']} row(s), and `pd,34EF` is "
-          f"one of them — so the byte arm is the predicate that finds it and the "
-          f"issue's stated filter is not")
+    check(0x34EF in {r["addr"] for r in both},
+          f"`pd,34EF` is in both arms — its comment carries one of the two "
+          f"clauses *and* its bytes qualify — so the byte arm is the predicate "
+          f"that finds it and the issue's stated filter is not, which is the "
+          f"claim this tool was written to settle")
 
     # The two families the two arms produce are genuinely different sets, and
     # the byte arm is strictly the wider: a row whose comment does not carry
@@ -743,31 +744,50 @@ def self_test(pd, rows, dec, byts, index, listings, tails, ann) -> int:
           f"so `pd,0x{a:04X}`'s verdict is `shared-tail`: two entries over one "
           f"tail, rather than one routine cut in half by the export")
 
-    # The two populations, and the de-duplication behind the wide one.
+    # The two populations. The wide half's size is a count over the committed
+    # image; the narrow half's is a count over the export, so what the narrow
+    # one is held by is the relationship between them — every `lcall`/`ljmp` a
+    # committed listing decodes is a site the scan finds too, since it spells
+    # the same three bytes at the same address. The converse does *not* hold
+    # and is not asserted to: the scan matches two opcodes, so a target only a
+    # decoded `ajmp`/`sjmp` reaches is outside its population, which is the
+    # other direction this census is `not found by this method` in.
     check(sum(len(v) for v in byts.values()) == ORACLE["byte_sites"]
           and len(byts) == ORACLE["byte_targets"],
           f"the byte scan finds {ORACLE['byte_sites']} `lcall`/`ljmp` site(s) "
           f"naming {ORACLE['byte_targets']} distinct target(s) — the wide half, "
           f"and every one of them a candidate, because a byte pattern cannot "
           f"tell code from data")
-    check(sum(len(v) for v in dec.values()) == ORACLE["listing_sites"]
-          and len(dec) == ORACLE["listing_targets"],
-          f"the committed listings' own decoded instructions carry "
-          f"{ORACLE['listing_sites']} site(s) naming {ORACLE['listing_targets']} "
-          f"distinct target(s) — the narrow half, and the one verdicts are "
-          f"assigned from")
+    abs_sites = {a for a in listings
+                 if listings[a][0] and listings[a][0][0] in ABS_OPCODES}
+    scan_sites = {s for v in byts.values() for s in v}
+    check(abs_sites <= scan_sites and scan_sites > abs_sites,
+          f"the narrow half, the committed listings' own decoded instructions: "
+          f"every `lcall`/`ljmp` one of them decodes is a site the scan finds "
+          f"as well, {len(abs_sites)} of them inside the {len(scan_sites)} the "
+          f"scan walks — which is what makes the two comparable rather than "
+          f"rival counts, and the scan's own surplus is where a site no "
+          f"committed listing decodes sits")
 
+    # The de-duplication, as *where* the over-count is rather than how much of
+    # it there is: a per-listing walk counts a site twice wherever two
+    # listings' spans cover it, and the whole of that has to fall inside the
+    # one span that overlaps.
     lo, hi = ORACLE["overlap_span"]
-    total, distinct = span_walk(pd, listings, tails)
-    covered = {h for h in tails if lo <= h <= hi}
-    check(len(covered) > 1 and total == ORACLE["overlap_sites_dedup"]
-          + ORACLE["overlap_sites"] and distinct == ORACLE["overlap_sites_dedup"],
+    total, distinct, doubled = span_walk(pd, listings, tails)
+    heads = {h for h in tails if lo <= h <= hi}
+    covering = [h for h in sorted(tails)
+                if h < lo and tails[h][1][1] + len(tails[h][1][0][0]) >= hi]
+    check(total > distinct and doubled
+          and all(lo <= a <= hi for a in doubled)
+          and len(heads) > 1 and covering,
           f"the de-duplication: a per-listing walk over the listings' own spans "
-          f"finds {total} site(s) where the spans hold {distinct}, because "
-          f"0x{lo:04X}-0x{hi:04X} is inside `pd/4D6F.asm`'s span *and* the "
-          f"subject of {len(covered)} other listings — {ORACLE['overlap_sites']} "
-          f"sites counted twice, and a census reporting {total} would be wrong "
-          f"by a figure it could not explain")
+          f"finds {total} site(s) where the spans hold {distinct}, and every "
+          f"address it counts more than once is in 0x{lo:04X}-0x{hi:04X} — "
+          f"inside {listings[covering[0]][2] if covering else '?'}'s own span "
+          f"*and* the subject of {len(heads)} listings headed there, so a census "
+          f"reporting {total} would be wrong by a difference it could not "
+          f"explain")
 
     # The two silent misreadings, asserted rather than described.
     prefixed = [a for a, r in ann.items() if r["addr"].lower().startswith("0x")]
@@ -859,7 +879,7 @@ def main(argv=None) -> int:
 
     print_arms(rows)
     print_table(rows, args.limit)
-    print_sites(rows, dec, byts)
+    print_sites(rows, dec, byts, pd, listings, tails)
     print_answer(rows, pd)
     return 0
 

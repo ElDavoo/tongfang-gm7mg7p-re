@@ -90,10 +90,12 @@ repeated anywhere else in this repository.
 
 3. **"178 `pd` rows carry a 'not decoded here' or 'no ret' clause"** and
    **"filtering to those … leaves 20"** — neither reproduces. The clause
-   matches **198** `pd` rows. The issue's stated filter — take the next
-   address as `addr + listing-index.csv`'s `size`, decode one instruction
-   there, keep the rows whose successor begins a `ljmp`/`jmp`/`sjmp`/`ajmp` —
-   yields **4** rows: 0x0000, 0x0012, 0x7045 and 0xF786.
+   matches a larger population than 178, and `--check` against the committed
+   CSV is what prints its size on the tree as it stands. The issue's stated
+   filter — take the next address as `addr + listing-index.csv`'s `size`,
+   decode one instruction there, keep the rows whose successor begins a
+   `ljmp`/`jmp`/`sjmp`/`ajmp` — yields these rows and no others: 0x0000,
+   0x0012, 0x7045 and 0xF786.
 
    **0x34EF is not among them**, and the reason is worth keeping because it is
    what a filter built this way gets wrong: `pd,34F2` begins `mov B,#0x60`, and
@@ -111,19 +113,26 @@ Two membership tests are printed side by side, and neither is presented as
 **The clause arm** is a regex over the annotation comment for either of the
 two clauses. It is a **text match over prose**: a row whose comment does not
 carry the clause is invisible to it whatever its bytes say, and a row that does
-is in it whatever its bytes say. It matches 198 `pd` rows.
+is in it whatever its bytes say.
 
 **The byte arm** is a decode. The listing's last instruction is neither a
 return nor a transfer of control, and `addr + size` is another listing's entry
 — so control leaves the listing by running past its end, into a boundary rather
-than off the end of the export. It matches 95 rows. `reti` counts as a return
-here, not just `ret`: a listing ending in `reti` falls into nothing whatever
-its comment says, and reading only `0x22` would admit 0x0056, 0x0094, 0x00B2
-and 0x00F0 for a reason that has nothing to do with the boundary.
+than off the end of the export. `reti` counts as a return here, not just `ret`:
+a listing ending in `reti` falls into nothing whatever its comment says, and
+reading only `0x22` would admit 0x0056, 0x0094, 0x00B2 and 0x00F0 for a reason
+that has nothing to do with the boundary.
 
-**Both arms: 80 rows.** The byte arm is not a subset of the clause arm — 15
-rows qualify on their bytes while their comment carries neither clause, which
-is what a text filter cannot see. `pd,34EF` is in both.
+**The byte arm is not a subset of the clause arm** — rows qualify on their bytes
+while their comment carries neither clause, which is what a text filter cannot
+see — and `pd,34EF` is in both.
+
+Neither population's size is written down here or in the tool's `--self-test`,
+because a comment or a listing that lands moves both, and a figure held in two
+places is a value every other open branch has to edit. `--check` against
+`ec/annotations/pd-no-ret-fallthrough.csv` prints them on the tree as it
+stands; what `--self-test` asserts is membership and relationship, which
+survive a row arriving.
 
 The tool prints each count with the predicate that produced it, so a reader who
 wants a different family can see which one is being reported.
@@ -157,12 +166,14 @@ with their bytes:
 | `0xB24C` | `load_r3_r0_jmp_0f0e` | 1 | `0xB24D` | `mov r2,a` | `boundary-wrong` | 0xA02B |
 
 **`pd,3632` is the row this table exists for.** Its own comment says 0x3632
-and 0x3635 "look like one routine split by the function boundary", and the
-byte scan finds `lcall 0x3635` at 0x44A1 — so the two are separately callable
-and that comment is a half-statement. The verdict column says
-`falls-through-unentered` because 0x44A1 is not an instruction start any
-committed listing decodes, which is the tool reporting the limit of its own
-narrow population rather than deciding the question. **That row is not edited
+and 0x3635 "look like one routine split by the function boundary". The byte
+scan names `lcall 0x3635` at 0x44A1, but **0x44A1 is not an instruction start
+any committed listing decodes**, so that is a candidate and 0x3635's
+reachability in its own right is *not found by this method* — the same
+calibration §"What this does not establish" applies to every byte-scan
+position. The verdict column reads `falls-through-unentered` for exactly that
+reason, which is the tool reporting the limit of its own narrow population
+rather than deciding the question in either direction. **That row is not edited
 here**; it is not this change's to touch, and the correction belongs with
 whatever reads 0x3632 next.
 
@@ -183,19 +194,25 @@ Entry sites are counted **twice**, as two populations, and the two are never
 exchanged for one another.
 
 **The byte scan**, over the image's whole 64 KiB for `12 aa aa` / `02 aa aa`,
-finds **7266** sites naming **1866** distinct targets. This is the wide half.
+finds **7266** sites naming **1866** distinct targets. This is the wide half,
+and both figures are counts over the committed image, so no change to this
+repository moves them.
 
-**The committed listings' own decoded instructions** carry **1923** sites
-naming **1038** distinct targets. This is the narrow half, and it is the one
-verdicts are assigned from, because a site there is an instruction start a
-committed listing states and so cannot be an operand byte.
+**The committed listings' own decoded instructions** are the narrow half, and it
+is the one verdicts are assigned from, because a site there is an instruction
+start a committed listing states and so cannot be an operand byte. Its size is
+not written down here: it moves with every export, and `--check` against the
+committed CSV is what prints it. What is held instead is the relationship —
+every `lcall`/`ljmp` a committed listing decodes is a site the byte scan also
+finds, since it spells the same three bytes at the same address.
 
 **De-duplication is by site address, and it is not a nicety.** A per-listing
-walk over the listings' own spans finds **2066** sites where the spans hold
-**2040**: `pd/4D6F.asm` spans 0x4A12-0x4E58 and carries rows at 0x4C12-0x4D18,
-which are the same bytes `pd/4C12.asm`, `pd/4C19.asm`, `pd/4C20.asm` and
-`pd/4C27.asm` are the subjects of. Those 26 sites are counted twice. A census
-reporting 2066 would be wrong by a figure it could not explain. The byte scan
+walk over the listings' own spans finds **more** sites than those spans hold,
+and every address it counts twice is in 0x4C12-0x4D18: `pd/4D6F.asm` spans
+0x4A12-0x4E58 and carries rows at 0x4C12-0x4D18, which are the same bytes
+`pd/4C12.asm`, `pd/4C19.asm`, `pd/4C20.asm` and `pd/4C27.asm` are the subjects
+of. One address, two listings, one site — and a census reporting the walk's
+figure would be wrong by a difference it could not explain. The byte scan
 walks each position once by construction, which is what makes the two halves
 comparable.
 
@@ -217,9 +234,9 @@ relative form or from a byte no listing covers. `pd,3632` above is the case
 where the two halves disagree, and the disagreement is left standing rather
 than resolved in either direction.
 
-**The 95 rows are candidates, not defects.** A candidate is a listing whose
-boundary may be a function-boundary artefact. This change retypes one row and
-proposes nothing for the rest; the CSV carries the classification so a
+**The byte arm's rows are candidates, not defects.** A candidate is a listing
+whose boundary may be a function-boundary artefact. This change retypes one row
+and proposes nothing for the rest; the CSV carries the classification so a
 follow-up can land the comments in tranches rather than in one large diff to
 the file most likely to collide with other open work.
 
@@ -237,8 +254,10 @@ sentence is still true.
 
 **The 0x11C2 dispatch key is untouched.** `pd 0x38D3` is
 `read_be16_from_dptr`, returning the byte pair at the incoming DPTR in A:B;
-at 0xCB2A the DPTR it reads is whatever 0x349B left, and 0xCB4A is one of at
-least ten distinct `lcall 0x11C2` sites in the image, each with its own table.
+at 0xCB2A the DPTR it reads is whatever 0x349B left, and 0xCB4A is one of the
+`lcall 0x11C2` candidates the byte scan names in the image. A candidate carries
+no table behind it — nothing in the committed inputs establishes what follows
+any of them — so this write-up attributes none to the other call sites.
 This change narrows the CB2A chain — 0x34EF's contribution to it is now
 recorded rather than left as an unresolved clause — and decides nothing about
 the key. The chain itself is written up in
@@ -266,14 +285,16 @@ merge is not indicated on this evidence.
   the rows cluster visibly around 0x3494-0x3506, where the `mov B,#0x60 /
   ljmp 0x10BC` idiom repeats.
 - **`pd,3632`'s comment**, which calls its pair "one routine split by the
-  function boundary" where `pd,3635` is separately callable at 0x44A1.
+  function boundary", where the byte scan's `lcall 0x3635` at 0x44A1 is a
+  candidate no committed listing decodes. Whether that is enough to call the
+  comment a half-statement is what a later reader with a decompile can settle.
 - **Whether the `boundary-wrong` rows' real entries are the addresses above
   them.** Three listings are reachable only by falling in, and each names a
   successor that is a committed call target.
-- **The 26 double-counted sites in 0x4C12-0x4D18**, which is a property of
-  `pd/4D6F.asm` spanning rows other listings are the subjects of. Any other
-  tool that walks listings by span rather than by site address has the same
-  bug.
+- **The sites in 0x4C12-0x4D18 that two listings both carry**, which is a
+  property of `pd/4D6F.asm` spanning rows other listings are the subjects of.
+  Any other tool that walks listings by span rather than by site address has the
+  same bug.
 
 ---
 
@@ -282,8 +303,11 @@ merge is not indicated on this evidence.
 [`ec/tools/test_pd_no_ret_fallthrough.py`](../../ec/tools/test_pd_no_ret_fallthrough.py)
 holds the byte claims and **no census total** — a test asserting how many rows
 the family has is a value every merge has to edit, which this repository has
-been burned by repeatedly. The population sizes live in the tool's `ORACLE` and
-in `--check` against the committed CSV, which is where a census belongs.
+been burned by repeatedly. The population lives in one place,
+`ec/annotations/pd-no-ret-fallthrough.csv`, which `--check` reproduces; the
+tool's `--self-test` asserts the two arms' membership and their relationship to
+each other, and the suite runs that for its exit code, so what it asserts is
+asserted here transitively too.
 
 What the suite holds: the pair's bytes, each re-read out of the image rather
 than trusted from a transcription, with the **adjacency asserted separately**
