@@ -1131,7 +1131,7 @@ cannot be reconciled against itself is the failure it is measuring.
   opposite routes, which is why neither merge's note predicted the other's figure.
   On #888's tree the corpus already wrote the same span **by path** —
   `ec/tools/test_xdata_cluster_names.py:563` in
-  [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334
+  [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):352
   — so the two new by-name pins arrived against a target that was already there
   and this count was argued not to move. **#890 repointed that by-path spelling
   by +25, to `:588`, and left the by-name one at `:563`**: the two no longer named
@@ -1572,14 +1572,14 @@ the half this table exists to record.
 | [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):475 | `ec/tools/test_xdata_cluster_names.py:363-378` | by-path | other | **records another line** |
 | [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md):87 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):20 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | other | **does not carry** — this merge's shift moved the case it names to `:381` |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):131 | `ec/tools/test_xdata_cluster_names.py:799` | by-path | other | carries — **shape re-derived from this tree's run, and #842's comment edit above the pin moved what `:799` holds; the verdict is the reading recorded before that and has not been re-read** |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):137 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):138 | `ec/tools/test_xdata_cluster_names.py:498` | by-path | comment | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):139 | `ec/tools/test_xdata_cluster_names.py:515` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):140 | `ec/tools/test_xdata_cluster_names.py:532` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):156 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | other | **does not carry** — this merge's shift moved the case it names to `:381` |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):165 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | comment | **records another line** |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334 | `ec/tools/test_xdata_cluster_names.py:596` | by-path | other | **does not carry** — this merge's shift moved the `> 300` floor it names to `:630` |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):149 | `ec/tools/test_xdata_cluster_names.py:799` | by-path | other | carries — **shape re-derived from this tree's run, and #842's comment edit above the pin moved what `:799` holds; the verdict is the reading recorded before that and has not been re-read** |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):155 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):156 | `ec/tools/test_xdata_cluster_names.py:498` | by-path | comment | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):157 | `ec/tools/test_xdata_cluster_names.py:515` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):158 | `ec/tools/test_xdata_cluster_names.py:532` | by-path | other | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):174 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | other | **does not carry** — this merge's shift moved the case it names to `:381` |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):183 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | comment | **records another line** |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):352 | `ec/tools/test_xdata_cluster_names.py:596` | by-path | other | **does not carry** — this merge's shift moved the `> 300` floor it names to `:630` |
 | [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):376 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
 | [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):469 | `test_xdata_cluster_names.py:425` | by-name | comment | **does not carry** — **re-anchored from `:401` by #904, whose §2 and §3 correction blocks were inserted above it** |
 | [`xdata-green-set.md`](xdata-green-set.md):335 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | other | **does not carry** — this merge's shift moved the case it names to `:381`; re-anchored from `:283` by #836, which appended two corrections above it |
@@ -2605,7 +2605,7 @@ struck out of it.)*
    [`xdata-green-set.md`](xdata-green-set.md):335 *(re-anchored from `:283` by
    #836, which appended two corrections above it)*. Three name `:596` for the
    `> 300` floor (**now `:630`**) —
-   [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334,
+   [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):352,
    and
    [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):278
    and `:389`. One names `:149-153` for
@@ -2647,7 +2647,7 @@ is no checker rather than a deferral:
 | a blockquote correction naming the post-fix location | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2645 | yes — and it is one of the **carries** |
 | a section kept whole per §4a-4d, so a pre-#850 value is quoted as it stood | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):177 — `:307` inside *The residual* , which the branch's own header marks as a record of a tree the file no longer has | **no** |
 | a merged-tree note naming both the old and the new value in one sentence | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):189 — *"were at `:307` on the pre-#850 file and are at `:339` on this one"* | **no** |
-| the same sentence, quoted verbatim inside a `>` block | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):165 | yes — and it is one of the **records** |
+| the same sentence, quoted verbatim inside a `>` block | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):183 | yes — and it is one of the **records** |
 
 **Eight of the ten are invisible to the vocabulary that already works**, and the
 two it does catch are correct sentences. **The fourth row is the one this merge

@@ -137,6 +137,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-index-low8-propagation.md`](pd-index-low8-propagation.md) — The `low8` truncation is in the template; what was left was two summaries that had not been told
 - [`pd-inline-arg-trampoline.md`](pd-inline-arg-trampoline.md) — The PD image's `lcall 0x104D` carries a 4-byte constant inline, deposits it in XDATA, and resumes four bytes on (issue #36)
 - [`pd-only-status-vocabulary.md`](pd-only-status-vocabulary.md) — `0x07CC` is re-graded, and the rule that grades it is now written down and
+- [`pd-pair-unmoved-one-fold.md`](pd-pair-unmoved-one-fold.md) — The de-duplicated census's `157`/`858` pd pair is unmoved because the pass finds one fold in the PD program and that fold names no XDATA byte (issue #1364)
 - [`pd-sites-address-range.md`](pd-sites-address-range.md) — `--sites` refuses an address outside the PD region, and the arithmetic the census's row 10 declined to guard becomes a statement about the code
 - [`pd-unannotated-listings.md`](pd-unannotated-listings.md) — Every `pd` listing now has a row, and #471's figures did not move (issue #489)
 - [`perturb-arm-colliding-marks.md`](perturb-arm-colliding-marks.md) — The perturbation arm's capture holds the colliding marks #1376 said had never been taken, and the Fn arm's negative survives both readings of its window (issue #1432)

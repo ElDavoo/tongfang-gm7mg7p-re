@@ -225,6 +225,20 @@ PD pair in the same table, which
 §2b records as left open for a narrow reason — `ORACLE["extmem_pd_*"]` measures
 the **default** census and `OWNERSHIP` carries no `pd_*` key.
 
+*(Correction, 2026-10-02, issue #1364. The paragraph above is left as it read,
+per [`../findings.md`](../findings.md) §4a-4d. **The `157`/`858` PD pair is now
+held too**, the way the main-EC half above it is: issue #1364 added
+`"pd_distinct": 157, "pd_refs": 858` to `OWNERSHIP` and an "and its pd half is"
+`check()` in the ownership block beside that one, so this table's
+`--export-ownership` pd row is asserted rather than asserted-about. The narrow
+reason named above is exactly what it took to close it — there was no `pd_*`
+key for that check to read — and "left open" understated the rest: the pair is
+unmoved because the pass reaches the PD program, finds one fold in it, and that
+fold names no XDATA byte, which is a fact about the program rather than a
+bookkeeping gap. File-wide the same pass moves 296 addresses' references, so
+"0 of the 858 move" is a result and not a pass that did nothing.
+[`pd-pair-unmoved-one-fold.md`](pd-pair-unmoved-one-fold.md) is the write-up.)*
+
 ## The two `main-ec-002` rows, and why a lookup on `cluster_id` is the wrong recipe
 
 These are the page's §4 rows "the 43 addresses of `main-ec-002`" and
