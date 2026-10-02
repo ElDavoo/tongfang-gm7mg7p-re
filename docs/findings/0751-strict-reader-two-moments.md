@@ -296,13 +296,21 @@ verifies.
 
 That is more than the issue asked for and less than a repair of the whole
 table: no pin was re-pointed at a *different statement*, only at the same
-statement one line down, and the tool's other findings are untouched. The
-tool **still exits 1 on this tree**, for the reason it exited 1 before this
-change — a doc-coverage note naming citations that
-`0751-mark-provenance-shapes.md` and `0751-mark-provenance-column.md` do not
-mention. It is not a gate and it is not made green here; that is a separate
-piece of work and reporting a green it does not have would be the wrong
-thing to do.
+statement one line down, and the tool's other findings are untouched.
+
+`check_page` is the other half of that contract and it is the half that
+reddened. It requires every `path:line` in `CITATIONS` to be named verbatim in
+`0751-mark-provenance-shapes.md` or `0751-mark-provenance-column.md`, and the
+`now` column of the first page's table is what those pins are read from. Moving
+the pins without moving that column left every moved pin unnamed, so the tool
+goes from the exit **0** it has on the tree this merges into to exit **1** on
+this diff — this change's own redness, not an inherited one, which is why it is
+repaired here rather than filed as separate work. So the column is re-anchored
+too, to the line each quoted text now sits on. That is an edit to a shared page,
+and it is the point rather than a cost: the tool's pins and the pages that name
+them are one measurement, and leaving the two halves disagreeing is what leaves
+a figure nobody can re-derive — which is the reason the measurement is a tool
+rather than a paragraph.
 
 ## How to re-check this
 
