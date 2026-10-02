@@ -146,6 +146,24 @@ grouping; 29 of the 146 non-owners are below the threshold for this reason.
 routine exported several times should be checkable without re-deriving the
 grouping.
 
+### Containment runs one way, so `member_share` runs the other
+
+`containment` normalises the smaller body away: it is how much of the *member*
+the owner has, so a four-statement stub scores `1.00` against any larger body
+that spells those four statements, and the column cannot tell that from a
+re-export of one routine. `member_share` is the ratio it normalises away —
+`|A| / |B|`, how much of the **owner** the non-owner accounts for — with
+`owner_body_lines` beside it so the ratio is checkable against the two bodies
+it came from. A re-export scores near `1.00` on both; the three timer stubs
+score `1.00` and `0.18`. `--min-share` is that ratio as a switch: it
+refuses an edge whose smaller body reaches less of the larger than the named
+share. It ships **off**, because the ratio does not separate the two shapes —
+a `fragment` and a `re-export` both sit at `0.50`, so no floor refuses every
+fragment and keeps every re-export — and because turning it on
+re-keys which files the census reads.
+(`docs/findings/export-ownership-relative-containment.md` is the measurement
+and the per-row verdicts.)
+
 ## 4. What the committed tool measures on this tree
 
 `xdata-export-ownership.csv`, 2,714 rows — one per `index.csv` row — and
@@ -250,8 +268,20 @@ whose claim is that the files already match.
   one correct answer.
 - **A fold is not proof of identity.** Two genuinely distinct routines can
   share most of their statements, and one routine split across exports can be
-  missed where the decompiler re-spelled a line. The `containment` column is
-  the per-row evidence and a reader is expected to look at it.
+  missed where the decompiler re-spelled a line. ~~The `containment` column is
+  the per-row evidence and a reader is expected to look at it.~~ **Corrected
+  2026-10-02:** the `containment` column cannot carry that judgement and never
+  could. It is `|A ∩ B| / |A|` with `A` the smaller body, so a fragment scores
+  `1.00` against any owner that spells its statements — the same number a copy
+  scores — and `MIN_BODY_STMTS` is a floor, not a discriminator. What the
+  column does establish is that every statement of the member appears in the
+  owner; what it does not is that the member is an export of the owner rather
+  than a routine the owner's text happens to contain. Read it beside
+  `member_share` for the size relation, and for the rows where the two
+  disagree about how much of the owner this file accounts for, read the
+  per-row verdict in `annotations/xdata-export-ownership-verdicts.csv` —
+  `export_ownership_verdicts.py --check` holds that ledger against this map in
+  both directions.
 - **The `refs` figures are not behavioural claims.** A count of references in
   decompiled text is evidence about static shape, never about what the EC does
   with a byte. A `write` count is not evidence the EC acts on the value, and a

@@ -53,6 +53,21 @@ spelled identically and the seed/`+1` distinction exists only inside
 not a query against a committed artifact, and §4.7 was right to state a count
 and a recipe rather than a list.
 
+> **Correction, 2026-10-02 (issue #734).** The paragraph above is left as it
+> was written, and its first sentence no longer holds:
+> `xdata-registers.csv` now carries a `pair_role` column, and the census *can*
+> answer the question — `pair_role` reads `seed` for the `addr` a call site
+> passes and `inc-dptr` for the byte the accessor's own `inc DPTR` walks onto,
+> so this page's 107 are the rows reading `inc-dptr`. What has not changed is
+> why the tool is here. The column is a *reading* of `pair_sites()`'s walk, not
+> a replacement for the derivation: the tool computes the population from the
+> same call and prints the two halves' sizes and their intersection on every
+> run, which is a stronger statement than a cell can be, and the `MOV DPTR`
+> admission rule of §3 is a question this column says nothing about. The
+> 107/34/8/26 accounting above is unaffected, and nothing in the tree says the
+> two halves are one register. `../../docs/findings/xdata-pair-role-column.md`
+> has the column and its limits.
+
 **The population, and the arithmetic under it.** `S` is every `addr` a call site
 passes and `S1` every `addr + 1`. On the committed tree |S| == |S1| == 107 and
 `S & S1` is **empty**, so `S1 - S` is the whole 107 and 107 + 107 ==

@@ -86,6 +86,14 @@ The only edited generated file is `ec/annotations/xdata-registers.csv` itself,
 It is already listed in `.github/workflows/agent-conflicts.yml` as a
 never-hand-merge generated file.
 
+*(Superseded 2026-10-02, issue #734. The row count is unchanged and the column
+count is now one higher: `pair_role` was appended as column 34, on the terms
+this page gives for appending rather than inserting. The sentence above is left
+as it was written, and the shape it states is the shape this change had before
+it. `xdata-pair-role-column.md` has that column; nothing else on this page
+moved, and no `awk -F,` field this page prints shifted — the figures below are
+`$2` and `$6`, both still the same two fields.)*
+
 ## The `both` rows' split, and the arithmetic that says it is this census
 
 There are 1,326 rows: 1,169 `main-ec` carrying 13,891 references, 108 `pd`
