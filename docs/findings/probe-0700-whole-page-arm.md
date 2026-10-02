@@ -24,6 +24,14 @@ still the least mapped part of the page and `0x0786` in it is a live naming
 conflict"* — which is the least-mapped part of the page, which is where a
 finding is most likely to be.
 
+**Corrected 2026-10-02 (issue #702), the quotation above left as written:**
+the naming half of that reason is settled — the EC's own bytes make `0x0786`
+the CPU TCC offset, so a `--watch-page` change row for it now has a name to
+read it against. The half this file leans on, the neighbourhood being the
+least mapped part of the page, is unchanged, so the argument above still
+holds and `--watch-page` is still wanted. The write-up is
+[`xdata-0786-tcc-offset-verdict.md`](xdata-0786-tcc-offset-verdict.md).
+
 The issue frames a 256-address page "on top of the existing 206 reads" as a
 real per-sweep cost. Read against §3's own arithmetic rather than the probe's
 default, it is **not a new figure at all** — it is §3's three watchers in one

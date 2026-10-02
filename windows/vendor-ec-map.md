@@ -349,6 +349,20 @@ routine runs, which is unresolved.
 - Upstream names `0x0786` `EC_ADDR_FAN_DEFAULT`, but both the DSDT
   (`APTC`/`APTN`) and this service treat it as the CPU TCC offset, with
   bit 7 as the enable.
+  **Settled from the EC side 2026-10-02 (issue #702), which is not a
+  correction of the line above — it recorded the disagreement accurately, and
+  this says what the code settled it with.** At bank0 `0x9492`-`0x94A9` the
+  EC reads `0x0786` behind a `jnb` on bit 7, tests `AP_OEM` (`0x0741`) bit 0,
+  and stores `0x0786 & 0x7f` *over* an already-computed TCC target in
+  `0x0A4A` — it replaces rather than indexes, and no address is built from
+  the byte. That is the CPU TCC offset, from the EC's own instructions rather
+  than from three sources agreeing on a name. So `EC_ADDR_FAN_DEFAULT` with
+  its `FAN_CURVE_LENGTH 5` describes a five-element array this EC does not
+  have at that address, and `ADDR_L1_PWM_DEFAULT_MYFAN3` is the same wrong
+  name by another road: 3.1.39.0 declares it at `1926` and its own
+  `SetCpuTccOffset` writes `1926` the same way. `0x0786` stays
+  `present-untested` — see
+  [`../docs/findings/xdata-0786-tcc-offset-verdict.md`](../docs/findings/xdata-0786-tcc-offset-verdict.md).
 - Upstream's cTGP init writes a DynamicBoost offset of 25 W to `0x0746`.
   This machine's BIOS caps DynamicBoost at 15 W, and the vendor writes 5 W
   (relevant to #8).
