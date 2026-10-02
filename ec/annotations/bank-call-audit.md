@@ -1740,3 +1740,12 @@ computed `jmp @a+dptr` at `0x716B` as an input to the CODE-pointer site list
 TRIGGER above, and the span list itself, which is the input #50's region map
 wanted — this PR deliberately stops at emitting it and does not teach
 `audit_call_targets.py` to mark its own phantom rows.
+
+**A fourth census, after this section's three.** `disasm8051.py`'s walk now
+steps over these tables rather than into them (`CASE_TABLE_CALLS` /
+`case_table_len()`), which corrects `find_indirect_xdata.py`'s per-site table
+and its `P2` census — the same phantom-row mechanism §10.3 attributes, in a
+different population, and it moves a *load-bearing negative* rather than only a
+count. The rule, the fifteen sites it is pinned against, and what the two
+surviving single-site `P2` rows turn out to look like are in
+[`../../docs/findings/7151-case-tables-in-the-walk.md`](../../docs/findings/7151-case-tables-in-the-walk.md).

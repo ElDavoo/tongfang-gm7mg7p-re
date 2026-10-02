@@ -14,11 +14,13 @@ evidence about framing, not proof of it. Confirm anything load-bearing in
 `r2 -a 8051` (make_bank_image.py builds it an image; trace_xdata_refs.py
 --r2-commands prints the seek lines).
 
-The one exception to "walk forward one instruction at a time" is
-`INLINE_ARG_CALLS`, a named table of calls whose arguments sit inline in the
-code stream; it has one entry, the PD image's `0x104D`. That is a claim about
-one address, not a general inline-argument heuristic, and
-`docs/findings/pd-inline-arg-trampoline.md` is where it is established.
+The exceptions to "walk forward one instruction at a time" are two named
+tables of calls whose data sits inline in the code stream, and neither is a
+general heuristic. `INLINE_ARG_CALLS` has one entry, the PD image's `0x104D`,
+a fixed-width argument block -- `docs/findings/pd-inline-arg-trampoline.md` is
+where it is established. `CASE_TABLE_CALLS` has one entry too, the main EC's
+`0x7151` `switch_case_dispatch`, whose table is a scan for a terminator rather
+than a width, so it gets its own function and its own write-up.
 
 The opcode length table covers the full 8051 map, because mis-framing one
 instruction corrupts every instruction after it. The mnemonic table covers
@@ -99,9 +101,53 @@ REL_OPCODES.update({op: "djnz" for op in range(0xD8, 0xE0)})  # DJNZ Rn
 # at a site in a program that has the idiom. That it is a *named* entry and not
 # a general "inline arguments" heuristic is the point: a heuristic guessing at
 # argument blocks would be unfalsifiable, and this is a byte-exact claim about
-# one address. The idiom occurs 458 times in the PD image and 0 times in the EC
-# image, which `test_disasm8051_inline_args.py` pins.
+# one address. *That* address's idiom occurs 458 times in the PD image and 0
+# times in the EC image, which `test_disasm8051_inline_args.py` pins -- a claim
+# about the `0x104D` block, not about inline data after a call in general, which
+# is what `CASE_TABLE_CALLS` below and its fifteen sites in the main EC are.
 INLINE_ARG_CALLS = {0x104D: 4}
+
+# Calls whose inline table is a *terminator scan* rather than a fixed-width
+# block, as {runtime target: bytes per case entry}. One entry, the main EC's
+# `0x7151` `switch_case_dispatch`, reached by fifteen `lcall`s and nothing else
+# (`ec/annotations/bank-call-audit.md` 10 enumerates them and finds no paged or
+# relative site naming it, and no BL51 trampoline either).
+#
+# The reader pops the return address the call pushed into DPTR, walks the bytes
+# after the call as 3-byte entries -- a 2-byte `ajmp` target and a selector byte
+# it compares against A -- stops on a `00 00` at an entry head, and jumps
+# through the two bytes after that. So the table is `3n + 4` for however many
+# entries it has, and `inline_arg_len()`'s model cannot express it: the width is
+# 3 but the length is not knowable without scanning for the terminator, which
+# is why this is a second table and a second function rather than a second row
+# in the first. A walk that decodes those bytes as instructions is misframed
+# from the call to the end of the region, and every table the committed span
+# list records runs to more than twenty bytes.
+#
+# Same reasoning as `INLINE_ARG_CALLS` about naming one address rather than
+# generalising: a heuristic that guessed at "inline data after a call" would be
+# unfalsifiable, and the extent rule here is byte-exact and checkable. The two
+# tables name disjoint targets, so a single `lcall` is claimed by at most one of
+# them and the two skips cannot overlap. ../../docs/findings/7151-case-tables-in-the-walk.md
+# is where the rule and its fifteen sites are established, against
+# ../annotations/index-table-spans.csv -- which
+# `decode_index_table.py` derives by an independent route that never calls this
+# code, so the two agreeing is corroboration rather than a restatement.
+CASE_TABLE_CALLS = {0x7151: 3}
+
+# The bytes between a table's `00 00` head and the end of the table: the two
+# zero bytes themselves, then the 2-byte default `pcVar1 = pcVar1 + 2` falls out
+# to. `7151.c` is where the reader's own shape is transcribed; the walk resumes
+# on the byte *after* the default, because the default is a code address the
+# reader dispatches to and the byte past it is the next instruction.
+CASE_TABLE_TAIL = 4
+
+# Entries read before the scan gives up, and the answer when it does. The same
+# cap and the same reason as `decode_index_table.MAX_ENTRIES`: a `lcall` byte
+# pair that lands inside data rather than before a table would otherwise scan
+# to the end of the buffer, and swallowing a whole region is the worse failure
+# of the two.
+MAX_CASE_ENTRIES = 64
 
 # Bit-addressable SFRs, for rendering the bit operand of JB/JNB/JBC/SETB
 # the way r2 prints it (`acc.0`, not `0xe0`).
@@ -121,6 +167,35 @@ def inline_arg_len(d: bytes, i: int) -> int:
         return 0
     n = INLINE_ARG_CALLS.get((d[i + 1] << 8) | d[i + 2], 0)
     return n if i + 3 + n <= len(d) else 0
+
+
+def case_table_len(d: bytes, i: int) -> int:
+    """How many bytes the case table after the call at d[i] occupies, else 0.
+
+    Scans 3-byte entries from the byte after the call until an entry head reads
+    `00 00`, then adds the 4-byte tail, so the answer is `3n + 4` and the
+    caller steps over the whole thing in one move.
+
+    Zero for anything but a call named in `CASE_TABLE_CALLS`, and zero for a
+    table the buffer does not hold whole or whose terminator does not arrive
+    within `MAX_CASE_ENTRIES` -- the same "no table here" contract
+    `inline_arg_len()` keeps, and for the same reason: a walk that skipped
+    bytes it has not got, or a whole region because a stray `lcall` target byte
+    pair happened to be in front of it, is worse than one that skips none.
+    """
+    if i >= len(d) or d[i] != 0x12 or i + 3 > len(d):
+        return 0
+    width = CASE_TABLE_CALLS.get((d[i + 1] << 8) | d[i + 2], 0)
+    if not width:
+        return 0
+    j = i + 3
+    for _ in range(MAX_CASE_ENTRIES):
+        if j + width > len(d):
+            return 0
+        if d[j] == 0 and d[j + 1] == 0:
+            return j + CASE_TABLE_TAIL - i - 3 if j + CASE_TABLE_TAIL <= len(d) else 0
+        j += width
+    return 0
 
 
 def bit_name(b: int) -> str:
@@ -383,9 +458,10 @@ def decode(d: bytes, start: int, count: int, addr: int = None, stop_at_flow: boo
     indivisible item after itself and resumes past it -- there is no asking for
     three of four of those bytes. The block is not an instruction and does not
     consume a unit of `count`, so a caller that asked for N instructions still
-    gets N. `stop_at_flow` still returns on the call and does not reach the
-    block, which is the point of that flag: a window that ends at a branch
-    should end at the branch."""
+    gets N. A call named in `CASE_TABLE_CALLS` yields its case table the same
+    way, as one item of whatever length the terminator scan finds. `stop_at_flow`
+    still returns on the call and does not reach the block, which is the point
+    of that flag: a window that ends at a branch should end at the branch."""
     i = start
     for _ in range(count):
         if i >= len(d):
@@ -395,6 +471,7 @@ def decode(d: bytes, start: int, count: int, addr: int = None, stop_at_flow: boo
             return
         here = None if addr is None else addr + (i - start)
         extra = inline_arg_len(d, i)
+        table = case_table_len(d, i)
         yield i, d[i:i + n], mnemonic(d, i, here)
         if stop_at_flow and d[i] in FLOW_OPCODES:
             return
@@ -402,6 +479,9 @@ def decode(d: bytes, start: int, count: int, addr: int = None, stop_at_flow: boo
         if extra:
             yield i, d[i:i + extra], "inline args: " + d[i:i + extra].hex(" ")
         i += extra
+        if table:
+            yield i, d[i:i + table], f"case table: {table} bytes"
+        i += table
 
 
 def converges_from(d: bytes, off: int, back: int = 24) -> tuple:
@@ -412,8 +492,9 @@ def converges_from(d: bytes, off: int, back: int = 24) -> tuple:
     linear walk can decode into alignment. Read the pair, not either half.
 
     "Linear" means as `decode()` means it, so the walk steps over an
-    `INLINE_ARG_CALLS` argument block rather than through it; a sweep that did
-    not would report every site behind one as unsyncable, which is the defect
+    `INLINE_ARG_CALLS` argument block or a `CASE_TABLE_CALLS` table rather than
+    through it; a sweep that did not would report every site behind one as
+    unsyncable, which is the defect
     `docs/findings/pd-inline-arg-trampoline.md` measures."""
     onto = over = 0
     for b in range(1, back + 1):
@@ -421,7 +502,7 @@ def converges_from(d: bytes, off: int, back: int = 24) -> tuple:
         if i < 0:
             continue
         while i < off:
-            i += OPCODE_LEN[d[i]] + inline_arg_len(d, i)
+            i += OPCODE_LEN[d[i]] + inline_arg_len(d, i) + case_table_len(d, i)
         if i == off:
             onto += 1
         else:
