@@ -79,10 +79,12 @@ had no way to say the word could not show that the difference was the bank.
 direction. Stub `0x1114` is bank 1's and carries the second row above: 53
 forwarders, 53 distinct targets, and their listings are bank 1's. It cost the
 same code path to measure and it is a result rather than an omission. One
-address, `0x8294`, is named by a listing in *both* banks — the target of
-`bank1,19E4` through stub `0x1100` and of `bank0,1894` through stub `0x1114` —
-which is the kind of overlap a per-bank reading has to handle rather than
-assume away.
+address, `0x8294`, is the target of a forwarder in *each* direction —
+`bank1,19E4` through stub `0x1100`, and `0x1894` through stub `0x1114`, which is
+a forwarder this image holds and carries no `ghidra-functions.csv` row of its
+own — so the census reads the same target against both banks and answers
+`entry` in one and not-found-by-this-method in the other. That is the kind of
+overlap a per-bank reading has to handle rather than assume away.
 
 ## The annotated subset, and the replacement for 19 / 7 / 22
 
@@ -91,9 +93,9 @@ bank1 forwarders in this file whose listing is the BL51 stub" and asked for a
 replacement. The subset is selected by rule rather than by a string: rows scoped
 `bank1`, typed `forwarder`, whose own comment names a stub address this image
 holds and quotes the immediate the listing loads DPTR with. Keying on the
-literal `ljmp 0x1100` would find 18 of them — the other 30 say "tail-jumps to
-`0x1100`" — so a string rule answers a narrower question while reading as
-though it had answered this one.
+literal `ljmp 0x1100` would select only some of them, because these rows spell
+the tail-jump more than one way — so a string rule answers a narrower question
+while reading as though it had answered this one.
 
 | listings read | entry | operand | no-listing |
 |---|---:|---:|---:|
@@ -113,13 +115,12 @@ committed bank1 listing" are entries in bank 0 — `0x8294`, `0xA747`, `0xC349`
 and `0xC48F` — and three have no listing in either bank (`0x8567`, `0x8588`,
 `0x85FB`).
 
-Twenty-three of the twenty-five entries carry a `ghidra-functions.csv` row for
-the bank-0 listing, and the symbol that row gives: `0xC1E7` is `test_1664_bit0`,
-`0xC389` is `clear_1607_bit2`, `0xC349` is `test_1667_bit0`, `0xC0AD` is
-`init_1615_1807_then_clear_1601_bit5`, `0xC48F` is `clear_160a_bit0`. The two
-that carry none are `0x8294` and `0xC4C9`, both still `FUN_CODE_*` in
-`ec/decompiled/listing-index.csv` because they were seeded by a call-target
-byte scan rather than annotated.
+Where a `ghidra-functions.csv` row carries the bank-0 listing, the symbol that
+row gives: `0xC1E7` is `test_1664_bit0`, `0xC389` is `clear_1607_bit2`, `0xC349`
+is `test_1667_bit0`, `0xC0AD` is `init_1615_1807_then_clear_1601_bit5`, `0xC48F`
+is `clear_160a_bit0`. The two that carry no such row are `0x8294` and `0xC4C9`,
+both still `FUN_CODE_*` in `ec/decompiled/listing-index.csv` because they were
+seeded by a call-target byte scan rather than annotated.
 
 Three addresses are worth naming individually, because they are the ones that
 would have been argued about:
@@ -157,10 +158,11 @@ Two of them were already transcribed by hand and are what
 - `0xC10C` is the same seven instructions with `lcall 0xC0C9`.
 
 The rest read as ordinary Keil output — `0xC2EF` is
-`90 16 06 e0 54 fb f0 22`, `mov DPTR,#0x1606; anl A,#0xfb; movx @DPTR,A; ret`,
-which is the shape of a reader with no listing — but that is a reading of eight
-bytes and nothing more. **Landing the missing listings is a separate change**
-and the addresses are carried in `ec/annotations/forwarder-targets.csv` for it.
+`90 16 06 e0 54 fb f0 22`, `mov DPTR,#0x1606; movx A,@DPTR; anl A,#0xfb; movx
+@DPTR,A; ret`, a read-modify-write that clears bit 2 of `0x1606` and has no
+listing — but that is a reading of eight bytes and nothing more. **Landing the
+missing listings is a separate change** and the addresses are carried in
+`ec/annotations/forwarder-targets.csv` for it.
 
 ## What this is not
 

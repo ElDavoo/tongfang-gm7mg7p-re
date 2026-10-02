@@ -14,7 +14,10 @@ it.
     same offset, are read from `ec/firmware/GMxMGxx_11.800` and compared with
     constants transcribed here. That is the common-area finding, and it is
     pinned as two byte strings rather than as a rule so a refactor of the rule
-    cannot quietly stop asserting it.
+    cannot quietly stop asserting it. The entry population is the whole image:
+    `trampolines` defaults to a `0x8000` limit, and a census bounded there
+    could not contain a forwarder in a bank's own window, so "every entry is
+    common area" would hold for the bound rather than for the firmware.
   * **the committed listings.** Every oracle row's class is re-derived from the
     named `.asm` with `citation_callers.iter_instructions`, not from the tool's
     own coverage map, so a coverage map that stopped covering what it claims to
@@ -178,8 +181,17 @@ class TheImageUnderneath(unittest.TestCase):
         # whole block sits below COMMON_END and each entry's own bytes are the
         # `mov DPTR,#imm16 ; ljmp stub` shape naming the imm16 the scan read --
         # so this holds as rows land, and a bank-private entry would red it.
+        #
+        # The whole image is scanned, not `trampolines`'s default `0x8000`
+        # bound, and that is what makes the assertion above load-bearing rather
+        # than a tautology: bounded at `0x8000`, every entry it returns is
+        # below `COMMON_END` by construction, so a bank-private entry could
+        # never be in the population this grades. Asked for the file length
+        # here rather than through the tool's own wrapper, so the bound under
+        # test is visible at the call site and not inherited from the code
+        # being graded.
         stubs = bank_switch_stubs(FIRMWARE_BYTES)
-        entries = trampolines(FIRMWARE_BYTES, stubs)
+        entries = trampolines(FIRMWARE_BYTES, stubs, limit=len(FIRMWARE_BYTES))
         self.assertTrue(entries, 'no forwarder found in this image')
         for entry, (bank, imm16) in sorted(entries.items()):
             with self.subTest(entry='0x%04X' % entry):
@@ -218,7 +230,7 @@ class TheImageUnderneath(unittest.TestCase):
         # the rule and wrong about the bank, which is the failure the rule is
         # there to prevent.
         stubs = bank_switch_stubs(FIRMWARE_BYTES)
-        entries = trampolines(FIRMWARE_BYTES, stubs)
+        entries = trampolines(FIRMWARE_BYTES, stubs, limit=len(FIRMWARE_BYTES))
         inside, _outside = census.annotated_rows(FIRMWARE_BYTES, stubs, entries)
         self.assertTrue(inside, 'the subset rule selected nothing')
         for scope, addr, _name, _type, imm16, stub in inside:

@@ -17,7 +17,11 @@ a forwarder below `0x8000` is shared by every bank and executes whichever bank
 is selected when it is called. That is a property of every entry, asserted for
 all of them rather than illustrated by one, and it is why the phrase "the bank
 the forwarder sits in", which the withdrawn row and the issue both use, has no
-well-defined reading for this population. `ec/decompiled/bank1/198A.asm` reads
+well-defined reading for this population. Asserting it for all of them is what
+`forwarders()` below is for: it scans the whole image rather than
+`trampolines`'s default `0x8000` bound, so a forwarder in a bank's own window
+could reach this census and fail the assertion rather than be invisible to it.
+`ec/decompiled/bank1/198A.asm` reads
 like a bank-1 listing because a bank *program* is that bank's own code plus the
 common area (`build_ec_decompile.py` grafts `0x0000`-`0x7FFF` onto every bank
 image), and the header of every such listing says so.
@@ -82,9 +86,9 @@ TARGET_BYTES = 8
 # -- the row's comment is matched against the stub addresses
 # `bank_switch_stubs` finds in the image, so which stubs exist is the image's
 # answer rather than a literal written here. And the phrase is not keyed on
-# "ljmp 0x1100", which finds 18 of the 48 rows this census is about: the other
-# 30 say "tail-jumps to 0x1100", and a rule that dropped them would answer a
-# narrower question while reading as though it had answered this one.
+# "ljmp 0x1100": these rows spell the tail-jump more than one way, and a rule
+# keyed on one spelling would answer a narrower question while reading as though
+# it had answered this one.
 DPTR_IMMEDIATE = re.compile(r"Loads DPTR with (0x[0-9A-Fa-f]{4})")
 
 # The scope and `type` the annotated subset is drawn from. `forwarder` is this
@@ -205,6 +209,19 @@ def trampoline_bytes(imm16, stub):
                   0x02, (stub >> 8) & 0xFF, stub & 0xFF])
 
 
+def forwarders(d, stubs):
+    """Every BL51 forwarder in the image, keyed by the address a caller calls.
+
+    `trampolines()` defaults to `limit=0x8000`, which is what its own callers
+    want and what this census must not inherit: a forwarder at or above
+    `0x8000` could then never enter the population at all, so `common_area()`
+    would hold for every row by construction rather than by measurement, and
+    the assertion that it does could not go red. The whole image is the same
+    predicate one region wider.
+    """
+    return trampolines(d, stubs, limit=len(d))
+
+
 def read_at(d, program, addr, length):
     """`length` bytes of runtime address `addr` in `program`, through `file_offset`.
 
@@ -319,7 +336,7 @@ def survey(d):
     `--csv` are three views of the same rows and cannot disagree.
     """
     stubs = bank_switch_stubs(d)
-    tramp = trampolines(d, stubs)
+    tramp = forwarders(d, stubs)
     covers = coverage_for_banks()
     index = exported_addresses()
     inside, outside = annotated_rows(d, stubs, tramp)
@@ -412,6 +429,12 @@ def report():
         "but not at a")
     say("start, and `no-listing` is **not found by this method**.")
     say("")
+    say("The scan is the whole image, not `trampolines`'s default `0x8000` "
+        "bound: a")
+    say("forwarder in a bank's own window would appear in this table rather "
+        "than be")
+    say("outside the census, which is what makes section 4's claim falsifiable.")
+    say("")
     say("| stub | bank | forwarders | distinct targets | entry | operand | no-listing |")
     say("|---|---:|---:|---:|---:|---:|---:|")
     for addr, bank in sorted(stubs.items()):
@@ -435,12 +458,14 @@ def report():
         "and" % SUBSET_TYPE)
     say("quotes the immediate the listing loads DPTR with. Selected by that "
         "rule, not by")
-    say("the string `ljmp 0x1100` -- which finds 18 of them, the other 30 "
-        "saying \"tail-")
-    say("jumps to 0x1100\". This is a count over this repository's annotation "
-        "text rather")
-    say("than over the image, so it moves when a row lands; section 2's does "
-        "not.")
+    say("the string `ljmp 0x1100` -- these rows spell the tail-jump more than one "
+        "way, so a")
+    say("rule keyed on one spelling would answer a narrower question while "
+        "reading as though")
+    say("it had answered this one. This is a count over this repository's "
+        "annotation text")
+    say("rather than over the image, so it moves when a row lands; section 2's "
+        "does not.")
     say("")
     if outside:
         say("  %d more `%s` annotated row(s) sit at a forwarder entry this image"
@@ -497,6 +522,11 @@ def report():
         % (sum(1 for r in sub if common_area(r)), len(sub)))
     say("  %d of %d across the whole family"
         % (sum(1 for r in rows if common_area(r)), len(rows)))
+    say("")
+    say("Both fractions are over the whole-image scan above, so a forwarder in "
+        "a bank's")
+    say("own window would be counted against them rather than be absent from "
+        "the population.")
     say("")
     say("A bank program is its own `0x8000`-`0xFFFF` plus the shared "
         "`0x0000`-`0x7FFF`")
@@ -567,7 +597,7 @@ def self_test(d) -> int:
         print("  %s  %s" % ("ok  " if ok else "FAIL", text))
 
     stubs = bank_switch_stubs(d)
-    tramp = trampolines(d, stubs)
+    tramp = forwarders(d, stubs)
     rows, stubs, inside, outside = survey(d)
     sub = subset_rows(rows, inside)
 
@@ -585,10 +615,14 @@ def self_test(d) -> int:
     # The common-area claim, for every entry rather than for one exemplar: a
     # forwarder that sits in a bank's own window would be code that runs
     # differently per bank, and this is the assertion that would catch it.
+    # `forwarders()` scans the whole image, so such an entry is in `rows` and
+    # this can go red; a scan bounded at the banks' private regions would hold
+    # for every row by construction.
     misplaced = [r for r in rows if not common_area(r)]
     check(not misplaced,
           "every forwarder's six bytes match in the common area and in neither "
-          "bank's own window -- all of them, not one worked example%s"
+          "bank's own window -- all of them, not one worked example, over a "
+          "whole-image scan%s"
           % ("" if not misplaced else " -- not at "
              + ", ".join("0x%04X" % r["forwarder"] for r in misplaced[:4])))
 
