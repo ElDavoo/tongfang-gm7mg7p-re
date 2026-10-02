@@ -2634,7 +2634,18 @@ registers:
       The other two sites are both on the USER-set path and both read the
       pair big-endian: 0xB6BC reads this byte into a `subb` against B, and
       0xB6E8 hands DPTR to 0xBADE with the direction unresolved by this
-      method. The pair is compared at 0xB6B7-0xB6C2 against a bound computed
+      method. Corrected 2026-10-02 (issue #44): 0xB6E8's direction is no
+      longer unresolved. `register_ref_table.py --callee-depth 2` follows the
+      chain 0xBADE -> 0x70E4 and reaches read+writes, because 0x70E4 is a
+      read-modify-write on the handed byte -- `xch a,0xf0 ; mov r0,a ; inc
+      dptr ; movx a,@dptr ; add a,r0 ; movx @dptr,a`, then the same pair
+      again -- so the byte is loaded, added to and stored back rather than
+      only read. Both 0xBADE and 0x70E4 are main EC, not PD. That is a
+      decoded read-modify-write and nothing more: it is not evidence
+      anything acts on the byte, `status:` is unchanged because a static
+      decode is not a status change, and nothing here was read back. See
+      ../../docs/findings/callee-depth-n.md.
+      The pair is compared at 0xB6B7-0xB6C2 against a bound computed
       from a CODE table at 0xB6A8-0xB6B5, so the stored value looks like an
       elapsed count against a limit -- but "looks like" is the whole of it,
       and what 0xB6C2 decides on the comparison is not established. Nothing

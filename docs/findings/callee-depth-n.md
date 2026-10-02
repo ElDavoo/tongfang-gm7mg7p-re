@@ -188,11 +188,13 @@ of 12 the same routine is four reads into `R0`-`R3`, which is what
 `pd-0x38-consumers.md` records and what `ghidra-functions.csv`'s `pd,0x0FCB`
 row resolves. Both readings are right about the budget each used. The
 `read` above is the **direction**, which both budgets agree on; only the count
-depends on the budget, and the budget stays at 8 because
-`walk_budget_census.py` measured that raising it to 64 rewrites committed
-`access` cells, ten of them wrongly. The suite pins the budget-limited
-number so a future budget change cannot rewrite it out from under the
-write-ups that quote it.
+depends on the budget, and the budget stays at 8. That decision's cost is
+`walk_budget_census.py`'s to record, and run over this firmware it reports
+that a budget of 64 changes three committed `access` cells, all three verdict
+`B` — the same site's own further accesses, none of them a cell the larger
+budget gets wrong. Its docstring keeps the figures it had to retract beside
+that correction. The suite pins the budget-limited number so a future budget
+change cannot rewrite it out from under the write-ups that quote it.
 
 **The honest ceiling, restated because the depth makes it easy to overstate:**
 

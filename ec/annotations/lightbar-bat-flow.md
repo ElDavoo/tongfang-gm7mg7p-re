@@ -488,9 +488,10 @@ three MOVX reads in; the instruction after it is `inc dptr` and at a budget of
 [`pd-0x38-consumers.md`](pd-0x38-consumers.md) records and what
 `ghidra-functions.csv`'s `pd,0x0FCB` row resolves. The `read` in both tables
 above is the direction, which both budgets agree on; only the count depends
-on the budget, and the budget stays at 8 because `walk_budget_census.py`
-measured that raising it to 64 rewrites committed `access` cells, ten of them
-wrongly.
+on the budget, and the budget stays at 8, at the cost
+`walk_budget_census.py` records: a budget of 64 changes three committed
+`access` cells, all three verdict `B` — the same site's own further accesses,
+none of them a cell the larger budget gets wrong.
 
 **The `0x35DA` row is no longer a dead end.** What its `ljmp 0x0F45` then does
 with the `0x07D8` triple is read in
