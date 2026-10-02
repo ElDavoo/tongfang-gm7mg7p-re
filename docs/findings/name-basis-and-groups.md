@@ -268,12 +268,21 @@ produces a component for it to refuse.
 
 **A `callgraph` group is a connected component, not a subsystem.** Union-find
 answers "are these mutually reachable", and on this firmware the largest
-component holds **327 of 1,848 rows**; the next two hold 321 and 303. That is
+component held **327 of 1,848 rows**; the next two held 321 and 303. That is
 a real structural fact and a poor subsystem boundary, so the groups are named
 `callgraph_<scope>_<addr>`, their size is in every row's comment, and `--report`
 names any component of 50 or more. The seeds — read off the `type` column, the
 vector table and the BIOS modules — are the part of this layer that says what a
 group is *for*.
+
+Those three figures were the uncut ones and they no longer describe the
+committed file. `group_functions.py --split trampoline` is now the default, so
+the graph the union walks has the BL51 bank-select trampoline boundary removed
+from it, and the three `callgraph` groups are **370 / 309 / 307**. The
+largest did not move at all, which is the finding rather than a correction, and
+[`group-split-at-the-bl51-trampoline.md`](group-split-at-the-bl51-trampoline.md)
+has the before/after table, the command that produced it, and why the cut is a
+partial cause of two of these components and no cause of the third.
 
 **The `<scope>` in a `callgraph` name is the component's dominant scope, and
 that is load-bearing rather than a label.** A component can hold rows from more
@@ -296,11 +305,12 @@ reason is the banking correction above rather than a rename.** On the merged
 tree the `pd` components are one `callgraph_pd_0003` of 303 — the shared common
 node had been holding two halves of that one program apart, exactly as it had
 been holding a 673-row blob together across the two banks — and the three
-components of 50 or more are now `callgraph_bank0_0EA2` (327, all `bank0`),
+components of 50 or more were `callgraph_bank0_0EA2` (327, all `bank0`),
 `callgraph_bank1_1738` (321, all `bank1`) and `callgraph_pd_0003` (303, all
 `pd`). Every large component being a single scope is the visible consequence of
 the fix; it is a structural fact about the graph, not a claim that the banks do
-separate jobs.
+separate jobs. Those three sizes were themselves the uncut ones; the cut
+described above gives 307 / 309 / 370 for the same three names.
 
 456 EC rows are `ungrouped`: no typed seed and no component at or above the
 minimum size. That is *not found by this method*, never "these functions have
@@ -358,11 +368,14 @@ number into generated output, and `check_site_census.py` is what caught it.
 - **A per-module role roll-up** for the BIOS, derived from the `type` column
   within each module. Nearly free from the committed CSVs and the one part of
   the BIOS grouping the plan named that is not in yet.
-- **Making the big components smaller.** Connected components are transitive:
-  one shared helper collapses two subsystems into one blob. Splitting on the
-  BL51 trampoline boundary, or on strong articulation points, would give
-  tighter groups — and would need its own check that it did not merge across a
-  bank.
+- **Making the big components smaller.** Done for one boundary, and partly:
+  [`group-split-at-the-bl51-trampoline.md`](group-split-at-the-bl51-trampoline.md)
+  cuts the graph at the BL51 bank-select trampoline, which is now the default
+  mode of `group_functions.py`, and the three large `callgraph` groups go
+  327 / 321 / 303 → 307 / 309 / 370 — the largest does not move at all, so
+  whatever holds that one together is not the trampoline boundary. Strong
+  articulation points are the route left, and they have no committed oracle
+  here, which is the thing a follow-up would have to build first.
 - **Reading the remaining `ungrouped` rows.** 456 of them are reachable by
   reading; they are not reachable by the method, and saying so is what the
   column is for.

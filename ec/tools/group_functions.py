@@ -107,6 +107,38 @@ classification problem. `--report` keeps the break-out for the case that comes
 back, and names it as a gap so it cannot read as a banking result; see
 `docs/findings/pd-common-address-spaces.md`.
 
+**The union walks a graph this repository edited, and the comment says so.** The
+call graph's edges include a bank-select trampoline's tail jump into the BL51
+stub, and that edge is what joins every caller of one stub to every caller of
+any other. `--split trampoline` -- the default, and the mode the committed file
+is written in -- drops the trampoline's own edge to the stub before the union,
+so a component is a component of the graph *with the bank-select boundary
+removed*. Every `callgraph` row's comment names the cut, because "one of N
+mutually reachable functions" is false of the firmware and true only of that
+contracted graph, and a reader who took it at face value would be reading a
+property of an editing decision. It is a **partial** cause and not the cause:
+the largest component does not move at all under the cut, so the trampoline
+edges are not what holds the big blobs together. The figures are in
+`docs/findings/group-split-at-the-bl51-trampoline.md` and `--report` prints the
+before/after table.
+
+**The cut drops an edge; it does not contract one.** "Contracts or drops" was
+the issue's phrasing and the second half is what this does, for a measured
+reason: union-find on the transitive closure is unchanged by contracting
+`caller -> trampoline -> stub` into `caller -> stub`, so a contraction cannot
+split anything and the operation would have been a no-op that reads like a
+result. What drops is the trampoline's own edge *to the stub*, which leaves it
+joined to whatever joined it to its callers. The write-up records the
+contraction result as a negative finding because it is the thing the next
+reader will otherwise re-derive.
+
+**Which bank a trampoline reaches is still not established, and the cut does
+not establish it.** `subsystems.md` §12 note 4 carries the caveat: the same
+address means different bytes in each bank, so an `lcall` at the caller's side
+and a `mov DPTR` in the trampoline are equally unable to name a bank. The new
+check's scope is "the cut did not join two regions", which is a property of the
+graph and not a mapping.
+
 Usage:
     python3 ec/tools/group_functions.py --report
     python3 ec/tools/group_functions.py --apply
@@ -128,6 +160,12 @@ REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, HERE)
 
 from audit_call_targets import OTHER_BANK, bucket_of  # noqa: E402,F401
+# The shape rule for the cut, in its own leaf module. It imports nothing from
+# here, and the one thing this file used to hold for itself -- the `.asm`
+# listing regex -- is taken from it rather than kept twice: the note above it
+# said local, to avoid an import cycle with grade_name_basis, and a leaf module
+# introduces none. Two copies of the regex would be two things to drift.
+from bl51_trampolines import LISTING, trampoline_listings  # noqa: E402
 # The comparison `check()` runs against a fresh `group_rows()`, in its own
 # file. It imports nothing from here -- it takes both sides already keyed by
 # `norm_addr`, which keeps the drift logic out of this file without a cycle.
@@ -201,11 +239,8 @@ BANKS = ("bank0", "bank1")
 # `cluster()`, which is the only thing that builds one.
 PROXY_SCOPE = "%s#common"
 
-# `<addr> <bytes> <mnemonic> <operands>`; the same shape
-# grade_name_basis.py reads, kept local so this tool has no import cycle.
-LISTING = re.compile(r"^\s*([0-9A-Fa-f]{4,8})\s+"
-                     r"((?:[0-9a-f]{2}|-)(?:\s+(?:[0-9a-f]{2}|-)){1,5})\s+"
-                     r"(\S+)\s*(.*?)\s*$")
+# `<addr> <bytes> <mnemonic> <operands>` is `bl51_trampolines.LISTING`, imported
+# above with the rest of that module's surface.
 
 # The 3-byte absolute forms. These are the ones that CAN name an address in
 # another bank, which is why they are the ones worth bucketing.
@@ -216,6 +251,30 @@ ABSOLUTE = frozenset(("lcall", "ljmp"))
 # rather than read as fact by the next person to open the file.
 CALLGRAPH_NAME = re.compile(r"^callgraph_([a-z0-9]+)_([0-9A-F]{4,8})$",
                             re.I)
+
+# The cut modes, as a closed list for the same reason `GROUP_BASES` is one: a
+# mode named at a call site and nowhere else is a value that can be spelled two
+# ways. `trampoline` is the DEFAULT and not an opt-in flag, because
+# `.github/scripts/agent-gates.sh` runs `--check && --self-test` with no
+# arguments: a mode that had to be named at every call site would either need a
+# gate edit or leave the committed file disagreeing with the gate.
+#
+# Each mode carries the clause it puts in a `callgraph` comment, rather than
+# the comment being assembled around a mode name at the point of use. Two
+# reasons, and the second is the one that binds: a row written under
+# `--split=none` must not claim a cut that was not made, and a row written
+# under the default must not read as though no cut had happened -- and one
+# spliced-together sentence with a mode name in the middle is exactly the shape
+# that gets one of those two wrong when a third mode is added.
+SPLIT_MODES = {
+    "trampoline": "The graph is cut at the BL51 bank-select trampoline "
+                  "boundary, so 'mutually reachable' is a property of the "
+                  "graph the union walked and not of the firmware as it "
+                  "stands.",
+    "none": "No edge is cut, so this is a component of the committed listing "
+            "graph itself.",
+}
+DEFAULT_SPLIT = "trampoline"
 
 # What the banking rule discarded, as one value the report and `group_rows()`
 # can both ask about. Two populations, because the rule cuts edges two ways and
@@ -236,10 +295,16 @@ CALLGRAPH_NAME = re.compile(r"^callgraph_([a-z0-9]+)_([0-9A-F]{4,8})$",
 #     a non-empty subset of the banks, i.e. the rows this method DID find and
 #     then cut. Non-empty matters: a row no caller reaches at all is not
 #     "reached only by bank callers", it is unreached.
+#   `trampoline_edges` -- edges the `--split trampoline` cut removed, counted
+#     here rather than folded into `proxy_edges` even though most of them are
+#     proxy edges. A report that reported the smaller total under the proxy
+#     rule's label would be attributing this tool's own edit to the banking
+#     rule, which is the same conflation `proxy_edges` was split out to stop,
+#     one edit later.
 ClusterStats = collections.namedtuple(
     "ClusterStats",
     "cross_region proxy_edges proxy_by_caller proxy_by_target "
-    "reached_only_by_bank")
+    "reached_only_by_bank trampoline_edges")
 
 
 def read_csv(path):
@@ -349,7 +414,7 @@ def seed_groups(rows):
     return seeds
 
 
-def cluster(rows, repo=REPO, min_size=4):
+def cluster(rows, repo=REPO, min_size=4, split=DEFAULT_SPLIT):
     """The call-graph clusters, as `{(scope, addr): (group, comment)}`.
 
     Union-find over the caller->callee edges the committed listings give,
@@ -372,7 +437,27 @@ def cluster(rows, repo=REPO, min_size=4):
     bridge and `cross_bank_groups` refused the result. The endpoint is a
     per-bank proxy node now (`PROXY_SCOPE`), which is still a node the union
     never joins across regions -- it is how the invariant was made true
-    rather than lucky."""
+    rather than lucky.
+
+    `split` says which edges are removed before the union ever sees them, and
+    the default removes the bank-select boundary: an edge whose SOURCE listing
+    is a shape-matched BL51 trampoline (`bl51_trampolines.is_trampoline`).
+    Because a stub lives below `BANK_BASE`, that edge is the one that would
+    otherwise land on the `PROXY_SCOPE` proxy node -- one node per `(scope,
+    stub address)` -- and that shared node is how every trampoline in a bank
+    reaching the same stub became joined to every other. Dropping the edge
+    leaves the trampoline joined to its callers, which are the edges that say
+    anything about the code around it.
+
+    The cut sits ahead of the `reach` bookkeeping rather than after the join,
+    and that placement is the whole accounting: a cut edge that still recorded
+    a reach would leave the proxy totals and `reached_only_by_bank` counting
+    edges the union did not walk, which is a report that disagrees with the
+    clustering standing next to it.
+    """
+    if split not in SPLIT_MODES:
+        raise ValueError("split=%r is outside the closed list (%s)"
+                         % (split, ", ".join(sorted(SPLIT_MODES))))
     parent = {}
 
     def find(x):
@@ -415,9 +500,25 @@ def cluster(rows, repo=REPO, min_size=4):
     reach = collections.defaultdict(set)
     proxy_by_caller = collections.Counter()
     proxy_by_target = collections.Counter()
+    trampoline_edges = 0
+    # Resolved once, before the walk, and only in the mode that cuts: the shape
+    # rule reads every listing the walk is about to read, and doing that twice
+    # on every run to answer a question the default mode only ever asked is not
+    # a cost worth paying for `--check`.
+    trampolines = trampoline_listings(rows, repo) if split == "trampoline" else {}
     for row in rows:
         scope = row["scope"]
         caller = (scope, norm_addr(row["addr"]))
+        if caller in trampolines:
+            # Counted from the listing rather than assumed to be one. A
+            # shape-matched trampoline has exactly one absolute call -- the
+            # tail jump -- and a rule that reported "one per trampoline" would
+            # be reporting a fact about the shape rather than about the edges
+            # removed, which is the same distinction `proxy_edges` is kept to.
+            trampoline_edges += sum(
+                len(targets)
+                for targets in listing_calls(asm_path(row, repo)).values())
+            continue
         # A row's `.asm` is the WHOLE function body, so every `lcall` in it
         # is an edge out of that function -- not only the one at its entry
         # address. Reading just the entry is how 2,851 committed edges
@@ -517,7 +618,8 @@ def cluster(rows, repo=REPO, min_size=4):
         proxy_by_caller=proxy_by_caller,
         proxy_by_target=proxy_by_target,
         reached_only_by_bank={taddr for taddr, scopes in reach.items()
-                              if scopes and scopes <= set(BANKS)})
+                              if scopes and scopes <= set(BANKS)},
+        trampoline_edges=trampoline_edges)
     return clusters, stats
 
 
@@ -583,7 +685,8 @@ def misnamed_callgraph_groups(grows):
     return out
 
 
-def group_rows(rows, repo=REPO, is_bios=False, min_size=4):
+def group_rows(rows, repo=REPO, is_bios=False, min_size=4,
+               split=DEFAULT_SPLIT):
     """{key: (group, group_basis, comment, evidence)} for every row.
 
     Precedence: an existing seed wins over a cluster, because a seed is read
@@ -598,7 +701,14 @@ def group_rows(rows, repo=REPO, is_bios=False, min_size=4):
     The two get different comments, because on the second row `ungrouped` says
     nothing about the method and everything about the rule -- and a comment
     reading "not found by this method" there is a claim the tool's own edge
-    list contradicts."""
+    list contradicts.
+
+    `split` reaches `cluster()` and the `callgraph` comment together, and the
+    comment carries it whether or not the cut touched the row it is written on.
+    That is deliberate and it is the calibration rule rather than a nicety:
+    "mutually reachable" is a property of the graph the union walked, so a row
+    that kept the wording unchanged because no edge of its own was cut would be
+    describing a graph the reader has not been told about."""
     seeds = seed_groups(rows)
     if is_bios:
         for row in rows:
@@ -607,7 +717,7 @@ def group_rows(rows, repo=REPO, is_bios=False, min_size=4):
                               "The module is the grouping: the export is "
                               "per-module and the module name is the real "
                               "structural layer the BIOS has."))
-    clusters, stats = cluster(rows, repo, min_size)
+    clusters, stats = cluster(rows, repo, min_size, split)
     out = {}
     assigned = collections.defaultdict(list)
     for members in clusters.values():
@@ -629,6 +739,7 @@ def group_rows(rows, repo=REPO, is_bios=False, min_size=4):
             assigned[key].append(name)
     sizes = {name: sum(1 for v in assigned.values() if name in v)
              for name in {n for v in assigned.values() for n in v}}
+    cut_note = SPLIT_MODES[split]
     for row in rows:
         key = (row["scope"], norm_addr(row["addr"]))
         if key in seeds:
@@ -640,10 +751,10 @@ def group_rows(rows, repo=REPO, is_bios=False, min_size=4):
                         "One of %d mutually reachable functions in the "
                         "lcall/ljmp graph of the committed listings, within "
                         "one region only; a cross-region edge is never joined "
-                        "(see audit_call_targets.py). A connected component is "
-                        "not a subsystem: this says the call graph connects "
-                        "them, not that they do one job."
-                        % sizes[group],
+                        "(see audit_call_targets.py). %s A connected "
+                        "component is not a subsystem: this says the call graph "
+                        "connects them, not that they do one job."
+                        % (sizes[group], cut_note),
                         row.get("evidence", ""))
         elif key[0] == "common" and key[1] in stats.reached_only_by_bank:
             out[key] = ("ungrouped", "ungrouped",
@@ -767,7 +878,24 @@ def self_test():
     the figures a reader sees, because a `--report` that quietly stopped
     printing the proxy population would leave the tool correct and its
     accounting wrong again, which is the shape of the bug this pass exists to
-    fix."""
+    fix.
+
+    **The bank-select cut is pinned on the CONTRACTED graph, and the fixture for
+    it is at the end for a reason.** A cut only removes edges, so it cannot join
+    anything that was not already joined -- which means every fixture above
+    passes unchanged against a `cluster()` that ignored the split entirely, and
+    would pass just as well against the tempting wrong implementation: a
+    contraction, rewriting `caller -> trampoline -> <DPTR immediate>` into
+    `caller -> <DPTR immediate>`. A contraction cannot split anything (union-find
+    over a transitive closure is unchanged by contracting one of its own edges)
+    so on the committed tree it is a no-op that reads like a result. What makes
+    it worse than useless is the other direction: `bl51_trampolines.py` counts
+    29 annotated trampolines whose DPTR immediate names an address the other
+    bank also has, and a contraction turns each of those into a live bucket-B
+    edge -- counted as a cross-region ambiguity and then joined to the caller's
+    own-bank row anyway, on a function whose purpose is to reach the other one.
+    The only fixture that separates the two is one carrying that shape, with
+    the cut on."""
     failures = []
 
     def check(label, cond, detail=""):
@@ -777,6 +905,12 @@ def self_test():
     scratch = os.path.join(os.environ.get("TMPDIR", "/tmp"),
                            "group_functions_selftest")
     os.makedirs(scratch, exist_ok=True)
+    # `main()` reads the module global rather than taking it as an argument,
+    # and the --apply fixture below has to point it somewhere other than the
+    # committed CSVs. Without this declaration the assignment below would make
+    # a local that `main()` never sees, and the fixture would be asserting
+    # against the real tree while reading as though it were not.
+    global COMMITTED_SOURCES
 
     def asm(name, lines):
         path = os.path.join(scratch, name)
@@ -1370,6 +1504,280 @@ def self_test():
           "one, the two refusals above would return 0 and this would still "
           "pass -- which is why they are here as a pair)")
 
+    # --- the bank-select cut, on the contracted graph -------------------------
+    #
+    # The shape of the bridge above, routed through each bank's own trampoline,
+    # and carrying a DPTR immediate that is ABOVE THE BANK BASE and has a row in
+    # both banks. All three properties are load-bearing, and each one is
+    # load-bearing by being SAFE WITHOUT the cut, which is what makes the
+    # fixture useless if it is left out:
+    #
+    #   * a DPTR immediate BELOW the bank base can be contracted safely, because
+    #     the per-bank proxy already keeps the two banks apart;
+    #   * an immediate in only ONE bank can be contracted safely, because the
+    #     same-bank branch joins the one row that exists;
+    #   * an immediate that exists in BOTH images is the bucket-B ambiguity this
+    #     tool exists to refuse, and a contraction walks straight into it --
+    #     counting a cross-region edge and then joining the caller's own-bank
+    #     row anyway, on a trampoline whose entire purpose is to reach the
+    #     other one.
+    #
+    # The shape is not invented for the fixture:
+    # `docs/findings/group-split-at-the-bl51-trampoline.md` carries the count of
+    # annotated trampolines on the committed tree whose DPTR immediate also
+    # carries a row in the other bank, and the command that produced it.
+    DPTR_88F0 = "90 88 f0 mov      DPTR, #0x88f0"
+    STUB_1100 = "02 11 00 ljmp     0x1100"
+    STUB_1114 = "02 11 14 ljmp     0x1114"
+
+    def trampoline_row(scope, addr, name, jump):
+        # Two instructions on two lines, and NO `ret`: the rule is that the whole
+        # body is `mov DPTR,#imm16` and the tail jump, and a third instruction
+        # makes it not a trampoline. That is not pedantry about the fixture --
+        # it is the assertion that the rule reads the whole body, and a fixture
+        # that appended a `ret` would quietly stop testing that part.
+        return {"scope": scope, "addr": addr, "name": name,
+                "type": "forwarder",
+                "evidence": os.path.relpath(
+                    asm("cut_%s_%s.asm" % (scope, addr.lower()),
+                        ["%s     %s" % (addr, DPTR_88F0),
+                         "%04X     %s" % (int(addr, 16) + 3, jump)]),
+                    REPO)}
+
+    def cut_caller_row(scope, addr, name, target):
+        # The bytes have to be the split form `12 hi lo`, not the address: the
+        # listing parser reads the byte column and the operand column
+        # separately, and an address in the byte column is a line it does not
+        # match at all -- so a fixture written that way produces a graph with
+        # no edges and every case below passes for the wrong reason.
+        return {"scope": scope, "addr": addr, "name": name, "type": "logic",
+                "evidence": os.path.relpath(
+                    asm("cut_caller_%s_%s.asm" % (scope, addr.lower()),
+                        ["%s     12 %02x %02x lcall    0x%s"
+                         % (addr, int(target, 16) >> 8, int(target, 16) & 0xFF,
+                            target), RET]),
+                    REPO)}
+
+    cut = [
+        cut_caller_row("bank0", "8000", "b0_cut_a", "9000"),
+        cut_caller_row("bank0", "8100", "b0_cut_b", "9000"),
+        cut_caller_row("bank1", "8000", "b1_cut_a", "9100"),
+        cut_caller_row("bank1", "8100", "b1_cut_b", "9100"),
+        trampoline_row("bank0", "9000", "b0_trampoline", STUB_1100),
+        trampoline_row("bank1", "9100", "b1_trampoline", STUB_1114),
+        # The address both DPTR immediates name, in BOTH images. Nothing
+        # reachable here after the cut: which is the point, because a
+        # contraction would join each trampoline to the same-bank row here and
+        # count a cross-region edge doing it.
+    ] + [
+        {"scope": scope, "addr": "88F0", "name": "b0_target" if scope == "bank0"
+         else "b1_target", "type": "logic",
+         "evidence": os.path.relpath(
+             asm("cut_target_%s.asm" % scope, [RET]), REPO)}
+        for scope in ("bank0", "bank1")
+    ] + [
+        # The four BL51 stubs the shape rule is pinned to. All four rather than
+        # only the one bank1 jumps to, because `stub_addresses()` refuses a
+        # PARTIAL set, and a fixture with one stub in it would be asserting a
+        # rule the EC's own annotations cannot satisfy.
+        {"scope": "common", "addr": addr, "name": "bl51_bank_select_%d" % n,
+         "type": "gate", "evidence": os.path.relpath(
+             asm("cut_stub_%s.asm" % addr, [RET]), REPO)}
+        for n, addr in enumerate(("1100", "1114", "1128", "113C"))
+    ]
+    grouped9, stats9 = group_rows(cut, repo=REPO, min_size=2,
+                                  split="trampoline")
+    check("the cut does not join two banks that share a trampoline target",
+          grouped9[("bank0", "8000")][0] != grouped9[("bank1", "8000")][0],
+          "(both banks' callers reach 0x88F0 only by loading it into DPTR and "
+          "tail-jumping a BL51 stub; got bank0 %r and bank1 %r"
+          % (grouped9[("bank0", "8000")][0], grouped9[("bank1", "8000")][0]))
+    # **The assertion that separates dropping from contracting.** A contraction
+    # rewrites the trampoline's tail jump to point at its own DPTR immediate, so
+    # `trampoline -> 0x88F0` becomes a live bucket-B edge: the target exists in
+    # both images, so `cross_region` counts it, and the same-bank branch then
+    # joins the caller's own `bank0` row anyway. Dropping the edge walks into
+    # neither. This is checked from both ends -- the count and the component --
+    # because a contraction that only raised the count, or only moved the group,
+    # would pass half of it.
+    check("the cut does not walk into the cross-region ambiguity the DPTR "
+          "immediate names",
+          stats9.cross_region == 0,
+          "(0x88F0 has a row in both banks, so a contraction would count this "
+          "as a cross-region edge and then join the same-bank row anyway; got "
+          "%r)" % (stats9.cross_region,))
+    check("a caller is not joined to the address its trampoline loads into "
+          "DPTR",
+          grouped9[("bank0", "8000")][0] != grouped9[("bank0", "88F0")][0],
+          "(the contraction failure mode from the grouping side: with the "
+          "trampoline's edge dropped there is no path from a caller to 0x88F0, "
+          "so the row cannot be sharing a component with one. Got bank0 0x8000 "
+          "%r and bank0 0x88F0 %r"
+          % (grouped9[("bank0", "8000")][0], grouped9[("bank0", "88F0")][0]))
+    check("the cut does not join two banks that share a trampoline target",
+          grouped9[("bank0", "8000")][0] != grouped9[("bank1", "8000")][0],
+          "(both banks' callers reach 0x88F0 only by loading it into DPTR and "
+          "tail-jumping a BL51 stub; got bank0 %r and bank1 %r)"
+          % (grouped9[("bank0", "8000")][0], grouped9[("bank1", "8000")][0]))
+    # The cut drops the trampoline's edge OUT and keeps the edges into it, so
+    # a bank's callers stay connected to their own trampoline. An
+    # implementation that dropped the whole row's edges would isolate the
+    # trampoline and take these two with it.
+    check("a trampoline keeps the callers that reach it",
+          grouped9[("bank0", "8000")][0]
+          == grouped9[("bank0", "9000")][0]
+          == grouped9[("bank0", "8100")][0],
+          "(got bank0 0x8000 %r, trampoline 0x9000 %r, bank0 0x8100 %r; the cut "
+          "is at the stub, not at the caller)"
+          % (grouped9[("bank0", "8000")][0], grouped9[("bank0", "9000")][0],
+             grouped9[("bank0", "8100")][0]))
+    check("a bank1 trampoline keeps its own callers too",
+          grouped9[("bank1", "8000")][0]
+          == grouped9[("bank1", "9100")][0]
+          == grouped9[("bank1", "8100")][0])
+    # ... and the accounting says which rule removed the edges. A cut that did
+    # not report itself would show up as the cross-region and proxy totals
+    # quietly changing with nothing to account for the difference -- which is
+    # the conflation this file has already had once, one edit later.
+    check("the cut counts its own edges apart from the banking rule's",
+          stats9.trampoline_edges == 2,
+          "(got %r cut by the trampoline boundary; each trampoline listing "
+          "carries exactly one absolute call, its tail jump)"
+          % (stats9.trampoline_edges,))
+    out_cut = io.StringIO()
+    with contextlib.redirect_stdout(out_cut):
+        report(grouped9, stats9, cut, repo=REPO, split="trampoline")
+    printed_cut = out_cut.getvalue()
+    check("the report names the trampoline cut as its own population",
+          "bank-select trampoline boundary, by the split mode and not by the "
+          "banking rule: 2" in printed_cut,
+          "(a report that let the proxy line absorb these would be attributing "
+          "this tool's own edit to the rule that exists to refuse a join; "
+          "looked for that line in:\n%s)" % printed_cut)
+    check("the report still counts the cross-region population",
+          "cross-region edges counted, not joined: 0" in printed_cut,
+          "(the cut removes edges; it must not be able to introduce one, and "
+          "the count is how a reader would see it if it did)")
+
+    # The same graph with the cut off, so the fixture is a pair and the reader
+    # can see what the cut is doing rather than only what it refuses. The two
+    # banks stay apart here too -- the per-bank proxy and the same-bank rule are
+    # doing that work, not the cut -- and the difference is that each bank's
+    # trampoline reaches its stub's proxied endpoint and, by walking into the
+    # bucket-B ambiguity at 0x88F0, joins its own bank's row there.
+    grouped10, stats10 = group_rows(cut, repo=REPO, min_size=2, split="none")
+    check("without the cut the trampoline edge is walked and counted",
+          stats10.trampoline_edges == 0 and stats10.proxy_edges == 2,
+          "(got %r cut and %r proxied; the uncut mode must leave the banking "
+          "rule accounting for both tail jumps)"
+          % (stats10.trampoline_edges, stats10.proxy_edges))
+    check("the two banks are kept apart with the cut off as well",
+          grouped10[("bank0", "8000")][0] != grouped10[("bank1", "8000")][0],
+          "(the per-bank proxy and the same-bank assumption, not the cut, are "
+          "what stop this join -- so the cut is not being credited with the "
+          "banking rule's guarantee)")
+    # **The discriminator, on the uncut graph.** `mov DPTR,#imm16` carries an
+    # address the call graph cannot use: `listing_calls()` reads `lcall`/`ljmp`
+    # operands, and a DPTR immediate is neither, so nothing points at 0x88F0
+    # from either bank's trampoline. A contraction rewrites the tail jump to
+    # point at that immediate instead of at the stub, which manufactures
+    # exactly that edge -- a bucket-B one, since 0x88F0 is in both images, and
+    # then joined to the caller's own-bank row. This is the assertion a
+    # contraction cannot pass, and one a `cluster()` that ignored the split
+    # entirely also passes: the cut and the no-op agree about the drop, and
+    # only both about the contraction being refused. `mov DPTR,#0x88f0` is not an
+    # edge: `listing_calls()` reads `lcall`/`ljmp` operands, and a DPTR
+    # immediate is neither, so the address 0x88F0 has no edge pointing at it
+    # from either bank's trampoline. A contraction rewrites the tail jump to
+    # point at that immediate instead of at the stub, which manufactures
+    # exactly that edge -- a bucket-B one, since 0x88F0 is in both images, and
+    # then joined to the caller's own-bank row. This is the assertion a
+    # contraction cannot pass and a `cluster()` that ignored the split
+    # entirely would: the cut and the no-op agree about the drop, and only
+    # both about the contraction being refused.
+    check("the DPTR immediate is not read as an edge target",
+          stats10.cross_region == 0
+          and grouped10[("bank0", "8000")][0]
+          != grouped10[("bank0", "88F0")][0],
+          "(got %r cross-region edge(s), and bank0 0x8000 %r against bank0 "
+          "0x88F0 %r; a contraction rewrites the tail jump to the DPTR "
+          "immediate and gets 2 and the same group)"
+          % (stats10.cross_region, grouped10[("bank0", "8000")][0],
+             grouped10[("bank0", "88F0")][0]))
+
+    # A mode outside the closed list is refused rather than read as "no cut",
+    # which is the failure a `--split` typo would otherwise make silently.
+    try:
+        cluster(cut, repo=REPO, min_size=2, split="trampolines")
+    except ValueError as exc:
+        check("a split mode outside the closed list is refused", True)
+    else:
+        check("a split mode outside the closed list is refused", False,
+              "(an unknown mode read as no cut would leave the committed file "
+              "and --check disagreeing with no word from either)")
+
+    # The comment, on both modes. This is the calibration requirement and not
+    # cosmetics: "one of N mutually reachable functions" is false of the
+    # firmware once the graph has been edited, and a row written under one mode
+    # and read under the other is the reader who is misled.
+    cut_comment = grouped9[("bank0", "8000")][2]
+    uncut_comment = grouped10[("bank0", "8000")][2]
+    check("a callgraph comment names the cut the row was written under",
+          "cut at the BL51 bank-select trampoline boundary" in cut_comment,
+          "(got %r)" % (cut_comment,))
+    check("the comment does not claim a cut in the uncut mode",
+          "No edge is cut" in uncut_comment
+          and "bank-select trampoline boundary" not in uncut_comment,
+          "(got %r)" % (uncut_comment,))
+    check("both modes say what mutual reachability is a property of",
+          "property of the graph the union walked" in cut_comment
+          and "committed listing graph itself" in uncut_comment,
+          "(`mutually reachable' is a property of the graph the union walked, "
+          "not of a set of rows and not of the firmware)")
+    check("the size in the comment is the component the cut produced",
+          "One of 3 mutually reachable functions" in cut_comment,
+          "(got %r; the cut leaves bank0's two callers and its trampoline as "
+          "one component of three, and the comment has to say three rather "
+          "than the six an uncut graph would give)" % (cut_comment,))
+
+    # --apply refuses the mode the committed file was not written in, before it
+    # opens anything. The scratch pair is what it is pointed at rather than the
+    # committed CSVs, so a refusal that regressed to writing first would damage
+    # a temporary file instead of the tree -- which is the only safe way to
+    # test the ordering of a refusal against a write.
+    guarded_ann = os.path.join(scratch, "guarded_annotations.csv")
+    guarded_groups = os.path.join(scratch, "guarded_groups.csv")
+    with open(guarded_groups, "w", newline="") as f:
+        writer = csv.DictWriter(
+            f, fieldnames=["scope", "addr", "group", "group_basis", "comment",
+                           "evidence"], lineterminator="\n")
+        writer.writeheader()
+        writer.writerow({"scope": "bank0", "addr": "8000", "group": "sentinel",
+                         "group_basis": "ungrouped", "comment": "",
+                         "evidence": ""})
+    before_bytes = open(guarded_groups, "rb").read()
+    _saved_sources = COMMITTED_SOURCES
+    COMMITTED_SOURCES = ((guarded_ann, guarded_groups, False),)
+    err = io.StringIO()
+    try:
+        with contextlib.redirect_stderr(err):
+            rc = main(["--apply", "--split=none"])
+    finally:
+        COMMITTED_SOURCES = _saved_sources
+    check("--apply refuses the mode the committed file was not written in",
+          rc == 2,
+          "(got exit %r; the file it would write is one --check then calls "
+          "drift on every row the cut moved)" % (rc,))
+    check("the refusal happens before anything is written",
+          open(guarded_groups, "rb").read() == before_bytes,
+          "(a refusal that runs after the write has already replaced the file, "
+          "and the message is the only thing saying so)")
+    check("the refusal names the basis the committed file carries",
+          "group_basis=callgraph" in err.getvalue(),
+          "(a refusal that does not say which mode the file is in leaves the "
+          "reader to work out which --check they should run; got %r)"
+          % (err.getvalue(),))
+
     if failures:
         for f in failures:
             print("  FAIL  %s" % f)
@@ -1392,11 +1800,112 @@ def bases_of(grouped):
     return out
 
 
-def report(grouped, stats, rows, repo=REPO, is_bios=False):
+def component_sizes(rows, repo=REPO, is_bios=False, min_size=4,
+                   split=DEFAULT_SPLIT):
+    """The component sizes the split is measured on, sorted largest first.
+
+    **Straight from `cluster()`'s own components, not from the row comments.**
+    The comment carries a size because a reader of one CSV row has no report
+    beside it, and re-reading it here would take the number from the thing being
+    measured to report on the thing being measured.
+
+    Components below `min_size` are excluded, because `group_rows()` never
+    assigns one and a table counting them would report a population no reader
+    can find in the file.
+
+    **These are not the numbers `report()` prints beside them, and the gap is
+    real rather than a discrepancy.** A component holds every member the union
+    found, while a `callgraph` group holds the members no seed claimed -- a
+    seeded row inside a 505-row component is written under its `type`, which is
+    `group_rows()`'s precedence rule and not a hole in the component. So the
+    largest component is larger than the largest `callgraph` group on both
+    sides, and a reader who expects the two columns to agree is looking for a
+    bug that is not there."""
+    clusters, _stats = cluster(rows, repo, min_size, split)
+    return sorted((len(m) for m in clusters.values() if len(m) >= min_size),
+                  reverse=True)
+
+
+def _median(sizes):
+    if not sizes:
+        return 0
+    n = len(sizes)
+    return sizes[n // 2] if n % 2 else (sizes[n // 2 - 1] + sizes[n // 2]) // 2
+
+
+def split_table(rows, repo=REPO, is_bios=False, min_size=4, rank=5,
+                annotations=None):
+    """Component sizes with the cut and without it, side by side.
+
+    **Keyed by rank, never by component name.** A cut renames: a component that
+    splits gets new names, because `component_name()` takes the lowest address
+    in the dominant scope and the fragments do not share one. A table keyed by
+    name would pair an unsplit component with whichever split component happened
+    to inherit its name, and the reader would read a correspondence that does
+    not hold. Rank is the only key that is honest here, and the totals below are
+    the only other things that mean the same thing on both sides.
+
+    The largest component is printed even when it does not move, because "the
+    cut did not touch the biggest blob" is the finding, and a table of only the
+    components that moved would not say it.
+    """
+    sides = {}
+    for mode in ("none", DEFAULT_SPLIT):
+        sizes = component_sizes(rows, repo, is_bios, min_size, mode)
+        grouped, _stats = group_rows(rows, repo, is_bios, min_size, mode)
+        sides[mode] = (sizes,
+                       sum(1 for v in grouped.values() if v[1] == "callgraph"))
+    before, before_rows = sides["none"]
+    after, after_rows = sides[DEFAULT_SPLIT]
+    where = (os.path.relpath(annotations, repo) if annotations
+             else "this component")
+    if not before and not after:
+        # Inertness is measured rather than reasoned from "the BIOS is not
+        # 8051": the shape rule is run over these rows and matches nothing, so
+        # there is no comparison to print and saying so is the finding.
+        print("    no component of %s reaches min_size=%d under either mode, "
+              "and no edge matched the bank-select trampoline shape, so the "
+              "split is inert here. That is the measurement, not an assumption "
+              "about what this firmware is." % (where, min_size))
+        return
+    print("    components of %s at or above min_size=%d: uncut / cut"
+          % (where, min_size))
+    print("      %-6s %8s %8s" % ("rank", "uncut", "cut"))
+    for i in range(min(rank, max(len(before), len(after)))):
+        b = before[i] if i < len(before) else None
+        a = after[i] if i < len(after) else None
+        print("      %-6d %8s %8s" % (i + 1, "-" if b is None else b,
+                                      "-" if a is None else a))
+
+    def summarise(sizes, callgraph_rows):
+        return ("%d component(s), largest %d, median %d, %d row(s) in all, "
+                "%d row(s) carrying callgraph"
+                % (len(sizes), sizes[0] if sizes else 0, _median(sizes),
+                   sum(sizes), callgraph_rows))
+    print("      uncut: %s" % summarise(before, before_rows))
+    print("      cut:   %s" % summarise(after, after_rows))
+    if before and after:
+        print("      the largest component goes %d -> %d, so the cut is a "
+              "partial cause of these components and not the cause of that one"
+              % (before[0], after[0]))
+
+
+def report(grouped, stats, rows, repo=REPO, is_bios=False,
+           split=DEFAULT_SPLIT):
     counts = collections.Counter(v[0] for v in grouped.values())
     bases = collections.Counter(v[1] for v in grouped.values())
     buckets = bucket_populations(rows, repo)
     print("  %d function(s), %d group(s)" % (len(rows), len(counts)))
+    # The mode, and -- when the mode is `trampoline` and nothing on this
+    # component matched the shape -- the measurement that it did nothing here.
+    # Printing the clause unconditionally would claim a cut on a component
+    # where the shape rule matched nothing, which is the BIOS's case and is
+    # measured rather than assumed: 0 `callgraph` rows, 0 matching listings.
+    inert = (split == "trampoline" and not stats.trampoline_edges)
+    print("    split mode: %s. %s%s"
+          % (split, SPLIT_MODES[split],
+             " Inert on this component: no listing matched the shape."
+             if inert else ""))
     for group, n in counts.most_common(20):
         print("    %-34s %4d  (%s)" % (group, n, next(
             v[1] for v in grouped.values() if v[0] == group)))
@@ -1484,6 +1993,21 @@ def report(grouped, stats, rows, repo=REPO, is_bios=False):
               "method found these and its own banking rule then cut the edges, "
               "which is a different reason from not being found."
               % len(stats.reached_only_by_bank))
+    # The third discard population, printed separately from the two above
+    # rather than netted into either. Most of these edges ARE proxy edges, so
+    # folding them into the line above would be arithmetically invisible and
+    # evidentially wrong: the proxy line's claim is about what the BANKING rule
+    # discarded, and this is what the split mode discarded. A report whose
+    # `proxy_edges` had quietly absorbed this tool's own edit would be
+    # attributing the cut to the rule that exists to refuse a join -- which is
+    # the same misattribution `proxy_edges` was broken out of `cross_region`
+    # to stop, one edit later and in the other direction.
+    if stats.trampoline_edges:
+        print("    edges cut at the bank-select trampoline boundary, by the "
+              "split mode and not by the banking rule: %d. These are counted "
+              "here as well as out of the proxy population above, because they "
+              "are edges removed from the graph rather than edges the banking "
+              "rule declined to join." % stats.trampoline_edges)
     ungrouped = counts.get("ungrouped", 0)
     # Split by the reason the row carries, so the two populations sum to the
     # headline rather than one of them being an unexplained remainder. These
@@ -1503,7 +2027,7 @@ def report(grouped, stats, rows, repo=REPO, is_bios=False):
              stats.proxy_edges))
 
 
-def drift_for(rows, grows, repo=REPO, is_bios=False):
+def drift_for(rows, grows, repo=REPO, is_bios=False, split=DEFAULT_SPLIT):
     """The two keyed maps `check()`'s drift half compares: what the file says,
     and what the rule says now.
 
@@ -1519,7 +2043,12 @@ def drift_for(rows, grows, repo=REPO, is_bios=False):
     That default is what `--apply` writes with, so it is what a check has to
     agree with; a check run at some other cluster threshold invents
     disagreements that are not drift at all, and a gate that invents failures
-    is a gate people route around.
+    is a gate people route around. `split` is threaded for the same reason and
+    with the same consequence: a check run in a mode the committed file was not
+    written in reports drift on every row the cut moved, which on this tree is
+    49 of them. That is the check working. `--check --split=none` is kept so a
+    pre-split checkout can be reproduced, and on a post-split file it is
+    expected to be red.
 
     A committed row with no annotated function at its key gets an empty name,
     so its refusal reads `bank0 8000 ()`: there is no annotation row to name,
@@ -1536,11 +2065,11 @@ def drift_for(rows, grows, repo=REPO, is_bios=False):
         committed[key] = ((grow.get("group") or "").strip(),
                           (grow.get("group_basis") or "").strip(),
                           names.get(key, ""))
-    computed, _stats = group_rows(rows, repo, is_bios)
+    computed, _stats = group_rows(rows, repo, is_bios, split=split)
     return committed, computed
 
 
-def check(repo=REPO, sources=None):
+def check(repo=REPO, sources=None, split=DEFAULT_SPLIT):
     """Refuse a group file that has drifted from the rule, breaks the
     vocabulary, leaves a function ungrouped, or names one address in two
     banks.
@@ -1563,7 +2092,7 @@ def check(repo=REPO, sources=None):
         # still says what the rule would say, so a `group` cell hand-edited to
         # any other in-vocabulary value passed all of them and was reverted by
         # `--apply` in silence.
-        committed, computed = drift_for(rows, grows, repo, is_bios)
+        committed, computed = drift_for(rows, grows, repo, is_bios, split)
         problems.extend(drift_problems(committed, computed,
                                        os.path.relpath(groups_path, repo)))
         for name, why in misnamed_callgraph_groups(grows):
@@ -1629,20 +2158,44 @@ def main(argv=None):
                          "one address in two banks")
     ap.add_argument("--self-test", action="store_true",
                     help="pin the no-cross-bank rule on a fixture graph with "
-                         "a known cross-region edge")
+                         "a known cross-region edge, and the bank-select cut "
+                         "on a fixture graph whose only join is a trampoline")
+    ap.add_argument("--split", choices=sorted(SPLIT_MODES), default=DEFAULT_SPLIT,
+                    help="which edges the union never sees. %r is the default "
+                         "and not an opt-in flag: the committed file is written "
+                         "in it and agent-gates.sh runs --check with no "
+                         "arguments. --apply refuses %r, because the file it "
+                         "would write is one --check then calls drift on every "
+                         "row the cut moved; --check %r stays available to "
+                         "reproduce a pre-split checkout and is expected to be "
+                         "red against a post-split one"
+                         % (DEFAULT_SPLIT, "none", "none"))
     args = ap.parse_args(argv)
     if args.self_test:
         return self_test()
     if args.check:
-        return check()
+        return check(split=args.split)
+    if args.apply and args.split != DEFAULT_SPLIT:
+        print("  refusing --apply --split=%s. The committed group files carry "
+              "`group_basis=callgraph`, which the split mode produces and the "
+              "other does not, so the file this would write is one --check "
+              "calls drift on every row the cut moved. --report --split=%s is "
+              "how to see that grouping without writing it."
+              % (args.split, args.split), file=sys.stderr)
+        return 2
     for annotations, groups_path, is_bios in COMMITTED_SOURCES:
         rows = read_csv(annotations)
-        grouped, stats = group_rows(rows, REPO, is_bios)
+        grouped, stats = group_rows(rows, REPO, is_bios, split=args.split)
         if args.apply:
             write_groups(groups_path, rows, grouped)
         print("%s -- %s" % (os.path.relpath(groups_path, REPO),
                             "wrote" if args.apply else "proposed"))
-        report(grouped, stats, rows, REPO, is_bios)
+        report(grouped, stats, rows, REPO, is_bios, args.split)
+        # The before/after table runs on both `--split` values rather than only
+        # on the default, because the comparison is the whole reason the mode
+        # exists and `--report --split=none` is the documented way to look at
+        # the other side of it.
+        split_table(rows, REPO, is_bios, annotations=annotations)
     return 0
 
 
