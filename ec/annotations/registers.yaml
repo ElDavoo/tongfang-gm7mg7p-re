@@ -5480,20 +5480,22 @@ registers:
     static_refs_pd_image: [0, 0]
     status: present-untested
     note: >
-      16-bit, 0x04AE low, 0x04AF high. An up-counter the 0x0490 gate arms and
-      clears, and **no unit is claimed**: 0x3C is 60 as arithmetic on the
-      committed decompiles, and nothing committed establishes how often
-      bank1 0xBFBB=FUN_CODE_bfbb is entered, so this is not named in seconds
-      or minutes. Three committed routines store 0x0000 to the word and one
-      increments it, all in the bank1 listings: 0xB841
-      =arm_05f2_countdown_0575_clears_0490 clears bits 0, 1, 2 and 6 of
-      0x0490 and stores 0x0000 to 0x04AE in the same breath
+      16-bit, 0x04AE low, 0x04AF high. An up-counter, and **no unit is
+      claimed**: 0x3C is 60 as arithmetic on the committed decompiles, and
+      nothing committed establishes how often bank1 0xBFBB=FUN_CODE_bfbb is
+      entered, so this is not named in seconds or minutes. 0xB841,
+      =arm_05f2_countdown_0575_clears_0490, 0xBFD9=zero_04ae_and_04be and
+      0xBFBB store 0x0000 to the word, and 0xBFBB increments it, all in the
+      bank1 listings. 0xB841 clears bits 0, 1, 2 and 6 of 0x0490 and stores
+      0x0000 to 0x04AE in the same breath
       (ec/decompiled/bank1/B841.asm:25-34) -- **bit 1 is the gate
       charge_target_update is reached on**, bank0 0xB141 doing `jb 0xe1,
-      0xb158` on 0x0490 (ec/decompiled/bank0/B12C.asm); 0xB8E1
-      =arm_05f4_countdown_0576_clears_0490 is the same shape on bit 5 for
-      0x04BE; 0xBFD9=zero_04ae_and_04be is the same two stores and nothing
-      else (ec/decompiled/bank1/BFD9.asm:7-13). 0xBFBB counts it once per
+      0xb158` on 0x0490 (ec/decompiled/bank0/B12C.asm); 0xBFD9 is the same two
+      stores and nothing else, and reads no 0x0490 byte
+      (ec/decompiled/bank1/BFD9.asm:7-13); 0xBFBB zeroes it on the path where
+      0x0490 bit 0 is clear (ec/decompiled/bank1/BFBB.c:77-81), a different
+      bit. 0xB8E1=arm_05f4_countdown_0576_clears_0490 is the same shape on bit
+      5, for 0x04BE rather than this word. 0xBFBB counts it once per
       0x3C ticks of the byte in front of it, 0x04AD, under 0x0490 bit 3,
       carrying into the high byte, then compares it against 0x057B * 0x3C --
       0x057C when 0x0472 bit 5 is set, 0x057D on the second path -- and sets

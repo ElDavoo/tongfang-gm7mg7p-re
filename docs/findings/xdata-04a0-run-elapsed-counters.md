@@ -1,4 +1,4 @@
-# `0x04A0`/`0x04A1` is a mirror of `0x0524`, and `0x04AE`/`0x04AF` and `0x04BE`/`0x04BF` are up-counters the `0x0490` gate arms and clears (issue #732)
+# `0x04A0`/`0x04A1` is a mirror of `0x0524`, and `0x04AE`/`0x04AF` and `0x04BE`/`0x04BF` are up-counters (issue #732)
 
 **Nothing here was observed on hardware.** No register was read, written or
 read back, no site was seen run, no capture was taken. This is a static
@@ -112,10 +112,16 @@ its `FUN_CODE_c0a8()` call at `BFBB.c:74`. The census's `functions` column
 agrees and is narrower than the whole page: `0x04AD` and `0x04BD` each have
 exactly one touching function, `BFBB` and `C0A8` respectively.
 
-`BFBB` also clears both words on a third path — `BFBB.c:77-81` returns
-immediately when `0x0490` bit 0 is set, and otherwise stores zero to `0x04AE`
-and `0x04BE` — so **three** committed routines zero these words and two of them
-increment one. What the two kinds of site share is the `0x0490` byte.
+`BFBB` also clears both words, on the path where `0x0490` bit 0 is clear —
+`BFBB.c:77-81` returns immediately when that bit is set, and otherwise stores
+zero to `0x04AE` and `0x04BE`. So `B841`, `B8E1`, `BFD9` and `BFBB` are the
+committed routines that store `0x0000` to these words, and `BFBB` and `C0A8`
+are the ones that increment one. **The `0x0490` byte is not what every site
+shares**: `BFD9` is the two stores and a `ret` and reads no `0x0490` byte, and
+neither does `C0A8`, whose XDATA is `0x0472`, `0x0499`, `0x04BD`-`0x04BF` and
+`0x0579`-`0x057C`. What the zeroing sites that do read it share is narrower
+still — `BFBB` zeroes on its bit-0-clear path, a different bit from the two
+`arm_*` routines.
 
 ## 3. What the counters are compared against
 
@@ -123,15 +129,16 @@ Both routines then compare the word against a byte times `0x3C`. From
 `BFBB.c:45-52`, the multiplier is `0x057B`, or `0x057C` when `0x0472` bit 5 is
 set, and `BFBB.c:59-61` repeats it with `0x057D` on the second path;
 `C0A8.c:44-45` is the same comparison with `0x057B`/`0x057C`. The result lands
-in bits of a flag byte — `0x0494` at `BFBB.c:63,69` and `0x049C` at
-`C0A8.c:47`, both `& 0xf3 | param_2` with `param_2` being 4 or 8.
+in bits of a flag byte — `0x0494` cleared at `BFBB.c:63` and set with
+`& 0xf3 | param_2` at `BFBB.c:69`, and `0x049C` set the same way at
+`C0A8.c:47`, with `param_2` being 4 or 8.
 
 So the committed decompiles establish: an up-counter, counted once per `0x3C`
 ticks of the byte in front of it, compared against a byte times `0x3C`, zeroed
-when the `0x0490` gate bits clear, and setting bits in `0x0494`/`0x049C` when
-the comparison goes the way the routine expects. `0x3C == 60` is arithmetic on
-the committed `.c`; **no unit is claimed**, because nothing committed
-establishes how often `BFBB` or `C0A8` is entered — see §7.
+along the paths §2 names, and setting bits in `0x0494`/`0x049C` when the
+comparison goes the way the routine expects. `0x3C == 60` is arithmetic on the
+committed `.c`; **no unit is claimed**, because nothing committed establishes
+how often `BFBB` or `C0A8` is entered — see §7.
 
 ## 4. `0x04A0`/`0x04A1` is a mirror of `0x0524`/`0x0525`
 
@@ -231,9 +238,13 @@ the census's. `ec/annotations/xdata-registers.csv` gives `0x04AF` 11 references
   the physical machine**: capture `0x04AE`/`0x04AF` against a wall clock across
   a charge and divide.
 - **Who sets `0x0490` bits 1 and 5.** This file reads them being cleared and
-  says nothing about the setting, which is what puts `0xB158` on the path at
-  all. "Not found by this method" is the honest wording for a set-side search
-  that has not been run, not "nothing sets them".
+  does not establish what sets them. Each has a candidate in the tree rather
+  than an open search: `bank1` `0xB784` sets bit 1 with `& 0xeb | 2` and
+  `0xB80A` `arm_05f5_countdown_0490_bit5` sets bit 5 with `& 0xbf | 0x20`, each
+  after its own countdown reaches zero. Neither is shown here to be what puts
+  `0xB158` on the path — that is a separate claim, and what these two establish
+  is only that a setter exists. "Not found by this method" remains the honest
+  wording for anything beyond them, not "nothing sets them".
 - **The `+0x10` column's extent.** §5 establishes the three `+0x10`
   correspondences the three entries' own functions show and no more. Whether the
   rest of the run repeats the shape is open, and `0x0490` has no

@@ -4,9 +4,9 @@ they have to keep.
 
 `docs/findings/xdata-04a0-run-elapsed-counters.md` reads `0x04A0`/`0x04A1` as a
 16-bit mirror of `0x0524`/`0x0525`, reads `0x04AE`/`0x04AF` and
-`0x04BE`/`0x04BF` as up-counters that the `0x0490` gate arms and clears, and
-reports that issue #732's own premise -- "no committed routine has been read
-setting them non-zero" -- does not survive the check the issue asked for.
+`0x04BE`/`0x04BF` as up-counters, and reports that issue #732's own premise --
+"no committed routine has been read setting them non-zero" -- does not survive
+the check the issue asked for.
 This file pins the bytes that reading stands on, and the two sentences each
 `registers.yaml` note has to carry.
 
