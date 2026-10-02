@@ -57,7 +57,7 @@ cannot produce.
 is two, not one.
 
 `python3 ec/tools/firmware_regions.py --strings 0x28000` prints 37 printable
-runs in the upper half of the block. All but one of them read as USB-PD
+runs, spread from `0x2A798` to `0x2F7AD`. All but one of them read as USB-PD
 protocol state-machine messages rather than compiler strings:
 
 ```
@@ -73,9 +73,10 @@ Three measurements separate it from the `0x20000` image beside it:
   `0x20160`/`0x20170` — one is `"(null)`, and four (`MNOx {`, `X@jL@fBB`,
   `P@n-@r.@`, `@.-PCIX`) are code decoding as ASCII by accident. The one
   exception among the 37 is at `0x2F7AD`, `2""""""""""`: a linear decode of
-  the bytes gives an `ljmp` at `0x2F7AB` whose high target byte is that `32`,
-  and the ten `0x22` after it are `ret` instructions, so it is a stub before
-  the erased tail and not a string. Several of the rest open with the
+  the three bytes `02 f7 32` gives `ljmp 0xf732` — `0xf7` is the high target
+  byte and that `32` the low one — and the ten `0x22` after it are `ret`
+  instructions, so it is a stub before the erased tail and not a string.
+  Several of the rest open with the
   preceding routine's `0x22` `ret` rather than with the message's first
   character, which moves where a run starts without changing what it says.
 - **A different first byte.** The `0x20000` image opens `02 05 00` — an
@@ -266,12 +267,12 @@ so a human applies it with `git apply docs/ci/agent-gates-bank-map-score.patch`.
 Its placement is a measurement rather than a preference, and it is the part
 worth knowing before someone re-cuts it. The obvious shape is two entries in
 the `for tool in` list and one `gate` line, and neither is available: the
-`gate` list is seven lines, so it admits eight insertion points, and every
-patch in `docs/ci/` wanting one takes a three-line context window out of it.
-Cut a one-line patch at each of the eight, the way `git diff` cuts a real one,
-and try each against the committed set in both orders — **all eight collide
-with an existing patch and none composes**. The tool list is saturated the same
-way. So the patch adds one function at a free anchor and one call from
+`gate` list is saturated. Every patch in `docs/ci/` wanting a line takes a
+three-line context window out of it, so cut a one-line patch at each insertion
+point the way `git diff` cuts a real one, and try each against the committed
+set in both orders — **each one collides with an existing patch and none
+composes**. The tool list is saturated the same way. So the patch adds one
+function at a free anchor and one call from
 `check_ghidra_tooling`, whose own comment calls it the pipeline's self-tests and
 staleness checks and whose every arm is a `--check` plus a `--self-test` on a
 tool that needs no Ghidra.

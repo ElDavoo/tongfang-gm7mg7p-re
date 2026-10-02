@@ -15,12 +15,12 @@
 #
 # The placement is the interesting half of this and it is a measurement, not a
 # preference. The obvious shape -- two entries in the `for tool in` list and
-# one `gate` line -- is not available. The `gate` list is seven lines, so it
-# admits eight insertion points, and every patch in `docs/ci/` that wants one
-# takes a three-line context window out of it; cut a one-line patch at each of
-# the eight the way `git diff` cuts a real one and try each against the
-# committed set in both orders, and **all eight collide with an existing patch
-# and none composes**. The `for tool in` list is saturated the same way, which
+# one `gate` line -- is not available. The `gate` list is saturated: every
+# patch in `docs/ci/` that wants a line takes a three-line context window out
+# of it, so cut a one-line patch at every insertion point `git diff` would
+# offer one, the way a real patch is cut, and try each against the committed
+# set in both orders -- **each one collides with an existing patch and none
+# composes**. The `for tool in` list is saturated the same way, which
 # is what `ec/tools/check_gate_arm_coverage.py`'s own comment about its tool
 # list is warning about. `agent-gates-capture-claims.patch` carries the
 # original measurement at `d3304785`; this is the same probe re-run against
@@ -80,12 +80,12 @@ index 16c70c3..0000000 100755
  check_ghidra_tooling() {
    local rc=0 scratch tool
 +  # Called from here rather than given its own `gate` line, and that is
-+  # composition rather than tidiness. The `gate` list is seven lines, so it
-+  # admits eight insertion points, and every patch in `docs/ci/` that wants one
-+  # takes a three-line context window out of it; measured against the set as
-+  # committed, all eight collide with an existing patch and none composes.
-+  # `ec/tools/check_gate_arm_coverage.py`'s own comment makes the same point
-+  # about the `for tool in` list, which is saturated for the same reason.
++  # composition rather than tidiness. The `gate` list is saturated: every
++  # patch in `docs/ci/` that wants a line takes a three-line context window
++  # out of it; measured against the set as committed, every insertion point a
++  # one-line patch could take collides with an existing patch and none
++  # composes. `ec/tools/check_gate_arm_coverage.py`'s own comment makes the
++  # same point about the `for tool in` list, which is saturated the same way.
 +  # `agent-gates-findings-frozen.patch` is the precedent for the shape, and
 +  # this call sits above its `local rc=0` line rather than beside its own so
 +  # the two three-line windows stay disjoint.

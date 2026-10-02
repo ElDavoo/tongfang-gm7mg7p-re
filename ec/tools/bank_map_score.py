@@ -492,11 +492,29 @@ def self_test() -> int:
           all(t >= WINDOW_BASE for v in pop.values() for t in v) and
           all(len(set(v)) == len(v) for v in pop.values()),
           "")
+    # The two classes this tool scores on, asserted as the classes they claim
+    # to be rather than as the set they happen to hold: `verdict()` over a
+    # one-byte buffer is the oracle, and the list is the manual's, not the
+    # decoder's. The bytes either side of the unassigned run are in it too, so
+    # this is about where the MCS-51 map's hole is and not about how many values
+    # the list happens to carry.
+    bad_bytes = (0xFF, 0x06, 0x07, 0x16, 0x17)
     check("the five bad-landing byte values are exactly 0xFF plus the four the "
-          "MCS-51 map assigns to no instruction",
+          "MCS-51 map assigns to no instruction, and `verdict()` files each of "
+          "them into the class the name says",
           UNASSIGNED == {0x06, 0x07, 0x16, 0x17} and
-          verdict(d, WINDOW_BASE) == LANDS or True,
-          "")
+          [verdict(bytes([b]), 0) for b in bad_bytes] ==
+          [ERASED] + [UNASSIGNED_V] * 4,
+          "got " + repr([(hex(b), verdict(bytes([b]), 0)) for b in bad_bytes]))
+    check("the bytes either side of that hole are real instructions and land",
+          all(verdict(bytes([b]), 0) == LANDS
+              for b in (0x05, 0x15, 0x18, 0x22)),
+          "got " + repr([(hex(b), verdict(bytes([b]), 0))
+                        for b in (0x05, 0x15, 0x18, 0x22)]))
+    check("the window base itself is not one of the bad-landing bytes, so a "
+          "target of `0x8000` is a landing rather than a hole",
+          verdict(d, WINDOW_BASE) == LANDS,
+          "0x%05X is %s" % (WINDOW_BASE, verdict(d, WINDOW_BASE)))
 
     # A row that claims a stub but has no MOV DPTR must be dropped, not scored
     # against bytes read from the wrong place.
