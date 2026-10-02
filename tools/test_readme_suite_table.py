@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
-"""Offline checks for tools/README.md's suite table: the *set*, not the counts.
+"""Offline checks that every suite describes itself, and that tools/README.md does not.
 
 `run-tests.sh` discovers suites by `find`, so a suite is picked up by having
-its file committed and nothing else. The README table is the only place that
-inventory is written down, and a table with no check on it loses a row the
-quiet way: the suite keeps running, the counts it quotes keep printing, and
-nothing says the index is behind. Two rows were missing that way, and the
-thing that noticed was a person reading the tree rather than a run of it.
+its file committed and nothing else. What a suite stands in for is its module
+docstring: `python3 tools/list_suites.py` prints every suite with the first
+line of it.
 
-So this compares the discovered set against the table's first column, in both
-directions. A discovered suite with no row and a row for a suite that is gone
-are different mistakes and the failure names which. The counts are never
-compared: an expected count turns every added test into a failure, which is
-the wrong trade, and the same reason `run-tests.sh` reports its totals rather
-than asserting them.
+Until 2026-10-02 the description was a hand-written row in a table in
+tools/README.md, and this file held the table to the discovered set. Every
+pull request that added a suite added a row to that one table, so it was in
+about half of main's commits and was a merge conflict between any two branches
+whose rows landed next to each other. The rows mostly restated the docstrings.
+So the description now lives in the suite's own file, which no other branch
+edits. This checks that every discovered suite has a docstring, and that the
+README has not grown the table back.
 
-The descriptions are not checked. They are prose -- what a suite stands in
-for -- and the runner has no reason to know any of it, so those stay by hand.
+The counts are never compared: an expected count turns every added test into a
+failure, which is the wrong trade, and the same reason `run-tests.sh` reports
+its totals rather than asserting them.
 """
 import posixpath
 import re
@@ -68,21 +69,6 @@ def discover():
     return found
 
 
-def is_suite_row(path):
-    """Whether a table row is about a suite, as opposed to a plain tool.
-
-    The table documents checkers as well as suites -- `check_findings_frozen.py`
-    and `gen_findings_index.py` are rows here and have no `test_` suite of
-    their own, because a checker with no suite is exactly the thing this table
-    exists to make visible. So the "a row outlived its file" direction applies
-    to rows that name a `test_*.py`, and a row naming any other tool is
-    documentation the reverse check has no opinion about. Without this the
-    check is red on a correct table, which is how a gate teaches everyone to
-    ignore it.
-    """
-    return posixpath.basename(path).startswith('test_')
-
-
 def table_rows(text):
     """The backticked path in the first column of every row of the table.
 
@@ -103,19 +89,25 @@ def table_rows(text):
 
 
 def readme_rows():
-    """What tools/README.md's table lists right now, on disk."""
-    return table_rows(README.read_text())
+    """Suite rows tools/README.md carries right now, on disk -- none, by design."""
+    return [p for p in table_rows(README.read_text())
+            if posixpath.basename(p).startswith('test_')]
+
+
+def docstring_of(rel):
+    """The module docstring of one suite, or '' when it has none."""
+    import ast
+    source = (REPO / rel).read_text(encoding='utf-8')
+    return ast.get_docstring(ast.parse(source)) or ''
 
 
 def readme_lead(text):
-    """The prose above the table: everything before the first table line.
+    """The prose above the first table line, or the whole file when it has none.
 
-    Scoped deliberately. The counter this file used to carry lived in the lead,
-    so the lead is where a total is a mistake -- but a *row* is allowed to say
-    how many cases its own suite has, and `at 36 cases` or `twenty-four tests`
-    is documentation, not a claim about the repository. A whole-file rule would
-    go red on that and teach everyone to ignore this suite, which is the same
-    failure `is_suite_row` exists to avoid.
+    The counter this file used to carry lived in the lead, so the lead is where
+    a total is a mistake. A table further down may say how many cases its own
+    subject has, which is documentation rather than a claim about the
+    repository, so the scan stops at the first one.
     """
     for line in text.splitlines():
         if line.startswith('|'):
@@ -191,27 +183,25 @@ class SuiteTableTests(unittest.TestCase):
             'no test_*.py under the repository root. If this suite is the '
             'only one left, the discovery rule is wrong, not the tree.')
 
-    def test_every_discovered_suite_has_a_row(self):
-        missing = sorted(discover() - set(readme_rows()))
+    def test_every_discovered_suite_describes_itself(self):
+        bare = sorted(rel for rel in discover() if not docstring_of(rel).strip())
         self.assertFalse(
-            missing,
-            f'tools/README.md lists no row for {len(missing)} discovered '
-            f'suite(s):\n  ' + '\n  '.join(missing) +
-            '\nThe runner picks a new suite up silently by find. The row is '
-            'the one step it cannot do, and the description beside it -- '
-            'what the suite stands in for -- is prose it has no reason to '
-            'know. Add both.')
+            bare,
+            f'{len(bare)} discovered suite(s) have no module docstring:\n  ' +
+            '\n  '.join(bare) +
+            '\nThe docstring is where a suite says what it stands in for; '
+            '`python3 tools/list_suites.py` is how a reader finds it. Write one '
+            'at the top of the file.')
 
-    def test_every_suite_row_names_a_discovered_suite(self):
-        # Suite rows only. A row for a checker with no suite of its own is a
-        # correct row; see `is_suite_row`.
-        stale = sorted(p for p in set(readme_rows())
-                       if is_suite_row(p) and p not in discover())
+    def test_the_readme_does_not_grow_a_suite_table_back(self):
+        rows = readme_rows()
         self.assertFalse(
-            stale,
-            f'tools/README.md has {len(stale)} row(s) for a suite that is '
-            f'not on disk:\n  ' + '\n  '.join(stale) +
-            '\nEither the file was renamed or moved, or the row outlived it.')
+            rows,
+            f'tools/README.md carries {len(rows)} suite row(s) again:\n  ' +
+            '\n  '.join(rows) +
+            '\nA suite describes itself in its own docstring. A shared table that '
+            'every branch adding a suite edits is a merge conflict, which is why '
+            'it was removed. Move the description into the suite\'s docstring.')
 
     def test_the_lead_states_no_total(self):
         # The whole point. This file carried "There are forty-nine today, 1561
@@ -228,7 +218,7 @@ class SuiteTableTests(unittest.TestCase):
             f'it in place is what grew this section to 3,522 lines. Run '
             f'`bash tools/run-tests.sh` and read its last line; if the lead needs '
             f'to say how big this is, point at that instead of restating it. The '
-            f'per-suite counts in the table rows below are fine and are not what '
+            f'per-suite counts in a suite\'s own docstring are fine and are not what '
             f'this reads.')
 
     def test_the_lead_carries_no_correction_chain(self):
