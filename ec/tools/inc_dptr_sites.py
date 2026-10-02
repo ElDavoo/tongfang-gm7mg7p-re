@@ -12,6 +12,16 @@ distinction lives only inside `pair_sites()`, which is why the question §4.7
 left open ("73 of the 107 have no `MOV DPTR,#addr` encoding") is not a query
 against a committed artifact and this tool exists to answer it.
 
+**Correction, 2026-10-02 (issue #734).** The paragraph above is left as written
+and its first claim no longer holds: `xdata-registers.csv` now carries a
+`pair_role` column, written by `scan()` out of *this* walk, and the census can
+say which of the 214 is the seed. What has not changed is why this tool exists:
+the column records a spelling role, while the derivation below prints the two
+halves' sizes and their intersection on every run and the tool also answers the
+`MOV DPTR` question the column says nothing about. `pair_pass()` is where the
+column's cells come from -- `test_xdata_pair_role.py` holds the committed CSV
+against a fresh call of it, cell for cell.
+
 **The population is a set difference, and both halves are derived here.** `S` is
 every `addr` a call site passes and `S1` every `addr + 1`. The addresses that
 are *only* the `inc DPTR` half are `S1 - S`: one that is somebody's seed *and*

@@ -698,6 +698,18 @@ only covers what's specific to *this* copy.
   were never a reason to reject. Of the 147 agent pull requests open or merged
   on 2026-10-02, none had been rejected, and the most common blocking findings
   were stale figures and line pins.
+- **Off-mission issues are parked, not re-planned** (2026-10-02, not in the
+  template). The plan stage can again decline an issue, for one reason only:
+  finishing it would move none of the EC, the BIOS, the Windows stack or the
+  driver, and unblock nothing that does. Such an issue gets `no-agent` and the
+  plan's one-line reason as a comment, and is not planned or implemented. The
+  review's `rejected` verdict has an `off_mission` flag for the same reason: the
+  issue is parked the same way instead of going back to `agent:queued`, because
+  a new attempt at the same issue would fail the same question. Every queue sweep
+  already skips `no-agent`, and removing the label is how a human sends an issue
+  back. On the day this landed, four of the seven closed agent pull requests had
+  been rejected on that question, each after a full implement, CI and review
+  cycle, and each issue was queued to be planned again.
 - **A self-check before the first push** (2026-10-02, not in the template).
   `agent-implement.yml`'s prompt now has the agent hold its own diff to the
   review prompt's list and answer the same first question. It also rewrites the

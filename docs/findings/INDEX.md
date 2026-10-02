@@ -84,6 +84,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) — Which of the census checklist's figures a check actually holds, measured (issue #849)
 - [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md) — What `tools/check_doc_patch_refs.py` reads, in both directions (issue #955)
 - [`doc-patch-reference-gate.md`](doc-patch-reference-gate.md) — The names prose gives a prepared gate patch, and what now holds them (issue #777)
+- [`door-grader-close-marks-threshold.md`](door-grader-close-marks-threshold.md) — The door grader's close-marks threshold is the 0751 grader's window, pinned rather than derived (issue #677)
 - [`door-grader-early-exit-row.md`](door-grader-early-exit-row.md) — The door grader dropped the watcher's "the run ended early" row, and a 3-second window graded as a 31-second one (issue #684)
 - [`door-grader-same-timestamp-marks.md`](door-grader-same-timestamp-marks.md) — Two marks on one timestamp open a phantom window in the door grader, and the grader refuses it rather than the writer catching it (issue #1376)
 - [`door-grader-two-captures.md`](door-grader-two-captures.md) — Two captures in one invocation filed one capture's change rows under the other capture's marks, and each capture is now its own run (issue #351)
@@ -99,6 +100,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`ecrw-fake-one-shape.md`](ecrw-fake-one-shape.md) — One fake for `ecrw`, one way to install it, and one interpreter that proves it
 - [`emit-csv-flag-honesty.md`](emit-csv-flag-honesty.md) — `--emit-csv` refused the three modes it knew about, and honoured nothing on the fourth
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading
+- [`export-ownership-relative-containment.md`](export-ownership-relative-containment.md) — `containment` at 1.00 cannot tell a copy from a fragment, so the size now
 - [`fan-duty-channel-075b-075c.md`](fan-duty-channel-075b-075c.md) — The 0x14 between 0x075B and 0x075C is the EC's own constant, and the committed captures cannot name either fan (issue #247)
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
 - [`findings-index-staleness.md`](findings-index-staleness.md) — The index is hand-edited by merges and nothing runs the check that would catch it (issue #1137)
@@ -241,6 +243,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md) — The refusal contract's measured-state section, corrected against this tree (issue #816)
 - [`xdata-no-eq-guard-refusal-contract.md`](xdata-no-eq-guard-refusal-contract.md) — The `--no-eq-guard` refusal contract
 - [`xdata-ownership-main-keys-pin.md`](xdata-ownership-main-keys-pin.md) — #658 asked for a pin that #849 had already laid: the `OWNERSHIP` main-EC keys, and the one line that could not show its own drift
+- [`xdata-pair-role-column.md`](xdata-pair-role-column.md) — The `pair_role` column: which half of a pair a census row is (issue #734)
 - [`xdata-per-program-counts.md`](xdata-per-program-counts.md) — The per-program count columns: `refs` and the five buckets, split, with `refs` itself unmoved (issue #713)
 - [`xdata-register-map-per-program-keying.md`](xdata-register-map-per-program-keying.md) — `xdata-register-map.md` §2 re-keyed per program, and what that moved (issue #714)
 - [`xdata-spelled-as-union.md`](xdata-spelled-as-union.md) — `spelled_as` is a union across programs, and the column that says so (issue #709)

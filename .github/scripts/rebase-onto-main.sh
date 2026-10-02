@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 # LOCAL CHANGE (not in the agent-pipeline template): rebase HEAD onto origin/main, and settle
-# the one conflict that is mechanical here. Every pull request adds a row to
-# docs/findings/INDEX.md and bumps its count line, so nearly any rebase across another merge
-# conflicts in that generated file. The fix stage died on exactly that (#1371, #1374) and
-# threw its round away. The file is generated, so the resolution is to regenerate it; any
-# other conflicted path is a real conflict and fails the step as before.
+# the conflicts that are mechanical here: those in generated files, which
+# regenerate-conflicted.sh rebuilds from the merged inputs. The fix stage died on exactly
+# that (#1371, #1374) and threw its round away. Any other conflicted path is a real conflict
+# and fails the step as before.
 set -euo pipefail
-
-INDEX=docs/findings/INDEX.md
 
 git fetch --quiet origin main
 if git rebase origin/main; then
@@ -15,15 +12,13 @@ if git rebase origin/main; then
 fi
 
 while :; do
-  conflicted=$(git diff --name-only --diff-filter=U)
-  if [ "$conflicted" != "$INDEX" ]; then
-    echo "::error::rebase onto main conflicts in files other than $INDEX:"
-    printf '%s\n' "$conflicted"
+  # From origin/main, not from the tree being rebased: mid-rebase the working tree is an
+  # older commit of the branch, which may predate the script.
+  if ! bash <(git show origin/main:.github/scripts/regenerate-conflicted.sh); then
+    echo "::error::rebase onto main conflicts in files that are not generated (above)"
     git rebase --abort
     exit 1
   fi
-  python3 ec/tools/gen_findings_index.py > "$INDEX"
-  git add "$INDEX"
   if GIT_EDITOR=true git rebase --continue; then
     break
   fi

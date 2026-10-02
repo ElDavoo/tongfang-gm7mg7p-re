@@ -374,6 +374,14 @@ PAIR_SPELLING = "pair-literal"
 # over `entry["spellings"]` because that is a set, and a set walk would make the
 # committed CSV differ between two runs of the same tree.
 SPELLING_ORDER = ("symbol", "DAT_EXTMEM", PAIR_SPELLING)
+# The two values `pair_role` can carry, and the order it writes them in -- the
+# byte the call site names first, the byte the accessor's own `inc DPTR` walks
+# onto second. A fixed tuple for the reason `SPELLING_ORDER` is one: the set is
+# a set, and a set walk would make the committed CSV differ between two runs of
+# the same tree.
+PAIR_SEED = "seed"
+PAIR_INC = "inc-dptr"
+PAIR_ROLE_ORDER = (PAIR_SEED, PAIR_INC)
 ASSIGN = ("=", "|=", "&=", "+=", "-=", "*=", "/=", "^=", "%=", "<<=", ">>=")
 
 # The metrics the per-program count columns carry: the row's whole `refs` and
@@ -464,6 +472,15 @@ REGISTER_COLUMNS = [
     # somebody has to remember. The write-up is
     # `../../docs/findings/xdata-per-program-counts.md`.
     *per_program_columns(),
+    # `pair_role` is appended **on those terms again**: a third append, same
+    # argument, so `$6`-`$11` and `$21`-`$33` all still mean what they mean. It
+    # is written on every row rather than only on the pair-reached ones,
+    # because an empty cell is the answer "no pair call reaches this address"
+    # and a column that is blank on most of the file is the `int('')`-where-
+    # `int`-is-natural failure `per_program_counts_of()` names -- and because
+    # a cell written on every row is one a check can hold to every row. The
+    # write-up is `../../docs/findings/xdata-pair-role-column.md`.
+    "pair_role",
 ]
 
 
@@ -2504,7 +2521,8 @@ def blank_entry():
     conflation this file exists to prevent."""
     return {"refs": 0, "buckets": collections.Counter(),
             "funcs": collections.Counter(), "dirs": collections.defaultdict(set),
-            "spellings": set(), "spelled_refs": collections.Counter()}
+            "spellings": set(), "spelled_refs": collections.Counter(),
+            "pair_roles": set()}
 
 
 def absorb(entry, src):
@@ -2514,6 +2532,7 @@ def absorb(entry, src):
     entry["funcs"].update(src["funcs"])
     entry["spellings"].update(src["spellings"])
     entry["spelled_refs"].update(src["spelled_refs"])
+    entry["pair_roles"].update(src["pair_roles"])
     for f, buckets in src["dirs"].items():
         entry["dirs"][f].update(buckets)
     return entry
@@ -2532,6 +2551,32 @@ def spellings_of(entry) -> str:
     the column and the tool that checks it" argument
     `ec/annotations/README.md` makes for `name_basis`."""
     return "+".join(s for s in SPELLING_ORDER if s in entry["spellings"])
+
+
+def pair_role_of(entry) -> str:
+    """One entry's pair role, as a `+`-joined cell in PAIR_ROLE_ORDER, or "".
+
+    `spelled_as` answers *how* the address was reached and is deliberately
+    blind to which half of the pair it is: `scan()` folds a call's `addr` and
+    `addr + 1` into one `pair-literal` row under the same spelling. This is
+    the column that takes the two apart -- `seed` for the byte a committed call
+    site passed, `inc-dptr` for the one the accessor's own `inc DPTR` walked
+    onto -- and empty for every row no pair call reaches, which is a real
+    answer rather than a missing one and is what makes the column checkable
+    corpus-wide.
+
+    **A set, joined in a fixed order, because an address can be both.** Two
+    call sites can pass `a` and reach `a + 1` themselves, so the two halves are
+    not disjoint by construction; on the committed tree they are, and the
+    self-test measures that rather than assuming it. A cell reading
+    `seed+inc-dptr` would then be a true statement about one address rather
+    than the writer silently dropping one role for the other.
+
+    Comma-free for the reason `REGISTER_COLUMNS` gives -- this can only join
+    from a fixed tuple, so there is no path by which a comma reaches the cell,
+    and the positional `awk -F,` readers keep every field they have today.
+    """
+    return "+".join(r for r in PAIR_ROLE_ORDER if r in entry["pair_roles"])
 
 
 def spellings_by_program_of(groups, addr) -> str:
@@ -2685,6 +2730,14 @@ def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
                 entry["dirs"][key].add(direction)
                 entry["spellings"].add(PAIR_SPELLING)
                 entry["spelled_refs"][PAIR_SPELLING] += 1
+                # `spelled_as` folds both halves into one `pair-literal`, so
+                # the role is the only thing on the row that says which of the
+                # two this is. Recorded in *this* loop rather than derived
+                # afterwards, so it comes out of the same `pair_sites()` walk
+                # that decided which calls resolve -- the same walk
+                # `inc_dptr_sites.pair_pass()` takes, which is what makes the
+                # two tools unable to disagree about the population.
+                entry["pair_roles"].add(PAIR_SEED if byte == addr else PAIR_INC)
         for addr, entry in per_addr.items():
             absorb(census[row["program"]].setdefault(addr, blank_entry()), entry)
     return census, calls, raw
@@ -3255,6 +3308,16 @@ def build(funcs, names, symbols, census, calls, threshold,
             # worked rows and the arithmetic.
             "spellings_by_program": spellings_by_program_of(groups, addr),
             **per_program_counts_of(groups, addr),
+            # Which half of a pair this address is, and the last column so the
+            # positional readers above are untouched. Rendered through
+            # `pair_role_of()`, like both spelling cells, so the cell written
+            # here and the one the self-test reads back are the same function's
+            # output. A `program=both` row's is the union across the two
+            # programs, the same as `spelled_as` -- and benign for the reason
+            # `PAIR_BOTH_PAIR_LITERAL`'s block gives: every pair-reached
+            # address is a main-EC one, so the union never merges two
+            # programs' disagreeing roles.
+            "pair_role": pair_role_of(entry),
         })
     return register_rows, cluster_rows, groups
 
@@ -3992,7 +4055,15 @@ def self_test(args) -> int:
           f"{split_shown})",
           not split_bad and len(committed_registers) == total_distinct
           and REGISTER_COLUMNS[20] == "spellings_by_program"
-          and REGISTER_COLUMNS[21:] == list(columns))
+          # Narrowed from `[21:]` when `pair_role` was appended: the claim is
+          # "the per-program columns occupy a contiguous run starting at 22",
+          # and a run to the end of the list would assert that too -- which
+          # stops being true the moment anything is appended after them, and
+          # would have failed #713's own assertion for a column that has
+          # nothing to do with #713. Sliced on the columns' own length rather
+          # than a typed end index so the assertion keeps saying what it says
+          # if a fourteenth per-program metric is ever added.
+          and REGISTER_COLUMNS[21:21 + len(columns)] == list(columns))
     # The cross-check that makes the file's own columns mean something. A
     # column written wrongly in *both* `build()` and the CSV is internally
     # consistent and the assertion above would pass it; this one compares the
@@ -4087,6 +4158,101 @@ def self_test(args) -> int:
           f"checked against prose nobody re-derived for it (rows that "
           f"disagree: {', '.join(bucket_bad) or 'none'})",
           not bucket_bad)
+    # ---- issue #734: `pair_role`, which half of a pair a row is ------------
+    #
+    # Five assertions, in the order they can fail: where the column sits, what
+    # it says on every row of the committed CSV, that a cell can only be the
+    # vocabulary rendered in the declared order, that the two roles *partition*
+    # what `scan()`'s pair loop reaches, and the one row where the `both` union
+    # is doing real work. All read the **committed** registers CSV for the same
+    # reason the two blocks above do -- the claim is about the artifact a
+    # reader opens, not about what this run would write.
+    #
+    # **No size is typed.** `PAIR_ROWS` is this file's own pin for the
+    # population the pair loop reaches, and each role's count is measured here
+    # rather than asserted at a figure; the numbers that are findings live in
+    # the write-up, beside the command that prints them.
+    role_seed = {int(r["addr"], 0) for r in committed_registers
+                 if PAIR_SEED in r["pair_role"].split("+")}
+    role_inc = {int(r["addr"], 0) for r in committed_registers
+                if PAIR_INC in r["pair_role"].split("+")}
+    role_any = {int(r["addr"], 0) for r in committed_registers if r["pair_role"]}
+    pair_literal = {int(r["addr"], 0) for r in committed_registers
+                    if PAIR_SPELLING in r["spelled_as"].split("+")}
+    role_at = REGISTER_COLUMNS.index("pair_role")
+    check(f"issue #734: `pair_role` is the last column, at {role_at + 1} and "
+          f"immediately after the {len(columns)} per-program columns -- "
+          f"appended rather than placed beside `spelled_as`, so the positional "
+          f"`awk -F,` readers `REGISTER_COLUMNS` documents keep every field "
+          f"they have today",
+          REGISTER_COLUMNS[-1] == "pair_role"
+          and REGISTER_COLUMNS[role_at - 1] == columns[-1])
+    # The column's own contract, over every row and not only the pair-reached
+    # ones: an empty cell is the answer "no pair call reaches this address",
+    # so emptiness has to be the whole answer and not an omission. Split on
+    # `+` rather than substring-matching, so a row carrying both roles is not
+    # read as carrying a role when the test is about the spelling.
+    role_wrong = [r["addr"] for r in committed_registers
+                  if bool(r["pair_role"]) != (PAIR_SPELLING in r["spelled_as"])]
+    role_shown = ", ".join(role_wrong[:8]) or "none"
+    if len(role_wrong) > 8:
+        role_shown += f" (and {len(role_wrong) - 8} more)"
+    check(f"and on all {len(committed_registers)} rows of "
+          f"{os.path.relpath(OUT_REGISTERS, EC_DIR)} the cell is non-empty "
+          f"exactly when `spelled_as` carries `pair-literal` -- the column "
+          f"takes one value apart rather than adding a new one, so a writer "
+          f"that labelled an address no pair call reaches fails here as loudly "
+          f"as one that failed to label one it does (rows that disagree: "
+          f"{role_shown})",
+          not role_wrong and role_any == pair_literal)
+    # A cell is legal only if re-rendering it from the declared order gives it
+    # back. That is one test carrying four properties -- the vocabulary, the
+    # order, no repeated role, and no comma -- and it is derived from
+    # `PAIR_ROLE_ORDER` rather than spelled out, so a third role widens the
+    # vocabulary here instead of failing this line. The comma is the one that
+    # matters mechanically: it would shift every field after it for the
+    # positional readers `REGISTER_COLUMNS` documents.
+    def ordered_roles(cell) -> bool:
+        return bool("+".join(r for r in PAIR_ROLE_ORDER if r in cell.split("+"))
+                    == cell) if cell else False
+    check(f"and every non-empty cell is the vocabulary in "
+          f"`{', '.join(PAIR_ROLE_ORDER)}` order, once each and joined with "
+          f"`+` -- nothing else can appear in it, so a comma cannot reach the "
+          f"column and shift the positional readers",
+          all(ordered_roles(r["pair_role"]) for r in committed_registers
+              if r["pair_role"]))
+    # The partition, and the disjointness `inc_dptr_sites.py` measures on its
+    # own. The two halves are disjoint by no construction -- `a` can be a seed
+    # in one call and another call's `+1` -- so this is the assertion that
+    # says so rather than the writer's assumption, and the sizes close on the
+    # population this file already pins. An overlap is named, not summarised,
+    # for the reason the failure would otherwise be unfindable.
+    overlap = sorted(role_seed & role_inc)
+    overlap_shown = ", ".join(hexaddr(a) for a in overlap[:8]) or "none"
+    if len(overlap) > 8:
+        overlap_shown += f" (and {len(overlap) - 8} more)"
+    check(f"and the two roles partition what the pair pass reaches: "
+          f"{len(role_seed)} rows read `{PAIR_SEED}` and {len(role_inc)} read "
+          f"`{PAIR_INC}`, the two sets share {len(overlap)} address(es) "
+          f"({overlap_shown}), and together they are exactly the {len(role_any)} "
+          f"rows carrying a cell -- which is the {PAIR_ROWS} this file pins, "
+          f"and which `scan()` reaches whether or not the column agrees",
+          not overlap and role_seed | role_inc == role_any
+          and len(role_any) == PAIR_ROWS
+          and len(role_seed) + len(role_inc) == PAIR_ROWS)
+    # `0x04A3` is the row where the union is not decorative: `spelled_as` reads
+    # it `DAT_EXTMEM+pair-literal` because the two programs spell it
+    # differently, and `PAIR_BOTH_PAIR_LITERAL` above is what establishes that
+    # its `pair-literal` is the main EC's. Its role is pinned by value because
+    # it is the one row where a reader could reasonably wonder which program's
+    # half the union is talking about.
+    check(f"and {', '.join(hexaddr(a) for a in PAIR_UNION_ONLY)} -- the one "
+          f"row the CSV's union reads as mixed where the main EC alone spells "
+          f"it `{PAIR_SPELLING}` -- reads `{PAIR_INC}`, being the `+1` of a "
+          f"seed, so the role stays unambiguous on a row whose `spelled_as` is "
+          f"a union across both programs",
+          all(csv_rows.get(hexaddr(a), {}).get("pair_role") == PAIR_INC
+              for a in PAIR_UNION_ONLY))
     check(f"oracle: the full census, both spellings -- {ORACLE['distinct']} "
           f"distinct / {ORACLE['refs']} references, main EC "
           f"{ORACLE['main_distinct']}/{ORACLE['main_refs']} (got {total_distinct}"

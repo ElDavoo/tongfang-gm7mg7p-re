@@ -388,7 +388,13 @@ into `r2 -a 8051` with no stitching needed.
   decompile the same body, which is where the 42× above comes from. This
   derives a containment class per group of exports and one owner per class, in
   `annotations/xdata-export-ownership.csv` — 2,714 rows, 56 classes, 146
-  non-owner rows, the 42-file class owned by `bank1/8001.c`. `--check` holds
+  non-owner rows, the 42-file class owned by `bank1/8001.c`. The map carries
+  `owner_body_lines` and `member_share` beside `containment`, because
+  containment runs one way and a fragment scores `1.00` against a copy;
+  `--min-share` is that ratio as a switch and ships off.
+  `annotations/xdata-export-ownership-verdicts.csv` records a verdict per row
+  for the ones a relative check has to spare, checked both ways by
+  `tools/export_ownership_verdicts.py`. `--check` holds
   the CSV to a fresh derivation and `--self-test` pins the rule against inline
   fixtures plus the tree-wide figures. `xdata_register_map.py
   --export-ownership` reads each routine once, from its owner; the default is
@@ -855,9 +861,15 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   (`main-ec=…;pd=…`), and the twelve columns after it (22–33) are the same
   split over the counts: `refs_<program>` and each of the five buckets once per
   program, written on every row, so a per-program question about a reference or
-  a direction is read from those rather than from the summed cell. The unsuffixed
-  columns stay the row's own figures, which is what every existing reader of
-  `$6`-`$11` gets; `../docs/findings/xdata-per-program-counts.md` has the
+  a direction is read from those rather than from the summed cell. Column 34,
+  `pair_role`, is what a `pair-literal` row does not say on its own: `seed` for
+  the `addr` a committed call site passes, `inc-dptr` for the byte the
+  accessor's own `inc DPTR` walks onto, empty where no pair call reaches the
+  address — which is the split `scan()` folds together, now readable off the
+  file. `../docs/findings/xdata-pair-role-column.md` has it and its limits. The
+  unsuffixed columns stay the row's own figures, which is what every existing
+  reader of `$6`-`$11` gets;
+  `../docs/findings/xdata-per-program-counts.md` has the
   worked rows, and `../docs/findings/xdata-spelled-as-union.md` the
   reconciliation the two together have to close.
 - **`annotations/xdata-clusters.csv`** — one row per cluster: the addresses,
