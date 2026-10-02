@@ -434,16 +434,32 @@ def partition_problems(rows, parent):
 # names none at all (`return *param_1;`). Those are the two readings of
 # "not named in the C", and reading them as one bucket is the mistake the last
 # two causes exist to prevent.
+#
+# **Every entry here is an annotated function, and that is load-bearing rather
+# than incidental.** Two entries used to be unannotated, and were in the sidecar
+# only because the stride half happened to reach them; when issue #648's change
+# to the selection rule moved that half, both left the sample and the pins went
+# red for a reason that had nothing to do with the classifier. A pin is only
+# worth having if the row it names is a row that will still be there, and an
+# annotated function is a backbone row precisely because someone has read it --
+# so it is carried by the annotation layer rather than by a hash. A known
+# answer pinned on a `stride` row is a claim about the sample, which is the
+# distinction `docs/findings/cross-decoder-sample-stability.md` draws.
 KNOWN_ANSWERS = [
     ("bank0", "B158", "charge_target_update", NAMED_BY_REGISTER_SYMBOL),
     ("bank0", "8F09", "copy_dptr_byte_to_075c", NAMED_BY_REGISTER_SYMBOL),
     ("common", "00CF", "walk_code_table_6f39", NAMED_BY_CODE_SYMBOL),
     ("bank1", "87DD", "copy_code_a691_a693_to_xdata", NAMED_BY_CODE_SYMBOL),
-    ("common", "1228", "FUN_CODE_1228", NAMED_BY_DECIMAL_LITERAL),
+    # `cmp_dptr_to_r2r1(6000)`, and 6000 is 0x1770 -- the address is in the C
+    # as a decimal and in no other spelling, which is the whole cause.
+    ("bank1", "B409", "set_dptr_1770_fallthru", NAMED_BY_DECIMAL_LITERAL),
     ("bank1", "CFB1", "step_03c3_and_reload_03bf", NAMED_BY_DECIMAL_LITERAL),
     ("bank0", "B93A", "set_dptr_0a51_b93a", NAMES_OTHER_ADDRESSES),
     ("pd", "357E", "read_byte_to_r3_stride_60", NAMES_NOTHING),
-    ("common", "4BB0", "FUN_CODE_4bb0", NAMES_NOTHING),
+    # `bl51_bank_select_0(test_1665_bit0_inverted); return;` -- the window found
+    # 0xC251 in the opening and the body names no address at all, which is the
+    # reading `names-nothing` exists to separate from the one above.
+    ("common", "159A", "load_dptr_c251_tail_jump_1100", NAMES_NOTHING),
 ]
 
 

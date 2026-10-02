@@ -676,11 +676,11 @@ on the operands is worth more than either alone.
 ```
 $ python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --cross-decoder
   cross-decoder agreement (Ghidra's C vs disasm8051.py, each sampled function's opening straight-line instructions):
-    bank0    698 sampled,  440 compared,  258 vacuous,   96 disagree, 0 no-export
-    bank1    599 sampled,  341 compared,  257 vacuous,  107 disagree, 1 no-export
-    common   158 sampled,   62 compared,   96 vacuous,   38 disagree, 0 no-export
-    pd       502 sampled,  173 compared,  329 vacuous,   74 disagree, 0 no-export
-    compared 1016 of 1957 functions, 940 vacuous; 701 agreed, 315 disagreed, 1 no-export
+    bank0    700 sampled,  443 compared,  257 vacuous,   75 disagree, 0 no-export
+    bank1    607 sampled,  346 compared,  260 vacuous,   25 disagree, 1 no-export
+    common   193 sampled,   61 compared,  132 vacuous,    5 disagree, 0 no-export
+    pd       541 sampled,  185 compared,  356 vacuous,   20 disagree, 0 no-export
+    compared 1035 of 2041 functions, 1005 vacuous; 910 agreed, 125 disagreed, 1 no-export
 ```
 
 **The denominator is the point, and it is printed on every run.** The version
@@ -689,23 +689,53 @@ carries, and two of the four compared nothing at all — their openings name no
 XDATA address — which the old output said in the same shape as a pass. That is
 `../../docs/findings.md` §14b's own sentence ("a parser that reads a fraction
 of a file and finds nothing wrong in it reports a pass") one level up, in a
-check that had been moved rather than fixed. 940 of 1,957 is a large vacuous
-share and it is now the first number on the screen rather than nothing at all.
+check that had been moved rather than fixed. A large vacuous share is now the
+first number on the screen rather than nothing at all.
 
 ### What the sample is
 
 Two committed CSVs and nothing else, so the same inputs always give the same
-rows — which is what lets `--check` compare the committed report against it and
-call a difference a stale report rather than a sample that moved.
+rows. **`--check` compares the committed report against them cell for cell**,
+so a difference is a stale report or a tree that moved — it is not the sample
+quietly re-rolling itself, and that is the property the selection rule below
+exists to keep. An earlier version of this section claimed the first half of
+that on the strength of the sample being *ordered*; it is the membership that
+has to be stable, and membership was the part that used to move.
 
 - **Backbone** — every `(scope, addr)` in `../annotations/ghidra-functions.csv`
-  that the listing index carries: 1,848 functions, the ones a person or an
-  agent has read and cited. All four programs are represented in it, so
-  per-program coverage holds by construction; `--self-test` asserts that rather
-  than assuming it.
-- **Stride** — every eighth of the remaining 862, in sorted
-  `(program, addr)` order, plus each program's first non-annotated row so
-  coverage survives a program whose remainder is tiny.
+  that the listing index carries: the functions a person or an agent has read
+  and cited. All four programs are represented in it, so per-program coverage
+  holds by construction; `--self-test` asserts that rather than assuming it.
+- **Stride** — the remainder's rows that fall in one bucket of
+  `CROSS_DECODER_STRIDE` of a CRC-32 over `(program, addr)`, plus each
+  program's first non-annotated row so coverage survives a program whose
+  remainder is tiny. `CROSS_DECODER_STRIDE` is the number of buckets, so it is
+  a fraction of the remainder and not a count of rows; the size is whatever the
+  run prints.
+
+**The stride half used to be a positional slice** — every eighth of the
+remainder in sorted order — and because the backbone is a subset of that same
+list, one added annotation shifted every later index and moved most of the
+sample onto different addresses, changing verdicts, with the row count
+unchanged so nothing in the file's shape showed it. Selecting on a stable hash
+of the row instead makes membership a function of `(program, addr)` alone: an
+annotation now moves at most the row it names. The measurement, and why the
+hash is CRC-32 rather than Python's salted `hash()`, are in
+`../../docs/findings/cross-decoder-sample-stability.md`.
+
+**A `stride` row's verdict is about the sample, not about that function.** It
+was sampled because a key put it in a bucket, which says how complete the
+annotation layer is and nothing about what the two decoders make of those
+bytes. "Nobody has read this one yet" is the whole of the `sample` column, and
+it stops being true the moment the annotation lands.
+
+**`pd` contributes no stride rows, and cannot while its listing rows are all
+annotated.** Its remainder is empty, and the first-row fallback lands on `pd
+0000`, which is annotated too, so neither clause fires for it. That is a fact
+about the completeness of the `pd` annotation layer rather than a gap the
+sampler can close, and it is held as a property in
+`../tools/test_cross_decoder_sample.py` so it is a stated rule rather than an
+accident of one tree.
 
 The four functions the comparison was introduced on are all annotated, so the
 backbone already carries them; they are kept as named regression fixtures and

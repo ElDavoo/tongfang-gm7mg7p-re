@@ -45,6 +45,7 @@ import re
 import shutil
 import subprocess
 import sys
+import zlib
 
 # This repository's own linear 8051 decoder, imported rather than run as a
 # subprocess per sampled function. It is import-safe -- everything it does
@@ -2780,6 +2781,49 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("every function the comparison was introduced on is still in the "
           "sample", all((p, "%04X" % a) in _sampled
                         for p, a in CROSS_DECODER_FIXTURES))
+
+    # The stride half is a function of each row's own content, which is what
+    # issue #648 is about and why selection is a bucket rather than a
+    # positional slice. Derived here against the sample cross_decoder_sample()
+    # actually returned rather than against a sentence in a docstring: the
+    # stride rows are exactly the remainder's bucket-zero rows plus the
+    # first-row fallback, so every one of them is reachable from its own
+    # (program, addr) with nothing else in the tree read.
+    _backbone = {annotation_key(r) for r in _ann} & _lr_keys
+    _stride_sampled = {k for k, v in _sampled.items() if v == "stride"}
+    _stride_derived = {key for key in _lr_keys - _backbone
+                       if not cross_decoder_bucket(key)}
+    # ...and each program's first row, which `setdefault` cannot demote: a
+    # program's first listing row that is already annotated stays an
+    # `annotation` row, which is why `common` and `pd` contribute no firsts
+    # here while the two bank programs do.
+    _stride_derived |= {key for key in _lr_keys - _backbone
+                        if key == min(k for k in _lr_keys if k[0] == key[0])}
+    check("every stride row is selected by its own (program, addr), so an "
+          "annotation elsewhere cannot move it", _stride_sampled == _stride_derived,
+          str(sorted(_stride_sampled ^ _stride_derived)[:4]))
+    # The same property under the rule this replaced, as the negative control
+    # that keeps the case above from being vacuous: a positional slice over the
+    # sorted remainder does move when a row leaves it, and moves most of
+    # itself rather than the one row that left.
+    _remainder = sorted(_lr_keys - _backbone)
+    _victim = _remainder[0]
+    _after = sorted(_lr_keys - _backbone - {_victim})
+    _moved = (set(_remainder[::CROSS_DECODER_STRIDE])
+              - set(_after[::CROSS_DECODER_STRIDE]))
+    check("the positional rule this replaced really does move the sample when "
+          "one row leaves the remainder, so the case above is measuring the "
+          "change and not the shape of the data", len(_moved) > 1,
+          str(len(_moved)))
+    # And the key is a stable hash, not Python's salted `hash()`: two
+    # derivations in one process agreeing is necessary but not sufficient,
+    # since `hash()` of a tuple of strings is stable *within* a run too. What
+    # would break a committed report is a difference *between* runs, so this is
+    # held as the key being a function of the row's own text.
+    check("the bucket key is derived from the row's own text, so it is the "
+          "same in every process",
+          all(cross_decoder_bucket(k) == zlib.crc32(("%s:%s" % k).encode())
+              % CROSS_DECODER_STRIDE for k in sorted(_lr_keys)))
     _cd = {(r["program"], r["addr"]): r for r in cross_decoder_results(fw)}
     # The `sample` column is a controlled vocabulary too, and the reason a
     # reader can treat a `stride` row as "nobody has read this one" -- which is
@@ -3322,9 +3366,12 @@ CROSS_DECODER_COLUMNS = ["program", "addr", "name", "sample", "insns", "linear",
 # than on a sentence in this comment.
 CROSS_DECODER_OUTCOMES = ("agree", "disagree", "vacuous", "no-export")
 CROSS_DECODER_SAMPLES = ("annotation", "stride")
-# One in eight of the non-annotated remainder. 927 rows over four programs at
-# this value, so each program is sampled rather than represented, and a tenth
-# of what the stride covers.
+# One bucket of CROSS_DECODER_STRIDE of the non-annotated remainder, so each
+# program with a remainder is sampled rather than represented, and a fraction
+# of what the stride covers. The sample's size follows from the annotation
+# layer and is reported by the run rather than fixed here; what this number
+# fixes is the *fraction*, and cross_decoder_bucket() is what decides which
+# rows land in it.
 CROSS_DECODER_STRIDE = 8
 # The bound on a window, not its length: every function measured ends sooner,
 # on a flow instruction or on its own size. Kept because the walk is linear
@@ -3533,6 +3580,33 @@ def asm_opening_bytes(program, addr, count):
     return bytes(out[:count]) if seen else None
 
 
+def cross_decoder_bucket(key, buckets=CROSS_DECODER_STRIDE):
+    """Which bucket of `buckets` a (program, addr) falls in. An integer.
+
+    The sampler selects on this rather than on a position, and the reason is
+    issue #648: a positional slice over the sorted unannotated remainder moves
+    when an annotation lands, because the backbone is a subset of the same
+    list, so removing one row shifts every later index. A sample keyed this
+    way is a function of the row's own content, so adding one annotation moves
+    at most that one row out of the sample and leaves every other verdict
+    standing. Measured over the committed tree, and the derivation is in
+    docs/findings/cross-decoder-sample-stability.md.
+
+    CRC-32 rather than Python's `hash()`, which is salted per process: a
+    sample that changed between two runs of the same committed inputs would
+    fail --check for no reason at all. That is the failure the docstring below
+    used to name as its reason for avoiding a hash, and it was right about
+    determinism and wrong about which kind mattered -- `cross_decoder_
+    problems()` keys both sides on (program, addr) and compares cells, never
+    order, so what `--check` needs is a membership that is stable across runs
+    and not an ordering that is stable within one. self_test() asserts the
+    salt-free property as a property, because a future edit that swaps in the
+    builtin has to fail there rather than produce a report that is stale for a
+    reason nobody can see.
+    """
+    return zlib.crc32(("%s:%s" % key).encode()) % buckets
+
+
 def cross_decoder_sample():
     """The sampled functions, as [(listing row, how it was sampled), ...].
 
@@ -3546,14 +3620,32 @@ def cross_decoder_sample():
                agent has read and cited. All four programs are represented in
                it, so per-program coverage holds by construction; self_test()
                asserts that rather than assuming it.
-      stride    every CROSS_DECODER_STRIDE-th of the rest in sorted
-               (program, addr) order, plus each program's first non-annotated
+      stride    the remainder's rows that fall in one bucket of
+               cross_decoder_bucket(), plus each program's first non-annotated
                row, so coverage survives a program whose remainder is tiny.
 
-    Sorted, and never ordered by a set or a hash, because --check compares the
-    committed report's rows against this list: a sample that came out in a
-    different order on a different run of the same inputs would fail the gate
-    for no reason at all.
+    **A `stride` row's verdict is a property of the sample, not of the
+    function at that address.** It was sampled because a content-derived key
+    put it in a bucket, which says something about how complete the annotation
+    layer is and nothing about what the two decoders make of those bytes. The
+    backbone rows are the ones a person or an agent has read; a `stride` row is
+    "nobody has read this one yet", and it stops saying that the moment the
+    annotation arrives -- at which point it is a backbone row with its own
+    verdict. That is the whole argument for keeping the annotation layer as the
+    place a function's meaning is recorded, and the reason a churn in this
+    half of the sample is worth a write-up rather than a re-measure.
+
+    **A program with no remainder gets no stride rows, and that is not a
+    defect the sampler can fix.** `pd`'s listing rows are all annotated on the
+    committed tree, so its remainder is empty and the first-row fallback lands
+    on an annotated row too. Whether that is a gap in the `pd` annotation layer
+    is a separate question with its own issue; here it is only the fact that
+    per-program stride coverage is a fact about the annotation layer rather
+    than a guarantee this function makes.
+
+    Sorted, so the committed report's rows compare in a stable order, and
+    selected by content rather than by position, so that order is a
+    presentation rather than the thing that decides membership.
     """
     if not os.path.isfile(LISTING_INDEX):
         raise SystemExit("error: no listing index at %s; there is no export to "
@@ -3565,8 +3657,10 @@ def cross_decoder_sample():
     firsts = {}
     for key in sorted(listing):
         firsts.setdefault(key[0], key)
-    rest = sorted(set(listing) - backbone)
-    for key in rest[::CROSS_DECODER_STRIDE] + sorted(firsts.values()):
+    for key in sorted(set(listing) - backbone):
+        if not cross_decoder_bucket(key):
+            kind.setdefault(key, "stride")
+    for key in sorted(firsts.values()):
         kind.setdefault(key, "stride")
     return [(listing[key], kind[key]) for key in sorted(kind)]
 

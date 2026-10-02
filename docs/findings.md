@@ -3956,7 +3956,14 @@ half of the problem that was not a speed question.
 now derived from committed data — every annotated function the listing index
 carries (1,848), plus every eighth of the remaining 862, plus each program's
 first non-annotated row — so all four programs are represented by construction
-and the same inputs always give the same rows. Over that sample:
+and the same inputs always give the same rows. **The stride half is a sample
+and not a census**, and a `stride` row's verdict is a statement about how
+complete the annotation layer is rather than a settled property of that
+function: it is selected by a content-derived key over `(program, addr)` rather
+than by position, so an annotation landing anywhere in the tree does not
+re-phase the sample and retire a row that was carrying evidence. The
+selection rule and what it means for a row's verdict are measured in
+`docs/findings/cross-decoder-sample-stability.md`. Over that sample:
 
 ```
 compared 1016 of 1957 functions, 940 vacuous; 701 agreed, 315 disagreed, 1 no-export
