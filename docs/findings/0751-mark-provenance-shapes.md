@@ -731,7 +731,7 @@ written against:
 | `ec/tools/grade_0751_isolation.py:1840` | `:1477` |
 | `ec/tools/grade_0751_isolation.py:537` | `:428` |
 | `ec/tools/grade_0751_isolation.py:3995` | `:3065` |
-| `ec/tools/grade_gpu_door.py:520` | `:479` |
+| `ec/tools/grade_gpu_door.py:931` | `:479` |
 | `ec/tools/check_capture_claims.py:914` | `:863` |
 | `windows/tools/ec_watch.py:381` | `:368` |
 | `windows/tools/ec_watch.py:509` | `:493` |
