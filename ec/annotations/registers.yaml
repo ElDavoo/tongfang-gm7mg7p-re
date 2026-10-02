@@ -56,6 +56,28 @@
 #                    ec/annotations/indirect-xdata-sites.md 5 is the full
 #                    list of what it does not establish. No `status:` below
 #                    moves on the strength of it, in either direction.
+#                    A third scan covers a third spelling, and is a third
+#                    caveat: ec/tools/computed_dptr_sites.py looks for
+#                    `add a,#imm` / `addc a,#imm` feeding `mov 0x83,a` -- a
+#                    16-bit DPTR assembled in the accumulator over two
+#                    instructions, with the address in neither of them. It finds
+#                    exactly 8 sites on page 0x0F, all in bank0, at 0x8AC6,
+#                    0x8AD8, 0x8AF3, 0x8B0C, 0xBCE3, 0xBDEC, 0xE86B and 0xF312
+#                    -- the hand-decode ec/annotations/manual-fan-ctrl-0751.md
+#                    6 already records, and the worked counter-example against
+#                    reading "zero direct sites for 0x0F00" as an absence.
+#                    Still outside it: a DPTR built from a stored pointer or a
+#                    table, one handed in through a subroutine's own DPL/DPH
+#                    writes, the `add a,rN` / `addc a,rN` register forms, and
+#                    CODE jump tables. It also answers a page by `--page`, and
+#                    0x07 is reached by no site it can establish -- which
+#                    narrows what the 0x07B9 and 0x07D0 zeros below license
+#                    and contradicts neither row. ec/annotations/
+#                    computed-dptr-sites.md 7 carries the same list. 0x0F00 is
+#                    deliberately still absent from this file:
+#                    tools/check_power_profile.py rule 2 requires it, and these
+#                    sites say what the EC reaches, not what it does with the
+#                    byte.
 #
 # reference-count keys (all three are direct MOV DPTR,#addr site counts,
 # and all three inherit the blind spot in the "absent" note below):
@@ -2076,7 +2098,11 @@ registers:
       convention -- forced first when the fan is being run flat out. None
       of these is a fan-table routine: 0x0F00 and 0x0F20 have zero direct
       MOV DPTR sites, so the table is reached indirectly and 6 of
-      manual-fan-ctrl-0751.md stays open. None of this bears on the
+      manual-fan-ctrl-0751.md stays open. That sentence is about
+      MOV DPTR,#imm16 and it stays true: computed_dptr_sites.py reaches
+      page 0x0F by a different spelling and finds 8 sites, none of them
+      in a fan-duty routine. The full list is the xdata-refs caveat
+      above. None of this bears on the
       fixed-load comparison the status still waits for, and the status
       stays present-untested.
 
@@ -2306,7 +2332,11 @@ registers:
       in the image, so no writer routine for the table exists to be the
       same as these; the table is reached indirectly, which is the
       long-standing question of ec/annotations/manual-fan-ctrl-0751.md 6
-      and is not settled by this.
+      and is not settled by this. The "indirectly" is now partly
+      answered -- computed_dptr_sites.py names 8 bank0 sites that build
+      the 0x0F page at run time and ec/annotations/
+      computed-dptr-sites.md lists them -- and that does not change the
+      claim here, which is about MOV DPTR,#imm16 sites only.
 
       The issue #247 result holds here as the entry above says it does,
       and one part of it is about this byte's own neighbourhood rather

@@ -356,7 +356,10 @@ do it — `34 0F F5 83`, `addc a,#0x0f ; mov DPH,a` — at `0x8AC6`, `0x8AD8`,
 
 and, on the write side, `0xF312` walks `0x0F61 + r7`. The site scan cannot
 see any of them, which is the standing caveat in `registers.yaml`'s header
-made concrete on a second address besides `0x07B9`.
+made concrete on a second address besides `0x07B9` — although a second scan
+now does: [`computed-dptr-sites.md`](computed-dptr-sites.md) finds all eight
+unseeded and lists them in
+[`computed-dptr-sites.csv`](computed-dptr-sites.csv).
 
 More usefully, this is the EC side of the handshake `docs/findings.md` §7
 lists as unread. `0x888D` is the handler: it requires `0x0F5D = 0xFD` and
