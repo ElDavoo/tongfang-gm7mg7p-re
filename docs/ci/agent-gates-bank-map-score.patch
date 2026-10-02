@@ -1,0 +1,95 @@
+# ec/tools/firmware_regions.py and ec/tools/bank_map_score.py, both wired into
+# the cheap gate as one `check_bank_map()`.
+#
+# Prepared here rather than landed, because `.github/scripts/agent-gates.sh` is
+# copied from the agent-pipeline template and the pipeline's push token has no
+# `workflow` scope, so a branch editing it fails at the end of the PR rather
+# than at the start of it. `docs/agent-pipeline.md` says the same thing about
+# every other leg of this a human has to land.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-bank-map-score.patch
+#
+# and that is the whole change.
+#
+# The placement is the interesting half of this and it is a measurement, not a
+# preference. The obvious shape -- two entries in the `for tool in` list and
+# one `gate` line -- is not available. The `gate` list is seven lines, so it
+# admits eight insertion points, and every patch in `docs/ci/` that wants one
+# takes a three-line context window out of it; cut a one-line patch at each of
+# the eight the way `git diff` cuts a real one and try each against the
+# committed set in both orders, and **all eight collide with an existing patch
+# and none composes**. The `for tool in` list is saturated the same way, which
+# is what `ec/tools/check_gate_arm_coverage.py`'s own comment about its tool
+# list is warning about. `agent-gates-capture-claims.patch` carries the
+# original measurement at `d3304785`; this is the same probe re-run against
+# the set as committed now, with the same result.
+#
+# So this is one `check_bank_map()` function at a free anchor plus one call
+# from `check_ghidra_tooling`, which is the function whose own comment calls
+# itself "the decompilation pipeline's own self-tests and staleness checks" and
+# whose every arm is a `--check` plus a `--self-test` on a tool that needs no
+# Ghidra -- which is exactly what these two are. `agent-gates-findings-frozen.
+# patch` is the precedent for calling a check from an existing function rather
+# than taking a `gate` line, and it took the line at the top of
+# `check_doc_links`; this call goes into a different function so the two
+# three-line context windows stay disjoint. `tools/test_agent_gates_patches.py`
+# proves every ordered pair, and this is the placement that needs no pair.
+#
+# The checks are cheap-tier by the split in that script's own header: both
+# read committed text and `ec/firmware/GMxMGxx_11.800`, and neither needs
+# Ghidra, the network or an assembler. `--check` on each is the reproducibility
+# claim in one command -- the report is a function of the committed files, so a
+# CSV or an image that no longer agrees fails here rather than in prose.
+# `--self-test` is the half that matters, and it is the same half the other
+# arms in `check_ghidra_tooling` are there for: it pins the refusals. A census
+# that had quietly started calling a block `code`, and a scorer that had
+# quietly started calling a pair confirmed, both print every known answer and
+# neither is caught without the assertions beside them.
+#
+# The fixtures that would be worth running from a gate live in
+# `ec/tools/testdata/`, and `tools/run-tests.sh` collects both suites on its
+# own -- `bash tools/run-tests.sh` is what covers them, not this.
+#
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index 16c70c3..0000000 100755
+@@ -93,6 +93,20 @@
+   return "$rc"
+ }
+ 
++# The bank-to-file-offset map the whole decompilation rests on, and the region
++# census the image's layout was never checked against. Both read committed text
++# and the committed firmware -- no Ghidra, no network, no assembler -- which is
++# what puts them in this cheap tier, and both take --check and --self-test and
++# nothing else, so they fit the shape the calls below expect.
++check_bank_map() {
++  local rc=0
++  python3 ec/tools/firmware_regions.py --check || rc=1
++  python3 ec/tools/firmware_regions.py --self-test || rc=1
++  python3 ec/tools/bank_map_score.py --check || rc=1
++  python3 ec/tools/bank_map_score.py --self-test || rc=1
++  return "$rc"
++}
++
+ # The decompilation pipeline's own self-tests and staleness checks. Each of
+ # these runs with no Ghidra and no network, which is what lets them live in a
+ # gate: a full Ghidra rebuild is minutes, and this gate has to stay inside the
+@@ -100,6 +114,17 @@
+ # opt-in step (build_ec_decompile.py --self-test --oracle).
+ check_ghidra_tooling() {
+   local rc=0 scratch tool
++  # Called from here rather than given its own `gate` line, and that is
++  # composition rather than tidiness. The `gate` list is seven lines, so it
++  # admits eight insertion points, and every patch in `docs/ci/` that wants one
++  # takes a three-line context window out of it; measured against the set as
++  # committed, all eight collide with an existing patch and none composes.
++  # `ec/tools/check_gate_arm_coverage.py`'s own comment makes the same point
++  # about the `for tool in` list, which is saturated for the same reason.
++  # `agent-gates-findings-frozen.patch` is the precedent for the shape, and
++  # this call sits above its `local rc=0` line rather than beside its own so
++  # the two three-line windows stay disjoint.
++  check_bank_map || rc=1
+   # This function's own tool list and its `case` arms, held together before the
+   # loop below dispatches anything: a tool listed with no arm falls to `*)` and
+   # is handed `--work "$scratch"`, and whether that is a red run or a silently

@@ -20,8 +20,27 @@ callers in this build:
 | 2 | `0x1128` | — | 0 | unused on this SKU/build |
 | 3 | `0x113C` | — | 0 | unused on this SKU/build |
 
+*(Corrected in place, 2026-10-02, issue #20: the "confidence" column above is a
+single-byte membership test over 32 of 256 byte values, so it is a score, not a
+probability, and neither figure should be read as one. `tools/bank_map_score.py`
+re-scores the same call sites on the two landing-byte classes that cannot be an
+instruction at all — `0xFF`, and the four values the MCS-51 map assigns to none
+— jointly over offset pairs, and ranks both offsets above first with no bad
+landing in the population; its §4 prints what a chance offset would score, which
+is a real margin for bank 0 and a thin one for bank 1. The sentence and the two
+figures are left standing as `find_banks.py` prints them; see
+[`../docs/findings/bank-map-and-image-census.md`](../docs/findings/bank-map-and-image-census.md)
+§4. The same tool shows a richer walk-forward metric's winner *moves with its
+walk limit*, so the mapping's margin is not larger than the 51% suggests, and
+`verify_reassembly.py` cannot catch this premise being wrong — its listings were
+produced from the image built at the offset in question.)*
+
 File regions `0x18000-0x1FFFF`, `0x30000-0x3FFFF` are 100% `0xFF` — erased
-flash / unused capacity, not code.
+flash / unused capacity, not code. `tools/firmware_regions.py` measures that
+rather than assuming it, and cross-references the four stubs above against the
+block each one's window names: bank 2's slot is the erased block at `0x18000`,
+and bank 3's slot is `0x20000`, which is not erased — it is the block the PD
+image lives in. See the same write-up §3.
 
 `0x20000-0x2FFFF` is **not** part of the EC firmware above. It is a second,
 self-contained 8051 image identifying itself as `ITE8850-PD` (marker at file
@@ -902,7 +921,16 @@ needs:
    seen in the charge-profile flow).
 2. A verified understanding of every bank-switch call site (only common-area
    callers are covered by `find_banks.py`; in-bank-to-in-bank calls, if any,
-   are not yet enumerated).
+   are not yet enumerated). *(Corrected in place, 2026-10-02, issue #20: "not
+   yet enumerated" is stale — `annotations/bank-call-audit.md` §4 enumerates
+   them, 3,261 bucket-B sites of which 33 are evidenced and 1,305 pairs are
+   undecidable in principle because nothing in an `lcall` names a bank. What
+   remains open is not the enumeration but the *assumption* underneath it:
+   `tools/bank_map_score.py` now scores the bank-to-offset mapping those sites
+   are read against, jointly, and its §4 names how far the winning pair is
+   ahead and how much of that is evidence. The sentence above is left standing;
+   see
+   [`../docs/findings/bank-map-and-image-census.md`](../docs/findings/bank-map-and-image-census.md).)*
 3. A test harness — this is a live EC that runs the keyboard, battery gauge,
    thermal management and USB-PD negotiation. A bad reflash is a bricked
    laptop; issue #7 in upstream `uniwill-laptop` documents a case where a
@@ -924,7 +952,14 @@ where the reading came from — those names come from
 `annotations/ghidra-functions.csv`, which is the editable surface. And the
 committed disassembly re-encodes to the firmware bytes: 45,481 of 45,624
 instructions, measured by `tools/verify_reassembly.py` and recorded in
-`ghidra/reassembly.csv`.
+`ghidra/reassembly.csv`. *(Corrected in place, 2026-10-02, issue #20: both
+figures above are stale against the committed `ghidra/reassembly.csv`, which
+`tools/reassembly_checked_bound.py --check` prints — it reports 45,518 checked
+and 45,661 in all, so the pair has moved and neither number above should be
+quoted. The correction immediately below already holds that this figure is a
+ceiling rather than a translation count, so what the committed report supports
+is whatever that tool prints; the figures are left standing as this section has
+carried them and the command is the current one.)*
 
 *(Corrected in place, 2026-10-01, issue #229: that figure counts the
 instructions translated and handed to `sdas8051`, not bytes compared against
@@ -945,7 +980,8 @@ different kinds of evidence. *(Corrected in place, 2026-10-01, issue #229:
 "stays 45,481 of 45,624" restates the translation count, so the correction
 above applies to this sentence too — what is bounded is the ceiling
 `tools/reassembly_checked_bound.py --check` prints, and neither number belongs
-in a percentage.)* Both are claims about the machine code, not about
+in a percentage. The 2026-10-02 correction above adds that both figures here
+have since moved.)* Both are claims about the machine code, not about
 the C, and `ghidra/README.md` says at length what it is not. See the repo's GitHub issues for the
 concrete next steps, several of which are independently useful (e.g. the 254
 call sites referencing `0x07D0`, which `trace_xdata_refs.py` places in the PD

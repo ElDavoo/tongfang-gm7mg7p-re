@@ -1356,17 +1356,17 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
                 number, _, label = piece.strip().partition(' ')
                 if number.isdigit() and label:
                     counts[label] = int(number)
-        self.assertEqual(counts['testdata/ directories'], 13)
+        self.assertEqual(counts['testdata/ directories'], 15)
         self.assertEqual((counts['named in the index'], counts['self-indexed'],
-                          counts['gap(s)']), (12, 1, 0))
+                          counts['gap(s)']), (12, 3, 0))
         # Not a floor -- see the class name.
         self.assertEqual((counts['table row(s)'], counts['path token(s)']),
-                         (29, 38))
+                         (31, 40))
         self.assertEqual((counts['Feeds cell(s)'], counts['tool pointer(s)']),
-                         (29, 31))
+                         (31, 33))
         self.assertEqual((counts['self-indexed README(s)'], counts['table(s)'],
                           counts['row(s)'], counts['check(s)']),
-                         (1, 3, 19, 21))
+                         (3, 5, 29, 31))
         # Ten cells carry a value and eleven tokens are checked over them: the
         # one `;`-joined cell is the difference, and it is a decidable fact
         # about the two committed CSVs. Not a floor -- see the comment above.

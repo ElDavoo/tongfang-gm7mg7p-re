@@ -1,0 +1,7 @@
+file_offset,region,runtime,opcode,target,bucket,frame_onto,frame_over,earlier_record,calls_stub,calls_trampoline,own_bank,other_bank
+0x00200,common,0x0200,ljmp,0x1100,B,0,0,,0,,,
+0x00210,common,0x0210,ljmp,0x1100,B,0,0,,0,,,
+0x00220,common,0x0220,ljmp,0x1100,B,0,0,,0,,,
+0x00230,common,0x0230,ljmp,0x1114,B,0,0,,1,,,
+0x00240,common,0x0240,ljmp,0x1114,B,0,0,,1,,,
+0x00250,common,0x0250,ljmp,0x1114,B,0,0,,1,,,
