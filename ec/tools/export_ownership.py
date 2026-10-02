@@ -82,8 +82,8 @@ map with `--map --min-share` is how to look at what one costs first.
 **The floor is a condition on the edge, so it inherits the same limit as the
 relation it filters.** A member still reaches its owner through a chain of
 edges that each clear the floor even when the member itself is a smaller share
-of the owner than the floor demands; at `CANDIDATE_MIN_SHARE` a handful of
-`bank0/F0*.c` bodies do exactly that against `bank0/F078.c`. That is not a
+of the owner than the floor demands; at `CANDIDATE_MIN_SHARE` `bank0/F078.c`
+has members that do exactly that against it. That is not a
 second mechanism to fix, it is the "containment does not compose" caveat above
 showing up again, and `member_share` is what makes it visible: a row whose
 share is under the floor while it is still folded says its owner is a
@@ -458,6 +458,14 @@ OWNERSHIP_ORACLE = {
 # `largest_class` is unchanged because a class is a connected component and
 # the 42-file class is still one; `newly_read` is what the census would open
 # again.
+#
+# `classes` is expected to collide with a figure another document already
+# pins -- the `pd` cluster count of the census checklist's 6b is the same
+# number -- so check_doc_figure_pins.py resolves that section's figure to this
+# constant rather than to the census case that asserts it. Nothing is weakened
+# by either: they are different measurements that happen to be equal. Read a
+# resolution from that section at this constant as a prompt to open the
+# checklist row, not as a statement about the pd image.
 SHARE_ORACLE = {
     "classes": 50,
     "shared_rows": 133,

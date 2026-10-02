@@ -88,13 +88,16 @@ being an export of it), and `undecided`, which is counted rather than dropped.
 
 Nothing in the population came back `undecided`, and that is a statement about
 these files rather than a claim that every fold is decided: it says each of
-the 25 pairs was read and each resolved one way or the other. The rows
-`--min-share` at the candidate value would *not* refuse are the eight
-`bank0/F0*.c` members still folded into `bank0/F078.c` below it, because the
-floor conditions the edge and a member can still reach its owner through a
-chain of edges that each clear it. That is the "containment does not compose"
-caveat on the ownership page showing up a second time, and `member_share` is
-what makes it visible rather than hidden.
+the 25 pairs was read and each resolved one way or the other. The floor
+conditions the edge, so a member under it can still reach its owner through a
+chain of edges that each clear it. `bank0/F0ED.c`, `bank0/F0EF.c`,
+`bank0/F0F3.c`, `bank0/F493.c`, `bank0/F495.c`, `bank0/F498.c`, `bank0/F499.c`
+and `bank0/F4AB.c` are each under the candidate floor and still come back
+folded into `bank0/F078.c`; `bank0/AF7D.c`, `common/3239.c` and
+`common/3451.c` come back folded too, each under a smaller owner than the one
+it had. That is the "containment does not compose" caveat on the ownership
+page showing up a second time, and `member_share` is what makes it visible
+rather than hidden.
 
 ### The three ways a `fragment` was established
 
@@ -181,8 +184,8 @@ something no size ratio answers.
 lowest share among the 42-file class's *members*, and it does not bound a
 window either. The floor conditions the edge while the class is a connected
 component, so a member under the floor is still held in the class by a chain
-of edges that each clear it — the same non-composition caveat as the eight
-`bank0/F0*.c` members above, and why the class survives floors well past
+of edges that each clear it — the same non-composition caveat as the
+`bank0/F078.c` members above, and why the class survives floors well past
 `0.34`. That is why `SHARE_ORACLE` in `export_ownership.py` pins the cost at
 a *named* candidate value instead: there is no threshold for the map to hand
 over, so enabling the floor is a decision somebody makes with the numbers in
