@@ -19,7 +19,8 @@ bytes §4 names moved inside it:
 
 and, reported but not graded, the fan duty bytes `0x075B`/`0x075C`
 and `CPU_TEMP` `0x043E` / `GPU_TEMP` `0x044F` (§4.4/§4.5), plus whether
-`0x0751` still holds the written value in the after-dump (§4.6).
+`0x0751` holds the written value in the after-dump and what the before-dump
+held (§4.6).
 
 Every context byte gets a `window delta` line in every window, whether or not
 it moved: first value, last value, the endpoint net, the total movement (the
@@ -77,8 +78,14 @@ a usable bracket. The other precondition is stated on the same terms: when no
 file name and neither flag names the value that was written, the comparison has
 nothing to be against and the section says that too, on the dumps alone,
 because no file can stand in for a number the way one can stand in for a
-missing dump. None of the three is a claim about the machine; each is a claim
-about which files were handed in.
+missing dump. And the before-side is read, for the same reason: `still` claims
+the byte survived the write, which is a statement about what it held before it,
+so when the block's first `--dump` already holds the value that was written --
+or when only one `--dump` was handed in for the block at all -- the section
+drops the word and says which of the two it is, the file that would support it
+being the before-dump whose `0x0751` byte `report_dumps` printed two lines
+above. None of these is a claim about the machine; each is a claim about which
+files were handed in and what those files can be read as saying.
 
 One thing is read that is not a byte at all: §3's per-block integrity check.
 §3 calls that check mechanical and then leaves the operator to eyeball it
@@ -1794,7 +1801,7 @@ def read_early_exits(path):
 
     A second reader rather than a change to `read_capture`, for two
     independent reasons. Its two-tuple is a contract with a second tool --
-    `grade_gpu_door.py` imports this module and unpacks it at `:479` -- and its
+    `grade_gpu_door.py` imports this module and unpacks it in `main` -- and its
     skip rule is the invariant this has to be added beside rather than
     through: `#` rows are skipped *so that* an operator can annotate a capture
     by hand without breaking this, and every committed fixture under
@@ -3409,28 +3416,47 @@ def report_readback(here, wrote, pairs, value, marker=""):
 
     `marker` is the caller's verdict for this value, and it is why the
     verdict sentence below is not the last word on a refused block. "The last
-    dump still holds the written 0xA0" is true or false of two files on disk
+    dump holds the written 0xA0" is true or false of the last file on disk
     and is true here whatever the CSV mark set did, so the sentence is kept
     -- and the scoping line below says what it is a reading of. The dumps
     were still read; a block being `void` says the capture is short a mark,
     not that these bytes were never in evidence. The marker itself is
     already on the group line above and is not repeated here.
 
-    Two preconditions stand between these dumps and that sentence, and this
-    is where each one that is missing is said. The first is that the block's
-    last dump holds `0x0751` at all; the notice above covers that one, and a
+    Preconditions stand between these dumps and that sentence, and this is
+    where each one that is missing is said. One is that the block's last
+    dump holds `0x0751` at all; the notice above covers that one, and a
     `--dump-pair` can be named in its place because a file can stand in for
     a missing file. The pair named is one that can be *read*, and that is
     `pair_refusal`'s question rather than coverage's: a pair given one file
     twice reaches the address and is not a readback of anything, so it is
     named with the reason and the walk goes on to the next pair rather than
-    stopping on it. The second is that something names the value that was
+    stopping on it. Another is that something names the value that was
     written -- the block's own, off a §6 file name, or off `--wrote` or
     `--block` -- and no file can stand in for a number, so that notice is
     printed on the dumps alone, whether or not a pair was given. When both
     are missing the two notices print together: they are two independent
     facts, and the second conditioned on the first would make the tail of
     the section depend on a condition the reader cannot see.
+
+    The other one is not a missing input but a limit on what the comparison
+    that *was* taken can say. "Still" asserts that the byte held the written
+    value before the write as well as after it, and the file that would
+    support that half is the block's first `--dump` -- whose `0x0751` byte
+    `report_dumps` has already printed two lines above this call. So the
+    before-side is read too, and the word is gated on what it found there. A
+    first dump that demonstrably held something else is the case the verdict
+    lines were written for and leaves both of them exactly as they are. A
+    first dump that already holds the written value gets a line of its own,
+    naming what that leaves open rather than which of the two readings
+    happened: the write did not take, or the dump named `before` was taken
+    after it, and nothing in the files separates those. A group of one dump
+    keeps the value comparison and its calibration clause and loses the word,
+    because one file says nothing about what the byte held beforehand, and a
+    run is not required to hand in a pair -- refusing the comparison there
+    would throw away a fact the operator can use. A first dump that does not
+    reach `0x0751` has no before-side value to compare against, so it is not
+    a case here and the section reads as it always has.
     """
     if here[-1][1].get(MANUAL_FAN_CTRL) is None:
         print(f"  the last --dump does not cover 0x{MANUAL_FAN_CTRL:04X}, so "
@@ -3483,8 +3509,29 @@ def report_readback(here, wrote, pairs, value, marker=""):
     last = here[-1][1].get(MANUAL_FAN_CTRL)
     if last is None:
         return
+    # The before-side, read after the two guards above rather than beside them,
+    # because neither of the lines below is a statement about an absent input:
+    # they are about what the comparison that was just taken can support, and
+    # saying them over a readback that was not taken would name a conclusion
+    # no comparison on this page reached.
+    first = here[0][1].get(MANUAL_FAN_CTRL)
+    still = "still "
+    if len(here) == 1:
+        # `here[0] is here[-1]`, so this file is being read as both sides of
+        # the write. It settles whether the byte holds the written value now
+        # and nothing about whether it ever did not.
+        print(f"  one --dump for this block, so nothing here says what "
+              f"0x{MANUAL_FAN_CTRL:04X} held before the write; the line below "
+              "is that one file read once")
+        still = ""
+    elif first == written:
+        print(f"  the first --dump already holds the written 0x{written:02X}, "
+              "so these files do not show the write landing: either the write "
+              "did not take, or the dump named before was taken after it. "
+              "Nothing here separates the two.")
+        still = ""
     if last == written:
-        print(f"  the last dump still holds the written 0x{written:02X}. Per "
+        print(f"  the last dump {still}holds the written 0x{written:02X}. Per "
               "CLAUDE.md that is a readback, not evidence the EC acted on it.")
     else:
         print(f"  the last dump holds 0x{last:02X}, not the written "

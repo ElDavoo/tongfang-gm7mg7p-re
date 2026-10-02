@@ -57,7 +57,7 @@ Measured over the committed export, by `index.csv` for the functions and
 - `exported functions` — 2720
 - `annotated function rows` — 1961
 - `rows the index marks annotated` — 1968
-- `unresolved rows` — 173
+- `unresolved rows` — 172
 
 By program, as exported minus annotated minus the rest:
 
@@ -629,7 +629,7 @@ cannot drift apart silently:
 - `exported functions` — 2720
 - `annotated function rows` — 1961
 - `rows the index marks annotated` — 1968
-- `unresolved rows` — 173
+- `unresolved rows` — 172
 
 **617 of the 753 common-area functions are unannotated, and that is still the
 largest single block of undecoded firmware in this repository** — larger than

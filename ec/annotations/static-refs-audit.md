@@ -287,6 +287,31 @@ print, so the branch was checked against sites that do have it. Image-wide
 there are 54 such sites across 48 addresses, none of them an address in
 `registers.yaml`, and `r2 -a 8051` agrees with the decode on both shapes:
 
+**Correction, 2026-10-02 (issue #41). The "29 addresses" above is left as
+written.** It was the population `registers.yaml` held when this section was
+written, and it was true then; the file has grown considerably since, so the
+wording is now a statement about a past population rather than about the one a
+reader would find. The null still holds over the current file — the
+intersection of the 48 CODE-pointer addresses with every address
+`registers.yaml` carries is empty — but that is now a **command**, not a
+sentence:
+
+```console
+$ python3 ec/tools/code_pointer_sites.py --against-registers
+```
+
+The 48 addresses themselves are committed as
+`annotations/code-pointer-sites.csv`, one row per **site** (54 of them, so
+`0x63BE` and `0x63D7` appear three times each and `0xF13F` and `0xF45B` twice —
+which is why 54 and 48 are both correct), and
+`python3 ec/tools/code_pointer_sites.py --check` regenerates that file in
+memory and fails on any difference. A sample of every region/class pair is
+cross-read in `r2 -a 8051` in `../../docs/findings/code-pointer-site-census.md`
+§2, and §5 of that file is the calibration this section's "no count in this
+repo is inflated by a string-table or jump-table pointer **by this method**"
+has always needed. Nothing in that write-up was measured on hardware, and no
+`status:` moved.
+
 ```console
 $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0xa6a4; pd 4' /tmp/bank0.bin
@@ -368,6 +393,34 @@ depth 2 is not attempted. `lightbar-bat-flow.md` §3.4 carries the per-site
 rows and §3.5 decodes each of the eight callees against `r2 -a 8051`. It is
 still a PD-image question, not an EC-side one, and not a `status:` question
 either way.
+
+**Correction (issue #44): depth 2 is attempted now, and the two rows above
+are the depth-1 reading.** `--callee-depth` takes an integer N and follows a
+callee that forwards DPTR again; the table above is unchanged and still
+reproduces at N=1, which is the point of keeping it. At N=2 the two forwarders
+resolve to reads, through `0xB1F2 -> 0x10C8` and `0x383A -> 0x0FCB`:
+
+```console
+$ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 2 \
+  | grep -E '0x04A6|0x07D0|0x07E2|0x07E3|0x07E5'
+| `0x07D0` | `BATTERY_CHARGE_LIMIT_DOWN` | 254 | 0 | 254 | 157 | 8 | 2 | 0 | 0 | 72 | 7 | 0 | 0 | 8 |
+| `0x07E2` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 15 | 0 | 15 | 7 | 4 | 0 | 0 | 0 | 3 | 1 | 0 | 0 | 0 |
+| `0x07E3` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 9 | 0 | 9 | 2 | 2 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 |
+| `0x07E5` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 10 | 0 | 10 | 5 | 3 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
+| `0x04A6` | `BAT_CYCLE_COUNT` | 7 | 3 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 0 |
+```
+
+`0x07D0` and `0x04A6` are the cross-check and both hold: the 72/7 split is
+unchanged, and the four `0x04A6` PD handoffs stay `handoff->unresolved` at
+depths 2, 3, 4 and 8 because the chain reaches `0x10BC`, which adds to DPTR
+without ever dereferencing it. Three further cells move between depth 1 and
+depth 2, none of them in this table's five: `0x089E` resolves `r+w` through
+`0xBADE -> 0x70E4`, and `0x0811` and `0x07D6` each resolve read through a
+one-instruction forwarder to `0x10C8` — the last of which is the verdict
+`ec-07d6-07d7-sites.md` §4.4 had reached by hand, now reached independently
+by the tool. `../../docs/findings/callee-depth-n.md` is the write-up, and it
+carries the two guards (a cycle and the depth cap) that this image never
+exercises.
 
 **The two rows already resolved by hand are the cross-check, and the tool
 agrees with both.** `0x07D0`'s 79 come out 72 read / 7 write, exactly the
