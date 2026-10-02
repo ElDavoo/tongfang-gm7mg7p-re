@@ -105,9 +105,9 @@ ORACLE = {
 # negative control reads as a control rather than as two table rows that happen
 # to disagree. Both shapes are here on purpose: `C389` is an operand byte in
 # one bank and an entry in the other, and `AA04` has no listing at all in one
-# and is the entry of its own in the other. A classifier that dropped the bank
-# argument would answer one class for both banks; one that dropped the listing
-# argument would answer `entry` for all sixteen cells.
+# and is an instruction start inside another listing in the other. A classifier
+# that dropped the bank argument would answer one class for both banks; one
+# that dropped the listing argument would answer `entry` for all sixteen cells.
 CROSS_BANK_CONTROL = (0xC389, 0xAA04)
 
 # The common-area finding, as bytes rather than as arithmetic. `0x198A` is

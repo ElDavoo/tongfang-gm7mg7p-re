@@ -126,7 +126,7 @@ Three addresses are worth naming individually, because they are the ones that
 would have been argued about:
 
 - **`0xAA04`, the target of `bank1,1A14`, has no listing in bank 0 at all** and
-  is the entry of its own listing `ec/decompiled/bank1/A9B4.asm` in bank 1.
+  is an instruction start inside `ec/decompiled/bank1/A9B4.asm` in bank 1.
   One address, two answers, and nothing about it that does not depend on which
   bank is asked.
 - **`0xC389`, the target of `bank1,19B4`, is an entry in bank 0 and an operand
@@ -139,8 +139,8 @@ would have been argued about:
 
 ### The boundary, printed
 
-Seven more `bank1` annotated rows sit at a forwarder entry this image holds and
-are **not** in the subset: `bank1,1A98`, `1A9E`, `1AA4`, `1AAA`, `1AB0`, `1AB6`
+More `bank1` annotated rows sit at a forwarder entry this image holds and are
+**not** in the subset: `bank1,1A98`, `1A9E`, `1AA4`, `1AAA`, `1AB0`, `1AB6`
 and `1ABC`, every one of them typed `dispatch` rather than `forwarder`. They are
 in the whole-family table and in the CSV. The boundary is the `type` column, and
 the tool prints which side of it each of them is on, so a rule that quietly
