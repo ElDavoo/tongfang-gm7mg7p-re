@@ -74,7 +74,7 @@ always a signed sum of *guard-off minus committed*, which is positive: the
 references **enter** `write` and none leave, because `--no-eq-guard` lifts one
 exclusion and lifting an exclusion only admits. §6a's row is corrected in place
 with the wrong wording left visible, and the measurement behind the word — over
-both censuses, 210 addresses' `write` rises and none falls — is in
+both censuses, 211 addresses' `write` rises and none falls — is in
 [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md).
 Nothing else in either table changes.
 

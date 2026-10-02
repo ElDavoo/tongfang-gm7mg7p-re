@@ -178,8 +178,8 @@ the measurement below is what corrected it.** There are **four**, all of
 Each is `DAT_INTMEM_65 = bVar5 & DAT_EXTMEM_0026;`. The four are separate
 `common` exports, each its own owner in `xdata-export-ownership.csv` and none a
 `shared` copy, so all four are counted in the default census *and* in the
-`--export-ownership` one. `0x0026` therefore carries two misbucketed reads
-today, one per census.
+`--export-ownership` one. Every `address-taken` reference `0x0026` carries is
+one of them — four in each of the two censuses.
 
 Finding this is not a reason to fix it here. The `&&` fix is one clause and this
 is a wider one — distinguishing `&x` from `x & y` needs the token *after* the
@@ -191,8 +191,8 @@ into a change about `&&`.
 
 ## Figures elsewhere that this change makes stale
 
-**Four pages had to be edited, not listed, because a suite holds each of them
-to the run.** `test_xdata_guard_off_row_join.py`, `test_xdata_cluster_names.py`,
+**These pages had to be edited, not just listed, because a suite holds each of
+them to the run.** `test_xdata_guard_off_row_join.py`, `test_xdata_cluster_names.py`,
 `test_xdata_program_keyed_table.py` and `test_check_doc_figure_pins.py` all
 compare a *published* figure against a fresh regeneration — the last by way of
 the §2b verdict column of `xdata-census-rederivation-checklist.md` — so leaving

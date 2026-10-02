@@ -2322,9 +2322,9 @@ def classify(text: str, start: int, end: int, addr: str, func_names,
     if left.endswith("&") and not left.endswith("&&"):
         return "address-taken"
     if store_target(text, start, end, eq_guard):
-        # Tested by prefix over the same tuple `store_target()` uses, not by a
-        # fixed-length slice: `<<=` and `>>=` are three characters, so a
-        # two-character slice could never match them and both stayed `write`.
+        # Tested by prefix over the same tuple `store_target()` uses, so a
+        # three-character operator like `<<=` can match at all; a fixed-length
+        # slice could not.
         stripped = text[end:].lstrip()
         return ("read+write" if any(stripped.startswith(op) for op in ASSIGN[1:])
                 or addr in rhs_of(text, text.index("=", end)) else "write")
