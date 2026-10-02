@@ -21,10 +21,10 @@ repository arrives in the worktree with different bytes and `--check` reports a
 difference nobody introduced.
 
 The file's own precedent for this is the block covering the decompiled `.c`
-trees, and its own warning at `:39-41` is why the answer here is not `binary`:
-marking a file binary also disables the CRLF normalisation git applies to text
-on the way **in**, which is a second and independent way for the same comparison
-to stop matching.
+trees, and the warning in the block above it that rules out `binary` is why the
+answer here is not `binary`: marking a file binary also disables the CRLF
+normalisation git applies to text on the way **in**, which is a second and
+independent way for the same comparison to stop matching.
 
 ## Which of `call_graph.py`'s three inputs are newline-sensitive
 
@@ -185,12 +185,15 @@ follow-up below.
 ## What the issue got right, and what it did not
 
 Three figures in the issue were right and are worth keeping, because each is a
-property that had to be measured rather than assumed:
+property that had to be measured rather than assumed. The first two are about
+`.gitattributes`, which this change rewrites, so they are statements about the
+tree the issue was filed against and not about the merged one:
 
 - `call-graph-callees.csv` is 1,841 data rows with zero CR bytes, and
-  `git check-attr -a` returned nothing for it. Both still hold.
-- `.gitattributes` was 44 lines covering only the Ghidra databases and the three
-  decompiled `.c` trees, with no entry for any CSV. Both still hold.
+  `git check-attr -a` returned nothing for it.
+- `.gitattributes` covered only the Ghidra databases and the three decompiled
+  `.c` trees, with no entry for any CSV — giving those CSVs an entry is what
+  this change does.
 - The three CRLF tables it named carry exactly the CR counts it gave:
   `bank-call-targets.csv` 5,999, `bank-relative-branch-targets.csv` 9,077,
   `pd-xdata-span-sites.csv` 1,025.
@@ -199,11 +202,11 @@ Two were wrong, and the first is why the naive fix would have broken checks
 that are green today:
 
 1. **"Do not silently renormalise the other 20 files."** The population is every
-   CRLF-carrying CSV under `ec/annotations/` plus `ec/decompiled/index.csv` —
-   several times the issue's count, and nearly all of it CRLF. A
-   renormalisation scoped off an undercount is the failure this issue is about,
-   so the correction matters more than the arithmetic, and the split moves as
-   tools are added, so it is printed rather than written down:
+   CRLF-carrying CSV under `ec/annotations/` plus `ec/decompiled/index.csv`,
+   which is a larger set than the issue counted. A renormalisation scoped off an
+   undercount is the failure this issue is about, so the correction matters more
+   than the arithmetic, and the split moves as tools are added, so it is printed
+   rather than written down:
 
    ```sh
    python3 - <<'PY'

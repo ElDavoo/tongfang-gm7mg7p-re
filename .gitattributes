@@ -105,8 +105,10 @@ ec/decompiled/index.csv                  text eol=lf
 # The same rule outside the annotations tree: every committed CSV another
 # component's tool byte-compares in --check. All are LF today, so all take
 # text eol=lf, and test_gitattributes_coverage.py fails if one stops being.
-# c-digests.csv is deliberately absent: it is covered by the .c entries above,
-# and it is the file those entries exist for.
+# c-digests.csv is deliberately absent, and no attribute is owed for it: each
+# component's verify_c_digests() opens it with newline="" and compares the
+# parsed sha256 cells against the decompiled files rather than the digest
+# file's own bytes, so a CRLF worktree copy is absorbed instead of failing.
 ec/ghidra/xdata-symbols.csv              text eol=lf
 ec/ghidra/gap-citation-scan.csv         text eol=lf
 bios/ifr/charge-questions.csv            text eol=lf

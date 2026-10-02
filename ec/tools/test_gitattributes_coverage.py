@@ -18,8 +18,8 @@ grows a `--check`. So the cases assert properties:
 
   - every table named below (a tool's `--check` input or output) is *matched*
     by some `.gitattributes` line;
-  - no line covering one says `binary`, which the file's own comment at `:39-41`
-    rules out and this turns the comment into a check;
+  - no line covering one says `binary`, which the file's own comment above
+    rules out in prose and this turns into a check;
   - no path matched by an `eol=lf` line carries a CR today -- the one that stops
     the next agent marking a CRLF-emitting tool's table `eol=lf` and quietly
     turning several green checks red;
@@ -294,7 +294,7 @@ class Coverage(unittest.TestCase):
                          % ", ".join(missing))
 
     def test_no_line_covering_a_table_says_binary(self):
-        # The file's own comment at `:39-41`: `binary` disables CRLF
+        # The file's own comment in the block above: `binary` disables CRLF
         # normalisation on the way IN, which is a second way for the same bytes
         # to stop matching. A comment is not a check; this is.
         offenders = []
