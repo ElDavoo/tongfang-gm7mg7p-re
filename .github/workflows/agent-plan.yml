@@ -478,7 +478,7 @@ jobs:
           {
             printf 'Parked by the plan stage as off-mission: it would not make the EC firmware, the BIOS or the Windows stack better understood, or bring the driver closer.\n\n'
             printf '> %s\n\n' "$(cat /tmp/off-mission-reason.txt)"
-            printf 'Remove `no-agent` to have it planned anyway.\n'
+            printf '%s\n' "Remove \`no-agent\` to have it planned anyway."
           } > /tmp/park.md
           gh issue comment "$ISSUE" --body-file /tmp/park.md
           gh issue edit "$ISSUE" --add-label 'no-agent'
