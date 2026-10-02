@@ -189,10 +189,11 @@ below is not a page number.
 | `0xD745` / `0x2D745` | `0x07D1` | `0x0A2C` | `DPTR ← 0x0A2C + low8(A×0x17)` | `A` | `0xACD6` | `0xD74B` | `0xD74B` read |
 
 `MOV DPTR` immediate and effective base are two different columns on purpose.
-Every `0x17` site is `rebased`: the immediate it loads is the index variable it
-reads (`0x07D1`, `0x07D4`, `0x07D5`, `0x0819`), and the array base arrives later
-inside the helper. Collapsing the two is how §7.1 of the geometry file explains
-why `--bases` misses three of its four addresses.
+Every `0x17` site is `rebased`: the array base arrives later inside the helper,
+and at every site but the two in §3.4 the immediate is the index variable the
+code reads (`0x07D1`, `0x07D4`, `0x07D5`, `0x0819`). Collapsing the two is how
+§7.1 of the geometry file explains why `--bases` misses three of its four
+addresses.
 
 The index is not one kind of thing either, and what the term strings say about
 it needs correcting before it can be used — §3.2. Fourteen of the seventeen
@@ -359,9 +360,7 @@ add-only suffixes as their own constructions, so a `mul ab` template at
 `0xACC3` also matches its own `add a,#35 ; mov dpl,a ; clr a ; addc a,#0a ;
 mov dph,a` suffix at `0xACC4`. These chains entered at the full template and
 consumed the whole run, so `construction_runtime` names `0xACC3` and not
-`0xACC4`. The suffix is a separate row in
-[pd-index-accesses.csv](pd-index-accesses.csv) with its own context — reached
-from outside, not by this chain — and this file does not re-count it.
+`0xACC4`, and this file does not re-count the suffix.
 
 ## 4. The two censuses, reconciled
 

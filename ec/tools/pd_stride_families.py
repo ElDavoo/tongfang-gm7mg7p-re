@@ -214,9 +214,11 @@ def family_terms(row):
     """The stride constants one site's effective terms carry.
 
     `effective_terms()` and not the raw list, because a rebasing chain discards
-    the terms before it: a `0x17` site's `MOV DPTR,#0x07D1` is the index it
-    reads, not part of the address it builds, and reading the raw list would
-    file the site under an arithmetic its chain never applies.
+    the terms before it: at a `0x17` site whose immediate the byte scan resolves
+    to a real address, `MOV DPTR,#0x07D1` is the index the code reads, not part
+    of the address it builds, and reading the raw list would file the site under
+    an arithmetic its chain never applies. The two framing-candidate sites of
+    `pd-stride-families.md` 3.4 have no such immediate.
     """
     return sorted(set(STRIDE_RE.findall(" ".join(effective_terms(row["terms"])))))
 
