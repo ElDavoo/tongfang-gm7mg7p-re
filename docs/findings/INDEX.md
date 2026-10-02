@@ -83,6 +83,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) — Which of the census checklist's figures a check actually holds, measured (issue #849)
 - [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md) — What `tools/check_doc_patch_refs.py` reads, in both directions (issue #955)
 - [`doc-patch-reference-gate.md`](doc-patch-reference-gate.md) — The names prose gives a prepared gate patch, and what now holds them (issue #777)
+- [`door-grader-close-marks-threshold.md`](door-grader-close-marks-threshold.md) — The door grader's close-marks threshold is the 0751 grader's window, pinned rather than derived (issue #677)
 - [`door-grader-early-exit-row.md`](door-grader-early-exit-row.md) — The door grader dropped the watcher's "the run ended early" row, and a 3-second window graded as a 31-second one (issue #684)
 - [`door-grader-same-timestamp-marks.md`](door-grader-same-timestamp-marks.md) — Two marks on one timestamp open a phantom window in the door grader, and the grader refuses it rather than the writer catching it (issue #1376)
 - [`door-grader-two-captures.md`](door-grader-two-captures.md) — Two captures in one invocation filed one capture's change rows under the other capture's marks, and each capture is now its own run (issue #351)
