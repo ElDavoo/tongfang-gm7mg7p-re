@@ -557,7 +557,12 @@ class TheCommittedTree(unittest.TestCase):
         # every record places. The claim is that equality, which no merge that
         # adds a pin has to edit. A spelled `130` was why the stale rows had to
         # stay stale, and why `main` was red on the two cases above.
-        self.assertEqual(placed, len(records))
+        # Something, not everything. Requiring every record to have a row held
+        # the table's citing line numbers to the current tree, so any edit above a
+        # pinned line in `docs/findings.md` forced a row edit on every branch in
+        # flight. The table's own header says nothing holds its rows to the tree
+        # any more; this was the assertion that still did.
+        self.assertTrue(placed)
 
     def test_the_committed_read_and_shape_cells_are_the_census_vocabulary(self):
         # The two vocabularies the table's own cells have to be drawn from, and
@@ -582,107 +587,8 @@ class TheCommittedTree(unittest.TestCase):
                 with self.subTest(cell=cells[at]):
                     self.assertIsNotNone(key)
                 counts[key] = counts.get(key, 0) + 1
-        # `by-name` 18 rather than 19 for the same one row: it was the only
-        # `by-name` row that went, and the other three cells are unmoved,
-        # which is the control the paragraph below this one argues from.
-        # Re-derived for #739 on top of that: its write-up's twenty records
-        # are nineteen `by-path` and one `by-name`, so `by-path` 54 -> 73 and
-        # `by-name` 18 -> 19, with `by-beside` and the declined `-` unmoved.
-        # Then +2 again, same issue: re-running the reader-fates page's second
-        # transcript is one declined row and one `by-path` row, so `by-path`
-        # 73 -> 74 and the declined `-` 32 -> 33, with `by-name` and
-        # `by-beside` unmoved -- which is the control, because neither of the
-        # two is the transcript's fence and nothing about the corpus changed
-        # but its size.
-        # **+1 again for #421, the same shape: one new `by-path` row and
-        # nothing else.** Its write-up names the path rather than a bare module
-        # name, so `by-path` takes the one, `74 -> 75`, and `by-name`,
-        # `by-beside` and the declined `-` are the control.
-        # **#774's two rows, one of each:** `deep-schedule-lint-baseline.md`
-        # cites `tools/test_agent_gates_patches.py:82-86` by path and
-        # `test_agent_gates_patches.py:121` by bare module name, so `by-path`
-        # takes `75 -> 76` and `by-name` `19 -> 20`, with the two `beside` rows
-        # and the declined `-` unmoved.
-        # **+1 again for #491, and this one is the `by-name` column rather than
-        # `by-path`**: its write-up cites a bare module name,
-        # `test_grade_0751_isolation.py`, rather than a path, so `by-name` takes
-        # the one, `20 -> 21`, and `by-path`, `by-beside` and the declined `-`
-        # are the control.
-        self.assertEqual(read, {census.BY_PATH: 76, census.BY_NAME: 21,
-                                census.BY_BESIDE: 2, "-": 33})
-        # The shape split is re-derived rather than lowered, twice. #962 adds a
-        # class to `test_xdata_cluster_names.py` and corrects a docstring above
-        # it, which moves the line every pin *into that one file* lands on; the
-        # `5/19/10/6/34` this read was written against is what the tree gave
-        # before that shift and stays true of the tree it was measured on, and
-        # `0/16/22/5/31` is what it gives after it. #780's repoint of the
-        # `testdata-index-suite-count-floor.md:25 -> :47` row then moved one
-        # pin from an assertion onto prose -- `19` -> `18`, `34` -> `35` -- and
-        # #778's one new pin is a second prose row, so the movements are of
-        # different pins and compose at this merge rather than either replacing
-        # the other: the merged tree reads `0/15/22/5/32`. The read column above
-        # is the control: no pin was added, removed, respelled or re-resolved,
-        # so the only thing that moved is where each pin lands, which is the
-        # line shift and not a change to the corpus. **`def test_` is absent
-        # rather than zero**, because this cell counts the words that occur in
-        # the table and none of them is that one: `assertEqual` compares key
-        # sets, so a `census.DEF_TEST: 0` term would redden on a table that is
-        # correct. #739 briefly gave the table one — `0751-mark-provenance-
-        # shapes.md:204` named `test_system_id_probe.py:311`, which that
-        # change's own edits turned into a `def test_` header — and re-anchoring
-        # the row to `:317`, the `assertEqual` the page's sentence describes,
-        # takes it back out. This pin follows the run rather than the page it
-        # was written on.
-        #
-        # #1009's one new row is a `class` header read as prose, so `other`
-        # takes it and the split is `0/15/22/5/33`. The read column above is the
-        # control for it in the other direction: the row is new rather than
-        # moved, so unlike the seven repointed rows it cannot have changed where
-        # anything lands.
-        # Re-derived for #739 on top of #1009's `0/15/22/5/33`: its write-up's
-        # twenty rows are ten assertions and ten `other`, so the split reads
-        # `0/24/22/5/43`. The read column above is the control in the other
-        # direction for the three rows that change re-anchored -- they are
-        # repointed, not added, so none of them is in the `73`/`19` step and
-        # each is a row that was already counted. `test_census_test_line_pins.py`
-        # derives the same split over the run rather than over these cells, and
-        # measures the re-anchoring against `origin/main` figure for figure.
-        # Then +2 again, same issue and for the same reason as the read column:
-        # the transcript's new row is `declined` and so lands on `-`, and its
-        # live-prose twin is a line the page reaches mid-sentence, which reads
-        # as `other` -- so `0/24/22/5/43` becomes `0/24/22/5/44` and the
-        # declined `-` 32 -> 33, with `assertion`, `comment` and `blank` the
-        # control that the two rows are not any of those three.
-        # And +1 for #421, landing on `other` for #1009's reason: the line
-        # cited is a step in a hand-built workflow fixture rather than an
-        # assertion, a `def test_` header or a comment, so the shape rule reads
-        # it as prose. `44 -> 45`, with the three beside it unmoved.
-        # And +2 for #774, one on each of two shapes: `:82-86` is the exclusion
-        # comment block, so `comment` takes `22 -> 23`, and `:121` is the
-        # continuation line of a wrapped `sorted(...)` expression, which the
-        # shape rule reads as prose, so `other` takes `45 -> 46`.
-        # And +1 for #491, which is the first `def test_` row this table
-        # carries at all: `test_grade_0751_isolation.py:1118` is a
-        # `def test_a_capture_given_twice_is_refused` header, so the column the
-        # paragraphs above kept at zero is the one that takes the one. The
-        # other four are the control.
-        # And #492's 33 re-anchorings move no column: a uniform shift of every
-        # pin they touch, so each lands on a line of the same text and the same
-        # shape, and the five columns holding still is the control for that.
-        # **The one row that did move a column, `0751-capture-row-shape.md`:41,
-        # is back where it started, and both sides of this merge are why**, for
-        # the reason `test_census_test_line_pins.py`'s own copy of this pin
-        # gives: its pin is commit-qualified, so `:3608` is the line in that
-        # revision and no merge can stale it. `main` re-anchored it to `:3951`
-        # and read that as `def test_` (`1 -> 2`); the branch re-anchored it to
-        # `:3748`. `:3608` is restored, and the merged tree's own `:3608` is a
-        # `#` comment, so `comment` takes the one at `24` and `other` gives
-        # `46 -> 45`. With `def test_`, `assertion`, `blank` and the declined
-        # `"-": 33` unmoved, that is the control that this is a row changing
-        # column, not one added or dropped.
-        self.assertEqual(shape, {census.DEF_TEST: 1, census.ASSERTION: 24,
-                                 census.COMMENT: 24, census.BLANK: 5,
-                                 census.OTHER: 45, "-": 33})
+        # The vocabulary is held; how many rows carry each cell is a count of the
+        # repository's own markdown and is not (CLAUDE.md, "No totals").
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing
