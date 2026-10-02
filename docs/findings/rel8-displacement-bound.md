@@ -14,7 +14,7 @@ the EC does.
 ## The two sites, and the one bound they share
 
 ```python
-# ec/tools/audit_call_targets.py:206-210, relative_sites()
+# ec/tools/audit_call_targets.py, relative_sites()
 for i in range(lo, hi):
     op = d[i]
     if op in REL_OPCODES and i + OPCODE_LEN[op] <= hi:
@@ -23,7 +23,7 @@ for i in range(lo, hi):
 ```
 
 ```python
-# ec/tools/audit_call_targets.py:435-436, relative_survey()
+# ec/tools/audit_call_targets.py, relative_survey()
 "length": OPCODE_LEN[op],
 "disp": d[off + OPCODE_LEN[op] - 1],
 ```
@@ -38,9 +38,8 @@ in front of it is `i + OPCODE_LEN[op] <= hi`, and `hi` is not a length.
 
 Two different modules, and neither one is the loop.
 
-`hi` is `region_bounds(name)` (`ec/tools/audit_call_targets.py:322-333`), a
-`next()` over `REGIONS` — a hard-coded table at
-`ec/tools/trace_xdata_refs.py:72-79`. It is a **constant**. Nothing about it
+`hi` is `region_bounds(name)`, a `next()` over `REGIONS` — a hard-coded table
+at `ec/tools/trace_xdata_refs.py:72-79`. It is a **constant**. Nothing about it
 moves when the buffer does:
 
 ```python
@@ -49,12 +48,11 @@ moves when the buffer does:
 ("bank1",   0x10000, 0x18000, 0x8000, ...),
 ```
 
-`AUDITED` is `("common", "bank0", "bank1")` (`:131`), so the largest `hi` either
-site can be handed is bank1's `0x18000`, and the guard caps the read at
-`0x17FFF`.
+`AUDITED` is `("common", "bank0", "bank1")`, so the largest `hi` either site
+can be handed is bank1's `0x18000`, and the guard caps the read at `0x17FFF`.
 
-What keeps the read in range is `main()` (`:1085`), which refuses the image
-unless `d[0x20040:0x2004A] == b"ITE8850-PD"`. A Python slice never raises, so a
+What keeps the read in range is `main()`, which refuses the image unless
+`d[0x20040:0x2004A] == b"ITE8850-PD"`. A Python slice never raises, so a
 short buffer yields a short slice, fails the comparison, and the function
 returns 1 — the check is a genuine **length floor of `0x2004A` = 131146 bytes**,
 verified by running it against buffers of five different lengths rather than
@@ -66,8 +64,8 @@ And it is on every path that can reach the read: `relative_sites` and
 (`grep -rn 'relative_sites\|relative_survey' --include=*.py .` returns only
 this module's own definitions and uses; `group_functions.py:124`, the one
 other module that imports from here, takes only `OTHER_BANK` and `bucket_of`),
-and the check sits above the `--self-test` dispatch at `:1090` as well as above
-the three survey calls.
+and the check sits above the `--self-test` dispatch as well as above the
+three survey calls.
 
 ## The verdict
 
@@ -78,26 +76,26 @@ convenience:
 
 - **A `len(d)` test in `relative_sites()` — no.** `hi` is a *region* bound, and
   every loop in this tool is region-relative: `call_sites()` stops two short of
-  `hi` (`:173`), `paged_sites()` one short (`:185`), `erased_runs()` reads to
-  `hi - 1` (`:151`). A clamp inside `relative_sites()` would test something
-  other than the loop's own invariant, which is the same reason the census gave
+  `hi`, `paged_sites()` one short, `erased_runs()` reads to `hi - 1`. A clamp
+  inside `relative_sites()` would test something other than the loop's own
+  invariant, which is the same reason the census gave
   rows 11-20 a measured verdict rather than a guard. The invariant that is
   actually true is `hi <= len(d)` — and that is a property of the *call sites*,
   not of any one loop, which is why it does not belong in the loop.
 - **A note on the bound — yes, on the consumer rather than the table.** "That
   `hi` is a constant and not a bound on `len(d)`" is a claim about how *this*
   tool reads the table, and a consumer's property belongs on the consumer. More
-  modules import `REGIONS` by name than this paragraph used to name --
+  modules import `REGIONS` by name than this paragraph used to name —
   `xdata_span_survey.py`, `decode_index_table.py`, `pd_index_geometry.py` and
   this one are four of them, and `grep -rl 'REGIONS' --include='*.py' ec/tools`
   is how a reader sees the set -- but this is the only consumer that acts on
   the property, and editing the table for a sentence the others have no
   occasion to make would be a shared-file edit for a claim they are not making.
 
-So the change is the note, on `region_bounds()` (`:322-333`), where a reader
-asking "where does `hi` come from" lands — plus **one `check()` in the existing
-`--self-test` harness** (`:932-935`) asserting `max(region_bounds(n)[1] for n in
-AUDITED) <= len(d)`. That check is beyond the issue's literal ask and is
+So the change is the note, on `region_bounds()`, where a reader asking "where
+does `hi` come from" lands — plus **one `check()` in the existing `--self-test`
+harness** asserting `max(region_bounds(n)[1] for n in AUDITED) <= len(d)`. That
+check is beyond the issue's literal ask and is
 labelled as such; the verdict above does not rest on it. It *reports* the
 invariant rather than guarding the loop, which is the difference the census's
 rows 11-20 are about: a future dump that breaks it becomes a visible failed
@@ -109,9 +107,9 @@ line has a run behind it — `ec/tools/test_audit_call_targets.py`, whose
 **Nothing about the tool's behaviour changed.** The two code edits are a
 docstring and a `check()`. `audit_call_targets.py` over the committed image
 exits 0 and produces byte-identical output before and after, and `--relative-csv`
-— the artifact that exercises `:436` specifically, since `disp` is a column of
-it — is 9077 lines and identical on both runs. That is the evidence for the
-sentence, not a formality.
+— the artifact that exercises `relative_survey()`'s `disp` row specifically,
+since `disp` is a column of it — is 9077 lines and identical on both runs. That
+is the evidence for the sentence, not a formality.
 
 ## The vector: the guard passes on a buffer the read cannot survive
 
@@ -121,7 +119,7 @@ a truncated buffer the guard still admits a site the read cannot serve, and the
 
 ```
 vector: truncate the image one byte past 0x0802C (`bc b6 a3`, a 3-byte form)
-  guard at :170 sees i+3 = 0x0802F <= hi = 0x10000 -> True, on a 0x0802D-byte buffer
+  guard at i+3 = 0x0802F <= hi = 0x10000 -> True, on a 0x0802D-byte buffer
   committed -> 3281 site(s) in bank0
   truncated -> IndexError: index out of range
 ```
@@ -130,8 +128,8 @@ The guard is satisfied by arithmetic on a constant; the read fails on the
 buffer. That gap — 32843 bytes wide on the committed image, and closed by one
 comparison in a different function — is the whole finding. The same
 truncation fed to `relative_survey()` rather than to the generator raises
-`IndexError` too, at `:151` in `erased_runs()` instead, which is a fact about
-call order and is **not** evidence about the two named sites; it is why the
+`IndexError` too, in `erased_runs()` instead, which is a fact about call order
+and is **not** evidence about the two named sites; it is why the
 vector above is aimed at `relative_sites()` directly.
 
 **Two corrections to the issue's arithmetic, both left visible here rather than
@@ -274,7 +272,7 @@ i = next(i for i in range(lo, hi - 3) if d[i] in REL_OPCODES and OPCODE_LEN[d[i]
 trunc = d[:i + 1]
 print("vector: truncate the image one byte past 0x%05X (`%s`, a 3-byte form)"
       % (i, d[i:i + 3].hex(" ")))
-print("  guard at :170 sees i+3 = 0x%05X <= hi = 0x%05X -> %s, on a 0x%05X-byte buffer"
+print("  guard at i+3 = 0x%05X <= hi = 0x%05X -> %s, on a 0x%05X-byte buffer"
       % (i + 3, hi, i + 3 <= hi, len(trunc)))
 for label, buf in (("committed", d), ("truncated", trunc)):
     try:
@@ -302,7 +300,7 @@ highest index relative_sites() actually reads over this image: 0x1744D
   len(d) 0x40000 - 1 - that = 166834 bytes
 
 vector: truncate the image one byte past 0x0802C (`bc b6 a3`, a 3-byte form)
-  guard at :170 sees i+3 = 0x0802F <= hi = 0x10000 -> True, on a 0x0802D-byte buffer
+  guard at i+3 = 0x0802F <= hi = 0x10000 -> True, on a 0x0802D-byte buffer
   committed -> 3281 site(s) in bank0
   truncated -> IndexError: index out of range
 ```
