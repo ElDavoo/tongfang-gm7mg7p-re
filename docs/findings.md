@@ -265,14 +265,20 @@ Reading both spellings — `../ec/tools/xdata_register_map.py` — gives
 
 | | main EC | PD image | total |
 |---|---:|---:|---:|
-| distinct addresses | 1,063 | 157 | 1,172 |
-| references | 13,937 | 864 | 14,801 |
-| of which named from `registers.yaml` | 41 | 0 | 41 |
+| distinct addresses | 1,218 | 157 | 1,326 |
+| references | 14,838 | 858 | 15,696 |
+| of which named from `registers.yaml` | 172 | 0 | 172 |
 
-So the corrected claim is that **41 of the 1,063 XDATA addresses the main EC
-touches carry a name, and 1,022 do not**. The blocking problem the issue
-described is real and 96% of the register file is still `DAT_EXTMEM_xxxx`; what
-was wrong was the size of the named minority, and with it any argument that the
+*(Corrected 2026-10-02, issue #342. The three rows above read `1,063 | 157 |
+1,172`, `13,937 | 864 | 14,801` and `41 | 0 | 41`, kept here as the wrong
+version. `python3 ec/tools/check_census_figures.py --print` derives the current
+three from `ec/annotations/xdata-registers.csv` and holds this table to them.)*
+
+So the corrected claim is that **172 of the 1,218 XDATA addresses the main EC
+touches carry a name, and 1,046 do not** — read as `DAT_EXTMEM_xxxx` or as a
+bare literal argument rather than as a name. The blocking problem the issue
+described is real; what was wrong was the size of the named minority, and with
+it any argument that the
 firmware and `registers.yaml` are looking at the same bytes. They are nearly
 disjoint corpora: 79 of `registers.yaml`'s 101 addresses appear in the
 decompiled tree at all, 72 of them touched by the main EC and 7 only by the PD
@@ -282,7 +288,14 @@ image. (Corrected 2026-09-24, issue #181: this read "44 of `registers.yaml`'s
 *other* number here — the 41 main-EC addresses the decompile spells by symbol —
 is unchanged, and it is a different question: an address being in
 `xdata-symbols.csv` and an address being *spelled* by that symbol in the
-committed `.c` are two facts, and only the second one has moved.)
+committed `.c` are two facts, and only the second one has moved. *(Corrected
+2026-10-02, issue #342: "is unchanged" is no longer true of this tree.
+`ORACLE["symbol_main_distinct"]` reads 172, so `41 of the 1,063 … and 1,022 do
+not` above is superseded too, and the "96% of the register file is still
+`DAT_EXTMEM_xxxx`" that went with it is gone rather than re-stated: a
+percentage whose rounding the sentence never gave is a figure that cannot be
+re-derived, which is what `check_census_figures.py` declines rather than
+checks. The wrong version above is kept, which is §4a-4d.)*)*
 
 Two smaller corrections travel with it, both pinned by the tool's `--self-test`
 so neither can drift unnoticed:

@@ -370,7 +370,7 @@ into `r2 -a 8051` with no stitching needed.
   `--self-test` running on committed text alone (no image, no Ghidra, no
   network). Reach for it when the question is "which addresses exist, which
   routines share them, and is this number a read or a write" — the whole
-  `registers.yaml` list is 153 addresses, and this census is 1,171. Two limits
+  `registers.yaml` list is 153 addresses, and this census is 1,326. Two limits
   it earns the right to state: it splits the main EC from the separate
   `ITE8850-PD` program rather than mixing them, and a cluster is a
   co-occurrence in static code, not a purpose —
@@ -614,7 +614,7 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   driver or the Windows service touches, cross-referenced against static-scan
   results and live-hardware behaviour. This is the primary research output;
   start here. It is 144 addresses, and `annotations/xdata-register-map.md`
-  covers 1,172 — the two corpora are nearly disjoint, and which of the two a
+  covers 1,326 — the two corpora are nearly disjoint, and which of the two a
   question is about decides where the answer lives.
 - **`annotations/data-regions.yaml`** — the seven byte ranges in this image
   that `annotations/bank-call-audit.md` §2 and §5 read as **data tables rather
