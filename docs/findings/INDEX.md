@@ -80,6 +80,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
 - [`ec-fan-table-defaults.md`](ec-fan-table-defaults.md) — The EC's own fan tables: where they live, what they say, and how far they are from the vendor's
 - [`ecmg-asl-references.md`](ecmg-asl-references.md) — Which of the 98 ECMG names the ASL reaches for, and what the two `0x71` arms are (issue #1159)
+- [`ecrw-fake-mirror-surface.md`](ecrw-fake-mirror-surface.md) — The `ecrw` fixture's mirror claim, measured, and narrowed to what it carries (issue #356)
 - [`ecrw-fake-one-shape.md`](ecrw-fake-one-shape.md) — One fake for `ecrw`, one way to install it, and one interpreter that proves it
 - [`emit-csv-flag-honesty.md`](emit-csv-flag-honesty.md) — `--emit-csv` refused the three modes it knew about, and honoured nothing on the fourth
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading

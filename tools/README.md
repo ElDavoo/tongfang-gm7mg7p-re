@@ -105,6 +105,7 @@ the row is the one step it cannot do.
 | `windows/tools/test_manual_fan_ctrl_probe.py` | the fan-mode probe's two-arm byte script, its read-safety guard under `--level-block` and `--watch-page`, the three mark rows its `--csv` capture lands, that capture read back through the real `ec/tools/grade_0751_isolation.py` reader and then through its block walk as a whole grader run — one block, `intact`, three roles, every window printed, exit 0 — the mark set against the grader's own §6 forms, a crashed run's `#` row, `--watch-page`: that the flag is opt-in, that it is §3's three ranges rather than 448 addresses of the tool's own choosing, that it substitutes for `WATCH` instead of adding to it, that it writes nothing but `0x0751`, and that its capture still grades and keeps its ungraded rows on the grader's `other addresses that moved` line — and `--block`: the seven runs the watch set decomposes into, the page arm's three whole runs, that the block path reports exactly what the byte path does, that only the mode byte is left to a point read, and the 56/61 and 112/117 figures the banner and the self-test quote |
 | `windows/tools/test_ec_watch.py` | the mark-CSV sweep and the mark landing between two change rows, that a blank press at the mark prompt records no row and takes no mark number while a padded label is still taken, plus `--block`: that it sweeps through `readmany`, that the flag is off by default, that the banner says the path is unverified, and that a range covering the fan-tach page is warned about rather than refused |
 | `windows/tools/test_ecrw.py` | the real `ecrw.py`, on a fake `ctypes.WinDLL` standing in for kernel32: the `MMRD` IOCTL's little-endian physical address, the aligned-block decomposition of a range, the probe watch set's 56-IOCTL cost against the 52 a `206/4` suggests, the `--watch-page` set's 112 IOCTLs and its 448 bytes with no padding, all four watch sets cleared of the fan-tach page, the window's last in-window dword, an unaligned start's discarded lead, `dump --block` printing what the byte path prints, the per-byte path's buffer byte for byte as it always was, and the unaligned `mmrd` escape: its wire shape, that it overlaps the aligned dword rather than equalling it, that it loosens alignment and not the window, that every offset any block path still issues is 4-aligned, and the four bare bytes its command prints |
+| `windows/tools/test_ecrw_fake.py` | `windows/tools/ecrw_fake.py` held to `windows/tools/ecrw.py`, which is the claim the fixture makes about itself and nothing checked -- the two cannot be compared at runtime (`ecrw.py` runs `ctypes.WinDLL` at module scope, which is the whole reason the fixture exists), so this parses both with `ast` and compares **signatures, not names**, which is what makes a `read` growing a parameter a red run rather than a silent divergence a member set cannot see. Four rules, both directions: nothing the fixture carries that `ecrw.Ec` does not have, nothing it carries with a different argument list, and then the pair that replaced "the whole surface" -- every member **a tool in this directory reaches** is on the fixture, and nothing else is. The reached set is **derived from the tools' own sources**, never listed, so a tool growing a fourth call is covered by the property rather than by whoever edits a table; the derivation errs toward counting too much, since a member wrongly believed needed has to be on the fixture and a member wrongly believed unneeded stays in the exemption. The residual (`_ioctl`, `read_dword`, `read_dword_unaligned` -- the real class's own interior, which no tool reaches) is **asserted equal in both directions** with `check_pin_message_names.py`'s discipline: an entry that stops violating has to be deleted, and that deletion is what makes it green. Plus `EcError`'s base and `block_runs`'s signature, and **four non-vacuity cases** over the parse, because a suite asserting a relation between two files can pass on two empty parses as readily as one asserting a census. **The negative control is what stops it being decorative**: five scratch copies of the two files -- add a member to the real class, drop one, re-signature one, drop one from the fixture, add one to it -- each asserted to be reported *under the key the matching case owns*, so a control cannot go green while the case it was written for is broken. Static throughout: it imports neither file and calls no `install()`, because leaving `sys.modules['ecrw']` pointing at the fixture is state a sibling suite inherits under the one-interpreter run. **Not in any gate**: `run-tests.sh` finds it by itself, and `check_python_syntax` globs `windows/tools/*.py`, so this file is syntax-checked there for free. The write-up is [`../docs/findings/ecrw-fake-mirror-surface.md`](../docs/findings/ecrw-fake-mirror-surface.md) |
 | `windows/tools/test_ec_validate.py` | the `ec_validate.py` `0x0436` capacity arm's exact-copy scoring, full-capacity bound, CSV, and `0x0400-0x045F` page assertion |
 | `windows/tools/test_system_id_probe.py` | the `0x0456` probe's `store_scaled_quotient_0449` arithmetic, its branch labels, its address guard, and that it has no write path |
 | `windows/tools/test_charge_target_test.py` | the charge-target tool's three refusals, the restore in its `finally`, and its CSV column set |
@@ -145,6 +146,8 @@ a suite that only ever exercises the fake
 is not testing the file whose arithmetic #147 is about.
 [`tools/test_windows_tools_shared_interpreter.py`](test_windows_tools_shared_interpreter.py)
 holds that as a property — see the next section.
+[`windows/tools/test_ecrw_fake.py`](../windows/tools/test_ecrw_fake.py) holds
+the fixture to the real module, which is the other half of the same claim.
 
 Named directories run alone, which is what to reach for when editing one tool:
 
@@ -171,14 +174,21 @@ the winner lacks died with `ImportError: cannot import name 'EcError' from
 `docs/findings.md` §16 has the reproduction.
 
 **There is now one shape and one way to install it.**
-`windows/tools/ecrw_fake.py` carries `Ec`, `EcError` and `block_runs` over the
-real module's whole surface, and every suite in that directory exercising a tool
-that imports `ecrw` calls `ecrw_fake.install()` — by assignment, not
-`setdefault`. A suite with bytes of its own keeps its own class and patches it
-over the tool after import, which is what every suite installing the fake does.
-`test_ecrw.py` installs nothing, because it puts a fake `ctypes.WinDLL` in front
-of the *real* `ecrw.py` and restores whatever was under the name in a `finally`;
-that is a borrow, not a third shape.
+`windows/tools/ecrw_fake.py` carries `Ec`, `EcError` and `block_runs` over every
+part of the real module a tool in that directory reaches, and every suite
+exercising a tool that imports `ecrw` calls `ecrw_fake.install()` — by
+assignment, not `setdefault`. A suite with bytes of its own keeps its own class
+and patches it over the tool after import, which is what every suite installing
+the fake does. `test_ecrw.py` installs nothing, because it puts a fake
+`ctypes.WinDLL` in front of the *real* `ecrw.py` and restores whatever was under
+the name in a `finally`; that is a borrow, not a third shape.
+**"Every part a tool reaches" is narrower than the whole surface, and on
+purpose.** `_ioctl`, `read_dword` and `read_dword_unaligned` are the real
+class's own interior, no tool here reaches them, and giving the fixture a dword
+body would turn a loud `AttributeError` into a silent four-zero answer on the
+MMRD path — the path `test_ecrw.py` guards hardest.
+`windows/tools/test_ecrw_fake.py` holds the narrowed claim, by `ast`, and names
+the three it omits.
 
 **So the per-file loop is insurance, and
 [`tools/test_windows_tools_shared_interpreter.py`](test_windows_tools_shared_interpreter.py)
