@@ -182,9 +182,9 @@ $ python3 ec/tools/xdata_register_map.py --check
 /home/runner/.../ec/annotations/xdata-registers.csv: 1326 rows match a fresh generation from the committed tree at threshold 0.5
 /home/runner/.../ec/annotations/xdata-clusters.csv: 439 rows match a fresh generation from the committed tree at threshold 0.5
 $ grep -rhoE 'DAT_EXTMEM_[0-9a-fA-F]{4}' ec/decompiled/*/*.c | wc -l
-8583
+8568
 $ grep -rhoE 'DAT_EXTMEM_[0-9a-fA-F]{4}' ec/decompiled/*/*.c | sort -u | wc -l
-1013
+1011
 ```
 
 Those are the current ones. `python3 ec/tools/check_census_figures.py` derives
@@ -337,7 +337,7 @@ deleted.)*
 
 *(Correction, 2026-10-02, issue #342. Two more of that note's figures have moved
 since it was written, so "unchanged and still pinned" now names only the top
-two addresses: the committed census has 172 symbol-spelled main-EC addresses
+two addresses: the committed census has 175 symbol-spelled main-EC addresses
 and splits `pd_only` / `both` 108 / 49. The top-two pair is
 `xdata_register_map.py`'s `ORACLE_TOP_MAIN` and still holds.
 `python3 ec/tools/check_census_figures.py` derives each of those three from
@@ -542,7 +542,7 @@ $ grep -rhoE '\bCPU_TEMP\b' ec/decompiled/common/*.c ec/decompiled/bank0/*.c ec/
 
 Fifty-six mentions of `CPU_TEMP` in the EC programs, and **zero** of them
 under a `DAT_EXTMEM_043e`. The same holds for every other address the main EC
-spells by symbol — 172 in the committed census, `CPU_TEMP` one of them.
+spells by symbol — 175 in the committed census, `CPU_TEMP` one of them.
 
 **Per program, the split is a statement about one program.** Keying each row's
 `spellings_by_program` clause, so a `main-ec` row is spelled one way *by the

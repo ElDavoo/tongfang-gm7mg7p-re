@@ -18,7 +18,11 @@
    and 0x9C1B, which are inside 0x9C00 and which that function's own row records. So every path into
    it is 'the condition for this case's work did not hold', and returning with A, R7 and the carry
    as the caller left them is the whole of what each caller expected. What the cases do when their
-   test does hold is not decoded here.
+   test does hold is not decoded here. Corrected in place, issue #649, the wrong version left
+   visible: it read that the cases were not decoded, and they now are, in
+   docs/findings/044b-mode-stepper.md and in the row for bank0,0x9AAD. What that reading settles is
+   the transition each arm takes, not what the five values of XDATA 0x044B mean, and the meaning is
+   still not decoded.
    type: forwarder
    evidence: ec/decompiled/bank0/9C47.asm; ec/decompiled/bank0/9C47.c; ec/decompiled/bank0/9AAD.asm
    basis: hand-decoded

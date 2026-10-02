@@ -125,7 +125,7 @@ bank0,9A7B,store_bd20_result_masked_7f,match,23782ef28e3080f1,6,0,,sdas8051 05.5
 bank0,9A86,call_ba15_then_write_02_to_044b,match,d29b5de085464ba7,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,9A90,call_bd20_with_03_then_or_80_into_dptr,match,9010d6728e8100be,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,9A9C,write_04_to_044b_and_set_08e2_bit7,match,cf96081d477525e6,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,9AAD,FUN_CODE_9aad,match,f0953c2d13cebe28,161,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,9AAD,dispatch_044b_then_write_01_02_03_or_04,match,f0953c2d13cebe28,161,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,9BFD,forward_to_9a86,match,9e7952840b4fc6a7,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,9C00,clear_09e9_unless_0743_bit2,match,bff02ed5aa0b1cf1,13,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,9C1D,clear_two_bytes_at_dptr_then_9a90,match,1d487da785c7461c,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14

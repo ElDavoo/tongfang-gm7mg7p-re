@@ -125,7 +125,7 @@ bank0,9A7B,store_bd20_result_masked_7f,11,annotation,no,yes,writer,hand-decoded,
 bank0,9A86,call_ba15_then_write_02_to_044b,10,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/9A86.asm; ec/decompiled/bank0/9A86.c; ec/annotations/registers.yaml,,bank0/9A86.asm
 bank0,9A90,call_bd20_with_03_then_or_80_into_dptr,12,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/9A90.asm; ec/decompiled/bank0/9A90.c,,bank0/9A90.asm
 bank0,9A9C,write_04_to_044b_and_set_08e2_bit7,17,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/9A9C.asm; ec/decompiled/bank0/9A9C.c; ec/annotations/registers.yaml,,bank0/9A9C.asm
-bank0,9AAD,FUN_CODE_9aad,336,call-target,no,no,,,,,bank0/9AAD.asm
+bank0,9AAD,dispatch_044b_then_write_01_02_03_or_04,336,annotation,no,yes,dispatch,hand-decoded,ec/decompiled/bank0/9AAD.asm; ec/decompiled/bank0/9AAD.c; ec/decompiled/bank0/BD20.asm; docs/findings/044b-mode-stepper.md,,bank0/9AAD.asm
 bank0,9BFD,forward_to_9a86,3,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/9BFD.asm; ec/decompiled/bank0/9BFD.c,,bank0/9BFD.asm
 bank0,9C00,clear_09e9_unless_0743_bit2,29,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/9C00.asm; ec/decompiled/bank0/9C00.c; ec/annotations/registers.yaml,,bank0/9C00.asm
 bank0,9C1D,clear_two_bytes_at_dptr_then_9a90,7,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/9C1D.asm; ec/decompiled/bank0/9C1D.c,,bank0/9C1D.asm
@@ -757,7 +757,7 @@ bank1,17FE,FUN_CODE_17fe,0,auto,yes,no,,,,,(no-instructions)
 bank1,1803,nop_no_control_transfer,1,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/bank1/1803.asm; ec/decompiled/bank1/1803.c,,bank1/1803.asm
 bank1,1804,trampoline_to_c48f,6,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/bank1/1804.asm; ec/decompiled/bank1/1804.c,,bank1/1804.asm
 bank1,1984,trampoline_to_c10c,6,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/bank1/1984.asm; ec/decompiled/bank1/1984.c,,bank1/1984.asm
-bank1,198A,trampoline_to_c1e7,6,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/bank1/198A.asm; ec/decompiled/bank1/198A.c,,bank1/198A.asm
+bank1,198A,trampoline_to_c1e7,6,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/bank1/198A.asm; ec/decompiled/bank1/198A.c; ec/decompiled/bank0/C1E7.asm,,bank1/198A.asm
 bank1,1990,trampoline_to_c391,6,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/bank1/1990.asm; ec/decompiled/bank1/1990.c,,bank1/1990.asm
 bank1,1996,trampoline_to_c4bf,6,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/bank1/1996.asm; ec/decompiled/bank1/1996.c,,bank1/1996.asm
 bank1,199C,trampoline_to_c4b7,6,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/bank1/199C.asm; ec/decompiled/bank1/199C.c,,bank1/199C.asm
