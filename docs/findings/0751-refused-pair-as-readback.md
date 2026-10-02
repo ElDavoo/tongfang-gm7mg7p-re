@@ -100,10 +100,10 @@ $ sed -n 14p $D/2026-01-01-0751-isolation-a0-after-0700.txt
 
 `0x0751` is the second byte of that line. So the run reads a pre-write value,
 and the report says of it that something put the value back — a claim about the
-vendor service and the EC, made out of a mistyped flag. This is the one shape
-in the tool that states something about the machine which is not true, and it
-is why the fix belongs before the run [#380](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/380)
-asks a human to make at the laptop.
+vendor service and the EC, made out of a mistyped flag. This is the shape
+§4.6's hint produces here, and it is why the fix belongs before the run
+[#380](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/380) asks a human
+to make at the laptop.
 
 ## The `break` makes this the likely case, not an edge
 
@@ -128,7 +128,8 @@ After, the refused pair is named with its reason and the walk goes on:
       pass the after file as the last --dump to take the readback: …-a0-after-0700.txt
 ```
 
-The second command above now lands on `0xA0` and prints `the last dump still
+Following that hint — whose last `--dump` is the pair's after file,
+`…-a0-after-0700.txt` — now lands on `0xA0` and prints `the last dump still
 holds the written 0xA0`, which is what a §6 run actually says about a byte that
 held.
 
@@ -199,10 +200,10 @@ is a bracket can still be named there. Two are real:
 
 Both are about which block a bracket is filed under, where this is about
 whether it is a bracket at all, and both change which pair §4.6 names on
-shapes no committed fixture reaches — which is its own change, and one that
-belongs with a fixture for the shape. `pair_refusal` is the place they go: it
-already has two callers and one spelling, so a third refusal is a new constant
-and a line in one function rather than a second copy of the walk.
+shapes no committed *test* drives — which is its own change, and one that
+belongs with a test over the committed fixtures. `pair_refusal` is the place
+they go: it already has two callers and one spelling, so a third refusal is a
+new constant and a line in one function rather than a second copy of the walk.
 
 ## Offline reproduction
 
