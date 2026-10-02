@@ -326,6 +326,17 @@ jobs:
                 or (.displayTitle | test("issue #" + $n + "$"))
                 or ($t != "" and .displayTitle == $t))' "$RUNNER_TEMP/busy.json" >/dev/null
           }
+          # LOCAL CHANGE (2026-10-02): the two queue sweeps' start counts restart at the last
+          # hand-off. Counted over the whole thread, an issue a human un-stuck -- which is what
+          # the hand-off comment tells them to do -- was re-stuck by the very next sweep, its
+          # old starts still on the books. The legacy text match covers hand-offs written before
+          # the marker existed. `--slurp` and a single jq rather than `--paginate --jq`, which
+          # runs once per page and prints one count per page on a long thread.
+          COUNT_STARTS='reduce (add[] | select(.user.login == "github-actions[bot]" and .user.type == "Bot")
+                                     | .body) as $b (0;
+                          if ($b | test("<!-- agent-handoff -->|being handed over rather than started again")) then 0
+                          elif ($b | contains($m)) then . + 1
+                          else . end)'
           busy_pr() {
             jq -e --arg n "$1" --arg b "$2" 'any(.[];
                 .headBranch == $b or (.displayTitle | test("PR #" + $n + "$")))' "$RUNNER_TEMP/busy.json" >/dev/null
@@ -640,12 +651,11 @@ jobs:
           # exists to stop and would be worse here: a stall costs a stopped run, this costs a
           # whole one. Same authorship filter as above, and for the same reason -- the marker is
           # an instruction to this workflow and an issue comment is world-writable.
-          started=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${waiting}/comments" \
-                      --jq '[.[] | select(.user.login == "github-actions[bot]" and .user.type == "Bot")
-                                 | .body | select(test("<!-- agent-queued -->"))] | length')
+          started=$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/issues/${waiting}/comments" \
+                      | jq --arg m '<!-- agent-queued -->' "$COUNT_STARTS")
           if [ "$started" -ge "$MAX_RETRIES" ]; then
             echo "started $started times from the queue already — giving up"
-            gh issue comment "$waiting" --body "This issue has been started $started times from the queue and has never reached a pull request, so it is being handed over rather than started again. Remove the \`agent:stuck\` label to let the pipeline pick it up."
+            gh issue comment "$waiting" --body "This issue has been started $started times from the queue and has never reached a pull request, so it is being handed over rather than started again. Remove the \`agent:stuck\` label to let the pipeline pick it up. <!-- agent-handoff -->"
             gh issue edit "$waiting" --add-label 'agent:stuck'
             continue
           fi
@@ -745,12 +755,11 @@ jobs:
           # A plan run that keeps ending without `agent:planned` -- declining at a cap this step
           # disagrees with, or failing before the stall step -- would otherwise be restarted
           # every five hours forever.
-          started=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${waiting}/comments" \
-                      --jq '[.[] | select(.user.login == "github-actions[bot]" and .user.type == "Bot")
-                                 | .body | select(test("<!-- agent-plan-queued -->"))] | length')
+          started=$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/issues/${waiting}/comments" \
+                      | jq --arg m '<!-- agent-plan-queued -->' "$COUNT_STARTS")
           if [ "$started" -ge "$MAX_RETRIES" ]; then
             echo "planning started $started times from the queue already — giving up"
-            gh issue comment "$waiting" --body "Planning this issue has been started $started times from the queue and it has never come out planned, so it is being handed over rather than started again. Remove the \`agent:stuck\` label to let the pipeline pick it up."
+            gh issue comment "$waiting" --body "Planning this issue has been started $started times from the queue and it has never come out planned, so it is being handed over rather than started again. Remove the \`agent:stuck\` label to let the pipeline pick it up. <!-- agent-handoff -->"
             gh issue edit "$waiting" --add-label 'agent:stuck'
             continue
           fi
