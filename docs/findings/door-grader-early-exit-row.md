@@ -1,4 +1,4 @@
-# The door grader dropped the watcher's "the run ended early" row, and a 4-second window graded as a 30-second one (issue #684)
+# The door grader dropped the watcher's "the run ended early" row, and a 3-second window graded as a 31-second one (issue #684)
 
 The write-up for [issue
 #684](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/684), the
@@ -46,10 +46,12 @@ one row written in after its second MARK line, stamped inside the second window
 
 exit **0**, and `grep -in 'early\|ended early\|not graded\|withheld'` over the
 whole report matched nothing. The row is not counted — not because it was
-refused, but because nothing looked. The per-window line that ends each of those
-three is `nothing in this block moved by this method under this action`, and
-that is the sentence §5's result table is filled from. It is the same sentence
-over a window cut at 4 s of a 30 s hold as over one that ran the hold.
+refused, but because nothing looked. Each of those three windows prints its
+`0x07C4-0x07D7: N of 20 addresses moved` and `0x0743-0x0746: N of 4 addresses
+moved` lines, and those are the lines §5's third and fourth cells are read
+from: a window cut at 3 s of a 31 s hold reports the same two figures in the
+same format as one that ran its hold. That is the false green, and a reader of
+the table cannot see it.
 
 `ec/tools/testdata/` is deliberately untouched: every fixture there is one some
 run grades and every one of those has to exit 0, and a fixture carrying this row

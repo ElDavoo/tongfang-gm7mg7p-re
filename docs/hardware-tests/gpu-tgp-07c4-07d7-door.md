@@ -332,13 +332,17 @@ open, and column 10 is the human's call against §6. The grader prints that
 split itself, so a table carrying only the first five cannot be mistaken for a
 finished one.
 
-**A withheld window is not a quiet one.** The per-window line that ends each
-graded window is `nothing in this block moved by this method under this
-action`, and this table's third and fourth cells are filled from that sentence
-— so read it only where the window is graded. A window the grader prints
-`NOT GRADED` carries no movement line, no ordering line and none of the 24
-`net`/`total`/`max` lines, because the capture records the run ending inside
-it: half a hold is not a smaller claim than a whole one, it is no claim at all.
+**A withheld window is not a quiet one.** This table's third and fourth cells
+are read off the count line each block of a graded window prints —
+`0x07C4-0x07D7: N of 20 addresses moved` and `0x0743-0x0746: N of 4 addresses
+moved` — so read them only where the window is graded. `nothing in this block
+moved by this method under this action` is not that figure: it is the prose a
+zero is written as, printed once for every block that moved nothing and not at
+all when both blocks moved, so it is absent from a graded window and cannot
+mark one. A window the grader prints `NOT GRADED` carries no count line, no
+such sentence, no ordering line and none of the 24 `net`/`total`/`max` lines,
+because the capture records the run ending inside it: half a hold is not a
+smaller claim than a whole one, it is no claim at all.
 The §6 closing below the windows says how many windows were withheld rather
 than counting them as windows where nothing moved, and the exit code is 1
 while the row is there. If a row of this table has no graded window behind it,
