@@ -166,13 +166,17 @@ group shows the byte anywhere but the written value before the last dump. The
   picks the second. Branch 3's line is printed above it and says what the
   files cannot separate, which helps but does not fix it. Aligning that arm is
   the same change one branch further, and it is not taken here.
-- **`--dump-pair` reads the same two files at a different strength.** A pair
-  whose before file already holds the written value is reported as `unchanged`
-  for `0x0751`, and §6 already says a dump diffed against itself "proves
-  nothing". §4.6 is now the stronger of the two readers on this shape, which is
-  the right way round, but the `--dump-pair` section has not been brought up to
-  it. The issue raised this and left it out of scope; it is recorded here so the
-  next pass starts from it.
+- **`--dump-pair` reads the same two files at a different strength.** On a pair
+  whose before file already holds the written value, `0x0751` drops out of the
+  section's "other addresses that differ" list and nothing replaces it: the
+  `unchanged` lines the pair does print belong to the §4.1 and §4.3 watched
+  groups, and this byte is in neither. So the tool does not call it unchanged —
+  it stops mentioning it, which is a silence about a byte the whole-block
+  section is not grading rather than a verdict on one. §6 already says a dump
+  diffed against itself "proves nothing". §4.6 is now the stronger of the two
+  readers on this shape, which is the right way round, but the `--dump-pair`
+  section has not been brought up to it. The issue raised this and left it out
+  of scope; it is recorded here so the next pass starts from it.
 
 ## Where the rest of it lives
 
