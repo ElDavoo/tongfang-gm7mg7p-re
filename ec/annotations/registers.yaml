@@ -866,9 +866,10 @@ registers:
       whole-byte, and none is a bit-7 operation -- which is the bit the
       vendor's SetTypeCAdaptorSwitch sets and clears; that mismatch is
       recorded there and is not resolved here. The reads are a counter
-      compared against 0x07CE, a read-modify-write increment, a read whose
-      value its window does not consume, and a pointer-building index. Same
-      reading as 0x07D0, same scope caveat, and no status moves.
+      compared against 0x07CE, a read-modify-write increment, a read the
+      window scales by 4 into a DPTR popped off the stack, and a
+      pointer-building index. Same reading as 0x07D0, same scope caveat,
+      and no status moves.
 
   - name: CPU_TEMP
     addr: 0x043E

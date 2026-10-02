@@ -7,7 +7,7 @@ Its XDATA `0x07D0` is **not** the EC's XDATA `0x07D0`; they are different
 address spaces belonging to different programs, which
 [`lightbar-bat-flow.md`](lightbar-bat-flow.md) §2 establishes and this file
 does not re-argue. The EC image references `0x07D0` **zero** times by this
-method (`lightbar-bat-flow.md` §6; §5 below reproduces the count).
+method (`lightbar-bat-flow.md` §6; §6 below reproduces the count).
 
 **And `2000` in `ec/decompiled/pd/*.c` is the address `0x07D0` written in
 decimal, not the charge limit.** Ghidra prints the number `2000` wherever the
@@ -90,12 +90,12 @@ $ grep -rn '\b2000\b' ec/decompiled/pd/*.c | wc -l
 10
 ```
 
-Ten occurrences, in three files, and every one of them sits where the
+Ten occurrences, in four files, and every one of them sits where the
 decompiled C needs a pointer. `2001` — the address one byte up — appears
-nowhere in the tree, which is itself the tell: this is not a printer emitting
-arbitrary numbers, it is a printer emitting addresses it computed. Nine of
-the ten are an **XDATA** pointer; the tenth is a **CODE** one, and that
-difference is what the third transcript below is for.
+nowhere in `ec/decompiled/pd/*.c`, which is itself the tell: this is not a
+printer emitting arbitrary numbers, it is a printer emitting addresses it
+computed. Nine of the ten are an **XDATA** pointer; the tenth is a **CODE**
+one, and that difference is what the third transcript below is for.
 
 Three of the ten settle it, each with the governing bytes beside it.
 
@@ -234,7 +234,7 @@ its derived totals against `registers.yaml` directly, so the three committed
 files cannot drift apart without something going red.
 
 **Read the second row with the third.** "43 of the 254 are inside a
-committed routine" is a statement about the 541 `pd` function boundaries in
+committed routine" is a statement about the `pd` function boundaries in
 `ec/decompiled/index.csv`, **not** about the firmware. A Ghidra function is
 seeded from an annotation row; a site no annotation has named is in bytes
 the project has no function over, and that is the ordinary state of a project
@@ -336,11 +336,11 @@ collapse into four:
    ```
 
    `0xC2FA` forms `0x08F8 + low8(value × 0x5E)` — B is discarded by the
-   `mul`, exactly as `pd-index-geometry.md` §8's correction records for this
-   site — and `0xE8D4` forms `0x0A13 + value × 0x17` into R2:R1 and hands it
-   to `0x128D`. Both are that file's §7 reading, reached from the other
-   direction: this file does not re-decode the strides, it reads the routines
-   that use them.
+   `clr a` at `0xC307`, exactly as `pd-index-geometry.md` §8.1's correction
+   records for this site — and `0xE8D4` forms `0x0A13 + value × 0x17` into
+   R2:R1 and hands it to `0x128D`. Both are that file's §7 reading, reached
+   from the other direction: this file does not re-decode the strides, it
+   reads the routines that use them.
 
 3. **The byte as a loop counter.** `0xDBD9` is the clearest statement of the
    role in the whole image, and it is the one that settles the "index or
@@ -476,8 +476,8 @@ routine reads `[0x07D0]` then `[0x07D1]` as one word. The same routine ANDs
 block `0x07D0`–`0x07D3` is read as two 16-bit little-endian fields.
 
 **The standalone one, in no committed routine** — `0xDACF`, which
-`ec-0x07d0-sites.csv` records as a `0x07D0` site and
-`ec-0x07d1-sites.csv` as a `0x07D1` site:
+`ec-0x07d0-sites.csv` records as a `0x07D0` site — a `read x2, walks 2
+consecutive bytes (inc dptr)` row, which is what carries it to `0x07D1`:
 
 ```console
 $ r2 -a 8051 -e scr.color=0 -e asm.comments=false -q -c 's 0xdacf; pd 6' /tmp/pd.bin
@@ -527,9 +527,10 @@ makes it a swap rather than two stores of the same value. There is no
 verified against the image and the committed site tables, not a decompile.
 
 **The pair is written together too.** `0x8576` seeds `[0x07D0]` from R7 and
-zeroes `[0x07D1]` (§3.2), and sixteen bytes later the same routine stores R7 —
-loaded from `[0x07D0]` at `0x865D` and carried through `0xF61C`, which is not
-decoded here and may have changed it — into `[0x07D1]`:
+zeroes `[0x07D1]` (§3.2), and later in the same routine — `0x865A` is one of
+its sites — R7, loaded from `[0x07D0]` at `0x865D` and carried through
+`0xF61C`, which is not decoded here and may have changed it, is stored into
+`[0x07D1]`:
 
 ```console
 $ r2 -a 8051 -e scr.color=0 -e asm.comments=false -q -c 's 0x865a; pd 10' /tmp/pd.bin
@@ -581,7 +582,7 @@ The other five are outside every committed routine boundary, and four of them
 sit in a listing gap worth naming: `0x7455`, `0x745E`, `0x7508` and `0x7519`
 are in the neighbourhood of `7392 count_07cb_up_to_3_over_07ca_records`, but
 `index.csv` records that routine as 141 bytes starting at `0x7392` — through
-`0x741D` — and `7392.asm` itself has a display gap from `0x73ED` to `0x7551`.
+`0x741E` — and `7392.asm` itself has a display gap from `0x73ED` to `0x7551`.
 The four sites are in bytes that neither the committed boundary nor the
 committed listing covers, which is the honest form of "outside every
 committed routine" for them.
@@ -616,15 +617,31 @@ a bound one page up. `0x7519` is `[0x07CC] += 1` in place followed by
 `ljmp 0x7459`, re-entering that compare.
 
 `0x7508` is the one that does not fit that reading, and it is worth being
-precise about why. It reads `0x07CC` into A, and the next two instructions
-are `pop dpl` / `pop dph` — which overwrite A before it can be used. The
-`0x10BC` call that follows is the `DPTR += A × B` index helper with B set to
-`0x04`, and the A it multiplies is not the byte that was read. So the site
-`pd-0x07d0-07cc-clusters.csv` classifies `read x1` is a real `movx a,@dptr`
-and nothing more: **on this path the value read is not consumed**, and whether
-some other path reaches the same `mov DPTR` with a live A was not determined
-here. It is counted as a read because the encoding is one, and it is listed
-here because a reader who stopped at the classification would over-read it.
+precise about which half of it survives. It reads `0x07CC` into A, and the
+next two instructions are `pop dpl` / `pop dph` — which write DPTR's halves,
+not A. A therefore still holds `[0x07CC]` when the `0x10BC` call is made, and
+`ec/decompiled/pd/10BC.asm` shows that helper is `mul AB / add A,DPL / mov
+DPL,A / mov A,B / addc A,DPH / mov DPH,A / ret` — `DPTR += A × B`, with B set
+to `0x04` at `0x7510`. So the **value** read is live, consumed as a ×4 index
+into the DPTR the two pops supply; what is dead on this path is the
+`mov DPTR,#0x07CC` the site itself loaded, which the pops overwrite before
+the helper ever sees it. The site `pd-0x07d0-07cc-clusters.csv` classifies
+`read x1` is therefore a real `movx a,@dptr` and nothing more, and the
+encoding is why it is counted as a read; whether some other path reaches the
+same `mov DPTR` with a different live A was not determined here.
+
+*** CORRECTION 2026-10-02 (issue #25 fix round), leaving the paragraph above
+as it was written: it read "which overwrite A before it can be used" and
+concluded "the A it multiplies is not the byte that was read" and "**on this
+path the value read is not consumed**". All three are wrong, and the error is
+that `pop dpl` / `pop dph` were read as touching A — they touch DPTR. The
+bytes are `90 07 cc | e0 | d0 82 | d0 83 | 75 f0 04 | 12 10 bc`, so the two
+pops follow the `movx` without disturbing it. The paragraph also stated the
+helper's own contract correctly (`DPTR += A × B`, B = `0x04`) and then drew
+the opposite conclusion from it. Nothing else in §5 depends on this: the
+other three `0x07CC` sites are unaffected, and the site count and
+classification are unchanged. The same inverted sentence was copied into
+`registers.yaml`'s `USB_C_POWER_PRIORITY` note and is corrected there.
 
 The fifth is a different shape and a useful contrast:
 
@@ -652,9 +669,9 @@ that this window is entered from `0x9031`, which loads `0x07CA`, and
 one whose result the `0x44` is added to.
 
 **Net for `0x07CC`.** Six sites: two whole-byte writes, one read-modify-write
-increment, and three reads — one of which (`0x7508`) is a read whose value
-this window does not consume, one a loop counter compared against `0x07CE`,
-one a pointer-building index. Same reading as `0x07D0` — an index/state byte
+increment, and three reads — one a loop counter compared against `0x07CE`,
+one a ×4 index into a popped DPTR (`0x7508`, per the correction above), one a
+pointer-building index. Same reading as `0x07D0` — an index/state byte
 of the PD firmware — and again nothing about the EC's own `0x07CC`, which the
 EC image references zero times by this method. `registers.yaml` re-graded
 this entry to `unknown-not-absent` on 2026-09-27 (#32) on exactly that basis,
