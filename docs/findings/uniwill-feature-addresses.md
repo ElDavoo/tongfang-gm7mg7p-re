@@ -356,8 +356,11 @@ $ grep -n "MAIN_FAN_RPM\|SECOND_FAN_RPM\|TOUCHPAD_TOGGLE\|USB_CHARGING" uniwill-
   addresses in a DPTR immediate — which is the rule `grade_name_basis.py`
   states. Applied with that tool's own `--apply`, not by hand;
   `grade_name_basis.py --check` is what caught it.
-- `ec/tools/xdata_register_map.py` — the `named_in_tree` pin and the comment
-  recording the delta.
+- `ec/tools/xdata_register_map.py` — the `named_in_tree` pin, and nothing else.
+  The reasoning for the export decision below lives in this file rather than in
+  a comment above that dict: a paragraph there moves every line pin in the
+  repository, and `check_eq_guard_citations.py` and `test_check_doc_figure_pins.py`
+  are two of the checks that read those pins.
 - `ec/annotations/static-refs-audit.md` — §3's closing paragraph corrected in
   place, §3's table extended, and a new dated §10.
 - `docs/findings.md` — the §3c clause and the §4d parenthetical corrected in
@@ -383,6 +386,6 @@ None of that is needed for the address resolution: `xdata-symbols.csv` is the
 layer Ghidra reads at export time, and the census's `name` column is populated
 from it whether or not the tree spells the address that way — a property
 `xdata_register_map.py --self-test` asserts directly. The export is left to
-whichever run wants it, and the ORACLE comment records the decision rather
+whichever run wants it, and this paragraph records the decision rather
 than the consequence. Only `named_in_tree` moves as a result (190 → 194); the
 `extmem_*` and `symbol_*` pins are unchanged, which `--self-test` confirms.

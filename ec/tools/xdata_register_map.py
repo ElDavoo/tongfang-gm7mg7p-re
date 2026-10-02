@@ -922,42 +922,6 @@ ORACLE = {
     # registers.yaml row renames the symbol table and not a decompile". The
     # census pins above are therefore the ones #1425 measured and this block
     # leaves them at; only `named_in_tree` moves here.
-    #
-    # *** 2026-10-02, issue #29: what moved it is the four fan-tachometer
-    # bytes `registers.yaml` gained as `MAIN_FAN_RPM` (0x0464/0x0465) and
-    # `SECOND_FAN_RPM` (0x046C/0x046D). All four were already reached by the
-    # census before they were named -- 0x0464 in main-ec-145, 0x046C and 0x046D
-    # in main-ec-138 -- so naming them is all this issue did to the census,
-    # and NOT_IN_TREE stays at its own length: the four are not in it, which is
-    # what the address-for-address assertion below is for. `--self-test`
-    # re-derives the number rather than taking it on trust.
-    #
-    # **The `extmem_*` and `symbol_*` pins above do NOT move, and that is a
-    # decision rather than an omission -- so it is worth saying why, because
-    # the four addresses are the shape that has moved them four times.**
-    # `MAIN_FAN_RPM_0` and the rest are now in `xdata-symbols.csv`, and a
-    # `build_ec_decompile.py --mode export-only` run WOULD carry them into the
-    # committed `.c` text and take the pins with it: measured against the
-    # parent commit, that run renames seven rows' `spelled_as` from
-    # `DAT_EXTMEM` to `symbol` without changing a single `refs` count --
-    # -7/+7 distinct and -35/+35 references on the two halves. Four are this
-    # issue's. The other three, `0x078B`, `0x07A5` and `0x0803`, are
-    # pre-existing staleness the export also catches up: their
-    # `xdata-symbols.csv` rows were committed long before this issue while the
-    # committed decompile still spelled them `DAT_EXTMEM_*`, which is the
-    # defect issue #250's block describes and the same one the block above
-    # records for `ec/decompiled/bank1/19A8.c` catching up issue #255.
-    #
-    # Running that export here would therefore put three renames nobody asked
-    # for into this change, and would move `extmem_raw` -- a file-wide token
-    # count -- on the strength of an export that is explicitly the opt-in tier
-    # rather than the gate. Neither the four new names nor the address
-    # resolution this issue is about needs the decompiled text renamed to
-    # reach the tree: `xdata-symbols.csv` is the layer Ghidra reads at export
-    # time, and the census's `name` column is populated from it either way
-    # (the self-test asserts that column is populated "independently of how
-    # the tree spells them"). So the export is left to the next run that wants
-    # it, and this pin records the decision rather than the consequence.
     "named_in_tree": 194,  # 190 -> 194: #29's four fan-tach bytes, all already in the census
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
