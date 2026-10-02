@@ -263,6 +263,20 @@ exporter's own list and the index's `annotated` column, not a measurement of a
 rebuild — it is the same kind of reasoning §18's exhaustion argument is, and no
 stronger.
 
+**Correction, 2026-10-02 (issue #623): the rebuild this section records as not
+run has since been run, and it reads the other way.** `python3
+ec/tools/rebuild_provenance.py --run` rebuilds a scratch copy of the tree, and
+[`rebuild-provenance.md`](rebuild-provenance.md) §3 tabulates what comes back:
+six of the seven stubs carry the committed bare target name, which is the form
+the paragraph above argues a rebuild does not produce. The seventh,
+`bank1 0x031C`, comes back as `FUN_CODE_031c` — a Ghidra placeholder, from the
+same three bytes `bank0 0x031C` re-derives the name under. **Why that one
+differs is left open.** What survives above is the reading the prefix list
+implied before there was a run to read, and that list is stale on its own terms
+besides: #631 (commit `4d11f266`) added `caseD_` and `default` to
+`isPlaceholderName()`, which is the change the correction in this file's lead
+already records.
+
 The issue's inference — that the premise about this repository's scripts implies
 the conclusion about a rebuild — is the step that does not hold either way: the
 premise ranges over `ghidra/scripts/`, the conclusion over Ghidra. Answering it
