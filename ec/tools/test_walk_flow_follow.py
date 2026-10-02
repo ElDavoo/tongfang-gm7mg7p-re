@@ -516,7 +516,10 @@ class RegisterRefTableTests(unittest.TestCase):
 
     def rows_the_pre_flag_way(self, addr):
         """The rows, built the way the file was before the flag: walk() then
-        bucket(classify()), with no follow and no via."""
+        bucket(classify()), with no follow and no via. The trailing `chain`
+        and `stop` are the depth-N columns and are None here for the same
+        reason `callee` is -- this builds what depth 0 of a run that never
+        asked to follow a chain can produce."""
         out = []
         for o in txr.sites_for(self.d, addr):
             insns = txr.walk(self.d, o)
@@ -524,7 +527,8 @@ class RegisterRefTableTests(unittest.TestCase):
                         txr.runtime_addr(o, self.pd),
                         rrt.bucket(txr.classify(insns)), None, None,
                         " ; ".join(" ".join(mn.split())
-                                   for _, _, mn in insns[1:]), None))
+                                   for _, _, mn in insns[1:]), None,
+                        None, None))
         return out
 
     def test_depth_0_without_the_flag_is_byte_identical(self):
@@ -552,7 +556,7 @@ class RegisterRefTableTests(unittest.TestCase):
         # reconcile() would report it -- which is the check below, asserted
         # directly here so a failure names the bucket rather than the tool.
         for addr in (0x043E, 0x0768, 0x07D0):
-            for o, _, _, label, _, _, _, via in self.rows(addr, True):
+            for o, _, _, label, _, _, _, via, _, _ in self.rows(addr, True):
                 pre = rrt.bucket(txr.classify(txr.walk(self.d, o)))
                 if pre == rrt.NONE:
                     self.assertIn(label,

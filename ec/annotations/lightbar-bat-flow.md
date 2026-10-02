@@ -180,14 +180,18 @@ loads DPTR and `lcall`s a helper, so the direction is not resolvable at the
 site. File offsets are in the dump; runtime = file − `0x20000`.
 
 The eleven handoff rows carry what the *callee's* own entry point does with
-that DPTR, from `register_ref_table.py --callee-depth 1`, which decodes one
-level down the way §3 of [`ec-0x07d0-sites.md`](ec-0x07d0-sites.md) and §3 of
+that DPTR, from `register_ref_table.py --callee-depth N`, which decodes N
+levels down the way §3 of [`ec-0x07d0-sites.md`](ec-0x07d0-sites.md) and §3 of
 [`pd-xdata-overlap.md`](pd-xdata-overlap.md) did by hand for `0x07D0` and
 `0x04A6`. §3.5 lists the eight callees and cross-reads each against `r2`.
 
 The first block below keeps only the four rows this file is about; the other
 25 addresses the tool prints, and the separator row, are elided where marked.
-Nothing else is edited.
+Nothing else is edited. Both depths are shown because they are different
+claims: at depth 1 the two forwarders of §3.5 are unresolved, and at depth 2
+they are reads. The class is the same bucket at both — the depth is in the
+`chain` column, not in the name, so a reader can compare a depth-N row
+against a depth-1 hand decode like for like.
 
 ```console
 $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1
@@ -197,6 +201,15 @@ $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-dep
 | `0x07E3` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 9 | 0 | 9 | 2 | 2 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 |
 | `0x07E4` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 4 | 0 | 4 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | `0x07E5` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 10 | 0 | 10 | 5 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 |
+19 entries / 29 addresses: class buckets sum to the site count and main + PD to the file-wide total for every address
+
+$ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 2
+| addr | register | total | main EC | PD | read | write | r+w | movc | jmp | handoff->read | handoff->write | handoff->r+w | handoff->unresolved | none |
+[...25 other rows...]
+| `0x07E2` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 15 | 0 | 15 | 7 | 4 | 0 | 0 | 0 | 3 | 1 | 0 | 0 | 0 |
+| `0x07E3` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 9 | 0 | 9 | 2 | 2 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 |
+| `0x07E4` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 4 | 0 | 4 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x07E5` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 10 | 0 | 10 | 5 | 3 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
 19 entries / 29 addresses: class buckets sum to the site count and main + PD to the file-wide total for every address
 
 $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1 --csv \
@@ -218,6 +231,21 @@ for r in csv.DictReader(sys.stdin):
 0x07E5 0x662D 0x383A | handed to lcall/ljmp (unresolved)
 ```
 
+At depth 2 the two forwarders resolve, and the `chain` column is what says
+how — the first link is the callee depth 1 already reported, the second is
+what depth 2 reaches and depth 1 could not:
+
+```console
+$ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 2 --csv \
+  | python3 -c "
+import csv, sys
+for r in csv.DictReader(sys.stdin):
+    if r['addr'].startswith('0x07E') and ' -> ' in r['chain']:
+        print(r['addr'], r['runtime'], '|', r['class'], '| chain:', r['chain'])"
+0x07E2 0x04F9 | handed to lcall/ljmp -> callee reads | chain: 0xB1F2 -> 0x10C8
+0x07E5 0x662D | handed to lcall/ljmp -> callee reads | chain: 0x383A -> 0x0FCB
+```
+
 Every one of the eleven sites is a bare `mov dptr,#addr` immediately followed
 by the `lcall` — the `window` column holds nothing else — so no instruction
 changes DPTR between the two, and the byte spans named in the table below are
@@ -226,7 +254,7 @@ statement about the instructions, not about anything observed running.
 
 | addr | file | runtime | what the site does |
 |---|---|---|---|
-| `0x07E2` | `0x204F9` | `0x04F9` | handoff → `lcall 0xB1F2` → unresolved (§3.5) |
+| `0x07E2` | `0x204F9` | `0x04F9` | handoff → `lcall 0xB1F2` → that forwards to `0x10C8` → read ×3 (`0x07E2`-`0x07E4`, at depth 2; unresolved at depth 1) |
 | `0x07E2` | `0x26E00` | `0x6E00` | write ×2, walks 2 bytes |
 | `0x07E2` | `0x26E54` | `0x6E54` | write ×2, walks 2 bytes |
 | `0x07E2` | `0x26E5C` | `0x6E5C` | read ×3, walks 3 bytes |
@@ -256,7 +284,7 @@ statement about the instructions, not about anything observed running.
 | `0x07E4` | `0x28F34` | `0x8F34` | read ×1 (bit-field pack, §3.3) |
 | `0x07E5` | `0x254AC` | `0x54AC` | write ×3, walks 3 bytes |
 | `0x07E5` | `0x26610` | `0x6610` | handoff → `lcall 0x1041` → write ×4 (`0x07E5`-`0x07E8`) |
-| `0x07E5` | `0x2662D` | `0x662D` | handoff → `lcall 0x383A` → unresolved (§3.5) |
+| `0x07E5` | `0x2662D` | `0x662D` | handoff → `lcall 0x383A` → that forwards to `0x0FCB` → reads, at least 3 bytes into `R0:R1:R2` from `0x07E5` (at depth 2; unresolved at depth 1). The count is the walk's, not the routine's — §3.5 |
 | `0x07E5` | `0x26C65` | `0x6C65` | write ×1 |
 | `0x07E5` | `0x26E26` | `0x6E26` | read ×1 (16-bit `subb`, §3.2) |
 | `0x07E5` | `0x28EF1` | `0x8EF1` | read ×1 |
@@ -290,8 +318,8 @@ hand DPTR on again without touching it.
 | `0x1041` | 1 | `mov a,r4 ; movx @dptr,a ; inc dptr ; … ; mov a,r7 ; movx @dptr,a ; ret` | 4-byte store from `R4:R5:R6:R7` |
 | `0x9CC2` | 1 | `mov r7,a ; movx a,@dptr ; mov r6,a ; mov b,#0x67 ; ret` | 1-byte load, returned in `R6`, leaving `0x67` in `B` |
 | `0x9CA4` | 1 | `movx a,@dptr ; mov r7,a ; mov r6,#0x00 ; mov r4,#0x01 ; mov r5,#0x67 ; ljmp 0x0C7A` | 1-byte load widened to 16 bits, then tail-calls `0x0C7A` — whose head is the Keil 16×16 multiply — against `R4:R5` = `0x0167` |
-| `0xB1F2` | 1 | `lcall 0x10C8 ; mov a,#0x01 ; ljmp 0x0C46` | **unresolved** — hands DPTR on again |
-| `0x383A` | 1 | `lcall 0x0FCB ; clr c ; ljmp 0x0F0E` | **unresolved** — hands DPTR on again |
+| `0xB1F2` | 1 | `lcall 0x10C8 ; mov a,#0x01 ; ljmp 0x0C46` | **read**, at depth 2 — forwards DPTR to `0x10C8`, the 3-byte load into `R3:R2:R1`. Unresolved at depth 1, which does not follow the second level |
+| `0x383A` | 1 | `lcall 0x0FCB ; clr c ; ljmp 0x0F0E` | **read**, at depth 2 — forwards DPTR to `0x0FCB`, a load into `R0:R1:R2`. Unresolved at depth 1, which does not follow the second level |
 
 ```console
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0x10e8; pd 9' /tmp/pd.bin
@@ -422,14 +450,47 @@ there the result is the same `0x888C` store
 `make_bank_image.py` bank-1 image — one agreement, on the one site, which
 `bank-call-audit.md` §6 records as such rather than as a validation.
 
-**The two unresolved ones, and why they stay unresolved.** `0xB1F2` and
+**The two forwarders, and why they were unresolved.** `0xB1F2` and
 `0x383A` each pass the DPTR they were given straight to a further routine —
 `0x10C8` and `0x0FCB`, both of which read three bytes from it by the same
-reading as the table above. That is a second level down, which the tool deliberately does not
-follow and which this file does not claim as a result: a chain resolved by eye
-is exactly the kind of one-linear-walk claim `../../docs/findings.md` §4
-warns about, and neither site's remaining control flow (`ljmp 0x0C46`,
-`ljmp 0x0F0E`) was traced. They are recorded as `handoff→unresolved`.
+reading as the table above. That is a second level down, which the tool at
+the time deliberately did not follow and which this file did not claim as a
+result: a chain resolved by eye is exactly the kind of one-linear-walk claim
+`../../docs/findings.md` §4 warns about, and neither site's remaining control
+flow (`ljmp 0x0C46`, `ljmp 0x0F0E`) was traced. They were recorded as
+`handoff→unresolved`.
+
+**Correction (issue #44): the second level is now followed by the tool, and
+both resolve to a read.** `--callee-depth` takes an integer N rather than
+`choices=(0, 1)`, and at N≥2 it follows a callee that forwards DPTR again and
+reports the chain it walked in a `chain` column. At N=2 the two chains are
+`0xB1F2 -> 0x10C8` and `0x383A -> 0x0FCB`, so the sites in §3.4 are
+`handoff→callee reads` and the two `unresolved` cells above are the depth-1
+reading, still what every transcript pasted before this change reproduces.
+The reason this was left to the tool rather than settled by eye is unchanged
+and is now the reason the claim is stronger: the `chain` column is what a
+reader re-checks with `s <addr>; pd N` at each address in it, which the
+hand-decode could not show. `../../docs/findings/callee-depth-n.md` is the
+write-up, and it also carries the two things this does *not* settle: neither
+`ljmp` tail is still untraced, because `walk()` stops at the first
+control-flow instruction and a forwarder decodes as exactly one `lcall`, so
+`mov a,#0x01 ; ljmp 0x0C46` and `clr c ; ljmp 0x0F0E` are in no window at
+any depth; and the `read` above is a statement about the DPTR that was
+handed on, not about what the forwarder then does with it —
+`ec/decompiled/pd/B1F2.c` shows that tail calling
+`write_byte_by_tag_r3(1, ...)`, so "it reads" would be wrong about the
+routine even though it is right about the handed pointer.
+
+**The `0x0FCB` read count is the walk's, not the routine's.** The tool's
+window for `0x0FCB` is eight instructions and ends `max_insns (8) exhausted`,
+three MOVX reads in; the instruction after it is `inc dptr` and at a budget of
+12 the same routine is four reads into `R0`-`R3`, which is what
+[`pd-0x38-consumers.md`](pd-0x38-consumers.md) records and what
+`ghidra-functions.csv`'s `pd,0x0FCB` row resolves. The `read` in both tables
+above is the direction, which both budgets agree on; only the count depends
+on the budget, and the budget stays at 8 because `walk_budget_census.py`
+measured that raising it to 64 rewrites committed `access` cells, ten of them
+wrongly.
 
 **The `0x35DA` row is no longer a dead end.** What its `ljmp 0x0F45` then does
 with the `0x07D8` triple is read in
@@ -448,12 +509,17 @@ load from the address the site handed over, in the PD image, found by a linear
 decode of eight instructions from each entry point. A `write` here is not
 evidence that anything acts on the value, and none of it is evidence about the
 EC's own `0x07E2`-`0x07E5` — the headline at the top of this file is unchanged.
-What it does add is that of the 38 sites, 20 now resolve to a read and 16 to a
-write with 2 left unresolved, where before it was 17 / 10 with 11 unresolved:
+What it does add is that of the 38 sites, 20 resolve to a read and 16 to a
+write with 2 left unresolved at depth 1, and 22 / 16 / **0** at depth 2,
+where before it was 17 / 10 with 11 unresolved:
 the byte spans in §3.4 (`0x10E8` reaching `0x07E5` from a
 `0x07E3` handoff, `0x1041` reaching `0x07E8` from `0x07E5`) are more of the
 same multi-byte structure access §3.1 and §3.2 already described, not the
-four separate control bytes `uniwill-laptop` expects.
+four separate control bytes `uniwill-laptop` expects. Nothing is left
+unresolved *by this method* at depth 2, which is a statement about the walk
+and not about the PD image: §3.5's two `ljmp` tails are still untraced, so
+the two forwarders are read as far as the entry-point chain goes and no
+further.
 
 ## 4. Corroborating greps, and what they are worth
 
