@@ -6,14 +6,23 @@
 
 /* WARNING: Instruction at (CODE,0xc851) overlaps instruction at (CODE,0xc850)
     */
-/* The bytes 0xC819 to 0xC86F in this listing are the tail of the function before it, and the DJNZ
-   at 0xC88F and the failure branch of the compare at 0xC886 both point back into them, so the two
-   bodies overlap as one loop. Within 0xC873 it stores R7 at XDATA 0x0819, calls 0x119C with A = R5,
-   and runs a carry/rotate sequence over R5, R0, @R1 and direct byte 0x77 (the listing renders
-   opcode 0xC8 as XCH A,R0, which the 8051 encoding gives as XCH A,R5) ending in a compare of A
-   against 0x55. On a match it stores 0x55 through @R1, calls 0x96FB, ORs 0x08 into XDATA 0x0819 and
-   returns; the decompile's later writes to the 0x0834 * 0x77 table belong to the 0xC819 bytes, not
-   to this function.
+/* The bytes 0xC819 to 0xC86F in this listing precede this function's entry at 0xC873 and end in a
+   ret at 0xC86F; the export names no function at 0xC819, so which entry they belong to is not
+   settled here. Within 0xC873 it stores R7 at XDATA 0x0819, loads A = R5 and calls 0x119C at
+   0xC879. 0x119C pops the return address into DPTR before its first MOVC, so the table it walks
+   begins at 0xC87C rather than after the call: from there the bytes are an 8-entry code-space table
+   of 3-byte records, target from +0/+1 and selector key at +2, keyed 0x22, 0x33, 0x44, 0x55, 0x66,
+   0x77, 0x88 and 0x99 -- a stride of 0x11 in the key. Its first three records are `c8 a0 22`, `c8
+   98 33` and `c8 c7 44`, so the carry/rotate sequence over R5, R0, @R1 and direct byte 0x77 that
+   the listing and the decompile show from 0xC87C, and the instructions the listing places at 0xC886
+   and 0xC88F, are those records' bytes rather than code: 0x55 is the key of the record whose target
+   is 0xC8B4, not a value compared against A. The table's last byte is 0xC897, its default is
+   0xC900, and the byte at 0xC898 is the target of the record keyed 0x33: the `lcall 0x96FB`, `orl
+   A,#0x08`, `movx @DPTR,A` and `ret` the listing shows there are that handler's, not a continuation
+   of this function. The figures are the pd 0xC879 row of ec/annotations/pd-index-table-spans.csv, a
+   decode under one reader's layout rather than a claim that any of these handlers executes. The
+   decompile's later writes to the 0x0834 * 0x77 table come from the `mov B,#0x77` and `mul AB`
+   sequence at 0xC823 in the 0xC819 bytes, not from this function.
    type: state
    evidence: ec/decompiled/pd/C873.asm; ec/decompiled/pd/C873.c
    basis: hand-decoded
