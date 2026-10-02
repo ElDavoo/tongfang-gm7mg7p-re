@@ -41,7 +41,7 @@ bank0,703A,thunk_FUN_CODE_e722,match,74c7d19210f7828f,1,0,,sdas8051 05.50.4+NoIC
 bank0,703D,read_byte_by_tag_r3,match,ff0b2c47049f61dd,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,7049,write_byte_by_tag_r3,match,7debd7ff5c041f11,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,705B,write_byte_offset_by_tag_r3,match,d84e73c2910030b7,23,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,708F,FUN_CODE_708f,match,0281dccb81ce09a7,62,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,708F,div_r6r4_by_r5_16bit,match,0281dccb81ce09a7,62,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,724B,normalize_sign_pair_4byte,partial,cc57f72aae39f8d1,36,2,"2 of 38 instruction(s) unchecked, first: cpl 0xd5",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,8000,clear_1654_block_load_1900,match,cabf10aa0ea21939,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,8016,write_1900_twice_set_1901,match,dcdee183a7a9a78a,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -73,7 +73,7 @@ bank0,8648,clear_200b,match,20fad9ab1eea354a,9,0,,sdas8051 05.50.4+NoICE+SDCCmod
 bank0,8653,seed_fan_table_base,match,e63a161c3d725bbd,98,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,8749,mode_tick_084c_07a5_09ee,match,15190a3cf265badc,165,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,888D,fan_table_mailbox_handler,match,2fdc8e49ad07211f,85,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,8931,FUN_CODE_8931,match,a5169ce97050ffa3,240,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,8931,gate_0751_0741_blocks_then_tail_jump_8c46,match,a5169ce97050ffa3,240,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,8939,store_200_via_dptr_then_8f09,match,a3320d79c0540b67,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,893E,store_a_via_dptr_then_jump_8f09,match,dfa97e3c2dc097fb,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,8B14,FUN_CODE_8b14,match,6e4245281cde4579,174,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -130,11 +130,11 @@ bank0,9BFD,forward_to_9a86,match,9e7952840b4fc6a7,1,0,,sdas8051 05.50.4+NoICE+SD
 bank0,9C00,clear_09e9_unless_0743_bit2,match,bff02ed5aa0b1cf1,13,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,9C1D,clear_two_bytes_at_dptr_then_9a90,match,1d487da785c7461c,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,9C24,reset_08ad_08bf_and_clear_08e2_bit7,match,78d440902be5ea9b,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,9C47,FUN_CODE_9c47,match,bc190afb03423d2c,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,9C47,return_trampoline_9aad_044b_case_bailout,match,bc190afb03423d2c,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,9CA6,gate_06e6_442_then_sync_046a_from_086b,match,3db9236420ef4767,129,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,9D9A,shared_return_stub_9d9a,match,a8ea2b6b6558337e,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,9D9B,FUN_CODE_9d9b,match,57531c17dab4d94e,316,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,A00E,FUN_CODE_a00e,match,8130aa21e20145a6,151,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,9D9B,compute_level_blocks_086b_086c_086e,match,57531c17dab4d94e,316,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,A00E,seed_0872_087a_088a_then_select_level,match,8130aa21e20145a6,151,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,A139,FUN_CODE_a139,match,e85f29e0d7bc528f,50,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,A169,clear_0983_bit1_then_0xa1c8,match,f2c31c2964ca6c6f,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,A172,clear_08a9_08aa_then_0xa1c8,match,a4fb5db12cd4ad0f,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -169,7 +169,7 @@ bank0,AB6E,set_06e2_bit0_from_c412,match,b19d6125fb1c7961,24,0,,sdas8051 05.50.4
 bank0,AB9E,set_0751_and_07a6_bits,match,eec414e5e25c8198,55,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,AC08,dispatch_on_0751_bits,match,8db4c529791f4249,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,AC4A,toggle_08e2_bit4,match,c09487f066a08ab2,33,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,ACB4,FUN_CODE_acb4,match,a9bb8dfd738696d8,131,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,ACB4,reset_xdata_flags_and_07d5_to_ff,match,a9bb8dfd738696d8,131,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,ADA3,write_0a47_from_r7,match,72da01c25db18280,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,ADAE,dispatch_on_0a47,match,dfd2696e90b7fc76,84,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,AE6D,set_08ec_bit0_clear_bit4,match,33c4ecbd52269b5b,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -515,14 +515,14 @@ bank0,D281,set_0860_ff_then_d284,match,5b670175b31ec762,1,0,,sdas8051 05.50.4+No
 bank0,D284,write_ff_to_dptr_then_d28e,match,5658140d50b05158,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D289,clear_0860,match,88192b7a65d111b3,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D28E,copy_0866_86b_to_1c04_1c3a,match,e685154d15afcf25,24,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,D2BE,FUN_CODE_d2be,match,a7c06ed762573774,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,D2BE,return_trampoline_d091_0860_guard_fail,match,a7c06ed762573774,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D2BF,set_dptr_1c00_then_d2c2,match,77d4b4c15b1194f5,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D2C2,copy_dp_to_086c_return_masked_7e,match,90583e617a8c99e5,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D2CB,store_a_to_1c05_then_d2d2,match,bce815b7e123abfe,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D2D2,write_ff_to_dptr_return_0861,match,8fa95a5211862f3b,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D2DA,stage_1c03_1c02_1c01,match,e73b77e799f66846,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,D2EF,FUN_CODE_d2ef,match,27858fd04306f977,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,D304,FUN_CODE_d304,match,d4c1177d171a8189,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,D2EF,stage_0862_0865_into_1c12_1c14,match,27858fd04306f977,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,D304,stage_0862_0865_into_1c36_1c38,match,d4c1177d171a8189,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D319,mask_dp_byte_7c_reset_dptr_0860,match,e8147fd92a8668a3,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D320,tick_dd_da_dc,match,8c34502aadd8d448,30,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D358,advance_d9_and_set_1500_20,match,930967404c42a6cf,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -549,7 +549,7 @@ bank0,D722,zero_0a4b_then_tail_jump_541d,match,d070dcf3ddd0d589,3,0,,sdas8051 05
 bank0,D72B,scatter_0200_to_table_6d74,match,f33c632d1c89a607,12,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D73D,gather_0200_from_table_6d74,match,07156771298960a4,12,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D74F,write_33_to_1511_then_loop,match,641635dfe8dd9395,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,D757,FUN_CODE_d757,partial,b17e6f47235ac3e7,132,1,"1 of 133 instruction(s) unchecked, first: mov 0xe4, CY",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,D757,state_1500_1504_1510_1514_to_0200,partial,b17e6f47235ac3e7,132,1,"1 of 133 instruction(s) unchecked, first: mov 0xe4, CY",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D872,load_code_ptr_from_table_6d74,match,3355576c3f601350,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D889,zero_dptr_and_load_regs,match,e992265e3fd360d7,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D894,set_dptr_0200_plus_r7,assembler-gap,4d0b35fd06fd6bba,7,0,no bytes emitted at D894,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -559,7 +559,7 @@ bank0,D991,store_r4_r5_into_record_6e65,match,f5f229c6786a80f9,40,0,,sdas8051 05
 bank0,D9D2,nop_stub_d9d2,match,75ce3c54a2cce61a,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D9DB,ret_stub,match,1a54240ac1cd4f12,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,D9DC,select_0825_or_0827_into_0826,match,ddcc5974bcadb5e7,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,D9FE,FUN_CODE_d9fe,match,59c840d74a987958,102,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,D9FE,seed_07d3_gfid_and_08xx_defaults,match,59c840d74a987958,102,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,DB3E,rec_ptr_from_index_6e65,match,71ca9167356c24ad,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,DB57,stash_code_pair_to_0b7_0b8,assembler-gap,1185f39f7760a543,17,0,no bytes emitted at DB57,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,DB6D,store_r7_to_table_addr,match,47f69bdea85af98a,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -595,7 +595,7 @@ bank0,DD5C,store_32_to_0458_then_tailcall_1954,match,4dae442a03f06386,4,0,,sdas8
 bank0,DE4D,init_0046_to_64_and_clear_af,match,acdb964625f74938,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,DE56,read_code_byte_at_ptr_0a35_0a36,match,6801db7083e0771d,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,DE65,init_163e_16f1_300e_3008,match,452fb6fb2e7fd40a,18,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,DE83,FUN_CODE_de83,match,df4911bef695a094,85,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,DE83,stage_3000_block_then_probe_3000_3007,match,df4911bef695a094,85,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,DF1E,stage_0a47_then_call_de83_r5_1a,match,37fd60477d0207c7,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,DF35,stage_0a47_then_call_de83_r5_1b,match,7f7fa8909bc4bd7f,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,DF78,scale_r7_by_8_then_set_09c1_09c3,match,c66f0a21d1b93540,25,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -819,15 +819,15 @@ bank1,8001,decrement_nonzero_xdata_counters,match,59289737fd476445,1,0,,sdas8051
 bank1,8004,read_06c6,match,b44465d06a4f1677,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8005,skip_06c6_decrement,match,331f082d6ff28f1a,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8007,dec_06c6_value,match,27d1814626cf058e,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,8008,FUN_CODE_8008,match,29d7f1f941fd37eb,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,8008,store_06c6_decrement,match,29d7f1f941fd37eb,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8009,select_06cd,match,69c8d17b24ea666c,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,800C,read_06cd,match,6a596d9f4257bbe8,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,800D,skip_06cd_decrement,match,0a7b3393a38a94b6,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,800F,dec_06cd_value,match,3fbd544315592879,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,8010,FUN_CODE_8010,match,f9174e7f795be454,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,8010,store_06cd_decrement,match,f9174e7f795be454,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8011,select_06d1,match,2fb6f4cdc933e992,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8014,read_06d1_and_test_zero,match,f15a03ce01f87a01,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,8017,FUN_CODE_8017,match,eed67f414d8ea320,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,8017,dec_06d1_value,match,eed67f414d8ea320,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8018,store_acc_to_xdata_dptr_8018,match,2f56e0870e3607cc,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8019,load_dptr_06d2,match,30827fe7e00fbf18,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,801C,read_xdata_dptr_801c,match,92e6ae86567d6b5f,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -880,7 +880,7 @@ bank1,8834,zero_2200_2201_set_047e_ec,match,529f50cf46f0e51d,9,0,,sdas8051 05.50
 bank1,8844,ror16_r1r2_by_r7,match,2f12774a37d60ece,12,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8854,add_r1r2_to_r3r4,match,31912e37a4890646,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,885B,sub_r1r2_from_r3r4,match,dee2876af6ad297e,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,8863,FUN_CODE_8863,match,7f643938e03381b8,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,8863,cmp_r3r4_against_r1r2_16bit,match,7f643938e03381b8,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,887A,set_carry_if_r3r4_is_0102,match,a69c5ba444dcf840,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8886,read_xdata_pair_to_r1r2,match,68995e164e2c8172,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,888C,write_r1r2_to_xdata_pair,match,4bf1ec3cbf2ceee8,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -928,7 +928,7 @@ bank1,8E91,dispatch_on_049d_049e_05e0,match,abe3fff8f48c7c7d,27,0,,sdas8051 05.5
 bank1,8ECC,select_r4_from_cpu_temp_and_0620_0626,match,7d4cc9c6a8e89814,50,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8F37,write_047f_and_arm_06d1_fa,match,2deb0573b6c293c5,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8F54,write_047f_and_arm_06d2_fa,match,0d51c0c60e5102c3,12,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,8F6B,FUN_CODE_8f6b,match,9154f5b8645cb124,79,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,8F6B,gate_06c2_0472_0801_then_count_06ce,match,9154f5b8645cb124,79,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,9000,store_a_to_xdata_at_dptr,match,36113920fb0b290e,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,9001,ret_only_fragment,match,6b5eb60c3e279d90,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,9004,load_dptr_06ce,match,b0f582efc8a93c35,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -991,10 +991,10 @@ bank1,9C0E,match_0820_against_0458_mode,match,64496015139b1406,33,0,,sdas8051 05
 bank1,9C53,FUN_CODE_9c53,match,95f3313276acc004,55,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,9CC0,gate_04fe_06e6_call_19a8,match,55dea8dbfc9984a7,13,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,9CD8,halve_be16_after_add_r1,match,9894641921d129a8,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,9CE8,FUN_CODE_9ce8,match,8b8144ce221703d2,46,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,9CE8,seed_1c12_trio_or_update_1c11_1c15_1c16,match,8b8144ce221703d2,46,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,9D45,write_2_to_068b,match,a31258444b168a74,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,9D4C,write_0_to_068b,match,d3861bdd16528c8d,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,9D53,FUN_CODE_9d53,match,bd5b885f9256854e,97,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,9D53,seed_1c12_trio_9f_or_run_0x9d7a_ladder,match,bd5b885f9256854e,97,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,9E0E,caseD_0,match,b671efac0c67f209,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,9E26,dispatch_068c_low3,match,91365b50d5d07116,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,9E37,set_1c12_2_and_68c_81,match,ee1b8b075f5d4029,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1150,7 +1150,7 @@ bank1,B679,gate_0572_bit0_set,match,6f8675c63e73610e,8,0,,sdas8051 05.50.4+NoICE
 bank1,B68C,gate_0571_0573_eq_1,match,57748a865f5f8a0a,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,B6A8,snapshot_0432_043c_04f2_04fc,match,a47eee7b7bcd43e9,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,B6C9,cmp32_hi16_lt_lo16_at_dptr,match,ac3320d32fb33a94,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,B6DE,FUN_CODE_b6de,match,73d348a4faef47e6,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,B6DE,gate_0564_against_4_and_0563_high_nibble,match,73d348a4faef47e6,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,B728,clear_0610_bit5_and_dispatch,match,f19fcffbe1b50755,24,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,B784,FUN_CODE_b784,match,fdc5184ca9c134cd,65,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,B80A,arm_05f5_countdown_0490_bit5,match,f02ab65759a7d949,30,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1170,7 +1170,7 @@ bank1,BCAA,set_0494_bit1,match,bdac95238fe002f5,5,0,,sdas8051 05.50.4+NoICE+SDCC
 bank1,BCB3,FUN_CODE_bcb3,match,f32f8c9fa500a0c5,52,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,BD10,mask_0491_with_c0,match,ccf391c559e4b34c,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,BD20,clear_0834_word_when_nonzero,match,29150a4574a7b5c7,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,BD45,FUN_CODE_bd45,match,c4ea61c07489c318,76,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,BD45,force_0491_0x21_then_base_0300_or_0180,match,c4ea61c07489c318,76,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,BDEF,write_0499_with_0x21,match,90487f708ee5b313,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,BE02,override_src_0180_when_1,match,7e0e3973a52a1913,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,BE10,FUN_CODE_be10,match,1d01b26d05b38452,56,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1248,7 +1248,7 @@ bank1,CBE8,increment_0349_saturating,match,a19ba77459fc2e0c,7,0,,sdas8051 05.50.
 bank1,CBF3,publish_0514_and_0342_product,match,10c4c86572e281bb,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,CC2D,FUN_CODE_cc2d,match,62aea94dfefaa866,43,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,CC95,set_0397_from_0342_by_0514_band,match,2a5125bbd2783c25,117,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,CD80,FUN_CODE_cd80,match,b3837529e43f8026,29,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,CD80,reset_03b5_at_limit_then_decrement_0514,match,b3837529e43f8026,29,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,CDCB,dispatch_03f1_low3,match,41ff8a33fff51945,18,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,CDDA,clamp_r1r2_against_const_from_0491,assembler-gap,eb39361a576a7a37,38,0,no bytes emitted at CDDA,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,CE2D,store_slot_for_index_0_and_7,match,2ed91a0ee91f8ba0,29,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1313,7 +1313,7 @@ bank1,DACC,FUN_CODE_dacc,match,8c372c093d72cfd9,27,0,,sdas8051 05.50.4+NoICE+SDC
 bank1,DB0B,FUN_CODE_db0b,match,c213eeb7604fbd2d,153,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,DC50,FUN_CODE_dc50,match,d21a80744a921dcc,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,DC52,FUN_CODE_dc52,match,e4df8baeee1e0a67,49,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,DE3C,FUN_CODE_de3c,match,98c7d9f2b2d4b806,52,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,DE3C,stage_0563_0564_pair_and_commit_1c04,match,98c7d9f2b2d4b806,52,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,DE9E,FUN_CODE_de9e,match,72828a3401ba7556,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,DEA5,FUN_CODE_dea5,match,64b31ad7d824fd92,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,DEC4,FUN_CODE_dec4,match,2db07307d51f2a41,19,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1327,7 +1327,7 @@ bank1,E237,gate_1c00_init_defaults,match,abb1fa940d587d22,35,0,,sdas8051 05.50.4
 bank1,E27D,reset_1c00_group_and_toggle_03a0,match,a10bc986b6e808a4,19,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E2A0,setup_0975_0976_0978_0979_call_c54c,match,1447a96c98147a67,18,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E2C3,set_1c00_ff_clear_1c04_1c05,match,69409514e9f74d67,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,E2D3,FUN_CODE_e2d3,match,756d4bf63a6154b6,90,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,E2D3,dispatch_036c_low3_then_seed_1c00_block,match,756d4bf63a6154b6,90,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E322,FUN_CODE_e322,match,9b689ea0dcdfb666,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E332,set_036c_to_4_jump_e490,match,52917289865dbb75,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E3B5,copy_03cd_03ce_03cf_to_1c02_1c04_1c05,match,b84c5facbb2f00d7,59,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1338,9 +1338,9 @@ bank1,E501,reset_03c4_03af_and_clear_03a1_bit,match,1c3838fe166a7f6e,40,0,,sdas8
 bank1,E54F,increment_03af_clear_03a1_on_wrap,match,0178024a83f1730e,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E57E,push_r7_call_e5d6_pop_r7,match,bc9dc5381f9581aa,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E582,read_code_pair_by_r7_index_then_call_889e,match,4fc687d37ca41885,25,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,E5A7,FUN_CODE_e5a7,match,182e4dfdf6cb15b8,30,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,E5A7,copy_code_pair_to_3e0_plus_r7,match,182e4dfdf6cb15b8,30,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E5D6,FUN_CODE_e5d6,match,421e297ee2674e3b,66,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank1,E656,FUN_CODE_e656,match,54f8c391a71f9cd3,62,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,E656,dptr_from_0491_031c_then_step_0e,match,54f8c391a71f9cd3,62,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E6CB,decrement_0365_and_0368_if_nonzero,match,f9953cc1f63484b0,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E722,write_r1_to_tmod_and_jump_8801,match,687e0931d09c890e,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E768,ret_no_op,match,a2ef36ec5caccc15,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1424,35 +1424,35 @@ bank1,FF17,unimplemented_ff_fill_ff17,match,f9ba8e321d278366,17,0,,sdas8051 05.5
 bank1,FF63,unimplemented_ff_fill_ff63,match,e9e8b36763821f8a,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0000,reset_vector_forwarder_to_0070,match,c28551173c85ccc0,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0003,int0_vector_forwarder_to_052f,assembler-gap,1b369960a161e27c,1,0,no bytes emitted at 0003,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0007,thunk_FUN_CODE_1150,match,f040c3d4247032ba,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0007,table_entry_to_1150,match,f040c3d4247032ba,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,000B,timer0_vector_forwarder_to_0530,match,679386ba589e24cc,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,000E,thunk_FUN_CODE_1156,match,1b15d8a830fb0844,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0012,FUN_CODE_0012,match,67f23fdd3fe9317d,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,000E,table_entry_to_1156,match,1b15d8a830fb0844,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0012,ret_only_0012,match,67f23fdd3fe9317d,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0013,int1_vector_forwarder_to_0556,match,55f4cfc8f7fa865b,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0016,thunk_FUN_CODE_115c,match,694e58f309ff10e5,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0016,table_entry_to_115c,match,694e58f309ff10e5,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0019,FUN_CODE_0019,match,00acf8cc05ea9916,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,001A,FUN_CODE_001a,match,d118ab6091ba35b7,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,001A,ret_only_001a,match,d118ab6091ba35b7,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,001B,timer1_vector_forwarder_to_05b6,match,a8255f0b348d12bd,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,001E,thunk_FUN_CODE_1162,match,1343f521610116f9,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0022,FUN_CODE_0022,assembler-gap,d4c2563d5421320d,1,0,no bytes emitted at 0022,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,001E,table_entry_to_1162,match,1343f521610116f9,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0022,ret_only_0022,assembler-gap,d4c2563d5421320d,1,0,no bytes emitted at 0022,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0023,serial0_vector_forwarder_to_05e6,match,b23509bcf9733e2c,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0026,thunk_FUN_CODE_1168,match,d9651beb33bfca95,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,002A,FUN_CODE_002a,match,c233979382480fe6,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,002B,thunk_FUN_CODE_05e7,match,a1ef4009e6d602b3,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0026,table_entry_to_1168,match,d9651beb33bfca95,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,002A,ret_only_002a,match,c233979382480fe6,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,002B,table_entry_to_05e7,match,a1ef4009e6d602b3,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,002E,FUN_CODE_002e,match,b583d7b563d993dc,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0046,FUN_CODE_0046,partial,f75a6b4f17807ea6,15,1,"1 of 16 instruction(s) unchecked, first: acall 0x0134",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0064,FUN_CODE_0064,partial,2866ed6d59e2aaef,1,1,"1 of 2 instruction(s) unchecked, first: acall 0x0086",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0070,FUN_CODE_0070,match,f3bfb577f15571c5,52,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,00CF,FUN_CODE_00cf,match,8ede8f844126e8e2,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0070,reset_entry_stack_bank0_then_code_init,match,f3bfb577f15571c5,52,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,00CF,walk_code_table_6f39,match,8ede8f844126e8e2,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,00E1,FUN_CODE_00e1,match,2b37553b76b52202,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,00E4,FUN_CODE_00e4,match,9a03e482832f4c34,36,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,011C,FUN_CODE_011c,partial,60d56458f627c030,4,1,"1 of 5 instruction(s) unchecked, first: acall 0x0001",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,012F,FUN_CODE_012f,match,08f7139b9231354f,44,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,018C,FUN_CODE_018c,match,1dc507dc89aeb7ae,41,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,012F,chan_init_170a_then_jmp_11b6,match,08f7139b9231354f,44,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,018C,chan_init_1709_then_jmp_11bc,match,1dc507dc89aeb7ae,41,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,01EC,thunk_FUN_CODE_11e6,match,baabc9ce86ed5221,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0200,FUN_CODE_0200,match,d0ed2c29c2c559a7,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0200,post_05e8_sp_0c0_init_1042_16e7_3105,match,d0ed2c29c2c559a7,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0213,FUN_CODE_0213,match,4a685ce6e8c501be,66,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,029B,FUN_CODE_029b,match,706858c136475fd7,52,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,029B,chan_init_1708_then_jmp_11c2,match,706858c136475fd7,52,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0402,FUN_CODE_0402,match,00c08d1e3fa4dc28,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0408,FUN_CODE_0408,match,9a2d98da0bf31c2c,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0444,FUN_CODE_0444,match,3b7739c385cba7b1,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1461,14 +1461,14 @@ common,04C8,FUN_CODE_04c8,match,15f1bca584de6eb9,3,0,,sdas8051 05.50.4+NoICE+SDC
 common,0504,FUN_CODE_0504,partial,efb64b2b215e524e,2,1,"1 of 3 instruction(s) unchecked, first: ajmp 0x00f0",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0512,int0_vector_forwarder_to_052f,assembler-gap,2830aa3b3ca3e788,0,1,ajmp 0x0003,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,051D,FUN_CODE_051d,match,adef2b2fe0793432,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,052F,FUN_CODE_052f,match,ac6dff30ee0e8981,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0530,FUN_CODE_0530,match,aba1af35afec34c3,20,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0556,FUN_CODE_0556,match,510d9b1e6cb41c6d,46,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,05B6,FUN_CODE_05b6,match,bafdd571c7003a2e,24,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,05E6,FUN_CODE_05e6,match,274e56295b6ff47d,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,05E7,FUN_CODE_05e7,match,15706f53c13a9327,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,05E8,FUN_CODE_05e8,match,f2c61dc8f1ffa9b5,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,05EF,FUN_CODE_05ef,match,9ddf2fd4a69e7992,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,052F,int0_target_is_one_byte_reti,match,ac6dff30ee0e8981,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0530,timer0_target_decrements_xdata_0a00,match,aba1af35afec34c3,20,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0556,int1_target_six_calls_14c8_012f_018c_029b_7110_7177,match,510d9b1e6cb41c6d,46,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,05B6,timer1_target_splits_internal_ram_41_on_carry,match,bafdd571c7003a2e,24,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,05E6,serial0_target_is_one_byte_reti,match,274e56295b6ff47d,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,05E7,table_entry_002b_target_is_one_byte_reti,match,15706f53c13a9327,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,05E8,critical_section_enter_05e8,match,f2c61dc8f1ffa9b5,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,05EF,critical_section_exit_05ef,match,9ddf2fd4a69e7992,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,05F2,FUN_CODE_05f2,match,85580948b71a92dc,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,05FA,FUN_CODE_05fa,match,b5d6d9fa520e0064,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0609,FUN_CODE_0609,match,42c20ca67ab762ab,25,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1477,12 +1477,12 @@ common,0690,FUN_CODE_0690,match,808c10d9ff3fcce4,2,0,,sdas8051 05.50.4+NoICE+SDC
 common,0703,FUN_CODE_0703,match,9510432f4bc5c530,13,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0712,FUN_CODE_0712,match,f30accc603cc3f19,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0713,FUN_CODE_0713,partial,1121c67c6d78b904,9,1,"1 of 10 instruction(s) unchecked, first: ajmp 0x0004",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,07B6,FUN_CODE_07b6,match,6172dc55b0fa568e,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,07C1,FUN_CODE_07c1,match,2b158d6642688699,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,07D0,FUN_CODE_07d0,match,8e0ffd0c2d057508,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,07D6,FUN_CODE_07d6,match,69876fd4d050eb5a,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,07E7,FUN_CODE_07e7,match,301aae7aee94fab3,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,07F0,FUN_CODE_07f0,match,3b75b64e2eb29563,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,07B6,zero_seven_xdata_bytes_from_200b,match,6172dc55b0fa568e,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,07C1,write_0x11_to_1700_1701_1702,match,2b158d6642688699,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,07D0,write_0x11_to_1702,match,8e0ffd0c2d057508,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,07D6,mask_1106_store_0x1c_to_1102_set_bit_23_0,match,69876fd4d050eb5a,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,07E7,set_bit_06_4_clear_bit_23_0_store_ff_via_r0_07e7,match,301aae7aee94fab3,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,07F0,inc_xdata_0043_return_new,match,3b75b64e2eb29563,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,07F8,FUN_CODE_07f8,match,4a10590d354973af,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0806,FUN_CODE_0806,match,70da8dbc9685b372,37,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0859,FUN_CODE_0859,match,cfa14138e361fe6e,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1501,16 +1501,16 @@ common,08D0,FUN_CODE_08d0,match,bf59a6c89e06b908,9,0,,sdas8051 05.50.4+NoICE+SDC
 common,08E0,FUN_CODE_08e0,match,08b300255a254e7c,26,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0902,FUN_CODE_0902,match,503734511f9da903,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0921,FUN_CODE_0921,match,5d3694fe2aa8a6d7,12,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0937,FUN_CODE_0937,match,f3136faf568424a0,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0937,store_r7_to_0a49_then_pulse_bit_3206_4,match,f3136faf568424a0,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0950,FUN_CODE_0950,match,a9cb655f8855e696,20,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0979,FUN_CODE_0979,match,516b880d798420dd,20,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,09A2,FUN_CODE_09a2,match,0848f1ae651d49e5,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,09A2,call_0c7a_then_write_1300_1306,match,0848f1ae651d49e5,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,09E9,FUN_CODE_09e9,match,0856b0254edd4d59,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0A04,FUN_CODE_0a04,match,90d2eb2883c1bc14,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0A12,FUN_CODE_0a12,match,a2d1a361fda94913,24,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0A39,FUN_CODE_0a39,match,0ff73afac6b3676a,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0A5A,FUN_CODE_0a5a,match,d47ab41479167aa0,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0A74,FUN_CODE_0a74,match,3e793844453585a3,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0A74,rearm_timer1_then_set_bit_4_of_internal_41,match,3e793844453585a3,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0A7F,FUN_CODE_0a7f,match,4a7e008bd4a43c0d,45,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0AD8,FUN_CODE_0ad8,match,35f7f7cc82fe75c9,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0ADC,FUN_CODE_0adc,match,ac294e65083ad626,43,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1520,11 +1520,11 @@ common,0BC8,FUN_CODE_0bc8,match,00e4811f5031b9c2,10,0,,sdas8051 05.50.4+NoICE+SD
 common,0BDB,FUN_CODE_0bdb,match,2e598712e4b20f36,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0C6D,FUN_CODE_0c6d,match,c7a5dcdd19d24642,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0C7A,clear_low_nibble_of_1304,match,dc7586146c28d642,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0C86,FUN_CODE_0c86,match,b1b6f1282a911240,82,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0C86,poll_flag_bytes_30_to_3b_and_dispatch,match,b1b6f1282a911240,82,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0D49,FUN_CODE_0d49,match,7975a9217db2049b,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0D4A,FUN_CODE_0d4a,match,06dbea8731ef3986,24,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0D78,thunk_FUN_CODE_2819,match,ea948d09f301ab71,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0D7B,FUN_CODE_0d7b,partial,6bc5610069a4a18d,55,1,"1 of 56 instruction(s) unchecked, first: ajmp 0x080c",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0D7B,divide_down_scheduler_counters_44_45_47,partial,6bc5610069a4a18d,55,1,"1 of 56 instruction(s) unchecked, first: ajmp 0x080c",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0DF7,thunk_FUN_CODE_0e4c,match,f626c8be8542b6bb,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0E04,thunk_FUN_CODE_0e4c,match,1d3f79a63778dbd0,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0E1E,FUN_CODE_0e1e,match,1af38cca60ab57f0,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1543,40 +1543,40 @@ common,0E52,thunk_FUN_CODE_1576,match,6f042ee39e142f3f,1,0,,sdas8051 05.50.4+NoI
 common,0E55,thunk_FUN_CODE_157c,match,bb3550d0132725b4,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0E58,thunk_FUN_CODE_1582,match,f8750f31238da5fe,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0E5B,thunk_FUN_CODE_1588,match,c2dd8e561d9c8b53,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0E5E,FUN_CODE_0e5e,match,956eeed1f315f25b,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0E72,FUN_CODE_0e72,match,a5c80230d3f7187c,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0E7D,FUN_CODE_0e7d,match,99e27c9ab3b68f0c,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0E5E,timer0_reload_8a_06_8c_f1_clear_8d,match,956eeed1f315f25b,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0E72,timer1_load_th1_fa_tl1_01_clear_tf1_start,match,a5c80230d3f7187c,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0E7D,stop_timer1_clear_tf1_and_bit_06_2,match,99e27c9ab3b68f0c,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0E84,FUN_CODE_0e84,match,a09cfc14629abae4,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0ECC,FUN_CODE_0ecc,match,1106ebfc529fc31a,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0EE8,FUN_CODE_0ee8,match,1500b920bfc5e42c,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0ECC,timer1_counted_delay_count_in_r7,match,1106ebfc529fc31a,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0EE8,timer1_load_th1_fd_tl0_clear_tf1_start,match,1500b920bfc5e42c,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0EF3,write_internal_ram_init_constants,match,55dd480956649fff,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0F12,FUN_CODE_0f12,match,bb859723495aa9bf,35,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0F4A,FUN_CODE_0f4a,match,a6fd3a38d5f1042a,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0F58,FUN_CODE_0f58,match,7e41d50cf3fec0c5,12,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,0F75,FUN_CODE_0f75,match,cd4001b6968a6a71,33,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,0F75,clr_xdata_0000_00ff_iram_20_bf_xdata_9000_97ff,match,cd4001b6968a6a71,33,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0FA6,FUN_CODE_0fa6,assembler-gap,080bd8ec80fe1b7a,43,0,no bytes emitted at 0FA6,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,0FE6,FUN_CODE_0fe6,match,6be21416d052f52f,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1002,FUN_CODE_1002,match,97d6bf5f91c23ea4,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1012,FUN_CODE_1012,match,6db6e92ae448c4fc,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1017,FUN_CODE_1017,match,363e5324594ef710,12,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1042,FUN_CODE_1042,match,4e69f5625685e0ae,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,1048,FUN_CODE_1048,match,14fe3ffd617ca28b,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,1048,bl51_bank_select_0_tail_110a_wrapper,match,14fe3ffd617ca28b,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1059,FUN_CODE_1059,match,ccb4d44d0637ee64,78,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,10E5,FUN_CODE_10e5,match,872e356599c9c4d8,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,10F0,FUN_CODE_10f0,match,e1b2f365ede2ef14,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,10F1,zero_xdata_200b,match,c1ca45ac6046527c,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,10FA,thunk_FUN_CODE_0a74,match,41890768bb538089,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,10FA,rearm_timer1_then_set_bit_4_of_internal_41,match,41890768bb538089,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,10FF,FUN_CODE_10ff,match,8aff0996d6847d71,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1100,bl51_bank_select_0,match,c720aacfd6cc25bb,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,110A,FUN_CODE_110a,match,4882f71eb2227f61,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,110A,set_iram_08_0a_clear_p1_0_p1_2,match,4882f71eb2227f61,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1114,bl51_bank_select_1,match,debfbcb4d5b3b157,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1128,bl51_bank_select_2,match,5313bca25f6a0d58,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,113C,bl51_bank_select_3,match,5996293402bb14aa,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,1150,FUN_CODE_1150,match,ba7997982e8d939a,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,1156,FUN_CODE_1156,match,63c959cc8dca2e3a,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,115C,FUN_CODE_115c,match,16d806ed4328a49e,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,1162,FUN_CODE_1162,match,118930e3443e092d,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,1168,FUN_CODE_1168,match,0cced86d42327c33,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,1150,load_dptr_bf1c_tail_jump_1100,match,ba7997982e8d939a,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,1156,load_dptr_bf1d_tail_jump_1100,match,63c959cc8dca2e3a,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,115C,load_dptr_bf1e_tail_jump_1100,match,16d806ed4328a49e,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,1162,load_dptr_bf1f_tail_jump_1100,match,118930e3443e092d,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,1168,load_dptr_bf20_tail_jump_1100,match,0cced86d42327c33,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,116E,FUN_CODE_116e,match,d37fd42f586930d0,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1174,FUN_CODE_1174,match,1247274b69623e89,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,117A,FUN_CODE_117a,match,0e871edc59f2bc15,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1754,9 +1754,9 @@ common,1576,FUN_CODE_1576,match,d38c8cf0138ba942,2,0,,sdas8051 05.50.4+NoICE+SDC
 common,157C,FUN_CODE_157c,match,f711230df366fe50,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1582,FUN_CODE_1582,match,ff7a4e6b39c272b9,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1588,FUN_CODE_1588,match,925935b514d7c9b1,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,158E,FUN_CODE_158e,match,fb79b35e7c6b8297,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,1594,FUN_CODE_1594,match,f948cce92b7e3eff,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,159A,FUN_CODE_159a,match,a2dcc20ccad867e5,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,158E,load_dptr_d89f_tail_jump_1100,match,fb79b35e7c6b8297,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,1594,load_dptr_d96c_tail_jump_1100,match,f948cce92b7e3eff,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,159A,load_dptr_c251_tail_jump_1100,match,a2dcc20ccad867e5,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,15A0,FUN_CODE_15a0,match,c350959457db54f3,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,15A6,FUN_CODE_15a6,match,3e562a15846ff640,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,15AC,FUN_CODE_15ac,match,2f21df3b2b9056f0,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1781,7 +1781,7 @@ common,1618,FUN_CODE_1618,match,0ddfc522e7308796,2,0,,sdas8051 05.50.4+NoICE+SDC
 common,161E,FUN_CODE_161e,match,f52b069cf210f582,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1624,FUN_CODE_1624,match,9e72de405663ea47,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1630,FUN_CODE_1630,match,17bb66d66f4aa413,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,1636,FUN_CODE_1636,match,a5e772ccb2d0c36f,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,1636,load_dptr_d991_tail_jump_1100,match,a5e772ccb2d0c36f,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,16D2,FUN_CODE_16d2,match,76b67fa9b46e11c3,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1706,FUN_CODE_1706,partial,2b27a834c5bbec32,2,1,"1 of 3 instruction(s) unchecked, first: acall 0x1000",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1800,FUN_CODE_1800,match,31b6afe03e46547b,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1799,13 +1799,13 @@ common,1E30,FUN_CODE_1e30,match,5cfa3ee5e8fb15e2,37,0,,sdas8051 05.50.4+NoICE+SD
 common,1E6E,FUN_CODE_1e6e,match,7bf973f84d396e7e,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,1E7F,FUN_CODE_1e7f,match,53408146b3c7fe40,113,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2002,FUN_CODE_2002,match,6434431af61d6bbe,32,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,21DC,FUN_CODE_21dc,match,d83a79c037fc932c,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,21DC,load_dptr_0a52_then_call_out,match,d83a79c037fc932c,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,21DF,FUN_CODE_21df,match,36e1f924320cfa6d,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,21E2,FUN_CODE_21e2,match,22f0a16df1dcf83c,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,21EB,FUN_CODE_21eb,match,ba83e02e6a28d916,20,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,220A,FUN_CODE_220a,match,68a163f1e1099d94,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,220A,increment_xdata_0a53,match,68a163f1e1099d94,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2211,FUN_CODE_2211,match,c35f5d45cad16438,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,221F,FUN_CODE_221f,match,7ec88d83b8f8865e,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,221F,return_low_three_bits_of_0a49,match,7ec88d83b8f8865e,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2226,FUN_CODE_2226,match,98a472c8d131b4a0,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,222E,FUN_CODE_222e,match,30c177c31284959e,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2238,FUN_CODE_2238,match,82eb2c7d363cd463,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1831,13 +1831,13 @@ common,2812,FUN_CODE_2812,assembler-gap,eebca33143c85889,5,0,no bytes emitted at
 common,2819,FUN_CODE_2819,match,0b51430e9613a394,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2820,FUN_CODE_2820,match,e6323e44dd0e2cb2,26,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2890,FUN_CODE_2890,match,ad9d50424e213bb8,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,2896,FUN_CODE_2896,match,53f2e4266bbceea0,25,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,2896,clear_iram_6d_7f_then_xdata_b00_bfe,match,53f2e4266bbceea0,25,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,28C1,FUN_CODE_28c1,match,0369e59f8e65db42,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,28D1,FUN_CODE_28d1,match,b987bf1ca9c7cd2b,49,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,291D,FUN_CODE_291d,match,7cda100c0f8b3ab2,34,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,295F,FUN_CODE_295f,match,73f645d242cfea55,26,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2987,FUN_CODE_2987,match,735e70b1b3418b8f,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,2990,FUN_CODE_2990,match,088e384781e1461d,37,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,2990,advance_bfe_counter_publish_at_bfd,match,088e384781e1461d,37,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,29CF,FUN_CODE_29cf,match,63d6846d9692116d,24,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2A24,FUN_CODE_2a24,match,b39cb6301bdfe56f,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2A27,FUN_CODE_2a27,match,ac2af97eff9dbe5d,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1864,29 +1864,29 @@ common,2AB9,FUN_CODE_2ab9,match,fc8b6fdcb0a3fe13,5,0,,sdas8051 05.50.4+NoICE+SDC
 common,2AC1,FUN_CODE_2ac1,match,0062222e15677512,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2ACD,FUN_CODE_2acd,match,3d8f4882a24a83b0,87,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2B68,FUN_CODE_2b68,match,acdd1e3f14704956,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,2B6C,FUN_CODE_2b6c,match,64dfdbbf3f971b47,48,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,2BC1,FUN_CODE_2bc1,match,f1481e4ecf7f3faf,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,2B6C,set_1304_mode_bits_then_write_1300_and_1308,match,64dfdbbf3f971b47,48,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,2BC1,clamp_iram_80_up_to_r7,match,f1481e4ecf7f3faf,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2BCB,FUN_CODE_2bcb,match,9560ce091ad52222,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2CB3,FUN_CODE_2cb3,match,723b0e0a5a412cf7,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2CB4,FUN_CODE_2cb4,match,543af8e60b7f68e7,109,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2D7A,FUN_CODE_2d7a,match,ba60d7fe22f7aa54,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2D85,FUN_CODE_2d85,match,4d9d95befe104005,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2D8F,FUN_CODE_2d8f,match,e5fc4771a5b6c26b,43,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,2DE3,FUN_CODE_2de3,match,72c394f12d60aaa1,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,2DE3,mask_1106_then_clear_18_34,match,72c394f12d60aaa1,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2DF4,FUN_CODE_2df4,match,ff33ae1ce6f35521,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2E02,FUN_CODE_2e02,partial,ecad2b44ad3802e8,2,1,"1 of 3 instruction(s) unchecked, first: ajmp 0x2812",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,2E9C,FUN_CODE_2e9c,match,1eeab133f46c9760,67,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,2F1D,FUN_CODE_2f1d,match,1d2f5e57f261e229,55,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,2E9C,store_0a4c_triplet_then_countdown_and_dispatch,match,1eeab133f46c9760,67,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,2F1D,store_0a4f_triplet_then_retry_loop,match,1d2f5e57f261e229,55,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,2F85,FUN_CODE_2f85,match,5dfa409c2ee976b3,98,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3042,FUN_CODE_3042,match,f77dfb774fb020f8,39,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3099,FUN_CODE_3099,match,040daba939ae7b18,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,30A6,FUN_CODE_30a6,match,7c0d6f6d429742dc,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,30B5,FUN_CODE_30b5,match,12b3ff7987ff2280,25,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,30B5,or_table_bytes_into_dptr_under_flag_87,match,12b3ff7987ff2280,25,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,30DF,FUN_CODE_30df,match,1a2f274f963629e1,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,30FB,FUN_CODE_30fb,match,3129d20296c112f6,18,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,311D,FUN_CODE_311d,match,e38275c677b653a3,135,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,322C,FUN_CODE_322c,match,5642a401be30f629,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3239,FUN_CODE_3239,match,f12e6657e4387ba8,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3239,increment_xdata_0a4d_then_ljmp_311d,match,f12e6657e4387ba8,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3242,FUN_CODE_3242,match,634a211e9fa2139d,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3254,FUN_CODE_3254,match,fb6980c47b68ac14,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3255,FUN_CODE_3255,match,fe53b27027ca410c,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1898,7 +1898,7 @@ common,3451,FUN_CODE_3451,match,97ee2a88b523875d,4,0,,sdas8051 05.50.4+NoICE+SDC
 common,3459,FUN_CODE_3459,match,9230d90ff96a31f3,50,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,34C6,FUN_CODE_34c6,match,28da7e76b39e5436,84,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3555,FUN_CODE_3555,match,58e7d5652b78ee58,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,355E,FUN_CODE_355e,match,a30e53ac110137e4,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,355E,shared_tail_return_of_3459_and_34c6,match,a30e53ac110137e4,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3578,thunk_FUN_CODE_3459,match,5b035dc3d5798d4f,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,35F6,FUN_CODE_35f6,match,131726262acb5afe,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3602,FUN_CODE_3602,match,cf1ec8c78b437832,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1911,48 +1911,48 @@ common,375E,FUN_CODE_375e,match,df321bd09e1796e0,11,0,,sdas8051 05.50.4+NoICE+SD
 common,3770,FUN_CODE_3770,assembler-gap,c457ed04cbe9c4f7,25,0,no bytes emitted at 3770,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3799,FUN_CODE_3799,match,e289d714206309d7,35,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,37E1,FUN_CODE_37e1,match,1505d7b932ee6085,47,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3835,FUN_CODE_3835,match,c69690cfbba432af,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3835,store_r7_to_upper_internal_ram_byte_3835,match,c69690cfbba432af,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,383A,set_direct_bit_0c_3,match,dddb60bc540b67a4,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,383D,FUN_CODE_383d,match,4dd31fd08d77dcfb,26,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,386F,FUN_CODE_386f,match,83b1bda3ade608fe,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3878,FUN_CODE_3878,match,daf5ac8d67cc6a5b,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,388B,FUN_CODE_388b,match,52b4a4a3bcdce733,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3894,FUN_CODE_3894,match,3f6904676b88b37a,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3894,set_iram_ad_88_clear_33,match,3f6904676b88b37a,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,38F0,FUN_CODE_38f0,match,ea075b5339e22e8f,41,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3983,FUN_CODE_3983,match,fe1d03505e850a9e,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3983,store_r7_to_upper_internal_ram_byte_3983,match,fe1d03505e850a9e,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3A02,thunk_FUN_CODE_38f0,assembler-gap,eeb584cf7c625ab5,0,1,ajmp 0x38f0,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3A0D,FUN_CODE_3a0d,match,d09b3a33a9df9a9b,42,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3ACC,FUN_CODE_3acc,match,0999e02991b687f9,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3AD1,FUN_CODE_3ad1,match,e33f19c0b09adb83,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3ACC,store_r7_to_upper_internal_ram_byte_3acc,match,0999e02991b687f9,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3AD1,clear_upper_internal_ram_byte_3ad1,match,e33f19c0b09adb83,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3B1D,FUN_CODE_3b1d,match,c6f5931c81834e79,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3B20,FUN_CODE_3b20,match,c159d881c60246cc,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3B22,FUN_CODE_3b22,match,2ad6dcc406830f00,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3B32,FUN_CODE_3b32,match,43d9972e66220e0d,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3B20,read_xdata_at_dptr_into_r7,match,c159d881c60246cc,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3B22,mul13_table_lookup_3b22,match,2ad6dcc406830f00,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3B32,load_dptr_high_from_a_low_from_code_table_3b32,match,43d9972e66220e0d,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3B3C,FUN_CODE_3b3c,match,a0e6e642b7bbe0ee,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3B3E,FUN_CODE_3b3e,match,27347c03b8ce13d3,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3B4E,FUN_CODE_3b4e,match,7d223cc88d580812,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3B51,FUN_CODE_3b51,match,d3695e4f2d338eb4,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3B3E,mul13_table_lookup_3b3e,match,27347c03b8ce13d3,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3B4E,read_dptr_to_r6_then_dptr_3a00_plus_13x,match,7d223cc88d580812,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3B51,dptr_3a00_plus_13x_3b51,match,d3695e4f2d338eb4,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3B60,FUN_CODE_3b60,match,b6e666b5dfa1e73a,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3B70,FUN_CODE_3b70,match,2cd04b7a4821f1eb,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3B70,dph_from_a_dpl_from_code_3b70,match,2cd04b7a4821f1eb,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3B79,FUN_CODE_3b79,match,42b5f401de61cb31,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3B7B,FUN_CODE_3b7b,match,f8404cab7dfe73fe,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3B80,FUN_CODE_3b80,match,818803fc89b2f490,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3B82,FUN_CODE_3b82,match,702db66b9ef74c30,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3B83,FUN_CODE_3b83,match,ee1c1f7fe85fde50,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3B8A,FUN_CODE_3b8a,match,3d92fe93cf7d087a,24,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3BAE,FUN_CODE_3bae,match,b46d35a9d3899a10,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3BAE,load_dptr_high_from_a_low_from_code_table,match,b46d35a9d3899a10,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3BB7,FUN_CODE_3bb7,match,5190149698d91a26,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3BBF,FUN_CODE_3bbf,match,2e9440d94897c71a,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3BC1,FUN_CODE_3bc1,match,0101ae72dc59c0e8,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3BC9,FUN_CODE_3bc9,match,5507778fb1987402,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3BD0,FUN_CODE_3bd0,match,d6df825758a72f42,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3BDD,FUN_CODE_3bdd,match,e3ba19d53de73da3,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3BDD,stop_timer1_and_set_et1_3bdd,match,e3ba19d53de73da3,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3BE4,FUN_CODE_3be4,match,552beb3589fbb6b3,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3BE7,FUN_CODE_3be7,match,598921ad7555ec76,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3BEF,FUN_CODE_3bef,match,9737441cb4d70d1f,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3C00,FUN_CODE_3c00,match,071ac8f3532f3205,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3C03,FUN_CODE_3c03,match,c2724f94c3d05f5e,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3C0A,FUN_CODE_3c0a,match,6557aa74af8800bb,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3C0A,read_0a49_then_index_iram_by_plus_97,match,6557aa74af8800bb,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3C18,FUN_CODE_3c18,match,1afdd20dda593c78,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3C21,FUN_CODE_3c21,match,cf708d9e83745ade,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3C2F,FUN_CODE_3c2f,match,dfd37ea1bbcf3adb,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2011,8 +2011,8 @@ common,3F51,FUN_CODE_3f51,match,d35080190424cab2,5,0,,sdas8051 05.50.4+NoICE+SDC
 common,3F5D,FUN_CODE_3f5d,match,a148bff986497ed3,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3F62,FUN_CODE_3f62,match,e6bf5b8408d6b053,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3F68,FUN_CODE_3f68,match,c336f9470868369e,27,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3F9D,FUN_CODE_3f9d,match,ece1f592b8a57eec,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,3FA4,FUN_CODE_3fa4,match,4f0ee3e7e52dfeb1,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3F9D,store_r7_to_iram_bb_then_set_68_0,match,ece1f592b8a57eec,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,3FA4,store_r7_to_iram_31,match,4f0ee3e7e52dfeb1,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,3FA7,FUN_CODE_3fa7,partial,39645a22920be7cd,54,1,"1 of 55 instruction(s) unchecked, first: mov 0x48, CY",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4002,FUN_CODE_4002,match,8441cdcfb0ea0096,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4016,FUN_CODE_4016,match,da185c2b38c7d4eb,36,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2028,21 +2028,21 @@ common,424A,FUN_CODE_424a,partial,4575f388062436a9,48,1,"1 of 49 instruction(s) 
 common,434C,FUN_CODE_434c,match,ae651d5ef31486b7,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4358,FUN_CODE_4358,match,80231e2ff4861e4b,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4361,FUN_CODE_4361,match,b4992ea093aad4e5,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,4368,FUN_CODE_4368,match,ee4fa1ec056b6dff,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,436F,FUN_CODE_436f,match,6ade91fd38358716,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,4368,stop_timer1_and_set_et1_4368,match,ee4fa1ec056b6dff,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,436F,store_0xfc_to_xdata_1308,match,6ade91fd38358716,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4376,FUN_CODE_4376,match,0662b576874271f7,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,437E,FUN_CODE_437e,match,a2e8e84193f2cd50,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4389,FUN_CODE_4389,match,d6726cd6ddbbf945,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4390,FUN_CODE_4390,match,5556d5ad8e3cbd68,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4397,FUN_CODE_4397,match,1c35ffa9d6bcccfd,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,43A5,FUN_CODE_43a5,match,b4b665cf5eccafa5,98,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,43A5,per_channel_state_sequence_on_15byte_stride_table_43a5,match,b4b665cf5eccafa5,98,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,445D,FUN_CODE_445d,match,f255e2bad47837de,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,451A,FUN_CODE_451a,match,69aee7df30875d3c,109,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4602,FUN_CODE_4602,match,333ce8a96a9da5df,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4643,FUN_CODE_4643,match,385dd81c52646149,21,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4666,FUN_CODE_4666,match,83b7e40aef059ab5,69,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,46F9,FUN_CODE_46f9,match,42558b70d0719443,24,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,4725,FUN_CODE_4725,match,1157f7bcc9f367ce,40,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,4725,shift_and_xor_step_on_iram_af,match,1157f7bcc9f367ce,40,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4825,FUN_CODE_4825,match,4ab67a2158d95a08,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,48A6,FUN_CODE_48a6,match,705b0da01660e0e4,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,48B1,FUN_CODE_48b1,match,702c508aadc7dfcd,19,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2053,12 +2053,12 @@ common,4940,FUN_CODE_4940,match,d803517d6554e726,5,0,,sdas8051 05.50.4+NoICE+SDC
 common,4947,FUN_CODE_4947,match,3e3b77769ec5f98e,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4A40,FUN_CODE_4a40,match,38999c3f95e4dfc9,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4A41,FUN_CODE_4a41,match,f534a690c3c34798,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,4A42,FUN_CODE_4a42,match,595298779ae4ba40,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,4A4D,FUN_CODE_4a4d,match,57a06e96c91689c3,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,4A42,dptr_from_21byte_stride_index,match,595298779ae4ba40,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,4A4D,code_word_to_dptr_4a4d,match,57a06e96c91689c3,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4A5A,FUN_CODE_4a5a,match,2cd8aa218e2c121f,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4A5E,FUN_CODE_4a5e,match,1f38aadb8a4858c3,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,4A69,FUN_CODE_4a69,match,4488a8c5d3f8d9de,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,4A76,FUN_CODE_4a76,match,1dec4da1a76ce490,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,4A69,code_word_to_dptr_4a69,match,4488a8c5d3f8d9de,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,4A76,dptr_4900_plus_15x_r1,match,1dec4da1a76ce490,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4A77,FUN_CODE_4a77,match,72b91626b207eb59,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4A83,FUN_CODE_4a83,match,f415a0a29b27be82,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4A8F,FUN_CODE_4a8f,match,acada365c2bedf43,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2074,7 +2074,7 @@ common,4ADF,FUN_CODE_4adf,match,852febd7f40a8353,1,0,,sdas8051 05.50.4+NoICE+SDC
 common,4AE0,FUN_CODE_4ae0,match,48c377933fe45177,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4AEC,FUN_CODE_4aec,match,40d1e0f4e01fae36,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4AEF,FUN_CODE_4aef,match,c3f7c2c1ebbdc2ad,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,4AFB,FUN_CODE_4afb,match,600e042a3e6b3743,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,4AFB,stop_timer1_and_set_et1_4afb,match,600e042a3e6b3743,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4B02,FUN_CODE_4b02,match,9bebf81f44e88a0f,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4B03,FUN_CODE_4b03,match,6a5576ac31331bc1,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,4B0F,FUN_CODE_4b0f,match,6e3bd81983524b88,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2101,13 +2101,13 @@ common,5202,FUN_CODE_5202,match,ea1687cd0c9a7763,68,0,,sdas8051 05.50.4+NoICE+SD
 common,527A,FUN_CODE_527a,match,fd6e04bb8af847ba,84,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,557E,FUN_CODE_557e,match,c95e205716509296,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,557F,FUN_CODE_557f,match,eba17c6f18f2472c,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,5597,FUN_CODE_5597,match,0c306ef3913c1152,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,5597,write_009f_4f_or_0f_by_r7,match,0c306ef3913c1152,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,57C2,FUN_CODE_57c2,partial,3de97166cd80c7ab,16,1,"1 of 17 instruction(s) unchecked, first: ajmp 0x5244",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,5802,FUN_CODE_5802,partial,7fc725740d607bd7,83,1,"1 of 84 instruction(s) unchecked, first: ajmp 0x5a43",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,5882,FUN_CODE_5882,partial,5c86c297cf684b7d,74,2,"2 of 76 instruction(s) unchecked, first: ajmp 0x5a43",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,5A02,FUN_CODE_5a02,match,a07a62ac9ca2db1e,42,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,5A43,FUN_CODE_5a43,match,c5c710bb8c372532,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,5A55,FUN_CODE_5a55,match,5b18994b77a1230b,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,5A43,addc_chain_into_r7_5a43,match,c5c710bb8c372532,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,5A55,table_bytes_disassembled_as_code_5a55,match,5b18994b77a1230b,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,5A5A,FUN_CODE_5a5a,match,5335e4467801beba,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,5A66,FUN_CODE_5a66,partial,db1b541501bf00da,142,5,"5 of 147 instruction(s) unchecked, first: ajmp 0x5a43",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,5AC2,FUN_CODE_5ac2,partial,361d39a404749409,5,1,"1 of 6 instruction(s) unchecked, first: ajmp 0x5a43",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2147,38 +2147,38 @@ common,7030,FUN_CODE_7030,match,c35abdaedad46498,5,0,,sdas8051 05.50.4+NoICE+SDC
 common,707D,mul16,match,e2aa6fc2a8dc8dce,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,70E4,be16_add,match,75da758e37e81168,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,70FA,limit_65000_minus_x,match,9f56ad8350eba107,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7110,FUN_CODE_7110,match,22ab50532a9706cd,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7110,dptr_plus_a_times_b_16bit,match,22ab50532a9706cd,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,711C,FUN_CODE_711c,match,4ade7454288322d6,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,7125,FUN_CODE_7125,assembler-gap,6e75ce5e1271c4a2,18,0,no bytes emitted at 7125,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,713C,FUN_CODE_713c,match,063a9a0f05a63c36,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,7145,FUN_CODE_7145,match,eaf256444c5dabac,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,7151,switch_case_dispatch,match,d1432e205209dc0c,27,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7177,FUN_CODE_7177,match,430e5a42fc812ed3,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7177,jump_to_dptr_from_r1_r2,match,430e5a42fc812ed3,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,717B,FUN_CODE_717b,match,a60615e442f6b99e,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,71B9,FUN_CODE_71b9,match,9f2507490c3b2ca1,149,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,7202,FUN_CODE_7202,match,76586e2b7894ef5c,19,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 common,7281,FUN_CODE_7281,match,a1637037a1db6a83,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7401,FUN_CODE_7401,match,f8a73af50214cc58,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7404,FUN_CODE_7404,match,06ae0e28c452b2d6,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7405,FUN_CODE_7405,match,353e7459ec19b53b,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7408,FUN_CODE_7408,match,78165e35792e1a11,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7410,FUN_CODE_7410,match,29af2ecf2df9cf80,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,741C,FUN_CODE_741c,match,e5a8e40b8d51b361,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7602,FUN_CODE_7602,match,3027f8a8b58ddae1,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7848,FUN_CODE_7848,match,043032a4cba836d3,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7883,FUN_CODE_7883,match,b0fd82c8edce6738,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7BFF,FUN_CODE_7bff,match,92d64cb86ff0f36b,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7C02,FUN_CODE_7c02,match,4622ef7b651c9a15,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7DF2,FUN_CODE_7df2,match,6a36bd2df7a32512,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7E01,FUN_CODE_7e01,match,8eb89ed66c332a55,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7F01,FUN_CODE_7f01,match,2752a586d63e99f4,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7F02,FUN_CODE_7f02,match,bb604f04a9ce1223,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7FF1,FUN_CODE_7ff1,match,27bd6aeefd42c191,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-common,7FFF,FUN_CODE_7fff,match,c32386a98fa4eb67,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,0000,c_startup_idata_clear,match,8ec9f65805a66a80,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7401,ff_filler_not_a_function_7401,match,f8a73af50214cc58,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7404,ff_filler_not_a_function_7404,match,06ae0e28c452b2d6,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7405,ff_filler_not_a_function_7405,match,353e7459ec19b53b,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7408,ff_filler_not_a_function_7408,match,78165e35792e1a11,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7410,ff_filler_not_a_function_7410,match,29af2ecf2df9cf80,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,741C,ff_filler_not_a_function_741c,match,e5a8e40b8d51b361,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7602,ff_filler_not_a_function_7602,match,3027f8a8b58ddae1,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7848,ff_filler_not_a_function_7848,match,043032a4cba836d3,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7883,ff_filler_not_a_function_7883,match,b0fd82c8edce6738,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7BFF,ff_filler_not_a_function_7bff,match,92d64cb86ff0f36b,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7C02,ff_filler_not_a_function_7c02,match,4622ef7b651c9a15,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7DF2,ff_filler_not_a_function_7df2,match,6a36bd2df7a32512,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7E01,ff_filler_not_a_function_7e01,match,8eb89ed66c332a55,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7F01,ff_filler_not_a_function_7f01,match,2752a586d63e99f4,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7F02,ff_filler_not_a_function_7f02,match,bb604f04a9ce1223,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7FF1,ff_filler_not_a_function_7ff1,match,27bd6aeefd42c191,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+common,7FFF,ff_filler_not_a_function_7fff,match,c32386a98fa4eb67,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,0000,ljmp_0500,match,8ec9f65805a66a80,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0003,ljmp_0056,match,bfc7b72bf62efeb5,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,000B,ljmp_0094,match,5474519dd00ba60e,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,0012,FUN_CODE_0012,match,a46b14f14db25dea,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,0012,ff_filler_not_a_function_0012,match,a46b14f14db25dea,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0013,ljmp_00b2,match,de7b8f9572228659,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,001B,ljmp_00f0,match,0a7607d45ffbfdda,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0023,ljmp_010e,match,d046905b55b2202a,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2192,28 +2192,28 @@ pd,0180,dispatch_r5_write_083b_0300,partial,81f73db7d985e746,71,6,"6 of 77 instr
 pd,0500,c_startup_idata_clear,match,055f15d380813778,105,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,05A6,mul32_accumulate_r4_r7,match,defd993d8a72add8,192,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,06B1,shl32_16_iters,partial,87266548bfe9d751,33,2,"2 of 35 instruction(s) unchecked, first: mov 0xd5, CY",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,06EA,FUN_CODE_06ea,partial,d3e384f3718498d5,41,1,"1 of 42 instruction(s) unchecked, first: mov 0xd5, CY",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,06EA,test_r4r5_bit15_then_rrc_40bit_and_negate_32bit,partial,d3e384f3718498d5,41,1,"1 of 42 instruction(s) unchecked, first: mov 0xd5, CY",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0721,shift_right_2x16_sticky_d5,partial,13ab15185fb9cfaf,16,2,"2 of 18 instruction(s) unchecked, first: mov 0xd5, CY",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0738,shift_r3r4_right_1,partial,5fc16631b8a134de,18,1,"1 of 19 instruction(s) unchecked, first: mov 0xe7, CY",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0756,saturate_all_ones,match,4bc044edd42e67f4,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,075D,clear_r4_r7_return_zero,match,3b47e8eca99f14cf,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0760,saturate_r4_from_d5_r5_80,match,cb12ba21a44217b3,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,0B85,FUN_CODE_0b85,match,912bd3bf063d215c,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,0B85,index_from_r5_r3_then_jmp_at_0b05,match,912bd3bf063d215c,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0BAB,read_byte_by_tag_r3,match,322032e83b65e240,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0BC4,read_byte_at_dptr_plus_r1r2_by_tag,match,bc9d1074e3054b8b,30,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0BF1,add_a_into_byte_by_tag_r3,match,f445a133d6f3da10,25,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,0C13,FUN_CODE_0c13,match,8bf71ba6c12c3aeb,36,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,0C13,add_a_to_byte_selected_by_r3_kind,match,8bf71ba6c12c3aeb,36,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0C46,write_byte_by_tag_r3,match,864091b0431280cd,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0C58,write_byte_at_dptr_plus_r1r2_by_tag,match,fae37d819796f383,23,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0C7A,mul_r7_r5_r4_into_r6r7,match,d120b35822718f9c,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0C8C,div_u16_by_u16_or_u8,match,5788f8000aa53478,62,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,0CF7,FUN_CODE_0cf7,match,09133a560c0e4485,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,0CF7,add_a_and_b_to_16bit_at_dptr_return_high,match,09133a560c0e4485,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0D0D,read_two_bytes_by_ptr_kind,match,f23da621e44a4ac0,29,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0D38,read_two_bytes_at_offset_by_ptr_kind,match,cb3a4c1276cae73e,39,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0D70,write_two_bytes_by_ptr_kind,match,9858b4f9a7fce618,21,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0D8F,write_two_bytes_at_offset_by_ptr_kind,match,bd0a0531d2619d8e,31,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0DBC,add_32bit_r0r3_to_r4r7,match,bdfecec6171753ca,13,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,0DC9,FUN_CODE_0dc9,match,5540facb1e241f14,64,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,0DC9,mul8_partial_products_accumulate_into_r4r7,match,5540facb1e241f14,64,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0E54,udiv_shift_subtract_core,match,aef58f36f41ee873,169,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0EE6,and_32bit_r0r3_r4r7,match,b2ad344f4106cd3e,13,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,0EF3,or_32bit_r0r3_r4r7,match,36b5d5ba7dc0d590,13,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2235,7 +2235,7 @@ pd,10E8,store_3byte_r3r2r1,match,2c4375488e36623d,9,0,,sdas8051 05.50.4+NoICE+SD
 pd,10F1,read3_code_to_r3r1,match,ab73a882f72dbf0d,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,10FD,read3_ptr_kind_dispatch,match,0f0b9ea649fcf698,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,119C,dispatch_code_table,match,34eaeaff36e686a1,27,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,11C2,FUN_CODE_11c2,match,1bf191859abb60c0,31,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,11C2,dispatch_code_table_2byte_key,match,1bf191859abb60c0,31,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,1229,load_dptr_then_indirect_jump,match,22c9d9cc227b71ba,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,122D,jmp_code_at_dptr,assembler-gap,a3f1d6a26e4ef5d2,2,0,no bytes emitted at 122D,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,122F,add_dptr_to_word_0d0e_ea_guard,match,74fc547ef98c4148,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2249,11 +2249,11 @@ pd,133F,clear_0807_0808_dispatch_0805,partial,e913e45b93cfb3fb,26,1,"1 of 27 ins
 pd,1820,store_r7_12_clear_bit_4d_tailcall,match,9624ce9a2bfaca09,13,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,1E4B,read_0803_and_invert,match,2249cba584745070,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,1E9D,flag_from_f4ee,match,cac8650f8408382e,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,1EFE,FUN_CODE_1efe,partial,3fa64e0d5c125882,27,1,"1 of 28 instruction(s) unchecked, first: ajmp 0x1820",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,1EFE,gate_0803_then_dispatch_through_code_table,partial,3fa64e0d5c125882,27,1,"1 of 28 instruction(s) unchecked, first: ajmp 0x1820",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,2726,invert_r7_after_f407,match,0d59c7152c01da96,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,347B,read_byte_to_r3_stride_60_alt,match,0c292a5617a0e9cf,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,3494,load_b_60,match,6d9c6554b5d33ee8,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,3497,add_full_product_to_dptr,match,11a05240181a34a9,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,3497,call_10bc,match,11a05240181a34a9,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,349B,dph_plus_double_a_349b,match,b5e7d6eb99353491,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,34A5,read_byte_to_r7_base_0420,match,8d67c0da006c391c,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,34C9,copy_a_to_r7_zero_r6,match,9078fec2f2bd06e5,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2312,7 +2312,7 @@ pd,37ED,clear_r7_and_mask_r6_to_bit3,match,54ca4fad6a4100ed,7,0,,sdas8051 05.50.
 pd,383A,unresolved_0x383A,match,baf5682b747da57c,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,384E,call_0f1f_then_return_r7_and_3,match,1073f7e68aa76506,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,3872,load_r0_r1_r2_r3_04_05_06_07,match,61f91c0fd33b5641,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,3883,FUN_CODE_3883,match,3127775455b89cb4,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,3883,set_b_60_and_dptr_0400_then_return,match,3127775455b89cb4,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,38CA,read_xdata_to_r3_set_dptr_0418,match,5c3f96d57028a587,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,38D3,read_be16_from_dptr,match,f9928c27baf34587,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,393D,write_r7_r5_r3_to_consecutive_xdata,match,3523382a80032bfe,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2321,7 +2321,7 @@ pd,3974,set_dptr_07fb_then_fall_through,match,df31df494d15e6fd,1,0,,sdas8051 05.
 pd,3977,read_dptr_byte_then_07d2,match,9c001043e30627e1,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,39AC,read_byte_to_r7_set_r3_1,match,f3268e45f514d126,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,39DE,set_dph_call_1041_r7_03,match,fc2ec970d3d49c70,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,39E6,FUN_CODE_39e6,match,6bd6093d726da595,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,39E6,set_r5_from_a_then_fall_through_to_39e7,match,6bd6093d726da595,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,39E7,set_args_r1_d3_r2_07_r3_01,match,47bd8027772d2866,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,39F9,tail_jump_10bc_with_b_60_and_r7,match,5aad0b81b6fd084a,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,3A0E,read4xdata_and_return_r7_bit0,match,d2558fb2b8d1c0ef,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2347,7 +2347,7 @@ pd,5874,mul_dptr_byte_77_to_arg_6c,match,82341bdeaf5ef05b,10,0,,sdas8051 05.50.4
 pd,58AB,arg_89_from_r4r5_then_store_at_0864,match,b5a62c25ad181499,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,58B9,scale_dptr_from_dptr_byte_77_plus_96,match,74b311da554125da,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,5950,index_stride_77_r7,match,484f4ae697751e02,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,6673,FUN_CODE_6673,partial,ff2398e85636a874,301,1,"1 of 302 instruction(s) unchecked, first: ajmp 0x68af",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,6673,dispatch_on_07f5_record_after_staging_07d2,partial,ff2398e85636a874,301,1,"1 of 302 instruction(s) unchecked, first: ajmp 0x68af",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,68CE,store_a_and_copy_07f4_masked_to_07f5,match,e11402bc0c8f16ea,13,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,6F96,call_122f_with_dptr_fffd_6f96,match,b903a8e723c431a7,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,6FAD,read_dptr_byte_into_r7,match,aefb6b8c4c9f04ae,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2384,13 +2384,13 @@ pd,716C,dptr_08e3_plus_5e_times_a,match,a9e2a4997bb39ee2,8,0,,sdas8051 05.50.4+N
 pd,717C,set_dptr_ffff_tail_jmp_122f,match,5eadeed368db3dd2,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,7182,pack_0108e3_plus_r6_r7_into_r1_r3,match,c707037cf1843a71,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,718D,store_a_to_dptr_and_zero_r2_r3,match,c544811e29771119,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,7392,FUN_CODE_7392,match,8cecc09e0f834963,74,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,7392,count_07cb_up_to_3_over_07ca_records,match,8cecc09e0f834963,74,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,7580,set_07d2_and_return_r7_zero_or_one,partial,8f5bac75a34cc4c5,227,1,"1 of 228 instruction(s) unchecked, first: acall 0x76e0",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,7753,call_f75c_with_07d1,match,c5ab15a599f6a79d,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,775C,call_e4d0_return_r7,match,3e694d1afc8ecade,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,7B0D,call_f739_then_return_dptr_07d0_7b0d,match,a842d04676b07a46,3,0,,sdas8051 02.00
-pd,7B14,FUN_CODE_7b14,match,057b6576fe7273d8,242,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,7CE0,FUN_CODE_7ce0,match,8c761ac18bb7732a,206,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,7B14,stage_07c9_index_then_dispatch_on_flag_bits,match,057b6576fe7273d8,242,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,7CE0,dispatch_on_0a8c_command_then_write_0a8b_record,match,8c761ac18bb7732a,206,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,7E91,reload_0a8b_call_f75c,match,314d4b8c8605c2c0,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,805E,update_07d4_state,match,c6a8cf537f0954ff,165,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,8210,call_dc29_with_07d4,match,9395f5b07b5422c3,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2400,7 +2400,7 @@ pd,8576,step_state_07d0_07d1,match,b5bc9c10520f1710,136,0,,sdas8051 05.50.4+NoIC
 pd,8716,call_f22e_with_07d0,match,b9c4c7e6fd526777,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,8814,store_3bytes_at_dptr_plus_1,match,c5ad0efa6874bc65,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,88BE,update_07d6_table_entries,match,5cc071886d76639d,102,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,8A4A,FUN_CODE_8a4a,match,b33dbeb4b0ad7720,188,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,8A4A,dispatch_on_07d1_bits_then_update_07d1_07d2,match,b33dbeb4b0ad7720,188,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,8BC0,call_f739_then_read_07d1,match,cf1df048e25fd4c7,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,8D41,advance_07d2_counter_and_dispatch,match,196b58986c1a6adb,177,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,8EA6,call_7ce0_with_r5_0b,match,c9770ca1c1081f1f,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2477,7 +2477,7 @@ pd,9849,call_0bc4_keep_result_in_r7,match,2dc4026499f6d416,2,0,,sdas8051 05.50.4
 pd,984D,call_0eeae,match,30575182f7a269c3,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9850,load_dptr_d9ef_tail_jump_10f1,match,305199af7ae79392,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,985D,call_0d8f_write_00_04_to_07da_07db,match,446a2fe26f646ebd,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,987F,FUN_CODE_987f,match,1df20ac74ec7d761,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,987F,set_r1_from_a_then_add_carry_into_r2,match,1df20ac74ec7d761,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9883,read_xdata_byte_to_r7,match,630e2e4ec1c9ace7,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9885,set_multiplier_2,match,e495e5f690ebe997,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9888,mul_ab_into_dptr,match,90e43f45f6129858,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2497,12 +2497,12 @@ pd,9926,dptr_001f_return_a0_b2,match,a69914403e11494a,4,0,,sdas8051 05.50.4+NoIC
 pd,9936,add_r6r7_to_r1r2_tail_0c58,match,02eb2339f40337a7,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9958,call_10fd_then_dptr_0007,match,0c04c9b8013e92ff,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,995F,dptr_0021_tail_0c58,match,1f14578a3202a183,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,9965,FUN_CODE_9965,match,69cf41e8ab5f7a4c,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,9965,add_a_times_0c_to_16bit_r1r2,match,69cf41e8ab5f7a4c,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,996F,dptr_0010_tail_0c58,match,e9a45da4d051fb1b,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9975,call_10fd_dptr_0004_tail_0bc4,match,e57874db36c4c576,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9987,load_a_from_r7_9987,match,84b0cce986c06740,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9988,set_multiplier_60,match,edff4864a6754ae9,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,998B,add_full_product_to_dptr,match,ca3d232093cc379a,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,998B,call_10bc,match,ca3d232093cc379a,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,998F,dbl_a_add_dph_write_dph,match,7772d84661ee8010,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,99C9,add_r5_to_dptr,match,f6d0b9054466f3cc,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,99D4,read_xdata_inc_r7_carry_r6_tail_0c8c,match,b5c019dfa9a6c8a6,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2512,14 +2512,14 @@ pd,9A91,set_b_60_dptr_04a4_then_ret,match,9cff5798c5e15861,3,0,,sdas8051 05.50.4
 pd,9ACD,dptr_add_0d0e_via_122f,match,b186e76eab207291,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9ADD,set_dptr_0d0e_9add,match,d64099b02f8b1deb,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9C18,set_b_67,match,bc2e752c2db2f1aa,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,9C1B,add_full_product_to_dptr,match,205e12083f9afea8,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,9C1B,call_10bc,match,205e12083f9afea8,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9C45,read_xdata_to_r6_set_dptr_069a,match,3203b00a6afb081e,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,9C4D,add_full_product_to_dptr,match,2ff4982fc94601dd,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,9C4D,call_10bc,match,2ff4982fc94601dd,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9CC2,load_1byte_to_r6,match,3c3c3508f67187f4,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9CFB,read_xdata_to_r7_set_dptr_066c,match,18f28257a5836447,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,9D39,set_b_67_dptr_066e,match,d2025839e73d6d46,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,A000,FUN_CODE_a000,match,3b496ba91d5bca8d,123,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,A0E6,FUN_CODE_a0e6,match,14b292f79c304463,155,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,A000,begins_mid_statement_write_then_index_0a8c_and_dispatch,match,3b496ba91d5bca8d,123,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,A0E6,stage_07d6_07d7_07d8_then_tail_to_f654,match,14b292f79c304463,155,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,A339,stash_args_dispatch_code_table,partial,b40678f3da0cb9f6,52,2,"2 of 54 instruction(s) unchecked, first: acall 0xa000",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,A571,dispatch_on_state_07d0,match,d9f733e54906a587,29,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,A5B3,and_16bit_fields_write_07d2_07d3,match,9366c938b13a73fe,103,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2590,10 +2590,10 @@ pd,B2F7,read3_from_dptr_then_set_dptr_0002,match,77e34fb7658c1adf,3,0,,sdas8051 
 pd,B2FE,read_0832_and_multiply_by_38,match,09d435b2d1e6614e,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,B311,write_07d2_then_dispatch_on_07d1,match,f7fc3191bb552bbf,114,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,B3ED,write_r7_at_0d0d_then_load_0d0b,match,7565c56b637218bb,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,B73F,FUN_CODE_b73f,match,d1ff89c40d9c2f99,44,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,B73F,stage_07d6_index_and_store_args_at_07dc,match,d1ff89c40d9c2f99,44,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,B80E,write_r7_and_r3r2r1_to_0803,match,23189ce07f9a23e7,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,B8DB,FUN_CODE_b8db,match,638778f2959ed823,116,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,B9A1,FUN_CODE_b9a1,match,1ada230caac63e1e,105,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,B8DB,init_07d8_indexed_flags_to_ff,match,638778f2959ed823,116,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,B9A1,stage_07d4_07d5_then_dispatch_and_tail_f035,match,1ada230caac63e1e,105,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,BA67,write_07d4_07d5_then_return_0_or_1,match,f965ebd5611b62d5,107,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,BBE7,branch_on_ram_r5_then_set_indirect_bits,match,54e6fdd582c3f0b7,109,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,BECB,write_07d6_07d7_07d8_07d9_then_store_07df,match,873886d7a448327a,21,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2615,17 +2615,17 @@ pd,C808,store_a_at_dptr_and_r7_at_0800_plus_a,match,d1380028a4761fec,10,0,,sdas8
 pd,C873,compare_55_then_mark_0819,partial,91a2f494f0b9f79b,84,1,"1 of 85 instruction(s) unchecked, first: cpl 0x08",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,C901,dispatch_on_r3_then_add_product_to_0699,match,9e22b502913c8ab3,41,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,CB2A,store_0803_0805_then_jump_c808,partial,66c2eb3fd36c9734,23,1,"1 of 24 instruction(s) unchecked, first: ajmp 0xc808",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,CBB0,FUN_CODE_cbb0,assembler-gap,b957a4d45c709819,88,0,no bytes emitted at CBB0,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,CBB0,write_r4_r5_indexed_flag_bits,assembler-gap,b957a4d45c709819,88,0,no bytes emitted at CBB0,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,CC36,call_122f_with_dptr_fffd_cc36,match,2140ccb17e89fdb0,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,CCB7,store_0a94_0a97_then_add_0a94_times_60,match,f2d5feb6cd932c11,18,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,CDB7,FUN_CODE_cdb7,match,3449bfd1c6892fd7,76,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,CDB7,decide_r7_from_r6_r5_r4_and_write_indexed_byte,match,3449bfd1c6892fd7,76,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,CFA0,store_4_at_07d6_then_branch_on_991a,match,175cf364068da800,51,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,D013,latch_07d4_07d5_and_call_7014_with_63_or_6c,match,44866f35e4883683,58,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,D085,decrement_00e2_and_tail_jump_to_d07b,partial,21adc20066f7ce8a,29,1,"1 of 30 instruction(s) unchecked, first: ajmp 0xd07b",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,D0F0,require_nonzero_from_b074,match,416c48e11fa9ecdf,63,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,D435,FUN_CODE_d435,match,304ad4c5908e29b7,34,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,D435,gate_0827_against_1388_then_set_0ffd4_bit0,match,304ad4c5908e29b7,34,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,D6E0,inc_r0_then_reti,match,38ae6298a320e1fc,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,D72E,FUN_CODE_d72e,partial,d20963f271ffd490,48,1,"1 of 49 instruction(s) unchecked, first: acall 0xd6e0",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,D72E,stage_07d1_set_0ffd4_bit5_then_tail_c755,partial,d20963f271ffd490,48,1,"1 of 49 instruction(s) unchecked, first: acall 0xd6e0",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,D78A,return_one_when_arg_matches_queried_values,match,13f83ee3c7b0453a,55,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,D83D,store_4_zero_bytes_at_0904_plus_0809_times_5e,match,5f37a9d11756032f,55,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,D8EE,copy_0841_to_0984_when_083c_matches_097f,match,220269e0969220b1,44,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2645,14 +2645,14 @@ pd,E458,store_07d8_and_dispatch_07da,match,1e019cde2b5a325f,34,0,,sdas8051 05.50
 pd,E4D0,dptr_fffe_then_122f_at_e4d0,match,2f5644c69626eeb8,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,E543,count_07cf_and_conditional_call_122d,match,5beb6ab8e8baccf1,34,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,E5B3,store_080e_and_accumulate_r6,match,0aed293d4442a823,33,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,E6C0,FUN_CODE_e6c0,match,b24af3b5f9d02289,29,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,E757,FUN_CODE_e757,match,108cb25cf4dd3fc0,26,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,E6C0,set_or_clear_706b_byte_bit2_then_call_f1b0_if_6faf_zero,match,b24af3b5f9d02289,29,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,E757,set_0832_bit0_then_dispatch_b17d_from_r5_and_call_0180,match,108cb25cf4dd3fc0,26,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,E877,store_080f_0810_and_pick_f50e_arg_on_carry,match,b128a20bb0e0c164,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,E8D4,FUN_CODE_e8d4,match,53ba8318a70912ce,25,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,E902,FUN_CODE_e902,match,e93c7fb29f7dc6d8,22,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,E930,FUN_CODE_e930,match,86dd54cab88e673f,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,E8D4,index_07d0_by_0x17_then_fill_128d_and_call_f604,match,53ba8318a70912ce,25,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,E902,if_0bc4_result_below_6_then_read3_at_r7_times_3_32,match,e93c7fb29f7dc6d8,22,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,E930,write_07ca_indexed_and_restore_saved_byte_when_flag_e7,match,86dd54cab88e673f,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,E9E3,store_3byte_r3r2r1_at_0803,match,2ba9de1ccb5a0bb1,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,EA67,FUN_CODE_ea67,assembler-gap,46a706a916c3abf5,29,0,no bytes emitted at EA67,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,EA67,reset_07c9_block_then_flag_00d3_1,assembler-gap,46a706a916c3abf5,29,0,no bytes emitted at EA67,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,EBBB,init_sequence_with_ea_cleared,match,91366eabdda28df9,19,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,EBE4,pick_00d0_or_00d1_then_tail_with_dp_0002,match,6ed14c0d7bc7a7a4,22,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,EC36,set_or_clear_bits_0_5_via_9028,match,3febada5f2bc1d14,27,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2661,16 +2661,16 @@ pd,ED46,store_3byte_r3r2r1_at_0861,match,46ed07cf73f22df9,2,0,,sdas8051 05.50.4+
 pd,ED90,set_bit3_and_bits2_3_from_r5,match,ee26387474bb261d,21,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,EDB5,setup_04a3_r3_7_then_call_10bc,match,b3d2a9ef0a12547a,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,EE68,stage_07d4_07d5_then_call_ef59,match,23f8e4e7d1f0827b,21,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,EE8B,FUN_CODE_ee8b,match,dcf7188e1ca3bbd0,22,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,EE8B,set_r6_07_r7_06_after_6faf_zero_test_and_pair_compare,match,dcf7188e1ca3bbd0,22,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,EEAE,write_r7_at_0x0260_plus_0bab_result,match,70829de7604b6e35,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,EED1,write_ff_clear_bit7_write_ff,match,eb139351b8a3149d,22,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,EF59,stage_07d6_call_715e_6faf_tail_e5b3,match,811e2c9140d06059,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,EF79,stage_07d6_call_716c_6faf_tail_e5b3,match,3fcc912f0355d8eb,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,EFB9,FUN_CODE_efb9,match,4127712380ba90d9,19,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,EFB9,clear_0ffd3_ff88_ffe1_bits_then_ffd0_2e,match,4127712380ba90d9,19,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,F035,stage_07d6_chain_tail_f351,match,3984b94bebdb4ecb,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,F109,set_or_clear_bit0_via_9028,match,3144716f0379e511,20,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,F126,gate_on_6f96_then_tail_122f_with_dp_000a,match,2ab3fd5a5c7287f7,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,F1B0,FUN_CODE_f1b0,match,9536bf7c67041e0a,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,F1B0,set_or_clear_0ffd4_bit5_from_r5_when_r7_zero,match,9536bf7c67041e0a,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,F22E,read_04a3_then_call_9a90,match,e86ed5d800dca11b,6,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,F247,write_07d6_then_table_entry_then_0_3,match,2f4772e3a86b4466,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,F28D,dptr_eaf9_index_04,match,8575a1b92c77eeaf,13,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -2707,7 +2707,7 @@ pd,F739,call_returns_with_dptr_loaded,match,539a353aa0ffd795,3,0,,sdas8051 05.50
 pd,F755,read_dptr_byte_via_715e,match,158e24dd6b916e42,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,F75C,read_dptr_byte_via_716c,match,9aff12629b4efe65,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,F763,store_r5_at_dptr_via_97fb,match,bca5ee48f6923b2b,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-pd,F775,FUN_CODE_f775,match,058406ebbedca09e,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,F775,write_r7_to_xdata_07d9,match,058406ebbedca09e,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,F781,clear_sfr_88_set_sfr_a8,match,f81153a531dea0f2,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,F786,tailcall_7b14_with_r7_zero,match,63bf9dd2efb5dca2,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,F79C,ljmp_d085,match,d9aed226a9e631f2,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
