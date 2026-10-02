@@ -325,8 +325,10 @@ def region_bounds(name: str):
     `hi` is therefore a constant, not a bound on `len(d)`: every loop here is
     region-relative, so the invariant is `hi <= len(d)` -- a property of these
     call sites, which no loop can state for itself. main()'s PD-marker check is
-    what holds it, and --self-test now reports it rather than assuming it.
-    See docs/findings/rel8-displacement-bound.md."""
+    what holds it on the CLI path, and --self-test reports the invariant on
+    every buffer that survives it rather than assuming it. A printed line is not
+    a holder of its own, so `test_audit_call_targets.py` drives --self-test and
+    names the line; see docs/findings/rel8-displacement-bound.md."""
     return next((lo, hi) for n, lo, hi, _, _ in REGIONS if n == name)
 
 
@@ -914,11 +916,23 @@ def self_test(d: bytes) -> int:
     # The property every region-relative loop in this tool rests on and none of
     # them can state: `hi` comes from REGIONS, so it does not move with the
     # buffer. main()'s PD-marker check is what keeps it inside `d`.
+    #
+    # The failure clause this line used to carry named what main() would have
+    # done about a buffer that broke the bound, and that was not a branch no
+    # caller could reach: a direct caller handing self_test() a buffer one byte
+    # short of the largest audited bound reaches this comparison with it false.
+    # The paged walk above does index `d` directly, so it would raise first on a
+    # buffer whose last admitted offset is paged-shaped; this image's is not, so
+    # it gets past. Measured, not argued -- test_audit_call_targets.py runs the
+    # branch and names the byte the case rests on. So the text was reachable and
+    # wrong rather than unreachable: main() was never called on that path, so
+    # nothing had refused anything, and the walk below raised `IndexError`.
+    # `FAIL` is what check() already prints and the sentence above carries the
+    # comparison, so the counterfactual cost nothing to lose.
     hi = max(region_bounds(name)[1] for name in AUDITED)
     check(hi <= len(d),
           f"the largest audited region bound 0x{hi:05X} is inside the "
-          f"{len(d)}-byte image, so no walk below reads past its own region"
-          f"{'' if hi <= len(d) else ' -- exceeded, main() would have refused this image'}")
+          f"{len(d)}-byte image, so no walk below reads past its own region")
 
     # The other half of the same subject: not that the walk stays inside `d`,
     # but where it stops. The window below is the only stretch of a region no

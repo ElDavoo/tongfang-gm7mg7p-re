@@ -14,7 +14,7 @@ the EC does.
 ## The two sites, and the one bound they share
 
 ```python
-# ec/tools/audit_call_targets.py:168-172, relative_sites()
+# ec/tools/audit_call_targets.py:206-210, relative_sites()
 for i in range(lo, hi):
     op = d[i]
     if op in REL_OPCODES and i + OPCODE_LEN[op] <= hi:
@@ -23,7 +23,7 @@ for i in range(lo, hi):
 ```
 
 ```python
-# ec/tools/audit_call_targets.py:314-315, relative_survey()
+# ec/tools/audit_call_targets.py:435-436, relative_survey()
 "length": OPCODE_LEN[op],
 "disp": d[off + OPCODE_LEN[op] - 1],
 ```
@@ -38,7 +38,7 @@ in front of it is `i + OPCODE_LEN[op] <= hi`, and `hi` is not a length.
 
 Two different modules, and neither one is the loop.
 
-`hi` is `region_bounds(name)` (`ec/tools/audit_call_targets.py:206-214`), a
+`hi` is `region_bounds(name)` (`ec/tools/audit_call_targets.py:322-333`), a
 `next()` over `REGIONS` — a hard-coded table at
 `ec/tools/trace_xdata_refs.py:72-79`. It is a **constant**. Nothing about it
 moves when the buffer does:
@@ -49,11 +49,11 @@ moves when the buffer does:
 ("bank1",   0x10000, 0x18000, 0x8000, ...),
 ```
 
-`AUDITED` is `("common", "bank0", "bank1")` (`:100`), so the largest `hi` either
+`AUDITED` is `("common", "bank0", "bank1")` (`:131`), so the largest `hi` either
 site can be handed is bank1's `0x18000`, and the guard caps the read at
 `0x17FFF`.
 
-What keeps the read in range is `main()` (`:799-800`), which refuses the image
+What keeps the read in range is `main()` (`:1085`), which refuses the image
 unless `d[0x20040:0x2004A] == b"ITE8850-PD"`. A Python slice never raises, so a
 short buffer yields a short slice, fails the comparison, and the function
 returns 1 — the check is a genuine **length floor of `0x2004A` = 131146 bytes**,
@@ -66,7 +66,7 @@ And it is on every path that can reach the read: `relative_sites` and
 (`grep -rn 'relative_sites\|relative_survey' --include=*.py .` returns only
 this module's own definitions and uses; `group_functions.py:124`, the one
 other module that imports from here, takes only `OTHER_BANK` and `bucket_of`),
-and the check sits above the `--self-test` dispatch at `:806` as well as above
+and the check sits above the `--self-test` dispatch at `:1090` as well as above
 the three survey calls.
 
 ## The verdict
@@ -78,35 +78,38 @@ convenience:
 
 - **A `len(d)` test in `relative_sites()` — no.** `hi` is a *region* bound, and
   every loop in this tool is region-relative: `call_sites()` stops two short of
-  `hi` (`:142`), `paged_sites()` one short (`:154`), `erased_runs()` reads to
-  `hi - 1` (`:121`). A clamp inside `relative_sites()` would test something
+  `hi` (`:173`), `paged_sites()` one short (`:185`), `erased_runs()` reads to
+  `hi - 1` (`:151`). A clamp inside `relative_sites()` would test something
   other than the loop's own invariant, which is the same reason the census gave
   rows 11-20 a measured verdict rather than a guard. The invariant that is
   actually true is `hi <= len(d)` — and that is a property of the *call sites*,
   not of any one loop, which is why it does not belong in the loop.
 - **A note on the bound — yes, on the consumer rather than the table.** "That
   `hi` is a constant and not a bound on `len(d)`" is a claim about how *this*
-  tool reads the table, and a consumer's property belongs on the consumer. Four
-  modules import `REGIONS` by name (`xdata_span_survey.py:40`,
-  `decode_index_table.py:61`, `pd_index_geometry.py:110`, and this one at `:83`)
-  out of thirteen that import something from `trace_xdata_refs`; editing the
-  table for a sentence only this one of them acts on would be a shared-file
-  edit for a claim the other twelve have no occasion to make.
+  tool reads the table, and a consumer's property belongs on the consumer. More
+  modules import `REGIONS` by name than this paragraph used to name --
+  `xdata_span_survey.py`, `decode_index_table.py`, `pd_index_geometry.py` and
+  this one are four of them, and `grep -rl 'REGIONS' --include='*.py' ec/tools`
+  is how a reader sees the set -- but this is the only consumer that acts on
+  the property, and editing the table for a sentence the others have no
+  occasion to make would be a shared-file edit for a claim they are not making.
 
-So the change is the note, on `region_bounds()` (`:206-214`), where a reader
+So the change is the note, on `region_bounds()` (`:322-333`), where a reader
 asking "where does `hi` come from" lands — plus **one `check()` in the existing
-`--self-test` harness** (`:728-735`) asserting `max(region_bounds(n)[1] for n in
+`--self-test` harness** (`:932-935`) asserting `max(region_bounds(n)[1] for n in
 AUDITED) <= len(d)`. That check is beyond the issue's literal ask and is
 labelled as such; the verdict above does not rest on it. It *reports* the
 invariant rather than guarding the loop, which is the difference the census's
 rows 11-20 are about: a future dump that breaks it becomes a visible failed
 line rather than an `IndexError` three functions deep, and no loop in the tool
-has to grow a bound that is not its own.
+has to grow a bound that is not its own. As of 2026-10-02 (#855) that visible
+line has a run behind it — `ec/tools/test_audit_call_targets.py`, whose
+`## Follow-ups this opens` correction below is the rest of that change.
 
 **Nothing about the tool's behaviour changed.** The two code edits are a
 docstring and a `check()`. `audit_call_targets.py` over the committed image
 exits 0 and produces byte-identical output before and after, and `--relative-csv`
-— the artifact that exercises `:315` specifically, since `disp` is a column of
+— the artifact that exercises `:436` specifically, since `disp` is a column of
 it — is 9077 lines and identical on both runs. That is the evidence for the
 sentence, not a formality.
 
@@ -127,7 +130,7 @@ The guard is satisfied by arithmetic on a constant; the read fails on the
 buffer. That gap — 32843 bytes wide on the committed image, and closed by one
 comparison in a different function — is the whole finding. The same
 truncation fed to `relative_survey()` rather than to the generator raises
-`IndexError` too, at `:121` in `erased_runs()` instead, which is a fact about
+`IndexError` too, at `:151` in `erased_runs()` instead, which is a fact about
 call order and is **not** evidence about the two named sites; it is why the
 vector above is aimed at `relative_sites()` directly.
 
@@ -202,30 +205,35 @@ committed tree today, not to any future one.
 
 ## Reproducing it
 
-Commands 1-3 first, then the snippet. All from the repository root.
+Commands 1-4 first, then the snippet. All from the repository root.
 
 ```sh
 # 1. the pair's own command, and the one that has to be unaffected by the edit
 python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800
 
-# 2. the artifact that exercises :315 specifically -- `disp` is a column of it
+# 2. the artifact `disp` is a column of
 python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 \
   --relative-csv | wc -l
 
 # 3. the new line, among the existing ones
 python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --self-test
 
-# 4-6. the other two tools directories
+# 4. and the run that reaches it, which is what `--self-test` alone did not do
+bash tools/run-tests.sh ec/tools
+
+# 5-7. the other two tools directories
 grep -rn 'OPCODE_LEN\[' --include=*.py bios/tools windows/tools
 grep -rn 'disasm8051' --include=*.py bios windows
 grep -rcE '\w+\[[a-z_]*\[[a-z_]+\]' --include=*.py bios/tools windows/tools
 ```
 
-`bash tools/run-tests.sh ec/tools` and the two self-tests are green and pick up
-nothing new, which is the point: **this work adds no suite**. The one red suite
-in the merged tree, `test_check_cluster_citations.py`, is the merged-tree red
-`opcode-len-bounds-census.md` already names; it reproduces on a clean
-`origin/main` and is named here rather than fixed.
+`bash tools/run-tests.sh ec/tools` and the two self-tests are green, which is
+the point: **this work adds no suite** — true of the #847 change and not of
+this one. As of 2026-10-02 (#855) it adds `ec/tools/test_audit_call_targets.py`,
+and the `## Follow-ups this opens` correction below is the rest of that change.
+The red suite named here at the time, `test_check_cluster_citations.py`, is
+green on this tree as of 2026-10-02 and was left alone rather than fixed, as
+this section said it would be.
 
 The snippet needs no committed file of its own. It re-reads the tool, so it is
 correct both before and after the docstring.
@@ -306,3 +314,45 @@ None recorded. The hand-off this answers is closed by this file, and the
 `hi <= len(d)`, the suite says so. A guard in `relative_sites()` would be
 answering a question this write-up argues is the wrong one, so it is not
 queued.
+
+**Correction to the sentence above (2026-10-02, #855). It is left in place
+because it is the claim, and the runner it leans on did not name the line.**
+`--self-test` *was* driven from a suite --
+`ec/tools/test_relative_edge_guard.py` calls `self_test()` and asserts the run
+passes over the committed image -- but it was written for #1093's region-edge
+window and treats every other line of the transcript as fixture, `unmoved by
+the plant` being one of its cases. So the bound line was covered only as a side
+effect of a different issue's subject, and nothing pointed at it. Coverage by
+accident ends when the accident does.
+
+The mechanism is now `ec/tools/test_audit_call_targets.py`, reached by
+`tools/run-tests.sh`'s `find` with no registration, and it matches the line by
+the half of it that is the claim rather than the half that is a count. So the
+claim is upgraded from an assumption the write-up could not support to a check
+that names itself -- a stronger thing than the original sentence promised, and
+a different thing than the sentence said.
+
+**What the suite pins, and the limit of it.** The invariant is held against
+whatever is at `ec/firmware/GMxMGxx_11.800`, and against nothing else. A
+second image landing beside that one is **not** covered: "a future image" is
+not broader than the path the suite names, and the suite says so in its own
+docstring rather than leaving a reader to assume the wider reading.
+
+**What the `--self-test` line's failure clause was, corrected.** It used to
+read `-- exceeded, main() would have refused this image`, which asserted a
+counterfactual about `main()` from inside `main()`'s own callee. It is gone,
+and the correction is that **the branch was reachable and the text was wrong**,
+not that the branch was dead. Measured: a direct caller handing `self_test()` a
+buffer one byte short of the largest audited bound reaches this check with its
+comparison false, prints `FAIL`, and the walk below raises `IndexError` a few
+lines later. On that path `main()` was never called, so nothing had refused
+anything. The reachability is not unconditional and is not claimed to be: the
+paged walk above this check indexes `d` directly and would raise first on a
+buffer whose last admitted offset is paged-shaped. On this image it is not --
+that offset holds `0xff`, whose low five bits are neither `ajmp`'s nor
+`acall`'s -- so the walk gets past. `test_audit_call_targets.py` runs the
+branch rather than arguing about it, and names the byte its case rests on, so
+the removal is held in the direction that would bring it back. `check()` already
+prints `FAIL` and the sentence already carries the comparison, so the text cost
+nothing to lose; the positive line is unchanged and the transcript over the
+committed image is byte-identical before and after.
