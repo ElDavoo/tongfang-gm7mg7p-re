@@ -292,9 +292,12 @@ instructs.
 > - **The two survivors' reasons still hold and their colour does not.** Both
 >   are green, fixed elsewhere, and
 >   [`runner-red-suite-set.md`](runner-red-suite-set.md)'s *The two suites named
->   above are green* records which fix moved each. The paragraph above is kept
->   because the reasoning it records is what made leaving them alone the right
->   call on the tree it was written on.
+>   above are green, and the set is not empty* records which fix moved each. That
+>   section's own **still red** row, for
+>   `ec/tools/test_check_cluster_citations.py`, is green here too, fixed
+>   elsewhere for the same reason. The paragraph above is kept because the
+>   reasoning it records is what made leaving them alone the right call on the
+>   tree it was written on.
 >
 > The total in the first paragraph is left visible for the same reason: it was
 > true of the commit it was measured on, and a fresh one would be true only
@@ -302,10 +305,10 @@ instructs.
 
 **Where the set is maintained, and what this tree prints.**
 [`runner-red-suite-set.md`](runner-red-suite-set.md) owns the runner's failing
-set; this file is deliberately a pointer to it rather than a fourth
-measurement of the same thing, which is the mechanism by which the paragraphs
-above went stale in the first place. The run this correction rests on, against
-committed blob `74269594`:
+set; this file is deliberately a pointer to it rather than another measurement
+of the same thing, which is the mechanism by which the paragraphs above went
+stale in the first place. The run this correction rests on, against committed
+blob `9919103a`:
 
 ```console
 $ bash tools/run-tests.sh          # 2026-10-02
