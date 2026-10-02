@@ -116,6 +116,24 @@ figure still open is not in these tables at all**, because §6a does not print
 it: the guard-off run's pd cluster count `51`. It is named below, and it is why
 "eighteen held" is not "nothing left to do".
 
+*(Correction, 2026-10-02, issue #1364. The paragraph above is left as it read,
+per [`../findings.md`](../findings.md) §4a-4d. **The `157`/`858` half of it no
+longer holds**: issue #1364 added `pd_distinct`/`pd_refs` to `OWNERSHIP` and an
+"and its pd half is" `check()` in the same ownership block as the main-EC one, so
+§6b's de-duplicated pd width is measured by something that compares against it
+and not only by a same-digit figure from the default census. Of the two
+mismatches named here, the guard-off `51` is the one that remains — the heading
+above still says two, and after this correction it is off by one in the
+conservative direction. The count of eighteen figures and eighteen held is
+unchanged and this correction does not touch it: the row was already marked
+`held` before the pin landed, and adding the pin that holds it is what makes that
+marking true rather than coincidental. **Why it holds is worth the sentence the
+caveat was standing in for:** the pass reaches the PD program, finds one fold in
+it, and that fold names no XDATA byte, so 0 of the 858 move while the same pass
+moves 296 addresses' references elsewhere. That is a fact about the PD program,
+not a bookkeeping gap, and it is why "left open for a narrow reason"
+understated it. [`pd-pair-unmoved-one-fold.md`](pd-pair-unmoved-one-fold.md).)*
+
 #### §6b's console block, `ec/annotations/xdata-06c2-06db-timers.md:901-904`
 
 **§6b's `--export-ownership` run, not §6a's**, which is easy to misread as
@@ -127,7 +145,7 @@ part of the table below:
 | `440` | the `after-clusters.csv` row count | `:902` | held | `OWNERSHIP["clusters"]`, `ec/tools/xdata_register_map.py:1442`, asserted `:4347-4354` |
 | `1218` | main-EC distinct addresses | `:903` | held | `ORACLE["main_distinct"]`, `ec/tools/xdata_register_map.py:744`, asserted `:3864-3869`; and, for the de-duplicated run this row is about, `OWNERSHIP["main_distinct"]`, `ec/tools/xdata_register_map.py:1414`, read by the "and its main-EC half is" check at `:4315-4319` |
 | `9320` | main-EC references | `:903` | held | `OWNERSHIP["main_refs"]`, `ec/tools/xdata_register_map.py:1414`, asserted `:4315-4319` |
-| `157` / `858` | pd distinct addresses / references | `:904` | held | `ORACLE["extmem_pd_distinct"]` / `["extmem_pd_refs"]`, `ec/tools/xdata_register_map.py:738`, asserted `:3555-3572` — **but for the *default* census, not this run's; see the paragraph above** |
+| `157` / `858` | pd distinct addresses / references | `:904` | held | `ORACLE["extmem_pd_distinct"]` / `["extmem_pd_refs"]`, `ec/tools/xdata_register_map.py:738`, asserted `:3555-3572` — for the *default* census; **and, for this row's own de-duplicated run, `OWNERSHIP["pd_distinct"]`/`["pd_refs"]`, `ec/tools/xdata_register_map.py:1628`, read by the "and its pd half is" check — #1364** |
 | `390` / `50` | main-EC / pd cluster counts | `:903-904` | held | `ec/tools/test_xdata_cluster_names.py:799`, `TheExportOwnershipClusters.test_the_440_splits_the_way_6b_prints_it` — **#850**; the `440` above is their sum and is held to it there |
 
 #### §6a's table, `ec/annotations/xdata-06c2-06db-timers.md:779-790`

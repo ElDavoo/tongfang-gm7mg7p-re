@@ -535,11 +535,14 @@ class TheOracleRule(unittest.TestCase):
         # is why main reads 22 lines past it and the branch's re-pin is what
         # caught it. Asserting the measured span here fixes all of it.
         # Re-measured, not shifted by arithmetic.
+        # **`:4612-4618` since issue #1364**, whose `pd_distinct`/`pd_refs`
+        # block in `OWNERSHIP`, the note above it, and the "and its pd half is"
+        # `check()` that reads those two keys all landed above this span.
         self.assertEqual(
             cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
                                   "largest_class", 1, 2, found["texts"],
                                   found["asserted"])),
-            "ec/tools/xdata_register_map.py:4560-4566")
+            "ec/tools/xdata_register_map.py:4612-4618")
 
     def test_the_census_csvs_are_read_from_the_tool_that_writes_them(self):
         # Derived from `OUT_REGISTERS`/`OUT_CLUSTERS` rather than named here, so
@@ -580,7 +583,12 @@ class TheOracleRule(unittest.TestCase):
         # asserting the span alone would have accepted a pin that had quietly
         # started pointing somewhere else. **`:3732-3749` / `#3722` were the
         # pins before issue #424, whose `&&` and compound-assignment corrections
-        # added lines above this span; `:3744-3761` / `#3734` on this tree.**
+        # added lines above this span; `:3744-3761` / `#3734` before issue
+        # #1364, whose `OWNERSHIP` `pd_distinct`/`pd_refs` block and the note
+        # above it added lines above this span and none below it; `:3781-3798`
+        # / `#3771` on this tree. That is the fourth merge-shaped step here,
+        # and like the three before it both members of the pair moved, which is
+        # what holding the pair is for.**
         # Re-read against the file rather than shifted by adding any of
         # the siblings' moves, which would give the same answer here for the
         # wrong reason. That re-pin is the third merge-shaped step on this span
@@ -589,17 +597,17 @@ class TheOracleRule(unittest.TestCase):
         # and each moved both members of the pair, which is what the pair is for.
         # The negative guard is re-pinned with them: `:3599` stopped being
         # producible when #573's note moved the sum, and a guard that can
-        # never fail is not a guard, so it names this tree's `:3734` --
-        # the sum the `lines[3733]` assertion below points at.
-        self.assertIn("3744-3761", detail)
-        self.assertNotIn(":3734", detail)
+        # never fail is not a guard, so it names this tree's `:3771` --
+        # the sum the `lines[3770]` assertion below points at.
+        self.assertIn("3781-3798", detail)
+        self.assertNotIn(":3771", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3733])
-        self.assertIn("check(", lines[3743])
+        self.assertIn("extmem_both", lines[3770])
+        self.assertIn("check(", lines[3780])
         self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3760])
+                      lines[3797])
 
 
 class SectionSelection(unittest.TestCase):
