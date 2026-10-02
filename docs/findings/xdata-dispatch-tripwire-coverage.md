@@ -126,6 +126,20 @@ coverage change firing. The old `ast.walk` remark (`ast.walk` is breadth-first
 and would put the trailing `return write(args)` first) was about the wrong
 walker for the job; the visitor is the right one and the comment now says why.
 
+> **Corrected 2026-10-02, issue #1407.** "and that is correct rather than a
+> gap" is measured now, and it holds for the bare-name wrapper named above and
+> for nothing else in the family. There, registering `run` in `MODES` where the
+> reader found it really does make the exact-tuple equality green again, so the
+> coverage change fires exactly as this paragraph says. For a wrapper reached
+> on a receiver — `return self.run(demo_mode(args))` — `self.run` is an
+> `ast.Attribute` and records nothing, and the walk does not descend into a
+> call's arguments either, so `demo_mode` is never reached: the recorded list
+> is unchanged, `MODES` needs no new entry, the equality is **green**, and a
+> tenth mode runs unmocked. That is the failure this class exists to prevent.
+> The paragraph is left standing per `../findings.md` §4a-4d; the measurement,
+> the other four shapes and the docstring correction are in
+> [`xdata-dispatch-indirect-shapes.md`](xdata-dispatch-indirect-shapes.md).
+
 ## The residual boundary: asserted, not hoped away
 
 One shape dependence survives the widening, and it is stated rather than closed
@@ -309,6 +323,23 @@ not disturb the tripwire the reader exists to keep complete.
   > naturally" is still true of it. The bullet is not a claim that
   > `mode_attributes` covers a mode reached through a **wrapper**; that edge is
   > argued above rather than measured, and it is still open.
+  >
+  > **Corrected 2026-10-02, issue #1407.** "still open" is now measured rather
+  > than argued, and it is not one edge but six — and the closure is worse than
+  > the paragraph above suggested. On a mirror carrying the committed nine plus
+  > a tenth behind `return self.run(demo_mode(args))`, the exact-tuple equality
+  > is green with the tenth unmocked; the residue does report `['run']`, but
+  > classifying that call silences it, and the derived rule cannot object,
+  > because a name reached as a method on a receiver is not a module-level
+  > binding and so falls outside the rule's subject rather than inside it. Suite
+  > green, tenth mode unmocked, guard relocated below the dispatch reaches it.
+  > The bullet's standing claim — that the residue covers a name the benign set
+  > does not account for — is untouched by this and still true; what changes is
+  > that the wrapper edge it deferred is now a measured escape rather than an
+  > unexamined one. See
+  > [`xdata-dispatch-indirect-shapes.md`](xdata-dispatch-indirect-shapes.md),
+  > which also corrects `module_level_names`' "if and only if" on the same
+  > subject.
 - **The pre-order property is stated as pre-order.** It coincides with source
   order for the flat dispatch the committed tool has, and would fire on a
   wrapped call — correctly, since a wrapper changes which entry point `main()`

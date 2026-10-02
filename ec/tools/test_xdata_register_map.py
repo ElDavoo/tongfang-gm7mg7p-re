@@ -109,6 +109,32 @@ COMPREHENSION_DISPATCH = "def main():\n    xs = [demo_mode(a) for a in y]\n    r
 # whole of what is under test.
 ATTRIBUTE_DISPATCH = "def main():\n    return xrm.demo_mode(args)\n"
 
+# The indirect shapes: each of these reaches a mode without naming it as a
+# bare-name call in `main()`, so `dispatch_names` may record the wrapper instead
+# of the mode, or nothing at all. Kept as strings beside the constants above for
+# the same reason, and measured rather than inferred from reading `ast`: the
+# suite imports its own readers and runs them, and the pairing each source gets
+# below is what it answered. `main()` is the whole of every one of them, which
+# is the condition the empty right-hand column turns on -- the `def` a shape
+# would have to be read against is absent from all six, so the derived rule has
+# nothing to intersect with unless a case supplies one, the way
+# `test_a_dispatched_name_the_tool_defines_is_a_suspect` does.
+BARE_NAME_WRAPPER = "def main():\n    return run(demo_mode(args))\n"
+ATTRIBUTE_WRAPPER = "def main():\n    return run(xrm.demo_mode(args))\n"
+SELF_RECEIVER_DISPATCH = "def main():\n    return self.run(demo_mode(args))\n"
+TABLE_DISPATCH = "def main():\n    return TABLE[args.mode](args)\n"
+GETATTR_DISPATCH = "def main():\n    return getattr(xrm, args.mode)(args)\n"
+LAMBDA_DISPATCH = "def main():\n    return (lambda f: f(args))(demo_mode)\n"
+
+# Where a tenth mode's branch goes into the committed tool's dispatch, as the
+# one edit a mirror needs: `main()`'s final `return write(args)`, so the branch
+# lands after `check` and before the last mode. A case asserts the anchor is
+# still there rather than trusting that, the way a checker that located nothing
+# has to say so instead of exiting 0. A refactor that moved the anchor is caught
+# by that assertion or, if the branch landed outside `main()` entirely, by the
+# residue going `[]` where the case expects it to report the new call.
+TENTH_BRANCH_ANCHOR = "    return write(args)\n"
+
 # The attribute calls the committed `main()` makes, which is the whole of the
 # benign set, measured off that `main()`'s own AST rather than named from a
 # reading of it. It is a maintained list and it is wrong the first time it is
@@ -133,6 +159,26 @@ DISPATCH_POSITIONS = {
     "assignment right-hand side": ASSIGNMENT_DISPATCH,
     "`with` header": WITH_DISPATCH,
     "bare comprehension": COMPREHENSION_DISPATCH,
+}
+
+# The indirect shapes, keyed by the words the docstrings use for each, each
+# carrying its source beside the `(dispatch_names, mode_attributes)` pair
+# measured on it. The key is the `subTest` label and the value is the reading,
+# so the case below states what each shape is rather than repeating it in an
+# assertion -- and a reader that changed its mind would go red naming the claim.
+#
+# Deliberately a second mapping rather than entries in `DISPATCH_POSITIONS`:
+# those three are positions `dispatch_names` reaches, and every shape here is one
+# it may not reach at all. Folding them together would assert the same equality
+# over two populations that do not share a subject, and the empty recorded lists
+# would read as over-collection rather than as what they are.
+INDIRECT_DISPATCHES = {
+    "bare-name wrapper": (BARE_NAME_WRAPPER, (["run"], [])),
+    "attribute wrapper": (ATTRIBUTE_WRAPPER, (["run"], ["demo_mode"])),
+    "`self` receiver": (SELF_RECEIVER_DISPATCH, ([], ["run"])),
+    "table dispatch": (TABLE_DISPATCH, ([], [])),
+    "`getattr` dispatch": (GETATTR_DISPATCH, ([], [])),
+    "lambda dispatch": (LAMBDA_DISPATCH, ([], [])),
 }
 
 
@@ -213,6 +259,21 @@ def dispatch_names(source):
     wrapper rather than the mode, and that is correct rather than a gap: the
     entry point `main()` dispatches to has changed, so `MODES` has to change
     with it and a tenth name turning up is the coverage change firing.
+
+    **Corrected 2026-10-02, issue #1407.** "and that is correct rather than a
+    gap" is measured now, and it holds for the bare-name wrapper and for
+    nothing else in the family. There, registering `run` in `MODES` where this
+    reader found it does make the exact-tuple equality green, so the coverage
+    change really does fire. For a wrapper reached on a receiver --
+    `return self.run(demo_mode(args))` -- `self.run` is an `ast.Attribute` and
+    records nothing here, and this reader's own rule does not descend into a
+    call's arguments, so `demo_mode` is never reached either: the recorded list
+    is unchanged, `MODES` needs no new entry, the equality is green, and a
+    tenth mode runs unmocked. That is the failure `TripwireCoverage` exists to
+    prevent, reached through the shape this sentence calls correct. The
+    sentence above is left standing per `../../docs/findings.md` §4a-4d; the
+    measurement is in `test_the_derived_rule_does_not_object_to_a_self_receiver_name`
+    and the write-up is `../../docs/findings/xdata-dispatch-indirect-shapes.md`.
     """
     class Dispatch(ast.NodeVisitor):
         def __init__(self):
@@ -268,6 +329,27 @@ def module_level_names(source):
     top-level `if` is not among them and neither is a name bound inside a
     function. A name the source reaches under a spelling it does not bind is not
     covered either, and nothing here claims it is.
+
+    **Corrected 2026-10-02, issue #1407.** The "if and only if" above is
+    stronger than the population this reader ranges over, in both directions.
+    *If*: the rule's subject is what a mode is, the entry points `main()`
+    dispatches to, and this reader returns every top-level binding the tool's
+    source carries -- `def`, `class`, plain and annotated assignment and import
+    bindings alike -- which is a substantially larger population than the entry
+    points it is about. So a name the tool binds at module level and that is no
+    entry point is called suspicious by a rule that means it is not, and the
+    direction it over-calls is the false red rather than the silent miss. *Only
+    if*: the rule is silent on the shape that matters most to it, because a
+    terminal name reached as a method on a receiver `main()` dispatches through
+    is not a module-level binding at all and so falls outside the rule's
+    subject. That is what lets a `self`-receiver wrapper be classified benign
+    with the guard holding an empty intersection and nothing objecting. Both
+    are measurements on synthetic source and on the committed tool; the
+    population and the command that prints it are in
+    `../../docs/findings/xdata-dispatch-indirect-shapes.md`, and the escape is
+    pinned by
+    `test_the_derived_rule_does_not_object_to_a_self_receiver_name`. The
+    sentence above is left standing per `../../docs/findings.md` §4a-4d.
     """
     bound = set()
     for node in ast.parse(source).body:
@@ -449,6 +531,154 @@ class TripwireCoverage(unittest.TestCase):
                     expected,
                     "a residue is a suspect only where the tool binds the name "
                     "at module level")
+
+    def mirror_with_a_tenth(self, branch):
+        """The committed tool with one extra dispatch branch, for the two cases
+        below that need a tenth mode to *exist* rather than to be described.
+
+        The edit is to the source text this process holds and to nothing else,
+        so the mirror's own census CSVs are not the property under test and no
+        tree outside this process moves. The anchor is asserted rather than
+        assumed: a `main()` that stopped ending in `return write(args)` would
+        otherwise leave both cases below green on a mirror with no tenth in it.
+        """
+        head, sep, tail = TOOL.read_text().partition(TENTH_BRANCH_ANCHOR)
+        self.assertTrue(
+            sep, f"main() no longer ends in {TENTH_BRANCH_ANCHOR!r}, so no "
+                 "mirror was built and this case would pass without measuring "
+                 "anything")
+        return head + branch + sep + tail
+
+    def test_every_indirect_shape_the_docstrings_name_is_measured(self):
+        # The six, each paired with what its two readers answered. The table is
+        # the pairing in `INDIRECT_DISPATCHES`, so this case is the reading
+        # rather than a second copy of it -- a reader that changed its mind goes
+        # red naming the shape whose claim moved, which is the whole reason the
+        # keys are the words the docstrings use.
+        #
+        # Equality in both directions, like the position cases above and for
+        # their reason: `[]` here is the finding for the table, `getattr` and
+        # lambda shapes -- no reader reaches them at all -- and a membership
+        # check could not tell that from a reader that reached something else.
+        for shape, (source, (dispatch, residue)) in INDIRECT_DISPATCHES.items():
+            with self.subTest(shape=shape):
+                self.assertEqual(dispatch_names(source), dispatch)
+                self.assertEqual(mode_attributes(source), residue)
+
+    def test_registering_a_wrapper_makes_the_equality_green(self):
+        # `dispatch_names`'s docstring, followed. A mode reached through a
+        # wrapper records the wrapper rather than the mode, and the sentence
+        # calls that correct rather than a gap because the entry point
+        # `main()` dispatches to has changed, so `MODES` has to change with it.
+        # On a mirror carrying the committed nine and this wrapper, that is what
+        # happens: the tenth name turning up is the coverage change firing, and
+        # the equality is green again once `run` is registered where the reader
+        # found it.
+        #
+        # The second half is why that is a case and not the sentence. The
+        # residue is `[]` for the same source, so once `MODES` has been widened
+        # to match, the exact-tuple equality is the only thing holding this
+        # shape and it is holding a shape it has just agreed to. Nothing else in
+        # the suite objects -- which is the correct outcome here, and is
+        # recorded so the next reader of the docstring knows the direction of
+        # the consequence rather than inferring it.
+        mirror = self.mirror_with_a_tenth(
+            "    if args.demo_mode:\n        return run(demo_mode(args))\n")
+        recorded = tuple(dispatch_names(mirror))
+        self.assertEqual(
+            [n for n in recorded if n not in MODES], ["run"],
+            f"the mirror recorded {recorded}, so the wrapper did not add "
+            "exactly the one name this case is about")
+        at = recorded.index("run")
+        registered = MODES[:at] + ("run",) + MODES[at:]
+        self.assertEqual(
+            recorded, registered,
+            "registering the wrapper in MODES did not make the equality green, "
+            "so the docstring's instruction is not what this case measured")
+        self.assertEqual(mode_attributes(BARE_NAME_WRAPPER), [])
+
+    def test_the_derived_rule_does_not_object_to_a_self_receiver_name(self):
+        # The escape, carried to its end on a mirror rather than described on
+        # one. `self.run` is an `ast.Attribute`, so `dispatch_names` records
+        # nothing for it, and on its own rule it does not descend into the
+        # call's arguments either, so `demo_mode` is never reached either: the
+        # recorded list is the nine, the equality is green, and a tenth mode
+        # runs unmocked. That is the failure this class exists to prevent.
+        #
+        # The residue does say `['run']`, and its failure message carries the
+        # benign set and what a name outside it is -- which makes the next step
+        # a classification. Every case below is that classification, and none of
+        # them objects. This is where the two layers disagree: the residue says
+        # red, and the derived rule has nothing to say about the fix.
+        mirror = self.mirror_with_a_tenth(
+            "    if args.demo_mode:\n        return self.run(demo_mode(args))\n")
+        self.assertEqual(
+            tuple(dispatch_names(mirror)), MODES,
+            "the mirror recorded something other than the nine with a tenth "
+            "mode behind a `self` receiver, so what follows is not measuring "
+            "the escape this case is named for")
+        self.assertEqual(mode_attributes(mirror), ["run"])
+
+        def residue_under(benign):
+            """`mode_attributes`' own expression, over a widened benign set.
+
+            Spelled out rather than reached through a parameter `mode_attributes`
+            does not have, because widening the set *is* the mutation under
+            test -- a residue reader that took its benign set from somewhere else
+            would hide it.
+            """
+            return sorted(set(attribute_calls(mirror)) - set(benign))
+
+        widened = BENIGN_ATTRIBUTES | {"run"}
+        self.assertEqual(
+            residue_under(widened), [],
+            "classifying the `self`-receiver call did not silence the residue, "
+            "so this case is not measuring the escape it is named for")
+
+        # The partition still holds, which is
+        # `xdata-attribute-dispatch-boundary.md`'s own case: a correct
+        # classification and a silencing are the same edit, and here nothing
+        # tells them apart. The mirror's `main()` really does make the call
+        # being classified.
+        reached = set(attribute_calls(mirror))
+        unaccounted = reached - set(widened)
+        self.assertEqual(unaccounted, set(),
+                         f"main() reaches {sorted(unaccounted)} and the widened "
+                         "benign set does not account for it")
+        uncalled = set(widened) - reached
+        self.assertEqual(uncalled, set(),
+                         f"the widened benign set names {sorted(uncalled)}, "
+                         "which the mirror's main() does not reach")
+
+        # And the derived guard, the only other thing that could object, holds
+        # an empty intersection: `run` is reached as a method on a receiver, and
+        # a name the tool binds inside a class body is not a module-level
+        # binding. So the classification above is one the rule cannot forbid,
+        # which is what makes the escape close completely rather than partly.
+        # The guard is taken over the widened benign set, which is the
+        # intersection the suite's own case takes.
+        # Hoisted so the assertion and the message beside it cannot be edited
+        # apart -- a failure message naming a different intersection than the one
+        # asserted is worse than no message at all.
+        objects_to = sorted(set(widened) & set(module_level_names(mirror)))
+        self.assertEqual(
+            objects_to, [],
+            f"the widened benign set names {objects_to}, which the mirror binds "
+            "at module level: the derived guard would have objected to the "
+            "classification, so this case is not measuring the escape")
+
+        # The non-vacuity control, in the direction that makes it worth having:
+        # the empty intersection above is the receiver spelling leaving the
+        # guard nothing to hold, not the guard having nothing to hold. The same
+        # mirror with the same name bound at module level is one the guard does
+        # object to, which is what a guard that located nothing and said so
+        # looks like next to one that located nothing and said nothing.
+        bound = "def run(args):\n    return 0\n\n\n" + mirror
+        self.assertEqual(
+            sorted(set(widened) & set(module_level_names(bound))), ["run"],
+            "the derived guard did not object to a `run` bound at module level, "
+            "so the empty intersection above is the guard being unreachable "
+            "rather than this shape being outside its subject")
 
 
 class Refusals(unittest.TestCase):
