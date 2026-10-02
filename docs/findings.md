@@ -7227,7 +7227,7 @@ head-of-the-neighbour case the lead section describes turns out to carry a real
 transfer. **32 of the 124 pairs** already have a same-scope transfer to their
 callee booked to a neighbouring function, and **15 of the 90
 `cited_by == inbound` agreements** in `call-graph-callees.csv` are carried that
-way — the two columns counting different call sites. `call_graph.py` is
+way — ~~the two columns counting different call sites~~. `call_graph.py` is
 unchanged and its 1,841-row table is byte-identical; the issue asks what the
 split means for the ranking, not for the ranking to move. *(Two corrections to
 the plan's figures, both in §35's file: the plan measured 100 rows / 114 pairs;
@@ -7236,6 +7236,28 @@ to 99 / 124 — that move runs both ways, its re-derived call graph dropping
 twelve rows that no longer cite anything while six of its own new listings join
 as citing rows. The predicate is unchanged, and the pins, the 9-and-one
 zero-gap split among `common` citers and the commands are all there.)*
+
+> **Correction (2026-10-02, issue #705), leaving the sentence above as it was
+> written.** The struck clause is the *reason*, and the reason is what #681
+> settled in the two files that own this measurement: the sentence is true of
+> the **kept** citing row, not of the population pair. All fifteen rows have now
+> been read one at a time. For 7 of the 15 those are two different rows — the
+> population pair is a rejected or undecided data-frame mention contributing
+> nothing to `cited_by` — and the other 8 are the kept citation itself. The
+> split is **9 where the kept comment names the neighbour's own site and 6 where
+> it names a different one**, and the mechanical screen for it, whether the
+> `neighbour_edge` address is in the callee's `citing` list, comes out
+> **identical to the verdict on all 15 rows**: a measured fact about fifteen
+> rows rather than a rule, and the cheapest check a reader can run. The reading
+> is carried already by `docs/findings/citation-gap-scan.md` and
+> `ec/annotations/call-graph.md`; the per-row verdicts and the command that
+> reproduces the split are in
+> [neighbour-edge-attribution.md](findings/neighbour-edge-attribution.md), and
+> §38 is the summary. A text measurement over committed tables: no CSV moved, no
+> re-export, no register `status:`, no listing re-read, no hardware. *(The
+> fifteen, the 9 / 6 and the 7 / 8 are what that command prints on this tree;
+> the denominators the sentence above was written against are #489's to correct
+> and are left as they were written.)*
 
 ## 36. The `bank1,0xE582` entry is reached through 0xE580, and the census row at 0x9F03 is the phantom (2026-09-25, issue #680)
 
