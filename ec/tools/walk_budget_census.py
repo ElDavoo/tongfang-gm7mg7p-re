@@ -70,9 +70,24 @@ indexed access begins.
 `window` column that `trace_xdata_refs.walk()` produces, all keyed on
 `file_offset`. `manual-fan-ctrl-0751-arms.csv` also has a `window` column and
 is not among them: `walk_branch_arms.py` produces it, its key is `site_runtime`
-rather than a file offset, and its 171 cells are arm listings that end on a
-flow opcode by construction. Folding it in would count another tool's
-guarantee as this one's measurement.
+rather than a file offset, and no row of the committed run ends on that tool's
+instruction budget or carries a cut `status`. Folding it in would count
+another tool's measurement as this one's.
+
+**Correction (2026-10-02, issue #866), leaving the clause this paragraph gave
+before visible.** It said the 171 cells "are arm listings that end on a flow
+opcode **by construction**", which is a promise about the module and not a fact
+about the run: `walk_branch_arms.py` budgets every arm at `--max-insns` and
+`END_BUDGET` is one of its `CUTS`, so an arm *can* end on the budget, and the
+committed run's largest arm sitting under that default is headroom rather than
+a guarantee. The exclusion is defensible on what was measured instead --
+no `ends` cell over the committed rows carries `END_BUDGET` or any other cut,
+and no `status` is one -- and `test_walk_budget_census.py`'s
+`test_no_committed_arm_ends_on_the_instruction_budget` holds that per row
+rather than counting rows, alongside the headroom that makes it re-derive.
+`../../docs/findings/arms-table-budget-exclusion.md` carries the measurement,
+the figure, and what the table's `partial: DPTR built at run time` rows cost a
+reader.
 
 **Nothing here is a claim about the EC.** Every input is a committed file: a
 site table and `ec/firmware/GMxMGxx_11.800`. No register was read back, no
