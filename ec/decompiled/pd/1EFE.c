@@ -9,10 +9,18 @@
    reads that byte into R7, calls 0xF4EE (`return_1_if_dptr_byte_ge_02`), and returns again unless
    R7 is zero. On the surviving path it calls 0x36C2 (`read_0803_0804_to_r7_r5`) with R3 = 0x10, and
    returns R7 = 1 if 0x2726 (`invert_r7_after_f407`) returns nonzero and R7 = 2 if it returns zero.
-   The fall-through at 0x1F29 is a third exit: it reads XDATA 0x0805, dispatches it through 0x119C
-   (`dispatch_code_table`), decrements R7, ORs the result with R4 and transfers to 0x1820 with
-   `ajmp` rather than returning. Two of the three exits are decided by values these instructions do
-   not decode.
+   The fall-through at 0x1F29 is a third exit: it reads XDATA 0x0805 into A and calls 0x119C
+   (`dispatch_code_table`) at 0x1F2D. 0x119C pops the return address into DPTR before its first
+   MOVC, so the table it walks begins at 0x1F30 rather than after the call: from there the bytes are
+   an 8-entry code-space table of 3-byte records, target from +0/+1 and selector key at +2, keyed
+   0x01 to 0x07 and 0x0F. Its first record is `1f 4c 01`, target 0x1F4C at key 0x01, so the `dec R7`
+   and `orl A,R4` the listing shows at 0x1F30 and 0x1F31 are that record's two target bytes, and the
+   `01 20` its `ajmp 0x1820` shows at 0x1F32 is the record's key byte followed by record 2's high
+   target byte. The table's last byte is 0x1F4B, its default is 0x26D6, and the byte at 0x1F4C is
+   record 1's target, so nothing after 0x1F2D executes as this function's continuation. The figures
+   are the pd 0x1F2D row of ec/annotations/pd-index-table-spans.csv, a decode under one reader's
+   layout rather than a claim that any of these handlers executes. Two of the three exits are
+   decided by values these instructions do not decode.
    type: dispatch
    evidence: ec/decompiled/pd/1EFE.asm; ec/decompiled/pd/1EFE.c
    basis: hand-decoded

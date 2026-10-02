@@ -242,6 +242,15 @@ jobs:
       - name: Set up the toolchain
         uses: ./.github/actions/project-setup
 
+      # LOCAL CHANGE (2026-10-02, not in the template): the plan's description, as a file the
+      # self-check below can rewrite. The plan writes it before any measurement exists, so its
+      # figures are guesses. Stale figures in the description were the most common blocking
+      # review finding, and each one cost a full review, fix and CI round.
+      - name: Hand the plan's description to the agent
+        env:
+          PR_BODY: ${{ inputs.pr_body }}
+        run: printf '%s\n' "$PR_BODY" > /tmp/pr-body-plan.md
+
       - name: Implement the plan
         id: implement
         # See agent-plan.yml for why this is continue-on-error. The guard matters more here
@@ -304,6 +313,27 @@ jobs:
             suppression or a baseline, deleting a failing assertion, or marking a test skipped
             will be caught by the review stage and sent back. If a gate is genuinely wrong,
             say so in a comment on the pull request rather than editing around it.
+
+            Then review your own change before the review stage does. A review that sends
+            the change back costs a full CI run and another review, and a self-check that
+            finds the same problem here costs neither.
+            - Read the review stage's prompt in `.github/workflows/agent-review.yml`, from
+              "First, before any of the checks below" to the end of the "Reject, rather
+              than request changes" list. That is the standard the merge gate holds you to.
+              Go through `git diff` against every item on it and fix what you find.
+            - Answer the review's first question about your own diff: what does it tell us
+              about the EC firmware, the BIOS, the Windows stack or the Linux driver that
+              main did not already know, or which named piece of that work does it unblock?
+              If the honest answer is nothing, do not dress it up. Say so in the first
+              line of the description, so the review can reject it quickly.
+            - Write the pull request description to `/tmp/pr-body-final.md`. Start from the
+              plan's version in `/tmp/pr-body-plan.md`. The plan wrote that before anything
+              was measured, so do not trust a single figure, digest, address, line reference
+              or count in it. Re-derive each one from the tree as it is now, by running the
+              command that produces it, and correct or delete it. Describe what you actually
+              built, not what the plan intended. Name code by function, not by line number.
+              The no-totals rule above applies here too. This file becomes the squash
+              commit message.
 
             Do not commit, push, or touch git. Leave your work in the working tree; the
             workflow commits it.
@@ -420,6 +450,11 @@ jobs:
             link="Refs #${ISSUE} -- left open: it is the live run this prepares, for a human at the machine to close."
           else
             link="Closes #${ISSUE}."
+          fi
+          # The self-check's description, measured after the work, wins over the plan's,
+          # written before it. LOCAL CHANGE (2026-10-02); see "Hand the plan's description".
+          if [ -s /tmp/pr-body-final.md ]; then
+            PR_BODY=$(cat /tmp/pr-body-final.md)
           fi
           {
             printf '%s\n\n' "${PR_BODY:-Implements #${ISSUE}.}"
