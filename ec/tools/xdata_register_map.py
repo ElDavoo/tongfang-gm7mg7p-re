@@ -38,9 +38,9 @@ the C text around the occurrence:
     read             the value is used, which includes every `==` comparison
     write            an `=` target, including the compound forms Ghidra
                      spells `DAT_EXTMEM_1300 = DAT_EXTMEM_1300 & 0x0f`
-    read+write       an `=` target whose right-hand side names the same address
+    read+write       an `=` target naming itself on the right, or `&=` and kin
     passed-to-call   an argument of a call to a routine `index.csv` records
-    address-taken    `&DAT_EXTMEM_xxxx`
+    address-taken    `&DAT_EXTMEM_xxxx`, but not the `&&` of a comparison
 
 `passed-to-call` is its own bucket on purpose, mirroring the `handoff` bucket
 `register_ref_table.py` already reports: an 8051 has no Keil
@@ -103,10 +103,10 @@ against are the ones this tool just produced. What it is *not* is a
 re-implementation, and that is what makes it worth asserting: the `==`
 rejection lives in `store_target()`, and the second pass's predicate is only
 "an `=` that is not `==` follows", so it never consults the thing under test.
-Re-introduce the pre-fix classifier and the two disagree on 837 occurrences,
-across 210 distinct addresses -- the 837, not the 838 above, because the one
-`==` site that was already `address-taken` rather than `write` (`&&` at
-bank0/A747.c:24) is not an offender either way.
+Re-introduce the pre-fix classifier and the two disagree on 838 occurrences,
+across 211 distinct addresses -- the 838, not the 837 the `==` fix alone left,
+because the one `==` site that was already `address-taken` rather than `write`
+(the `&&` at `bank0/A747.c`, corrected by #424) is a disagreement of its own now.
 What it cannot reach is everything a shape test over C text cannot reach -- a
 store the decompiler mis-spelled, a write through a pointer, and a per-address
 *count* that is wrong while every occurrence is assignment-shaped. Only
@@ -1535,9 +1535,9 @@ XSPACE_WINDOW = 32
 # `address-taken` and `read+write` -- and a resolved site is in none of them by
 # construction: the direction is the callee's, and a call that hands an address
 # on is neither a store nor a comparison. The cross-check is again the sum:
-# 8826 + 3587 + 2482 + 534 + 267 = 15696 = ORACLE["refs"].
-BUCKET_TOTALS = {"read": 8826, "write": 3587, "read+write": 2482,
-                 "passed-to-call": 534, "address-taken": 267}
+# 8827 + 3587 + 2482 + 534 + 266 = 15696 = ORACLE["refs"].
+BUCKET_TOTALS = {"read": 8827, "write": 3587, "read+write": 2482,
+                 "passed-to-call": 534, "address-taken": 266}
 
 # Issue #554: what `scan(export_ownership=True)` says on this tree, pinned the
 # same way BUCKET_TOTALS is, so the de-duplicated census stays a measurement
@@ -1589,8 +1589,8 @@ OWNERSHIP = {
     # this one adds 68 more of them.
     "distinct": 1326, "refs": 10178,
     "main_distinct": 1218, "main_refs": 9320,
-    "buckets": {"read": 5361, "write": 3043, "read+write": 1018,
-                "passed-to-call": 500, "address-taken": 256},
+    "buckets": {"read": 5362, "write": 3043, "read+write": 1018,
+                "passed-to-call": 500, "address-taken": 255},
     # Addresses present without the pass and absent with it. Empty here, and
     # that is a measurement rather than an absence: it is the failure the pass
     # would have if an owner were not a superset of its non-owners, and it is
@@ -1764,18 +1764,18 @@ HAND_CHECKED = {
 CLASSIFIER_SHAPE = (
     ("DAT_EXTMEM_0440 = 0;", "write"),
     ("DAT_EXTMEM_0440 = DAT_EXTMEM_0440 & 0x0f;", "read+write"),
-    # These two are `write` and should read as `read+write`: `read+write` is
-    # decided syntactically -- "the right-hand side of the `=` names this
-    # address" -- and `&=` compresses the self-reference out of the right-hand
-    # side, so the test cannot see it. Pinned as measured rather than as
-    # intended, because the shape does not occur: no compound assignment
-    # operator follows a `DAT_EXTMEM_` token anywhere in the committed tree,
-    # which is why the module docstring cites the spelled-out form Ghidra
-    # actually emits. So this costs no bucket and is a follow-up, not a fix
-    # folded silently into issue #178.
-    ("DAT_EXTMEM_0440 &= 0x0f;", "write"),
-    ("DAT_EXTMEM_0440 |= 0x0f;", "write"),
+    # A compound assignment reads what it writes -- what `&=` cannot say on its
+    # right-hand side. Measured over the committed tree none follows an address
+    # token (#424), so the pair costs no bucket: it was pinned as the measured
+    # `write`, which is the misclassification this corrects.
+    ("DAT_EXTMEM_0440 &= 0x0f;", "read+write"),
+    ("DAT_EXTMEM_0440 |= 0x0f;", "read+write"),
     ("if (DAT_EXTMEM_0440 == 0) {", "read"),
+    # `&&`, ampersand-preceded address first because the self-test resolves only
+    # the first token -- in `bank0/A747.c` that is the other operand, so the
+    # tree's own order would pass for the wrong reason. The second is `==`-free.
+    ("DAT_EXTMEM_076a == '\\0' && DAT_EXTMEM_0440 == '\\0'", "read"),
+    ("DAT_EXTMEM_076a && DAT_EXTMEM_0440", "read"),
     ("if (DAT_EXTMEM_0440 == 0) {\n}", "read"),
     ("if (DAT_EXTMEM_0440 != 0) {", "read"),
     ("if (DAT_EXTMEM_0440 <= 7) {", "read"),
@@ -2311,11 +2311,11 @@ def classify(text: str, start: int, end: int, addr: str, func_names,
     """One occurrence -> one of BUCKETS. See the module docstring for why
     `passed-to-call` and `address-taken` are buckets of their own."""
     left = text[:start].rstrip()
-    if left.endswith("&"):
+    if left.endswith("&") and not left.endswith("&&"):
         return "address-taken"
     if store_target(text, start, end, eq_guard):
-        eq = text.index("=", end)
-        return "read+write" if addr in rhs_of(text, eq) else "write"
+        return ("read+write" if text[end:].lstrip()[:2] in ASSIGN[1:]
+                or addr in rhs_of(text, text.index("=", end)) else "write")
     if enclosing_call(text, start, func_names):
         return "passed-to-call"
     return "read"

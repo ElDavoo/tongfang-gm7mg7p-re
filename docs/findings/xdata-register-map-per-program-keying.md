@@ -192,7 +192,7 @@ already hold themselves to.
 $ tail -n +2 ec/annotations/xdata-registers.csv | awk -F, '{s+=$6} END{print s}'
 15696
 $ tail -n +2 ec/annotations/xdata-registers.csv | awk -F, '{r+=$7;w+=$8;rw+=$9;p+=$10;a+=$11} END{print "read",r,"write",w,"read+write",rw,"passed-to-call",p,"address-taken",a}'
-read 8826 write 3587 read+write 2482 passed-to-call 534 address-taken 267
+read 8827 write 3587 read+write 2482 passed-to-call 534 address-taken 266
 $ tail -n +2 ec/annotations/xdata-registers.csv | awk -F, '{n+=gsub(/=/,"&",$21)} END{print n}'
 1375
 $ tail -n +2 ec/annotations/xdata-registers.csv | wc -l

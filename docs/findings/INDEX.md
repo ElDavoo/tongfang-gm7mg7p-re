@@ -191,6 +191,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-census-self-test-gate.md`](xdata-census-self-test-gate.md) — `xdata_register_map.py --self-test` was switched off for a reason that had
 - [`xdata-census-totals.md`](xdata-census-totals.md) — The census totals: 1,171 addresses / 14,819 references, and how to re-derive them (issue #557)
 - [`xdata-check-message-pin-sweep.md`](xdata-check-message-pin-sweep.md) — Six `check()` calls read a pin their message never names, and the sweep that found them (issue #1363)
+- [`xdata-classify-operator-tests.md`](xdata-classify-operator-tests.md) — `classify()`'s two operator tests: `&&` is not address-of, and `&=` reads what it writes
 - [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md) — The guard-off census, built by the flag instead of by patching a copy of the tool (issue #753)
 - [`xdata-cluster-refs-projection.md`](xdata-cluster-refs-projection.md) — A cluster's `refs` is the sum of its members' `refs_<program>`, and not of their `refs` (issue #343)
 - [`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md) — `deciles()` had a floor in its docstring and none in its code, and the report was already printing the stretch (issue #889)

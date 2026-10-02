@@ -894,11 +894,11 @@ Each occurrence lands in exactly one, decided from the C around it:
 
 | bucket | what it is | total |
 |---|---|---:|
-| `read` | the value is used, which includes every `==` comparison | 8,826 |
+| `read` | the value is used, which includes every `==` comparison | 8,827 |
 | `write` | an `=` target, including Ghidra's `DAT_EXTMEM_1300 = DAT_EXTMEM_1300 & 0x0f` spelling | 3,587 |
-| `read+write` | an `=` target whose right-hand side names the same address | 2,482 |
+| `read+write` | an `=` target whose right-hand side names the same address, or a compound assignment | 2,482 |
 | `passed-to-call` | an argument of a call to a routine `index.csv` records | 534 |
-| `address-taken` | `&DAT_EXTMEM_xxxx` | 267 |
+| `address-taken` | `&DAT_EXTMEM_xxxx`, but not the `&&` of a comparison | 266 |
 | | | **15,696** |
 
 **`read` and `write` are the two buckets §4.7's pass moves, and the three that
@@ -907,9 +907,10 @@ resolved pair site is a store or a load in the *callee*, six bytes away in
 another routine, so the caller's own expression carries no `=` and no `==` for
 this classifier to read. The direction is the callee's committed `.asm`, which
 is why the two directional buckets take the +482 and +392 and the other three
-stand at 2,482 / 534 / 267 — the same three they read before. The arithmetic
-cross-check is the total: 8,826 + 3,587 + 2,482 + 534 + 267 is 15,696, which is
-§3's all-of-it row.
+stand at 2,482 / 534 / 266 — the same three they read before, once issue #424's
+`&&` correction moves the one reference that was filed `address-taken` by the
+second `&` of a boolean `&&`. The arithmetic cross-check is the total: 8,827 +
+3,587 + 2,482 + 534 + 266 is 15,696, which is §3's all-of-it row.
 
 **Drift record, 2026-09-25 (issue #256).** Every total in this table was
 stale, and the table is re-derived here rather than left to disagree with the
@@ -970,11 +971,11 @@ each routine once, from the export that owns it
 
 | bucket | as committed | with `--export-ownership` |
 |---|---:|---:|
-| `read` | 8,826 | 5,361 |
+| `read` | 8,827 | 5,362 |
 | `write` | 3,587 | 3,043 |
 | `read+write` | 2,482 | 1,018 |
 | `passed-to-call` | 534 | 500 |
-| `address-taken` | 267 | 256 |
+| `address-taken` | 266 | 255 |
 | | **15,696** | **10,178** |
 
 Every bucket moves and none of them moves by a factor of 42 on its own — the
@@ -1214,6 +1215,20 @@ row that shows how far off it could get: it read as 0 read / 13 `write` / 3
 > `bank0/A747.c:25`. Only the line number moved; the site, the `&&`, the bucket
 > it is misfiled under and the 838/837 arithmetic above all still hold. §6's
 > bullet and §8's follow-up carry the current `:25`.
+>
+> **CORRECTION (2026-10-02, issue #424) to the 838/837 arithmetic above, which
+> is kept as it was written.** It was a true measurement of the `==` fix alone
+> and it still is: that fix moved 837 occurrences, and the 838th is the one it
+> did not. Issue #424 corrects that site's *bucket* for the first time, because
+> `classify()` now excludes a second `&` before it files an `address-taken`, so
+> the two figures become one measurement of the tree instead of two needing a
+> mechanism to explain them. What moved: `BUCKET_TOTALS` carries `address-taken`
+> 267→266 and `read` 8,826→8,827, and `OWNERSHIP["buckets"]` 256→255 and
+> 5,361→5,362. Nothing else moves — `refs` 15,696, `write`, `read+write`,
+> `passed-to-call`, `DIRECTION_INVARIANT` in every key, and `0x076A`'s own
+> `write`, which is a real store (`DAT_EXTMEM_076a = DAT_EXTMEM_076d;`, below
+> the `&&` test in the same routine). Only the `&&` occurrence was misbucketed,
+> and the address is not leaving the corpus.
 
 `0x0443` is the control, and it does not move: four genuine
 read-modify-writes at `bank1/F11C.c:21`, `F11F.c:23`, `F2CA.c:23` and
@@ -2579,25 +2594,33 @@ is a human's, and the issue says so too.
   anywhere in a function's body counts as its callee, so a callee of a callee
   is credited to the outer function. It is a name-frequency column for picking
   a place to start reading, not a call graph.
-- **`address-taken` is a one-character test, and `&&` satisfies it.**
-  `classify()` asks only whether the text before the token ends in `&`, and
-  tests that *before* it reaches the store rule, so the second `&` of a boolean
-  `&&` files a plain comparison under `address-taken` instead of `read`. There
-  is exactly one such site in the committed tree — `bank0/A747.c:25`
-  (`:24` on the tree §4.3's correction was written against; see the correction
-  block above), `DAT_EXTMEM_076a` — so §4.1's 267 is 266 genuine
-  `&DAT_EXTMEM_xxxx` and one comparison. (This bullet said 271 / 270 when §4.1's
-  table was written against the older census; both are re-derived on the
-  committed tree, where the one misfiled site is still `bank0/A747.c` and the
-  arithmetic is 266 / 1.) No total
-  is restated here, because none was recomputed for it and the census the CSVs
-  publish is the tool's own buckets either way; the fix is
-  `left.endswith("&") and not left.endswith("&&")`, which would move one
-  reference from `address-taken` to `read` and change no other bucket. The
-  ordering is pre-existing — `git show main:ec/tools/xdata_register_map.py`
-  has the same three-branch `classify()` — so §4.3 neither caused nor fixed
-  it, and it is not a regression from this work. Found by review of #206; §8
-  carries it as follow-up work.
+- **`address-taken` was a one-character test, and `&&` satisfied it — corrected
+  2026-10-02, issue #424.** `classify()` asked only whether the text before the
+  token ended in `&`, and tested that *before* it reached the store rule, so the
+  second `&` of a boolean `&&` filed a plain comparison under `address-taken`
+  instead of `read`. There was exactly one such site in the committed tree —
+  `bank0/A747.c:25` (`:24` on the tree §4.3's correction was written against;
+  see the correction block above), `DAT_EXTMEM_076a` — so §4.1's 267 was 266
+  genuine `&DAT_EXTMEM_xxxx` and one comparison. (This bullet said 271 / 270 when
+  §4.1's table was written against the older census; all three figures are
+  re-derived on the committed tree, where the one misfiled site is still
+  `bank0/A747.c`.) The test now excludes a second `&`
+  (`left.endswith("&") and not left.endswith("&&")`), that one reference has
+  moved from `address-taken` to `read`, and §4.1 reads 266 / 8,827. No other
+  bucket moved and the total did not move. The ordering was pre-existing — `git
+  show main:ec/tools/xdata_register_map.py` had the same three-branch
+  `classify()` — so §4.3 neither caused nor fixed it, and it was not a
+  regression from that work. Found by review of #206; it belonged in an issue
+  of its own, and #424 is it.
+  **The residual is not fixed, and is the same shape of mistake one level
+  deeper:** a *binary* `&` immediately before an address
+  (`DAT_INTMEM_65 = bVar5 & DAT_EXTMEM_0026;`) still files an ordinary read
+  under `address-taken`. Measured over the committed tree there are four such
+  occurrences, all of `DAT_EXTMEM_0026`, one each in `common/223F.c`,
+  `common/2275.c`, `common/2290.c` and `common/22EF.c` — four separate `common`
+  exports, each its own owner and none a `shared` copy, so all four are counted
+  in both the default census and the `--export-ownership` one. None is an
+  address-of and all four are reads.
 
 ## 7. Reconciling against the other method: one non-gap, and twelve rows the tree says zero on
 
@@ -3073,17 +3096,18 @@ re-measurement, so it is left for its own issue rather than folded in here.
   that is wrong is a bug in `assign_after()` and is fixed there — an exemption
   list inside the invariant is the five-address problem at larger scale, and an
   unrecorded one is worse than not checking.
-- **`classify()`'s `&` test should learn to tell `&&` from address-of.** It
-  files a boolean `&&` under `address-taken`, which is the one occurrence at
-  `bank0/A747.c:25` that §4.3's 838 could not correct (§6's bullet, and the
-  correction block above). The fix is one clause — `left.endswith("&") and not
-  left.endswith("&&")` — and it moves one reference from `address-taken` to
-  `read` (267/8,341 → 266/8,342, the committed cells; §4.1's table carried
-  271/8,319 when this was written) and touches no other bucket, so it is a
-  re-run and a diff of two numbers rather than a re-derivation. It belongs in
-  its own issue: the ordering is pre-existing on `main`, it is not a regression
-  from #206, and folding it in here would put an unrelated classifier change
-  inside a correction about `==`.
+- **`classify()`'s `&` test now tells `&&` from address-of (2026-10-02, issue
+  #424).** It used to file a boolean `&&` under `address-taken`, which was the
+  one occurrence at `bank0/A747.c:25` that §4.3's 838 could not correct (§6's
+  bullet, and the correction block above). The fix was the one clause this
+  bullet named — `left.endswith("&") and not left.endswith("&&")` — and it
+  moved that one reference from `address-taken` to `read`: 267/8,826 →
+  266/8,827, the committed cells, with no other bucket moving and the total
+  unmoved. The figures it was written with (267/8,341 → 266/8,342, and §4.1's
+  271/8,319) are its own past re-derivation and are kept for the record. It
+  belonged in an issue of its own — the ordering was pre-existing on `main`, it
+  is not a regression from #206, and folding it into the `==` correction would
+  have put an unrelated classifier change inside it — and #424 is that issue.
 
 > **Corrected 2026-09-26, issue #873.** Four `xdata_register_map.py` line
 > numbers in this file no longer name the code they were written for, and all

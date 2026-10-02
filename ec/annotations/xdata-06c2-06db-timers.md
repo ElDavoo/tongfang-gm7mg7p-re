@@ -768,8 +768,8 @@ against two dereference stores. It landed in issue #178, and
 produces.** Regenerating with no arguments reproduces every `read`, `write`,
 `refs` and `addrs` cell of both CSVs: 0 differences across 1,326 register rows
 and 439 cluster rows. The tree's own `BUCKET_TOTALS` oracle
-(`xdata_register_map.py:668`) reads `read 8826 write 3587 read+write 2482
-passed-to-call 534 address-taken 267`, which are the post-guard figures.
+(`xdata_register_map.py:668`) reads `read 8827 write 3587 read+write 2482
+passed-to-call 534 address-taken 266`, which are the post-guard figures.
 
 **The effect**, from running the committed tool twice — once as it stands, and
 once with `--no-eq-guard`, which re-runs the census with the `==` rejection
@@ -778,12 +778,12 @@ not a number remembered from 2026-09-23:
 
 | | guard removed (`--no-eq-guard`) | as committed today |
 |---|---:|---:|
-| main-EC `write` references (1,169 addresses, 13,891 refs) | 3,948 | 3,206 |
-| main-EC `read` references | 7,189 | 7,935 |
+| main-EC `write` references (1,169 addresses, 13,891 refs) | 3,949 | 3,206 |
+| main-EC `read` references | 7,189 | 7,936 |
 | PD-image `write` references (108 addresses, 603 refs) | 193 | 142 |
 | references in `write` for the 49 addresses in both images | 279 | 239 |
-| **references entering `write`, all three programs** † | — | **833** |
-| **addresses whose `write` column changes** | — | **210 of 1,326** |
+| **references entering `write`, all three programs** † | — | **834** |
+| **addresses whose `write` column changes** | — | **211 of 1,326** |
 | `0x08A8` read / write | 84 / 44 | **126 / 2** |
 | `0x0843` read / write | 84 / 42 | **126 / 0** |
 | main-EC clusters at threshold 0.50 | 394 | 389 |
@@ -884,8 +884,8 @@ kind of question: what the committed CSVs are not.
 |---|---:|---:|
 | total `refs` | 15,696 | 10,178 |
 | main-EC `refs` | 14,838 | 9,320 |
-| `read` / `write` / `read+write` | 8,826 / 3,587 / 2,482 | 5,361 / 3,043 / 1,018 |
-| `passed-to-call` / `address-taken` | 534 / 267 | 500 / 256 |
+| `read` / `write` / `read+write` | 8,827 / 3,587 / 2,482 | 5,362 / 3,043 / 1,018 |
+| `passed-to-call` / `address-taken` | 534 / 266 | 500 / 255 |
 | §2a's 43 addresses, register rows summed | 4,988 | **460** |
 | **`main-ec-003` (this block)** | **43 addresses, 4,966 refs, `k733222e83898`** | **28 of the 43 survive into `k22aecb4dc595` (43 addresses, 280 refs); 15 leave it** |
 | `0x0843` / `0x0844` refs | 168 / 168 | 4 / 4 |
@@ -931,7 +931,7 @@ the two `references` figures in the last two lines; the 296 addresses whose
 after-census in-process because the flag is refused with `--self-test` — so
 that one is the oracle's own pin rather than a cell in either file, and it is
 the reason a reader re-deriving the table from the two CSVs gets 296 and not a
-number they can add up. §6a's heredoc below prints its own 833 / 210 / 0,
+number they can add up. §6a's heredoc below prints its own 834 / 211 / 0,
 which are `--no-eq-guard` figures rather than this flag's.
 
 *(Correction, 2026-09-25, issue #279. This block was transcribed half-renumbered
@@ -984,8 +984,8 @@ print("addresses whose 'write' changes:",
 print("addresses whose 'refs' changes:",
       sum(1 for k in u if u[k]['refs'] != f[k]['refs']), "of", len(u))
 EOF
-references leaving 'write': 833
-addresses whose 'write' changes: 210 of 1326
+references leaving 'write': 834
+addresses whose 'write' changes: 211 of 1326
 addresses whose 'refs' changes: 0 of 1326
 ```
 

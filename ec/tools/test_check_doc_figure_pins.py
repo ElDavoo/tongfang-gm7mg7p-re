@@ -131,7 +131,7 @@ class ClassifiesTheRealTree(unittest.TestCase):
         # heredoc, on either side of the guard-off split. Held the same way
         # since #850, for the same reason: the expectation is a literal at each
         # assertion.
-        for value in (3948, 3206, 7189, 7935, 193, 142, 279, 239):
+        for value in (3949, 3206, 7189, 7936, 193, 142, 279, 239):
             self.assertVerdict(value, cdfp.BY_LITERAL)
 
     def test_the_cluster_refs_cell_is_held_through_the_line_the_row_cites(self):
@@ -195,7 +195,7 @@ class TheCommittedChecklist(unittest.TestCase):
         self.assertEqual(len(held), 18)
         self.assertEqual(sorted(r[0] for r in held),
                          [43, 50, 142, 157, 193, 239, 279, 390, 440, 858, 1218,
-                          1326, 3206, 3948, 4966, 7189, 7935, 9320])
+                          1326, 3206, 3949, 4966, 7189, 7936, 9320])
         self.assertEqual(sorted(r[0] for r in results if r not in held), [])
 
     def test_the_page_runs_green_end_to_end(self):
