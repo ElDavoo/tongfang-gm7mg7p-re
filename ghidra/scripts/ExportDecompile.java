@@ -330,13 +330,21 @@ public class ExportDecompile extends GhidraScript {
      * a person, or by ec/annotations/ghidra-functions.csv on their behalf. One
      * definition, used by both the index and the export header -- they used to
      * disagree, and a `thunk_FUN_...` came out marked [named].
+     *
+     * The last three are the switch-analysis namespace: Ghidra names a `switch`
+     * it framed, and the entries below it are its own too, so `switchD_` alone
+     * listed the container and not what was inside it -- fourteen exported
+     * functions came out `[named]` holding a `caseD_<n>` or a `default` that no
+     * annotation row wrote. `TongFang.java` is the canonical copy and is where
+     * the reasoning behind the two new tests is written down.
      */
     private static boolean isPlaceholderName(String name) {
         return name.startsWith("FUN_") || name.startsWith("LAB_")
             || name.startsWith("SUB_") || name.startsWith("thunk_")
             || name.startsWith("dt_") || name.startsWith("entry")
             || name.startsWith("LABEL") || name.startsWith("UNDEF_")
-            || name.startsWith("FUNCODE") || name.startsWith("switchD_");
+            || name.startsWith("FUNCODE") || name.startsWith("switchD_")
+            || name.startsWith("caseD_") || name.equals("default");
     }
 
     /** "bank0.bin" -> "bank0": the file name is an artefact of the import, not an identity. */

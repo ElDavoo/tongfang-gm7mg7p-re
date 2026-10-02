@@ -2,51 +2,59 @@
 """Census the exported functions that carry a name no `ghidra-functions.csv`
 row wrote, and say where each of those names came from.
 
-`build_ec_decompile.py --check` already counts the population: 21 index rows are
-marked `annotated=yes` with no annotation row behind them, which is
-`docs/findings.md` §18's figure. What it could not do was say *why* each one
-holds a name, so the six readable ones sat in prose with nothing to check the
-count against. This tool answers that per address, from committed files only,
-and fails on the ones it cannot answer.
+`build_ec_decompile.py --check` already counts the population: 7 index rows are
+marked `annotated=yes` with no annotation row behind them. What it could not do
+was say *why* each one holds a name, so the six readable ones sat in prose with
+nothing to check the count against. This tool answers that per address, from
+committed files only, and fails on the ones it cannot answer.
 
 **Three answers, and the split between them is measured rather than asserted.**
 
   target-of-a-transfer   the committed bytes at the address are exactly one
                          unconditional `ljmp`/`ajmp`/`lcall`/`acall`, and the
                          target is an exported function a CSV row backs under
-                         *this same name*. 7 of the 21, and all 7 are jumps. A
-                         body that is nothing but a transfer of control
-                         decompiles to what the transfer reaches, so the name at
-                         the stub is the target's name and the target's row is
-                         committed text.
+                         *this same name*. All 7 of the committed population,
+                         and all 7 are jumps. A body that is nothing but a
+                         transfer of control decompiles to what the transfer
+                         reaches, so the name at the stub is the target's name
+                         and the target's row is committed text.
   ghidra-switch-entry    the committed `.c` declares the function inside a
                          `switchD_*` namespace -- Ghidra's own switch-analysis
                          namespace, and the same `switchD_` prefix
-                         `ExportDecompile.java:339` keys `isPlaceholderName()`
-                         on. 14 of the 21, and this is the bucket the name
-                         belongs to whatever the bytes are.
+                         `ExportDecompile.java` keys `isPlaceholderName()`
+                         on. **No instance in the committed tree since issue
+                         #631**, which added the `caseD_` and `default` leaves
+                         to the predicate and so took the fourteen rows that
+                         used to land here out of this population altogether.
+                         The bucket stays because it is still the right answer
+                         to a question this tool asks -- it is what classifies a
+                         switch entry whose bytes reach somewhere real under a
+                         name that is not its own -- and because the fixtures
+                         below are now the only place it is exercised.
   unexplained            anything else. `--check` **fails** here, and
                          "unexplained" is a refusal: it says this method found
                          no mechanism, never that the name is automatic,
                          project-only, or absent.
 
 **Why the two are separated by the target's name and not by the shape of the
-instruction.** Measured over the 21: 19 of them begin with a single `ljmp` or
-`lcall`, and 12 of those reach somewhere real -- `bank1 0x8A80`'s
-`ljmp 0x8AA7` is `clear_06f9_bits_0_3_then_call_abee` -- while the name at the
-site is still Ghidra's, not the target's. So "it is a jump" carries almost no
-information here, and a classifier built on it would call 19 of 21 explained
-while explaining none of the 12. The discriminator is the name *and* the row
-behind it, and the two are tried in that order: name equality with a row-backed
-target first, the switch namespace second, `unexplained` only after both have
-failed.
+instruction.** Measured over the 21 rows this tool had before issue #631: 19
+began with a single `ljmp` or `lcall`, and 12 of those reached somewhere real
+-- `bank1 0x8A80`'s `ljmp 0x8AA7` is
+`clear_06f9_bits_0_3_then_call_abee` -- while the name at the site was still
+Ghidra's, not the target's. So "it is a jump" carries almost no information
+here, and a classifier built on it would have called 19 of 21 explained while
+explaining none of the 12. The discriminator is the name *and* the row behind
+it, and the two are tried in that order: name equality with a row-backed target
+first, the switch namespace second, `unexplained` only after both have failed.
 
-**The population is not a constant, and the figures above move.** Five `pd`
-addresses read here once -- `0x0000`, `0x3497`, `0x998B`, `0x9C1B` and `0x9C4D`
--- left it in issue #489, which gave each a row of its own; a row is what puts
-an address in this population, so adding one takes it out. `--check` and
-`--self-test` are what say so, and `docs/findings/named-without-a-row.md` has
-the reading.
+**The population is not a constant, and it moves two ways.** Five `pd` addresses
+read here once -- `0x0000`, `0x3497`, `0x998B`, `0x9C1B` and `0x9C4D` -- left
+it in issue #489, which gave each a row of its own; a row is what puts an
+address in this population, so adding one takes it out. The other way is a name
+the index stops reporting `annotated=yes`, which is what issue #631 did to the
+fourteen switch entries. Neither route is a discovery about a function, and
+neither changed a byte. `--check` and `--self-test` are what say so, and
+`docs/findings/named-without-a-row.md` has the reading.
 
 **Where the bytes come from.** Runtime addresses are mapped to file offsets with
 `trace_xdata_refs.offset_for_runtime()`, off that file's own `REGIONS` table,
@@ -657,10 +665,16 @@ def report(verdicts, found):
     say("")
     say("  %d of the %d begin with a single unconditional transfer; %d reach a "
         "CSV row's function under this row's own name (%d jumps, %d calls) and "
-        "%d reach somewhere real under a name that is not this row's. That "
-        "second figure is why the test is the name and not the instruction."
+        "%d reach somewhere real under a name that is not this row's."
         % (len(transfers), len(verdicts), len(matched), len(jumps), len(calls),
            len(transfers) - len(matched)))
+    # Printed only when there is such a row: the sentence is an argument from
+    # the count, and at zero it would be arguing from nothing. The measurement
+    # it argues from is over the population before issue #631 and is in the
+    # module docstring, where it cannot stop being true by printing nothing.
+    if len(transfers) - len(matched):
+        say("  That second figure is why the test is the name and not the "
+            "instruction.")
     say("")
     say("  program addr    bytes       instruction     target   the target's row"
         "                    framing      boundary")
@@ -810,8 +824,8 @@ def _fixture_tree(scratch, fw):
 def self_test() -> int:
     """Today's measured answers, and the refusals that make them worth anything.
 
-    The known answers are the population, the three verdicts it falls into, the
-    bytes and target of each of the six readable transfers, the five `pd`
+    The known answers are the population, the verdict every row in it takes,
+    the bytes and target of each of the six readable transfers, the five `pd`
     addresses that left the population, and the framing read on those six. The
     refusals are the half that matters: a classifier
     that had quietly degraded into "a row with a name is a target-of-a-transfer"
@@ -838,11 +852,12 @@ def self_test() -> int:
     by_key = {(v["program"], v["addr"]): v for v in verdicts}
     counts = collections.Counter(v["bucket"] for v in verdicts)
 
-    check("the population is the 21 index rows the exporter prints", len(named) == 21,
+    check("the population is the 7 index rows the exporter prints", len(named) == 7,
           "got %d" % len(named))
-    check("7 target a transfer, 14 are switch entries, 0 unexplained",
+    check("all 7 target a transfer, none is a switch entry and none is "
+          "unexplained",
           (counts["target-of-a-transfer"], counts["ghidra-switch-entry"],
-           counts["unexplained"]) == (7, 14, 0),
+           counts["unexplained"]) == (7, 0, 0),
           "got %d, %d, %d" % (counts["target-of-a-transfer"],
                               counts["ghidra-switch-entry"], counts["unexplained"]))
     jumps = [v for v in verdicts if v["bucket"] == "target-of-a-transfer"
@@ -852,14 +867,20 @@ def self_test() -> int:
     check("all 7 of the matched transfers are jumps and none is a call",
           (len(jumps), len(calls)) == (7, 0),
           "got %d and %d" % (len(jumps), len(calls)))
-    check("19 of the 21 are a single transfer, and 12 of those carry a name "
-          "that is not the target's",
-          sum(1 for v in verdicts if v["transfer"]) == 19
-          and sum(1 for v in verdicts if v["transfer"]
-                  and v["bucket"] != "target-of-a-transfer") == 12,
-          "got %d and %d" % (sum(1 for v in verdicts if v["transfer"]),
-                             sum(1 for v in verdicts if v["transfer"]
-                                 and v["bucket"] != "target-of-a-transfer")))
+    # The 14 switch entries this had before issue #631 are not re-pinned as an
+    # expected count of zero, which would go stale silently. What is pinned is
+    # the relation that made them leave: every remaining row is a single
+    # transfer that reaches a CSV row's function under its own name, so the
+    # population is one mechanism and not a mixture. The bucket they were filed
+    # under stays -- it is still the right answer, and the fixture refusal
+    # below is where it now has an instance.
+    check("every row is a single transfer reaching a CSV row's function under "
+          "its own name",
+          all(v["transfer"] and v["bucket"] == "target-of-a-transfer"
+              for v in verdicts),
+          "got " + repr([(v["program"], v["addr"], v["bucket"]) for v in verdicts
+                         if not v["transfer"]
+                         or v["bucket"] != "target-of-a-transfer"]))
     check("no row is unexplained and --check reports no problem", not found,
           "; ".join(found[:3]))
 
@@ -1003,10 +1024,11 @@ def self_test() -> int:
     if bad:
         print("self-test FAILED: %d check(s) disagree with the readings above" % bad)
         return 1
-    print("self-test passed: 21 rows in 7/14/0, the six readable transfers "
-          "with their bytes, targets and decompilations, the five `pd` "
-          "addresses that left the population, the framing reads and the "
-          "boundary partition, and the refusals")
+    print("self-test passed: 7 rows, every one a transfer reaching a CSV row's "
+          "function under its own name, the six readable ones with their bytes, "
+          "targets and decompilations, the five `pd` addresses that left the "
+          "population, the framing reads and the boundary partition, and the "
+          "refusals")
     return 0
 
 

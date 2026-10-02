@@ -12,6 +12,37 @@ things it found on the way that are not this issue.
 `ec/annotations/subsystems.md` §2 carries the same correction against its own
 census, with its own two stale paragraphs corrected beside it.
 
+> **Correction, 2026-10-02 (#631): the 1,897 above is the figure at this merge,
+> and it has moved twice since, for two unrelated reasons. Neither is a
+> retraction of anything this file argues.** Collapsing the three states is the
+> error to avoid here, so each is named separately:
+>
+> - **1,897**, at #602's merge, 2026-09-25 — the figure this file's "what
+>   moved" section measures. Correct when written.
+> - **1,982** on the tree this correction was written against, 2026-10-02, for
+>   reasons that have nothing to do with the rule this file installs: annotation
+>   tranches (#489, #1101, #1183, #1296 and others) added rows, and each row at
+>   an address the index marks `annotated=yes` raises the count.
+> - **1,968**, after #631, which widened `isPlaceholderName()` to the switch-case
+>   leaves and took fourteen bank1 rows *out* of the count — not because anything
+>   was answered, but because those fourteen were Ghidra's `caseD_<n>` and
+>   `default` names and `manifest.csv`'s `functions_named` counts person-chosen
+>   names whether or not they are. That change is
+>   [`cased-in-reserved-namespace.md`](cased-in-reserved-namespace.md).
+>
+> So the `[named]`-header agreement at 1,897 / 1,897 held for #602's re-export and
+> holds now at 1,968 / 1,968; the two numbers are the same relation at two
+> different dates, not one number restated. `build_ec_decompile.py --check`
+> recounts all three terms on every run, and `ec/annotations/subsystems.md` §2
+> carries the live figures.
+>
+> One more count in this file moved on the same day for the same reason, and it
+> is left as written: "the ten tests in the canonical `isPlaceholderName()`",
+> below, was ten at #602's merge and is twelve now — nine prefixes and one exact
+> match then, ten prefixes and two exact matches after #631. The scan itself
+> still reports zero on the EC, which is what the paragraph below is about, and
+> `grade_name_basis.py --self-test` is where the count is asserted.
+
 ---
 
 ## The fault, stated precisely

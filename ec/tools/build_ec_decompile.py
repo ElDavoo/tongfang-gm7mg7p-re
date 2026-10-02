@@ -1275,16 +1275,16 @@ def annotation_ledger(index_rows, ann_rows):
     column was the index's `annotated=yes` count under a name that promised a
     count of CSV rows, and the gap that mismatch opened was read as stale
     annotations. It is not stale rows: every CSV row resolves, and the gap is
-    names from somewhere else -- Ghidra's own `caseD_*` labels on switch
-    dispatchers, and symbols that were already in the committed project
-    database. A one-way count sees those and calls them drift. Counting only the
-    other direction misses its own case: the `annotated` column answers "did
-    Ghidra name this, or did a person", so a row can apply and still be reported
-    unannotated, and the case is a row that took its name out of Ghidra's own
-    reserved namespace. That is what the seven `thunk_`-prefixed rows were until
-    #602 renamed them; nothing about the direction is route-specific, so the
-    list stays a check rather than becoming a name filter. Both halves have to
-    be counted for either to read correctly.
+    names from somewhere else -- a name the export derived by propagating a
+    callee's name across a transfer, and symbols that were already in the
+    committed project database. A one-way count sees those and calls them drift.
+    Counting only the other direction misses its own case: the `annotated` column
+    reads the *name*, so a row can apply and still be reported unannotated, and
+    the case is a row that took its name out of Ghidra's own reserved namespace.
+    That is what the seven `thunk_`-prefixed rows were until #602 renamed them;
+    nothing about the direction is route-specific, so the list stays a check
+    rather than becoming a name filter. Both halves have to be counted for either
+    to read correctly.
 
     The third list is the matched middle, and its length is what lets the two
     directions be added up rather than merely reported: it says how many index
@@ -2319,26 +2319,53 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # 1,982, and no bank's own figure: a `common`-scoped row at an address both
     # banks carry is de-duplicated into `common` and lands there and nowhere
     # else.
-    _want_named = {"bank0": 697, "bank1": 608, "common": 136, "pd": 541}
+    #
+    # And then bank1 from 608 to 594, with the sum to 1,968, for a reason that is
+    # not an annotation tranche and not a step in that history. Fourteen of
+    # bank1's 608 were `annotated=yes` while holding a name Ghidra gave them --
+    # thirteen `caseD_<n>` and one `default`, the leaves of the `switchD_*`
+    # namespace `switchD_` alone listed -- so `functions_named` was counting
+    # fourteen names no `ghidra-functions.csv` row wrote among the ones a row
+    # did write. They left the count because `isPlaceholderName()` learned the two
+    # leaf names, and nothing was answered: no row was added, no row was
+    # renamed, no byte and no symbol moved. That is the distinction from every
+    # step above it, which is why this one is recorded as its own paragraph
+    # rather than as another term in the sum -- a figure that falls because a
+    # predicate widened and a figure that rises because a question got answered
+    # read the same way in a manifest and are not the same fact. The write-up is
+    # docs/findings/cased-in-reserved-namespace.md; the population is derived by
+    # ec/tools/second_copy_census.py --check.
+    _want_named = {"bank0": 697, "bank1": 594, "common": 136, "pd": 541}
     check("EC: functions_named is the index's own annotated=yes count per "
-          "program, 697 / 608 / 136 / 541, summing to 1,982",
+          "program, 697 / 594 / 136 / 541, summing to 1,968",
           {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
-          and sum(_want_named.values()) == 1982
+          and sum(_want_named.values()) == 1968
           and not annotation_ledger_mismatches(_mr, _ir, _ann),
           str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
     # The two-way ledger on the committed files, which is the whole substance of
-    # the §18 correction. 26 and 0, and they close the arithmetic exactly:
-    # 1,951 rows - 0 applied-but-unflagged + 21 named-without-a-row = 1,972.
-    # The 21 is 11 `auto` (Ghidra's own caseD_* / default labels on switch
-    # dispatchers, which isPlaceholderName() does not list among its placeholder
-    # prefixes) and 10 `call-target`. It was 26 = 15 + 10 + 1, and issue
-    # #489's 37 `pd` rows took five off it: the `vector` one is `pd 0x0000`,
-    # where the only annotation row at that address had been `common`-scoped
-    # while the PD image carries its own separate function there, and the other
-    # four are the single-`lcall` thunks the export had already named by
-    # propagating their callee's name across the call. Both halves were
+    # the §18 correction. 0 and 0, and they close the arithmetic exactly:
+    # 1,961 rows - 0 applied-but-unflagged + 7 named-without-a-row = 1,968.
+    # The 7 are all `call-target`, and all seven are the second copies
+    # second_copy_census.py files as `target-of-a-transfer`. It was 26 = 15 + 10
+    # + 1, and issue #489's 37 `pd` rows took five off it: the `vector` one is
+    # `pd 0x0000`, where the only annotation row at that address had been
+    # `common`-scoped while the PD image carries its own separate function there,
+    # and the other four are the single-`lcall` thunks the export had already
+    # named by propagating their callee's name across the call. Both halves were
     # named-without-a-row, which is this ledger's whole subject, so annotating
     # them is what moved the figure rather than anything about the export.
+    #
+    # Fourteen more left with issue #631, and they left by a different route from
+    # every step above: 11 `auto` and 3 `call-target`, all of them Ghidra's own
+    # `caseD_*` / `default` labels on switch dispatchers. Nothing was annotated
+    # and nothing was renamed -- `isPlaceholderName()` learned the two leaf names
+    # those labels use, so the index stopped reporting them `annotated=yes`, and
+    # a row is in this population precisely when the index reports it `yes` with
+    # nothing behind it. The count therefore falls while the export is otherwise
+    # unchanged, which is the opposite of #561's and #489's rounds (below) and is
+    # why this paragraph is not a fourth term in the sum. It was the 14 that
+    # `second_copy_census.py` filed as `ghidra-switch-entry`; that bucket stays,
+    # and has no instance in the committed tree now.
     #
     # The `call-target` count rose from 9 with issue #603, by exactly one: naming
     # common 0x0A74 made the exporter rename the bare `ljmp 0x0A74` thunk at
@@ -2372,9 +2399,9 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     _seed = {}
     for _r in _nwr:
         _seed[_r.get("seed_basis", "?")] = _seed.get(_r.get("seed_basis", "?"), 0) + 1
-    check("EC: the ledger's 21 named-without-a-CSV-row split 11 auto / 10 "
-          "call-target",
-          len(_nwr) == 21 and _seed == {"auto": 11, "call-target": 10},
+    check("EC: the ledger's 7 named-without-a-CSV-row are all call-target, the "
+          "second copies second_copy_census.py derives",
+          len(_nwr) == 7 and _seed == {"call-target": 7},
           "%d row(s), %s" % (len(_nwr), _seed))
     # The fact, not a cause. Both faults that have ever produced a non-empty
     # _abu are checked or named elsewhere -- the reserved namespace by
@@ -2389,8 +2416,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "predates the row",
           _abu == [],
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
-    check("EC: the two ledger directions close the arithmetic -- 1,960 - 0 + 21 "
-          "= the 1,981 functions named",
+    check("EC: the two ledger directions close the arithmetic -- 1,961 - 0 + 7 "
+          "= the 1,968 functions named",
           len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
           "%d - %d + %d = %d, not %d"
           % (len(_ann), len(_abu), len(_nwr),

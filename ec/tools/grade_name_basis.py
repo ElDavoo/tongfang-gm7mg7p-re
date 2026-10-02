@@ -517,10 +517,11 @@ def row_problems(row, registers):
 # fault: nothing about the row is wrong except its alphabet.
 #
 # "Whichever exporter" is not claimed here, and deliberately so. There are two
-# copies of the predicate and they have already drifted on `entry`; the nine
-# prefixes below and `thunk_` are matched identically by both, and the exact
-# match is the canonical copy's. That divergence is the next paragraph's subject
-# and this repository's open question, not something this list settles.
+# copies of the predicate and they have already drifted on `entry`; the ten
+# prefixes below and `default` are matched identically by both, and
+# `equals("entry")` is the canonical copy's alone. That divergence is the next
+# paragraph's subject and this repository's open question, not something this
+# list settles.
 #
 # Seven EC rows did -- `thunk_to_*` and `thunk_call_122f`, and `thunk_` is how
 # Ghidra renders an auto-thunk -- and the ledger reported all seven as
@@ -531,6 +532,27 @@ def row_problems(row, registers):
 # `annotated` and `[named]` across the whole export. See
 # docs/findings/thunk-prefix-collision.md.
 #
+# `caseD_` and `default` are the leaves of the namespace `switchD_` names, and
+# the fault here is the mirror image of `thunk_`'s: there the row took a name
+# Ghidra owned, here the *export* held one and no row had to be at fault.
+# Ghidra labels a `switch` it framed `switchD_<type>:<addr>` and labels the
+# entries below it `caseD_<n>` and `default`; listing the container without the
+# entries left fourteen EC index rows reported `annotated=yes` holding a name no
+# `ghidra-functions.csv` row wrote, which overstates person-chosen names by
+# fourteen everywhere the column is quoted -- `manifest.csv`'s
+# `functions_named`, the `[named]` markers, and no manifest has anywhere to
+# carry the caveat. Measured over committed files by
+# `ec/tools/second_copy_census.py --check`; the write-up is
+# docs/findings/cased-in-reserved-namespace.md.
+#
+# What the predicate sees is the *leaf*, which is why the entries are named as
+# themselves rather than as a path through the namespace:
+# `Function.getName()` returns `caseD_0` for the symbol a `.c` declares as
+# `switchD_CODE:8aa6::caseD_0`, and that is what both exporters read. Threading
+# the qualified name down would catch `default` as a member of its namespace
+# rather than as a word, and it is a signature change at three call sites for one
+# row; the leaf is what is available and it is what has to be named.
+#
 # Transcribed from ghidra/scripts/TongFang.java, which is the canonical copy and
 # the one every exporter and the index mean to call. The other copy,
 # ghidra/scripts/ExportDecompile.java, has already drifted from it -- it reads
@@ -539,13 +561,16 @@ def row_problems(row, registers):
 # is what holds the two together.
 GHIDRA_RESERVED_PREFIXES = (
     "FUN_", "LAB_", "SUB_", "thunk_", "dt_",
-    "LABEL", "UNDEF_", "FUNCODE", "switchD_",
+    "LABEL", "UNDEF_", "FUNCODE", "switchD_", "caseD_",
 )
-# `entry` is the one exact match and stays one, because the distinction is the
-# point: `entry_clamp_status` and `entry_dispatch` are people's names that
-# happen to begin with those letters, and the drifted copy above cannot tell
-# them from the module entry point.
-GHIDRA_RESERVED_EXACT = ("entry",)
+# Both entries are exact matches and both stay exact, because the distinction is
+# the point, and each has a committed row that would not survive a prefix test.
+# `entry_clamp_status` and `entry_dispatch` are people's names that happen to
+# begin with those letters, and the drifted copy above cannot tell them from the
+# module entry point. `bank0 0x549B` is `default_009d_bf_dispatch_4e2c` on a
+# `ghidra-functions.csv` row of its own, so `startsWith("default")` would have
+# made this rule report the row #602 renamed seven of its siblings over.
+GHIDRA_RESERVED_EXACT = ("entry", "default")
 
 
 def reserved_prefix_problems(rows):
@@ -785,11 +810,20 @@ def self_test():
           len(reserved_prefix_problems([row(name="thunk_to_f275"),
                                         row(name="forward_to_f275"),
                                         row(name="thunk_call_122f")])) == 2)
+    # The switch namespace, and the near miss that keeps `default` an exact
+    # match: `bank0 0x549B` is a committed row named `default_009d_bf_dispatch_4e2c`,
+    # so a prefix test would have reported it the way #602 reported its seven.
+    check("reserved namespace refuses a switch-case leaf",
+          bool(reserved_prefix_problems([row(name="caseD_0")])))
+    check("reserved namespace refuses the switch's `default` entry",
+          bool(reserved_prefix_problems([row(name="default")])))
+    check("reserved namespace accepts bank0 0x549B's committed name",
+          not reserved_prefix_problems([row(name="default_009d_bf_dispatch_4e2c")]))
     # Pinned because the census in build_ec_decompile.py --self-test compares
     # the count against TongFang.java's, and a silent change to either side
     # would make that comparison vacuous.
-    check("reserved namespace is 9 prefixes and 1 exact name",
-          len(GHIDRA_RESERVED_PREFIXES) == 9 and len(GHIDRA_RESERVED_EXACT) == 1,
+    check("reserved namespace is 10 prefixes and 2 exact names",
+          len(GHIDRA_RESERVED_PREFIXES) == 10 and len(GHIDRA_RESERVED_EXACT) == 2,
           "%d prefix(es), %d exact" % (len(GHIDRA_RESERVED_PREFIXES),
                                        len(GHIDRA_RESERVED_EXACT)))
 

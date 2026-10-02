@@ -131,13 +131,24 @@ public final class TongFang {
      * a person, or by <component>/annotations/ghidra-functions.csv on their
      * behalf. One definition, used by every exporter and by the index -- they
      * used to disagree, and a `thunk_FUN_...` came out marked [named].
+     *
+     * The last three are the switch-analysis namespace, and they belong here for
+     * the reason `switchD_` did: Ghidra names a `switch` it framed, and the
+     * entries below it are its own too. `switchD_` alone listed the container
+     * and not what is inside it, so fourteen exported functions came out marked
+     * `[named]` holding `caseD_<n>` or `default` -- names no annotation row
+     * wrote. `default` is an exact match and not a prefix for the reason `entry`
+     * is, and with a committed row to show it: bank0 0x549B is named
+     * `default_009d_bf_dispatch_4e2c` on a row of its own, so a prefix test
+     * would have reported it here as well.
      */
     public static boolean isPlaceholderName(String name) {
         return name.startsWith("FUN_") || name.startsWith("LAB_")
             || name.startsWith("SUB_") || name.startsWith("thunk_")
             || name.startsWith("dt_") || name.equals("entry")
             || name.startsWith("LABEL") || name.startsWith("UNDEF_")
-            || name.startsWith("FUNCODE") || name.startsWith("switchD_");
+            || name.startsWith("FUNCODE") || name.startsWith("switchD_")
+            || name.startsWith("caseD_") || name.equals("default");
     }
 
     /** "bank0.bin" -> "bank0": the file name is an artefact of the import. */

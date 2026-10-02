@@ -1083,21 +1083,35 @@ one next. The write-up is
   reads.
 
 **`name` must not be a name Ghidra could have chosen.** The index's `annotated`
-column is `isPlaceholderName(name) ? "no" : "yes"` — it answers "did Ghidra
-name this, or did a person", not "is this name good". A row that picks its name
-out of Ghidra's reserved namespace therefore applies and is then recorded as
-unannotated, which is a fault with no other signature: the row resolves, the
-name is honest, and the export says the annotation did not happen. Seven rows
-did it, with `thunk_` (Ghidra's prefix for an auto-thunk), and the ledger read
-them as applied-but-unflagged for as long as they stood there. Issue #602
-renamed them rather than narrowing the predicate, because the collision was in
-the row: `forward_to_<addr>` is the convention this repository already had for
-saying "forwarder" — eleven rows carried it before #602, seventeen after — and
-`thunk` belongs mid-name (`bank1_switch_thunk_to_81c5`), not as a prefix.
-`../tools/grade_name_basis.py` now refuses the collision on the EC side, and
-`build_ec_decompile.py --self-test` holds that Python set against the Java it
-is transcribed from, which is the guard that makes "one definition, used by
-every exporter" true rather than aspirational.
+column is `isPlaceholderName(name) ? "no" : "yes"` — it answers "is this name one
+Ghidra reserves, or is it a person's", not "is this name good" and not, quite,
+"did a person choose it". A row that picks its name out of Ghidra's reserved
+namespace therefore applies and is then recorded as unannotated, which is a fault
+with no other signature: the row resolves, the name is honest, and the export
+says the annotation did not happen. Seven rows did it, with `thunk_` (Ghidra's
+prefix for an auto-thunk), and the ledger read them as applied-but-unflagged for
+as long as they stood there. Issue #602 renamed them rather than narrowing the
+predicate, because the collision was in the row: `forward_to_<addr>` is the
+convention this repository already had for saying "forwarder" — eleven rows
+carried it before #602, seventeen after — and `thunk` belongs mid-name
+(`bank1_switch_thunk_to_81c5`), not as a prefix. `../tools/grade_name_basis.py`
+now refuses the collision on the EC side, and `build_ec_decompile.py --self-test`
+holds that Python set against the Java it is transcribed from, which is the guard
+that makes "one definition, used by every exporter" true rather than aspirational.
+
+**Read the column as "not reserved", and there are rows that show why.**
+`bank0 0x031C` and `0x805B`, `bank1 0x031C` and `0x703A`, and `common 0x0512`,
+`0x10FA` and `0x1207` are all reported `annotated=yes` while holding no person's
+name: they are second copies, where the export propagated the target's name
+across a bare transfer, and
+[`../../docs/findings/named-without-a-row.md`](../../docs/findings/named-without-a-row.md)
+is the per-address reading. Issue #631 closed the other direction of the same
+gap — fourteen bank1 rows holding Ghidra's own `caseD_<n>` and `default` were
+reported `annotated=yes` because the predicate listed `switchD_` and not the
+leaves under it, and `default` in particular has to be an exact match rather than
+a prefix, because `bank0 0x549B` is a committed row named
+`default_009d_bf_dispatch_4e2c`. The write-up is
+[`../../docs/findings/cased-in-reserved-namespace.md`](../../docs/findings/cased-in-reserved-namespace.md).
 
 **Open, and deliberately not fixed here: the two copies of
 `isPlaceholderName()` no longer agree.** `scripts/TongFang.java` tests
