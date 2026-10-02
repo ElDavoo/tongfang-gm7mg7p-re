@@ -1051,6 +1051,27 @@ which is the reading §14f warns about. `--self-test` runs per commit from
 one next. The write-up is
 [`../../docs/findings/verify-provenance-failure-answers.md`](../../docs/findings/verify-provenance-failure-answers.md).
 
+**And the `name` column, which is a copy and not a measurement.** Every other
+column in `reassembly.csv` records what a re-encode observed; `name` does not —
+`write_report()` copies the name `../decompiled/listing-index.csv` held at report
+time — so it is the one column here that can be re-copied without asserting an
+observation nobody made. `--check` therefore compares it, per `(program, addr)`,
+against the index and names the rows that disagree; it does **not** check the
+name is a *good* one, and a name that agrees with the index is a name the index
+wrote. The repair is
+
+```
+$ python3 ../tools/verify_reassembly.py --refresh-name-column
+```
+
+which is repeatable where `--add-digest-column` is one-shot, and is guarded
+differently for that reason: it writes the file, reads it back, and requires
+every non-`name` cell, the header and the row order to be unchanged — restoring
+the original bytes if not — so it cannot re-arm a digest, move an outcome or
+rewrite an `assembler` version. It refuses outright if the report's keys and
+the index's do not match. The write-up is
+[`../../docs/findings/reassembly-name-column.md`](../../docs/findings/reassembly-name-column.md).
+
 ## The annotation layer
 
 `../annotations/ghidra-functions.csv`, header-only so `csv.DictReader` reads it
