@@ -351,13 +351,13 @@ class Coverage(unittest.TestCase):
         #
         # Which table is *theirs* is read from the `check_table(...)` call that
         # does the comparing, not from every `.csv` path the module mentions.
-        # `pd_image_census.py` is the case that makes the difference: it names
-        # three committed CSVs, and only `pd-image-strings.csv` is the one it
-        # emits and compares -- the other two are inputs it reads. Asking it for
-        # all of them puts `ghidra-functions.csv` in this case, and that file is
-        # correctly `eol=lf`, because it is hand-transcribed and its embedded
-        # newline is a real thing. A CRLF emitter's *input* being LF is not a
-        # contradiction; only its *output* has to stay CRLF.
+        # `pd_image_census.py` is the case that makes the difference: it writes
+        # and compares `pd-image-strings.csv`, but it also reads
+        # `ghidra-functions.csv`, which is correctly `eol=lf`, because it is
+        # hand-transcribed and its embedded newline is a real thing. Asking for
+        # every CSV path a module mentions puts that one in this case, and a
+        # CRLF emitter's *input* being LF is not a contradiction; only its
+        # *output* has to stay CRLF.
         checked = 0
         offenders = []
         for tool in CRLF_EMITTERS:

@@ -117,9 +117,9 @@ table exposed.
 
 `ec/decompiled/**/*.asm` is uncovered and measured harmless **for this tool**:
 `citation_callers.py` reads listings with default newline handling, so universal
-newlines absorb CRLF, and 0 of the 2,717 committed listings carry a CR. That is
-a latent hazard for any future tool that byte-compares an `.asm`, not a claim
-that the tree is safe for one.
+newlines absorb CRLF, and no committed listing carries a CR. That is a latent
+hazard for any future tool that byte-compares an `.asm`, not a claim that the
+tree is safe for one.
 
 ## Why the form is per file, and not one rule
 
@@ -155,12 +155,12 @@ to an attribute and the docstrings that named the old state.
 
 **A CRLF-emitting tool's *input* being LF is not a contradiction.** This came up
 while writing the test that holds the split, and it is worth stating because the
-obvious way to write that test gets it wrong. `pd_image_census.py` names three
-committed CSVs and emits CRLF, but only `pd-image-strings.csv` is the table it
-writes and compares; `ghidra-functions.csv` is an *input* it reads, and that one
-is correctly `eol=lf`, being hand-transcribed with an embedded newline in it. So
-the property to hold is about the table a tool *compares*, not every CSV path a
-tool mentions. `test_gitattributes_coverage.py` therefore reads each emitter's
+obvious way to write that test gets it wrong. `pd_image_census.py` emits CRLF:
+`pd-image-strings.csv` is the table it writes and compares, while the
+`ghidra-functions.csv` it also reads is correctly `eol=lf`, being
+hand-transcribed with an embedded newline in it. So the property to hold is
+about the table a tool *compares*, not every CSV path a tool mentions.
+`test_gitattributes_coverage.py` therefore reads each emitter's
 `check_table(...)` argument — and each tool's `--check` default, which for most
 of them is the `const=` on their own argparse call, and is the only place
 `walk_budget_census.py` names its table at all. An earlier version of that case
