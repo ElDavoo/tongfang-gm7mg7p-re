@@ -131,9 +131,8 @@ Measured over the **46 pairs** that recipe produces:
 - every changed line falls into one of three classes — the reworded preamble
   sentence in `report_window`, the note added under it, and the note added to
   the closing block;
-- **no changed line carries a digit, an address, a figure or a count**: no
-  numeric figure, no count, no exit code, no group name and no verdict
-  sentence moved on any run;
+- **no numeric figure, no count, no exit code, no group name and no verdict
+  sentence** moved on any run;
 - every `window delta` line is **byte-identical in all 46 pairs**, which is the
   arithmetic half of the claim stated as a check rather than as an assertion.
 
@@ -178,9 +177,13 @@ pushed down a second registry**: `measure_mark_provenance.py`'s `CITATIONS`
 table, which pins 19 lines of that file and is checked by
 `test_measure_mark_provenance_citations.py` in both directions — a citation
 naming a line that no longer carries its quoted text, and a scanned
-`"MARK"` site no citation names. Both registries were re-anchored, every pin
-verified by byte-identical target text rather than by arithmetic, and each
-census row carries the reason in the form the table already uses.
+`"MARK"` site no citation names. Both registries were re-anchored and each
+census row carries the reason in the form the table already uses. The
+re-anchored rows were read against the tree rather than moved by arithmetic,
+except `0751-capture-row-shape.md`'s commit-qualified pin, which names a line
+in the revision it qualifies and is left there; the two quoted `grep`
+transcripts in `0751-path-taking-reader-fates.md` are a third place line
+numbers live in these write-ups, and nothing in the tree checks them.
 
 Two things that a uniform shift gets wrong, and this change hit both:
 
@@ -202,7 +205,18 @@ addresses, built the same way — and it names the endpoint gap ("a byte that we
 somewhere and came back between them reads as quiet") but not the sampling
 period gap. The same fix belongs there. Left out because it is a different
 procedure with its own runbook and its own suite, and this change already has
-three shared files open. **That is the next issue.**
+three shared files open.
+
+**Two more sites carry the phrasing, and the next issue is all three.**
+`docs/hardware-tests/oem4-07a6-bit0.md`'s *The two figures are not
+interchangeable* says "a byte that held still reads as `net +0 … (0 changes)`"
+over the same shape, and `ec/tools/grade_timer_sweep.py` says it in both its
+header and its closing note ("Nothing above is a register status. A byte that
+held still was not reached on the paths watched over this span, which is not
+absence."). All three read as a fact about movement over a capture sampled at
+intervals, and none names the sampling-period gap. None is in this change's
+scope: the runbook belongs to #94's procedure and `grade_timer_sweep.py` is a
+third procedure again, each with its own suite. **That is the next issue.**
 
 Also open, and unchanged by this: **measuring the sampling period** is issue
 #94's, and no runner can reach the machine or the driver. Nothing here measures

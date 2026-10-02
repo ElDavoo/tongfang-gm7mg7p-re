@@ -827,20 +827,17 @@ class TheCommittedTree(unittest.TestCase):
         # sentence names, and `:3951` there is an unrelated comment about other
         # suites. `:3608` is restored here, so `def test_` gives `2 -> 1` and
         # the record lands wherever the merged tree's own `:3608` reads.
-        # **It reads `other`, and that is a third value neither side recorded**:
-        # `main`'s tree holds code there and the branch's holds a `#` comment, so
-        # the branch's `comment` at `24` was a measurement of its own line and
-        # `main`'s `def test_` a measurement of a line this pin does not name.
-        # On this tree `:3608` is a statement rather than a `def test_` header, so
-        # `comment` is `23` and `other` is `46`, with `assertion` and `blank`
-        # unmoved -- the control that this is one record changing column and not
-        # one added or dropped. **The gap between the record's verdict and its
-        # shape is the verdict**: the row reads *records another line* precisely
-        # because a commit-qualified pin names the line of that revision, not this
-        # one.
+        # **It reads `comment`**, which is the value the branch measured on its
+        # own tree, so the split here is that side's `1 / 24 / 24 / 5 / 45` and
+        # not a third value -- the merged tree's `:3608` is a `#` comment, and
+        # `assertion` and `blank` are unmoved, which is the control that this is
+        # one record changing column and not one added or dropped. **The gap
+        # between the record's verdict and its shape is the verdict**: the row
+        # reads *records another line* precisely because a commit-qualified pin
+        # names the line of that revision, not this one.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 1, census.ASSERTION: 24, census.COMMENT: 23,
-            census.BLANK: 5, census.OTHER: 46})
+            census.DEF_TEST: 1, census.ASSERTION: 24, census.COMMENT: 24,
+            census.BLANK: 5, census.OTHER: 45})
         # `69 -> 70` is the same #421 record, and it takes this axis for the
         # reason the comment above gives for the split: a record that resolves
         # names a target, and this one lands in a file the axis did not carry,
