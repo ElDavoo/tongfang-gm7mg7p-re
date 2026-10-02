@@ -53,6 +53,43 @@ column records each member's own score *against its owner*, so a member that
 is 0.43 similar to the 14-statement body it belongs with is visible in the
 committed CSV instead of hidden inside the grouping.
 
+**`containment` cannot tell a copy from a fragment, so the size runs the other
+way too.** It is `|A & B| / |A|` with `A` the *smaller* body, so a four-statement
+stub scores `1.00` against any larger body that happens to spell those four
+statements -- the score of a copy and the score of a fragment are the same
+number, and `MIN_BODY_STMTS` does not separate them because it is a floor and
+the cases are four to six statements. `member_share` divides the same two
+bodies by the other side: `|A| / |B|`, how much of the *owner* the non-owner
+accounts for, which is the ratio `containment`'s direction normalises away.
+A re-export of one routine scores near `1.00` on both; the three timer stubs
+score `1.00` and `0.18`. `owner_body_lines` is carried beside it so
+the ratio is checkable against the two bodies it came from rather than taken
+on trust.
+
+**`--min-share` is that ratio as a switch, and it ships off.** A containment
+edge is refused when the member accounts for less than the named share of its
+owner, which is the check the committed strict-subset derivation declines to
+make by itself. The default is no floor because `member_share` does not
+separate the two shapes, which was measured rather than guessed: the
+`fragment` verdicts run from `common/3239.c`'s `0.06` to `bank0/BB78.c`'s
+`0.50`, and `common/3BBF.c` is a `re-export` at that same `0.50`, so a floor
+high enough to refuse every fragment refuses re-exports with it and no value
+on the column is a separator. Enabling one is its own change with its own
+re-pinned oracles
+(docs/findings/export-ownership-relative-containment.md), and writing a scratch
+map with `--map --min-share` is how to look at what one costs first.
+
+**The floor is a condition on the edge, so it inherits the same limit as the
+relation it filters.** A member still reaches its owner through a chain of
+edges that each clear the floor even when the member itself is a smaller share
+of the owner than the floor demands; at `CANDIDATE_MIN_SHARE` `bank0/F078.c`
+has members that do exactly that against it. That is not a
+second mechanism to fix, it is the "containment does not compose" caveat above
+showing up again, and `member_share` is what makes it visible: a row whose
+share is under the floor while it is still folded says its owner is a
+container rather than a re-export, which is the judgement the check cannot
+make for itself.
+
 **What this is not.** A containment score over decompiled C text is a text
 heuristic about how two files compare, not a function boundary and not a
 disassembly. Two genuinely distinct routines can share most of their statements
@@ -98,8 +135,15 @@ THRESHOLD = 0.90
 # routines that have nothing to do with each other.
 MIN_BODY_STMTS = 3
 
+# The candidate relative floor, named rather than inlined, because it is the
+# value the oracle below measures: one constant holding the shape, the counts
+# derived from it. It is not the default and never becomes one without a
+# decision of its own -- see the docstring.
+CANDIDATE_MIN_SHARE = 0.30
+
 COLUMNS = ["out_file", "program", "addr", "body_lines", "owner_out_file",
-           "owner_addr", "owner_name", "shared", "containment"]
+           "owner_addr", "owner_name", "shared", "containment",
+           "owner_body_lines", "member_share"]
 
 
 def body_of(text: str) -> frozenset:
@@ -157,8 +201,24 @@ def containment(small: frozenset, large: frozenset) -> float:
     return len(small & large) / len(small)
 
 
+def member_share(small: frozenset, large: frozenset) -> float:
+    """`|A| / |B|`, how much of the larger body the smaller one accounts for.
+
+    The direction `containment` normalises away. Containment asks how much of
+    the *member* the owner has, and a four-statement fragment scores 1.00
+    against any owner that spells those four statements; this asks how much of
+    the *owner* the member is, which is the same number for a re-export of one
+    routine and a different one for a fragment inside a longer routine. An
+    owner has no larger body to be measured against, so it scores 1.00 -- it is
+    the whole of its own class.
+    """
+    if not large:
+        return 0.0
+    return len(small) / len(large)
+
+
 def classes_of(rows, bodies, threshold=THRESHOLD, fold_equal=False,
-               floor=MIN_BODY_STMTS):
+               floor=MIN_BODY_STMTS, min_share=None):
     """out_file -> list of its class's index.csv rows.
 
     The unit is the connected component, not the nearest container, and that
@@ -171,6 +231,12 @@ def classes_of(rows, bodies, threshold=THRESHOLD, fold_equal=False,
     Comparison is within a program only. `index.csv` rows already carry the
     program, and two programs are two address spaces that must never be
     compared (the mistake `docs/findings.md` 3a had to correct).
+
+    `min_share` is off (`None`) unless `--min-share` asks for it, and then an
+    edge additionally needs `member_share(sa, sb) >= min_share`. It is a second
+    condition on the edge rather than a post-filter on the class, so a class
+    held together by a chain loses the links below the floor and re-forms as
+    whatever the remaining links connect.
     """
     by_prog = collections.defaultdict(list)
     for r in rows:
@@ -199,6 +265,8 @@ def classes_of(rows, bodies, threshold=THRESHOLD, fold_equal=False,
                 sb = bodies[large["out_file"]]
                 if len(sb) <= len(sa):
                     continue
+                if min_share is not None and member_share(sa, sb) < min_share:
+                    continue
                 if containment(sa, sb) >= threshold:
                     union(small["out_file"], large["out_file"])
         if fold_equal:
@@ -216,7 +284,7 @@ def classes_of(rows, bodies, threshold=THRESHOLD, fold_equal=False,
 
 
 def ownership(rows, bodies, threshold=THRESHOLD, fold_equal=False,
-              floor=MIN_BODY_STMTS):
+              floor=MIN_BODY_STMTS, min_share=None):
     """out_file -> the record that becomes one row of the committed CSV.
 
     The owner is the largest body in the class, ties by the lowest `index.csv`
@@ -226,7 +294,8 @@ def ownership(rows, bodies, threshold=THRESHOLD, fold_equal=False,
     folding it would drop a real export's references.
     """
     out = {}
-    for members in classes_of(rows, bodies, threshold, fold_equal, floor).values():
+    for members in classes_of(rows, bodies, threshold, fold_equal, floor,
+                              min_share).values():
         owner = min(members, key=lambda m: (-len(bodies[m["out_file"]]),
                                             m["key"][1], m["out_file"]))
         for m in members:
@@ -240,24 +309,29 @@ def row_record(member, owner, bodies, score) -> dict:
     """One committed CSV row. `shared` says whether the file is read at all:
     `no` means it owns itself, `yes` means its references are already counted
     through the owner and the file is skipped."""
+    own_body = bodies[member["out_file"]]
+    owner_body = bodies[owner["out_file"]]
     return {
         "out_file": member["out_file"],
         "program": member["program"],
         "addr": member["addr"],
-        "body_lines": len(bodies[member["out_file"]]),
+        "body_lines": len(own_body),
         "owner_out_file": owner["out_file"],
         "owner_addr": owner["addr"],
         "owner_name": owner["name"],
         "shared": "no" if member["out_file"] == owner["out_file"] else "yes",
         "containment": f"{score:.2f}",
+        "owner_body_lines": len(owner_body),
+        "member_share": f"{member_share(own_body, owner_body):.2f}",
     }
 
 
-def derive(threshold=THRESHOLD, fold_equal=False, floor=MIN_BODY_STMTS) -> list:
+def derive(threshold=THRESHOLD, fold_equal=False, floor=MIN_BODY_STMTS,
+           min_share=None) -> list:
     """The whole map as a list of records in index.csv order."""
     rows = load_rows()
     bodies = load_bodies(rows)
-    own = ownership(rows, bodies, threshold, fold_equal, floor)
+    own = ownership(rows, bodies, threshold, fold_equal, floor, min_share)
     return [own[r["out_file"]] for r in rows]
 
 
@@ -371,6 +445,64 @@ OWNERSHIP_ORACLE = {
     # moves alongside `rows` and a reader should not treat it as independent.
     "tiny_bodies": 1282,
 }
+
+# What `--min-share` would cost, measured at CANDIDATE_MIN_SHARE and pinned the
+# same way, so that enabling the floor later is a re-pin someone has to make
+# deliberately rather than a number that quietly moves. Issue #589, and
+# docs/findings/export-ownership-relative-containment.md is the write-up.
+#
+# The finding is that this candidate is not a separator rather than that it is
+# a well-placed one: the `fragment` verdicts run from 0.06 (`common/3239.c`) to
+# 0.50 (`bank0/BB78.c`), and `common/3BBF.c` is a `re-export` at that same
+# 0.50, so no floor refuses every fragment and keeps every re-export.
+# `largest_class` is unchanged because a class is a connected component and
+# the 42-file class is still one; `newly_read` is what the census would open
+# again.
+#
+# `classes` is expected to collide with a figure another document already
+# pins -- the `pd` cluster count of the census checklist's 6b is the same
+# number -- so check_doc_figure_pins.py resolves that section's figure to this
+# constant rather than to the census case that asserts it. Nothing is weakened
+# by either: they are different measurements that happen to be equal. Read a
+# resolution from that section at this constant as a prompt to open the
+# checklist row, not as a statement about the pd image.
+SHARE_ORACLE = {
+    "classes": 50,
+    "shared_rows": 133,
+    "largest_class": 42,
+    "largest_class_owner": "bank1/8001.c",
+    "newly_read": 13,
+}
+
+
+def floored_cost(rows, bodies, min_share=CANDIDATE_MIN_SHARE):
+    """`(cost, floored)` for a floor at `min_share`.
+
+    The cost is measured rather than quoted, because the point of pinning the
+    floor's cost is that a reader can re-run it: `newly_read` counts the files
+    the committed map skips and a floor at this value would hand back to
+    `xdata_register_map.py --export-ownership`, which is the number that says
+    whether the flip is a re-pin or a rebuild. The floored records come back
+    with it so the caller can check the derivation rather than the summary.
+    """
+    floored = ownership(rows, bodies, min_share=min_share)
+    committed = ownership(rows, bodies)
+    comps = [m for m in classes_of(rows, bodies, min_share=min_share).values()
+             if len(m) > 1]
+    big = [m for m in comps if len(m) == SHARE_ORACLE["largest_class"]]
+    owner = (min(big[0], key=lambda m: (-len(bodies[m["out_file"]]),
+                                        m["key"][1], m["out_file"]))
+             if big else None)
+    cost = {
+        "classes": len(comps),
+        "shared_rows": sum(1 for r in floored.values() if r["shared"] == "yes"),
+        "largest_class": max((len(m) for m in comps), default=0),
+        "largest_class_owner": owner["out_file"] if owner else None,
+        "newly_read": sum(1 for f, r in committed.items()
+                          if r["shared"] == "yes"
+                          and floored[f]["shared"] == "no"),
+    }
+    return cost, floored
 
 
 def bridged_classes(rows, bodies, floor, threshold=THRESHOLD) -> int:
@@ -548,6 +680,37 @@ def self_test(args) -> int:
           f"grouping ({len(weak)} are below the threshold)",
           all(0.0 <= float(r["containment"]) <= 1.0 for r in shared) and bool(weak))
 
+    # The relative floor's cost, at the named candidate value, from the same
+    # bodies -- never quoted, so a reader who disagrees with the candidate can
+    # see what a different one costs by editing one constant.
+    cost, floored = floored_cost(rows, bodies)
+    check(f"a --min-share floor of {CANDIDATE_MIN_SHARE} leaves the "
+          f"{SHARE_ORACLE['largest_class']}-file class whole and owned by "
+          f"{SHARE_ORACLE['largest_class_owner']}, moves "
+          f"{OWNERSHIP_ORACLE['shared_rows']} non-owner rows to "
+          f"{cost['shared_rows']} across {cost['classes']} classes, and hands "
+          f"{cost['newly_read']} files back to the census",
+          cost["classes"] == SHARE_ORACLE["classes"]
+          and cost["shared_rows"] == SHARE_ORACLE["shared_rows"]
+          and cost["largest_class"] == SHARE_ORACLE["largest_class"]
+          and cost["largest_class_owner"] == SHARE_ORACLE["largest_class_owner"]
+          and cost["newly_read"] == SHARE_ORACLE["newly_read"])
+
+    # A floor that high must cost *something*: a check whose refusals the tree
+    # does not notice is indistinguishable from a check that stopped refusing.
+    check(f"the floor refuses rather than passing the tree through "
+          f"({cost['shared_rows']} non-owners with it, {len(shared)} without, "
+          f"{cost['newly_read']} files handed back)",
+          cost["shared_rows"] < len(shared) and cost["newly_read"] > 0)
+
+    # `member_share` is evidence about the fold only if it is the ratio of the
+    # two sizes beside it, on every row and not only the ones that make a
+    # point. A column computed from something the reader cannot see is a
+    # number beside the evidence rather than part of it.
+    check("every row's member_share is its own two committed sizes' ratio",
+          all(r["member_share"] == f"{int(r['body_lines']) / int(r['owner_body_lines']):.2f}"
+              for r in recs))
+
     on_disk = read_committed()
     check("the committed CSV is a fresh derivation from the committed tree",
           on_disk is not None and not diff(on_disk, recs))
@@ -558,7 +721,8 @@ def self_test(args) -> int:
 
 def map_mode(args) -> int:
     """Write the derived map, to the committed path or a scratch one."""
-    generated = render(derive(args.threshold, args.fold_equal))
+    generated = render(derive(args.threshold, args.fold_equal,
+                              min_share=args.min_share))
     with open(args.out, "w") as f:
         f.write(generated)
     print(f"wrote {args.out} ({generated.count(chr(10)) - 1} rows)")
@@ -586,11 +750,16 @@ def main(argv=None) -> int:
                     help="also group bodies that are exactly equal, which "
                          "strict containment cannot; the committed map is the "
                          "strict-subset derivation")
+    ap.add_argument("--min-share", type=float, default=None,
+                    help="refuse a containment edge whose smaller body "
+                         "accounts for less than this share (|A|/|B|) of the "
+                         "larger one; off by default, so the committed map "
+                         "folds on containment alone")
     ap.add_argument("--out", default=OWNERSHIP_CSV,
                     help=f"where --map writes (default: {OWNERSHIP_CSV})")
     args = ap.parse_args(argv)
 
-    # Both knobs change the map, and both are refused where a gate could
+    # Every knob changes the map, and each is refused where a gate could
     # otherwise answer a question about a derivation other than the committed
     # one -- the same shape as xdata_register_map.py's --no-eq-guard refusals.
     # Refused before any mode runs, so --check and --self-test stay statements
@@ -606,6 +775,12 @@ def main(argv=None) -> int:
                  f"so --check and --self-test cannot answer for it: they "
                  f"describe {OWNERSHIP_CSV}, which was derived without it. Write "
                  f"a scratch map with --map --fold-equal and diff it.")
+    if args.min_share is not None and (args.check or args.self_test):
+        ap.error(f"--min-share {args.min_share} is not the derivation the "
+                 f"committed map records, so --check and --self-test cannot "
+                 f"answer for it: they describe {OWNERSHIP_CSV}, which was "
+                 f"derived with no floor at all. Write a scratch map with "
+                 f"--map --min-share and diff it.")
 
     if args.self_test:
         return self_test(args)
