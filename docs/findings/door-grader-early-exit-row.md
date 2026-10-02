@@ -57,8 +57,7 @@ the table cannot see it.
 run grades and every one of those has to exit 0, and a fixture carrying this row
 exits 1 by design. `test_every_door_fixture_is_one_this_suite_runs` holds the
 directory equal to the suite's `FIXTURES` set, and the new cases build their
-captures in a `tempfile.TemporaryDirectory()` — which is what `write_capture`'s
-own docstring says that directory is for.
+captures in a `tempfile.TemporaryDirectory()`.
 
 ## The decision: the window, not the block
 

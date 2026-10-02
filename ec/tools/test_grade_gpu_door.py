@@ -1013,9 +1013,9 @@ class RefusalTests(unittest.TestCase):
 class EarlyExitTests(unittest.TestCase):
     """A capture that records a run stopping part way through.
 
-    Eight cases over one reader, and none of them over a real capture: every
-    file here is built in a `tempfile.TemporaryDirectory()` rather than added
-    to `testdata/`, because `test_every_door_fixture_is_one_this_suite_runs`
+    Cases over one reader, and none of them over a real capture: every file
+    here is built in a `tempfile.TemporaryDirectory()` rather than added to
+    `testdata/`, because `test_every_door_fixture_is_one_this_suite_runs`
     holds the directory equal to `FIXTURES` and every entry there has to exit
     0 -- a fixture carrying an early-exit row exits 1 by design. That is also
     what keeps the hand-annotation cases meaningful, since they are graded out
