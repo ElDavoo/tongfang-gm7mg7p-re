@@ -220,10 +220,12 @@ jobs:
             planned again from scratch, with your summary and findings in front of the new
             plan, so write the `fix` fields as guidance for that new attempt: what it must do
             differently, not how to patch this diff.
-            When you reject on the first question, the `fix` fields say what the issue
-            would have to deliver about the firmware, the BIOS, the Windows stack or the
-            driver to be worth doing. A second rejection of the same issue hands it to a
-            human.
+            When you reject on the first question, also set `off_mission` to true. The issue
+            is then parked for a human instead of being planned again, since a new attempt at
+            the same issue would fail the same question. Use the `fix` fields to say what the
+            issue would have to deliver about the firmware, the BIOS, the Windows stack or the
+            driver to be worth doing. For any other rejection `off_mission` is false, and the
+            issue is planned again.
 
             Time: this job is stopped at 60 minutes, and a review that is stopped records
             nothing, so the pull request waits for a restart. Check claims against the tree as
@@ -270,7 +272,7 @@ jobs:
             --dangerously-skip-permissions
             --allowedTools "Task,Read,Glob,Grep,Bash(git:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(rg:*),Bash(jq:*),Bash(find:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(sort:*),Bash(uniq:*),Bash(diff:*)"
             --disallowedTools "Write,Edit,Bash(gh pr review:*),Bash(gh pr merge:*),Bash(gh pr edit:*),Bash(gh pr comment:*),Bash(gh api:*),Bash(gh workflow:*),Bash(gh run:*),Bash(gh secret:*),Bash(gh ruleset:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
-            --json-schema '{"type":"object","properties":{"approved":{"type":"boolean","description":"True to approve and let this merge"},"rejected":{"type":"boolean","description":"True to close this pull request and have the issue planned again: only when fixing the findings would mean starting over. Never true together with approved"},"summary":{"type":"string","description":"Two to four sentences of GitHub markdown: what this pull request does and why it is or is not mergeable. No lists; those go in findings and verified"},"findings":{"type":"array","description":"Every blocking finding, then any non-blocking suggestion worth leaving. Empty when there is nothing to raise","items":{"type":"object","properties":{"blocking":{"type":"boolean","description":"True if this alone stops the merge"},"file":{"type":"string","description":"Repository path the finding is about, or empty for the pull request as a whole"},"line":{"type":"integer","description":"Line in the head version of that file, or 0"},"problem":{"type":"string","description":"Markdown: what is wrong, and the evidence you checked it against"},"fix":{"type":"string","description":"Markdown: what would resolve it"}},"required":["blocking","file","line","problem","fix"]}},"verified":{"type":"array","description":"Claims you re-checked yourself, one short markdown line each, naming the command or file that checked it","items":{"type":"string"}},"final_title":{"type":"string","description":"Squash commit subject, lowercase, house style"},"final_body":{"type":"string","description":"Squash commit body: reasoning and evidence"}},"required":["approved","rejected","summary","findings","verified","final_title","final_body"]}'
+            --json-schema '{"type":"object","properties":{"approved":{"type":"boolean","description":"True to approve and let this merge"},"rejected":{"type":"boolean","description":"True to close this pull request: when fixing the findings would mean starting over, when the change fails the first question, or when the fix loop is not converging. Never true together with approved"},"off_mission":{"type":"boolean","description":"True only together with rejected, when the reason is the first question: the change moves none of the firmware, the BIOS, the Windows stack or the driver. Parks the issue instead of re-planning it"},"summary":{"type":"string","description":"Two to four sentences of GitHub markdown: what this pull request does and why it is or is not mergeable. No lists; those go in findings and verified"},"findings":{"type":"array","description":"Every blocking finding, then any non-blocking suggestion worth leaving. Empty when there is nothing to raise","items":{"type":"object","properties":{"blocking":{"type":"boolean","description":"True if this alone stops the merge"},"file":{"type":"string","description":"Repository path the finding is about, or empty for the pull request as a whole"},"line":{"type":"integer","description":"Line in the head version of that file, or 0"},"problem":{"type":"string","description":"Markdown: what is wrong, and the evidence you checked it against"},"fix":{"type":"string","description":"Markdown: what would resolve it"}},"required":["blocking","file","line","problem","fix"]}},"verified":{"type":"array","description":"Claims you re-checked yourself, one short markdown line each, naming the command or file that checked it","items":{"type":"string"}},"final_title":{"type":"string","description":"Squash commit subject, lowercase, house style"},"final_body":{"type":"string","description":"Squash commit body: reasoning and evidence"}},"required":["approved","rejected","off_mission","summary","findings","verified","final_title","final_body"]}'
 
       - name: Record a stall
         if: steps.verdict.outcome != 'success' || steps.verdict.outputs.conclusion != 'success'
@@ -300,6 +302,7 @@ jobs:
           # merging something the reviewer also said to throw away.
           echo "approved=$(jq -r '(.approved and (.rejected | not)) | tostring' <<<"$OUT")" >> "$GITHUB_OUTPUT"
           echo "rejected=$(jq -r '.rejected | tostring' <<<"$OUT")" >> "$GITHUB_OUTPUT"
+          echo "off_mission=$(jq -r '(.rejected and (.off_mission // false)) | tostring' <<<"$OUT")" >> "$GITHUB_OUTPUT"
           # The review body. Continuation lines are indented so a multi-line problem stays inside
           # its list item.
           jq -r '
@@ -309,7 +312,8 @@ jobs:
                       + (if .fix == "" then "" else "\n\n  **Fix:** \(.fix | indent)" end);
             [ .findings[] | select(.blocking) ] as $b
             | [ .findings[] | select(.blocking | not) ] as $s
-            | [ (if .rejected then "**Rejected.** This pull request is closed and the issue goes back to be planned again; the findings below are what the next attempt has to do differently."
+            | [ (if .rejected and (.off_mission // false) then "**Rejected as off-mission.** This pull request is closed and the issue is parked with `no-agent`; the findings below say what it would have to deliver to be worth doing."
+                 elif .rejected then "**Rejected.** This pull request is closed and the issue goes back to be planned again; the findings below are what the next attempt has to do differently."
                  elif .approved then "**Approved.**"
                  else "**Changes requested:** \($b | length) blocking finding\(if ($b | length) == 1 then "" else "s" end)."
                  end),
@@ -376,11 +380,24 @@ jobs:
           PUSH_TOKEN: ${{ secrets.AGENT_PUSH_TOKEN }}
           PR: ${{ github.event.pull_request.number }}
           ISSUE: ${{ steps.ctx.outputs.issue }}
+          OFF_MISSION: ${{ steps.unpack.outputs.off_mission }}
           # CUSTOMISE: how many rejections of one issue before a human takes it.
           MAX_REJECTIONS: '2'
         run: |
           set -euo pipefail
           gh pr review "$PR" --request-changes --body-file /tmp/review.md
+          if [ "$OFF_MISSION" = true ]; then
+            # LOCAL CHANGE (2026-10-02): rejected on the mission question. Planning the issue
+            # again would build the same off-mission change, so it is parked the way the plan
+            # stage parks one: `no-agent` and a pointer, for a human to send back or close.
+            GH_TOKEN="$PUSH_TOKEN" gh pr close "$PR" --delete-branch \
+              --comment "Rejected by the review stage as off-mission: see the review above. The issue is parked with \`no-agent\` rather than planned again."
+            gh issue comment "$ISSUE" --body "PR #${PR} was rejected as off-mission: it would not make the EC firmware, the BIOS or the Windows stack better understood, or bring the driver closer. The review on the pull request says what the issue would have to deliver to be worth doing. Parked with \`no-agent\`; remove it to have the issue planned again. <!-- agent-rejected -->"
+            gh issue edit "$ISSUE" --add-label 'no-agent'
+            gh issue edit "$ISSUE" --remove-label 'agent:working' || true
+            gh issue edit "$ISSUE" --remove-label 'agent:planned' || true
+            exit 0
+          fi
           GH_TOKEN="$PUSH_TOKEN" gh pr close "$PR" --delete-branch \
             --comment "Rejected by the review stage: see the review above. The issue goes back to be planned again."
 

@@ -1,0 +1,26 @@
+out_file,owner_out_file,verdict,basis
+bank0/BB78.c,bank0/BB6A.c,fragment,ec/decompiled/bank0/BB6A.asm and ec/decompiled/bank0/BB78.asm: the owner's 14 committed bytes run 0xBB6A-0xBB77 and end on a store with no ret and no store to 0x0855/0x0856; its decompilation continues into the member's 8 bytes at 0xBB78
+bank0/F08B.c,bank0/F078.c,fragment,ec/decompiled/bank0/F078.asm is one instruction (inc DPTR) whose decompilation carries the bodies of routines at 0xF08B; 0xF0F3 and 0xF499
+bank0/F0F3.c,bank0/F078.c,fragment,ec/decompiled/bank0/F078.asm is one instruction (inc DPTR) whose decompilation carries this body's routine from 0xF0F3
+bank0/F499.c,bank0/F078.c,fragment,ec/decompiled/bank0/F078.asm is one instruction (inc DPTR) whose decompilation carries this body's routine from 0xF499
+common/3BDD.c,common/0806.c,fragment,ec/decompiled/common/3BDD.asm: seven bytes c2 8e c2 8f d2 ab 22 at 0x3BDD reached by four callers disjoint from the other two copies'; the owner ends with the same four statements spelled inline
+common/4368.c,common/0806.c,fragment,ec/decompiled/common/4368.asm: the same seven bytes at 0x4368 reached by two callers disjoint from the other two copies'
+common/4AFB.c,common/0806.c,fragment,ec/decompiled/common/4AFB.asm: the same seven bytes at 0x4AFB reached by five callers disjoint from the other two copies'; the three together are 15 lcall sites across 11 callers
+common/322C.c,common/30FB.c,fragment,ec/decompiled/common/30FB.c calls FUN_CODE_322c() at four sites; a routine the owner calls is not an export of it
+common/3239.c,common/30FB.c,fragment,ec/decompiled/common/30FB.c calls increment_xdata_0a4d_then_ljmp_311d() (this routine's committed name) at four sites
+common/3451.c,common/3402.c,fragment,ec/decompiled/common/3402.c calls FUN_CODE_3451() at one site
+common/3BBF.c,common/07D0.c,re-export,ec/decompiled/common/3BBF.c and ec/decompiled/common/07D0.c: the member's three statements are the owner's first; fourth and last of one body
+bank1/9008.c,bank1/8F6B.c,re-export,ec/decompiled/bank1/9008.c and ec/decompiled/bank1/8F6B.c: the member is the owner's param_1 == 0 arm -- a run of one routine
+bank0/8026.c,bank0/8000.c,re-export,ec/decompiled/bank0/8026.c is the tail of ec/decompiled/bank0/8000.c from sVar2 = 0x1905 onward
+bank0/C058.c,bank0/CDC3.c,re-export,ec/decompiled/bank0/C058.c is the tail of ec/decompiled/bank0/CDC3.c from the 0x1611/0x1613/0x1616 clear onward
+bank0/D673.c,bank0/D5DB.c,re-export,ec/decompiled/bank0/D673.c is the innermost DAT_EXTMEM_1504 == -2 arm of ec/decompiled/bank0/D5DB.c
+bank1/C31E.c,bank1/C2B0.c,re-export,ec/decompiled/bank1/C31E.c is the head of ec/decompiled/bank1/C2B0.c up to return_immediately()
+bank1/C8E3.c,bank1/D219.c,re-export,ec/decompiled/bank1/C8E3.c is the head of ec/decompiled/bank1/D219.c up to update_0524_0526_4a0_and_0497_flags()
+common/4B4C.c,common/383D.c,re-export,ec/decompiled/common/4B4C.c is the TH1/TL1/TF1/TR1 run inside ec/decompiled/common/383D.c
+bank1/E2C3.c,bank1/E237.c,re-export,ec/decompiled/bank1/E2C3.c is the 0x1c00/0x1c04/0x1c05 run inside ec/decompiled/bank1/E237.c
+common/0877.c,common/0902.c,re-export,ec/decompiled/common/0877.c is the tail of ec/decompiled/common/0902.c from the 0x1500 mask onward
+bank1/D5B4.c,bank1/D524.c,re-export,ec/decompiled/bank1/D5B4.c is the deepest arm of ec/decompiled/bank1/D524.c from read_xdata_pair_to_b_and_a(0x834) onward
+common/3F62.c,common/3DFC.c,re-export,ec/decompiled/common/3F62.c is the tail of ec/decompiled/common/3DFC.c from FUN_CODE_3799() onward
+bank0/AF7D.c,bank0/AF27.c,re-export,ec/decompiled/bank0/AF7D.c is the tail of ec/decompiled/bank0/AF27.c from the 0x0a4a countdown onward
+common/4B57.c,common/3A0D.c,re-export,ec/decompiled/common/4B57.c is the TH1/TL1/TF1/TR1 run inside ec/decompiled/common/3A0D.c
+bank1/D322.c,bank1/D2A3.c,re-export,ec/decompiled/bank1/D322.c is the tail of ec/decompiled/bank1/D2A3.c from the last mul_16_round_shift_subtract() onward
