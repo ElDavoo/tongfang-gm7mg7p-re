@@ -28,6 +28,7 @@ drift. `docs/findings/no-append-logs.md` is the write-up; the same rule is in
 import csv
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -358,20 +359,20 @@ class TheToolIsHeldToTheTree(unittest.TestCase):
     def test_a_dump_that_is_not_the_pd_image_is_refused(self):
         # `not found by this method` has to be able to say so. A file with the
         # marker missing must exit 1 with the offset named, rather than
-        # decoding a page of arithmetic about the wrong program.
+        # decoding a page of arithmetic about the wrong program. The fixture
+        # lives in a temp directory, not beside the committed vendor inputs,
+        # so an interrupted run cannot leave a stray file in `ec/firmware/`.
         with open(FIRMWARE, 'rb') as f:
             whole = f.read()
-        scratch = ROOT / 'ec' / 'firmware' / '.test-not-the-pd-image.bin'
-        try:
+        with tempfile.TemporaryDirectory() as tmp:
+            scratch = Path(tmp) / 'not-the-pd-image.bin'
             scratch.write_bytes(whole[:sweep.PD_MARKER[0]]
                                 + b"\x00" * len(whole[sweep.PD_MARKER[0]:]))
             r = subprocess.run(
                 [sys.executable, str(HERE / 'pd_no_ret_fallthrough.py'),
                  str(scratch)], capture_output=True, text=True)
-            self.assertEqual(r.returncode, 1)
-            self.assertIn(f"0x{sweep.PD_MARKER[0]:05X}", r.stderr)
-        finally:
-            scratch.unlink(missing_ok=True)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn(f"0x{sweep.PD_MARKER[0]:05X}", r.stderr)
 
     def test_the_base_is_the_region_offset_and_not_the_marker(self):
         # The silent one: `PD_MARKER` is 0x40 bytes *inside* the image, so

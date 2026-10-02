@@ -90,8 +90,7 @@ repeated anywhere else in this repository.
 
 3. **"178 `pd` rows carry a 'not decoded here' or 'no ret' clause"** and
    **"filtering to those … leaves 20"** — neither reproduces. The clause
-   matches **198** `pd` rows (62 for "not decoded here" alone, 155 for "no ret"
-   alone, and the two overlap). The issue's stated filter — take the next
+   matches **198** `pd` rows. The issue's stated filter — take the next
    address as `addr + listing-index.csv`'s `size`, decode one instruction
    there, keep the rows whose successor begins a `ljmp`/`jmp`/`sjmp`/`ajmp` —
    yields **4** rows: 0x0000, 0x0012, 0x7045 and 0xF786.
@@ -119,8 +118,8 @@ return nor a transfer of control, and `addr + size` is another listing's entry
 — so control leaves the listing by running past its end, into a boundary rather
 than off the end of the export. It matches 95 rows. `reti` counts as a return
 here, not just `ret`: a listing ending in `reti` falls into nothing whatever
-its comment says, and reading only `0x22` would admit seven rows for a reason
-that has nothing to do with the boundary.
+its comment says, and reading only `0x22` would admit 0x0056, 0x0094, 0x00B2
+and 0x00F0 for a reason that has nothing to do with the boundary.
 
 **Both arms: 80 rows.** The byte arm is not a subset of the clause arm — 15
 rows qualify on their bytes while their comment carries neither clause, which
@@ -170,8 +169,11 @@ whatever reads 0x3632 next.
 The three `boundary-wrong` rows are the same shape one step earlier: each is
 reached only by falling in from the listing before it, so the boundary that
 matters is the one above the row, not the fall-through below it. `pd,34D6` is
-the clearest — nothing calls 0x34D6 at all, while its successor 0x34D9 has two
-committed call sites.
+the clearest — no committed listing decodes a transfer to 0x34D6, while its
+successor 0x34D9 has two committed call sites. The byte scan does name 0x34D6
+from five positions (0x30FA, 0x310D, 0x31BE, 0x31D5 and 0x32BD); none of the
+five is an instruction start a committed listing decodes, so they are
+candidates the narrow population cannot confirm rather than call sites.
 
 ---
 

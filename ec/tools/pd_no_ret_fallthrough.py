@@ -115,8 +115,8 @@ RET = 0x22
 RETI = 0x32
 # Both returns, because both leave the listing and the question is what leaves
 # the listing. A listing ending in `reti` falls into nothing whatever its
-# comment says, and reading only 0x22 would put seven rows into the family for
-# a reason that has nothing to do with the boundary.
+# comment says, and reading only 0x22 would put 0x0056, 0x0094, 0x00B2 and
+# 0x00F0 into the family for a reason that has nothing to do with the boundary.
 RETURNS = frozenset((RET, RETI))
 
 # The absolute transfer opcodes, and the paged and indirect families beside
@@ -759,7 +759,7 @@ def self_test(pd, rows, dec, byts, index, listings, tails, ann) -> int:
 
     lo, hi = ORACLE["overlap_span"]
     total, distinct = span_walk(pd, listings, tails)
-    covered = {a for a in listings if lo <= a <= hi}
+    covered = {h for h in tails if lo <= h <= hi}
     check(len(covered) > 1 and total == ORACLE["overlap_sites_dedup"]
           + ORACLE["overlap_sites"] and distinct == ORACLE["overlap_sites_dedup"],
           f"the de-duplication: a per-listing walk over the listings' own spans "
@@ -818,7 +818,8 @@ def main(argv=None) -> int:
     ap.add_argument("firmware", nargs="?", default=FIRMWARE,
                     help="raw EC firmware image (default: the committed one)")
     ap.add_argument("--csv", action="store_true",
-                    help="write one row per candidate on stdout")
+                    help="write one row per committed pd listing, with an "
+                         "in_byte_arm column, on stdout")
     ap.add_argument("--check", action="store_true",
                     help="regenerate ../annotations/pd-no-ret-fallthrough.csv "
                          "and diff it")
