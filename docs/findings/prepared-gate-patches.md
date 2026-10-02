@@ -307,8 +307,8 @@ instructs.
 [`runner-red-suite-set.md`](runner-red-suite-set.md) owns the runner's failing
 set; this file is deliberately a pointer to it rather than another measurement
 of the same thing, which is the mechanism by which the paragraphs above went
-stale in the first place. The run this correction rests on, against committed
-blob `9919103a`:
+stale in the first place. The run this correction rests on, made on this
+branch's merge head (`d845ad7e` plus this branch's diff):
 
 ```console
 $ bash tools/run-tests.sh          # 2026-10-02
