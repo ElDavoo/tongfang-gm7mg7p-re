@@ -3275,6 +3275,32 @@ registers:
       Read as a block:
       docs/findings/xdata-07fd-07ff-witness-triple.md.
 
+  - name: XDATA_0803
+    addr: 0x0803
+    sources: [xdata-refs]
+    static_refs: 142
+    static_refs_main_ec: 3
+    static_refs_pd_image: 139
+    status: present-untested
+    note: >
+      Round trip for the selector byte of the PD image's `pd 0xCB2A`: the
+      routine stores the caller's R7 here at 0xCB2E, reads it back into R1 at
+      0xCB3E, and builds the dispatch key from it, so the address
+      0x0424 + 0x260*R7 (mod 2^16) is a function of this byte and of nothing
+      else in that chain. 139 of the 142 sites are in the PD image, which is
+      another program's XDATA and says nothing about the EC's use of this
+      address; the 3 EC-side sites are one read at 0x81EA and two stores of
+      0x01 at 0x830D and 0x83C7, all in bank1, and
+      ec/annotations/site-resolution.csv names bank1 0x8300
+      (clear_and_set_xdata_flag_bits) for the middle one and `not exported` for
+      the other two. Two things about that byte that a count does not carry,
+      both from ec/annotations/xdata-registers.csv: pd 0xB80E
+      (write_r7_and_r3r2r1_to_0803) is a second writer of it, and pd 0x1E4B
+      and pd 0x1EFE are further readers, so the selector is per-call and this
+      byte has more than one site feeding it. A static read or write is not
+      behaviour and status stays present-untested. Derivation, simulator
+      and evidence: docs/findings/pd-11c2-dispatch-key-selector.md.
+
   - name: XDATA_0809
     addr: 0x0809
     sources: [xdata-refs]

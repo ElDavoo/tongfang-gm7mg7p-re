@@ -922,7 +922,7 @@ ORACLE = {
     # registers.yaml row renames the symbol table and not a decompile". The
     # census pins above are therefore the ones #1425 measured and this block
     # leaves them at; only `named_in_tree` moves here.
-    "named_in_tree": 189,
+    "named_in_tree": 190,  # 189 -> 190: #647's XDATA_0803, an address the census already reaches
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # **Unmoved by issue #279, and worth saying why rather than leaving it as a
