@@ -617,6 +617,24 @@ class RegionSplitTests(unittest.TestCase):
         self.assertEqual([r["region"] for r in rows], ["common", "unknown"])
         self.assertEqual(len(rows), 2)
 
+    def test_the_page_report_prints_the_unidentified_region_rather_than_dropping_it(self):
+        # The same refusal through `page_report()`, which is where it was lost.
+        # A row in the unidentified span is not a refusal -- it has a page, so it
+        # is in no "could not place" list -- and `pd-image` is a different
+        # image's region, so the loop over the named regions skipped it too. It
+        # was in neither printed list while the report exited 1 beside it, and
+        # `page_report()`'s docstring promises the rows that could not be placed
+        # are printed rather than dropped.
+        out, rc = capture(C.page_report, self.image_with(0x20020), False, 0x0F)
+        self.assertEqual(rc, 1)
+        self.assertIn("unknown", out)
+        self.assertIn("0x20021", out)
+        # And it is added to nothing: not the main EC's half, whose exit code is
+        # the question, and not the PD image's line, which is another program.
+        self.assertEqual(sum(1 for r in C.sites(self.image_with(0x20020), False)
+                             if r["region"] in C.MAIN_EC_REGIONS), 0)
+        self.assertNotIn(C.UNKNOWN_REGION, C.MAIN_EC_REGIONS)
+
     def test_the_page_report_names_the_image_each_hit_is_in(self):
         # The issue asks whether the **main EC image** reaches the page, so the
         # answer is per image and the exit code is about the main EC alone.
@@ -633,8 +651,7 @@ class RegionSplitTests(unittest.TestCase):
         # even though the page is not empty.
         out, rc = capture(C.page_report, self.image_with(0x20020), True, 0x0F)
         self.assertEqual(rc, 1)
-        self.assertIn("the main EC does not reach page 0x0F by any of the scans",
-                      out)
+        self.assertIn("reaches page 0x0F at no computed-`DPH`", out)
         self.assertIn("building 0x0F", out)
 
     def test_a_page_nothing_reaches_exits_non_zero_with_no_hits(self):
@@ -777,19 +794,26 @@ class CommittedTableTests(unittest.TestCase):
         # what narrows what the zero in `registers.yaml`'s `0x07B9` and `0x07D0`
         # rows licenses. The exit code is the claim; the wording is the shape.
         #
-        # The `not` in the closing sentence is pinned rather than left to the
+        # The `no` in the closing sentence is pinned rather than left to the
         # sentence after it: this branch only runs when the main EC established
         # no site on the page, so an un-negated "reaches" would state the
         # opposite of the measurement at the point a reader stops reading.
+        #
+        # The spelling in that sentence is the claim, not decoration: the
+        # negative is about computed `DPH` sites -- the ones *this* scan can
+        # establish -- and not about the other spellings of the same page.
+        # `scan_refs.py` and `trace_xdata_refs.py` both find direct
+        # `MOV DPTR,#imm16` sites on page `0x07` in the main EC, so a closing
+        # sentence reaching past this scan to the others would be false against
+        # the committed image, and this assertion is what holds it scoped.
         out = subprocess.run(
             [sys.executable, str(HERE / "computed_dptr_sites.py"),
              str(FIRMWARE), "--page", "0x07"],
             capture_output=True, text=True, cwd=REPO)
         self.assertEqual(out.returncode, 1, out.stdout + out.stderr)
         self.assertIn("not reached by any site with an established page", out.stdout)
-        self.assertIn("the main EC does not reach page 0x07 by any of the scans",
-                      out.stdout)
-        self.assertIn('"not found by these methods"', out.stdout)
+        self.assertIn("reaches page 0x07 at no computed-`DPH`", out.stdout)
+        self.assertIn('"not found by this method"', out.stdout)
 
 
 if __name__ == "__main__":

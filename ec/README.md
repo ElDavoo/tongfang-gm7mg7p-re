@@ -155,9 +155,11 @@ into `r2 -a 8051` with no stitching needed.
   derivable and the cell says so. The population is **not** filtered
   on a following `movx` — two of the eight hand DPTR to a subroutine
   instead, and the read/handoff split is a reported column.
-  `--page 0xNN` answers "does the main EC reach this page" per image
-  and exits non-zero when it does not; `--check` diffs
-  `annotations/computed-dptr-sites.csv` byte for byte.
+  `--page 0xNN` answers "which computed-`DPH` sites build this page"
+  per image and exits non-zero when the main EC has none it can
+  establish — a negative about this scan, not about the scans beside
+  it; `--check` diffs `annotations/computed-dptr-sites.csv` byte for
+  byte.
   `annotations/computed-dptr-sites.md` is the write-up and its §7 is
   the full list of what a zero here does not cover.
 - **`tools/data_regions.py`** — re-derives every span in

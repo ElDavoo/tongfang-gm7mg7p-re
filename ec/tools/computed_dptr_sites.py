@@ -6,9 +6,9 @@ a,#imm` followed by `mov 0x83,a`, and the page each one reaches.
 same sites down to the individual one. Both therefore see one way of naming an
 XDATA address in a 8051 instruction out of the several there are, and
 `ec/annotations/manual-fan-ctrl-0751.md` §6 is this repository's own worked
-counter-example: the EC provably reads and writes the `0x0F00` fan table, and
-those tools report **zero** direct sites for it, because the EC reaches the
-page by assembling the pointer in the accumulator over two instructions --
+counter-example: the EC reads and writes bytes on page `0x0F`, and those tools
+report **zero** direct sites for it, because the EC reaches the page by
+assembling the pointer in the accumulator over two instructions --
 `add a,#lo ; mov DPL,a ; clr a ; addc a,#0x0f ; mov DPH,a` -- and the address
 is in neither instruction. This is the `0x07B9` argument again on a second
 address, and the same class of error `docs/findings.md` §4d had to retract.
@@ -162,6 +162,11 @@ SENSITIVITY_WIDTHS = (2, 3, 4, 5, 6, 8)
 # a split and not a total: a DPTR in the PD image is another program's byte.
 MAIN_EC_REGIONS = ("common", "bank0", "bank1")
 PD_REGION = "pd-image"
+# `region_of()`'s own refusal, spelled here because `page_report()` has to name
+# it: without the `ITE8850-PD` marker the `0x20000-0x2FFFF` span is no program's
+# region rather than the PD image's, and a row found there belongs to neither
+# total. Never in `MAIN_EC_REGIONS` for the reason `PD_REGION` is not.
+UNKNOWN_REGION = "unknown"
 
 # The page a row carries, in the three states it can be in. Two are functions
 # because two of the three carry a value, and a reader looking at a cell has to
@@ -686,12 +691,15 @@ def page_report(d: bytes, pd_verified: bool, page: int, back: int = WINDOW) -> i
     establish, so a scripted caller can use it. The PD image is counted
     separately and never added: a DPTR in it is another program's byte, and
     that is `lightbar-bat-flow.md` §2's mistake and `trace_xdata_refs.py`'s
-    docstring's first point. A page the main EC does not reach is the answer
-    for `0x07B9` and `0x07D0`, and it is a negative -- so the rows that could
-    not be placed are printed under it rather than dropped, because they are the
-    difference between "nothing here" and "nothing here that this method could
-    establish". A refusal is in that list for *every* page, since the
-    accumulator it could not read leaves the page open rather than closed.
+    docstring's first point. A page **this scan** finds no main-EC site on is
+    the answer for `0x07B9` and `0x07D0`, and it is a negative scoped to this
+    scan -- so the rows that could not be placed are printed under it rather
+    than dropped, because they are the difference between "nothing here" and
+    "nothing here that this method could establish". A refusal is in that list
+    for *every* page, since the accumulator it could not read leaves the page
+    open rather than closed, and a row in the unidentified span a missing
+    `ITE8850-PD` marker creates is printed under its own refusal for the same
+    reason: it is a row this tool found and would otherwise place nowhere.
     """
     hits, undecided = page_of_sites(d, pd_verified, page, back)
     print(f"page 0x{page:02X}, by the sites whose page this tool can "
@@ -714,6 +722,20 @@ def page_report(d: bytes, pd_verified: bool, page: int, back: int = WINDOW) -> i
         split = collections.Counter(access_of(r["access"]) for r in found)
         for what, count in sorted(split.items(), key=lambda kv: (-kv[1], kv[0])):
             print(f"  {'':<9} {count:>2} of them {what}")
+    # `region_of()` files the `0x20000-0x2FFFF` span under `unknown` when the
+    # marker is absent, and none of the three programs above is that. A
+    # determinate row there is not a refusal -- it carries a page -- so it is in
+    # none of the lists above, and the loop's own regions are what it fell
+    # between. Printed under the refusal that named it rather than dropped: a row
+    # the tool found and did not place is the one a reader cannot notice is
+    # missing, and a zero beside it would read as a measurement.
+    loose = sorted(hits.get(UNKNOWN_REGION, []), key=lambda r: r["offset"])
+    if loose:
+        where = ", ".join(f"0x{r['offset']:05X}" for r in loose)
+        print(f"  {UNKNOWN_REGION:<9} {len(loose):>2} site(s) building "
+              f"0x{page:02X}  ({where})\n  {'':<9} region unidentified: no "
+              f"{PD_MARKER[1].decode()!r}\n  {'':<9} marker, so this is neither "
+              "program's page count and it is added to neither.")
     if undecided:
         # "could not place" rather than "whose immediate names", because the
         # second is only true where the accumulator is zero and the list below
@@ -726,10 +748,16 @@ def page_report(d: bytes, pd_verified: bool, page: int, back: int = WINDOW) -> i
     main_rows = [r for region in MAIN_EC_REGIONS for r in hits.get(region, [])]
     main_ec = len(main_rows)
     if not main_ec:
-        print(f"\nSo the main EC does not reach page 0x{page:02X} by any of the "
-              "scans\nnamed in `registers.yaml`, and the PD image's computed DPTR "
-              "is a\ndifferent program's byte either way. That is \"not found by "
-              "these methods\", and it is\na statement about the methods.")
+        # Scoped to **this scan**, and the scoping is the whole of the claim.
+        # `scan_refs.py` and `trace_xdata_refs.py` both find direct
+        # `MOV DPTR,#imm16` sites on page `0x07` in the main EC, so a sentence
+        # reaching "any of the scans" would be false on the image this tool
+        # reads. `find_indirect_xdata.py`'s own `page_report()` scopes the same
+        # negative to "this method" for the same reason.
+        print(f"\nSo the main EC reaches page 0x{page:02X} at no computed-`DPH` "
+              "site this\nscan can establish, and the PD image's computed DPTR "
+              "is a different\nprogram's byte either way. That is \"not found "
+              "by this method\", and it\nis a statement about the method.")
     elif all(access_of(r["access"]) == CODE_ONLY for r in main_rows):
         print(f"\nEvery one of those sites uses the pointer it built as a CODE "
               f"pointer rather than an XDATA\none, so no XDATA byte on page "

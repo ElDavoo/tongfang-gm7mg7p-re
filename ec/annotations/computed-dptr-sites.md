@@ -2,8 +2,8 @@
 
 [`manual-fan-ctrl-0751.md`](manual-fan-ctrl-0751.md) §6 is this repository's own
 worked counter-example against its own tooling. `ec/tools/trace_xdata_refs.py`
-reports **zero** direct sites for `0x0F00`-`0x0F5C`, a page the EC provably
-reads and writes, because the EC reaches it by building the pointer in the
+reports **zero** direct sites for `0x0F00`-`0x0F5C`, a page the EC reads and
+writes bytes on, because the EC reaches it by building the pointer in the
 accumulator over two instructions — `add a,#lo ; mov DPL,a ; clr a ; addc
 a,#0x0f ; mov DPH,a` — and the address is in neither of them. This page is the
 scan that sees that spelling, the eight sites it finds, and the sentence in
@@ -266,10 +266,10 @@ page 0x07, by the sites whose page this tool can establish:
     0x2F3E4  pd-image  not established; the instruction before it is `mov a,r6`
     0x2F3ED  pd-image  not established; the instruction before it is `mov a,r6`
 
-So the main EC does not reach page 0x07 by any of the scans
-named in `registers.yaml`, and the PD image's computed DPTR is a
-different program's byte either way. That is "not found by these methods", and it is
-a statement about the methods.
+So the main EC reaches page 0x07 at no computed-`DPH` site this
+scan can establish, and the PD image's computed DPTR is a different
+program's byte either way. That is "not found by this method", and it
+is a statement about the method.
 $ echo $?
 1
 ```
@@ -286,6 +286,14 @@ front of those `addc`s, so it cannot rule `0x07` out for any of them either.
 - **`0x07D0`** (254 direct sites, all in the PD image, so zero in the main EC):
   the same, with `DO-NOT-WRITE-BLIND` unchanged. A static scan is not a
   behaviour.
+
+**The zero is this scan's, and the closing sentence says which.** A direct
+`MOV DPTR,#imm16` on the same page is a different spelling with its own scan —
+`scan_refs.py`, named in `registers.yaml` beside this one, reaches `0x07` in
+the main EC — so the negative above narrows what those two rows' zeros license
+and says nothing about theirs. That scoping is what `test_computed_dptr_sites.py`
+holds: the closing sentence names a *computed* `DPH` site, and a general one
+would be false against the committed image.
 
 **Six of the eight are followed by `movx @dptr`; the other two are not, and the
 population is not filtered on it.** `0x08AD8` and `0x08AF3` do `setb c ; lcall
