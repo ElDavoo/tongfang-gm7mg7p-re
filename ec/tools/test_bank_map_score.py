@@ -22,6 +22,7 @@ Nothing here was observed on hardware; the fixture is hand-written and the
 committed image is a committed file.
 """
 import os
+import re
 import sys
 import unittest
 
@@ -29,6 +30,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import bank_map_score as bms
+import find_banks
 
 FIXTURE_DIR = os.path.join(HERE, "testdata", "bank-map-score")
 FIXTURE_IMAGE = os.path.join(FIXTURE_DIR, "score-example-image.bin")
@@ -173,6 +175,36 @@ class Fixture(unittest.TestCase):
         rows = bms.read_csv(bms.TARGETS_CSV)
         pop, dropped = bms.population(d, rows)
         return bms.report(d, pop, dropped, rows)
+
+
+class DocstringQuotesTheSetItCriticises(unittest.TestCase):
+    """The size this tool quotes for `find_banks.py` is read off that set.
+
+    The docstring's whole second criticism is that the metric is a membership
+    test over a minority of byte values, so the size is the denominator of the
+    chance rate it quotes -- and the number drifts if nothing ties it to the
+    set, which is how a figure that flattered the heuristic being critiqued
+    reached four places. So the size is read out of `find_banks.py` here rather
+    than typed in, and editing the set fails this instead of the prose.
+    """
+
+    def quoted(self, pattern):
+        m = re.search(pattern, bms.__doc__)
+        self.assertIsNotNone(
+            m, "the docstring no longer matches %r, so what it claims about "
+               "`find_banks.py`'s scoring has to be re-read and re-stated" %
+               pattern)
+        return int(m.group(1))
+
+    def test_the_quoted_set_size_is_the_set_find_banks_defines(self):
+        n = len(find_banks.START_OPCODES)
+        self.assertEqual(self.quoted(r"a (\d+)-entry `START_OPCODES` set"), n)
+        self.assertEqual(self.quoted(r"over (\d+) of 256 byte values"), n)
+
+    def test_the_quoted_chance_rate_is_that_size_over_the_byte_space(self):
+        n = len(find_banks.START_OPCODES)
+        self.assertEqual(self.quoted(r"score about (\d+)%"),
+                         round(100.0 * n / 256.0))
 
 
 if __name__ == "__main__":

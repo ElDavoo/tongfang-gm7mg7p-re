@@ -145,9 +145,9 @@ is now measured.
 
 `find_banks.py` gives bank 0's mapping to `0x08000` at 51% and bank 1's to
 `0x10000` at 92%. Both figures come from one thing: for each of the trampoline
-call sites, is the byte at the candidate offset one of 32 hand-picked
-"plausible first opcode" values. That is a single-byte membership test over 32
-of 256 byte values, so random bytes score about 12.5%, and the distance
+call sites, is the byte at the candidate offset one of 30 hand-picked
+"plausible first opcode" values. That is a single-byte membership test over 30
+of 256 byte values, so random bytes score about 12%, and the distance
 `ec/README.md` reports between a right offset and a wrong one is 51% against
 32% — two mediocre numbers, not a margin.
 

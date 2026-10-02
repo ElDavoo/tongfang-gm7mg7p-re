@@ -4,10 +4,10 @@ sites, jointly, and say how far the winner is ahead of the runner-up.
 
 `find_banks.py` scores each bank on its own: it collects the runtime targets
 that reach one bank-switch stub and asks which 32 KiB slice of the file puts
-most of them on a byte in a 32-entry `START_OPCODES` set. That is the source of
+most of them on a byte in a 30-entry `START_OPCODES` set. That is the source of
 the 51% and 92% in `ec/README.md` §Layout, and the two things wrong with it are
 the two this tool exists to fix. The metric is a **single-byte membership test**
-over 32 of 256 byte values, so random bytes score about 12.5% and the distance
+over 30 of 256 byte values, so random bytes score about 12% and the distance
 between a right offset and a wrong one is a distance between two mediocre
 numbers -- the committed image gives bank 0 51% against 32%. And the banks are
 scored **independently**, so nothing in the run requires the two mappings to be

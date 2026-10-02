@@ -21,7 +21,7 @@ callers in this build:
 | 3 | `0x113C` | — | 0 | unused on this SKU/build |
 
 *(Corrected in place, 2026-10-02, issue #20: the "confidence" column above is a
-single-byte membership test over 32 of 256 byte values, so it is a score, not a
+single-byte membership test over 30 of 256 byte values, so it is a score, not a
 probability, and neither figure should be read as one. `tools/bank_map_score.py`
 re-scores the same call sites on the two landing-byte classes that cannot be an
 instruction at all — `0xFF`, and the four values the MCS-51 map assigns to none
@@ -923,13 +923,13 @@ needs:
    callers are covered by `find_banks.py`; in-bank-to-in-bank calls, if any,
    are not yet enumerated). *(Corrected in place, 2026-10-02, issue #20: "not
    yet enumerated" is stale — `annotations/bank-call-audit.md` §4 enumerates
-   them, 3,261 bucket-B sites of which 33 are evidenced and 1,305 pairs are
-   undecidable in principle because nothing in an `lcall` names a bank. What
-   remains open is not the enumeration but the *assumption* underneath it:
-   `tools/bank_map_score.py` now scores the bank-to-offset mapping those sites
-   are read against, jointly, and its §4 names how far the winning pair is
-   ahead and how much of that is evidence. The sentence above is left standing;
-   see
+   them, target by target and pair by pair, and carries the counts. What
+   remains open is not the enumeration but the *same-bank assumption*
+   underneath it: nothing in an `lcall` names a bank, so a pair both banks
+   satisfy is undecidable from the bytes. `tools/bank_map_score.py` now scores
+   the bank-to-offset mapping those sites are read against, jointly, and its §4
+   names how far the winning pair is ahead and how much of that is evidence.
+   The sentence above is left standing; see
    [`../docs/findings/bank-map-and-image-census.md`](../docs/findings/bank-map-and-image-census.md).)*
 3. A test harness — this is a live EC that runs the keyboard, battery gauge,
    thermal management and USB-PD negotiation. A bad reflash is a bricked
