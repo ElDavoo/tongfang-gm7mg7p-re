@@ -191,7 +191,7 @@ family (`0x5E`) on nine bases at `0x08E7`-`0x08FC`, and `xdata-086x-dispatch.md`
 is about the EC's `0x086x` handlers. Both images allocate there heavily and
 they collide there more than chance, and **this work does not say why** —
 naming what either image keeps at `0x0800`-`0x08FF` needs the control-flow
-recovery §6 lists as missing, and `pd-index-geometry.md` §4 is where that
+recovery §6 lists as missing, and `pd-index-geometry.md` §8 is where that
 question is already carried. It is a follow-up, not a result.
 
 ## 3. The 39, with §4's three tests applied to each
@@ -302,17 +302,16 @@ The three tests, answered:
 more (`0x0400`, `0x0408`, `0x0410`, `0x0434`, `0x04A4`) it is `index` plus
 `none`, still no `movx` at the address. **29 of the 39 are never dereferenced
 by the PD image at all.** The ten that are all sit on the `0x07xx` page, and
-that is not the collision-concentration effect §2 measures: `xdata-registers.csv`
-already carries that page as dense census clusters (`0x07D3`-`0x07D5`,
-`0x07D8`-`0x07DA`, `0x07F2`-`0x07F3`, `0x07F6`, `0x07FD`-`0x0801`), so a page
-this heavily used on both sides is where a plain `movx` is expected to turn
-up rather than an index base.
+that is not the collision-concentration effect §2 measures:
+`xdata-registers.csv` already marks all ten of them `program=both`, so a page
+this heavily used on both sides is where a plain `movx` is expected to turn up
+rather than an index base.
 
 Those 29 are not a fresh finding, and it is worth saying where they are
 already recorded: every one of the 22 `0x04xx` collisions is a base in
 `pd-base-strides.csv`'s `0x60` row, which is the stride family
 `pd_index_geometry.py --strides 0x0400-0x07FF` re-derives, and
-`pd-index-geometry.md` §4's page term makes the effective stride `0x260`. So
+`pd-index-geometry.md` §3.2's page term makes the effective stride `0x260`. So
 §5.2's reading is not re-derived here; it is now measured over the whole
 collision set rather than over `0x04A6` and `0x04A3`, and it comes out the
 same. The six `0x06xx` collisions are in none of that mode's resolved rows —
@@ -325,10 +324,12 @@ verdict that no stride is there.
 `mov 0xf0,#0x5e ; mul ab ; add a,#0xe9` at most `0x07D4` sites is the stride
 `0x5E` computation, not an increment of the byte. The one genuine in-place
 increment in the whole set is §4's next section. The EC side compares
-constants at five of the 39 — `0x0458`, `0x0491`, `0x0670`, `0x07FE`,
-`0x07FF` — and those are bit-field tests (`anl a,#0x70 ; cjne a,#0x10`), not
-threshold comparisons. At the first three of those the PD image hands DPTR on
-rather than reading; at the last two it reads the byte.
+constants at five of the 39, and not in one shape: `0x0458` and `0x0491` are
+masked bit-field tests (`anl a,#0x70 ; cjne a,#0x10` and `anl a,#0xc0`),
+`0x0670` a threshold compare against `0xA0` whose byte is elsewhere written
+with that same `0xA0`, and `0x07FE`/`0x07FF` unmasked compares against the
+`0x55`/`0xAA` pair followed by clearing both. At the first three of those the
+PD image hands DPTR on rather than reading; at the last two it reads the byte.
 
 **Same shape in both images?** No, and consistently so in one direction. Of
 the 28 collisions below `0x0700`, **20 are plain `movx` in the EC and never
@@ -422,10 +423,10 @@ one counter — one program is polling for a byte to become non-zero and the
 other is keeping a copy of `0x09EA` in step with it.
 
 **This is not a conflict, and it is not proof of one.** Whether the PD image's
-`0x07D4` and the EC's `0x07D4` are the same byte is exactly the question §7
-puts to a human with the machine, and it is still open: two programs whose
-separate XDATA spaces are byte-identical in address would produce this listing
-pair exactly as it stands.
+`0x07D4` and the EC's `0x07D4` are the same byte is a question of §7's kind for
+this address — one only a human at the machine can answer, because two
+programs whose separate XDATA spaces are byte-identical in address would
+produce this listing pair exactly as it stands — and it is still open.
 
 ## 5. What this does not establish
 
@@ -442,10 +443,12 @@ pair exactly as it stands.
   `trace_xdata_refs.py` reports `DPTR handed to lcall … -- direction unresolved
   here` because it cannot follow a call. `pd-index-geometry.py` resolves the
   arithmetic for the addresses whose chain it can model, and issue #1425
-  resolved the `0x04A3` handoffs to the byte
-  (`pack-temp-producer-chain.md` §4) — but that is a per-address adjudication,
-  not something this survey did for all 29. "Hands DPTR on" is the claim; what
-  it computes is not re-derived here.
+  adjudicated `0x04A3` as a base rather than as the datum
+  (`pack-temp-producer-chain.md` §4: the three sites that dereference do so at
+  a rebased address, `0x04A3 + R7×0x60 + 0x200×R7` and the like, and no
+  general value of those terms lands on the byte) — but that is a per-address
+  adjudication, not something this survey did for all 29. "Hands DPTR on" is
+  the claim; what it computes is not re-derived here.
 - **The `0x0800` page's excess is measured, not explained.** §2 shows where it
   is and that the rest of the low range is at chance. Naming what either image
   keeps there is §6's missing control-flow recovery, and it is not attempted.
@@ -469,8 +472,8 @@ pair exactly as it stands.
   collide at +3σ against a null computed over that page alone, and where this
   work says nothing about what either image keeps. §2 names it; naming it
   needs the same recovery §6 of `pd-xdata-overlap.md` lists as missing, and
-  `pd-index-geometry.md` §4's `--bases 0x0800-0x08FF` is the mode already built
+  `pd_index_geometry.py --bases 0x0800-0x08FF` is the mode already built
   for it.
-- **The live step is unchanged and is still a human's.** Read EC RAM over a
-  period in which the PD image is active and see whether the byte the EC calls
-  `CPUA` moves on its own.
+- **The live step is a human's.** Read EC RAM over a period in which the PD
+  image is active and see whether the byte the EC calls `CPUA` moves on its
+  own.

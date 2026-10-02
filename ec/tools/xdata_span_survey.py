@@ -16,11 +16,12 @@ registers happen to sit.
 
 The region map, the PD image's identifying marker and the "which image is
 this offset in" rule all come from trace_xdata_refs.py; nothing about the
-dump's layout is re-derived here, and neither is the byte-for-byte diff a
-committed table has to survive. The counting is the same `90 hi lo` byte
-pattern scan_refs.py uses, with the same limits: it is not instruction
-aligned, so a hit can be an operand byte or table data rather than a real
-`MOV DPTR,#imm16`, and indirect/pointer XDATA access is invisible to it. A
+dump's layout is re-derived here, and neither is the byte-for-byte check,
+which comes from trace_xdata_refs.py alongside the region map. The counting is
+the same `90 hi lo` byte pattern scan_refs.py uses, with the same limits: it is
+not instruction aligned, so a hit can be an operand byte or table data rather
+than a real `MOV DPTR,#imm16`, and indirect/pointer XDATA access is invisible
+to it. A
 zero therefore means "not found by this method", never "absent" -- see the
 0x07B9 blind spot in docs/findings.md 4c. Counts here are expected to equal
 `trace_xdata_refs.py --counts-only` for any address; they are a faster way

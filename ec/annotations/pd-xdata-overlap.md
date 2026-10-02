@@ -442,14 +442,15 @@ move this verdict in either direction.**
 [`docs/findings/pd-xdata-collision-survey.md`](../../docs/findings/pd-xdata-collision-survey.md)
 applies §4's three tests to the other 39 addresses and re-runs the survey over
 the whole `0x0000`-`0xFFFF` range, whose both-image collision set is committed
-as `pd-xdata-collisions-full.csv`. Both halves of the reasoning above survive
-the wider look: the PD image hands DPTR on rather than dereferencing the byte
-at 29 of the 39, which is §5.2's reading measured over the set rather than
-over the two addresses the audit met, and the collision rate one page below
-this one is what independent choice predicts. The falsifier this section
-names — a collision where both images increment the same byte — is not present.
-The one place the wider evidence departs from chance is the `0x0800`-`0x08FF`
-page, which is not decoded there and is not decoded here.
+as `pd-xdata-collisions-full.csv`. Both things §5.1 argues survive the wider
+look: `0x04A6` is still not the only collision, and 40 is still about what
+chance predicts — which also holds over the rest of the low 4 KiB with the
+`0x0800` page taken out. The PD image hands DPTR on rather than dereferencing
+the byte at 29 of the 39, which is §5.2's reading measured over the set
+rather than over the two addresses the audit met. The falsifier issue #64
+names — a collision where both images increment the same byte — is not
+present. The one place the wider evidence departs from chance is the
+`0x0800`-`0x08FF` page, which is not decoded there and is not decoded here.
 
 ### 5.2 The PD image's own block structure
 

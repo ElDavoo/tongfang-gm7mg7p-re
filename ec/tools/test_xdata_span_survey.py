@@ -22,7 +22,7 @@ and `ec-0x07d0-sites.md` §1 all cite. The case below re-derives them by running
 shows up as disagreement rather than as a number that quietly moved. Pinned as
 literals as well, because a pair of tools that drift *together* agree with each
 other forever -- the same vacuous-green shape
-`../../docs/findings.md` §88 records.
+`../../docs/findings.md` §14b records.
 
 **The mutations are the reason the rest of the file means anything.**
 `--collisions` and `--check` are two additions to a tool whose committed
