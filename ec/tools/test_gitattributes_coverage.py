@@ -84,6 +84,7 @@ BYTE_COMPARED = {
     # `test_a_crlf_emitters_table_is_not_marked_eol_lf` case is what keeps them
     # on the other attribute.
     "ec/annotations/walk-budget-census.csv": "walk_budget_census.py",
+    "ec/annotations/pd-no-ret-fallthrough.csv": "pd_no_ret_fallthrough.py",
     "ec/annotations/xdata-086x-dispatch-sites.csv": "trace_xdata_refs.py",
     "ec/annotations/flow-follow-none-sites.csv": "walk_flow_follow.py",
     "ec/annotations/pd-entry-forms.csv": "pd_entry_forms.py",
@@ -115,6 +116,7 @@ BYTE_COMPARED = {
 # the CR bytes of every committed CSV an `eol=lf` line covers.
 CRLF_EMITTERS = (
     "walk_budget_census.py",
+    "pd_no_ret_fallthrough.py",
     "trace_xdata_refs.py",
     "walk_flow_follow.py",
     "pd_entry_forms.py",

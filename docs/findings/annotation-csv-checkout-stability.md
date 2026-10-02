@@ -79,6 +79,7 @@ byte-compared tables are:
 | `ifr_census.py` (`bios/`) | `bios/ifr/charge-questions.csv` |
 | `census_native_c.py` (`windows/`) | `windows/ghidra/c-census.csv` |
 | `walk_budget_census.py` | `ec/annotations/walk-budget-census.csv` |
+| `pd_no_ret_fallthrough.py` | `ec/annotations/pd-no-ret-fallthrough.csv` |
 | `trace_xdata_refs.py` | `ec/annotations/xdata-086x-dispatch-sites.csv` |
 | `walk_flow_follow.py` | `ec/annotations/flow-follow-none-sites.csv` |
 | `pd_entry_forms.py` | `ec/annotations/pd-entry-forms.csv` |
