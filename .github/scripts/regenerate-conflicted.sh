@@ -13,9 +13,18 @@ set -euo pipefail
 
 declare -A REGEN=(
   [docs/findings/INDEX.md]='python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md'
+  [ec/ghidra/xdata-symbols.csv]='python3 ec/tools/gen_xdata_symbols.py'
+  [ec/annotations/xdata-export-ownership.csv]='python3 ec/tools/export_ownership.py'
   [ec/annotations/xdata-registers.csv]='python3 ec/tools/xdata_register_map.py'
   [ec/annotations/xdata-clusters.csv]='python3 ec/tools/xdata_register_map.py'
-  [ec/ghidra/xdata-symbols.csv]='python3 ec/tools/gen_xdata_symbols.py'
+)
+# The order the generators run in: a generator runs after every generator whose output it
+# reads. The census reads the ownership map, so the ownership map goes first.
+ORDER=(
+  'python3 ec/tools/gen_xdata_symbols.py'
+  'python3 ec/tools/export_ownership.py'
+  'python3 ec/tools/xdata_register_map.py'
+  'python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md'
 )
 
 mapfile -t conflicted < <(git diff --name-only --diff-filter=U)
@@ -31,14 +40,15 @@ if [ "${#other[@]}" -gt 0 ]; then
   exit 1
 fi
 
-# Inputs before outputs: the symbol table is read by nothing here, the census reads
-# registers.yaml, and the index reads only docs/findings/. One run per distinct command.
-declare -A ran=()
+declare -A wanted=() ran=()
 for path in "${conflicted[@]}"; do
-  cmd=${REGEN[$path]}
-  if [ -z "${ran[$cmd]:-}" ]; then
+  wanted[${REGEN[$path]}]=1
+  git checkout --theirs -- "$path" 2>/dev/null || true
+done
+# A generator downstream of one that ran is re-run too: its input just changed.
+for cmd in "${ORDER[@]}"; do
+  if [ -n "${wanted[$cmd]:-}" ] || [ "${#ran[@]}" -gt 0 ]; then
     echo "regenerating with: $cmd"
-    git checkout --theirs -- "$path" 2>/dev/null || true
     bash -c "$cmd" >/dev/null
     ran[$cmd]=1
   fi
