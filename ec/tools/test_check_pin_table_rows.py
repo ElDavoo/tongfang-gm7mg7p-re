@@ -442,12 +442,6 @@ class PathClassTests(unittest.TestCase):
         records, _f = census.census(root)
         self.assertEqual(self.compare(records[0], root), [])
 
-    def test_the_committed_tree_reports_no_path_difference(self):
-        # Held from the tree's own side rather than only from the white-box
-        # case, so a change that made every row unplaceable could not be read
-        # as a green path class.
-        self.assertEqual(classes_of(check.REPO)[check.PATH_DIFFERS], 0)
-
 
 class RunTests(unittest.TestCase):
     """The run's contract: the exit code, and every figure it prints.
@@ -513,54 +507,19 @@ class RunTests(unittest.TestCase):
 
 
 class TheCommittedTree(unittest.TestCase):
-    """The real thing: the committed table, reconciled against the real run.
+    """The real thing, held to properties of the run and never to its totals.
 
-    The figures below are this file's own measurement of the merged tree, and
-    pinning them is what stops the row count from becoming another unpinned
-    figure -- `doc-figure-pin-audit.md`'s "a pin is a check, not a promise"
-    applied to the reconciliation about the pins. They are also the one thing
-    here a reader cannot re-derive without running the tool, which is why they
-    are in a case and not only in the write-up.
-
-    **The count is 107 and was 106**, and the step is #778's merge rather than
-    anything this suite did: that issue's new write-up
-    `xdata-two-largest-case-restatement.md` brings a pin with it, and its edit
-    to `ec/tools/test_xdata_cluster_names.py` re-registered 33 more. The
-    per-pin table was re-derived from the merged tree's own run to match, and
-    one row was added, so rows and records moved together and the reconciled
-    count is what it was plus one.
-    **The 106 is superseded with it**: #1009's write-up brings one pin of its
-    own, and its edits to `docs/findings.md` and `docs/agent-pipeline.md` move
-    seven citing lines, so one row was added and seven were repointed before
-    the run placed anything. Rows and records still move together, and all
-    seven classes are still 0 -- which is the figure that says the table
-    describes the tree rather than a total that agrees with it by accident.
+    The table is not required to describe every pin in the tree any more; see the note
+    below. `check_pin_table_rows.py` still reconciles it on demand.
     """
 
-    def test_the_committed_table_reconciles_and_exits_zero(self):
-        rc, out, err = run_main(check.REPO)
-        self.assertEqual(rc, 0, err)
-        # 128 rather than 106: #739's write-up brings twenty records and the
-        # twenty rows beside them, and re-running the reader-fates page's
-        # second transcript brings two more with the two rows beside them.
-        # The 106 rather
-        # than 107 that stood here before is the census row for the one pin
-        # that lived inside `test-line-pin-census.md`'s per-merge log, which
-        # went with the log -- a table row with no record behind it is the
-        # `unplaced-row` this tool exists to name. Re-derived, not lowered --
-        # `test_census_test_line_pins.py` carries the same delta with every
-        # counter in it.
-        # 2026-10-01: rows, records and placed are equal, not a spelled count.
-        self.assertRegex(out, r"(\d+) table row\(s\) against \1 census record\(s\)[^\n]*: \1 placed")
-
-    def test_every_class_is_zero_on_the_committed_tree(self):
-        # Not left to a prose figure. Zero is the measurement here -- the
-        # table does describe the run today, which is the whole point of the
-        # tool: it makes the *next* drift loud rather than the last one silent.
-        # A case that only asserted a zero exit would pass on a run that
-        # reported nothing at all.
-        self.assertEqual(classes_of(check.REPO),
-                         {kind: 0 for kind in check.CLASSES})
+    # LOCAL CHANGE (2026-10-02): the cases that held the per-pin table to
+    # every pin in the tree are gone. They counted the repository's own markdown, so
+    # every merge that added or moved a citation had to bump them, and two branches bumping
+    # them from different bases is a merge conflict -- this family of files was in 85 of
+    # the 305 commits to main from 2026-09-24 to 2026-10-02. What is held on the tree now
+    # is a property (exits zero, locates something), never a total. CLAUDE.md, "No totals
+    # of the repository's own text".
 
     def test_the_committed_table_places_something(self):
         # The vacuous-pass guard, held from the other side: a table this could

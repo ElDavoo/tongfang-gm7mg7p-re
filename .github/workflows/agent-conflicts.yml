@@ -246,6 +246,10 @@ jobs:
               merged tree legitimately moves one because both sides added rows or names, set
               it to the measured value and add a one-line comment saying which change moved
               it. A pin that moves for a reason you cannot explain is a real failure: say so.
+            - A conflict on a total or count of the repository's own text (how many write-ups,
+              suites, tests, pins, rows, lines or files), in prose or in a test: delete the
+              total rather than recomputing it, on both sides. CLAUDE.md, "No totals of the
+              repository's own text".
             - A document that transcribes a tool's output: re-run the tool on the merged tree
               and transcribe that, rather than picking either side's transcript.
 

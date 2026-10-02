@@ -270,6 +270,9 @@ jobs:
             to check those as well. Do not add a new count, line number or "on every tree since"
             claim in a fix round unless the finding asks for one. Cite code by function or
             heading name rather than by line number (see CLAUDE.md, "Cite code by name").
+            A finding about a total of the repository's own text (how many suites, tests,
+            pins, rows, lines or files) is fixed by deleting the total, in prose and in
+            tests alike (CLAUDE.md, "No totals of the repository's own text").
 
             The pull request's title and description are in /tmp/pr/title.txt and
             /tmp/pr/body.md, outside the checkout. When a finding is about the title or the
