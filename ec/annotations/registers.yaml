@@ -333,8 +333,8 @@ registers:
       real-world effect untested", and a readback is not evidence the EC acts
       on it (see OEM_9 below for the same downgrade). No `status:` is recorded
       for the powershare feature, because it is a bit of a byte that already
-      has one and nothing live has been run at the register. The prepared
-      procedure is docs/hardware-tests/ and the audit is
+      has one and nothing live has been run at the register, so there is no
+      prepared procedure for it. The audit is
       docs/findings/uniwill-feature-addresses.md.
 
   - name: SWITCH_STATUS (SUPER_KEY_LOCK_STATUS)

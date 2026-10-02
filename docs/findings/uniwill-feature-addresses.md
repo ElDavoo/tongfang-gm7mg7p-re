@@ -266,15 +266,15 @@ found, phrased as a statement about the world.
 ## What the re-derivable subset is now
 
 `docs/findings.md` §4d's parenthetical says what is re-derivable from
-committed files is a set of **14** addresses. The four fan bytes join it, so
-the set is **18**.
+committed files is a set of addresses. The four fan bytes have joined it: they
+are now rows of `registers.yaml` and of §3's table in
+`ec/annotations/static-refs-audit.md`, two addresses for each of the two
+pairs, all four `confirmed-working`, all four main-EC with non-zero counts.
 
-That arithmetic is 14 + 4 and nothing else moved: two addresses for each of
-the two pairs, all four `confirmed-working`, all four main-EC with non-zero
-counts. `USB_POWERSHARE` and `TOUCHPAD_TOGGLE` do **not** join it, because
-they are bits of bytes already in the set (`0x0767` and `0x07A6` are rows in
-§3's live-verdict table) rather than new addresses, and neither has a live
-verdict of its own to add.
+`USB_POWERSHARE` and `TOUCHPAD_TOGGLE` did **not** join it, because each is a
+bit of a byte already in the set (`0x0767` and `0x07A6` are rows in §3's
+live-verdict table) rather than a new address, and neither has a live verdict
+of its own to add.
 
 The original 20 is still not enumerated register-by-register anywhere, and
 growing the re-derivable subset does **not** retroactively show that the scan

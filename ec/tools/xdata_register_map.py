@@ -923,15 +923,14 @@ ORACLE = {
     # census pins above are therefore the ones #1425 measured and this block
     # leaves them at; only `named_in_tree` moves here.
     #
-    # *** 2026-10-02, issue #29: 190 -> 194, and it is the four fan-tachometer
+    # *** 2026-10-02, issue #29: what moved it is the four fan-tachometer
     # bytes `registers.yaml` gained as `MAIN_FAN_RPM` (0x0464/0x0465) and
     # `SECOND_FAN_RPM` (0x046C/0x046D). All four were already reached by the
     # census before they were named -- 0x0464 in main-ec-145, 0x046C and 0x046D
-    # in main-ec-138 -- so this is the 190 + 4 = 194 and nothing else, and
-    # NOT_IN_TREE stays at its own length: the four are not in it, which is
-    # what the address-for-address assertion below is for. The arithmetic is
-    # 221 symbols - 27 NOT_IN_TREE = 194, and `len(symbols)` moved 217 -> 221
-    # for the same reason.
+    # in main-ec-138 -- so naming them is all this issue did to the census,
+    # and NOT_IN_TREE stays at its own length: the four are not in it, which is
+    # what the address-for-address assertion below is for. `--self-test`
+    # re-derives the number rather than taking it on trust.
     #
     # **The `extmem_*` and `symbol_*` pins above do NOT move, and that is a
     # decision rather than an omission -- so it is worth saying why, because

@@ -146,8 +146,8 @@ Two results worth naming:
 independently confirmed live behaviour** (15 working, 5 not) and predicted all
 20 correctly. That set is not enumerated register-by-register anywhere in this
 repo, so this table cannot claim to *be* those 20. What it is: every address in
-`registers.yaml` whose status comes from live observation — 18 addresses, 14
-graded live-working and 4 live-negative.
+`registers.yaml` whose status comes from live observation, working and
+live-negative alike.
 
 | addr | register | live verdict | main EC | PD | consistent with §4d |
 |---|---|---|---:|---:|---|
@@ -171,9 +171,9 @@ graded live-working and 4 live-negative.
 | `0x046D` | `SECOND_FAN_RPM_1` | works (RPM sysfs vs sound) | 1 | 0 | yes |
 
 So §3a's prose claim — "every live-confirmed register in §2 does have
-references in the EC image" — holds for all 14 live-working addresses this
-repo records an address for, `0x04A6` included, and the 4 live-negative ones
-have zero references in either image. The claim is measured now rather than
+references in the EC image" — holds for every live-working address this repo
+records an address for, `0x04A6` included, and the live-negative ones have
+zero references in either image. The claim is measured now rather than
 asserted.
 
 `0x07B9` is deliberately not a row above. It is the counter-example, not a
@@ -901,16 +901,16 @@ the terms §6, §7, §8 and §9 set out: **§2 and §5 stay a 29-address snapsho
 and are not re-measured, because they were taken under different conditions and
 editing them would rewrite a snapshot rather than extend one.
 
-**§3's subset is now 18 addresses, 14 live-working and 4 live-negative.** The
-four that joined are the two fan-tachometer pairs, `0x0464`/`0x0465` and
-`0x046C`/`0x046D`, graded `confirmed-working` on `../../docs/findings.md` §2's
-"confirmed (RPM sysfs matches physical sound)" — a live read cross-checked
-against an observation outside the machine. Two limits ride on the entries
-rather than being left implicit: it is a **read** verdict, so it establishes
-the driver/EC model and not that the bytes are writable controls; and the
-`0x046C`/`0x046D` grade does not rest on the vendor's read, which is
-`0x046C`/`0x046B` and is wrong about the low byte. The firmware's own 16-bit
-arithmetic over `0x046C`/`0x046D` is what settles that address — see below and
+**§3's table gains the two fan-tachometer pairs.** The four that joined are
+`0x0464`/`0x0465` and `0x046C`/`0x046D`, graded `confirmed-working` on
+`../../docs/findings.md` §2's "confirmed (RPM sysfs matches physical sound)"
+— a live read cross-checked against an observation outside the machine. Two
+limits ride on the entries rather than being left implicit: it is a **read**
+verdict, so it establishes the driver/EC model and not that the bytes are
+writable controls; and the `0x046C`/`0x046D` grade does not rest on the
+vendor's read, which is `0x046C`/`0x046B` and is wrong about the low byte. The
+firmware's own 16-bit arithmetic over `0x046C`/`0x046D` is what settles that
+address — see below and
 `../../docs/findings/uniwill-feature-addresses.md`.
 
 `USB_POWERSHARE` and `TOUCHPAD_TOGGLE` do **not** join this subset, and the
@@ -955,7 +955,7 @@ is upgraded on the strength of a reference count, and nothing is downgraded.
 
 **§3's "the scan predicted all 20 correctly" is untouched and stays
 unverifiable from here.** The original 20 was never enumerated register by
-register, and §4d's parenthetical number is now 18 — 14 plus these four. Growing
-the re-derivable subset does not show the scan got the other two right; that
-still rests on the original testing notes. §4d says so in its own words and
-this section does not improve on it.
+register, and §4d's parenthetical still counts the set as it stood before these
+four joined it. Growing the re-derivable subset does not show the scan got the
+other two right; that still rests on the original testing notes. §4d says so in
+its own words and this section does not improve on it.
