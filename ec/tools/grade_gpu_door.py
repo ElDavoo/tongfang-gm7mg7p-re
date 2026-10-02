@@ -223,12 +223,13 @@ DS_NAMES = (
 #
 # Restated rather than read off `fan.MARK_MERGE_SECONDS`, deliberately, so a
 # window that moves in `grade_0751_isolation.py` is a visible event: derived,
-# it would carry this grader's flag threshold along with it silently, and a
-# decision about a three-console fuse window would become a decision about a
-# one-console flag threshold with nobody asked and no test run.
+# it would carry this flag threshold along with a three-console fuse window,
+# so a decision about one procedure's threshold would be made by editing
+# another procedure's constant. Nothing would then hold the two equal, and
+# what a moved window turns red is a note that happens to print the number.
 # `test_the_restated_threshold_is_the_graders_window` pins the equality, so
-# such a move fails this file's own suite and names itself rather than leaving
-# a stale literal here; and `report_close_marks` prints the other grader's
+# such a move fails this file's own suite by name, on the relation itself
+# rather than on a string; and `report_close_marks` prints the other grader's
 # window off the same constant, so a broken pin is two disagreeing numbers in
 # one report rather than only a line in a test log. Written up in
 # docs/findings/door-grader-close-marks-threshold.md.

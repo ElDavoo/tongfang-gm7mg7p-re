@@ -32,21 +32,23 @@ spacing rather than the fixture's job, and the case is left exactly as it is.
 
 ## Why the pin, and not the derivation
 
-Both are offered and either would have been defensible; the two want opposite
-behaviour when the 0751 window moves, which is what decides it.
+Both are offered and either would have been defensible. What decides it is what
+turns red when the 0751 window moves, measured rather than argued — the mutation
+table below carries the runs.
 
-- **Derive** (`CLOSE_MARKS_SECONDS = fan.MARK_MERGE_SECONDS`). Moving
-  `MARK_MERGE_SECONDS` moves the door grader's flag threshold with it, silently.
-  Nothing in the door grader's own suite goes red, and a decision about a
-  three-console *fuse* window becomes a decision about a one-console *flag*
-  threshold with nobody asked. The one run that would turn red is the probe
-  suite's, from #665 — and it says nothing about the door grader, which is
-  exactly the point: under the derivation this file becomes the one restated
-  number in the tree that nothing names.
-- **Pin.** The same move fails one named case in
-  `ec/tools/test_grade_gpu_door.py` and a human decides whether the threshold
-  should follow. This is #665's direction of pin verbatim: the door's copy is
-  what follows the grader, not the other way round.
+- **Derive** (`CLOSE_MARKS_SECONDS = fan.MARK_MERGE_SECONDS`). The door grader's
+  flag threshold then follows a three-console *fuse* window, and a decision about
+  one procedure's threshold is made by editing another procedure's constant. The
+  door suite does go red when the window moves, but on
+  `test_close_marks_are_flagged_and_never_fused` and
+  `test_a_file_boundary_is_noted_where_the_two_captures_meet`, which hold the
+  note byte for byte and so break on a string that happens to embed the number.
+  Nothing names the relation that moved.
+- **Pin.** The same move fails one named case,
+  `test_the_restated_threshold_is_the_graders_window`, which is about the
+  equality itself rather than about a string carrying the number, and a human
+  decides whether the threshold should follow. This is #665's direction of pin
+  verbatim: the door's copy is what follows the grader, not the other way round.
 
 There is a second, independent argument, and it is this repository's own.
 `grade_0751_isolation.py`'s comment on `CLOSE_GAP_SECONDS` declines to copy the
@@ -104,6 +106,7 @@ edit and reverted; none is a committed state.
 |---|---|
 | `MARK_MERGE_SECONDS = 30` in `grade_0751_isolation.py` | `test_the_restated_threshold_is_the_graders_window`, by name, and nothing else — the issue's *Done* criterion |
 | `CLOSE_MARKS_SECONDS = 8` (the literal drifting) | the new case, and the two cases holding `are 1.0s apart, inside the 5s flag threshold` byte for byte |
+| `CLOSE_MARKS_SECONDS = fan.MARK_MERGE_SECONDS` (the derivation) with `MARK_MERGE_SECONDS = 30` | the same two byte-for-byte cases, and *not* the new case — the derivation cannot fail an equality it makes true by assignment |
 | the `{fan.MARK_MERGE_SECONDS:g}s` interpolation deleted from the note (the explanation drifting off the constant) | the new case |
 | `gap <= CLOSE_MARKS_SECONDS` loosened to `<` | the new case, on its `5s apart` edge |
 
@@ -134,8 +137,9 @@ edit and reverted; none is a committed state.
 ## Left out on purpose
 
 - **Deriving the threshold instead of pinning it.** A one-line change the pin
-  already accepts; not taken here, because it makes a move silent rather than
-  visible.
+  already accepts; not taken here, because it leaves nothing asserting the
+  relation, so what a moved window turns red is a string rather than the
+  equality.
 - **Making the door grader fuse, or merging the two graders.** The issue
   forbids it and the module docstring argues the distinction; the door's §3 is
   "mark, act, hold, mark" on one console, and fusing would attribute the second
@@ -190,12 +194,19 @@ about the work:
 `measure_mark_provenance.py` names every site its own write-up rests on as a
 `(path, line, quoted text)` triple, and
 `test_measure_mark_provenance_citations.py` re-reads each one and fails if the
-line no longer carries the quoted text. One of them pinned
-`grade_gpu_door.py:686`, the second consumer of `read_capture`'s two-tuple; the
-comment above `CLOSE_MARKS_SECONDS` grew a dozen lines above it here, so that
-pin is re-anchored to the line now carrying `m, c = fan.read_capture(path)`. The
-text it quotes and the claim it makes are both unchanged, and
+line no longer carries the quoted text. One of them pinned the second consumer
+of `read_capture`'s two-tuple, the line carrying
+`m, c = fan.read_capture(path)`; the comment above `CLOSE_MARKS_SECONDS` grew
+above it here, so that pin is re-anchored. The text it quotes and the claim it
+makes are both unchanged, and
 `docs/findings/0762-provenance-citation-reanchor.md` describes the
-re-anchoring. It is the only edit to a file this change does not otherwise
-touch, and it follows from adding comment lines rather than from a change of
-subject.
+re-anchoring.
+
+**Those comment lines are not the only reason the line moved.** `main` grew
+`grade_gpu_door.py` above it independently, so this change is rebased onto
+`main` and the pin is anchored against the merged tree rather than against this
+branch's own base — anchored against the base, it would resolve here and point at
+nothing once the two met. The other half of a re-anchor is the page:
+`0751-mark-provenance-shapes.md`'s live table carries the new number, which is
+what `check_page` reads, and without it the tool reports the citation as one the
+two findings pages do not name.
