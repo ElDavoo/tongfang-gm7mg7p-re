@@ -36,9 +36,10 @@ verdict is *the pair this scoring ranks first, by this many bad landings*, and
 the tool prints what a chance offset would have scored over the same population
 so the reader can see how much of the margin is evidence. On the committed
 image bank 0's winning offset takes **no** bad landing in 350 sites and bank
-1's takes none in 53; a uniformly random 32 KiB block would be expected to take
-about two and one respectively, which is a real margin for bank 0 and a weak
-one for bank 1 -- and §4 says so rather than leaving the reader to work it out.
+1's takes none in 53, and §4 prints what a uniformly random 32 KiB block would
+have been expected to take over each of those populations, so the reader sees
+how much of the margin is evidence rather than being handed a number here that
+can only drift from the one the tool computes.
 
 **Framing is reported, not scored.** `disasm8051.py`'s `OPCODE_LEN` table is
 imported so a target that walks cleanly for N instructions is distinguished from

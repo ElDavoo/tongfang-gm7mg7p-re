@@ -2,14 +2,14 @@
 
 **Nothing here was read from an EC.** `census-example-image.bin` was written by
 hand to exercise `../firmware_regions.py`'s branches; not one of its bytes is
-evidence of anything about the real dump. It carries the obviously placeholder
-`2026-01-01` timestamp so it can never be mistaken for a capture.
+evidence of anything about the real dump, and nothing in it is dated. It is this
+README and the construction recorded below that say so.
 
 It is a binary file with no header comment, which is the only form that works
 here: `census()` walks the image in `0x8000`-sized blocks from offset zero, so
 anything prepended would shift every block boundary and the fixture would stop
-being the shape it claims to be. The claim that it is constructed is this file
-and the timestamp, not a header inside it.
+being the shape it claims to be. The claim that it is constructed is this file,
+not a header inside it.
 
 | file | what it pins |
 |---|---|

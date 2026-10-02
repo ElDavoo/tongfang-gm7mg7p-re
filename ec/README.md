@@ -953,10 +953,10 @@ where the reading came from — those names come from
 committed disassembly re-encodes to the firmware bytes: 45,481 of 45,624
 instructions, measured by `tools/verify_reassembly.py` and recorded in
 `ghidra/reassembly.csv`. *(Corrected in place, 2026-10-02, issue #20: both
-figures above are stale against the committed `ghidra/reassembly.csv`, which
-`tools/reassembly_checked_bound.py --check` prints — it reports 45,518 checked
-and 45,661 in all, so the pair has moved and neither number above should be
-quoted. The correction immediately below already holds that this figure is a
+figures above are stale against the committed `ghidra/reassembly.csv`, and the
+pair moves with every re-export, so neither number above should be quoted.
+`tools/reassembly_checked_bound.py --check` prints the current pair. The
+correction immediately below already holds that this figure is a
 ceiling rather than a translation count, so what the committed report supports
 is whatever that tool prints; the figures are left standing as this section has
 carried them and the command is the current one.)*

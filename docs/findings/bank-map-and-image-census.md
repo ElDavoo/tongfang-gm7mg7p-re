@@ -58,7 +58,8 @@ is two, not one.
 
 `python3 ec/tools/firmware_regions.py --strings 0x28000` prints 37 printable
 runs, spread from `0x2A798` to `0x2F7AD`. All but one of them read as USB-PD
-protocol state-machine messages rather than compiler strings:
+protocol strings — state-machine messages and version constants alike — rather
+than compiler strings:
 
 ```
 SRC Negotiate done     SINK Negotiate done    PR Swap        DR Swap
