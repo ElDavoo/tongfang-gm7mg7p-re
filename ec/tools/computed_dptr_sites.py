@@ -837,8 +837,8 @@ def main() -> int:
 
     skips = collections.Counter(
         why for _at, why in declined(d, pd_verified, args.window))
-    print(f"The {len(anchored)} anchored stores this scan did not turn into a "
-          f"site, {sum(skips.values())} of them, and\nthe reason is not the "
+    print(f"Of the {len(anchored)} anchored stores, this scan did not turn "
+          f"{sum(skips.values())} into a site, and\nthe reason is not the "
           "same claim for all of them -- a window that found no `add` is a\nfact "
           "about the window, one that ran out before it could is a limit on "
           "the\nlook, and a build a nearer store already claimed is a limit on "
