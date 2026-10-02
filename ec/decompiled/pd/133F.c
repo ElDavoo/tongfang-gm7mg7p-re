@@ -6,9 +6,18 @@
 
 /* Sets DPTR to XDATA 0x803 and calls 0x393D, then clears XDATA 0x807 and 0x808. If direct bit 0xE4
    is set and 0x1E9D returns zero and the byte at XDATA 0x805 XOR 0x10 is non-zero, it returns 1 or
-   2 in R7 according to 0x1E4B; otherwise it reads XDATA 0x805, passes it to 0x119C, decrements R6,
-   increments R1 and jumps into the 32-bit XDATA adder at 0x1013. What the four callees do, and what
-   direct bit 0xE4 gates, is not decoded further here.
+   2 in R7 according to 0x1E4B; otherwise it reads XDATA 0x805 into A and calls 0x119C at 0x136C.
+   0x119C pops the return address into DPTR before its first MOVC, so the table it walks begins at
+   0x136F rather than after the call: from there the bytes are a 20-entry code-space table of 3-byte
+   records, target from +0/+1 and selector key at +2, keyed 0x01 to 0x16 with 0x0E and 0x0F absent.
+   Its first record is `1e 09 01`, target 0x1E09 at key 0x01, so the `dec R6` and `inc R1` the
+   listing shows at 0x136F and 0x1370 are that record's two target bytes, and the `01 13` its `ajmp
+   0x1013` shows at 0x1371 is the record's key byte followed by record 2's high target byte. The
+   table's last byte is 0x13AE, its default is 0x1DE6, and the byte at 0x13AF is record 2's target,
+   so nothing after 0x136C executes as this function's continuation. The figures are the pd 0x136C
+   row of ec/annotations/pd-index-table-spans.csv, a decode under one reader's layout rather than a
+   trace of what any of these handlers does. What the four callees do, and what direct bit 0xE4
+   gates, is not decoded further here.
    type: dispatch
    evidence: ec/decompiled/pd/133F.asm; ec/decompiled/pd/133F.c
    basis: hand-decoded
