@@ -217,7 +217,7 @@ runtime `0x3478` to `0xE8F9`. 229 read the byte, 15 write it, 2 increment it
 in place, 8 are unresolved by this method. Read sites feed it into address
 arithmetic (`DPTR = base + value × stride`, strides `0x5E`/`0x60`/`0x77`),
 which is the shape of an index or iteration state, not of a threshold. What
-it indexes is not identified and was not guessed at.
+it indexes is not identified and was not guessed at; issue #25's routine clustering, the byte's multi-byte structure, and why the decompiled PD C prints its address as the literal `2000` are in [`pd-0x07d0-07cc-structure.md`](../ec/annotations/pd-0x07d0-07cc-structure.md).
 
 **This changes nothing about the EC's `0x07D0`**, which is a different
 program's address space and still has zero direct references in the EC image.
