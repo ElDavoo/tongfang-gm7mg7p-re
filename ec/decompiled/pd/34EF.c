@@ -4,8 +4,15 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* A single mov DPTR,#0x424 with no ret, so the pointer's use is not decoded here.
-   type: unresolved
+/* One instruction: DPTR = 0x0424. The listing has no ret and the next address 0x34F2 is mov B,#0x60
+   / ljmp 0x10BC, so control falls straight into that sequence and 0x34EF plus 0x34F2 share one
+   tail: the effect on DPTR is 0x0424 + 0x60 * A, and 0x10BC ends in ret at 0x10C7, so control
+   returns to the byte after the lcall that got here -- 0x67E3 from the lcall at 0x67E0, or 0xCB43
+   from the lcall at 0xCB40. The two are separately callable, because 0x34F2 is itself lcalled at
+   0x6782, so this is a forwarder over a shared tail rather than one routine split by the function
+   boundary; pd,3632 is the same shape. The C's non-returning call to add_full_product_to_dptr is
+   not contained in these three bytes.
+   type: forwarder
    evidence: ec/decompiled/pd/34EF.asm; ec/decompiled/pd/34EF.c
    basis: hand-decoded
    name_basis: code-shape */

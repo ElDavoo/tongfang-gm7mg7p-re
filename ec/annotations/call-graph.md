@@ -431,6 +431,13 @@ way. Written up in
 [`../../docs/findings/citation-gap-scan.md`](../../docs/findings/citation-gap-scan.md);
 the per-row verdicts in
 [`../../docs/findings/neighbour-edge-attribution.md`](../../docs/findings/neighbour-edge-attribution.md).
+**Measured as sets rather than as counts, 61 of the 74 agreements are identical
+and 13 are count-only** — a shape these two columns cannot show, because
+`callers` is a count in the table rather than the set behind it; none of the 13
+can reorder this ranking, since `callers` is not one of `build()`'s sort keys.
+The split, the thirteen rows, and the five of them that were outside
+#681's population are in
+[`../../docs/findings/call-graph-agreement-set-identity.md`](../../docs/findings/call-graph-agreement-set-identity.md).
 
 **Corrected 2026-09-27, issue #489: the population and the denominator moved; the
 fifteen rows the reading is over did not.** The figures above are **96 citing

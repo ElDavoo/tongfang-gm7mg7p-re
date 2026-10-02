@@ -321,11 +321,41 @@ a question about one call site, and this change does not answer it. Its four
 records read `cb 5d 01 08 / cb 66 02 06 / cb 6f 02 07 / 00 00 cb 76`: the first
 three carry a nonzero target pair and a two-byte key, so a match on B=0x01 and
 A=0x08 leaves for 0xCB5D, and the last is the `00 00` default, which selects
-0xCB76. A here is whatever `pd 0x38D3` returned, which the bytes do not fix.
-**That is as far as this goes.** Whether any particular call site is
+0xCB76. ~~A here is whatever `pd 0x38D3` returned, which the bytes do not
+fix.~~ **That is as far as this goes.** Whether any particular call site is
 reached, what it selects, and whether the record scan can run past the end of
 the table it was given are separate questions that want their own issue; none of
 them affects the classification, which turns only on which rows exist.
+
+**Correction (issue #647), in place.** The struck sentence above is no longer
+right, and it is left visible rather than deleted because the reason it was
+written is the reason the question looked harder than it was: nothing in *this
+section's* evidence reaches past the dispatch call, so the key genuinely was
+unfixed by what had been read at the time. The bytes between the store and the
+dispatch are committed, and the arithmetic closes.
+
+The key address is `0x0424 + 0x260 * R7` mod 2^16, where R7 is the caller's
+selector byte as `pd 0xCB2A` stores it at XDATA 0x0803 and reads it back, and
+the key pair is `B = XDATA[addr]` with `A = XDATA[addr + 1]` — low byte first.
+`pd 0x34EF` supplies the `0x60` and `pd 0x349B` the `0x200`, and both steps are
+exact 16-bit modular adds. One precondition the earlier text did not mention:
+`pd 0xCB2A` returns at 0xCB3A when R3 == `0x0D`, before any of that runs.
+
+What is now settled is which record a *given pair* selects, because that is a
+function of the sixteen bytes alone: three pairs reach a keyed record, one
+each, and the other 65533 take the default to 0xCB76. So this table cannot be
+scanned past its end, whatever the pair is — though `pd 0x11C2` still has no
+bound of its own, and that general question is untouched.
+
+What stays open is the *value*, not the *shape*. A key pair is a pair of XDATA
+**contents**, and XDATA is RAM: the image says what the address is and never
+what is stored there. So which record a given execution selects is still
+unanswered, and for a further reason this section did not have — the census in
+`ec/annotations/xdata-registers.csv` names `pd 0xB80E`
+(`write_r7_and_r3r2r1_to_0803`) as a second writer of 0x0803, so the selector
+is per-call rather than a fixed property of the routine. The derivation, the
+simulator and the evidence are in
+[`pd-11c2-dispatch-key-selector.md`](pd-11c2-dispatch-key-selector.md).
 
 ---
 

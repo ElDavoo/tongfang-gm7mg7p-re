@@ -922,7 +922,7 @@ ORACLE = {
     # registers.yaml row renames the symbol table and not a decompile". The
     # census pins above are therefore the ones #1425 measured and this block
     # leaves them at; only `named_in_tree` moves here.
-    "named_in_tree": 190,
+    "named_in_tree": 191,  # 189 -> 191: #647's XDATA_0803 and #1357's XDATA_3202, two addresses the census already reaches
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # **Unmoved by issue #279, and worth saying why rather than leaving it as a
@@ -3345,10 +3345,10 @@ def render(rows, columns) -> str:
 
 
 def diff(name, on_disk, generated) -> int:
-    """First differing line named, the way gen_xdata_symbols.py does."""
+    """First differing line named; both counts are file lines, not data rows."""
     print(f"{name} differs from a fresh generation "
-          f"({len(on_disk.splitlines())} on disk vs "
-          f"{len(generated.splitlines())} generated) -- run without --check "
+          f"({len(on_disk.splitlines())} lines on disk vs "
+          f"{len(generated.splitlines())} lines generated) -- run without --check "
           "to rewrite", file=sys.stderr)
     for i, (a, b) in enumerate(zip(on_disk.splitlines(), generated.splitlines())):
         if a != b:
@@ -5359,7 +5359,8 @@ if __name__ == "__main__":
 # is `../../docs/findings/xdata-cluster-refs-projection.md`, which is also where
 # the arithmetic is.
 #
-# **Issue #1357, 2026-10-02: `named_in_tree` 189 -> 190, and it is recorded here
+# **Issue #1357, 2026-10-02: `named_in_tree` +1 (189 -> 190 on this branch, 190 ->
+# 191 merged with #647's `XDATA_0803`), and it is recorded here
 # rather than in the dated block above the pin so that it moves nothing.** Every
 # prose file that cites this one by line is held to it by
 # `check_eq_guard_citations.py`, and the highest anchor any of them names is
@@ -5372,8 +5373,8 @@ if __name__ == "__main__":
 # against the twenty-two it would red.
 #
 # The move itself: `XDATA_3202` is a `registers.yaml` row for an address the
-# census already carried, so 216 -> 217 named addresses and 217 - 27 = 190 of
-# them in the tree. NOT_IN_TREE is unmoved, and the reason is the shape rather
+# census already carried, so one more named address and one more of them in
+# the tree. NOT_IN_TREE is unmoved, and the reason is the shape rather
 # than the count -- every one of its entries is an address that is *not* in
 # `registers.yaml`, and this was never that. It was the mirror image: a
 # register the source of truth did not name. Those 27 keys are asserted as a set
@@ -5402,3 +5403,27 @@ if __name__ == "__main__":
 #   extmem_raw            8583 -> 8563      extmem_commented          9 -> 9
 #   extmem_main_distinct    890 ->  887      extmem_pd_*         157/858 unmoved
 #   extmem_main_refs       7716 -> 7696      extmem_both               34 unmoved
+
+# *** 2026-10-02, issue #342: `diff()`'s two counts are file lines and its
+# neighbour's is data rows, and the two messages said the same noun for both.
+# `--check` prints `{len(rows)} rows match a fresh generation` -- data rows --
+# while `diff()` printed `{len(on_disk.splitlines())} on disk vs
+# {len(generated.splitlines())} generated`, which counts the header on both
+# sides. Same noun, two different quantities, one tool, adjacent messages. That
+# is how `1172 on disk vs 1172 generated` came to be read as "1,172
+# addresses" in `annotations/xdata-register-map.md` -- which is 1,171 of them --
+# and why that file carries a sentence explaining an ambiguity this tool
+# manufactured. The fix is the word `lines` before both counts; the number
+# cannot be made to mean both things at once, so naming it in both messages is
+# the whole of it, and `check_census_figures.py --print` now re-derives the
+# figures a page is held to, so the transcript beside them is not the only
+# thing carrying a count. `docs/findings/census-figures-restated.md` is the
+# write-up.
+#
+# **Placed here rather than on `diff()` because this module is cited by line.**
+# `check_eq_guard_citations.py` resolves the nine `--no-eq-guard` anchors to
+# line numbers and holds every page that cites them to what it finds there, so
+# growing `diff()`'s docstring by even one line moves the anchors below it and
+# turns a dozen citations across four documents red. A note about a message
+# belongs at the end of the file for the same reason the `named_in_tree` block
+# above does.

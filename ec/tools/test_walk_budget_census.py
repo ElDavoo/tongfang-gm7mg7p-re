@@ -27,6 +27,7 @@ What is pinned here and not by the tool:
 Nothing here needs hardware, Windows or a capture. The firmware read is a
 committed file.
 """
+import ast
 import csv
 import io
 import os
@@ -44,6 +45,10 @@ REPO = HERE.parent.parent
 sys.path.insert(0, str(HERE))
 import trace_xdata_refs as T          # noqa: E402
 import walk_budget_census as W        # noqa: E402
+# The producer of the arms table the census declines to read, imported for its
+# `END_BUDGET` and `CUTS` -- the cut vocabulary the exclusion is stated
+# against, read off the tool that emits the cells rather than transcribed.
+import walk_branch_arms as wba       # noqa: E402
 
 FIRMWARE = str(HERE.parent / 'firmware' / 'GMxMGxx_11.800')
 ANNOT = HERE.parent / 'annotations'
@@ -688,13 +693,111 @@ class ReCutTests(unittest.TestCase):
 
     def test_the_arms_table_is_not_one_of_them(self):
         # It has a `window` column and is not in W.TABLES: a different
-        # producer, keyed on site_runtime, ending on a flow opcode by
-        # construction. Folding it in would count another tool's guarantee
-        # as this one's measurement.
+        # producer, keyed on site_runtime rather than file_offset, which is
+        # why read_sites() cannot reach it at all. Folding it in would count
+        # another tool's measurement as this one's -- which is only
+        # defensible because nothing in it is budget-truncated, which
+        # test_no_committed_arm_ends_on_the_instruction_budget holds. That
+        # case used to be prose: it said the cells "end on a flow opcode by
+        # construction", and the producer has no such guarantee -- see
+        # docs/findings/arms-table-budget-exclusion.md.
         arms = rows_of('manual-fan-ctrl-0751-arms.csv')
         self.assertNotIn('manual-fan-ctrl-0751-arms.csv', W.TABLES)
         self.assertTrue(arms)
         self.assertNotIn("file_offset", arms[0])
+        self.assertIn("site_runtime", arms[0])
+        self.assertIn("window", arms[0])
+
+    def test_no_committed_arm_ends_on_the_instruction_budget(self):
+        """The measurement the exclusion above rests on, per row.
+
+        `walk_branch_arms.py` gives every arm an instruction budget and can
+        cut an arm on it -- `END_BUDGET`, one of the four stop reasons `CUTS`
+        groups as "the walk gave up rather than finished". An arm that ended
+        there would put a truncated listing in a committed table, which is the
+        thing this census exists to name in the nine it does read. Nothing
+        committed ends that way, and that is a fact about a file rather than a
+        promise the producer makes: the headroom assertion is what makes it
+        re-derive, so a `--max-insns` default lowered below the largest
+        committed arm goes red here instead of quietly re-cutting the table
+        under a suite that stayed green.
+
+        Asserted against `wba.END_BUDGET` and `wba.CUTS` rather than against
+        the strings, so a rename of the token or its drop from `CUTS` makes
+        this case fail instead of quietly vacuous -- and `CUTS` is what makes
+        the per-row check mean "a cut reason" rather than "this one string".
+        Both `status` spellings are named: `arm_status()` writes `"cut: "` and
+        `callee_row()` writes `"unresolved: "`, so a check on one prefix alone
+        would pass on a cut row of the other kind.
+        """
+        self.assertIn(wba.END_BUDGET, wba.CUTS,
+                      "END_BUDGET is no longer a cut, so the per-row check "
+                      "below would pass on arms that were cut short")
+        arms = rows_of('manual-fan-ctrl-0751-arms.csv')
+        self.assertTrue(arms, "no rows read: a rule over nothing has to say "
+                              "so rather than pass")
+        cut_statuses = ("cut: ", "unresolved: ")
+        for row in arms:
+            # `ends` is one cell holding every stop reason the arm hit, so it
+            # is split before matching; `status` is a single token and joins
+            # the same list because a cut reaches a row through either.
+            for cell in row["ends"].split("; ") + [row["status"]]:
+                for cut in wba.CUTS:
+                    self.assertFalse(
+                        cell.startswith(cut),
+                        f"manual-fan-ctrl-0751-arms.csv row at "
+                        f"{row['site_runtime']} carries the cut {cut!r} in "
+                        f"{cell!r}; the budget census excludes this table on "
+                        f"the measurement that it holds none")
+            for prefix in cut_statuses:
+                self.assertFalse(
+                    row["status"].startswith(prefix),
+                    f"manual-fan-ctrl-0751-arms.csv row at "
+                    f"{row['site_runtime']} has the cut status "
+                    f"{row['status']!r}")
+        # No count of rows here on purpose: which rows exist moves on every
+        # regeneration, and the property above is what the exclusion needs.
+        largest = max(int(row["insns"]) for row in arms)
+        budget = self._max_insns_default()
+        self.assertLess(
+            largest, budget,
+            f"the largest committed arm decodes {largest} instructions and "
+            f"--max-insns now defaults to {budget}, so the committed table "
+            f"was cut with a default this run no longer has; re-cut it "
+            f"rather than widening the assertion")
+
+    def _max_insns_default(self):
+        """`walk_branch_arms.py`'s own `--max-insns` default, read off its
+        source rather than restated here.
+
+        `--help` cannot answer it. The option carries a hand-written `help=`
+        string whose "(default 500, ...)" is prose, not the value argparse
+        would append, so a `--max-insns` default changed without its help text
+        would read back the old number here and this case would stay green
+        over a table re-cut at the new one -- which is the failure it exists
+        to catch, reproduced by the method meant to prevent it. So the
+        `add_argument` call is read directly: an AST walk for the keyword, so
+        a renamed flag, a dropped `default`, or a value that is not a literal
+        each fail loudly here instead of being papered over with a constant.
+        """
+        tree = ast.parse((HERE / "walk_branch_arms.py").read_text())
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func = node.func
+            if not (isinstance(func, ast.Attribute)
+                    and func.attr == "add_argument"):
+                continue
+            if not node.args or not isinstance(node.args[0], ast.Constant):
+                continue
+            if node.args[0].value != "--max-insns":
+                continue
+            for kw in node.keywords:
+                if kw.arg == "default" and isinstance(kw.value, ast.Constant):
+                    return kw.value.value
+        self.fail('no add_argument("--max-insns", ..., default=<literal>) in '
+                  "walk_branch_arms.py, so the headroom cannot be read and a "
+                  "hard-coded 500 would go stale without anything going red")
 
     def test_the_only_window_cell_that_moved_is_the_preexisting_drift(self):
         """The `frame_onto`/`frame_over` pairs #36's re-cut moved, and nothing

@@ -33,8 +33,15 @@
 #                    The INDIRECT addressing mode is a separate scan and a
 #                    separate caveat: ec/tools/find_indirect_xdata.py looks for
 #                    `movx @Ri`, whose page is in P2 and whose low byte is in a
-#                    register, and finds 44 such sites in the EC image of which
-#                    none resolves to an address -- `mov p2,#imm` occurs 0 times
+#                    register, and finds 37 such sites in the EC image of which
+#                    none resolves to an address. (Correction: this caveat said
+#                    44. The walk did not know about the main EC's `0x7151`
+#                    case tables and decoded their bytes as instructions; the
+#                    seven lost rows were table data, and the corrected walk
+#                    removes them. docs/findings/7151-case-tables-in-the-walk.md
+#                    is the write-up, and the population is that tool's output
+#                    rather than a figure to carry here.)
+#                    `mov p2,#imm` occurs 0 times
 #                    in this image, with the same query finding 529 for
 #                    `mov b,#imm`, so the common literal-P2 idiom is not in
 #                    this firmware at all. That is a fact about the FORM, not
@@ -42,7 +49,11 @@
 #                    across a call, `mov @Ri,#data` and @dptr walks are all
 #                    outside that scan, and the 12 `mov p2,register` it does
 #                    report turn out to be a data table its own walk decoded as
-#                    code. ec/annotations/indirect-xdata-sites.md 5 is the full
+#                    code. The smaller population is a WEAKER negative, not a
+#                    cleaner one: no site behind it was ever checked for being
+#                    real code, and the two single-site `P2` rows that survive
+#                    look like ascending-step data by a second route.
+#                    ec/annotations/indirect-xdata-sites.md 5 is the full
 #                    list of what it does not establish. No `status:` below
 #                    moves on the strength of it, in either direction.
 #
@@ -514,8 +525,10 @@ registers:
       concept of a "resume charging below" threshold and has never written
       this address. 254 direct references is the busiest address in the
       whole 0x0780-0x07FF range -- too busy to be a single-purpose "resume
-      threshold" byte on this firmware. Needs disassembly of all 254 sites
-      before writing to it (see issue: "map 0x07D0 call sites").
+      threshold" byte on this firmware. The disassembly of the sites that
+      was asked for here is done: ec/annotations/pd-0x07d0-07cc-structure.md,
+      with the per-site cluster table ec/annotations/pd-0x07d0-07cc-clusters.csv
+      beside it and the tool ec/tools/pd_site_clusters.py behind both.
       *** CORRECTION to the "too busy" argument, see
       ec/annotations/lightbar-bat-flow.md 6: the 254 count is right but
       all 254 sites are in the ITE8850-PD image, not the EC firmware,
@@ -540,6 +553,27 @@ registers:
       DSDT ECMG field list, as DBD1 (with DBD2 at 0x07D1) -- what DBD1 is
       for is not established, and reading the vendor's name as "the resume
       threshold" would be a guess.
+      *** READING TRAP, issue #25, and the reason the disassembly above was
+      worth doing: the decompiled PD C prints the token `2000` wherever it
+      needs a pointer to the PD image's 0x07D0, and 2000 is exactly this
+      entry's ECSpec value ADDR_BATTERY_CHARGE_LIMIT_DOWN. The two are a
+      base conversion coinciding, not a charge limit in the PD firmware;
+      three `r2` transcripts beside the claim in
+      ec/annotations/pd-0x07d0-07cc-structure.md 2 settle it, the third by
+      showing Ghidra splitting the value into the two bytes of a CODE call
+      target. A reader who
+      greps 2000 out of ec/decompiled/pd/*.c will otherwise believe the
+      charge limit was found in the wrong program. The same file clusters
+      the 254 sites onto the committed `pd` routine boundaries in
+      ec/decompiled/index.csv and reads the byte's multi-byte structure:
+      it is the LOW half of a 16-bit little-endian word whose high half is
+      0x07D1, and simultaneously a counter/array index -- both readings
+      hold at once, in the same committed listings. GRADE UNCHANGED, and
+      said plainly in that file's 6: DO-NOT-WRITE-BLIND stands, because a
+      PD-image decode is not evidence about an EC byte the EC image has no
+      site for. The paired UP/DOWN write in docs/findings.md 5 is still the
+      experiment that would settle the EC-side question and is still a
+      human-at-the-machine step. ***
       SCOPE NOTE 2026-09-23 (issue #178), because the census makes the trap
       concrete: xdata-registers.csv's `0x07D0` row is `program=pd`, 4 write
       and 2 read+write, every function in it `pd:`. Those are the PD image's
@@ -769,18 +803,25 @@ registers:
       Classified by access direction (ec/annotations/static-refs-audit.md
       5.2), 11 of the 38 PD sites resolve no further than "DPTR handed to a
       subroutine" -- for 0x07E3 that is 5 of its 9, a majority of that
-      address's population. Nine of those eleven have since been decoded one
-      level down (register_ref_table.py --callee-depth 1, per-site rows in
-      lightbar-bat-flow.md 3.4-3.5): 3 call a routine that loads from the
-      handed address, 6 call one that stores to it, and 2 hand DPTR on a
-      second time and stay unresolved. So the PD image's 38 sites are now 20
-      reads, 16 writes and 2 unresolved by this method -- instructions in the
-      PD image do store to these bytes, in runs that reach past 0x07E5 into
-      0x07E6-0x07E8, which is the compiler-allocated-block shape above and
-      not four control bytes. None of the 38 is a movc, so none of the count
-      is a CODE-pointer artefact. All of that is static decode of the PD
-      image only: it says nothing about the EC's own 0x07E2-0x07E5, and a
-      decoded store is not evidence anything acts on the value.
+      address's population. All eleven have since been decoded
+      (register_ref_table.py --callee-depth N, per-site rows in
+      lightbar-bat-flow.md 3.4-3.5): nine of them one level down at depth 1
+      (3 call a routine that loads from the handed address, 6 call one that
+      stores to it), and the 2 that hand DPTR on a second time resolve at
+      depth 2, one through 0xB1F2 to 0x10C8 and one through 0x383A to 0x0FCB,
+      both of which read. So the PD image's 38 sites are 20 reads, 16 writes
+      and 2 unresolved at depth 1, and 22 reads, 16 writes and none
+      unresolved at depth 2 -- instructions in the PD image do store to these
+      bytes, in runs that reach past 0x07E5 into 0x07E6-0x07E8, which is the
+      compiler-allocated-block shape above and not four control bytes. None
+      of the 38 is a movc, so none of the count is a CODE-pointer artefact.
+      Two of those conclusions are about the handed DPTR only and no further:
+      walk() stops at the first control-flow instruction, so each forwarder's
+      ljmp tail (0x0C46, 0x0F0E) is in no window at any depth, and
+      pd/B1F2.c shows the 0xB1F2 tail calling write_byte_by_tag_r3. All of
+      that is static decode of the PD image only: it says nothing about the
+      EC's own 0x07E2-0x07E5, and a decoded store is not evidence anything
+      acts on the value.
 
   - name: KBD_STATUS
     addr: 0x078C
@@ -824,6 +865,18 @@ registers:
       0x07B9 blind spot above). Whether the EC acts on this byte at all is
       still open, and is issue #8. See
       docs/findings/pd-only-status-vocabulary.md.
+      MAPPED 2026-10-02 (issue #25, the static half; #8's live half is
+      untouched): all six sites are placed and read in
+      ec/annotations/pd-0x07d0-07cc-structure.md 5, with the per-site table
+      ec/annotations/pd-0x07d0-07cc-clusters.csv and how many fall inside a
+      routine ec/decompiled/index.csv commits. The writes there are
+      whole-byte, and none is a bit-7 operation -- which is the bit the
+      vendor's SetTypeCAdaptorSwitch sets and clears; that mismatch is
+      recorded there and is not resolved here. The reads are a counter
+      compared against 0x07CE, a read-modify-write increment, a read the
+      window scales by 4 into a DPTR popped off the stack, and a
+      pointer-building index. Same reading as 0x07D0, same scope caveat,
+      and no status moves.
 
   - name: CPU_TEMP
     addr: 0x043E
@@ -2403,6 +2456,7 @@ registers:
 
   - name: CPU_TCC_OFFSET (APTC/APTN)
     addr: 0x0786
+    bits: "0-6 offset magnitude; bit 7 is the enable, not data"
     sources: [dsdt(APTC:7/APTN:1), vendor-3.1.39.0(SetCpuTccOffset),
               uniwill-laptop(EC_ADDR_FAN_DEFAULT), live]
     static_refs: 4
@@ -2417,6 +2471,42 @@ registers:
       (FAN_CURVE_LENGTH 5), and ECSpec 3.1.6.0 ADDR_L1_PWM_DEFAULT_MYFAN3.
       Those don't agree with the DSDT or with 3.1.39.0 here, which agree
       with each other.
+      *** DECIDED 2026-10-02 (issue #702), leaving the paragraph above as it
+      was written: it recorded the disagreement and did not resolve it. The
+      EC's own bytes settle it, and they settle it for the CPU TCC offset.
+      *** At bank0 0x9492-0x94A9 the byte is read behind a `jnb` on its own
+      bit 7, a second `jnb` tests AP_OEM (0x0741) bit 0 -- the bit
+      MyEcCtrl.Set_APExistToEC writes -- and then `anl a,#0x7f` stores the
+      low seven bits over XDATA 0x0A4A, which already held a TCC target
+      picked out of a GPU_TEMP (0x044F)-bracketed CODE table. The value
+      replaces that target; it is never added to a base and no address is
+      built from it, which is what EC_ADDR_FAN_DEFAULT as the base of a
+      FAN_CURVE_LENGTH 5 array would require. The routine is
+      seed_tcc_defaults_from_ba36 (0x9334), whose own listing writes the
+      MODE_TCC_OFFSET_DEFAULTS bytes 0x07D8/0x07D9/0x07DA and then runs on
+      into the block above without a break -- so one routine seeds the
+      per-mode TCC defaults and then lets this byte override the selected
+      one. Both other direct sites store a cleared accumulator in an init
+      pass (0xAD81, 0xCCA9).
+      The full walk is docs/findings/xdata-0786-tcc-offset-verdict.md. Note
+      what decides nothing: the `live` source above. Per `jnb 0xe7` at
+      0x9496 a 0x00 byte is one the EC ignores outright, so that reading is
+      consistent with this verdict and confirms no behaviour. No status moves
+      on this, and none should -- nothing here is a live test of the byte,
+      and a store through a run-time-built DPTR stays invisible to both
+      scan_refs.py and trace_xdata_refs.py. What would move it is a live
+      write with bit 7 and 0x0741 bit 0 both set, reading 0x098C and 0x0463
+      back, which is a human's step at the machine.
+      What the verdict does NOT settle is the service side, and the walk is
+      explicit about it: 3.1.39.0 reads 0x0786-0x078A both ways.
+      SetCpuTccOffset writes 0x0786 as a TCC offset, and
+      MyFanManager*.GetFanTablePWMDefault reads 0x0786-0x078A into a
+      five-element DefaultPWM array that is then used as PWM values, so
+      ADDR_L1_PWM_DEFAULT_MYFAN3 names a block this service version does read
+      the way the constant says. Which reading the vendor intended is not
+      answerable from the committed decompilations. This does not move the
+      EC-side verdict above, which is about what the EC's instructions do
+      with the byte, and it does not move the status.
 
   - name: AP_OEM_6 (whisper status / universal fan control)
     addr: 0x07C6
@@ -2544,7 +2634,18 @@ registers:
       The other two sites are both on the USER-set path and both read the
       pair big-endian: 0xB6BC reads this byte into a `subb` against B, and
       0xB6E8 hands DPTR to 0xBADE with the direction unresolved by this
-      method. The pair is compared at 0xB6B7-0xB6C2 against a bound computed
+      method. Corrected 2026-10-02 (issue #44): 0xB6E8's direction is no
+      longer unresolved. `register_ref_table.py --callee-depth 2` follows the
+      chain 0xBADE -> 0x70E4 and reaches read+writes, because 0x70E4 is a
+      read-modify-write on the handed byte -- `xch a,0xf0 ; mov r0,a ; inc
+      dptr ; movx a,@dptr ; add a,r0 ; movx @dptr,a`, then the same pair
+      again -- so the byte is loaded, added to and stored back rather than
+      only read. Both 0xBADE and 0x70E4 are main EC, not PD. That is a
+      decoded read-modify-write and nothing more: it is not evidence
+      anything acts on the byte, `status:` is unchanged because a static
+      decode is not a status change, and nothing here was read back. See
+      ../../docs/findings/callee-depth-n.md.
+      The pair is compared at 0xB6B7-0xB6C2 against a bound computed
       from a CODE table at 0xB6A8-0xB6B5, so the stored value looks like an
       elapsed count against a limit -- but "looks like" is the whole of it,
       and what 0xB6C2 decides on the comparison is not established. Nothing
@@ -3274,6 +3375,32 @@ registers:
       store 0xAA and 0xA6A6 only reads it. No upstream name.
       Read as a block:
       docs/findings/xdata-07fd-07ff-witness-triple.md.
+
+  - name: XDATA_0803
+    addr: 0x0803
+    sources: [xdata-refs]
+    static_refs: 142
+    static_refs_main_ec: 3
+    static_refs_pd_image: 139
+    status: present-untested
+    note: >
+      Round trip for the selector byte of the PD image's `pd 0xCB2A`: the
+      routine stores the caller's R7 here at 0xCB2E, reads it back into R1 at
+      0xCB3E, and builds the dispatch key from it, so the address
+      0x0424 + 0x260*R7 (mod 2^16) is a function of this byte and of nothing
+      else in that chain. 139 of the 142 sites are in the PD image, which is
+      another program's XDATA and says nothing about the EC's use of this
+      address; the 3 EC-side sites are one read at 0x81EA and two stores of
+      0x01 at 0x830D and 0x83C7, all in bank1, and
+      ec/annotations/site-resolution.csv names bank1 0x8300
+      (clear_and_set_xdata_flag_bits) for the middle one and `not exported` for
+      the other two. Two things about that byte that a count does not carry,
+      both from ec/annotations/xdata-registers.csv: pd 0xB80E
+      (write_r7_and_r3r2r1_to_0803) is a second writer of it, and pd 0x1E4B
+      and pd 0x1EFE are further readers, so the selector is per-call and this
+      byte has more than one site feeding it. A static read or write is not
+      behaviour and status stays present-untested. Derivation, simulator
+      and evidence: docs/findings/pd-11c2-dispatch-key-selector.md.
 
   - name: XDATA_0809
     addr: 0x0809
