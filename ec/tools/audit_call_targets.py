@@ -81,17 +81,33 @@ candidate was found by this rule, never that the row is real. It is derived
 per family rather than once for all three, because the three censuses are
 separate scans and neither is evidence for the others.
 
+`--map-column` adds one more, from a different method entirely: a `map` column
+carrying `code_map.py`'s verdict for the *site byte* -- `code`, `operand` or
+`unreached`, from the recursive descent in `../annotations/code-map.md`. It is
+off by default and the three committed CSVs are byte-identical without it, so
+the census counts above rest on exactly the rows they always did. It is a
+column and not a filter for the reason the `earlier_record` column is one: a
+row whose byte a descent reads as an operand is exactly the disagreement a
+reader wants to see, and dropping it would hide what the other method missed.
+`operand` is the verdict that carries the reading -- it says the byte belongs to
+an instruction that starts one or two bytes earlier -- and `code_map.py --at
+OFFSET` prints the instruction.
+
 Usage:
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --csv > sites.csv
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --paged-csv > paged.csv
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --relative-csv > rel.csv
+    python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --csv --map-column
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --self-test
 """
 import argparse
 import collections
 import csv
+import io
+import os
 import sys
+from contextlib import redirect_stdout
 
 from data_regions import load as load_data_regions, region_at
 from disasm8051 import (OPCODE_LEN, REL_OPCODES, REL_SITES, converges_from,
@@ -325,8 +341,10 @@ def region_bounds(name: str):
     `hi` is therefore a constant, not a bound on `len(d)`: every loop here is
     region-relative, so the invariant is `hi <= len(d)` -- a property of these
     call sites, which no loop can state for itself. main()'s PD-marker check is
-    what holds it, and --self-test now reports it rather than assuming it.
-    See docs/findings/rel8-displacement-bound.md."""
+    what holds it on the CLI path, and --self-test reports the invariant on
+    every buffer that survives it rather than assuming it. A printed line is not
+    a holder of its own, so `test_audit_call_targets.py` drives --self-test and
+    names the line; see docs/findings/rel8-displacement-bound.md."""
     return next((lo, hi) for n, lo, hi, _, _ in REGIONS if n == name)
 
 
@@ -721,11 +739,57 @@ def print_relative(rows) -> None:
     print()
 
 
-def write_csv(rows) -> None:
+MAP_COLUMN = "map"
+
+# The committed tables --map-column annotates, and the flag that writes each.
+# Named rather than derived so the self-test below can say which writer it is
+# holding to which file.
+CSV_FLAG = {"bank-call-targets.csv": "csv",
+            "bank-paged-call-targets.csv": "paged-csv",
+            "bank-relative-branch-targets.csv": "relative-csv"}
+
+# Resolved off __file__ rather than the working directory, so the gate's cwd and
+# a shell's are both irrelevant here.
+ANNOTATIONS = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           "..", "annotations")
+
+
+def render(writer, rows, verdicts=None) -> str:
+    """One table as its writer emits it, captured rather than printed.
+
+    The three writers below go to `sys.stdout` because that is what `--csv`,
+    `--paged-csv` and `--relative-csv` are for. Rendering one into a string is
+    what lets the self-test hold a fresh table against a committed file without
+    shelling out, and it costs a redirect.
+    """
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        writer(rows, verdicts)
+    return buf.getvalue()
+
+
+def map_verdicts(d: bytes):
+    """`{(region, file_offset): verdict}` from `code_map.py`, or None.
+
+    Imported here rather than at module scope because `code_map` imports this
+    module: a top-level import would close a cycle, and a lazy one is the same
+    shape `disasm8051.self_test()` uses for `disasm8051_oracle`. Only the
+    narrow seed set is walked -- the vectors and the BL51 trampolines, the entry
+    points a reset vector on this part reaches without any other input -- so the
+    column says what a descent from those reaches and not what a wider seed set
+    would. `--check` in `code_map.py` holds the committed map to that same set.
+    """
+    import code_map
+    m = code_map.descend(d, code_map.narrow_seeds(d)[0])
+    return dict(m.state)
+
+
+def write_csv(rows, verdicts=None) -> None:
     w = csv.writer(sys.stdout)
     w.writerow(["file_offset", "region", "runtime", "opcode", "target", "bucket",
                 "frame_onto", "frame_over", "earlier_record", "calls_stub",
-                "calls_trampoline", "own_bank", "other_bank"])
+                "calls_trampoline", "own_bank", "other_bank"]
+               + ([MAP_COLUMN] if verdicts is not None else []))
     for r in rows:
         w.writerow([
             f"0x{r['file_offset']:05X}", r["region"],
@@ -736,17 +800,19 @@ def write_csv(rows) -> None:
             "" if r["calls_stub"] is None else r["calls_stub"],
             "" if r["calls_trampoline"] is None else r["calls_trampoline"],
             r["own_bank"], r["other_bank"],
-        ])
+        ] + ([verdicts.get((r["region"], r["file_offset"]), "unreached")]
+             if verdicts is not None else []))
 
 
-def write_paged_csv(rows) -> None:
+def write_paged_csv(rows, verdicts=None) -> None:
     """A sibling of write_csv() rather than more columns on it: `bucket`,
     `own_bank` and `other_bank` are absolute-form questions that have no
     answer for a paged site, and bank-call-targets.csv stays as committed."""
     w = csv.writer(sys.stdout)
     w.writerow(["file_offset", "region", "runtime", "opcode", "target",
                 "target_offset", "in_region", "target_class", "frame_onto",
-                "frame_over", "earlier_record", "calls_stub", "calls_trampoline"])
+                "frame_over", "earlier_record", "calls_stub", "calls_trampoline"]
+               + ([MAP_COLUMN] if verdicts is not None else []))
     for r in rows:
         w.writerow([
             f"0x{r['file_offset']:05X}", r["region"], f"0x{r['runtime']:04X}",
@@ -757,10 +823,11 @@ def write_paged_csv(rows) -> None:
             r["earlier_record"],
             "" if r["calls_stub"] is None else r["calls_stub"],
             "" if r["calls_trampoline"] is None else r["calls_trampoline"],
-        ])
+        ] + ([verdicts.get((r["region"], r["file_offset"]), "unreached")]
+             if verdicts is not None else []))
 
 
-def write_relative_csv(rows) -> None:
+def write_relative_csv(rows, verdicts=None) -> None:
     """A third sibling: the paged table's columns minus the absolute-form ones,
     plus `length` and `disp`, which are what a reader needs to re-derive a
     target by hand. `calls_stub`/`calls_trampoline` stay, because a common-area
@@ -769,7 +836,7 @@ def write_relative_csv(rows) -> None:
     w.writerow(["file_offset", "region", "runtime", "opcode", "length", "disp",
                 "target", "target_offset", "in_region", "target_class",
                 "frame_onto", "frame_over", "earlier_record", "calls_stub",
-                "calls_trampoline"])
+                "calls_trampoline"] + ([MAP_COLUMN] if verdicts is not None else []))
     for r in rows:
         w.writerow([
             f"0x{r['file_offset']:05X}", r["region"], f"0x{r['runtime']:04X}",
@@ -781,7 +848,8 @@ def write_relative_csv(rows) -> None:
             r["earlier_record"],
             "" if r["calls_stub"] is None else r["calls_stub"],
             "" if r["calls_trampoline"] is None else r["calls_trampoline"],
-        ])
+        ] + ([verdicts.get((r["region"], r["file_offset"]), "unreached")]
+              if verdicts is not None else []))
 
 
 # The four stub sites ec/annotations/lightbar-bat-flow.md 2 records, and the
@@ -914,11 +982,23 @@ def self_test(d: bytes) -> int:
     # The property every region-relative loop in this tool rests on and none of
     # them can state: `hi` comes from REGIONS, so it does not move with the
     # buffer. main()'s PD-marker check is what keeps it inside `d`.
+    #
+    # The failure clause this line used to carry named what main() would have
+    # done about a buffer that broke the bound, and that was not a branch no
+    # caller could reach: a direct caller handing self_test() a buffer one byte
+    # short of the largest audited bound reaches this comparison with it false.
+    # The paged walk above does index `d` directly, so it would raise first on a
+    # buffer whose last admitted offset is paged-shaped; this image's is not, so
+    # it gets past. Measured, not argued -- test_audit_call_targets.py runs the
+    # branch and names the byte the case rests on. So the text was reachable and
+    # wrong rather than unreachable: main() was never called on that path, so
+    # nothing had refused anything, and the walk below raised `IndexError`.
+    # `FAIL` is what check() already prints and the sentence above carries the
+    # comparison, so the counterfactual cost nothing to lose.
     hi = max(region_bounds(name)[1] for name in AUDITED)
     check(hi <= len(d),
           f"the largest audited region bound 0x{hi:05X} is inside the "
-          f"{len(d)}-byte image, so no walk below reads past its own region"
-          f"{'' if hi <= len(d) else ' -- exceeded, main() would have refused this image'}")
+          f"{len(d)}-byte image, so no walk below reads past its own region")
 
     # The other half of the same subject: not that the walk stays inside `d`,
     # but where it stops. The window below is the only stretch of a region no
@@ -1044,6 +1124,34 @@ def self_test(d: bytes) -> int:
           "rather than an absence: the same layout with a non-paged opcode in "
           "front of the site is named")
 
+    # `--map-column`, on the three committed tables rather than on a fixture.
+    # Two properties, and the first is the one that matters: rendered without
+    # the flag, each writer still reproduces its committed CSV byte for byte, so
+    # every count printed above rests on exactly the rows it always did and the
+    # new column is inert by default. The second is that the column renders for
+    # a site in every family, so it is not a header nothing ever fills.
+    mapped = map_verdicts(d)          # one walk for all three families
+    for census, writer, walk in (("bank-call-targets.csv", write_csv, survey),
+                                 ("bank-paged-call-targets.csv",
+                                  write_paged_csv, paged_survey),
+                                 ("bank-relative-branch-targets.csv",
+                                  write_relative_csv, relative_survey)):
+        plain = render(writer, walk(d)[0])
+        with open(os.path.join(ANNOTATIONS, census), newline="") as fh:
+            committed = fh.read()
+        check(plain == committed,
+              f"{census} is reproduced byte for byte by --{CSV_FLAG[census]}, so "
+              "the committed table and every count above it are unchanged"
+              f"{'' if plain == committed else ' -- differs; regenerate it'}")
+        table = list(csv.reader(io.StringIO(render(writer, walk(d)[0], mapped))))
+        import code_map
+        classes = sorted({r[-1] for r in table[1:]})
+        check(table[0][-1] == MAP_COLUMN
+              and all(v in set(code_map.VERDICTS) for v in classes),
+              f"and --map-column appends a `{MAP_COLUMN}` header and fills every "
+              f"row of {census} with one of code_map.py's verdicts -- "
+              f"{classes}")
+
     print()
     print("self-test FAILED" if bad else "self-test passed")
     return 1 if bad else 0
@@ -1060,6 +1168,10 @@ def main() -> int:
     ap.add_argument("--relative-csv", action="store_true",
                     help="write one row per PC-relative branch site on stdout "
                          "instead of the tables")
+    ap.add_argument("--map-column", action="store_true",
+                    help="append a `map` column carrying code_map.py's verdict for "
+                         "the site byte. Off by default, so the committed CSVs are "
+                         "unchanged without it")
     ap.add_argument("--self-test", action="store_true",
                     help="re-check the stub sites, the offset_for_runtime round-trip, "
                          "the paged page arithmetic and the rel8 displacement "
@@ -1076,17 +1188,23 @@ def main() -> int:
     if args.self_test:
         return self_test(d)
 
+    # Walked once, lazily: the three tables below each need it and the tables
+    # print without it. `None` is the "no column" answer and is threaded through
+    # rather than defaulted per writer, so `--map-column` cannot reach one CSV
+    # and miss another.
+    verdicts = map_verdicts(d) if args.map_column else None
+
     if args.paged_csv:
-        write_paged_csv(paged_survey(d)[0])
+        write_paged_csv(paged_survey(d)[0], verdicts)
         return 0
 
     if args.relative_csv:
-        write_relative_csv(relative_survey(d)[0])
+        write_relative_csv(relative_survey(d)[0], verdicts)
         return 0
 
     rows, stubs, tramp = survey(d)
     if args.csv:
-        write_csv(rows)
+        write_csv(rows, verdicts)
         return 0
 
     print_buckets(rows)

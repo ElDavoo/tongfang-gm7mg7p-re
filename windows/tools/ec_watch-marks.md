@@ -311,6 +311,15 @@ records as a seventh open. The three preflights call one `skippable_row` predica
 `EARLY_EXIT_TAG` opens with `#` and that reader *keeps* the rows the other three
 drop.
 
+> **Correction (2026-10-02, issue #786), leaving the paragraph above as it was
+> written.** There is no second open and no seventh one. `path_starts_with_bom`
+> is deleted; `read_capture` reads the file once in binary and asks
+> `starts_with_bom` of that buffer, so this notice's reader and the grading
+> reader answer the mark question off the same bytes and off one moment each.
+> The two readers outside this scope are unchanged and are still outside it —
+> `count` and `load` still spell the `ts`/`#` test out with no strip. See
+> `docs/findings/0751-strict-reader-two-moments.md`.
+
 The strip is at the shape rather than at the open because `utf-8-sig` would
 accept a mark the format does not have, and whether it should ever is a separate
 question the encoding decision below explicitly leaves open. The version of this

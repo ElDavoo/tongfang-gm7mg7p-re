@@ -196,6 +196,18 @@ cannot — which `docs/findings.md` records as a seventh open, so
 "`capture_rows` is where a capture is opened" is a claim about the four
 readers rather than about the tree.
 
+> **Correction (2026-10-02, issue #786), leaving the paragraph above as it was
+> written.** The second open is gone. `path_starts_with_bom` is deleted and
+> `read_capture` asks `starts_with_bom` of the one buffer its single open
+> returned, so the file-level question and the rows are answered from the same
+> bytes on the strict reader too. The sentence above was right about its
+> conclusion — `capture_rows` is about the readers rather than about the tree —
+> and wrong about the cause, which was a second open rather than the shape
+> owning an open. `capture_rows` now reads the file's bytes and hands them to
+> `rows_from_bytes`, so the shape owns the rows and every reader in the module
+> opens a capture exactly once. See
+> `docs/findings/0751-strict-reader-two-moments.md`.
+
 **Applied uniformly to every row's first field**, not only the first row. The
 first three bytes of a file are the only place a BOM occurs in practice, so the
 uniform rule and a file-level rule agree on every file that exists, and a
