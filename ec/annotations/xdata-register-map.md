@@ -1102,9 +1102,14 @@ magnitude.
    every row from those two named columns.
 
 The threshold is a flag (`--threshold`, default **0.50**) and the whole curve.
-The first block is the current one; the second is the pre-#279 tree it
+The first block is the current one; the second is the `c9e0c2c4` (#206) tree it
 supersedes, kept because the *shape* of the argument is that the plateau has not
-moved:
+moved. It was **carried** from `c9e0c2c4` through to `6bf9c234` (#279), which is
+where it was split off and labelled rather than re-run, and the tree it was
+carried across reads a third set of figures — so the second block is a record of
+one commit's run, not of the tree before #279, which is what its label said it
+was. The derivation, every set named against the commit it was measured on, is
+`../../docs/findings/xdata-4-2-threshold-sweep-rederivation.md`:
 
 ```console
 $ python3 ec/tools/xdata_register_map.py --threshold-sweep
@@ -1121,7 +1126,7 @@ threshold,relations,main-ec clusters,main-ec largest,main-ec singletons,pd clust
 ```
 
 ```console
-$ python3 ec/tools/xdata_register_map.py --threshold-sweep    # pre-#279 tree
+$ python3 ec/tools/xdata_register_map.py --threshold-sweep    # c9e0c2c4 (#206)
 threshold,relations,main-ec clusters,main-ec largest,main-ec singletons,pd clusters,pd largest
 0.30,touching+writers,238,306,122,35,55,12
 0.35,touching+writers,337,112,169,49,35,24
@@ -1142,7 +1147,7 @@ count rises only 340 → 389, and 0.55 drops the largest to 82 and adds 159 more
 0.30 collapses 531 of the 1,218 into one component, which is the shape the
 issue warned about when it said a cluster of functions that share them is a
 list someone can work through. **The superseding version of that paragraph, kept
-rather than deleted: the same claim on the pre-#279 tree — "from 0.35 to 0.50
+rather than deleted: the same claim on the `c9e0c2c4` tree — "from 0.35 to 0.50
 the largest main-EC cluster holds at 108–112 while the cluster count only moves
 337 → 376, and 0.55 drops the largest to 43 and adds 149 more. 0.30 collapses
 306 of the 1,063 into one component".** The plateau is where it was, which is

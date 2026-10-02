@@ -278,3 +278,25 @@ them.
    not this change's business — and the map's §1 and §5 blocks are listed in
    that write-up with their line numbers rather than here, so this file stays a
    record.)*
+
+   *(Corrected 2026-10-02, issue #581. The paragraph above states as current that
+   §4.2's threshold sweep reads 380/109/302 and 481, and calls its table wrong.
+   **Those figures are neither §4.2's table nor the committed tree's** — they are
+   `--threshold-sweep` as it read at `37140548` (#327's unnamed-callee pass),
+   reproducible by extracting that commit's `ec/` and re-running the tool it
+   carried, and every arithmetic correction the item makes is right for that
+   commit. §4.2's own table reads 376/108/203 at 0.50 and 238/306 at 0.30, which
+   is `c9e0c2c4` (#206) and not "the tree before #263": the block was carried
+   un-re-run from that commit to `6bf9c234` (#279), across 102 commits, and the
+   tree immediately before #279 reads 380/109/204 rather than the 376/108/203 the
+   block carries. On the committed tree §4.2's **first** block is
+   `--threshold-sweep` cell for cell — 389/152/200 at 0.50, 531 at 0.30 — its
+   `--no-writer-axis` block is 507/74/274 as #582 corrected, and its `0.30`
+   denominator is the 1,218 the census holds. So the §4.2 half is closed as
+   *already correct*, with a label fixed rather than a figure: §4.2's second
+   block now names `c9e0c2c4 (#206)` instead of claiming to be the pre-#279 tree.
+   Its "306 of the 1,063" needed no correction either — 1,063 is what
+   `c9e0c2c4`'s tool prints for main-EC distinct addresses, so that denominator
+   was right on the tree the sentence was written on. The derivation, with every
+   figure named against the commit it was measured on, is
+   [`xdata-4-2-threshold-sweep-rederivation.md`](xdata-4-2-threshold-sweep-rederivation.md).)*
