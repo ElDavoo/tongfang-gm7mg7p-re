@@ -44,6 +44,13 @@ $ python3 ec/tools/census_xdata_writers.py ec/firmware/GMxMGxx_11.800 0x0786
   2 store instruction(s): blind-store 2
 ```
 
+That second command **exits non-zero**, and the lines that make it do so are a
+pre-existing gap rather than anything about this address: all four sites named
+below are ones `ec/annotations/manual-fan-ctrl-0751-sites.csv` does not record,
+and the run ends `4 problem(s) for 0x0786`. The two lines quoted above are the
+part this write-up rests on; the CSV is untouched by it, and closing that gap is
+a separate question.
+
 Four is what `registers.yaml` records as `static_refs_main_ec: 4`, and
 `check_register_counts.py` re-derives it from the image.
 

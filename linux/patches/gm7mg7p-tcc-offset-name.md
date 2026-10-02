@@ -27,13 +27,32 @@ the only place in the driver where `0x0786` is given that meaning.
 
 **At `5a24248` neither constant is referenced anywhere in the tree.** Each
 occurs exactly once, at its own `#define`, and `0x0786` appears nowhere else in
-`uniwill-acpi.c` — so upstream has no read or write path to the address today,
-and this is a rename with no behavioural consequence to reason about. (That is
-*not found used by this method*, per
-[`dmi-descriptor-evidence.md`](../../docs/findings/dmi-descriptor-evidence.md):
-`upstream-excerpt.txt` is a deliberate partial quotation, so an
-occurrence count in it says nothing about the source. The whole 90 KB file is
-not vendored here and no offline gate can fetch it.)
+`uniwill-acpi.c` — so at that commit upstream has no read or write path to the
+address, and this is a rename with no behavioural consequence to reason about.
+An absence is not quotable out of the excerpt, so here is the scan instead, in
+a throwaway checkout outside this repository. Run once, on 2026-10-02:
+
+```console
+$ cd <throwaway> && git init -q . && git fetch -q --depth 1 \
+      https://github.com/Wer-Wolf/uniwill-laptop 5a24248f6422a0b673a47cbfd65e19a98eb4c8a9 \
+      && git checkout -q FETCH_HEAD
+$ git rev-parse HEAD
+5a24248f6422a0b673a47cbfd65e19a98eb4c8a9
+$ grep -rn 'EC_ADDR_FAN_DEFAULT\|FAN_CURVE_LENGTH\|0x0786' .
+./uniwill-acpi.c:254:#define EC_ADDR_FAN_DEFAULT		0x0786
+./uniwill-acpi.c:255:#define FAN_CURVE_LENGTH		5
+```
+
+The rev is the one `linux/patches/BASE_COMMIT` pins, so re-running those two
+lines with the rev read out of that file is the whole re-check. Two limits are
+worth stating rather than leaving for a reader to infer. It is a recorded run
+and not a gate: `upstream-excerpt.txt` is a deliberate partial quotation (per
+[`dmi-descriptor-evidence.md`](../../docs/findings/dmi-descriptor-evidence.md)),
+the whole 90 KB file is not vendored here, and no offline gate fetches it — so
+the excerpt could never have shown this absence, and nothing re-derives the grep
+above. And it is scoped to the commit named: a later upstream commit may well
+reference the address, and this says nothing about one. What is claimed is what
+`git rev-parse HEAD` printed in the block.
 
 ## 2. What the EC's own bytes do with the address
 
@@ -116,9 +135,10 @@ should not carry it:
 > This is corroborated from two independent directions on that board: the
 > DSDT's `ECMG` field list declares `APTC` as 7 bits followed by a 1-bit
 > `APTN`, and the vendor's own service writes `value | 0x80` to the same
-> address from a method called `SetCpuTccOffset`. Nothing in either tree reads
-> or writes `0x0786` at `5a24248`, so there is no upstream behaviour to
-> preserve either way and the change is a rename plus its uses.
+> address from a method called `SetCpuTccOffset`. In the driver as of
+> `5a24248` — the base this diff applies to — neither constant is referenced
+> anywhere in the tree, so there is no upstream behaviour to preserve either
+> way and the change is a rename plus its uses.
 >
 > One caveat I do not want to paper over: that same vendor service *also* reads
 > `0x0786`-`0x078A` as a five-element array of default fan PWM values
@@ -157,6 +177,10 @@ do not fold either into this.
 - **The `live` reading settles nothing.** The 2026-09-23 capture records
   `0x00`, and per `jnb 0xe7` a `0x00` byte is one the EC ignores outright —
   consistent with this reading, and not evidence for it.
+- **The upstream scan in §1 is a recorded run, not a gate.** It was run once,
+  against the rev `BASE_COMMIT` pins, and §1 carries the commands. The
+  committed excerpt cannot stand in for it: reading an absence out of a partial
+  quotation is the mistake, and it is scoped to that one commit.
 - **The temperature bracketing is on the other side of the override.** The
   consuming path is temperature-*shaped*; `0x0786` itself is not
   temperature-*indexed*. Keeping those apart is what the fan-curve reading
