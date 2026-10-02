@@ -8,10 +8,11 @@ is none.
 
 ## The gap
 
-`ec/tools/verify_reassembly.py`'s `verify_provenance()` has **nine `return 1`
-sites and one `return 0`**. The issue filed from #411 enumerates five of them by
-what a reader sees in the function's output; the rest were found by reading it.
-Nothing committed exercised any of them.
+`ec/tools/verify_reassembly.py`'s `verify_provenance()` has **eight `return 1`
+statements and one `return 0`**, reached over nine distinct failure conditions.
+The issue filed from #411 enumerates five of the nine by what a reader sees in
+the function's output; the rest were found by reading it. Nothing committed
+exercised any of them.
 
 What there *was* is one hand-run, recorded in `docs/findings.md` §14f: *"pointed
 at the window that wrote the listings (`--base 8c7985e --migration 08b72e2`) it
@@ -28,7 +29,7 @@ many, looks exactly like a working one on any pair that agrees — and the
 committed pair is a pair that agrees."* The gate runs exactly that pair, per
 commit. The same argument applies one level up and was not applied there.
 
-## The ten sites, and which case reaches each
+## The ten rows, and which case reaches each
 
 | return | case | how it is reached |
 |---|---|---|
@@ -43,9 +44,12 @@ commit. The same argument applies one level up and was not applied there.
 | the two reports differ by more than the column | `--migration recounted` | a commit editing one cell beneath the column |
 | `PASS` | the control, first | a migration that changes the column and nothing else |
 
-The report's one `return 1` serves both sides of the pair, so `--migration gone`
-and `--base listings` are two cases over one site — and they are still two cases,
-because the sentence each prints names a different side.
+Two of the ten rows are pairs of conditions over one statement. The report's
+`return 1` serves both sides of the pair, so `--migration gone` and `--base
+listings` are two cases over one site; the `for label, rev, sha in (("base",
+...), ("migration", ...))` loop's serves an unresolvable `--base` and an
+unresolvable `--migration`, the same shape. Each is still two cases, because
+the sentence each prints names a different side.
 
 Every one asserts **the exit status and a substring of the printed reason**, so a
 guard that fires for the wrong reason is not what passes, and each of the three
@@ -54,7 +58,7 @@ assertion. The `PASS` case is in the list because failure assertions with no
 success assertion are satisfied by a mode that fails at everything — which is
 the vacuity this whole issue is about.
 
-Two of the nine `return 1` sites are not reachable from a real repository, and
+Two of the nine conditions are not reachable from a real repository, and
 the fixture does not pretend otherwise. A commit that resolves cannot make
 `git diff` fail over a fixed pathspec, so those two cases replace
 `verify_reassembly._git` for the duration of one call with a shim that returns a
@@ -199,7 +203,7 @@ live question.
 
 `ec/tools/test_verify_provenance_clone_depth.py` is **not** extended. It holds
 the *depth* claim over real clones of this repository at two depths; this holds
-the *failure returns*, and a six-commit fixture cannot stand in for a clone
+the *failure returns*, and a seven-commit fixture cannot stand in for a clone
 depth. They are cross-referenced.
 
 ## What is not claimed
@@ -213,9 +217,9 @@ depth. They are cross-referenced.
   disclaim that reading and this page does not override it: what `ci.yml`'s
   `gates` job asks for is a fact about the workflow, not about a runner.
 - **That the `PASS` case says anything about the committed migration.** It says
-  the mode reaches its verdict on a six-commit fixture. The committed pair's own
-  answer is the one in the README, and what that answer does not establish — the
-  digests attest to the measured text and not to its correctness, and the
+  the mode reaches its verdict on a seven-commit fixture. The committed pair's
+  own answer is the one in the README, and what that answer does not establish
+  — the digests attest to the measured text and not to its correctness, and the
   re-encode (`docs/findings.md` §14e) is still the open half — is the mode's own
   closing paragraph, not restated here as if it were more.
 - **That the two INJECTED cases are end-to-end.** They are not, they are labelled
