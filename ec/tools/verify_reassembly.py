@@ -3,12 +3,13 @@
 
 Two tiers of checks, and the difference between them is the point.
 
-**`--check`, no assembler needed.** Three assertions. Every byte of every
+**`--check`, no assembler needed.** Four assertions. Every byte of every
 committed listing is compared against the firmware image. The committed report
-is confirmed to still describe those listings. And every row's `listing_digest`
-is recomputed from the listing it names and compared. The first covers 100% of
-the instructions, including the ones the assembler below cannot express, and
-all three run anywhere.
+is confirmed to still describe those listings. Every row's `listing_digest` is
+recomputed from the listing it names and compared. And every row's `name` is
+compared against the one the listing index carries for the same address. The
+first covers 100% of the instructions, including the ones the assembler below
+cannot express, and all four run anywhere.
 
 **The full run, `sdas8051` needed.** The committed listing is re-encoded with
 `sdas8051` (SDCC's assembler, which never saw this firmware) and the result is
@@ -33,6 +34,24 @@ by nothing automated here, because the only thing that would catch it is the
 re-encode, and that still has no schedule (`docs/findings.md` §14e). Detecting
 a change is not verifying it, and the column's name invites the second reading
 more than the first.
+
+**`name` is a copy rather than a measurement, and that is what decides how
+`--check` holds it.** `write_report()` writes the name the listing index held at
+report time, so the column restates a source of truth this repository already
+checks rather than recording something a run observed; `outcome`,
+`listing_digest`, `instructions_*` and `assembler` are the other kind, and
+copying a value into one of those asserts an observation that was not made. So
+the fourth assertion compares the report's copy against the index's, per
+(program, addr), and names the rows that disagree.
+
+**What that comparison establishes, exactly.** That the report and the index
+still agree about what to call each function. Not that the name is a good one:
+naming a function is a judgement about what it does, and the judgement belongs
+to the annotation and the disassembly, not to this file. A name that agrees with
+the index is a name the index wrote, exactly as a digest that agrees is a digest
+the report was measured with -- neither is a claim that the thing is right, and
+`--refresh-name-column` below is the deliberate, proved-one-column way to
+re-copy it.
 
 **`--verify-provenance` is what anchors that column to the text it covers.**
 `add_digest_column()` digests the listings on disk without re-encoding, so it
@@ -85,6 +104,10 @@ Usage:
         # and one per way --verify-provenance below can fail, each driven
         # against a throwaway repository rather than against this one
     python3 ec/tools/verify_reassembly.py --add-digest-column       # one-shot
+    python3 ec/tools/verify_reassembly.py --refresh-name-column     # repeatable:
+        # copy the listing index's names into the report's `name` column, and
+        # prove from the written file that no other cell moved. A copy, not a
+        # measurement, which is why this one is not one-shot
     python3 ec/tools/verify_reassembly.py --verify-provenance \\
         --base 08b72e2 --migration a56b3bb --listings-from 8c7985e
         # audit a digest migration against history; needs a full clone.
@@ -142,6 +165,8 @@ NO_RE_ENCODE = (
     Mode("--self-test", "self_test",
          "the read-only verify path is `--work <dir>`"),
     Mode("--add-digest-column", "add_digest_column",
+         "the read-only verify path is `--work <dir>`"),
+    Mode("--refresh-name-column", "refresh_name_column",
          "the read-only verify path is `--work <dir>`"),
     Mode("--verify-provenance", "verify_provenance",
          "run it on its own, without --emit-csv; it reads git history and "
@@ -832,10 +857,18 @@ def refuses_committed_report(path):
     """-> True, having said why, if `path` is the committed report.
 
     One predicate rather than a check per caller, because the invariant is one
-    writer for one file: `reassembly.csv` is written by `--report` and by
-    nothing else, and a second path to it is the hazard `--add-digest-column`
-    needed its own guard for. `realpath` on both sides so a relative spelling
-    or a symlink reaches the same verdict as the absolute one.
+    writer for one *result*: the rows of `reassembly.csv` are written by
+    `--report` and by nothing else, and a second path to them is the hazard
+    `--add-digest-column` needed its own guard for. `realpath` on both sides so
+    a relative spelling or a symlink reaches the same verdict as the absolute
+    one.
+
+    (Corrected 2026-10-02, issue #627: this said the *file* was written by
+    `--report` and by nothing else, which stopped being true when
+    `refresh_name_column()` arrived. That function is a second writer of the
+    file and not of any result -- it moves one copied cell and proves from the
+    written file that it moved nothing else -- so the predicate below is
+    unchanged and only the sentence it prints was wrong.)
     """
     if os.path.realpath(path) != os.path.realpath(REPORT):
         # realpath follows symlinks but not hardlinks, and a hardlink to the
@@ -849,9 +882,10 @@ def refuses_committed_report(path):
                 return False
         except OSError:
             return False
-    print("  %s is written by --report and by nothing else.\n"
-          "     A per-row comparison needs a second path, not a second writer "
-          "for the\n     first one; write it somewhere else."
+    print("  %s is written from a re-encode: by --report, and by nothing else\n"
+          "     that carries per-row results. A per-row comparison needs a "
+          "second path,\n     not a second writer for the first one; write it "
+          "somewhere else."
           % os.path.relpath(REPORT, REPO))
     return True
 
@@ -1038,6 +1072,80 @@ def compare_digests(report, digests, live):
                        ("report says %s, %s now digests to %s -- the listing "
                         "text changed after the report measured it"
                         % (got, rel, want),))
+    return compared, bad
+
+
+def listing_index_keys(index_path=LISTING_INDEX):
+    """The index's listing rows, keyed the way the report keys its own.
+
+    -> (live, names): {addr|program: out_file} and {addr|program: name}, from
+    one read of the file.
+
+    Both come back from the same pass because the two callers need one of each
+    and neither wants a second read: --check prints the path beside every row it
+    names and compares the name against the same row, and a second read of one
+    file is a second chance to compare against something that moved underneath
+    the comparison. `addr|program` rather than `addr` for the reason
+    committed_report() gives: 54 addresses carry a row in each bank window.
+
+    A row with no `out_file`, or one that names something other than a listing,
+    is not in the join at all and is skipped here exactly as it is everywhere
+    else that reads the index.
+    """
+    live, names = {}, {}
+    for r in csv.DictReader(open(index_path, newline="")):
+        if r["out_file"] and not r["out_file"].startswith("("):
+            key = r["addr"] + "|" + r["program"]
+            live[key] = r["out_file"]
+            names[key] = (r.get("name") or "").strip()
+    return live, names
+
+
+def compare_names(report, names, live):
+    """Every report row's `name` against the listing index's, per (program, addr).
+
+    -> (compared, bad). `report` is {addr|program: row}, `names` and `live` are
+    listing_index_keys()'s two dicts. Returned rows are
+    (key, program, addr, name, out_file, why), the same six fields
+    compare_digests() returns, so check() prints one kind of failure the way it
+    prints the other.
+
+    A report row with no index row is named rather than skipped, and a blank
+    `name` is named rather than read as agreement: both are the "nothing to
+    compare, and treating that as a pass" shape compare_digests() is written
+    against, and it is the one a checker fails in.
+
+    It is a *copy* comparison and not a verification, and the difference is the
+    whole argument for this being safe to re-run: the report's name was written
+    from the index, so a disagreement is stale rather than wrong, and copying
+    the index back establishes nothing and asserts nothing.
+    """
+    compared, bad = 0, []
+    for key, r in sorted(report.items()):
+        got = (r.get("name") or "").strip()
+        rel = live.get(key, "(not in the listing index)")
+        where = (r.get("program", "?"), r.get("addr", "?"),
+                 r.get("name", "?"), rel)
+        # The two rows with nothing to compare come before the count, as they do
+        # in compare_digests(): "compared" has to mean two values were put
+        # against each other, or the summary line is counting rows it skipped.
+        want = names.get(key)
+        if want is None:
+            bad.append((key,) + where +
+                       ("no name to compare against: %s has no row in the "
+                        "listing index" % rel,))
+            continue
+        if not got:
+            bad.append((key,) + where +
+                       ("no name in the report: the listing index calls %s %s"
+                        % (rel, want),))
+            continue
+        compared += 1
+        if got != want:
+            bad.append((key,) + where +
+                       ("the report calls it %s, the listing index calls it "
+                        "%s -- the report's copy of the name is stale"
+                        % (got, want),))
     return compared, bad
 
 
@@ -1309,6 +1417,14 @@ REPORT_COMMAND = (
     "SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) "
     "python3 ec/tools/verify_reassembly.py --work /tmp/ec --report")
 
+# The other one, and the contrast with the line above is the whole of why a
+# name may be re-copied when a digest may not. A digest disagreement means the
+# listing text moved and the re-encode is the only thing that re-establishes it;
+# a name disagreement means a copy of the index went stale, and the index is
+# still there. Named once so the failure message and the flag that answers it
+# cannot drift into pointing at different things.
+NAME_COMMAND = "python3 ec/tools/verify_reassembly.py --refresh-name-column"
+
 
 def run_status(tally):
     """The full run's exit status: zero unless a function re-encodes to different
@@ -1333,17 +1449,21 @@ def run_status(tally):
 def check():
     """No assembler required.
 
-    Three things. First, every byte of every listing against the firmware
+    Four things. First, every byte of every listing against the firmware
     image, which covers the instructions the assembler cannot express and runs
     anywhere. Second, that the committed reassembly report still describes the
     committed listings: same functions, same outcomes. Third, that no listing's
     text has moved since the report measured it, which is what a mnemonic or
-    operand edit leaves the byte column unable to see.
+    operand edit leaves the byte column unable to see. Fourth, that the report's
+    copy of each function's name still matches the one the listing index holds.
 
     The first two are about the claim on file agreeing with the export; the
-    third is about the export not having changed underneath it. What none of
-    them can do is verify the disassembly, and this function does not say it
-    does: verifying is the re-encode, and that is the deep tier."""
+    third is about the export not having changed underneath it; the fourth is
+    about a copied cell that nothing else in this file watches, and it is the
+    weakest of the four because a name is a judgement rather than a
+    measurement -- it holds the copy, not the judgement. What none of them can
+    do is verify the disassembly, and this function does not say it does:
+    verifying is the re-encode, and that is the deep tier."""
     ok = True
     bytes_ok, n_insns, n_bad, digests = check_listing_bytes()
     ok = ok and bytes_ok
@@ -1351,14 +1471,9 @@ def check():
         print("  FAIL no reassembly report at %s; run verify_reassembly.py"
               % os.path.relpath(REPORT, REPO))
         return 1
-    rows = {r["out_file"] for r in csv.DictReader(open(LISTING_INDEX, newline=""))
-            if r["out_file"] and not r["out_file"].startswith("(")}
     report = {r["addr"] + "|" + r["program"]: r
               for r in csv.DictReader(open(REPORT, newline=""))}
-    live = {}
-    for r in csv.DictReader(open(LISTING_INDEX, newline="")):
-        if r["out_file"] and not r["out_file"].startswith("("):
-            live[r["addr"] + "|" + r["program"]] = r["out_file"]
+    live, names = listing_index_keys()
     for key, rel in live.items():
         if key not in report:
             print("  FAIL %s is in the listing index but not in the reassembly "
@@ -1414,6 +1529,29 @@ def check():
               "why --check reports a\n"
               "       disagreement here rather than a diff the reader has to "
               "interpret." % REPORT_COMMAND)
+        ok = False
+    # The name, against the index it was copied from. Its own line rather than a
+    # fifth clause of the digest line above, because the two need different
+    # remedies and merging them would tell a reader to re-report for a stale
+    # name, which is the one thing that cannot fix it here.
+    n_compared, name_bad = compare_names(report, names, live)
+    print("  listing names: %d compared against the listing index, "
+          "%d disagreement(s)" % (n_compared, len(name_bad)))
+    for _key, prog, addr, name, rel, why in name_bad[:MOVED_CAP]:
+        print("  FAIL %s %s %s (%s): %s" % (prog, addr, name, rel, why))
+    if len(name_bad) > MOVED_CAP:
+        print("  ... and %d more" % (len(name_bad) - MOVED_CAP))
+    if name_bad:
+        print("       A name is a copy of what the listing index holds, so this "
+              "is stale rather than\n       wrong, and copying it across is the "
+              "whole repair:\n"
+              "         %s\n"
+              "       It rewrites that one column and proves from the written "
+              "file that no other cell\n       moved, so it cannot be used to "
+              "re-arm a digest, an outcome or an assembler\n       version. It "
+              "asserts that the report and the index agree about the name; it "
+              "does\n       not check the name is a good one."
+              % NAME_COMMAND)
         ok = False
     print("  all checks passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
@@ -1481,6 +1619,157 @@ def add_digest_column(path=REPORT):
           "  %s\n"
           "  which re-encodes with the assembler, rather than editing the CSV."
           % (len(rows), os.path.relpath(path, REPO), REPORT_COMMAND))
+    return 0
+
+
+def read_report(path):
+    """-> (raw bytes, fieldnames, rows) for a report, read once.
+
+    The bytes as well as the rows because the caller needs something to put back
+    if its own guard fails: a writer that has decided the file is worse than it
+    found it has to be able to leave it exactly as it was, and a re-serialisation
+    of the rows it read is not that.
+
+    Not `committed_report()`, and the difference is what each is for. That one
+    derives the tallies and the assembler census the run comparison prints, and
+    answers None for a file that is not there; this one is the raw parse a writer
+    needs before it has changed anything, so it has the header and the bytes.
+    """
+    with open(path, "rb") as f:
+        raw = f.read()
+    with open(path, newline="") as f:
+        reader = csv.DictReader(f)
+        return raw, list(reader.fieldnames or []), list(reader)
+
+
+def only_name_moved(before, after):
+    """-> (True, "") if the second read of a report differs from the first in no
+    cell but `name`. `before` and `after` are (fieldnames, rows) pairs.
+
+    The header and the row order are compared too, because a writer that
+    reordered rows, renamed a column or dropped one has changed the report even
+    though no cell differs from the row it was read as.
+
+    This is the guard, and it is the reason a second writer of the committed
+    report is safe at all: the comparison is between two reads of the *file*, not
+    between the rows that were about to be serialised and themselves, so a column
+    that moved, a header that moved or a row that came back with a different set
+    of columns fails here rather than agreeing with itself. It compares parsed
+    cells, so it does not see a difference in how those cells were written: a
+    quoting rule or a line terminator that parses to the same cells passes it.
+    """
+    was_header, was_rows = before
+    now_header, now_rows = after
+    if was_header != now_header:
+        return False, ("the header moved: %r became %r"
+                       % (was_header, now_header))
+    if len(was_rows) != len(now_rows):
+        return False, ("%d row(s) before, %d after"
+                       % (len(was_rows), len(now_rows)))
+    for i, (was, now) in enumerate(zip(was_rows, now_rows)):
+        if list(was) != list(now):
+            return False, ("row %d has a different set of columns" % i)
+        for column in was:
+            if column == "name":
+                continue
+            if was[column] != now[column]:
+                return False, ("row %d, %s column: %r became %r"
+                               % (i, column, was[column], now[column]))
+    return True, ""
+
+
+def refresh_name_column(path=REPORT, index_path=LISTING_INDEX):
+    """Copy the listing index's `name` into the report, and touch nothing else.
+
+    **Repeatable, where `--add-digest-column` is one-shot, and the difference is
+    the argument rather than a convenience.** A digest records an observation; a
+    re-copied one re-arms a detector while verifying nothing, so the only writer
+    of a digest has to be the run that measures it. A name is a copy of a value
+    the index holds and this file can read back, so re-copying it re-establishes
+    agreement and asserts nothing -- which is exactly what the check is for.
+
+    What it therefore cannot do, and does not try to: compute a measurement. No
+    outcome, no digest, no instructions_* cell and no assembler version is
+    recomputed here; they are read and copied through, and the read-back below
+    fails the run if any of them moved. That is what keeps this path out of the
+    hazard `refuses_committed_report()` names -- a report written by a different
+    assembler -- and least of all out of the rows whose `assembler` cell
+    `docs/findings/thunk-prefix-collision.md` says is already unexplained.
+
+    The key sets have to be identical in both directions before anything is
+    written. Copying by key is otherwise a way to invent a name for a row with no
+    listing, and to leave an index row with no report row unmentioned, and both
+    of those are things `--check` already reports -- this must not paper over.
+    """
+    rel = os.path.relpath(path, REPO)
+    original, fieldnames, rows = read_report(path)
+    # Copied before anything is changed, so the read-back below compares the file
+    # as it was found against the file as it was left rather than against the
+    # dicts in between -- which is the comparison that could agree with itself.
+    before_rows = [dict(r) for r in rows]
+    if "name" not in fieldnames:
+        print("  %s has no name column; nothing to refresh.\n"
+              "     A report from before the column existed is not something to "
+              "add one to by\n     hand; re-report it instead:\n       %s"
+              % (rel, REPORT_COMMAND))
+        return 1
+    live, names = listing_index_keys(index_path)
+    keys = [r["addr"] + "|" + r["program"] for r in rows]
+    have = set(keys)
+    dupes = sorted(k for k, n in collections.Counter(keys).items() if n > 1)
+    if dupes:
+        # A duplicate would make "this row" ambiguous about which row a name is
+        # for, and a dict built over the keys would keep one of the two silently.
+        print("  refusing to refresh %s: %d (program, addr) appear more than "
+              "once\n  (first: %s). Which row a name belongs to has to be "
+              "unambiguous." % (rel, len(dupes), dupes[0]))
+        return 1
+    orphans = [k for k in keys if k not in names]
+    if orphans:
+        print("  refusing to refresh %s: %d report row(s) have no row in the\n"
+              "  listing index (first: %s). A name cannot be copied for a "
+              "function no\n  listing names, and --check has already said the "
+              "report is stale." % (rel, len(orphans), orphans[0]))
+        return 1
+    unlisted = [k for k in names if k not in have]
+    if unlisted:
+        print("  refusing to refresh %s: %d listing(s) have no row in the report "
+              "(first:\n  %s). --check has already said the report predates this "
+              "export; a name\n  written now would leave it looking current."
+              % (rel, len(unlisted), live.get(unlisted[0], unlisted[0])))
+        return 1
+    moved = []
+    for r in rows:
+        want = names[r["addr"] + "|" + r["program"]]
+        if (r.get("name") or "").strip() != want:
+            moved.append((r["program"], r["addr"], (r.get("name") or "").strip(),
+                          want))
+            r["name"] = want
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\n",
+                           restval="", extrasaction="ignore")
+        w.writeheader()
+        w.writerows(rows)
+    held, why = only_name_moved((fieldnames, before_rows), read_report(path)[1:])
+    if not held:
+        with open(path, "wb") as f:
+            f.write(original)
+        print("  restored %s: the rewrite changed more than the name column "
+              "(%s).\n  A writer that cannot say which column it touched is not "
+              "one to leave in place." % (rel, why))
+        return 1
+    print("  refreshed the name column of %d row(s) in %s." % (len(moved), rel))
+    for prog, addr, was, want in moved[:MOVED_CAP]:
+        print("    %s %s: %s -> %s" % (prog, addr, was, want))
+    if len(moved) > MOVED_CAP:
+        print("    ... and %d more" % (len(moved) - MOVED_CAP))
+    print("\n  Every other cell was read back from the written file and is "
+          "unchanged, so no\n  outcome, digest, instruction count or assembler "
+          "version was touched. Asserting: the\n  report and the listing index "
+          "now agree about what each function is called.\n  Not asserting: that "
+          "the name is a good one -- a name that agrees with the index is a "
+          "name\n  the index wrote. Re-reporting is what re-measures anything:\n"
+          "    %s" % REPORT_COMMAND)
     return 0
 
 
@@ -2186,7 +2475,8 @@ def self_test():
     bare = argparse.Namespace(emit_csv="x.csv", limit=None, report=False,
                               work=None, assembler=None, jobs=8,
                               check=False, self_test=False,
-                              add_digest_column=False, verify_provenance=False,
+                              add_digest_column=False, refresh_name_column=False,
+                              verify_provenance=False,
                               base=None, migration=None, listings_from=None)
     assert_that(refuses_emit_csv(bare) is None,
                 "--emit-csv alone is honoured: a guard that refuses everything "
@@ -2261,6 +2551,7 @@ def self_test():
                     "than being skipped")
     finally:
         os.remove(rpath)
+
 
     # The dispatch must never hand two rows that are in flight at the same
     # time the same scratch directory, or they overwrite each other's source
@@ -2887,6 +3178,164 @@ def self_test():
         shutil.rmtree(stub_dir, ignore_errors=True)
     cmpdir.cleanup()
 
+    # The name column, which is a copy and not a measurement, and so is both
+    # checked and refreshed on a different argument from the digest above. The
+    # scratch report and the scratch listing index are written here rather than
+    # committed, for the reason the digest probe is: the thing under test is a
+    # join between two CSVs this file can be handed, so a fixture row nobody
+    # edits is a thing to keep in step for nothing.
+    ndir = tempfile.TemporaryDirectory(prefix="name-selftest-")
+    NAME_REPORT_COLUMNS = ["program", "addr", "name", "outcome",
+                           "listing_digest", "detail", "assembler"]
+    NAME_INDEX_COLUMNS = ["program", "addr", "name", "out_file"]
+
+    def nrow(name, addr="0040", prog="bank0", assembler=NIX, detail=""):
+        return {"program": prog, "addr": addr, "name": name, "outcome": "match",
+                "listing_digest": "0123456789abcdef", "detail": detail,
+                "assembler": assembler}
+
+    def nrow_pair(report_rows, index_rows):
+        """A report and a listing index on disk -> their two paths, then read."""
+        rpath = os.path.join(ndir.name, "report.csv")
+        ipath = os.path.join(ndir.name, "listing-index.csv")
+        for path, columns, rows in ((rpath, NAME_REPORT_COLUMNS, report_rows),
+                                    (ipath, NAME_INDEX_COLUMNS, index_rows)):
+            with open(path, "w", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=columns, lineterminator="\n",
+                                   restval="", extrasaction="ignore")
+                w.writeheader()
+                w.writerows(rows)
+        with open(rpath, newline="") as f:
+            report = {r["addr"] + "|" + r["program"]: r
+                      for r in csv.DictReader(f)}
+        return rpath, ipath, report, listing_index_keys(ipath)
+
+    # A renamed listing has to fail, and the message has to carry both
+    # spellings: "something moved" is not a thing the reader can act on.
+    rpath, ipath, report, (live, names) = nrow_pair(
+        [nrow("FUN_CODE_0012", addr="0012"),
+         nrow("store_be16_b", addr="BD54")],
+        [{"program": "bank0", "addr": "0012", "name": "ret_only_0012",
+          "out_file": "bank0/0012.asm"},
+         {"program": "bank0", "addr": "BD54", "name": "store_be16_b",
+          "out_file": "bank0/BD54.asm"}])
+    n_compared, n_bad = compare_names(report, names, live)
+    assert_that(n_compared == 2 and len(n_bad) == 1
+                and n_bad[0][0] == "0012|bank0",
+                "a row whose name the index has renamed fails while the row "
+                "beside it passes (%d compared, %d failed)"
+                % (n_compared, len(n_bad)))
+    assert_that(len(n_bad[0]) == 6 and n_bad[0][4] == "bank0/0012.asm"
+                and "FUN_CODE_0012" in n_bad[0][5]
+                and "ret_only_0012" in n_bad[0][5],
+                "the failure carries the six fields check() already prints for a "
+                "digest: both spellings in the why, the listing in the field the "
+                "printer puts in parentheses")
+
+    # The two rows that are not "nothing to compare", which is the shape a
+    # checker fails in: one has no name to copy, the other has no listing to copy
+    # from. Both are named, and neither is counted as compared.
+    _rpath, _ipath, report, (live, names) = nrow_pair(
+        [nrow("", addr="0040"), nrow("orphan", addr="0044")],
+        [{"program": "bank0", "addr": "0040", "name": "refreshed",
+          "out_file": "bank0/0040.asm"}])
+    n_compared, n_bad = compare_names(report, names, live)
+    assert_that(n_compared == 0 and len(n_bad) == 2
+                and "no name in the report" in n_bad[0][5]
+                and "no name to compare against" in n_bad[1][5],
+                "a blank name and a row with no index row are both named and "
+                "told apart, and neither is skipped as agreement (%d compared, "
+                "%d failed)" % (n_compared, len(n_bad)))
+
+    # The writer. It moves the name and nothing else, and it says so from the
+    # file it wrote rather than from the rows it was about to write -- so the
+    # row that changes is also the row carrying the other assembler's version
+    # string, which is the one a writer computing a measurement would rewrite.
+    rpath, ipath, _report, _keys = nrow_pair(
+        [nrow("FUN_CODE_0012", addr="0012", assembler="sdas8051 02.00"),
+         nrow("store_be16_b", addr="BD54", detail="a, b \"c\""),
+         nrow("already", addr="0044")],
+        [{"program": "bank0", "addr": "0012", "name": "ret_only_0012",
+          "out_file": "bank0/0012.asm"},
+         {"program": "bank0", "addr": "BD54", "name": "store_be16_b",
+          "out_file": "bank0/BD54.asm"},
+         {"program": "bank0", "addr": "0044", "name": "already",
+          "out_file": "bank0/0044.asm"}])
+    assert_that(refresh_name_column(rpath, ipath) == 0,
+                "a report with one stale name refreshes and exits 0")
+    _raw, after_header, after = read_report(rpath)
+    assert_that(after_header == NAME_REPORT_COLUMNS
+                and [r["name"] for r in after]
+                == ["ret_only_0012", "store_be16_b", "already"]
+                and [r["assembler"] for r in after]
+                == ["sdas8051 02.00", NIX, NIX]
+                and after[1]["detail"] == "a, b \"c\"",
+                "the names become the index's and every other cell is the one "
+                "that was there: a non-uniform assembler column, a detail cell "
+                "holding a comma and a quote, the header and the row order")
+
+    # The key sets, both directions, and before anything is written. A name
+    # written across either of them would leave a stale report looking current.
+    rpath, ipath, _report, _keys = nrow_pair(
+        [nrow("agrees", addr="0040"), nrow("orphan", addr="0044")],
+        [{"program": "bank0", "addr": "0040", "name": "agrees",
+          "out_file": "bank0/0040.asm"},
+         {"program": "bank0", "addr": "0046", "name": "unlisted",
+          "out_file": "bank0/0046.asm"}])
+    untouched = open(rpath, "rb").read()
+    assert_that(refresh_name_column(rpath, ipath) == 1
+                and open(rpath, "rb").read() == untouched,
+                "a key set that disagrees in both directions is refused and the "
+                "file is left byte for byte as it was")
+
+    # A refresh with nothing to move. The one-column claim at its strongest: if
+    # the writer touched quoting, the line terminator or the column order, this
+    # is where it shows and nothing above it would.
+    rpath, ipath, _report, _keys = nrow_pair(
+        [nrow("agrees", addr="0040", detail="a, b \"c\"")],
+        [{"program": "bank0", "addr": "0040", "name": "agrees",
+          "out_file": "bank0/0040.asm"}])
+    untouched = open(rpath, "rb").read()
+    assert_that(refresh_name_column(rpath, ipath) == 0
+                and open(rpath, "rb").read() == untouched,
+                "a refresh with nothing to move leaves the file byte-identical")
+
+    # The guard, on the writer's own path rather than only as a function. A row
+    # with a missing trailing cell is the one a CSV round-trip genuinely
+    # changes -- DictReader fills it with None and DictWriter writes it back as
+    # "" -- so this is a case the writer reaches and not a fault injected for
+    # it, and the file has to come back out of it untouched.
+    short = os.path.join(ndir.name, "short.csv")
+    short_index = os.path.join(ndir.name, "short-index.csv")
+    with open(short, "w", newline="") as f:
+        f.write("program,addr,name,outcome\n"
+                "bank0,0040,stale,match\n"
+                "bank0,0044,kept\n")
+    with open(short_index, "w", newline="") as f:
+        f.write("program,addr,name,out_file\n"
+                "bank0,0040,refreshed,common/0040.asm\n"
+                "bank0,0044,kept,common/0044.asm\n")
+    untouched = open(short, "rb").read()
+    assert_that(refresh_name_column(short, short_index) == 1
+                and open(short, "rb").read() == untouched,
+                "a report the writer cannot round-trip is restored byte for byte "
+                "rather than left half rewritten")
+
+    # The guard refusing both things a cell comparison cannot see on its own.
+    held, why = only_name_moved(
+        (["a", "name", "b"], [{"a": "1", "name": "x", "b": "2"}]),
+        (["a", "name", "b"], [{"a": "9", "name": "y", "b": "2"}]))
+    assert_that(not held and "a column" in why,
+                "the guard fails on a cell that moved under a column other than "
+                "name, and says which one (%r)" % why)
+    held, why = only_name_moved(
+        (["a", "name", "b"], [{"a": "1", "name": "x", "b": "2"}]),
+        (["a", "name"], [{"a": "1", "name": "y"}]))
+    assert_that(not held and "header" in why,
+                "and on a header that moved, which comparing cells would never "
+                "see (%r)" % why)
+    ndir.cleanup()
+
     # The comparison itself, against a byte string we control. A check that
     # cannot fail on a wrong byte is not a check.
     sdas = find_assembler()
@@ -2968,7 +3417,8 @@ def main():
     ap.add_argument("--emit-csv", metavar="PATH",
                     help="write the per-row results to PATH, for comparing two "
                          "runs; refuses the committed report, and refuses --check, "
-                         "--self-test, --add-digest-column, --verify-provenance "
+                         "--self-test, --add-digest-column, "
+                         "--refresh-name-column, --verify-provenance "
                          "and --limit, none of which produce a full set of rows "
                          "to write")
     ap.add_argument("--check", action="store_true",
@@ -2976,6 +3426,11 @@ def main():
     ap.add_argument("--add-digest-column", action="store_true",
                     help="one-shot: add listing_digest to the existing report, "
                          "without re-encoding (refuses to run twice)")
+    ap.add_argument("--refresh-name-column", action="store_true",
+                    help="copy the listing index's names into the report's name "
+                         "column, no re-encode; repeatable, because a name is a "
+                         "copy and not a measurement, and it proves from the "
+                         "written file that no other cell moved")
     ap.add_argument("--verify-provenance", action="store_true",
                     help="audit a listing_digest migration against the history "
                          "it sits in; needs --base and --migration, and a full "
@@ -3018,6 +3473,8 @@ def main():
                                  repo=args.repo)
     if args.add_digest_column:
         return add_digest_column()
+    if args.refresh_name_column:
+        return refresh_name_column()
     if args.check:
         return check()
     # Checked here as well as in emit_csv(), so a refused path costs a

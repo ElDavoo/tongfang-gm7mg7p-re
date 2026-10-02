@@ -329,6 +329,17 @@ def workflow(name, jobs):
     return "\n".join(lines) + "\n"
 
 
+def criterion_line():
+    """The 1-based line of the review prompt's weakened-gate criterion, the one
+    line of `agent-review.yml` that names the gate script."""
+    path = REPO / ".github" / "workflows" / "agent-review.yml"
+    with open(path, encoding="utf-8") as handle:
+        hits = [n for n, text in enumerate(handle.read().splitlines(), 1)
+                if ".github/scripts/agent-gates.sh" in text]
+    assert len(hits) == 1, f"expected one line naming the gate script, found {hits}"
+    return hits[0]
+
+
 def at_line(path, line):
     """The text of one 1-based line of a workflow, for checking a citation."""
     with open(path, encoding="utf-8") as handle:
@@ -523,7 +534,7 @@ class DepthTests(ScratchTree):
                       out)
 
     def test_a_gate_named_inline_in_a_criterion_is_not_a_reader(self):
-        # `agent-review.yml:169`'s shape: the marker is the fourth word of a
+        # `agent-review.yml`'s weakened-gate criterion's shape: the marker is the fourth word of a
         # bullet, so the line's first non-whitespace text is a hyphen. Counting
         # it would put a job that runs no gate and needs no clone inside a
         # full-depth invariant, which is the rule being wrong rather than
@@ -1011,12 +1022,16 @@ class CommittedTreeTests(unittest.TestCase):
         workflows, _unreadable = chc.load_workflows(str(REPO))
         job = workflows["agent-review.yml"]["review"]
         self.assertIsNone(job.reader)
-        self.assertEqual(job.named, [(169, ".github/scripts/agent-gates.sh")])
+        # The line is found by its text rather than written down: the review
+        # prompt is edited often, and a number here went stale with every edit
+        # above the criterion.
+        line = criterion_line()
+        self.assertEqual(job.named, [(line, ".github/scripts/agent-gates.sh")])
         # And the line is one a reader can go and check, which is the whole
         # reason the loader keeps a position for a parsed scalar.
         self.assertIn(".github/scripts/agent-gates.sh",
                       at_line(REPO / ".github" / "workflows" /
-                              "agent-review.yml", 169))
+                              "agent-review.yml", line))
 
     def test_the_report_prints_the_prompt_it_did_not_count(self):
         out = io.StringIO()
@@ -1024,7 +1039,7 @@ class CommittedTreeTests(unittest.TestCase):
             chc.report(str(REPO))
         text = out.getvalue()
         self.assertIn("not in command position", text)
-        self.assertIn("agent-review.yml:169 review", text)
+        self.assertIn(f"agent-review.yml:{criterion_line()} review", text)
         # The blind-spot footer is the report's half of the docstring's own
         # paragraph, and the second declared blind spot is in it: the prepared
         # workflow outside the glob.
