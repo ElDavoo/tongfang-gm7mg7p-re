@@ -5,7 +5,16 @@
 
 
 /* Prologue 0x4C27..0x4C37 immediately after RET at 0x4C26; its MOV A,R5 at 0x4C34 supplies the
-   selector to LCALL 0x119C at 0x4C35. The framing is conditional on entry to 0x4C27:
+   selector to LCALL 0x119C at 0x4C35. 0x119C pops the return address into DPTR before its first
+   MOVC, so the table it walks begins at 0x4C38 rather than after the call: from there the bytes are
+   an 11-entry code-space table of 3-byte records, target from +0/+1 and selector key at +2, keyed
+   0x00 to 0x0C with 0x07 and 0x08 absent. Its first three records are `4c 5d 00`, `4c 92 01` and
+   `4c 9e 02`; the table's last byte is 0x4C5C, its default is 0x4FE1, and the byte at 0x4C5D is the
+   target of the record keyed 0x00, so nothing after 0x4C35 executes as this function's
+   continuation. ec/annotations/pd-0x38-consumers.md section 5.1 carries the dispatcher's own
+   disassembly and this table's bytes, and reads them as data on that basis. The figures are the pd
+   0x4C35 row of ec/annotations/pd-index-table-spans.csv, a decode under one reader's layout rather
+   than a claim that any of these handlers executes. The framing is conditional on entry to 0x4C27:
    reset-to-0x4C27 reachability, all upstream callers, and occurrence of any selector are not
    established
    type: dispatch
