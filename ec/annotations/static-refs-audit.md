@@ -394,6 +394,34 @@ rows and §3.5 decodes each of the eight callees against `r2 -a 8051`. It is
 still a PD-image question, not an EC-side one, and not a `status:` question
 either way.
 
+**Correction (issue #44): depth 2 is attempted now, and the two rows above
+are the depth-1 reading.** `--callee-depth` takes an integer N and follows a
+callee that forwards DPTR again; the table above is unchanged and still
+reproduces at N=1, which is the point of keeping it. At N=2 the two forwarders
+resolve to reads, through `0xB1F2 -> 0x10C8` and `0x383A -> 0x0FCB`:
+
+```console
+$ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 2 \
+  | grep -E '0x04A6|0x07D0|0x07E2|0x07E3|0x07E5'
+| `0x07D0` | `BATTERY_CHARGE_LIMIT_DOWN` | 254 | 0 | 254 | 157 | 8 | 2 | 0 | 0 | 72 | 7 | 0 | 0 | 8 |
+| `0x07E2` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 15 | 0 | 15 | 7 | 4 | 0 | 0 | 0 | 3 | 1 | 0 | 0 | 0 |
+| `0x07E3` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 9 | 0 | 9 | 2 | 2 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 |
+| `0x07E5` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 10 | 0 | 10 | 5 | 3 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
+| `0x04A6` | `BAT_CYCLE_COUNT` | 7 | 3 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 0 |
+```
+
+`0x07D0` and `0x04A6` are the cross-check and both hold: the 72/7 split is
+unchanged, and the four `0x04A6` PD handoffs stay `handoff->unresolved` at
+depths 2, 3, 4 and 8 because the chain reaches `0x10BC`, which adds to DPTR
+without ever dereferencing it. Three further cells move between depth 1 and
+depth 2, none of them in this table's five: `0x089E` resolves `r+w` through
+`0xBADE -> 0x70E4`, and `0x0811` and `0x07D6` each resolve read through a
+one-instruction forwarder to `0x10C8` — the last of which is the verdict
+`ec-07d6-07d7-sites.md` §4.4 had reached by hand, now reached independently
+by the tool. `../../docs/findings/callee-depth-n.md` is the write-up, and it
+carries the two guards (a cycle and the depth cap) that this image never
+exercises.
+
 **The two rows already resolved by hand are the cross-check, and the tool
 agrees with both.** `0x07D0`'s 79 come out 72 read / 7 write, exactly the
 split `ec-0x07d0-sites.md` §3 reached by hand. `0x04A6`'s single EC-side
