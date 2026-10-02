@@ -1,4 +1,4 @@
-# The 39 other collisions, decoded: the PD image hands them on, and only one page of the wider range is not chance
+# The 39 other collisions, decoded: the PD image hands them on, and the low 4 KiB's excess sits on one page
 
 (2026-10-02, issue #64. Static reading of `ec/firmware/GMxMGxx_11.800`
 through `trace_xdata_refs.py`, `xdata_span_survey.py`, `pd_index_geometry.py`
@@ -25,13 +25,13 @@ both sides, and the `0x07D4` case that comes closest is a PD increment loop
 against an EC mirror register that has already been named in this repository.
 
 **The wider count.** Across `0x0000`-`0xFFFF` there are **138** addresses with
-direct `MOV DPTR` sites in both images, and they are not spread over the range:
-65 of them are on the single `0x0800`-`0x08FF` page. That looks at first like
-§5.1's chance argument collapsing — a collision rate an order of magnitude over
-what independent allocation predicts. It does not. Once that one page is set
-aside the collision rate in the rest of the low 4 KiB is what independent
-choice predicts, and the argument survives, with the discount §5.1 already
-attached to it unchanged.
+direct `MOV DPTR` sites in both images, and they are not spread evenly over the
+low range: 65 of them are on the `0x0800`-`0x08FF` page. That looks at first
+like §5.1's chance argument collapsing — a collision rate well over what
+independent allocation predicts. It does not. Take that page out and the
+collision rate in the rest of the low 4 KiB is what independent choice
+predicts, and the argument survives, with the discount §5.1 already attached to
+it unchanged.
 
 ## 1. The wider range, and the table that is its product
 
@@ -143,12 +143,16 @@ def survey(lo, hi):
     return list(csv.DictReader(io.StringIO(t, newline='')))
 
 print(f\"{'range':<24}{'addrs':>6}{'EC':>6}{'PD':>6}{'both':>6}{'expected':>10}{'z':>7}\")
-def line(label, rows):
+def counts(rows):
     ec = sum(1 for r in rows if int(r['main_ec']))
     pd = sum(1 for r in rows if int(r['pd_image']))
     both = sum(1 for r in rows if int(r['main_ec']) and int(r['pd_image']))
     e = ec * pd / len(rows)
-    z = (both - e) / math.sqrt(e * (1 - ec / len(rows)) * (1 - pd / len(rows)))
+    return ec, pd, both, e, (both - e) / math.sqrt(e * (1 - ec / len(rows))
+                                               * (1 - pd / len(rows)))
+
+def line(label, rows):
+    ec, pd, both, e, z = counts(rows)
     print(f'{label:<24}{len(rows):>6}{ec:>6}{pd:>6}{both:>6}{e:>10.1f}{z:>+7.1f}')
 
 low = survey('0x0000', '0x0FFF')
@@ -159,6 +163,15 @@ line('  minus 0x0800 page', [r for r in low
 line('  0x0800 page alone', [r for r in low
                              if 0x800 <= int(r['addr'], 16) <= 0x8FF])
 line('0x0000-0xFFFF', survey('0x0000', '0xFFFF'))
+
+print()
+print('leave-one-out over the sixteen 0x100 pages of the low 4 KiB:')
+print(f\"  {'page dropped':<14}{'addrs':>6}{'both':>6}{'expected':>10}{'z':>7}\")
+for pg in range(16):
+    rest = [r for r in low
+            if not pg * 0x100 <= int(r['addr'], 16) <= pg * 0x100 + 0xFF]
+    _, _, both, e, z = counts(rest)
+    print(f\"  0x{pg:02X}00-0x{pg:02X}FF{len(rest):>7}{both:>6}{e:>10.1f}{z:>+7.1f}\")
 "
 range                    addrs    EC    PD  both  expected      z
 0x0400-0x07FF             1024   430   114    40      47.9   -1.6
@@ -166,6 +179,25 @@ range                    addrs    EC    PD  both  expected      z
   minus 0x0800 page       3840   862   263    68      59.0   +1.4
   0x0800 page alone        256   167    83    65      54.1   +3.0
 0x0000-0xFFFF            65536  1899   458   138      13.3  +34.9
+
+leave-one-out over the sixteen 0x100 pages of the low 4 KiB:
+  page dropped   addrs  both  expected      z
+  0x0000-0x00FF   3840   124      73.9   +7.0
+  0x0100-0x01FF   3840   133      90.7   +5.4
+  0x0200-0x02FF   3840   131      90.5   +5.2
+  0x0300-0x03FF   3840   132      78.5   +7.2
+  0x0400-0x04FF   3840   110      73.2   +5.1
+  0x0500-0x05FF   3840   133      84.5   +6.4
+  0x0600-0x06FF   3840   127      78.2   +6.6
+  0x0700-0x07FF   3840   122      69.0   +7.6
+  0x0800-0x08FF   3840    68      59.0   +1.4
+  0x0900-0x09FF   3840   128      84.3   +5.8
+  0x0A00-0x0AFF   3840   122      68.7   +7.7
+  0x0B00-0x0BFF   3840   133      91.8   +5.3
+  0x0C00-0x0CFF   3840   133      92.5   +5.2
+  0x0D00-0x0DFF   3840   133      91.9   +5.2
+  0x0E00-0x0EFF   3840   133      91.0   +5.4
+  0x0F00-0x0FFF   3840   133      89.7   +5.6
 ```
 
 Two of these lines are not findings, and the third is.
@@ -181,9 +213,21 @@ other. **Take the `0x0800` page out and the collision rate in the rest of the
 low 4 KiB is what independent choice predicts** — 68 observed against 59.0,
 which is +1.4σ and nothing a reader would act on. §5.1's "40 is about what
 chance predicts" is therefore not an artefact of the span it was measured on;
-it holds one page wider, and the whole apparent excess sits on
-`0x0800`-`0x08FF`, where the two images' address choices are correlated at +3σ
-against a null computed over that page alone.
+it holds one page wider.
+
+**The page is where the excess in the low 4 KiB sits, and the choice of it was
+not made after the fact.** Removing `0x0800`-`0x08FF` takes the rest of that
+4 KiB to +1.4σ, and the leave-one-out above drops each of the sixteen `0x100`
+pages in turn to show no other single page does anything like it: every other
+removal leaves the remainder between +5.1σ and +7.7σ. So the concentration is
+a property of that page and not of the choice to single it out — had the
+excess been spread, every leave-one-out would have stayed high. On the page
+itself the two images' address choices are correlated at +3σ against a null
+computed over that page alone.
+
+That is a statement about the low 4 KiB, which is what this section measures.
+The wider range is not scanned page by page here, so nothing is claimed about
+`0x1000`-`0xFFFF` beyond the full-range row above.
 
 **What that page is, and what it is not.** It is not new territory in this
 repository: `pd-base-strides.csv` already records the PD image's second stride
@@ -332,19 +376,27 @@ with that same `0xA0`, and `0x07FE`/`0x07FF` unmasked compares against the
 PD image hands DPTR on rather than reading; at the last two it reads the byte.
 
 **Same shape in both images?** No, and consistently so in one direction. Of
-the 28 collisions below `0x0700`, **20 are plain `movx` in the EC and never
-dereferenced by the PD image** — the same asymmetry §5.2 found for
-`0x04A1`-`0x04A6`, now measured over the set instead of the two addresses the
-audit happened to include.
+the 28 collisions below `0x0700`, **20 have a `movx` at the address in the EC
+and are never dereferenced by the PD image** — the same asymmetry §5.2 found
+for `0x04A1`-`0x04A6`, now measured over the set instead of the two addresses
+the audit happened to include. Three of those 20 (`0x0400`, `0x0434`,
+`0x04A2`) have an `index` site on the EC side as well, so "EC touches the byte,
+PD does not" is the claim rather than "`movx` throughout".
 
 `xdata-registers.csv` is a different projection — census rows over annotated
 functions, not an unaligned byte scan — and this file does not reconcile its
-magnitudes. Its *set* agrees with the scan's, though, and that is worth the
-sentence: the census marks an address `program=both` at exactly the eleven
-where this survey finds the PD image dereferencing the byte, ten on `0x07xx`
-plus `0x04A3`, and marks the other 25 `program=main-ec` with three carrying no
-census row at all. Two methods with different units picked out the same
-addresses, which is the strongest thing available here short of a live read.
+magnitudes. Its *set* nearly agrees with the scan's, and the near-agreement is
+worth the sentence: the census marks eleven addresses `program=both`, and this
+survey finds the PD image dereferencing the byte at ten of those eleven, all
+on `0x07xx`. The exception is `0x04A3`, whose PD column above is `5 index` and
+no `byte`, and the file already has the reason: `pack-temp-producer-chain.md`
+§4 adjudicated that address as a base whose PD-side dereferences land at a
+rebased address (`0x04A3 + R7×0x60 + 0x200×R7` and the like), which a `90 hi
+lo` byte scan cannot see — §5's blind spot, operating in the direction that
+makes the two projections agree rather than disagree. The census marks the
+other 25 `program=main-ec`, with three of the 39 carrying no census row at all.
+Ten of eleven, plus one the file can account for, is corroboration from two
+projections with different units; §5's `unresolved` caveat is what governs it.
 
 ## 4. `0x07D4`, the closest the two images come
 
@@ -456,8 +508,9 @@ produce this listing pair exactly as it stands — and it is still open.
   here.** Its counts are census rows over annotated functions; this file's are
   an unaligned byte scan, and where their magnitudes differ this file does not
   adjudicate. §3 compares the two on the one thing they can be compared on —
-  *which* addresses the PD image is recorded as dereferencing — and that
-  agrees. An agreement of sets is corroboration of the asymmetry, not a
+  *which* addresses the PD image is recorded as dereferencing — where ten of
+  the census's eleven `program=both` addresses agree and `0x04A3` is the
+  exception. Agreement on a set is corroboration of the asymmetry, not a
   measurement of it.
 - **`BAT_CYCLE_COUNT` is untouched.** Its `confirmed-working` status comes
   from a live read; a static decode can neither strengthen nor weaken that, and

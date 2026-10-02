@@ -449,8 +449,8 @@ chance predicts — which also holds over the rest of the low 4 KiB with the
 the byte at 29 of the 39, which is §5.2's reading measured over the set
 rather than over the two addresses the audit met. The falsifier issue #64
 names — a collision where both images increment the same byte — is not
-present. The one place the wider evidence departs from chance is the
-`0x0800`-`0x08FF` page, which is not decoded there and is not decoded here.
+present. The excess in the low 4 KiB sits on the `0x0800`-`0x08FF` page, which
+is not decoded there and is not decoded here.
 
 ### 5.2 The PD image's own block structure
 
