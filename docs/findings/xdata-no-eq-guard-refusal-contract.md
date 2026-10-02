@@ -620,6 +620,57 @@ is another file's finding from another issue.
   > another issue — turned out to be right, and the finding never became false
   > so much as the sentence that carried it stopped being one. The suite's
   > present redness is a *third* file's finding, and belongs with #822's.
+  >
+  > **Corrected 2026-10-02, issue #828. The count has moved again, and the
+  > redness this block records is gone rather than moved.** The claim above and
+  > the transcript under it are left standing, per §4a-4d. What the `#816`
+  > entry above records as `46 → 48` is no longer the count, and the suite is
+  > no longer red at all. Measured on the tree this correction lands on:
+  >
+  > ```console
+  > $ cd ec/tools && python3 -m unittest test_check_cluster_citations
+  > Ran 63 tests in 1.475s
+  >
+  > OK
+  >
+  > $ python3 ec/tools/check_cluster_citations.py; echo "rc=$?"
+  > …: every checked cluster citation (`main-ec-NNN`, `cluster_key` or
+  > `cluster_name`) resolves to the membership it names, and every hand-typed
+  > census count agrees with ec/annotations/xdata-clusters.csv
+  > rc=0
+  > ```
+  >
+  > The tool's leading `files / lines` count is elided above, and deliberately:
+  > it is a property of the corpus and moves every time a page is added, which
+  > is what the paragraph above this block already sets as the thing not to
+  > do. **The verdict, the exit code and the skip reasons are the claim here,
+  > not the figures.**
+  >
+  > `TheCommittedTree::test_committed_prose_matches_committed_census` — the
+  > case this block names as the suite's one failure — **passes**, and
+  > `check_cluster_citations.py` exits 0, so neither the disagreement list nor
+  > the failing case reproduces. **What cleared it is
+  > [`guard-off-transcript-scope.md`](guard-off-transcript-scope.md) (issue
+  > #996): `check_cluster_citations.py` now passes over a unit inside a fenced
+  > block that runs a census-regenerating flag**, so the `0x0464`/`0x0465` line
+  > in #822's write-up is a `census-regeneration transcript` rather than a
+  > citation about the committed census. That is a rule about the shape of a
+  > unit, not a fix to the prose — which is why this block's own mechanism
+  > holds: §26's claim is still true, and a unit that reads as a claim is still
+  > checked, which the run's own `skipped:` line names per reason rather than
+  > summing. **The line #822's write-up argued about is unchanged, and the
+  > answer it got is a scope rather than a fix** — "the line moved" and "the
+  > line is now out of scope" are not the same claim, and which one this is
+  > matters to anyone reading the transcript it printed.
+  >
+  > #564's correction is **still not owed**, and this is now the second
+  > measurement saying so. Nor is anything owed to #822. And a green run says
+  > nothing the red one did not: a passing `check_cluster_citations.py` says
+  > the committed prose and `xdata-clusters.csv` agree, and nothing about the
+  > clusters, the `0xD96C` routine, or `main-ec-086`'s membership. The write-up
+  > is [`red-suite-claim-inventory.md`](red-suite-claim-inventory.md), and the
+  > count the claim's first half is about is a property of the merge rather
+  > than of any suite, so it is not explained here.
 
 ## The `--check` verdict, before and after
 
