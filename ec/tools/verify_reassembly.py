@@ -1652,9 +1652,11 @@ def only_name_moved(before, after):
 
     This is the guard, and it is the reason a second writer of the committed
     report is safe at all: the comparison is between two reads of the *file*, not
-    between the rows that were about to be serialised and themselves, so a
-    quoting rule, a line terminator or a field the in-memory rows never saw still
-    fails here rather than agreeing with itself.
+    between the rows that were about to be serialised and themselves, so a column
+    that moved, a header that moved or a row that came back with a different set
+    of columns fails here rather than agreeing with itself. It compares parsed
+    cells, so it does not see a difference in how those cells were written: a
+    quoting rule or a line terminator that parses to the same cells passes it.
     """
     was_header, was_rows = before
     now_header, now_rows = after

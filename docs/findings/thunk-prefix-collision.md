@@ -245,17 +245,27 @@ regeneration's diff, not a run of it on this machine.**
 the gate would have caught the seven names going stale. That gap is real and is
 left as it stands — closing it means deciding what the column is for.
 
-*(Corrected 2026-10-02, issue #627. The sentence above says the gap is left
-standing, and that is no longer true: `--check` now compares every report row's
-`name` against `ec/decompiled/listing-index.csv` per `(program, addr)` and names
-the rows that disagree, and `--refresh-name-column` re-copies the index's names
-into the report, proving from the written file that it moved no other cell. The
-paragraph above is left as it stands, per the retraction rule: it is the record
-of the gap, and "left as it stands" is what was true of it. Two measurements
-taken while that decision was being made are in
-[`reassembly-name-column.md`](reassembly-name-column.md), and both bear on this
-section — how many rows the column was stale on, and which rows carry an
-`assembler` cell this section's account does not describe.)*
+*(Corrected 2026-10-02, issue #627. Two sentences above needed correcting, and
+both are left visible above rather than edited away, per the retraction rule.*
+
+*The first says the gap is left standing, and that is no longer true: `--check`
+now compares every report row's `name` against `ec/decompiled/listing-index.csv`
+per `(program, addr)` and names the rows that disagree, and
+`--refresh-name-column` re-copies the index's names into the report, proving
+from the written file that it moved no other cell. "Left as it stands" is what
+was true of the gap when this was written; the paragraph is the record of it.*
+
+*The second says the committed `reassembly.csv` here is the pinned
+regeneration's diff, which was a complete description of the file at the time
+and is not a complete one now: commits that added or replaced single rows under
+apt had already written some `02.00` assembler cells into the file, and later
+commits added more, so the sentence describes a state the file was in rather
+than every row it now carries. The census is measured, beside the command that
+prints it, in [`reassembly-name-column.md`](reassembly-name-column.md), which
+also names the write-up that accounts for each of those rows by commit. That is
+not a disagreement with this section: the claim above is about the diff one
+discarded local `--report` run produced, and not about rows other commits added
+to the file afterwards.)*
 
 ## Two corrections to the premises
 

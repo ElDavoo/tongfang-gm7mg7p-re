@@ -116,8 +116,11 @@ the content of the change rather than the copying:
   first read gave; the header and the row order are compared too, since a writer
   that reordered rows has changed the report without changing a cell. Any
   difference and the original bytes are put back. The comparison is between two
-  reads of the *file*, not between the dicts in between, so a quoting rule, a
-  line terminator or a field the in-memory rows never saw still fails it.
+  reads of the *file* rather than between the dicts in between, so a column, a
+  header or a row's set of columns that moved fails it. It compares parsed
+  cells, so a quoting rule or a line terminator that parses to the same cells
+  passes it — the committed report is LF, and nothing here depends on the
+  distinction.
 - It **never computes a measurement.** No outcome, no digest, no
   `instructions_*` cell and no assembler version is recomputed. They are read
   and copied through, and the read-back fails the run if any of them moved. That
@@ -184,18 +187,46 @@ EOF
    13  sdas8051 02.00
 ```
 
-This conflicts with
-[`thunk-prefix-collision.md`](thunk-prefix-collision.md), "One generated file
-could not be regenerated here, and why". That write-up records that the local
-`02.00` run was **discarded**, and that "what replaced it is the seven `name`
-cells" — but these thirteen rows have a `02.00` **assembler** cell, which is a
-measured cell that a discarded run cannot have contributed. The two accounts
-cannot both be complete descriptions of the committed file: either the run was
-not discarded in the sense the paragraph means, or what replaced it was more
-than seven `name` cells. Which of the two is wrong is not settled here, and
-nothing below settles it.
+**Every one of the thirteen is accounted for by a commit, in two write-ups
+already in the tree**, and the union of the two lists is exactly these
+thirteen:
 
-Two things this change can say about it, and one it cannot:
+- **Seven**, in [`deep-schedule-row-csv.md`](deep-schedule-row-csv.md): "the 7
+  exceptions are rows added or replaced under apt after that measurement
+  without re-running the rest: five of them by `d8525eae`, `bank0,CC64` by
+  `85741eca` and `bank1,C1E7` by `ca3b01ff`".
+- **Six**, in [`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md), the six
+  `pd` rows that change added: "So the six rows are the tool's own output, each
+  honestly carrying `sdas8051 02.00` in its `assembler` cell, and the other
+  2,711 are untouched."
+
+The file's own history says the same thing in the order it happened. Reading
+`ec/ghidra/reassembly.csv` at each commit that wrote it walks the `02.00`
+census 0 → 1 (`85741eca`) → 2 (`ca3b01ff`) → 2 (`e30dbd2d`) → 7 (`d8525eae`) →
+13 (`03991c0d`), so the thirteen arrived as later commits adding or replacing
+rows, and not as one run:
+
+```console
+$ for c in 8c7985ec 85741eca ca3b01ff e30dbd2d d8525eae 03991c0d; do
+>   printf '%s %s\n' "$c" "$(git show $c:ec/ghidra/reassembly.csv | grep -c 'sdas8051 02\.00')"
+> done
+8c7985ec 0
+85741eca 1
+ca3b01ff 2
+e30dbd2d 2
+d8525eae 7
+03991c0d 13
+```
+
+So nothing here conflicts with
+[`thunk-prefix-collision.md`](thunk-prefix-collision.md), "One generated file
+could not be regenerated here, and why". That write-up's claim is about one
+local `--report` run — that it was discarded, and that what replaced it in the
+committed file was the seven `name` cells. It is a statement about that run's
+diff; it is not a claim that no row of the committed file was ever written
+under apt, and these thirteen are not that run.
+
+Two things this change can say about the census:
 
 - The thirteen rows are **disjoint from the 181**: no row whose name was stale
   is one of them. The two populations are separate, so the name refresh did not
@@ -204,13 +235,6 @@ Two things this change can say about it, and one it cannot:
   on is the sharpest available argument for it: `--refresh-name-column` cannot
   reach those thirteen rows' assembler cells even in principle, because it
   proves from the written file that nothing but `name` moved.
-- **Which run produced them is not settled here.** The pinned
-  `05.50.4+NoICE+SDCCmods-WIP-R14` is not installed on an agent runner, and
-  answering the question means reading the file's own history — which commit
-  last wrote each of the thirteen rows, and whether they were a partial run, a
-  hand-merge or something else. That is a question for a human with the pinned
-  tool and the full history, and it is raised as a follow-up with this
-  measurement attached rather than guessed at here.
 
 **Not fixed here, on purpose.** Re-reporting those rows needs the pinned
 assembler, and a full `--report` against the runner's `02.00` would rewrite
@@ -236,7 +260,7 @@ guarantee because it is entitled to move every cell.
 
 - **The `.asm` header ↔ listing-index name invariant**, measured here to hold
   for every row and not checked. Belongs beside `build_ec_decompile.py`.
-- **The `program` quirk in the common-area headers** — 753 index rows say
+- **The `program` quirk in the common-area headers** — a body of index rows says
   `common` where the `.asm` header spells `bank0`. Measured, unrelated to the
   name column, another issue.
 - **Whether the names are good names.** A comparison holds the copy. The
