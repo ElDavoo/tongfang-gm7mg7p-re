@@ -42,9 +42,10 @@ FAKE = HERE / 'ecrw_fake.py'
 # The members of `ecrw.Ec` no tool in this directory reaches, and so the only
 # ones the fixture may omit. Each is the real class's own interior: `_ioctl`
 # is how `read`/`write` issue their IOCTLs, and the two `read_dword*` methods
-# are what `--block` and the `mmrd` escape are built on. `ecrw.py` itself is the
-# only caller of all three -- `test_ecrw.py` reaches the dword pair by loading
-# the real module behind a fake `ctypes.WinDLL`, which is the point of it.
+# are what `--block` and the `mmrd` escape are built on. No tool that binds
+# `ecrw` reaches them: `test_ecrw.py` does call the dword pair, against the real
+# module behind a fake `ctypes.WinDLL`, which is the point of it and which
+# `binds_ec` is what leaves out of the population.
 #
 # An allowlist with `ec/tools/check_pin_message_names.py`'s discipline: an entry
 # that stops violating has to be deleted rather than left standing, because a
@@ -138,15 +139,16 @@ def reached_by_tools(names):
     unreached stays in `RESIDUAL`, which is where an allowance should not be.
 
     1. Any attribute spelled in a tool that binds `Ec`, whether or not the
-       object it is spelled on is the handle -- `fh.read` on a file counts
-       `read`, which the fixture carries anyway. Telling the handle from every
-       other name in a module would need a dataflow analysis nothing here has
-       a use for, and its only effect would be to make the residual larger.
+       object it is spelled on is the handle -- the `self._fh.close()` on a file
+       handle counts `close`, which no tool calls on an `Ec` and which the
+       fixture carries anyway. Telling the handle from every other name in a
+       module would need a dataflow analysis nothing here has a use for, and
+       its only effect would be to make the residual larger. `close`'s place
+       on the fixture rests on that blunt rule rather than on a call, so
+       narrowing rule 1 would mean deciding `close` on purpose.
     2. The context-manager protocol, which is not spelled as an attribute at
        all: `with Ec() as ec` reaches `__enter__` and `__exit__`, and the `Ec()`
-       call inside it reaches `__init__`. `close` needs no rule of its own --
-       `__exit__` calls it and a tool names it -- and gets the same treatment
-       as `read`.
+       call inside it reaches `__init__`.
 
     The population is the tools, not the suites: a `test_*.py` installs the
     fixture and then patches its own class over the tool, so a member it calls

@@ -56,12 +56,12 @@ the bodies exist so that an import, "or an accidentally unpatched call", does
 not fail on a missing attribute. Which members an accidentally-unpatched call
 can reach is exactly the question of which members the tools call — and every
 member the fixture has today is one a tool calls. The three omitted ones are
-called by nothing outside `ecrw.Ec` itself: measured over `windows/tools/*.py`,
-the only `read_dword` / `read_dword_unaligned` calls are inside `ecrw.py`, and
-the only `mmrd` command callers are `test_ecrw.py`, which loads the *real*
-module behind a fake `ctypes.WinDLL`. Their absence is a consequence of the
-design, not an oversight — which is exactly the thing the issue says no reader
-of the diff can currently tell.
+reached by no tool that binds `ecrw`: `test_ecrw.py` does call both dword
+members, against the *real* module behind a fake `ctypes.WinDLL`, and the
+module-level-import filter described below is what keeps it out of the
+population. Their absence is a consequence of the design, not an oversight —
+which is exactly the thing the issue says no reader of the diff can currently
+tell.
 
 **Adding them would be a safety regression on the one path that matters.** Today
 an unpatched `read_dword` on the fixture raises `AttributeError`, loudly. A
@@ -101,11 +101,14 @@ residual is the three named members.
 deliberate rather than incidental. A member wrongly believed needed has to be on
 the fixture — a cost paid once, in a docstring. A member wrongly believed
 unneeded stays in `RESIDUAL` — a cost paid the moment a tool calls it, in a red
-run naming the member. Rule 1 is the blunt one: `fh.read` on a file object
-counts `read`, which the fixture carries anyway, because telling the handle from
-every other name in a module would need a dataflow analysis nothing here has a
-use for. So the residual is "no tool *spells* this", which is a weaker claim than
-"no tool *calls* this" and is stated as such in the suite's own docstring.
+run naming the member. Rule 1 is the blunt one: the `.close()` a tool spells on
+a file handle counts `close`, which no tool calls on an `Ec` and which the
+fixture carries anyway, because telling the handle from every other name in a
+module would need a dataflow analysis nothing here has a use for. So `close`'s
+place on the fixture rests on that blunt rule rather than on a call, and
+narrowing it would mean deciding `close` on purpose. The residual is "no tool
+*spells* this", which is a weaker claim than "no tool *calls* this" and is
+stated as such in the suite's own docstring.
 
 The population is the tools, not the suites: a `test_*.py` installs the fixture
 and then patches its own class over the tool, so a member it calls is not one
@@ -196,7 +199,7 @@ they apply to any new `test_*.py` in `windows/tools/` automatically:
 ## What was left out, and why
 
 - **Running any of this against the driver or on Windows.** `ecrw.py` still
-  cannot be imported off Windows, and the four `ValueError` guards and the
+  cannot be imported off Windows, and the `ValueError` guards and the
   open-failure `EcError` are only ever read here as source. Nothing in this
   change is hardware evidence and nothing in it implies a live run.
 - **Giving the fixture `ValueError` guards.** The issue lists this as optional,
@@ -266,7 +269,7 @@ preference.
 What is left out is any claim about *behaviour*. The fixture's bodies are not
 compared to `ecrw.py`'s, because comparing them would mean importing a module
 that cannot be imported off Windows, and because behaviour is `test_ecrw.py`'s
-job against a fake `ctypes.WinDLL`. The four `ValueError` guards and the
+job against a fake `ctypes.WinDLL`. The `ValueError` guards and the
 open-failure `EcError` are the visible part of that gap, and the issue is right
 that they are unheld; the answer is that they are held against the real module,
 which is the one whose behaviour anyone is relying on.

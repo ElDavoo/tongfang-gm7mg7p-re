@@ -18,7 +18,7 @@ read back. `ecrw.py` is unchanged and stays the only thing that talks to
 
 It carries every member of `ecrw.Ec` that a tool in this directory reaches,
 with the real signatures. It does not carry `_ioctl`, `read_dword` or
-`read_dword_unaligned` -- the real class's own interior, which nothing here
+`read_dword_unaligned` -- the real class's own interior, which no tool here
 reaches -- and their absence is a decision rather than a gap; see `Ec` below
 for why adding them would be the wrong direction.
 `windows/tools/test_ecrw_fake.py` holds that rule and its residual, by `ast`,
