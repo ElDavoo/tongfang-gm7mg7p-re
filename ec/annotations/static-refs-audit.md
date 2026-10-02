@@ -287,6 +287,31 @@ print, so the branch was checked against sites that do have it. Image-wide
 there are 54 such sites across 48 addresses, none of them an address in
 `registers.yaml`, and `r2 -a 8051` agrees with the decode on both shapes:
 
+**Correction, 2026-10-02 (issue #41). The "29 addresses" above is left as
+written.** It was the population `registers.yaml` held when this section was
+written, and it was true then; the file has grown considerably since, so the
+wording is now a statement about a past population rather than about the one a
+reader would find. The null still holds over the current file — the
+intersection of the 48 CODE-pointer addresses with every address
+`registers.yaml` carries is empty — but that is now a **command**, not a
+sentence:
+
+```console
+$ python3 ec/tools/code_pointer_sites.py --against-registers
+```
+
+The 48 addresses themselves are committed as
+`annotations/code-pointer-sites.csv`, one row per **site** (54 of them, so
+`0x63BE` and `0x63D7` appear three times each and `0xF13F` and `0xF45B` twice —
+which is why 54 and 48 are both correct), and
+`python3 ec/tools/code_pointer_sites.py --check` regenerates that file in
+memory and fails on any difference. A sample of every region/class pair is
+cross-read in `r2 -a 8051` in `../../docs/findings/code-pointer-site-census.md`
+§2, and §5 of that file is the calibration this section's "no count in this
+repo is inflated by a string-table or jump-table pointer **by this method**"
+has always needed. Nothing in that write-up was measured on hardware, and no
+`status:` moved.
+
 ```console
 $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0xa6a4; pd 4' /tmp/bank0.bin
