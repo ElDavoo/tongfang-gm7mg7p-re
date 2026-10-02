@@ -43,6 +43,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
+- [`bank-map-and-image-census.md`](bank-map-and-image-census.md) — The bank map, and a second image in the dump
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
 - [`bucket-c-codemap.md`](bucket-c-codemap.md) — Bucket C against a recovered code map: 16 of the 140 sites are on an instruction boundary, and 14 of those 16 sit inside spans already listed as data tables
@@ -112,6 +113,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`group-check-drift-and-shared-basis.md`](group-check-drift-and-shared-basis.md) — `group_functions.py --check` re-runs the rule, and `shared` was a basis no rule emitted (issue #442)
 - [`group-proxy-populations.md`](group-proxy-populations.md) — What the banking rule discards, and how much of it (issue #455)
 - [`group-split-at-the-bl51-trampoline.md`](group-split-at-the-bl51-trampoline.md) — Splitting the call-graph groups at the BL51 bank-select boundary (issue #444)
+- [`group-unplaced-edges.md`](group-unplaced-edges.md) — The third decision the call-graph walk makes, and the edges it could not place (issue #488)
 - [`guard-off-transcript-scope.md`](guard-off-transcript-scope.md) — A census-regeneration transcript is not a citation, and a fenced block is not a transcript either: what the rule scopes, and what it still checks
 - [`handoff-site-warrant.md`](handoff-site-warrant.md) — A DPTR handoff that resolves is a warrant, and the one address whose sites do not resolve
 - [`hardware-test-artifact-handoff.md`](hardware-test-artifact-handoff.md) — Every procedure's "Where the output goes" is now held to its own commands, in both directions (issue #1190)
@@ -175,6 +177,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`reset-vector-dptr-targets.md`](reset-vector-dptr-targets.md) — The reset vector's two DPTR-only bank-0 targets, `0xD89F` and `0xD96C` (issue #559)
 - [`runner-red-suite-set.md`](runner-red-suite-set.md) — The runner's red set, and the third of #162's blocker that was a missing table row (issue #751)
 - [`scheduler-divide-down-cycle.md`](scheduler-divide-down-cycle.md) — How many entries to the divide-down scheduler is one case-`0x0A` turn (issue #1183)
+- [`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md) — The `0x8518` block decoded: seven entry points, not one, and half of it is invisible to the host (issue #1185)
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)

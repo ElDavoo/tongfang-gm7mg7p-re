@@ -698,6 +698,26 @@ only covers what's specific to *this* copy.
   were never a reason to reject. Of the 147 agent pull requests open or merged
   on 2026-10-02, none had been rejected, and the most common blocking findings
   were stale figures and line pins.
+- **Branches are brought up to date by merging main, not by rebasing**
+  (2026-10-03, not in the template). `.github/scripts/rebase-onto-main.sh`,
+  which the implement and fix stages run before every push, merges `origin/main`.
+  A rebase replays the branch's commits and drops its merge commits. So any
+  branch that had once been updated by a merge met every conflict that merge had
+  resolved again, the step failed, and the fix round's work was discarded. That
+  was most fix rounds on the open pull requests of 2026-10-02, and four of them
+  were then rejected for not converging. The fix stage's round counter counts
+  with `--no-merges`.
+- **Review and fix before the pull request opens** (2026-10-02, not in the
+  template). After the implement agent finishes, `agent-implement.yml` runs up to
+  two rounds of review then fix, each a fresh Claude invocation with none of the
+  implementer's context. The reviewer is held to the `Verdict` prompt in
+  `agent-review.yml` by reading it, so the two cannot drift apart. The fixer
+  works only from the reviewer's blocking findings. Anything the reviewer's tools
+  wrote is discarded, and a fix that does not finish is rolled back to what was
+  staged before it. So the worst case is the pull request opening as it would
+  have without this. The pull request body records what each round found, below
+  the scratch marker. The review stage after opening is still the merge gate. The
+  job's timeout is 300 minutes, up from 120.
 - **A green CI run no longer cancels a pending review** (2026-10-02, not in
   the template). `agent-fix-ci.yml` runs on every finished CI run on an agent
   branch, because its trigger cannot filter on conclusion. It used to hold that

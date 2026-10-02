@@ -109,7 +109,7 @@ jobs:
     # takes every later step down with it, including the stall record -- so the retry sweep never
     # learns the stage stopped, and the issue sits there looking planned and idle. A turn limit
     # reached is the failure that gets retried; a timeout is the one that does not.
-    timeout-minutes: 120
+    timeout-minutes: 300  # LOCAL CHANGE (2026-10-02): was 120; two pre-review rounds run inside this job
 
     steps:
       - name: Checkout
@@ -357,6 +357,267 @@ jobs:
         if: steps.implement.outcome != 'success' || steps.implement.outputs.conclusion != 'success'
         run: exit 1
 
+      # LOCAL CHANGE (2026-10-02, not in the template): review and fix before the pull request
+      # opens, each a fresh Claude invocation with none of the implementer's context. Most
+      # pull requests used to need several review -> fix -> CI rounds after opening, each one a
+      # full CI run and a review run holding a slot. Two rounds here: review, fix, review, fix.
+      # The review stage after the pull request opens is still the merge gate; this only makes
+      # its first look likelier to be an approval. Every step is allowed to fail, and a failed
+      # fix is rolled back, so the worst case is the pull request opening as it would have.
+      - name: Stage the change for pre-review 1
+        if: success()
+        run: git add -A
+
+      - name: Pre-review 1
+        id: prereview1
+        if: success()
+        continue-on-error: true
+        timeout-minutes: 30
+        uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
+        env:
+          ANTHROPIC_BASE_URL: https://openrouter.ai/api
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/space-bunny-alpha
+          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/space-bunny-alpha
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/space-bunny-alpha
+          CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
+          CLAUDE_CODE_EFFORT_LEVEL: max
+          CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
+        with:
+          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          prompt: |
+            You are reviewing a change before its pull request is opened, for issue
+            #${{ inputs.issue }}. Another agent wrote it; you did not, and you have none of its
+            context. The plan it implemented is /tmp/plan.md. The change is staged: read it with
+            `git diff --cached origin/main` (and `git diff --cached origin/main --stat` first).
+            The draft pull request description is /tmp/pr-body-final.md, if it exists.
+
+            Hold it to exactly the standard of the merge gate that will review the pull request:
+            read the prompt of the `Verdict` step in `.github/workflows/agent-review.yml`, from
+            "First, before any of the checks below" to the end of the "Reject, rather than
+            request changes" list, and CLAUDE.md, which that prompt points to. Check claims
+            against the tree yourself by running the tools and grepping the sources, rather
+            than trusting the description. Each finding must stand on its own (file, line, what
+            is wrong and the evidence, what would fix it), because a different agent fixes from
+            your findings and nothing else. Do not block on style.
+
+            Do not edit, create or delete any file, and do not touch git: anything you change is
+            discarded after you finish. Return the verdict only.
+          claude_args: >-
+            --model stealth/space-bunny-alpha
+            --effort max
+            --dangerously-skip-permissions
+            --max-turns 150
+            --allowedTools "Read,Glob,Grep,Bash"
+            --disallowedTools "Write,Edit,Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),Bash(git commit:*),Bash(git add:*),Bash(git checkout:*),Bash(git reset:*),Bash(git stash:*),WebFetch,WebSearch"
+            --json-schema '{"type":"object","properties":{"approved":{"type":"boolean","description":"True when nothing blocks"},"summary":{"type":"string","description":"Two to four sentences"},"findings":{"type":"array","items":{"type":"object","properties":{"blocking":{"type":"boolean"},"file":{"type":"string"},"line":{"type":"integer"},"problem":{"type":"string"},"fix":{"type":"string"}},"required":["blocking","file","line","problem","fix"]}}},"required":["approved","summary","findings"]}'
+
+      - name: Unpack pre-review 1
+        id: verdict1
+        if: success()
+        env:
+          OUTCOME: ${{ steps.prereview1.outcome }}
+          CONCLUSION: ${{ steps.prereview1.outputs.conclusion }}
+          OUT: ${{ steps.prereview1.outputs.structured_output }}
+        run: |
+          set -euo pipefail
+          # The reviewer may have run tools that write: put the tree back to what was staged.
+          git restore --worktree -- . && git clean -fdq
+          if [ "$OUTCOME" != success ] || [ "$CONCLUSION" != success ] || [ -z "$OUT" ]; then
+            printf -- '- pre-review 1: did not finish; the pull request opens without it\n' >> /tmp/prereview-summary.md
+            echo "fix=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          blocking=$(jq '[.findings[] | select(.blocking)] | length' <<<"$OUT")
+          jq -r '[.findings[] | select(.blocking)][]
+                 | "- `\(.file)\(if .line > 0 then ":\(.line)" else "" end)`: \(.problem)\n\n  **Fix:** \(.fix)\n"' \
+            <<<"$OUT" > /tmp/prereview-1.md
+          printf -- '- pre-review 1: %s blocking finding(s)\n' "$blocking" >> /tmp/prereview-summary.md
+          if [ "$blocking" -gt 0 ]; then
+            echo "fix=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fix=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Pre-review fix 1
+        id: prefix1
+        if: steps.verdict1.outputs.fix == 'true'
+        continue-on-error: true
+        timeout-minutes: 45
+        uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
+        env:
+          ANTHROPIC_BASE_URL: https://openrouter.ai/api
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/space-bunny-alpha
+          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/space-bunny-alpha
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/space-bunny-alpha
+          CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
+          CLAUDE_CODE_EFFORT_LEVEL: max
+          CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
+        with:
+          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          prompt: |
+            A change for issue #${{ inputs.issue }} is in the working tree, uncommitted, and a
+            reviewer has found problems in it before its pull request is opened. Another agent
+            wrote the change and another reviewed it; you have neither's context. The plan is
+            /tmp/plan.md, the change is `git diff --cached origin/main` plus anything unstaged,
+            and the reviewer's blocking findings are /tmp/prereview-1.md. CLAUDE.md is
+            authoritative: read it first.
+
+            Fix every blocking finding. Where you are certain a finding is wrong, leave the code
+            as it is and say why in the pull request description instead. Keep the change to what
+            the findings ask: do not widen it. Then run `.github/scripts/agent-gates.sh` and the
+            suites your change touches, and fix what they report. Weakening a gate is not a way to
+            pass it.
+
+            Then bring the pull request description at /tmp/pr-body-final.md up to date with what
+            the change now is. Re-derive every figure it quotes by running the command that
+            produces it. No totals of the repository's own text.
+
+            Do not commit, push, or touch git. Leave your work in the working tree.
+          claude_args: >-
+            --model stealth/space-bunny-alpha
+            --effort max
+            --dangerously-skip-permissions
+            --max-turns 200
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
+            --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
+
+      - name: Undo a pre-review fix 1 that did not finish
+        if: steps.verdict1.outputs.fix == 'true' && (steps.prefix1.outcome != 'success' || steps.prefix1.outputs.conclusion != 'success')
+        run: |
+          set -euo pipefail
+          # A fix that stopped half-way must not be pushed: go back to what was staged before it.
+          git restore --worktree -- . && git clean -fdq
+          printf -- '- pre-review fix 1: did not finish and was rolled back\n' >> /tmp/prereview-summary.md
+
+      - name: Stage the change for pre-review 2
+        if: steps.prefix1.outcome == 'success' && steps.prefix1.outputs.conclusion == 'success'
+        run: git add -A
+
+      - name: Pre-review 2
+        id: prereview2
+        if: steps.prefix1.outcome == 'success' && steps.prefix1.outputs.conclusion == 'success'
+        continue-on-error: true
+        timeout-minutes: 30
+        uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
+        env:
+          ANTHROPIC_BASE_URL: https://openrouter.ai/api
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/space-bunny-alpha
+          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/space-bunny-alpha
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/space-bunny-alpha
+          CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
+          CLAUDE_CODE_EFFORT_LEVEL: max
+          CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
+        with:
+          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          prompt: |
+            You are reviewing a change before its pull request is opened, for issue
+            #${{ inputs.issue }}. Another agent wrote it; you did not, and you have none of its
+            context. The plan it implemented is /tmp/plan.md. The change is staged: read it with
+            `git diff --cached origin/main` (and `git diff --cached origin/main --stat` first).
+            The draft pull request description is /tmp/pr-body-final.md, if it exists.
+
+            Hold it to exactly the standard of the merge gate that will review the pull request:
+            read the prompt of the `Verdict` step in `.github/workflows/agent-review.yml`, from
+            "First, before any of the checks below" to the end of the "Reject, rather than
+            request changes" list, and CLAUDE.md, which that prompt points to. Check claims
+            against the tree yourself by running the tools and grepping the sources, rather
+            than trusting the description. Each finding must stand on its own (file, line, what
+            is wrong and the evidence, what would fix it), because a different agent fixes from
+            your findings and nothing else. Do not block on style.
+
+            Do not edit, create or delete any file, and do not touch git: anything you change is
+            discarded after you finish. Return the verdict only.
+          claude_args: >-
+            --model stealth/space-bunny-alpha
+            --effort max
+            --dangerously-skip-permissions
+            --max-turns 150
+            --allowedTools "Read,Glob,Grep,Bash"
+            --disallowedTools "Write,Edit,Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),Bash(git commit:*),Bash(git add:*),Bash(git checkout:*),Bash(git reset:*),Bash(git stash:*),WebFetch,WebSearch"
+            --json-schema '{"type":"object","properties":{"approved":{"type":"boolean","description":"True when nothing blocks"},"summary":{"type":"string","description":"Two to four sentences"},"findings":{"type":"array","items":{"type":"object","properties":{"blocking":{"type":"boolean"},"file":{"type":"string"},"line":{"type":"integer"},"problem":{"type":"string"},"fix":{"type":"string"}},"required":["blocking","file","line","problem","fix"]}}},"required":["approved","summary","findings"]}'
+
+      - name: Unpack pre-review 2
+        id: verdict2
+        if: steps.prefix1.outcome == 'success' && steps.prefix1.outputs.conclusion == 'success'
+        env:
+          OUTCOME: ${{ steps.prereview2.outcome }}
+          CONCLUSION: ${{ steps.prereview2.outputs.conclusion }}
+          OUT: ${{ steps.prereview2.outputs.structured_output }}
+        run: |
+          set -euo pipefail
+          # The reviewer may have run tools that write: put the tree back to what was staged.
+          git restore --worktree -- . && git clean -fdq
+          if [ "$OUTCOME" != success ] || [ "$CONCLUSION" != success ] || [ -z "$OUT" ]; then
+            printf -- '- pre-review 2: did not finish; the pull request opens without it\n' >> /tmp/prereview-summary.md
+            echo "fix=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          blocking=$(jq '[.findings[] | select(.blocking)] | length' <<<"$OUT")
+          jq -r '[.findings[] | select(.blocking)][]
+                 | "- `\(.file)\(if .line > 0 then ":\(.line)" else "" end)`: \(.problem)\n\n  **Fix:** \(.fix)\n"' \
+            <<<"$OUT" > /tmp/prereview-2.md
+          printf -- '- pre-review 2: %s blocking finding(s)\n' "$blocking" >> /tmp/prereview-summary.md
+          if [ "$blocking" -gt 0 ]; then
+            echo "fix=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fix=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Pre-review fix 2
+        id: prefix2
+        if: steps.verdict2.outputs.fix == 'true'
+        continue-on-error: true
+        timeout-minutes: 45
+        uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
+        env:
+          ANTHROPIC_BASE_URL: https://openrouter.ai/api
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/space-bunny-alpha
+          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/space-bunny-alpha
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/space-bunny-alpha
+          CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
+          CLAUDE_CODE_EFFORT_LEVEL: max
+          CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
+        with:
+          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          prompt: |
+            A change for issue #${{ inputs.issue }} is in the working tree, uncommitted, and a
+            reviewer has found problems in it before its pull request is opened. Another agent
+            wrote the change and another reviewed it; you have neither's context. The plan is
+            /tmp/plan.md, the change is `git diff --cached origin/main` plus anything unstaged,
+            and the reviewer's blocking findings are /tmp/prereview-2.md. CLAUDE.md is
+            authoritative: read it first.
+
+            Fix every blocking finding. Where you are certain a finding is wrong, leave the code
+            as it is and say why in the pull request description instead. Keep the change to what
+            the findings ask: do not widen it. Then run `.github/scripts/agent-gates.sh` and the
+            suites your change touches, and fix what they report. Weakening a gate is not a way to
+            pass it.
+
+            Then bring the pull request description at /tmp/pr-body-final.md up to date with what
+            the change now is. Re-derive every figure it quotes by running the command that
+            produces it. No totals of the repository's own text.
+
+            Do not commit, push, or touch git. Leave your work in the working tree.
+          claude_args: >-
+            --model stealth/space-bunny-alpha
+            --effort max
+            --dangerously-skip-permissions
+            --max-turns 200
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
+            --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
+
+      - name: Undo a pre-review fix 2 that did not finish
+        if: steps.verdict2.outputs.fix == 'true' && (steps.prefix2.outcome != 'success' || steps.prefix2.outputs.conclusion != 'success')
+        run: |
+          set -euo pipefail
+          # A fix that stopped half-way must not be pushed: go back to what was staged before it.
+          git restore --worktree -- . && git clean -fdq
+          printf -- '- pre-review fix 2: did not finish and was rolled back\n' >> /tmp/prereview-summary.md
+
       # Run again, recorded rather than enforced. Claude was told to run these and generally
       # will have; this step is what makes that checkable from the pull request instead of taken
       # on trust. Most build tools are cached and incremental within a job, so a second run over
@@ -415,7 +676,7 @@ jobs:
           #
           # Deliberately not solved by giving the token `workflow` scope. That would let an
           # agent rewrite the review and CI gates that judge it, and then merge the rewrite.
-          # LOCAL CHANGE: the helper regenerates docs/findings/INDEX.md when that is the only conflict.
+          # LOCAL CHANGE: the helper merges main and regenerates conflicted generated files.
           # Read from main, not the working tree: a branch cut before the helper landed lacks it.
           git fetch --quiet origin main
           bash <(git show origin/main:.github/scripts/rebase-onto-main.sh)
@@ -461,6 +722,10 @@ jobs:
             printf '%s\n' "$link"
             printf '\n<!-- agent-scratch -->\n\n'
             printf '### local gates at first push\n\n%s\n' "$GATES"
+            if [ -s /tmp/prereview-summary.md ]; then
+              printf '\n### pre-review before opening\n\n'
+              cat /tmp/prereview-summary.md
+            fi
           } > /tmp/pr-body.md
 
           gh pr create \

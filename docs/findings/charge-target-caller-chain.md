@@ -154,6 +154,13 @@ index 11 and 0x853F is index 13:
 0x853C  12 91 67  lcall 0x9167     0x8542  12 B4 A8  lcall 0xB4A8
 ```
 
+**The run is seven entry points, not one, and not one walk.** The stub table
+above reaches seven entries of this block rather than the one hop, and the run
+carries `ljmp` at seven of its indices, so it is seven independent segments
+rather than a single pass. [`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md)
+decodes the block slot by slot, maps each stub to its segment, and splits every
+slot's write set against the host window.
+
 **`bank0 0xB12C` — the routine that branches in.**
 
 ```
@@ -209,6 +216,22 @@ What the wrong address got right, and is not being taken back: `0xB12C` *is*
 reached on every pass the run is dispatched, and the `0xE010` at `0x8539` is
 the *other* `0x0522` writer both files already named, on the slot immediately
 before it. So the two facts were one slot apart and both were in the run.
+
+> **CORRECTION (2026-10-02, issue #1185).** "On every pass the run is
+> dispatched" is withdrawn, and the sentence above is left visible per
+> `CLAUDE.md`. The run is **seven independent segments**, not one walk: it
+> carries `ljmp` at seven of its twenty-two indices, and an `ljmp` slot leaves
+> the block rather than returning into the next slot. The superseding wording:
+> `0xB12C` is reached on **every pass of the segment that starts at index 11**,
+> and on no pass of any other segment — the stub at `0x157C` is the only one of
+> the seven that names index 11, and an entry at index 0 or 1 does not reach
+> index 11 at all. What is *not* being taken back is the part the wrong address
+> got right: `0xE010` at `0x8539` is still the other `0x0522` writer, still on
+> the slot immediately before it, and both slots are still in the same segment,
+> so the two facts remain one slot apart and both in the run. Decoded in
+> [`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md); the segment
+> heads and the marker premise that makes a tail-jumped slot leave the block are
+> pinned by `ec/tools/test_run_entry_map.py`.
 
 ## 3. The three tables, and their extent
 
