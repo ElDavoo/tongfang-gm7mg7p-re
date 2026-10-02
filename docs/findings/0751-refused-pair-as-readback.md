@@ -14,8 +14,11 @@ so §4.6 named a pair the other section had just called not a bracket.
 was read, no §3 run was performed, no laptop or Windows box was reached, and no
 register was observed. The whole of the evidence is this tree's Python printing
 sections over the committed fixtures in
-`ec/tools/testdata/0751-isolation-run/`. Every sentence below is about which
-files were handed in and what the report said about them.
+`ec/tools/testdata/0751-isolation-run/`, which are **hand-written input, not a
+capture**: every file there carries a `# CONSTRUCTED INPUT, NOT A CAPTURE`
+header, no byte in it was read from an EC, and `ec/tools/testdata/README.md` is
+where that rule is written down. Every sentence below is about which files were
+handed in and what the report said about them.
 
 ---
 
@@ -88,8 +91,9 @@ $ python3 ec/tools/grade_0751_isolation.py $D/2026-01-01-0751-isolation-0700-07f
   the last dump holds 0x10, not the written 0xA0 -- something put it back; §3a's service-stopped run is what separates the vendor service from the EC.
 ```
 
-`0x10` is what the byte held **before** the write. The committed fixtures say
-so directly, at the same line of each file:
+`0x10` is what that fixture's own byte holds **before** the write — a byte
+written by hand, to put the pre-write value on the page. The two files say so at
+the same line of each:
 
 ```
 $ sed -n 14p $D/2026-01-01-0751-isolation-a0-before-0700.txt
@@ -130,8 +134,8 @@ After, the refused pair is named with its reason and the walk goes on:
 
 Following that hint — whose last `--dump` is the pair's after file,
 `…-a0-after-0700.txt` — now lands on `0xA0` and prints `the last dump still
-holds the written 0xA0`, which is what a §6 run actually says about a byte that
-held.
+holds the written 0xA0`: the wording for a last dump holding what was written to
+it, over this fixture's own hand-written byte.
 
 This is the likely case because §6's own command line lists the `0x0700` pair
 first, and it is the only §6 pair whose two dumps reach `0x0751` — the `0x0F00`
