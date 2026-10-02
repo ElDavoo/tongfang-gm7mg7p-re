@@ -494,9 +494,11 @@ def check_table(have, want):
 
     Byte equality is the pass condition, for `call_graph.check_table`'s reason:
     a table whose rows read the same while its bytes do not is a table this
-    tool did not write, and `ec/annotations/*.csv` is not covered by the
-    `.gitattributes` `-text` entries the decompiled tree has for exactly that
-    hazard. `lines` is never empty when the code is 1.
+    tool did not write. `.gitattributes` now covers `ec/ghidra/
+    gap-citation-scan.csv` with `text eol=lf`, so the CRLF checkout is not
+    reachable through the report's own path; the detection stays, because the
+    attribute removes the cause and not the check. `lines` is never empty when
+    the code is 1.
     """
     if have == want:
         return 0, []

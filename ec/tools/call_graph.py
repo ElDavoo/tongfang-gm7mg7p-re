@@ -500,12 +500,25 @@ def check_table(have, want):
     It has to be the bytes rather than the parsed rows. A table whose rows
     read the same while its bytes do not is a table this tool did not write --
     CRLF line endings from a `core.autocrlf` checkout, a trailing blank line,
-    reordered columns, redundant quoting -- and `.gitattributes` marks the
-    decompiled `.c` trees `-text` for exactly that hazard but does not cover
-    `ec/annotations/*.csv`, so the CRLF case is reachable rather than
-    hypothetical. Gating the verdict on the rows would call such a table clean
-    with the gate green, which is the exact quiet drift this check exists to
-    close.
+    reordered columns, redundant quoting. Gating the verdict on the rows would
+    call such a table clean with the gate green, which is the exact quiet drift
+    this check exists to close.
+
+    `.gitattributes` now covers the tables read here, so the CRLF checkout is
+    no longer reachable through this tool's own inputs, and the check is
+    deliberately kept anyway: the attribute removes the cause, not the
+    detection, and a check softened to agree with a new attribute would pass a
+    table that really had drifted. Which of the three inputs that leaves
+    sensitive is measured rather than assumed --
+    `docs/findings/annotation-csv-checkout-stability.md`. In short: the output
+    table `ec/annotations/call-graph-callees.csv` is byte-compared, and a CRLF
+    checkout of it is rejected; `ec/decompiled/index.csv` and
+    `ec/annotations/ghidra-functions.csv` are read with `newline=""`, which
+    strips a CR that terminates a line but not one inside a quoted field, and
+    `ghidra-functions.csv` has exactly one such field -- `bank0/0EA2`'s
+    comment carries an embedded blank line. For this tool the rendered table
+    came out byte-identical under CRLF anyway, which is a measurement about
+    this table and not a property of the format.
 
     `lines` is never empty when the code is 1, so a failure always says
     something: where every row parses equal, the line names the byte

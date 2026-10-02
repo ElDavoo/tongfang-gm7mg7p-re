@@ -340,8 +340,17 @@ def check_table(have, want):
     on the way there. Byte equality is the pass condition and it is the only
     one -- a table whose rows read the same while its bytes do not is a table
     this tool did not write (CRLF from a checkout, a trailing blank line,
-    reordered columns), and `.gitattributes` does not mark
-    `ec/annotations/*.csv` against that.
+    reordered columns).
+
+    `.gitattributes` now marks `ec/annotations/task-call-table.csv`
+    `text eol=lf`, which covers the committed table's own bytes. Two things
+    that attribute does not reach, both worth stating rather than leaving to be
+    discovered: this tool's `--check` is not in `agent-gates.sh`, so the
+    hazard it guards was latent rather than gate-reachable, and its `--write`
+    opens `CSV_PATH` without `newline=""` where the three `check_table`
+    siblings do -- so on Windows it *produces* CRLF, and `-text` or `eol=lf`
+    on the read side cannot address that. The writer is the remaining gap, and
+    it belongs with the other tools' `lineterminator` work rather than here.
 
     `lines` is never empty when the code is 1, so a failure always says
     something.

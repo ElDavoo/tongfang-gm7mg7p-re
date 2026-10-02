@@ -40,6 +40,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`7151-case-tables-in-the-walk.md`](7151-case-tables-in-the-walk.md) — The main EC's `0x7151` dispatcher carries a case table inline, so the walk was decoding it as instructions (issue #1257)
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
+- [`annotation-csv-checkout-stability.md`](annotation-csv-checkout-stability.md) — The annotation CSVs a tool byte-compares are checkout-stable, per file
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)

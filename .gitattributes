@@ -42,3 +42,70 @@
 ec/decompiled/**/*.c       -text
 bios/decompiled/**/*.c     -text
 windows/decompiled/**/*.c  -text -diff
+
+# The annotation CSVs a tool byte-compares, which is the same hazard as the
+# decompiled .c trees above and a different correct answer.
+#
+# --check in these tools compares the committed file's bytes against a freshly
+# generated table and exits 1 on any difference, so the bytes in the worktree
+# are the pass condition (call_graph.py's check_table() is the worked example,
+# and its self-test proves a CRLF table is rejected). That makes a
+# core.autocrlf=true Windows checkout reachable rather than hypothetical, for
+# the same reason and with the same answer: -text and never binary, for the
+# reason the warning above gives.
+#
+# So why two forms rather than one? Because the annotation tree is not one
+# thing. The CRLF files are not drift -- they are these tools' correct output:
+# every one of walk_budget_census.py, trace_xdata_refs.py, walk_flow_follow.py,
+# pd_entry_forms.py, pd_image_census.py, pd_direct_offset_sites.py,
+# find_indirect_xdata.py, inc_dptr_sites.py, census_xdata_writers.py and
+# code_pointer_sites.py passes a bare csv.writer() no lineterminator, so csv's
+# default \r\n is what they render, and each of their --check runs is green
+# today. For those, -text is the only correct form: it stops autocrlf
+# normalising CRLF->LF on the way IN, which would be a whole-file diff and a
+# red check, and it leaves the worktree bytes exactly what the tool wrote.
+# Marking one of them `text eol=lf` would send it out as LF and break the green
+# check it is protecting.
+#
+# The LF tables are the other case, and the reason they do NOT get -text is the
+# editable surface: ghidra-functions.csv is transcribed by hand (CLAUDE.md), and
+# its bank0/0EA2 comment carries an embedded blank line. With -text a Windows
+# contributor's edit to that field commits CRLF verbatim and a CR lands inside a
+# parsed field; `text eol=lf` normalises it back on commit, so the round trip is
+# lossless and the file stays ordinary text for diff and merge.
+#
+# Both forms renormalise nothing on today's tree, which is why this is an
+# attribute change alone. Moving the CRLF tools to lineterminator="\n" and
+# renormalising their output is a separate commit with its own diff.
+#
+# Measured per file by ec/tools/test_gitattributes_coverage.py, which holds the
+# rule this comment claims rather than a count of the tree: every byte-compared
+# table is covered, no line covering one says binary, and no path matched by an
+# eol=lf line carries a CR. See
+# docs/findings/annotation-csv-checkout-stability.md.
+ec/annotations/*.csv                     -text
+
+# The LF tables, named so the blanket above does not swallow them. Each is a
+# tool's --check input or output; the two call_graph.py reads are in it because
+# a CRLF checkout of ghidra-functions.csv changes a parsed field there even
+# though the rendered table happens to come out byte-identical for this tool.
+ec/annotations/call-graph-callees.csv    text eol=lf
+ec/annotations/dsdt-ecmg-fields.csv     text eol=lf
+ec/annotations/task-call-table.csv       text eol=lf
+ec/annotations/bucket-c-codemap.csv      text eol=lf
+ec/annotations/site-resolution.csv      text eol=lf
+ec/annotations/fan-table-defaults.csv    text eol=lf
+ec/annotations/xdata-registers.csv       text eol=lf
+ec/annotations/xdata-clusters.csv        text eol=lf
+ec/annotations/ghidra-functions.csv      text eol=lf
+ec/decompiled/index.csv                  text eol=lf
+
+# The same rule outside the annotations tree: every committed CSV another
+# component's tool byte-compares in --check. All are LF today, so all take
+# text eol=lf, and test_gitattributes_coverage.py fails if one stops being.
+# c-digests.csv is deliberately absent: it is covered by the .c entries above,
+# and it is the file those entries exist for.
+ec/ghidra/xdata-symbols.csv              text eol=lf
+ec/ghidra/gap-citation-scan.csv         text eol=lf
+bios/ifr/charge-questions.csv            text eol=lf
+windows/ghidra/c-census.csv              text eol=lf
