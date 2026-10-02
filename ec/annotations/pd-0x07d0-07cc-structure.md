@@ -229,9 +229,10 @@ $ python3 ec/tools/pd_site_clusters.py ec/firmware/GMxMGxx_11.800
 The `254` and the `6` are the figures `registers.yaml` records as
 `static_refs` / `static_refs_pd_image` for `DBD1 (0x07D0)` and
 `USB_C_POWER_PRIORITY (0x07CC)`, and the same ones
-`trace_xdata_refs.py … --counts-only` prints; the tool's `--self-test` holds
-its derived totals against `registers.yaml` directly, so the three committed
-files cannot drift apart without something going red.
+`trace_xdata_refs.py … --counts-only` prints; it is
+`test_pd_site_clusters.py`'s `TestReconciliation` that holds the derived
+totals against `registers.yaml`, so the three committed files cannot drift
+apart without something going red.
 
 **Read the second row with the third.** "43 of the 254 are inside a
 committed routine" is a statement about the `pd` function boundaries in
@@ -268,8 +269,8 @@ most of those fourteen are not really separate logic (see 3.2).
 
 ### 3.2 Four shapes, not nineteen routines
 
-Reading the committed listings rather than the row count, the nineteen
-collapse into four:
+Reading the committed listings rather than the row count, those nineteen
+routines collapse into four shapes:
 
 1. **The state step and its back edge** — `0x8576` and the `0xA571` /
    `0xA678` pair. `0x8576` seeds the byte from R7 and clears `0x07D1` in the
