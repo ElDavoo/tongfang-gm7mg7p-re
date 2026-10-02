@@ -5,8 +5,8 @@
 
 
 /* A prologue and then a five-way dispatch on XDATA 0x044B. The prologue bails out to 0x9C24 on
-   three tests -- 0xB9D8 returning zero, bit 0 of XDATA 0x0490 clear, and 0xC26E leaving R7 zero --
-   and on the paths that survive it sets bit 0 of XDATA 0x08AD at 0x9B12 or clears it at 0x9B27,
+   three tests -- 0xB9D8 returning non-zero, bit 0 of XDATA 0x0490 clear, and 0xC26E leaving R7 zero
+   -- and on the paths that survive it sets bit 0 of XDATA 0x08AD at 0x9B12 or clears it at 0x9B27,
    which is the bit the value-1, value-2 and value-3 arms then branch on. The dispatch reads 0x044B
    at 0x9B33 and runs a dec/jz chain giving 1 at 0x9B63, 2 at 0x9B75, 3 at 0x9B99, 4 at 0x9B43 (an
    ljmp to 0x9C00) and, via add A,#0x4, 0 at 0x9B4D; 0x9B4A is the default for every other value. An

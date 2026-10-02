@@ -165,11 +165,21 @@ class ModeStepper(unittest.TestCase):
 
     # -- the dispatch chain -------------------------------------------------
 
-    def test_the_dispatch_opens_on_a_read_of_the_mode_byte(self):
-        """The chain is entered by reading 0x044B, and exactly once."""
+    def _dispatch_open(self):
+        """Where the dispatch reads the mode byte, read out of the listing.
+
+        The prologue is everything that runs before this, so the guard search
+        below is bounded by a value the listing gives rather than by an
+        address typed in beside it.
+        """
         reads = [addr for addr, insn in sorted(self.insns.items())
                  if insn.mnemonic == 'mov' and insn.operand == 'DPTR, #0x44b']
         self.assertEqual(reads, [0x9B33], 'the dispatch reads 0x044B once')
+        return reads[0]
+
+    def test_the_dispatch_opens_on_a_read_of_the_mode_byte(self):
+        """The chain is entered by reading 0x044B, and exactly once."""
+        self._dispatch_open()
         self.assertEqual(self.insns[0x9B36].operand, 'A, @DPTR')
         self.assertEqual(self.insns[0x9B36].mnemonic, 'movx')
 
@@ -428,6 +438,101 @@ class ModeStepper(unittest.TestCase):
         self.assertEqual(self.insns[0x9B2B].operand, 'A, #0xfe')
         for writer in (0x9B18, 0x9B2D):
             self.assertEqual(self.insns[writer].operand, '@DPTR, A')
+
+    # -- the prologue's bail-out guards --------------------------------------
+
+    def test_each_bail_out_is_guarded_by_the_condition_that_reaches_it(self):
+        """Derive all three guards from the listing, polarity included.
+
+        A bail-out is a conditional branch that *skips* the `ljmp` after it, so
+        the branch's own sense is the opposite of the guard's: `jz 0x9aba`
+        jumps over the `ljmp 0x9c24` when A is zero, which means the bail-out
+        is reached when `0xB9D8` returns non-zero. Reading the mnemonic as the
+        guard rather than as the skip is the inversion this pins.
+
+        Each guard is a pair of consecutive instructions -- a branch whose
+        target is the address just past an `ljmp` -- so the three are found by
+        that shape in the prologue rather than by a list of addresses, and the
+        polarity comes from the mnemonic the listing prints.
+        """
+        guards = self._prologue_guards()
+        self.assertEqual(
+            sorted(guards.items()),
+            [(0x9AB7, ('jz', 0xB9D8, False)),
+             (0x9AC1, ('jb', 0x0490, True)),
+             (0x9ACA, ('jnz', 0xC26E, True))],
+            'the three guards: site, skipping mnemonic, source, and whether '
+            'the bail-out fires when the tested value is zero/clear')
+        for site in guards:
+            self.assertEqual(self.insns[site].target, 0x9C24,
+                             '0x%04X bails out to 0x9C24' % site)
+
+    def _prologue_guards(self):
+        """{(ljmp site): (mnemonic, source, zero_means_bail)} before the chain.
+
+        Found by the shape above, so a fourth guard, or an existing one moved,
+        changes what this returns. `source` is what the guard's test reads: the
+        DPTR the `movx` a branch earlier loaded, or the callee whose return
+        value is in the accumulator.
+        """
+        found = {}
+        for addr in sorted(self.insns):
+            insn = self.insns[addr]
+            if insn.mnemonic != 'ljmp' or addr >= self._dispatch_open():
+                continue
+            branch = self.predecessor(addr)
+            if branch is None or not branch.mnemonic.startswith('j'):
+                continue
+            if branch.target != addr + insn.size:
+                continue                       # not a jump over this ljmp
+            # `jz` and `jnb` skip the bail-out on a zero or clear value, so
+            # the bail-out is reached on the other two; the polarity is the
+            # branch's sense inverted, which is the whole point of the test.
+            found[addr] = (branch.mnemonic, self._guard_source(branch),
+                           branch.mnemonic not in ('jz', 'jnb'))
+        return found
+
+    def _guard_source(self, branch):
+        """What the guard at `branch` tests: the byte read, or the callee.
+
+        A `jb 0xe0` names bit 0 of the accumulator, so the byte comes from the
+        `mov DPTR` before the `movx` that loaded it. An accumulator test after
+        a call takes that call's return value, which for `0xC26E` arrives in
+        R7 and reaches the branch through a `mov A, R7` -- so the source is
+        followed back through the move rather than read off the instruction
+        immediately before.
+        """
+        read = self.predecessor(branch.addr)
+        if read is not None and read.operand == 'A, @DPTR':
+            loaded = self.predecessor(read.addr)
+            return int(loaded.operand.split('#')[1], 16)
+        if read is not None and read.mnemonic == 'mov' and read.operand == 'A, R7':
+            read = self.predecessor(read.addr)
+        if read is not None and read.mnemonic == 'lcall':
+            return read.target
+        self.fail('0x%04X does not follow a read or a call' % branch.addr)
+
+    def test_the_write_up_and_the_annotation_carry_the_derived_polarity(self):
+        """Both places the guards are written say what the listing says.
+
+        The three guards are prose in two files that nothing else ties to the
+        bytes: the guard table in the write-up and the cell in
+        ghidra-functions.csv, which is also what the exported .c header
+        carries. Checking the derived polarity appears in each is what stops
+        either from restating the other wrongly -- a `jz` guard read as "bails
+        when the call returns zero" is the same sentence in both files, so
+        comparing them to each other would pass.
+        """
+        cell = self._bank0_row(DISPATCHER)['comment']
+        page = WRITEOUT.read_text(encoding='utf-8')
+        for source, expected in ((0xB9D8, 'non-zero'),
+                                 (0x0490, 'clear'),
+                                 (0xC26E, 'zero')):
+            pattern = r'0x%04X[^\n]{0,40}?%s' % (source, expected)
+            self.assertRegex(cell, pattern,
+                             'the annotation cell states 0x%04X' % source)
+            self.assertRegex(page, pattern,
+                             'the write-up states 0x%04X' % source)
 
     # -- the inherited carry ------------------------------------------------
 

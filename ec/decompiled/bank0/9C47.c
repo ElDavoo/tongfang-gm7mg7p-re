@@ -12,17 +12,19 @@
    enumerated value whose first action is another arm's. The other six are bail-outs from inside a
    case whose own test has failed: 0x9B5E when the counter at XDATA 0x08BF is still below 0xC8,
    0x9B6F when bit 0 of XDATA 0x08AD is clear, 0x9B84 and 0x9BA8 when 0xBBC7 returns with the carry
-   set, 0x9B8F when 0xB9F5 returns with the carry set, and 0x9BC1 when XDATA 0x0873 is not below
-   0x08C7. Four conditional branches inside 0x9AAD reach the same address without a transfer --
-   0x9BCE, 0x9BD6, 0x9BEF and 0x9BFB, all carry or below tests; the export holds two more, 0x9C15
-   and 0x9C1B, which are inside 0x9C00 and which that function's own row records. So every path into
-   it is 'the condition for this case's work did not hold', and returning with A, R7 and the carry
-   as the caller left them is the whole of what each caller expected. What the cases do when their
-   test does hold is not decoded here. Corrected in place, issue #649, the wrong version left
-   visible: it read that the cases were not decoded, and they now are, in
-   docs/findings/044b-mode-stepper.md and in the row for bank0,0x9AAD. What that reading settles is
-   the transition each arm takes, not what the five values of XDATA 0x044B mean, and the meaning is
-   still not decoded.
+   set, 0x9B8F when 0xB9F5 returns with the carry set, and 0x9BC1 when XDATA 0x0873 is above 0x08C7
+   rather than at or below it. Corrected in place, issue #649, the wrong version left visible: it
+   read not below 0x08C7, and the setb CY at 0x9BBD makes the 0x9BBE comparison 0x0873 - 0x08C7 - 1,
+   so an equal pair continues to 0x9BC4 and does not bail out. Four conditional branches inside
+   0x9AAD reach the same address without a transfer -- 0x9BCE, 0x9BD6, 0x9BEF and 0x9BFB, all carry
+   or below tests; the export holds two more, 0x9C15 and 0x9C1B, which are inside 0x9C00 and which
+   that function's own row records. So every path into it is 'the condition for this case's work did
+   not hold', and returning with A, R7 and the carry as the caller left them is the whole of what
+   each caller expected. What the cases do when their test does hold is not decoded here. Corrected
+   in place, issue #649, the wrong version left visible: it read that the cases were not decoded,
+   and they now are, in docs/findings/044b-mode-stepper.md and in the row for bank0,0x9AAD. What
+   that reading settles is the transition each arm takes, not what the five values of XDATA 0x044B
+   mean, and the meaning is still not decoded.
    type: forwarder
    evidence: ec/decompiled/bank0/9C47.asm; ec/decompiled/bank0/9C47.c; ec/decompiled/bank0/9AAD.asm
    basis: hand-decoded
