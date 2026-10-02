@@ -3345,10 +3345,10 @@ def render(rows, columns) -> str:
 
 
 def diff(name, on_disk, generated) -> int:
-    """First differing line named, the way gen_xdata_symbols.py does."""
+    """First differing line named; both counts are file lines, not data rows."""
     print(f"{name} differs from a fresh generation "
-          f"({len(on_disk.splitlines())} on disk vs "
-          f"{len(generated.splitlines())} generated) -- run without --check "
+          f"({len(on_disk.splitlines())} lines on disk vs "
+          f"{len(generated.splitlines())} lines generated) -- run without --check "
           "to rewrite", file=sys.stderr)
     for i, (a, b) in enumerate(zip(on_disk.splitlines(), generated.splitlines())):
         if a != b:
@@ -5358,3 +5358,27 @@ if __name__ == "__main__":
 # named per-program columns (`refs_main_ec` / `refs_pd`) instead. The prose side
 # is `../../docs/findings/xdata-cluster-refs-projection.md`, which is also where
 # the arithmetic is.
+
+# *** 2026-10-02, issue #342: `diff()`'s two counts are file lines and its
+# neighbour's is data rows, and the two messages said the same noun for both.
+# `--check` prints `{len(rows)} rows match a fresh generation` -- data rows --
+# while `diff()` printed `{len(on_disk.splitlines())} on disk vs
+# {len(generated.splitlines())} generated`, which counts the header on both
+# sides. Same noun, two different quantities, one tool, adjacent messages. That
+# is how `1172 on disk vs 1172 generated` came to be read as "1,172
+# addresses" in `annotations/xdata-register-map.md` -- which is 1,171 of them --
+# and why that file carries a sentence explaining an ambiguity this tool
+# manufactured. The fix is the word `lines` before both counts; the number
+# cannot be made to mean both things at once, so naming it in both messages is
+# the whole of it, and `check_census_figures.py --print` now re-derives the
+# figures a page is held to, so the transcript beside them is not the only
+# thing carrying a count. `docs/findings/census-figures-restated.md` is the
+# write-up.
+#
+# **Placed here rather than on `diff()` because this module is cited by line.**
+# `check_eq_guard_citations.py` resolves the nine `--no-eq-guard` anchors to
+# line numbers and holds every page that cites them to what it finds there, so
+# growing `diff()`'s docstring by even one line moves the anchors below it and
+# turns a dozen citations across four documents red. A note about a message
+# belongs at the end of the file for the same reason the `named_in_tree` block
+# above does.

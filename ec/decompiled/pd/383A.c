@@ -4,8 +4,13 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Unresolved: lcalls 0x0FCB with the DPTR it was given, clears carry and jumps to 0x0F0E. Remaining
-   control flow not traced, for the same reason as 0xB1F2
+/* The handed DPTR is now resolved one level further than it was: lcalls 0x0FCB with it, which
+   reads, so the access is a read -- register_ref_table.py --callee-depth 2 reaches it with the
+   chain 0x383A -> 0x0FCB on its row. The name stays unresolved_* for the reason 0xB1F2's does: the
+   clr c and the ljmp 0x0F0E after the call are past walk()'s first control-flow instruction and so
+   in no window at any depth. The 0x0FCB read count is the walk's budget rather than the routine's
+   -- four MOVX reads into R0-R3 at a budget of 12, three at the eight the tool uses -- so the
+   direction is the claim and the count is not
    type: forwarder
    evidence: ec/annotations/lightbar-bat-flow.md
    basis: hand-decoded

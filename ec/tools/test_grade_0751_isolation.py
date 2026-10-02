@@ -6422,5 +6422,183 @@ class RefusedPairReadbackTests(unittest.TestCase):
         self.assertIn('Every `unchanged` above', whole_block(out))
 
 
+# Appended, not inserted: the reason the comment above `RefusedPairReadbackTests`
+# gives is this one's reason too, and it is the whole of the constraint here.
+#
+# What is under test is a single adjective. "Still" says the byte survived the
+# write, which is a claim about what it held *before* it, and the file that
+# would support that half is the block's first `--dump` -- whose 0x0751 byte
+# `report_dumps` prints two lines above the verdict. Nothing read it, so a
+# before-dump that already held the written value produced the section a
+# successful write produces, calibration clause included, byte for byte. Two
+# files that admit either "the write never landed" or "the file named
+# `-before-` is not before it" read the same as two files where it did.
+#
+# No fixture is edited. The before-dump that already holds the value is built
+# per run by rewriting one byte of a copy of §6's own into a temporary
+# directory, so the committed dumps stay what §6's file list holds them equal
+# to, and the file under test is §6's own file rather than one written to suit
+# the case.
+class BeforeSideReadbackTests(unittest.TestCase):
+    """What the block's *first* dump held, and the one word that depends on it.
+
+    The two verdict lines are a comparison of one number against another, and
+    they were both reachable without the number the word "still" is a claim
+    about. This pins that the word is now gated on the before-side and that
+    both lines are byte for byte what they were where the before-side
+    supports them, so the fix cannot pass by dropping or rewording either.
+
+    Every case is about which files were handed in and what can be read out of
+    them; nothing here reads an EC, and the mutated dump is a copy of a
+    fixture whose own header says it is constructed input and not a capture.
+    """
+
+    @staticmethod
+    def with_0751(path, byte, directory):
+        """§6's dump into `directory` with 0x0751 set to `byte`.
+
+        One row, one byte, so the file under test is still the committed one
+        with a single edit rather than a synthetic dump written for the case.
+        The name carries `<value>`, which is what §6 does and what lets the
+        block be named without a `--wrote` on the command line.
+        """
+        rows = Path(path).read_text().splitlines(keepends=True)
+        for i, line in enumerate(rows):
+            if line.startswith('0750:'):
+                fields = line.split()
+                # `fields[0]` is the row's own address, so 0x0751 is the
+                # second byte on the 0x0750 row rather than the first.
+                fields[2] = f'{byte:02x}'
+                rows[i] = ' '.join(fields) + '\n'
+                break
+        else:
+            raise AssertionError(f'{path} has no 0750 row to set 0x0751 from')
+        out = Path(directory) / Path(path).name
+        out.write_text(''.join(rows))
+        return str(out)
+
+    # The case the section could not tell apart from a successful write. The
+    # before-side already holds the written value, so no file in the group
+    # predates the write and nothing here shows it landing.
+    def test_a_before_dump_already_holding_the_value_says_the_write_is_not_shown(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            before = self.with_0751(RUN_BEFORE, 0xA0, tmp)
+            rc, out, _ = run(RUN_CAPTURES[0],
+                             *dumps(before, RUN_AFTER),
+                             '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        # The comparison itself still runs: the last dump does hold what was
+        # written, and the section has to be able to say that much.
+        self.assertIn('the last dump holds the written 0xA0', section)
+        self.assertIn('readback, not evidence', section)
+        # And the word that claims the value survived the write is gone,
+        # because the byte held it before the write too and these files cannot
+        # say which is which.
+        self.assertNotIn('still holds', section)
+        # The line says what is missing rather than what happened, and names
+        # both readings it leaves open instead of picking one.
+        self.assertIn('the first --dump already holds the written 0xA0',
+                      section)
+        self.assertIn('these files do not show the write landing', section)
+        self.assertIn('the write did not take', section)
+        self.assertIn('taken after it', section)
+        self.assertIn('Nothing here separates the two', section)
+        # Both bytes are still printed above the verdict, so a reader can see
+        # the fact the line is about rather than having to take it on trust.
+        self.assertIn('0x0751 = 0xA0', section)
+        # Nothing here is a claim about the machine, so the line must not
+        # borrow the wording that is.
+        self.assertNotIn('something put it back', section)
+
+    # Both existing verdict lines, over §6's own two files and unchanged. The
+    # before-side here demonstrably held something else, which is what the
+    # word "still" was written for -- so nothing about the sentence moves, and
+    # a fix that gated it too hard would be caught here rather than by a reader.
+    def test_a_before_dump_holding_something_else_leaves_both_verdicts_unchanged(self):
+        rc, out, _ = run(RUN_CAPTURES[0],
+                         *dumps(RUN_BEFORE, RUN_AFTER),
+                         '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('the last dump still holds the written 0xA0', section)
+        self.assertIn('readback, not evidence', section)
+        # And no before-side line, because there is nothing wrong with the
+        # before-side to announce.
+        self.assertNotIn('the first --dump already holds', section)
+        self.assertNotIn('one --dump for this block', section)
+
+        # The other arm, over the same two files in the order §6's own `rem`
+        # warns about. Here the *first* dump holds 0xA0, so the before-side
+        # line does fire -- and that is the use of it: §6's mis-ordering is
+        # not something the bytes can be caught doing, so the one thing this
+        # can say is that no file in the group shows the byte anywhere but the
+        # written value before the last dump. The verdict itself is untouched.
+        rc, out, _ = run(RUN_CAPTURES[0],
+                         *dumps(RUN_AFTER, RUN_BEFORE),
+                         '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('the last dump holds 0x10, not the written 0xA0', section)
+        self.assertIn('something put it back', section)
+        self.assertIn('§3a', section)
+        self.assertIn('the first --dump already holds the written 0xA0',
+                      section)
+        self.assertIn('Nothing here separates the two', section)
+        # And it is not quoted as the answer: the hedging line and the
+        # machine-facing one are separate lines, and only the first of them
+        # says the files cannot tell the two readings apart.
+        self.assertLess(section.index('Nothing here separates the two'),
+                        section.index('something put it back'))
+
+    # What a group of one dump says. A run is not required to hand in a pair,
+    # so refusing the comparison here would throw away a fact the operator can
+    # use: the question is only whether the word survives without a before-side.
+    def test_one_dump_keeps_the_comparison_and_loses_the_word(self):
+        rc, out, _ = run(RUN_CAPTURES[0],
+                         *dumps(RUN_AFTER),
+                         '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('the last dump holds the written 0xA0', section)
+        # The calibration clause is what makes the sentence safe to quote, and
+        # it is not conditional on a before-side having been handed in.
+        self.assertIn('readback, not evidence', section)
+        self.assertNotIn('still holds', section)
+        self.assertIn('one --dump for this block', section)
+        self.assertIn('nothing here says what 0x0751 held before the write',
+                      section)
+
+        # And the other direction on one file, so the before-side line is not a
+        # thing that only ever prints beside a matching value.
+        with tempfile.TemporaryDirectory() as tmp:
+            before = self.with_0751(RUN_BEFORE, 0xA0, tmp)
+            rc, out, _ = run(RUN_CAPTURES[0], *dumps(before), '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('one --dump for this block', section)
+        self.assertIn('the last dump holds the written 0xA0', section)
+        self.assertNotIn('still holds', section)
+        # One file, not two: there is no before-side to have been taken after
+        # the write, so the line that names that reading must not appear here
+        # as though it were a second candidate.
+        self.assertNotIn('the first --dump already holds', section)
+
+    # A first dump that does not reach 0x0751 has no before-side value to
+    # compare, so it is not a case this gate has anything to say about and the
+    # section reads as it always has. Pinned because a line printed for a
+    # before-side that is not there would be a claim about nothing.
+    def test_a_first_dump_that_does_not_reach_0751_is_not_a_before_side(self):
+        rc, out, _ = run(RUN_CAPTURES[0],
+                         *dumps(RUN_BEFORE_0F00, RUN_AFTER),
+                         '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('0x0751 not covered by this dump', section)
+        self.assertIn('the last dump still holds the written 0xA0', section)
+        self.assertNotIn('one --dump for this block', section)
+        self.assertNotIn('the first --dump already holds', section)
+
+
 if __name__ == '__main__':
     unittest.main()

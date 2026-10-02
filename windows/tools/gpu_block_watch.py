@@ -39,7 +39,10 @@ address.
 The CSV schema is `ts,addr,old,new,provenance`, a mark as
 `ts,MARK,,label,provenance` -- the five-field row `ec_watch.py` writes and
 grade_0751_isolation.py reads, kept byte-identical so grade_gpu_door.py
-(#283) needs no new parser; `Marker(sink)` leaves the fifth empty.
+(#283) needs no new parser; `Marker(sink)` leaves the fifth empty. One more
+row is not data: a `# the run ended early: <ts>,...` comment row, written
+when an EC read fails mid-sweep and never on Ctrl-C, which is how a run that
+stopped part way through is told from one that finished.
 
 The `--interval` default is ec_watch.py's 0.25 s and is a starting point, not a
 safe one: `ecrw.Ec.read` is one ECRR DeviceIoControl per byte with nothing
@@ -52,6 +55,7 @@ Usage:
   gpu_block_watch.py --names-only            # the watch table, no EC opened
 """
 import argparse
+from pathlib import Path
 import sys
 import time
 
@@ -115,6 +119,22 @@ WATCH = [
 # reader to sort them by hand.
 WINDOWS = (("0x07C4-0x07D7", 0x07C4, 0x07D7),
            ("0x0743-0x0746", 0x0743, 0x0746))
+
+# The `#` row this writes when a run stops part way through, and the one
+# `ec/tools/grade_gpu_door.py` reads it back: a record *about* the run rather
+# than an annotation *of* the capture, and the only `#` row either tool reads.
+# `now()` goes on the front, because a row that says *that* a run ended and not
+# *when* cannot be said to have cut any window short -- the grader places it
+# against the last mark at or before it and withholds that window.
+#
+# Transcribed rather than imported, because this module cannot import the
+# grader: `from ecrw import Ec, EcError` above binds kernel32 at import time,
+# so this file loads only on Windows and the grader would load nowhere else.
+# `windows/tools/test_gpu_block_watch.py` holds the two spellings equal, the
+# same hold the fan probe's `--self-test` carries for its own copy. A drifted
+# tag is not a wrong-looking string: it is a grader that matches no stopped
+# run, and a capture that grades green.
+EARLY_EXIT_TAG = "# the run ended early:"
 
 
 def window_of(addr):
@@ -211,6 +231,30 @@ def main(argv=None):
     except KeyboardInterrupt:
         print()
     except EcError as e:
+        # The one row this writes about its own run, and `EcError` rather than
+        # `BaseException` where `manual_fan_ctrl_probe.py` writes the same
+        # phrase: Ctrl-C is §3's documented way to end a run that *finished*
+        # ("defaults to running until Ctrl-C, which is the right default
+        # here", and the console prompt says "Ctrl-C to stop"), so stamping
+        # "the run ended early" on every Ctrl-C would put that row on every
+        # successful door capture and grade a good run as a stopped one. That
+        # probe's unit is a block with a known end and a `finally` that restores
+        # it; this run has no restore and no end of its own, so there is no
+        # Ctrl-C a reader could tell from a crash.
+        #
+        # An EC read that fails mid-sweep is the other case: the run stopped
+        # part way through, the arm that raises already returns 1, and the
+        # windows the sweep was in the middle of are not windows anyone can
+        # read. Written before the `finally` below closes the sink and after
+        # the last row it wrote, so the row is in the file rather than in a
+        # terminal nobody reads twice.
+        if sink:
+            # The tool's own name rather than `__name__`, which is `__main__`
+            # for the run an operator takes at the box: the field is there for
+            # whoever opens the file, and `__main__` names the interpreter
+            # rather than the thing that raised.
+            sink.row([f"{EARLY_EXIT_TAG} {now()}",
+                      f"{Path(__file__).stem}: {type(e).__name__}: {e}"])
         print(f"error: {e}", file=sys.stderr)
         return 1
     finally:
