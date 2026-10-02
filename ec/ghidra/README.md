@@ -809,12 +809,10 @@ this comparison stops at.
 *did the comparison agree*, and a window that found no address had nothing to
 disagree about — so a function whose decompile plainly names several XDATA
 symbols reads the same as one that names none. `cross-decoder-blindness.csv`
-says which is which, in a `blind` column over the same keys:
-
-```
-$ python3 ../tools/cross_decoder_blindness.py
-  the 1008 vacuous row(s) are 356 entry-is-branch, 493 no-xdata-named, 62 named-past-first-branch, 97 no-literal-named, out of 2057 sampled function(s) of which 1047 were compared
-```
+says which is which, in a `blind` column over the same keys.
+`python3 ../tools/cross_decoder_blindness.py` prints one census line naming
+each class and the sample it was taken over; the counts move with the sample,
+so they are read from that line and not from here. Which class is which:
 
 - **`entry-is-branch`** — the byte at the entry is in
   `disasm8051.FLOW_OPCODES`, so the window is empty by construction and `insns`
@@ -836,20 +834,13 @@ $ python3 ../tools/cross_decoder_blindness.py
 
 The walk behind the last two is over the listing's `size` with
 `stop_at_flow=False`, not over this window — the question is *is the literal in
-this function at all*, and 204 sampled rows decode to more instructions than
+this function at all*, and sampled rows do decode to more instructions than
 the window's bound of 40. **The residue is not split** into caller-supplied
 versus arithmetic-from-a-base: telling those apart means reading each `.c` and
 deciding what its pointer algebra means, which is the same refusal
 `CROSS_DECODER_OUTCOMES` gives for `disagree`. And **a `vacuous` row is not
 evidence that an address is absent** — the classes above are properties of one
 function's opening, and 0x07D0 stays at `unknown-not-absent-DO-NOT-WRITE-BLIND`.
-
-**A stale block above.** The run this section quotes is from
-2026-09-24 and the tree has moved: the committed report is 2,057 rows and the
-denominator line reads `compared 1047 of 2057 functions, 1008 vacuous; 920
-agreed, 127 disagreed, 2 no-export`. `docs/findings.md` §14i carries the
-correction against its own copy of these figures, which is where it belongs;
-re-run `--self-test --cross-decoder` for this tree's.
 
 ### What `disagree` is made of
 
@@ -859,12 +850,10 @@ and it is **not one thing** either. The matcher used to read only the
 `(undefined1 *)0x7d6`, the cast an annotated callee's signature leaves behind —
 read as a disagreement for a spelling rather than for a reading. It now reads
 both, which is why `docs/findings.md` §14i's tally moved; and what is left
-carries a `cause` in `cross-decoder-disagreement.csv`, over the same keys:
-
-```
-$ python3 ../tools/cross_decoder_disagreement.py
-  the 127 disagree row(s) are 43 named-by-register-symbol, 6 named-by-code-symbol, 7 named-by-decimal-literal, 45 names-other-addresses, 26 names-nothing, out of 2057 sampled function(s) of which 1047 were compared
-```
+carries a `cause` in `cross-decoder-disagreement.csv`, over the same keys;
+`python3 ../tools/cross_decoder_disagreement.py` prints one census line naming
+each cause and the sample it was taken over, on the same terms as the census
+above. Which cause is which:
 
 - **`named-by-register-symbol`** — the C names the address with a register's
   real name, which carries no address in its spelling. `bank0 0x8F09`'s whole
@@ -882,14 +871,15 @@ $ python3 ../tools/cross_decoder_disagreement.py
   one the window found. `bank0 0xB93A`'s window finds 0x0A51 and its body says
   `DAT_EXTMEM_0a52`.
 - **`names-nothing`** — the body names no address at all.
-  `common 0x4BB0` decompiles to `do {} while (true);` and `pd 0x357E` to
+  `common 0x159A load_dptr_c251_tail_jump_1100` decompiles to
+  `bl51_bank_select_0(test_1665_bit0_inverted); return;` and `pd 0x357E` to
   `return *param_1;`.
 
 **The body, not the file.** The annotation above a function names the
 addresses its body does not — `pd/F4CD.c` opens "With DPTR loaded from
 0x07D6" — so the matcher strips it before it reads, and the classifier reads
-the code with its comments removed. Matching the whole file gives `1038
-agreed, 9 disagreed` against the shipped rule's `920/127`, which is §14b's
+the code with its comments removed. Matched against the whole file the same
+census agrees on nearly everything the shipped rule disputes, which is §14b's
 failure in a new place; `--self-test` asserts both halves of that.
 
 **The residue is not split** into an empty loop, a caller-supplied pointer and
@@ -900,7 +890,7 @@ C spells an address rather than about whether the EC acts on one.
 
 ### What `--check` does with it
 
-`--check` recomputes all 1,920 rows and fails on a row the report does not
+`--check` recomputes every row and fails on a row the report does not
 carry, a row the report carries that the sample no longer does, or **any
 cell** that moved — not just `outcome`, so a drifted name or instruction count
 is caught too. It fails on a wholly vacuous or wholly unexported sample, which

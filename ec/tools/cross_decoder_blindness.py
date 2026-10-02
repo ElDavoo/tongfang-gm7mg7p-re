@@ -51,13 +51,12 @@ never going to hold anything".
                            pointer arrives from the caller or is built by
                            arithmetic from a base.
 
-**Why the walk is over the listing's extent and not the window.** 204 of the
-sampled rows decode to more than `CROSS_DECODER_WINDOW`'s 40 instructions over
-their own extent, and the longest is 316 (`bank0 0x9D9B`, 627 bytes). A walk
-held to the window would therefore answer "is it past the first branch" for the
-small functions and "is it anywhere" for the large ones -- two questions
-wearing one name, and a split whose answer depends on a function's length. The
-question here is the second of those.
+**Why the walk is over the listing's extent and not the window.** Sampled rows
+do decode to more than `CROSS_DECODER_WINDOW`'s 40 instructions over their own
+extent, some of them by a wide margin, so a walk held to the window would
+answer "is it past the first branch" for the small functions and "is it anywhere"
+for the large ones -- two questions wearing one name, and a split whose answer
+depends on a function's length. The question here is the second of those.
 
 **The residue is not split further, and that is the deliberate refusal.** The
 issue asked for `no-literal-named` to be divided into "reached through a

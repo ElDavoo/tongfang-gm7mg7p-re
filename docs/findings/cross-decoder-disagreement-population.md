@@ -62,30 +62,28 @@ involved, and under the shipped rule:
 ### The rule has to be read off the body, and that is the whole measurement
 
 **Matching the file rather than the body is not a small difference. It is the
-difference between a check and a comment.** The same tree, the same matcher,
-one argument apart:
+difference between a check and a comment.** The same matcher, one argument
+apart: handed the whole file it disputes almost nothing, because the annotation
+above a function names the addresses its body does not; handed the body with the
+annotation comment removed — the shipped rule — it reports the census above,
+and stripping every comment instead of only the annotation's hands that same
+census back.
 
-| what the matcher is handed | agree | disagree |
-|---|---|---|
-| the whole file | 1038 | **9** |
-| the body, annotation comment removed (shipped) | 920 | **127** |
-| the body, every comment removed | 920 | **127** |
+**Every row that stays `disagree` under the shipped rule is there only because
+the annotation is in scope**, the whole-file reading rescues nearly all of them,
+and no row is half-rescued. `pd/F4CD.c` opens `/* With DPTR loaded from 0x07D6
+... */`, and so does most of the export's annotation layer, because that is what
+an annotation is for. An answer that near passes is §14b's failure in a new
+place: a check that reads a fraction of its input and prints the result in the
+same form as a full pass.
 
-**118 of the 127 rows that stay `disagree` are there only because the
-annotation is in scope** — the other 9 disagree either way, and no row is
-half-rescued. `pd/F4CD.c` opens `/* With DPTR loaded from 0x07D6 ... */`, and so
-does most of the export's annotation layer, because that is what an annotation is
-for. The nine-row answer is §14b's failure in a new place: a check that reads a
-fraction of its input and prints the result in the same form as a full pass.
-
-The other two rows of that table are the useful half. **Removing the annotation
-alone and removing every comment give the same census**, so which comment a
-reader chooses to strip is a choice and not a tuning; the binary is *whether a
-comment is removed at all*. `build_ec_decompile.py --self-test` asserts the
-equality over the whole sample every run, and
-`ec/tools/test_cross_decoder_disagreement.py` asserts the negative — that the
-whole-file reading really does disagree about the bucket — so the rule is a
-held fact in both directions.
+**Removing the annotation alone and removing every comment give the same
+census**, so which comment a reader chooses to strip is a choice and not a
+tuning; the binary is *whether a comment is removed at all*.
+`build_ec_decompile.py --self-test` asserts the equality over the whole sample
+every run, and `ec/tools/test_cross_decoder_disagreement.py` asserts the
+negative — that the whole-file reading really does disagree about the bucket —
+so the rule is a held fact in both directions.
 
 ### The false-positive surface, measured
 
@@ -108,17 +106,17 @@ in the export would name the address zero.
 
 ## The five causes, and the residue, cause by cause
 
-Every row is in `ec/ghidra/cross-decoder-disagreement.csv`; the counts below are
-what `cross_decoder_disagreement.py` prints on a run and are read from there,
-not typed in here.
+Every row is in `ec/ghidra/cross-decoder-disagreement.csv`; the counts are what
+`cross_decoder_disagreement.py` prints on a run and are read from there, not
+typed in here.
 
-| cause | n | what it is |
-|---|---|---|
-| `named-by-register-symbol` | 43 | the body names the address with a register's real name, which carries no address in its spelling |
-| `names-other-addresses` | 45 | the body names addresses and none of them is one the window found |
-| `names-nothing` | 26 | the body names no address at all in the comparison's own vocabulary |
-| `named-by-decimal-literal` | 7 | the body spells the address as a decimal literal of that value |
-| `named-by-code-symbol` | 6 | the window's DPTR immediate named a *code* address and the export spells it in its own code space |
+| cause | what it is |
+|---|---|
+| `named-by-register-symbol` | the body names the address with a register's real name, which carries no address in its spelling |
+| `names-other-addresses` | the body names addresses and none of them is one the window found |
+| `names-nothing` | the body names no address at all in the comparison's own vocabulary |
+| `named-by-decimal-literal` | the body spells the address as a decimal literal of that value |
+| `named-by-code-symbol` | the window's DPTR immediate named a *code* address and the export spells it in its own code space |
 
 Each of the first three is a candidate to widen the matcher further, and each of
 the last two is a vocabulary the comparison never had. The classes are decided
@@ -182,19 +180,19 @@ two spellings for that space and both are in the class: `bank0 0xBC95`'s
 `be16_add(0,FUN_CODE_08ce,1)` is a function entry, and 0x08CE is just as much a
 code address in the second as 0x632D is in the first.
 
-### `named-by-decimal-literal` — `common 0x1228 FUN_CODE_1228`
+### `named-by-decimal-literal` — `bank1 0xB409 set_dptr_1770_fallthru`
 
 ```c
-void FUN_CODE_1228(void)
+void set_dptr_1770_fallthru(void)
 
 {
-  bl51_bank_select_0(49000);
+  cmp_dptr_to_r2r1(6000);
   return;
 }
 ```
 
-The window finds `mov DPTR,#0xbf68`; the export passes 0xBF68 to the BL51 stub
-as **49000**. This is §14i's bank-switch-trampoline paragraph — "the address is
+The window finds `mov DPTR,#0x1770`; the export passes 0x1770 to the BL51 stub
+as **6000**. This is §14i's bank-switch-trampoline paragraph — "the address is
 in the output as a literal argument, but not as a symbol carrying its address" —
 and a literal argument is a route the matcher now reads, which is why the vast
 majority of those rows are no longer in the bucket at all. What is left in this
@@ -210,15 +208,14 @@ address is in no literal at all — the signature swallowed it. That is the same
 mechanism as `pd 0xF4CD`, one rung further along, and it is the direction the
 variable layer is heading in.
 
-### `names-nothing` — `common 0x4BB0 FUN_CODE_4bb0` and `pd 0x357E`
+### `names-nothing` — `common 0x159A load_dptr_c251_tail_jump_1100` and `pd 0x357E`
 
 ```c
-void FUN_CODE_4bb0(void)
+void load_dptr_c251_tail_jump_1100(void)
 
 {
-                    /* WARNING: Do nothing block with infinite loop */
-  do {
-  } while( true );
+  bl51_bank_select_0(test_1665_bit0_inverted);
+  return;
 }
 ```
 
@@ -231,10 +228,11 @@ undefined1 read_byte_to_r3_stride_60(undefined1 *param_1)
 ```
 
 Neither body names an address, so there is nothing in either to be in or out
-of. `4BB0` is the class's own reason for reading the code rather than the file:
-its Ghidra warnings name five unreachable code addresses, and a classifier asked
-of the file rather than of the code would call an empty loop a body that names
-something. `pd 0x357E` is the other end — the pointer arrives from the caller.
+of. `159A` is the class's own reason for reading the code rather than the file:
+its annotation names the 0xC251 its window found, and its body spells the
+argument as `test_1665_bit0_inverted`, so a classifier asked of the file rather
+than of the code would read a body that names something. `pd 0x357E` is the
+other end — the pointer arrives from the caller.
 
 ### `names-other-addresses` — `bank0 0xB93A set_dptr_0a51_b93a`
 
