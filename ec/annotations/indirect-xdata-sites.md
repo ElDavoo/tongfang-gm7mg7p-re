@@ -141,8 +141,10 @@ is inside the `0x0A34A` one, both listed in
 [`index-table-spans.csv`](index-table-spans.csv). A row that was a table byte
 is not a `P2` write, and the walk no longer reports it as one.
 
-The 15 that do not occur are not found by this method, which is not the same
-as their being absent from the 8051. The nineteenth, `xch a,direct` (`0xC5`),
+The encodings that do not occur are not found by this method, which is not
+the same as their being absent from the 8051;
+`ec/tools/find_indirect_xdata.py`'s own summary line prints how many of the 19
+it found and how many it did not. The nineteenth, `xch a,direct` (`0xC5`),
 was missing from the tool's table until #1169 was reviewed: it is in
 `ec/tools/pd_index_geometry.py`'s `DIRECT_DST_OPS`, and a table assembled from
 `sdcc`'s assembler alone does not reach it. It occurs zero times here, so the

@@ -210,7 +210,7 @@ it; a bank never can:
   common: 2 / 0 onto a bank-1 trampoline entry
 
   4 of 9076 relative site(s) resolve outside the caller's own region
-    0x0803B sjmp -> 0x7FD1, 59 byte(s) from a bank0 edge, frame 24/24
+    0x0803B sjmp -> 0x7FD1, 59 byte(s) from a bank0 edge, frame 5/24
     0x0802C cjne -> 0x7FD2, 44 byte(s) from a bank0 edge, frame 3/24
     0x0805F cjne -> 0x7FF2, 95 byte(s) from a bank0 edge, frame 1/24
     0x08060 djnz -> 0x7FF2, 96 byte(s) from a bank0 edge, frame 0/24
@@ -862,9 +862,25 @@ wrong layout, and it is left standing here rather than edited away, per
 [`../../docs/findings.md`](../../docs/findings.md) §4a-4d. Read against the
 subroutine that consumes the table, each entry is a big-endian *address*
 followed by a case value, there is no `sjmp`, and `0x8054` is the first
-entry's target rather than a default jump. The conclusion §8 drew from it —
-`0x0803B` is data, and a 24-of-24 score bought nothing — is unaffected;
-everything about the table's shape is superseded by §9.
+entry's target rather than a default jump. Everything about the table's shape
+is superseded by §9.
+
+**Second correction to the same paragraph: the 24-of-24 is now 5-of-24.**
+"Scores 24 of 24 anchors and still reads as data" is left standing for the
+same reason, and it no longer describes what the tool prints.
+`disasm8051.py` now steps over a `0x7151` case table rather than decoding
+through it, and `0x0803B` sits inside the `0x08035` one
+([`index-table-spans.csv`](index-table-spans.csv)), so the corrected walk no
+longer syncs onto it: `audit_call_targets.py` reports `frame 5/24` for that
+site, and `--relative-csv` carries the new pair. The score fell *because* the
+site is a table byte — the same conclusion §8 reached, reached now by the walk
+rather than against it.
+
+The argument this paragraph was carrying does not rest on the number. It is
+that a high frame score is not evidence of a branch, and §4's table carries it
+on a site the corrected walk leaves alone: `0x00686` still scores 24 of 24 and
+still sits inside the `common-0656-address-table` region. Read that row, not
+`0x0803B`.
 
 **The counts, and the framing caveat is worse again.** 9076 sites by byte scan,
 6675 anchored — 74%, against 48% for the paged forms (§7) and 89% for the
@@ -1001,9 +1017,10 @@ find an entry `trampolines()` missed), and what this does not say are in
 ## 9. The `0x8038` table, read against its reader
 
 §8 met this table sideways and read it out of context. The span *is* data —
-that part holds, and `0x0803B`'s 24 of 24 anchors still bought nothing — but
-the layout §8 gave it is wrong, and this section is the correction rather
-than a silent edit of §8's paragraph.
+that part holds, and `0x0803B`'s anchors bought nothing then or now, though
+the corrected walk scores it 5 of 24 rather than the 24 of 24 §8 quoted (§8's
+second correction) — but the layout §8 gave it is wrong, and this section is
+the correction rather than a silent edit of §8's paragraph.
 
 The difference is not cosmetic: §8's framing puts an `sjmp` at the head of
 the table and a case value in front of each address, which shifts every entry

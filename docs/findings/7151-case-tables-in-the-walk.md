@@ -168,6 +168,45 @@ framing changed. Per-region, per-encoding and control numbers are the
 summary's, and `ec/annotations/indirect-xdata-sites.md` §2/§3 are corrected to
 match this run.
 
+**The `converges_from()` edit reaches further than `find_indirect_xdata.py`'s
+own walk, and the committed tables it reaches are regenerated too.**
+`converges_from()` is the shared anchor-walk, and adding `case_table_len()` to
+its stepping rule changes the framing evidence for *every* site whose backward
+window crosses one of the fifteen tables — not only for the two censuses this
+write-up re-derives. `audit_call_targets.py` imports it and emits three
+committed CSVs, so all three were regenerated against a fresh run rather than
+edited:
+
+```console
+$ python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --csv \
+        > ec/annotations/bank-call-targets.csv
+$ python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --paged-csv \
+        > ec/annotations/bank-paged-call-targets.csv
+$ python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --relative-csv \
+        > ec/annotations/bank-relative-branch-targets.csv
+```
+
+Only `frame_onto`/`frame_over` move in them: comparing every other column by
+name, no `bucket`, `target`, `in_region`, `earlier_record` or tie-break changed,
+so the corrected walk moved framing evidence and nothing else. Each of the
+three reproduced its committed file byte for byte before this change, which is
+what makes the diff attributable to the walk rather than to drift.
+
+`ec/annotations/bank-call-audit.md` quoted one of the moved scores — `0x0803B`
+at 24 of 24 anchors, in a transcript and twice in prose — and is corrected in
+place per [`../findings.md`](../findings.md) §4a-4d rather than silently
+edited. The site's score fell because it is a byte of the `0x08035` table,
+which is the conclusion that audit already drew; the argument it was carrying
+("a high frame score is not evidence of a branch") is now carried by §4's
+`0x00686`, which the corrected walk leaves alone.
+
+The census tables that read the PD image are untouched, and so is everything
+derived from them: `case_table_len()` is keyed on `lcall 0x7151`, which the PD
+image does not contain, so it cannot fire there. That is the same
+"absent from one program, not from the 8051" reading the PD half of this work
+rests on, and it is why `pd-direct-offset-sites.csv`, `pd-entry-forms.csv` and
+the `pd-index-*` tables still reproduce byte for byte.
+
 **The population going down is not a cleaner negative — it is a weaker one.**
 `indirect-xdata-sites.md` §3a showed the anchored walk decoding a data table at
 `0x05C9A` as twelve `mov p2,register` instructions, and said the other three
@@ -210,14 +249,18 @@ walk decodes 0x14C8F as 92 a0 = mov p2.0,c
 ```
 
 `92 a0` is the run's ninth and tenth bytes, and `0x14C92`-`0x14C94` continues
-it (`bd cc dc`, stepping 0x0E and 0x0F again). The `mov p2.0,c` is the walk
+it (`bd cc dc`, stepping 0x0F and 0x10 — the run is already off `0x0E`/`0x0F`
+by then, the `0x0E` being the step *into* `bd`). The `mov p2.0,c` is the walk
 reading two bytes of a one-byte-per-step sequence as an instruction.
 
-**`0x16CA3` is the low half of a 16-bit ascending table.** Read as
+**`0x16CA3` sits inside a 16-bit ascending run.** Read as
 little-endian words from `0x16CA1`, the values are `0x1940 0x1985 0x19A0
-0x19BB 0x19D5 0x1AF0 0x1A0B 0x1A25` — a low byte stepping by `0x1A`/`0x1B`
-with a high byte that crosses `0x19`→`0x1A` once, which is a record table's
-stride and not an instruction stream's:
+0x19BB 0x19D5 0x1AF0 0x1A0B 0x1A25`. The low byte steps by `0x1A`/`0x1B` for
+the middle of the run, with a high byte that crosses `0x19`→`0x1A` once — but
+the sequence is not a uniform stride, and the deltas below show where it stops
+being one: the first step is `0x45` and one step wraps negative. A run that
+mostly steps by a near-constant `0x1A`/`0x1B` is a record table's shape and not
+an instruction stream's:
 
 ```console
 $ python3 -c "
@@ -234,11 +277,10 @@ low    [69, 27, 27, 26, 27, -229, 26]
 walk decodes 0x16CA3 as 85 19 a0 = mov 0xa0,0x19
 ```
 
-The `85 19 a0` is the `0x1940` entry's second byte, the `0x1985` entry, and
-the first byte of the `0x19A0` entry — one instruction assembled out of three
-consecutive words of a record table. `P2_WRITERS` reads the *third* byte as
-the `P2` destination, which is why the row exists: `0xa0` is the low byte of a
-word, not an SFR write.
+The `85 19 a0` is the whole `0x1985` record plus the low byte of the `0x19A0`
+record — one instruction assembled out of the tail of one word and the head of
+the next. `P2_WRITERS` reads the *third* byte as the `P2` destination, which
+is why the row exists: `0xa0` is the low byte of a word, not an SFR write.
 
 **This is an indication with the arithmetic shown, not a verdict**, and the
 distinction is the one CLAUDE.md's calibration rule turns on. What is
