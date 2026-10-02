@@ -269,6 +269,64 @@ It is a one-line documentation fix for whoever owns that suite. The counts
 `tools/README.md` quotes are re-derived from this run, as that README
 instructs.
 
+> **Corrected 2026-10-02, issue #789.** Every suite this section names is green
+> on this tree, so what is above reads as a record of a runner state that has
+> passed rather than as a list anybody should act on. **Nothing here was fixed
+> by this correction** — each suite was fixed elsewhere, and the three
+> paragraphs are left standing for the `../findings.md` §4a-4d reason. Three of
+> their claims do need correcting against this tree, and each is about the claim
+> rather than about a replacement number:
+>
+> - **`tools/test_readme_suite_table.py` is not outstanding work.** The row for
+>   `ec/tools/test_inc_dptr_sites.py` landed and the check is green. The reason
+>   the paragraph gives for not fixing it here — that "another agent PR may be
+>   open against the same file" — is recorded as the reason that stopped
+>   holding rather than deleted along with the sentence.
+> - **The `794` has no owner left to propagate it.** The paragraph's last
+>   sentence has `tools/README.md`'s counts re-derived from that run, but
+>   `tools/README.md` **carries no total at all** now: its *What it runs*
+>   section says there is deliberately none, and
+>   `tools/test_readme_suite_table.py` fails a spelled-out total that comes
+>   back. The figure is retired here rather than re-derived into this file, and
+>   `tools/README.md` is not edited.
+> - **The two survivors' reasons still hold and their colour does not.** Both
+>   are green, fixed elsewhere, and
+>   [`runner-red-suite-set.md`](runner-red-suite-set.md)'s *The two suites named
+>   above are green* records which fix moved each. The paragraph above is kept
+>   because the reasoning it records is what made leaving them alone the right
+>   call on the tree it was written on.
+>
+> The total in the first paragraph is left visible for the same reason: it was
+> true of the commit it was measured on, and a fresh one would be true only
+> until the next suite lands.
+
+**Where the set is maintained, and what this tree prints.**
+[`runner-red-suite-set.md`](runner-red-suite-set.md) owns the runner's failing
+set; this file is deliberately a pointer to it rather than a fourth
+measurement of the same thing, which is the mechanism by which the paragraphs
+above went stale in the first place. The run this correction rests on, against
+committed blob `74269594`:
+
+```console
+$ bash tools/run-tests.sh          # 2026-10-02
+...
+                                    # no suite is printed as FAILED
+$ echo $?
+0
+$ git status --porcelain
+                                    # empty: a green runner wrote nothing either
+```
+
+**The totals line is left out on purpose**, for the reason
+[`runner-red-suite-set.md`](runner-red-suite-set.md)'s *What fails, and why the
+corrected text carries no number* gives: a suite or test total is a property of
+the merge rather than of any suite, and pasting one into a file is how the total
+above came to be wrong in the first place. Whoever needs that figure runs the
+runner. Whoever lands the gate wiring re-derives the failing set at that moment
+**rather than trusting this list either**, which is the rule
+`runner-red-suite-set.md` already carries and the reason this section is not
+where the set lives.
+
 ## A fifth patch, and two more regions a re-cut cannot use
 
 **2026-09-25, issue #798.** The set is five now, and this section exists for
