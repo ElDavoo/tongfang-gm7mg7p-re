@@ -246,14 +246,21 @@ jobs:
           #
           # LOCAL CHANGE (2026-09-26): 5 -> 8. The pipeline was sitting at 4-5 runs in flight
           # against a budget of 5, so a typical run had 0-2 slots to hand out.
-          MAX_PARALLEL_AGENTS: '8'
+          #
+          # LOCAL CHANGE (2026-10-02): 8 -> 16, with agent-conflicts.yml. Billed per token through
+          # OpenRouter, not a subscription window, so the budget is throughput, not quota. The
+          # ceiling that matters is the account's 20 concurrent Actions jobs on the Free plan,
+          # shared with CI's three jobs per push: past it, runs queue rather than fail.
+          MAX_PARALLEL_AGENTS: '16'
           # LOCAL CHANGE (2026-09-26): slots held back from the conflict, review and follow-up
           # sweeps for the two queue sweeps. All five shared one decrementing budget, the
           # opportunistic three run first, and they took all of it -- on every recent run both
           # queue sweeps were skipped, which is the pipeline's only intake. A 554-deep backlog
           # did not move at all, and the only work being picked up was whatever an `issues:
           # opened` event happened to deliver.
-          INTAKE_RESERVED: '2'
+          #
+          # LOCAL CHANGE (2026-10-02): 2 -> 4, in proportion to MAX_PARALLEL_AGENTS.
+          INTAKE_RESERVED: '4'
         run: |
           set -euo pipefail
 
@@ -691,7 +698,9 @@ jobs:
           #
           # LOCAL CHANGE (2026-10-01): 8 -> 4 with agent-plan.yml, counting only pull requests
           # that are neither drafts nor `agent:stuck` -- the reasoning is there.
-          MAX_OPEN_AGENT_PRS: '4'
+          #
+          # LOCAL CHANGE (2026-10-02): 4 -> 12 with agent-plan.yml.
+          MAX_OPEN_AGENT_PRS: '12'
         run: |
           set -euo pipefail
 

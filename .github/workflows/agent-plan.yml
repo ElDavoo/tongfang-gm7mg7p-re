@@ -42,7 +42,7 @@ permissions: {}
 # LOCAL CHANGE (2026-09-24, not yet in the agent-pipeline template): the group is now
 # `agent-pipeline/agent/issue-N`, one per issue, so stages for *different* issues run in parallel
 # and only stages for the *same* issue serialise. What bounds parallelism now is
-# MAX_OPEN_AGENT_PRS below and agent-retry.yml's MAX_PARALLEL_AGENTS (5). The paragraphs
+# MAX_OPEN_AGENT_PRS below and agent-retry.yml's MAX_PARALLEL_AGENTS (16). The paragraphs
 # below describe the original single-group design and are kept for its reasoning.
 #
 # LOCAL CHANGE (2026-09-24): MAX_OPEN_AGENT_PRS lowered 5 -> 2. At 5, nearly every merge left
@@ -99,7 +99,11 @@ env:
   # every merge invalidates, because nearly every one touches docs/findings/INDEX.md, the pin
   # census or registers.yaml. On 2026-09-30, eight open meant each merge sent the other seven
   # back through conflicts and review.
-  MAX_OPEN_AGENT_PRS: '4'
+  #
+  # LOCAL CHANGE (2026-10-02): 4 -> 12, for throughput. The conflict rate above is the known
+  # cost: more branches open means more of them sent through agent-conflicts.yml per merge.
+  # If the conflict sweep starts eating most of the slots, this is the knob to turn back down.
+  MAX_OPEN_AGENT_PRS: '12'
 
 jobs:
   # Who filed it decides whether this runs unattended, and the question asked is "could this
