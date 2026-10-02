@@ -242,8 +242,8 @@ class TheTwoEntries(unittest.TestCase):
 class TheAnnotationRow(unittest.TestCase):
     """`pd,34EF` is a `forwarder` whose comment records the fall-through, and
     its name is unchanged. The name is held because the write-up leaves the
-    rename alone deliberately: a name change ripples through five generated
-    CSVs, and the name is not false."""
+    rename alone deliberately: a name change ripples through the generated
+    name-keyed CSVs and the export, and the name is not false."""
 
     def test_type_and_comment(self):
         row = function_row('pd', HEAD)

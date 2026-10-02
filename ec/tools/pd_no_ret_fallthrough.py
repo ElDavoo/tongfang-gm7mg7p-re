@@ -2,9 +2,10 @@
 """Classify the `pd` listings whose "no ret" comment may be a function-boundary
 artefact, and settle what `pd` 0x34EF actually does.
 
-`ec/annotations/ghidra-functions.csv`'s `pd,34EF` row reads `set_dptr_0424`
+`ec/annotations/ghidra-functions.csv`'s `pd,34EF` row read `set_dptr_0424`
 with `type=unresolved` and the comment "A single `mov DPTR,#0x424` with no
-ret, so the pointer's use is not decoded here." The three bytes it names are
+ret, so the pointer's use is not decoded here."; it is now `type=forwarder`.
+The three bytes it names are
 the whole listing, and the next address is not a gap: `pd/34F2.asm` starts
 `mov B,#0x60` and is a listing in its own right. So the row's clause is a
 statement about where Ghidra's export put a function boundary, not about
@@ -128,6 +129,14 @@ RETURNS = frozenset((RET, RETI))
 # `REL_OPCODES` nor the paged test reaches it. This tool enumerates no
 # encoding of its own beyond that one: a fourth spelling of the map is a fourth
 # thing to keep in step with the shared decoder.
+#
+# `0x11` is in the paged set for the `acall` half of `(0x01, 0x11)`, and
+# `acall` returns to its caller rather than leaving the listing, so counting it
+# as leaving is a decision rather than a transcription of the decoder's key.
+# It is kept because the byte arm asks "does control leave this listing by
+# running past its end", and an `acall` does not answer that question by
+# running past the end. No committed pd listing ends in one, so nothing turns
+# on it today.
 ABS_OPCODES = frozenset((0x02, 0x12))
 PAGED_OPCODES = frozenset(op for op in range(256) if (op & 0x1F) in (0x01, 0x11))
 INDIRECT_OPCODES = frozenset((0x73,))
@@ -160,17 +169,28 @@ VERDICTS = ("shared-tail", "falls-through-unentered", "boundary-wrong")
 
 # What each verdict means, in the tool's own words rather than the write-up's.
 # A reader who has the CSV and not the prose needs these.
+#
+# Each says what the verdict is computed from -- the *decoded* population, so
+# every negative here is "no committed listing decodes a transfer to it", never
+# "nothing transfers to it". The committed listings cover a fraction of the
+# image, and an absence over them is `not found by this method` in the sense
+# `CLAUDE.md` and `pd_entry_forms.py` use it. So none of these three glosses
+# concludes what *reaches* an address: the predecessor listing's last
+# instruction is not examined, and `pd,0012` is a `0xFF` filler byte rather than
+# a routine's worth of anything, so a fall-through reading is not available to
+# be stated about it either.
 VERDICT_GLOSS = {
     "shared-tail":
-        "the successor is itself a transfer target, so the two listings are two "
-        "entries over one tail rather than one routine cut in half",
+        "a committed listing decodes a transfer to the successor, so the two "
+        "listings are two entries over one tail rather than one routine cut "
+        "in half",
     "falls-through-unentered":
-        "the successor is contiguous and nothing transfers to it, so the two "
-        "listings are one routine's worth of code with the boundary inside it",
+        "no committed listing decodes a transfer to the successor; whether the "
+        "two listings are one routine or two is not settled by that absence",
     "boundary-wrong":
-        "nothing transfers to the row's own address either: it is reached only "
-        "by falling in from the previous listing, so the boundary is misdrawn "
-        "and the real entry is elsewhere",
+        "no committed listing decodes a transfer to the successor, and none "
+        "decodes one to the row's own address either; what does reach the row "
+        "is not established here",
 }
 
 COLUMNS = ["addr", "name", "type", "size", "successor", "succ_name",
@@ -798,9 +818,9 @@ def self_test(pd, rows, dec, byts, index, listings, tails, ann) -> int:
           and sorted(raw) == sorted(ann),
           f"the join: `ghidra-functions.csv` spells its address column two ways "
           f"— {len(prefixed)} `pd` row(s) `0x`-prefixed and {len(bare)} bare — "
-          f"and `int(addr, 16)` reads only the first, dropping the other "
-          f"{len(bare)} silently rather than failing, so the column is "
-          f"normalised on the way in and the two readings agree here")
+          f"and a join or comparison done on the string matches one spelling "
+          f"and misses the other silently rather than failing, so the column "
+          f"is normalised on the way in and the two readings agree here")
 
     head_off = offset_for_runtime(a, PD_REGION)
     check(head_off == PD_BASE + a and head_off != PD_MARKER[0],

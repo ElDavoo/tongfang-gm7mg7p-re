@@ -144,9 +144,18 @@ listings' own decoded instructions** and never on the byte scan:
 
 | verdict | what it means |
 |---|---|
-| `shared-tail` | the successor is itself a transfer target, so the two listings are two entries over one tail |
-| `falls-through-unentered` | the successor is contiguous and nothing transfers to it, so the two listings are one routine's worth of code with the boundary inside it |
-| `boundary-wrong` | nothing transfers to the row's own address either: it is reached only by falling in from the previous listing, so the boundary is misdrawn and the real entry is elsewhere |
+| `shared-tail` | a committed listing decodes a transfer to the successor, so the two listings are two entries over one tail |
+| `falls-through-unentered` | no committed listing decodes a transfer to the successor; whether the two listings are one routine or two is not settled by that absence |
+| `boundary-wrong` | no committed listing decodes a transfer to the successor, and none decodes one to the row's own address either; what does reach the row is not established here |
+
+Each verdict is computed on the **committed listings' own decoded
+instructions**, so a negative here is *no committed listing decodes a transfer
+to this address* and never *nothing transfers to it* — the committed listings
+cover a fraction of the image, per §"What this does not establish". What
+reaches a row the scan does not name is not measured: the predecessor listing's
+last instruction is not examined, so no verdict above concludes that a row is
+reached by falling in. `pd,0012` is the limit case — it is a `0xFF` filler
+byte rather than a routine's worth of anything, and it is in the table below.
 
 `pd,34EF` is `shared-tail`, on the 0x6782 site.
 
@@ -177,10 +186,9 @@ rather than deciding the question in either direction. **That row is not edited
 here**; it is not this change's to touch, and the correction belongs with
 whatever reads 0x3632 next.
 
-The three `boundary-wrong` rows are the same shape one step earlier: each is
-reached only by falling in from the listing before it, so the boundary that
-matters is the one above the row, not the fall-through below it. `pd,34D6` is
-the clearest — no committed listing decodes a transfer to 0x34D6, while its
+The `boundary-wrong` rows are the same shape one step earlier: no committed
+listing decodes a transfer to the row's own address either. `pd,34D6` is the
+clearest — no committed listing decodes a transfer to 0x34D6, while its
 successor 0x34D9 has two committed call sites. The byte scan does name 0x34D6
 from five positions (0x30FA, 0x310D, 0x31BE, 0x31D5 and 0x32BD); none of the
 five is an instruction start a committed listing decodes, so they are
@@ -268,9 +276,9 @@ tension" is the section this issue's row sat behind.
 **`pd,3632` and `pd,3635` are not merged, and `pd,34EF` is not renamed.** The
 0x3632 precedent goes the other way on the naming question — it is
 `set_dptr_042f_then_fall_through` and does carry its fall-through in the name —
-and `set_dptr_0424` does not. Renaming would ripple through five name-keyed
-generated CSVs and both export headers for a name that is not false, so it is
-left as a follow-up with its cost recorded rather than asserted. The issue
+and `set_dptr_0424` does not. Renaming would ripple through the name-keyed
+generated CSVs and the export for a name that is not false, so it is left as a
+follow-up with its cost recorded rather than asserted. The issue
 asked whether the two should share one row and to *note* rather than assert
 the answer; the answer is that the 0x6782 site makes them two entries, so the
 merge is not indicated on this evidence.
@@ -289,8 +297,8 @@ merge is not indicated on this evidence.
   candidate no committed listing decodes. Whether that is enough to call the
   comment a half-statement is what a later reader with a decompile can settle.
 - **Whether the `boundary-wrong` rows' real entries are the addresses above
-  them.** Three listings are reachable only by falling in, and each names a
-  successor that is a committed call target.
+  them.** No committed listing decodes a transfer to any of them, and each
+  names a successor that is a committed call target.
 - **The sites in 0x4C12-0x4D18 that two listings both carry**, which is a
   property of `pd/4D6F.asm` spanning rows other listings are the subjects of.
   Any other tool that walks listings by span rather than by site address has the
