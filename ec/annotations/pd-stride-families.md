@@ -201,12 +201,13 @@ multiply a byte the helper itself loads out of XDATA, one multiplies a
 caller-supplied register, and two are not resolved at all.
 
 **Bases.** Seven, `0x0A13` through `0x0A35`, spanning `0x22` bytes with
-successive differences `0x02 0x12 0x02 0x03 0x01 0x08`. Every difference is
-smaller than the `0x17` stride, and no base is a whole number of strides from
-another. So no two of them are consecutive records of one array at the same
-index: they are seven field offsets inside a region, in the shape §3.3 of the
-geometry file found for `0x04A1`–`0x04A6`. That is the whole of the
-relationship the arithmetic supports, and §5 says why it stops there.
+successive differences `0x02 0x12 0x02 0x03 0x01 0x08`. Those are successive,
+and the pairwise view has one gap the succession hides: `0x0A2C - 0x0A15` is
+`0x17`, a whole stride, so those two bases may be the same field in consecutive
+records of one array. The remaining pairwise gaps are below the stride and are
+consistent with field offsets inside a region, in the shape §3.3 of the
+geometry file found for `0x04A1`–`0x04A6`. The arithmetic does not choose
+between the two readings, and §5 says where it stops.
 
 ### 3.2 The index is not what the term strings say, and one bound is refuted
 
@@ -234,7 +235,7 @@ say reaches the multiply. Across the three families:
 | family | what actually reaches the multiply | sites |
 |---|---|---|
 | `0x17` | the byte the helper's `movx a,@dptr` returns | 14 |
-| `0x17` | a caller-supplied register (`R7` at `0x8068`, via `0x971B`'s `mov a,r7`) | 1 |
+| `0x17` | a caller-supplied register (`R7` at `0x8068`, via `0x971C`'s `mov a,r7`) | 1 |
 | `0x17` | not found by this method — the two framing candidates of §3.4 | 2 |
 | `0x67` | the caller-supplied accumulator, unresolved | 7 |
 | `0x04` | the caller-supplied accumulator, unresolved | 2 |
@@ -396,9 +397,12 @@ described once, here.
   a multiply factor in an address expression. `low8(index * 0x17)` and
   `index * 0x17` agree only below index 12, which `--families` computes rather
   than asserts, and §7.4's correction (PR #74) is the standing precedent that
-  neither form is an unconditional record width. The `0x17` bases' sub-stride
-  spacing in §3.1 is consistent with field offsets inside a region and with
-  nothing else; it does not name a region, a field, or a byte.
+  neither form is an unconditional record width. The `0x17` bases are not evenly
+  spaced at the stride — `0x0A15` and `0x0A2C` are exactly one `0x17` apart
+  and the remaining gaps are below it (§3.1) — so the spacing does not pick
+  between those two being the same field in consecutive records and each base
+  being a field offset inside a region. Nothing here names a region, a field,
+  or a byte.
 - **The address expressions are complete only as far as the chain walked.** Ten
   `0x17` sites stop at their first `movx`, which is a real first consumer with
   a direction. Seven `0x67` sites stop at `add a,dph` and the register it adds
@@ -439,10 +443,11 @@ described once, here.
   model to admit it is a change to `pd_index_geometry.py` that would move
   `pd-base-strides.csv`, so it is a separate, deliberate change rather than a
   line here.
-- **What the `0x17` region is.** Seven field offsets between `0x0A13` and
-  `0x0A35`, reached from five `ec/decompiled/pd/` listings — `update_07d4_state`,
-  `set_07d2_and_return_r7_zero_or_one`, `write_07d1_then_call_chain`,
-  `write_07d2_then_dispatch_on_07d1` and
+- **What the `0x17` region is.** The bases between `0x0A13` and `0x0A35` — field
+  offsets inside a region, or two of them the same field in consecutive records,
+  per §3.1 — reached from the `ec/decompiled/pd/` listings:
+  `update_07d4_state`, `set_07d2_and_return_r7_zero_or_one`,
+  `write_07d1_then_call_chain`, `write_07d2_then_dispatch_on_07d1` and
   `stage_07d1_set_0ffd4_bit5_then_tail_c755` — whose own names describe the index
   variable and the dispatch around it, not the array. Nothing in these bytes
   names what is stored there.
