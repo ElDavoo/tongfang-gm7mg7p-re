@@ -223,8 +223,9 @@ one of them:
 
 - `classes_for(0) is CLASSES`, and every site's row at depth 0 is what
   `walk()` + `bucket(classify())` produced before the flag existed;
-- the `--callee-depth 1 --csv` output is byte-for-byte the committed table,
-  header included;
+- the depth-0 and depth-1 output is byte-identical to the pre-change tool's,
+  same rows and same columns, so a transcript taken at either depth before
+  this change still reproduces;
 - the new `chain` and `stop` columns are emitted **only** above depth 1, so a
   depth-0 or depth-1 reader's `cut -d, -f6` keeps working and no committed
   transcript gains an empty cell;
@@ -233,12 +234,12 @@ one of them:
   still red on a dropped site, on a split that does not add up, and on a
   class no column is named for.
 
-**One thing this did not fix, and did not cause.** Two committed artefacts
-had already drifted from their own documented reproduction command before
-this change — `ec/annotations/pd-0x07d8-ref-table.csv`, whose four rows differ
-in `window`/`callee_window` since the switch-case work in #1600, and seven
-`ec/decompiled/*.c` files whose `XDATA_*` symbols and `name_basis` predate the
-current `registers.yaml`. Running the documented commands on a clean tree
-reproduces both, and this change's tool output is byte-identical to the
-pre-change tool's on every one of them. Re-cutting them is a separate change
-with its own review; flagging it here rather than folding it in.
+**One thing this did not fix, and did not cause.** One committed artefact had
+already drifted from its own documented reproduction command before this
+change — `ec/annotations/pd-0x07d8-ref-table.csv`, whose four rows differ in
+`window`/`callee_window` since the switch-case work in #1600. Running the
+documented command on a clean tree reproduces the drift, and this change's
+tool output is byte-identical to the pre-change tool's on it, which is why
+the bullet above is a claim about the tool and not about the file.
+Re-cutting it is a separate change with its own review; flagging it here
+rather than folding it in.

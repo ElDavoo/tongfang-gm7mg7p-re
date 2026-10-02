@@ -289,8 +289,8 @@ def site_rows(d: bytes, addr: int, pd_verified: bool, callee_depth: int,
     They are None at depth 0, where nothing was resolved; from depth 1 up they
     carry whatever the walk found, and it is write_csv() that leaves the two
     columns out of the table until the depth is above 1. That is what keeps
-    the depth-0 and depth-1 tables byte-identical to the committed ones -- the
-    columns, not the values.
+    the depth-0 and depth-1 tables byte-identical to the ones the tool emitted
+    before `--callee-depth` took an N -- the columns, not the values.
     """
     for o in sites_for(d, addr):
         if follow_flow:

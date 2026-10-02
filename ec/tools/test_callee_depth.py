@@ -130,9 +130,12 @@ class ImageDepthTests(unittest.TestCase):
                     out[(addr, o)][depth] = (label, tuple(chain), stop)
         return out
 
-    def test_depth_0_and_1_are_byte_identical_to_what_was_committed(self):
-        # The guard rail: at depth 0 the class set is the committed one and
-        # every site's row is what the file produced before the flag existed.
+    def test_depth_0_rows_match_the_pre_flag_walk_and_bucket_path(self):
+        # The guard rail: at depth 0 the class set is the tool's own and every
+        # site's row is what walk() + bucket(classify()) give, which is the
+        # path that ran before the flag existed. The comparison is against
+        # that code path re-derived here, not against a committed CSV; the
+        # depth-1 half is test_depth_1_changes_the_handoff_buckets_and_nothing_else.
         # A regression here would not be a weaker claim, it would be a
         # document that no longer reproduces.
         self.assertIs(rrt.classes_for(0), rrt.CLASSES)
