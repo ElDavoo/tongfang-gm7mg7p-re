@@ -347,10 +347,12 @@ def counter_moves(committed_rows, rebuilt_rows):
     The whole-tree diff says *that* the two exports differ; this says which
     counters account for it, which is the difference between a rebuild that
     found more functions and one that could not resolve rows the committed
-    database resolves. `seeds_applied` is printed even when it holds still,
-    because that is the reading which keeps the other two honest: a rebuild
-    seeded from a different seed set would move them for a reason that has
-    nothing to do with the database.
+    database resolves. `seeds_applied` is printed even when it holds still, so
+    a reader can see it and discount it: `build_ec_decompile.py` computes it
+    from the committed rows before Ghidra runs, so it is a property of the
+    committed inputs rather than a reading of the run. The per-run half of the
+    same question is `seeds_rejected`, which is not among the columns here
+    because the two manifests' copy of it is not a measurement either.
     """
     have = {r.get("program"): r for r in committed_rows}
     want = {r.get("program"): r for r in rebuilt_rows}
@@ -893,8 +895,7 @@ def self_test() -> int:
         # The counter table, which is where Q3's shape is accounted for. A
         # column that held still and a column that moved must be told apart:
         # printing a held-still counter as `1549 -> 1549` would read as a
-        # movement, and `seeds_applied` holding still is the reading that keeps
-        # the other two honest.
+        # movement it did not make.
         moved = counter_moves(
             [{"program": "bank0", "functions": "750", "seeds_applied": "1549",
               "annotations_applied": "828", "annotations_unmatched": "0",

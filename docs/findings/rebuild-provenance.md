@@ -218,10 +218,16 @@ that is said.)
 
 Three things in that table are worth separating.
 
-**`seeds_applied` does not move, anywhere.** The rebuild seeded from the same
-seed set the committed database was seeded from, which is what keeps the other
-two rows honest: `annotations_applied` falling is not a rebuild that seeded
-differently.
+**`seeds_applied` does not move, anywhere — and could not.** It is not a
+reading of the run: `build_ec_decompile.py` builds it from `seed_rows()` over
+the committed CSV and the committed scans, before Ghidra is invoked, so it is a
+property of the committed inputs and is the same figure in a rebuild of them.
+What it gives is the narrow thing, and it gives it by construction rather than
+by observation: the seed spec a rebuild is handed covers the addresses the
+committed export was seeded from. It does not cover what Ghidra then does with
+them — a seed it absorbs into a neighbouring function, or rejects, does not
+move this column. `seeds_rejected` is the column that reports that, and this
+table does not print it.
 
 **`annotations_unmatched` goes from 0 to 5 and 0 to 4.** This is the finding. In
 the committed database every annotation row resolves to a function; in a rebuild
@@ -239,9 +245,16 @@ recorded here and not resolved.
 ## 6. Q4 — is the committed database reproducible from the committed inputs
 
 **No, not entirely.** The rebuilt export is not byte-identical to the committed
-one, so the committed `.gpr`/`.rep` carries analysis state that
+one, and the part of that difference this answer rests on is §7's nine rows: a
+`ghidra-functions.csv` row that resolves in the committed database and does not
+resolve in a rebuild of the same bytes is analysis state that
 `ec/firmware/GMxMGxx_11.800` plus `ghidra-functions.csv` and
-`ghidra-variables.csv` do not re-derive.
+`ghidra-variables.csv` do not re-derive. Not every difference in the diff is
+evidence of that, though —
+[`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md) records `.c` files on
+this tree that differ on *any* re-export, stale against the committed
+`xdata-symbols.csv` and the committed name grades, and that staleness is not
+database state in either direction.
 
 This is the answer issue #623 called "a load-bearing fact for the mission's end
 state", and it lands on the branch that makes provenance a question of its own.
