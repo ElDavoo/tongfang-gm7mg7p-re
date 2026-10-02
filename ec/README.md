@@ -388,7 +388,13 @@ into `r2 -a 8051` with no stitching needed.
   decompile the same body, which is where the 42× above comes from. This
   derives a containment class per group of exports and one owner per class, in
   `annotations/xdata-export-ownership.csv` — 2,714 rows, 56 classes, 146
-  non-owner rows, the 42-file class owned by `bank1/8001.c`. `--check` holds
+  non-owner rows, the 42-file class owned by `bank1/8001.c`. The map carries
+  `owner_body_lines` and `member_share` beside `containment`, because
+  containment runs one way and a fragment scores `1.00` against a copy;
+  `--min-share` is that ratio as a switch and ships off.
+  `annotations/xdata-export-ownership-verdicts.csv` records a verdict per row
+  for the ones a relative check has to spare, checked both ways by
+  `tools/export_ownership_verdicts.py`. `--check` holds
   the CSV to a fresh derivation and `--self-test` pins the rule against inline
   fixtures plus the tree-wide figures. `xdata_register_map.py
   --export-ownership` reads each routine once, from its owner; the default is
