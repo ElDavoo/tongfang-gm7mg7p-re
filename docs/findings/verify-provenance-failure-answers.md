@@ -1,4 +1,4 @@
-# `--verify-provenance` had nine ways to fail and one committed answer to none of them
+# `--verify-provenance` had ten ways to fail and one committed answer to none of them
 
 **Offline throughout.** No laptop, no Windows box, no EC register, no firmware
 image, and no history beyond this checkout. Everything below was measured by
@@ -9,8 +9,8 @@ is none.
 ## The gap
 
 `ec/tools/verify_reassembly.py`'s `verify_provenance()` has **eight `return 1`
-statements and one `return 0`**, reached over nine distinct failure conditions.
-The issue filed from #411 enumerates five of the nine by what a reader sees in
+statements and one `return 0`**, reached over ten distinct failure conditions.
+The issue filed from #411 enumerates five of the ten by what a reader sees in
 the function's output; the rest were found by reading it. Nothing committed
 exercised any of them.
 
@@ -44,12 +44,12 @@ commit. The same argument applies one level up and was not applied there.
 | the two reports differ by more than the column | `--migration recounted` | a commit editing one cell beneath the column |
 | `PASS` | the control, first | a migration that changes the column and nothing else |
 
-Two of the ten rows are pairs of conditions over one statement. The report's
-`return 1` serves both sides of the pair, so `--migration gone` and `--base
-listings` are two cases over one site; the `for label, rev, sha in (("base",
-...), ("migration", ...))` loop's serves an unresolvable `--base` and an
-unresolvable `--migration`, the same shape. Each is still two cases, because
-the sentence each prints names a different side.
+Two of the eight statements serve two conditions each, and the table prints
+them as three rows. The report's `return 1` serves both sides of the pair, so
+`--migration gone` and `--base listings` are two cases over one site; the `for
+label, rev, sha in (("base", ...), ("migration", ...))` loop's serves an
+unresolvable `--base` and an unresolvable `--migration`, the same shape. Each
+is still two cases, because the sentence each prints names a different side.
 
 Every one asserts **the exit status and a substring of the printed reason**, so a
 guard that fires for the wrong reason is not what passes, and each of the three
@@ -58,7 +58,7 @@ assertion. The `PASS` case is in the list because failure assertions with no
 success assertion are satisfied by a mode that fails at everything — which is
 the vacuity this whole issue is about.
 
-Two of the nine conditions are not reachable from a real repository, and
+Two of the ten conditions are not reachable from a real repository, and
 the fixture does not pretend otherwise. A commit that resolves cannot make
 `git diff` fail over a fixed pathspec, so those two cases replace
 `verify_reassembly._git` for the duration of one call with a shim that returns a
