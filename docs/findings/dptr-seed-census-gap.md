@@ -173,7 +173,7 @@ Four EC-side sites, all in bank1, all read-modify-writes, at `0x8190`,
 | site | falls between |
 |---|---|
 | `0x8190`, `0x81D1` | `0x80EF` `dec_timers_and_set_expiry_flags` / `0x8202` `clear_0801_bit5_then_call_19a2_84` |
-| `0x8246`, `0x826A` | `0x820F` `with_r7_results_into_carry` / `0x8300` `clear_and_set_xdata_flag_bits` |
+| `0x8246`, `0x826A` | `0x820F` `and_r7_results_into_carry` / `0x8300` `clear_and_set_xdata_flag_bits` |
 
 No exported function covers any of the four. That is the census's reason, and it
 is a stronger one than it looks: the census reads *every* `.c` in the tree, the
