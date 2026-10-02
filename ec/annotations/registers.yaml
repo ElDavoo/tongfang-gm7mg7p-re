@@ -525,8 +525,10 @@ registers:
       concept of a "resume charging below" threshold and has never written
       this address. 254 direct references is the busiest address in the
       whole 0x0780-0x07FF range -- too busy to be a single-purpose "resume
-      threshold" byte on this firmware. Needs disassembly of all 254 sites
-      before writing to it (see issue: "map 0x07D0 call sites").
+      threshold" byte on this firmware. The disassembly of the sites that
+      was asked for here is done: ec/annotations/pd-0x07d0-07cc-structure.md,
+      with the per-site cluster table ec/annotations/pd-0x07d0-07cc-clusters.csv
+      beside it and the tool ec/tools/pd_site_clusters.py behind both.
       *** CORRECTION to the "too busy" argument, see
       ec/annotations/lightbar-bat-flow.md 6: the 254 count is right but
       all 254 sites are in the ITE8850-PD image, not the EC firmware,
@@ -551,6 +553,27 @@ registers:
       DSDT ECMG field list, as DBD1 (with DBD2 at 0x07D1) -- what DBD1 is
       for is not established, and reading the vendor's name as "the resume
       threshold" would be a guess.
+      *** READING TRAP, issue #25, and the reason the disassembly above was
+      worth doing: the decompiled PD C prints the token `2000` wherever it
+      needs a pointer to the PD image's 0x07D0, and 2000 is exactly this
+      entry's ECSpec value ADDR_BATTERY_CHARGE_LIMIT_DOWN. The two are a
+      base conversion coinciding, not a charge limit in the PD firmware;
+      three `r2` transcripts beside the claim in
+      ec/annotations/pd-0x07d0-07cc-structure.md 2 settle it, the third by
+      showing Ghidra splitting the value into the two bytes of a CODE call
+      target. A reader who
+      greps 2000 out of ec/decompiled/pd/*.c will otherwise believe the
+      charge limit was found in the wrong program. The same file clusters
+      the 254 sites onto the committed `pd` routine boundaries in
+      ec/decompiled/index.csv and reads the byte's multi-byte structure:
+      it is the LOW half of a 16-bit little-endian word whose high half is
+      0x07D1, and simultaneously a counter/array index -- both readings
+      hold at once, in the same committed listings. GRADE UNCHANGED, and
+      said plainly in that file's 6: DO-NOT-WRITE-BLIND stands, because a
+      PD-image decode is not evidence about an EC byte the EC image has no
+      site for. The paired UP/DOWN write in docs/findings.md 5 is still the
+      experiment that would settle the EC-side question and is still a
+      human-at-the-machine step. ***
       SCOPE NOTE 2026-09-23 (issue #178), because the census makes the trap
       concrete: xdata-registers.csv's `0x07D0` row is `program=pd`, 4 write
       and 2 read+write, every function in it `pd:`. Those are the PD image's
@@ -835,6 +858,18 @@ registers:
       0x07B9 blind spot above). Whether the EC acts on this byte at all is
       still open, and is issue #8. See
       docs/findings/pd-only-status-vocabulary.md.
+      MAPPED 2026-10-02 (issue #25, the static half; #8's live half is
+      untouched): all six sites are placed and read in
+      ec/annotations/pd-0x07d0-07cc-structure.md 5, with the per-site table
+      ec/annotations/pd-0x07d0-07cc-clusters.csv and how many fall inside a
+      routine ec/decompiled/index.csv commits. The writes there are
+      whole-byte, and none is a bit-7 operation -- which is the bit the
+      vendor's SetTypeCAdaptorSwitch sets and clears; that mismatch is
+      recorded there and is not resolved here. The reads are a counter
+      compared against 0x07CE, a read-modify-write increment, a read the
+      window scales by 4 into a DPTR popped off the stack, and a
+      pointer-building index. Same reading as 0x07D0, same scope caveat,
+      and no status moves.
 
   - name: CPU_TEMP
     addr: 0x043E
