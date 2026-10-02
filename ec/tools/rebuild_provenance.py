@@ -89,9 +89,9 @@ EC = os.path.join(HERE, os.pardir)
 REPO = os.path.join(EC, os.pardir)
 # The owner in the committed `ec.rep/project.prp`, which is the whole of
 # #572's NotOwnerException. Supplied to the JVM rather than written into the
-# file: the three write-ups that hit it (`docs/findings.md`, and
+# file: the write-ups that used the option (`docs/findings.md`, and
 # `pd-unannotated-listings.md` and `pd-07d0-accessor-stubs.md` under
-# `docs/findings/`) all say the option, and none of them edited the copy.
+# `docs/findings/`) all say it, and none of them edited the copy.
 PROJECT_OWNER = "dave"
 OWNER_OPTION = "-Duser.name=%s" % PROJECT_OWNER
 
@@ -137,7 +137,7 @@ KINDS = ("index-row", "listing-row", "manifest-column", "c", "asm",
 TRUNCATION_FLOOR = 0.9
 
 # The default ceiling on the rebuild. Three programs, a fresh import, auto
-# analysis and 2,710 decompiles is a long job; the default is a ceiling rather
+# analysis and a full export is a long job; the default is a ceiling rather
 # than a budget, and a run that reaches it is reported as not measured rather
 # than as an answer.
 DEFAULT_TIMEOUT = 7200
@@ -206,7 +206,7 @@ def csv_field_differences(have_rows, want_rows, key, label):
 
     Reported this way rather than as a byte diff because the reader's question
     is which *row* moved and which *column* of it, and a file-level difference
-    on a 2,700-row export answers neither. A key on one side only is a whole row
+    over the export answers neither. A key on one side only is a whole row
     added or dropped, which is its own kind rather than a field that changed.
     """
     out = []

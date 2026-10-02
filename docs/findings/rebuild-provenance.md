@@ -98,10 +98,10 @@ a truncated run.
 `ec/ghidra/project/ec.rep/project.prp` carries
 `<STATE NAME="OWNER" TYPE="string" VALUE="dave" />`, and `analyzeHeadless`
 refuses the copy with `NotOwnerException: Project is owned by dave` otherwise.
-The three write-ups that hit it — `docs/findings.md`, and
+The write-ups that used the option — `docs/findings.md`, and
 [`pd-unannotated-listings.md`](pd-unannotated-listings.md) and
-[`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md) — all name the option,
-and none of them edited the copy. #572 owns making it permanent inside the
+[`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md) — all name it, and
+none of them edited the copy. #572 owns making it permanent inside the
 tools; whether a one-off measurement can happen today is a different question,
 and it could. The tool records which mechanism it used and prints the `.prp`
 edit as a documented fallback for a JVM that will not take the option. **No
@@ -140,18 +140,18 @@ person-chosen name, which is the same route out of the population the fourteen
 switch entries took in #631. **The rebuild reproduces the census's finding
 rather than contradicting it.**
 
-There is a reading of this that is worth stating because it is the obvious
-objection, and it is wrong. `bank1` `0x031C` and `bank0` `0x031C` hold the same
-three bytes, `02 d2 36`, and both re-derive; only the bank1 one does not. And
-§5 of [`named-without-a-row.md`](named-without-a-row.md) already calls all four
-of the mid-instruction addresses *not function entry points* — the address is a
+The obvious reading of that placeholder is the frame §5 already gives these
+addresses, and this run does not settle it. §5 of
+[`named-without-a-row.md`](named-without-a-row.md) calls all four of the
+mid-instruction addresses *not function entry points* — `0x031C` is a
 displacement byte inside `sjmp 0x031F` at `0x031B`, not an instruction start at
-all. A fresh analysis has no function there to carry a name, so it creates one
-with its own. That is consistent with the frame read, and it is **not** what
-this write-up claims: the framing is §5's reading of the bytes, made by a linear
-walk, and the rebuild is an independent method that agrees about this one
-address. Two methods agreeing is corroboration; it is not a substitute for the
-argument, and §5's table is not restated here on the strength of it.
+all — so a fresh analysis finding no function there to carry a name, and writing
+one of its own, is consistent with that frame. **What the run does not
+establish is why one re-derived and the other did not:** `bank1` `0x031C` and
+`bank0` `0x031C` hold the same three bytes, `02 d2 36`, and the second came
+back with the committed name. The question is left open here as §4's and §8's
+are. The framing is §5's reading of the bytes, made by a linear walk; §5's
+table is not restated here on the strength of a rebuild.
 
 ## 4. Q2 — the four `pd` call sites
 
@@ -180,7 +180,9 @@ A row that supersedes a name is not a row that explains it.
 
 The rebuilt export differs from the committed one. **`diff -r` is not the
 reading**; the tool classifies every difference, because the question is which
-*kind* of thing moved and a byte diff over a 2,700-row export answers neither.
+*kind* of thing moved and a byte diff over the export answers neither. (The
+block below is the tool's output reflowed for width, with the differences after
+the first elided; the tallies and the first-difference line are its own.)
 
 ```
 245 difference(s): 29 index-row, 30 listing-row, 28 manifest-column,
