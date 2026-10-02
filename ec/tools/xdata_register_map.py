@@ -732,13 +732,13 @@ ORACLE = {
     # settles it; the 155 the pass adds are new `program=main-ec` rows, of which
     # `0x03DE` and `0x03B8` are two. (A shared address *number* is not a shared
     # byte, which is the collision `program=both` exists to carry.)
-    "extmem_distinct": 1013, "extmem_refs": 8574,
-    "extmem_raw": 8583, "extmem_commented": 9,
-    "extmem_main_distinct": 890, "extmem_main_refs": 7716,
+    "extmem_distinct": 1010, "extmem_refs": 8554,
+    "extmem_raw": 8563, "extmem_commented": 9,
+    "extmem_main_distinct": 887, "extmem_main_refs": 7696,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
     # Named by the decompiler. The 2026-09-30 move is recorded in the dated
-    # block above `named_in_tree`, and the 2026-09-28 one at the END OF FILE.
-    "symbol_main_distinct": 172, "symbol_main_refs": 6248,
+    # block above `named_in_tree`, and the 2026-09-28 and #1357's at END OF FILE.
+    "symbol_main_distinct": 175, "symbol_main_refs": 6268,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1326, "refs": 15696,
@@ -922,7 +922,7 @@ ORACLE = {
     # registers.yaml row renames the symbol table and not a decompile". The
     # census pins above are therefore the ones #1425 measured and this block
     # leaves them at; only `named_in_tree` moves here.
-    "named_in_tree": 189,
+    "named_in_tree": 190,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # **Unmoved by issue #279, and worth saying why rather than leaving it as a
@@ -5358,3 +5358,47 @@ if __name__ == "__main__":
 # named per-program columns (`refs_main_ec` / `refs_pd`) instead. The prose side
 # is `../../docs/findings/xdata-cluster-refs-projection.md`, which is also where
 # the arithmetic is.
+#
+# **Issue #1357, 2026-10-02: `named_in_tree` 189 -> 190, and it is recorded here
+# rather than in the dated block above the pin so that it moves nothing.** Every
+# prose file that cites this one by line is held to it by
+# `check_eq_guard_citations.py`, and the highest anchor any of them names is
+# `committed_output_refusal` at :5229 -- below this block, but above most of the
+# file. Thirty-five lines added at the pin would have shifted all nine anchors
+# and put 22 citations across four documents out of date, in a diff that has
+# nothing to do with them. That is why this is at the END OF FILE, where
+# `check_eq_guard_citations.py` and `test_check_doc_figure_pins.py` cannot see
+# it. Moving one of those records back up is what the next reader has to weigh
+# against the twenty-two it would red.
+#
+# The move itself: `XDATA_3202` is a `registers.yaml` row for an address the
+# census already carried, so 216 -> 217 named addresses and 217 - 27 = 190 of
+# them in the tree. NOT_IN_TREE is unmoved, and the reason is the shape rather
+# than the count -- every one of its entries is an address that is *not* in
+# `registers.yaml`, and this was never that. It was the mirror image: a
+# register the source of truth did not name. Those 27 keys are asserted as a set
+# in both directions in `self_test()`, so adding one would not have been a
+# shifted total but a new claim, and the correct entry is none. #255 reached the
+# same address through `0x1664` and moved it the same way.
+#
+# **The spelling-oracle pins moved with it, and most of what they record is not
+# this issue's.** Re-exporting bank0 to apply the new symbol renamed 6
+# `DAT_EXTMEM_3202` tokens to `XDATA_3202`: -6 of the raw total, and one address
+# moving between the two spellings. The other -14 tokens and -2 addresses --
+# `0x07A5` (8 tokens) and `0x078B` (6) -- are drift this change picked up rather
+# than caused. Those two rows landed in `registers.yaml` without a re-export,
+# which is the omission the block above this one describes, and
+# `build_ec_decompile.py --check` was **already red on `main`** over the six
+# files it left behind (#311's plate correction, #106's and #1425's two names).
+# A re-export cannot skip those six and still land green, because the exports
+# are generated and `CLAUDE.md` forbids hand-editing them, so they are swept in
+# here; owning that earlier omission is a different diff against a different
+# file. The arithmetic that says the sweep-in was accounted for rather than
+# absorbed is that all three spelling figures move by exactly 20 the other way,
+# which is 14 + 6:
+#
+#   extmem_distinct       1013 -> 1010      symbol_main_distinct   172 -> 175
+#   extmem_refs           8574 -> 8554      symbol_main_refs      6248 -> 6268
+#   extmem_raw            8583 -> 8563      extmem_commented          9 -> 9
+#   extmem_main_distinct    890 ->  887      extmem_pd_*         157/858 unmoved
+#   extmem_main_refs       7716 -> 7696      extmem_both               34 unmoved

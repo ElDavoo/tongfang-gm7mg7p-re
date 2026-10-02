@@ -6,16 +6,16 @@
 
 /* The exact inverse of 0xC0B8: loads XDATA 0x3202 into A and returns R7 = 1 only when bits 1 and 2
    (acc.1 and acc.2) are both set, 0 when either is clear. The byte is reloaded from XDATA before
-   the second test. 0x3202 has no entry in ec/annotations/registers.yaml.
+   the second test. It has a row in ec/annotations/registers.yaml, XDATA_3202 at present-untested.
    type: logic
    evidence: ec/decompiled/bank0/C0C9.asm; ec/decompiled/bank0/C0C9.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void return_1_if_3202_bits_1_and_2(void)
 
 {
-  if (((DAT_EXTMEM_3202 >> 1 & 1) != 0) && ((DAT_EXTMEM_3202 >> 2 & 1) != 0)) {
+  if (((XDATA_3202 >> 1 & 1) != 0) && ((XDATA_3202 >> 2 & 1) != 0)) {
     return;
   }
   return;

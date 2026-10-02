@@ -604,11 +604,20 @@ R7 return is the thing to check, because the decompiler drops it in the sibling
 rows that already say so in their own comments, `0xC0C9` and `0xC0E7` both
 decompiling to a bare `return;` with no assignment to R7 anywhere.
 
-`0x3202` has **no row in `registers.yaml`**. Four annotations read it
-(`0xC0B8`, `0xC0C9`, `0xC0DA`, `0xC0E7`), and the first three say in their own
-comments that it has no row — `0xC0E7` records what it reads and says nothing
-about the map. Giving it a row means correcting those three, which is why it is
-a follow-up of its own and not a rider here — see §8.1.
+> **Superseded.** This paragraph previously read: *"`0x3202` has **no row in
+> `registers.yaml`**. Four annotations read it (`0xC0B8`, `0xC0C9`, `0xC0DA`,
+> `0xC0E7`), and the first three say in their own comments that it has no row —
+> `0xC0E7` records what it reads and says nothing about the map. Giving it a row
+> means correcting those three, which is why it is a follow-up of its own and
+> not a rider here — see §8 item 2."* The row has landed, as `XDATA_3202` at
+> `present-untested`, with the three comments corrected in the same change
+> (issue #1357), so what is withdrawn is the tense and not the reading: four
+> annotations read the byte, and `0xC0E7` did never speak for the map. What
+> that change also found, and this page did not say, is that the predicates are
+> reached through **two** unexported bank-0 thunks and not one — `0xC10C` above
+> on `0xC0C9`, and `0xC118` on `0xC0E7`, the seven instructions in twelve
+> bytes recorded by the `bank1,19A8` row of `ghidra-functions.csv`. The wrong
+> version is left here rather than edited away, per `docs/findings.md` §4a.
 
 **The third thing is a return, not a test.** `0x06D6` is the only reload in the
 block: at `0x806C` a non-zero value is decremented and the routine returns at
@@ -1232,14 +1241,20 @@ touching it, not the EC's sweep.
    wording of this item (`match`, 7 of 7 instructions re-encoded) described a
    run that did not happen, and it is withdrawn here. Whoever runs the pinned
    `--report` is the first to have that number.
-2. **`0x3202` has no `registers.yaml` row**, and it is the register the `0x06D9`
+2. ~~**`0x3202` has no `registers.yaml` row**, and it is the register the `0x06D9`
    gate actually reads. Four existing annotations read it (`0xC0B8`, `0xC0C9`,
    `0xC0DA`, `0xC0E7`), and the first three say in their own comments that it has
    none, so the row is three comment corrections as well — and
    `build_ec_decompile.py:stale_no_entry_claims` fails the build the moment the
    row lands and they do not. Deliberately not a rider on #255. With four read
    sites and no writer found by this method, its value space is unestablished, so
-   a row would claim nothing beyond the address.
+   a row would claim nothing beyond the address.~~ **Closed by #1357**: the row
+   landed as `XDATA_3202` at `present-untested` and the three comments were
+   corrected in the same change, so the build failure this item predicted never
+   arrived. Nothing else here needed changing — four read sites, no writer found
+   by this method, and a value space the row declines to fill, which is what the
+   item said a row would do. The read path is a separate question and stays open:
+   §6 item 3 of `docs/hardware-tests/xdata-06c2-06db-sweep.md` (#375).
 3. **The reload path for the seventeen in §5.** The blind spot is named rather
    than bounded: a computed DPTR, a register-indirect access and a table are
    all invisible to both methods here. `0xC10C` used to be named here as a

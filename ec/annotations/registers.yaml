@@ -5308,3 +5308,44 @@ registers:
       EC does not touch, and one static method cannot tell those apart. The
       other 31 are "not found by this method", never absent. No hardware was
       involved.
+
+  - name: XDATA_3202
+    addr: 0x3202
+    bits: [0, 1, 2]
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: created at present-untested. 4
+      EC-side sites, no PD site, 4 read and 0 write, all of them in bank0. Read
+      as a gate, not as data: 0xC0B8 (return_1_unless_3202_bits_1_and_2) and
+      0xC0C9 (return_1_if_3202_bits_1_and_2) are exact inverses on bits 1 and
+      2, and 0xC0DA (return_1_unless_3202_bit0) and 0xC0E7 (test_3202_bit0)
+      are the same shape on bit 0; each is a pure bit test with no other
+      XDATA access. Two unexported bank-0 thunks reach two of them and
+      restate the answer in R7 without adding to it: 0xC10C, whose twelve
+      bytes at file 0x0C10C are 12 c0 c9 ef 60 03 7f 01 22 7f 00 22 and which
+      lcalls 0xC0C9, and 0xC118, the same shape on 0xC0E7 (the bank1 19A8
+      row of ec/annotations/ghidra-functions.csv;
+      ec/annotations/bank-call-targets.csv records both as bank0 lcall
+      entries). Neither thunk has a committed listing, so both readings are
+      of the image and not of a listing. No writer for it was found by this
+      method, which is a gap in the search and not evidence that none
+      exists: a store through a computed DPTR, or a movx @Ri store, would not
+      appear. With no writer the value space is unestablished, so what any of
+      the three bits selects is not stated here. There is also no live read
+      to offer: on this machine every byte of 0x1000-0xFFFF read 0xFF through
+      the physical ECMG window, which is the MMRW path the vendor's ECRW also
+      takes, so 0x3202 is outside it (docs/hardware-tests/xdata-06c2-06db-sweep.md
+      §3 for the measurement and the ECRW cross-reference, its §2 for the
+      window itself; the cross-reference is docs/findings.md §4e). The image
+      has 4 direct MOV DPTR sites and that is the 4 above:
+      ec/tools/check_register_counts.py recomputes it and is the authority,
+      while the 6 in ec/annotations/xdata-registers.csv is a decompiled-C
+      token count and overstates this address six-to-four, because C0B8.c and
+      C0C9.c each name the byte twice in one condition. The decompiled C
+      drops the R7 return at every site, so the .asm listings are the only
+      statement of it. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.

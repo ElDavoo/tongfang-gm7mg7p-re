@@ -71,20 +71,20 @@ WRITE_OPEN = re.compile(r"open\([^)]*['\"][wax]")
 # and a census re-derivation are then both visible: the first by
 # `TheMapAgrees`, the second by these.
 PER_PROGRAM_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 846, 7487),
+    ("main-ec", "DAT_EXTMEM", 843, 7467),
     ("main-ec", "DAT_EXTMEM+pair-literal", 44, 490),
     ("main-ec", "pair-literal", 156, 468),
-    ("main-ec", "symbol", 158, 6197),
+    ("main-ec", "symbol", 161, 6217),
     ("main-ec", "symbol+pair-literal", 14, 196),
     ("pd", "DAT_EXTMEM", 157, 858),
 ]
 PER_PROGRAM_TOTAL = (1375, 15696)
 
 UNION_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 815, 7256),
+    ("main-ec", "DAT_EXTMEM", 812, 7236),
     ("main-ec", "DAT_EXTMEM+pair-literal", 41, 385),
     ("main-ec", "pair-literal", 155, 461),
-    ("main-ec", "symbol", 144, 5593),
+    ("main-ec", "symbol", 147, 5613),
     ("main-ec", "symbol+pair-literal", 14, 196),
     ("both", "DAT_EXTMEM", 31, 321),
     ("both", "DAT_EXTMEM+pair-literal", 4, 139),
@@ -96,8 +96,8 @@ UNION_TOTAL = (1326, 15696)
 # §2's three-way partition of the main EC, per program and on the union key,
 # each `(named, DAT_EXTMEM, pair-only)` in distinct addresses. The two differ in
 # the last two terms by the one address the two keyings disagree about.
-PER_PROGRAM_PARTITION = (172, 890, 156)
-UNION_PARTITION = (172, 891, 155)
+PER_PROGRAM_PARTITION = (175, 887, 156)
+UNION_PARTITION = (175, 888, 155)
 
 # The one address whose partition bucket moves, and the two directions.
 MOVED = [("0x04A3", "DAT_EXTMEM", "pair-only")]
@@ -477,17 +477,20 @@ class TheMapAgrees(unittest.TestCase):
 
     def test_the_partition_blockquote_holds_the_per_program_reading(self):
         # The quoted sentence is §2's restatement of the issue's claim, so it
-        # has to be the reading the per-program table supports: 172 named of
-        # 1,218, the other 1,046 split 890 / 156. The order of the figures is
+        # has to be the reading the per-program table supports: 175 named of
+        # 1,218, the other 1,043 split 887 / 156. The order of the figures is
         # the order the sentence reads them in, which is the only thing that
         # makes the tuple below mean anything. It moved off 167 / 1,051 / 895
         # in issue #1425, when `0x04A2` left the `DAT_EXTMEM` term for
         # `symbol`; §2's correction block beside the superseded figures says so
-        # and attributes four of the five addresses to #333 and #573.
+        # and attributes four of the five addresses to #333 and #573. Issue
+        # #1357 moved it once more, by -20 references and -3 addresses, when
+        # `XDATA_3202`'s re-export carried two more names across and swept in
+        # the `0x07A5` / `0x078B` drift that issue left behind.
         named, total, other, extmem, pair = blockquote(
             self.text, "of the 1,218 XDATA addresses")
         self.assertEqual((named, total, other, extmem, pair),
-                         (172, 1218, 1046, 890, 156))
+                         (175, 1218, 1043, 887, 156))
         self.assertEqual(named + other, total)
         self.assertEqual(extmem + pair, other)
 

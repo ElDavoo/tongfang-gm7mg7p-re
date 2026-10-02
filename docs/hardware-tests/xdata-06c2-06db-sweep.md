@@ -376,7 +376,9 @@ Not settled:
    `0x06C0`-`0x06DF` with the Control Center started and stopped.
 3. **A read path to `0x1664` and `0x3202` (#375).** Something other than the ECMG
    window, if the EC offers one. Until then §7's third step stays unrunnable
-   as written.
+   as written. Both bytes carry `registers.yaml` rows now — `XDATA_1664`, and
+   `XDATA_3202` added in issue #1357 — and neither row has moved off
+   `present-untested`.
 4. **What wrote `0x06C5` across the suspend (#376).**
 5. **Every `registers.yaml` row outside the host window (#377)**, since a live
    read of any of them through ECMG returns `0xFF`.

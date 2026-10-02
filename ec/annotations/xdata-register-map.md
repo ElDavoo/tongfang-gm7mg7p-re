@@ -520,10 +520,10 @@ main EC* whatever the PD image does with the same address number:
 
 | program | spelling | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 846 | 7,487 |
+| main-ec | `DAT_EXTMEM` | 843 | 7,467 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 44 | 490 |
 | main-ec | `pair-literal` | 156 | 468 |
-| main-ec | `symbol` | 158 | 6,197 |
+| main-ec | `symbol` | 161 | 6,217 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
 | pd | `DAT_EXTMEM` | 157 | 858 |
 | **total** | | **1,375** | **15,696** |
@@ -550,10 +550,10 @@ directly:
 
 | `program` | `spelled_as` | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 815 | 7,256 |
+| main-ec | `DAT_EXTMEM` | 812 | 7,236 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 41 | 385 |
 | main-ec | `pair-literal` | 155 | 461 |
-| main-ec | `symbol` | 144 | 5,593 |
+| main-ec | `symbol` | 147 | 5,613 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
 | both | `DAT_EXTMEM` | 31 | 321 |
 | both | `DAT_EXTMEM+pair-literal` | 4 | 139 |
@@ -652,19 +652,19 @@ history of a table that still exists. The write-up is
 Read the `symbol` rows as the addresses the issue's grep could not see. **On
 §3's basis** — every row the main EC touches, which is the 1,218 the tool
 prints rather than the 1,169 `program=main-ec` rows of the second table above,
-the 49 difference being the `program=both` rows — that is **172 addresses in
-6,393 references**, counted per program. The corrected form of the issue's claim
+the 49 difference being the `program=both` rows — that is **175 addresses in
+6,413 references**, counted per program. The corrected form of the issue's claim
 is therefore a *three*-way split, not a two-way one:
 
-> 172 of the 1,218 XDATA addresses the main EC touches carry a name from
-> `ec/ghidra/xdata-symbols.csv`. Of the other 1,046, **890** read as
+> 175 of the 1,218 XDATA addresses the main EC touches carry a name from
+> `ec/ghidra/xdata-symbols.csv`. Of the other 1,043, **887** read as
 > `DAT_EXTMEM_xxxx` and **156** are named nowhere and reach the census only as a
 > literal argument to one of the pair accessors of §4.7.
 
-172 + 890 + 156 is 1,218 exactly, and the references are 6,393 + 7,977 + 468 =
+175 + 887 + 156 is 1,218 exactly, and the references are 6,413 + 7,957 + 468 =
 the main EC's own 14,838.
 
-**The same partition on the union key is 172 / 891 / 155**, and both readings
+**The same partition on the union key is 175 / 888 / 155**, and both readings
 are right about different things: counted within the main EC the last term is
 156, not 155, because the main EC reaches `0x04A3` as a `pair-literal` and
 nothing else, and it is the PD image that spells it `DAT_EXTMEM_xxxx` — so the
@@ -710,8 +710,8 @@ them — every one was right about the union-keyed table it was measured on. Wha
 the re-key does is state the per-program partition above them, which is the
 reading §2's first table supports and the one a `spellings_by_program` cell
 answers directly. **Nothing above is retracted by that**, because a partition on
-one key is not a wrong version of the same partition on another: 172 + 890 + 156
-and 172 + 891 + 155 both sum to 1,218, and the difference is one address,
+one key is not a wrong version of the same partition on another: 175 + 887 + 156
+and 175 + 888 + 155 both sum to 1,218, and the difference is one address,
 `0x04A3`, in one term. The row's `spellings_by_program` cell is still where a
 reader of this paragraph goes for the split, and
 `../../docs/findings/xdata-spelled-as-union.md` still has the whole
@@ -762,8 +762,8 @@ issue is on the critical path:
 `DAT_EXTMEM_xxxx` rather than carrying a name, against 96% when this was
 written. *(The figure read **74%** here until issue #1425, and the sentence
 below it explained the one-address gap between the two keyings as the reason
-the two roundings differed. They no longer differ: 891 of 1,218 on the union
-key and 890 per program both round to 73%, because `0x04A2` joined the named
+the two roundings differed. They no longer differ: 888 of 1,218 on the union
+key and 887 per program both round to 73%, because `0x04A2` joined the named
 term and the `DAT_EXTMEM` share fell by five. The two-keying distinction this
 paragraph made is still real and is still in the table above -- `0x04A3` is
 still the one address whose term moves between them -- it just no longer

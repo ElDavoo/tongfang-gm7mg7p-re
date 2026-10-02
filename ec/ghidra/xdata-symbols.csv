@@ -215,3 +215,4 @@ addr,name,from_register,register_status,derivation,programs
 0x0EAE,CTL6,CTL6,present-untested,scalar-name,bank0;bank1
 0x0EAF,CTL7,CTL7,present-untested,scalar-name,bank0;bank1
 0x0EB8,MGI8,MGI8,present-untested,scalar-name,bank0;bank1
+0x3202,XDATA_3202,XDATA_3202,present-untested,scalar-name,bank0;bank1
