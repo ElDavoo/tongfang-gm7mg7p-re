@@ -220,6 +220,18 @@ DS_NAMES = (
 # grader's `MARK_MERGE_SECONDS` on the same 5 s scale because the scale is
 # about human hands, not about either procedure -- §3's "hold ~30 s after
 # each action" is the thing that keeps a real action boundary far from this.
+#
+# Restated rather than read off `fan.MARK_MERGE_SECONDS`, deliberately, so a
+# window that moves in `grade_0751_isolation.py` is a visible event: derived,
+# it would carry this grader's flag threshold along with it silently, and a
+# decision about a three-console fuse window would become a decision about a
+# one-console flag threshold with nobody asked and no test run.
+# `test_the_restated_threshold_is_the_graders_window` pins the equality, so
+# such a move fails this file's own suite and names itself rather than leaving
+# a stale literal here; and `report_close_marks` prints the other grader's
+# window off the same constant, so a broken pin is two disagreeing numbers in
+# one report rather than only a line in a test log. Written up in
+# docs/findings/door-grader-close-marks-threshold.md.
 CLOSE_MARKS_SECONDS = 5
 
 
@@ -625,8 +637,8 @@ def report_close_marks(runs):
         if gap <= CLOSE_MARKS_SECONDS:
             print(f"\n  note  marks {a.label!r} and {b.label!r} are {gap:.1f}s "
                   f"apart, inside the {CLOSE_MARKS_SECONDS}s flag threshold.")
-            print("    They stay two windows. The 0751 grader fuses marks this "
-                  "close because")
+            print(f"    They stay two windows. The 0751 grader fuses marks "
+                  f"within {fan.MARK_MERGE_SECONDS:g}s because")
             print("    that procedure runs one watcher per console and one "
                   "action lands in all")
             print("    three; this one runs a single watcher on a single "

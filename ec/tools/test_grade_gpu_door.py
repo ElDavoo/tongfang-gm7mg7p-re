@@ -385,6 +385,50 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(len(marks), 3)
         self.assertEqual(len(door.fan.coalesce_marks(marks)), 2)
 
+    def test_the_restated_threshold_is_the_graders_window(self):
+        # The 5 above is `grade_0751_isolation.MARK_MERGE_SECONDS` restated, and
+        # the case above cannot see it move: its fixture's marks are 1.0 s
+        # apart, so it flags at any threshold above that. It was never that
+        # case's job -- it holds that the marks stay two windows -- so the pin
+        # is its own here. Read through the module's own `fan` alias rather
+        # than importing the grader again, so it is the real constant and not a
+        # third copy of the number.
+        self.assertEqual(door.CLOSE_MARKS_SECONDS,
+                         door.fan.MARK_MERGE_SECONDS)
+        # The direction of the pin: this threshold is what follows the grader,
+        # not the other way round, so a window that moves in
+        # `grade_0751_isolation.py` fails this suite and names itself rather
+        # than silently carrying a flag threshold with it.
+        #
+        # And the sentence that explains the threshold reads the same constant
+        # it is printed from, so the two cannot drift apart in the report: a
+        # pin broken any other way shows the reader two disagreeing numbers in
+        # one note. Unwrapped, for the reason `unwrapped` gives.
+        rc, out, err = run(CLOSE_MARKS)
+        self.assertEqual(rc, 0, err)
+        note = unwrapped(out.split('  note  ')[1])
+        self.assertIn('The 0751 grader fuses marks within '
+                      f'{door.fan.MARK_MERGE_SECONDS:g}s because', note)
+        # The `<=` edge, against this file's own constant rather than a number
+        # typed out here -- so it stays green when the constant moves and goes
+        # red only if the comparison stops being `<=` at the value it prints.
+        # Built in a temporary directory rather than added to testdata/, because
+        # a fixture committed for it would want a `testdata/README.md` row and
+        # would move `FIXTURES`, which the first test holds equal to the
+        # directory.
+        base = door.fan.parse_ts('2026-01-01T12:00:10.000+01:00')
+        edges = ((door.CLOSE_MARKS_SECONDS, True),
+                 (door.CLOSE_MARKS_SECONDS + 0.5, False))
+        for apart, flagged in edges:
+            with self.subTest(f'{apart}s apart'):
+                pair = [(base.isoformat(timespec=MS), 'fn mode balanced'),
+                        ((base + timedelta(seconds=apart)).isoformat(
+                            timespec=MS), 'gpu tgp 115W->130W')]
+                with tempfile.TemporaryDirectory() as tmp:
+                    rc, out, err = run(write_capture(tmp, 'edge.csv', pair))
+                self.assertEqual(rc, 0, err)
+                self.assertEqual('flag threshold' in out, flagged)
+
     def test_changes_before_the_first_mark_belong_to_no_window(self):
         rc, out, _ = run(ACPI_FIRST)
         self.assertEqual(rc, 0)
