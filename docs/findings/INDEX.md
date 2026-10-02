@@ -60,6 +60,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`common-runtime-tranche.md`](common-runtime-tranche.md) — The unannotated `common` pool, ordered, and its first 37 rows (issue #603)
 - [`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md) — A count is a budget on work, not a bound on the buffer: the region end bounds `walk_helper` and `chain_from`
 - [`counter-sweep-entry-set.md`](counter-sweep-entry-set.md) — The counter sweep's entry set: 180 call sites, one of them a call (issue #555)
+- [`counter-sweep-gap-sites.md`](counter-sweep-gap-sites.md) — The two counter-sweep sites no listing covers, decoded across the gap (issue #625)
 - [`cross-decoder-blind-population.md`](cross-decoder-blind-population.md) — What the cross-decoder's `vacuous` bucket is made of (issue #350)
 - [`cross-decoder-disagreement-population.md`](cross-decoder-disagreement-population.md) — What the cross-decoder's `disagree` bucket is made of (issue #510)
 - [`csv-column-usage-advice.md`](csv-column-usage-advice.md) — A `Usage:` line that reproduces its table, and a note for the diff a reader writes instead (issue #1020)

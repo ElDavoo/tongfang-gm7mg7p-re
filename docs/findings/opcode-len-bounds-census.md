@@ -23,7 +23,7 @@ table**, where the *buffer read* is what can raise.
 It is not "the opcode table is indexed". `OPCODE_LEN` covers all 256 byte
 values — 16 rows of 16, opcode `0x00` first (`ec/tools/disasm8051.py:39-56`) —
 so `OPCODE_LEN[op]` where `op` is already a byte value cannot go out of range,
-and `counter_sweep_entry.py:319,384,551,565` and
+and `counter_sweep_entry.py:369,445,652,666` and
 `audit_call_targets.py:176,320` index the table exactly that way. The
 distinction is the whole content of this census, and it is stated here because a
 grep for `OPCODE_LEN[` returns both kinds and a reader has to be told which is
@@ -90,10 +90,10 @@ ec/tools/pd_index_geometry.py:1294:        op, n = d[i], OPCODE_LEN[d[i]]
 ec/tools/pd_index_geometry.py:1372:        n = OPCODE_LEN[d[i]]
 ec/tools/pd_index_geometry.py:1385:            n = OPCODE_LEN[d[i]]
 ec/tools/pd_index_geometry.py:1834:            i += OPCODE_LEN[op]
-ec/tools/counter_sweep_entry.py:319:    last = idx == OPCODE_LEN[op] - 1
-ec/tools/counter_sweep_entry.py:384:            n = OPCODE_LEN[r["owner_opcode"]]
-ec/tools/counter_sweep_entry.py:551:    check(all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
-ec/tools/counter_sweep_entry.py:565:          and all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
+ec/tools/counter_sweep_entry.py:369:    last = idx == OPCODE_LEN[op] - 1
+ec/tools/counter_sweep_entry.py:445:            n = OPCODE_LEN[r["owner_opcode"]]
+ec/tools/counter_sweep_entry.py:652:    check(all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
+ec/tools/counter_sweep_entry.py:666:          and all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
 ec/tools/walk_branch_arms.py:220:        n = OPCODE_LEN[op]
 ec/tools/walk_branch_arms.py:347:            n = OPCODE_LEN[op]
 ec/tools/audit_call_targets.py:176:        if op in REL_OPCODES and i + OPCODE_LEN[op] <= hi:
@@ -227,7 +227,7 @@ above are those trees' and stay as they are, per §4a-4d.)*
 | `citation_gap_scan.py:28` | 1 | the module docstring, quoting the retracted `decode()` claim |
 | `test_disasm8051.py:52` | 1 | a comment in the test that already pins the #679 fix |
 | `pd_index_geometry.py:678,712` | 2 | `OPCODE_LEN[MOV_DPTR]` — the constant, not a buffer read |
-| `counter_sweep_entry.py:319,384,551,565` | 4 | `op` or `r["owner_opcode"]` is a byte value already in hand |
+| `counter_sweep_entry.py:369,445,652,666` | 4 | `op` or `r["owner_opcode"]` is a byte value already in hand |
 | `audit_call_targets.py:176,320` | 2 | the same: `op` is in hand from `d[i]` at `:175`, and `:320`'s `OPCODE_LEN[op]` is a length value with no buffer read at all |
 | `audit_call_targets.py:177,321` | 2 | the adjacent last-byte-of-instruction read, excluded above |
 

@@ -10,15 +10,23 @@ to the `ret` at `0x8189`. `../ec/annotations/xdata-06c2-06db-timers.md` §8 item
 
 **They are settled here, by measurement, and the answer is one address:
 `0x8001`.** Of the 180 census rows that target into the run, exactly one is at
-an instruction start in a committed listing. The other 179 are not: 177 are
-operand bytes of instructions a committed listing already carries, 135 of them
-the `rel8` displacement of a `cjne`, and the remaining two — `bank1:0x81E7`
-and `bank1:0xA6DC` — sit in a committed gap no listing covers, which is a
-*different* kind of "not found by this method" from an identified operand byte
-and is reported as one. **One confirmed caller found by this method** is the
-whole of the finding — not "the only caller in the firmware", and not "179
-absent calls". The method is `../ec/tools/counter_sweep_entry.py`; every figure
-below is its output, and `--self-test` asserts the load-bearing ones.
+an instruction start. The other 179 are not: 177 are operand bytes of
+instructions a committed listing already carries, 135 of them the `rel8`
+displacement of a `cjne`, and the remaining two — `bank1:0x81E7` and
+`bank1:0xA6DC` — sit in a committed gap no listing covers, so a second method
+decoded them: each is the last byte of a PC-relative branch. They are inside
+those buckets rather than beside them — one more `cjne` displacement and one
+more `relative` displacement, which is why §3 reads 136 and 40 over all 180 and
+not over the 177. That decode is a *weaker* class of evidence than a listing's
+— a listing **names** the owning bytes, a decode reads them — and each of the
+two carries a `gap-decode` provenance rather than being folded in with the 177.
+**One confirmed caller found by this method** is the whole of the finding —
+not "the only caller in
+the firmware", and not "179 absent calls". The method is
+`../ec/tools/counter_sweep_entry.py`; every figure below is its output, and
+`--self-test` asserts the load-bearing ones. The gap decode is
+[`counter-sweep-gap-sites.md`](counter-sweep-gap-sites.md), which states its
+limit beside the two.
 
 **The deletion the issue also asked for is not here, and not because it was
 skipped.** Removing the slice rows removes *no* seeds (every one of the 42
@@ -70,6 +78,13 @@ and never separately, because neither is sufficient:
   reason. What settles a site is both: a score *and* the committed instruction
   that owns the byte.
 
+Two of the 180 have no committed instruction to point at, so the second half
+is a *decode* across the gap rather than a listing — the same two halves, with
+the second one weaker. Those two carry `gap-decode` in the tool's output and in
+`--csv`, so the classes are never read as one;
+[`counter-sweep-gap-sites.md`](counter-sweep-gap-sites.md) is the measurement
+and the limit.
+
 The region filter is load-bearing rather than a shortcut. `offset_for_runtime()`
 resolves a target at or above `0x8000` against the **caller's own bank**, so a
 `bank0` or `common` row naming `0x8001` is about a different byte. 47 such rows
@@ -77,14 +92,20 @@ exist in the census and none of them is evidence about this run.
 
 ## 3. What the 180 sites are
 
-| what the site is, in a committed listing | count |
+| what the site is | count |
 |---|---:|
 | an instruction start | **1** |
-| the `rel8` displacement byte of a `cjne` (opcode `0xb4`, `0xb5`, `0xba` or `0xbf`) | **135** |
-| the `rel8` displacement byte of another PC-relative branch | 39 |
+| the `rel8` displacement byte of a `cjne` (opcode `0xb4`, `0xb5`, `0xba` or `0xbf`) | **136** |
+| the `rel8` displacement byte of another PC-relative branch | 40 |
 | the low target byte of an `ljmp`/`lcall` the listing already carries | 1 |
 | an immediate operand of an instruction that is not a branch | 2 |
-| in a committed gap, covered by no listing | 2 |
+| in a committed gap, and named by neither a listing nor the gap decode | 0 |
+
+The last row is the one the gap decode closed: `0x81E7` is a `jc`
+displacement and `0xA6DC` a `cjne` one, so `relative` and `cjne` are the two
+counts that moved and no site is left unclassified by either method. The
+labels are `../ec/tools/counter_sweep_entry.py`'s `SITE_BUCKETS`, and the tool
+prints this same table — `--self-test` asserts the six sum to 180.
 
 108 of the 180 score 0/24 outright. The ten most-framed of the rest, with the
 listing evidence beside the score:
@@ -105,7 +126,7 @@ listing evidence beside the score:
 **The `cjne` row is the finding, and it is one measurable place where the
 caveat bites.** A `cjne` is three bytes with its displacement last, so a scan
 looking for a literal `0x02` or `0x12` opcode finds that displacement and reads
-the following two bytes as a 16-bit target. 135 of the 180 sites are exactly
+the following two bytes as a 16-bit target. 136 of the 180 sites are exactly
 that. Nine of the ten rows above are of this kind or its `sjmp`/`jz`/`jc`/
 `jnc`/`jb`/`jnb` equivalents.
 
@@ -143,11 +164,16 @@ of the five are the `cjne` shape and only the fifth is a call:
 **The three seeds are not confirmed; they are refuted as entry points.** Their
 own comments said the one-instruction boundary was "the call-target scan's
 hypothesis". The hypothesis is now tested and does not hold: no site naming
-`0x8008`, `0x8010` or `0x8017` scores above 1 of 24, and the best-placed of the
-three is a `cjne` displacement byte — except `0x8017`, whose single best site
-is a byte in a committed gap between two listings. They remain useful rows —
-they are the only per-slice reading of those bytes — but they are not entry
-points and must not be described as candidate ones.
+`0x8008`, `0x8010` or `0x8017` scores above 1 of 24, and the best-placed of
+each of the three is a `cjne` displacement byte — including `0x8017`, whose
+single best site is the `rel8` of the `cjne` at `0xA6DA`, decoded across a
+committed gap and therefore resting on the weaker `gap-decode` class rather
+than on a listing ([`counter-sweep-gap-sites.md`](counter-sweep-gap-sites.md)).
+The `*except* 0x8017` this paragraph used to carry is gone; it is not folded in
+silently, and the odd one out is a narrower claim than the listings `0x8008`
+and `0x8010` rest on. They remain useful rows — they are the only per-slice
+reading of those bytes — but they are not entry points and must not be
+described as candidate ones.
 
 **The "body starts at `0x8018`" claim is affirmatively wrong, not merely
 unproven.** 28 of the 42 rows say the body runs `0x8018` to the `ret` at
@@ -271,8 +297,11 @@ to record, not a reason to re-add slice rows.**
 - **Not "the only caller in the firmware".** One caller was *confirmed* by this
   method. The other 179 sites are a gap in a byte scan with a named blind spot;
   a caller reached through a computed DPTR, a function-pointer table or a BL51
-  trampoline is invisible to every method named here.
-- **Not 179 absent calls.** Read §3's table the other way round: 135 are
+  trampoline is invisible to every method named here. Naming the two sites no
+  listing covers closes a gap in *this* method, not in the census: a
+  `gap-decode` row is still a byte scan's site, and the decode says what byte
+  it is, not that there was a call.
+- **Not 179 absent calls.** Read §3's table the other way round: 136 are
   positively identified as something else.
 - **Not a register claim.** Nothing here bears on what any byte *means*. The
   sweep's 43 XDATA addresses keep the readings and the `status:` values
@@ -288,7 +317,16 @@ to record, not a reason to re-add slice rows.**
 - **The frame score is one method's opinion, reported beside the listing
   evidence for that reason.** `converges_from()` is the repository's own, and
   `bank-call-audit.md` §1's note that its anchored counts are demonstrably not
-  phantom-free applies to the 24/24 here as much as to the 0/24s.
+  phantom-free applies to the 24/24 here as much as to the 0/24s. The same goes
+  for the two `gap-decode` sites, where there is no listing to report beside
+  and the frame score is the *weaker* of the two: one of them scores 0 of 24,
+  and what stands behind that site's owner is the census's own `earlier_record`
+  cell **and nothing else** — carried there as a named residual, with the
+  method's limit, rather than folded in here as a settled row.
+  [`counter-sweep-gap-sites.md`](counter-sweep-gap-sites.md) is where that is
+  written out, including why the re-entry check beside it is not evidence: it
+  reads 24 of 24 on every same-geometry stretch in the image and on two fillings
+  in three of random bytes.
 
 ## Reproducing it
 
@@ -296,11 +334,16 @@ to record, not a reason to re-add slice rows.**
 $ python3 ec/tools/counter_sweep_entry.py            # the four sections above
 $ python3 ec/tools/counter_sweep_entry.py --self-test
 $ python3 ec/tools/counter_sweep_entry.py --csv > /tmp/entry.csv
+$ python3 ec/tools/gap_span_decode.py --at 0x81E7 --region bank1
+$ python3 ec/tools/gap_span_decode.py --at 0xA6DC --region bank1
+$ python3 ec/tools/gap_span_decode.py --self-test
 ```
 
 `--self-test` asserts the 42/393/16 shape and the tiling, the 180/70 counts, that
 the tool's own `converges_from()` scores reproduce the census's recorded ones on
-all 180 rows, the single anchored site and its 24/24, the five slice scores, the
+all 180 rows, the single anchored site and its 24/24 **as a set** — `{0xABB8}`,
+not a count — the two `gap-decode` sites and the bucket each lands in, that the
+`gap` bucket reads 0 and the six still sum to 180, the five slice scores, the
 `ret` at each end, the 42-of-70 seed union, and the two silent misreadings it is
 easy to commit here — that a `bank1` *file offset* is not a runtime address
 (`0x12BB8` is `0xABB8`, so the listing is `bank1/ABB8.asm`), and that a listing
