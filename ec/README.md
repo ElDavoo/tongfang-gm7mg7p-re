@@ -156,6 +156,31 @@ into `r2 -a 8051` with no stitching needed.
   register, a table, or across a call is `unresolved` and says which half
   defeated it — never "absent". `annotations/indirect-xdata-sites.md` is the
   write-up and its §5 is the full list.
+- **`tools/computed_dptr_sites.py`** — a further spelling, and the one
+  `manual-fan-ctrl-0751.md` §6 is a worked counter-example to: a 16-bit
+  `DPTR` assembled in the accumulator over two instructions,
+  `add a,#lo ; mov DPL,a ; clr a ; addc a,#hi ; mov DPH,a`, so the
+  address is in neither instruction and neither tool above can see it.
+  It finds the eight bank0 sites that reach page `0x0F` with no
+  seeding, and prints the `0x0F` count at several `--window` widths
+  beside the default, so a reader can see the eight are a property of
+  the image and not of the knob. The blind spot to read before quoting
+  it: the high byte is read off the *one* instruction before the
+  `add`/`addc`, so a `clr c` — which sets the carry and not the
+  accumulator — is a refusal and not a page, and an `addc` whose carry
+  the tool cannot read is a two-value candidate set that is never
+  collapsed to its low member. The low byte is reported, not invented:
+  at the eight it is a run-time value, so the concrete address is not
+  derivable and the cell says so. The population is **not** filtered
+  on a following `movx` — two of the eight hand DPTR to a subroutine
+  instead, and the read/handoff split is a reported column.
+  `--page 0xNN` answers "which computed-`DPH` sites build this page"
+  per image and exits non-zero when the main EC has none it can
+  establish — a negative about this scan, not about the scans beside
+  it; `--check` diffs `annotations/computed-dptr-sites.csv` byte for
+  byte.
+  `annotations/computed-dptr-sites.md` is the write-up and its §7 is
+  the full list of what a zero here does not cover.
 - **`tools/data_regions.py`** — re-derives every span in
   `annotations/data-regions.yaml` from the committed image, so the map of data
   tables cannot drift from the bytes it claims to describe. `--check`
