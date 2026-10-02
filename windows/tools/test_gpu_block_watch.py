@@ -1011,6 +1011,128 @@ class CaptureHandoffTests(unittest.TestCase):
                           "§9 promotes a status a capture cannot earn")
 
 
+class FailingEc(FakeEc):
+    """`FakeEc`'s sweeps, with an EC read failing part way through.
+
+    After the baseline and one sweep that moves a byte, so the capture holds
+    real rows before the one that says the run stopped: a failure on the
+    opening read would leave a capture with nothing in it and would say
+    nothing about a run that stopped *part way through*, which is the shape
+    the row exists for.
+    """
+
+    def read(self, addr):
+        if self._reads >= len(ADDRS) * 2:
+            raise watch.EcError("DeviceIoControl failed")
+        return super().read(addr)
+
+
+class EarlyExitRowTests(unittest.TestCase):
+    """The `#` row this writes when a run stops, and the one it never writes.
+
+    Two ends of one gap, and neither is worth anything alone: a capture that
+    cannot carry the row is a row no reader will ever place, and a reader that
+    cannot see it is a grader that grades every stopped run as a finished one.
+    Both are exercised offline -- the writer against the same faked `ecrw`
+    every other case in this suite uses -- so nothing here is a statement
+    about the machine or about a laptop that has not been near it.
+    """
+
+    def run_watch(self, ec):
+        """rc, and the rows of the file the run leaves behind.
+
+        `marked` is set up front so `FakeEc`'s `at_last_sweep` wait is
+        released at once: these cases pass no `--mark`, so nothing else would
+        set it and every run would spend five seconds waiting for a mark that
+        was never going to be typed.
+        """
+        ec.marked.set()
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'capture.csv'
+            with patch.object(watch, 'Ec', lambda: ec), \
+                 contextlib.redirect_stdout(io.StringIO()), \
+                 contextlib.redirect_stderr(io.StringIO()):
+                rc = watch.main(['--interval', '0', '--csv', str(out)])
+            # Read inside the directory, and after `main` has returned, so what
+            # is checked is the file the run leaves rather than one this test
+            # wrote: the sink is closed by the tool's own `finally` on this
+            # path exactly as on the Ctrl-C one, and a row written after that
+            # close would not be in it.
+            return rc, out.read_text().splitlines()
+
+    def test_the_tag_is_the_phrase_the_grader_reads(self):
+        # The drift guard, and the twin of the one `manual_fan_ctrl_probe.py`'s
+        # `--self-test` carries for its own copy of the same phrase. Two files
+        # cannot share a constant -- this one does `from ecrw import ...` and
+        # binds kernel32 at import time -- so this equality is the only thing
+        # holding them together, and a drifted tag is not a wrong-looking
+        # string: it is a reader that matches no stopped capture, and a
+        # capture of a crashed run that grades green. `grader.fan` is
+        # `grade_0751_isolation`, the module the phrase was transcribed from.
+        self.assertEqual(watch.EARLY_EXIT_TAG, grader.fan.EARLY_EXIT_TAG)
+
+    def test_an_ec_error_mid_sweep_writes_the_row(self):
+        rc, rows = self.run_watch(FailingEc())
+        self.assertEqual(rc, 1)
+        early = [r for r in rows if r.startswith(watch.EARLY_EXIT_TAG)]
+        self.assertEqual(len(early), 1, rows)
+        # Stamped, because a row that says *that* a run ended and not *when*
+        # cannot be placed against a window; and naming the exception, because
+        # that field is there for whoever opens the file. The tool's own name
+        # rather than `__main__`, which is what the run an operator takes at
+        # the box would otherwise write.
+        self.assertIn(',gpu_block_watch: EcError: DeviceIoControl failed',
+                      early[0])
+        # And the rows the sweep really wrote are still in the file, ahead of
+        # it: the row says the run stopped part way through, not that it never
+        # ran. This is the control for a writer that got the tag right and
+        # dropped everything else.
+        self.assertIn(f'0x{ACPI:04X},0x00,0x37', '\n'.join(rows))
+
+    def test_the_row_the_writer_writes_is_one_the_grader_reads(self):
+        # The two ends of the tag in one run, which is the only assertion here
+        # that covers a *row* rather than a constant: a writer and a reader
+        # agreeing on the tag and disagreeing on the row -- the stamp in the
+        # wrong field, a reason swallowed by the CSV quoting -- is the shape
+        # this catches, and it is checked through the grader's own reader over
+        # the file this writer actually produced.
+        ec = FailingEc()
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'capture.csv'
+            ec.marked.set()
+            with patch.object(watch, 'Ec', lambda: ec), \
+                 contextlib.redirect_stdout(io.StringIO()), \
+                 contextlib.redirect_stderr(io.StringIO()):
+                watch.main(['--interval', '0', '--csv', str(out)])
+            found = grader.fan.read_early_exits(str(out))
+        self.assertEqual(len(found), 1, [r.source for r in found])
+        # Carrying a timestamp this repository's own `parse_ts` reads, which
+        # is the difference between a row that withholds a window and a row
+        # that refuses the whole run. This capture has no marks, so an
+        # unreadable stamp would come back refused rather than placed; the
+        # timestamp is what separates the two, and the case below for a placed
+        # row is where that is spent.
+        self.assertIsNotNone(found[0].ts,
+                             "the row carries no readable timestamp")
+        self.assertIn('EcError: DeviceIoControl failed', found[0].reason)
+
+    def test_a_keyboard_interrupt_writes_no_row(self):
+        # `FakeEc` ends every run this suite drives with a `KeyboardInterrupt`,
+        # so this is the case the capture an operator gets when they press
+        # Ctrl-C after the last action has been marked -- which §3 calls the
+        # right way to end a run that finished. A row here would put "the run
+        # ended early" on every successful door capture, which is §4c's shape
+        # with a different cause: a method reporting an absence as a fact.
+        # Asserted so that a later "make it match the probe's BaseException"
+        # fails here rather than passing for a fix.
+        rc, rows = self.run_watch(FakeEc())
+        self.assertEqual(rc, 0)
+        self.assertEqual([r for r in rows if r.startswith('#')], [], rows)
+        # Not absent because nothing was written at all: the change rows the
+        # sweep did write are the control for that.
+        self.assertIn(f'0x{ACPI:04X},0x00,0x37', '\n'.join(rows))
+
+
 class NamesOnlyTests(unittest.TestCase):
     def test_names_only_prints_the_table_and_opens_no_ec(self):
         out = io.StringIO()

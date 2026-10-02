@@ -4,9 +4,13 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Unresolved: lcalls the 3-byte loader 0x10C8 with the DPTR it was given, sets A=1 and jumps to
-   0x0C46. The file says the remaining control flow was not traced and deliberately did not follow
-   the second level, so this name records a handoff and nothing more
+/* The handed DPTR is now resolved one level further than it was: lcalls the 3-byte loader 0x10C8
+   with it, so the access is a read, which register_ref_table.py --callee-depth 2 reaches with the
+   chain 0xB1F2 -> 0x10C8 on its row. The name stays unresolved_* because the tool settled the
+   pointer, not this routine: walk() stops at the first control-flow instruction, so the mov a,#0x01
+   and the ljmp 0x0C46 after the call are in no window at any depth, and the decompile below shows
+   that tail calling write_byte_by_tag_r3(1,...). What remains unresolved is what this routine does
+   after the load, not what the load did
    type: forwarder
    evidence: ec/annotations/lightbar-bat-flow.md
    basis: hand-decoded

@@ -61,13 +61,13 @@ and 0xF3 are common *operand* bytes inside `mov dptr,#imm16`, `jnb bit,rel` and
 
 | | raw byte(s) | anchored site(s) |
 |---|---|---|
-| `common` | 123 | 28 |
-| `bank0` | 128 | 5 |
+| `common` | 123 | 26 |
+| `bank0` | 128 | 0 |
 | `bank1` | 218 | 11 |
-| **main EC** | **469** | **44** |
+| **main EC** | **469** | **37** |
 | **PD image** | **285** | **47** |
 
-754 raw against 91 anchored. The two programs are never added together: a
+754 raw against 84 anchored. The two programs are never added together: a
 `movx @Ri` in the PD image reaches a different program's XDATA byte, which is
 `lightbar-bat-flow.md` §2's mistake and `trace_xdata_refs.py`'s docstring's
 first point. The site list is
@@ -75,21 +75,30 @@ first point. The site list is
 the window's own decode in the last column so a reader can re-derive the
 resolution cell from the row.
 
-**Zero of the 91 resolve, and the reason is the same one every time.** All 91
-report `no P2 write in the window`, and all 91 windows ended at
+**Seven of the earlier rows were bytes of a `0x7151` case table, not code.**
+`bank-call-audit.md` §10 enumerates the fifteen `lcall 0x7151` sites and
+`disasm8051.py`'s `case_table_len()` now steps over each table, so the rows
+inside those spans leave the table. `bank0` is empty as a result, and
+`ghidra-functions.csv`'s `bank0,F239` row already said the bytes the linear
+listing shows at `0x0F257` are table data reached through `0x7151` rather than
+sequential code. The rule, the fifteen sites and the surviving rows are
+[`../../docs/findings/7151-case-tables-in-the-walk.md`](../../docs/findings/7151-case-tables-in-the-walk.md).
+
+**Zero of the 84 resolve, and the reason is the same one every time.** All 84
+report `no P2 write in the window`, and all 84 windows ended at
 `window exhausted (24 bytes)` rather than at the start of the region. Two of
-the 91 do have a literal `mov rN,#imm` behind them -- `mov r0,#0x1C` before the
+the 84 do have a literal `mov rN,#imm` behind them -- `mov r0,#0x1C` before the
 `movx a,@r0` at file `0x16A15` and `mov r0,#0x28` before the one at `0x16A83`,
 both in `bank1` -- and no site has a `P2` write behind it at all, so there is
 no page to pair a low byte with.
 
-**The framing is not the reason.** All 91 sites have `frame_onto` > 0: at least
+**The framing is not the reason.** All 84 sites have `frame_onto` > 0: at least
 one nearby anchor's linear decode lands exactly on each of them, and the
 `frame_onto`/`frame_over` pair is in the table beside every row. That is
 `disasm8051.py`'s evidence and it is a lower bound on a site's being real
 rather than a proof of it -- `converges_from()`'s own docstring says to read the
-pair and not either half -- but a population of 91 sites that no decode walks
-onto would have been a different claim.
+pair and not either half -- but a population that no decode walks onto would
+have been a different claim.
 
 ## 3. The `P2` zero, and the control that makes it citable
 
@@ -115,19 +124,27 @@ image; the `P2` half of the indirect idiom is not in it at all.
 
 **The tool does not stop at the literal.** An 8051 has 19 encodings that write
 `0xA0`-`0xA7`, and only `mov p2,#imm` supplies a page this tool can name; the
-other 18 make the half `unresolved` and say which one defeated it. Four of the
-19 occur in this image, and none of the four is the literal:
+other 18 make the half `unresolved` and say which one defeated it. Three of the
+19 occur in this image, and none of the three is the literal:
 
 | encoding | anchored occurrences | where |
 |---|---|---|
 | `mov p2,#imm` | 0 | -- |
 | `mov p2,register` | 12 | all in `common`, and all of them probably not a `P2` write -- §3a |
-| `mov p2.x,carry` | 2 | `bank0` `0x9287`, `bank1` `0x14C8F` |
-| `inc p2` | 1 | `bank0` `0xA35E` |
-| `mov p2,direct` | 1 | `bank1` `0x16CA3` |
+| `mov p2,direct` | 1 | `bank1` `0x16CA3`, and see §3a |
+| `mov p2.x,carry` | 1 | `bank1` `0x14C8F`, and see §3a |
 
-The 15 that do not occur are not found by this method, which is not the same
-as their being absent from the 8051. The nineteenth, `xch a,direct` (`0xC5`),
+The `mov p2.x,carry` row at `bank0` `0x9287` and the `inc p2` row at `bank0`
+`0xA35E` that an earlier run of this page reported are gone with the tables
+that held them: `0x9287` is an entry head of the `0x09284` table and `0xA35E`
+is inside the `0x0A34A` one, both listed in
+[`index-table-spans.csv`](index-table-spans.csv). A row that was a table byte
+is not a `P2` write, and the walk no longer reports it as one.
+
+The encodings that do not occur are not found by this method, which is not
+the same as their being absent from the 8051;
+`ec/tools/find_indirect_xdata.py`'s own summary line prints how many of the 19
+it found and how many it did not. The nineteenth, `xch a,direct` (`0xC5`),
 was missing from the tool's table until #1169 was reviewed: it is in
 `ec/tools/pd_index_geometry.py`'s `DIRECT_DST_OPS`, and a table assembled from
 `sdcc`'s assembler alone does not reach it. It occurs zero times here, so the
@@ -160,9 +177,24 @@ and decoded the record's first two bytes as `mov p2,r4`, twelve times. **These
 are almost certainly not `P2` writes**, and the census row above is reported
 because reporting it is what the method produced, not because the method is
 right about it. This is the anchored pass's framing limitation landing on a
-real case rather than a hypothetical one, and it is worth holding in mind when
-reading the other three rows: `mov p2,direct`, `inc p2` and `mov p2.x,carry`
-are single sites and are not independently corroborated either way.
+real case rather than a hypothetical one.
+
+**Both surviving single-site rows look like the same kind of data, by a second
+and independent route.** `bank1` `0x14C8F` (`mov p2.x,carry`) is two bytes of
+an ascending run at `0x14C87` whose consecutive differences are 14 or 15, and
+`bank1` `0x16CA3` (`mov p2,direct`) is three bytes of a 16-bit record table
+whose little-endian words from `0x16CA1` step by `0x1A`/`0x1B` in their low
+byte. Both shapes, with the arithmetic, are in
+[`../../docs/findings/7151-case-tables-in-the-walk.md`](../../docs/findings/7151-case-tables-in-the-walk.md)
+§5. That is an indication rather than a verdict, and it is the uncomfortable
+half of this change: the population got smaller, and the rows it kept are
+candidates for being data on the same grounds as the twelve. **"No `P2` write
+in the main-EC windows" is a weaker statement after this page's correction,
+not a stronger one**, and no row here is called a `P2` write on the strength of
+an arithmetic pattern.
+
+`data-regions.yaml` lists no span covering either run, and listing them is the
+open question.
 
 **One of those 18 rows was wrong in the first cut of this table, and the tool's
 own output is what found it.** `0x40` is `jc rel` -- and `0x42` is
@@ -200,8 +232,9 @@ image's indirect XDATA is a different program's byte either way.
   The direct route was already empty by `docs/findings.md` §4c's standard and
   the indirect route is empty by this page's. The blind spot the issue asked to
   narrow has narrowed, and it narrowed to a fact about the *encoding*: the
-  main EC has 44 anchored `movx @Ri` sites and not one of them has a `P2` write
-  within 24 bytes behind it.
+  main EC has 37 anchored `movx @Ri` sites and not one of them has a `P2` write
+  within 24 bytes behind it. §3a is why that is a statement about the windows
+  and not about the firmware.
 - **`0x07D0`**: the same, with `DO-NOT-WRITE-BLIND` unchanged and the
   `unknown-not-absent-DO-NOT-WRITE-BLIND` status unchanged. Nothing here
   re-grades it, and nothing here could have: a static scan is not a behaviour.
@@ -245,12 +278,18 @@ conclusion that is not in it:
 
 ## 6. What it opens
 
-- **The 44 main-EC sites are unclassified.** They are anchored, they are
-  spread across `common` (28), `bank1` (11) and `bank0` (5), and nothing
-  beyond the framing columns says what any of them does. A caller table, a
-  `movc`-style lookup and a genuine register access are all still one row each.
-  The `window` column on each row is the raw material for telling them apart
-  and nothing has been read out of it yet.
+- **The main-EC sites are unclassified.** They are anchored, they are spread
+  across `common` and `bank1` (`bank0` has none, since §2's table bytes were
+  its whole population), and nothing beyond the framing columns says what any
+  of them does. A caller table, a `movc`-style lookup and a genuine register
+  access are all still one row each. The `window` column on each row is the raw
+  material for telling them apart and nothing has been read out of it yet.
+- **The two runs §3a names want `data-regions.yaml` rows.** `0x14C87`'s
+  one-byte ascending run and `0x16CA1`'s 16-bit record table are the same kind
+  of finding as the `0x05C9A` table below, and neither is listed, so every
+  future scan in this repository walks through them. What the records hold is
+  the open question; that they are not instruction streams is what this page
+  can say.
 - **The table at `0x05C9A` is worth a `data-regions.yaml` row.** §3a
   establishes that it is a data structure and that the anchored pass decodes
   its record heads as instructions. It is unlisted, so every future scan in
@@ -263,7 +302,7 @@ conclusion that is not in it:
   in this population. Widening the tool to them is a scope decision and the
   natural one next.
 - **The 24-byte window is a choice with a number attached.** `--window` moves
-  it and the cell names the budget that ran out, and all 91 of the committed
-  sites end at that budget rather than at a region boundary. A wider run would
-  say whether the two `mov r0,#imm` sites at `0x16A15` and `0x16A83` pick up a
+  it and the cell names the budget that ran out, and every committed site ends
+  at that budget rather than at a region boundary. A wider run would say
+  whether the two `mov r0,#imm` sites at `0x16A15` and `0x16A83` pick up a
   `P2` write further back; this run does not claim the answer either way.

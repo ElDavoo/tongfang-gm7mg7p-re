@@ -80,7 +80,7 @@ COLLIDING_MARKS = (
 # would change the date before anything else.
 
 
-def write_capture(directory, name, marks):
+def write_capture(directory, name, marks, early_exit=None):
     """A §3-schema capture: `marks` as (ts, label) pairs, then two change rows.
 
     The rows land 0.4 s and 1.9 s after the *first* mark rather than at fixed
@@ -91,6 +91,15 @@ def write_capture(directory, name, marks):
     with: the phantom is a property of the duplicate mark, not of the rows
     around it.
 
+    `early_exit` is `(after, text)` or None: `after` is how many of `marks` the
+    row is written behind, so `(1, row)` puts it between the first and second
+    mark and `(0, row)` before any mark at all -- which is the one placement
+    no window can absorb, and the reason the parameter carries a position as
+    well as a row. `text` is the row verbatim rather than something built from
+    parts, because the two shapes a caller needs are a well-formed one and one
+    this cannot place, and a helper that assembled the second for them would
+    be assembling the case it is meant to test.
+
     `parse_ts` is the grader's own, so the timestamps here go through the same
     reader the capture will, and the rows are written at
     `timespec="milliseconds"` because that is the spelling `ec_watch.py`'s
@@ -98,7 +107,12 @@ def write_capture(directory, name, marks):
     """
     first = door.fan.parse_ts(marks[0][0])
     rows = ['ts,addr,old,new']
-    rows += [f'{ts},MARK,,{label}' for ts, label in marks]
+    if early_exit is not None and early_exit[0] == 0:
+        rows.append(early_exit[1])
+    for i, (ts, label) in enumerate(marks, 1):
+        rows.append(f'{ts},MARK,,{label}')
+        if early_exit is not None and early_exit[0] == i:
+            rows.append(early_exit[1])
     rows += [f'{(first + timedelta(milliseconds=ms)).isoformat(timespec=MS)},'
              f'{row}'
              for ms, row in ((400, '0x07C4,0x08,0x28'),
@@ -994,6 +1008,261 @@ class RefusalTests(unittest.TestCase):
                 self.assertEqual(rc, 0, second_ts)
                 self.assertIn('=== 2 window(s), one per mark, none merged ===',
                               out)
+
+
+class EarlyExitTests(unittest.TestCase):
+    """A capture that records a run stopping part way through.
+
+    Cases over one reader, and none of them over a real capture: every file
+    here is built in a `tempfile.TemporaryDirectory()` rather than added to
+    `testdata/`, because `test_every_door_fixture_is_one_this_suite_runs`
+    holds the directory equal to `FIXTURES` and every entry there has to exit
+    0 -- a fixture carrying an early-exit row exits 1 by design. That is also
+    what keeps the hand-annotation cases meaningful, since they are graded out
+    of the same directory.
+
+    §3 asks for "its own pair of marks with a hold between them -- mark, act,
+    hold, mark", so a run that stops inside a hold never writes that hold's
+    closing mark and the window its action mark opened has no end the capture
+    can name. Every assertion below is about that window and about the claim
+    the report makes, never about what the bytes did.
+    """
+
+    # Three marks 30 s apart, so a hold fits inside each window and a row
+    # stamped between the first and the second falls in window 1's own span --
+    # the placement §3's pacing makes unambiguous. 2026-01-01T12:00:10 is the
+    # placeholder instant testdata/README.md reserves for constructed inputs.
+    MARKS = (('2026-01-01T12:00:10.000+01:00', 'gpu tgp 115W->130W'),
+             ('2026-01-01T12:00:40.000+01:00', 'fn mode balanced->performance'),
+             ('2026-01-01T12:01:10.000+01:00', 'ac unplug'))
+    # A row stamped 4 s into the first hold, which is the capture's whole
+    # point: a window that ran 4 s of a 30 s hold prints exactly like one that
+    # ran all of it.
+    ROW = (f'{door.fan.EARLY_EXIT_TAG} 2026-01-01T12:00:14.000+01:00,'
+           'gpu_block_watch: EcError: DeviceIoControl failed')
+
+    def capture(self, tmp, marks=None, early_exit=None, name='stopped.csv'):
+        return write_capture(tmp, name, marks or self.MARKS, early_exit)
+
+    def test_a_placed_row_withholds_exactly_its_own_window(self):
+        # The issue's headline requirement, and the exit code is half of it:
+        # a report over a stopped run must not be one an operator can read as a
+        # run that finished.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, err = run(self.capture(tmp, early_exit=(1, self.ROW)))
+        self.assertEqual(rc, 1, out + err)
+        # All three windows are still counted, because the marks are all there
+        # and §5's table has a row per mark: the withheld one is a window this
+        # run could not grade, not a mark that is not in the file.
+        self.assertIn('=== 3 window(s), one per mark, none merged ===', out)
+        # The other two print in full: every watched address gets its line in
+        # each, which is the whole of what a graded window is here. Both are
+        # quiet -- `write_capture` puts its two change rows 0.4 s and 1.9 s
+        # after the first mark, which is the window the row fell in, so what
+        # the withheld window would have shown is what the control in the case
+        # below reports instead.
+        self.assertEqual(out.count('window delta'), WATCHED * 2)
+        self.assertEqual(out.count('every watched address, moved or not'), 2)
+        self.assertEqual(out.count('no ordering to report: neither block moved '
+                                   'in this window'), 2)
+        self.assertEqual(ordering_lines(out), [])
+        # And the one it fell in is withheld, by name: the section above the
+        # windows says which window, which capture, and when the row says the
+        # run stopped.
+        section = unwrapped(out.split('=== early-exit rows')[1]
+                            .split('=== 3 window(s)')[0])
+        self.assertIn('in mark 1/3', section)
+        self.assertIn("2026-01-01 12:00:14+01:00", section)
+        self.assertIn('gpu_block_watch: EcError: DeviceIoControl failed',
+                      section)
+        self.assertIn('withholds the window it names and turns this run',
+                      unwrapped(section))
+
+    def test_the_two_reports_are_not_byte_identical(self):
+        # The claim the issue is written in, checked as the claim rather than
+        # through any one of the assertions above: the same capture with the
+        # row and without it must not grade to the same bytes. Run twice over
+        # the same marks so the only difference is the row.
+        with tempfile.TemporaryDirectory() as tmp:
+            stopped = self.capture(tmp, early_exit=(1, self.ROW),
+                                   name='stopped.csv')
+            whole = write_capture(tmp, 'whole.csv', self.MARKS)
+            rc_stopped, out_stopped, _ = run(stopped)
+            rc_whole, out_whole, _ = run(whole)
+        self.assertEqual((rc_stopped, rc_whole), (1, 0))
+        self.assertNotEqual(out_stopped, out_whole)
+        # And the difference is in the window the row fell in rather than in a
+        # header: the control keeps the movement the withheld one drops, which
+        # is the false green being stopped.
+        self.assertIn('window delta  0x07C4  0x08 -> 0x28  net +32  total 32'
+                      '  max 32  (1 change)', out_whole)
+        self.assertNotIn('0x07C4  0x08 -> 0x28   (+0.4s)', out_stopped)
+
+    def test_the_withheld_window_keeps_its_heading_and_drops_its_body(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(self.capture(tmp, early_exit=(1, self.ROW)))
+        self.assertEqual(rc, 1)
+        # The heading and the "runs to" line are a graded window's, so the
+        # mark is still locatable and the numbering still matches a run in
+        # which nothing was withheld.
+        self.assertIn("--- mark 1/3: 2026-01-01T12:00:10+01:00  "
+                      "'gpu tgp 115W->130W'", out)
+        self.assertIn('window runs to the next mark in', out)
+        # What is in its place: the row's own words, and the statement that
+        # nothing here is quotable.
+        self.assertIn('NOT GRADED', out)
+        self.assertIn('What it would have shown is not reported here and is '
+                      'not to be quoted from this run', unwrapped(out))
+        # And no figure is printed for it: the two block lines, the ordering
+        # and all 24 addresses are the body the withheld window does not get,
+        # and each is checked where a graded window would have put it.
+        body = out.split('--- mark 1/3')[1].split('--- mark 2/3')[0]
+        for absent in ('addresses moved', 'nothing in this block moved',
+                       'no ordering to report', 'which block moved first',
+                       'every watched address', 'window delta'):
+            self.assertNotIn(absent, body, absent)
+        # Calibration, on the one region of the report that prints it: this is
+        # a statement about which windows this run graded, and it must not
+        # read as the door having done or not done anything.
+        for word in ('absent', 'unused', 'unreferenced', 'confirmed-working',
+                     'confirmed-inert', 'did not execute'):
+            self.assertNotIn(word, out.split('=== what this does and does '
+                                             'not settle')[0], word)
+
+    def test_a_row_this_cannot_read_refuses_the_run(self):
+        # The shape a capture annotated by hand takes, and one written before
+        # the watcher stamped its row: a row that says a run ended and not
+        # when cannot be placed against any window, and a report that graded
+        # beside it would be printing windows of a length it cannot name.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(
+                tmp, early_exit=(1, f'{door.fan.EARLY_EXIT_TAG} when the '
+                                   'driver went away, gpu_block_watch: '
+                                   'EcError: DeviceIoControl failed'),
+                name='unstamped.csv')
+            rc, out, err = run(path)
+        self.assertEqual(rc, 1)
+        self.assertIn('carries an early-exit row this cannot place', err)
+        self.assertIn('the row carries no timestamp this can read', err)
+        # Refused before any window is reported, not partly reported: a window
+        # printed beside an unplaced row is a window whose length this run
+        # cannot bound.
+        for absent in ('window(s), one per mark', 'window delta',
+                       '=== what this does and does not settle ==='):
+            self.assertNotIn(absent, out, absent)
+
+    def test_a_row_stamped_before_the_first_mark_refuses_the_run(self):
+        # The second unplaceable shape. Placed by timestamp and not by where
+        # in the file it was written, so a row written mid-capture and stamped
+        # early is not rescued by being in the middle of it: there is no
+        # window for it to have cut short.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(
+                tmp, early_exit=(0, f'{door.fan.EARLY_EXIT_TAG} '
+                                   '2026-01-01T12:00:05.000+01:00,'
+                                   'gpu_block_watch: EcError: DeviceIoControl'
+                                   ' failed'),
+                name='early.csv')
+            rc, out, err = run(path)
+        self.assertEqual(rc, 1)
+        self.assertIn('no mark in the capture is at or before it', err)
+        self.assertNotIn('window delta', out)
+        # The section still names it, unplaced: a reader who only reads stdout
+        # is not left with a refusal and no account of which row caused it.
+        self.assertIn('NOT PLACED', out)
+
+    def test_a_hand_annotated_capture_grades_exactly_as_it_did(self):
+        # The invariant, asserted as a claim about the unchanged case rather
+        # than left implied by the tests above being about a different file.
+        # A `#` annotation is the only `#` row `read_capture` skips and this
+        # reader has to keep skipping, or every capture an operator annotated
+        # would be a capture whose report changed shape.
+        note = '"# annotated by hand: dock attached, laptop on a desk"'
+        with tempfile.TemporaryDirectory() as tmp:
+            marked = self.capture(tmp, name='annotated.csv')
+            annotated = Path(tmp) / 'plain.csv'
+            lines = Path(marked).read_text().splitlines()
+            lines.insert(1, note)
+            annotated.write_text('\n'.join(lines) + '\n')
+            self.assertIn(note, annotated.read_text())
+            rc, out, _ = run(marked)
+            rc_annotated, annotated_out, _ = run(str(annotated))
+        # Byte for byte the same report, the temporary directory swapped back
+        # for the other file's name -- the strongest form of the claim, and it
+        # covers the read line, the census, all three windows and the exit
+        # code at once.
+        self.assertEqual(rc, 0)
+        self.assertEqual(rc_annotated, rc)
+        self.assertEqual(out.replace(marked, str(annotated)), annotated_out)
+        self.assertNotIn('annotated by hand', annotated_out)
+        # Named rather than implied: the annotation is in the file and in no
+        # section of the report, and neither is the early-exit section.
+        self.assertNotIn('early-exit', annotated_out)
+        # And the census line says nothing about early exits when there are
+        # none -- the count is appended only when there is one to count, which
+        # is what keeps every committed fixture byte-identical too.
+        self.assertNotIn('early-exit', out.split('\n')[0])
+
+    def test_a_row_in_one_capture_withholds_nothing_in_the_other(self):
+        # The per-capture cut, applied to this rule as it is to a change row:
+        # the row is charged only within the file that recorded it, so naming
+        # two captures does not let one file's crash withhold the other
+        # file's windows.
+        other = (('2026-01-03T09:00:10.000+01:00', 'gpu tgp 130W->115W'),
+                 ('2026-01-03T09:00:40.000+01:00', 'ac plug'))
+        with tempfile.TemporaryDirectory() as tmp:
+            first = self.capture(tmp, early_exit=(1, self.ROW),
+                                 name='first.csv')
+            second = write_capture(tmp, 'second.csv', other)
+            rc, out, err = run(first, second)
+        self.assertEqual(rc, 1, out + err)
+        # The row is named, and named against the capture that recorded it.
+        section = unwrapped(out.split('=== early-exit rows')[1])
+        self.assertIn('first.csv (1 row(s))', section)
+        self.assertNotIn('second.csv', section.split('A placed row')[0])
+        # The other capture's two windows grade in full, over their own marks
+        # and their own rows -- and so do the first capture's other two, which
+        # is the cut: the row cost this run one window and one window only.
+        self.assertEqual(out.count('window delta'), WATCHED * 4)
+        self.assertEqual(out.count('every watched address, moved or not'), 4)
+        # And each closing counts its own windows. The withheld count belongs
+        # to the capture the row was in, and the second capture's closing is
+        # the one it would have had with no early-exit row anywhere in the
+        # command line -- which is the control for the sentence above it.
+        close = unwrapped(out.split('=== what this does and does not '
+                                    'settle ===')[1])
+        self.assertIn('1 of the 3 window(s) above was withheld', close)
+        self.assertIn('Both blocks moved in 1 of the windows above', close)
+        with tempfile.TemporaryDirectory() as tmp:
+            rc_alone, alone, _ = run(write_capture(tmp, 'second.csv', other))
+        self.assertEqual(rc_alone, 0)
+        self.assertIn('Both blocks moved in 1 of the windows above',
+                      unwrapped(alone.split('=== what this does and does not '
+                                            'settle ===')[1]))
+
+    def test_a_capture_holding_only_a_row_is_never_a_quiet_capture(self):
+        # The §4c shape this closes: a file whose whole content is the row that
+        # says the run stopped used to grade as a capture that recorded
+        # nothing and said nothing, which reads the same as a capture that
+        # recorded nothing because nothing moved.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'only.csv'
+            path.write_text('ts,addr,old,new\n' + self.ROW + '\n')
+            rc, out, err = run(str(path))
+        # Refused rather than reported, because with no mark at all there is
+        # no window for the row to have cut short -- and said so by name rather
+        # than reported as an empty capture.
+        self.assertEqual(rc, 1)
+        self.assertIn('no mark in the capture is at or before it', err)
+        self.assertIn('NOT PLACED', out)
+        # The row is the only record that anything stopped, and the report says
+        # so rather than claiming the bytes held still: what is printed is the
+        # row's own reason and the reason it could not be placed, and the
+        # window count is zero because the capture holds no mark.
+        self.assertIn('gpu_block_watch: EcError: DeviceIoControl failed',
+                      unwrapped(out))
+        self.assertNotIn('nothing in this block moved', out)
+        self.assertNotIn('window delta', out)
 
 
 if __name__ == '__main__':

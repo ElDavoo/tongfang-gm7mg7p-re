@@ -437,6 +437,21 @@ than coincidence would give. This is a weak test — the two images' address
 choices are not independent draws, both being Keil allocations biased toward
 low XDATA — and it is offered as consistency, not proof.
 
+**The rest of the collision set is now decoded, and the wider range does not
+move this verdict in either direction.**
+[`docs/findings/pd-xdata-collision-survey.md`](../../docs/findings/pd-xdata-collision-survey.md)
+applies §4's three tests to the other 39 addresses and re-runs the survey over
+the whole `0x0000`-`0xFFFF` range, whose both-image collision set is committed
+as `pd-xdata-collisions-full.csv`. Both things §5.1 argues survive the wider
+look: `0x04A6` is still not the only collision, and 40 is still about what
+chance predicts — which also holds over the rest of the low 4 KiB with the
+`0x0800` page taken out. The PD image hands DPTR on rather than dereferencing
+the byte at 29 of the 39, which is §5.2's reading measured over the set
+rather than over the two addresses the audit met. The falsifier issue #64
+names — a collision where both images increment the same byte — is not
+present. The excess in the low 4 KiB sits on the `0x0800`-`0x08FF` page, which
+is not decoded there and is not decoded here.
+
 ### 5.2 The PD image's own block structure
 
 ```console
