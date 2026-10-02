@@ -44,3 +44,11 @@ claim, why `UNIWILL_FEATURE_BATTERY_CHARGE_LIMIT` should not be one of them
 (with the commands that reproduce each line), what `charge_types` actually
 does — a floor on a per-cell voltage derating, not a percentage cap — and a
 drafted PR description to lift.
+
+[`gm7mg7p-ec-register-names.md`](gm7mg7p-ec-register-names.md) is the other
+half of #10: the two places where `uniwill-laptop`'s own register *names*
+disagree with the DSDT and the vendor service, what this tree can and cannot
+show about each, and the question text to put to a maintainer. It ships no
+patch, and `docs/findings.md` §7's "New questions" bullet is the record behind
+both of them.
+
