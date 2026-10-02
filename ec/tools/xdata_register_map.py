@@ -1768,8 +1768,8 @@ CLASSIFIER_SHAPE = (
     # right-hand side. Measured over the committed tree none follows an address
     # token (#424), so the pair costs no bucket: it was pinned as the measured
     # `write`, which is the misclassification this corrects. `<<=` and `>>=` are
-    # here for the operator test itself, which read them by a two-character
-    # slice and so could not match a three-character operator at all.
+    # here so the prefix test is pinned for three-character operators as well as
+    # two-character ones.
     ("DAT_EXTMEM_0440 &= 0x0f;", "read+write"),
     ("DAT_EXTMEM_0440 |= 0x0f;", "read+write"),
     ("DAT_EXTMEM_0440 <<= 1;", "read+write"),

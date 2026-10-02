@@ -2604,7 +2604,10 @@ is a human's, and the issue says so too.
   genuine `&DAT_EXTMEM_xxxx` and one comparison. (This bullet said 271 / 270 when
   §4.1's table was written against the older census; all three figures are
   re-derived on the committed tree, where the one misfiled site is still
-  `bank0/A747.c`.) The test now excludes a second `&`
+  `bank0/A747.c`.) *(Correction, 2026-10-02, issue #424. **The word "genuine"
+  is not earned**: four of the 266 are binary-`&` reads and not address-of,
+  which the residual paragraph below measures. The 267 and the one comparison
+  stand.)* The test now excludes a second `&`
   (`left.endswith("&") and not left.endswith("&&")`), that one reference has
   moved from `address-taken` to `read`, and §4.1 reads 266 / 8,827. No other
   bucket moved and the total did not move. The ordering was pre-existing — `git

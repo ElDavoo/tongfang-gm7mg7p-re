@@ -175,7 +175,8 @@ the measurement below is what corrected it.** There are **four**, all of
 | `common/2290.c` | 85 |
 | `common/22EF.c` | 79 |
 
-Each is `DAT_INTMEM_65 = bVar5 & DAT_EXTMEM_0026;`. The four are separate
+Three of the four are `DAT_INTMEM_65 = bVar5 & DAT_EXTMEM_0026;` and
+`common/22EF.c` names `bVar4` instead. The four are separate
 `common` exports, each its own owner in `xdata-export-ownership.csv` and none a
 `shared` copy, so all four are counted in the default census *and* in the
 `--export-ownership` one. Every `address-taken` reference `0x0026` carries is
@@ -231,8 +232,10 @@ the `:24`→`:25` correction, and `xdata-write-direction-correction.md` quotes t
 ## Calibration
 
 - The two fixes are corrections to a *label*, not to a reading of the firmware.
-  `0x076A` and `0x0443` keep their stores, their references and their
-  `writers`; only the bucket one reference of each sits in is corrected.
+  `0x076A` keeps its store, its references and its `writers`, and only the
+  bucket its one `&&` reference sits in is corrected. `0x0443` is the control
+  and does not move at all: the compound case has zero sites in the tree, so
+  no reference of `0x0443` has its bucket corrected.
 - "Zero compound-assignment sites" is a finding of this method over this tree,
   not an assertion that the exporter cannot emit one.
 - "Four binary-`&` sites" is the same kind of statement, in the other direction:
