@@ -108,8 +108,10 @@ EXPECTED_CORPUS_FILES = (
     "ec/tools/measure_index_repair_visibility.py",
     "ec/tools/test_verify_provenance_clone_depth.py",
     "ec/tools/verify_reassembly.py",
-    "tools/README.md",
 )
+# `tools/README.md` left the population on 2026-10-02: its depth claims were in
+# the per-suite table rows, and the table was removed in favour of each suite's
+# own docstring, where the same claims already were.
 
 # **`docs/agent-pipeline.md:103` as it stood before #1031**, verbatim from the
 # pre-fix source. It is the new control and the reason one is needed: the three
