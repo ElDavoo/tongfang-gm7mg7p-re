@@ -94,6 +94,44 @@ had not been named. Nothing here depends on the two captures being far apart in
 time, which is the shape `ec_watch.py` and `gpu_block_watch.py` produce when
 both are run at once.
 
+**A run that stopped part way through withholds the window it stopped in.**
+`windows/tools/gpu_block_watch.py` records that in the capture itself, in one
+`# the run ended early:` row written from its `except EcError` handler before
+the sink closes -- stamped with `now()`, then the tool's own name and whatever
+the run raised. The grader reads that one row, and it is the only `#` row it
+reads -- a `#` annotation you write by hand does not carry the phrase and is
+still skipped, so a capture carrying none of them grades byte for byte as it
+did before. A row it can place **withholds the window it falls in and turns
+the exit code to 1**: §3 asks for each action to be "its own pair of marks
+with a hold between them -- mark, act, hold, mark", so a run that stops inside
+a hold never writes that hold's closing mark, and the window its action mark
+opened has no end this capture can name. A window that ran five seconds of a
+thirty-second hold reads
+exactly like one that ran all of it, which is the false green the row is in the
+file to stop. The withheld window keeps its `--- mark n/total` heading and its
+`window runs to ...` line, so the mark is still locatable and the numbering
+still matches, and prints no movement figure and no ordering line in place of
+them. The windows that closed normally are unaffected -- the same bounded blast
+radius the 0751 procedure states as "The rest of the day is unaffected" -- and
+a section above the windows names every row with the window it fell in, all of
+them whether or not this run graded that capture's. A row with no readable
+timestamp, or one stamped before its capture's first mark, cannot be placed
+against any window at all: the run is then refused rather than partly reported,
+because a window whose length the capture itself ends is not one to quote.
+Re-run the capture.
+
+Two divergences from the 0751 grader are deliberate and both are in the
+writer's side of this, not in the rule. The **unit is the window and not the
+block**, because there is no `Block` and no `Block.problems` here to charge a
+row to, and because one window here *is* one action's mark, hold and closing
+mark. And the writer's row comes from `EcError` and not from `BaseException`,
+because Ctrl-C is §3's documented way to end a run that finished:
+`manual_fan_ctrl_probe.py` restores from a `finally` and a block has a known
+end, this watcher has neither, and stamping "the run ended early" on every
+Ctrl-C would put that row on every successful capture. Either way, a withheld
+or refused window is a claim about which files were handed in and which windows
+this run graded -- never about the door, and never about a byte.
+
 **The ms figure is a sweep, not a clock.** Both timestamps are the sweeps that
 saw the change, so the delta between them is good to about one `--interval`
 (0.25 s by default) and no better. It is printed in milliseconds because §5's
@@ -121,6 +159,7 @@ Usage:
     python3 ec/tools/grade_gpu_door.py <date>-gpu-door-07c4-07d7.csv
 """
 import argparse
+import os
 import sys
 
 # The CSV vocabulary, not the 0751 procedure's watched sets: `read_capture`,
@@ -306,6 +345,89 @@ def build_windows(runs):
     return out
 
 
+def charge_early_exits(exits, runs):
+    """(placed, refused): the window an early-exit row falls in, and the rest.
+
+    `exits` is `read_early_exits`' own `[(path, rows)]` and `runs` this
+    module's `capture_runs` output, and the two are matched per capture
+    through `fan.capture_key` on `capture_runs`' argument: a row is charged
+    only within the file that recorded it, which is what a window cut from one
+    console's own marks already means everywhere else in this file.
+
+    Handed the marks rather than `build_windows`' output, so that `main` can
+    refuse a row this cannot place before it builds a window at all -- the
+    placement the other refusals here precede. The mark *is* the window: the
+    window a mark opens is the one it heads, and `build_windows` sorts the same
+    list the same way, so the mark this charges is the window the report names
+    at that number.
+
+    This module's own pass rather than a call into
+    `grade_0751_isolation.charge_early_exits`, for the reason `build_windows`
+    gives its own docstring: that one reads `w.block`, which does not exist
+    here, and issue #169 is open on that file. The rule it keeps is the same
+    one -- the last mark at or before the row -- because a row says when a run
+    stopped and the window it stopped inside is the one whose mark is the last
+    one before it.
+
+    A row that places nowhere is refused by the caller rather than filed
+    anywhere. There is no `Block.problems` here to record it against and
+    nothing else in the report would say so: a window printed beside a row
+    this cannot place is a window whose length the report cannot name.
+    """
+    placed, refused = [], []
+    for path, rows in exits:
+        windows = own_marks(runs, path)
+        for e in rows:
+            if e.ts is None:
+                refused.append((e, "the row carries no timestamp this can "
+                                   "read, so nothing in it says when the run "
+                                   "stopped"))
+                continue
+            before = [w for w in windows if w.ts <= e.ts]
+            if not before:
+                refused.append((e, "no mark in the capture is at or before it, "
+                                   "so there is no window for it to have cut "
+                                   "short"))
+                continue
+            placed.append((e, before[-1]))
+    return placed, refused
+
+
+def own_marks(runs, path):
+    """One capture's marks in timestamp order, as `runs` carries them.
+
+    Sorted here rather than trusted to `main`'s sort because three callers
+    want the same order and a window's printed number is its position in it --
+    `charge_early_exits` places against it, `report_early_exits` numbers it,
+    and `build_windows` numbers it again.
+
+    An unknown path comes back as no marks rather than raising, which is what
+    turns its rows into refusals rather than into an exception three functions
+    up. It cannot happen through `main`, which reads the rows out of exactly
+    the files `capture_runs` seeded from; `capture_runs` grows the same
+    guard for the same reason.
+    """
+    for source, marks, _ in runs:
+        if fan.capture_key(source) == fan.capture_key(path):
+            return sorted(marks, key=lambda w: w.ts)
+    return []
+
+
+def early_exit_note(e):
+    """One row's own words, as both places this run prints them.
+
+    The same sentence in the section above the windows and in the body of the
+    window it fell in, so a reader who reads only one of the two is not told a
+    different thing by the one they skipped. The tool name is the file's,
+    because the field is there for whoever opens the file; the reason is the
+    writer's verbatim, because nothing here parses it and nothing here claims
+    to know who wrote the row.
+    """
+    return (f"{os.path.basename(e.source)} records that the run ended early at "
+            f"{e.ts.isoformat(sep=' ')}: "
+            f"{e.reason or 'the row carries no reason'}")
+
+
 def first_change(w, addrs):
     """(timestamp, address) of the earliest change in one block, or None.
 
@@ -319,20 +441,32 @@ def first_change(w, addrs):
     return first.ts, first.addr
 
 
-def report_window(w, n, total):
-    # The file is named on the "runs to" line as well as on the heading
-    # above it, and that is the repetition the per-capture cut needs rather
-    # than a stylistic one: the line says where this window *ends*, and after
-    # the cut that is a mark in `w.source` or the end of `w.source`, so a
-    # reader who took "the next mark" to mean the next mark in the whole run
-    # would be reading a mark a day away into a window that does not contain
-    # it. The last window of a capture runs to that capture's end, not to a
-    # mark another file recorded later.
+def window_head(w, n, total):
+    """The two lines every window opens with, graded or withheld.
+
+    The file is named on the "runs to" line as well as on the heading
+    above it, and that is the repetition the per-capture cut needs rather
+    than a stylistic one: the line says where this window *ends*, and after
+    the cut that is a mark in `w.source` or the end of `w.source`, so a
+    reader who took "the next mark" to mean the next mark in the whole run
+    would be reading a mark a day away into a window that does not contain
+    it. The last window of a capture runs to that capture's end, not to a
+    mark another file recorded later.
+
+    Shared with `report_withheld_window` so a withheld window keeps the same
+    heading and the same numbering as a graded one: the mark stays locatable,
+    and the numbers a reader counts do not shift because a window in the
+    middle of the run was withheld.
+    """
     end = (f"the next mark in {w.source}" if n < total
            else f"the end of {w.source}")
     print(f"\n--- mark {n}/{total}: {w.ts.isoformat()}  {w.label!r} "
           f"({w.source})")
     print(f"    window runs to {end}")
+
+
+def report_window(w, n, total):
+    window_head(w, n, total)
 
     firsts = {}
     for label, lo, hi in WINDOWS:
@@ -406,6 +540,27 @@ def report_window(w, n, total):
         for a in range(lo, hi + 1):
             print(f"        {fan.window_delta(w, a)}")
     return moved
+
+
+def report_withheld_window(w, n, total, why):
+    """One window an early-exit row fell in, in place of its own report.
+
+    The heading and the "runs to" line are a graded window's, from
+    `window_head`, so the mark is still locatable and the numbering still
+    matches a run in which nothing was withheld. The body is not printed: this
+    window is correct as arithmetic and unusable as evidence about a labelled
+    action, and a window that ran five seconds of a thirty-second hold reads
+    exactly like one that ran all of it -- which is the false green the row is
+    in the file to stop. Nothing is dropped in its place but the row's own
+    words: no block summary, no ordering line and none of the 24 `net` /
+    `total` / `max` lines, because a figure taken from half a hold is not a
+    smaller claim than one taken from all of it.
+    """
+    window_head(w, n, total)
+    print("    NOT GRADED -- the capture records the run ending early inside "
+          "this window:")
+    print(fan.wrap_note(f"{why}. What it would have shown is not reported here "
+                        "and is not to be quoted from this run.", indent=4))
 
 
 def report_close_marks(runs):
@@ -512,15 +667,69 @@ def report_columns():
     print("    verdict                        col 10")
 
 
+def report_early_exits(exits, placed, refused, runs):
+    """The rows that say a run stopped, and what this run did about them.
+
+    Printed whole, above the windows, on the census's reasoning rather than its
+    own: a command line may name two captures, and a section naming only the
+    rows in a capture whose windows this run graded would read as a day in
+    which no run ever stopped. So every capture that carries a row is named,
+    and a row this run did not charge is named as unplaced here rather than
+    only in the refusal -- this section is the whole of what the captures hold
+    on this question.
+
+    Printed at all only when a capture carries one. A run in which nothing
+    stopped has nothing to say here, and it is that condition which keeps
+    every committed fixture and every hand-annotated capture grading byte for
+    byte as it did before this reader existed.
+    """
+    print("\n=== early-exit rows (a run that did not reach its closing mark) "
+          "===")
+    landed = {e: w for e, w in placed}
+    why = dict(refused)
+    for path, rows in exits:
+        windows = own_marks(runs, path)
+        print(f"  {os.path.basename(path)} ({len(rows)} row(s)):")
+        for e in rows:
+            w = landed.get(e)
+            if w is not None:
+                where = (f"in mark {windows.index(w) + 1}/{len(windows)} "
+                         f"of {path} ({w.label!r})")
+            else:
+                where = f"NOT PLACED -- {why[e]}"
+            at = e.ts.isoformat(sep=" ") if e.ts else "no readable timestamp"
+            print(fan.wrap_note(f"{at}  {where}: "
+                                f"{e.reason or 'the row records no reason'}",
+                                indent=4))
+    print()
+    # The exit-code clause is flat rather than scoped, because the 0751
+    # grader's `--block` scoping has no counterpart here: this grader grades
+    # every capture the command line named, so a row in either file is a fact
+    # about this invocation rather than about one arm of it.
+    print(fan.wrap_note(
+        "A placed row withholds the window it names and turns this run's exit "
+        "code to 1; the windows that closed normally are graded as they would "
+        "be on their own, and a row this cannot place refuses the run "
+        "outright. Neither is a claim about the machine -- they are claims "
+        "about which files were handed in and which windows this run graded."))
+
+
 def report_settle(runs, orders):
     """The closing section, in §6's own order of what it does and does not do.
 
-    `orders` is one per-capture list of which blocks moved, so each shape is
-    described from its own capture rather than from a template. The three
-    branches are deliberately not collapsed: "one block moved" is neither of
-    §6's other two readings, and a closing line that said §6's third bullet for
-    a run in which the ACPI half moved twice would be the tool making the
-    human's call.
+    `orders` is one per-capture list of `(moved, why)` pairs, one entry per
+    window, where `why` is the early-exit row that withheld that window and
+    `None` for a window this run graded: a withheld window has no `moved` to
+    report, and a closing that read its absence as an empty one would count a
+    window this run did not grade as a window where nothing moved. That is the
+    shape the branch below for a capture holding nothing exists for, arrived
+    at through one withheld window rather than through a window count of zero.
+
+    Each shape is described from its own capture rather than from a template.
+    The three branches are deliberately not collapsed: "one block moved" is
+    neither of §6's other two readings, and a closing line that said §6's third
+    bullet for a run in which the ACPI half moved twice would be the tool
+    making the human's call.
 
     A closing per capture, and the counts in it are that capture's own
     windows. Summed over two day-apart files they read as one run's figures
@@ -531,7 +740,30 @@ def report_settle(runs, orders):
     print("\n=== what this does and does not settle ===")
     for (source, _), own in zip(runs, orders):
         print(f"  -- {source} --")
-        ranked = [o for o in own if len(o) == len(WINDOWS)]
+        withheld = [(i, why) for i, (_, why) in enumerate(own, 1)
+                    if why is not None]
+        if withheld:
+            # Its own branch rather than the three below run over the graded
+            # windows, because none of the three is true of this capture: each
+            # of them is a count over every window, and one of these windows is
+            # not in evidence at all. §6's third bullet in particular -- no
+            # movement at all -- is not available from a run whose own capture
+            # records it stopping, and printing it over a window this run
+            # declined to grade would be the §4c shape with a different cause.
+            verb = "was" if len(withheld) == 1 else "were"
+            print(f"  {len(withheld)} of the {len(own)} window(s) above {verb} "
+                  "withheld, so this closing")
+            print("  takes no §6 reading over the capture:")
+            for i, why in withheld:
+                print(fan.wrap_note(f"mark {i} -- {why}", indent=4))
+            print("  The windows that did print are graded above, one per "
+                  "mark. A window that")
+            print("  was not graded is not a window where nothing moved, and "
+                  "§6's third bullet")
+            print("  is not available from a run whose own capture records it "
+                  "stopping.")
+            continue
+        ranked = [o for o, _ in own if len(o) == len(WINDOWS)]
         if not own:
             # Stated rather than passed over. A capture with no mark row has
             # no window and so no §6 reading, and the "Neither block moved in
@@ -557,8 +789,8 @@ def report_settle(runs, orders):
                   "change with no host `ECRW` at")
             print("  the mark -- needs the PID and the IOCTL code, which are "
                   "§4a's and in no capture.")
-        elif any(own):
-            one = sum(1 for o in own if len(o) == 1)
+        elif any(o for o, _ in own):
+            one = sum(1 for o, _ in own if len(o) == 1)
             print(f"  No window had both blocks moving ({one} of {len(own)} "
                   "moved one block only), so §5's")
             print("  ordering column has no number in any of them, and that "
@@ -681,12 +913,23 @@ def main(argv=None):
               "the capture once.", file=sys.stderr)
         return 1
 
-    marks, changes = [], []
+    marks, changes, exits = [], [], []
     for path in paths:
         m, c = fan.read_capture(path)
         marks += m
         changes += c
-        print(f"{path}: {len(m)} mark(s), {len(c)} change row(s)")
+        read = f"{path}: {len(m)} mark(s), {len(c)} change row(s)"
+        # Appended only when there is something to count, which is what keeps
+        # every capture carrying no such row grading byte for byte as it did
+        # before this reader existed -- every committed fixture, and every
+        # capture an operator annotated by hand. Counted here rather than at
+        # the section below for the reason `read_capture` is above: this line
+        # is what a reader looks for first.
+        rows = fan.read_early_exits(path)
+        if rows:
+            exits.append((path, rows))
+            read += f", {len(rows)} early-exit row(s)"
+        print(read)
 
     # One run per capture, and the per-file census above is what says so: the
     # counts are per file because `read_capture` is called per file, and the
@@ -771,7 +1014,51 @@ def main(argv=None):
               "actions two instants.", file=sys.stderr)
         return 1
 
+    # The early-exit rows, placed before a window is built, so that a row this
+    # cannot place refuses the run with nothing window-shaped printed -- the
+    # same position, and for the same reason, as the collisions refusal above.
+    # `charge_early_exits` is handed `runs` rather than `build_windows`' output
+    # for that ordering: the mark is the window, and it is here before the
+    # window exists.
+    placed, early_refused = charge_early_exits(exits, runs)
+
     built = build_windows(runs)
+    if exits:
+        report_early_exits(exits, placed, early_refused, runs)
+    if early_refused:
+        for e, text in early_refused:
+            print(f"\n{os.path.basename(e.source)} carries an early-exit row "
+                  f"this cannot place: {text}.", file=sys.stderr)
+        # The consequences named are this grader's own, and what a placement
+        # would have cost is named as firmly as what it would have gained: a
+        # row saying only *that* a run stopped, and not when, leaves every
+        # window's length uncertifiable, so the windows below would be
+        # quotable as one action each whether or not the action's closing mark
+        # was ever written. The row `gpu_block_watch.py` writes is stamped, so
+        # a row carrying no timestamp is a capture annotated by hand or one
+        # written by a tool that did not stamp it, and the fix is the capture
+        # rather than the grader.
+        print("§3 opens one window per mark so each action's movement can be "
+              "told from the next one's, and a row saying a run ended early "
+              "has to be placed against the window it cut short to say which "
+              "one that was. Nothing in these captures is reported and the "
+              "exit code is 1 until the rows place, because a window whose "
+              "length this cannot bound is not one to quote as an action's. "
+              "What a withheld window is and is not is written up in "
+              "docs/findings/door-grader-early-exit-row.md. Re-run the "
+              "capture, or give the row a timestamp of its own on the same "
+              "clock as the marks around it.", file=sys.stderr)
+        return 1
+
+    # One window can hold more than one row: `CsvSink` opens in append mode,
+    # so a capture the operator ran the watcher into twice carries both. Kept
+    # as a list rather than overwritten so the second row is named on the
+    # window it fell in as well as in the section above -- dropping it would
+    # leave a withheld window explained by one of the two rows that withheld
+    # it.
+    stopped = {}
+    for e, w in placed:
+        stopped.setdefault(w, []).append(e)
     orders = []
     for source, windows in built:
         # The count is this capture's, and the capture is named on the same
@@ -783,12 +1070,25 @@ def main(argv=None):
         # other assertion in the suite is written against.
         print(f"\n=== {len(windows)} window(s), one per mark, none merged ==="
               f" ({source})")
-        orders.append([report_window(w, i, len(windows))
-                       for i, w in enumerate(windows, 1)])
+        # One `(moved, why)` per window, `why` naming the row or rows that
+        # withheld this one. The window keeps its number either way, so the
+        # heading above counts every mark in the capture rather than only the
+        # graded ones -- which is the point: a withheld window is a window this
+        # run could not grade, not a mark that is not there.
+        run_orders = []
+        for i, w in enumerate(windows, 1):
+            rows = stopped.get(w)
+            if rows is None:
+                run_orders.append((report_window(w, i, len(windows)), None))
+                continue
+            why = "; ".join(early_exit_note(e) for e in rows)
+            report_withheld_window(w, i, len(windows), why)
+            run_orders.append((None, why))
+        orders.append(run_orders)
     report_close_marks(built)
     report_columns()
     report_settle(built, orders)
-    return 0
+    return 1 if placed else 0
 
 
 if __name__ == "__main__":
