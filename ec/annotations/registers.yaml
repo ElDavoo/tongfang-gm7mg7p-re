@@ -2403,6 +2403,7 @@ registers:
 
   - name: CPU_TCC_OFFSET (APTC/APTN)
     addr: 0x0786
+    bits: "0-6 offset magnitude; bit 7 is the enable, not data"
     sources: [dsdt(APTC:7/APTN:1), vendor-3.1.39.0(SetCpuTccOffset),
               uniwill-laptop(EC_ADDR_FAN_DEFAULT), live]
     static_refs: 4
@@ -2417,6 +2418,42 @@ registers:
       (FAN_CURVE_LENGTH 5), and ECSpec 3.1.6.0 ADDR_L1_PWM_DEFAULT_MYFAN3.
       Those don't agree with the DSDT or with 3.1.39.0 here, which agree
       with each other.
+      *** DECIDED 2026-10-02 (issue #702), leaving the paragraph above as it
+      was written: it recorded the disagreement and did not resolve it. The
+      EC's own bytes settle it, and they settle it for the CPU TCC offset.
+      *** At bank0 0x9492-0x94A9 the byte is read behind a `jnb` on its own
+      bit 7, a second `jnb` tests AP_OEM (0x0741) bit 0 -- the bit
+      MyEcCtrl.Set_APExistToEC writes -- and then `anl a,#0x7f` stores the
+      low seven bits over XDATA 0x0A4A, which already held a TCC target
+      picked out of a GPU_TEMP (0x044F)-bracketed CODE table. The value
+      replaces that target; it is never added to a base and no address is
+      built from it, which is what EC_ADDR_FAN_DEFAULT as the base of a
+      FAN_CURVE_LENGTH 5 array would require. The routine is
+      seed_tcc_defaults_from_ba36 (0x9334), whose own listing writes the
+      MODE_TCC_OFFSET_DEFAULTS bytes 0x07D8/0x07D9/0x07DA and then runs on
+      into the block above without a break -- so one routine seeds the
+      per-mode TCC defaults and then lets this byte override the selected
+      one. Both other direct sites store a cleared accumulator in an init
+      pass (0xAD81, 0xCCA9).
+      The full walk is docs/findings/xdata-0786-tcc-offset-verdict.md. Note
+      what decides nothing: the `live` source above. Per `jnb 0xe7` at
+      0x9496 a 0x00 byte is one the EC ignores outright, so that reading is
+      consistent with this verdict and confirms no behaviour. No status moves
+      on this, and none should -- nothing here is a live test of the byte,
+      and a store through a run-time-built DPTR stays invisible to both
+      scan_refs.py and trace_xdata_refs.py. What would move it is a live
+      write with bit 7 and 0x0741 bit 0 both set, reading 0x098C and 0x0463
+      back, which is a human's step at the machine.
+      What the verdict does NOT settle is the service side, and the walk is
+      explicit about it: 3.1.39.0 reads 0x0786-0x078A both ways.
+      SetCpuTccOffset writes 0x0786 as a TCC offset, and
+      MyFanManager*.GetFanTablePWMDefault reads 0x0786-0x078A into a
+      five-element DefaultPWM array that is then used as PWM values, so
+      ADDR_L1_PWM_DEFAULT_MYFAN3 names a block this service version does read
+      the way the constant says. Which reading the vendor intended is not
+      answerable from the committed decompilations. This does not move the
+      EC-side verdict above, which is about what the EC's instructions do
+      with the byte, and it does not move the status.
 
   - name: AP_OEM_6 (whisper status / universal fan control)
     addr: 0x07C6
