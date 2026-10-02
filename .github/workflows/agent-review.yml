@@ -300,9 +300,11 @@ jobs:
           jq -r '.final_body'  <<<"$OUT" > /tmp/final-body.txt
           # A verdict that sets both is read as a rejection: the failure to guard against is
           # merging something the reviewer also said to throw away.
-          echo "approved=$(jq -r '(.approved and (.rejected | not)) | tostring' <<<"$OUT")" >> "$GITHUB_OUTPUT"
-          echo "rejected=$(jq -r '.rejected | tostring' <<<"$OUT")" >> "$GITHUB_OUTPUT"
-          echo "off_mission=$(jq -r '(.rejected and (.off_mission // false)) | tostring' <<<"$OUT")" >> "$GITHUB_OUTPUT"
+          {
+            echo "approved=$(jq -r '(.approved and (.rejected | not)) | tostring' <<<"$OUT")"
+            echo "rejected=$(jq -r '.rejected | tostring' <<<"$OUT")"
+            echo "off_mission=$(jq -r '(.rejected and (.off_mission // false)) | tostring' <<<"$OUT")"
+          } >> "$GITHUB_OUTPUT"
           # The review body. Continuation lines are indented so a multi-line problem stays inside
           # its list item.
           jq -r '
