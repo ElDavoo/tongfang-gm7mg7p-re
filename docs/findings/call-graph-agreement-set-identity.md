@@ -92,7 +92,7 @@ the sentence then singles out; the label itself is wrong for `bank1,DEC4`, whose
 two sets are both of size two. The split, the ranks and every set above are
 unchanged.)*
 
-## Twelve of the thirteen are on the record already
+## Eight of the thirteen are on the record already
 
 Eight of the thirteen are not new, and re-deciding them would be a second,
 competing reading of a row that has already been read:
