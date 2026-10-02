@@ -555,6 +555,28 @@ into `r2 -a 8051` with no stitching needed.
   with a named reason, and every count a count *of this walk from this seed
   set*. The write-up is
   [`../docs/findings/bucket-c-codemap.md`](../docs/findings/bucket-c-codemap.md).
+- **`tools/code_map.py`** — the whole main EC image the tool above covers one
+  region of: a worklist descent from the vector table and the BL51 bank-switch
+  trampolines over `common`, `bank0` and `bank1`, marking every byte it decodes.
+  **Three verdicts, not two**, and the third is the point: `code` is an
+  instruction start, `operand` is a byte an instruction the walk decoded
+  consumed, `unreached` is in no decoded instruction at all. A two-state map
+  calls `0x015BA` and `0x01110` `code` — they are inside a `mov dptr,#0xC881`
+  and a `clr 0x91` — which inverts the hand read in
+  `../docs/findings/paged-trampoline-hits-by-hand.md` while appearing to
+  confirm it; `operand` is the only answer that agrees with it, and
+  `--at OFFSET` prints the instruction. `unreached` means not reached by this
+  method, never data. `--csv` writes the committed
+  `annotations/code-map.csv` and `--check` diffs it; `--report` prints coverage
+  for both seed sets and the edges the walk declined, and coverage is a property
+  of the seed set rather than of the image, so the narrow figures are the map's
+  and the wide ones are printed beside them as the circular thing they are. It
+  follows the BL51 trampoline — the one indirect edge it takes, because
+  `find_banks.find_stubs()` reads the selected bank off the stub's own port
+  writes — and `audit_call_targets.py --map-column` carries the map's verdict
+  for the site byte into each of the three censuses, off by default so the
+  committed CSVs are unchanged without it. Write-up:
+  [`annotations/code-map.md`](annotations/code-map.md).
 - **`tools/decode_index_table.py`** — decodes the inline `switch` tables the
   main EC image's one table-reading subroutine consumes, starting with the
   `bank0` `0x8038` one that `annotations/bank-call-audit.md` §8 met as a
