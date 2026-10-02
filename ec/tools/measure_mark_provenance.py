@@ -566,22 +566,22 @@ CITATIONS = [
     # a row only one side wrote, and the lines they landed on are the merged
     # ones. The pins in the other files were drifted by #748 and #749 and are
     # re-anchored here too, so nothing is red on this tree.
-    ("ec/tools/grade_0751_isolation.py", 1398, 'if addr == "MARK":',
+    ("ec/tools/grade_0751_isolation.py", 1416, 'if addr == "MARK":',
      "reader: take_capture_row recognising the row, read_capture's own body"),
-    ("ec/tools/grade_0751_isolation.py", 1526, 'if addr == "MARK":',
+    ("ec/tools/grade_0751_isolation.py", 1544, 'if addr == "MARK":',
      "reader: partition_capture_rows recognising the row -- the fourth site "
      "over this shape, and the one the notice partitions its own read with, "
      "so a mark row is never hex-read there either"),
-    ("ec/tools/grade_0751_isolation.py", 1420,
+    ("ec/tools/grade_0751_isolation.py", 1438,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: mark_labels_of recognising the row, existing_mark_labels' own "
      "extraction"),
-    ("ec/tools/grade_0751_isolation.py", 1490,
+    ("ec/tools/grade_0751_isolation.py", 1508,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: existing_mark_provenance recognising the row -- #739's reader, "
      "the fifth site over this shape, and the one whose result is *supposed* "
      "to differ under the fifth column, which is why it is not in `families`"),
-    ("ec/tools/grade_0751_isolation.py", 1320,
+    ("ec/tools/grade_0751_isolation.py", 1338,
      '`addr == "MARK"` before the `int()` calls, and so does this',
 "refused_capture_rows' docstring quoting that branch, which the scan "
      "matches because it is the same literal spelled in prose"),
@@ -611,40 +611,45 @@ CITATIONS = [
      "the same in the other suite, so the blind side is the tree's and not "
      "one file's"),
     # -- the lines the read-side claim rests on -----------------------------
-    ("ec/tools/grade_0751_isolation.py", 1179, "def read_capture(path):",
+    ("ec/tools/grade_0751_isolation.py", 1175, "def read_capture(path):",
      "read_capture"),
-    ("ec/tools/grade_0751_isolation.py", 1172,
+    ("ec/tools/grade_0751_isolation.py", 1168,
      'return not row or row[0].startswith("#") or row[0] == "ts"',
      "the one skip rule, where a `# provenance` row goes"),
-    ("ec/tools/grade_0751_isolation.py", 1220, "if path_starts_with_bom(path):",
-     "read_capture refusing a byte-order mark before it reads a row, which is "
-     "what keeps the header out of the row shape's data rows"),
-    ("ec/tools/grade_0751_isolation.py", 1224, "if skippable_row(row):",
+    # `:1220` -> `:1238` by #786, which deleted `path_starts_with_bom` and
+    # made this the same test asked of the buffer the one open read. The text
+    # the site quotes is `if starts_with_bom(raw):` -- the same predicate on
+    # the same bytes, which is what keeps the header out of the row shape's
+    # data rows.
+    ("ec/tools/grade_0751_isolation.py", 1238, "if starts_with_bom(raw):",
+     "read_capture refusing a byte-order mark before it decodes a byte of the "
+     "buffer, which is what keeps the header out of the row shape's data rows"),
+    ("ec/tools/grade_0751_isolation.py", 1242, "if skippable_row(row):",
      "read_capture calls that one skip rule rather than spelling it"),
-    ("ec/tools/grade_0751_isolation.py", 1395, "if len(row) < 4:",
+    ("ec/tools/grade_0751_isolation.py", 1413, "if len(row) < 4:",
      "read_capture's only length test: a fifth column passes it"),
-    ("ec/tools/grade_0751_isolation.py", 1397,
+    ("ec/tools/grade_0751_isolation.py", 1415,
      "ts, addr, old, new = row[0], row[1], row[2], row[3]",
      "explicit indexing, not an unpack of row -- the correction to the issue"),
-    ("ec/tools/grade_0751_isolation.py", 1230,
+    ("ec/tools/grade_0751_isolation.py", 1248,
      "def existing_mark_labels(path):", "existing_mark_labels"),
-    ("ec/tools/grade_0751_isolation.py", 1418, "if skippable_row(row):",
+    ("ec/tools/grade_0751_isolation.py", 1436, "if skippable_row(row):",
      "mark_labels_of takes that one skip rule, so existing_mark_labels -- which "
      "delegates its extraction to it -- cannot spell a second copy"),
-    ("ec/tools/grade_0751_isolation.py", 1513, "if skippable_row(row):",
+    ("ec/tools/grade_0751_isolation.py", 1531, "if skippable_row(row):",
      "and so does the partition, over the notice's own read"),
-    ("ec/tools/grade_0751_isolation.py", 1421,
+    ("ec/tools/grade_0751_isolation.py", 1439,
      'out.append((row[0], row[3] if len(row) > 3 else ""))',
      "the (ts, label) pair: no position, and no fifth column either"),
-    ("ec/tools/grade_0751_isolation.py", 1798, "def read_early_exits(path):",
+    ("ec/tools/grade_0751_isolation.py", 1830, "def read_early_exits(path):",
      "read_early_exits"),
-    ("ec/tools/grade_0751_isolation.py", 1840,
+    ("ec/tools/grade_0751_isolation.py", 1872,
      "if not row or not row[0].startswith(EARLY_EXIT_TAG):",
      "the phrase test: a mark's row[0] is a timestamp"),
     ("ec/tools/grade_0751_isolation.py", 537,
      'EARLY_EXIT_TAG = "# the run ended early:"',
      "the one machine phrase the `#` namespace spends in this family"),
-    ("ec/tools/grade_0751_isolation.py", 3995,
+    ("ec/tools/grade_0751_isolation.py", 4027,
      'read = f"{path}: {len(m)} mark(s), {len(c)} change row(s)"',
      "the per-capture census line, which counts rather than spells"),
     ("ec/tools/grade_gpu_door.py", 931, "m, c = fan.read_capture(path)",

@@ -132,6 +132,25 @@ joined to whatever joined it to its callers. The write-up records the
 contraction result as a negative finding because it is the thing the next
 reader will otherwise re-derive.
 
+**And a third decision, which is neither a join nor a cut: an edge whose target
+address has no annotated row to end on.** `cluster()` makes one of three
+decisions per edge -- join it, proxy it, or end at nothing -- and only the
+middle one had a line in `--report`, so nothing printed beside the census said
+what happened to the other two. The third is counted now, in the same walk and
+on the same edges, and the report prints it beside the other decisions so the
+census closes. It is a statement about `ghidra-functions.csv` and about
+nothing else:
+a listing with no row is **not found by this method**, never absent from the
+image, and whether the target is a function this method has not annotated yet
+or a function boundary nobody has drawn is a question about the annotation
+pass, not about the firmware. The split is by the branch, not by what the
+issue could have named -- an edge below the bank base ends unplaced because
+there is no row in the caller's own scope and none in `common`, and one at or
+above it because there is no row in the caller's own scope -- and the small
+remainder that does have a row in the *other* bank is already inside
+`cross_region`, so the two populations overlap and are not additive.
+`docs/findings/group-unplaced-edges.md` has the measurement.
+
 **Which bank a trampoline reaches is still not established, and the cut does
 not establish it.** `subsystems.md` §12 note 4 carries the caveat: the same
 address means different bytes in each bank, so an `lcall` at the caller's side
@@ -301,10 +320,29 @@ DEFAULT_SPLIT = "trampoline"
 #     rule's label would be attributing this tool's own edit to the banking
 #     rule, which is the same conflation `proxy_edges` was split out to stop,
 #     one edit later.
+#   `joined_edges` / `unplaced_edges` / `unplaced_by_caller` /
+#     `unplaced_by_target` / `unplaced_other_bank` -- the other two decisions.
+#     `cluster()` makes one of three per edge and only `proxy_edges` had a line
+#     in the report, so nothing printed added back to `bucket_populations()`'s
+#     census. These are what closes it: joined + proxied + unplaced +
+#     `trampoline_edges` is the census, which is an identity about the code
+#     rather than about this tree.
+#     `unplaced_edges` is an edge the union could not end on a row at all, and
+#     `unplaced_by_target` is kept beside it for the reason
+#     `proxy_by_target` is: the edges spread over the addresses they land on,
+#     so the edge total and the address count are two populations.
+#     `unplaced_other_bank` is the sub-population that does have a row in the
+#     OTHER bank, as its own counter rather than a test on
+#     `unplaced_by_target` because `cross_region` counts those edges too --
+#     it counts a bucket-B edge whose target exists in the other bank whether
+#     or not it was joined -- so the report has to be able to say the two
+#     populations overlap instead of printing them side by side.
 ClusterStats = collections.namedtuple(
     "ClusterStats",
     "cross_region proxy_edges proxy_by_caller proxy_by_target "
-    "reached_only_by_bank trampoline_edges")
+    "reached_only_by_bank trampoline_edges "
+    "joined_edges unplaced_edges unplaced_by_caller unplaced_by_target "
+    "unplaced_other_bank")
 
 
 def read_csv(path):
@@ -454,6 +492,12 @@ def cluster(rows, repo=REPO, min_size=4, split=DEFAULT_SPLIT):
     a reach would leave the proxy totals and `reached_only_by_bank` counting
     edges the union did not walk, which is a report that disagrees with the
     clustering standing next to it.
+
+    Three decisions, not two: an edge is joined, proxied, or left unplaced.
+    The unplaced ones are counted here too rather than in a second pass, for
+    the reason the proxy figures are -- so that the three decisions and the
+    split mode's own cut partition `bucket_populations()`'s census on every
+    run, and no printed line is a partial accounting presented as a whole.
     """
     if split not in SPLIT_MODES:
         raise ValueError("split=%r is outside the closed list (%s)"
@@ -501,6 +545,17 @@ def cluster(rows, repo=REPO, min_size=4, split=DEFAULT_SPLIT):
     proxy_by_caller = collections.Counter()
     proxy_by_target = collections.Counter()
     trampoline_edges = 0
+    # The third decision, and the only one of the three that discards nothing
+    # and claims nothing about the graph: an edge whose target address carries
+    # no row the branch could end it on. Counted on the two fall-through sites
+    # below rather than by a second pass over the listings, for the same
+    # reason the proxy figures are counted here -- a second read is a second
+    # chance to measure a different population from the one the clustering
+    # used.
+    joined_edges = 0
+    unplaced_by_caller = collections.Counter()
+    unplaced_by_target = collections.Counter()
+    unplaced_other_bank = collections.Counter()
     # Resolved once, before the walk, and only in the mode that cuts: the shape
     # rule reads every listing the walk is about to read, and doing that twice
     # on every run to answer a question the default mode only ever asked is not
@@ -550,6 +605,7 @@ def cluster(rows, repo=REPO, min_size=4, split=DEFAULT_SPLIT):
                 # 35, and fails --self-test.
                 if taddr in by_addr.get(scope, {}):
                     union(caller, (scope, taddr))
+                    joined_edges += 1
                     if scope == "common":
                         reach[taddr].add(scope)
                 elif taddr in by_addr.get("common", {}):
@@ -581,6 +637,19 @@ def cluster(rows, repo=REPO, min_size=4, split=DEFAULT_SPLIT):
                     reach[taddr].add(scope)
                     proxy_by_caller[scope] += 1
                     proxy_by_target[taddr] += 1
+                else:
+                    # The third decision, on this branch: there is no row in
+                    # the caller's own scope to join the edge onto and no
+                    # `common` row to proxy it onto either, so the edge ends
+                    # at nothing. Nothing here is a statement about the
+                    # graph: a cut is the proxy rule's decision and says
+                    # something about the call structure, and this is the
+                    # absence of a decision, because there is nothing to
+                    # decide. It says the target address has no row in
+                    # `ghidra-functions.csv` -- not that the firmware has no
+                    # function there.
+                    unplaced_by_caller[scope] += 1
+                    unplaced_by_target[taddr] += 1
                 continue
             # At or above the bank base. The target is in the caller's own
             # bank by assumption -- the assumption audit_call_targets.py
@@ -600,6 +669,21 @@ def cluster(rows, repo=REPO, min_size=4, split=DEFAULT_SPLIT):
                 cross_region += 1
             if taddr in by_addr.get(scope, {}):
                 union(caller, (scope, taddr))
+                joined_edges += 1
+            else:
+                # The third decision again, on the banked branch. The
+                # same-bank assumption found no row to join onto, so the edge
+                # is unplaced -- and if the other bank has a row there it is
+                # already inside `cross_region` above, which counts a
+                # bucket-B edge whose target exists in the other bank whether
+                # or not it was joined. That is why the overlap is recorded
+                # rather than left implicit: the two populations are not
+                # additive, and a report printing them side by side without
+                # saying so invites the addition.
+                unplaced_by_caller[scope] += 1
+                unplaced_by_target[taddr] += 1
+                if other and taddr in by_addr.get(other, {}):
+                    unplaced_other_bank[taddr] += 1
     clusters = collections.defaultdict(list)
     for key in list(parent):
         # The proxy endpoints above are not rows. They hold a component
@@ -619,8 +703,34 @@ def cluster(rows, repo=REPO, min_size=4, split=DEFAULT_SPLIT):
         proxy_by_target=proxy_by_target,
         reached_only_by_bank={taddr for taddr, scopes in reach.items()
                               if scopes and scopes <= set(BANKS)},
-        trampoline_edges=trampoline_edges)
+        trampoline_edges=trampoline_edges,
+        joined_edges=joined_edges,
+        unplaced_edges=sum(unplaced_by_caller.values()),
+        unplaced_by_caller=unplaced_by_caller,
+        unplaced_by_target=unplaced_by_target,
+        unplaced_other_bank=unplaced_other_bank)
     return clusters, stats
+
+
+def edge_partition(stats):
+    """The census's four terms, as the decisions that produced them.
+
+    **`cross_region` is not one of them.** It is counted *before* the join
+    decision, so it covers edges that were joined as well as edges that were
+    not; adding it here would count some of them twice. The four terms below
+    are disjoint and exhaustive over `bucket_populations()`'s edges: `joined`,
+    `proxied` and `unplaced` are the three things `cluster()` does with an
+    edge, and `trampoline` is the fourth because a shape-matched trampoline
+    row is skipped before its targets are read, so those edges are in the
+    census and in none of the three.
+
+    Written as a function rather than as arithmetic in `report()` so the
+    identity is stated once and `--self-test` checks the same expression the
+    report prints."""
+    return {"joined": stats.joined_edges,
+            "proxied": stats.proxy_edges,
+            "unplaced": stats.unplaced_edges,
+            "trampoline": stats.trampoline_edges}
 
 
 def component_name(members):
@@ -1504,6 +1614,124 @@ def self_test():
           "one, the two refusals above would return 0 and this would still "
           "pass -- which is why they are here as a pair)")
 
+    # The third decision. Both ways an edge can land unplaced, in one fixture,
+    # because a fixture carrying only one of them passes against a report that
+    # never mentions the other. Two edges that DO get placed are here too, so
+    # the identity below is an identity over all four terms and not a check
+    # that two zeroes and two zeroes make four.
+    unplaced = [
+        # A common-area address with no row in the caller's own scope and none
+        # in `common` either: nothing to join onto and nothing to proxy onto.
+        {"scope": "bank0", "addr": "8000", "name": "b0_unplaced_caller",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("unplaced_b0.asm", ["8000     12 06 f0 lcall    0x06F0", RET]),
+             REPO)},
+        # An address that carries a `bank1` row and no `bank0` row. The
+        # same-bank branch finds nothing to join, so this edge is unplaced --
+        # and `cross_region` counted it above that decision, because the target
+        # exists in the other bank whether or not it was joined. This is the
+        # edge that fails if anyone adds the two populations.
+        {"scope": "bank0", "addr": "8100", "name": "b0_other_bank_caller",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("unplaced_other_bank.asm",
+                 ["8100     12 82 a0 lcall    0x82A0", RET]), REPO)},
+        {"scope": "bank1", "addr": "82A0", "name": "other_bank_target",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("unplaced_other_bank_target.asm", [RET]), REPO)},
+        # A joined edge, same bank, so `joined_edges` is not vacuous here.
+        {"scope": "bank0", "addr": "8200", "name": "b0_joined_caller",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("unplaced_joined.asm",
+                 ["8200     12 83 f0 lcall    0x83F0", RET]), REPO)},
+        {"scope": "bank0", "addr": "83F0", "name": "b0_joined_target",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("unplaced_joined_target.asm", [RET]), REPO)},
+        # A proxied edge, so `proxy_edges` is not vacuous either.
+        {"scope": "bank0", "addr": "8400", "name": "b0_proxied_caller",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("unplaced_proxied.asm",
+                 ["8400     12 07 d0 lcall    0x07D0", RET]), REPO)},
+        {"scope": "common", "addr": "07D0", "name": "proxied_target",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("unplaced_proxied_target.asm", [RET]), REPO)},
+    ]
+    grouped11, stats11 = group_rows(unplaced, repo=REPO, min_size=2)
+    check("an edge with no row to end on is counted, not dropped",
+          stats11.unplaced_edges == 2
+          and dict(stats11.unplaced_by_caller) == {"bank0": 2}
+          and dict(stats11.unplaced_by_target) == {"06F0": 1, "82A0": 1},
+          "(got %r edge(s), %r by caller, %r by target; the graph carries four "
+          "edges and two of them have no annotated row to join or proxy onto)"
+          % (stats11.unplaced_edges, dict(stats11.unplaced_by_caller),
+             dict(stats11.unplaced_by_target)))
+    check("an unplaced edge is neither joined nor proxied",
+          stats11.proxy_edges == 1
+          and dict(stats11.proxy_by_target) == {"07D0": 1}
+          and grouped11[("bank0", "8000")][0] == "ungrouped"
+          and grouped11[("bank1", "82A0")][0] == "ungrouped",
+          "(got %r proxied edge(s) to %r; an unplaced edge ends at nothing, so "
+          "neither side of the call is in one component with the other)"
+          % (stats11.proxy_edges, dict(stats11.proxy_by_target)))
+    check("the sub-population that does have a row in the other bank is "
+          "kept apart from the rest",
+          dict(stats11.unplaced_other_bank) == {"82A0": 1},
+          "(got %r; 0x06F0 has no row in either bank and 0x82A0 has one in "
+          "bank1, so the second is the term that overlaps cross_region)"
+          % (dict(stats11.unplaced_other_bank),))
+    # The overlap itself, which is the assertion a report that treated the two
+    # populations as additive fails: this one edge is in both, and neither
+    # count is wrong for saying so.
+    check("an unplaced edge in the other bank is already a cross-region edge",
+          stats11.cross_region == 1,
+          "(got %r; `cross_region` counts a bucket-B edge whose target exists "
+          "in the other bank whether or not it was joined, so the 1 unplaced "
+          "edge and this are the same edge and must not be added)"
+          % (stats11.cross_region,))
+    # The identity, on this fixture. A property of the code rather than of any
+    # tree, which is why it is worth pinning and why no constant anywhere
+    # holds the committed tree's figures.
+    check("the three decisions and the split cut partition the edge census",
+          sum(edge_partition(stats11).values())
+          == sum(bucket_populations(unplaced, REPO).values()),
+          "(%r against a census of %d edges)"
+          % (edge_partition(stats11), sum(bucket_populations(
+              unplaced, REPO).values())))
+    check("the fixture really carries one of each of the four terms",
+          edge_partition(stats11) == {"joined": 1, "proxied": 1,
+                                      "unplaced": 2, "trampoline": 0},
+          "(got %r; an all-but-unplaced fixture would make the identity above a "
+          "check on one counter)" % (edge_partition(stats11),))
+    # What a reader can SEE, for the same reason the proxy fixtures assert
+    # their printed strings: a report that stayed silent about this population
+    # would leave the tool correct and its accounting partial again, which is
+    # the bug this fixture exists to stop.
+    out_unplaced = io.StringIO()
+    with contextlib.redirect_stdout(out_unplaced):
+        report(grouped11, stats11, unplaced, repo=REPO)
+    printed_unplaced = out_unplaced.getvalue()
+    for label, needle in (
+            ("the census closing against the four decisions",
+             "1 joined + 1 proxied + 2 unplaced + 0 cut by the split mode = 4"),
+            ("the unplaced edge total",
+             "no annotated row for the caller to be joined or proxied onto: 2"),
+            ("the distinct addresses those edges land on",
+             "over 2 distinct target address(es)"),
+            ("the unplaced edges by caller scope", "by caller scope bank0=2"),
+            ("the two ways an edge can land unplaced",
+             "1 of the 2 have no row in the caller's own scope"),
+            ("the other-bank sub-population", "1 do have a row in the "
+                                              "other bank"),
+            ("the overlap with cross_region",
+             "already inside the cross-region count, so the two populations "
+             "overlap and are not additive"),
+            ("an unplaced edge is neither a join nor a cut",
+             "An unplaced edge is neither a join nor a cut"),
+            ("the population is stated as not-found, never absent",
+             "never absent from the image"),
+    ):
+        check("the report prints %s" % label, needle in printed_unplaced,
+              "(looked for %r in:\n%s)" % (needle, printed_unplaced))
+
     # --- the bank-select cut, on the contracted graph -------------------------
     #
     # The shape of the bridge above, routed through each bank's own trampoline,
@@ -1639,6 +1867,21 @@ def self_test():
           "(got %r cut by the trampoline boundary; each trampoline listing "
           "carries exactly one absolute call, its tail jump)"
           % (stats9.trampoline_edges,))
+    # ... and the fourth term of the census is load-bearing exactly where the
+    # other three are not. Every fixture above is a graph with no
+    # shape-matched trampoline in it, so `trampoline` is 0 throughout and the
+    # partition identity would close without it; this graph is the one place
+    # the term is non-zero, and it is in the census because
+    # `bucket_populations()` reads every listing including the two the walk
+    # skipped.
+    check("the split mode's edges are a term of the census partition",
+          sum(edge_partition(stats9).values())
+          == sum(bucket_populations(cut, REPO).values())
+          and edge_partition(stats9)["trampoline"] == 2,
+          "(got %r against a census of %d edges; the cut edges are in the "
+          "census and in none of the three decisions)"
+          % (edge_partition(stats9), sum(bucket_populations(cut,
+                                                            REPO).values())))
     out_cut = io.StringIO()
     with contextlib.redirect_stdout(out_cut):
         report(grouped9, stats9, cut, repo=REPO, split="trampoline")
@@ -1914,6 +2157,42 @@ def report(grouped, stats, rows, repo=REPO, is_bios=False,
               % (len(big), ", ".join("%s=%d" % (g, n) for g, n in big[:3])))
     print("    call-edge buckets (audit_call_targets.py's): "
           + " ".join("%s=%d" % (b, buckets[b]) for b in "ABC" if buckets[b]))
+    # The line that closes the census printed above it. Until now neither the
+    # `joined` term nor the unplaced one had a line, so the proxy and
+    # cross-region figures were the whole accounting the report could offer for
+    # the edges it read, and neither of them adds to the census. The four terms
+    # are what `cluster()` does with an edge, and they are the same edges:
+    # `bucket_populations()` reads every listing, and this walk skips a
+    # shape-matched trampoline row, which is the fourth term.
+    partition = edge_partition(stats)
+    print("    every edge in that census ended one of those four ways: %d "
+          "joined + %d proxied + %d unplaced + %d cut by the split mode = %d. "
+          "The cross-region count below is not a fifth term: it is counted "
+          "before the join decision, so it covers some of the joined edges "
+          "and some of the unplaced ones rather than adding to either."
+          % (partition["joined"], partition["proxied"],
+             partition["unplaced"], partition["trampoline"],
+             sum(partition.values())))
+    # ... and the third of those, which had no line of its own.
+    other_bank = sum(stats.unplaced_other_bank.values())
+    print("    unplaced edges -- an edge whose target address has no annotated "
+          "row for the caller to be joined or proxied onto: %d, over %d "
+          "distinct target address(es), by caller scope %s."
+          % (stats.unplaced_edges, len(stats.unplaced_by_target),
+             ", ".join("%s=%d" % (scope, n) for scope, n
+                       in sorted(stats.unplaced_by_caller.items())) or "none"))
+    print("    %d of the %d have no row in the caller's own scope, and none in "
+          "`common` either below the bank base or none in the other bank "
+          "either at or above it; %d do have a row in the other bank, "
+          "and those are already inside the cross-region count, so the two "
+          "populations overlap and are not additive. An unplaced edge is "
+          "neither a join nor a cut: a cut is the proxy rule's decision and "
+          "says something about the graph, and an unplaced edge makes no claim "
+          "about the graph at all. A listing with no row is not found by this "
+          "method, never absent from the image; see "
+          "docs/findings/group-unplaced-edges.md."
+          % (stats.unplaced_edges - other_bank, stats.unplaced_edges,
+             other_bank))
     # The two discard populations, printed together because one of them is
     # seven times the other and the banking rule cut both. A report that
     # printed only the cross-region count would read as though that were the
