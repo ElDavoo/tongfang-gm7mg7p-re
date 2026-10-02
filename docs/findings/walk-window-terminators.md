@@ -57,9 +57,17 @@ within one byte of the image's end and the second within two of it, and
 **`manual-fan-ctrl-0751-arms.csv` is not in the table above** and its 171
 `window` cells are not counted here. It has a `window` column, but
 `walk_branch_arms.py` produces it, its key is `site_runtime` rather than a file
-offset, and its cells are arm listings that end on a flow opcode by
-construction. Folding it in would count another tool's guarantee as this one's
-measurement.
+offset, and no row of the committed run ends on that tool's instruction budget
+or carries a cut `status`. Folding it in would count another tool's
+measurement as this one's.
+
+**Correction (2026-10-02, issue #866): the sentence this replaced claimed the
+cells "end on a flow opcode by construction", and that is a guarantee about
+`walk_branch_arms.py` rather than a measurement of a file.** The tool budgets
+every arm at `--max-insns` and `END_BUDGET` is one of its `CUTS`, so an arm can
+end on the budget; what excludes the table is that none committed does, held
+per row by `test_walk_budget_census.py` rather than counted by it. See
+[`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md).
 
 ## The issue's four, and the thirteen
 

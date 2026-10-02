@@ -1925,7 +1925,7 @@ file_offset,region,runtime,opcode,target,bucket,frame_onto,frame_over,earlier_re
 0x08022,bank0,0x8022,ljmp,0x7415,A,1,23,"0x08020 90 19 02 mov dptr,#0x1902",,,,
 0x0802B,bank0,0x802B,lcall,0xBCB6,B,21,3,0x0802A 80 12 sjmp 0x803e,,,other,other
 0x08035,bank0,0x8035,lcall,0x7151,A,24,0,,,,,
-0x08040,bank0,0x8040,ljmp,0x811A,B,24,0,,,,entry,entry
+0x08040,bank0,0x8040,ljmp,0x811A,B,10,14,,,,entry,entry
 0x0805B,bank0,0x805B,ljmp,0x8274,B,24,0,,,,entry,other
 0x0805E,bank0,0x805E,lcall,0xB9DF,B,23,1,"0x0805D 74 12 mov a,#0x12",,,entry,entry
 0x08074,bank0,0x8074,lcall,0xB965,B,22,2,,,,other,other
@@ -3734,7 +3734,7 @@ file_offset,region,runtime,opcode,target,bucket,frame_onto,frame_over,earlier_re
 0x0EBD2,bank0,0xEBD2,ljmp,0xED52,B,24,0,,,,entry,other
 0x0EBD5,bank0,0xEBD5,lcall,0x1510,A,22,2,"0x0EBD4 52 12 anl 0x12,a",,1,,
 0x0EBDC,bank0,0xEBDC,lcall,0x7151,A,24,0,,,,,
-0x0EBE7,bank0,0xEBE7,ljmp,0xEC59,B,24,0,,,,entry,other
+0x0EBE7,bank0,0xEBE7,ljmp,0xEC59,B,10,14,,,,entry,other
 0x0EBF5,bank0,0xEBF5,lcall,0x0800,A,24,0,,,,,
 0x0EBFB,bank0,0xEBFB,lcall,0xF12F,B,24,0,,,,entry,entry
 0x0EBFE,bank0,0xEBFE,lcall,0xE4B9,B,24,0,,,,entry,other

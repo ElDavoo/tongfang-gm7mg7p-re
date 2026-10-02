@@ -16,10 +16,12 @@ registers happen to sit.
 
 The region map, the PD image's identifying marker and the "which image is
 this offset in" rule all come from trace_xdata_refs.py; nothing about the
-dump's layout is re-derived here. The counting is the same `90 hi lo` byte
-pattern scan_refs.py uses, with the same limits: it is not instruction
-aligned, so a hit can be an operand byte or table data rather than a real
-`MOV DPTR,#imm16`, and indirect/pointer XDATA access is invisible to it. A
+dump's layout is re-derived here, and neither is the byte-for-byte check,
+which comes from trace_xdata_refs.py alongside the region map. The counting is
+the same `90 hi lo` byte pattern scan_refs.py uses, with the same limits: it is
+not instruction aligned, so a hit can be an operand byte or table data rather
+than a real `MOV DPTR,#imm16`, and indirect/pointer XDATA access is invisible
+to it. A
 zero therefore means "not found by this method", never "absent" -- see the
 0x07B9 blind spot in docs/findings.md 4c. Counts here are expected to equal
 `trace_xdata_refs.py --counts-only` for any address; they are a faster way
@@ -31,13 +33,16 @@ Usage:
     python3 xdata_span_survey.py ../firmware/GMxMGxx_11.800 0x0400 0x07FF
     python3 xdata_span_survey.py ../firmware/GMxMGxx_11.800 0x0400 0x07FF --csv
     python3 xdata_span_survey.py ../firmware/GMxMGxx_11.800 0x0400 0x07FF --page 0x40
+    python3 xdata_span_survey.py ../firmware/GMxMGxx_11.800 0x0000 0xFFFF \\
+        --csv --collisions
 """
 import argparse
 import collections
 import csv
+import io
 import sys
 
-from trace_xdata_refs import PD_MARKER, REGIONS, region_of
+from trace_xdata_refs import PD_MARKER, REGIONS, check_table, region_of
 
 # Region names in the order the tables print them, main EC first. Taken from
 # REGIONS rather than spelled out, so a re-derived image map carries through.
@@ -64,7 +69,34 @@ def totals(counts, names):
     return sum(counts[n] for n in names)
 
 
-def main() -> None:
+def csv_table(counts, lo: int, hi: int, collisions: bool = False) -> str:
+    """(the `--csv` table, one row per address in the span) as a string.
+
+    A string rather than a write to stdout, because `--check` diffs the same
+    bytes this prints. It is built for the plain span too, so
+    `../annotations/pd-xdata-span-sites.csv` keeps reproducing byte for byte
+    from the command §1 of `pd-xdata-overlap.md` quotes.
+
+    `collisions` keeps only the addresses both images reference. The whole
+    `0x0000`-`0xFFFF` table is 65536 rows, almost all of them zero on one side
+    or the other, and a committed table of that shape carries the collisions
+    in a form that has to be filtered on every read; the collisions are what
+    the wide span was run for, so they are the rows that survive here.
+    """
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["addr", "total", "main_ec", "pd_image"] + IMAGES)
+    for addr in range(lo, hi + 1):
+        c = counts[addr]
+        main_ec, pd_image = totals(c, MAIN_EC_IMAGES), c[PD_IMAGE]
+        if collisions and not (main_ec and pd_image):
+            continue
+        w.writerow([f"0x{addr:04X}", sum(c.values()), main_ec, pd_image]
+                   + [c[n] for n in IMAGES])
+    return buf.getvalue()
+
+
+def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("firmware", help="raw EC firmware image (e.g. ec/firmware/GMxMGxx_11.800)")
@@ -72,9 +104,18 @@ def main() -> None:
     ap.add_argument("hi", help="last address of the span, inclusive, e.g. 0x07FF")
     ap.add_argument("--csv", action="store_true",
                     help="write one row per address on stdout instead of the table")
+    ap.add_argument("--collisions", action="store_true",
+                    help="with --csv, keep only the addresses both images reference")
+    ap.add_argument("--check", metavar="PATH",
+                    help="with --csv, diff this run against a committed table and "
+                         "exit non-zero on any difference")
     ap.add_argument("--page", type=lambda s: int(s, 0), metavar="N",
                     help="also bucket the span into blocks of N addresses")
     args = ap.parse_args()
+
+    if (args.collisions or args.check) and not args.csv:
+        ap.error("--collisions and --check are about the --csv table; without "
+                 "--csv this run prints the summary")
 
     lo, hi = int(args.lo, 16), int(args.hi, 16)
     if lo > hi:
@@ -92,14 +133,11 @@ def main() -> None:
     counts = survey(d, lo, hi, pd_verified)
 
     if args.csv:
-        w = csv.writer(sys.stdout)
-        w.writerow(["addr", "total", "main_ec", "pd_image"] + IMAGES)
-        for addr in range(lo, hi + 1):
-            c = counts[addr]
-            w.writerow([f"0x{addr:04X}", sum(c.values()),
-                        totals(c, MAIN_EC_IMAGES), c[PD_IMAGE]]
-                       + [c[n] for n in IMAGES])
-        return
+        table = csv_table(counts, lo, hi, args.collisions)
+        if args.check is not None:
+            return check_table(table, args.check)
+        sys.stdout.write(table)
+        return 0
 
     span_ec = sum(totals(counts[a], MAIN_EC_IMAGES) for a in range(lo, hi + 1))
     span_pd = sum(counts[a][PD_IMAGE] for a in range(lo, hi + 1))
@@ -120,6 +158,8 @@ def main() -> None:
             ec = sum(totals(counts[a], MAIN_EC_IMAGES) for a in range(base, top + 1))
             pd = sum(counts[a][PD_IMAGE] for a in range(base, top + 1))
             print(f"  0x{base:04X}-0x{top:04X}   {ec:>8} {pd:>8}")
+
+    return 0
 
 
 if __name__ == "__main__":
