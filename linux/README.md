@@ -24,6 +24,15 @@
   offline tests. The 2026-09-17 live run produced red → off with no keyboard
   change; [notes and remaining driver work](lightbar/README.md). Static
   protocol control is confirmed, not complete `ite_8291_lb` integration.
+- **`uniwill-var/`** — reads and writes the vendor's `UniWillVariable` UEFI
+  variable through `efivarfs`, the Linux half of
+  `../windows/tools/uniwill_set.py` (issue #118). `0x33` is the byte
+  `../docs/findings.md` §8 found gates the BIOS setup's hidden memory-OC menu.
+  **The write has not been run** — the pipeline has no machine — so §8's "that
+  route has not been exercised" still stands; what exists is the tool, its
+  offline suite and the procedure in
+  `../docs/hardware-tests/uniwill-var-memoc-efivarfs.md`.
+  [Notes and why it stays userspace](uniwill-var/README.md).
 - **`patches/`** — a small `uniwill-laptop` patch adding a module parameter
   to test the numeric charge-limit path instead of the charge-mode path.
   See `patches/README.md` for an important correction to its own commit
