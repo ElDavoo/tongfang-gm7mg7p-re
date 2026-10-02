@@ -57,16 +57,20 @@ what `--check` reported as name disagreements on the tree before it.
 
 - The two key sets were **identical** — 2,717 rows each, no orphan in either
   direction — so the disagreement that follows is not a shape problem.
-- **181 rows disagreed on `name`**, all in one direction: the index holds a real
-  name, the report holds the placeholder it had replaced. `FUN_CODE_0012` against
+- **181 rows disagreed on `name`.** In 176 of them the report held a placeholder
+  the index has since replaced with a real name: `FUN_CODE_0012` against
   `ret_only_0012`, `thunk_FUN_CODE_1150` against `table_entry_to_1150`. By
-  program: `common` 114, `pd` 41, `bank1` 14, `bank0` 12. **176 of the 181**
-  have an old name matching `^(FUN_CODE|thunk_FUN_CODE|CODE|FUNC)_` and **2** have
-  a new one, so the drift is overwhelmingly "the report never learned a rename
-  away from a placeholder" rather than a rename that moved. That pattern is a
-  local check, not this repository's `isPlaceholderName()` — two drifted copies
-  of which are a separate open item, named below — so it is measuring the shape
-  of the old names and not applying the project's rule to them.
+  program: `common` 114, `pd` 41, `bank1` 14, `bank0` 12. Those 176 have an old
+  name matching `^(FUN_CODE|thunk_FUN_CODE|CODE|FUNC)_` and not one of the 181
+  has a new name matching it. The remaining **5** are the other shape — the
+  report held a real, stale name the index replaced with a *different* real
+  name, so a rename that moved: `pd 0000` became `ljmp_0500`, and `pd 3497`,
+  `pd 998B`, `pd 9C1B` and `pd 9C4D` became `call_10bc`. The drift is therefore
+  overwhelmingly "the report never learned a rename away from a placeholder",
+  and those five are the whole of the exception. That pattern is a local check,
+  not this repository's `isPlaceholderName()` — two drifted copies of which are
+  a separate open item, named below — so it is measuring the shape of the old
+  names and not applying the project's rule to them.
 - **The `.asm` header carries the name too, and it agreed with the index for
   every row and every one of the 2,717** — 0 differences. The name is therefore
   stated twice in the tree and the two copies agree; the report was the only
@@ -211,9 +215,13 @@ Two things this change can say about it, and one it cannot:
 **Not fixed here, on purpose.** Re-reporting those rows needs the pinned
 assembler, and a full `--report` against the runner's `02.00` would rewrite
 almost every row of the file and change measurements in order to fix something
-that is not a measurement. `assembler_version()` records what a different ASxxxx
-does to the tallies: `match` 2,574 → 2,621, `assembler-gap` 58 → 6, `mismatch`
-0 → 0. A measurement is not traded for a cleanup.
+that is not a measurement. What a different ASxxxx does to the tallies is in
+[`../../evidence/ec-reencode/2026-09-23-sdas8051-versions.md`](../../evidence/ec-reencode/2026-09-23-sdas8051-versions.md),
+"The two measurements", and in the `assembler_version()` docstring that quotes
+it: `match` 2,574 → 2,621, `assembler-gap` 58 → 6, `mismatch` 0 → 0. Those are
+that run's figures, on a report that has since grown, and are not to be
+compared against the census the committed CSV shows now. A measurement is not
+traded for a cleanup.
 
 ## Why a full `--report` is not the answer to a stale name
 
