@@ -161,9 +161,9 @@ class TheEightSitesTests(unittest.TestCase):
     """Issue #110's acceptance criterion, asserted as a claim and not a census.
 
     Eight bank0 `DPH` builds reach page `0x0F`, they are the eight §6 names, and
-    the answer is the same at every window width the tool offers. The third half
-    is the one that makes the first two a finding rather than a coincidence: a
-    count a `--window` knob can manufacture is a property of the knob.
+    the answer is the same at every window width from 2 to 9. The third half is
+    the one that makes the first two a finding rather than a coincidence: a count
+    a `--window` knob can manufacture is a property of the knob.
     """
 
     @classmethod
@@ -198,8 +198,8 @@ class TheEightSitesTests(unittest.TestCase):
 
     def test_the_count_does_not_depend_on_the_window(self):
         # The sweep, including a width one past the widest the summary prints.
-        # "Eight at the default" is a claim about an image; "eight at every
-        # width" is a claim about the scan, and it is the one that would catch a
+        # "Eight at the default" is a claim about an image; "eight across the
+        # sweep" is a claim about the scan, and it is the one that would catch a
         # window default chosen to produce the answer.
         for width in sorted(set(WIDTHS) | {max(WIDTHS) + 1}):
             with self.subTest(window=width):

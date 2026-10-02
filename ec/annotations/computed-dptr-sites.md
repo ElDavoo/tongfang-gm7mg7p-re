@@ -10,9 +10,9 @@ scan that sees that spelling, the eight sites it finds, and the sentence in
 `registers.yaml`'s header that now names this scan beside the ones before it.
 
 **The eight are found with no seeding, and the answer is eight at every window
-width the tool offers.** §2 has the run. A count a `--window` knob can
-manufacture is a property of the knob, so the summary prints the page-`0x0F`
-count at several widths beside the default on every run, and
+width from 2 to 9.** §2 has the run and §2a the ends of that range. A count a
+`--window` knob can manufacture is a property of the knob, so the summary prints
+the page-`0x0F` count at several widths beside the default on every run, and
 `test_computed_dptr_sites.py` sweeps them as the acceptance criterion.
 
 **The page is carried, not assumed, and no row invents a concrete address.**
@@ -91,11 +91,12 @@ before it from the row.
 
 **A `mov 0x83,a` this scan did not turn into a site is a limit, and the summary
 counts them.** The 341 anchored stores are the 242 sites and the 99 declined
-between them, once each, and a declined store says which of three reasons it is:
-95 had no immediate `add`/`addc` in the window — each naming the budget that ran
-out, a different token from a store at the very start of a region, which has no
-budget to name — and 4 are the build the next paragraph is about. None of the
-three is a claim about the byte.
+between them, once each, and a declined store names the reason it is not one:
+95 had no immediate `add`/`addc` in the window, each naming the budget that ran
+out, and 4 are the build the next paragraph is about. Those are the two reasons
+this image produces — a store at the very start of a region, which has no budget
+to name and carries its own token, is not among them. No reason is a claim about
+the byte.
 
 **A high-byte build is a site once, however many stores follow it.** The linear
 walk does not stop at control flow, so where a `ret` is followed by the bytes
@@ -150,10 +151,18 @@ the tool:
 | 6 | 64 | 8 |
 | 8 | 64 | 8 |
 
-Both columns hold at every width the tool offers, and the `0x0F` count is 8 at
-width 2 as well — the narrowest that can still hold an `add` at all, since the
-anchor store is not itself in the window. That is the acceptance criterion: the
-eight are a property of the image, not of the knob.
+Both columns hold across the widths this table prints and across the full range
+the suite sweeps, 2 to 9, and the `0x0F` count is 8 at width 2 as well — the
+narrowest that can still hold an `add` at all, since the anchor store is not
+itself in the window. That is the acceptance criterion: the eight are a property
+of the image, not of the knob.
+
+The range is bounded because the tool accepts widths outside it and prints only
+the six above. Narrower than 2 the window never reaches the `add`/`addc` — at
+`--window 1` it holds the `clr a` alone — so the `0x0F` count is 0 and not 8.
+Wider than 9 the main-EC column moves: `--window 10` reports 66 against the 64
+above. So the sweep's 2 to 9 is the range the evidence covers, and the 64 in §2's
+table is a property of the default width rather than of the image.
 
 ## 3. The carry, and why the eight are decidable
 
