@@ -137,7 +137,7 @@ into `r2 -a 8051` with no stitching needed.
   register, a table, or across a call is `unresolved` and says which half
   defeated it — never "absent". `annotations/indirect-xdata-sites.md` is the
   write-up and its §5 is the full list.
-- **`tools/computed_dptr_sites.py`** — the third spelling, and the one
+- **`tools/computed_dptr_sites.py`** — a further spelling, and the one
   `manual-fan-ctrl-0751.md` §6 is a worked counter-example to: a 16-bit
   `DPTR` assembled in the accumulator over two instructions,
   `add a,#lo ; mov DPL,a ; clr a ; addc a,#hi ; mov DPH,a`, so the

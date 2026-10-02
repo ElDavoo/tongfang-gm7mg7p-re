@@ -233,7 +233,11 @@ class TheEightSitesTests(unittest.TestCase):
         # drop a row, so a page reached only by handoffs is still reached.
         hits, undecided = C.page_of_sites(self.img, True, 0x0F)
         self.assertEqual(sorted(r["offset"] for r in hits["bank0"]), EIGHT)
-        self.assertEqual(undecided, [])
+        # The eight are hits and not maybes, which is the claim; the rest of the
+        # undecided list is this image's refusals, which a refusal's page being
+        # undetermined puts under every page, and a count of those would be a
+        # figure every merge that changes a byte has to edit.
+        self.assertEqual(set(EIGHT) & {r["offset"] for r in undecided}, set())
         out, rc = capture(C.page_report, self.img, True, 0x0F)
         self.assertEqual(rc, 0)
         self.assertIn("hands DPTR to a subroutine", out)
@@ -275,13 +279,21 @@ class CarryTests(unittest.TestCase):
         # accumulator and leaves the carry, so the high byte is one of two
         # values -- and a tool that printed `0x0F` would be claiming the method
         # established something it did not.
-        site = one_site(fixture(mov_a(0x0F), addc(0x00), mov_dph()))
+        img = fixture(mov_a(0x0F), addc(0x00), mov_dph())
+        site = one_site(img)
         self.assertIsNone(site["page_value"])
         self.assertIn("{0x0F, 0x10}", site["page"])
         self.assertNotEqual(site["page"], "0x0F")
-        # And the row is not in `--page`'s tally either, because a set is not a
-        # hit and a refusal is not a miss.
-        self.assertNotIn(site["page_value"], (0x0F, 0x10))
+        # And the row is not in `--page`'s hit tally either, because a set is
+        # not a hit -- it is listed as undecided for the two pages in the set,
+        # which is the difference between "measured and not this" and "not
+        # looked at".
+        for page in (0x0F, 0x10):
+            with self.subTest(page=f"0x{page:02x}"):
+                hits, undecided = C.page_of_sites(img, False, page)
+                self.assertEqual(hits, {})
+                self.assertEqual([r["offset"] for r in undecided],
+                                 [site["offset"]])
 
     def test_add_a_resolves_on_the_accumulator_alone(self):
         # `add a,#imm` never reads the carry, so it resolves on the accumulator
@@ -307,11 +319,12 @@ class CarryTests(unittest.TestCase):
         # its table's encodings.
         for opcode, expected in ((0x24, "0x3A"), (0x34, "0x3B")):
             with self.subTest(opcode=f"0x{opcode:02x}"):
-                page, value, state = C.page_of(bytes([opcode, 0x10]), 0,
-                                                (0x2A, 1, "setb c"))
+                page, value, state, pages = C.page_of(bytes([opcode, 0x10]), 0,
+                                                      (0x2A, 1, "setb c"))
                 self.assertEqual(page, expected)
                 self.assertEqual(value, 0x3A + (opcode == 0x34))
                 self.assertEqual(state, C.DETERMINATE)
+                self.assertEqual(pages, frozenset({0x3A + (opcode == 0x34)}))
 
     def test_a_carry_setter_on_its_own_is_still_not_a_page_source(self):
         # `setb c` (0xD3) is the mirror of the `clr c` case below and is pinned
@@ -619,7 +632,7 @@ class RegionSplitTests(unittest.TestCase):
         # even though the page is not empty.
         out, rc = capture(C.page_report, self.image_with(0x20020), True, 0x0F)
         self.assertEqual(rc, 1)
-        self.assertIn("the main EC reaches page 0x0F by any of the three methods",
+        self.assertIn("the main EC reaches page 0x0F by any of the scans",
                       out)
         self.assertIn("building 0x0F", out)
 
@@ -632,19 +645,60 @@ class RegionSplitTests(unittest.TestCase):
         self.assertIn("not reached by any site with an established page", out)
         self.assertNotIn("building 0x0F", out)
 
-    def test_a_refused_row_naming_the_page_is_neither_a_hit_nor_a_miss(self):
-        # The distinction `--page` has to keep: a site whose `addc` names the
-        # page and whose accumulator this tool could not read is neither. It is
-        # printed, so the zero beside it is a measurement and not a silence.
+    def test_a_refused_row_is_neither_a_hit_nor_a_miss(self):
+        # The distinction `--page` has to keep: a site whose accumulator this
+        # tool could not read is neither a hit on the queried page nor a miss
+        # for it. It is printed, so the zero beside it is a measurement and not
+        # a silence.
+        #
+        # **The queried page is deliberately not the one the immediate names.**
+        # A refusal leaves A whatever a callee returned, so the site can reach
+        # any page at all; keying the test on the immediate made this pass
+        # only because `0x0F` here happened to be both the immediate and the
+        # query, and would have printed a bare `common 0` with nothing listed
+        # beside it for a refusal that could have been 0x07.
         img = bytearray(b"\x00" * 0x80)
         img[0:5] = bytes([0xEE]) + addc(0x0F) + mov_dph()   # `mov a,r6` first
-        hits, undecided = C.page_of_sites(bytes(img), False, 0x0F)
+        self.assertNotEqual(0x07, 0x0F)   # the query below is not the immediate
+        hits, undecided = C.page_of_sites(bytes(img), False, 0x07)
         self.assertEqual(hits, {})
         self.assertEqual([r["offset"] for r in undecided], [1])
-        out, rc = capture(C.page_report, bytes(img), False, 0x0F)
+        out, rc = capture(C.page_report, bytes(img), False, 0x07)
         self.assertEqual(rc, 1)
-        self.assertIn("could not establish", out)
+        self.assertIn("could not place", out)
         self.assertIn("0x00001", out.replace("0x0001", "0x00001"))
+
+    def test_a_candidate_set_names_the_page_and_not_only_the_immediate(self):
+        # The other direction, and the one the immediate got wrong in *both*
+        # ways: here A is known and non-zero, so the high byte is `0x0B + 0x0F`
+        # and the immediate `0x0F` is not the page at all. The row's own cell
+        # spells the candidate set, and that set -- not the immediate -- is what
+        # decides whether the row is listed under the queried page.
+        img = fixture(mov_a(0x0B), addc(0x0F), mov_dph())
+        site = one_site(img)
+        self.assertEqual(site["page"], "{0x1A, 0x1B} -- " + C.CARRY_UNKNOWN)
+        self.assertEqual(site["page_candidates"], frozenset({0x1A, 0x1B}))
+        for page in (0x1A, 0x1B):
+            with self.subTest(page=f"0x{page:02x}"):
+                hits, undecided = C.page_of_sites(img, False, page)
+                self.assertEqual(hits, {})
+                self.assertEqual([r["offset"] for r in undecided],
+                                 [site["offset"]])
+        # And the page the immediate names is one the row's own set rules out,
+        # so it must not be listed there. This is the half that put a row under
+        # a page it cannot be.
+        hits, undecided = C.page_of_sites(img, False, 0x0F)
+        self.assertEqual(hits, {})
+        self.assertEqual(undecided, [])
+
+    def test_a_determinate_page_is_listed_as_a_hit_and_not_as_undecided(self):
+        # The two lists are disjoint by construction, so a resolved row is
+        # counted once rather than appearing under both. The fixture resolves
+        # on the accumulator alone, and the queried page is its own.
+        img = fixture(clr_a(), addc(0x0F), mov_dph())
+        hits, undecided = C.page_of_sites(img, False, 0x0F)
+        self.assertEqual([r["offset"] for r in hits["common"]], [1])
+        self.assertEqual(undecided, [])
 
 
 class CsvTests(unittest.TestCase):

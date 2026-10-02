@@ -72,13 +72,15 @@ the low byte is a run-time value. The `low` cell names that supplying
 instruction and its offset so a reader can chase it, and the `window` column
 carries the decode it was read against.
 
-**A zero is still "not found by this method", and the sentence now names four
-methods rather than three.** `MOV DPTR,#imm16`, `movx @Ri` with `P2` paging,
-and this scan are three; a `DPTR` built from a stored pointer or a table, one
-handed in through a subroutine's own `DPL`/`DPH` writes, and a CODE jump table
-are not, and neither is the `mov @Ri,#data` form. `ec/annotations/computed-
-dptr-sites.md` §"What this does not establish" carries the same list, and the
-`movx @Ri` half of it belongs to `find_indirect_xdata.py`.
+**A zero is still "not found by this method", and the sentence naming it now
+names this scan beside the ones before it.** What it covers is the
+`MOV DPTR,#imm16` of `scan_refs.py` and `trace_xdata_refs.py`, the `movx @Ri`
+with `P2` paging of `find_indirect_xdata.py`, and this scan; a `DPTR` built
+from a stored pointer or a table, one handed in through a subroutine's own
+`DPL`/`DPH` writes, and a CODE jump table are not, and neither is the
+`mov @Ri,#data` form. `ec/annotations/computed-dptr-sites.md` §"What this
+does not establish" carries the same list, and the `movx @Ri` half of it
+belongs to `find_indirect_xdata.py`.
 
 **Why no `0x0F00` row was added to `registers.yaml`.** The obvious thing to do
 with eight sites on page `0x0F` is to enter the page, and it would break a
@@ -248,7 +250,7 @@ def norm(d: bytes, at: int) -> str:
 
 
 def page_of(d: bytes, add: int, before):
-    """(the page cell, the value or None, the state) for one `add`/`addc`.
+    """(the page cell, the value or None, the state, the pages it could be).
 
     Three states and no fourth, and the middle one is a **set**: where the
     accumulator is known and the carry is not, the high byte is one of two
@@ -256,26 +258,37 @@ def page_of(d: bytes, add: int, before):
     §4d shape -- a claim as though the method had established something it had
     not -- so `page_value` is None in that state and `--page` does not count
     the row either way.
+
+    The fourth element is that set as **data**, and it is the quantity that
+    decides the page rather than the immediate: the high byte is `A + imm [+ C]`
+    and the two agree only where the accumulator happens to be zero. A
+    determinate row's set is the one page it builds, a `CARRY_UNKNOWN` row's is
+    the two it might, and a **refusal's is None** -- the accumulator was not
+    read, so *every* page is open and no queried page can be ruled out by it.
+    Keying that decision on the immediate instead is what let `--page` print a
+    bare zero beside a refusal whose page it could not have established.
     """
     acc, carry, how = before
     imm = d[add + 1] if add + 1 < len(d) else 0
     if acc is None:
         if how == NO_BEFORE:
-            return NO_BEFORE, None, "refused"
-        return f"not established; the instruction before it is `{how}`", None, "refused"
+            return NO_BEFORE, None, "refused", None
+        return (f"not established; the instruction before it is `{how}`",
+                None, "refused", None)
     # `add` and `addc` are two different instructions here and the branch is
     # the whole of it: `add a,#imm` (0x24) is `A + imm` and never reads the
     # carry, so a `setb c` in front of it supplies nothing and adding it would
     # be an off-by-one page. `addc a,#imm` (0x34) is `A + imm + C`, which is
     # why it is the one that needs a candidate set.
     if d[add] == 0x24:
-        return f"0x{(acc + imm) & 0xFF:02X}", (acc + imm) & 0xFF, DETERMINATE
+        value = (acc + imm) & 0xFF
+        return f"0x{value:02X}", value, DETERMINATE, frozenset({value})
     if carry is not None:
         value = (acc + imm + carry) & 0xFF
-        return f"0x{value:02X}", value, DETERMINATE
+        return f"0x{value:02X}", value, DETERMINATE, frozenset({value})
     low = (acc + imm) & 0xFF
     return (f"{{0x{low:02X}, 0x{((low + 1) & 0xFF):02X}}} -- {CARRY_UNKNOWN}",
-            None, CARRY_UNKNOWN)
+            None, CARRY_UNKNOWN, frozenset({low, (low + 1) & 0xFF}))
 
 
 def xaddr_of(page, value, low, lowvalue) -> str:
@@ -409,7 +422,7 @@ def store_verdict(d: bytes, starts: list, store: int, pd_verified: bool,
         return None, NO_ADD if why == REGION_START else f"{NO_ADD} ({why})"
     j = behind.index(add)
     before = accum_before(d, behind[j - 1] if j > 0 else None)
-    page, value, state = page_of(d, add, before)
+    page, value, state, pages = page_of(d, add, before)
     low, lowvalue = resolve_low(d, behind[:j + 1], add)
     onto, over = converges_from(d, add)
     return {
@@ -418,12 +431,16 @@ def store_verdict(d: bytes, starts: list, store: int, pd_verified: bool,
         "region": region_of(add, pd_verified)[0],
         "runtime": runtime_addr(add, pd_verified),
         "form": norm(d, add),
-        "imm": d[add + 1] if add + 1 < len(d) else None,
         "frame_onto": onto,
         "frame_over": over,
         "page": page,
         "page_value": value,
         "page_state": state,
+        # The pages this row can be, or None where the accumulator was not
+        # established and every page is open. The immediate is deliberately not
+        # a field of its own: it is already spelled in `form`, and carrying it
+        # separately is what let `--page` read a page off it instead of off this.
+        "page_candidates": pages,
         "low": low,
         "low_value": lowvalue,
         "xaddr": xaddr_of(page, value, low, lowvalue),
@@ -590,25 +607,30 @@ def page_histogram(rows: list) -> collections.Counter:
 
 
 def page_of_sites(d: bytes, pd_verified: bool, page: int, back: int = WINDOW):
-    """(hits per region, the rows whose immediate names `page` but whose page
-    this tool could not establish), for `--page` and the summary.
+    """(hits per region, the rows whose page this tool could not establish but
+    could not rule out either), for `--page` and the summary.
 
-    Split in two because a refusal is not evidence. A site whose `addc` names
-    `0x07` and whose accumulator this tool could not read is neither a hit on
-    page `0x07` nor a miss for it, and an answer that printed only the count
-    would be claiming the second about every site in the second list.
+    Split in two because a refusal is not evidence. A site whose accumulator
+    this tool could not read is neither a hit on page `0x07` nor a miss for it,
+    and an answer that printed only the count would be claiming the second
+    about every site in the second list.
 
-    The immediate is read off the row's own `imm` field, not back out of the
-    `form` cell: a cell is prose this module formats, and re-parsing one in
-    order to count the thing it says is how a summary and a table come to
-    disagree.
+    **A row is undecided for `page` when `page` is one of the pages it can
+    build, and a row whose accumulator was not read is undecided for every
+    page.** Both halves are the row's own `page_candidates`, which `page_of()`
+    derives from `A + imm [+ C]`; the immediate is not the test, because it
+    agrees with the high byte only where the accumulator is zero. Keying on it
+    both missed rows that could reach the queried page and listed rows for a
+    page their own candidate set rules out -- the second of which is the worse
+    of the two, because it puts a row under a page it cannot be.
     """
     hits = collections.defaultdict(list)
     undecided = []
     for r in sites(d, pd_verified, back):
         if r["page_value"] is not None and r["page_value"] == page:
             hits[r["region"]].append(r)
-        elif r["page_value"] is None and page in (r["imm"], r["imm"] + 1):
+        elif r["page_value"] is None and (r["page_candidates"] is None
+                                          or page in r["page_candidates"]):
             undecided.append(r)
     return hits, undecided
 
@@ -665,10 +687,11 @@ def page_report(d: bytes, pd_verified: bool, page: int, back: int = WINDOW) -> i
     separately and never added: a DPTR in it is another program's byte, and
     that is `lightbar-bat-flow.md` §2's mistake and `trace_xdata_refs.py`'s
     docstring's first point. A page the main EC does not reach is the answer
-    for `0x07B9` and `0x07D0`, and it is a negative -- so the rows that named
-    the page and could not be resolved are printed under it rather than
-    dropped, because they are the difference between "nothing here" and
-    "nothing here that this method could establish".
+    for `0x07B9` and `0x07D0`, and it is a negative -- so the rows that could
+    not be placed are printed under it rather than dropped, because they are the
+    difference between "nothing here" and "nothing here that this method could
+    establish". A refusal is in that list for *every* page, since the
+    accumulator it could not read leaves the page open rather than closed.
     """
     hits, undecided = page_of_sites(d, pd_verified, page, back)
     print(f"page 0x{page:02X}, by the sites whose page this tool can "
@@ -692,17 +715,19 @@ def page_report(d: bytes, pd_verified: bool, page: int, back: int = WINDOW) -> i
         for what, count in sorted(split.items(), key=lambda kv: (-kv[1], kv[0])):
             print(f"  {'':<9} {count:>2} of them {what}")
     if undecided:
-        print(f"\n  and {len(undecided)} site(s) whose immediate names "
-              f"0x{page:02X} but whose page this tool\n  could not establish "
-              "-- neither a hit nor a miss, and listed so the zero above is a "
-              "measurement:")
+        # "could not place" rather than "whose immediate names", because the
+        # second is only true where the accumulator is zero and the list below
+        # is now every row that could not rule this page out.
+        print(f"\n  and {len(undecided)} site(s) this tool could not place, and "
+              f"0x{page:02X} is not\n  ruled out by any of them -- neither a "
+              "hit nor a miss, and listed so the zero above is a\n  measurement:")
         for r in sorted(undecided, key=lambda r: r["offset"]):
             print(f"    0x{r['offset']:05X}  {r['region']:<9} {r['page']}")
     main_rows = [r for region in MAIN_EC_REGIONS for r in hits.get(region, [])]
     main_ec = len(main_rows)
     if not main_ec:
-        print(f"\nSo the main EC reaches page 0x{page:02X} by any of the three "
-              "methods now named nowhere,\nand the PD image's computed DPTR is a "
+        print(f"\nSo the main EC reaches page 0x{page:02X} by any of the scans "
+              "named in `registers.yaml`,\nand the PD image's computed DPTR is a "
               "different program's byte either way. That is\n\"not found by "
               "these methods\", and it is a statement about the methods.")
     elif all(access_of(r["access"]) == CODE_ONLY for r in main_rows):
@@ -858,7 +883,7 @@ def main() -> int:
     print(f"\n{repo_path(SITES_CSV)} is the per-site table; `--csv` prints it "
           "and `--check` diffs this\nrun against it. "
           "ec/annotations/computed-dptr-sites.md is the write-up, and its "
-          "\"what this does not\nestablish\" list is the fourth method a zero "
+          "\"what this does not\nestablish\" list is what a zero "
           "here does not cover.")
     return 0
 

@@ -56,8 +56,8 @@
 #                    ec/annotations/indirect-xdata-sites.md 5 is the full
 #                    list of what it does not establish. No `status:` below
 #                    moves on the strength of it, in either direction.
-#                    A third scan covers a third spelling, and is a third
-#                    caveat: ec/tools/computed_dptr_sites.py looks for
+#                    A further scan covers a further spelling, and is a
+#                    further caveat: ec/tools/computed_dptr_sites.py looks for
 #                    `add a,#imm` / `addc a,#imm` feeding `mov 0x83,a` -- a
 #                    16-bit DPTR assembled in the accumulator over two
 #                    instructions, with the address in neither of them. It finds

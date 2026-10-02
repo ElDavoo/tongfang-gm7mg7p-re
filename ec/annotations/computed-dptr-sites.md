@@ -1,4 +1,4 @@
-# The eight `DPH` builds that reach page `0x0F`, and the fourth method a zero does not cover (issue #110)
+# The eight `DPH` builds that reach page `0x0F`, and what a zero here still does not cover (issue #110)
 
 [`manual-fan-ctrl-0751.md`](manual-fan-ctrl-0751.md) §6 is this repository's own
 worked counter-example against its own tooling. `ec/tools/trace_xdata_refs.py`
@@ -7,7 +7,7 @@ reads and writes, because the EC reaches it by building the pointer in the
 accumulator over two instructions — `add a,#lo ; mov DPL,a ; clr a ; addc
 a,#0x0f ; mov DPH,a` — and the address is in neither of them. This page is the
 scan that sees that spelling, the eight sites it finds, and the sentence in
-`registers.yaml`'s header that now names four methods rather than three.
+`registers.yaml`'s header that now names this scan beside the ones before it.
 
 **The eight are found with no seeding, and the answer is eight at every window
 width the tool offers.** §2 has the run. A count a `--window` knob can
@@ -150,8 +150,8 @@ the tool:
 | 6 | 64 | 8 |
 | 8 | 64 | 8 |
 
-The site count is stable from width 3 up, and the `0x0F` count is 8 at every
-width including 2 — the narrowest that can still hold an `add` at all, since the
+Both columns hold at every width the tool offers, and the `0x0F` count is 8 at
+width 2 as well — the narrowest that can still hold an `add` at all, since the
 anchor store is not itself in the window. That is the acceptance criterion: the
 eight are a property of the image, not of the knob.
 
@@ -174,6 +174,13 @@ see them — and gets three answers:
   else. The 6 main-EC refusals are 4 preceded by an `lcall` — which returns
   whatever the callee left in A — and 2 by a `mov a,rN`; both are limits on the
   look rather than facts about the accumulator.
+
+**A refusal leaves its page open, and `--page` prints it rather than dropping
+it.** An accumulator this tool could not read is not a page it can rule out, so
+a refusal is listed under every page asked rather than under the one its
+immediate happens to name — the high byte is `A + imm [+ C]`, and those agree
+only where `A` is zero. That is what makes the `0x07` zero in §5 a measurement
+instead of a silence.
 
 **`clr c` (0xC3) is a real way to write "no carry", and it is deliberately not a
 page source.** It establishes the carry and *not* the accumulator, so
@@ -234,11 +241,40 @@ page 0x07, by the sites whose page this tool can establish:
   bank1     0  -- not reached by any site with an established page
   pd-image  0  -- not reached by any site with an established page
 
-So the main EC reaches page 0x07 by any of the three methods now named nowhere,
+  and 21 site(s) this tool could not place, and 0x07 is not
+  ruled out by any of them -- neither a hit nor a miss, and listed so the zero above is a
+  measurement:
+    0x02266  common    not established; the instruction before it is `lcall 0x2a7b`
+    0x02270  common    not established; the instruction before it is `lcall 0x2a7b`
+    0x02278  common    not established; the instruction before it is `lcall 0x2a8f`
+    0x022DF  common    not established; the instruction before it is `lcall 0x2a7d`
+    0x028EF  common    not established; the instruction before it is `mov a,r6`
+    0x02912  common    not established; the instruction before it is `mov a,r6`
+    0x22C58  pd-image  no instruction before it in the window
+    0x22E38  pd-image  no instruction before it in the window
+    0x27BE8  pd-image  not established; the instruction before it is `mov a,r6`
+    0x2902A  pd-image  not established; the instruction before it is `mov a,r6`
+    0x2906F  pd-image  not established; the instruction before it is `mov a,r6`
+    0x29080  pd-image  not established; the instruction before it is `mov a,r6`
+    0x290EA  pd-image  not established; the instruction before it is `mov a,r6`
+    0x297BF  pd-image  not established; the instruction before it is `mov a,r4`
+    0x297CD  pd-image  not established; the instruction before it is `mov a,r6`
+    0x2B174  pd-image  no instruction before it in the window
+    0x2B220  pd-image  not established; the instruction before it is `mov a,r6`
+    0x2C6F5  pd-image  not established; the instruction before it is `mov a,r6`
+    0x2D795  pd-image  not established; the instruction before it is `mov a,r6`
+    0x2F3E4  pd-image  not established; the instruction before it is `mov a,r6`
+    0x2F3ED  pd-image  not established; the instruction before it is `mov a,r6`
+
+So the main EC reaches page 0x07 by any of the scans named in `registers.yaml`,
 and the PD image's computed DPTR is a different program's byte either way. That is
 "not found by these methods", and it is a statement about the methods.
 1
 ```
+
+The rows under the zero are the refusals, and they are the reason the zero is a
+measurement rather than a silence: this tool could not read the accumulator in
+front of those `addc`s, so it cannot rule `0x07` out for any of them either.
 
 - **`0x07B9`** (`static_refs_main_ec: 0`, `status: unknown-not-absent`): not
   contradicted and not rescued. The new bucket narrows what its zero licenses,
@@ -315,7 +351,7 @@ The list the issue asked for, and the header paragraph carries the same one.
   register add belongs to the low one.
 - **Anything about behaviour.** No register was read back, no write accepted,
   no capture taken. The `0x0F` mechanism is already mapped statically
-  (`windows/vendor-ec-map.md` 222, §6 above, and `profile-map.csv`'s
+  (`windows/vendor-ec-map.md` "Fan tables", §6 above, and `profile-map.csv`'s
   `0x0F5D`-`0x0F5F` mailbox row); this pass changes which static sites a tool
   can see and claims nothing about what the EC does with them.
 - **A page that is absent from the summary's list.** That is "not reached by a
