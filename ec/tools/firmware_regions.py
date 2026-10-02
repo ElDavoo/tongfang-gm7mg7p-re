@@ -28,8 +28,10 @@ means a byte census cannot settle an architecture, and a tool that printed
 **The `0x28000` block is the reason this tool exists.** It is a 32 KiB block
 that is neither erased nor inside the four-block window the layout assumes, it
 carries 37 printable runs against the 8 in the `0x20000` block beside it, and
-those runs are USB-PD protocol messages (`SRC Negotiate done`, `PR Swap`,
-`UsbPdVer:01.00`). That is enough to say *a distinct 32 KiB image containing
+all but one of those runs read as USB-PD protocol messages (`SRC Negotiate
+done`, `PR Swap`, `UsbPdVer:01.00`) -- the exception, at `0x2F7AD`, is a stub of
+`ret` instructions before the erased tail and not a string. That is enough to
+say *a distinct 32 KiB image containing
 USB-PD protocol strings*. It is not enough to say what architecture it is (its
 first byte is `0x01`, where the three images this repository has identified
 open `0x02`), nor whether it drives a second physical controller -- one Type-C

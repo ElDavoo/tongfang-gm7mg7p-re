@@ -57,8 +57,8 @@ cannot produce.
 is two, not one.
 
 `python3 ec/tools/firmware_regions.py --strings 0x28000` prints 37 printable
-runs in the upper half of the block. They are USB-PD protocol state-machine
-messages, not compiler strings:
+runs in the upper half of the block. All but one of them read as USB-PD
+protocol state-machine messages rather than compiler strings:
 
 ```
 SRC Negotiate done     SINK Negotiate done    PR Swap        DR Swap
@@ -71,9 +71,13 @@ Three measurements separate it from the `0x20000` image beside it:
 - **37 printable runs against 8.** Of the 8 in the `0x20000` block, three are
   intentional — the marker and `ProtoVer:01.00 ` / `DriverVer:01.00` at
   `0x20160`/`0x20170` — one is `"(null)`, and four (`MNOx {`, `X@jL@fBB`,
-  `P@n-@r.@`, `@.-PCIX`) are code decoding as ASCII by accident. Every one of
-  the 37 in the `0x28000` block reads as a protocol message, and none is an
-  artefact.
+  `P@n-@r.@`, `@.-PCIX`) are code decoding as ASCII by accident. The one
+  exception among the 37 is at `0x2F7AD`, `2""""""""""`: a linear decode of
+  the bytes gives an `ljmp` at `0x2F7AB` whose high target byte is that `32`,
+  and the ten `0x22` after it are `ret` instructions, so it is a stub before
+  the erased tail and not a string. Several of the rest open with the
+  preceding routine's `0x22` `ret` rather than with the message's first
+  character, which moves where a run starts without changing what it says.
 - **A different first byte.** The `0x20000` image opens `02 05 00` — an
   `LJMP` into the image, the ordinary way an 8051 reset vector is spelled. The
   `0x28000` block opens `01 90 08 52`, and `0x01` is `AJMP`.
@@ -198,17 +202,19 @@ Bank 0's best offset **moves with the walk limit**:
 |---|---|
 | 8 | `0x08000` |
 | 16 | `0x08000` |
-| 32 | `0x10000` |
+| 32 | `0x08000` |
 | 64 | `0x10000` |
 
-The cause is a 2354-byte erased run at file `0x0F4CE`, inside the block
-`0x08000` names. Bank 0's highest trampoline target is runtime `0xFE00`, which
-under that mapping is inside the run, so a walk long enough to reach it stops.
-The `0x10000` block's own erased tail sits higher and short walks never reach
-it. A metric whose winner depends on a parameter would be asserting something
-the data does not carry, so the ranking uses the depth-independent composite and
-**prints the per-limit counts anyway**, so the sensitivity is visible to anyone
-who would otherwise have assumed a framing metric settles it.
+The ranking holds through a limit of 32 and inverts at 64, and the instruction
+counts `bank_map_score.py` prints for the same two offsets are near-equal at
+the shorter limits and clearly separated at 64. What accounts for the difference
+is not measured here: a walk stops on the first erased or unassigned byte it
+reaches, so how far it gets is a property of where those bytes sit in the
+candidate block rather than of the mapping. A metric whose winner depends on a
+parameter would be asserting something the data does not carry, so the ranking
+uses the depth-independent composite and **prints the per-limit counts anyway**,
+so the sensitivity is visible to anyone who would otherwise have assumed a
+framing metric settles it.
 
 This is also the honest reason the 51% figure was not simply raised. The
 premise underneath `make_bank_image.py`, the Ghidra project, every `.asm`

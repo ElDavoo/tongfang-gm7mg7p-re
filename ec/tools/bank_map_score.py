@@ -45,11 +45,12 @@ imported so a target that walks cleanly for N instructions is distinguished from
 one that runs into padding three bytes in, which the single-byte test cannot see.
 But the walk's ranking is **depth-sensitive and this tool does not use it to
 pick a winner**: measured over the committed population, bank 0's best offset is
-`0x08000` at a walk limit of 8 and 16 and `0x10000` at 32 and above, because
-`0x08000` carries a 2354-byte erased run at file `0x0F4CE` that a long walk from
-a high target runs into. The per-depth columns are printed so that sensitivity
-is visible rather than buried, and §5 names it as the reason the composite is
-depth-independent.
+`0x08000` at a walk limit of 8, 16 and 32, and `0x10000` at 64. A walk stops on
+the first erased or unassigned byte it reaches, so how far it gets is a property
+of where those bytes sit in the candidate block rather than of the mapping, and
+this tool attributes the change to nothing more specific than that. The
+per-depth columns are printed so that sensitivity is visible rather than buried,
+and §5 names it as the reason the composite is depth-independent.
 
 **Nothing here changes the mapping.** Acting on a result would churn every
 bank-0 listing, `c-digests.csv`, `reassembly.csv` and the Ghidra project, and
@@ -157,9 +158,9 @@ def bad(counter):
 def walk_instructions(d: bytes, off: int, limit: int):
     """How many instructions decode from a landing byte, and why the walk stopped.
 
-    A count and not a verdict: `--check` must not fail on this, because whether
-    a walk of 32 or 64 instructions clears the erased run at `0x0F4CE` is a
-    property of the image and not of the mapping.
+    A count and not a verdict: `--check` must not fail on this, because how far
+    a walk of 32 or 64 instructions gets is a property of the image and not of
+    the mapping.
     """
     i, n = off, 0
     while n < limit:
