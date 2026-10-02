@@ -1,0 +1,94 @@
+# ec/tools/cross_decoder_disagreement.py --check and --self-test, wired into
+# the cheap gate.
+# Prepared here rather than landed, for the reason
+# docs/ci/agent-gates-0751-self-test.patch gives:
+# `.github/scripts/agent-gates.sh` is copied from the agent-pipeline template
+# and the pipeline's push token has no `workflow` scope, so a branch editing it
+# fails at the end of the PR rather than at the start of it.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-cross-decoder-disagreement.patch
+#
+# and that is the whole change.
+#
+# What it buys. `--check` re-derives
+# ec/ghidra/cross-decoder-disagreement.csv from ec/ghidra/cross-decoder.csv,
+# the listing index and the committed decompiles and diffs it, so a `disagree`
+# row that fell in no cause, a cause on a row that is not `disagree`, a cause
+# outside the closed vocabulary, and a sidecar that has outlasted the export it
+# describes are all a red run rather than a reader's problem. `--self-test` is
+# the half that matters and it needs no image at all: each of the five causes is
+# built from one line of hand-written C, and each negative is the positive with
+# exactly one thing wrong -- a register's real name against a different address,
+# a `DAT_CODE_` symbol against an `FUN_CODE_` one, a decimal literal of the
+# wrong value, `'\0'` against the address zero -- so a classifier that has
+# quietly stopped telling those apart is caught by a case rather than agreeing
+# with its own verdict.
+#
+# Cheap tier by what it reads: the committed firmware image, three committed
+# CSVs, the committed listings and the committed decompiled C. No Ghidra, no
+# network, no assembler, no sdas8051.
+#
+# **Why the line above the tool list and not an entry in it.** Every entry from
+# gen_xdata_symbols.py down is inside some other prepared patch's context, and
+# an insertion into any of them stops that patch applying; the same is true of
+# the `gate` call list, which three patches have taken between them. The line
+# above the `for` is the insertion point that composes with the nine other
+# prepared patches, and tools/test_agent_gates_patches.py's composition cases are
+# what decided that -- they apply the whole set in every order and assert each
+# one still applies. `rc` is the function's own, declared at the top of it, which
+# is what the comment at the call site repeats for the next reader.
+#
+# **Until a human lands this, nothing runs `--check` or `--self-test` per
+# commit, and a PR that breaks one of them merges green.** The suite behind it is
+# ec/tools/test_cross_decoder_disagreement.py, which tools/run-tests.sh finds on
+# its own; this patch does not gate that either, which is the whole reason this
+# file exists. That is the same deferral cross_decoder_blindness.py has carried
+# since issue #350.
+#
+# Cut whole against the committed `.github/scripts/agent-gates.sh` on
+# 2026-10-02, issue #510, from a scratch clone so the hunk is what `git apply`
+# will accept rather than a transcription, and shellcheck-clean in the state it
+# produces. It carries an `index` line for the same reason
+# docs/ci/agent-gates-0751-self-test.patch does.
+#
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index 16c70c3..4927677 100755
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -114,6 +114,34 @@ check_ghidra_tooling() {
+   # ec/tools, bios/tools, windows/tools and tools. No image, no Ghidra, no
+   # network, no assembler, so by the split above it is cheap-tier work.
+   python3 ec/tools/check_gate_arm_coverage.py --check || rc=1
++  # The per-row cause for every row the cross-decoder still calls `disagree`.
++  # `--check` re-derives ec/ghidra/cross-decoder-disagreement.csv from the
++  # committed report, the committed listings and the committed decompiles and
++  # diffs it, so a row that fell in no cause, a row that fell in two, or a
++  # sidecar that has outlasted the export it describes is a red run here rather
++  # than a reader's problem. `--self-test` is the half that matters and it needs
++  # no image and no Ghidra: every one of the five causes is built from one line
++  # of hand-written C, each negative being the positive with exactly one thing
++  # wrong, so a classifier that has quietly stopped telling a register's real
++  # name from a code-space symbol is caught rather than agreeing with itself.
++  #
++  # It runs here, on the line above the tool list, for the reason the tool list's
++  # own comment above gives: every entry of that list is inside some other
++  # prepared patch's context in docs/ci/, and an insertion there stops that patch
++  # applying -- which tools/test_agent_gates_patches.py's composition cases hold.
++  # `rc` is this function's own, declared at the top of it.
++  #
++  # What it reads is committed bytes and committed text: the firmware image, two
++  # committed CSVs, the committed listings and the decompiled C. No Ghidra, no
++  # network, no assembler, which is what puts it in this cheap tier.
++  #
++  # It prints its own deferral, and it is a real one: a cause says where a
++  # decompile spells an address, and nothing about it is hardware evidence. No EC
++  # is opened, no register is read back, and registers.yaml is a read-only input
++  # -- it is read for a name and nothing is written. No test count is asserted
++  # here; the exit code decides, for the reason tools/run-tests.sh gives.
++  python3 ec/tools/cross_decoder_disagreement.py --check && \
++  python3 ec/tools/cross_decoder_disagreement.py --self-test || rc=1
+   # Each decompiler tool checks its own output -- the tool that wrote a file is
+   # the tool that checks it, so the self-test lives next to the code the review
+   # stage reads. The scratch dir is only passed to the tools that take one;

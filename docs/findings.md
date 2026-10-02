@@ -3998,6 +3998,40 @@ which of them a given row is, is measured in
 column in `ec/ghidra/cross-decoder-blindness.csv`. No outcome was added to
 `CROSS_DECODER_OUTCOMES` and no register status moved.
 
+**CORRECTION 2026-10-02 (issue #510), to the `disagree` tally above and to what
+the comparison counts as "named".** The denominator line is now
+
+```
+compared 1047 of 2057 functions, 1008 vacuous; 920 agreed, 127 disagreed, 2 no-export
+```
+
+so `328 disagreed` in the correction above is `127 disagreed`, and
+`719 agreed` is `920`. **The cause is the comparison, not the export**: the
+matcher read only the `DAT_EXTMEM_`/`XDATA_` spelling, so a C that names an
+address as a hex literal — `(undefined1 *)0x7d6`, the cast and pointer local an
+annotated callee's signature leaves behind — read as a `disagree` against a
+decompile that names the address in so many words. `pd 0xF4CD` is the row issue
+#510 filed: its listing has read `mov DPTR, #0x07d6` throughout and only the
+spelling moved. `names_an_address()` now collects both routes, and the header
+comment is stripped before it reads a file at all: matching the whole file gives
+`1038 agreed, 9 disagreed`, which is this section's §14b failure in a new place,
+since the annotation above a function names the addresses its body does not. The
+remaining 127 rows are not one thing either, and each carries a committed
+`cause` in `ec/ghidra/cross-decoder-disagreement.csv`; the re-measurement, the
+five causes, the measured false-positive surface of a value match, and the limit
+are in `docs/findings/cross-decoder-disagreement-population.md`. The
+per-program figures the 2026-10-01 correction above gave for the table below are
+stale on the `disagree` column for the same reason and are now `bank0
+702/444/258/75`, `bank1 604/345/257/25`, `common 210/73/137/7`, `pd
+541/185/356/20` over `sampled/compared/vacuous/disagree`; every other column
+is unchanged, because a window that finds no address never reaches the matcher.
+What `disagree` *means* has not moved — it is still "the two decoders saw
+different things in the opening window" — but `agree` → `disagree` is now
+unreachable through the spelling route, which `--self-test` asserts as a
+property over the sample rather than as a sentence.
+`CROSS_DECODER_OUTCOMES` is still four names, the sample and the method are
+unchanged, and no register status moved.
+
 **CORRECTION 2026-09-24 (issue #255), to the `disagree` tally this section
 first measured and to its composition further down.** The tally is now `701 agreed, 315
 disagreed`, and the composition's "of the rest" is 167 distinct addresses

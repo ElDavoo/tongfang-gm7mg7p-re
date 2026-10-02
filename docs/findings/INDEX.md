@@ -60,6 +60,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md) — A count is a budget on work, not a bound on the buffer: the region end bounds `walk_helper` and `chain_from`
 - [`counter-sweep-entry-set.md`](counter-sweep-entry-set.md) — The counter sweep's entry set: 180 call sites, one of them a call (issue #555)
 - [`cross-decoder-blind-population.md`](cross-decoder-blind-population.md) — What the cross-decoder's `vacuous` bucket is made of (issue #350)
+- [`cross-decoder-disagreement-population.md`](cross-decoder-disagreement-population.md) — What the cross-decoder's `disagree` bucket is made of (issue #510)
 - [`csv-column-usage-advice.md`](csv-column-usage-advice.md) — A `Usage:` line that reproduces its table, and a note for the diff a reader writes instead (issue #1020)
 - [`de3c-1c04-to-0563.md`](de3c-1c04-to-0563.md) — The store at `bank1,0xDE96` writes the `0x1C04` byte to the address the bytes at XDATA `0x0563`/`0x0564` spell, and that pair is staged by the same routine from two CODE tables — an indexed set, not one address and not the caller's
 - [`deep-schedule-lint-baseline.md`](deep-schedule-lint-baseline.md) — What the linters say about the prepared nightly, and what now holds it

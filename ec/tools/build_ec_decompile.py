@@ -2797,6 +2797,79 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "name is in the comparison's vocabulary (%d name(s))"
           % len(_XDATA_NAME_ADDR), not _vocab_missed, str(_vocab_missed[:4]))
 
+    # The matcher's second route, on the row issue #510 filed. `pd 0xF4CD`'s
+    # listing has held `mov DPTR,#0x07d6` throughout; what changed was the C,
+    # and only its spelling -- a cast and a pointer local where there had been
+    # `DAT_EXTMEM_07d6`. The row reads `agree` again, and it is named rather
+    # than counted: a ratchet cell is a claim about one function, and this is
+    # the one this issue is about.
+    _f4cd = _cd.get(("pd", "F4CD"))
+    check("pd 0xF4CD names 07D6 in a cast, and agrees because of it",
+          _f4cd is not None and _f4cd["outcome"] == "agree"
+          and _f4cd["linear"] == "07D6" and _f4cd["in_c"] == "07D6"
+          and _f4cd["missing"] == "",
+          str({c: _f4cd[c] for c in ("outcome", "linear", "in_c", "missing")}
+              if _f4cd else "not sampled"))
+
+    # The strip, on the tree rather than on a fixture. Stripping *every*
+    # comment rather than the annotation alone has to leave every sampled row
+    # reading what it reads, because a rule whose result had quietly become
+    # load-bearing would still read the same in `names_an_address`'s docstring.
+    # This is the control that catches the opposite error too: a matcher
+    # applied to the whole file would go green over annotation prose, and this
+    # is the assertion that says the outcome does not depend on that prose.
+    _cd_nocomment = {(r["program"], r["addr"]): r
+                     for r in cross_decoder_results(fw, strip_every_comment)}
+    _drift = sorted(k for k, r in _cd.items()
+                    if (r["outcome"], r["in_c"], r["missing"])
+                    != (_cd_nocomment[k]["outcome"], _cd_nocomment[k]["in_c"],
+                        _cd_nocomment[k]["missing"]))
+    check("every sampled row reads the same when every comment is stripped, "
+          "so no verdict rests on an annotation's prose",
+          not _drift, "%d row(s) moved, e.g. %s" % (len(_drift), _drift[:3]))
+    # And the negative, on hand-made text: a `.c` whose only mention of an
+    # address is in the annotation comment names nothing.
+    _comment_only = ("/* DPTR is loaded from 0x07D6 before the call.\n"
+                     "   type: forwarder\n"
+                     "   evidence: ec/decompiled/pd/F4CD.c */\n"
+                     "void f(void)\n{\n  call_70c7_with_0_then_5c_tail_f55c(0);\n}\n")
+    check("an address named only in the annotation comment is not the body's",
+          "07D6" not in names_an_address(_comment_only),
+          str(sorted(names_an_address(_comment_only))))
+    check("the same address is the body's once the body spells it",
+          "07D6" in names_an_address(
+              _comment_only.replace("call_70c7_with_0_then_5c_tail_f55c(0)",
+                                    "store_a_to_dptr(0x7d6)")),
+          "sanity: the fixture has to be able to say it at all")
+    check("a Ghidra WARNING block is not mistaken for the annotation comment",
+          "0988" in names_an_address(
+              "/* WARNING: Do nothing block with infinite loop */\n"
+              "  DAT_EXTMEM_0988 = 1;\n"))
+    check("the exporter's `//` banner does not hand every C an address either",
+          "7FFF" not in names_an_address(
+              "// bank0 @ B1F0   the 0x0000-0x7FFF common area\n"
+              "void f(void)\n{\n  DAT_EXTMEM_0988 = 1;\n}\n"),
+          str(sorted(names_an_address(
+              "// bank0 @ B1F0   the 0x0000-0x7FFF common area\n"
+              "void f(void)\n{\n  DAT_EXTMEM_0988 = 1;\n}\n"))))
+    check("a hex literal wider than 16 bits is not truncated into an address",
+          "10000" not in names_an_address("  x = 0x10000;\n"))
+
+    # The direction, as a property over the committed report rather than as a
+    # sentence above it. `agree` -> `disagree` is the move issue #510 is about,
+    # and a widening cannot produce it: `names_an_address()` can only grow the
+    # set, so `missing` can only shrink. Expressed as a relation between the
+    # committed cells and this run's, so it survives every future export --
+    # a count of how many rows moved would be a value every merge has to edit,
+    # and zero of them is a census.
+    _committed = {(r["program"], r["addr"]): r for r in read_index(CROSS_DECODER)}
+    _regressed = sorted(k for k in set(_committed) & set(_cd)
+                        if _committed[k]["outcome"] == "agree"
+                        and _cd[k]["outcome"] == "disagree")
+    check("no sampled row moved agree -> disagree between the committed report "
+          "and this run", not _regressed,
+          "%d row(s): %s" % (len(_regressed), _regressed[:3]))
+
     # The ratchet, exercised. A check that has never been seen to fail is an
     # absent one, which is §14b's own sentence and the reason these cases are
     # here at all: the report that matches first, then a verdict flipped, a row
@@ -3202,7 +3275,24 @@ CROSS_DECODER_COLUMNS = ["program", "addr", "name", "sample", "insns", "linear",
 # described, and guessing which of a function's C reads is a fold would
 # manufacture the very distinction the comparison is meant to measure. What
 # `disagree` does contain is measured in docs/findings.md §14i, and the answer
-# is not "the decompiler got it wrong".
+# is not "the decompiler got it wrong". Per-row causes are committed beside the
+# report by cross_decoder_disagreement.py rather than added here, for the same
+# reason: `outcome` answers whether the two decoders agreed, and why a row is
+# what it is is metadata about the row.
+#
+# **`disagree` has two directions, and only one of them is a regression.**
+# A row moving `disagree` -> `agree` is the export spelling an address the
+# linear walk already found, which is what this comparison is for. A row moving
+# `agree` -> `disagree` is either a decompile that lost an address or a matcher
+# that stopped accepting one -- issue #510's row was the second, a callee's
+# committed signature moving `0x07D6` out of the `DAT_EXTMEM_` spelling and
+# into a cast, with the decompile the better reading of the listing both before
+# and after. Widening `names_an_address()` below closes that second direction
+# rather than merely documenting it: the set it returns can only grow, so
+# `missing` can only shrink and no row reaches `disagree` through the spelling
+# route at all. `--self-test` asserts that as a property over the committed
+# report, so a later change that narrows the matcher fails on the report rather
+# than on a sentence in this comment.
 CROSS_DECODER_OUTCOMES = ("agree", "disagree", "vacuous", "no-export")
 CROSS_DECODER_SAMPLES = ("annotation", "stride")
 # One in eight of the non-annotated remainder. 927 rows over four programs at
@@ -3226,19 +3316,21 @@ CROSS_DECODER_FIXTURES = [("bank0", 0xB1F0), ("bank0", 0xB158),
 # reason as verify_reassembly.MOVED_CAP: a reader acts on the first few, and
 # the rest are a grep away in a file whose path is already on screen.
 CROSS_DECODER_CAP = 20
-# The XDATA addresses a decompiled C names. The comparison's whole vocabulary:
-# an address registers.yaml does not name cannot appear as a symbol carrying
-# its address, so it is reported `disagree` whether or not the C mentions it.
-# Measured rather than argued in docs/findings.md §14i.
+# The XDATA addresses a decompiled C names as a symbol carrying its own
+# address. One route of the comparison's vocabulary, and the only one that was
+# not a value match: an address registers.yaml does not name cannot appear
+# under this spelling at all, so it is reported `disagree` whether or not the
+# C mentions it. Measured rather than argued in docs/findings.md §14i.
 #
-# Two spellings carry an address, and a row added to registers.yaml picks
-# between them without saying so: Ghidra's own default is `DAT_EXTMEM_0a4e`
+# Two spellings carry an address this way, and a row added to registers.yaml
+# picks between them without saying so: Ghidra's own default is `DAT_EXTMEM_0a4e`
 # (this matches the `EXTMEM_` inside it), while a register whose name is the
 # address -- the `XDATA_1664` row issue #255 added -- is exported under that
 # name by gen_xdata_symbols.py. Matching only the first emptied `in_c` for
 # every such listing and reported `disagree` against a C that names the
 # address in so many words, so both are in the vocabulary and self_test()
-# pins that against the names xdata-symbols.csv actually carries.
+# pins that against the names xdata-symbols.csv actually carries. The hex route
+# `names_an_address()` adds beside this one is `names_an_address`'s own comment.
 #
 # The class spans both cases because the two spellings do not agree on one:
 # SLEIGH writes the hex lowercase and gen_xdata_symbols.py writes it
@@ -3247,6 +3339,106 @@ CROSS_DECODER_CAP = 20
 # way, so widening the class here changes no comparison -- it stops the
 # uppercase names being invisible to it in the first place.
 _EXTMEM = re.compile(r"(?:EXTMEM|XDATA)_([0-9a-fA-F]{4})")
+# A hex literal that could be a 16-bit address. `\b` on both ends, so `0x7d6`
+# is one address and `0x10000` is none: the trailing boundary fails on the fifth
+# digit rather than silently truncating a value that does not fit the space, and
+# a leading one keeps `var_0x7d6` from reading as the address inside a name.
+_HEX_LITERAL = re.compile(r"\b0x([0-9a-fA-F]{1,4})\b")
+# A block comment, a line comment, and the one line that tells the exporter's
+# annotation comment apart from any other. The first two anchored on the comment
+# rather than on a position: a `.c` whose annotation is absent carries no such
+# block, and one whose decompile opens with a Ghidra warning carries that block
+# first.
+_BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.S)
+_LINE_COMMENT = re.compile(r"//[^\n]*")
+_ANNOTATION_FIELD = re.compile(r"^[ \t]*type:[ \t]", re.M)
+
+
+def strip_header_comment(text):
+    """The `.c` with the exporter's annotation comment and its banner removed.
+
+    Found by the `type:` field the annotation carries rather than by being
+    first, because Ghidra's own `/* WARNING: ... */` lines are block comments
+    too and some of them come first. A `.c` with no annotation is returned whole
+    -- there is nothing to remove, and that is not a failure.
+
+    Which of the two spellings an address takes is the second rule the matcher
+    below has, and this is the first: without the strip, `pd/F4CD.c`'s own
+    annotation reads "With DPTR loaded from 0x07D6", and so does the annotation
+    of most of the export, so a whole-file match would let an annotation's
+    summary of a function stand in as a decode of it. On the committed tree
+    that is 118 of the 127 rows this comparison disagrees on -- the other 9
+    disagree either way -- and it moves the tally from `1038 agreed, 9
+    disagreed` to `920 agreed, 127 disagreed`.
+
+    The `//` banner is removed for the same reason and separately, because it
+    is a different hazard: it is in every exported file, and "the 0x0000-0x7FFF
+    common area" in it hands `0000` and `7FFF` to every vocabulary in the
+    export. No sampled row's verdict turns on it today -- removing it, removing
+    the annotation and removing both give the same counts -- so this is a latent
+    route closed rather than a measured one, and it is named here rather than
+    left as a question about what a future `mov dptr,#0x0000` would compare
+    against.
+    """
+    text = _LINE_COMMENT.sub("", text)
+    out, at = [], 0
+    for m in _BLOCK_COMMENT.finditer(text):
+        if _ANNOTATION_FIELD.search(m.group()):
+            out.append(text[at:m.start()])
+            at = m.end()
+    out.append(text[at:])
+    return "".join(out)
+
+
+def strip_every_comment(text):
+    """Every comment removed, block and line. `--self-test`'s control for the
+    rule above: removing the annotation alone, removing the banner alone and
+    removing all of it give the same census over the committed tree, so which
+    of them a reader picks is a choice rather than a tuning."""
+    return _BLOCK_COMMENT.sub("", _LINE_COMMENT.sub("", text))
+
+
+def names_an_address(text, strip=strip_header_comment):
+    """The XDATA addresses `text` names, in the four-digit upper-case spelling.
+
+    Two routes, because the export has two ways of writing one down and
+    `missing` decides the verdict:
+
+      a symbol carrying its own address -- `DAT_EXTMEM_07d6`, `XDATA_1664`,
+      the two spellings `_EXTMEM` has always matched, which is why its comment
+      says an address `registers.yaml` does not name cannot appear at all;
+      a hex literal -- `(undefined1 *)0x7d6`, the cast and pointer local an
+      annotated callee's signature leaves behind, and the form §14i's own
+      trampoline rows have carried since `bl51_bank_select_1(0x88f0)` stopped
+      rendering as one.
+
+    A value match can be satisfied by a constant that is not an address -- a
+    bit mask, a count, an offset into a base -- so the widened route has a
+    false-positive surface and it is measured rather than argued:
+    `docs/findings/cross-decoder-disagreement-population.md` carries the figure
+    and names the rows it read.
+
+    **The local-initialiser fold is not built here, on purpose.** Issue #510
+    asked for "a local that the function initialises from one" to be folded in.
+    A local is initialised from an address by writing the address, so once
+    every way of writing one is in the set the local follows: `pd/F4CD.c`'s
+    `puVar1 = (undefined1 *)0x7d6;` is the hex route, not a fourth one. A
+    second mechanism that resolved pointer locals to addresses would be a
+    second answer to a question this one already answers, and it would be the
+    first mechanism whose correctness is a judgement about a C rather than a
+    fact about its text.
+
+    `strip` is a parameter so `--self-test` can ask what the census looks like
+    under a different rule and get a second reading of the same tree;
+    `cross_decoder_blindness.py` parameterises its stripper for the same reason
+    and carries its own copy of both functions, because it imports `_EXTMEM`
+    from here and this imports nothing from it.
+    """
+    body = strip(text)
+    return ({m.upper() for m in _EXTMEM.findall(body)}
+            | {"%04X" % int(m, 16) for m in _HEX_LITERAL.findall(body)})
+
+
 # An address column in a committed .asm, and one slot of its byte column. Used
 # only to prove the per-program file-offset map against the listings themselves,
 # so both are anchored: a line whose shape is not the one the exporter writes is
@@ -3352,7 +3544,7 @@ def cross_decoder_sample():
     return [(listing[key], kind[key]) for key in sorted(kind)]
 
 
-def compare_function(program, addr, size, out_file, fw):
+def compare_function(program, addr, size, out_file, fw, strip=strip_header_comment):
     """One function's straight-line opening against its committed C.
 
     -> (outcome, insns, linear, in_c, missing), the address sets upper-case hex
@@ -3361,6 +3553,10 @@ def compare_function(program, addr, size, out_file, fw):
     The window's own bound is `size` from the listing index -- the exporters
     count a function's bytes slightly differently, and the listing's extent is
     the one this walk is over.
+
+    `strip` is `names_an_address`'s own, threaded through so `--self-test` can
+    re-run the whole comparison under a different comment rule and see whether
+    the verdict depends on it.
     """
     if not out_file or out_file.startswith("("):
         return "no-export", 0, set(), set(), set()
@@ -3384,12 +3580,13 @@ def compare_function(program, addr, size, out_file, fw):
             linear.add("%04X" % ((raw[1] << 8) | raw[2]))
     if not linear:
         return "vacuous", insns, set(), set(), set()
-    in_c = {m.upper() for m in _EXTMEM.findall(open(path, errors="replace").read())}
+    with open(path, errors="replace") as f:
+        in_c = names_an_address(f.read(), strip)
     missing = linear - in_c
     return ("disagree" if missing else "agree"), insns, linear, in_c, missing
 
 
-def cross_decoder_results(fw):
+def cross_decoder_results(fw, strip=strip_header_comment):
     """The whole comparison, once. -> [report row, ...] by (program, addr).
 
     One read of the listing index, one of the annotations, one of the firmware
@@ -3404,12 +3601,15 @@ def cross_decoder_results(fw):
     one cell for cell. `in_c` is the intersection, not the C's whole symbol
     set: the column is "what both decoders saw", and a function can name twenty
     addresses of which the linear walk saw three.
+
+    `strip` exists for `--self-test`'s control and is `names_an_address`'s own
+    default everywhere else.
     """
     rows = []
     for row, kind in cross_decoder_sample():
         program, addr = row["program"], int(row["addr"], 16)
         outcome, insns, linear, in_c, missing = compare_function(
-            program, addr, int(row["size"]), row["out_file"], fw)
+            program, addr, int(row["size"]), row["out_file"], fw, strip)
         rows.append({
             "program": program,
             "addr": row["addr"],
@@ -3474,9 +3674,12 @@ def is_bank_switch_trampoline(row, span=8):
     in it -- but a measured shape inside the `disagree` bucket, and worth
     naming on a run because it is what the first rows of that list are. A
     trampoline's C calls `bl51_bank_select_1(0x88f0)`, so the address is right
-    there in the output as a literal argument; it is simply not an `EXTMEM_`
-    symbol, and the comparison's vocabulary is `EXTMEM_`. Read without that,
-    a list of twenty consecutive trampolines reads as twenty defects.
+    there in the output as a literal argument, and since `names_an_address()`
+    grew a hex-literal route (issue #510) that no longer disagrees on its own:
+    what is left is the subset whose stub has a committed callee signature, so
+    the export calls it with an annotated callee's name and the address is in
+    no literal. Read without that, a list of consecutive trampolines reads as
+    consecutive defects.
 
     Matched on the bytes rather than on the name: the names carry
     "trampoline" today and that is a reading, not a fact about the encoding.
@@ -3531,10 +3734,16 @@ def print_cross_decoder(rows):
             print("    ... and %d more" % (len(disagree) - CROSS_DECODER_CAP))
         tramps = sum(1 for r in disagree if is_bank_switch_trampoline(r))
         print("    %d of the %d are the `mov dptr,#imm; ljmp <BL51 stub>` "
-              "bank-switch trampoline, whose C passes the\n    address to "
-              "bl51_bank_select_* as a literal rather than naming it as XDATA. "
-              "A disagreement is not a\n    defect and not a decoder verdict: "
-              "docs/findings.md §14i measures what this bucket holds."
+              "bank-switch trampoline. `bl51_bank_select_*(0x88f0)` is a hex\n"
+              "    literal and names_an_address() reads one, so the rows that used "
+              "to disagree\n    only for that reason no longer do; what is left "
+              "here is the subset whose stub has a committed callee "
+              "signature, so the export passes the\n    stub an annotated "
+              "callee's name and the address is in no literal at all. "
+              "cross_decoder_disagreement.py\n    classifies every remaining "
+              "row: a disagreement is not a defect and not a decoder "
+              "verdict, and docs/findings.md §14i\n    measures what this "
+              "bucket holds."
               % (tramps, len(disagree)))
 
 
@@ -3552,6 +3761,32 @@ def write_cross_decoder_report(rows, path=CROSS_DECODER):
         w.writeheader()
         w.writerows(rows)
     return path
+
+
+def direction_note(theirs, mine, column):
+    """Which way a moved cell moved, in the words that name the cause.
+
+    Only `outcome` has a direction worth naming; every other column gets the
+    general clause, because `insns` moving is not the decompiler regressing or
+    the matcher narrowing and is not either of those things' business.
+
+    The asymmetry is the point. `disagree` -> `agree` is a row the export now
+    spells in a way the matcher accepts, which is what a widening is for and
+    what this one did across the committed report. `agree` -> `disagree` is
+    the other thing -- a
+    decompile that lost an address, or a matcher that stopped accepting one --
+    and it is the direction issue #510 is about, so a line that says
+    "the export or the comparison moved" is a line that says to go and look
+    rather than one that says what happened.
+    """
+    if column != "outcome":
+        return "the export or the comparison moved"
+    was, now = theirs.get("outcome", ""), mine.get("outcome", "")
+    if was == "agree" and now == "disagree":
+        return ("the export stopped naming an address the linear walk found, "
+                "or the matcher stopped accepting how it names it -- the one "
+                "direction a widening cannot produce")
+    return "the export or the comparison moved"
 
 
 def cross_decoder_problems(committed, current):
@@ -3576,6 +3811,12 @@ def cross_decoder_problems(committed, current):
     carries no digest of its own on purpose -- a second committed record of one
     value is a second thing to keep in step, and this check's addition is the
     per-row recomputation, not the file's identity.
+
+    A moved cell says which way it went, through `direction_note()`. On its own
+    that is a better message and nothing more; the direction is enforced
+    separately, as a property over the committed report in self_test(), because
+    a diagnostic that names a direction and a gate that holds it are different
+    things and only one of them stops the next row.
     """
     mine = {(r["program"], r["addr"]): r for r in current}
     theirs = {(r["program"], r["addr"]): r for r in committed}
@@ -3592,10 +3833,11 @@ def cross_decoder_problems(committed, current):
         for column in CROSS_DECODER_COLUMNS:
             if theirs[key].get(column) != mine[key].get(column):
                 problems.append(
-                    "%s %s: %s is %r in the report and %r now -- the export or "
-                    "the comparison moved, so regenerate the report"
+                    "%s %s: %s is %r in the report and %r now -- %s, so "
+                    "regenerate the report"
                     % (key[0], key[1], column, theirs[key].get(column, ""),
-                       mine[key].get(column, "")))
+                       mine[key].get(column, ""),
+                       direction_note(theirs[key], mine[key], column)))
     return compared, problems
 
 
