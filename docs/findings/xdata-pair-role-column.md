@@ -3,7 +3,7 @@
 **Issue #734, 2026-10-02.** `xdata_register_map.py`'s pair pass folds each
 resolved accessor call into one `pair-literal` row covering `addr` and
 `addr + 1` under the same spelling, so the seed/`+1` distinction existed only
-inside `pair_sites()`. `ec/tools/inc_dptr_sites.py` (issue #723) took the
+inside `pair_sites()`. `ec/tools/inc_dptr_sites.py` (issue #707) took the
 distinction out of the tool and into a derived population, and
 [`xdata-inc-dptr-only.md`](../../ec/annotations/xdata-inc-dptr-only.md) §1 said
 plainly that "`xdata-registers.csv` cannot answer the question". That sentence
@@ -133,17 +133,20 @@ states the file's shape as "1,326 rows × 33 columns", which this change makes
 34. Left as written with a dated note beside it, for the same reason as the
 rest of this ledger.
 
-**`docs/findings.md` is not edited at all**, for two independent reasons. A
-column change moves no census total: `refs`, the five buckets, `readers`,
-`writers`, `functions_touched`, `co_reading`, `sources_beyond`, `spelled_as`,
-`spellings_by_program` and every previous column are byte for byte what they
-were, and no row was added or lost. `xdata-clusters.csv` regenerating
-byte-identical is the proof, and the `awk -F,` transcript in
-`xdata-per-program-counts.md` below re-runs unchanged. The file is also frozen:
-`check_findings_frozen.py` fails a change that adds a section. §39 is left
-exactly as written — its closing sentence names the re-keying follow-up and
-already carries the 2026-09-30 correction recording that #713 and #714 did it,
-and this column is orthogonal to both.
+**`docs/findings.md` gains no section and no census total**, for two
+independent reasons. A column change moves no census total: `refs`, the five
+buckets, `readers`, `writers`, `functions_touched`, `co_reading`,
+`sources_beyond`, `spelled_as`, `spellings_by_program` and every previous
+column are byte for byte what they were, and no row was added or lost.
+`xdata-clusters.csv` regenerating byte-identical is the proof, and the
+`awk -F,` transcript in `xdata-per-program-counts.md` below re-runs unchanged.
+The file is also frozen: `check_findings_frozen.py` fails a change that adds a
+section. §39 is left exactly as written — its closing sentence names the
+re-keying follow-up and already carries the 2026-09-30 correction recording
+that #713 and #714 did it, and this column is orthogonal to both. The only
+edits are re-anchored `xdata_register_map.py` line pins that this change's own
+growth moved, which is the shift `docs/findings/test-line-pin-census.md`'s
+edited rows record.
 
 ## One recorded limitation
 
@@ -161,15 +164,11 @@ files.
 - **The `program=both` re-keying (#713) and §2's `both`-row re-keying
   (#714).** This column touches neither, and #713's write-up's "not done, and
   named" list is unchanged.
-- **Whether the 73 are entered in `registers.yaml`.** Settled by #723 and not
+- **Whether the 73 are entered in `registers.yaml`.** Settled by #707 and not
   reopened. No `status:` moves and no entry is added or removed.
 - **Whether a pair is one logical field.** No evidence in the tree, and this
   page records the question as open rather than answering it.
 - **Any hardware or Windows run.** None is needed and none is possible from a
   runner. Nothing here is evidence the EC acts on any of these bytes.
-- **Registering the new suite in CI.** `.github/scripts/agent-gates.sh` cannot
-  be written by this branch, so `test_xdata_pair_role.py` is run by hand, exactly
-  as `test_inc_dptr_sites.py` is today, and both say so in the same words. The
-  `--self-test` assertions *are* gated already. **A human's change.**
 - **Submitting anything upstream.** There is no prepared upstream patch and none
   is planned; this is a census column in this repository.
