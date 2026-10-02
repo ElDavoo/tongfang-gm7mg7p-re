@@ -194,6 +194,17 @@ Two knock-on notes, since the same conflation reaches other entries:
   include features (`PRIMARY_FAN`/`SECONDARY_FAN`, `TOUCHPAD_TOGGLE`,
   `USB_POWERSHARE`) whose EC addresses are nowhere in this repo, so they
   could not be checked either way.
+  **(Corrected 2026-10-02, issue #29; the clause above is left as it was
+  written.)** "nowhere in this repo" is **false**, and was when written:
+  `USB_POWERSHARE` is bit 4 of `0x0767` and `TOUCHPAD_TOGGLE` bit 6 of
+  `0x07A6`, both already rows in that audit's tables under the names
+  `TRIGGER` and `OEM_4`, and the fans' bytes are named in committed
+  `ECSpec.cs` and read in `FanInfo.cs`. True but much narrower: `grep` over
+  `linux/` finds no address, because the driver is not vendored here. The
+  four fan bytes have since been resolved and are now in `registers.yaml`
+  and §3's table — 14 → 18 — and one vendor constant among them turned out
+  to name the wrong byte.
+  [`findings/uniwill-feature-addresses.md`](findings/uniwill-feature-addresses.md).
 - `0x07D8`-`0x07DA` (`MODE_TCC_OFFSET_DEFAULTS`) is 34/16/53 references, one
   EC-side each and 33/15/52 PD-side, and the one EC-side site is real — a
   straight-line block in `seed_tcc_defaults_from_ba36` writing all three from a
@@ -661,6 +672,27 @@ powershare) have no EC address anywhere in this repo, so they are named in the
 audit as unresolvable rather than guessed at. "The scan predicted all 20
 correctly" therefore still rests on the original testing notes; what is
 re-derivable from committed files is the 14.)*
+
+*(Corrected 2026-10-02, issue #29; the parenthetical above is left as it was
+written. The re-derivable subset is now **18**, and the claim inside it that
+these features' EC addresses are "nowhere in this repo" / "not recorded
+anywhere in this repository" was **false when written**, not merely
+out-of-date. `USB_POWERSHARE` is bit 4 of `0x0767` and `TOUCHPAD_TOGGLE` is
+bit 6 of `0x07A6` — both already rows in the audit's own tables under the
+names `TRIGGER` and `OEM_4`, with committed vendor sources naming the bit and
+the mask. The fans' four bytes are named in
+`windows/decompiled/v3.1.6.0/ECSpec.cs:221-229` and read in `FanInfo.cs`. What
+was true is the narrower claim the same sentence makes two lines later: `grep`
+over `linux/` finds no address, because the driver is not vendored here. The
+four fan bytes are now in `registers.yaml` as `MAIN_FAN_RPM` and
+`SECOND_FAN_RPM` and in §3's table, which is 14 + 4 = 18.
+`USB_POWERSHARE` and `TOUCHPAD_TOGGLE` add nothing to that count: each is a
+bit of a byte already in it, and neither has a live verdict at the register —
+one is a readback, the other's hotkey test failed upstream of the EC.
+"The scan predicted all 20 correctly" still rests on the original testing
+notes, and this does not improve on it. The write-up, including a vendor
+constant that is wrong about one of the four bytes, is
+[`findings/uniwill-feature-addresses.md`](findings/uniwill-feature-addresses.md).)*
 
 *(One class of correction this section covers has a machine check behind it in
 one place, which is a stronger guarantee than the convention alone: §6a's

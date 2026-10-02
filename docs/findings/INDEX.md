@@ -186,6 +186,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`tools-readme-totals.md`](tools-readme-totals.md) — The runner's totals, re-derived from a run, and why a red suite moves them (issue #817)
 - [`trampoline-relative-branch-sites.md`](trampoline-relative-branch-sites.md) — All 170 of §8's trampoline-landing relative sites are the trampoline block's own operands, and no branch reaches the block from outside it
 - [`uncalled-vendor-setters.md`](uncalled-vendor-setters.md) — The three bytes the uncalled vendor setters write (issue #106)
+- [`uniwill-feature-addresses.md`](uniwill-feature-addresses.md) — The four features `static-refs-audit.md` §3 called unresolvable, resolved —
 - [`verify-provenance-failure-answers.md`](verify-provenance-failure-answers.md) — `--verify-provenance` had ten ways to fail and one committed answer to none of them
 - [`walk-bounds-guard-pinned.md`](walk-bounds-guard-pinned.md) — The bounds disjunct is pinned, by two cases — and the sweep that could have noticed it cannot see it
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason

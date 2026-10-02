@@ -146,7 +146,7 @@ Two results worth naming:
 independently confirmed live behaviour** (15 working, 5 not) and predicted all
 20 correctly. That set is not enumerated register-by-register anywhere in this
 repo, so this table cannot claim to *be* those 20. What it is: every address in
-`registers.yaml` whose status comes from live observation — 14 addresses, 10
+`registers.yaml` whose status comes from live observation — 18 addresses, 14
 graded live-working and 4 live-negative.
 
 | addr | register | live verdict | main EC | PD | consistent with §4d |
@@ -165,9 +165,13 @@ graded live-working and 4 live-negative.
 | `0x0749` | `LIGHTBAR_AC_RED` | no effect on write | 0 | 0 | yes |
 | `0x074A` | `LIGHTBAR_AC_GREEN` | no effect on write | 0 | 0 | yes |
 | `0x074B` | `LIGHTBAR_AC_BLUE` | no effect on write | 0 | 0 | yes |
+| `0x0464` | `MAIN_FAN_RPM_0` | works (RPM sysfs vs sound) | 3 | 0 | yes |
+| `0x0465` | `MAIN_FAN_RPM_1` | works (RPM sysfs vs sound) | 1 | 0 | yes |
+| `0x046C` | `SECOND_FAN_RPM_0` | works (RPM sysfs vs sound) | 3 | 0 | yes |
+| `0x046D` | `SECOND_FAN_RPM_1` | works (RPM sysfs vs sound) | 1 | 0 | yes |
 
 So §3a's prose claim — "every live-confirmed register in §2 does have
-references in the EC image" — holds for all 10 live-working addresses this
+references in the EC image" — holds for all 14 live-working addresses this
 repo records an address for, `0x04A6` included, and the 4 live-negative ones
 have zero references in either image. The claim is measured now rather than
 asserted.
@@ -186,6 +190,20 @@ only a patch and a `BASE_COMMIT` (`../../linux/patches/`). Filling those rows
 would mean inventing addresses, so they are left out and named here instead.
 Resolving them needs the driver source pulled at that commit and its address
 defines read off; that is a follow-up issue, not a gap quietly dropped.
+
+*(The paragraph above is left as it was written, per the retraction pattern in
+`../../docs/findings.md` §4a-4d. **Its central claim — "not recorded anywhere
+in this repository" — is false, and was false when written.** All four features
+had committed sources naming their address: `USB_POWERSHARE` is bit 4 of
+`0x0767`, already a row in §2 and in the table above under the name
+`TRIGGER`; `TOUCHPAD_TOGGLE` is bit 6 of `0x07A6`, already a row as `OEM_4`;
+and the fans' bytes are named in `windows/decompiled/v3.1.6.0/ECSpec.cs:221-229`
+and read in `FanInfo.cs:24-42`. What was true, and is narrower, is the `grep`
+over `linux/` — the driver is not vendored here. A statement about what one
+method found, phrased as a statement about the tree, is the overclaim
+`../../CLAUDE.md`'s calibration rule exists to stop, and it is corrected here
+rather than left standing. Resolved in `../../docs/findings/uniwill-feature-addresses.md`;
+the four rows are in the table above and §10 below carries what changed.)*
 
 ## 4. The separate-maps premise, tested
 
@@ -874,3 +892,70 @@ site is a DPTR handoff that resolves no further, `0x0420` being the clearest
 case and its own note saying whether the byte is touched at all is not
 established. Neither is a re-grade this issue asked for, and the check
 deliberately encodes neither.
+
+## 10. The four features §3 called unresolvable, resolved — and the vendor is wrong about one byte (2026-10-02, issue #29)
+
+§3's closing paragraph is corrected in place above, with the wrong wording left
+readable, and its table gains four rows. This section states what changed, in
+the terms §6, §7, §8 and §9 set out: **§2 and §5 stay a 29-address snapshot**
+and are not re-measured, because they were taken under different conditions and
+editing them would rewrite a snapshot rather than extend one.
+
+**§3's subset is now 18 addresses, 14 live-working and 4 live-negative.** The
+four that joined are the two fan-tachometer pairs, `0x0464`/`0x0465` and
+`0x046C`/`0x046D`, graded `confirmed-working` on `../../docs/findings.md` §2's
+"confirmed (RPM sysfs matches physical sound)" — a live read cross-checked
+against an observation outside the machine. Two limits ride on the entries
+rather than being left implicit: it is a **read** verdict, so it establishes
+the driver/EC model and not that the bytes are writable controls; and the
+`0x046C`/`0x046D` grade does not rest on the vendor's read, which is
+`0x046C`/`0x046B` and is wrong about the low byte. The firmware's own 16-bit
+arithmetic over `0x046C`/`0x046D` is what settles that address — see below and
+`../../docs/findings/uniwill-feature-addresses.md`.
+
+`USB_POWERSHARE` and `TOUCHPAD_TOGGLE` do **not** join this subset, and the
+reason is the same in both cases: each is a bit of a byte already in the table
+above, not a new address, and neither has a live verdict at the register. The
+first's evidence is a readback ("EC bit flips on write; real-world effect
+untested"), which is not evidence the EC acts on it — the reasoning that
+downgraded `0x0726` out of `confirmed-inert`. The second's is a hotkey test
+that failed upstream of the EC: Fn+F5 emitted no WMI event, so the byte was
+never written. Neither is given a `status:` of its own.
+
+**The vendor's `ECSpec.cs` is wrong about one of the four bytes, and the
+committed tree already said so.** It names the second fan's low byte
+`ADDR_EC_SECOND_FAN_RPM_BYTE2 = 1131` = `0x046B`. Three things put it at
+`0x046D` instead: `uniwill-laptop` at the commit in `../../linux/patches/BASE_COMMIT`
+(`EC_ADDR_SECOND_FAN_RPM_2 0x046D`, read as a consecutive `be16_to_cpu` pair);
+the EC's own `store_r6_r7_to_046c_046d` (bank0 `0xE024`), which writes `0x046C`
+then `inc dptr` to `0x046D`; and `be16_046c_046d_minus_100` (bank0 `0xBD6B`),
+which borrows across them as one 16-bit value. `0x046B` is not unattested —
+`xdata-clusters.csv` puts it in `main-ec-004` with `0x046A`, `0x046E` and
+`0x046F`, synced from `0x086B`-`0x086E` by
+`gate_06e6_442_then_sync_046a_from_086b`, and all four of its sites are in that
+one routine. The divergence is the opposite of the usual direction — the vendor
+is the outlier — and it is recorded on the entry rather than resolved silently.
+
+**Counts, and what moved because of them.** The four addresses are main-EC with
+no PD-image site, so this is one program's XDATA and not the `0x04A6` kind of
+collision. Per address, by `trace_xdata_refs.py --counts-only`: `0x0464` 3
+(`0x8778` and `0xBD64` read, `0xDFF3` writes the pair across an `inc dptr`),
+`0x0465` 1 (`0xBD5E`), `0x046C` 3 (`0x8793` and `0xBD72` read, `0xE024` writes
+the pair), `0x046D` 1 (`0xBD6C`). Each pair's low byte shows one site rather
+than two because one walk covers both bytes and the count is attributed to the
+address the walk starts at — a property of the counting method, not evidence
+that the low byte is less used. `../tools/check_register_counts.py` re-derives
+all three keys for all four from the committed image.
+
+**No status moved except the four additions.** `0x0767` keeps
+`confirmed-working` on the strength of its SUPER KEY bit, which is physically
+confirmed, and that is not a verdict on bit 4. `0x07A6` keeps
+`confirmed-working-partially`, which is about the charge-profile bits. Nothing
+is upgraded on the strength of a reference count, and nothing is downgraded.
+
+**§3's "the scan predicted all 20 correctly" is untouched and stays
+unverifiable from here.** The original 20 was never enumerated register by
+register, and §4d's parenthetical number is now 18 — 14 plus these four. Growing
+the re-derivable subset does not show the scan got the other two right; that
+still rests on the original testing notes. §4d says so in its own words and
+this section does not improve on it.

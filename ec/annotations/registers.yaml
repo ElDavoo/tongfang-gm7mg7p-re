@@ -308,7 +308,34 @@ registers:
     static_refs_main_ec: 10
     static_refs_pd_image: 0
     status: confirmed-working
-    note: "TRIGGER_SUPER_KEY_LOCK bit flips SWITCH_STATUS; used for super-key toggle test"
+    note: >
+      TRIGGER_SUPER_KEY_LOCK bit flips SWITCH_STATUS; used for super-key
+      toggle test
+
+      Bit 4 of this byte is USB_POWERSHARE -- named USB charging by the vendor
+      and independently named the same way by the driver, which is the
+      strongest agreement in this entry. The vendor RMWs bit 4 of 1895 =
+      0x0767 in USB_Charger_ON/OFF
+      (windows/decompiled/v3.1.39.0/GCUService/MyControlCenter/
+      MySettingManager.cs:1204-1224, `bitArray[4] = true/false` over a read of
+      the same address). uniwill-laptop defines TRIGGER_USB_CHARGING as
+      BIT(4) on EC_ADDR_TRIGGER = 0x0767 (uniwill-acpi.c:210,215) and drives
+      it through usb_powershare_high (uniwill-acpi.c:1189-1202). The driver
+      also records a hazard the vendor code does not comment: that the RMW
+      "could also trigger the super key toggle, but the EC seems to take care
+      that those bits are always read as 0" (uniwill-acpi.c:1197-1200) -- a
+      statement about the EC's behaviour from a third party, and a reason not
+      to blind-write this byte.
+
+      This byte keeps `confirmed-working` on the strength of the SUPER KEY
+      bit, which is physically confirmed. It is NOT a live verdict on bit 4:
+      docs/findings.md 2 records USB_POWERSHARE as "EC bit flips on write;
+      real-world effect untested", and a readback is not evidence the EC acts
+      on it (see OEM_9 below for the same downgrade). No `status:` is recorded
+      for the powershare feature, because it is a bit of a byte that already
+      has one and nothing live has been run at the register. The prepared
+      procedure is docs/hardware-tests/ and the audit is
+      docs/findings/uniwill-feature-addresses.md.
 
   - name: SWITCH_STATUS (SUPER_KEY_LOCK_STATUS)
     addr: 0x0768
@@ -447,6 +474,29 @@ registers:
       this method", never "absent" (see the xdata-refs and absent notes
       at the top of this file; 0x07B0-0x07BE is a documented blind spot
       of the scan this census comes from).
+
+      Bit 6 is TOUCHPAD_TOGGLE, and the driver names it independently and with
+      a different polarity convention from the vendor's, which is worth
+      recording because the two read as contradictions and are not. uniwill-
+      laptop defines TOUCHPAD_TOGGLE_OFF as BIT(6) on EC_ADDR_OEM_4 = 0x07A6
+      (uniwill-acpi.c:292) and reads the feature as !(value & BIT(6))
+      (uniwill-acpi.c:880) -- so in the driver bit 6 SET means the touchpad is
+      disabled. The vendor clears bit 6 to enable: TouchpadToggle_ON masks
+      with 0xBF and TouchpadToggle_OFF re-adds 64
+      (MySettingManager.cs:1224-1246). Same byte, same bit, same meaning; the
+      names differ because the driver names the bit for the state it disables
+      and the vendor names the method for the state it sets. Nothing here is
+      being re-mapped.
+
+      That leaves TOUCHPAD_TOGGLE with no `status:` of its own, deliberately.
+      This entry's `confirmed-working-partially` is about the charge-profile
+      bits, which were exercised; bit 6 was not. docs/findings.md 2 records
+      the touchpad toggle as "fails -- Fn+F5 emits no WMI event at all", and
+      that failure happened UPSTREAM of the EC: no event reached the service,
+      so the byte was never written and the test says nothing about it. A bit
+      of a byte that already carries a status, with no live verdict at the
+      register, gets no row rather than a borrowed one. See
+      docs/findings/uniwill-feature-addresses.md.
 
   - name: CHARGE_CTRL (numeric threshold)
     addr: 0x07B9
@@ -853,6 +903,107 @@ registers:
     static_refs_pd_image: 0
     status: confirmed-working
     note: "cross-checked against nvidia-smi (48 vs 49C)"
+
+  - name: MAIN_FAN_RPM
+    addr: [0x0464, 0x0465]
+    sources: [uniwill-laptop, ecspec-3.1.6.0(ADDR_EC_MAIN_FAN_RPM_BYTE1/BYTE2),
+              vendor-3.1.39.0(FanInfo.GetEcCpuFanRpm), xdata-refs, live]
+    static_refs: [3, 1]
+    static_refs_main_ec: [3, 1]
+    static_refs_pd_image: [0, 0]
+    status: confirmed-working
+    note: >
+      The first fan's tachometer, as a 16-bit pair. This is a READ verdict:
+      docs/findings.md 2 records PRIMARY_FAN/SECONDARY_FAN as "confirmed (RPM
+      sysfs matches physical sound)", which is a live read cross-checked
+      against something outside the machine. It establishes that the driver/EC
+      model for these bytes is right; it does NOT establish that they are
+      writable controls, and nothing here should be read as an invitation to
+      write them. Duty is a different byte (0x075B/0x075C) and PWM a third
+      (0x0743-0x0747).
+
+      Three independent sources name the same two addresses. ECSpec calls
+      them ADDR_EC_MAIN_FAN_RPM_BYTE1 = 1124 and _BYTE2 = 1125
+      (windows/decompiled/v3.1.6.0/ECSpec.cs:221,223, byte-identical at
+      v3.1.39.0/GCUService/Define/ECSpec.cs and v3.9.18.0/Define/ECSpec.cs).
+      uniwill-laptop calls them EC_ADDR_MAIN_FAN_RPM_1/_2
+      (uniwill-acpi.c:94,96) and reads them as one value:
+      regmap_bulk_read at EC_ADDR_MAIN_FAN_RPM_1 for sizeof(rpm) followed by
+      be16_to_cpu (uniwill-acpi.c:1399). The EC's own code writes them as a
+      pair too -- gate_06e6_then_store_0464 (bank0 0xDFDF, named in
+      ec/annotations/ghidra-functions.csv) writes R6 to 0x0464 then R7 to
+      0x0465, and be16_0464_0465_minus_100 (bank0 0xBD5D) borrows across them
+      as one 16-bit value.
+
+      The EC side is bank0 only and no site is in the PD image, so this is one
+      program's XDATA and not a collision like 0x04A6's. Counts by
+      trace_xdata_refs.py --counts-only: 0x0464 3 sites (0x8778 and 0xBD64
+      read, 0xDFF3 writes both bytes across an inc dptr), 0x0465 1 (0xBD5E).
+      The 0x0464 reader at 0x8778 is inside mode_tick_084c_07a5_09ee, which
+      tests both this pair and the 0x046C/0x046D pair for zero and sets bit 5
+      of AP_OEM (0x0741) when both are zero -- an EC-side "no fan tach
+      reporting" flag, and the clearest committed statement that the EC treats
+      them as two pairs rather than four loose bytes.
+
+      Byte order is deliberately NOT in the symbol names (gen_xdata_symbols.py
+      names multi-byte registers <BASE>_0/_1 by address order and refuses
+      _HI/_LO). The big-endian fact is real and citable -- FanInfo.cs:31 does
+      (num << 8) | b over its two reads, and the driver's be16_to_cpu agrees --
+      so it is recorded here where a later correction can reach it.
+      Which physical fan this pair is, and whether the other pair is the
+      second fan or a second reading of the first, is NOT established:
+      ECSpec's own names are an ordinal (MAIN/SECOND) with no left/right or
+      CPU/GPU in them, and docs/findings/fan-duty-channel-075b-075c.md is the
+      prepared live test that would settle it for the duty bytes.
+      See docs/findings/uniwill-feature-addresses.md.
+
+  - name: SECOND_FAN_RPM
+    addr: [0x046C, 0x046D]
+    sources: [uniwill-laptop, ecspec-3.1.6.0(ADDR_EC_SECOND_FAN_RPM_BYTE1),
+              vendor-3.1.39.0(FanInfo.GetEcGpuFanRpm), xdata-refs, live]
+    static_refs: [3, 1]
+    static_refs_main_ec: [3, 1]
+    static_refs_pd_image: [0, 0]
+    status: confirmed-working
+    note: >
+      The second fan's tachometer, and the pair where the vendor and the
+      driver DISAGREE. Read the low byte before trusting this entry.
+
+      ECSpec's ADDR_EC_SECOND_FAN_RPM_BYTE2 = 1131 = 0x046B
+      (ECSpec.cs:229), and FanInfo.GetEcGpuFanRpm reads 1132 then 1131 as one
+      big-endian value (FanInfo.cs:34-42). uniwill-laptop instead defines
+      EC_ADDR_SECOND_FAN_RPM_2 as 0x046D (uniwill-acpi.c:103) and bulk-reads
+      from EC_ADDR_SECOND_FAN_RPM_1 = 0x046C for sizeof(rpm) with
+      be16_to_cpu, i.e. 0x046C then 0x046D (uniwill-acpi.c:1403). The driver's
+      pair is the adjacent one; the vendor's is not.
+
+      The EC firmware sides with the driver, and this is not a close call.
+      store_r6_r7_to_046c_046d (bank0 0xE024) writes R6 to 0x046C then
+      increments DPTR and writes R7 -- 0x046D -- named for what it does in
+      ec/annotations/ghidra-functions.csv. be16_046c_046d_minus_100 (bank0
+      0xBD6B) subtracts 100 from 0x046D into 0x046C through the borrow, the
+      same shape as the 0x0464/0x0465 routine at 0xBD5D. mode_tick (bank0
+      0x8749) tests 0x046C/0x046D as a pair against zero.
+
+      0x046B is a DIFFERENT byte and belongs to a different quartet.
+      xdata-clusters.csv puts it in main-ec-004 with 0x046A, 0x046E and 0x046F,
+      synced from 0x086B-0x086E by gate_06e6_442_then_sync_046a_from_086b
+      (bank0 0x9CA6, hand-decoded at ec/annotations/ghidra-functions.csv),
+      where all four of its sites are. It is not a fan tachometer and this
+      entry does not claim it is. The vendor's constant is recorded as
+      divergent, not as an address this repo adopts.
+
+      So this pair is the driver's SECONDARY_FAN and the EC's own 16-bit
+      reader, and the vendor's BYTE2 constant is the outlier of the three --
+      which is the opposite of the usual direction, and worth stating plainly
+      rather than resolving silently. What is NOT settled is which of the two
+      pairs is the first physical fan and which the second: ECSpec names them
+      by ordinal only, and the same open question as MAIN_FAN_RPM's applies.
+      Live verdict is the same read cross-check as that entry's -- RPM sysfs
+      against physical sound -- and carries the same "this is a read, not a
+      writable control" limit. Counts by trace_xdata_refs.py --counts-only:
+      0x046C 3 sites (0x8793 and 0xBD72 read, 0xE024 writes both bytes), 0x046D
+      1 (0xBD6C). See docs/findings/uniwill-feature-addresses.md.
 
   - name: BAT_POWER_UNIT
     addr: [0x0400, 0x0401]
