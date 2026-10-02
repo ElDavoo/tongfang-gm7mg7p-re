@@ -70,12 +70,15 @@ several and the window report is still worth printing, where every section of
 this report is about the captures. And §4.6 is a coverage statement before it
 is a comparison -- when the last `--dump` does not cover `0x0751` the section
 says the readback was not taken, and names a `--dump-pair` that does cover
-it, whose after file is what §6 says to pass last. The other precondition is
-stated on the same terms: when no file name and neither flag names the value
-that was written, the comparison has nothing to be against and the section
-says that too, on the dumps alone, because no file can stand in for a number
-the way one can stand in for a missing dump. None of the three is a
-claim about the machine; each is a claim about which files were handed in.
+it, whose after file is what §6 says to pass last. The pair it names is one
+that can be read: a refused pair is named with the reason instead, and the
+walk goes on past it, so one mistyped entry cannot hide a later pair that is
+a usable bracket. The other precondition is stated on the same terms: when no
+file name and neither flag names the value that was written, the comparison has
+nothing to be against and the section says that too, on the dumps alone,
+because no file can stand in for a number the way one can stand in for a
+missing dump. None of the three is a claim about the machine; each is a claim
+about which files were handed in.
 
 One thing is read that is not a byte at all: §3's per-block integrity check.
 §3 calls that check mechanical and then leaves the operator to eyeball it
@@ -3253,6 +3256,52 @@ def dump_pair_block(before, after, fallback):
     return None, "none"
 
 
+# Why a `--dump-pair` given one file twice is not a bracket, as one string
+# both readers print. `report_dump_pairs` drops such a pair from the
+# whole-block read and `report_readback` withholds it as a §4.6 readback, and
+# one spelling is the point of the predicate below rather than a tidiness: two
+# readers deciding the same thing must not be able to disagree about what they
+# said. Kept as the line the whole-block section already printed, so the
+# suite's `both sides are the same file` assertion is over the reason rather
+# than over one reader's phrasing of it.
+SAME_FILE_PAIR = (
+    "both sides are the same file, so this pair is not graded: a read "
+    "compared with itself proves nothing. Pass the before and after dumps "
+    "of one range as two different files.")
+
+
+def pair_refusal(before, after):
+    """Why a --dump-pair cannot be read at all, or `None` if it can.
+
+    The one place the answer lives, because two readers need it and one of
+    them had their own copy: `report_dump_pairs` skips such a pair, and
+    `report_readback` must not hand the operator the same pair as the way to
+    take a readback. Nothing propagated the refusal out of the first loop, so
+    §4.6 named a pair the block section was calling not a bracket -- and a
+    self-diff's after file *is* its before file, so following that hint passes
+    §4.6 a pre-write dump and the section then reports the byte as one that
+    something put back. Whether a pair can be read is a fact about the two
+    files, so it is asked once and both readers print what comes back.
+
+    Path identity rather than the `<value>-before-`/`<value>-after-` spelling,
+    for the reason `report_dump_pairs` gives and for the same reason its own
+    check was already on resolved paths: `x.txt` and `./x.txt` are the same
+    mistake written two ways, and §6's naming is a convention the flag does
+    not require.
+
+    A `disagree` pair and a pair belonging to a block a `--block` run is not
+    testing are refused too, in `report_dump_pairs`, and neither is left out
+    by accident. They are left out on purpose: both are about which block a
+    bracket is filed under, where this is about whether it is a bracket at
+    all, and a predicate that grew to cover them would change which pair §4.6
+    names on shapes no committed fixture reaches. This is the shape they have
+    somewhere to go when that change is made.
+    """
+    if os.path.realpath(before) == os.path.realpath(after):
+        return SAME_FILE_PAIR
+    return None
+
+
 def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None):
     """0x0751 in each --dump, and what the last of them says about §4.6.
 
@@ -3371,7 +3420,11 @@ def report_readback(here, wrote, pairs, value, marker=""):
     is where each one that is missing is said. The first is that the block's
     last dump holds `0x0751` at all; the notice above covers that one, and a
     `--dump-pair` can be named in its place because a file can stand in for
-    a missing file. The second is that something names the value that was
+    a missing file. The pair named is one that can be *read*, and that is
+    `pair_refusal`'s question rather than coverage's: a pair given one file
+    twice reaches the address and is not a readback of anything, so it is
+    named with the reason and the walk goes on to the next pair rather than
+    stopping on it. The second is that something names the value that was
     written -- the block's own, off a §6 file name, or off `--wrote` or
     `--block` -- and no file can stand in for a number, so that notice is
     printed on the dumps alone, whether or not a pair was given. When both
@@ -3384,13 +3437,30 @@ def report_readback(here, wrote, pairs, value, marker=""):
               "the §4.6 readback was not taken -- nothing here says what the "
               "byte held after the write")
         for before_path, after_path, before, after in pairs:
-            if MANUAL_FAN_CTRL in set(before) & set(after):
-                print(f"    a --dump-pair does cover it: {before_path} -> "
-                      f"{after_path}; both files reach "
-                      f"0x{MANUAL_FAN_CTRL:04X}")
-                print(f"      pass the after file as the last --dump to take "
-                      f"the readback: {after_path}")
-                break
+            if MANUAL_FAN_CTRL not in set(before) & set(after):
+                continue
+            reason = pair_refusal(before_path, after_path)
+            if reason is not None:
+                # This hint ends in an instruction, and on a self-diff the
+                # instruction is the defect: the pair's after file *is* its
+                # before file, so following it hands this section a pre-write
+                # dump and the comparison above reports a byte that something
+                # put back. Named with the reason rather than dropped, so the
+                # operator can see which pair was not read instead of
+                # finding no hint at all, and `continue` rather than `break`
+                # because one refused entry must not hide a later pair that
+                # can be read -- the refusal decides, not the position.
+                print(f"    a --dump-pair reaches 0x{MANUAL_FAN_CTRL:04X} and "
+                      f"is not one to read from: {before_path} -> "
+                      f"{after_path}")
+                print(f"      {reason}")
+                continue
+            print(f"    a --dump-pair does cover it: {before_path} -> "
+                  f"{after_path}; both files reach "
+                  f"0x{MANUAL_FAN_CTRL:04X}")
+            print(f"      pass the after file as the last --dump to take "
+                  f"the readback: {after_path}")
+            break
     written = value if value is not None else wrote
     if written is None:
         # The other precondition, and the same kind of fact as the coverage
@@ -3593,20 +3663,19 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None):
                       f"(0x{block_value:02X}) -- not read for §4.1-§4.3 here")
             continue
         for before_path, after_path, before, after in here:
-            if os.path.realpath(before_path) == os.path.realpath(after_path):
-                # Path identity, not the before-/after- naming: a pair is
-                # whatever the operator says it is, and the same file twice is
-                # the one input error this flag cannot see on its own. Grading
-                # it would print "unchanged" for every address, which is a true
-                # statement about nothing -- the file agrees with itself by
-                # construction. Flagged and skipped rather than fatal, so the
-                # window report and the §4.6 readback the operator also needs
-                # still get printed.
+            reason = pair_refusal(before_path, after_path)
+            if reason is not None:
+                # A pair is whatever the operator says it is, and the same
+                # file twice is the one input error this flag cannot see on
+                # its own. Grading it would print "unchanged" for every
+                # address, which is a true statement about nothing -- the file
+                # agrees with itself by construction. Flagged and skipped
+                # rather than fatal, so the window report and the §4.6
+                # readback the operator also needs still get printed. The
+                # predicate is `pair_refusal`, not a test written here,
+                # because `report_readback` has to refuse the same pair.
                 print(f"\n  {before_path} -> {after_path}")
-                print("    both sides are the same file, so this pair is not "
-                      "graded: a read compared with itself proves nothing. "
-                      "Pass the before and after dumps of one range as two "
-                      "different files.")
+                print(f"    {reason}")
                 continue
             graded += 1
             common = sorted(set(before) & set(after))
@@ -3704,18 +3773,33 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None):
               "the whole-block read for it was not taken; the pairs named "
               "above are another block's")
 
-    print("\n  Every `unchanged` above says the byte did not differ between "
-          "these two reads, which is not a claim that it did not move inside "
-          "the block: §5, a byte that does not move inside a window may "
-          "still move at the next suspend, AC transition or EC reset. This "
-          "bracket is complementary to the windowed CSV read above, not a "
-          "stronger one -- a byte that moved and was back where it started "
-          "by the after-dump reads unchanged here whether or not the "
-          "captures recorded the move, and a byte that moves entirely "
-          "between two of ec_watch.py's sweeps is in no change row at all. "
-          "Neither gap is closed by the other read. `0x0F5D-0x0F5F` is a "
-          "bucket of its own for the reason printed under it, and §4.2's "
-          "prediction is about the `0x0F00-0x0F5C` bytes above it.")
+    if graded:
+        print("\n  Every `unchanged` above says the byte did not differ "
+              "between these two reads, which is not a claim that it did not "
+              "move inside the block: §5, a byte that does not move inside a "
+              "window may still move at the next suspend, AC transition or "
+              "EC reset. This bracket is complementary to the windowed CSV "
+              "read above, not a stronger one -- a byte that moved and was "
+              "back where it started by the after-dump reads unchanged here "
+              "whether or not the captures recorded the move, and a byte that "
+              "moves entirely between two of ec_watch.py's sweeps is in no "
+              "change row at all. Neither gap is closed by the other read. "
+              "`0x0F5D-0x0F5F` is a bucket of its own for the reason printed "
+              "under it, and §4.2's prediction is about the `0x0F00-0x0F5C` "
+              "bytes above it.")
+    else:
+        # Printed outside the group loop and ungated, this paragraph used to
+        # close a run that compared nothing, over a section whose only lines
+        # were refusals: there is no `unchanged` above it to qualify, and a
+        # reader who found one would be reading a note about a bracket that
+        # was never taken. Strictly narrower than before -- an empty `pairs`
+        # has already returned above -- so the only runs it stops printing
+        # on are the ones where it was describing lines that do not exist.
+        # Said rather than dropped, for the reason §4.6's refusal is: a
+        # silent ending after a refusal is the same defect one step down.
+        print("\n  no dump pair here was compared, so there is no whole-block "
+              "read to qualify: the pairs above were refused, and each says "
+              "why")
     return graded
 
 

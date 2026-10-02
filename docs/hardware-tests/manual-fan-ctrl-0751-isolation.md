@@ -876,9 +876,9 @@ Pass one block's dumps, with the `after` one last — the §4.6 readback
 check is taken from the final `--dump`, and before-then-after is the order
 inside each `--dump-pair` too. Both are checked now rather than left to the
 comment below: get the `--dump` order wrong and §4.6 says the readback was
-not taken and names the pair that does cover `0x0751`; give a pair the same
-file twice and it is named and not read, because a dump diffed against
-itself proves nothing:
+not taken and names the pair that does cover `0x0751` and can be read; give a
+pair the same file twice and it is named and not read, by both §4.6 and the
+whole-block section, because a dump diffed against itself proves nothing:
 
 ```console
 rem  The 0x0700 pair is given twice on purpose, and not by accident of
@@ -1032,11 +1032,14 @@ does have a change, the section names its own next step,
 
 A pair given the same file twice is the one input error this flag cannot see
 on its own, so it is caught by path: the run names the pair, says both sides
-are the same file, and prints no whole-block read for it at all. A dump
-diffed against itself holds every byte equal by construction, so `unchanged`
-there is a true statement about nothing. The `<value>-before-` /
-`<value>-after-` naming is what keeps the two files apart to begin with, and
-the tool now says so when a pair does not.
+are the same file, and prints no whole-block read for it at all. §4.6's hint
+is refused the same way — a pair that reaches `0x0751` but is one file twice is
+named with the reason rather than offered as the after-dump to pass, and the
+walk goes on to the next pair rather than stopping on it. A dump diffed
+against itself holds every byte equal by construction, so `unchanged` there is
+a true statement about nothing. The `<value>-before-` / `<value>-after-` naming
+is what keeps the two files apart to begin with, and the tool now says so when
+a pair does not.
 
 A capture given twice is the same mistake on the CSV list, and it is refused
 outright where a repeated `--dump-pair` is only flagged and skipped, because

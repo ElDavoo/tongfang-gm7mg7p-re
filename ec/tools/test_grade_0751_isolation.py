@@ -6306,5 +6306,121 @@ class MarkSplitBoundaryTests(unittest.TestCase):
         self.assertGreater(grade.MARK_SPLIT_SECONDS, grade.MARK_MERGE_SECONDS)
 
 
+# Appended, not inserted: the findings files carry pins of the form
+# `test_grade_0751_isolation.py:NNN` and a class added inside `GradeTests`
+# moves every one of them onto a line that no longer says what its sentence
+# says it does. A class at the end costs nothing.
+class RefusedPairReadbackTests(unittest.TestCase):
+    """A `--dump-pair` the whole-block section refuses is not offered to §4.6
+    either, and the section that follows the refusal does not describe a read
+    that was not taken.
+
+    The two readers were written independently, so §4.6 selected the pair it
+    names on coverage alone while the whole-block section refused a pair whose
+    two paths are one file -- and since a self-diff's after file *is* its
+    before file, §4.6's hint ended in an instruction that hands the next run a
+    pre-write dump. The byte then reads as one that something put back, which
+    is a claim about the machine made out of a mistyped flag. All three shapes
+    here are reachable from §6's committed fixture set, so the file under test
+    is §6's own file set and none of this is a constructed shape.
+
+    The third test is the same run read both ways, because a gate that is only
+    ever asserted to be closed is a gate that can be deleted. Every case is
+    about which files were handed in; nothing here reads an EC.
+    """
+
+    # §6's `0x0700` before-dump, paired with itself: the one input error
+    # `--dump-pair` cannot see on its own, and the pair §4.6 must not name.
+    SELF_DIFF = (RUN_BEFORE, RUN_BEFORE)
+    # The 0F00 dumps last, so the block's own last `--dump` stops short of
+    # 0x0751 and §4.6's coverage notice is what fires. This is the ordering
+    # mistake §6's command block warns about, and the notice it produces.
+    SHORT_LAST = (RUN_BEFORE_0F00, RUN_AFTER_0F00)
+
+    def test_a_refused_pair_is_withheld_as_the_readback_not_named(self):
+        rc, out, _ = run(RUN_CAPTURES[0],
+                         *dumps(*self.SHORT_LAST),
+                         '--dump-pair', *self.SELF_DIFF,
+                         '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        # The readback notice still stands: refusing to name a pair says
+        # nothing about whether the last --dump covers the byte, and the two
+        # are independent facts about the files.
+        self.assertIn('the §4.6 readback was not taken', section)
+        # The "here is the pair to use" clause is withheld. It ends in
+        # "pass the after file as the last --dump", and on a self-diff that
+        # file is the before one -- the whole defect, and the two lines that
+        # carry it are the two that must not be printed.
+        self.assertNotIn('a --dump-pair does cover it', section)
+        self.assertNotIn('pass the after file as the last --dump', section)
+        # Named with the reason instead of dropped, so the operator can see
+        # which pair reached 0x0751 and was not read rather than finding no
+        # hint at all. The reason is the whole-block section's own string,
+        # which is the point of there being one: two readers refusing the
+        # same pair must not be able to word it two ways.
+        self.assertIn('is not one to read from', section)
+        self.assertIn(f'{RUN_BEFORE} -> {RUN_BEFORE}', section)
+        self.assertIn('both sides are the same file', section)
+        # And the refusal is the same one the whole-block section prints, so
+        # the two cannot drift into disagreeing about what was refused.
+        self.assertIn(grade.SAME_FILE_PAIR, whole_block(out))
+
+    def test_a_refused_pair_does_not_hide_a_valid_one_behind_it(self):
+        # §6's own command line lists the 0x0700 pair first and that is the
+        # only §6 pair whose dumps reach 0x0751, so a mistyped first entry is
+        # the likely case rather than an edge. The refused pair is given the
+        # before-dump twice and the real pair second, and the real one is what
+        # has to be named.
+        rc, out, _ = run(RUN_CAPTURES[0],
+                         *dumps(*self.SHORT_LAST),
+                         '--dump-pair', *self.SELF_DIFF,
+                         '--dump-pair', RUN_BEFORE, RUN_AFTER,
+                         '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        # The valid pair is the one named, and the instruction points at its
+        # after file -- the file that actually holds 0x0751 after the write.
+        self.assertIn(f'a --dump-pair does cover it: {RUN_BEFORE} -> '
+                      f'{RUN_AFTER}; both files reach 0x0751', section)
+        self.assertIn(f'pass the after file as the last --dump to take the '
+                      f'readback: {RUN_AFTER}', section)
+        # The refused one is still named and still refused, rather than
+        # dropped on the floor for having been in the way.
+        self.assertIn('is not one to read from', section)
+        # The line that carries the readback is named exactly once, so this
+        # cannot be satisfied by a reader that stopped on the first pair it
+        # saw: deleting the `break` and refusing by position would print it
+        # for both, and the self-diff's path would be on it.
+        self.assertEqual(section.count('a --dump-pair does cover it'), 1)
+        self.assertNotIn(f'does cover it: {RUN_BEFORE} -> {RUN_BEFORE}',
+                         section)
+
+    def test_the_closing_paragraph_is_gated_on_a_pair_having_been_read(self):
+        # Only a refused pair, so the whole-block section compared nothing and
+        # has no `unchanged` line for its closing paragraph to qualify.
+        rc, out, _ = run(*RUN_CAPTURES, '--dump-pair', *self.SELF_DIFF)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertIn('both sides are the same file', section)
+        self.assertNotIn('Every `unchanged` above', section)
+        # Said rather than left out, because a silent ending after a refusal
+        # is the same defect one step down: a reader who reaches the end of
+        # the section has to be able to tell "compared nothing" from "compared
+        # nothing and said so here".
+        self.assertIn('no dump pair here was compared', section)
+
+        # And the other direction, on the two-block grouping run, whose cut on
+        # the paragraph's first words is unaffected but whose presence is not:
+        # a gate that can only ever be asserted closed is a gate that can be
+        # removed. Both of that run's pairs are real, so the paragraph is
+        # earned.
+        rc, out, _ = run(*MULTI_BLOCK,
+                         '--dump-pair', *MULTI_A0_DUMPS,
+                         '--dump-pair', *MULTI_10_DUMPS)
+        self.assertEqual(rc, 0)
+        self.assertIn('Every `unchanged` above', whole_block(out))
+
+
 if __name__ == '__main__':
     unittest.main()
