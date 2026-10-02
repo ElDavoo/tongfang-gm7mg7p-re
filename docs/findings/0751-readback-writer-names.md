@@ -52,9 +52,10 @@ So:
 - bit 6 is `0x40`, and it is clear in all three.
 
 The branch is taken, the taken arm runs, and the `0x8978` compare and the
-`0x8990` store are not reached. This is arithmetic over three written values
-and one instruction's sense — no hardware, no capture, and nothing here that a
-different firmware image would not have to be re-checked against.
+`0x8990` store are not reached — for as long as `0x0751` holds one of the
+three. This is arithmetic over three values and one instruction's sense — no
+hardware, no capture, and nothing here that a different firmware image would
+not have to be re-checked against.
 
 **How this sits beside the census's wording, which is not a contradiction.**
 `0751-writer-census.md` records that `0x8990` "clears bit 6 whenever both
@@ -72,7 +73,8 @@ different instructions.
 
 ## What it rules out, precisely
 
-It rules out **one site of one table**: the `0x898A` row of
+It rules out **one site of one table**, for as long as `0x0751` holds bit 6
+clear: the `0x898A` row of
 [`manual-fan-ctrl-0751-writers.csv`](../../ec/annotations/manual-fan-ctrl-0751-writers.csv),
 whose `condition` cell already reads `temperature-gate`, and which the census
 write-up records as the only one of its sites gated by a temperature. It does
@@ -90,17 +92,22 @@ nothing in this change lowers the bar for it. What changed is that one
 candidate is named and excluded up front, so the operator does not spend the
 run matching a value against a path the byte cannot have taken.
 
-**The grader's sentence is conditional, and that is a correction to the issue's
-framing rather than an addition.** `--wrote` takes any byte, so a value with
-bit 6 set is a case `report_readback()` can be handed — and on that value the
-`jnb` falls *through* and the temperature clear is reachable. A message
-claiming it was ruled out regardless would be the tool asserting a static fact
-that does not hold of the value it was just given, which is the overclaim
-CLAUDE.md puts above every other rule. So the exclusion prints only when bit 6
-is clear in the value in hand, which is every value §3 writes; a value with it
-set gets the opposite sentence, naming the temperature clear as a live
-candidate. The runbook's two paragraphs are scoped to §3's three values
-explicitly and do not need the same branch.
+**The grader's sentence is conditional, and the byte it is about is the one in
+the register.** `0x8942` loads `0x0751` and tests `acc.6` on what the register
+holds, so the exclusion is a property of that byte and not of the value handed
+to `--wrote` — which is also the only reading the tool could have used. The
+mismatch line is reached once the byte has stopped holding the written value,
+so the value it just called stale cannot be the one that decides the arm; a
+`xrl a,#0x40` row in
+[`manual-fan-ctrl-0751-writers.csv`](../../ec/annotations/manual-fan-ctrl-0751-writers.csv)
+can set bit 6 on a byte whose bit 6 was clear, between the write and the next
+pass through the arm. So the exclusion is scoped to the byte as the last dump
+holds it and is not stated flatly: a held byte with bit 6 set gets the
+opposite sentence, naming the temperature clear as a live candidate, and the
+exclusion is worded as holding *while the byte holds that value* because the
+last dump is the only reading of the register the tool has. All of that is
+still a static reading of one image, and a byte that moved back is still a
+finding — what changes is the byte the reasoning is about.
 
 **No count of writers appears in any of the surfaces this change touches**,
 and that is deliberate. The census's own figure is open-ended by its own

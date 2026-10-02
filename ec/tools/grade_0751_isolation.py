@@ -3542,30 +3542,34 @@ def report_readback(here, wrote, pairs, value, marker=""):
         # so the fall-through arm -- which carries the `0x8978` compare and the
         # `anl a,#0xbf` at `0x898E` -- runs only when bit 6 is SET.
         #
-        # That makes the exclusion conditional on the value in hand, not on
-        # §3's three: `--wrote` takes any byte, and for one with bit 6 set the
-        # temperature clear *is* reachable, so claiming it is ruled out would be
-        # the tool asserting a static fact that does not hold of the value it
-        # was just handed. Every value §3 writes has bit 6 clear, so the case
-        # the procedure produces reads as the exclusion; a value outside it
-        # reads as its absence, which is the honest half.
+        # The bit is read off the register, and this branch is reached only
+        # once the byte has stopped holding the written value, so the byte to
+        # ask about is `last` and not `written`: the line above has just said
+        # `written` is stale, and `0x8942` loads `0x0751` itself. Every value
+        # §3 writes has bit 6 clear, so a byte still holding one is excluded --
+        # but a writer that toggles the bit (the `xrl a,#0x40` rows in
+        # `manual-fan-ctrl-0751-writers.csv`) can set it between the write and
+        # the arm, and the exclusion is about what the register holds then.
+        # `last` is this tool's only reading of that, so the sentence is
+        # scoped to the byte as the last dump holds it rather than stated
+        # flatly, and a `last` with bit 6 set gets the opposite sentence.
         print(f"  the last dump holds 0x{last:02X}, not the written "
               f"0x{written:02X} -- the byte moved back. What remains is the "
               "EC's other 0x0751 write paths or the vendor service, and §3a's "
               "service-stopped run is what separates them.")
-        if written & 0x40:
+        if last & 0x40:
             print("  The bank0 0x8978 temperature clear is among them: bit 6 "
-                  f"(0x40) is set in the written 0x{written:02X}, so the jnb "
-                  "acc.6 at 0x8942 falls through to the arm that compares "
-                  "CPU_TEMP/GPU_TEMP against 0x46 and clears the bit with anl "
-                  "a,#0xbf at 0x898E (ec/annotations/manual-fan-ctrl-0751.md "
-                  "§9).")
+                  f"(0x40) is set in the 0x{last:02X} the last dump holds, so "
+                  "the jnb acc.6 at 0x8942 falls through to the arm that "
+                  "compares CPU_TEMP/GPU_TEMP against 0x46 and clears the bit "
+                  "with anl a,#0xbf at 0x898E "
+                  "(ec/annotations/manual-fan-ctrl-0751.md §9).")
         else:
             print("  It is not the bank0 0x8978 temperature clear: bit 6 "
-                  f"(0x40) is clear in the written 0x{written:02X}, so the jnb "
-                  "acc.6 at 0x8942 is taken to 0x8998 and the anl a,#0xbf at "
-                  "0x898E is not reached "
-                  "(ec/annotations/manual-fan-ctrl-0751.md §9).")
+                  f"(0x40) is clear in the 0x{last:02X} the last dump holds, "
+                  "so the jnb acc.6 at 0x8942 is taken to 0x8998 and the anl "
+                  "a,#0xbf at 0x898E is not reached while the byte holds that "
+                  "value (ec/annotations/manual-fan-ctrl-0751.md §9).")
     if marker:
         # The marker itself is on the group line above, and is not restated
         # here: a second copy of those words is a second thing to keep in

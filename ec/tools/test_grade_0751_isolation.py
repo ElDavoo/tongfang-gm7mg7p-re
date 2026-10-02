@@ -6606,10 +6606,11 @@ class ReadbackWriterNamesTests(unittest.TestCase):
     Issue #220. §4.6's readback said "something put it back", which names
     nothing an operator can act on, and it did not carry the one exclusion the
     static disassembly supports: the bank0 `0x8978` Fan-Boost temperature
-    clear is behind `jnb acc.6,0x8998`, and bit 6 is clear in every value §3
-    writes, so the branch is taken and that store is not reached. These hold
-    the message and the runbook to the same anchors by content rather than by
-    line, so the two cannot drift apart on the next edit of either.
+    clear is behind `jnb acc.6,0x8998`, which tests bit 6 of `0x0751` itself,
+    and every value §3 writes has that bit clear -- so a byte holding one runs
+    the other arm and the store is not reached. These hold the message and the
+    runbook to the same anchors by content rather than by line, so the two
+    cannot drift apart on the next edit of either.
     """
 
     # One case per value rather than a loop over the three: a parameterised
@@ -6659,12 +6660,35 @@ class ReadbackWriterNamesTests(unittest.TestCase):
         self.assertIn('ec/annotations/manual-fan-ctrl-0751.md', section)
 
     # The other side of the same gate, and the reason it is conditional rather
-    # than stated flat. `--wrote` takes any byte, so a value with bit 6 set is
-    # a case the tool can be handed -- and on that value the temperature clear
-    # *is* reachable, because the branch falls through. A message that claimed
-    # it was ruled out regardless would be the tool asserting a static fact
-    # that does not hold of the value it was just given.
-    def test_a_written_value_with_bit_six_set_keeps_the_writer_in_play(self):
+    # than stated flat. `0x8942` loads `0x0751` and tests `acc.6` on what the
+    # register holds, so the byte that decides the arm is the one the last dump
+    # reads -- the branch is reached only once that byte has stopped holding
+    # the written value, so the value passed to `--wrote` cannot be what the
+    # exclusion is about. A held byte with bit 6 set is the case that reaches
+    # the store, because the branch falls through.
+    def test_a_held_byte_with_bit_six_set_keeps_the_writer_in_play(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            after = Path(tmp) / 'after-0700.txt'
+            after.write_text('0750: 00 40\n')
+            rc, out, _ = run(QUIET, '--dump', str(after), '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('the last dump holds 0x40, not the written 0xA0',
+                      section)
+        self.assertIn('The bank0 0x8978 temperature clear is among them',
+                      section)
+        # The bit is read off the held byte and not off the written one: 0xA0
+        # has bit 6 clear, so a message reasoning from it would exclude the
+        # writer for the one case where the store is reachable.
+        self.assertIn('bit 6 (0x40) is set in the 0x40 the last dump holds',
+                      section)
+        self.assertNotIn('is not the bank0 0x8978 temperature clear', section)
+
+    # The same predicate from the other side, and the case that would have
+    # caught the other one: a written value with bit 6 set decides nothing,
+    # because the byte has moved back by the time the arm could run. The held
+    # byte here has bit 6 clear, so the store is out of reach.
+    def test_a_written_value_with_bit_six_set_does_not_decide_the_arm(self):
         with tempfile.TemporaryDirectory() as tmp:
             after = Path(tmp) / 'after-0700.txt'
             after.write_text('0750: 00 00\n')
@@ -6672,12 +6696,13 @@ class ReadbackWriterNamesTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         section = dumps_section(out)
         self.assertIn('the last dump holds 0x00, not the written 0x40', section)
-        self.assertIn('The bank0 0x8978 temperature clear is among them',
+        self.assertIn('It is not the bank0 0x8978 temperature clear', section)
+        self.assertIn('bit 6 (0x40) is clear in the 0x00 the last dump holds',
                       section)
-        self.assertIn('bit 6 (0x40) is set in the written 0x40', section)
-        # And explicitly not the other branch: claiming the exclusion here is
-        # the overclaim this case exists to catch.
-        self.assertNotIn('is not among them', section)
+        # And the exclusion is scoped to the byte rather than asserted flat:
+        # the arm reads the register, and the tool's only reading of it is
+        # this dump.
+        self.assertIn('is not reached while the byte holds that value', section)
 
     # "Something" named nothing. Asserted absent as loudly as its replacement
     # is present, so a merge that resolves back to the old wording is caught.
