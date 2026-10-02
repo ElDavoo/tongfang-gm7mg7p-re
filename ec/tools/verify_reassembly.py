@@ -81,7 +81,9 @@ Usage:
     python3 ec/tools/verify_reassembly.py --work /tmp/ec --limit 40 # a sample
     python3 ec/tools/verify_reassembly.py --check                   # no assembler
     python3 ec/tools/verify_reassembly.py --emit-csv /tmp/reasm.csv  # per-row
-    python3 ec/tools/verify_reassembly.py --self-test               # known answers
+    python3 ec/tools/verify_reassembly.py --self-test               # known answers,
+        # and one per way --verify-provenance below can fail, each driven
+        # against a throwaway repository rather than against this one
     python3 ec/tools/verify_reassembly.py --add-digest-column       # one-shot
     python3 ec/tools/verify_reassembly.py --verify-provenance \\
         --base 08b72e2 --migration a56b3bb --listings-from 8c7985e
@@ -89,6 +91,11 @@ Usage:
         # ci.yml's `gates` job has one (`fetch-depth: 0`) and is the job that
         # runs the gate; its `workflows` job is default-depth and runs no
         # history reader, so it never reaches this mode
+    python3 ec/tools/verify_reassembly.py --verify-provenance \\
+        --repo /path/to/other/clone --base BASE --migration MIG
+        # the same audit against another clone -- a fork, or a worktree of
+        # one -- so the revisions resolve there. Defaults to the repository
+        # this script is in, which is every invocation above.
 """
 import argparse
 import collections
@@ -1504,13 +1511,21 @@ HISTORY_REQUIREMENT = (
     "  anyway would be auditing whatever happened to be checked out.")
 
 
-def _git(*args):
-    """git, run against the repository whatever the cwd is."""
-    return subprocess.run(["git", "-C", REPO] + list(args),
+def _git(*args, repo=REPO):
+    """git, run against `repo` whatever the cwd is.
+
+    The root is a parameter and not the constant so `--self-test` can drive the
+    mode at a repository it builds, and so `--repo` can point it at a fork or a
+    worktree. It is deliberately not an injected `git_lines`: a fake would have
+    answered every known answer below, and the distinction that matters most
+    here -- `None` (the command did not run) against `[]` (it ran and said
+    nothing) -- is one only a real git can draw.
+    """
+    return subprocess.run(["git", "-C", repo] + list(args),
                           capture_output=True, text=True)
 
 
-def git_lines(*args):
+def git_lines(*args, repo=REPO):
     """-> (lines, None) for git's non-empty output lines, or (None, why).
 
     None rather than an empty list because an empty answer and a command that
@@ -1519,7 +1534,7 @@ def git_lines(*args):
     pass on all of them.
     """
     try:
-        r = _git(*args)
+        r = _git(*args, repo=repo)
     except OSError as exc:
         return None, "git could not be run: %s" % exc
     if r.returncode != 0:
@@ -1527,10 +1542,11 @@ def git_lines(*args):
     return [ln for ln in r.stdout.splitlines() if ln.strip()], None
 
 
-def resolve_revision(rev):
-    """-> the commit sha `rev` names in this clone, or None if it has no such
+def resolve_revision(rev, repo=REPO):
+    """-> the commit sha `rev` names in that clone, or None if it has no such
     commit. `^{commit}` so a tag or a branch name is measured, not a path."""
-    lines, _why = git_lines("rev-parse", "--verify", "--quiet", rev + "^{commit}")
+    lines, _why = git_lines("rev-parse", "--verify", "--quiet",
+                            rev + "^{commit}", repo=repo)
     return lines[0] if lines else None
 
 
@@ -1627,7 +1643,7 @@ def compare_provenance(base_text, migration_text):
     return identical, len(base_rows), (base_has, mig_has), problems
 
 
-def verify_provenance(base, migration, listings_from=None):
+def verify_provenance(base, migration, listings_from=None, repo=REPO):
     """Audit a `listing_digest` migration against the history it sits in.
     -> exit status. 0 means every check below measured what it claims to.
 
@@ -1648,9 +1664,15 @@ def verify_provenance(base, migration, listings_from=None):
     departs from the order §14f presents them in: an empty diff printed as a
     result and only then contradicted by the control is exactly the reading the
     control exists to prevent. Both numbers are printed together either way.
+
+    `repo` is the clone the revisions are resolved in, and every check below is
+    a check against it: a window in one repository's history says nothing about
+    another's. `--self-test` builds a small one and drives all of this at it, so
+    each way out of here has an answer a change to the code above can be caught
+    against.
     """
-    base_sha = resolve_revision(base)
-    mig_sha = resolve_revision(migration)
+    base_sha = resolve_revision(base, repo=repo)
+    mig_sha = resolve_revision(migration, repo=repo)
     for label, rev, sha in (("base", base, base_sha),
                             ("migration", migration, mig_sha)):
         if not sha:
@@ -1662,7 +1684,7 @@ def verify_provenance(base, migration, listings_from=None):
     # a named revision is, so a window whose start is missing fails with the
     # history requirement rather than as a control of zero.
     from_rev = listings_from or (base + "^")
-    from_sha = resolve_revision(from_rev)
+    from_sha = resolve_revision(from_rev, repo=repo)
     if not from_sha:
         print("  FAIL cannot resolve --listings-from %r in this clone."
               % from_rev)
@@ -1673,13 +1695,13 @@ def verify_provenance(base, migration, listings_from=None):
 
     control, why = git_lines("diff", "--name-only",
                              "%s..%s" % (from_sha, base_sha), "--",
-                             LISTING_PATHSPEC)
+                             LISTING_PATHSPEC, repo=repo)
     if control is None:
         print("  FAIL the control diff did not run: %s" % why)
         return 1
     moved, why = git_lines("diff", "--name-only",
                            "%s..%s" % (base_sha, mig_sha), "--",
-                           LISTING_PATHSPEC)
+                           LISTING_PATHSPEC, repo=repo)
     if moved is None:
         print("  FAIL the listing diff did not run: %s" % why)
         return 1
@@ -1712,7 +1734,7 @@ def verify_provenance(base, migration, listings_from=None):
 
     reports = {}
     for label, sha in (("base", base_sha), ("migration", mig_sha)):
-        lines, why = git_lines("show", "%s:%s" % (sha, REPORT_REL))
+        lines, why = git_lines("show", "%s:%s" % (sha, REPORT_REL), repo=repo)
         if lines is None:
             print("  FAIL cannot read %s at the %s revision: %s"
                   % (REPORT_REL, label, why))
@@ -1735,7 +1757,7 @@ def verify_provenance(base, migration, listings_from=None):
 
     touched, why = git_lines("log", "--name-only", "--format=",
                              "%s..%s" % (base_sha, mig_sha), "--",
-                             "ec/decompiled")
+                             "ec/decompiled", repo=repo)
     if touched is None:
         print("  (the supporting view did not run: %s)" % why)
     else:
@@ -1761,6 +1783,152 @@ def verify_provenance(base, migration, listings_from=None):
           "correctness -- that is the re-encode's job (docs/findings.md §14e), "
           "and it\n  still has no schedule.")
     return 0
+
+
+# The committed report's columns, less `listing_digest` -- the set
+# `add_digest_column()` adds that one to and beside. Written out rather than
+# read from `REPORT`, so the fixture below is a pair of small reports compared
+# with `compare_provenance()` and nothing more: a fixture whose shape came from
+# the committed file would make every case here depend on the corpus it is a
+# check for.
+FIXTURE_FIELDS = ["program", "addr", "name", "outcome", "instructions_checked",
+                  "instructions_unchecked", "detail", "assembler"]
+
+
+def build_provenance_fixture(root):
+    """A small repository carrying one digest migration's shape.
+    -> {commit name: sha}, in the order the commits are made.
+
+    Each commit is named for what it *is* rather than for what it holds, so a
+    case reads `--migration moved` and not a sha a reader has to look up.
+    `seed` is a revision the `--listings-from` control can name that is not the
+    base itself, `listings` is the window that last wrote them, `base` is the
+    last full `--report`, `migration` adds the column and a `.c` beside it,
+    `recounted` touches one cell under the column, `moved` edits a listing, and
+    `gone` is the revision the report cannot be read at.
+
+    Under `tempfile` and never in the working tree, for the reason
+    `test_verify_provenance_clone_depth.py` gives: `run-tests.sh` prunes `.git/`,
+    `.claude/` and `vendor/` when it counts, and `check_testdata_index.py` and
+    `census_test_line_pins.py` walk the tree, so a repository in the working
+    directory is a second checkout for all three to trip over.
+
+    Three things in here are traps rather than decoration, and each one answers
+    a case silently and wrongly if it is got wrong:
+
+      - the listings sit one level under `ec/decompiled/`, as the committed
+        ones do. `LISTING_PATHSPEC` is `ec/decompiled/**/*.asm`, and an `.asm`
+        written directly in `ec/decompiled/` would fire the control branch for a
+        reason that has nothing to do with the case under test;
+      - the report's `listing_digest` cells are this tool's own `digest_of()`
+        over this tool's own listings, so the fixture is the shape a real
+        migration has rather than made-up hex. No cell is asserted by value
+        anywhere; what is asserted is the exit status and the printed reason;
+      - every commit carries its own identity and `commit.gpgsign=false`, so a
+        runner with no global `user.name` and one that signs everything both
+        work, and no config from the repository this runs in leaks into the
+        fixture.
+    """
+    import io
+
+    def git(*args):
+        proc = subprocess.run(["git", "-C", root] + list(args),
+                              capture_output=True, text=True)
+        if proc.returncode != 0:
+            raise RuntimeError("fixture: `git %s` exited %d: %s"
+                               % (" ".join(args), proc.returncode,
+                                  proc.stderr.strip()))
+        return proc.stdout
+
+    def commit(message):
+        git("add", "-A")
+        git("-c", "user.name=verify_reassembly self-test",
+            "-c", "user.email=self-test@example.invalid",
+            "-c", "commit.gpgsign=false",
+            "-c", "core.autocrlf=false", "commit", "-q", "-m", message)
+        return git("rev-parse", "HEAD").strip()
+
+    def write(rel, text):
+        path = os.path.join(root, *rel.split("/"))
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", newline="") as f:
+            f.write(text)
+        return path
+
+    def report_text(rows, fields):
+        buf = io.StringIO()
+        w = csv.DictWriter(buf, fieldnames=fields, lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+        return buf.getvalue()
+
+    git("init", "-q")
+    shas = {}
+    # Not a listing and not the report, so the control has an ancestor to name
+    # that is not the base itself -- which is the point of `--listings-from`
+    # being a flag rather than a `^`.
+    write("docs/seed.txt", "not a listing, and not the report.\n")
+    shas["seed"] = commit("seed: a revision no pathspec in this mode matches")
+
+    # The committed `.asm` layout, one level down, with disjoint addresses: the
+    # mode compares paths and reports, never addresses, but a reader of this
+    # function should not have to wonder.
+    first = ("; bank0 0040 selftest_first  [named]\n"
+             "0040  74 12 -     mov   a,#0x12\n"
+             "0042  00  -  -    nop\n")
+    second = ("; bank0 0042 selftest_second  [named]\n"
+              "0042  90 00 47    mov   dptr,#0x0047\n"
+              "0045  22  -  -    ret\n")
+    first_path = write("ec/decompiled/bank0/0040.asm", first)
+    second_path = write("ec/decompiled/bank0/0042.asm", second)
+    shas["listings"] = commit("listings: the window that last wrote them")
+
+    base_rows = [{"program": "bank0", "addr": "0040", "name": "selftest_first",
+                  "outcome": "match", "instructions_checked": "2",
+                  "instructions_unchecked": "0", "detail": "",
+                  "assembler": "sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14"},
+                 {"program": "bank0", "addr": "0042", "name": "selftest_second",
+                  "outcome": "match", "instructions_checked": "2",
+                  "instructions_unchecked": "0", "detail": "",
+                  "assembler": "sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14"}]
+    write(REPORT_REL, report_text(base_rows, FIXTURE_FIELDS))
+    shas["base"] = commit("base: the last full --report")
+
+    # The column where add_digest_column() puts it, and the cells its own
+    # digest_of() computes over the two listings above.
+    column_at = FIXTURE_FIELDS.index("outcome") + 1
+    mig_fields = (FIXTURE_FIELDS[:column_at] + ["listing_digest"]
+                  + FIXTURE_FIELDS[column_at:])
+    mig_rows = [dict(r, listing_digest=digest_of(parse_listing(path)))
+                for r, path in zip(base_rows, (first_path, second_path))]
+    write(REPORT_REL, report_text(mig_rows, mig_fields))
+    # A `.c` beside the column, because a migration window normally contains
+    # one and the digest is over the parsed `.asm` stream, so it must not move
+    # one. That is the supporting view, and the mode prints it as such.
+    write("ec/decompiled/bank0/0EA2.c",
+          "/* A decompiled C export. The digest is over the .asm instruction\n"
+          "   stream, so a window that contains one of these has still moved no\n"
+          "   listing. */\n")
+    shas["migration"] = commit("migration: add listing_digest, and a .c beside it")
+
+    # The three windows that are wrong in different ways. They are one line
+    # rather than three branches because each case names the window it reads,
+    # and the two that would otherwise be caught by an earlier check say so by
+    # naming a different base -- see the cases passing at("moved", "gone") and
+    # at("listings", "migration").
+    write(REPORT_REL, report_text([dict(mig_rows[0],
+                                         instructions_checked="1"),
+                                   mig_rows[1]], mig_fields))
+    shas["recounted"] = commit("recounted: one cell under the column")
+
+    # One mnemonic, same byte column, same length: an edit to the text rather
+    # than to the bytes, which is the change the digest column exists to catch.
+    write("ec/decompiled/bank0/0040.asm", first.replace("nop", "ret"))
+    shas["moved"] = commit("moved: a listing moved under the migration")
+
+    os.remove(os.path.join(root, *REPORT_REL.split("/")))
+    shas["gone"] = commit("gone: the report is not in this revision")
+    return shas
 
 
 def self_test():
@@ -2209,6 +2377,242 @@ def self_test():
                 "an empty report fails rather than comparing zero rows to zero "
                 "and agreeing")
 
+    # The outer function, over a repository this builds rather than over this
+    # one. The cases above are the comparison, with no git in them; what they do
+    # not reach is the part that runs git, refuses to answer, and returns 1. A
+    # mode that returned 1 from everywhere satisfies every failure case above
+    # and no verdict at all, so the `PASS` is in this list with them rather than
+    # assumed from them.
+    #
+    # The repository root is threaded through as `--repo` rather than the git
+    # callable injected, for the reason `_git()`'s own docstring gives: a fake
+    # would have answered every case below, and `None` (the command did not run)
+    # against `[]` (it ran and said nothing) is a distinction only a real git
+    # draws. Two cases below do inject, and say so in the assertion.
+    #
+    # Before the find_assembler() early return for the reason agent-gates.sh
+    # states when it runs this: the known answers sit there so they run whether
+    # or not sdas8051 is installed, and nothing in this block needs an assembler.
+    if not shutil.which("git"):
+        print("  --   git absent: --verify-provenance's failure returns are not "
+              "run here, because the mode reads every revision from git (the "
+              "gate's own run of it needs git too, one line later)")
+    else:
+        fixture = tempfile.mkdtemp(prefix="rasm-provenance-")
+        try:
+            shas = build_provenance_fixture(fixture)
+            # The read-back, and it is a control over a fixture rather than a
+            # census: a builder that quietly stopped making commits -- or made
+            # one and forgot to name it -- would leave a repository the cases
+            # below cannot tell from the one they think they built, and an empty
+            # `diff` over that is the one shape that cannot tell a working mode
+            # from a matching-nothing one. Read back with git's own answer
+            # rather than reconstructed from the builder: the same discipline
+            # `test_verify_provenance_clone_depth.py` uses, reading
+            # `--is-shallow-repository` back rather than inferring it from the
+            # command that made the clone. Set equality, so a commit no case
+            # names is as red as a name that is not a commit, and no size is
+            # asserted anywhere.
+            inside, _why = git_lines("rev-parse", "--is-inside-work-tree",
+                                     repo=fixture)
+            made, _why = git_lines("rev-list", "HEAD", repo=fixture)
+            assert_that(
+                inside == ["true"] and made
+                and set(made) == set(shas.values())
+                and len(set(shas.values())) == len(shas)
+                and all(re.fullmatch("[0-9a-f]{40}", s or "")
+                        for s in shas.values()),
+                "the fixture is a repository whose %d named commit(s) are "
+                "exactly the ones reachable from its HEAD (inside: %r, "
+                "reachable: %d)" % (len(shas), inside, len(made or [])))
+
+            # One argument vector over the fixture, by commit name, so a case
+            # reads `at("base", "migration")` and the shas it stands for are the
+            # ones the mode is given -- the shape the gate's own invocation
+            # takes, where both revisions are shas too.
+            def at(base, migration, listings_from="seed"):
+                return ["--verify-provenance", "--repo", fixture,
+                        "--base", shas[base], "--migration", shas[migration],
+                        "--listings-from", shas[listings_from]]
+
+            # The control, and the PASS. Everything below is read against this
+            # one: a mode that fails at everything would satisfy five failure
+            # cases and nothing here, which is the vacuity this block is the
+            # answer to.
+            status, said = main_says(at("base", "migration"))
+            assert_that(
+                status == 0 and "PASS" in said
+                and "0 of them changed over" in said
+                and "the same pathspec returns" in said
+                and "once listing_digest is dropped" in said,
+                "a migration that adds the column and nothing else reaches its "
+                "verdict, with the control's count printed beside the zero it "
+                "makes a measurement (status %r)" % status)
+            # The supporting view is not a gate, and this says why: a `.c`
+            # re-export is a normal thing for a window to contain, the digest is
+            # over the parsed `.asm` stream, and the verdict is unchanged.
+            assert_that(
+                "the window touched" in said
+                and "ec/decompiled/bank0/0EA2.c" in said and "PASS" in said,
+                "and the window's .c re-export is named in the supporting view "
+                "without moving the verdict: a C export is not a listing, so it "
+                "cannot move a digest")
+
+            # Each revision that does not resolve names its own label, and prints
+            # the history requirement whole rather than a fragment of it. Three
+            # copies of one case would be a control asserting nothing -- it would
+            # go green on a mode that named the wrong flag -- so each names its
+            # own.
+            for label, argv, named_rev in (
+                    ("base", ["--base", "no-such-base",
+                              "--migration", shas["migration"]],
+                     "cannot resolve the base revision 'no-such-base'"),
+                    ("migration", ["--base", shas["base"],
+                                   "--migration", "no-such-migration"],
+                     "cannot resolve the migration revision "
+                     "'no-such-migration'"),
+                    ("--listings-from",
+                     ["--base", shas["base"], "--migration", shas["migration"],
+                      "--listings-from", "no-such-listings"],
+                     "cannot resolve --listings-from 'no-such-listings'")):
+                status, said = main_says(["--verify-provenance", "--repo",
+                                          fixture] + argv)
+                assert_that(
+                    status == 1 and named_rev in said
+                    and HISTORY_REQUIREMENT in said,
+                    "an unresolvable %s fails with its own label and the "
+                    "history requirement whole (status %r, requirement "
+                    "printed: %s)"
+                    % (label, status, HISTORY_REQUIREMENT in said))
+
+            # The control that came back empty, which is the branch the whole
+            # check is shaped around and the failure a wrong or stale
+            # `--listings-from` produces: a control of zero over a window that
+            # wrote nothing, printed as "the pathspec is matching nothing" --
+            # indistinguishable from a working mode, on every commit, until
+            # something says it is not one.
+            status, said = main_says(at("base", "migration", listings_from="base"))
+            assert_that(
+                status == 1 and "the control returned 0 file(s)" in said
+                and "Pass --listings-from the revision before the window that "
+                    "last wrote" in said,
+                "a deliberately wrong --listings-from fails at the control "
+                "rather than passing as a diff that found nothing, and prints "
+                "the remedy (status %r)" % status)
+
+            # A listing that moved under the migration: the failure §14f exists
+            # to close, and the one the gate's own --listings-from protects
+            # against whenever it goes stale.
+            status, said = main_says(at("base", "moved"))
+            assert_that(
+                status == 1 and "listing(s) changed under the migration" in said
+                and "ec/decompiled/bank0/0040.asm" in said,
+                "a listing that moved under the migration fails with the file "
+                "named (status %r)" % status)
+
+            # The report unreadable at the migration. The base is `moved` rather
+            # than `base` so the window named is the deletion and nothing else:
+            # a window that also moved a listing would be caught above and never
+            # reach the report at all.
+            status, said = main_says(at("moved", "gone"))
+            assert_that(
+                status == 1
+                and "cannot read %s at the migration revision" % REPORT_REL
+                in said,
+                "a report that is not in the migration revision fails with the "
+                "path and the side named (status %r)" % status)
+
+            # And the same sentence naming the base. Reachable without a second
+            # fixture because `listings` predates the report and its control
+            # window still returns both listings -- which is the control doing
+            # its job: it is what lets the run get as far as reading the report.
+            status, said = main_says(at("listings", "migration"))
+            assert_that(
+                status == 1
+                and "cannot read %s at the base revision" % REPORT_REL in said,
+                "and the same sentence naming the base, with a control window "
+                "that is not empty behind it (status %r)" % status)
+
+            # Two reports differing beneath the column. compare_provenance()
+            # holds this at the function level above; what is new here is the
+            # outer function's print-and-return.
+            status, said = main_says(at("base", "recounted"))
+            assert_that(
+                status == 1
+                and "the two reports differ by more than the column" in said
+                and "instructions_checked" in said and "0040" in said,
+                "a cell changed under the column fails with the count, the cell "
+                "and the row named (status %r)" % status)
+
+            # The two `git_lines is None` branches, and the only cases here that
+            # are not end-to-end: a commit that resolves cannot make `git diff`
+            # fail over a fixed pathspec, so the failure is injected rather than
+            # provoked. Everything outside the named window is the real git, so
+            # each case reaches the branch it is about rather than failing to
+            # resolve a revision in front of it.
+            real_git = _git
+
+            def with_git(shim, argv):
+                """main_says() with `_git` replaced for the duration of the call."""
+                global _git
+                saved, _git = _git, shim
+                try:
+                    return main_says(argv)
+                finally:
+                    _git = saved
+
+            def one_diff_answers(window, status=128, stderr="injected\n"):
+                """`_git` with one diff window answering as it is told to.
+
+                `stderr` is what `git_lines()` carries into the printed reason,
+                so the cases below assert on it rather than on the shape of the
+                message alone.
+                """
+                def shim(*args, repo=REPO):
+                    if args[:1] == ("diff",) and any(window in str(a)
+                                                     for a in args):
+                        return subprocess.CompletedProcess(
+                            args=["git", "-C", repo], returncode=status,
+                            stdout="", stderr=stderr)
+                    return real_git(*args, repo=repo)
+                return shim
+
+            control_window = "%s..%s" % (shas["seed"], shas["base"])
+            listing_window = "%s..%s" % (shas["base"], shas["migration"])
+            status, said = with_git(
+                one_diff_answers(control_window, stderr="fatal: injected\n"),
+                at("base", "migration"))
+            assert_that(
+                status == 1 and "the control diff did not run:" in said
+                and "fatal: injected" in said,
+                "INJECTED, not end-to-end: a control diff that did not run is "
+                "refused and carries the reason out of git, rather than reading "
+                "as a diff that found nothing (status %r)" % status)
+            status, said = with_git(
+                one_diff_answers(listing_window, stderr="fatal: injected\n"),
+                at("base", "migration"))
+            assert_that(
+                status == 1 and "the listing diff did not run:" in said
+                and "fatal: injected" in said,
+                "INJECTED, not end-to-end: the same for the listing diff, which "
+                "is the branch that would otherwise read a command that did not "
+                "run as 'no listing moved' (status %r)" % status)
+            # The non-vacuity of the pair: the same shim answering with no output
+            # and a zero status is `[]` rather than `None`, and takes the
+            # control-empty branch instead. Without this the two injected cases
+            # would be one case written twice.
+            status, said = with_git(
+                one_diff_answers(control_window, status=0, stderr=""),
+                at("base", "migration"))
+            assert_that(
+                status == 1 and "the control returned 0 file(s)" in said
+                and "did not run" not in said,
+                "and a diff that ran and said nothing is the other branch, not "
+                "this one: `[]` is a measurement and `None` is not, which is "
+                "the whole of what git_lines() exists to keep apart")
+        finally:
+            shutil.rmtree(fixture, ignore_errors=True)
+
     # What a run says about itself: the assembler it used, and its tally beside
     # the committed report's. Reported against synthetic reports rather than the
     # committed one, on the same principle as the digest probe above -- a
@@ -2581,6 +2985,9 @@ def main():
     ap.add_argument("--listings-from",
                     help="revision before the window that last wrote the "
                          "listings, for the positive control (default: <base>^)")
+    ap.add_argument("--repo", metavar="ROOT", default=REPO,
+                    help="the clone --verify-provenance reads its revisions "
+                         "from (default: the repository this script is in)")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
     if args.emit_csv:
@@ -2607,7 +3014,8 @@ def main():
     if args.verify_provenance:
         if not args.base or not args.migration:
             ap.error("--verify-provenance needs --base and --migration")
-        return verify_provenance(args.base, args.migration, args.listings_from)
+        return verify_provenance(args.base, args.migration, args.listings_from,
+                                 repo=args.repo)
     if args.add_digest_column:
         return add_digest_column()
     if args.check:

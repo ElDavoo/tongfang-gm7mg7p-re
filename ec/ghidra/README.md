@@ -979,6 +979,30 @@ a measurement rather than a pathspec matching nothing. A migration that moved a
 listing, or touched any other cell of the report, fails with the file or the
 cell named.
 
+`--repo ROOT` runs the same audit against another clone — a fork, or a
+worktree of one — so the revisions resolve there rather than here. It defaults
+to the repository this script is in, which is every other invocation:
+
+```
+$ python3 ../tools/verify_reassembly.py --verify-provenance \
+      --repo /path/to/other/clone --base BASE --migration MIG
+```
+
+**Each way that command can fail has a committed known answer.**
+`--self-test` builds a throwaway repository under `tempfile` — never this one,
+so nothing below is a statement about the pair above — and drives the mode at
+it through every way it returns 1: a base, a migration or a `--listings-from`
+that does not resolve, a control that matched nothing, a listing that moved, a
+report unreadable at either side, two reports differing under the column, and a
+`git diff` that did not run. Each asserts the exit status and a substring of the
+printed reason, and the successful run is asserted with them — five failure
+cases with no success case are satisfied by a mode that fails at everything,
+which is the reading §14f warns about. `--self-test` runs per commit from
+`.github/scripts/agent-gates.sh` and from `ci.yml`'s `gates` job, so a wrong
+`--listings-from` is caught by a committed check rather than by whoever types
+one next. The write-up is
+[`../../docs/findings/verify-provenance-failure-answers.md`](../../docs/findings/verify-provenance-failure-answers.md).
+
 ## The annotation layer
 
 `../annotations/ghidra-functions.csv`, header-only so `csv.DictReader` reads it
