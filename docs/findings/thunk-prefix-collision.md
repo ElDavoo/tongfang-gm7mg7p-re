@@ -245,6 +245,18 @@ regeneration's diff, not a run of it on this machine.**
 the gate would have caught the seven names going stale. That gap is real and is
 left as it stands — closing it means deciding what the column is for.
 
+*(Corrected 2026-10-02, issue #627. The sentence above says the gap is left
+standing, and that is no longer true: `--check` now compares every report row's
+`name` against `ec/decompiled/listing-index.csv` per `(program, addr)` and names
+the rows that disagree, and `--refresh-name-column` re-copies the index's names
+into the report, proving from the written file that it moved no other cell. The
+paragraph above is left as it stands, per the retraction rule: it is the record
+of the gap, and "left as it stands" is what was true of it. Two measurements
+taken while that decision was being made are in
+[`reassembly-name-column.md`](reassembly-name-column.md), and both bear on this
+section — how many rows the column was stale on, and which rows carry an
+`assembler` cell this section's account does not describe.)*
+
 ## Two corrections to the premises
 
 **`annotation_ledger()` never identified the seven by the prefix.**
