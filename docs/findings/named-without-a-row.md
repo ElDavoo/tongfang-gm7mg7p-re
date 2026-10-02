@@ -40,6 +40,24 @@ transfers it argues about are unchanged; the rows themselves, and the reading of
 the bytes behind them, are in
 [`pd-unannotated-listings.md`](pd-unannotated-listings.md).
 
+> **Correction, 2026-10-02 (#631): the 21 above is the population before this
+> merge, and it is now 7 — every one `target-of-a-transfer`.** `--check` prints
+> `7 row(s): 7 target-of-a-transfer, 0 ghidra-switch-entry, 0 unexplained`. The
+> fourteen switch entries left **because the predicate widened, not because a
+> row was added**: `caseD_` and `default` joined `isPlaceholderName()`'s reserved
+> names, so `index.csv` stopped reporting fourteen Ghidra-given names as
+> `annotated=yes`. No row was added or renamed, no byte and no symbol moved, and
+> nothing the fourteen were read as argues differently — which is the same route
+> out of the population the five `pd` addresses took, and the tool's own docstring
+> names both. So the `ghidra-switch-entry` bucket is still live code with no
+> instance on the committed tree, and `--self-test` no longer pins the 7 / 14 / 0
+> split, only the bucket, by fixture. The seven are §2's six plus `common 0x10FA`
+> — the address the paragraph above already records as the one this document's
+> list lacks. §3's fourteen and §4's measurement over 21 are corrected beside
+> themselves below; §2's per-address reading and §5's frames are untouched by any
+> of this. The write-up is
+> [`cased-in-reserved-namespace.md`](cased-in-reserved-namespace.md).
+
 ## 1. The two questions, and only one of them had an answer
 
 Issue #601 asks for each of the seven either a `ghidra-functions.csv` row, or
@@ -117,6 +135,18 @@ analysis creates and the prefix `ExportDecompile.java:339` already keys
 §4 says what the bytes at them are *not* evidence of. **These 14 did not move**,
 and that is the point of §4: nothing about them is a fact about a row.
 
+> **Correction, 2026-10-02 (#631): "did not move" is now false, and "that remain"
+> above with it — they left the population, and the reason is the one that is not
+> about a row.** `caseD_` and `default` joined the reserved names
+> `isPlaceholderName()` keys on, so the `switchD_CODE:<addr>::` namespace this
+> paragraph reads is reserved *including its leaves*, and the index no longer
+> reports a name Ghidra wrote as `annotated=yes`. Nothing was answered and no row
+> was added. Everything else here stands and is what makes the change legible:
+> they were Ghidra's own namespace, `caseD_0` at eleven bank1 addresses plus
+> `caseD_6`, `caseD_1` and `default`, §18 counted them as automatic, and none of
+> that was a fact about a row — which is why a change to a name filter moved them
+> and a change to the CSV did not have to.
+
 ## 4. What the bytes are not evidence of
 
 Measured over the 21 the tool now derives, and over the 25 this document
@@ -129,6 +159,18 @@ discriminator is
 the name *and* the row behind it, and the tool tries them in that order: name
 equality against a row-backed target first, the switch namespace second,
 `unexplained` only after both fail.
+
+> **Correction, 2026-10-02 (#631): the 21 measured over above is the population
+> before this merge, not the one the tool derives now.** It is kept because the
+> twelve it names are the argument: they were switch entries, and the seven rows
+> that remain are all `target-of-a-transfer`, so on the current population the
+> discriminator's second arm has nothing to fire on. `--check` prints `7 of the 7
+> begin with a single unconditional transfer; 7 reach a CSV row's function under
+> this row's own name (7 jumps, 0 calls) and 0 reach somewhere real under a name
+> that is not this row's.` That is the same conclusion the paragraph reaches, from
+> a population where the contrast has gone — the argument needs the fourteen, and
+> the tool's `--self-test` keeps the `ghidra-switch-entry` bucket alive by fixture
+> so the arm stays exercised.
 
 `unexplained` is a refusal, and `--check` fails on it. It means this method found
 no mechanism for the name; it does not mean the name is absent, project-only or
@@ -352,6 +394,14 @@ the verdict beside each of the 25 and fails on an unexplained one. **Those are
 the numbers as they stood when this was written; on the current tree the ledger
 is 21 named-without-row, 1,951 rows each backing one index row and 1,972
 functions named, for the five rows the correction above is about.**
+**And on the tree after #631 it is 7 named-without-row, 1,961 rows each backing
+one index row and 1,968 functions named** — `build_ec_decompile.py --check`
+prints `1961 annotation row(s) - 0 unflagged + 7 unnamed-by-CSV = 1968 named
+function(s)`. The 21 and the 1,961 are not one number restated: `21` was
+`1,951 + 7 + 14` and `7` is `1,961 + 7 + 0`, and the term that moved is the
+`ghidra-switch-entry` fourteen leaving because the name filter learned them, not
+because the CSV grew or shrank. Every term is recounted on each run; nothing here
+needs re-measuring by hand.
 `grade_name_basis.py --check` is a clean no-op, which is the evidence that
 `ghidra-functions.csv` was not disturbed.
 
