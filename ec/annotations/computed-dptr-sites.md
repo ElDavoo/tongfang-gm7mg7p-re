@@ -373,10 +373,12 @@ The list the issue asked for, and the header paragraph carries the same one.
   (`windows/vendor-ec-map.md` "Fan tables", §6 above, and `profile-map.csv`'s
   `0x0F5D`-`0x0F5F` mailbox row); this pass changes which static sites a tool
   can see and claims nothing about what the EC does with them.
-- **A page that is absent from the summary's list.** That is "not reached by a
-  computed `DPH`", which is a statement about the encoding and not about the
-  page. `0x07` is in that position, and so is every page the list does not
-  name — `--page` on any of them prints the same zero and exits non-zero.
+- **A page that is absent from the summary's list.** That is "built by no site
+  whose page this scan can establish", which is a statement about the method
+  and not about the page: the rows this tool could not place are open on every
+  page, so a page one of them might build is absent from that list too. `0x07`
+  is in that position, and `--page` on it prints the zero, exits non-zero, and
+  names the rows it could not place beside it.
 - **The anchored pass's own framing.** One linear decode per region, which
   re-syncs a byte at a time at the region's tail and does not stop at control
   flow — §2's `ret` case is that limitation landing on a real row.

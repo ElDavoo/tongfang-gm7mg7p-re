@@ -686,6 +686,46 @@ class RegionSplitTests(unittest.TestCase):
         self.assertIn("could not place", out)
         self.assertIn("0x00001", out.replace("0x0001", "0x00001"))
 
+    def test_the_summary_census_scopes_its_negative_to_what_it_established(self):
+        # The summary's own page census, which is the *other* place a reader
+        # stops, and where the same over-claim was made in the same words:
+        # "a page absent from this list is not reached by a computed `DPH`".
+        #
+        # The fixture is what makes that sentence load-bearing: a determinate
+        # site and a **refused** one at the same `addc` immediate. The census
+        # lists only the first's page, so the second is a site this scan found
+        # whose page it could not establish -- and a refusal is open on every
+        # page, so "absent from the list" cannot mean "not reached". An
+        # un-negated "not reached by a computed `DPH`" would state the opposite
+        # of what the tool knows, at the point a reader stops reading.
+        #
+        # So the summary's negative is pinned the way `--page`'s closing
+        # sentence is: scoped to what the scan *can* establish, which is the
+        # only form the refusal model supports. The un-scoped wording is
+        # asserted absent, so a reword that drops the qualifier is red rather
+        # than a sentence that drifts back into the claim the tool cannot make.
+        img = bytearray(fixture(clr_a(), addc(0x0F), mov_dph(),
+                                bytes(3), bytes([0xEE]),  # `mov a,r6` first
+                                addc(0x0F), mov_dph()))
+        # The fixture has to have the shape the sentence is about, or the
+        # assertion below is about a buffer that never exercised the refusal.
+        rows = C.sites(bytes(img), False)
+        self.assertEqual(len(rows), 2, rows)
+        self.assertEqual([r["page_state"] for r in rows],
+                         [C.DETERMINATE, "refused"])
+        # The census reaches only the determinate one.
+        self.assertEqual(dict(C.page_histogram(rows)), {0x0F: 1})
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "image.bin")
+            with open(path, "wb") as f:
+                f.write(img)
+            out = subprocess.run(
+                [sys.executable, str(HERE / "computed_dptr_sites.py"), path],
+                capture_output=True, text=True, cwd=REPO)
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        self.assertIn("whose page this scan can establish", out.stdout)
+        self.assertNotIn("is not reached by a computed `DPH`", out.stdout)
+
     def test_a_candidate_set_names_the_page_and_not_only_the_immediate(self):
         # The other direction, and the one the immediate got wrong in *both*
         # ways: here A is known and non-zero, so the high byte is `0x0B + 0x0F`

@@ -863,8 +863,9 @@ def main() -> int:
 
     print("\nThe pages the main EC reaches by this method, all of them from a "
           "row the anchored\ndecode reaches and an accumulator this tool "
-          "could read -- a page absent from this\nlist is not reached by a "
-          "computed `DPH`, which is a statement about the encoding:\n")
+          "could read -- a page absent from this\nlist is built by no site "
+          "whose page this scan can establish,\nwhich is a statement about "
+          "the method:\n")
     for page, count in sorted(page_histogram(main_ec).items()):
         where = sorted(f"0x{r['offset']:05X}" for r in main_ec
                        if r["page_value"] == page)
