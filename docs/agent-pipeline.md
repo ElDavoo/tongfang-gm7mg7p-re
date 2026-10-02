@@ -698,6 +698,17 @@ only covers what's specific to *this* copy.
   were never a reason to reject. Of the 147 agent pull requests open or merged
   on 2026-10-02, none had been rejected, and the most common blocking findings
   were stale figures and line pins.
+- **Review and fix before the pull request opens** (2026-10-02, not in the
+  template). After the implement agent finishes, `agent-implement.yml` runs up to
+  two rounds of review then fix, each a fresh Claude invocation with none of the
+  implementer's context. The reviewer is held to the `Verdict` prompt in
+  `agent-review.yml` by reading it, so the two cannot drift apart. The fixer
+  works only from the reviewer's blocking findings. Anything the reviewer's tools
+  wrote is discarded, and a fix that does not finish is rolled back to what was
+  staged before it. So the worst case is the pull request opening as it would
+  have without this. The pull request body records what each round found, below
+  the scratch marker. The review stage after opening is still the merge gate. The
+  job's timeout is 300 minutes, up from 120.
 - **A green CI run no longer cancels a pending review** (2026-10-02, not in
   the template). `agent-fix-ci.yml` runs on every finished CI run on an agent
   branch, because its trigger cannot filter on conclusion. It used to hold that
