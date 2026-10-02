@@ -73,7 +73,7 @@ class ArityTests(unittest.TestCase):
     def test_a_three_wide_scan_raises_the_named_error(self):
         # `row_sites()` yields (path, lineno, text). This is the set as it is
         # before `main`'s narrowing, and the width the issue reported.
-        wide = {("ec/tools/grade_0751_isolation.py", 1477,
+        wide = {("ec/tools/grade_0751_isolation.py", 1516,
                  MARK_BRANCH)}
         with self.assertRaises(ValueError) as caught:
             mmp.check_citations(wide)
@@ -138,14 +138,14 @@ class JoinTests(unittest.TestCase):
         # only way to make this direction say something on its own.
         original = mmp.CITATIONS
         try:
-            mmp.CITATIONS = [("ec/tools/grade_0751_isolation.py", 1477,
+            mmp.CITATIONS = [("ec/tools/grade_0751_isolation.py", 1516,
                               "a line carrying no row literal", "synthetic")]
             problems = mmp.check_citations(
-                {("ec/tools/grade_0751_isolation.py", 1477)})
+                {("ec/tools/grade_0751_isolation.py", 1516)})
         finally:
             mmp.CITATIONS = original
         self.assertTrue(
-            any("1477" in p and "no citation names" in p for p in problems),
+            any("1516" in p and "no citation names" in p for p in problems),
             f'the scan found a site nothing cites and it was not said: '
             f'{problems}')
 
@@ -169,10 +169,10 @@ class JoinTests(unittest.TestCase):
         # a pin carrying the literal, a scan holding exactly that site.
         original = mmp.CITATIONS
         try:
-            mmp.CITATIONS = [("ec/tools/grade_0751_isolation.py", 1477,
+            mmp.CITATIONS = [("ec/tools/grade_0751_isolation.py", 1516,
                               MARK_BRANCH, "a synthetic pin")]
             problems = mmp.check_citations(
-                {("ec/tools/grade_0751_isolation.py", 1477)})
+                {("ec/tools/grade_0751_isolation.py", 1516)})
         finally:
             mmp.CITATIONS = original
         self.assertEqual(problems, [])
@@ -181,7 +181,7 @@ class JoinTests(unittest.TestCase):
         # Order, not decoration: a wrong width has to be refused before the
         # set differences, or the run ends in the for-loop ValueError this
         # guard exists to replace.
-        wide = {("ec/tools/grade_0751_isolation.py", 1477,
+        wide = {("ec/tools/grade_0751_isolation.py", 1516,
                  MARK_BRANCH)}
         with self.assertRaises(ValueError) as caught:
             mmp.check_citations(wide)

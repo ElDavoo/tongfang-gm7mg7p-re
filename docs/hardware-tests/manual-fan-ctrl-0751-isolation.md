@@ -669,9 +669,19 @@ For each run, from the three CSVs plus the by-hand power readings:
    entirely — a duty that climbs to a new curve and then wanders back down
    ends near where it started and nets to nearly nothing, which is exactly
    what a *ramping response* to the write looks like. What can separate the
-   two arms is how far the byte actually travelled. A byte that held still
-   prints as `net +0 … (0 changes)` rather than going missing, so a byte
-   that was watched and stayed put is not read as a byte nobody watched.
+   two arms is how far the byte actually travelled. A byte with no change
+   row in the window prints as `net +0 … (0 changes)` rather than going
+   missing, so a byte that was watched and recorded nothing is not read as
+   a byte nobody watched. **What the zero is a zero of** is the rest of the
+   line: *a zero here is a zero of observed transitions, not a measurement
+   of the byte* — `ec_watch.py` writes a change row only when a byte
+   differs between two of its sweeps, `--interval` is slept between sweeps
+   rather than between bytes, and the per-byte sampling period is
+   `--interval` plus a sweep duration nothing in this repo measures (issue
+   #94), so a move that completes inside one sampling period is in no
+   change row at all. §3 already puts that period on the page and stops
+   there; §6's `--dump-pair` is the wider bracket, and it is complementary
+   rather than stronger.
    The net stays on the line because where a response really is a clean
    step, that is the figure to read, and because where the statistics
    disagree it is total that carries the answer.
@@ -1047,7 +1057,13 @@ be compared line for line, and it sums each of them into a `window delta`
 line — first value, last value, the endpoint net, the total movement, the
 max excursion, and how many times the byte moved inside the window. Every
 context byte gets a line in every window, whether or not it moved, so a
-byte that held still reads as a zero rather than as a missing line. §4.4
+byte with no change row in it reads as a zero rather than as a missing
+line. **A zero here is a zero of observed transitions, not a measurement
+of the byte**: `ec_watch.py` writes a change row only when a byte differs
+between two of its sweeps, `--interval` is slept between sweeps rather than
+between bytes, and the per-byte sampling period is `--interval` plus a
+sweep duration nothing in this repo measures (issue #94), so a move that
+completes inside one sampling period is in no change row at all. §4.4
 names which of the three figures the control-vs-write comparison keys on
 and argues it from what a thermal wander looks like; the short form is that
 they disagree exactly when a byte wanders, and a fan duty under a fixed load
@@ -1076,8 +1092,19 @@ Concretely:
   *scope* of the claim written out (the byte does X; it does not imply the
   PLs follow).
 - nothing moves across all three values, both with and without the service,
-  and the surrounding bytes stay put → `confirmed-inert` for the byte *as a
-  standalone control*, which is the answer that sizes the Linux driver. Say
-  it in those words; "inert" about one path is not "inert".
+  and the surrounding bytes record no change either → `confirmed-inert` for
+  the byte *as a standalone control*, which is the answer that sizes the
+  Linux driver. Say it in those words; "inert" about one path is not
+  "inert". **Both halves of that condition are read off the change rows the
+  captures recorded** — `ec_watch.py` writes a row only when a byte differs
+  between two of its sweeps, so a move that completes inside one sampling
+  period is in no change row at all — and that is what a zero here is a zero
+  of: a zero of observed transitions, not a measurement of the byte. The
+  per-byte sampling period is `--interval` plus a sweep duration nothing in
+  this repo measures (issue #94), so a run at a cadence that cannot see the
+  move is not evidence the byte does nothing. `--dump-pair` brackets the
+  wider gap and is complementary to the windows, not a stronger read, and a
+  low-cadence confirmation run is a much smaller ask than re-deriving this
+  after the fact.
 - mixed or ambiguous → it stays `present-untested` and the run goes into
   `evidence/` anyway with what was seen. That is not a failed test.

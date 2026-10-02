@@ -716,15 +716,14 @@ class TheCommittedTree(unittest.TestCase):
         # gives: its pin is commit-qualified, so `:3608` is the line in that
         # revision and no merge can stale it. `main` re-anchored it to `:3951`
         # and read that as `def test_` (`1 -> 2`); the branch re-anchored it to
-        # `:3748`. `:3608` is restored, and the merged tree's own `:3608` is
-        # code, so `comment` gives `24 -> 23` and `other` takes `45 -> 46` --
-        # a third value, because each side measured a different line. With
-        # `def test_`, `assertion`, `blank` and the declined `"-": 33` unmoved,
-        # that is the control that this is a row changing column, not one added
-        # or dropped.
+        # `:3748`. `:3608` is restored, and the merged tree's own `:3608` is a
+        # `#` comment, so `comment` takes the one at `24` and `other` gives
+        # `46 -> 45`. With `def test_`, `assertion`, `blank` and the declined
+        # `"-": 33` unmoved, that is the control that this is a row changing
+        # column, not one added or dropped.
         self.assertEqual(shape, {census.DEF_TEST: 1, census.ASSERTION: 24,
-                                 census.COMMENT: 23, census.BLANK: 5,
-                                 census.OTHER: 46, "-": 33})
+                                 census.COMMENT: 24, census.BLANK: 5,
+                                 census.OTHER: 45, "-": 33})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing

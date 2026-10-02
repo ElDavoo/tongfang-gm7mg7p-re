@@ -300,6 +300,48 @@ def section6_command(doc):
     raise AssertionError("§6 has no fenced command line any more")
 
 
+def section4_4(doc):
+    """§4's fourth numbered item, which is where §4.4's prose lives.
+
+    Cut by the item that follows rather than by a `### 4.4` heading,
+    because §4.1-§4.6 are numbered list items under `## 4.` and about
+    thirty places in the repository cite them as `§4.x`. Promoting one to a
+    real heading to make it findable would change all of them, so the item
+    is cut here instead and the reader is explicit about it.
+    """
+    if "\n## 4. " not in doc:
+        raise AssertionError("no §4 in the runbook; the item that states "
+                             "what a zero is a zero of has moved or gone")
+    section = doc.split("\n## 4. ", 1)[1].split("\n## 5. ", 1)[0]
+    match = re.search(r"^4\. \*\*Fan duty\*\*.*?(?=^5\. |\Z)", section,
+                      re.M | re.S)
+    if match is None:
+        raise AssertionError("§4 has no `4. **Fan duty**` item any more")
+    return match.group(0)
+
+
+def section7(doc):
+    """§7, the section that says what a result has to state."""
+    if "\n## 7. " not in doc:
+        raise AssertionError("no §7 in the runbook; the section the "
+                             "`confirmed-inert` call is made in has gone")
+    return doc.split("\n## 7. ", 1)[1]
+
+
+def section7_inert_bullet(doc):
+    """§7's `confirmed-inert` bullet, whole.
+
+    Cut by the bullet rather than searched for across §7, because this is
+    the sentence the status call is made on: a caveat in some other part
+    of the section is not one the reader of this bullet sees.
+    """
+    for line in section7(doc).split("\n- ")[1:]:
+        if "nothing moves across all three values" in line:
+            return line
+    raise AssertionError("§7 has no `confirmed-inert` bullet naming all "
+                         "three values any more")
+
+
 # A differing-address line as the report prints it, in the WATCHED and
 # CONTEXT buckets. The section cannot simply be swept for every `0xNNNN` it
 # holds: WATCHED's own §4.3 label names 0x07C6 whether or not it moved.
@@ -662,6 +704,127 @@ class GradeTests(unittest.TestCase):
         self.assertIn('window delta  0x044F  ???? -> ????  net +0  '
                       'total 0  max 0  '
                       '(0 changes, level not in these captures)', out)
+
+    # What the zero above is a zero *of*. `ec_watch.py` writes a change row
+    # when a byte differs between two of its sweeps, so a capture is a log of
+    # recorded transitions rather than a sampling of levels: a duty byte that
+    # wobbles and returns inside one sampling period is in no row, and what
+    # the report knows about it is that no row was written. The two cases
+    # above pin the figures, which is right -- the figures are arithmetic
+    # over the rows and do not move. What they cannot say is that the byte
+    # held still, and the preamble used to say exactly that.
+    def test_a_zero_line_says_what_the_zero_is_a_zero_of(self):
+        rc, out, _ = run(QUIET)
+        self.assertEqual(rc, 0)
+        flat = " ".join(out.split())
+        # The scope, in the report and in the preamble the zero lines sit
+        # under -- not only in the closing block, which a reader who stops
+        # at the figures never reaches.
+        self.assertIn('a zero of observed transitions, not a measurement of '
+                      'the byte', flat)
+        self.assertIn('so a move that completes inside one sampling period is '
+                      'in no change row at all', flat)
+        # And in the preamble of every window rather than one of them: the
+        # two windows here are the count the fixture has, not a figure this
+        # holds, so the assertion is that the note is wherever the context
+        # bytes are printed.
+        for n in (1, 2):
+            self.assertIn('a zero of observed transitions',
+                          " ".join(window_body(out, n).split()))
+        # The mutation pin: the sentence this retired is what a reword that
+        # drops the scope would leave behind, so it has to be absent as
+        # loudly as its replacement is present.
+        self.assertNotIn('a byte that held still is a zero here', flat)
+        self.assertNotIn('a byte that held still reads as a zero', flat)
+        self.assertNotIn('the strongest negative result the procedure can '
+                         'produce', flat)
+
+    # The control for the case above: the wording moved and the arithmetic
+    # did not. Both parentheticals are asserted literally by the two cases
+    # named above and they are repeated here rather than relied on, because
+    # this is the pair that says a reader can take the new sentence and still
+    # read every figure the old one was printed beside.
+    def test_the_zero_scope_note_moved_no_figure(self):
+        rc, out, _ = run(QUIET)
+        self.assertEqual(rc, 0)
+        # The level-unknown zero, with all three figures, and the count of
+        # the lines themselves: the note added above the context bytes is not
+        # one of them and must not have become one.
+        self.assertIn('window delta  0x075B  ???? -> ????  net +0  total 0  '
+                      'max 0  '
+                      '(0 changes, level not in these captures)', out)
+        self.assertEqual(out.count('window delta'), 8)
+        # The known-level zero, off the fixture that carries one. This is the
+        # half the level-unknown case above cannot reach, and it is the
+        # reading issue #384 is about: a byte whose level *is* in evidence
+        # and which has no change row is exactly the shape a `confirmed-inert`
+        # answer takes, so it is the one that has to say what it is.
+        _, out, _ = run(*MULTI_MOVE)
+        self.assertIn('window delta  0x043E  0x37 -> 0x37  net +0  '
+                      'total 0  max 0  (0 changes)', out)
+
+    # The closing block is the one home that prints on every run whatever it
+    # found, so the caveat has to be there too -- and on both branches, or it
+    # would read as part of the "nothing moved" answer rather than as a fact
+    # about every zero in the report. A run that moved and a run that did not
+    # is the pair: the same sentence, over outputs whose closing blocks
+    # differ in every other word.
+    def test_the_closing_block_carries_the_zero_scope_on_both_branches(self):
+        for argv, what in (([QUIET], 'nothing moved'),
+                           (list(BLOCK_CAPTURES_MOVED), 'something moved')):
+            rc, out, _ = run(*argv)
+            section = out.split('=== what this does and does not settle ===')[1]
+            flat = " ".join(section.split())
+            self.assertIn('a zero of observed transitions, not a measurement '
+                          'of the byte', flat, what)
+            # It is beside the `confirmed-inert` sentence rather than
+            # replacing it, and the wider bracket is named as the complement
+            # rather than the stronger read -- the same three facts §4.4 and
+            # §6 carry.
+            self.assertIn('`confirmed-inert` as a standalone control', flat,
+                          what)
+            self.assertIn('The wider bracket, `--dump-pair`, closes part of '
+                          'that gap and is complementary rather than stronger',
+                          flat, what)
+
+    # "Hold it across the tool and the doc" as a red test rather than a
+    # review note. The runbook is where the call is made and where a reader
+    # goes for what a zero means, and §4.4/§6/§7 each restate the sentence,
+    # so a change to one and not the others is a change a run contradicts.
+    def test_the_runbook_says_what_the_zero_is_a_zero_of(self):
+        doc = RUNBOOK.read_text(encoding="utf-8")
+        flat = " ".join(doc.split())
+        for name, fragment in (
+                # §4.4 is a numbered list item, not a heading, so it is cut
+                # by the item that follows it rather than by a `### 4.x`.
+                ('§4.4', " ".join(section4_4(doc).split())),
+                ('§6', " ".join(doc.split('\n## 6. ', 1)[1]
+                                .split('\n## 7. ', 1)[0].split())),
+                ('§7', " ".join(section7(doc).split()))):
+            self.assertIn('a zero of observed transitions, not a measurement '
+                          'of the byte', fragment, name)
+            self.assertIn('in no change row', fragment, name)
+            # And the retired phrasings are gone from all three, not just
+            # the first: the sentence was made in one place and restated in
+            # two, and a reword that reached only the first is the shape the
+            # tool's own three homes had.
+            self.assertNotIn('stayed put', fragment, name)
+            self.assertNotIn('stays put', fragment, name)
+            self.assertNotIn('strongest negative', fragment, name)
+        # The period is stated as unmeasured rather than given a number, and
+        # pointed at the issue that owns measuring it.
+        self.assertIn('plus a sweep duration nothing in this repo measures '
+                      '(issue #94)', flat)
+        # §7's `confirmed-inert` bullet is where the status call is made and
+        # the caveat has to reach it, so it is cut by the bullet and read
+        # rather than searched for across the section.
+        bullet = " ".join(section7_inert_bullet(doc).split())
+        self.assertIn('nothing moves across all three values', bullet)
+        self.assertIn('a zero of observed transitions', bullet)
+        self.assertIn('a run at a cadence that cannot see the move is not '
+                      'evidence the byte does nothing', bullet)
+        self.assertIn('complementary to the windows, not a stronger read',
+                      bullet)
 
     def test_active_capture_names_the_byte_and_its_offset(self):
         rc, out, _ = run(ACTIVE)
