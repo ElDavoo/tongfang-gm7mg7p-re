@@ -172,26 +172,20 @@ follow-up issue's job, not this file's.
 
 The issue's evidence, re-run against the committed tree on 2026-10-02
 (issue #342), and the tool beside it. The `--check` pair is the census tool's
-own; the two `grep` lines are the corpus-wide token count the issue measured,
-run with the issue's own command over the whole of `ec/decompiled/*/*.c` and
-counting comments, which is what makes the first of them larger than the
-census's own comment-stripped `DAT_EXTMEM_` tally.
+own. The issue also measured a corpus-wide token count, with the issue's own
+command over the whole of `ec/decompiled/*/*.c`, counting comments:
+`grep -rhoE 'DAT_EXTMEM_[0-9a-fA-F]{4}' ec/decompiled/*/*.c | wc -l`, and the
+same piped through `sort -u` for distinct tokens. Its output is not transcribed
+here, because every re-export that names a register moves it.
 
 ```console
 $ python3 ec/tools/xdata_register_map.py --check
 /home/runner/.../ec/annotations/xdata-registers.csv: 1326 rows match a fresh generation from the committed tree at threshold 0.5
 /home/runner/.../ec/annotations/xdata-clusters.csv: 439 rows match a fresh generation from the committed tree at threshold 0.5
-$ grep -rhoE 'DAT_EXTMEM_[0-9a-fA-F]{4}' ec/decompiled/*/*.c | wc -l
-8583
-$ grep -rhoE 'DAT_EXTMEM_[0-9a-fA-F]{4}' ec/decompiled/*/*.c | sort -u | wc -l
-1013
 ```
 
 Those are the current ones. `python3 ec/tools/check_census_figures.py` derives
-the register count and the distinct-token count from the committed CSVs and
-holds this block to both; the raw count is `ORACLE["extmem_raw"]`, which is a
-count over `ec/decompiled/` rather than over a CSV, so the check declines it and
-the command beside it is what holds it.
+the register count from the committed CSVs and holds this block to it.
 
 ### 1b. The transcript this section was written with
 
@@ -337,11 +331,12 @@ deleted.)*
 
 *(Correction, 2026-10-02, issue #342. Two more of that note's figures have moved
 since it was written, so "unchanged and still pinned" now names only the top
-two addresses: the committed census has 172 symbol-spelled main-EC addresses
-and splits `pd_only` / `both` 108 / 49. The top-two pair is
+two addresses: the committed census's symbol-spelled main-EC count moves with
+every register named, so it is not written here (`check_census_figures.py
+--print` has it), and the census splits `pd_only` / `both` 108 / 49. The top-two pair is
 `xdata_register_map.py`'s `ORACLE_TOP_MAIN` and still holds.
-`python3 ec/tools/check_census_figures.py` derives each of those three from
-`ec/annotations/xdata-registers.csv` and holds this paragraph to them; the
+`python3 ec/tools/check_census_figures.py` derives the split from
+`ec/annotations/xdata-registers.csv` and holds this paragraph to it; the
 figures it corrects are kept above.)*
 
 The self-test is the oracle, and it pins the issue's numbers *and* the
@@ -542,7 +537,7 @@ $ grep -rhoE '\bCPU_TEMP\b' ec/decompiled/common/*.c ec/decompiled/bank0/*.c ec/
 
 Fifty-six mentions of `CPU_TEMP` in the EC programs, and **zero** of them
 under a `DAT_EXTMEM_043e`. The same holds for every other address the main EC
-spells by symbol — 172 in the committed census, `CPU_TEMP` one of them.
+spells by symbol in the committed census, `CPU_TEMP` one of them.
 
 **Per program, the split is a statement about one program.** Keying each row's
 `spellings_by_program` clause, so a `main-ec` row is spelled one way *by the
