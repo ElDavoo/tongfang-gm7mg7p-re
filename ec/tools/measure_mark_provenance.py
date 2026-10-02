@@ -644,7 +644,7 @@ CITATIONS = [
     ("ec/tools/grade_0751_isolation.py", 537,
      'EARLY_EXIT_TAG = "# the run ended early:"',
      "the one machine phrase the `#` namespace spends in this family"),
-    ("ec/tools/grade_0751_isolation.py", 3995,
+    ("ec/tools/grade_0751_isolation.py", 4024,
      'read = f"{path}: {len(m)} mark(s), {len(c)} change row(s)"',
      "the per-capture census line, which counts rather than spells"),
     ("ec/tools/grade_gpu_door.py", 931, "m, c = fan.read_capture(path)",

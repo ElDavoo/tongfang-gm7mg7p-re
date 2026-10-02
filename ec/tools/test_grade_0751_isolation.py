@@ -954,7 +954,7 @@ class GradeTests(unittest.TestCase):
             after = Path(tmp) / 'after-0700.txt'
             after.write_text('0750: 00 00\n')
             _, out, _ = run(QUIET, '--dump', str(after), '--wrote', '0xA0')
-        self.assertIn('something put it back', out)
+        self.assertIn('the byte moved back', out)
 
     def test_a_dump_header_comment_is_skipped(self):
         # §6 tells the operator to annotate what they hand in, and
@@ -5766,7 +5766,7 @@ class ReadbackNoticeTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         section = dumps_section(out)
         self.assertIn('the last dump holds 0x10, not the written 0xA0', section)
-        self.assertIn('something put it back', section)
+        self.assertIn('the byte moved back', section)
         self.assertNotIn('nothing here names the value that was written',
                          section)
         # And the flag the notice tells the operator to pass is the flag that
@@ -6540,7 +6540,7 @@ class BeforeSideReadbackTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         section = dumps_section(out)
         self.assertIn('the last dump holds 0x10, not the written 0xA0', section)
-        self.assertIn('something put it back', section)
+        self.assertIn('the byte moved back', section)
         self.assertIn('§3a', section)
         self.assertIn('the first --dump already holds the written 0xA0',
                       section)
@@ -6549,7 +6549,7 @@ class BeforeSideReadbackTests(unittest.TestCase):
         # machine-facing one are separate lines, and only the first of them
         # says the files cannot tell the two readings apart.
         self.assertLess(section.index('Nothing here separates the two'),
-                        section.index('something put it back'))
+                        section.index('the byte moved back'))
 
     # What a group of one dump says. A run is not required to hand in a pair,
     # so refusing the comparison here would throw away a fact the operator can
@@ -6598,6 +6598,178 @@ class BeforeSideReadbackTests(unittest.TestCase):
         self.assertIn('the last dump still holds the written 0xA0', section)
         self.assertNotIn('one --dump for this block', section)
         self.assertNotIn('the first --dump already holds', section)
+
+
+class ReadbackWriterNamesTests(unittest.TestCase):
+    """The mismatch line names a writer that cannot have run, and the rest.
+
+    Issue #220. §4.6's readback said "something put it back", which names
+    nothing an operator can act on, and it did not carry the one exclusion the
+    static disassembly supports: the bank0 `0x8978` Fan-Boost temperature
+    clear is behind `jnb acc.6,0x8998`, and bit 6 is clear in every value §3
+    writes, so the branch is taken and that store is not reached. These hold
+    the message and the runbook to the same anchors by content rather than by
+    line, so the two cannot drift apart on the next edit of either.
+    """
+
+    # One case per value rather than a loop over the three: a parameterised
+    # loop that failed on the second value would say nothing about which, and
+    # the whole claim is per-value -- each of these is separately supposed to
+    # leave bit 6 clear, which is what the exclusion rests on.
+    def test_the_mismatch_line_names_what_remains_for_each_value(self):
+        for wrote, held in ((0xA0, 0x00), (0x00, 0xA0), (0x10, 0x00)):
+            with self.subTest(wrote=wrote):
+                with tempfile.TemporaryDirectory() as tmp:
+                    after = Path(tmp) / 'after-0700.txt'
+                    after.write_text(f'0750: 00 {held:02x}\n')
+                    rc, out, _ = run(QUIET, '--dump', str(after),
+                                     '--wrote', f'0x{wrote:02X}')
+                self.assertEqual(rc, 0)
+                section = dumps_section(out)
+                # The half that is the finding, and it is unchanged: which two
+                # bytes disagree, named rather than described.
+                self.assertIn(f'the last dump holds 0x{held:02X}, not the '
+                              f'written 0x{wrote:02X}', section)
+                # What remains, rather than "something": both candidate kinds
+                # and the step that separates them.
+                self.assertIn("the EC's other 0x0751 write paths", section)
+                self.assertIn('the vendor service', section)
+                self.assertIn("§3a's service-stopped run is what separates "
+                              "them", section)
+
+    # The exclusion itself. A future edit that dropped it would leave the
+    # message naming the candidates without saying which one is already off
+    # the table, which is the whole of what this change added.
+    def test_the_mismatch_line_carries_the_temperature_exclusion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            after = Path(tmp) / 'after-0700.txt'
+            after.write_text('0750: 00 00\n')
+            rc, out, _ = run(QUIET, '--dump', str(after), '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        # The instruction that excludes the path, the mask the store carries,
+        # and the bit that decides which arm runs -- the three facts the
+        # arithmetic is made of.
+        self.assertIn('0x8978', section)
+        self.assertIn('anl a,#0xbf', section)
+        self.assertIn('bit 6 (0x40) is clear', section)
+        self.assertIn('jnb acc.6 at 0x8942 is taken', section)
+        # And the file that carries the disassembly, so a reader can check it
+        # rather than take the sentence's word for it.
+        self.assertIn('ec/annotations/manual-fan-ctrl-0751.md', section)
+
+    # The other side of the same gate, and the reason it is conditional rather
+    # than stated flat. `--wrote` takes any byte, so a value with bit 6 set is
+    # a case the tool can be handed -- and on that value the temperature clear
+    # *is* reachable, because the branch falls through. A message that claimed
+    # it was ruled out regardless would be the tool asserting a static fact
+    # that does not hold of the value it was just given.
+    def test_a_written_value_with_bit_six_set_keeps_the_writer_in_play(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            after = Path(tmp) / 'after-0700.txt'
+            after.write_text('0750: 00 00\n')
+            rc, out, _ = run(QUIET, '--dump', str(after), '--wrote', '0x40')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('the last dump holds 0x00, not the written 0x40', section)
+        self.assertIn('The bank0 0x8978 temperature clear is among them',
+                      section)
+        self.assertIn('bit 6 (0x40) is set in the written 0x40', section)
+        # And explicitly not the other branch: claiming the exclusion here is
+        # the overclaim this case exists to catch.
+        self.assertNotIn('is not among them', section)
+
+    # "Something" named nothing. Asserted absent as loudly as its replacement
+    # is present, so a merge that resolves back to the old wording is caught.
+    def test_something_is_no_longer_the_word(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            after = Path(tmp) / 'after-0700.txt'
+            after.write_text('0750: 00 00\n')
+            _, out, _ = run(QUIET, '--dump', str(after), '--wrote', '0xA0')
+        self.assertNotIn('something put it back', out)
+
+    # The #196 guard. The census that would supply a count says itself that the
+    # count is not closed, so a numeral presented as a number of writers is a
+    # figure every later census has to keep right. This fails the day one
+    # lands, which is when the sentence should be re-worded to cite the census
+    # rather than to keep a stale figure quietly true.
+    def test_the_mismatch_line_counts_no_writers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            after = Path(tmp) / 'after-0700.txt'
+            after.write_text('0750: 00 00\n')
+            _, out, _ = run(QUIET, '--dump', str(after), '--wrote', '0xA0')
+        section = dumps_section(out)
+        counted = re.search(
+            r'\b(one|two|three|four|five|six|seven|eight|nine|ten|11|12|13)\b'
+            r'.{0,40}(writer|path|arm)', section)
+        self.assertIsNone(counted, f'a count of writers in the message: '
+                                   f'{counted.group(0) if counted else ""}')
+
+    # The change must not have widened §4.6. The matching branch is still a
+    # readback and still not evidence, and the coverage notices still fire --
+    # the exclusion is one sentence on one branch, not a new status.
+    def test_the_matching_branch_and_the_coverage_notices_are_unchanged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            after = Path(tmp) / 'after-0700.txt'
+            after.write_text('0750: 00 a0 02 03 04 05 06 07\n')
+            rc, out, _ = run(QUIET, '--dump', str(after), '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('the last dump holds the written 0xA0', section)
+        self.assertIn('readback, not evidence', section)
+        # The exclusion is not on this branch: there is no moved-back byte to
+        # exclude a writer from, so printing it here would be a claim about
+        # nothing.
+        self.assertNotIn('0x8978', section)
+
+        # And the coverage notices still refuse rather than read. The dump
+        # starts at `0x0753`, so it does not reach `0x0751` at all -- `0750:
+        # 00 a0 02` would have covered it, which is the point: the notice is
+        # about coverage, not about the value the byte held.
+        with tempfile.TemporaryDirectory() as tmp:
+            after = Path(tmp) / 'after-0700.txt'
+            after.write_text('0753: 00 01\n')
+            rc, out, _ = run(QUIET, '--dump', str(after), '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        self.assertIn('the last --dump does not cover 0x0751', out)
+
+    # The runbook side of the same claim. Located by anchor phrase rather than
+    # by line: write-ups cite lines in this file's neighbourhood, and a pin
+    # is true only until the next merge grows the file above it. This is what
+    # stops the tool and the runbook drifting apart.
+    def test_the_procedure_carries_the_exclusion_in_both_places(self):
+        doc = (HERE.parent.parent / 'docs' / 'hardware-tests'
+               / 'manual-fan-ctrl-0751-isolation.md').read_text(encoding='utf-8')
+        # Both places are found by a phrase that is already there rather than
+        # by a heading this change would have to add, and both are bounded by
+        # the phrase on the far side of them so a later section cannot stand in
+        # for a deleted one. Step 4's Fan Boost paragraph ends where step 6's
+        # writer-table paragraph begins, and step 6's runs to §5.
+        boost = doc.index('The same §9 also found the Fan Boost arms gating')
+        writers = doc.index('the byte that came back names the writer')
+        section5 = doc.index('## 5. What this cannot settle')
+        self.assertLess(boost, writers)
+        self.assertLess(writers, section5)
+        for name, section in (('step 4', doc[boost:writers]),
+                              ('step 6', doc[writers:section5])):
+            # The instruction, the mask and the bit, as on the tool's side.
+            self.assertIn('0x8978', section, name)
+            self.assertIn('anl a,#0xbf', section, name)
+            self.assertIn('bit 6', section, name)
+            self.assertIn('jnb acc.6', section, name)
+            self.assertIn('0x898E', section, name)
+            # The disassembly it is read off, cited by file and heading.
+            self.assertIn('ec/annotations/manual-fan-ctrl-0751.md', section,
+                          name)
+
+    # The same claim, on the arithmetic. Each value separately, so a failure
+    # names the value whose bit is wrong rather than "the values".
+    def test_each_written_value_leaves_bit_six_clear(self):
+        for value, bits in ((0xA0, {7, 5}), (0x10, {4}), (0x00, set())):
+            with self.subTest(value=value):
+                self.assertEqual(value & 0x40, 0)
+                self.assertEqual({n for n in range(8)
+                                  if value & (1 << n)}, bits)
 
 
 if __name__ == '__main__':

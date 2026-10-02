@@ -643,6 +643,22 @@ For each run, from the three CSVs plus the by-hand power readings:
    `0x0751` has moved back, that is a finding, not a failed write, and it
    belongs next to the readback check in step 6.
 
+   **Which arm that is, and why none of §3's three values enters it.** "The
+   BOOST-**set** arm" above means *the arm taken when the bit is set*, and
+   that is the *fall-through*: `0x8942` is `jnb acc.6,0x8998`, taken when bit
+   6 is **clear**, so a byte without bit 6 runs the other arm
+   (`../../ec/annotations/manual-fan-ctrl-0751.md` §9.1 spells this out for
+   all seventeen branches). The three values §3 writes are `0xA0` (bits 7 and
+   5), `0x10` (bit 4) and `0x00` (nothing), so bit 6 (`0x40`) is clear in all
+   three, the branch is taken to `0x8998`, and the `0x8978` compare and the
+   `anl a,#0xbf` store at `0x898E`-`0x8990` are not reached. That is a static
+   reading of committed disassembly and it is narrow: it rules out this one
+   path, and the arms CSV's own taken-arm row for `0x8942` carries
+   `0x0751 read` rather than `r+w` — the store is only on the other side. It
+   says nothing about which path did move the byte, and the paragraph above
+   stands: a moved-back byte is still a finding. The write-up is
+   [`../findings/0751-readback-writer-names.md`](../findings/0751-readback-writer-names.md).
+
    One thing deliberately *not* done: `0x0460`/`0x0468`, the fan-tachometer
    bytes these arms also read, are **not** added to any watcher. §3 stops
    that range at `0x045F` on purpose — reading the tach bytes through `ECRR`
@@ -758,6 +774,27 @@ For each run, from the three CSVs plus the by-hand power readings:
    `../../docs/findings/0751-writer-census.md` §4 says which two blind spots
    could hold one. Record it either way; the unreached row is the more useful
    of the two results.
+
+   **Read the table with one row already ruled out.** The `0x898A` row — the
+   Fan Boost clear, `anl a,#0xbf` at `0x898E` storing at `0x8990` under the
+   `0x8978` compare — is behind the `0x8942` `jnb acc.6,0x8998` gate
+   (`../../ec/annotations/manual-fan-ctrl-0751.md` §9 carries the listing and
+   §9.1 which way `jnb` runs), and step 4's paragraph above carries the
+   arithmetic: bit 6 is clear in `0xA0`, `0x10` and `0x00`, so the branch is
+   taken and that store is not reached on any of the three. Do not spend the
+   run matching a value against it, and do not read a value it *would* have
+   produced as evidence it ran. What is left to separate is **the EC's other
+   `0x0751` write paths and the vendor service**, and §3a's service-stopped
+   pass is the step that separates them: the same write with the service up and
+   the service down moves the byte in one case and not the other only if the
+   service is the writer.
+
+   **The `0x0400` pair is not this step's input.** §4.5's flat-load check is
+   what reads those two temperatures, which is what §6 already says the pair is
+   for. Pairing a failed readback with a temperature bracket sends the operator
+   looking for a thermal explanation this step has already excluded; the
+   bracket belongs beside §4.5's and §4.4's comparisons, and the readback is
+   read against the writer table instead.
 
 A run where *nothing* moves is a real result and should be recorded as one:
 it would mean a Linux driver has to write the whole bundle, which is the
