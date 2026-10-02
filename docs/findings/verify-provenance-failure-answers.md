@@ -162,7 +162,7 @@ the block; a table of pass marks is not.
 | the reports-differ guard (`if problems:`) disabled | 1: the reports-differ case |
 | `git_lines` answering `[]` instead of `None` on a failed command | 4: both INJECTED cases and both unreadable-report cases |
 | `repo=repo` dropped from the report's `git show` | 4: the PASS case, its supporting view, the unreadable-migration case, and the reports-differ case |
-| `repo=repo` dropped from the control `git diff` | 8, including the PASS and both INJECTED cases |
+| `repo=repo` dropped from the control `git diff` | 8, including the PASS and the listing diff's INJECTED case; the control diff's own stays green, because that shim answers on the window string and never reaches the real git |
 | `repo=repo` dropped from `resolve_revision()` | every case except the unresolvable `--base` one, which fails before any diff and so reads the same wrong clone |
 
 The `git_lines` row is the one that matters most: it is the change that would
