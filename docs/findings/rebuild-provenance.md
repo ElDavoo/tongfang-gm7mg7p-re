@@ -407,7 +407,8 @@ question says so.
    functions the committed database merged, or five it never found, is a
    reading of the PD image's bytes and is not this write-up's.
 4. **§8's follow-ups are still open** and are not touched here — the four
-   mid-instruction frames and the two nested frames that
-   [`named-without-a-row.md`](named-without-a-row.md) §8 already lists. §3 and
-   §7 corroborate the category from a second direction; neither settles an
-   address.
+   mid-instruction frames of §8 item 1, and the nested frame its item 2 leaves
+   standing once §8.2's correction withdrew the count of two (`bank0 0x805B`
+   inside `index_case_00`; `pd 0x9C4D` reads `after-a-function`), all in
+   [`named-without-a-row.md`](named-without-a-row.md). §3 and §7 corroborate
+   the category from a second direction; neither settles an address.
