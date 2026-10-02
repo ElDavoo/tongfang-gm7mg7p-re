@@ -754,6 +754,13 @@ def write_csv(d, pd_verified, callee_depth, max_depth, max_insns, out=sys.stdout
     reach = REACH_NOTE if settled else REACH_UNSETTLED
     for slot in slots:
         arm = slot.arm
+        # Walked as `write_writes_csv` and `report` both do, rather than with an
+        # empty callee list: `slot_status()` reads the callees' cuts as well as
+        # the slot's, so passing none reported a slot cut inside a callee as
+        # `complete` here while the other two modes of this one tool said
+        # `cut`.
+        callees = walk_slot(d, RUN_REGION, slot, pd_verified, callee_depth,
+                            max_depth, max_insns)
         w.writerow([slot.index, f"0x{slot.address:04X}", slot.opcode,
                     f"0x{slot.target:04X}", slot.segment,
                     "yes" if slot.head else "no",
@@ -763,7 +770,7 @@ def write_csv(d, pd_verified, callee_depth, max_depth, max_insns, out=sys.stdout
                     " ; ".join(f"0x{c:04X}" for c in dict.fromkeys(arm.callees)) if arm else "",
                     arm.unattributed if arm else 0,
                     "; ".join(arm.ends) if arm else "",
-                    slot_status(slot, []), reach,
+                    slot_status(slot, callees), reach,
                     arm.window if arm else ""])
     return 0
 

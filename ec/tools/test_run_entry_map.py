@@ -10,7 +10,17 @@ actually see. This file holds the byte facts that reading stands on.
 `ec/firmware/GMxMGxx_11.800` or a committed CSV. A regenerated table that
 disagreed would then fail instead of passing on a stale pair -- the
 `test_bank1_e582_framing.py` arrangement, and the reason the tool's `--csv` mode
-is not what these cases compare against.
+is not what these cases compare against. The write-set case reads a mode too,
+and the arrangement still holds: it runs `--writes-csv` in process off the same
+image, and what it puts the other side of is the write-up's own prose, so there
+is no committed table on either side for the pair to be stale.
+
+**A `vis`/`invis` cell is a write set, so it is compared as one.** §3 defines a
+`write` as an instruction storing to an address, and the cells are parsed back
+and compared against what the walk attributes. That rejects both ways a cell
+can name more than the bytes show: an address the walk never reaches, and one it
+reaches but only reads -- and a range is expanded before the comparison, so
+spanning either of them does not hide it.
 
 **The stub-to-segment map is computed, not asserted.** `test_each_stub_names_its
 _own_segments_head` reads the stub immediates out of the committed
@@ -43,6 +53,7 @@ capture run most needs warned about, and a test that only ever checked the
 classification would pass just as well if every slot turned out visible.
 """
 import csv
+import io
 import re
 import sys
 import unittest
@@ -54,7 +65,7 @@ sys.path.insert(0, str(HERE))
 
 import run_entry_map
 from ec_timer_capture import HOST_WINDOW
-from trace_xdata_refs import offset_for_runtime
+from trace_xdata_refs import PD_MARKER, offset_for_runtime
 
 FIRMWARE = HERE.parent / 'firmware' / 'GMxMGxx_11.800'
 TASK_TABLE = HERE.parent / 'annotations' / 'task-call-table.csv'
@@ -80,6 +91,15 @@ MARKER_WINDOW = (0x1100, 0x11FF)
 # agreed with by construction.
 LCALL, LJMP = 0x12, 0x02
 STRIDE = 3
+
+# The depth the write-up states its write sets at ("one level of `lcall`
+# callee"), and `run_entry_map.direction`'s two values that mean an instruction
+# stores to the address -- the third, `read`, is what a write set may not
+# contain. Both are the write-up's own vocabulary read back, not a copy of a
+# table: a cell naming a `read` is naming something the walk does not call
+# written.
+CALLEE_DEPTH = 1
+STORE_DIRECTIONS = ("write", "r+w")
 
 
 def at(addr, n=1, region='bank0'):
@@ -451,6 +471,26 @@ class TheWriteup(unittest.TestCase):
     ROW = re.compile(r'^\|\s*`?0x([0-9A-Fa-f]{4})`?\s*\|\s*`?(lcall|ljmp)`?\s*\|'
                      r'\s*`?0x([0-9A-Fa-f]{4})`?\s*\|\s*(\d+)\s*\|')
 
+    # One address in a `vis:`/`invis:` cell, optionally the two ends of a
+    # `0xAABB`–`0xCCDD` range. Anchored rather than searched, because a cell is
+    # a *run* of addresses: it ends where the run does, at the first thing that
+    # is not one -- `none`, or the prose the same markdown cell carries after
+    # the write set ("**Cut** at the `0x7151` dispatcher's `jmp @a+dptr`"), and
+    # a backticked address inside that prose is not a write.
+    CELL = re.compile(r'\s*0x([0-9A-Fa-f]{4})(?:\s*–\s*0x([0-9A-Fa-f]{4}))?')
+
+    @classmethod
+    def cell_addresses(cls, cell):
+        """The addresses one cell names, expanded from its ranges."""
+        cell, out, pos = cell.replace('`', ''), set(), 0
+        while True:
+            m = cls.CELL.match(cell, pos)
+            if m is None:
+                return out
+            lo = int(m.group(1), 16)
+            out |= set(range(lo, int(m.group(2), 16) + 1) if m.group(2) else [lo])
+            pos = m.end()
+
     def table_rows(self):
         text = WRITEUP.read_text()
         found = []
@@ -460,6 +500,41 @@ class TheWriteup(unittest.TestCase):
                 found.append((int(m.group(1), 16), m.group(2),
                               int(m.group(3), 16), int(m.group(4))))
         return found
+
+    def write_set_cells(self):
+        """`{slot address: (vis, invis)}` parsed back out of the last column."""
+        out = {}
+        for line in WRITEUP.read_text().splitlines():
+            line = line.strip()
+            m = self.ROW.match(line)
+            if not m:
+                continue
+            # The last cell, between the row's final two pipes.
+            desc = line.rsplit('|', 2)[1]
+            cut = desc.find('invis:')
+            out[int(m.group(1), 16)] = (
+                self.cell_addresses((desc[:cut] if cut >= 0 else desc)
+                                    .split('vis:')[-1]),
+                self.cell_addresses(desc[cut + len('invis:'):])
+                if cut >= 0 else set())
+        return out
+
+    def tool_writes(self):
+        """`{run index: {xdata: row}}` as `--writes-csv` renders it.
+
+        Called in process rather than shelled out to, so it walks the committed
+        image and not a regenerated table -- which is what the cases here are
+        for. The mode itself is the one §3 tells a reader to reproduce with, so
+        the comparison is against what that command prints.
+        """
+        out, buf = {}, io.StringIO()
+        off, magic = PD_MARKER
+        run_entry_map.write_writes_csv(
+            IMAGE, IMAGE[off:off + len(magic)] == magic, CALLEE_DEPTH,
+            run_entry_map.MAX_DEPTH, run_entry_map.MAX_INSNS, out=buf)
+        for row in csv.DictReader(io.StringIO(buf.getvalue())):
+            out.setdefault(int(row['index']), {})[int(row['xdata'], 16)] = row
+        return out
 
     def test_the_writeup_exists_and_has_a_table(self):
         self.assertTrue(WRITEUP.exists(), f'{WRITEUP} is missing')
@@ -486,6 +561,37 @@ class TheWriteup(unittest.TestCase):
         for (_addr, _op, _target, segment), slot in zip(self.table_rows(), rows):
             with self.subTest(addr=f"0x{slot.address:04X}"):
                 self.assertEqual(segment, slot.segment)
+
+    def test_the_write_set_cells_are_what_the_tool_attributes_as_written(self):
+        # **The property the write-up claims for itself**, and the one every
+        # case above could pass without: §3 says the `vis`/`invis` cells are the
+        # write set, and a `write` is an instruction storing to an address, so
+        # each cell has to name exactly the addresses `--writes-csv` records as
+        # stored to -- split by the imported `HOST_WINDOW`, which is what makes
+        # `vis` the observable set. Two ways to overclaim, both checked: an
+        # address the walk never reaches, and one it reaches but only reads.
+        # Compared as computed sets rather than as a literal list, so a changed
+        # walk moves the expectation and names itself.
+        rows, _stubs = slots()
+        cells, tool = self.write_set_cells(), self.tool_writes()
+        for slot in rows:
+            reached = tool[slot.index]
+            named_vis, named_invis = cells[slot.address]
+            with self.subTest(addr=f"0x{slot.address:04X}"):
+                for addr in sorted(named_vis | named_invis):
+                    row = reached.get(addr)
+                    self.assertIsNotNone(
+                        row, f"the write-up names 0x{addr:04X}, which no arm "
+                             f"found by this method reaches")
+                    self.assertIn(
+                        row['direction'], STORE_DIRECTIONS,
+                        f"the write-up names 0x{addr:04X} as written, but the "
+                        f"walk records it as {row['direction']!r}")
+                stored = {a for a, r in reached.items()
+                          if r['direction'] in STORE_DIRECTIONS}
+                self.assertEqual(named_vis, {a for a in stored
+                                             if run_entry_map.host_visible(a)})
+                self.assertEqual(named_invis, stored - named_vis)
 
     def test_the_writeup_keeps_the_absence_claims_calibrated(self):
         # A write-up that had drifted into asserting absence would pass every
