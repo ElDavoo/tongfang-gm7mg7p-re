@@ -1767,15 +1767,23 @@ CLASSIFIER_SHAPE = (
     # A compound assignment reads what it writes -- what `&=` cannot say on its
     # right-hand side. Measured over the committed tree none follows an address
     # token (#424), so the pair costs no bucket: it was pinned as the measured
-    # `write`, which is the misclassification this corrects.
+    # `write`, which is the misclassification this corrects. `<<=` and `>>=` are
+    # here for the operator test itself, which read them by a two-character
+    # slice and so could not match a three-character operator at all.
     ("DAT_EXTMEM_0440 &= 0x0f;", "read+write"),
     ("DAT_EXTMEM_0440 |= 0x0f;", "read+write"),
+    ("DAT_EXTMEM_0440 <<= 1;", "read+write"),
+    ("DAT_EXTMEM_0440 >>= 1;", "read+write"),
     ("if (DAT_EXTMEM_0440 == 0) {", "read"),
-    # `&&`, ampersand-preceded address first because the self-test resolves only
-    # the first token -- in `bank0/A747.c` that is the other operand, so the
-    # tree's own order would pass for the wrong reason. The second is `==`-free.
-    ("DAT_EXTMEM_076a == '\\0' && DAT_EXTMEM_0440 == '\\0'", "read"),
-    ("DAT_EXTMEM_076a && DAT_EXTMEM_0440", "read"),
+    # `&&`, with a leading operand `occurrence_re` does not match. The self-test
+    # resolves a snippet with `pattern.search`, the *first* match only, so what
+    # has to follow the `&&` is the first address token in the literal -- and a
+    # literal that begins with one cannot test this clause at all, however the
+    # operands are ordered. `bank0/A747.c` puts its address second, so the tree's
+    # own shape cannot supply it; `param_1` supplies a leading operand that is
+    # not an address. The second literal is `==`-free.
+    ("if (param_1 == '\\0' && DAT_EXTMEM_0440 == 0) {", "read"),
+    ("if (param_1 && DAT_EXTMEM_0440) {", "read"),
     ("if (DAT_EXTMEM_0440 == 0) {\n}", "read"),
     ("if (DAT_EXTMEM_0440 != 0) {", "read"),
     ("if (DAT_EXTMEM_0440 <= 7) {", "read"),
@@ -2314,7 +2322,11 @@ def classify(text: str, start: int, end: int, addr: str, func_names,
     if left.endswith("&") and not left.endswith("&&"):
         return "address-taken"
     if store_target(text, start, end, eq_guard):
-        return ("read+write" if text[end:].lstrip()[:2] in ASSIGN[1:]
+        # Tested by prefix over the same tuple `store_target()` uses, not by a
+        # fixed-length slice: `<<=` and `>>=` are three characters, so a
+        # two-character slice could never match them and both stayed `write`.
+        stripped = text[end:].lstrip()
+        return ("read+write" if any(stripped.startswith(op) for op in ASSIGN[1:])
                 or addr in rhs_of(text, text.index("=", end)) else "write")
     if enclosing_call(text, start, func_names):
         return "passed-to-call"

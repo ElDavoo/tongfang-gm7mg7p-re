@@ -83,7 +83,7 @@ print(len(amp), sum(l.endswith("&&") for l in amp),
 **Compound assignments after an address token: zero.** Over the same walk, no
 member of `ASSIGN` other than `=` follows a `DAT_EXTMEM_xxxx` or symbol token
 anywhere in the committed tree, in either spelling. So fix 2 costs no bucket
-today: the two `CLASSIFIER_SHAPE` literals move from pinning a *known
+today: the `CLASSIFIER_SHAPE` literals move from pinning a *known
 misclassification* to pinning the *right* one, and the reason is not a defect in
 this tree. That is a statement about this tree by this method — if a future
 export emits `&=`, the literal still holds it, and the census would then count
