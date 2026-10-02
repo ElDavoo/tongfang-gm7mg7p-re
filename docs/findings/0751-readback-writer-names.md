@@ -150,6 +150,13 @@ anchors moves when another branch edits either file — and the runbook cannot
 lose its half of the claim on the next edit of the tool without a case going
 red.
 
+Editing `report_readback()` pushed the grader's per-capture census line below
+it down, so `measure_mark_provenance.py`'s citation of that line moved with it,
+and so did the live ledger row in
+[`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) that names
+that pin — the table there is the live half of that page, and `check_page` is
+what fails when one of the two moves and the other does not.
+
 ## What this does not establish
 
 - **No run happened.** No `--dump` was taken, no capture opened, no EC or
