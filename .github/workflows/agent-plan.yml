@@ -346,8 +346,19 @@ jobs:
             files rather than growing an existing one. Name in the plan every shared file the
             change must still touch, and why.
 
-            Write the plan. There is no longer a "refuse this one" answer: every issue that
-            reaches you is planned and handed to the implement stage. Where a request is vague,
+            First, the one question that can stop an issue here (LOCAL CHANGE, 2026-10-02): would
+            finishing it make the EC firmware, the BIOS or the Windows vendor stack better
+            understood, or bring a feature closer to a Linux driver, or unblock a named piece of
+            work that does? If the honest answer is no, because the issue only re-counts,
+            re-anchors, re-pins, re-words or re-checks the repository's own text, tables,
+            censuses or checkers, set `off_mission` to true and give the reason in
+            `off_mission_reason`, in one or two sentences naming what the issue would change
+            and why that moves none of the three. The issue is then parked for a human rather
+            than planned. A tool defect that puts a published finding at risk is mission work.
+            So is preparation for a hardware run. When in doubt, plan it.
+
+            Otherwise write the plan. Being vague, partly blocked or partly impossible is never
+            a reason to set `off_mission`. Where a request is vague,
             pick the narrowest reading that is still useful and say in the plan which reading
             you took and what you left out; where part of it cannot be done unattended, plan
             the rest and put that part under "out of scope" with the reason.
@@ -422,7 +433,7 @@ jobs:
             --dangerously-skip-permissions
             --allowedTools "Read,Glob,Grep,Bash(git:*),Bash(rg:*),Bash(jq:*),Bash(find:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(sort:*),Bash(uniq:*),Bash(diff:*)"
             --disallowedTools "Write,Edit,Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
-            --json-schema '{"type":"object","properties":{"pr_title":{"type":"string","description":"Lowercase plain-language subject line for the eventual squash commit"},"pr_body":{"type":"string","description":"Body for the eventual squash commit: reasoning and evidence"},"plan":{"type":"string","description":"The plan, as markdown, to become the issue body"}},"required":["pr_title","pr_body","plan"]}'
+            --json-schema '{"type":"object","properties":{"pr_title":{"type":"string","description":"Lowercase plain-language subject line for the eventual squash commit"},"pr_body":{"type":"string","description":"Body for the eventual squash commit: reasoning and evidence"},"plan":{"type":"string","description":"The plan, as markdown, to become the issue body. Empty when off_mission is true"},"off_mission":{"type":"boolean","description":"True only when finishing the issue would move none of the EC firmware, the BIOS, the Windows stack or the driver, and unblock nothing that does"},"off_mission_reason":{"type":"string","description":"When off_mission is true: one or two sentences on what the issue would change and why that moves none of the three. Empty otherwise"}},"required":["pr_title","pr_body","plan","off_mission","off_mission_reason"]}'
 
       - name: Record a stall
         if: steps.plan.outcome != 'success' || steps.plan.outputs.conclusion != 'success'
@@ -442,6 +453,7 @@ jobs:
       # been skipped anyway. So a stalled Claude run took every step below it down with a parse
       # error rather than skipping cleanly. Plain string outputs cannot do that.
       - name: Unpack the plan
+        id: unpack
         env:
           OUT: ${{ steps.plan.outputs.structured_output }}
         run: |
@@ -449,12 +461,35 @@ jobs:
           jq -r '.plan'     <<<"$OUT" > /tmp/plan-body.md
           jq -r '.pr_title' <<<"$OUT" > /tmp/pr-title.txt
           jq -r '.pr_body'  <<<"$OUT" > /tmp/pr-body.txt
+          jq -r '.off_mission_reason // ""' <<<"$OUT" > /tmp/off-mission-reason.txt
+          echo "off_mission=$(jq -r '(.off_mission // false) | tostring' <<<"$OUT")" >> "$GITHUB_OUTPUT"
+
+      # LOCAL CHANGE (2026-10-02): the plan's mission gate. An issue that would move none of the
+      # EC, the BIOS, the Windows stack or the driver is parked with `no-agent` and the reason,
+      # instead of costing an implement run, CI and a review that then rejects it. Every queue
+      # sweep already skips `no-agent`; removing the label is how a human sends it back.
+      - name: Park an off-mission issue
+        if: steps.unpack.outputs.off_mission == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE: ${{ needs.triage.outputs.issue }}
+        run: |
+          set -euo pipefail
+          {
+            printf 'Parked by the plan stage as off-mission: it would not make the EC firmware, the BIOS or the Windows stack better understood, or bring the driver closer.\n\n'
+            printf '> %s\n\n' "$(cat /tmp/off-mission-reason.txt)"
+            printf 'Remove `no-agent` to have it planned anyway.\n'
+          } > /tmp/park.md
+          gh issue comment "$ISSUE" --body-file /tmp/park.md
+          gh issue edit "$ISSUE" --add-label 'no-agent'
+          gh issue edit "$ISSUE" --remove-label 'agent:queued' || true
 
       # The issue body is replaced by the plan, with the text as filed preserved verbatim
       # underneath it. Overwriting outright would lose the provenance of the request -- on an
       # outside issue that is the very text you approved against, and a later reader could not
       # tell what was asked from what the agent decided it meant.
       - name: Rewrite the issue as the plan
+        if: steps.unpack.outputs.off_mission != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE: ${{ needs.triage.outputs.issue }}
@@ -484,6 +519,7 @@ jobs:
           gh issue edit "$ISSUE" --add-label 'agent:planned'
 
       - name: Hand over to the implement stage
+        if: steps.unpack.outputs.off_mission != 'true'
         env:
           # The PAT, not GITHUB_TOKEN: a workflow dispatched with GITHUB_TOKEN does not run at
           # all. Same family of trap as the push token in dependabot-verification-metadata.yml.
