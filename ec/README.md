@@ -837,11 +837,18 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   (`main-ec=…;pd=…`), and the twelve columns after it (22–33) are the same
   split over the counts: `refs_<program>` and each of the five buckets once per
   program, written on every row, so a per-program question about a reference or
-  a direction is read from those rather than from the summed cell. The unsuffixed
-  columns stay the row's own figures, which is what every existing reader of
-  `$6`-`$11` gets; `../docs/findings/xdata-per-program-counts.md` has the
-  worked rows, and `../docs/findings/xdata-spelled-as-union.md` the
-  reconciliation the two together have to close.
+  a direction is read from those rather than from the summed cell. The twelve
+  after those (34–45) split the *function* counts the same way:
+  `readers_<program>`, `writers_<program>`, `functions_touched_<program>`,
+  `single_function_<program>`, `co_reading_<program>` and
+  `sources_beyond_<program>` — `single_function` being the one metric of the six
+  that is a derived boolean rather than a sum, so its two halves do not add to
+  `$15`. The unsuffixed columns stay the row's own figures, which is what every
+  existing reader of `$6`-`$11` gets;
+  `../docs/findings/xdata-per-program-counts.md` has the worked rows,
+  `../docs/findings/xdata-per-program-function-counts.md` the function-count
+  half, and `../docs/findings/xdata-spelled-as-union.md` the reconciliation the
+  three together have to close.
 - **`annotations/xdata-clusters.csv`** — one row per cluster: the addresses,
   the functions that touch two or more of them, the routines most of those
   functions call, the already-named addresses inside, and the two identity

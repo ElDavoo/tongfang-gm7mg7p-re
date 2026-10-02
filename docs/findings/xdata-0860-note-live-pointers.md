@@ -16,6 +16,30 @@ about a source file this repository reads, not an observation of a byte. No
 `refs:` figure moved, and no CSV or Ghidra export was regenerated. Every figure
 the block asserts about the firmware is unchanged, because only pointers moved.
 
+*(Correction, 2026-10-02, issue #907. **The six measured figures in the table
+below have moved again**, and the table is kept as written rather than edited:
+each is a `grep -n` into `ec/tools/xdata_register_map.py`, and #907's
+per-program function-count columns added lines above four of the six anchors.
+Re-measured on this tree, not shifted:*
+
+| the table says | it now names | **measured now** |
+|---|---|---|
+| `:1730` | `def store_target` | **`:2033`** |
+| `:377` | `ASSIGN = (...)` | **`:404`** |
+| `:1753-1754` | the `==` rejection | **`:2056-2057`** |
+| `:1750-1751` | the reason, in the function's own comment | **`:2053-2054`** |
+| `:1752` | the 838 tree-wide count | **`:2055`** |
+| `:757-758`, in the `ORACLE` opening at `:638` | the `131 -> 146` / `146 -> 150` record | **`:828-829`**, `ORACLE` opening at **`:708`** |
+
+*Nothing else on this page moves: the six anchors are the same six, in the same
+order, and the reasoning here and below is a reading of their surroundings
+rather than of their line numbers. **This is the same shape the page describes**
+— a corrected pointer a later growth of the tool makes stale again — so the note
+worth recording is the shape and not the arithmetic. The nine anchors
+`check_eq_guard_citations.py` does hold were re-pointed with #907 and its run is
+green; the rest of the class is §"What is left" below, and is not swept by a
+change that grows the tool.*
+
 ## The six, measured
 
 The block quotes six live pointers in its own present tense, outside the

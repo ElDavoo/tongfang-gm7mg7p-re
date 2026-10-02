@@ -258,6 +258,28 @@ rather than leaving a reader to work it out from the first. The function counts
 listed above are still unsplit and still the open item. The write-up is
 [`xdata-register-map-per-program-keying.md`](xdata-register-map-per-program-keying.md).)*
 
+*(Correction, 2026-10-02, issue #907. The clause above that says "The function
+counts listed above are still unsplit and still the open item" is **no longer
+true**, and it is kept as written because it was true of the file it describes.
+`readers`, `writers`, `functions_touched`, `single_function`, `co_reading` and
+`sources_beyond` now carry per-program halves in twelve more columns at **34–45**
+— `readers_<program>` through `sources_beyond_<program>`, written on every row
+on the same terms as the 22–33 block above. So the bullet at the top that lists
+those
+six as "their counts are not split" is now true of the *unsuffixed* columns and
+no longer describes the whole row — the third dated correction to land on that
+same closing paragraph, after `refs` and the buckets (2026-09-26) and §2's table
+(2026-09-30). **The one claim above that still stands is the one it makes
+about the `functions` cell**: the sites there are attributable by reading their
+program prefixes, and that cell's prefix partition reproduces
+`functions_touched` per program on every row — which is why `readers` and
+`writers` are *not* taken from it (the `[reader]` / `[writer]` / `[logic]` /
+`[state]` labels are `ftype` documentation, not this classifier's output) and the
+cell is used as the cross-check instead. **No figure on this page moves**: the
+unsuffixed cells are byte for byte what they were and `xdata-clusters.csv`
+regenerates byte-identically. The write-up, with the 49-row split table, is
+[`xdata-per-program-function-counts.md`](xdata-per-program-function-counts.md).)*
+
 ## What this does not establish
 
 The column says how each program **spells** an address, not what either one

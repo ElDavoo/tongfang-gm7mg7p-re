@@ -223,6 +223,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-no-eq-guard-refusal-contract.md`](xdata-no-eq-guard-refusal-contract.md) — The `--no-eq-guard` refusal contract
 - [`xdata-ownership-main-keys-pin.md`](xdata-ownership-main-keys-pin.md) — #658 asked for a pin that #849 had already laid: the `OWNERSHIP` main-EC keys, and the one line that could not show its own drift
 - [`xdata-per-program-counts.md`](xdata-per-program-counts.md) — The per-program count columns: `refs` and the five buckets, split, with `refs` itself unmoved (issue #713)
+- [`xdata-per-program-function-counts.md`](xdata-per-program-function-counts.md) — The per-program function counts: `readers`, `writers`, `functions_touched`, `single_function`, `co_reading` and `sources_beyond`, split (issue #907)
 - [`xdata-register-map-per-program-keying.md`](xdata-register-map-per-program-keying.md) — `xdata-register-map.md` §2 re-keyed per program, and what that moved (issue #714)
 - [`xdata-spelled-as-union.md`](xdata-spelled-as-union.md) — `spelled_as` is a union across programs, and the column that says so (issue #709)
 - [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md) — The two-largest case passed vacuously; its exhibits are now derived (issue #778)

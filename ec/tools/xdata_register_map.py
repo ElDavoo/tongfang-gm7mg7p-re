@@ -208,6 +208,33 @@ is the only reason a reader who reads them still gets the census.
 arithmetic, and what a zero in the other program's column does and does not
 say.
 
+**The function counts were the last thing on the row still summed, and the
+twelve columns after those split them too.** `readers`, `writers`,
+`functions_touched`, `co_reading` and `sources_beyond` on a `both` row had the
+same shape the reference counts had: `0x080C` reads 49 touching functions with
+`writers` 48 and `co_reading` 47, and none of it says that 48 of those functions
+are the main EC's and the single pd one is the writer. So the row now carries
+`readers_<program>`, `writers_<program>`, `functions_touched_<program>`,
+`single_function_<program>`, `co_reading_<program>` and
+`sources_beyond_<program>` -- twelve more columns at **34-45**, written on every
+row on the same terms, so `address-taken_pd` is no longer the last column and
+`sources_beyond_pd` is. **The partition is arithmetic rather than approximate**:
+a main-EC function key is `(common | bank0 | bank1, addr)` and a pd one is
+`(pd, addr)`, the two key sets are disjoint, and `len(A | B) == len(A) + len(B)`.
+`single_function` is the one metric of the six that is **not** a sum -- it is
+`len(funcs) == 1` per program, so its two halves do not add to `$15` -- and it is
+the only one of the six with content the summed cell cannot carry: a `both` row
+always reads `no`, because it touches at least one function in each program and
+therefore at least two, while `0x00D0` and three others are single-function in
+*both*. `readers` and `writers` are computed from each program's own `dirs` map
+and not recovered from the `functions` cell, whose `[reader]` / `[writer]` /
+`[logic]` / `[state]` labels are `ftype` documentation out of
+`ghidra-functions.csv` rather than this classifier's output; that cell's program
+prefixes are used for the cross-check instead, and they reproduce
+`functions_touched` per program on every row.
+`../../docs/findings/xdata-per-program-function-counts.md` has the 49-row table
+and the whole argument.
+
 **What settles an address's space is the encoding, not the token.** Ten of
 `pd-001`'s 34 addresses sit in `0xFF00`-`0xFFFF`, inside the width of an SFR
 byte, and the census counts them because Ghidra wrote `DAT_EXTMEM_ff80`. That
@@ -382,6 +409,16 @@ ASSIGN = ("=", "|=", "&=", "+=", "-=", "*=", "/=", "^=", "%=", "<<=", ">>=")
 # different address spaces.
 PER_PROGRAM_METRICS = ("refs",) + BUCKETS
 
+# The function-count metrics the second block of per-program columns carries, in
+# the order their unsuffixed cells sit in the row ($12, $13, $14, $15, $19,
+# $20), so `$12` and `$34` answer the same question about different address
+# spaces. `single_function` is in this tuple and is **not** a count: it is the
+# derived boolean `len(funcs) == 1`, so its two halves do not add to `$15` and
+# cannot be held to the partition the other five are.
+PER_PROGRAM_FUNCTION_METRICS = ("readers", "writers", "functions_touched",
+                                 "single_function", "co_reading",
+                                 "sources_beyond")
+
 
 def program_suffix(g: str) -> str:
     """The per-program columns' suffix for one `GROUPS` key: `main-ec` ->
@@ -429,6 +466,26 @@ def per_program_columns() -> tuple:
                  for g in GROUPS)
 
 
+def per_program_function_columns() -> tuple:
+    """The twelve per-program function-count columns, in CSV order.
+
+    The sibling of `per_program_columns()` for the *function* counts, built
+    from `PER_PROGRAM_FUNCTION_METRICS` and the same `program_suffix()`, and on
+    the same terms: metric first then program, so `cut -d, -f34,36,38,40,42,44`
+    is the main EC's half and the odd fields the pd image's, and one program's
+    whole six is a contiguous run.
+
+    **A function and not a second literal list**, for the same reason
+    `per_program_columns()` is one: the names and the cells `build()` writes
+    cannot come to describe different sets, and `DictWriter` renders a name in
+    `fieldnames` with no cell in a row as `''` rather than raising. The
+    self-test's position assertion is what would catch it.
+    """
+    return tuple(f"{metric}{program_suffix(g)}"
+                 for metric in PER_PROGRAM_FUNCTION_METRICS
+                 for g in GROUPS)
+
+
 REGISTER_COLUMNS = [
     "addr", "program", "spelled_as", "span_group", "cluster_id", "refs",
     "read", "write", "read+write", "passed-to-call", "address-taken",
@@ -464,6 +521,19 @@ REGISTER_COLUMNS = [
     # somebody has to remember. The write-up is
     # `../../docs/findings/xdata-per-program-counts.md`.
     *per_program_columns(),
+    # The twelve per-program function counts are appended **on the same terms
+    # again**: `$22`-`$33` keep meaning what they mean today, so a reader who
+    # asks for "the last column" gets `sources_beyond_pd` rather than
+    # `address-taken_pd`. `readers` / `writers` / `functions_touched` /
+    # `co_reading` / `sources_beyond` are counts and split exactly; their unsuffixed
+    # cells stay the row's own figures. `single_function` is the sixth metric and
+    # is **not** a sum -- it is `len(funcs) == 1` per program, so the two halves
+    # do not add to `$15` and the write-up says so beside the positional readers
+    # rather than leaving a reader to find it by trying to add them. Ten `int`s
+    # and two `yes`/`no`, so comma-free is as mechanical here as it is for the
+    # twelve before. The write-up is
+    # `../../docs/findings/xdata-per-program-function-counts.md`.
+    *per_program_function_columns(),
 ]
 
 
@@ -1182,6 +1252,54 @@ PER_PROGRAM = {
     # = 95+74+2+56+28.
     "both_main_buckets": (546, 165, 212, 16, 8),
     "both_pd_buckets": (95, 74, 2, 56, 28),
+    # The per-program *function* counts, which the second block of columns
+    # carries. Every key here is read by a `check()` and named in that check's
+    # message (issue #849), the same rule the block above is held to.
+    #
+    # The five corpus figures are the rows' own unsuffixed cells summed, over
+    # all 1,326 rows, so what the halves are reconciled *against* is a figure
+    # the census already published rather than one read back out of the new
+    # columns. Every one is re-derived against the committed CSV rather than
+    # transcribed from anything; `readers` is 4,788, and a working figure for
+    # this split that said 4,787 was off by one.
+    "readers": 4788, "writers": 5083, "functions_touched": 7256,
+    "co_reading": 3354, "sources_beyond": 3902,
+    # The same five over the 49 `both` rows alone, which is the subset the
+    # split exists for and the only subset where either half can be zero.
+    "both_readers": 364, "both_writers": 415, "both_functions_touched": 549,
+    "both_co_reading": 277, "both_sources_beyond": 272,
+    # The `functions` cell's own program prefixes, as counts of *sites*. They
+    # are what the self-test's independent cross-check reads the new columns
+    # against, and pinning them means a column written wrongly in `build()` and
+    # in the CSV together still has to reproduce this census's own rendering of
+    # it. 434 + 115 over the `both` rows, and 6,905 + 351 over all of them.
+    "both_main_functions": 434, "both_pd_functions": 115,
+    "main_functions": 6905, "pd_functions": 351,
+    # The `single_function` split, and the one that is not vacuous. Over the 49
+    # `both` rows the *summed* `single_function` is `no` on every one of them --
+    # a `both` row touches at least one function in each program, so it always
+    # touches at least two -- which is why the split is what carries the
+    # content: 13 of those rows have exactly one main-EC function and 25 have
+    # exactly one pd function, and the four below have exactly one in each.
+    # `0x00D0` is the worked example, a row the summed cell calls "not a
+    # single-function row" that is two single-function rows, one per address
+    # space.
+    #
+    # The four are a **set**, for the reason `NOT_IN_TREE` is one rather than a
+    # count: which addresses is re-derivable from here, and the counts above are
+    # arithmetic over them rather than numbers to take on trust.
+    "both_one_main_ec": 13, "both_one_pd": 25,
+    "one_in_each": (0x00D0, 0x0808, 0x0851, 0x097E),
+    # The two worked rows the issue names, as the exact per-program counts rather
+    # than as the rows' own summed cells: main-EC functions, pd functions, then
+    # main-EC `readers` / `writers` / `co_reading`. They are here because they are
+    # the two directions the split has to get right -- `0x080C` is nearly all
+    # writers (3 of 48 main-EC functions read it) and `0x07F6` nearly all
+    # readers (37 of 41 write it) -- and on both of them the single pd function
+    # is a *writer*, so the row's own summed `writers` is one higher than the
+    # main EC's: 48 against 47, and 38 against 37. Both rows read
+    # `single_function=no` summed and `single_function_pd=yes`.
+    "080c": (48, 1, 3, 47, 47), "07f6": (41, 1, 41, 37, 36),
 }
 # The two worked examples the issue asks for, as the exact multiset of resolved
 # sites rather than a bucket total. `0x0402` is the address whose decompile
@@ -2553,6 +2671,69 @@ def per_program_counts_of(groups, addr) -> dict:
     return out
 
 
+def per_program_function_counts_of(groups, addr, group_of) -> dict:
+    """Every *function* count on a row, once per program, from the per-program
+    entries.
+
+    The sibling `per_program_counts_of()` takes one argument and this takes two,
+    because `co_reading` and `sources_beyond` are not a property of an
+    address's own references: they are `functions_touched` split by membership
+    in the co-reading relation, and `group_of` is already a `build()` parameter
+    for exactly that reason. `per_program_counts_of()` is unchanged.
+
+    **The partition here is arithmetic, not approximate.** A main-EC function
+    key is `(common | bank0 | bank1, addr)` and a pd one is `(pd, addr)`, so the
+    two key sets are disjoint and `len(A | B) == len(A) + len(B)`. That is why
+    `readers == readers_main_ec + readers_pd` holds on a `both` row rather than
+    merely holding closely, and it is why `readers`/`writers` are computed here
+    from each program's own `dirs` map rather than recovered from the `functions`
+    cell: the cell's `[reader]` / `[writer]` / `[logic]` / `[state]` labels are
+    `ftype` documentation out of `ghidra-functions.csv`, not this classifier's
+    per-address output, so a per-program half taken from them would be a second
+    reading of a comment. The `functions` cell is used for the *cross-check* --
+    its program prefixes reproduce `functions_touched` exactly -- and never as
+    the source of a number.
+
+    **`single_function` is a derived boolean, not a count.** It is `yes` exactly
+    when that program's own `len(funcs) == 1`, so its two halves do not add to
+    the row's `$15`, and a `both` row reads `no` in both halves *by
+    construction*: an address in `groups[g]` has at least one reference there,
+    so the two halves together touch at least two functions.
+
+    The same two properties the sibling records: all twelve cells are written on
+    every row, and a zero means "not found by this method over the committed
+    decompiled tree" -- never "absent from the image", and never evidence the EC
+    acts on the byte. `int` and `yes`/`no` out, so the positional `awk -F,` /
+    `cut -d,` readers `REGISTER_COLUMNS` names stay exact.
+    """
+    out = {}
+    for metric in PER_PROGRAM_FUNCTION_METRICS:
+        for g in GROUPS:
+            half = groups[g].get(addr)
+            funcs = half["funcs"] if half else ()
+            co = sum(1 for f in funcs if f in group_of)
+            if metric == "single_function":
+                value = "yes" if len(funcs) == 1 else "no"
+            elif half is None:
+                value = 0
+            elif metric == "readers":
+                value = len(touches(half, "read") | touches(half, "read+write"))
+            elif metric == "writers":
+                value = len(touches(half, "write") | touches(half, "read+write"))
+            elif metric == "functions_touched":
+                value = len(funcs)
+            elif metric == "co_reading":
+                value = co
+            else:
+                # `sources_beyond`, and the last name in
+                # `PER_PROGRAM_FUNCTION_METRICS`: the chain above covers the
+                # other five, so a metric added to that tuple lands here rather
+                # than raising. Adding one means adding its branch.
+                value = len(funcs) - co
+            out[f"{metric}{program_suffix(g)}"] = value
+    return out
+
+
 def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
          export_ownership: bool = False, ownership=None, accessors=None):
     """(per-program census, call graph, raw occurrence count) over the tree.
@@ -3218,6 +3399,15 @@ def build(funcs, names, symbols, census, calls, threshold,
             # worked rows and the arithmetic.
             "spellings_by_program": spellings_by_program_of(groups, addr),
             **per_program_counts_of(groups, addr),
+            # And after those, the same split for the *function* counts. Same
+            # entries, same terms, and the unsuffixed `readers` / `writers` /
+            # `functions_touched` / `single_function` / `co_reading` /
+            # `sources_beyond` above stay the row's own figures for the same
+            # reason `refs` does. `single_function` is the one metric of the six
+            # that is not a sum: it is `len(funcs) == 1` per program, so its two
+            # halves do not add to `$15`. The write-up is
+            # `../../docs/findings/xdata-per-program-function-counts.md`.
+            **per_program_function_counts_of(groups, addr, group_of),
         })
     return register_rows, cluster_rows, groups
 
@@ -3955,7 +4145,11 @@ def self_test(args) -> int:
           f"{split_shown})",
           not split_bad and len(committed_registers) == total_distinct
           and REGISTER_COLUMNS[20] == "spellings_by_program"
-          and REGISTER_COLUMNS[21:] == list(columns))
+          # `21:21 + len(columns)`, not `21:`: this block's assertion is "the
+          # twelve sit contiguously right after `spellings_by_program`", and a
+          # second block of per-program columns appended after them (issue
+          # #907) does not falsify it -- where `21:` would.
+          and REGISTER_COLUMNS[21:21 + len(columns)] == list(columns))
     # The cross-check that makes the file's own columns mean something. A
     # column written wrongly in *both* `build()` and the CSV is internally
     # consistent and the assertion above would pass it; this one compares the
@@ -4050,6 +4244,296 @@ def self_test(args) -> int:
           f"checked against prose nobody re-derived for it (rows that "
           f"disagree: {', '.join(bucket_bad) or 'none'})",
           not bucket_bad)
+
+    # ---- issue #907: the twelve per-program function-count columns ----------
+    #
+    # Six more assertions, in the same shape as #713's four above and in the
+    # order they can fail. Four are what the issue asks for; two are split
+    # further than that, because one message would otherwise have to carry two
+    # unrelated failures behind a single verdict. #713's and #711's are left as
+    # they were, with one exception recorded at the first of these: a new column
+    # is not a licence to weaken what the old one is held to.
+    #
+    # All six read the **committed** registers CSV, for the same reason the three
+    # above do -- the whole of the issue is that the artifact a reader opens
+    # could not answer the question, so a check against what this run would write
+    # would not be answering it. What differs is what each holds those committed
+    # cells against: the attribution one is the deliberate exception and holds
+    # them against a fresh generation, the `functions`-cell one reads the census's
+    # own rendering of the same partition rather than either, and the last
+    # carries the one leg measured against prose nobody re-derived for this
+    # change.
+    fn_columns = per_program_function_columns()
+    fn_split_bad = []
+    for r in committed_registers:
+        cells = {c: per_program_cell(r, c) for c in fn_columns}
+        for metric in PER_PROGRAM_FUNCTION_METRICS:
+            if metric == "single_function":
+                # **A derived identity per program, not a partition.**
+                # `single_function` is `len(funcs) == 1` *in that program*, so
+                # its two halves do not add to `$15` and neither of them has to
+                # equal the row's own cell: a `main-ec` row touching one function
+                # reads `yes` at `$15` and `no` in the pd half, which has no
+                # function at all. What has to hold is `yes` exactly where that
+                # program's own `functions_touched` is 1.
+                for g in GROUPS:
+                    suffix = program_suffix(g)
+                    want = ("yes"
+                            if per_program_cell(
+                                r, f"functions_touched{suffix}") == 1 else "no")
+                    if (r.get(f"single_function{suffix}") or "").strip() != want:
+                        fn_split_bad.append(
+                            f"{r['addr']}:single_function{suffix}")
+                continue
+            halves = sum(cells[f"{metric}{program_suffix(g)}"] for g in GROUPS)
+            if per_program_cell(r, metric) != halves:
+                fn_split_bad.append(f"{r['addr']}:{metric}")
+        # The two branches are exclusive and the `both` one is checked first,
+        # for the same reason #713's is: `"both"` is not a `GROUPS` key. The
+        # five counts only -- `single_function`'s own contract is above, and on
+        # a single-program row it already reads `no` for the program that is not
+        # there, because that program's `functions_touched` is 0.
+        if r["program"] == "both":
+            if any(cells[f"functions_touched{program_suffix(g)}"] <= 0
+                   for g in GROUPS):
+                fn_split_bad.append(f"{r['addr']}:both/zero-half")
+        else:
+            for g in GROUPS:
+                if g == r["program"]:
+                    continue
+                suffix = program_suffix(g)
+                for metric in PER_PROGRAM_FUNCTION_METRICS:
+                    if metric != "single_function" and \
+                            cells[f"{metric}{suffix}"] != 0:
+                        fn_split_bad.append(
+                            f"{r['addr']}:{r['program']}/{metric}{suffix}")
+    fn_split_shown = ", ".join(fn_split_bad[:8]) or "none"
+    if len(fn_split_bad) > 8:
+        fn_split_shown += f" (and {len(fn_split_bad) - 8} more)"
+    check(f"issue #907: the {len(fn_columns)} per-program function-count "
+          f"columns sit at {REGISTER_COLUMNS.index(fn_columns[0]) + 1}-"
+          f"{REGISTER_COLUMNS.index(fn_columns[-1]) + 1} with "
+          f"`{REGISTER_COLUMNS[32]}` still the last of the twelve before them "
+          f"and `{REGISTER_COLUMNS[20]}` still at "
+          f"{REGISTER_COLUMNS.index(REGISTER_COLUMNS[20]) + 1}, and on all "
+          f"{len(committed_registers)} rows of "
+          f"{os.path.relpath(OUT_REGISTERS, EC_DIR)} each of the five "
+          f"unsuffixed counts is the sum of its two halves -- `readers == "
+          f"readers_main_ec + readers_pd` and the same for `writers`, "
+          f"`functions_touched`, `co_reading` and `sources_beyond` -- while "
+          f"`single_function`, which is the derived boolean and not a sum, "
+          f"reads `yes` in a half exactly where that program's own "
+          f"`functions_touched` cell is 1 rather than where the row's `$15` is, "
+          f"a `main-ec` row touching one function reading `yes` there and `no` "
+          f"in the pd half that has no function at all; a `main-ec` row "
+          f"carries nothing for `pd`, a `pd` row nothing for "
+          f"`main-ec`, and a `both` row carries a touching function in both "
+          f"(rows that disagree: {fn_split_shown})",
+          not fn_split_bad and len(committed_registers) == total_distinct
+          and REGISTER_COLUMNS[20] == "spellings_by_program"
+          and REGISTER_COLUMNS[21:21 + len(per_program_columns())]
+          == list(per_program_columns())
+          and REGISTER_COLUMNS[21 + len(per_program_columns()):]
+          == list(fn_columns))
+    # Attribution against a fresh generation, plus the one check that shares no
+    # code with `groups` at all. A column written wrongly in *both* `build()`
+    # and the CSV is internally consistent and the assertion above would pass
+    # it; the first half of this compares the committed cells to the per-program
+    # entries they were supposed to be rendered from -- `want` is written out
+    # again here rather than taken from `per_program_function_counts_of()`, for
+    # the reason #713's equivalent writes its `want` out -- and the second half
+    # reads the `functions` cell, whose program prefixes are a rendering of the
+    # census that shares no code with the map the columns are built from.
+    fn_attributed_bad = []
+    fn_cell_bad = []
+    fn_both_rows = [r for r in committed_registers if r["program"] == "both"]
+    fn_cell_main = fn_cell_pd = fn_cell_both_main = fn_cell_both_pd = 0
+    for r in committed_registers:
+        addr = int(r["addr"], 0)
+        for g in GROUPS:
+            half = groups[g].get(addr)
+            half_funcs = half["funcs"] if half else ()
+            co = sum(1 for f in half_funcs if f in group_of)
+            want = {
+                "readers": 0 if half is None else len(touches(half, "read")
+                                                     | touches(half, "read+write")),
+                "writers": 0 if half is None else len(touches(half, "write")
+                                                      | touches(half, "read+write")),
+                "functions_touched": len(half_funcs),
+                "co_reading": co,
+                "sources_beyond": len(half_funcs) - co,
+            }
+            suffix = program_suffix(g)
+            for metric, value in want.items():
+                if per_program_cell(r, f"{metric}{suffix}") != value:
+                    fn_attributed_bad.append(f"{r['addr']}/{g}/{metric}")
+        sites = [x.strip() for x in (r.get("functions") or "").split(";")
+                 if x.strip()]
+        cell_main = sum(1 for x in sites if not x.startswith("pd:"))
+        cell_pd = len(sites) - cell_main
+        fn_cell_main += cell_main
+        fn_cell_pd += cell_pd
+        if r["program"] == "both":
+            fn_cell_both_main += cell_main
+            fn_cell_both_pd += cell_pd
+        if (per_program_cell(r, f"functions_touched{program_suffix('main-ec')}")
+                != cell_main
+                or per_program_cell(r, f"functions_touched{program_suffix('pd')}")
+                != cell_pd):
+            fn_cell_bad.append(r["addr"])
+    fn_attributed_shown = ", ".join(fn_attributed_bad[:8]) or "none"
+    if len(fn_attributed_bad) > 8:
+        fn_attributed_shown += f" (and {len(fn_attributed_bad) - 8} more)"
+    check(f"and every one of those cells is the per-program entry it claims "
+          f"to be, read against a fresh generation of the census rather than "
+          f"against a rendered row, with an address in no program of `groups` "
+          f"expecting a zero rather than a skip",
+          not fn_attributed_bad)
+    # The independent one, and the only check on these twelve that could fail
+    # for a column wrong in `build()` *and* wrong in the CSV together. The
+    # `functions` cell is the census's own rendering of the same partition --
+    # every site there carries `bank0:`, `bank1:`, `common:` or `pd:` -- so
+    # splitting it on that prefix reproduces `functions_touched` per program on
+    # all 1,326 rows and not only on the 49. `readers` and `writers` are *not*
+    # re-derivable this way and are not claimed to be: the cell's `[reader]` /
+    # `[writer]` / `[logic]` / `[state]` labels are `ftype` documentation out of
+    # `ghidra-functions.csv`, not this classifier's per-address output.
+    check(f"and that is a reading of the committed `functions` cell as well: "
+          f"on every one of those rows the entries not prefixed `pd:` are "
+          f"{fn_cell_main} against "
+          f"{PER_PROGRAM['main_functions']} over all of them and "
+          f"{fn_cell_both_main} against {PER_PROGRAM['both_main_functions']} "
+          f"over the {len(fn_both_rows)} `both` rows, and the `pd:` ones "
+          f"{fn_cell_pd} against {PER_PROGRAM['pd_functions']} and "
+          f"{fn_cell_both_pd} against {PER_PROGRAM['both_pd_functions']} "
+          f"(rows that disagree: {', '.join(fn_cell_bad[:8]) or 'none'}"
+          f"{f' (and {len(fn_cell_bad) - 8} more)' if len(fn_cell_bad) > 8 else ''})",
+          not fn_cell_bad
+          and (fn_cell_main, fn_cell_pd, fn_cell_both_main, fn_cell_both_pd)
+          == (PER_PROGRAM["main_functions"], PER_PROGRAM["pd_functions"],
+              PER_PROGRAM["both_main_functions"],
+              PER_PROGRAM["both_pd_functions"]))
+    # The identity the split makes available for the first time.
+    # `co_reading_<g> + sources_beyond_<g> == functions_touched_<g>` is
+    # `co_reading + sources_beyond == functions_touched` restated on each half
+    # rather than on the row, and it is held per program and per row rather than
+    # only in the aggregate -- which is the part the `both` rows need, because a
+    # main-EC function is never a co-reading of a pd one.
+    fn_identity_bad = [
+        f"{r['addr']}/{g}" for r in committed_registers for g in GROUPS
+        if (per_program_cell(r, f"co_reading{program_suffix(g)}")
+            + per_program_cell(r, f"sources_beyond{program_suffix(g)}")
+            != per_program_cell(r, f"functions_touched{program_suffix(g)}"))]
+    check(f"and each half is its own source count, so "
+          f"`co_reading_<g> + sources_beyond_<g> == functions_touched_<g>` holds "
+          f"per program and per row rather than only over the row: no main-EC "
+          f"function is a co-reading of a pd one, so the identity the row's own "
+          f"three cells already share is now {len(GROUPS)} identities (rows and "
+          f"programs that disagree: "
+          f"{', '.join(fn_identity_bad[:8]) or 'none'}"
+          f"{f' (and {len(fn_identity_bad) - 8} more)' if len(fn_identity_bad) > 8 else ''})",
+          not fn_identity_bad)
+    # The aggregate reconciliation. Both halves of each metric are summed per
+    # program over all 1,326 rows and over the `both` subset, and each is held
+    # against both the rows' own unsuffixed cell and the pin -- so a column that
+    # moved a function between programs keeps the per-row partition above true
+    # and fails here.
+    fn_tot = {m: tuple(sum(per_program_cell(r, f"{m}{program_suffix(g)}")
+                           for r in committed_registers) for g in GROUPS)
+              for m in PER_PROGRAM_FUNCTION_METRICS if m != "single_function"}
+    fn_both_tot = {m: tuple(sum(per_program_cell(r, f"{m}{program_suffix(g)}")
+                                for r in fn_both_rows) for g in GROUPS)
+                   for m in PER_PROGRAM_FUNCTION_METRICS
+                   if m != "single_function"}
+    fn_pin = {m: (PER_PROGRAM[m], PER_PROGRAM[f"both_{m}"]) for m in fn_tot}
+    fn_unsuffixed = {m: (sum(per_program_cell(r, m)
+                              for r in committed_registers),
+                         sum(per_program_cell(r, m) for r in fn_both_rows))
+                     for m in fn_tot}
+    check(f"and the halves partition the five figures the rows already "
+          f"published: over all {len(committed_registers)} rows readers "
+          f"{fn_tot['readers']} against {fn_unsuffixed['readers'][0]} unsuffixed "
+          f"and {PER_PROGRAM['readers']} pinned, writers {fn_tot['writers']} "
+          f"against {fn_unsuffixed['writers'][0]} and {PER_PROGRAM['writers']}, "
+          f"functions_touched {fn_tot['functions_touched']} against "
+          f"{fn_unsuffixed['functions_touched'][0]} and "
+          f"{PER_PROGRAM['functions_touched']}, co_reading "
+          f"{fn_tot['co_reading']} against {fn_unsuffixed['co_reading'][0]} and "
+          f"{PER_PROGRAM['co_reading']}, sources_beyond "
+          f"{fn_tot['sources_beyond']} against "
+          f"{fn_unsuffixed['sources_beyond'][0]} and "
+          f"{PER_PROGRAM['sources_beyond']}; over the "
+          f"{len(fn_both_rows)} `both` rows, readers {fn_both_tot['readers']} "
+          f"against {fn_unsuffixed['readers'][1]} and "
+          f"{PER_PROGRAM['both_readers']}, writers {fn_both_tot['writers']} "
+          f"against {fn_unsuffixed['writers'][1]} and "
+          f"{PER_PROGRAM['both_writers']}, functions_touched "
+          f"{fn_both_tot['functions_touched']} against "
+          f"{fn_unsuffixed['functions_touched'][1]} and "
+          f"{PER_PROGRAM['both_functions_touched']}, co_reading "
+          f"{fn_both_tot['co_reading']} against "
+          f"{fn_unsuffixed['co_reading'][1]} and "
+          f"{PER_PROGRAM['both_co_reading']}, sources_beyond "
+          f"{fn_both_tot['sources_beyond']} against "
+          f"{fn_unsuffixed['sources_beyond'][1]} and "
+          f"{PER_PROGRAM['both_sources_beyond']}",
+          all(fn_tot[m][0] + fn_tot[m][1] == fn_unsuffixed[m][0]
+              == fn_pin[m][0] for m in fn_tot)
+          and all(fn_both_tot[m][0] + fn_both_tot[m][1] == fn_unsuffixed[m][1]
+                  == fn_pin[m][1] for m in fn_tot))
+    # The `single_function` split, and the leg of this that is checked against
+    # prose nobody re-derived for the change. Every `both` row reads `no` in the
+    # summed cell -- a `both` row touches at least one function in each program,
+    # so it always touches at least two -- which is why the split carries the
+    # content and why the two halves are worth a column each: 13 of those rows
+    # are single-function *in the main EC* and 25 in the pd image, and four are
+    # single-function in both. `0x0440` is the leg measured against prose nobody
+    # re-derived for this change: `HAND_CHECKED`'s zero writers was read off the
+    # decompiled C by hand, and the per-program cell has to agree with it.
+    fn_one_main = {r["addr"] for r in fn_both_rows
+                   if (r.get("single_function_main_ec") or "").strip() == "yes"}
+    fn_one_pd = {r["addr"] for r in fn_both_rows
+                 if (r.get("single_function_pd") or "").strip() == "yes"}
+    fn_one_in_each = tuple(sorted(int(a, 0) for a in fn_one_main & fn_one_pd))
+    fn_row_bad = []
+    for addr, want in ((0x080C, PER_PROGRAM["080c"]),
+                       (0x07F6, PER_PROGRAM["07f6"])):
+        row = csv_rows.get(hexaddr(addr))
+        got = ((per_program_cell(row, "functions_touched_main_ec"),
+                per_program_cell(row, "functions_touched_pd"),
+                per_program_cell(row, "readers_main_ec"),
+                per_program_cell(row, "writers_main_ec"),
+                per_program_cell(row, "co_reading_main_ec")) if row else None)
+        if got != want:
+            fn_row_bad.append(hexaddr(addr))
+    hand_0440 = csv_rows.get("0x0440")
+    hand_ok = (hand_0440 is not None
+               and per_program_cell(hand_0440, "writers_main_ec")
+               == HAND_CHECKED["0x0440"]["writers"]
+               == per_program_cell(hand_0440, "writers"))
+    check(f"and the split is not vacuous: all {len(fn_both_rows)} `both` rows "
+          f"read `single_function=no` in the summed cell, but "
+          f"{len(fn_one_main)} of them are single-function in the main EC "
+          f"(want {PER_PROGRAM['both_one_main_ec']}) and {len(fn_one_pd)} in "
+          f"the pd image (want {PER_PROGRAM['both_one_pd']}), and "
+          f"{len(fn_one_in_each)} of them have exactly one in each, so "
+          f"`0x00D0` is two single-function rows in one: "
+          f"{', '.join(hexaddr(a) for a in fn_one_in_each)} against "
+          f"{', '.join(hexaddr(a) for a in PER_PROGRAM['one_in_each'])} wanted. "
+          f"The two worked rows are `0x080C` at "
+          f"{PER_PROGRAM['080c'][0]} main-EC functions against "
+          f"{PER_PROGRAM['080c'][1]} pd and `0x07F6` at "
+          f"{PER_PROGRAM['07f6'][0]} against {PER_PROGRAM['07f6'][1]} (rows "
+          f"that disagree: {', '.join(fn_row_bad) or 'none'}), and 0x0440's "
+          f"per-program `writers_main_ec` is "
+          f"{per_program_cell(hand_0440, 'writers_main_ec') if hand_0440 else 'missing'} "
+          f"against the hand-checked {HAND_CHECKED['0x0440']['writers']}, which "
+          f"is the '**No writer**' prose registers.yaml already carried",
+          all((r.get("single_function") or "").strip() == "no" for r in fn_both_rows)
+          and len(fn_one_main) == PER_PROGRAM["both_one_main_ec"]
+          and len(fn_one_pd) == PER_PROGRAM["both_one_pd"]
+          and fn_one_in_each == tuple(sorted(PER_PROGRAM["one_in_each"]))
+          and not fn_row_bad and hand_ok)
     check(f"oracle: the full census, both spellings -- {ORACLE['distinct']} "
           f"distinct / {ORACLE['refs']} references, main EC "
           f"{ORACLE['main_distinct']}/{ORACLE['main_refs']} (got {total_distinct}"

@@ -86,6 +86,16 @@ The only edited generated file is `ec/annotations/xdata-registers.csv` itself,
 It is already listed in `.github/workflows/agent-conflicts.yml` as a
 never-hand-merge generated file.
 
+*(Correction, 2026-10-02, issue #907. **33 is now 45.** Twelve more columns are
+appended after `address-taken_pd` — the per-program function counts — so this
+page's sentence and its `awk '{print NF}'` console block below both print a
+width one block short. The width was correct when this page was written and
+stopped being correct with the second append; it is corrected here rather than
+in place so the version this page was accurate about stays readable. No figure
+about the *census* moves: 1,326 rows, and the row count is
+`bash tools/run-tests.sh`'s and `--check`'s to print. See
+[`xdata-per-program-function-counts.md`](xdata-per-program-function-counts.md).)*
+
 ## The `both` rows' split, and the arithmetic that says it is this census
 
 There are 1,326 rows: 1,169 `main-ec` carrying 13,891 references, 108 `pd`
@@ -344,6 +354,13 @@ $ tail -n +2 ec/annotations/xdata-registers.csv | awk -F, '$2=="both" { n=split(
 `address-taken_pd`. The two new sums, and the per-row partition over all 1,326
 rows rather than the 49 that carry the information:
 
+*(Correction, 2026-10-02, issue #907. `address-taken_pd` is no longer the last
+column either: a second block of per-program columns is appended after it, so
+the last column is `sources_beyond_pd`. The sentence above is kept as written
+because it was true of the file this page describes, and the `33` in the console
+block below is covered by the first of this page's three #907 corrections.
+`cut -d, -f33` still selects `address-taken_pd`; only "the last column" moved.)*
+
 ```console
 $ tail -n +2 ec/annotations/xdata-registers.csv | awk -F, '{m+=$22;p+=$23} END{print m, p}'
 14838 858
@@ -425,6 +442,21 @@ for nothing else — no `status:` moved and none of those figures was refreshed.
   reading it — which is why the sibling page lists those columns as the
   exception rather than as an open item. Whether their *counts* should get the
   same treatment is a real question this change does not answer.
+
+  *(Correction, 2026-10-02, issue #907. The last clause above is **answered**,
+  and the bullet is kept as written rather than edited. `readers`, `writers`,
+  `functions_touched`, `single_function`, `co_reading` and `sources_beyond` are
+  split per program too, in twelve columns appended at **34–45**, written on
+  every row on the same terms as the twelve above them; the unsuffixed cells stay
+  the row's own figures. `single_function` is the one metric of the six that is
+  not a sum — it is `len(funcs) == 1` per program — and it is the only one of
+  the six with content the summed cell could not carry, since a `both` row always reads
+  `no` there while `0x00D0` is single-function in *both* programs. The write-up,
+  with the 49-row split table and the disjointness argument, is
+  [`xdata-per-program-function-counts.md`](xdata-per-program-function-counts.md).
+  **No figure on this page moves** — the columns are appended, the six
+  unsuffixed cells are byte for byte what they were, and `xdata-clusters.csv`
+  regenerates byte-identically.)*
 - **Any `status:` change in `registers.yaml`, and any refresh of its per-program
   reference figures** — different method, different bytes, as above.
 - **Refreshing the stale `md5sum` in `xdata-export-ownership-page-census.md`.**

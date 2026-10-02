@@ -535,11 +535,22 @@ class TheOracleRule(unittest.TestCase):
         # is why main reads 22 lines past it and the branch's re-pin is what
         # caught it. Asserting the measured span here fixes all of it.
         # Re-measured, not shifted by arithmetic.
+        #
+        # **`:5044-5050` since issue #907**, whose per-program function-count
+        # columns added 484 lines above this span: the metrics tuple, the
+        # `per_program_function_columns()` sibling, the `REGISTER_COLUMNS`
+        # comment, the `PER_PROGRAM` pin block, `per_program_function_counts_of()`
+        # and the `build()` clause all land above it, and the six `--self-test`
+        # assertions land between it and the file's end. Re-measured against the
+        # file like every re-pin above it, and for the same reason they are
+        # spelled out rather than left as arithmetic: **that is the second half
+        # of the pin this case exists for**, so adding the other pins' worth of
+        # lines to it by hand would have been right here for the wrong reason.
         self.assertEqual(
             cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
                                   "largest_class", 1, 2, found["texts"],
                                   found["asserted"])),
-            "ec/tools/xdata_register_map.py:4560-4566")
+            "ec/tools/xdata_register_map.py:5044-5050")
 
     def test_the_census_csvs_are_read_from_the_tool_that_writes_them(self):
         # Derived from `OUT_REGISTERS`/`OUT_CLUSTERS` rather than named here, so
@@ -591,15 +602,21 @@ class TheOracleRule(unittest.TestCase):
         # producible when #573's note moved the sum, and a guard that can
         # never fail is not a guard, so it names this tree's `:3734` --
         # the sum the `lines[3733]` assertion below points at.
-        self.assertIn("3744-3761", detail)
-        self.assertNotIn(":3734", detail)
+        #
+        # **`:3934-3951` / `:3924` since issue #907**, whose per-program
+        # function-count columns added 190 lines above this span -- the seven
+        # insertions between the `ORACLE` block and here, none of them inside
+        # this `check()` -- so the pair moved together again for the fourth time
+        # and both are re-read against the file rather than shifted.
+        self.assertIn("3934-3951", detail)
+        self.assertNotIn(":3924", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3733])
-        self.assertIn("check(", lines[3743])
+        self.assertIn("extmem_both", lines[3923])
+        self.assertIn("check(", lines[3933])
         self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3760])
+                      lines[3950])
 
 
 class SectionSelection(unittest.TestCase):
