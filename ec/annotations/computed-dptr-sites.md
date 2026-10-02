@@ -90,10 +90,12 @@ window's own decode in the last column so a reader can re-derive every cell
 before it from the row.
 
 **A `mov 0x83,a` this scan did not turn into a site is a limit, and the summary
-counts them.** 95 of the 341 anchored stores had no immediate `add`/`addc` in
-the window, and every one of them says so with the budget that ran out — a
-different token from a store at the very start of a region, which has no budget
-to name. Neither is a claim about the byte.
+counts them.** The 341 anchored stores are the 242 sites and the 99 declined
+between them, once each, and a declined store says which of three reasons it is:
+95 had no immediate `add`/`addc` in the window — each naming the budget that ran
+out, a different token from a store at the very start of a region, which has no
+budget to name — and 4 are the build the next paragraph is about. None of the
+three is a claim about the byte.
 
 **A high-byte build is a site once, however many stores follow it.** The linear
 walk does not stop at control flow, so where a `ret` is followed by the bytes
@@ -198,9 +200,9 @@ The `low` cell is read off the instruction in front of the nearest `mov DPL,a`:
 `mov a,#imm` gives a literal and therefore a concrete address, and anything
 else is a refusal naming the instruction that supplied A, with its offset, so a
 reader can chase it. On this image **not one row resolves** — 60 of the 64
-main-EC sites are supplied by an `add a,#imm` and 4 have no `mov DPL,a` in the
-window at all. The 60 that do have one are 47 supplied by an `add a,#imm` and
-  13 by an `add a,rN`. For the eight the supplies are:
+main-EC sites are supplied at run time and 4 have no `mov DPL,a` in the window
+at all. The 60 that do have one are 47 supplied by an `add a,#imm` and 13 by an
+`add a,rN`. For the eight the supplies are:
 
 | site | low byte |
 |---|---|
@@ -335,11 +337,11 @@ The list the issue asked for, and the header paragraph carries the same one.
   and nothing here touches these.
 - **Page `0x3A` is six sites, five of them CODE pointers.** The largest page in
   §2's list after `0x49`, and the same shape.
-- **The 95 declined stores are a census nobody has read.** Every one says
-  `no immediate add/addc in the window`, and the window is four instructions, so
-  most of them are probably `mov a,#hi ; mov 0x83,a` — the ordinary immediate
-  form, already `trace_xdata_refs.py`'s population. Reading one of them against
-  the listing would say whether the two populations are disjoint, which is a
+- **The declined stores are a census nobody has read.** The ones saying
+  `no immediate add/addc in the window` are four instructions wide, so most of
+  them are probably `mov a,#hi ; mov 0x83,a` — the ordinary immediate form,
+  already `trace_xdata_refs.py`'s population. Reading one of them against the
+  listing would say whether the two populations are disjoint, which is a
   question about the two tools rather than about the image.
 - **Confirming the eight on the machine is still a human's step.** This is a
   static scan and §7 says so; closing the issue does not need it, and doing it

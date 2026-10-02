@@ -2100,9 +2100,9 @@ registers:
       MOV DPTR sites, so the table is reached indirectly and 6 of
       manual-fan-ctrl-0751.md stays open. That sentence is about
       MOV DPTR,#imm16 and it stays true: computed_dptr_sites.py reaches
-      page 0x0F by a different spelling and finds 8 sites, none of them
-      in a fan-duty routine. The full list is the xdata-refs caveat
-      above. None of this bears on the
+      page 0x0F by a different spelling and finds 8 sites, and it does
+      not resolve which routine a site sits in. The full list is the
+      xdata-refs caveat above. None of this bears on the
       fixed-load comparison the status still waits for, and the status
       stays present-untested.
 

@@ -177,6 +177,13 @@ NO_DPL = "no DPL store in the window"
 NO_BEFORE = "no instruction before it in the window"
 REGION_START = "start of region"
 
+# A store the anchored walk reached whose high-byte build a nearer store has
+# already claimed: the `ret`-then-`F5 83` case `sites()`'s own docstring names.
+# It is a limit on the anchored pass rather than on the window, so it carries
+# its own token -- folding it into `NO_ADD` would claim "no add in the window"
+# about a store whose `add` is sitting in that window.
+DUP_BUILD = "high-byte build already claimed by a nearer store"
+
 
 def window_end(back: int) -> str:
     """The token for a window that used every instruction it was given.
@@ -496,19 +503,33 @@ def declined(d: bytes, pd_verified: bool, back: int = WINDOW):
 
     The offset is carried beside the reason so a reader who wants to go and
     look at one of them has the address the reason is about, rather than a
-    count and a guess at which of 341 stores it named.
+    count and a guess at which stores it named.
 
     Reported by the summary beside the sites, because a `mov 0x83,a` this scan
     did not count is a limit on the method and a reader is entitled to know how
-    many there were. It is a census of `window_before()`'s refusals and nothing
-    more -- none of these is a claim about the byte.
+    many there were.
+
+    **This is the complement of `sites()`, under `sites()`'s own dedup rule, so
+    the two partition the anchored stores.** A store is declined for one of
+    three reasons and each is its own claim: the window held no immediate
+    `add`/`addc`, the window ran out before it reached one, or the build is one
+    a nearer store already claimed (`DUP_BUILD`). That third case is the reason
+    a census built out of `store_verdict()`'s refusals alone would leave the
+    arithmetic a reader checks on every run short by one reason per duplicated
+    build -- the store *was* resolved, and it is the dedup rule, not the window,
+    that keeps its row out of `sites()`. None of the three is a claim about the
+    byte.
     """
-    out = []
+    out, claimed = [], set()
     for starts, found in stores(d):
         for store in found:
             row, why = store_verdict(d, starts, store, pd_verified, back)
             if row is None:
                 out.append((store, why))
+            elif row["offset"] in claimed:
+                out.append((store, DUP_BUILD))
+            else:
+                claimed.add(row["offset"])
     return out
 
 
@@ -766,12 +787,14 @@ def main() -> int:
     print(f"The {len(anchored)} anchored stores this scan did not turn into a "
           f"site, {sum(skips.values())} of them, and\nthe reason is not the "
           "same claim for all of them -- a window that found no `add` is a\nfact "
-          "about the window, and one that ran out before it could is a limit "
-          "on the look:\n")
+          "about the window, one that ran out before it could is a limit on "
+          "the\nlook, and a build a nearer store already claimed is a limit on "
+          "the anchored\npass rather than on the window:\n")
     for why, count in sorted(skips.items(), key=lambda kv: -kv[1]):
         print(f"  {count:>4}  {why}")
-    print("  None of these is a claim about the byte: each is a `mov 0x83,a` "
-          "whose high byte\n  this method did not find.")
+    print("  These and the sites above are the anchored stores between them, "
+          "once each. None of\n  them is a claim about the byte: each is a "
+          "`mov 0x83,a` whose high byte did not\n  become a row of its own.")
 
     states = collections.Counter(r["page_state"] for r in rows)
     print(f"\nOf the {len(rows)} sites, the high byte resolves to a page in "

@@ -497,6 +497,28 @@ class AnchoredTests(unittest.TestCase):
         self.assertEqual(img[5], 0x22)
         self.assertEqual(img[6:8], bytes([0xF5, 0x83]))
 
+    def test_the_declined_census_and_the_sites_partition_the_anchored_stores(self):
+        # `sites()` suppresses the row for a build a nearer store already
+        # claimed, and `declined()` used to collect only `store_verdict()`'s
+        # refusals -- so a duplicate fell out of both lists and the arithmetic
+        # the summary prints on every run (`anchored = sites + declined`) came
+        # out short by one per duplicate. The property is the partition, not a
+        # count of the tree: every anchored store is named exactly once across
+        # the two, whichever side it lands on.
+        img = fixture(clr_a(), addc(0x0F), mov_dph(), bytes([0x22]),
+                      mov_dph(), mov_dph())
+        rows = C.sites(img, False)
+        declined = C.declined(img, False)
+        anchored = [s for _starts, found in C.stores(img) for s in found]
+        named = [r["dph_store"] for r in rows] + [at for at, _why in declined]
+        self.assertEqual(sorted(named), sorted(anchored))
+        self.assertEqual(len(named), len(set(named)))
+        # And the duplicate is declined under its own reason rather than under
+        # `NO_ADD`: its `addc` is sitting in its window, so "no immediate
+        # add/addc in the window" would be false of it.
+        self.assertIn((6, C.DUP_BUILD), declined)
+        self.assertNotIn(C.NO_ADD, [why for _at, why in declined])
+
 
 class TruncationTests(unittest.TestCase):
     """Short buffers get a verdict, and a refusal names what it ran out of."""
