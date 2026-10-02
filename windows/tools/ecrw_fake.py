@@ -15,6 +15,15 @@ substitute for running against the vendor driver. A green offline run here says
 the tool's own logic behaves on a fixture -- no EC is opened, no register is
 read back. `ecrw.py` is unchanged and stays the only thing that talks to
 `\\.\ACPIDriver`.
+
+It carries every member of `ecrw.Ec` that a tool in this directory reaches,
+with the real signatures. It does not carry `_ioctl`, `read_dword` or
+`read_dword_unaligned` -- the real class's own interior, which no tool here
+reaches -- and their absence is a decision rather than a gap; see `Ec` below
+for why adding them would be the wrong direction.
+`windows/tools/test_ecrw_fake.py` holds that rule and its residual, by `ast`,
+since `ecrw.py` cannot be imported off Windows and the two therefore cannot be
+compared at runtime.
 """
 import sys
 import types
@@ -48,7 +57,7 @@ def block_runs(addrs):
 
 
 class Ec:
-    """The real signatures and the whole protocol, and no behaviour.
+    """The real signatures, for every member a tool here reaches. No behaviour.
 
     No suite calls these bodies: every suite that installs this replaces `Ec`
     wholesale with a class of its own once the tool module is imported, so the
@@ -56,6 +65,17 @@ class Ec:
     call -- from failing on a missing attribute. A suite that needs bytes has
     to say so by supplying its own class rather than by finding a default it
     likes, which is why `read` returns 0x00 and nothing else here does anything.
+
+    `_ioctl`, `read_dword` and `read_dword_unaligned` are deliberately absent,
+    and staying that way is the safe side. An unpatched `read_dword` here dies
+    on a missing attribute, loudly; a `bytes(4)`-returning body would answer
+    with four silent zeros on the MMRD path, which is the path `test_ecrw.py`
+    guards hardest -- an unaligned four-byte read over `0x0460-0x046F` is what
+    #94 is about. A fixture that answers that quietly is worse than one that
+    refuses, so the decision about a dword default is made against a caller
+    that exists rather than in advance of one. If a tool ever reaches one,
+    `windows/tools/test_ecrw_fake.py` goes red, and that is the signal to add
+    it and decide its body then.
     """
 
     def __init__(self):
