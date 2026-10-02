@@ -163,6 +163,30 @@ trusting one of theirs: every row says whether it was verified against
   held one that four concurrent branches each bumped from a different base.
   Assert the claim (`twelve suites are cited by line`), not the census
   (`fifty-nine suites exist`) — the second moves on every landing suite.
+- **No totals of the repository's own text, and as few figures as the claim
+  needs** (2026-10-02). A count of things in this repository (write-ups,
+  suites, tests, pins, citations, table rows, lines, files, sections, issues)
+  is out of date at the next merge, and the line carrying it is one every
+  other open branch edits too. That is where most merge conflicts here come
+  from: the pin census and the two suites that held its totals were in 85 of
+  the 305 commits to main between 2026-09-24 and 2026-10-02. So:
+  - Do not write such a count in prose, in a table, in a PR description or in
+    a test assertion. Say what is true without the number ("every pin
+    resolves", "the suites that cite by line"), or name the command that
+    prints it.
+  - When a number *is* the finding (an address, a byte, a register value, a
+    count over the committed firmware that no change to this repository can
+    move), state it once, in the write-up that measured it, next to the
+    command. Do not repeat it in a summary, a README or another write-up;
+    link to it.
+  - A test holds a property of the tree (exits zero, locates something, every
+    pin resolves), never a count of it.
+  - When a review finding or a merge conflict is about a total, delete the
+    total. Do not recompute it, and do not add a note explaining the new
+    arithmetic.
+  - `docs/findings/test-line-pin-census.md` and its per-pin table record the
+    tree they were measured on, and nothing holds them to the current one any
+    more. Leave them alone unless the issue is about them.
 - **Cite code by name, not by line number.** Write
   `grade_0751_isolation.py`'s `build_windows`, not `grade_0751_isolation.py:1981`.
   If the line itself is the point, pin it to a commit:

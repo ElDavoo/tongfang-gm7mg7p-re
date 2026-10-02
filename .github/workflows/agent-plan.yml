@@ -401,6 +401,10 @@ jobs:
             - the test that will prove it works, and where it goes;
             - what is explicitly out of scope.
 
+            Plan no figures or totals the work does not need. A count of the repository's own
+            text (write-ups, suites, tests, pins, rows, lines, files) is never in scope, in a
+            document or in a test: CLAUDE.md, "No totals of the repository's own text".
+
             Also write the pull request title and body that this work should eventually merge
             under. They become the squash commit message verbatim, so follow the house style in
             CLAUDE.md: a plain-language lowercase subject line, and a body explaining the

@@ -170,6 +170,12 @@ jobs:
               relaxed or a tool's self-test deleted or defanged;
             - work that does not actually implement the issue, or that quietly does more than the
               issue asked;
+            - a count of the repository's own text added by this diff -- how many write-ups,
+              suites, tests, pins, rows, lines or files -- in prose, a table, the description
+              or a test assertion (CLAUDE.md, "No totals of the repository's own text"). The
+              fix is always to delete it. Never ask for a figure or total to be added,
+              restated or re-measured; a claim that stands without its number is better
+              without it;
             - a new tool without a way to check it: an analysis script with no self-test or no
               recorded known-answer run against the committed firmware, when its output is what
               the PR's claims rest on.

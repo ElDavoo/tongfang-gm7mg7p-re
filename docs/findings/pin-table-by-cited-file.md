@@ -1,5 +1,11 @@
 # Which test file the corpus's pins name, and the indexed suites none of them does (issue #941)
 
+> **2026-10-02:** nothing holds this file's figures to the current tree any
+> more. The suites that did were removed because every merge that
+> added or moved a citation had to edit them and this file, which made them the
+> repository's largest single source of merge conflicts (CLAUDE.md, "No totals of the
+> repository's own text"). Every figure below is a record of the tree it was measured on.
+
 **Nothing here is a hardware claim, and nothing here is a firmware claim.** No
 image is opened, no register is read back, no capture is taken, and no laptop, EC
 or Windows machine is involved anywhere below. Every figure is a count of lines
