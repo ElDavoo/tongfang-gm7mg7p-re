@@ -27,8 +27,9 @@ whose marks are 1.0 s apart: its distance assertion, its wording and its
 `MARK_MERGE_SECONDS` to 30 and the door's literal stays 5, the fixture still
 flags and the 0751 grader still fuses — while the sentence describing that
 grader's fusing has become a claim about a grader that no longer fuses at that
-distance, and nothing turned red. The issue is right that this is the fixture's
-spacing rather than the fixture's job, and the case is left exactly as it is.
+distance, and nothing that goes red on that move is a check of the sentence. The
+issue is right that this is the fixture's spacing rather than the fixture's job,
+and the case is left exactly as it is.
 
 ## Why the pin, and not the derivation
 
@@ -100,11 +101,16 @@ and would have moved `FIXTURES`, which
 ## The mutations this was checked against
 
 A case that passes both ways is not a pin. Each of these was made in a scratch
-edit and reverted; none is a committed state.
+edit and reverted; none is a committed state. The column is scoped to the door
+suite, which is where the pin and the note live. Moving `MARK_MERGE_SECONDS` is
+not confined to it — that constant is the 0751 grader's own window, so the
+suites that read it go red as well. What the pin buys is that one case fails
+*by name* here, on the relation itself; it does not make the move a one-suite
+event.
 
 | mutation | what turns red |
 |---|---|
-| `MARK_MERGE_SECONDS = 30` in `grade_0751_isolation.py` | `test_the_restated_threshold_is_the_graders_window`, by name, and nothing else — the issue's *Done* criterion |
+| `MARK_MERGE_SECONDS = 30` in `grade_0751_isolation.py` | `test_the_restated_threshold_is_the_graders_window`, by name — the issue's *Done* criterion |
 | `CLOSE_MARKS_SECONDS = 8` (the literal drifting) | the new case, and the two cases holding `are 1.0s apart, inside the 5s flag threshold` byte for byte |
 | `CLOSE_MARKS_SECONDS = fan.MARK_MERGE_SECONDS` (the derivation) with `MARK_MERGE_SECONDS = 30` | the same two byte-for-byte cases, and *not* the new case — the derivation cannot fail an equality it makes true by assignment |
 | the `{fan.MARK_MERGE_SECONDS:g}s` interpolation deleted from the note (the explanation drifting off the constant) | the new case |
@@ -146,8 +152,7 @@ edit and reverted; none is a committed state.
   action's movement to the first.
 - **`ec/tools/grade_0751_isolation.py`.** Not one line of it, including its
   `CLOSE_GAP_SECONDS` comment. The pin's other end is the thing that is *not*
-  edited, and issue #169 is open on that file, so an edit from here would
-  collide for no gain.
+  edited.
 - **A `testdata/` fixture, or re-timing the committed one.** The committed
   fixture's 1.0 s spacing cannot tell the number moved, and re-timing it to
   match the constant would make a fixture that can no longer fail; the `<=` edge
@@ -202,11 +207,6 @@ makes are both unchanged, and
 `docs/findings/0762-provenance-citation-reanchor.md` describes the
 re-anchoring.
 
-**Those comment lines are not the only reason the line moved.** `main` grew
-`grade_gpu_door.py` above it independently, so this change is rebased onto
-`main` and the pin is anchored against the merged tree rather than against this
-branch's own base — anchored against the base, it would resolve here and point at
-nothing once the two met. The other half of a re-anchor is the page:
-`0751-mark-provenance-shapes.md`'s live table carries the new number, which is
-what `check_page` reads, and without it the tool reports the citation as one the
-two findings pages do not name.
+The other half of a re-anchor is the page: `0751-mark-provenance-shapes.md`'s
+live table carries the new number, which is what `check_page` reads, and without
+it the tool reports the citation as one the two findings pages do not name.
