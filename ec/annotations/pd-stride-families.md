@@ -55,7 +55,7 @@ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 \
 python3 ec/tools/pd_image_census.py --self-test
 ```
 
-All five are green on this tree, and the three committed CSVs regenerate
+Every command above is green on this tree, and the committed CSVs regenerate
 byte-identically: this change reads them and writes none of them. The tool is
 imported-from, not forked — `ec/tools/pd_index_geometry.py`, `ec/tools/
 pd_image_census.py` and `ec/tools/disasm8051.py` are the only decoders, so a
@@ -119,18 +119,22 @@ in-a-listing and anchored are separate questions: a committed pd listing holds t
 0x17  17 site(s)  7 base(s)  12 in a listing  15 anchored  17 reach a construction  10 consumed
         low8-truncated  bases 0x0A13 0x0A15 0x0A27 0x0A29 0x0A2C 0x0A2D 0x0A35
         low8 and the full product agree below index 12 and diverge from it
+        stop reasons: 0x1041 is unmodelled: 0x1043 `inc  dptr` is outside the term model; 0x104D is unmodelled: 0x104D `mov  r0,0x82` is outside the term model; 0xAD1E is unmodelled: 0x0FB1 `inc  dptr` is outside the term model; 0xADA4 is unmodelled: 0x0FB1 `inc  dptr` is outside the term model; movx: DPTR dereferenced here
 0x67   7 site(s)  6 base(s)  1 in a listing  7 anchored  0 reach a construction  0 consumed
         full-product  bases 0x0661 0x0667 0x069A 0x069B 0x07A3 0x07C4
         unmodelled DPH addends R3 R5 R6 R7
+        stop reasons: `add  a,0x83` at 0x2F12; `add  a,0x83` at 0x2F71; `add  a,0x83` at 0x9C1F; `add  a,0x83` at 0x9C40; `add  a,0x83` at 0x9C51; `add  a,0x83` at 0x9C78; `add  a,0x83` at 0xCF1A
 0x04   2 site(s)  2 base(s)  0 in a listing  2 anchored  0 reach a construction  0 consumed
         full-product  bases 0x00C0 0x00C8
+        stop reasons: 0x104D is unmodelled: 0x104D `mov  r0,0x82` is outside the term model
+
 ```
 
 ### 3.1 `0x17`: a truncating construction behind seven helpers
 
 Every `0x17` site is a `MOV DPTR` anchor whose chain reaches a helper, and every
 one of those helpers ends in the same byte run — `mul ab ; add a,#lo ; mov
-dpl,a ; clr a ; addc a,#hi ; mov dph,a`. The `clr a` at `0xCC68` is the
+dpl,a ; clr a ; addc a,#hi ; mov dph,a`. The `clr a` at `0xCC67` is the
 load-bearing instruction: it discards B, the multiplication's high byte, so the
 address is `base + low8(index * 0x17)` and **not** the product.
 
@@ -332,9 +336,11 @@ $ r2 -a 8051 -e scr.color=0 -q -c 's 0xcc58; pd 6; s 0xcc92; pd 6' /tmp/pd-75.bi
 ```
 
 The census reads `0xCC5B` as `mov dptr,#0xFCE0`; the instruction stream has
-`lcall 0x90FC` at `0xCC5A` and a `movx` at `0xCC5D`, and `0xFCE0` is the
-`lcall`'s own operand bytes. So the site's `mov_dptr_immediate` cell is a byte
-scan artefact and **not an address this code loads** — which is why
+`lcall 0x90FC` at `0xCC5A` and a `movx` at `0xCC5D`, so the three bytes the scan
+takes for one instruction are the `lcall`'s two target bytes `90 FC` and the
+`movx`'s own opcode `E0` — an immediate assembled out of two instructions that
+do not load it. So the site's `mov_dptr_immediate` cell is a byte scan artefact
+and **not an address this code loads** — which is why
 `effective_base` and `index_terms` are reported from the chain and not from that
 cell, and why the two columns are separate in the CSV.
 
