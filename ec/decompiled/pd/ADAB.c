@@ -9,10 +9,20 @@
    0x0BC4, keeps the result in R6, calls 0x0BAB and keeps that in R5, masks R5 with 0x1F and writes
    the result to 0x080C, leaving 0x080B at 0. It then adds 2 to R1 (the clr A before the addc A,R2
    clears the carry, so R2 comes back holding its own old value and R1's carry-out is dropped),
-   reads XDATA 0x0805, calls 0x119C, loads R6 with 0x7A and tail-jumps to 0xA8AE. There is no ret;
-   the .c renders that tail-jump as a call to a routine it names dispatch_code_table, whose body is
-   not in this file pair, as is the case for every callee here (0x393D, 0x10C8, 0x0BC4, 0x0BAB,
-   0x119C).
+   reads XDATA 0x0805 into A and calls 0x119C at 0xADE6. 0x119C pops the return address into DPTR
+   before its first MOVC, so the table it walks begins at 0xADE9 rather than after the call: from
+   there the bytes are a 15-entry code-space table of 3-byte records, target from +0/+1 and selector
+   key at +2, keyed 0x01 to 0x0F without a gap. Its first record is `ae 7a 01`, target 0xAE7A at key
+   0x01, which is also the address of the table's default and the target of eleven of the fifteen
+   records -- so the `mov R6,0x7a` the listing shows at 0xADE9 is that record's two target bytes
+   read as an opcode and an operand, and its `ajmp 0xA8AE` at 0xADEB spans record 1's key byte and
+   record 2's high target byte. The table's last byte is 0xAE19, its default is 0xAE7A, and the byte
+   at 0xAE1A is the target of the record keyed 0x03, so nothing after 0xADE6 executes as this
+   function's continuation. The figures are the pd 0xADE6 row of
+   ec/annotations/pd-index-table-spans.csv, a decode under one reader's layout rather than a claim
+   that any of these handlers executes. There is no ret, and the .c renders what follows 0x119C as a
+   call to a routine it names dispatch_code_table, whose body is not in this file pair, as is the
+   case for every callee here (0x393D, 0x10C8, 0x0BC4, 0x0BAB, 0x119C).
    type: dispatch
    evidence: ec/decompiled/pd/ADAB.asm; ec/decompiled/pd/ADAB.c
    basis: hand-decoded
