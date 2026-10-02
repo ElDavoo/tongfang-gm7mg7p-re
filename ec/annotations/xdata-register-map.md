@@ -2746,19 +2746,15 @@ within those the two this file has always named:
   entirely and so spells the address nowhere for the census to match.
   `0x0457`'s four sites sit in routine no export covers, and the one committed
   `.c` that names the address does so inside a comment, which this tool's
-  `strip_comments()` blanks. A run today, against the committed image:
-
-  ```console
-  $ python3 ec/tools/xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800 2>&1 >/dev/null
-  217 addresses: 62 agree on the main-EC count, 12 have main-EC sites the decompiled tree does not contain, 143 differ another way. A zero in the 'this tool' column is 'not found by this method' -- a function that did not decompile carries its references nowhere -- never 'absent'.
-  ```
-
-  Which committed artifact carries which of these ten addresses, which method
-  cannot see it, and why a census row was not added for the two — including the
+  `strip_comments()` blanks. A run today, against the committed image, puts
+  `0x0420` and `0x0457` in the *not in the decompiled tree* column. Which
+  committed artifact carries which of these ten addresses, which method cannot
+  see it, and why a census row was not added for the two — including the
   decision not to add a third place for the shape — is
-  `../../docs/findings/dptr-seed-census-gap.md`. The sentence above is left
-  standing because it was true when this section's run was taken, and because
-  a correction with the wrong text beside it is the form this repository keeps.
+  `../../docs/findings/dptr-seed-census-gap.md`, whose §1 table is that run's
+  own per-address output. The sentence above is left standing because it was
+  true when this section's run was taken, and because a correction with the
+  wrong text beside it is the form this repository keeps.
 - **`0x0733`** and **`0x0735`** (both `MODE_PL_DEFAULTS`, the
   `0x0730`-`0x0737` block's one register name) are
   the two gaps this file has always named, and they fail in

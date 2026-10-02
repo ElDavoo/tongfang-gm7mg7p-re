@@ -28,16 +28,16 @@ the listing.
 
 ## 1. The position, measured
 
-`--reconcile` joins the two censuses — `xdata_register_map.py`'s C-level one
-against `register_ref_table.py`'s image-level one — and prints the main-EC row
-for every address in `registers.yaml`:
+`python3 ec/tools/xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800`
+joins the two censuses — `xdata_register_map.py`'s C-level one against
+`register_ref_table.py`'s image-level one — and prints the main-EC row for
+every address in `registers.yaml`. It closes on a standing gloss: a zero in the
+'this tool' column is *not found by this method*, because a function that did
+not decompile carries its references nowhere, never *absent*. Its summary
+sentence tallies `registers.yaml`'s own rows rather than anything in the image,
+so it is not reproduced here; the per-address rows are what this section is for.
 
-```console
-$ python3 ec/tools/xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800 2>&1 >/dev/null
-217 addresses: 62 agree on the main-EC count, 12 have main-EC sites the decompiled tree does not contain, 143 differ another way. A zero in the 'this tool' column is 'not found by this method' -- a function that did not decompile carries its references nowhere -- never 'absent'.
-```
-
-The ten rows that issue is about:
+The ten rows that issue is about, as that run prints them:
 
 | address | `registers.yaml` name | census, main EC | census, PD | image, main EC | image, PD | in the decompiled tree |
 |---|---|---:|---:|---:|---:|---|
@@ -185,7 +185,8 @@ is a measurement rather than a miss.
 
 An exported routine reaches the same byte by a route the census cannot take,
 recorded at `ec/annotations/xdata-0400-045f.md` §5: `bank1/8418.c`'s
-`code_table_scatter_to_xdata` walks three-byte CODE records at `0x851C`, a
+`zero_1510_and_clear_xdata_flag_bits` calls `code_table_scatter_to_xdata`
+(bank1 `0xA530`), which walks three-byte CODE records at `0x851C`, a
 big-endian destination followed by a value per iteration, and one of those
 records' destination bytes are `0x0457`. DPTR there is built from the record
 rather than seeded by a literal, which is a different instrument's subject
