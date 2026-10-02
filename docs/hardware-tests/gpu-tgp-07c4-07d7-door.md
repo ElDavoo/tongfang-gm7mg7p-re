@@ -182,6 +182,43 @@ is an ordering, and an ordering across two captures is an ordering across two
 start times. If a second run is needed, start a second *file* with its own
 marks; do not merge two files and read the union.
 
+**A run that did not reach its closing mark.** `gpu_block_watch.py` records
+that in the capture itself, in one `#` row written from its `except EcError`
+handler just before the sink closes:
+
+```
+# the run ended early: 2026-09-25T14:31:02.480+02:00,gpu_block_watch: EcError: DeviceIoControl failed
+```
+
+The grader reads that one row, and it is the only `#` row it reads — a `#`
+annotation you write by hand does not carry the phrase and is still skipped. A
+row it can place **withholds that window and exits 1**: one window here is one
+action's mark, act, hold and closing mark, so a run that stops inside the hold
+never writes the closing mark and the window has no end the capture can name —
+and a window that ran 5 s of a 30 s hold grades in exactly the same format as
+one that ran all of it. The withheld window keeps its `--- mark n/total`
+heading and its `window runs to ...` line, so the mark is still locatable and
+the numbering still matches, and prints no movement figure and no ordering line
+in their place. The rest of the run is unaffected, so a second capture named
+on the same command line still grades as it would have, and a section above
+the windows names every row with the window and the capture it fell in — all
+of them, whether or not this run graded that file's. A row with no readable
+timestamp, or one stamped before that capture's first mark, cannot be placed
+against any window at all: the run is then refused rather than partly reported,
+because a window whose length the capture itself ends is not one to quote.
+Re-run that capture. **As of 2026-10-02 (issue #684)**.
+
+Two things differ from the `0x0751` procedure's row on purpose, and both are in
+the writer rather than in the rule. The unit is the **window, not the block**:
+this procedure has no block, and §3 above asks for one mark per action
+boundary, so a window is already one action. And the row comes from `except
+EcError` and not from `except BaseException`, because Ctrl-C is how this run
+ends on purpose — `--seconds` defaults to running until Ctrl-C, which is the
+right default here, and the console prompt says "Ctrl-C to stop". Stamping "the
+run ended early" on every Ctrl-C would put that row on every *successful*
+capture and grade a finished run as a stopped one. If your capture carries the
+row, it carries it because an EC read failed.
+
 ## 4. The attribution capture
 
 This is the part no committed input substitutes for, and it is why §3's capture
@@ -294,6 +331,23 @@ image, the IOCTL code on the `\.\ACPIDriver` handle and the loaded-module list
 open, and column 10 is the human's call against §6. The grader prints that
 split itself, so a table carrying only the first five cannot be mistaken for a
 finished one.
+
+**A withheld window is not a quiet one.** This table's third and fourth cells
+are read off the count line each block of a graded window prints —
+`0x07C4-0x07D7: N of 20 addresses moved` and `0x0743-0x0746: N of 4 addresses
+moved` — so read them only where the window is graded. `nothing in this block
+moved by this method under this action` is not that figure: it is the prose a
+zero is written as, printed once for every block that moved nothing and not at
+all when both blocks moved, so it is absent from a graded window and cannot
+mark one. A window the grader prints `NOT GRADED` carries no count line, no
+such sentence, no ordering line and none of the 24 `net`/`total`/`max` lines,
+because the capture records the run ending inside it: half a hold is not a
+smaller claim than a whole one, it is no claim at all.
+The §6 closing below the windows says how many windows were withheld rather
+than counting them as windows where nothing moved, and the exit code is 1
+while the row is there. If a row of this table has no graded window behind it,
+leave that row's movement cells empty and re-run the capture; the other rows in
+the table are not affected by it.
 
 ## 6. What a result would settle, and what it would not
 

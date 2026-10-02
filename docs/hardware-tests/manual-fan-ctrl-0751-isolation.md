@@ -576,11 +576,24 @@ For each run, from the three CSVs plus the by-hand power readings:
    Keep reading the whole `0x0700-0x07FF` sweep rather than only those two.
    That instruction used to be there because the two addresses were
    unidentified; it stays because the neighbourhood is still the least
-   mapped part of the page and `0x0786` in it is a live naming conflict —
-   `EC_ADDR_FAN_DEFAULT` upstream, APTC/APTN in the DSDT and in 3.1.39.0,
-   `ADDR_L1_PWM_DEFAULT_MYFAN3` in ECSpec, three names and no agreement
-   (recorded in that register's own entry). The audible fan is evidence too —
-   write down whether it changed, and when.
+   mapped part of the page.
+   **Corrected 2026-10-02 (issue #702):** the second half of that reason —
+   "`0x0786` in it is a live naming conflict, `EC_ADDR_FAN_DEFAULT` upstream,
+   APTC/APTN in the DSDT and in 3.1.39.0, `ADDR_L1_PWM_DEFAULT_MYFAN3` in
+   ECSpec, three names and no agreement" — is narrower than it was. The EC's
+   own bytes settle what the *EC* does with the byte: at bank0
+   `0x9492`-`0x94A9` the value replaces an already-computed TCC target behind
+   a bit-7 enable and an `AP_OEM` bit-0 gate, and nothing indexes with it. So
+   a `--watch-page` run will produce a `0x0786` change row with a name to read
+   it against. What is *not* settled is the vendor service, which reads the
+   same five bytes as a default-PWM curve. **The instruction itself is
+   unchanged and still wanted** — the neighbourhood is the least mapped part
+   of the page, the naming conflict is not fully closed, and the rest of the
+   `0x0786`-`0x078D` block is open: `0x0789` and `0x078A` have no direct
+   `MOV DPTR` site by the scan, which is "not found by this method" and not
+   "unused". The write-up is
+   [`../findings/xdata-0786-tcc-offset-verdict.md`](../findings/xdata-0786-tcc-offset-verdict.md).
+   The audible fan is evidence too — write down whether it changed, and when.
 
    **The single-tool form of that instruction is `--watch-page`** (issue
    #666): one console, the whole page swept, at 448 ECRR reads per sweep or
@@ -728,8 +741,10 @@ For each run, from the three CSVs plus the by-hand power readings:
    something put it back? Compare the block's `*-before-0700.txt` and
    `*-after-0700.txt` dumps (§6). A section that ends without either of the
    two answers names the precondition it was missing — the last `--dump` not
-   reaching `0x0751`, or nothing naming the value that was written — so read
-   that line before quoting the section as an answer.
+   reaching `0x0751`, nothing naming the value that was written, or a
+   before-dump that already holds the written value, which leaves the two
+   readings open and drops the word "still" — so read that line before quoting
+   the section as an answer.
 
    **If it moved back, the byte that came back names the writer.**
    `../../ec/annotations/manual-fan-ctrl-0751-writers.csv` is the ten writer

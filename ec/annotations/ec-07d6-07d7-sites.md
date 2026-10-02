@@ -130,6 +130,16 @@ rather than leaving it to be guessed at. Note the read/write columns here
 (86/14 against §2's 85/10) are the same sites counted after the handoffs are
 classified, which is why they do not match; §2's split is the raw walk.
 
+**The tool now reaches §4.4's verdict for `0x951B` on its own (issue #44),
+which is a corroboration rather than a new claim.** `--callee-depth` takes
+an integer N, and at N=2 the chain `0xB2F7 -> 0x10C8` is followed and the
+site comes out a read — the same direction §4.4 reached by hand from the
+committed exports, by a path that does not run through those exports. The
+`1` in this table's `handoff unresolved` column is the depth-1 reading and
+is what still reproduces at N=1; `../../docs/findings/callee-depth-n.md` has
+the run. The table above is otherwise unchanged, and §1's transcript is
+still the depth-1 one.
+
 Framing, in the `frame_onto`/`frame_over` sense of
 [`bank-call-audit.md`](bank-call-audit.md) §8: **148 of the 213 have all 24
 preceding anchors converging onto them** (94 of 142 for `0x07D6`, 54 of 71 for

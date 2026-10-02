@@ -2267,7 +2267,7 @@ pd,34D6,index_stride_5e_from_07d6,3,annotation,yes,yes,math,hand-decoded,ec/anno
 pd,34D9,read_xdata_at_dptr_34d9,1,annotation,yes,yes,reader,hand-decoded,ec/decompiled/pd/34D9.asm; ec/decompiled/pd/34D9.c,,pd/34D9.c
 pd,34DA,index_5e_fc,16,annotation,yes,yes,math,hand-decoded,ec/decompiled/pd/34DA.asm; ec/decompiled/pd/34DA.c,,pd/34DA.c
 pd,34ED,read_xdata_at_dptr_to_r7_34ed,2,annotation,yes,yes,reader,hand-decoded,ec/decompiled/pd/34ED.asm; ec/decompiled/pd/34ED.c,,pd/34ED.c
-pd,34EF,set_dptr_0424,3,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/pd/34EF.asm; ec/decompiled/pd/34EF.c,,pd/34EF.c
+pd,34EF,set_dptr_0424,3,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/pd/34EF.asm; ec/decompiled/pd/34EF.c,,pd/34EF.c
 pd,34F2,add_60a_to_dptr_34f2,6,annotation,yes,yes,math,hand-decoded,ec/decompiled/pd/34F2.asm; ec/decompiled/pd/34F2.c,,pd/34F2.c
 pd,34FB,read_byte_to_r7_base_0408,5,annotation,yes,yes,reader,inferred,ec/annotations/ec-0x07d0-sites.md,,pd/34FB.c
 pd,3500,add_60a_to_dptr_3500,6,annotation,yes,yes,math,hand-decoded,ec/decompiled/pd/3500.asm; ec/decompiled/pd/3500.c,,pd/3500.c

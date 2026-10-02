@@ -992,7 +992,7 @@ ORACLE = {
     # registers.yaml row renames the symbol table and not a decompile". The
     # census pins above are therefore the ones #1425 measured and this block
     # leaves them at; only `named_in_tree` moves here.
-    "named_in_tree": 189,
+    "named_in_tree": 190,  # 189 -> 190: #647's XDATA_0803, an address the census already reaches
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # **Unmoved by issue #279, and worth saying why rather than leaving it as a
@@ -1683,13 +1683,16 @@ BUCKET_TOTALS = {"read": 8827, "write": 3587, "read+write": 2482,
 # property of that grouping, which is why the rule is a committed tool and the
 # figures are re-derived rather than carried forward.
 #
-# **Every key below is read by a check in the --self-test ownership block**, and
-# the two that were not are named here so the reader does not have to grep for
+# **Every key below is read by a check in the --self-test ownership block.** The
+# four per-program ones are named here so the reader does not have to grep for
 # them: `main_distinct`/`main_refs` are read by the "and its main-EC half is"
-# check, which `docs/findings/xdata-census-rederivation-checklist.md` §2b lists
-# as the pin for the 6b console block's `1218`/`9320` line. A value in a
-# constant that nothing reads is a promise wearing the costume of a pin, which
-# is the defect issue #849 corrected.
+# check, and `pd_distinct`/`pd_refs` by the "and its pd half is" one beside it,
+# which is the same shape again for the other half of the 6b console block's
+# per-program line -- `docs/findings/xdata-census-rederivation-checklist.md` §2b
+# lists the main-EC pair as its pin and recorded the pd pair as unheld for the
+# narrow reason that these two keys did not exist. A value in a constant that
+# nothing reads is a promise wearing the costume of a pin, which is the defect
+# issue #849 corrected.
 OWNERSHIP = {
     # *** 2026-09-25, issue #279: 1171/9404 -> 1326/10178, main EC
     # 1062/8546 -> 1218/9320, read 4923 -> 5361 and write 2707 -> 3043, and
@@ -1707,6 +1710,40 @@ OWNERSHIP = {
     # this one adds 68 more of them.
     "distinct": 1326, "refs": 10178,
     "main_distinct": 1218, "main_refs": 9320,
+    # The other half of the same per-program line, and the pair §2b's last row
+    # records as held for the *default* census only. That was accurate and it
+    # was a gap: `ORACLE["extmem_pd_*"]` measures the default census's token
+    # spellings, this is the de-duplicated pass, and nothing read the second.
+    #
+    # **The pass reaches the PD program and finds one fold in it, and that fold
+    # carries no XDATA literal**, so no reference in these 858 moves. At
+    # `export_ownership.THRESHOLD`/`MIN_BODY_STMTS` exactly one `pd` export folds
+    # -- `pd/3750.c` into `pd/9784.c`, containment 1.00, four body lines -- out
+    # of the 541 `pd` rows in `ec/decompiled/index.csv`, and the other 145
+    # `shared=yes` rows tree-wide are main-EC. Both bodies are the same
+    # three-call forwarder (`read4xdata_to_r4_r7(); negate_32bit_r4r7();
+    # add_32bit_r0r3_to_r4r7();`), `pd/9784.c` adding one
+    # `sub_or_cmp_r0_r7(0,0,0,0x23)`, and neither names an XDATA byte; a fold
+    # only moves a reference when the non-owner's body did.
+    #
+    # **0 pd references move is not "0 of the whole pass".** File-wide the pass
+    # moves 296 addresses -- the `moved` key below -- and all 15 of the
+    # `program=both` rows that move do so on their main-EC half alone. Read off
+    # `python3 ec/tools/xdata_register_map.py --export-ownership --out-registers
+    # /tmp/… --out-clusters /tmp/…` (refused with `--check`/`--self-test`, so the
+    # before/after is only reachable that way) against the committed
+    # `ec/annotations/xdata-registers.csv`: 108 `program=pd` rows and 603 `refs`
+    # on both sides, 0 of the 108 with a different `refs`, and 0 of the 49
+    # `both` rows with a different `refs_pd`. So `157 = 108 + 49` and
+    # `858 = 603 + 255` is `PER_PROGRAM`'s own arithmetic read back over the
+    # pass's census rather than the default's -- which is what makes the pair an
+    # identity and not a spot check.
+    #
+    # The pin is for the event that would break it, and this comment is not the
+    # claim that the event cannot happen: a `pd` fold whose body *does* name an
+    # XDATA byte drops that body's references onto the owner and moves these
+    # figures. `docs/findings/pd-pair-unmoved-one-fold.md` is the write-up.
+    "pd_distinct": 157, "pd_refs": 858,
     "buckets": {"read": 5362, "write": 3043, "read+write": 1018,
                 "passed-to-call": 500, "address-taken": 255},
     # Addresses present without the pass and absent with it. Empty here, and
@@ -3498,10 +3535,10 @@ def render(rows, columns) -> str:
 
 
 def diff(name, on_disk, generated) -> int:
-    """First differing line named, the way gen_xdata_symbols.py does."""
+    """First differing line named; both counts are file lines, not data rows."""
     print(f"{name} differs from a fresh generation "
-          f"({len(on_disk.splitlines())} on disk vs "
-          f"{len(generated.splitlines())} generated) -- run without --check "
+          f"({len(on_disk.splitlines())} lines on disk vs "
+          f"{len(generated.splitlines())} lines generated) -- run without --check "
           "to rewrite", file=sys.stderr)
     for i, (a, b) in enumerate(zip(on_disk.splitlines(), generated.splitlines())):
         if a != b:
@@ -4995,6 +5032,21 @@ def self_test(args) -> int:
           f"console block prints (got {len(groups_own['main-ec'])}/{own_main_refs})",
           len(groups_own["main-ec"]) == OWNERSHIP["main_distinct"]
           and own_main_refs == OWNERSHIP["main_refs"])
+    # The pd half of that same line, and the last of §2b's pairs with no key
+    # behind it until issue #1364. `groups_own["pd"]` is the pd census merged
+    # over the `pd` program, and an address the two programs share is in both
+    # merges, so this counts the 108 `program=pd` rows plus the 49 `both` ones
+    # -- the 157 the console block prints, not the 108 the CSV's `program`
+    # column alone would give.
+    own_pd_refs = sum(e["refs"] for e in groups_own["pd"].values())
+    # Expected-then-got in the two slots, as the main-EC check above it does and
+    # for the reason its comment gives: printing the measured pair in both made
+    # a moved pin indistinguishable from a green run in the refs column.
+    check(f"and its pd half is {OWNERSHIP['pd_distinct']} distinct / "
+          f"{OWNERSHIP['pd_refs']} references, the other half of that line "
+          f"(got {len(groups_own['pd'])}/{own_pd_refs})",
+          len(groups_own["pd"]) == OWNERSHIP["pd_distinct"]
+          and own_pd_refs == OWNERSHIP["pd_refs"])
     check("and its bucket totals, "
           f"{' '.join(f'{k} {v}' for k, v in OWNERSHIP['buckets'].items())} "
           f"(got {' '.join(f'{k} {fired_own.get(k, 0)}' for k in OWNERSHIP['buckets'])})",
@@ -5790,3 +5842,27 @@ if __name__ == "__main__":
 # named per-program columns (`refs_main_ec` / `refs_pd`) instead. The prose side
 # is `../../docs/findings/xdata-cluster-refs-projection.md`, which is also where
 # the arithmetic is.
+
+# *** 2026-10-02, issue #342: `diff()`'s two counts are file lines and its
+# neighbour's is data rows, and the two messages said the same noun for both.
+# `--check` prints `{len(rows)} rows match a fresh generation` -- data rows --
+# while `diff()` printed `{len(on_disk.splitlines())} on disk vs
+# {len(generated.splitlines())} generated`, which counts the header on both
+# sides. Same noun, two different quantities, one tool, adjacent messages. That
+# is how `1172 on disk vs 1172 generated` came to be read as "1,172
+# addresses" in `annotations/xdata-register-map.md` -- which is 1,171 of them --
+# and why that file carries a sentence explaining an ambiguity this tool
+# manufactured. The fix is the word `lines` before both counts; the number
+# cannot be made to mean both things at once, so naming it in both messages is
+# the whole of it, and `check_census_figures.py --print` now re-derives the
+# figures a page is held to, so the transcript beside them is not the only
+# thing carrying a count. `docs/findings/census-figures-restated.md` is the
+# write-up.
+#
+# **Placed here rather than on `diff()` because this module is cited by line.**
+# `check_eq_guard_citations.py` resolves the nine `--no-eq-guard` anchors to
+# line numbers and holds every page that cites them to what it finds there, so
+# growing `diff()`'s docstring by even one line moves the anchors below it and
+# turns a dozen citations across four documents red. A note about a message
+# belongs at the end of the file for the same reason the `named_in_tree` block
+# above does.

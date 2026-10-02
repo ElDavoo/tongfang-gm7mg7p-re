@@ -24,11 +24,11 @@ Re-measured on this tree, not shifted:*
 
 | the table says | it now names | **measured now** |
 |---|---|---|
-| `:1730` | `def store_target` | **`:2033`** |
+| `:1730` | `def store_target` | **`:2070`** |
 | `:377` | `ASSIGN = (...)` | **`:404`** |
-| `:1753-1754` | the `==` rejection | **`:2056-2057`** |
-| `:1750-1751` | the reason, in the function's own comment | **`:2053-2054`** |
-| `:1752` | the 838 tree-wide count | **`:2055`** |
+| `:1753-1754` | the `==` rejection | **`:2093-2094`** |
+| `:1750-1751` | the reason, in the function's own comment | **`:2090-2091`** |
+| `:1752` | the 838 tree-wide count | **`:2092`** |
 | `:757-758`, in the `ORACLE` opening at `:638` | the `131 -> 146` / `146 -> 150` record | **`:828-829`**, `ORACLE` opening at **`:708`** |
 
 *Nothing else on this page moves: the six anchors are the same six, in the same

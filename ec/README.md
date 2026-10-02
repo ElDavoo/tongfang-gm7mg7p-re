@@ -329,6 +329,24 @@ into `r2 -a 8051` with no stitching needed.
   plain ones and never share one with them; only `none` sites are re-decoded,
   so every other bucket is unchanged code over unchanged bytes and depth 0
   without the flag is byte-identical to before.
+- **`tools/code_pointer_sites.py`** — the two CODE-pointer buckets of the table
+  above, image-wide rather than per address: every `MOV DPTR,#imm16` that feeds
+  a `movc a,@a+dptr` table read or a `jmp @a+dptr` jump-table dispatch instead
+  of an XDATA access, committed one row per *site* as
+  `annotations/code-pointer-sites.csv` with `--check` and `--self-test`. It
+  imports `bucket()` from `register_ref_table.py` and the `walk`/`classify`
+  machinery from `trace_xdata_refs.py`, so its vocabulary cannot drift from
+  §5's, and it adds no mode to either. **Use it as a pre-flight check when an
+  address is about to be added to `registers.yaml`**:
+  `python3 tools/code_pointer_sites.py --against-registers 0xNNNN` prints
+  whether that one address has a CODE-pointer site, and
+  `--against-registers` with no address re-runs
+  `annotations/static-refs-audit.md` §5.1's null over the whole file as it
+  stands today. A hit means *this address has at least one CODE-pointer site*,
+  not that a count for it is bogus — an address can carry both, which is why
+  the table is per site and not per address — and a miss means only that this
+  method found none. The list is a floor, `walk()`'s, and
+  `docs/findings/code-pointer-site-census.md` §5 states the rest.
 - **`tools/walk_flow_follow.py`** — what `--follow-flow` above reads, and the
   other half of `walk_branch_arms.py` by deliberately weaker means: it
   re-decodes the sites the 8-instruction linear walk gives up on by continuing
@@ -352,7 +370,7 @@ into `r2 -a 8051` with no stitching needed.
   `--self-test` running on committed text alone (no image, no Ghidra, no
   network). Reach for it when the question is "which addresses exist, which
   routines share them, and is this number a read or a write" — the whole
-  `registers.yaml` list is 153 addresses, and this census is 1,171. Two limits
+  `registers.yaml` list is 153 addresses, and this census is 1,326. Two limits
   it earns the right to state: it splits the main EC from the separate
   `ITE8850-PD` program rather than mixing them, and a cluster is a
   co-occurrence in static code, not a purpose —
@@ -596,7 +614,7 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   driver or the Windows service touches, cross-referenced against static-scan
   results and live-hardware behaviour. This is the primary research output;
   start here. It is 144 addresses, and `annotations/xdata-register-map.md`
-  covers 1,172 — the two corpora are nearly disjoint, and which of the two a
+  covers 1,326 — the two corpora are nearly disjoint, and which of the two a
   question is about decides where the answer lives.
 - **`annotations/data-regions.yaml`** — the seven byte ranges in this image
   that `annotations/bank-call-audit.md` §2 and §5 read as **data tables rather

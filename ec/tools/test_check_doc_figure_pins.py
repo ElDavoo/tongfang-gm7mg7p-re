@@ -536,7 +536,7 @@ class TheOracleRule(unittest.TestCase):
         # caught it. Asserting the measured span here fixes all of it.
         # Re-measured, not shifted by arithmetic.
         #
-        # **`:5044-5050` since issue #907**, whose per-program function-count
+        # **`:5096-5102` since issue #907 merged with main**, whose per-program function-count
         # columns added 484 lines above this span: the metrics tuple, the
         # `per_program_function_columns()` sibling, the `REGISTER_COLUMNS`
         # comment, the `PER_PROGRAM` pin block, `per_program_function_counts_of()`
@@ -550,7 +550,7 @@ class TheOracleRule(unittest.TestCase):
             cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
                                   "largest_class", 1, 2, found["texts"],
                                   found["asserted"])),
-            "ec/tools/xdata_register_map.py:5044-5050")
+            "ec/tools/xdata_register_map.py:5096-5102")
 
     def test_the_census_csvs_are_read_from_the_tool_that_writes_them(self):
         # Derived from `OUT_REGISTERS`/`OUT_CLUSTERS` rather than named here, so
@@ -591,7 +591,12 @@ class TheOracleRule(unittest.TestCase):
         # asserting the span alone would have accepted a pin that had quietly
         # started pointing somewhere else. **`:3732-3749` / `#3722` were the
         # pins before issue #424, whose `&&` and compound-assignment corrections
-        # added lines above this span; `:3744-3761` / `#3734` on this tree.**
+        # added lines above this span; `:3744-3761` / `#3734` before issue
+        # #1364, whose `OWNERSHIP` `pd_distinct`/`pd_refs` block and the note
+        # above it added lines above this span and none below it; `:3781-3798`
+        # / `#3771` on this tree. That is the fourth merge-shaped step here,
+        # and like the three before it both members of the pair moved, which is
+        # what holding the pair is for.**
         # Re-read against the file rather than shifted by adding any of
         # the siblings' moves, which would give the same answer here for the
         # wrong reason. That re-pin is the third merge-shaped step on this span
@@ -603,20 +608,20 @@ class TheOracleRule(unittest.TestCase):
         # never fail is not a guard, so it names this tree's `:3734` --
         # the sum the `lines[3733]` assertion below points at.
         #
-        # **`:3934-3951` / `:3924` since issue #907**, whose per-program
+        # **`:3971-3988` / `:3961` since issue #907 merged with main**, whose per-program
         # function-count columns added 190 lines above this span -- the seven
         # insertions between the `ORACLE` block and here, none of them inside
         # this `check()` -- so the pair moved together again for the fourth time
         # and both are re-read against the file rather than shifted.
-        self.assertIn("3934-3951", detail)
-        self.assertNotIn(":3924", detail)
+        self.assertIn("3971-3988", detail)
+        self.assertNotIn(":3961", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3923])
-        self.assertIn("check(", lines[3933])
+        self.assertIn("extmem_both", lines[3960])
+        self.assertIn("check(", lines[3970])
         self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3950])
+                      lines[3987])
 
 
 class SectionSelection(unittest.TestCase):

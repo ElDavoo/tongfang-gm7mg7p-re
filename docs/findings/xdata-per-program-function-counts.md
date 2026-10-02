@@ -476,8 +476,8 @@ rather than left quietly wrong.
   `check()` that reads `ORACLE["extmem_pd_distinct"]` and the one that reads
   `export_ownership.OWNERSHIP_ORACLE["largest_class"]` — because the property it
   checks is *which lines a checker reports*. Both moved (`:3744-3761` →
-  `:3934-3951` with its negative guard `:3734` → `:3924`, and `:4560-4566` →
-  `:5044-5050`) and both were **re-measured against the file**, which is what
+  `:3934-3951` (`:3971-3988` once merged with main) with its negative guard `:3734` → `:3924` (`:3961`), and `:4560-4566` →
+  `:5044-5050` (`:5096-5102`)) and both were **re-measured against the file**, which is what
   that file's own comment history says to do at each step. The pair that moves
   together moved together, which is the point of holding both.
 - **`check_pin_table_rows.py`** holds the per-pin table in

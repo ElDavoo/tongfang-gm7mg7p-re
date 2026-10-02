@@ -297,6 +297,18 @@ things nobody asked it to:
   measures the after-census's pd width. This is the `pd_*` pair §2b's last row
   still needs, and it is a one-line addition to `OWNERSHIP` plus a self-test
   assertion. **Still open on the merged tree.**
+  ***Closed at the merge, and by exactly the remedy this bullet names:** issue
+  #1364 added the `pd_distinct`/`pd_refs` keys to `OWNERSHIP` and the "and its pd
+  half is" `check()` in the same ownership block, in the same window #849 closed
+  the `1218`/`9320` bullet below, so the two keys are read and the pair is a
+  whole hold. What the bullet did not say is the part worth keeping: the pair
+  holds because the pass reaches the PD program, finds one fold in it, and that
+  fold names no XDATA byte — so 0 of the 858 move while the same pass moves 296
+  addresses' references elsewhere. That is a fact about the PD program, and it
+  makes this a narrower miss than "left open for a narrow reason" reads like.
+  The bullet stays visible as written above, per [`../findings.md`](../findings.md)
+  §4a-4d; [`pd-pair-unmoved-one-fold.md`](pd-pair-unmoved-one-fold.md) is the
+  write-up.*
 - **§6b's `1218` / `9320` for the de-duplicated census**, which the §2b audit
   above first listed as held and does not: `OWNERSHIP["main_distinct"]` /
   `["main_refs"]` (`:1414`) hold exactly this pair and no assertion reads them,
