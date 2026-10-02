@@ -676,7 +676,7 @@ jobs:
           #
           # Deliberately not solved by giving the token `workflow` scope. That would let an
           # agent rewrite the review and CI gates that judge it, and then merge the rewrite.
-          # LOCAL CHANGE: the helper regenerates docs/findings/INDEX.md when that is the only conflict.
+          # LOCAL CHANGE: the helper merges main and regenerates conflicted generated files.
           # Read from main, not the working tree: a branch cut before the helper landed lacks it.
           git fetch --quiet origin main
           bash <(git show origin/main:.github/scripts/rebase-onto-main.sh)

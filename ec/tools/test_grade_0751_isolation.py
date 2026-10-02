@@ -6600,5 +6600,239 @@ class BeforeSideReadbackTests(unittest.TestCase):
         self.assertNotIn('the first --dump already holds', section)
 
 
+class StrictReaderOpenCountTests(unittest.TestCase):
+    """`read_capture`'s opens: one, on every way out of it (#786).
+
+    Its own class at the end of the file, and not a third case folded into
+    `ExistingMarkLabelTests.test_the_capture_is_opened_once_on_both_paths` or
+    into `MarkBeforeCodecTests` above, for the reason `MarkBeforeCodecTests`
+    gives for the same choice: prose across `docs/findings/` pins lines of
+    this file by number, and a block added mid-file moves every pin below it
+    onto a different line. The pair of cases is also the right *shape* --
+    that one is named for the notice's two paths and measures
+    `existing_mark_findings`, and this one is named for the strict reader's
+    and measures `read_capture`, so extending the existing case in place
+    would have given it a name covering two readers and pinned a line below
+    it that every following merge moves.
+
+    The count is the claim, not the symptom. `read_capture` used to open a
+    capture twice -- a three-byte binary probe for the byte-order mark, then
+    the text stream for the rows -- and the two opens are two moments on a
+    file §3's three watchers are appending to by design. The defect that
+    makes is narrow and unobserved: a row or a re-save landing between them,
+    and because the row stream normalises the mark off the first field of
+    every row, a file that gained a BOM in the gap would be graded as though
+    it carried none. A test that waited for that to happen would pass on a
+    quiet filesystem, so what is asserted here is the count, which is true
+    on every run, and which is what makes a fifth open red.
+
+    Offline throughout: every fixture is a `tempfile` file this checkout
+    wrote, and nothing here needs a capture, a register or a Windows box.
+    """
+
+    count_opens = ExistingMarkLabelTests.count_opens
+    capture = ExistingMarkLabelTests.capture
+    ROWS = ExistingMarkLabelTests.ROWS
+
+    def count_opens_raising(self, path, call):
+        """What `call` raised, and how many times it `open()`ed `path`.
+
+        `count_opens` keeps what the call *returned*, which is the wrong half
+        on the two of this reader's three ways out that refuse -- and a
+        refusal is where the count matters most, because that is the path
+        where a second read would decide which row the error names. Same
+        counter, exception kept instead of dropped, so a case that expects a
+        refusal can assert what it opened on the way to raising.
+        """
+        opened = []
+        real = builtins.open
+
+        def counting(name, *args, **kwargs):
+            if str(name) == str(path):
+                opened.append(str(name))
+            return real(name, *args, **kwargs)
+        with patch.object(builtins, 'open', counting):
+            try:
+                call()
+                raised = None
+            except (ValueError, UnicodeDecodeError) as e:
+                raised = e
+        return raised, len(opened)
+
+    def test_the_strict_reader_opens_a_clean_capture_once(self):
+        # The plain path, and the one a graded run takes every time. The
+        # result is asserted beside the count so a `read_capture` that
+        # returned the right marks without opening the file cannot pass this
+        # either -- the count alone would not catch a reader that read
+        # nothing and guessed.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(self.ROWS, tmp)
+            (marks, changes), opens = self.count_opens(
+                path, lambda: grade.read_capture(path))
+        self.assertEqual(opens, 1)
+        self.assertEqual([m.label for m in marks],
+                         ['wrote 0x0751=0xA0', 'settled'])
+        # The change row is the one the second field of the fixture exists
+        # for, and it is a *second* kind of row rather than a second open.
+        self.assertEqual([(c.addr, c.old, c.new) for c in changes],
+                         [(0x0701, 0x00, 0x11)])
+
+    def test_the_strict_reader_opens_an_undecodable_capture_once(self):
+        # The same count on the way the reader refuses. Before #786 this
+        # path was two opens as well, and a refusal is the *worst* place for
+        # the two to differ: the decode failure names one row, and which row
+        # it names is a fact about the bytes the read returned.
+        # `0xE9` is the byte latin-1 and cp1252 both write for `café`, and
+        # the one UTF-8 cannot decode.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'latin1.csv'
+            path.write_bytes(b'ts,addr,old,new\n'
+                             b'2026-01-01T12:00:00.000+01:00,MARK,,caf\xe9\n')
+            raised, opens = self.count_opens_raising(
+                str(path), lambda: grade.read_capture(str(path)))
+        self.assertIsNotNone(raised)
+        self.assertEqual(opens, 1)
+        # Named by the codec the format declares rather than by whatever
+        # this interpreter's default is, so the same bytes are refused the
+        # same way on every box (#748). Not a sentence of this tool's own:
+        # the notice is what puts a remedy around this one, and
+        # `ExistingMarkLabelTests` holds the two to each other.
+        self.assertEqual(raised.encoding, 'utf-8')
+        self.assertIn('utf-8', str(raised))
+
+    def test_a_marked_capture_opens_once_and_is_refused_before_a_row(self):
+        # The count and the order in one case, because on this path the
+        # second open is what the refusal exists to *prevent*: the probe
+        # used to read three bytes, and the mark test is now asked of the
+        # same buffer the rows come from, so there is no second read to have
+        # disagreed about the file.
+        bom, header = b'\xef\xbb\xbf', b'ts,addr,old,new\n'
+        row = b'2026-01-01T12:00:00.000+01:00,MARK,,settled\n'
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_bytes(bom + header + row)
+            raised, opens = self.count_opens_raising(
+                str(path), lambda: grade.read_capture(str(path)))
+            message = str(raised) if raised else ''
+        self.assertEqual(opens, 1)
+        # `bom_refusal`'s one sentence, verbatim -- the anti-drift contract
+        # `ExistingMarkLabelTests` and `MarkBeforeCodecTests` hold the notice
+        # to, which is only a contract if this side is still the same string.
+        self.assertIsInstance(raised, ValueError)
+        self.assertEqual(message, grade.bom_refusal(str(path)))
+        # And refused *before* the rows: the header is never graded, so the
+        # complaint is about the mark rather than about `int("ts", 16)`.
+        self.assertIn('byte-order mark', message.lower())
+        self.assertNotIn('invalid literal for int()', message)
+
+    def test_the_no_mark_control_opens_once_and_refuses_over_the_codec(self):
+        # The control, in #784's shape: the three mark bytes taken off and
+        # nothing else changed, and both halves run here so the pair is
+        # visible. Without it a `read_capture` that opened the file zero
+        # times, or that refused every file with a reason, would be green on
+        # the cases above -- the first because nothing was read to be wrong
+        # about, the second because the count and the message would both
+        # come from a path that never ran.
+        header = b'ts,addr,old,new\n'
+        row = b'2026-01-01T12:00:00.000+01:00,MARK,,caf\xe9\n'
+        with tempfile.TemporaryDirectory() as tmp:
+            marked = Path(tmp) / 'marked.csv'
+            marked.write_bytes(b'\xef\xbb\xbf' + header + row)
+            bare = Path(tmp) / 'bare.csv'
+            bare.write_bytes(header + row)
+            seen = {}
+            for name, path in (('marked', marked), ('bare', bare)):
+                raised, opens = self.count_opens_raising(
+                    str(path), lambda p=path: grade.read_capture(str(p)))
+                seen[name] = (raised, opens)
+        # Equal counts here are the point: what moved between the two files
+        # is which sentence comes back, and it moves because the bytes did.
+        self.assertEqual(seen['marked'][1], 1)
+        self.assertEqual(seen['bare'][1], 1)
+        self.assertIsInstance(seen['marked'][0], ValueError)
+        self.assertIsInstance(seen['bare'][0], UnicodeDecodeError)
+        self.assertIn('byte-order mark', str(seen['marked'][0]).lower())
+        self.assertNotIn('byte-order mark', str(seen['bare'][0]).lower())
+
+    def test_a_bad_byte_past_the_first_chunk_still_names_one_row(self):
+        # The case `0751-notice-two-moments.md` records as never written:
+        # "the snapshot decodes the whole buffer where `read_capture`'s text
+        # layer decodes a chunk, so the `position` inside the exception can
+        # in principle differ for a file larger than that chunk". The fold
+        # removed the asymmetry by construction -- both readers now call
+        # `rows_from_bytes` -- so what is left to measure is whether the two
+        # agree, and this is the measurement rather than an assumption.
+        #
+        # `csv.reader` pulls lines, and `TextIOWrapper` decodes a chunk at a
+        # time, so a `TextIOWrapper` on a file of this size has handed over
+        # many lines before it reaches a byte near the end. If the reader
+        # decoded the whole buffer up front, the row count below would be
+        # zero and the laziness `refused_capture_rows` names one row over
+        # would be gone.
+        filler = '# %s\n' % ('y' * 200)
+        lines, size = ['ts,addr,old,new\n'], len('ts,addr,old,new\n')
+        while size < 200000:
+            lines.append(filler)
+            size += len(filler)
+        lines.append('2026-01-01T12:00:00.000+01:00,MARK,,settled\n')
+        raw = ''.join(lines).encode()
+        # The bad byte lands inside the last row's *label*, so every row
+        # ahead of it is well-formed, the last is a mark row that still
+        # parses as one, and the preflight below can go on listing it -- the
+        # shape an operator produces by hand-editing a large capture, and
+        # the one where a whole-file decode would cost the listing.
+        bad = len(raw) - 5
+        raw = raw[:bad] + b'\xe9' + raw[bad + 1:]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'large.csv'
+            path.write_bytes(raw)
+            raised = None
+            try:
+                grade.read_capture(str(path))
+            except UnicodeDecodeError as e:
+                raised = e
+            # The notice's side of the containment the anti-drift suite
+            # holds, over a file where it had never been checked.
+            accepted, refused, unplaceable = \
+                grade.existing_mark_findings(str(path))
+        # (i) The refusal is still the bare `UnicodeDecodeError` of the
+        # declared codec, naming it, and not a sentence of this tool's own.
+        self.assertIsNotNone(raised)
+        self.assertEqual(raised.encoding, 'utf-8')
+        # The offending byte, by position *within the decode chunk* rather
+        # than within the file: `TextIOWrapper` decodes 8 KiB at a time, so
+        # `start` is that byte's offset in the chunk it stopped in. Measured
+        # on this interpreter, and recorded in the write-up rather than
+        # asserted as a property of `TextIOWrapper` -- the arithmetic below
+        # is what makes it a check and not a pinned constant.
+        self.assertEqual(raised.start, bad % 8192)
+        self.assertEqual(raised.end, raised.start + 1)
+        # (ii) The rows ahead of the bad one were produced. `read_capture`
+        # cannot show this itself -- it raises, and the marks it had built go
+        # out of scope with the exception -- so the stream is walked
+        # directly, which is also the contract `capture_rows` and
+        # `refused_capture_rows`' fix-one, re-run, meet-the-next rests on.
+        seen = 0
+        with self.assertRaises(UnicodeDecodeError):
+            for _ in grade.rows_from_bytes(raw):
+                seen += 1
+        self.assertGreater(seen, 0)
+        self.assertLess(seen, len(lines))
+        # (iii) The message is still the one the notice reports, verbatim.
+        # Before the fold this was a coincidence of two decoders; it is now
+        # one decoder called twice, and this is where that shows.
+        self.assertEqual(len(refused), 1)
+        self.assertIsNone(refused[0][0])
+        self.assertIn(str(raised), refused[0][1])
+        # And the preflight still lists what the file holds, which is the
+        # half of the contract the refusal must not cost the operator. The
+        # label carries the byte as U+FFFD, which is how the operator finds
+        # the row that stopped it.
+        self.assertEqual([ts for ts, _ in accepted],
+                         ['2026-01-01T12:00:00.000+01:00'])
+        self.assertIn('�', accepted[0][1])
+        self.assertEqual(unplaceable, [])
+
+
 if __name__ == '__main__':
     unittest.main()
