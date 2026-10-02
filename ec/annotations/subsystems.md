@@ -56,7 +56,7 @@ Measured over the committed export, by `index.csv` for the functions and
 
 - `exported functions` — 2720
 - `annotated function rows` — 1961
-- `rows the index marks annotated` — 1982
+- `rows the index marks annotated` — 1968
 - `unresolved rows` — 173
 
 By program, as exported minus annotated minus the rest:
@@ -64,7 +64,7 @@ By program, as exported minus annotated minus the rest:
 | program | exported | annotated | unannotated |
 |---|---|---|---|
 | `bank0` | 750 | 697 | 53 (7%) |
-| `bank1` | 676 | 608 | 68 (10%) |
+| `bank1` | 676 | 594 | 82 (12%) |
 | `pd` | 541 | 541 | 0 (0%) |
 | `common` | 753 | 136 | 617 (82%) |
 
@@ -78,15 +78,12 @@ interrupt entry, which is what §3 is. The tranche is
 block that issue #574 owns, which is where the rest of the 656 was.
 
 **The three counts disagree, and the difference is measured rather than
-smoothed.** `index.csv` marks 1981 rows `annotated=yes` and the CSV holds 1960
-rows: a gap of 21. Both sides are enumerated. 21 index rows are marked
+smoothed.** `index.csv` marks 1968 rows `annotated=yes` and the CSV holds 1961
+rows: a gap of 7. Both sides are enumerated. 7 index rows are marked
 `annotated=yes` with no CSV row at all, and no CSV row is recorded by the index
-as `annotated=no`; 21 − 0 = 21.
+as `annotated=no`; 7 − 0 = 7.
 
-Of the 21, 14 carry a name no CSV row has — `caseD_0` at eleven bank1
-addresses, plus `caseD_6`, `caseD_1` and `default` — which is the switch-case
-naming Ghidra applies to a `switch` it framed, not an annotation. The other 7
-are second copies of a name that does have a CSV row, and each is worth a
+All 7 are second copies of a name that does have a CSV row, and each is worth a
 sentence of its own because the copy is a fact about the framing:
 
 - `bank0` `0x031C` and `bank0` `0x805B` repeat `poll_d6c2_then_branch` and
@@ -113,14 +110,27 @@ write-up is
 **That list of 7 is a pinned figure, not the authority.**
 `python3 ec/tools/second_copy_census.py --check` derives it, and prints its own
 tally over exactly the population this section describes:
-`21 row(s): 7 target-of-a-transfer, 14 ghidra-switch-entry, 0 unexplained`. The
+`7 row(s): 7 target-of-a-transfer, 0 ghidra-switch-entry, 0 unexplained`. The
 7 are a body that is nothing but a transfer of control into a function this CSV
-backs under the same name, and the 14 are Ghidra's own `switchD_*` namespace,
-read from the committed `.c`. `--check` fails on a row it cannot account for,
-so a 22nd named-without-row function that is neither shape turns this red
-rather than quietly extending the list above.
+backs under the same name. `--check` fails on a row it cannot account for, so an
+8th named-without-row function of any other shape turns this red rather than
+quietly extending the list above.
 [`docs/findings/named-without-a-row.md`](../../docs/findings/named-without-a-row.md)
 has the per-address reading.
+
+> **Correction, 2026-10-02 (#631): this paragraph said 21, split 14 / 7, and the
+> fourteen it filed as Ghidra's own `switchD_*` namespace are no longer in the
+> population.** `switchD_` was in the exporter's reserved namespace and the
+> leaves under it — `caseD_<n>` and `default` — were not, so fourteen bank1
+> index rows held a name Ghidra gave them and were reported `annotated=yes` all
+> the same: `caseD_0` at eleven addresses, plus `caseD_6`, `caseD_1` and
+> `default`. That overstates person-chosen names by fourteen everywhere the
+> column is quoted, `manifest.csv`'s `functions_named` and the `[named]` markers
+> among them. **They left because the predicate learned the two leaf names, not
+> because anything was answered**: no row was added, no row was renamed, no byte
+> and no symbol moved. The census's `ghidra-switch-entry` bucket stays and has no
+> instance in the committed tree; the write-up is
+> [`docs/findings/cased-in-reserved-namespace.md`](../../docs/findings/cased-in-reserved-namespace.md).
 
 The 7 the index records as `annotated=no` are `bank1` `0xF113`, `0xF116`,
 `0xF119`, `0xF11C`, `0xF11F` and `0xF123`, and `pd` `0x7059` — all seven seeded
@@ -139,7 +149,7 @@ basis rather than the presence of a name.
 > naming rule is in `README.md`, and a check now refuses the collision from
 > either side.
 
-**173 of the 1960 rows are `type: unresolved`, and 289 carry a name that
+**173 of the 1961 rows are `type: unresolved`, and 289 carry a name that
 describes a shape rather than a job.** Each is counted on the whole prefix, not
 a narrower one, and the six prefixes below are the whole scope of that 289 — a
 family that is not a row here is outside the total rather than quietly
@@ -618,7 +628,7 @@ cannot drift apart silently:
 
 - `exported functions` — 2720
 - `annotated function rows` — 1961
-- `rows the index marks annotated` — 1982
+- `rows the index marks annotated` — 1968
 - `unresolved rows` — 173
 
 **617 of the 753 common-area functions are unannotated, and that is still the

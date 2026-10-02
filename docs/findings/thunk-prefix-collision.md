@@ -12,6 +12,37 @@ things it found on the way that are not this issue.
 `ec/annotations/subsystems.md` §2 carries the same correction against its own
 census, with its own two stale paragraphs corrected beside it.
 
+> **Correction, 2026-10-02 (#631): the 1,897 above is the figure at this merge,
+> and it has moved twice since, for two unrelated reasons. Neither is a
+> retraction of anything this file argues.** Collapsing the three states is the
+> error to avoid here, so each is named separately:
+>
+> - **1,897**, at #602's merge, 2026-09-25 — the figure this file's "what
+>   moved" section measures. Correct when written.
+> - **1,982** on the tree this correction was written against, 2026-10-02, for
+>   reasons that have nothing to do with the rule this file installs: annotation
+>   tranches (#489, #1101, #1183, #1296 and others) added rows, and each row at
+>   an address the index marks `annotated=yes` raises the count.
+> - **1,968**, after #631, which widened `isPlaceholderName()` to the switch-case
+>   leaves and took fourteen bank1 rows *out* of the count — not because anything
+>   was answered, but because those fourteen were Ghidra's `caseD_<n>` and
+>   `default` names and `manifest.csv`'s `functions_named` counts person-chosen
+>   names whether or not they are. That change is
+>   [`cased-in-reserved-namespace.md`](cased-in-reserved-namespace.md).
+>
+> So the `[named]`-header agreement at 1,897 / 1,897 held for #602's re-export and
+> holds now at 1,968 / 1,968; the two numbers are the same relation at two
+> different dates, not one number restated. `build_ec_decompile.py --check`
+> recounts all three terms on every run, and `ec/annotations/subsystems.md` §2
+> carries the live figures.
+>
+> One more count in this file moved on the same day for the same reason, and it
+> is left as written: "the ten tests in the canonical `isPlaceholderName()`",
+> below, was ten at #602's merge and is twelve now — nine prefixes and one exact
+> match then, ten prefixes and two exact matches after #631. The scan itself
+> still reports zero on the EC, which is what the paragraph below is about, and
+> `grade_name_basis.py --self-test` is where the count is asserted.
+
 ---
 
 ## The fault, stated precisely
@@ -22,6 +53,25 @@ this symbol, or did a person**. Ghidra reserves a set of prefixes for its own
 placeholder names, and a row that starts a name with one of them has answered
 that question wrong. The annotation is applied, the name is honest, the comment
 is cited, and the export reports `annotated=no`.
+
+> **Correction, 2026-10-02 (#631): the bold gloss above is not what the column
+> answers, and the same gloss recurs below as "the tool that answers 'did Ghidra
+> name this, or did a person'".** Both sentences are left as written. The column
+> answers whether the name is one Ghidra reserves — `isPlaceholderName(name) ?
+> "no" : "yes"` reads the *name* and nothing else — and seven rows are reported
+> `annotated=yes` while holding no person's name: `bank0 0x031C` and `0x805B`,
+> `bank1 0x031C` and `0x703A`, `common 0x0512`, `0x10FA` and `0x1207`, where the
+> export propagated a bare transfer's target's name onto each.
+> `second_copy_census.py --check` files all seven as `target-of-a-transfer`.
+>
+> The restated reading — "is this name one Ghidra reserves, or is it a person's",
+> not "did a person choose it" — is in `ec/ghidra/README.md`'s annotation-layer
+> section with the seven named beside it, and `build_ec_decompile.py`'s
+> `annotation_ledger()` docstring says the same. The per-address reading is
+> [`named-without-a-row.md`](named-without-a-row.md). Nothing #602 argued is
+> retracted: the reserved-namespace fault, the `thunk_` renames and the ledger
+> argument all stand, and the paragraph below is still right about the fault it
+> describes.
 
 That is why the fault was so quiet. There is no error to read and nothing to
 grep for: the row resolves, `annotations_unmatched` stays 0, the `.c` exists
