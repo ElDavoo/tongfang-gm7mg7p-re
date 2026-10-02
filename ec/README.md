@@ -490,8 +490,8 @@ into `r2 -a 8051` with no stitching needed.
   of the 256 opcode lengths and says nothing about the other 236** — those were
   read one at a time, which is a method and not a reproducible one. What pins
   the rest is `tools/opcode_coverage.py`: `--divergence` compares every length
-  against the 45,643 instruction starts in the committed Ghidra listings and
-  reports **0 disagreements over 45,643 rows** (`0xA5` and `0xC1` are *not
+  against the 45,661 instruction starts in the committed Ghidra listings and
+  reports **0 disagreements over 45,661 rows** (`0xA5` and `0xC1` are *not
   found by this method*, not confirmed wrong — no listing places either at an
   instruction start), `--r2-diff` gives a second decoder's opinion from a linear
   `r2 -a 8051` walk of all three images, which reaches both and reports **0
