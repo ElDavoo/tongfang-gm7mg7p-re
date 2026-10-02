@@ -728,8 +728,10 @@ For each run, from the three CSVs plus the by-hand power readings:
    something put it back? Compare the block's `*-before-0700.txt` and
    `*-after-0700.txt` dumps (§6). A section that ends without either of the
    two answers names the precondition it was missing — the last `--dump` not
-   reaching `0x0751`, or nothing naming the value that was written — so read
-   that line before quoting the section as an answer.
+   reaching `0x0751`, nothing naming the value that was written, or a
+   before-dump that already holds the written value, which leaves the two
+   readings open and drops the word "still" — so read that line before quoting
+   the section as an answer.
 
    **If it moved back, the byte that came back names the writer.**
    `../../ec/annotations/manual-fan-ctrl-0751-writers.csv` is the ten writer
