@@ -51,4 +51,3 @@ disagree with the DSDT and the vendor service, what this tree can and cannot
 show about each, and the question text to put to a maintainer. It ships no
 patch, and `docs/findings.md` §7's "New questions" bullet is the record behind
 both of them.
-

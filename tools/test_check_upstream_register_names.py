@@ -14,7 +14,7 @@ a hex address beside a decimal, a claim that names the wrong gate *in prose*
 in order to record that the note is declining to claim it. That last one
 decides whether rule 6 survives a week — a check that fires on the text stating
 it is a check everybody turns off, and this note names `FAN_TURBO_SUPPORTED`
-in three places precisely to say it is not claiming the thing.
+in prose precisely to say it is not claiming the thing.
 
 Two cases drive the tree rather than the note, because two of the checker's
 rules are about a *gap* and a *decline* rather than about a citation: adding a

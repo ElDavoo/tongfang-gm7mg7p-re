@@ -140,8 +140,8 @@ meaning.** `GetTurboModeSupport` returns 0 unless it is set; `GetFanModeCount`
 returns `3` fan modes instead of `2` when it is set. Neither calls the other —
 the first is reached from the fan managers and from `CustomizeCtrl`, the
 second once from `TrayCtrl`'s own initialiser — and the second carries a
-separate `GetBridgeType()` override of its own. So this is two writers
-coinciding on a bit number, not one function reached twice.
+separate `GetBridgeType()` override of its own. So this is two separate
+functions coinciding on a bit number, not one function reached twice.
 
 | what | citation |
 |---|---|
