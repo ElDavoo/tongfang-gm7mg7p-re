@@ -60,6 +60,26 @@ def scan_of(sites):
     return {(path, lineno) for path, lineno, _text in writers + readers}
 
 
+def a_reader_site():
+    """A real `(path, lineno)` whose line carries `MARK_BRANCH`, from the tree.
+
+    A case that pins a *line number* into a source file is a value every
+    merge that grows that file above it has to edit, and a case that pins one
+    to satisfy a drift check fails for having been moved rather than for
+    anything it was built to show. The claim under test is that a pin and a
+    scan naming the same site close with nothing to report, and the site is
+    not that claim -- so it is read off the tree rather than typed. Nothing
+    else is borrowed: the pin is still hand-built, which is the point of the
+    narrow-set cases in `ArityTests`.
+    """
+    _writers, readers = mmp.row_sites()
+    for path, lineno, text in readers:
+        if MARK_BRANCH in text:
+            return path, lineno
+    raise AssertionError(f"no scanned reader carries {MARK_BRANCH!r}, so this "
+                         "file has no line to build the case over")
+
+
 class ArityTests(unittest.TestCase):
     """The width check, at each width it is there to catch.
 
@@ -166,13 +186,17 @@ class JoinTests(unittest.TestCase):
 
     def test_a_join_that_closes_reports_nothing(self):
         # The pass condition, built rather than read off the committed tree:
-        # a pin carrying the literal, a scan holding exactly that site.
+        # a pin carrying the literal, a scan holding exactly that site. The
+        # site is the tree's (`a_reader_site`) and only the site -- a typed
+        # line number here would be a pin the next merge that grows the file
+        # above it has to edit, and it would fail for having moved rather than
+        # for anything this case is about.
         original = mmp.CITATIONS
+        site = a_reader_site()
         try:
-            mmp.CITATIONS = [("ec/tools/grade_0751_isolation.py", 1516,
-                              MARK_BRANCH, "a synthetic pin")]
-            problems = mmp.check_citations(
-                {("ec/tools/grade_0751_isolation.py", 1516)})
+            mmp.CITATIONS = [(site[0], site[1], MARK_BRANCH,
+                              "a synthetic pin")]
+            problems = mmp.check_citations({site})
         finally:
             mmp.CITATIONS = original
         self.assertEqual(problems, [])
