@@ -6,12 +6,15 @@
 
 /* Clears A, calls 0xBD20 with it, masks the byte that call returns with 0x7F and writes it back
    through the DPTR it left; reading 0xBD20 own listing, that is a read-modify-write on XDATA
-   0x08E2, but 0x08E2 is not named in this listing. It then reads XDATA 0x0490 and loads 0x94D0 with
-   3 or 4 according to bit 2 of that byte, writes 0x00 to XDATA 0x08AD, calls 0xBA16 which writes A
-   to 0x08CC and 0x08CD, and writes A to XDATA 0x08BF. None of 0x0490, 0x08AD, 0x08BF, 0x08CC or
-   0x08CD has an entry in ec/annotations/registers.yaml.
+   0x08E2, but 0x08E2 is not named in this listing. The A it clears is what 0xBD20 stores to XDATA
+   0x044B, so this is where the byte takes value 0 - the one value no arm of bank0 0x9AAD writes,
+   each of those rewriting it to 1, 2, 3 or 4 instead. It then reads XDATA 0x0490 and loads 0x94D0
+   with 3 or 4 according to bit 2 of that byte, writes 0x00 to XDATA 0x08AD, calls 0xBA16 which
+   writes A to 0x08CC and 0x08CD, and writes A to XDATA 0x08BF. None of 0x0490, 0x08AD, 0x08BF,
+   0x08CC or 0x08CD has an entry in ec/annotations/registers.yaml.
    type: state
-   evidence: ec/decompiled/bank0/9C24.asm; ec/decompiled/bank0/9C24.c
+   evidence: ec/decompiled/bank0/9C24.asm; ec/decompiled/bank0/9C24.c; ec/decompiled/bank0/BD20.asm;
+   docs/findings/xdata-044b-selector-value-set.md
    basis: hand-decoded
    name_basis: code-shape */
 

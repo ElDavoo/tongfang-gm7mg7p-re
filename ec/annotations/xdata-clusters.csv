@@ -293,7 +293,7 @@ main-ec-291,main-ec,1,6,0x0816,0x0816,2,,common:0x70E4 [1/2]; bank0:0xCE9E [1/2]
 main-ec-292,main-ec,1,6,0x08A0,0x08A0,2,,bank0:0xB82E [1/2]; bank0:0xBC37 [1/2]; bank0:0xB989 [1/2] (+11 more called by the cluster's functions),0x08A0,kb787f7579eab,fan-step-08a0,0,0,no
 main-ec-293,main-ec,1,6,0x08E0,0x08E0,4,,bank0:0x805B (also bank0:0x8274) [2/4]; bank0:0xBB08 [2/4]; bank0:0xB965 [1/4] (+4 more called by the cluster's functions),,k84d18fde7b50,,0,0,no
 main-ec-294,main-ec,1,6,0x1665,0x1665,6,,bank0:0xC3A6 [1/6]; bank0:0xC199 [1/6]; bank0:0xC25E [1/6] (+8 more called by the cluster's functions),0x1665,k438e62889264,,0,0,no
-main-ec-295,main-ec,1,6,0x3202,0x3202,4,,,,kec5c5b776eda,,0,0,no
+main-ec-295,main-ec,1,6,0x3202,0x3202,4,,,0x3202,kec5c5b776eda,,0,0,no
 main-ec-296,main-ec,1,5,0x0025,0x0025,2,,common:0x1059 [1/2]; common:0x2A38 [1/2]; common:0x2A42 [1/2] (+1 more called by the cluster's functions),,k5341ccfa53fb,,0,0,no
 main-ec-297,main-ec,1,5,0x004D,0x004D,1,,common:0x3B60 [1/1]; common:0x3C62 [1/1]; common:0x3BAE [1/1] (+1 more called by the cluster's functions),,k93609d700dd2,,0,0,no
 main-ec-298,main-ec,1,5,0x0368,0x0368,2,,bank1:0xD16F [1/2]; bank1:0xCBF3 [1/2],,ka1a4475123fc,,1,2,no

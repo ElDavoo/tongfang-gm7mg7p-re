@@ -721,6 +721,50 @@ registers:
       in ec/tools/testdata/. A grader that has never read a real capture
       changes no status here, and the row's addr, name and status are
       untouched.
+      2026-10-03, issue #228: what the DSDT does with this byte is now
+      measured rather than assumed, and the answer narrows rather than
+      widens. DBD1 occurs exactly twice in evidence/acpi/dsdt.dsl -- one
+      store at :50687 and one declaration at :52249 -- and both DBD1 and
+      DBD2 are written only by the T1WR Arg0 == 0x1173 arm, which is a
+      pure writer. Nothing loads the pair, and the reason is not the
+      obvious one: DBD1/DBD2 are the only route AML has to these bytes
+      THROUGH THE ECMG FIELD LIST (no IndexField or CreateField is
+      declared over ECMG), but not the only route full stop. ECRR/ECRW at
+      dsdt.dsl:50497/50504 compute 0xFE410000 + Arg0 -- the base ECMG
+      itself declares -- and access the byte through the OperationRegion
+      MMRW builds, so ECRR IS a reader of 0x07D0 with no field name in the
+      path at all. The file has MANY computed-base methods, not three,
+      and some that build one ARE called -- DLLR at :19119 builds EMPC
+      at an XBAS-relative base (XBAS is External, so unbounded by any
+      committed input) and is invoked at :19223 -- so a list of three
+      names is not an enumeration and the census is derived from the
+      file instead. What holds: no AML in the committed DSDT reaches the
+      pair by a computed base that resolves into this window, and ECRR,
+      ECRW, SMRW at :50764 are among the methods nothing calls. A region
+      whose base is a runtime value is reported as UNBOUNDED, never
+      cleared. The same writer arm also mirrors both bytes into
+      NPCF.AMAT/NPCF.AMIT, whose owning AML is External and not
+      committed here, so nothing here excludes an SSDT reading them back
+      as a word.
+      What IS established is that the field list gives both 8 bits under
+      one Offset (0x7D0) with DBD2 starting at bit 8, so they are two
+      disjoint byte fields. So "two independent 8-bit fields" is a claim
+      about a field list and not about a value any AML object holds as
+      one. The CLOBBER HAZARD paragraph above is
+      NOT retracted: what the DSDT and the PD firmware differ about is
+      the MEANING of these two bytes. What changes is that the collision
+      question leaves the DSDT entirely, because a conflict between two
+      readings needs a DSDT reading and there is none; what remains is
+      whether the EC firmware reads the pair as a word, under #34's
+      indirect-access blind spot (whose walk, indirect-xdata-sites.md 4,
+      covered 0x07B9 and 0x07D0 only -- not these bytes), with the live
+      half in the GPU-door run issue #278 owns. Write-up:
+      docs/findings/dsdt-dbd-pair-declared-not-read.md. Held by
+      ec/tools/check_dsdt_ecmg_pair.py, which counts the names AND the
+      calls to those three methods, so a later DSDT revision that adds a
+      reader by either route turns that check red instead of silently
+      invalidating the sentence. No status, static_refs* or addr moved,
+      and nothing here is a claim about the EC.
 
   - name: DBD2 (DSDT name; no vendor constant, no committed Windows writer)
     addr: 0x07D1
@@ -812,6 +856,50 @@ registers:
       correction as much as the sentence it corrects: no rows is "not found to
       move in this window", not "never written" and not "absent". 0x07D4's own
       entry keeps present-untested, and no status or count moves here.
+      2026-10-03, issue #228: the DSDT half of this entry's divergence is
+      now measured. DBD2 occurs exactly twice in evidence/acpi/dsdt.dsl --
+      one store at :50688 and one declaration at :52250 -- and the only
+      ASL use of either name is the T1WR Arg0 == 0x1173 arm, which writes
+      and never loads. Nothing loads the pair, and not for the reason an
+      earlier draft of this note gave: these two names are the only route
+      AML has to 0x07D0/0x07D1 THROUGH THE ECMG FIELD LIST (no IndexField
+      or CreateField is declared over ECMG), which is not the same as
+      being the only route. ECRR/ECRW at dsdt.dsl:50497/50504 compute
+      0xFE410000 + Arg0 -- the base ECMG itself declares -- and access the
+      byte through the OperationRegion MMRW builds, so ECRR IS a reader of
+      0x07D0 with no field name in the path. The file has MANY
+      computed-base methods, not three, and some that build one ARE
+      called (DLLR at :19119 builds EMPC at an XBAS-relative base and is
+      invoked at :19223; XBAS is External, so its reach is unbounded by
+      any committed input), so a list of three names is not an
+      enumeration and the census is derived from the file instead. What
+      holds: no AML in the committed DSDT reaches the pair by a computed
+      base that resolves into this window, and ECRR, ECRW, SMRW at
+      :50764 are among the methods nothing calls. A region whose base is
+      a runtime value is reported as UNBOUNDED rather than cleared. The
+      same writer arm mirrors both bytes into NPCF.AMAT/NPCF.AMIT, whose
+      owning AML is External and not committed here. Measured, and the
+      part that stands: the field
+      list gives both 8 bits under one Offset (0x7D0) with DBD2 starting
+      at bit 8, so they are two disjoint byte fields. What that is NOT is
+      two values the DSDT loads. The disagreement recorded above stands
+      and is not retracted -- what the DSDT and the PD firmware differ
+      about is the MEANING of these two bytes -- but the sentence above
+      speaking of "whether the two readings of the same bytes ever
+      collide" describes a conflict between two readings the DSDT does
+      not have. A disagreement about meaning becomes a fault only if
+      something reads the pair the other way too, so the question is an
+      EC-side one, under #34's indirect-access blind spot
+      (indirect-xdata-sites.md 4 covered 0x07B9 and 0x07D0 only, not these
+      bytes), with the live half in the GPU-door run issue #278 owns --
+      the door note above was written for the closed #184 and #278 owns
+      the run. Write-up:
+      docs/findings/dsdt-dbd-pair-declared-not-read.md. Held by
+      ec/tools/check_dsdt_ecmg_pair.py, which counts the names AND the
+      calls to those three methods. Nothing here is a claim about the
+      EC: no status, static_refs* or addr moved, and 0x07D2 still has no
+      row in this file, which is a fact about the DSDT's list rather than
+      about that byte.
 
   - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
     addr: [0x0748, 0x0749, 0x074A, 0x074B]
@@ -1680,9 +1768,25 @@ registers:
       by falling through into forward_to_9a86, so 0x9AAD is the dispatcher
       and the indirect writer of all five successors while the static count
       stays at 6. Its arms map 0 to 1, 1 to 2, 2 to 3 or 1, 3 to 4 or 2, and
-      4 to 3: the byte is re-decided, not counted up. What the five values
-      mean is not decoded -- docs/findings/044b-mode-stepper.md. No PD site,
-      no upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
+      4 to 3: the byte is re-decided, not counted up. Which values a caller
+      can put there, and which values its readers have to cope with, is a
+      separate question from the transitions and it has its own answer:
+      each of 0, 1, 2, 3 and 4 has one producer -- reset_08ad_08bf_and_clear_08e2_bit7
+      (bank0 0x9C24) for 0, store_bd20_result_masked_7f (bank0 0x9A7B) for 1,
+      call_ba15_then_write_02_to_044b for 2, call_bd20_with_03_then_or_80_into_dptr
+      for 3 and write_04_to_044b_and_set_08e2_bit7 for 4 -- and the dispatch's
+      dec/jz chain enumerates the same set, so there is no value a reader tests
+      for that no writer produces. 0x9A7B stores 1 because 0xBA15 is a single
+      clr A and the next ret after it is the one at BA22. The other routine
+      that reads the byte is not a second dispatcher: mul_div_08ea_then_sub_044b_selected
+      (bank0 0x9A0E) tests it against 4 and against 2 and takes 0x08CA for every
+      other value, subtracting the selected byte from a scaled pair at
+      0x0A49/0x0A4A and returning the low byte, which bank0 0x9AAD passes to
+      x044c_minus_r7 (bank0 0xBEA3). What the five values mean is still not
+      decoded -- docs/findings/044b-mode-stepper.md for the transitions,
+      docs/findings/xdata-044b-selector-value-set.md for the value sets and the
+      consumer. No PD site, no upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
 
   - name: XDATA_044C
     addr: 0x044C
@@ -2866,26 +2970,42 @@ registers:
     note: >
       21 sites, all of them in the EC -- 20 in bank0 and one in bank1 -- and
       none in the PD image. It is the most-referenced byte in this group.
+      ec/annotations/xdata-08eb-bit-sites.csv carries the per-bit attribution
+      of every one of them, one row per site and bit, keeping what the linear
+      sweep found and what the committed listing shows in two columns rather
+      than one corrected column; docs/findings/xdata-08eb-bit-sites.md is the
+      write-up. bits: is unchanged by that reading -- all six listed bits are
+      attested by a committed listing -- so what moved is this note, not the
+      field. Per bit, by the site that carries it: bit 2 is set at 0xD487,
+      cleared at 0xD6A8 and at 0xCD3C, and branched on at 0xCD34, where the
+      clear sits behind the jnb the sweep stops at; bit 3 is set at 0xB690,
+      cleared at 0xB716, and branched on at 0xB65B and at 0x8931; bit 4 is
+      set and cleared by the single site 0xCCB7, whose two arms are the orl
+      at 0xCCBE and the anl at 0xCCC4 and whose selector is bit 1 of 0x0490
+      read at 0xCCB6 -- set when that bit is clear, cleared when it is set --
+      and is branched on, with no store back, at bank1 0xA916; bit 5 is set
+      at 0xB53E, cleared at 0xB5B2, and branched on at 0xB501; bit 6 is set
+      at 0xB7F4, cleared at 0xB82E, and branched on at 0xB7BB and at 0x8931;
+      bit 7 is set at 0xC86A, cleared at 0xB476 and at 0xB491 behind the jnb
+      at 0xB489, and branched on at 0xB489, 0xB497, 0xC47E and 0xC860.
       Bits 3 and 6 are the pair the two USER branches'
       tail-jump targets write, and each is a set/clear pair rather than a
-      one-way flag: bit 3 is set at 0xB690 and cleared at 0xB716, bit 6 is
-      set at 0xB7F4 and cleared at 0xB82E
-      (ec/annotations/manual-fan-ctrl-0751.md 8a). Both set sites are
-      themselves conditional -- 0xB65F and 0xB7BF test the bit and skip the
+      one-way flag (ec/annotations/manual-fan-ctrl-0751.md 8a). Both set sites
+      are themselves conditional -- 0xB65F and 0xB7BF test the bit and skip the
       counting block when it is already set, and 0xB7F2 retires once 0x08A0
       has reached 0x0A, which latches bit 6 from 0x0B up -- so bit 6 looks
       like a latch the counter trips.
       0x8931 masks 0x48, which is exactly bits 3 and 6, and branches on the
       result: the one site this method finds that reads the two together.
-      What it decides is not decoded here.
-      Bits 2, 4, 5 and 7 are also read-modify-written, at 0xD487 and 0xD6A8
-      (bit 2), 0xB476 and 0xC86A (bit 7), 0xCCB7 (bit 4, a set/clear pair
-      whose selector is bit 1 of 0x0490, tested by the jb acc.1 at 0xCCBA)
-      and 0xB53E and 0xB5B2 (bit 5); bits 2, 3, 4, 5, 6 and 7 are branched
-      on at other sites besides, including bank1 0xA916, which reads bit 4
-      and branches on it at 0xA91C without storing the byte back. Nothing
-      is read back. Every bit above is "the EC touches this bit", which is
-      not the same claim as "the EC acts on it".
+      What it decides is decoded now -- either bit set and the routine
+      publishes 200 and returns, both clear and its five blocks run -- and
+      0x8931 is a reader of this byte and only a reader. The publish path
+      does not stage 200 into 0x08EB, as the 0x8931 row of
+      ec/annotations/ghidra-functions.csv used to read: the lcall 0xBB22 it
+      makes ends in the ret at 0xBB30 and leaves DPTR at 0x1809, so the store
+      behind it lands at 0x1809 and 0x8F09 copies that into 0x075C.
+      Nothing is read back. Every bit above is "the EC touches this bit",
+      which is not the same claim as "the EC acts on it".
 
   - name: XDATA_089E
     addr: 0x089E
@@ -4341,6 +4461,44 @@ registers:
       stated here. The decompiled C drops the R7 return at every site, so the
       .asm listings are the only statement of it. No upstream name.
       Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_3202
+    addr: 0x3202
+    bits: [0, 1, 2]
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: 0x3202 had no entry in this file
+      before this one, and it is created at present-untested. Four direct MOV
+      DPTR sites, all in bank0, all reads, no PD-image site; recounted from
+      the image by ec/tools/check_register_counts.py, which is the authority
+      for the 4/4/0 above. The four accessors come in two polarity pairs, and
+      both pairs are named here because the inverted half is the reason the
+      other half exists: 0xC0C9 (return_1_if_3202_bits_1_and_2) returns 1
+      only when bits 1 and 2 are both set, and 0xC0B8
+      (return_1_unless_3202_bits_1_and_2) is its exact inverse on the same two
+      bits; 0xC0E7 (test_3202_bit0) returns the bit's own value, and 0xC0DA
+      (return_1_unless_3202_bit0) its inverse. So bits 0, 1 and 2 are all read
+      and no site here examines a bit above 2. The census row's refs=6 is a
+      different unit, not a disagreement: it counts C-level `movx` occurrences
+      across the same four functions, and two of them reload the byte before
+      their second bit test, so 4 direct sites become 6 C-level reads. The
+      decompiled C drops the R7 return at every site, so the .asm listings are
+      the only statement of it. No writer for this byte was found by this
+      method, which is a gap in the search and not evidence that none exists --
+      a store through a computed DPTR, an indirect `movx @Ri` or a table would
+      all be invisible to both tools here. With no writer, the value space is
+      unestablished, so what the three bits select is not stated here. This is
+      the other arm of the 0x06D9 countdown gate beside XDATA_1664: bank1
+      0x8096 decrements 0x06D9 only when both return zero, and 0x1984 reaches
+      the 0xC10C thunk on 0xC0C9, so what it gates on is bits 1 and 2 read one
+      call deeper. High XDATA is plausibly a hardware block rather than the
+      EC's own state; nothing measured here bears on which it is, so this row
+      claims the address and nothing beyond it. No hardware was involved.
+      Block census: docs/findings/3202-block-walk.md.
 
   - name: XDATA_1C01
     addr: 0x1C01

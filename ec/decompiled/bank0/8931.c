@@ -11,23 +11,32 @@
    (store_a_via_dptr_then_jump_8f09, four), and lands on the very next instruction in this listing,
    so what it guards is that arm alone. When XDATA 0x08EB has bit 3 or bit 6 set the arm stages 0xC8
    into 0x08EB and tail-jumps to 0x8F09, which copies it to XDATA 0x075C; when both are clear the
-   five blocks run. Block one, behind bit 6 of MANUAL_FAN_CTRL (XDATA 0x0751), zeroes 0x085F once it
-   reaches 0x3C, computes XDATA 0x086C from 0xE389's return -- through 0xBEA3 when bit 0 of XDATA
-   0x0490 is set, otherwise from R7 -- and then requires 0x086C below 0x50, CPU_TEMP (0x043E) below
-   0x46 and GPU_TEMP (0x044F) below 0x46; all three holding clears bit 6 of 0x0751 and calls 0xA73F
-   with R7 = 0xAC. Block two, on the same bit, returns through the shared trampoline at 0x8F0E when
-   bit 2 of SWITCH_STATUS (0x0768) is set, and otherwise sets that same bit 2 with the orl A,#0x4 at
-   0x89AF, calls 0xBB22 and 0x8F0F, and clears bit 7 of XDATA 0x0824. Block three, again on bit 6,
-   clears bit 2 of 0x0768 with the anl A,#0xfb at 0x89CA when that same bit 2 is set, calls 0xBBE6,
-   and publishes the byte it leaves DPTR pointing at through 0x1804 into MAIN_FAN_L_DUTY (0x075B)
-   and 0x1809. Block four, behind bit 7 of 0x0751, advances XDATA 0x08E7 by 4 or 8 and calls 0xBCCB;
-   with bit 7 clear it instead consults BIOS_INFO_3 (0x049F) and 0xBB40, adding 0x0C to 0x08E7 only
-   when 0xBB40 returns 0x10, and calls 0xBC4F otherwise. Block five, behind bit 0 of AP_OEM (0x0741)
-   and bit 2 of AP_OEM_6 (0x07C6), is a state machine on XDATA 0x0460 that steps it up or down
-   against CPU_TEMP and XDATA 0x09E4, copies 0x0461 from 0x0F00 + 0x0460, and leaves A holding the
-   bytes at 0x0F30 + 0x0468, 0x0F40 + 0x0468 and 0x0F50 + 0x0468 before the tail-jump. Which blocks
-   run is decided by those enable bits alone; what the thresholds and the 0x0460 ramp govern is not
-   decoded.
+   five blocks run. The first half of that was read from the decompile, which keeps the pointer it
+   formed at entry across a call that reloads DPTR, and it is wrong: corrected 2026-10-03 (issue
+   #243). The lcall 0xBB22 the arm makes is not a stub that returns -- ec/decompiled/bank0/BB22.asm
+   is one instruction with no ret, the head of a fifteen-byte sequence that BB24.asm and BB28.asm
+   continue and that ends in the ret at 0xBB30 -- and it leaves DPTR pointing at XDATA 0x1809. The
+   movx @DPTR,A at 0x893E therefore stores 0xC8 to 0x1809, the ljmp to 0x8F09 copies 0x1809 into
+   XDATA 0x075C, and the four XDATA bytes this arm touches are 0x1804, 0x075B, 0x1809 and 0x075C.
+   XDATA 0x08EB is not one of them and the sweep's read x1 for 0x8931 stands. What the branch does
+   decide is now settled: either latch bit set and the routine publishes 200 and returns, both clear
+   and its five blocks run. See docs/findings/xdata-08eb-bit-sites.md. Block one, behind bit 6 of
+   MANUAL_FAN_CTRL (XDATA 0x0751), zeroes 0x085F once it reaches 0x3C, computes XDATA 0x086C from
+   0xE389's return -- through 0xBEA3 when bit 0 of XDATA 0x0490 is set, otherwise from R7 -- and
+   then requires 0x086C below 0x50, CPU_TEMP (0x043E) below 0x46 and GPU_TEMP (0x044F) below 0x46;
+   all three holding clears bit 6 of 0x0751 and calls 0xA73F with R7 = 0xAC. Block two, on the same
+   bit, returns through the shared trampoline at 0x8F0E when bit 2 of SWITCH_STATUS (0x0768) is set,
+   and otherwise sets that same bit 2 with the orl A,#0x4 at 0x89AF, calls 0xBB22 and 0x8F0F, and
+   clears bit 7 of XDATA 0x0824. Block three, again on bit 6, clears bit 2 of 0x0768 with the anl
+   A,#0xfb at 0x89CA when that same bit 2 is set, calls 0xBBE6, and publishes the byte it leaves
+   DPTR pointing at through 0x1804 into MAIN_FAN_L_DUTY (0x075B) and 0x1809. Block four, behind bit
+   7 of 0x0751, advances XDATA 0x08E7 by 4 or 8 and calls 0xBCCB; with bit 7 clear it instead
+   consults BIOS_INFO_3 (0x049F) and 0xBB40, adding 0x0C to 0x08E7 only when 0xBB40 returns 0x10,
+   and calls 0xBC4F otherwise. Block five, behind bit 0 of AP_OEM (0x0741) and bit 2 of AP_OEM_6
+   (0x07C6), is a state machine on XDATA 0x0460 that steps it up or down against CPU_TEMP and XDATA
+   0x09E4, copies 0x0461 from 0x0F00 + 0x0460, and leaves A holding the bytes at 0x0F30 + 0x0468,
+   0x0F40 + 0x0468 and 0x0F50 + 0x0468 before the tail-jump. Which blocks run is decided by those
+   enable bits alone; what the thresholds and the 0x0460 ramp govern is not decoded.
    type: gate
    evidence: ec/decompiled/bank0/8931.asm; ec/decompiled/bank0/8931.c; ec/decompiled/bank0/8939.asm;
    ec/decompiled/bank0/893E.asm; ec/decompiled/bank0/8F09.asm; ec/decompiled/bank0/8C46.asm;

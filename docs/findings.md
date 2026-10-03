@@ -419,6 +419,54 @@ of the DSDT's own making, not a 16-bit quantity the PD firmware agrees with.**
 Whether the two readings of the same physical bytes ever collide in practice
 is not determined, and the answer is not reachable from a static walk.
 
+**Correction, 2026-10-03 (issue #228): the "two readings" above is one
+reading and one write, and the collision question moves off the DSDT.** Both
+names appear exactly twice in `evidence/acpi/dsdt.dsl` — one store and one
+declaration each, at `:50687`/`:52249` and `:50688`/`:52250` — and the whole
+of their ASL use is the `T1WR` `Arg0 == 0x1173` arm, which is a pure writer.
+So "declares two independent 8-bit fields" is a statement about a field list
+and not about a value the ASL ever loads, and **the divergence recorded above
+survives**: what the DSDT and the PD firmware disagree about is the *meaning*
+of these two bytes, not two readings of them.
+
+"Nothing loads them" survives too, but not on the reason an earlier draft of
+this correction gave, and not on the enumeration that draft used. `DBD1`/`DBD2`
+are the only route AML has to these bytes **through the `ECMG` field list** —
+no `IndexField` or `CreateField` is declared over `ECMG` — and that is *not*
+the same as being the only route full stop. `ECRR`/`ECRW` at `:50497`/`:50504`
+compute `0xFE410000 + Arg0`, the base `ECMG` itself declares, and read or write
+the byte through the `OperationRegion` `MMRW` builds, so `ECRR` is a
+**reader** of `0x07D0` with no field name anywhere in it.
+
+The file has **many** computed-base methods, not three, and some of the ones
+that build one *are* called — `DLLR` at `:19119` builds `EMPC` at an
+`XBAS`-relative base and is invoked at `:19223`, with `XBAS` declared `External`
+and so unbounded by anything committed. No list of three names can stand for
+the set, which is why the census is now derived from the file: **no AML in the
+committed DSDT reads the pair by any route whose base resolves into this
+window**, and `ECRR`/`ECRW`/`SMRW` are among the methods nothing calls. Two
+limits belong with that sentence rather than after it: a computed-base region
+whose base is a runtime value is reported as unbounded, never cleared, and the
+writer arm mirrors both bytes into `NPCF.AMAT`/`NPCF.AMIT`, whose owning AML is
+`External` and not committed here.
+
+The sentence this corrects is the collision question, which cannot be posed
+against the DSDT at all — no route whose base resolves into the window gives it
+a reading to conflict with — and becomes
+instead a question about the **EC** firmware, which owns the XDATA the DSDT
+writes: does it read `0x07D0`/`0x07D1` as a word? That is #34's
+indirect-access blind spot — scope note, `indirect-xdata-sites.md` §4 covers
+`0x07B9` and `0x07D0` only, not these two bytes — with the live half in the
+GPU-door run `#278` owns.
+`docs/findings/dsdt-dbd-pair-declared-not-read.md` is the write-up, and
+`ec/tools/check_dsdt_ecmg_pair.py` holds both the counts and the accessor
+census, so a later DSDT revision that adds a reader — by a field name *or* by a
+call to one of those three — turns the check red instead of silently
+invalidating this section. **No `status:` or `static_refs*` moved.** The
+`0x07D2` clause above survives with its scope corrected: that byte is
+undeclared like almost every byte the `ECMG` list covers, and what makes it
+worth naming is that it is the third byte of the PD's little-endian window.
+
 **What did not change:** `0x07D1` keeps
 `unknown-not-absent-DO-NOT-WRITE-BLIND`, and no `static_refs*` count moved — a
 PD-image walk cannot move an EC-side grading, which is §3a's point restated.
@@ -7747,7 +7795,7 @@ out, per §4a; the full derivation is in
 [`xdata-4-4-identity-rederivation.md`](findings/xdata-4-4-identity-rederivation.md)'s
 "Which tree §4.4 was measured against".)*
 Re-running the block's recipe with the flag that now does what its workaround
-did (`--no-eq-guard`, `ap.add_argument` in `xdata_register_map.py:5535`) gives
+did (`--no-eq-guard`, `ap.add_argument` in `xdata_register_map.py:5561`) gives
 439 → 445, 124 ranks intact and 315 changed, 424 keys unchanged, 434 committed
 rows reaching a new cluster, 15 clusters a key cannot carry (10 on overlap, 5
 on nothing), nine names carried and 430 committed clusters with a key and none.
@@ -7766,7 +7814,7 @@ figures are what the block now carries and the disagreement is written down
 rather than pasted. Two things this pass found that are not figures:
 `ec/tools/test_xdata_cluster_names.py` is **red on `main`**, because its
 `GUARD` literal predates the parameterised guard, `eq_guard and`, at
-`xdata_register_map.py:2014` and its two-largest case pairs ids with names a
+`xdata_register_map.py:2040` and its two-largest case pairs ids with names a
 generation behind — reported, not edited around, and a follow-up rather than a
 line to move here; and `test_xdata_cluster_names.py:286` carries a
 third-generation figure in its docstring, recorded rather than fixed.
@@ -13140,15 +13188,15 @@ results are in
 `--no-eq-guard` block above cited `xdata_register_map.py:4568` for the flag, and
 on `d330478` that line is `--co-reading-group-table prints the other half: every
 group over two` — **a different flag's help**. `ap.add_argument("--no-eq-guard"`
-is at **`:5535`**. That is the shape issue #873 found at `:4457`, naming the tail
+is at **`:5561`**. That is the shape issue #873 found at `:4457`, naming the tail
 of `--reconcile`'s help (`"image and registers.yaml, unlike every other mode"`,
-now **`:5522`**): on this tree the same defect has moved on to a *third* flag's
+now **`:5548`**): on this tree the same defect has moved on to a *third* flag's
 help, which is the argument for anchoring the code rather than re-pointing the
 number. §17's #254 correction block cited `xdata_register_map.py:916` for
 `store_target()`, `:939` for its `==` rejection and `:243` for `ASSIGN`, and
 those three land on a comment about callers, a `("write_r3r4_to_xdata_pair",
 "write")` tuple and prose about `cluster_key`. Re-measured, `def
-store_target()` is at **`:1991`**, its `==` rejection at **`:2014`** and `ASSIGN`
+store_target()` is at **`:2017`**, its `==` rejection at **`:2040`** and `ASSIGN`
 at **`:398`**, the first two named as content in the block now. The block's own
 reason for being a block — that a first attempt at those pins "ran exactly four
 lines low" because nothing said which tree it was measured against — is the whole
@@ -13160,7 +13208,7 @@ quoted above because it is right. `:1582` for the parameterised guard, in the
 `d330478`, and is a property of that tree rather than a constant.** Nothing here
 is a claim about the EC, the firmware, or any register's behaviour: the guard is
 still a conditional in front of the rejection is a statement about
-`xdata_register_map.py:2014` and nothing else, and it is the claim every one of
+`xdata_register_map.py:2040` and nothing else, and it is the claim every one of
 these corrections depends on. The same pins were re-anchored in
 `ec/annotations/xdata-register-map.md`, in
 `xdata-no-eq-guard-refusal-contract.md`, in
