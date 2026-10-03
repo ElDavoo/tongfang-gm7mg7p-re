@@ -47,7 +47,7 @@ void FUN_CODE_e100(void)
     return;
   }
   if (((DAT_EXTMEM_1c00 >> 1 & 1) != 0) && ((DAT_EXTMEM_1c00 & 0x7c) == 0)) {
-    bVar2 = DAT_EXTMEM_0391;
+    bVar2 = XDATA_0391;
     bVar1 = shift_pair_then_sum_and_divide_by_four((byte *)0x3c5,DAT_EXTMEM_1c04,0x90,3);
     if (bVar2 <= bVar1) {
       BANK0_R0 = BANK0_R1;

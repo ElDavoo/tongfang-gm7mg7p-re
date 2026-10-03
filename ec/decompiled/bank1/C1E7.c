@@ -10,14 +10,35 @@
    second mask is non-zero too. The 0x28 pair repeats the shape and sets bit 3 of 0x0498 on the same
    condition. The conjunction is 'some bit of the pair set in both bytes', not a bitwise AND: the
    0x049D mask is only tested against zero and its value is discarded, and so is the R5 mask once
-   0x0498 has been set. Every exit is a ret, at 0xC209, 0xC211 and 0xC219, and no instruction in the
-   body writes R7, so the R7 that 0xA389 tests after `lcall 0x198A` is not this routine's to set.
-   Two further BL51 forwarders land inside the body, 0xC201 from 0x1762 and 0xC209 from 0x1768, so
-   this is a body with two more entries in it. 0x0495, 0x0498 and 0x049D are not documented in
-   ec/annotations/registers.yaml; 0x0491, 0x0495, 0x0499 and 0x049D are the stride-4 family
-   ec/annotations/pd-xdata-overlap.md records.
+   0x0498 has been set. CORRECTION 2026-10-03, issue #336: the two sentences this row previously
+   closed with -- that 'no instruction in the body writes R7, so the R7 that 0xA389 tests after
+   `lcall 0x198A` is not this routine's to set', and that 'Two further BL51 forwarders land inside
+   the body, 0xC201 from 0x1762 and 0xC209 from 0x1768, so this is a body with two more entries in
+   it' -- were both read against the wrong bank, and both are kept here rather than deleted. The
+   first is true of the bank-1 bytes this row describes and is not what 0xA389 runs: `lcall 0x198A`
+   reaches bank 0 (ec/annotations/bank-call-audit.md section 2), and there 0xC1E7 is the annotated
+   `test_1664_bit0` (ec/decompiled/bank0/C1E7.asm), which does write R7. The R7 is that predicate's
+   answer, as ec/annotations/ghidra-variables.csv `bank1,0xA389` already records. The second names
+   bank 0's reading as bank 1's: `bank1,1762` and `bank1,1768` both tail-jump to the stub at 0x1100,
+   so their immediates name bank 0, where 0xC201 and 0xC209 are the separate eight-byte entries
+   `set_1604_bit1` and `clear_1604_bit1` (ec/decompiled/bank0/C201.asm,
+   ec/decompiled/bank0/C209.asm), not addresses inside this body at all. What is new here, and what
+   the bank-1 reading could not have told us: no transfer in bank 1 that
+   ec/tools/entry_reachability.py can resolve names this address. It scans bank 1's own window and
+   finds none, while the same scan over bank 0 finds the `lcall` at 0xD9E7 -- the call
+   ec/annotations/bank-call-targets.csv records. That is not found by this method rather than
+   unreachable: the scan covers the three statically resolvable transfer families and not an
+   indirect transfer, which the 8051 computes at run time. The entry is reached in bank 1 only by
+   fall-through, from the three `jnb` at 0xC1DE-0xC1E6, which are covered by no committed bank1
+   listing. So this row describes a body whose own bank refers to it never, which is why a reading
+   of it went unchallenged for as long as it did. That is a statement about which transfers name an
+   address, not about whether the code runs: no register was read back and nothing here was observed
+   on hardware. 0x0495, 0x0498 and 0x049D are not documented in ec/annotations/registers.yaml;
+   0x0491, 0x0495, 0x0499 and 0x049D are the stride-4 family ec/annotations/pd-xdata-overlap.md
+   records.
    type: state
-   evidence: ec/decompiled/bank1/C1E7.asm; ec/decompiled/bank1/C1E7.c
+   evidence: ec/decompiled/bank1/C1E7.asm; ec/decompiled/bank1/C1E7.c; ec/decompiled/bank0/C1E7.asm;
+   ec/decompiled/bank0/C201.asm; ec/decompiled/bank0/C209.asm
    basis: hand-decoded
    name_basis: code-shape */
 
