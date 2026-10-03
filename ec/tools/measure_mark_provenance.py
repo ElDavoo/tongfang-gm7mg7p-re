@@ -560,6 +560,15 @@ CITATIONS = [
     ("windows/tools/manual_fan_ctrl_probe.py", 450,
      'self.row([now() if ts is None else ts, "MARK", "", label])',
      "writer: MarkCsv.mark"),
+    ("ec/tools/probe_log_to_capture.py", 478, 'return ("MARK", "", label)',
+     "the mark row a converted legacy log is written as, stated once rather "
+     "than at each of the two sites that emits one. `row_sites` files it "
+     "under consumers because the line carries no `.row(` call -- it is a "
+     "return, and that is the whole of the split -- so this is the one site "
+     "the list and the scan describe in different words. The marks it writes "
+     "are reconstructed rather than observed; "
+     "`docs/findings/probe-log-capture-conversion.md` is what that costs, "
+     "and every file this writes says so in its own `#` header"),
     # -- the header, which this measurement did not record ------------------
     # A format change to a mark row is also a change to the row that names
     # this capture's columns, and the two are not the same file: a
