@@ -87,11 +87,13 @@ invariant, not the check.
 ## The rows that were missing, and why each has no inbound edge
 
 Eight keys, nine naming comments. **No claim here is that any of them is a
-missing function.** Each is named by a comment that records how it *is*
-reached, which is the opposite of a hole in the export; the mechanisms, as
-those comments state them:
+missing function**, which is the opposite of a hole in the export. Four of the
+citing comments name the reaching instruction, and the other four do not: they
+describe what the callee *is* — the routine that makes those ljmps, or the
+routine the call site sits inside — and say nothing about how it is entered.
+So the table quotes each comment as it reads rather than under one claim:
 
-| key | cited by | how its own comment says it is reached |
+| key | cited by | what its own comment says about it |
 |---|---|---|
 | `bank0,A716` | `bank0,A6C6` | "sets DPTR to 0x0857 and falls through to 0xA716, which increments the byte there" |
 | `bank1,B224` | `bank1,B1B3` | "Masks XDATA 0x0490 with 7: 6 jumps to 0xB1F5, 7 jumps to 0xB224" |

@@ -747,9 +747,11 @@ def report(index, rows, edges, unresolved, orphan_callers, total,
     # and a line says which, and a work list is only the second.
     print("  cited with no transfer reaching them, so `in` reads 0 and the "
           "row is ranked anyway;")
-    print("  each one's own comment says how it is reached, and none of them "
-          "is evidence of a")
-    print("  missing function:")
+    print("  none of them is evidence of a missing function. Their citing "
+          "comments do not all")
+    print("  say the same thing -- some name the reaching instruction, others "
+          "describe what the")
+    print("  callee is -- so read each at its citing row:")
     for r in sorted(unreached_cited, key=lambda r: (r["scope"], r["addr"])):
         print("  %-7s %-5s cited by %d  %s"
               % (r["scope"], r["addr"], r["cited_by"], r["citing"]))
@@ -765,7 +767,10 @@ def report(index, rows, edges, unresolved, orphan_callers, total,
           "ranked anyway; a" % len(unreached_cited))
     print("  zero `in` above is this scan not seeing the edge, not the callee "
           "being absent or")
-    print("  uncalled. Each one names the mechanism in its citing comment.")
+    print("  uncalled. Their citing comments do not all say the same thing: "
+          "some name the reaching")
+    print("  instruction, others describe what the callee is, not how it is "
+          "entered.")
     print("  limit: %d rejected or undecided citation candidates name a "
           "callee this table" % unranked)
     print("  carries no row for. Two things leave a callee rowless and the "

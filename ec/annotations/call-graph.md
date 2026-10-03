@@ -462,7 +462,10 @@ Four of the eight such rows on this tree are named by exactly one `sjmp` in
 the committed listings, which `TRANSFERS` deliberately does not scan and must
 not start scanning; the rest are named by no committed instruction at all,
 with a `ret` immediately before each, so a fall-through does not account for
-them either. Each one's own comment says how it is reached. The tool prints
+them either. Their citing comments do not all say the same thing: four name
+the reaching instruction, and the rest say what the callee *is* — the routine
+that makes those ljmps, or the routine the call site sits inside — rather than
+how it is entered. The tool prints
 the whole population by `scope` and `addr` rather than only its size, and the
 per-address reading is in
 [`../../docs/findings/cited-set-population.md`](../../docs/findings/cited-set-population.md).
