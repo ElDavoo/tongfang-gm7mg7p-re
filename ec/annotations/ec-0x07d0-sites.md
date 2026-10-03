@@ -60,6 +60,19 @@ disagree with the number everything else quotes. `ec-0x07d0-sites.csv` is
 committed next to this file; every table below is derived from it, and each
 one names the command that re-derives it.
 
+**That command now runs in CI.** `../../ec/tools/test_sites_csv_regeneration.py`
+regenerates this table from the committed firmware for the address above and
+compares it against the committed file, so the claim the transcript above makes
+is re-derived on every run of `bash tools/run-tests.sh` rather than left to a
+reader. It regenerates every committed table carrying
+`trace_xdata_refs.py`'s schema, and it says which addresses each one is the map
+of rather than reading them back out of the file — so a row edited out, added,
+reordered, or relabelled `region` is a red run. "Not found by this method, never
+absent": a site reached through a computed DPTR has no row here and would have
+none in a regeneration either, so a green run is a statement about this
+enumeration and not about the byte. The write-up is
+`../../docs/findings/sites-csv-regeneration.md`.
+
 Drop `--csv` for the per-site decode, add `--r2-commands` for paste-able
 `r2 -a 8051` seek lines (radare2 is not installed on the CI runner, so
 nothing here was produced by it — the commands are there so a human with r2

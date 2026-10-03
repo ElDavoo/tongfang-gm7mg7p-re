@@ -175,6 +175,7 @@ addr,name,from_register,register_status,derivation,programs
 0x086D,XDATA_086D,XDATA_086D,present-untested,scalar-name,bank0;bank1
 0x086E,XDATA_086E,XDATA_086E,present-untested,scalar-name,bank0;bank1
 0x1664,XDATA_1664,XDATA_1664,present-untested,scalar-name,bank0;bank1
+0x3202,XDATA_3202,XDATA_3202,present-untested,scalar-name,bank0;bank1
 0x1C01,XDATA_1C01,XDATA_1C01,present-untested,scalar-name,bank0;bank1
 0x1C02,XDATA_1C02,XDATA_1C02,present-untested,scalar-name,bank0;bank1
 0x1C03,XDATA_1C03,XDATA_1C03,present-untested,scalar-name,bank0;bank1

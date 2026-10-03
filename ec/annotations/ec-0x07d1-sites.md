@@ -64,6 +64,18 @@ That is the reconciliation check this file rests on, and it is the same one
 counts sum to it, so the site table cannot silently disagree with the number
 everything else cites.
 
+**That command now runs in CI.** `../../ec/tools/test_sites_csv_regeneration.py`
+regenerates this table from the committed firmware for `0x07D1` and compares it
+against the committed file, on every run of `bash tools/run-tests.sh`. It is the
+`pd-image`-only table whose `region` cell no other suite can check —
+`classify()` and `walk_why()` say what a window did and why it ended, not which
+image a site is in — so a `region` relabelled here is a red run rather than a
+silent disagreement with §3a's conflation. "Not found by this method, never
+absent": a site reached through a computed DPTR has no row here and would have
+none in a regeneration either. The write-up, and the inventory of the other
+committed tables the same suite holds, are
+`../../docs/findings/sites-csv-regeneration.md`.
+
 ```console
 $ python3 -c "
 import csv, collections
@@ -510,6 +522,52 @@ little-endian word that also reaches `0x07D2`. Whether the two readings of the
 same physical bytes ever collide in practice is not determined here — the EC
 side has no committed reference to this address at all.
 
+**Correction, 2026-10-03 (issue #228): "the two readings" is one reading and
+one write, and the collision question is not this file's to answer.** Each name
+appears exactly twice in `evidence/acpi/dsdt.dsl` — one store and one
+declaration, `DBD1` at `:50687`/`:52249` and `DBD2` at `:50688`/`:52250` — and
+both stores are in the one `T1WR` `Arg0 == 0x1173` arm, which writes and never
+loads. The "two independent 8-bit fields" claim above therefore describes a
+**field list**, not a value any AML object holds as one; what is *measured* is
+that both are 8 bits under one `Offset (0x7D0)` and `DBD2` starts at bit 8,
+where `DBD1` ends.
+
+Scope note on why nothing loads them, because the obvious reason is false. The
+two names are the only route AML has to these bytes **through the `ECMG` field
+list** — no `IndexField` or `CreateField` is declared over `ECMG` — but not the
+only route full stop: `ECRR`/`ECRW` at `dsdt.dsl:50497`/`:50504` compute
+`0xFE410000 + Arg0`, the base `ECMG` declares, and access the byte through the
+`OperationRegion` `MMRW` builds, so `ECRR` reads `0x07D0` with no field name
+in the path.
+
+The file has **many** computed-base methods, not three, and some that build one
+are called — `DLLR` builds `EMPC` at `:19119` from an `XBAS`-relative base
+(`XBAS` is `External`, so unbounded) and is invoked at `:19223`. Naming three of
+them is not an enumeration, so the census is derived from the file instead: no
+AML in the committed DSDT reaches the pair by a computed base that resolves
+into this window, and `ECRR`/`ECRW`/`SMRW` are among those nothing calls. A
+region whose base is a runtime value is reported as unbounded rather than
+cleared, and the writer arm also mirrors both bytes into `NPCF.AMAT`/`NPCF.AMIT`,
+whose owning AML is `External` and not committed here.
+`docs/findings/dsdt-dbd-pair-declared-not-read.md` is the write-up, and
+`ec/tools/check_dsdt_ecmg_pair.py` holds the counts and the route census.
+
+The `0x07D2` clause survives with its scope corrected: that byte is undeclared
+like almost every byte the `ECMG` field list covers, so its being unnamed is a
+fact about the list rather than about this byte. What makes it worth naming is
+narrower and does carry the weight above — `0x07D2` is the third byte of the
+PD's little-endian window, and the list's boundary at `Offset (0x7D3)` puts it
+outside the declaration entirely, which is why the PD's 16-bit reads straddle
+the DSDT's field boundary.
+
+Two things this correction does **not** do. It does not say the PD leaves the
+pair alone — §4.3's `0x8662`/`0x866A` copies `0x07D0` into `0x07D1`, so the PD
+firmware does combine them; every claim in this paragraph is scoped to the
+DSDT. And it does not retract the divergence recorded above, which stands:
+what the DSDT and the PD firmware disagree about is the *meaning* of these two
+bytes, and a disagreement about meaning becomes a fault only if something
+reads them the other way too. That is §8's third bullet.
+
 ## 7. What this does not establish
 
 - **Nothing about the EC's `0x07D1`.** The byte the DSDT writes as `DBD2` lives
@@ -571,10 +629,31 @@ Three questions this walk opened, and deliberately did not answer:
   it, and loads it as a word. Naming it needs the call graph and the
   surrounding PD structures — `#26` and `#67`, not this file.
 - **Does the PD's 16-bit reading of `0x07D0`/`0x07D1` ever collide with the
-  DSDT's two independent byte fields?** §6 states the divergence and stops.
-  A live observation would say more than another static pass, and no live
-  observation is possible from here.
+  DSDT's two independent byte fields?** **Answered as posed, 2026-10-03 (issue
+  #228): it cannot arise between the DSDT and the PD image, because it was
+  posed as a conflict between two readings and no route the scan can place
+  gives the DSDT a reading.** Each
+  name is one store and one declaration in `evidence/acpi/dsdt.dsl`, and both
+  stores are in the one `T1WR` `Arg0 == 0x1173` arm. No AML in the committed
+  DSDT reaches the pair by a route whose base resolves into this window: the
+  names are the only route through the `ECMG` field
+  list, and the route census -- derived from the file, not a list of three
+  names -- finds no computed-base region that resolves into this window from a
+  method that is called. `ECRR`, `ECRW` at `dsdt.dsl:50497`/`:50504` and `SMRW`
+  at `:50764` are among the methods nothing calls; a region whose base is a
+  runtime value is reported as unbounded rather than cleared. What survives
+  §6's divergence
+  is a disagreement about *meaning*, and that turns into a fault only if
+  something reads the pair the other way as well — which is the third bullet
+  below. The live half of that is the `0x07C4`-`0x07D7` GPU-door run,
+  `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md`, written for the closed
+  `#184` and owned for the run by **`#278`**. See
+  `docs/findings/dsdt-dbd-pair-declared-not-read.md`.
 - **Does the EC firmware read `0x07D0` or `0x07D1` at all?** The EC image
   references neither by this method, which is the §4c signal, not a verdict.
   `#25` owns the `0x07D0` half of that question; this file does not re-open
-  it, and the `0x07D1` half is not reachable from its scope.
+  it, and the `0x07D1` half is not reachable from its scope. **`#34` owns the
+  indirect-access blind spot** that would hide such a read, and its scope note
+  is worth stating: `ec/annotations/indirect-xdata-sites.md` §4 answers `#34`
+  for `0x07B9` and `0x07D0` only, so `0x07D1` and `0x07D2` are outside what
+  that walk covered. Nothing here re-opens `#25` or `#34`.
