@@ -73,17 +73,13 @@ Counter({'pd-image': 47})
 47 distinct file offsets
 
 $ python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
-193 entries / 226 addresses: every static_refs, static_refs_main_ec and
-static_refs_pd_image reproduced from ec/firmware/GMxMGxx_11.800
 ```
 
 The per-region split is the load-bearing half of that. A bare `refs=47` adds the
 two programs' address spaces together and reads as an EC-side count;
 `pd-image: 47` with the EC column at 0 is what makes the row a PD-image finding.
 This is the conflation §3a of `../../docs/findings.md` records, and `pd-image`
-is the column that prevents it. Adding this address's entry to `registers.yaml`
-is what took that tool from 192 entries to 193; the delta is one entry and one
-address, and no other row moved.
+is the column that prevents it.
 
 **The other census indexes a different unit, and the two figures do not
 conflict.** `xdata-registers.csv`'s `0x07D2` row reports 53 references, against

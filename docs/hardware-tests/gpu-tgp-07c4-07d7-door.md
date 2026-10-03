@@ -474,7 +474,7 @@ Four notes on reading the table, each of which is a place a table like this
 gets misread:
 
 - **"No row" is a statement about `registers.yaml`, not about the address.** It
-  is 6 of the 24, and it is the §4c retraction in table form
+  is the §4c retraction in table form
   (`../../docs/findings.md` §4c retracted a "does not exist" claim built on a
   zero-reference scan). A cell saying "no row" is the sentence most
   likely to be read back as a claim of absence; it is not. The per-site
