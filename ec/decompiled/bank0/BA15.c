@@ -4,13 +4,18 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* The listing for this entry is the single instruction CLR A. The next address BA16 stores that
-   cleared accumulator to XDATA 0x08CC and 0x08CD, and BA1C stores it to 0x08CE and 0x08CF, so on a
-   fall-through the zero reaches four bytes -- but those stores are in the other two listings, and
-   this entry's own function boundary is a hypothesis. The decompiled C reports all four zero
-   writes; none of them is in this listing.
+/* The listing for this entry is the single instruction CLR A, and it reads nothing. The next
+   address BA16 stores that cleared accumulator to XDATA 0x08CC and 0x08CD, and BA1C stores it to
+   0x08CE and 0x08CF, so on a fall-through the zero reaches four bytes -- but those stores are in
+   the other two listings, and this entry's own function boundary is a hypothesis. The decompiled C
+   reports all four zero writes; none of them is in this listing. A caller that does not fall
+   through gets the ret at BA22 instead, and nothing between the two touches A, so lcall 0xBA15
+   returns A = 0. Every committed transfer to this address is such a call - bank-call-targets.csv
+   names 0x9A7B, 0x9A86, 0x9A90 and 0x9A9C and no other - and 0xB9F5's listing ends in the ret at
+   BA14, so nothing falls in from above either.
    type: init
-   evidence: ec/decompiled/bank0/BA15.asm; ec/decompiled/bank0/BA15.c
+   evidence: ec/decompiled/bank0/BA15.asm; ec/decompiled/bank0/BA15.c;
+   ec/annotations/bank-call-targets.csv; docs/findings/xdata-044b-selector-value-set.md
    basis: hand-decoded
    name_basis: code-shape */
 
