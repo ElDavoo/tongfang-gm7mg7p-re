@@ -66,6 +66,7 @@ cost the reader the pointer:
 ```console
 $ grep -E "^(074C|080C)," ec/annotations/call-graph-unresolved.csv
 074C,1,1,ljmp,xdata-or-data,pd,0738,shift_r3r4_right_1,pd/05A6@05EA
+080C,1,1,ajmp,xdata-or-data,common,0806,FUN_CODE_0806,common/0D7B@0DE6
 ```
 
 That the higher cause wins is a decision about *which label to print*, not a
@@ -93,7 +94,7 @@ Thirty-one targets are reached only by `ajmp`/`acall`; twenty-six of the
 
 ## The `xdata-or-data` lookup has low recall, and that is what it is
 
-`registers.yaml` carries 221 addresses, all XDATA and none of them code. The
+`registers.yaml` carries XDATA addresses and no code addresses. The
 lookup finds 2 of the 80 targets. **A target the lookup does not name is not
 found by this method** — it is not "not XDATA", and it is emphatically not
 "code". A two-hit lookup says nothing about the other seventy-eight, which is
