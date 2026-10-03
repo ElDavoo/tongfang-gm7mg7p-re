@@ -18,8 +18,8 @@ evidence about what the EC does with its own `0x07D0`, and nothing below
 makes writing that register any safer. See §6.
 
 Within the PD image the picture is consistent and boring: a byte that is
-read almost everywhere, written in fifteen places, incremented in place in
-two, and used as a multiplier against structure strides (`0x5E`, `0x60`,
+read almost everywhere, written in fourteen places, incremented in place in
+three, and used as a multiplier against structure strides (`0x5E`, `0x60`,
 `0x77`) to index arrays — the shape of an index or state variable, not of a
 threshold. "The shape of" is the claim; naming what it indexes would be a
 guess and is not made.
@@ -123,16 +123,16 @@ for r in rows:
       'read' if 'read' in a else 'write' if 'write' in a else
       'no movx in window'] += 1
 print(sorted(k.items(), key=lambda x: -x[1]))"
-[('read', 157), ('handed to a helper', 79), ('write', 8), ('no movx in window', 8), ('read-modify-write', 2)]
+[('read', 157), ('handed to a helper', 79), ('no movx in window', 8), ('write', 7), ('read-modify-write', 3)]
 ```
 
 | at the site | sites |
 |---|---|
 | reads it (`movx a,@dptr`) | 157 |
 | hands DPTR to a subroutine — direction not resolvable at the site | 79 |
-| writes it (`movx @dptr,a`) | 8 |
+| writes it (`movx @dptr,a`) | 7 |
 | no `movx` in the decoded window | 8 |
-| read-modify-write | 2 |
+| read-modify-write | 3 |
 
 The 79 handoffs go to 25 distinct entry points. Decoding each one's first
 instruction resolves the direction one level deeper — 72 of the 79 call a
@@ -154,11 +154,27 @@ Several of these entry points are mid-routine — `0x34D9` is the tail of a
 routine whose head at `0x34D6` loads `0x07D6` instead — which is ordinary
 Keil tail-sharing and is why the entry addresses are unaligned-looking.
 
-Net: **229 of the 254 sites read the byte, 15 write it, 2 read-modify-write
+Net: **229 of the 254 sites read the byte, 14 write it, 3 read-modify-write
 it, and 8 are unresolved by this method.** The eight "no `movx`" sites are
 seven instances of `lcall 0xF739 ; mov dptr,#0x07d0 ; ret` — a routine
 returning with DPTR left pointing at the byte, so the access is in its
 callers — plus one site where a `jnz` intervenes.
+
+**Correction (issue #865), leaving the sentence above as it was written.** It
+read 229 / **15** write / **2** read-modify-write. The site at file offset
+`0x2E8D4` (`pd:0xE8D4`) is a read-modify-write, not a write: it stores
+`0x07D0` at `0xE8D8` and reads the same byte straight back at `0xE8E3`, with
+no DPTR rebuild in between, and hands what it read to a `mul AB` against the
+record stride `0x17`. The budget-8 window ended at `0xE8E1` and so reported
+`write x1`. So the net is 229 / 14 / 3 / 8, and 229+14+3+8 is still the 254
+the table above partitions. **229 does not move.** It is the 157 site-level
+reads plus the 72 handoffs this section resolves as reads one level deeper,
+and a corrected site's own cell moves neither: `0x2E8D4` was a site-level
+`write` and is now a site-level read-modify-write, which this table's
+bucketing counts in its own row rather than under `read`. `../../docs/findings/walk-window-terminators.md`
+§B called this row class B — the budget was short, not the cell wrong — and
+`../../docs/findings/class-b-access-cell-corrections.md` carries the bytes
+and the correction's second method.
 
 ## 4. What the value is used as
 
