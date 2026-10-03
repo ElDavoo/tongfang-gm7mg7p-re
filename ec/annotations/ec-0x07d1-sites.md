@@ -91,7 +91,7 @@ windows `charge-profile-flow.md` transcribed from r2 by hand:
 ```console
 $ python3 ec/tools/disasm8051.py --self-test
 ...
-self-test passed: both charge-profile-flow.md windows decode identically and all 4 relative-branch sites resolve as hand-decoded
+self-test passed: both charge-profile-flow.md windows decode identically, all 4 relative-branch sites resolve as hand-decoded, and all 11 bit-form sites decode as transcribed
 ```
 
 Unlike [`ec-0x07d0-sites.md`](ec-0x07d0-sites.md) §1, some of the load-bearing

@@ -208,6 +208,10 @@ oracle…") is more true after this branch, not less. Wiring either into a gate 
   than an unstated one: 11 `BIT_SITES` and the `0xC1`/`0xC2` pair have no
   committed transcription to reconcile against. A follow-up could add one, at
   the cost this branch declined for `0xB330`.
-- **The pre-existing stale transcripts** listed above.
+- **The pre-existing stale transcripts** listed above are now corrected and
+  held: `docs/findings/disasm8051-transcript-copies.md` is the pass that fixed
+  them, and `ec/tools/check_disasm8051_transcripts.py` compares every committed
+  transcript's summary line to the run, so the next one is a red run rather than
+  something a reader notices.
 - **The `0xA0`/`0xB0` `ANL`/`ORL C,/bit` disagreement** stays deliberately open
   in `disasm8051.py`, where no committed instruction is affected either way.

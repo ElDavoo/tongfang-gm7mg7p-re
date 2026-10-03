@@ -773,7 +773,7 @@ table is itself pinned to r2:
 
 ```console
 $ python3 ec/tools/disasm8051.py --self-test
-self-test passed: both charge-profile-flow.md windows decode identically and all 4 relative-branch sites resolve as hand-decoded
+self-test passed: both charge-profile-flow.md windows decode identically, all 4 relative-branch sites resolve as hand-decoded, and all 11 bit-form sites decode as transcribed
 ```
 
 ## 8. The `0x07C4` observation from 2026-09-23, and its scope

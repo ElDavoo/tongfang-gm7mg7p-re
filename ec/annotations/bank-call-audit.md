@@ -242,12 +242,12 @@ $ python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --self-test
 self-test passed
 
 $ python3 ec/tools/disasm8051.py --self-test | tail -6
-  ok  file 0x0B2EE (runtime 0xB2EE) is `80 6e` targeting 0xB35E (got `80 6e` -> 0xB35E)
-  ok  file 0x0B137 (runtime 0xB137) is `20 e0 07` targeting 0xB141 (got `20 e0 07` -> 0xB141)
-  ok  file 0x0F1B0 (runtime 0xF1B0) is `df e6` targeting 0xF198 (got `df e6` -> 0xF198)
-  ok  file 0x0FE24 (runtime 0xFE24) is `30 e1 e8` targeting 0xFE0F (got `30 e1 e8` -> 0xFE0F)
+  ok  file 0x067F5 (runtime 0x67F5) is `b2 b4` = `cpl  p3.4`  (expected `cpl  p3.4`, image has `b2 b4`)
+  ok  `c1 d0` = `clr  psw.0`  (CLR bit (0xC1), expected `clr  psw.0`)
+  ok  `c2 d0` = `clr  0xd0`  (CLR direct (0xC2), expected `clr  0xd0`)
+  ok  `01 ff` at 0x07FE targets 0x08FF, the *following* page (expected 0x08FF)
 
-self-test passed: both charge-profile-flow.md windows decode identically and all 4 relative-branch sites resolve as hand-decoded
+self-test passed: both charge-profile-flow.md windows decode identically, all 4 relative-branch sites resolve as hand-decoded, and all 11 bit-form sites decode as transcribed
 ```
 
 [`bank-call-targets.csv`](bank-call-targets.csv) is `--csv` on the same image —

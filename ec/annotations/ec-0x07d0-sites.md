@@ -75,7 +75,7 @@ tables are pinned by `--self-test` against the two windows
 ```console
 $ python3 ec/tools/disasm8051.py --self-test
 ...
-self-test passed: both charge-profile-flow.md windows decode identically
+self-test passed: both charge-profile-flow.md windows decode identically, all 4 relative-branch sites resolve as hand-decoded, and all 11 bit-form sites decode as transcribed
 ```
 
 ## 2. Where the 254 are
