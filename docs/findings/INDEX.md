@@ -182,6 +182,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`provenance-clone-depth-behaviour.md`](provenance-clone-depth-behaviour.md) — Both clone depths run: `--verify-provenance` measured rather than asserted (issue #421)
 - [`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md) — What a re-encode row's own columns say, and the ceiling they support
 - [`reassembly-name-column.md`](reassembly-name-column.md) — `reassembly.csv`'s `name` column describes the listing, so it is compared and not trusted
+- [`reassembly-unmeasured-row-policy.md`](reassembly-unmeasured-row-policy.md) — What a re-encode row outside `OUTCOMES` does to a run, to `--check`, and to the report (issue #230)
 - [`rebuild-provenance.md`](rebuild-provenance.md) — What a rebuild from the committed inputs re-derives (issue #623)
 - [`region-edge-declined-sites.md`](region-edge-declined-sites.md) — The six offsets the rel8 site walk declines are now reported by the tool rather than verified once
 - [`rel8-displacement-bound.md`](rel8-displacement-bound.md) — What holds the rel8 displacement read in range: a constant in another module, and a marker check three frames away
@@ -219,6 +220,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`walk-bounds-guard-pinned.md`](walk-bounds-guard-pinned.md) — The bounds disjunct is pinned, by two cases — and the sweep that could have noticed it cannot see it
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
 - [`walk-window-terminators.md`](walk-window-terminators.md) — `walk()`'s stop reason is a column now, and the 45 rows its budget truncates are named
+- [`xdata-0390-0391-filter-pair.md`](xdata-0390-0391-filter-pair.md) — The 0x0390/0x0391 pair: what the 0x9EA1 filter reads, what the `E100` branch selects, and where `0x0391`'s value comes from (issue #295)
 - [`xdata-0786-tcc-offset-verdict.md`](xdata-0786-tcc-offset-verdict.md) — `0x0786` is a CPU TCC offset: the EC's own bytes decide the naming conflict
 - [`xdata-07fd-07ff-witness-triple.md`](xdata-07fd-07ff-witness-triple.md) — The `0x07FD`-`0x07FF` triple: a three-byte witness whose third byte discriminates (issue #573)
 - [`xdata-0860-census-sites-relined.md`](xdata-0860-census-sites-relined.md) — The four `0x0860` census citations move; the counts do not (issue #752)
@@ -260,6 +262,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md) — The refusal contract's measured-state section, corrected against this tree (issue #816)
 - [`xdata-no-eq-guard-refusal-contract.md`](xdata-no-eq-guard-refusal-contract.md) — The `--no-eq-guard` refusal contract
 - [`xdata-ownership-main-keys-pin.md`](xdata-ownership-main-keys-pin.md) — #658 asked for a pin that #849 had already laid: the `OWNERSHIP` main-EC keys, and the one line that could not show its own drift
+- [`xdata-page-cluster-count.md`](xdata-page-cluster-count.md) — The working page's cluster count, both sides of the pass, and what the added addresses have to do with it (issue #903)
 - [`xdata-pair-role-column.md`](xdata-pair-role-column.md) — The `pair_role` column: which half of a pair a census row is (issue #734)
 - [`xdata-per-program-counts.md`](xdata-per-program-counts.md) — The per-program count columns: `refs` and the five buckets, split, with `refs` itself unmoved (issue #713)
 - [`xdata-register-map-per-program-keying.md`](xdata-register-map-per-program-keying.md) — `xdata-register-map.md` §2 re-keyed per program, and what that moved (issue #714)

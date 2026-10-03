@@ -48,7 +48,11 @@ apart on purpose: `assembler-gap` is about what the assembler can express,
 `OUTCOMES`, so it picked the new one up without change; `run_status()` still
 fails only on `mismatch`, and its docstring says why — a `listing-gap` says the
 listing a run read had no entry, and the pinned build settles what that is
-about, not whichever runner is reporting it.
+about, not whichever runner is reporting it. (Corrected 2026-10-03:
+`run_status()` no longer fails *only* on `mismatch`. The residual half of its
+policy was settled later, in `reassembly-unmeasured-row-policy.md`, and
+`listing-gap` is still not adjudicated — measured, which is the reason given
+here and is still the reason.)
 
 The count is now two counts. `check_one()` returns the instructions it
 translated *and* the bytes that reached the `got != want` test, accumulated
@@ -297,7 +301,9 @@ reached.
   `bank0 E9DE` is the cheapest one to work on and the shortest to reproduce.
 - **§14g's open question, unchanged by any of this**: a report row whose
   outcome is `error` or `assembler-error` is named by the residual and
-  `check()` still passes it.
+  `check()` still passes it. (Settled since, in
+  `reassembly-unmeasured-row-policy.md`: all five residual outcomes fail now,
+  and `write_report()` refuses to write a run carrying one.)
 - **`check_one()`'s row model.** A row records a count and the first skipped
   address, not the set of them, so the middle class above cannot be resolved
   from the committed file at all. Recording the number of bytes compared per
