@@ -25,10 +25,22 @@ premise would not know where to look:
 | `ec/tools/test_pd_site_clusters.py`, `test_findings_4o_correction.py`, `test_code_pointer_sites.py`, `test_0741_bit7_chain.py`, `test_code_table_records.py`, `test_trace_xdata_refs_usage.py` | these files' rows as *input* to another claim |
 
 **The gap is one level below where the issue places it.** Every one of those
-checks iterates the rows **already in the file** and re-derives a cell of each.
-None re-derives the row **set**, because a row that is not there is not
-iterated. So the tables were not held to nothing — they were held, cell by
-cell, to a row set that nothing checked.
+checks iterates the rows **already in the file** and re-derives a cell of each,
+because a row that is not there is not iterated. A few go further and
+regenerate a table whole rather than re-derive a cell of it, so the "none of
+them re-derives the row set" version of the claim is false for the tables they
+cover:
+
+| table | suite and case | what it compares |
+|---|---|---|
+| `manual-fan-ctrl-0751-sites.csv` | `test_trace_xdata_refs_usage.py::test_the_terminator_line_reproduces_its_committed_table` | the tool's stdout against the committed file read in binary — every row |
+| `xdata-086x-dispatch-sites.csv` | `test_trace_xdata_refs_usage.py::test_the_default_check_still_reproduces_its_table`, and `test_walk_budget_census.py::test_the_sweep_reproduces_the_086x_table_byte_for_byte` | `--check`'s exit code, which is `check_table()`'s verdict on any difference |
+| `ap-oem-0741-bit7-sites.csv` | `test_0741_bit7_chain.py::test_the_reproduction_command_reproduces_the_committed_table` | the tool's stdout against the committed file |
+
+Each was measured on committed inputs by deleting a data row and confirming the
+named case goes red. So the tables were not held to nothing — those were held
+whole, and the rest were held, cell by cell, to a row set that nothing
+checked.
 
 ## What notices a change, measured on committed inputs
 
@@ -47,7 +59,7 @@ re-run, and the file restored. "caught by" names the suite that went red.
 | relabel a `pd-image` row `bank0` in `ec-0x07d1-sites.csv` | **nothing** |
 | relabel a `bank0` row `pd-image` in `ec-07c4-07d5-sites.csv` | `test_gpu_block_watch.py`, and only incidentally — `read_site_census` filters `bank0`, so the population moves |
 | relabel a `bank0` row `pd-image` in `ec-0x07c5-sites.csv` | `test_gpu_block_watch.py`, incidentally, the same way |
-| relabel a `bank0` row `pd-image` in `manual-fan-ctrl-0751-sites.csv` | `test_trace_xdata_refs_usage.py`, and only incidentally — `committed_terminator_tables()`'s scan sees an address become uncovered |
+| relabel a `bank0` row `pd-image` in `manual-fan-ctrl-0751-sites.csv` | `test_trace_xdata_refs_usage.py`, **directly** — `test_the_terminator_line_reproduces_its_committed_table` byte-compares the tool's stdout against the committed file, and a `region` cell is among the bytes |
 | swap two adjacent data rows in `ec-07d6-07d7-sites.csv` | **nothing** |
 | swap two adjacent data rows in `ec-0x07d0-sites.csv` | `test_walk_budget_census.py`, `test_pd_site_clusters.py` |
 
@@ -70,11 +82,13 @@ does is make them unnecessary *for this claim*, which is the half that was
 available: a re-derivation from the committed image is not a number a re-cut has
 to update, so it cannot go stale the way a count does.
 
-**A `region` cell is the cell nothing else can check.** `classify()` says what
-a site's window did and `walk_why()` says why the window ended; neither says
-which image the site is in. That is `region_of()`'s column alone, and the
-relabels caught above are caught *incidentally* — a population moved, so a
-different assertion went red — rather than by anything that read the cell. A
+**A `region` cell is the cell no cell-wise check derives.** `classify()` says
+what a site's window did and `walk_why()` says why the window ended; neither
+says which image the site is in. That is `region_of()`'s column alone, so a
+relabel is noticed only where it happens to move something another check looks
+at — a population, in the tables the matrix above names `test_gpu_block_watch.py`
+or `test_pd_site_clusters.py` for, and the compared bytes themselves in
+`manual-fan-ctrl-0751-sites.csv`, whose suite byte-compares the whole table. A
 `pd-image` row read as `bank0` credits the main EC with a site in an image it is
 not in, which is the exact confusion `read_site_census`'s own filter docstring
 says the filter exists to prevent. The `ec-0x07d1-sites.csv` row in the table
@@ -189,6 +203,5 @@ The suite's teeth were checked by mutation rather than asserted: a data row
 deleted, a row added, a row swapped with its neighbour, an `access` cell
 rewritten, a `region` cell relabelled and a `terminator` column dropped, each
 applied to a committed CSV and each restored afterwards. Every one turns the
-suite red, including the two rows marked **nothing** above — the `region`
-relabel in `ec-0x07d1-sites.csv` and the row swap in
-`ec-07d6-07d7-sites.csv` — which no other suite notices.
+suite red, including each row marked **nothing** above, which no other suite
+notices.
