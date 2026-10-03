@@ -388,6 +388,7 @@ bank0,C0B8,return_1_unless_3202_bits_1_and_2,annotation,2,3202,3202,,agree
 bank0,C0C9,return_1_if_3202_bits_1_and_2,annotation,2,3202,3202,,agree
 bank0,C0DA,return_1_unless_3202_bit0,annotation,2,3202,3202,,agree
 bank0,C0E7,test_3202_bit0,annotation,2,3202,3202,,agree
+bank0,C118,call_test_3202_bit0_keep_result_in_r7,annotation,0,,,,vacuous
 bank0,C124,set_1602_bit2,annotation,4,1602,1602,,agree
 bank0,C12C,clear_1602_bit2,annotation,4,1602,1602,,agree
 bank0,C154,set_1602_bit7,annotation,4,1602,1602,,agree
