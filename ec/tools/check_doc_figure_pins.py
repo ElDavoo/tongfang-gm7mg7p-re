@@ -59,6 +59,24 @@ read as one. A cell left with no figure is a decline rather than an `unheld`: th
 `set(off) == set(on)` row of §2a is a relation, and reading nothing from it is
 the right answer, not a miss.
 
+**What a retraction is, and where it is and is not honoured.** `~~` is how this
+corpus marks a retraction, in cells and in headings alike, and this tool reads it
+in both: a struck first cell **declines** with its reason printed rather than
+measuring a figure the page withdrew, and a struck heading is **not a section** —
+`section()` refuses it and names the live heading at the same level beneath it.
+`docs/findings.md` §4a-4d asks for a retraction to stay visible with its
+correction beside it, and this is the other half of that: a reader summing what
+is on the page should not be handed back a number the page itself withdrew.
+
+**The limit worth naming, which this does not fix.** A struck row's *verdict
+marking* is still not compared, because a declined row's marking is never
+compared — that is what declining means. So a verdict table whose struck row is
+marked `held` passes silently, and the decline above says only that the first
+cell was not read. Whether a struck row should assert anything is a separate
+question about what declining means, and no committed page asks it: the struck
+cells the corpus has sit in tables with no `verdict` column, which this tool
+skips. Recorded as a limit rather than fixed, for want of a case to fix against.
+
 **What the row claims, and what has to back it up.** A table declares itself a
 verdict table by having a column headed `verdict`, and every figure row of one
 has to put exactly one of `held`, `unheld` or `not read by this method` in that
@@ -198,6 +216,12 @@ CITATION = re.compile(r"(?P<path>[\w./-]+\.(?:py|md|csv|ya?ml)):"
 HEADING = re.compile(r"^(#{2,6})\s+(.*)$")
 DELIMITER = re.compile(r"^\|[\s:|-]+\|$")
 MARKUP = re.compile(r"[`*]")
+
+# The corpus's retraction marker, matched as a *pair* rather than as a lone
+# tilde. A `~~` with nothing closing it is two characters of prose, and this
+# corpus does not write one; requiring the pair is what lets a first cell that
+# merely mentions the marker be read normally.
+STRIKE = re.compile(r"~~[^~]+~~")
 
 
 def tool_names(exclude_self=False):
@@ -497,6 +521,26 @@ def measure(value, pins, found):
     return (UNHELD, "no occurrence in ec/tools/*.py and no committed cell")
 
 
+def live_replacement(lines, level, start):
+    """The tail of a struck-heading refusal, naming what a reader wants instead.
+
+    The replacement is the nearest unstruck heading at the same level below the
+    struck one, and it is found by *level* rather than by the token: a
+    retraction rewrites the heading's figures as well as its title, so the live
+    heading beside a struck `### ~~The six shapes, and the 26 literals~~` reads
+    `### The five shapes, and the 24 literals` and shares no word with the token
+    that named the struck one. Naming the token's next match would send the
+    reader to a heading that is not there.
+    """
+    for i in range(start + 1, len(lines)):
+        m = HEADING.match(lines[i])
+        if (m and len(m.group(1)) == level
+                and not STRIKE.search(m.group(2))):
+            return (f" The live heading at the same level is line {i + 1}: "
+                    f"{m.group(2).strip()}")
+    return " No live heading at that level follows it."
+
+
 def section(text, token):
     """(lineno, level, body lines) for the heading `token` names, or raises.
 
@@ -505,6 +549,26 @@ def section(text, token):
     ambiguous or absent token is refused rather than guessed: a checker that
     quietly reads §2a when it was asked for §2b is a green run over the wrong
     text, which is the failure this whole tool exists to stop.
+
+    **A struck heading is refused, and a token that names two headings is
+    refused first.** `~~` is how this corpus marks a retraction, and a struck
+    heading is not a section. Reading one is worse than measuring the wrong
+    text: because a struck heading is followed by its replacement at the same
+    level, the body that comes back stops at the replacement, so the run reports
+    on the struck heading's own correction note and no table at all. That is the
+    shape the corpus already had — `six shapes` on the testdata page read a body
+    of the heading and the blockquote under it, and the run then complained that
+    the section held no verdict table, which is true of the stub and not of what
+    the reader asked for.
+
+    The token is matched against the heading text **as written**, struck or not,
+    so the ambiguity rule above is untouched: a token naming both a struck
+    heading and its replacement still names two headings and is still refused as
+    ambiguous. That ordering is load-bearing, and filtering struck headings out
+    of the match would break it -- `shapes` would resolve to the live heading,
+    which is the guess the ambiguity rule exists to prevent. Only the single
+    heading left over is then asked whether it is struck, and the refusal says
+    so by name rather than reporting that the token names nothing.
     """
     lines = text.split("\n")
     hits = []
@@ -521,7 +585,13 @@ def section(text, token):
         raise ValueError(f"{token!r} names {len(hits)} headings -- "
                          + "; ".join(f"line {i + 1}: {t}" for i, _l, t in hits)
                          + " -- so the section is ambiguous and none was read")
-    start, level, _title = hits[0]
+    start, level, title = hits[0]
+    if STRIKE.search(title):
+        raise ValueError(
+            f"line {start + 1} names {token!r} and is struck -- "
+            + f"{title.strip()} -- which this corpus writes a retraction with, "
+            + f"so it is not a section."
+            + live_replacement(lines, level, start))
     end = len(lines)
     for i in range(start + 1, len(lines)):
         m = HEADING.match(lines[i])
@@ -573,7 +643,21 @@ def figures(cell):
     The first cell only, because that is where this corpus puts the figure and
     bounding the reader is what keeps a prose cell's "1,169 addresses" out of a
     count it was never making.
+
+    **A struck cell is a decline, not a figure.** `~~` is how this corpus marks
+    a retraction, and a retracted figure measured as a live one is the page
+    handing the reader a number the page itself withdrew. Any strike run in the
+    cell declines, not only a wholly-struck one, because `~~2~~ (was 2)` is the
+    same retraction written with the superseded value repeated beside it and
+    would otherwise be counted twice. `MARKUP` is where it is tempting to put
+    this and it fails in the wrong direction: that regex is also how
+    `verdict_column()` reads a header and `marking()` reads a verdict cell, so
+    adding `~` there strips `~~held~~` to `held` and turns a retracted verdict
+    into a live marking. The strike is therefore detected on its own, and only
+    where a figure is read.
     """
+    if STRIKE.search(cell):
+        return ([], "struck with `~~`, which this corpus writes a retraction with")
     text = NOT_A_FIGURE.sub(" ", MARKUP.sub("", cell))
     found = [int(m.group(0).replace(",", "")) for m in FIGURE.finditer(text)]
     if not found:
@@ -679,6 +763,9 @@ def audit(body, found):
     A result is `(figure, claimed, verdict, detail)` per figure, in the order the
     document lists them, so the report and the exit code read the same walk.
     Declined rows are `(cell, reason)`: counted and printed, never a failure.
+    The reason is `figures()`'s own rather than one written here, because a
+    decline that prints the wrong reason is a checker reporting a shape it did
+    not apply -- and the struck-cell decline exists only as long as it says so.
     """
     results, declined, problems, marked = [], [], [], 0
     for header, rows in tables(body):
@@ -688,7 +775,7 @@ def audit(body, found):
         marked += 1
         for offset, row in rows:
             claimed, pins = marking(row, column)
-            values, _why = figures(row[0])
+            values, why = figures(row[0])
             if claimed is None:
                 problems.append(f"line {offset + 1}: a row of a table with a "
                                 f"verdict column marks nothing; every figure row "
@@ -696,8 +783,7 @@ def audit(body, found):
                                 f"{DECLINED!r}")
                 continue
             if not values:
-                declined.append((MARKUP.sub("", row[0]).strip(),
-                                  "no figure in the first cell"))
+                declined.append((MARKUP.sub("", row[0]).strip(), why))
                 continue
             resolved = set()
             for value in values:

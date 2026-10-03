@@ -191,8 +191,10 @@ writing the tool is what makes the rule writable rather than guessed.
 > that replaced it and has **0 instances on this tree**, because the one dated
 > sentence in the index resolves; it is pinned on a scratch tree instead, by
 > `test_a_bare_date_resolving_to_nothing_is_unresolved_and_not_absent`. The
-> column as corrected adds up: `16 + 3 + 2 + 2 + 1 = 24`, which is what the run
-> prints, plus the dated variant's zero.
+> column as corrected is the checker's own arithmetic rather than prose's:
+> `python3 ec/tools/check_testdata_row_claims.py --check` prints the per-shape
+> counts and the totals they come to, plus the dated variant's zero, so the
+> column is read there rather than kept here.
 
 **The six overlap, so those six numbers are not six disjoint buckets.** Four
 literals are caught by two rules at once: row 3's `0x0700` by both spellings of

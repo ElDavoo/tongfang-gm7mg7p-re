@@ -28,6 +28,7 @@ import io
 import os
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 HERE = Path(__file__).parent
@@ -38,6 +39,11 @@ spec.loader.exec_module(cdfp)
 
 REPO = Path(cdfp.REPO)
 CHECKLIST = REPO / "docs/findings/xdata-census-rederivation-checklist.md"
+# The page whose table carries the corpus's struck first cell, and the struck
+# heading above it. Read by the `AStrikeIsARetraction` cases so the rule is
+# pinned against a shape the corpus really contains rather than one invented
+# for the suite.
+CORPUS_PAGE = REPO / "docs/findings/testdata-third-column-claims.md"
 
 # One parse of the tree, shared by every case. `index()` is the expensive half
 # and nothing here changes the tree, so paying for it once is the whole reason
@@ -426,6 +432,119 @@ class ReadsTheFigure(unittest.TestCase):
         self.assertIn("marks nothing", problems[0])
 
 
+class AStrikeIsARetraction(unittest.TestCase):
+    """`~~` is how this corpus withdraws a claim, and both readers honour it.
+
+    `docs/findings.md` §4a-4d asks for a retraction to stay visible with its
+    correction beside it. That is the half about the reader; this is the half
+    about the checker. A struck figure measured as a live one is the page
+    handing the reader a number the page itself withdrew, and a struck heading
+    read as a section measures a stub -- the correction note under it, and no
+    table -- because the live heading that replaced it is at the same level and
+    ends the body there.
+
+    These cases assert the *rule* and not how many `~~` sites the corpus has.
+    A census of the tree is a value every merge moves; a strike is a strike.
+    """
+
+    def report(self, row):
+        """(rc, stdout, stderr) for one row's page, driven through `main()`.
+
+        Driven rather than read off `audit()`'s return value, because the half
+        worth pinning is that the reason reaches the reader. A decline that
+        returns its reason and prints a different one is what this rule would
+        have shipped with had `audit()` kept writing its own string.
+        """
+        with tempfile.TemporaryDirectory() as scratch:
+            page = Path(scratch) / "page.md"
+            page.write_text("### 2b. a section\n\n"
+                            "| figure | line | verdict | pin |\n|---|---|---|---|\n"
+                            + row, encoding="utf-8")
+            err, out, saved = io.StringIO(), io.StringIO(), sys.argv
+            sys.argv = ["check_doc_figure_pins.py", str(page),
+                        "--section", "2b"]
+            try:
+                with (contextlib.redirect_stderr(err),
+                      contextlib.redirect_stdout(out)):
+                    rc = cdfp.main()
+            finally:
+                sys.argv = saved
+        return rc, out.getvalue(), err.getvalue()
+
+    def test_a_struck_first_cell_declines_and_raises_nothing(self):
+        # A decline that raised would turn the tool red on a page that is
+        # correct, so `problems` is the half worth holding next to the empty
+        # result. The exit code is the printed breakdown's case below.
+        results, declined, problems = audit(
+            TABLE + "| ~~2~~ | `:1` | held | |\n")
+        self.assertEqual(results, [])
+        self.assertEqual(len(declined), 1)
+        self.assertEqual(declined[0][0], "~~2~~")
+        self.assertIn("~~", declined[0][1])
+        self.assertEqual(problems, [])
+
+    def test_the_decline_reaches_the_printed_breakdown_and_the_run_exits_zero(self):
+        # The exit code and the reason both have to reach the reader, and they
+        # are opposite failures: a decline that failed would make the tool red
+        # on a correct page, and one that passed silently is issue #819's shape
+        # -- a checker that stopped firing without saying so. Driven through
+        # `main()` rather than read off `audit()`, because a decline that
+        # returns its reason and prints a different one is what this would have
+        # shipped with had `audit()` kept writing its own string.
+        rc, printed, err = self.report("| ~~2~~ | `:1` | held | |\n")
+        self.assertEqual(rc, 0, err)
+        self.assertIn("struck with `~~`", printed)
+        # On the row's own line, beside the cell it is about, and counted in the
+        # summary as a decline rather than as a figure that measured nothing.
+        self.assertIn("[not compared]", printed)
+        self.assertIn("1 not read by this method", printed)
+
+    def test_a_partly_struck_cell_declines_too(self):
+        # `~~2~~ (was 2)` is the same retraction with the superseded value
+        # repeated beside it. Read before the rule, it counted twice: the
+        # struck figure and its own correction, as two figures.
+        self.assertEqual(cdfp.figures("~~2~~ (was 2)")[0], [])
+        self.assertEqual(cdfp.figures("~~2~~ (was 2)")[1],
+                         cdfp.figures("~~2~~")[1])
+
+    def test_a_struck_cell_with_no_digits_still_declines_with_its_own_reason(self):
+        # The second struck row in the corpus names no figure at all, so it
+        # declines either way -- but by the strike rule now rather than by
+        # accident of its content, which is the distinction worth holding.
+        struck = cdfp.figures("~~the other-capture rule~~")[1]
+        self.assertIn("~~", struck)
+        self.assertNotEqual(struck, cdfp.figures("set(off) == set(on)")[1])
+
+    def test_a_retracted_verdict_is_not_read_as_a_live_marking(self):
+        # The reason the strike is detected where a figure is read and not by
+        # adding `~` to `MARKUP`. That regex is also how `verdict_column()`
+        # reads a header and `marking()` reads a verdict cell, so a `~` there
+        # would strip `~~held~~` to `held` and turn a retraction into a
+        # marking -- a correction becoming a silent claim.
+        self.assertEqual(cdfp.marking(["`390`", "~~held~~"], 1)[0], None)
+        self.assertEqual(cdfp.verdict_column(["figure", "~~verdict~~"]), None)
+
+    def test_a_lone_tilde_is_not_a_strike(self):
+        # The pair is what makes this a retraction rather than two characters of
+        # prose. Requiring it is what lets a cell that merely mentions the
+        # marker be read normally; matching a lone `~` would decline a figure
+        # for spelling.
+        self.assertEqual(cdfp.figures("~390~"), ([390], None))
+        self.assertEqual(cdfp.figures("~ 390"), ([390], None))
+
+    def test_the_corpus_page_is_the_fixture_for_the_strike_rule(self):
+        # The real cell, read out of the real page rather than written here, so
+        # the rule stays tied to a shape the corpus contains. Both figures the
+        # page's own correction says the struck row accounts for are named, so a
+        # rule that declined for a reason other than the strike would show up as
+        # a different reason string rather than as a pass.
+        cell = next(line.split("|")[1].strip() for line
+                    in CORPUS_PAGE.read_text(encoding="utf-8").split("\n")
+                    if line.startswith("| ~~"))
+        self.assertEqual(cell, "~~2~~")
+        self.assertEqual(cdfp.figures(cell), cdfp.figures("~~2~~"))
+
+
 class PinsMustResolve(unittest.TestCase):
     """The `file:line` rules, which are the only ones of their kind in the tree.
 
@@ -738,6 +857,52 @@ class SectionSelection(unittest.TestCase):
         with self.assertRaises(ValueError):
             cdfp.section("## 2. the groups, and §2b's split\n\na\n\n"
                          "### 2b. one\n\nb\n", "2b")
+
+    def test_a_struck_heading_is_refused_and_names_what_replaced_it(self):
+        # The corpus's own heading, and the reason refusing it is a fix rather
+        # than a nicety. A struck heading is followed by its replacement at the
+        # same level, so the section that comes back is short: measured before
+        # this rule, `--section "six shapes"` returned the heading, the
+        # correction blockquote under it and nothing else, and reported a clean
+        # run over it. Naming the replacement is what makes the refusal usable
+        # -- the token names nothing that survives the strike, so without it a
+        # reader would be sent looking for a heading that is right there.
+        with self.assertRaises(ValueError) as caught:
+            cdfp.section(CORPUS_PAGE.read_text(encoding="utf-8"), "six shapes")
+        message = str(caught.exception)
+        self.assertIn("struck", message)
+        self.assertIn("The five shapes", message)
+
+    def test_a_struck_heading_still_counts_towards_ambiguity(self):
+        # The three behaviours compose, and this is the one that would be easy
+        # to break in the fixing: filtering struck headings out of the match
+        # makes this token resolve to the live heading, which is the guess the
+        # ambiguity rule exists to refuse. `shapes` names both, so both count.
+        with self.assertRaises(ValueError) as caught:
+            cdfp.section(CORPUS_PAGE.read_text(encoding="utf-8"), "shapes")
+        self.assertIn("names 2 headings", str(caught.exception))
+
+    def test_a_live_heading_beside_a_struck_one_still_reads(self):
+        # The other half of the composition: refusing struck headings must not
+        # refuse the section that replaced one.
+        _lineno, _level, body = cdfp.section(
+            CORPUS_PAGE.read_text(encoding="utf-8"), "five shapes")
+        self.assertTrue(any("capture / window bound" in line for line in body))
+
+    def test_a_main_returns_two_for_a_struck_heading(self):
+        # `main()` turns the `ValueError` into a printed reason and exit 2,
+        # which is the same standing an absent or ambiguous token has.
+        err = io.StringIO()
+        argv = sys.argv
+        sys.argv = ["check_doc_figure_pins.py", str(CORPUS_PAGE),
+                    "--section", "six shapes"]
+        try:
+            with contextlib.redirect_stderr(err):
+                rc = cdfp.main()
+        finally:
+            sys.argv = argv
+        self.assertEqual(rc, 2, err.getvalue())
+        self.assertIn("struck", err.getvalue())
 
     def test_a_main_returns_two_for_a_missing_file_and_an_unusable_token(self):
         argv = sys.argv
