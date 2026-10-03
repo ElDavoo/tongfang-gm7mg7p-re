@@ -99,7 +99,7 @@ while reading as though it had answered this one.
 
 | listings read | entry | operand | no-listing |
 |---|---:|---:|---:|
-| **the bank the stub selects (bank 0)** | **25** | **0** | **23** |
+| **the bank the stub selects (bank 0)** | **26** | **0** | **22** |
 | the bank the row is filed under (bank 1) — *withdrawn, issue #255* | 19 | 22 | 7 |
 
 The two rows differ only in which bank's `.asm` files were asked. The withdrawn
@@ -155,8 +155,14 @@ Two of them were already transcribed by hand and are what
 
 - `0xC118` is `12 c0 e7 ef 60 03 7f 01 22 7f 00 22` — `lcall 0xC0E7` then the
   six-instruction restatement of its answer in R7 as 1 or 0. That is an entry
-  by any reading; it simply has no committed export.
-- `0xC10C` is the same seven instructions with `lcall 0xC0C9`.
+  by any reading. **SUPERSEDED (issue #337):** this row previously ended
+  "it simply has no committed export", which was true when the census was
+  measured and is not now — `0xC118` is seeded and exported, so the census
+  classifies it `entry` against `bank0/C118.asm` and the count in the table
+  above moved with it. The byte reading is unchanged and is what the listing
+  was checked against. See `bank0-c118-3202-bit0-thunk.md`.
+- `0xC10C` is the same seven instructions with `lcall 0xC0C9`, and is still
+  unexported: that one is issue #255's.
 
 The rest read as ordinary Keil output — `0xC2EF` is
 `90 16 06 e0 54 fb f0 22`, `mov DPTR,#0x1606; movx A,@DPTR; anl A,#0xfb; movx
