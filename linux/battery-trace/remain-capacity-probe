@@ -22,16 +22,130 @@
 # a direction is not the same as matching a quantity.
 # docs/hardware-tests/remain-capacity-0436.md is the procedure and does the
 # grading; run as root, AC charged, with a load you can hold for the whole window.
+#
+#   --dry-run           no /dev/mem, no root, no capture; one sample per phase
+#                       by default (BASELINE/DISCHARGE/RECOVERY still override)
+#   --sysfs-dir DIR     read BAT0/AC0 from DIR instead of /sys/class/power_supply
+#   --ec-reader CMD     read through CMD (`CMD read <addrs...>`) instead of
+#                       ec/tools/ecmem.py
+#
+# --sysfs-dir and --ec-reader are refused outside --dry-run. They exist to let
+# the tool's own parsing, guarding and formatting run against fixtures, and a
+# flag that could point a real run at something other than this EC is not one to
+# leave lying around. --dry-run without them answers from a built-in reader
+# that prints one distinguishable byte per address in the order asked, so the
+# column layout is reviewable without the machine the capture comes from.
+# Nothing here has been run against hardware by the pipeline that wrote it.
 set -u
+INVOKED_FROM=$(pwd)
+
+# Flags first, then the single positional output path, so §4's command and the
+# dry run's fixtures can be given in either order.
+DRY_RUN=0
+SYSFS_DIR=/sys/class/power_supply
+ECM=
+OUT_ARG=
+while [ "$#" -gt 0 ]; do
+  case $1 in
+    --dry-run) DRY_RUN=1 ;;
+    --sysfs-dir)
+      [ "$#" -ge 2 ] || { echo "remain-capacity-probe: --sysfs-dir needs a directory" >&2; exit 2; }
+      SYSFS_DIR=$2
+      shift
+      ;;
+    --ec-reader)
+      [ "$#" -ge 2 ] || { echo "remain-capacity-probe: --ec-reader needs a command" >&2; exit 2; }
+      ECM=$2
+      shift
+      ;;
+    -*)
+      echo "remain-capacity-probe: unknown option $1" >&2
+      echo "  flags: --dry-run --sysfs-dir DIR --ec-reader CMD, then the output path" >&2
+      exit 2
+      ;;
+    *)
+      [ -z "$OUT_ARG" ] || { echo "remain-capacity-probe: one output path, got $OUT_ARG and $1" >&2; exit 2; }
+      OUT_ARG=$1
+      ;;
+  esac
+  shift
+done
+
+if [ "$DRY_RUN" != 1 ] && { [ "$SYSFS_DIR" != /sys/class/power_supply ] || [ -n "$ECM" ]; }; then
+  echo "remain-capacity-probe: --sysfs-dir and --ec-reader are --dry-run only." >&2
+  echo "  A real run must read this machine's sysfs and this EC, not a fixture." >&2
+  exit 2
+fi
+
+# Made absolute here rather than after the cd below, so a relative fixture path
+# means what was typed on this command line and not something under the
+# repository root the cd moves to.
+case $SYSFS_DIR in
+  /*) ;;
+  *) SYSFS_DIR=$INVOKED_FROM/$SYSFS_DIR ;;
+esac
+
 cd "$(dirname "$0")/../.." || exit 1
-B=/sys/class/power_supply/BAT0
-A=/sys/class/power_supply/AC0
-OUT=${1:-evidence/ec-watch/$(date +%F)-0436-capacity.csv}
-ECM="python3 ec/tools/ecmem.py"
-STEP=${STEP:-1}
-BASELINE=${BASELINE:-60}
-DISCHARGE=${DISCHARGE:-600}
-RECOVERY=${RECOVERY:-120}
+REPO=$(pwd)
+B=$SYSFS_DIR/BAT0
+A=$SYSFS_DIR/AC0
+# §4's command is a bare `<date>-0436-capacity.csv` and §7 says the capture
+# lands under evidence/ec-watch/ already named, with no rename step and no
+# second file to reconcile. So a name carrying no `/` resolves there. A path
+# that already carries one is used as given, against the repository root this
+# script has just cd'd to, which is the only place a path was ever read from.
+if [ -n "$OUT_ARG" ]; then
+  case $OUT_ARG in
+    */*) OUT=$OUT_ARG ;;
+    *)   OUT=evidence/ec-watch/$OUT_ARG ;;
+  esac
+else
+  OUT=evidence/ec-watch/$(date +%F)-0436-capacity.csv
+fi
+# Absolute once, here, where the argument has been resolved against the
+# repository root. The print sites name $OUT on its own rather than composing
+# "$REPO/$OUT", which prepends the root to an argument that already carries one
+# and so prints a path that does not exist. Opening $OUT is unaffected: it was
+# resolved against this directory either way.
+case $OUT in
+  /*) ;;
+  *) OUT=$REPO/$OUT ;;
+esac
+
+if [ -z "$ECM" ]; then
+  if [ "$DRY_RUN" = 1 ]; then
+    # One distinguishable byte per address, printed in the order asked, so a
+    # dry run shows the column layout and each column is visibly its own
+    # address rather than a row of zeroes.
+    ec_dry_run_reader() {
+      shift   # the `read` word, which ecmem.py's own entry point also takes
+      local a n=0
+      for a in "$@"; do
+        printf '%s=0x%02x\n' "$(printf '%#06x' "$a")" "$((n * 17 + 3))"
+        n=$((n + 1))
+      done
+    }
+    ECM=ec_dry_run_reader
+  else
+    ECM="python3 ec/tools/ecmem.py"
+  fi
+fi
+# A dry run takes one sample per phase and no interval, so it finishes in
+# seconds on a machine that is not the target. An explicit environment setting
+# still wins over that default, because the summary's first-to-last arithmetic
+# is per phase: a phase of one sample can never show a series falling, so the
+# block that names what fell would be unreachable offline without this.
+if [ "$DRY_RUN" = 1 ]; then
+  STEP=${STEP:-0}
+  BASELINE=${BASELINE:-1}
+  DISCHARGE=${DISCHARGE:-1}
+  RECOVERY=${RECOVERY:-1}
+else
+  STEP=${STEP:-1}
+  BASELINE=${BASELINE:-60}
+  DISCHARGE=${DISCHARGE:-600}
+  RECOVERY=${RECOVERY:-120}
+fi
 
 # Every address this probe may read, as one constant. The bound check below is
 # in code rather than in the procedure prose because a typo here is the only
@@ -53,16 +167,63 @@ for a in "${ADDRS[@]}"; do
   done
 done
 
-[ "$(id -u)" = 0 ] || { echo "run as root: /dev/mem" >&2; exit 1; }
-[ -r "$B/charge_now" ] || { echo "no $B/charge_now on this machine" >&2; exit 1; }
+# The key each column's answer has to carry, in the same order. This is the
+# exact string ec/tools/ecmem.py prints -- its __main__ formats with `{a:#06x}`
+# and printf's '%#06x' produces the same 0x0402 for 0x402 -- rather than a guess
+# at the shape, because the sample loop compares against it. The Linux
+# counterpart of ec_validate.py's in-code check_page: a bound asserted in the
+# tool, not in the procedure prose.
+WANT=()
+for a in "${ADDRS[@]}"; do
+  WANT+=("$(printf '%#06x' "$a")")
+done
+
+[ "$DRY_RUN" = 1 ] || [ "$(id -u)" = 0 ] || { echo "run as root: /dev/mem" >&2; exit 1; }
+[ -r "$B/charge_now" ] || { echo "no $B/charge_now here" >&2; exit 1; }
 
 HEADER="ts,phase,ac,status,capacity,charge_now_uwh,charge_mwh,current_now,voltage_now,ec_0436_0437,ec_u16,ec_u16_as_uwh,ec_0404_full,ec_0402_design,ec_0434_ma"
 # A `#` comment above a real header row, which is the order
 # evidence/battery-traces/2026-09-17-limit-pair.csv uses and the one every CSV
 # reader in this repo expects: the comment says what produced the file, and the
 # row below it is the header. `limit-pair-test` writes the same way.
-echo "# remain-capacity-probe, read-only, 0x0400-0x045F only, ${STEP}s samples" > "$OUT"
-echo "$HEADER" >> "$OUT"
+#
+# `>` on the first line and appends after it, so a re-run replaces the capture
+# rather than extending the one before it. A dry run prints both to stdout and
+# opens nothing at all, which is what makes it safe to run anywhere.
+capture_header() {
+  printf '# remain-capacity-probe, read-only, 0x0400-0x045F only, %ss samples\n' "$STEP"
+  printf '%s\n' "$HEADER"
+}
+# The path is named before $OUT is opened, not after, so a run says where it is
+# writing before it has written anything there -- including the truncation on
+# the branch below, which destroys whatever a previous run left at that name.
+if [ "$DRY_RUN" = 1 ]; then
+  printf 'remain-capacity-probe: --dry-run, no EC read and no file written; would write %s\n' "$OUT"
+  capture_header
+else
+  printf 'remain-capacity-probe: writing %s\n' "$OUT"
+  capture_header > "$OUT"
+fi
+
+# A line of the capture that is not a data row. Same stdout-or-file split as
+# the header.
+capture_note() {
+  if [ "$DRY_RUN" = 1 ]; then
+    printf '%s\n' "$*"
+  else
+    printf '%s\n' "$*" >> "$OUT"
+  fi
+}
+
+# The row stream, which is the one that also has to reach the terminal so a run
+# in progress is readable while it is happening.
+capture_row() {
+  if [ "$DRY_RUN" = 1 ]; then
+    cat
+  else
+    tee -a "$OUT"
+  fi
+}
 
 # Per-phase first/last of each series, so the summary is a delta rather than a
 # terminal. Keyed by "phase,series" and only ever written by one process.
@@ -75,18 +236,42 @@ BOUND_EC=0
 BOUND_FULL=0
 
 sample() {
-  local phase=$1 n=$2 i b design full current ec_u16 charge_now charge_mwh ac
+  local phase=$1 n=$2 i c key value extra design full current ec_u16 charge_now charge_mwh ac
+  local -a b lines
   for ((i = 0; i < n; i++)); do
-    mapfile -t b < <($ECM read "${ADDRS[@]}" | cut -d= -f2)
+    mapfile -t lines < <($ECM read "${ADDRS[@]}")
     # ecmem.py prints one "0xNNN=0xNN" line per address; a short answer means
     # the window was not readable, and indexing past the end of an empty array
-    # under `set -u` is a confusing way to say so.
-    if [ "${#b[@]}" -ne "${#ADDRS[@]}" ]; then
-      echo "remain-capacity-probe: got ${#b[@]} of ${#ADDRS[@]} bytes from $ECM" >&2
+    # under `set -u` is a confusing way to say so. This stays first because a
+    # short read says more here than anything the check below could say about
+    # a line that is not there at all.
+    if [ "${#lines[@]}" -ne "${#ADDRS[@]}" ]; then
+      echo "remain-capacity-probe: got ${#lines[@]} of ${#ADDRS[@]} bytes from $ECM" >&2
       return 1
     fi
-    # The low byte first: u16() in ec_validate.py and the pair helpers in the
-    # EC firmware both read these little-endian.
+    b=()
+    for ((c = 0; c < ${#ADDRS[@]}; c++)); do
+      # Each column is checked against the address that position asked for,
+      # before any column is filled. The count above catches an answer of the
+      # wrong length, which is what an extra line or a dropped one produces;
+      # this catches the one that is the right length and the wrong order, or
+      # the right order under a renamed key. Every one of those rotates the
+      # columns by one and the capture is then committed under a header that
+      # reads correctly -- the shape of a wrong answer that looks like a result.
+      # Compared case-insensitively so a case change in the reader's own
+      # format is not mistaken for a rotation.
+      IFS='=' read -r key value extra <<<"${lines[$c]}"
+      if [ "${key,,}" != "${WANT[$c],,}" ] || [ -n "$extra" ] || [ -z "$value" ]; then
+        printf 'remain-capacity-probe: column %d should carry %s and got %s.\n' \
+          "$c" "${WANT[$c]}" "${lines[$c]}" >&2
+        printf '  Columns are filled by position, so a rotated or mislabelled\n' >&2
+        printf '  answer is committed under a header that reads correctly.\n' >&2
+        return 1
+      fi
+      # The low byte first: u16() in ec_validate.py and the pair helpers in the
+      # EC firmware both read these little-endian.
+      b+=("$((value))")
+    done
     design=$((b[0] + (b[1] << 8)))
     full=$((b[2] + (b[3] << 8)))
     current=$((b[4] + (b[5] << 8)))
@@ -104,7 +289,7 @@ sample() {
       "$(cat "$B/capacity")" "$charge_now" "$charge_mwh" \
       "$(cat "$B/current_now")" "$(cat "$B/voltage_now")" \
       "0x$(printf '%02x%02x' "${b[6]}" "${b[7]}")" "$ec_u16" \
-      "$((ec_u16 * 1000))" "$full" "$design" "$current" | tee -a "$OUT"
+      "$((ec_u16 * 1000))" "$full" "$design" "$current" | capture_row
     if [ "$BOUND_OK" = 1 ] && [ "$ec_u16" -gt "$full" ]; then
       BOUND_OK=0
       BOUND_EC=$ec_u16
@@ -126,13 +311,13 @@ sample() {
   done
 }
 
-echo "# phase baseline begins" >> "$OUT"
+capture_note "# phase baseline begins"
 sample baseline "$BASELINE" || exit 1
 echo "baseline done ($BASELINE samples) -- pull AC now and start the load"
-echo "# phase discharge begins" >> "$OUT"
+capture_note "# phase discharge begins"
 sample discharge "$DISCHARGE" || exit 1
 echo "discharge done ($DISCHARGE samples) -- AC back in, or stop the load"
-echo "# phase recovery begins" >> "$OUT"
+capture_note "# phase recovery begins"
 sample recovery "$RECOVERY" || exit 1
 
 # The report. Three series, each as first -> last and a signed delta, and then
@@ -142,11 +327,31 @@ sample recovery "$RECOVERY" || exit 1
 echo
 echo "=== per-phase, first -> last (signed delta) ==="
 fell=()
+# The phases charge_mwh was published in, and the ones it was not. The verdict
+# below turns on this: "charge_mwh included" is only true of a run whose driver
+# published charge_now in every phase, and a phase with no charge_mwh at all is
+# not a phase charge_now sat flat through.
+CHARGE_MWH_PHASES=()
+CHARGE_MWH_MISSING=()
 for phase in baseline discharge recovery; do
   echo "$phase"
   for series in charge_mwh ec_u16 ec_u16_as_uwh; do
-    f=${FIRST["$phase,$series"]}
-    l=${LAST["$phase,$series"]}
+    pk="$phase,$series"
+    # Presence is checked before the pair is read, not after. sample() skips
+    # writing one for a series a phase published nothing for, and reading an
+    # element that was never written is fatal under `set -u` rather than empty
+    # -- which is how a capture finished on disk lost its closing report. Zero
+    # is not substituted either: `printf '%8d'` on an empty operand prints a
+    # plausible "0 -> 0 (+0)" for a series no sample published, which is a
+    # worse answer than saying there was none.
+    if [ -z "${FIRST[$pk]+set}" ]; then
+      printf '  %-16s %s\n' "$series" "not published this phase"
+      [ "$series" = charge_mwh ] && CHARGE_MWH_MISSING+=("$phase")
+      continue
+    fi
+    [ "$series" = charge_mwh ] && CHARGE_MWH_PHASES+=("$phase")
+    f=${FIRST[$pk]}
+    l=${LAST[$pk]}
     printf '  %-16s %8d -> %-8d (%+d)\n' "$series" "$f" "$l" "$((l - f))"
     if [ "$l" -lt "$f" ]; then
       fell+=("$phase $series")
@@ -154,13 +359,45 @@ for phase in baseline discharge recovery; do
   done
 done
 
+# Printed under both verdicts, because it qualifies both: a phase that published
+# no charge_mwh cannot be a phase charge_now fell through. Unindented from the
+# per-phase report above, so it reads as a note about the whole run.
+if [ "${#CHARGE_MWH_MISSING[@]}" -gt 0 ]; then
+  echo "note: charge_mwh was not published in: ${CHARGE_MWH_MISSING[*]}"
+fi
+
 echo
 if [ "${#fell[@]}" -eq 0 ]; then
-  echo "moved down with charge_mwh: nothing at all, charge_mwh included --"
-  echo "  a window that long with a flat charge_now is not a discharge"
+  if [ "${#CHARGE_MWH_MISSING[@]}" -eq 0 ]; then
+    echo "moved down with charge_mwh: nothing at all, charge_mwh included --"
+    echo "  a window that long with a flat charge_now is not a discharge"
+  elif [ "${#CHARGE_MWH_PHASES[@]}" -eq 0 ]; then
+    echo "nothing fell, and charge_mwh was published in no phase -- so this"
+    echo "  capture does not say whether the pack moved. It is not the"
+    echo "  not-a-discharge verdict, which needs a charge_mwh to compare."
+  else
+    echo "nothing fell, and charge_mwh was published only in: ${CHARGE_MWH_PHASES[*]}"
+    echo "  -- so this is not the not-a-discharge verdict either. Nothing fell"
+    echo "  in the phases that published one, and the rest cannot be compared."
+  fi
   exit 0
 fi
-echo "moved down with charge_mwh:"
+# The heading names what was actually compared. A falling ec_u16 under
+# "moved down with charge_mwh" asserts that charge_mwh fell with it, and that
+# is the discrimination the procedure's §8 grades on; a run where the EC moved
+# and the pack did not says the opposite thing, and a phase that published no
+# charge_mwh at all cannot support either claim.
+CHARGE_FELL=0
+for entry in "${fell[@]}"; do
+  case $entry in
+    *charge_mwh) CHARGE_FELL=1 ;;
+  esac
+done
+if [ "$CHARGE_FELL" = 1 ]; then
+  echo "moved down with charge_mwh, in the phases above that published it:"
+else
+  echo "charge_mwh did not fall in any phase that published it; what fell:"
+fi
 any=0
 for entry in "${fell[@]}"; do
   case $entry in
@@ -188,4 +425,7 @@ echo "capacity moves with load, and both can fall across a discharge; what"
 echo "settles 0x0436 is docs/hardware-tests/remain-capacity-0436.md read against"
 echo "this capture. Nothing was written to the EC, and no hardware test has been"
 echo "run by the pipeline that wrote this script."
+if [ "$DRY_RUN" = 1 ]; then
+  echo "dry run: nothing was read from an EC and no file was written."
+fi
 echo "capture: $OUT"
