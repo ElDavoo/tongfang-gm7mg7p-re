@@ -217,6 +217,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`test-name-grader-coupling.md`](test-name-grader-coupling.md) — A test name that claims a coupling the test does not make
 - [`test-site-fits-guard.md`](test-site-fits-guard.md) — `test_site()` bounds the index at `:217` and reads three bytes underneath it, and the second bound is now there
 - [`testdata-addr-column-claim.md`](testdata-addr-column-claim.md) — A claim about a capture is columnar, and a claim about a fixture is not (issue #975)
+- [`testdata-grader-claims.md`](testdata-grader-claims.md) — What the testdata index's claims about the grader's own output grade to (issue #1007)
 - [`testdata-index-check.md`](testdata-index-check.md) — `ec/tools/testdata/README.md` is now held to the tree under it (issue #727)
 - [`testdata-index-evidence-column.md`](testdata-index-evidence-column.md) — The fixture CSVs' `evidence` column is resolved against the real tree, and eight cells that named nothing there are empty (issue #780)
 - [`testdata-index-feeds-and-call-graph.md`](testdata-index-feeds-and-call-graph.md) — The testdata index's `Feeds` column and its self-indexed nested tables are read too (issue #746)
