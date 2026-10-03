@@ -77,6 +77,7 @@ import io
 import os
 import sys
 
+from access_cell_corrections import corrected
 from disasm8051 import (FLOW_OPCODES, OPCODE_LEN, case_table_len, converges_from,
                         inline_arg_len, mnemonic, paged_target)
 
@@ -531,7 +532,19 @@ def csv_table(d: bytes, addrs, pd_verified: bool, census=None,
     after it, and is off by default for the same reason: the 0x086x table's
     own `--check` is the regression test that no `access` or `window` cell
     moved when the other six tables gained one, and it can only stay that
-    while the default output has no column in it."""
+    while the default output has no column in it.
+
+    **The `access` cell goes through `access_cell_corrections.corrected()`
+    and not straight out of `classify()`.** For every row but a handful that
+    is the same string; the handful are sites whose committed cell was
+    corrected because the budget-8 window was too short to hold an access of
+    its own, and the correction has to be *derived* rather than typed into
+    the CSV or `--check` here would refuse the file it produced. Their
+    `window` and `terminator` cells are untouched -- they are still
+    budget-truncated, and that stays true whatever the cell says. The module
+    docstring there is the long version;
+    `../../docs/findings/class-b-access-cell-corrections.md` carries the
+    bytes."""
     buf = io.StringIO()
     w = csv.writer(buf)
     columns = ["addr", "file_offset", "region", "runtime", "frame_onto",
@@ -551,7 +564,7 @@ def csv_table(d: bytes, addrs, pd_verified: bool, census=None,
             insns, why = walk_why(d, o)
             row = [f"0x{addr:04X}", f"0x{o:05X}", name,
                    f"0x{rt:04X}" if rt is not None else "",
-                   onto, over, classify(insns),
+                   onto, over, corrected(o, classify(insns)),
                    " ; ".join(" ".join(mn.split()) for _, _, mn in insns[1:])]
             if census is not None:
                 cell = census.get(row[1])
