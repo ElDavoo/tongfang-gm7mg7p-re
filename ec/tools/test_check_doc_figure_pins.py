@@ -77,17 +77,26 @@ class ClassifiesTheRealTree(unittest.TestCase):
     names one figure and the verdict it has to have, so a tree that changes under
     any of them fails here rather than quietly changing what the page claims.
 
-    **Every figure §2b's tables list measured `held` as of #850, so this class
-    no longer has a §2b figure to assert `unheld`.** The two that remain are
+    **Every figure §2b's tables list measured `held` as of #850, and as of
+    #918 this class has no §2b figure to assert `unheld` either — the two §2b's
+    prose named beside its tables are both pinned now.** The `unheld` verdict is
     asserted anyway, because a checker for held-versus-unheld that has never
-    seen the other verdict is decoration: `51` is the one figure §2b's prose
-    names as open, and `8826` is a `BUCKET_TOTALS` value this checker measures
-    `unheld` — not because the tree never reads it, since `--self-test` compares
-    every key of the constant, but because `reads()` credits a key that is
-    *subscripted* outside its own definition and `BUCKET_TOTALS` is only
-    iterated by key. `unheld` is "not found by this method". Both are also
-    shapes rather than §2b rows, and the second is what keeps the `unheld`
-    branch measured against the real tree at all.
+    seen the other verdict is decoration: `31` is a real cluster row's
+    `functions_touched` cell that nothing in `ec/tools/*.py` asserts, and `8826`
+    is a `BUCKET_TOTALS` value this checker measures `unheld` — not because the
+    tree never reads it, since `--self-test` compares every key of the constant,
+    but because `reads()` credits a key that is *subscripted* outside its own
+    definition and `BUCKET_TOTALS` is only iterated by key. `unheld` is "not
+    found by this method". Both are shapes rather than §2b rows, and the second
+    is what keeps the `unheld` branch measured against the real tree at all.
+
+    **`51` was the first of the two and is now a case of its own.** It is the
+    guard-off `pd` cluster count §2b's prose named as the one figure there
+    nothing held, and it measured `unheld` here until #918 asserted it beside
+    the `394` in `test_xdata_cluster_names.py`. The case that watched it as
+    unheld now watches it as held, which is the same watch with the other
+    polarity: a pin deleted out of the tree takes the figure back to `unheld`
+    and this fails.
     """
 
     def assertVerdict(self, value, want, pins=()):
@@ -155,6 +164,27 @@ class ClassifiesTheRealTree(unittest.TestCase):
         for value in (3949, 3206, 7189, 7936, 193, 142, 279, 239):
             self.assertVerdict(value, cdfp.BY_LITERAL)
 
+    def test_the_guard_off_pd_cluster_count_is_pinned_beside_the_394(self):
+        # The one figure §2b's prose named beside its tables as held by nothing.
+        # It needed a case here for a structural reason rather than a personal
+        # one: §6a does not print it, so it is not in §2b's tables, so
+        # `check_doc_figure_pins.py --section 2b` never audits it and the §2b
+        # audit's own all-held column says nothing about it either way. #918
+        # asserted it in `test_xdata_cluster_names.py`, beside the `394` that is
+        # the main-EC arm of the same pair, and this is the watch on it: delete
+        # that assertion and the figure goes back to `unheld` and this case
+        # fails. Before #918 the watch ran the other way, in
+        # `test_a_small_figure_is_not_pinned_by_an_unrelated_cell`, which used
+        # this figure as its real-tree witness for the over-match rule.
+        verdict, detail = cdfp.measure(51, [], FOUND)
+        self.assertEqual(verdict, cdfp.BY_LITERAL, detail)
+        # Held by the census suite's own assertion rather than by an oracle key
+        # or a cited CSV cell, which is the strongest thing a figure can be held
+        # by and the reason naming the file is worth a second assertion: a `51`
+        # that some later constant happened to equal would be a promise, and
+        # this case is what tells the two apart.
+        self.assertIn("test_xdata_cluster_names.py", detail)
+
     def test_the_cluster_refs_cell_is_held_through_the_line_the_row_cites(self):
         # `4,966` is the `refs` cell of `main-ec-003`, and `--check` compares
         # that whole file, so a re-derivation that moved it turns the cheap gate
@@ -166,28 +196,40 @@ class ClassifiesTheRealTree(unittest.TestCase):
         self.assertVerdict(43, cdfp.BY_LITERAL, pins)
 
     def test_a_small_figure_is_not_pinned_by_an_unrelated_cell(self):
-        # The over-match the cited-line rule exists to prevent. `51` is the
-        # guard-off pd cluster count §2b's prose names as the one figure there
-        # nothing holds, and `51` is also a cell in some other cluster's row;
-        # with no citation the measurement refuses to borrow the other one. A
-        # tool that called this held would be wrong about a figure a re-deriver
-        # would then be told to skip. `8826` is the second shape, and its reason
-        # is the oracle rule's: `reads()` credits a key that is *subscripted*
-        # outside its own definition, and `BUCKET_TOTALS` is never subscripted —
-        # `--self-test` walks it by key at `xdata_register_map.py:4284-4286` and
-        # compares every value, so `8826` is not a value the tree ignores — it is
-        # one this checker has no subscription to see. That is what makes it the
-        # negative case for the rule rather than a claim about the tree.
+        # The over-match the cited-line rule exists to prevent. `31` is a cell
+        # in three committed cluster rows — `main-ec-007`'s
+        # `functions_touched`, and the `refs` of `main-ec-030` and `main-ec-039`
+        # — and nothing in `ec/tools/*.py` asserts it; with no citation the
+        # measurement refuses to borrow any of those three. A tool that called
+        # this held would be wrong about a figure a re-deriver would then be
+        # told to skip. `8826` is the second shape, and its reason is the oracle
+        # rule's: `reads()` credits a key that is *subscripted* outside its own
+        # definition, and `BUCKET_TOTALS` is never subscripted —
+        # `--self-test` walks it by key and compares every value, so `8826` is
+        # not a value the tree ignores — it is one this checker has no
+        # subscription to see. That is what makes it the negative case for the
+        # rule rather than a claim about the tree.
+        #
+        # **The witness was `51` until #918**, the guard-off pd cluster count,
+        # because a figure §2b's prose names as open is the strongest version of
+        # this case: being wrongly told it is held sends a re-deriver past real
+        # work. It cannot be that figure any more, because #918 pinned it, and a
+        # witness has to be a figure this checker measures `unheld` or the case
+        # proves nothing. `31` is the replacement and it is a weaker witness on
+        # purpose: no page names it, so the verdict is stable, and it is in more
+        # rows than the `51` was, which gives an over-matching tool more chances
+        # to borrow one. The `51` itself is not dropped from the file — the case
+        # above watches it, with the other polarity.
         #
         # The first assertion is what keeps the case from going vacuous: a
         # figure that is in no committed cell would prove nothing about the
         # rule, so the cell is checked for before the verdict is.
         self.assertTrue(
-            any(51 in cells for cells
+            any(31 in cells for cells
                 in FOUND["cells"]["ec/annotations/xdata-clusters.csv"].values()),
-            "51 is in no committed cluster row, so this case is not testing "
+            "31 is in no committed cluster row, so this case is not testing "
             "the over-match rule any more")
-        for value in (51, 8826):
+        for value in (31, 8826):
             self.assertVerdict(value, cdfp.UNHELD)
 
 
@@ -367,10 +409,13 @@ class ReadsTheFigure(unittest.TestCase):
     def test_only_the_first_cell_is_a_figure_cell(self):
         # Bounding the reader is what keeps a prose cell's "1,169 addresses" out
         # of a count it was never making: §6a's own first cell carries one and is
-        # quoted in the middle column here.
-        self.assertEqual(verdicts(TABLE + "| `51` | main-EC `write` references "
+        # quoted in the middle column here. The figure cell is `31` rather than
+        # the `51` it was until #918, for the reason the over-match case gives:
+        # a synthetic row here asserts `unheld`, so its figure has to be one the
+        # real tree measures `unheld`, and #918 pinned the `51`.
+        self.assertEqual(verdicts(TABLE + "| `31` | main-EC `write` references "
                                   "(1,169 addresses) | unheld | |\n"),
-                         {51: ("unheld", "unheld")})
+                         {31: ("unheld", "unheld")})
 
     def test_a_row_with_no_verdict_cell_at_all_is_reported(self):
         # The shape an accidental merge leaves behind. Reporting it is the whole
@@ -569,11 +614,15 @@ class TheOracleRule(unittest.TestCase):
         # `name_clusters`' second return value and `print_carry`'s third
         # parameter, every one of them above this span. Re-read against the
         # file; the same move-and-not-an-edit shape as each step above it.
+        # **`:4872-4878` since issue #918**, which added two comments to
+        # `OWNERSHIP` and to the pd-half check, both above this span and neither
+        # inside it. Same shape as every step above it: re-read from the file,
+        # not shifted by the size of those two edits.
         self.assertEqual(
             cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
                                   "largest_class", 1, 2, found["texts"],
                                   found["asserted"])),
-            "ec/tools/xdata_register_map.py:4855-4861")
+            "ec/tools/xdata_register_map.py:4872-4878")
 
     def test_the_census_csvs_are_read_from_the_tool_that_writes_them(self):
         # Derived from `OUT_REGISTERS`/`OUT_CLUSTERS` rather than named here, so
@@ -645,15 +694,21 @@ class TheOracleRule(unittest.TestCase):
         # with them, naming this tree's `:3910` -- the sum the `lines[3910]`
         # assertion below points at -- because a guard that can never fail is
         # not a guard. Both re-read against the file, not shifted by arithmetic.
-        self.assertIn("3921-3938", detail)
-        self.assertNotIn(":3910", detail)
+        # **`:3930-3947` / `#3919` since issue #918**, which added two comments
+        # to `OWNERSHIP` and to the pd-half check, both above this span and
+        # neither inside it. That is the seventh merge-shaped step here, and
+        # like the six before it both members of the pair moved together, which
+        # is what holding the pair is for; the negative guard is re-pinned with
+        # them for the reason the step above gives.
+        self.assertIn("3930-3947", detail)
+        self.assertNotIn(":3919", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3910])
-        self.assertIn("check(", lines[3920])
+        self.assertIn("extmem_both", lines[3919])
+        self.assertIn("check(", lines[3929])
         self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3937])
+                      lines[3946])
 
 
 class SectionSelection(unittest.TestCase):
