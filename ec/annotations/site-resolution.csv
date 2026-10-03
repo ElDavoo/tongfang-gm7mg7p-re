@@ -33,6 +33,9 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x0403,BAT_DESIGN_CAPACITY,0x13E4A,bank1,0xBE4A,read,read,0xBE10 FUN_CODE_be10,,
 0x0403,BAT_DESIGN_CAPACITY,0x15118,bank1,0xD118,read,read,0xD0C4 update_0524_0526_4a0_and_0497_flags,,
 0x0390,XDATA_0390,0x16176,bank1,0xE176,read,read,0xE100 FUN_CODE_e100,,
+0x0391,XDATA_0391,0x15BC5,bank1,0xDBC5,write,write,0xDB0B FUN_CODE_db0b,,
+0x0391,XDATA_0391,0x16171,bank1,0xE171,read,read,0xE100 FUN_CODE_e100,,
+0x0391,XDATA_0391,0x1626A,bank1,0xE26A,read,read,0xE237 gate_1c00_init_defaults,,
 0x0404,BAT_FULL_CAPACITY_1,0x0AA34,bank0,0xAA34,read,read,not exported,,
 0x0404,BAT_FULL_CAPACITY_1,0x13214,bank1,0xB214,handed to lcall/ljmp -> callee reads,read,0xB214 set_carry_if_0404_0405_is_0201,0x8892,0x8892 read_xdata_pair_to_r3r4
 0x0404,BAT_FULL_CAPACITY_1,0x1323B,bank1,0xB23B,handed to lcall/ljmp -> callee reads,read,0xB224 FUN_CODE_b224,0x8892,0x8892 read_xdata_pair_to_r3r4
