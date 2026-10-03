@@ -42,7 +42,7 @@ alone.
 
 **The declaration is inside a block the form set never opens.** It sits within
 the `DisableIf` at `:26613` whose operand is a bare `True` at `:26614`, a block
-that runs to `:27300` and holds a run of hidden numerics of this same shape.
+that holds a run of hidden numerics of this same shape.
 A `DisableIf` on `True` disables unconditionally, so the IFR states **no
 setup-time path that writes `0xE9F`**. That is a statement about the form set
 and nothing more: whatever does write it is DXE/SMM code or the TSE itself, and
@@ -115,7 +115,7 @@ committed evidence:
 | route | status |
 |---|---|
 | The TSE opens root form `0x2710`, whose six tabs carry no condition | **not established.** The six `Ref`s at `:65`–`:70` are ungated, which is a fact about the IFR and not a claim the page is reachable. `0x2710` has no incoming `Ref`, which is what a TSE-opened root looks like — and also what an orphan looks like. Settling it needs the `AMITSE` decompile. |
-| Set `DynamicPageCount` to a real page count | **not established, and the IFR works against it.** The variable lives in a `DisableIf(True)` block, so the form set states no path that writes it. Whether the OS can reach the store is separately unresolved — §6 establishes boot-services-only for the five stores it names, not for this one, and this one is absent from the OS-visible variable list while thirteen others are (below). `0xFFFF` is the sentinel, not a count. |
+| Set `DynamicPageCount` to a real page count | **not established, and the IFR works against it.** The variable lives in a `DisableIf(True)` block, so the form set states no path that writes it. Whether the OS can reach the store is separately unresolved — §6 establishes boot-services-only for the five stores it names, not for this one, and this one is absent from the OS-visible variable list, which settles nothing either way (below). `0xFFFF` is the sentinel, not a count. |
 | Enter Advanced via the suppressed self-`Ref` at `:1675` | **not a route in.** It points at `0x2718` from inside `0x2718` and is suppressed exactly when the sentinel is set. It is a breadcrumb for a page you are already on. |
 | Enter Advanced via a `Ref` in `0x2717` | **does not exist.** Form `0x2717` holds no `Ref` opcode. This corrects the issue's premise rather than answering it. |
 | A `UniWillVariable` flag, as with the memory menu (§8) | **not found by this method.** `UniWillVariable` occurs zero times in the Setup dump and no `VarStore` line declares it — the scoped negative `bios/ifr/README.md` already records and `test_ifr_census.py` already holds. `DynamicPageCount` is on its own GUID `B63BF800-…`, not an alias of `UniWillVariable`, so §8's trick has no obvious analogue here. |
@@ -140,14 +140,17 @@ appears in the live variable list, and read it before and after entering setup
 `AmiHardwareSignatureSetupUpdateCountVar` and `CpuSetupVolatileData` — which is
 why this is a whole-name reading and not a `grep` count.)
 
-**That absence is unexplained rather than explained, because the list is not
-blind to this dump's VarStores.** Thirteen others it declares *are* present as
-whole names: `PlatformLang`, `PlatformLangCodes`, `Timeout`, `BootOrder`,
-`SetupCpuFeatures`, `CpuSetupVolatileData`, `NBGopPlatformData`, `VendorKeys`,
-`SetupMode`, `SecureBoot`, `AuditMode`, `DeployedMode` and `FixedBootGroup`. A
-list that shows those would have shown `DynamicPageCount` had it been a store
-the OS can see, so its absence is an observation about that store rather than a
-property of the list.
+**The names the list does show are not a control.** Every one of them that this
+dump also declares as a VarStore is either on `EFI_GLOBAL_VARIABLE`
+(`8BE4DF61-…`) — the ordinary UEFI global-variable namespace, not an AMI HII
+store — or shares its GUID with a store the list does not show: `Setup` shares
+`EC87D643-…` with `SetupCpuFeatures`, `NBGopPlatformData` and
+`FixedBootGroup`, and `CpuSetup` shares `B08F97FF-…` with
+`CpuSetupVolatileData`. Stores on one and the same GUID land on both sides of
+that line, so presence in this list is not tracking OS-visibility of a store at
+all. What is left is the observation itself: `DynamicPageCount` is a name that
+does not appear in this file, which is consistent with §6's boot-services-only
+account for the setup stores and settles nothing about the store it is on.
 
 **§6 covers the other names, not this one.** `docs/findings.md` §6 says AMI's
 `Setup`, `SaSetup`, `PchSetup`, `CpuSetup` and `MeSetup` "are boot-services-only,
