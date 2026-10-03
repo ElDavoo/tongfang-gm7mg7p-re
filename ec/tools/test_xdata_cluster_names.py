@@ -1070,6 +1070,40 @@ class TheGeneratorsAreUnchanged(unittest.TestCase):
             self.assertEqual(cid, row["cluster_id"])
 
 
+def key_disagreements(clusters_rows, registers_rows):
+    """{addr: (the row's cluster_key, its cluster's cluster_key)} for the
+    register rows carrying a key their own clusters CSV does not give them.
+
+    Offenders rather than an assertion, so the case that holds this and the
+    forgery that shows it capable of going red ask one question of one
+    implementation. Not beside `clusters_of`/`registers_of` above because
+    those read one file and this compares two: the pair is the claim, and a
+    reader checking the question itself should find it in one place.
+    """
+    by_id = {cid: row["cluster_key"] for cid, row in clusters_rows.items()}
+    bad = {}
+    for r in registers_rows:
+        expected = by_id[r["cluster_id"]]
+        if r["cluster_key"] != expected:
+            bad[r["addr"]] = (r["cluster_key"], expected)
+    return bad
+
+
+def programs_not_mentioned(clusters_rows, registers_rows):
+    """Sorted programs the clusters CSV has that the registers CSV never names.
+
+    Set coverage rather than a row count, and the difference is the point: a
+    count is a symptom of a collision and the whole of a coverage claim, which
+    is why a registers CSV that lost every row of one program answers a
+    per-program count exactly as well as one that kept them. The two CSVs are
+    also not a per-program mirror of one another -- see
+    `docs/findings/xdata-registers-agreement-vacuity.md` -- so a per-program
+    count compared across the two is not a claim this repository satisfies.
+    """
+    mentioned = {r["program"] for r in registers_rows}
+    return sorted({row["program"] for row in clusters_rows.values()} - mentioned)
+
+
 class TheGuardOffKeyDistinctness(unittest.TestCase):
     """The guard-off generation's own key uniqueness, held by a case.
 
@@ -1096,13 +1130,37 @@ class TheGuardOffKeyDistinctness(unittest.TestCase):
     no business touching. The regeneration is the one `guard_off()` already
     caches, so this costs no second run -- the two classes share it.
 
-    **The property is the claim; the totals are not.** Nothing here pins 445
+    **The property is the claim; the totals are not -- and that is reasoning
+    about a collision, not about the registers case.** Nothing here pins 445
     or 439. `duplicate_keys()` answers "are these distinct", and a re-
     derivation that moved the count would not have anything to say about the
     design being defended. The row count appears in the failure message, where
     a reader who is chasing a collision sees it, and nowhere else. That is the
     same reasoning `TheGuardOffRegeneration` applies to its `> 300` floor and
     `assertTrue(movers, ...)` to its exhibit, and for the same reason.
+
+    **A count is the wrong witness for coverage, and coverage is the other
+    half of what the registers case holds.** "Every register row the
+    generation wrote carries its cluster's key" has a shorter witness than
+    "every register row agrees", and the shorter one is the one that can
+    shrink without anything going red: a registers CSV with no rows at all
+    satisfies a row count, and one missing every `pd` row satisfies a
+    per-program count, while the byte-to-key comparison over the rows that
+    survive is simply true of both. So what the case below floors is a *set* --
+    the CSV is non-empty, and it names every program its clusters CSV has --
+    and no figure from either census is written into it.
+
+    **The committed pair is held differently, and the difference is
+    mechanical rather than editorial.** `TheContentKey`'s registers loop is
+    left as it is because `xdata_register_map.py --check` regenerates both
+    committed CSVs from the committed tree and byte-compares them, and the
+    cheap gate runs it; a truncated, emptied or half-programmed committed
+    `xdata-registers.csv` is a byte diff there, which is a stronger floor than
+    one added here could be. This pair has no such floor *by construction* --
+    `--no-eq-guard` is refused together with `--check` and refused again
+    without scratch outputs, which is the whole reason this class exists -- so
+    the floors go here instead.
+    `docs/findings/xdata-registers-agreement-vacuity.md` measures both halves.
 
     The fourth census is not here: see `TheContentKey`'s docstring, which
     names the `e169a0e4` pair as held by none of this.
@@ -1140,10 +1198,40 @@ class TheGuardOffKeyDistinctness(unittest.TestCase):
         # byte-to-key lookup here and be caught by nothing. The committed pair
         # gets read by people and by `--check`; this one gets read by nothing
         # but the tool that wrote it.
-        by_id = {cid: row["cluster_key"] for cid, row in self.rows.items()}
+        #
+        # **The two floors come first, because the comparison they guard is
+        # vacuous without them.** `key_disagreements()` asks over the rows
+        # there are: a CSV with none -- a header and nothing else, or a writer
+        # that failed partway -- returns no offenders, and one missing every
+        # row of a program returns no offenders for the rows of the others.
+        # Both are cases this loop was written to catch and neither is a
+        # disagreement, which is the difference between a claim about a
+        # census and a claim about a file that happened to be readable.
         with open(self.registers, newline="") as f:
-            for r in csv.DictReader(f):
-                self.assertEqual(r["cluster_key"], by_id[r["cluster_id"]])
+            registers_rows = list(csv.DictReader(f))
+        self.assertTrue(
+            registers_rows,
+            "the guard-off registers CSV has a header and no data row, so the "
+            "byte-to-key comparison below has nothing to compare and passes "
+            "on the emptiness rather than on the agreement: the clusters CSV "
+            f"it was written beside holds {len(self.rows)} cluster(s) over "
+            f"{sorted({r['program'] for r in self.rows.values()})}")
+        missing = programs_not_mentioned(self.rows, registers_rows)
+        self.assertEqual(
+            missing, [],
+            "the guard-off registers CSV never names the program(s) "
+            f"{missing}, so every cluster of those in its own clusters CSV is "
+            "unchecked: the agreement asserted below is over the programs "
+            "that survived the CSV, not over the census")
+        bad = key_disagreements(self.rows, registers_rows)
+        self.assertEqual(
+            bad, {},
+            f"{len(bad)} of {len(registers_rows)} guard-off register row(s) "
+            "carry a cluster_key their own clusters CSV does not give them -- "
+            + ("; ".join(
+                f"{addr} carries {carried}, its cluster holding {held}"
+                for addr, (carried, held) in sorted(bad.items()))
+               or "none, which is a bug in this message rather than a result"))
 
     def test_a_duplicated_key_is_named_with_both_its_ranks(self):
         # The negative control, as a permanent case rather than a transcript.
@@ -1172,6 +1260,126 @@ class TheGuardOffKeyDistinctness(unittest.TestCase):
         # whatever ran next -- and the assertion above would be a lie about
         # which census it had just checked.
         self.assertEqual(ranks.duplicate_keys(self.rows), {})
+
+    def test_each_registers_forgery_is_caught_by_the_assertion_that_catches_it(self):
+        # The negative control for the floors and the comparison above, and
+        # what gives them their meaning: a hold case that has never gone red
+        # has never been shown capable of it. One forgery per way the case can
+        # be passed without having checked anything, each aimed at the
+        # assertion that ought to catch it -- so a floor that has gone quiet
+        # and a loop that has gone vacuous are distinguishable rather than
+        # both silent.
+        #
+        # The fixture is a forgery for the same reason the collision above is:
+        # `xdata_register_map.py` wrote this CSV and would not write a
+        # half-written one. Each is written to a scratch file and read back,
+        # because what is being modelled is the *file* a run left behind: a
+        # writer that failed partway leaves a well-formed CSV that still
+        # parses, which is precisely why nothing about reading it complains.
+        tmp = tempfile.mkdtemp(prefix="xdata-forged-registers-")
+        with open(self.registers, newline="") as f:
+            reader = csv.DictReader(f)
+            header, pristine = reader.fieldnames, list(reader)
+
+        def forged(name, rows):
+            """A scratch CSV carrying `rows`, read back the way the case
+            above reads the real one."""
+            path = os.path.join(tmp, name)
+            with open(path, "w", newline="") as out:
+                writer = csv.DictWriter(out, fieldnames=header)
+                writer.writeheader()
+                writer.writerows(rows)
+            with open(path, newline="") as f:
+                return list(csv.DictReader(f))
+
+        # A row carrying another cluster's key: the disagreement the
+        # byte-to-key comparison exists to catch, and the only one it can
+        # catch by itself.
+        #
+        # The donor is picked by *cluster*, not by row, because a registers
+        # CSV holds several rows per cluster: two neighbouring rows can share
+        # a `cluster_id`, and copying that cluster's key onto the other would
+        # forge nothing at all.
+        victim = pristine[0]
+        donor = next(r for r in pristine
+                     if r["cluster_id"] != victim["cluster_id"])
+        rows = [dict(r) for r in pristine]
+        rows[0]["cluster_key"] = self.rows[donor["cluster_id"]]["cluster_key"]
+        self.assertEqual(
+            key_disagreements(self.rows, forged("wrong-key.csv", rows)),
+            {victim["addr"]: (rows[0]["cluster_key"],
+                              self.rows[victim["cluster_id"]]["cluster_key"])},
+            f"a register row carrying {donor['cluster_id']}'s key was not "
+            f"reported as {victim['addr']} disagreeing, and nothing else in "
+            "the CSV does")
+
+        # Every row deleted. The comparison returns nothing over an empty
+        # list, which is asserted rather than argued. Two floors reach this
+        # forgery, not one: the coverage floor below names every program,
+        # because an empty CSV mentions none, so dropping the non-empty
+        # assertion does not leave the case able to pass here. What the
+        # non-empty assertion adds is the diagnosis -- it says the file has
+        # no rows, where the coverage floor can only say which programs went
+        # missing -- so it is kept for the message rather than for the red,
+        # and a case that claimed otherwise in a comment it has not checked
+        # is the failure the transcript in
+        # `docs/findings/xdata-registers-agreement-vacuity.md` §3 exists to
+        # prevent.
+        empty = forged("empty.csv", [])
+        self.assertEqual(
+            key_disagreements(self.rows, empty), {},
+            "the byte-to-key comparison is not what catches an empty CSV; if "
+            "it does, the non-empty assertion ahead of it is unreachable and "
+            "this message is wrong about which assertion holds what")
+        self.assertEqual(
+            programs_not_mentioned(self.rows, empty),
+            sorted({r["program"] for r in self.rows.values()}),
+            "a registers CSV with no data row leaves every program of its "
+            "clusters CSV unmentioned, and the coverage floor did not name "
+            "them")
+
+        # And the per-program hole, over *every* program the clusters CSV
+        # has rather than a typed one, so a census that grew a program or
+        # lost one changes which hole this punches instead of quietly punching
+        # nothing. The `assertNotEqual` is the guard for that: a forgery that
+        # removed nothing would make the floor below pass on the strength of
+        # a deletion that never happened.
+        #
+        # The registers CSV carries a program of its own that the clusters
+        # CSV does not have, so it is deliberately absent from this loop: a
+        # registers CSV with every one of *those* rows deleted still names
+        # every program of the clusters CSV, and the coverage floor has
+        # nothing to say about it. That is not an oversight in the floor but
+        # a property of the pair, and it is measured in
+        # `docs/findings/xdata-registers-agreement-vacuity.md`.
+        for program in sorted({r["program"] for r in self.rows.values()}):
+            with self.subTest(dropped=program):
+                kept = [r for r in pristine if r["program"] != program]
+                self.assertNotEqual(
+                    kept, pristine,
+                    f"no {program} row to drop, so this forgery is not the "
+                    "half-written CSV it claims to be")
+                self.assertEqual(
+                    key_disagreements(self.rows, kept), {},
+                    f"a registers CSV with every {program} row deleted still "
+                    "agrees with its clusters CSV about every row it kept, "
+                    "which is the hole this case is about")
+                self.assertEqual(
+                    programs_not_mentioned(self.rows, kept), [program],
+                    f"a registers CSV with every {program} row deleted was not "
+                    f"reported as not naming {program}, and nothing else went "
+                    "with it")
+
+        # And every forgery stayed in its own scratch copy. `setUpClass` hands
+        # the same regeneration to `TheGuardOffRegeneration`, so a case that
+        # wrote through to `self.registers` would leave a real disagreement
+        # behind for whatever ran next -- and the assertions above would be a
+        # lie about which CSV they had just checked.
+        with open(self.registers, newline="") as f:
+            self.assertEqual(
+                list(csv.DictReader(f)), pristine,
+                "a forgery wrote through to the shared guard-off registers "
+                "CSV rather than to its own copy")
 
 
 class TheNamesShape(unittest.TestCase):

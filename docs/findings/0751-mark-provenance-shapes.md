@@ -105,8 +105,8 @@ remembered to update:
      windows/tools/test_manual_fan_ctrl_probe.py:508  if len(r) == 4 and r[1] == "MARK"]
    6 call(s) of the grader's readers, none of which writes the literal:
      ec/tools/check_capture_claims.py:514  index[WATCH + "/" + name] = read_capture(os.path.join(REPO, WATCH, name))
-     ec/tools/grade_0751_isolation.py:2990  m, c = read_capture(path)
-     ec/tools/grade_0751_isolation.py:2999  rows = read_early_exits(path)
+     ec/tools/grade_0751_isolation.py:2990  m, c = read_capture(path)          <- gone: #767
+     ec/tools/grade_0751_isolation.py:2999  rows = read_early_exits(path)      <- gone: #767
      ec/tools/grade_gpu_door.py:479  m, c = fan.read_capture(path)
      windows/tools/manual_fan_ctrl_probe.py:701  marks, changes = grader.read_capture(str(path))
      windows/tools/manual_fan_ctrl_probe.py:707  void_marks, void_changes = grader.read_capture(str(void_path))
@@ -140,8 +140,8 @@ above cannot see it. Six call sites of the grader's readers do not:
 ```console
    6 call(s) of the grader's readers, none of which writes the literal:
      ec/tools/check_capture_claims.py:514  index[WATCH + "/" + name] = read_capture(os.path.join(REPO, WATCH, name))
-     ec/tools/grade_0751_isolation.py:2990  m, c = read_capture(path)
-     ec/tools/grade_0751_isolation.py:2999  rows = read_early_exits(path)
+     ec/tools/grade_0751_isolation.py:2990  m, c = read_capture(path)          <- gone: #767
+     ec/tools/grade_0751_isolation.py:2999  rows = read_early_exits(path)      <- gone: #767
      ec/tools/grade_gpu_door.py:479  m, c = fan.read_capture(path)
      windows/tools/manual_fan_ctrl_probe.py:701  marks, changes = grader.read_capture(str(path))
      windows/tools/manual_fan_ctrl_probe.py:707  void_marks, void_changes = grader.read_capture(str(void_path))
@@ -164,7 +164,13 @@ above cannot see it. Six call sites of the grader's readers do not:
 > rule and the first field once (`skippable_row`, `normalised_rows`) and took
 > the byte-order-mark refusal out of the row body into the file, so the same
 > six decisions sit at six lines rather than four. The `test_*.py` count moved
-> twice, because #749's and #750's cases both call the readers. Re-run the tool
+> twice, because #749's and #750's cases both call the readers. **Issue #767
+> then took both of the grader's own call sites out of `main`** — it took one
+> `capture_snapshot` per capture and fed both passes over it, so `main` calls
+> neither `read_capture` nor `read_early_exits` directly any more ([the
+> write-up](0751-census-one-moment.md)) — which is why those two rows are
+> marked *gone* above rather than deleted: the block is a quotation and the
+> quotation is what records where the calls were. Re-run the tool
 > rather than trusting this paragraph: it is a quotation, and a quotation rots.
 >
 > `windows/tools/ec_watch.py:355` and `:254`/`:280` are cited by the tool and
