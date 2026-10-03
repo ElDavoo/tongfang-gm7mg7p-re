@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-r"""Every non-suite module in this directory imports on a non-Windows runner.
+r"""Every non-suite module here that wants no pip package imports off Windows.
 
 These tools are deployed as a directory rather than as a package, and four of
 them used to bind a Win32 DLL at module scope -- `ctypes.WinDLL` exists only on
@@ -22,6 +22,26 @@ The mechanism *is* the check.
 substitutes its own fakes, and `ecrw_fake.py` because it is the fixture that
 substitutes for `ecrw` rather than a tool. Both exclusions are by glob, so a
 new tool joins this suite by being committed here rather than by being listed.
+
+**A third exclusion, by failure rather than by name: a tool that wants a
+package from pip.** `dotnet_dump.py` and `dotnet_bodies.py` import `pefile` and
+`dnfile` at module scope, which `.github/actions/project-setup` installs and
+`windows/README.md` records, so on a checkout without them those two cannot
+import at all. That is a property of the checkout, not a defect to fix here,
+and it is reported as its own thing rather than as a bind -- a reader sent to
+look for a module-scope `WinDLL` in `dotnet_bodies.py` will not find one.
+`_pip_dependency` is what tells the two apart, and it is deliberately narrow:
+only a `ModuleNotFoundError` naming something outside the standard library and
+not provided by this directory is excused. A missing *stdlib* module is a real
+failure, and so is a missing sibling, because `TOOLS` is on `sys.path` and a
+name this directory provides is a broken import rather than an uninstalled
+one.
+
+What that costs is narrow and worth stating rather than leaving to be
+discovered: on a checkout without those two packages, the two .NET tools are
+not covered by the import half of this suite. They still are by
+`DanglingHandleTests`, which reads source and never imports, and CI installs
+the packages, so a bind in either is caught there rather than here.
 
 **What a green run is not.** Importable is all it says. Nothing opens
 `\\.\ACPIDriver`, no IOCTL is issued, no register is read back and no vendor
@@ -82,6 +102,36 @@ def load(path):
     return module
 
 
+def _pip_dependency(error):
+    """The pip package `error` names, or None if it is not one.
+
+    The exception *type* is the first question, and it has to be asked before
+    the name: an `AttributeError` raised by attribute access carries a `.name`
+    too -- `ctypes.WinDLL` binds as `AttributeError(name='WinDLL')` -- so a
+    classifier that reads the name off any exception with one excuses the
+    module-scope bind this suite exists to catch and reports it as a missing
+    pip install. Only `ModuleNotFoundError` says a module could not be found.
+
+    Past that, the name decides. Outside `sys.stdlib_module_names` and not
+    provided by this directory, it is a package from PyPI that this runner was
+    never given. A missing stdlib module is a real failure -- the interpreter
+    is broken, or the tool is being run under the wrong Python -- and a
+    missing sibling is a real failure too: `TOOLS` is on `sys.path`, so a name
+    this directory provides but cannot import is a broken import here, not an
+    uninstalled one. The sibling test is by file, which is the same rule
+    `modules()` applies to pick its subject set.
+    """
+    if not isinstance(error, ModuleNotFoundError):
+        return None
+    name = error.name
+    if not name:
+        return None
+    top = name.split(".")[0]
+    if top in sys.stdlib_module_names or (TOOLS / f"{top}.py").exists():
+        return None
+    return top
+
+
 class OfflineImportTests(unittest.TestCase):
     def test_every_module_in_this_directory_imports(self):
         # Collected rather than raised, so one failure does not hide the rest:
@@ -91,11 +141,16 @@ class OfflineImportTests(unittest.TestCase):
         # `sys.exit()` at import has not imported either, and that is worth
         # reporting rather than letting it abort the suite.
         failed = []
+        needs_pip = []
         for path in modules():
             with self.subTest(module=path.name):
                 try:
                     load(path)
                 except BaseException as e:
+                    package = _pip_dependency(e)
+                    if package is not None:
+                        needs_pip.append(f"{path.name} ({package})")
+                        continue
                     failed.append(f"{path.name}: {type(e).__name__}: {e}")
         self.assertEqual(
             failed, [],
@@ -104,7 +159,15 @@ class OfflineImportTests(unittest.TestCase):
             + "\nA Win32 DLL bound at module scope raises here, and takes every "
               "module importing it with it. Bind it on first use instead -- "
               "`ecrw.py`'s `_kernel32()` and `uefi_var.py`'s `_load()` are the "
-              "shape -- so the pure-Python surface loads anywhere.")
+              "shape -- so the pure-Python surface loads anywhere."
+            + (("\nNot failures, and reported apart from them: "
+                + ", ".join(needs_pip)
+                + " wants a package from pip, which "
+                  "`.github/actions/project-setup` installs and "
+                  "`windows/README.md` records. On a checkout without it those "
+                  "modules are not covered by this test; see the module "
+                  "docstring.")
+               if needs_pip else ""))
 
     def test_the_directory_is_not_empty_of_tools(self):
         # The vacuity guard. A glob that matched nothing would make the test
@@ -113,6 +176,47 @@ class OfflineImportTests(unittest.TestCase):
         self.assertTrue(modules(),
                         f"no tool found under {TOOLS}; the glob is wrong, not "
                         "the directory")
+
+    def test_only_a_missing_third_party_package_is_excused(self):
+        # The classifier decides what the test above is allowed to ignore, and
+        # a classifier that excused everything would leave that test passing on
+        # a directory it had imported none of. Held against the shapes
+        # `exec_module` actually produces, not against invented ones.
+        self.assertEqual(
+            _pip_dependency(ModuleNotFoundError("No module named 'pefile'",
+                                                name="pefile")),
+            "pefile")
+        # A missing stdlib module is a broken interpreter, not a pip install.
+        self.assertIsNone(_pip_dependency(
+            ModuleNotFoundError("No module named 'ctypes'", name="ctypes")))
+        # A name this directory provides is a broken sibling import: `TOOLS` is
+        # on `sys.path`, so it resolved to something and that something failed.
+        self.assertIsNone(_pip_dependency(
+            ModuleNotFoundError("No module named 'ecrw'", name="ecrw")))
+        # A plain `ImportError` names no module, so there is nothing to excuse.
+        self.assertIsNone(_pip_dependency(ImportError("cannot import name")))
+
+    def test_the_bind_this_suite_exists_to_catch_is_not_excused(self):
+        # Raised, not written out. An `AttributeError` built by hand has
+        # `name=None`, so a hand-built one is satisfied by a classifier that
+        # never looks at the type -- and the real bind, the one this suite is
+        # here to report, arrives from attribute access with
+        # `name='WinDLL'` and `obj=<module ctypes>`. A classifier that reads
+        # the name off that exception calls it a missing pip package and the
+        # suite above passes on a tree with the bind back in it. Which is what
+        # it did, until this test held it against the exception that actually
+        # occurs.
+        if hasattr(ctypes, "WinDLL"):
+            self.skipTest("on Windows kernel32 loads, so this is not the "
+                          "failure to expect")
+        try:
+            ctypes.WinDLL("kernel32")
+        except AttributeError as e:
+            self.assertEqual(e.name, "WinDLL")
+            self.assertIsNone(_pip_dependency(e))
+        else:
+            self.fail("ctypes.WinDLL exists here, so this test is not holding "
+                      "the classifier against anything")
 
 
 class DanglingHandleTests(unittest.TestCase):

@@ -7,8 +7,9 @@ assignment, so this suite is not a party to the `setdefault` ordering accident
 docs/findings.md §16 records. What the fake is for now is scriptability: the
 module imports anywhere, which
 `windows/tools/test_import_off_windows.py` holds for every tool in this
-directory. Deleting it, and having the suites import the real `ecrw` and patch
-its `Ec` in the tool's own namespace, is the open follow-up.
+directory that wants no pip package. Deleting it, and having the suites import
+the real `ecrw` and patch its `Ec` in the tool's own namespace, is the open
+follow-up.
 
 Unlike most of the `windows/tools` suites this one reads committed inputs,
 `evidence/acpi/dsdt.dsl`, `ec/annotations/registers.yaml`,

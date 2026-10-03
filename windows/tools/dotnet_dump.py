@@ -102,8 +102,13 @@ def _load():
     `windows/tools/test_import_off_windows.py` holds. Cached, so one process
     binds each handle once.
 
-    The `wintypes` guard is belt-and-braces, as in `ecrw.py`: the module
-    imports cleanly on Linux and the resolver checks it again.
+    The `wintypes` guard below cannot fire here, and `ecrw.py`'s equivalent can:
+    this module builds `LUID`, `LUID_AND_ATTRIBUTES`, `TOKEN_PRIVILEGES`,
+    `MODULEINFO` and `PROCESSENTRY32W` from `wintypes.DWORD` at
+    class-definition time, so an interpreter without `ctypes.wintypes` is
+    already dead during import and never reaches this line. Kept because the
+    guard costs nothing and names the interpreter rather than raising
+    `AttributeError` from a structure definition.
     """
     global _dlls
     if _dlls is not None:

@@ -238,7 +238,8 @@ annotation leaves its header on row 1 rather than row 0.
 (`tools/test_system_id_probe.py` covers the `0x0456` probe;
 `../tools/README.md` lists it.) All but one of them work by faking
 `ecrw` — `ecrw` itself imports anywhere now
-(`test_import_off_windows.py` holds that for every tool here), so the fake is
+(`test_import_off_windows.py` holds that for every tool here that wants no pip
+package), so the fake is
 what makes the arms scriptable rather than what makes the module loadable; the
 charge-target and
 battery-trace suites fake the `powershell` call behind their WMI lines as well.

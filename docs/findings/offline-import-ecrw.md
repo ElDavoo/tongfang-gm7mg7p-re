@@ -180,6 +180,27 @@ rather than by being listed. Two exclusions rather than none, and both stated
 in the module docstring: suites install their own fakes before importing what
 they exercise, and `ecrw_fake.py` is the fixture rather than a tool.
 
+**A third exclusion is by failure rather than by name, and it was this
+reviewer's doing.** The first run of the suite on a checkout without
+`.github/actions/project-setup`'s `pip install pyyaml pefile dnfile` failed, and
+the two entries it named were `ModuleNotFoundError` for `dnfile` and `pefile`
+— `dotnet_bodies.py` and `dotnet_dump.py`, which import those at module scope.
+`windows/README.md` already recorded the dependency, so the tree knew and the
+suite did not. It now classifies rather than reports: a `ModuleNotFoundError`
+naming something outside the standard library and not provided by this
+directory is reported as what it is, a tool that wants a package from pip, and
+everything else is a failure. The exception type is what decides, and that is
+not a detail — an `AttributeError` from a module-scope `ctypes.WinDLL` carries
+`.name == 'WinDLL'`, so a classifier that reads the name off any exception with
+one excuses the bind this suite exists to catch and passes on a tree that has
+it back. A test holds that against the raised exception rather than a
+hand-built one, because a hand-built `AttributeError` has `name=None` and is
+satisfied by the classifier that gets this wrong. So the claim is "every
+non-suite module here that has no third-party dependency imports off Windows",
+and on a checkout without those two packages the two .NET tools are not covered
+by this half — they still are by the symtable walk below, which reads source
+and never imports, and CI installs the packages.
+
 A second check in that suite exists because moving handles out of module scope
 turns a typo in a function body from an `AttributeError` at import into a
 `NameError` when the tool is next run — on Windows, against the driver, with
@@ -197,8 +218,9 @@ the right follow-up. It is deferred because each of those suites needs its own
 decision about how it scripts bytes — patch the tool's `Ec` in its namespace
 with a class that answers a fixture, or keep a local fake — and those suites
 are the leaf files other open pull requests are most likely to be editing.
-Nothing is at risk by waiting: the new suite proves every module imports, so
-the fixture's remaining job is scriptability, not importability.
+Nothing is at risk by waiting: the new suite proves every module that wants no
+pip package imports, so the fixture's remaining job is scriptability, not
+importability.
 
 A correction to what this defers, because it was checked rather than repeated:
 the per-suite fakes that used to lose the `sys.modules.setdefault` race are

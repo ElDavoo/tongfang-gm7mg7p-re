@@ -175,8 +175,9 @@ import grade_0751_isolation as fan
 # EcError`, and `ecrw` binds kernel32 on the first `Ec()` rather than at import,
 # so importing it costs this grader nothing either --
 # `windows/tools/test_import_off_windows.py` holds that for every module in
-# that directory. It is a plain `import`, not a by-path spec load, so a module
-# already loaded under that name is the same object rather than a second copy.
+# that directory that wants no pip package. It is a plain `import`, not a
+# by-path spec load, so a module already loaded under that name is the same
+# object rather than a second copy.
 #
 # This inverts the direction `windows/tools/test_gpu_block_watch.py` reaches
 # this way: it loads the grader by path because a suite cannot import a grader
