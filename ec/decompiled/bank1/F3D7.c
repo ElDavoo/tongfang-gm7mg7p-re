@@ -6,15 +6,16 @@
 
 /* Calls 0x198A, which loads DPTR with 0xC1E7 and tail-jumps to a common-area bank-switch stub, then
    branches on R7. When R7 is 0 it sets R3=0x64 and R4=0, reads the 16-bit value at XDATA
-   0x0434/0x0435 into R1:R2 via 0x8886, divides by 100 via 0xA5E6, and writes the returned R1 to
-   XDATA 0x0449. When R7 is nonzero it calls 0xF3C9, which sets the divisor R3 to 0x22 or 0x44
-   according to bit 6 of XDATA 0x0456, reads XDATA 0x060C/0x060D, masks R2 (the high byte) with
-   0x03, multiplies the 16-bit value by 10, divides by that divisor, and again writes R1 to XDATA
-   0x0449. R7 is set nowhere in this listing or in 0x198A, so the origin of the selector is not
-   established. ec/annotations/registers.yaml now carries 0x0434 as BAT_CURRENT_MA (the
-   little-endian mA pair this routine reads and divides by 100), 0x0456 as SYSTEM_ID -- the byte
-   whose bit 6 the 0xF3C9 call above already uses to pick its 0x22/0x44 divisor -- and 0x0449 as
-   XDATA_0449, an EC-side site found with its meaning not established; 0x060C has no entry there.
+   0x0434/0x0435 into R1:R2 via 0x8886, divides by 100 via 0xA5E6, and writes the returned R1 -- the
+   quotient's low byte -- to XDATA 0x0449. When R7 is nonzero it calls 0xF3C9, which sets the
+   divisor R3 to 0x22 or 0x44 according to bit 6 of XDATA 0x0456, reads XDATA 0x060C/0x060D, masks
+   R2 (the high byte) with 0x03, multiplies the 16-bit value by 10, divides by that divisor, and
+   again writes the same low byte, R1, to XDATA 0x0449. R7 is set nowhere in this listing or in
+   0x198A, so the origin of the selector is not established. ec/annotations/registers.yaml carries
+   0x0434 as BAT_CURRENT_MA, 0x0456 as SYSTEM_ID and 0x0449 as XDATA_0449, the last with its meaning
+   not established; 0x060C has no entry there. Both arms store R1 because 0xA5E6 returns the
+   quotient's low byte in R1; these are its only two writers and no other listing in the tree writes
+   0x0449.
    type: math
    evidence: ec/decompiled/bank1/F3D7.asm; ec/decompiled/bank1/F3D7.c; ec/annotations/registers.yaml
    basis: hand-decoded
