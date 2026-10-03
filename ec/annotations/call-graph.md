@@ -514,9 +514,9 @@ target is a branch into a routine the index already carries at another address,
 `multi-scope` is `Index.resolve()`'s own decline, `xdata-or-data` is a
 `registers.yaml` hit, and `no-index-row` is what is left — which is this
 method placing the target nowhere, not a statement that it has no function.
-**Only `interior-entry` is a branch into code that exists**; `multi-scope` is
-a decline this method does not resolve to the caller's own bank, and for
-`xdata-or-data` and `no-index-row` the reading is its blind spot — "not found
+**`interior-entry` and `multi-scope` are both branches into code the index
+carries**, the first at a different address and the second in two banks;
+`xdata-or-data` and `no-index-row` are this method's blind spot — "not found
 by this method". The two artifact rows carry the same calibration, so the
 split is a measurement rather than a sentence; the write-up is
 [`../../docs/findings/unresolved-transfer-causes.md`](../../docs/findings/unresolved-transfer-causes.md).
