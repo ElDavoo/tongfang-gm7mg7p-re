@@ -698,6 +698,14 @@ only covers what's specific to *this* copy.
   were never a reason to reject. Of the 147 agent pull requests open or merged
   on 2026-10-02, none had been rejected, and the most common blocking findings
   were stale figures and line pins.
+- **A fix round starts by merging main** (2026-10-03, not in the template).
+  `agent-fix.yml` merges `origin/main` into the branch before the agent runs and
+  regenerates conflicted generated files. Any other conflict is left in the tree,
+  listed in `/tmp/merge-conflicts.txt`, for the agent to resolve as part of the
+  round. The commit step refuses to commit markers and finishes the merge.
+  Before this, the only merge happened after the round, before the push, and a
+  real conflict there discarded the whole round: #1716 lost a 57-minute round on
+  a conflict in `measure_mark_provenance.py`.
 - **Branches are brought up to date by merging main, not by rebasing**
   (2026-10-03, not in the template). `.github/scripts/rebase-onto-main.sh`,
   which the implement and fix stages run before every push, merges `origin/main`.
