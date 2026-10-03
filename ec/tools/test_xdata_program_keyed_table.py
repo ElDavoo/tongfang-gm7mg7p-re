@@ -71,20 +71,20 @@ WRITE_OPEN = re.compile(r"open\([^)]*['\"][wax]")
 # and a census re-derivation are then both visible: the first by
 # `TheMapAgrees`, the second by these.
 PER_PROGRAM_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 840, 7467),
+    ("main-ec", "DAT_EXTMEM", 838, 7459),
     ("main-ec", "DAT_EXTMEM+pair-literal", 44, 490),
     ("main-ec", "pair-literal", 156, 468),
-    ("main-ec", "symbol", 164, 6217),
+    ("main-ec", "symbol", 166, 6225),
     ("main-ec", "symbol+pair-literal", 14, 196),
     ("pd", "DAT_EXTMEM", 157, 858),
 ]
 PER_PROGRAM_TOTAL = (1375, 15696)
 
 UNION_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 810, 7237),
+    ("main-ec", "DAT_EXTMEM", 808, 7229),
     ("main-ec", "DAT_EXTMEM+pair-literal", 41, 385),
     ("main-ec", "pair-literal", 155, 461),
-    ("main-ec", "symbol", 149, 5612),
+    ("main-ec", "symbol", 151, 5620),
     ("main-ec", "symbol+pair-literal", 14, 196),
     ("both", "DAT_EXTMEM", 30, 312),
     ("both", "DAT_EXTMEM+pair-literal", 4, 139),
@@ -116,8 +116,22 @@ UNION_TOTAL = (1326, 15696)
 # key. Five references each way is the census's own 2 + 2 + 1. The totals, the
 # `pair-only` terms and the PD rows do not move, which is the check that the
 # move is a spelling change and not three new addresses.
-PER_PROGRAM_PARTITION = (178, 884, 156)
-UNION_PARTITION = (178, 885, 155)
+#
+# 178 / 884 -> 180 / 882, and the same 178 -> 180 on the union one, in issue
+# #338, by the same mechanism once more: that change's re-export carried two
+# more symbol renames, `0x0391` and `0x3202`, both named in `registers.yaml`.
+# The split tables move with them -- main-EC `DAT_EXTMEM` 840 -> 838 distinct
+# and 7,467 -> 7,459 references against `symbol` 164 -> 166 and 6,217 -> 6,225
+# per program, and 810 -> 808 / 7,237 -> 7,229 against 149 -> 151 / 5,612 ->
+# 5,620 on the union key. Eight references each way is the census's own 2 for
+# `0x0391` plus 6 for `0x3202`. `0x0391` is not #338's row -- it was named by
+# #295 and its rename had reached `registers.yaml` and the committed census
+# while the committed `.c` still spelled it `DAT_EXTMEM_0391`, so this is the
+# re-export where that one landed too. The totals, the `pair-only` terms and the
+# PD rows do not move, which is again the check that the move is a spelling
+# change and not two new addresses.
+PER_PROGRAM_PARTITION = (180, 882, 156)
+UNION_PARTITION = (180, 883, 155)
 
 # The one address whose partition bucket moves, and the two directions.
 MOVED = [("0x04A3", "DAT_EXTMEM", "pair-only")]
