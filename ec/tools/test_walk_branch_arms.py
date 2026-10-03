@@ -433,6 +433,12 @@ class BoundTests(unittest.TestCase):
     the difference between "no arm reaches X" and "the walk stopped before it
     got to X", and only one of those is a finding.
 
+    The cases below the walk bounds pin the classification each stop reason
+    carries -- cut or not, decided by what stopped the walk rather than by how
+    its message begins. `Arm.end()` takes that verdict as a required argument
+    and `arm.cut_ends` reads it back, so these assert the answer rather than a
+    match against a string.
+
     The cases at the end bound `test_site()` rather than the walk, and call it
     directly for the reason the `pd-image` case above does: `walk()` pins the
     region to `common` *and* descends, and these are about the scan."""
@@ -496,6 +502,132 @@ class BoundTests(unittest.TestCase):
         arm = wba.descend(cut, "pd-image", 0x004A, None, DEPTH, INSNS, True)
         self.assertTrue(any(e.startswith(wba.END_IMAGE) for e in arm.ends))
         self.assertTrue(wba.arm_status(arm).startswith("cut:"))
+
+    def test_an_instruction_that_does_not_fit_is_a_cut(self):
+        # Nine one-byte opcodes and then the opcode of a three-byte `mov dptr`
+        # on the last byte, so `off + n > len(d)` with `off` itself in range.
+        # The instruction was never decoded, which is the same condition
+        # `END_IMAGE` reports one step earlier for the index; before each
+        # reason carried its own verdict this one was emitted address-first,
+        # matched no `CUTS` prefix, and the arm read `complete`.
+        arm = walk(bytes([0x00] * 9) + bytes([0x90]))
+        self.assertEqual(len(arm.cut_ends), 1)
+        self.assertIn("runs past the end of the image", arm.cut_ends[0])
+        self.assertTrue(wba.arm_status(arm).startswith("cut:"))
+        self.assertEqual(arm.insns, 9)
+
+    def test_an_address_outside_the_region_is_a_cut_at_the_entry_point(self):
+        # `common` is 0x0000-0x7FFF, so 0x9000 is not in it and the bytes
+        # there were never read. Same condition `callee_row()` states as
+        # `unresolved: not reachable from region ...` when it fires there.
+        self.assertIsNone(wba.offset_for_runtime(0x9000, "common"))
+        arm = walk(bytes(0x40), start=0x9000)
+        self.assertEqual(arm.insns, 0)
+        self.assertEqual(arm.cut_ends,
+                         ["0x9000 is not reachable from region common"])
+        self.assertTrue(wba.arm_status(arm).startswith("cut:"))
+
+    def test_an_address_outside_the_region_is_a_cut_after_decoding(self):
+        # The same case again, reached the way the firmware reaches it: the
+        # walk decodes inside the region first and a branch then carries it
+        # over the edge, which is the `BANK_EDGE` shape `bucket_c_codemap.py`
+        # documents. Without this the case above could be read as an artefact
+        # of an entry point that is never in range.
+        img = bytearray(0x8000)
+        img[0x7FF0:0x7FF3] = bytes([0x40, 0x0D, 0x22])   # jc +13 -> 0x8000 ; ret
+        arm = wba.descend(bytes(img), "common", 0x7FF0, None, DEPTH, INSNS, True)
+        self.assertGreater(arm.insns, 0)
+        self.assertEqual(arm.cut_ends,
+                         ["0x8000 is not reachable from region common"])
+
+    def test_the_dptr_note_is_not_a_cut(self):
+        # The one reason that is neither: the walk records it and carries on,
+        # so an arm whose only end is the DPTR note is complete. `DptrTests`
+        # pins that the message is recorded; nothing pinned what it was
+        # classified as, which is the half a reader of `arm_status()` sees.
+        arm = walk(fixture(bytes([0x90, 0x07, 0x51, 0xF5, 0x82, 0xE0, 0x22])))
+        self.assertEqual(arm.ends, [wba.END_DPTR, wba.END_RET])
+        self.assertEqual(arm.cut_ends, [])
+        self.assertEqual(wba.arm_status(arm), "complete")
+
+    def test_the_four_existing_cuts_stay_cuts(self):
+        # One assertion each, so reclassifying any of them has to be
+        # deliberate rather than a side effect of a later edit.
+        budget = walk(fixture(bytes([0x00] * 0x20)), insns=4)
+        self.assertEqual(budget.cut_ends, [f"{wba.END_BUDGET} at 0x0004"])
+
+        depth = walk(fixture(*[bytes([0x80, 0x02, 0x00, 0x00])
+                               for _ in range(4)]), depth=1)
+        self.assertEqual(len(depth.cut_ends), 1)
+        self.assertTrue(depth.cut_ends[0].startswith(wba.END_DEPTH))
+
+        indirect = walk(fixture(bytes([0x73, 0x22])))
+        self.assertEqual(indirect.cut_ends, [wba.END_INDIRECT])
+
+        image = walk(bytes(10))
+        self.assertEqual(image.cut_ends, [f"{wba.END_IMAGE} at 0x000A"])
+
+    def test_the_non_cuts_stay_non_cuts(self):
+        # `ret`/`reti` and a tail jump are the arm finishing or handing over,
+        # not the walk giving up, and a loop is an arm that has been fully
+        # explored. Same reason as the case above, from the other side.
+        for opcode, expected in ((0x22, wba.END_RET), (0x32, wba.END_RETI)):
+            arm = walk(fixture(bytes([opcode])))
+            self.assertEqual(arm.cut_ends, [], f"{expected} is not a cut")
+            self.assertEqual(wba.arm_status(arm), "complete")
+
+        tail = walk(fixture(bytes([0x02, 0x81, 0x00])))
+        self.assertEqual(tail.cut_ends, [])
+        self.assertIn(wba.END_TAIL, tail.ends)
+
+        looped = walk(wba.LOOP_FIXTURE, start=wba.LOOP_SITE)
+        self.assertEqual(looped.cut_ends, [])
+
+    def test_every_stop_reason_descend_can_record_is_accounted_for(self):
+        # The issue's done-condition as one executable statement: every
+        # reason `descend()` can record is classified here, and the ones that
+        # mean the walk gave up are exactly the ones reported. The required
+        # `cut` argument is what makes this exhaustive rather than
+        # representative -- a new reason cannot be added at a call site
+        # without stating a verdict there, and this pins each verdict to the
+        # mechanism rather than to a string's first characters.
+        cases = {
+            # reason: (end, is a cut)
+            wba.END_RET: (walk(fixture(bytes([0x22]))), False),
+            wba.END_RETI: (walk(fixture(bytes([0x32]))), False),
+            wba.END_TAIL: (walk(fixture(bytes([0x02, 0x81, 0x00]))), False),
+            wba.END_DPTR: (walk(fixture(bytes([0x90, 0x07, 0x51,
+                                               0xF5, 0x82, 0xE0, 0x22]))), False),
+            wba.END_INDIRECT: (walk(fixture(bytes([0x73, 0x22]))), True),
+        }
+        seen = {e for arm, _ in cases.values() for e in arm.ends}
+        self.assertEqual(seen, set(cases))
+        for reason, (arm, is_cut) in cases.items():
+            self.assertIn(reason, arm.ends)
+            self.assertEqual(arm.cut_ends == [reason], is_cut, reason)
+
+        # The reasons that carry an address, so they cannot be matched by
+        # equality. Four lead with the reason and two lead with the address;
+        # both shapes are here because which end a message *begins* with is
+        # exactly what the classification no longer depends on.
+        for arm, prefix, is_cut in (
+            (walk(wba.LOOP_FIXTURE, start=wba.LOOP_SITE), wba.END_LOOP, False),
+            (walk(fixture(bytes([0x00] * 0x20)), insns=4), wba.END_BUDGET, True),
+            (walk(fixture(*[bytes([0x80, 0x02, 0x00, 0x00])
+                           for _ in range(4)]), depth=1), wba.END_DEPTH, True),
+            (walk(bytes(10)), wba.END_IMAGE, True),
+        ):
+            self.assertTrue(any(e.startswith(prefix) for e in arm.ends), prefix)
+            self.assertEqual(bool(arm.cut_ends), is_cut, prefix)
+
+        for arm, tail, is_cut in (
+            (walk(bytes([0x00] * 9) + bytes([0x90])),
+             " runs past the end of the image", True),
+            (walk(bytes(0x40), start=0x9000),
+             " is not reachable from region common", True),
+        ):
+            self.assertTrue(any(e.endswith(tail) for e in arm.ends), tail)
+            self.assertEqual(bool(arm.cut_ends), is_cut, tail)
 
     def test_an_ljmp_ends_the_arm_and_becomes_a_callee(self):
         arm = walk(fixture(bytes([0x02, 0x81, 0x00])))
@@ -606,7 +738,7 @@ class ClaimWordingTests(unittest.TestCase):
 
     def test_a_cut_widens_the_claim_rather_than_narrowing_it(self):
         arm = walk(fixture(READ), depth=0)
-        arm.end(f"{wba.END_DEPTH} at 0x0000")
+        arm.end(f"{wba.END_DEPTH} at 0x0000", cut=True)
         self.assertIn("a walk stopped at", wba.no_claim(arm))
 
 

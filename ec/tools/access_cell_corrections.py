@@ -2,7 +2,7 @@
 """The one place a committed `access` cell may differ from what
 `classify(walk(d, file_offset))` returns at `walk()`'s own budget of 8.
 
-**A corrected cell cannot simply be typed into a CSV.** Three site tables and
+**A corrected cell cannot simply be typed into a CSV.** The site tables and
 `walk_budget_census.py` both refuse a hand-edit: `csv_table()`'s `--check`
 diffs the generator's output against the committed file and says "regenerate
 rather than edit", and `census_table()` refuses the whole run when it cannot
@@ -18,21 +18,24 @@ raises unless `classify()` hands back exactly the string the entry claims. A
 correction that cannot be re-derived is a claim, and this repository does not
 keep those -- so the module refuses one rather than exporting it.
 
-**Why these three and not more.** `walk_budget_census.py`'s `verdict_for()`
-splits every budget-truncated row into class A and class B, and the three
-class-B rows are the ones whose committed cell is *short* rather than wrong:
+**Why these rows and not more.** `walk_budget_census.py`'s `verdict_for()`
+splits every budget-truncated row into class A and class B, and the class-B
+rows are the ones whose committed cell is *short* rather than wrong:
 no store to DPL/DPH sits between the budget-8 cut and the first `movx` the
 larger budget reaches, so the extra access belongs to this same site and no
 larger budget has to be chosen to get a different answer. Class A is the
 opposite -- the extra access rides a rebuilt DPTR and is not this register's
-at all -- and no budget fixes those. `../../docs/findings/class-b-access-cell-corrections.md`
+at all -- and no budget fixes those, which is why nothing here corrects a
+class-A row. `--self-test` prints how many entries this holds for the tree it
+is run on; the count is not written here because a row count is out of date at
+the next merge. `../../docs/findings/class-b-access-cell-corrections.md`
 carries the bytes, the second method for each and the census run that produces
 the tie-breaker.
 
 **What this is not.** `classify()` and `walk()` are untouched, so every other
 row of every committed table still satisfies `classify(walk(d, off)) ==
-access` byte for byte. These three rows keep their `window` and `terminator`
-cells too: they are still genuinely budget-truncated, and saying so is
+access` byte for byte. A corrected row keeps its `window` and `terminator`
+cells too: it is still genuinely budget-truncated, and saying so is
 separate from saying what the access is. And nothing here is a statement about
 what the EC or the PD firmware does with any byte -- it is a direction class
 over a linear decode, on both sides.
@@ -87,6 +90,22 @@ CORRECTIONS = (
        "already a row of its own at `read x1`, so this does not count it "
        "twice.",
        "ec/decompiled/pd/E8D4.asm; ec/decompiled/pd/E8D4.c; "
+       "ec/annotations/ghidra-functions.csv"),
+
+    _c(0x2F628, "ec-0x07d2-sites.csv", "0x07D2",
+       "write x3, walks 3 consecutive bytes (inc dptr)", 64,
+       "Three `movx @dptr,a` stores with two `inc dptr` between them and no "
+       "flow opcode or DPTR rebuild in front of any of them: 0xF62C writes "
+       "0x07D2 from R7, 0xF62F writes 0x07D3 from R5, and 0xF632 writes a "
+       "cleared A to 0x07D4. walk()'s eighth instruction from the site ends "
+       "at 0xF631, the second `inc dptr`, which is why the budget-8 cell "
+       "counted two writes and three walked bytes rather than three of each. "
+       "Second method: the committed listing, whose function is exported as "
+       "store_r7r5_0_to_07d2_if_6faf_zero and whose annotation row decodes "
+       "the same three stores by hand -- the name is the decode. This is the "
+       "one site of its address the PD firmware writes as part of a 24-bit "
+       "quantity rather than a 16-bit one.",
+       "ec/decompiled/pd/F61C.asm; ec/decompiled/pd/F61C.c; "
        "ec/annotations/ghidra-functions.csv"),
 
     _c(0x0DD4A, "xdata-0400-045f-sites.csv", "0x045A",

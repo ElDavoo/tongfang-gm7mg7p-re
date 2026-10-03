@@ -94,8 +94,8 @@ ec/tools/counter_sweep_entry.py:369:    last = idx == OPCODE_LEN[op] - 1
 ec/tools/counter_sweep_entry.py:445:            n = OPCODE_LEN[r["owner_opcode"]]
 ec/tools/counter_sweep_entry.py:652:    check(all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
 ec/tools/counter_sweep_entry.py:666:          and all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
-ec/tools/walk_branch_arms.py:220:        n = OPCODE_LEN[op]
-ec/tools/walk_branch_arms.py:347:            n = OPCODE_LEN[op]
+ec/tools/walk_branch_arms.py:265:        n = OPCODE_LEN[op]
+ec/tools/walk_branch_arms.py:404:            n = OPCODE_LEN[op]
 ec/tools/audit_call_targets.py:176:        if op in REL_OPCODES and i + OPCODE_LEN[op] <= hi:
 ec/tools/audit_call_targets.py:177:            yield i, op, relative_target(op, d[i + OPCODE_LEN[op] - 1],
 ec/tools/audit_call_targets.py:320:                "length": OPCODE_LEN[op],
@@ -862,3 +862,37 @@ two walkers walk until something stops them, and a walk that stops nowhere is a
 listing with no end. That is the whole difference, and it is a difference in
 contract, not in caution.
 
+## Note (2026-10-03, issue #1018): which of this tool's stop reasons are cuts, and where that answer now lives
+
+**`walk_branch_arms.py`'s two sites above move; no site is added and none is
+removed.** The two lines in the grep block are `:265` and `:404`, not `:220` and
+`:347`. They moved because `Arm.end()` became `end(why, *, cut)` — every call
+site states whether its reason means the walk gave up — and the two template
+constants for the address-first messages went into the stop-reasons block above
+`test_site()`. That no site of the shape is added or removed is the property
+the census's membership test actually turns on. Re-run the grep rather than
+trusting that sentence; the block above is the re-run, as its own rule says.
+
+**The classification this census's row 8 does not carry.** `descend()` reports
+eleven distinct stop reasons, and only some of them mean the walk gave up
+rather than finished. Nine keep the answer they had. **Two change**, both of them
+emitted *address-first* — `0x… runs past the end of the image` and
+`0x… is not reachable from region …` — and both are cuts: the instruction was
+never decoded, and the bytes at the address were never read. Neither could be
+told apart from the others by a prefix match, so each carries its own `cut`
+verdict at its call site. `DPTR built at run time (a store to DPL/DPH)` was
+already the answer it keeps: a *note* the walk records and continues past,
+neither a cut nor a control-flow end.
+
+That answer is no longer recovered from the shape of a message, and
+`Arm.cut_ends` is where it lives. The full table of reasons, the reasoning per
+reason, and the four files outside `walk_branch_arms.py` that still classify
+`Arm.ends` for themselves — one of which does not agree, and has a separate
+exact-membership defect this change neither causes nor fixes — are in
+[`cut-classification-by-mechanism.md`](cut-classification-by-mechanism.md).
+
+**Both newly-classified reasons fire 0 times over the committed `0x0751` run at
+the default bounds**, and the two committed CSVs come out byte-identical before
+and after. That is a measurement of this run, not "cannot fire" — the same
+calibration [`descend-index-guard.md`](descend-index-guard.md) applies to its own
+zero.

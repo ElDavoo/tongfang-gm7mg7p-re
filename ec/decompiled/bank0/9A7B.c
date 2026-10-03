@@ -4,13 +4,15 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Calls 0xBA15, increments the byte it returns in A, passes that to 0xBD20, then writes 0xBD20's
-   return value with bit 7 cleared to the XDATA address 0xBD20 left in DPTR. No address is passed in
-   and none is named in the listing, so the decompiled C's *param_1 is not a pointer here - 0xBD20
-   chooses the destination. What 0xBA15 and 0xBD20 read to produce their results is not decoded in
-   this listing.
+/* Calls 0xBA15, which reads nothing and returns A = 0, increments it and passes it to 0xBD20, so
+   the value stored to XDATA 0x044B is 1 whatever the caller left in the accumulator. 0xBD20 then
+   returns the byte at XDATA 0x08E2, and this routine masks that byte with 0x7F and writes it back
+   through the DPTR 0xBD20 left in DPTR - the mask applies to the byte read back, not to the value
+   just stored. No address is passed in and none is named in the listing, so the decompiled C's
+   *param_1 is not a pointer here - 0xBD20 chooses the destination.
    type: writer
-   evidence: ec/decompiled/bank0/9A7B.asm; ec/decompiled/bank0/9A7B.c
+   evidence: ec/decompiled/bank0/9A7B.asm; ec/decompiled/bank0/9A7B.c; ec/decompiled/bank0/BA15.asm;
+   docs/findings/xdata-044b-selector-value-set.md
    basis: hand-decoded
    name_basis: code-shape */
 
