@@ -610,6 +610,17 @@ comments that it has no row — `0xC0E7` records what it reads and says nothing
 about the map. Giving it a row means correcting those three, which is why it is
 a follow-up of its own and not a rider here — see §8.1.
 
+> **Superseded** (issue #338). The paragraph above is left as it was written.
+> `0x3202` now carries the `XDATA_3202` row, at `present-untested`, with the
+> three comment corrections the paragraph predicted, and the follow-up it asked
+> for is this file's §8 item 2 rather than a rider. What the row adds beyond
+> the address is the two polarity pairs — `0xC0B8` is the exact inverse of
+> `0xC0C9` on the same two bits, and `0xC0DA` the inverse of `0xC0E7` on bit 0,
+> so all four accessors exist in pairs and no writer for the byte was found by
+> this method. `check_register_counts.py` recomputes its counts from the image.
+> The census row behind it and the block it sits in are walked in
+> `docs/findings/3202-block-walk.md`.
+
 **The third thing is a return, not a test.** `0x06D6` is the only reload in the
 block: at `0x806C` a non-zero value is decremented and the routine returns at
 `0x8074`, skipping everything from `0x06C2` downward; a zero value is loaded
@@ -1232,14 +1243,20 @@ touching it, not the EC's sweep.
    wording of this item (`match`, 7 of 7 instructions re-encoded) described a
    run that did not happen, and it is withdrawn here. Whoever runs the pinned
    `--report` is the first to have that number.
-2. **`0x3202` has no `registers.yaml` row**, and it is the register the `0x06D9`
+2. ~~**`0x3202` has no `registers.yaml` row**, and it is the register the `0x06D9`
    gate actually reads. Four existing annotations read it (`0xC0B8`, `0xC0C9`,
    `0xC0DA`, `0xC0E7`), and the first three say in their own comments that it has
    none, so the row is three comment corrections as well — and
    `build_ec_decompile.py:stale_no_entry_claims` fails the build the moment the
    row lands and they do not. Deliberately not a rider on #255. With four read
    sites and no writer found by this method, its value space is unestablished, so
-   a row would claim nothing beyond the address.
+   a row would claim nothing beyond the address.~~ **Closed by #338**, on the
+   terms the item set out: the row is `XDATA_3202` at `present-untested`, 4/4/0
+   recounted from the image, and the three comments were corrected in the same
+   change, so the build gate did not fire. It claims nothing beyond the address,
+   for the reason given: no writer was found by this method, so the value space
+   is unestablished. The walk of the surrounding block is
+   `docs/findings/3202-block-walk.md`.
 3. **The reload path for the seventeen in §5.** The blind spot is named rather
    than bounded: a computed DPTR, a register-indirect access and a table are
    all invisible to both methods here. `0xC10C` used to be named here as a
