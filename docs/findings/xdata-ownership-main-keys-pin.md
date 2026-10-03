@@ -125,3 +125,19 @@ open for a narrow reason — `ORACLE["extmem_pd_*"]` measures the **default**
 census's token spellings and `OWNERSHIP` carries no `pd_*` key at all. The two
 `main-ec-002`/`main-ec-003` cluster rows stay unpinned; #654 decided that on the
 record and #658 did not reopen it.
+
+*(Corrected, 2026-10-03, issue #918. The paragraph above is left as it read, per
+[`../findings.md`](../findings.md) §4a-4d. **The `157`/`858` pair is no longer
+unheld**, and a next pass reading this file need not rediscover that: #1364 added
+`OWNERSHIP["pd_distinct"]`/`["pd_refs"]` beside the `main_*` pair this file is
+about, and an "and its pd half is" `check()` in the same `--self-test` ownership
+block reads both over the de-duplicated census — the same fix, in the same shape,
+as the `main_*` pair #849 closed. What the paragraph could not say, because the
+keys did not exist, is why that fix stops where it does: §6b's two per-program
+lines do not partition the way the census-wide pair does, so `pd_distinct` has no
+sum identity to assert, and the identity #918 was asked to add is already implied
+by the checks beside it.
+[`xdata-ownership-arms-do-not-partition.md`](xdata-ownership-arms-do-not-partition.md)
+is the write-up and carries the arithmetic. The two `main-ec-002`/`main-ec-003`
+cluster rows stay unpinned, as the paragraph above says and for the reason it
+gives.*

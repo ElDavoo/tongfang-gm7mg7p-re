@@ -47,8 +47,10 @@ reads the mode dispatch rather than the guards, so a flag added without its
 refusals would be a gap this suite could not see" -- is corrected beside itself
 rather than deleted. `guarded_flags` now reads the guards out of `main()`'s own
 AST the way `dispatch_names` reads the dispatch, so a *third guarded* flag goes
-red on `TripwireCoverage` until `GUARDED_FLAGS` names it, and the `Refusals`
-cases then loop over it for free.
+red on `TripwireCoverage` until a table names it, and the `Refusals` cases then
+loop over it for free -- where "for free" holds for a flag carrying the pair,
+which is what `GUARDED_FLAGS` says and what `REFUSED_ELSEWHERE` (issue #882)
+exists to say for one that does not.
 
 **The other half is open, and is named rather than closed.** A flag that
 re-buckets occurrences and carries *no* refusal at all is nothing for that
@@ -105,6 +107,17 @@ MODES = ("self_test", "threshold_sweep", "co_reading_sweep",
 GUARDED_FLAGS = ("--no-eq-guard", "--export-ownership")
 REFUSED_WITH_A_MODE = "cannot be combined with --check or --self-test"
 REFUSED_AT_THE_DEFAULTS = "would overwrite the committed census"
+
+# A flag `main()` guards that this suite does **not** loop `Refusals` over, and
+# where its refusal is held instead. `--no-writer-axis` is refused by which mode
+# asked for it rather than by what the run would do (issue #882), so it carries
+# one refusal, not the pair above, and every case in `Refusals` asserts a message
+# shape it does not have. `test_xdata_census_shape_set.py` holds it -- against
+# the modes the guard admits, derived off `main()`'s own dispatch rather than
+# against a table. That is why the flag is named here rather than added to
+# `GUARDED_FLAGS`: the loop would be the wrong shape for it, and the table is
+# what says a flag carries the pair.
+REFUSED_ELSEWHERE = ("--no-writer-axis",)
 
 # The `main()` shapes `TripwireCoverage` pins its readers on, kept as
 # strings rather than written out per case so the reading and the pin cannot
@@ -469,11 +482,17 @@ class TripwireCoverage(unittest.TestCase):
     been parsed, guarded and never exercised: the `Refusals` cases loop over the
     table, so a flag simply not in it is not in the loop and the suite stays
     green. `guarded_flags` reads that table off `main()`'s own `ap.error` guards
-    with both directions asserted, so the third flag is red here until the table
+    with both directions asserted, so the third flag is red here until a table
     names it and `Refusals` picks it up for nothing. Its one dependence is
     positional -- the guarded flag has to be the left operand of the guard's
     `and` -- and `GUARD_SOURCES` pins the other shape rather than leaving it to
     the reader's docstring to promise.
+
+    That reader now reports one flag more than `GUARDED_FLAGS` holds, which is
+    how #882 was caught: `--no-writer-axis` is guarded, and it carries one
+    refusal rather than the pair `Refusals` asserts. `REFUSED_ELSEWHERE` names it
+    with that difference recorded, so the table states the shape of what it
+    holds rather than only which flags exist.
     """
 
     def test_modes_is_every_entry_point_main_dispatches_to(self):
@@ -602,18 +621,19 @@ class TripwireCoverage(unittest.TestCase):
         # `main()` and compared here, so a third flag added with its two
         # refusals is red on this case rather than parsed, guarded and never
         # exercised. Both directions, because each is its own defect: a flag
-        # `main()` refuses and the table does not name is a flag the `Refusals`
-        # cases never loop over, and a flag the table names and `main()` no
+        # `main()` refuses and neither table names is a flag the `Refusals`
+        # cases never loop over, and a flag the tables name and `main()` no
         # longer refuses is a case looping over nothing.
         derived = guarded_flags(TOOL.read_text())
-        listed = set(GUARDED_FLAGS)
+        listed = set(GUARDED_FLAGS) | set(REFUSED_ELSEWHERE)
         self.assertEqual(
             derived, listed,
-            f"main() refuses {sorted(derived - listed)}, which GUARDED_FLAGS "
-            "does not name, so the Refusals cases never exercise them; and "
-            f"GUARDED_FLAGS names {sorted(listed - derived)}, which main() no "
-            "longer refuses: add the first to the table, and read the second as "
-            "guards that went missing rather than as a table to edit")
+            f"main() refuses {sorted(derived - listed)}, which neither table "
+            "names, so the Refusals cases never exercise them; and the tables "
+            f"name {sorted(listed - derived)}, which main() no longer refuses: "
+            "add the first to GUARDED_FLAGS if it carries the pair and to "
+            "REFUSED_ELSEWHERE if it does not, and read the second as guards "
+            "that went missing rather than as a table to edit")
 
     def test_every_guard_shape_the_reader_names_is_collected_too(self):
         # On synthetic source, and the committed tree cannot show why: both of

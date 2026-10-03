@@ -598,17 +598,17 @@ CITATIONS = [
     # a row only one side wrote, and the lines they landed on are the merged
     # ones. The pins in the other files were drifted by #748 and #749 and are
     # re-anchored here too, so nothing is red on this tree.
-    ("ec/tools/grade_0751_isolation.py", 1416, 'if addr == "MARK":',
+    ("ec/tools/grade_0751_isolation.py", 1485, 'if addr == "MARK":',
      "reader: take_capture_row recognising the row, read_capture's own body"),
-    ("ec/tools/grade_0751_isolation.py", 1544, 'if addr == "MARK":',
+    ("ec/tools/grade_0751_isolation.py", 1613, 'if addr == "MARK":',
      "reader: partition_capture_rows recognising the row -- the fourth site "
      "over this shape, and the one the notice partitions its own read with, "
      "so a mark row is never hex-read there either"),
-    ("ec/tools/grade_0751_isolation.py", 1438,
+    ("ec/tools/grade_0751_isolation.py", 1507,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: mark_labels_of recognising the row, existing_mark_labels' own "
      "extraction"),
-    ("ec/tools/grade_0751_isolation.py", 1508,
+    ("ec/tools/grade_0751_isolation.py", 1577,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: existing_mark_provenance recognising the row -- #739's reader, "
      "the fifth site over this shape, and the one whose result is *supposed* "

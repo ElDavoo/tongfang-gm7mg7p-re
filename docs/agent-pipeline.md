@@ -280,7 +280,14 @@ only covers what's specific to *this* copy.
      matters — a table with one cell altered and a table with its last row
      dropped both have to come back rejected, over the same `diff_table()`
      `--check` uses — because a check that has quietly started accepting
-     everything looks exactly like a check that is working. That is why this
+     everything looks exactly like a check that is working. **(2026-10-03,
+     issue #469: that pair is not sufficient. Both leave every surviving row
+     where a positional zip will find it, so neither says anything about how
+     `diff_table()` pairs rows; a third assertion permutes the table and is
+     outstanding against #459, reported as a known defect so this arm stays
+     green until that fix lands.
+     [`findings/call-graph-diff-alignment.md`](findings/call-graph-diff-alignment.md).)**
+     That is why this
      one is `--self-test` in the arm rather than `--check` alone, unlike
      item 4's. **A re-copy of `agent-gates.sh` from the template restores the
      eight-tool list, so the path and the arm have to be re-applied with
@@ -698,6 +705,14 @@ only covers what's specific to *this* copy.
   were never a reason to reject. Of the 147 agent pull requests open or merged
   on 2026-10-02, none had been rejected, and the most common blocking findings
   were stale figures and line pins.
+- **A fix round starts by merging main** (2026-10-03, not in the template).
+  `agent-fix.yml` merges `origin/main` into the branch before the agent runs and
+  regenerates conflicted generated files. Any other conflict is left in the tree,
+  listed in `/tmp/merge-conflicts.txt`, for the agent to resolve as part of the
+  round. The commit step refuses to commit markers and finishes the merge.
+  Before this, the only merge happened after the round, before the push, and a
+  real conflict there discarded the whole round: #1716 lost a 57-minute round on
+  a conflict in `measure_mark_provenance.py`.
 - **Branches are brought up to date by merging main, not by rebasing**
   (2026-10-03, not in the template). `.github/scripts/rebase-onto-main.sh`,
   which the implement and fix stages run before every push, merges `origin/main`.

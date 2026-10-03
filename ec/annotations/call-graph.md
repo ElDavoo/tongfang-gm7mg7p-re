@@ -578,6 +578,14 @@ directory, so it does not fit the loop's default branch, which passes
 need no Ghidra and no network, which is what lets the check live in the cheap
 gate at all. The self-test's own fixture assertions are what prove the check
 still rejects — a table with one cell altered and one with its last row
-dropped both come back rejected, over the same comparison `--check` runs. A
-template re-copy of `agent-gates.sh` drops the tool and its arm again;
+dropped both come back rejected, over the same comparison `--check` runs.
+**(Correction, 2026-10-03, issue #469: that pair is not sufficient, and a
+third rejection case now sits outstanding beside them.** Both cases above
+leave every surviving row where a positional zip will find it, so neither says
+anything about how `diff_table()` pairs rows; a third assertion that moves a
+row to the end names every row of the fixture rather than the one that moved,
+and is reported as a known defect for #459 rather than as a failure, so the
+gate arm stays green until that fix lands. See
+`../../docs/findings/call-graph-diff-alignment.md`.**
+A template re-copy of `agent-gates.sh` drops the tool and its arm again;
 `docs/agent-pipeline.md` item 6 carries both for re-applying.

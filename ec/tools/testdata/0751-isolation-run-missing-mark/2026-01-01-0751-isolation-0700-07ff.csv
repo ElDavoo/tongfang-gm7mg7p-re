@@ -1,8 +1,7 @@
 # CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
 # byte and timestamp below was written by hand. See ../README.md.
 # Shape: the 0x0700-0x07FF third of a §3 0xA0 block, byte for byte the
-# 0751-isolation-run capture of the same action, so the only difference
-# between the two sets is in the 0x0F00 capture. The candidate PWM byte drifts
+# 0751-isolation-run capture of the same action. The candidate PWM byte drifts
 # under the no-op more than under the write and nothing §4.1-§4.3 names moves,
 # as in that set. It is not a prediction that a re-run produces this.
 ts,addr,old,new
