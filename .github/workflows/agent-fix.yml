@@ -145,7 +145,7 @@ jobs:
           PR: ${{ inputs.pr }}
         run: |
           set -euo pipefail
-          commits=$(git rev-list --count origin/main..HEAD)
+          commits=$(git rev-list --count --no-merges origin/main..HEAD)
           reviews=$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/pulls/${PR}/reviews" \
             | jq '[.[] | .[] | select(.user.login == "github-actions[bot]" and .user.type == "Bot"
                                      and .state == "CHANGES_REQUESTED")] | length')
@@ -447,12 +447,12 @@ jobs:
           # none of these subjects reach main.
           git commit -m "fix round ${ROUND} (${REASON})"
 
-          # Rebase onto current main before pushing, for the reason spelled out in
-          # agent-implement.yml: a branch whose workflow files differ from the default branch
-          # cannot be pushed by a token without `workflow` scope, and main moving during a run
-          # is enough to cause that. Rebasing also keeps the round counter honest, since it
-          # counts commits in origin/main..HEAD.
-          # LOCAL CHANGE: the helper regenerates docs/findings/INDEX.md when that is the only conflict.
+          # Bring the branch up to date with current main before pushing, for the reason spelled
+          # out in agent-implement.yml: a branch whose workflow files differ from the default
+          # branch cannot be pushed by a token without `workflow` scope, and main moving during a
+          # run is enough to cause that. The helper merges rather than rebases (see its header),
+          # so the round counter above counts with --no-merges.
+          # LOCAL CHANGE: the helper merges main and regenerates conflicted generated files.
           # Read from main, not the working tree: a branch cut before the helper landed lacks it.
           git fetch --quiet origin main
           bash <(git show origin/main:.github/scripts/rebase-onto-main.sh)
