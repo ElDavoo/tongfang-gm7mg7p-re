@@ -84,6 +84,58 @@ line `grep -rhoE '^\s*`{3,}'` finds over `ec/`, `docs/` and `evidence/` is
 exactly three backticks, so the width is a measurement and not an assumption.
 The count is what the run prints; the predicate is what the code reads.
 
+**Corrected 2026-10-03 (issue #1454).** Three claims above are wrong. Two are
+about the *figure* rather than about the rule. The third is about the rule, and
+it is the one the widening had to decide before the other two could be asked.
+
+**The block count was the regex's, not the corpus's.** `21` was what
+`REGENERATES` matched — and it matched only blocks that spell the tool name and
+the flag on one physical line, because the gap between them was `[^\n]`. The
+corpus also writes the command as a `subprocess.run` list argument with the flag
+on the following line, and those blocks run the same census-changing
+regeneration and were simply not counted. So the figure described the pattern,
+and a pattern this narrow is a claim about a *spelling*. `docs/findings/
+guard-off-transcript-block-scope.md` widens the gap to `[\s\S]`, which makes the
+fence the unit the exemption is read in; the fence was already what
+`transcript_lines()` supplied, so the block was the intended boundary throughout
+and only the pattern made it a line. **The figure is not restated here**: a
+count of blocks over committed markdown moves the next time a write-up lands,
+which is the reason `CLAUDE.md` keeps these out of prose. `fence_spans()` is the
+walk that produces the population and `python3 ec/tools/check_cluster_citations.py`
+is the run that prints the skips.
+
+**"The count is what the run prints" is false, and it is worth being precise
+about what the run does print.** It prints one figure per *skip reason*, counted
+in **units** — `no membership claim`, `disclaims membership`,
+`census-regeneration transcript` — and it never prints a block count at all. The
+reason that matters for a reader: a unit is dropped at `if not ids: continue`
+and again at `if not addresses: continue` long before `skip_reason()` is asked,
+so a block can be scoped, correctly or not, and contribute nothing to that line
+either way. The count a reader wants is not one this run produces.
+
+**"Neither can appear with `--no-eq-guard` at all" is wrong for `--map`, and
+that is what makes a block naming both a real shape rather than a hypothetical
+one.** `xdata_register_map.py` refuses `--check` and `--self-test` alongside
+`--no-eq-guard` — the guard is `if args.no_eq_guard and (args.check or
+args.self_test)`, raised before any mode runs — and refuses `--no-eq-guard` run
+bare, against the committed absolute defaults. It does **not** refuse `--map`
+with it, and `ec/annotations/xdata-register-map.md` runs
+`--no-eq-guard … --map ec/annotations/xdata-clusters.csv` as **one** command:
+there `--map` is how the guard-off generation is diffed against the committed
+census, so the block is a regeneration and not a claim about the committed one.
+
+The sentence above it — "a membership claim beside either is a claim about the
+committed census" — therefore holds only of a block naming no flag that changes
+the census. A block that names one is passed over whole, `--map` line included,
+and that is what issue #1454's widening settled.
+`docs/findings/guard-off-transcript-block-scope.md` carries the decision, the
+committed blocks it was taken against, and the case that witnesses it.
+
+The width claim above still holds, and it is a measurement rather than an
+assumption: `grep -rhoE '^\s*`{3,}'` over `ec/`, `docs/` and `evidence/` returns
+fence lines of one width only. No figure is kept for it, because a corpus that
+gains a page moves the count and the property is what the rule rests on.
+
 ## The part that was not in the plan: a fence is a boundary, not a unit
 
 The obvious implementation — make `units()` yield a fenced block as one unit,

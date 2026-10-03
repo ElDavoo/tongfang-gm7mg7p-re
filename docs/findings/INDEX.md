@@ -144,6 +144,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`group-proxy-populations.md`](group-proxy-populations.md) — What the banking rule discards, and how much of it (issue #455)
 - [`group-split-at-the-bl51-trampoline.md`](group-split-at-the-bl51-trampoline.md) — Splitting the call-graph groups at the BL51 bank-select boundary (issue #444)
 - [`group-unplaced-edges.md`](group-unplaced-edges.md) — The third decision the call-graph walk makes, and the edges it could not place (issue #488)
+- [`guard-off-transcript-block-scope.md`](guard-off-transcript-block-scope.md) — The census-regeneration exemption is keyed on the fenced block, not on the line inside it
 - [`guard-off-transcript-scope.md`](guard-off-transcript-scope.md) — A census-regeneration transcript is not a citation, and a fenced block is not a transcript either: what the rule scopes, and what it still checks
 - [`handoff-site-warrant.md`](handoff-site-warrant.md) — A DPTR handoff that resolves is a warrant, and the one address whose sites do not resolve
 - [`hardware-test-artifact-handoff.md`](hardware-test-artifact-handoff.md) — Every procedure's "Where the output goes" is now held to its own commands, in both directions (issue #1190)

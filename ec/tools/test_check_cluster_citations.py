@@ -33,6 +33,7 @@ import importlib.util
 import io
 import os
 from pathlib import Path
+import re
 import sys
 import tempfile
 import unittest
@@ -938,6 +939,216 @@ class TheSkipListHasOneSource(unittest.TestCase):
         with self.assertRaises(AssertionError) as caught:
             check_every_skip(self, ccc.SKIPS + ('a reason nobody wrote down',))
         self.assertIn('a reason nobody wrote down', str(caught.exception))
+
+
+# The membership error every case below carries, so that "silent" is a claim
+# about the fence rather than about a fixture with nothing in it. `0x06C6` is in
+# neither fixture cluster, and the sentence says membership, so a fence that is
+# not scoped reports it and a fence that is passed over does not. The same line
+# is reused in every case on purpose: it is the only thing that varies.
+MEMBERSHIP_ERROR = 'The clustering put `0x06C6` in `main-ec-003`.\n'
+
+# The three ways the corpus writes the census-regenerating command, each as a
+# block body that also carries `MEMBERSHIP_ERROR`. Only the third puts its flag
+# on a line of its own, which is the whole of what distinguishes them.
+TRANSCRIPT_SPELLINGS = (
+    ('one line',
+     '```console\n$ python3 ec/tools/xdata_register_map.py --no-eq-guard '
+     '--out-clusters /tmp/off-clusters.csv\n' + MEMBERSHIP_ERROR + '```\n'),
+    ('a backslash continuation',
+     '```console\n$ python3 ec/tools/xdata_register_map.py --no-eq-guard \\\n'
+     '      --out-clusters /tmp/off-clusters.csv\n'
+     + MEMBERSHIP_ERROR + '```\n'),
+    ('a subprocess.run list argument',
+     '```console\n$ python3 - <<\'PY\'\nimport subprocess, sys\n'
+     'subprocess.run([sys.executable, "ec/tools/xdata_register_map.py",\n'
+     '                "--no-eq-guard", "--out-clusters", "/tmp/off.csv"], '
+     'check=True)\nPY\n' + MEMBERSHIP_ERROR + '```\n'),
+)
+
+
+class TranscriptBlockScope(unittest.TestCase):
+    """The exemption is keyed on the fenced block, not on one line of it.
+
+    Issue #1454. `REGENERATES` read the tool name and its flag with a `[^\n]`
+    gap between them, so the flag had to be on the same physical line as the
+    tool name. The corpus writes the command as a `subprocess.run` list argument
+    with the flag on the *following* line -- `xdata-two-largest-case-
+    restatement.md` and `xdata-cluster-key-round-trip.md` both do -- and those
+    blocks were not scoped. The gap is now `[\\s\\S]`, which makes the block the
+    unit rather than the line.
+
+    What the widening does **not** do is reach past the closing fence: a claim in
+    a neighbouring fence is still reported, whether the guard-off command is in
+    the fence before it or the one after it. A case that cannot fail has not been
+    shown to check anything, so each case below puts a membership error in the
+    block and asks for silence, or puts the same error in a block that is not
+    scoped and asks for it to be reported. Perturbing `REGENERATES` back to
+    `[^\n]` turns the `subprocess.run` case red with the one problem it is
+    written to catch, and leaves the other two green; that asymmetry is what
+    makes it the discriminating one.
+    """
+
+    def test_each_command_spelling_scopes_the_block(self):
+        for label, text in TRANSCRIPT_SPELLINGS:
+            with self.subTest(spelling=label):
+                self.assertEqual(cited(text), (0, None))
+                reasons, _ = _skipped(text)
+                self.assertIn('census-regeneration transcript', reasons)
+
+    def test_the_flag_on_the_next_line_is_what_the_old_pattern_missed(self):
+        # The discriminating half, stated rather than assumed. Asserted on the
+        # two patterns directly -- a property of each rather than of a fixture
+        # -- so it keeps saying what it says as the corpus grows, and so the
+        # claim "the old gap could not reach this spelling" is one somebody
+        # can re-run rather than one this suite asserts about itself.
+        old = re.compile(r"xdata_register_map\.py[^\n]*--no-eq-guard\b")
+        for label, text in TRANSCRIPT_SPELLINGS:
+            body = text.split('\n', 1)[1].rsplit('```', 1)[0]
+            with self.subTest(spelling=label):
+                self.assertIsNotNone(ccc.REGENERATES.search(body))
+                self.assertEqual(
+                    bool(old.search(body)),
+                    label != 'a subprocess.run list argument',
+                    f"{label}: which spellings the one-line gap reaches")
+
+    def test_the_membership_error_is_reported_when_the_fence_is_not_scoped(self):
+        # The other half of every case above, and what makes them worth having:
+        # the identical line, outside a block running the tool under a
+        # census-changing flag, is reported. Without this the three cases above
+        # would pass on a fixture that says nothing checkable at all.
+        #
+        # The second fixture is the mixed block, and it is here for the
+        # boundary rather than for the sentence it used to carry. `--map` and
+        # `--check` change nothing, so naming one is not what scopes a block --
+        # but the scope is decided on the *block*, so a block that runs the
+        # tool under a census-changing flag is passed over whole, and a
+        # membership claim beside `--map` in it goes with the rest.
+        #
+        # The guard-off command is the `subprocess.run` spelling on purpose,
+        # because that is what makes the case discriminate: `--map` on one line
+        # and `--no-eq-guard` on another is exactly the shape the `[^\n]` gap
+        # could not reach, so with the old pattern this block did not match at
+        # all and the claim was adjudicated. The committed corpus does not
+        # reach it -- every block naming both puts the tool and the flag on one
+        # line -- so the suite is the only witness that the boundary was chosen
+        # rather than inherited. `xdata_register_map.py` refuses
+        # `--no-eq-guard` with `--check` and `--self-test` but *not* with
+        # `--map`, which is how one command does both at once
+        # (`xdata-register-map.md`), so the pair in this fixture is a legal
+        # invocation and not a slip.
+        guard_off = ('$ python3 - <<\'PY\'\nimport subprocess, sys\n'
+                     'subprocess.run([sys.executable, '
+                     '"ec/tools/xdata_register_map.py",\n'
+                     '                "--no-eq-guard", "--out-clusters", '
+                     '"/tmp/off.csv"], check=True)\nPY\n')
+        unscoped = '```console\n$ python3 ec/tools/xdata_register_map.py ' \
+            '--map\n' + MEMBERSHIP_ERROR + '```\n'
+        mixed = ('```console\n$ python3 ec/tools/xdata_register_map.py --map '
+                 'ec/annotations/xdata-clusters.csv\n'
+                 + guard_off + MEMBERSHIP_ERROR + '```\n')
+        self.assertEqual(cited(unscoped), (1, '0x06C6'))
+        self.assertEqual(cited(mixed), (0, None))
+        reasons, _ = _skipped(mixed)
+        self.assertIn('census-regeneration transcript', reasons)
+        # And the discriminator is what is claimed to scope it: drop the
+        # census-changing command and the same block reports the claim again,
+        # `--map` and all. That is the half of the boundary that predates this
+        # change and is the one about the committed census.
+        self.assertEqual(cited(mixed.replace(guard_off, '')), (1, '0x06C6'))
+
+    def test_the_block_is_the_ceiling_in_both_directions(self):
+        # The perturbation the widening invites: a predicate that reached
+        # anywhere in the *file* rather than inside one fence would scope this
+        # claim too and stop reporting it. The claim is in a fence of its own,
+        # because a file-wide rule scopes a fenced unit and not one in running
+        # prose -- a claim outside every fence would be reported either way and
+        # the case would pass without checking anything. The guard-off command
+        # is in the fence before the claim and in the fence after it, so either
+        # one reaching across is enough to catch the perturbation.
+        text = ('```console\n$ python3 ec/tools/xdata_register_map.py '
+                '--no-eq-guard\nnothing in this block is a claim.\n'
+                '```\n'
+                '```text\n' + MEMBERSHIP_ERROR + '```\n'
+                '```console\n$ python3 ec/tools/xdata_register_map.py '
+                '--no-eq-guard\nnor in this one.\n```\n')
+        self.assertEqual(cited(text), (1, '0x06C6'))
+
+    def test_a_flag_in_a_blocks_output_is_scoped(self):
+        # The decision, stated so it is one. `xdata-moved-ranks-427-pair.md`
+        # reaches this shape: a `--self-test` diff whose *output* names
+        # `--no-eq-guard` and whose body is an assertion about what the flag
+        # does. The tempting reading is to scope a command and not its output.
+        # That is not expressible over this corpus: the `two-largest` fences
+        # print `main-ec-001 mode-oem-init -> jaccard=0.0000` as bare output
+        # with no `>` prefix, while this one prints `>   ok ...`, so a
+        # command-versus-output discriminator would be a heuristic over whether
+        # a line starts with `>`, and the exemption would be keyed on
+        # formatting rather than on what the block did.
+        #
+        # So the boundary is stated instead: the block runs the tool under a
+        # census-changing flag, and *where* the flag is written is not a
+        # question this rule asks. What the block is about is a separate
+        # question this rule does not ask either -- the same membership error in
+        # a block naming `--map` and no flag that changes the census is
+        # reported, and in one that names both it is passed over with the rest.
+        # Both halves are the case above.
+        text = ('```console\n'
+                '$ diff <(python3 ec/tools/xdata_register_map.py '
+                '--self-test) <(python3 ec/tools/xdata_register_map.py '
+                '--self-test)\n'
+                '>   ok    --no-eq-guard flips exactly the 3 `==` snippets\n'
+                + MEMBERSHIP_ERROR + '```\n')
+        self.assertEqual(cited(text), (0, None))
+        reasons, _ = _skipped(text)
+        self.assertIn('census-regeneration transcript', reasons)
+
+    def test_the_flag_before_the_tool_in_one_block_is_not_scoped(self):
+        # The other half of "in that order", pinned so it is a decision rather
+        # than a side effect of how the gap is written. An unordered predicate
+        # would also scope a block whose output names the flag *first* and the
+        # tool it resolved anchors in -- a block about where the flag is
+        # defined rather than one that ran it.
+        #
+        # **Synthetic, and the corpus does not reach it.** The nearest committed
+        # shape is `xdata-no-eq-guard-citation-anchors.md`, whose output names
+        # the flag before the tool, but that block names the tool again further
+        # down and is scoped either way. Over every fence in `ec/`, `docs/` and
+        # `evidence/` the two orderings agree on every block, so this pins what
+        # the rule means rather than repairing something the corpus gets wrong.
+        text = ('```console\n'
+                '$ python3 ec/tools/check_eq_guard_citations.py\n'
+                'the anchors of the `--no-eq-guard` mechanism, resolved in\n'
+                'ec/tools/xdata_register_map.py:\n'
+                + MEMBERSHIP_ERROR + '```\n')
+        self.assertEqual(cited(text), (1, '0x06C6'))
+
+    def test_the_conjunction_of_tool_and_flag_is_what_scopes(self):
+        # Why the rule is not "the file mentions a census-changing flag". Each
+        # half is in the corpus without the other, and both are checked here
+        # rather than left as prose: `xdata-moved-ranks-427-pair.md` runs
+        # `git grep -l -- '--no-eq-guard'` over an old tree and never names the
+        # tool, and `xdata-names-file-census-anchor.md` names
+        # `(--export-ownership)` in a names-summary line inside a fence.
+        # Neither is a regeneration, so both are ordinary claims and both are
+        # reported. Each fixture names exactly one of the two, which is what the
+        # case is about -- naming both would put the ordering rule above to work
+        # instead and pass this one for the wrong reason.
+        for label, text in (
+            ('the flag as a git grep argument, naming no tool',
+             '```console\n$ git grep -l -- \'--no-eq-guard\' '
+             'e6c8886 -- | wc -l\n0\n' + MEMBERSHIP_ERROR + '```\n'),
+            ('the flag named in prose, naming no tool',
+             '```console\nnames: seeded 4, exact 0, carried by overlap 3\n'
+             'main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 '
+             '(--export-ownership), so a carry here is arithmetic over a '
+             'different clustering\n' + MEMBERSHIP_ERROR + '```\n'),
+        ):
+            with self.subTest(shape=label):
+                self.assertNotIn('xdata_register_map.py', text,
+                                 "this fixture must name only one of the two, "
+                                 "or it tests the ordering rule instead")
+                self.assertEqual(cited(text), (1, '0x06C6'))
 
 
 if __name__ == '__main__':

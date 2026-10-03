@@ -67,11 +67,24 @@ the figures would be about.
     rows in `xdata-clusters.csv`. That is "not found by this method" rather
     than a disagreement, and it is the same verdict `cited_clusters()` already
     gives a key or a name this generation does not carry. `--map` and
-    `--check` are deliberately **not** in it: both are keyed to the committed
-    identifiers, so a membership claim beside one of those is a claim about
-    the committed census and is still checked. It is the fence that scopes it,
-    not the prose around it — a sentence naming the same command in running
-    text is an ordinary citation.
+    `--check` are deliberately **not** in it: neither changes the census, so
+    naming one is not what makes a block a regeneration. Naming one beside a
+    flag that does change it is not a way out either, because the scope is
+    decided on the block: a block that runs the tool under a census-changing
+    flag is passed over whole, so a membership claim in it goes with the rest —
+    including one a `--map` line printed beside it, since `--map` is also how a
+    guard-off run is diffed against the committed census. The half that holds
+    is the other one: a block naming `--map` or `--check` and no flag that
+    changes the census is **not** scoped, and a membership claim in it is
+    reported. It is the fence that scopes it, not the prose around it — a
+    sentence naming the same command in running text is an ordinary citation.
+    **The unit of the match is the block, not the line**: the tool name and the
+    flag have to be in the same fenced block, in that order, and the corpus
+    writes the command three ways — one line, a backslash continuation with the
+    flag on the tool's line, and a `subprocess.run` list argument with the flag
+    on the next. Only the last puts the flag off the tool's line, so a match
+    that stops at the newline reads one of the three as something else. Nothing
+    can reach past the closing fence: the block is the string searched in.
   * *Proximity.* A unit that mentions a cluster word without claiming
     membership ("the `0x06E6`/`0x0860` gate block" in a `main-ec-002` table row,
     where `0x06E6` is a byte the shared function reads and not a member) is
@@ -230,13 +243,25 @@ FENCE = re.compile(r"^\s*(?P<fence>`{3,})")
 
 # The one tool whose flags *change* the census rather than report it, so a
 # fenced block running one of them is showing a generation this run is not
-# holding prose to. `--map` and `--check` are excluded on purpose: both are
-# keyed to the committed identifiers, so a membership claim beside one of
-# those commands is a claim about the committed census and is checked like any
-# other. The fence is what scopes this, so the command has to be *inside* the
-# block -- the same command named in running prose is an ordinary citation.
+# holding prose to. `--map` and `--check` are excluded on purpose: neither
+# changes the census, so naming one is not what makes a block a regeneration.
+# Nor is naming one a way out of the exemption -- the match is decided on the
+# whole block, so a block running the tool under a census-changing flag is
+# passed over whole, and a `--map` line beside it is a line of that same
+# regeneration (it is how a guard-off run is diffed against the committed
+# census) rather than a claim about the committed one. The other half does
+# hold: a block naming `--map`/`--check` and no flag that changes the census
+# is not scoped, and a membership claim in it is reported. The fence is what
+# scopes this, so the command has to be *inside* the block -- the same command
+# named in running prose is an ordinary citation.
+# The gap is `[\s\S]` and not `[^\n]`, so the unit of the match is the block and
+# not the line -- see the docstring's third bullet for the three spellings and
+# `TranscriptBlockScope` for the case per spelling. The block is the ceiling for
+# free, because `fence_spans()` supplies the string this is searched in.
+# Ordered, not unordered: the tool name has to come before the flag in that
+# one block.
 REGENERATES = re.compile(
-    r"xdata_register_map\.py[^\n]*--(?:no-eq-guard|export-ownership)\b")
+    r"xdata_register_map\.py[\s\S]*?--(?:no-eq-guard|export-ownership)\b")
 
 # The closed list of reasons a unit is passed over rather than checked, in
 # `skip_reason()`'s own order, and the one place they are written down. A skip
