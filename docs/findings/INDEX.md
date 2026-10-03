@@ -224,6 +224,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`testdata-index-check.md`](testdata-index-check.md) — `ec/tools/testdata/README.md` is now held to the tree under it (issue #727)
 - [`testdata-index-evidence-column.md`](testdata-index-evidence-column.md) — The fixture CSVs' `evidence` column is resolved against the real tree, and eight cells that named nothing there are empty (issue #780)
 - [`testdata-index-feeds-and-call-graph.md`](testdata-index-feeds-and-call-graph.md) — The testdata index's `Feeds` column and its self-indexed nested tables are read too (issue #746)
+- [`testdata-index-keyed-census.md`](testdata-index-keyed-census.md) — The row-count refusal is gone: the census keys on the `File` cell, and three more edits come back (issue #1084)
 - [`testdata-index-repair-census.md`](testdata-index-repair-census.md) — How many edits the testdata index's third column has held (issue #1008)
 - [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md) — The testdata-index suite asserted three integers the tree happens to hold today (issue #744)
 - [`testdata-row-claims-closing-line-root.md`](testdata-row-claims-closing-line-root.md) — The closing line named the committed index for a run that read a scratch one, and the argument that excused it was a caller count (issue #1022)
