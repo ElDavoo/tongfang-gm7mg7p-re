@@ -38,9 +38,11 @@ set while a read-modify-write provably preserves every bit the EC does not name:
 | `0x044F` | `0x9D53` | `add R1`, then `rrc` — the `0x1C15` averaging step |
 | `0x03C4` | `0xE2D3` | `orl #0x40` at one site, `inc` at another |
 
-`0x068B` and `0x068C` are the counter pair `0x9D53` and `0xE2D3` write on
-almost every exit, and `0x1C11` is read early and written `0xFF` later on paths
-where the read is not the write's source — so those are **not** counted as
+`0x068B` is written by `0x9CE8` and `0x9D53`, `0x068C` by `0x9D53` alone, and
+`0xE2D3` writes neither — the only `0x068x` byte it stores is `0x0680`. Each
+of those stores puts a constant in A and writes it without reading the byte,
+and `0x1C11` is the same case: read early, written `0xFF` later on paths where
+the read is not the write's source. They are therefore **not** counted as
 read-modify-write here, and a reader counting "read then later write" in the
 listing rather than following A would get them wrong.
 
