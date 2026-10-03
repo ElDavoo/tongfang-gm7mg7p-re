@@ -73,10 +73,17 @@ REPORT = [
 
 
 def stderr_of(report, shape_label):
-    """`print_carry`'s stderr for one report under one census shape."""
+    """`print_carry`'s stderr for one report under one census shape.
+
+    The coverage list is empty, which is what the committed census gives it:
+    every name in the names file is carried, so the name-indexed half prints
+    no line and adds no clause, and every assertion below is about the
+    cluster-indexed half alone. `test_xdata_name_coverage.py` is the suite that
+    drives the other half, and it pins the committed `names:` line end to end.
+    """
     buf = io.StringIO()
     with contextlib.redirect_stderr(buf):
-        xrm.print_carry(report, shape_label)
+        xrm.print_carry(report, [], shape_label)
     return buf.getvalue()
 
 
