@@ -1655,6 +1655,15 @@ OWNERSHIP = {
     # claim that the event cannot happen: a `pd` fold whose body *does* name an
     # XDATA byte drops that body's references onto the owner and moves these
     # figures. `docs/findings/pd-pair-unmoved-one-fold.md` is the write-up.
+    #
+    # `pd_refs` has no companion identity the way `refs` does, and the asymmetry
+    # is the reason rather than an omission: the census-wide `refs` above is
+    # `main_refs + pd_refs` because a `both` row's references split by source
+    # program, while `distinct` is a union and the two per-program widths
+    # overlap on the shared addresses. Asserting `refs - main_refs == pd_refs`
+    # beside the three checks that already compare all three keys against the
+    # measured census would add no measurement; see the "and its pd half is"
+    # check, which is where the distinction is recorded.
     "pd_distinct": 157, "pd_refs": 858,
     "buckets": {"read": 5362, "write": 3043, "read+write": 1018,
                 "passed-to-call": 500, "address-taken": 255},
@@ -4797,6 +4806,14 @@ def self_test(args) -> int:
     # merges, so this counts the 108 `program=pd` rows plus the 49 `both` ones
     # -- the 157 the console block prints, not the 108 the CSV's `program`
     # column alone would give.
+    #
+    # **The two arms' `distinct` figures do not partition and their `refs`
+    # figures do**, which is why there is no `pd_distinct` identity to assert
+    # beside this check. An address the programs share is one entry in *both*
+    # merges, so the widths count it twice; a `both` row's references are split
+    # by source program, so the ref counts count each of them once. A sum check
+    # over the distinct side therefore cannot hold on this tree, and writing one
+    # to catch a drift would fail here rather than on a real change.
     own_pd_refs = sum(e["refs"] for e in groups_own["pd"].values())
     # Expected-then-got in the two slots, as the main-EC check above it does and
     # for the reason its comment gives: printing the measured pair in both made
