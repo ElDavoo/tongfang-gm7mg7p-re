@@ -39,9 +39,8 @@ this comparison was static.
 > kernel32 on its first `Ec()`, so it imports on a non-Windows runner
 > (`windows/tools/test_import_off_windows.py`), and the fixture's remaining job
 > is scriptability rather than importability.
-> `docs/findings/offline-import-ecrw.md` is the write-up. The suite still
-> imports neither file, for the reason below. The suite therefore imports
-> neither file:
+> `docs/findings/offline-import-ecrw.md` is the write-up. The suite therefore
+> imports neither file:
 `ast.parse` over the two sources is enough, and staying static keeps it clear of
 the shared-interpreter machinery in
 `tools/test_windows_tools_shared_interpreter.py` (see "Shared-file rules").
@@ -222,7 +221,7 @@ they apply to any new `test_*.py` in `windows/tools/` automatically:
   import on a non-Windows runner
   (`windows/tools/test_import_off_windows.py`). `docs/findings/offline-import-ecrw.md`
   is the write-up. The rest of this item stands as it was written.
-  - **Giving the fixture `ValueError` guards.** The issue lists this as optional,
+- **Giving the fixture `ValueError` guards.** The issue lists this as optional,
   and it is the wrong side to close. Copying the bounds into `ecrw_fake.py`
   would make the fixture a second implementation of `ecrw.py`, which is the one
   thing its own docstring says it is not. The guards are already pinned against

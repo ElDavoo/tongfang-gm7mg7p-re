@@ -48,14 +48,12 @@ for f in sorted(TOOLS.glob("*.py")):
 PY
 ```
 
-gave a dozen-and-one failures, all of them the same `AttributeError`, and one
-`OK` line per module that had no DLL to bind: `battery_trace.py`,
-`charge_target_test.py`, `ctgp_dben_probe.py`, `ctgp_live_test.py`,
-`dotnet_dump.py`, `ec_validate.py`, `ec_watch.py`, `ecrw.py`,
-`gpu_block_watch.py`, `manual_fan_ctrl_probe.py`, `system_id_probe.py`,
-`uefi_var.py` and `uniwill_set.py`. Most of them imported `ecrw` and failed
-only because it was in front of them. Run against the tree as it stands, the
-same loop reports no failures at all.
+gave one `AttributeError` per module that reaches a DLL — binding one itself at
+module scope, or importing `ecrw` or `uefi_var`, which bound theirs — and an
+`OK` line for every module that reaches none. Run against the tree as it
+stands, the same loop reports no failures at all. Which modules fall on which
+side is a property of the tree at a given commit rather than of the method, so
+the command above is where to read the split.
 
 **The tax the issue named was real and it was not confined to the grader.**
 `ecrw_fake.py` exists because a module that could not be imported had to be
