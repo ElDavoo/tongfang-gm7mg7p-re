@@ -297,6 +297,73 @@ to explain it. The alternative — tidying either placement back to where a
 reader expects it — breaks every-ordered-pair landing, and the failure is
 silent in the way that matters: **each patch still applies cleanly alone.**
 
+**Corrected 2026-10-03, issue #956 — the last row is wrong in three ways and
+two regions are missing, and the correction is a whole table rather than an
+edit to that row.** The two figures the issue names are the ambiguity that let
+the mistake in: every number in the block above is **a hunk offset against the
+base each patch was cut on**, not a current line number, and nothing said so.
+The table is replaced below with one that labels which is which.
+
+The regions, re-derived on this tree by **applying each hunk alone to a
+`tempfile` copy of the committed script and taking the first line that
+differs** — not from its `@@` header, which names the base it was cut against
+and several of which predate this file's current shape, and not from its first
+context line, which recurs. Each patch is listed with the line it lands on, so
+a reader can check the cell rather than trust it. Every figure in the first
+column is a **current line number**; `grep -n "^gate '" .github/scripts/agent-gates.sh`
+prints the `gate` list's own.
+
+| region of `agent-gates.sh`, current | held by (and where it lands) | what is held |
+|---|---|---|
+| `:68`, the gap after `check_registers_yaml()` | — | **free** |
+| `:79`, after `check_scan_refs_smoke_test()` | testdata-row-claims h1 (`:79`) | |
+| `:87`, after `check_register_counts()` | capture-claims h1 (`:87`) | **a function region**, not the gate list |
+| `:96`, after `check_python_syntax()` | bank-map-score h1 (`:96`) | |
+| `:103`, inside `check_ghidra_tooling()` | bank-map-score h2 (`:103`) | the one call, above the tool list |
+| `:117`, inside `check_ghidra_tooling()` | cross-decoder-disagreement h1 (`:117`) | the one call, on the line above the tool list — **not** a gap in it |
+| `:133-144`, the `for tool in` list | 0751-writer-census h1 (`:133`), gap-text-check h1 (`:136`), 0751-self-test h1 (`:140`), disasm8051 h1 (`:144`) | every gap in the list, from its head to its foot |
+| `:146-299`, the `case` arms | disasm8051 h2 (`:155`), gap-text-check h2 (`:180`), 0751-self-test h2 (`:207`) | the arm list |
+| `:301`, inside `check_ghidra_tooling()` | reassembly-bound-check h1 (`:301`) | after the `done`, before `rm -rf "$scratch"` |
+| `:305`, the gap before `check_shellcheck()` | — | **free** |
+| `:313` and `:316`, above `check_doc_links()` | pin-table-rows h1 (`:313`), findings-frozen h1 (`:316`) | |
+| `:324`, inside `check_doc_links()` | findings-frozen h2 (`:324`) | the one call, not a `gate` line |
+| `:327-334`, the `gate` list and the insertion point after it | pin-table-rows h2 (`:327`), capture-claims h2 (`:330`), testdata-row-claims h2 (`:334`) | **all eight insertion points**, head to foot |
+
+**The `case` arms and the `*)` default are two different things, and only the
+first is held.** The `*)` arm is at `:294`, and no prepared patch adds one —
+`grep -nE '^\+[[:space:]]*\*\)' docs/ci/agent-gates-*.patch` returns nothing —
+so a re-cut may still add a `*)` arm without colliding with anything. What is
+saturated is the arm list above it. A table that credits the arms with "the
+arm list and the `*)` default" claims a hold that does not exist, in the same
+way a hunk offset presented as a current line number does.
+
+Three of those rows are corrections of the block above rather than additions:
+`check_register_counts` and the `gate` list were **conflated into one row**, and
+they are two separate anchors — the old row credits `testdata-row-claims` with
+`gate` list `:271-277` when that patch's `gate` hunk has no header line number
+that matches this file at all and its context is the list's **tail**. And
+**`agent-gates-pin-table-rows.patch` had no row anywhere in the table**, though
+it holds the `gate` list's head and the region above it; that omission is why the
+head anchor read as free.
+
+**A hunk's header line number is a claim about the file it was cut against, and
+it is not checkable by reading the patch.** Measured here, `pin-table-rows` hunk 2
+carries `@@ -294,6` while it lands at `:327`, and `testdata-row-claims` hunk 2
+carries `@@ -275,6` while it lands at `:334` — both still apply, because
+`git apply` searches. `grep -n '^@@ '` prints the headers, which is to say it
+prints the figure that is not the answer:
+
+```sh
+for p in docs/ci/agent-gates-*.patch; do grep -n '^@@ ' "$p"; done
+```
+
+Reading a hunk's context out of the committed script is the alternative, and it
+has its own trap: `pin-table-rows` hunk 1's context is `return "$rc"` / `}` /
+blank, and that sequence occurs three times in the file. `git apply` resolves it
+by search order, so the patch applies where the header says — but a reader
+matching that context by hand can pick the wrong one of the three, and the third
+column of the table above is where that mistake shows up.
+
 The new patch adds a third way for a patch here to be half-right without
 noticing, so the suite grew a case for it. `FoldTests` covers the folded
 capture-claims patch; `ArmRetentionTests` covers this one, whose two halves

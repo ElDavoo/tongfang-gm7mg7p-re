@@ -10136,7 +10136,15 @@ names**, not "three of the 34" — only one of the issue's 34 qualified
 references names an absent file, the other three being bare-spelled. The
 `.py`-side population, three further references inside
 `tools/test_agent_gates_patches.py`, is a follow-up: the checker is scoped to
-`*.md`, and widening it would put this tool in a file #772 owns.
+`*.md`, and widening it would put this tool in a file
+`docs/findings/prepared-gate-patches.md` owns. *(Corrected 2026-10-03, issue
+#956: this named issue #772, which is closed. What a wider scan would newly
+govern is a stale patch name inside a Python file — the same failure this check
+catches in prose — and widening to `*.py` would report the checker's own
+deliberately-absent fixture names, so it is real work rather than a one-line
+widening; the files and what each names are in
+[`findings/doc-patch-ref-file-sets.md`](findings/doc-patch-ref-file-sets.md),
+where the decision is recorded.)*
 
 **The historical rule, and why it is an enumeration rather than a per-reference
 opt-out.** Three of the four deliberate references are *records* — §43's sentence
@@ -10153,7 +10161,7 @@ that broke in `test_readme_suite_table.py`. **The bound is stated rather than
 hidden: any new reference to one of those two names is exempt by construction.**
 
 **Not in the gate, and that is a decision with a reason.** No
-`docs/ci/agent-gates-*.patch` was added, because a seventh would need a `gate`
+`docs/ci/agent-gates-*.patch` was added, because a new one would need a `gate`
 line at the same seven-line list's anchor where two patches already insert — two
 patches that each apply alone and do not compose is what
 `tools/test_agent_gates_patches.py` exists to catch, and §71's took the *head*
@@ -10165,6 +10173,17 @@ precedent. The recipe is `docs/agent-pipeline.md` item 13, the renumbering
 §71's item 12 forced on both. The **suite** needs no wiring at all:
 `tools/run-tests.sh` finds every `test_*.py`, so
 `tools/test_doc_patch_refs.py` is collected on a full run.
+*(Corrected 2026-10-03, issue #956: the held `PATCHES` set is not what blocked
+this, and no issue does. The step was taken — the check and its `gate` line
+**folded into `docs/ci/agent-gates-capture-claims.patch`** rather than shipped
+as a file of its own, which is why there is still no new patch to add to
+`PATCHES` and why the filename this issue's step asked for is recorded as a key
+in `tools/check_doc_patch_refs.py`'s `HISTORICAL` set beside what was prepared.
+The measurement is in
+[`findings/doc-patch-refs-gate-fold.md`](findings/doc-patch-refs-gate-fold.md):
+*every* insertion point the `gate` list admits fails to compose, not only the
+two named above. **Until a human lands that patch, no commit runs this
+check**.)*
 
 **Nothing here is a live test and nothing is evidence about the firmware.** It is
 arithmetic over committed text: no EC opened, no register read back, no capture

@@ -514,7 +514,9 @@ only covers what's specific to *this* copy.
      window, and two patches editing one contiguous region cannot both be
      applied in either order.
   13. **`check_doc_patch_refs.py --check` is not in the cheap tier yet, and
-     should be** (2026-09-26, issue #777). `check_doc_links()`'s discovery is
+     should be** (2026-09-26, issue #777; **prepared and folded, not landed,
+     2026-10-03, issue #956** — "yet" still reads true, because a prepared
+     patch is not a gate line). `check_doc_links()`'s discovery is
      `grep -rEo '\]\(([^:)]+\.md)\)'`, so it reads markdown *links* and nothing
      else — not a backticked path, and not a `.patch` at all. It finds 686 `.md`
      link references at `271389d` and **zero** references to a patch, while
@@ -526,35 +528,46 @@ only covers what's specific to *this* copy.
      case 6 checks each patch *header's* `git apply` line, and a fold breaks the
      prose the same way. #745 deleted `agent-gates-testdata-index.patch` and
      repointing its references was six manual edits across five files with
-     nothing to notice a miss. Adding it is a `check_doc_patch_refs()` function
-     and a `gate` line beside `check_doc_links`:
+     nothing to notice a miss. **It is prepared, folded into
+     `docs/ci/agent-gates-capture-claims.patch` rather than shipped as a patch
+     of its own** (2026-10-03, issue #956), which is where the check's
+     `gate` line went:
 
      ```sh
      check_doc_patch_refs() {
-       python3 tools/check_doc_patch_refs.py --check || return 1
+       python3 tools/check_doc_patch_refs.py --check
      }
 
      gate 'doc patch refs'  check_doc_patch_refs
      ```
 
-     **No `docs/ci/agent-gates-*.patch` was prepared for it, and that is a
-     decision with a reason rather than an omission** — the same one
-     `docs/findings/prose-line-citations-held.md` took for the `run-tests.sh`
-     wiring above, followed here rather than reinvented. A seventh patch would
-     need a `gate` line at the same seven-line list's anchor where
-     `agent-gates-capture-claims.patch` and `agent-gates-testdata-row-claims.patch`
-     already insert — item 12 above took the *head* of that list for exactly
-     this reason — and two patches that each apply alone and do not compose is
-     the failure `tools/test_agent_gates_patches.py` exists to catch; the file
-     would also need adding to that suite's held `PATCHES` set, which issue #772
-     owns. Cheap tier for item 4's reason: markdown and one directory, the
+     *(Corrected 2026-10-03: this carried `|| return 1`, which the landed
+     function does not and the four functions beside it in the same patch do
+     not either — the tool's own exit code is the function's exit code, and
+     `gate` keys on it. The snippet above is what the patch carries.)*
+
+     **Why it folds rather than shipping alone is the measurement, and the
+     measurement is repeated in
+     [`findings/doc-patch-refs-gate-fold.md`](findings/doc-patch-refs-gate-fold.md)
+     because a template re-copy brings this item across and a recipe that does
+     not apply is what it brought last time.** Every insertion point the
+     seven-line `gate` list admits was cut as a one-line patch and tried alone
+     and in both orders against every prepared patch: **all of them apply
+     alone, and none composes.** Item 12 above took the *head* of that list for
+     exactly this reason, and this is the same list from the other direction —
+     there is no anchor left to pick. The *function* side is not saturated, so
+     the pair has to ride together anyway: a function at a free gap and a
+     `gate` line nowhere are not a change, they are one check that runs on the
+     days the second half landed. The tables in that write-up are also the
+     re-derived ones, and they are what to read rather than a line number here.
+     Cheap tier for item 4's reason: markdown and one directory, the
      standard library, no firmware image, no Ghidra, no network, no assembler.
      It is not here for item 4's reason, template-copied file and no `workflow`
-     scope on the token, and **until a human lands it, no commit runs it** — the
-     prepared patch is the next step, not a gate line here. Its own suite
-     (`tools/test_doc_patch_refs.py`) needs no wiring to be run at all, for
-     item 5's reason: `tools/run-tests.sh` discovers every `test_*.py` in the
-     repository, so it is already collected by the runner above.
+     scope on the token, and **until a human lands the patch, no commit runs
+     it**. Its own suite (`tools/test_doc_patch_refs.py`) needs no wiring to
+     be run at all, for item 5's reason: `tools/run-tests.sh` discovers every
+     `test_*.py` in the repository, so it is already collected by the runner
+     above.
   14. **`dsdt_ec_fields.py --csv --check` and `--self-test` are added to the
      tool list in `check_ghidra_tooling`, and a re-copy drops them**
      (2026-09-27, issue #1161). `--csv --check` is the mode that matters: it

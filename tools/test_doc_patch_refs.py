@@ -138,10 +138,13 @@ class RefusalTests(unittest.TestCase):
                              [("agent-gates-never-existed.patch", "docs/note.md")])
             self.assertEqual(quiet(tool.check_mode, found)[1], 1)
 
-    def test_a_fourth_absent_name_is_refused(self):
-        # The bound on the enumeration, stated rather than hidden: `HISTORICAL`
-        # is two names wide and a name outside it is stale, so adding a third
-        # absent reference cannot make the check pass by being tolerated.
+    def test_a_name_outside_the_enumeration_is_refused(self):
+        # The bound on the enumeration, stated rather than hidden: a name the
+        # enumeration does not hold is stale, so an absent reference cannot make
+        # the check pass by being tolerated, however many entries the
+        # enumeration has. The fixture is two names wide for the same reason it
+        # always has been -- one present, one not -- so adding a key to the
+        # enumeration does not edit this case.
         with tool.mini_tree({"docs/note.md": "`agent-gates-a.patch`\n"
                                              "`agent-gates-b.patch`\n",
                              "docs/ci/agent-gates-a.patch": "a\n"}) as root:
@@ -189,20 +192,28 @@ class HistoricalTests(unittest.TestCase):
     is the same silent-pass shape the empty-discovery guard above is for.
     """
 
-    def test_there_are_exactly_three_keys(self):
+    def test_the_exemption_is_exactly_as_wide_as_it_is_documented(self):
         # A count here is not the population: it is the size of the exemption,
         # and the exemption is what a new absent name would have to join. It is
-        # pinned because a fourth key appearing silently *widens* what this
-        # check tolerates, which is the one direction a bare "is it still
-        # absent" test would not notice.
+        # pinned because a key appearing silently *widens* what this check
+        # tolerates, which is the one direction a bare "is it still absent"
+        # test would not notice. The names are listed rather than counted, so
+        # the case reads as what it is -- this is the whole of the enumeration,
+        # and a name added without a record here is a name nobody decided to
+        # exempt.
         #
-        # The third is `agent-gates-check-history-checkouts.patch`, the filename
-        # #1033 asked for and the same saturated `gate` list declined, exactly as
-        # #745 declined the second. #1033's own case for it is in
-        # docs/findings/history-checkouts-gate-wiring.md.
+        # The keys past the first two are filenames issues asked for and the
+        # same saturated `gate` list declined: `agent-gates-check-history-
+        # checkouts.patch` (#1033, in
+        # docs/findings/history-checkouts-gate-wiring.md) and
+        # `agent-gates-doc-patch-refs.patch` (#956, in
+        # docs/findings/doc-patch-refs-gate-fold.md). Each write-up names what
+        # was asked for beside what was prepared, which is what makes the name
+        # genuinely cited rather than incidentally so.
         self.assertEqual(sorted(tool.HISTORICAL),
                          ["agent-gates-check-history-checkouts.patch",
                           "agent-gates-claims-and-testdata.patch",
+                          "agent-gates-doc-patch-refs.patch",
                           "agent-gates-testdata-index.patch"])
 
     def test_each_key_is_still_absent_from_docs_ci(self):
@@ -389,9 +400,10 @@ class PreparedNonPatchTests(unittest.TestCase):
         # Prose and not the whole declared set, and that is a measured
         # distinction rather than a convenience: the one place
         # `docs/ci/agent-gates-capture-claims.patch` names this file is a `+`
-        # line at :197, a comment the patch adds to a Python file. A diff body
+        # line, a comment the patch adds to a Python file. A diff body
         # is not a citation, and letting one sustain this would make the
-        # verdict true of nothing.
+        # verdict true of nothing. `grep -n 'deep-schedule' <patch>` is the
+        # pair to re-derive which line it is.
         with tool.scratch_tree() as root:
             stripped = 0
             for rel in tool.markdown_files(root):

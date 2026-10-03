@@ -39,7 +39,7 @@ the `docs/ci/` prefix, and that file is a `.csv` -- never a counterexample to a
 `*.patch` glob. The two `linux/patches/` files above are, and they are what
 the second glob is drawn around.)
 
-**The historical rule, which is the whole design problem here.** Three names
+**The historical rule, which is the whole design problem here.** Some names
 are in prose and deliberately not on disk, and a naive "every name resolves"
 rule false-positives on every reference to them. **The count of those
 references is a figure of the tree it was counted on and has moved more than
@@ -57,6 +57,10 @@ prints the current one, which is the figure to re-derive:
     declined again: the check went into
     `docs/ci/agent-gates-capture-claims.patch` instead, and the write-up names
     what was asked for beside what was prepared, per `CLAUDE.md` §4a-4d.
+  * `agent-gates-doc-patch-refs.patch` -- the filename issue #956 asked for,
+    and the same saturation declining it a third time: this check's own `gate`
+    line went into the same patch, for the reason
+    `docs/findings/doc-patch-refs-gate-fold.md` measures.
 
 `HISTORICAL` below is that opt-out, keyed on the patch **name** and enumerated
 here rather than marked in the prose. The alternative the issue offers -- a
@@ -64,11 +68,12 @@ fenced or quoted span at each reference -- was not taken, and the reason is
 recorded in `docs/findings/doc-patch-reference-gate.md`: every one of them is a
 record, and `CLAUDE.md` §4a-4d says a superseded claim stays visible with a
 correction beside it rather than reshaped so a checker can see it. The bound is
-stated rather than hidden: any *new* reference to one of these three names is
-exempt by construction. It is three names wide, and both directions are held --
-each key is still absent from `docs/ci/`, and still cited by at least one
-markdown file -- so neither a patch reappearing under that name nor a reference
-being edited away can leave the exemption quietly true.
+stated rather than hidden: any *new* reference to one of these names is
+exempt by construction, and the set itself is the width -- `len(HISTORICAL)`,
+which every run here prints. Both directions are held -- each key is still
+absent from `docs/ci/`, and still cited by at least one markdown file -- so
+neither a patch reappearing under that name nor a reference being edited away
+can leave the exemption quietly true.
 
 **The live direction is checked too, mirroring the sibling:** every prepared
 change in `docs/ci/` must be cited by at least one file this check reads -- a
@@ -100,10 +105,10 @@ and the decision behind each:
   tool's and its suite's own deliberately-absent fixture names
   (`agent-gates-a.patch`, `-b`, `-never-existed`, `-gone`) as STALE, and would
   make the "still cited" half of every `HISTORICAL` key self-certifying -- this
-  file's own docstring names all three.
+  file's own docstring names all of them.
 - **A citation in a diff body is not a citation.** The one place
   `docs/ci/agent-gates-capture-claims.patch` names
-  `agent-gates-deep-schedule.yml` is a `+` line at :197, a comment the patch
+  `agent-gates-deep-schedule.yml` is a `+` line, a comment the patch
   adds to a Python file. That is why the non-patch entry's citation is read
   over prose, and it is why a future patch that adds a backticked patch name
   into a file it patches would contribute a reference that is a diff rather
@@ -139,13 +144,14 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 CI = REPO / "docs" / "ci"
 
-# The three names prose names on purpose; see the docstring. The write-up beside
+# The names prose names on purpose; see the docstring. The write-up beside
 # this tool records why this is an enumeration rather than a per-reference
 # opt-out, and what the choice costs.
 HISTORICAL = {
     "agent-gates-testdata-index.patch",
     "agent-gates-claims-and-testdata.patch",
     "agent-gates-check-history-checkouts.patch",
+    "agent-gates-doc-patch-refs.patch",
 }
 
 # The prepared changes in `docs/ci/` that are not `.patch`. One entry today,
@@ -322,7 +328,7 @@ def scan(root):
     #
     # Prose only, because the widened set is not a set of citations. The one
     # place `docs/ci/agent-gates-capture-claims.patch` names this file is a
-    # `+` line at :197 -- a comment the patch *adds* to a Python file, not a
+    # `+` line -- a comment the patch *adds* to a Python file, not a
     # header of its own naming a sibling. Counting it would let a diff body
     # sustain the liveness of a prepared change whose every real citation had
     # been deleted, which is a false negative produced by a phantom rather than
@@ -336,9 +342,9 @@ def scan(root):
 
     # A name is stale when it resolves to nothing in `docs/ci/` and is not one
     # of the names the docstring says prose names on purpose. That clause is
-    # the exemption and it is the *only* one: a fourth absent name is refused
-    # here rather than needing a fourth entry, so the exemption cannot widen by
-    # accident.
+    # the exemption and it is the *only* one: a name the enumeration does not
+    # hold is refused here rather than tolerated, so the exemption cannot widen
+    # by accident.
     stale = [(rel, line, name) for rel, _k, name, line in refs
              if name not in disk and name not in HISTORICAL]
 
@@ -551,8 +557,8 @@ def self_test():
     # enumeration and a name outside it is stale, which is the whole of the "the
     # exemption cannot widen silently" claim: there is no path that admits a
     # name the enumeration does not hold, whatever its width. Both names here
-    # are absent from a `docs/ci/` holding one patch, and the second is the
-    # "fourth" one the issue asks about.
+    # are absent from a `docs/ci/` holding one patch, and the second is a name
+    # the enumeration does not list.
     with mini_tree({"docs/note.md":
                     "`agent-gates-a.patch`\n`agent-gates-b.patch`\n",
                     "docs/ci/agent-gates-a.patch": "a patch\n"}) as root:

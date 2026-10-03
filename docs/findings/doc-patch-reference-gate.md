@@ -101,7 +101,14 @@ fold is:
    patch in three more places (its module docstring and the `FoldTests` failure
    message). That `.py` population is a follow-up, not something to widen this
    into: the checker is scoped to `*.md`, and a wider scan would put this tool
-   inside a file issue #772 owns.
+   inside a file `docs/findings/prepared-gate-patches.md` owns.
+   *(Corrected 2026-10-03, issue #956: this named issue #772, which is closed.
+   What owns it now is the question the `.py` population actually raises — a
+   stale name inside a Python file, which is a rename or a fold's missed
+   repoint, and the same failure this tool exists to catch in prose. Widening
+   the scan would report this tool's own deliberately-absent fixture names, so
+   it is a real piece of work rather than a widening; the files and what each
+   names are in [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md).)*
 
 5. **The "every reference" wording over-claimed, in both directions, and the
    file set is now named wherever it is claimed** (2026-09-27, issue
@@ -269,14 +276,20 @@ no `.c` and no `.asm`.
 a reason rather than an omission.**
 [`prose-line-citations-held.md`](prose-line-citations-held.md) took this exact
 decision for the `tools/run-tests.sh` wiring and recorded it in prose; this
-follows that precedent rather than inventing one. A seventh patch would need a
+follows that precedent rather than inventing one. A new patch would need a
 `gate` line at the same seven-line list's anchor where
 `agent-gates-capture-claims.patch` and `agent-gates-testdata-row-claims.patch`
 already insert — item 12 takes the *head* of that list for exactly this reason
 — and two patches that each apply alone and do not compose is the failure
-`tools/test_agent_gates_patches.py` exists to catch. The file would also have to
-be added to that suite's held `PATCHES` set, which issue #772 owns. The prepared
-patch is the right next step; a gate line here is not this issue's to land.
+`tools/test_agent_gates_patches.py` exists to catch. **Corrected 2026-10-03,
+issue #956: the next step has now been taken, by fold rather than by a new
+file.** The check and its `gate` line went into
+`docs/ci/agent-gates-capture-claims.patch`, and the measurement behind that is
+[`doc-patch-refs-gate-fold.md`](doc-patch-refs-gate-fold.md) — which also
+records that *every* insertion point the `gate` list admits fails to compose,
+not only the two this paragraph names, and that the tables this paragraph's
+reasoning rests on have drifted. **Until a human lands that patch no commit
+runs this check**; a gate line here is still not this issue's to land.
 
 ## The transcript
 
@@ -350,10 +363,12 @@ OK
   deferred: this read "recorded as a follow-up". It is out of scope by decision
   and for a reason — widening to `*.py` reports this tool's own deliberately
   absent fixture names as STALE and makes the "still cited" half of every
-  `HISTORICAL` key self-certifying, since this tool's docstring names all three.
+  `HISTORICAL` key self-certifying, since this tool's docstring names all of
+  them.
   The five files and what each names are listed in
-  [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md), and the files a
-  wider scan would newly govern are issue #772's.)*
+  [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md), and what a wider
+  scan would newly govern is a stale name inside a Python file — real work, and
+  not this issue's to do.)*
 - **Whether a reference's sentence is instructing or describing.** That is what
   `HISTORICAL` stands in for, at name granularity. The cost of getting it wrong
   is a false positive a reader can see and an edit to make — not a silent pass.

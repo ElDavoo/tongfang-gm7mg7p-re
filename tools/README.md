@@ -128,11 +128,12 @@ a suite that leaves global state behind, which has nothing to do with `ecrw`.
 - **The checker is not in the gate either.**
   `check_doc_patch_refs.py` is a `--check`/`--self-test` tool of their shape and
   it is **not** wired into `.github/scripts/agent-gates.sh`, for the same
-  template-copied-file reason: `docs/agent-pipeline.md` item 13 carries the
-  recipe, and no `docs/ci/agent-gates-*.patch` was added, for the reason
-  [`findings/prose-line-citations-held.md`](../docs/findings/prose-line-citations-held.md)
-  set out for `run-tests.sh`. Its **suite** needs no wiring to be run at all —
-  `tools/run-tests.sh` finds it, which is the whole of what a suite takes. What
-  the gate would add is per-commit coverage of the prose, and nothing here
-  claims it until a human lands the patch.
+  template-copied-file reason. It is **prepared and folded** into
+  `docs/ci/agent-gates-capture-claims.patch` rather than shipped as a patch of
+  its own — the `gate` list admits no insertion point that composes, measured in
+  [`findings/doc-patch-refs-gate-fold.md`](../docs/findings/doc-patch-refs-gate-fold.md)
+  — so no `docs/ci/agent-gates-*.patch` was added for it. Its **suite** needs no
+  wiring to be run at all — `tools/run-tests.sh` finds it, which is the whole of
+  what a suite takes. What the gate would add is per-commit coverage of the
+  prose, and nothing here claims it until a human lands the patch.
 
