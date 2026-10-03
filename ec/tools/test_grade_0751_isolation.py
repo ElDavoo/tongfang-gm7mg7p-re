@@ -7481,11 +7481,11 @@ def block_lines(out):
 class RestoreCloserPerCaptureTests(unittest.TestCase):
     """A block's verdict is about every capture, not the fused window (#450).
 
-    Its own class at the end of the file, and not a case folded into
-    `GradeTests` above, for the reason `StrictReaderOpenCountTests` gives for
-    the same choice: prose across `docs/findings/` pins lines of this file by
-    number, and a block added mid-file moves every pin below it onto a
-    different line. A class at the end costs nothing.
+    Its own class, and not a case folded into `GradeTests` above, which
+    has no `setUp`: these read one fixture of their own, and the docstring
+    saying what they stand for needs a class to sit on. Position is not
+    the reason and does not make the block cheap -- this one sits above
+    `UnreadableCaptureTests`, and adding it moved that class's lines.
 
     What is being held is that `block_verdict` reads each capture's own
     closing mark rather than the block's last fused window. The fused window
