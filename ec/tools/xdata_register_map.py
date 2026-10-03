@@ -952,7 +952,7 @@ ORACLE = {
     # registers.yaml row renames the symbol table and not a decompile". The
     # census pins above are therefore the ones #1425 measured and this block
     # leaves them at; only `named_in_tree` moves here.
-    "named_in_tree": 193,  # 190 -> 193: #635's XDATA_1663/1667/1668, each reached by an exported function
+    "named_in_tree": 194,  # 190 -> 194: #635's XDATA_1663/1667/1668 and #295's XDATA_0391, each reached by an exported function
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # **Unmoved by issue #279, and worth saying why rather than leaving it as a
@@ -5737,3 +5737,21 @@ if __name__ == "__main__":
 # what it finds there, so a dated block added in the middle moves the anchors
 # below it and turns a dozen citations across four documents red. The pin
 # changes above are in place regardless; only this prose is placed here.
+
+# *** 2026-10-02, issue #295: 190 -> 191, and it is the #647 step once more.
+# `registers.yaml` gained `XDATA_0391`, the byte the sibling `XDATA_0390` row
+# already pointed at, and the census reached that address before this change:
+# `annotations/xdata-registers.csv` carries a `0x0391` row with references in
+# `bank1:0xDB0B` and `bank1:0xE100`, both exported, so it was already in the
+# tree under its `DAT_EXTMEM_` spelling and adding the name moves the count by
+# exactly one. NOT_IN_TREE does not move for the reason #106 and #647 give: the
+# address is reached by an exported function, not merely named.
+#
+# **Nothing else in this oracle moves, and the reason is the re-export question
+# again.** `extmem_*` and `symbol_*` move only when the committed `.c` text
+# changes its spelling, and there is no re-export here -- issue #295 names a byte
+# the census already resolves by token, so `gen_xdata_symbols.py` writes the row
+# and the text keeps saying `DAT_EXTMEM_0391`. That is the "a registers.yaml row
+# renames the symbol table and not a decompile" distinction the #106 block above
+# draws, and it is why `named_in_tree` is the whole of the movement rather than
+# the start of a second one.
