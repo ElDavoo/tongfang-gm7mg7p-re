@@ -6,12 +6,17 @@
 
 /* Calls 0x198A, which loads DPTR with 0xC1E7 and tail-jumps to a common-area bank-switch stub, then
    branches on R7. When R7 is 0 it sets R3=0x64 and R4=0, reads the 16-bit value at XDATA
-   0x0438/0x0439 via 0x8886, divides by 100 via 0xA5E6, and writes the returned R1 to XDATA 0x0448.
-   When R7 is nonzero it performs no reads at all and writes the constant 0xBE to XDATA 0x0448
-   instead. R7 is set nowhere in this listing or in 0x198A, and ec/annotations/registers.yaml now
-   carries 0x0438 as BAT_VOLTAGE_MV -- the little-endian mV pair this routine reads and divides by
-   100, established by three independent committed sources -- and 0x0448 as XDATA_0448, the byte
-   that quotient lands in: an EC-side site found with its meaning not established.
+   0x0438/0x0439 via 0x8886, divides by 100 via 0xA5E6, and writes the returned R1 -- the quotient's
+   low byte -- to XDATA 0x0448. When R7 is nonzero it performs no reads at all and writes the
+   constant 0xBE to XDATA 0x0448 instead. R7 is set nowhere in this listing or in 0x198A, and
+   ec/annotations/registers.yaml now carries 0x0438 as BAT_VOLTAGE_MV -- the little-endian mV pair
+   this routine reads and divides by 100, established by three independent committed sources -- and
+   0x0448 as XDATA_0448, the byte that quotient lands in: an EC-side site found with its meaning not
+   established. 0xBE is a byte the computed arm can also produce -- a dividend of 19000-19099 gives
+   190, which retracts an earlier claim that the constant was unreachable -- but that dividend is
+   above every voltage recorded for the pack (ec/annotations/registers.yaml carries the charge
+   request and the live reading), so those figures do not distinguish the two arms and which arm ran
+   is still an open question about R7's origin.
    type: math
    evidence: ec/decompiled/bank1/F416.asm; ec/decompiled/bank1/F416.c; ec/annotations/registers.yaml
    basis: hand-decoded
