@@ -266,9 +266,15 @@ many files it resolved to, and what became of each literal.
   checked, and editing prose to make a tool green is the thing this repository
   forbids.
 - **The gate wiring.** `docs/ci/agent-gates-testdata-row-claims.patch` is **not
-  touched** — the tool's CLI is unchanged — and it remains a human's
-  `git apply`. No gate is wired by this branch, and no commit runs this check
-  in CI.
+  landed** and remains a human's `git apply`; no gate is wired here, and no
+  commit runs this check in CI. ~~The tool's CLI is unchanged~~ **and that is
+  what keeps the patch *applying*, not what makes its descriptions right: the
+  descriptions were the part that went stale, and issue #976 corrected two of
+  them (a dated-refusal count, and a cheap-tier input list that omitted
+  `evidence/ec-watch/`). The census of the rest, and
+  `tools/test_gate_patch_descriptions.py`, which holds each patch's prose to
+  what its tool prints, are in
+  [`prepared-patch-description-census.md`](prepared-patch-description-census.md).**
 - **Live hardware, Windows, or the EC/BIOS/Windows stack.** Nothing here reads
   a register, opens a capture in any sense that touches hardware, or runs a
   capture-producing tool. No `status:` moved, so `ec/annotations/registers.yaml`

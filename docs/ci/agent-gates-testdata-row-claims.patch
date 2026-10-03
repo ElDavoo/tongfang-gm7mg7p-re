@@ -12,6 +12,13 @@
 #
 # and that is the whole change.
 #
+# What this header and the gate comment say about the tool is held to the tool
+# by `tools/test_gate_patch_descriptions.py`, which runs the tool and compares
+# what it prints against what both of them claim. That is worth saying here
+# because the two are separate things and this file used to conflate them: an
+# unchanged CLI is what keeps the patch *applying*, and it is not what makes a
+# sentence describing the tool right.
+#
 # It is a patch of its own, and it still composes with
 # `agent-gates-capture-claims.patch`, which issue #745 had to fold two
 # patches into one. The two inserts into the seven-line `gate` list are the
@@ -42,10 +49,15 @@
 # entries the tool writes down as `SHAPES`, are counted, printed with the
 # reason, and do not fail the run -- a checker that reported its own blind spot
 # as a broken index would be pushed to grow a rule for whatever it could not
-# read, and would end up inventing the thing it is checking. Two of those
+# read, and would end up inventing the thing it is checking. ~~Two of those
 # entries are dated refusals, a capture named in prose that resolves to nothing
-# and a sentence naming two of them. The list is closed and each entry has a
-# case.
+# and a sentence naming two of them.~~ **Three of them are, and the summary line
+# says "under the five shapes and the three dated refusals" because it is
+# derived: `shape_label()` computes both halves off `SHAPES` and
+# `DATED_REFUSALS` rather than either being written out. The third is a bare
+# date that resolved to a file set with no `addr` column in it (#990), and this
+# sentence was written before that entry existed.** The list is closed and each
+# entry has a case.
 #
 # **Until a human lands this, no commit runs it.** The suite
 # (`ec/tools/test_check_testdata_row_claims.py`) needs no wiring to be run at
@@ -58,7 +70,7 @@
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -76,6 +76,27 @@
+@@ -76,6 +76,30 @@
    echo "$out" | grep -q 'refs=15' && echo "$out" | grep -q 'referenced'
  }
  
@@ -72,8 +84,11 @@ diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
 +# resolves to rather than per file: 0x075B is in one of
 +# 0751-isolation-run-staged/'s three CSVs and in neither of the other two,
 +# while the row names the directory. Cheap tier because of what it reads -- the
-+# committed index, the committed tree under ec/tools/testdata/ and two
-+# annotation CSVs, no firmware image, no Ghidra, no network, no assembler. It
++# committed index, the committed tree under ec/tools/testdata/, two annotation
++# CSVs, and the captures under evidence/ec-watch/ a bare date in a sentence is
++# resolved against (a fourth input tree, and the reason this line was wrong:
++# it named three of four). No firmware image, no Ghidra, no network, no
++# assembler. It
 +# prints what it checked and how many literals it could not place, because a
 +# run that checked nothing and a run that found nothing look the same from the
 +# exit code alone, and because "unresolved" there means not checked by this

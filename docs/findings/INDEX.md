@@ -191,6 +191,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pin-table-row-reconciliation.md`](pin-table-row-reconciliation.md) — The per-pin table's four mechanical columns are now reconciled against the run, and its fifth is not read (issue #942)
 - [`power-profile-gm7mg7p.md`](power-profile-gm7mg7p.md) — A `0x0751`-only platform profile would report a new mode and not move the machine's power limits
 - [`prepared-gate-patches.md`](prepared-gate-patches.md) — The prepared gate patches: the set composes, and a test says so
+- [`prepared-patch-description-census.md`](prepared-patch-description-census.md) — The prepared gate patches describe their tools, and the descriptions drift (issue #976)
 - [`presence-check-container-shape.md`](presence-check-container-shape.md) — Two of the three presence checks key their per-file container and pin that shape; the third has nothing to scan (issue #371)
 - [`probe-0700-whole-page-arm.md`](probe-0700-whole-page-arm.md) — The probe's watch set can be §3's first watcher, whole (issue #666)
 - [`probe-hold-mark-merge.md`](probe-hold-mark-merge.md) — A `--csv` probe run's `hold` is held to the grader's mark-merge window (issue #665)

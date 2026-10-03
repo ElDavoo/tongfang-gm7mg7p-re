@@ -413,13 +413,15 @@ only covers what's specific to *this* copy.
      `tools/test_agent_gates_patches.py` applies the set in every ordered pair
      so no landing order has to be written down anywhere. Cheap tier for item
      4's reason: the committed index, the committed tree under
-     `ec/tools/testdata/` and two annotation CSVs — no firmware image, no
-     Ghidra, no network, no assembler; 0.05 s here against item 9's 0.03 s and
-     a cheap tier the paragraph above records at 5.9 s. It is not here for
-     item 4's reason, template-copied file and no `workflow` scope on the
-     token, and **until a human lands it, no commit runs it**. Its own suite
-     (`ec/tools/test_check_testdata_row_claims.py`) needs no wiring to be run
-     at all, for item 5's reason.
+     `ec/tools/testdata/`, two annotation CSVs, and the captures under
+     `evidence/ec-watch/` a bare date in a sentence resolves against (issue
+     #976; the list named three trees and the tool reads four) — no firmware
+     image, no Ghidra, no network, no assembler; 0.05 s here against item 9's
+     0.03 s and a cheap tier the paragraph above records at 5.9 s. It is not
+     here for item 4's reason, template-copied file and no `workflow` scope on
+     the token, and **until a human lands it, no commit runs it**. Its own
+     suite (`ec/tools/test_check_testdata_row_claims.py`) needs no wiring to be
+     run at all, for item 5's reason.
   11. **`disasm8051.py --self-test` is added to the tool list in
      `check_ghidra_tooling`, and a re-copy drops it**
      (2026-09-25, issue #798). `--self-test` holds the r2 hand transcriptions,
