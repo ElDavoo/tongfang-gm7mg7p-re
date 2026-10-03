@@ -37,6 +37,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-writer-census.md`](0751-writer-census.md) — The `0x0751` writer census — "at least three paths" becomes ten sites and thirteen stores, and the number is not closed
 - [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md) — The measurement tool's pins, re-anchored, and one `what` that had to be re-worded (issue #762)
 - [`07d6-07d7-pd-image-census.md`](07d6-07d7-pd-image-census.md) — `0x07D6`/`0x07D7` are 213 PD-image sites and 0 EC sites, and the two bytes reach opposite conclusions
+- [`4900-stride-table.md`](4900-stride-table.md) — The 0x4900 stride table: how far it runs, what geometry the two strides imply, and what the index is
 - [`7151-case-tables-in-the-walk.md`](7151-case-tables-in-the-walk.md) — The main EC's `0x7151` dispatcher carries a case table inline, so the walk was decoding it as instructions (issue #1257)
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
