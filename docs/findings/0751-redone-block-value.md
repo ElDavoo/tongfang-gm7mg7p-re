@@ -58,7 +58,7 @@ keying it on `block_verdict` would have left a day passing that
 
 The same condition is reached a second way, and it is worth naming because it
 is the check's other half rather than a separate defect. When the three
-consoles type a mark more than `MARK_SPLIT_SECONDS` apart, `coalesce_marks`
+consoles type a mark more than `MARK_MERGE_SECONDS` apart, `coalesce_marks`
 does not fuse them: each console's `write` opens its own block, all of them
 carrying `0xA0`, and every one of them is already `NOT GRADED` for `missing,
 void`. That day reached the check before this change existed, and the refusal

@@ -2283,7 +2283,7 @@ def repeated_values(blocks):
     Ordered by first appearance rather than by value, so a caller that names
     the blocks gets them in the order the census prints them. Only values
     carried by more than one block are in the result -- a day with no repeat
-    is an empty dict, which is every committed fixture but one.
+    is an empty dict.
     """
     out = {}
     for b in blocks:
