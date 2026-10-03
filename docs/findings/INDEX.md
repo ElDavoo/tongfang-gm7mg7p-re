@@ -17,6 +17,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-file-refusal-order.md`](0751-file-refusal-order.md) — Which of the two refusals names a file that is both (issue #784)
 - [`0751-grader-block-scope-claims.md`](0751-grader-block-scope-claims.md) — A `--block` run said "consistent with the static prediction" for the whole capture (issue #497)
 - [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md) — A `--block` run exited 1 over a window it neither printed nor withheld, and did not say why (issue #498)
+- [`0751-grader-graded-unplaced-exit-code.md`](0751-grader-graded-unplaced-exit-code.md) — The exit code deliberately does not read the count of graded windows in no block, and the comment now says so (issue #552)
 - [`0751-grader-moved-unplaced-scope.md`](0751-grader-moved-unplaced-scope.md) — A run that moved and graded a window in no block printed the movement over the whole capture and nothing that said so (issue #725)
 - [`0751-grader-movement-path-claims.md`](0751-grader-movement-path-claims.md) — A run that moved said "that is the 7 window(s) that were graded" under a count saying one of the 7 is a window of nothing (issue #551)
 - [`0751-grader-partial-grade-claims.md`](0751-grader-partial-grade-claims.md) — A partly-graded run said "consistent with the static prediction" anyway (issue #477)
