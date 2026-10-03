@@ -348,8 +348,8 @@ main-ec-346,main-ec,1,2,0x1033,0x1033,1,,,,kbbecc5a9fa9f,,0,0,no
 main-ec-347,main-ec,1,2,0x1306,0x1306,2,,common:0x0200 [1/2]; bank0:0x1978 [1/2]; common:0x0C7A [1/2],,k98029cb0aa4b,,0,0,no
 main-ec-348,main-ec,1,2,0x1610,0x1610,2,,bank0:0xC4F0 [1/2],,k65b2eff63a96,,0,0,no
 main-ec-349,main-ec,1,2,0x1641,0x1641,2,,,,ked7e872a6338,,0,0,no
-main-ec-350,main-ec,1,2,0x1663,0x1663,2,,,,k752b15f2993a,,0,0,no
-main-ec-351,main-ec,1,2,0x1667,0x1667,2,,,,k2f6325b88c6a,,0,0,no
+main-ec-350,main-ec,1,2,0x1663,0x1663,2,,,0x1663,k752b15f2993a,,0,0,no
+main-ec-351,main-ec,1,2,0x1667,0x1667,2,,,0x1667,k2f6325b88c6a,,0,0,no
 main-ec-352,main-ec,1,2,0x1C10,0x1C10,2,,,,kaad7c33ee874,,0,0,no
 main-ec-353,main-ec,1,2,0x1C21,0x1C21,2,,,,kd0d81314c347,,0,0,no
 main-ec-354,main-ec,1,2,0x1C35,0x1C35,2,,bank0:0xD28E [2/2]; bank0:0xD2C2 [2/2]; bank0:0xD319 [2/2] (+2 more called by the cluster's functions),,k0213c96f1a32,,0,0,no
@@ -377,7 +377,7 @@ main-ec-375,main-ec,1,1,0x0A04,0x0A04,1,,,,kb1acc17cb126,,0,0,no
 main-ec-376,main-ec,1,1,0x0A05,0x0A05,1,,common:0x2F1D [1/1],,kbf18e6f38803,,0,0,no
 main-ec-377,main-ec,1,1,0x0E00,0x0E00,1,,common:0x30FB [1/1]; common:0x09A2 [1/1],,k9eff4b3a387f,,0,0,no
 main-ec-378,main-ec,1,1,0x1664,0x1664,1,,,0x1664,k3bf86239c060,,0,0,no
-main-ec-379,main-ec,1,1,0x1668,0x1668,1,,,,kf2f4bdf845a5,,0,0,no
+main-ec-379,main-ec,1,1,0x1668,0x1668,1,,,0x1668,kf2f4bdf845a5,,0,0,no
 main-ec-380,main-ec,1,1,0x1674,0x1674,1,,common:0x7110 [1/1],,kf982a2e90e26,,0,0,no
 main-ec-381,main-ec,1,1,0x170C,0x170C,1,,common:0x07F0 [1/1]; common:0x11C2 [1/1]; common:0x07E7 [1/1] (+2 more called by the cluster's functions),,k278e8a133184,,0,0,no
 main-ec-382,main-ec,1,1,0x170D,0x170D,1,,common:0x11BC [1/1]; common:0x07F0 [1/1]; common:0x07E7 [1/1] (+2 more called by the cluster's functions),,kc3d9f5899abf,,0,0,no
