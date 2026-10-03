@@ -244,6 +244,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) — The 94 flipped clusters: both named mechanisms are refuted, and what the working page does show instead (issue #884)
 - [`xdata-green-set.md`](xdata-green-set.md) — The green set is empty, and the four sentences that said otherwise (issue #819)
 - [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md) — The guard-off generation's `cluster_key` distinctness had no case behind it, and the coverage sentences named two of the four censuses (issue #962)
+- [`xdata-guarded-flags-read-from-main.md`](xdata-guarded-flags-read-from-main.md) — The guards table is a reading of `main()`, and a flag with no guard is still uncovered
 - [`xdata-most-cited-cluster-count.md`](xdata-most-cited-cluster-count.md) — The most-cited-cluster count, and the claim that does not need one (issue #842)
 - [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) — The 427-row census is stale at `e6c88864` and unreadable at `1fcd5f1e`, and the guard's per-address effect is measured a third time (issue #885)
 - [`xdata-moved-ranks-cause-guard-off-pair.md`](xdata-moved-ranks-cause-guard-off-pair.md) — `cause` opened four registers CSVs and read two, and the two it ignored were the ones the message asked for (issue #905)
