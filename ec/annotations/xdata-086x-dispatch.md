@@ -386,6 +386,37 @@ a blank cell would have read as agreement — the skip-that-is-not-deliberate
 failure `../tools/check_cluster_citations.py` is built to catch, in a table no
 tool could see.
 
+> **CORRECTION (2026-10-03, issue #800).** The sentence above described the
+> state of this file when it was written and no longer describes it: **no cell
+> in `xdata-086x-dispatch-sites.csv` reads `not recorded` any more.** The join
+> this section leaves open has been run for all fourteen addresses, one
+> correspondence file each, and `../tools/check_site_census.py --all` holds
+> every one of them to the sweep's own `access` cell, to the census's own
+> classification of each cited line, and to the per-bucket totals in
+> `xdata-registers.csv`.
+>
+> It is left as it was, per the §4a rule, because what it says about *why* the
+> token existed is still exactly right: "not done by this method" is never
+> "there is nothing there", and a blank cell would have read as agreement. The
+> token is now gone from this column by being answered, not by being read
+> differently.
+>
+> **Four shapes did not fit the vocabulary this section states, and each is a
+> name rather than a workaround** — a site where the sweep decoded an access
+> and the decompile names no address (`census-blind`, twelve sites); a bucket
+> that names no direction at all (`address-taken`, eight occurrences, four of
+> them at a handoff, which makes the tool's handoff-is-an-error rule false for
+> those four); a site
+> whose sweep window stopped at a conditional branch before a store
+> (`window-cut`, three sites, all `0x086B` clamps); and the differing
+> denominators this section
+> already names. `docs/findings/xdata-086x-site-census-join.md` is the
+> write-up, with the per-address results and the reproduction.
+>
+> **The `0x0860` rows are unchanged**, and this section's table still reads
+> out of them. Nothing here moved a register `status:`, and nothing here is
+> evidence about what the EC does with any of these bytes.
+
 ## 4. `0x0860`: two writers, and a gate that is its own early-outs
 
 **The writer set is two instructions, and this method found no others.**
@@ -640,7 +671,9 @@ reads. **That table's ninth column, `census`, is the other method's answer for
 the same site** — §3's per-site table is where `0x0860`'s nine rows are read
 out of it, and `../tools/check_site_census.py` is what holds the two to each
 other. The other 14 addresses carry `not recorded` there, which is §9's first
-concession.
+concession. *(Corrected 2026-10-03, issue #800: recorded — `--all` now covers
+every address of this page and no cell reads `not recorded`. See §3's dated
+block and `docs/findings/xdata-086x-site-census-join.md`.)*
 
 | addr | EC | PD | b0 | read | write | handoff | no-`movx` | routines holding EC sites |
 |---|---:|---:|---:|---:|---:|---:|---:|---|
@@ -713,6 +746,25 @@ listings.
   `not recorded` in the `census` column, which says this work did not join the
   two methods for them and nothing about their direction. Recording the other
   fourteen is the same job in the same format.
+
+  > **CORRECTION (2026-10-03, issue #800): recorded, and what is still not
+  > established.** The fourteen were recorded — `check_site_census.py --all`
+  > now joins every address of this page and exits non-zero on any
+  > disagreement. What that settles is that the two methods' *vocabularies*
+  > join at every one of the 114 sites, each of the census's 119 occurrences
+  > accounted for exactly once, and the per-bucket totals close against
+  > `xdata-registers.csv`.
+  >
+  > **What it does not settle is any direction, for any of these bytes.** A
+  > verdict here is a statement about whether two readings of the same
+  > instructions agree — never about what the EC does with the byte, and never
+  > about whether a store is acted on. Twelve sites now read
+  > `census blind at a decoded access`, which says the sweep decoded a `movx`
+  > and the decompiled C names no address there: that is a limit of the
+  > C-level reader's vocabulary, and **not** evidence those bytes are unused.
+  > The decompiler-lost-`MOV DPTR` question in the bullet below is now
+  > counted and named on this page rather than open here — and the count is of
+  > *this page*, not of the tree.
 - **That a `no census occurrence` cell means the byte is unused.** It means
   the decompile names no address at that site, and `0x0D31C` is the reason to
   be careful: a `MOV DPTR,#0x0860` the decompiler folded away is invisible to
@@ -783,7 +835,9 @@ entries stay `present-untested`, and the names stay placeholders.
   correspondence file and is **not** derived from the image; §3 carries the
   sentence that says so and the four tokens that keep "not established" from
   reading as "checked and empty". `xdata-0860-census-sites.csv` covers
-  `0x0860` only, and the other 14 addresses carry `not recorded`.
+  `0x0860` only, and the other 14 addresses carry `not recorded`. *(Corrected
+  2026-10-03, issue #800: the correspondence is now one file per address and
+  covers all fifteen; see §3's dated block.)*
 - **CORRECTION (2026-09-24, issue #281) to §3's opening sentence**, left
   visible in a dated blockquote there rather than only in the history, and
   **the stale `bank0/D091.c` line numbers in
@@ -831,6 +885,21 @@ entries stay `present-untested`, and the names stay placeholders.
   3. `0x0862` and `0x086D` have no writer this method can see (§2, §8). A
      computed-DPTR search, or a live read to see whether they ever move,
      would settle whether they are inputs or dead.
+
+     > **Re-checked 2026-10-03 (issue #800), and it stands as a finding.**
+     > The join in issue #800 runs from the other side and does not move it:
+     > both addresses' per-bucket totals close with `write 0`, and
+     > `check_site_census.py` rejects a mapping that closed on anything else.
+     >
+     > **It must keep saying "this method can see",** and that is the load-
+     > bearing half. The conditional computed-DPTR writer of §2 is not a
+     > `MOV DPTR` site, so **neither** the sweep nor the C-level census can
+     > reach it, and the join is not evidence against it. A reader who saw the
+     > census record `write 0` for `0x0862` and concluded the byte has no
+     > writer would be reading past the end of both methods.
+     >
+     > Whether that writer ever fires is still §10's live step, still a human's
+     > to run, and still unrun. Nothing in issue #800 observed hardware.
   4. **The decompiler-lost `MOV DPTR` at `0x0D31C`**, which the census cannot
      see because the decompile folded it away and `D319.c`'s body never names
      the address. That is a per-address undercount **by construction** for

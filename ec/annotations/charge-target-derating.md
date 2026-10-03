@@ -166,17 +166,35 @@ What this predicts, and what was then observed:
   `0x0C86`, which calls a divide-down scheduler at `0x0D7B` whose inline case
   table selects this chain at case `0x0A`), and the methods that found
   nothing. The rate is still not established and none is claimed.
-- **Whether `stress` survives an EC reset.** `0x09C9/0x09CA` is XDATA RAM.
-  If nothing persists it (to e-flash, or to the pack), a full EC power loss
-  would reset the counter, and the derating would fall back to the
-  cycle-count tier (450 cycles → 200 mV/cell → 16600 mV). One data point
-  found while tracing the caller (#90): `0xB141`'s else-branch, taken when
-  `0x0490` bit 1 is clear, explicitly zeroes `0x09C7`–`0x09CA` (the seconds,
-  minutes and stress counters). So the counter *is* cleared under that
-  condition, and no e-flash write sits near this routine — but a dedicated
-  persistence path elsewhere was not searched for, so "survives a reset" is
-  still open. Until someone settles it, don't treat an EC reset as a way to
-  "undo" the derating.
+- **Whether `stress` survives an EC reset — answered 2026-10-03, issue #90.
+  It does not.** `0x09C9/0x09CA` is XDATA RAM, and the EC's reset path zeroes
+  it. That was already half on record: `0xB141`'s else-branch, taken when
+  `0x0490` bit 1 is clear, explicitly zeroes `0x09C7`–`0x09CA`, and
+  `docs/findings/reset-vector-dptr-targets.md` (#559) decoded a boot-time clear
+  sweeping `0x0100`–`0x0FFF`. Both are now closed against the committed image by
+  `ec/tools/boot_xdata_sites.py`, which executes the reset vector and reports a
+  per-address verdict: all four counters read `cleared`, and every direct
+  `MOV DPTR` site for them is in `bank0` between `0xB149` and `0xBD9E`, inside
+  `0xB12C`'s routine and its helpers — none in `common`, `bank1` or `pd-image`.
+  **"Not found by this method" is the limit, not "absent":** indirect and
+  DPTR-handed stores are not searched, and the seven parameterised "zero N
+  bytes at DPTR" helpers `xdata-0440-readers.md` §7.5 names are the concrete
+  unsearched population. Full answer, including the per-address site counts and
+  what a second boot-path XDATA clearer (`0x0F75`) contributes, in
+  [`docs/findings/charge-derating-counters-not-persisted.md`](../../docs/findings/charge-derating-counters-not-persisted.md).
+
+  **The advice this replaces was right for the wrong reason, and the sharper
+  form is stronger, not weaker.** The old text said "don't treat an EC reset as
+  a way to undo the derating", on the reasoning that persistence was
+  unestablished. What is established is that a full EC power loss *does* reset
+  the counter, so the derating falls back to the cycle-count tier (450 cycles →
+  200 mV/cell → 16600 mV). It then **climbs back** at +1/h below 30 °C, +3/h at
+  30–40 °C and +7/h above, only while the pack is above 4.1 V/cell — so the
+  250 mV tier at `stress > 18144` returns after roughly 2,592 h near 40 °C. The
+  derating is not a latch a reset clears; it is a function of accumulated
+  high-voltage time. The practical advice is unchanged and now has a reason: an
+  EC reset is not a user-facing operation on this machine, and on one that
+  offered it, the counter would be back where it started within months.
 - **`cfg_0xBC8D`** (the source of the 0xC0/0x80 cell-count selector) was
   not decoded. "4 cells" is backed by the pack's own 15200 mV design voltage
   (4 × 3.8 V) and by the 1000 mV arithmetic above, not by that helper.

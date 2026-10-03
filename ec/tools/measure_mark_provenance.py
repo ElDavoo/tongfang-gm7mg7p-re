@@ -604,11 +604,33 @@ CITATIONS = [
      "reader: partition_capture_rows recognising the row -- the fourth site "
      "over this shape, and the one the notice partitions its own read with, "
      "so a mark row is never hex-read there either"),
-    ("ec/tools/grade_0751_isolation.py", 1507,
+    # These two are the pair #358 moved, and they are moved by the tie-break
+    # rather than by a lost quote. They and the `if addr == "MARK"` pair above
+    # are the grader's two sites spelled identically, and `resolve()` returns
+    # the carrying line nearest the pin when several carry the text, so a pin
+    # that drifts past the midpoint between its site and its twin names the
+    # wrong one and leaves its own site uncited. #358's `XDATA_NAME_NOTE`
+    # correction put lines above both of these, the second pin crossed that
+    # midpoint, both citations named `mark_labels_of`, and the join reported
+    # `existing_mark_provenance`'s site as a scanned site no citation names.
+    # Both pins move by that shift and by nothing else, and they move
+    # together -- one on each side of the midpoint -- or the tie-break picks
+    # the same line twice and the join opens the other way round instead.
+    ("ec/tools/grade_0751_isolation.py", 1528,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: mark_labels_of recognising the row, existing_mark_labels' own "
      "extraction"),
-    ("ec/tools/grade_0751_isolation.py", 1577,
+    # One of the ambiguous pins: the quoted text is carried by `mark_labels_of`
+    # as well, so `resolve` picks whichever of the two is nearer a number that
+    # is only a hint. What keeps this one right is that it sits *after* the
+    # midpoint between the two sites -- past it the nearer carrying line is
+    # this reader's, before it the other's, and the join then reports
+    # `existing_mark_provenance`'s site as one no citation names. #767's edit
+    # to the grader moved both sites and this number not at all, which put the
+    # nearer one on the wrong side and resolved this entry and the one above
+    # onto the same line. Re-anchored by re-resolving the text after the edit;
+    # the text the site quotes is unchanged.
+    ("ec/tools/grade_0751_isolation.py", 1613,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: existing_mark_provenance recognising the row -- #739's reader, "
      "the fifth site over this shape, and the one whose result is *supposed* "
@@ -688,7 +710,17 @@ CITATIONS = [
      "the second consumer of read_capture's two-tuple"),
     ("ec/tools/check_capture_claims.py", 914,
      "read_capture(os.path.join(REPO, WATCH, name))",
-     "a third, and the only one that reads every committed capture"),
+     "a call of a reader of its own -- `check_capture_claims.py` defines "
+     "`read_capture` itself and returns a three-tuple `(per, rows, addrs)`, "
+     "and imports nothing from this module -- so it is a consumer of the "
+     "*shape*, not of this reader's two-tuple. Corrected from a claim that it "
+     "was the third unpacking `read_capture`; the two readers of the name are "
+     "unrelated and the two-tuple's real holders are `grade_gpu_door.py`, "
+     "`manual_fan_ctrl_probe.py` and `scan_mark_collisions.py`. It indexes "
+     "the corpus by filename rather "
+     "than walking it -- `sorted(os.listdir(os.path.join(REPO, WATCH)))` -- "
+     "and `check_capture_encoding.py` reads the same captures by walking, "
+     "through a `ROOTS` that names `evidence/ec-watch`."),
     ("ec/tools/grade_timer_sweep.py", 327, 'if line.startswith("#"):',
      "grade_timer_sweep drops every `#` line before the CSV parse"),
     ("ec/tools/grade_timer_sweep.py", 355, 'if "resumed" in r[3]:',
