@@ -317,7 +317,12 @@ firmware rather than from the service's constants. Worth noting against
 steps 1 and 5: the EC's PL1/PL2/PL4 clear at `0xA833` fires when `0x0741`
 bit 0 is *clear*, which is the state the service deliberately parks the EC
 in for this handshake. Whether the two ever overlap depends on when that
-routine runs, which is unresolved.
+routine runs, which is unresolved. **Answered 2026-10-03 (issue #109): that
+routine is reached on two of the divide-down scheduler's nine cases, so it is a
+recurring polled task and the overlap is possible.** The sentence above is left
+as it was written; whether the two *actually* coincide in time is still open,
+and it is what `docs/hardware-tests/pl-clear-0741-gate.md` would settle. See
+[`../docs/findings/a7c8-dispatch-slot-and-pl-race.md`](../docs/findings/a7c8-dispatch-slot-and-pl-race.md).
 
 ### What this means for a Linux platform profile
 
