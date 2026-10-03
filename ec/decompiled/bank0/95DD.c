@@ -103,8 +103,8 @@ void fill_08xx_from_code_table(short param_1,undefined1 param_2,char param_3)
     if (CPU_PL1_PL4 != '\0') {
       DAT_EXTMEM_08c3 = CPU_PL1_PL4;
     }
-    if (DAT_EXTMEM_078b != '\0') {
-      DAT_EXTMEM_08bb = DAT_EXTMEM_078b - 1;
+    if (XDATA_078B != '\0') {
+      DAT_EXTMEM_08bb = XDATA_078B - 1;
     }
   }
   if ((CTGP_DB_CTRL & 1) != 0) {

@@ -142,15 +142,15 @@ UNASSIGNED = (0x06, 0x07, 0x16, 0x17)
 #     which naming the callee does not decide. They want their own reading.
 #
 # `docs/findings/citation-gap-scan.md` carries the correction in place.
-EXPECT_ROWS = 96
-EXPECT_PAIRS = 121
+EXPECT_ROWS = 95
+EXPECT_PAIRS = 120
 # The second cut is `common,3459` cited by `common,355E` -- #603's own rank-1
 # tranche row, whose one-`ret` listing is followed by 25 bytes before the next
 # common entry, and whose `ljmp 0x3459` sits at that boundary. It is the
 # zero-gap case the write-up describes, turning out to carry a real transfer.
 EXPECT_CUT = 2
 EXPECT_NOT_CODE = 1
-EXPECT_NO_TRANSFER = 118
+EXPECT_NO_TRANSFER = 117
 # The issue's premise is the exception: 84 of the 96 citing rows have a
 # zero-byte window, so for most of the population the question is the head of
 # the neighbouring export rather than bytes stranded between two. 108 of the

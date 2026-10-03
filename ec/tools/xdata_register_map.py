@@ -272,11 +272,23 @@ the named cluster whose membership scores at least `CARRY_MIN_JACCARD` against
 this one -- and the score is reported with it, because a name carried at 0.98
 and one carried at 0.51 are not the same statement. `tie` is a named cluster
 being claimed by two old names at the same score: that is a fact about the
-clustering, so it is reported and no winner is picked. And `none` is **not
+clustering, so it is reported and no winner is picked. `duplicate` is its
+mirror -- one old name reached by two new clusters at the same score -- and is
+refused the same way, so no name is written to two rows. And `none` is **not
 carried by this method** -- never *gone*, never *lost*, never *disappeared*: a
 function that stopped decompiling, a threshold that moved, a guard that was
 removed and a cluster that stopped existing are four different things, and this
 column can only report that its own rule did not fire.
+
+**Those six are counted per new *cluster*, so they do not account for every
+hand name.** A name the names file lists whose key no cluster of this run has,
+and which no new cluster reaches at `CARRY_MIN_JACCARD`, is in no cluster's
+record and in no cell of that tally; on a run that re-clusters the difference
+is several names. So the carry block has a second half as well,
+`xdata_name_coverage.coverage()`'s list, which is one record per **row of the
+names file** and therefore produces an outcome for every hand name on every run
+that builds a census. `print_carry()` prints both, and the tally's two optional
+clauses are the parts of it that come from the second half.
 
 **`--no-eq-guard` re-runs the census with the `==` rejection turned off**, and
 is refused with `--check` and `--self-test` because both are gates: a flag that
@@ -340,6 +352,7 @@ if TOOL_DIR not in sys.path:
     sys.path.insert(0, TOOL_DIR)
 import export_ownership  # noqa: E402
 import cluster_name_shape  # noqa: E402
+import xdata_name_coverage  # noqa: E402
 
 # The EC firmware proper: common area plus the two CODE banks that have
 # callers in this build (ec/README.md's bank table). Never "pd" -- the two
@@ -749,13 +762,13 @@ ORACLE = {
     # settles it; the 155 the pass adds are new `program=main-ec` rows, of which
     # `0x03DE` and `0x03B8` are two. (A shared address *number* is not a shared
     # byte, which is the collision `program=both` exists to carry.)
-    "extmem_distinct": 1013, "extmem_refs": 8574,
-    "extmem_raw": 8583, "extmem_commented": 9,
-    "extmem_main_distinct": 890, "extmem_main_refs": 7716,
+    "extmem_distinct": 1011, "extmem_refs": 8559,
+    "extmem_raw": 8568, "extmem_commented": 9,
+    "extmem_main_distinct": 887, "extmem_main_refs": 7701,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
     # Named by the decompiler. The 2026-09-30 move is recorded in the dated
     # block above `named_in_tree`, and the 2026-09-28 one at the END OF FILE.
-    "symbol_main_distinct": 172, "symbol_main_refs": 6248,
+    "symbol_main_distinct": 175, "symbol_main_refs": 6263,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1326, "refs": 15696,
@@ -2920,32 +2933,51 @@ def carry_names(old_rows, seeded, new_rows):
     """({new cluster_key: name}, one report record per new cluster).
 
     A hand name is a claim about a *cluster*, and a cluster is its membership,
-    so the name follows the membership rather than the rank. Five outcomes, and
-    they are five because they are five different claims:
+    so the name follows the membership rather than the rank. Six outcomes, and
+    they are six because they are six different claims:
 
-        seeded   the names file names this exact key -- a human said so
-        exact    a named row of the committed census has this exact key
-        overlap  a named row's membership scores >= CARRY_MIN_JACCARD against
-                 this one. A weaker claim, and the score is in the record with
-                 it: a name carried at 0.98 and one carried at 0.51 are not the
-                 same statement about the firmware
-        tie      two named rows are the joint best match. Which of them the new
-                 cluster is, is a fact about the clustering and not a coin this
-                 function flips, so no name is carried and both are reported
-        none     nothing cleared the threshold. **Not carried by this method**,
-                 never gone -- a cluster the decompiler stopped producing is a
-                 different claim from one that stopped existing, and the report
-                 prints the best score it saw so a reader can tell "nothing came
-                 close" from "nothing was even looked for"
+        seeded    the names file names this exact key -- a human said so
+        exact     a named row of the committed census has this exact key
+        overlap   a named row's membership scores >= CARRY_MIN_JACCARD against
+                  this one. A weaker claim, and the score is in the record with
+                  it: a name carried at 0.98 and one carried at 0.51 are not
+                  the same statement about the firmware
+        tie       two named rows are the joint best match. Which of them the new
+                  cluster is, is a fact about the clustering and not a coin this
+                  function flips, so no name is carried and both are reported
+        duplicate this cluster and another both reached the name the loop picked
+                  here. The mirror of `tie`, and the same refusal: no winner is
+                  picked, and the second pass below takes the name away from
+                  every cluster in the pair
+        none      nothing cleared the threshold. **Not carried by this method**,
+                  never gone -- a cluster the decompiler stopped producing is a
+                  different claim from one that stopped existing, and the report
+                  prints the best score it saw so a reader can tell "nothing
+                  came close" from "nothing was even looked for"
 
     `old_rows` is read from the *committed* census rather than from
     `--out-clusters`, because the output is the thing being written: reading it
     back would make the carry a function of where this run happens to write.
     That is what lets a guard-off or a different-threshold run be carried from
-    the census that is actually committed beside the prose."""
+    the census that is actually committed beside the prose.
+
+    **A name is attached to at most one cluster, and the refusal is a second
+    pass.** The loop above scores every new cluster and picks one name for it,
+    which is a claim per *cluster*; nothing in it notices that two new clusters
+    picked the same name, and `names` would then write that name to two rows of
+    `xdata-clusters.csv`. So the first pass's scores stand exactly as they are
+    and only the attachment is settled afterwards, by
+    `xdata_name_coverage.duplicate_claims()`: the losers keep `name` in the
+    record and take `how = "duplicate"`, so the report still says which name
+    was refused, and `xdata_name_coverage.resolve_duplicate()` picks the
+    survivor -- a `seeded`/`exact` record over any guess, then the best score,
+    and **neither** on a tie. Two new clusters at the same score is a 2-address
+    split of one membership, which is a fact about the clustering rather than a
+    coin this function flips, exactly as the `tie` branch above refuses the
+    mirror case."""
     old_named = [r for r in old_rows if (r.get("cluster_name") or "").strip()]
     by_key = {r.get("cluster_key", ""): r for r in old_rows}
-    names, report = {}, []
+    report = []
     for row in new_rows:
         key, addrs = row["cluster_key"], set(row["addrs"].split())
         name, how, score, from_key, detail = "", "", 1.0, "", ""
@@ -2972,20 +3004,45 @@ def carry_names(old_rows, seeded, new_rows):
                 detail = " == ".join(f"{n} ({cid})" for _s, n, cid, _k in winners)
             else:
                 how = "none"
-        if name:
-            names[key] = name
         report.append({"cluster_id": row["cluster_id"], "cluster_key": key,
                        "name": name, "how": how, "jaccard": score,
                        "from_key": from_key, "detail": detail})
+    # The second pass, and the only thing in this function that changes what
+    # gets written. `names` is left empty by the loop above on purpose: a name
+    # two new clusters both reach has to be resolved before either of them can
+    # be given it, and that is not a question the per-cluster loop can answer.
+    how_of = {r["cluster_id"]: r["how"] for r in report}
+    for name, claimants in xdata_name_coverage.duplicate_claims(report).items():
+        keepers = xdata_name_coverage.resolve_duplicate(claimants, how_of)
+        detail = ", ".join(cid for cid, _s in claimants)
+        for cid, _score in claimants:
+            if cid in keepers:
+                continue
+            for r in report:
+                if r["cluster_id"] == cid and r["name"] == name:
+                    r["how"] = "duplicate"
+                    r["detail"] = detail
+    names = {r["cluster_key"]: r["name"] for r in report
+             if r["name"] and r["how"] in xdata_name_coverage.CARRIED}
     return names, report
 
 
 def name_clusters(cluster_rows, old_rows, seeded):
-    """Fill `cluster_name` in, and return the carry report for the modes to print."""
+    """Fill `cluster_name` in, and return `(carry report, name coverage)`.
+
+    Two values rather than three, and the shape is deliberate: `carry_names()`
+    keeps its 2-tuple because `xdata_guard_off_row_join.py` and three call sites
+    in `test_xdata_cluster_names.py` unpack it, and widening *that* would be a
+    second question. The coverage list is one record per row of the names file
+    -- the transpose of the report's one record per new cluster, and the half
+    that makes every hand name produce an outcome on a run where no cluster
+    reaches it. See `xdata_name_coverage.py`."""
     names, report = carry_names(old_rows, seeded, cluster_rows)
+    cov = xdata_name_coverage.coverage(old_rows, seeded, cluster_rows, report,
+                                      CARRY_MIN_JACCARD)
     for row in cluster_rows:
         row["cluster_name"] = names.get(row["cluster_key"], "")
-    return report
+    return report, cov
 
 
 def similar(a: int, b: int, group: dict, writers: dict, threshold: float) -> bool:
@@ -3441,12 +3498,14 @@ def census_and_groups(args, funcs, by_file, names, symbols, floor=None):
 
 
 def generate(args):
-    """(register_rows, cluster_rows, groups, carry report), or None after
-    printing why.
+    """(register_rows, cluster_rows, groups, carry report, name coverage), or
+    None after printing why.
 
     The carry is part of the generation rather than of the writing, so `--check`
     and the default agree about what a named cluster is -- the same reason
-    `outputs()` exists for the two CSVs."""
+    `outputs()` exists for the two CSVs. The name coverage is its transpose and
+    rides along for the same reason: a mode that printed the report without it
+    would be a mode that could still not account for every hand name."""
     funcs, by_file = load_index()
     problems = check_file_set(by_file)
     if problems:
@@ -3457,9 +3516,9 @@ def generate(args):
                                                       names, symbols)
     register_rows, cluster_rows, groups = build(funcs, names, symbols, census,
                                                calls, args.threshold, group_of)
-    report = name_clusters(cluster_rows, load_cluster_rows(OUT_CLUSTERS),
-                           load_cluster_names())
-    return register_rows, cluster_rows, groups, report
+    report, cov = name_clusters(cluster_rows, load_cluster_rows(OUT_CLUSTERS),
+                                load_cluster_names())
+    return register_rows, cluster_rows, groups, report, cov
 
 
 def outputs(args, built):
@@ -3539,8 +3598,8 @@ def carry_advice(shape) -> str:
             f"arithmetic over a different clustering, not a re-key request")
 
 
-def print_carry(report, shape) -> None:
-    """What happened to every hand name, on stderr so the CSVs stay pipeable.
+def print_carry(report, cov, shape) -> None:
+    """The carry block, on stderr so the CSVs stay pipeable.
 
     Printed by every mode that builds a census, because a name that appears in
     `xdata-clusters.csv` without saying how it got there is the overclaim
@@ -3548,19 +3607,36 @@ def print_carry(report, shape) -> None:
     a weaker one with a score, a `tie` was not carried at all, and a `none` is
     this rule not firing rather than a cluster that went away.
 
+    **Two halves, and the tally sums only the first.** `report` is one record
+    per new *cluster*, so its counters are a count of clusters that carried a
+    name -- not of names in `annotations/xdata-cluster-names.csv`, and on a run
+    that re-clusters the two are different numbers. `cov` is one record per row
+    of that file, so it is the half that accounts for every hand name, and
+    `xdata_name_coverage.print_coverage()` prints the names this run did not
+    carry. Both halves are printed because neither is the other: a name no
+    cluster reached is in the second and in no cluster's line, and a cluster
+    that took a wrong name is in the first.
+
+    `cov` is required and has no default. A default a future caller forgets is
+    the exact failure this signature exists to prevent -- a mode that printed
+    the cluster half and silently left the names out is how the two halves
+    drifted apart in the first place.
+
     The *advice* on an overlap line is the part that is not mode-independent,
-    and the split is deliberate (issue #851). The tally and the tie line above
-    and here are about this run's own arithmetic whatever flags produced it, so
-    they stay as they are. Whether a carry is a re-key request is a question
-    about the run: only a run whose cluster keys are the committed ones can
-    answer it, so `shape` -- `census_shape(args)` -- decides, and a run that is
-    not the committed census says so on the line rather than advising a re-key
-    it has no standing to advise."""
+    and the split is deliberate (issue #851). The tally, the tie line above and
+    here, and every line either half prints are about this run's own arithmetic
+    whatever flags produced it, so they stay as they are. Whether a carry is a
+    re-key request is a question about the run: only a run whose cluster keys
+    are the committed ones can answer it, so `shape` -- `census_shape(args)` --
+    decides, and a run that is not the committed census says so on the line
+    rather than advising a re-key it has no standing to advise."""
     tallies = collections.Counter(r["how"] for r in report)
     print("  names: " + ", ".join(
         f"{n} {tallies[h]}" for h, n in
         (("seeded", "seeded"), ("exact", "exact"), ("overlap", "carried by overlap"),
-         ("tie", "tied, not carried"), ("none", "with no name"))), file=sys.stderr)
+         ("tie", "tied, not carried"), ("none", "with no name")))
+          + xdata_name_coverage.tally_clauses(cov, os.path.relpath(NAMES_CSV, EC_DIR)),
+          file=sys.stderr)
     for r in report:
         if r["how"] in ("seeded", "exact"):
             continue
@@ -3573,6 +3649,7 @@ def print_carry(report, shape) -> None:
             print(f"    {r['cluster_id']} is claimed by two names at Jaccard "
                   f"{r['jaccard']:.2f} ({r['detail']}); not carried by this method",
                   file=sys.stderr)
+    xdata_name_coverage.print_coverage(cov, CARRY_MIN_JACCARD, sys.stderr)
 
 
 def check(args) -> int:
@@ -3594,7 +3671,7 @@ def check(args) -> int:
         else:
             print(f"{path}: {len(rows)} rows match a fresh generation from the "
                   f"committed tree at threshold {args.threshold}")
-    print_carry(built[3], census_shape(args))
+    print_carry(built[3], built[4], census_shape(args))
     return rc
 
 
@@ -3613,7 +3690,7 @@ def write(args) -> int:
               f"{sum(e['refs'] for e in addrs.values())} references, "
               f"{sum(1 for r in cluster_rows if r['program'] == g)} clusters at "
               f"threshold {args.threshold}")
-    print_carry(built[3], census_shape(args))
+    print_carry(built[3], built[4], census_shape(args))
     return 0
 
 
@@ -4455,7 +4532,7 @@ def self_test(args) -> int:
     register_rows, cluster_rows, _ = build(funcs, names, symbols, census, calls,
                                            args.threshold, group_of)
     old_rows = load_cluster_rows(OUT_CLUSTERS)
-    carry = name_clusters(cluster_rows, old_rows, load_cluster_names())
+    carry, cov = name_clusters(cluster_rows, old_rows, load_cluster_names())
     by_addr = {r["addr"]: r for r in register_rows}
     # The wide direction oracle, and the only one here that is not internal.
     # Each entry is read off the decompiled C by hand (the greps are in the
@@ -4909,8 +4986,71 @@ def self_test(args) -> int:
     check("every cluster has a carry record, so a name that is not carried is a "
           "reported outcome and not an absence",
           len(carry) == len(cluster_rows) and
-          all(r["how"] in ("seeded", "exact", "overlap", "tie", "none")
+          all(r["how"] in ("seeded", "exact", "overlap", "tie", "none",
+                           "duplicate")
               for r in carry))
+    # The name-indexed half, and the check the cluster-indexed one above cannot
+    # make. That one reads `old_names` off the *committed* census, so it is
+    # green precisely where nothing is lost: a name the committed census does
+    # not carry is not in its denominator, and a run that re-clusters is not
+    # its subject. These three are about this run's own report, and they are
+    # the ones a re-clustering run can fail.
+    check(f"every row of {os.path.relpath(NAMES_CSV, EC_DIR)} produces a "
+          f"coverage record, so a name no cluster reaches is an outcome and not "
+          f"an absence (names: {len(load_cluster_names())}, records: "
+          f"{len(cov)})",
+          len(cov) == len(load_cluster_names()))
+    # The duplicate rule, asserted on what was *written* rather than on the
+    # record: two new clusters reaching one name is a refusal, so the name may
+    # appear in at most one row of this run's clusters. A `cluster_name` cell
+    # holding it twice is the failure this pass exists to stop.
+    written = [r["cluster_name"] for r in cluster_rows if r["cluster_name"]]
+    twice = sorted({n for n in written if written.count(n) > 1})
+    check(f"no name is written to two clusters of this run, so a name two new "
+          f"clusters both reach is a reported duplicate rather than a row "
+          f"written twice (written twice: {', '.join(twice) or 'none'})",
+          not twice)
+    duped = [r for r in carry if r["how"] == "duplicate"]
+    # `from_key` is deliberately **not** asserted empty here. It records where
+    # the name came from, which a duplicate does not falsify: the name did come
+    # from that old row, it simply is not carried to this cluster. What a
+    # duplicate must not be is a carry, and "is a carry" is `how in CARRIED`,
+    # already checked by the vocabulary check above.
+    check(f"every duplicate record keeps the name it refused and names the "
+          f"clusters that claimed it, so the report says which name was "
+          f"refused rather than only that some name was (duplicates: "
+          f"{len(duped)}; without a name or a detail: "
+          f"{', '.join(r['cluster_id'] for r in duped if not (r['name'] and r['detail'])) or 'none'})",
+          all(r["name"] and r["detail"] for r in duped))
+    # The three checks above are about **this** run, and on the committed census
+    # they hold vacuously: every hand name is `seeded` onto its own cluster, so
+    # there is no duplicate to refuse and none to leave unwritten. A gate that
+    # cannot fail is not a gate, so the duplicate rule is driven once on the
+    # shape it exists for -- `flag-pair-0442`'s two addresses split into two
+    # one-address clusters, each scoring exactly CARRY_MIN_JACCARD against the
+    # pair -- and the committed census's green is read as "no case here" rather
+    # than as "the rule holds". The fixture is the committed row for that key,
+    # read out of the CSV rather than spelled as addresses, so it cannot drift
+    # away from the membership the names file actually names.
+    pair_key = "kb07a0f522a7d"
+    pair_row = next((r for r in old_rows if r.get("cluster_key") == pair_key), None)
+    split = []
+    if pair_row is not None:
+        pair_addrs = pair_row.get("addrs", "").split()
+        for i, a in enumerate(pair_addrs):
+            split.append({"cluster_id": f"main-ec-{900 + i}",
+                          "cluster_key": f"ksplit{i:011d}",
+                          "addrs": a})
+    dup_names, dup_report = carry_names(old_rows, load_cluster_names(), split)
+    dup_outcomes = [r["how"] for r in dup_report if r["name"] == "flag-pair-0442"]
+    check(f"the duplicate rule fires on the shape it is for: a two-address name "
+          f"whose addresses {pair_key} names split into one cluster each, every "
+          f"one of them at exactly CARRY_MIN_JACCARD, so the name is written to "
+          f"neither rather than to both (outcomes: "
+          f"{', '.join(dup_outcomes) or 'none recorded'}; written: "
+          f"{len(dup_names)})",
+          pair_row is not None and len(pair_row.get("addrs", "").split()) > 1
+          and dup_outcomes == ["duplicate"] * len(split) and not dup_names)
     # Scoped to the **committed** census, which is what the names file is
     # anchored to and what every `cluster_key`/`cluster_name` citation in the
     # tree resolves against -- not to the fresh generation above. The two
@@ -5181,7 +5321,7 @@ def map_census(args) -> int:
     built = generate(args)
     if built is None:
         return 1
-    _registers, clusters, _groups, report = built
+    _registers, clusters, _groups, report, _cov = built
     by_key = {r["cluster_key"]: r for r in clusters}
     carried = {r["cluster_key"]: r for r in report}
     try:

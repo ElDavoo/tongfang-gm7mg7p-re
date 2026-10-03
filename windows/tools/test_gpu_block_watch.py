@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Offline checks; no EC is opened and the vendor driver is never called.
 
-gpu_block_watch.py imports ecrw, which binds kernel32 at import time and so
-only loads on Windows -- windows/tools/ecrw_fake.py stands in for the whole
-module, installed by assignment, so this suite is not a party to the
-`setdefault` ordering accident docs/findings.md §16 records. The fake also makes
-the sweep scriptable byte by byte.
+gpu_block_watch.py imports ecrw, and `windows/tools/ecrw_fake.py` stands in
+for the whole module so the sweep is scriptable byte by byte -- installed by
+assignment, so this suite is not a party to the `setdefault` ordering accident
+docs/findings.md §16 records. What the fake is for now is scriptability: the
+module imports anywhere, which
+`windows/tools/test_import_off_windows.py` holds for every tool in this
+directory that wants no pip package. Deleting it, and having the suites import
+the real `ecrw` and patch its `Ec` in the tool's own namespace, is the open
+follow-up.
 
 Unlike most of the `windows/tools` suites this one reads committed inputs,
 `evidence/acpi/dsdt.dsl`, `ec/annotations/registers.yaml`,
@@ -28,16 +32,18 @@ copy's EC-side cross-reference column for the rows the per-site censuses
 cover, against the two site CSVs and their `.md`s: the doc
 was free to credit `0x07C4` with one cross-reference where the walk had found
 five, and a re-walk that finds a sixth would move the census the same way
-without the doc moving with it. The fifth is the same hold one copy further
-out, and the reason it exists at all: `ec/tools/grade_gpu_door.py` grades this
-tool's captures and cannot import it -- the `ecrw` import below binds
-kernel32 -- so it states its own two window bounds and its own 24 DSDT names.
-A grader reading a capture against different bounds than the one that wrote it
-would be grading one tool's watch set with another's, and would say so
-nowhere. The sixth holds the two sections that tell a human's capture where to
-land and what it is allowed to change, for the same reason: a procedure that
-is written but not followed is the failure this suite can still catch before
-the machine.
+without the doc moving with it.
+
+There was once a fifth class here, holding `ec/tools/grade_gpu_door.py`'s
+transcribed copy of this tool's bounds and DSDT names against the originals.
+That copy is gone: the grader imports this module for them, so the table is
+read once rather than transcribed twice. A hold comparing a value to a
+comprehension over itself would be a tautology, and what replaced it is a
+check with a subject of its own -- that the grader can *name* every address
+its own bounds cover -- in `ec/tools/test_grade_gpu_door.py`. The remaining
+class holds the two sections that tell a human's capture where to land and
+what it is allowed to change: a procedure that is written but not followed is
+the failure this suite can still catch before the machine.
 """
 import csv
 import contextlib
@@ -87,10 +93,10 @@ watch = importlib.import_module('gpu_block_watch')
 # The offline grader of this procedure's §3 capture. Loaded by path, and its
 # own directory put on sys.path first, because the grader does `import
 # grade_0751_isolation` for the CSV vocabulary and the two `ec/tools` files are
-# otherwise outside every import root this runner sets. It cannot be imported
-# the other way round: this module does `from ecrw import Ec, EcError`, and
-# `ecrw` binds kernel32 at import time, so a grader that imported it would load
-# only on Windows.
+# otherwise outside every import root this runner sets. The reverse direction
+# needs no such help: the grader inserts this directory itself and does a
+# plain `import gpu_block_watch`, so it gets the module object above rather
+# than a second copy of it.
 EC_TOOLS = REPO / "ec" / "tools"
 sys.path.insert(0, str(EC_TOOLS))
 _grader_spec = importlib.util.spec_from_file_location(
@@ -792,58 +798,6 @@ class SiteCensusTests(unittest.TestCase):
                 f"census)")
 
 
-class GraderAgreementTests(unittest.TestCase):
-    """The door grader's copy of the watch table, held against this one.
-
-    `ec/tools/grade_gpu_door.py` grades the capture this tool writes and
-    answers §5's ordering column from it. It cannot import this module -- the
-    `ecrw` import above binds kernel32 -- so it states its own two window
-    bounds and its own 24 ECMG field-list names, and this class is the hold.
-
-    The same shape as DoorTableTests above, and for the same reason: #266 let
-    a second copy of this table drift through a whole merge cycle. A grader
-    that read a capture against different bounds than the one that wrote it
-    would be grading one tool's watch set with another's, and would say so
-    nowhere.
-    """
-
-    def test_the_grader_stated_a_table_at_all(self):
-        # The vacuity guard, for the same reason the two parsers above have
-        # one: a loader that found nothing would make every check below pass
-        # on a grader that grades no addresses at all.
-        self.assertTrue(grader.DS_NAMES, "the grader states no DSDT names")
-        self.assertTrue(grader.WINDOWS, "the grader states no windows")
-        self.assertEqual(len(grader.DS_NAMES), len(ADDRS))
-
-    def test_the_window_bounds_are_the_watchers(self):
-        # Equality on the tuples, labels included: §5's columns are headed with
-        # the two ranges, so a label that disagreed would be visible in a
-        # filled table and in this grader's own output.
-        self.assertEqual(list(grader.WINDOWS), list(watch.WINDOWS))
-
-    def test_the_dsdt_names_are_the_watchers(self):
-        # Same order and same spelling, so a movement the grader prints under
-        # §5's "DSDT name" column carries the name the watcher printed in the
-        # capture's own header. CitationTableTests holds `watch.WATCH` against
-        # evidence/acpi/dsdt.dsl, so the chain from the ASL to the grader's
-        # column is checked at both ends rather than trusted in the middle.
-        self.assertEqual(list(grader.DS_NAMES),
-                         [(addr, name) for addr, name, _, _ in watch.WATCH])
-
-    def test_the_two_bounds_cover_exactly_the_watch_set(self):
-        # No watched address outside the grader's bounds, and none inside them
-        # the watcher does not sweep. The second half matters because
-        # `name_of` raises on an address with no name: a capture carrying a row
-        # the grader bounds cover but its name table does not would fail its
-        # own report rather than reading it.
-        covered = {a for _, lo, hi in grader.WINDOWS for a in range(lo, hi + 1)}
-        self.assertEqual(covered, set(ADDRS))
-        self.assertEqual({addr for addr, _ in grader.DS_NAMES}, set(ADDRS))
-        for addr in ADDRS:
-            self.assertEqual(grader.window_of(addr), watch.window_of(addr),
-                             f"0x{addr:04X}")
-
-
 class CaptureHandoffTests(unittest.TestCase):
     """Where a returned capture lands, and what it is allowed to change.
 
@@ -1063,12 +1017,13 @@ class EarlyExitRowTests(unittest.TestCase):
     def test_the_tag_is_the_phrase_the_grader_reads(self):
         # The drift guard, and the twin of the one `manual_fan_ctrl_probe.py`'s
         # `--self-test` carries for its own copy of the same phrase. Two files
-        # cannot share a constant -- this one does `from ecrw import ...` and
-        # binds kernel32 at import time -- so this equality is the only thing
-        # holding them together, and a drifted tag is not a wrong-looking
-        # string: it is a reader that matches no stopped capture, and a
-        # capture of a crashed run that grades green. `grader.fan` is
-        # `grade_0751_isolation`, the module the phrase was transcribed from.
+        # in different trees still cannot share a constant -- a tool that
+        # imported the grader would import its whole capture reader with it --
+        # so this equality is the only thing holding them together, and a
+        # drifted tag is not a wrong-looking string: it is a reader that
+        # matches no stopped capture, and a capture of a crashed run that
+        # grades green. `grader.fan` is `grade_0751_isolation`, the module the
+        # phrase was transcribed from.
         self.assertEqual(watch.EARLY_EXIT_TAG, grader.fan.EARLY_EXIT_TAG)
 
     def test_an_ec_error_mid_sweep_writes_the_row(self):

@@ -86,6 +86,7 @@ import io
 import os
 import sys
 
+from access_cell_corrections import corrected
 import trace_xdata_refs as T
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -203,6 +204,14 @@ def sites(d: bytes, addr: int):
     image without the marker, so the "unknown" region that flag produces is
     unreachable by the time a site is looked up. Re-deriving it would be a
     second gate on the same fact.
+
+    **The cell goes through `access_cell_corrections.corrected()` for the
+    same reason `trace_xdata_refs.csv_table()` does.** This table commits its
+    own `access` column over the same sites `ec-0x07d0-sites.csv` enumerates,
+    and `0x2E8D4` is one of the corrected rows; without the correction the
+    two committed files would answer the same question about the same site
+    two different ways, which is the state
+    `../../docs/findings/class-b-access-cell-corrections.md` exists to end.
     """
     rows = []
     for off in T.sites_for(d, addr):
@@ -211,7 +220,7 @@ def sites(d: bytes, addr: int):
         if runtime is None:
             continue
         insns, _why = T.walk_why(d, off)
-        rows.append((off, runtime, region, T.classify(insns)))
+        rows.append((off, runtime, region, corrected(off, T.classify(insns))))
     return sorted(rows)
 
 

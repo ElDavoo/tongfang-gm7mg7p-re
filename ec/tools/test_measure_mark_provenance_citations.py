@@ -221,23 +221,37 @@ class CommittedTreeTests(unittest.TestCase):
     moved; the number of pins is not, so nothing here counts them.
     """
 
-    def test_every_citation_resolves_at_the_line_it_quotes(self):
-        drifted = []
-        for path, lineno, want, what in mmp.CITATIONS:
-            got = mmp.line_of(os.path.join(mmp.REPO, path), lineno).strip()
-            if want not in got:
-                drifted.append(f"{path}:{lineno} ({what})")
+    def test_every_citation_resolves_by_its_quoted_text(self):
+        gone = [f"{path} ({what})" for path, lineno, want, what in mmp.CITATIONS
+                if mmp.resolve(os.path.join(mmp.REPO, path), lineno, want) is None]
         self.assertEqual(
-            drifted, [],
-            f'{len(drifted)} citation(s) name a line that does not carry '
-            'their quoted text. A pin is re-anchored by re-reading its own '
-            'text in the file, and where the `what` no longer describes the '
-            'line it is the `what` that is wrong -- see '
-            'docs/findings/0762-provenance-citation-reanchor.md.')
+            gone, [],
+            f'{len(gone)} citation(s) quote text no line of their file carries. '
+            'A citation is found by its text, so this is the claim failing, not '
+            'a line moving.')
+
+    def test_a_citation_whose_line_moved_still_resolves(self):
+        # The point of finding by text: lines inserted above the cited one
+        # move the number and must not turn the check red.
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "f.py")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("a\nb\nTARGET = 1\n")
+            self.assertEqual(mmp.resolve(path, 3, "TARGET = 1"), 3)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("x\ny\na\nb\nTARGET = 1\n")
+            self.assertEqual(mmp.resolve(path, 3, "TARGET = 1"), 5)
+            # Gone is a failure, and several carrying lines pick the nearest.
+            self.assertIsNone(mmp.resolve(path, 3, "TARGET = 2"))
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("TARGET = 1\nx\nx\nx\nx\nx\nTARGET = 1\n")
+            self.assertEqual(mmp.resolve(path, 6, "TARGET = 1"), 7)
 
     def test_the_row_site_join_closes_in_both_directions(self):
         scan = scan_of(mmp.row_sites())
-        named = {(path, lineno) for path, lineno, want, _what in mmp.CITATIONS
+        named = {(path, mmp.resolve(os.path.join(mmp.REPO, path), lineno, want))
+                 for path, lineno, want, _what in mmp.CITATIONS
                  if mmp.ROW_LITERAL in want}
         self.assertTrue(scan, "the scan found no row site at all, so a "
                               "closed join over it would prove nothing")
