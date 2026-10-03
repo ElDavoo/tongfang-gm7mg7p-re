@@ -1318,7 +1318,35 @@ registers:
       handing DPTR to the pair helpers, so the EC reads it as a unit. The only
       writer is in the zero-clear at bank1 0xB8BF-0xB8D4, which stores 0 into
       all four bytes 0x0436-0x0439 -- 0x0436/0x0437 only when XDATA 0x0575
-      reads 0, 0x0438/0x0439 unconditionally, as the jnz at 0xB8BD shows. NOT
+      reads 0, 0x0438/0x0439 unconditionally, as the jnz at 0xB8BD shows.
+      *** 2026-10-03 (issue #213) ***: the "only writer" half above is wrong
+      and is corrected here rather than edited away. It is true of the `wr`
+      column and false of writers: ec/annotations/site-resolution.csv,
+      committed and never cross-read against this note, resolves 8 of the 17
+      sites to `write` and 9 to `read`, in 8 distinct routines. Only
+      0xB8BF in FUN_CODE_b88c is a store AT the site; the other 7 hand DPTR
+      to a pair writer (0x888C for six, 0x889E for cmp_0404_vs_0518_then_store_0436)
+      and are stores at the callee's entry.
+      ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1
+      re-derives the same split from the image by a different route, so the
+      disagreement was never between two counts but between a note written
+      from the `wr` column and a `ho` column of 15 handoffs whose direction
+      section 4 of ec/annotations/xdata-0400-045f.md resolves.
+      None of the 8 increments what it stores: three store a literal (0xFFFF
+      at 0xB1D3, 0 at 0xBAD8 and 0xC28A), two store the product XDATA 0x0514
+      x 0x0342 that publish_0514_and_0342_product computes, one
+      (FUN_CODE_b224) stores XDATA 0x0518/0x0519 verbatim, and one stores
+      either the literal 0x0201 or the 0x0404/0x0405 pair depending on a
+      compare. So no committed image is found by these methods to produce a
+      running value, and the ~35 s +0x14 step in the capture below is
+      unexplained by any of them; FUN_CODE_b88c stores zero and has one
+      caller, inside arm_05f2_countdown_0575_clears_0490. Both blind spots
+      stay open and are lower bounds in either direction: a writer behind a
+      depth-2 handoff or behind a callee outside the pair helpers (#110), and
+      the unscanned indirect movx @Ri plus P2 paging (#34). status, name,
+      static_refs and sources all unchanged -- a static scan is not a
+      behaviour. Write-up: docs/findings/0436-0437-writer-census.md.
+      NOT
       NAMED, deliberately. Upstream calls this pair
       EC_ADDR_BAT_REMAIN_CAPACITY (uniwill-acpi.c:79,81) and that is the only
       name anyone has for the address -- but the one committed observation of
@@ -1389,7 +1417,13 @@ registers:
       docs/findings.md 4g. Upstream agrees (EC_ADDR_BAT_VOLTAGE_1/_2,
       uniwill-acpi.c:83,85), a fourth. 14 EC-side sites for 0x0438 and 3 for
       0x0439; 12 of the 17 hand DPTR to the pair helpers. The only writer is
-      the shared zero-clear with 0x0436/0x0437. The symbol is
+      the shared zero-clear with 0x0436/0x0437.
+      *** 2026-10-03 (issue #213) ***: same correction as XDATA_0436_PAIR's,
+      and the same defect -- ec/annotations/site-resolution.csv resolves 5
+      0x0438 sites to `write`, of which 4 are handoffs to a pair writer and
+      only 0xB8CB in FUN_CODE_b88c stores at the site. The zero-clear is the
+      only DIRECT store, not the only writer.
+      The symbol is
       BAT_VOLTAGE_MV_0/_1 and not _LO/_HI: gen_xdata_symbols.py's docstring is
       right that an endianness suffix baked into a symbol outlives the note
       that would correct it. Per-address table:
