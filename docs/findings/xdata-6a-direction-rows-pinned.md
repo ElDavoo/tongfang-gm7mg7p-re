@@ -390,6 +390,18 @@ because both are figures a reader of the same tree will trip over:
   the new census went to a new class. Pre-existing, already wrong before this
   change, and left alone — it is a count in a file this change *does* edit, which
   is the only reason it is named here at all.
+  *(Corrected, 2026-10-03. The bullet above is left as it read, per
+  [`../findings.md`](../findings.md) §4a-4d. **The docstring no longer says
+  "six"**: issue #962 rewrote that sentence to attribute the regeneration to
+  both of the classes that share the cached run —
+  `TheGuardOffRegeneration` and `TheGuardOffKeyDistinctness` — and kept the old
+  "six" visible beside the reason it was wrong. The "left alone" clause is what
+  no longer describes the tree either; the count moved on in a file this
+  write-up names, and this bullet is the record of it having gone stale here
+  first. The correction does not restate how many cases either class holds:
+  `bash tools/run-tests.sh` and the class definitions in
+  `ec/tools/test_xdata_cluster_names.py` are what a reader would run, and the
+  figure is one every landing suite moves.*
 - `tools/README.md`'s runner total read 974 tests over 32 suites when this was
   written and this adds two cases; on the merged tree #849's
   `ec/tools/test_check_doc_figure_pins.py` at 44 cases is in as well, so the

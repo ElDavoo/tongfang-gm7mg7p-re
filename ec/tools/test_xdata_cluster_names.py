@@ -673,6 +673,64 @@ class TheGuardOffRegeneration(unittest.TestCase):
             "the figure the guard-off run above is measured against. Expected "
             "then measured, as the `394`/`389` pair does")
 
+        # 445 against 439: the two arms above added, which is what makes them a
+        # partition rather than two numbers that happen to sit near each other.
+        # Each is also the census's own cluster-row count -- `445 rows` on the
+        # run's stdout, `439` in `xdata-06c2-06db-timers.md` §6a -- so the sum
+        # is not a figure this case invents but the total the arms are supposed
+        # to account for, and a `program` column that stopped partitioning over
+        # the clusters (a third value, or a row with none) is the shape that
+        # leaves every arm count above standing and the total wrong.
+        #
+        # The second assertion is not a restatement of the first, and the
+        # difference is the shape that separates them: a cluster row belonging
+        # to neither arm -- a third `program` value, or a blank one -- is in no
+        # arm count and in no arm *sum* either, so it leaves `394`, `51` and
+        # `445` all standing and moves only the row count. Measured on the run's
+        # own CSV, that shape is 394/51, arms 445, rows 446: the assertion
+        # above passes and this one goes red. The 834 sum is the same shape of
+        # claim over the *register* rows' `program` partition; this is the
+        # cluster rows' half, which the four per-program direction rows above
+        # are stated over but never summed.
+        #
+        # It reads `self.off`/`self.committed`, which are `{cluster_id: row}`
+        # rather than lists, so it counts *distinct* cluster ids and not CSV
+        # lines -- which on this tree is the same 445 the run printed, and is
+        # not itself a claim about the CSV. A repeated id would collapse in the
+        # dict and take an arm count with it, which `cid = f"{g}-{n:03d}"`
+        # (in `xdata_register_map.py`'s `build`) cannot produce anyway, since
+        # the program is baked into the id; so that is not a shape this
+        # assertion reaches that the arms above do not.
+        #
+        # §6a prints the main-EC arm of the pair (`:789`) and the committed
+        # census's `439` in prose (`:770`), but no pd arm and no row total in
+        # its table, so a re-deriver is sent to the run's own stdout line --
+        # `wrote …/clusters.csv: 445 rows`, beside the per-program cluster
+        # counts -- rather than to a §6a row that is not there. The same
+        # treatment the `1,202` `both`-refs figure gets above, and for the same
+        # reason.
+        self.assertEqual(
+            (len([r for r in self.off.values() if r["program"] == "main-ec"])
+             + len([r for r in self.off.values() if r["program"] == "pd"]),
+             len([r for r in self.committed.values() if r["program"] == "main-ec"])
+             + len([r for r in self.committed.values() if r["program"] == "pd"])),
+            (445, 439),
+            "the guard-off and committed censuses' cluster rows, each the sum of "
+            "its `main-ec` and `pd` arms: the two program values are the whole "
+            "of the `program` column on a clusters CSV, so this is the "
+            "partition. §6a prints the main-EC arm (`:789`) and the committed "
+            "`439` in prose (`:770`) but no pd arm and no row total; the totals "
+            "are the run's own `wrote …/clusters.csv: 445 rows` and the "
+            "committed CSV's row count. Re-derive §6a; do not move this number")
+        self.assertEqual(
+            (len(self.off), len(self.committed)),
+            (445, 439),
+            "the same two figures as the arms' sum above, read as the censuses' "
+            "own cluster counts: that the two agree is what says the `program` "
+            "column partitions rather than that two totals happen to match. A "
+            "row in a third program, or in none, is in no arm and so in no arm "
+            "sum, and only this assertion sees it")
+
     def test_the_regeneration_really_moves_the_ranks(self):
         # If this ever stops holding, the rest of the class is testing nothing:
         # a regeneration that renumbers nothing is not the case the identity
