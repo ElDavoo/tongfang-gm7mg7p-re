@@ -75,23 +75,23 @@ instruction is `9EA1.asm:33-43`:
 ```
 
 R5 counts 8-bit carries and is incremented once per add at `9EA1.asm:21-22`,
-`:24-25`, `:27-28` and `:31-32`, so **R5 ≤ 4**. `swap` puts R5 in the high
+`:24-25`, `:27-28` and `:31-32`, so **R5 ≤ 3**. `swap` puts R5 in the high
 nibble; two `rl` put it in the top two bits and drag whatever was in bit 7 down
 into the low bits, which `anl A, #0xc0` discards. For R5 in 0..3 that leaves
-exactly `(R5 & 3) << 6`. For R5 = 4 — which is reachable, not merely
-theoretical: four addends of `0xFF` sum to `0x3FC`, bit 7 is set, and the
-`add A, #0x4` round-to-nearest correction at `:30` carries a fourth time — the
-same rotation yields `0x01` and the mask leaves `0x00`, which is `(4 & 3) << 6`
-as well.
+exactly `(R5 & 3) << 6`.
 
-**Correction to the hand-decode, in place.** `9EA1.c:12-13` says R5 reaching 4
-is "which four addends of at most 0xFF cannot produce". They can: `0xFF +
-0xFF + 0xFF + 0xFF` is `0x3FC`, and the `+4` at `9EA1.asm:30` then makes
-`0x400`. The formula the comment states is unaffected — `(R5 & 3) << 6` covers
-R5 = 4 correctly — so only the parenthetical's reachability claim is wrong.
-The text lives in `ec/annotations/ghidra-functions.csv` and reaches
-`ec/decompiled/` through a re-export, which this change does not do; the wrong
-sentence stays where it is with this correction beside it.
+The bound is the one the hand-decode already gives, and it is worth spelling
+out because the `+4` looks like a fifth addend. A fourth carry needs three
+carries from the three real adds *and* a carry out of the round-to-nearest
+`add A, #0x4` at `:30`. The three carries mean the running total has already
+reached `0x300`, and four addends of at most `0xFF` cannot take it past
+`0x3FC`, so the accumulator holds at most `0xFC` at that point — which is
+exactly the value the `+4` needs to carry, and exactly what four addends of
+`0xFF` leave behind. The `jnb` in front of the add at `:29` is `disasm8051`'s
+`jnb acc.1` — ACC bit 1, not bit 7 and not the auxiliary carry — and `0xFC`
+leaves bit 1 clear, so the branch is taken and the add is skipped. R5 stops at
+3, and the committed `9EA1.c:12-13`'s "which four addends of at most 0xFF
+cannot produce" stands.
 
 So the filter is a recursive smoother over a byte stream: the previous
 accumulator output, plus the last three samples, rounded, divided by four.
