@@ -618,11 +618,16 @@ class TheOracleRule(unittest.TestCase):
         # `OWNERSHIP` and to the pd-half check, both above this span and neither
         # inside it. Same shape as every step above it: re-read from the file,
         # not shifted by the size of those two edits.
+        # **`:4898-4904` since issue #338**, whose `extmem_*` oracle block in
+        # `ORACLE` gained a dated comment recording the `0x0391`/`0x3202`
+        # spelling move, and whose `extmem_raw` and `extmem_main_*` values
+        # moved with it -- every one above this span and none inside it. Same
+        # move-and-not-an-edit shape as each step above it.
         self.assertEqual(
             cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
                                   "largest_class", 1, 2, found["texts"],
                                   found["asserted"])),
-            "ec/tools/xdata_register_map.py:4872-4878")
+            "ec/tools/xdata_register_map.py:4898-4904")
 
     def test_the_census_csvs_are_read_from_the_tool_that_writes_them(self):
         # Derived from `OUT_REGISTERS`/`OUT_CLUSTERS` rather than named here, so
@@ -700,15 +705,21 @@ class TheOracleRule(unittest.TestCase):
         # like the six before it both members of the pair moved together, which
         # is what holding the pair is for; the negative guard is re-pinned with
         # them for the reason the step above gives.
-        self.assertIn("3930-3947", detail)
-        self.assertNotIn(":3919", detail)
+        # **`:3956-3973` / `#3945` since issue #338**, whose `extmem_*` block in
+        # `ORACLE` gained the dated comment recording the `0x0391`/`0x3202`
+        # spelling move, above this span and not inside it. That is the eighth
+        # merge-shaped step, and like the seven before it both members of the
+        # pair moved together. Re-read from the file, not shifted by the size
+        # of that comment.
+        self.assertIn("3956-3973", detail)
+        self.assertNotIn(":3945", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3919])
-        self.assertIn("check(", lines[3929])
+        self.assertIn("extmem_both", lines[3945])
+        self.assertIn("check(", lines[3955])
         self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3946])
+                      lines[3972])
 
 
 class SectionSelection(unittest.TestCase):
