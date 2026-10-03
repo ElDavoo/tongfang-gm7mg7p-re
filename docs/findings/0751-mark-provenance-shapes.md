@@ -252,6 +252,15 @@ all five are in scope for a change to the row's shape.
    rather than by inheritance. Its constructed row at `:243` is the test input
    it hands a writer that takes a label alone, not a writer of its own.
 
+**And one added since, named here so the citation check can reach it.**
+`ec/tools/probe_log_to_capture.py` writes the row as well, from one `mark_row`
+helper rather than at each of the two places that emits one — so it is a single
+site for the census either way. What is different about it is that its marks
+are reconstructed rather than observed: it converts a legacy probe console log
+into this schema, and every file it writes says so in its own `#` header.
+`probe-log-capture-conversion.md` is what that costs and what it establishes.
+The five above are left as this page measured them.
+
 ## The committed fixtures
 
 ```console

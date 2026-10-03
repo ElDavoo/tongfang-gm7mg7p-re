@@ -4966,6 +4966,32 @@ Written up in
 > on `origin/main` after it merged. The paragraph above is left as #749 wrote
 > it; this is the number a reader should use.
 
+**2026-10-03 (issue #721): a re-done block stops the value under test from
+naming a block, and the tool now says so.** §3's remedy for a void block is to
+run it again, and §3 fixes the three CSVs as one file per run, so that remedy
+appended a second `no-op`/`wrote`/`restored` set carrying the same value into
+the set the first attempt is in. `--block` takes that value — it is what
+identifies a block, and §6 attaches the grader's output one value at a time —
+so the same day carried two blocks named `0x00` and `--block 0x00` took the
+first, which is the attempt that came out void. The census now names the repeat
+on every block carrying the value whatever the run was scoped to, a run over
+the whole day's files holds the exit code at 1 whether or not either is void,
+`--block` refuses an ambiguous value and names the blocks it would have had to
+choose between — while a `--block` run over an unambiguous value still grades
+that block and exits 0, so §6's per-value attachment is untouched — and
+`VOID_BLOCK_NOTE` and §3 name the remedy as a second run with its own
+`<date>` rather than an append into the set being
+refused. The condition is on the value and not on `block_verdict`: a day whose
+two `0x00` blocks are both intact passed every check and exited 0 before this.
+Fixture arithmetic over hand-written rows, with a new
+`RepeatedValueTests` and a new fixture under `ec/tools/testdata/`; nothing was
+read back from a register and no block was run at a laptop. It is also the
+fifth way a file comes to hold marks this run did not type, so it is added to
+the list #548 wrote in `ec_watch-marks.md` and in
+[0751-append-unchecked-marks.md](findings/0751-append-unchecked-marks.md).
+Written up in
+[0751-redone-block-value.md](findings/0751-redone-block-value.md).
+
 ## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253, by the 2026-09-24 re-derivation, and again by #279 on 2026-09-25)
 
 **The id in this section's subject has been wrong twice, and every version of
@@ -6004,6 +6030,19 @@ It is written in `ghidra/scripts/ApplyAnnotations.java` (comment only — no
 behaviour changed), `ec/annotations/README.md`'s Variables section beside "The
 rebuild asymmetry", and here.
 
+**Extended 2026-10-02 (issue #294), and it is the same rule rather than a new
+one.** "May change a caller's arity" also covers **the value passed at a call
+site**. At `pd` `0x9028` the variable row shortened
+`make_dptr_r6_minus_3_9028(0x1c, DAT_EXTMEM_07c9)` — the two arguments
+`9028.asm` takes, the column byte in A and the row index in R6 — to
+`make_dptr_r6_minus_3_9028(DAT_EXTMEM_07c9)`, and the census gained a token
+with no machine access behind it as a result. Removing the row restores the
+constant; the measurement is in the correction below. One **function** row was
+measured and it did not do this: dropping `ghidra-functions.csv`'s `pd,9028`
+row moves no token. That is one row, so it rules that row out as the mechanism
+here rather than settling the function layer — whether a name can move a
+caller's argument value is not settled by one row.
+
 **The `0x07C9` +1, which is the one that gained.** It is **not** an annotation
 effect. Across the #238 merge the only one of the two files the census names for
 this address that moved is `ec/decompiled/pd/7B14.c` (21 → 22
@@ -6018,6 +6057,52 @@ correspond to a new machine access. **What made Ghidra re-render the file is
 not recorded in the committed tree** — there is no annotation on `0x7B14` to
 point at — and that is the honest limit of the account rather than a mechanism
 invented to close it.
+
+**Corrected 2026-10-02 (issue #294), in place.** The account above kept its
+honest limit by asserting two things that are false against the committed tree,
+and both corrections belong next to them rather than in a newer section.
+
+*Wrong: "`0x7B14` has no row in `ghidra-functions.csv` or
+`ghidra-variables.csv`."* It has a hand-decoded **function** row —
+`stage_07c9_index_then_dispatch_on_flag_bits`, evidence
+`ec/decompiled/pd/7B14.asm; ec/decompiled/pd/7B14.c` — and the name has
+propagated into `call-graph-callees.csv`, `xdata-export-ownership.csv`,
+`cross-decoder.csv` and `xdata-registers.csv`. The absence that mattered was one
+callee over, not one function over.
+
+*Wrong: "what made Ghidra re-render the file is not recorded in the committed
+tree."* It is recorded, in `ghidra-variables.csv`, at
+`pd,0x9028,param_1,r6_value,artifact` — a #259-shaped row naming a
+decompiler-promoted scratch register as an artifact. `ec/tools/
+pd_9028_render_probe.py --run` re-renders the PD program from the committed
+project under three arms and settles it:
+
+| arm | row removed | `7B14.c` against the committed file | `DAT_EXTMEM_07c9` |
+|---|---|---|---:|
+| `baseline` | none | byte-identical | 22 |
+| `drop-variable` | `ghidra-variables.csv` `pd,0x9028,param_1` | differs | 21 |
+| `drop-function` | `ghidra-functions.csv` `pd,9028` | differs (every call renamed `FUN_CODE_9028`) | 22 |
+
+The `baseline` arm is the re-export #275 asked for and did not have: the
+committed PD corpus reproduces **byte for byte**, so nothing is churning and
+the 22 is stable. Dropping the variable row restores the constant —
+`make_dptr_r6_minus_3_9028(0x1c,DAT_EXTMEM_07c9)` where the committed C has
+`make_dptr_r6_minus_3_9028(DAT_EXTMEM_07c9)` — which is `9028.asm`'s own order,
+the column byte in A first and the R6 row index second. Dropping that *function*
+row renames every call and moves no token, so that row is not the mechanism —
+which is one row's worth, not a property of the function layer.
+
+**The rule gains a clause, and it is the same rule one callee further.** A
+variable row may change a caller's arity *or the value it passes at a call
+site*. That is written where #259 wrote its version:
+`ghidra/scripts/ApplyAnnotations.java`, `ec/annotations/README.md`'s Variables
+section, and `ec/annotations/xdata-register-map.md` §7.1. **The `21` is settled,
+not open**: #238 is `1fcd5f1e`, and `git log -S'pd,0x9028,param_1'` over
+`ghidra-variables.csv` names it as the commit that added the row; the token count
+goes 21 → 22 across that merge. The `drop-variable` arm renders 21 and its ten
+`0x9028` call forms match the pre-merge file's exactly, so the row is the +1 read
+off the tree rather than inferred; `docs/findings/7b14-07c9-token.md` carries the
+account.
 
 **Two pre-existing defects, reported and not fixed here.** `build_ec_decompile
 .py --self-test --oracle` raises `NameError` (`opt_in_ghidra_oracle` is called
