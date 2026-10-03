@@ -901,6 +901,82 @@ registers:
       row in this file, which is a fact about the DSDT's list rather than
       about that byte.
 
+  - name: DAT_EXTMEM (the exporter's own placeholder; no DSDT field, no
+      vendor constant, no committed Windows writer)
+    addr: 0x07D2
+    bits: "0-7 value; PD firmware reads it low-byte-first into 0x07D2/0x07D3
+      16-bit windows and multiplies it into an address on its own"
+    sources: [xdata-refs]
+    static_refs: 47
+    static_refs_main_ec: 0
+    static_refs_pd_image: 47
+    status: unknown-not-absent
+    note: >
+      The byte the DSDT's ECMG field list steps over. The list reads
+      "Offset (0x7D0), DBD1, 8, DBD2, 8, Offset (0x7D3), , 4" and
+      GFID 3 (dsdt.dsl:52248-52252): DBD1 is 0x07D0 and DBD2 is
+      0x07D1, so the two 8-bit fields end at 0x07D2 and the next
+      Offset is 0x7D3. 0x07D2 therefore sits in NO DSDT field at
+      all -- it is not an unnamed field, it is outside the list --
+      and it has no committed writer in any input. It is also absent
+      from windows/decompiled/v3.1.6.0/ECSpec.cs and no row in the
+      service's ec-callsites.csv names it.
+      Its "name" here is the one spelling the census carries,
+      DAT_EXTMEM, which is this repository's generic placeholder for
+      an unnamed XDATA byte (ec/decompiled/pd/A571.c spells the byte
+      DAT_EXTMEM_07d2). It is not a vendor symbol, so nothing here
+      borrows a name from it.
+      47 direct MOV DPTR sites, every one of them in the ITE8850-PD
+      image and none in the EC firmware, enumerated in
+      ec/annotations/ec-0x07d2-sites.md (site table:
+      ec-0x07d2-sites.csv). 37 read, 10 write. The 5 DPTR handoffs
+      all resolve one level deeper to a read, and the one row the
+      linear walk scored as unreachable -- it stopped at the branch
+      just past the site -- is a read too, taken by the 0x37DE scale
+      helper the site hands DPTR to, which rebuilds DPTR around the
+      value it read so neither store that follows reaches 0x07D2.
+      Status is
+      unknown-not-absent rather than present-untested for the reason
+      rule 2 of this file's header gives and 0x07CC was re-graded
+      for: static_refs_main_ec is 0, so a PD-only count cannot carry
+      the value whose whole warrant is a reference count.
+      NO DO-NOT-WRITE-BLIND suffix, unlike its two neighbours: that
+      suffix's declared warrant is a byte Windows demonstrably writes
+      with no traceable EC-side handler, and the DSDT does not name
+      0x07D2 at all, so there is no committed writer to warn a reader
+      about. The absence of the suffix is a statement about the
+      committed inputs, not a licence to write the byte -- it is the
+      PD firmware's own variable, and its meaning is unknown.
+      WHAT IT IS, at the confidence the decode supports: both, in
+      different routines. Nine of the 47 walk past their own byte
+      through inc dptr into 0x07D3 (one into 0x07D4 as well), and
+      every one of the nine puts 0x07D2 in the LOW position --
+      0x8BAD builds R4:R5 from 0x07D2 then 0x07D3|0x01, 0xA5DD and
+      0xC755 store an R6/R7 and an R7/R5 pair to 0x07D2 then
+      0x07D3, and 0xF628 writes three bytes R7:R5:0. The window that
+      puts the byte high is a different one and is not among those
+      nine: 0xAD83 reads 0x07D1 into R7 and then, past inc dptr,
+      0x07D2 into R5, so 0x07D2 is the high byte of THAT pair; its
+      neighbour 0xAD8C reads 0x07D2 alone into R7 and clears R5.
+      0xAD83's MOV DPTR names 0x07D1, so it is a 0x07D1 site
+      (ec-0x07d1-sites.md 4.2's accessor pair) and not a row of
+      ec-0x07d2-sites.csv. Against that, four sites multiply the
+      byte into an address by itself -- 0x35FF and 0x373C at stride
+      0x5E, 0xC7A8 at stride 0x17, and 0x4A6D scaling it by 4 into
+      DPTR with no base at all. So it is a low byte in some windows
+      and a standalone index in others, and the site-by-site table
+      is what separates them. 0x8A4A clears 0x07D2 and 0x07D3
+      together after storing R7 to 0x07D1, which is the third length
+      of the same window. ec-0x07d1-sites.md 4.3's refusal to
+      choose between a
+      3-byte counter, a packed field and a moved 16-bit value
+      therefore survives this walk, and this entry does not claim to
+      have settled it.
+      A PD-image decode cannot move an EC-side status, and this one
+      moves none. Nothing was read on hardware, no register was read
+      back, and no write was attempted; the EC side of 0x07D3 belongs
+      to issue #183 (ec-07c4-07d5-sites.md), not to this entry.
+
   - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
     addr: [0x0748, 0x0749, 0x074A, 0x074B]
     sources: [uniwill-laptop]
