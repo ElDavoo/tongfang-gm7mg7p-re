@@ -389,6 +389,22 @@ byte. A byte-level scan of the whole EC window finds the same nine and no
 
 This is the method issue #110 is adding to `trace_xdata_refs.py`; the general
 tool is that issue's work and this is the bounded single-address version.
+
+> **CORRECTION (2026-10-03, issue #519) to the sentence above, which stands as
+> written.** No open issue in this repository covers general computed-DPTR
+> visibility in `trace_xdata_refs.py`, so it is not that issue's work in the
+> present tense. The bounded version of the method is committed, as the
+> **sibling** tools `ec/tools/computed_dptr_sites.py` and
+> `ec/annotations/computed-dptr-sites.md` rather than as a mode of
+> `trace_xdata_refs.py` — that tool's `--csv` default is what the committed
+> per-address tables reproduce byte for byte from, which is the reason
+> `computed_dptr_sites.py`'s own docstring gives. What remains unowned is
+> stated as unowned in `docs/findings/addc-dph-residual-six.md` §5, which also
+> accounts for every `#110` reference in the tree and says which of them are
+> this correction and which are provenance. The residual this subsection
+> names — the six `addc`-into-`DPH` sites not preceded by `clr A` — has been
+> read there and all six close.
+
 **Excluded:** a DPTR built from a register or memory value that reaches `0x0440`
 without any `DPH`/`DPL` immediate in the preceding 12 instructions, and a
 DPTR built inside a callee and handed back.

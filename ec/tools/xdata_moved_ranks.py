@@ -1388,6 +1388,25 @@ def self_test() -> int:
           "a flipped set of two clusters is reported as the two sizes it is, "
           "on the line itself -- not `2 2 2 2 2 2 2 2 2 2` read as a decile "
           "distribution beside the census's")
+    # The census read beside it, which the case above cannot reach: that one
+    # looks for the marker on the flipped set's line, and its other clause
+    # looks for a stretched ten anywhere in the report -- and over this
+    # fixture the census is five rows, so it takes the same below-floor
+    # rendering and never prints one. Two clauses that both miss a call site
+    # hold no more of it than not checking at all, so the pair is held here as
+    # the comparison it is: the census names its own row count, and the sizes
+    # behind the marker are the census's, in order.
+    census_read = [ln for ln in lines if ln.strip().startswith("the census:")]
+    b_census_sizes = sorted(len(addrs_of(row)) for row in t["b"].values())
+    check(len(census_read) == 1
+          and "too few to cut ten ways" in census_read[0]
+          and f"{len(b_census_sizes)} row(s)," in census_read[0]
+          and census_read[0].split("too few to cut ten ways:")[1].split()
+              == [str(n) for n in b_census_sizes],
+          "the census read beside the flipped set's is marked and names its "
+          "own row count, carrying the census's sizes in order -- the clause "
+          "above cannot reach this call site, because a census below the "
+          "floor prints the marker rather than the stretched ten it looks for")
     check(deciles([]) == "no rows",
           "an empty set is reported before the floor rule applies")
     check(deciles(range(1, 11)) == "1 2 3 4 5 6 7 8 9 10"
@@ -1400,6 +1419,36 @@ def self_test() -> int:
     check(deciles([3, 1, 2]) == "3 row(s), too few to cut ten ways: 1 2 3",
           "a set below the floor comes back sorted and marked, as the set it "
           "is and not as ten numbers a reader would take for deciles")
+
+    # The `min()` on the ten-cell read, which the floor above made
+    # unobservable: `deciles` returns before it below ten rows, and for
+    # `n >= 10` the unclamped cut lands inside the set anyway, because
+    # `(n * 9) // 10 <= n - 1` exactly when `n >= 10`. So the shape of the read
+    # is the same with or without it, and this case holds the property the
+    # docstring states rather than the spelling -- ten cells, ten distinct
+    # ranks, one row each, and each cell equal to the rank the formula names.
+    # Held over a range of `n` because a single input cannot distinguish a
+    # clamp that binds from one that never does.
+    def cell_at(n, i):
+        return sorted(range(1, n + 1))[(n * i) // 10]
+
+    def is_ten_cells(n):
+        read = [int(s) for s in deciles(range(1, n + 1)).split()]
+        return (len(read) == 10 and len(set(read)) == 10
+                and all(a <= b for a, b in zip(read, read[1:]))
+                and read == [cell_at(n, i) for i in range(10)])
+
+    check(all(is_ten_cells(n) for n in range(10, 21)),
+          "at and above the floor the ten cells are ten distinct ranks in "
+          "order, each one the value at rank `(n * i) // 10` -- the read is the "
+          "unclamped formula, which is what makes the `min()` beside it "
+          "unreachable rather than load-bearing, over every `n` from ten to "
+          "twenty")
+    check(all(max((n * i) // 10 for i in range(10)) <= n - 1 for n in range(10, 100)),
+          "the clamp is arithmetic, not a guard: the largest rank the ten-cell "
+          "formula names is at most `n - 1` for every `n >= 10`, which is why "
+          "removing `min(len(ordered) - 1, ...)` changes no output this tool "
+          "can produce and no case above it goes red")
 
     # Keys present in only one generation, named rather than netted off.
     c_committed = write_census(tmp, "c-committed.csv", [
@@ -1760,6 +1809,100 @@ def self_test() -> int:
           "a committed rank with no row in the guard-off census is in no cell, "
           "rather than in a cell with a missing subject row -- `absent_ranks` "
           "is the one place that names it")
+
+    # ------------------------------------------------------------------------
+    # `cause`'s two-column size line, which is the comparison the floor exists
+    # for and the half of it that had no case: `across` prints one read per
+    # line, `cause` prints two on one line -- the subject rows by size and the
+    # committed rows at the same ranks -- and reads them against each other
+    # cell for cell. Asserted on the report line for the reason the `across`
+    # case above gives, and over both directions of the floor, because the two
+    # are different renderings of the same line and one of them alone would
+    # hold a mode that marked one column and not the other.
+    def size_reads(report, cells):
+        """The two reads off each cell's `the subject rows by size:` line.
+
+        (marked, row count or None, sizes) per read, keyed by cell. The cell a
+        line belongs to is taken from the header above it rather than from the
+        order the cells happen to be built in, so a refactor that walked them
+        differently would fail here rather than silently re-pair the reads."""
+        out = {}
+        for ln in report:
+            head = ln.strip().split(": ", 1)[0]
+            if head in cells and " key(s)," in ln:
+                title = head
+            elif ln.strip().startswith("the subject rows by size:"):
+                subject, _, committed = ln.partition(
+                    "the committed rows at the same ranks:")
+                reads = []
+                for read in (subject.split("by size:", 1)[1], committed):
+                    read = read.strip()
+                    if "too few to cut ten ways" in read:
+                        count, _, sizes = read.partition("too few to cut ten ways:")
+                        reads.append((True, int(count.split()[0]),
+                                      [int(s) for s in sizes.split()]))
+                    else:
+                        reads.append((False, None,
+                                      [] if read == "no rows"
+                                      else [int(s) for s in read.split()]))
+                out[title] = reads
+        return out
+
+    below = size_reads(lines, cells)
+    check(sorted(below) == sorted(cells)
+          and sorted(len(cells[title]) for title in below) == [1, 1, 2, 2]
+          and all(marked and count == len(cells[title]) and sizes == sorted(sizes)
+                  for title, reads in below.items()
+                  for marked, count, sizes in reads)
+          and all(reads[0][:2] == reads[1][:2] for reads in below.values())
+          and not any(stretched in ln for ln in lines
+                      for stretched in ("1 1 1 1 1 1 1 1 1 1", "2 2 2 2 2 2 2 2 2 2")),
+          "below the floor both reads on `cause`'s two-column line are marked "
+          "and name the same row count -- the cell's own key count, over cells "
+          "of one, one, two and two -- rather than one column marked and one "
+          "not, and neither column is a stretched handful read as a "
+          "distribution")
+
+    # The same line at the floor, which the D/E fixture cannot reach: its four
+    # cells hold 1, 2, 2 and 1 keys, so every read on it is below the floor and
+    # the ten-cell rendering is never printed here. Lettered H and I for the
+    # reason F and G are: one scratch directory, and the file names would
+    # otherwise collide.
+    #
+    # Ten clusters whose guard-off row in H differs and in I does not, so all
+    # ten land in one flipped cell and its line carries two ten-cell reads.
+    # Sizes are one address apart per row on each side, so a cell-for-cell
+    # reader sees the two distributions differ rather than match.
+    h_committed = write_census(tmp, "h-committed.csv", [
+        (f"main-ec-{n:03d}", "main-ec", [f"0x{0x600 + n * 8 + i:04X}" for i in range(n)],
+         key(100 + n)) for n in range(1, 11)])
+    i_committed = write_census(tmp, "i-committed.csv", [
+        (f"main-ec-{n:03d}", "main-ec", [f"0x{0x600 + n * 8 + i:04X}" for i in range(n)],
+         key(100 + n)) for n in range(1, 11)])
+    h_off = write_census(tmp, "h-off.csv", [
+        (f"main-ec-{n:03d}", "main-ec",
+         [f"0x{0x600 + n * 8 + i:04X}" for i in range(n + 1)], key(200 + n))
+        for n in range(1, 11)])
+    i_off = write_census(tmp, "i-off.csv", [
+        (f"main-ec-{n:03d}", "main-ec", [f"0x{0x600 + n * 8 + i:04X}" for i in range(n)],
+         key(100 + n)) for n in range(1, 11)])
+    h_on = write_registers(tmp, "h-on.csv",
+                           [(f"0x{0x600 + n * 8 + i:04X}", "1")
+                            for n in range(1, 11) for i in range(n + 1)])
+    at_floor_lines, _t3, at_floor_cells = cause_report(
+        "H", h_committed, h_off, "I", i_committed, i_off, registers=(h_on, h_on))
+    at_floor = size_reads(at_floor_lines, at_floor_cells)
+    check(len(at_floor_cells["moved -> intact"]) == 10
+          and all(not marked and count is None and len(sizes) == 10
+                  and sizes == sorted(sizes)
+                  for marked, count, sizes in at_floor["moved -> intact"])
+          and all(reads[0][:2] == reads[1][:2] for reads in at_floor.values()),
+          "at the floor the same two-column line is two ten-cell reads on the "
+          "cell with ten keys in it, neither carrying the marker -- the marker "
+          "is the floor's own and a read of exactly ten rows is not below it -- "
+          "and every cell of the report has its two reads in the same state, "
+          "which is the invariant the two cases above and here between them "
+          "hold from both sides of the floor")
 
     # ------------------------------------------------------------------------
     # The rank-shift fixture, lettered F and G because the `cause` block above

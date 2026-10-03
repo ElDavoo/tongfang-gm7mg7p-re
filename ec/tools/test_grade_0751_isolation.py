@@ -148,6 +148,18 @@ MULTI_10_DUMPS = (str(MULTI / '2026-01-01-0751-isolation-10-before-0700.txt'),
 # mark, which is the property the boundary exists for and the reason the two
 # windows have to be checkable apart.
 STAGED_CAPTURES = _set('staged')
+# The two-value day with block 2's restore mark in two of the three captures
+# and not in the third. It is the mixed case `block_verdict` had no word for:
+# `missing-mark/` loses the *control* mark and holds its restore in all three,
+# `disagreeing-marks/` loses nothing, and `3blocks/` loses the restore in all
+# three -- so nothing committed reached a block that closed for two consoles
+# and not the third. The `0x0700` capture is the one short of it, which is §3's
+# own coverage: of its three `--start`/`--len` sweeps, `0x0700`/`0x0100` is the
+# only one covering `0x0751`, so it holds that block's own change rows and
+# cannot say which arm they belong to. Block 1 is `run/`'s `0xA0` block byte
+# for byte, so the one run shows a block that closed everywhere and one that
+# did not, side by side.
+RESTORE_SHORT = _set('restore-short')
 
 # The void one-block set with dumps of its own: `void-block/` byte for byte,
 # and `multi-block/`'s `a0` pair under that file's own name so the `<value>`
@@ -7451,6 +7463,341 @@ class StrictReaderOpenCountTests(unittest.TestCase):
                          ['2026-01-01T12:00:00.000+01:00'])
         self.assertIn('�', accepted[0][1])
         self.assertEqual(unplaceable, [])
+
+
+def block_lines(out):
+    """The block section's per-block verdict lines, in the order printed.
+
+    Cut on the section header's tail and given back whole, because what is
+    being held here is that two blocks' lines read *differently* and that one
+    of them says something the other does not -- so a substring search over
+    the report, where both lines are present either way, would be satisfied
+    by a change to either one alone. The `value under test` line under each
+    is not one of these: it is the block's own description and it is checked
+    elsewhere. The header is split at its tail rather than in full because
+    `report_blocks` puts the block count in front of it and a `--block` run
+    words the same section differently again.
+    """
+    section = out.split('one per no-op control arm (§3) ===', 1)[1] \
+               .split('\n=== ', 1)[0]
+    # `block N/M:` and not the bare word: the void-block note under the lines
+    # is wrapped prose, and a wrapped line can begin with "block" too.
+    return [line for line in section.splitlines()
+            if re.match(r'  block \d+/\d+: ', line)]
+
+
+class RestoreCloserPerCaptureTests(unittest.TestCase):
+    """A block's verdict is about every capture, not the fused window (#450).
+
+    Its own class, and not a case folded into `GradeTests` above, which
+    has no `setUp`: these read one fixture of their own, and the docstring
+    saying what they stand for needs a class to sit on. Position is not
+    the reason and does not make the block cheap -- this one sits above
+    `UnreadableCaptureTests`, and adding it moved that class's lines.
+
+    What is being held is that `block_verdict` reads each capture's own
+    closing mark rather than the block's last fused window. The fused window
+    is whichever of the three consoles recorded the action first, because
+    `coalesce_marks` joins the labels and `parse_mark` takes the first that
+    parses -- so a block whose restore reached two of the three captures has
+    the same last window as one whose restore reached all three, and used to
+    read `intact` either way. That is the false green: §3's three consoles are
+    three processes reading three ranges, each mark is typed into one of them
+    by hand, and one console recording a mark is not two. Of §3's three sweeps
+    the `0x0700` one is the only one covering `0x0751`, so it is the capture
+    that holds the byte's own change rows, and a restore mark that missed it
+    leaves that capture with the rows and nothing saying which arm they belong
+    to.
+
+    The fixture is a two-block day rather than two directories because the
+    point is that the two read differently *in one output*: block 1 is
+    `0751-isolation-run/`'s `0xA0` block byte for byte in the `0x0700` and
+    `0x0F00` captures and `0751-isolation-run-missing-mark/`'s in the `0x0400`
+    one, and block 2 is short its restore in the `0x0700` capture only, so
+    `assertNotEqual` on the two block lines is a statement about a run rather
+    than about two runs that happen to be compared.
+
+    Offline throughout: every fixture is a `testdata/` file this checkout
+    holds, nothing here reads an EC, and the marks were typed by hand. What
+    the cases below establish is what the grader says about which files it
+    was handed, never what a machine did.
+    """
+
+    def setUp(self):
+        rc, out, _ = run(*RESTORE_SHORT)
+        self.rc, self.out = rc, out
+        self.lines = block_lines(out)
+
+    def test_the_two_blocks_read_differently_and_the_second_names_its_capture(self):
+        # The issue's Done clause: a restore in two of the three CSVs reads
+        # differently from one in all three, and the difference is the verdict
+        # word rather than only the sentence under it -- so the property is
+        # asserted on the two lines, not on a string either of them happens to
+        # contain.
+        self.assertEqual(len(self.lines), 2)
+        first, second = self.lines
+        self.assertNotEqual(first, second)
+        # Neither word is the other: `intact` is the word a fold-in files, and
+        # the whole of the defect is that this block could be filed as one.
+        self.assertNotIn('intact', second)
+        self.assertNotIn('VOID', second)
+        self.assertIn('intact', first)
+        # Block 1's restore is in all three, and the line says so by naming
+        # them -- `intact` on its own is the sentence the issue says is unsafe
+        # to file.
+        self.assertIn("block 1/2: intact -- last mark 'restored 0x0751=0x10' "
+                      "is the restore", first)
+        for capture in ('0400-045f', '0700-07ff', '0f00-0f5f'):
+            self.assertIn(f'0751-isolation-{capture}.csv', first)
+        # Block 2's is in two, and the third is named with what it ended on --
+        # the row the operator has to go and find, and the only thing in the
+        # report that says what that console took the block to be.
+        self.assertIn("block 2/2: PARTIAL -- last mark "
+                      "'restored 0x0751=0xA0' is the restore, but not in "
+                      "every capture", second)
+        self.assertIn("2026-01-01-0751-isolation-0700-07ff.csv ends on "
+                      "'wrote 0x0751=0x00'", second)
+        for capture in ('0400-045f', '0f00-0f5f'):
+            self.assertIn(f'0751-isolation-{capture}.csv', second)
+        # And the two readings are not the same set of captures: the sentence
+        # is not one block's, which is the property a fold-in would file.
+        self.assertNotEqual(first.split('; the restore is in')[1],
+                            second.split('; the restore is in')[1])
+
+    def test_the_short_capture_is_the_one_holding_the_bytes_own_rows(self):
+        # The issue's premise, as a property of the fixture rather than a claim
+        # about the tool: the capture that missed block 2's restore mark is the
+        # one §3's ranges make hold `0x0751`'s own change rows, so the rows
+        # for the byte are in a capture that cannot say which arm they belong
+        # to. Read out of the files rather than written here, so editing a
+        # fixture row fails this instead of leaving it asserting a shape the
+        # CSVs no longer have. The cut is §3's second control arm, which is
+        # where block 2 opens in every capture of this day.
+        second = grade.parse_ts('2026-01-01T12:05:00+01:00')
+        _, changes = grade.read_capture(RESTORE_SHORT[0])
+        block_two = [c for c in changes if c.addr == 0x0751 and c.ts > second]
+        # Both directions, and the second is the one the grader cannot see:
+        # the byte went out and came back in this capture, and neither row
+        # says which mark put it back.
+        self.assertEqual([(c.old, c.new) for c in block_two],
+                         [(0xA0, 0x00), (0x00, 0xA0)])
+        # The other two captures record the restore mark, so the block does
+        # close -- for them.
+        for path in RESTORE_SHORT[1:]:
+            marks, _ = grade.read_capture(path)
+            self.assertEqual([m.label for m in marks
+                              if grade.parse_mark(m.label)[0] == 'restore'
+                              and m.ts > second],
+                             ['restored 0x0751=0xA0'])
+
+    def test_the_run_is_refused_and_only_the_short_block_is_withheld(self):
+        # `PARTIAL` counts in the tally `void` does, so the exit code turns on
+        # it exactly as on a void block -- a block short its restore in one
+        # console cannot close that console's last window, so it is as
+        # unreadable as one short in all three.
+        self.assertEqual(self.rc, 1)
+        # Block 2's three windows are withheld and block 1's three are
+        # printed, which is what makes the withheld banner a statement about
+        # this block rather than about the day.
+        self.assertIn('-- NOT GRADED, its windows are not printed', self.out)
+        self.assertEqual(self.out.count('block: 0x00 (block 2 of 2) -- '
+                                        'NOT GRADED'), 3)
+        self.assertEqual(self.out.count('block: 0xA0 (block 1 of 2)'), 3)
+        # And the census already named both problem kinds, so the two
+        # sections do not disagree about what is wrong with the block.
+        self.assertIn('NOT GRADED, 2 problem(s): missing, void', self.out)
+        # The note under the section answers the mixed case too, rather than
+        # sending the operator to §3 with nothing said about the third console.
+        flat = " ".join(self.out.split(
+            '=== 2 block(s), one per no-op control arm')[1]
+            .split('=== 0x0751 across the dumps')[0].split())
+        self.assertIn('marked PARTIAL is short the same mark in some of the '
+                      'captures', flat)
+
+    def test_the_three_words_are_three_shapes_at_unit_level(self):
+        # Off `as_main_reads` alone, with no `check_block_marks` call first:
+        # `Block.closers` is derived from the block's own marks, so the
+        # verdict is an answer about the block rather than about what was run
+        # over it. A pin on the printed string alone would be satisfied by any
+        # run that printed it, and this is the function the other four readers
+        # are downstream of.
+        _, _, blocks, _ = as_main_reads(RESTORE_SHORT)
+        self.assertEqual([grade.block_verdict(b) for b in blocks],
+                         ['intact', 'partial'])
+        # The record is per capture and is what the verdict reads, so a change
+        # that kept `block_verdict`'s old fused-window answer would leave the
+        # record right and the verdict wrong -- which is why the record is
+        # asserted here rather than only through the output. The `0x0700`
+        # capture is the one the second block is short of, and its closing
+        # label is the write rather than the restore.
+        self.assertEqual(
+            [[(os.path.basename(p), label) for p, label in b.closers]
+             for b in blocks],
+            [[('2026-01-01-0751-isolation-0700-07ff.csv',
+              'restored 0x0751=0x10'),
+              ('2026-01-01-0751-isolation-0f00-0f5f.csv',
+              'restored 0x0751=0x10'),
+              ('2026-01-01-0751-isolation-0400-045f.csv',
+              'restored 0x0751=0x10')],
+             [('2026-01-01-0751-isolation-0700-07ff.csv', 'wrote 0x0751=0x00'),
+              ('2026-01-01-0751-isolation-0f00-0f5f.csv',
+               'restored 0x0751=0xA0'),
+              ('2026-01-01-0751-isolation-0400-045f.csv',
+               'restored 0x0751=0xA0')]])
+        # The third word, from the set whose restore is in no capture: the
+        # wording `3blocks/` has always printed is unchanged, which is the
+        # regression the issue asks to be held.
+        _, _, blocks, _ = as_main_reads(BLOCK_CAPTURES)
+        self.assertEqual([grade.block_verdict(b) for b in blocks],
+                         ['intact', 'void', 'intact'])
+        rc, out, _ = run(*BLOCK_CAPTURES)
+        self.assertEqual(rc, 1)
+        self.assertIn("block 2/3: VOID -- last mark is 'wrote 0x0751=0x00', "
+                      "not the restore", out)
+        # And a block the walk never closed is `void` rather than `intact` on
+        # an empty record: no capture holds a restore for it.
+        self.assertEqual(grade.block_verdict(grade.Block(0xA0, [])), 'void')
+
+    def test_a_capture_short_of_the_restore_carries_a_marker_of_its_own(self):
+        # `block_marker` is what a `--dump` read under that value carries, and
+        # it is keyed on the restore check where the mark-set wording would
+        # send the operator after a mark the block has in two consoles and not
+        # the third. Asserted over the index the two dump sections read
+        # (`verdicts_for`), because that is the reader that has to be right
+        # and a marker nothing carries fixes nothing.
+        reads, _, blocks, _ = as_main_reads(RESTORE_SHORT)
+        for b in blocks:
+            b.problems = grade.check_block_marks(b, reads)
+        self.assertEqual(grade.block_marker(blocks[0]), '')
+        self.assertEqual(grade.block_marker(blocks[1]),
+                         'PARTIAL, its windows were withheld above -- the '
+                         'restore is not in every capture')
+        # The index over both values: the withheld block's reads carry it and
+        # the intact block's carry nothing, which is the "checked and nothing
+        # to mark" answer `verdicts_for` keeps apart from "not checked".
+        verdicts = grade.verdicts_for(blocks, None)
+        self.assertEqual(verdicts, {
+            0xA0: '',
+            0x00: 'PARTIAL, its windows were withheld above -- the restore is '
+                  'not in every capture'})
+        # And end to end, which is the only place the marker is read: both
+        # dump sections open a `--block 0x00` read with it. The dumps are
+        # `multi-block/`'s `a0` pair copied under a `00` name, because §6
+        # stamps every dump with the `<value>` of its block and there is no
+        # committed pair stamped `0x00` -- and that stamp is the only thing in
+        # a dump that says which block it is, so a pair under another block's
+        # name is refused rather than read. Copied rather than committed for
+        # the reason `void-block-with-dumps/`'s own row gives: nothing here is
+        # a case a failure has to name, and what is under test is the marker
+        # and not the bytes the pair holds.
+        with tempfile.TemporaryDirectory() as tmp:
+            pair = []
+            for which, src in zip(('before', 'after'), MULTI_A0_DUMPS):
+                dst = Path(tmp) / f'2026-01-01-0751-isolation-00-{which}-0700.txt'
+                dst.write_text(Path(src).read_text())
+                pair.append(str(dst))
+            rc, out, _ = run(*RESTORE_SHORT, '--block', '0x00',
+                             *dumps(*pair), '--dump-pair', *pair)
+        self.assertEqual(rc, 1)
+        for section in (dumps_section(out), whole_block(out)):
+            self.assertIn("block 0x00, from the <value> in these files' §6 "
+                          "names -- PARTIAL, its windows were withheld above "
+                          "-- the restore is not in every capture", section)
+
+    def test_one_capture_still_reads_intact_and_claims_no_agreement(self):
+        # The cross-console checks engage at two or more by design, so the
+        # new word must not fire over a single CSV: there is no other console
+        # for the block to have missed a restore in. And the line names the
+        # one capture rather than saying "all of them", which would be a
+        # sentence about agreement this run never had a chance to check.
+        # §6's own `0x0700` capture, whose block is closed.
+        rc, out, _ = run(RUN_CAPTURES[0])
+        self.assertEqual(rc, 0)
+        self.assertIn('one capture: the cross-console checks did not run', out)
+        first = block_lines(out)[0]
+        self.assertIn("block 1/1: intact -- last mark 'restored 0x0751=0x10' "
+                      "is the restore; the restore is in "
+                      "2026-01-01-0751-isolation-0700-07ff.csv", first)
+        self.assertNotIn('PARTIAL', out)
+        self.assertNotIn('none of them', out)
+
+    def test_a_missing_mark_is_not_what_the_new_word_is_about(self):
+        # `missing-mark/` holds its restore in all three and loses the
+        # *control* mark, so its one block still reads `intact`: the new word
+        # is about the closing mark specifically, and a change that fired it on
+        # any missing mark would fail here while fixing nothing.
+        rc, out, _ = run(*MISSING_MARK)
+        self.assertEqual(rc, 1)
+        self.assertIn("block 1/1: intact -- last mark 'restored 0x0751=0x10' "
+                      "is the restore", out)
+        self.assertNotIn('PARTIAL', out)
+        self.assertIn('-- NOT GRADED, its windows are not printed', out)
+
+    def test_a_short_capture_inside_the_merge_window_does_not_read_as_the_restore(self):
+        # The fixture's own captures are 40 s apart, so block 2's restore lands
+        # in a window of its own in each capture, the block's last window reads
+        # `restored ...`, and the clause under `PARTIAL` agrees with the parser
+        # for a reason the committed set cannot tell from. Move the two
+        # restores that did land inside the short capture's write window and
+        # they fuse into it -- `coalesce_marks` joins labels within
+        # `MARK_MERGE_SECONDS` and `parse_mark` reads the first that parses --
+        # so the last window becomes the short console's *write* carrying the
+        # other two's restores behind it, while `Block.closers` still sees two
+        # captures closed and one not.
+        #
+        # Built in a temporary directory rather than added to the fixture: it
+        # is two timestamps moved, and a committed set carrying them would
+        # make its own header a claim about the merge window that has to
+        # hold true afterwards.
+        inside = '2026-01-01T12:08:33.000+01:00'
+        short_write = '2026-01-01T12:08:30.000+01:00'
+        # The two literals above are what put the rows in the window, so if the
+        # constant ever moves under them this says so rather than silently
+        # building the un-fused day and passing on the clause.
+        self.assertLessEqual(
+            (grade.parse_ts(inside) - grade.parse_ts(short_write)).total_seconds(),
+            grade.MARK_MERGE_SECONDS)
+
+        def onto_the_write(later):
+            def rewrite(text):
+                return text.replace(f'{later},MARK,,restored 0x0751=0xA0',
+                                    f'{inside},MARK,,restored 0x0751=0xA0')
+            return rewrite
+
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = copies_of(tmp, RESTORE_SHORT, {
+                '2026-01-01-0751-isolation-0f00-0f5f.csv':
+                    onto_the_write('2026-01-01T12:09:11.000+01:00'),
+                '2026-01-01-0751-isolation-0400-045f.csv':
+                    onto_the_write('2026-01-01T12:09:12.000+01:00')})
+            rc, out, err = run(*paths)
+            # The fused label is read off the run rather than written here: the
+            # clause has to follow the parser's reading of whatever the join
+            # made, which is the whole of what this case is about.
+            _, _, blocks, _ = as_main_reads(paths)
+            fused = blocks[1].windows[-1].label
+        self.assertEqual(rc, 1, err)
+        self.assertEqual(fused,
+                         'wrote 0x0751=0x00 / restored 0x0751=0xA0')
+        # What the tool's own parser makes of it, which is what the clause used
+        # to contradict: the first spelling that parses is the short console's
+        # write, so the label is not the restore.
+        self.assertEqual(grade.parse_mark(fused)[0], 'write')
+        second = block_lines(out)[1]
+        self.assertIn(f"block 2/2: PARTIAL -- last mark is {fused!r}, not the "
+                      "restore", second)
+        self.assertNotIn(f"last mark {fused!r} is the restore", second)
+        # Same three captures as the committed fixture's line, and the same
+        # note saying so. Split at the note rather than compared whole: only
+        # the clause moved, so the half before it differs and the half from it
+        # on is the line `setUp` already graded, byte for byte.
+        self.assertIn("2026-01-01-0751-isolation-0700-07ff.csv ends on "
+                      "'wrote 0x0751=0x00'", second)
+        for capture in ('0400-045f', '0f00-0f5f'):
+            self.assertIn(f'0751-isolation-{capture}.csv', second)
+        cut = '; the restore is in'
+        self.assertNotEqual(second.split(cut)[0], self.lines[1].split(cut)[0])
+        self.assertEqual(second.split(cut)[1:], self.lines[1].split(cut)[1:])
 
 
 class UnreadableCaptureTests(unittest.TestCase):

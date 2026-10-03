@@ -13,7 +13,13 @@
    0x1C15 and 0x1C16 and 0x04 to 0x068B. UNITS NOT DETERMINED: 0x48 also seeds 0x1C01 elsewhere, and
    that is co-occurrence of a constant, not a shared field. No consumer of the trio is found by any
    of the ten methods in ec/annotations/xdata-1c3x-consumers.md section 7; the computed-DPTR
-   remainder is issue #110 and stays open.
+   remainder is issue #110 and stays open. CORRECTION 2026-10-03 (issue #519) to that clause, which
+   stands as written: no open issue in this repository covers general computed-DPTR visibility in
+   trace_xdata_refs.py, and the bounded version of the method is committed as the sibling tools
+   ec/tools/computed_dptr_sites.py and ec/annotations/computed-dptr-sites.md. The six residual
+   addc-into-DPH sites section 6.2 of that document named are read in
+   docs/findings/addc-dph-residual-six.md and all six close, so none reaches page 0x1C by that
+   construction; that negative is scoped to the construction and is not absence.
    type: writer
    evidence: ec/decompiled/bank1/9CE8.asm; ec/decompiled/bank1/9CE8.c
    basis: hand-decoded

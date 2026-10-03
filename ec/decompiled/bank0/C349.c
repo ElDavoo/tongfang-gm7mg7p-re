@@ -5,17 +5,18 @@
 
 
 /* Loads A from XDATA 0x1667 and leaves 1 in R7 if bit 0 is set, 0 if it is clear: JNB on bit 0
-   jumps to the R7=0 return. 0x1667 has no entry in ec/annotations/registers.yaml, so the bit is not
-   named. C356 immediately after is the same test on the same bit with the polarity inverted.
+   jumps to the R7=0 return. C356 immediately after is the same test on the same bit with the
+   polarity inverted, and the two are exact complements. The byte's row is XDATA_1667, which carries
+   the bit map for both sites.
    type: logic
    evidence: ec/decompiled/bank0/C349.asm; ec/decompiled/bank0/C349.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void test_1667_bit0(void)
 
 {
-  if ((DAT_EXTMEM_1667 & 1) != 0) {
+  if ((XDATA_1667 & 1) != 0) {
     return;
   }
   return;
