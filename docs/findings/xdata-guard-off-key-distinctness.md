@@ -71,7 +71,7 @@ and §4 measures it rather than asserting either way.
 
 ## 2. The cases, and what each one holds
 
-`ec/tools/test_xdata_cluster_names.py::TheGuardOffKeyDistinctness`, three cases
+`ec/tools/test_xdata_cluster_names.py::TheGuardOffKeyDistinctness`, its cases
 over the one `guard_off()` regeneration the module already caches (~2 s,
 `lru_cache`d, shared with `TheGuardOffRegeneration` — no second run).
 
@@ -92,8 +92,27 @@ looks at: they land in a scratch directory and are gone with the next run, so
 a registers CSV that disagreed with its own clusters CSV would break the
 byte-to-key lookup there and be caught by nobody.
 
+> **Corrected in place (issue #968): this case was coverage-blind as written.**
+> The paragraph above is its argument for being *there*, and it is sound about
+> a disagreement — but a loop over the rows that exist also goes green on a
+> registers CSV with no rows at all, and on one missing every row of a
+> program, and neither defect is a disagreement. So for its lifetime the case
+> was unheld by *itself*: what caught it was
+> `TheGuardOffRegeneration::test_the_census_is_the_one_6a_measured`'s address
+> set equality, which reports a census identity rather than a missing row and
+> disappears the moment that equality is legitimately loosened. The case now
+> floors the registers CSV non-empty and holds set coverage — every program
+> its clusters CSV has is a program it names — before the byte-to-key
+> comparison, and the floor is a set rather than a count because a count is
+> the wrong witness here. Measured, with the two commands and a transcript of
+> both shapes going red, in
+> [`xdata-registers-agreement-vacuity.md`](xdata-registers-agreement-vacuity.md).
+
 **`test_a_duplicated_key_is_named_with_both_its_ranks`** is the negative
 control; §3 is its transcript.
+**`test_each_registers_forgery_is_caught_by_the_assertion_that_catches_it`**
+is its companion for the registers half, over the ways that loop could pass on
+nothing; §3 of `xdata-registers-agreement-vacuity.md` is its transcript.
 
 Three things about the shape of this, each deliberate:
 
@@ -104,7 +123,13 @@ Three things about the shape of this, each deliberate:
 - **The property is the claim, not a count.** Nothing pins 445 or 439. The row
   count appears in the failure message, where a reader chasing a collision sees
   it, and nowhere else — the same reasoning `TheGuardOffRegeneration` applies to
-  its `> 300` floor and its `assertTrue(movers, ...)` exhibit.
+  its `> 300` floor and its `assertTrue(movers, ...)` exhibit. **Corrected in
+  place by issue #968, and only for coverage:** this is right for a
+  *collision*, where a count is a symptom and the claim is the set, and it is
+  not right for a *coverage* claim, where a count is the whole claim and the
+  shortest witness — and so the one that can shrink without anything going
+  red. The registers half now floors a set instead, and the split is argued in
+  the class docstring rather than left to this paragraph.
 - **It runs in the default sweep.** `bash tools/run-tests.sh` collects
   `ec/tools/test_*.py`, so the property is now held by a run CI performs.
   `xdata_moved_ranks.py --self-test` keeps its 53 checks unchanged; the issue
