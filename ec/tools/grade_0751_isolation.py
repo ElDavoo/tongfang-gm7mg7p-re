@@ -841,6 +841,14 @@ XDATA_NAMES = {
 # rather than hypothetical -- the sweep summary's 0x0448 row ends on exactly
 # it -- so a report that named only the quotient would be wrong about a value
 # a committed file has already recorded.
+#
+# The premise of that last clause held and its conclusion did not, which is
+# the shape issue #358 found here. 0xBE is in evidence; it is also a quotient
+# the computed arm produces, at a dividend of 19000-19099. The note therefore
+# keeps the sentence it always printed and carries the correction beside it,
+# dated, rather than editing a sentence operators have already read -- the
+# report is the deliverable here, not the YAML, so a retraction that stopped
+# at ec/annotations/registers.yaml would leave the tool contradicting it.
 XDATA_NAME_NOTE = {
     0x0436: (
         "The name upstream gives this pair is not printed, and the reason "
@@ -875,7 +883,20 @@ XDATA_NAME_NOTE = {
         "hypothetical: evidence/ec-watch/2026-09-18-ac-plugin-sweep-"
         "summary.csv carries 0x0448,4,0x8B,0xBE, so a committed file has "
         "already recorded this byte ending a window on exactly 0xBE. Read "
-        "0xBE as the branch the routine took and not as a voltage."),
+        "0xBE as the branch the routine took and not as a voltage. "
+        # The sentence above is left as written and corrected underneath,
+        # per the reasoning in the block comment over this table: this is
+        # printed to an operator, so the retraction has to reach the output
+        # and not only the repository.
+        "Correction (2026-10-03, issue #358): the sentence above reads "
+        "0xBE as the branch and not as a voltage, and that is too strong. "
+        "0xBE is 190, and 190 is a quotient 0xA5E6 produces for a "
+        "dividend of 19000-19099 at divisor 100, so the computed arm can "
+        "produce this byte too. Every voltage recorded for this pack is "
+        "below that window, so the constant arm is still the likelier "
+        "reading of a committed 0xBE and nothing here claims which arm "
+        "ran; what is retracted is only that the value cannot be a "
+        "voltage."),
     0x0449: (
         "The same branch, and the same gap. store_scaled_quotient_0449 at "
         "R7 = 0 reads 0x0434/0x0435 and divides by 100, and at any nonzero "
