@@ -1122,8 +1122,11 @@ convention this repository already had for saying "forwarder" — eleven rows
 carried it before #602, seventeen after — and `thunk` belongs mid-name
 (`bank1_switch_thunk_to_81c5`), not as a prefix. `../tools/grade_name_basis.py`
 now refuses the collision on the EC side, and `build_ec_decompile.py --self-test`
-holds that Python set against the Java it is transcribed from, which is the guard
-that makes "one definition, used by every exporter" true rather than aspirational.
+holds that Python set against the Java it is transcribed from. That hold is a
+two-way one and it is what keeps the transcription honest; what makes "one
+definition, used by every exporter" true rather than aspirational is #626
+deleting the second Java definition, and `bios/tools/test_entry_namespace.py`
+is what holds *that*.
 
 **Read the column as "not reserved", and there are rows that show why.**
 `bank0 0x031C` and `0x805B`, `bank1 0x031C` and `0x703A`, and `common 0x0512`,
@@ -1139,8 +1142,9 @@ a prefix, because `bank0 0x549B` is a committed row named
 `default_009d_bf_dispatch_4e2c`. The write-up is
 [`../../docs/findings/cased-in-reserved-namespace.md`](../../docs/findings/cased-in-reserved-namespace.md).
 
-**Open, and deliberately not fixed here: the two copies of
-`isPlaceholderName()` no longer agree.** `scripts/TongFang.java` tests
+**Two copies of `isPlaceholderName()`, and they no longer agree.** *First half
+of this paragraph is closed — see the correction below; the second half is
+still open and is restated there too.* `scripts/TongFang.java` tests
 `name.equals("entry")`; `scripts/ExportDecompile.java` tests
 `name.startsWith("entry")`. The first is the canonical one and the second is
 what the `.c` exporter and the `annotated` column in `index.csv` call. The
@@ -1158,6 +1162,33 @@ different component, a different driver (`bios/tools/bios_extract.py`) and a
 #602's new rule is modelled on the canonical copy and scoped to the EC: a check
 built on the drifted one would pin the drift as correct.
 `../../docs/findings/thunk-prefix-collision.md` has the measurement.
+
+**CORRECTION (2026-10-03, issue #626): the divergence is fixed; the BIOS
+re-export it needed is not.** Two things this paragraph called one thing are
+separate, and only the first has happened. `ExportDecompile.java`'s private
+copy is deleted and both its call sites — the `annotated` column and the
+`[named]` marker — now call `TongFang.isPlaceholderName()`, so the
+"two copies no longer agree" claim above is no longer true and `TongFang.java`'s
+docstring, which claims one definition used by every exporter, now is.
+`EcPs2Kbd 0x260` and `Setup 0x000004B0` are renamed out of Ghidra's namespace,
+so `grade_name_basis.reserved_prefix_problems()` over the BIOS CSV returns an
+empty list where the two rows above were.
+
+Still open, unchanged by any of that: `bios/ghidra/index.csv` and
+`bios/ghidra/listing-index.csv` are the committed output of a Ghidra run
+against `bios/ghidra/project/`, and **no re-export has happened**, so those two
+files still carry `entry` for both renamed addresses and still disagree on the
+`annotated` column for `PeiOverClock FFCFBB49` and `OemGlobalNvsDxe 0x370`
+(`no` in the index, `yes` in the listing). The renames above therefore change
+no committed `.c` or `.asm` yet, and `bios_extract.py --check` will not notice
+— it joins on `(scope, addr)` and never compares `name`. The re-export is
+blocked on #572: `bios/ghidra/project/bios.rep/project.prp` carries
+`STATE NAME="OWNER" VALUE="dave"`, and the driver copies the project
+byte-for-byte before running headless against the copy, so the default
+`export-only` mode aborts with `NotOwnerException`. That is the remaining step,
+it is named as one, and the workaround recorded in `docs/findings.md` is
+deliberately not used.
+`../../docs/findings/entry-namespace-two-copies.md` has the measurement.
 
 An address with no function is counted as `annotations_unmatched` and carried
 into `manifest.csv` rather than dropped, so the figure is one a run produced.

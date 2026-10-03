@@ -607,7 +607,12 @@ would be a corpus-wide loosening made by half-measure against one sentence.
    loosening: it needs its own re-run over every committed citation, and the
    set of units it would newly admit is not enumerable from the committed tree,
    so it is a separate change with its own issue rather than a tuning pass
-   against one sentence.
+   against one sentence. **That enumeration is now
+   [`operand-bound-exemption-census.md`](operand-bound-exemption-census.md),
+   and the answer came back no**: no unit in the committed corpus is admitted by
+   the lexicon, and the one sentence this exemption is for would be admitted by
+   it, so adopting it would silence the `0x0800` disagreement
+   `OneAttributionPerUnit` holds as expected.
 6. **`units()` keeps a blockquote's `>` in the joined text, so a sentence
    boundary inside one is recognised only where the `>` does not fall between
    the period and the next capital.** `TERMINATOR` looks ahead for
