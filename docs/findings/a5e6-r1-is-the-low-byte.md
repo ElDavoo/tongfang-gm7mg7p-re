@@ -39,6 +39,7 @@ two implementations over 423 input pairs: they agree on both result pairs
 | `ec/tools/test_grade_0751_isolation.py`, `test_the_derived_bytes_say_which_branch_they_are_on` | pinned the retracted sentence on its own | still pins it, and now pins the correction under it too — a retraction that no assertion holds is one edit from being lost |
 | `docs/hardware-tests/system-id-0456-bit6-divisor.md` §1 and §5 | "write the quotient's high byte", and §5's "a run that comes back mostly `unexplained` is the model and the machine disagreeing in the open" | corrected in place, each with a dated correction paragraph inside the section. No new heading: `check_no_append_logs.py` fails a `##` that names a merge, and a `*(Superseded …)*` outside `docs/findings/` |
 | `ec/annotations/registers.yaml`, `XDATA_0448`, `XDATA_0449`, `SYSTEM_ID` | described the division without saying which byte was stored | corrected in place. **No `status:` moved** — nothing here is a live observation, and `present-untested` is what both entries already said |
+| `ec/annotations/registers.yaml`, `XDATA_044C` | "Busiest byte in the committed capture at 247 changes" | narrowed in place. The figure is right and the scope was not: `0x044C` is the busiest byte on the `0x0400`-`0x045F` page, and eighth in the capture as a whole. The page-scoped wording in `grade_0751_isolation.py` was already correct and is a separate sentence |
 | `ec/annotations/xdata-0400-045f.md` §9 | "`0x0448` is the battery voltage divided by 100, `0x0449` the battery current divided by 100" | **left deliberately.** Byte-ambiguous rather than false, and loose under *both* readings, so there is no sentence here the swap falsifies. Cited from this write-up instead of churning a long shared page |
 | `ec/decompiled/bank1/*.c`, `ec/ghidra/c-digests.csv` | plate comments generated from the CSV rows above | regenerated, never hand-edited |
 
@@ -146,22 +147,60 @@ they carry:
   foregone conclusion. `test_system_id_probe.py` asserts the property, not the
   numeral.
 
-## Tried and rejected: `0x044C` as a second discriminator
+## `0x044C` as a second discriminator
 
-`0x044C` looked like an independent check: it is the busiest byte on the
-`0x0400`-`0x045F` page in the capture — 247 changes, spanning `0x44`-`0x93`,
-ahead of `0x0449`'s 238 — and `halve_sum_into_044c` computes it from
-`0x0449 × 0x0448`. It is **not** the busiest byte in the capture as a whole:
-counting the `new` column per address over the file's 4 960 rows, `0x0566`,
-`0x06CF`, `0x06D6`, `0x06E4`, `0x06F8` and `0x06F9` each change 260 times and
-`0x060C` 256, so `0x044C` ranks eighth. **It does not discriminate.**
-`0xF416`'s second arm writes the constant `0xBE` (190), so the byte is
-`0x0449 × 190 / 100` — and that product's low byte spans `0x40`-`0xAB` across
-the observed `0x0449` values under **either** reading. The capture carries no
-`0x0448` at all, so the product cannot be evaluated from it in any case.
-Recorded because a rejected discriminator is worth as much as an accepted
-one: it is the difference between "the capture agrees" and "we checked a
-second thing and it did not speak".
+`0x044C` is an independent check on the same question, and it agrees. It is
+the busiest byte on the `0x0400`-`0x045F` page in the capture — 247 changes,
+spanning `0x44`-`0x93`, ahead of `0x0449`'s 238 — and `halve_sum_into_044c`
+computes it from `0x0449 × 0x0448`, with `0xA5E6`'s quotient in between. It
+is **not** the busiest byte in the capture as a whole: counting the `new`
+column per address over the file's 4 960 rows, `0x0566`, `0x06CF`, `0x06D6`,
+`0x06E4`, `0x06F8` and `0x06F9` each change 260 times and `0x060C` 256, so
+`0x044C` ranks eighth.
+
+An earlier pass of this write-up recorded it as a *rejected* discriminator,
+on the grounds that `0x0449 × 190 / 100` has a low byte spanning
+`0x40`-`0xAB` under **either** reading. **That was wrong, and it reasoned
+about the wrong quantity.** The product's low byte is not what reaches
+`0x044C`: `0xF436` clamps between the divide and the store, and the clamp is
+where the two readings part.
+
+```console
+$ python3 ec/tools/a5e6_quotient.py --capture \
+    evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv
+  the input 0x0448 has no rows in this capture, so each value below is a
+  separate evaluation conditional on it rather than one reading of the file
+  0x0448 = 0xbe  high-byte reading (R1): 1 of 238 simulated writes inside
+    the observed set; simulated spans 0x80-0xc9
+  0x0448 = 0xbe  low-byte reading (R1): 230 of 238 simulated writes inside
+    the observed set; simulated spans 0x34-0x93
+  0x0448 = 0xa0  high-byte reading (R1): 1 of 238 simulated writes inside
+    the observed set; simulated spans 0x80-0xc9
+  0x0448 = 0xa0  low-byte reading (R1): 206 of 238 simulated writes inside
+    the observed set; simulated spans 0x2c-0x86
+```
+
+The clamp is `0xF44B mov A, R2`, `0xF44C jz 0xf450`, `0xF44E mov R1, #0xff`,
+and R1 is what the store folds in either way — `0xF455 add A, R1` — so what
+the clamp decides is *what R1 means*, not whether it is stored. Corrected, R2
+is the quotient's high byte and is `0x00` across this capture's range, so the
+clamp never fires and R1 keeps the quotient's low byte. Swapped, R2 is the
+low byte and is nonzero on every one of the capture's `0x0449` values, so the
+clamp fires on every pass, R1 is `0xFF`, and `0x044C` is driven up toward
+`0xFF` — a value the capture never shows. Both multiplicands above behave the
+same way, so the result is not an artifact of the byte `0xBE` happens to be.
+
+Those lines are executed bytes, not arithmetic: the tool runs the committed
+`F436.asm` — the `mul AB`, the `lcall 0xa5e6` into the committed `A5E6.asm`,
+the clamp and the halving — on the same core everything else here uses, so
+the clamp is a fact about the listing rather than about a model of it. That
+is the whole correction: the earlier pass reasoned about the quotient, and the
+quotient is not what reaches this byte.
+
+The caveat that is real, and that the quoted line above carries: this
+capture has no `0x0448`, so `0xBE` — the constant `0xF416`'s second arm
+stores — is an **input** here rather than a reading of the file, and each of
+the four lines is a separate evaluation conditional on it.
 
 ## `0x0449` has no second writer
 
@@ -171,7 +210,11 @@ the only other `0x0449` DPTR loads in the tree are reads (`0xF436`, and
 bank0 `BE15`). `a5e6_quotient.py --callers` reports every `lcall 0xA5E6` site
 in `ec/annotations/bank-call-targets.csv` and confirms each against the
 firmware image rather than against the census's own target column. **A second
-writer is not available as an explanation, and the question is closed.**
+writer is not available as an explanation** — over the exported listings,
+which is what that scan covers. `0xE715` is the known gap in that coverage:
+it is decoded and unlisted below, so a `0x0449` writer there would not have
+been exported either. The closure is over the listings this repository has,
+not over the image.
 
 ## What this does not claim
 

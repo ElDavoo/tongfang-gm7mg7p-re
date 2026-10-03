@@ -300,6 +300,68 @@ class CaptureTests(unittest.TestCase):
                             tool.stored_byte(0xF0, 0x03, 0x22, False))
 
 
+class Capture044CTests(unittest.TestCase):
+    """`halve_sum_into_044c` executed over the capture, under each reading.
+
+    0x044C is a second discriminator and a sharper one than 0x0449's own
+    reachability: it is the only other byte in the capture that 0xA5E6's
+    result feeds, so where the tests above ask whether 0x0449's bytes can be
+    produced at all, these ask whether the byte downstream of them landed
+    where the capture says it did.
+
+    **The arithmetic is the firmware's.** `f436_store` runs the committed
+    `F436.asm` -- the multiply, the `lcall 0xa5e6` into the committed
+    `A5E6.asm`, the clamp and the halving -- on the same core as everything
+    else, so the clamp is a fact about the listing rather than about a model
+    of it. Only the epilogue's R1/R2 assignment is intervened with, and only
+    because the swapped reading is a different machine rather than a
+    different function.
+    """
+
+    def test_the_committed_body_runs_and_writes_the_byte(self):
+        # A single pass through the listing, end to end: the `mul`, the call
+        # into 0xA5E6, the clamp, the halving, the store. Both cases are ones
+        # where the quotient's high byte is zero, so the clamp cannot fire and
+        # the stored byte is the halved sum of the standing value and the
+        # quotient's low byte -- which the listing's own `rrc`/`addc` pair
+        # rounds rather than truncates.
+        for value_449, value_44c, stored in ((0x22, 0x44, 0x42),
+                                            (0x5A, 0x71, 0x8E)):
+            with self.subTest(value_449=value_449):
+                self.assertEqual(
+                    tool.f436_store(value_449, 0xBE, value_44c, False), stored)
+
+    def test_the_two_readings_drive_the_clamp_on_opposite_passes(self):
+        # The property the write-up leans on, taken straight from the bytes:
+        # 0xF44B reads R2 and 0xF44E overwrites R1 when it is nonzero, so
+        # which half of the quotient lands in R2 decides whether R1 survives
+        # to the store. A quotient of 0x0100 is the case that tells them
+        # apart -- corrected, R2 is the nonzero high byte and R1 is clamped to
+        # 0xFF; swapped, R2 is the zero low byte and nothing is clamped, so
+        # the store gets 0x01, which overflows nothing.
+        self.assertEqual(tool.f436_store(0x65, 0xFE, 0x00, False), 0x80)
+        self.assertEqual(tool.f436_store(0x65, 0xFE, 0x00, True), 0x01)
+
+    def test_the_two_readings_simulate_different_044c_sets(self):
+        # The checkable form of the write-up's conclusion, over the capture's
+        # own rows rather than over a hand-picked one. Asserted as a property
+        # and not as a figure: what has to hold is that the readings part and
+        # that the corrected one lands where the capture shows, and both are
+        # true whatever the census of the file comes to.
+        for multiplicand in tool.MULTIPLICANDS:
+            corrected, observed, inside = tool.simulate_044c(
+                str(CAPTURE), multiplicand, False)
+            swapped, _, inside_swapped = tool.simulate_044c(
+                str(CAPTURE), multiplicand, True)
+            with self.subTest(multiplicand=multiplicand):
+                self.assertTrue(corrected and swapped)
+                self.assertTrue(observed, "the capture carries no 0x044C")
+                self.assertNotEqual(set(corrected), set(swapped))
+                self.assertGreater(inside, inside_swapped,
+                                   "the corrected reading does not fit the "
+                                   "observed set better than the other")
+
+
 class ReportTests(unittest.TestCase):
     """The three modes run, and the default one refuses to report a mismatch."""
 

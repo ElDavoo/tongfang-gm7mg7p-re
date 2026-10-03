@@ -19,15 +19,16 @@ about a result pair cannot be a disagreement about them. The opcodes are not
 arbitrated here -- `verify_reassembly.py --check` already holds them against
 the firmware, and this file reads the listing that check arbitrates.
 
-The core covers only what 0xA5E6 and the four functions in `FAMILIES` use. It
-raises `Unsupported` on anything else rather than skipping, so a listing that
-grows an instruction this core cannot execute is a loud failure and not a
-silently short run.
+The core covers only what 0xA5E6, the four functions in `FAMILIES`, and
+`halve_sum_into_044c` (bank1 0xF436) use. It raises `Unsupported` on anything
+else rather than skipping, so a listing that grows an instruction this core
+cannot execute is a loud failure and not a silently short run.
 
 Modes:
     python3 a5e6_quotient.py                    # reconcile, print the roles
     python3 a5e6_quotient.py --callers          # every lcall 0xA5E6 site
-    python3 a5e6_quotient.py --capture PATH     # reachability against a capture
+    python3 a5e6_quotient.py --capture PATH     # reachability against a capture,
+                                                # then 0x044C through 0xF436
 
 Standard library only, no Ghidra, no ecrw, nothing opened for writing.
 """
@@ -40,6 +41,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 
 LISTING = HERE.parent / "decompiled" / "bank1" / "A5E6.asm"
+F436_LISTING = HERE.parent / "decompiled" / "bank1" / "F436.asm"
 FIRMWARE = HERE.parent / "firmware" / "GMxMGxx_11.800"
 CALL_TARGETS = HERE.parent / "annotations" / "bank-call-targets.csv"
 INDEX = HERE.parent / "decompiled" / "index.csv"
@@ -48,6 +50,19 @@ INDEX = HERE.parent / "decompiled" / "index.csv"
 # divisor/mask constants its callers are read through.
 A5E6 = 0xA5E6
 DIVISORS = (0x22, 0x44)
+
+# `halve_sum_into_044c` (bank1 0xF436) is the one caller whose result is
+# compared against another captured byte rather than against this tool's own
+# inputs, so it gets its own listing: it multiplies 0x0449 by 0x0448, divides
+# by the constant 100 its own 0xF444 row loads, and folds the clamped
+# quotient's low byte into 0x044C. What 0x0448 holds is *not* read from the
+# profile-switch capture -- that file carries no 0x0448 at all -- so it is an
+# input, and 0xBE is the value `scale_0438_into_0448`'s other arm stores.
+# 0xA0 is here as a second input so the conclusion can be seen not to be an
+# artifact of the byte the constant happens to be.
+F436_BODY = 0xF436
+MULTIPLICANDS = (0xBE, 0xA0)
+SRC_0449, SRC_0448, DST_044C = 0x0449, 0x0448, 0x044C
 
 # Which rows settle the operand roles. The addresses are named so the report
 # can cite them, but they select rows and say nothing about what those rows do:
@@ -98,12 +113,16 @@ def _into_a(text):
 
 
 class Core:
-    """The 8051 subset 0xA5E6 and the families below need, and no more.
+    """The 8051 subset 0xA5E6, the families below and 0xF436 need, and no more.
 
     `r` is the register file as R0..R7; direct addresses 0x00-0x07 are the same
     eight bytes, which is what makes `mov 0x02,0x05` at 0xA613 a move into R2
     without a special case. `dpl`/`dph` and `b` are the other direct addresses
-    these listings touch (0x82, 0x83, 0xF0).
+    these listings touch (0x82, 0x83, 0xF0). `xdata` is a sparse external data
+    space, held as a plain dict because only three addresses are ever read and
+    written here and 0x00 is as good a stand-in for an unwritten byte as any:
+    what the listings below do with 0x0448, 0x0449 and 0x044C does not depend
+    on what any other address holds.
     """
 
     REGISTERS = ("R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7")
@@ -115,6 +134,7 @@ class Core:
         self.cy = kw.pop("cy", 0)
         self.dpl = kw.pop("dpl", 0)
         self.dph = kw.pop("dph", 0)
+        self.xdata = dict(kw.pop("xdata", {}))
         if kw:
             raise TypeError(f"unexpected core state {sorted(kw)}")
 
@@ -178,13 +198,17 @@ def parse_listing(path=None):
     return rows
 
 
-def step(core, addr, raw):
+def step(core, addr, raw, stack=None):
     """Execute one instruction. Returns the next runtime address.
 
-    Only the opcodes 0xA5E6 and the functions in `FAMILIES` use are handled.
-    Anything else raises, so an instruction this core cannot execute stops the
-    run where it is rather than being treated as a no-op -- which would let the
-    comparison below pass on a partial run.
+    Only the opcodes 0xA5E6, the functions in `FAMILIES`, and `F436_BODY`
+    use are handled. Anything else raises, so an instruction this core cannot
+    execute stops the run where it is rather than being treated as a no-op --
+    which would let the comparison below pass on a partial run.
+
+    `stack` is the call return stack `run()` threads through; without it an
+    `lcall` has nowhere to come back to and raises rather than jumping into a
+    listing that is not there.
     """
     op = raw[0]
     nxt = addr + len(raw)
@@ -218,11 +242,30 @@ def step(core, addr, raw):
         core.r[op - 0xA8] = core.read(imm8)
     elif op == 0xE5:
         core.a = core.read(imm8)
+    # movx A,@DPTR / movx @DPTR,A. DPTR is the whole operand, so it is
+    # formed as it stands rather than tracked as a separate pointer.
+    elif op == 0xE0:
+        core.a = core.xdata.get(core.dpl | core.dph << 8, 0)
+    elif op == 0xF0:
+        core.xdata[core.dpl | core.dph << 8] = core.a
+    # mul AB is B:A <- A*B, so A is the low half, B the high one, and it
+    # clears CY. Reading it the other way round halves every product this
+    # tool feeds it, and 0xF436's clamp cannot tell the difference.
+    elif op == 0xA4:
+        product = core.a * core.b
+        core.a, core.b, core.cy = product & 0xFF, (product >> 8) & 0xFF, 0
+    elif op == 0x12:                       # lcall addr16
+        if stack is None:
+            raise Unsupported(f"0x{addr:04X}: lcall with no return stack")
+        stack.append(nxt)
+        nxt = imm16
     # add/adc/subb A,Rn and A,direct
     elif 0x28 <= op <= 0x2F:
         core.a, core.cy = _add(core.a, core.r[op - 0x28], core.cy)
     elif 0x38 <= op <= 0x3F:
         core.a, core.cy = _add(core.a, core.r[op - 0x38], core.cy)
+    elif op == 0x34:                       # addc A,#d
+        core.a, core.cy = _add(core.a, imm8, core.cy)
     elif 0x94 <= op <= 0x97:
         core.a, core.cy = _sub(core.a, core.read(imm8), core.cy)
     elif 0x98 <= op <= 0x9F:
@@ -272,8 +315,14 @@ def step(core, addr, raw):
         i = op - 0xB8
         if core.r[i] != imm8:
             nxt = nxt + (raw[2] - 256 if raw[2] > 127 else raw[2])
-    elif op == 0x22 or op == 0x32:         # ret / retl: the helper is a leaf
-        return None
+    elif op == 0x22 or op == 0x32:         # ret / retl
+        # An empty stack means this run started at the function, so the ret
+        # is the end of it. A non-empty one means it came back from an
+        # `lcall` and there is an address to resume at.
+        if stack:
+            nxt = stack.pop()
+        else:
+            return None
     elif op == 0x90:                       # mov DPTR,#imm16
         core.dph, core.dpl = imm16 >> 8, imm16 & 0xFF
     else:
@@ -294,23 +343,45 @@ def _sub(a, b, cy):
     return raw & 0xFF, 1 if raw < 0 else 0
 
 
-def run(rows, core=None, limit=100000):
+def run(rows, core=None, limit=100000, extra=(), watch=None):
     """Execute a parsed listing from its first instruction.
 
     `limit` is a backstop against a listing whose branches do not terminate.
     A run that hits it raises rather than returning a partial register state,
     because a partial state compared against a model would read as a
     disagreement rather than as the bug it is.
+
+    `extra` merges further listings into the same address table, which is how
+    a `lcall` into a second committed listing is executed rather than
+    modelled. An address two listings both claim raises, because a silent
+    shadow would run one function's bytes under another's name and the whole
+    point of this tool is that the bytes are what it ran.
+
+    `watch` maps an address to a callable taking the core, invoked just
+    before that address executes. It exists for the one thing committed bytes
+    cannot produce -- the reading where 0xA5E6's epilogue assigned the halves
+    of the quotient the other way round -- which is a different machine, not
+    a different function.
     """
     core = core if core is not None else Core()
     table = {addr: (text, raw) for addr, text, raw in rows}
+    for more in extra:
+        clash = set(table) & {addr for addr, _, _ in more}
+        if clash:
+            raise Unsupported(
+                f"{len(clash)} address(es) in two listings, first at "
+                f"0x{min(clash):04X}")
+        table.update({addr: (text, raw) for addr, text, raw in more})
+    stack = []
     pc = rows[0][0]
     for _ in range(limit):
         if pc not in table:
             raise Unsupported(f"0x{pc:04X} is not an instruction in this "
                               f"listing")
+        if watch and pc in watch:
+            watch[pc](core)
         _, raw = table[pc]
-        nxt = step(core, pc, raw)
+        nxt = step(core, pc, raw, stack)
         if nxt is None:
             return core
         pc = nxt
@@ -690,6 +761,143 @@ def stored_byte(lo, hi, divisor, high_byte):
     return (quotient >> 8) & 0xFF if high_byte else quotient & 0xFF
 
 
+def capture_044c_rows(path, target=SRC_0449, accumulated=DST_044C):
+    """Each `target` row paired with the `accumulated` byte standing at it.
+
+    Nearest-in-time, and no stronger than that: the two bytes were not
+    written at the same instant, so the second element is the byte 0xF436
+    would have read had it run at that row's timestamp. It is a starting
+    value for the fold and nothing more, which is why the comparison in
+    `simulate_044c` is against a set rather than against a pairing.
+    """
+    events = []
+    observed = set()
+    with open(path, newline="", encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            addr = int(row["addr"], 16)
+            events.append((row["ts"], addr, int(row["new"], 16)))
+            if addr == accumulated:
+                observed.add(int(row["new"], 16))
+    events.sort(key=lambda e: (e[0], e[1]))
+
+    standing = 0
+    rows = []
+    for _, addr, new in events:
+        if addr == accumulated:
+            standing = new
+        elif addr == target:
+            rows.append((new, standing))
+    return rows, observed
+
+
+def _after_lcall(rows, target):
+    """The address of the instruction following this listing's `lcall target`.
+
+    Read out of the listing rather than written down beside it, so the point
+    the readings part at moves with the listing instead of with this file.
+    """
+    for i, (_addr, text, _raw) in enumerate(rows):
+        parts = text.split()
+        if len(parts) != 2 or parts[0] != "lcall":
+            continue
+        if int(parts[1], 16) == target:
+            if i + 1 == len(rows):
+                raise Unsupported(f"the lcall {target:#06x} ends the listing")
+            return rows[i + 1][0]
+    raise Unsupported(f"no lcall {target:#06x} in this listing")
+
+
+def f436_store(value_449, value_448, value_44c, high_byte, rows=None, a5e6=None):
+    """What `halve_sum_into_044c` writes to 0x044C, executed from its listing.
+
+    The whole body runs -- the `mul AB`, the `lcall 0xa5e6` into the committed
+    listing, the clamp and the halving -- on the same core everything else in
+    this tool uses, because the clamp is what the two readings disagree about
+    and it is in the bytes rather than in the epilogue.
+
+    `high_byte` again selects the reading rather than the arithmetic: the same
+    committed bytes are executed either way, and the machines part only
+    between the `lcall` returning and the clamp reading R2, so that is where
+    R1 and R2 are exchanged. Everything else -- the product, the division, the
+    `jz`, the `add A, R1`, the `rrc` -- is the firmware's own.
+    """
+    rows = rows if rows is not None else parse_listing(F436_LISTING)
+    a5e6 = a5e6 if a5e6 is not None else parse_listing(LISTING)
+    if rows[0][0] != F436_BODY:
+        raise Unsupported(f"{F436_LISTING.name} does not start at "
+                          f"0x{F436_BODY:04X}")
+
+    def exchange(core):
+        core.r[1], core.r[2] = core.r[2], core.r[1]
+
+    watch = {_after_lcall(rows, A5E6): exchange} if high_byte else None
+    core = Core(xdata={SRC_0449: value_449, SRC_0448: value_448,
+                       DST_044C: value_44c})
+    core = run(rows, core, extra=(a5e6,), watch=watch)
+    return core.xdata[DST_044C]
+
+
+def simulate_044c(path, multiplicand=0xBE, high_byte=False):
+    """Every 0x044C write the committed 0xF436 body makes over a capture.
+
+    Returns (values, observed, inside): the simulated writes in capture order,
+    the set of 0x044C values the capture actually shows, and how many of the
+    simulated writes land in that set. `multiplicand` is 0x0448's value --
+    an input, because the profile-switch capture carries no 0x0448 at all.
+    """
+    pairs, observed = capture_044c_rows(path)
+    rows = parse_listing(F436_LISTING)
+    a5e6 = parse_listing(LISTING)
+    values = [f436_store(v, multiplicand, standing, high_byte, rows, a5e6)
+              for v, standing in pairs]
+    return values, observed, sum(1 for v in values if v in observed)
+
+
+def report_044c(path, out=None):
+    """Replay a capture's 0x0449 rows through the committed 0xF436 body.
+
+    A second discriminator, and a sharper one than the reachability above:
+    where that asks whether 0x0449's own bytes can be produced at all, this
+    asks whether the *other* byte 0xA5E6's result feeds lands where the
+    capture says it did.
+    """
+    out = out or sys.stdout
+    _pairs, observed = capture_044c_rows(path)
+    print("", file=out)
+    if not observed:
+        print("  0x044C through the committed 0xF436 body: the capture "
+              "carries no 0x044C, so it cannot discriminate", file=out)
+        return
+    print(f"  0x044C through the committed 0xF436 body, which multiplies "
+          f"0x0449 by\n  0x0448, divides by the constant 100 its own 0xF444 "
+          f"row loads, clamps and\n  halves the sum into this byte. The "
+          f"capture spans "
+          f"{min(observed):#04x}-{max(observed):#04x}.", file=out)
+    print("  the input 0x0448 has no rows in this capture, so each value "
+          "below is a", file=out)
+    print("  separate evaluation conditional on it rather than one reading "
+          "of the file.", file=out)
+    for multiplicand in MULTIPLICANDS:
+        for high_byte, name in ((True, "high-byte reading (R1)"),
+                                (False, "low-byte reading (R1)")):
+            values, _seen, inside = simulate_044c(path, multiplicand, high_byte)
+            if not values:
+                print(f"  0x0448 = {multiplicand:#04x} {name}: no 0x0449 rows "
+                      "to replay", file=out)
+                continue
+            print(f"  0x0448 = {multiplicand:#04x}  {name}: {inside} of "
+                  f"{len(values)} simulated writes inside", file=out)
+            print(f"    the observed set; simulated spans "
+                  f"{min(values):#04x}-{max(values):#04x}", file=out)
+    print("  the clamp at 0xF44E is where the two part. R2 holds the "
+          "quotient's high byte", file=out)
+    print("  under the corrected reading and its low byte under the other, "
+          "so it fires on", file=out)
+    print("  every pass under the other -- R1 is 0xff every time, so 0x044C "
+          "is driven toward", file=out)
+    print("  0xff -- and on none under the corrected one.", file=out)
+
+
 def report_capture(path, out=None):
     out = out or sys.stdout
     pairs, observed = capture_pairs(path)
@@ -711,6 +919,8 @@ def report_capture(path, out=None):
             print(f"  divisor {divisor:#04x} {name}: "
                   f"{len(reachable)} distinct byte(s) reachable, "
                   f"{len(inside)} of them in the observed set", file=out)
+
+    report_044c(path, out)
     return pairs, observed
 
 

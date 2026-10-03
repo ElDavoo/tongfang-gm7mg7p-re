@@ -1635,8 +1635,9 @@ registers:
     note: >
       7 EC-side sites (5 bank1, 2 bank0): 4 reads, 2 writes and 1
       read-modify-write, no PD site. halve_sum_into_044c says what one writer
-      does -- it halves a sum into this byte. Busiest byte in the committed
-      capture at 247 changes. No upstream name. Per-address table:
+      does -- it halves a sum into this byte. Busiest byte on the 0x0400-0x045F
+      page in the committed capture at 247 changes, and eighth in the capture
+      as a whole. No upstream name. Per-address table:
       ec/annotations/xdata-0400-045f.md.
 
   - name: XDATA_0450
