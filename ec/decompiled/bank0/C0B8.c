@@ -6,17 +6,17 @@
 
 /* Loads XDATA 0x3202 into A and then tests bits of that byte through the accumulator's bit
    addresses 0xE1 and 0xE2 (acc.1 and acc.2), so R7 comes back 1 unless both bit 1 and bit 2 are
-   set, in which case it is 0. The decompiled C drops the return value entirely. 0x3202 has no entry
-   in ec/annotations/registers.yaml.
+   set, in which case it is 0. The decompiled C drops the return value entirely. The byte is 0x3202,
+   which carries the XDATA_3202 row in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank0/C0B8.asm; ec/decompiled/bank0/C0B8.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void return_1_unless_3202_bits_1_and_2(void)
 
 {
-  if (((DAT_EXTMEM_3202 >> 1 & 1) != 0) && ((DAT_EXTMEM_3202 >> 2 & 1) == 1)) {
+  if (((XDATA_3202 >> 1 & 1) != 0) && ((XDATA_3202 >> 2 & 1) == 1)) {
     return;
   }
   return;
