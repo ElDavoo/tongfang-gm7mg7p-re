@@ -99,14 +99,16 @@ cells.** `../../ec/tools/test_sites_csv_regeneration.py` regenerates this table
 from the committed firmware for the four addresses above and compares it against
 the committed file on every run of `bash tools/run-tests.sh`. The suites that
 already read this file re-derive a cell of each row that is *present*, so a row
-reordered, or a `region` cell relabelled, is not something they can see; a row
-edited out or added is caught, but by `test_walk_budget_census.py`'s
-`ReCutTests` row count against a pinned commit rather than by anything
-re-deriving the set. This one freezes the four addresses as its own data —
-reading them back out of the CSV would be circular — so "this file is the map
-of these four addresses" is a claim something checks. A `region` cell is the
-one none of those cell-wise checks can reach, and the `region` column is what
-separates the 15 from the 102 below. "Not found by this method, never absent":
+reordered is not something they can see; a row edited out or added is caught,
+but by `test_walk_budget_census.py`'s `ReCutTests` row count against a pinned
+commit rather than by anything re-deriving the set. This one freezes the four
+addresses as its own data — reading them back out of the CSV would be circular —
+so "this file is the map of these four addresses" is a claim something checks. A
+`region` cell is the one none of those cell-wise checks can derive, and the
+`region` column is what separates the 15 from the 102 below; a relabel is
+noticed in this table too, but incidentally rather than by any of them, because
+`windows/tools/test_gpu_block_watch.py`'s `read_site_census()` filters `bank0`
+and the population moves. "Not found by this method, never absent":
 a site reached through a computed DPTR has no row here and would have none in
 a regeneration either. The write-up is
 `../../docs/findings/sites-csv-regeneration.md`.
