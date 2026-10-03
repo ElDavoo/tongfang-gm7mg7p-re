@@ -2635,7 +2635,25 @@ repo, so that last link is inferred. Live, 0x60 reads 0. The BIOS's own create-i
 `OemUniWillVariableDxe` initialises it to **1**, along with 0xFF in the
 reserved bytes. The live variable has 0 in 0x60 and zeros in the reserved
 bytes, so something rewrote the whole block after creation. Which writer
-did that is not known. 0x60 was deliberately **left at 0** here. With it at
+did that is not known.
+
+> **Correction (2026-10-03, issue #116), leaving the two sentences above as
+> they were.** Two of them do not survive the listing. "Initialises it to
+> **1**, along with 0xFF in the reserved bytes": the 1 is right, but the fill
+> beside it runs `0x67..0xB2` — one byte *before* `Reserved`, stopping one byte
+> short of its end — so it is not 0xFF across the 76 reserved bytes; and the
+> store that writes 0x60 is 16 bits wide, so its `0x01` arrives with `0xFF`
+> going into `ApUseFlag` at 0x61, which is not reserved at all. "So something
+> rewrote the whole block after creation": that presupposes a run of the create
+> path, and the whole initialisation block sits below the `jns 0x60F` that
+> skips it on a non-negative `GetVariable` status. Nothing in the committed tree
+> establishes a run of it here. What stands is the sentence between them —
+> which writer did that is not known — and that is the verdict the sweep
+> reaches. Measurements, the writer table and the limits of the sweep:
+> [uniwill-variable-0x60-writers.md](findings/uniwill-variable-0x60-writers.md),
+> *Every writer of `UniWillVariable`, and which of them can explain offset 0x60*.
+
+0x60 was deliberately **left at 0** here. With it at
 1, the service's `SetUserProfile()` calls
 `SetMemoryOverClockSwitch(currentProfile.MEM.MemoryOverClockSwitch)`. It
 runs from `Init()` and on every power-mode change, and it would put the

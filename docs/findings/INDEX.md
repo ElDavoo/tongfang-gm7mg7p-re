@@ -16,6 +16,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-file-refusal-order.md`](0751-file-refusal-order.md) — Which of the two refusals names a file that is both (issue #784)
 - [`0751-grader-block-scope-claims.md`](0751-grader-block-scope-claims.md) — A `--block` run said "consistent with the static prediction" for the whole capture (issue #497)
 - [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md) — A `--block` run exited 1 over a window it neither printed nor withheld, and did not say why (issue #498)
+- [`0751-grader-graded-unplaced-exit-code.md`](0751-grader-graded-unplaced-exit-code.md) — The exit code deliberately does not read the count of graded windows in no block, and the comment now says so (issue #552)
 - [`0751-grader-moved-unplaced-scope.md`](0751-grader-moved-unplaced-scope.md) — A run that moved and graded a window in no block printed the movement over the whole capture and nothing that said so (issue #725)
 - [`0751-grader-movement-path-claims.md`](0751-grader-movement-path-claims.md) — A run that moved said "that is the 7 window(s) that were graded" under a count saying one of the 7 is a window of nothing (issue #551)
 - [`0751-grader-partial-grade-claims.md`](0751-grader-partial-grade-claims.md) — A partly-graded run said "consistent with the static prediction" anyway (issue #477)
@@ -47,6 +48,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`7b14-07c9-token.md`](7b14-07c9-token.md) — The 0x07C9 token in `pd/7B14.c` is a variable row on the *callee*, and the re-export is a fixed point
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
+- [`a5e6-r1-is-the-low-byte.md`](a5e6-r1-is-the-low-byte.md) — `0xA5E6` returns the quotient's low byte in R1, and a probe built on the opposite reading could not have agreed with a capture (issue #358)
 - [`addc-dph-residual-six.md`](addc-dph-residual-six.md) — All six residual `addc A,#imm ; mov DPH,A` sites close: four build page `0x0D`/`0x0E`, two build page `0x2A` and read CODE (issue #519)
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
@@ -114,6 +116,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`ecrw-fake-mirror-surface.md`](ecrw-fake-mirror-surface.md) — The `ecrw` fixture's mirror claim, measured, and narrowed to what it carries (issue #356)
 - [`ecrw-fake-one-shape.md`](ecrw-fake-one-shape.md) — One fake for `ecrw`, one way to install it, and one interpreter that proves it
 - [`emit-csv-flag-honesty.md`](emit-csv-flag-honesty.md) — `--emit-csv` refused the three modes it knew about, and honoured nothing on the fourth
+- [`entry-namespace-two-copies.md`](entry-namespace-two-copies.md) — `isPlaceholderName()` had two definitions and they had drifted (issue #626)
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading
 - [`export-ownership-relative-containment.md`](export-ownership-relative-containment.md) — `containment` at 1.00 cannot tell a copy from a fragment, so the size now
 - [`fan-duty-channel-075b-075c.md`](fan-duty-channel-075b-075c.md) — The 0x14 between 0x075B and 0x075C is the EC's own constant, and the committed captures cannot name either fan (issue #247)
@@ -198,6 +201,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`runner-red-suite-set.md`](runner-red-suite-set.md) — The runner's red set, and the third of #162's blocker that was a missing table row (issue #751)
 - [`scheduler-divide-down-cycle.md`](scheduler-divide-down-cycle.md) — How many entries to the divide-down scheduler is one case-`0x0A` turn (issue #1183)
 - [`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md) — The `0x8518` block decoded: seven entry points, not one, and half of it is invisible to the host (issue #1185)
+- [`seed-dispatch-xdata-footprint.md`](seed-dispatch-xdata-footprint.md) — What the trio the old gate comment blamed actually does to XDATA, and the one seed byte still unexplained (2026-10-03, issue #628)
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
 - [`sweep-summary-schema.md`](sweep-summary-schema.md) — The AC-plugin sweep summary has a schema, a reader, and two blind spots written down
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
@@ -224,6 +228,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`trampoline-relative-branch-sites.md`](trampoline-relative-branch-sites.md) — All 170 of §8's trampoline-landing relative sites are the trampoline block's own operands, and no branch reaches the block from outside it
 - [`trampoline-target-census.md`](trampoline-target-census.md) — Every trampoline in the BL51 block gets a decoded target, read in the bank its stub selects (issue #574)
 - [`uncalled-vendor-setters.md`](uncalled-vendor-setters.md) — The three bytes the uncalled vendor setters write (issue #106)
+- [`uniwill-variable-0x60-writers.md`](uniwill-variable-0x60-writers.md) — Every writer of `UniWillVariable`, and which of them can explain offset 0x60
 - [`verify-provenance-failure-answers.md`](verify-provenance-failure-answers.md) — `--verify-provenance` had ten ways to fail and one committed answer to none of them
 - [`walk-bounds-guard-pinned.md`](walk-bounds-guard-pinned.md) — The bounds disjunct is pinned, by two cases — and the sweep that could have noticed it cannot see it
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
@@ -243,9 +248,11 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-carry-name-coverage.md`](xdata-carry-name-coverage.md) — What happened to every hand name: the carry report gets a name-indexed half (issue #881)
 - [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md) — The xdata census re-derivation checklist: what a re-export moves, and what to do about it (issue #820)
 - [`xdata-census-self-test-gate.md`](xdata-census-self-test-gate.md) — `xdata_register_map.py --self-test` was switched off for a reason that had
+- [`xdata-census-shape-derived-set.md`](xdata-census-shape-derived-set.md) — The re-clustering flag set `census_shape` names, derived rather than kept (issue #882)
 - [`xdata-census-totals.md`](xdata-census-totals.md) — The census totals: 1,171 addresses / 14,819 references, and how to re-derive them (issue #557)
 - [`xdata-check-message-pin-sweep.md`](xdata-check-message-pin-sweep.md) — Six `check()` calls read a pin their message never names, and the sweep that found them (issue #1363)
 - [`xdata-classify-operator-tests.md`](xdata-classify-operator-tests.md) — `classify()`'s two operator tests: `&&` is not address-of, and `&=` reads what it writes
+- [`xdata-cluster-key-round-trip.md`](xdata-cluster-key-round-trip.md) — A census row's `cluster_key` is the hash of that row, and it is held by a case rather than argued in prose (issue #896)
 - [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md) — The guard-off census, built by the flag instead of by patching a copy of the tool (issue #753)
 - [`xdata-cluster-refs-projection.md`](xdata-cluster-refs-projection.md) — A cluster's `refs` is the sum of its members' `refs_<program>`, and not of their `refs` (issue #343)
 - [`xdata-decile-cause-clamp-coverage.md`](xdata-decile-cause-clamp-coverage.md) — The `deciles()` floor had a case on one of its two callers and none on the other (issue #922)
@@ -279,6 +286,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-pair-role-column.md`](xdata-pair-role-column.md) — The `pair_role` column: which half of a pair a census row is (issue #734)
 - [`xdata-per-program-counts.md`](xdata-per-program-counts.md) — The per-program count columns: `refs` and the five buckets, split, with `refs` itself unmoved (issue #713)
 - [`xdata-register-map-per-program-keying.md`](xdata-register-map-per-program-keying.md) — `xdata-register-map.md` §2 re-keyed per program, and what that moved (issue #714)
+- [`xdata-self-test-deferral-already-lifted.md`](xdata-self-test-deferral-already-lifted.md) — The self-test deferral #628 was filed against had already been lifted, and one file still described it in the present tense (2026-10-03, issue #628)
 - [`xdata-spelled-as-union.md`](xdata-spelled-as-union.md) — `spelled_as` is a union across programs, and the column that says so (issue #709)
 - [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md) — The two-largest case passed vacuously; its exhibits are now derived (issue #778)
 - [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md) — The 833 enters `write` and never leaves it: the word was wrong, the number was not (issue #890)
