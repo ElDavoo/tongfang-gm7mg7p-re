@@ -96,6 +96,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`cross-decoder-blind-population.md`](cross-decoder-blind-population.md) — What the cross-decoder's `vacuous` bucket is made of (issue #350)
 - [`cross-decoder-disagreement-population.md`](cross-decoder-disagreement-population.md) — What the cross-decoder's `disagree` bucket is made of (issue #510)
 - [`csv-column-usage-advice.md`](csv-column-usage-advice.md) — A `Usage:` line that reproduces its table, and a note for the diff a reader writes instead (issue #1020)
+- [`cut-classification-by-mechanism.md`](cut-classification-by-mechanism.md) — Every stop reason `descend()` records is now classified where it is emitted, not recovered from how its message begins
 - [`d8a0-init-routine.md`](d8a0-init-routine.md) — `bank0,0xD8A0`: the routine the reset operand lands one byte short of, and the four `0x20xx` bytes it alone touches (issue #575)
 - [`de3c-1c04-to-0563.md`](de3c-1c04-to-0563.md) — The store at `bank1,0xDE96` writes the `0x1C04` byte to the address the bytes at XDATA `0x0563`/`0x0564` spell, and that pair is staged by the same routine from two CODE tables — an indexed set, not one address and not the caller's
 - [`deep-schedule-lint-baseline.md`](deep-schedule-lint-baseline.md) — What the linters say about the prepared nightly, and what now holds it
@@ -116,6 +117,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`dptr-guard-census-vs-1027.md`](dptr-guard-census-vs-1027.md) — Issue #1027's 27 is a pre-#517 measurement of the same six tables, and a rendered `window` cell has three ways to be miscounted rather than two
 - [`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) — `walk()`'s reload guard covers every way an 8051 rebuilds DPTR, and 21 sites in the image render their `access` cell with the wrong direction, 2 of them in a committed table
 - [`dptr-seed-census-gap.md`](dptr-seed-census-gap.md) — Eight of the ten `0x0400`-`0x0457` census gaps are closed by two tools, and the two that are not fail for two different reasons
+- [`dsdt-dbd-pair-declared-not-read.md`](dsdt-dbd-pair-declared-not-read.md) — The DSDT declares `DBD1`/`DBD2` and writes them, and reads them by no route that resolves into the window (issue #228)
 - [`dump-pair-block-attribution.md`](dump-pair-block-attribution.md) — A whole-block bracket is not a second reading of the same bytes (issue #475)
 - [`dump-reads-for-a-refused-block.md`](dump-reads-for-a-refused-block.md) — A read taken for a block whose windows were refused (issue #499)
 - [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
@@ -217,6 +219,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md) — The `0x8518` block decoded: seven entry points, not one, and half of it is invisible to the host (issue #1185)
 - [`seed-dispatch-xdata-footprint.md`](seed-dispatch-xdata-footprint.md) — What the trio the old gate comment blamed actually does to XDATA, and the one seed byte still unexplained (2026-10-03, issue #628)
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
+- [`sites-csv-regeneration.md`](sites-csv-regeneration.md) — The committed sites tables are re-derived from the firmware, not from the pages that print the command (issue #313)
 - [`sweep-summary-schema.md`](sweep-summary-schema.md) — The AC-plugin sweep summary has a schema, a reader, and two blind spots written down
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
@@ -249,12 +252,14 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
 - [`walk-window-terminators.md`](walk-window-terminators.md) — `walk()`'s stop reason is a column now, and the 45 rows its budget truncates are named
 - [`xdata-0390-0391-filter-pair.md`](xdata-0390-0391-filter-pair.md) — The 0x0390/0x0391 pair: what the 0x9EA1 filter reads, what the `E100` branch selects, and where `0x0391`'s value comes from (issue #295)
+- [`xdata-044b-selector-value-set.md`](xdata-044b-selector-value-set.md) — `0x044B`'s writable set and its reader set are the same values, and `0x9A0E` spends the byte on one threshold of three
 - [`xdata-0786-tcc-offset-verdict.md`](xdata-0786-tcc-offset-verdict.md) — `0x0786` is a CPU TCC offset: the EC's own bytes decide the naming conflict
 - [`xdata-07fd-07ff-witness-triple.md`](xdata-07fd-07ff-witness-triple.md) — The `0x07FD`-`0x07FF` triple: a three-byte witness whose third byte discriminates (issue #573)
 - [`xdata-0860-census-sites-relined.md`](xdata-0860-census-sites-relined.md) — The four `0x0860` census citations move; the counts do not (issue #752)
 - [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md) — The `XDATA_0860` note's six live pointers, and what holds them (issue #870)
 - [`xdata-086c-cluster-ruling.md`](xdata-086c-cluster-ruling.md) — `0x086C` enters `registers.yaml`, and the clustering recorded something real (issue #333)
 - [`xdata-086x-site-census-join.md`](xdata-086x-site-census-join.md) — The `0x086x` page's site census, joined for every address
+- [`xdata-08eb-bit-sites.md`](xdata-08eb-bit-sites.md) — `0x08EB`: what each of its six bits is set, cleared and branched on by
 - [`xdata-1663-1667-1668.md`](xdata-1663-1667-1668.md) — `0x1663`, `0x1667` and `0x1668`: the rest of the `0x1663`-`0x1668` run, and a third accessor the census cannot see (issue #635)
 - [`xdata-4-2-threshold-sweep-rederivation.md`](xdata-4-2-threshold-sweep-rederivation.md) — §4.2's threshold sweep, re-run against the committed census (issue #581)
 - [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md) — §4.4's identity figures, re-run against the committed census (issue #582)

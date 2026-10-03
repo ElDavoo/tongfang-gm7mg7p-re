@@ -5,12 +5,15 @@
 
 
 /* Reads the byte at the XDATA address the caller left in DPTR into R7, sets the carry, loads DPTR
-   with 0x0A4A, and computes that byte minus R7 minus 1, leaving the borrow in the carry for the
-   subb that follows. The listing stops there, so the low-byte half of the 16-bit subtraction is the
-   separately listed 0xBB39; the decompiled C's return of 0x0A49 plus a shifted carry is a reading
-   of that other listing, not this one.
+   with 0x0A4A, and computes that byte minus R7 minus 1, leaving the low byte's borrow in the carry
+   for the subb that follows. There is no ret in this listing, so it runs straight into 0xBB39 and
+   the two are one 16-bit subtraction of the pair 0x0A49:0x0A4A minus the caller's byte plus one;
+   what the caller gets back is the high byte of the difference in A, and the carry is set exactly
+   when that pair is not greater than the byte passed in. The decompiled C's return of 0x0A49 plus a
+   shifted carry is Ghidra reading across that boundary, which is what it is.
    type: math
-   evidence: ec/decompiled/bank0/BB31.asm; ec/decompiled/bank0/BB31.c
+   evidence: ec/decompiled/bank0/BB31.asm; ec/decompiled/bank0/BB31.c; ec/decompiled/bank0/BB39.asm;
+   docs/findings/xdata-044b-selector-value-set.md
    basis: hand-decoded
    name_basis: code-shape */
 
