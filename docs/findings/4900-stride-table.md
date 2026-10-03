@@ -263,23 +263,40 @@ R7, and five with a read this tool does not follow** — `common 0x454F`,
 `--index-range` prints the register per site, so the split above is a reading
 of that column and not a separate count.
 
-**No committed listing passes a constant index to any of them.** Every call
-site the tool finds sets the index register from a register or from an XDATA
-byte, within the same window the tool looks in. The callers it enumerates
-agree with `ec/annotations/call-graph-callees.csv`'s own `inbound` count for
-every entry that CSV has a row for — `common 0x43A5` has seven in both,
-`common 0x4A42` four in both — which is a cross-check between two derivations
-rather than a restatement of one. The one entry with no row, `common 0x4B03`, is
-one this tool finds no caller for either; that is consistent, but it is "not
-found by this method" rather than a second derivation agreeing with the first.
+**The register a site's own listing names is not always the register its
+callers write**, and `common 0x43A5` is the case. All three of its
+constructions end in `mov A, R6`, which is why §2's column says R6, but the
+entry's own prologue at `0x43A5`-`0x43A8` is
+`xch A, R6 / mov A, R7 / xch A, R6 / mov A, R6`: it moves the caller's R7 into
+R6 and discards the caller's R6, so the index the stride arithmetic multiplies
+is the caller's R7. `--index-range` follows that prologue, and six of the seven
+committed call sites then answer with a run-time value — `common 451A` at
+`0x45A3` and `0x45BB` and `common 46F9` at `0x4704` from an XDATA byte, read
+through `0x0A56` and `0x0A17` respectively, and `common 4921`, `common 4940` and
+`common 4947` from R1 by the same `xch A, R7 / mov A, R1 / xch A, R7` hand-off.
+`common 4666` at `0x4685` writes R6 at `0x4676` and writes R7 nowhere before the
+call, so what its index is is not established by these listings.
+
+**No committed listing passes a literal index to any of them.** Every caller
+row `--index-range` prints is one of three cells: a run-time value, the bounded
+`no constant within this window of the call in the caller's own listing`, or
+`index register not named at the site`, where the site's own index load is a
+read this tool does not follow. The second is a negative about four listing
+lines, not a statement about what the register holds at run time and not a
+statement about every caller. The callers the tool enumerates agree with
+`ec/annotations/call-graph-callees.csv`'s own `inbound` count for every entry
+that CSV has a row for — `common 0x43A5` has seven in both, `common 0x4A42`
+four in both — which is a cross-check between two derivations rather than a
+restatement of one. The one entry with no row, `common 0x4B03`, is one this
+tool finds no caller for either; that is consistent, but it is "not found by
+this method" rather than a second derivation agreeing with the first.
 
 So the answer to "whether they agree on a record count" is **that the question
 cannot be asked from these files**, and saying so is the finding. Two registers
 appear among them, R6 and R1 -- the issue called `0x4A42`'s index `A`, which is
-where the `mov A,R1` in front of it leaves the accumulator -- and every caller
-passes a run-time value. An odd stride bounds nothing on top of that. What the
-firmware can pass at run time is not recorded anywhere in this repository, and
-this page does not infer it.
+where the `mov A,R1` in front of it leaves the accumulator. An odd stride bounds
+nothing on top of that. What the firmware can pass at run time is not recorded
+anywhere in this repository, and this page does not infer it.
 
 ## 5. What this does not establish
 

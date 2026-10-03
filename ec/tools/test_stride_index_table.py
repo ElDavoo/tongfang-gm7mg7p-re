@@ -232,6 +232,45 @@ class SiteTests(unittest.TestCase):
             with self.subTest(cut=cut):
                 self.assertEqual(sit.scan(self.d[:cut], self.pd), [])
 
+    def test_the_callers_are_asked_for_the_register_they_actually_write(self):
+        # The mistake a caller row makes when the entry's prologue hands the
+        # index in from a register other than the one the site's own listing
+        # reads: `common 0x43A5`'s three constructions all end in
+        # `mov A, R6`, and six of its seven committed call sites write R7
+        # instead, because the prologue at `0x43A5`-`0x43A8` is
+        # `xch A, R6 / mov A, R7 / xch A, R6 / mov A, R6`. Searching the
+        # callers for R6 found nothing and said so once per site, which reads
+        # in prose as a statement about all seven of them and is a statement
+        # about neither the register nor the callers.
+        self.assertEqual(sit.prologue_index_source(self.d, "common", "43A5", "R6"),
+                         "R7",
+                         "common 0x43A5's entry no longer hands the index in "
+                         "from the caller's R7")
+        # An entry whose first two instructions are not that shape reports no
+        # hand-off, rather than one inferred from the register it happens to
+        # read.
+        self.assertEqual(sit.prologue_index_source(self.d, "common", "4A42", "R1"),
+                         "",
+                         "an entry with no such prologue reports a hand-off it "
+                         "does not have")
+        # And the register the prologue names is the one the caller rows are
+        # then answered against: a run-time write, a hand-off, and the one
+        # call site where neither is in front of the `lcall`.
+        for scope, addr, at, want in (
+                ("common", "451A", 0x45A3, "`mov R7, A` at 0x45A2"),
+                ("common", "4921", 0x492A, "`xch A, R7` at 0x4927 hands R1 to R7"),
+        ):
+            with self.subTest(caller=f"{scope} {addr} at 0x{at:04X}"):
+                self.assertTrue(
+                    sit.caller_index(self.d, scope, addr, at, "R7").startswith(want),
+                    f"the index at {scope} {addr} 0x{at:04X} is no longer "
+                    f"reached by {want!r}")
+        self.assertEqual(sit.caller_index(self.d, "common", "4666", 0x4685, "R7"),
+                         sit.NO_CONSTANT,
+                         "the one committed call site that does not establish "
+                         "the index register in its own listing is no longer "
+                         "the bounded negative")
+
     def test_the_index_register_is_read_out_of_the_listing_not_guessed(self):
         # Three answers, kept apart because they are three different claims:
         # a register, a literal, or a read. The case pins the shape of each

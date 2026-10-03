@@ -818,6 +818,39 @@ def register_name(cell: str) -> str:
     return f"R{m.group(1)}" if m else ""
 
 
+def prologue_index_source(d: bytes, scope: str, addr: str, reg: str) -> str:
+    """The caller's register `reg` is filled from at the entry, or "".
+
+    `xch A,Rn / mov A,Rm` in the entry's first two instructions is a hand-off:
+    after it Rn holds what the caller passed in Rm, and the caller's own Rn is
+    gone. `common 0x43A5` is why the question is asked at all -- all three of
+    its constructions end in `mov A, R6`, so `index_load()` names R6, but its
+    prologue at `0x43A5`-`0x43A8` is
+    `xch A, R6 / mov A, R7 / xch A, R6 / mov A, R6`, so the register the
+    stride arithmetic multiplies is the caller's R7. A caller row that
+    searched the callers for a write to R6 answered a bounded negative about a
+    register no committed caller of this entry writes, which is invisible in
+    the row itself because the cell says only what was searched for.
+
+    Only the first two instructions of the entry are read: past them the shape
+    is a coincidence rather than a hand-off. The entry address comes from the
+    committed listing and the opcodes from the image, as everywhere else here.
+    """
+    lines = read_listing(scope, addr)
+    if not lines:
+        return ""
+    entry = lines[0][0]
+    op0 = d[entry] if entry < len(d) else None
+    op1 = d[entry + 1] if entry + 1 < len(d) else None
+    # `xch A, Rn` is 0xC8-0xCF. `xch A, @Rn` (0xC6-0xC7) names a register
+    # indirectly and hands nothing off, so it is not in the range.
+    if op0 is None or op1 is None or not 0xC8 <= op0 <= 0xCF:
+        return ""
+    if f"R{op0 - 0xC8}" != reg or not 0xE8 <= op1 <= 0xEF:
+        return ""
+    return f"R{op1 - 0xE8}"
+
+
 def caller_index(d: bytes, scope: str, addr: str, call_at: int,
                  reg: str) -> str:
     """What the caller's own listing puts in `reg` in front of the call.
@@ -825,8 +858,13 @@ def caller_index(d: bytes, scope: str, addr: str, call_at: int,
     The plan's "the constant each committed listing passes in the index
     register", measured rather than assumed: the last write to `reg` inside
     the caller's own listing and inside `WINDOW` of the call. A literal is
-    reported as one; anything else is `NO_CONSTANT`, which on this image is
-    what every caller of every one of these sites is.
+    reported as one; anything else is `NO_CONSTANT`.
+
+    `NO_CONSTANT` is a bounded negative -- no constant *within this window* --
+    and it is a statement about four listing lines, not about what the
+    register holds at run time and not about every caller. The write-up quotes
+    it as the bounded thing it is, and the one call site where a hand-off is
+    not written out in front of the `lcall` is named there too.
     """
     if not reg:
         return "index register not named at the site"
@@ -846,6 +884,16 @@ def caller_index(d: bytes, scope: str, addr: str, call_at: int,
             return f"{norm(d, at)} at 0x{at:04X}"
         if op is not None and 0xF8 <= op <= 0xFF and f"R{op - 0xF8}" == reg:
             return f"`{squash(textline)}` at 0x{at:04X} (run time)"
+        # `xch A,reg / mov A,Rm / xch A,reg` is the caller's own hand-off: `reg`
+        # ends up holding `Rm` and A is what it was on entry. Read forwards from
+        # the *first* exchange, because the one in front of the call is followed
+        # by whatever comes next rather than by the move.
+        if (op is not None and 0xC8 <= op <= 0xCF
+                and f"R{op - 0xC8}" == reg and at + 2 < len(d)):
+            move, close = d[at + 1], d[at + 2]
+            if 0xE8 <= move <= 0xEF and close == op:
+                return (f"`{squash(textline)}` at 0x{at:04X} hands "
+                        f"R{move - 0xE8} to {reg} (run time)")
         i -= 1
     return NO_CONSTANT
 
@@ -1158,6 +1206,11 @@ def index_report(d: bytes, rows: list, index_rows: list) -> str:
         scope, addr, _name = text.split(" ", 2)
         entry = int(addr, 16)
         reg = register_name(load)
+        source = prologue_index_source(d, scope, addr, reg) if reg else ""
+        if source:
+            load = (f"{load}; its entry's prologue hands the caller's {source} "
+                    f"into it, so the caller rows below follow {source}")
+            reg = source
         who = calls.get(entry, [])
         crow = census.get((scope, addr.upper()))
         counted = crow["inbound"] if crow else "no row"
@@ -1171,11 +1224,14 @@ def index_report(d: bytes, rows: list, index_rows: list) -> str:
     out.append("\n  The index load is read out of the committed .asm the site "
                "sits in, backwards to\n  the end of its block. `read, not a "
                "register` names a read whose address this tool\n  does not "
-               "follow. A caller row is what the caller's own listing puts in "
-               "the index\n  register inside the same window; what the "
-               "firmware can pass is not in these files, and\n  an odd stride "
-               "is a bijection mod 256, so no range follows from the "
-               "arithmetic.\n")
+               "follow. An entry whose prologue hands another register in is "
+               "asked for that\n  one, since it is the register its callers "
+               "write. A caller row is what the caller's own\n  listing puts "
+               "in the index register inside the same window, and `no "
+               "constant\n  within this window` bounds a negative to those "
+               "lines rather than to every caller;\n  what the firmware can "
+               "pass is not in these files, and an odd stride is a\n  "
+               "bijection mod 256, so no range follows from the arithmetic.\n")
     return "".join(out)
 
 
@@ -1294,6 +1350,23 @@ def self_test(d: bytes, pd_verified: bool, index_rows: list) -> int:
         fh.write("# scratch\n\nno block here\n")
     check(run_check(d, pd_verified, index_rows, scratch) == 1,
           "a write-up with no fenced block is refused, not read as agreeing")
+
+    # 8. An index that arrives in one register and is read out of another is
+    #    asked for in the register the callers write. The mistake is the one
+    #    the first version of this census made: `common 0x43A5`'s three
+    #    constructions end in `mov A, R6` and its callers write R7, so
+    #    searching for R6 turned seven real call sites into a bounded negative
+    #    each and the write-up read that as a statement about all of them.
+    check(prologue_index_source(d, "common", "43A5", "R6") == "R7",
+          "common 0x43A5's entry hands the index in from the caller's R7")
+    check(prologue_index_source(d, "common", "4A42", "R1") == "",
+          "an entry with no such prologue reports none, not a guess")
+    check("R1" in caller_index(d, "common", "4921", 0x492A, "R7"),
+          "a caller that hands R1 to R7 in front of the call is a run-time "
+          "value, not a bounded negative")
+    check(caller_index(d, "common", "4666", 0x4685, "R7") == NO_CONSTANT,
+          "a call site with no write to the register in the window stays the "
+          "bounded negative it is")
 
     print(f"\n{len(fails)} failure(s)" if fails else "\nall assertions passed")
     return 1 if fails else 0
