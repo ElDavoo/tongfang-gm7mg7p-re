@@ -254,6 +254,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md) — The `XDATA_0860` note's six live pointers, and what holds them (issue #870)
 - [`xdata-086c-cluster-ruling.md`](xdata-086c-cluster-ruling.md) — `0x086C` enters `registers.yaml`, and the clustering recorded something real (issue #333)
 - [`xdata-086x-site-census-join.md`](xdata-086x-site-census-join.md) — The `0x086x` page's site census, joined for every address
+- [`xdata-08eb-bit-sites.md`](xdata-08eb-bit-sites.md) — `0x08EB`: what each of its six bits is set, cleared and branched on by
 - [`xdata-1663-1667-1668.md`](xdata-1663-1667-1668.md) — `0x1663`, `0x1667` and `0x1668`: the rest of the `0x1663`-`0x1668` run, and a third accessor the census cannot see (issue #635)
 - [`xdata-4-2-threshold-sweep-rederivation.md`](xdata-4-2-threshold-sweep-rederivation.md) — §4.2's threshold sweep, re-run against the committed census (issue #581)
 - [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md) — §4.4's identity figures, re-run against the committed census (issue #582)
