@@ -2819,26 +2819,42 @@ registers:
     note: >
       21 sites, all of them in the EC -- 20 in bank0 and one in bank1 -- and
       none in the PD image. It is the most-referenced byte in this group.
+      ec/annotations/xdata-08eb-bit-sites.csv carries the per-bit attribution
+      of every one of them, one row per site and bit, keeping what the linear
+      sweep found and what the committed listing shows in two columns rather
+      than one corrected column; docs/findings/xdata-08eb-bit-sites.md is the
+      write-up. bits: is unchanged by that reading -- all six listed bits are
+      attested by a committed listing -- so what moved is this note, not the
+      field. Per bit, by the site that carries it: bit 2 is set at 0xD487,
+      cleared at 0xD6A8 and at 0xCD3C, and branched on at 0xCD34, where the
+      clear sits behind the jnb the sweep stops at; bit 3 is set at 0xB690,
+      cleared at 0xB716, and branched on at 0xB65B and at 0x8931; bit 4 is
+      set and cleared by the single site 0xCCB7, whose two arms are the orl
+      at 0xCCBE and the anl at 0xCCC4 and whose selector is bit 1 of 0x0490
+      read at 0xCCB6 -- set when that bit is clear, cleared when it is set --
+      and is branched on, with no store back, at bank1 0xA916; bit 5 is set
+      at 0xB53E, cleared at 0xB5B2, and branched on at 0xB501; bit 6 is set
+      at 0xB7F4, cleared at 0xB82E, and branched on at 0xB7BB and at 0x8931;
+      bit 7 is set at 0xC86A, cleared at 0xB476 and at 0xB491 behind the jnb
+      at 0xB489, and branched on at 0xB489, 0xB497, 0xC47E and 0xC860.
       Bits 3 and 6 are the pair the two USER branches'
       tail-jump targets write, and each is a set/clear pair rather than a
-      one-way flag: bit 3 is set at 0xB690 and cleared at 0xB716, bit 6 is
-      set at 0xB7F4 and cleared at 0xB82E
-      (ec/annotations/manual-fan-ctrl-0751.md 8a). Both set sites are
-      themselves conditional -- 0xB65F and 0xB7BF test the bit and skip the
+      one-way flag (ec/annotations/manual-fan-ctrl-0751.md 8a). Both set sites
+      are themselves conditional -- 0xB65F and 0xB7BF test the bit and skip the
       counting block when it is already set, and 0xB7F2 retires once 0x08A0
       has reached 0x0A, which latches bit 6 from 0x0B up -- so bit 6 looks
       like a latch the counter trips.
       0x8931 masks 0x48, which is exactly bits 3 and 6, and branches on the
       result: the one site this method finds that reads the two together.
-      What it decides is not decoded here.
-      Bits 2, 4, 5 and 7 are also read-modify-written, at 0xD487 and 0xD6A8
-      (bit 2), 0xB476 and 0xC86A (bit 7), 0xCCB7 (bit 4, a set/clear pair
-      whose selector is bit 1 of 0x0490, tested by the jb acc.1 at 0xCCBA)
-      and 0xB53E and 0xB5B2 (bit 5); bits 2, 3, 4, 5, 6 and 7 are branched
-      on at other sites besides, including bank1 0xA916, which reads bit 4
-      and branches on it at 0xA91C without storing the byte back. Nothing
-      is read back. Every bit above is "the EC touches this bit", which is
-      not the same claim as "the EC acts on it".
+      What it decides is decoded now -- either bit set and the routine
+      publishes 200 and returns, both clear and its five blocks run -- and
+      0x8931 is a reader of this byte and only a reader. The publish path
+      does not stage 200 into 0x08EB, as the 0x8931 row of
+      ec/annotations/ghidra-functions.csv used to read: the lcall 0xBB22 it
+      makes ends in the ret at 0xBB30 and leaves DPTR at 0x1809, so the store
+      behind it lands at 0x1809 and 0x8F09 copies that into 0x075C.
+      Nothing is read back. Every bit above is "the EC touches this bit",
+      which is not the same claim as "the EC acts on it".
 
   - name: XDATA_089E
     addr: 0x089E

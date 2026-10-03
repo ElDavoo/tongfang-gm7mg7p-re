@@ -224,12 +224,21 @@ another function.** The `jz 0x8942` at 0x8937 lands on the very next instruction
 in this listing, and the nine bytes in between are `bank0 0x8939`
 (`store_200_via_dptr_then_8f09`, already annotated): when XDATA 0x08EB has bit 3
 or bit 6 set, the routine stages 0xC8 into 0x08EB and tail-jumps to 0x8F09,
-which copies it to XDATA 0x075C. When both are clear, five independently-enabled
-blocks run and the routine ends in a tail-jump to 0x8C46. The blocks are gated on
-bits 6 and 7 of MANUAL_FAN_CTRL (0x0751), and bit 0 of AP_OEM (0x0741) with bit 1
-of AP_OEM_6 (0x07C6) — which `registers.yaml` already carries decoded, so the
-name grades **`ec-register`** rather than `code-shape`, the only one of the
-twelve that does. Block one's cascade requires XDATA 0x086C below 0x50,
+which copies it to XDATA 0x075C. **It does not stage 0xC8 into 0x08EB:
+corrected 2026-10-03 (issue #243).** The `lcall 0xBB22` the arm makes at 0x8939
+is not a stub that returns — `ec/decompiled/bank0/BB22.asm` is one instruction
+with no `ret`, the head of a fifteen-byte sequence that `BB24.asm` and
+`BB28.asm` continue and that ends in the `ret` at 0xBB30 — and it leaves DPTR
+pointing at XDATA 0x1809, so the `movx @DPTR,A` at 0x893E stores 0xC8 into
+0x1809 and the `ljmp 0x8F09` copies 0x1809 into 0x075C. The four XDATA bytes
+that arm touches are 0x1804, 0x075B, 0x1809 and 0x075C, and 0x08EB is not one
+of them. See docs/findings/xdata-08eb-bit-sites.md. When both are clear, five
+independently-enabled blocks run and the routine ends in a tail-jump to
+0x8C46. The blocks are gated on bits 6 and 7 of MANUAL_FAN_CTRL (0x0751), and
+bit 0 of AP_OEM (0x0741) with bit 1 of AP_OEM_6 (0x07C6) — which
+`registers.yaml` already carries decoded, so the name grades **`ec-register`**
+rather than `code-shape`, the only one of the twelve that does. Block one's
+cascade requires XDATA 0x086C below 0x50,
 **CPU_TEMP (0x043E) below 0x46 and GPU_TEMP (0x044F) below 0x46** — the two
 temperatures are named in `registers.yaml` and this is the first row to say so
 for this address. What the thresholds and the 0x0460 ramp *govern* is still not
