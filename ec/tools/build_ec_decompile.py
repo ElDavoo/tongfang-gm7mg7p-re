@@ -135,7 +135,8 @@ MANIFEST_COLUMNS = ["program", "source", "sha256", "loader", "ghidra_version",
                     # found no function, and -- a different question, kept apart
                     # because it is the one the old `annotations_applied` column
                     # was answering -- how many exported functions carry a symbol
-                    # that is not a Ghidra placeholder (ExportDecompile.java:129).
+                    # that is not a Ghidra placeholder (the `annotated` column
+                    # `ExportDecompile` writes).
                     "annotations_applied", "annotations_unmatched",
                     "functions_named",
                     "variables_functions", "variables_applied",
@@ -955,10 +956,10 @@ def write_outputs(raw, listing, work, digest, mode, seeds_info, apply_counts):
                 "annotations_unmatched": a.get("annotations_unmatched", 0),
                 # What the old `annotations_applied` column was actually
                 # counting, kept under the name that says so:
-                # ExportDecompile.java:129 asks whether the exported symbol is
-                # still a Ghidra placeholder, which is not a question about the
-                # annotation CSV at all. docs/findings.md §18 records why the
-                # two are no longer summed into one figure.
+                # `ExportDecompile`'s `annotated` column asks whether the
+                # exported symbol is still a Ghidra placeholder, which is not a
+                # question about the annotation CSV at all. docs/findings.md §18
+                # records why the two are no longer summed into one figure.
                 "functions_named": p["annotated"],
                 "variables_functions": a.get("variables_functions", 0),
                 "variables_applied": a.get("variables_applied", 0),
@@ -1712,10 +1713,14 @@ def xdata_address_names(path=XDATA):
 # The canonical `isPlaceholderName()` and the Python transcription of it in
 # grade_name_basis.py, read against each other. The Java is what the exporters
 # and the index actually call, so it is the source of truth and the Python set
-# is the derivation; this is the pair TongFang.java:132 claims there is one of,
-# and the claim had already stopped being true of the copy in
-# ExportDecompile.java. Comparing the two is the point -- a Python list nobody
-# checks against the Java is the same second derivation, free to drift again.
+# is the derivation; this is the pair TongFang.java claims there is one of, and
+# until issue #626 that claim was false of the copy in ExportDecompile.java.
+# Comparing the two is the point -- a Python list nobody checks against the
+# Java is a second derivation, free to drift again. What this hold could not see
+# is a SECOND JAVA copy, because it reads one file: the regex below requires
+# `public static`, so it never matched the `private static` twin and reported no
+# problem while two committed CSVs disagreed. bios/tools/test_entry_namespace.py
+# is what holds the definition count now.
 TONGFANG_JAVA = os.path.join(SCRIPTS, "TongFang.java")
 _PLACEHOLDER_NAME = re.compile(
     r"public static boolean isPlaceholderName\(String name\)\s*\{(.*?)\n    \}",
@@ -1951,8 +1956,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("ledger: an unannotated row with no CSV row is not a mismatch",
           _abu == [], str(_abu))
     # The opposite direction, which is why the ledger is two-way: a `thunk_`
-    # name matches isPlaceholderName() (ExportDecompile.java:334-340) and the
-    # row that wrote it applied anyway.
+    # name matches isPlaceholderName() (TongFang.java's) and the row that
+    # wrote it applied anyway.
     _abu2 = annotation_ledger([_fidx("pd", "2000", "no")], _fa)[1]
     check("ledger: a CSV row that DID apply but is reported annotated=no is "
           "found, not passed over",
@@ -2427,8 +2432,12 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # opened: scanning the committed CSV for names the predicate matches needs
     # no Ghidra run at all, and it found exactly these seven. (b) and (c) are
     # what keep the rule from going stale -- the Java is what the exporters
-    # call, the Python is what the check uses, and TongFang.java:132's "one
+    # call, the Python is what the check uses, and TongFang.java's "one
     # definition, used by every exporter" is only true while the two agree.
+    # "The two" is the Java and this transcription, and it was never a count of
+    # Java copies: this hold reads one file, so a second Java definition would
+    # pass it silently. Issue #626 deleted the second one;
+    # bios/tools/test_entry_namespace.py is what holds the definition count.
     _rp = grade_name_basis.reserved_prefix_problems(_ann)
     check("EC: no row in ghidra-functions.csv takes a name out of Ghidra's "
           "reserved namespace, so no row can apply and read as unannotated",
@@ -2445,7 +2454,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           % (sum(1 for lit in _want_literals if lit in _java),
              len(_want_literals), _java))
     check("EC: isPlaceholderName() tests nothing grade_name_basis.py does not -- "
-          "the two copies have not drifted apart",
+          "the Java and this transcription have not drifted apart",
           len(_java) == len(_want_literals),
           "%d test(s) in the Java, %d in the Python set; the extra is %s"
           % (len(_java), len(_want_literals),
@@ -4844,11 +4853,11 @@ def check(work):
     # disagree about a function that is there. Five cross-field rules is the
     # wrong count above because this is not one -- it grades no column, and it
     # is the only rule here whose fault is in the NAME's namespace rather than
-    # in what the name rests on. Scoped to the EC, and the scope is the honest
-    # one: the same scan over the BIOS CSV finds two rows, and those belong to
-    # the `equals("entry")` / `startsWith("entry")` divergence between the two
-    # copies of isPlaceholderName(), which reconciling would need a BIOS
-    # re-export. docs/findings/thunk-prefix-collision.md.
+    # in what the name rests on. Scoped to the EC, and issue #626 took away the
+    # reason it had to be: the two `entry`-named BIOS rows are renamed and the
+    # same scan over the BIOS CSV is empty, held by
+    # bios/tools/test_entry_namespace.py. Carrying the rule into
+    # bios_extract.py is the follow-up; docs/findings/entry-namespace-two-copies.md.
     _rp = grade_name_basis.reserved_prefix_problems(_read["ghidra-functions.csv"])
     for problem in _rp[:5]:
         fail("reserved name: %s" % problem)
