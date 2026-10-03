@@ -4986,8 +4986,14 @@ the hazard `ec/annotations/xdata-register-map.md` §5 records for its own table.
 this corrects a long-stale citation rather than relocating a sound one.)
 The
 wrong ids are left standing where they quote issue #179, per §4a;
-`ec/tools/check_cluster_citations.py` is what holds the rest of the tree to the
-census.
+`ec/tools/check_cluster_citations.py` holds the rest of the tree to the census
+within the limits its own docstring states. One of those limits is the shape a
+claim is written in rather than the cluster it names, and the claim in this tree
+that limit leaves unchecked is a split written as a list of ids followed by a
+list of addresses rather than an address beside the cluster it is paired with —
+it is this section's own reading of the block, further down, and no check reads
+it. That is "not found by this method" rather than a disagreement, and the
+docstring is where the limit and its reasons are written down.
 
 > **(2026-09-25, issue #279: the ids moved once more, and this is where the
 > current ones live.)** The census was re-derived again for this issue — 39 new

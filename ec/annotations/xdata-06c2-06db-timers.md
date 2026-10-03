@@ -41,8 +41,8 @@ byte count below is re-derivable from the committed image by §1, and
 > needed no change and the stale `main-ec-003` was in `ec/README.md`, which is
 > the copy that moved. Left visible here so a reader holding #254 reads the
 > unapplied instruction rather than an oversight.
-> `../tools/check_cluster_citations.py` is what holds the rest of the tree to
-> the census.
+> `../tools/check_cluster_citations.py` holds the rest of the tree to the census,
+> within the limits its docstring states.
 >
 > **(2026-09-25, issue #279: the ids moved a third time, and #254's prediction
 > is the one the census now carries.)** The census was re-derived again for this

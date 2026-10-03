@@ -45,8 +45,8 @@ human with the machine.
 > of `xdata-06c2-06db-timers.md` and shares no address with this one. The id
 > moved for the same reason as every other id in issue #253, which is issue
 > #4.3's census regeneration (#133 / #238), and
-> `../tools/check_cluster_citations.py` is what holds the rest of the tree to
-> the census.
+> `../tools/check_cluster_citations.py` holds the rest of the tree to the census,
+> within the limits its docstring states.
 
 ## 1. How to reproduce it
 
