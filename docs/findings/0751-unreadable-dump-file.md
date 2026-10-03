@@ -141,13 +141,19 @@ opened. On a `--block` run whose only pair would not open, the section was
 saying the pair was another block's, under a header about attribution and on no
 evidence at all.
 
-It is now gated on there being a group to attribute. The pair's own line above
-still says what became of it and the paragraph below still says nothing was
-compared, so the section loses the unfounded attribution and not the fact; and
-the same footer still fires where it is earned, on a pair that names another
-block outright. `report_dumps` needs no such gate: an unreadable `--dump`
-stays in its group, so its block attribution is off its filename's `<value>`,
-which is exactly what the footer there claims.
+It is now gated on there being a group to attribute *and* on no pair having
+failed to open. The second term is not the same case twice: put a readable pair
+naming another block beside an unreadable one and the readable pair files a
+group, so gating on a group alone still fires the footer with the unreadable
+pair named under it — and takes the first half with it, since a pair that named
+the block under test and would not open is a pair that was given. The pair's
+own line above still says what became of it, the readable pair's own line still
+says whose it is, and the paragraph below still says nothing was compared, so
+the section loses the unfounded sentence and not the fact; and the same footer
+still fires where it is earned, on a pair that names another block outright.
+`report_dumps` needs no such gate: an unreadable `--dump` stays in its group,
+so its block attribution is off its filename's `<value>`, which is exactly what
+the footer there claims.
 
 ## What the catch covers, and what it deliberately does not
 

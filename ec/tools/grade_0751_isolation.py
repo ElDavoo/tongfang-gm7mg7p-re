@@ -4416,17 +4416,22 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None,
                                                  after):
                         print(line)
 
-    # Gated on `groups` being non-empty as well as on the block being absent,
-    # and the extra term is the same fact the group lines above are: "the pairs
-    # named above are another block's" is a claim about which block a pair
-    # belongs to, and a pair that could not be read has not been filed under
-    # one. Without it a `--block` run whose only pair would not open was told
-    # the pair was another block's -- an attribution it has no evidence for,
-    # printed under a header about attribution. Its own line above already
-    # says what happened to it, and the paragraph below this one says nothing
-    # was compared.
-    if block_value is not None and groups and not any(v == block_value
-                                                      for v, _, _ in groups):
+    # Gated on `failed` being empty as well as on `groups` being non-empty and
+    # on the block being absent, and both extra terms are the same fact the
+    # group lines above are: the sentence is a claim about which block the
+    # pairs named above belong to, and a pair that could not be read was never
+    # filed under one. Without the `groups` term, a `--block` run whose only
+    # pair would not open was told the pair was another block's. Without the
+    # `failed` term, that same run told the same thing with a readable pair
+    # naming another block beside the unreadable one: the readable one files a
+    # group, so the footer fires, and the pair the run never filed is named
+    # under it -- and so is the first half, since a pair that named the block
+    # under test and would not open is a pair that was given. The unreadable
+    # pair's own line above says what became of it, the readable pair's line
+    # says whose it is, and the paragraph below this one says nothing was
+    # compared, so the section loses the unfounded sentence and not the fact.
+    if block_value is not None and not failed and groups \
+            and not any(v == block_value for v, _, _ in groups):
         print(f"  no --dump-pair was given for block 0x{block_value:02X}, so "
               "the whole-block read for it was not taken; the pairs named "
               "above are another block's")

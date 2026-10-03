@@ -8001,11 +8001,12 @@ class GradedUnplacedExitCodeTests(unittest.TestCase):
 
 
 # Appended at the end of the file for the reason the comment above
-# `MarkSplitBoundaryTests` gives, and the same load-bearing reason: line
-# numbers in five write-ups and in `docs/findings/test-line-pin-census.md`
-# cite into this file below `GradeTests`, and inserting anywhere else moves all
-# of them onto the wrong line without changing a word of the sentences citing
-# them. Placement is all that costs, and appending costs none.
+# `MarkSplitBoundaryTests` gives, and the same load-bearing reason: the line
+# numbers in the write-ups, and the per-pin table in
+# `docs/findings/test-line-pin-census.md` on top of them, cite into this file
+# below `GradeTests`, and inserting anywhere else moves all of them onto the
+# wrong line without changing a word of the sentences citing them. Placement is
+# all that costs, and appending costs none.
 #
 # No fixture is written here. A file that cannot be opened is the subject, so
 # every case names a path under `tempfile` that was never written to, and the
@@ -8286,6 +8287,40 @@ class UnreadableDumpTests(unittest.TestCase):
         self.assertIn("belongs to block 0x10, not the block under test (0xA0)",
                       whole_block(out))
         self.assertIn("another block's", whole_block(out))
+
+    def test_an_unreadable_pair_beside_a_readable_one_is_not_attributed(self):
+        # The shape above is the easy one for that gate: its only pair failed
+        # to open, so `groups` is empty and the footer cannot fire. Beside a
+        # readable pair naming another block, the readable one files a group,
+        # so a gate reading `groups` alone fires the footer over both -- naming
+        # a pair the run never filed under a block, and doing it in the first
+        # half too, since a pair that named the block under test and would not
+        # open is a pair that was given. A separate method because the two
+        # shapes are closed by different terms, and closing only the easy one
+        # would leave this one printing the attribution.
+        with tempfile.TemporaryDirectory() as tmp:
+            typo = self.missing(tmp, 'typo.txt')
+            rc, out, _ = run(*MULTI_BLOCK, '--block', '0xA0',
+                             '--dump-pair', typo, typo,
+                             '--dump-pair', *MULTI_10_DUMPS)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # The unreadable pair is still named where it was handed in, and the
+        # readable one is still attributed to the block its names carry.
+        self.assertIn(f'{typo} -> {typo}', section)
+        self.assertIn('this pair is not compared', section)
+        self.assertIn('belongs to block 0x10, not the block under test (0xA0)',
+                      section)
+        # Neither half of the footer, over either pair. And the readable
+        # pair's own line carries the attribution the footer would have, so
+        # dropping the sentence loses no fact about whose pair it was.
+        self.assertNotIn('another block\'s', section)
+        self.assertNotIn('no --dump-pair was given', section)
+        # What the block under test did get is unchanged: the 0x10 pair is
+        # not read for it, so no bracket was compared, and the section says
+        # so rather than ending on the sentence it no longer prints.
+        self.assertNotIn('address(es) compared', section)
+        self.assertIn('no dump pair here was compared', section)
 
 
 if __name__ == '__main__':
