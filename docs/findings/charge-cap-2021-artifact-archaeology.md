@@ -31,11 +31,9 @@ mechanical rather than a judgement:
   `WebFetch`, `WebSearch`, `Bash(curl:*)` and `Bash(wget:*)` in
   `--disallowedTools`, so no stage that plans, implements, reviews or fixes this
   issue can fetch a 2021-era installer, reach an archive, or query a vendor
-  download page. (`.github/workflows/claude.yml` is the one workflow in the
-  tree with no `--disallowedTools` at all, so this is a statement about the
-  pipeline stages and not about every workflow.) The issue's own text concedes
-  the dependency: it "cannot be done from committed inputs — needs the owner's
-  old files / download history."
+  download page. The issue's own text concedes the dependency: it "cannot be
+  done from committed inputs — needs the owner's old files / download
+  history."
 - **No hardware and no Windows.** `docs/findings.md` §4i's three live runs and
   §4m's `0x0522` test were done by a human at the machine. `dotnet_dump.py`
   reads a *running* process's memory and binds `kernel32` at import; it cannot
@@ -170,7 +168,7 @@ The baseline the command would report against, from the committed image:
 |---|---|---|---|
 | `0x07A6` (mode) | 7 | 7 | 0 |
 | `0x07B9` (charge limit up) | 0 | 0 | 0 |
-| `0x07CC` (complex power) | 6 | 0 | 6 |
+| `0x07CC` (`USB_C_POWER_PRIORITY`) | 6 | 0 | 6 |
 | `0x07D0` (charge limit down) | 254 | 0 | 254 |
 | `0x0522` (charge target) | 10 | 10 | 0 |
 
@@ -340,3 +338,10 @@ beside it that `tools/run-tests.sh` collects:
 Each suite's refusal cases are written to go red when the refusal is removed,
 which is the property this repository keeps asking for: a check that has
 quietly stopped rejecting anything looks exactly like a check that is working.
+
+`version_fingerprint.py` is stdlib apart from one optional dependency,
+`dnfile` (`pip install dnfile`), which is what reads a .NET `Assembly` table.
+Without it the tool still runs and the `.NET` half is reported as *not read*
+rather than absent, and the self-check says on its face which assertion it
+could not make instead of failing it — a missing package is not a version that
+came back wrong. CI installs it, so there every assertion runs.

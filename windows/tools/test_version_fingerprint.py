@@ -46,6 +46,14 @@ SETUP_316 = "control-center-3.1.6.0/UniwillService_3.1.6.0_STD.exe"
 SETUP_3918 = "control-center-3.9.18.0/setup.exe"
 ACPIDRV = "control-center-3.9.18.0/ACPIDriver/ACPIDriver.sys"
 
+# `dnfile` is the one optional dependency `version_fingerprint.py` has, and it
+# is what reads a .NET `Assembly` table (see that module's docstring). The
+# assertions that need it are skipped rather than failed when it is absent, so
+# that a reader without it is told the check did not run instead of being shown
+# a missing package as a wrong version. CI installs it, so there these run.
+HAVE_DNFILE = importlib.util.find_spec("dnfile") is not None
+needs_dnfile = unittest.skipUnless(HAVE_DNFILE, "dnfile not installed")
+
 
 class TestCommittedVendorArtifacts(unittest.TestCase):
     """The figures issue #83's write-up cites, read back off the real files."""
@@ -62,6 +70,12 @@ class TestCommittedVendorArtifacts(unittest.TestCase):
         # executable's own `FileVersion` is `1.0.2.70`", for a service whose
         # `DisplayVersion` is 3.1.39.0.
         self.assertEqual(self.gcu["fixed_file_version"], "1.0.2.70")
+
+    @needs_dnfile
+    def test_the_dotnet_assembly_table_agrees_with_the_version_resource(self):
+        # The `Assembly` half of the case above, which is a different field
+        # from the version resource and needs `dnfile` to read. Split from it so
+        # that its absence skips one assertion rather than the FileVersion one.
         self.assertEqual(self.gcu["assembly_version"], "1.0.2.70")
         self.assertEqual(self.gcu["assembly_name"], "GCUService")
 
@@ -98,6 +112,12 @@ class TestCommittedVendorArtifacts(unittest.TestCase):
         self.assertEqual(self.sys["fixed_file_version"], "")
         self.assertEqual(self.sys["_version_resource"], "absent from the file")
         self.assertEqual(self.sys["assembly_version"], "")
+
+    @needs_dnfile
+    def test_a_native_driver_is_reported_as_not_a_dotnet_assembly(self):
+        # Why `assembly_version` is empty above, which `dnfile` is what can
+        # tell: "not a .NET assembly" and "not read" are different answers and
+        # the field says which. Without `dnfile` it says only the second.
         self.assertIn("not a .NET assembly", self.sys["dotnet"])
 
     def test_every_row_reports_the_size_of_the_file_it_read(self):
@@ -248,16 +268,40 @@ class TestEntryPoint(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
         self.assertNotIn("FAIL", done.stdout)
 
+    @needs_dnfile
     def test_self_check_is_not_green_by_construction(self):
         # A check that has quietly stopped rejecting anything looks exactly
         # like a check that is working, so the mutation is put in and the run
-        # is required to go red.
+        # is required to go red. The `dnfile` branch is the one that could
+        # swallow this, so the run is also required not to have skipped
+        # anything: with the dependency installed the assertion is hard again.
         with patch.object(version_fingerprint, "ORACLE_ASSEMBLY_VERSION", "9.9.9.9"):
             done = io.StringIO()
             with patch("sys.stdout", done):
                 rc = version_fingerprint.self_check(str(REPO))
         self.assertEqual(rc, 1)
         self.assertIn("FAIL", done.getvalue())
+        self.assertNotIn("skip", done.getvalue())
+
+    def test_self_check_says_which_assertion_a_missing_dnfile_cost_it(self):
+        # `dnfile` is optional, so the `Assembly` assertion cannot run without
+        # it. Two things have to hold there, and they pull opposite ways: the
+        # run must not report a *failure* (the table was not read, so no version
+        # came back wrong), and it must not pass silently either (a reader who
+        # sees green has to be able to find out that one check did not run).
+        # `sys.modules[name] = None` is what makes the tool's local
+        # `import dnfile` raise, which is the absence being simulated.
+        done = io.StringIO()
+        with patch.dict(sys.modules, {"dnfile": None}):
+            with patch("sys.stdout", done):
+                rc = version_fingerprint.self_check(str(REPO))
+        out = done.getvalue()
+        self.assertEqual(rc, 0, out)
+        self.assertNotIn("FAIL", out)
+        self.assertIn("dnfile not installed", out)
+        # The assertions that do not need it still ran, rather than the whole
+        # check having gone quiet with the dependency.
+        self.assertIn("GCUService.exe FileVersion is the README's 1.0.2.70", out)
 
     def test_no_arguments_is_an_error(self):
         self.assertNotEqual(self._run().returncode, 0)

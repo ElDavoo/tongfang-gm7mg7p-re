@@ -37,7 +37,10 @@ not write one, never that the file is unlabelled or unimportant.
 
 No disassembler, no Windows, no network. `dnfile` is optional and is what reads
 the `Assembly` table; without it the .NET half is reported as not read rather
-than absent.
+than absent, and `--self-check` names the one assertion it therefore cannot
+make instead of failing it. With `dnfile` installed -- `pip install dnfile`,
+which is what `.github/actions/project-setup` does -- every assertion below
+runs.
 
 **`TimeDateStamp` is a link stamp, not a release date**, and the committed set
 shows why in one comparison: the 3.1.6.0 and the 3.9.18.0 installers carry the
@@ -463,6 +466,14 @@ def self_check(repo: str) -> int:
         print(f"  {'ok  ' if ok else 'FAIL'}  {label}"
               + (f"  {detail}" if detail and not ok else ""))
 
+    def skip(label, why):
+        # Not a pass and not a failure: the assertion could not be made at all.
+        # `dnfile` is optional (see the module docstring), so a machine without
+        # it cannot read the `Assembly` table, and grading `''` against
+        # 1.0.2.70 would report the missing dependency as a wrong version --
+        # the same confusion the tool exists to refuse. Named, never silent.
+        print(f"  skip  {label}  not checked: {why}")
+
     rows = {}
     for rel in SELF_CHECK:
         try:
@@ -480,9 +491,17 @@ def self_check(repo: str) -> int:
     expect("GCUService.exe FileVersion is the README's 1.0.2.70",
            gc["fixed_file_version"] == ORACLE_ASSEMBLY_VERSION,
            f"got {gc['fixed_file_version']!r}")
-    expect("GCUService.exe's Assembly table version is 1.0.2.70 too",
-           gc["assembly_version"] == ORACLE_ASSEMBLY_VERSION,
-           f"got {gc['assembly_version']!r}")
+    # This is the one assertion that needs `dnfile`, and it is branched rather
+    # than hard because the dependency is optional. When `dnfile` is installed
+    # -- as it is in CI, and as `pip install dnfile` makes it -- this is the
+    # same hard assertion it was before.
+    if gc["dotnet"] == "read":
+        expect("GCUService.exe's Assembly table version is 1.0.2.70 too",
+               gc["assembly_version"] == ORACLE_ASSEMBLY_VERSION,
+               f"got {gc['assembly_version']!r}")
+    else:
+        skip("GCUService.exe's Assembly table version is 1.0.2.70 too",
+             gc["dotnet"])
     expect("GCUService.exe's FileVersion is not the Control Center release it "
            "belongs to, so the installed service cannot be dated by its "
            "version resource",
