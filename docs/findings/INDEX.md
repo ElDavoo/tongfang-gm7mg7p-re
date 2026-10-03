@@ -115,6 +115,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`ecrw-fake-mirror-surface.md`](ecrw-fake-mirror-surface.md) — The `ecrw` fixture's mirror claim, measured, and narrowed to what it carries (issue #356)
 - [`ecrw-fake-one-shape.md`](ecrw-fake-one-shape.md) — One fake for `ecrw`, one way to install it, and one interpreter that proves it
 - [`emit-csv-flag-honesty.md`](emit-csv-flag-honesty.md) — `--emit-csv` refused the three modes it knew about, and honoured nothing on the fourth
+- [`entry-namespace-two-copies.md`](entry-namespace-two-copies.md) — `isPlaceholderName()` had two definitions and they had drifted (issue #626)
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading
 - [`export-ownership-relative-containment.md`](export-ownership-relative-containment.md) — `containment` at 1.00 cannot tell a copy from a fragment, so the size now
 - [`fan-duty-channel-075b-075c.md`](fan-duty-channel-075b-075c.md) — The 0x14 between 0x075B and 0x075C is the EC's own constant, and the committed captures cannot name either fan (issue #247)
