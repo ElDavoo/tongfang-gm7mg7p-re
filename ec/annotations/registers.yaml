@@ -836,17 +836,24 @@ registers:
       different routines. Nine of the 47 walk past their own byte
       through inc dptr into 0x07D3 (one into 0x07D4 as well), and
       every one of the nine puts 0x07D2 in the LOW position --
-      0xAD83 loads 0x07D1/0x07D2 into R7/R5, 0x8BAD builds R4:R5 from
-      0x07D2 then 0x07D3|0x01, 0xA5DD and 0xC755 store an R6/R7 and
-      an R7/R5 pair to 0x07D2 then 0x07D3, and 0xF628 writes three
-      bytes R7:R5:0. Against that, four sites multiply the byte into
-      an address by itself -- 0x35FF and 0x373C at stride 0x5E, 0xC7A8
-      at stride 0x17, and 0x4A6D scaling it by 4 into DPTR with no
-      base at all. So it is a low byte in some windows and a
-      standalone index in others, and the site-by-site table is what
-      separates them. 0x8A4A clears 0x07D2 and 0x07D3 together after
-      storing R7 to 0x07D1, which is the third length of the same
-      window. ec-0x07d1-sites.md 4.3's refusal to choose between a
+      0x8BAD builds R4:R5 from 0x07D2 then 0x07D3|0x01, 0xA5DD and
+      0xC755 store an R6/R7 and an R7/R5 pair to 0x07D2 then
+      0x07D3, and 0xF628 writes three bytes R7:R5:0. The window that
+      puts the byte high is a different one and is not among those
+      nine: 0xAD83 reads 0x07D1 into R7 and then, past inc dptr,
+      0x07D2 into R5, so 0x07D2 is the high byte of THAT pair; its
+      neighbour 0xAD8C reads 0x07D2 alone into R7 and clears R5.
+      0xAD83's MOV DPTR names 0x07D1, so it is a 0x07D1 site
+      (ec-0x07d1-sites.md 4.2's accessor pair) and not a row of
+      ec-0x07d2-sites.csv. Against that, four sites multiply the
+      byte into an address by itself -- 0x35FF and 0x373C at stride
+      0x5E, 0xC7A8 at stride 0x17, and 0x4A6D scaling it by 4 into
+      DPTR with no base at all. So it is a low byte in some windows
+      and a standalone index in others, and the site-by-site table
+      is what separates them. 0x8A4A clears 0x07D2 and 0x07D3
+      together after storing R7 to 0x07D1, which is the third length
+      of the same window. ec-0x07d1-sites.md 4.3's refusal to
+      choose between a
       3-byte counter, a packed field and a moved 16-bit value
       therefore survives this walk, and this entry does not claim to
       have settled it.
