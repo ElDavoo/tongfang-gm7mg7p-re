@@ -165,6 +165,13 @@ norm_addr = citation_callers.norm_addr
 HEXREF = re.compile(r"(?<![0-9A-Fa-f])0[xX](?P<d>[0-9A-Fa-f]{1,4})"
                     r"(?![0-9A-Fa-f])")
 
+# The `  scope/addr:` header `diff_table()` writes above a row's differing
+# columns, which is how `self_test()` reads back *which* rows a diff named
+# rather than how many lines it returned. The column lines are indented four
+# spaces and the `row count:` line is not this shape, so only row headers
+# match.
+ROWHEAD = re.compile(r"^  (\S+)/([0-9A-Fa-f]{4}):$")
+
 COLUMNS = ["scope", "addr", "name", "annotated", "also_in", "inbound",
            "lcall", "ljmp", "ajmp", "acall", "callers", "named_callers",
            "cited_by", "citing"]
@@ -688,12 +695,37 @@ def self_test() -> int:
     rejected_keys = {(c.callee, c.citer) for c in rejected}
     undecided_keys = {(c.callee, c.citer) for c in undecided}
     ok = True
+    known = []
 
     def check(label, cond):
         nonlocal ok
         print("  %s  %s" % ("ok  " if cond else "FAIL", label))
         if not cond:
             ok = False
+
+    def check_known_defect(issue, label, cond, note):
+        """Assert a property a *known* defect breaks, and report the break
+        without failing the run.
+
+        A plain `check()` here makes the gate's `call_graph.py` arm red on
+        every commit until the fix lands, which holds up the whole queue over
+        a defect that is already written down and owned; this repository
+        records a known red in writing rather than papering over it, in
+        `docs/findings/0751-grader-self-test-gate.md`. So the verdict prints
+        under a prefix of its own that never reads `ok`, the measurement goes
+        on the next line so a run says *what* is wrong rather than only that
+        something is, and `ok` is left alone, which is what keeps the exit code
+        and the gate arm green. When the fix lands `cond` becomes true and the
+        line reads `ok` with nothing here edited -- so the condition is
+        written as the property rather than as one fix's shape, because the
+        assertion has to outlive the writer of the fix.
+        """
+        if cond:
+            print("  ok    %s" % label)
+        else:
+            known.append(issue)
+            print("  FAIL known defect (#%s)  %s" % (issue, label))
+        print("      %s" % note)
 
     print("call_graph.py --self-test (fixture: ec/tools/testdata/call-graph)")
     check("every transfer site in the fixture resolves (%d)" % total,
@@ -774,6 +806,36 @@ def self_test() -> int:
           diff_table(render(rows[:-1]), rendered)
           == ["  row count: committed %d, recomputed %d"
               % (len(rows) - 1, len(rows))])
+    # The alignment case, which the two above are structurally unable to
+    # reach: editing a cell in place leaves the row where a positional zip
+    # will find it, and dropping the last row leaves every earlier pair
+    # aligned. Neither moves a row, so neither says anything about how the
+    # diff pairs them up. The rotation is a permutation -- same rows, same
+    # cells, same row count -- so the only thing it can report is alignment,
+    # and `diff_table()` is driven as shipped rather than re-implemented, for
+    # the reason `diff_table()`'s own docstring gives.
+    permuted = rows[1:] + [rows[0]]
+    moved = (rows[0]["scope"], rows[0]["addr"])
+    perm_lines = diff_table(render(permuted), rendered)
+    named = {(m.group(1), m.group(2)) for m in
+             (ROWHEAD.match(line) for line in perm_lines) if m}
+    check_known_defect(
+        459,
+        "the alignment case #459 opens, and distinct from the "
+        "one-cell-altered and last-row-dropped cases above: a table with a "
+        "row moved to the end is rejected naming only the row that moved",
+        check_table(render(permuted), rendered)[0] == 1
+        and named <= {moved} and len(named) <= 1,
+        "named %d row%s, expected at most 1, and the moved row %s/%s %s"
+        % (len(named), "" if len(named) == 1 else "s", moved[0], moved[1],
+           "is among them" if moved in named else "is not among them"))
+    check("the alignment assertion reads the rows `diff_table()` named and not "
+          "its line count: the one-cell-altered diff above is a header this "
+          "parses, so a `diff_table()` whose header shape moved cannot leave "
+          "the alignment clause reading an empty set and passing on it",
+          {(m.group(1), m.group(2)) for m in
+           (ROWHEAD.match(line) for line in edited_lines) if m}
+          == {(rows[0]["scope"], rows[0]["addr"])})
     check("no fixture listing is an orphan, so callers == named_callers is "
           "only false where a real anonymous caller makes it false",
           orphans == 0)
@@ -916,7 +978,17 @@ def self_test() -> int:
           "limit included: the fixture's is one",
           len([line for line in block
                if line.startswith("  ") and " cited by " in line]) == len(undecided))
-    print("  all assertions passed" if ok else "  FAILURES ABOVE")
+    if not ok:
+        print("  FAILURES ABOVE")
+    elif known:
+        # A clean run of every assertion while a defect the same run reports
+        # as outstanding is the "all assertions passed" this tool must not
+        # print on its own, so the tail names what is left.
+        print("  all assertions passed; %d known defect%s outstanding (%s)"
+              % (len(known), "" if len(known) == 1 else "s",
+                 ", ".join("issue #%d" % n for n in known)))
+    else:
+        print("  all assertions passed")
     return 0 if ok else 1
 
 
