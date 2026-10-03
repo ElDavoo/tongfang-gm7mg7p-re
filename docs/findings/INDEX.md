@@ -14,6 +14,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-census-capture-identity.md`](0751-census-capture-identity.md) — The census counted a capture one way and its per-action line counted it another, and a list holding one file twice withheld a block on a clean run (issue #492)
 - [`0751-census-one-moment.md`](0751-census-one-moment.md) — One `open()` of a capture in `main`, and a truncated early-exit row (issue #767)
 - [`0751-dump-pair-battery-names.md`](0751-dump-pair-battery-names.md) — The 0x0400 pair's "other" bucket, on a mover the capture recorded (issue #219)
+- [`0751-dump-value-vs-block-value.md`](0751-dump-value-vs-block-value.md) — A block's `<value>` came off a file name and nothing checked it against the day's own write (issue #1400)
 - [`0751-early-exit-row.md`](0751-early-exit-row.md) — The grader dropped the probe's "the run ended early" row, and a 5-second arm graded as a 30-second one (issue #664)
 - [`0751-file-refusal-order.md`](0751-file-refusal-order.md) — Which of the two refusals names a file that is both (issue #784)
 - [`0751-grader-block-scope-claims.md`](0751-grader-block-scope-claims.md) — A `--block` run said "consistent with the static prediction" for the whole capture (issue #497)
@@ -205,6 +206,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`prepared-gate-patches.md`](prepared-gate-patches.md) — The prepared gate patches: the set composes, and a test says so
 - [`presence-check-container-shape.md`](presence-check-container-shape.md) — Two of the three presence checks key their per-file container and pin that shape; the third has nothing to scan (issue #371)
 - [`probe-0700-whole-page-arm.md`](probe-0700-whole-page-arm.md) — The probe's watch set can be §3's first watcher, whole (issue #666)
+- [`probe-csv-encoding.md`](probe-csv-encoding.md) — The three probe appenders declare `utf-8`, and `evidence/battery-traces/` is now measured rather than excused (issue #1277)
 - [`probe-hold-mark-merge.md`](probe-hold-mark-merge.md) — A `--csv` probe run's `hold` is held to the grader's mark-merge window (issue #665)
 - [`probe-log-capture-conversion.md`](probe-log-capture-conversion.md) — The one real 0751 capture converts to a capture the grader reads (issue #124)
 - [`prose-line-citations-held.md`](prose-line-citations-held.md) — The prose's line citations, and what now holds them (issue #801)
@@ -255,6 +257,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`verify-provenance-failure-answers.md`](verify-provenance-failure-answers.md) — `--verify-provenance` had ten ways to fail and one committed answer to none of them
 - [`walk-bounds-guard-pinned.md`](walk-bounds-guard-pinned.md) — The bounds disjunct is pinned, by two cases — and the sweep that could have noticed it cannot see it
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
+- [`walk-inc-dptr-attribution.md`](walk-inc-dptr-attribution.md) — `inc dptr` was not tracked, so every store behind one lost its address, and the arms tables attributed a two-byte store to one byte of it
 - [`walk-window-terminators.md`](walk-window-terminators.md) — `walk()`'s stop reason is a column now, and the 45 rows its budget truncates are named
 - [`xdata-0390-0391-filter-pair.md`](xdata-0390-0391-filter-pair.md) — The 0x0390/0x0391 pair: what the 0x9EA1 filter reads, what the `E100` branch selects, and where `0x0391`'s value comes from (issue #295)
 - [`xdata-044b-selector-value-set.md`](xdata-044b-selector-value-set.md) — `0x044B`'s writable set and its reader set are the same values, and `0x9A0E` spends the byte on one threshold of three

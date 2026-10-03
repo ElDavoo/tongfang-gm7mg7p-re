@@ -637,8 +637,13 @@ CITATIONS = [
     # to the grader moved both sites and this number not at all, which put the
     # nearer one on the wrong side and resolved this entry and the one above
     # onto the same line. Re-anchored by re-resolving the text after the edit;
-    # the text the site quotes is unchanged.
-    ("ec/tools/grade_0751_isolation.py", 1613,
+    # the text the site quotes is unchanged. Issue #1400's edit to the grader
+    # put both sites on the other side of it: `misfiled_before` and the notice
+    # it gates land above `existing_mark_provenance`, so the shift is **+7**,
+    # `:1613` -> `:1642` -> `:1649`, and 1613 was 29 lines from the site while
+    # 1579 would have been 34 -- the same crossing #767 caused, from the
+    # other direction, and the same remedy.
+    ("ec/tools/grade_0751_isolation.py", 1649,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: existing_mark_provenance recognising the row -- #739's reader, "
      "the fifth site over this shape, and the one whose result is *supposed* "

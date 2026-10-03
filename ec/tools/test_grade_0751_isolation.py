@@ -9,6 +9,7 @@ import io
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -8628,6 +8629,408 @@ class PairHintBlockScopeTests(unittest.TestCase):
         # rather than the sentence, since there is no block to format.
         self.assertNotIn("no --dump-pair of block", section)
         self.assertNotIn('belong to another block', section)
+
+
+# A group's value comes off a file name, and nothing checked it against the
+# one record of the write in the run. This sits at the end of the file for the
+# reason the comment above `ReadbackNoticeTests` gives, and for the same
+# load-bearing reason: line pins across this suite's write-ups and the
+# per-pin table in `docs/findings/test-line-pin-census.md` cite into the file
+# below `GradeTests`, and inserting anywhere else moves all of them onto a line
+# that no longer says what its sentence says it does.
+#
+# Nothing here asserts a count of the tree or of this suite. The swap cases
+# assert what a transposed pair of names does; the fixture scan below asserts a
+# shape the committed dumps have, not how many of them there are, so the next
+# fixture landing cannot turn it into a number every merge has to edit.
+class MisfiledBeforeDumpTests(unittest.TestCase):
+    """A `<value>` swapped between two blocks' file names, and the day a
+    before-dump holds its value without anything being wrong.
+
+    §6 asks for six file names per block, typed by hand, and §3 takes the
+    before-dump at step 0 -- before the control arm, before the write. So the
+    block's write cannot be what put `V` in a file named `-before-` for block
+    `V`.
+
+    **The step order is not the whole of it, and the case at the bottom of
+    this class is what it misses.** It says nothing about the byte having held
+    `V` before the block began, and §3 nowhere requires the value under test
+    to differ from what is there: step 2 is "write the value already there back
+    to itself", which presupposes a value and names none. So a day that writes
+    0xA0 onto a byte already at 0xA0 is a day the procedure produces, and its
+    before-dump holding 0xA0 *is* that block's before-dump. The withhold is
+    therefore gated on the day's own answer -- the block's control arm, which
+    records what the byte held before the write -- rather than on step order
+    alone.
+
+    Nothing in this class reads an EC. Every case is this tree's Python over
+    fixtures whose own headers read `CONSTRUCTED INPUT, NOT A CAPTURE`, with
+    the swaps and the already-at-the-value day built per run into a
+    `tempfile` directory and no committed input changed.
+    """
+
+    @staticmethod
+    def multi_arms():
+        """`multi-block/`'s own control-arm values, as `{value: byte}`.
+
+        Through the same walk `main` does and the same
+        `control_arms_for` the tool calls, so the swap cases assert what the
+        day's marks actually say rather than a copy of them that a fixture
+        edit could leave behind.
+        """
+        _, _, blocks, _ = as_main_reads(MULTI_BLOCK)
+        return grade.control_arms_for(blocks, None)
+
+    @staticmethod
+    def renamed(tmp, pair):
+        """`pair` copied into `tmp` under the other block's `<value>`.
+
+        `pair` is one block's two dumps, so both names carry one value and
+        both are rewritten to the other's. Each file's bytes are the committed
+        one's, unchanged; renaming the file is the whole of the mistake, and
+        carrying the bytes with it is what makes it a transposition rather
+        than an edit. Written into a temporary directory rather than committed,
+        because the committed set is an input every other case reads, and a
+        fixture that transposed its own names would be a fixture no run could
+        grade.
+
+        The value in a name is read off the committed file rather than passed
+        in, so the copies cannot drift from the names the grader parses.
+        """
+        out = []
+        for path in pair:
+            path = Path(path)
+            value = path.stem.split('-')[-3]
+            other = '10' if value.lower() == 'a0' else 'a0'
+            copy = Path(tmp) / path.name.replace(
+                f'-0751-isolation-{value}-',
+                f'-0751-isolation-{other}-')
+            copy.write_bytes(path.read_bytes())
+            out.append(str(copy))
+        return tuple(out)
+
+    def test_a_transposed_dump_name_is_caught_in_both_directions(self):
+        # Each direction is run on its own copy, because the swap consumes the
+        # names it renames. In the first the renamed files carry `-10-` and
+        # hold 0xA0's bytes; in the second they carry `-a0-` and hold 0x10's.
+        # Either way the group's before-dump holds the value the group names,
+        # and that value is the one its own `wrote` mark carries.
+        for swapped_pair in (MULTI_A0_DUMPS, MULTI_10_DUMPS):
+            with tempfile.TemporaryDirectory() as tmp:
+                before, after = self.renamed(tmp, swapped_pair)
+                rc, out, _ = run(*MULTI_BLOCK, *dumps(before, after))
+            self.assertEqual(rc, 0)
+            section = dumps_section(out)
+            value = int(Path(before).stem.split('-')[-3], 16)
+            # The group line still prints, and still says where the value came
+            # from: the notice is about the value that came off a name, and a
+            # notice that did not say so would leave the reader looking for
+            # something in the captures that is not there.
+            self.assertIn(f'block 0x{value:02X}, from the <value> in these '
+                          'files\' §6 names', section)
+            # The notice says both of the things the operator needs: which
+            # file contradicts which record, and that the value came from the
+            # file name rather than from anything in the captures.
+            self.assertIn('the §4.6 readback is withheld for these files',
+                          section)
+            self.assertIn('already holds', section)
+            self.assertIn(f'`wrote 0x0751=0x{value:02X}` mark', section)
+            self.assertIn('`<value>` in these files\' names', section)
+            # And it names the record the withhold actually rests on: this
+            # block's own control arm, read from the day's marks, saying the
+            # byte was somewhere else before the write. Read back out of the
+            # fixture rather than written here, so a fixture edit moves the
+            # expected string rather than turning this into a hand-kept
+            # figure.
+            arm = self.multi_arms()[value]
+            self.assertIn(f'`no-op wrote 0x0751=0x{arm:02X}` mark', section)
+            self.assertIn(f'recorded 0x{arm:02X}', section)
+            self.assertNotEqual(arm, value)
+            # It claims no uniqueness for the mark it names. A day that wrote
+            # the value twice carries several records of it, and "the only
+            # other record" is not a claim the day's own rows would support on
+            # the run this fires on -- `multi-block/`'s CSV carries 0x10 in
+            # three mark rows and in every one of its four `0x0751` change
+            # rows.
+            self.assertNotIn('only other record', section)
+            # And it names no cause. "The byte moved back" is a claim about the
+            # EC, and §3a's service-stopped run is what an operator would go
+            # and run on the strength of it.
+            self.assertNotIn('the byte moved back', section)
+            self.assertNotIn('something put it back', section)
+            self.assertNotIn('§3a', section)
+            self.assertNotIn('readback, not evidence', section)
+            # The bytes are still printed: what each file holds is a fact about
+            # files on disk and is true whatever the comparison is.
+            self.assertIn(f'{before}: 0x0751 = ', section)
+            self.assertIn(f'{after}: 0x0751 = ', section)
+
+    # The same two files through `--dump-pair`, where the bracket is filed by
+    # the same stamp and `dump_pair_block` cannot see the error: it refuses a
+    # pair whose two names disagree *with each other*, and a swap makes them
+    # agree with each other and be wrong together.
+    def test_a_transposed_dump_pair_name_is_caught_in_both_directions(self):
+        for swapped_pair in (MULTI_A0_DUMPS, MULTI_10_DUMPS):
+            with tempfile.TemporaryDirectory() as tmp:
+                before, after = self.renamed(tmp, swapped_pair)
+                rc, out, _ = run(*MULTI_BLOCK, '--dump-pair', before, after)
+            self.assertEqual(rc, 0)
+            section = whole_block(out)
+            self.assertIn('this whole-block bracket is withheld for these '
+                          'files', section)
+            # No bracket, and the counter the closing paragraph reads did not
+            # rise: a withheld pair is not a compared one.
+            self.assertNotIn('address(es) compared', section)
+            self.assertIn('no dump pair here was compared', section)
+            # The pair is still named where it was handed in, and still says
+            # which value the two names claim, so the operator can see which
+            # files to rename rather than only that something is wrong.
+            self.assertIn(f'{before} -> {after}', section)
+            self.assertIn('0x0751=0x', section)
+            self.assertNotIn('other addresses that differ', section)
+
+    # The single-block case, and it is a different one: `run/`'s day writes
+    # 0xA0 only, so a group stamped 0x10 names a value the day never wrote.
+    # That is disclosed by `verdict_note` today, by name and without guessing
+    # which file is wrong -- the shape this change has no opinion about,
+    # because there is no second block for the bytes to belong to. Pinned as
+    # disclosed, so the difference between the two cases stays a fact about the
+    # tool rather than an assumption a later reader has to re-derive.
+    def test_a_mis_stamped_single_block_day_is_disclosed_by_the_absence_line(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            before, after = self.renamed(tmp, (RUN_BEFORE, RUN_AFTER))
+            rc, out, _ = run(*RUN_CAPTURES, *dumps(before, after))
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('no block under test 0x10 is in this run', section)
+        # And this is not the notice, which would need a `wrote 0x0751=0x10`
+        # mark in the day for its own sentence to be true of.
+        self.assertNotIn('is withheld for these files', section)
+        self.assertNotIn('wrote 0x0751=0x10', section)
+        # The day's own readback is untouched here, including the verdict the
+        # change exists to stop: this group never claimed a block the day
+        # wrote, so withholding here would remove a claim about files that
+        # contradicts nothing.
+        self.assertIn('the byte moved back', section)
+
+    # The narrow half, and it is the whole reason #1401's before-side branch
+    # survives untouched. The group's before-dump holds its own value, as in
+    # the swap -- but the last dump holds it too, so §4.6 prints the
+    # `last == written` arm, which is a true sentence about the last file with
+    # its own calibration, above a line that already names both readings a
+    # group in this shape leaves open. There is no claim about the EC on that
+    # arm to withdraw.
+    #
+    # The control arm reads 0x10 here, so the day's marks *do* contradict the
+    # before-dump, and the gate is open -- the `last == written` arm is what
+    # keeps it closed. The case at the bottom of this class is the one where
+    # the day's marks agree with the before-dump and the gate closes by
+    # itself; this one shows the two gates are independent, and neither is
+    # doing the other's work.
+    def test_a_before_dump_holding_the_value_is_still_read_when_the_last_holds_it(self):
+        # Both sides 0xA0. Nothing is transposed here -- `renamed` is not what
+        # builds it -- only the before-dump's byte, so the group is 0xA0 and
+        # neither of its files contradicts that block's `wrote 0x0751=0xA0`.
+        with tempfile.TemporaryDirectory() as tmp:
+            before = Path(tmp) / Path(MULTI_A0_DUMPS[0]).name
+            after = Path(tmp) / Path(MULTI_A0_DUMPS[1]).name
+            for path in (before, after):
+                path.write_bytes(Path(MULTI_A0_DUMPS[1]).read_bytes())
+            rc, out, _ = run(*MULTI_BLOCK, *dumps(str(before), str(after)))
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertNotIn('is withheld for these files', section)
+        self.assertIn('the first --dump already holds the written 0xA0',
+                      section)
+        self.assertIn('the last dump holds the written 0xA0', section)
+        self.assertIn('readback, not evidence', section)
+
+    # The invocation §6 tells a fold-in to attach, one block at a time, which
+    # is the one a §4.6 result is most likely to be read off. `verdicts` is
+    # scoped to the selected block here, and the check has to survive that
+    # rather than needing the day's other values: the group's own value is the
+    # one the notice names, and it is in scope because it is the block under
+    # test.
+    def test_a_transposed_dump_name_is_caught_on_a_block_scoped_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            before, after = self.renamed(tmp, MULTI_A0_DUMPS)
+            rc, out, _ = run(*MULTI_BLOCK, '--block', '0x10', '--wrote', '0x10',
+                             *dumps(before, after))
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('the §4.6 readback is withheld for these files', section)
+        self.assertNotIn('the byte moved back', section)
+        # The scoped run's other block is still not read, and the block
+        # section's own "the other block(s) were not checked" notice is
+        # untouched by any of this.
+        self.assertNotIn('no block named', section)
+        self.assertIn('the other 1 block(s) were not checked in this run', out)
+
+    # A committed `-before-` dump that already held the value in its own name
+    # would make every case above a no-op check: the tool would be withholding
+    # on the fixtures the rest of the suite grades, and a green run here would
+    # say nothing about whether a transposed name is caught. A property of the
+    # fixtures' shape rather than a count of them, so the next fixture landing
+    # does not make this a number every merge has to edit.
+    #
+    # Read through `read_dump` rather than by parsing the `0750:` row here,
+    # because the `0f00` and `0400` dumps are in the same glob and cover no
+    # `0x0751` at all -- which is the coverage case the check skips, and
+    # deciding it a second way in the test is how the two could drift.
+    def test_no_committed_before_dump_already_holds_the_value_it_is_named_for(self):
+        for path in sorted((HERE / 'testdata').rglob('*-before-*.txt')):
+            name = re.search(r'-0751-isolation-([0-9a-f]{1,2})-before-',
+                             path.name)
+            if name is None:
+                continue
+            held = grade.read_dump(str(path)).get(grade.MANUAL_FAN_CTRL)
+            if held is None:
+                continue
+            self.assertNotEqual(
+                held, int(name.group(1), 16),
+                f'{path} already holds the value its own name carries, so a '
+                'group named for it is refused before anything is compared')
+
+    # The other direction: a clean two-block day is byte for byte what it was.
+    # Both groups are named from their files and both read a before-side that
+    # held something else, which is every committed §6 run and the case the
+    # rule is not for.
+    def test_the_two_blocks_of_the_committed_two_block_day_are_both_read(self):
+        rc, out, _ = run(*MULTI_BLOCK, *dumps(*MULTI_A0_DUMPS, *MULTI_10_DUMPS))
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertNotIn('is withheld for these files', section)
+        self.assertIn('the last dump still holds the written 0xA0', section)
+        self.assertIn('the last dump still holds the written 0x10', section)
+        # And through `--dump-pair`, where the same two brackets come back.
+        rc, out, _ = run(*MULTI_BLOCK, '--dump-pair', *MULTI_A0_DUMPS,
+                         '--dump-pair', *MULTI_10_DUMPS)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertNotIn('is withheld for these files', section)
+        self.assertIn('address(es) compared', section)
+        self.assertNotIn('no dump pair here was compared', section)
+
+    # The sibling the fixture scan above cannot be, and the case the rule was
+    # unsound on: a before-dump that already holds the value it is named for,
+    # on a day that says the byte was already there.
+    #
+    # `test_no_committed_before_dump_already_holds_the_value_it_is_named_for`
+    # walks the committed fixtures and finds none in this shape, so it is
+    # green whether or not the rule handles it -- no committed capture happens
+    # to rest at the value under test, and that is a property of the fixtures
+    # rather than of the rule. This builds the shape instead, from §6's own
+    # single-block day with the control arm rewritten to the value already in
+    # the file: a day that writes 0xA0 onto a byte already at 0xA0, which §3
+    # produces (step 2 is "write the value already there back to itself") and
+    # which nothing in the procedure rules out.
+    #
+    # Nothing here is transposed and nothing contradicts anything else: the
+    # before-dump holds 0xA0, the block's control arm says the byte was at
+    # 0xA0, the write puts 0xA0 there again, and the change row that would
+    # have claimed a move is deleted rather than contradicted. The `0x0751`
+    # change row left in place is the restore's, moved after the restore so it
+    # agrees with what the after-dump holds. §3's step order alone does not
+    # rule this shape out -- it rules out the block's *write* having put the
+    # value there, and says nothing about the byte having been there already
+    # -- so this is the case a rule resting on step order alone mis-fires on,
+    # and the control-arm gate is what makes it sound.
+    def test_a_day_that_writes_the_value_the_byte_already_holds_is_still_read(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            captures, before, after = self.already_at_the_value_day(tmp)
+            rc, out, _ = run(*captures, *dumps(before, after))
+        # The day grades clean: every mark spelled as §6 spells it, every
+        # change row agreeing with what the dumps hold, nothing transposed.
+        self.assertEqual(rc, 0)
+        self.assertIn('block 1 of 1: value under test 0xA0', out)
+        section = dumps_section(out)
+        # Read, not withheld. This file *is* that block's before-dump, and a
+        # withhold here would print a claim about the capture that the
+        # capture itself refutes.
+        self.assertNotIn('is withheld for these files', section)
+        self.assertIn('the first --dump already holds the written 0xA0',
+                      section)
+        self.assertIn('the last dump holds 0x10, not the written 0xA0',
+                      section)
+        # And through `--dump-pair`, which is the section with no
+        # `last == written` arm to fall back on.
+        with tempfile.TemporaryDirectory() as tmp:
+            captures, before, after = self.already_at_the_value_day(tmp)
+            rc, out, _ = run(*captures, '--dump-pair', before, after)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertNotIn('is withheld for these files', section)
+        self.assertIn('address(es) compared', section)
+        self.assertNotIn('no dump pair here was compared', section)
+
+    @staticmethod
+    def already_at_the_value_day(tmp):
+        """§6's single-block day, copied into `tmp` and found already at 0xA0.
+
+        `(captures, before, after)`, all as strings ready to hand to `run`.
+        Two runs read the same shape through different sections, and building
+        it twice would let the two halves of one case drift apart -- which is
+        the shape the §4.6 test would then be checking against a fixture the
+        `--dump-pair` half never saw.
+        """
+        day = Path(tmp) / 'already-at-the-value'
+        shutil.copytree(RUN, day)
+        for path in sorted(day.glob('*.csv')):
+            MisfiledBeforeDumpTests.rewrite_already_at_the_value(path)
+        before, after = day / Path(RUN_BEFORE).name, day / Path(RUN_AFTER).name
+        MisfiledBeforeDumpTests.set_0751(before, 0xA0)
+        MisfiledBeforeDumpTests.set_0751(after, 0x10)
+        return (tuple(str(p) for p in sorted(day.glob('*.csv'))),
+                str(before), str(after))
+
+    # The two rewrites the case above is built from, as helpers, because both
+    # are about the *capture* and neither is about a dump: `set_0751` is a
+    # dump byte and `rewrite_already_at_the_value` is the mark set the byte
+    # has to agree with. Kept beside the case rather than shared with the swap
+    # tests, which change a file name and nothing else.
+    @staticmethod
+    def set_0751(path, value):
+        """One dump's `0x0751` byte, at the offset `read_dump` reads it at."""
+        rows = Path(path).read_text().splitlines(keepends=True)
+        base = grade.MANUAL_FAN_CTRL & ~0x0F
+        for i, row in enumerate(rows):
+            if row.startswith(f'{base:04X}:'):
+                fields = row.split()
+                fields[1 + (grade.MANUAL_FAN_CTRL & 0x0F)] = f'{value:02X}'
+                rows[i] = ' '.join(fields) + '\n'
+                break
+        Path(path).write_text(''.join(rows))
+
+    @staticmethod
+    def rewrite_already_at_the_value(path):
+        """One capture's marks as a day that found the byte at 0xA0.
+
+        The control arm and the restore become `0x0751=0xA0`, the write under
+        test keeps its own `0x0751=0xA0` -- §3 spells the write out with the
+        value, whatever was there -- the change row that would claim the byte
+        moved 0x10 -> 0xA0 is dropped because nothing moved, and the restore's
+        change row is placed after the restore mark so it agrees with what the
+        after-dump holds. Every mark row is rewritten in all three captures,
+        because the census compares the three spellings against each other and
+        a rewrite in one alone is a disagreement it reports as its own thing.
+        """
+        rows = Path(path).read_text().splitlines(keepends=True)
+        out, move = [], None
+        for row in rows:
+            if 'no-op wrote 0x0751=0x10' in row:
+                out.append(row.replace('0x10', '0xA0'))
+            elif 'restored 0x0751=0x10' in row:
+                out.append(row.replace('0x10', '0xA0'))
+            elif '0x0751,0x10,0xA0' in row:
+                continue
+            elif '0x0751,0xA0,0x10' in row:
+                move = row
+            else:
+                out.append(row)
+        if move is not None:
+            last = max(i for i, r in enumerate(out) if 'restored 0x0751' in r)
+            out.insert(last + 1, move)
+        Path(path).write_text(''.join(out))
 
 
 if __name__ == '__main__':
