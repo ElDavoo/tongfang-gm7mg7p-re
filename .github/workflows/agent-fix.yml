@@ -222,6 +222,33 @@ jobs:
           gh pr view "$PR" --json body --jq .body > /tmp/pr/body.md
           cp /tmp/pr/title.txt /tmp/pr/body.md /tmp/pr-before/
 
+      # LOCAL CHANGE (2026-10-03, not in the template): merge main before the round, not only
+      # after it. The pre-push merge below meets every conflict between the branch and main, and a
+      # conflict in a file that is not generated makes it give up -- after the agent's whole round
+      # (#1716's round on 2026-10-03 ran 57 minutes and was discarded on a conflict in
+      # measure_mark_provenance.py). Merged here, the conflict is in the tree the agent works on,
+      # it resolves it as part of the round, and the pre-push merge only meets what landed on main
+      # while the round ran. A merge left unfinished here is finished by "Commit and push".
+      - name: Merge main before fixing
+        if: steps.round.outputs.stuck != 'true'
+        run: |
+          set -uo pipefail
+          git config user.name  'agent'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          : > /tmp/merge-conflicts.txt
+          git fetch --quiet origin main
+          if git merge-base --is-ancestor origin/main HEAD; then exit 0; fi
+          if git merge --no-edit --quiet origin/main; then exit 0; fi
+          # Generated files are regenerated from the merged inputs; what is left is for the agent.
+          bash <(git show origin/main:.github/scripts/regenerate-conflicted.sh) || true
+          git diff --name-only --diff-filter=U > /tmp/merge-conflicts.txt
+          if [ ! -s /tmp/merge-conflicts.txt ]; then
+            GIT_EDITOR=true git commit --no-edit --quiet
+          else
+            echo "Left for the fix round to resolve:"
+            cat /tmp/merge-conflicts.txt
+          fi
+
       # Rounds 1-8 and 10: fix the failure in front of you.
       #
       # LOCAL CHANGE (2026-10-01): the paragraph on deleting rather than rewording. On the open
@@ -250,6 +277,13 @@ jobs:
             #${{ inputs.pr }}, for issue #${{ inputs.issue }}. The branch is checked out.
 
             ${{ inputs.reason == 'ci' && 'CI failed. The failed jobs'' logs are in /tmp/failure.txt.' || 'The code review requested changes. The blocking findings are in /tmp/failure.txt.' }}
+
+            If /tmp/merge-conflicts.txt lists any files, the branch is in the middle of a merge
+            with main and those files carry conflict markers. Resolve them first, before the
+            failure: produce what is true of both sides' work, keeping each side's additions
+            (CLAUDE.md, "A merge conflict is never committed; it is resolved"). Do not run
+            `git merge --abort` or `git checkout --ours/--theirs` on a whole file. The commit
+            step finishes the merge.
 
             Read CLAUDE.md first. A CI failure in a mature repository is more often a documented
             gate than a bug, and CLAUDE.md is where the reason behind each gate is written down.
@@ -315,6 +349,10 @@ jobs:
             Pull request #${{ inputs.pr }} (issue #${{ inputs.issue }}) has failed eight fix
             rounds. This is the escalation round. One round remains after this one, and then
             the pipeline gives up and hands the branch to a human.
+
+            If /tmp/merge-conflicts.txt lists any files, the branch is in the middle of a merge
+            with main and those files carry conflict markers: resolve them first, keeping both
+            sides' work, and do not abort the merge. The commit step finishes it.
 
             Assume the approach taken so far is wrong. Eight attempts that each looked
             reasonable and each failed is evidence about the diagnosis, not about the effort.
@@ -426,7 +464,16 @@ jobs:
           git config user.name  'agent'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          if git diff --cached --quiet; then
+          # A merge the round was asked to finish must not be committed with markers in it.
+          if [ -s /tmp/merge-conflicts.txt ]; then
+            mapfile -t merged < /tmp/merge-conflicts.txt
+            if git grep -nE '^(<<<<<<<|>>>>>>>) ' -- "${merged[@]}" > /tmp/markers.txt 2>/dev/null; then
+              echo "::error::the round left conflict markers in the merge with main:"
+              head -20 /tmp/markers.txt
+              exit 1
+            fi
+          fi
+          if [ -z "$(git rev-parse -q --verify MERGE_HEAD)" ] && git diff --cached --quiet; then
             # A round that changed only the title or description has no push to start the next
             # review, so it is restarted the way agent-retry.yml restarts one: close and reopen
             # with the PAT, then re-arm auto-merge, which closing disarms. The round counter
@@ -445,7 +492,11 @@ jobs:
           fi
           # Scratch history: the pull request squash-merges under its own title and body, so
           # none of these subjects reach main.
-          git commit -m "fix round ${ROUND} (${REASON})"
+          if [ -n "$(git rev-parse -q --verify MERGE_HEAD)" ]; then
+            git commit -m "fix round ${ROUND} (${REASON}), with main merged in"
+          else
+            git commit -m "fix round ${ROUND} (${REASON})"
+          fi
 
           # Bring the branch up to date with current main before pushing, for the reason spelled
           # out in agent-implement.yml: a branch whose workflow files differ from the default
