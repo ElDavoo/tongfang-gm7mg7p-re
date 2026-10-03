@@ -204,10 +204,15 @@ last mark the capture has. If it is not the restore, the block is short one.
 The check over the capture is the one that survives into the record, and
 `../../ec/tools/grade_0751_isolation.py` now makes it: it groups the marks
 into blocks — one per write under test, opened by the no-op control arm and
-closed by the restore — prints an `intact` or a `VOID` verdict for each, and
-exits non-zero if any block is void. It reads the CSVs rather than the
-terminal, and that is not a preference: `ec_watch.py` appends a mark to its
-own list and prints it whether or not the CSV sink is still open
+closed by the restore — prints an `intact`, a `VOID` or a `PARTIAL` verdict for
+each, naming the captures the verdict rests on, and exits non-zero if any block
+is void or partial. The verdict is per capture: `intact` means every capture
+that recorded anything in that block closed on the restore, `VOID` that none
+did, and `PARTIAL` that some did and some did not — which is what a restore
+mark that reached two of the three consoles and missed the third produces. It
+reads the CSVs rather than the terminal, and that is not a preference:
+`ec_watch.py` appends a mark to its own list and prints it whether or not the
+CSV sink is still open
 (`../../windows/tools/ec_watch.py:211-214` against the close at `:330-332`),
 so the last label on the screen can be one the capture never received. The
 by-eye check above is still the fastest one to do at the machine; run the
@@ -821,7 +826,18 @@ else in the set says it. The marks in all three CSVs must carry the same
 labels, must tell the control arm from the write under test, and must leave
 every block ending on its restore. All three are checked, per block and per
 capture, before a window is
-printed — see §3, and the census the grader puts above the windows. The labels
+printed — see §3, and the census the grader puts above the windows. The
+restore rule is per capture too, and the verdict word is: `intact` means every
+capture that recorded anything in that block closed on the restore, `VOID` that
+none did and `PARTIAL` that some did and some did not, and each block line
+names the captures behind its word. A `PARTIAL` block is the case where the
+restore mark reached two consoles and missed the third, and the block line
+names the one that missed it. When that is the `0x0700` sweep it is the one
+that matters most — of §3's three `--start`/`--len` sweeps, `0x0700`/`0x0100`
+is the only one covering `0x0751`, so it is the only capture that can hold
+that block's own change rows for the byte, and those rows are then in a file
+with no mark saying which arm they belong to. A `PARTIAL` block is not filed as
+a finished block and the run's exit code is 1. The labels
 are §3's six forms: the three that name a write and carry a value —
 `no-op wrote 0x0751=0xA0`, `wrote 0x0751=0x10`, `restored 0x0751=0xA0` — and
 the three stage boundaries that carry none, `settled`, `held`, `watch over`.

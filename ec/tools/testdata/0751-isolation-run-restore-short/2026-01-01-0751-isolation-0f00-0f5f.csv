@@ -1,0 +1,17 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# timestamp below was written by hand. See ../README.md.
+# Shape: the 0x0F00-0x0F5F fan-table third of the same two-value day, the marks
+# a second after the 0700 capture's so the grader sees one action marked in
+# every watcher, and no change rows at all -- §4.2's prediction, and the
+# branch that keeps the grader from reading a fan-table move into this day.
+# Both blocks carry all three of their marks HERE, block 2's included: this
+# capture and 0400-045f are the two that recorded block 2's restore, and
+# 0700-07ff is the one that did not. Not a prediction that the table stays put,
+# nor that a mark reaches two watchers and misses a third.
+ts,addr,old,new
+2026-01-01T12:00:11.000+01:00,MARK,,no-op wrote 0x0751=0x10
+2026-01-01T12:00:41.000+01:00,MARK,,wrote 0x0751=0xA0
+2026-01-01T12:01:11.000+01:00,MARK,,restored 0x0751=0x10
+2026-01-01T12:05:11.000+01:00,MARK,,no-op wrote 0x0751=0xA0
+2026-01-01T12:08:31.000+01:00,MARK,,wrote 0x0751=0x00
+2026-01-01T12:09:11.000+01:00,MARK,,restored 0x0751=0xA0
