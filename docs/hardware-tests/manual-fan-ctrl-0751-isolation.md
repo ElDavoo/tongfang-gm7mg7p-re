@@ -651,14 +651,15 @@ For each run, from the three CSVs plus the by-hand power readings:
    all seventeen branches). The three values §3 writes are `0xA0` (bits 7 and
    5), `0x10` (bit 4) and `0x00` (nothing), so bit 6 (`0x40`) is clear in all
    three, the branch is taken to `0x8998`, and the `0x8978` compare and the
-   `anl a,#0xbf` store at `0x898E`-`0x8990` are not reached. **That is a
-   statement about what `0x0751` holds when that arm runs, not about the value
-   you hand the tool**: `0x8942` loads the register itself, so a writer that
-   toggles bit 6 between your write and the next pass through the arm moves
-   the byte in and out of the store's reach. Step 6's readback line is what
-   says which way the byte stood when it was last read. The rest is a static
-   reading of committed disassembly and it is narrow: it rules out this one
-   path, and the arms CSV's own taken-arm row for `0x8942` carries
+   `anl a,#0xbf` store at `0x898E`-`0x8990` are not reached. **Whether that
+   store could have moved your byte is a question about what you wrote, and
+   where the byte stands now is a question about the register** — two
+   different readings, and step 6's readback line reports both: `0x8942` loads
+   the register itself, so a writer that toggles bit 6 between your write and
+   the next pass through the arm moves the byte in and out of the store's
+   reach, and the last dump then says which way it ended. The rest is a
+   static reading of committed disassembly and it is narrow: it rules out
+   this one path, and the arms CSV's own taken-arm row for `0x8942` carries
    `0x0751 read` rather than `r+w` — the store is only on the other side. It
    says nothing about which path did move the byte, and the paragraph above
    stands: a moved-back byte is still a finding. The write-up is
@@ -786,19 +787,21 @@ For each run, from the three CSVs plus the by-hand power readings:
    (`../../ec/annotations/manual-fan-ctrl-0751.md` §9 carries the listing and
    §9.1 which way `jnb` runs), and step 4's paragraph above carries the
    arithmetic: bit 6 is clear in `0xA0`, `0x10` and `0x00`, so a `0x0751`
-   holding any of them takes the branch and that store is not reached. The
-   gate reads the register rather than the value passed to `--wrote`, and
-   `manual-fan-ctrl-0751-writers.csv` carries `xrl a,#0x40` rows that can set
-   the bit on a byte whose bit 6 was clear, so the row is out of reach **while
-   the byte holds bit 6 clear** — which is what §6's readback line reports
-   about the byte as it last stood, and it names the clear as a live candidate
-   again if the byte came back holding bit 6. Do not spend the run matching a
-   value against it while it is ruled out, and do not read a value it *would*
-   have produced as evidence it ran. What is left to separate is **the EC's
-   other `0x0751` write paths and the vendor service**, and §3a's
-   service-stopped pass is the step that separates them: the same write with
-   the service up and the service down moves the byte in one case and not the
-   other only if the service is the writer.
+   holding any of them takes the branch and that store is not reached, and
+   `0xA0 & 0xbf`, `0x10 & 0xbf` and `0x00 & 0xbf` are each the value written,
+   so that store cannot turn any of them into another value either. Step 6's
+   readback line rules the row out on what you wrote and then says, separately,
+   where the byte stands now: `manual-fan-ctrl-0751-writers.csv` carries
+   `xrl a,#0x40` rows that can set the bit on a byte whose bit 6 was clear, so
+   a byte that came back holding bit 6 puts the store back in reach from
+   there — though on a written value with bit 6 clear those rows set the bit
+   and this store clears it again, leaving the byte where it started. Do not
+   spend the run matching a value against it while it is ruled out, and do not
+   read a value it *would* have produced as evidence it ran. What is left to
+   separate is **the EC's other `0x0751` write paths and the vendor service**,
+   and §3a's service-stopped pass is the step that separates them: the same
+   write with the service up and the service down moves the byte in one case
+   and not the other only if the service is the writer.
 
    **The `0x0400` pair is not this step's input.** §4.5's flat-load check is
    what reads those two temperatures, which is what §6 already says the pair is

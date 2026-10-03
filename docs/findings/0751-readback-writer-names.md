@@ -92,22 +92,36 @@ nothing in this change lowers the bar for it. What changed is that one
 candidate is named and excluded up front, so the operator does not spend the
 run matching a value against a path the byte cannot have taken.
 
-**The grader's sentence is conditional, and the byte it is about is the one in
-the register.** `0x8942` loads `0x0751` and tests `acc.6` on what the register
-holds, so the exclusion is a property of that byte and not of the value handed
-to `--wrote` — which is also the only reading the tool could have used. The
-mismatch line is reached once the byte has stopped holding the written value,
-so the value it just called stale cannot be the one that decides the arm; a
-`xrl a,#0x40` row in
+**The grader's sentence is keyed on the value that was written, and the byte
+the last dump holds is a second, separate statement.** The store is
+`0x898A 90 07 51 / 0x898D e0 / 0x898E 54 bf / 0x8990 f0`: it loads the register
+and applies `anl a,#0xbf`, so it maps `X -> X & ~0x40`. That makes the answer
+to "which writer moved the byte away from the value I wrote" a fact about
+`written` and nothing else — the store can move the byte away from `written` if
+and only if `written & 0x40` — and it is what the two sentences key on. A
+written value with bit 6 clear gets "It is not the bank0 `0x8978` temperature
+clear", with the arithmetic shown (`0xA0 & 0xbf` is `0xA0`, the value written);
+a written value with bit 6 set gets "The bank0 `0x8978` temperature clear is
+among them", because there the store turns one value into another.
+
+Where the byte stands at the last dump is the other question, and it gets its
+own sentence in the present tense: `0x8942` loads `0x0751` and tests `acc.6` on
+what the register holds, so a byte with bit 6 set now puts the store back in
+reach from here, and one without keeps it out. The two readings can disagree,
+and when they do the disagreement is the finding — `0x40` read back as `0x00`
+is that store's own transition, so it is named as a candidate rather than
+ruled out, which is the case a message keyed on the last dump's byte gets
+backwards.
+
+The `xrl a,#0x40` rows in
 [`manual-fan-ctrl-0751-writers.csv`](../../ec/annotations/manual-fan-ctrl-0751-writers.csv)
-can set bit 6 on a byte whose bit 6 was clear, between the write and the next
-pass through the arm. So the exclusion is scoped to the byte as the last dump
-holds it and is not stated flatly: a held byte with bit 6 set gets the
-opposite sentence, naming the temperature clear as a live candidate, and the
-exclusion is worded as holding *while the byte holds that value* because the
-last dump is the only reading of the register the tool has. All of that is
+are the reason `written` and `last` can drift apart between the write and the
+last dump: such a row can set bit 6 on a byte whose bit 6 was clear. It does
+not rescue the store on a written value with bit 6 clear — the row sets the
+bit and the store clears it again, so the byte is back where it started and
+that store is still not what moved it away from `written`. All of this is
 still a static reading of one image, and a byte that moved back is still a
-finding — what changes is the byte the reasoning is about.
+finding.
 
 **No count of writers appears in any of the surfaces this change touches**,
 and that is deliberate. The census's own figure is open-ended by its own
@@ -144,11 +158,14 @@ than by line: each value gets its own case rather than a parameterised loop, so
 a failure names which value lost its wording; the mismatch line must carry the
 exclusion and the `0x8978`/`0x40`/annotation-path anchors; `"something"` must
 be gone; and a numeral presented as a count of writers is what the `#196`
-guard fails on. The runbook side is located by anchor phrase rather than by
-line, and the tool side by the words the operator reads, so none of these
-anchors moves when another branch edits either file — and the runbook cannot
-lose its half of the claim on the next edit of the tool without a case going
-red.
+guard fails on. The predicate is pinned in both directions, because the two
+readings invert on `0x40` written and `0x00` held: that pair must name the
+temperature clear as a candidate, and every written value with bit 6 clear
+must exclude it whatever the last dump holds. The runbook side is located by
+anchor phrase rather than by line, and the tool side by the words the operator
+reads, so none of these anchors moves when another branch edits either file —
+and the runbook cannot lose its half of the claim on the next edit of the
+tool without a case going red.
 
 Editing `report_readback()` pushed the grader's per-capture census line below
 it down, so `measure_mark_provenance.py`'s citation of that line moved with it,
