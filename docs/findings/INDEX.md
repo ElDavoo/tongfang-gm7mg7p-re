@@ -32,6 +32,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-notice-two-moments.md`](0751-notice-two-moments.md) — The 0751 startup notice described two moments as one (issue #749)
 - [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md) — The two path-taking readers are kept, and their docstrings name their callers (issue #771)
 - [`0751-readback-before-dump-holds-written-value.md`](0751-readback-before-dump-holds-written-value.md) — §4.6 said "still" without reading the dump that would support it (issue #1401)
+- [`0751-readback-writer-names.md`](0751-readback-writer-names.md) — §4.6's readback names the writer the two bytes rule out, and what is left
 - [`0751-readback-written-value-notice.md`](0751-readback-written-value-notice.md) — §4.6's second precondition, stated when nothing names the value that was written (issue #387)
 - [`0751-refused-pair-as-readback.md`](0751-refused-pair-as-readback.md) — §4.6 named a pair the whole-block section had refused, and the hint ended in a pre-write dump (issue #386)
 - [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md) — §3's three unlabelled mark rounds were a fourth class of mark, and the block model had no place for them (issue #472)
@@ -69,6 +70,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`code-pointer-site-census.md`](code-pointer-site-census.md) — The 54 image-wide CODE-pointer sites, written down as a regenerable table, and what the list is not
 - [`committed-checkout-triples-held.md`](committed-checkout-triples-held.md) — What the checkout suite holds, which was seven of nine depths and no `stated` at all
 - [`common-07f0-0f75-158e-1594-tranche.md`](common-07f0-0f75-158e-1594-tranche.md) — `common,0x07F0`, `0x0F75`, `0x158E` and `0x1594`: the top of the corrected call-graph ranking, read (issue #558)
+- [`common-5a5a-edge-framing.md`](common-5a5a-edge-framing.md) — The `lcall 0x5a5a` at 0x0049 sits inside the version-string record, and the edge is a census false positive (issue #703)
 - [`common-runtime-tranche.md`](common-runtime-tranche.md) — The unannotated `common` pool, ordered, and its first 37 rows (issue #603)
 - [`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md) — A count is a budget on work, not a bound on the buffer: the region end bounds `walk_helper` and `chain_from`
 - [`counter-sweep-entry-set.md`](counter-sweep-entry-set.md) — The counter sweep's entry set: 180 call sites, one of them a call (issue #555)
@@ -140,6 +142,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`nested-export-frames.md`](nested-export-frames.md) — Frames the export nests inside its own functions (issue #622)
 - [`no-append-logs.md`](no-append-logs.md) — A document every merge must edit is a lock nobody holds, and this repository has now hit that three times
 - [`oem4-bit-map-and-bit0.md`](oem4-bit-map-and-bit0.md) — The `0x07A6` (`OEM_4`) bit map, and bit 0's owner (issue #93)
+- [`offline-import-ecrw.md`](offline-import-ecrw.md) — Four Windows tools bound a Win32 DLL at import, so a grader had to transcribe the watch table, and the DLLs now load on first use (issue #353)
 - [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md) — The opcode-table bounds census: every `OPCODE_LEN[d[i]]` in `ec/tools/`, and what holds the index in
 - [`opcode-table-coverage.md`](opcode-table-coverage.md) — The opcode table's coverage and a differential decode: 254 of 256 rows, 0 disagreements against two decoders that are not independent — and 8 against the manual, which is the finding — independent
 - [`pack-temp-producer-chain.md`](pack-temp-producer-chain.md) — The pack-temperature producer chain at `0x04A2`/`0x04A3` (issue #1425)
@@ -223,6 +226,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md) — §6a's per-direction rows and §6b's cluster split are held now, and what is still not (issue #850)
 - [`xdata-819-815-correction-chain.md`](xdata-819-815-correction-chain.md) — Two gate claims #819 corrected were settled by #815 and #823, and eleven pins across the chain no longer land (issue #836)
 - [`xdata-attribute-dispatch-boundary.md`](xdata-attribute-dispatch-boundary.md) — The attribute reader is measured against the six benign calls in `main()`, not filtered by `MODES`
+- [`xdata-carry-name-coverage.md`](xdata-carry-name-coverage.md) — What happened to every hand name: the carry report gets a name-indexed half (issue #881)
 - [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md) — The xdata census re-derivation checklist: what a re-export moves, and what to do about it (issue #820)
 - [`xdata-census-self-test-gate.md`](xdata-census-self-test-gate.md) — `xdata_register_map.py --self-test` was switched off for a reason that had
 - [`xdata-census-totals.md`](xdata-census-totals.md) — The census totals: 1,171 addresses / 14,819 references, and how to re-derive them (issue #557)
