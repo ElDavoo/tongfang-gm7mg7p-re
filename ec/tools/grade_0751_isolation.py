@@ -1188,11 +1188,17 @@ def capture_rows(path, errors=None):
     `rows_from_bytes`, which this delegates the row shape to -- the one place
     the row shape is stated at all: `existing_mark_labels`,
     `refused_capture_rows` and `read_early_exits` reach it from here, and so
-    do `read_capture` and the notice's `capture_snapshot`. Every one of them
-    now reads a capture once and streams its rows off the bytes that read
-    returned, so a capture has one moment rather than two on every path
-    (#786; `capture_snapshot` had it in #749, and the strict reader is the
-    one that had two opens).
+    do `read_capture` and `capture_snapshot`. Every one of them now reads a
+    capture once and streams its rows off the bytes that read returned, so a
+    capture has one moment rather than two on every path (#786;
+    `capture_snapshot` had it in #749, the strict reader is the one that had
+    two opens, and #767 gave `main` the same by reading one snapshot per
+    capture rather than calling two readers over it).
+
+    **`main` is not a caller of this**, and that is the shape rather than an
+    omission: it reads one `capture_snapshot` per capture and hands the same
+    row list to the strict rules and to `early_exits_of` (#767), so a capture
+    `main` grades was opened once rather than once per reader.
 
     A stream and not a filtered iterator, because the readers do not agree on
     which rows to drop: `skippable_row` is the filter three of them apply,
@@ -1312,9 +1318,11 @@ def read_capture(path):
     What the fold does **not** buy is a lock. One `open()` is one moment and
     the file is still moving after it; what it removes is the moment *inside*
     one read, where the mark and the rows could come from different files.
-    `main` still reads the same capture twice over, through this and
-    `read_early_exits` (#767), which is a different site and a different
-    question.
+    `main` used to read the same capture twice over, through this and
+    `read_early_exits`, and takes one `capture_snapshot` over both passes
+    instead (#767) -- so this is no longer on `main`'s path at all, and the
+    two-tuple this returns is a contract with the tools that unpack it rather
+    than one `main` reads.
 
     `utf-8`, declared rather than inherited from the interpreter reading the
     file, and no `errors=`: a byte outside the format is a refusal of the
@@ -1682,6 +1690,15 @@ def capture_snapshot(path):
     moments, microseconds apart or not. Whatever landed between them is a row
     one of the two answers has and the other does not.
 
+    **Two callers, and between them they cover every read of a capture in the
+    grading path.** `existing_mark_findings` has read this way since #749, and
+    `main` does too (#767), which took the per-capture census line off two
+    readers and onto one snapshot: the mark and change counts and the
+    early-exit count in that one printed line are now off the same buffer
+    rather than off two opens a few lines apart. What that does **not** buy
+    is a lock -- a row landing after this read is still graded, by the
+    whole-file grading `report_census` already tells the operator about.
+
     `open(path, "rb")` and one `read()`, so there is no second open to be a
     second moment. The decode is then the format's, through `rows_from_bytes`:
     the same `utf-8` `read_capture` declares (#748), over the same bytes, and
@@ -1950,8 +1967,9 @@ def read_early_exits(path):
     `read_capture` drops.
 
     A second reader rather than a change to `read_capture`, for two
-    independent reasons. Its two-tuple is a contract with a second tool --
-    `grade_gpu_door.py` imports this module and unpacks it in `main` -- and its
+    independent reasons. Its two-tuple is a contract with other tools --
+    `grade_gpu_door.py`, `manual_fan_ctrl_probe.py` and
+    `scan_mark_collisions.py` each import this module and unpack it -- and its
     skip rule is the invariant this has to be added beside rather than
     through: `#` rows are skipped *so that* an operator can annotate a capture
     by hand without breaking this, and every committed fixture under
@@ -1980,14 +1998,45 @@ def read_early_exits(path):
     without it, a byte-order mark at offset 0 glued itself to the first
     field of whatever row came first, and a crash row written on line 1 was
     invisible to the one reader that exists to find it, and now is: the
-    normalisation is what makes it so, not a caller. The only caller is
-    `main`, which guards `read_capture` and returns 1 on the refusal
-    before this is reached, so a capture the strict reader refused whole
-    is answered by the printed refusal rather than raised; a refused one
-    is also `existing_mark_findings`' to answer, via `bom_refusal`.
+    normalisation is what makes it so, not a caller. This is no longer
+    `main`'s path into an early-exit row -- `main` reads one snapshot per
+    capture and hands its rows to `early_exits_of` (#767) -- so nothing here
+    is reached for a capture the strict rules refused; that one is answered
+    by the printed refusal `main` makes, and by `existing_mark_findings`,
+    which names the same files `bom_refusal` speaks for.
+    """
+    return early_exits_of(capture_rows(path), path)
+
+
+def early_exits_of(rows, path):
+    """The early-exit rows among `rows`: `read_early_exits`' own body, over a
+    row list rather than a path.
+
+    The shape `mark_labels_of` and `partition_capture_rows` already have
+    (#749), taken for the same reason and no new one: the rule below is
+    `read_capture`'s counterpart, so a second copy of it would be a second set
+    of rules the notice could apply, and the whole of its value is that its
+    verdict is the reader's.
+
+    **The path here is the entry point, and `main` is no longer a caller of
+    it** (#767). It used to read the same capture a second time, a few lines
+    after the strict read, so the early-exit count it appended to the census
+    line came from a different moment than the mark and change counts already
+    in that line -- and §3 runs three watchers on one `--csv` with
+    `CsvSink.row` flushing every row, so the two opens were microseconds apart
+    or not and a row landing between them was a row the two halves of one
+    printed line disagreed about. `main` now takes one `capture_snapshot` per
+    capture and hands the same row list to the strict pass and to this, so the
+    census line is one moment rather than two.
+
+    So this takes rows and the caller decides what they are, and the phrase
+    test below is the whole of what it decides. It is `read_early_exits`' body
+    unchanged, and that is the claim: `test_early_exits_of_is_read_early_exits_
+    over_one_row_list` holds the two to each other rather than leaving a
+    reader to check them against each other by reading.
     """
     out = []
-    for row in capture_rows(path):
+    for row in rows:
         if not row or not row[0].startswith(EARLY_EXIT_TAG):
             continue
         rest = row[0][len(EARLY_EXIT_TAG):].strip()
@@ -2629,13 +2678,28 @@ def charge_early_exits(early_exits, windows):
     say. What it is short is a *hold*, and that is a different fact wearing
     the same word on the block line.
 
-    A row that cannot be placed -- no readable timestamp, no window at or
-    before it, or a window in no block -- is refused by the caller instead of
-    filed anywhere. It is a run-level refusal on `unplaceable_marks`'s
+    A row that cannot be placed -- no readable timestamp, a timestamp whose
+    offset does not match the marks it would be placed against, no window at
+    or before it, or a window in no block -- is refused by the caller instead
+    of filed anywhere. It is a run-level refusal on `unplaceable_marks`'s
     argument: block attribution rests entirely on the labels and where each
     row falls, so a row this cannot place leaves every block's completeness
     uncertifiable, and `--block` narrows what is graded rather than what is
     known.
+
+    **The offset check is a refusal rather than a comparison that raises**
+    (#767). `parse_ts` is `datetime.fromisoformat`, which accepts a bare
+    `YYYY-MM-DDThh:mm:ss` and returns a *naive* datetime, so a stamp cut
+    before its offset still parses and arrives here as a `ts` while every
+    window's carries the offset `manual_fan_ctrl_probe.now()` wrote -- and
+    `w.ts <= e.ts` below raises `TypeError: can't compare offset-naive and
+    offset-aware datetimes` straight out of `main`, killing a run over a file
+    the operator did nothing wrong to. No race is needed for that: a watcher
+    killed mid-`flush` leaves that file on disk, and so does a hand-edited or
+    truncated row. Checked here rather than in the reader because the two
+    ends are the question: the row alone is well-formed, and it is only
+    against *these* windows that it cannot be placed, which is why the reason
+    names the mismatch and not a fault of the row.
     """
     placed, refused = [], []
     order = sorted(windows, key=lambda w: w.ts)
@@ -2644,6 +2708,14 @@ def charge_early_exits(early_exits, windows):
             refused.append((e, "the row carries no timestamp this can "
                                "read, so nothing in it says when the run "
                                "stopped"))
+            continue
+        if any((w.ts.tzinfo is None) != (e.ts.tzinfo is None) for w in order):
+            refused.append((e, f"its timestamp {e.ts.isoformat(sep=' ')} "
+                               f"carries {'no' if e.ts.tzinfo is None else 'a'} "
+                               f"UTC offset and the marks in these captures "
+                               f"do not agree, so the two cannot be compared "
+                               f"and there is no window for it to have cut "
+                               f"short"))
             continue
         before = [w for w in order if w.ts <= e.ts]
         if not before:
@@ -4371,13 +4443,14 @@ def main(argv=None):
     marks, changes = [], []
     exits = []
     for path in paths:
-        # `read_capture` refuses a file by raising, and the exception's own text
-        # is the sentence -- `bom_refusal`, a short row, a timestamp `parse_ts`
-        # cannot read -- so it is printed here rather than restated. Two
-        # reasons it is printed and not caught higher: a file this cannot read
-        # is a file the operator named on the command line and can be pointed at
-        # a different one, and one raised out of `main` is a traceback over a
-        # §6 file list that is otherwise a clean refusal.
+        # A refusal of a file is an exception, and the exception's own text is
+        # the sentence -- `bom_refusal`, the `UnicodeDecodeError` of the
+        # declared codec, a short row, a timestamp `parse_ts` cannot read -- so
+        # it is printed here rather than restated. Two reasons it is printed
+        # and not caught higher: a file this cannot read is a file the operator
+        # named on the command line and can be pointed at a different one, and
+        # one raised out of `main` is a traceback over a §6 file list that is
+        # otherwise a clean refusal.
         #
         # "Nothing was graded", and not "nothing was read": §6 passes one CSV
         # per watcher, so a later path here can be refused after an earlier one
@@ -4390,8 +4463,39 @@ def main(argv=None):
         # about the captures as one set, so a set one of whose members is
         # unreadable has no report, and the census lines already on stdout are
         # counts rather than a grade.
+        #
+        # **One `open()` and one read per capture, and both passes over it**
+        # (#767). This used to be two: `read_capture` for the marks and
+        # changes, then `read_early_exits` for the crash rows, a few lines
+        # apart, and the two counts were appended to one printed line -- so
+        # the census line this tool prints per capture was a composite of two
+        # moments on a file §3 has three watchers appending to by design. The
+        # refusals are `read_capture`'s, in its order, off the one buffer: the
+        # mark first (three bytes, decidable without a decode, and the one the
+        # strict rules must have before they read a row), then the decode, so a
+        # file carrying both faults is named the same way here as
+        # `read_capture` and `existing_mark_findings` name it.
+        #
+        # `read_capture` itself is not called; its signature and executable
+        # body are unchanged, and only its docstring is not. Its two-tuple is
+        # a contract with the other tools that unpack it, and taking that
+        # contract over would be a change to a reader other
+        # programs depend on to fix a problem in this one. The strict rules
+        # below are its two (`skippable_row` and `take_capture_row`), over
+        # rows this read, and
+        # `test_read_capture_still_returns_the_two_tuple_the_other_tools_unpack`
+        # holds the reader to the contract while this holds the rules to it.
+        rows, decode_failure, has_bom = capture_snapshot(path)
         try:
-            m, c = read_capture(path)
+            if has_bom:
+                raise ValueError(bom_refusal(path))
+            if decode_failure is not None:
+                raise decode_failure
+            m, c = [], []
+            for row in rows:
+                if skippable_row(row):
+                    continue
+                take_capture_row(row, path, m, c)
         except ValueError as refusal:
             print(f"\n{refusal}", file=sys.stderr)
             print(f"{path}: nothing was graded. A capture is what "
@@ -4408,11 +4512,12 @@ def main(argv=None):
         # Counted here rather than at the section below, because this line is
         # what a capture with no MARK rows is refused on -- and a capture with
         # no marks and an early-exit row in it is the one the refusal has to
-        # be able to name.
-        rows = read_early_exits(path)
-        if rows:
-            exits.append((path, rows))
-            read += f", {len(rows)} early-exit row(s)"
+        # be able to name. Off the same `rows` the marks above came from, so
+        # the two numbers in this line describe one file rather than two.
+        found = early_exits_of(rows, path)
+        if found:
+            exits.append((path, found))
+            read += f", {len(found)} early-exit row(s)"
         print(read)
 
     if not marks:
