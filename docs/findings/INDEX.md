@@ -247,6 +247,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-census-totals.md`](xdata-census-totals.md) — The census totals: 1,171 addresses / 14,819 references, and how to re-derive them (issue #557)
 - [`xdata-check-message-pin-sweep.md`](xdata-check-message-pin-sweep.md) — Six `check()` calls read a pin their message never names, and the sweep that found them (issue #1363)
 - [`xdata-classify-operator-tests.md`](xdata-classify-operator-tests.md) — `classify()`'s two operator tests: `&&` is not address-of, and `&=` reads what it writes
+- [`xdata-cluster-key-round-trip.md`](xdata-cluster-key-round-trip.md) — A census row's `cluster_key` is the hash of that row, and it is held by a case rather than argued in prose (issue #896)
 - [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md) — The guard-off census, built by the flag instead of by patching a copy of the tool (issue #753)
 - [`xdata-cluster-refs-projection.md`](xdata-cluster-refs-projection.md) — A cluster's `refs` is the sum of its members' `refs_<program>`, and not of their `refs` (issue #343)
 - [`xdata-decile-cause-clamp-coverage.md`](xdata-decile-cause-clamp-coverage.md) — The `deciles()` floor had a case on one of its two callers and none on the other (issue #922)
