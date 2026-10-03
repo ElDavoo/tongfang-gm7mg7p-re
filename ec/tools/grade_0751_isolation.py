@@ -326,6 +326,12 @@ Usage:
         --dump-pair before-0700.txt after-0700.txt \
         --dump-pair before-0f00.txt after-0f00.txt
     python3 ec/tools/grade_0751_isolation.py --self-test
+
+A capture this cannot read is refused by name and not raised out of. The one
+input the format does not cover is a probe console log from before
+`manual_fan_ctrl_probe.py --csv`, which is free-form text rather than rows;
+`ec/tools/probe_log_to_capture.py` converts one into this schema, and says in
+the file it writes that the timestamps in it are reconstructed.
 """
 import argparse
 import csv
@@ -1935,9 +1941,10 @@ def read_early_exits(path):
     field of whatever row came first, and a crash row written on line 1 was
     invisible to the one reader that exists to find it, and now is: the
     normalisation is what makes it so, not a caller. The only caller is
-    `main`, which calls `read_capture` unguarded the line before, so a
-    capture the strict reader refused whole raises out of `main`; a
-    refused one is `existing_mark_findings`' to answer, via `bom_refusal`.
+    `main`, which guards `read_capture` and returns 1 on the refusal
+    before this is reached, so a capture the strict reader refused whole
+    is answered by the printed refusal rather than raised; a refused one
+    is also `existing_mark_findings`' to answer, via `bom_refusal`.
     """
     out = []
     for row in capture_rows(path):
@@ -4266,7 +4273,36 @@ def main(argv=None):
     marks, changes = [], []
     exits = []
     for path in paths:
-        m, c = read_capture(path)
+        # `read_capture` refuses a file by raising, and the exception's own text
+        # is the sentence -- `bom_refusal`, a short row, a timestamp `parse_ts`
+        # cannot read -- so it is printed here rather than restated. Two
+        # reasons it is printed and not caught higher: a file this cannot read
+        # is a file the operator named on the command line and can be pointed at
+        # a different one, and one raised out of `main` is a traceback over a
+        # §6 file list that is otherwise a clean refusal.
+        #
+        # "Nothing was graded", and not "nothing was read": §6 passes one CSV
+        # per watcher, so a later path here can be refused after an earlier one
+        # has been read and had its census line printed, and telling that
+        # operator nothing was read would be false about the two captures that
+        # were. The path is named here as well as in the refusal above so the
+        # sentence says which file ended the run. Returning rather than
+        # continuing to the next path is deliberate and is the same choice the
+        # repeat refusal above makes: every section of the report below is
+        # about the captures as one set, so a set one of whose members is
+        # unreadable has no report, and the census lines already on stdout are
+        # counts rather than a grade.
+        try:
+            m, c = read_capture(path)
+        except ValueError as refusal:
+            print(f"\n{refusal}", file=sys.stderr)
+            print(f"{path}: nothing was graded. A capture is what "
+                  "`ec_watch.py --mark --csv` and "
+                  "`manual_fan_ctrl_probe.py --csv` write, in the schema "
+                  "`ec/tools/probe_log_to_capture.py` reads into; a probe "
+                  "console log predating that mode is converted with it "
+                  "rather than graded as one.", file=sys.stderr)
+            return 1
         captures.append((path, m))
         marks += m
         changes += c
