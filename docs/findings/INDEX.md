@@ -168,6 +168,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pack-temp-producer-chain.md`](pack-temp-producer-chain.md) — The pack-temperature producer chain at `0x04A2`/`0x04A3` (issue #1425)
 - [`paged-trampoline-hits-by-hand.md`](paged-trampoline-hits-by-hand.md) — All 18 paged-trampoline hits, read one by one (issue #54)
 - [`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md) — The six `pd 0x07D0` accessors that were not functions, and what naming them did to the census (issue #1101)
+- [`pd-07d2-index-or-word-half.md`](pd-07d2-index-or-word-half.md) — `0x07D2` is an index and a word's low byte, and choosing between them is the wrong question
 - [`pd-11c2-dispatch-key-selector.md`](pd-11c2-dispatch-key-selector.md) — The `pd 0x11C2` dispatch key is `0x0424 + 0x260 * R7`, and only three key pairs ever leave the default record (issue #647)
 - [`pd-call-site-table-framing.md`](pd-call-site-table-framing.md) — Five `pd` dispatch call sites whose tables the annotation rows read as instructions (issue #643)
 - [`pd-callers-status-intersection.md`](pd-callers-status-intersection.md) — A caller's literals are not index-register loads unless the site indexes on those registers
