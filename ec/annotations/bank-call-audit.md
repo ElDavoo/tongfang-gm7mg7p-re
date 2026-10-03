@@ -562,6 +562,35 @@ finds nothing never licenses the second. Anyone who needs bucket C settled
 should decode the common area from a recovered function boundary set, which is
 a disassembler's job and a different issue.
 
+**The unplaced half, censused (issue #1147).** "The other 105 are not thereby
+calls" is the right reading and this census does not change it.
+`ec/tools/bucket_c_unplaced.py` takes the bucket-C rows
+`data_regions.region_at()` declines and gives each a row in
+[`bucket-c-unplaced.csv`](bucket-c-unplaced.csv), with a verdict from a closed
+four-value vocabulary and a non-empty reason: **93 read `code`** — 74 inside a
+span the #49 walk decoded without being the first byte of an instruction, 17
+inside a `common` function `ec/decompiled/index.csv` records (every one of them
+a row the walk itself never reached, so that 17 is the second method's coverage
+and not the walk's), and 2 that do start an instruction it decoded —
+**11 stay `unresolved`** carrying the walk's own reason, and **1 is
+`trampoline`**, which is `0x021C6` naming the `0xE000` this section already
+called out. **None is a `table-entry`**: no unplaced site lies within one stride
+of a listed region, the closest being 5 bytes from an edge beside a stride-3
+region. `code` is a statement about where a byte falls relative to something a
+method in this repository read as code — not evidence the byte is a call, and not
+a behavioural observation. The counts above are unchanged and
+`offset_for_runtime()` still returns `None` for all 140.
+
+The function boundary set this section routes the decision to is **still not
+recovered, and is recorded now as an open question with no issue named** rather
+than by pointing at a closed one — naming an issue that no longer carries the
+work is the stale-pointer failure
+[`../../docs/findings/ec-data-regions.md`](../../docs/findings/ec-data-regions.md)
+§Limits already records. Two artifacts stand regardless of who picks it up:
+`ec/tools/bucket_c_codemap.py --spans`, and
+[`../../ec/ghidra/README.md`](../../ec/ghidra/README.md). The census itself is
+[`../../docs/findings/bucket-c-unplaced.md`](../../docs/findings/bucket-c-unplaced.md).
+
 **The handover, done (issue #49).**
 [`../../docs/findings/bucket-c-codemap.md`](../../docs/findings/bucket-c-codemap.md)
 is that decode, scoped to this one question. A recursive descent over the
