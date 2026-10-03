@@ -11,6 +11,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
 - [`0751-capture-row-shape.md`](0751-capture-row-shape.md) — One row stream for the 0751 capture readers, and a byte-order mark retired at the shape (issue #750)
 - [`0751-census-capture-identity.md`](0751-census-capture-identity.md) — The census counted a capture one way and its per-action line counted it another, and a list holding one file twice withheld a block on a clean run (issue #492)
+- [`0751-census-one-moment.md`](0751-census-one-moment.md) — One `open()` of a capture in `main`, and a truncated early-exit row (issue #767)
 - [`0751-dump-pair-battery-names.md`](0751-dump-pair-battery-names.md) — The 0x0400 pair's "other" bucket, on a mover the capture recorded (issue #219)
 - [`0751-early-exit-row.md`](0751-early-exit-row.md) — The grader dropped the probe's "the run ended early" row, and a 5-second arm graded as a 30-second one (issue #664)
 - [`0751-file-refusal-order.md`](0751-file-refusal-order.md) — Which of the two refusals names a file that is both (issue #784)
@@ -53,6 +54,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
 - [`bank-map-and-image-census.md`](bank-map-and-image-census.md) — The bank map, and a second image in the dump
+- [`bank1-c1e7-reachability.md`](bank1-c1e7-reachability.md) — No transfer in bank 1 names `0xC1E7`, which is why a reading of it stood unchallenged (issue #336)
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
 - [`bucket-c-codemap.md`](bucket-c-codemap.md) — Bucket C against a recovered code map: 16 of the 140 sites are on an instruction boundary, and 14 of those 16 sit inside spans already listed as data tables
