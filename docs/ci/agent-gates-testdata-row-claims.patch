@@ -1,4 +1,24 @@
 # ec/tools/check_testdata_row_claims.py, wired into the cheap gate. Prepared
+#
+# **This patch now carries two tools, not one.** The second is
+# `ec/tools/check_testdata_grader_claims.py`, folded in here rather than cut as
+# a file of its own for the reason every other fold in this directory is:
+# `tools/test_agent_gates_patches.py` applies the whole set in every ordered
+# pair, and the seven-line `gate` list has no line left that a new hunk can be
+# cut against -- `agent-gates-pin-table-rows.patch` holds the one at the front,
+# `agent-gates-capture-claims.patch` the one at `register counts`, and this
+# patch the one at the end. A separate file would apply cleanly *alone* and fail
+# in half the pairs, which is the failure that is silent in the way that
+# matters. `tools/test_agent_gates_patches.py`'s `FoldTests` reads this file
+# for both tools' strings, so a re-cut that keeps one half and drops the other
+# still applies, still composes, and passes every other case there.
+#
+# The new function hunk is at `check_shellcheck()`, the one anchor in the
+# script no patch in the set writes into; its two `gate` lines are appended to
+# the one this patch already carries.
+#
+# Original header, for ec/tools/check_testdata_row_claims.py alone:
+# ec/tools/check_testdata_row_claims.py, wired into the cheap gate. Prepared
 # here rather than landed, for the reason every other file in docs/ci/ is:
 # `.github/scripts/agent-gates.sh` is copied from the agent-pipeline template
 # and the pipeline's push token has no `workflow` scope, so a branch editing it
@@ -54,7 +74,6 @@
 #
 # The comment the function adds at the call site says the same thing where the
 # next reader of the gate will see it, rather than only here.
-
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
@@ -86,11 +105,42 @@ diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
  # The per-image reference counts in registers.yaml are the evidence several
  # statuses rest on, and a file-wide total hiding PD-image references is the
  # mistake docs/findings.md §3a had to correct. This recomputes every count
-@@ -275,6 +296,7 @@
+@@ -302,6 +323,29 @@
+   return "$rc"
+ }
+ 
++# The third column of ec/tools/testdata/README.md is the one a reader opens the
++# index to read, and it makes two kinds of claim about each fixture: which
++# addresses the fixture carries, and what grade_0751_isolation.py prints over
++# it. check_testdata_index.py and check_testdata_row_claims.py hold the first to
++# the tree; this holds the second, by running the grader over the set each row's
++# first column resolves to and comparing what it printed to what the row says of
++# it. That is the gap issue #978 measured and named -- both checkers reported 0
++# missing over the pre-repair tree at each of the index's hand-repairs, because
++# every row those repairs touched spells zero backticked addresses -- and
++# docs/findings/testdata-grader-claims.md is what closes it. Cheap tier because
++# of what it reads: the committed index, the committed tree under
++# ec/tools/testdata/, and the grader's own output over it -- no firmware image,
++# no Ghidra, no network. It prints a census of which rows carry a claim and
++# which do not, because the answer is a mix and a reader who cannot tell an
++# unchecked row from a clean one cannot tell whether the run covered anything,
++# and "unresolved" there means not checked by this method and never absent. Not
++# claimed: that a fixture demonstrates what its row says about the EC. This
++# compares the index's sentence to the grader's output, and the grader's output
++# is itself a claim about a capture no live run has produced.
++check_testdata_grader_claims() {
++  python3 ec/tools/check_testdata_grader_claims.py --check
++}
++
+ check_shellcheck() {
+   local f rc=0
+   while IFS= read -r -d '' f; do
+@@ -331,6 +375,8 @@
  gate 'python syntax'   check_python_syntax
  gate 'shellcheck'      check_shellcheck
  gate 'doc links'       check_doc_links
 +gate 'testdata row claims'  check_testdata_row_claims
++gate 'testdata grader claims'  check_testdata_grader_claims
  
  # What this tier does not run, and the one command that runs it. Printed
  # unconditionally, including on a failing run, because the moment to notice

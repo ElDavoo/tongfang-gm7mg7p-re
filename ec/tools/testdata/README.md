@@ -227,3 +227,32 @@ the rows either repair touched carry no address claim to be wrong about —
 measured in issue #978, and the same reason holds for all four. See
 `docs/findings/testdata-third-column-claims.md` and
 `docs/findings/testdata-row-claims-repair-measurement.md`.
+
+`../check_testdata_grader_claims.py` reads the **third** column for the other
+kind of claim in it, which is the one that measurement above left open by name:
+what `../grade_0751_isolation.py` prints over the set a row names. The rows
+those hand-repairs rewrote are about mark labels, block membership and where a
+count is taken, and none of that is an address, so the checker above reads none
+of it. This one decides those by **running the grader** over the first column's
+file set and comparing: the index writes a note constant's *name* rather than
+the note's prose, so the right-hand side is the grader's own module-level string
+formatted with the numbers the row states, and nothing re-spells it. The `N of
+the M` stem is printed in three grammatical places, so the **context** is the
+closed entry rather than the number, and a claim's own clause is what says what
+it is about — row 30 names another row's fixture in the same sentence it names
+its own, and only the reference's position tells the two apart. Its two closed
+lists are counted and printed **including the entries with no instance**, because
+a list of only what a run reached cannot be told from a shorter list; none of
+them fails the run, "not checked, not absent". A trailing "It is *not* a
+prediction that …" clause is stripped before any claim is read, and counted apart
+from the declines because a rule reaching one would turn the run red by
+construction. It declines a claim about another row's fixture, a row fed to
+another grader, a row naming no capture, a withheld count stated against a
+`--block` run's different banner spelling, a claim about the movement line's own
+restatement, and a count whose clause names neither counted line. **It is not a
+claim that a fixture demonstrates what this column says about the EC**: it
+compares the index's sentence to the grader's output, and the grader's output is
+itself a claim about a capture no live run has produced. Its wiring folds into
+`docs/ci/agent-gates-testdata-row-claims.patch`, which is two tools in one file
+because the `gate` list has no line a new hunk can be cut against. See
+`docs/findings/testdata-grader-claims.md`.
