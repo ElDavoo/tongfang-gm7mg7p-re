@@ -823,6 +823,9 @@ entries stay `present-untested`, and the names stay placeholders.
      reproduction, and the follow-ups it opens — issue #110's
      computed-DPTR remainder first, then a live read of `XDATA[0x0A56]` to
      settle whether §2's conditional writer ever fires.
+     **The `#110` pointer in the two lines above is corrected below**, in a
+     block placed here rather than in §6 or §9 so that the per-bucket totals
+     cited at §3's `0x0860` rows keep their line pins.
   2. The six case handlers at `0xD173`-`0xD24E` have no function entry
      (§9). Seeding them is a `--mode rebuild-project` change.
   3. `0x0862` and `0x086D` have no writer this method can see (§2, §8). A
@@ -836,3 +839,57 @@ entries stay `present-untested`, and the names stay placeholders.
      the same shape rather than an absence. Worth its own issue; §9 says what
      the cell does and does not mean.
   5. The live step of §10, which needs the physical machine.
+
+## 12. The `#110` pointers in §6 and §9, corrected in place (issue #519)
+
+> **CORRECTION (2026-10-03, issue #519) to three `#110` references in this
+> document, which are left as they were.** §6's "Answered" block says the
+> computed-DPTR remainder "is issue #110, and §6 of that document is the method
+> table"; §9's follow-up 1 says "the computed-DPTR remainder those methods
+> cannot see is issue #110", and its closing list repeats it. Each hands the
+> work to an issue as though the queue still held it open.
+>
+> **No open issue in this repository covers general computed-DPTR visibility in
+> `trace_xdata_refs.py`.** That is the whole correction, and it is phrased
+> against the tree rather than against the state of the queue, because this
+> pass did not read the issue tracker. The work is real and it is still
+> unowned, which is a different sentence from the one these three places
+> carried.
+>
+> What *has* landed, and what these references did not anticipate, is the
+> **bounded sibling**: `ec/tools/computed_dptr_sites.py` and
+> `ec/annotations/computed-dptr-sites.md` are committed, and they cover the
+> eight page-`0x0F` sites unseeded. They are a sibling tool rather than a mode
+> of `trace_xdata_refs.py`, for the compatibility reason that tool's own
+> docstring gives — its `--csv` default is what the committed `0x086x`,
+> `0x0400` and `0x07C4` tables reproduce byte for byte from. So the general
+> category remains absent from that tool and the pointers were wrong twice
+> over: about the queue, and about the tree.
+>
+> **The two pages §2's conditional writer turns on are also now bounded.**
+> `xdata-1c3x-consumers.md` §6.2's residual — the six `addc A,#imm ; mov
+> DPH,A` sites whose high byte is not the immediate — has been read and all six
+> close (`docs/findings/addc-dph-residual-six.md`,
+> `ec/annotations/xdata-addc-dph-residual-sites.csv`). Four build page
+> `{0x0D, 0x0E}`; two build `0x2A` and their computed pointer is consumed by a
+> `movc`, a CODE read, with the `movx` after it aimed at a hard literal. None
+> reaches page `0x08` or page `0x1C` by that construction, and only `0x2266`
+> writes — to a page-`0x0D`/`0x0E` address.
+>
+> **This does not touch §2's store.** `FUN_CODE_8294` at bank0 `0x8365` is a
+> `clr A` site, its `DPH` is `0x08` or `0x09`, and the `XDATA[0x0A56]` gate is
+> still unobserved — the same conditional writer, and still not evidence
+> either byte ever moves. The `0x0862`/`0x086D` rows stay `present-untested`,
+> no `status:` moved, and §10's live read remains the step that settles it.
+> That read is a human's; no hardware is reachable from a GitHub-hosted
+> runner.
+>
+> **One correction inside that correction.** The "still page `0x08`" reading
+> this block originally carried was itself resting on a false premise: it
+> treated `clr A` as clearing the carry, which on an 8051 it does not — it
+> clears the accumulator and leaves `CY` alone. The site's page set is
+> therefore `{0x08, 0x09}`, and it is `0x09` for every `XDATA[0x0A56]` value
+> §2's own table names. That is a live question about §2's table rather than
+> a settled result, so it is recorded in
+> `docs/findings/addc-dph-residual-six.md` §8 and left out of this document
+> rather than corrected here.

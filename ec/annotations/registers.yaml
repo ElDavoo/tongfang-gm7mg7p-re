@@ -4304,7 +4304,19 @@ registers:
       ten methods listed in that document's section 7. That is "not found by
       this method", never absence -- the computed-DPTR remainder is issue
       #110's and stays open. UNITS NOT DETERMINED. Per-address table:
-      ec/annotations/xdata-1c3x-consumers.md.
+      ec/annotations/xdata-1c3x-consumers.md. CORRECTION 2026-10-03 (issue
+      #519) to the "stays open" sentence above, which stands as written and is
+      corrected here rather than edited away: no open issue in this repository
+      covers general computed-DPTR visibility in trace_xdata_refs.py, and the
+      bounded version of the method is committed as the sibling tools
+      ec/tools/computed_dptr_sites.py and
+      ec/annotations/computed-dptr-sites.md rather than as a mode of that
+      tool. The six residual addc-into-DPH sites that document's section 6.2
+      named are read in docs/findings/addc-dph-residual-six.md and all six
+      close -- four build page 0x0D/0x0E, two build 0x2A and feed a movc --
+      so none reaches page 0x1C by that construction and only 0x2266 writes.
+      That negative is scoped to the construction and is not absence; this
+      entry stays present-untested and no status moved.
 
   - name: XDATA_1C37
     addr: 0x1C37
