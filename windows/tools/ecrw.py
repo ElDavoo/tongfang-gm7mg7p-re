@@ -49,6 +49,17 @@ already present and started; on the machine this was developed against that is
 `\DosDevices\ACPIDriver` symlink the 3.1.6.0-era `ACPIDriver.sys` does and
 carries the same 21 IOCTL codes. Must be run elevated.
 
+**Importing this module opens nothing and binds nothing.** `kernel32` is loaded
+on the first `Ec()`, not at import, because `ctypes.WinDLL` exists only on
+Windows: a module-scope bind made this file -- and every tool that does `from
+ecrw import ...` -- loadable only there. Off Windows `Ec()` raises `EcError`
+naming the platform, which `main` turns into a message and exit 1.
+`windows/tools/test_import_off_windows.py` holds both halves. The `try` around
+the `wintypes` import below is belt-and-braces rather than the load-bearing
+half: `ctypes.wintypes` imports cleanly on Linux, and the guard exists so a
+future interpreter without it fails at the point of use rather than as an
+`ImportError` from the top of the file.
+
 Usage:
   ecrw.py read  0x7b9 0x7d0 ...
   ecrw.py dump  0x0700 0x100          # start, length
@@ -61,7 +72,10 @@ Addresses and values accept 0x-prefixed hex or decimal.
 import argparse
 import ctypes
 import sys
-from ctypes import wintypes
+try:
+    from ctypes import wintypes
+except ImportError:  # pragma: no cover - only on a Python without the module
+    wintypes = None
 
 DEVICE = r"\\.\ACPIDriver"
 IOCTL_ECRR = 0x9C40A488
@@ -81,27 +95,67 @@ FILE_SHARE_READ_WRITE = 0x00000003
 OPEN_EXISTING = 3
 INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
 
-_k32 = ctypes.WinDLL("kernel32", use_last_error=True)
-
-_k32.CreateFileW.argtypes = [
-    wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, wintypes.LPVOID,
-    wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE,
-]
-_k32.CreateFileW.restype = wintypes.HANDLE
-
-_k32.DeviceIoControl.argtypes = [
-    wintypes.HANDLE, wintypes.DWORD, wintypes.LPVOID, wintypes.DWORD,
-    wintypes.LPVOID, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD),
-    wintypes.LPVOID,
-]
-_k32.DeviceIoControl.restype = wintypes.BOOL
-
-_k32.CloseHandle.argtypes = [wintypes.HANDLE]
-_k32.CloseHandle.restype = wintypes.BOOL
-
 
 class EcError(RuntimeError):
     pass
+
+
+_k32 = None
+
+
+def _kernel32():
+    """kernel32, loaded and declared on first use.
+
+    `ctypes.WinDLL` exists only on Windows, so binding it at import time made
+    this module loadable only there -- and every tool importing it with it, on
+    a runner that has no Windows. Binding on first call instead keeps the
+    pure-Python surface (`DEVICE`, the `IOCTL_*` codes, `EC_BASE`, `EcError`)
+    importable anywhere, which is what
+    `windows/tools/test_import_off_windows.py` holds. The signatures travel
+    with the load rather than staying at module scope because they are
+    assignments onto the handle that does not exist yet.
+
+    Cached, so one process binds it once: every `Ec` reuses the same handle
+    object, and the `argtypes`/`restype` writes happen once rather than per
+    construction.
+
+    Off Windows the failure is `EcError` naming the platform, rather than the
+    `AttributeError` a user got from the module-scope bind -- and it lands in
+    `main`'s own `except EcError`, so the CLI prints it and exits 1.
+    """
+    global _k32
+    if _k32 is not None:
+        return _k32
+    if wintypes is None:
+        raise EcError("ctypes.wintypes is unavailable on this interpreter, so "
+                      "the Win32 signatures this module needs cannot be built")
+    try:
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    except AttributeError:
+        raise EcError(
+            "ctypes.WinDLL does not exist on this platform -- this tool reads "
+            f"EC RAM through the vendor driver on {DEVICE} and is Windows-only. "
+            "On Linux, `ec/tools/ecmem.py` reads the same bytes through "
+            "/dev/mem") from None
+
+    k32.CreateFileW.argtypes = [
+        wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, wintypes.LPVOID,
+        wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE,
+    ]
+    k32.CreateFileW.restype = wintypes.HANDLE
+
+    k32.DeviceIoControl.argtypes = [
+        wintypes.HANDLE, wintypes.DWORD, wintypes.LPVOID, wintypes.DWORD,
+        wintypes.LPVOID, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD),
+        wintypes.LPVOID,
+    ]
+    k32.DeviceIoControl.restype = wintypes.BOOL
+
+    k32.CloseHandle.argtypes = [wintypes.HANDLE]
+    k32.CloseHandle.restype = wintypes.BOOL
+
+    _k32 = k32
+    return _k32
 
 
 class Ec:
@@ -115,8 +169,10 @@ class Ec:
     """
 
     def __init__(self):
-        h = _k32.CreateFileW(DEVICE, GENERIC_READ | GENERIC_WRITE,
-                             FILE_SHARE_READ_WRITE, None, OPEN_EXISTING, 0, None)
+        self._k32 = _kernel32()
+        h = self._k32.CreateFileW(DEVICE, GENERIC_READ | GENERIC_WRITE,
+                                  FILE_SHARE_READ_WRITE, None, OPEN_EXISTING,
+                                  0, None)
         if h == INVALID_HANDLE_VALUE or h is None:
             err = ctypes.get_last_error()
             raise EcError(
@@ -128,7 +184,7 @@ class Ec:
 
     def close(self):
         if self._h is not None:
-            _k32.CloseHandle(self._h)
+            self._k32.CloseHandle(self._h)
             self._h = None
 
     def __enter__(self):
@@ -139,8 +195,8 @@ class Ec:
 
     def _ioctl(self, code, buf):
         returned = wintypes.DWORD(0)
-        ok = _k32.DeviceIoControl(self._h, code, buf, len(buf), buf, len(buf),
-                                  ctypes.byref(returned), None)
+        ok = self._k32.DeviceIoControl(self._h, code, buf, len(buf), buf,
+                                       len(buf), ctypes.byref(returned), None)
         if not ok:
             raise EcError(f"DeviceIoControl(0x{code:08X}) failed, "
                           f"error {ctypes.get_last_error()}")

@@ -69,6 +69,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`code-pointer-site-census.md`](code-pointer-site-census.md) — The 54 image-wide CODE-pointer sites, written down as a regenerable table, and what the list is not
 - [`committed-checkout-triples-held.md`](committed-checkout-triples-held.md) — What the checkout suite holds, which was seven of nine depths and no `stated` at all
 - [`common-07f0-0f75-158e-1594-tranche.md`](common-07f0-0f75-158e-1594-tranche.md) — `common,0x07F0`, `0x0F75`, `0x158E` and `0x1594`: the top of the corrected call-graph ranking, read (issue #558)
+- [`common-5a5a-edge-framing.md`](common-5a5a-edge-framing.md) — The `lcall 0x5a5a` at 0x0049 sits inside the version-string record, and the edge is a census false positive (issue #703)
 - [`common-runtime-tranche.md`](common-runtime-tranche.md) — The unannotated `common` pool, ordered, and its first 37 rows (issue #603)
 - [`count-bounded-walk-invariant.md`](count-bounded-walk-invariant.md) — A count is a budget on work, not a bound on the buffer: the region end bounds `walk_helper` and `chain_from`
 - [`counter-sweep-entry-set.md`](counter-sweep-entry-set.md) — The counter sweep's entry set: 180 call sites, one of them a call (issue #555)
@@ -140,6 +141,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`nested-export-frames.md`](nested-export-frames.md) — Frames the export nests inside its own functions (issue #622)
 - [`no-append-logs.md`](no-append-logs.md) — A document every merge must edit is a lock nobody holds, and this repository has now hit that three times
 - [`oem4-bit-map-and-bit0.md`](oem4-bit-map-and-bit0.md) — The `0x07A6` (`OEM_4`) bit map, and bit 0's owner (issue #93)
+- [`offline-import-ecrw.md`](offline-import-ecrw.md) — Four Windows tools bound a Win32 DLL at import, so a grader had to transcribe the watch table, and the DLLs now load on first use (issue #353)
 - [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md) — The opcode-table bounds census: every `OPCODE_LEN[d[i]]` in `ec/tools/`, and what holds the index in
 - [`opcode-table-coverage.md`](opcode-table-coverage.md) — The opcode table's coverage and a differential decode: 254 of 256 rows, 0 disagreements against two decoders that are not independent — and 8 against the manual, which is the finding — independent
 - [`pack-temp-producer-chain.md`](pack-temp-producer-chain.md) — The pack-temperature producer chain at `0x04A2`/`0x04A3` (issue #1425)

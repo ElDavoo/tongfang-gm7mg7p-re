@@ -86,10 +86,12 @@ def _stub(name, source):
     """A stand-in for a Windows-only sibling import, with the names it imports.
 
     All four of the Windows writers do `from ecrw import ...` at module scope,
-    and `ecrw.py` calls `ctypes.WinDLL("kernel32")` at module scope, so none of
-    them can be imported on a Linux runner at all -- the tool would be
-    unrunnable here rather than wrong, and the writer half of this check would
-    have no answer to give. The names are read out of the writer's own import
+    and the stub keeps them loadable without the real module behind that name --
+    which is belt-and-braces now that `ecrw` binds kernel32 on its first `Ec()`
+    and imports anywhere (`windows/tools/test_import_off_windows.py`). What it
+    still buys is the failure it names: a driver call reaching the writer half
+    of this check raises here, by name, instead of quietly not happening. The
+    names are read out of the writer's own import
     line rather than listed here, so a writer that starts importing a fourth
     name does not need this file edited to stay loadable.
 

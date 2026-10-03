@@ -7,15 +7,16 @@ directory has to be the import root. `unittest discover -s ec/tools` already
 puts it there, which is how tools/run-tests.sh runs this file; the insert below
 is so the suite also runs from an editor or a bare `python3` on its own.
 
-The eighth check is the one that keeps a second copy honest. The grader cannot
-import windows/tools/gpu_block_watch.py -- that module does `from ecrw import
-Ec, EcError`, and `ecrw` binds kernel32 at import time, so it loads only on
-Windows and an offline grader that imported it would be Windows-only. So the
-grader states its own two window bounds and its own 24 DSDT field-list names,
-and windows/tools/test_gpu_block_watch.py holds both against the watcher's
-WATCH. That is the same shape of hold as the one that caught the procedure's
-four stale cells in #266: two copies of a table, and one test that fails when
-they disagree.
+The grader's two tables are not transcribed here or in
+windows/tools/test_gpu_block_watch.py: it imports `gpu_block_watch` for its
+window bounds and its DSDT field-list names, so the watch table is read once
+from `evidence/acpi/dsdt.dsl` -- in `CitationTableTests` there -- and named
+once in the §5 column. What is checked here instead is the property a
+transcription could not have: that the grader can *name* every address its own
+bounds cover. `name_of` raises `KeyError` on an address with no name, so a
+capture carrying a row inside the bounds but outside the name table would fail
+the grader's own report rather than read it -- which is a reason to hold the
+two tables against each other that is not "this equals that".
 """
 import contextlib
 from datetime import timedelta
@@ -246,6 +247,26 @@ class FixtureTests(unittest.TestCase):
         for addr, _ in door.DS_NAMES:
             self.assertIn(door.window_of(addr), {lbl for lbl, _, _ in
                                                  door.WINDOWS}, addr)
+
+    def test_every_address_the_bounds_cover_can_be_named(self):
+        # The check that replaced the transcription hold, and it is a different
+        # question rather than a restated one. `report_window` prints
+        # `name_of(addr)` for every change row inside a window, and `name_of`
+        # raises `KeyError` rather than returning a blank -- so an address the
+        # bounds cover but the name table misses fails the grader's own report
+        # halfway through printing it. Both directions: a name outside the
+        # bounds is a row the grader never prints it for, and an address inside
+        # them with no name is a row it dies on.
+        covered = {a for _, lo, hi in door.WINDOWS for a in range(lo, hi + 1)}
+        named = {addr for addr, _ in door.DS_NAMES}
+        self.assertEqual(covered, named)
+        # Read through `name_of` rather than off the tuple, so a name that was
+        # present but unreachable would fail here: a bare empty string is the
+        # shape the DSDT's own "this byte is not a field" cell takes, and §5's
+        # column is the whole of what a blank would leave a reader.
+        for addr in sorted(covered):
+            name = door.name_of(addr)
+            self.assertTrue(name.strip(), f"0x{addr:04X} has a blank name")
 
     def test_window_of_refuses_an_address_outside_both_blocks(self):
         # 0x0747 is one past the host half and 0x07C3 one before the ACPI
