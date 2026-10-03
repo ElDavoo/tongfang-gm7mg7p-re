@@ -114,7 +114,7 @@ addr,file_offset,region,runtime,frame_onto,frame_over,access,window,terminator
 0x07D6,0x2BDC8,pd-image,0xBDC8,24,0,read x1,"movx a,@dptr ; mov r7,a ; lcall 0xf755",flow opcode
 0x07D6,0x2BDDD,pd-image,0xBDDD,24,0,read x1,"movx a,@dptr ; mov r7,a ; lcall 0xf054",flow opcode
 0x07D6,0x2BDE5,pd-image,0xBDE5,22,2,read x1,"movx a,@dptr",DPTR reloaded
-0x07D6,0x2BECB,pd-image,0xBECB,23,1,"write x2, walks 3 consecutive bytes (inc dptr)","mov a,r5 ; movx @dptr,a ; inc dptr ; mov a,r3 ; movx @dptr,a ; clr a ; inc dptr",max_insns (8) exhausted
+0x07D6,0x2BECB,pd-image,0xBECB,23,1,"write x4, walks 4 consecutive bytes (inc dptr)","mov a,r5 ; movx @dptr,a ; inc dptr ; mov a,r3 ; movx @dptr,a ; clr a ; inc dptr",max_insns (8) exhausted
 0x07D6,0x2BEFB,pd-image,0xBEFB,22,2,read x1,"movx a,@dptr ; xrl a,#0x01 ; jnz +0x42",flow opcode
 0x07D6,0x2C6C4,pd-image,0xC6C4,24,0,DPTR handed to lcall 0xb2f1 -- direction unresolved here,lcall 0xb2f1,flow opcode
 0x07D6,0x2C6D1,pd-image,0xC6D1,24,0,DPTR handed to lcall 0xb293 -- direction unresolved here,lcall 0xb293,flow opcode

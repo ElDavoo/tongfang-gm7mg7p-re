@@ -372,7 +372,7 @@ jobs:
         id: prereview1
         if: success()
         continue-on-error: true
-        timeout-minutes: 30
+        timeout-minutes: 55  # the merge gate's review gets 60; the first one here timed out at 30
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
         env:
           ANTHROPIC_BASE_URL: https://openrouter.ai/api
@@ -401,8 +401,10 @@ jobs:
             is wrong and the evidence, what would fix it), because a different agent fixes from
             your findings and nothing else. Do not block on style.
 
-            Do not edit, create or delete any file, and do not touch git: anything you change is
-            discarded after you finish. Return the verdict only.
+            You have 50 minutes, and a review that runs out of time returns nothing at all. Spend
+            it on the blocking checks; skip suggestions if time is short. Do not edit, create or
+            delete any file, and do not touch git: anything you change is discarded after you
+            finish. Return the verdict only.
           claude_args: >-
             --model stealth/space-bunny-alpha
             --effort max
@@ -479,7 +481,7 @@ jobs:
             --model stealth/space-bunny-alpha
             --effort max
             --dangerously-skip-permissions
-            --max-turns 200
+            --max-turns 300
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
             --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
 
@@ -499,7 +501,7 @@ jobs:
         id: prereview2
         if: steps.prefix1.outcome == 'success' && steps.prefix1.outputs.conclusion == 'success'
         continue-on-error: true
-        timeout-minutes: 30
+        timeout-minutes: 55  # the merge gate's review gets 60; the first one here timed out at 30
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
         env:
           ANTHROPIC_BASE_URL: https://openrouter.ai/api
@@ -528,8 +530,10 @@ jobs:
             is wrong and the evidence, what would fix it), because a different agent fixes from
             your findings and nothing else. Do not block on style.
 
-            Do not edit, create or delete any file, and do not touch git: anything you change is
-            discarded after you finish. Return the verdict only.
+            You have 50 minutes, and a review that runs out of time returns nothing at all. Spend
+            it on the blocking checks; skip suggestions if time is short. Do not edit, create or
+            delete any file, and do not touch git: anything you change is discarded after you
+            finish. Return the verdict only.
           claude_args: >-
             --model stealth/space-bunny-alpha
             --effort max
@@ -606,7 +610,7 @@ jobs:
             --model stealth/space-bunny-alpha
             --effort max
             --dangerously-skip-permissions
-            --max-turns 200
+            --max-turns 300
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
             --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
 

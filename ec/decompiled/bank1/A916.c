@@ -13,7 +13,7 @@
    type: state
    evidence: ec/decompiled/bank1/A916.asm; ec/decompiled/bank1/A916.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void clamp_078b_level_into_0804(void)
 
@@ -34,7 +34,7 @@ void clamp_078b_level_into_0804(void)
     return;
   }
   if ((XDATA_0442 & 0x10) == 0) {
-    bVar1 = DAT_EXTMEM_078b - 1;
+    bVar1 = XDATA_078B - 1;
     if (5U - (in_PSW >> 7) <= bVar1) {
       bVar1 = 0;
     }

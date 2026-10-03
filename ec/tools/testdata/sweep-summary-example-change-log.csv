@@ -1,0 +1,13 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# value and timestamp below was written by hand. See ../README.md.
+# Shape: a raw ts,addr,old,new change log, one row per change -- the schema
+# ec_watch.py --csv writes and the two graders in ec/tools/ read. Handed to
+# grade_sweep_summary.py it is refused with the readers that own it rather than
+# graded, because there is no change_count column in it to read a total out of
+# and a row's "old" and "new" are two steps of one sweep rather than the two
+# ends of a window. 2026-01-01 is the placeholder instant testdata/README.md
+# reserves for constructed inputs. Not a prediction that these bytes move.
+ts,addr,old,new
+2026-01-01T12:00:00.000+01:00,0x07C6,0x04,0x00
+2026-01-01T12:00:02.000+01:00,0x07C6,0x00,0x04
+2026-01-01T12:00:05.000+01:00,0x07C4,0x08,0x38

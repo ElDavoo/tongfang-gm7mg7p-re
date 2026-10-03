@@ -1,0 +1,20 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# value and count below was written by hand. See ../README.md.
+# Shape: the committed 2026-09-18-ac-plugin-sweep-summary.csv's own schema,
+# built so its `#` block's source-log figure does not reconcile with what its
+# own change_count column sums to -- 9 in the header against 20 in the column.
+# The committed file has the same disagreement for reasons nothing committed can
+# settle, and this is the fixture --strict is read against: the default exit is
+# 0 and --strict's is 1, on the same bytes. Not a prediction that a sweep's
+# header and its column disagree.
+# derived from a sweep, 2026-01-01. Full 9-row log not committed.
+addr,change_count,first_old,last_new
+0x0743,1,0x02,0x03
+0x07C4,2,0x08,0x38
+0x07C6,2,0x04,0x04
+0x07D7,0,0x00,0x00
+0x0751,7,0xA0,0x00
+0x07A6,3,0x29,0x29
+0x00C0,2,0x00,0x00
+0x00C1,2,0x00,0x08
+0x00D3,1,0x07,0xD1

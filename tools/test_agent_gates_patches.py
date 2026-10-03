@@ -589,18 +589,21 @@ class CompositionTests(unittest.TestCase):
 
 @unittest.skipUnless(has_git(), 'no git on PATH')
 class FoldTests(unittest.TestCase):
-    """The folded patch still carries all three of the checks it absorbed.
+    """The folded patch still carries every check it absorbed, and its gates.
 
     `check_testdata_index()` came out of its own patch because that patch and
-    `check_capture_claims()` could not both be landed, and
-    `check_history_checkouts()` joined the same file for the same reason two
-    folds later: a seventh patch has no `gate` line it can insert that
-    composes with the six already here, which
-    `docs/findings/history-checkouts-gate-wiring.md` measures anchor by
-    anchor. Folding is only the right answer while every half is still there:
-    a later re-cut that keeps two functions and drops the third would apply
-    cleanly, pass every case above, and quietly lose a gate. This is the case
-    that says so, and it grows a line per fold for the same reason.
+    `check_capture_claims()` could not both be landed, and two more joined the
+    same file for the same reason: `check_history_checkouts()`, two folds
+    later, and `check_sweep_summary()`, three. Each was cut as its own file
+    first and refused by `test_every_ordered_pair_lands` below -- a patch with
+    no `gate` line it can insert that composes with the ones already here is
+    what each of those cut runs turned out to be, and
+    `docs/findings/history-checkouts-gate-wiring.md` is where that saturation
+    is measured anchor by anchor. Folding is only the right answer while every
+    half is still there: a later re-cut that keeps some functions and drops
+    others would apply cleanly, pass every case above, and quietly lose a
+    gate. This is the case that says so, and it grows a line per fold for the
+    same reason.
 
     It reads whichever file the patch's state says the content is in -- the
     scratch tree while the patch is prepared, the committed script once it is
@@ -615,12 +618,14 @@ class FoldTests(unittest.TestCase):
         'check_capture_claims() {',
         'check_testdata_index() {',
         'check_history_checkouts() {',
+        'check_sweep_summary() {',
         "gate 'capture claims'   check_capture_claims",
         "gate 'testdata index'   check_testdata_index",
         "gate 'history checkouts'  check_history_checkouts",
+        "gate 'sweep summary'  check_sweep_summary",
     ]
 
-    def test_all_three_checks_and_all_three_gate_lines_land(self):
+    def test_every_check_and_every_gate_line_land(self):
         with retention_gate(self.FOLDED) as (gate, problem):
             self.assertFalse(problem, problem)
             landed = gate.read_text()
@@ -633,10 +638,11 @@ class FoldTests(unittest.TestCase):
                 self.assertTrue(
                     line in landed,
                     f'{self.FOLDED} no longer lands {line!r}. That patch has '
-                    'absorbed two others -- agent-gates-testdata-index.patch '
-                    'in #745, and the history-checkouts check in #1033 -- '
-                    'because the checks could not be landed at the same '
-                    'anchors as separate patches. A re-cut that keeps some '
+                    'absorbed three others -- agent-gates-testdata-index.patch '
+                    'in #745, the history-checkouts check in #1033, and the '
+                    'sweep-summary check in #316 -- because the checks could '
+                    'not be landed at the same anchors as separate patches. '
+                    'A re-cut that keeps some '
                     'halves and drops others still applies, still composes, '
                     'and still passes every other case here, so nothing else '
                     'in this suite would notice. If the patch is already '

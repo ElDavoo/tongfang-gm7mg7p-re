@@ -406,7 +406,7 @@ def read_capture(path: str):
     changed a thousand times.
 
     `#` comment lines are dropped before the header is read, not after:
-    `2026-09-18-ac-plugin-sweep-summary.csv` opens with three of them, and a
+    `2026-09-18-ac-plugin-sweep-summary.csv` opens with a `#` block, and a
     naive DictReader takes a comment as the header and yields three garbage
     fieldnames -- which reads as "the file has no addr column" rather than as
     a parser that skipped what it should not have. The filter itself is
