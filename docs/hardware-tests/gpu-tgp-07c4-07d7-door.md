@@ -388,7 +388,14 @@ Two caveats belong next to the table rather than in a footnote.
   by this method under this action" — never "the GPU does not read it" — and
   read any zero through `../../ec/tools/grade_gpu_door.py` first: it prints
   `net`, `total` and `max` side by side for every address, and `total` is the
-  figure that shows a move-and-return, which `net` cannot.
+  figure that shows a move-and-return, which `net` cannot. That reader takes
+  the `ts,addr,old,new` shape §3's watcher writes, which is what the
+  `2026-09-23-power-mode-cycle-0700-07ff.csv` named at the top of this file is.
+  The `2026-09-18-ac-plugin-sweep-summary.csv` beside it is not that shape — it
+  is a per-address summary, and `../../ec/tools/grade_sweep_summary.py` is what
+  reads it: `change_count` is the only total it carries, and a row whose two
+  endpoints match under a non-zero `change_count` is still a byte that moved.
+  Only `change_count == 0` with equal endpoints reads `held`.
 - **A readback is not an effect.** Nothing in this procedure checks whether the
   EC acted on a byte, and the table deliberately has no "readback OK ⇒
   confirmed" column. Do not add one. `../../CLAUDE.md`: a register write being

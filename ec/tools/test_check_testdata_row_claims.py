@@ -172,7 +172,8 @@ class ScratchIndex:
         is not a row, and that is the whole distinction a columnar read turns
         on. The header is a real shape rather than a contrived one:
         `read_capture()` drops `#` lines before it reads the header precisely
-        because `2026-09-18-ac-plugin-sweep-summary.csv` opens with three.
+        because `2026-09-18-ac-plugin-sweep-summary.csv` opens with a `#`
+        block.
         """
         head = "".join(f"# page swept at 0x{a:04X}\n" for a in addresses)
         return self.write(rel, head + a_csv(*rows), root=self.captures)
