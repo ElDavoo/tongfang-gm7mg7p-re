@@ -11,6 +11,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
 - [`0751-capture-row-shape.md`](0751-capture-row-shape.md) — One row stream for the 0751 capture readers, and a byte-order mark retired at the shape (issue #750)
 - [`0751-census-capture-identity.md`](0751-census-capture-identity.md) — The census counted a capture one way and its per-action line counted it another, and a list holding one file twice withheld a block on a clean run (issue #492)
+- [`0751-census-one-moment.md`](0751-census-one-moment.md) — One `open()` of a capture in `main`, and a truncated early-exit row (issue #767)
 - [`0751-dump-pair-battery-names.md`](0751-dump-pair-battery-names.md) — The 0x0400 pair's "other" bucket, on a mover the capture recorded (issue #219)
 - [`0751-early-exit-row.md`](0751-early-exit-row.md) — The grader dropped the probe's "the run ended early" row, and a 5-second arm graded as a 30-second one (issue #664)
 - [`0751-file-refusal-order.md`](0751-file-refusal-order.md) — Which of the two refusals names a file that is both (issue #784)

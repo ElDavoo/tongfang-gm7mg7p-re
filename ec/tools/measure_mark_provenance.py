@@ -688,7 +688,16 @@ CITATIONS = [
      "the second consumer of read_capture's two-tuple"),
     ("ec/tools/check_capture_claims.py", 914,
      "read_capture(os.path.join(REPO, WATCH, name))",
-     "a third, and the only one that reads every committed capture"),
+     "a call of a reader of its own -- `check_capture_claims.py` defines "
+     "`read_capture` itself and returns a three-tuple `(per, rows, addrs)`, "
+     "and imports nothing from this module -- so it is a consumer of the "
+     "*shape*, not of this reader's two-tuple. Corrected from a claim that it "
+     "was the third unpacking `read_capture`; the two readers of the name are "
+     "unrelated and the two-tuple's real holders are `grade_gpu_door.py` and "
+     "`manual_fan_ctrl_probe.py`. It indexes the corpus by filename rather "
+     "than walking it -- `sorted(os.listdir(os.path.join(REPO, WATCH)))` -- "
+     "and `check_capture_encoding.py` reads the same captures by walking, "
+     "through a `ROOTS` that names `evidence/ec-watch`."),
     ("ec/tools/grade_timer_sweep.py", 327, 'if line.startswith("#"):',
      "grade_timer_sweep drops every `#` line before the CSV parse"),
     ("ec/tools/grade_timer_sweep.py", 355, 'if "resumed" in r[3]:',
