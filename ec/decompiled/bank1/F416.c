@@ -13,10 +13,11 @@
    this routine reads and divides by 100, established by three independent committed sources -- and
    0x0448 as XDATA_0448, the byte that quotient lands in: an EC-side site found with its meaning not
    established. 0xBE is a byte the computed arm can also produce -- a dividend of 19000-19099 gives
-   190, which retracts an earlier claim that the constant was unreachable -- but that dividend is
-   above every voltage recorded for the pack (ec/annotations/registers.yaml carries the charge
-   request and the live reading), so those figures do not distinguish the two arms and which arm ran
-   is still an open question about R7's origin.
+   190, which retracts an earlier claim that the constant was unreachable;
+   ec/tools/grade_0751_isolation.py printed that claim to an operator and carries the correction
+   beside it -- but that dividend is above every voltage recorded for the pack
+   (ec/annotations/registers.yaml carries the charge request and the live reading), so those figures
+   do not distinguish the two arms and which arm ran is still an open question about R7's origin.
    type: math
    evidence: ec/decompiled/bank1/F416.asm; ec/decompiled/bank1/F416.c; ec/annotations/registers.yaml
    basis: hand-decoded

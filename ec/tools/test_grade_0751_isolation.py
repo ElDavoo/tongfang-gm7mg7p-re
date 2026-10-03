@@ -5414,6 +5414,14 @@ class OtherBucketNameTests(unittest.TestCase):
         # recorded this byte ending a window on exactly that value, so the
         # note names the row rather than asserting the constant could occur.
         self.assertIn('summary.csv carries 0x0448,4,0x8B,0xBE', section)
+        # ...and it is not only the constant arm, which is what issue #358
+        # found: 19000-19099 at divisor 100 is 190. The sentence that said
+        # otherwise is left in place and the correction is printed under it,
+        # because this is a report an operator acts on -- a retraction that
+        # reached only registers.yaml would leave the tool contradicting it.
+        self.assertIn('Correction (2026-10-03, issue #358): the sentence above',
+                      section)
+        self.assertIn('dividend of 19000-19099 at divisor 100', section)
         # The 0x0449 branch is a different pair by a different divisor, not a
         # second reading of the battery current, and the row that records it
         # is named so the claim can be followed.

@@ -1525,9 +1525,11 @@ registers:
       gives 190 -- so an earlier claim that the constant was unreachable was
       false; that dividend is above every voltage recorded for the pack
       (0x030E's charge request is 17400 mV, 0x0438 read live as 16021 mV), so
-      this machine's own figures do not distinguish the two arms. 3 EC-side
-      sites, 1 read and 2 writes, no PD site, no upstream name. Per-address
-      table: ec/annotations/xdata-0400-045f.md.
+      this machine's own figures do not distinguish the two arms. The report an
+      operator reads, ec/tools/grade_0751_isolation.py, printed the retracted
+      claim and now carries this correction beside it rather than only here.
+      3 EC-side sites, 1 read and 2 writes, no PD site, no upstream name.
+      Per-address table: ec/annotations/xdata-0400-045f.md.
 
   - name: XDATA_0449
     addr: 0x0449

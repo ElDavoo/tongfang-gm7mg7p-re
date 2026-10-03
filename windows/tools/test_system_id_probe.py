@@ -37,7 +37,7 @@ from unittest.mock import patch
 #               which is the contradiction the implied divisor exists to catch
 #   2  060c     an all-zero pair places under both divisors; bit 6 is set here
 #   3  neither  one above the 0x22 arm's 0x28, and the current arm lands on
-#               0x01 -- the near-miss that must not be snapped to the nearer arm
+#               0x00 -- the near-miss that must not be snapped to the nearer arm
 #   4  both     an all-zero current reading and an all-zero pair both produce
 #               0x00. Under the swapped reading this bucket was trivially
 #               reachable at every input, which is why the fixture below it is
@@ -267,7 +267,7 @@ class ClassifyTests(unittest.TestCase):
 
     def test_a_near_miss_is_not_snapped_to_the_nearer_arm(self):
         # Sweep 3 sits one above what the 0x22 arm predicts (0x28 -> 0x29),
-        # and the current arm lands at 0x01, nowhere near it. Snapping to the
+        # and the current arm lands at 0x00, nowhere near it. Snapping to the
         # closer of the two would be the "closest fit" the procedure rules
         # out, and it would manufacture a match out of a sample that neither
         # arm reproduces.
