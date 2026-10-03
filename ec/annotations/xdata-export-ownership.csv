@@ -406,6 +406,7 @@ bank0/C0B8.c,bank0,C0B8,2,bank0/C0B8.c,C0B8,return_1_unless_3202_bits_1_and_2,no
 bank0/C0C9.c,bank0,C0C9,2,bank0/C0C9.c,C0C9,return_1_if_3202_bits_1_and_2,no,1.00,2,1.00
 bank0/C0DA.c,bank0,C0DA,2,bank0/C0DA.c,C0DA,return_1_unless_3202_bit0,no,1.00,2,1.00
 bank0/C0E7.c,bank0,C0E7,2,bank0/C0E7.c,C0E7,test_3202_bit0,no,1.00,2,1.00
+bank0/C118.c,bank0,C118,3,bank0/C118.c,C118,call_test_3202_bit0_keep_result_in_r7,no,1.00,3,1.00
 bank0/C124.c,bank0,C124,2,bank0/C124.c,C124,set_1602_bit2,no,1.00,2,1.00
 bank0/C12C.c,bank0,C12C,2,bank0/C12C.c,C12C,clear_1602_bit2,no,1.00,2,1.00
 bank0/C154.c,bank0,C154,2,bank0/C154.c,C154,set_1602_bit7,no,1.00,2,1.00

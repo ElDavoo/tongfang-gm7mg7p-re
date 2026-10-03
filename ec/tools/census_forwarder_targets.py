@@ -27,11 +27,13 @@ common area (`build_ec_decompile.py` grafts `0x0000`-`0x7FFF` onto every bank
 image), and the header of every such listing says so.
 
 **Two populations, and they are not interchangeable.** The whole family is every
-trampoline `trampolines()` finds, a count over the committed image that moves
-only if the firmware does. The annotated subset is the population
-`ghidra-functions.csv` carries `forwarder` rows for, which is a count over this
-repository's own annotation text, where every line stating it is a line another
-merge has to edit. The report labels which is which wherever it prints a figure.
+trampoline `trampolines()` finds, scanned out of the committed image; the
+annotated subset is the population `ghidra-functions.csv` carries `forwarder`
+rows for, which is a count over this repository's own annotation text, where
+every line stating it is a line another merge has to edit. Both are then
+classified against the committed `.asm` listings of the bank the stub selects,
+so both move when a listing lands: a `no-listing` reclassifies as an `entry`.
+The report labels which is which wherever it prints a figure.
 
 **Three classes and no fourth**, per target, against the committed listings of
 the bank the stub selects:
@@ -464,8 +466,11 @@ def report():
         "reading as though")
     say("it had answered this one. This is a count over this repository's "
         "annotation text")
-    say("rather than over the image, so it moves when a row lands; section 2's "
-        "does not.")
+    say("rather than over the image, so it moves when a row lands -- and so "
+        "does section 2's,")
+    say("because both classify against the committed listings, and landing one "
+        "turns a")
+    say("`no-listing` into an `entry`.")
     say("")
     if outside:
         say("  %d more `%s` annotated row(s) sit at a forwarder entry this image"

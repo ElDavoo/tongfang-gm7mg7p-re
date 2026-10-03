@@ -273,19 +273,32 @@ class WalkContractTests(unittest.TestCase):
                         self.assertEqual(derived, row["access"],
                                          f"{name} row {row['file_offset']}")
                     checked += 1
-        self.assertEqual(checked, 1288,
-                         "the population moved; W.TABLES and the committed "
-                         "tables are supposed to agree")
+        # `checked` was a hard-coded 1288 and is now the property it stood
+        # for. A row count is a value every commit that adds a site table or
+        # a row moves, and the loop above already asserts the claim per row:
+        # every row of every table in TABLES re-derives from the image, and
+        # every one of them is reached. So what is asserted instead is that
+        # the loop read something and that the read covers exactly the
+        # corrected set -- a census that silently read one table fewer would
+        # still satisfy both of those, which is why TABLES is checked against
+        # the committed annotation directory.
+        self.assertGreater(checked, 0, "the loop read no committed row at all")
+        for name in W.TABLES:
+            with self.subTest(table=name):
+                self.assertTrue(
+                    (ANNOT / name).is_file(),
+                    "W.TABLES names a table the annotation directory does "
+                    "not hold, so the loop above never read it")
         self.assertEqual(corrected, len(ACC.CORRECTIONS))
 
-    def test_the_only_three_rows_that_may_differ_are_the_three_corrected(self):
+    def test_the_only_corrected_rows_are_the_corrected_ones(self):
         # The exclusion, so the case above cannot be satisfied by a
         # `corrected()` that answers for every offset. The size is spelled
-        # out rather than derived, because the case is named for it: a fourth
+        # out rather than derived, because the case is named for it: a further
         # entry has to be a deliberate edit here rather than a correction
         # that widens unnoticed. It is a count of what this module holds, not
         # of anything in the repository.
-        self.assertEqual(len(ACC.CORRECTIONS), 3)
+        self.assertEqual(len(ACC.CORRECTIONS), 4)
         for c in ACC.CORRECTIONS:
             with self.subTest(table=c.table, offset=f"0x{c.offset:05X}"):
                 self.assertIn(c.table, W.TABLES)
@@ -580,7 +593,21 @@ class CommittedCensusTests(unittest.TestCase):
         `../../docs/findings/class-b-access-cell-corrections.md`.
         """
         rows = rows_of('walk-budget-census.csv')
-        self.assertEqual(len(rows), 15)
+        # 15 was a count of this repository's own rows, and every commit that
+        # adds a site table moves it -- the trap CLAUDE.md names, and the
+        # reason the per-row properties below are what this case asserts. The
+        # census's actual claim is that it names every budget-truncated row of
+        # every table it lists, which is a property over two committed files
+        # and is checked as one; the count was never what that claim rested
+        # on.
+        self.assertEqual(
+            {(r["table"], r["file_offset"]) for r in rows},
+            {(name, row["file_offset"]) for name in W.TABLES
+             for row in rows_of(name)
+             if T.walk_why(firmware(), int(row["file_offset"], 16),
+                           W.BUDGET)[1] == T.budget_end(W.BUDGET)},
+            "the census names a different set of budget-truncated rows than "
+            "the committed tables hold")
         self.assertEqual(sum(1 for r in rows if r["moves"] == "yes"), 0)
         self.assertEqual(sum(1 for r in rows
                              if r["verdict"].startswith("A: ")), 0)

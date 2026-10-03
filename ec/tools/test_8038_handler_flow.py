@@ -32,7 +32,7 @@ and hold the table to that, which is the check that survives a regeneration.
 result to its `window` cell; takes each arm's `callees` cell to be the
 `lcall`/`ljmp` targets the bytes that cell names actually hold; derives each
 `arm_start` from the branch opcode in the image; and requires every address an
-`xdata` cell names to be a `mov dptr,#imm` inside that row's own decode. So a
+`xdata` cell names to be one that row's own decode reaches through DPTR. So a
 byte that changes what an arm calls, or how it decodes, fails here rather than
 passing on a stale pair.
 
@@ -41,9 +41,9 @@ That is four of the table's columns, and it is **not** the whole table.
 image, which is a weaker check than the four above. `status` and the `callee`
 names are pinned to constants transcribed from the image, and a transcription
 that had drifted from it would not be caught. `addr`, `region`, `test`,
-`unattributed`, `code_pointers` and `code_immediates` are not read at all --
-the last two are empty in every row -- and `ends` appears only in a failure
-message. A change to any of those would pass here.
+`unattributed`, `dp_causes`, `code_pointers` and `code_immediates` are not read
+at all -- the last two are empty in every row -- and `ends` appears only in a
+failure message. A change to any of those would pass here.
 
 And it writes no `test_*.py:<line>` citation, and names no other test file by
 line. `census_test_line_pins.py` counts those spellings in markdown across the
@@ -99,7 +99,8 @@ def hexat(image, addr, length):
     return image[addr:addr + length].hex()
 
 
-MOV_DPTR = 0x90      # mov dptr,#imm16 -- the only way an XDATA address is named
+MOV_DPTR = 0x90      # mov dptr,#imm16 -- the immediate an XDATA address is named by
+INC_DPTR = 0xA3      # inc dptr -- steps the above onto its successor
 OPCODE_LEN_MAX = max(OPCODE_LEN)   # 3; the width the range check below uses
 
 
@@ -158,13 +159,35 @@ def window_edges(row):
 
 
 def window_dptr_immediates(row):
-    """Every address a `mov dptr,#imm16` inside the row points at, decoded from
-    `BANK0`. The `xdata` column is the set of the ones a `movx` actually
-    reaches, so this is a superset of it by construction -- which is the form
-    the check can take without re-deriving DPTR tracking, and which still fails
-    on an address the cell names that no instruction in the row loads."""
-    return {be16(BANK0, pc + 1) for pc in window_addrs(row)
-            if BANK0[pc] == MOV_DPTR}
+    """Every address the row's own decode reaches through DPTR: the ones a
+    `mov dptr,#imm16` points at, and the ones an `inc dptr` steps onto from
+    one. The `xdata` column is the subset of those a `movx` actually accesses,
+    so this is a superset of it by construction -- which is the form the check
+    can take without re-deriving DPTR tracking, and which still fails on an
+    address the cell names that no instruction in the row loads.
+
+    The `inc dptr` half is here because `walk_branch_arms.descend()` follows
+    it: the two-byte store these handlers do is `mov dptr,#slot ; movx @dptr,a
+    ; inc dptr ; movx @dptr,a`, and both halves of that pair are named in
+    `xdata`. The increment is resolved against the last `mov dptr` **in the
+    same block**, which is the fact `descend()` holds too -- the pointer a
+    block inherits is not the one it sets -- so the check stays a check
+    against `BANK0` and the row's own block structure rather than a second
+    implementation of the walk. Reading `BANK0` rather than the tool's state is
+    the point: it still fails if `xdata` names an address the bytes do not
+    reach. The low byte carrying into the high one is the same 16-bit register
+    either way, so `& 0xFFFF` is the whole of the arithmetic."""
+    addrs = set()
+    for block in window_blocks(row):
+        dptr = None
+        for pc in block:
+            if BANK0[pc] == MOV_DPTR:
+                dptr = be16(BANK0, pc + 1)
+            if dptr is not None:
+                addrs.add(dptr)
+            if BANK0[pc] == INC_DPTR and dptr is not None:
+                dptr = (dptr + 1) & 0xFFFF
+    return addrs
 
 
 def rows(path):
@@ -1396,13 +1419,14 @@ class TheCommittedArmsTable(unittest.TestCase):
                 for addr in (0x0610, slot, pair, pair + 1, 0x0A59):
                     self.assertIn('0x%04X' % addr, row['xdata'])
                 # The slot's low byte is written by the `inc dptr` after it,
-                # which is what leaves the pointer unknown, so the walk
-                # credits the two-byte write to the slot alone. Asserted
-                # because "the slot is 0x08D0/0x08D1" and "the scan names
-                # 0x08D0" are different claims and only the first is a
-                # reading of the handler.
-                self.assertIn('0x%04X' % slot, row['xdata'])
-                self.assertNotIn('0x%04X' % (slot + 1), row['xdata'])
+                # and both halves of the two-byte store are now named. This
+                # assertion used to be `assertNotIn` on the successor: the walk
+                # set the pointer to unknown at the increment, so the store
+                # after it was charged to the slot alone and `slot + 1` was in
+                # neither the table nor the handler's own two-byte write.
+                # `descend()` follows `inc dptr` now, so the closer reading of
+                # a two-byte store is the one being checked.
+                self.assertIn('0x%04X' % (slot + 1), row['xdata'])
                 # The gate is read and never written by the arm; the re-arm is
                 # inside a callee, which is why it is absent from this column.
                 self.assertNotIn('0x%04X' % gate, row['xdata'])

@@ -66,6 +66,11 @@ sys.path.insert(0, str(HERE))
 import run_entry_map
 from ec_timer_capture import HOST_WINDOW
 from trace_xdata_refs import PD_MARKER, offset_for_runtime
+# The cause vocabulary is `walk_branch_arms`'s, imported from there rather than
+# through `run_entry_map`: the cases below hold a *consumer* to what the walk
+# records, and a consumer that re-exported the constants could satisfy them by
+# renaming one.
+from walk_branch_arms import DPTR_BUILT, DPTR_UNSET
 
 FIRMWARE = HERE.parent / 'firmware' / 'GMxMGxx_11.800'
 TASK_TABLE = HERE.parent / 'annotations' / 'task-call-table.csv'
@@ -602,6 +607,123 @@ class TheWriteup(unittest.TestCase):
         self.assertNotIn('the EC does not write', text)
         # And it says the host-window split is a preparation, not a result.
         self.assertIn('HOST_WINDOW', text)
+
+
+class TheCalleeCause(unittest.TestCase):
+    """A callee's status names a cause the walk recorded for it, not one
+    assumed from the shape.
+
+    `walk_slot()` is the only consumer of `descend()` here that passes no
+    `entry_cause`, so a callee opened with `dptr=None` was recorded as
+    `DPTR never set on this path` -- a claim about the callee's own bytes,
+    which is not what happened when the caller had a pointer to pass. And the
+    status column said `partial: DPTR built at run time` for every partial
+    callee, which for a callee that never builds one is a claim about the row
+    that is not true. Both are the calibration defect `callee_row()` was fixed
+    to cure, left standing in the one other `descend()` caller.
+
+    The cases read the image and the tool's own statuses, so they hold the
+    property rather than a count: a status that names a cause is checked
+    against the causes `descend()` recorded for that same callee.
+    """
+
+    def callee_rows(self):
+        """(slot address, callee, arm, status) for every callee walked at the
+        declared depth."""
+        rows, _stubs = slots()
+        out = []
+        for slot in rows:
+            for callee, sub, status, _w in run_entry_map.walk_slot(
+                    IMAGE, run_entry_map.RUN_REGION, slot, True, CALLEE_DEPTH,
+                    run_entry_map.MAX_DEPTH, run_entry_map.MAX_INSNS):
+                if sub is not None:
+                    out.append((slot.address, callee, sub, status))
+        return out
+
+    def test_a_partial_status_names_only_causes_the_walk_recorded(self):
+        # The property, over every partial callee the run reaches. `dp_causes`
+        # is what builds the status and `unknown_causes` is what it is built
+        # from, so the check is that the string a reader sees and the arm's own
+        # record agree -- not that a particular phrase is present, which a
+        # reworded tool would fail and an overclaimed one would pass.
+        seen = 0
+        for addr, callee, sub, status in self.callee_rows():
+            if not status.startswith('partial'):
+                continue
+            seen += 1
+            named = status.split('partial: ', 1)[1]
+            with self.subTest(slot=f'0x{addr:04X}', callee=f'0x{callee:04X}'):
+                self.assertTrue(named, 'a partial status that names no cause')
+                for cause in dict.fromkeys(sub.unknown_causes):
+                    self.assertIn(cause, named)
+        self.assertTrue(seen, 'no partial callee to check, so this is vacuous')
+
+    def test_no_descended_callee_is_recorded_as_never_having_a_pointer(self):
+        # The fault itself. A callee is entered through a `lcall` from a caller
+        # that walked a DPTR, so `DPTR never set on this path` is a claim about
+        # the callee's own bytes and cannot be right for one descended here.
+        # Checked on the arm rather than the string, so it holds however the
+        # status is worded.
+        for addr, callee, sub, _status in self.callee_rows():
+            with self.subTest(slot=f'0x{addr:04X}', callee=f'0x{callee:04X}'):
+                self.assertNotIn(DPTR_UNSET, sub.unknown_causes)
+
+    def test_a_callee_with_no_run_time_build_does_not_say_it_had_one(self):
+        # The other half. A callee that inherits an unknown pointer and never
+        # stores to DPL/DPH has nothing to build one with, so the status
+        # asserting a run-time build is a claim the arm's own record refutes.
+        for addr, callee, sub, status in self.callee_rows():
+            if not status.startswith('partial'):
+                continue
+            if DPTR_BUILT in sub.unknown_causes:
+                continue
+            with self.subTest(slot=f'0x{addr:04X}', callee=f'0x{callee:04X}'):
+                self.assertNotIn('run time', status)
+
+    def test_a_callee_that_does_rebuild_the_pointer_still_says_so(self):
+        # The negative control for the case above, and the reason the two are
+        # held apart: a tool that refused the phrase everywhere would pass it
+        # while having lost a cause it does have. Whether any callee on this
+        # image builds one is not asserted -- the arm's own record decides, and
+        # this only requires the status to match it.
+        for addr, callee, sub, status in self.callee_rows():
+            if DPTR_BUILT not in sub.unknown_causes:
+                continue
+            with self.subTest(slot=f'0x{addr:04X}', callee=f'0x{callee:04X}'):
+                self.assertIn('run time', status)
+
+    def test_the_repair_moved_no_write_set(self):
+        # The claim that makes the wording change safe to make at all: a cause
+        # is a label, so recording a different one must not have changed what
+        # the walk charges. `slot_writes()` is compared against a walk that
+        # passes the *other* `entry_cause`, so the two differ in the cause and
+        # in nothing else -- the shape a wording-only fix has.
+        rows, _stubs = slots()
+        for slot in rows:
+            callees = run_entry_map.walk_slot(
+                IMAGE, run_entry_map.RUN_REGION, slot, True, CALLEE_DEPTH,
+                run_entry_map.MAX_DEPTH, run_entry_map.MAX_INSNS)
+            with self.subTest(addr=f'0x{slot.address:04X}'):
+                self.assertEqual(
+                    run_entry_map.slot_writes(slot, callees),
+                    run_entry_map.slot_writes(slot, _as_unset_callees(callees)))
+
+
+def _as_unset_callees(callees):
+    """The same callee rows re-walked at the `DPTR_UNSET` default, so a claim
+    that the cause repair moved no write set has something to be compared
+    against. The arm is re-descended rather than relabelled: a relabelled arm
+    would differ in nothing and the comparison would be vacuous."""
+    out = []
+    for callee, sub, status, _w in callees:
+        if sub is None:
+            out.append((callee, None, status, set()))
+            continue
+        alt = run_entry_map.descend(IMAGE, run_entry_map.RUN_REGION, callee,
+                                    None, run_entry_map.MAX_DEPTH,
+                                    run_entry_map.MAX_INSNS, True)
+        out.append((callee, alt, status, alt.writes()))
+    return out
 
 
 class TheInvariants(unittest.TestCase):

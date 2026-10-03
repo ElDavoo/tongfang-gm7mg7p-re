@@ -713,6 +713,27 @@ only covers what's specific to *this* copy.
   Before this, the only merge happened after the round, before the push, and a
   real conflict there discarded the whole round: #1716 lost a 57-minute round on
   a conflict in `measure_mark_provenance.py`.
+- **A conflict at push time keeps the work** (2026-10-04, not in the template).
+  `rebase-onto-main.sh` exits 2 when merging main meets a conflict outside the
+  generated files, and `agent-fix.yml` and `agent-implement.yml` then push the
+  work without main instead of failing. The pull request conflicts, and
+  `agent-retry.yml`'s conflict sweep dispatches `agent-conflicts.yml` for it.
+  Merging main at the start of a fix round does not cover what lands while the
+  round runs: #1780's first round on 2026-10-03 was committed and then discarded
+  for four conflicts that had landed meanwhile. The pull request then sat with
+  no stall label and no run for twelve hours.
+- **The review and fix steps get a second attempt** (2026-10-04, not in the
+  template). `agent-review.yml`'s `Verdict` and `agent-fix.yml`'s `Fix` are each
+  followed by a second, identical step that runs only when the first failed.
+  The second step reuses the first one's `env:` and `with:` through YAML anchors,
+  so the two prompts cannot drift apart. The stall is recorded only when both
+  attempts failed. On 2026-10-02 and 2026-10-03 several Claude steps ended
+  `is_error` within seconds or minutes of starting, including the #1716 review
+  that ended with "--json-schema was provided but Claude did not return
+  structured_output". Each of those failures labelled the pull request
+  `agent:stalled` and waited for a human to close and reopen it.
+  `check_history_checkouts.py` lists a prompt line once, because the alias
+  resolves to the anchor's lines.
 - **Branches are brought up to date by merging main, not by rebasing**
   (2026-10-03, not in the template). `.github/scripts/rebase-onto-main.sh`,
   which the implement and fix stages run before every push, merges `origin/main`.
