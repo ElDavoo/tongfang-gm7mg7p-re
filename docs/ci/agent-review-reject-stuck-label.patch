@@ -1,0 +1,74 @@
+# The second rejection hands an issue to a human; the label it leaves behind says
+# it is still queued.
+# Prepared here rather than landed, for the reason every other file in
+# `docs/ci/` gives: `.github/` is copied from the agent-pipeline template and the
+# pipeline's push token has no `workflow` scope, so a branch editing
+# `.github/workflows/agent-review.yml` fails at the end of a PR rather than at
+# the start of it.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-review-reject-stuck-label.patch
+#
+# and that is the whole change. One line.
+#
+# What it changes. The `Reject` step's `MAX_REJECTIONS` branch adds
+# `agent:stuck` and nothing else, so an issue that has been rejected twice ends
+# up carrying `agent:stuck` *and* the `agent:queued` its first rejection added.
+# `docs/agent-pipeline.md` says the second rejection "gets `agent:stuck`
+# instead", and the comment this branch posts tells a human to remove
+# `agent:stuck` and add `agent:queued` -- an instruction that is wrong
+# precisely because `agent:queued` is already there. The one line makes both
+# true and changes no prose anywhere.
+#
+# **It is a `local` hunk, not a template one, so unlike the gate patches in this
+# directory it is not at risk from a re-copy.** The `Reject` step and the third
+# `rejected` verdict are this repository's own (`LOCAL CHANGE (2026-09-24, not
+# in the agent-pipeline template)` in the file's header), so the context this
+# hunk needs is context this repository wrote. The `agent-gates-*.patch` files
+# cut `agent-gates.sh`, which *is* copied, and their failure mode is a re-copy
+# moving the lines a hunk was cut against; this one has no such source. The
+# corollary is that this patch is not competing for an insertion point with
+# them, and unlike them there is no free-anchor problem to solve: a hunk that
+# replaces one line needs no anchor at all.
+#
+# Why the combined `--add-label ... --remove-label ...` form rather than a
+# second `gh issue edit` line. It is the form the other hand-offs in this tree
+# already use -- the stuck branches of `agent-fix.yml` and `agent-implement.yml`
+# -- and it is one API call that cannot half-apply. The comment above the two
+# `|| true` removals at the foot of this step gives the reason a *separate*
+# removal is the awkward form here, and it is worth reading before anyone
+# re-cuts this: it records that these labels are alternatives ("an issue carries
+# one of these, not both") and that removing a label the issue does not carry is
+# an error, which is why those two are guarded. `agent:queued` is on the issue
+# by the time this branch runs -- the `else` branch below is what put it there
+# on the first rejection -- so its removal is not the absent-label case, but it
+# is unguarded anyway, which is only safe because it is fused to the add.
+#
+# What it does not change. It does not touch `MAX_REJECTIONS`, so an issue is
+# still planned twice before a human is handed it. It does not touch the
+# `else` branch, so a first rejection still queues the issue exactly as
+# before. And it changes no consumer: every sweep and triage that reads these
+# labels already filters `agent:stuck` out, so nothing here alters which issues
+# the pipeline picks up -- only what a human sees on the issue.
+#
+# Added 2026-10-03, issue #410. The write-up is
+# `docs/findings/review-reject-verdict-contract.md`, which also holds the
+# committed check on the four approved/rejected combinations. Nothing about
+# this patch has been run: no rejection has been performed and no label has
+# been observed on a live issue, so the claim here is about the committed text
+# and what `git apply --check` says about it, nothing more.
+
+diff --git a/.github/workflows/agent-review.yml b/.github/workflows/agent-review.yml
+index d002c9a..2f376de 100644
+--- a/.github/workflows/agent-review.yml
++++ b/.github/workflows/agent-review.yml
+@@ -421,7 +421,7 @@ jobs:
+ 
+           if [ "$rejections" -ge "$MAX_REJECTIONS" ]; then
+             gh issue comment "$ISSUE" --body "PR #${PR} was rejected, and that is rejection ${rejections} of this issue, so it is being handed to a human rather than planned again. Remove the \`agent:stuck\` label and add \`agent:queued\` to let the pipeline try once more. <!-- agent-rejected -->"
+-            gh issue edit "$ISSUE" --add-label 'agent:stuck'
++            gh issue edit "$ISSUE" --add-label 'agent:stuck' --remove-label 'agent:queued'
+           else
+             gh issue comment "$ISSUE" --body "PR #${PR} was rejected (rejection ${rejections} of ${MAX_REJECTIONS}). The review is now at the top of this issue, and the retry sweep will plan it again from here. <!-- agent-rejected -->"
+             gh issue edit "$ISSUE" --add-label 'agent:queued'
