@@ -545,10 +545,10 @@ main EC* whatever the PD image does with the same address number:
 
 | program | spelling | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 843 | 7,472 |
+| main-ec | `DAT_EXTMEM` | 840 | 7,467 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 44 | 490 |
 | main-ec | `pair-literal` | 156 | 468 |
-| main-ec | `symbol` | 161 | 6,212 |
+| main-ec | `symbol` | 164 | 6,217 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
 | pd | `DAT_EXTMEM` | 157 | 858 |
 | **total** | | **1,375** | **15,696** |
@@ -575,10 +575,10 @@ directly:
 
 | `program` | `spelled_as` | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 813 | 7,242 |
+| main-ec | `DAT_EXTMEM` | 810 | 7,237 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 41 | 385 |
 | main-ec | `pair-literal` | 155 | 461 |
-| main-ec | `symbol` | 146 | 5,607 |
+| main-ec | `symbol` | 149 | 5,612 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
 | both | `DAT_EXTMEM` | 30 | 312 |
 | both | `DAT_EXTMEM+pair-literal` | 4 | 139 |

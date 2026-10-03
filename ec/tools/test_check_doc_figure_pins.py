@@ -152,8 +152,30 @@ class ClassifiesTheRealTree(unittest.TestCase):
         # heredoc, on either side of the guard-off split. Held the same way
         # since #850, for the same reason: the expectation is a literal at each
         # assertion.
-        for value in (3949, 3206, 7189, 7936, 193, 142, 279, 239):
+        #
+        # **193 is no longer one of them, for the same reason 50 left the
+        # residual pair above.** Issue #635 moved `ORACLE["named_in_tree"]` to
+        # 193, and this checker's order is deliberate — an oracle entry
+        # something reads is the strongest pin there is, ahead of a literal
+        # written inline — so the figure resolves there now rather than at the
+        # census suite's `pd write` assertion. The two 193s are unrelated in
+        # meaning: one is that row's guard-off subset sum and the other is a
+        # count of named symbols. They collided on value alone, which is why
+        # the verdict moved without either number moving. Still `held`, held
+        # more tightly than it was, and the three lines below are here so that a
+        # tree where `named_in_tree` stops being read reddens on this verdict
+        # rather than on nothing at all.
+        self.assertVerdict(193, cdfp.BY_ASSERTION)
+        for value in (3949, 3206, 7189, 7936, 142, 279, 239):
             self.assertVerdict(value, cdfp.BY_LITERAL)
+        found = cdfp.index()
+        oracle = found["oracles"][("xdata_register_map.py", "ORACLE")]
+        keys, lo, hi = oracle
+        self.assertEqual(keys["named_in_tree"][0], 193)
+        read = cdfp.reads("xdata_register_map.py", "ORACLE", "named_in_tree",
+                          lo, hi, found["texts"], found["asserted"])
+        self.assertIsNotNone(read, "ORACLE['named_in_tree'] is read by nothing")
+        self.assertFalse(lo <= read[1] <= hi)
 
     def test_the_cluster_refs_cell_is_held_through_the_line_the_row_cites(self):
         # `4,966` is the `refs` cell of `main-ec-003`, and `--check` compares
