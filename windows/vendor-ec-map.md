@@ -17,6 +17,17 @@ line, class, method, read/write, address and the value expression) and
 so every call site carries its address as a literal. Only one helper
 (`SingleZone.ReadECRAM/WriteECRAM`) takes the address as a parameter.
 
+**This table's reach, so a question about an address outside it is not read as
+a zero.** The addresses it resolves fall in exactly three high-byte bands —
+`0x04xx`, `0x07xx` and `0x0Fxx` — and nowhere else, so a byte in `0x05xx`,
+`0x06xx` or `0x08xx` is *not found by this method* rather than absent.
+`windows/tools/ec_addr_reach.py` measures that reach, resolves the
+parameterised helper's callers (all `0x07xx`), and censuses the `ECSpec`
+constant table (no `const ushort` in any of the three committed trees names one
+in `0x0800`-`0x08FF`); the answer, its four boundaries and the two partial trees
+it does not cover are in
+[`../docs/findings/ec-addr-reach-086x.md`](../docs/findings/ec-addr-reach-086x.md).
+
 ## Which classes run on this board
 
 The service picks a class per platform. On the GM7MG7P (read 2026-09-19):

@@ -166,6 +166,37 @@ The separator is `;`; `:` is not split and silently leaves one path.
 **A Ghidra install can lack a working decompiler and still look fine.** See
 below — it is the same failure the ConfuserEx trap produces.
 
+## A project owned by another user does not open
+
+Not a silent failure — this one is loud, and it is loud in a way that reads
+like "the project is broken" rather than "you are not its owner". Every
+committed project here records an owner in its `project.prp`, and
+`analyzeHeadless` refuses a project owned by anyone else:
+
+```
+ERROR Abort due to Headless analyzer error: ghidra.util.NotOwnerException: Project is owned by dave
+```
+
+It raises that before a pre-script runs and before an annotation is applied, so
+an export that never starts is indistinguishable from one that was never going
+to work — which matters, because `export-only` copies the committed project, so
+the copy inherits the owner and the *documented, non-destructive* path is the
+one that fails.
+
+Both drivers now retake the owner **in the scratch copy**, after the
+`shutil.copytree` and before the first `analyzeHeadless`. `project_owner.py`
+does it, refuses a `.rep` outside the scratch root so it cannot be aimed at a
+committed project, and leaves the committed `project.prp` byte-identical. Its
+one-line report — `rewrote <old> -> <user>` or `already <user>` — is the thing
+to look for when an export produced nothing.
+`docs/findings/ghidra-project-owner.md` has the measurement.
+
+**This does not cover `--mode rebuild-project`,** which writes the committed
+`.gpr`/`.rep` instead of copying one — there is no scratch copy to normalise,
+and normalising the committed project is exactly what `-merge` rules out. Nor
+does it apply to `decompile_native.py`, whose export mode opens the committed
+project in place.
+
 ## The rule for agents
 
 Improve a decompilation by editing a CSV under a component's
