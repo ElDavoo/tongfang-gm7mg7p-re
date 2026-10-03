@@ -95,6 +95,11 @@ sys.path.insert(0, str(HERE))
 import dptr_rebuild_forms as F        # noqa: E402
 import trace_xdata_refs as T          # noqa: E402
 import walk_budget_census as W        # noqa: E402
+# The one place a committed `access` cell may differ from
+# classify(walk(d, off)) at walk()'s own budget; three rows' cells were
+# corrected under issue #865 and the committed-cell case below compares
+# against the corrected string.
+import access_cell_corrections as ACC  # noqa: E402
 
 # walk()'s own budget, named rather than relied on, so a case that says "the
 # budget" says which budget and a change to the signature moves this file's
@@ -1003,12 +1008,23 @@ class CommittedWindowTests(unittest.TestCase):
         # cell, or the windows this file is reading are not the ones the tables
         # were cut with. The same refusal `walk_budget_census` makes, run over
         # the six rather than over the census.
+        #
+        # **Issue #865:** three of the six tables' rows carry a cell corrected
+        # because their budget-8 window was too short to hold an access of
+        # their own, so the comparison goes through
+        # `access_cell_corrections.corrected()`. `corrected()` returns
+        # `classify()`'s own string for every offset it does not hold, and
+        # the case below asserts that per row as well, so the three cannot
+        # quietly become more. `../../docs/findings/class-b-access-cell-corrections.md`.
         for name in SIX:
             for row in self._rows(name):
                 off = int(row["file_offset"], 16)
-                got = T.classify(T.walk_why(self.image, off, BUDGET)[0])
-                self.assertEqual(got, row["access"],
+                derived = T.classify(T.walk_why(self.image, off, BUDGET)[0])
+                self.assertEqual(ACC.corrected(off, derived), row["access"],
                                  f"{name} row {row['file_offset']}")
+                if off not in ACC.BY_OFFSET:
+                    self.assertEqual(derived, row["access"],
+                                     f"{name} row {row['file_offset']}")
 
     def test_a_read_of_dpl_in_a_committed_window_is_a_read_here(self):
         # The issue names four rows of `xdata-0400-045f-sites.csv` whose

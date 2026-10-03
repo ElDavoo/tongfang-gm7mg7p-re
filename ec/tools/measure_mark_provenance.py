@@ -231,6 +231,29 @@ def line_of(path: str, lineno: int) -> str:
     return lines[lineno - 1] if 0 < lineno <= len(lines) else ""
 
 
+def resolve(path: str, lineno: int, want: str):
+    """The line that carries `want`, found by its text: `lineno` when that line
+    still carries it, else the one line in the file that does, else the
+    carrying line nearest `lineno` when several do. None when no line does.
+
+    Since 2026-10-03 a citation is held to its text and not to its number. A
+    number held to the tree went stale on every merge that grew the cited file
+    above it, and keeping it current became the blocking finding of the pull
+    requests that touched these graders: #1681 was rejected with sound
+    firmware work in it after the same pin drifted three times. The text is
+    still the whole check, and a quoted text that is gone from the file is the
+    claim failing. The number is a hint for a reader, and the tool prints the
+    line it found."""
+    with open(path, encoding="utf-8", errors="replace") as f:
+        lines = f.read().splitlines()
+    if 0 < lineno <= len(lines) and want in lines[lineno - 1]:
+        return lineno
+    hits = [n for n, text in enumerate(lines, 1) if want in text]
+    if not hits:
+        return None
+    return min(hits, key=lambda n: abs(n - lineno))
+
+
 def row_sites():
     """The `ts,MARK,,label` census: every line carrying the literal, split
     into the sites that construct the row and the sites that consume it.
@@ -740,14 +763,14 @@ def check_citations(scan: set) -> list:
     problems = []
     named = set()
     for path, lineno, want, what in CITATIONS:
-        full = os.path.join(REPO, path)
-        got = line_of(full, lineno).strip()
-        if want not in got:
-            problems.append(f"{path}:{lineno} ({what}): the page quotes "
-                            f"{want!r} and the line reads {got!r} -- the line "
-                            "moved or the claim is wrong")
+        found = resolve(os.path.join(REPO, path), lineno, want)
+        if found is None:
+            problems.append(f"{path} ({what}): the page quotes {want!r} and no "
+                            "line of the file carries it any more -- the claim "
+                            "is wrong or the code was rewritten")
+            continue
         if ROW_LITERAL in want:
-            named.add((path, lineno))
+            named.add((path, found))
     site_arity(scan, "scan")
     site_arity(named, "named")
     for path, lineno in sorted(scan - named):
@@ -788,8 +811,10 @@ def check_page(paths) -> list:
         with open(path, encoding="utf-8") as f:
             text += f.read()
     named = " or ".join(repo_path(p) for p in paths)
-    return [f"{p}:{n}: cited here and not named in {named}"
-            for p, n, _, _ in CITATIONS if f"{p}:{n}" not in text]
+    # The file, not the line: a page held to `path:NNN` had to be edited on
+    # every merge that moved the line, which is the churn `resolve()` ends.
+    return [f"{p}: cited here and not named in {named}"
+            for p in sorted({p for p, _, _, _ in CITATIONS}) if p not in text]
 
 
 def section_comment_namespace() -> None:
@@ -797,9 +822,9 @@ def section_comment_namespace() -> None:
     them. This is section 4 and it is short on purpose: one shape's cost is
     what it takes from a namespace, and the answer is a count."""
     for path, lineno, phrase in COMMENT_PHRASES:
-        got = line_of(os.path.join(REPO, path), lineno)
-        ok = phrase in got
-        print(f"  {path}:{lineno}  {'ok ' if ok else 'DRIFT'}  {phrase!r}")
+        found = resolve(os.path.join(REPO, path), lineno, phrase)
+        mark = "ok " if found is not None else "GONE"
+        print(f"  {path}:{found if found is not None else lineno}  {mark}  {phrase!r}")
 
 
 def self_test_provenance(grader, tmp: str, problems: list) -> None:
@@ -1019,8 +1044,9 @@ def main(argv=None) -> int:
     scan = {(p, n) for p, n, _ in writers + readers}
     problems = check_citations(scan)
     for path, lineno, want, what in CITATIONS:
-        ok = want in line_of(os.path.join(REPO, path), lineno).strip()
-        print(f"   {'ok ' if ok else 'DRIFT'}  {path}:{lineno}  {what}")
+        found = resolve(os.path.join(REPO, path), lineno, want)
+        mark = "ok " if found is not None else "GONE"
+        print(f"   {mark}  {path}:{found if found is not None else lineno}  {what}")
     for problem in problems:
         print(f"   {problem}")
     page_problems = check_page(args.page)
@@ -1030,7 +1056,7 @@ def main(argv=None) -> int:
     if problems:
         print(f"   {len(problems)} citation problem(s)", file=sys.stderr)
         return 1
-    print(f"   {len(CITATIONS)} citations resolve at the line quoted, the "
+    print(f"   {len(CITATIONS)} citations resolve by their quoted text, the "
           f"row-site join closes both ways,\n   and "
           f"{' and '.join(repo_path(p) for p in args.page)} name every one "
           "of them.")

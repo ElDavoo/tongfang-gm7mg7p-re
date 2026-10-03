@@ -17,11 +17,20 @@ not the same measurement, and -- the point this tool was asked to make
 measurable -- **the first two are not independent of each other**:
 
 - **The committed Ghidra listings** (`--coverage`, `--divergence`) give a
-  length for every instruction *start* Ghidra found: 45,643 rows across
+  length for every instruction *start* Ghidra found: 45,661 rows across
   `common`, `bank0`, `bank1` and `pd`. Third-party, reproducible from
   committed files with nothing installed, and never having seen
   `disasm8051.py`. What it cannot see is an opcode that never appears at an
   instruction start -- 0xA5 and 0xC1 here, so it pins 254 of 256 rows.
+  *(Corrected 2026-10-02, issue #775: this read 45,643, which is 18 instructions
+  short of what the committed listings now hold, the growth of listings seeded
+  since. The count is `parse_listing()`'s rows over the committed `.asm`
+  files, and `listing_rows()` exists because a parser that quietly reads a
+  third of a file reports no disagreement and looks like a pass --
+  `verify_reassembly.parse_listing()` is a second implementation of the same
+  rule, and `test_verify_gap_text.py` holds the two to identical addresses,
+  bytes and order on every listing. `--coverage --summary` prints the figure
+  for the tree as it is now; a seeded listing moves it, so read it there.)*
 - **`r2 -a 8051`** (`--r2-diff`) linearly walks each whole 64 KiB program from
   its first byte, so it reaches opcodes the listings never place, and covers
   256 of 256 across the three images. It is the same disassembler the hand
