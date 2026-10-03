@@ -88,13 +88,13 @@ def guard_off():
     figures from. The flag refuses to be given the committed output paths, so
     both CSVs go to a scratch directory the tool is pointed at by name and the
     run reads the committed decompile and writes nothing into it. ~2 s, and the
-    only reason the suite caches it is that ten cases want the same
-    regeneration -- seven in `TheGuardOffRegeneration`, three in
-    `TheGuardOffKeyDistinctness`. "six", the count this sentence carried until
-    `TheGuardOffKeyDistinctness` was added, is left in the write-up beside it
-    rather than deleted: it was already one short of the seven its own class
-    held, so the number went stale in the file before anything here did, and
-    that is worth a reader being able to see.
+    only reason the suite caches it is that every class here that wants a
+    second census wants *this* one: `TheGuardOffRegeneration`,
+    `TheGuardOffKeyDistinctness`, `TheKeyIsTheHashOfItsRow`. The number of
+    cases was named here and is not named now, for the reason `CLAUDE.md`
+    gives: a count of this file's own cases is a value every merge that adds
+    one has to edit, so the total is deleted rather than updated and the
+    classes are named in its place.
     """
     tmp = tempfile.mkdtemp(prefix="xdata-guard-off-")
     out_clusters = os.path.join(tmp, "clusters.csv")
@@ -1144,8 +1144,13 @@ class TheNamesShape(unittest.TestCase):
     trip a different one. The last two call `problems()`, because the wiring is
     its own thing to be wrong.
 
-    **This class is last in the file, and that is load-bearing rather than
-    incidental** -- see `setUpClass` below.
+    **This class was last in the file, and that is load-bearing rather than
+    incidental** -- see `setUpClass` below. `TheKeyIsTheHashOfItsRow` is
+    appended below it, and that is the whole of what changed: the new class
+    sits *under* this one, so every pin into this file still resolves to the
+    line it was written against, and "last in the file" now means last of the
+    classes that hold a rule rather than last outright. A class inserted above
+    this one would move all of them.
     """
 
     @classmethod
@@ -1263,6 +1268,179 @@ class TheNamesShape(unittest.TestCase):
             "were for, so record it in cluster_name_shape.py and "
             "docs/findings/name-shape.md and drop the claim that it is "
             "not caught")
+
+
+class TheKeyIsTheHashOfItsRow(unittest.TestCase):
+    """Every census row's `cluster_key` is the hash of that row's own columns.
+
+    **The property, and why distinctness is not it.**
+    `TheContentKey` and `TheGuardOffKeyDistinctness` each ask whether a
+    census's keys are *distinct*, and distinctness is the wrong question for
+    the two `b.get(k) or a[k]` reads
+    `docs/findings/xdata-moved-ranks-second-count.md` §6 left alone on the
+    strength of `cluster_key` being a content hash. A set of distinct keys
+    passes both of those cases with every `program` and `addrs` cell in it
+    wrong, so nothing behind them would notice a row that is not the cluster its
+    own key names -- and `flip_table()`'s `shared`, `across_report()`'s `by
+    construction` line and the `program` column all read the row rather than
+    the key.
+
+    **This recomputes the write path rather than a second reading of it.**
+    `cluster_rows_build` writes `"program": g` and `"addrs"` from the same
+    `members` the minting site hashed, `cluster_key` is that program and the
+    `hexaddr`-sorted join of that membership, and `hexaddr` is the tool's one
+    `f"0x{addr:04X}"` -- so `int(a, 16)` over the `addrs` cell inverts it
+    exactly rather than approximately. What these cases evaluate is the
+    expression the tool evaluated, over the cells the tool wrote; the CSV round
+    trip is the only step between.
+
+    **Two censuses, and why these two.** `TheContentKey` reads the committed
+    pair off disk and the two `check()`s inside `self_test()` cover a fresh
+    guard-on generation, but neither producer check can be pointed anywhere
+    else: `--no-eq-guard` is refused together with `--check` and `--self-test`,
+    and refused again without scratch outputs. So the committed census and the
+    guard-off regeneration are the two a `keyed_by()`/`flip_table()` pair is
+    built from, and they are the two here. The regeneration is the `guard_off()`
+    this module already caches, so the second case costs no second run.
+
+    **Distinctness is a different property, and neither class implies the
+    other.** An earlier draft of this docstring argued that the round-trip *did*
+    imply it -- that two rows carrying one membership under two keys would each
+    have to disagree with their own row -- and that argument is false, and its
+    witness is the last case below. A row copied verbatim under a second id is
+    self-consistent: its key genuinely is the hash of its own columns, so
+    `key_mismatches()` reports nothing and `duplicate_keys()` reports the two
+    ranks sharing one key. The other direction is the shape the issue
+    describes, a set of distinct keys none of which is the hash of its own row.
+    Distinctness is therefore not re-asserted here, but for a reason that does
+    not depend on that argument: `TheContentKey` and
+    `TheGuardOffKeyDistinctness` already hold it over these same two censuses,
+    and the two neighbours assert a *view's* precondition where these assert
+    the writer's arithmetic.
+
+    **The property is the claim; the totals are not.** Nothing here pins 439 or
+    445. The row count appears in the failure message, where a reader chasing a
+    bad row sees it, and nowhere else -- the reasoning
+    `TheGuardOffKeyDistinctness` states for itself, and the hazard `CLAUDE.md`
+    names: a test that asserts a count of the tree is a value every merge has to
+    edit.
+
+    **The `e169a0e4` pair is still held by nothing**, and this class does not
+    make it look otherwise. `TheContentKey`'s docstring names that census and
+    its guard-off regeneration as the fourth, unreached one; counting the
+    classes instead of reading them would put the wrong number on the censuses
+    this suite reaches, which is why that docstring says so.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.committed = clusters_of(CLUSTERS)
+        # Slot 1 of `guard_off()`'s tuple, reached by index rather than
+        # unpacked: `TheGuardOffKeyDistinctness` names all four slots and this
+        # wants the clusters CSV alone.
+        cls.guard_off = clusters_of(guard_off()[1])
+
+    def key_mismatches(self, rows):
+        """{cluster_id: (stored, recomputed)} for the rows whose stored
+        `cluster_key` is not the hash of their own `program` and `addrs`.
+
+        One copy of the question, for both censuses and both forgeries alike.
+        A second one would already be `xdata-moved-ranks-second-count.md` §3's
+        shape -- two places that know how a row is built and can disagree about
+        it -- and the disagreement would be invisible, because each would still
+        be a correct re-derivation of something.
+        """
+        bad = {}
+        for cid, row in sorted(rows.items()):
+            addrs = [int(a, 16) for a in row["addrs"].split()]
+            recomputed = xrm.cluster_key(row["program"], addrs)
+            if recomputed != row["cluster_key"]:
+                bad[cid] = (row["cluster_key"], recomputed)
+        return bad
+
+    def census_holds_its_own_keys(self, rows, which):
+        """`rows` every one the hash of its own columns. `which` names the
+        census in the failure message and nowhere else."""
+        bad = self.key_mismatches(rows)
+        self.assertEqual(
+            bad, {},
+            f"{which} census: {len(bad)} of {len(rows)} row(s) whose stored "
+            "cluster_key is not the hash of their own program and addrs -- "
+            + ("; ".join(
+                f"{cid} holds {stored}, its own row hashing to {recomputed}"
+                for cid, (stored, recomputed) in sorted(bad.items()))
+               or "none, which is a bug in this message rather than a result"))
+
+    def test_the_committed_census_holds_its_own_keys(self):
+        # The census `xdata_register_map.py --check` re-derives and people read.
+        self.census_holds_its_own_keys(self.committed, "committed")
+
+    def test_the_guard_off_census_holds_its_own_keys(self):
+        # The census `cause_report` re-keys for its population, and the half of
+        # the pair no producer check can be aimed at.
+        self.census_holds_its_own_keys(self.guard_off, "guard-off")
+
+    def test_a_forged_row_is_named_with_both_keys(self):
+        # The negative control, and what gives the two above their meaning: a
+        # hold case that has never gone red has never been shown capable of it.
+        # Two forgeries, one per direction a hand edit of a census goes -- the
+        # `addrs` cell changed under a key left alone, which is the edit the
+        # issue describes, and its inverse, a key copied onto a row that is not
+        # the cluster it names. Both are forgeries `cluster_key`'s own content
+        # hash would never emit, which is the point rather than a flaw in the
+        # fixture: the row these cases exist to catch cannot come from the
+        # generator, only from a census something else assembled.
+        victim, donor = sorted(self.committed)[:2]
+        # The two lowest ids, so a reader can find them at the top of the CSV
+        # and neither is a single-address cluster, so dropping one from it
+        # leaves a membership behind. The *last* address is the one dropped
+        # because that is the edit which leaves the cell in the sorted order
+        # `cluster_rows_build` writes it in -- a plausible hand edit rather
+        # than an arbitrary corruption.
+        for what, forge in (
+            ("a hand-edited addrs cell", lambda row: row.update(
+                addrs=" ".join(row["addrs"].split()[:-1]))),
+            ("a copied cluster_key", lambda row: row.update(
+                cluster_key=self.committed[donor]["cluster_key"])),
+        ):
+            with self.subTest(forged=what):
+                rows = {cid: dict(r) for cid, r in self.committed.items()}
+                forge(rows[victim])
+                bad = self.key_mismatches(rows)
+                self.assertEqual(
+                    sorted(bad), [victim],
+                    f"a row with {what} was not reported as the one row whose "
+                    f"key disagrees with its own columns: {bad}")
+
+        # And the forgeries stayed in the copies. `setUpClass` hands the same
+        # committed census to `TheContentKey`, so a case that wrote through
+        # would leave a real mismatch behind for whatever ran next -- and the
+        # assertions above would be a lie about which census they had checked.
+        self.assertEqual(self.key_mismatches(self.committed), {})
+
+        # A third forgery, the one that goes in the other direction: a row
+        # copied *verbatim* under a second id. The copy is self-consistent --
+        # same program, same `addrs`, and a key that genuinely is the hash of
+        # its own columns -- so `key_mismatches()` has nothing to report, and
+        # `duplicate_keys()` names it. This is the witness that the round-trip
+        # does not imply distinctness, held as a case rather than argued in the
+        # write-up: an assertion the helper is expected to *fail* to make. Only
+        # these two rows carry the key, so the rank list is exactly these two
+        # whatever their relative order.
+        twin = victim + "-dup"
+        rows = {cid: dict(r) for cid, r in self.committed.items()}
+        rows[twin] = dict(rows[victim], cluster_id=twin)
+        key = rows[victim]["cluster_key"]
+        self.assertEqual(
+            self.key_mismatches(rows), {},
+            "a census whose only defect is a row duplicated under a second id "
+            "is self-consistent, so the round-trip has nothing to report; if "
+            "this ever reports one, the helper is wrong rather than the census")
+        self.assertEqual(
+            {k: sorted(v) for k, v in ranks.duplicate_keys(rows).items()},
+            {key: sorted([victim, twin])},
+            f"the duplicated row was not reported as {key} on both {victim} "
+            f"and {twin}, and nothing else in the census collides")
 
 
 if __name__ == "__main__":
