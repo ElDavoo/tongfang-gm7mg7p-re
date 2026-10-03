@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline checks against the constructed captures in testdata/; no hardware
 and no real capture is involved."""
+import ast
 import builtins
 import contextlib
 from datetime import datetime, timedelta
@@ -329,6 +330,87 @@ def section6_command(doc):
         if "grade_0751_isolation.py" in fence.group(1):
             return fence.group(1)
     raise AssertionError("§6 has no fenced command line any more")
+
+
+# The counts a docstring can spell a file count in. A table rather than a
+# formula, because a docstring writes "ten" and not "10", and `number_word`
+# raises on a value past its end rather than answering -- a §6 with more
+# files than this would find no word to look for and the check would pass
+# vacuously, which is the drift it exists to catch.
+NUMBER_WORDS = ("zero", "one", "two", "three", "four", "five", "six",
+                "seven", "eight", "nine", "ten", "eleven", "twelve",
+                "thirteen", "fourteen", "fifteen", "sixteen", "seventeen",
+                "eighteen", "nineteen", "twenty")
+
+
+def number_word(count):
+    """`count` as the word a docstring spells it in.
+
+    Raises rather than answering for a count outside the table. The
+    alternative is a check that has quietly stopped checking: it would look
+    for a word no docstring carries, find none, and pass -- which is the
+    failure #218 is about, arrived at from the other end.
+    """
+    if not 0 <= count < len(NUMBER_WORDS):
+        raise AssertionError(
+            "%d files is past the end of NUMBER_WORDS (%s); extend the table "
+            "rather than let a count this size go unchecked"
+            % (count, NUMBER_WORDS[-1]))
+    return NUMBER_WORDS[count]
+
+
+# The probe, which is the other of the two descriptions, read by path rather
+# than imported -- it does `from ecrw import Ec`, and `ecrw` binds kernel32 at
+# import time, so importing it here would make the whole suite Windows-only.
+# The path is the reach-by-path the probe's own `--self-test` uses to get at
+# the grader, run in the other direction.
+PROBE = (HERE.resolve().parents[1] / 'windows' / 'tools'
+         / 'manual_fan_ctrl_probe.py')
+
+
+def probe_docstring():
+    """`manual_fan_ctrl_probe.py`'s module docstring, parsed out of its source.
+
+    `ast` rather than a slice at the first triple quote, because
+    `ast.get_docstring` applies `inspect.cleandoc`: continuation lines come
+    back dedented, the way `--help` and `inspect.getdoc` render them, while a
+    slice hands back the source's own indentation. That is the whole of the
+    difference -- the grader's side below is `grade.__doc__`, which is *not*
+    cleaned, so the two are read differently on purpose and nothing in
+    `test_the_two_descriptions_quote_section6_as_it_stands` depends on the
+    difference: its checks are substring searches and one `\\b`-anchored word,
+    and cleandoc moves a line's leading whitespace without touching what is
+    inside it. (The probe's docstring is a *raw* string, so a `\\` in it would
+    survive into the module's value instead of collapsing -- a case where a
+    slice would agree with the module, not disagree.)
+    """
+    return ast.get_docstring(ast.parse(PROBE.read_text(encoding="utf-8"))) or ""
+
+
+def usage_block(doc):
+    """The indented command lines under a module docstring's `Usage:` line.
+
+    Cut at the first line that is not indented, rather than taken as
+    everything after the heading. The paragraphs after a `Usage:` block are
+    prose about the same tool, and `test_the_two_descriptions_quote...` counts
+    flags: a `--dump-pair` named in the prose under the block would make the
+    block look like it passed a pair it does not, which is the drift that
+    check exists to catch.
+    """
+    _, sep, tail = doc.partition("Usage:\n")
+    if not sep:
+        raise AssertionError("the docstring has no `Usage:` block; the "
+                             "commands a reader copies have moved or gone")
+    lines = []
+    for line in tail.splitlines():
+        if not line.strip():
+            if lines:
+                break
+            continue
+        if not line.startswith(" "):
+            break
+        lines.append(line)
+    return "\n".join(lines)
 
 
 def section4_4(doc):
@@ -1462,6 +1544,59 @@ class GradeTests(unittest.TestCase):
         for path in (RUN_BEFORE, RUN_AFTER, RUN_BEFORE_0F00, RUN_AFTER_0F00,
                      RUN_BEFORE_0400, RUN_AFTER_0400):
             self.assertIn(Path(path).name, block)
+
+    # The defect issue #218 was opened for: #205 grew §6 from eight files to
+    # ten and from two `--dump-pair` flags to three, and the two docstrings
+    # that describe the procedure went on describing the pre-merge set, with
+    # nothing in the tree to fail when they did. The count and the ranges are
+    # read out of §6 rather than written here, so what this holds is that the
+    # descriptions agree with §6 -- a §6 that grows a file or a range fails
+    # this rather than quietly making a docstring wrong, and a number written
+    # into this method would be the thing every such change has to edit.
+    def test_the_two_descriptions_quote_section6_as_it_stands(self):
+        doc = RUNBOOK.read_text(encoding="utf-8")
+        count = number_word(len(section6_file_list(doc)))
+        block = concrete(section6_command(doc))
+        # The range of each pair, off the before-file §6 spells it with. The
+        # token rather than the whole name, because §6 writes a fixture name
+        # (`2026-01-01-0751-isolation-a0-before-0700.txt`) and a docstring
+        # abbreviates to `before-0700.txt` or to the bare range -- matching
+        # names would fail for a difference of spelling, not of substance.
+        ranges = re.findall(r"--dump-pair\s+\S*before-(\w+)\.txt", block)
+        self.assertTrue(ranges, "§6's command line passes no --dump-pair at "
+                                "all; the pairs below would be vacuous")
+        for name, text in (('grade_0751_isolation.py', grade.__doc__),
+                           ('manual_fan_ctrl_probe.py', probe_docstring())):
+            with self.subTest(description=name):
+                # The count, as the word a docstring spells it in. `files`
+                # rather than a bare `ten`, so a sentence about ten bytes
+                # elsewhere in the grader's module docstring cannot stand in
+                # for the one claim.
+                self.assertRegex(text, r"\b%s files?\b" % count)
+                for rng in ranges:
+                    self.assertIn("0x" + rng.lower(), text.lower(), name)
+        # The probe's half, and the half its ranges above cannot check: both
+        # of them are in that docstring already, for the ranges the tool
+        # sweeps, so "it mentions 0x0400" is true of the pre-#218 wording and
+        # would pass a sentence that had lost the point. What #205 added the
+        # third pair for is the *answer*, and §3b's dump bullet says which
+        # answer each pair carries -- §4.6's readback off the `0x0700` pair,
+        # §4.5's temperatures out of the `0x0400` one and neither of the
+        # others. So the probe's gap list has to name both reads, which is
+        # what a reader of the probe has to be told a probe run cannot answer.
+        probe = probe_docstring()
+        for section in ('§4.6', '§4.5'):
+            self.assertIn(section, probe,
+                          'the probe names no %s, so it does not say which of '
+                          '§4\'s answers its missing dump pairs would have '
+                          'given' % section)
+        self.assertIn('§4.6\'s readback', probe)
+        self.assertIn('§4.5\'s whole-block temperature read', probe)
+        # And the grader's `Usage:` block shows a flag per pair rather than
+        # naming the ranges in prose: the block is what a reader copies, and
+        # the count is the part #205 moved without it.
+        self.assertEqual(usage_block(grade.__doc__).count("--dump-pair"),
+                         len(ranges))
 
     # §3's per-block integrity check, on the capture shape it exists for. A
     # block whose last mark is not the restore cannot show the byte being put

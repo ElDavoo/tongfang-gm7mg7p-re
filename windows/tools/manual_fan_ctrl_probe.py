@@ -15,14 +15,18 @@ cadence are what §3 of docs/hardware-tests/manual-fan-ctrl-0751-isolation.md
 asks for, and that file is the reference whenever the two disagree. What the
 single-tool form does *not* do is §3b of that file: the service-stopped second
 pass, the by-hand package-power notes, and the other seven of §6's ten files --
-the six range dumps and the snapshot, none of which this tool writes. With
-`--csv` it does produce what §6's three CSVs hold, in one appended file rather
-than three, and the grader reads that with no conversion -- but not at equal
-coverage: FANTBL and TEMP sweep their ranges whole, while WATCH reads 14
-addresses of the 0x0700-0x07FF page where §3's `ec_watch.py --start 0x0700
---len 0x0100` takes all 256. `--watch-page` sweeps that page whole, so a run
-with the flag reproduces §4.4's whole-page instruction and a default run does
-not. Either way this tool produces no range dump.
+the six range dumps and the snapshot, none of which this tool writes. So a
+probe run has no answer for §4.6's readback, which the `0x0700` before/after
+pair is taken from, nor for §4.5's whole-block temperature read, which is in
+the `0x0400` pair and in neither of the others; the grader takes all three
+pairs as `--dump-pair`. With `--csv` it does produce what §6's three CSVs
+hold, in one appended file rather than three, and the grader reads that with
+no conversion -- but not at equal coverage: FANTBL and TEMP sweep their
+ranges whole, while WATCH reads 14 addresses of the 0x0700-0x07FF page where
+§3's `ec_watch.py --start 0x0700 --len 0x0100` takes all 256. `--watch-page`
+sweeps that page whole, so a run with the flag reproduces §4.4's whole-page
+instruction and a default run does not. Either way this tool produces no
+range dump.
 
 Two arms, because 0x075B/0x075C (the fan duty bytes -- the vendor's
 ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE, issue #123) move with the die

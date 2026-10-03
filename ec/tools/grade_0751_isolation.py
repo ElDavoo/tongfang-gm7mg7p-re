@@ -3,12 +3,16 @@
 capture, mechanically, so the sweep half of the procedure is read the same way
 twice.
 
-Input is what the procedure already produces: the `ec_watch.py --mark --csv`
-captures for the `0x0700-0x07FF` sweep, the `0x0F00-0x0F5F` fan table and the
-`0x0400-0x045F` temperature range, and, optionally, the `before-*`/`after-*`
-`ecrw.py dump` files from its steps 0 and 6. Each mark in a CSV opens a window
-that runs to the next mark, and for every window this reports whether the
-bytes §4 names moved inside it:
+Input is what the procedure already produces, and §6 is what names it: the
+`ec_watch.py --mark --csv` captures for the `0x0700-0x07FF` sweep, the
+`0x0F00-0x0F5F` fan table and the `0x0400-0x045F` temperature range, and,
+optionally, the `before-*`/`after-*` `ecrw.py dump` files from its steps 0 and
+6 -- one pair per range, over those same three. Those are §6's ten files bar
+its snapshot, which nothing here reads; §6's command block passes them as its
+three captures, the two `--dump`s §4.6's readback is taken from, and one
+`--dump-pair` per range. Each mark in a CSV opens a window that runs to the
+next mark, and for every window this reports whether the bytes §4 names moved
+inside it:
 
   * `0x0783-0x0785` -- PL1/PL2/PL4 (§4.1)
   * `0x0F00-0x0F5C` -- the fan table (§4.2)
@@ -331,7 +335,8 @@ Usage:
     python3 ec/tools/grade_0751_isolation.py capture.csv --block 0xa0
     python3 ec/tools/grade_0751_isolation.py capture.csv \
         --dump-pair before-0700.txt after-0700.txt \
-        --dump-pair before-0f00.txt after-0f00.txt
+        --dump-pair before-0f00.txt after-0f00.txt \
+        --dump-pair before-0400.txt after-0400.txt
     python3 ec/tools/grade_0751_isolation.py --self-test
 
 A capture this cannot read is refused by name and not raised out of. The one
