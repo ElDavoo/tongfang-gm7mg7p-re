@@ -554,11 +554,11 @@ def row_problems(row, registers):
 # row; the leaf is what is available and it is what has to be named.
 #
 # Transcribed from ghidra/scripts/TongFang.java, which is the canonical copy and
-# the one every exporter and the index mean to call. The other copy,
-# ghidra/scripts/ExportDecompile.java, has already drifted from it -- it reads
-# `startsWith("entry")` where the canonical reads `equals("entry")` -- so this
-# list is a second derivation on purpose, and build_ec_decompile.py --self-test
-# is what holds the two together.
+# the one every exporter and the index call -- issue #626 deleted the drifted
+# `ExportDecompile.java` copy that used to sit beside it, so this is now the
+# only Python derivation of a predicate with one Java definition. That does not
+# make it safe to hand-maintain, so build_ec_decompile.py --self-test still
+# holds the two together.
 GHIDRA_RESERVED_PREFIXES = (
     "FUN_", "LAB_", "SUB_", "thunk_", "dt_",
     "LABEL", "UNDEF_", "FUNCODE", "switchD_", "caseD_",
@@ -566,10 +566,10 @@ GHIDRA_RESERVED_PREFIXES = (
 # Both entries are exact matches and both stay exact, because the distinction is
 # the point, and each has a committed row that would not survive a prefix test.
 # `entry_clamp_status` and `entry_dispatch` are people's names that happen to
-# begin with those letters, and the drifted copy above cannot tell them from the
-# module entry point. `bank0 0x549B` is `default_009d_bf_dispatch_4e2c` on a
-# `ghidra-functions.csv` row of its own, so `startsWith("default")` would have
-# made this rule report the row #602 renamed seven of its siblings over.
+# begin with those letters, and the drifted copy #626 deleted could not tell them
+# from the module entry point. `bank0 0x549B` is `default_009d_bf_dispatch_4e2c`
+# on a `ghidra-functions.csv` row of its own, so `startsWith("default")` would
+# have made this rule report the row #602 renamed seven of its siblings over.
 GHIDRA_RESERVED_EXACT = ("entry", "default")
 
 
@@ -581,10 +581,10 @@ def reserved_prefix_problems(rows):
     census -- how many rows collide is the number worth reporting -- and a
     per-row predicate would leave the caller summing. It is not one of the four
     cross-field rules and is not folded into `row_problems`, because it is
-    component-independent while the call sites are not: the same scan over
-    bios/annotations/ghidra-functions.csv finds two rows, and reconciling the
-    two Java copies that disagree about them is a BIOS re-export this
-    repository has not done.
+    component-independent while the call sites are not. Issue #626 removed the
+    reason the BIOS call site was missing: the scan over
+    bios/annotations/ghidra-functions.csv is empty, held there by
+    bios/tools/test_entry_namespace.py.
 
     The message states the consequence rather than the rule, because the
     consequence is what a row author has to act on: the name reads as
