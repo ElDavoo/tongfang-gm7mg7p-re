@@ -135,6 +135,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`history-checkout-run-contract.md`](history-checkout-run-contract.md) — The checkout-depth checker's exit code is its product, and the run crashed on the trees `--repo` exists for
 - [`history-checkout-site-identity.md`](history-checkout-site-identity.md) — The four corrected sites are held by value, and the check is shown going red
 - [`history-checkouts-gate-wiring.md`](history-checkouts-gate-wiring.md) — The checkout-depth check is prepared for the cheap gate, in a patch that had to fold (issue #1033)
+- [`ifr-2718-reachability.md`](ifr-2718-reachability.md) — Question `0xE9F` is `DynamicPageCount`, and it is a sentinel no page count takes — so the two routes to Intel's Advanced page in the IFR are a self-reference and a TSE choice
 - [`ifr-charge-and-battery-options.md`](ifr-charge-and-battery-options.md) — The charge and battery questions in the Setup IFR, and what hides them
 - [`landed-gate-patch-state.md`](landed-gate-patch-state.md) — A landed gate patch is not a stale one: the four states, and the two-step landing (issue #772)
 - [`mmrd-unaligned-escape.md`](mmrd-unaligned-escape.md) — The unaligned `MMRD` escape, and the two sources that would have to say it is safe (issue #439)
