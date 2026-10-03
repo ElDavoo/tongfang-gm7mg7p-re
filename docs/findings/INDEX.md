@@ -5,6 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
+- [`0436-0437-writer-census.md`](0436-0437-writer-census.md) — The `0x0436`/`0x0437` writer census: eight stores and none of them a counter, and the PD's five sites name a base rather than a byte
 - [`044b-mode-stepper.md`](044b-mode-stepper.md) — `0x044B` is a five-value mode byte, and `bank0 0x9AAD` is the routine that re-decides it
 - [`0741-bit7-oc-recovery.md`](0741-bit7-oc-recovery.md) — One instruction sets AP_OEM bit 7, and the region it scans is 253 bytes rather than the three a committed annotation claimed
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
