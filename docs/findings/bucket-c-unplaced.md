@@ -85,10 +85,12 @@ not start an instruction; 74 is the count this walk is answerable for, and the
 two are not interchangeable: attributing the 17 to the descent would be
 `docs/findings.md` §4c's error one level up, since a byte covered by the
 Ghidra `common` function set is not a byte the #49 walk decoded. The 74 are the
-census's original phantom shape: a `0x12` that is the operand of a
-`mov dptr,#imm16` rather than the opcode of a call. `0x055DC` is the precedent
-that the two questions have to stay apart; it is reached, covered, *and*
-genuinely a table entry on the same evidence.
+census's original phantom shape: bytes that fall inside a span this walk decoded
+without being that span's first instruction. `0x0286E` is one of them, and is in
+this population — `d[0x0286E]` is `0x02`, the low byte of the `#imm16` in the
+`mov dptr,#0x1D02` at `0x286C`, so a byte scan reading it as an opcode reads
+`ljmp 0xF012` where the walk decoded an operand. That is the precedent that the
+two questions have to stay apart.
 
 ## `table-entry` is empty, and that is a result
 

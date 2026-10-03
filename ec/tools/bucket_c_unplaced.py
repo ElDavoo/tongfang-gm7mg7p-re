@@ -23,11 +23,11 @@ behavioural observation, and no register is read, no capture opened, and no
 **Two questions are kept apart, on purpose.** `verdict` answers "is the byte
 inside something a method read as code", and `on_instruction_boundary` answers
 "does it *start* an instruction". Those are different questions and folding them
-together is how a site gets reported as a call it is not: a `0x12` byte that is
-the *operand* of a `mov dptr,#imm16` is covered by a decoded span and starts
-nothing. `0x055DC` is the precedent that separates them -- reached, covered, and
-genuinely a table entry on the same evidence -- which is why the boolean is a
-column rather than a detail of the reason string.
+together is how a site gets reported as a call it is not: a byte that is the
+*operand* of an instruction the walk decoded is covered by a decoded span and
+starts nothing. `0x0286E` is the precedent that separates them -- covered by the
+`mov dptr,#0x1D02` at `0x286C`, and `on_instruction_boundary` `no` -- which is
+why the boolean is a column rather than a detail of the reason string.
 
 **`grid_state` is ungated; the verdict is not.** Whether a byte sits on some
 listed table's stride grid is a measurement, so it is recorded as one for every

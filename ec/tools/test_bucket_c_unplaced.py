@@ -101,6 +101,14 @@ ORACLE_BYTE_BEFORE = 0xE0
 ORACLE_FRONTIER = 921
 ORACLE_LABELLED_ABSENT = (0x055DC, 0x00381, 0x06952)
 
+# The row `bucket-c-unplaced.md` and this tool's docstring name as the example
+# of a byte the walk decoded into without it starting an instruction, and the
+# instruction that covers it. Held rather than restated in prose, so a sentence
+# citing a row the census excludes cannot survive a red run.
+ORACLE_EXEMPLAR = 0x0286E
+ORACLE_EXEMPLAR_COVER = 0x0286C
+NOT_LISTED = "not listed"
+
 # The prose files that state the derived unplaced count, and the shape of the
 # sentence each states it in. Held, not edited -- see the module docstring.
 #
@@ -742,7 +750,7 @@ class VerdictRuleTests(unittest.TestCase):
                                  f"set's coverage and not the walk's")
 
     def test_a_mid_instruction_row_and_a_boundary_row_are_told_apart(self):
-        # The distinction `0x055DC` is the precedent for: covered by something
+        # The distinction `0x0286E` is the precedent for: covered by something
         # read as code, and starting an instruction, are two answers.
         on_boundary = [t for t in self.table
                        if t["on_instruction_boundary"] == bcu.YES]
@@ -754,6 +762,45 @@ class VerdictRuleTests(unittest.TestCase):
             if t["verdict_reason"] == "mid-instruction-in-a-span-this-walk-decoded":
                 self.assertEqual(t["on_instruction_boundary"], bcu.NO,
                                  t["file_offset"])
+
+    def test_the_exemplar_the_write_up_cites_is_a_row_of_this_population(self):
+        # `bucket-c-unplaced.md` and this tool's docstring both name `0x0286E`
+        # as the row separating "covered" from "starts an instruction", so the
+        # sentence rests on it being *in* the population and covered without
+        # starting anything. Held against the code map rather than against this
+        # tool's own output: the claim is about a row of the sibling census, and
+        # a row the sibling declines to place is one this population excludes.
+        with (HERE.parent / 'annotations' / 'bucket-c-codemap.csv').open() as fh:
+            row = next((r for r in csv.DictReader(fh)
+                        if r["file_offset"] == f"0x{ORACLE_EXEMPLAR:05X}"), None)
+        self.assertIsNotNone(row, "the code map has no row for the exemplar")
+        self.assertEqual(row["in_data_region"], NOT_LISTED,
+                         "the exemplar must be one `region_at()` declines")
+        self.assertEqual(row["walk_verdict"], "not-reached")
+        self.assertEqual(row["in_ghidra_function"], "no")
+
+        site = next((t for t in self.table
+                     if t["file_offset"] == f"0x{ORACLE_EXEMPLAR:05X}"), None)
+        self.assertIsNotNone(site, "the exemplar is not in the population")
+        self.assertEqual(site["verdict"], bcu.CODE)
+        self.assertEqual(site["verdict_reason"],
+                         "mid-instruction-in-a-span-this-walk-decoded")
+        self.assertEqual(site["on_instruction_boundary"], bcu.NO)
+
+    def test_the_exemplar_is_covered_by_the_instruction_the_write_up_names(self):
+        # The write-up says which instruction covers it, and the operand byte
+        # reading is the whole point: the site's own byte is an operand of that
+        # instruction, so a scan reading it as an opcode reads something the
+        # walk decoded no instruction there.
+        d = image()
+        pc = ORACLE_EXEMPLAR_COVER
+        length = bcu.OPCODE_LEN[d[pc]]
+        self.assertLessEqual(pc, ORACLE_EXEMPLAR,
+                             "the named instruction starts after the site")
+        self.assertLess(ORACLE_EXEMPLAR, pc + length,
+                        "the named instruction ends before the site")
+        self.assertIn(ORACLE_EXEMPLAR, census().covered)
+        self.assertNotIn(ORACLE_EXEMPLAR, census().reached)
 
     def test_an_unresolved_row_carries_the_walks_own_reason(self):
         for t in self.table:
