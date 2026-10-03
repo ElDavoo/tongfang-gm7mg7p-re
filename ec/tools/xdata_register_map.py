@@ -5633,6 +5633,44 @@ def main() -> int:
     return write(args)
 
 
+# *** 2026-10-03, issue #575: four NOT_IN_TREE entries for the bytes the
+# routine at bank0 0xD8A0 alone touches in the 0x20xx page.
+#
+# **Placed here and updated into the dict, for the reason the block above
+# gives about `diff()`.** The entries belong in the `NOT_IN_TREE` literal
+# beside their siblings, and putting them there moves every line below that
+# point -- including the `--no-eq-guard` anchors `check_eq_guard_citations.py`
+# resolves by line -- and turns red every citation of them.
+# This is the one window that avoids both horns: it is below every line those
+# citations name, so none of them shifts, and above the `__main__` guard, so
+# the update has run by the time `main()` reaches `--self-test` and counts the
+# set. Appended below the guard instead, it would be dead on a script run and
+# only visible to an import, which is exactly the sort of split a test that
+# imports the module cannot see.
+#
+# The reason is the 0x0EAF one, not the 0x07C0 one: not the wrong program's
+# byte, but a routine no export covers. Each of the four has exactly one
+# `mov DPTR,#imm16` in the whole 256 KiB image and that site is inside
+# 0xD8A0, which has no index row and no listing, so the census -- which reads
+# the committed decompile -- has no function to attribute the site to. That is
+# a coverage gap, and it is expected to close when the deferred annotation row
+# and the export that carries it land; nothing here predicts the count.
+# Re-derive with `python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800
+# --at 0x0D8A0 --runtime 0xD8A0 -n 61`, which prints all four sites, and with
+# `scan_refs.py` on each address, which reports one EC-side site apiece. The
+# reading is docs/findings/d8a0-init-routine.md.
+NOT_IN_TREE.update({
+    0x2012: "in a routine no export covers: as 0x0EAF, the sole site is at "
+            "bank0 0xD90E, inside the routine at 0xD8A0, which has no index "
+            "row and no listing",
+    0x2014: "in a routine no export covers: as 0x2012, the sole site is at "
+            "bank0 0xD915",
+    0x2015: "in a routine no export covers: as 0x2012, the sole site is at "
+            "bank0 0xD91B",
+    0x201C: "in a routine no export covers: as 0x2012, the sole site is at "
+            "bank0 0xD8CC",
+})
+
 if __name__ == "__main__":
     sys.exit(main())
 
