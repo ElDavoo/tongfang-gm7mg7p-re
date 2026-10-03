@@ -6065,3 +6065,134 @@ registers:
       EC does not touch, and one static method cannot tell those apart. The
       other 31 are "not found by this method", never absent. No hardware was
       involved.
+
+  - name: MAILBOX_PAYLOAD_LATCH
+    addr: 0x047C
+    sources: [xdata-refs, static-scan]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      One producer, one consumer, both on the bank1 drain path. bank1
+      0x8955 (init_09f1_and_zero_09f2_through_09f9) writes 0 here at
+      ec/decompiled/bank1/8955.asm; bank1 0x8915
+      (saturating_count_09f0_then_call_88f0) reads it on entry, and writes
+      back whatever R7 0x897B returned at ec/decompiled/bank1/8915.asm. It
+      is the latch holding the last payload the mailbox handed over: while
+      it reads non-zero, 0x8915 takes the saturating-count arm instead of
+      the drain arm, and it is 0x8915 itself that clears it once the count
+      at 0x09F0 reaches 0x10. All four sites are in the main EC. A decoded
+      path, not an observed effect -- nothing here says the EC acts on the
+      byte. docs/findings/a73f-09f1-mailbox-payload.md.
+
+  - name: EVENT_RING_INDEX
+    addr: 0x070F
+    sources: [xdata-refs, static-scan]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Four-bit cursor for the sixteen-byte ring at 0x0710-0x071F. bank1
+      0x88F0 (push_r5_into_070f_ring_when_gates_pass) reads it, does
+      `INC A` / `ANL A,#0x0F`, and writes it back before storing R5 at
+      0x0710 + that index; the listing for that address stops at 0x8900
+      because the exporter's call-target scan also found entries at 0x8901
+      and 0x8902, and the bytes there are that increment and masked write.
+      The ring base is 0x0710 by those bytes, not the 0x0700 the decompile's
+      `CONCAT11(7,...)` gives; the .asm is the machine code and wins. Both
+      sites are in the main EC. docs/findings/a73f-09f1-mailbox-payload.md.
+
+  - name: MAILBOX_DRAIN_COUNT
+    addr: 0x09F0
+    sources: [xdata-refs, static-scan]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Saturating pass counter for the mailbox drain. bank1 0x8915
+      increments it while `0x047C` reads non-zero and returns while the
+      result is below 0x10 (`CLR CY` / `ADD A,#0xF0` / `JNC`); on reaching
+      0x10 it clears `0x047C` and writes 0 here. Both write sites are the
+      same routine, and the third is its zeroing on the way into the drain.
+      All three are in the main EC. A counter whose period is sixteen
+      passes -- `ADD A,#0xF0` carries from A = 0x10 -- is a reading of the
+      arithmetic, not an observed rate.
+      docs/findings/a73f-09f1-mailbox-payload.md.
+
+  - name: MAILBOX_INDEX
+    addr: 0x09F1
+    sources: [xdata-refs, static-scan]
+    static_refs: 9
+    static_refs_main_ec: 9
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Two independent three-bit cursors and two flags in one byte, and the
+      whole state of the eight-slot mailbox. Bits 0-2 are the producer's
+      index, bits 4-6 the consumer's, bit 3 is the full flag and bit 7 the
+      empty one; 0x77 is the mask both sides apply on every increment, and
+      it clears exactly those two flag bits. The mask is also what makes
+      the two cursors independent: the producer's `((v & 0x77) + 1) & 0x77`
+      carries out of bit 2 into bit 3, where the mask discards it, so the
+      carry never reaches bits 4-6. bank1 0x8955 writes 0x80 here to
+      initialise; 0x89B5 and 0x897B do the rest.
+      ec/decompiled/bank1/89B5.asm, ec/decompiled/bank1/897B.asm. Nine
+      sites, all in the main EC. The flags' purpose is decoded, their
+      observed behaviour is not -- this byte needs the live read named in
+      docs/findings/a73f-09f1-mailbox-payload.md. No upstream name.
+
+  - name: MAILBOX_RING_SLOT0
+    addr: 0x09F2
+    sources: [xdata-refs, static-scan]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Base of the eight-byte producer/consumer ring, and the only byte of
+      it that three sites name outright -- the producer and the consumer both
+      load DPTR with it before handing the address to a helper that adds
+      the index. bank1 0x89B5 writes slot + index through
+      write_xdata_at_dptr_plus_a (0x89E7) and bank1 0x897B reads it
+      through read_xdata_at_dptr_plus_a (0x89A9); bank1 0x8955 zeroes all
+      eight at init with an 8-iteration `DJNZ R0`. The value stored is the
+      R7 argument of bank0 0xA73F, which is what makes it a payload rather
+      than a command code. Three sites, all in the main EC. docs/findings/a73f-09f1-mailbox-payload.md.
+
+  - name: MAILBOX_PUBLISH_GUARD
+    addr: 0x09EF
+    sources: [xdata-refs, static-scan]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The byte the mailbox's 0xBC publish is conditional on. bank0 0x9D9B
+      compares `0x0A47` against it and, when they differ, copies the new
+      value into this byte and calls bank0 0xA73F with R7 = 0xBC
+      (ec/decompiled/bank0/9D9B.asm). So a change here is what makes the
+      publish happen at all; the payload the caller passes is the literal
+      0xBC either way. The `MOV R7,A` two instructions before the call
+      takes this byte's value and is overwritten before use. Both sites are
+      in the main EC. Its own role as a guard -- what it guards and who is
+      expected to change it -- is not decoded by the walk. docs/findings/a73f-09f1-mailbox-payload.md.
+
+  - name: MAILBOX_PUBLISH_VALUE
+    addr: 0x0A47
+    sources: [xdata-refs, static-scan]
+    static_refs: 121
+    static_refs_main_ec: 121
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Read and written by bank0 0x9D9B and compared against 0x09EF to decide
+      whether to publish 0xBC into the mailbox, which is the one site the
+      walk found reaching 0xA73F with a payload rather than a literal
+      ec/decompiled/bank0/9D9B.asm. Its 121 EC-side sites are far more than
+      any other byte here and are not the walk's business: what this row
+      records is the one path that ties it to the mailbox, and a count this
+      large is a reason to distrust any single claim built on it without a
+      per-site table. No PD site. docs/findings/a73f-09f1-mailbox-payload.md.

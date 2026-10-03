@@ -225,3 +225,10 @@ addr,name,from_register,register_status,derivation,programs
 0x0EAE,CTL6,CTL6,present-untested,scalar-name,bank0;bank1
 0x0EAF,CTL7,CTL7,present-untested,scalar-name,bank0;bank1
 0x0EB8,MGI8,MGI8,present-untested,scalar-name,bank0;bank1
+0x047C,MAILBOX_PAYLOAD_LATCH,MAILBOX_PAYLOAD_LATCH,present-untested,scalar-name,bank0;bank1
+0x070F,EVENT_RING_INDEX,EVENT_RING_INDEX,present-untested,scalar-name,bank0;bank1
+0x09F0,MAILBOX_DRAIN_COUNT,MAILBOX_DRAIN_COUNT,present-untested,scalar-name,bank0;bank1
+0x09F1,MAILBOX_INDEX,MAILBOX_INDEX,present-untested,scalar-name,bank0;bank1
+0x09F2,MAILBOX_RING_SLOT0,MAILBOX_RING_SLOT0,present-untested,scalar-name,bank0;bank1
+0x09EF,MAILBOX_PUBLISH_GUARD,MAILBOX_PUBLISH_GUARD,present-untested,scalar-name,bank0;bank1
+0x0A47,MAILBOX_PUBLISH_VALUE,MAILBOX_PUBLISH_VALUE,present-untested,scalar-name,bank0;bank1
