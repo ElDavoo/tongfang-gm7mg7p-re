@@ -14,7 +14,9 @@ the next agent — **what the numbers do not say**.
 
 Every figure in the census table below is reproduced by
 `python3 ec/tools/call_graph.py`, which prints the census and rewrites the
-table; `--check` recomputes and fails on any diff, and `--self-test` runs the
+table, with one exception named in the correction under it: the tool does not
+print the four-form breakdown, so that row carries its own command.
+`--check` recomputes and fails on any diff, and `--self-test` runs the
 tool against `../tools/testdata/call-graph/`. Two sections further down quote
 figures from a *different* tree, and each says which: §"Ordering" is measured
 before this tranche's 44 rows exist, and §"Corrections" reconciles the several
@@ -24,21 +26,61 @@ trees the numbers were taken on.
 
 | quantity | value |
 |---|---|
-| function rows in `decompiled/index.csv` | 2,714 |
-| of those, still `FUN_*` | 752 |
-| transfer instructions in the `.asm` listings | 5,027 |
-| — `lcall` / `ljmp` / `ajmp` / `acall` | 3,854 / 1,063 / 74 / 36 |
-| — resolving to an index row | 4,924 |
+| function rows in `decompiled/index.csv` | 2,720 |
+| of those, still `FUN_*` | 715 |
+| transfer instructions in the `.asm` listings | 5,033 |
+| — `lcall` / `ljmp` / `ajmp` / `acall` | 3,860 / 1,063 / 74 / 36 |
+| — resolving to an index row | 4,930 |
 | distinct targets reaching a row | 1,841 |
 | transfer sites whose target is no index row | 103, over 80 targets |
-| targets still anonymous | 432 |
-| inbound sites to those | 598 |
-| anonymous rows no direct transfer reaches | 320 |
-| distinct `FUN_*` callees the `.c` files name | 760 |
-| anonymous callees a comment names | 124 |
-| comments that name one | 147 |
-| — candidate (callee, comment) pairs, before the frame gate | 353 |
-| — kept / rejected / undecided by it | 157 / 165 / 31 |
+| anonymous rows the table carries | 405 |
+| inbound sites to those | 552 |
+| anonymous rows no direct transfer reaches | 318 |
+| anonymous rows the table carries no row for | 310 |
+| distinct `FUN_*` callees the `.c` files name | 723 |
+| anonymous callees a comment names | 112 |
+| comments that name one | 134 |
+| — candidate (callee, comment) pairs, before the frame gate | 326 |
+| — kept / rejected / undecided by it | 134 / 166 / 26 |
+
+*** CORRECTION 2026-10-03 (issue #460), leaving the table above as it was
+written.*** Every cell is re-measured. Three of them moved *because of this
+change*; the rest were already behind, and `--check` cannot catch either kind
+because it compares `call-graph-callees.csv` against the listings and never
+reads this table, which is transcribed by hand.
+
+- **moved by this change**, against what the tool printed the day before it:
+  "anonymous rows the table carries" **397 → 405** (renamed from "targets
+  still anonymous", which no longer described it: a cited callee no transfer
+  reaches is now in the table and is not a transfer target),
+  "anonymous callees a comment names" **104 → 112** and "comments that name
+  one" **125 → 134**. The last of those is the one the change is about — the
+  cited set was the cited set intersected with the reachable set, and it is
+  now the cited set. The new "no row for" cell reads **310**, the old "no
+  transfer reaches" row's 318 less the eight rows added on purpose.
+- **already stale**, and not moved by it: the two function-row cells
+  **2,714 → 2,720** and **752 → 715**, the transfer cells **5,027 → 5,033**,
+  **3,854 → 3,860** in the `lcall` position, **4,924 → 4,930**, the inbound
+  **598 → 552**, the `.c`-named **760 → 723**, and the frame-gate block
+  **353 → 326** and **157/165/31 → 134/166/26**. Re-exports and annotation
+  tranches moved all of them, and a tranche annotating a function necessarily
+  moves the `FUN_*` and citation cells.
+
+**The `lcall` / `ljmp` / `ajmp` / `acall` row is the one figure above the tool
+does not print**, so it carries its own command rather than being asserted:
+
+```console
+$ PYTHONPATH=ec/tools python3 -c "import glob, collections, citation_callers as c; print(collections.Counter(f for p in sorted(glob.glob('ec/decompiled/*/*.asm')) for _, f, _ in c.transfers(p)))"
+Counter({'lcall': 3860, 'ljmp': 1063, 'ajmp': 74, 'acall': 36})
+```
+
+**The whole table is now the population `build()` actually writes, and the
+population changed under three of these cells.** `call-graph-callees.csv` grew
+by exactly the eight cited-but-unreached keys, no row already in it moved, and
+`inbound == 0` now means one thing only — no transfer in the scanned set
+reaches it *and* a kept citation names it. §"What is left" says which
+population the ranking orders by; the write-up is
+[`../../docs/findings/cited-set-population.md`](../../docs/findings/cited-set-population.md).
 
 *** CORRECTION 2026-09-25 (issue #470), leaving the table above as it was
 written.*** One row stopped being anonymous. `pd 0x11C2` was `FUN_CODE_11c2`
@@ -152,6 +194,25 @@ count selected it.
 The table is sorted **citations descending, then inbound count**, then scope
 and address so the order is total and reproducible. A citation is a comment
 writing a callee's address in the canonical `0x` + 4-uppercase-hex-digit form.
+
+**`named_callers` is printed and is deliberately not a ranking term.** It
+counts the *callee's* callers, and the premise it was once asked to police is
+about the *citing comment's* row — "a named function's comment names it" —
+which is a different question. The tool prints that question's answer beside
+it: on this tree every kept pair's citing row is itself a named function. **The
+other arm is 0 by construction, not by measurement**, and `report()` labels it
+that way. A citing row can only be a row of `annotations/ghidra-functions.csv`,
+and every row of that names a function, so the split says those two files agree
+— it does not track the corpus, and a reader should not watch it as comments
+land.
+Two further reasons are in `call_graph.py`'s module docstring, the load-bearing
+one being that `named_callers` is only defined for a row that has an inbound
+edge at all, so as a sort term it would rank exactly the `inbound=0` rows on
+their citers while their own callers stayed uncounted. The column stays, so
+the weight stays visible in the CSV and in the census's ranked block; the
+decision, and which cited rows carry `named_callers == 0`, are in
+[`../../docs/findings/cited-set-population.md`](../../docs/findings/cited-set-population.md)
+§"The `named_callers` decision".
 
 **The canonical-width rule is the load-bearing part, and it is there to avoid a
 specific false positive.** Matched numerically instead, a comment's `0x64` is
@@ -380,26 +441,64 @@ inbound distribution is already spent.
 
 ## What is left, and the two limits a reader must carry
 
-**The work list is the `annotated=no` rows**, 432 of them, of which **124 are
-cited** by a comment and so are the ones a reader can trace to a sentence that
-needs them. The rest are reachable but uncited: worth naming, not yet blocking
-any explanation. The ranking is the order to work them in, and its top has
-moved twice since issue #525 corrected it: the three `0xFF`-fill rows that held
-ranks 1–3 fell to `cited_by=1` each, `common,07F0` then led at 3, and issue #558
-has since named that one and the three rows behind it
-([`../../docs/findings/common-07f0-0f75-158e-1594-tranche.md`](../../docs/findings/common-07f0-0f75-158e-1594-tranche.md)).
-**The head of the table is now `bank0,DFA0` at `cited_by=3` against
-`inbound=2`** — a row the ranking promotes on citations alone, which is the
-ordering this file argues for and the first thing to read about it.
+**The table's population is every key the transfer scan reaches *or* a kept
+citation names, and the ranking orders by that population.** `build()` writes a
+row for both, so a callee nothing reaches still appears, reading `inbound=0`
+with the naming comments in `citing`. **The work list proper is still the
+`annotated=no` rows**, and within it the `cited_by` ones are what a sentence
+is actually blocked on — but the cited subset is now the whole cited set
+rather than the cited set ∩ the reachable set. That is the reason §"Ordering"
+argues: the issue's work list is the addresses a comment already depends on,
+and dropping the ones this scan happens to miss was shrinking it on no
+evidence but the missing edge — the same reachability blind spot the limits
+below name, being used to do it. It is also what makes the census table's
+"anonymous callees a comment names" the same number as the frame gate's kept
+set, which it was not before.
 
-**320 anonymous rows have no direct transfer reaching them at all** — 320 of
-the 752 `FUN_*` rows, reached by function pointer, by a dispatch table, or not
+**`inbound == 0` in the table is that blind spot, not a missing function.** A
+zero in the `in` column says no transfer *in the scanned set* reaches it and a
+kept citation does: not that the callee is absent, unreachable or uncalled.
+Four of the eight such rows on this tree are named by exactly one `sjmp` in
+the committed listings, which `TRANSFERS` deliberately does not scan and must
+not start scanning; the rest are named by no committed instruction at all,
+with a `ret` immediately before each, so a fall-through does not account for
+them either. Each one's own comment says how it is reached. The tool prints
+the whole population by `scope` and `addr` rather than only its size, and the
+per-address reading is in
+[`../../docs/findings/cited-set-population.md`](../../docs/findings/cited-set-population.md).
+
+**A sentence elsewhere in this repository that this makes false.**
+§25 of `docs/findings.md` records that adding `sjmp` to the comment
+lexicon left `call-graph-callees.csv` byte-identical, "0x9B3C has no row in
+it: no form in `TRANSFERS` reaches a PC-relative branch". Both halves were
+true then. The reason still is — `sjmp` is still not in `TRANSFERS` — but
+`bank1,9B3C` now **holds a row**, reading `inbound=0` with `cited_by=1` and
+`citing bank1:9B03`. That file is frozen at §97 and `check_findings_frozen.py`
+fails an added section, so the sentence is left standing there and corrected
+here and in the write-up named above.
+
+The head of that list has moved twice since issue #525 corrected it, the three
+`0xFF`-fill rows that held ranks 1–3 fell to `cited_by=1` each, `common,07F0`
+then led at 3, and issue #558 has since named that one and the three rows
+behind it
+([`../../docs/findings/common-07f0-0f75-158e-1594-tranche.md`](../../docs/findings/common-07f0-0f75-158e-1594-tranche.md)).
+**The head of the table is `bank0,DFA0` at `cited_by=3` against `inbound=2`**
+— a row the ranking promotes on citations alone, which is the ordering this
+file argues for and the first thing to read about it. No row already in the
+table moved when the population widened: the sort key is row-local, so the
+added rows interleave.
+
+**318 anonymous rows have no direct transfer reaching them at all** — 318 of
+the 715 `FUN_*` rows, reached by function pointer, by a dispatch table, or not
 reached. **That is a limit of this method and not a claim that they are
-unreachable.** The same goes for the 103 transfer sites whose target is no
-index row: those are branches into straight-line code, not evidence of a
-missing function. They are counted and reported rather than dropped or
-guessed, because a target resolving to more than one scope row is left
-unresolved rather than assigned to the caller's bank.
+unreachable**, and the figure is deliberately unchanged by the paragraph
+above: it is counted off the rows that carry an inbound edge, so a cited row
+the scan cannot reach does not subtract from the blind spot it sits in. The
+same goes for the 103 transfer sites whose target is no index row: those are
+branches into straight-line code, not evidence of a missing function. They are
+counted and reported rather than dropped or guessed, because a target
+resolving to more than one scope row is left unresolved rather than assigned
+to the caller's bank.
 
 **A count is a ranking, not evidence of what a function does.** `bank0,DFA0`
 leads on three citations to two `lcall` sites; that says it is cheap to read,
@@ -549,12 +648,16 @@ zeroed all 27 would have failed. The 25 that are gone are all `pd` comments
 naming the PD image's own byte, every one of them carrying the
 `cross-program` reason.
 
-**0x1C00 is the limit worth carrying, not an absence.** Twenty-one comments name
-it, 20 in a data frame and 1 unsettled — but it has **no row in this table at
-all**, because no transfer reaches it, so it was never in the ranking to be
-wrong in. That is the shape to watch for in any other count
-here: not ranked is not absent, and 74 candidate pairs name a callee the table
-carries no row for. The tool prints that number beside the gate's.
+**0x1C00 is the limit worth carrying, not an absence.** 22 comments name it,
+21 in a data frame and 1 unsettled — and no transfer reaches it either, so it
+has **no row in this table at all**. The population widened to every key a
+kept citation names, and 0x1C00 has no kept citation, so the widening does not
+reach it. It is the worked example rather than the only such callee — others
+are rowless on both counts too — and what separates it is weight: far more
+comments name 0x1C00 than name any other callee left rowless on both counts.
+That is the shape to watch for in any other count here: not ranked is not
+absent, and the tool prints the rejected and undecided pairs naming a callee
+the table carries no row for beside the gate's own figures.
 
 ## Adding the next tranche
 

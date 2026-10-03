@@ -606,11 +606,14 @@ addresses a comment already depends on, because a named function whose comment
 says "calls 0x0EE8" is not explaining itself until 0x0EE8 has a name.
 
 **The work list is `call-graph-callees.csv`**, and the tool that builds it is
-`../tools/call_graph.py`. One row per callee in the graph: inbound count, the
-breakdown by transfer form, how many of the callers are themselves named, and
-which comments cite the address. The `annotated` column is the queue — the
-`annotated=no` rows are what is left, and the `cited_by` ones are the subset a
-sentence is actually blocked on.
+`../tools/call_graph.py`. One row per callee the transfer scan reaches **or a
+comment names**: inbound count, the breakdown by transfer form, how many of
+the callers are themselves named, and which comments cite the address. A
+comment's citation is enough to earn a row, so one no transfer reaches reads
+`inbound=0` rather than being absent from the queue — that is this method not
+seeing the edge, not the callee being missing. The `annotated` column is the
+queue — the `annotated=no` rows are what is left, and the `cited_by` ones are
+the subset a sentence is actually blocked on.
 
 **The ordering is citation-first, then inbound count**, and that is a
 correction to the issue rather than a restatement of it. Issue #134 says the
