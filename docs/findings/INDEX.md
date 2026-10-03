@@ -34,6 +34,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-readback-before-dump-holds-written-value.md`](0751-readback-before-dump-holds-written-value.md) — §4.6 said "still" without reading the dump that would support it (issue #1401)
 - [`0751-readback-writer-names.md`](0751-readback-writer-names.md) — §4.6's readback names the writer the two bytes rule out, and what is left
 - [`0751-readback-written-value-notice.md`](0751-readback-written-value-notice.md) — §4.6's second precondition, stated when nothing names the value that was written (issue #387)
+- [`0751-redone-block-value.md`](0751-redone-block-value.md) — A value under test stops naming a block when the same value is written twice in a day (issue #721)
 - [`0751-refused-pair-as-readback.md`](0751-refused-pair-as-readback.md) — §4.6 named a pair the whole-block section had refused, and the hint ended in a pre-write dump (issue #386)
 - [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md) — §3's three unlabelled mark rounds were a fourth class of mark, and the block model had no place for them (issue #472)
 - [`0751-strict-reader-two-moments.md`](0751-strict-reader-two-moments.md) — The strict reader described two moments as one (issue #786)
@@ -70,6 +71,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`citing-listing-evidence.md`](citing-listing-evidence.md) — The citing listing is the other half of the citation question (issue #525)
 - [`class-b-access-cell-corrections.md`](class-b-access-cell-corrections.md) — The three class-B `access` cells were short rather than wrong, and all three are corrected (issue #865)
 - [`code-pointer-site-census.md`](code-pointer-site-census.md) — The 54 image-wide CODE-pointer sites, written down as a regenerable table, and what the list is not
+- [`code-table-record-writers.md`](code-table-record-writers.md) — The writers a `MOV DPTR` scan cannot see: every record of the EC's CODE tables
 - [`committed-checkout-triples-held.md`](committed-checkout-triples-held.md) — What the checkout suite holds, which was seven of nine depths and no `stated` at all
 - [`common-07f0-0f75-158e-1594-tranche.md`](common-07f0-0f75-158e-1594-tranche.md) — `common,0x07F0`, `0x0F75`, `0x158E` and `0x1594`: the top of the corrected call-graph ranking, read (issue #558)
 - [`common-5a5a-edge-framing.md`](common-5a5a-edge-framing.md) — The `lcall 0x5a5a` at 0x0049 sits inside the version-string record, and the edge is a census false positive (issue #703)
@@ -177,10 +179,12 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`presence-check-container-shape.md`](presence-check-container-shape.md) — Two of the three presence checks key their per-file container and pin that shape; the third has nothing to scan (issue #371)
 - [`probe-0700-whole-page-arm.md`](probe-0700-whole-page-arm.md) — The probe's watch set can be §3's first watcher, whole (issue #666)
 - [`probe-hold-mark-merge.md`](probe-hold-mark-merge.md) — A `--csv` probe run's `hold` is held to the grader's mark-merge window (issue #665)
+- [`probe-log-capture-conversion.md`](probe-log-capture-conversion.md) — The one real 0751 capture converts to a capture the grader reads (issue #124)
 - [`prose-line-citations-held.md`](prose-line-citations-held.md) — The prose's line citations, and what now holds them (issue #801)
 - [`provenance-clone-depth-behaviour.md`](provenance-clone-depth-behaviour.md) — Both clone depths run: `--verify-provenance` measured rather than asserted (issue #421)
 - [`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md) — What a re-encode row's own columns say, and the ceiling they support
 - [`reassembly-name-column.md`](reassembly-name-column.md) — `reassembly.csv`'s `name` column describes the listing, so it is compared and not trusted
+- [`reassembly-unmeasured-row-policy.md`](reassembly-unmeasured-row-policy.md) — What a re-encode row outside `OUTCOMES` does to a run, to `--check`, and to the report (issue #230)
 - [`rebuild-provenance.md`](rebuild-provenance.md) — What a rebuild from the committed inputs re-derives (issue #623)
 - [`region-edge-declined-sites.md`](region-edge-declined-sites.md) — The six offsets the rel8 site walk declines are now reported by the tool rather than verified once
 - [`rel8-displacement-bound.md`](rel8-displacement-bound.md) — What holds the rel8 displacement read in range: a constant in another module, and a marker check three frames away
@@ -218,6 +222,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`walk-bounds-guard-pinned.md`](walk-bounds-guard-pinned.md) — The bounds disjunct is pinned, by two cases — and the sweep that could have noticed it cannot see it
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
 - [`walk-window-terminators.md`](walk-window-terminators.md) — `walk()`'s stop reason is a column now, and the 45 rows its budget truncates are named
+- [`xdata-0390-0391-filter-pair.md`](xdata-0390-0391-filter-pair.md) — The 0x0390/0x0391 pair: what the 0x9EA1 filter reads, what the `E100` branch selects, and where `0x0391`'s value comes from (issue #295)
 - [`xdata-0786-tcc-offset-verdict.md`](xdata-0786-tcc-offset-verdict.md) — `0x0786` is a CPU TCC offset: the EC's own bytes decide the naming conflict
 - [`xdata-07fd-07ff-witness-triple.md`](xdata-07fd-07ff-witness-triple.md) — The `0x07FD`-`0x07FF` triple: a three-byte witness whose third byte discriminates (issue #573)
 - [`xdata-0860-census-sites-relined.md`](xdata-0860-census-sites-relined.md) — The four `0x0860` census citations move; the counts do not (issue #752)
@@ -260,6 +265,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md) — The refusal contract's measured-state section, corrected against this tree (issue #816)
 - [`xdata-no-eq-guard-refusal-contract.md`](xdata-no-eq-guard-refusal-contract.md) — The `--no-eq-guard` refusal contract
 - [`xdata-ownership-main-keys-pin.md`](xdata-ownership-main-keys-pin.md) — #658 asked for a pin that #849 had already laid: the `OWNERSHIP` main-EC keys, and the one line that could not show its own drift
+- [`xdata-page-cluster-count.md`](xdata-page-cluster-count.md) — The working page's cluster count, both sides of the pass, and what the added addresses have to do with it (issue #903)
 - [`xdata-pair-role-column.md`](xdata-pair-role-column.md) — The `pair_role` column: which half of a pair a census row is (issue #734)
 - [`xdata-per-program-counts.md`](xdata-per-program-counts.md) — The per-program count columns: `refs` and the five buckets, split, with `refs` itself unmoved (issue #713)
 - [`xdata-register-map-per-program-keying.md`](xdata-register-map-per-program-keying.md) — `xdata-register-map.md` §2 re-keyed per program, and what that moved (issue #714)

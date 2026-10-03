@@ -134,7 +134,12 @@ trusting one of theirs: every row says whether it was verified against
   same applies to code: a new tool is a new file, not another mode bolted
   onto an existing one. A new test suite is a new `test_*.py` whose module docstring
   says what it stands in for: the runner finds it, `tools/list_suites.py`
-  lists it, and there is no shared table to add a row to. Structured sources of truth (`registers.yaml`, the
+  lists it, and there is no shared table to add a row to. Tests for a new
+  behaviour go in a new suite file too (`test_<tool>_<topic>.py`), not appended
+  to the end of an existing one: two pull requests appending to the same long
+  suite collide at its last line. `test_grade_0751_isolation.py`, at over six
+  thousand lines, conflicted that way twice on 2026-10-03. A case that changes an
+  assertion the existing suite already makes still belongs in that suite. Structured sources of truth (`registers.yaml`, the
   annotation CSVs) stay single files: edit the rows you need and nothing
   else.
 - **No hand-kept totals in prose, and never a correction chain.**
