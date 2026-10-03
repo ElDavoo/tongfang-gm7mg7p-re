@@ -10,14 +10,18 @@ error is left visible here rather than edited out of history, per `CLAUDE.md`.
 
 The correction is not a reading of the listing. `ec/tools/a5e6_quotient.py`
 parses `ec/decompiled/bank1/A5E6.asm`, executes the instruction stream on a
-small 8051 core, and compares every register against an independent Python
-model of shift-and-subtract written from the algorithm rather than from the
-listing. Two implementations, one machine; a disagreement is a red run.
+small 8051 core, and compares the two result pairs the helper returns — the
+quotient in `R1:R2` and the remainder in `R3:R4` — against an independent
+Python model of shift-and-subtract written from the algorithm rather than from
+the listing. Two implementations, one machine; a disagreement is a red run.
+The other four registers are not compared because they are not results: the
+epilogue's own copies are what leave `R0`/`R5`/`R6`/`R7` equal to these four,
+so comparing the pairs compares everything the helper hands back.
 
 ```console
 $ python3 ec/tools/a5e6_quotient.py
 listing ec/decompiled/bank1/A5E6.asm: 39 instructions
-two implementations over 423 input pairs: they agree on every register
+two implementations over 423 input pairs: they agree on both result pairs
 ```
 
 ## Where the claim was carried, and what happened to each
@@ -62,11 +66,17 @@ order, and each is a fact about a *caller*, so the correction is not resting
 on one reading of one function:
 
 - `0xF436` (`halve_sum_into_044c`) reads `R2` at `0xF44B`, and on it being
-  nonzero overwrites `R1` with `0xFF` at `0xF44E`. That is a **clamp**, and a
-  clamp only coheres one way round: the byte that normally reaches the store
-  is `R1`, and `R2` is the overflow flag. Under the swapped reading the same
-  three instructions would overwrite the high byte and leave the stored byte
-  untouched — not a clamp. `0xCC2D` has the identical shape at `0xCC6C`.
+  nonzero overwrites `R1` with `0xFF` at `0xF44E`; `0xF455` adds `R1` into
+  `0x044C`, so `R1` is the byte that reaches the store either way and only its
+  meaning is in question. On the corrected reading `R1` is the quotient's low
+  byte and `R2` its high byte, so the shape is "store `min(quotient, 0xFF)`" —
+  a **clamp**, and one that fires exactly when the quotient left one byte.
+  Swapped, `R1` is the high byte and the same three instructions test the *low*
+  byte for nonzero: a quotient of `0x000E` is stored as `0xFF` and one of
+  `0x0100` as `0x01`, which overflows nothing and is not a clamp. That is the
+  one-way argument, and `test_a5e6_quotient.py`'s clamp test runs both readings
+  over the same registers to hold it. `0xCC2D` has the identical shape at
+  `0xCC6C`.
 - `CB80` says it stores "the low byte of the quotient", over `mov A, R1` at
   `0xCBA5`.
 - `CB1F` says "from the low byte q of the quotient", over `mov A, R1`.

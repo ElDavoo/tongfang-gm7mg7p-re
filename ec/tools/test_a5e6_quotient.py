@@ -4,8 +4,9 @@
 Issue #358. PR #200 read bank1 0xA5E6 as leaving the quotient's *high* byte in
 R1, and `windows/tools/system_id_probe.py` was built on that reading.
 `a5e6_quotient.py` executes the committed `.asm` on a small 8051 core and
-compares it against an independent Python model; this suite is what holds that
-comparison to the claim.
+compares the two result pairs it returns -- the quotient in R1:R2 and the
+remainder in R3:R4 -- against an independent Python model; this suite is what
+holds that comparison to the claim.
 
 The properties here are properties of the tree, not counts of it: that the two
 implementations agree, that R1 is the low byte, that the callers' clamp shape
@@ -37,7 +38,7 @@ class TwoImplementationsTests(unittest.TestCase):
     function, which is the one thing this whole change rests on.
     """
 
-    def test_the_listing_and_the_independent_model_agree_on_every_register(self):
+    def test_the_listing_and_the_model_agree_on_both_result_pairs(self):
         checked, bad = tool.reconcile()
         self.assertTrue(checked, "the sweep is empty, so nothing was compared")
         self.assertEqual(bad, [], f"{len(bad)} input pair(s) disagree")
@@ -74,7 +75,10 @@ class RoleTests(unittest.TestCase):
 
     def test_the_epilogue_copies_r0_into_r1_and_r5_into_r2(self):
         # The claim is about two named moves in the listing, not about the
-        # arithmetic agreeing with itself, so it is read off the listing.
+        # arithmetic agreeing with itself. `epilogue_moves` parses each
+        # `mov 0x0n,0x0m` row's own operands, so this fails on a listing whose
+        # copies run the other way round rather than passing whatever a table
+        # beside the code happens to say.
         epilogue = dict(tool.roles()["epilogue"])
         self.assertEqual(epilogue[0xA613], ("R2", "R5"))
         self.assertEqual(epilogue[0xA616], ("R1", "R0"))
@@ -82,7 +86,8 @@ class RoleTests(unittest.TestCase):
     def test_the_quotient_bit_enters_r0_before_r5(self):
         # R0 is shifted first, so it is the low accumulator; the epilogue then
         # hands R0 to R1. Both halves are needed for the conclusion and
-        # neither alone would survive a swap in the other.
+        # neither alone would survive a swap in the other. As above, the
+        # registers come from the listing rows and not from a constant.
         accumulator = dict(tool.roles()["accumulator"])
         self.assertEqual(accumulator[0xA60A], "R0")
         self.assertEqual(accumulator[0xA60D], "R5")
@@ -98,12 +103,13 @@ class RoleTests(unittest.TestCase):
 class ClampTests(unittest.TestCase):
     """The 0xF436 clamp, which only coheres one way round.
 
-    `halve_sum_into_044c` reads the *high* byte of the quotient into R2 and,
-    when it is nonzero, overwrites R1 with 0xFF. That is a saturation clamp on
-    the low byte: the byte that normally reaches the store is the one that gets
-    overwritten, and the byte that decides whether to overwrite is the other
-    one. Under the swapped reading it would be a clamp on the high byte with no
-    effect on what is stored, which is not a clamp.
+    `halve_sum_into_044c` tests R2 and, when it is nonzero, overwrites R1 with
+    0xFF before adding R1 into the stored byte. If R2 is the quotient's high
+    byte and R1 its low byte, that is a saturation clamp: the value reaches the
+    store capped at 0xFF, and it is capped exactly when the quotient left one
+    byte. Swapped, the same three instructions test the *low* byte for nonzero
+    and saturate the stored high byte, which overflows nothing and is not a
+    clamp.
     """
 
     CLAMP = REPO / 'ec/decompiled/bank1/F436.asm'
@@ -120,33 +126,51 @@ class ClampTests(unittest.TestCase):
     def test_the_clamp_changes_what_is_stored_only_on_the_low_byte_reading(self):
         # Run the helper for real, apply 0xF436's three instructions to the
         # registers it leaves, and ask which reading of the epilogue makes the
-        # clamp a clamp. Under the swapped reading the same three instructions
-        # would overwrite the *high* byte and leave the stored low byte
-        # untouched -- which is not a clamp, and is why the callers corroborate
-        # the correction rather than merely being consistent with it.
+        # clamp a clamp. `0xF455` adds R1 into the stored byte, so R1 is what
+        # reaches the store either way and only its *meaning* is in question:
+        # on the corrected reading R1 is the quotient's low byte, so the shape
+        # is "store min(quotient, 0xFF)" and the clamp fires exactly when the
+        # quotient left one byte. On the swapped reading R1 is the high byte,
+        # the same three instructions test the *low* byte for nonzero, and the
+        # result saturates inputs that never overflowed -- which is not a
+        # clamp, and is why the callers corroborate the correction rather than
+        # merely being consistent with it.
         rows = tool.parse_listing(self.CLAMP)
         after = {addr: t for addr, t, _raw in rows}
-        self.assertEqual((after[0xF44B], after[0xF44E]),
-                         ("mov A, R2", "mov R1, #0xff"))
+        self.assertEqual((after[0xF44B], after[0xF44E], after[0xF455]),
+                         ("mov A, R2", "mov R1, #0xff", "add A, R1"))
 
         fired = not_fired = 0
+        differed = not_a_clamp = 0
         for dividend, divisor in ((0xFFFF, 0x22), (0x1234, 0x44), (0x00FF, 0x22),
                                   (0x0100, 0x22), (0x7FFF, 0x64)):
             with self.subTest(dividend=dividend, divisor=divisor):
                 core = tool.listing_quotient(dividend, divisor)
+                quotient, _r = tool.model(dividend, divisor)
                 low, high = core.r[1], core.r[2]
-                stored = 0xFF if high != 0 else low
-                self.assertEqual(stored, 0xFF if high != 0 else low)
-                # A clamp that fired has replaced a byte that was not already
-                # 0xFF; one that did not has left it alone.
+                # Both readings of the same three instructions, from the same
+                # registers: the corrected one tests the high byte, the
+                # swapped one the low.
+                corrected = 0xFF if high != 0 else low
+                swapped = 0xFF if low != 0 else high
                 if high != 0:
                     fired += 1
-                    self.assertEqual(stored, 0xFF)
                 else:
                     not_fired += 1
-                    self.assertEqual(stored, low)
+                # A saturation clamp stores the value, capped at 0xFF.
+                self.assertEqual(corrected, min(quotient, 0xFF))
+                if corrected != swapped:
+                    differed += 1
+                if swapped != min(quotient, 0xFF):
+                    not_a_clamp += 1
         self.assertTrue(fired and not_fired,
                         "the cases must exercise both arms of the clamp")
+        # The one-way argument: the two readings are distinguishable, and it
+        # is the corrected one that behaves as a clamp.
+        self.assertTrue(differed, "the readings never disagree on these cases")
+        self.assertTrue(not_a_clamp,
+                        "the swapped reading saturates as well, so neither "
+                        "reading is a clamp and this corroborates nothing")
 
 
 class ConventionTests(unittest.TestCase):
@@ -287,7 +311,7 @@ class ReportTests(unittest.TestCase):
             rc = tool.report()
         text = out.getvalue()
         self.assertEqual(rc, 0)
-        self.assertIn("they agree on every register", text)
+        self.assertIn("they agree on both result pairs", text)
         self.assertIn("0x8844", text)
         self.assertIn("0xa5e6", text.lower())
 

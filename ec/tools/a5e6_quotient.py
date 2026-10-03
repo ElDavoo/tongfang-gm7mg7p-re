@@ -9,12 +9,15 @@ touches R1 first, and the epilogue at 0xA613 copies R0 into R1.
 
 **The point of this tool is that the roles are a consequence of the committed
 bytes rather than a reading of them.** It parses ec/decompiled/bank1/A5E6.asm,
-runs the instruction stream on a small 8051 core, and compares every register
-against an independent Python model of shift-and-subtract written from the
-algorithm rather than from the listing. Two implementations, one machine: a
-disagreement is a red run, not a caveat. The opcodes are not arbitrated here --
-`verify_reassembly.py --check` already holds them against the firmware, and
-this file reads the listing that check arbitrates.
+runs the instruction stream on a small 8051 core, and compares the two result
+pairs -- the quotient in R1:R2 and the remainder in R3:R4 -- against an
+independent Python model of shift-and-subtract written from the algorithm
+rather than from the listing. Two implementations, one machine: a disagreement
+is a red run, not a caveat. The other four registers hold nothing this leaves
+behind: the epilogue's own copies are what put them there, so a disagreement
+about a result pair cannot be a disagreement about them. The opcodes are not
+arbitrated here -- `verify_reassembly.py --check` already holds them against
+the firmware, and this file reads the listing that check arbitrates.
 
 The core covers only what 0xA5E6 and the four functions in `FAMILIES` use. It
 raises `Unsupported` on anything else rather than skipping, so a listing that
@@ -46,18 +49,14 @@ INDEX = HERE.parent / "decompiled" / "index.csv"
 A5E6 = 0xA5E6
 DIVISORS = (0x22, 0x44)
 
-# The registers the helper writes its result into, by epilogue address. Both
-# orders are stated rather than one, because the epilogue is the whole claim
-# and a reader checking it wants both ends of it.
-EPILOGUE = {0xA613: ("R2", "R5"), 0xA616: ("R1", "R0"),
-            0xA619: ("R4", "R7"), 0xA61C: ("R3", "R6")}
-
-# Where the quotient bit enters the accumulator, and which accumulator is
-# low. 0xA60A shifts it into R0 and 0xA60D shifts R0's carry-out into R5, so
-# the register touched first is the low half -- the same "first shifted is
-# low" rule 0xA5E6's own dividend shift follows, and the one that made the
-# high-byte reading look plausible in the first place.
-ACCUMULATOR_STEP = {0xA60A: "R0", 0xA60D: "R5"}
+# Which rows settle the operand roles. The addresses are named so the report
+# can cite them, but they select rows and say nothing about what those rows do:
+# the direction comes out of the text, so a listing that swapped an operand
+# would be reported as having swapped it rather than checked against a table
+# written beside it. `0xA613`-`0xA61C` are the four `mov 0x0n,0x0m` copies and
+# `0xA60A`/`0xA60D` the two `mov A,Rn` the quotient bit enters.
+EPILOGUE_ADDRS = (0xA613, 0xA616, 0xA619, 0xA61C)
+ACCUMULATOR_ADDRS = (0xA60A, 0xA60D)
 
 # The 16-bit operand pair every helper in `FAMILIES` takes, named so the two
 # places that ask which half is low read as a question about a pair rather
@@ -67,6 +66,35 @@ OPERAND_PAIR = ("R1", "R2")
 
 class Unsupported(Exception):
     """An opcode this core does not execute. Raised, never skipped."""
+
+
+def _direct(token):
+    """A direct-address operand as its register number, rejecting anything else.
+
+    Only 0x00-0x07 is a register of the file `Core` executes; a larger direct
+    address is DPL, DPH or B and naming it "R130" would read as a finding.
+    """
+    n = int(token, 16)
+    if not 0 <= n < 0x08:
+        raise Unsupported(f"0x{token} is not one of R0-R7")
+    return n
+
+
+def _direct_move(text):
+    """(destination, source) of a `mov 0x0n,0x0m` row, as register names."""
+    parts = text.replace(",", " ").split()
+    if len(parts) != 3 or parts[0] != "mov":
+        raise Unsupported(f"{text!r} is not a direct-to-direct mov")
+    dst, src = parts[1], parts[2]
+    return f"R{_direct(dst)}", f"R{_direct(src)}"
+
+
+def _into_a(text):
+    """The register a `mov A, Rn` row reads."""
+    parts = text.replace(",", " ").split()
+    if len(parts) != 3 or parts[0] != "mov" or parts[1] != "A":
+        raise Unsupported(f"{text!r} is not a mov into A")
+    return parts[2]
 
 
 class Core:
@@ -324,9 +352,15 @@ def listing_quotient(dividend, divisor, rows=None):
 def reconcile(rows=None, cases=None):
     """Run both implementations over `cases` and report every disagreement.
 
+    What is compared is the two result pairs the helper returns -- the
+    quotient in R1:R2 and the remainder in R3:R4 -- not all eight registers.
+    R0, R5, R6 and R7 are not checked because they are not results: the
+    epilogue's own copies are what leave them equal to these four, so
+    comparing the pairs compares everything the helper hands back.
+
     Returns (checked, disagreements). A disagreement is a list of
-    (dividend, divisor, listing_regs, model_pair) rather than a count, so the
-    caller can print the registers that differ instead of a total.
+    (dividend, divisor, listing_pairs, model_pairs) rather than a count, so
+    the caller can print the bytes that differ instead of a total.
     """
     rows = rows if rows is not None else parse_listing()
     cases = cases if cases is not None else sweep()
@@ -428,17 +462,50 @@ def family_low(addr, rows=None):
     return shifted if shifted else added
 
 
+def epilogue_moves(rows=None):
+    """The epilogue's (destination, source) pairs, from the listing's own text.
+
+    The four `mov 0x0n,0x0m` rows at 0xA613-0xA61C are what copy the
+    accumulators out, and which is which is the whole claim, so both ends of
+    every pair are parsed out of the row rather than written down beside it.
+    The listing renders MOV direct,direct destination-first (`85 07 04` is
+    R4 <- R7 and is printed `mov 0x04, 0x07`), so the first operand is the one
+    that receives.
+
+    Direct addresses 0x00-0x07 are R0-R7 -- the same identity `Core.read` and
+    `Core.write` already hold them to, so there is no second mapping here to
+    disagree with.
+    """
+    rows = rows if rows is not None else parse_listing()
+    return [(addr, _direct_move(text)) for addr, text, _raw in rows
+            if addr in EPILOGUE_ADDRS]
+
+
+def accumulator_steps(rows=None):
+    """Which accumulator each `mov A, Rn` of the quotient step feeds.
+
+    0xA60A shifts the compare's outcome into R0 and 0xA60D shifts R0's
+    carry-out into R5, so the register touched first is the low half -- the
+    same "first shifted is low" rule 0xA5E6's own dividend shift follows, and
+    the one that made the high-byte reading look plausible in the first place.
+
+    The register is the operand of the row, not a constant beside it, so a
+    listing that swapped the two accumulators would be reported as having
+    swapped them.
+    """
+    rows = rows if rows is not None else parse_listing()
+    return [(addr, _into_a(text)) for addr, text, _raw in rows
+            if addr in ACCUMULATOR_ADDRS]
+
+
 def roles(rows=None):
     """The operand roles, each one cited to the listing address that fixes it."""
     rows = rows if rows is not None else parse_listing()
     return {
         "dividend_shift": [(addr, text) for addr, text, _raw in rows
                            if 0xA5EE <= addr <= 0xA5F9],
-        "accumulator": [(addr, ACCUMULATOR_STEP[addr])
-                        for addr, _text, _raw in rows
-                        if addr in ACCUMULATOR_STEP],
-        "epilogue": [(addr, EPILOGUE[addr]) for addr, _text, _raw in rows
-                     if addr in EPILOGUE],
+        "accumulator": accumulator_steps(rows),
+        "epilogue": epilogue_moves(rows),
     }
 
 
@@ -657,7 +724,7 @@ def report(rows=None, out=None):
     print(f"listing {LISTING.relative_to(REPO)}: {len(rows)} instructions",
           file=out)
     print(f"two implementations over {checked} input pairs: "
-          + ("they agree on every register" if not bad
+          + ("they agree on both result pairs" if not bad
              else f"{len(bad)} DISAGREEMENT(S)"), file=out)
     for dividend, divisor, got, want in bad[:10]:
         print(f"  {dividend:#06x} / {divisor:#06x}: listing gave "
