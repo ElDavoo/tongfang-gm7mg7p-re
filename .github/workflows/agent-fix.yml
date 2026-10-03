@@ -518,5 +518,17 @@ jobs:
           # LOCAL CHANGE: the helper merges main and regenerates conflicted generated files.
           # Read from main, not the working tree: a branch cut before the helper landed lacks it.
           git fetch --quiet origin main
-          bash <(git show origin/main:.github/scripts/rebase-onto-main.sh)
+          # LOCAL CHANGE (2026-10-04): a real conflict with main (status 2) no longer throws the
+          # round away. Main moves during a round, and the merge that opened it does not cover
+          # what landed since: #1780's first round was written, committed, and discarded on
+          # 2026-10-03 for four conflicts that landed while it ran. The round is pushed without
+          # main instead. The pull request then conflicts, gets no review until it is resolved,
+          # and agent-retry.yml's conflict sweep dispatches agent-conflicts.yml for it.
+          rc=0
+          bash <(git show origin/main:.github/scripts/rebase-onto-main.sh) || rc=$?
+          if [ "$rc" = 2 ]; then
+            echo "::warning::main conflicts with this round in files that are not generated. Pushing the round without main; the conflict sweep resolves it."
+          elif [ "$rc" != 0 ]; then
+            exit "$rc"
+          fi
           git push --force-with-lease origin "HEAD:agent/issue-${ISSUE}"

@@ -14,6 +14,9 @@
 # and never pushed. A merge only meets what changed since the last one. The pull request is
 # squash-merged, so the branch's history shape costs nothing. The push stays legal for the same
 # reason a rebase made it legal: after the merge, the branch's workflow files are main's.
+#
+# Exit status 2 means a real conflict: the merge was aborted and HEAD is what it was. A caller
+# with finished work to keep can push it as it stands (see agent-fix.yml); any other failure is 1.
 set -euo pipefail
 
 git fetch --quiet origin main
@@ -25,7 +28,7 @@ if ! git merge --no-edit --quiet origin/main; then
   if ! bash <(git show origin/main:.github/scripts/regenerate-conflicted.sh); then
     echo "::error::merging main conflicts in files that are not generated (above)"
     git merge --abort
-    exit 1
+    exit 2
   fi
   GIT_EDITOR=true git commit --no-edit --quiet
 fi
