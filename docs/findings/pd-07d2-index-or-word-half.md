@@ -90,10 +90,13 @@ vendor symbol.
 **The `no movx` classification cell is this method stopping, not the site being
 inert.** `0x6757` is scored `no movx found in the decoded window` because the
 instruction after its `MOV DPTR,#0x07D2` is `cjne a,#0x02` and the walk stops at
-a branch. It is a **write**: both arms store a constant through that DPTR, `0x02`
-when `[0x07F9]` equals 2 and `0x01` otherwise. The cell means "the walk stopped
-before reaching the access", which is not "no access happens here" — a
-distinction worth carrying to any future walk whose guard fires.
+a branch. Both arms of that `cjne` call `0x37DE` before storing anything, and
+that callee opens with `movx a,@dptr` — so `0x07D2` is **read** — before
+rebuilding DPTR to `0x08F5 + 0x5E*[0x07D2]`. The `0x02` or `0x01` each arm then
+stores lands on that computed address, not on `0x07D2`. The cell means "the walk
+stopped before reaching the access", which is not "no access happens here" — a
+distinction worth carrying to any future walk whose guard fires, and here one
+where the access that was missed belongs to a callee rather than to the site.
 
 ## What this does not move
 
@@ -118,14 +121,18 @@ committed image and about nothing else.
 firmware; they do not share a program.
 
 **The nine walks are what the method found, not a census of the walks that
-exist.** `0x8D41` `advance_07d2_counter_and_dispatch` is a tenth: it writes `R7`
-to `0x07D2`, clears it, writes `0xFF` back, then calls `0x35FF` — which reloads
-`0x07D2` and reads it — and `inc dptr` into `0x07D3`, where it reads that byte and
-tests its top bit. The committed listing shows all of it; the site table does not
-record it as a walk, because the window for `0x8D41` stops three instructions in,
-on the `lcall` right after the store. A linear walk that stops at the first
-branch does not reach it, which is the same limitation as §4c below and in a
-specific instance rather than in the abstract.
+exist.** `0x8D41` `advance_07d2_counter_and_dispatch` is not one of the nine and
+does not turn into one: it opens by storing `R7` to `0x07D2`, and the site
+table's window for it stops three instructions in, on the `lcall 0x35AC` right
+after the store. Everything past that store runs through callees that rebuild
+DPTR (`0x35AC`, `0x3632` and `0x3760` each set it outright, `0x349B` and `0x3627`
+add to `DPH` and `DPL`), so the later `clr` and the later `0xFF` store reach
+computed cells rather than `0x07D2`. The `inc dptr` after `0x35FF` — which sets
+DPTR to `0x08F6 + 0x5E*[0x07D2]` — reaches `0x08F7 + 0x5E*[0x07D2]`, so the
+`jnb acc.7` at `0x8D76` tests the top bit of that byte and not of `0x07D3`. What
+the window cut off here is a chain of DPTR-destroying calls rather than a
+further `0x07D3` walk, which is the same limitation as §4c below in a specific
+instance rather than in the abstract.
 
 **47 is a lower bound**, for the computed-`DPTR` reason in `docs/findings.md`
 §4c: `trace_xdata_refs.py` finds direct `MOV DPTR,#imm16` sites only, so a byte

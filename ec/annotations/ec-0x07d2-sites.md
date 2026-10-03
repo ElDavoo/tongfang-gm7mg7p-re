@@ -119,9 +119,10 @@ $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-dep
 ```
 
 (columns after `jmp` are `handoff->read`, `handoff->write`, `handoff->r+w`,
-`handoff->unresolved`, `none`.) Net: **36 of the sites read the byte and 10
-write it**, the 36 being the 31 read at the site plus all 5 handoffs, which
-resolve one level deeper and all read.
+`handoff->unresolved`, `none`.) Net: **37 of the sites read the byte and 10
+write it** — the 37 being the 31 read at the site, the 5 handoffs, which
+resolve one level deeper and all read, and the one `none` row, which §5 decodes
+by hand and turns out to read as well.
 
 The opcode tables the decode rests on are pinned by a self-test against the two
 windows `charge-profile-flow.md` transcribed from r2 by hand, and the
@@ -289,8 +290,8 @@ former, and `0x0420` and `0x042C` in the `0x60` row of the latter.
 file records only *which* bases already appear there and leaves their contents
 to `#75`.
 
-Of the 36 read sites, 9 reach a multiply — 4 inline and 5 through a callee —
-and **27 have no multiply in the decoded window**. That is the honest form of the
+Of the 37 read sites, 9 reach a multiply — 4 inline and 5 through a callee —
+and **28 have no multiply in the decoded window**. That is the honest form of the
 negative: not "not an index", because a linear walk stops at the first branch
 and the multiply may be past it. `ec-0x07d1-sites.md` §4.1 makes the same point
 in the same words, and `pd-xdata-overlap.md` §3 makes it about the `10BC`
@@ -298,8 +299,9 @@ family for `0x04A6`.
 
 ### 4.2 The nine `inc dptr` walks
 
-Nine sites reach past their own byte, and nine is what the *table* records: §5
-names a tenth the walk's window stops short of, and it points the same way.
+Nine sites reach past their own byte, and nine is what the *table* records. §5
+names a tenth site the walk's window stops short of; the code after its store
+reaches a computed address rather than `0x07D3`, so it does not join this set.
 **All nine put `0x07D2` in the low position** — none reads or writes it as the
 second half of a pair, and the one that runs to three bytes runs upward from it.
 This is the strongest single piece of evidence in the file, and it is evidence
@@ -346,8 +348,8 @@ points DPTR at `0x07D1` and calls `0xACF4`, which
 write-handling callee. Each loads the immediate pair `R2 = 0x11`, `R3 = 0x94`
 into the call `0x775C` makes, and `0xB311` increments `R5` on the way past —
 `inc R5` at `0xB322`. That is visible in the committed listing rather than in
-the table's own window, and it is the only place any of the thirteen named
-entries advances a value destined for this byte; like `0x07D0`, which
+the table's own window, and it is the only place a named routine advances a
+value destined for this byte; like `0x07D0`, which
 `ec-0x07d0-sites.md` §4 records at two of its sites, this address is **never
 incremented in place** — a search of the three committed site tables for an
 `inc` reaching a store returns `0x07D0`'s rows and none of this file's. After
@@ -418,35 +420,83 @@ classifier's guard is a flow opcode, and for `0x6757` the instruction after
 no `movx` in it. The bytes above and below say what the site does:
 
 ```console
-$ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x26753 --runtime 0x6753 -n 6
+$ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x26753 --runtime 0x6753 -n 8
 0x6753  9007f9   mov  dptr,#0x07f9
 0x6756  e0       movx a,@dptr
 0x6757  9007d2   mov  dptr,#0x07d2
 0x675a  b40208   cjne  a,#0x02,0x6765
 0x675d  1237de   lcall 0x37de
 0x6760  7402     mov  a,#0x02
+0x6762  f0       movx @dptr,a
+0x6763  8006     sjmp 0x676b
+
+$ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x237DE --runtime 0x37DE -n 9
+0x37de  e0       movx a,@dptr
+0x37df  75f05e   mov  0xf0,#0x5e
+0x37e2  a4       mul  ab
+0x37e3  24f5     add  a,#0xf5
+0x37e5  f582     mov  0x82,a
+0x37e7  e4       clr  a
+0x37e8  3408     addc a,#0x08
+0x37ea  f583     mov  0x83,a
+0x37ec  22       ret
 ```
 
-`0x6757` is inside `0x6673` `dispatch_on_07f5_record_after_staging_07d2`, and it
-is a **write**: DPTR is loaded with `0x07D2` and both arms of the `cjne` store
-a constant through it — `0x02` when `[0x07F9]` equals 2, `0x01` otherwise. So
-the cell is a *write* that the linear walk scored as "nothing", and the honest
-direction is that this method's `no movx` cell means "the walk stopped before
-reaching the access", which is a different statement from "no access happens
-here". Counting `0x6757` as neither a read nor a write would understate the
-write total; it is counted in §7's caveat instead.
+`0x6757` is inside `0x6673` `dispatch_on_07f5_record_after_staging_07d2`, and
+both arms of its `cjne` call `0x37DE` before they store anything. That callee
+opens with `movx a,@dptr`, so the byte is **read**, and it then rebuilds DPTR
+out of the value it read, leaving it at `0x08F5 + 0x5E*[0x07D2]`. Each arm's
+`movx @dptr,a` therefore stores to *that* address — `0x02` when `[0x07F9]` is
+2, `0x01` otherwise — and `0x07D2` is not the byte either store reaches.
 
-**And it is the tenth walk the table cannot see.** `0x8D41`
-`advance_07d2_counter_and_dispatch` writes `R7` to `0x07D2`, clears it, writes
-`0xFF` back, and then calls `0x35FF` — which reloads `0x07D2` and reads it — and
-`inc dptr` into `0x07D3`, where `0x8D75` reads it and `jnb acc.7` tests its top
-bit. That is a tenth site reading `0x07D2` then `0x07D3`, and the table does not
-record it as a walk: the window for `0x8D41` stops three instructions in, on the
-`lcall 0x35AC` that immediately follows the store. This section's limitation in a
-specific instance rather than in the abstract — the access is real, it is
-committed and visible, and a linear walk that stops at the first branch does not
-reach it. It is why the nine of §4.2 are "what this method found" and not a
-census of the walks that exist.
+`0x37DE` is the `0x5E`-stride shape of §3's `0x3509` one base along, and like
+those five it is a callee that replaces DPTR rather than using the one it is
+given. It is not among §3's five only because the classifier scored this row
+`no movx` rather than `handed to a helper`, so §3's table does not reach it.
+
+So what this method's `no movx` cell records here is that the walk stopped
+before reaching the access — a different statement from "no access happens
+here" — and the direction the bytes give is a read.
+
+**And `0x8D41` is a store the table's window cuts in half.**
+`advance_07d2_counter_and_dispatch` opens by storing `R7` to `0x07D2` — a real
+write, and not one of §4.2's nine. Everything after those three instructions
+runs through callees that rebuild DPTR: `0x35AC` sets it to `0x0428`, `0x3632`
+to `0x042F`, `0x3760` to `0x042C`, and `0x349B` and `0x3627` add to `DPH` and
+`DPL`. So the `clr a` that follows reaches a computed cell rather than
+`0x07D2`, and so does the `mov a,#0xff ; movx @dptr,a` after it.
+
+```console
+$ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x28D41 --runtime 0x8D41 -n 15
+0x8d41  9007d2   mov  dptr,#0x07d2
+0x8d44  ef       mov  a,r7
+0x8d45  f0       movx @dptr,a
+0x8d46  1235ac   lcall 0x35ac
+0x8d49  ef       mov  a,r7
+0x8d4a  12349b   lcall 0x349b
+0x8d4d  e0       movx a,@dptr
+0x8d4e  fe       mov  r6,a
+0x8d4f  ef       mov  a,r7
+0x8d50  123632   lcall 0x3632
+0x8d53  ef       mov  a,r7
+0x8d54  12349b   lcall 0x349b
+0x8d57  123627   lcall 0x3627
+0x8d5a  e4       clr  a
+0x8d5b  f0       movx @dptr,a
+```
+
+The `lcall 0x35FF` near the end is §4.1's `0x5E`-stride site, so it leaves DPTR
+at `0x08F6 + 0x5E*[0x07D2]` and the `inc dptr` after it reaches
+`0x08F7 + 0x5E*[0x07D2]` — not `0x07D3`. The byte read at `0x8D75` for the
+`jnb acc.7` at `0x8D76` to test is that one.
+
+So what the table's window cannot see here is not a further `0x07D3` walk but
+the call chain: the window for `0x8D41` stops three instructions in, on the
+`lcall 0x35AC` that immediately follows the store, and every later access in the
+routine is at an address only those callees produce. That is §1's
+`0x8D41`-versus-`0xF61C` entry split again, and the same blind spot §4c of
+`../../docs/findings.md` retracted a claim over. It is why the nine of §4.2 are
+"what this method found" and not a census of the walks that exist.
 
 **The CODE-pointer blind spot, checked explicitly for this address.** `MOV
 DPTR,#imm16` builds CODE pointers as well as XDATA ones, and the collision here
@@ -533,10 +583,12 @@ this one share an address and a firmware; they do not share a program.
   about the inputs, not about the safety of writing it. No tool here writes it,
   no value for it is known, and its meaning is open.
 - **The walk's `no movx` cell is a method artefact, not a measurement.**
-  `0x6757` is a write (§5), so the read/write split above is a lower bound on
-  writes and the classification of that one row is known to be wrong. Nothing
-  about the other 46 rows is thereby in doubt; they each carry an access in
-  their own window.
+  `0x6757` is a read (§5): the `0x37DE` helper it hands the byte to reads it and
+  rebuilds DPTR around the value, so the two stores visible after the branch
+  reach a computed address and not `0x07D2`. The cell names no access where one
+  is reached, and by the site rather than by its callee. Nothing about the
+  other 46 rows is thereby in doubt; they each carry an access in their own
+  window.
 - **47 is a lower bound, and a zero would have meant "not found".**
   `trace_xdata_refs.py` finds direct `MOV DPTR,#imm16` sites only. Anything
   reaching the byte through a computed DPTR — a register-held address, a table

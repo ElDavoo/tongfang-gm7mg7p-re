@@ -904,11 +904,13 @@ registers:
       47 direct MOV DPTR sites, every one of them in the ITE8850-PD
       image and none in the EC firmware, enumerated in
       ec/annotations/ec-0x07d2-sites.md (site table:
-      ec-0x07d2-sites.csv). 36 read, 10 write, and 1 the linear
-      walk scored as unreachable because it stopped at the branch
-      just past the site -- it is a write, and the split is a lower
-      bound on writes. The 5 DPTR handoffs all resolve one level
-      deeper to a read. Status is
+      ec-0x07d2-sites.csv). 37 read, 10 write. The 5 DPTR handoffs
+      all resolve one level deeper to a read, and the one row the
+      linear walk scored as unreachable -- it stopped at the branch
+      just past the site -- is a read too, taken by the 0x37DE scale
+      helper the site hands DPTR to, which rebuilds DPTR around the
+      value it read so neither store that follows reaches 0x07D2.
+      Status is
       unknown-not-absent rather than present-untested for the reason
       rule 2 of this file's header gives and 0x07CC was re-graded
       for: static_refs_main_ec is 0, so a PD-only count cannot carry
