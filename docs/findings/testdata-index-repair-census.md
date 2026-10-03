@@ -15,6 +15,20 @@ $ python3 ec/tools/census_index_third_column_edits.py --census
 33 revision(s) of 2 index(es): 5 edited, 14 refused, 12 unchanged, 2 unborn, 0 no-parent, 0 not-read-by-this-method
 ```
 
+*(Corrected 2026-10-03, issue #1084: the run above no longer reproduces, because
+the census now matches rows over their first-column cells rather than by
+position. On the tree at `33cca5f9` the same command reads **`47 revision(s) of
+5 index(es): 7 edited, 19 one-sided, 0 refused, 16 unchanged, 5 unborn, 0
+no-parent, 0 not-read-by-this-method`** — `refused` has become `one-sided`, and
+**three more third-column edits have come out of it.** The population has grown
+too (three self-indexed directories under `ec/tools/testdata/` are now
+committed), so the run above is not comparable to it figure for figure and is
+left as the record of the tree it was taken on.
+[`testdata-index-keyed-census.md`](testdata-index-keyed-census.md) is the write-up
+for that change and carries both measurements side by side. The lead figure above
+is superseded in the same way and stays written, true of the tree it was measured
+on, per §4a-4d.)*
+
 **The `33` is a per-ref figure and is published with the ref it was taken at:
 `0daac768`, the same 33 `origin/main` holds.** The tree this write-up lands in
 holds **34**, and the extra record is this PR's own commit editing the paragraph
@@ -559,6 +573,16 @@ edited, first column, the path a row names -- ec/tools/testdata/call-graph/READM
   every negative above is 'not found by this method'. A revision that does not resolve is not measurable in this clone, at exit 2.
 ```
 
+*(Corrected 2026-10-03, issue #1084: the transcript above is the run as it was
+before rows were matched over their first-column cells, and it **no longer
+reproduces** — the `14 refused` there are now measured, not declined, and
+**three of them held a third-column edit this transcript could not see.** The
+`#746` record is in `edited` above and is `one-sided` now, because a nested
+row's measured cell is its key; **both its cells are still printed**, which is
+the evidence. [`testdata-index-keyed-census.md`](testdata-index-keyed-census.md)
+carries the new transcript. This one stays byte-for-byte, true of the tree it was
+taken on, per §4a-4d.)*
+
 ## The criterion, in as many words
 
 **The census counts edits. It does not decide which were repairs, and its own
@@ -682,6 +706,15 @@ the count.
     table went from 3 rows to 27 over this history. A cell edit made in the same
     revision as a row addition would be invisible to this method, and the tool
     says so per revision rather than reporting the rows it could line up.
+    *(Corrected 2026-10-03, issue #1084: this exclusion no longer exists. Rows
+    are now matched over their `File` cells rather than by position, so a row
+    addition stops making the table unmeasurable: each moved key is now printed
+    in a new `one-sided` class, and **three of those revisions turn out to have
+    edited a shared row as well** — which is exactly what this exclusion hid.
+    [`testdata-index-keyed-census.md`](testdata-index-keyed-census.md) carries
+    the measurement, the criterion applied per edited cell, and what the
+    alignment still cannot see. The paragraph above stays written, true of the
+    tree it was measured on, per §4a-4d.)*
   * **One revision is two records.** `1813fe98` appears twice — `unchanged` for
     the root index and `edited` for the nested one. Reading it as one is how a
     count across the two populations could come out one too high or one too low,
@@ -841,6 +874,12 @@ restoring it turns it green again.
     state on this history; the census says so rather than guessing, and no
     method that compares positions can do better without an alignment rule that
     would itself be a judgement.
+    *(Done, 2026-10-03, issue #1084: the alignment this bullet asked for exists —
+    `index_keyed_rows.py`, keyed on the first-column cell, matched over the
+    intersection. **It found that three of those revisions did also edit a shared
+    row**, so the guess above was right that one of them might and wrong about
+    how many. See [`testdata-index-keyed-census.md`](testdata-index-keyed-census.md).
+    The bullet stays written, true of the tree it was measured on, per §4a-4d.)*
   * **Whether the two populations should ever be one number.** They are different
     columns in different tables, and this write-up states the reconciliation per
     population rather than summing. A future single figure would need a stated

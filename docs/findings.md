@@ -12840,6 +12840,27 @@ stage's push token has no `workflow` scope — and it renders no verdict, so the
 is nothing for a gate to call. No `status:` moved, no checker rule or threshold
 changed, and no `gh` command runs against any repository.
 
+*(Corrected 2026-10-03, issue #1084: the census this section reports **has been
+re-aligned**, and one of the figures above does not survive it. Rows are now
+matched over their first-column cells rather than by position, so a row addition
+no longer makes the whole table unmeasurable — **the `14 refused` above are
+measured, and three of them held a third-column edit this section's tool could
+not see.** On the tree at `33cca5f9` the same command reads `47 revision(s) of 5
+index(es): 7 edited, 19 one-sided, 0 refused, 16 unchanged, 5 unborn, 0
+no-parent, 0 not-read-by-this-method`. The **count of hand-repairs above is not
+retracted and is a subset of what is now measured**: the three edits the new
+alignment finds are #457, #1699 and #1732, and each is read as a hand-repair by
+the criterion two paragraphs above. **The nested edit above (#746) moves out of
+`edited`** into the new `one-sided` class, because a nested row's measured cell
+*is* its key — a repointed pointer is a key that left beside a key that arrived —
+and **both cells are still printed**, which is the evidence the write-up reads
+the repair from. The per-ref figures, the shas and the two populations' split
+above all stand; what moves is the `refused` class and the `edited` count. Full
+measurement, the criterion applied per edited cell, and the limits of the new
+alignment are in
+[`testdata-index-keyed-census.md`](findings/testdata-index-keyed-census.md). No
+`gh` command has been run against any repository by that work.)*
+
 *(Numbering note, 2026-09-26, recorded here and not in §85, on the rule §85's own
 note sets: a summary already committed on `main` does not move and this branch's
 own gives way, per §4a-4d. **This section is written as §85 and is §92 on the

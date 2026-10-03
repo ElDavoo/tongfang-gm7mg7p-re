@@ -34,23 +34,28 @@ difference"). The committed nested index is that case for the column-3 reader,
 which is why a census built only on `repair_rows()` would print a clean, wrong
 zero over it.
 
-**Four classes per revision, each counted and printed, none of them a verdict:**
+**The classes a revision lands in, each counted and printed, none of them a
+verdict:**
 
   * `edited` — a description cell (root) or a pointer cell (nested) differs
     from the first parent's. Printed with the sha, the subject, the row and
     table, the first-column token, and both cells, so the repair-or-routine
     reading can be made from this report rather than by re-running git.
-  * `refused` — the two images have different row counts. `repair_rows()`
-    already refuses rather than aligns and **that refusal is the separation
-    between an edit and a row addition**: adding a row changes the count, so
-    row additions land here automatically and are counted on neither side. A
-    revision that both adds a row and edits a cell in the same table is
-    **not separable by this method** and says so rather than guessing.
-  * `unchanged` — the revision moved the file and the column read is
-    byte-identical in both images. What moved is a first column, a `Feeds`
-    cell, or prose below the table; saying so is the point, because "the file
-    changed" and "the column changed" are different answers and a census that
-    reported the second for a first would be overclaiming.
+  * `one-sided` — the two images do not carry the same rows: a key is present
+    in one and absent from the other. Each is printed with the direction and
+    the cell that exists, and it is counted on neither side **as an edit**.
+    A revision that both adds a row and edits a shared row lands in `edited`
+    with its additions printed beside the edit, which is the case the older
+    positional comparison could only refuse as *not separable by this method*.
+  * `refused` — the two images cannot be keyed against each other at all: a
+    key is empty, a key is repeated inside one image, or a row has no cell in
+    the column being read. That is a refusal of the **method**, not a class of
+    revision, and it is not where a row addition goes.
+  * `unchanged` — the revision moved the file and every row it shares with its
+    first parent reads the same in both images. What moved is a first column, a
+    `Feeds` cell, or prose below the table; saying so is the point, because "the
+    file changed" and "the column changed" are different answers and a census
+    that reported the second for a first would be overclaiming.
   * `unborn` — the file is not at the revision, or not at its first parent.
     A fact about the revision, printed with the path.
   * `no-parent` — a root commit has nothing to compare against. Not a zero.
@@ -105,14 +110,26 @@ import textwrap
 # say so. `HISTORY_REQUIREMENT` is reused verbatim so the two tools cannot
 # disagree about what a clone has to be to answer.
 from measure_index_repair_visibility import (  # noqa: F401
-    HISTORY_REQUIREMENT, git_lines, parent, repair_rows, resolve_revision,
-    subject)
+    HISTORY_REQUIREMENT, git_lines, parent, resolve_revision, subject)
 
-# The index checker's table readers, the same import the sibling makes. Cells
-# come from `table_cells()` and the whole-table shape from `markdown_tables()`,
-# so a change to what a table is lands in one place.
-from check_testdata_index import (  # noqa: F401
-    HEADER, markdown_tables, table_cells)
+# The keyed comparison, in its own file. It is a census concept and not a mode
+# on this tool: a third function bolted onto a file this size is one more thing
+# a reader of the census has to hold, and the alignment is a thing the census
+# reports rather than something it does to an image.
+from index_keyed_rows import compare
+
+# The index checker's own vocabulary for what a table is, the same import the
+# sibling makes: `HEADER` is how the root index is located and `markdown_tables()`
+# is the shape every reader here agrees on, so a change to either lands in one
+# place rather than in two.
+#
+# `table_cells()` and `measure_index_repair_visibility.repair_rows()` are
+# deliberately **not** imported here. This census no longer calls either -- the
+# first because the keyed comparison reads its rows, the second because that is
+# the *pair* tool's refusal and a population is not a pair -- and an import kept
+# alive only for a test to reach through this namespace would be a name in this
+# file that nothing here uses.
+from check_testdata_index import HEADER, markdown_tables
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.join(HERE, os.pardir, os.pardir)
@@ -128,15 +145,17 @@ REPO = os.path.join(HERE, os.pardir, os.pardir)
 TESTDATA = "ec/tools/testdata"
 POPULATION = ":(glob)%s/**/README.md" % TESTDATA
 
-# The five classes a revision can land in, plus the reader's own refusal. The
-# order is the order a report prints them in.
+# The classes a revision can land in. The order is the order a report prints
+# them in, and it is the order the questions are asked in: an edit is the answer,
+# a one-sided row is a fact beside it, and a refusal is the method declining.
 EDITED = "edited"
+ONE_SIDED = "one-sided"
 REFUSED = "refused"
 UNCHANGED = "unchanged"
 UNBORN = "unborn"
 NO_PARENT = "no-parent"
 UNREADABLE = "not-read-by-this-method"
-VERDICTS = (EDITED, REFUSED, UNCHANGED, UNBORN, NO_PARENT, UNREADABLE)
+VERDICTS = (EDITED, ONE_SIDED, REFUSED, UNCHANGED, UNBORN, NO_PARENT, UNREADABLE)
 
 # The two classes whose token is their whole reason. Every other one carries a
 # sentence beside it, because the token alone would not say it: a refusal has a
@@ -149,8 +168,16 @@ SILENT = (UNCHANGED, NO_PARENT)
 # The column each population is read in, and the wording a report prints it
 # with. Named rather than derived from a length so a reader of the transcript
 # can see which instrument produced which number without counting columns.
-ROOT_COLUMN = "third column, the description"
-NESTED_COLUMN = "first column, the path a row names"
+#
+# The numbers are the ones `index_keyed_rows.keyed_rows()` reads into each row,
+# and for the nested population the measured column **is** the key column --
+# which is why a nested pointer change is reported as a key removed and a key
+# added rather than as an edit, and why `one-sided` prints both of them. That is
+# the key's own consequence and not a special case put in here to keep a number.
+ROOT_COLUMN = 3
+ROOT_WORDING = "third column, the description"
+NESTED_COLUMN = 1
+NESTED_WORDING = "first column, the path a row names"
 
 # A cell in a report is prose, and prose pasted unwrapped into a terminal is
 # unreadable. The cells themselves are never shortened: the whole of what one
@@ -163,8 +190,12 @@ WRAP = 76
 # `edited` record and is empty for every other class, because for those the
 # class and `why` between them are the whole of the answer -- there is no cell
 # to show and a synthetic one would be a number with nothing behind it.
+# `sides` carries the rows present on one image only, which is the whole content
+# of a `one-sided` record and is printed beside an `edited` one that also moved a
+# row; it is its own field rather than a row in `rows` so that the invariant
+# above stays true whatever a revision did.
 Revision = collections.namedtuple(
-    "Revision", "path kind sha headline verdict why rows")
+    "Revision", "path kind sha headline verdict why rows sides")
 
 # One differing cell: where it is, what the row names, and the two texts.
 Cell = collections.namedtuple("Cell", "position first before after")
@@ -228,6 +259,17 @@ def reader_for(path):
 
 
 def column_of(kind):
+    """The wording a report prints this population's measured column with.
+
+    Named per kind rather than derived from a length, for the reason
+    `ROOT_COLUMN` carries: a reader of a transcript has to be able to see which
+    instrument produced which number without counting columns off a table.
+    """
+    return ROOT_WORDING if kind == "root" else NESTED_WORDING
+
+
+def measured_column(kind):
+    """The cell `index_keyed_rows` reads into each row for this population."""
     return ROOT_COLUMN if kind == "root" else NESTED_COLUMN
 
 
@@ -248,72 +290,21 @@ def located(text, kind):
     return any(header and header[0] == HEADER for header, _rows in tables)
 
 
-def pointer_rows(text):
-    """Column 1 of every data row of every table, one list per table.
-
-    The nested reader, and the shape `nested_index()` reads off disk, done over
-    a **text** so two revisions of the same file can be compared without
-    extracting either. It is column 1 because that is the column a nested row's
-    pointers are in; the second is prose about the case and a token lifted out
-    of it is a pointer the index never made.
-    """
-    return [[row[0] for row in rows if row] for _header, rows in
-            markdown_tables(text)]
-
-
-def nested_edits(before_text, after_text):
-    """-> (edited, refused) for two nested images.
-
-    `edited` is a list of `(table number, row number, before, after)`;
-    `refused` is a list of `(table number, why)`. Table by table rather than
-    over the whole file, because two images with a different number of tables
-    are not a comparison and a different number of rows **within one table**
-    is, so a growth in table 1 does not make table 2 unmeasurable.
-
-    The refusal carries the reason the census exists to keep: a table that grew
-    may also have had a cell edited, and the two are not separable by a method
-    that compares positions, so the line says that rather than reporting the
-    rows it could line up.
-    """
-    before, after = pointer_rows(before_text), pointer_rows(after_text)
-    if len(before) != len(after):
-        return [], [(0, "the two images carry %d and %d table(s), so a table "
-                       "number is not the same table on both sides; a table "
-                       "was added or removed, which is not a pointer-column "
-                       "edit, and a cell edit in the same file is not "
-                       "separable from it by this method -- counted on neither "
-                       "side. the pointer-column edits are not found by this "
-                       "method" % (len(before), len(after)))]
-    edited, refused = [], []
-    for number, (old, new) in enumerate(zip(before, after), 1):
-        if len(old) != len(new):
-            grew = "grew" if len(new) > len(old) else "shrank"
-            refused.append((number,
-                            "table %d %s from %d to %d row(s), so a row number "
-                            "names a different row in each; a row was added or "
-                            "removed, which is not a pointer-column edit, and a "
-                            "cell edit in the same table is not separable from "
-                            "it by this method -- counted on neither side"
-                            % (number, grew, len(old), len(new))))
-            continue
-        for row, (was, now) in enumerate(zip(old, new), 1):
-            if was != now:
-                edited.append((number, row, was, now))
-    return edited, refused
-
-
 def grew(before, after):
     """'grew' or 'shrank', named rather than left to the reader to derive from
     two counts.
 
-    The direction is the half of a refusal that separates the two reasons a
-    table can grow: a revision that adds a fixture row and one that drops a
+    The direction is the half of an answer that separates the two reasons a row
+    count can move: a revision that adds a fixture row and one that drops a
     fixture both change the count, and only the direction says which happened.
-    `repair_rows()`'s own reason carries both counts and is passed through
-    beside this rather than reworded, so the two tools' reports keep meaning
-    the same thing by the same class.
+    `repair_rows()`'s own reason carries both counts too, so the two tools'
+    reports keep meaning the same thing by the same words.
+
+    It takes counts rather than the things counted, so the caller reads them off
+    the comparison rather than re-reading the images to learn how many rows each
+    had.
     """
-    return "grew" if len(after) > len(before) else "shrank"
+    return "grew" if after > before else "shrank"
 
 
 def classify(path, rev, repo=None):
@@ -325,6 +316,13 @@ def classify(path, rev, repo=None):
     revision's, a root commit has nothing to compare against before either
     image is read, and an image the reader cannot locate is not a comparison
     before its cells are counted.
+
+    The last three classes are one measurement read three ways. The two images
+    are keyed against each other once, and what comes back is an edit, a row
+    present on one side only, or a refusal -- so a revision that did both of the
+    first two is `edited` **with** its one-sided rows printed beside the edit,
+    rather than the *not separable by this method* the positional comparison had
+    to say about it.
     """
     kind = reader_for(path)
     sha, why = resolve_revision(rev, repo=repo)
@@ -339,57 +337,70 @@ def classify(path, rev, repo=None):
         return Revision(path, kind, sha, headline, NO_PARENT,
                         "a root commit has no parent to compare against, which "
                         "is a fact about the revision and not a count of zero",
-                        []), None
+                        [], []), None
     base, why = parent(sha, repo=repo)
     if base is None:
         return None, why
     after, why = read_at(sha, path, repo=repo)
     if after is None:
         return Revision(path, kind, sha, headline, UNBORN,
-                        f"the file is not at this revision ({why})", []), None
+                        f"the file is not at this revision ({why})", [], []), None
     before, why = read_at(base, path, repo=repo)
     if before is None:
         return Revision(path, kind, sha, headline, UNBORN,
                         f"the file is not at the first parent {base[:8]} "
-                        f"({why})", []), None
+                        f"({why})", [], []), None
     if not located(after, kind) or not located(before, kind):
         return Revision(path, kind, sha, headline, UNREADABLE,
                         "the reader for this kind of index located no table "
                         "in an image that carries %d table(s); the edits are "
                         "not read by this method, which is a different answer "
                         "from there being none"
-                        % len(markdown_tables(after)), []), None
+                        % len(markdown_tables(after)), [], []), None
 
-    if kind == "root":
-        before_cells = table_cells(before, column=3)
-        after_cells = table_cells(after, column=3)
-        rows, why = repair_rows(before, after)
-        if why:
-            return Revision(path, kind, sha, headline, REFUSED,
-                            f"a row was added or removed and the table "
-                            f"{grew(before_cells, after_cells)}; a cell edit "
-                            f"in it is not separable from that by this method, "
-                            f"and it is counted on neither side. {why}",
-                            []), None
-        first = table_cells(before, column=1)
-        cells = [Cell("row %d" % row,
-                      first[row - 1] if 1 <= row <= len(first) else "-",
-                      before_cells[row - 1], after_cells[row - 1])
-                 for row in rows]
-    else:
-        cells, refused = nested_edits(before, after)
-        if refused:
-            return Revision(path, kind, sha, headline, REFUSED,
-                            "; ".join(why for _number, why in refused),
-                            []), None
-        cells = [Cell(f"table {number}, row {row}", was, was, now)
-                 for number, row, was, now in cells]
-    if not cells:
+    answer = compare(before, after, column=measured_column(kind),
+                     root=(kind == "root"))
+    if answer.refusal is not None:
+        return Revision(path, kind, sha, headline, REFUSED, answer.refusal,
+                        [], []), None
+    cells = [Cell(found.where, found.key, found.before, found.after)
+             for found in answer.edits]
+    sides = list(answer.one_sided)
+    if cells:
+        return Revision(path, kind, sha, headline, EDITED, "", cells,
+                        sides), None
+    if not sides:
+        # Every key in both images reads the same in both, and the two key sets
+        # are equal -- a stronger claim than "the column is byte-identical in
+        # both images", and deliberately stated as it is measured. A reorder
+        # moves the column without moving any cell, and it is not an edit: the
+        # reader asks what each row says, not where it sits.
         return Revision(path, kind, sha, headline, UNCHANGED,
-                        f"the file changed at this revision and the "
-                        f"{column_of(kind)} is byte-identical in both images; "
-                        f"whatever moved is not in it", []), None
-    return Revision(path, kind, sha, headline, EDITED, "", cells), None
+                        f"the file changed at this revision and every row it "
+                        f"shares with its first parent reads the same in the "
+                        f"{column_of(kind)}; whatever moved is not in it",
+                        [], []), None
+    return Revision(path, kind, sha, headline, ONE_SIDED,
+                    _one_sided_why(answer, kind), [], sides), None
+
+
+def _one_sided_why(answer, kind):
+    """The reason a revision's `one-sided` line carries, above its key list.
+
+    Two things a reader needs before the list below it means anything: **which
+    way the move went**, and **what the line is not**. The direction separates a
+    revision that added rows from one that dropped them, which are the two
+    reasons a key set can differ and only one of which is usually the one a
+    reader is looking for. The second sentence says the class is not `edited` and
+    not `refused`: an edit is over a key both images carry, so a row on one side
+    only cannot be one, and the method answered rather than declined.
+    """
+    return (f"the two images do not carry the same rows: the key set "
+            f"{grew(answer.before_rows, answer.after_rows)} from "
+            f"{answer.before_rows} to {answer.after_rows} key(s), and each one "
+            f"listed below is in one image and absent from the other. that is a "
+            f"row added or removed rather than a {column_of(kind)} edit, and it "
+            f"is counted on neither side as one")
 
 
 def population(repo=None):
@@ -464,6 +475,31 @@ def wrapped(label, text, indent):
     return [indent + line for line in body.splitlines()]
 
 
+def sides_lines(record):
+    """The one-sided rows of `record`, one per key, in the tool's own words.
+
+    The direction first and the **cell that exists** beside the key, because the
+    cell is the evidence and the direction is what says what the key's absence
+    means. A nested index's measured cell **is** its key -- its tables are two
+    columns wide and the first holds the path -- so there the pair is the same
+    string and printing it twice would be two copies of one fact. That is the
+    population's shape rather than a formatting accident, and it is why a nested
+    pointer change lands here rather than in `edited`.
+
+    Printed under an `edited` record as well as under a `one-sided` one, because
+    a revision that both edited a shared row and moved a key is measured as
+    both, and the additions are half of what that revision did.
+    """
+    lines = []
+    for side in record.sides:
+        label = "%s: " % side.direction
+        body = side.where + " -- " + side.key
+        if record.kind != "nested":
+            body += " -- " + side.cell
+        lines += wrapped(label, body, "      ")
+    return lines
+
+
 def report(records, paths):
     """The census's whole output, and the counts a run has to be readable by.
 
@@ -492,6 +528,8 @@ def report(records, paths):
                 print(line)
             for line in wrapped("after:  ", cell.after, "      "):
                 print(line)
+        for line in sides_lines(record):
+            print(line)
         print()
 
     counts = {verdict: 0 for verdict in VERDICTS}
@@ -506,6 +544,8 @@ def report(records, paths):
         if record.verdict not in SILENT:
             for line in wrapped("", record.why, "      "):
                 print(line)
+        for line in sides_lines(record):
+            print(line)
         print(f"    {record.headline}")
     print("  an edit is not a repair: whether one was wrong is a reading of the "
           "cells above, and it is "
