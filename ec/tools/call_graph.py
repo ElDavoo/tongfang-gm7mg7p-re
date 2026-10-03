@@ -53,6 +53,16 @@ around: 0x0EE8 has 2 direct `lcall` sites (0x0EA2 and 0x0ECC) and ranks about
 *citations* -- exactly one named function's comment names it. Inbound count is
 the ranking within a citation band. See ec/annotations/call-graph.md.
 
+**`named_callers` is printed and is deliberately not a ranking term.** It
+counts the *callee's* callers; the premise it was once asked to police is
+about the *citing comment's* row -- "a named function's comment names it" --
+which is a different question and is `report()`'s citer-named split rather
+than a sort key. It is also only defined for a row that has an inbound edge
+at all, so as a term it would rank exactly the rows with no inbound edge on
+their citers while leaving their own callers uncounted. The column stays, so
+the weight stays visible; the decision and the figure behind it are written
+up in docs/findings/cited-set-population.md.
+
 A citation is a named function's comment writing a callee's address in the
 canonical `0x` + 4-uppercase-hex-digit form, which is how every function
 address in the export is written. The width is the point, not a detail: a
@@ -101,6 +111,18 @@ which bank executed a given common call site is not in the listing: a
 `common/0EA2.asm` and a `bank0/0EA2.asm` reading of the same bytes are
 indistinguishable here. Such a target is reported with `also_in` as the index
 records it and is never attributed to one bank.
+
+**The table is over the cited set, not over the reachable set.** `build()`
+writes a row for every key `scan()` reached *and* for every key a kept citation
+names, so a callee no transfer in the scanned set reaches still appears, with
+`inbound=0` and the comments that name it in `citing`. Intersecting the cited
+set with the reachable set used to drop those rows from the work list on no
+evidence but the absence of an edge -- which is a limit of the transfer scan
+stated above, being used silently to shrink a queue. **`inbound == 0` in the
+committed CSV now means one thing only:** no transfer in the scanned set
+reaches it and a kept citation names it. No other row shape produces it, and
+that is what keeps `rank_common_runtime.py`'s "no zero-count row" rule from
+being violated by a row the table now emits on purpose.
 
 **What this cannot do.** A transfer target with no row in the index is a branch
 into straight-line code (Ghidra's function boundaries on this firmware cut
@@ -403,10 +425,52 @@ def is_named(index, key):
     return row is not None and not row["name"].startswith("FUN_")
 
 
+def citer_is_named(index, key):
+    """`is_named()` for a *citing* row, resolved the way `citations()`
+    resolved it.
+
+    Not the same lookup: a citing key is the scope the annotation CSV wrote,
+    while `is_named()` takes an index key, and for an address the index
+    carries in another scope the two disagree. Going through `resolve()` keeps
+    this figure on the same footing as the population `citations()` proposed,
+    and an address it cannot place falls on the "not a named function" side
+    rather than being counted either way.
+    """
+    row = index.resolve(*key)
+    return row is not None and not row["name"].startswith("FUN_")
+
+
+def _row(index, key, sites, citing):
+    """One committed-table row for `key`. `sites` is the inbound list
+    `scan()` produced, and an empty one is the cited-but-unreached shape, so
+    the form counts and `named_callers` fall out as 0 from the same code
+    rather than from a second row shape that could drift from this one."""
+    row = index.by_scope_addr[key]
+    forms = collections.Counter(form for _, _, form in sites)
+    callers = {(scope, caller) for scope, caller, _ in sites}
+    return {
+        "scope": key[0],
+        "addr": key[1],
+        "name": row["name"],
+        "annotated": "yes" if row.get("annotated") == "yes" else "no",
+        "also_in": row.get("also_in", ""),
+        "inbound": len(sites),
+        "lcall": forms["lcall"],
+        "ljmp": forms["ljmp"],
+        "ajmp": forms["ajmp"],
+        "acall": forms["acall"],
+        "callers": len(callers),
+        "named_callers": sum(1 for c in callers if is_named(index, c)),
+        "cited_by": len(citing),
+        "citing": " ".join(f"{s}:{a}" for s, a, _ in sorted(citing)),
+    }
+
+
 def build(index, edges, cited):
-    """One row per callee in the graph, ordered the issue's work list is
-    read in: most-cited first, inbound count breaking a citation band, then
-    scope and address so the order is total and reproducible.
+    """One row per callee the graph reaches **or** a comment names, ordered
+    the issue's work list is read in: most-cited first, inbound count
+    breaking a citation band, then scope and address so the order is total and
+    reproducible.
 
     Named callees are kept, not dropped. Annotating a tranche row renames it
     in `index.csv` and in the `.c` files, and a table that lists only
@@ -415,29 +479,30 @@ def build(index, edges, cited):
     consumes it. A named row keeps its inbound count and loses only its
     citation count, and its `annotated=yes` is how a reader sees the tranche
     is done rather than how a row silently disappears.
+
+    **A kept citation gets a row even where no transfer reaches it.** The
+    first pass is over `edges`, so a callee this scan cannot reach had no row
+    at all, and `report()`'s cited set -- read off this table -- was the
+    cited set intersected with the reachable set. The second pass over
+    `cited` gives each remaining key an empty `sites` list, so the row reads
+    `inbound=0` with the naming comments in `citing` rather than being absent
+    from the work list on no evidence but the missing edge. `citations()`
+    proposes a key only where `Index.resolve()` returned a `FUN_*` row, and it
+    keys that pair on `(row["program"], row["_addr"])` -- which is the key
+    `by_scope_addr` is built from -- so every added key resolves to the row
+    that put it there and needs no new resolution rule.
+
+    `named_callers` is not in the sort key, on purpose; the module docstring
+    gives the reason. The sort key is row-local either way, so adding rows
+    interleaves them without moving any row already in the table.
     """
     rows = []
+    emitted = set(edges)
     for key, sites in edges.items():
-        row = index.by_scope_addr[key]
-        forms = collections.Counter(form for _, _, form in sites)
-        callers = {(scope, caller) for scope, caller, _ in sites}
-        citing = cited.get(key, [])
-        rows.append({
-            "scope": key[0],
-            "addr": key[1],
-            "name": row["name"],
-            "annotated": "yes" if row.get("annotated") == "yes" else "no",
-            "also_in": row.get("also_in", ""),
-            "inbound": len(sites),
-            "lcall": forms["lcall"],
-            "ljmp": forms["ljmp"],
-            "ajmp": forms["ajmp"],
-            "acall": forms["acall"],
-            "callers": len(callers),
-            "named_callers": sum(1 for c in callers if is_named(index, c)),
-            "cited_by": len(citing),
-            "citing": " ".join(f"{s}:{a}" for s, a, _ in sorted(citing)),
-        })
+        rows.append(_row(index, key, sites, cited.get(key, [])))
+    for key, citing in cited.items():
+        if key not in emitted:
+            rows.append(_row(index, key, (), citing))
     rows.sort(key=lambda r: (-r["cited_by"], -r["inbound"], r["scope"],
                              r["addr"]))
     return rows
@@ -453,8 +518,8 @@ def render(rows):
 
 class _Sink:
     """csv needs a file-like; a list of lines is the committed byte-for-byte
-    comparison `--check` wants, and a temp file is not worth it for 1,841
-    rows."""
+    comparison `--check` wants, and a temp file is not worth it for a table
+    of this size."""
 
     def __init__(self, sink):
         self._sink = sink
@@ -538,23 +603,44 @@ def report(index, rows, edges, unresolved, orphan_callers, total,
     anon_rows = [r for r in index.rows if r["name"].startswith("FUN_")]
     anon_edges = [r for r in rows if r["name"].startswith("FUN_")]
     cited = [r for r in anon_edges if r["cited_by"]]
-    unreached = len(anon_rows) - len(anon_edges)
+    reached_cited = [r for r in cited if r["inbound"]]
+    unreached_cited = [r for r in cited if not r["inbound"]]
+    # The reachability limit is a statement about the transfer scan, so it is
+    # counted off the rows that carry an inbound edge. A cited row the scan
+    # cannot reach is in the table now and is still a row no transfer reaches,
+    # and subtracting the whole table instead would quietly understate the
+    # blind spot by exactly the number of rows `build()` added on purpose.
+    unreached = len(anon_rows) - len([r for r in anon_edges if r["inbound"]])
     c_callees = decompiled_callees()
     # Two different counts, and the gap between them is the point of the
-    # block below. `cited_by` sums over the rows this table carries, so a
-    # citation of a callee no transfer reaches is in neither; the frame gate
-    # counts (callee, comment) pairs, which is the whole population the
-    # matcher sees. 0x1C00 is the worked example: no lcall reaches it, so it
-    # has no row to be right or wrong in, and its comments split across the
-    # rejected and undecided buckets rather than falling out of the census
-    # altogether.
+    # block below. `cited_by` sums over the rows this table carries, which is
+    # now every key a kept citation names and not only the reachable ones; the
+    # frame gate counts (callee, comment) pairs, which is the whole
+    # population the matcher sees. 0x1C00 is the worked example on the other
+    # arm: no transfer reaches it *and* every pair naming it was rejected or
+    # left undecided, so it still has no row to be right or wrong in.
     table_keys = {(r["scope"], r["addr"]) for r in rows}
     kept = sum(len(v) for v in cited_rows.values())
     unranked = sum(1 for c in rejected + undecided
                    if c.callee not in table_keys)
-    unranked += sum(len(v) for k, v in cited_rows.items()
-                    if k not in table_keys)
+    # Its own line rather than folded into `unranked`: it is 0 because
+    # `build()` emits a row for every kept key, so folding it in would print
+    # a total that looks measured and is really an identity.
+    kept_unranked = sum(len(v) for k, v in cited_rows.items()
+                        if k not in table_keys)
     candidates = kept + len(rejected) + len(undecided)
+    # Issue #134's premise is about the *citing* row, not the cited one, and
+    # `named_callers` cannot answer it -- see the module docstring. This is
+    # the figure that does, and it is a check on the two inputs rather than a
+    # measure of the corpus: a citing row is by construction a row of the
+    # annotation CSV, and every row of that names a function, so the not-named
+    # arm is 0 whenever `ghidra-functions.csv` and `decompiled/index.csv`
+    # agree. It can move only on a skew between those two files -- an
+    # annotation whose re-export has not landed -- and not as comments are
+    # added, which is the same status `kept_unranked` above carries and is
+    # labelled the same way below.
+    named_citers = sum(1 for v in cited_rows.values()
+                       for s, a, _ in v if citer_is_named(index, (s, a)))
     # The three numbers the 0x1C00 sentence is made of, counted rather than
     # written out. All three were literals once and the sentence below was the
     # only one of them the census did not produce, so it drifted into claiming
@@ -587,15 +673,19 @@ def report(index, rows, edges, unresolved, orphan_callers, total,
     print("  %-52s %6d" % ("  resolving to an index row",
                            total - sum(unresolved.values())))
     print("  %-52s %6d" % ("distinct targets reaching a row", len(edges)))
-    print("  %-52s %6d" % ("  sites whose target is no index row",
-                           sum(unresolved.values())))
+    print("  %-52s %6s" % ("  sites whose target is no index row",
+                           "%d, over %d targets" % (sum(unresolved.values()),
+                                                    len(unresolved))))
     print("  %-52s %6d" % ("  listings with no index row of their own",
                            orphan_callers))
     print()
-    print("  %-52s %6d" % ("  targets still anonymous", len(anon_edges)))
+    print("  %-52s %6d" % ("  anonymous rows the table carries",
+                           len(anon_edges)))
     print("  %-52s %6d" % ("  inbound sites to those",
                            sum(r["inbound"] for r in anon_edges)))
     print("  %-52s %6d" % ("  anonymous rows no transfer reaches", unreached))
+    print("  %-52s %6d" % ("  anonymous rows the table carries no row for",
+                           len(anon_rows) - len(anon_edges)))
     print()
     print("  second framing, from the .c export:")
     print("  %-52s %6d" % ("  distinct FUN_* callees named in .c files",
@@ -605,6 +695,16 @@ def report(index, rows, edges, unresolved, orphan_callers, total,
     print("  %-52s %6d" % ("  anonymous callees a comment names", len(cited)))
     print("  %-52s %6d" % ("  comments that name one",
                            sum(r["cited_by"] for r in cited)))
+    print("  %-52s %6d" % ("    a transfer in the scanned set reaches",
+                           len(reached_cited)))
+    print("  %-52s %6d" % ("    no transfer reaches",
+                           len(unreached_cited)))
+    print("  %-52s %6d" % ("  comments naming one no transfer reaches",
+                           sum(r["cited_by"] for r in unreached_cited)))
+    print("  %-52s %6d" % ("  kept pairs whose citing row is itself named",
+                           named_citers))
+    print("  %-52s %6d" % ("  kept pairs citing an unnamed row (0 by "
+                           "construction)", kept - named_citers))
     print()
     print("  frame gate (citation_frames.py), the same comments:")
     print("  %-52s %6d" % ("  candidate (callee, comment) pairs", candidates))
@@ -615,8 +715,10 @@ def report(index, rows, edges, unresolved, orphan_callers, total,
                            "fill", len(rejected)))
     print("  %-52s %6d" % ("  undecided: no frame inside the window",
                            len(undecided)))
-    print("  %-52s %6d" % ("  of those, naming a callee no transfer reaches",
-                           unranked))
+    print("  %-52s %6d" % ("  rejected or undecided naming a callee with "
+                           "no row", unranked))
+    print("  %-52s %6d" % ("  kept naming a callee with no row (0 by "
+                           "construction)", kept_unranked))
     print("  %-52s %6d" % ("  cross-program rejections", len(cross_program)))
     print("  %-52s %6d" % ("    of those, a mention reads as a code frame",
                            len(cross_program_code)))
@@ -640,6 +742,20 @@ def report(index, rows, edges, unresolved, orphan_callers, total,
               % (rank, r["scope"], r["addr"], r["inbound"],
                  r["named_callers"], r["cited_by"], r["name"]))
     print()
+    # The population this change put in the table, rendered rather than
+    # totalled, for the same reason the rejected set is: a count says how many
+    # and a line says which, and a work list is only the second.
+    print("  cited with no transfer reaching them, so `in` reads 0 and the "
+          "row is ranked anyway;")
+    print("  none of them is evidence of a missing function. Their citing "
+          "comments do not all")
+    print("  say the same thing -- some name the reaching instruction, others "
+          "describe what the")
+    print("  callee is -- so read each at its citing row:")
+    for r in sorted(unreached_cited, key=lambda r: (r["scope"], r["addr"])):
+        print("  %-7s %-5s cited by %d  %s"
+              % (r["scope"], r["addr"], r["cited_by"], r["citing"]))
+    print()
     print("  limit: %d anonymous rows have no direct transfer reaching them "
           "by this" % unreached)
     print("  method -- function pointer, dispatch table, or not reached. Not "
@@ -647,14 +763,25 @@ def report(index, rows, edges, unresolved, orphan_callers, total,
     print("  method is not absent. The ranking is a work order, not evidence "
           "of what any")
     print("  function does.")
-    print("  limit: %d citation candidates name a callee this table carries "
-          "no row" % unranked)
-    print("  for, because no transfer reaches it, so the gate can count them "
-          "but the")
-    print("  table cannot rank them. 0x1C00 is the worked example: %d "
-          "comments name it, %d" % (c1c00_named, c1c00_rejected))
-    print("  in a data frame and %d unsettled. Not ranked is not absent."
-          % c1c00_undecided)
+    print("  limit: %d of the cited rows are in that same blind spot and are "
+          "ranked anyway; a" % len(unreached_cited))
+    print("  zero `in` above is this scan not seeing the edge, not the callee "
+          "being absent or")
+    print("  uncalled. Their citing comments do not all say the same thing: "
+          "some name the reaching")
+    print("  instruction, others describe what the callee is, not how it is "
+          "entered.")
+    print("  limit: %d rejected or undecided citation candidates name a "
+          "callee this table" % unranked)
+    print("  carries no row for. Two things leave a callee rowless and the "
+          "gate refusing the")
+    print("  pair is one of them: no transfer in the scanned set reaches it, "
+          "and no kept")
+    print("  citation names it. 0x1C00 is the worked example on both counts: "
+          "%d comments name it," % c1c00_named)
+    print("  %d in a data frame and %d unsettled, and no transfer reaches it "
+          "either. Not ranked is not" % (c1c00_rejected, c1c00_undecided))
+    print("  absent.")
 
 
 def decompiled_callees(decompiled=DECOMPILED):
@@ -684,6 +811,11 @@ def self_test() -> int:
     whose comment reads as a call, a mention the frame window cannot settle
     that the listing does, and a `pd` listing whose transfer must not rescue a
     pair the program-identity veto refused.
+
+    It carries the cited-but-unreached shape too, and needed no new file for
+    it: 0x0D40 was already here, an `sjmp` target the comment lexicon credits
+    and `TRANSFERS` cannot reach, which is the one row shape that change to the
+    population introduced.
     """
     index = load_index(os.path.join(FIXTURE, "index.csv"))
     edges, unresolved, orphans, total, listings = scan(
@@ -748,8 +880,9 @@ def self_test() -> int:
     check("a comment naming an address the listings do not carry is refused, "
           "not invented: 0xBEEF gets no citation",
           not any(k[1] == "BEEF" for k in cited))
-    check("an index row no transfer reaches gets no inbound edge, and that "
-          "is a limit of the scan rather than an absent function: 0xDEAD",
+    check("an index row the scan does not reach and no comment names still "
+          "gets no row at all, so the table is not an inventory of every "
+          "anonymous row: 0xDEAD",
           ("common", "DEAD") not in by_key)
     check("a short-form data value is not a citation: the 0x64 in 0xEA2's "
           "comment credits neither 0x0064 nor anything else",
@@ -949,14 +1082,53 @@ def self_test() -> int:
     # The `sjmp` case, and the reason it is one. TRANSFERS scans the four
     # absolute forms and the comment lexicon is a different set, so a target
     # reached only by a PC-relative branch is a citation the graph cannot
-    # rank. Both halves are asserted, because a guard that credited it
+    # reach. Both halves are asserted, because a guard that credited it
     # *and* a graph that gave it an edge would agree on the number while
     # disagreeing about what produced it.
+    #
+    # The assertion this one replaces read `("common", "0D40") in cited and
+    # ("common", "0D40") not in by_key` -- cited, and with no row in the table
+    # at all, so no `inbound` column to read 0 in. That was the calibrated
+    # statement for the population this file used to build, where a callee no
+    # transfer reached had no row to be right or wrong in, and it is left here
+    # because a reader who remembers it should be able to see what moved.
+    # Issue #460 widened the population from "reached" to "reached or named by
+    # a kept citation"; the row is now emitted rather than absent.
     check("an `sjmp` in the comment lexicon credits a target whose only "
           "transfer is a PC-relative branch TRANSFERS does not scan: 0x0D40 "
-          "is cited and still has no inbound edge",
+          "is cited, and is in the table reading inbound=0",
           ("common", "0D40") in cited
-          and ("common", "0D40") not in by_key)
+          and ("common", "0D40") in by_key
+          and by_key[("common", "0D40")]["inbound"] == 0
+          and by_key[("common", "0D40")]["cited_by"] == 1
+          and by_key[("common", "0D40")]["citing"] == "common:0D20")
+    # The shape invariant, and the reason `rank_common_runtime.py`'s
+    # "no zero-count row" rule survives this change: `inbound == 0` in the
+    # committed table means one thing only, and it is never produced by a
+    # reached row whose counters happen to read zero.
+    zero_inbound = [r for r in rows if r["inbound"] == 0]
+    check("every emitted row reading inbound=0 is a kept citation naming it, "
+          "and there is exactly one per kept key the scan does not reach",
+          all(r["cited_by"] for r in zero_inbound)
+          and {(r["scope"], r["addr"]) for r in zero_inbound}
+          == {k for k in cited if k not in edges})
+    check("within one citation band the zero-inbound row loses the tie-break "
+          "and nothing else: 0x0D40 (0 in, 1 cited) sorts below 0x0EE8 "
+          "(2 in, 1 cited)",
+          [r["addr"] for r in rows].index("0EE8")
+          < [r["addr"] for r in rows].index("0D40"))
+    # And the same property read off the whole table rather than off two
+    # addresses: `build()` over the same edges with the cited map trimmed to
+    # the keys it already emits is the table this change replaced, so its rows
+    # have to survive as the reached subsequence of the new one. A sort key
+    # that stopped being row-local -- a rank, a percentile, a running total --
+    # would move a row and fail here without any address being wrong.
+    pre_change = build(index, edges,
+                       {k: v for k, v in cited.items() if k in edges})
+    check("the added rows interleave without moving any row that was already "
+          "in the table, and without changing what is in it",
+          [(r["scope"], r["addr"]) for r in rows if r["inbound"]]
+          == [(r["scope"], r["addr"]) for r in pre_change])
     # The undecided block. This population is the one a human is handed, and
     # it is rendered the way the rejected one is; an undecided candidate
     # carries no reason, so each line falls back to the frame verdicts its
@@ -966,9 +1138,60 @@ def self_test() -> int:
         report(index, rows, edges, unresolved, orphans, total,
                cited, rejected, undecided, listing_kept)
     report_lines = report_out.getvalue().splitlines()
+
+    def figure(label):
+        """The number the report printed beside `label`, or `None`.
+
+        Read back out of the rendered lines rather than recomputed here, so
+        the assertion is about what a reader is shown and not about this file
+        agreeing with itself. A line that matches without ending in a number
+        is a label whose wording moved, and reads as `None` rather than
+        raising: the assertion below then fails with a readable message
+        instead of a traceback out of the middle of a passing run.
+        """
+        for line in report_lines:
+            body = line.strip()
+            if body.startswith(label):
+                tail = body[len(label):].split()
+                return int(tail[-1]) if tail and tail[-1].isdigit() else None
+        return None
+
+    # The equality the intersection used to break: `report()` reads its cited
+    # set off this table, so a kept pair whose callee had no row was a comment
+    # the matcher counted and the ranking could not show. The two figures are
+    # now the same number by construction, and the assertion is against the
+    # matcher rather than against a literal.
+    check("the report's cited set is the whole kept set and not the reachable "
+          "part of it",
+          figure("anonymous callees a comment names") == len(cited)
+          and figure("comments that name one")
+          == sum(int(r["cited_by"]) for r in rows
+                 if r["name"].startswith("FUN_")))
+    check("the two cited populations are printed apart, each with the "
+          "comment count beside it",
+          figure("a transfer in the scanned set reaches")
+          + figure("no transfer reaches") == len(cited)
+          and figure("comments naming one no transfer reaches")
+          == sum(int(r["cited_by"]) for r in rows if r["inbound"] == 0))
+    # Issue #134's premise is about the *citing* row, and it is this line and
+    # not `named_callers` that measures it; see the module docstring for why
+    # the column is not a sort term. The assertion is the sum, not the split's
+    # shape: the not-named arm is 0 by construction, so pinning it to a
+    # literal would pin a figure that cannot move on the corpus growing.
+    check("the citer-named split is printed and sums to the kept pairs, so "
+          "the premise a comment carries is visible rather than inferred",
+          figure("kept pairs whose citing row is itself named")
+          + figure("kept pairs citing an unnamed row")
+          == sum(len(v) for v in cited.values()))
     block_at = next((i for i, line in enumerate(report_lines)
                      if line.startswith("  undecided set,")), None)
-    block = report_lines[block_at:] if block_at is not None else []
+    # Bounded at the blank line the block ends on rather than run to the end
+    # of the report: the two checks below count rendered rows, and a later
+    # section that renders rows in the same shape would otherwise be read as
+    # part of this one.
+    tail = report_lines[block_at:] if block_at is not None else []
+    block = tail[:next((i for i, line in enumerate(tail) if not line.strip()),
+                       len(tail))]
     rendered = [line for line in block if line.startswith("  common,5A43 ")]
     check("the undecided population is rendered, and a line carries the "
           "frame verdicts rather than a bare `--`: 0x5A43 cited by 0x029B",
