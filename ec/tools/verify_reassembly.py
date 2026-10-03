@@ -741,9 +741,7 @@ def verify(limit=None, jobs=8, work=None, sdas=None, quiet=False):
 
     results = run_rows(rows, work, loaded, sdas, jobs)
 
-    tally = {}
-    for _row, outcome, _detail, _b, _c, _s, _d, _a in results:
-        tally[outcome] = tally.get(outcome, 0) + 1
+    tally = results_tally(results)
     compared = sum(r[3] for r in results)
     checked = sum(r[4] for r in results)
     skipped = sum(r[5] for r in results)
@@ -824,11 +822,48 @@ def assembler_version(sdas):
 
 
 def write_report(results, sdas, path=REPORT, version=None):
+    """Write a run's per-row results. -> the path written, or None if refused.
+
     # `version=None` falls back to reading the banner here, so this stays the
     # report's only writer and the `assembler` cell is still the version that
     # produced this run. verify() passes the one it already computed, so main()
     # does not shell out twice and the report and the run's own output cannot
     # disagree about which assembler answered.
+
+    **A run carrying any outcome outside OUTCOMES is not written at all**, to
+    any destination. The file's columns claim a measurement per row and the
+    `assembler` cell says which run produced it, so a row labelled `error` in
+    one is a claim about coverage that nothing established -- and a scratch
+    `--emit-csv` carrying one is the same broken claim in a file nobody reads
+    the `assembler` column of, which is why the refusal is here rather than in
+    the `--report` branch of main().
+
+    Refusing rather than writing-with-a-marker also leaves whatever file is
+    already at `path` in place, and that file is still an honest description of
+    the run that produced it. So `--check` stays green while the run that could
+    not measure goes red, which is where the failure belongs: not on the
+    artifact that was correct when it was written. Nothing is lost
+    diagnostically, because the run's own output has already named these rows
+    through compare_tally()'s `moved` list -- which carries a row whose outcome
+    differs from the committed one and a row the committed report has no entry
+    for, and the committed report holds no residual, so every one of these is on
+    it.
+
+    docs/findings/reassembly-unmeasured-row-policy.md has the settlement.
+    """
+    refused = unmeasured(results_tally(results))
+    if refused:
+        print("  not writing %s: %d row(s) carry an outcome outside OUTCOMES, "
+              "and every column of a report claims a measurement."
+              % (os.path.relpath(path, REPO),
+                 sum(n for _o, n in refused)))
+        for outcome, n in refused:
+            print("    %d %s: %s" % (n, outcome, unmeasured_reason(outcome)))
+        first = next(r for r in results if r[1] not in OUTCOMES)
+        print("    first: %s %s %s" % (first[0].get("program"),
+                                       first[0].get("addr"),
+                                       first[0].get("name")))
+        return None
     version = version if version is not None else assembler_version(sdas)
     with open(path, "w", newline="") as f:
         w = csv.writer(f, lineterminator="\n")
@@ -937,13 +972,18 @@ def emit_csv(results, sdas, path):
     if refuses_committed_report(path):
         return 1
     try:
-        write_report(results, sdas, path)
+        wrote = write_report(results, sdas, path)
     except OSError as exc:
         # A mistyped or nested destination, said the way the rest of this tool
         # says it. A traceback through emit_csv for a path that does not exist
         # is a worse answer than the sentence, and this is the first flag here
         # that takes a path the user typed.
         print("  cannot write %s: %s" % (path, exc))
+        return 1
+    if wrote is None:
+        # write_report() has said why. Printing "wrote" below would be the one
+        # sentence this change exists to make impossible, so the refusal is
+        # carried out as a status rather than as a flag to skip a print.
         return 1
     print("  wrote %s" % os.path.abspath(path))
     return 0
@@ -1176,10 +1216,75 @@ def split_tally(counts):
     Two halves because both are needed. The ordered ones are this file's
     vocabulary for a re-encode, and a report that used another is describing a
     run in terms check_one() can produce: `assembler-error`, `error`,
-    `missing-listing`, `empty-listing`, `skipped`."""
+    `missing-listing`, `empty-listing`, `skipped`. What the residual half *does*
+    to a run is unmeasured()'s decision, one function down."""
     ordered = [(o, counts.get(o, 0)) for o in OUTCOMES]
     residual = sorted((o, n) for o, n in counts.items() if o not in OUTCOMES)
     return ordered, residual
+
+
+# The residual vocabulary, and what each of these says about the run it came
+# from. `unmeasured()` below decides by membership of OUTCOMES rather than by
+# this table, so an outcome nobody has thought of yet fails too rather than
+# passing by omission; the table is where the five this file can produce are
+# written down, and its values are the sentence a failure prints. The policy and
+# the argument for it: docs/findings/reassembly-unmeasured-row-policy.md.
+UNMEASURED = {
+    "assembler-error": "sdas8051 refused the listing; nothing was compared",
+    "error": "a worker raised; nothing was compared",
+    "missing-listing": "the row names a listing that is not on disk",
+    "empty-listing": "the listing parsed to zero instructions, so there was "
+                     "nothing to re-encode",
+    "skipped": "the index row carries no listing to check",
+}
+
+
+def unmeasured(counts):
+    """-> [(outcome, n)] for every outcome in `counts` that is not a
+    measurement: everything outside OUTCOMES.
+
+    The one predicate `run_status()`, `check()` and `write_report()` all read,
+    which is what stops the three from drifting. The dividing line is measured
+    against not measured rather than benign against serious: `mismatch`,
+    `partial`, `assembler-gap` and `listing-gap` are all measurements and keep
+    the policy `run_status()` gives, while everything here is one measurement
+    absent. A version difference and a moved category are two measurements
+    disagreeing, which the calibration in assembler_version() was written for;
+    a report row claiming a re-encode that did not happen is a false claim about
+    coverage, which is a different kind of defect and does not inherit it.
+
+    Keyed on the `outcome` cell and on nothing else. The `detail` column cannot
+    carry it: `no bytes emitted at ....` is a `listing-gap` detail and also the
+    detail on most of the committed `assembler-gap` rows, so a policy read off
+    `detail` would fail a measured outcome and turn `--check` red on a tree
+    whose report is correct.
+    """
+    return split_tally(counts)[1]
+
+
+def unmeasured_reason(outcome):
+    """-> the sentence a failure prints for `outcome`.
+
+    The fallback is for an outcome this file does not name, and it says so
+    rather than going quiet: the row still fails, because `unmeasured()` decided
+    that, and the one thing a reader must not conclude from an unnamed outcome
+    is that this table is what let it through.
+    """
+    return UNMEASURED.get(
+        outcome,
+        "an outcome outside OUTCOMES that this file does not name, and so not "
+        "a measurement either")
+
+
+def status_for(counts):
+    """-> the exit status one tally implies: 1 for a `mismatch` or for any row
+    outside OUTCOMES, 0 for neither.
+
+    The single answer two readers give, rather than two independent readings of
+    `mismatch == 0` -- which is how a run and the report it wrote came to
+    disagree about whether a row with no measurement behind it counted.
+    """
+    return 1 if (counts.get("mismatch", 0) or unmeasured(counts)) else 0
 
 
 def report_tally(rows):
@@ -1187,6 +1292,20 @@ def report_tally(rows):
     counts = {}
     for row in rows:
         outcome = row.get("outcome") or "(blank)"
+        counts[outcome] = counts.get(outcome, 0) + 1
+    return counts
+
+
+def results_tally(results):
+    """-> {outcome: n} over the result tuples verify() returns.
+
+    The shape report_tally() gives for a report read back from disk, so one
+    policy reads a run and the committed file the same way. verify() tallies
+    with this rather than with a second copy of the loop, because a second copy
+    of a tally is a second answer to the question the exit status asks.
+    """
+    counts = {}
+    for _row, outcome, _detail, _compared, _checked, _skipped, _d, _a in results:
         counts[outcome] = counts.get(outcome, 0) + 1
     return counts
 
@@ -1427,23 +1546,34 @@ NAME_COMMAND = "python3 ec/tools/verify_reassembly.py --refresh-name-column"
 
 
 def run_status(tally):
-    """The full run's exit status: zero unless a function re-encodes to different
-    bytes than the firmware holds.
+    """The full run's exit status: status_for()'s answer, and nothing else.
 
-    Only that, and deliberately. Three things this run reports are not
-    adjudicated here: a warning that its assembler differs from the one the
-    committed report was measured with, a category that moved since, and a
-    `listing-gap`. All three are measured, and none is actionable by whoever is
-    not watching -- a branch that re-reported the listings and has not committed
-    its CSV yet moves the tally legitimately, and this tool cannot tell that from
-    a regression. A `listing-gap` is the same shape: the row says the listing it
-    read had no entry at an address, and what that is about -- a build that
-    cannot express the form, a listing this build does not print, or a `read_lst`
-    regex that cannot see what it did -- is settled by the pinned build rather
-    than by any runner here. Failing a scheduled run on it would be noise, not a
-    gate. What fails is the one outcome the firmware arbitrates.
+    The measured half is unchanged and deliberate. Three things this run reports
+    are not adjudicated here: a warning that its assembler differs from the one
+    the committed report was measured with, a category that moved since, and a
+    `listing-gap`. All three are measurements, and none is actionable by whoever
+    is not watching -- a branch that re-reported the listings and has not
+    committed its CSV yet moves the tally legitimately, and this tool cannot tell
+    that from a regression. A `listing-gap` is the same shape: the row says the
+    listing it read had no entry at an address, and what that is about -- a build
+    that cannot express the form, a listing this build does not print, or a
+    `read_lst` regex that cannot see what it did -- is settled by the pinned build
+    rather than by any runner here. Failing a scheduled run on it would be noise,
+    not a gate.
+
+    The unmeasured half is the opposite of that, and it is the same for all five
+    outcomes outside OUTCOMES: `assembler-error`, `error`, `missing-listing`,
+    `empty-listing` and `skipped` all fail, because none of them is a
+    measurement at all. `unmeasured()` is the one place that decision is
+    written; `check()` reads the same predicate over a report, and
+    `write_report()` refuses to write a run carrying one. The policy and the
+    argument for it are in
+    docs/findings/reassembly-unmeasured-row-policy.md.
+
+    What fails is therefore the one outcome the firmware arbitrates, plus every
+    row with nothing behind it.
     """
-    return 0 if tally.get("mismatch", 0) == 0 else 1
+    return status_for(tally)
 
 
 def check():
@@ -1463,7 +1593,13 @@ def check():
     weakest of the four because a name is a judgement rather than a
     measurement -- it holds the copy, not the judgement. What none of them can
     do is verify the disassembly, and this function does not say it does:
-    verifying is the re-encode, and that is the deep tier."""
+    verifying is the re-encode, and that is the deep tier.
+
+    The summary it prints counts every outcome, and a row outside OUTCOMES fails
+    here exactly as it fails a full run, because `unmeasured()` is the one
+    predicate both read. A committed row saying `error` claims a re-encode that
+    did not happen; that is a false claim about coverage, where a `mismatch` is
+    a disagreement about bytes."""
     ok = True
     bytes_ok, n_insns, n_bad, digests = check_listing_bytes()
     ok = ok and bytes_ok
@@ -1493,16 +1629,20 @@ def check():
     print("  reassembly report: %s (of %d)"
           % (", ".join("%d %s" % (n, o) for o, n in ordered), len(report)))
     if residual:
-        # Named, not folded in and not failed on. check_one() can return
-        # `assembler-error`, `error`, `missing-listing` or `empty-listing`, and a
-        # committed row saying `error` probably should fail and today does not;
-        # docs/findings.md §14g names that as a question this change raises and
-        # does not settle. What this line does is make the row countable, so the
-        # summary describes the report it is summarizing. The sentence counts
-        # nothing -- OUTCOMES is the list and this points at it -- because a
-        # number here is one more thing for the next outcome to edit.
+        # Named, and failed on. check_one() can return `assembler-error`,
+        # `error`, `missing-listing`, `empty-listing` and `skipped`, and none of
+        # them is a measurement: a committed row carrying one claims a re-encode
+        # that did not happen, which is a false claim about coverage rather than
+        # a disagreement about bytes. `unmeasured()` is the predicate run_status()
+        # reads over the same tally, so a residual cannot mean one thing to a run
+        # and another to the report it wrote; the settlement and the argument for
+        # it are in docs/findings/reassembly-unmeasured-row-policy.md.
         print("  and %s, which are outside OUTCOMES"
               % ", ".join("%d %s" % (n, o) for o, n in residual))
+        for outcome, n in residual:
+            print("  FAIL %d %s row(s): %s"
+                  % (n, outcome, unmeasured_reason(outcome)))
+        ok = False
     mism = dict(ordered)["mismatch"]
     if mism:
         print("  FAIL %d function(s) re-encode to different bytes than the "
@@ -3061,8 +3201,8 @@ def self_test():
                 "committed outcome differs, did not")
 
     # An outcome outside OUTCOMES is counted and named rather than dropped, and
-    # the two halves still add up to the row count. check_one() can return all
-    # four of these, so this is the shape a real race or crash produces.
+    # the two halves still add up to the row count. check_one() can return every
+    # one of the five, so this is the shape a real race or crash produces.
     odd = synth([row(10, 0), row(5, 0, addr="0042", outcome="assembler-error"),
                  row(0, 2, addr="0044", outcome="error")])
     ordered, residual = split_tally(odd["tally"])
@@ -3071,9 +3211,34 @@ def self_test():
                 and sum(n for _o, n in ordered + residual) == 3,
                 "an outcome outside OUTCOMES is named by the residual, and the "
                 "two halves add up to the report's own row count")
-    assert_that(run_status({"assembler-error": 1, "error": 2}) == 0,
-                "an assembler-error or error row is counted and named, not "
-                "failed on -- docs/findings.md §14g names that as still open")
+
+    # The settled policy, one case per residual outcome. All five fail, and the
+    # reason is that none of them is a measurement rather than that any of them
+    # is serious: a run holding one cannot say which functions it checked. Both
+    # readers are asserted here rather than only the exit status, because the two
+    # were independent readings of `mismatch == 0` until unmeasured() became the
+    # predicate they share, and that is the property this case exists to hold.
+    for outcome in sorted(UNMEASURED):
+        one = {outcome: 1}
+        assert_that(run_status(one) == 1 and status_for(one) == 1
+                    and unmeasured(one) == [(outcome, 1)]
+                    and unmeasured_reason(outcome),
+                    "a %s row carries no measurement, so a run holding one fails "
+                    "and the predicate check() reads fails on the same tally: %s"
+                    % (outcome, unmeasured_reason(outcome)))
+    # And the direction that catches a fix which made everything fail, which the
+    # cases above cannot: every outcome in OUTCOMES is a measurement, so a tally
+    # of those with no mismatch is a run that did what it said.
+    measured = {o: 1 for o in OUTCOMES if o != "mismatch"}
+    assert_that(run_status(measured) == 0 and status_for(measured) == 0
+                and unmeasured(measured) == [],
+                "a tally of measured outcomes and no mismatch passes, so the "
+                "cases above are the residual half of the policy and not a "
+                "blanket failure")
+    assert_that(run_status({"assembler-error": 1, "error": 2}) == 1,
+                "a tally of nothing but unmeasured rows fails: these are the two "
+                "§14g's race produced, on runs whose `mismatch` was 0 throughout "
+                "and whose exit status was `mismatch` alone")
     # `listing-gap` is measured and not adjudicated, for the reason run_status()
     # gives: what it says is about the listing a run read, and the pinned build
     # settles it rather than whichever runner this is.
@@ -3081,6 +3246,126 @@ def self_test():
                 and run_status({"listing-gap": 1, "mismatch": 1}) == 1,
                 "a listing-gap is counted and named, not failed on, and it does "
                 "not stand in for the mismatch that is")
+
+    # check()'s own half, against a synthetic report rather than the committed
+    # one, because a comparison that cannot be made to fail is not a comparison.
+    # What is asserted is the decision check() makes from a report's tally --
+    # unmeasured() over report_tally()'s shape -- and not the whole of check(),
+    # which also compares every listing byte against the firmware and both CSV
+    # joins; none of those has anything to do with this question and all of them
+    # need the committed report and the image.
+    for outcome in sorted(UNMEASURED):
+        tally = synth([row(10, 0), row(5, 0, addr="0042",
+                                        outcome=outcome)])["tally"]
+        assert_that(unmeasured(tally) == [(outcome, 1)]
+                    and status_for(tally) == 1,
+                    "a report carrying one %s row fails the predicate check() "
+                    "reads, not only the run that produced it" % outcome)
+    clean = synth([row(10, 0), row(5, 0, addr="0042"),
+                   row(0, 2, addr="0044", outcome="assembler-gap")])["tally"]
+    assert_that(unmeasured(clean) == [] and status_for(clean) == 0,
+                "and a report of measured outcomes passes the same predicate, "
+                "which is the control that keeps the case above honest")
+
+    # check() itself, over the committed report with one row's `outcome` changed
+    # and nothing else touched. The cases above are about the predicate check()
+    # reads; this one is about check() using it, which is a separate thing and
+    # the drift the shared predicate exists to stop -- a branch that prints a
+    # FAIL and then forgets to set `ok` is the old defect with a new comment over
+    # it. Only the one cell moves, so the byte check, the digest join and the
+    # name join all still pass and the residual is the only thing that can turn
+    # the status red. REPORT is repointed rather than the committed file touched,
+    # and restored in the finally, so the tree is the same whichever way this
+    # assertion goes.
+    def checked_against(rows, fieldnames):
+        """-> (status, stdout) for check() with `rows` standing in for REPORT."""
+        global REPORT
+        import contextlib
+        import io
+        buf = io.StringIO()
+        path = os.path.join(cmpdir.name, "for-check%02d.csv" % len(written))
+        written.append(path)
+        with open(path, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\n",
+                               restval="")
+            w.writeheader()
+            w.writerows(rows)
+        saved = REPORT
+        REPORT = path
+        try:
+            with contextlib.redirect_stdout(buf):
+                status = check()
+        finally:
+            REPORT = saved
+        return status, buf.getvalue()
+
+    with open(REPORT, newline="") as f:
+        reader = csv.DictReader(f)
+        report_columns = reader.fieldnames
+        committed_rows = list(reader)
+    spoiled = [dict(r) for r in committed_rows]
+    spoiled[0]["outcome"] = "error"
+    status, said = checked_against(spoiled, report_columns)
+    assert_that(status == 1 and "outside OUTCOMES" in said
+                and "a worker raised" in said,
+                "check() fails a committed report carrying one residual row, "
+                "and says which: status %r" % status)
+    status, _said = checked_against(committed_rows, report_columns)
+    assert_that(status == 0,
+                "and the same report with that cell restored passes, so the "
+                "residual is what failed it and nothing else (status %r)" % status)
+
+    # write_report() refuses rather than writing a row that claims a re-encode
+    # which did not happen, and refuses to every destination. The control is the
+    # point of the second case: a measured run still writes, and its row is in
+    # the file, so the refusal is this policy and not a writer that stopped.
+    import contextlib
+    import io
+
+    def wrote_saying(results, path):
+        """-> (write_report()'s return, what it printed)."""
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            returned = write_report(results, None, path, version=HERE)
+        return returned, buf.getvalue()
+
+    refused_path = os.path.join(cmpdir.name, "refused.csv")
+    returned, said = wrote_saying(
+        [run_row("bank0", "0040", "raced", "error"),
+         run_row("bank0", "0042", "agrees", "match", 10)], refused_path)
+    assert_that(returned is None and not os.path.exists(refused_path)
+                and "error" in said and "raced" in said
+                and unmeasured_reason("error") in said,
+                "write_report() writes no report for a run carrying an `error` "
+                "row, and says which outcome and which function: returned %r, "
+                "file exists %s" % (returned, os.path.exists(refused_path)))
+    clean_path = os.path.join(cmpdir.name, "clean.csv")
+    returned, _said = wrote_saying(
+        [run_row("bank0", "0040", "agrees", "match", 10)], clean_path)
+    assert_that(returned == clean_path
+                and [r["outcome"] for r in
+                     csv.DictReader(open(clean_path, newline=""))] == ["match"],
+                "and a run of measured outcomes is written, with its row")
+
+    # `skipped` is settled to fail like the other four and cannot reach a report
+    # through the full run: verify()'s filter drops exactly the index rows
+    # check_one() answers `skipped` for. Asserted by calling check_one() on the
+    # dropped rows rather than by restating the guard it reads -- the filter and
+    # the outcome are two pieces of code and nothing else holds them together --
+    # and answerable without an assembler because check_one() returns `skipped`
+    # from `out_file` alone, before the image or the scratch directory is
+    # touched. A policy for an unreachable outcome costs nothing, and leaving the
+    # reachability as a measurement rather than as a claim is what makes that
+    # safe to rely on.
+    index_rows = list(csv.DictReader(open(LISTING_INDEX, newline="")))
+    dropped = [r for r in index_rows
+               if not (r["out_file"] and not r["out_file"].startswith("("))]
+    assert_that(dropped and all(check_one(r, None, None, None)[0] == "skipped"
+                                for r in dropped),
+                "every listing-index row verify()'s filter drops is one "
+                "check_one() answers `skipped` for, so `skipped` cannot reach a "
+                "report through the full run -- and the filter drops some, so "
+                "that relation is not vacuous")
 
     # Nothing to compare against is a reading, not a crash.
     absent = committed_report(os.path.join(cmpdir.name, "not-written.csv"))
@@ -3490,16 +3775,24 @@ def main():
         # handled the answer it was given.
         return 2
     results, tally, sdas, version = verified
+    reported = 0
     if args.report:
-        print("\n  wrote %s" % os.path.relpath(
-            write_report(results, sdas, version=version), REPO))
+        wrote = write_report(results, sdas, version=version)
+        if wrote is None:
+            # write_report() has said why, and run_status() is already 1 on the
+            # same tally -- but a refused --report is this flag not being
+            # honoured, which is counted here rather than left to two readers of
+            # the policy happening to agree.
+            reported = 1
+        else:
+            print("\n  wrote %s" % os.path.relpath(wrote, REPO))
     emitted = 0
     if args.emit_csv:
         emitted = emit_csv(results, sdas, args.emit_csv)
     # A refused --emit-csv is the user's flag not being honoured, so it is a
     # non-zero run whatever the tallies say; a run that quietly did not write
     # the file it was asked for is how a comparison ends up comparing nothing.
-    return emitted or run_status(tally)
+    return emitted or reported or run_status(tally)
 
 
 if __name__ == "__main__":

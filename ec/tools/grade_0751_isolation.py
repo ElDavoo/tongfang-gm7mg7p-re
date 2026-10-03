@@ -3630,9 +3630,78 @@ def report_readback(here, wrote, pairs, value, marker=""):
         print(f"  the last dump {still}holds the written 0x{written:02X}. Per "
               "CLAUDE.md that is a readback, not evidence the EC acted on it.")
     else:
+        # The one writer ruled out is named, and the rest are not counted: the
+        # census that would supply a count is open-ended by its own account,
+        # so a numeral here is one every later census has to keep right. What
+        # is worth stating is which candidate the operator should NOT spend the
+        # run on.
+        #
+        # The `0x898A` store is `90 07 51 / e0 / 54 bf / f0` in bank0: it loads
+        # the register and applies `anl a,#0xbf`, so it maps X -> X & ~0x40.
+        # That is the whole of what the bytes say about it, and it is a fact
+        # about the byte the register holds WHEN IT RUNS: the gate at 0x8946 is
+        # `jnb acc.6,0x8998` on the live `0x0751`, not on what was written, so
+        # `X & ~0x40` comes out as `written` only while X == written and
+        # nothing between the write and the last dump keeps the two in step.
+        # The store is therefore named on either byte that puts it in reach --
+        # `written & 0x40`, the transition it is the known producer of (`0x40`
+        # read back as `0x00` is what `anl a,#0xbf` does to it), or
+        # `last & 0x40`, the state it runs in -- and only ruled out on the two
+        # bytes both clear.
+        #
+        # The `xrl a,#0x40` rows in `manual-fan-ctrl-0751-writers.csv` are what
+        # makes the second one reachable on a written value with bit 6 clear,
+        # and they are also why the exclusion cannot be keyed on `written`
+        # alone. `xrl` is a pure toggle of bit 6, so on its own it does
+        # round-trip -- the row sets the bit, this store clears it, and the byte
+        # lands back where it started -- but only while that row is the sole
+        # intervening writer, and the same table's 0xA818, 0xABE8/0xC741 and
+        # 0xAC00/0xC759 rows move other bits in the same pass. So the byte this
+        # store reads is not the value written on any of those readings.
         print(f"  the last dump holds 0x{last:02X}, not the written "
-              f"0x{written:02X} -- something put it back; §3a's service-stopped "
-              "run is what separates the vendor service from the EC.")
+              f"0x{written:02X} -- the byte moved back. What remains is the "
+              "EC's other 0x0751 write paths or the vendor service, and §3a's "
+              "service-stopped run is what separates them.")
+        if written & 0x40:
+            print("  The bank0 0x8978 temperature clear is among them: that "
+                  "store is the anl a,#0xbf at 0x898E, which clears bit 6 "
+                  f"(0x40) and nothing else, and the written 0x{written:02X} "
+                  f"has bit 6 set -- 0x{written:02X} & 0xbf is "
+                  f"0x{written & 0xBF:02X}, a different value -- so it can turn "
+                  "the written value into another one "
+                  "(ec/annotations/manual-fan-ctrl-0751.md §9).")
+        elif last & 0x40:
+            print("  The bank0 0x8978 temperature clear is among them: that "
+                  "store is the anl a,#0xbf at 0x898E, which clears bit 6 "
+                  "(0x40) and nothing else, so it runs only on a byte holding "
+                  f"bit 6 set, and the last dump holds 0x{last:02X}, which is "
+                  "one. It reads 0x0751 as the register stands rather than as "
+                  f"it was written, so the written 0x{written:02X} having bit 6 "
+                  f"clear -- 0x{written:02X} & 0xbf is "
+                  f"0x{written & 0xBF:02X}, which is the value written -- does "
+                  "not settle it: an xrl a,#0x40 row in "
+                  "manual-fan-ctrl-0751-writers.csv can set that bit in "
+                  "between (ec/annotations/manual-fan-ctrl-0751.md §9).")
+        else:
+            print("  It is not the bank0 0x8978 temperature clear on either of "
+                  "those two bytes: that store is the anl a,#0xbf at 0x898E, "
+                  "which clears bit 6 (0x40) and nothing else, so it runs only "
+                  f"on a byte holding bit 6 set, and the written 0x{written:02X} "
+                  f"has bit 6 clear -- 0x{written:02X} & 0xbf is "
+                  f"0x{written & 0xBF:02X}, which is the value written -- so on "
+                  "its own it did not change this byte; neither does the byte at "
+                  "the last dump. It reads 0x0751 as the register stands "
+                  "rather than as it was written, so that is what the two bytes "
+                  "rule out and not a proof it never ran "
+                  "(ec/annotations/manual-fan-ctrl-0751.md §9).")
+        if last & 0x40:
+            print("  Where the byte stands now is what that store runs on next: "
+                  f"it holds 0x{last:02X}, so bit 6 is set now and that store is "
+                  "live from here.")
+        else:
+            print("  Where the byte stands now is what that store runs on next: "
+                  f"it holds 0x{last:02X}, so bit 6 is clear now and that store "
+                  "stays out of reach while it does.")
     if marker:
         # The marker itself is on the group line above, and is not restated
         # here: a second copy of those words is a second thing to keep in

@@ -2333,7 +2333,7 @@ symbol table.
 
 | cluster | key | name | size | refs | range | named inside | co-reading (§4.5) | the functions the cluster's addresses share |
 |---|---|---|---:|---:|---|---|---|---|
-| `main-ec-001` | `ke794087e13a6` | — | 152 | 873 | `0x0300`-`0x097B` | 10 | 37/100 fns, 479 (55%) | `FUN_CODE_dee8`, `FUN_CODE_def1`, `FUN_CODE_db0b` — **new, and the pass is what made it**: §4.7's 155 addresses are spread across this same `0x0300`-`0x05xx` working page, and the three routines whose `FUN_CODE_0402`/`FUN_CODE_0408` calls the pass resolves are the ones this cluster's addresses share. The old `0x0300`-page row is inside it (§4.7) |
+| `main-ec-001` | `ke794087e13a6` | — | 152 | 873 | `0x0300`-`0x097B` | 11 | 37/100 fns, 479 (55%) | `FUN_CODE_dee8`, `FUN_CODE_def1`, `FUN_CODE_db0b` — **new, and the pass is what made it**: §4.7's 155 addresses are spread across this same `0x0300`-`0x05xx` working page, and the three routines whose `FUN_CODE_0402`/`FUN_CODE_0408` calls the pass resolves are the ones this cluster's addresses share. The old `0x0300`-page row is inside it (§4.7) |
 | `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 92 | 1,130 | `0x0456`-`0x1809` | 34 | 25/136 fns, 294 (26%) | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
 | `main-ec-003` | `k733222e83898` | `counter-sweep` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | **63/127 fns, 4,642 (93%)** | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
 | `main-ec-004` | `ka39cda99615f` | `level-block-086x` | 28 | 181 | `0x045C`-`0x1C3A` | 14 | 8/21 fns, 66 (36%) | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `compute_level_blocks_086b_086c_086e` — the `0x06E6`/`0x0860` gate block |
@@ -2858,16 +2858,71 @@ order this file takes everywhere else.
   is no annotation on `0x7B14` to point at — and that is the honest limit of
   this account.
 
+  **Corrected 2026-10-02 (issue #294), in place.** Two sentences above are
+  wrong against the committed tree, and the correction belongs beside them
+  rather than in a newer place. `0x7B14` **does** have rows —
+  `stage_07c9_index_then_dispatch_on_flag_bits` in `ghidra-functions.csv`, whose
+  evidence cell cites both `7B14.asm` and `7B14.c` — so "there is no annotation
+  on `0x7B14` to point at" was a statement about a row that exists, and "not an
+  annotation effect" was the wrong conclusion drawn from it. And "what made
+  Ghidra re-render the file is not recorded in the committed tree" was true of
+  the *caller* and false of the callee: the mechanism is in
+  `ghidra-variables.csv`, one callee over, at
+  `pd,0x9028,param_1,r6_value,artifact`. The account above is left as written,
+  so its heading still says what it said; read it as the retracted version.
+
+  **The measurement.** `ec/tools/pd_9028_render_probe.py --run` re-renders the
+  PD program from the committed Ghidra project under three arms and diffs
+  `7B14.c`:
+
+  | arm | row removed | `7B14.c` against the committed file | `DAT_EXTMEM_07c9` |
+  |---|---|---|---:|
+  | `baseline` | none | byte-identical | 22 |
+  | `drop-variable` | `ghidra-variables.csv` `pd,0x9028,param_1` | differs | 21 |
+  | `drop-function` | `ghidra-functions.csv` `pd,9028` | differs (every call renamed `FUN_CODE_9028`) | 22 |
+
+  So the re-export is a fixed point — the committed corpus reproduces byte for
+  byte — and the variable row is what moves the token. Removing it restores
+  `0x1c` at the call the listing builds it for: committed
+  `make_dptr_r6_minus_3_9028(DAT_EXTMEM_07c9)` becomes
+  `make_dptr_r6_minus_3_9028(0x1c,DAT_EXTMEM_07c9)` — the column byte in A
+  first and the R6 row index second, which is the order `9028.asm` reads them.
+  Removing the *function* row renames the callee at every call site and leaves
+  the token count alone, so the name is not the mechanism here.
+
+  **What the measurement settles, and what it does not.** The `21` is not a loose
+  end: #238 is `1fcd5f1e`, `git log -S'pd,0x9028,param_1'` names that commit as
+  the one that added the row, and the file's token count goes 21 → 22 across it.
+  The `drop-variable` arm renders 21 and matches the pre-merge file's ten
+  `0x9028` call forms exactly. See `docs/findings/7b14-07c9-token.md`.
+
 **The policy these seven lines settle.** A variable row may change a caller's
-arity, and that is a correction rather than a loss: the committed four-argument
-signature is the one that matches the listing, and the fifth argument the
-decompiler used to promote was an unconsumed scratch register. The census
-counts C-level references and is therefore a lower bound on the machine code; a
-pin moves only with a measured reason recorded in the same change; and an
-address that leaves the census is "not found by this method" until an `.asm`
-witness says otherwise. The same rule is written where an annotation author
-meets it — `ghidra/scripts/ApplyAnnotations.java`, `ec/annotations/README.md`,
-and `../../docs/findings.md` §18.
+arity **or an argument's value at a call site**, and that is a correction
+rather than a loss. At `bank1` `0x9EA1` the committed four-argument signature
+is the one that matches the listing, and the fifth argument the decompiler used
+to promote was an unconsumed scratch register; at `pd` `0x9028` the same kind
+of row shortened a one-argument call to `make_dptr_r6_minus_3_9028(
+DAT_EXTMEM_07c9)` where the listing's `clr A` / `add A, #0x1c` says the call
+takes a constant column byte *and* a row index (issue #294, measured in the
+table above). The census counts C-level references and is therefore a lower
+bound on the machine code; a pin moves only with a measured reason recorded in
+the same change; and an address that leaves the census is "not found by this
+method" until an `.asm` witness says otherwise. The same rule is written where
+an annotation author meets it — `ghidra/scripts/ApplyAnnotations.java`,
+`ec/annotations/README.md`, and `../../docs/findings.md` §18.
+
+**One function row was measured, and it did not do this.** Dropping
+`ghidra-functions.csv`'s `pd,9028` row renames every call in `7B14.c` to
+`FUN_CODE_9028` and moves no token. So *that row* is not the mechanism here; what
+it establishes about the function layer is one row, and whether a name can move
+a caller's argument value is **not settled by one row**. What the code says is
+narrower than what the measurement shows: the only effect of a function row that
+reaches the decompiler is `f.setName(name, USER_DEFINED)`, and the `signature`
+column is *recorded, not applied* (the row also sets the plate comment, which the
+exporter prints and the decompiler does not read). A rename is not *provably*
+inert — Ghidra's decompiler is name-sensitive and this tree does not model that
+— so the counterfactual is what decides any given row, and
+`ec/tools/pd_9028_render_probe.py --run` is what reruns it.
 
 **The measurement, which is the part that was actually open.** Issue #259 added
 the `XDATA_0390` row, so `xdata-symbols.csv` names the byte and

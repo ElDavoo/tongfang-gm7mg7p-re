@@ -17,6 +17,7 @@ declare -A REGEN=(
   [ec/annotations/xdata-export-ownership.csv]='python3 ec/tools/export_ownership.py'
   [ec/annotations/xdata-registers.csv]='python3 ec/tools/xdata_register_map.py'
   [ec/annotations/xdata-clusters.csv]='python3 ec/tools/xdata_register_map.py'
+  [ec/ghidra/c-asm-counterpart.csv]='python3 ec/tools/c_asm_counterpart.py --report'
 )
 # The order the generators run in: a generator runs after every generator whose output it
 # reads. The census reads the ownership map, so the ownership map goes first.
@@ -24,6 +25,7 @@ ORDER=(
   'python3 ec/tools/gen_xdata_symbols.py'
   'python3 ec/tools/export_ownership.py'
   'python3 ec/tools/xdata_register_map.py'
+  'python3 ec/tools/c_asm_counterpart.py --report'
   'python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md'
 )
 

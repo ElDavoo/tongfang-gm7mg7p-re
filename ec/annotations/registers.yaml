@@ -1025,6 +1025,49 @@ registers:
       and the census transcript: ec/annotations/xdata-register-map.md; the
       calibration rule this note follows is docs/findings.md 4.
 
+  - name: XDATA_0391
+    addr: 0x0391
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three EC-side sites, no PD site, one byte wide at each: every one loads
+      DPTR with the three-byte sequence 90 03 91 and the next access is a
+      single 0xE0 read or 0xF0 write, never an inc-DPTR pair walk. Two are reads
+      and one is a write, and all three are the ones the sibling row's filter
+      call reaches.
+      The writer is bank1/DB0B.asm:101-102, on the carry-clear arm of the poll
+      at DB0B.asm:98 -- carry clear is that routine's success return (see
+      ec/decompiled/bank1/C4F0.asm:34-46) and the carry-set arm falls to 0xE8A4
+      instead. What it stores is NOT the routine's first argument, which is
+      what DB0B.c:73 renders as DAT_EXTMEM_0391 = param_1. The instruction is
+      mov A, R3 (DB0B.asm:100), and the poll it just returned from writes R3
+      from XDATA 0x1C04 on its success path (C4F0.asm:38, and the hand-decode
+      at C4F0.c:10 already records it). So the byte is the low half of the
+      16-bit value the 0x1C00 block poll returns; Ghidra's param_1 is a
+      register-tracking artifact of the same kind as the CONCAT11 pointer the
+      sibling note records, and it is corrected in
+      docs/findings/xdata-0390-0391-filter-pair.md rather than here.
+      The two readers are the two 0x9EA1 call sites. bank1/E100.asm:67-69
+      loads it into R0, and the branch at E100.asm:81 then overwrites that R0
+      with the filter's return value before E100.asm:91 publishes it to
+      0x0386 -- and that store is itself behind two guard bits (E100.asm:87
+      and :90 both branch to the ljmp at 0xE1D4), so 0x0386 is written only
+      when neither is set. E100 reads 0x0391 and compares it rather than
+      passing it on.
+      bank1/E237.asm:33-35 loads it into R2, which nothing in 0x9EA1 reads
+      (the filter's operands are R1, R3, R4, R5, R6 and R7), and that same site
+      hands the address on as R3:R4 (E237.asm:36-37), making 0x0391 the second
+      of the two accumulators this filter keeps. Whether some later instruction
+      in that routine reads the R2 is not settled here: the listing for
+      FUN_CODE_e100 ends at E100.asm:117 with a ljmp to 0xE27D, and the one for
+      gate_1c00_init_defaults stops at 0xE27C, so the committed instructions
+      end before any later use of R2 would sit.
+      A static direction is not behaviour and no live test was run, so
+      `present-untested` is the ceiling for this row as much as for 0x0390.
+
   - name: BAT_FULL_CAPACITY_1
     addr: 0x0404
     sources: [uniwill-laptop, xdata-refs]
