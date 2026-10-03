@@ -274,6 +274,30 @@ of the seventh row is a **missing** hold: nothing reads either key, so the two
 digits that do land in an assertion land there as a different pair in a different
 census, per the correction under the table.
 
+*(Corrected, 2026-10-03, issue #918. The paragraph above is left as it read, per
+[`../findings.md`](../findings.md) §4a-4d — and **both of the rows it calls open
+were closed in the same window, by the remedy each paragraph names.**
+`OWNERSHIP["main_distinct"]`/`["main_refs"]` are read by #849's "and its main-EC
+half is" `check()`, and `OWNERSHIP["pd_distinct"]`/`["pd_refs"]` by #1364's "and its
+pd half is" one beside it, both in `--self-test`'s ownership block and both over
+the de-duplicated census, which is the run §6b's two per-program lines come from.
+"Partial" was the right classification on the tree it was written on and is not
+this one: the `ORACLE["extmem_pd_*"]` half was never the whole hold, and the
+de-duplicated half it was missing now exists. The bullet under "Still unpinned
+after this" below already records its own closure this way. **The guard-off `51`,
+the other bullet in that list, was the last of the three to close**, and #918
+closed it too — asserted in `ec/tools/test_xdata_cluster_names.py` beside the
+`394` that is the main-EC arm of the same pair, which is the assertion the bullet
+below says it was "`assertEqual` away".
+[`xdata-guard-off-pd-cluster-count-pinned.md`](xdata-guard-off-pd-cluster-count-pinned.md)
+is that write-up. The two reasons are still kept apart above, and they are still
+different — one row the tree pinned for the wrong census, one figure it pinned for
+none — but neither is open now. Neither per-program figure carries an identity
+check of the kind the census-wide pair has, and
+[`xdata-ownership-arms-do-not-partition.md`](xdata-ownership-arms-do-not-partition.md)
+is why: §6b's two per-program lines do not partition the way the census-wide pair
+does, so the distinct side cannot carry one.*
+
 A by-product of the audit, since the checklist already flags `14,838` as
 "commonly mis-transcribed": it is `ORACLE["main_refs"]` (`:744`) and it is
 asserted, at `:3864-3869`. The correction can therefore say **where** the number
@@ -330,6 +354,22 @@ things nobody asked it to:
   `unheld`, and it is the case
   `test_a_small_figure_is_not_pinned_by_an_unrelated_cell` now uses as its
   real-tree witness for that verdict.
+  *(Corrected, 2026-10-03, issue #918. The bullet above is left as it read, per
+  [`../findings.md`](../findings.md) §4a-4d. **It is closed, and it was closed
+  the way the bullet says it could be**: the `assertEqual` it names is in the tree
+  now, asserting the guard-off run's `51` against the committed census's `50`
+  immediately after the `394`/`389` pair in the same case, so the two arms of the
+  pair are one measurement. `check_doc_figure_pins.py` measures it
+  `held-by-check-literal` there rather than `unheld`, and
+  `test_check_doc_figure_pins.py` watches that verdict — including which file it
+  resolves in, so a `51` that some later constant happened to equal cannot pass
+  as a promise. The `test_a_small_figure_is_not_pinned_by_an_unrelated_cell`
+  clause is the one casualty: a witness for the over-match rule has to be a
+  figure the checker measures `unheld`, so that case now witnesses the rule with
+  `31`, which is a cell in three committed cluster rows and which nothing in
+  `ec/tools/*.py` asserts.
+  [`xdata-guard-off-pd-cluster-count-pinned.md`](xdata-guard-off-pd-cluster-count-pinned.md)
+  is the write-up, with the run that produced the figure.)*
 - **The three arms' `refs` totals.** *Closed by this change*, and this is the one
   item of the four that is not left open: `13,891` / `603` / `1,202` are asserted
   in the same subTest as the four numerators, by the same "denominators are pinned

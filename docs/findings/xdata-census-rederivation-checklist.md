@@ -270,6 +270,28 @@ left for a narrow reason**: `ORACLE["extmem_pd_*"]` measures the PD half of the
 **default** census's token spellings and `OWNERSHIP` carries no `pd_*` key at
 all, so nothing holds §6b's de-duplicated `157`/`858`.
 
+*(Correction, 2026-10-03, issue #918. The sentence above is left as it read, per
+[`../findings.md`](../findings.md) §4a-4d. **The `157`/`858` pair is closed**,
+and was already closed before this correction: #1364 added
+`OWNERSHIP["pd_distinct"]`/`["pd_refs"]` and an "and its pd half is" `check()`
+reading them, so §6b's own de-duplicated run is measured rather than inferred from
+a same-digit figure from another census. #918 then audited what that pin rests on,
+and recorded one thing this paragraph's framing gets backwards even now that the
+key exists: the absence of a `pd_refs` identity beside it is **not** an omission,
+because §6b's two per-program lines do not partition the way the census-wide pair
+does, so a sum check over the distinct side cannot hold. The identity #918 was
+asked to add is already implied by the three checks beside it and was not added
+for that reason.
+[`xdata-ownership-arms-do-not-partition.md`](xdata-ownership-arms-do-not-partition.md)
+is the write-up and carries the arithmetic.* **What is left of §2b was the
+guard-off `51`**, named in the last paragraph below, and #918 pinned that as well
+— asserted in `ec/tools/test_xdata_cluster_names.py` beside the `394` that is the
+main-EC arm of the same pair, which is where §2b said it was missing a pin.
+[`xdata-guard-off-pd-cluster-count-pinned.md`](xdata-guard-off-pd-cluster-count-pinned.md)
+is that write-up, and §2b has no figure it cannot vouch for on this tree. The
+`157`/`858` row was marked `held` before the pin landed, and adding the pin is
+what made that marking true rather than coincidental.*
+
 *(Corrected at review, 2026-09-25, and the wrong version stays visible per
 §4a-4d. The heading above first counted **four** of the eight rows as wholly
 held "and two more are now", and this paragraph first counted them four unheld,
