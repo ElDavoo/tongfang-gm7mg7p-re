@@ -17,10 +17,12 @@ tables in `walk_budget_census.TABLES` back through `classify()`,
 `test_gpu_block_watch.py` reads a census of its own. What every one of those
 does is iterate the rows **already in the file** and re-derive a cell of each.
 None re-derives the row **set**, because a row that is not there is not
-iterated. A deleted row, an added row, a reordered row and a mislabelled
-`region` all pass all of them; that is the failure mode this suite exists for,
-and `docs/findings/sites-csv-regeneration.md` carries the measurement of which
-mutations each suite catches.
+iterated. Measured with this suite held out of the tree, a reordered row and a
+mislabelled `region` pass every one of them, and that is the failure mode this
+suite exists for. A deleted or added row is caught too, but by a count and not
+by a re-derivation -- `test_walk_budget_census.py`'s `ReCutTests` compares the
+row count against a pinned commit.
+`docs/findings/sites-csv-regeneration.md` carries the matrix per table.
 
 **Addresses are frozen here as test data, not read back from the file.** That
 is the whole design, and it is not a detail. Deriving the address list from

@@ -99,13 +99,16 @@ cells.** `../../ec/tools/test_sites_csv_regeneration.py` regenerates this table
 from the committed firmware for the four addresses above and compares it against
 the committed file on every run of `bash tools/run-tests.sh`. The suites that
 already read this file re-derive a cell of each row that is *present*, so a row
-edited out, added or reordered is not something they can see; this one freezes
-the four addresses as its own data — reading them back out of the CSV would be
-circular — so "this file is the map of these four addresses" is a claim
-something checks. A `region` cell is the one none of those cell-wise checks can
-reach, and the `region` column is what separates the 15 from the 102 below. "Not
-found by this method, never absent": a site reached through a computed DPTR has
-no row here and would have none in a regeneration either. The write-up is
+reordered, or a `region` cell relabelled, is not something they can see; a row
+edited out or added is caught, but by `test_walk_budget_census.py`'s
+`ReCutTests` row count against a pinned commit rather than by anything
+re-deriving the set. This one freezes the four addresses as its own data —
+reading them back out of the CSV would be circular — so "this file is the map
+of these four addresses" is a claim something checks. A `region` cell is the
+one none of those cell-wise checks can reach, and the `region` column is what
+separates the 15 from the 102 below. "Not found by this method, never absent":
+a site reached through a computed DPTR has no row here and would have none in
+a regeneration either. The write-up is
 `../../docs/findings/sites-csv-regeneration.md`.
 
 The 102 `pd-image` rows are the `ITE8850-PD` program's own variables, at
