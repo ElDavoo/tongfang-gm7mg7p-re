@@ -45,6 +45,10 @@ REPO = HERE.parent.parent
 sys.path.insert(0, str(HERE))
 import trace_xdata_refs as T          # noqa: E402
 import walk_budget_census as W        # noqa: E402
+# The one place a committed `access` cell may differ from
+# classify(walk(d, off)) at walk()'s own budget; the census applies it, so
+# the census's own comparisons are against the corrected cell.
+import access_cell_corrections as ACC  # noqa: E402
 # The producer of the arms table the census declines to read, imported for its
 # `END_BUDGET` and `CUTS` -- the cut vocabulary the exclusion is stated
 # against, read off the tool that emits the cells rather than transcribed.
@@ -244,17 +248,55 @@ class WalkContractTests(unittest.TestCase):
         # through the census. Every committed table's `access` cell is
         # classify(walk(d, file_offset)), so a walk that changed shape would
         # move one of them.
+        #
+        # **Issue #865: three rows now carry a corrected cell** and the
+        # comparison goes through `access_cell_corrections.corrected()`,
+        # which returns `classify()`'s own string for every other offset. The
+        # uncorrected invariant is still asserted here, per row and by
+        # exclusion, so the correction cannot quietly widen: a fourth row
+        # entering the module fails
+        # `test_the_only_three_rows_that_may_differ_are_the_three_corrected`
+        # rather than passing unnoticed here.
         d = firmware()
         checked = 0
+        corrected = 0
         for name in W.TABLES:
             for row in rows_of(name):
                     off = int(row["file_offset"], 16)
-                    self.assertEqual(T.classify(T.walk(d, off)), row["access"],
+                    derived = T.classify(T.walk(d, off))
+                    self.assertEqual(ACC.corrected(off, derived),
+                                     row["access"],
                                      f"{name} row {row['file_offset']}")
+                    if off in ACC.BY_OFFSET:
+                        corrected += 1
+                    else:
+                        self.assertEqual(derived, row["access"],
+                                         f"{name} row {row['file_offset']}")
                     checked += 1
         self.assertEqual(checked, 1288,
                          "the population moved; W.TABLES and the committed "
                          "tables are supposed to agree")
+        self.assertEqual(corrected, len(ACC.CORRECTIONS))
+
+    def test_the_only_three_rows_that_may_differ_are_the_three_corrected(self):
+        # The exclusion, so the case above cannot be satisfied by a
+        # `corrected()` that answers for every offset. The size is spelled
+        # out rather than derived, because the case is named for it: a fourth
+        # entry has to be a deliberate edit here rather than a correction
+        # that widens unnoticed. It is a count of what this module holds, not
+        # of anything in the repository.
+        self.assertEqual(len(ACC.CORRECTIONS), 3)
+        for c in ACC.CORRECTIONS:
+            with self.subTest(table=c.table, offset=f"0x{c.offset:05X}"):
+                self.assertIn(c.table, W.TABLES)
+                off = c.offset
+                self.assertNotEqual(
+                    T.classify(T.walk(firmware(), off,
+                                      T.walk.__defaults__[0])),
+                    c.access,
+                    f"{c.table} row 0x{off:05X}: the budget-8 decode already "
+                    "gives the committed cell, so this entry corrects "
+                    "nothing")
 
     def test_no_committed_access_cell_is_re_derived_differently(self):
         # The census's own loud check, exercised through census_table() so
@@ -448,6 +490,13 @@ class CommittedCensusTests(unittest.TestCase):
     # `test_the_superseded_45_and_the_13_are_kept_beside_their_replacement`
     # and ../../docs/findings/dptr-rebuild-walk-guard.md.
     SUPERSEDED_45_AND_THE_13 = {"rows": 45, "moves": 13, "A": 10, "B": 3}
+    # What issue #865's corrections replaced, held beside the current figures
+    # for the same reason. The three class-B rows stayed in the census and
+    # their terminator is unchanged; what changed is the `access` cell, so
+    # they now read `unchanged` and no row is named a class at all. See
+    # `test_the_superseded_class_b_is_kept_beside_its_replacement` and
+    # ../../docs/findings/class-b-access-cell-corrections.md.
+    SUPERSEDED_CLASS_B = {"moves": 3, "B": 3}
 
     def _run(self, *args):
         return subprocess.run(
@@ -517,14 +566,33 @@ class CommittedCensusTests(unittest.TestCase):
         than overwritten, and
         `../../docs/findings/dptr-rebuild-walk-guard.md` carries the census
         and the reasoning.
+
+        **2026-10-02 (issue #865), leaving the figures #517 left visible
+        above:** 3 moving becomes **0**, and 3 class B becomes **0**. The same
+        fifteen rows are still truncated at a budget of 8 and still carry that
+        token in `terminator_at_budget`; what changed is that each of the three
+        class-B rows' committed `access` cell now holds what the 64-instruction
+        budget derives, so `access_at_budget == access_at_extend` and the
+        verdict is `unchanged`. A larger budget now rewrites no committed cell
+        in any of the nine tables — which is what class B said should happen
+        once the cells were corrected, and is the reason `moves` empties rather
+        than a re-measurement. See
+        `../../docs/findings/class-b-access-cell-corrections.md`.
         """
         rows = rows_of('walk-budget-census.csv')
         self.assertEqual(len(rows), 15)
-        self.assertEqual(sum(1 for r in rows if r["moves"] == "yes"), 3)
+        self.assertEqual(sum(1 for r in rows if r["moves"] == "yes"), 0)
         self.assertEqual(sum(1 for r in rows
                              if r["verdict"].startswith("A: ")), 0)
         self.assertEqual(sum(1 for r in rows
-                             if r["verdict"].startswith("B: ")), 3)
+                             if r["verdict"].startswith("B: ")), 0)
+        # Every row a verdict is no longer attached to is one whose terminator
+        # is still the budget: a row that left the census, or one that stopped
+        # on a real terminator, would satisfy the empty classes above too.
+        for r in rows:
+            self.assertEqual(r["terminator_at_budget"], T.budget_end(W.BUDGET))
+            self.assertEqual(r["moves"], "no")
+            self.assertEqual(r["access_at_budget"], r["access_at_extend"])
         # Every row is a row of a committed table, at the budget that table
         # was cut with, and no row's committed cell differs from the re-derived
         # one -- the census's own loud check, as a fact about the data. The
@@ -554,6 +622,33 @@ class CommittedCensusTests(unittest.TestCase):
             sum(1 for r in rows if r["verdict"].startswith("A: ")),
             self.SUPERSEDED_45_AND_THE_13["A"])
 
+    def test_the_superseded_class_b_is_kept_beside_its_replacement(self):
+        # Same reason as the constant above, for issue #865's figure. Held as
+        # a constant so that dropping the correction has to delete code.
+        self.assertEqual(self.SUPERSEDED_CLASS_B, {"moves": 3, "B": 3})
+        rows = rows_of('walk-budget-census.csv')
+        self.assertEqual(sum(1 for r in rows if r["moves"] == "yes"), 0)
+        self.assertEqual(
+            sum(1 for r in rows if r["verdict"].startswith("B: ")), 0)
+        # And the three rows are still there, still budget-truncated, now
+        # agreeing with their own committed cell at both budgets -- the reason
+        # a correction empties the class rather than emptying the census.
+        for c in ACC.CORRECTIONS:
+            key = (c.table, f"0x{c.offset:05X}")
+            with self.subTest(table=c.table, offset=key[1]):
+                row = next((r for r in rows
+                            if r["table"] == key[0]
+                            and r["file_offset"] == key[1]), None)
+                self.assertIsNotNone(
+                    row, f"{key[0]} row {key[1]} left the census; the "
+                         "correction changed a cell, not a terminator")
+                self.assertEqual(row["moves"], "no")
+                self.assertEqual(row["access_at_budget"], c.access)
+                self.assertEqual(row["access_at_budget"],
+                                 row["access_at_extend"])
+                self.assertEqual(row["terminator_at_budget"],
+                                 T.budget_end(W.BUDGET))
+
     def test_the_four_issue_addresses_are_three_class_b_and_one_class_a(self):
         """Issue #846's four rows, each at the committed and larger-budget
         values it quotes.
@@ -568,22 +663,47 @@ class CommittedCensusTests(unittest.TestCase):
         image, so the case below asserts both halves: what is still in the
         census, and that the three that left are gone *because* their
         terminator moved rather than because a row was deleted.
+
+        **2026-10-02 (issue #865), leaving the `B` verdict above visible:** the
+        two rows below are still in the census and still budget-truncated, and
+        their cells are now the corrected ones, so `access_at_budget` and
+        `access_at_extend` agree and neither row is named a class. The `B`
+        verdict was not wrong: it said the window was short rather than the
+        cell wrong, and the cell has been corrected to what the longer window
+        holds. `../../docs/findings/class-b-access-cell-corrections.md`.
         """
-        # The three issue-#846 rows that are still truncated, each at the
-        # committed and larger-budget values the issue quotes.
+        # Issue #846's rows that are still truncated, each now at the
+        # corrected committed cell and the larger-budget value they agree
+        # with. `unchanged` is spelled out rather than matched on a prefix
+        # because it is the verdict that replaced the class.
         want = {
-            ("ec-0x07d0-sites.csv", "0x2E8D4"): ("write x1", "read x1, write x1", "B"),
-            ("xdata-0400-045f-sites.csv", "0x0DD4A"): ("read x2, write x1", "read x2, write x2", "B"),
+            ("ec-0x07d0-sites.csv", "0x2E8D4"): "read x1, write x1",
+            ("xdata-0400-045f-sites.csv", "0x0DD4A"): "read x2, write x2",
         }
         rows = {(r["table"], r["file_offset"]): r
                 for r in rows_of('walk-budget-census.csv')}
-        for key, (at8, at64, cls) in want.items():
+        for key, cell in want.items():
             self.assertIn(key, rows, f"{key} is not in the committed census")
             row = rows[key]
-            self.assertEqual(row["access_at_budget"], at8, key)
-            self.assertEqual(row["access_at_extend"], at64, key)
-            self.assertTrue(row["verdict"].startswith(f"{cls}: "),
-                            f"{key} is not class {cls}: {row['verdict']}")
+            self.assertEqual(row["access_at_budget"], cell, key)
+            self.assertEqual(row["access_at_extend"], cell, key)
+            self.assertTrue(row["verdict"].startswith("unchanged: "),
+                            f"{key} is not `unchanged`: {row['verdict']}")
+
+        # And the correction is what made them agree: at walk()'s own budget
+        # the image still gives the pre-correction cell, which is what
+        # `access_at_budget` would have been without
+        # `access_cell_corrections.corrected()`. Asserted here rather than
+        # left implicit, because a census that stopped applying the
+        # corrections and simply recorded the class as empty would satisfy
+        # every assertion above.
+        d = firmware()
+        for key, cell in want.items():
+            off = int(key[1], 16)
+            with self.subTest(table=key[0], offset=key[1]):
+                self.assertNotEqual(T.classify(T.walk(d, off)), cell)
+                self.assertEqual(ACC.corrected(off, T.classify(T.walk(d, off))),
+                                 cell)
 
         # The three that left, and why. Every one is a row of a committed
         # table and none of its `access` cell moved -- what moved is the
@@ -663,6 +783,22 @@ class ReCutTests(unittest.TestCase):
     SUPERSEDED_MOVED = [
         ("xdata-0400-045f-sites.csv", "0x11F16", "window",
          "movx a,@dptr ; db 0xa2", "movx a,@dptr ; mov c,acc.0"),
+    ]
+    # Issue #865's three, in the same shape as `SUPERSEDED_MOVED` and for the
+    # same reason: the baseline above does not move, and the guard narrows
+    # from "no `access` cell moved" to "no `access` cell moved except these
+    # three, and these three moved to what is written here". A fourth cell
+    # moving still fails, which is the property the assertion is cited for.
+    # `../../docs/findings/class-b-access-cell-corrections.md` carries the
+    # bytes and why each correction is right.
+    CORRECTED_ACCESS = [
+        ("ec-07d6-07d7-sites.csv", "0x2BECB", "access",
+         "write x2, walks 3 consecutive bytes (inc dptr)",
+         "write x4, walks 4 consecutive bytes (inc dptr)"),
+        ("ec-0x07d0-sites.csv", "0x2E8D4", "access", "write x1",
+         "read x1, write x1"),
+        ("xdata-0400-045f-sites.csv", "0x0DD4A", "access",
+         "read x2, write x1", "read x2, write x2"),
     ]
 
     # The six pages whose generating command gained --terminator-column.
@@ -982,9 +1118,23 @@ class ReCutTests(unittest.TestCase):
           `sites.csv`'s `0x0867` row, whose `access` and `window` cells
           respectively changed, corrected against their `.asm` in
           `../../docs/findings/dptr-rebuild-walk-guard.md`.
+
+        **2026-10-02 (issue #865), leaving that bullet as it was written:** three
+        `access` cells in these six **have** moved, deliberately, and the
+        bullet is now "no `access` cell moved except the three named in
+        `CORRECTED_ACCESS`". They are the three class-B rows of
+        `../../docs/findings/walk-window-terminators.md` §B, whose cells were
+        short rather than wrong and have been corrected to what a
+        64-instruction budget derives. #517's rule is otherwise intact and
+        still asserted per row: the baseline does not move, `window` cells
+        are still only ever shortened at a DPTR store, `terminator` cells
+        still only ever move to `DPTR reloaded`, and the set of rows whose
+        `access` moved is asserted equal to the named three so a fourth one
+        still fails.
         """
         d = firmware()
         shortened = retokenized = 0
+        moved_access = set()
         for name in self.RECUT:
             old = {r["file_offset"]: r for r in csv.DictReader(io.StringIO(
                 self._committed_at_baseline(name)))}
@@ -1017,14 +1167,33 @@ class ReCutTests(unittest.TestCase):
                         row["terminator"], T.RELOAD_END,
                         f"{name} row {row['file_offset']}: its terminator "
                         f"moved to {row['terminator']!r}, not to a reload")
+                if before["access"] == row["access"]:
+                    self.assertNotIn(
+                        (name, row["file_offset"]),
+                        {(c[0], c[1]) for c in self.CORRECTED_ACCESS},
+                        f"{name} row {row['file_offset']} is named in "
+                        "CORRECTED_ACCESS but its `access` cell did not move")
+                    continue
+                moved_access.add((name, row["file_offset"]))
+                named = [c for c in self.CORRECTED_ACCESS
+                         if c[0] == name and c[1] == row["file_offset"]]
                 self.assertEqual(
-                    before["access"], row["access"],
-                    f"{name} row {row['file_offset']}: an `access` cell moved, "
-                    f"{before['access']!r} -> {row['access']!r}")
+                    len(named), 1,
+                    f"{name} row {row['file_offset']}: an `access` cell moved "
+                    f"from {before['access']!r} to {row['access']!r} and "
+                    "CORRECTED_ACCESS does not name exactly this change")
+                self.assertEqual(before["access"], named[0][3])
+                self.assertEqual(row["access"], named[0][4])
         # Both counts are non-zero, so the rules above are exercised rather
         # than vacuous -- a re-cut that moved nothing would pass them.
         self.assertGreater(shortened, 0)
         self.assertGreater(retokenized, 0)
+        # And the set of rows whose `access` moved is exactly the corrections,
+        # not a superset of them. A re-cut or a regeneration that moved a
+        # fourth cell fails here rather than passing through the per-row
+        # branch above.
+        self.assertEqual(moved_access,
+                         {(c[0], c[1]) for c in self.CORRECTED_ACCESS})
         # And every committed terminator is what the image gives, so the
         # column and the guard are one measurement rather than two.
         for name in self.RECUT:
