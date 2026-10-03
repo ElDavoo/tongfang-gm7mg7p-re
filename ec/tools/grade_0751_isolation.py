@@ -84,8 +84,16 @@ so when the block's first `--dump` already holds the value that was written --
 or when only one `--dump` was handed in for the block at all -- the section
 drops the word and says which of the two it is, the file that would support it
 being the before-dump whose `0x0751` byte `report_dumps` printed two lines
-above. None of these is a claim about the machine; each is a claim about which
-files were handed in and what those files can be read as saying.
+above. And a file that cannot be opened is on those same terms: the path and
+the OS error are printed in the section that would have read it, nothing is
+compared over it, and the run carries on -- the readback is a fact about two
+files on disk, and a mistyped path is a fact about the command line rather
+than about the machine. The unreadable `--dump` keeps its place in its block's
+list with nothing behind it rather than being dropped from it, because the
+readback is taken over the block's last one and deleting an entry would
+promote the dump before it into that place. None of these is a claim about the
+machine; each is a claim about which files were handed in and what those files
+can be read as saying.
 
 One thing is read that is not a byte at all: §3's per-block integrity check.
 §3 calls that check mechanical and then leaves the operator to eyeball it
@@ -2060,6 +2068,13 @@ def read_dump(path):
     what they hand in; a comment carrying a colon is otherwise read as a row
     of bytes and raises out of `int()`. `newline=""` as the five readers
     above pass it, so a hand-annotated dump is read the way it is written.
+
+    It opens with no handling of its own and raises `OSError` at a file that
+    is not there, which is the right contract for the one place a dump is
+    parsed and the wrong one for a caller with a whole `--dump` list to get
+    through. `read_dumps` and `read_dump_pairs` below are the forms the
+    report goes through; this stays as they are built on it, and as the test
+    helper that reads one committed fixture calls it directly.
     """
     values = {}
     with open(path, newline="", encoding="utf-8") as f:
@@ -2073,6 +2088,65 @@ def read_dump(path):
             for i, b in enumerate(rest.split()):
                 values[addr + i] = int(b, 16)
     return values
+
+
+def read_dumps(paths):
+    """(--dump entries in the order given, the ones that would not open).
+
+    An entry that would not open keeps its place in the first list with
+    `values` of `None` rather than being left out of it, because
+    `report_dumps` takes the §4.6 readback from the block's *last* `--dump`:
+    a dropped entry promotes the one before it into that place, and the
+    verdict then reads "the last dump" over a file the operator did not name
+    last. `failed` carries those entries with the error, which is what the
+    report prints and a bare `None` cannot say.
+
+    `OSError` and nothing wider, deliberately. A dump that opens and is not
+    decodable raises `UnicodeDecodeError`, and one holding a line that is not
+    hex raises `ValueError`; a malformed file and a missing one are different
+    faults, and swallowing the first under "not read" would report a parse
+    failure as an input one. A narrow catch that has to grow later is visible
+    in a diff.
+    """
+    dumps, failed = [], []
+    for path in paths:
+        try:
+            dumps.append((path, read_dump(path)))
+        except OSError as exc:
+            dumps.append((path, None))
+            failed.append((path, exc))
+    return dumps, failed
+
+
+def read_dump_pairs(arg_pairs):
+    """(the --dump-pair entries that opened, those with a side that did not).
+
+    A pair with either side unreadable is dropped whole rather than compared
+    over what is left. A whole-block read is the intersection of two files,
+    and one of them not being there is not a bracket: `0 address(es)
+    compared` over the survivor would be a result about nothing, which is the
+    same false green `SAME_FILE_PAIR`'s line is written against. `failed`
+    keeps the pair's two paths and, per side that would not open, the error,
+    so the report can print it under the pair the operator actually typed.
+
+    `OSError` only, for the reason `read_dumps` gives.
+    """
+    pairs, failed = [], []
+    for before, after in arg_pairs:
+        sides = []
+        try:
+            before_values = read_dump(before)
+        except OSError as exc:
+            sides.append(("before", exc))
+        try:
+            after_values = read_dump(after)
+        except OSError as exc:
+            sides.append(("after", exc))
+        if sides:
+            failed.append((before, after, sides))
+        else:
+            pairs.append((before, after, before_values, after_values))
+    return pairs, failed
 
 
 def capture_key(path):
@@ -3695,7 +3769,8 @@ def pair_refusal(before, after):
     return None
 
 
-def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None):
+def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None,
+                 unread=()):
     """0x0751 in each --dump, and what the last of them says about §4.6.
 
     Coverage is stated before anything is compared. A run may hand in dumps
@@ -3727,6 +3802,22 @@ def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None):
     §4.6 readers in the test suite cut the section on, and a heading that
     grows a value in it breaks both of them for no gain -- the block is
     named on the first line under it instead.
+
+    A dump that would not open is in the run's dump list with no bytes behind
+    it rather than out of it, which is `read_dumps`' half of the contract and
+    is load-bearing here: the readback is taken from the block's last dump,
+    and deleting the unreadable one promotes the dump before it into that
+    place, where "the last dump still holds the written 0xA0" would be a true
+    sentence about a file the operator did not name last. It prints its own
+    line in the group instead of the byte it cannot have, so the section
+    keeps its shape and the operator can see which file is missing rather
+    than finding a silently shorter list.
+
+    The "no dump given" line is only for a run that handed in none, and stays
+    byte for byte: no test asserts its spelling, and it is true of every run it
+    is printed for. A run that handed in dumps and had every one of them fail
+    to open is a different fact, and printing the same sentence would be false --
+    the operator did give files, and this is what became of them.
     """
     print("\n=== 0x0751 across the dumps (§4.6) ===")
     if not dumps:
@@ -3743,6 +3834,7 @@ def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None):
         else:
             groups.append([value, how, [(path, values)]])
 
+    unreadable = dict((path, exc) for path, exc in unread)
     for value, how, here in groups:
         # Nothing is carried for a group this run will not read: a `--block`
         # run's other blocks were never checked, so a verdict on one would be
@@ -3772,6 +3864,9 @@ def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None):
                       "for §4.6 here")
             continue
         for path, values in here:
+            if values is None:
+                print(f"  {path}: not read: {unreadable[path]}")
+                continue
             v = values.get(MANUAL_FAN_CTRL)
             if v is None:
                 print(f"  {path}: 0x{MANUAL_FAN_CTRL:04X} not covered by this "
@@ -3784,6 +3879,9 @@ def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None):
         print(f"  no dump was given for block 0x{block_value:02X}, so §4.6's "
               "readback for it was not taken; the dumps named above are "
               "another block's")
+    if all(values is None for _, values in dumps):
+        print(f"  none of the {len(dumps)} dump(s) given could be read, so "
+              "§4.6 was not checked; each is named above")
 
 
 def report_readback(here, wrote, pairs, value, marker=""):
@@ -3843,11 +3941,30 @@ def report_readback(here, wrote, pairs, value, marker=""):
     would throw away a fact the operator can use. A first dump that does not
     reach `0x0751` has no before-side value to compare against, so it is not
     a case here and the section reads as it always has.
+
+    The third precondition is the block's last dump not being readable at all,
+    and it is the reason `read_dumps` keeps an entry it could not fill in
+    rather than leaving it out. A group whose last entry is one of those has
+    no last *read*, and the pair walk answers it the way it answers a last
+    dump that does not reach the address: the readback was not taken, and a
+    `--dump-pair` that does cover `0x0751` is named with the file to pass.
+    Without it, dropping that entry promotes the dump before it, and the
+    verdict prints over a file the operator did not name last -- a true
+    sentence about the wrong file, which is the failure this notice exists to
+    stop. A first dump that would not open has no before-side value for the
+    reason the coverage case has none, so it drops the word the way the
+    one-dump group does.
     """
-    if here[-1][1].get(MANUAL_FAN_CTRL) is None:
-        print(f"  the last --dump does not cover 0x{MANUAL_FAN_CTRL:04X}, so "
-              "the §4.6 readback was not taken -- nothing here says what the "
-              "byte held after the write")
+    last_values = here[-1][1]
+    if last_values is None or last_values.get(MANUAL_FAN_CTRL) is None:
+        if last_values is None:
+            print(f"  the block's last --dump is {here[-1][0]}, which was not "
+                  "read, so the §4.6 readback was not taken -- nothing here "
+                  "says what the byte held after the write")
+        else:
+            print(f"  the last --dump does not cover 0x{MANUAL_FAN_CTRL:04X}, "
+                  "so the §4.6 readback was not taken -- nothing here says "
+                  "what the byte held after the write")
         for before_path, after_path, before, after in pairs:
             if MANUAL_FAN_CTRL not in set(before) & set(after):
                 continue
@@ -3892,7 +4009,8 @@ def report_readback(here, wrote, pairs, value, marker=""):
         print(f"  these dumps are named for block 0x{value:02X} but --wrote "
               f"says 0x{wrote:02X}; the readback below is against the "
               "block's own write")
-    last = here[-1][1].get(MANUAL_FAN_CTRL)
+    last = (last_values.get(MANUAL_FAN_CTRL)
+            if last_values is not None else None)
     if last is None:
         return
     # The before-side, read after the two guards above rather than beside them,
@@ -3900,7 +4018,9 @@ def report_readback(here, wrote, pairs, value, marker=""):
     # they are about what the comparison that was just taken can support, and
     # saying them over a readback that was not taken would name a conclusion
     # no comparison on this page reached.
-    first = here[0][1].get(MANUAL_FAN_CTRL)
+    first_values = here[0][1]
+    first = (first_values.get(MANUAL_FAN_CTRL)
+             if first_values is not None else None)
     still = "still "
     if len(here) == 1:
         # `here[0] is here[-1]`, so this file is being read as both sides of
@@ -3909,6 +4029,14 @@ def report_readback(here, wrote, pairs, value, marker=""):
         print(f"  one --dump for this block, so nothing here says what "
               f"0x{MANUAL_FAN_CTRL:04X} held before the write; the line below "
               "is that one file read once")
+        still = ""
+    elif first_values is None:
+        # The one-dump case above, with the reason stated: the block's first
+        # `--dump` could not be opened, so there is no earlier read of the
+        # byte for "still" to be about.
+        print(f"  the first --dump, {here[0][0]}, was not read, so nothing "
+              f"here says what 0x{MANUAL_FAN_CTRL:04X} held before the "
+              "write; the line below is the last of them read once")
         still = ""
     elif first == written:
         print(f"  the first --dump already holds the written 0x{written:02X}, "
@@ -4004,7 +4132,8 @@ def report_readback(here, wrote, pairs, value, marker=""):
               "read against.")
 
 
-def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None):
+def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None,
+                      failed=()):
     """The same watched bytes, read across a whole block instead of a window.
 
     A pair is §3's own bracket for one range -- step 0 and step 6, ~100 s
@@ -4095,12 +4224,30 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None):
     Returns how many pairs were actually compared, so the closing summary
     cannot report a whole-block read for a run that took none -- a `--block`
     run handed only another block's pairs is 0.
+
+    A pair whose before or after side would not open is named here and
+    compared nowhere, and it is `read_dump_pairs` that decides which: it is
+    not in `pairs` to begin with, so it cannot be counted by the loop below
+    and the closing paragraph's `if graded:` cannot qualify a bracket that was
+    never read. The section keeps its shape around it for the same reason
+    §4.6's does -- the operator handed in a `--dump-pair` and the output has to
+    say what became of it, in the position it was handed in, rather than
+    leaving a shorter list to be read as the whole of the input. The "no dump
+    pair given" line is for a run that was given none, and stays byte for byte
+    because it is true of every run it is printed for; a run whose only pair
+    would not open gets its own sentence, since the operator did hand one in.
     """
     print("\n=== whole-block dump pairs (§4.1-§4.3) ===")
-    if not pairs:
+    if not pairs and not failed:
         print("  no dump pair given (--dump-pair); the whole-block read is not "
               "checked")
         return 0
+    for before_path, after_path, sides in failed:
+        print(f"\n  {before_path} -> {after_path}")
+        for side, exc in sides:
+            print(f"    {side}: not read: {exc}")
+        print("    this pair is not compared: a whole-block read is the "
+              "intersection of two files and it needs both of them")
     fallback = block_value if block_value is not None else wrote
     groups = []
     for pair in pairs:
@@ -4269,8 +4416,22 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None):
                                                  after):
                         print(line)
 
-    if block_value is not None and not any(v == block_value
-                                           for v, _, _ in groups):
+    # Gated on `failed` being empty as well as on `groups` being non-empty and
+    # on the block being absent, and both extra terms are the same fact the
+    # group lines above are: the sentence is a claim about which block the
+    # pairs named above belong to, and a pair that could not be read was never
+    # filed under one. Without the `groups` term, a `--block` run whose only
+    # pair would not open was told the pair was another block's. Without the
+    # `failed` term, that same run told the same thing with a readable pair
+    # naming another block beside the unreadable one: the readable one files a
+    # group, so the footer fires, and the pair the run never filed is named
+    # under it -- and so is the first half, since a pair that named the block
+    # under test and would not open is a pair that was given. The unreadable
+    # pair's own line above says what became of it, the readable pair's line
+    # says whose it is, and the paragraph below this one says nothing was
+    # compared, so the section loses the unfounded sentence and not the fact.
+    if block_value is not None and not failed and groups \
+            and not any(v == block_value for v, _, _ in groups):
         print(f"  no --dump-pair was given for block 0x{block_value:02X}, so "
               "the whole-block read for it was not taken; the pairs named "
               "above are another block's")
@@ -4375,13 +4536,18 @@ def main(argv=None):
                          "agreeing with itself. By resolved path, so ./x.csv "
                          "and x.csv are the same repeat")
     ap.add_argument("--dump", action="append", default=[], metavar="FILE",
-                    help="ecrw.py dump output; repeat for before- and after-")
+                    help="ecrw.py dump output; repeat for before- and after-"
+                         "-- a file that cannot be read is named with the "
+                         "error where it would have been read and takes no "
+                         "part in the comparison")
     ap.add_argument("--dump-pair", action="append", nargs=2, default=[],
                     metavar=("BEFORE", "AFTER"),
                     help="one range's ecrw.py dump before/after pair, as §3's "
                          "steps 0 and 6 take it; repeat per range, and never "
                          "the same file twice -- a pair read against itself "
-                         "proves nothing and is not graded. Read for the "
+                         "proves nothing and is not graded, and a pair whose "
+                         "before or after file cannot be read is named with "
+                         "the error and not compared either. Read for the "
                          "whole-block report and independent of --dump, whose "
                          "§4.6 readback still comes from the last of that "
                          "block's --dump flags. Pairs are grouped by the "
@@ -4751,14 +4917,23 @@ def main(argv=None):
     # taken. The print order is unchanged and is the one §6 documents: the
     # per-window read, then 0x0751 across the dumps, then the whole-block
     # bracket on the same §4.1-§4.3 bytes.
-    dumps = [(p, read_dump(p)) for p in args.dump]
-    pairs = [(b, a, read_dump(b), read_dump(a))
-             for b, a in args.dump_pair]
+    #
+    # A file that would not open is not allowed to end the run. These two
+    # readers are where that is decided, and they decide it the way the two
+    # neighbouring `--dump-pair` refusals already do -- named, not graded, and
+    # the window report and the §4.6 readback still printed -- because a
+    # mistyped path is a claim about which files were handed in, exactly as a
+    # self-diff is, and unlike a repeated capture: every section of this
+    # report is about the captures, while a dump is one input among several
+    # and the section that would have read it prints the omission in full.
+    dumps, unread = read_dumps(args.dump)
+    pairs, failed_pairs = read_dump_pairs(args.dump_pair)
     report_dumps(dumps, wrote, pairs,
-                 selected.value if selected is not None else None, verdicts)
+                 selected.value if selected is not None else None, verdicts,
+                 unread)
     graded_pairs = report_dump_pairs(
         pairs, selected.value if selected is not None else None, wrote,
-        verdicts)
+        verdicts, failed_pairs)
 
     print("\n=== what this does and does not settle ===")
     if withheld:
