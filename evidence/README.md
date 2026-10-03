@@ -63,7 +63,14 @@ independently checkable rather than taken on faith:
   the rest is §3 of `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md`,
   is not done, and needs the physical machine. That file's §6 names the
   re-run's captures `<YYYY-MM-DD>-0751-isolation-…`, and they go in this index
-  next to this one.
+  next to this one. It is a console log rather than a capture in the grader's
+  schema; `ec/tools/probe_log_to_capture.py` converts it, given an `--anchor`,
+  and the conversion committed at
+  `ec/tools/testdata/0751-isolation-probe-log/2026-01-01-0751-isolation-from-probe-log.csv`
+  is the gradeable form — a transcription, with reconstructed timestamps and no
+  control arm, as its own header says.
+  `docs/findings/probe-log-capture-conversion.md` is what it does and does not
+  establish.
 - **`ec-watch/2026-09-24-06d6-reload-linux.csv`**,
   **`ec-watch/2026-09-24-06c2-06db-sweep-linux.csv`**,
   **`ec-watch/2026-09-24-06d9-hold-linux.csv`**: the issue #257 run. It is a

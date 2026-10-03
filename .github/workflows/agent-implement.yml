@@ -288,8 +288,11 @@ jobs:
             you directly.
 
             Follow the repository's own workflow:
-            - Tests come with the change, not after it. Where an invariant already has a test
-              that pins it, that test is where the new case belongs.
+            - Tests come with the change, not after it. Where an existing test already pins
+              the invariant you change, edit that test. Tests for new behaviour go in a new
+              suite file (`test_<tool>_<topic>.py`, found by the runner without registering
+              it), not appended to an existing suite: appending to a long shared suite is a
+              merge conflict with every other branch doing the same.
             - Comments explain *why* — a platform quirk, a race actually observed — never what
               the code does.
             - Match the surrounding code: its naming, its idiom, its comment density. A change
