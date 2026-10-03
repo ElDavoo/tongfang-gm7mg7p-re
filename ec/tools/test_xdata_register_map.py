@@ -39,10 +39,24 @@ could damage the repository on failure would be the wrong place to pin this.
 
 **Not tested, deliberately.** `--check --self-test <flag>` together, for either
 flag, is refused by argparse's mutually-exclusive group, but that is testing
-argparse, and its exit code is indistinguishable from a guard firing. And no
-*third* flag is covered: the two here are the two `main()` carries today, and
-`TripwireCoverage` reads the mode dispatch rather than the guards, so a flag
-added without its refusals would be a gap this suite could not see.
+argparse, and its exit code is indistinguishable from a guard firing.
+
+The second sentence that paragraph used to end on -- "And no *third* flag is
+covered: the two here are the two `main()` carries today, and `TripwireCoverage`
+reads the mode dispatch rather than the guards, so a flag added without its
+refusals would be a gap this suite could not see" -- is corrected beside itself
+rather than deleted. `guarded_flags` now reads the guards out of `main()`'s own
+AST the way `dispatch_names` reads the dispatch, so a *third guarded* flag goes
+red on `TripwireCoverage` until `GUARDED_FLAGS` names it, and the `Refusals`
+cases then loop over it for free.
+
+**The other half is open, and is named rather than closed.** A flag that
+re-buckets occurrences and carries *no* refusal at all is nothing for that
+reader to find, and nothing for `Refusals` to loop over either; what would find
+it is a flag read from inside the census path rather than from a guard, and that
+is not built here. `../../docs/findings/xdata-guarded-flags-read-from-main.md`
+carries the measurement of that candidate signal and records why it is a
+follow-up rather than part of this change.
 """
 import ast
 import contextlib
@@ -83,6 +97,11 @@ MODES = ("self_test", "threshold_sweep", "co_reading_sweep",
 # two pairs are "the same two refusals, for the same two reasons", and a shared
 # fragment makes that a thing a case checks rather than a sentence a reader
 # believes. A flag that stopped carrying one of them goes red here.
+#
+# *Which* two is a reading and not a keeping, one level up: `guarded_flags`
+# derives the set from `main()`'s own `ap.error` guards and `TripwireCoverage`
+# holds both directions of the comparison, so a third flag added with its two
+# refusals goes red there until this table names it.
 GUARDED_FLAGS = ("--no-eq-guard", "--export-ownership")
 REFUSED_WITH_A_MODE = "cannot be combined with --check or --self-test"
 REFUSED_AT_THE_DEFAULTS = "would overwrite the committed census"
@@ -109,6 +128,22 @@ COMPREHENSION_DISPATCH = "def main():\n    xs = [demo_mode(a) for a in y]\n    r
 # whole of what is under test.
 ATTRIBUTE_DISPATCH = "def main():\n    return xrm.demo_mode(args)\n"
 
+# The parser the `GUARD_SOURCES` shapes below share, and why it is a block
+# rather than a line: `guarded_flags` reads the namespace `parse_args()` is
+# bound to and the flag spellings off `add_argument`, so a `main()` that
+# declares neither would measure a reader reaching nothing. `--demo-flag`, and
+# not one of the committed tool's, for the reason `demo_mode` is not one of its
+# modes -- a flag already in `GUARDED_FLAGS` cannot show a reader stopped
+# working.
+DEMO_PARSER = (
+    "def main():\n"
+    "    ap.add_argument('--check', action='store_true')\n"
+    "    ap.add_argument('--self-test', action='store_true')\n"
+    "    ap.add_argument('--out-registers', default='r.csv')\n"
+    "    ap.add_argument('--out-clusters', default='c.csv')\n"
+    "    ap.add_argument('--demo-flag', action='store_true')\n"
+    "    args = ap.parse_args()\n")
+
 # The attribute calls the committed `main()` makes, which is the whole of the
 # benign set, measured off that `main()`'s own AST rather than named from a
 # reading of it. It is a maintained list and it is wrong the first time it is
@@ -133,6 +168,28 @@ DISPATCH_POSITIONS = {
     "assignment right-hand side": ASSIGNMENT_DISPATCH,
     "`with` header": WITH_DISPATCH,
     "bare comprehension": COMPREHENSION_DISPATCH,
+}
+
+# The two `main()` shapes `guarded_flags` is pinned on, keyed by the words that
+# reader's docstring uses for each and carrying the set it must derive beside
+# them, because a pin whose expected half is written inside the case is a pin
+# the case and the rule can drift apart on. The second row is the reader's one
+# dependence measured rather than promised: the guard is the same `and` with the
+# guarded flag moved to the right, so the subtraction takes the wrong side and
+# reports the mode namespace as the guarded set. That is what the reader does,
+# asserted here because the alternative -- a reader that guesses -- is the one
+# that would be green.
+GUARD_SOURCES = {
+    "a third guarded flag GUARDED_FLAGS does not name":
+        (DEMO_PARSER
+         + "    if args.demo_flag and (args.check or args.self_test):\n"
+           "        ap.error('refused')\n",
+         {"--demo-flag"}),
+    "the guarded flag on the right of the `and`, so the wrong side is subtracted":
+        (DEMO_PARSER
+         + "    if (args.check or args.self_test) and args.demo_flag:\n"
+           "        ap.error('refused')\n",
+         {"--check", "--self-test"}),
 }
 
 
@@ -303,6 +360,83 @@ def mode_attributes(source):
     return sorted(set(attribute_calls(source)) - BENIGN_ATTRIBUTES)
 
 
+def guarded_flags(source):
+    """The flags `main()` in `source` refuses, under their own spellings.
+
+    A guard is an `if` whose body calls `.error(...)`: that is what `argparse`
+    refuses an argument with, and it is the only refusal `main()` writes today.
+    Keying on it means a guard the tool stops writing stops being reported as
+    one -- a table entry nothing derives, which the comparison catches from the
+    other side, rather than a flag the reader keeps calling guarded. Each
+    guard's test is read for the attributes of the name `parse_args()` is bound
+    to, and the **right-hand operands of the test's top-level `and`** are then
+    taken back out.
+
+    The subtraction is the rule a later reader will second-guess, so: the
+    right-hand side of a guard is by construction *not* a guarded flag. It is
+    what the flag is refused **with** -- `--check`, `--self-test`, the mode
+    namespace `MODES` lives in -- or refused **against** -- `--out-registers` and
+    `--out-clusters` still at their committed defaults, the output namespace.
+    Keeping every attribute in the test instead returns those alongside the
+    flag's and answers nothing about which flag is being guarded, which is the
+    only question `GUARDED_FLAGS` asks. The namespace name and the spellings are
+    read off `main()` too -- the former from the assignment `parse_args()` is
+    bound to, the latter from each `add_argument`'s first long option under
+    argparse's own `-`-for-`_` rule -- so no name or dest-to-spelling list sits
+    in the middle of this.
+
+    One dependence, and it is `main()`'s rather than the reader's: the rule is
+    **positional**, and it assumes the guarded flag is the *left* operand of the
+    `and`. `GUARD_SOURCES` pins the other shape and pins what this reader then
+    derives rather than what it ought to -- it subtracts the wrong side and
+    reports the mode namespace. That fails loudly, which is the property worth
+    having at the boundary: a reader that guesses is red, not quiet.
+    """
+    tree = main_of(source)
+    namespace = next(
+        (target.id for node in ast.walk(tree) if isinstance(node, ast.Assign)
+         for target in node.targets
+         if isinstance(target, ast.Name) and isinstance(node.value, ast.Call)
+         and isinstance(node.value.func, ast.Attribute)
+         and node.value.func.attr == "parse_args"), None)
+
+    def attributes(node):
+        """The `<namespace>.<name>` reads inside `node`, as dests."""
+        return {n.attr for n in ast.walk(node)
+                if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name)
+                and n.value.id == namespace}
+
+    guards = [node for node in ast.walk(tree) if isinstance(node, ast.If)
+              and any(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                      and n.func.attr == "error"
+                      for stmt in node.body for n in ast.walk(stmt))]
+    dests = set()
+    for guard in guards:
+        test = guard.test
+        refused_with = (test.values[1:] if isinstance(test, ast.BoolOp)
+                        and isinstance(test.op, ast.And) else ())
+        dests |= attributes(test) - {n for side in refused_with
+                                     for n in attributes(side)}
+
+    # A dest no `add_argument` in `main()` produces has no spelling to recover,
+    # and argparse would not carry one either; it is reported under the dest.
+    spellings = {}
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and node.args
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "add_argument"):
+            first = node.args[0]
+            options = (first.elts if isinstance(first, (ast.List, ast.Tuple))
+                       else [first])
+            for option in options:
+                if (isinstance(option, ast.Constant)
+                        and isinstance(option.value, str)
+                        and option.value.startswith("--")):
+                    spellings.setdefault(
+                        option.value.lstrip("-").replace("-", "_"), option.value)
+    return {spellings.get(dest, dest) for dest in dests}
+
+
 class TripwireCoverage(unittest.TestCase):
     """`MODES` is the dispatch, read from the tool rather than kept by hand.
 
@@ -328,6 +462,18 @@ class TripwireCoverage(unittest.TestCase):
     shape left out is a mode dispatched through an attribute, and
     `mode_attributes` asserts against it rather than leaving it to this
     docstring to promise.
+
+    The guards get the same treatment one level up. `GUARDED_FLAGS` was the
+    last hand-kept entry-point table in the suite and was checked against
+    nothing, so a third flag added to `main()` with its two refusals would have
+    been parsed, guarded and never exercised: the `Refusals` cases loop over the
+    table, so a flag simply not in it is not in the loop and the suite stays
+    green. `guarded_flags` reads that table off `main()`'s own `ap.error` guards
+    with both directions asserted, so the third flag is red here until the table
+    names it and `Refusals` picks it up for nothing. Its one dependence is
+    positional -- the guarded flag has to be the left operand of the guard's
+    `and` -- and `GUARD_SOURCES` pins the other shape rather than leaving it to
+    the reader's docstring to promise.
     """
 
     def test_modes_is_every_entry_point_main_dispatches_to(self):
@@ -449,6 +595,39 @@ class TripwireCoverage(unittest.TestCase):
                     expected,
                     "a residue is a suspect only where the tool binds the name "
                     "at module level")
+
+    def test_guarded_flags_is_every_flag_main_refuses(self):
+        # The other reading this class owns, on the rule `dispatch_names`
+        # settled for the dispatch: which flags `main()` guards is derived from
+        # `main()` and compared here, so a third flag added with its two
+        # refusals is red on this case rather than parsed, guarded and never
+        # exercised. Both directions, because each is its own defect: a flag
+        # `main()` refuses and the table does not name is a flag the `Refusals`
+        # cases never loop over, and a flag the table names and `main()` no
+        # longer refuses is a case looping over nothing.
+        derived = guarded_flags(TOOL.read_text())
+        listed = set(GUARDED_FLAGS)
+        self.assertEqual(
+            derived, listed,
+            f"main() refuses {sorted(derived - listed)}, which GUARDED_FLAGS "
+            "does not name, so the Refusals cases never exercise them; and "
+            f"GUARDED_FLAGS names {sorted(listed - derived)}, which main() no "
+            "longer refuses: add the first to the table, and read the second as "
+            "guards that went missing rather than as a table to edit")
+
+    def test_every_guard_shape_the_reader_names_is_collected_too(self):
+        # On synthetic source, and the committed tree cannot show why: both of
+        # its guarded flags are already in `GUARDED_FLAGS`, so a reader that
+        # gets the committed tree right by *keeping* rather than by deriving
+        # leaves the case above green. Measured in
+        # ../../docs/findings/xdata-guarded-flags-read-from-main.md: taking the
+        # right-hand side as a mode/output name list rather than off the `and`
+        # leaves the case above green and the flag-on-the-right `subTest` red,
+        # and finding a guard by its message rather than by `.error` leaves it
+        # green and both `subTest`s red.
+        for shape, (source, expected) in GUARD_SOURCES.items():
+            with self.subTest(shape=shape):
+                self.assertEqual(guarded_flags(source), expected)
 
 
 class Refusals(unittest.TestCase):

@@ -4966,6 +4966,32 @@ Written up in
 > on `origin/main` after it merged. The paragraph above is left as #749 wrote
 > it; this is the number a reader should use.
 
+**2026-10-03 (issue #721): a re-done block stops the value under test from
+naming a block, and the tool now says so.** §3's remedy for a void block is to
+run it again, and §3 fixes the three CSVs as one file per run, so that remedy
+appended a second `no-op`/`wrote`/`restored` set carrying the same value into
+the set the first attempt is in. `--block` takes that value — it is what
+identifies a block, and §6 attaches the grader's output one value at a time —
+so the same day carried two blocks named `0x00` and `--block 0x00` took the
+first, which is the attempt that came out void. The census now names the repeat
+on every block carrying the value whatever the run was scoped to, a run over
+the whole day's files holds the exit code at 1 whether or not either is void,
+`--block` refuses an ambiguous value and names the blocks it would have had to
+choose between — while a `--block` run over an unambiguous value still grades
+that block and exits 0, so §6's per-value attachment is untouched — and
+`VOID_BLOCK_NOTE` and §3 name the remedy as a second run with its own
+`<date>` rather than an append into the set being
+refused. The condition is on the value and not on `block_verdict`: a day whose
+two `0x00` blocks are both intact passed every check and exited 0 before this.
+Fixture arithmetic over hand-written rows, with a new
+`RepeatedValueTests` and a new fixture under `ec/tools/testdata/`; nothing was
+read back from a register and no block was run at a laptop. It is also the
+fifth way a file comes to hold marks this run did not type, so it is added to
+the list #548 wrote in `ec_watch-marks.md` and in
+[0751-append-unchecked-marks.md](findings/0751-append-unchecked-marks.md).
+Written up in
+[0751-redone-block-value.md](findings/0751-redone-block-value.md).
+
 ## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253, by the 2026-09-24 re-derivation, and again by #279 on 2026-09-25)
 
 **The id in this section's subject has been wrong twice, and every version of
