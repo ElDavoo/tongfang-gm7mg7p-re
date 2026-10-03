@@ -5,17 +5,37 @@
 list against `isPlaceholderName()` in both directions, and it reads **one** Java
 file — the canonical `ghidra/scripts/TongFang.java`. That guard is what stopped
 #602's rule from being forgotten, and it is blind to the failure this test
-exists for: there are two copies of the predicate, and `ExportDecompile.java`
-carries its own.
+exists for: while there were two copies of the predicate,
+`ExportDecompile.java` carried its own.
 
-The four outputs are not all written by the same copy:
+**As of #626 there is one Java definition again**, so the table below records
+what the four outputs *were* written by rather than what they are — the split is
+history, and the disagreement it could produce is what this file still guards.
+`bios/tools/test_entry_namespace.py` now holds the definition count that
+`--self-test` structurally could not see, because its regex requires `public
+static` and so never matched the `private static` twin.
 
-| output | written by | predicate it calls |
-|---|---|---|
-| `index.csv`'s `annotated` column | `ExportDecompile` | its own private copy |
-| the `[named]` marker on a `.c` | `ExportDecompile` | its own private copy |
-| `listing-index.csv`'s `annotated` column | `ExportListing` | `TongFang` |
-| the `[named]` marker on an `.asm` | `ExportListing` | `TongFang` |
+The four outputs were not all written by the same copy:
+
+| output | written by | predicate it called | where it exists |
+|---|---|---|---|
+| `index.csv`'s `annotated` column | `ExportDecompile` | its own private copy | EC and BIOS |
+| the `[named]` marker on a `.c` | `ExportDecompile` | its own private copy | **EC only** |
+| `listing-index.csv`'s `annotated` column | `ExportListing` | `TongFang` | EC and BIOS |
+| the `[named]` marker on an `.asm` | `ExportListing` | `TongFang` | EC and BIOS |
+
+**The `.c` row is EC-only, and the reason is a mode rather than a fault.**
+`ExportDecompile` writes that marker in `writeFunctionFile`, which runs only in
+per-function mode. `bios/tools/bios_extract.py` runs the same script in
+**per-program** mode, where a `.c` gets a `// ==== <name> @ <addr>` separator
+instead and never a marker — so no file under `bios/decompiled/` carries one,
+and every row of `bios/ghidra/index.csv` names a whole-program `out_file`
+(`DxeOverClock.c`) rather than a per-function one. The relation asserted below is
+therefore this file's on the EC and one clause short of it on the BIOS;
+asserting the `.c` clause there would read a file that never carries the marker
+and report every `annotated=yes` row as a fault.
+`docs/findings/entry-namespace-two-copies.md` has the measurement, and against
+the BIOS the clause that does hold there is currently red on two rows.
 
 Widen one copy and not the other and the self-test stays green — it compares
 `len(java) == len(want_literals)` against the canonical file either way — while

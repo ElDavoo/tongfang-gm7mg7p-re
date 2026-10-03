@@ -1607,9 +1607,16 @@ registers:
     note: >
       Derived from 0x0438/0x0439, not a sensor: scale_0438_into_0448 (bank1
       0xF416) reads the battery voltage pair and divides by 100, writing the
-      quotient here (0xBE when its selector is nonzero). 3 EC-side sites, 1
-      read and 2 writes, no PD site, no upstream name. Per-address table:
-      ec/annotations/xdata-0400-045f.md.
+      quotient's low byte here. The other arm writes the constant 0xBE, which
+      is a byte the computed arm can also produce -- a dividend of 19000-19099
+      gives 190 -- so an earlier claim that the constant was unreachable was
+      false; that dividend is above every voltage recorded for the pack
+      (0x030E's charge request is 17400 mV, 0x0438 read live as 16021 mV), so
+      this machine's own figures do not distinguish the two arms. The report an
+      operator reads, ec/tools/grade_0751_isolation.py, printed the retracted
+      claim and now carries this correction beside it rather than only here.
+      3 EC-side sites, 1 read and 2 writes, no PD site, no upstream name.
+      Per-address table: ec/annotations/xdata-0400-045f.md.
 
   - name: XDATA_0449
     addr: 0x0449
@@ -1620,7 +1627,9 @@ registers:
     status: present-untested
     note: >
       Derived from 0x0434/0x0435: store_scaled_quotient_0449 (bank1 0xF3D7)
-      reads the battery current pair and divides by 100 into this byte. 4
+      reads the battery current pair and divides by 100, storing the
+      quotient's low byte -- 0xA5E6 returns it in R1 and 0xF3D7 stores R1
+      -- into this byte. 4
       EC-side sites, 2 reads and 2 writes. Moved 238 times in
       evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv, the
       second-busiest byte on the page after 0x044C. No upstream name.
@@ -1660,8 +1669,9 @@ registers:
     note: >
       7 EC-side sites (5 bank1, 2 bank0): 4 reads, 2 writes and 1
       read-modify-write, no PD site. halve_sum_into_044c says what one writer
-      does -- it halves a sum into this byte. Busiest byte in the committed
-      capture at 247 changes. No upstream name. Per-address table:
+      does -- it halves a sum into this byte. Busiest byte on the 0x0400-0x045F
+      page in the committed capture at 247 changes, and eighth in the capture
+      as a whole. No upstream name. Per-address table:
       ec/annotations/xdata-0400-045f.md.
 
   - name: XDATA_0450
@@ -1752,7 +1762,10 @@ registers:
       site found here. The bit-6 read is load-bearing elsewhere: 0xF3C9 picks
       its divisor 0x22 or 0x44 from it before scaling 0x060C/0x060D into
       0x0449 (bank1 0xF3D7), so setting bit 6 changes how that derived byte is
-      computed. None of this is exercised live, and ec/tools/ecmem.py's record
+      computed. Which byte of the quotient that store receives was read the
+      wrong way round until issue #358 corrected it: 0xA5E6 returns the low
+      byte in R1 and 0xF3D7 stores R1. The bit-6 half of that is untouched
+      by the correction and remains unexercised. None of this is exercised live, and ec/tools/ecmem.py's record
       that 0x456 reads were cross-checked against the regmap debugfs dump is
       two software paths agreeing on a read, not a behavioural test, so it is
       not recorded here as live evidence. Per-address table:

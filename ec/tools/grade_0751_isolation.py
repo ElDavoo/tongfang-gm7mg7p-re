@@ -841,6 +841,14 @@ XDATA_NAMES = {
 # rather than hypothetical -- the sweep summary's 0x0448 row ends on exactly
 # it -- so a report that named only the quotient would be wrong about a value
 # a committed file has already recorded.
+#
+# The premise of that last clause held and its conclusion did not, which is
+# the shape issue #358 found here. 0xBE is in evidence; it is also a quotient
+# the computed arm produces, at a dividend of 19000-19099. The note therefore
+# keeps the sentence it always printed and carries the correction beside it,
+# dated, rather than editing a sentence operators have already read -- the
+# report is the deliverable here, not the YAML, so a retraction that stopped
+# at ec/annotations/registers.yaml would leave the tool contradicting it.
 XDATA_NAME_NOTE = {
     0x0436: (
         "The name upstream gives this pair is not printed, and the reason "
@@ -875,7 +883,20 @@ XDATA_NAME_NOTE = {
         "hypothetical: evidence/ec-watch/2026-09-18-ac-plugin-sweep-"
         "summary.csv carries 0x0448,4,0x8B,0xBE, so a committed file has "
         "already recorded this byte ending a window on exactly 0xBE. Read "
-        "0xBE as the branch the routine took and not as a voltage."),
+        "0xBE as the branch the routine took and not as a voltage. "
+        # The sentence above is left as written and corrected underneath,
+        # per the reasoning in the block comment over this table: this is
+        # printed to an operator, so the retraction has to reach the output
+        # and not only the repository.
+        "Correction (2026-10-03, issue #358): the sentence above reads "
+        "0xBE as the branch and not as a voltage, and that is too strong. "
+        "0xBE is 190, and 190 is a quotient 0xA5E6 produces for a "
+        "dividend of 19000-19099 at divisor 100, so the computed arm can "
+        "produce this byte too. Every voltage recorded for this pack is "
+        "below that window, so the constant arm is still the likelier "
+        "reading of a committed 0xBE and nothing here claims which arm "
+        "ran; what is retracted is only that the value cannot be a "
+        "voltage."),
     0x0449: (
         "The same branch, and the same gap. store_scaled_quotient_0449 at "
         "R7 = 0 reads 0x0434/0x0435 and divides by 100, and at any nonzero "
@@ -5036,6 +5057,30 @@ def main(argv=None):
     # anything: a day whose two `0x00` blocks are both intact is graded over
     # in full and every check above passes it, so without this term it would
     # exit 0 over a day `3blocks/` holds at 1 for a different reason.
+    #
+    # `graded_unplaced` is the one shape in this section that is not a refusal
+    # at all, and it is left out on purpose. Every term above counts something
+    # this run declined to grade -- a window it would not print, or a value it
+    # would not grade twice -- while `graded_unplaced` counts windows it read,
+    # printed with their rows, and graded, over an arm the labels cannot name.
+    # Folding it in would report a run that read and graded every window as one
+    # that could not read them -- the one thing the closing section above is
+    # careful not to say about itself. It is a disclosure rather than a
+    # refusal, so the section says it in prose where §7's call is read from:
+    # the `elif graded_unplaced:` branch declines the capture-level
+    # comparison and stops at "as far as this run goes". A second
+    # machine-readable channel for it would be one fact owned twice. And the
+    # term is zero under `--block` by construction rather than by a guard --
+    # `shown` is the selected block's own windows there, and a window in no
+    # block is in none of them -- so it could only move the exit code of a
+    # day-level run, and §6's documented command line passes `--block` per
+    # value. That command line's day-level counterpart is #506.
+    #
+    # `unagreed`'s fold into `withheld` is a *refusal* counted under a term
+    # already here, which is a different shape and is not the argument for this
+    # one: a window that cannot be graded is not the case this is, and the two
+    # have different `--block` semantics for the reason each of their own
+    # comments give.
     return 1 if (void or unreads or withheld or repeated) else 0
 
 
