@@ -92,13 +92,26 @@ One thing is read that is not a byte at all: §3's per-block integrity check.
 against the mark list `ec_watch.py` prints at stop. Here the marks are grouped
 into blocks -- one per write under test, opened by the step-2 no-op control
 arm, carrying the stage boundaries §3's steps 2, 3 and 4 mark, and closed by
-the step-5 restore -- and each block's last mark has to be that restore. A
-block whose last mark is not the restore is void: the capture cannot show the
-byte being put back, so its last window never closes. It is printed as void,
-by name and with the label it did end on, and the exit code is not zero. Its
-windows are withheld like any other block that fails a mark check: each prints
-a `not graded` line naming the capture that ends the block where, and the
-block's own line reads `-- NOT GRADED, its windows are not printed`.
+the step-5 restore -- and each block's last mark has to be that restore *in
+every capture that recorded any mark in it*. That last clause is the whole of
+issue #450 and it is not a formality: the block's last window is a fused group
+of whatever the three consoles recorded, so a restore that reached two of them
+and missed the third made the block read as closed on the strength of one of
+the two. Which of the three it missed is not fixed -- it is whichever failed to
+record the mark, and `closers_note` names that one rather than assuming it.
+`0x0700` is the one that matters *when it is the one missed*, because of §3's
+three `--start 0x0700 --len 0x0100`, `--start 0x0F00 --len 0x0060` and
+`--start 0x0400 --len 0x0060`: it is the only sweep that covers `0x0751`, and
+so the only one that can hold the byte's own change rows, which such a capture
+holds with nothing in it saying which arm they belong to. A block whose last
+mark is not the restore in some or all of the captures is `void` or `PARTIAL`:
+the capture cannot show the byte being put back in the console that took it
+elsewhere, so its last window never closes there. It is printed as such, by
+name, with the label it did end on, the captures behind the verdict, and the
+exit code is not zero. Its windows are withheld like any other block that fails
+a mark check: each prints a `not graded` line naming the capture that ends the
+block where, and the block's own line reads `-- NOT GRADED, its windows are not
+printed`.
 
 **A mark is a stage boundary as often as it is a write.** Three of the six
 rounds §3 asks for in a block are not writes at all: `settled`, `held` and
@@ -141,6 +154,16 @@ and printing them in the usual format is the defect. The census that carries
 the diagnosis is printed whole either way, and names which capture is short,
 which two disagree, and what the consequence is.
 
+**A verdict is a statement about every capture or it is not one.** The three
+consoles are three processes reading three ranges, and each mark is typed into
+one of them by hand, so nothing about a mark's presence is shared: one console
+recording it is not two, and `coalesce_marks` joining the labels hides that
+rather than repairing it. `block_verdict` therefore reads each capture's own
+closing mark off the block, and every block line names the captures its word
+rests on -- a block that closed in all three and one that closed in one of
+three read differently for that reason alone, and only the first is one a
+fold-in can file.
+
 **One `#` row is a record about the run rather than an annotation of it.**
 `read_capture` skips every row whose first field starts with `#`, so an
 operator can annotate a capture by hand, and that skip is load-bearing. The
@@ -161,8 +184,15 @@ are about. §6 stamps every dump with the `<value>` of the block it belongs to,
 and a per-block invocation is meant to be attached per block, so `--block`
 takes that value rather than a position in the mark stream: `0xA0`, `A0` and
 `a0` are the same block. A value that is in no block is an error rather than
-a run that grades everything, and a `--block` and a `--wrote` that name
-different values are an error too -- both name the value under test.
+a run that grades everything, a `--block` and a `--wrote` that name different
+values are an error too -- both name the value under test -- and so is a
+value in *two* blocks, which is what §3's own remedy for a void block produces
+when the re-done block is appended to the set rather than run on its own
+`<date>`: the census names every block carrying it whatever run was scoped to,
+and `--block` is refused on it. Only the run over the whole day has its exit
+code held at 1 by that, whether or not either of them is void; a `--block` run
+over one of the day's unambiguous values still grades that block and exits 0,
+on the scope `void` and `withheld` already take.
 
 The cross-console checks engage at two or more captures, which is §6's form.
 With one there is no other console for a mark to be missing from and no
@@ -453,15 +483,34 @@ FAN_TABLE_NEXT_STEP = (
 # What a void block means, in the operator's words rather than this file's.
 # Printed once however many blocks are void: the per-block line already names
 # which they are and the label each ended on, so repeating the explanation
-# per block would be noise on a three-value run.
+# per block would be noise on a three-value run. The `PARTIAL` clause is here
+# rather than in a note of its own because the two are the same finding over
+# more or fewer consoles -- a block whose restore reached some of them is short
+# it, and the operator's next move is the same.
+#
+# The last sentence is a second run rather than a redo appended to this one,
+# and that is the whole of the change from the sentence it replaces. §3 fixes
+# the three CSVs as one file for all three blocks, so "redo the void block"
+# read as an instruction to append a fourth block of the same value into the
+# set this run is already refusing -- a state the census above now names and
+# `--block` refuses, and one this note used to send the operator into. The
+# remedy a re-done block needs is a `<date>` of its own, which is what §3's
+# `<date>` placeholder and §3a's own note already do for a second pass.
 VOID_BLOCK_NOTE = (
     "A void block is short the restore mark §3's step 5 makes, so its last "
     "window never closes and the block is not a finished one. The usual cause "
     "is the mark itself: ec_watch.py writes a mark into the CSV only while "
     "the sink is open, so a restore typed after the watcher has exited is "
     "printed in its `marks:` list and recorded nowhere else -- which is why "
-    "this reads the CSVs and not that list. Redo the void block per §3; the "
-    "exit code is 1 while any block is void.")
+    "this reads the CSVs and not that list. A block marked PARTIAL is short "
+    "the same mark in some of the captures and not the others, which is the "
+    "same hole over fewer consoles: the block line names the ones that ended "
+    "elsewhere, and their rows for the missing arm are filed under whichever "
+    "window their timestamps fall in. Run the block again per §3, on "
+    "its own <date> and its own set of the three CSVs rather than appended to "
+    "this one: a second block of a value already in this set stops the value "
+    "naming a block, which the census above names and the exit code reflects. "
+    "The exit code is 1 while any block is void or partial.")
 
 # The same, for a mark set that cannot support the windows taken over it. A
 # void block is short a mark at the end; this is an action that is missing
@@ -971,6 +1020,48 @@ class Block:
         # block verdict and the exit code are all reading one list and cannot
         # disagree about which blocks were graded.
         self.problems = []
+
+    @property
+    def closers(self):
+        """`(capture, that capture's last mark in this block)` per capture.
+
+        Derived from the block's own marks rather than stored, so `block_verdict`
+        needs nothing run over it first: a reader that builds a block from
+        `assign_blocks` and asks what it closed on gets the answer rather than
+        an empty record (`windows/tools/test_manual_fan_ctrl_probe.py` does
+        exactly that). Storing it is the alternative and is worse twice over --
+        it makes the verdict depend on a call the caller may not know it has to
+        make, and it puts a second copy of this computation somewhere that can
+        disagree with this one.
+
+        The record exists because the fused last window is one console's answer
+        in the grammar of three: `coalesce_marks` joins the labels and
+        `parse_mark` takes the first that parses, so a block that closed on the
+        restore in two of the three captures has the same last window as one
+        that closed in all of them (#450). Every mark carries the capture it was
+        recorded in, so the per-capture answer is available from the block.
+
+        Keyed on `capture_key` for the reason that function gives: `m.source`
+        is a path as given, and one file handed in under two spellings is one
+        capture rather than two. The path printed is the one the *closing*
+        mark carries, and the order is by each capture's *first* mark in the
+        block, which is the order the operator typed them in and does not move
+        when one capture's last mark lands later than another's.
+
+        A capture that recorded no mark in this block is absent rather than
+        present-and-empty: a block exists because a mark opened it, and that
+        mark is in some capture.
+        """
+        first, last = {}, {}
+        for w in self.windows:
+            for m in w.marks:
+                key = capture_key(m.source)
+                if key not in first or m.ts < first[key].ts:
+                    first[key] = m
+                if key not in last or m.ts > last[key].ts:
+                    last[key] = m
+        return [(last[key].source, last[key].label)
+                for key in sorted(first, key=lambda k: first[k].ts)]
 
     @property
     def name(self):
@@ -2257,6 +2348,28 @@ def assign_blocks(windows):
     return blocks, unplaced
 
 
+def repeated_values(blocks):
+    """The values more than one block is under test, as `{value: [block]}`.
+
+    The value under test is what a block, a `--dump` pair and a §4.6 verdict
+    are all named by, and `--block` takes it rather than a position in the
+    mark stream, so a value carried by two blocks names no single block. A
+    day reaches this by running §3's own remedy for a void block: the redo is
+    a second `no-op`/`wrote`/`restored` set carrying the same value, appended
+    into the same three CSVs, and nothing in the marks says which attempt a
+    window belongs to.
+
+    Ordered by first appearance rather than by value, so a caller that names
+    the blocks gets them in the order the census prints them. Only values
+    carried by more than one block are in the result -- a day with no repeat
+    is an empty dict.
+    """
+    out = {}
+    for b in blocks:
+        out.setdefault(b.value, []).append(b)
+    return {v: bs for v, bs in out.items() if len(bs) > 1}
+
+
 def unplaceable_marks(unplaced):
     """The marks the label parse could not read, per unplaceable window.
 
@@ -2443,7 +2556,11 @@ def check_block_marks(block, captures):
 
     The first two are `window_mark_problems`, and the third is not: it is
     defined over a block, and the windows a block walk could not place are
-    checked by `unplaced_window_problems` for the other two.
+    checked by `unplaced_window_problems` for the other two. The third is also
+    what `block_verdict` reports, over `Block.closers` -- the same per-capture
+    answer, derived from the block rather than from this loop, so the verdict
+    and the complaint cannot be two reads that disagree about which capture
+    ended the block where (#450).
 
     The agreement checks need a second capture to have anything to disagree
     with, so they engage at two or more and the census says so below that
@@ -2805,6 +2922,7 @@ def report_census(captures, windows, blocks, unplaced, unreads, unagreed,
         for line in mark_gap_note(w):
             print(line)
 
+    repeated = repeated_values(blocks)
     for i, b in enumerate(blocks, 1):
         line = (f"  block {i} of {len(blocks)}: value under test {b.name}, "
                 f"roles {', '.join(b.roles)}")
@@ -2818,6 +2936,28 @@ def report_census(captures, windows, blocks, unplaced, unreads, unagreed,
             # exit is not short a mark -- it holds all of them.
             kinds = ", ".join(sorted({k for k, _, _ in b.problems}))
             line += f" -- NOT GRADED, {len(b.problems)} problem(s): {kinds}"
+        # Independent of the clause above, because it is a fact about the
+        # value rather than about this block: one block being void does not
+        # make its value a shared one, and a shared one does not need a block
+        # to be void. Printed on every block carrying the value, not on the
+        # first, so a reader holding the day's census can see which blocks a
+        # single `--block` would have had to choose between -- and `--block`
+        # refuses rather than choosing (see `main`).
+        #
+        # What put the value in two blocks is not named here, because this
+        # cannot know: the shapes that reach it are §3's re-done block
+        # appended to the set, and marks the merge did not fuse because the
+        # consoles typed them too far apart, which is a different defect with
+        # its own line above. The clause says the one thing true of both --
+        # the value names no single block, so `--block` is refused on it and
+        # the exit code holds -- and the lines above say what each block
+        # itself is short of.
+        if b.value in repeated:
+            twins = repeated[b.value]
+            which = ", ".join(str(x.index) for x in twins)
+            line += (f" -- {b.name} is the value under test of {len(twins)} "
+                     f"block(s) of this run ({which}), so it names no one of "
+                     "them and --block is refused on it")
         print(line)
     if unplaced:
         # The kinds are named from `window_mark_problems`, the function
@@ -3045,7 +3185,7 @@ def report_window(w, n, total, block, total_blocks, end=None):
 
 
 def block_verdict(block):
-    """`intact` or `void`: whether the block's last mark is its restore.
+    """`intact`, `void` or `partial`: whether the block closed on its restore.
 
     The one predicate §3's integrity check is, and it is here rather than
     inlined at `report_blocks` because the two dump sections need the same
@@ -3053,9 +3193,75 @@ def block_verdict(block):
     `void` is short the mark that says the byte was put back, so its windows
     are withheld; that is a statement about what the capture holds and
     nothing else.
+
+    **Per capture, over `Block.closers` and not over the fused last window.**
+    The three consoles are three processes reading three ranges and each mark
+    is typed into one of them by hand, so the fused label is whichever
+    console's spelling `parse_mark` reads first and the fused *existence* is
+    whichever console recorded one. A block whose restore reached two of the
+    three has a fused window reading `restored ...`, and grading that window
+    grades the block `intact` on the strength of one of the two -- which is
+    how a console holding its own change rows and no restore mark at all came
+    to be reported as a closed block off the other two's (#450). Which console
+    that is depends on which one missed the mark; see the module docstring.
+    The three words are the three shapes the per-capture record has: every
+    capture that recorded anything in the block closed on the restore, none of
+    them did, or some did and some did not.
+
+    `partial` is a word of its own rather than a qualified `intact` because
+    `intact` is the word a fold-in files, and the whole point is that a
+    fold-in must not be able to file this one. It is not a third kind of
+    evidence either: `report_blocks` counts it beside `void` and the same
+    note answers it, because a block short its restore in one console is as
+    unable to close its last window in that console as one short in all three.
+
+    `Block.closers` is a property, so this needs nothing run over the block
+    first. A block with no windows would answer `void` on an empty record,
+    which is also what a caller that never built one gets.
     """
-    last = block.windows[-1]
-    return "intact" if parse_mark(last.label)[0] == "restore" else "void"
+    closers = block.closers
+    closed = [label for _, label in closers
+              if parse_mark(label)[0] == "restore"]
+    if closed and len(closed) == len(closers):
+        return "intact"
+    return "partial" if closed else "void"
+
+
+def closers_note(block):
+    """Which captures closed a block on the restore, and which did not.
+
+    The clause `report_blocks` appends to every block's line, and the
+    per-capture answer behind the verdict word above it: a block that closes
+    in every capture and one that closes in one of three read the same without
+    this, and the operator's next move after either is to a console rather
+    than to §3, so the console is named.
+
+    The label each capture that did not close ended on is quoted with it,
+    because that is the row the operator has to go and find and it is the only
+    thing in the report that says what that console took the block to be.
+    Captures that all ended on one label share it rather than repeating it
+    once per name -- a day where every console stops at the write says the same
+    thing three times otherwise, and the names are the part that differs.
+
+    Reads the same `Block.closers` the verdict reads, so the clause and the
+    word above it cannot disagree about which captures closed.
+    """
+    closed, groups = [], {}
+    for path, label in block.closers:
+        if parse_mark(label)[0] == "restore":
+            closed.append(os.path.basename(path))
+        else:
+            groups.setdefault(label, []).append(os.path.basename(path))
+    note = "; the restore is in " \
+        + (", ".join(closed) if closed else "none of them")
+    if not groups:
+        return note
+    said = []
+    for label, names in groups.items():
+        who = ", ".join(names)
+        said.append(f"{who} all end on {label!r}" if len(names) > 1
+                    else f"{who} ends on {label!r}")
+    return f"{note} -- {'; '.join(said)}"
 
 
 def block_marker(block):
@@ -3072,8 +3278,9 @@ def block_marker(block):
 
     What a marker names is the windows rather than the block's findings,
     because the windows are what this run refused and what it is not entitled
-    to speak for. `VOID` here means the same thing `report_blocks` means by
-    it: short a restore mark, not that anything did or did not happen.
+    to speak for. `VOID` and `PARTIAL` here mean what `report_blocks` means by
+    them: short a restore mark in every capture or in some, not that anything
+    did or did not happen.
 
     The early-exit branch is a third fact rather than a fourth wording of the
     first: a block that holds its restore and whose capture records the run
@@ -3081,12 +3288,17 @@ def block_marker(block):
     hold would send the operator to a console that recorded all of them. It
     wins over the mark-set wording when a block has both, because the census
     above prints the kinds and this line is the one a reader takes to a
-    terminal.
+    terminal. It does not win over `partial`, for the reason above: that one
+    *is* short a mark, in some capture, so the operator has to be sent to it.
     """
     if not block.problems:
         return ""
-    if block_verdict(block) == "void":
+    verdict = block_verdict(block)
+    if verdict == "void":
         return "VOID, its windows were withheld above"
+    if verdict == "partial":
+        return ("PARTIAL, its windows were withheld above -- the restore is "
+                "not in every capture")
     if any(k == "early-exit" for k, _, _ in block.problems):
         return ("this capture records the run ending early inside it, its "
                 "windows were withheld above")
@@ -3179,6 +3391,20 @@ def report_blocks(blocks, selected=None):
     on, because "void" on its own sends the operator back to the terminals to
     find out which block and which mark.
 
+    **The verdict is per capture, and every line names the captures it rests
+    on.** A block's last *fused* window is one console's mark in the grammar
+    of three, so grading it grades the block on whichever of them recorded
+    one, and a block whose restore reached two of the three consoles read as a
+    finished block to the third -- which is how a console holding its own
+    change rows and no restore mark at all reads as a closed block off the
+    other two's (#450). `block_verdict` reads each capture's
+    closing mark and returns one of three words, and `closers_note` appends the
+    captures behind whichever one printed, so the console that was missed is
+    named rather than assumed. `PARTIAL` is the mixed case, and it
+    counts in the tally below exactly as `void` does, because a block short
+    its restore in one console is as unable to close that console's last
+    window as one short in all three.
+
     `intact` prints as well, so a reader of a fold-in can see that the check
     ran and held rather than inferring it from the absence of a complaint --
     silence about a missing restore is the failure mode this exists to stop,
@@ -3212,13 +3438,41 @@ def report_blocks(blocks, selected=None):
     for block in shown:
         i = block.index
         last = block.windows[-1]
-        if block_verdict(block) == "intact":
+        # The capture breakdown rides on the verdict word's own line rather
+        # than on the `value under test` one below: a reader who takes this
+        # section's verdict into a fold-in takes the line that says `intact`,
+        # and the two facts it is made of -- which restore, recorded where --
+        # belong together or the second is not read.
+        note = closers_note(block)
+        verdict = block_verdict(block)
+        if verdict == "intact":
             print(f"  block {i}/{total}: intact -- last mark {last.label!r} is "
-                  "the restore")
+                  f"the restore{note}")
+        elif verdict == "partial":
+            # Counted beside `void` rather than apart from it: a block short
+            # its restore in one console cannot close its last window in that
+            # console, so it is as unreadable as one short in all three, and
+            # the note below is the one that says what to do about it.
+            void += 1
+            # Branched on `parse_mark` because this is the only one of the
+            # three verdicts whose clause can contradict the note beside it.
+            # `intact` and `void` each name a block that closed in every
+            # capture or in none, so their clause is a statement about the
+            # block and holds whichever console typed the fused label first.
+            # Here the block closed in some of them, and the note says which:
+            # a fused label whose first spelling is the short console's write
+            # cannot be called the restore on the same line that names that
+            # write as what the short capture ended on.
+            if parse_mark(last.label)[0] == "restore":
+                clause = (f"last mark {last.label!r} is the restore, but not "
+                          "in every capture")
+            else:
+                clause = f"last mark is {last.label!r}, not the restore"
+            print(f"  block {i}/{total}: PARTIAL -- {clause}{note}")
         else:
             void += 1
             print(f"  block {i}/{total}: VOID -- last mark is {last.label!r}, "
-                  "not the restore")
+                  f"not the restore{note}")
         tail = (f"value under test {block.name}; roles "
                 f"{', '.join(block.roles)}")
         if block.problems:
@@ -4160,6 +4414,7 @@ def main(argv=None):
         [e for _, rows in exits for e in rows], windows)
 
     selected = None
+    twins = None
     if args.block is not None:
         wanted = parse_value(args.block)
         if wanted is None:
@@ -4173,7 +4428,13 @@ def main(argv=None):
                   "run, so one of them is a wrong command line; pass the same "
                   "one twice or neither.", file=sys.stderr)
             return 1
-        selected = next((b for b in blocks if b.value == wanted), None)
+        # Left `None` for a value more than one block carries, so the census
+        # prints the whole day with nothing marked `-- not selected in this
+        # run`: no block was selected, and marking one of them would name the
+        # block this refusal is about to decline to choose.
+        twins = repeated_values(blocks).get(wanted)
+        if not twins:
+            selected = next((b for b in blocks if b.value == wanted), None)
 
     report_census(captures, windows, blocks, unplaced, unreads, unagreed,
                   selected)
@@ -4193,6 +4454,45 @@ def main(argv=None):
         # selected `intact` and exit 0 over a capture that says otherwise.
         why = "; ".join(text for _, text in early_refused)
         print(f"\n{EARLY_EXIT_REFUSAL.format(why=why)}", file=sys.stderr)
+        return 1
+
+    # The two refusals `--block` can earn, in one place and in this order: a
+    # value two blocks carry, then a value in none. Both leave `selected` at
+    # `None` -- the first deliberately, above -- so the ambiguous case has to
+    # be asked about before the no-match one, or a value two blocks carry
+    # would be reported as a value in no block, which is the opposite of what
+    # is wrong with it.
+    if twins:
+        # Named, not selected, because the value is what identifies a block:
+        # `--block`'s own help, §6's per-value dump names and the per-block
+        # lines above all take the value rather than a position in the mark
+        # stream, and nothing in the marks says which of the blocks a window
+        # belongs to. Taking the first of them is a verdict on whichever came
+        # first rather than on any of them, and the shape §3's own remedy
+        # produces puts the attempt that came out void first. A selector that
+        # could reach another would make appending a re-done block under the
+        # same value a supported thing to do, which is the state the census
+        # line above and `VOID_BLOCK_NOTE` are removing.
+        #
+        # After the census, which is where the blocks are named with their
+        # indices, so the refusal points at lines the operator has just read
+        # rather than repeating the day at them. The remedy is given as a
+        # pointer rather than as this run's diagnosis, because a value can
+        # reach this two ways and the census above says which: §3's re-done
+        # block appended to the set wants a second `<date>`, and a day whose
+        # consoles marked too far apart for the merge wants the distances the
+        # census already named.
+        which = " and ".join(f"block {b.index} of {len(blocks)}" for b in twins)
+        print(f"\n--block {args.block!r} names {len(twins)} blocks in these "
+              f"captures, {which}. The value under test is what identifies a "
+              "block, so a value this many blocks carry names none of them "
+              "one: this is not graded as the first of them, because a first "
+              "match over several is a verdict on whichever came first rather "
+              "than on any. Read the census above for what each of them is "
+              "short of; where this is §3's re-done block, the remedy is that "
+              "block on its own <date> and its own set of the three CSVs "
+              "(§3). --block names one block of a value that is in one block.",
+              file=sys.stderr)
         return 1
 
     if args.block is not None and selected is None:
@@ -4302,6 +4602,16 @@ def main(argv=None):
     graded = len(shown) - withheld
 
     void = report_blocks(blocks, selected)
+    # The same scope `void` and `withheld` take, and for the same reason: a
+    # `--block` run is about one block, and the value of another block being
+    # carried twice is not a fact about this one. `--block` on a repeated
+    # value is refused above, so the selected block's own value is never one,
+    # and this is 0 on every run that gets that far. Counted over the blocks
+    # the block section just graded rather than over `blocks`, so the figure
+    # and that section's lines cannot disagree about which blocks it covers.
+    graded_blocks = blocks if selected is None else [selected]
+    repeated = sum(1 for b in graded_blocks
+                   if b.value in repeated_values(blocks))
 
     # The verdicts the block section just printed, indexed for the two file
     # sections. Built here rather than passed down from `report_blocks` so the
@@ -4693,31 +5003,40 @@ def main(argv=None):
           "additionally needs all three values, with and without the vendor "
           "service (§3a).")
     print(wrap_note(ZERO_SCOPE_NOTE))
-    # Six ways a run can be refused rather than graded, and they are six
-    # facts about the input rather than six verdicts about the machine: a
+    # Seven ways a run can be refused rather than graded, and they are seven
+    # facts about the input rather than seven verdicts about the machine: a
     # block short its restore, a mark set that cannot support a block's
     # windows, a window in no block whose marks the captures spell two ways or
     # that one of them did not record, a label the block walk could not place,
-    # a --block that named no block, and a capture named twice. The last two
-    # are not in this expression at all -- both are refused above, before the
-    # closing section prints -- so the other four reach it, and they are not
-    # scoped alike. `void` and `withheld` are this run's selected block:
+    # a value under test two blocks carry, a --block that named no block or
+    # named two, and a capture named twice. The last three are not in this
+    # expression at all -- all three are refused above, before the closing
+    # section prints -- so the other four reach it, and they are not scoped
+    # alike. `void` and `withheld` are this run's selected block:
     # `report_blocks` grades `selected` alone, and `withheld` is counted over
     # `shown`, which is that block's own windows, so a `--block` run says
-    # nothing about the other blocks and passes if this one held. The
-    # agreement refusal on a window in no block is counted into `withheld`, so
-    # it takes that same scope: a window already in no block cannot re-shape
-    # one, and no block's completeness rests on it. An early exit lands the
-    # same way -- its block's windows are withheld, so it is decided by the
-    # block it fell in, and a `--block` run over a value that did not crash
-    # passes over a day in which another value did. The unplaceable row is the
-    # one early-exit path with no such scope: like `unreads`, it is refused
-    # above, for the whole run, because a row that cannot be placed against a
-    # window leaves every block's length uncertifiable. `unreads` is the whole
-    # capture's however the run was scoped, per `unplaceable_marks`, and
-    # `UNREAD_MARK_NOTE` above is the line that says so where the exit code is
-    # read from.
-    return 1 if (void or unreads or withheld) else 0
+    # nothing about the other blocks and passes if this one held. `repeated`
+    # takes that same scope and is 0 on every run that reaches here with a
+    # `--block`, because a repeated value is refused above -- the census line
+    # is the whole-capture half of the same fact, printed whatever the run was
+    # scoped to. The agreement refusal on a window in no block is counted into
+    # `withheld`, so it takes that same scope: a window already in no block
+    # cannot re-shape one, and no block's completeness rests on it. An early
+    # exit lands the same way -- its block's windows are withheld, so it is
+    # decided by the block it fell in, and a `--block` run over a value that
+    # did not crash passes over a day in which another value did. The
+    # unplaceable row is the one early-exit path with no such scope: like
+    # `unreads`, it is refused above, for the whole run, because a row that
+    # cannot be placed against a window leaves every block's length
+    # uncertifiable. `unreads` is the whole capture's however the run was
+    # scoped, per `unplaceable_marks`, and `UNREAD_MARK_NOTE` above is the
+    # line that says so where the exit code is read from.
+    #
+    # `repeated` is the one of the four that needs no block to be short of
+    # anything: a day whose two `0x00` blocks are both intact is graded over
+    # in full and every check above passes it, so without this term it would
+    # exit 0 over a day `3blocks/` holds at 1 for a different reason.
+    return 1 if (void or unreads or withheld or repeated) else 0
 
 
 def rows_from_bytes(raw, errors=None):

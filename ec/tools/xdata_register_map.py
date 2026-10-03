@@ -762,13 +762,13 @@ ORACLE = {
     # settles it; the 155 the pass adds are new `program=main-ec` rows, of which
     # `0x03DE` and `0x03B8` are two. (A shared address *number* is not a shared
     # byte, which is the collision `program=both` exists to carry.)
-    "extmem_distinct": 1011, "extmem_refs": 8559,
-    "extmem_raw": 8568, "extmem_commented": 9,
-    "extmem_main_distinct": 887, "extmem_main_refs": 7701,
+    "extmem_distinct": 1008, "extmem_refs": 8554,
+    "extmem_raw": 8563, "extmem_commented": 9,
+    "extmem_main_distinct": 884, "extmem_main_refs": 7696,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
     # Named by the decompiler. The 2026-09-30 move is recorded in the dated
     # block above `named_in_tree`, and the 2026-09-28 one at the END OF FILE.
-    "symbol_main_distinct": 175, "symbol_main_refs": 6263,
+    "symbol_main_distinct": 178, "symbol_main_refs": 6268,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1326, "refs": 15696,
@@ -1655,6 +1655,15 @@ OWNERSHIP = {
     # claim that the event cannot happen: a `pd` fold whose body *does* name an
     # XDATA byte drops that body's references onto the owner and moves these
     # figures. `docs/findings/pd-pair-unmoved-one-fold.md` is the write-up.
+    #
+    # `pd_refs` has no companion identity the way `refs` does, and the asymmetry
+    # is the reason rather than an omission: the census-wide `refs` above is
+    # `main_refs + pd_refs` because a `both` row's references split by source
+    # program, while `distinct` is a union and the two per-program widths
+    # overlap on the shared addresses. Asserting `refs - main_refs == pd_refs`
+    # beside the three checks that already compare all three keys against the
+    # measured census would add no measurement; see the "and its pd half is"
+    # check, which is where the distinction is recorded.
     "pd_distinct": 157, "pd_refs": 858,
     "buckets": {"read": 5362, "write": 3043, "read+write": 1018,
                 "passed-to-call": 500, "address-taken": 255},
@@ -4797,6 +4806,14 @@ def self_test(args) -> int:
     # merges, so this counts the 108 `program=pd` rows plus the 49 `both` ones
     # -- the 157 the console block prints, not the 108 the CSV's `program`
     # column alone would give.
+    #
+    # **The two arms' `distinct` figures do not partition and their `refs`
+    # figures do**, which is why there is no `pd_distinct` identity to assert
+    # beside this check. An address the programs share is one entry in *both*
+    # merges, so the widths count it twice; a `both` row's references are split
+    # by source program, so the ref counts count each of them once. A sum check
+    # over the distinct side therefore cannot hold on this tree, and writing one
+    # to catch a drift would fail here rather than on a real change.
     own_pd_refs = sum(e["refs"] for e in groups_own["pd"].values())
     # Expected-then-got in the two slots, as the main-EC check above it does and
     # for the reason its comment gives: printing the measured pair in both made
@@ -5688,6 +5705,57 @@ if __name__ == "__main__":
 # turns a dozen citations across four documents red. A note about a message
 # belongs at the end of the file for the same reason the `named_in_tree` block
 # above does.
+#
+# *** 2026-10-03, issue #635: registers.yaml gained XDATA_1663, XDATA_1667 and
+# XDATA_1668 -- the three unnamed single-bit test bytes the 0x1663-0x1668 run
+# held between #267's three -- and NOT_IN_TREE does not move: each is reached
+# by an exported function (0xC1B1/0xC1BE for 0x1663, 0xC349/0xC356 for
+# 0x1667, 0xC412 for 0x1668, per ec/annotations/site-resolution.csv), so the
+# movement is by the rows themselves rather than by the set. No figure is
+# written down here: `named_in_tree` is no longer pinned -- self_test() derives
+# it as len(symbols) - len(NOT_IN_TREE) and prints it, so `--self-test` is what
+# answers it and a numeral in prose here would be a hand-kept total that every
+# other branch adding a register row has to edit.
+#
+# The token half moves by the mechanism the #264 and #267 blocks above record,
+# for the same reason: `gen_xdata_symbols.py` turns the three rows into three
+# `XDATA_*` names and `ApplyAnnotations.java` applies the symbol table to the
+# project *copy* the export makes, so the rename reaches the `.c` text without
+# `--mode rebuild-project`. `extmem_main_distinct` 887 -> 884 against
+# `symbol_main_distinct` 175 -> 178 is -3/+3, the three rows changing spelling
+# and nothing else, and `extmem_main_refs` 7701 -> 7696 against
+# `symbol_main_refs` 6263 -> 6268 is -5/+5, where 5 is the census's own
+# 2 + 2 + 1 references to the three addresses. The full census is the
+# cross-check these blocks all end on and it is unmoved: 1326/15696, main EC
+# 1218/14838, PD 157/858, `extmem_commented` 9, `extmem_both` 33. The addresses
+# and the references did not change; only which token spells them.
+#
+# `extmem_both` reads 33 here, where the blocks above say 37: it is
+# `extmem_main_distinct` + `extmem_pd_distinct` - `extmem_distinct`, unmoved
+# across this merge as the others are, and 33 is what the `--self-test` line
+# above prints on this tree.
+#
+# **0x1663's third site is why this block cannot be the whole record, and it is
+# not papered over here.** `trace_xdata_refs.py` finds three
+# `MOV DPTR,#0x1663` sites in the image where this census reaches two, because
+# the third -- 0xC184 -- sits in a routine no export covers and is reached only
+# through the bank1 trampoline at 0x1AB6. That is the same blind spot the
+# 0xC4E7 paragraph in the ORACLE block records, and seeding the site would close
+# it; this change does not, so the two methods still disagree. The `refs` cells
+# here stay 2 / 2 / 1 because they are this census's own count, and the
+# `static_refs` in registers.yaml are 3 / 2 / 1 because
+# `check_register_counts.py` recomputes those from the image. Both are right
+# about their own method, which is what the disagreement *is* -- not an error in
+# either number, and not something to reconcile by editing one of them.
+# `docs/findings/xdata-1663-1667-1668.md` is the write-up.
+#
+# **Placed at the end of the file for the reason the block above gives about
+# `diff()`, and not beside `named_in_tree` where the other dated blocks sit.**
+# This module is cited by line: `check_eq_guard_citations.py` resolves its
+# `--no-eq-guard` anchors to line numbers and holds every page citing them to
+# what it finds there, so a dated block added in the middle moves the anchors
+# below it and turns a dozen citations across four documents red. The pin
+# changes above are in place regardless; only this prose is placed here.
 
 # *** 2026-10-02, issue #295: 190 -> 191, and it is the #647 step once more.
 # `registers.yaml` gained `XDATA_0391`, the byte the sibling `XDATA_0390` row

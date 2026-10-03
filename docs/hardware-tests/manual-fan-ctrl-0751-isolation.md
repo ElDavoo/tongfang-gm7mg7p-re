@@ -131,7 +131,11 @@ rem  finished files the same way, so following this list produces the §6 set
 rem  with no rename step. The three CSVs are one file for all three blocks,
 rem  because ec_watch.py appends to a --csv file that already exists and the
 rem  marks say which write each row follows; the dumps are not, so they carry
-rem  <value> and block 2 cannot overwrite block 1's.
+rem  <value> and block 2 cannot overwrite block 1's. A block run again after
+rem  a void one is a second run, not a fourth block: give it a different
+rem  <date> so it gets its own set of the files below, or the value it shares
+rem  with the block it re-does stops naming one block and the grader refuses
+rem  to grade it.
 rem
 rem  --- as of 2026-09-25 (issue #548) each of the three commands below says so
 rem  ---    when its --csv already holds mark rows: it names them and carries
@@ -195,8 +199,17 @@ invocations and six mark rounds typed by hand across three consoles, which is
 eighteen presses between the watchers starting and stopping. The old 150 s
 left so little that a block run as written could run its last mark past the
 end of a capture, and **a mark after the watcher has exited is written
-nowhere.** A block whose final mark lands late is void; redo it. The check is
-mechanical, not a matter of remembering: `ec_watch.py` prints
+nowhere.** A block whose final mark lands late is void; redo it, on a second
+run with its own `<date>` and its own set of the three CSVs — *not* appended
+to the set the void block is in. That is not tidiness. The three CSVs are one
+file for all three blocks, so a redo appended to them is a second block of a
+value that is already in the set, and the value under test is what a block, a
+`--dump` pair and `--block` are all named by: it stops naming one block, the
+grader's census says so on both lines and a run over the day's files exits 1,
+and `--block` refuses the value rather than taking whichever attempt came
+first. Same shape as §3a's service-stopped pass, which is a second run for the
+same reason. The check is mechanical, not a matter of remembering:
+`ec_watch.py` prints
 `=== N sweeps over Ms` and then every mark it recorded when it stops
 (`../../windows/tools/ec_watch.py:335`), so the last label in that list is the
 last mark the capture has. If it is not the restore, the block is short one.
@@ -204,10 +217,15 @@ last mark the capture has. If it is not the restore, the block is short one.
 The check over the capture is the one that survives into the record, and
 `../../ec/tools/grade_0751_isolation.py` now makes it: it groups the marks
 into blocks — one per write under test, opened by the no-op control arm and
-closed by the restore — prints an `intact` or a `VOID` verdict for each, and
-exits non-zero if any block is void. It reads the CSVs rather than the
-terminal, and that is not a preference: `ec_watch.py` appends a mark to its
-own list and prints it whether or not the CSV sink is still open
+closed by the restore — prints an `intact`, a `VOID` or a `PARTIAL` verdict for
+each, naming the captures the verdict rests on, and exits non-zero if any block
+is void or partial. The verdict is per capture: `intact` means every capture
+that recorded anything in that block closed on the restore, `VOID` that none
+did, and `PARTIAL` that some did and some did not — which is what a restore
+mark that reached two of the three consoles and missed the third produces. It
+reads the CSVs rather than the terminal, and that is not a preference:
+`ec_watch.py` appends a mark to its own list and prints it whether or not the
+CSV sink is still open
 (`../../windows/tools/ec_watch.py:211-214` against the close at `:330-332`),
 so the last label on the screen can be one the capture never received. The
 by-eye check above is still the fastest one to do at the machine; run the
@@ -230,7 +248,8 @@ over a longer stretch than the arm it is compared against, and the report
 prints that window's length without being able to say what made it. What the
 tool does call out is a window at or above the lid, and there it offers a
 freeze the rows do not cover as a guess, not a named suspend. Either way the
-block is lost: redo it, the same as a mark typed after the watcher exited.
+block is lost: redo it, the same as a mark typed after the watcher exited, and
+on a second run with its own `<date>` for the same reason as above.
 
 **And it checks the marks themselves, per block and per capture, before it
 prints a window.** A window is every change after a mark up to the next one,
@@ -867,6 +886,18 @@ placeholders §3's commands take, spelled the same way so a filename carries
 between the two without a rename. The three CSVs are one set for the whole
 run: `ec_watch.py` appends to a `--csv`
 file that already exists, and the marks say which write each row follows.
+**A re-done block is not one of that run's blocks.** §3's remedy for a void
+block is a second run, and the `<date>` placeholder is what puts it in a set
+of its own: a redo appended to the set the void block is in is a second block
+of a value already in that set, and the value under test is what `--block`
+takes, so it stops naming one block — the census says so on both lines
+whatever the run was scoped to, and `--block` refuses the value rather than
+taking whichever attempt came first. **The exit code is 1 on a run over the
+whole day's files, whether or not either attempt is void; a `--block` run over
+one of the day's unambiguous values still grades that block and exits 0**, the
+repeat taking the same scope a block's own voidness already takes. The dumps
+follow the same rule for the reason below, which is that `<value>` is all a
+dump has.
 **As of 2026-09-25 (issue #548) sharing the three CSVs across blocks also means
 sharing their marks, and the marks in front of this run's are not this run's.**
 `--label-vocab 0751` names them at startup, above the file, and carries on —
@@ -890,7 +921,18 @@ else in the set says it. The marks in all three CSVs must carry the same
 labels, must tell the control arm from the write under test, and must leave
 every block ending on its restore. All three are checked, per block and per
 capture, before a window is
-printed — see §3, and the census the grader puts above the windows. The labels
+printed — see §3, and the census the grader puts above the windows. The
+restore rule is per capture too, and the verdict word is: `intact` means every
+capture that recorded anything in that block closed on the restore, `VOID` that
+none did and `PARTIAL` that some did and some did not, and each block line
+names the captures behind its word. A `PARTIAL` block is the case where the
+restore mark reached two consoles and missed the third, and the block line
+names the one that missed it. When that is the `0x0700` sweep it is the one
+that matters most — of §3's three `--start`/`--len` sweeps, `0x0700`/`0x0100`
+is the only one covering `0x0751`, so it is the only capture that can hold
+that block's own change rows for the byte, and those rows are then in a file
+with no mark saying which arm they belong to. A `PARTIAL` block is not filed as
+a finished block and the run's exit code is 1. The labels
 are §3's six forms: the three that name a write and carry a value —
 `no-op wrote 0x0751=0xA0`, `wrote 0x0751=0x10`, `restored 0x0751=0xA0` — and
 the three stage boundaries that carry none, `settled`, `held`, `watch over`.
