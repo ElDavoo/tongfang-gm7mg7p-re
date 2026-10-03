@@ -2,11 +2,30 @@
 r"""Watch EC RAM for changes while something else -- the vendor's Control Center,
 usually -- is driving it, and report which addresses moved.
 
-`ecrw.py` can sweep 2 KiB of EC space in about 150 ms, which is fast enough to
-catch a settings write as it lands. That turns "which register does the vendor
-service actually use for X" from a static-analysis question into an observation:
-start this, change X in the vendor UI, stop, and read off the addresses that
-changed at that moment.
+An unpaced sweep of 2 KiB of EC space takes about 150 ms, which is fast enough
+to catch a settings write as it lands. That turns "which register does the
+vendor service actually use for X" from a static-analysis question into an
+observation: start this, change X in the vendor UI, stop, and read off the
+addresses that changed at that moment.
+
+That is still why the default range is the whole 2 KiB, and it is not why the
+sweep is unpaced. What this tool reads is not only its own cost: HydroControl
+reports that reading the fan-tachometer bytes `0x0460-0x046F` through `ECRR`
+stalled the fans on a sibling Uniwill board, and that the OEM software and
+`uniwill-laptop` both sleep about 6 ms after every EC access
+(#94, `docs/related-projects.md`). So a sweep leaves that page out entirely
+(`--include-fan-tach` puts it back) and sleeps `--gap-ms` between reads, which
+turns a full-range sweep from 150 ms into seconds. The banner says how many
+before the run starts, because the trade is the tool's to name rather than the
+operator's to discover: a settings write persists in the EC, so a slower sweep
+still catches it, more coarsely -- but a run that has to keep up with a
+transient wants a narrower range (`--start 0x0700 --len 0x100`) rather than a
+smaller gap.
+
+None of that is measured on this machine. Reading that page has never been
+observed to stall fans here, and the 6 ms is HydroControl's figure for a
+*different* board. No interval in this repository has been validated against
+this EC.
 
 The output separates two kinds of address, because they need reading differently:
 
@@ -72,21 +91,28 @@ records, numbered from 1 whatever the file already holds. #548,
 `ec_watch-marks.md`.
 
 `--block` sweeps the same addresses four bytes per IOCTL through the driver's
-`MMRD` instead of one byte per `ECRR`, so the default 2 KiB sweep is 512 calls
-rather than 2048. It is off by default and nothing in this repository has run
+`MMRD` instead of one byte per `ECRR`, so a sweep costs a quarter as many
+driver calls. It is off by default and nothing in this repository has run
 it:
 `ecrw.py`'s `readmany` is a reading of how the handler marshals, and whether
 the BIOS answers with what four single reads would have is the comparison
 written out in `manual_fan_ctrl_probe.py`'s docstring, for a human with the
 machine. A block read that covers the fan-tach page is a *wider* access to the
-page that stalled the fans on a sibling board (#94), not a narrower one, so
-the tool warns rather than refuses: `0x0000-0x07FF`, this tool's default
-range, contains it.
+page that stalled the fans on a sibling board (#94), not a narrower one, which
+is why the page is dropped from the address set *before* either path runs
+rather than after: every dword holding a fan-tach byte lies wholly inside the
+sixteen-byte page, so a run ending at `0x045F` or starting at `0x0470` cannot
+have one read in for it, and `0x0000-0x07FF` -- this tool's default range --
+splits into two reads around the page rather than issuing one block across it.
+`--include-fan-tach` puts the page back, and the banner then says the sweep is
+reading it.
 
 Usage:
   ec_watch.py                                  # 0x0000-0x07FF until Ctrl-C
   ec_watch.py --start 0x0700 --len 0x100
   ec_watch.py --seconds 60 --csv out.csv
+  ec_watch.py --gap-ms 0                       # no inter-read gap: fast, and unpaced
+  ec_watch.py --start 0x0460 --len 0x10 --include-fan-tach   # the page this leaves out
   ec_watch.py --mark                           # type a label + Enter to stamp a mark
   ec_watch.py --mark --label-vocab 0751        # and refuse a label the 0751 grader cannot read
   ec_watch.py --mark --label-vocab 0751 --grader <path-to-grade_0751_isolation.py>
@@ -107,14 +133,17 @@ import sys
 import threading
 import time
 
-from ecrw import Ec, EcError
+from ecrw import Ec, EcError, block_runs
 
-# The fan-tach bytes, named as a range so the --block warning, this tool's
+# The fan-tach bytes, named as a range so the exclusion, this tool's
 # self-description and its suite can all name the same sixteen addresses
 # without each spelling the endpoints out again. Reading them through ECRR
-# stalled the fans on a sibling board (#94, docs/related-projects.md); nothing
-# here stops that, and --block does not help: a dword read that covers the page
-# is a four-byte access to the page rather than a one-byte one.
+# stalled the fans on a sibling board (#94, docs/related-projects.md), and
+# this sweep leaves them out unless --include-fan-tach is passed. Local rather
+# than imported: `manual_fan_ctrl_probe.py`, `system_id_probe.py` and
+# `ec_validate.py` each carry their own copy of this range, because
+# `windows/tools/` is deployed as a directory and `ecrw_fake.py` publishes
+# exactly three names. Unifying them is worth doing; it is not this change.
 FAN_TACH = range(0x0460, 0x0470)
 
 
@@ -520,6 +549,21 @@ def main(argv=None):
                     help="stop after this long (default: until Ctrl-C)")
     ap.add_argument("--interval", type=float, default=0.25,
                     help="seconds between sweeps (default 0.25)")
+    ap.add_argument("--gap-ms", type=float, default=6,
+                    help="milliseconds to sleep after every read within a "
+                         "sweep, not between sweeps (default 6). The figure "
+                         "HydroControl reports for the OEM software and "
+                         "uniwill-laptop after reading a sibling board whose "
+                         "fans stalled on unpaced ECRR traffic; not measured "
+                         "on this machine, and no interval here is validated. "
+                         "0 is the unpaced tool this default stopped being")
+    ap.add_argument("--include-fan-tach", action="store_true",
+                    help="read the fan-tach bytes 0x0460-0x046F, which are "
+                         "left out by default: ECRR reads of that page stalled "
+                         "the fans on a sibling board (#94) and this machine "
+                         "has never been seen to. --block does not make it "
+                         "safer -- a dword across the page is a wider access to "
+                         "it, not a narrower one")
     ap.add_argument("--csv", help="also write every change to this CSV")
     ap.add_argument("--mark", action="store_true",
                     help="read stdin; each line stamps a labelled mark, into "
@@ -582,7 +626,28 @@ def main(argv=None):
 
     start = int(args.start, 0)
     length = int(args.length, 0)
-    addrs = list(range(start, start + length))
+    wanted = list(range(start, start + length))
+    addrs = wanted if args.include_fan_tach else [
+        a for a in wanted if a not in FAN_TACH]
+    dropped = len(wanted) - len(addrs)
+    # An empty address set is reported rather than swept. A sweep with nothing
+    # in it prints a baseline and then "nothing moved", which reads as an
+    # observation about the EC rather than as the refusal to read it that it
+    # is (#94). This is the only range that reaches it by default: the page is
+    # sixteen bytes, so a range wholly inside one is a range that asked for
+    # nothing else.
+    if not addrs:
+        print(f"nothing to sweep: 0x{start:04X}+0x{length:04X} holds no "
+              f"address outside the fan-tach bytes "
+              f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X} (#94). Move "
+              "the range off the page, or pass --include-fan-tach to read it "
+              "anyway.", file=sys.stderr)
+        return 1
+
+    # The --block path reads runs rather than the range, which is what makes
+    # the exclusion exact rather than approximate (see the docstring), so the
+    # runs are built once here and are the same on every sweep.
+    runs = block_runs(addrs) if args.block else None
 
     sink = CsvSink(args.csv) if args.csv else None
 
@@ -604,27 +669,71 @@ def main(argv=None):
                 # therefore reports a sweep's changes after the sweep's reads
                 # rather than between them, which is the only thing that moved
                 # on the path that was already the default.
+                #
+                # The gap sits here rather than in the loop below because it
+                # paces *reads*: --interval is a different axis and stays where
+                # it was. After every read rather than between them, so a
+                # sweep costs one gap per read and the banner's projection is a
+                # floor rather than an estimate. A read is a call into the
+                # driver, which on the --block path is a `readmany` issuing one
+                # IOCTL per four bytes without coming back here -- so the two
+                # runs the default range splits into are 280 and 228 IOCTLs back
+                # to back, 508 under two gaps, and --block is the path this
+                # pacing does not cover. The banner counts calls rather than
+                # IOCTLs so the figure it quotes is the time actually spent.
                 if args.block:
-                    return ec.readmany(start, length)
-                return {a: ec.read(a) for a in addrs}
+                    out = {}
+                    for run_start, run_length in runs:
+                        out.update(ec.readmany(run_start, run_length))
+                        time.sleep(args.gap_ms / 1000)
+                    return out
+                out = {}
+                for a in addrs:
+                    out[a] = ec.read(a)
+                    time.sleep(args.gap_ms / 1000)
+                return out
 
             prev = sweep()
             for a, v in prev.items():
                 first_last[a] = (v, v)
             print(f"{now()}  baseline: 0x{start:04X}-0x{start + length - 1:04X} "
-                  f"({length} bytes), sweeping every {args.interval}s")
+                  f"({len(addrs)} bytes), sweeping every {args.interval}s")
+            if dropped:
+                print(f"  the fan-tach bytes "
+                      f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X} are "
+                      f"left out: {dropped} of this range's addresses were "
+                      "not read (#94, docs/related-projects.md). "
+                      "--include-fan-tach reads them.")
+            elif (args.include_fan_tach and start < FAN_TACH.stop
+                    and start + length > FAN_TACH.start):
+                # Said on either path rather than only under --block: this is
+                # the operator reading a page their sweep would otherwise skip
+                # over, and the run that asked for it is the only one where
+                # that is a choice rather than a fact about the range.
+                print("  --include-fan-tach: this sweep is reading the "
+                      "fan-tach bytes "
+                      f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X}, "
+                      "whose ECRR reads stalled the fans on a sibling board "
+                      "(#94, docs/related-projects.md). This machine has "
+                      "never been seen to; the flag is the choice being made.")
             if args.block:
                 print("  --block: reading 4 bytes per IOCTL (MMRD) instead of "
                       "1 (ECRR).\n  That path has never been run against the "
                       "driver, and it is not a safety improvement over the "
                       "byte read: see this tool's help")
-                if start < FAN_TACH.stop and start + length > FAN_TACH.start:
-                    print("  warning: this range covers the fan-tach bytes "
-                          f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X}, "
-                          "whose ECRR reads stalled the fans on a sibling "
-                          "board (#94). A 4-byte read across the page is a "
-                          "different access shape, not a safer one -- run "
-                          "per-byte, or move the range off it.")
+                if args.include_fan_tach:
+                    print("  And a 4-byte read across the page is a different "
+                          "access shape than a 1-byte one, not a safer one.")
+            # The cost, before the loop rather than discovered in it. A paced
+            # full-range sweep is seconds rather than the 150 ms an unpaced
+            # one took, and the operator is the one who has to decide whether
+            # that suits the thing they are watching for. Calls and not
+            # addresses, because the gap is paid per call.
+            reads = len(runs) if args.block else len(addrs)
+            print(f"  {reads} read call(s) per sweep, {args.gap_ms:g} ms apart: "
+                  f"about {reads * args.gap_ms / 1000:.1f}s a sweep. Narrow "
+                  "the range, not the gap, for something that has to keep up "
+                  "with a transient.")
             if args.mark:
                 print("type a label + Enter to stamp a mark "
                       "(a blank line records nothing); Ctrl-C to stop")
