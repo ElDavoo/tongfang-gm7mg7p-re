@@ -161,8 +161,15 @@ are about. §6 stamps every dump with the `<value>` of the block it belongs to,
 and a per-block invocation is meant to be attached per block, so `--block`
 takes that value rather than a position in the mark stream: `0xA0`, `A0` and
 `a0` are the same block. A value that is in no block is an error rather than
-a run that grades everything, and a `--block` and a `--wrote` that name
-different values are an error too -- both name the value under test.
+a run that grades everything, a `--block` and a `--wrote` that name different
+values are an error too -- both name the value under test -- and so is a
+value in *two* blocks, which is what §3's own remedy for a void block produces
+when the re-done block is appended to the set rather than run on its own
+`<date>`: the census names every block carrying it whatever run was scoped to,
+and `--block` is refused on it. Only the run over the whole day has its exit
+code held at 1 by that, whether or not either of them is void; a `--block` run
+over one of the day's unambiguous values still grades that block and exits 0,
+on the scope `void` and `withheld` already take.
 
 The cross-console checks engage at two or more captures, which is §6's form.
 With one there is no other console for a mark to be missing from and no
@@ -303,6 +310,12 @@ Usage:
         --dump-pair before-0700.txt after-0700.txt \
         --dump-pair before-0f00.txt after-0f00.txt
     python3 ec/tools/grade_0751_isolation.py --self-test
+
+A capture this cannot read is refused by name and not raised out of. The one
+input the format does not cover is a probe console log from before
+`manual_fan_ctrl_probe.py --csv`, which is free-form text rather than rows;
+`ec/tools/probe_log_to_capture.py` converts one into this schema, and says in
+the file it writes that the timestamps in it are reconstructed.
 """
 import argparse
 import csv
@@ -448,14 +461,26 @@ FAN_TABLE_NEXT_STEP = (
 # Printed once however many blocks are void: the per-block line already names
 # which they are and the label each ended on, so repeating the explanation
 # per block would be noise on a three-value run.
+#
+# The last sentence is a second run rather than a redo appended to this one,
+# and that is the whole of the change from the sentence it replaces. §3 fixes
+# the three CSVs as one file for all three blocks, so "redo the void block"
+# read as an instruction to append a fourth block of the same value into the
+# set this run is already refusing -- a state the census above now names and
+# `--block` refuses, and one this note used to send the operator into. The
+# remedy a re-done block needs is a `<date>` of its own, which is what §3's
+# `<date>` placeholder and §3a's own note already do for a second pass.
 VOID_BLOCK_NOTE = (
     "A void block is short the restore mark §3's step 5 makes, so its last "
     "window never closes and the block is not a finished one. The usual cause "
     "is the mark itself: ec_watch.py writes a mark into the CSV only while "
     "the sink is open, so a restore typed after the watcher has exited is "
     "printed in its `marks:` list and recorded nowhere else -- which is why "
-    "this reads the CSVs and not that list. Redo the void block per §3; the "
-    "exit code is 1 while any block is void.")
+    "this reads the CSVs and not that list. Run the block again per §3, on "
+    "its own <date> and its own set of the three CSVs rather than appended to "
+    "this one: a second block of a value already in this set stops the value "
+    "naming a block, which the census above names and the exit code reflects. "
+    "The exit code is 1 while any block is void.")
 
 # The same, for a mark set that cannot support the windows taken over it. A
 # void block is short a mark at the end; this is an action that is missing
@@ -1884,9 +1909,10 @@ def read_early_exits(path):
     field of whatever row came first, and a crash row written on line 1 was
     invisible to the one reader that exists to find it, and now is: the
     normalisation is what makes it so, not a caller. The only caller is
-    `main`, which calls `read_capture` unguarded the line before, so a
-    capture the strict reader refused whole raises out of `main`; a
-    refused one is `existing_mark_findings`' to answer, via `bom_refusal`.
+    `main`, which guards `read_capture` and returns 1 on the refusal
+    before this is reached, so a capture the strict reader refused whole
+    is answered by the printed refusal rather than raised; a refused one
+    is also `existing_mark_findings`' to answer, via `bom_refusal`.
     """
     out = []
     for row in capture_rows(path):
@@ -2269,6 +2295,28 @@ def assign_blocks(windows):
         for m in w.marks:
             m.block = None
     return blocks, unplaced
+
+
+def repeated_values(blocks):
+    """The values more than one block is under test, as `{value: [block]}`.
+
+    The value under test is what a block, a `--dump` pair and a §4.6 verdict
+    are all named by, and `--block` takes it rather than a position in the
+    mark stream, so a value carried by two blocks names no single block. A
+    day reaches this by running §3's own remedy for a void block: the redo is
+    a second `no-op`/`wrote`/`restored` set carrying the same value, appended
+    into the same three CSVs, and nothing in the marks says which attempt a
+    window belongs to.
+
+    Ordered by first appearance rather than by value, so a caller that names
+    the blocks gets them in the order the census prints them. Only values
+    carried by more than one block are in the result -- a day with no repeat
+    is an empty dict.
+    """
+    out = {}
+    for b in blocks:
+        out.setdefault(b.value, []).append(b)
+    return {v: bs for v, bs in out.items() if len(bs) > 1}
 
 
 def unplaceable_marks(unplaced):
@@ -2819,6 +2867,7 @@ def report_census(captures, windows, blocks, unplaced, unreads, unagreed,
         for line in mark_gap_note(w):
             print(line)
 
+    repeated = repeated_values(blocks)
     for i, b in enumerate(blocks, 1):
         line = (f"  block {i} of {len(blocks)}: value under test {b.name}, "
                 f"roles {', '.join(b.roles)}")
@@ -2832,6 +2881,28 @@ def report_census(captures, windows, blocks, unplaced, unreads, unagreed,
             # exit is not short a mark -- it holds all of them.
             kinds = ", ".join(sorted({k for k, _, _ in b.problems}))
             line += f" -- NOT GRADED, {len(b.problems)} problem(s): {kinds}"
+        # Independent of the clause above, because it is a fact about the
+        # value rather than about this block: one block being void does not
+        # make its value a shared one, and a shared one does not need a block
+        # to be void. Printed on every block carrying the value, not on the
+        # first, so a reader holding the day's census can see which blocks a
+        # single `--block` would have had to choose between -- and `--block`
+        # refuses rather than choosing (see `main`).
+        #
+        # What put the value in two blocks is not named here, because this
+        # cannot know: the shapes that reach it are §3's re-done block
+        # appended to the set, and marks the merge did not fuse because the
+        # consoles typed them too far apart, which is a different defect with
+        # its own line above. The clause says the one thing true of both --
+        # the value names no single block, so `--block` is refused on it and
+        # the exit code holds -- and the lines above say what each block
+        # itself is short of.
+        if b.value in repeated:
+            twins = repeated[b.value]
+            which = ", ".join(str(x.index) for x in twins)
+            line += (f" -- {b.name} is the value under test of {len(twins)} "
+                     f"block(s) of this run ({which}), so it names no one of "
+                     "them and --block is refused on it")
         print(line)
     if unplaced:
         # The kinds are named from `window_mark_problems`, the function
@@ -4110,7 +4181,36 @@ def main(argv=None):
     marks, changes = [], []
     exits = []
     for path in paths:
-        m, c = read_capture(path)
+        # `read_capture` refuses a file by raising, and the exception's own text
+        # is the sentence -- `bom_refusal`, a short row, a timestamp `parse_ts`
+        # cannot read -- so it is printed here rather than restated. Two
+        # reasons it is printed and not caught higher: a file this cannot read
+        # is a file the operator named on the command line and can be pointed at
+        # a different one, and one raised out of `main` is a traceback over a
+        # §6 file list that is otherwise a clean refusal.
+        #
+        # "Nothing was graded", and not "nothing was read": §6 passes one CSV
+        # per watcher, so a later path here can be refused after an earlier one
+        # has been read and had its census line printed, and telling that
+        # operator nothing was read would be false about the two captures that
+        # were. The path is named here as well as in the refusal above so the
+        # sentence says which file ended the run. Returning rather than
+        # continuing to the next path is deliberate and is the same choice the
+        # repeat refusal above makes: every section of the report below is
+        # about the captures as one set, so a set one of whose members is
+        # unreadable has no report, and the census lines already on stdout are
+        # counts rather than a grade.
+        try:
+            m, c = read_capture(path)
+        except ValueError as refusal:
+            print(f"\n{refusal}", file=sys.stderr)
+            print(f"{path}: nothing was graded. A capture is what "
+                  "`ec_watch.py --mark --csv` and "
+                  "`manual_fan_ctrl_probe.py --csv` write, in the schema "
+                  "`ec/tools/probe_log_to_capture.py` reads into; a probe "
+                  "console log predating that mode is converted with it "
+                  "rather than graded as one.", file=sys.stderr)
+            return 1
         captures.append((path, m))
         marks += m
         changes += c
@@ -4145,6 +4245,7 @@ def main(argv=None):
         [e for _, rows in exits for e in rows], windows)
 
     selected = None
+    twins = None
     if args.block is not None:
         wanted = parse_value(args.block)
         if wanted is None:
@@ -4158,7 +4259,13 @@ def main(argv=None):
                   "run, so one of them is a wrong command line; pass the same "
                   "one twice or neither.", file=sys.stderr)
             return 1
-        selected = next((b for b in blocks if b.value == wanted), None)
+        # Left `None` for a value more than one block carries, so the census
+        # prints the whole day with nothing marked `-- not selected in this
+        # run`: no block was selected, and marking one of them would name the
+        # block this refusal is about to decline to choose.
+        twins = repeated_values(blocks).get(wanted)
+        if not twins:
+            selected = next((b for b in blocks if b.value == wanted), None)
 
     report_census(captures, windows, blocks, unplaced, unreads, unagreed,
                   selected)
@@ -4178,6 +4285,45 @@ def main(argv=None):
         # selected `intact` and exit 0 over a capture that says otherwise.
         why = "; ".join(text for _, text in early_refused)
         print(f"\n{EARLY_EXIT_REFUSAL.format(why=why)}", file=sys.stderr)
+        return 1
+
+    # The two refusals `--block` can earn, in one place and in this order: a
+    # value two blocks carry, then a value in none. Both leave `selected` at
+    # `None` -- the first deliberately, above -- so the ambiguous case has to
+    # be asked about before the no-match one, or a value two blocks carry
+    # would be reported as a value in no block, which is the opposite of what
+    # is wrong with it.
+    if twins:
+        # Named, not selected, because the value is what identifies a block:
+        # `--block`'s own help, §6's per-value dump names and the per-block
+        # lines above all take the value rather than a position in the mark
+        # stream, and nothing in the marks says which of the blocks a window
+        # belongs to. Taking the first of them is a verdict on whichever came
+        # first rather than on any of them, and the shape §3's own remedy
+        # produces puts the attempt that came out void first. A selector that
+        # could reach another would make appending a re-done block under the
+        # same value a supported thing to do, which is the state the census
+        # line above and `VOID_BLOCK_NOTE` are removing.
+        #
+        # After the census, which is where the blocks are named with their
+        # indices, so the refusal points at lines the operator has just read
+        # rather than repeating the day at them. The remedy is given as a
+        # pointer rather than as this run's diagnosis, because a value can
+        # reach this two ways and the census above says which: §3's re-done
+        # block appended to the set wants a second `<date>`, and a day whose
+        # consoles marked too far apart for the merge wants the distances the
+        # census already named.
+        which = " and ".join(f"block {b.index} of {len(blocks)}" for b in twins)
+        print(f"\n--block {args.block!r} names {len(twins)} blocks in these "
+              f"captures, {which}. The value under test is what identifies a "
+              "block, so a value this many blocks carry names none of them "
+              "one: this is not graded as the first of them, because a first "
+              "match over several is a verdict on whichever came first rather "
+              "than on any. Read the census above for what each of them is "
+              "short of; where this is §3's re-done block, the remedy is that "
+              "block on its own <date> and its own set of the three CSVs "
+              "(§3). --block names one block of a value that is in one block.",
+              file=sys.stderr)
         return 1
 
     if args.block is not None and selected is None:
@@ -4287,6 +4433,16 @@ def main(argv=None):
     graded = len(shown) - withheld
 
     void = report_blocks(blocks, selected)
+    # The same scope `void` and `withheld` take, and for the same reason: a
+    # `--block` run is about one block, and the value of another block being
+    # carried twice is not a fact about this one. `--block` on a repeated
+    # value is refused above, so the selected block's own value is never one,
+    # and this is 0 on every run that gets that far. Counted over the blocks
+    # the block section just graded rather than over `blocks`, so the figure
+    # and that section's lines cannot disagree about which blocks it covers.
+    graded_blocks = blocks if selected is None else [selected]
+    repeated = sum(1 for b in graded_blocks
+                   if b.value in repeated_values(blocks))
 
     # The verdicts the block section just printed, indexed for the two file
     # sections. Built here rather than passed down from `report_blocks` so the
@@ -4678,31 +4834,40 @@ def main(argv=None):
           "additionally needs all three values, with and without the vendor "
           "service (§3a).")
     print(wrap_note(ZERO_SCOPE_NOTE))
-    # Six ways a run can be refused rather than graded, and they are six
-    # facts about the input rather than six verdicts about the machine: a
+    # Seven ways a run can be refused rather than graded, and they are seven
+    # facts about the input rather than seven verdicts about the machine: a
     # block short its restore, a mark set that cannot support a block's
     # windows, a window in no block whose marks the captures spell two ways or
     # that one of them did not record, a label the block walk could not place,
-    # a --block that named no block, and a capture named twice. The last two
-    # are not in this expression at all -- both are refused above, before the
-    # closing section prints -- so the other four reach it, and they are not
-    # scoped alike. `void` and `withheld` are this run's selected block:
+    # a value under test two blocks carry, a --block that named no block or
+    # named two, and a capture named twice. The last three are not in this
+    # expression at all -- all three are refused above, before the closing
+    # section prints -- so the other four reach it, and they are not scoped
+    # alike. `void` and `withheld` are this run's selected block:
     # `report_blocks` grades `selected` alone, and `withheld` is counted over
     # `shown`, which is that block's own windows, so a `--block` run says
-    # nothing about the other blocks and passes if this one held. The
-    # agreement refusal on a window in no block is counted into `withheld`, so
-    # it takes that same scope: a window already in no block cannot re-shape
-    # one, and no block's completeness rests on it. An early exit lands the
-    # same way -- its block's windows are withheld, so it is decided by the
-    # block it fell in, and a `--block` run over a value that did not crash
-    # passes over a day in which another value did. The unplaceable row is the
-    # one early-exit path with no such scope: like `unreads`, it is refused
-    # above, for the whole run, because a row that cannot be placed against a
-    # window leaves every block's length uncertifiable. `unreads` is the whole
-    # capture's however the run was scoped, per `unplaceable_marks`, and
-    # `UNREAD_MARK_NOTE` above is the line that says so where the exit code is
-    # read from.
-    return 1 if (void or unreads or withheld) else 0
+    # nothing about the other blocks and passes if this one held. `repeated`
+    # takes that same scope and is 0 on every run that reaches here with a
+    # `--block`, because a repeated value is refused above -- the census line
+    # is the whole-capture half of the same fact, printed whatever the run was
+    # scoped to. The agreement refusal on a window in no block is counted into
+    # `withheld`, so it takes that same scope: a window already in no block
+    # cannot re-shape one, and no block's completeness rests on it. An early
+    # exit lands the same way -- its block's windows are withheld, so it is
+    # decided by the block it fell in, and a `--block` run over a value that
+    # did not crash passes over a day in which another value did. The
+    # unplaceable row is the one early-exit path with no such scope: like
+    # `unreads`, it is refused above, for the whole run, because a row that
+    # cannot be placed against a window leaves every block's length
+    # uncertifiable. `unreads` is the whole capture's however the run was
+    # scoped, per `unplaceable_marks`, and `UNREAD_MARK_NOTE` above is the
+    # line that says so where the exit code is read from.
+    #
+    # `repeated` is the one of the four that needs no block to be short of
+    # anything: a day whose two `0x00` blocks are both intact is graded over
+    # in full and every check above passes it, so without this term it would
+    # exit 0 over a day `3blocks/` holds at 1 for a different reason.
+    return 1 if (void or unreads or withheld or repeated) else 0
 
 
 def rows_from_bytes(raw, errors=None):
