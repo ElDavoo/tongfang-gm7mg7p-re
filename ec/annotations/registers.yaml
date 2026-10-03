@@ -1666,6 +1666,17 @@ registers:
       seeding the routine would need --mode rebuild-project and a database
       change this token cannot merge. 1 PD site, no direct read, no upstream
       name. Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** 2026-10-02 (issue #429) ***: the per-site census reads all four as
+      read+write and xdata-registers.csv has no row for this address at all,
+      and that disagreement is by design rather than a hole in either: the
+      census counts occurrences of the address in decompiled text, no exported
+      function covers the routine the four sites sit in, and the one committed
+      .c that names the address does so in a comment the census strips -- so
+      there is no text to count, while the site census walks the bytes and sees
+      a read-modify-write. A census row is not owed for a routine no export
+      covers. Which artifact carries which of this page's addresses, and why the
+      other cannot, is docs/findings/dptr-seed-census-gap.md. static_refs and
+      status are unchanged, and a read-modify-write is not a behaviour.
 
   - name: XDATA_0458
     addr: 0x0458
