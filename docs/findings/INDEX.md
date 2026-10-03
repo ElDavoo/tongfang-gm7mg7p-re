@@ -217,6 +217,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md) — §6a's per-direction rows and §6b's cluster split are held now, and what is still not (issue #850)
 - [`xdata-819-815-correction-chain.md`](xdata-819-815-correction-chain.md) — Two gate claims #819 corrected were settled by #815 and #823, and eleven pins across the chain no longer land (issue #836)
 - [`xdata-attribute-dispatch-boundary.md`](xdata-attribute-dispatch-boundary.md) — The attribute reader is measured against the six benign calls in `main()`, not filtered by `MODES`
+- [`xdata-carry-name-coverage.md`](xdata-carry-name-coverage.md) — What happened to every hand name: the carry report gets a name-indexed half (issue #881)
 - [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md) — The xdata census re-derivation checklist: what a re-export moves, and what to do about it (issue #820)
 - [`xdata-census-self-test-gate.md`](xdata-census-self-test-gate.md) — `xdata_register_map.py --self-test` was switched off for a reason that had
 - [`xdata-census-totals.md`](xdata-census-totals.md) — The census totals: 1,171 addresses / 14,819 references, and how to re-derive them (issue #557)
