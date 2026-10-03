@@ -45,6 +45,7 @@ root, and a copy of this file outside the tree will not find them.
 """
 import contextlib
 import csv
+import ast
 import importlib.util
 import io
 from pathlib import Path
@@ -58,6 +59,16 @@ from unittest.mock import patch
 TOOLS = Path(__file__).parent
 REPO = TOOLS.parent.parent
 TRACES = REPO / "evidence" / "battery-traces"
+
+
+def tool_source_tree():
+    """battery_trace.py parsed, for the declaration case below.
+
+    Parsed rather than grepped because the claim is about a keyword on a
+    particular call, and the anchor that identifies the call -- the `args.csv`
+    its first argument names -- is not something a line of text can say.
+    """
+    return ast.parse((TOOLS / 'battery_trace.py').read_text(encoding='utf-8'))
 
 # A run that samples exactly once. --seconds 0 will not do: the tool's break is
 # `if args.seconds and time.time() - t0 >= args.seconds` (battery_trace.py:101),
@@ -139,7 +150,7 @@ RATE_MW = 27992
 
 
 def rows_of(name):
-    return list(csv.reader((TRACES / name).read_text().splitlines()))
+    return list(csv.reader((TRACES / name).read_text(encoding="utf-8").splitlines()))
 
 
 def header_line(name, row=0):
@@ -150,7 +161,7 @@ def header_line(name, row=0):
     string. Comparing the two is therefore a byte-identity claim, not a
     question of how either side is quoted.
     """
-    return (TRACES / name).read_text().splitlines()[row]
+    return (TRACES / name).read_text(encoding="utf-8").splitlines()[row]
 
 
 class FakeEc:
@@ -259,7 +270,7 @@ class BatteryTraceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'run.csv'
             rc, _, clock, wmi, _, _ = self.run_tool(BASE + ('--csv', str(path)))
-            rows = list(csv.reader(path.read_text().splitlines()))
+            rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
             self.assertEqual(rc, 0)
             self.assertEqual(rows[0], COLS)
             self.assertEqual(len(rows), 2)          # header, and the one sample
@@ -359,7 +370,7 @@ class BatteryTraceTests(unittest.TestCase):
     #    test_the_committed_0522_traces_share_that_header encodes for the three
     #    files it reads, and why that case could never have covered it.
     def test_the_limit_pair_capture_is_recorded_not_skipped(self):
-        lines = (TRACES / LIMIT_PAIR).read_text().splitlines()
+        lines = (TRACES / LIMIT_PAIR).read_text(encoding="utf-8").splitlines()
         rows = list(csv.reader(lines))
         self.assertTrue(
             lines[0].startswith("#"),
@@ -405,7 +416,7 @@ class BatteryTraceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'run.csv'
             rc, _, _, _, _, _ = self.run_tool(BASE + ('--csv', str(path)))
-            rows = list(csv.reader(path.read_text().splitlines()))
+            rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
             self.assertEqual(rc, 0)
             row = dict(zip(rows[0], rows[1]))
             # The EC reading, worked out from the two bytes here rather than by
@@ -437,7 +448,7 @@ class BatteryTraceTests(unittest.TestCase):
             path = Path(tmp) / 'run.csv'
             rc, _, _, _, _, _ = self.run_tool(BASE + ('--csv', str(path)))
             rc2, _, _, _, _, err = self.run_tool(BASE + ('--csv', str(path)))
-            rows = list(csv.reader(path.read_text().splitlines()))
+            rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
             self.assertEqual((rc, rc2), (0, 0))
             self.assertEqual(err, "")
             self.assertEqual(rows[0], COLS)
@@ -461,14 +472,14 @@ class BatteryTraceTests(unittest.TestCase):
     #    refusal, do not delete it, or the next change re-opens the gap in
     #    silence.
     def test_appending_to_a_foreign_header_interleaves_it_anyway(self):
-        lines = (TRACES / LIMIT_PAIR).read_text().splitlines()
+        lines = (TRACES / LIMIT_PAIR).read_text(encoding="utf-8").splitlines()
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'run.csv'
             # A copy of the file's first two lines. The committed evidence is
             # read, never written to.
             path.write_text("\n".join(lines[:2]) + "\n", encoding="utf-8")
             rc, _, _, _, _, err = self.run_tool(BASE + ('--csv', str(path)))
-            rows = list(csv.reader(path.read_text().splitlines()))
+            rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
             self.assertEqual(rc, 0)
             self.assertEqual(err, "")
             # The annotation and the header it annotated are untouched ...
@@ -483,6 +494,60 @@ class BatteryTraceTests(unittest.TestCase):
             self.assertEqual(rows[1][3], "status")
             self.assertEqual(rows[2][3], "1")
             self.assertEqual(rows[2][1:], rows_of(BIOS_DEFAULTS)[1][1:])
+
+    # 11. The declaration itself. `args.phase` is operator-supplied free text
+    #    and lands in column 1 of every row, so it is the one field of this
+    #    capture with a path to a byte above 0x7F; before issue #1277 the
+    #    `open()` inherited the writing process's locale to write it.
+    #    Asserted over the tool's source rather than over a run, because on this
+    #    runner the two are indistinguishable: python3's default here *is*
+    #    utf-8, so a round-trip with no declaration would land the same bytes.
+    def test_the_capture_opener_declares_its_encoding(self):
+        calls = [n for n in ast.walk(tool_source_tree())
+                 if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                 and n.func.id == "open"]
+        openers = [c for c in calls
+                   if c.args and isinstance(c.args[0], ast.Attribute)
+                   and c.args[0].attr == "csv"]
+        self.assertTrue(openers, "no open() taking args.csv in the tool")
+        for call in openers:
+            with self.subTest(line=call.lineno):
+                self.assertIn("encoding",
+                              [k.arg for k in call.keywords
+                               if isinstance(k, ast.keyword)],
+                              f"battery_trace.py's open() at line {call.lineno} "
+                              f"declares no encoding=, so a phase label "
+                              f"carrying a high byte is written in whatever "
+                              f"the writing process's locale prefers")
+
+    # 12. ... and the consequence, on the runner this suite happens to run on.
+    #     This would also pass with no `encoding=` on a utf-8 interpreter, which
+    #     is exactly why 11 is the case that can fail and this one cannot: what
+    #     this holds is that the declared codec admits the bytes, not that the
+    #     declaration is what chose them.
+    def test_a_phase_label_above_0x7f_lands_as_utf8_on_disk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'run.csv'
+            # --phase twice, so the run's own label wins over BASE's and the
+            # one byte the tool has no other route to is the one under test.
+            rc, _, _, _, _, _ = self.run_tool(
+                BASE + ('--csv', str(path), '--phase', '§3'))
+            raw = path.read_bytes()
+        self.assertEqual(rc, 0)
+        self.assertFalse(raw.startswith(b'\xef\xbb\xbf'),
+                         'the capture carries a BOM; the format is utf-8 with none')
+        # The two-byte form specifically. `§` *is* 0xC2 0xA7 in utf-8, so the
+        # byte 0xA7 is present either way; what separates the declared codec
+        # from the cp1252 default is whether 0xA7 ever stands alone, which is
+        # the whole byte a one-byte-per-character writer would have spent on
+        # it.
+        self.assertIn('§3'.encode('utf-8'), raw)
+        self.assertTrue(raw.decode('utf-8').splitlines()[1].split(',')[1]
+                        .startswith('§'), raw)
+        alone = [i for i, b in enumerate(raw)
+                 if b == 0xA7 and (i == 0 or raw[i - 1] != 0xC2)]
+        self.assertEqual(alone, [], 'a 0xA7 with no 0xC2 before it: the file '
+                                     'carries a one-byte character somewhere')
 
 
 if __name__ == '__main__':
