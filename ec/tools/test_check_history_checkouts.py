@@ -8,8 +8,11 @@ the same clean report. The scratch-tree cases below are therefore the ones that
 matter most in this suite -- the synthetic workflow that resolves to the depths
 it spells, the gate job that goes red on a shallow checkout, the actionlint job
 that does not, the sentence that names `ci.yml` without naming a job, the one
-that names two workflows and a job of only one of them, and the gate reached
-from a `prompt:` rather than a `run:` step.
+that names two workflows and a job of only one of them, the sentence whose
+depth claim rides on a group the sentence never enumerates and is **not** caught
+(that case asserts a false sentence passing, and is the rule's documented limit
+rather than a pass it earned), and the gate reached from a `prompt:` rather than
+a `run:` step.
 
 **The two prompt shapes are a matched pair, and the pair is the point.** A
 marker alone on an indented line of a prompt is a command and its job's shallow
@@ -146,6 +149,35 @@ CORRECTED_DOCSTRING = r'''
 # way the pre-#1009 paraphrases would have stopped catching the stale rule.
 ISSUE_TWO_WORKFLOW = (
     "# ci.yml's `gates` job is full-depth and claude.yml is shallow throughout")
+
+# The sentence issue #1036 is filed with, **verbatim** from `ec/ghidra/README.md`
+# as it stood, and the reason it is a control in its own voice: it is the false
+# half #1009's correction did not reach, and it passed the rule rather than
+# failing it. `STALE_*` above are controls for the rule; this one is a control
+# for the rule's **limit**, and the two are not the same thing -- the case below
+# that uses it is the only one in this suite asserting that a sentence known to
+# be false is *not* flagged.
+#
+# Verbatim matters here for a second reason as well. The claim rides on the
+# group "the agent stages", which is what makes it a claim about six workflows
+# while naming one job of a seventh (`ci.yml`'s, in the other clause). A
+# paraphrase that said "the four agent stages" would be *true* and would pass
+# for the entirely wrong reason.
+ISSUE_GROUP_CLAIM = (
+    "# The agent stages check out with `fetch-depth: 0` and can run it, and so "
+    "does ci.yml's `gates` job\n")
+
+# What replaced it, verbatim from the corrected file, and the positive control
+# for the same rule. It is here so that "the rule stopped flagging things" and
+# "the rule cannot see this" are distinguishable: a suite holding only the
+# first would be satisfied by a rule broken in either direction.
+CORRECTED_GROUP_CLAIM = (
+    "# Four of the six `agent-*.yml` stages check out with `fetch-depth: 0` and "
+    "can run it -- `agent-implement.yml`'s `implement` job, `agent-fix.yml`'s "
+    "`fix`, `agent-review.yml`'s `review` and `agent-conflicts.yml`'s `resolve` "
+    "-- and so does ci.yml's `gates` job; `agent-plan.yml`'s `plan` and "
+    "`agent-followups.yml`'s `followups` are the action's default depth of 1 and "
+    "run no history reader, so they are not part of the claim.\n")
 
 # The nine committed checkouts, as `(job, depth, stated)`, which is what the
 # table in `docs/findings/history-checkout-claims.md` and the paragraph that
@@ -769,6 +801,59 @@ class ProseTests(ScratchTree):
         self.assertEqual(len(prose), 1, out)
         self.assertIn("names ci.yml and no job of it", prose[0].split(" -- ", 1)[0])
         self.assertIn("broken.yml: jobs not found by this method", out)
+
+    def test_a_claim_about_a_group_the_sentence_never_enumerates_is_not_caught(self):
+        # **This case asserts a false sentence PASSES**, which is the opposite of
+        # every other control in this class, and it is here because the rule's
+        # limit should be held by something executable rather than by a sentence
+        # in a docstring. `ISSUE_GROUP_CLAIM` is the false half of #1009's
+        # correction: it claims a depth about all six `agent-*.yml` stages while
+        # the only job it names belongs to `ci.yml`, in the other clause.
+        # `prose_problems()` judges per workflow, finds `ci.yml` satisfied by
+        # `gates`, and has nothing to report.
+        #
+        # **A green run here is the documented limit and not a pass the rule
+        # earned.** `docs/findings/history-checkout-claims.md` records why no
+        # clause split of this corpus separates the sentence from correct ones,
+        # and the file-level correction of it is held by
+        # `test_the_corrected_sentence_is_green` below. If a future change makes
+        # this case fail, that is the rule getting *better*: the write-up needs
+        # updating with it, and the docstring's residual paragraph comes out.
+        self.workflow()
+        self.tool("ec/tools/verify_reassembly.py", ISSUE_GROUP_CLAIM)
+        _depth, prose, out = self.problems()
+        self.assertFalse(prose, out)
+        # Reported as a site rather than dropped, so a reader of the run sees the
+        # claim was seen and not judged rather than never found.
+        self.assertIn("The agent stages check out with `fetch-depth: 0`", out)
+
+    def test_the_corrected_sentence_is_green(self):
+        # The other half of the pair, and what makes the case above a *limit*
+        # rather than a hole the suite cannot see: the corrected wording of the
+        # same claim, verbatim, is judged and passes. A suite holding only the
+        # first case would be satisfied by a rule that flags nothing.
+        self.workflow()
+        self.tool("ec/tools/verify_reassembly.py", CORRECTED_GROUP_CLAIM)
+        depth, prose, out = self.problems()
+        self.assertFalse(depth, out)
+        self.assertFalse(prose, out)
+
+    def test_a_depth_word_in_an_appositive_is_not_a_claim_of_its_own(self):
+        # **A committed sentence, verbatim**, and the sharpest of the cases a
+        # clause rule would break: the depth word sits inside an appositive whose
+        # job name sits outside it, so a split wide enough to cut the appositive
+        # finds a depth word naming no job and reports a sentence that is
+        # correct. It is here as a positive control rather than only as the
+        # reason the rule was not taken -- a suite holding the limit cases
+        # above and none of these would be satisfied by a rule that flags every
+        # multi-clause sentence.
+        self.workflow()
+        self.tool("ec/tools/verify_reassembly.py",
+                  "# `agent-gates.sh` and ci.yml's `gates` job are both "
+                  "template-copied, so **the gate clause and the `fetch-depth: "
+                  "0` that job depends on have to be re-applied together**.\n")
+        _depth, prose, out = self.problems()
+        self.assertFalse(prose, f"a correct appositive was flagged:\n{out}")
 
     def test_a_job_id_two_workflows_share_satisfies_the_rule_for_both(self):
         # The floor and not a proof, at its bluntest: one word, both workflows,

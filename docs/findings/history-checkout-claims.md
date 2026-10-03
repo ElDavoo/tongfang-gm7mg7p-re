@@ -90,7 +90,7 @@ wording is kept, next to the correction.
 | 2 | `ec/tools/verify_reassembly.py:1313-1320` (comment) | "The agent stages check out with `fetch-depth: 0` and can run it; both of ci.yml's checkouts are default-depth and cannot resolve the revisions §14f names at all." | the four jobs that run the gate, all `fetch-depth: 0`; ci.yml's other checkout named as the default-depth one that runs only the two linters |
 | 3 | `ec/tools/verify_reassembly.py:1321-1327` (`HISTORY_REQUIREMENT`, printed to the user on a revision that will not resolve) | "A default-depth checkout -- actions/checkout's default, which is what ci.yml uses -- has neither revision" | "which is what ci.yml's `workflows` job uses, though that job runs no history reader" |
 | 4 | `ec/tools/measure_index_repair_visibility.py:107-126` (comment and string) | "The agent stages and ci.yml both check out with `fetch-depth: 0`" — a claim that `ci.yml` has one checkout, which it has two of, and that this one is the full-depth one, which is the other direction from the other six | the jobs that run a history reader, and `ci.yml`'s `workflows` job named as the default-depth example |
-| 5 | `ec/ghidra/README.md:800-817`, correction at `:806` | "both of `ci.yml`'s checkouts are default-depth and cannot resolve `08b72e2` at all, which is why it is a full-clone command and **not part of the per-commit gate**" | *is* part of the per-commit gate, via the `gates` job and `agent-gates.sh:160-163` |
+| 5 | `ec/ghidra/README.md:800-817`, correction at `:806` | "both of `ci.yml`'s checkouts are default-depth and cannot resolve `08b72e2` at all, which is why it is a full-clone command and **not part of the per-commit gate**" | *is* part of the per-commit gate, via the `gates` job and `agent-gates.sh:160-163`. **Corrected a second time, issue #1036:** that first correction reached only the halves about the other workflow and left "The agent stages check out with `fetch-depth: 0` and can run it" standing — false of `agent-plan.yml`'s `plan` and `agent-followups.yml`'s `followups` — and the live sentence now enumerates the four `agent-*.yml` stages that are `fetch-depth: 0`, by workflow *and* job, naming the other two as the action's default depth of 1 and not part of the claim |
 | 6 | `docs/findings.md` §14f, correction at `:3380` | "the agent stages have one (`fetch-depth: 0`) and `ci.yml`'s two checkouts do not" | every job that runs a history reader has one, `ci.yml`'s `gates` included |
 | 7 | `docs/agent-pipeline.md` item 3, correction at `:99` | heading "**`--verify-provenance` needs a full git history, and `ci.yml` does not have one**"; body "both of `ci.yml`'s checkouts (`:34`, `:64`) are default-depth" and "it is not in the gate for that reason" | heading names the jobs rather than the file; body's stale line refs repointed and its 2026-09-23 state marked as the record it is, since the decision paragraph below it landed the next day |
 
@@ -202,6 +202,47 @@ every readable workflow a sentence names is judged, and one problem is reported
 per workflow it names no job of, naming which. The floor above is unchanged and
 gained a second case; the file-granularity limit below is a different one and
 #1031 owns it.
+
+**A second workflow in one sentence is judged; a second *clause* is not, and that
+is a decision with a measurement behind it (#1036).** The per-workflow reading
+above is the whole of what is enforced. #1036 asked the same question one level
+down — a sentence whose first clause claims a depth about a group it never
+enumerates ("The agent stages check out with `fetch-depth: 0`") and whose second
+names one job, so the per-workflow rule is satisfied by a job belonging to a
+different clause — and **it was measured rather than decided by preference**, and
+the answer was no.
+
+Splitting a sentence on the coordination marks that join two claims (`; `,
+`, and `, `, but `, `, so `, `, while `, `, nor `) and requiring the depth word's
+own clause to name a workflow or a job **fires on committed sentences that are
+correct**, and they are not near-misses of the rule's shape: `docs/findings.md`'s
+own account of the three stale sites, whose second clause claims a depth by
+pronominal reference to a workflow named in the first;
+`history-checkout-prompt-reach.md`'s description of a *scratch* root, which is
+about a tree this repository does not commit; the prepared patch's statement of
+the tool's own invariant ("every job running a history reader has a full-depth
+checkout"), whose subject is quantified rather than named; a markdown table row
+in `provenance-clone-depth-behaviour.md` that the sentence splitter reads as one
+sentence; and that file's *"the gate clause and the `fetch-depth: 0` that job
+depends on"*, whose depth word sits in an appositive whose job name sits
+outside it. Narrowing the split set removes some of them and **stops firing on
+the target**, so it buys nothing. Exempting a clause whose subject is carried
+over from the clause before removes the rest — and the target too, because
+"check out with `fetch-depth: 0` and can run **it**" carries the pronoun itself,
+which is the anaphor the exemption would be keying on.
+
+That is the shape of the limit: deciding which of the two a bare clause belongs
+to needs the depth word attached to a particular subject, which is reading
+English. **So the residual is recorded rather than papered over: a sentence can
+still be satisfied by a job named for a different clause of itself.** The
+concrete case was `ec/ghidra/README.md`, whose live sentence made exactly that
+claim; it is corrected by hand and held by the suite rather than by the rule,
+which is the only kind of hold available for a claim this method cannot decide.
+`check_history_checkouts.py`'s docstring carries the same decision beside the
+rule it qualifies, and the committed-tree cases in
+`ec/tools/test_check_history_checkouts.py` assert both halves: that the
+uncorrected sentence is *not* flagged (the documented limit, executable rather
+than asserted in prose) and that the corrected one is.
 
 The line number it reports is the depth word's, not the sentence's. The
 docstring's claim sits eleven lines below the `Usage:` line it belongs to,
@@ -356,5 +397,13 @@ question is open, and is not resolved by what is on this page.
   the quotation rule that keeps it from red-flagging every retraction, and the
   files it declined and why are
   [`checkout-claim-corpus.md`](checkout-claim-corpus.md).
+- That the prose rule is closed. **It is a floor, and one specific shape of claim
+  gets past it:** a sentence satisfied by a job named for a different clause of
+  itself, which is how `ec/ghidra/README.md`'s site 5 sentence stayed false
+  through #1009's correction. That is measured and written down above rather
+  than fixed, and the tool does not attempt to count what a collective denotes
+  — telling "the agent stages" apart from a sentence that means six named
+  workflows needs the group resolved to its members, which is the English this
+  half deliberately does not read.
 - Any verdict of any tool, any register status, and any hardware or Windows
   fact. None of this needs a laptop, and none of it produces a hardware claim.

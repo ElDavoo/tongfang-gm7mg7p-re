@@ -955,9 +955,14 @@ which a full report would rewrite every `assembler` cell and could move the gap
 tallies above. That is why it is one-shot and why the tallies here are still the
 nix-pinned measurement. Auditing what it wrote is a separate command,
 `--verify-provenance` below, and it needs the full git history the two
-revisions it names live in: `git clone` without `--depth`. The agent stages
-check out with `fetch-depth: 0` and can run it, and so does `ci.yml`'s `gates`
-job — **which is why it *is* part of the per-commit gate**:
+revisions it names live in: `git clone` without `--depth`. Four of the six
+`agent-*.yml` stages check out with `fetch-depth: 0` and can run it —
+`agent-implement.yml`'s `implement` job, `agent-fix.yml`'s `fix`,
+`agent-review.yml`'s `review` and `agent-conflicts.yml`'s `resolve` — and so
+does `ci.yml`'s `gates` job; `agent-plan.yml`'s `plan` and
+`agent-followups.yml`'s `followups` are the action's default depth of 1 and run
+no history reader, so they are not part of the claim. **This is why it *is*
+part of the per-commit gate**:
 `.github/scripts/agent-gates.sh` runs the mode after `--check` and
 `--self-test`, and the `gates` job is the one that runs that script.
 *(Corrected 2026-09-26, issue #1009. The sentence this replaces read: "The
@@ -972,6 +977,29 @@ and no history reader. Left visible per [`../../docs/findings.md`](../../docs/fi
 §4a-4d; [`../../docs/findings/history-checkout-claims.md`](../../docs/findings/history-checkout-claims.md)
 has the rest of it, and `check_history_checkouts.py` re-derives the jobs from
 the committed workflows.)*
+
+*(Corrected 2026-10-03, issue #1036. **The half of that correction this file
+carried above it was not reached.** The note above says both halves of the
+sentence it replaced were wrong, and then explains only the halves about the
+checkout on this repository's other workflow; the half about the pipeline's own
+stages was left standing in the live sentence, which read "The agent stages
+check out with `fetch-depth: 0` and can run it, and so does `ci.yml`'s `gates`
+job". That was false of two of the six stages by this merge's own measurement:
+`check_history_checkouts.py` reads `agent-plan.yml`'s `plan` and
+`agent-followups.yml`'s `followups` at **depth 1, the action's default**, so a
+reader of this file concluded that all six stages check out in full. That was
+true of the tree #1009 measured and is the same defect, not a second one. The
+sentence above now enumerates the four stages that are `fetch-depth: 0` by
+workflow *and* job, and says in a clause which two are not part of the claim.
+Left visible per [`../../docs/findings.md`](../../docs/findings.md) §4a-4d;
+[`../../docs/agent-pipeline.md`](../../docs/agent-pipeline.md) item 3 carries
+the same clause with the scope spelled out, and
+[`../../docs/findings/testdata-row-claims-repair-measurement.md`](../../docs/findings/testdata-row-claims-repair-measurement.md)
+carries the correction that found this copy. **What is still true and is not
+restated here:** all four stages have full-depth checkouts, so all four *can*
+run the mode; the checker counts only the jobs that reach a history reader
+(`gates`, `implement` and `fix`, with `resolve` reaching it from its `prompt:`
+rather than a `run:` step), and `review` runs no gate at all.*
 
 **That warning has since been measured rather than predicted**
 (`../../docs/findings.md` §14h, issue #157). The runner's `sdas8051` was

@@ -123,6 +123,32 @@ and names no job of it. Telling that sentence apart from one that mentions
 clause level, and the whole design of this half is that one rule is asserted --
 the one decidable without reading English meaning.
 
+**A second workflow in one sentence IS judged, and a second *clause* is not,
+which is a decision rather than an omission (#1036).** The per-workflow reading
+above landed in #1034 and is the whole of what is enforced: a sentence naming
+two workflows is judged on both, and one naming a full-depth job of `ci.yml`
+beside a claim about `agent-plan.yml` reports `agent-plan.yml`. #1036 asked
+whether the same should hold *within* a sentence -- a sentence whose first
+clause claims a depth about a group the sentence never enumerates ("The agent
+stages check out with `fetch-depth: 0`") and whose second names one job, so the
+per-workflow reading is satisfied by a job belonging to the other clause. It is
+**not enforced, because no split of this corpus separates that from a correct
+sentence**, and the measurement is in
+`docs/findings/history-checkout-claims.md`. Splitting on `; `, `, and `,
+`, but `, `, so `, `, while ` and `, nor ` and requiring the depth word's own
+clause to name a workflow or a job fires on committed sentences that are
+correct, among them `docs/findings.md`'s own account of the three stale sites
+and a sentence whose job name is carried over by a pronoun from the clause
+before. Narrowing the split fires on fewer of those and stops firing on the
+target. Adding an exemption for a clause whose subject is carried over that way
+removes the false positives **and the true one**, because "check out with
+`fetch-depth: 0` and can run **it**" carries the pronoun itself. There is no
+boundary rule left that decides this without reading English, so the rule stays
+where the design puts it and the residual is recorded rather than papered over:
+**a sentence can still be satisfied by a job named for a different clause of
+itself.** That sentence was corrected at `ec/ghidra/README.md` by hand, and the
+correction is held by the suite rather than by this rule.
+
 The rule is a floor and not a proof: a job id is a plain word (`plan`, `fix`,
 `gates`), so a sentence that names one by accident passes, and **a job id two
 workflows share satisfies the rule for both** -- `gates` in `ci.yml` and
