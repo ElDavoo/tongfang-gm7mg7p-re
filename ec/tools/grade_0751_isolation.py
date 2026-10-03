@@ -5036,6 +5036,30 @@ def main(argv=None):
     # anything: a day whose two `0x00` blocks are both intact is graded over
     # in full and every check above passes it, so without this term it would
     # exit 0 over a day `3blocks/` holds at 1 for a different reason.
+    #
+    # `graded_unplaced` is the one shape in this section that is not a refusal
+    # at all, and it is left out on purpose. Every term above counts something
+    # this run declined to grade -- a window it would not print, or a value it
+    # would not grade twice -- while `graded_unplaced` counts windows it read,
+    # printed with their rows, and graded, over an arm the labels cannot name.
+    # Folding it in would report a run that read and graded every window as one
+    # that could not read them -- the one thing the closing section above is
+    # careful not to say about itself. It is a disclosure rather than a
+    # refusal, so the section says it in prose where §7's call is read from:
+    # the `elif graded_unplaced:` branch declines the capture-level
+    # comparison and stops at "as far as this run goes". A second
+    # machine-readable channel for it would be one fact owned twice. And the
+    # term is zero under `--block` by construction rather than by a guard --
+    # `shown` is the selected block's own windows there, and a window in no
+    # block is in none of them -- so it could only move the exit code of a
+    # day-level run, and §6's documented command line passes `--block` per
+    # value. That command line's day-level counterpart is #506.
+    #
+    # `unagreed`'s fold into `withheld` is a *refusal* counted under a term
+    # already here, which is a different shape and is not the argument for this
+    # one: a window that cannot be graded is not the case this is, and the two
+    # have different `--block` semantics for the reason each of their own
+    # comments give.
     return 1 if (void or unreads or withheld or repeated) else 0
 
 

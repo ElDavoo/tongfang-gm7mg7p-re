@@ -21,8 +21,8 @@ committed files only, and fails on the ones it cannot answer.
   ghidra-switch-entry    the committed `.c` declares the function inside a
                          `switchD_*` namespace -- Ghidra's own switch-analysis
                          namespace, and the same `switchD_` prefix
-                         `ExportDecompile.java` keys `isPlaceholderName()`
-                         on. **No instance in the committed tree since issue
+                         `TongFang.java`'s `isPlaceholderName()` keys on.
+                         **No instance in the committed tree since issue
                          #631**, which added the `caseD_` and `default` leaves
                          to the predicate and so took the fourteen rows that
                          used to land here out of this population altogether.
@@ -267,8 +267,8 @@ def in_switch_namespace(declared):
     Four committed `.c` files declare a namespaced name without being in one --
     `R3(x03)` and three like it, which is Ghidra rendering a call it could not
     resolve -- and a test for `::` would file those as switch entries. `switchD_`
-    is the prefix `ExportDecompile.java:339` already keys `isPlaceholderName()`
-    on, so the rule is the exporter's rather than this file's."""
+    is the prefix `TongFang.java`'s `isPlaceholderName()` already keys on, so
+    the rule is the exporter's rather than this file's."""
     if declared is None or ":" not in declared:
         return None
     root = declared.split(":")[0]
