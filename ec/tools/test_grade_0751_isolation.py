@@ -7884,5 +7884,121 @@ class UnreadableCaptureTests(unittest.TestCase):
         self.assertNotIn('nothing was read', err)
 
 
+# Appended for the reason `RefusedPairReadbackTests` names: a class added
+# inside `GradeTests` moves every `test_grade_0751_isolation.py:NNN` pin onto a
+# line that no longer says what its sentence says it does, and a class at the
+# end costs nothing.
+class GradedUnplacedExitCodeTests(unittest.TestCase):
+    """The exit code, and the count it deliberately does not turn on.
+
+    #530 added a seventh shape to the closing section: `graded_unplaced`, the
+    graded windows that are a window of no block because the mark that opened
+    them named an arm no value under test carries. The report discloses it --
+    a count in the section §7's call is read from, and a branch that declines
+    the capture-level comparison over it -- and the exit expression does not
+    read it. That is the decision this class pins, because it was held only in
+    prose: the accounting comment above the return described a population
+    `graded_unplaced` was not in, and nothing said the omission was a choice.
+
+    It is a choice, and the argument is the vocabulary the comment block
+    already uses. Every term in the expression counts something the run
+    *declined to grade* -- a window it would not print, or a value it would not
+    grade twice. `graded_unplaced` counts windows the run read, printed with
+    their rows, and graded, over an arm the labels cannot name -- so folding it
+    in would report a run that read and graded every window as one that could
+    not read them, which is the one thing the closing section is careful not to
+    say about itself. It is a disclosure and not a refusal, and the section
+    already states it in prose where §7's call is read from, so a second
+    machine-readable channel would be the same fact owned twice.
+
+    The third method is what makes the decision mechanical rather than a
+    promise: it reads the comment block the exit code is accounted for in, and
+    fails if that block stops naming the term or stops saying the expression
+    does not read it. A comment-only change is otherwise untestable, and this is
+    what makes one testable.
+
+    The first two methods are deliberately narrow. The pairing this decision
+    turns on was already asserted over this same fixture -- rc 0 beside the
+    count line, the sentence declining the capture-level comparison, and both
+    refusal sentences absent are all held by
+    `test_a_graded_window_in_no_block_is_scoped_where_the_prediction_is_read_from`,
+    and the per-block exit codes by
+    `test_a_block_is_its_own_windows_over_one_in_no_block`. These add only the
+    two ends that were open: where the decline branch stops, and the count
+    line's absence under the second value rather than the first.
+
+    Nothing here reads an EC. Every case is arithmetic over committed CSVs.
+    """
+
+    def test_the_decline_branch_ends_where_the_decision_says_it_does(self):
+        # The sentence the decision above leans on, and the one part of the
+        # unscoped run no existing method held.
+        #
+        # The pairing itself was already asserted, over this same invocation, by
+        # `test_a_graded_window_in_no_block_is_scoped_where_the_prediction_is_read_from`:
+        # rc 0, the count line, the sentence declining the capture-level
+        # comparison, and both refusal sentences absent. This does not repeat
+        # those. What that method holds is where the branch *begins*; what it
+        # does not hold is where the branch *stops*, and that is the sentence
+        # the decision cites -- the report says the strays cost it the
+        # comparison and then declines to go on, which is the whole reason a
+        # second machine-readable channel would be one fact owned twice.
+        rc, out, _ = run(*UNPLACED_WINDOW)
+        self.assertEqual(rc, 0)
+        section = out.split('=== what this does and does not settle ===')[1]
+        flat = " ".join(section.split())
+        self.assertIn('so the paragraph below is as far as this run goes', flat)
+
+    def test_the_count_line_is_absent_under_the_second_block_too(self):
+        # The structural zero for the second value, which is the half of it no
+        # existing method held.
+        #
+        # The `0xA0` half is already asserted by the same method named above,
+        # which runs `--block 0xA0` and requires the count line absent, and both
+        # values already assert rc 0 between them: that method for `0xA0`, and
+        # `test_a_block_is_its_own_windows_over_one_in_no_block` for `0xA0` and
+        # `0x10` over this same fixture. Neither reaches the count line under
+        # `0x10`, which is what this adds. Both values rather than one because
+        # §6 runs one attachment per value, and a zero held for only one would
+        # be a fact about the fixture and not about `shown`.
+        rc, out, _ = run(*UNPLACED_WINDOW, '--block', '0x10')
+        self.assertEqual(rc, 0)
+        self.assertNotIn('graded window(s) above are in no block', out)
+
+    def test_the_exit_expression_says_it_does_not_read_the_count(self):
+        # The decision, at the place it is read from. Anchored on the expression
+        # string rather than on a line number: it occurs exactly once in the
+        # file, where a bare `file:NNN` would name a line the next merge moves,
+        # and the comment block above it is what the issue asks to be recorded.
+        source = (HERE / 'grade_0751_isolation.py').read_text()
+        anchor = 'return 1 if (void or unreads or withheld or repeated) else 0'
+        self.assertEqual(source.count(anchor), 1)
+        lines = source.splitlines()
+        at = next(n for n, line in enumerate(lines) if anchor in line)
+        # The contiguous run of comment lines immediately above the return, which
+        # is the accounting block. Walking back from the return is what makes this
+        # the comment rather than the function: the block is not separated from
+        # the closing section above it by a blank line, so reading back to the
+        # last blank line reaches into `main`, where every term is named by the
+        # code that reads it -- and deleting the decision out of the comment would
+        # leave this test green.
+        head = at
+        while head and lines[head - 1].lstrip().startswith('#'):
+            head -= 1
+        block = '\n'.join(lines[head:at])
+        self.assertIn('graded_unplaced', block)
+        # Named *and* excluded. A comment that named the term without saying the
+        # expression does not read it would leave the decision unstated, which is
+        # the gap this closes: the block described a population the term was
+        # absent from without recording that as a choice.
+        self.assertIn('not a refusal', block)
+        self.assertIn('left out on purpose', block)
+        # And the term is genuinely absent from the expression rather than the
+        # comment being wrong about which terms it reads. Read from the tool's own
+        # return line and not from the literal above, so that folding the count
+        # in and rewriting the comment alongside it cannot agree.
+        self.assertNotIn('graded_unplaced', lines[at])
+
+
 if __name__ == '__main__':
     unittest.main()
