@@ -109,6 +109,12 @@ Three phases, each announced on stdout and marked in the CSV's `phase` column:
 the `baseline done` line prints; put AC back when the `discharge done` line
 prints.
 
+The `<date>-0436-capacity.csv` above is a bare name, and the probe resolves a
+bare name under `evidence/ec-watch/` so it lands where §7 says it does — it
+prints the path it resolved, before the first sample and again at the end. A
+name carrying a `/` is used as given, relative to the repository root the probe
+`cd`s into. Nothing is written until you see the path.
+
 The phase lengths are environment variables rather than arguments, so a run does
 not have to be the default one: `BASELINE`, `DISCHARGE`, `RECOVERY` in samples
 at 1 s each, and `STEP` for the interval.
@@ -257,6 +263,20 @@ replacing it, so a §3 run stopped and resumed extends the capture instead of
 overwriting it. §4's probe does the opposite — it opens its `$OUT` with `>` and
 truncates — so a re-run there is a fresh file rather than an extension of the
 one before it.
+
+*** CORRECTION 2026-10-03 (issue #216), leaving the paragraph above as it was
+written.*** **The two sentences above about §4's probe resolving its path are
+no longer true of it, and only of it.** `remain-capacity-probe` now resolves a
+bare output name under `evidence/ec-watch/`, so §4's command as printed lands
+its capture where this section lists it, with no rename step and no second file
+to reconcile — which is what the paragraph above says neither arm does.
+**`ec_validate.py` is unchanged and §3's bare name still lands at the
+repository root**, so §3 still needs the full path or a `cd` into
+`evidence/ec-watch/` first; the `rem` block in §3 still says so. **The
+append-versus-truncate half above is also unchanged for both tools** — §4's
+probe still opens its `$OUT` with `>` and truncates, and `ec_validate.py --csv`
+still appends. The other claim in the paragraph above, that a bare name resolves
+differently per tool, was correct and is now only true of one of them.
 
 Add the files to `evidence/README.md`, which is the index every findings claim
 cites through, and say in that entry what the run was: which arm, AC or battery
