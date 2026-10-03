@@ -61,6 +61,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
 - [`bucket-c-codemap.md`](bucket-c-codemap.md) — Bucket C against a recovered code map: 16 of the 140 sites are on an instruction boundary, and 14 of those 16 sit inside spans already listed as data tables
+- [`bucket-c-unplaced.md`](bucket-c-unplaced.md) — The unplaced bucket-C census: what the sites no data region covers say
 - [`call-graph-agreement-set-identity.md`](call-graph-agreement-set-identity.md) — Do the agreements agree as sets, and not only in number? 61 of 74, and the thirteen that do not (issue #704)
 - [`call-graph-diff-alignment.md`](call-graph-diff-alignment.md) — `diff_table()` names every row of a permuted table, including the rows that did not move (issue #469)
 - [`call-graph-unresolved.md`](call-graph-unresolved.md) — The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (issue #456)
@@ -173,6 +174,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pack-temp-producer-chain.md`](pack-temp-producer-chain.md) — The pack-temperature producer chain at `0x04A2`/`0x04A3` (issue #1425)
 - [`paged-trampoline-hits-by-hand.md`](paged-trampoline-hits-by-hand.md) — All 18 paged-trampoline hits, read one by one (issue #54)
 - [`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md) — The six `pd 0x07D0` accessors that were not functions, and what naming them did to the census (issue #1101)
+- [`pd-07d2-index-or-word-half.md`](pd-07d2-index-or-word-half.md) — `0x07D2` is an index in some routines and a 16-bit window's low byte in others, and choosing between them is the wrong question
 - [`pd-11c2-dispatch-key-selector.md`](pd-11c2-dispatch-key-selector.md) — The `pd 0x11C2` dispatch key is `0x0424 + 0x260 * R7`, and only three key pairs ever leave the default record (issue #647)
 - [`pd-call-site-table-framing.md`](pd-call-site-table-framing.md) — Five `pd` dispatch call sites whose tables the annotation rows read as instructions (issue #643)
 - [`pd-callers-status-intersection.md`](pd-callers-status-intersection.md) — A caller's literals are not index-register loads unless the site indexes on those registers

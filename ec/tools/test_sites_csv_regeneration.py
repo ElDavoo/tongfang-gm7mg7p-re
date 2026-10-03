@@ -117,6 +117,8 @@ TABLES = {
         ["0x07D0"], True, False),
     "ec-0x07d1-sites.csv": (
         ["0x07D1"], True, False),
+    "ec-0x07d2-sites.csv": (
+        ["0x07D2"], True, False),
     "ap-oem-0741-bit7-sites.csv": (
         ["0x0741"], True, False),
     "manual-fan-ctrl-0751-sites.csv": (

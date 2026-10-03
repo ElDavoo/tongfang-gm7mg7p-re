@@ -6,10 +6,15 @@ budget would have put in that row's `access` cell instead.
 `../../docs/findings/opcode-len-bounds-census.md` drove that loop from every
 one of the image's 262144 start offsets to count where it stops: `max_insns (8)
 exhausted` fires 119530 times. That figure is a property of the file, and
-nothing in the tree had asked what it means for the nine committed tables whose
+nothing in the tree had asked what it means for the committed tables whose
 `window` column this same function produces. This asks, and the answer is that
-**15** of their rows are truncated, so their windows are shorter than the code
-around them and their `access` cells are summaries of a cut.
+a set of their rows is truncated, so their windows are shorter than the code
+around them and their `access` cells are summaries of a cut. `--csv` prints
+that set for the tree it is run on; how many rows it holds is not written down
+here, because a count of the repository's own rows goes stale at the next
+merge, and `test_the_committed_census_holds_the_45_and_the_13` holds the claim
+in its place -- that this census names exactly the budget-truncated rows of the
+tables in `TABLES`, which is the property and does not move.
 
 **The terminator is re-derived here, not re-implemented.** Every row goes
 through `trace_xdata_refs.walk_why()`, the function `trace_xdata_refs.py`
@@ -130,6 +135,7 @@ TABLES = ("ec-07c4-07d5-sites.csv",
           "ec-09e9-09eb-sites.csv",
           "ec-0x07d0-sites.csv",
           "ec-0x07d1-sites.csv",
+          "ec-0x07d2-sites.csv",
           "manual-fan-ctrl-0751-sites.csv",
           "xdata-0400-045f-sites.csv",
           "xdata-086x-dispatch-sites.csv",

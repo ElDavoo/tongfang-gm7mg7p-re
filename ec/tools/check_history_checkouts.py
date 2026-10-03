@@ -480,7 +480,9 @@ def job_routes(steps):
     `named` is every prompt mention that is not in command position, whether or
     not the job is a reader by some other route. It is a fact about that line
     of the prompt, and folding it into the job's own standing would report a
-    job as reaching a gate it only describes.
+    job as reaching a gate it only describes. A line is listed once: a retry
+    step that reuses its first attempt's `with:` through a YAML alias carries
+    the same prompt, and the alias resolves to the anchor's lines.
     """
     stepped, prompted, named = [], [], []
     for step in steps:
@@ -493,7 +495,7 @@ def job_routes(steps):
         for line, marker, command in prompt_mentions(step):
             if command:
                 prompted.append(marker)
-            else:
+            elif (line, marker) not in named:
                 named.append((line, marker))
     if stepped:
         return stepped[0], "a run: step", named
