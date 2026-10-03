@@ -202,23 +202,33 @@ ROOT_VALUES = {
 # be reported rather than edited, and a bare "stale" would leave the next
 # reader with nowhere to go.
 #
-# **A key is matched against what the tool prints, not against the figure the
-# patch quotes.** That is the whole reason the values below carry two facts:
-# the claim that is wrong, and the figure the tool prints in its place. The
-# asserting case asks "does the patch carry 201?" and the exemption answers
-# "no, and that is the enumerated claim `103 committed tests`, owned by #685".
-# A key that quoted only the patch's own figure could never match, because the
-# figures differ by definition -- which is what makes an exemption an
-# enumerated fact rather than a hole.
+# **A key records no figure, and that is the point.** The obvious thing to
+# write beside a stale claim is what the tool prints in its place, and for two
+# of these it is a count of this repository's own tests: a value every merge
+# that adds a test case has to edit, in a table nothing else makes anyone
+# edit. The direction that needs it is already the second assertion in
+# `test_every_stale_key_is_still_wrong` -- `assertNotIn(_quoted_figure(claim),
+# printed)` -- and it asks its question off the run, so it keeps holding when
+# the figure moves.
 #
-# `KNOWN_STALE` is not a backlog to drain here. Both are owned by issues that
-# were open against this tree when it was written, and each patch header says
-# so in its own words.
+# **An owner is a file in this repository, not an issue number.** An issue
+# closes and its number goes on naming work nobody is doing, and a reader
+# cannot tell a closed one from a live one by looking at it: two of these
+# descriptions were first attributed to issues that have since closed, which
+# left the suite reporting them as owned and the corrections unowned.
+# `test_every_stale_key_names_an_owner` holds the replacement by requiring the
+# owner to name a file that is there.
+#
+# `KNOWN_STALE` is not a backlog to drain here. The census records what each
+# claim is and where the correction is recorded.
 KNOWN_STALE = {
-    ('docs/ci/agent-gates-0751-self-test.patch', '103 committed tests'): (
-        '201', "issue #685, by the patch header's own sentence"),
-    ('docs/ci/agent-gates-pin-table-rows.patch', '105 rows of the per-pin'): (
-        '132', "issue #942, `docs/findings/pin-table-row-reconciliation.md`"),
+    ('docs/ci/agent-gates-0751-self-test.patch', '103 committed tests'):
+        "`docs/ci/agent-gates-0751-self-test.patch`'s own header, which "
+        "assigns the other occurrences of that figure to issue #685",
+    ('docs/ci/agent-gates-pin-table-rows.patch', '105 rows of the per-pin'):
+        "`docs/findings/prepared-patch-description-census.md`, *Read and not "
+        "corrected*, where the row-count claim and the red tool it describes "
+        "are recorded as follow-up work",
 }
 
 # Which prose half each root must appear in. The capture root is what the cheap
@@ -384,17 +394,19 @@ class PatchDescriptionTests(unittest.TestCase):
                     'this suite can no longer check, which is worth knowing.')
                 said = prose(patch)
                 for where in spec['where']:
+                    if exempt(patch, where, said):
+                        # An enumerated stale sentence lives in this half, so
+                        # what the tool prints is not what this half is
+                        # required to carry. `ExceptionTests` is what holds
+                        # the key rather than this skip.
+                        continue
                     for figure in printed:
-                        if exempt(patch, figure):
-                            # Enumerated and still wrong; `ExceptionTests` is
-                            # what holds the key rather than this skip.
-                            continue
                         self.assertIn(
                             figure, said[where],
                             f'{patch} does not carry {figure!r}, which '
                             f'`{" ".join(spec["tool"])}` prints (exit {code}). '
                             f'The {where} describes the tool as it is not.'
-                            + _exemption(patch, figure))
+                            + _not_enumerated())
 
     def test_each_gate_comment_names_every_input_tree_its_tool_reads(self):
         for patch, spec in sorted(PATCHES.items()):
@@ -405,9 +417,10 @@ class PatchDescriptionTests(unittest.TestCase):
                         root, f'{tool} names no input tree this suite can '
                               'read; see '
                               'test_each_named_root_constant_still_reads_as_it_did')
-                    if exempt(patch, root):
+                    said = prose(patch)
+                    if exempt(patch, ROOT_WHERE, said):
                         continue
-                    comment = prose(patch)[ROOT_WHERE]
+                    comment = said[ROOT_WHERE]
                     self.assertIn(
                         root, comment,
                         f'{patch} does not name {root!r} in its gate comment, '
@@ -416,7 +429,7 @@ class PatchDescriptionTests(unittest.TestCase):
                         'permanent description of what the cheap tier may '
                         'read, so a reader deciding whether the check is cheap '
                         'is reading a list with a tree missing from it.'
-                        + _exemption(patch, root))
+                        + _not_enumerated())
 
     def test_each_named_root_constant_still_reads_as_it_did(self):
         # The direction that keeps the root honest. A root asserted against the
@@ -457,10 +470,12 @@ class ExceptionTests(unittest.TestCase):
 
     An exemption that nothing checks is a hole with a comment on it. Each key
     is asserted twice: the quoted text is still in the patch, so the key still
-    names something real; and the figure the tool prints today is not what the
-    key quotes, so the key is still needed. Correct a description anywhere and
-    the second assertion fails and says to drop the key -- which is the only
-    thing that makes it safe to leave four wrong descriptions uncorrected.
+    names something real; and the tool does not print the figure the key's
+    sentence quotes, so the key is still needed. Correct a description anywhere
+    and the first assertion fails and says to drop the key -- which is the only
+    thing that makes it safe to leave the wrong descriptions uncorrected. Both
+    are read off a run, so neither is a figure this table has to be edited
+    into when one of them moves.
 
     The reverse direction matters for the same reason and is what stops the set
     growing: a key that never matched any patch is a claim about a sentence
@@ -479,7 +494,7 @@ class ExceptionTests(unittest.TestCase):
                     'now right.')
 
     def test_every_stale_key_is_still_wrong(self):
-        for (patch, claim), (expected, owner) in sorted(KNOWN_STALE.items()):
+        for (patch, claim), owner in sorted(KNOWN_STALE.items()):
             with self.subTest(patch=patch, claim=claim):
                 self.assertIn(
                     patch, PATCHES,
@@ -494,16 +509,9 @@ class ExceptionTests(unittest.TestCase):
                     f'{patch} carries no figure pattern in this suite\'s table, '
                     'so nothing can tell whether the claim its key quotes is '
                     'still wrong. Give the entry a `figure`, or drop the key.')
-                self.assertIn(
-                    expected, printed,
-                    f'the KNOWN_STALE key for {patch} records that its tool '
-                    f'prints {expected!r}, and the run now prints {printed}. '
-                    'The figure moved, so this key no longer exempts anything: '
-                    're-derive it against the run, or correct the patch and '
-                    'drop it.')
-                # The other direction, and the one that makes the exemption
-                # mean something: if the patch has caught up with the tool,
-                # nothing needs exempting any more.
+                # Read off the run, not off the table: the figure the tool
+                # prints is a count of this repository's own tests, and holding
+                # one here is a value every merge that adds a case has to edit.
                 self.assertNotIn(
                     _quoted_figure(claim), printed,
                     f'{patch} quotes {claim!r} and its tool now prints that '
@@ -512,7 +520,7 @@ class ExceptionTests(unittest.TestCase):
                     'be corrected if the two still disagree.')
 
     def test_every_stale_key_names_an_owner(self):
-        for (patch, claim), (_, owner) in sorted(KNOWN_STALE.items()):
+        for (patch, claim), owner in sorted(KNOWN_STALE.items()):
             with self.subTest(patch=patch, claim=claim):
                 # An exemption with no owner is a deferral with no name on it,
                 # which is how a stale description outlives the branch that
@@ -520,8 +528,30 @@ class ExceptionTests(unittest.TestCase):
                 self.assertTrue(
                     owner.strip() and not owner.lower().startswith('tbd'),
                     f'the KNOWN_STALE key for {patch} ({claim!r}) names no '
-                    'owner for its correction. Name the issue, or correct the '
-                    'description and drop the key.')
+                    'owner for its correction. Name where it is recorded, or '
+                    'correct the description and drop the key.')
+                # And an owner that is a bare issue number is the same hole
+                # with a number on it. The issue closes; the number goes on
+                # naming work nobody is doing, and nothing in this repository
+                # distinguishes a closed one from a live one -- two of these
+                # descriptions were first attributed to issues that have since
+                # closed, and the suite reported them as owned. This cannot
+                # reach GitHub to ask, so it holds the shape that cannot rot
+                # instead: an owner names a file here, and the file is there.
+                named = _owner_paths(owner)
+                self.assertTrue(
+                    named,
+                    f'the KNOWN_STALE key for {patch} ({claim!r}) gives its '
+                    f'owner as {owner!r}, which names no file in this '
+                    'repository. An issue number is not an owner -- it closes, '
+                    'and a closed one reads exactly like a live one. Name the '
+                    'file recording where the correction is tracked.')
+                for path in named:
+                    self.assertTrue(
+                        (REPO / path).exists(),
+                        f'the KNOWN_STALE key for {patch} ({claim!r}) names '
+                        f'{path!r} as where its correction is tracked, and '
+                        'there is no such file here.')
 
 
 def _quoted_figure(claim):
@@ -535,39 +565,48 @@ def _quoted_figure(claim):
     return found.group(0) if found else None
 
 
-def exempt(patch, figure):
-    """Whether `(patch, figure)` is an enumerated stale claim, and its owner.
+def exempt(patch, where, said):
+    """The owner of an enumerated stale claim in `patch`'s `where` half, or None.
 
     The single place the asserting cases consult `KNOWN_STALE` through, so a
     key and the case it silences cannot disagree about what a key is: both go
     through this, and the second direction -- that a key is still *needed* --
     is `ExceptionTests`.
 
-    Matched on the *printed* figure, which is what the asserting case has in
-    hand. A key whose printed figure no longer matches the run is a key whose
-    tool changed, and `test_every_stale_key_is_still_wrong` is what says so.
+    Matched on the sentence the patch carries, and on the half of the prose
+    being checked. What the tool prints today is a count this repository's own
+    next merge moves, and matching on it would put that count in the exemption
+    table -- see the note above `KNOWN_STALE`. A key whose sentence has been
+    corrected matches nothing here, which is
+    `test_every_stale_key_still_quotes_its_patch` saying so by name.
     """
-    for (stale_patch, claim), (printed, owner) in sorted(KNOWN_STALE.items()):
-        if stale_patch == patch and printed == figure:
+    for (stale_patch, claim), owner in sorted(KNOWN_STALE.items()):
+        if stale_patch == patch and claim in said.get(where, ''):
             return owner
     return None
 
 
-def _exemption(patch, figure):
+def _not_enumerated():
     """The trailing note for a claim the suite is about to fail on.
 
-    It names the exemption when there is one and says what to do when there is
-    not, because the failing assertion's own message should not have to be
-    read twice to find out which of the two situations this is.
+    One branch rather than two: an enumerated claim is skipped above the
+    assertion, so a failure here is by construction a claim nothing has
+    claimed, and the message says what to do about that.
     """
-    owner = exempt(patch, figure)
-    if owner:
-        return (f'\n\nThis one is enumerated in KNOWN_STALE and owned by '
-                f'{owner}, which is why the assertion above has not already '
-                'failed. If it has, the key needs dropping.')
     return ('\n\nIf this is a claim already known to be wrong, add it to '
-            'KNOWN_STALE with the issue that owns the correction; a claim '
-            'already wrong is exempt by construction, a new one is not.')
+            'KNOWN_STALE with the file recording where its correction is '
+            'tracked; a claim already wrong is exempt by construction, a new '
+            'one is not.')
+
+
+def _owner_paths(owner):
+    """The repository paths an owner names, read out of its backticks.
+
+    What `test_every_stale_key_names_an_owner` requires at least one of, so
+    that an owner is somewhere a reader can go rather than a number that may
+    or may not still be open.
+    """
+    return re.findall(r'`([^`]+)`', owner)
 
 
 class ParseTests(unittest.TestCase):

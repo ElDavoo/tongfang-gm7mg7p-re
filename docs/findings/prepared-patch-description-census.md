@@ -19,10 +19,11 @@ tool, and it is the sentence the next reader of that gate consults.
 
 Issue #976 named two such descriptions in
 `agent-gates-testdata-row-claims.patch` and asked for the rest of the set to be
-censused rather than fixed, so each stale row below is reported with its owner
-and left alone. One description is corrected here; the corrections land in that
-patch's own header and gate comment, with the superseded wording left visible
-per `docs/findings.md` §4a-4d rather than silently replaced.
+censused rather than fixed, so each stale row below is reported and left alone.
+Those two are corrected here, along with the same wording in
+`docs/agent-pipeline.md`; the corrections land in the patch's own header, in its
+gate comment and in that one file, with the superseded wording left visible per
+`docs/findings.md` §4a-4d rather than silently replaced.
 
 ## The correction, and what it was
 
@@ -60,6 +61,15 @@ could silently have broken the patch's applicability.
 `tools/test_agent_gates_patches.py` is what proves it did not, and it runs over
 the whole set in every ordered pair rather than only this patch.
 
+**The same wording in `docs/agent-pipeline.md`.** Item 10 carried the gate
+comment's "two annotation CSVs" list, and is corrected here too: the cheap
+tier's inputs now read "`ec/tools/testdata/`, two annotation CSVs, and the
+captures under `evidence/ec-watch/` a bare date in a sentence resolves
+against", with the reason in a parenthesis. It is the file whose job is to
+carry descriptions across a template re-copy, so leaving it wrong would have
+left the same false statement in the one place a re-copy picks it up. One
+phrase, and nothing else in that file moved.
+
 ## The census, and how to re-derive it
 
 Every figure below is read off a run on this tree, not copied. The commands
@@ -70,9 +80,9 @@ image.
 |---|---|---|---|---|
 | `agent-gates-testdata-row-claims.patch` | `check_testdata_row_claims.py --check` | "Two of those entries are dated refusals" | "under the five shapes and the three dated refusals" | **was stale; corrected here** |
 | ″ | ″ | gate comment names three input trees | also globs `evidence/ec-watch/<date>-*` | **was stale; corrected here** |
-| `agent-gates-0751-self-test.patch` | `grade_0751_isolation.py --self-test` | "the grader's 103 committed tests" | prints a four-figure test count today | **stale, left** — #685 |
-| `agent-gates-pin-table-rows.patch` | `check_pin_table_rows.py` | "105 rows place against 105 records and all seven classes are 0" | a larger row count, with classes non-zero | **stale, left** — #942 |
-| `agent-gates-capture-claims.patch` | `check_testdata_index.py`, `check_capture_claims.py` | "the two CSVs beside it" | the testdata tree holds many loose CSVs and `.txt` files; `check_capture_claims.py` also reads the prose corpus | **stale, left** — #745 |
+| `agent-gates-0751-self-test.patch` | `grade_0751_isolation.py --self-test` | "the grader's 103 committed tests" | prints a different figure than the patch quotes | **stale, left** — #685, by that patch header's own sentence |
+| `agent-gates-pin-table-rows.patch` | `check_pin_table_rows.py` | "105 rows place against 105 records and all seven classes are 0" | a larger row count, with classes non-zero | **stale, left** — see *Read and not corrected* |
+| `agent-gates-capture-claims.patch` | `check_testdata_index.py`, `check_capture_claims.py` | "the two CSVs beside it" | the testdata tree holds many loose CSVs and `.txt` files; `check_capture_claims.py` also reads the prose corpus | **stale, left** — see the borderline readings above |
 | `agent-gates-disasm8051-self-test.patch` | `disasm8051.py --self-test` | "18 instructions", "4 `REL_SITES`", "11 `BIT_SITES`", "36 assertions in all" | every printed figure agrees | **matches** |
 | `agent-gates-gap-text-check.patch` | `verify_gap_text.py --check` | "the 143 instructions `sdas8051` cannot express" | "gap text verdicts: 143 agree" | **matches** |
 
@@ -105,7 +115,7 @@ is a census row here and not a row in
 nothing can judge is a hole with a comment on it. Its other half is the same
 kind of claim: the gate comment names the two CSVs but not the prose corpus
 `check_capture_claims.py` reads, though the header records `registers.yaml` as
-the subject one sentence above. Reported here rather than corrected, for #745.
+the subject one sentence above. Reported here rather than corrected.
 
 ## What now holds a description to its tool
 
@@ -115,17 +125,33 @@ carry it; for each tool whose input trees it can name from the tool's own
 module constants, it requires the gate comment to name each one. It is not
 wired into `.github/scripts/agent-gates.sh` — a seventh `gate` line at a list
 two patches already insert into is #956's problem, not this one's — and
-`tools/run-tests.sh` discovers it by `find` like any other suite.
+`tools/run-tests.sh`, which is what `ci.yml`'s `tests` job runs, discovers it by
+`find` like any other suite. Both are green.
 
 The bound is stated rather than hidden, and it is the sibling's: **a claim
 already wrong is exempt by construction; a new one is not.** The descriptions
 the census found stale, and did not correct, are the ones `KNOWN_STALE`
 silences: each keyed on the sentence the patch carries, and each naming the
-issue that owns the correction. Every key is held in both directions: the
-quoted sentence must still be in the patch, and the figure the tool prints must
-still differ from the one it quotes. Correct a description anywhere and the key
-fails and says to drop it, which is what makes the exemption an enumerated fact
-rather than a hole.
+file recording where the correction is tracked. Every key is held in both
+directions, both read off a run: the quoted sentence must still be in the
+patch, and the figure the tool prints must still differ from the one it quotes.
+Correct a description anywhere and the key fails and says to drop it, which is
+what makes the exemption an enumerated fact rather than a hole.
+
+A key holds no figure of its own, and that is deliberate rather than an
+omission: what the tool prints in place of a stale claim is for two of these a
+count of this repository's own tests, which is a value every merge that adds a
+test case has to edit — and a test table is not where anyone looks to edit one.
+The run already answers the question a recorded figure would answer.
+
+An owner is a file in this repository rather than an issue number. Two of these
+descriptions were first attributed to issues that have since closed, which left
+the suite reporting them as owned by work nobody was doing — a closed number is
+indistinguishable from a live one by looking at it, and nothing here holds one
+open. `test_every_stale_key_names_an_owner` therefore requires the owner to
+name a file that is there, which is the part of that claim this repository can
+check. Whether an issue is still open is a fact about GitHub, not about this
+tree, and this suite does not reach GitHub to ask.
 
 **What the suite does not check is prose**, and two things in particular. A
 patch claiming a tool "catches regression X", or "is cheap because it reads
@@ -133,8 +159,8 @@ one CSV", is a reading. So is any figure a tool derives rather than prints —
 which is why the disasm sum above is a census row and not a key. Not found by
 this method, never absent.
 
-Every case was checked against a mutation it is supposed to catch, in a scratch
-copy rather than asserted:
+Every case was checked against a mutation it is supposed to catch, applied to
+the tree and reverted rather than asserted:
 
 | mutation | case that went red |
 |---|---|
@@ -142,6 +168,8 @@ copy rather than asserted:
 | say four where the tool says three | same |
 | drop `evidence/ec-watch/` from the gate comment | `test_each_gate_comment_names_every_input_tree_its_tool_reads` |
 | correct an enumerated stale claim | `test_every_stale_key_still_quotes_its_patch` |
+| re-point a key at a sentence carrying the figure the tool now prints | `test_every_stale_key_is_still_wrong` |
+| give an owner back as a bare issue number | `test_every_stale_key_names_an_owner` |
 
 ## Read and not corrected
 
@@ -156,12 +184,12 @@ the tool is green as prepared, with a specific figure and "all seven classes
 are 0". On this tree the tool is **red** — `check_pin_table_rows.py` exits
 non-zero, and the per-pin table carries unplaced rows and rows with no census
 record. That is a live reconciliation failure rather than a stale sentence, and
-it is #942's. It is also worth naming here because of what it says about the
-class: **"it is green as prepared, and that was measured" is a claim about a
-tree, and it is the one kind of claim in this set that a landing would make
-real** — a patch that lands a red gate is how a gate gets switched off. Nothing
-here claims the other patches are green; each was run, and the run is in the
-table.
+reconciling it is follow-up work rather than a sentence to reword. It is also
+worth naming here because of what it says about the class: **"it is green as
+prepared, and that was measured" is a claim about a tree, and it is the one
+kind of claim in this set that a landing would make real** — a patch that lands
+a red gate is how a gate gets switched off. Nothing here claims the other
+patches are green; each was run, and the run is in the table.
 
 **`docs/findings.md` §76's closing "the patch is **not** touched — the CLI is
 unchanged".** Same wrong reason as the sentence corrected here, one file over,
@@ -190,9 +218,3 @@ file is not touched at all.
   exactly why the corrected patch header names `shape_label()` instead of
   quoting it. The suite is what stops the descriptions going stale; this table
   is what says which were, and it is correct as of the tree it was measured on.
-- **`docs/agent-pipeline.md` item 10 carries the same "two annotation CSVs"
-  wording** as the gate comment corrected here. It is the file whose job is to
-  carry descriptions across a template re-copy, so leaving it wrong leaves the
-  same false statement in the one place a re-copy would pick it up. It is a
-  one-phrase edit, and it is **not made here** because issue #956 has an open
-  branch editing that file; a follow-up should take it.
