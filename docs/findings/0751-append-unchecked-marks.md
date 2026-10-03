@@ -34,7 +34,7 @@ promise. It is a per-process fact, and everything around it is per-file:
 
 So a CSV already carrying an unchecked mark keeps it, and the run is still
 refused whole after the day, from a prompt that said every label was fine. The
-four ways a file comes to hold a mark no watcher checked:
+five ways a file comes to hold a mark no watcher checked:
 
 1. a run taken before `--label-vocab` existed;
 2. a console started without the flag — the three §3 watchers are three
@@ -42,10 +42,22 @@ four ways a file comes to hold a mark no watcher checked:
 3. a watcher restarted mid-block, appending into the file the first one left;
 4. a `manual_fan_ctrl_probe.py` capture, which writes the same
    `ts,MARK,,label` row (`windows/tools/manual_fan_ctrl_probe.py:433-438`) and
-   is only a *source* of a mark in somebody else's file.
+   is only a *source* of a mark in somebody else's file;
+5. **a block run again after one came out void** — the re-done block, added
+   after #548 by `docs/findings/0751-redone-block-value.md`. It is the only
+   one of the five where nothing went wrong: the redo is what §3 tells the
+   operator to do. Appended to the set the void block is in rather than run on
+   its own `<date>`, it is a second `no-op`/`wrote`/`restored` set carrying the
+   same value, and since the value under test is what a block, a `--dump` pair
+   and `--block` are all named by, it stops naming one block — the census names
+   every block carrying it whatever the run was scoped to, a run over the whole
+   day holds the exit code at 1, and `--block` refuses the value rather than
+   taking whichever attempt came first. That write-up is
+   where the condition and both shapes that reach it are argued; the list here
+   is so this one and that one cannot disagree about how many there are.
 
-§3a's service-stopped pass is not a fifth: it is a second run with its own
-`<date>`, not a fourth block of §3's
+§3a's service-stopped pass is none of them either: it is a second run with its
+own `<date>`, not a fourth block of §3's
 (`manual-fan-ctrl-0751-isolation.md:909-912`), so a §3a pass on a fresh date
 writes three new files and starts on empty ones. It is the one routine that
 correctly *avoids* the collision, which is why the notice stays quiet for it.
