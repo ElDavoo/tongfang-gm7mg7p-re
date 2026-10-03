@@ -7127,5 +7127,89 @@ class StrictReaderOpenCountTests(unittest.TestCase):
         self.assertEqual(unplaceable, [])
 
 
+class UnreadableCaptureTests(unittest.TestCase):
+    # `main` over a file `read_capture` refuses. Built from temp files rather
+    # than from `evidence/ec-watch/2026-09-23-0751-isolation.txt`, which is
+    # the case `test_probe_log_to_capture.py` holds: this suite is over
+    # constructed captures throughout, and a committed log under it would make
+    # that untrue. What is under test is `main`'s own half -- that a refusal
+    # the reader raises is printed and returned rather than raised out, over a
+    # command line that named the file.
+    def _written(self, tmp, name, payload):
+        path = Path(tmp) / name
+        path.write_bytes(payload)
+        return str(path)
+
+    def test_a_free_form_probe_log_is_refused_by_name_and_not_raised(self):
+        # The shape the reader hits first in a console log: a `#` note per
+        # header line, and then a line with no commas in it at all, which is a
+        # short row rather than a bad hex literal.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._written(tmp, 'probe.log', (
+                b'# a probe run\n'
+                b'# 2026-01-01T12:00:01Z, Control Center running\n'
+                b'=== write 0x0751=0xA0 (hold 20s) ===\n'
+                b'restored 0x0751 -> 0x10\n'))
+            rc, _, err = run(path)
+        self.assertEqual(rc, 1)
+        self.assertIn(f"{path}: short row ['=== write 0x0751=0xA0 (hold 20s) ===']",
+                      err)
+        # The remedy, and it names the converter rather than restating the
+        # refusal: the reader's own sentence is the first thing printed, so
+        # what follows has to be what an operator does about it.
+        self.assertIn('probe_log_to_capture.py', err)
+
+    def test_a_marked_capture_is_refused_by_the_readers_own_sentence(self):
+        # `bom_refusal` is the sentence `existing_mark_findings` already
+        # reports for the same file, and the equality is the anti-drift
+        # contract the notice runs on. `main` printing the exception's text is
+        # what keeps the third reader of it -- the operator, at a terminal --
+        # reading the same verdict as the other two.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._written(tmp, 'bom.csv',
+                                 grade.BOM_BYTES + b'ts,addr,old,new\n')
+            rc, _, err = run(path)
+        self.assertEqual(rc, 1)
+        self.assertIn(grade.bom_refusal(path), err)
+
+    def test_nothing_is_printed_for_a_capture_that_was_never_read(self):
+        # The refusal is before any mark is read, which is where `main` already
+        # refuses a capture given twice: a refusal that printed the census or a
+        # window would be reporting on a file it has not read a row of.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._written(tmp, 'bom.csv',
+                                 grade.BOM_BYTES + b'ts,addr,old,new\n')
+            rc, out, err = run(path)
+        self.assertEqual(rc, 1)
+        self.assertEqual(out, '')
+        self.assertNotIn('=== mark census', out)
+
+    def test_a_refusal_after_a_capture_was_read_does_not_claim_nothing_was(self):
+        # §6 passes one CSV per watcher, so this command line has several files
+        # on it and the read loop counts each as it goes. The refusal arrives
+        # after the first capture's census line is already on stdout, so
+        # "nothing was read" would be false about a file that was read and
+        # reported -- and it would send the operator looking for an unreadable
+        # capture rather than for the one this names. `grade_timer_sweep.py`
+        # draws the same line for the same reason: its disagreement sentence
+        # says the run was not built, because everything before it *was* read.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._written(tmp, 'bom.csv',
+                                 grade.BOM_BYTES + b'ts,addr,old,new\n')
+            rc, out, err = run(QUIET, path)
+        self.assertEqual(rc, 1)
+        # The earlier capture's own census line stands: reading it happened,
+        # and this is the count `main` prints per file as it goes.
+        self.assertIn(f'{QUIET}: ', out)
+        self.assertIn('change row(s)', out)
+        # No grade over it -- the refusal is before any window is built, so the
+        # report's own sections are absent and only the counts are on stdout.
+        self.assertNotIn('=== mark census', out)
+        self.assertNotIn('=== ', out)
+        # And the refusal says what did not happen, and which file.
+        self.assertIn(f'{path}: nothing was graded', err)
+        self.assertNotIn('nothing was read', err)
+
+
 if __name__ == '__main__':
     unittest.main()
