@@ -452,13 +452,17 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # docs/findings/xdata-census-rederivation-checklist.md, which is where
         # the export instruction and §6a itself now point. **§2b's held/unheld
         # split is a command's output, not prose**: `check_doc_figure_pins.py
-        # --section 2b` measures all eighteen of its figures held since #849
-        # read `OWNERSHIP["main_refs"]` and #850 added the rows above, and the
-        # two it cannot see are named beside it -- the `157`/`858` §6b prints
-        # for its *de-duplicated* run, which `ORACLE["extmem_pd_*"]` holds for
-        # the default census instead, and the guard-off pd cluster count `51`,
-        # which §6a does not print and so is not in that section's tables. An
-        # `unheld` there is "not found by this method", never "absent".
+        # --section 2b` measures all of its figures held since #849 read
+        # `OWNERSHIP["main_refs"]` and #850 added the rows above, and the two it
+        # could not see were named beside it -- the `157`/`858` §6b prints for
+        # its *de-duplicated* run, which `ORACLE["extmem_pd_*"]` held for the
+        # default census instead, and the guard-off pd cluster count `51`, which
+        # §6a does not print and so is not in that section's tables. An
+        # `unheld` there is "not found by this method", never "absent". **Both
+        # of those have since been pinned rather than left named**: the first by
+        # the `pd_distinct`/`pd_refs` keys #1364 added to `OWNERSHIP`, the
+        # second by the pair of assertions at the end of this case, which is
+        # where the `51` is now held. Neither is a figure §2b's tables carry.
         self.assertEqual(
             (sum(1 for a in on if off[a]["write"] != on[a]["write"]), len(on)),
             (211, 1326), "§6a: 'addresses whose write changes: 211 of 1326'")
@@ -620,6 +624,54 @@ class TheGuardOffRegeneration(unittest.TestCase):
         self.assertEqual(
             len([r for r in self.committed.values() if r["program"] == "main-ec"]),
             389)
+
+        # 51 against 50: the pd arm of the same pair, on the same line of the
+        # same run, and the last figure §2b of the checklist named as held by
+        # nothing. It is asserted here for the reason the `394` above is: §6a
+        # prints the main-EC arm of the pair (`:789`) and the guard-off run
+        # prints both, so pinning one arm and not the other left the pd arm
+        # measurable by no assertion at all -- the shape §2b's own audit
+        # reports as `unheld`.
+        #
+        # **What only this assertion reaches is a pd-arm-only change**, and it
+        # is worth being exact about which change that is. A re-export that
+        # moved a cluster *across* the two programs was never uncaught: that
+        # moves the main-EC count with it, and the `394` above is counted over
+        # the same `self.off` rows by the same expression, so 394 -> 395 and
+        # that assertion trips. What nothing reached was two pd clusters
+        # merging into one, or one splitting into two -- `51` to `50` or `52`
+        # with the `394` left at `394` and every other assertion in the tree
+        # green. §2b's verdict column is what a re-deriver reads before
+        # touching anything, and a figure its tables do not carry is a figure
+        # that column says nothing about, so that is the direction worth
+        # closing.
+        #
+        # The committed `50` is §6b's `pd` cluster count and was already held;
+        # it is asserted in the same call so the two arms are one measurement,
+        # and so a reader who wants to know what the guard-off run added is
+        # looking at one pair rather than at a lone `51` with nothing to
+        # compare it against. It is the shape #850 used for the four direction
+        # rows, where the denominators are pinned with the numerators.
+        #
+        # Not a §2a row: the checklist's "pinned by the test" table has no row
+        # for this figure, because §6a does not print it and the table's third
+        # column is where §6a prints each figure. Adding one would have made
+        # that section's row counts a number every merge has to edit, which
+        # `docs/findings/no-append-logs.md` is the write-up against;
+        # `docs/findings/xdata-guard-off-pd-cluster-count-pinned.md` records
+        # the measurement and the reason instead.
+        self.assertEqual(
+            len([r for r in self.off.values() if r["program"] == "pd"]), 51,
+            "the guard-off run's `pd` clusters at threshold 0.5, on the line "
+            "beside the `394` above: §6a prints the main-EC arm of this pair "
+            "(`:789`) and the --no-eq-guard run prints both, so a re-derivation "
+            "that moved a cluster between the two programs is caught here. "
+            "Re-derive §6a; do not move this number")
+        self.assertEqual(
+            len([r for r in self.committed.values() if r["program"] == "pd"]), 50,
+            "§6b's `pd` clusters at threshold 0.5, the other arm of the pair and "
+            "the figure the guard-off run above is measured against. Expected "
+            "then measured, as the `394`/`389` pair does")
 
     def test_the_regeneration_really_moves_the_ranks(self):
         # If this ever stops holding, the rest of the class is testing nothing:

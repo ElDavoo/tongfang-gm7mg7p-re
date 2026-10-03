@@ -253,6 +253,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) — The 94 flipped clusters: both named mechanisms are refuted, and what the working page does show instead (issue #884)
 - [`xdata-green-set.md`](xdata-green-set.md) — The green set is empty, and the four sentences that said otherwise (issue #819)
 - [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md) — The guard-off generation's `cluster_key` distinctness had no case behind it, and the coverage sentences named two of the four censuses (issue #962)
+- [`xdata-guard-off-pd-cluster-count-pinned.md`](xdata-guard-off-pd-cluster-count-pinned.md) — The guard-off `pd` cluster count `51`, the one figure §2b named as held by nothing, pinned beside the `394` (issue #918)
 - [`xdata-guarded-flags-read-from-main.md`](xdata-guarded-flags-read-from-main.md) — The guards table is a reading of `main()`, and a flag with no guard is still uncovered
 - [`xdata-most-cited-cluster-count.md`](xdata-most-cited-cluster-count.md) — The most-cited-cluster count, and the claim that does not need one (issue #842)
 - [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) — The 427-row census is stale at `e6c88864` and unreadable at `1fcd5f1e`, and the guard's per-address effect is measured a third time (issue #885)
@@ -268,6 +269,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-no-eq-guard-citation-anchors.md`](xdata-no-eq-guard-citation-anchors.md) — The `--no-eq-guard` mechanism's citations, re-anchored to code (issue #873)
 - [`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md) — The refusal contract's measured-state section, corrected against this tree (issue #816)
 - [`xdata-no-eq-guard-refusal-contract.md`](xdata-no-eq-guard-refusal-contract.md) — The `--no-eq-guard` refusal contract
+- [`xdata-ownership-arms-do-not-partition.md`](xdata-ownership-arms-do-not-partition.md) — The two `--export-ownership` census arms partition their references but not their addresses, so `pd_distinct` has no identity to assert (issue #918)
 - [`xdata-ownership-main-keys-pin.md`](xdata-ownership-main-keys-pin.md) — #658 asked for a pin that #849 had already laid: the `OWNERSHIP` main-EC keys, and the one line that could not show its own drift
 - [`xdata-page-cluster-count.md`](xdata-page-cluster-count.md) — The working page's cluster count, both sides of the pass, and what the added addresses have to do with it (issue #903)
 - [`xdata-pair-role-column.md`](xdata-pair-role-column.md) — The `pair_role` column: which half of a pair a census row is (issue #734)
