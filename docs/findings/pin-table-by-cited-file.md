@@ -650,9 +650,13 @@ rename later is cheaper than one now.
 `.github/scripts/agent-gates.sh`, and cannot be from an agent branch: the plan
 stage's push token has no `workflow` scope, so a branch touching `.github/` fails
 at the very end of the run. It runs by hand, where
-`census_test_line_pins.py` stands today. A census nobody runs is the shape of
-defect issue #819 was, so a case holds that standing rather than leaving a reader
-to assume a gate exists. For the same reason
+`census_test_line_pins.py` stands today — and both now have a prepared patch
+carrying them, `docs/ci/agent-gates-census-pin-pins.patch`, so what is missing
+is a human's `git apply` rather than an anchor to cut against; the anchors and
+what they cost are in
+[`census-pin-pins-gate.md`](census-pin-pins-gate.md). A census nobody runs is
+the shape of defect issue #819 was, so a case holds that standing rather than
+leaving a reader to assume a gate exists. For the same reason
 [`../../tools/README.md`](../../tools/README.md)'s table gained a row and
 [`../findings.md`](../findings.md) §65 gained a pointer: a suite with no row in
 that table turns a currently-green suite red, and that is mechanical rather than

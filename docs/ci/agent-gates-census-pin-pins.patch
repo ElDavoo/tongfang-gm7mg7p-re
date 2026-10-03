@@ -1,0 +1,181 @@
+# The two `test_*.py:NNN` pin censuses, wired into the cheap gate. Prepared
+# here rather than landed, for the reason docs/ci/agent-gates-capture-claims.patch
+# gives: `.github/scripts/agent-gates.sh` is copied from the agent-pipeline
+# template and the pipeline's push token has no `workflow` scope, so a branch
+# editing it fails at the end of the PR rather than at the start of it.
+# `docs/agent-pipeline.md` carries this one across a re-copy too, as its item
+# 15.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-census-pin-pins.patch
+#
+# and that is the whole change.
+#
+# Prepared 2026-10-03 for issue #954.
+# `docs/findings/census-pin-pins-gate.md` is the write-up: it re-derives the
+# anchor table below, prices the fold that was not taken, and carries the
+# standing these two tools now have.
+#
+# What the two tools are. `ec/tools/census_test_line_pins.py` walks the
+# committed markdown for every `test_*.py:NNN` (or `:NNN-MMM`) pin, resolves
+# each to a file and a line, and prints the verdict counts.
+# `ec/tools/check_pin_table_by_cited_file.py` consumes that same population --
+# it imports the first tool's extractor rather than walking the markdown a
+# second time -- and breaks it down by *which test file the pin names*, plus
+# the other direction: the indexed suites no pin names at all. They are wired
+# as one function because they read one population, so their figures reconcile
+# against each other by construction; a second walk here would be a second set
+# of numbers, and two headcounts that cannot be reconciled with each other is
+# the failure `docs/findings/test-line-pin-census.md`'s whole argument is
+# about.
+#
+# **Both are censuses, not checks, and that is the standing that makes either
+# safe in a gate.** Neither renders a verdict on any claim, and both exit 0 on
+# a tree where every pin in it is wrong: whether a cited line still carries the
+# claim it is cited for is a reading, and it lives in
+# `docs/findings/test-line-pin-census.md`'s per-pin table. A gate that reddened
+# on that would redden on sentences that are true, which is
+# `docs/findings/prose-line-citations-held.md`'s standing for the same reason.
+#
+# What they do buy is the vacuous-pass guard, which is the half a gate can
+# carry. Both exit non-zero on a run that read **no markdown file at all**, and
+# on a run that found **no pin to read**, so "found nothing" can never read as
+# "found nothing wrong". That is the same guard `check_citation_lines.py` and
+# `tools/run-tests.sh` already carry, and it is what stops a census whose
+# reader has silently stopped reading from reporting a clean run over nothing.
+# Neither reds on anything a prose edit can cause, which is what keeps a gate
+# from being switched off by a sentence.
+#
+# Why the cheap tier: what the pair reads is the committed tree and the
+# standard library. No firmware image, no Ghidra, no network, no assembler, and
+# the tree is unchanged afterwards. Measured on the tree this patch was cut
+# from, 2026-10-03, over five runs each: `census_test_line_pins.py` 0.58-0.59 s,
+# `check_pin_table_by_cited_file.py` 0.61-0.62 s, so about 1.2 s together,
+# against a cheap tier `docs/agent-pipeline.md` records at 5.9 s. Those are one
+# runner's figures and the ratio is the point, as that file's own tools bullet
+# says; re-measure rather than quote them. On a loaded runner the same two runs
+# measured 0.96-1.00 s and 1.03-1.08 s, which is the spread to expect rather
+# than a contradiction of the pair above.
+#
+# It is green as prepared, and that was measured before this patch was cut
+# rather than after: `python3 ec/tools/census_test_line_pins.py` and
+# `python3 ec/tools/check_pin_table_by_cited_file.py` both exit 0 on this tree,
+# with every verdict class the first one prints at zero except the two that are
+# supposed to be populated. `docs/findings/census-pin-pins-gate.md` carries the
+# run's output and the date; the counts move with the prose, and what a landing
+# needs is that **both are exit 0** -- a patch that lands a red gate is the
+# cheapest way to get a gate switched off
+# (`docs/findings/prepared-gate-patches.md` records that happening once).
+#
+# **The one tool in this family that is red is `check_pin_table_rows.py`, and
+# this patch does not call it.** It exits 1 on this tree, before this patch,
+# for rows whose citing line has moved and one `docs/agent-pipeline.md` cell
+# that names the wrong line; its own patch is
+# `docs/ci/agent-gates-pin-table-rows.patch`, and the remedy belongs there. A
+# human landing all three of the pin patches at once gets a red cheap gate from
+# that row and not from this one.
+#
+# **This patch carries no `gate` line, and that is a measurement rather than a
+# preference.** Measured against the set as committed on 2026-10-03, **every**
+# insertion point the `gate` list admits is inside some other patch's
+# three-line context window: each was cut as a real one-line insertion and
+# tried alone and in both orders against every committed patch. Each applies
+# cleanly alone and would fail only when a sibling landed, with a
+# context-mismatch message that reads like staleness -- the failure
+# `tools/test_agent_gates_patches.py` exists to catch, and the reason
+# `agent-gates-testdata-index.patch` no longer exists.
+# `docs/findings/census-pin-pins-gate.md` carries the anchor-by-anchor table and
+# the recipe that produced it;
+# `docs/findings/history-checkouts-gate-wiring.md` is the same measurement on an
+# older revision of the same file, whose line numbers have since moved.
+# `agent-gates-findings-frozen.patch` is the precedent for this shape, and its
+# header gives the same reason in the same words.
+#
+# **The function and its call are in one region, and the placement looks wrong
+# in three separate ways.** The function goes between `check_ghidra_tooling()`
+# and `check_shellcheck()`, which is a gap between two checks this one is
+# nothing to do with, and it is placed there because that gap is free; every
+# other gap is another patch's context. The call is at the tail of
+# `check_shellcheck()`, so a red run prints `=== shellcheck ===` for a markdown
+# census and a reader's first move is to go looking at shell scripts; that is
+# the wrong label, and the census's own stderr (`census_test_line_pins.py: no
+# markdown file was read at all, ...`) is unmistakable, so the run does say
+# what failed. **This host is a tidiness choice, not a forced one.**
+# `check_ghidra_tooling()` has free single-line points above its tool loop --
+# at :105-113 and :119-129 -- which were each cut as a real insertion and tried
+# alone and in both orders against every committed patch; each applies, composes
+# with all of them, and passes `bash -n` and `shellcheck`, so a call there would
+# run once per gate as well. It prints `=== ghidra tooling ===` instead, which
+# is no better a label, and those points sit inside the comment block explaining
+# the loop, where a bare call reads as a stray line rather than as a check.
+# `check_doc_links()` would be the *better* host -- a stale pin in markdown is a
+# documentation defect, and `agent-gates-findings-frozen.patch` already sets
+# that precedent -- but its only free gap is inside its `while read` loop, and
+# a census cannot run once per link.
+#
+# What was left out, and what it would cost. The alternative is a fold into
+# `agent-gates-findings-frozen.patch`, which already holds a function and a
+# call in free regions and is about the same thing -- both are checks over this
+# repository's own documents. The fold was not taken because the issue names
+# this file, and because folding is a smaller change than the one filed: it
+# would cost the `PATCHES` entry, this header, the write-up's own anchor
+# discussion, and a patch whose name would carry one more concern than it
+# already does. The price is
+# recorded in the write-up so a reader who disagrees has the alternative rather
+# than having to re-derive it.
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index 16c70c3..8904df9 100755
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -302,11 +302,50 @@ check_ghidra_tooling() {
+   return "$rc"
+ }
+ 
++# The two `test_*.py:NNN` pin censuses, wired as one function because they
++# read one population: ec/tools/census_test_line_pins.py owns the extractor and
++# ec/tools/check_pin_table_by_cited_file.py consumes it rather than walking the
++# markdown a second time, so their figures reconcile by construction.
++#
++# **Neither renders a verdict, and that is what makes either safe in a gate.**
++# Both exit 0 on a tree where every pin in it is wrong, because whether a cited
++# line still carries the claim it is cited for is a reading and lives in
++# docs/findings/test-line-pin-census.md's per-pin table. What they do hold is
++# the vacuous-pass guard: both exit non-zero on a run that read no markdown at
++# all, or that found no pin, so "found nothing" cannot read as "found nothing
++# wrong". And they red on nothing a prose edit can cause, which is what keeps a
++# gate from being switched off by a sentence.
++#
++# Cheap tier by what they read -- the committed tree and the standard library.
++# No firmware image, no Ghidra, no network, no assembler, and the tree is
++# unchanged afterwards. docs/ci/agent-gates-census-pin-pins.patch carries the
++# measured times and the vacuous-pass lines, and
++# docs/findings/census-pin-pins-gate.md is the write-up.
++#
++# It is placed here, between check_ghidra_tooling() and check_shellcheck(),
++# because that gap is free and every other one is another prepared patch's
++# context. The call goes in check_shellcheck() because the `gate` list is
++# saturated -- every insertion point it admits collides with a committed
++# patch's context window, measured -- and this is the tidier of the two hosts
++# that work, not the only one: check_ghidra_tooling() has free points above its
++# tool loop that compose too, and print `=== ghidra tooling ===` for the same
++# wrong reason. That is why a red run prints `=== shellcheck ===` for a markdown
++# census, and the census's own stderr names what failed. Both are arguments
++# against moving them, but they are tidiness arguments rather than composition
++# ones, and the header says so rather than overclaiming the second.
++check_pin_census() {
++  local rc=0
++  python3 ec/tools/census_test_line_pins.py || rc=1
++  python3 ec/tools/check_pin_table_by_cited_file.py || rc=1
++  return "$rc"
++}
++
+ check_shellcheck() {
+   local f rc=0
+   while IFS= read -r -d '' f; do
+     shellcheck "$f" || rc=1
+   done < <(find . -name '*.sh' -not -path './.git/*' -not -path './.claude/*' -print0)
++  check_pin_census || rc=1
+   return "$rc"
+ }
+ 

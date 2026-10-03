@@ -485,3 +485,36 @@ gate switched off, and `ec/tools/test_reassembly_checked_bound.py` holds the
 strict form red on the committed tree so `--fail-on-overclaim` is not a flag
 nobody can tell works. The census it derives from is
 [`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md).
+
+## A patch with no `gate` line, in the two regions the table above leaves
+
+**2026-10-03, issue #954.** `docs/ci/agent-gates-census-pin-pins.patch` wires
+`ec/tools/census_test_line_pins.py` and
+`ec/tools/check_pin_table_by_cited_file.py` into the cheap tier. It is here
+for the same reason the file is: a re-cut needs to know where it may cut.
+
+| region of `agent-gates.sh` | used by this patch |
+|---|---|
+| between `check_ghidra_tooling()` and `check_shellcheck()` | the function |
+| inside `check_shellcheck()`, before its `return` | the one call |
+
+Both regions are outside the table's tool list, its arms and its
+`check_register_counts` `gate` list, so the hunks have no context any existing
+patch writes into — which `tools/test_agent_gates_patches.py` proves rather
+than this table asserting.
+
+**It takes no `gate` line**, and the reason is the one the table above already
+records: every insertion point the list admits is held, each patch refusing a
+different subset, so a `gate` line would apply cleanly alone and fail only when
+a sibling landed. The function goes in a free gap and the call is borrowed from
+`check_shellcheck()`, which is the wrong label for a markdown census — the
+patch header names that cost. That host is a tidiness choice rather than the
+only one that composes: `check_ghidra_tooling()` has free single-line points
+above its tool loop that apply alone and compose in both orders against every
+committed patch, and print `=== ghidra tooling ===` for the same wrong reason.
+`check_doc_links()` would be the better host but has no free gap outside its own
+`while read` loop.
+
+The anchor table, the fold that was priced and not taken, and the figures that
+are a function of the markdown rather than a fixed claim are in
+[`census-pin-pins-gate.md`](census-pin-pins-gate.md).

@@ -3128,7 +3128,13 @@ one.
    half: a verdict that has quietly stopped being true, and a row that is right
    about a stale line. It is not in any gate either — the prepared patch is
    `docs/ci/agent-gates-pin-table-rows.patch` — so until a human lands it, a
-   drifted row still arrives in a green tree. The write-up is
+   drifted row still arrives in a green tree. **The run this checker holds that
+   table to has its own prepared patch now**,
+   `docs/ci/agent-gates-census-pin-pins.patch`, which carries both this census
+   and the by-cited-file breakdown; neither renders a verdict, so neither stops
+   a drift, and what a landing would buy is the vacuous-pass guard — a run that
+   read nothing at all is red rather than clean. The anchors and that cost are
+   in [`census-pin-pins-gate.md`](census-pin-pins-gate.md). The write-up is
    [`pin-table-row-reconciliation.md`](pin-table-row-reconciliation.md).
    **And finding 8's two are a fourth kind again, and the only kind where no
    tree is wrong at any point.** Taken together the eight `> 300` pins are one

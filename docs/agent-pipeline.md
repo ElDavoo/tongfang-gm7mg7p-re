@@ -611,6 +611,67 @@ only covers what's specific to *this* copy.
      arm is after `*xdata_register_map.py)`, and tidying either back to where
      a reader expects it breaks every-ordered-pair landing while the patch
      still applies on its own.
+  15. **The two `test_*.py:NNN` pin censuses are not in the cheap tier yet,
+     and should be** (2026-10-03, issue #954). Item 12 holds a table to the run
+     `census_test_line_pins.py` makes of the same markdown; this wires the two
+     tools that *make* that run and break it down by which test file each pin
+     names, so both stop being run by hand. `census_test_line_pins.py` resolves
+     every pin in the committed markdown and prints the verdict counts;
+     `check_pin_table_by_cited_file.py` consumes the same population — it
+     imports the first tool's extractor rather than re-walking the markdown —
+     and adds the other direction, the indexed suites no pin names. They are one
+     gate function because they read one population, so their figures reconcile
+     against each other by construction. The whole of it is prepared at
+     `docs/ci/agent-gates-census-pin-pins.patch`, which composes with the rest
+     for the same reason item 12's does: `tools/test_agent_gates_patches.py`
+     applies the set in every ordered pair. Cheap tier for item 4's reason — the
+     committed tree and the standard library, no firmware image, no Ghidra, no
+     network, no assembler; about 1.2 s here for the pair on 2026-10-03 against
+     the 5.9 s tier the paragraph above records, on item 6's caveat that the
+     ratio is the point — and about 2 s on a loaded runner, which is the spread
+     to expect rather than a figure to quote. It takes no `--work` and no
+     `--check`/`--self-test`, so the gate calls it bare:
+     ```sh
+     check_pin_census() {
+       local rc=0
+       python3 ec/tools/census_test_line_pins.py || rc=1
+       python3 ec/tools/check_pin_table_by_cited_file.py || rc=1
+       return "$rc"
+     }
+     ```
+     **Both render no verdict and exit 0 on a tree where every pin in it is
+     wrong**, which is what makes either safe in a gate: whether a cited line
+     still carries the claim it was cited for is a reading and lives in the
+     per-pin table. What a gate does get is the vacuous-pass guard — both exit
+     non-zero on a run that read no markdown at all, or that found no pin, so
+     "found nothing" cannot read as "found nothing wrong" — and neither reds
+     on anything a prose edit can cause. It is not here for item 4's reason,
+     template-copied file and no `workflow` scope on the token, and **until a
+     human lands it, no commit runs either census.** Its own suites need no
+     wiring to be run at all, for item 5's reason: `tools/run-tests.sh`
+     discovers every `test_*.py` in the repository.
+     **It carries no `gate` line, and that is a measurement rather than a
+     preference**: every insertion point the list admits is inside some
+     committed patch's context window, so another line lands in one order and
+     not the other. The function therefore goes in a free gap, and the call has
+     to be borrowed from an existing check — at the tail of
+     `check_shellcheck()`, which is the wrong label for a markdown census and
+     is the patch's header to explain. That host is a tidiness choice and not
+     the only one that composes: `check_ghidra_tooling()` has free single-line
+     points above its tool loop which apply alone and compose in both orders
+     against every committed patch, and print `=== ghidra tooling ===` for the
+     same wrong reason. Item 12's patch and
+     `docs/ci/agent-gates-findings-frozen.patch` took the borrowed-call shape
+     for the same reason. Its two halves are a *definition* and a *call*, which
+     is a shape the other patches here do not have and a new way for one to go
+     half-right (an uncalled shell function is valid shell, so a re-cut that
+     drops the call still applies, still composes and still passes `bash -n`
+     and `shellcheck`; and so does one that lands the name over an empty
+     body, which is why the case holds a body line as well as the two
+     halves), and
+     `tools/test_agent_gates_patches.py::CallRetentionTests.REQUIRED` is what
+     holds them. The anchors and the fold that was not taken are in
+     [`findings/census-pin-pins-gate.md`](findings/census-pin-pins-gate.md).
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,

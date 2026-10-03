@@ -79,9 +79,12 @@ pins it counts.
 **And what this tool is not.** It is not in `.github/scripts/agent-gates.sh`, and
 cannot be from an agent branch: the plan stage's push token has no `workflow`
 scope, so a branch touching `.github/` fails at the very end of the run. It runs
-by hand, where `census_test_line_pins.py` stands today. A census nobody runs is
-the shape of defect issue #819 was, so that standing is a case rather than a
-sentence here.
+by hand, where `census_test_line_pins.py` stands today — and a prepared patch
+now carries both of them,
+`docs/ci/agent-gates-census-pin-pins.patch`, so what is missing is a human's
+`git apply` rather than an anchor to cut against; the anchors are in
+`docs/findings/census-pin-pins-gate.md`. A census nobody runs is the shape of
+defect issue #819 was, so that standing is a case rather than a sentence here.
 
 Usage:
     python3 ec/tools/check_pin_table_by_cited_file.py

@@ -73,6 +73,7 @@ PATCHES = [
     'docs/ci/agent-gates-0751-self-test.patch',
     'docs/ci/agent-gates-bank-map-score.patch',
     'docs/ci/agent-gates-0751-writer-census.patch',
+    'docs/ci/agent-gates-census-pin-pins.patch',
     'docs/ci/agent-gates-capture-claims.patch',
     'docs/ci/agent-gates-cross-decoder-disagreement.patch',
     'docs/ci/agent-gates-disasm8051-self-test.patch',
@@ -735,6 +736,80 @@ class ArmRetentionTests(unittest.TestCase):
                     'patch is already landed, this is saying the landing lost '
                     'it -- the tool would be running the `*)` default, which '
                     'passes `--work "$scratch"` and a flag it does not take.')
+
+
+@unittest.skipUnless(has_git(), 'no git on PATH')
+class CallRetentionTests(unittest.TestCase):
+    """This patch's two halves are a *definition* and a *call*, and both land.
+
+    `FoldTests` and `ArmRetentionTests` cover the two shapes where the halves
+    share one hunk, so dropping either is visible in the patch file itself.
+    This patch has the third shape: the halves are in different functions, and
+    the failure is that an uncalled `check_pin_census()` is valid shell. A
+    re-cut that lands the definition and drops the call still applies, still
+    composes in every ordered pair, and passes `bash -n` **and** `shellcheck`
+    -- because a shell function nothing calls is exactly as correct as one
+    something does. Nothing else in this suite would notice, and what is lost
+    is the gate: the census stops running per commit and no run says so.
+
+    The same silence is reachable from the other end, and the first version of
+    this class missed it: a re-cut that lands the name and an empty body is
+    just as valid shell, and `check_pin_census() {` is inside it just the same.
+    So the body is a third string here rather than a sentence saying the first
+    two cover it. Both mutants are re-cut and re-run rather than argued, and
+    `docs/findings/census-pin-pins-gate.md` carries what each one turns red on.
+
+    It reads whichever file the patch's state says the content is in, for the
+    reason `FoldTests`' docstring gives, so it keeps saying this after the
+    landing rather than going red on the apply that the landing makes stop
+    working.
+    """
+
+    PATCH = 'docs/ci/agent-gates-census-pin-pins.patch'
+    # Three strings, and the third one is here because two were not enough --
+    # which was found by the mutation rather than argued. The opening line
+    # alone cannot see an empty body: `check_pin_census() {\n  :\n}` still
+    # contains `check_pin_census() {`, so a re-cut that gutted the function
+    # kept both of the first two strings and passed every case in this suite
+    # green. That is the gate lost in silence, which is what this class exists
+    # to make loud, so the body is checked too.
+    #
+    # The census rather than the by-cited-file tool, because the census is the
+    # deliverable: it is the tool that resolves the pins, and the other one
+    # breaks its population down. One body string, not both, for the reason
+    # `ArmRetentionTests` gives -- a shape that grows is another string on this
+    # list, never an edit to the sentence above.
+    #
+    # What this cannot see is a body that runs something *other* than these two
+    # tools. That is not the shape here: the halves are a definition and a
+    # call, and a re-cut that keeps both of those and renames what runs inside
+    # is a different defect with a different cheap tell.
+    REQUIRED = [
+        'check_pin_census() {',
+        'python3 ec/tools/census_test_line_pins.py || rc=1',
+        'check_pin_census || rc=1',
+    ]
+
+    def test_both_the_definition_and_the_call_land(self):
+        with retention_gate(self.PATCH) as (gate, problem):
+            self.assertFalse(problem, problem)
+            landed = gate.read_text()
+        for line in self.REQUIRED:
+            with self.subTest(line=line):
+                # `assertTrue`, not `assertIn` -- see the note in `FoldTests`.
+                self.assertTrue(
+                    line in landed,
+                    f'{self.PATCH} no longer lands {line!r}. Its halves are a '
+                    'definition and a call, and an uncalled shell function is '
+                    'valid shell, so a re-cut that kept one and dropped the '
+                    'other still applies, still composes, and still passes '
+                    'every other case here; and a re-cut that lands the name '
+                    'over an empty body passes too, which is why the body is '
+                    'its own string. If the patch is already landed, this is '
+                    'saying the landing lost it -- the check would not run, or '
+                    'would be defined and never called, and the cheap gate '
+                    'would stop running the censuses without any run saying '
+                    'so.')
 
 
 class HeaderInstructionTests(unittest.TestCase):

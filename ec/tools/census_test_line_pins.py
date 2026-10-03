@@ -78,7 +78,10 @@ census-able, which is what the suite's red demonstration needs.
 cannot be from an agent branch: the plan stage's push token has no `workflow`
 scope, so a branch touching `.github/` fails at the very end of the run. It runs
 by hand, which is where `check_cluster_citations.py` and
-`check_doc_figure_pins.py` stand today. A checker nobody runs is the shape of
+`check_doc_figure_pins.py` stand today — and a prepared patch now carries it,
+`docs/ci/agent-gates-census-pin-pins.patch`, so what is missing is a human's
+`git apply` rather than an anchor to cut against; the anchors are in
+`docs/findings/census-pin-pins-gate.md`. A checker nobody runs is the shape of
 defect issue #819 was, so that standing is stated here rather than left for a
 reader to assume a gate exists.
 
