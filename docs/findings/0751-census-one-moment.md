@@ -44,9 +44,12 @@ lists it beside `grade_gpu_door.py` as a program that unpacks the contract, and
 `measure_mark_provenance.py`'s citation for it said "a third" of the two-tuple's
 consumers. That was wrong about the file rather than out of date about a line,
 so it is corrected in place there. The two-tuple's real holders are
-`grade_gpu_door.py` and `windows/tools/manual_fan_ctrl_probe.py`, and
+`grade_gpu_door.py`, `windows/tools/manual_fan_ctrl_probe.py` and
+`ec/tools/scan_mark_collisions.py`, and
 `ec/tools/test_grade_0751_one_capture_read.py` holds the reader to the contract
-they rely on.
+they rely on. The three are what `grep -rn "import grade_0751_isolation as" --
+include=*.py` returns outside the test suites, less `grade_timer_sweep.py`,
+which imports the grader and does not unpack the two-tuple.
 
 **The pin `measure_mark_provenance.py` holds over this grader.** That tool
 checks its citations against the tree, so an edit to the grader can turn the
@@ -106,14 +109,15 @@ One `capture_snapshot(path)` per path — the read the notice has used since
 #749 — and both passes over its one row list: the strict rules through
 `skippable_row` and `take_capture_row`, the crash rows through a new
 `early_exits_of(rows, path)`. `read_early_exits` keeps its signature and its
-body and is now the open plus a delegate, which is the shape
-`mark_labels_of` and `partition_capture_rows` already had.
+body moves to that sibling, leaving the reader the open plus a delegate —
+which is the shape `mark_labels_of` and `partition_capture_rows` already had.
 
-**`read_capture` itself is not called and is not changed.** Its two-tuple is a
-contract with two other programs, and taking it over would be a change to a
-reader those programs depend on in order to fix a problem in this one. The
-strict rules are now spelled in `main` where its own read feeds them, and the
-case `test_read_capture_still_returns_the_two_tuple_the_other_tools_unpack`
+**`read_capture` itself is not called; its signature and executable body are
+unchanged, and its docstring is not.** Its two-tuple is a contract with other
+programs, and taking it over would be a change to a reader those programs
+depend on in order to fix a problem in this one. The strict rules are now
+spelled in `main` where its own read feeds them, and the case
+`test_read_capture_still_returns_the_two_tuple_the_other_tools_unpack`
 holds the reader to the contract while
 `test_early_exits_of_is_read_early_exits_over_one_row_list` holds the sibling to
 the reader's body.
@@ -133,7 +137,7 @@ Measured before the change, over the same two rows:
 | the two rows | `read_capture` refused with | `main` refuses with now |
 |---|---|---|
 | adjacent | `UnicodeDecodeError` | `UnicodeDecodeError` |
-| 400 KB apart | `ValueError: short row` | `UnicodeDecodeError` |
+| 378 KiB apart | `ValueError: short row` | `UnicodeDecodeError` |
 
 Deterministic rather than buffer-size-dependent: `main` decides the decode
 first, on the whole buffer, at every size. That is an improvement and it is

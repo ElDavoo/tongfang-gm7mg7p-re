@@ -5,10 +5,12 @@ Its own file rather than cases in `test_grade_0751_isolation.py`, which is
 several times this length and whose every append has been a merge conflict:
 this is a suite about one question -- how many times `main` opens each
 capture, and what the one read it takes is refused for -- and it stands in
-for nothing that suite already holds. The open-count idiom it reuses is
-`ExistingMarkLabelTests.count_opens` and `snapshot_then_append`, borrowed
-rather than copied, so the two suites cannot drift on how the count is
-taken.
+for nothing that suite already holds. `count_opens` and
+`snapshot_then_append` below are copies of the methods of those names in that
+suite's `ExistingMarkLabelTests`, and the two suites *can* drift on them: an
+edit to one does not reach the other. They are copied rather than shared
+because lifting them into a module both import would mean editing the file
+this suite exists to stay out of.
 
 Every fixture here is a `tempfile` file this checkout wrote or a committed
 capture under `ec/tools/testdata/`. No EC is opened, no register is read
@@ -32,12 +34,16 @@ grade = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(grade)
 
 REPO = HERE.parent.parent
-# The two programs that unpack `read_capture`'s two-tuple. The grader's own
-# `main` stopped calling it (#767) and the reader kept its contract for these,
-# which is why the case below greps their call sites rather than trusting that
-# nothing moved.
+# The programs that unpack `read_capture`'s two-tuple: every tracked non-test
+# file that imports the grader and binds the result to two names, which is what
+# the case below greps for. The grader's own `main` stopped calling it (#767)
+# and the reader kept its contract for these, which is why that case reads
+# their call sites rather than trusting that nothing moved. `grade_timer_sweep`
+# imports the grader too but does not unpack the two-tuple, so it is not here.
 DOOR = REPO / 'ec' / 'tools' / 'grade_gpu_door.py'
 PROBE = REPO / 'windows' / 'tools' / 'manual_fan_ctrl_probe.py'
+SCAN = REPO / 'ec' / 'tools' / 'scan_mark_collisions.py'
+CONSUMERS = (DOOR, PROBE, SCAN)
 
 
 def run(*argv):
@@ -50,11 +56,11 @@ def run(*argv):
 def snapshot_then_append(path, row):
     """A stand-in for a watcher landing a row at the instant `main` reads.
 
-    Borrowed from `ExistingMarkLabelTests` rather than written again, and
-    patched over `capture_snapshot` because that is the one read this change
-    leaves in `main`. The append is *after* the delegate on purpose: it is
-    what a second read would have picked up and the first had not, which is
-    the whole of the two-moments defect.
+    Copied from `ExistingMarkLabelTests.snapshot_then_append`, which it does
+    not track. Patched over `capture_snapshot` because that is the one read
+    this change leaves in `main`. The append is *after* the delegate on
+    purpose: it is what a second read would have picked up and the first had
+    not, which is the whole of the two-moments defect.
     """
     real = grade.capture_snapshot
 
@@ -219,15 +225,15 @@ class TruncatedEarlyExitRowTests(unittest.TestCase):
 
 class ReadCaptureContractTests(unittest.TestCase):
     # The issue's third "Done" bullet. `main` stopped calling `read_capture`
-    # (#767) and the reader kept its signature and its two-tuple, because two
-    # other programs unpack it. Both halves matter: the first is what stops a
+    # (#767) and the reader kept its signature and its two-tuple, because other
+    # programs unpack it. Both halves matter: the first is what stops a
     # well-meant signature change here, the second is what would let a rename
-    # in either consumer pass unnoticed until that tool ran.
+    # in a consumer pass unnoticed until that tool ran.
     FIXTURE = str(HERE / 'testdata' / '0751-isolation-example-quiet.csv')
 
     def test_read_capture_still_returns_the_two_tuple_the_other_tools_unpack(self):
         marks, changes = grade.read_capture(self.FIXTURE)
-        # The two-tuple itself, unpacked the way both consumers unpack it: a
+        # The two-tuple itself, unpacked the way the consumers unpack it: a
         # two-item return whose halves are the readers' own row types, so a
         # reader that returned a list of pairs or added a third item would
         # fail here rather than at the consumer.
@@ -237,9 +243,9 @@ class ReadCaptureContractTests(unittest.TestCase):
         self.assertTrue(all(isinstance(m, grade.Window) for m in marks))
         self.assertTrue(all(isinstance(c, grade.Change) for c in changes))
         # And the consumers still name it, by grep rather than by import: the
-        # point is that a rename in either file reddens here, and importing
+        # point is that a rename in any of them reddens here, and importing
         # them would exercise their module bodies instead.
-        for path in (DOOR, PROBE):
+        for path in CONSUMERS:
             with self.subTest(path.name):
                 text = path.read_text(encoding='utf-8')
                 self.assertIn('read_capture', text)
@@ -330,7 +336,7 @@ class MainRefusalOrderTests(unittest.TestCase):
             self.assertIn("'utf-8' codec can't decode", err)
             self.assertNotIn('short row', err)
         self.assertEqual(seen['adjacent'], seen['400 KB apart'])
-        # The recorded half: `read_capture` is what the other two consumers
+        # The recorded half: `read_capture` is what the other consumers
         # still call, and its answer to the same bytes is still
         # size-dependent. Asserted so the write-up's before-and-after is
         # checkable rather than remembered.
