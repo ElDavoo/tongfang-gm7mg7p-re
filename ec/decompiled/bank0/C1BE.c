@@ -7,16 +7,18 @@
 /* Reads the same byte and the same bit as 0xC1B1 but with opposite polarity: JB 0xE6 jumps to the
    path that loads R7 with 0, so R7 is 1 when bit 6 of XDATA 0x1663 is clear and 0 when it is set.
    Whether that inversion reflects an active-low flag or is just the mirror accessor is not
-   determined by this listing.
+   determined by this listing. The two entries are exact complements, which is the agreement
+   XDATA_1663 records; the byte's third accessor is 0xC184, on bit 3 and reached only through a
+   bank1 trampoline.
    type: reader
    evidence: ec/decompiled/bank0/C1BE.asm; ec/decompiled/bank0/C1BE.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void test_1663_bit6_inverted(void)
 
 {
-  if ((DAT_EXTMEM_1663 >> 6 & 1) != 1) {
+  if ((XDATA_1663 >> 6 & 1) != 1) {
     return;
   }
   return;

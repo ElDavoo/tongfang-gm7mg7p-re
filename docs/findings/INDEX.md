@@ -229,6 +229,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-0860-census-sites-relined.md`](xdata-0860-census-sites-relined.md) — The four `0x0860` census citations move; the counts do not (issue #752)
 - [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md) — The `XDATA_0860` note's six live pointers, and what holds them (issue #870)
 - [`xdata-086c-cluster-ruling.md`](xdata-086c-cluster-ruling.md) — `0x086C` enters `registers.yaml`, and the clustering recorded something real (issue #333)
+- [`xdata-1663-1667-1668.md`](xdata-1663-1667-1668.md) — `0x1663`, `0x1667` and `0x1668`: the rest of the `0x1663`-`0x1668` run, and a third accessor the census cannot see (issue #635)
 - [`xdata-4-2-threshold-sweep-rederivation.md`](xdata-4-2-threshold-sweep-rederivation.md) — §4.2's threshold sweep, re-run against the committed census (issue #581)
 - [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md) — §4.4's identity figures, re-run against the committed census (issue #582)
 - [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md) — §6a's per-direction rows and §6b's cluster split are held now, and what is still not (issue #850)

@@ -71,20 +71,20 @@ WRITE_OPEN = re.compile(r"open\([^)]*['\"][wax]")
 # and a census re-derivation are then both visible: the first by
 # `TheMapAgrees`, the second by these.
 PER_PROGRAM_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 843, 7472),
+    ("main-ec", "DAT_EXTMEM", 840, 7467),
     ("main-ec", "DAT_EXTMEM+pair-literal", 44, 490),
     ("main-ec", "pair-literal", 156, 468),
-    ("main-ec", "symbol", 161, 6212),
+    ("main-ec", "symbol", 164, 6217),
     ("main-ec", "symbol+pair-literal", 14, 196),
     ("pd", "DAT_EXTMEM", 157, 858),
 ]
 PER_PROGRAM_TOTAL = (1375, 15696)
 
 UNION_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 813, 7242),
+    ("main-ec", "DAT_EXTMEM", 810, 7237),
     ("main-ec", "DAT_EXTMEM+pair-literal", 41, 385),
     ("main-ec", "pair-literal", 155, 461),
-    ("main-ec", "symbol", 146, 5607),
+    ("main-ec", "symbol", 149, 5612),
     ("main-ec", "symbol+pair-literal", 14, 196),
     ("both", "DAT_EXTMEM", 30, 312),
     ("both", "DAT_EXTMEM+pair-literal", 4, 139),
@@ -105,8 +105,19 @@ UNION_TOTAL = (1326, 15696)
 # `symbol+DAT_EXTMEM` -- and all three are named in `registers.yaml` on
 # `origin/main`. Three addresses changing spelling is three off the `DAT_EXTMEM`
 # term and onto `named`, which is the whole of the move.
-PER_PROGRAM_PARTITION = (175, 887, 156)
-UNION_PARTITION = (175, 888, 155)
+#
+# 175 / 887 -> 178 / 884, and the same 175 -> 178 on the union one, in issue
+# #635, by the identical mechanism and for the identical reason: that change's
+# re-export carried three more symbol renames, `0x1663`/`0x1667`/`0x1668`,
+# which are named in `registers.yaml` on this tree. The split tables move with
+# them -- main-EC `DAT_EXTMEM` 843 -> 840 distinct and 7,472 -> 7,467
+# references against `symbol` 161 -> 164 and 6,212 -> 6,217 per program, and
+# 813 -> 810 / 7,242 -> 7,237 against 146 -> 149 / 5,607 -> 5,612 on the union
+# key. Five references each way is the census's own 2 + 2 + 1. The totals, the
+# `pair-only` terms and the PD rows do not move, which is the check that the
+# move is a spelling change and not three new addresses.
+PER_PROGRAM_PARTITION = (178, 884, 156)
+UNION_PARTITION = (178, 885, 155)
 
 # The one address whose partition bucket moves, and the two directions.
 MOVED = [("0x04A3", "DAT_EXTMEM", "pair-only")]
