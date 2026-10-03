@@ -120,12 +120,12 @@ was not read instead of finding a shorter list.
 ## The two "nothing was given" lines
 
 `report_dumps` and `report_dump_pairs` both have a line for a run that was
-handed no files at all, and both stay **byte for byte** — existing cases assert
-them, and they are true of every run they print for. A run that handed in files
-and had every one of them fail to open is a different fact, and reusing the
-sentence would be false: the operator did give files, and this is what became of
-them. So those cases print the named failures and, for the dumps, their own
-line:
+handed no files at all, and both stay **byte for byte** — no test asserts their
+spelling, so what holds them is that they are true of every run they print for.
+A run that handed in files and had every one of them fail to open is a different
+fact, and reusing the sentence would be false: the operator did give files, and
+this is what became of them. So those cases print the named failures and, for
+the dumps, their own line:
 
 ```
 none of the 1 dump(s) given could be read, so §4.6 was not checked; each is named above

@@ -3814,9 +3814,9 @@ def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None,
     than finding a silently shorter list.
 
     The "no dump given" line is only for a run that handed in none, and stays
-    byte for byte: the tests assert it, and it is true of every run it is
-    printed for. A run that handed in dumps and had every one of them fail to
-    open is a different fact, and printing the same sentence would be false --
+    byte for byte: no test asserts its spelling, and it is true of every run it
+    is printed for. A run that handed in dumps and had every one of them fail
+    to open is a different fact, and printing the same sentence would be false --
     the operator did give files, and this is what became of them.
     """
     print("\n=== 0x0751 across the dumps (§4.6) ===")
