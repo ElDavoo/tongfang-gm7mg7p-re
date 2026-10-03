@@ -276,8 +276,8 @@ happened to the version that was there before it.
 | `windows/tools/test_ec_watch.py:179` | the fifth field read off the raw row by index, in the test split out for it | it was a **four**-way unpack, and a five-field row raises `ValueError: too many values to unpack (expected 4)` **before any assertion in the test runs** |
 | `windows/tools/test_ec_watch.py:270` | the same row list, in the blank-press class | the same |
 | `windows/tools/test_ec_watch.py:443` | the same row list in a run holding `--label-vocab`, compared without the fifth field | the row's fifth field named whichever runner invoked the suite, so a literal list of rows could not hold it |
-| `windows/tools/test_gpu_block_watch.py:1191` | the header equality, naming five columns | it asserted four names — `gpu_block_watch.py:59,166` imports `CsvSink` and `Marker` from `ec_watch` and constructs `Marker(sink)` |
-| `windows/tools/test_gpu_block_watch.py:1194` | the mark row, with its trailing comma | the list ended at the label |
+| `windows/tools/test_gpu_block_watch.py:1145` | the header equality, naming five columns | it asserted four names — `gpu_block_watch.py:59,166` imports `CsvSink` and `Marker` from `ec_watch` and constructs `Marker(sink)` |
+| `windows/tools/test_gpu_block_watch.py:1148` | the mark row, with its trailing comma | the list ended at the label |
 | `windows/tools/test_system_id_probe.py:322` | the mark row, with its trailing comma | the assertion's right side was the four-field row |
 | `windows/tools/test_system_id_probe.py:341` | the capture handed to `grader.read_capture`, where `test_ec_watch.py:179` was a five-way unpack | a four-way unpack |
 | `windows/tools/test_manual_fan_ctrl_probe.py:508` | `mark_rows`'s `len(r) == 4` filter | **unchanged**, and it would fail *silently* — an empty list rather than an exception |

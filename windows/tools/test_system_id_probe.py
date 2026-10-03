@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Offline checks; no EC is opened and the vendor driver is never called.
 
-system_id_probe.py imports ecrw, which binds kernel32 at import time and so
-only loads on Windows -- the fake below stands in for the whole module, which
-is also what lets the sweeps be scripted byte by byte.
+system_id_probe.py imports ecrw -- the fake below stands in for the whole module,
+which is what lets the sweeps be scripted byte by byte. What the fake is for
+now is that scriptability: `ecrw` imports anywhere
+(`windows/tools/test_import_off_windows.py`).
 
 The script is keyed on the sweep, not on a timestamp, so what a sample is
 labelled is an assertion about the arithmetic -- which arm reproduces the

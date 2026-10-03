@@ -2,12 +2,17 @@
 """Offline checks for `ecrw.py`'s own arithmetic; no EC, no driver, no IOCTL.
 
 This is the one suite here that exercises the *real* `ecrw.py` rather than a
-stand-in for it, and it can: `ecrw.py` binds kernel32 through
-`ctypes.WinDLL` at import time (ecrw.py:69), and there is no `WinDLL` on
-Linux, so putting a fake `ecrw` in front of it -- which is what
-`ecrw_fake.py` is for, and what every other suite in this directory does --
-would test the fake. Instead a fake kernel32 goes in front of it, which is the
-only boundary the module has.
+stand-in for it, and it can: `ecrw.py` reaches kernel32 through
+`ctypes.WinDLL`, which does not exist on Linux, so putting a fake `ecrw` in
+front of it -- which is what `ecrw_fake.py` is for, and what every other suite
+in this directory does -- would test the fake. Instead a fake kernel32 goes in
+front of it, which is the only boundary the module has.
+
+The fake has to stand in at construction rather than at import:
+`ecrw.py` binds kernel32 on the first `Ec()` (`_kernel32`), so a fake put in
+front of the module alone would leave every `Ec()` here reaching for a
+`WinDLL` that is not there. `load_modules` primes the resolver inside its
+patch window and the cache carries the rest.
 
 What that buys: `read_dword` and `readmany` run for real, over a fake EC RAM
 the fake answers out of, so a block that asked for the wrong address, the
@@ -106,8 +111,19 @@ def load_modules():
     """Import the real `ecrw.py`, and the probe that imports it, on a fake.
 
     `ctypes.wintypes` imports cleanly on Linux, so `WinDLL` is the only name
-    that has to be standing in -- and it has to be standing in before the
-    module body runs, because the binding is at import time.
+    that has to be standing in -- and `ecrw.py` binds it on the first `Ec()`
+    rather than at import, so the window has to stay open across that call and
+    not merely across the module body.
+
+    Which is what the priming `_kernel32()` here does: inside the window it
+    builds the fake and caches it on the module, so every later `Ec()` in this
+    suite reuses it after `ctypes.WinDLL` has gone back to not existing. That
+    is safe because `tools/run-tests.sh` gives each suite file its own
+    interpreter, and a cache that outlived it would be this suite deciding the
+    binding for whatever ran next -- the same accident
+    `docs/findings.md` §16 is about, one object narrower. It also asserts
+    something the rest of the suite cannot: that the resolver caches, which is
+    what lets the patch window be this narrow.
 
     `manual_fan_ctrl_probe.py` is loaded in the same window, because it does
     `from ecrw import Ec` and this suite wants the watch set off the file the
@@ -123,6 +139,8 @@ def load_modules():
     ctypes.WinDLL = lambda name, **kw: k32
     try:
         ecrw = _load("ecrw", "ecrw.py")
+        if ecrw._kernel32() is not k32:
+            raise AssertionError("the resolver did not cache the fake kernel32")
         sys.modules["ecrw"] = ecrw
         probe = _load("manual_fan_ctrl_probe", "manual_fan_ctrl_probe.py")
     finally:
@@ -192,6 +210,23 @@ class EcrwTests(unittest.TestCase):
         self.assertEqual(ecrw.IOCTL_MMRD, FAKE_IOCTL_MMRD)
         self.assertEqual(ecrw.EC_BASE, FAKE_EC_BASE)
         self.assertEqual(ecrw.EC_SIZE, 0x10000)
+
+    def test_the_resolver_declared_the_signatures_it_loaded(self):
+        # The `argtypes`/`restype` block moved off module scope into
+        # `_kernel32` when the bind went lazy, so the fake handle is where that
+        # move can go wrong: load the DLL, forget the signatures, and every
+        # call passes whatever ctypes defaults to -- an int where a pointer is
+        # expected, truncated silently, with no exception anywhere. Read off
+        # the fake rather than asserted as literals, because what is checked is
+        # that the resolver *wrote* them, not what the right values are.
+        k32 = ecrw._k32
+        self.assertIsNotNone(k32, "the resolver did not cache a handle")
+        for name in ("CreateFileW", "DeviceIoControl", "CloseHandle"):
+            self.assertIsNotNone(getattr(k32, name).argtypes, name)
+            self.assertIsNotNone(getattr(k32, name).restype, name)
+        # And it declared them on the object it handed back rather than on a
+        # second load: one bind, one set of signatures.
+        self.assertIs(ecrw._kernel32(), k32)
 
     # 2. Decomposition. A range is covered by the aligned blocks enclosing it,
     #    and the keys that come back are the range and not the blocks.
