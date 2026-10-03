@@ -184,9 +184,9 @@ direct encoding only, which is §"What this does not settle"'s subject.
 ## What this retires, and in which direction
 
 `charge-target-derating.md` §3's standing advice was *"don't treat an EC reset
-as a way to undo the derating."* That advice is now wrong in the direction that
-makes it **weaker, not stronger**, and the correction is in place with the
-answer:
+as a way to undo the derating."* That advice survives, and the sharper form is
+**stronger, not weaker** — it was right for the wrong reason, and the correction
+is in place with the answer:
 
 - **An EC power loss does reset the counter.** It is plain XDATA RAM and the
   reset path zeroes it. The derating would fall back to the cycle-count tier —
