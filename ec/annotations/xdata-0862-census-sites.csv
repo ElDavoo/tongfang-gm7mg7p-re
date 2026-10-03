@@ -1,0 +1,6 @@
+region,file_offset,census_state,census_bucket,census_count,census_refs
+bank0,0x0D2DE,mapped,read,1,bank0/D2DA.c:18
+bank0,0x0D2F3,mapped,read,1,bank0/D2EF.c:22
+bank0,0x0D308,mapped,read,1,bank0/D304.c:21
+pd-image,0x25EAC,other-program,none,na,none
+pd-image,0x27F57,other-program,none,na,none

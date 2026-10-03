@@ -1,0 +1,3 @@
+region,file_offset,census_state,census_bucket,census_count,census_refs
+bank0,0x0D0E3,mapped,write,1,bank0/D091.c:69
+bank0,0x0D2AE,mapped,read,2,bank0/D289.c:23;bank0/D28E.c:23
