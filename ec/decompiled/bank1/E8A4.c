@@ -13,8 +13,8 @@
    R1=0x46 and R2=0x0A, 0x889E with DPTR 0x0502 and again with 0x0504, and 0x885B with DPTR 0x0AAA.
    On carry from 0x885B it writes 0x00 to both 0x0386 and 0x0387; otherwise it loads the product
    into the bank-0 direct bytes 0x01 and 0x02, sets R3=0x0A and R4=0, calls 0xA5E6, and writes the
-   returned R1 to both 0x0386 and 0x0387 before jumping to 0xE931, and no XDATA address in this
-   listing has an entry in ec/annotations/registers.yaml.
+   returned R1 -- the quotient's low byte -- to both 0x0386 and 0x0387 before jumping to 0xE931, and
+   no XDATA address in this listing has an entry in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank1/E8A4.asm; ec/decompiled/bank1/E8A4.c
    basis: hand-decoded

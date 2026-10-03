@@ -44,10 +44,20 @@ leaves an arithmetic trace. `store_scaled_quotient_0449` (bank1 `0xF3D7`,
 `../../ec/decompiled/bank1/F3D7.asm`) branches on **R7**, and the two arms are:
 
 - **R7 == 0** — R3 = `0x64` (100), R4 = 0, read the pair at `0x0434`/`0x0435`,
-  divide, write the quotient's **high** byte to `0x0449`.
+  divide, write the quotient's **low** byte to `0x0449`.
 - **R7 != 0** — call `0xF3C9`, which sets R3 to `0x22` or `0x44` from
   `0x0456` bit 6, R4 = 0, read `0x060C`/`0x060D`, mask the high byte with
   `0x03`, multiply the 16-bit value by 10, divide, write the same byte.
+
+> **Correction (2026-10-03, issue #358).** The two bullets above originally
+> said **high** byte, and that was wrong. `0xA5E6`'s dividend shift at
+> `0xA5EE` touches `R1` before `R2`, and its epilogue at `0xA613` copies `R0`
+> into `R1`, so `R1` holds the quotient's **low** byte and `0xF3D7` stores
+> `R1`. The wrong reading is retracted, not deleted, and the derivation is in
+> [`a5e6-r1-is-the-low-byte.md`](../../docs/findings/a5e6-r1-is-the-low-byte.md);
+> `ec/tools/a5e6_quotient.py` establishes it by executing the committed
+> listing against an independent model. The probe's arithmetic and its offline
+> checks were corrected in the same pass.
 
 R7 is set nowhere in that listing or in the `0x198A` trampoline it calls, so
 **the run cannot observe which arm ran — it derives it.** For each sample,
@@ -268,19 +278,23 @@ Control Center service running** and note that you did.
   or a different code path, would produce the same reading. **R7's origin
   stays unestablished by this run**, and finding the caller that sets it is a
   separate static question.
-- **The model and the one committed capture do not obviously agree, and this
-  test does not decide which is wrong.** Read off the committed listings: the
-  `anl 0x02,#0x3` caps arm B's dividend at `0x03FF`, so the byte arm B stores
-  never leaves `{0, 1}`; arm A needs 25600 mA to leave `0` and 51200 mA — 51.2
-  A — to reach `2`. The one capture covering the byte,
-  `evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv`, has `0x0449`
-  across `0x22`-`0x5A` over 238 changes. Reading that capture against the
-  model puts all 237 of its gradeable values in `unexplained`, and it carries
-  no `0x0456`, `0x0434` or `0x0435` at all, so it cannot exercise the bit-6
-  half either. **A run that comes back mostly `unexplained` is the model and
-  the machine disagreeing in the open, and the disagreement is the result.**
-  Which of the two is wrong is a separate finding, and it is not "the divisor
-  is `0x22`".
+- **The one committed capture is no longer evidence against the model, and
+  this test still does not decide which arm ran.** Under the reading this
+  procedure originally carried, both arms returned `0x00` for any plausible
+  input: `anl 0x02,#0x3` capped arm B's dividend low enough that its quotient
+  never reached the stored byte, and arm A's division by 100 needed 25600 mA
+  to leave `0`. In `evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv`
+  the byte `0x0449` moved 238 times across the range `0x22` to `0x5A`, so under
+  that reading none of its values was reachable at all. That was the model
+  being wrong, not the machine, and the correction is issue #358.
+  **Reachability is not a match**: pairing that capture nearest-in-time does
+  not align two bytes that were not written at the same instant, so it
+  establishes that the observed values are *possible* under the corrected
+  reading and nothing about which arm produced any particular sample. The
+  capture carries no `0x0456`, `0x0434` or `0x0435`, so it cannot exercise the
+  bit-6 half either way, and **a run that comes back mostly `unexplained` is
+  still a result** — now a question about which arm ran, rather than a
+  question about which byte the arithmetic returns.
 - `ec/tools/ecmem.py`'s record that `0x456` reads were cross-checked against
   the `uniwill-laptop` regmap debugfs dump is **not** a result of this test.
   Two software paths agreeing on a read is not a behavioural test, and

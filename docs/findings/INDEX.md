@@ -48,6 +48,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`7b14-07c9-token.md`](7b14-07c9-token.md) — The 0x07C9 token in `pd/7B14.c` is a variable row on the *callee*, and the re-export is a fixed point
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
+- [`a5e6-r1-is-the-low-byte.md`](a5e6-r1-is-the-low-byte.md) — `0xA5E6` returns the quotient's low byte in R1, and a probe built on the opposite reading could not have agreed with a capture (issue #358)
 - [`addc-dph-residual-six.md`](addc-dph-residual-six.md) — All six residual `addc A,#imm ; mov DPH,A` sites close: four build page `0x0D`/`0x0E`, two build page `0x2A` and read CODE (issue #519)
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
@@ -200,6 +201,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`runner-red-suite-set.md`](runner-red-suite-set.md) — The runner's red set, and the third of #162's blocker that was a missing table row (issue #751)
 - [`scheduler-divide-down-cycle.md`](scheduler-divide-down-cycle.md) — How many entries to the divide-down scheduler is one case-`0x0A` turn (issue #1183)
 - [`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md) — The `0x8518` block decoded: seven entry points, not one, and half of it is invisible to the host (issue #1185)
+- [`seed-dispatch-xdata-footprint.md`](seed-dispatch-xdata-footprint.md) — What the trio the old gate comment blamed actually does to XDATA, and the one seed byte still unexplained (2026-10-03, issue #628)
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
 - [`sweep-summary-schema.md`](sweep-summary-schema.md) — The AC-plugin sweep summary has a schema, a reader, and two blind spots written down
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
@@ -284,6 +286,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-pair-role-column.md`](xdata-pair-role-column.md) — The `pair_role` column: which half of a pair a census row is (issue #734)
 - [`xdata-per-program-counts.md`](xdata-per-program-counts.md) — The per-program count columns: `refs` and the five buckets, split, with `refs` itself unmoved (issue #713)
 - [`xdata-register-map-per-program-keying.md`](xdata-register-map-per-program-keying.md) — `xdata-register-map.md` §2 re-keyed per program, and what that moved (issue #714)
+- [`xdata-self-test-deferral-already-lifted.md`](xdata-self-test-deferral-already-lifted.md) — The self-test deferral #628 was filed against had already been lifted, and one file still described it in the present tense (2026-10-03, issue #628)
 - [`xdata-spelled-as-union.md`](xdata-spelled-as-union.md) — `spelled_as` is a union across programs, and the column that says so (issue #709)
 - [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md) — The two-largest case passed vacuously; its exhibits are now derived (issue #778)
 - [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md) — The 833 enters `write` and never leaves it: the word was wrong, the number was not (issue #890)
