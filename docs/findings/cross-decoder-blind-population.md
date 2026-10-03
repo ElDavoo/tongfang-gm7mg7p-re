@@ -253,7 +253,10 @@ address the straight-line window cannot name. `walk_flow_follow.py`,
 machinery over *sites*; nothing does it over the cross-decoder's sample. What a
 walk of that kind costs in unattributed `movx`es is already on the record for
 one address: `census_xdata_writers.py`'s own blind spot, where the arm walk
-charges 100 stores to no address over its 171 rows for 0x0751.
+charges stores to no address when it cannot name the pointer they ride, across
+the `0x0751` arms table. That figure was 100 before #242 made `descend()`
+follow `inc dptr` and the arms table's `dp_causes` column say which of the four
+causes each of the remainder is; `walk_branch_arms.py --census` prints it.
 
 The case for it rests entirely on the 97. `named-past-first-branch` (62) would
 be closed by a longer window and nothing else; `no-xdata-named` (493) is not a

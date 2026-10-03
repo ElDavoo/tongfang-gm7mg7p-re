@@ -30,14 +30,42 @@ Two things it refuses to guess, because guessing them is how a window scan
 produces a confident wrong answer:
 
   * **DPTR is tracked, not assumed.** A `movx` is attributed to whatever
-    `mov dptr,#imm16` last set, and to nothing before that. Any store to DPL
-    (`0x82`) or DPH (`0x83`) -- from the accumulator or from a register --
-    builds the pointer at run time, so after one the pointer is unknown and
-    every later `movx` is counted `unattributed` rather than charged to the
-    address that happened to be loaded earlier. That shape is not
-    hypothetical: manual-fan-ctrl-0751.md 6 is eight sites that reach the fan
-    table only because DPTR is built out of a sensor byte, and the `0x9432`
-    arms below rebuild DPTR from `r2`/`r1` after loading a CODE pointer.
+    `mov dptr,#imm16` last set, and to nothing before that. `inc dptr` steps
+    that value by one, which is the same claim and is tracked the same way --
+    the byte the pointer walked over is credited a read, and the store after
+    it lands on `dp + 1` rather than on nothing. Five named things stop the
+    pointer being known, and each unattributed `movx` records which:
+
+      - `DPTR_BUILT` -- any store to DPL (`0x82`) or DPH (`0x83`), from the
+        accumulator or from a register, builds the pointer at run time. Not
+        hypothetical: manual-fan-ctrl-0751.md 6 is eight sites that reach the
+        fan table only because DPTR is built out of a sensor byte, and the
+        `0x9432` arms below rebuild DPTR from `r2`/`r1` after loading a CODE
+        pointer.
+      - `DPTR_MUTATED` -- `dec dptr`, and `inc`/`dec`/`xch`/`anl`/`orl`/`xrl`
+        on DPL or DPH, change the pointer in place. Tracking `inc dptr` keeps
+        DPTR live across more instructions than it used to be, so leaving
+        these to a stale `dp` would produce a *wrong* address rather than no
+        address. `trace_xdata_refs.is_dptr_rebuild()` names the same forms as
+        the ones it leaves out of *its* terminator set.
+      - `DPTR_CODE` -- an `inc dptr` stepped at or above CODE_FLOOR, where the
+        value is a CODE pointer. The `mov dptr` case records the immediate and
+        carries on; the increment refuses, which is the stricter of the two
+        and the safe direction. See the note at the `0xA3` branch.
+      - `DPTR_UNSET` / `DPTR_INHERITED` -- the walk began with no pointer.
+        Which of the two it is depends on the entry and is the difference a
+        reader needs: `DPTR_INHERITED` is a callee row, where the caller's
+        DPTR is real and simply not carried here, so the address is
+        unknowable from this row but not from the program;
+        `DPTR_UNSET` is an arm that never issues a `mov dptr` at all.
+
+    One more thing is recorded rather than acted on: a credit whose DPTR was
+    set before an `lcall`/`acall` the walk continued past. The callee may
+    have rebuilt the pointer, so the address is charged anyway -- that is
+    issue #197, still open, and not something this change closes -- but the
+    row says so rather than presenting the credit as one of the rest.
+    `--census` prints the split over the rows a walk reached; no total of it
+    is kept in this file.
   * **A CODE access is not an XDATA access.** A `movc a,@a+dptr` or
     `jmp @a+dptr` is recorded against `code_pointers` whatever DPTR holds,
     because it reads CODE by definition; separately, an immediate at or above
@@ -68,9 +96,11 @@ Usage:
     python3 walk_branch_arms.py ../firmware/GMxMGxx_11.800 0x0751
     python3 walk_branch_arms.py ../firmware/GMxMGxx_11.800 0x0751 --callee-depth 1
     python3 walk_branch_arms.py ../firmware/GMxMGxx_11.800 0x0751 --callee-depth 1 --csv > arms.csv
+    python3 walk_branch_arms.py ../firmware/GMxMGxx_11.800 0x0751 --callee-depth 1 --census
     python3 walk_branch_arms.py --self-test ../firmware/GMxMGxx_11.800
 """
 import argparse
+import collections
 import csv
 import sys
 
@@ -118,6 +148,32 @@ CODE_FLOOR = 0x8000
 # 0751.md 6 documents; after one, the pointer is unknown.
 DPTR_REGS = (0x82, 0x83)
 
+# Why a `movx` landed on no address, as it reads in the `dp_causes` cell and
+# in `ends`. One string per unattributed `movx` in `Arm.unknown_causes`, so a
+# row with three of them says which of the causes each was -- a single cell
+# naming a set would let a row with one run-time store and one inherited DPTR
+# read as either. The last is not a loss of the pointer but a loss of trust in
+# it: the address is charged anyway and the row says the DPTR crossed a call
+# on the way (issue #197, which this does not close).
+DPTR_BUILT = "DPTR built at run time (a store to DPL/DPH)"
+DPTR_MUTATED = "DPTR changed in place (an arithmetic or exchange write to DPL/DPH)"
+DPTR_CODE = "DPTR stepped to a CODE address (at or above 0x8000)"
+DPTR_UNSET = "DPTR never set on this path"
+DPTR_INHERITED = "DPTR inherited from the caller"
+DPTR_CARRIED = "DPTR carried across a call"
+
+# What a walk that opens with no pointer is told about the pointer it did not
+# get. `descend()` cannot tell the two apart from `dptr=None` alone -- the same
+# argument is both "the caller had one" and "nothing here ever set one" -- so
+# the caller states which, and a callee row is not left claiming its stores are
+# unattributable because the code has no pointer in it.
+ENTRY_CAUSES = (DPTR_UNSET, DPTR_INHERITED)
+
+# Every reason a `movx` here has no address, and the closed set the suite holds
+# the rows to. Declared in one place so a new cause is a deliberate edit here
+# rather than something a row can quietly acquire.
+UNKNOWN_CAUSES = ENTRY_CAUSES + (DPTR_BUILT, DPTR_MUTATED, DPTR_CODE)
+
 # Stop reasons, as they read in a table cell. Kept as data rather than
 # formatted at each site so a reader can grep for a specific one.
 END_RET = "ret"
@@ -153,6 +209,8 @@ class Arm:
         self.code_immediates = []         # DPTR immediates >= CODE_FLOOR
         self.callees = []                 # lcall/acall/ljmp/ajmp targets
         self.unattributed = 0             # movx with an unknown DPTR
+        self.unknown_causes = []          # one DPTR_* reason per unattributed movx
+        self.crossed_call = False         # a charged store whose DPTR crossed a call
         self.movx_ri = 0                  # movx @Ri -- indirect, never an address
         self.insns = 0
         self.blocks = []                  # (block start, [(runtime, text)])
@@ -303,8 +361,37 @@ def _dptr_write(op: int, imm, imm2) -> bool:
     return False
 
 
+# The in-place forms, keyed on the opcode rather than on the mnemonic for the
+# reason trace_xdata_refs.is_dptr_rebuild() states: the renderer spells
+# `0x82`/`0x83` three ways and none of them is DPL. `0x05`/`0x15` are
+# `inc`/`dec direct`, `0xC5` is `xch a,direct`, and the `direct`-first
+# `anl`/`orl`/`xrl` pairs are the six that write rather than read. The
+# `anl a,0x82` forms (0x55/0x45/0x65) are absent deliberately: they read the
+# byte and leave the pointer where it was.
+DPTR_MUTATE_OPS = frozenset((0x05, 0x15, 0xC5, 0x42, 0x43, 0x52, 0x53,
+                             0x62, 0x63))
+DEC_DPTR = 0xA5
+
+
+def _dptr_mutation(op: int, imm) -> bool:
+    """Does this instruction change DPL or DPH in place, one byte at a time?
+
+    Not in the issue, and required by it. `inc dptr` keeps DPTR live across
+    more instructions than it used to be, so a `dec dptr` between two
+    increments would otherwise be walked with the *pre-decrement* value still
+    held and a store after it charged to an address the machine never touches.
+    That is the wrong-address failure `_dptr_write()` above rules out, reached
+    by the same walk that fixed the other half, so these drop to the same
+    `unattributed` the run-time build does.
+
+    The same forms are named, and left alone, by
+    trace_xdata_refs.is_dptr_rebuild()'s docstring, which is the broader
+    reading of whether either tool should follow them rather than refuse."""
+    return op == DEC_DPTR or (op in DPTR_MUTATE_OPS and imm in DPTR_REGS)
+
+
 def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: int,
-            pd_verified: bool) -> Arm:
+            pd_verified: bool, entry_cause: str = DPTR_UNSET) -> Arm:
     """Everything reachable from `start` in `region`, within the bounds.
 
     The unit is the *linear block*: decode forward from one address until a
@@ -321,6 +408,21 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
     the pointer the branch left behind, so an arm that reads the mode byte
     again is credited to the mode byte rather than to nothing.
 
+    `why` rides alongside `dp` through the worklist rather than being
+    recomputed, because it is the *history* of the pointer and not its value:
+    a `mov dptr` on this path clears it, an `lcall` past which the walk
+    continues sets it to DPTR_CARRIED, and the ways the pointer can be lost
+    each set their own. One `movx` with no address therefore names the
+    instruction that took the pointer away rather than a single catch-all
+    reason the row as a whole could be read against.
+
+    `entry_cause` is what a `movx` opening this walk with no pointer is
+    attributed to, and it is a parameter because `dptr=None` says which of
+    DPTR_UNSET and DPTR_INHERITED applies to nobody: both are "the walk began
+    with nothing" and only the caller knows whether that is the caller's
+    pointer (a callee row) or the absence of one (an arm). The default is the
+    arm reading, which is the case `descend()` is called with by arms_for().
+
     The bounds are a transfer depth, an instruction budget and the end of the
     buffer, and each is reported on the row when it bites. None of them is a
     claim that the walk saw everything after the cut."""
@@ -329,13 +431,13 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
     # Explicit list rather than recursion: an arm can re-enter itself through a
     # routine, and a RecursionError there would be a crash on this image rather
     # than a reported result.
-    pending = [(start, 0, dptr)]
+    pending = [(start, 0, dptr, entry_cause if dptr is None else None)]
     # Every address decoded, not just every block start: a branch target that
     # lands back inside a block the spine already crossed is the same fact as a
     # loop, and re-walking it would double-count every `movx` in the overlap.
     walked = set()
     while pending:
-        pc, depth, dp = pending.pop(0)
+        pc, depth, dp, why = pending.pop(0)
         if pc in walked:
             arm.end(f"{END_LOOP} back to 0x{pc:04X}")
             continue
@@ -384,13 +486,21 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
 
             if op == MOV_DPTR:
                 dp = (d[off + 1] << 8) | d[off + 2]
+                why = None
                 if dp >= CODE_FLOOR:
                     arm.code_immediates.append(dp)
             elif op in (0xE0, 0xF0):
                 if dp is None:
                     arm.unattributed += 1
+                    arm.unknown_causes.append(why)
                 else:
                     arm.touch(dp, read=op == 0xE0, write=op == 0xF0)
+                    if why == DPTR_CARRIED:
+                        # Charged anyway: issue #197 is that the callee may
+                        # have rebuilt the pointer, and closing that is a
+                        # separate change. What this owes the reader is that
+                        # the credit is not presented as one of the rest.
+                        arm.crossed_call = True
             elif op in (0xE2, 0xE3, 0xF2, 0xF3):
                 arm.movx_ri += 1
             elif op in (0x93, 0x73) and dp is not None:
@@ -403,14 +513,38 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
                 if dp not in arm.code_pointers:
                     arm.code_pointers.append(dp)
             elif op == 0xA3 and dp is not None:
-                arm.touch(dp, read=True)   # the walked byte is read too
-                dp = None                   # and the next one is not knowable
+                # The byte the pointer walks over is read on the way past, and
+                # the one after it is `dp + 1` -- the same 16-bit register, so
+                # the low byte carrying into the high one is the arithmetic,
+                # not a special case. `& 0xFFFF` is the hardware: DPTR is 16
+                # bits, so `0xFFFF` increments to `0x0000` rather than to an
+                # address outside the map.
+                #
+                # A result at or above CODE_FLOOR is refused, where the
+                # `mov dptr` above records the immediate and leaves the pointer
+                # set. That is a deliberate difference in the strict direction:
+                # charging a store to an address the module docstring says
+                # cannot be XDATA is the wrong-address failure, and losing a
+                # possible store is the direction this tool takes everywhere
+                # else. Neither occurs over the committed tables, so no row
+                # depends on it -- `IncDptrTests` in the suite is what keeps
+                # the two answers visible so neither is changed by accident.
+                arm.touch(dp, read=True)
+                nxt = (dp + 1) & 0xFFFF
+                if nxt >= CODE_FLOOR:
+                    arm.code_immediates.append(nxt)
+                    dp, why = None, DPTR_CODE
+                else:
+                    dp = nxt
             elif _dptr_write(op, imm, imm2):
                 # DPTR built at run time. Everything after this is unattributed
                 # on purpose -- see the module docstring and manual-fan-ctrl-
                 # 0751.md 6, which is eight sites this tool must not mis-credit.
-                dp = None
-                arm.end("DPTR built at run time (a store to DPL/DPH)")
+                dp, why = None, DPTR_BUILT
+                arm.end(DPTR_BUILT)
+            elif _dptr_mutation(op, imm):
+                dp, why = None, DPTR_MUTATED
+                arm.end(DPTR_MUTATED)
 
             if op in (0x22, 0x32):            # ret / reti
                 arm.end(END_RET if op == 0x22 else END_RETI)
@@ -424,6 +558,14 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
                     else paged_target(op, raw[1], pc)
                 arm.callees.append(target)
                 if op == 0x12 or op & 0x1F == 0x11:      # lcall / acall
+                    # The walk continues, so the pointer it is holding has
+                    # been through a call and may not be the pointer the
+                    # callee left. Marking that here rather than dropping the
+                    # pointer is issue #197's half, and it stays open: a later
+                    # `mov dptr` clears the mark, and anything charged before
+                    # one is charged with it visible in `dp_causes`.
+                    if dp is not None:
+                        why = DPTR_CARRIED
                     pc += n
                     continue
                 arm.end(END_TAIL)                        # ljmp / ajmp
@@ -437,7 +579,7 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
                 # different offsets.
                 target = relative_target(op, raw[-1], pc)
                 if depth < max_depth:
-                    pending.append((target, depth + 1, dp))
+                    pending.append((target, depth + 1, dp, why))
                 else:
                     arm.end(f"{END_DEPTH} at 0x{target:04X}")
                 if op not in REL_BRANCHES:      # sjmp: a transfer, not a split
@@ -474,20 +616,41 @@ def arms_for(d: bytes, addr: int, pd_verified: bool, max_depth: int, max_insns: 
     return out
 
 
+def dp_causes(arm) -> str:
+    """The named DPTR states on a row, one per unattributed `movx`, and the
+    cross-call caveat where one applies. A set rather than a tally: the count
+    is the `unattributed` cell's job, and restating it here would be a second
+    number to keep right. `DPTR_CARRIED` is not a reason a store went
+    unattributed -- it is the reason a store that *was* charged might be
+    charged wrongly, so it appears here beside them and not inside the tally.
+    """
+    causes = list(dict.fromkeys(arm.unknown_causes))
+    if arm.crossed_call:
+        causes.append(DPTR_CARRIED)
+    return " ; ".join(causes)
+
+
 def no_claim(arm) -> str:
     """The wording for an arm that writes nothing. Never "the EC does not" --
     the walk is bounded, and manual-fan-ctrl-0751.md 6 is the worked
     counter-example of what reading a bounded scan's silence as absence costs.
 
     The list of what is outside the method is the claim, so it says which
-    blind spots actually bit on *this* arm rather than a generic disclaimer."""
+    blind spots actually bit on *this* arm rather than a generic disclaimer.
+    The DPTR entry names the cause rather than asserting one shape for every
+    row: an arm whose pointer was inherited from a caller is limited by a
+    different thing than one that watched it get rebuilt, and only the second
+    is what the module docstring's worked example is about."""
     if arm.writes():
         return ""
     if not arm.insns:
         return "no arm found by this method decodes to any instruction"
     blind = ["indirect access"]
     if arm.unattributed:
-        blind.append("a DPTR built at run time")
+        for why in dict.fromkeys(arm.unknown_causes):
+            blind.append("a " + why)
+    if arm.crossed_call:
+        blind.append("a DPTR that crossed a call before this arm's last write")
     if arm.movx_ri:
         blind.append("a movx through a register")
     if arm.callees:
@@ -653,10 +816,14 @@ def self_test(fw_path: str) -> int:
 # One table, two row shapes. `kind` says which, and the columns that only
 # apply to one of them are blank on the other -- a second file would drift from
 # the first, and the .md table beside this one is re-derived from both shapes.
+# `dp_causes` sits beside `unattributed` rather than inside `ends` because
+# `ends` is a list of what the walk *hit* and this is a per-`movx` attribution:
+# a row can hit a run-time DPTR build and still have every unattributed store
+# of it on one side of a branch and an inherited one on the other.
 CSV_HEAD = ["addr", "kind", "site_runtime", "branch", "test", "arm",
             "arm_start", "callee", "region", "insns", "xdata",
             "code_pointers", "code_immediates", "callees", "unattributed",
-            "ends", "status", "window"]
+            "dp_causes", "ends", "status", "window"]
 
 def _code_pointers(arm):
     return " ; ".join(f"0x{c:04X}" for c in sorted(set(arm.code_pointers)))
@@ -680,7 +847,8 @@ def write_csv(d, addrs, pd_verified, callee_depth, max_depth, max_insns) -> int:
                             arm.insns, arm.accesses, _code_pointers(arm),
                             _code_immediates(arm),
                             " ; ".join(f"0x{c:04X}" for c in arm.callees),
-                            arm.unattributed, "; ".join(arm.ends),
+                            arm.unattributed, dp_causes(arm),
+                            "; ".join(arm.ends),
                             arm_status(arm), arm.window])
             if callee_depth:
                 for callee in dict.fromkeys(c for a in arms for c in a.callees):
@@ -698,30 +866,91 @@ def callee_row(d, region, callee, max_depth, max_insns):
     `dptr` starts None because a callee inherits the caller's DPTR and that
     value is not carried here; a callee opening with `movx a,@dptr` therefore
     lands in the `unattributed` count rather than being charged to whatever
-    address the call site happened to have loaded."""
-    def row(insns, xdata, codes, immcodes, unattributed, ends, status, window):
-        return [insns, xdata, codes, immcodes, "", unattributed, ends,
+    address the call site happened to have loaded. The `partial:` reason names
+    the cause rather than always saying "built at run time", because for a
+    callee that never builds one the inherited pointer is the whole story and
+    a run-time build is a claim about this row that is not true."""
+    def row(insns, xdata, codes, immcodes, unattributed, causes, ends, status,
+            window):
+        return [insns, xdata, codes, immcodes, "", unattributed, causes, ends,
                 status, window]
 
     if offset_for_runtime(callee, region) is None:
-        return row(0, "", "", "", 0, "",
+        return row(0, "", "", "", 0, "", "",
                    f"unresolved: not reachable from region {region}", "")
-    arm = descend(d, region, callee, None, max_depth, max_insns, True)
+    arm = descend(d, region, callee, None, max_depth, max_insns, True,
+                  DPTR_INHERITED)
     ends = "; ".join(arm.ends)
+    causes = dp_causes(arm)
     if not arm.insns:
-        return row(0, "", "", "", 0, ends,
+        return row(0, "", "", "", 0, causes, ends,
                    "unresolved: no instruction decodes at the entry point", "")
     cuts = [e for e in arm.ends if e.startswith(CUTS)]
     if cuts:
         status = "unresolved: " + "; ".join(cuts)
     elif arm.unattributed or arm.movx_ri:
-        status = "partial: " + ("DPTR built at run time" if arm.unattributed
+        # The causes, not one of them: a callee can inherit an unknown DPTR,
+        # build one itself, and do both, and which of those it was is the
+        # difference between an address this row could have carried and one it
+        # could not. `dp_causes` already holds the list.
+        status = "partial: " + (causes if arm.unattributed
                                 else "movx through a register")
     else:
         status = "resolved"
     return row(arm.insns, arm.accesses, _code_pointers(arm),
-               _code_immediates(arm), arm.unattributed, ends, status,
+               _code_immediates(arm), arm.unattributed, causes, ends, status,
                arm.window)
+
+
+def census(addrs, d, pd_verified, callee_depth, max_depth, max_insns) -> int:
+    """The split of the unattributed `movx` over the rows a walk reached, by
+    cause, and how many rows carry each. This is the mode the module docstring
+    points at rather than restating a total of: the numbers move whenever the
+    walk's DPTR handling does, and a number written into prose is a number that
+    has to be found and edited by the next branch that moves it.
+
+    A cause with no stores against it is still printed. That is the point of
+    the mode -- a cause that has stopped occurring and one that was never
+    implemented read the same in a table that dropped the empty row.
+    """
+    stores = collections.Counter()
+    rows = collections.Counter()
+    for text in addrs:
+        addr = int(text, 16)
+        for off, region, rt, test, arms in arms_for(d, addr, pd_verified,
+                                                    max_depth, max_insns):
+            for arm in arms:
+                for why in arm.unknown_causes:
+                    stores[why] += 1
+                if arm.unattributed:
+                    for why in dict.fromkeys(arm.unknown_causes):
+                        rows[why] += 1
+            if not callee_depth:
+                continue
+            for callee in dict.fromkeys(c for a in arms for c in a.callees):
+                if offset_for_runtime(callee, region) is None:
+                    continue
+                sub = descend(d, region, callee, None, max_depth, max_insns, True,
+                              DPTR_INHERITED)
+                for why in sub.unknown_causes:
+                    stores[why] += 1
+                if sub.unattributed:
+                    for why in dict.fromkeys(sub.unknown_causes):
+                        rows[why] += 1
+    declared = UNKNOWN_CAUSES
+    width = max(len(c) for c in declared)
+    print("unattributed movx by cause, over the arms and callee rows these "
+          "addresses reach")
+    print(f"  {'cause'.ljust(width)}  stores  rows")
+    for cause in declared:
+        print(f"  {cause.ljust(width)}  {stores[cause]:6d}  {rows[cause]:4d}")
+    print(f"  {'(a DPTR carried across a call)'.ljust(width)}  "
+          f"{'':6}  {'':4}  not a loss of the pointer: those stores are "
+          "charged, and issue #197 is what would move them")
+    print(f"\n{sum(stores.values())} unattributed movx over the rows reached, "
+          f"in {sum(rows.values())} row/cause pair(s); every store is in "
+          "exactly one cause.")
+    return 0
 
 
 def main() -> int:
@@ -733,6 +962,8 @@ def main() -> int:
                     help="check the branch split against hand transcriptions and exit")
     ap.add_argument("--csv", action="store_true",
                     help="write one row per arm on stdout instead of the decode")
+    ap.add_argument("--census", action="store_true",
+                    help="print the unattributed-movx split by cause and exit")
     ap.add_argument("--callee-depth", type=int, choices=(0, 1), default=0,
                     help="1: follow each arm's lcall/ljmp one level (default 0)")
     ap.add_argument("--max-depth", type=int, default=16,
@@ -762,6 +993,10 @@ def main() -> int:
         return write_csv(d, args.addrs, pd_verified, args.callee_depth,
                          args.max_depth, args.max_insns)
 
+    if args.census:
+        return census(args.addrs, d, pd_verified, args.callee_depth,
+                      args.max_depth, args.max_insns)
+
     branched = 0
     for text in args.addrs:
         addr = int(text, 16)
@@ -790,8 +1025,11 @@ def main() -> int:
                     print("      callees: "
                           + " ; ".join(f"0x{c:04X}" for c in arm.callees))
                 if arm.unattributed:
-                    print(f"      {arm.unattributed} movx on a DPTR built at run "
-                          "time -- unattributed on purpose")
+                    print(f"      {arm.unattributed} movx unattributed: "
+                          f"{dp_causes(arm)}")
+                if arm.crossed_call:
+                    print("      a store here was charged a DPTR that crossed a "
+                          "call -- charged anyway, issue #197 is what moves it")
                 if arm.movx_ri:
                     print(f"      {arm.movx_ri} movx through a register -- no address")
                 print(f"      ends: {'; '.join(arm.ends) or 'no control-flow instruction'}")

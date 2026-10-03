@@ -2219,11 +2219,15 @@ registers:
       write need not persist -- 0xAC06/0xC75F clear USER and
       TURBO, and 0x8990 clears bit 6 whenever both sensors are under 0x46
       -- but how often any of those runs is behavioural, not static.
-      **The count is not closed.** walk_branch_arms charges 100 stores
-      to no address across its 171 0x0751 rows, any of which could be a
-      0x0751 writer no site scan can name -- that blind spot is issue #34 and
-      stays open. Nothing here moves static_refs (the census reads the same
-      29 sites and adds none) and nothing here is behavioural.
+      **The count is not closed.** walk_branch_arms charges stores to no
+      address when it cannot name the pointer they ride -- DPTR rebuilt at run
+      time, changed in place, or inherited from a caller and not carried --
+      and its `unattributed` column reports them across the 0x0751 arms table
+      with the cause beside each, any of which could be a 0x0751 writer no site
+      scan can name -- that blind spot is issue #34 and stays open.
+      walk_branch_arms.py --census prints the split. Nothing here moves
+      static_refs (the census reads the same 29 sites and adds none) and
+      nothing here is behavioural.
 
       Stays present-untested for one narrow reason: whether the fan-mode
       bits (4-7) change how the EC drives the fans along the (unchanged)
@@ -2891,9 +2895,15 @@ registers:
       0xB734 inside 0xB730, one byte past 0x089E. So the count of 1 here is
       a count of direct `mov dptr` sites and it does not mean "written once"
       or "written from one place" -- the write that reaches this byte is
-      invisible to that count, which is also why 0xB716's own arms row
-      carries one `unattributed` store. See XDATA_089E for the two entries
-      and the A = 0 they both carry. Nothing is read back.
+      invisible to that count, which until 2026-10-03 was also why 0xB716's
+      own arms row carried one `unattributed` store: `walk_branch_arms.py`
+      set DPTR to unknown at an `inc dptr`, so the store after one reached
+      no address in the tool. It follows the increment now, and that row
+      records `0x089F write` with nothing unattributed; the count of 1 here
+      is unchanged, because a direct-`mov dptr` site count is a different
+      question from which instructions write the byte. See XDATA_089E for
+      the two entries and the A = 0 they both carry, and
+      docs/findings/walk-inc-dptr-attribution.md. Nothing is read back.
 
   - name: XDATA_09E6
     addr: 0x09E6

@@ -169,12 +169,23 @@ to the hardware run that is issue #167.
 
 ## 4. Why the number is not closed, with a figure
 
-`walk_branch_arms.descend()` charges a `movx` to no address once DPTR has been
-rebuilt at run time, and reports it in the `unattributed` column. Across the
-`0x0751` arm table that is **100 stores over its 171 rows**, and any of them
-could be a `0x0751` writer that no site scan can name. The figure is read out
-of the committed arms table on every run and held by `--self-test`, so the gap
-is a number that moves rather than a caveat that gets copied forward.
+`walk_branch_arms.descend()` charges a `movx` to no address when it cannot
+name the pointer the store rides, and reports it in the `unattributed` column
+with the cause beside it in `dp_causes`. The figure is read out of the
+committed arms table on every run and held by `--self-test`, so the gap is a
+number that moves rather than a caveat that gets copied forward;
+`walk_branch_arms.py --census` splits it by cause.
+
+> **Corrected 2026-10-03 (issue #242).** This section originally read
+> **100 stores over its 171 rows**, on the single cause of a DPTR rebuilt at
+> run time. Both halves moved. `descend()` now follows `inc dptr`, so stores
+> that reached no address because the pointer went unknown at an increment are
+> charged to their address, and the remainder splits across four causes rather
+> than one — of which *inherited from a caller* is the larger share on this
+> table and was previously unnameable. `walk_branch_arms.py --census` over
+> `0x0751 --callee-depth 1` prints the current split. Issue #34 stays open:
+> the stores are still there, and any of them could still be a `0x0751`
+> writer no site scan can name.
 
 That blind spot is issue #34, and it stays open. Three further limits are the
 tree's own and are not new:
@@ -258,4 +269,5 @@ green.**
   the three vendor modes, so its input is this byte rather than another
   register. §3 of `manual-fan-ctrl-0751.md` covers the mode setters from the
   other side.
-- **Issue #34.** The 100 unattributed stores are the reason the count is open.
+- **Issue #34.** The unattributed stores are the reason the count is open;
+  `--census` prints how many there are and why each pointer was not knowable.
