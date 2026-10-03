@@ -374,24 +374,67 @@ class RecordFramingTests(unittest.TestCase):
                          (0, 0))
 
     def test_the_two_record_figures_are_separate_questions(self):
-        # How many whole records fit in the run, and how far the walk gets from
-        # a given anchor, are different questions with different answers. They
-        # are asserted apart because a tool that merged them would pass a case
-        # that only checked one.
+        # How many whole records fit in the run, and where the 256 index
+        # values land relative to it, are different questions with different
+        # answers. They are asserted apart because a tool that merged them
+        # would pass a case that only checked one.
         self.assertEqual(sit.records_in_run(sit.BLOCK_START, sit.BLOCK_END, 15),
                          (14, 6))
         self.assertEqual(sit.records_in_run(sit.BLOCK_START, sit.BLOCK_END, 21),
                          (10, 6))
-        for label, anchor in sit.ANCHORS:
-            with self.subTest(anchor=label):
-                steps = sit.walk_reaches(anchor, sit.BLOCK_START,
-                                         sit.BLOCK_END, 15, len(self.d))
-                self.assertLessEqual(anchor + steps * 15, sit.BLOCK_END,
-                                     "the walk left the run before the step "
-                                     "it reported")
-                self.assertGreater(anchor + (steps + 1) * 15, sit.BLOCK_END,
-                                   "the walk could have taken another step "
-                                   "inside the run")
+        reach = sit.walk_reaches(sit.BLOCK_BASE_HI, sit.LOWEST_BASE_OFF,
+                                 sit.BLOCK_START, sit.BLOCK_END, 15,
+                                 len(self.d))
+        self.assertEqual(reach["indices"], 256)
+        self.assertEqual(reach["in_run"], 178)
+        self.assertEqual(reach["above_run"], 0)
+
+    def test_the_walk_wraps_inside_the_page_rather_than_climbing(self):
+        # The mistake this replaced: the address is eight bits wide, so the
+        # walk leaves the run and comes back and a step count is not a stable
+        # quantity. Asserted as the property of the address sequence itself --
+        # no index reaches past the page, and the run's top is unreachable --
+        # so a model that grew the address to 16 bits fails here.
+        for stride in (15, 21):
+            with self.subTest(stride=stride):
+                addrs = sit.index_addresses(sit.BLOCK_BASE_HI, stride,
+                                            sit.LOWEST_BASE_OFF)
+                self.assertTrue(all(sit.PAGE_LO <= a <= sit.PAGE_HI
+                                    for a in addrs),
+                                "an index reached outside the page")
+                self.assertFalse(any(a > sit.BLOCK_END for a in addrs),
+                                 "an index reached above the declared run")
+                # An odd stride is a bijection mod 256, so every page address
+                # is named exactly once -- which is why the two strides and
+                # every anchor agree on the tally.
+                self.assertEqual(sorted(set(addrs)),
+                                 list(range(sit.PAGE_LO, sit.PAGE_HI + 1)))
+
+    def test_the_declared_run_is_not_the_set_of_bytes_the_constructions_name(self):
+        # The run is declared wider than the arithmetic can address, and
+        # narrower than the page the arithmetic reaches at its bottom. Both
+        # halves are asserted as properties of the run and the page rather
+        # than as counts, so what is held is the relationship and not a figure
+        # -- `walk.*.indices_in_run` in the write-up's block is where the
+        # count lives, and `--check` holds that to these bytes.
+        self.assertGreater(sit.BLOCK_END, sit.PAGE_HI,
+                           "the declared run no longer extends past the page "
+                           "the arithmetic is confined to")
+        for stride in (15, 21):
+            with self.subTest(stride=stride):
+                addrs = set(sit.index_addresses(sit.BLOCK_BASE_HI, stride,
+                                                sit.LOWEST_BASE_OFF))
+                self.assertTrue(addrs <= set(range(sit.PAGE_LO,
+                                                   sit.PAGE_HI + 1)))
+                self.assertFalse(addrs & set(range(sit.BLOCK_END + 1,
+                                                   sit.PAGE_HI + 2)),
+                                 "an index reached a byte above the page's "
+                                 "ceiling")
+                # Part of what the walk names is below the run, in the code
+                # §1 says the export places above it.
+                self.assertTrue(any(a < sit.BLOCK_START for a in addrs),
+                                "no index fell below the run, so the lower "
+                                "bound would be a floor after all")
 
     def test_a_base_offset_below_the_run_is_refused_not_framed(self):
         # A grid origin one base offset wrong produces an address in the code
@@ -526,11 +569,12 @@ class RefusalTests(unittest.TestCase):
                 self.assertIn(f"0x{base:04X}", str(caught.exception))
 
     def test_a_run_declared_past_the_end_of_the_image_is_refused(self):
-        # A mistyped extent read as a short table: the walk simply never
-        # enters and the answer is a zero that looks like a measurement.
+        # A mistyped extent read as a short table: the tally simply comes out
+        # empty and the answer is a zero that looks like a measurement.
         with self.assertRaises(SystemExit) as caught:
-            sit.walk_reaches(0x4900, sit.BLOCK_START, len(self.d) + 0x1000,
-                             15, len(self.d))
+            sit.walk_reaches(sit.BLOCK_BASE_HI, sit.LOWEST_BASE_OFF,
+                             sit.BLOCK_START, len(self.d) + 0x1000, 15,
+                             len(self.d))
         self.assertIn("outside the image", str(caught.exception))
 
     def test_the_even_stride_refusal_is_also_reached_through_walk_reaches(self):
@@ -538,7 +582,8 @@ class RefusalTests(unittest.TestCase):
         # refusal above would be reachable from one entry point and not the
         # other.
         with self.assertRaises(SystemExit) as caught:
-            sit.walk_reaches(sit.BLOCK_START, sit.BLOCK_START, sit.BLOCK_END, 14)
+            sit.walk_reaches(sit.BLOCK_BASE_HI, sit.LOWEST_BASE_OFF,
+                             sit.BLOCK_START, sit.BLOCK_END, 14)
         self.assertIn("bijection", str(caught.exception))
 
 

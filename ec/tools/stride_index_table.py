@@ -41,9 +41,21 @@ odd, so `A*stride mod 256` is a bijection over all 256 index values and the
 construction bounds nothing: any 8-bit index is admitted, and the number of
 records a walk *can* reach is not a property of the table. So `--records`
 prints two figures separately and labels each for what it is -- how many whole
-records the declared byte run holds at that stride, and how far past the run
-the eight-bit walk can be taken before it leaves it. A reader who wants one
-"record count" is looking for something the arithmetic does not supply.
+records the declared byte run holds at that stride, and how the 256 index
+values fall relative to that run. A reader who wants one "record count" is
+looking for something the arithmetic does not supply.
+
+**The address arithmetic is eight bits wide, and that is the whole of the
+extent question.** `mul AB` keeps only the low byte of the product in A,
+`add A,#base_off` wraps mod 256, and `clr A` clears the carry so
+`addc A,#base_hi` is `base_hi` whatever the low byte did. So the address is
+`base_hi*256 + ((index*stride + base_off) & 0xFF)` and DPTR can never leave
+`0x4900`-`0x49FF` at any index. The walk therefore *wraps*: it leaves the
+declared run and comes back, which is why this tool reports where the 256
+indices land rather than "how many steps before the walk leaves the run" --
+that quantity is not stable, and a first version of this file reported it
+anyway, having modelled the address as 16 bits and grown it past a page the
+firmware cannot address.
 
 **An even stride is refused rather than measured.** `A*stride mod 256` is a
 bijection only when the stride is odd. At an even stride the index maps onto
@@ -155,19 +167,20 @@ STRIDES = (15, 21)
 ENTRY_LEN = 2
 FIELD_STEP = 2
 
-# Where the walk figure is reported from, as (label, address). The first is
-# the run's own first byte; the second is the `+0xCC` base that the `0x43A5`
-# sequence walks from, which the grid `--records` prints at stride 15 places at
-# record 8 field 6 rather than at record 0. They give different answers and
-# both are printed, because a reader shown only one would take it for the
-# record count -- and because a walk anchored at a grid's record 0 reads as
-# that grid's count, which this one is not.
-ANCHORS = (("run_start", BLOCK_START), ("base_cc", 0x49CC))
-# The same two anchors, spelled for a reader. Kept beside ANCHORS rather than
-# inside it because the figure keys are parsed as `key = value` and a key with
-# a space in it is a line the parser refuses.
-ANCHOR_LABELS = {"run_start": "the run's first byte",
-                 "base_cc": "the +0xCC base"}
+# The construction's address arithmetic is eight bits wide, so these bound what
+# it can name however large the index is. `mul AB` truncates the product to A
+# and `add A,#off` wraps mod 256, and `clr A` clears the carry so
+# `addc A,#base_hi` is always exactly `base_hi`: the address is
+# `base_hi*256 + ((index*stride + off) & 0xFF)` and cannot leave the page. The
+# ceiling is what makes the declared run's upper bytes unreachable, so it is
+# derived from BLOCK_BASE rather than written as a second constant.
+PAGE_BYTES = 0x100
+PAGE_LO = BLOCK_BASE
+PAGE_HI = BLOCK_BASE + PAGE_BYTES - 1
+# The lowest base offset any construction on this block uses, and so the anchor
+# the walk figure is reported from: `0x4900 + 0x4E` is the run's own first
+# byte. Not a record count -- `walk_reaches` says so where it prints.
+LOWEST_BASE_OFF = BLOCK_START - BLOCK_BASE
 
 # The image-wide population, per region, is a count over committed bytes and
 # is stated once in the write-up beside the command that prints it. Nothing
@@ -336,13 +349,24 @@ def scan(d: bytes, pd_verified: bool, base_hi=None) -> list:
 
 
 def owning_rows(index_path: str = INDEX_CSV) -> list:
-    """[(start, size, scope, addr, name)] sorted by start, from index.csv.
+    """[(start, size, scope, addr, name, common)] sorted by start, from
+    index.csv.
 
     For every program but the PD image, the `addr` column is the *file offset*
     of the function's bytes: `bank1/4A26.asm` and the common area's 0x4A26
     are the same bytes, and `program` names which image seeded the export. So
     a coverage question about the common area is `bisect` and no bank
     arithmetic at all.
+
+    That leaves the `scope` a *program* name, which is not always the area the
+    bytes are in, and the last cell is what tells the two apart: `common` is
+    index.csv's own flag for a row whose bytes lie in the common area. It
+    matters because every bank image this exporter builds grafts the common
+    area on the front (`make_bank_image.build_bank`), so a `bank1` row at a
+    file offset below 0x8000 describes common-area bytes -- and reporting such
+    a row as `bank1` attributes a common-area function to a bank, which is
+    what `--sites`' `function` column did for the one row of the census where
+    the two disagree.
 
     The `pd` rows are dropped, and this is the exception that makes the rest
     of the paragraph true rather than mostly true: the PD image is a separate
@@ -367,7 +391,8 @@ def owning_rows(index_path: str = INDEX_CSV) -> list:
                 continue
             if size <= 0:
                 continue
-            rows.append((start, size, r["program"], r["addr"], r["name"]))
+            rows.append((start, size, r["program"], r["addr"], r["name"],
+                         r["common"] == "yes"))
     rows.sort(key=lambda t: (t[0], t[2]))
     return rows
 
@@ -380,20 +405,42 @@ def owner_of(off: int, rows: list) -> str:
     `common` first: the same bytes are exported once per program whose image
     seeded them, and the common-area spelling is the one a reader of the
     common area wants.
+
+    The scope reported is the *area the bytes are in*, not the program whose
+    image seeded the export. `listing_scope()` recovers the program for the
+    file lookup, which is what the directory is named by; this cell is what a
+    reader of the census takes as the area, so a `bank1` row whose bytes are
+    common-area bytes is reported as `common`.
     """
     starts = [r[0] for r in rows]
     i = bisect.bisect_right(starts, off)
     best = None
-    for start, size, scope, addr, name in reversed(rows[:i]):
+    for start, size, scope, addr, name, common in reversed(rows[:i]):
         if start + size <= off:
             continue
+        area = "common" if common else scope
         if best is None or start > best[0]:
-            best = (start, scope, addr, name)
-        elif start == best[0] and best[1] != "common" and scope == "common":
-            best = (start, scope, addr, name)
+            best = (start, area, addr, name)
+        elif start == best[0] and best[1] != "common" and area == "common":
+            best = (start, area, addr, name)
     if best is None:
         return NO_FUNCTION
     return f"{best[1]} {best[2]} {best[3]}"
+
+
+def listing_scope(addr: str, rows: list) -> str:
+    """The index.csv `program` for the row at `addr`, for the file lookup.
+
+    `owner_of()` reports the area the bytes are in, which is not always the
+    directory the listing is filed under: a common-area function exported
+    through the bank1 image lives at `bank1/4A26.asm`. This is the name that
+    path is built from, so it is kept separate rather than taken from
+    `owner_of()`'s cell.
+    """
+    for start, _size, scope, row_addr, _name, _common in rows:
+        if row_addr.upper() == addr.upper():
+            return scope
+    return ""
 
 
 def listing_stream(off: int, rows: list) -> list:
@@ -414,7 +461,7 @@ def listing_stream(off: int, rows: list) -> list:
     stream, at = [], None
     j = i - 1
     while j >= 0:
-        start, size, scope, addr, _name = rows[j]
+        start, size, scope, addr, _name, _common = rows[j]
         if at is not None and start + size != at:
             break
         if start + size <= off and at is None:
@@ -556,32 +603,52 @@ def records_in_run(start: int, end: int, stride: int) -> tuple:
     return divmod(span, stride)
 
 
-def walk_reaches(base: int, start: int, end: int, stride: int,
-                 image_len: int = None) -> int:
-    """How many steps the walk takes before it leaves the declared run.
+def index_addresses(base_hi: int, stride: int, base_off: int) -> list:
+    """Every address the construction can name, over all 256 index values.
+
+    The eight-bit model the bytes implement, and the reason the run's own
+    arithmetic is not a wider one: `mul AB` keeps only the low byte of the
+    product in A, `add A,#base_off` wraps mod 256, and `clr A` (0xE4) clears
+    the carry so `addc A,#base_hi` is `base_hi` whatever the low byte did. The
+    address is therefore `base_hi*256 + ((index*stride + base_off) & 0xFF)`,
+    which never leaves the page -- the widest any construction on this image
+    reaches is `0x49FF`.
+
+    This is a property of the opcode bytes, not of a choice this tool made
+    about how to model them, so it is measured from the same `base_hi`,
+    `stride` and `base_off` the census reads off the image.
+    """
+    page = base_hi << 8
+    return [page + ((i * stride + base_off) & 0xFF) for i in range(PAGE_BYTES)]
+
+
+def walk_reaches(base_hi: int, base_off: int, start: int, end: int,
+                 stride: int, image_len: int = None) -> dict:
+    """Where the walk's 256 addresses fall, relative to the declared run.
 
     The second of the two record figures, and the one the arithmetic is
-    actually about: the largest `k` with `base + k*stride` still inside the
-    run. Because an odd stride is a bijection, this is a statement about where
-    *this* grid runs out, not about how many indices the construction admits
-    -- which is all 256 of them, whatever this returns.
+    actually about. It is a tally of the index values, not a count of steps:
+    because the address wraps mod 256 the walk *leaves the run and comes
+    back*, so "how far before it leaves" is not a stable quantity at all and
+    is not reported. What is stable is how many of the 256 indices land inside
+    the run, how many fall below it, and whether any index can reach the top of
+    the page at all.
 
     A run declared past the end of the image is refused rather than counted.
     The mistake is a mistyped extent, and without the check it reads as a
-    short table: the loop simply never enters, and the answer is a zero that
-    looks like a measurement. `image_len` is what makes the two distinguishable.
+    short table: the tally simply comes out empty, and the answer is a zero
+    that looks like a measurement. `image_len` is what makes the two
+    distinguishable.
     """
     check_stride(stride)
     if image_len is not None and end >= image_len:
         raise SystemExit("error: " + OVERRUN % (0, stride, start,
                                                 end, image_len))
-    k, off = 0, base
-    while start <= off <= end:
-        k += 1
-        off = (off + stride) & 0xFFFF
-        if k > 0x10000:            # unreachable for an odd stride; a guard
-            break
-    return k - 1 if k else 0
+    addrs = index_addresses(base_hi, stride, base_off)
+    inside = sum(1 for a in addrs if start <= a <= end)
+    above = sum(1 for a in addrs if a > end)
+    return {"indices": len(addrs), "in_run": inside, "above_run": above,
+            "page_hi": PAGE_HI}
 
 
 def entry_tags(d: bytes, start: int, end: int) -> dict:
@@ -951,10 +1018,12 @@ def figures(d: bytes, pd_verified: bool, index_rows: list) -> list:
         whole, left = records_in_run(BLOCK_START, BLOCK_END, stride)
         out.append((f"records.{stride}.whole", str(whole)))
         out.append((f"records.{stride}.leftover_bytes", str(left)))
-        for label, anchor in ANCHORS:
-            out.append((f"walk.{stride}.steps_from_{label}",
-                        str(walk_reaches(anchor, BLOCK_START, BLOCK_END,
-                                         stride, len(d)))))
+        reach = walk_reaches(BLOCK_BASE_HI, LOWEST_BASE_OFF, BLOCK_START,
+                             BLOCK_END, stride, len(d))
+        out.append((f"walk.{stride}.indices_in_run",
+                    str(reach["in_run"])))
+        out.append((f"walk.{stride}.indices_above_run",
+                    str(reach["above_run"])))
     return out
 
 
@@ -1123,28 +1192,34 @@ def records_report(d: bytes, rows: list, stride: int, base: int) -> str:
     index printed without the grid it was computed on is a number with
     nothing to check it against.
 
-    The walk figure is reported from two anchors rather than one -- the run's
-    own first byte, and the `+0xCC` base the `0x43A5` sequence walks from --
-    because they give different answers and a reader who only saw one would
-    take it for the record count. Neither is what the firmware can pass; an
-    odd stride is a bijection mod 256 and admits all 256 index values.
+    The walk figure is a tally of the 256 index values against the run rather
+    than a count of steps, because the arithmetic is eight bits wide and wraps
+    inside the page: the walk leaves the run and comes back, so a step count
+    would be a number with no stable referent. Neither figure is what the
+    firmware can pass; an odd stride is a bijection mod 256 and admits all 256
+    index values.
     """
     whole, left = records_in_run(BLOCK_START, BLOCK_END, stride)
+    reach = walk_reaches(BLOCK_BASE_HI, LOWEST_BASE_OFF, BLOCK_START,
+                         BLOCK_END, stride, len(d))
     out = [f"page base 0x{base:04X}, stride {stride}, run "
            f"0x{BLOCK_START:04X}-0x{BLOCK_END:04X}\n"]
     out.append(f"  the run is {BLOCK_END - BLOCK_START + 1} bytes: "
                f"{whole} whole record(s) of {stride} and {left} byte(s) "
                "left over\n")
-    for label, anchor in ANCHORS:
-        out.append(f"  the 8-bit walk from 0x{anchor:04X} "
-                   f"({ANCHOR_LABELS[label]}) reaches "
-                   f"{walk_reaches(anchor, BLOCK_START, BLOCK_END, stride, len(d))}"
-                   " further record(s) before it leaves the run.\n")
+    out.append(f"  the address arithmetic is eight bits wide, so the walk "
+               f"wraps mod 256 inside the page and\n  leaves the run and comes "
+               f"back: of the {reach['indices']} index values, "
+               f"{reach['in_run']} land inside it and\n  "
+               f"{reach['indices'] - reach['in_run'] - reach['above_run']} "
+               f"below it, in the code the export places above.\n")
+    out.append(f"  the page ends at 0x{PAGE_HI:04X}, so the "
+               f"{BLOCK_END - PAGE_HI} byte(s) at the top of the declared run "
+               "are ones no index\n  reaches at all.\n")
     out.append("  These are three different questions and the tool will not "
                "merge them. An odd stride\n  is a bijection mod 256, so the "
                "construction admits every 8-bit index and none of these is a "
-               "record\n  count the firmware can reach; the last is where "
-               "*this* grid runs out.\n")
+               "record\n  count the firmware can reach.\n")
     out.append("  site        base_off  record  field\n")
     for r in rows:
         frame = record_frame(base, BLOCK_START, BLOCK_END, stride, r["base_off"])
@@ -1204,15 +1279,19 @@ def index_report(d: bytes, rows: list, index_rows: list) -> str:
             out.append(f"  0x{r['offset']:04X}  {NO_FUNCTION}\n")
             continue
         scope, addr, _name = text.split(" ", 2)
+        # The listing and the census row are both filed under the program that
+        # seeded the export, which is not always the area the bytes are in.
+        program = listing_scope(addr, index_rows) or scope
         entry = int(addr, 16)
         reg = register_name(load)
-        source = prologue_index_source(d, scope, addr, reg) if reg else ""
+        source = (prologue_index_source(d, program, addr, reg)
+                  if reg else "")
         if source:
             load = (f"{load}; its entry's prologue hands the caller's {source} "
                     f"into it, so the caller rows below follow {source}")
             reg = source
         who = calls.get(entry, [])
-        crow = census.get((scope, addr.upper()))
+        crow = census.get((program, addr.upper()))
         counted = crow["inbound"] if crow else "no row"
         out.append(f"  0x{r['offset']:04X}  entry {scope} {addr}  {load}\n")
         for listing, call_at in who:
@@ -1314,14 +1393,25 @@ def self_test(d: bytes, pd_verified: bool, index_rows: list) -> int:
     #    is a typo in a declared extent that reads as a short table instead of
     #    as a run past the end of what was read.
     try:
-        walk_reaches(0x4900, BLOCK_START, len(d) + 0x1000, 15, len(d))
+        walk_reaches(BLOCK_BASE_HI, LOWEST_BASE_OFF, BLOCK_START,
+                     len(d) + 0x1000, 15, len(d))
         check(False, "a run declared past the end of the image is refused")
     except SystemExit as e:
         check("outside the image" in str(e),
               "a run declared past the end of the image is refused, "
               "naming the bound")
-    check(walk_reaches(0x4A25, BLOCK_START, BLOCK_END, 15) == 0,
-          "a grid anchored at the run's last byte reaches no further record")
+    # The arithmetic is eight bits wide, so the walk wraps and comes back and
+    # there is no step count to report. What is stable is where the indices
+    # land, and the two halves of that are asserted here because a tool that
+    # reported only the first would imply the run's top is reachable.
+    reach = walk_reaches(BLOCK_BASE_HI, LOWEST_BASE_OFF, BLOCK_START,
+                         BLOCK_END, 15)
+    check(reach["in_run"] == 178 and reach["above_run"] == 0,
+          "at stride 15 the 256 indices wrap inside the page: 178 land in "
+          "the run, none above it")
+    check(index_addresses(BLOCK_BASE_HI, 15, LOWEST_BASE_OFF)[-1]
+          <= PAGE_HI,
+          "no index at any stride reaches past the top of the page")
 
     # 6. A `--check` against a write-up whose figures no longer re-derive is
     #    red. Built here rather than asserted about, because the mistake it

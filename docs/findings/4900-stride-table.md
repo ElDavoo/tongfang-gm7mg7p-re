@@ -50,28 +50,49 @@ dump of a byte run is not a decode and is printed as one.
 
 ## 1. Where the block starts and ends, and whether the two strides partition the same region
 
-**One region, not two.** Every construction in §2 builds an address in the same
-216 bytes, `0x494E`–`0x4A25`. The two strides walk that run at different step
-sizes and nothing else.
+**One region, not two, but not the whole of the declared run either.** Every
+construction in §2 builds its address into the same page, `0x4900`–`0x49FF`,
+and the two strides walk it at different step sizes. The **run** this page
+declares, `0x494E`–`0x4A25`, is wider than what the arithmetic can name: the
+address is eight bits wide, so DPTR cannot leave the page, and the run's top
+**38 bytes** — `0x4A00`–`0x4A25` — are above `0x49FF` and are named by no
+construction at any index.
 
-The **lower** bound is firm and has two independent supports:
+That width is a property of the opcodes rather than of a choice about how to
+model them. `mul AB` keeps only the low byte of the product in A, `add A,#off`
+wraps mod 256, and `clr A` (0xE4) clears the carry so `addc A,#0x49` is
+exactly `0x49` whatever the low byte did. The address is therefore
+`0x4900 + ((index*stride + off) & 0xFF)`, and the widest any construction on
+this image reaches is `0x49FF`.
+
+So the declared run is **not** the set of bytes the constructions address.
+Below its lower bound the arithmetic also reaches, and reaches it a third of
+the time: at stride 15 from `+0x4E` the walk leaves the run at index 12, wraps
+to `0x4902`, and comes back. The run's two edges each cut the page.
+
+The **lower** bound has one support, and it is a walk's:
 
 * `0x494D` is a `ret`. The function the committed export places immediately
   below the run is `common 0x4947`, seven bytes ending there, and a forward
   `walk_branch_arms.descend()` from its seed decodes five instructions and
   stops at that `ret` without decoding `0x494E`.
-* `+0x4E` is the lowest base offset any of the constructions uses, and
-  `0x4900 + 0x4E` is `0x494E` — the byte immediately after that `ret`. So the
-  lowest address the arithmetic reaches is the first byte after the last
-  instruction the export places there.
 
-The **upper** bound is one byte weaker and is stated as such. `0x4A26` is a
-call target in the committed listings (`bank1/4874.asm` calls it) and
-`ec/decompiled/index.csv` exports it as a function entry, so the run is
-declared to end at `0x4A25`, the byte before it. Nothing in the committed tree
-independently settles `0x4A25` itself: it is one `mov R1,A` in the middle of
-the run's tail and it could as well be a final entry byte. The run's declared
-length is therefore a lower bound on the data, not an exact end.
+`+0x4E` is also the lowest base offset any of the constructions uses, and
+`0x4900 + 0x4E` is `0x494E`, the byte immediately after that `ret` — but that
+is now a statement about where the offsets start, not a floor, because the
+address wraps below it.
+
+The **upper** bound is stated as what the common bytes are. At `0x4A26` the
+common area holds `mov R7,A` / `mov A,R1` — the two instructions that open the
+`0x4A28` construction site — so the byte after the run is code, and the run is
+declared to end at `0x4A25`. `ec/decompiled/index.csv` has no `common` row
+covering `0x4A26`–`0x4A3F`; the row that covers it is `bank1,4A26`, whose
+`common` column says the bytes are common-area bytes exported through the
+bank1 image (`make_bank_image.build_bank` grafts the common area on at
+`0x0000`-`0x7FFF`). Nothing in the committed tree independently settles
+`0x4A25` itself: it is one `mov R1,A` in the middle of the run's tail and it
+could as well be a final entry byte. The run's declared length is therefore a
+lower bound on the data, not an exact end.
 
 ```
 python3 ec/tools/stride_index_table.py ec/firmware/GMxMGxx_11.800 --boundary
@@ -87,7 +108,7 @@ the two ends of the declared run, and the two functions they are bracketed by
   0x494E  walk from bracketing function below the run
          common 4947 FUN_CODE_4947, seed 0x4947: run start not-reached, byte after the run not-reached; the walk ended at ret
   0x494E  walk from bracketing function above the run
-         bank1 4A26 code_table_pointer_from_r1, seed 0x4A26: run start not-reached, byte after the run reached-by-walk; the walk ended at DPTR built at run time (a store to DPL/DPH); ret
+         common 4A26 code_table_pointer_from_r1, seed 0x4A26: run start not-reached, byte after the run reached-by-walk; the walk ended at DPTR built at run time (a store to DPL/DPH); ret
   0x4A25  run length at the 2-byte entry width
          108 entries cover it exactly (216 of 216 bytes), with 49 distinct bytes at the entry offsets
 ```
@@ -107,8 +128,8 @@ byte is not in it), not "the byte is data".
 
 **The upper-bound walk says `reached-by-walk` for its own entry.** That is
 tautological — the seed *is* `0x4A26` — and it is printed rather than hidden
-so a reader can see that the run's upper bound rests on the call target and
-the export, not on the walk.
+so a reader can see that the run's upper bound rests on what the common bytes
+there are, not on the walk.
 
 ## 2. How many constructions there are — the issue's five, and what a scan finds
 
@@ -138,9 +159,18 @@ bytes inside somebody's immediate operand.
 
 The last column is `--sites`'s own `function` cell, verbatim: the innermost
 `ec/decompiled/index.csv` row whose extent covers the site, as `scope`, `addr`
-and `name`. A `FUN_CODE_*` name is a placeholder the export carries and no
-annotation row names, which is the whole of what an "annotated" flag would add
-here, so the name is left to say it.
+and `name`. The `scope` there is the **area the bytes are in**, not the program
+whose image seeded the export — every bank image grafts the common area on at
+`0x0000`-`0x7FFF` (`make_bank_image.build_bank`), so a `bank1` row at a file
+offset below `0x8000` is a common-area function, and index.csv's own `common`
+column is what says so. All nineteen rows here are common-area sites and all
+nineteen are now reported with a common-area scope; before that they did not
+agree, and the one row of the census where the two differed was reported as
+belonging to a bank. The listing each name refers to is still filed under the
+program that seeded it, which is `bank1/4A26.asm` for the `0x4A28` row. A
+`FUN_CODE_*` name is a placeholder the export carries and no annotation row
+names, which is the whole of what an "annotated" flag would add here, so the
+name is left to say it.
 
 | site | stride | `base_off` | index register | owning exported function |
 |---|---|---|---|---|
@@ -148,7 +178,7 @@ here, so the name is left to say it.
 | `common 0x43F6` | 15 | `+0xD6` | R6 | `common 43A5 per_channel_state_sequence_on_15byte_stride_table_43a5` |
 | `common 0x440B` | 15 | `+0xD8` | R6 | `common 43A5 per_channel_state_sequence_on_15byte_stride_table_43a5` |
 | `common 0x454F` | 21 | `+0x61` | an XDATA read | `common 451A FUN_CODE_451a` |
-| `common 0x4A28` | 21 | `+0x50` | R1 | `bank1 4A26 code_table_pointer_from_r1` |
+| `common 0x4A28` | 21 | `+0x50` | R1 | `common 4A26 code_table_pointer_from_r1` |
 | `common 0x4A42` | 21 | `+0x54` | R1 | `common 4A42 dptr_from_21byte_stride_index` |
 | `common 0x4A5E` | 21 | `+0x4E` | an XDATA read | `common 4A5E FUN_CODE_4a5e` |
 | `common 0x4A77` | 15 | `+0xCE` | R1 | `common 4A77 FUN_CODE_4a77` |
@@ -200,19 +230,23 @@ every site; neither is the answer, because the bytes do not choose.
 
 The anchor matters and is named in every one of these numbers: the grid is
 counted from `0x494E`, not from `0x43A5`'s own `+0xCC` base at `0x49CC`, which
-that grid places at record 8 field 6 rather than at record 0. §7 keeps the two
-apart for the walk as well — `steps_from_base_cc` is five where
-`steps_from_run_start` is fourteen — because an index printed without the grid
-it was computed on is a number with nothing to check it against.
+that grid places at record 8 field 6 rather than at record 0. An index printed
+without the grid it was computed on is a number with nothing to check it
+against, and the grid is what §7's `--check` re-derives.
 
 **The record count is two measurements and this page will not merge them.**
 
 1. *How many whole records of that stride fit in the declared run.* The run is
    216 bytes: fourteen whole 15-byte records with 6 bytes over, ten whole
-   21-byte records with 6 bytes over.
-2. *How far the 8-bit walk gets from a given anchor before it leaves the run.*
-   From the run's first byte, fourteen steps at stride 15 and ten at stride 21;
-   from the `+0xCC` base, five at stride 15 and four at stride 21.
+   21-byte records with 6 bytes over. This is a statement about the byte run
+   §1 declares, and §1's first paragraph says why that run is wider than what
+   the arithmetic addresses.
+2. *Where the 256 index values land relative to the run.* Because the address
+   is eight bits wide and wraps mod 256, the walk **leaves the run and comes
+   back**, so "how far before it leaves the run" is not a stable quantity and
+   is not reported. What is stable is the tally: at either stride, 178 of the
+   256 index values land inside the run, 78 land below it, and **none lands
+   above `0x49FF`**.
 
 They are different questions with different answers, and the tool prints both
 on every run. A reader who wants one "record count" is looking for something
@@ -222,32 +256,34 @@ construction admits every 8-bit index.** The tool refuses an even stride
 outright for the same reason — at an even parity the index maps onto half the
 offsets, so the record count it implies is a different claim.
 
-**One tiling is worth recording and one is refuted.**
+**The tiling that was recorded here does not survive the eight-bit
+arithmetic, and neither does the one refuted beside it.** An earlier version of
+this page noted that `0x49CC` to `0x4A25` is 90 bytes, six whole 15-byte
+records, ending exactly on the byte after the run, and set that against the
+21-byte grid which lands nowhere. Both readings were arithmetic on a 16-bit
+address. `0x49CC + 90` is `0x4A26` as an addition, but the construction does
+not add: the sixth step computes `index*15 + 0xCC` in A, and `6*15 + 0xCC` is
+`0x12E`, which truncates to `0x2E` and lands at `0x4926` — inside the page and
+below the run. Neither the 15-byte fit nor the 21-byte miss is evidence about
+the table, because at eight bits neither endpoint is an address the walk ever
+holds.
 
-The run's 216 bytes are a whole number of 2-byte entries from its first byte,
-and the byte after the last one is `0x4A26`, the call target. The run is also
-a whole number of 15-byte records *from the `+0xCC` base*: `0x49CC` to
-`0x4A25` is 90 bytes, six records, and `0x49CC + 90` is `0x4A26`. The same
-arithmetic at stride 21 does not land: from the run's first byte, 216 is ten
-21-byte records and 6 bytes over, so the 21-grid does not end on the boundary
-above the run.
-
-The 15-byte fit is one observation and not a proof. 90 is divisible by 15 and
-`0x49CC + 90` lands on a function entry, but 15 is one of two strides the byte
-pattern would have to be lucky about, and the run has an even length whichever
-stride is tried — which is why this is recorded beside the refuted one and not
-leaned on.
+What is left standing is the 2-byte-entry width, which is a property of the
+run's bytes rather than of the address arithmetic: 216 is a whole number of
+2-byte entries, and every base offset the constructions use is even except
+`+0x61`, with both strides odd.
 
 *(A hypothesis worth keeping beside this: that the two strides are two record
 geometries over the same bytes — one table, two grids — is what this page set
-out to test and it does not survive the arithmetic. 21 tiles nothing whole. The
-reading that does fit every base offset is that the entries are two bytes wide
-and the strides are index steps over them, not record widths: every base offset
-the constructions use is even — `0x4E`, `0x50`, `0x52`, `0x54`, `0x56`,
-`0x58`, `0x5A`, and `0xCC`, `0xCE`, `0xD0`, `0xD2`, `0xD4`, `0xD6`, `0xD8` —
-except `+0x61`, and both strides are odd, so a walk steps from an even offset
-to an odd one and back. That is what a 2-byte entry stream looks like walked at
-an odd stride. What the entries *are* is §5's open question.)*
+out to test, and it does not survive either the tiling arithmetic or the
+eight-bit address model. The reading that does fit every base offset is that
+the entries are two bytes wide and the strides are index steps over them, not
+record widths: every base offset the constructions use is even — `0x4E`,
+`0x50`, `0x52`, `0x54`, `0x56`, `0x58`, `0x5A`, and `0xCC`, `0xCE`, `0xD0`,
+`0xD2`, `0xD4`, `0xD6`, `0xD8` — except `+0x61`, and both strides are odd, so
+a walk steps from an even offset to an odd one and back. That is what a 2-byte
+entry stream looks like walked at an odd stride. What the entries *are* is
+§5's open question.)*
 
 ## 4. The index register, and whether the constructions agree on a count
 
@@ -305,10 +341,17 @@ anywhere in this repository, and this page does not infer it.
   separate job. Nothing above decodes it, and the 49 distinct bytes at the
   entry offsets are a measurement of that vocabulary's size, not of its
   meaning.
-* **That the run is data rather than code.** §1 gives a walk's verdict and a
-  call target. A flow walk cannot tell code from a table it wandered into, and
-  `disasm8051.py --converge` answers 24 of 24 at both ends of the run, so the
-  framing evidence it offers is the uninformative answer.
+* **That the run is data rather than code.** §1 gives a walk's verdict and what
+  the common bytes at the byte after the run are. A flow walk cannot tell code
+  from a table it wandered into, and `disasm8051.py --converge` answers 24 of 24
+  at both ends of the run, so the framing evidence it offers is the
+  uninformative answer.
+* **That the declared run is the set of bytes the constructions address.**
+  §1's first paragraph is the negative half of this: the arithmetic reaches the
+  256 bytes `0x4900`-`0x49FF`, which straddles both edges of the run, so the
+  run's top 38 bytes are unreachable and its lower bound is not a floor the
+  walk stops at. Where the run *should* end is the open question this becomes;
+  what the arithmetic settles is only what it cannot name.
 * **That any index range is reachable.** See §4.
 * **That `0x4900` is a register.** It is a CODE address, and
   `ec/annotations/registers.yaml` is XDATA-scoped, so no row is implied here
@@ -326,12 +369,21 @@ anywhere in this repository, and this page does not infer it.
 
 * Annotate the rows §2's last column still shows as a `FUN_CODE_*` placeholder —
   the `0x4A26`–`0x4B40` pointer-builder family, which fifteen of the nineteen
-  sites sit in and only `bank1 0x4A26` and `common 0x4A42` of which are named
-  today, plus `common 0x451A` on the one site outside it. Naming them would
-  rename exported functions and churn `ec/decompiled/index.csv`, so it is its
-  own change and not this one's. `common 0x4A77` is the one to leave alone: it is
+  sites sit in and only `0x4A26` and `common 0x4A42` of which are named today,
+  plus `common 0x451A` on the one site outside it. The `0x4A26` row is the one
+  whose annotation row is filed under `bank1` while its bytes are common-area
+  (§2's last-column paragraph), so renaming it means deciding which spelling
+  the row should carry. Naming them would rename exported functions and churn
+  `ec/decompiled/index.csv`, so it is its own change and not this one's.
+  `common 0x4A77` is the one to leave alone: it is
   the second instruction of the entry issues #617 and #652 already discuss, and
   re-opening that boundary is not this change.
+* Settle where the run actually ends, which §1's eight-bit arithmetic makes an
+  open question rather than a measurement. What it settles is the ceiling:
+  nothing above `0x49FF` is addressable, so the declared run's top 38 bytes are
+  data no index reaches, and whether they are the tail of the table or the
+  start of something else is not answerable from the arithmetic. It needs an
+  argument about the bytes.
 * Decode the entry stream, which is the missing half of `common 0x43A5`: until
   a record's two bytes are named, the state sequence that walks the table is a
   walk over an unnamed thing.
@@ -387,10 +439,11 @@ table.end = 0x4A25
 table.entries_at_2 = 108
 table.sha256 = 9ecf1319a6dcc9f3b4b044ae66f3c2726198dbb81f4b12d9eb9359d7bf8c1100
 table.start = 0x494E
-walk.15.steps_from_base_cc = 5
-walk.15.steps_from_run_start = 14
-walk.21.steps_from_base_cc = 4
-walk.21.steps_from_run_start = 10
+walk.15.indices_above_run = 0
+walk.15.indices_in_run = 178
+walk.21.indices_above_run = 0
+walk.21.indices_in_run = 178
+```
 ```
 
 ## 8. What landed, and what did not
