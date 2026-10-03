@@ -34,11 +34,15 @@ three answers and no fourth:
 | inside another instruction | **397** | 14.5% |
 | no committed listing covers the site | **986** | 36.0% |
 
-Bucket B is not read. It is left to [#574](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/574),
-which is open on it and wants a different `entry`/`erased`/`other` census; two
-branches writing the same rows is the merge-conflict surface `CLAUDE.md` warns
-about. The schemas compose — both key on `(region, runtime, bucket)` — so #574
-can run this same classification over B and join on the site.
+Bucket B is not read, and **nothing here claims it**: no issue is named as owning
+those rows, because a claim about the tracker is one a write-up cannot keep true.
+Take the scope as unowned, not covered. It stands on the merge-conflict surface
+`CLAUDE.md` warns about instead: two branches writing the same rows collide at
+the same hunk. Bucket B is also a different question, which
+`bank-call-audit.md` §4 gives the `entry`/`erased`/`other` treatment. The
+schemas compose — both key on `(region, runtime, bucket)` — so the same
+classification can be run over B and joined on the site by whichever branch
+picks it up.
 
 By region and bucket, so no cell is read as the whole:
 
@@ -107,8 +111,7 @@ real opcode — and behind them:
   about the **site** — the covering listing starts at the site's own address,
   so the scan matched at a listing's first byte — and it is not a second,
   smaller answer to the target question. The target-side figures are the two
-  counts above: 1,049 rows name a target with an `index.csv` row and 633 name
-  one with a `ghidra-functions.csv` row. Neither set is a subset of the other.
+  counts in the bullet above, and neither set is a subset of the other.
   A boundary read makes the **site** an opcode and says nothing about the
   **target**; the two are separate questions, so this is not multiplied into a
   single "clears both" figure, which would be a count of neither.
@@ -141,12 +144,12 @@ they are not spread evenly:
 
 **53 of the 397 sit inside a `mov DPTR,#imm16` immediate** — 27 read as
 `lcall`, 26 as `ljmp`, and they land on both bytes of that immediate rather than
-only one (24 at the instruction's second byte, 29 at its third). This is the
-family [#508](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/508)
-names. **This census re-reports those addresses so #508 can reconcile against
-the population rather than recount it**; #508's own count is not re-derived or
-re-litigated here, and the rows are reachable with
-`--rows` for it to read.
+only one (24 at the instruction's second byte, 29 at its third). **This census
+re-reports those addresses so
+[#508](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/508) can reconcile
+against the population rather than recount it**; #508's own count is not
+re-derived, re-litigated, or restated here, and this figure is not offered in
+its place. The rows are reachable with `--rows` for it to read.
 
 The three worked examples, read byte by byte, in
 [`ff-fill-census.md`](ff-fill-census.md)'s style:
@@ -239,7 +242,7 @@ classifies the direct-call rows, and none should wait for this.
   bytes at the site's address are a real opcode in a committed listing. It does
   not establish that the scan's `target` is a function, that anything reaches
   it, or that the transfer is what the scan took it for. The `--rows` target
-  columns are labels for a naming pass; the 99 boundary rows at a listing's own
+  columns are labels for a naming pass; the boundary rows at a listing's own
   entry address are a fact about where the scan matched, not a count of good
   targets, and neither figure filters the other.
 - **`anchored` predicts a real opcode in bucket A, not across A and C.** Not

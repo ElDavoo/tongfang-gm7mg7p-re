@@ -100,11 +100,13 @@ DECOMPILED = os.path.join(EC, "decompiled")
 ANNOTATIONS = os.path.join(EC, "annotations")
 BUCKET_C_CODEMAP = os.path.join(ANNOTATIONS, "bucket-c-codemap.csv")
 
-# The two buckets this tool reads. Bucket B is left to #574, which is open on
-# it and wants a different `entry`/`erased`/`other` census: two branches
-# writing the same rows is the conflict surface CLAUDE.md warns about. The
-# schemas compose -- both key on `(region, runtime, bucket)` -- so #574 can run
-# the same classification over B and join on the site.
+# The two buckets this tool reads. Bucket B is not read, and no issue is named
+# here as owning it -- that would be a claim about the tracker this tool cannot
+# keep true, and a reader should take B as unowned rather than covered. The
+# scope stands on the conflict surface CLAUDE.md warns about instead: two
+# branches writing the same rows collide at the same hunk. The schemas compose
+# -- both key on `(region, runtime, bucket)` -- so the same classification can
+# be run over B and joined on the site.
 BUCKETS = ("A", "C")
 
 # The three verdicts, in the order the report prints them, and the only three
@@ -390,8 +392,9 @@ def report(sites, cover, index, annotated):
         say("  %d of them sit inside a `mov DPTR,#imm16` immediate: %s"
             % (len(dptr), ", ".join("%d %s" % (n, o)
                                     for o, n in sorted(by_opcode.items()))))
-        say("  the family #508 names; this tool re-reports the addresses so it "
-            "can reconcile against the population rather than recount it")
+        say("  this tool re-reports the addresses so #508 can reconcile "
+            "against the population rather than recount it; #508's own count "
+            "is not restated here and this figure is not offered in its place")
     say("")
 
     # --- the uncovered set, and the program scoping that keeps it honest ---
