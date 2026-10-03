@@ -40,8 +40,27 @@ carried a **warm** cache — and a warm cache preserves offset 0x60 and
 read*; the evidence is equally consistent with "0x60 was never 1" as with "0x60
 was 1 and was later zeroed".
 
-`docs/findings.md` §8 records that "which writer did that is not known". That
-stays true, and no retraction is needed.
+## What this retracts in `docs/findings.md` §8
+
+§8 records that "which writer did that is not known". That sentence survives,
+and it is the verdict below. The two sentences beside it in §8 do not.
+`docs/findings.md` is frozen by `check_findings_frozen.py`, so they cannot be
+corrected in place and this file is the correction — which has to name them,
+because a pointer to a write-up cannot retract a sentence that is still
+standing next to the figures a reader is looking at.
+
+- **"initialises it to 1, along with 0xFF in the reserved bytes"** — the 1 is
+  right, and it is the store at `0x5CB`. The fill beside it is not "0xFF in the
+  reserved bytes": it runs `0x67..0xB2`, one byte before `Reserved` and stopping
+  one byte short of its end. And the store at `0x5CB` is 16 bits wide, so the
+  `0x01` reaching `MemoryOverClockSupport` arrives with `0xFF` going into
+  `ApUseFlag` at 0x61, which is not reserved at all. Both are measured under
+  *The create path's actual image, and why it is not what the dumps hold*.
+- **"so something rewrote the whole block after creation"** — this presupposes a
+  run of the create path. Correction 1 above is that the path is conditional,
+  and *The create path's actual image, and why it is not what the dumps hold* is
+  that its image is not the block the dumps hold. §8 ends on a true sentence;
+  the inference it draws on the way there is not one the listing supports.
 
 ## The layout is computed, not carried
 
