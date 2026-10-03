@@ -14,8 +14,11 @@ the next agent — **what the numbers do not say**.
 
 Every figure in the census table below is reproduced by
 `python3 ec/tools/call_graph.py`, which prints the census and rewrites the
-table, with one exception named in the correction under it: the tool does not
-print the four-form breakdown, so that row carries its own command.
+table, with the exceptions named where they are: the tool does not print the
+four-form breakdown, so that row carries its own command, and the two rows
+marked *by cause* / *by entry* come from
+`python3 ec/tools/call_graph_gaps.py` instead, which writes them to
+`call-graph-unresolved.csv` and `call-graph-unreached.csv`.
 `--check` recomputes and fails on any diff, and `--self-test` runs the
 tool against `../tools/testdata/call-graph/`. Two sections further down quote
 figures from a *different* tree, and each says which: §"Ordering" is measured
@@ -33,9 +36,11 @@ trees the numbers were taken on.
 | — resolving to an index row | 4,930 |
 | distinct targets reaching a row | 1,841 |
 | transfer sites whose target is no index row | 103, over 80 targets |
+| — by cause, `targets / sites` | `multi-scope` 5/6, `xdata-or-data` 2/2, `interior-entry` 60/81, `no-index-row` 13/14 |
 | anonymous rows the table carries | 405 |
 | inbound sites to those | 552 |
 | anonymous rows no direct transfer reaches | 318 |
+| — by entry, `fall-through` / `adjacent-no-fallthrough` / `not-adjacent` | 35 / 217 / 66 |
 | anonymous rows the table carries no row for | 310 |
 | distinct `FUN_*` callees the `.c` files name | 723 |
 | anonymous callees a comment names | 112 |
@@ -493,16 +498,30 @@ table moved when the population widened: the sort key is row-local, so the
 added rows interleave.
 
 **318 anonymous rows have no direct transfer reaching them at all** — 318 of
-the 715 `FUN_*` rows, reached by function pointer, by a dispatch table, or not
-reached. **That is a limit of this method and not a claim that they are
-unreachable**, and the figure is deliberately unchanged by the paragraph
-above: it is counted off the rows that carry an inbound edge, so a cited row
-the scan cannot reach does not subtract from the blind spot it sits in. The
-same goes for the 103 transfer sites whose target is no index row: those are
-branches into straight-line code, not evidence of a missing function. They are
-counted and reported rather than dropped or guessed, because a target
-resolving to more than one scope row is left unresolved rather than assigned
-to the caller's bank.
+the 715 `FUN_*` rows. **That is a limit of this method and not a claim that
+they are unreachable**, and the figure is deliberately unchanged by the
+paragraph above: it is counted off the rows that carry an inbound edge, so a
+cited row the scan cannot reach does not subtract from the blind spot it sits
+in. Whether a dispatch table reaches one is not something this scan can see,
+but where the row sits relative to its neighbour is: the split below measures
+that much.
+
+**The 103 sites over 80 targets are four populations, and "branches into
+straight-line code" describes one of them rather than all of them.** That is
+what `../tools/call_graph_gaps.py` measures, and
+`call-graph-unresolved.csv` carries the per-target split: an `interior-entry`
+target is a branch into a routine the index already carries at another address,
+`multi-scope` is `Index.resolve()`'s own decline, `xdata-or-data` is a
+`registers.yaml` hit, and `no-index-row` is what is left — which is this
+method placing the target nowhere, not a statement that it has no function.
+**`interior-entry` and `multi-scope` are both branches into code the index
+carries**, the first at a different address and the second in two banks;
+`xdata-or-data` and `no-index-row` are this method's blind spot — "not found
+by this method". The two artifact rows carry the same calibration, so the
+split is a measurement rather than a sentence; the write-up is
+[`../../docs/findings/unresolved-transfer-causes.md`](../../docs/findings/unresolved-transfer-causes.md).
+The same tool splits the 318 above into how each row is entered, of which
+`call-graph-unreached.csv` holds the rows.
 
 **A count is a ranking, not evidence of what a function does.** `bank0,DFA0`
 leads on three citations to two `lcall` sites; that says it is cheap to read,

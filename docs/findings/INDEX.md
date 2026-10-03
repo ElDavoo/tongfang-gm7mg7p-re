@@ -42,9 +42,11 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-restore-closer-per-capture.md`](0751-restore-closer-per-capture.md) — A block that closed on the restore in two of three consoles read `intact` (issue #450)
 - [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md) — §3's three unlabelled mark rounds were a fourth class of mark, and the block model had no place for them (issue #472)
 - [`0751-strict-reader-two-moments.md`](0751-strict-reader-two-moments.md) — The strict reader described two moments as one (issue #786)
+- [`0751-unreadable-dump-file.md`](0751-unreadable-dump-file.md) — An unreadable `--dump` is named, and the §4.6 readback still runs (issue #388)
 - [`0751-writer-census.md`](0751-writer-census.md) — The `0x0751` writer census — "at least three paths" becomes ten sites and thirteen stores, and the number is not closed
 - [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md) — The measurement tool's pins, re-anchored, and one `what` that had to be re-worded (issue #762)
 - [`07d6-07d7-pd-image-census.md`](07d6-07d7-pd-image-census.md) — `0x07D6`/`0x07D7` are 213 PD-image sites and 0 EC sites, and the two bytes reach opposite conclusions
+- [`3202-block-walk.md`](3202-block-walk.md) — `0x3202` and the `0x32xx` block: four read sites, no writer found, and two addresses the census does not carry (issue #338)
 - [`4900-stride-table.md`](4900-stride-table.md) — The 0x4900 stride table: how far it runs, what geometry the two strides imply, and what the index is
 - [`7151-case-tables-in-the-walk.md`](7151-case-tables-in-the-walk.md) — The main EC's `0x7151` dispatcher carries a case table inline, so the walk was decoding it as instructions (issue #1257)
 - [`7b14-07c9-token.md`](7b14-07c9-token.md) — The 0x07C9 token in `pd/7B14.c` is a variable row on the *callee*, and the re-export is a fixed point
@@ -113,6 +115,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`dptr-guard-census-vs-1027.md`](dptr-guard-census-vs-1027.md) — Issue #1027's 27 is a pre-#517 measurement of the same six tables, and a rendered `window` cell has three ways to be miscounted rather than two
 - [`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) — `walk()`'s reload guard covers every way an 8051 rebuilds DPTR, and 21 sites in the image render their `access` cell with the wrong direction, 2 of them in a committed table
 - [`dptr-seed-census-gap.md`](dptr-seed-census-gap.md) — Eight of the ten `0x0400`-`0x0457` census gaps are closed by two tools, and the two that are not fail for two different reasons
+- [`dsdt-dbd-pair-declared-not-read.md`](dsdt-dbd-pair-declared-not-read.md) — The DSDT declares `DBD1`/`DBD2` and writes them, and reads them by no route that resolves into the window (issue #228)
 - [`dump-pair-block-attribution.md`](dump-pair-block-attribution.md) — A whole-block bracket is not a second reading of the same bytes (issue #475)
 - [`dump-reads-for-a-refused-block.md`](dump-reads-for-a-refused-block.md) — A read taken for a block whose windows were refused (issue #499)
 - [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
@@ -133,6 +136,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`forwarder-target-bank-census.md`](forwarder-target-bank-census.md) — Every bank-switch forwarder's `imm16`, resolved in the bank its stub selects (issue #465)
 - [`gap-text-self-test-census.md`](gap-text-self-test-census.md) — The listing instruction census, and the readers that have to agree on it
 - [`gate-arm-coverage.md`](gate-arm-coverage.md) — What issue #318 asked for is already in the gate; what was missing is what holds it there (2026-10-01, issue #318)
+- [`ghidra-project-owner.md`](ghidra-project-owner.md) — The Ghidra projects are owned by `dave`, and that is the whole of why a non-owner cannot export (issue #293)
 - [`grader-merged-capture-sources.md`](grader-merged-capture-sources.md) — The merged timer-sweep run took its sample interval and its byte levels from one file each, and now refuses a merge whose files disagree (issue #1377)
 - [`grader-repeated-capture.md`](grader-repeated-capture.md) — A repeated capture opens phantom windows in the door grader and a ZeroDivisionError in the timer grader, and the rule that closes it is identity rather than a single capture (issue #491)
 - [`group-check-drift-and-shared-basis.md`](group-check-drift-and-shared-basis.md) — `group_functions.py --check` re-runs the rule, and `shared` was a basis no rule emitted (issue #442)
@@ -200,17 +204,20 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`prose-line-citations-held.md`](prose-line-citations-held.md) — The prose's line citations, and what now holds them (issue #801)
 - [`provenance-clone-depth-behaviour.md`](provenance-clone-depth-behaviour.md) — Both clone depths run: `--verify-provenance` measured rather than asserted (issue #421)
 - [`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md) — What a re-encode row's own columns say, and the ceiling they support
+- [`reassembly-gap-composition.md`](reassembly-gap-composition.md) — What is in the instructions sdas8051 declines, derived rather than recalled
 - [`reassembly-name-column.md`](reassembly-name-column.md) — `reassembly.csv`'s `name` column describes the listing, so it is compared and not trusted
 - [`reassembly-unmeasured-row-policy.md`](reassembly-unmeasured-row-policy.md) — What a re-encode row outside `OUTCOMES` does to a run, to `--check`, and to the report (issue #230)
 - [`rebuild-provenance.md`](rebuild-provenance.md) — What a rebuild from the committed inputs re-derives (issue #623)
 - [`region-edge-declined-sites.md`](region-edge-declined-sites.md) — The six offsets the rel8 site walk declines are now reported by the tool rather than verified once
 - [`rel8-displacement-bound.md`](rel8-displacement-bound.md) — What holds the rel8 displacement read in range: a constant in another module, and a marker check three frames away
+- [`remain-capacity-probe-offline-hold.md`](remain-capacity-probe-offline-hold.md) — The 0x0436 Linux probe: an unchecked column mapping, a path that missed §7, and a summary that aborted on `unknown` (issue #216)
 - [`reset-vector-dptr-targets.md`](reset-vector-dptr-targets.md) — The reset vector's two DPTR-only bank-0 targets, `0xD89F` and `0xD96C` (issue #559)
 - [`runner-red-suite-set.md`](runner-red-suite-set.md) — The runner's red set, and the third of #162's blocker that was a missing table row (issue #751)
 - [`scheduler-divide-down-cycle.md`](scheduler-divide-down-cycle.md) — How many entries to the divide-down scheduler is one case-`0x0A` turn (issue #1183)
 - [`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md) — The `0x8518` block decoded: seven entry points, not one, and half of it is invisible to the host (issue #1185)
 - [`seed-dispatch-xdata-footprint.md`](seed-dispatch-xdata-footprint.md) — What the trio the old gate comment blamed actually does to XDATA, and the one seed byte still unexplained (2026-10-03, issue #628)
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
+- [`sites-csv-regeneration.md`](sites-csv-regeneration.md) — The committed sites tables are re-derived from the firmware, not from the pages that print the command (issue #313)
 - [`sweep-summary-schema.md`](sweep-summary-schema.md) — The AC-plugin sweep summary has a schema, a reader, and two blind spots written down
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
@@ -238,6 +245,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`trampoline-target-census.md`](trampoline-target-census.md) — Every trampoline in the BL51 block gets a decoded target, read in the bank its stub selects (issue #574)
 - [`uncalled-vendor-setters.md`](uncalled-vendor-setters.md) — The three bytes the uncalled vendor setters write (issue #106)
 - [`uniwill-variable-0x60-writers.md`](uniwill-variable-0x60-writers.md) — Every writer of `UniWillVariable`, and which of them can explain offset 0x60
+- [`unresolved-transfer-causes.md`](unresolved-transfer-causes.md) — Why the call-graph's unresolved and unreached rows are the ones they are
 - [`verify-provenance-failure-answers.md`](verify-provenance-failure-answers.md) — `--verify-provenance` had ten ways to fail and one committed answer to none of them
 - [`walk-bounds-guard-pinned.md`](walk-bounds-guard-pinned.md) — The bounds disjunct is pinned, by two cases — and the sweep that could have noticed it cannot see it
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
@@ -249,6 +257,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md) — The `XDATA_0860` note's six live pointers, and what holds them (issue #870)
 - [`xdata-086c-cluster-ruling.md`](xdata-086c-cluster-ruling.md) — `0x086C` enters `registers.yaml`, and the clustering recorded something real (issue #333)
 - [`xdata-086x-site-census-join.md`](xdata-086x-site-census-join.md) — The `0x086x` page's site census, joined for every address
+- [`xdata-08eb-bit-sites.md`](xdata-08eb-bit-sites.md) — `0x08EB`: what each of its six bits is set, cleared and branched on by
 - [`xdata-1663-1667-1668.md`](xdata-1663-1667-1668.md) — `0x1663`, `0x1667` and `0x1668`: the rest of the `0x1663`-`0x1668` run, and a third accessor the census cannot see (issue #635)
 - [`xdata-4-2-threshold-sweep-rederivation.md`](xdata-4-2-threshold-sweep-rederivation.md) — §4.2's threshold sweep, re-run against the committed census (issue #581)
 - [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md) — §4.4's identity figures, re-run against the committed census (issue #582)

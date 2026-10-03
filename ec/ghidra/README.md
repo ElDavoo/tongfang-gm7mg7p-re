@@ -446,6 +446,10 @@ written from memory rather than measured.
 than carrying a list, cross-decodes each of the 143 with `disasm8051.py` (all
 143 agree; the verdict per instruction is in `gap-text-check.csv`), and its
 `--check` fails if a gap reason appears that has no cross-decode handler.
+`verify_reassembly.py --check`, which is in the cheap gate, prints the same
+composition beside the count and compares its total against the report's
+`instructions_unchecked` column; the transcript above is `--report`'s, and
+nothing in a gate runs that.
 
 Measured with `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` (SDCC 4.6.0), and
 reproduced unchanged on 4.5.0. The version is in every row of
@@ -1189,6 +1193,17 @@ byte-for-byte before running headless against the copy, so the default
 it is named as one, and the workaround recorded in `docs/findings.md` is
 deliberately not used.
 `../../docs/findings/entry-namespace-two-copies.md` has the measurement.
+
+*(Corrected 2026-10-03, issue #293. The owner state the paragraph above names
+as the blocker is now normalised in the scratch copy by
+`ghidra/project_owner.py` — the copy only, after the `copytree` and before
+`post_scripts`, with the committed `project.prp` left byte-identical — so
+`export-only` no longer aborts with `NotOwnerException`. Measured on a copy of
+the committed BIOS project: an `analyzeHeadless` run over the un-rewritten copy
+aborts with `Project is owned by dave` before opening anything, and the same run
+over the rewritten copy exits zero having processed the project's program files.
+What is left of #572 is the export itself. The paragraph above is left as it was
+written. `../../docs/findings/ghidra-project-owner.md` has the measurement.)*
 
 An address with no function is counted as `annotations_unmatched` and carried
 into `manifest.csv` rather than dropped, so the figure is one a run produced.
