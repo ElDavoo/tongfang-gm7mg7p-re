@@ -5,17 +5,17 @@
 
 
 /* Loads XDATA 0x3202 into A and returns R7 = 1 when its bit 0 (acc.0, bit address 0xE0) is clear,
-   and 0 when it is set. A single jb, with no other condition tested. 0x3202 has no entry in
-   ec/annotations/registers.yaml.
+   and 0 when it is set. A single jb, with no other condition tested. The byte is 0x3202, which
+   carries the XDATA_3202 row in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank0/C0DA.asm; ec/decompiled/bank0/C0DA.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void return_1_unless_3202_bit0(void)
 
 {
-  if ((DAT_EXTMEM_3202 & 1) != 1) {
+  if ((XDATA_3202 & 1) != 1) {
     return;
   }
   return;
