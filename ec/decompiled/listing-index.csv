@@ -1185,7 +1185,7 @@ bank1,BFD9,zero_04ae_and_04be,17,annotation,no,yes,writer,hand-decoded,ec/decomp
 bank1,C032,FUN_CODE_c032,118,call-target,no,no,,,,,bank1/C032.asm
 bank1,C0A8,FUN_CODE_c0a8,116,call-target,no,no,,,,,bank1/C0A8.asm
 bank1,C11C,latch_0490_bit3_or_bit7,190,annotation,no,yes,state,hand-decoded,ec/decompiled/bank1/C11C.asm; ec/decompiled/bank1/C11C.c,,bank1/C11C.asm
-bank1,C1E7,latch_0498_bit1_or_bit3,51,annotation,no,yes,state,hand-decoded,ec/decompiled/bank1/C1E7.asm; ec/decompiled/bank1/C1E7.c,,bank1/C1E7.asm
+bank1,C1E7,latch_0498_bit1_or_bit3,51,annotation,no,yes,state,hand-decoded,ec/decompiled/bank1/C1E7.asm; ec/decompiled/bank1/C1E7.c; ec/decompiled/bank0/C1E7.asm; ec/decompiled/bank0/C201.asm; ec/decompiled/bank0/C209.asm,,bank1/C1E7.asm
 bank1,C245,dispatch_0490_bits_1_5_6,34,annotation,no,yes,dispatch,hand-decoded,ec/decompiled/bank1/C245.asm; ec/decompiled/bank1/C245.c,,bank1/C245.asm
 bank1,C267,reset_0432_and_04f2,16,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/C267.asm; ec/decompiled/bank1/C267.c,,bank1/C267.asm
 bank1,C277,set_0432_from_0494,57,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/C277.asm; ec/decompiled/bank1/C277.c,,bank1/C277.asm
@@ -2038,7 +2038,7 @@ common,437E,FUN_CODE_437e,11,call-target,yes,no,,,,bank1,common/437E.asm
 common,4389,FUN_CODE_4389,7,call-target,yes,no,,,,bank1,common/4389.asm
 common,4390,FUN_CODE_4390,7,call-target,yes,no,,,,bank1,common/4390.asm
 common,4397,FUN_CODE_4397,14,call-target,yes,no,,,,bank1,common/4397.asm
-common,43A5,per_channel_state_sequence_on_15byte_stride_table_43a5,181,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/43A5.asm; ec/decompiled/common/43A5.c,bank1,common/43A5.asm
+common,43A5,per_channel_state_sequence_on_15byte_stride_table_43a5,181,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/43A5.asm; ec/decompiled/common/43A5.c; docs/findings/4900-stride-table.md,bank1,common/43A5.asm
 common,445D,FUN_CODE_445d,1,call-target,yes,no,,,,bank1,common/445D.asm
 common,451A,FUN_CODE_451a,212,call-target,yes,no,,,,bank1,common/451A.asm
 common,4602,FUN_CODE_4602,31,call-target,yes,no,,,,bank1,common/4602.asm

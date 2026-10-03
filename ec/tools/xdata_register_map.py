@@ -762,13 +762,39 @@ ORACLE = {
     # settles it; the 155 the pass adds are new `program=main-ec` rows, of which
     # `0x03DE` and `0x03B8` are two. (A shared address *number* is not a shared
     # byte, which is the collision `program=both` exists to carry.)
-    "extmem_distinct": 1008, "extmem_refs": 8554,
-    "extmem_raw": 8563, "extmem_commented": 9,
-    "extmem_main_distinct": 884, "extmem_main_refs": 7696,
+    "extmem_distinct": 1006, "extmem_refs": 8546,
+    "extmem_raw": 8555, "extmem_commented": 9,
+    "extmem_main_distinct": 882, "extmem_main_refs": 7688,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
+    # `extmem_commented` stays at 9 across the move below for the reason the
+    # three blocks above it give: it is derived, as
+    # `raw["DAT_EXTMEM"] - (extmem["main-ec"][1] + extmem["pd"][1])`, and both
+    # terms fall by the same 8, so the difference is unmoved. The full census
+    # below is unmoved for the same reason -- no address or reference was
+    # added or lost, only which token spells it.
+    #
+    # The 2026-10-03 move, issue #338: two rows change spelling and nothing
+    # else, so `extmem_main_distinct` 884 -> 882 against
+    # `symbol_main_distinct` 178 -> 180 is -2/+2, and
+    # `extmem_main_refs` 7696 -> 7688 against `symbol_main_refs` 6268 -> 6276
+    # is -8/+8, where 8 is the census's own 2 for 0x0391 plus 6 for 0x3202 --
+    # the two addresses whose `spelled_as` column reads `symbol` where it read
+    # `DAT_EXTMEM`. Both are the same mechanism as the 0x1663/0x1667/0x1668
+    # block above: `gen_xdata_symbols.py` turns the row into an `XDATA_*` name
+    # and `ApplyAnnotations.java` applies the symbol table to the project
+    # *copy* the export makes, so the rename reaches the `.c` text with no
+    # `--mode rebuild-project`. **0x0391 is not this issue's row**: it was
+    # named by #295 and its rename reached `registers.yaml` and the committed
+    # census, but the committed `.c` still spelled it `DAT_EXTMEM_0391`, so
+    # this re-export is also where that one landed. A stale export is not
+    # evidence about the census and the census was never wrong about it; the
+    # pin moves because the tree moved, not because either count was corrected.
+    # Reproduce the split with
+    # `python3 ec/tools/xdata_register_map.py --self-test`, and the two rows
+    # with a diff of the `spelled_as` column against the parent commit.
     # Named by the decompiler. The 2026-09-30 move is recorded in the dated
     # block above `named_in_tree`, and the 2026-09-28 one at the END OF FILE.
-    "symbol_main_distinct": 178, "symbol_main_refs": 6268,
+    "symbol_main_distinct": 180, "symbol_main_refs": 6276,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1326, "refs": 15696,
