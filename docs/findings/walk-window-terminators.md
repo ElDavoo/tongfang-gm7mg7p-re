@@ -110,6 +110,11 @@ the `movx` whose direction changed the cell.
 | `ec-0x07d1-sites.csv` | `0x2B344` | `0x07D1` | `read x1` | `read x2, walks 2 …` | A |
 | `ec-0x07d1-sites.csv` | `0x2B370` | `0x07D1` | `read x1` | `read x2` | A |
 
+**Correction (2026-10-02, issue #865): the three `B` rows in this table have
+been corrected** — their committed cells now read what the "at budget 64"
+column shows. The `A` rows are untouched. The table is left as it was written
+and §B carries the correction.
+
 **Ten are A and three are B**, and the two are different findings rather than
 degrees of the same one.
 
@@ -222,6 +227,37 @@ anywhere. So the issue's "say so if that is what it turns out to be" turns out
 to be right for two of its four, and the committed cells are **short rather
 than wrong** in those two.
 
+**Correction (2026-10-02, issue #865), leaving the section above as it was
+written.** It reads as a diagnosis that stopped short of the cell. All three
+class-B rows have since been **corrected**: the committed `access` cells now
+carry the values the 64-instruction budget derives, so
+`ec/annotations/walk-budget-census.csv` records all three as `unchanged` —
+the `moves` column is `no` and each verdict reads "the `access` cell is the
+same at both budgets" — and **the committed class B column is empty.** A
+larger budget now changes no committed `access` cell in any of the nine
+tables, which is a stronger claim than "three would".
+
+The rows stay in the census and stay budget-truncated; only the cell moved.
+`ec/annotations/walk-budget-census.csv` holds one row per truncated row, so
+removing them would have hidden the terminator measurement that is this
+file's subject.
+
+The two cells that moved a class bucket, and the two that did not:
+
+| table | `file_offset` | was | now | bucket moves? |
+|---|---|---|---|---|
+| `ec-0x07d0-sites.csv` | `0x2E8D4` | `write x1` | `read x1, write x1` | yes — write → read-modify-write |
+| `xdata-0400-045f-sites.csv` | `0x0DD4A` | `read x2, write x1` | `read x2, write x2` | no — already both directions |
+| `ec-07d6-07d7-sites.csv` | `0x2BECB` | `write x2, walks 3 …` | `write x4, walks 4 …` | no — both are a write that walks |
+
+"Ten are A and three are B" is therefore a pre-correction reading. The ten
+class-A rows are exactly as they were — their cells would be *wrong* at any
+budget, because DPTR is rebuilt mid-window, and no correction applies to
+them. The three class-B rows were right to call short, and are now corrected
+in place. `../../docs/findings/class-b-access-cell-corrections.md` carries the
+bytes, the second method for each and the mechanism that derives the
+corrections rather than typing them into the CSVs.
+
 ## What the tool records, and what it refuses
 
 `ec/tools/walk_budget_census.py` is the census, and it re-derives every row's
@@ -247,11 +283,22 @@ these places is a cell that reads as agreement:
   `unchanged` — and the case is reachable rather than hypothetical:
   `--extend 9` reports exactly two rows `undecided`, `ec-07d6-07d7-sites.csv`
   `0x2BECB` and `ec-0x07d0-sites.csv` `0x2E8D4`, both still budget-truncated at
-  nine instructions. The other 43 are `unchanged` there, because their
+  nine instructions. Every other row is `unchanged` there, because its
   `access` cell is already the same at nine, so the short window never has to
   be diagnosed. `ec/tools/test_walk_budget_census.py` exercises the
   `undecided` verdict on a hand-built fixture rather than depending on a
   budget at which it happens to fire.
+
+  **Correction (2026-10-02, issue #865), leaving the paragraph above as it
+  was written.** `0x2E8D4` is no longer one of the two: its committed cell is
+  now what a 64-instruction budget derives, so at nine it is already
+  `unchanged` like most of the rest. The other `undecided` row is
+  `xdata-0400-045f-sites.csv` `0x0DD4A`, which is `undecided` at nine for the
+  same reason `0x2E8D4` was. **Two rows, either way** — which two is the
+  correction's doing, and a reader reproducing the command above is what
+  catches it. The "43" this paragraph gave was a pre-#517 figure and is
+  deleted rather than recomputed: the census's row count is what
+  `walk_budget_census.py`'s own output says, and this file does not keep it.
 
 The tool also re-derives each row's committed `access` cell from the image and
 **refuses the whole run** if it cannot reproduce one, at `walk()`'s own budget

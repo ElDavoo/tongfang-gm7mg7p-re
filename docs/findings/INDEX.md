@@ -5,6 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
+- [`044b-mode-stepper.md`](044b-mode-stepper.md) — `0x044B` is a five-value mode byte, and `bank0 0x9AAD` is the routine that re-decides it
 - [`0741-bit7-oc-recovery.md`](0741-bit7-oc-recovery.md) — One instruction sets AP_OEM bit 7, and the region it scans is 253 bytes rather than the three a committed annotation claimed
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
@@ -64,6 +65,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`citation-gap-scan.md`](citation-gap-scan.md) — The bytes a function boundary cut out of a citing listing (issue #560)
 - [`citation-undecided-verdicts.md`](citation-undecided-verdicts.md) — The 45 undecided citation pairs, one verdict each (issue #526)
 - [`citing-listing-evidence.md`](citing-listing-evidence.md) — The citing listing is the other half of the citation question (issue #525)
+- [`class-b-access-cell-corrections.md`](class-b-access-cell-corrections.md) — The three class-B `access` cells were short rather than wrong, and all three are corrected (issue #865)
 - [`code-pointer-site-census.md`](code-pointer-site-census.md) — The 54 image-wide CODE-pointer sites, written down as a regenerable table, and what the list is not
 - [`committed-checkout-triples-held.md`](committed-checkout-triples-held.md) — What the checkout suite holds, which was seven of nine depths and no `stated` at all
 - [`common-07f0-0f75-158e-1594-tranche.md`](common-07f0-0f75-158e-1594-tranche.md) — `common,0x07F0`, `0x0F75`, `0x158E` and `0x1594`: the top of the corrected call-graph ranking, read (issue #558)
@@ -92,6 +94,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`door-grader-two-captures.md`](door-grader-two-captures.md) — Two captures in one invocation filed one capture's change rows under the other capture's marks, and each capture is now its own run (issue #351)
 - [`dptr-guard-census-vs-1027.md`](dptr-guard-census-vs-1027.md) — Issue #1027's 27 is a pre-#517 measurement of the same six tables, and a rendered `window` cell has three ways to be miscounted rather than two
 - [`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) — `walk()`'s reload guard covers every way an 8051 rebuilds DPTR, and 21 sites in the image render their `access` cell with the wrong direction, 2 of them in a committed table
+- [`dptr-seed-census-gap.md`](dptr-seed-census-gap.md) — Eight of the ten `0x0400`-`0x0457` census gaps are closed by two tools, and the two that are not fail for two different reasons
 - [`dump-pair-block-attribution.md`](dump-pair-block-attribution.md) — A whole-block bracket is not a second reading of the same bytes (issue #475)
 - [`dump-reads-for-a-refused-block.md`](dump-reads-for-a-refused-block.md) — A read taken for a block whose windows were refused (issue #499)
 - [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
@@ -108,6 +111,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`findings-index-staleness.md`](findings-index-staleness.md) — The index is hand-edited by merges and nothing runs the check that would catch it (issue #1137)
 - [`fixture-empty-pointer-cells.md`](fixture-empty-pointer-cells.md) — The fixture's six empty cells are not a count, and the set is derivable where the six is not (issue #1006)
 - [`forwarder-target-bank-census.md`](forwarder-target-bank-census.md) — Every bank-switch forwarder's `imm16`, resolved in the bank its stub selects (issue #465)
+- [`gap-text-self-test-census.md`](gap-text-self-test-census.md) — The listing instruction census, and the readers that have to agree on it
 - [`gate-arm-coverage.md`](gate-arm-coverage.md) — What issue #318 asked for is already in the gate; what was missing is what holds it there (2026-10-01, issue #318)
 - [`grader-merged-capture-sources.md`](grader-merged-capture-sources.md) — The merged timer-sweep run took its sample interval and its byte levels from one file each, and now refuses a merge whose files disagree (issue #1377)
 - [`grader-repeated-capture.md`](grader-repeated-capture.md) — A repeated capture opens phantom windows in the door grader and a ZeroDivisionError in the timer grader, and the rule that closes it is identity rather than a single capture (issue #491)
@@ -180,6 +184,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`scheduler-divide-down-cycle.md`](scheduler-divide-down-cycle.md) — How many entries to the divide-down scheduler is one case-`0x0A` turn (issue #1183)
 - [`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md) — The `0x8518` block decoded: seven entry points, not one, and half of it is invisible to the host (issue #1185)
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
+- [`sweep-summary-schema.md`](sweep-summary-schema.md) — The AC-plugin sweep summary has a schema, a reader, and two blind spots written down
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
 - [`test-name-grader-coupling.md`](test-name-grader-coupling.md) — A test name that claims a coupling the test does not make
@@ -202,6 +207,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`thunk-prefix-collision.md`](thunk-prefix-collision.md) — Seven rows whose names Ghidra owned (issue #602)
 - [`tools-readme-totals.md`](tools-readme-totals.md) — The runner's totals, re-derived from a run, and why a red suite moves them (issue #817)
 - [`trampoline-relative-branch-sites.md`](trampoline-relative-branch-sites.md) — All 170 of §8's trampoline-landing relative sites are the trampoline block's own operands, and no branch reaches the block from outside it
+- [`trampoline-target-census.md`](trampoline-target-census.md) — Every trampoline in the BL51 block gets a decoded target, read in the bank its stub selects (issue #574)
 - [`uncalled-vendor-setters.md`](uncalled-vendor-setters.md) — The three bytes the uncalled vendor setters write (issue #106)
 - [`verify-provenance-failure-answers.md`](verify-provenance-failure-answers.md) — `--verify-provenance` had ten ways to fail and one committed answer to none of them
 - [`walk-bounds-guard-pinned.md`](walk-bounds-guard-pinned.md) — The bounds disjunct is pinned, by two cases — and the sweep that could have noticed it cannot see it

@@ -545,10 +545,10 @@ main EC* whatever the PD image does with the same address number:
 
 | program | spelling | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 846 | 7,487 |
+| main-ec | `DAT_EXTMEM` | 843 | 7,472 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 44 | 490 |
 | main-ec | `pair-literal` | 156 | 468 |
-| main-ec | `symbol` | 158 | 6,197 |
+| main-ec | `symbol` | 161 | 6,212 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
 | pd | `DAT_EXTMEM` | 157 | 858 |
 | **total** | | **1,375** | **15,696** |
@@ -575,14 +575,14 @@ directly:
 
 | `program` | `spelled_as` | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 815 | 7,256 |
+| main-ec | `DAT_EXTMEM` | 813 | 7,242 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 41 | 385 |
 | main-ec | `pair-literal` | 155 | 461 |
-| main-ec | `symbol` | 144 | 5,593 |
+| main-ec | `symbol` | 146 | 5,607 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
-| both | `DAT_EXTMEM` | 31 | 321 |
+| both | `DAT_EXTMEM` | 30 | 312 |
 | both | `DAT_EXTMEM+pair-literal` | 4 | 139 |
-| both | `symbol+DAT_EXTMEM` | 14 | 742 |
+| both | `symbol+DAT_EXTMEM` | 15 | 751 |
 | pd | `DAT_EXTMEM` | 108 | 603 |
 | **total** | | **1,326** | **15,696** |
 
@@ -678,19 +678,19 @@ history of a table that still exists. The write-up is
 Read the `symbol` rows as the addresses the issue's grep could not see. **On
 §3's basis** — every row the main EC touches, which is the 1,218 the tool
 prints rather than the 1,169 `program=main-ec` rows of the second table above,
-the 49 difference being the `program=both` rows — that is **172 addresses in
-6,393 references**, counted per program. The corrected form of the issue's claim
+the 49 difference being the `program=both` rows — that is **175 addresses in
+6,408 references**, counted per program. The corrected form of the issue's claim
 is therefore a *three*-way split, not a two-way one:
 
-> 172 of the 1,218 XDATA addresses the main EC touches carry a name from
-> `ec/ghidra/xdata-symbols.csv`. Of the other 1,046, **890** read as
+> 175 of the 1,218 XDATA addresses the main EC touches carry a name from
+> `ec/ghidra/xdata-symbols.csv`. Of the other 1,043, **887** read as
 > `DAT_EXTMEM_xxxx` and **156** are named nowhere and reach the census only as a
 > literal argument to one of the pair accessors of §4.7.
 
-172 + 890 + 156 is 1,218 exactly, and the references are 6,393 + 7,977 + 468 =
+175 + 887 + 156 is 1,218 exactly, and the references are 6,408 + 7,962 + 468 =
 the main EC's own 14,838.
 
-**The same partition on the union key is 172 / 891 / 155**, and both readings
+**The same partition on the union key is 175 / 888 / 155**, and both readings
 are right about different things: counted within the main EC the last term is
 156, not 155, because the main EC reaches `0x04A3` as a `pair-literal` and
 nothing else, and it is the PD image that spells it `DAT_EXTMEM_xxxx` — so the
@@ -2729,6 +2729,32 @@ within those the two this file has always named:
   below being the worked example. Reconciling them is its own issue; the
   numbers are recorded here so the next reader does not have to re-derive that
   they exist.
+
+  **Correction, 2026-10-02 (issue #429): "nothing here says why" stopped being
+  true before this paragraph was written, and the reason is #279.** Eight of
+  the ten now carry a row here — `spelled_as=pair-literal`, `pair_role=seed` —
+  because §4.7's pass resolves a literal first argument through the callee's own
+  `movx`. That is this bullet's second possibility, a spelling the census does
+  not read, and the `0x0733` worked example below is the same possibility
+  reached by a different spelling. All ten carry a dated per-address reason in
+  `registers.yaml`, and
+  `../annotations/site-resolution.csv` carries a row per site with the resolved
+  callee. The other two fail for two different reasons, not one. `0x0420`'s
+  single site copies the address into R1:R2 and returns, with no `lcall` in the
+  routine at `../decompiled/bank1/E769.asm`, so no seed-to-helper category
+  would reach it, and the decompiled `.c` beside that listing drops the store
+  entirely and so spells the address nowhere for the census to match.
+  `0x0457`'s four sites sit in routine no export covers, and the one committed
+  `.c` that names the address does so inside a comment, which this tool's
+  `strip_comments()` blanks. A run today, against the committed image, puts
+  `0x0420` and `0x0457` in the *not in the decompiled tree* column. Which
+  committed artifact carries which of these ten addresses, which method cannot
+  see it, and why a census row was not added for the two — including the
+  decision not to add a third place for the shape — is
+  `../../docs/findings/dptr-seed-census-gap.md`, whose §1 table is that run's
+  own per-address output. The sentence above is left standing because it was
+  true when this section's run was taken, and because a correction with the
+  wrong text beside it is the form this repository keeps.
 - **`0x0733`** and **`0x0735`** (both `MODE_PL_DEFAULTS`, the
   `0x0730`-`0x0737` block's one register name) are
   the two gaps this file has always named, and they fail in

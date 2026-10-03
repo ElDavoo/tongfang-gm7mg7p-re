@@ -44,7 +44,7 @@ byte FUN_CODE_a7c8(void)
       CPU_PL1 = 0;
       CPU_PL1_PL2 = 0;
       CPU_PL1_PL4 = 0;
-      DAT_EXTMEM_078b = 0;
+      XDATA_078B = 0;
     }
   }
   return bVar2;

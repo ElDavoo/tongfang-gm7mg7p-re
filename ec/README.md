@@ -490,8 +490,8 @@ into `r2 -a 8051` with no stitching needed.
   of the 256 opcode lengths and says nothing about the other 236** — those were
   read one at a time, which is a method and not a reproducible one. What pins
   the rest is `tools/opcode_coverage.py`: `--divergence` compares every length
-  against the 45,643 instruction starts in the committed Ghidra listings and
-  reports **0 disagreements over 45,643 rows** (`0xA5` and `0xC1` are *not
+  against the 45,661 instruction starts in the committed Ghidra listings and
+  reports **0 disagreements over 45,661 rows** (`0xA5` and `0xC1` are *not
   found by this method*, not confirmed wrong — no listing places either at an
   instruction start), `--r2-diff` gives a second decoder's opinion from a linear
   `r2 -a 8051` walk of all three images, which reaches both and reports **0
@@ -545,6 +545,17 @@ into `r2 -a 8051` with no stitching needed.
   column to `bank-call-targets.csv` needs
   `tools/build_ec_decompile.py`'s `CALL_TARGET_COLUMNS` edited too, and its
   `--self-test` runs in the cheap gate.
+- **`tools/trampoline_target_census.py`** — gives every trampoline in §3's
+  block the decoded target the byte scan above cannot match: the `imm16`, the
+  bank its own tail-jump stub selects, §4's `entry`/`erased`/`other` class
+  measured **in that bank**, and whether a committed listing covers it.
+  `--check` re-derives the committed
+  `annotations/trampoline-target-census.csv` and diffs it; `--self-test` pins the
+  refusals and re-derives the block's framing from the bytes rather than from
+  the scan that found it. The bank is read before the byte because every entry
+  in the block is common-area code, so the stub is the only thing that names it
+  — the ordering issue #255's `bank1,19A8` correction is about. The write-up is
+  [`../docs/findings/trampoline-target-census.md`](../docs/findings/trampoline-target-census.md).
 - **`tools/bucket_c_codemap.py`** — classifies all 140 bucket-C sites against a
   code map of the common area recovered by recursive descent, so
   `audit_call_targets.py`'s unresolvable bucket stops being one undifferentiated

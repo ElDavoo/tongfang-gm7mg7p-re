@@ -18,7 +18,7 @@ void clear_and_set_xdata_flag_bits(void)
   trampoline_to_c389();
   call_19c0_then_19c6();
   DAT_EXTMEM_0801 = DAT_EXTMEM_0801 & 0xdf;
-  DAT_EXTMEM_0803 = 1;
+  XDATA_0803 = 1;
   XDATA_0442 = XDATA_0442 & 0xe7;
   DAT_EXTMEM_086f = DAT_EXTMEM_086f | 4;
   if (XDATA_0440 == '\a') {

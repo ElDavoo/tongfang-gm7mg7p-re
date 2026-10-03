@@ -483,9 +483,9 @@ def check():
     # byte column had drifted would arrive here as a verdict disagreement --
     # but a disagreement names a *canonical form*, which is a derived thing to
     # read, and this names the byte. Same comparison
-    # verify_reassembly.check_listing_bytes() makes over all 45,537, run over
-    # the 143 for the same reason the whole tool exists: these are the ones no
-    # other check reaches.
+    # verify_reassembly.check_listing_bytes() makes over every instruction in
+    # the listings, run over the 143 for the same reason the whole tool
+    # exists: these are the ones no other check reaches.
     byte_checked = 0
     for r in rows:
         want = bytes.fromhex(r["bytes"]) if r["bytes"].isalnum() else b""
