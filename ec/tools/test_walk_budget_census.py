@@ -257,12 +257,23 @@ class WalkContractTests(unittest.TestCase):
         # entering the module fails
         # `test_the_only_three_rows_that_may_differ_are_the_three_corrected`
         # rather than passing unnoticed here.
+        # **Issue #799: the `DPTR from` rows are exempt, and held elsewhere.**
+        # `classify()` cannot derive a cell for a `movx` whose DPTR a callee
+        # left behind, so those rows are compared against
+        # `trace_xdata_refs.load_callee_map()` -- `callee_dptr_sites.py`'s own
+        # committed table -- which is a check against a file rather than a
+        # waiver. `test_access_cell_corrections.py` holds the same rows to the
+        # same table, so the exemption is stated once and enforced twice.
         d = firmware()
         checked = 0
         corrected = 0
+        callee = T.load_callee_map()
         for name in W.TABLES:
             for row in rows_of(name):
                     off = int(row["file_offset"], 16)
+                    if callee.get((row["addr"], row["file_offset"])) == row["access"]:
+                        checked += 1
+                        continue
                     derived = T.classify(T.walk(d, off))
                     self.assertEqual(ACC.corrected(off, derived),
                                      row["access"],
@@ -273,9 +284,17 @@ class WalkContractTests(unittest.TestCase):
                         self.assertEqual(derived, row["access"],
                                          f"{name} row {row['file_offset']}")
                     checked += 1
-        self.assertEqual(checked, 1288,
-                         "the population moved; W.TABLES and the committed "
-                         "tables are supposed to agree")
+        # **Issue #799: the hard-coded row total this used to assert is gone.**
+        # It was a count of the repository's own tables -- 1288 -- and every
+        # merge that adds a site to any of them had to edit it, which is the
+        # line `../../CLAUDE.md`'s "No totals of the repository's own text"
+        # is about. What it guarded, "W.TABLES and the committed tables agree",
+        # is stated directly instead: every table the list names exists and
+        # has rows, so the walk above ran against committed cells rather than
+        # against nothing.
+        for name in W.TABLES:
+            self.assertTrue(rows_of(name), name)
+        self.assertTrue(checked)
         self.assertEqual(corrected, len(ACC.CORRECTIONS))
 
     def test_the_only_three_rows_that_may_differ_are_the_three_corrected(self):
@@ -1286,31 +1305,29 @@ class FifteenAddressSweepTests(unittest.TestCase):
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertIn("reproduces it byte for byte", out.stdout)
 
-    def test_the_sweep_terminators_are_the_75_39_and_0_the_census_committed(self):
-        """#805's own tally for this table, reproduced through the guard.
+    def test_no_row_of_the_086x_table_is_a_summary_of_a_cut(self):
+        """The claim this table exists to support, held as a property.
 
-        **2026-09-28 (issue #517):** 75 DPTR reloads and 39 flow opcodes
-        becomes **76** and **38**. One row moved across from the flow column
-        to the reload column, because a `movx` past a pointer rebuild is no
-        longer decoded and the window ends on the rebuild rather than on the
-        branch behind it. The totals are unchanged at 114 and no row's
-        `access` or `window` cell moved, so #805's claim that this table is
-        free of budget-truncated rows still holds -- which is the part of it
-        the two guards are being measured against.
+        #805 tallied this table's windows into DPTR reloads and flow opcodes
+        and asserted the two figures; issue #517 moved one row from the second
+        column to the first. **Both tallies are gone, deliberately: they are
+        counts of the repository's own table, every merge that adds a site has
+        to edit them, and the property underneath them is what the two guards
+        are actually measured against** -- that no row's window is an
+        instruction-budget exhaustion, which is what makes "this table's cells
+        are not summaries of a cut" a measurement rather than a claim.
+
+        Issue #799 added the callee-set sites to this table and re-ran it: the
+        new rows end on a reload or on a flow opcode like every other row, so
+        the property is unchanged and nothing had to be re-derived to keep it.
         """
-        rows = rows_of('xdata-086x-dispatch-sites.csv')
-        self.assertEqual(len(rows), 114)
         d = firmware()
-        tokens = {}
-        for row in rows:
+        budget = T.walk.__defaults__[0]
+        for row in rows_of('xdata-086x-dispatch-sites.csv'):
             token = T.walk_why(d, int(row["file_offset"], 16))[1]
-            tokens[token] = tokens.get(token, 0) + 1
-        self.assertEqual(tokens, {T.RELOAD_END: 76, T.FLOW_END: 38})
-        # The partition itself is the claim, not either half of it: 114 rows
-        # and no exhausted budget over them, which is what makes "this table's
-        # cells are not summaries of a cut" a measurement.
-        self.assertEqual(sum(tokens.values()), len(rows))
-        self.assertNotIn(T.budget_end(T.walk.__defaults__[0]), tokens)
+            with self.subTest(offset=row["file_offset"]):
+                self.assertNotEqual(token, T.budget_end(budget))
+                self.assertIn(token, T.TERMINATORS)
 
     def test_the_terminator_column_is_opt_in(self):
         # The sweep above is what keeps the default output free of a column,

@@ -1807,6 +1807,26 @@ HAND_CHECKED = {
     # right and the counts did not move; re-derived from
     # check_site_census.py's own census_occurrences() rather than shifted by
     # hand. Quoted verbatim, so these wrong ones stay visible too.
+    #
+    # CORRECTION (2026-10-03, issue #799): `write: 2` above counts
+    # **decompiled-C occurrences**, and it is correct as such. It is not a count
+    # of the firmware's stores, and it is deliberately NOT shifted to the four
+    # the `.asm` listings hold: `mask_dp_byte_7c_reset_dptr_0860` at 0xD319
+    # loads DPTR with 0x0860 and returns, so the stores at 0x0D191 and 0x0D249
+    # reach the address through a callee, and Ghidra bound DPTR to its pre-call
+    # value -- the sweep found neither (its rule is a `MOV DPTR` in the same
+    # function) and this census cannot (it reads the decompiled text, where the
+    # store in dispatch_on_0860 is charged to 0x0864 and the one in
+    # poll_d6c2_then_branch to a pointer naming no address). Two numbers, two units, both true:
+    # ec/tools/callee_dptr_sites.py resolves the four from the listings and
+    # ec/annotations/xdata-0860-callee-dptr-sites.csv holds them, while this
+    # entry and the generated row still read what they read. Moving them would
+    # mean teaching this census to read `.asm` tree-wide, which re-freezes
+    # every address's numbers -- its own issue, not this one. The per-site
+    # correspondence is ec/annotations/xdata-0860-census-sites.csv, whose two
+    # `dptr-from-callee` rows are how the shape is recorded;
+    # docs/findings/callee-set-dptr-census-blindspot.md is the write-up. NO
+    # VALUE IN THIS ENTRY MOVES, and --self-test staying green is the evidence.
     "0x0860": {"read": 14, "write": 2, "read+write": 0, "passed-to-call": 1,
                "address-taken": 0, "writers": 2},
     # 12 references and zero `==` adjacent to the address. Four are genuine

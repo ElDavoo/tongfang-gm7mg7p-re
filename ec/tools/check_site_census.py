@@ -34,13 +34,27 @@ are not in conflict on `0x0860`; they are in two languages:
 | `read xN`, window ending in a call | `passed-to-call xM` | agree -- one instruction, two vocabularies |
 | `DPTR handed to <call>` | a bucket | **error** -- the decompile names no address, so no occurrence can exist |
 | `no movx found in the decoded window`, or a handoff | `no-occurrence` | agree -- nothing for either method to see |
+| `<direction> x1, DPTR from <helper>` | `dptr-from-callee` | **reported on its own** -- see below |
 | any | `other-program` | out of scope -- reported as unchecked, never as agreeing |
+
+**`dptr-from-callee` is the row that was `agree` and was not.** A `movx`
+whose DPTR a callee left behind (`trace_xdata_refs.py`'s `DPTR from` cell,
+sourced from `callee_dptr_sites.py`) is a site the sweep's own `MOV DPTR` scan
+cannot find, and the census cannot see it either -- Ghidra bound DPTR to its
+pre-call value, so the decompiled C names some other address or none. Both
+methods missing the same byte is not corroboration, and this tool used to
+report it as agreement at the `0x0D31C` cell. It now has its own outcome,
+counted separately on the summary line and never added to `agree`; a site in
+that state that the sweep does not agree is still an error.
 
 The counts are deliberately not compared per site. The sweep records one row
 per `MOV DPTR`, and the `0x48`/`0x4C` chains re-read A without reloading
 DPTR, so six C-level comparisons land on one sweep row: `2 + 6 + 6 = 14` reads
 behind three `read x1` rows. The totals are compared instead, per bucket,
-against the generated `xdata-registers.csv` row.
+against the generated `xdata-registers.csv` row. **A `dptr-from-callee` site
+contributes to neither**: the census sees no occurrence there, so adding its
+zero to a bucket total would be the tool asserting a measured zero it does not
+have.
 
 **What this does not check, which is as much of the point:**
 
@@ -69,7 +83,19 @@ against the generated `xdata-registers.csv` row.
     register-indirect access or a table lookup has no site here, and a site
     the decompiler folded a `MOV DPTR` out of -- `0x0D31C` -- looks identical
     to one the firmware never touches. `no census occurrence` is not evidence
-    that the site is unused.
+    that the site is unused. **Corrected 2026-10-03 (issue #799): the second
+    half of that used to be the whole of it, and the first sentence described
+    only one of the two ways a site goes missing here.** A DPTR loaded by a
+    **callee** was the other way, and it is worse than the folded `MOV DPTR`,
+    because there the sweep at least had a site and only the census was
+    silent -- here neither method has one. `callee_dptr_sites.py` resolves it
+    from the `.asm`, its table feeds the sweep's `DPTR from` cell under
+    `--callee-column`, and the `dptr-from-callee` state above is how the
+    correspondence records the result. What is still not established is
+    anything behind that: an unresolved row in that table is
+    "not found by this method" in exactly the way this bullet describes, and
+    `callee_dptr_sites.py` reports how many `movx` it could not place rather
+    than leaving the set to read as a census.
 
 Usage:
     python3 check_site_census.py [--verbose]
@@ -96,15 +122,20 @@ REGISTERS_CSV = os.path.join(EC, "annotations", "xdata-registers.csv")
 ADDRESS = "0x0860"
 
 # What a non-mapped row carries, per state, so "the census cannot see this
-# site" is one shape and "a different program's byte" is another. `na` is not
-# a measured zero: the register row for the address is `main-ec`, so no count
-# is established for a PD site at all.
-BLIND = {"no-occurrence": "0", "other-program": "na"}
+# site" is one shape, "the sweep cannot find this site" is a second, and "a
+# different program's byte" is a third. `na` is not a measured zero: the
+# register row for the address is `main-ec`, so no count is established for a
+# PD site at all. `dptr-from-callee` takes `0` rather than `na` because the
+# census is not looking at another program's map -- it looked, and found no
+# occurrence, because the decompile bound DPTR elsewhere.
+BLIND = {"no-occurrence": "0", "other-program": "na",
+         "dptr-from-callee": "0"}
 
 # trace_xdata_refs.classify()'s own spellings, read back off the committed
 # `access` cell rather than re-run: the sweep's half of the join is the
 # committed table, because that is the thing a reader is being shown.
 HANDOFF = "DPTR handed to "
+DPTR_FROM = "DPTR from "
 NO_MOVX = "no movx found in the decoded window"
 CODE_POINTER = "CODE pointer"
 
@@ -122,11 +153,19 @@ def sweep_direction(access: str):
     """The direction one `access` cell claims, or None if it claims none of
     the ones the table above can compare. `read+write` is its own answer
     rather than two, so a site the sweep calls both is not silently read as
-    a read and made to agree with a `read` bucket."""
+    a read and made to agree with a `read` bucket.
+
+    `DPTR from` is tested before the `read xN`/`write xN` substrings because a
+    callee-set cell carries one of them: `write x1, DPTR from 0xD319` is a
+    write the census cannot corroborate, not a write it can. Reading it as a
+    plain `write` is the failure the `dptr-from-callee` state exists to stop.
+    """
     if access.startswith(HANDOFF):
         return "handoff"
     if access == NO_MOVX:
         return "no-movx"
+    if DPTR_FROM in access:
+        return "callee-dptr"
     if CODE_POINTER in access:
         return "code-pointer"
     reads, writes = "read x" in access, "write x" in access
@@ -148,13 +187,21 @@ def ends_in_call(window: str) -> bool:
 
 
 def verdict(sweep: str, state: str, bucket: str, call_tail: bool) -> str:
-    """"agree", "error" or "unchecked" for one site, per the table above.
+    """"agree", "callee-dptr", "error" or "unchecked" for one site, per the
+    table above.
 
     Order matters: the two structural cases are decided before the bucket is
     looked at, because a bucket the census cannot support is an error whatever
     the sweep says."""
     if state == "other-program":
         return "unchecked"
+    if state == "dptr-from-callee":
+        # Both methods missing the same byte is not one method's answer, and
+        # `agree` was the word that made it read as one. This gets its own
+        # outcome, in both directions: the map says the sweep found the site
+        # through a callee and the sweep's own cell does not say so, and that
+        # is a disagreement like any other.
+        return "callee-dptr" if sweep == "callee-dptr" else "error"
     if state == "no-occurrence":
         # Nothing to compare and nothing claimed. A window the sweep found no
         # `movx` in and a handoff the decompile names no address for are the
@@ -164,6 +211,10 @@ def verdict(sweep: str, state: str, bucket: str, call_tail: bool) -> str:
     if sweep == "handoff":
         # Mapped, so a bucket is claimed, and DPTR went to a call that named no
         # address in the decompile. An occurrence cannot exist there.
+        return "error"
+    if sweep == "callee-dptr":
+        # The sweep found the site through a callee and the map does not say
+        # so, which would leave the site out of the per-bucket totals as well.
         return "error"
     if sweep == "no-movx" or sweep in (None, "code-pointer"):
         return "error"
@@ -231,17 +282,19 @@ def register_buckets(path: str = REGISTERS_CSV,
 
 
 def check(sites: dict, rows: list, occurrences: dict, expected: tuple,
-          verbose=False) -> list:
-    """(problems, agreed, unchecked) over the three committed inputs.
+          verbose=False) -> tuple:
+    """(problems, agreed, callee_dptr, unchecked) over the three committed
+    inputs.
 
     Every clause is a disagreement between a hand-typed correspondence and
     something derived -- the sweep's own `access` cell, the census's own
     classification of the cited lines, and the census's own totals. Passing
     means those three agree; it does not mean either method is right about the
-    firmware."""
+    firmware, and `callee_dptr` is counted apart from `agreed` precisely
+    because neither method saw those bytes at all."""
     buckets, refs_total = expected
     problems = []
-    agreed = unchecked = 0
+    agreed = callee_dptr = unchecked = 0
 
     # The join in both directions, before anything is compared: a site in one
     # file and not the other is a visible mismatch rather than a silent one.
@@ -269,7 +322,7 @@ def check(sites: dict, rows: list, occurrences: dict, expected: tuple,
         # Nothing below can mean anything until both files describe the same
         # set of sites, and a report that mixes "disagrees" with "no row" is
         # harder to read than the first real failure.
-        return problems, 0, 0
+        return problems, 0, 0, 0
 
     accounted = collections.Counter()
     totals = collections.Counter()
@@ -321,11 +374,14 @@ def check(sites: dict, rows: list, occurrences: dict, expected: tuple,
                 continue
 
         how = verdict(sweep, state, bucket, ends_in_call(site["window"]))
-        if how == "unchecked":
-            unchecked += 1
+        if how in ("unchecked", "callee-dptr"):
+            if how == "unchecked":
+                unchecked += 1
+            else:
+                callee_dptr += 1
             if verbose:
-                print(f"  unchecked {where}: sweep says "
-                      f"{site['access']!r}, out of scope here", file=sys.stderr)
+                print(f"  {how} {where}: sweep says {site['access']!r}",
+                      file=sys.stderr)
             continue
         if how == "error":
             problems.append(f"{where}: the sweep says {site['access']!r} and "
@@ -333,8 +389,10 @@ def check(sites: dict, rows: list, occurrences: dict, expected: tuple,
                             + ("a handoff names no address in the decompile, "
                                "so no occurrence can exist there"
                                if sweep == "handoff" else
-                               "the two methods disagree, and the table in "
-                               "this tool's docstring is the only set of pairs "
+                               "one of the methods found this site through a "
+                               "callee's DPTR and the other does not know of "
+                               "it, or they disagree, and the table in this "
+                               "tool's docstring is the only set of pairs "
                                "allowed to agree"))
             continue
         agreed += 1
@@ -385,22 +443,23 @@ def check(sites: dict, rows: list, occurrences: dict, expected: tuple,
     if sum(totals.values()) != refs_total:
         problems.append(f"per-bucket totals: the map sums {sum(totals.values())} "
                         f"where {repo_path(REGISTERS_CSV)} says refs {refs_total}")
-    return problems, agreed, unchecked
+    return problems, agreed, callee_dptr, unchecked
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--verbose", action="store_true",
-                    help="name the sites reported as unchecked, not only the ones that fail")
+                    help="name the sites reported as unchecked or callee-set, "
+                         "not only the ones that fail")
     args = ap.parse_args()
 
     sites = sweep_sites()
     rows = read_csv(MAPPING_CSV)
     occurrences = census_occurrences()
     expected = register_buckets()
-    problems, agreed, unchecked = check(sites, rows, occurrences, expected,
-                                        args.verbose)
+    problems, agreed, callee_dptr, unchecked = check(sites, rows, occurrences,
+                                                      expected, args.verbose)
 
     for problem in problems:
         print(f"check_site_census.py: {problem}", file=sys.stderr)
@@ -411,7 +470,9 @@ def main() -> int:
         return 1
     counts = " ".join(f"{b} {expected[0][b]}" for b in BUCKETS)
     print(f"{ADDRESS}: {agreed} site(s) agree across both methods, {unchecked} "
-          f"unchecked (other program), {sum(expected[0].values())} occurrence(s) "
+          f"unchecked (other program), {callee_dptr} found only through a "
+          f"callee's DPTR and counted in no bucket, "
+          f"{sum(expected[0].values())} occurrence(s) "
           f"accounted for once each -- {counts}, refs {expected[1]}")
     return 0
 

@@ -54,6 +54,7 @@ human with the machine.
 $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 \
       0x0860 0x0862 0x0865 0x0866 0x0867 0x0868 0x0869 0x086A 0x086B \
       0x086D 0x086E 0x1C39 0x1C3A 0x1F01 0x1F07 --csv --census-column \
+      --callee-column \
   | diff - ec/annotations/xdata-086x-dispatch-sites.csv
 ```
 
@@ -63,7 +64,12 @@ That is the whole sweep, it is read-only, and it needs no hardware. Adding
 `--census-column` appends the ninth column of §3; it reads
 `xdata-0860-census-sites.csv` and is **not** derived from the image, and the
 sites it covers no mapping say so on stderr and in the cell rather than
-leaving it blank. The `0x044C`-`0x05F1` group of §6 is swept the same way, and
+leaving it blank. `--callee-column` adds the sites whose DPTR a callee left
+behind, which §3's second table and §9's correction are about; it reads
+`xdata-0860-callee-dptr-sites.csv`, written by `ec/tools/callee_dptr_sites.py`
+from the `.asm` listings, and is **not** derived here either. `--check` finds
+that column in the committed table on its own, so a run that forgets the flag
+reproduces the file rather than diffing every callee row. The `0x044C`-`0x05F1` group of §6 is swept the same way, and
 the case table of §4 is re-derived by
 `ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --at 0xD148`.
 
@@ -112,11 +118,17 @@ what the instruction there does. The C-level census behind
 decompiled C's occurrences of the address bucket out. Neither is derived from
 the other's columns, and on this address they are not in conflict, because
 they have different denominators. The sweep counts **opcode sites**, a direct
-`MOV DPTR,#imm16` and the `movx` after it, which for `0x0860` is the 7
-EC-side sites of §8 and the `read 4 / write 2` among them. The census counts
+`MOV DPTR,#imm16` and the `movx` after it, which for `0x0860` **was** the 7
+EC-side sites of §8 and the `read 4 / write 2` among them. **Both figures are
+stale and are corrected in this section's second dated block below:**
+`--callee-column` (§1) books the sites whose DPTR a *callee* left behind,
+which the `MOV DPTR,#imm16` rule cannot reach, so §8's row is now 9 EC-side
+sites and `read 4 / write 4`. The census counts
 **C-level occurrences** of the address in the decompiled text, which is the
 `refs: 17` of `ec/annotations/xdata-registers.csv:817`. The 14/2/0/1 below
-is the bucketing of those 17, not a rival count of the 7.
+is the bucketing of those 17, not a rival count of the 7 — and **not a rival
+count of the 9 either**, because a site the census cannot see contributes to
+neither the numerator nor the denominator here.
 
 > **CORRECTION (2026-09-24, issue #281) to this section's opening sentence,
 > which read:**
@@ -358,6 +370,8 @@ census reads `D091.c`, and neither number is inferred.
 | `0x0D144` | `read x1` | `passed-to-call x1` | `D091.c:84` | `movx a,@dptr ; lcall 0x7151` — **the same instruction, two vocabularies** |
 | `0x0D281` | `write x1` | `write x1` | `D281.c:19` | `XDATA_0860 = 0xff` |
 | `0x0D28A` | `write x1` | `write x1` | `D289.c:18` | `XDATA_0860 = 0` — `clear_0860`'s decompile entry is `0xD289`, one byte before the site, so the file and the offset do not match |
+| `0x0D191` | `write x1, DPTR from 0xD319` | `dptr from callee` | — | the load is inside `0xD319`, a callee away; the decompile charges the store to `0x0864` (`*pcVar4 = 0`, through `pcVar4 = (code *)0x864`) — **wrong address** |
+| `0x0D249` | `write x1, DPTR from 0xD319` | `dptr from callee` | — | the same shape in `poll_d6c2_then_branch`, where the decompile charges it to `*puVar2 = 0` through `puVar2 = &DAT_EXTMEM_1c35` — **no address at all** |
 | `0x0D31C` | `no movx found in the decoded window` | `no census occurrence` | — | `mask_dp_byte_7c_reset_dptr_0860` reloads DPTR and returns; `D319.c`'s body is `return *param_1 & 0x7c;` and never names the address |
 | `0x25CE4`, `0x25CFC` | `read x1, walks 2 consecutive…`, `read x1` | `other program` | — | the PD image, which has its own XDATA map; `xdata-registers.csv:817`'s `0x0860` row is `main-ec` |
 
@@ -367,6 +381,30 @@ them per site:** `2+6+6 = 14` read, `2` write, `1` passed-to-call and `refs:
 sites. `check_site_census.py` asserts both — the direction at every site and
 the per-bucket totals against `xdata-registers.csv:817` — so a hand-typed
 number that drifts fails instead of reading as agreement.
+
+> **CORRECTION (2026-10-03, issue #799) to that paragraph, to §8's
+> `read 4 / write 2 / no-movx 1`, and to the table above.** The sums still
+> close, and every number in them is still right about what it counts — but
+> `read 4 / write 2` was being read as *the* direction split of this byte in
+> the firmware, and it is not. `mask_dp_byte_7c_reset_dptr_0860` at `0xD319`
+> ends `mov DPTR,#0x0860 / ret`, so the two `movx @DPTR,A` behind `lcall
+> 0xD319` at `0x0D18C` and `0x0D244` are stores of this byte that no
+> `MOV DPTR,#0x0860` site accounts for. `trace_xdata_refs.py` finds a site by
+> a literal load in the same function, so it had no row there; the census
+> reads the decompiled text, where Ghidra bound DPTR to its **pre-call** value,
+> so it had no occurrence there either. Both methods missing the same byte is
+> what this table's `0x0D31C` row was called *agreement*, and the new
+> `dptr-from-callee` state is what that word was wrong about. The correction is
+> in three committed places rather than in this prose: the two sites are rows
+> in `xdata-086x-dispatch-sites.csv` under `--callee-column`, the two
+> `dptr-from-callee` rows are in `xdata-0860-census-sites.csv`, and
+> `check_site_census.py` now reports that state **on its own** rather than
+> folding it into the agree count. **No bucket total moves**: the census sees
+> no occurrence at either site, so the totals above are unchanged and still
+> close. `xdata_register_map.py`'s `HAND_CHECKED["0x0860"]` keeps `write: 2`
+> and its `--self-test` still passes; that is the evidence the counts are
+> unmoved, and the correction says why in place.
+> `docs/findings/callee-set-dptr-census-blindspot.md` has the measurement.
 
 **Three residues, named rather than left for a reader to infer.** The
 `2/6/6` **collapse**: all 14 `==` occurrences do have a byte site, and they
@@ -390,12 +428,41 @@ tool could see.
 
 **The writer set is two instructions, and this method found no others.**
 
+> **CORRECTION (2026-10-03, issue #799): both halves of that sentence are
+> wrong, and the second one is the one that mattered.** *This method* found no
+> others — that half still holds, and it is what the table records — but the
+> sentence was being read as *the firmware has no other writer*, and the
+> firmware has two more. `mask_dp_byte_7c_reset_dptr_0860` at `0xD319` is four
+> instructions ending `mov DPTR,#0x0860 / ret`; the callers at `0x0D18C` and
+> `0x0D244` call it and then store A on its zero branch, so `0x0D191` and
+> `0x0D249` are each a **conditional store of `0x00` to this address**, through
+> a pointer the caller's own function never loaded. `trace_xdata_refs.py` finds
+> a site by a literal `MOV DPTR,#imm16` in the same function and so had no row
+> there; the census reads the decompiled text, where Ghidra bound DPTR to its
+> **pre-call** value, and so had no occurrence there either. Both methods
+> missing the same byte is what the `0x0D31C` row above was calling
+> *agreement*. The two stores are rows in `xdata-086x-dispatch-sites.csv` under
+> `--callee-column` and `dptr-from-callee` rows in
+> `xdata-0860-census-sites.csv`, and **no bucket total moves** — the census sees
+> no occurrence at either site.
+> `docs/findings/callee-set-dptr-census-blindspot.md` has the measurement and
+> `ec/tools/callee_dptr_sites.py` the resolver.
+
 | site | loads DPTR | the store that follows | routine holding the site |
 |---|---|---|---|
 | bank0 `0xD281` | `0x0860` | `0xFF` at `0xD286` | `set_0860_ff_then_d284` |
 | bank0 `0xD28A` | `0x0860` | a cleared `A` at `0xD28D` | `clear_0860` |
+| bank0 `0x0D191` | `0x0860`, **inside `0xD319`** | a cleared `A` at `0x0D191` | `dispatch_on_0860`, behind `lcall 0xD319` at `0x0D18C` |
+| bank0 `0x0D249` | `0x0860`, **inside `0xD319`** | a cleared `A` at `0x0D249` | `poll_d6c2_then_branch`, behind `lcall 0xD319` at `0x0D244` |
 
-Both sit in the `0xD281`-`0xD2BD` block, and the existing `0xD284` row
+The first row is also not quite what this table has always said: the store at
+`0x0D286` sits in `write_ff_to_dptr_then_d28e` at `0xD284`, whose listing
+begins where `set_0860_ff_then_d284` at `0xD281` ends. The three-byte `MOV
+DPTR` is a site of its own and the store is in the listing after it, which is
+why `callee_dptr_sites.py` calls that shape `predecessor` rather than `literal`
+— and why it is *not* a fourth site in the sweep's table, the load already
+being one. The first two rows sit in the `0xD281`-`0xD2BD` block, and the
+existing `0xD284` row
 already records that it writes `0xFF` through whatever DPTR the caller left,
 with `mask_dp_byte_7c_reset_dptr_0860` at `0xD319` reloading DPTR to `0x0860`
 immediately before. The seventh bank-0 site is that `0xD31C` one: it loads
@@ -637,19 +704,33 @@ the EC-side sites only, and the last column names the routines holding them.
 Every cell is re-derivable from `xdata-086x-dispatch-sites.csv`; the two
 `handoff` cells are resolved in §5 and the starred rows below count them as
 reads. **That table's ninth column, `census`, is the other method's answer for
-the same site** — §3's per-site table is where `0x0860`'s nine rows are read
+the same site** — §3's per-site table is where `0x0860`'s eleven rows are read
 out of it, and `../tools/check_site_census.py` is what holds the two to each
 other. The other 14 addresses carry `not recorded` there, which is §9's first
 concession.
 
+**CORRECTED 2026-10-03 (issue #799): the `0x0860`, `0x0867` and `0x0868`
+rows below are re-cut, and the other twelve are not.** `--callee-column`
+(§1) adds one row per `movx` whose DPTR a callee left behind, which is a site
+the `MOV DPTR,#imm16` rule these cells count cannot reach. `0x0860` gains two
+and `0x0867`/`0x0868` gain one apiece; the `EC` and `b0` columns move with
+them, and the `read`/`write`/`no-movx` columns classify the added rows the same
+way as any other. **The PD column does not move** — no PD byte is reached
+through a main-EC routine — and `0x0864`, which the resolver places on the page
+and which §1 does not sweep, appears in no row here. The `routines holding EC
+sites` cells name the listings the sites sit in, and the two new `0x0860`
+sites are inside `dispatch_on_0860` and `poll_d6c2_then_branch`, which is why
+`dispatch_on_0860`'s count rises. Every other row is untouched and every cell
+is still re-derivable from `xdata-086x-dispatch-sites.csv` by §1's command.
+
 | addr | EC | PD | b0 | read | write | handoff | no-`movx` | routines holding EC sites |
 |---|---:|---:|---:|---:|---:|---:|---:|---|
-| `0x0860` | 7 | 2 | 7 | 4 | 2 | 0 | 1 | dispatch_on_0860 ×4, set_0860_ff_then_d284, clear_0860, mask_dp_byte_7c_reset_dptr_0860 |
+| `0x0860` | 9 | 2 | 9 | 4 | 4 | 0 | 1 | dispatch_on_0860 ×5, poll_d6c2_then_branch, set_0860_ff_then_d284, clear_0860, mask_dp_byte_7c_reset_dptr_0860 |
 | `0x0862` | 3 | 2 | 3 | 3 | 0 | 0 | 0 | stage_1c03_1c02_1c01, stage_0862_0865_into_1c12_1c14, stage_0862_0865_into_1c36_1c38 |
 | `0x0865` | 10 | 0 | 10 | 4 | 6 | 0 | 0 | compute_level_blocks_086b_086c_086e ×3, dispatch_on_0860 ×3, sub_0866_from_0865, and the three staging routines |
 | `0x0866` | 12 | 0 | 12 | 5 | 7 | 0 | 0 | compute_level_blocks_086b_086c_086e ×9, sub_0866_from_0865, dispatch_on_0860, copy_0866_86b_to_1c04_1c3a |
-| `0x0867` | 9 | 6 | 9 | 2 | 7 | 0 | 0 | compute_level_blocks_086b_086c_086e ×6, sub_dptr_byte_from_0867, dispatch_on_0860, copy_0866_86b_to_1c04_1c3a |
-| `0x0868` | 9 | 2 | 9 | 2 | 7 | 0 | 0 | compute_level_blocks_086b_086c_086e ×6, sub_dptr_byte_from_0868, dispatch_on_0860, copy_0866_86b_to_1c04_1c3a |
+| `0x0867` | 12 | 6 | 12 | 5 | 7 | 0 | 0 | compute_level_blocks_086b_086c_086e ×9, sub_dptr_byte_from_0867, dispatch_on_0860, copy_0866_86b_to_1c04_1c3a |
+| `0x0868` | 12 | 2 | 12 | 5 | 7 | 0 | 0 | compute_level_blocks_086b_086c_086e ×9, sub_dptr_byte_from_0868, dispatch_on_0860, copy_0866_86b_to_1c04_1c3a |
 | `0x0869` | 8 | 0 | 8 | 3 | 5 | 0 | 0 | compute_level_blocks_086b_086c_086e ×6, dispatch_on_0860, copy_0866_86b_to_1c04_1c3a |
 | `0x086A` | 2 | 0 | 2 | 1 | 1 | 0 | 0 | dispatch_on_0860, copy_0866_86b_to_1c04_1c3a |
 | `0x086B` * | 14 | 0 | 14 | 9 | 5 | 2 | 0 | compute_level_blocks_086b_086c_086e ×10, gate_06e6_442_then_sync_046a_from_086b ×2, dispatch_on_0860, copy_0866_86b_to_1c04_1c3a |
@@ -717,7 +798,21 @@ listings.
   the decompile names no address at that site, and `0x0D31C` is the reason to
   be careful: a `MOV DPTR,#0x0860` the decompiler folded away is invisible to
   the census by construction, so every address reached that way is undercounted
-  by the census alone. §11's last bullet.
+  by the census alone. §11's last bullet. **CORRECTED 2026-10-03 (issue
+  #799): that bullet named one way a site goes missing and the second way is
+  the one that cost two stores of this byte.** A DPTR loaded by a **callee** is
+  invisible to *both* methods at once — the sweep needs a `MOV DPTR,#imm16` in
+  the same function and the census needs the address spelled in the
+  decompiled text, and in this shape neither is there — so the cell is not
+  undercounted by the census alone but absent from the pair, and a checker
+  reading "both methods saw nothing" as "nothing is there" turns a pair of
+  blind spots into a corroboration. `0x0D191` and `0x0D249` are the two sites
+  that shape produces here; `dptr-from-callee` is now its own outcome in
+  `check_site_census.py` rather than a row on the agree list, and
+  `ec/tools/callee_dptr_sites.py`'s table is what finds them. What that table
+  does **not** establish is anything about a site it could not resolve: its
+  `unresolved` rows, and the count it prints of `movx` it placed nowhere, are
+  "not found by this method" in exactly the sense this bullet describes.
 - **Anything about the two programs' address spaces.** The 2 PD-image sites
   for `0x0860` are a separate program with its own XDATA map;
   `pd-xdata-overlap.md` is not reopened.
@@ -814,6 +909,18 @@ entries stay `present-untested`, and the names stay placeholders.
   `--mode rebuild-project`; the `0x1C02` direction corrected against two
   `.asm` listings; and a **conditional computed-DPTR writer found for
   `0x0862` and `0x086D`**, which corrects §2 above in place.
+- **Issue #799 answers the `0x0D31C` follow-up below in part, and adds two
+  stores of `0x0860` that no `MOV DPTR` site accounted for.** A new
+  **`ec/tools/callee_dptr_sites.py`** resolves every `movx` on the
+  `0x0860`-`0x086E` page from the `.asm` listings and reports where its DPTR
+  came from; its table is the new **`xdata-0860-callee-dptr-sites.csv`**;
+  `trace_xdata_refs.py` gains **`--callee-column`**, which books its `callee`
+  rows as sites; and `check_site_census.py` gains the **`dptr-from-callee`**
+  state, reported on its own rather than as agreement between two methods that
+  both missed the same bytes. §3, §4, §8 and §9 carry the corrections in
+  place, dated, with the superseded readings left visible. No bucket total
+  moves and no `status:` moves.
+  `docs/findings/callee-set-dptr-census-blindspot.md` is the write-up.
 - **Open questions this reading raised**, for the follow-up pass:
   1. **CLOSED by issue #250, in the bounded form.** What consumes
      `0x1C39`/`0x1C3A` and the two staging trios: no consumer is named by any
@@ -837,7 +944,15 @@ entries stay `present-untested`, and the names stay placeholders.
      every address reached the same way, which is a wider question than this
      one site: how many other `no census occurrence` cells across the tree are
      the same shape rather than an absence. Worth its own issue; §9 says what
-     the cell does and does not mean.
+     the cell does and does not mean. **CLOSED IN PART by issue #799**: the
+     wider question was taken up, `ec/tools/callee_dptr_sites.py` resolves
+     every `movx` on this page and its table is the answer for it,
+     `docs/findings/callee-set-dptr-census-blindspot.md` is the write-up, and
+     §3's and §4's corrections are the two stores of `0x0860` that came out
+     of it. What is **not** closed is the same class on the fourteen other
+     addresses of the page and the tree-wide version — the resolver reads the
+     committed `.asm` listings, so it sees what they cover and reports what
+     they do not rather than decoding around it.
   5. The live step of §10, which needs the physical machine.
 
 ## 12. The `#110` pointers in §6 and §9, corrected in place (issue #519)

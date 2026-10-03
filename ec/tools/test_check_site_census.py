@@ -71,9 +71,10 @@ BLIND = {'read': 0, 'write': 0, 'read+write': 0, 'passed-to-call': 0,
 
 
 def checked(sites=None, rows=None, occurrences=None, expected=None):
-    """(problems, agreed, unchecked) for the fixtures with the named parts
-    replaced. `None` means "the base version", spelled that way rather than
-    with `or` so that an empty dict is a fixture and not a default."""
+    """(problems, agreed, callee_dptr, unchecked) for the fixtures with the
+    named parts replaced. `None` means "the base version", spelled that way
+    rather than with `or` so that an empty dict is a fixture and not a
+    default."""
     return csc.check(SITES if sites is None else sites,
                      ROWS if rows is None else rows,
                      OCCURRENCES if occurrences is None else occurrences,
@@ -100,7 +101,7 @@ class Agreement(unittest.TestCase):
     """The pairs the two vocabularies are allowed to spell the same way."""
 
     def test_read_against_read_passes(self):
-        self.assertEqual(checked(), ([], 1, 0))
+        self.assertEqual(checked(), ([], 1, 0, 0))
 
     def test_a_call_tail_agrees_with_passed_to_call(self):
         # The one instruction the two methods read differently: the sweep
@@ -115,7 +116,7 @@ class Agreement(unittest.TestCase):
                  'census_count': '1', 'census_refs': 'bank0/D091.c:81'}]
         occurrences = {('bank0/D091.c', 81): ['passed-to-call']}
         expected = (dict(BLIND, **{'passed-to-call': 1}), 1)
-        self.assertEqual(checked(sites, rows, occurrences, expected), ([], 1, 0))
+        self.assertEqual(checked(sites, rows, occurrences, expected), ([], 1, 0, 0))
 
     def test_no_movx_against_no_occurrence_agrees(self):
         # 0x0D31C: the sweep decoded a window with no `movx` in it, and the
@@ -127,7 +128,7 @@ class Agreement(unittest.TestCase):
         rows = [{'region': 'bank0', 'file_offset': '0x0D31C',
                  'census_state': 'no-occurrence', 'census_bucket': 'none',
                  'census_count': '0', 'census_refs': 'none'}]
-        self.assertEqual(checked(sites, rows, {}, (BLIND, 0)), ([], 1, 0))
+        self.assertEqual(checked(sites, rows, {}, (BLIND, 0)), ([], 1, 0, 0))
 
     def test_the_many_to_one_collapse_is_a_count_not_a_conflict(self):
         # Three `read x1` rows carrying 2, 6 and 6 occurrences, which is the
@@ -151,14 +152,14 @@ class Agreement(unittest.TestCase):
             for line, times in lines:
                 occurrences[('bank0/D091.c', line)] = ['read'] * times
         expected = (dict(BLIND, read=14), 14)
-        self.assertEqual(checked(sites, rows, occurrences, expected), ([], 3, 0))
+        self.assertEqual(checked(sites, rows, occurrences, expected), ([], 3, 0, 0))
 
 
 class RejectsDisagreement(unittest.TestCase):
     """One case per way the two vocabularies can part company."""
 
     def test_read_against_write_is_rejected(self):
-        self.assertTrue(saying('the two methods disagree',
+        self.assertTrue(saying('only set of pairs',
                                rows=row(census_bucket='write')))
 
     def test_write_against_read_is_rejected(self):
@@ -168,7 +169,7 @@ class RejectsDisagreement(unittest.TestCase):
         rows = [{'region': 'bank0', 'file_offset': '0x0D281',
                  'census_state': 'mapped', 'census_bucket': 'read',
                  'census_count': '2', 'census_refs': 'bank0/D091.c:43,47'}]
-        self.assertTrue(saying('the two methods disagree', sites=sites, rows=rows))
+        self.assertTrue(saying('only set of pairs', sites=sites, rows=rows))
 
     def test_a_read_plus_write_window_is_not_a_read(self):
         # `read x1, write x1` contains the substring "read x". A site the
@@ -177,13 +178,13 @@ class RejectsDisagreement(unittest.TestCase):
         sites = {'0x0D2A0': {'addr': '0x0860', 'region': 'bank0',
                              'access': 'read x1, write x1',
                              'window': 'movx a,@dptr ; inc a ; movx @dptr,a'}}
-        self.assertTrue(saying('the two methods disagree', sites=sites,
+        self.assertTrue(saying('only set of pairs', sites=sites,
                                rows=row(file_offset='0x0D2A0')))
 
     def test_passed_to_call_needs_a_call_in_the_window(self):
         # The agreeing pair above with the `lcall` gone: a read the census
         # calls an argument, and nothing in the window to pass it to.
-        self.assertTrue(saying('the two methods disagree',
+        self.assertTrue(saying('only set of pairs',
                                rows=row(census_bucket='passed-to-call')))
 
     def test_passed_to_call_against_a_write_site_is_rejected(self):
@@ -191,7 +192,7 @@ class RejectsDisagreement(unittest.TestCase):
                              'access': 'write x1', 'window': 'movx @dptr,a'}}
         rows = row(file_offset='0x0D144', census_bucket='passed-to-call',
                    census_count='2')
-        self.assertTrue(saying('the two methods disagree', sites=sites, rows=rows))
+        self.assertTrue(saying('only set of pairs', sites=sites, rows=rows))
 
     def test_a_handoff_site_claiming_a_bucket_is_rejected(self):
         # The decompile names no address where DPTR went to a call, so an
@@ -210,7 +211,7 @@ class RejectsDisagreement(unittest.TestCase):
         rows = [{'region': 'bank0', 'file_offset': '0x09E03',
                  'census_state': 'no-occurrence', 'census_bucket': 'none',
                  'census_count': '0', 'census_refs': 'none'}]
-        self.assertEqual(checked(sites, rows, {}, (BLIND, 0)), ([], 1, 0))
+        self.assertEqual(checked(sites, rows, {}, (BLIND, 0)), ([], 1, 0, 0))
 
     def test_no_occurrence_against_a_read_site_is_rejected(self):
         # The census saw nothing where the sweep decoded a `movx`. One of the
@@ -220,7 +221,7 @@ class RejectsDisagreement(unittest.TestCase):
         rows = [{'region': 'bank0', 'file_offset': '0x0D091',
                  'census_state': 'no-occurrence', 'census_bucket': 'none',
                  'census_count': '0', 'census_refs': 'none'}]
-        self.assertTrue(saying('the two methods disagree', rows=rows,
+        self.assertTrue(saying('only set of pairs', rows=rows,
                                occurrences={}))
 
     def test_a_code_pointer_is_not_a_register(self):
@@ -230,7 +231,7 @@ class RejectsDisagreement(unittest.TestCase):
         sites = {'0x0D14B': {'addr': '0x0860', 'region': 'bank0',
                              'access': 'movc a,@a+dptr x1 -- CODE pointer, not an XDATA access',
                              'window': 'movc a,@a+dptr'}}
-        self.assertTrue(saying('the two methods disagree', sites=sites,
+        self.assertTrue(saying('only set of pairs', sites=sites,
                                rows=row(file_offset='0x0D14B')))
 
     def test_an_unrecognised_access_is_not_silence(self):
@@ -240,7 +241,7 @@ class RejectsDisagreement(unittest.TestCase):
         sites = {'0x0D091': {'addr': '0x0860', 'region': 'bank0',
                              'access': 'something the walk did not say',
                              'window': 'movx a,@dptr'}}
-        self.assertTrue(saying('the two methods disagree', sites=sites))
+        self.assertTrue(saying('only set of pairs', sites=sites))
 
 
 class ReportsUncheckedRatherThanAgreeing(unittest.TestCase):
@@ -254,7 +255,7 @@ class ReportsUncheckedRatherThanAgreeing(unittest.TestCase):
 
     def test_other_program_is_unchecked_not_agreeing(self):
         self.assertEqual(checked({'0x25CE4': self.PD_SITE}, [self.PD_ROW], {},
-                                 (BLIND, 0)), ([], 0, 1))
+                                 (BLIND, 0)), ([], 0, 0, 1))
 
     def test_other_program_cannot_claim_a_measured_zero(self):
         # The census's 0x0860 row is `main-ec`, so a PD site has no count at
@@ -267,10 +268,100 @@ class ReportsUncheckedRatherThanAgreeing(unittest.TestCase):
     def test_verbose_names_the_unchecked_site(self):
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
-            _, agreed, unchecked = csc.check({'0x25CE4': self.PD_SITE},
-                                             [self.PD_ROW], {}, (BLIND, 0), True)
-        self.assertEqual((agreed, unchecked), (0, 1))
+            _, agreed, callee, unchecked = csc.check(
+                {'0x25CE4': self.PD_SITE}, [self.PD_ROW], {}, (BLIND, 0), True)
+        self.assertEqual((agreed, callee, unchecked), (0, 0, 1))
         self.assertIn('unchecked 0x25CE4', err.getvalue())
+
+
+class CalleeSetDPtrIsNotAgreement(unittest.TestCase):
+    """Issue #799: both methods missing the same byte is not corroboration.
+
+    `0x0D191` and `0x0D249` are stores whose DPTR `0xD319` loaded. The sweep
+    has no `MOV DPTR,#0x0860` at either and the decompiled C charges them to
+    `0x0864` and to nothing, so before this state existed the pair had nowhere
+    to go and the checker's only options were `agree` or `error`. What is
+    pinned here is that the third option is its own outcome, that it is never
+    counted as agreement, and that either method being wrong about it still
+    fails.
+    """
+
+    SITE = {'addr': '0x0860', 'region': 'bank0',
+            'access': 'write x1, DPTR from 0xD319',
+            'window': 'movx @dptr,a ; ljmp 0xd28e'}
+    ROW = {'region': 'bank0', 'file_offset': '0x0D191',
+           'census_state': 'dptr-from-callee', 'census_bucket': 'none',
+           'census_count': '0', 'census_refs': 'none'}
+
+    def test_the_pair_is_accepted_and_reported_on_its_own(self):
+        problems, agreed, callee, unchecked = checked(
+            sites={'0x0D191': self.SITE}, rows=[self.ROW], occurrences={},
+            expected=(BLIND, 0))
+        self.assertEqual(problems, [])
+        self.assertEqual((agreed, callee, unchecked), (0, 1, 0))
+
+    def test_it_is_never_counted_as_agreement(self):
+        # The regression the issue is about: a checker that returned `agree`
+        # here would report two independent-looking methods on a site neither
+        # of them can see.
+        _, agreed, callee, _ = checked(sites={'0x0D191': self.SITE},
+                                       rows=[self.ROW], occurrences={},
+                                       expected=(BLIND, 0))
+        self.assertEqual(agreed, 0)
+        self.assertEqual(callee, 1)
+
+    def test_the_sweep_cell_alone_is_an_error(self):
+        # The sweep found the site through a callee and the map does not say
+        # so, which would leave the site out of the per-bucket totals too.
+        sites = dict(SITES, **{'0x0D191': self.SITE})
+        rows = ROWS + [dict(self.ROW, census_state='mapped',
+                            census_bucket='read', census_count='1',
+                            census_refs='bank0/D091.c:43')]
+        occurrences = {('bank0/D091.c', 43): ['read'] * 2,
+                       ('bank0/D091.c', 47): ['read']}
+        self.assertTrue(saying('only set of pairs', sites=sites, rows=rows,
+                               occurrences=occurrences,
+                               expected=(dict(BLIND, read=3), 3)))
+
+    def test_the_map_state_alone_is_an_error(self):
+        # The map says the site was found through a callee; the sweep's own
+        # cell says it was not, and one of the two is stale.
+        sites = dict(SITES, **{'0x0D0EF': {'addr': '0x0860', 'region': 'bank0',
+                                           'access': 'read x1',
+                                           'window': 'movx a,@dptr'}})
+        rows = ROWS + [dict(self.ROW, file_offset='0x0D0EF')]
+        self.assertTrue(saying('only set of pairs', sites=sites, rows=rows,
+                               occurrences=OCCURRENCES))
+
+    def test_a_plain_write_cell_does_not_satisfy_the_callee_state(self):
+        # `write x1` and `write x1, DPTR from 0xD319` both contain "write x1",
+        # so a checker that read the direction by substring would call this
+        # site an ordinary mapped write and make the two agree.
+        rows = [dict(self.ROW, file_offset='0x0D091')]
+        sites = {'0x0D091': dict(SITES['0x0D091'], access='write x1')}
+        self.assertTrue(saying('only set of pairs', sites=sites, rows=rows,
+                               occurrences=OCCURRENCES))
+
+    def test_it_contributes_to_no_bucket_total(self):
+        # The census sees no occurrence there, so folding the site's zero into
+        # a bucket would be the tool asserting a measured zero it does not
+        # have. The totals it checks are the base fixture's, unchanged.
+        self.assertEqual(checked(sites={'0x0D091': SITES['0x0D091']},
+                                 rows=[self.ROW], occurrences={},
+                                 expected=(BLIND, 0))[0],
+                         [p for p in checked(rows=[self.ROW], occurrences={},
+                                             expected=(BLIND, 0))[0]])
+
+    def test_a_bucket_claimed_on_this_state_is_rejected(self):
+        rows = [dict(self.ROW, census_bucket='write')]
+        self.assertTrue(saying('structurally blind', sites={'0x0D191': self.SITE},
+                               rows=rows, occurrences={}))
+
+    def test_verbose_names_the_callee_site(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            csc.check({'0x0D191': self.SITE}, [self.ROW], {}, (BLIND, 0), True)
+        self.assertIn('callee-dptr 0x0D191', err.getvalue())
 
 
 class RejectsAnUnsupportedClaim(unittest.TestCase):
@@ -381,7 +472,7 @@ class RejectsAnUnjoinedPair(unittest.TestCase):
         # one.
         sites = {ref: dict(row) for ref, row in SITES.items()}
         sites['0x0D0EF'] = self.OTHER
-        problems, agreed, unchecked = checked(sites=sites,
+        problems, agreed, callee, unchecked = checked(sites=sites,
                                               rows=row(census_bucket='write'))
         self.assertEqual((agreed, unchecked), (0, 0))
         self.assertTrue(all('no row in' in p for p in problems))
