@@ -545,10 +545,10 @@ main EC* whatever the PD image does with the same address number:
 
 | program | spelling | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 846 | 7,487 |
+| main-ec | `DAT_EXTMEM` | 843 | 7,472 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 44 | 490 |
 | main-ec | `pair-literal` | 156 | 468 |
-| main-ec | `symbol` | 158 | 6,197 |
+| main-ec | `symbol` | 161 | 6,212 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
 | pd | `DAT_EXTMEM` | 157 | 858 |
 | **total** | | **1,375** | **15,696** |
@@ -575,14 +575,14 @@ directly:
 
 | `program` | `spelled_as` | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 815 | 7,256 |
+| main-ec | `DAT_EXTMEM` | 813 | 7,242 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 41 | 385 |
 | main-ec | `pair-literal` | 155 | 461 |
-| main-ec | `symbol` | 144 | 5,593 |
+| main-ec | `symbol` | 146 | 5,607 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
-| both | `DAT_EXTMEM` | 31 | 321 |
+| both | `DAT_EXTMEM` | 30 | 312 |
 | both | `DAT_EXTMEM+pair-literal` | 4 | 139 |
-| both | `symbol+DAT_EXTMEM` | 14 | 742 |
+| both | `symbol+DAT_EXTMEM` | 15 | 751 |
 | pd | `DAT_EXTMEM` | 108 | 603 |
 | **total** | | **1,326** | **15,696** |
 
@@ -678,19 +678,19 @@ history of a table that still exists. The write-up is
 Read the `symbol` rows as the addresses the issue's grep could not see. **On
 §3's basis** — every row the main EC touches, which is the 1,218 the tool
 prints rather than the 1,169 `program=main-ec` rows of the second table above,
-the 49 difference being the `program=both` rows — that is **172 addresses in
-6,393 references**, counted per program. The corrected form of the issue's claim
+the 49 difference being the `program=both` rows — that is **175 addresses in
+6,408 references**, counted per program. The corrected form of the issue's claim
 is therefore a *three*-way split, not a two-way one:
 
-> 172 of the 1,218 XDATA addresses the main EC touches carry a name from
-> `ec/ghidra/xdata-symbols.csv`. Of the other 1,046, **890** read as
+> 175 of the 1,218 XDATA addresses the main EC touches carry a name from
+> `ec/ghidra/xdata-symbols.csv`. Of the other 1,043, **887** read as
 > `DAT_EXTMEM_xxxx` and **156** are named nowhere and reach the census only as a
 > literal argument to one of the pair accessors of §4.7.
 
-172 + 890 + 156 is 1,218 exactly, and the references are 6,393 + 7,977 + 468 =
+175 + 887 + 156 is 1,218 exactly, and the references are 6,408 + 7,962 + 468 =
 the main EC's own 14,838.
 
-**The same partition on the union key is 172 / 891 / 155**, and both readings
+**The same partition on the union key is 175 / 888 / 155**, and both readings
 are right about different things: counted within the main EC the last term is
 156, not 155, because the main EC reaches `0x04A3` as a `pair-literal` and
 nothing else, and it is the PD image that spells it `DAT_EXTMEM_xxxx` — so the

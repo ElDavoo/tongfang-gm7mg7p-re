@@ -610,26 +610,26 @@ CITATIONS = [
      "matches because it is the same literal spelled in prose"),
     ("ec/tools/grade_timer_sweep.py", 354, 'if r[1] == "MARK":',
      "reader: grade_timer_sweep.load recognising the row"),
-    ("ec/tools/check_capture_encoding.py", 166,
+    ("ec/tools/check_capture_encoding.py", 168,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: the encoding check's own mark/change census, written against "
      "the same shape and declared against the same codec"),
-    ("ec/tools/check_capture_encoding.py", 243,
+    ("ec/tools/check_capture_encoding.py", 245,
      '"2026-01-01T12:00:00.000+01:00", "MARK", "", PROBE]',
      "a constructed row rather than a writer: `check_capture_encoding` builds "
      "one to hand a writer that takes a label alone, and the literal scan "
      "counts it as a consumer because the `.row(` call is on the next line"),
-    ("windows/tools/test_manual_fan_ctrl_probe.py", 508,
+    ("windows/tools/test_manual_fan_ctrl_probe.py", 510,
      'if len(r) == 4 and r[1] == "MARK"]',
      "reader: the only exact-column-count filter in the tree"),
     # -- the spelling the literal scan cannot see ----------------------------
-    ("windows/tools/test_ec_watch.py", 452,
+    ("windows/tools/test_ec_watch.py", 454,
      "self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],",
      "a single-quoted MARK the scan cannot match: a test assertion, not a "
      "writer"),
     # `:320` -> `:322` by #364's edit to that suite, which put two lines above
     # it; the text the site quotes is unchanged.
-    ("windows/tools/test_system_id_probe.py", 322,
+    ("windows/tools/test_system_id_probe.py", 323,
      "'MARK,,GPU mode -> dGPU,'",
      "the same in the other suite, so the blind side is the tree's and not "
      "one file's"),
@@ -675,7 +675,7 @@ CITATIONS = [
     ("ec/tools/grade_0751_isolation.py", 4077,
      'read = f"{path}: {len(m)} mark(s), {len(c)} change row(s)"',
      "the per-capture census line, which counts rather than spells"),
-    ("ec/tools/grade_gpu_door.py", 931, "m, c = fan.read_capture(path)",
+    ("ec/tools/grade_gpu_door.py", 912, "m, c = fan.read_capture(path)",
      "the second consumer of read_capture's two-tuple"),
     ("ec/tools/check_capture_claims.py", 914,
      "read_capture(os.path.join(REPO, WATCH, name))",
@@ -691,7 +691,7 @@ CITATIONS = [
     ("windows/tools/ec_watch.py", 381,
      "accepted, refused, unplaceable = existing_findings(path)",
      "the notice's one call into the grader's reader"),
-    ("windows/tools/test_manual_fan_ctrl_probe.py", 515,
+    ("windows/tools/test_manual_fan_ctrl_probe.py", 517,
      "self.assertEqual(len(row), 4, row)",
      "the canary: the only committed assertion of an exact column count"),
     ("windows/tools/manual_fan_ctrl_probe.py", 264,

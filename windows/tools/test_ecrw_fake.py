@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 r"""`ecrw_fake.py` held to `ecrw.py`: the mirror, measured rather than promised.
 
-`ecrw.py` runs `ctypes.WinDLL("kernel32", ...)` at module scope, so it cannot
-be imported off Windows -- which is the whole reason the fixture exists, and
-the reason this comparison has to be static. Neither file is imported here:
-`install()` under a shared interpreter
-(`tools/test_windows_tools_shared_interpreter.py`) would leave `sys.modules`
-pointing at the fixture for a sibling suite to inherit, and `ast.parse` over
-the two sources answers everything asserted below.
+`ecrw.py` used to run `ctypes.WinDLL("kernel32", ...)` at module scope, which
+was why this comparison had to be static. It binds on the first `Ec()` now, so
+the real module imports anywhere
+(`windows/tools/test_import_off_windows.py`), and this stays a source
+comparison anyway -- but for the other reason: `install()` under a shared
+interpreter (`tools/test_windows_tools_shared_interpreter.py`) would leave
+`sys.modules` pointing at the fixture for a sibling suite to inherit. Neither
+file is imported here, and `ast.parse` over the two sources answers everything
+asserted below.
 
 The fixture used to claim the real module's *whole* surface in three places.
 It does not carry it: `_ioctl`, `read_dword` and `read_dword_unaligned` are the

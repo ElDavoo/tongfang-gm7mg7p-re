@@ -127,9 +127,12 @@ WINDOWS = (("0x07C4-0x07D7", 0x07C4, 0x07D7),
 # *when* cannot be said to have cut any window short -- the grader places it
 # against the last mark at or before it and withholds that window.
 #
-# Transcribed rather than imported, because this module cannot import the
-# grader: `from ecrw import Ec, EcError` above binds kernel32 at import time,
-# so this file loads only on Windows and the grader would load nowhere else.
+# Transcribed rather than imported, because a live-capture tool importing an
+# offline grader would import its whole capture reader with it -- `ecrw` is no
+# longer the reason (it binds kernel32 on first `Ec()`, not at import, so
+# `windows/tools/test_import_off_windows.py` can import this module anywhere).
+# The grader takes this table by reference instead -- see `WATCH` above -- so
+# this is the one constant still spelled twice.
 # `windows/tools/test_gpu_block_watch.py` holds the two spellings equal, the
 # same hold the fan probe's `--self-test` carries for its own copy. A drifted
 # tag is not a wrong-looking string: it is a grader that matches no stopped

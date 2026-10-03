@@ -62,10 +62,10 @@ import trace_xdata_refs
 
 # `fan_table_replay` is the vendor's own writer and the committed MQTT reader,
 # and it imports nothing but stdlib -- so importing it costs an offline tool
-# nothing. `grade_gpu_door.py` imports a sibling the same way, and records why
-# the *other* cross-tree candidate (`windows/tools/gpu_block_watch.py`) could
-# not be: `ecrw` binds kernel32 at import time, which `fan_table_replay` does
-# not do. The one copy of the layout is the point; a second would be the
+# nothing. `grade_gpu_door.py` imports across this boundary the same way, and
+# takes its watch table by reference from `windows/tools/gpu_block_watch.py`,
+# which is now importable off Windows for the same reason. The one copy of the
+# layout is the point; a second would be the
 # drift that tool's own test guards against.
 sys.path.insert(0, os.path.join(
     os.path.dirname(os.path.abspath(__file__)),

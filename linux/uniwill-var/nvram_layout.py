@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 r"""`NVRAM_STRUCT`'s field table and offsets, importable on any platform.
 
-No I/O and no `ctypes.WinDLL` here, which is the only reason this table is
-repeated rather than imported. `windows/tools/uefi_var.py` builds its
-`kernel32`/`advapi32`/`ntdll` handles with three module-scope `ctypes.WinDLL`
-calls, so that file cannot be imported off Windows at all and a Linux tool that
-reached for it would fail at import on every machine this repository's tests
-run on. The table is 20 lines of literals; the duplication is what the costs.
+No I/O and no `ctypes.WinDLL` here. That used to be the whole reason this table
+is repeated rather than imported -- `windows/tools/uefi_var.py` built its
+`kernel32`/`advapi32`/`ntdll` handles with three module-scope
+`ctypes.WinDLL` calls, so a Linux tool that reached for it failed at import.
+`uefi_var.py` now binds those three on first use
+(`windows/tools/test_import_off_windows.py` holds that it imports anywhere), so
+the reason this duplication cites is gone and folding the two back together is
+the open follow-up. Until then the copy stays, and what holds it is the check
+below rather than the impossibility of importing the original.
 
 The cost is paid off here instead, in `test_uniwill_var.py`, which `ast`-reads
 both copies and the decompiled `NVRAM_STRUCT.cs` and holds all three to the

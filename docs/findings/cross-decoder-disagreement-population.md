@@ -184,6 +184,13 @@ code address in the second as 0x632D is in the first.
 
 ### `named-by-decimal-literal` — `common 0x1228 FUN_CODE_1228`
 
+*(This row left the sampled set in issue #649 — the annotation added for
+`bank0,0x9AAD` took one key out of the non-annotated remainder and the
+every-eighth stride re-phased. The body below is unchanged and still
+reads as this cause; `pd 0xDB89` is the row the export samples in its
+place. Nothing was lost, and `docs/findings/044b-mode-stepper.md` says so
+where the re-export is described.)*
+
 ```c
 void FUN_CODE_1228(void)
 
@@ -211,6 +218,11 @@ mechanism as `pd 0xF4CD`, one rung further along, and it is the direction the
 variable layer is heading in.
 
 ### `names-nothing` — `common 0x4BB0 FUN_CODE_4bb0` and `pd 0x357E`
+
+*(`common 0x4BB0` left the sampled set in issue #649, on the same
+re-phase; `common 0x50DE` is the row the export samples in its place, and
+its body is the same empty loop under the same Ghidra warnings, so what
+this section argues holds for the sampled row as it does for this one.)*
 
 ```c
 void FUN_CODE_4bb0(void)

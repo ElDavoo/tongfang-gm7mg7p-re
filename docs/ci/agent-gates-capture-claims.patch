@@ -1,10 +1,11 @@
-# ec/tools/check_capture_claims.py, ec/tools/check_testdata_index.py and
-# ec/tools/check_history_checkouts.py, all three wired into the cheap gate.
+# ec/tools/check_capture_claims.py, ec/tools/check_testdata_index.py,
+# ec/tools/check_history_checkouts.py and ec/tools/grade_sweep_summary.py, all
+# four wired into the cheap gate.
 # Prepared here rather than landed, because `.github/scripts/agent-gates.sh` is
 # copied from the agent-pipeline template and the pipeline's push token has no
 # `workflow` scope, so a branch editing it fails at the end of the PR rather
 # than at the start of it. `docs/agent-pipeline.md` says the same thing about
-# every other leg of this that a human has to land, and carries these three
+# every other leg of this that a human has to land, and carries these four
 # across too, as its items 5 and 9.
 #
 # To land it:
@@ -13,7 +14,7 @@
 #
 # and that is the whole change.
 #
-# This patch carries THREE checks, and that is not tidiness -- they cannot be
+# This patch carries FOUR checks, and that is not tidiness -- they cannot be
 # landed apart. It was two files until 2026-09-25 (issue #745): this one and
 # agent-gates-testdata-index.patch. Both applied cleanly on their own, and
 # neither could be applied after the other, in either order, because each put
@@ -46,13 +47,29 @@
 # `docs/agent-pipeline.md` item 13 declined a seventh patch for the same
 # reason, from the other direction.
 #
+# A fourth check joined it on 2026-10-02 (issue #316) for the same reason, and
+# the saturation is unchanged in direction since. That check's own patch was
+# cut first, as its own file, against the committed script, and
+# `tools/test_agent_gates_patches.py` refused it:
+# `agent-gates-pin-table-rows.patch` and it cannot be landed together in
+# either order, because that patch's insertion point is the blank line between
+# `check_doc_links()` and the first `gate` line, which is exactly where the
+# fourth `check_*()` + `gate` pair had been aimed. It composed with every other
+# patch in the set, so the collision is one anchor rather than a general one --
+# and the free half is still the function side, as it was for the third check.
+# The `gate` line is the half that is saturated, so the pair rides here. Cut
+# and re-measured rather than reasoned about, for the reason the paragraph
+# above gives: a patch written from a correct reading of the file failed once
+# already for want of an anchor.
+#
 # List order in the `gate` block is cosmetic, as it is in the tool list: the
 # loop is over a `for` word list and nothing reads the order. The new `gate`
 # line therefore goes below the two this patch already adds rather than in a
 # place that reads as a priority, and its name is two characters too long for
 # the column the shorter lines align on -- which
 # `gate 'scan_refs.py smoke test' check_scan_refs_smoke_test` already breaks.
-# The filename is kept rather than given an honest one for two checks now three,
+# The filename is kept rather than given an honest one -- it was two checks,
+# then three, now four, and the name names none of them --
 # because at `d3304785` it is cited **30 times across 13 markdown files** as
 # this repository's canonical account of the prepared-not-landed shape, and a
 # name is not worth churning the long shared files for. Those 30 are the tree
@@ -103,6 +120,15 @@
 # `ec/tools/test_check_history_checkouts.py`'s
 # `test_a_gate_job_on_a_shallow_checkout_is_a_failure` is the evidence it
 # *would* go red, on a scratch tree, not a record of a red run.
+# check_sweep_summary reads the one capture under `evidence/ec-watch/` that is
+# a per-address projection rather than a change log, and holds the one property
+# that projection cannot express: a byte whose `change_count` is non-zero is
+# never described as held, whatever its two endpoints say. Issue #276 is what
+# that costs -- a claim that `0x07C6` "held `0x04`" over the row
+# `0x07C6,2,0x04,0x04`, retracted in place, and now re-derivable by a command
+# rather than by hand. The refusals around it are the rest of what this holds;
+# the schema and its two blind spots are in
+# `docs/findings/sweep-summary-schema.md`.
 #
 # **What a red run from the third check means**, since the gate keys on the
 # tool's own exit code and that is what a reader lands on: one of the two
@@ -123,9 +149,10 @@
 # the line and not the job on it. Nothing in it was false -- that line *is*
 # `ci.yml`'s `gates` job's `fetch-depth: 0` -- and it is the line a re-copy
 # would move, so both halves stand.) **Until
-# a human lands this, no commit runs any of the three**, and the next false
-# capture claim, the eleventh fixture directory with no row, or a `ci.yml`
-# re-copy that drops the depth, merges the way the earlier ones did.
+# a human lands this, no commit runs any of the four**, and the next false
+# capture claim, the eleventh fixture directory with no row, a `ci.yml`
+# re-copy that drops the depth, or a reader who takes a byte that moved and came
+# back for one that held, merges the way the earlier ones did.
 # Neither the first tool nor the second reads a fixture for what it contains,
 # opens a capture, or touches an EC: both are disagreements between committed
 # files about which paths and rows exist. The third reads no git history and no
@@ -138,14 +165,14 @@
 # `tools/run-tests.sh` discovers every `test_*.py` in the repository, so they
 # are already collected by the runner.
 #
-# The comments the three functions add at the call site say the same thing
+# The comments the four functions add at the call site say the same thing
 # where the next reader of the gate will see it, rather than only here.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index de5db1f..62dd622 100755
+index 16c70c3..66cd66e 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -84,6 +84,58 @@ check_register_counts() {
+@@ -84,6 +84,76 @@ check_register_counts() {
    python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
  }
  
@@ -201,16 +228,35 @@ index de5db1f..62dd622 100755
 +  python3 ec/tools/check_history_checkouts.py
 +}
 +
++# The one capture under evidence/ec-watch/ that is a per-address projection
++# rather than a change log, read for the property the projection cannot
++# express: a byte whose `change_count` is non-zero is never described as held,
++# whatever its two endpoints say. Issue #276 is what that costs -- a claim that
++# 0x07C6 "held 0x04" over the row 0x07C6,2,0x04,0x04, retracted in place. It
++# takes a required capture positional and neither --check nor a --work dir, so
++# it is a check_*() here rather than an entry in check_ghidra_tooling()'s tool
++# list, where the *) default would hand it `--work "$scratch"` and get a hard
++# exit 2. Cheap tier because of what it reads: one committed CSV, the
++# committed fixtures under ec/tools/testdata/, and the standard library's
++# unittest -- no firmware image, no Ghidra, no network, no assembler. It prints
++# its own deferral, that no EC is opened and no register read back, and it
++# asserts no test count: the exit code decides, for the reason tools/run-tests.sh
++# gives.
++check_sweep_summary() {
++  python3 ec/tools/grade_sweep_summary.py --self-test
++}
++
  check_python_syntax() {
    local f rc=0
    for f in ec/tools/*.py bios/tools/*.py windows/tools/*.py ghidra/tools/*.py; do
-@@ -297,6 +349,9 @@ check_doc_links() {
+@@ -327,6 +397,10 @@ check_doc_links() {
  gate 'registers.yaml'  check_registers_yaml
  gate 'scan_refs.py smoke test' check_scan_refs_smoke_test
  gate 'register counts'  check_register_counts
 +gate 'capture claims'   check_capture_claims
 +gate 'testdata index'   check_testdata_index
 +gate 'history checkouts'  check_history_checkouts
++gate 'sweep summary'  check_sweep_summary
  gate 'ghidra tooling'  check_ghidra_tooling
  gate 'python syntax'   check_python_syntax
  gate 'shellcheck'      check_shellcheck
