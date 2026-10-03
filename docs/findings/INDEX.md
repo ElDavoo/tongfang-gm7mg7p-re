@@ -236,6 +236,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-classify-operator-tests.md`](xdata-classify-operator-tests.md) — `classify()`'s two operator tests: `&&` is not address-of, and `&=` reads what it writes
 - [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md) — The guard-off census, built by the flag instead of by patching a copy of the tool (issue #753)
 - [`xdata-cluster-refs-projection.md`](xdata-cluster-refs-projection.md) — A cluster's `refs` is the sum of its members' `refs_<program>`, and not of their `refs` (issue #343)
+- [`xdata-decile-cause-clamp-coverage.md`](xdata-decile-cause-clamp-coverage.md) — The `deciles()` floor had a case on one of its two callers and none on the other (issue #922)
 - [`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md) — `deciles()` had a floor in its docstring and none in its code, and the report was already printing the stretch (issue #889)
 - [`xdata-dispatch-position-pins.md`](xdata-dispatch-position-pins.md) — The three dispatch positions the docstring names are pinned on synthetic source
 - [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md) — The dispatch reader reads statement position too, and one boundary it does not
