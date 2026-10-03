@@ -139,6 +139,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`nested-export-frames.md`](nested-export-frames.md) — Frames the export nests inside its own functions (issue #622)
 - [`no-append-logs.md`](no-append-logs.md) — A document every merge must edit is a lock nobody holds, and this repository has now hit that three times
 - [`oem4-bit-map-and-bit0.md`](oem4-bit-map-and-bit0.md) — The `0x07A6` (`OEM_4`) bit map, and bit 0's owner (issue #93)
+- [`offline-import-ecrw.md`](offline-import-ecrw.md) — Four Windows tools bound a Win32 DLL at import, so a grader had to transcribe the watch table, and the DLLs now load on first use (issue #353)
 - [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md) — The opcode-table bounds census: every `OPCODE_LEN[d[i]]` in `ec/tools/`, and what holds the index in
 - [`opcode-table-coverage.md`](opcode-table-coverage.md) — The opcode table's coverage and a differential decode: 254 of 256 rows, 0 disagreements against two decoders that are not independent — and 8 against the manual, which is the finding — independent
 - [`pack-temp-producer-chain.md`](pack-temp-producer-chain.md) — The pack-temperature producer chain at `0x04A2`/`0x04A3` (issue #1425)

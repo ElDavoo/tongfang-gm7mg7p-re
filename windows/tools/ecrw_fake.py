@@ -1,19 +1,26 @@
 #!/usr/bin/env python3
 r"""The offline stand-in for `ecrw.py`, shared by every suite in this directory.
 
-`ecrw.py` binds kernel32 at import time, so it cannot be imported off Windows at
-all -- which is why the offline suites have to hand the tools a module of their
-own before importing them. There used to be one of those per suite, and they
-were not the same shape: whichever installed itself first won the
-`sys.modules.setdefault` and the other died on `from ecrw import Ec, EcError`.
-That ordering accident, and the rename that trips it, is in
+`ecrw.py` binds kernel32 on its first `Ec()` rather than at import, so it can
+be imported on a runner that has no Windows -- what this fixture is *not* for
+any more. It is for scriptability: every suite below installs a module whose
+`Ec` answers bytes the suite chooses, so the tool under test can be driven over
+a script of its own reads and writes. Importing the real module would open the
+vendor driver, which is exactly what no offline run may do. There used to be
+one fixture per suite, and they were not the same shape: whichever installed
+itself first won the `sys.modules.setdefault` and the other died on `from ecrw
+import Ec, EcError`. That ordering accident, and the rename that trips it, is in
 `docs/findings.md` §16; it is no longer a variable because there is now one
 shape to install.
+
+Converting those suites to import the real `ecrw` and patch its `Ec` in the
+tool's own namespace is the open follow-up, and whether this file still earns
+its place is part of it.
 
 This is a test fixture, not a second implementation of `ecrw.py` and not a
 substitute for running against the vendor driver. A green offline run here says
 the tool's own logic behaves on a fixture -- no EC is opened, no register is
-read back. `ecrw.py` is unchanged and stays the only thing that talks to
+read back. `ecrw.py` remains the only thing that talks to
 `\\.\ACPIDriver`.
 
 It carries every member of `ecrw.Ec` that a tool in this directory reaches,
@@ -21,9 +28,7 @@ with the real signatures. It does not carry `_ioctl`, `read_dword` or
 `read_dword_unaligned` -- the real class's own interior, which no tool here
 reaches -- and their absence is a decision rather than a gap; see `Ec` below
 for why adding them would be the wrong direction.
-`windows/tools/test_ecrw_fake.py` holds that rule and its residual, by `ast`,
-since `ecrw.py` cannot be imported off Windows and the two therefore cannot be
-compared at runtime.
+`windows/tools/test_ecrw_fake.py` holds that rule and its residual, by `ast`.
 """
 import sys
 import types
@@ -41,8 +46,10 @@ class EcError(RuntimeError):
 def block_runs(addrs):
     """`ecrw.py`'s, for the tools that import the name at module scope.
 
-    A copy, because the real module binds kernel32 at import and cannot be
-    loaded here at all. It is arithmetic over its argument and nothing else, so
+    A copy rather than the import, and the reason is the one above: the tool
+    under test takes this name off whatever module it finds, so a suite that
+    installed the real `ecrw` would have to reach the real one by path rather
+    than by the name. It is arithmetic over its argument and nothing else, so
     what the fixture needs from it is the shape of the answer rather than any
     behaviour -- and the real one, which decides the blocks an actual sweep
     issues, is what `test_ecrw.py` exercises, against the real watch sets.
