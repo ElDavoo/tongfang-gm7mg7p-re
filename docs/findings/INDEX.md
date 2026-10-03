@@ -242,6 +242,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-carry-name-coverage.md`](xdata-carry-name-coverage.md) — What happened to every hand name: the carry report gets a name-indexed half (issue #881)
 - [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md) — The xdata census re-derivation checklist: what a re-export moves, and what to do about it (issue #820)
 - [`xdata-census-self-test-gate.md`](xdata-census-self-test-gate.md) — `xdata_register_map.py --self-test` was switched off for a reason that had
+- [`xdata-census-shape-derived-set.md`](xdata-census-shape-derived-set.md) — The re-clustering flag set `census_shape` names, derived rather than kept (issue #882)
 - [`xdata-census-totals.md`](xdata-census-totals.md) — The census totals: 1,171 addresses / 14,819 references, and how to re-derive them (issue #557)
 - [`xdata-check-message-pin-sweep.md`](xdata-check-message-pin-sweep.md) — Six `check()` calls read a pin their message never names, and the sweep that found them (issue #1363)
 - [`xdata-classify-operator-tests.md`](xdata-classify-operator-tests.md) — `classify()`'s two operator tests: `&&` is not address-of, and `&=` reads what it writes
