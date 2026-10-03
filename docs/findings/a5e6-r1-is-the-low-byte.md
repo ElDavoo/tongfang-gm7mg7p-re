@@ -1,0 +1,245 @@
+# `0xA5E6` returns the quotient's low byte in R1, and a probe built on the opposite reading could not have agreed with a capture (issue #358)
+
+**2026-10-03, issue #358.** PR #200 read `mul_16_round_shift_subtract` (bank1
+`0xA5E6`) as leaving "the quotient's high byte in R1, its low byte in R2" and
+built `windows/tools/system_id_probe.py` on that reading, while correctly
+refusing to say which side of the resulting model/capture disagreement was
+wrong. **The reading was wrong.** R1 is the **low** byte. The probe, its
+offline checks, and the procedure written from it were all corrected; the
+error is left visible here rather than edited out of history, per `CLAUDE.md`.
+
+The correction is not a reading of the listing. `ec/tools/a5e6_quotient.py`
+parses `ec/decompiled/bank1/A5E6.asm`, executes the instruction stream on a
+small 8051 core, and compares the two result pairs the helper returns — the
+quotient in `R1:R2` and the remainder in `R3:R4` — against an independent
+Python model of shift-and-subtract written from the algorithm rather than from
+the listing. Two implementations, one machine; a disagreement is a red run.
+The other four registers are not compared because they are not results: the
+epilogue's own copies are what leave `R0`/`R5`/`R6`/`R7` equal to these four,
+so comparing the pairs compares everything the helper hands back.
+
+```console
+$ python3 ec/tools/a5e6_quotient.py
+listing ec/decompiled/bank1/A5E6.asm: 39 instructions
+two implementations over 423 input pairs: they agree on both result pairs
+```
+
+## Where the claim was carried, and what happened to each
+
+| file | what it said | verdict |
+|---|---|---|
+| `ec/annotations/ghidra-functions.csv`, `A5E6` row | "Which register holds which operand is not decoded further" | corrected here: the roles, the carry-into-R0 step and the epilogue mapping, cited to listing addresses |
+| `ec/annotations/ghidra-functions.csv`, `0xF3D7`, `0xF416`, `0xE8A4` rows | wrote the returned R1 to their byte without saying which byte of the quotient that was | corrected here, one clause each |
+| `ec/annotations/ghidra-functions.csv`, `0xF436` row | "If the quotient's high byte R2 is nonzero it overwrites the low byte R1 with 0xFF" | already correct — cited below as corroboration, left alone |
+| `ec/annotations/ghidra-functions.csv`, `CB80`, `CB1F` rows | "stores the low byte of the quotient" | already correct — corroboration, left alone |
+| `windows/tools/system_id_probe.py` | "on exit R1 is the quotient's high byte, R2 its low byte", and arithmetic that masked nothing | corrected in place; the old wording is quoted in this row and in the file's own docstring, which now says an earlier version read it the other way |
+| `windows/tools/test_system_id_probe.py` | pinned the swapped model in `test_what_is_stored_is_the_quotients_high_byte`, in `test_the_mask_keeps_the_060c_arm_inside_one_byte`'s `{0, 1}` bound and in `test_the_two_divisors_separate_only_where_the_byte_can_move` | rewritten; the `{0, 1}` bound was an artifact of the swap, and the replacements assert the property rather than a numeral |
+| `ec/tools/grade_0751_isolation.py`, `XDATA_NAME_NOTE[0x0448]` | "Read 0xBE as the branch the routine took and not as a voltage" — printed to an operator, so the claim reached a reader at run time and not only in the repository | the sentence is left as written and a dated correction is printed under it. A retraction that stopped at `registers.yaml` would leave the tool contradicting the file it cites |
+| `ec/tools/grade_0751_isolation.py`, the comment block above that table | "The 0xBE is in evidence rather than hypothetical … so a report that named only the quotient would be wrong" — the premise held, the conclusion drawn from it did not | corrected in place: the evidence is still evidence, and 19000-19099 is also a quotient |
+| `ec/tools/test_grade_0751_isolation.py`, `test_the_derived_bytes_say_which_branch_they_are_on` | pinned the retracted sentence on its own | still pins it, and now pins the correction under it too — a retraction that no assertion holds is one edit from being lost |
+| `docs/hardware-tests/system-id-0456-bit6-divisor.md` §1 and §5 | "write the quotient's high byte", and §5's "a run that comes back mostly `unexplained` is the model and the machine disagreeing in the open" | corrected in place, each with a dated correction paragraph inside the section. No new heading: `check_no_append_logs.py` fails a `##` that names a merge, and a `*(Superseded …)*` outside `docs/findings/` |
+| `ec/annotations/registers.yaml`, `XDATA_0448`, `XDATA_0449`, `SYSTEM_ID` | described the division without saying which byte was stored | corrected in place. **No `status:` moved** — nothing here is a live observation, and `present-untested` is what both entries already said |
+| `ec/annotations/registers.yaml`, `XDATA_044C` | "Busiest byte in the committed capture at 247 changes" | narrowed in place. The figure is right and the scope was not: `0x044C` is the busiest byte on the `0x0400`-`0x045F` page, and eighth in the capture as a whole. The page-scoped wording in `grade_0751_isolation.py` was already correct and is a separate sentence |
+| `ec/annotations/xdata-0400-045f.md` §9 | "`0x0448` is the battery voltage divided by 100, `0x0449` the battery current divided by 100" | **left deliberately.** Byte-ambiguous rather than false, and loose under *both* readings, so there is no sentence here the swap falsifies. Cited from this write-up instead of churning a long shared page |
+| `ec/decompiled/bank1/*.c`, `ec/ghidra/c-digests.csv` | plate comments generated from the CSV rows above | regenerated, never hand-edited |
+
+## The derivation
+
+`ec/decompiled/bank1/A5E6.asm`, sixteen rounds of:
+
+- **`0xA5EE`-`0xA5F9`** shift `R1`, `R2`, `R6`, `R7` in that order with the
+  carry chained, so the dividend is `R7:R6:R2:R1` and **`R1` is the low
+  byte**. The rule that fixes this: in a carry-chained shift, whichever
+  register is shifted first is the low one.
+- **`0xA5FA`-`0xA608`** subtract `R3:R4` from `R6:R7` into `DPH:DPL`; `0xA603`
+  `cpl CY` and `0xA604` `jnc` keep the difference only when the subtract did
+  not borrow, so the compare's outcome is still in `CY` at `0xA60A`.
+- **`0xA60A`-`0xA60F`** shift that bit into **`R0`**, then `R0`'s carry-out into
+  `R5`. `R0` is shifted first, so **`R0` is the low accumulator**.
+- **`0xA613`-`0xA61C`** copy `R5`→`R2`, `R0`→`R1`, `R7`→`R4`, `R6`→`R3`.
+
+**So `R1` is the low byte and `R2` the high one, and `R3:R4` is the
+remainder.** The generated `A5E6.c` already agreed in its last four
+statements; only its plate comment repeated the gap.
+
+Three committed rows corroborate the direction independently of the shift
+order, and each is a fact about a *caller*, so the correction is not resting
+on one reading of one function:
+
+- `0xF436` (`halve_sum_into_044c`) reads `R2` at `0xF44B`, and on it being
+  nonzero overwrites `R1` with `0xFF` at `0xF44E`; `0xF455` adds `R1` into
+  `0x044C`, so `R1` is the byte that reaches the store either way and only its
+  meaning is in question. On the corrected reading `R1` is the quotient's low
+  byte and `R2` its high byte, so the shape is "store `min(quotient, 0xFF)`" —
+  a **clamp**, and one that fires exactly when the quotient left one byte.
+  Swapped, `R1` is the high byte and the same three instructions test the *low*
+  byte for nonzero: a quotient of `0x000E` is stored as `0xFF` and one of
+  `0x0100` as `0x01`, which overflows nothing and is not a clamp. That is the
+  one-way argument, and `test_a5e6_quotient.py`'s clamp test runs both readings
+  over the same registers to hold it. `0xCC2D` has the identical shape at
+  `0xCC6C`.
+- `CB80` says it stores "the low byte of the quotient", over `mov A, R1` at
+  `0xCBA5`.
+- `CB1F` says "from the low byte q of the quotient", over `mov A, R1`.
+
+`0xD37F` corroborates from the operand-order side: at `0xD40C` and `0xD455`
+it does `mov 0x04,0x02` / `mov 0x03,0x01` — `R4`←`R2`, `R3`←`R1` — the
+epilogue's own low-word-first order, passing the whole 16-bit result on.
+
+## The two conventions, and why the swap was easy
+
+The firmware uses **both** register conventions, and they belong to different
+helper families. The rule is common — whichever register a helper touches
+first is its low byte — and the answers differ:
+
+| helper | first touched | so |
+|---|---|---|
+| `0x8844` `ror16` | `R2` | `R2` is low, `R1` high |
+| `0x8854` `add`, `0x885B` `subb` | `R1` (combined with no carry-in) | `R1` is low |
+| `0xA5E6` | `R1` (shifted first) | **`R1` is low** |
+
+`system_id_probe.py` applied the `0x8844` family's reading to the `0xA5E6`
+family. **This is the one piece of context a future reader needs**: the rule
+does not transfer between helpers even though it is the same rule, and
+`a5e6_quotient.py`'s default mode prints the derived order for each of the
+four so the next helper is a lookup rather than a guess.
+
+## The capture
+
+The capture is the discriminator, and it was already committed.
+`evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv` has `0x0449`
+across `0x22`-`0x5A`.
+
+```console
+$ python3 ec/tools/a5e6_quotient.py --capture \
+    evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv
+  pairs nearest-in-time: 238; distinct 0x0449 values observed: 46
+  0x0449 spans 0x22-0x5a
+  divisor 0x22 high-byte reading (R1): 1 distinct byte(s) reachable, 0 of them in the observed set
+  divisor 0x22 low-byte reading (R1): 47 distinct byte(s) reachable, 43 of them in the observed set
+  divisor 0x44 high-byte reading (R1): 1 distinct byte(s) reachable, 0 of them in the observed set
+  divisor 0x44 low-byte reading (R1): 26 distinct byte(s) reachable, 8 of them in the observed set
+```
+
+The qualitative claim reproduces decisively: **under the high-byte model the
+reachable set is `{0x00}`, and not one of the 46 observed `0x0449` values is
+in it.** That is what the procedure reported as "all 237 of its gradeable
+values in `unexplained`", and it was the model, not the machine.
+
+Three calibrations on that measurement, because the numbers invite more than
+they carry:
+
+- **Reachability is not a match.** Pairing the change log nearest-in-time does
+  not align two bytes that were not written at the same instant. What this
+  establishes is that the observed values are *possible* under the corrected
+  reading from the capture's own inputs, and that they were not possible at
+  all under the old one. It does not establish that any particular sample was
+  produced by either arm, and R7's origin is still unestablished.
+- **The recipe is pinned, the issue's counts are not reproduced and were not
+  targeted.** The issue quoted 25 and 21 distinct bytes from a 30-pair recipe;
+  the tool uses every `0x0449` row in the capture and prints what it derives.
+  Nothing here was written to hit a figure from the issue.
+- **The divisors do not *stop* overlapping.** Over the masked input space
+  (`lo` 0-255, `hi` 0-3) a handful of pairs give the same byte under both, and
+  all of them are the degenerate near-zero region where both quotients are
+  below the divisor. The honest claim is *near*-non-overlap, which is what
+  makes the probe's per-sample `implied` column discriminating rather than a
+  foregone conclusion. `test_system_id_probe.py` asserts the property, not the
+  numeral.
+
+## `0x044C` as a second discriminator
+
+`0x044C` is an independent check on the same question, and it agrees. It is
+the busiest byte on the `0x0400`-`0x045F` page in the capture — 247 changes,
+spanning `0x44`-`0x93`, ahead of `0x0449`'s 238 — and `halve_sum_into_044c`
+computes it from `0x0449 × 0x0448`, with `0xA5E6`'s quotient in between. It
+is **not** the busiest byte in the capture as a whole: counting the `new`
+column per address over the file's 4 960 rows, `0x0566`, `0x06CF`, `0x06D6`,
+`0x06E4`, `0x06F8` and `0x06F9` each change 260 times and `0x060C` 256, so
+`0x044C` ranks eighth.
+
+An earlier pass of this write-up recorded it as a *rejected* discriminator,
+on the grounds that `0x0449 × 190 / 100` has a low byte spanning
+`0x40`-`0xAB` under **either** reading. **That was wrong, and it reasoned
+about the wrong quantity.** The product's low byte is not what reaches
+`0x044C`: `0xF436` clamps between the divide and the store, and the clamp is
+where the two readings part.
+
+```console
+$ python3 ec/tools/a5e6_quotient.py --capture \
+    evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv
+  the input 0x0448 has no rows in this capture, so each value below is a
+  separate evaluation conditional on it rather than one reading of the file
+  0x0448 = 0xbe  high-byte reading (R1): 1 of 238 simulated writes inside
+    the observed set; simulated spans 0x80-0xc9
+  0x0448 = 0xbe  low-byte reading (R1): 230 of 238 simulated writes inside
+    the observed set; simulated spans 0x34-0x93
+  0x0448 = 0xa0  high-byte reading (R1): 1 of 238 simulated writes inside
+    the observed set; simulated spans 0x80-0xc9
+  0x0448 = 0xa0  low-byte reading (R1): 206 of 238 simulated writes inside
+    the observed set; simulated spans 0x2c-0x86
+```
+
+The clamp is `0xF44B mov A, R2`, `0xF44C jz 0xf450`, `0xF44E mov R1, #0xff`,
+and R1 is what the store folds in either way — `0xF455 add A, R1` — so what
+the clamp decides is *what R1 means*, not whether it is stored. Corrected, R2
+is the quotient's high byte and is `0x00` across this capture's range, so the
+clamp never fires and R1 keeps the quotient's low byte. Swapped, R2 is the
+low byte and is nonzero on every one of the capture's `0x0449` values, so the
+clamp fires on every pass, R1 is `0xFF`, and `0x044C` is driven up toward
+`0xFF` — a value the capture never shows. Both multiplicands above behave the
+same way, so the result is not an artifact of the byte `0xBE` happens to be.
+
+Those lines are executed bytes, not arithmetic: the tool runs the committed
+`F436.asm` — the `mul AB`, the `lcall 0xa5e6` into the committed `A5E6.asm`,
+the clamp and the halving — on the same core everything else here uses, so
+the clamp is a fact about the listing rather than about a model of it. That
+is the whole correction: the earlier pass reasoned about the quotient, and the
+quotient is not what reaches this byte.
+
+The caveat that is real, and that the quoted line above carries: this
+capture has no `0x0448`, so `0xBE` — the constant `0xF416`'s second arm
+stores — is an **input** here rather than a reading of the file, and each of
+the four lines is a separate evaluation conditional on it.
+
+## `0x0449` has no second writer
+
+The issue asked that this be closed rather than left as a caveat. Both
+writers are inside `0xF3D7` (`0xF3EB`/`0xF3EE` and `0xF411`/`0xF414`), and
+the only other `0x0449` DPTR loads in the tree are reads (`0xF436`, and
+bank0 `BE15`). `a5e6_quotient.py --callers` reports every `lcall 0xA5E6` site
+in `ec/annotations/bank-call-targets.csv` and confirms each against the
+firmware image rather than against the census's own target column. **A second
+writer is not available as an explanation** — over the exported listings,
+which is what that scan covers. `0xE715` is the known gap in that coverage:
+it is decoded and unlisted below, so a `0x0449` writer there would not have
+been exported either. The closure is over the listings this repository has,
+not over the image.
+
+## What this does not claim
+
+- **No live evidence.** Nothing was read back, no register was exercised, and
+  no EC or Windows machine was reachable: this is a static correction over
+  committed bytes. The procedure stays `not run` and issue #174 stays the run.
+- **No `status:` moved.** `XDATA_0448`, `XDATA_0449` and `SYSTEM_ID` remain
+  `present-untested`, which is what they already said.
+- **Not #221.** Whether the byte counts *are* mA/100 is a separate open
+  question and this does not answer it. Under the corrected reading `0x0449` ∈
+  `0x22`-`0x5A` is 3 400-9 000 mA *if* `0x0434`/`0x0435` is mA — consistent
+  with #221 and settling nothing about it.
+- **R7's origin is still unknown**, and so is which arm produced any given
+  capture sample. The correction makes the `implied` column discriminating so
+  a future live run *can* answer the bit-6 question; it does not answer it.
+- **`0xE715` has no listing.** The census names it as an `lcall 0xA5E6` and the
+  firmware image holds it, but it sits in an unexported gap between `E6CB` and
+  `E722`. Seeding a function for it would need `--mode rebuild-project`,
+  which writes the committed Ghidra database; the tool reaches it from the
+  image bytes instead. It is *decoded and unlisted*, which is not the same as
+  missing — and the distinction is `CLAUDE.md`'s, not a hedge.
+
+## What is left open
+
+- **#221**, what the byte counts. Adjacent, not replaced by this.
+- **R7's origin**, and the branch selector `0xF3D7` branches on.
+- **Which arm a given sample took** — the open question for a live run.
+- **`0xE715`'s enclosing function**, which a rebuild-project pass would seed.

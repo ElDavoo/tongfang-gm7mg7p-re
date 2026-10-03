@@ -1,0 +1,11 @@
+region,file_offset,census_state,census_bucket,census_count,census_refs
+bank0,0x09DA4,mapped,write,1,bank0/9D9B.c:41
+bank0,0x09E8D,mapped,write,1,bank0/9D9B.c:91
+bank0,0x09FA7,mapped,write,1,bank0/9D9B.c:163
+bank0,0x0BBF7,mapped,read,1,bank0/BBF2.c:19
+bank0,0x0D10F,mapped,write,1,bank0/D091.c:73
+bank0,0x0D137,mapped,write,1,bank0/D091.c:78
+bank0,0x0D140,mapped,write,1,bank0/D091.c:81
+bank0,0x0D2E6,mapped,read,1,bank0/D2DA.c:19
+bank0,0x0D2FB,mapped,read,1,bank0/D2EF.c:23
+bank0,0x0D310,mapped,read,1,bank0/D304.c:22

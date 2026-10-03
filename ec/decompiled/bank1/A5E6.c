@@ -4,11 +4,17 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Clears R7 and R6, sets B to 0x10, then runs 16 rounds. Each round shifts R1, R2, R6, R7 and then
-   R0, R5 left with carry cleared, and compares R6:R7 against R3:R4, replacing R6:R7 with the
-   difference whenever the subtract produced no borrow. On exit it copies R5 to R2, R0 to R1, R7 to
-   R4 and R6 to R3. Which register holds which operand is not decoded further, and the .c drops the
-   conditional subtract.
+/* Divides the 16-bit little-endian pair R1:R2 by the 16-bit pair R3:R4, with R1 and R3 the low
+   bytes: sixteen rounds of shift-and-subtract, R0 and R5 accumulating the quotient and R6:R7
+   holding the working remainder. Each round shifts R1, R2, R6 then R7 left with the carry chained,
+   so R7:R6:R2:R1 is the dividend with R1 least significant, and the register shifted first is the
+   low one. The compare at 0xA5FA subtracts R3:R4 from R6:R7 into DPH:DPL and leaves the outcome in
+   CY, which 0xA60A shifts into R0 -- the low accumulator, R5 taking its carry-out at 0xA60D. The
+   epilogue copies R5 to R2, R0 to R1, R7 to R4 and R6 to R3, so on exit R1 is the quotient's LOW
+   byte, R2 its high byte, and R3:R4 the remainder. Two callers corroborate the direction: 0xF436
+   clamps by overwriting R1 with 0xFF when R2 is nonzero, which is a clamp on the byte that reaches
+   the store, and 0xCB80 takes the low byte straight out of R1. R0 and R5 are fully shifted out over
+   the sixteen rounds, so their entry values do not affect the result.
    type: math
    evidence: ec/decompiled/bank1/A5E6.asm; ec/decompiled/bank1/A5E6.c
    basis: hand-decoded

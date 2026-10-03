@@ -24,25 +24,32 @@ import unittest
 from unittest.mock import patch
 
 # One dict per sweep, in run order. Each is built so that a specific arm
-# reproduces its 0x0449:
+# reproduces its 0x0449, and the quotient behind each is worked out in the
+# comment so a reader can check a fixture without running anything:
 #
-#   0  current  0xC800 mA / 100 = 0x0200, high byte 0x02
-#   1  060c     masked pair 0x03F0 * 10 = 10224; /34 -> 300 (0x01), /68 -> 150 (0x00),
-#               so it places under 0x22 alone -- and 0x0456 bit 6 is clear here,
+#   0  current  0x07F8 = 2040 mA, the value BAT_CURRENT_MA was established
+#               live at; / 100 = 20 = 0x0014, low byte 0x14. The high byte is
+#               0x00, so this fixture is what a high-byte reading cannot
+#               reproduce.
+#   1  060c     masked pair 0x03F0 * 10 = 10080; / 0x22 = 296 = 0x0128 (low
+#               byte 0x28) and / 0x44 = 148 = 0x0094 (low byte 0x94), so it
+#               places under 0x22 alone -- and 0x0456 bit 6 is clear here,
 #               which is the contradiction the implied divisor exists to catch
 #   2  060c     an all-zero pair places under both divisors; bit 6 is set here
-#   3  neither  one above what the 0x22 arm predicts, and the current arm
-#               lands on 0x01 rather than 0x02 -- the near-miss that must not
-#               be snapped to the nearer arm
-#   4  both     the current arm and both divisors produce 0x00
+#   3  neither  one above the 0x22 arm's 0x28, and the current arm lands on
+#               0x00 -- the near-miss that must not be snapped to the nearer arm
+#   4  both     an all-zero current reading and an all-zero pair both produce
+#               0x00. Under the swapped reading this bucket was trivially
+#               reachable at every input, which is why the fixture below it is
+#               built rather than searched for; see BothArmsFixtureTests.
 SWEEPS = [
-    {0x0456: 0x40, 0x060C: 0x00, 0x060D: 0x00, 0x0449: 0x02,
-     0x0434: 0x00, 0x0435: 0xC8},
-    {0x0456: 0x00, 0x060C: 0xF0, 0x060D: 0x83, 0x0449: 0x01,
-     0x0434: 0x00, 0x0435: 0xC8},
+    {0x0456: 0x40, 0x060C: 0x00, 0x060D: 0x00, 0x0449: 0x14,
+     0x0434: 0xF8, 0x0435: 0x07},
+    {0x0456: 0x00, 0x060C: 0xF0, 0x060D: 0x03, 0x0449: 0x28,
+     0x0434: 0x00, 0x0435: 0x07},
     {0x0456: 0x40, 0x060C: 0x00, 0x060D: 0x00, 0x0449: 0x00,
-     0x0434: 0x00, 0x0435: 0xC8},
-    {0x0456: 0x80, 0x060C: 0xF0, 0x060D: 0x83, 0x0449: 0x02,
+     0x0434: 0x00, 0x0435: 0x07},
+    {0x0456: 0x80, 0x060C: 0xF0, 0x060D: 0x03, 0x0449: 0x29,
      0x0434: 0x00, 0x0435: 0x64},
     {0x0456: 0x40, 0x060C: 0x00, 0x060D: 0x00, 0x0449: 0x00,
      0x0434: 0x00, 0x0435: 0x00},
@@ -155,16 +162,30 @@ class ArithmeticTests(unittest.TestCase):
 
     def test_the_pair_is_little_endian_with_the_lower_address_in_the_low_byte(self):
         # 0x8886 puts [DPTR] in R1 and [DPTR+1] in R2, so 0x0434 is the low
-        # byte. Read the pair the other way round, 0xC800 becomes 0x00C8 and
-        # the stored byte collapses to zero.
-        self.assertEqual(probe.arm_current(0x00 | 0xC8 << 8), 0x02)
-        self.assertEqual(probe.arm_current(0xC8 | 0x00 << 8), 0x00)
+        # byte. 2040 mA is 0x07F8, and read the other way round it would be
+        # 0xF807 -- a different current entirely, and one that divides to a
+        # different stored byte.
+        self.assertEqual(probe.arm_current(0xF8 | 0x07 << 8), 0x14)
+        self.assertNotEqual(probe.arm_current(0x07 | 0xF8 << 8), 0x14)
 
-    def test_what_is_stored_is_the_quotients_high_byte(self):
-        # 0xA5E6 leaves the quotient in R1:R2 and 0xF3D7 stores R1, so 512
-        # reads back as 0x02 and 511 -- the same top byte, one short -- as 0x01.
-        self.assertEqual(probe.arm_current(51200), 0x02)
-        self.assertEqual(probe.arm_current(51199), 0x01)
+    def test_what_is_stored_is_the_quotients_low_byte(self):
+        # 0xA5E6 returns the quotient low byte in R1 and 0xF3D7 stores R1, so
+        # the stored byte is the low one. 2040 mA -- the value BAT_CURRENT_MA
+        # was established live at -- divides to 20, and 20 is 0x14 rather than
+        # the 0x00 a high-byte reading gives it. ec/tools/a5e6_quotient.py
+        # establishes the direction by executing the listing.
+        self.assertEqual(probe.arm_current(2040), 0x14)
+
+    def test_the_stored_byte_is_the_low_one_wherever_the_bytes_differ(self):
+        # The property behind the case above, over inputs whose quotient has
+        # two different bytes: the stored byte is the low one. A high-byte
+        # reading disagrees on every one of these, so the case cannot pass by
+        # accident on an input where the two bytes happen to be equal.
+        for current_ma in (25600, 51200, 65535, 100000):
+            with self.subTest(current_ma=current_ma):
+                full = current_ma // probe.CURRENT_DIV
+                self.assertEqual(probe.arm_current(current_ma), full & 0xFF)
+                self.assertNotEqual(probe.arm_current(current_ma), full >> 8)
 
     def test_the_high_byte_of_the_060c_pair_is_masked_to_0x03(self):
         # F3FB `anl 0x02,#0x3`, a direct address, so it is R2 -- the high byte.
@@ -173,27 +194,51 @@ class ArithmeticTests(unittest.TestCase):
         self.assertEqual(probe.arm_060c(0xF0, 0x04, 0x22),
                          probe.arm_060c(0xF0, 0x00, 0x22))
 
-    def test_the_mask_keeps_the_060c_arm_inside_one_byte(self):
-        # The point of the mask, stated as a bound: with it, the largest
-        # product is 0x03F0 * 10 and the stored byte never leaves {0, 1}. Drop
-        # it and 0xFFFF would reach 0x01A0 * 10, which stores 0x07 -- so this
-        # is the assertion that fails if the `hi &= 0x03` ever goes missing.
+    def test_the_mask_bounds_the_060c_dividend_the_way_the_listing_does(self):
+        # The point of the mask, stated as a bound. F3FB's `anl 0x02,#0x3`
+        # caps the high byte at 3, so the product cannot exceed 0x03FF * 10
+        # and the stored byte is bounded by that quotient's low byte. Drop the
+        # mask and an unmasked high byte reaches 0xFFFF * 10, whose quotient
+        # mod 256 differs -- which is what this case is here to notice. The
+        # bound was {0, 1} under the swapped reading and is not a bound now,
+        # because the low byte of a quotient this size is not confined to two
+        # values; asserting a numeral here rather than the property is what
+        # made the old case wrong.
         for lo in (0x00, 0x7F, 0xF0, 0xFF):
             for hi in range(0x100):
-                self.assertIn(probe.arm_060c(lo, hi, 0x22), (0x00, 0x01))
+                masked = probe.arm_060c(lo, hi, 0x22)
+                # Whatever the input, the result is the low byte of a
+                # division, so it is always a byte.
+                self.assertTrue(0x00 <= masked <= 0xFF)
+        # And with the high byte pinned at its mask ceiling the quotient is
+        # the largest the arm can produce.
+        self.assertEqual(probe.arm_060c(0xFF, 0xFF, 0x22),
+                         probe.arm_060c(0xFF, 0x03, 0x22))
+        self.assertNotEqual(probe.arm_060c(0xFF, 0x03, 0x22), 0x00)
 
-    def test_the_two_divisors_separate_only_where_the_byte_can_move(self):
-        # The masked pair caps the product at 0x27FF, and 0x27FF / 0x44 is 150
-        # -- never 0x100. So under 0x44 the stored byte is always 0x00, and
-        # every sample that places under 0x44 places under 0x22 too. That is
-        # why the implied divisor is reported next to bit 6 rather than
-        # folded into one pass/fail: the disagreement is only ever visible in
-        # the 0x22 direction, and only per sample.
-        self.assertEqual(probe.arm_060c(0xF0, 0x03, 0x22), 0x01)
-        self.assertEqual(probe.arm_060c(0xF0, 0x03, 0x44), 0x00)
-        for lo in (0x00, 0x7F, 0xF0, 0xFF):
-            for hi in (0x00, 0x01, 0x02, 0x03):
-                self.assertEqual(probe.arm_060c(lo, hi, 0x44), 0x00)
+    def test_the_two_divisors_separate_wherever_the_byte_can_move(self):
+        # The corrected model makes the implied divisor discriminating, which
+        # is the point of reporting it per sample rather than folding it into
+        # one pass/fail. Under the swapped reading the two divisors returned
+        # 0x00 for almost every input and could not be told apart at all.
+        # Asserted as near-non-overlap over the masked input space rather than
+        # as a count: a handful of near-zero inputs still agree, and that is
+        # a property of the arithmetic rather than something to pin.
+        self.assertEqual(probe.arm_060c(0xF0, 0x03, 0x22), 0x28)
+        self.assertEqual(probe.arm_060c(0xF0, 0x03, 0x44), 0x94)
+        agree = [(lo, hi)
+                 for lo in range(0x100)
+                 for hi in range(0x04)
+                 if probe.arm_060c(lo, hi, 0x22) == probe.arm_060c(lo, hi, 0x44)]
+        self.assertTrue(agree, "the divisors never agree at all")
+        # Where they do agree it is the degenerate near-zero region, where
+        # both quotients are below the divisor and the stored byte is 0.
+        for lo, hi in agree:
+            self.assertEqual(probe.arm_060c(lo, hi, 0x22), 0x00)
+        # And they are told apart across the bulk of the space.
+        differ = sum(1 for lo in range(0x100) for hi in range(0x04)
+                     if probe.arm_060c(lo, hi, 0x22) != probe.arm_060c(lo, hi, 0x44))
+        self.assertGreater(differ, 0x100 * 0x04 // 2)
 
     def test_bit6_picks_the_divisor_the_way_f3c9_does(self):
         self.assertEqual(probe.divisor_from_bit6(0x40), 0x22)
@@ -221,18 +266,64 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual(probe.classify(SWEEPS[3]), ("unexplained", []))
 
     def test_a_near_miss_is_not_snapped_to_the_nearer_arm(self):
-        # Sweep 3 sits one above the 0x22 arm's 0x01 and one above the current
-        # arm's 0x01. Picking the closer of the two would be the "closest fit"
-        # the procedure rules out, and it would manufacture a match.
+        # Sweep 3 sits one above what the 0x22 arm predicts (0x28 -> 0x29),
+        # and the current arm lands at 0x00, nowhere near it. Snapping to the
+        # closer of the two would be the "closest fit" the procedure rules
+        # out, and it would manufacture a match out of a sample that neither
+        # arm reproduces.
         snap = SWEEPS[3]
         self.assertEqual(probe.arm_060c(snap[0x060C], snap[0x060D], 0x22),
                          snap[0x0449] - 1)
-        self.assertEqual(probe.arm_current(snap[0x0434] | snap[0x0435] << 8),
-                         snap[0x0449] - 1)
+        self.assertNotEqual(probe.arm_current(snap[0x0434] | snap[0x0435] << 8),
+                            snap[0x0449] - 1)
         self.assertEqual(probe.classify(snap)[0], "unexplained")
 
     def test_both_arms_reproducing_the_same_byte_is_its_own_bucket(self):
         self.assertEqual(probe.classify(SWEEPS[4]), ("both-arms", [0x22, 0x44]))
+
+
+class BothArmsFixtureTests(unittest.TestCase):
+    """A genuine both-arms collision, built rather than found in SWEEPS.
+
+    Under the swapped reading both arms returned the same byte for almost
+    every input, so the fixture table collided by construction and a sweep
+    could be found for it. Under the corrected reading a real collision is
+    rare -- both arms return the low byte of a small quotient, so they agree
+    only near zero -- and the table above cannot be guaranteed to contain one.
+    It does, on an all-zero reading, but that is the degenerate case, and a
+    test that only ever exercises the degenerate case is not evidence the
+    bucket works.
+
+    So this builds a collision away from zero and checks the label directly.
+    Building the snapshot here rather than widening the fixture table is the
+    point: it keeps SWEEPS a set of *sweeps* rather than a search space, and
+    the alternative -- weakening an arm until the two collide -- would
+    manufacture the collision out of the thing under test.
+    """
+
+    def test_a_nonzero_collision_is_still_labelled_both_arms(self):
+        found = None
+        for current_ma in range(0x0100, 0x2000):
+            byte = probe.arm_current(current_ma)
+            for lo, hi in ((0xF0, 0x03), (0x10, 0x00), (0x64, 0x01)):
+                if byte and probe.arm_060c(lo, hi, 0x22) == byte:
+                    found = (current_ma, lo, hi, byte)
+                    break
+            if found:
+                break
+        self.assertIsNotNone(found,
+                             "no non-zero both-arms collision exists to test")
+        current_ma, lo, hi, byte = found
+        snap = {0x0456: 0x40, 0x060C: lo, 0x060D: hi, 0x0449: byte,
+                0x0434: current_ma & 0xFF, 0x0435: (current_ma >> 8) & 0xFF}
+        self.assertNotEqual(byte, 0x00)
+        label, implied = probe.classify(snap)
+        # `both-arms` is about the two *current/060c* arms agreeing, not about
+        # both divisors doing so: the implied list carries whichever divisors
+        # also reproduce the byte, and near zero that is not always both.
+        self.assertEqual(label, "both-arms")
+        self.assertIn(probe.DIV_BIT6_SET, implied)
+        self.assertTrue(set(implied) <= {probe.DIV_BIT6_SET, probe.DIV_BIT6_CLEAR})
 
 
 class RunTests(unittest.TestCase):
@@ -279,8 +370,8 @@ class RunTests(unittest.TestCase):
         line = [l for l in out.splitlines() if "unexplained" in l][0]
         self.assertIn("0x0456=0x80", line)
         self.assertIn("0x060C=0xF0", line)
-        self.assertIn("0x060D=0x83", line)
-        self.assertIn("0x0449=0x02", line)
+        self.assertIn("0x060D=0x03", line)
+        self.assertIn("0x0449=0x29", line)
         self.assertIn("0x0434=0x00", line)
         self.assertIn("0x0435=0x64", line)
 
