@@ -1,0 +1,59 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte and timestamp below was written by hand. See ../README.md.
+# Shape: 0751-isolation-run-3blocks/ byte for byte through block 3, plus the
+# block §3's own remedy asks for. Block 2 came out void, and both §3 and the
+# grader's own VOID_BLOCK_NOTE say to redo it -- so this file carries the redo,
+# appended into the same three CSVs the way §3 takes them, rather than onto a
+# second set with its own <date>.
+# WHAT THIS SET IS ABOUT IS THE REPEAT, NOT THE VOID. The re-done block
+# carries block 2's own three labels, so 0x00 now names two blocks: 2 of 4,
+# which is void, and 4 of 4, which is not. The value under test is what --block
+# takes, what a --dump pair is filed under and what the per-block lines are
+# named by, so on this input it no longer identifies a block.
+# The re-done block's marks are block 2's, at 12:30-12:31 rather than
+# 12:05-12:08 and clear of block 3's 12:15-12:16 rounds. Its two 0x0751 rows
+# are the ones its write and its restore arms carry; the no-op arm carries
+# none, as in every other block here, and nothing is claimed about what the
+# register held between block 3 and this one -- that is the same relation
+# block 1's restore and block 2's no-op already stand in above. The duty byte
+# drifts throughout and nothing §4.1-§4.3 names moves at all, as in
+# ../../0751-isolation-run/; 0x0751 is not one of §4.1-§4.3's bytes, so the
+# two rows above do not move a watched group.
+# Not a prediction that a re-run produces this, nor that a block comes out
+# void, nor that a value is ever written twice in a day.
+ts,addr,old,new
+2026-01-01T12:00:04.000+01:00,0x0796,0x2F,0x30
+2026-01-01T12:00:10.000+01:00,MARK,,no-op wrote 0x0751=0x10
+2026-01-01T12:00:12.400+01:00,0x075B,0x64,0x66
+2026-01-01T12:00:25.000+01:00,0x075B,0x66,0x67
+2026-01-01T12:00:40.000+01:00,MARK,,wrote 0x0751=0xA0
+2026-01-01T12:00:40.600+01:00,0x0751,0x10,0xA0
+2026-01-01T12:00:42.750+01:00,0x075B,0x67,0x69
+2026-01-01T12:00:55.000+01:00,0x075C,0x50,0x51
+2026-01-01T12:01:10.000+01:00,MARK,,restored 0x0751=0x10
+2026-01-01T12:01:10.500+01:00,0x0751,0xA0,0x10
+2026-01-01T12:01:12.000+01:00,0x075B,0x69,0x6A
+2026-01-01T12:05:10.000+01:00,MARK,,no-op wrote 0x0751=0xA0
+2026-01-01T12:05:14.000+01:00,0x075B,0x6A,0x6C
+2026-01-01T12:08:25.000+01:00,0x075B,0x6C,0x6D
+2026-01-01T12:08:30.000+01:00,MARK,,wrote 0x0751=0x00
+2026-01-01T12:08:30.600+01:00,0x0751,0xA0,0x00
+2026-01-01T12:08:35.000+01:00,0x075B,0x6D,0x6E
+2026-01-01T12:08:50.000+01:00,0x075C,0x51,0x52
+2026-01-01T12:15:10.000+01:00,MARK,,no-op wrote 0x0751=0x00
+2026-01-01T12:15:13.000+01:00,0x075B,0x6E,0x70
+2026-01-01T12:15:40.000+01:00,MARK,,wrote 0x0751=0x10
+2026-01-01T12:15:40.500+01:00,0x0751,0x00,0x10
+2026-01-01T12:15:45.000+01:00,0x075B,0x70,0x72
+2026-01-01T12:16:10.000+01:00,MARK,,restored 0x0751=0x00
+2026-01-01T12:16:10.400+01:00,0x0751,0x10,0x00
+2026-01-01T12:16:14.000+01:00,0x075B,0x72,0x73
+2026-01-01T12:30:00.000+01:00,MARK,,no-op wrote 0x0751=0xA0
+2026-01-01T12:30:03.000+01:00,0x075B,0x73,0x75
+2026-01-01T12:30:30.000+01:00,MARK,,wrote 0x0751=0x00
+2026-01-01T12:30:30.600+01:00,0x0751,0xA0,0x00
+2026-01-01T12:30:34.000+01:00,0x075B,0x75,0x77
+2026-01-01T12:30:55.000+01:00,0x075C,0x52,0x53
+2026-01-01T12:31:00.000+01:00,MARK,,restored 0x0751=0xA0
+2026-01-01T12:31:00.400+01:00,0x0751,0x00,0xA0
+2026-01-01T12:31:04.000+01:00,0x075B,0x77,0x79

@@ -34,6 +34,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-readback-before-dump-holds-written-value.md`](0751-readback-before-dump-holds-written-value.md) — §4.6 said "still" without reading the dump that would support it (issue #1401)
 - [`0751-readback-writer-names.md`](0751-readback-writer-names.md) — §4.6's readback names the writer the two bytes rule out, and what is left
 - [`0751-readback-written-value-notice.md`](0751-readback-written-value-notice.md) — §4.6's second precondition, stated when nothing names the value that was written (issue #387)
+- [`0751-redone-block-value.md`](0751-redone-block-value.md) — A value under test stops naming a block when the same value is written twice in a day (issue #721)
 - [`0751-refused-pair-as-readback.md`](0751-refused-pair-as-readback.md) — §4.6 named a pair the whole-block section had refused, and the hint ended in a pre-write dump (issue #386)
 - [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md) — §3's three unlabelled mark rounds were a fourth class of mark, and the block model had no place for them (issue #472)
 - [`0751-strict-reader-two-moments.md`](0751-strict-reader-two-moments.md) — The strict reader described two moments as one (issue #786)
@@ -45,6 +46,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`7b14-07c9-token.md`](7b14-07c9-token.md) — The 0x07C9 token in `pd/7B14.c` is a variable row on the *callee*, and the re-export is a fixed point
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
+- [`addc-dph-residual-six.md`](addc-dph-residual-six.md) — All six residual `addc A,#imm ; mov DPH,A` sites close: four build page `0x0D`/`0x0E`, two build page `0x2A` and read CODE (issue #519)
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
 - [`bank-map-and-image-census.md`](bank-map-and-image-census.md) — The bank map, and a second image in the dump
@@ -133,6 +135,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`history-checkout-run-contract.md`](history-checkout-run-contract.md) — The checkout-depth checker's exit code is its product, and the run crashed on the trees `--repo` exists for
 - [`history-checkout-site-identity.md`](history-checkout-site-identity.md) — The four corrected sites are held by value, and the check is shown going red
 - [`history-checkouts-gate-wiring.md`](history-checkouts-gate-wiring.md) — The checkout-depth check is prepared for the cheap gate, in a patch that had to fold (issue #1033)
+- [`ifr-2718-reachability.md`](ifr-2718-reachability.md) — Question `0xE9F` is `DynamicPageCount`, and it is a sentinel no page count takes — so the two routes to Intel's Advanced page in the IFR are a self-reference and a TSE choice
 - [`ifr-charge-and-battery-options.md`](ifr-charge-and-battery-options.md) — The charge and battery questions in the Setup IFR, and what hides them
 - [`landed-gate-patch-state.md`](landed-gate-patch-state.md) — A landed gate patch is not a stale one: the four states, and the two-step landing (issue #772)
 - [`mmrd-unaligned-escape.md`](mmrd-unaligned-escape.md) — The unaligned `MMRD` escape, and the two sources that would have to say it is safe (issue #439)
@@ -228,6 +231,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-0860-census-sites-relined.md`](xdata-0860-census-sites-relined.md) — The four `0x0860` census citations move; the counts do not (issue #752)
 - [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md) — The `XDATA_0860` note's six live pointers, and what holds them (issue #870)
 - [`xdata-086c-cluster-ruling.md`](xdata-086c-cluster-ruling.md) — `0x086C` enters `registers.yaml`, and the clustering recorded something real (issue #333)
+- [`xdata-1663-1667-1668.md`](xdata-1663-1667-1668.md) — `0x1663`, `0x1667` and `0x1668`: the rest of the `0x1663`-`0x1668` run, and a third accessor the census cannot see (issue #635)
 - [`xdata-4-2-threshold-sweep-rederivation.md`](xdata-4-2-threshold-sweep-rederivation.md) — §4.2's threshold sweep, re-run against the committed census (issue #581)
 - [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md) — §4.4's identity figures, re-run against the committed census (issue #582)
 - [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md) — §6a's per-direction rows and §6b's cluster split are held now, and what is still not (issue #850)
@@ -241,6 +245,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-classify-operator-tests.md`](xdata-classify-operator-tests.md) — `classify()`'s two operator tests: `&&` is not address-of, and `&=` reads what it writes
 - [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md) — The guard-off census, built by the flag instead of by patching a copy of the tool (issue #753)
 - [`xdata-cluster-refs-projection.md`](xdata-cluster-refs-projection.md) — A cluster's `refs` is the sum of its members' `refs_<program>`, and not of their `refs` (issue #343)
+- [`xdata-decile-cause-clamp-coverage.md`](xdata-decile-cause-clamp-coverage.md) — The `deciles()` floor had a case on one of its two callers and none on the other (issue #922)
 - [`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md) — `deciles()` had a floor in its docstring and none in its code, and the report was already printing the stretch (issue #889)
 - [`xdata-dispatch-position-pins.md`](xdata-dispatch-position-pins.md) — The three dispatch positions the docstring names are pinned on synthetic source
 - [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md) — The dispatch reader reads statement position too, and one boundary it does not
@@ -249,6 +254,8 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) — The 94 flipped clusters: both named mechanisms are refuted, and what the working page does show instead (issue #884)
 - [`xdata-green-set.md`](xdata-green-set.md) — The green set is empty, and the four sentences that said otherwise (issue #819)
 - [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md) — The guard-off generation's `cluster_key` distinctness had no case behind it, and the coverage sentences named two of the four censuses (issue #962)
+- [`xdata-guard-off-pd-cluster-count-pinned.md`](xdata-guard-off-pd-cluster-count-pinned.md) — The guard-off `pd` cluster count `51`, the one figure §2b named as held by nothing, pinned beside the `394` (issue #918)
+- [`xdata-guarded-flags-read-from-main.md`](xdata-guarded-flags-read-from-main.md) — The guards table is a reading of `main()`, and a flag with no guard is still uncovered
 - [`xdata-most-cited-cluster-count.md`](xdata-most-cited-cluster-count.md) — The most-cited-cluster count, and the claim that does not need one (issue #842)
 - [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) — The 427-row census is stale at `e6c88864` and unreadable at `1fcd5f1e`, and the guard's per-address effect is measured a third time (issue #885)
 - [`xdata-moved-ranks-cause-guard-off-pair.md`](xdata-moved-ranks-cause-guard-off-pair.md) — `cause` opened four registers CSVs and read two, and the two it ignored were the ones the message asked for (issue #905)
@@ -263,6 +270,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-no-eq-guard-citation-anchors.md`](xdata-no-eq-guard-citation-anchors.md) — The `--no-eq-guard` mechanism's citations, re-anchored to code (issue #873)
 - [`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md) — The refusal contract's measured-state section, corrected against this tree (issue #816)
 - [`xdata-no-eq-guard-refusal-contract.md`](xdata-no-eq-guard-refusal-contract.md) — The `--no-eq-guard` refusal contract
+- [`xdata-ownership-arms-do-not-partition.md`](xdata-ownership-arms-do-not-partition.md) — The two `--export-ownership` census arms partition their references but not their addresses, so `pd_distinct` has no identity to assert (issue #918)
 - [`xdata-ownership-main-keys-pin.md`](xdata-ownership-main-keys-pin.md) — #658 asked for a pin that #849 had already laid: the `OWNERSHIP` main-EC keys, and the one line that could not show its own drift
 - [`xdata-page-cluster-count.md`](xdata-page-cluster-count.md) — The working page's cluster count, both sides of the pass, and what the added addresses have to do with it (issue #903)
 - [`xdata-pair-role-column.md`](xdata-pair-role-column.md) — The `pair_role` column: which half of a pair a census row is (issue #734)
