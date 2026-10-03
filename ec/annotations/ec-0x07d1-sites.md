@@ -619,10 +619,12 @@ Three questions this walk opened, and deliberately did not answer:
 - **Does the PD's 16-bit reading of `0x07D0`/`0x07D1` ever collide with the
   DSDT's two independent byte fields?** **Answered as posed, 2026-10-03 (issue
   #228): it cannot arise between the DSDT and the PD image, because it was
-  posed as a conflict between two readings and the DSDT has no reading.** Each
+  posed as a conflict between two readings and no route the scan can place
+  gives the DSDT a reading.** Each
   name is one store and one declaration in `evidence/acpi/dsdt.dsl`, and both
   stores are in the one `T1WR` `Arg0 == 0x1173` arm. No AML in the committed
-  DSDT loads the pair: the names are the only route through the `ECMG` field
+  DSDT reaches the pair by a route whose base resolves into this window: the
+  names are the only route through the `ECMG` field
   list, and the route census -- derived from the file, not a list of three
   names -- finds no computed-base region that resolves into this window from a
   method that is called. `ECRR`, `ECRW` at `dsdt.dsl:50497`/`:50504` and `SMRW`

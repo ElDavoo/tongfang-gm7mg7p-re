@@ -436,14 +436,18 @@ def computed_base_routes(lines, window_base, window_length):
       * **invoked** -- the region's method is called *and* the base folds to a
         constant outside the window. This is a route to somewhere else, and it
         is the only category that can be cleared.
-      * **uncalled** -- the region's method is never called. `ECRR` and
-        `ECRW` are here, which is what makes the conclusion survive: they are
-        genuine readers of `0x07D0` that nothing in the file ever reaches.
+      * **uncalled** -- the region's method is never called, so nothing reaches
+        the region. `ECRR`/`ECRW`/`SMRW` are *not* here: they declare no
+        `OperationRegion`, so this census never sees them, and their zero-call
+        result comes from `accessor_census` instead.
       * **unbounded** -- the base is a runtime value. The scan cannot say
         where it points, so it is reported rather than counted either way. A
         DSDT revision that turns one of these into a constant is caught; one
         that leaves it a runtime value is not, and no document may claim
-        otherwise.
+        otherwise. Reachability here is one level deep -- a method counts as
+        called if anything invokes it -- so `MMNM`, the region carrying
+        `ECRR`'s read, lands here rather than in `uncalled` even though all
+        eight of `MMRW`'s callers are themselves uncalled.
     """
     names = literal_names(lines)
     enclosing = enclosing_methods(lines)

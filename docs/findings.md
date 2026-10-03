@@ -451,7 +451,8 @@ writer arm mirrors both bytes into `NPCF.AMAT`/`NPCF.AMIT`, whose owning AML is
 `External` and not committed here.
 
 The sentence this corrects is the collision question, which cannot be posed
-against the DSDT at all — it has no reading to conflict with — and becomes
+against the DSDT at all — no route whose base resolves into the window gives it
+a reading to conflict with — and becomes
 instead a question about the **EC** firmware, which owns the XDATA the DSDT
 writes: does it read `0x07D0`/`0x07D1` as a word? That is #34's
 indirect-access blind spot — scope note, `indirect-xdata-sites.md` §4 covers

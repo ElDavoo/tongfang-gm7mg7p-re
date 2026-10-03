@@ -1,4 +1,4 @@
-# The DSDT declares `DBD1`/`DBD2` and writes them, and reads them nowhere (issue #228)
+# The DSDT declares `DBD1`/`DBD2` and writes them, and reads them by no route that resolves into the window (issue #228)
 
 `docs/findings.md` §3d records a divergence between the DSDT and the PD
 firmware over `0x07D0`/`0x07D1`: the field list "declares `DBD1` and `DBD2` as
@@ -8,7 +8,8 @@ The first half of that was never measured. This measures it, and what the
 measurement supports is narrower than the sentence reads.
 
 **The short version: the committed DSDT *declares* the pair as two scalars and
-*writes* them, and never reads either one.** So "two independent 8-bit fields"
+*writes* them, and reads them by no route whose base resolves into this
+window.** So "two independent 8-bit fields"
 is a statement about a field list, not about a value the ASL ever loads, and
 within this file no AML object holds the two bytes as one quantity. The
 divergence §3d wanted to record is real, but it is not between two *readings*
@@ -157,17 +158,29 @@ first is a reason to doubt the second:
   **3** in a called method whose base resolves elsewhere, and **68** whose base
   this scan **cannot place at all**. Only the first state is a cleared route.
 
-`ECRR`/`ECRW` above and `SMRW` at `:50764` are among the uncalled ones, which is
-what the conclusion rests on. `DLLR` is the counterexample to the old framing
-and is worth naming: it builds `OperationRegion (EMPC, SystemMemory, EMPB,
-0x0100)` at `:19119` from `EMPB = XBAS | (Arg0 << 0x14) | …`, and it **is**
+The zero-call result is `accessor_census`'s, not the route census's:
+`--check --print` reports `0 call(s)` for `ECRR`, `ECRW` and `SMRW` because
+nothing invokes those three *methods*. None of them declares an
+`OperationRegion` of its own, so the route census never sees them and they are
+not among the 17 uncalled regions above. And the region that actually carries
+`ECRR`'s read, `MMNM` at `:50423`, is reported **unresolved-base** rather than
+cleared — `MMRW` has eight syntactic call sites, so this scan places it among
+the unbounded 68. The census decides reachability one level deep, so it reports
+that as "reached, not placeable" rather than following the callers; a
+transitive walk would be a change to `computed_base_routes`, not something this
+document reads as though the tool already did.
+
+`DLLR` is the counterexample to the old framing and is worth naming: it builds
+`OperationRegion (EMPC, SystemMemory, EMPB, 0x0100)` at `:19119` from
+`EMPB = XBAS | (Arg0 << 0x14) | …`, and it **is**
 invoked, once, at `:19223`. `EMPB` is built from `XBAS`, which is declared
 `External (XBAS, UnknownObj)` at `:335` and defined nowhere in this file, so
 **that region's reach is not determinable from the committed inputs** — the
 "not found by this method" form, not a verdict.
 
-**No AML in the committed DSDT loads `0x07D0`/`0x07D1`.** That survives on the
-derived census rather than on the three names, and the scope word on "committed
+**No AML in the committed DSDT reaches `0x07D0`/`0x07D1` by a route whose base
+resolves into this window.** That survives on the derived census rather than on
+the three names, and the scope word on "committed
 DSDT" is load-bearing rather than a formality: the same `T1WR` arm **mirrors
 both bytes into `NPCF.AMAT` and `NPCF.AMIT`**, and `\_SB_.NPCF` is not defined
 in this file at all — it appears only as `External (...)` declarations at
@@ -221,7 +234,7 @@ declared side by side under Offset (0x7D0): DBD1 bits 0-7, DBD2 bits 8-15 -- dis
 Both are 8 bits under `Offset (0x7D0)`, and `DBD2` begins at bit 8 — where
 `DBD1` ends. So the pair really is two disjoint byte fields, which is the half
 of the §3d sentence worth keeping. What is *not* established is any reading of
-them as a value, because the ASL never reads them.
+them as a value, because no route the scan can place reads them either.
 
 ## The "unnamed `0x07D2`" clause is a fact about the list, not about that byte
 
@@ -333,8 +346,9 @@ have caught the `MGOF` dropout instead of silently reporting a smaller total.
 > DSDT's two independent byte fields?
 
 It cannot arise *as posed*, and the reason is not that nobody looked hard
-enough — it is that the DSDT has no reading to collide *with*. The only
-directions in the DSDT are two byte stores, both in one `T1WR` arm. What
+enough — it is that no route the scan can place gives the DSDT a reading to
+collide *with*. The only directions it can reach are two byte stores, both in
+one `T1WR` arm. What
 survives the correction is the disagreement about **meaning** recorded above:
 two independent byte stores on one side, overlapping 16-bit little-endian
 windows on the other. That becomes a fault only if something reads those bytes
