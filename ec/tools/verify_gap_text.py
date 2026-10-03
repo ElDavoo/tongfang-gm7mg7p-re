@@ -256,35 +256,20 @@ def split_text(text):
 def why(mnem, ops, pc, size, opcode, hexbytes):
     """Which predicate in `to_sdas()` declined this instruction, or None.
 
-    Checked in the order `to_sdas()` applies them, and for the same reasons --
-    `GAP_FORMS` before `GAP_MNEMONICS`, the opcode before the operand text. The
-    set of instructions is `to_sdas()`'s to decide; this only names the reason,
-    so the two cannot disagree about *which* instructions. A `None` here means
-    `to_sdas()` returned None and nothing in its source explains why, which is
-    a form this file has not been taught to cross-decode: the caller fails
-    rather than recording a set it cannot explain.
+    A delegation, not a second copy of the decision order. The enumerator
+    lives in `verify_reassembly.refusal_reason()`, beside the `to_sdas()` whose
+    order it mirrors, because that is where the vocabulary it reads
+    (`GAP_FORMS`, `GAP_MNEMONICS`, `BIT_UNSUPPORTED`) is defined; a second
+    enumerator beside a second reader of those collections is how the two came
+    to disagree about a form once. The set of instructions is still
+    `to_sdas()`'s to decide -- this only names the reason.
+
+    A `None` here means `to_sdas()` returned None and nothing in its source
+    explains why, which is a form this file has not been taught to
+    cross-decode: the caller fails rather than recording a set it cannot
+    explain.
     """
-    key = re.sub(r"\s*,\s*", ",", ("%s %s" % (mnem, ops)).lower())
-    for gap in sorted(V.GAP_FORMS):
-        if key.startswith(gap):
-            return 'GAP_FORMS "%s"' % gap
-    if mnem in V.GAP_MNEMONICS:
-        return "GAP_MNEMONICS %s" % mnem
-    if opcode is not None and opcode in V.BIT_UNSUPPORTED:
-        return "BIT_UNSUPPORTED 0x%02X" % opcode
-    if mnem == "a" and not ops.strip():
-        return "reserved `da A`"
-    parts = _operand_list(ops)
-    if mnem == "cjne" and parts and parts[0].lower().startswith("0x"):
-        return "CJNE direct operand"
-    if mnem in V.RELATIVE_BRANCH and pc is not None and parts:
-        try:
-            rel = int(parts[-1], 16) - (pc + size)
-        except ValueError:
-            return None
-        if not -128 <= rel <= 127:
-            return "branch displacement out of range"
-    return None
+    return V.refusal_reason(mnem, ops, pc, size, opcode, hexbytes)
 
 
 def verdict_of(ghidra_text, disasm_text, opcode):

@@ -42,6 +42,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-restore-closer-per-capture.md`](0751-restore-closer-per-capture.md) — A block that closed on the restore in two of three consoles read `intact` (issue #450)
 - [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md) — §3's three unlabelled mark rounds were a fourth class of mark, and the block model had no place for them (issue #472)
 - [`0751-strict-reader-two-moments.md`](0751-strict-reader-two-moments.md) — The strict reader described two moments as one (issue #786)
+- [`0751-unreadable-dump-file.md`](0751-unreadable-dump-file.md) — An unreadable `--dump` is named, and the §4.6 readback still runs (issue #388)
 - [`0751-writer-census.md`](0751-writer-census.md) — The `0x0751` writer census — "at least three paths" becomes ten sites and thirteen stores, and the number is not closed
 - [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md) — The measurement tool's pins, re-anchored, and one `what` that had to be re-worded (issue #762)
 - [`07d6-07d7-pd-image-census.md`](07d6-07d7-pd-image-census.md) — `0x07D6`/`0x07D7` are 213 PD-image sites and 0 EC sites, and the two bytes reach opposite conclusions
@@ -133,6 +134,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`forwarder-target-bank-census.md`](forwarder-target-bank-census.md) — Every bank-switch forwarder's `imm16`, resolved in the bank its stub selects (issue #465)
 - [`gap-text-self-test-census.md`](gap-text-self-test-census.md) — The listing instruction census, and the readers that have to agree on it
 - [`gate-arm-coverage.md`](gate-arm-coverage.md) — What issue #318 asked for is already in the gate; what was missing is what holds it there (2026-10-01, issue #318)
+- [`ghidra-project-owner.md`](ghidra-project-owner.md) — The Ghidra projects are owned by `dave`, and that is the whole of why a non-owner cannot export (issue #293)
 - [`grader-merged-capture-sources.md`](grader-merged-capture-sources.md) — The merged timer-sweep run took its sample interval and its byte levels from one file each, and now refuses a merge whose files disagree (issue #1377)
 - [`grader-repeated-capture.md`](grader-repeated-capture.md) — A repeated capture opens phantom windows in the door grader and a ZeroDivisionError in the timer grader, and the rule that closes it is identity rather than a single capture (issue #491)
 - [`group-check-drift-and-shared-basis.md`](group-check-drift-and-shared-basis.md) — `group_functions.py --check` re-runs the rule, and `shared` was a basis no rule emitted (issue #442)
@@ -201,6 +203,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`prose-line-citations-held.md`](prose-line-citations-held.md) — The prose's line citations, and what now holds them (issue #801)
 - [`provenance-clone-depth-behaviour.md`](provenance-clone-depth-behaviour.md) — Both clone depths run: `--verify-provenance` measured rather than asserted (issue #421)
 - [`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md) — What a re-encode row's own columns say, and the ceiling they support
+- [`reassembly-gap-composition.md`](reassembly-gap-composition.md) — What is in the instructions sdas8051 declines, derived rather than recalled
 - [`reassembly-name-column.md`](reassembly-name-column.md) — `reassembly.csv`'s `name` column describes the listing, so it is compared and not trusted
 - [`reassembly-unmeasured-row-policy.md`](reassembly-unmeasured-row-policy.md) — What a re-encode row outside `OUTCOMES` does to a run, to `--check`, and to the report (issue #230)
 - [`rebuild-provenance.md`](rebuild-provenance.md) — What a rebuild from the committed inputs re-derives (issue #623)
