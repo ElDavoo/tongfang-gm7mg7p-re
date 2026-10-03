@@ -6,12 +6,18 @@
 
 /* Four instructions: clears the accumulator, writes it to XDATA at DPTR, increments DPTR, writes it
    again, then ljmps to 0x9A90. It loads no DPTR of its own and takes no parameter, so the two bytes
-   cleared belong to the caller: both paths that reach it in this shard arrive with DPTR=0x08AD,
-   from the ljmp at 0x9B87 and from the fall-through at 0x9C1B. 0x08AD and 0x08AE have no entry in
-   ec/annotations/registers.yaml, and the C parameter *param_1 is the decompiler rendering of DPTR,
-   not a parameter.
+   cleared belong to the caller, and the two paths that reach it in this shard carry different
+   DPTRs: the ljmp at 0x9B87 arrives after lcall 0xBBC7, whose own listing ends by loading DPTR with
+   0x08CE, and the fall-through at 0x9C1B arrives after lcall 0xB9F5, which ends by loading DPTR
+   with 0x08CC. Corrected in place, issue #649, the wrong version left visible: it read that both
+   paths arrive with DPTR=0x08AD, which is the pointer the decompiled C passes as *param_1, carried
+   across both calls from before them; neither listing loads 0x08AD on either path. The bytes
+   cleared are 0x08CE and 0x08CF on the first path and 0x08CC and 0x08CD on the second, none of
+   which has an entry in ec/annotations/registers.yaml, and the C parameter *param_1 is the
+   decompiler rendering of DPTR, not a parameter.
    type: writer
-   evidence: ec/decompiled/bank0/9C1D.asm; ec/decompiled/bank0/9C1D.c
+   evidence: ec/decompiled/bank0/9C1D.asm; ec/decompiled/bank0/9C1D.c; ec/decompiled/bank0/BBC7.asm;
+   ec/decompiled/bank0/B9F5.asm
    basis: hand-decoded
    name_basis: code-shape */
 

@@ -1543,8 +1543,8 @@ registers:
       accumulator, so the value is selected rather than measured. The six
       sites understate the byte, because all six are inline movx sites and
       none of the three writes is inside the routine that decides the value:
-      dispatch_044b_then_write_01_02_03_or_04 (bank0 0x9AAD) is its largest
-      reader, and the read at 0x9B33 is its only counted site. Every write it
+      dispatch_044b_then_write_01_02_03_or_04 (bank0 0x9AAD) reads the byte
+      once, at 0x9B33, which is its only counted site. Every write it
       causes is reached by ljmp into one of the three writers named above or
       by falling through into forward_to_9a86, so 0x9AAD is the dispatcher
       and the indirect writer of all five successors while the static count

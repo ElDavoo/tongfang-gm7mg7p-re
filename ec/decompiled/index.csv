@@ -128,7 +128,7 @@ bank0,9A9C,write_04_to_044b_and_set_08e2_bit7,17,annotation,no,yes,writer,hand-d
 bank0,9AAD,dispatch_044b_then_write_01_02_03_or_04,336,annotation,no,yes,dispatch,hand-decoded,ec/decompiled/bank0/9AAD.asm; ec/decompiled/bank0/9AAD.c; ec/decompiled/bank0/BD20.asm; docs/findings/044b-mode-stepper.md,,bank0/9AAD.c
 bank0,9BFD,forward_to_9a86,3,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/9BFD.asm; ec/decompiled/bank0/9BFD.c,,bank0/9BFD.c
 bank0,9C00,clear_09e9_unless_0743_bit2,29,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/9C00.asm; ec/decompiled/bank0/9C00.c; ec/annotations/registers.yaml,,bank0/9C00.c
-bank0,9C1D,clear_two_bytes_at_dptr_then_9a90,7,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/9C1D.asm; ec/decompiled/bank0/9C1D.c,,bank0/9C1D.c
+bank0,9C1D,clear_two_bytes_at_dptr_then_9a90,7,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/9C1D.asm; ec/decompiled/bank0/9C1D.c; ec/decompiled/bank0/BBC7.asm; ec/decompiled/bank0/B9F5.asm,,bank0/9C1D.c
 bank0,9C24,reset_08ad_08bf_and_clear_08e2_bit7,35,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/9C24.asm; ec/decompiled/bank0/9C24.c,,bank0/9C24.c
 bank0,9C47,return_trampoline_9aad_044b_case_bailout,1,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/9C47.asm; ec/decompiled/bank0/9C47.c; ec/decompiled/bank0/9AAD.asm,,bank0/9C47.c
 bank0,9CA6,gate_06e6_442_then_sync_046a_from_086b,244,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/9CA6.asm; ec/decompiled/bank0/9CA6.c; ec/annotations/registers.yaml,,bank0/9CA6.c

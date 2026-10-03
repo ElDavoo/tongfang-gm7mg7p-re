@@ -78,9 +78,9 @@ values and a catch-all — not a free-running counter.
 
 Every arm tests something first. On a failed test it returns at `0x9C47`
 without writing; on a passed test it leaves for one of four small routines that
-write a constant — by `ljmp` in five of the seven paths below, and by falling
-through into the next entry in the other two. The tail targets, and the
-constant each one leaves in `0x044B`:
+write a constant — by `ljmp` in six of the seven paths below, and by running off
+the end of the listing into the next entry in the remaining one. The tail
+targets, and the constant each one leaves in `0x044B`:
 
 | value | arm | the test it must pass | writes |
 |---|---|---|---|
@@ -263,10 +263,18 @@ so DPTR is `0x08CC` and the bytes cleared are `0x08CC` and `0x08CD`. The C has
 carried a DPTR set before the call across it. This is not a cosmetic
 disagreement: `0x08AD` is the byte the dispatch itself branches on, and a
 routine that cleared it here would be destroying the very state the arm read to
-decide which path to take. The same stale-DPTR shape appears in the C's
-value-2 bit-0-set path, where it passes the same `0x8AD` pointer to
-`clear_two_bytes_at_dptr_then_9a90` — whose caller has just had `0xBADB` and
-`0xBBC7` leave DPTR at `0x08CE`.
+decide which path to take.
+
+The same stale-DPTR shape appears in the C's value-2 bit-0-set path, where it
+passes the same `0x8AD` pointer to `clear_two_bytes_at_dptr_then_9a90`. That
+routine loads no DPTR of its own, so it clears whatever its caller left there,
+and the two paths that reach it in this shard leave *different* values —
+`0xBBC7` ends at `0x08CE` and `0xB9F5` at `0x08CC`:
+
+| path into `0x9C1D` | the call before it | DPTR it carries | bytes cleared |
+|---|---|---|---|
+| `ljmp 0x9C1D` at `0x9B87` | `0xBADB`, then `0xBBC7` | `0x08CE` | `0x08CE`, `0x08CF` |
+| fall-through at `0x9C1B` | `0x9C00`'s `lcall 0xB9F5` | `0x08CC` | `0x08CC`, `0x08CD` |
 
 `9AAD.asm`'s own header states the rule this page follows: where the two
 disagree, the listing is right and the C is a reading of it.
@@ -278,9 +286,10 @@ disagree, the listing is right and the C is a reading of it.
   not say what any of them selects. The name `dispatch_044b_then_write_01_02_03_or_04`
   in `../../ec/annotations/ghidra-functions.csv` is deliberately written that
   way for the same reason.
-- **What `0x94D0` does with the R7 the arms load.** The five arms pass 4, 5, 6,
-  7 and 8 to `copy_code_table_into_0730_07a7`, and this page does not say what
-  that routine does with any of them.
+- **What `0x94D0` does with the R7 the arms load.** The arms pass 4, 5 and 6 to
+  `copy_code_table_into_0730_07a7`, the value-4 arm passes it 7 through the
+  `0x9C00` it tail-jumps to, and the prologue passes it 8 before the dispatch
+  opens. This page does not say what that routine does with any of them.
 - **What `0xB9F5` and `0xBBC7` compare.** Both are read only for the carry they
   leave and the DPTR they leave behind, which is all the arms use. Neither is
   decoded here.
