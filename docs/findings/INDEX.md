@@ -287,6 +287,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-pair-role-column.md`](xdata-pair-role-column.md) — The `pair_role` column: which half of a pair a census row is (issue #734)
 - [`xdata-per-program-counts.md`](xdata-per-program-counts.md) — The per-program count columns: `refs` and the five buckets, split, with `refs` itself unmoved (issue #713)
 - [`xdata-register-map-per-program-keying.md`](xdata-register-map-per-program-keying.md) — `xdata-register-map.md` §2 re-keyed per program, and what that moved (issue #714)
+- [`xdata-registers-agreement-vacuity.md`](xdata-registers-agreement-vacuity.md) — The guard-off registers loop was coverage-blind, and 17 of the 50 `pd` clusters are named by no register row at all (issue #968)
 - [`xdata-self-test-deferral-already-lifted.md`](xdata-self-test-deferral-already-lifted.md) — The self-test deferral #628 was filed against had already been lifted, and one file still described it in the present tense (2026-10-03, issue #628)
 - [`xdata-spelled-as-union.md`](xdata-spelled-as-union.md) — `spelled_as` is a union across programs, and the column that says so (issue #709)
 - [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md) — The two-largest case passed vacuously; its exhibits are now derived (issue #778)
