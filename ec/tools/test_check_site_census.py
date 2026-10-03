@@ -16,7 +16,15 @@ The fixtures are small enough to write inline, which keeps each case readable
 as the disagreement it is about rather than as a diff against a stored file.
 They are not the real 0x0860 sites; the last class is, and it is what says the
 committed sweep, the committed correspondence and the committed census
-currently agree.
+currently agree -- for every address of the page, since the correspondence is
+one file per address and `--all` is what covers them.
+
+**A third outcome has to be asserted as an outcome, not as a non-failure.**
+`census-blind` and `window-cut` are neither agreement nor errors, so a case that
+only asserted `problems == []` would go green on a checker that had started
+counting them as agreement -- which is the exact failure the whole suite
+exists to catch, one level up. The cases below therefore assert the counters
+as well as the empty problem list.
 """
 import contextlib
 import csv
@@ -71,9 +79,11 @@ BLIND = {'read': 0, 'write': 0, 'read+write': 0, 'passed-to-call': 0,
 
 
 def checked(sites=None, rows=None, occurrences=None, expected=None):
-    """(problems, agreed, unchecked) for the fixtures with the named parts
-    replaced. `None` means "the base version", spelled that way rather than
-    with `or` so that an empty dict is a fixture and not a default."""
+    """(problems, agreed, unchecked, blind, cut, sites) for the fixtures with
+    the named parts replaced. `None` means "the base version", spelled that way
+    rather than with `or` so that an empty dict is a fixture and not a default.
+    The tail three are what the summary line reports beyond agreement, and the
+    cases below that assert an outcome are asserting one of them."""
     return csc.check(SITES if sites is None else sites,
                      ROWS if rows is None else rows,
                      OCCURRENCES if occurrences is None else occurrences,
@@ -100,7 +110,7 @@ class Agreement(unittest.TestCase):
     """The pairs the two vocabularies are allowed to spell the same way."""
 
     def test_read_against_read_passes(self):
-        self.assertEqual(checked(), ([], 1, 0))
+        self.assertEqual(checked(), ([], 1, 0, 0, 0, 1))
 
     def test_a_call_tail_agrees_with_passed_to_call(self):
         # The one instruction the two methods read differently: the sweep
@@ -115,7 +125,8 @@ class Agreement(unittest.TestCase):
                  'census_count': '1', 'census_refs': 'bank0/D091.c:81'}]
         occurrences = {('bank0/D091.c', 81): ['passed-to-call']}
         expected = (dict(BLIND, **{'passed-to-call': 1}), 1)
-        self.assertEqual(checked(sites, rows, occurrences, expected), ([], 1, 0))
+        self.assertEqual(checked(sites, rows, occurrences, expected),
+                         ([], 1, 0, 0, 0, 1))
 
     def test_no_movx_against_no_occurrence_agrees(self):
         # 0x0D31C: the sweep decoded a window with no `movx` in it, and the
@@ -127,7 +138,8 @@ class Agreement(unittest.TestCase):
         rows = [{'region': 'bank0', 'file_offset': '0x0D31C',
                  'census_state': 'no-occurrence', 'census_bucket': 'none',
                  'census_count': '0', 'census_refs': 'none'}]
-        self.assertEqual(checked(sites, rows, {}, (BLIND, 0)), ([], 1, 0))
+        self.assertEqual(checked(sites, rows, {}, (BLIND, 0)),
+                         ([], 1, 0, 0, 0, 1))
 
     def test_the_many_to_one_collapse_is_a_count_not_a_conflict(self):
         # Three `read x1` rows carrying 2, 6 and 6 occurrences, which is the
@@ -151,7 +163,8 @@ class Agreement(unittest.TestCase):
             for line, times in lines:
                 occurrences[('bank0/D091.c', line)] = ['read'] * times
         expected = (dict(BLIND, read=14), 14)
-        self.assertEqual(checked(sites, rows, occurrences, expected), ([], 3, 0))
+        self.assertEqual(checked(sites, rows, occurrences, expected),
+                         ([], 3, 0, 0, 0, 3))
 
 
 class RejectsDisagreement(unittest.TestCase):
@@ -194,14 +207,17 @@ class RejectsDisagreement(unittest.TestCase):
         self.assertTrue(saying('the two methods disagree', sites=sites, rows=rows))
 
     def test_a_handoff_site_claiming_a_bucket_is_rejected(self):
-        # The decompile names no address where DPTR went to a call, so an
-        # occurrence cannot exist and a bucket for one is invented.
+        # A handoff names no direction, so it cannot corroborate one.
+        # `address-taken` is the single exception and has its own cases in
+        # `AddressTakenIsItsOwnVocabularyRow` -- it is a pointer, not a
+        # direction, so it is not a read or a write the sweep contradicted.
+        # Everything else here is a bucket invented for a site that named none.
         sites = {'0x09E03': {'addr': '0x0860', 'region': 'bank0',
                              'access': 'DPTR handed to lcall 0xbd34 -- direction unresolved here',
                              'window': 'lcall 0xbd34'}}
         rows = row(file_offset='0x09E03', census_count='1',
                    census_refs='bank0/D091.c:43')
-        self.assertTrue(saying('a handoff names no address', sites=sites, rows=rows))
+        self.assertTrue(saying('a handoff names no direction', sites=sites, rows=rows))
 
     def test_a_handoff_site_that_says_no_occurrence_agrees(self):
         sites = {'0x09E03': {'addr': '0x0860', 'region': 'bank0',
@@ -210,7 +226,8 @@ class RejectsDisagreement(unittest.TestCase):
         rows = [{'region': 'bank0', 'file_offset': '0x09E03',
                  'census_state': 'no-occurrence', 'census_bucket': 'none',
                  'census_count': '0', 'census_refs': 'none'}]
-        self.assertEqual(checked(sites, rows, {}, (BLIND, 0)), ([], 1, 0))
+        self.assertEqual(checked(sites, rows, {}, (BLIND, 0)),
+                         ([], 1, 0, 0, 0, 1))
 
     def test_no_occurrence_against_a_read_site_is_rejected(self):
         # The census saw nothing where the sweep decoded a `movx`. One of the
@@ -243,6 +260,327 @@ class RejectsDisagreement(unittest.TestCase):
         self.assertTrue(saying('the two methods disagree', sites=sites))
 
 
+class ReportsBlindRatherThanAgreeing(unittest.TestCase):
+    """`census-blind`: the sweep decoded an access the C-level reader does not
+    name. It is a third outcome and the case is that it is neither of the other
+    two -- asserting the count is asserting it is not agreement and not failure,
+    which is the only property that makes it safe to have."""
+
+    BLIND_SITE = {'addr': '0x1F01', 'region': 'bank0', 'access': 'write x1',
+                  'window': 'mov a,#0x20 ; movx @dptr,a'}
+    BLIND_ROW = {'region': 'bank0', 'file_offset': '0x0D6B5',
+                 'census_state': 'census-blind', 'census_bucket': 'none',
+                 'census_count': '0', 'census_refs': 'none'}
+
+    def test_a_decoded_access_the_decompile_does_not_name_is_blind(self):
+        problems, agreed, unchecked, blind, cut, seen = checked(
+            {'0x0D6B5': self.BLIND_SITE}, [self.BLIND_ROW], {}, (BLIND, 0))
+        self.assertEqual((problems, agreed, unchecked, cut), ([], 0, 0, 0))
+        self.assertEqual(blind, 1)
+
+    def test_blind_is_not_an_error(self):
+        # The shape this state exists for. Reporting it as a failure would be a
+        # claim about the decompiler; the tool has no evidence for one.
+        self.assertFalse(checked({'0x0D6B5': self.BLIND_SITE}, [self.BLIND_ROW],
+                                 {}, (BLIND, 0))[0])
+
+    def test_blind_is_not_agreement_either(self):
+        # The other half. Counting it as agreement is the claim that a site
+        # where only one method saw something has been corroborated.
+        self.assertEqual(checked({'0x0D6B5': self.BLIND_SITE}, [self.BLIND_ROW],
+                                 {}, (BLIND, 0))[1], 0)
+
+    def test_a_site_with_no_decoded_access_cannot_be_blind(self):
+        # `census-blind` asserts the sweep decoded something. On a window with
+        # no `movx` it would be a claim about a site neither method saw, and
+        # the state that says that is `no-occurrence`.
+        sites = {'0x0D31C': {'addr': '0x1F01', 'region': 'bank0',
+                             'access': 'no movx found in the decoded window',
+                             'window': 'ret'}}
+        rows = [dict(self.BLIND_ROW, file_offset='0x0D31C')]
+        self.assertTrue(saying('the two methods disagree', sites=sites, rows=rows,
+                               occurrences={}))
+
+    def test_a_handoff_cannot_be_blind(self):
+        # A handoff is `DPTR handed to <call>`: the sweep named no direction
+        # either, so there is no decoded access for `census-blind` to be about.
+        sites = {'0x09E03': {'addr': '0x1F01', 'region': 'bank0',
+                             'access': 'DPTR handed to lcall 0xbd34 -- '
+                                       'direction unresolved here',
+                             'window': 'lcall 0xbd34'}}
+        rows = [dict(self.BLIND_ROW, file_offset='0x09E03')]
+        self.assertTrue(saying('a handoff names no direction', sites=sites,
+                               rows=rows, occurrences={}))
+
+    def test_blind_cannot_claim_a_bucket_or_a_citation(self):
+        # The blind states' own bucket/count/refs discipline, which is what
+        # stops `census-blind` from becoming a bucket with no occurrence behind
+        # it wearing a different name.
+        for field, value, needle in (
+                ('census_bucket', 'write', 'structurally blind'),
+                ('census_count', '1', 'structurally blind'),
+                ('census_refs', 'bank0/D091.c:43', 'no occurrence')):
+            with self.subTest(field=field):
+                rows = [dict(self.BLIND_ROW, **{field: value})]
+                self.assertTrue(saying(needle, sites={'0x0D6B5': self.BLIND_SITE},
+                                       rows=rows, occurrences={}))
+
+    def test_verbose_names_the_blind_site(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            csc.check({'0x0D6B5': self.BLIND_SITE}, [self.BLIND_ROW], {},
+                      (BLIND, 0), True)
+        self.assertIn('blind 0x0D6B5', err.getvalue())
+
+
+class WindowCutRatherThanDisagreeing(unittest.TestCase):
+    """A second row at one site, admitted only where the sweep's window stopped
+    at a *conditional* branch before the access. The `0x086B` clamp shape, and
+    the tails that are not conditional branches are cases below."""
+
+    CLAMP_SITE = {'addr': '0x086B', 'region': 'bank0', 'access': 'read x1',
+                  'window': 'movx a,@dptr ; setb c ; subb a,#0x23 ; jc +0x03'}
+    READ_ROW = {'region': 'bank0', 'file_offset': '0x09E41',
+                'census_state': 'mapped', 'census_bucket': 'read',
+                'census_count': '2', 'census_refs': 'bank0/9D9B.c:80'}
+    WRITE_ROW = {'region': 'bank0', 'file_offset': '0x09E41',
+                 'census_state': 'mapped', 'census_bucket': 'write',
+                 'census_count': '1', 'census_refs': 'bank0/9D9B.c:81'}
+    OCC = {('bank0/9D9B.c', 80): ['read', 'read'],
+           ('bank0/9D9B.c', 81): ['write']}
+    EXPECTED = (dict(BLIND, read=2, write=1), 3)
+
+    def test_a_store_behind_the_branch_is_window_cut_not_a_disagreement(self):
+        problems, agreed, unchecked, blind, cut, seen = checked(
+            {'0x09E41': self.CLAMP_SITE}, [self.READ_ROW, self.WRITE_ROW],
+            self.OCC, self.EXPECTED)
+        self.assertEqual(problems, [])
+        self.assertEqual((agreed, cut, seen), (1, 1, 1))
+
+    def test_the_same_store_at_a_window_that_did_not_stop_is_rejected(self):
+        # The narrowness, and the half that matters: without the branch the
+        # second row is a plain bucket the sweep contradicted, which is the
+        # error `check()` was written to raise.
+        sites = {'0x09E41': dict(self.CLAMP_SITE,
+                                  window='movx a,@dptr ; mov r7,a')}
+        self.assertTrue(saying('the two methods disagree', sites=sites,
+                               rows=[self.READ_ROW, self.WRITE_ROW],
+                               occurrences=self.OCC, expected=self.EXPECTED))
+
+    def test_a_ret_terminated_window_admits_no_extra_row(self):
+        # The other half of the narrowness, and the one a wider tuple lost: a
+        # window ending at an *unconditional* terminator stopped because the
+        # straight-line run ended, with no fall-through arm for an access to
+        # hide in. This is the real `0x0865` `0x0BBF7` window and the real
+        # construction -- the same site, a `read` row the sweep agrees with and
+        # a second `write` row the sweep contradicts -- and it has to be the
+        # plain disagreement.
+        sites = {'0x0BBF7': {'addr': '0x0865', 'region': 'bank0',
+                             'access': 'read x1',
+                             'window': 'movx a,@dptr ; clr c ; subb a,r7 ; ret'}}
+        rows = [{'region': 'bank0', 'file_offset': '0x0BBF7',
+                 'census_state': 'mapped', 'census_bucket': 'read',
+                 'census_count': '1', 'census_refs': 'bank0/BBF2.c:19'},
+                {'region': 'bank0', 'file_offset': '0x0BBF7',
+                 'census_state': 'mapped', 'census_bucket': 'write',
+                 'census_count': '1', 'census_refs': 'bank0/BBF2.c:20'}]
+        occ = {('bank0/BBF2.c', 19): ['read'], ('bank0/BBF2.c', 20): ['write']}
+        self.assertTrue(saying('the two methods disagree', sites=sites,
+                               rows=rows, occurrences=occ,
+                               expected=(dict(BLIND, read=1, write=1), 2)))
+
+    def test_every_unconditional_tail_the_sweep_commits_is_rejected(self):
+        # The same construction at each unconditional terminator the page's own
+        # windows end in, so the tuple cannot be widened by a future sweep
+        # without a test failing. Read from the committed table rather than
+        # listed, so a tail that appears one day is covered the day it appears.
+        wanted = {"ret", "reti", "sjmp", "ljmp", "jmp @a+dptr"}
+        seen = set()
+        for row in csc.read_csv(csc.SITES_CSV):
+            tail = row["window"].rsplit(" ; ", 1)[-1].strip()
+            if tail not in wanted:
+                continue
+            seen.add(tail)
+            sites = {row['file_offset']: dict(row, window=f'movx a,@dptr ; {tail}')}
+            rows = [{'region': row['region'], 'file_offset': row['file_offset'],
+                     'census_state': 'mapped', 'census_bucket': 'read',
+                     'census_count': '1', 'census_refs': 'bank0/BBF2.c:19'},
+                    {'region': row['region'], 'file_offset': row['file_offset'],
+                     'census_state': 'mapped', 'census_bucket': 'write',
+                     'census_count': '1', 'census_refs': 'bank0/BBF2.c:20'}]
+            occ = {('bank0/BBF2.c', 19): ['read'],
+                   ('bank0/BBF2.c', 20): ['write']}
+            self.assertTrue(
+                saying('the two methods disagree', sites=sites, rows=rows,
+                       occurrences=occ,
+                       expected=(dict(BLIND, read=1, write=1), 2)),
+                f"{row['addr']} {row['file_offset']}: {tail!r}")
+        self.assertTrue(seen, "no committed window ends at an unconditional "
+                              "tail; this case has stopped testing anything")
+
+    def test_a_site_with_no_row_the_sweep_agrees_with_is_rejected(self):
+        # `second_row` means "this site also has a row the sweep's direction
+        # names", so a site whose *only* row contradicts the sweep is an error
+        # even with a branch in its window. Dropping the read row is what makes
+        # this the case -- it is the one a check keyed on row order would let
+        # through, since the write row is then first and last.
+        problems = checked({'0x09E41': self.CLAMP_SITE}, [self.WRITE_ROW],
+                           {('bank0/9D9B.c', 81): ['write']},
+                           (dict(BLIND, write=1), 1))[0]
+        self.assertTrue(any('the two methods disagree' in p for p in problems))
+
+    def test_the_allowance_needs_a_row_the_sweep_does_agree_with(self):
+        # The same site with the read row present is the `0x086B` clamp shape
+        # and passes, so the two cases together are what pins the condition on
+        # the sibling row rather than on the window alone.
+        self.assertEqual(
+            checked({'0x09E41': self.CLAMP_SITE},
+                    [dict(self.WRITE_ROW, census_count='1'),
+                     self.READ_ROW], self.OCC,
+                    (dict(BLIND, read=2, write=1), 3))[0], [])
+
+    def test_a_window_cut_row_still_has_its_citation_checked(self):
+        # The clause a third outcome must not lose. A `window-cut` row carrying
+        # a line the census has no occurrence for is a stale citation, and it
+        # has to fail exactly as a `mapped` row's would.
+        rows = [self.READ_ROW, dict(self.WRITE_ROW,
+                                    census_refs='bank0/9D9B.c:30')]
+        # The fixture's address is the default one, so that is what the
+        # message names; what is under test is that it is named at all.
+        self.assertTrue(saying('where the census has no',
+                               sites={'0x09E41': self.CLAMP_SITE}, rows=rows,
+                               occurrences=self.OCC, expected=self.EXPECTED))
+
+    def test_a_window_cut_row_still_counts_its_occurrence_once(self):
+        # Same reason, the other direction: dropping the write row leaves
+        # `9D9B.c:81` unaccounted for even though the site still passes on its
+        # own, so the per-occurrence join is what catches it.
+        self.assertTrue(saying('no mapped row accounts for',
+                               sites={'0x09E41': self.CLAMP_SITE},
+                               rows=[self.READ_ROW], occurrences=self.OCC,
+                               expected=self.EXPECTED))
+
+
+class AddressTakenIsItsOwnVocabularyRow(unittest.TestCase):
+    """`address-taken` names no direction, so it can only be admitted against a
+    sweep cell that names no direction either."""
+
+    TAKEN_SITE = {'addr': '0x0866', 'region': 'bank0', 'access': 'read x1',
+                  'window': 'movx a,@dptr'}
+    TAKEN_ROW = {'region': 'bank0', 'file_offset': '0x09DFB',
+                 'census_state': 'mapped', 'census_bucket': 'address-taken',
+                 'census_count': '1', 'census_refs': 'bank0/9D9B.c:62'}
+    OCC = {('bank0/9D9B.c', 62): ['address-taken']}
+    EXPECTED = (dict(BLIND, **{'address-taken': 1}), 1)
+
+    def test_address_taken_against_a_bare_movx_read_agrees(self):
+        # `movx a,@dptr` on its own is the encoding of an address being taken,
+        # which is what `&XDATA_0866` in the decompile is. One instruction, two
+        # vocabularies, and neither claims a direction.
+        problems, agreed = checked({'0x09DFB': self.TAKEN_SITE},
+                                   [self.TAKEN_ROW], self.OCC,
+                                   self.EXPECTED)[:2]
+        self.assertEqual((problems, agreed), ([], 1))
+
+    def test_address_taken_against_a_handoff_agrees(self):
+        # The other half of the row: `mov DPTR,#0x086B ; lcall 0xbd34` is
+        # `pbVar4 = &XDATA_086B` in the decompile, and the handoff names no
+        # direction to contradict.
+        sites = {'0x09DFB': {'addr': '0x0866', 'region': 'bank0',
+                             'access': 'DPTR handed to lcall 0xbd34 -- '
+                                       'direction unresolved here',
+                             'window': 'lcall 0xbd34'}}
+        self.assertEqual(checked(sites, [self.TAKEN_ROW], self.OCC,
+                                 self.EXPECTED)[:2], ([], 1))
+
+    def test_address_taken_against_a_window_with_more_in_it_is_rejected(self):
+        # The narrowness. `movx a,@dptr ; mov r7,a` is the sweep reporting what
+        # it did with the byte, and `address-taken` against it is a
+        # disagreement rather than a second reading of one instruction.
+        sites = {'0x09DFB': dict(self.TAKEN_SITE,
+                                  window='movx a,@dptr ; mov r7,a')}
+        self.assertTrue(saying('the two methods disagree', sites=sites,
+                               rows=[self.TAKEN_ROW], occurrences=self.OCC,
+                               expected=self.EXPECTED))
+
+    def test_address_taken_against_a_write_is_rejected(self):
+        sites = {'0x09DFB': dict(self.TAKEN_SITE, access='write x1')}
+        self.assertTrue(saying('the two methods disagree', sites=sites,
+                               rows=[self.TAKEN_ROW], occurrences=self.OCC,
+                               expected=self.EXPECTED))
+
+    def test_is_bare_read_is_exact(self):
+        # The predicate is what makes the row narrow, so its edge is the
+        # interesting part: whitespace is stripped and nothing else is.
+        self.assertTrue(csc.is_bare_read('  movx a,@dptr  '))
+        self.assertFalse(csc.is_bare_read('movx a,@dptr ; mov r7,a'))
+        self.assertFalse(csc.is_bare_read('movx @dptr,a'))
+
+
+class FlowTailMatchesTheDecoder(unittest.TestCase):
+    """`FLOW_TAIL` and `BRANCH_TAIL` are written out by hand, so they are pinned
+    against the table that decides when a window ends. Three opcodes in that set
+    have no entry in the mnemonic table and render as `db`/`clr`; they are
+    excluded here for the reason `FLOW_TAIL`'s own comment gives, and this is
+    where that exclusion is checked rather than asserted in prose.
+
+    The two tuples answer different questions and the difference is load-bearing
+    -- `ends_in_branch()` admits a `window-cut` row only on `BRANCH_TAIL`, so a
+    tuple that drifts wide again is a weaker check than the tool's docstring
+    says it is. Pinning the narrowing here is what stops that."""
+
+    UNRENDERABLE = {0xB6, 0xB7, 0xC1}
+
+    def rendered(self) -> set:
+        import disasm8051
+        out = set()
+        for op in disasm8051.FLOW_OPCODES - self.UNRENDERABLE:
+            n = disasm8051.OPCODE_LEN[op]
+            out.add(disasm8051.mnemonic(
+                bytes([op] + [0] * (n - 1)), 0).split()[0])
+        return out
+
+    def test_the_tuple_is_the_flow_opcode_table_minus_the_unrenderable(self):
+        self.assertEqual(set(csc.FLOW_TAIL), self.rendered())
+
+    def test_the_branch_tuple_is_the_conditional_subset_and_nothing_more(self):
+        # What separates the two: a conditional branch has an arm the walk
+        # cannot reach, and an unconditional terminator does not. So this is
+        # exactly the derived set minus the forms that fall through to nothing
+        # and minus the call forms `CALL_TAIL` already carries.
+        excluded = csc.CALL_TAIL + ("jmp", "ljmp", "sjmp", "ret", "reti")
+        self.assertEqual(set(csc.BRANCH_TAIL),
+                         self.rendered() - set(excluded))
+
+    def test_no_unconditional_terminator_is_in_the_branch_tuple(self):
+        # The case the narrowing exists for, stated directly rather than
+        # derived: none of these has a fall-through arm, so nothing can hide
+        # behind one and the `window-cut` allowance must not apply to them.
+        for tail in ("ret", "reti", "sjmp", "ljmp", "jmp @a+dptr", "lcall",
+                     "acall", "ajmp"):
+            self.assertNotIn(tail.split(" ")[0], csc.BRANCH_TAIL, tail)
+
+    def test_the_unrenderable_opcodes_really_do_not_render_as_a_mnemonic(self):
+        # The exclusion is only sound because these three have no mnemonic.
+        # If the table grows one, this fails and the exclusion has to be
+        # re-examined rather than left in place.
+        import disasm8051
+        for op in sorted(self.UNRENDERABLE & disasm8051.FLOW_OPCODES):
+            n = disasm8051.OPCODE_LEN[op]
+            name = disasm8051.mnemonic(bytes([op] + [0] * (n - 1)), 0).split()[0]
+            self.assertIn(name, ("db", "clr"))
+
+    def test_ends_in_branch_agrees_with_the_table_for_every_committed_window(self):
+        # The predicate reads the committed `window` cell, so the only way it
+        # can be wrong about the tree is if a tail mnemonic is in neither list.
+        # Read over every window the page's sweep commits.
+        for row in csc.read_csv(csc.SITES_CSV):
+            tail = row["window"].rsplit(" ; ", 1)[-1].strip()
+            self.assertEqual(bool(tail) and tail.split(" ")[0] in csc.BRANCH_TAIL,
+                             csc.ends_in_branch(row["window"]),
+                             f"{row['addr']} {row['file_offset']}: {tail!r}")
+
+
 class ReportsUncheckedRatherThanAgreeing(unittest.TestCase):
     """The `other-program` token, which is the whole calibration of the column."""
 
@@ -254,7 +592,7 @@ class ReportsUncheckedRatherThanAgreeing(unittest.TestCase):
 
     def test_other_program_is_unchecked_not_agreeing(self):
         self.assertEqual(checked({'0x25CE4': self.PD_SITE}, [self.PD_ROW], {},
-                                 (BLIND, 0)), ([], 0, 1))
+                                 (BLIND, 0)), ([], 0, 1, 0, 0, 1))
 
     def test_other_program_cannot_claim_a_measured_zero(self):
         # The census's 0x0860 row is `main-ec`, so a PD site has no count at
@@ -267,9 +605,9 @@ class ReportsUncheckedRatherThanAgreeing(unittest.TestCase):
     def test_verbose_names_the_unchecked_site(self):
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
-            _, agreed, unchecked = csc.check({'0x25CE4': self.PD_SITE},
-                                             [self.PD_ROW], {}, (BLIND, 0), True)
-        self.assertEqual((agreed, unchecked), (0, 1))
+            _, agreed, unchecked, blind, cut, _ = csc.check(
+                {'0x25CE4': self.PD_SITE}, [self.PD_ROW], {}, (BLIND, 0), True)
+        self.assertEqual((agreed, unchecked, blind, cut), (0, 1, 0, 0))
         self.assertIn('unchecked 0x25CE4', err.getvalue())
 
 
@@ -342,13 +680,14 @@ class RejectsStaleCitations(unittest.TestCase):
     def test_an_occurrence_no_site_accounts_for_is_rejected(self):
         occurrences = {ref: list(buckets) for ref, buckets in OCCURRENCES.items()}
         occurrences[('bank0/D091.c', 81)] = ['read']
-        self.assertTrue(saying('no mapped site accounts for', occurrences=occurrences))
+        self.assertTrue(saying('no mapped row accounts for',
+                               occurrences=occurrences))
 
     def test_two_sites_citing_one_occurrence_are_rejected(self):
         sites = {ref: dict(row) for ref, row in SITES.items()}
         sites['0x0D094'] = dict(SITES['0x0D091'])
         rows = ROWS + [dict(ROWS[0], file_offset='0x0D094')]
-        self.assertTrue(saying('mapped sites cite this occurrence',
+        self.assertTrue(saying('mapped rows cite this occurrence',
                                sites=sites, rows=rows))
 
 
@@ -373,7 +712,12 @@ class RejectsAnUnjoinedPair(unittest.TestCase):
         self.assertTrue(saying('mapped as', rows=row(region='pd-image')))
 
     def test_a_duplicated_offset_is_rejected(self):
-        self.assertTrue(saying('two rows in', rows=ROWS + [dict(ROWS[0])]))
+        # Two rows for one offset *in one bucket* is the duplicate. Two rows
+        # for one offset in different buckets is the documented shape -- a
+        # window that stopped at a branch before the second access -- so the
+        # clause names the bucket rather than the offset.
+        self.assertTrue(saying('two rows for bucket', 'read',
+                               rows=ROWS + [dict(ROWS[0])]))
 
     def test_the_join_fails_before_anything_is_compared(self):
         # A half-joined pair produces only the join failure, so a report never
@@ -381,9 +725,9 @@ class RejectsAnUnjoinedPair(unittest.TestCase):
         # one.
         sites = {ref: dict(row) for ref, row in SITES.items()}
         sites['0x0D0EF'] = self.OTHER
-        problems, agreed, unchecked = checked(sites=sites,
-                                              rows=row(census_bucket='write'))
-        self.assertEqual((agreed, unchecked), (0, 0))
+        problems, agreed, unchecked, blind, cut, seen = checked(
+            sites=sites, rows=row(census_bucket='write'))
+        self.assertEqual((agreed, unchecked, blind, cut, seen), (0, 0, 0, 0, 0))
         self.assertTrue(all('no row in' in p for p in problems))
 
 
@@ -450,6 +794,55 @@ class CsvReading(unittest.TestCase):
                 tref.load_census_map(str(path))
         self.assertIn('probably', str(caught.exception))
 
+    def test_a_site_with_two_rows_renders_both_cells(self):
+        # The 0x086B clamp shape reaching the column: one site, a read the
+        # sweep decoded and a write behind the branch it stopped at. Rendering
+        # only the first would put a direction in front of the reader that the
+        # mapping does not support.
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / 'map.csv'
+            path.write_text('region,file_offset,census_state,census_bucket,'
+                            'census_count,census_refs\n'
+                            'bank0,0x09E41,mapped,read,2,bank0/9D9B.c:80\n'
+                            'bank0,0x09E41,mapped,write,1,bank0/9D9B.c:81\n')
+            cells = tref.load_census_map(str(path))
+        self.assertEqual(cells['0x09E41'], 'read x2 + write x1')
+
+    def test_census_blind_renders_its_own_token(self):
+        # It has to be a different cell from `no census occurrence`: the first
+        # is what both methods agree is not there, the second is where the
+        # sweep decoded an access and the decompile names nothing. Asserted on
+        # the cell being distinct rather than on its wording, which is prose.
+        self.assertNotEqual(tref.CENSUS_TOKENS['census-blind'],
+                            tref.CENSUS_TOKENS['no-occurrence'])
+
+
+class TheCensusColumnIsHeldToTheMapping(unittest.TestCase):
+    """`check_cells()`: the sweep's own `census` column, against the row it
+    restates. Without it the column is a hand-typed copy nothing derives."""
+
+    SITES = {'0x0D091': {'census': 'read x2'}}
+
+    def test_a_cell_that_matches_passes(self):
+        self.assertEqual(csc.check_cells(self.SITES, {'0x0D091': 'read x2'}), [])
+
+    def test_a_cell_that_drifted_is_rejected(self):
+        problems = csc.check_cells(self.SITES, {'0x0D091': 'read x6'})
+        self.assertEqual(len(problems), 1)
+        self.assertIn('0x0D091', problems[0])
+
+    def test_a_cell_reading_not_recorded_over_a_real_row_is_rejected(self):
+        # The failure this clause exists for. `not recorded` reads as
+        # "agreement pending" to anyone who does not know what it means, and a
+        # mapping row behind it says the join was recorded.
+        self.assertTrue(csc.check_cells(self.SITES,
+                                        {'0x0D091': 'other program'}))
+
+    def test_a_site_the_mapping_says_nothing_about_is_rejected(self):
+        problems = csc.check_cells(self.SITES, {})
+        self.assertEqual(len(problems), 1)
+        self.assertIn('nothing', problems[0])
+
 
 class CheckMode(unittest.TestCase):
     """`--check`, whose whole job is to be red when the table drifts."""
@@ -512,6 +905,25 @@ class TheCommittedTree(unittest.TestCase):
         self.assertIn('site(s) agree across both methods', out)
         self.assertIn('unchecked (other program)', out)
         self.assertIn('refs 17', out)
+
+    def test_every_address_of_the_page_joins(self):
+        # `--all` is what makes "no `not recorded` cell is left that a reader
+        # could mistake for agreement" a check rather than a promise, so the
+        # run that covers the page is itself under test -- including that it
+        # prints one line per address and a page total over them.
+        out = self.run_main(csc, ['check_site_census.py', '--all'])
+        addresses = csc.page_addresses()
+        self.assertEqual(len(addresses), len(PAGE_ADDRESSES))
+        for addr in addresses:
+            self.assertIn(f"{addr}: ", out)
+        self.assertIn('page: ', out)
+
+    def test_one_address_can_be_checked_on_its_own(self):
+        # The switch that made the fourteen files reachable at all. A file that
+        # nothing can name is a file nothing checks.
+        out = self.run_main(csc, ['check_site_census.py', '--address', '0x1F01'])
+        self.assertIn('0x1F01: ', out)
+        self.assertNotIn('0x0860: ', out)
 
     def test_the_committed_sites_table_reproduces_from_the_sweep(self):
         out = self.run_main(tref, ['trace_xdata_refs.py', FIRMWARE,
