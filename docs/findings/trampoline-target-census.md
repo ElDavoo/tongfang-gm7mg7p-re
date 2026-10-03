@@ -221,10 +221,11 @@ and this table does not fold it in.
 
 **The forwarder-family count** is `census_forwarder_targets.py`, which closed
 #465 on 2026-10-02 and censused **the same 403 entries** against the committed
-`.asm` files. So the withdrawn 19 / 7 / 22 is no longer the tree's answer: the
-replacement is `25` entry / `0` operand / `23` not-found-by-this-method for the
-annotated `bank1` subset, against bank 0. This issue's plan predates that
-landing and read #465 as open; it is closed, and its write-up,
+`.asm` files. So the withdrawn `19` entry / `22` operand / `7` not-covered is no
+longer the tree's answer: the replacement is `25` entry / `0` operand / `23`
+not-found-by-this-method for the annotated `bank1` subset, against bank 0. This
+issue's plan predates that landing and read #465 as open; it is closed, and its
+write-up,
 [`forwarder-target-bank-census.md`](forwarder-target-bank-census.md), is cited
 here rather than re-derived.
 
