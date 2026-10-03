@@ -762,13 +762,39 @@ ORACLE = {
     # settles it; the 155 the pass adds are new `program=main-ec` rows, of which
     # `0x03DE` and `0x03B8` are two. (A shared address *number* is not a shared
     # byte, which is the collision `program=both` exists to carry.)
-    "extmem_distinct": 1008, "extmem_refs": 8554,
-    "extmem_raw": 8563, "extmem_commented": 9,
-    "extmem_main_distinct": 884, "extmem_main_refs": 7696,
+    "extmem_distinct": 1006, "extmem_refs": 8546,
+    "extmem_raw": 8555, "extmem_commented": 9,
+    "extmem_main_distinct": 882, "extmem_main_refs": 7688,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
+    # `extmem_commented` stays at 9 across the move below for the reason the
+    # three blocks above it give: it is derived, as
+    # `raw["DAT_EXTMEM"] - (extmem["main-ec"][1] + extmem["pd"][1])`, and both
+    # terms fall by the same 8, so the difference is unmoved. The full census
+    # below is unmoved for the same reason -- no address or reference was
+    # added or lost, only which token spells it.
+    #
+    # The 2026-10-03 move, issue #338: two rows change spelling and nothing
+    # else, so `extmem_main_distinct` 884 -> 882 against
+    # `symbol_main_distinct` 178 -> 180 is -2/+2, and
+    # `extmem_main_refs` 7696 -> 7688 against `symbol_main_refs` 6268 -> 6276
+    # is -8/+8, where 8 is the census's own 2 for 0x0391 plus 6 for 0x3202 --
+    # the two addresses whose `spelled_as` column reads `symbol` where it read
+    # `DAT_EXTMEM`. Both are the same mechanism as the 0x1663/0x1667/0x1668
+    # block above: `gen_xdata_symbols.py` turns the row into an `XDATA_*` name
+    # and `ApplyAnnotations.java` applies the symbol table to the project
+    # *copy* the export makes, so the rename reaches the `.c` text with no
+    # `--mode rebuild-project`. **0x0391 is not this issue's row**: it was
+    # named by #295 and its rename reached `registers.yaml` and the committed
+    # census, but the committed `.c` still spelled it `DAT_EXTMEM_0391`, so
+    # this re-export is also where that one landed. A stale export is not
+    # evidence about the census and the census was never wrong about it; the
+    # pin moves because the tree moved, not because either count was corrected.
+    # Reproduce the split with
+    # `python3 ec/tools/xdata_register_map.py --self-test`, and the two rows
+    # with a diff of the `spelled_as` column against the parent commit.
     # Named by the decompiler. The 2026-09-30 move is recorded in the dated
     # block above `named_in_tree`, and the 2026-09-28 one at the END OF FILE.
-    "symbol_main_distinct": 178, "symbol_main_refs": 6268,
+    "symbol_main_distinct": 180, "symbol_main_refs": 6276,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1326, "refs": 15696,
@@ -5632,6 +5658,44 @@ def main() -> int:
         return check(args)
     return write(args)
 
+
+# *** 2026-10-03, issue #575: four NOT_IN_TREE entries for the bytes the
+# routine at bank0 0xD8A0 alone touches in the 0x20xx page.
+#
+# **Placed here and updated into the dict, for the reason the block above
+# gives about `diff()`.** The entries belong in the `NOT_IN_TREE` literal
+# beside their siblings, and putting them there moves every line below that
+# point -- including the `--no-eq-guard` anchors `check_eq_guard_citations.py`
+# resolves by line -- and turns red every citation of them.
+# This is the one window that avoids both horns: it is below every line those
+# citations name, so none of them shifts, and above the `__main__` guard, so
+# the update has run by the time `main()` reaches `--self-test` and counts the
+# set. Appended below the guard instead, it would be dead on a script run and
+# only visible to an import, which is exactly the sort of split a test that
+# imports the module cannot see.
+#
+# The reason is the 0x0EAF one, not the 0x07C0 one: not the wrong program's
+# byte, but a routine no export covers. Each of the four has exactly one
+# `mov DPTR,#imm16` in the whole 256 KiB image and that site is inside
+# 0xD8A0, which has no index row and no listing, so the census -- which reads
+# the committed decompile -- has no function to attribute the site to. That is
+# a coverage gap, and it is expected to close when the deferred annotation row
+# and the export that carries it land; nothing here predicts the count.
+# Re-derive with `python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800
+# --at 0x0D8A0 --runtime 0xD8A0 -n 61`, which prints all four sites, and with
+# `scan_refs.py` on each address, which reports one EC-side site apiece. The
+# reading is docs/findings/d8a0-init-routine.md.
+NOT_IN_TREE.update({
+    0x2012: "in a routine no export covers: as 0x0EAF, the sole site is at "
+            "bank0 0xD90E, inside the routine at 0xD8A0, which has no index "
+            "row and no listing",
+    0x2014: "in a routine no export covers: as 0x2012, the sole site is at "
+            "bank0 0xD915",
+    0x2015: "in a routine no export covers: as 0x2012, the sole site is at "
+            "bank0 0xD91B",
+    0x201C: "in a routine no export covers: as 0x2012, the sole site is at "
+            "bank0 0xD8CC",
+})
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -15,6 +15,7 @@ addr,name,from_register,register_status,derivation,programs
 0x07B9,CHARGE_CTRL,CHARGE_CTRL (numeric threshold),unknown-not-absent,scalar-name,bank0;bank1
 0x07D0,DBD1,DBD1 (DSDT name; ECSpec calls the same byte BATTERY_CHARGE_LIMIT_DOWN),unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
 0x07D1,DBD2,"DBD2 (DSDT name; no vendor constant, no committed Windows writer)",unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
+0x07D2,DAT_EXTMEM,"DAT_EXTMEM (the exporter's own placeholder; no DSDT field, no vendor constant, no committed Windows writer)",unknown-not-absent,scalar-name,bank0;bank1
 0x0748,LIGHTBAR_AC_CTRL,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
 0x0749,LIGHTBAR_AC_CTRL_RED,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
 0x074A,LIGHTBAR_AC_CTRL_GREEN,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
@@ -175,6 +176,7 @@ addr,name,from_register,register_status,derivation,programs
 0x086D,XDATA_086D,XDATA_086D,present-untested,scalar-name,bank0;bank1
 0x086E,XDATA_086E,XDATA_086E,present-untested,scalar-name,bank0;bank1
 0x1664,XDATA_1664,XDATA_1664,present-untested,scalar-name,bank0;bank1
+0x3202,XDATA_3202,XDATA_3202,present-untested,scalar-name,bank0;bank1
 0x1C01,XDATA_1C01,XDATA_1C01,present-untested,scalar-name,bank0;bank1
 0x1C02,XDATA_1C02,XDATA_1C02,present-untested,scalar-name,bank0;bank1
 0x1C03,XDATA_1C03,XDATA_1C03,present-untested,scalar-name,bank0;bank1
@@ -194,6 +196,10 @@ addr,name,from_register,register_status,derivation,programs
 0x1663,XDATA_1663,XDATA_1663,present-untested,scalar-name,bank0;bank1
 0x1667,XDATA_1667,XDATA_1667,present-untested,scalar-name,bank0;bank1
 0x1668,XDATA_1668,XDATA_1668,present-untested,scalar-name,bank0;bank1
+0x201C,XDATA_201C,XDATA_201C,present-untested,scalar-name,bank0;bank1
+0x2012,XDATA_2012,XDATA_2012,present-untested,scalar-name,bank0;bank1
+0x2014,XDATA_2014,XDATA_2014,present-untested,scalar-name,bank0;bank1
+0x2015,XDATA_2015,XDATA_2015,present-untested,scalar-name,bank0;bank1
 0x07C4,GPU_DYNAMIC_BOOST_STATUS,"GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)",present-untested,scalar-name,bank0;bank1
 0x07D3,GFID,GFID (DSDT bits 4-6),present-untested,scalar-name,bank0;bank1
 0x07D4,CPUA,CPUA (DSDT),present-untested,scalar-name,bank0;bank1

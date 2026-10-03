@@ -4,12 +4,16 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Loads DPTR with 0x0A49, reads that byte and subtracts the incoming carry from it with subb
-   A,#0x00, returning the low byte. It is the low-byte half of the little-endian 16-bit subtraction
-   that 0xBB31 starts: the carry consumed here is the borrow the subb A,R7 at 0xBB38 produced.
-   Neither 0x0A49 nor 0x0A4A has an entry in ec/annotations/registers.yaml.
+/* Loads DPTR with 0x0A49 - a literal in the instruction, not a value chosen from the caller - reads
+   that byte and subtracts the incoming carry from it with subb A,#0x00, returning the high byte of
+   the pair 0x0A49:0x0A4A. It is the high-byte half of the 16-bit subtraction that 0xBB31 starts,
+   and has no ret of its own: the carry consumed here is the borrow the subb A,R7 at 0xBB38
+   produced, and the carry left is the borrow of the whole subtraction. Because the DPTR is that
+   constant, the movx @DPTR,A following a call to either half stores to 0x0A49 whatever the caller
+   had in DPTR. Neither 0x0A49 nor 0x0A4A has an entry in ec/annotations/registers.yaml.
    type: math
-   evidence: ec/decompiled/bank0/BB39.asm; ec/decompiled/bank0/BB39.c
+   evidence: ec/decompiled/bank0/BB39.asm; ec/decompiled/bank0/BB39.c; ec/decompiled/bank0/BB31.asm;
+   docs/findings/xdata-044b-selector-value-set.md
    basis: hand-decoded
    name_basis: code-shape */
 

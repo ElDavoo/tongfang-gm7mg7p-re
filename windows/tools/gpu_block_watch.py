@@ -62,10 +62,10 @@ import time
 from ecrw import Ec, EcError
 from ec_watch import CsvSink, Marker, now
 
-# The 7 addresses here have no row in registers.yaml. That is a claim about
-# the file, not about the address: docs/findings.md §4c retracted a "does not
-# exist" reading of a zero-reference scan, and a table that says "no row"
-# seven times is the sentence most likely to be misread back into one.
+# Some of the addresses here have no row in registers.yaml. That is a claim
+# about the file, not about the address: docs/findings.md §4c retracted a "does
+# not exist" reading of a zero-reference scan, and a table that says "no row" is
+# the sentence most likely to be misread back into one.
 NO_ROW = "no row in ec/annotations/registers.yaml"
 
 # (addr, DSDT field list name and bit, registers.yaml status, citation)
@@ -100,7 +100,8 @@ WATCH = [
      "dsdt.dsl:52248, registers.yaml DBD1"),
     (0x07D1, "DBD2", "unknown-not-absent-DO-NOT-WRITE-BLIND",
      "dsdt.dsl:52248, registers.yaml DBD2"),
-    (0x07D2, "(no DSDT field)", NO_ROW, "dsdt.dsl:52194"),
+    (0x07D2, "(no DSDT field)", "unknown-not-absent",
+     "dsdt.dsl:52194, registers.yaml DAT_EXTMEM"),
     (0x07D3, "GFID b4-6", "present-untested",
      "dsdt.dsl:52251, registers.yaml GFID"),
     (0x07D4, "CPUA", "present-untested",

@@ -304,8 +304,17 @@ them. One session serves both; two documents record it.
   drift on a warming die, which is a different confound. §3's service-stopped
   second pass is the arm that separates them, and a capture without it says
   "something wrote this while the mode changed", which is a weaker claim than
-  "the EC wrote this". Whether the service writes any `0x086x` byte at all is
-  answerable statically and is not asked here.
+  "the EC wrote this". **The static half of that question is answered**
+  ([`../findings/ec-addr-reach-086x.md`](../findings/ec-addr-reach-086x.md)):
+  the service's resolved EC writes lie in `0x04xx`, `0x07xx` and `0x0Fxx` only —
+  **not found in `0x0800`-`0x08FF`** in the decrypted service, in the
+  parameterised helper's callers, or in any committed `ECSpec` — and the bundle
+  it rewrites on a switch is entirely `0x07xx`/`0x0Fxx`. So within that reach a
+  `0x086x` move is **not** the service writing that band, and §3's second pass
+  is corroboration rather than the load-bearing half. It is not optional: that
+  answer is scoped to the decrypted tree's text (the other two committed trees
+  are anti-tamper-partial), it says nothing about a native immediate, and a live
+  capture attributes by observation where a static zero attributes by absence.
 - **The `0x9CA6` sync, out of reach on purpose.** That routine syncs `0x046A`
   *from* `0x086B` — and `0x046A` is on the forbidden `0x0460`-`0x046F` page. **A
   run reads the gates and the source and never the destination, and the sync

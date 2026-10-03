@@ -8000,5 +8000,328 @@ class GradedUnplacedExitCodeTests(unittest.TestCase):
         self.assertNotIn('graded_unplaced', lines[at])
 
 
+# Appended at the end of the file for the reason the comment above
+# `MarkSplitBoundaryTests` gives, and the same load-bearing reason: the line
+# numbers in the write-ups, and the per-pin table in
+# `docs/findings/test-line-pin-census.md` on top of them, cite into this file
+# below `GradeTests`, and inserting anywhere else moves all of them onto the
+# wrong line without changing a word of the sentences citing them. Placement is
+# all that costs, and appending costs none.
+#
+# No fixture is written here. A file that cannot be opened is the subject, so
+# every case names a path under `tempfile` that was never written to, and the
+# runs that pair one with a real dump are §6's own file list over
+# `0751-isolation-run/`'s committed captures and dumps. A dump the run *can*
+# open is not the thing under test and does not need a constructed one beside
+# it.
+class UnreadableDumpTests(unittest.TestCase):
+    """A `--dump` or `--dump-pair` path that cannot be opened, named rather
+    than fatal, with the window report and the §4.6 readback still printed.
+
+    `read_dump` opened its file with no handling, so one mistyped path ended
+    the run in a `FileNotFoundError` traceback -- and since the pairs are read
+    before either section prints, it did so *after* the window report and
+    *before* §4.6, taking with it the one section whose whole job is to be
+    trustworthy about two files on disk. The two good `--dump`s in the issue's
+    command line would have answered it and the operator got nothing.
+
+    The exit status is not chosen here, it is read off the code that already
+    handles the neighbouring input errors, and the comment below quotes both.
+    What the section prints is the other half: naming the path is worthless if
+    the section that would have read it goes on to read a different one, so the
+    unreadable `--dump` stays in its block's list with nothing behind it and
+    the block's *last* dump is the one the readback is decided over.
+
+    Every case is about which files were handed in and what can be read out of
+    them; nothing here reads an EC.
+    """
+
+    # The issue's own command line, with the pair it mistypes and the byte it
+    # mistypes. Kept as one spelling because it is the shape under test: a
+    # good pair beside a bad one, both handed in the same run.
+    GOOD_PAIR = (RUN_BEFORE, RUN_AFTER)
+
+    def missing(self, tmp, name):
+        """A path under `tmp` that is never written to.
+
+        A `TemporaryDirectory` entry rather than a literal, so the path cannot
+        come to exist by being written by some other case, and rather than a
+        relative name like the issue's, which would be relative to wherever
+        the suite was run from.
+        """
+        return str(Path(tmp) / name)
+
+    # Non-fatal, and taken from the code rather than chosen here. Two
+    # neighbouring refusals already say what they do in their own words, and
+    # they agree:
+    #   `report_dump_pairs`, on a pair given one file twice -- "Flagged and
+    #   skipped rather than fatal, so the window report and the §4.6 readback
+    #   the operator also needs still get printed."
+    #   `dump_pair_block`, on two names that disagree about their block -- "the
+    #   same non-fatal handling the same-file-twice pair gets, because it is
+    #   the same class of thing: an input error, stated, with the window report
+    #   and the §4.6 readback the operator also needs still printed."
+    # A file that is not there is that same class of thing. The fatal
+    # precedents are the captures and the value under test -- a repeated
+    # capture, and a `--block`/`--wrote` that disagree or name no block -- and
+    # `main`'s comment on the repeat draws the line this sits on the other side
+    # of: skipping a *capture* "would hand back a report that is quietly a
+    # single-capture run", because every section of this report is about the
+    # captures. A skipped dump is not that; the section that would have read it
+    # prints the omission in full.
+    def test_the_issues_own_command_line_ends_zero_with_both_sections_printed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            typo = self.missing(tmp, 'after-0700-typo.txt')
+            rc, out, _ = run(RUN_CAPTURES[0],
+                             *dumps(RUN_BEFORE, RUN_AFTER),
+                             '--wrote', '0xA0',
+                             '--dump-pair', RUN_BEFORE, typo)
+        self.assertEqual(rc, 0)
+        # The window report and the block section, which are what the
+        # traceback used to cost along with §4.6. Asserted as headings so
+        # this is about the sections being there at all rather than about any
+        # line inside them.
+        self.assertIn('=== mark census (§3/§6) ===', out)
+        self.assertIn('=== 1 block(s), one per no-op control arm (§3) ===',
+                      out)
+        # §4.6 itself, and the verdict it would have given. The block's last
+        # dump is the good after-dump here, so the comparison is over the file
+        # the operator named last and the calibration clause rides with it.
+        self.assertIn('=== 0x0751 across the dumps (§4.6) ===', out)
+        section = dumps_section(out)
+        self.assertIn(f'{RUN_AFTER}: 0x0751 = 0xA0', section)
+        self.assertIn('the last dump still holds the written 0xA0', section)
+        # The failure names the path and the OS error, which is the whole of
+        # what the issue asks for: the operator has to be able to see which
+        # entry was not read, and the error is what says which of the two
+        # files it was. The path is on the pair's own line and the side that
+        # raised on the one under it, so a mistyped *before* path reads the
+        # same way as this one.
+        block = whole_block(out)
+        self.assertIn(f'{RUN_BEFORE} -> {typo}', block)
+        self.assertIn('after: not read:', block)
+        self.assertIn('No such file or directory', block)
+        # And why it was not compared, rather than a bracket over whatever
+        # survived.
+        self.assertIn('this pair is not compared', block)
+        # And no bracket over it. `0 address(es) compared` for a pair whose
+        # after side does not exist would be a result about nothing, which is
+        # the same false green the same-file pair's own line is written
+        # against.
+        self.assertNotIn('address(es) compared', whole_block(out))
+
+    def test_an_unreadable_pair_is_not_counted_as_a_bracket_read(self):
+        # The regression a placeholder entry left in `pairs` would cause: the
+        # closing paragraph of the whole-block section qualifies `unchanged`
+        # lines, and there are none, so printing it over an unreadable pair
+        # tells the operator a bracket was read when none was.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(*RUN_CAPTURES,
+                             '--dump-pair', RUN_BEFORE,
+                             self.missing(tmp, 'typo.txt'))
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertNotIn('Every `unchanged` above', section)
+        # And the paragraph that says so is printed rather than the section
+        # ending in silence after a refusal, which is the same defect one step
+        # down.
+        self.assertIn('no dump pair here was compared', section)
+        # The summary paragraph over the same two brackets, which is gated on
+        # the count `report_dump_pairs` returns and not on `pairs` being
+        # non-empty.
+        self.assertNotIn('The whole-block dump pairs above were read as a '
+                         'second, wider bracket', out)
+
+    def test_a_readable_pair_beside_an_unreadable_one_is_still_compared(self):
+        # Both orders of the pair as §6 lists it, so the unreadable entry is
+        # beside a real bracket rather than alone in the section. The readable
+        # one is printed in full and the unreadable one is named, and the
+        # count that gates the closing paragraph covers only the first.
+        with tempfile.TemporaryDirectory() as tmp:
+            typo = self.missing(tmp, 'typo.txt')
+            rc, out, _ = run(RUN_CAPTURES[0], '--wrote', '0xA0',
+                             '--dump-pair', RUN_BEFORE, typo,
+                             '--dump-pair', *self.GOOD_PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertIn(f'{RUN_BEFORE} -> {RUN_AFTER}', section)
+        self.assertIn('address(es) compared', section)
+        self.assertIn(f'{RUN_BEFORE} -> {typo}', section)
+        # Once, over the pair that opened. Twice would mean the unreadable one
+        # reached the loop that counts, which is the other half of what this
+        # pins.
+        self.assertEqual(section.count('address(es) compared'), 1)
+        self.assertIn('Every `unchanged` above', section)
+        # The summary paragraph is earned by the one pair that was read.
+        self.assertIn('The whole-block dump pairs above were read as a second, '
+                      'wider bracket', out)
+
+    def test_a_bad_dump_path_is_named_and_the_good_dumps_still_answer_46(self):
+        # The case the issue notes has always had the traceback, and the one
+        # where the section can still give the operator its verdict: the two
+        # good `--dump`s are the block's last two, so the unreadable one is not
+        # the file the readback is taken over and §4.6 reads exactly what it
+        # read before the unreadable path was added to the command line.
+        with tempfile.TemporaryDirectory() as tmp:
+            typo = self.missing(tmp, 'before-0700-typo.txt')
+            rc, out, _ = run(RUN_CAPTURES[0],
+                             *dumps(typo, RUN_AFTER), '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        # Named in the group, in the position it was handed in and beside the
+        # byte of the dump that did open.
+        self.assertIn(f'{typo}: not read:', section)
+        self.assertIn('No such file or directory', section)
+        self.assertIn(f'{RUN_AFTER}: 0x0751 = 0xA0', section)
+        self.assertIn('the last dump holds the written 0xA0', section)
+        # The before-side is a file that could not be opened, so "still" has
+        # nothing to be about and the word is dropped rather than printed over
+        # a file that was never read.
+        self.assertIn(f'the first --dump, {typo}, was not read', section)
+        self.assertNotIn('still holds the written', section)
+        # The comparison is still taken: one unreadable dump of two does not
+        # cost the operator the byte's after-write value.
+        self.assertNotIn('the §4.6 readback was not taken', section)
+
+    def test_the_blocks_last_dump_being_the_unreadable_one_stops_the_readback(self):
+        # This is the case that fails if the unreadable dump is deleted from
+        # the list instead of carried through with no bytes. The unreadable
+        # path is handed in last with the good dump before it, so dropping the
+        # entry would promote `RUN_AFTER` into "the last dump" and print "the
+        # last dump still holds the written 0xA0" -- a true sentence about a
+        # file the operator did not name last, in the wording that says it is
+        # the last one.
+        with tempfile.TemporaryDirectory() as tmp:
+            typo = self.missing(tmp, 'last-0700-typo.txt')
+            rc, out, _ = run(RUN_CAPTURES[0],
+                             *dumps(RUN_AFTER, typo), '--wrote', '0xA0',
+                             '--dump-pair', *self.GOOD_PAIR)
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        # The byte the readable dump holds is still printed, so the operator
+        # keeps the fact the file on disk gives them.
+        self.assertIn(f'{RUN_AFTER}: 0x0751 = 0xA0', section)
+        # And the readback is not taken over that file: the notice names the
+        # path that was not read, which is the whole of this case.
+        self.assertIn(f"the block's last --dump is {typo}, which was not read",
+                      section)
+        self.assertIn('the §4.6 readback was not taken', section)
+        self.assertNotIn('holds the written 0xA0', section)
+        # The remedy is the one the coverage notice gives, because the two are
+        # the same fact: there is no last read, so a pair that does cover the
+        # byte is named with the file to pass.
+        self.assertIn(f'a --dump-pair does cover it: {RUN_BEFORE} -> '
+                      f'{RUN_AFTER}', section)
+        self.assertIn(f'pass the after file as the last --dump to take the '
+                      f'readback: {RUN_AFTER}', section)
+
+    def test_every_dump_and_pair_unreadable_says_so_and_claims_nothing_was_given(self):
+        # The operator did hand in files here, so the two "no X given" lines
+        # would both be false and neither may print. Each path is named with
+        # its error in the section that would have read it, and both sections
+        # still print their headings, which is what the run carried on for.
+        with tempfile.TemporaryDirectory() as tmp:
+            dump_typo = self.missing(tmp, 'dump-typo.txt')
+            before_typo = self.missing(tmp, 'before-typo.txt')
+            after_typo = self.missing(tmp, 'after-typo.txt')
+            rc, out, _ = run(RUN_CAPTURES[0], '--dump', dump_typo, '--wrote',
+                             '0xA0', '--dump-pair', before_typo, after_typo)
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('=== 0x0751 across the dumps (§4.6) ===', out)
+        self.assertIn('=== whole-block dump pairs (§4.1-§4.3) ===', out)
+        self.assertIn(f'{dump_typo}: not read:', section)
+        self.assertIn(f"the block's last --dump is {dump_typo}", section)
+        # Its own sentence rather than the "no dump given" one, which is for
+        # a run that was handed none.
+        self.assertIn('none of the 1 dump(s) given could be read', section)
+        self.assertNotIn('no dump given (--dump)', section)
+        block = whole_block(out)
+        self.assertIn(f'{before_typo} -> {after_typo}', block)
+        self.assertIn(f'before: not read:', block)
+        self.assertIn(f'after: not read:', block)
+        self.assertNotIn('no dump pair given (--dump-pair)', block)
+
+    def test_a_pair_whose_before_side_is_the_unreadable_one_is_named_too(self):
+        # The other side of the pair. It is a separate entry from the
+        # after-side one because `read_dump_pairs` reads the two sides
+        # independently and reports whichever one raised, and a pair whose
+        # before file is the missing one is the same bracket with the same
+        # reason for not existing.
+        with tempfile.TemporaryDirectory() as tmp:
+            typo = self.missing(tmp, 'before-typo.txt')
+            rc, out, _ = run(RUN_CAPTURES[0], '--wrote', '0xA0',
+                             '--dump-pair', typo, RUN_AFTER)
+        self.assertEqual(rc, 0)
+        block = whole_block(out)
+        self.assertIn(f'{typo} -> {RUN_AFTER}', block)
+        self.assertIn('before: not read:', block)
+        self.assertIn('No such file or directory', block)
+        self.assertNotIn('address(es) compared', block)
+
+    def test_an_unreadable_pair_is_not_attributed_to_another_block(self):
+        # The footer that fires when a `--block` run was given no pair for the
+        # block under test ends "the pairs named above are another block's",
+        # and that is a claim about which block a pair belongs to. A pair
+        # whose before file could not be read was never filed under one, so
+        # the sentence would attribute it on no evidence -- under a header
+        # about attribution, which is the wrong place for a guess.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(*RUN_CAPTURES, '--block', '0xA0',
+                             '--dump-pair', self.missing(tmp, 'typo.txt'),
+                             RUN_AFTER)
+        self.assertEqual(rc, 0)
+        self.assertNotIn("another block's", whole_block(out))
+        # The line above it still says what became of the pair, and the
+        # paragraph below still says nothing was compared, so the section
+        # loses the unfounded attribution and not the fact.
+        self.assertIn('this pair is not compared', whole_block(out))
+        self.assertIn('no dump pair here was compared', whole_block(out))
+        # And the same footer still fires where it is earned, on a pair that
+        # names another block outright. Asserted in the same method because
+        # this is the gate that can only be checked closed: dropping the
+        # footer entirely would leave every case above green.
+        rc, out, _ = run(*MULTI_BLOCK, '--block', '0xA0',
+                         '--dump-pair', *MULTI_10_DUMPS)
+        self.assertEqual(rc, 0)
+        self.assertIn("belongs to block 0x10, not the block under test (0xA0)",
+                      whole_block(out))
+        self.assertIn("another block's", whole_block(out))
+
+    def test_an_unreadable_pair_beside_a_readable_one_is_not_attributed(self):
+        # The shape above is the easy one for that gate: its only pair failed
+        # to open, so `groups` is empty and the footer cannot fire. Beside a
+        # readable pair naming another block, the readable one files a group,
+        # so a gate reading `groups` alone fires the footer over both -- naming
+        # a pair the run never filed under a block, and doing it in the first
+        # half too, since a pair that named the block under test and would not
+        # open is a pair that was given. A separate method because the two
+        # shapes are closed by different terms, and closing only the easy one
+        # would leave this one printing the attribution.
+        with tempfile.TemporaryDirectory() as tmp:
+            typo = self.missing(tmp, 'typo.txt')
+            rc, out, _ = run(*MULTI_BLOCK, '--block', '0xA0',
+                             '--dump-pair', typo, typo,
+                             '--dump-pair', *MULTI_10_DUMPS)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # The unreadable pair is still named where it was handed in, and the
+        # readable one is still attributed to the block its names carry.
+        self.assertIn(f'{typo} -> {typo}', section)
+        self.assertIn('this pair is not compared', section)
+        self.assertIn('belongs to block 0x10, not the block under test (0xA0)',
+                      section)
+        # Neither half of the footer, over either pair. And the readable
+        # pair's own line carries the attribution the footer would have, so
+        # dropping the sentence loses no fact about whose pair it was.
+        self.assertNotIn('another block\'s', section)
+        self.assertNotIn('no --dump-pair was given', section)
+        # What the block under test did get is unchanged: the 0x10 pair is
+        # not read for it, so no bracket was compared, and the section says
+        # so rather than ending on the sentence it no longer prints.
+        self.assertNotIn('address(es) compared', section)
+        self.assertIn('no dump pair here was compared', section)
+
+
 if __name__ == '__main__':
     unittest.main()

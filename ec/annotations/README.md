@@ -634,6 +634,13 @@ seeing the edge, not the callee being missing. The `annotated` column is the
 queue — the `annotated=no` rows are what is left, and the `cited_by` ones are
 the subset a sentence is actually blocked on.
 
+**The two populations that census cannot rank are their own tables**:
+`call-graph-unresolved.csv`, one row per transfer target the index does not
+carry with the `cause` it failed to resolve, and `call-graph-unreached.csv`,
+one row per anonymous row no transfer reaches with the `entry` this method can
+see for it. `../tools/call_graph_gaps.py` builds both, and its `--check`
+recomputes them against the listings.
+
 **The ordering is citation-first, then inbound count**, and that is a
 correction to the issue rather than a restatement of it. Issue #134 says the
 natural order is by inbound reference count. Inbound is a good ranking and the
