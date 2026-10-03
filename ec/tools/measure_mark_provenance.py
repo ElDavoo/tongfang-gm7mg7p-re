@@ -675,7 +675,7 @@ CITATIONS = [
     ("ec/tools/grade_0751_isolation.py", 4027,
      'read = f"{path}: {len(m)} mark(s), {len(c)} change row(s)"',
      "the per-capture census line, which counts rather than spells"),
-    ("ec/tools/grade_gpu_door.py", 911, "m, c = fan.read_capture(path)",
+    ("ec/tools/grade_gpu_door.py", 912, "m, c = fan.read_capture(path)",
      "the second consumer of read_capture's two-tuple"),
     ("ec/tools/check_capture_claims.py", 914,
      "read_capture(os.path.join(REPO, WATCH, name))",

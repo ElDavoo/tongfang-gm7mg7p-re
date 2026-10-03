@@ -51,9 +51,12 @@ PY
 gave one `AttributeError` per module that reaches a DLL — binding one itself at
 module scope, or importing `ecrw` or `uefi_var`, which bound theirs — and an
 `OK` line for every module that reaches none. Run against the tree as it
-stands, the same loop reports no failures at all. Which modules fall on which
-side is a property of the tree at a given commit rather than of the method, so
-the command above is where to read the split.
+stands, the same loop reports no failure from a DLL bind; on a checkout
+without the two packages `.github/actions/project-setup` installs, it also
+names `dotnet_bodies.py` and `dotnet_dump.py` wanting `dnfile` and `pefile`,
+which is what the suite's third exclusion is for (see "What holds it" below).
+Which modules fall on which side is a property of the tree at a given commit
+rather than of the method, so the command above is where to read the split.
 
 **The tax the issue named was real and it was not confined to the grader.**
 `ecrw_fake.py` exists because a module that could not be imported had to be
