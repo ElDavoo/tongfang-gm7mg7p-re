@@ -16,9 +16,19 @@
    is a constant in this listing, so the name stops at the shape and the row takes `type:
    unresolved` rather than a name guessing a mechanism. The name is not a `name_basis: unresolved`
    placeholder, because it does say something true of the bytes, which is the distinction
-   ec/annotations/README.md §`name_basis` draws.
+   ec/annotations/README.md §`name_basis` draws. The table it walks is now measured:
+   docs/findings/4900-stride-table.md puts the byte run the constructions address at 0x494E-0x4A25
+   and frames this listing's three of them, at 15-byte stride on a grid counted from 0x494E (where
+   +0x4E, the lowest base offset any site uses, is record 0 field 0), as record 8 field 6, record 9
+   field 1 and record 9 field 3. That is the geometry only: the entry's own prologue at
+   0x43A5-0x43A8 is `xch A, R6 / mov A, R7 / xch A, R6 / mov A, R6`, so the index is the caller's R7
+   and the R6 this sequence reads is not the register its callers write.
+   docs/findings/4900-stride-table.md §4 measures where the committed call sites set R7, and
+   `common 4666`'s call at 0x4685 does not establish it locally. What the sequence switches between
+   is still not established and the row keeps `type: unresolved`.
    type: unresolved
-   evidence: ec/decompiled/common/43A5.asm; ec/decompiled/common/43A5.c
+   evidence: ec/decompiled/common/43A5.asm; ec/decompiled/common/43A5.c;
+   docs/findings/4900-stride-table.md
    basis: hand-decoded
    name_basis: code-shape */
 
