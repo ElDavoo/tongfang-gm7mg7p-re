@@ -47,6 +47,15 @@ a description corrected anywhere makes its key fail and says to drop it. That
 is what makes the exemption an enumerated fact rather than a hole. The bound is
 the sibling's: *a claim already wrong is exempt by construction; a new one is
 not.*
+
+**A patch not in the table is not a patch nobody has read.** `PATCHES` names
+what this suite compares and `NOT_HELD` names what it does not and why, and a
+case holds the two against the tree in both directions -- the completeness
+direction the sibling asserts for applicability. Without it the census read as
+a census of the set while covering part of it, which is a scan that covered
+part of the tree written up as if it covered all of it: the same defect as a
+zero-hit scan called `absent`, and the reason the bound is an enumeration here
+rather than a silence.
 """
 import collections
 import os
@@ -131,6 +140,18 @@ PATCHES = {
         'where': [HEADER],
         'roots': [],
     },
+    'docs/ci/agent-gates-0751-writer-census.patch': {
+        'tool': ['python3', 'ec/tools/census_xdata_writers.py', '--check'],
+        # Only the total, which is what the gate comment quotes. The run splits
+        # it three ways -- writers, read-only sites, and the `sites_for()`
+        # total -- and the comment says "which of the 29 sites store", so the
+        # total is the figure it is required to carry. The header's own half
+        # spells its counts as words ("the ten writer sites"), which is prose
+        # this suite cannot compare; see the census row.
+        'figure': r'of (\d+) found by sites_for\(\)',
+        'where': [COMMENT],
+        'roots': [],
+    },
     'docs/ci/agent-gates-disasm8051-self-test.patch': {
         'tool': ['python3', 'ec/tools/disasm8051.py', '--self-test'],
         'figure': r'all (\d+) relative-branch sites resolve',
@@ -170,6 +191,45 @@ PATCHES = {
         'where': [],
         'roots': ['ec/tools/check_capture_claims.py'],
     },
+}
+
+# Patches on disk that `PATCHES` above does not hold, keyed on why. The bound
+# has to be an enumeration rather than a silence: the sibling
+# (`tools/test_agent_gates_patches.py`) holds the completeness direction for
+# applicability and says why -- "a new one is picked up silently by the glob" --
+# and a table that only checks its own entries cannot see a patch arriving
+# outside it. The census that read part of the set was read as a census of all
+# of it, which is the same defect as a zero-hit scan called `absent`: part of
+# the set was never examined and nothing said so.
+#
+# Each reason is a shape of claim, not an excuse. None of these patches quotes a
+# figure its tool prints, which is the one thing the figure comparison can see;
+# each row of `docs/findings/prepared-patch-description-census.md` records what
+# the patch says, what the tool says and the reading, beside the command.
+NOT_HELD = {
+    'docs/ci/agent-gates-bank-map-score.patch':
+        'quotes no figure either tool prints: "outside the three its '
+        'classifier can produce" is a count of `firmware_regions.py`\'s '
+        '`ERASED`/`NON_ERASED`/`UNCLASSIFIED`, spelled as a word, and a '
+        'derived sum over constants is what this suite is documented as not '
+        'checking',
+    'docs/ci/agent-gates-cross-decoder-disagreement.patch':
+        'quotes no printed figure: "each of the five causes" is a count of the '
+        'closed vocabulary the `--check` run enumerates one label at a time, '
+        'spelled as a word -- the same derived-sum shape as the disasm row the '
+        'census records',
+    'docs/ci/agent-gates-findings-frozen.patch':
+        'quotes no figure its tools print: what it carries is what '
+        '`tools/README.md` and `docs/findings/test-line-pin-census.md` *were* '
+        '-- a hand-kept total with supersession notes under it, dated '
+        'per-merge headings -- and the checks this same patch wires are what '
+        'removed both, so the figures are a record of a past tree rather than '
+        'a claim about this one',
+    'docs/ci/agent-gates-reassembly-bound-check.patch':
+        'quotes no figure its tool prints: "0.15 s here over three runs" is a '
+        'timing on one runner, which the header itself calls one runner\'s '
+        'figure, and the 5.9 s beside it is `docs/agent-pipeline.md`\'s cheap '
+        'tier rather than an output of `reassembly_checked_bound.py`',
 }
 
 # Which module constant of each tool names its input trees. Read rather than
@@ -251,6 +311,17 @@ def run(tool):
 
     `cwd` is the repository because that is where the gate's cwd is, and two
     of these tools resolve a path from `__file__` and would be indifferent.
+
+    **The return code is carried but not asserted, deliberately.** What this
+    suite holds is a *description* against a *figure*, and a tool that exits
+    non-zero can still print the figure its patch quotes. Asserting the code
+    would make this a second copy of every tool's own gate, and one of them is
+    red on this tree for a reason recorded in the census, so the assertion
+    would go red here over a fact about the tool rather than about any
+    description. `stdout` and `stderr` are merged, so the code and the figure
+    arrive together and every failure message quotes both. The bound is the
+    suite's: a patch whose tool is red is a census row, and the census is where
+    that reading lives.
     """
     done = subprocess.run(tool, cwd=REPO, capture_output=True, text=True)
     return done.returncode, done.stdout + done.stderr
@@ -374,6 +445,36 @@ class PatchDescriptionTests(unittest.TestCase):
             f'docs/ci/: ' + ', '.join(gone) +
             '. A renamed or folded patch would leave the cases below checking '
             'a file that is not there.')
+
+    def test_every_patch_on_disk_is_accounted_for(self):
+        # The direction the table above does not check, and the one the census
+        # needed. `test_the_table_names_a_patch_that_exists` holds PATCHES
+        # against the tree; nothing held the tree against PATCHES, so a patch
+        # landing in `docs/ci/` joined the unwatched half silently and the
+        # census read as a census of the set while covering part of it. The
+        # sibling suite asserts this same direction for applicability and
+        # gives the reason in one line: a new one is picked up silently by the
+        # glob.
+        on_disk = {p.relative_to(REPO).as_posix()
+                   for p in CI.glob('agent-gates-*.patch')}
+        for name in (PATCHES, NOT_HELD):
+            orphans = sorted(set(name) - on_disk)
+            self.assertFalse(
+                orphans,
+                f'{len(orphans)} name(s) in a table here are not in '
+                f'docs/ci/: ' + ', '.join(orphans) +
+                '. A renamed or folded patch leaves the table naming a file '
+                'that is not there, and the reason recorded for a patch that '
+                'no longer exists describes nothing.')
+        unaccounted = sorted(on_disk - set(PATCHES) - set(NOT_HELD))
+        self.assertFalse(
+            unaccounted,
+            'these patches in docs/ci/ are in neither this suite\'s table nor '
+            'its exclusion set: ' + ', '.join(unaccounted) + '. One in neither '
+            'is a patch nobody has read, which is the gap this suite exists to '
+            'close: give it an entry in PATCHES if it quotes a figure its tool '
+            'prints, or in NOT_HELD with the reason there is nothing to '
+            'compare -- and record the reading in the census either way.')
 
     def test_each_patch_carries_the_figure_its_tool_prints(self):
         for patch, spec in sorted(PATCHES.items()):
@@ -512,8 +613,28 @@ class ExceptionTests(unittest.TestCase):
                 # Read off the run, not off the table: the figure the tool
                 # prints is a count of this repository's own tests, and holding
                 # one here is a value every merge that adds a case has to edit.
+                quoted = _quoted_figure(claim)
+                # Before comparing it, because `assertNotIn` cannot make that
+                # distinction: a key quoting no figure yields None, and
+                # `assertNotIn(None, printed)` is True for any list of strings,
+                # so without this the "is it still wrong" direction passes
+                # unconditionally for such a key -- and the exemption silences
+                # the asserting case for that patch's whole `where` half with
+                # nothing checked. The docstring on `_quoted_figure` says a key
+                # quoting prose "must say so rather than read as a checked
+                # one", and this is what says it.
+                self.assertIsNotNone(
+                    quoted,
+                    f'the KNOWN_STALE key for {patch} quotes {claim!r}, which '
+                    'carries no standalone figure for this suite to compare '
+                    'against the run. A key that quotes prose exempts that '
+                    'patch\'s half from the asserting cases and cannot be held '
+                    'to still being wrong, which is a hole with a comment on '
+                    'it. Give the key a figure the tool prints, or drop it and '
+                    'record the reading in the census instead -- the census '
+                    'is where a claim this suite cannot judge belongs.')
                 self.assertNotIn(
-                    _quoted_figure(claim), printed,
+                    quoted, printed,
                     f'{patch} quotes {claim!r} and its tool now prints that '
                     f'figure too, so the claim is no longer stale. The '
                     f'exception ({owner}) can be dropped, and the patch should '
@@ -631,6 +752,19 @@ class ParseTests(unittest.TestCase):
         ' context',
     ])
 
+    # A patch whose prose halves are both empty: no header comment above the
+    # diff, and no `+#` line inside it. This is what a patch looks like after a
+    # rewrite drops the sentence rather than correcting it.
+    BARE = '\n'.join([
+        'diff --git a/f b/f',
+        '--- a/f',
+        '+++ b/f',
+        '@@ -1 +1 @@',
+        '+check_x() {',
+        '+  true',
+        '+}',
+    ])
+
     def test_the_header_stops_at_the_diff(self):
         self.assertEqual(header_of(self.TEXT), 'A header naming a figure.')
 
@@ -646,9 +780,14 @@ class ParseTests(unittest.TestCase):
 
     def test_a_prose_half_with_no_claim_reads_as_empty(self):
         # The other direction: a rewritten patch that dropped the sentence
-        # entirely must read as empty rather than as clean.
-        self.assertEqual(prose('docs/ci/agent-gates-gap-text-check.patch')
-                         [HEADER][:0], '')
+        # entirely must read as empty rather than as clean, because empty is
+        # what the asserting cases need -- `assertNotIn(claim, '')` is the
+        # failure that says the claim is gone. Asserting the emptiness is the
+        # whole point, so this compares the halves against `''` directly
+        # rather than slicing them: `[:0]` is `''` for every possible input,
+        # which is the vacuous-pass shape these cases exist to catch.
+        self.assertEqual(header_of(self.BARE), '')
+        self.assertEqual(added_comment(self.BARE), '')
 
 
 if __name__ == '__main__':

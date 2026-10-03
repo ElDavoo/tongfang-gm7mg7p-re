@@ -25,6 +25,12 @@ Those two are corrected here, along with the same wording in
 gate comment and in that one file, with the superseded wording left visible per
 `docs/findings.md` §4a-4d rather than silently replaced.
 
+The table below covers every `docs/ci/agent-gates-*.patch` on this tree, which
+is the whole of what that glob names. A patch with no figure this method can
+compare is a row with the reason rather than an omission, and
+`tools/test_gate_patch_descriptions.py` holds the coverage in both directions —
+a new patch landing in `docs/ci/` is a red run until it is read.
+
 ## The correction, and what it was
 
 Two claims in `docs/ci/agent-gates-testdata-row-claims.patch` described the
@@ -85,6 +91,11 @@ image.
 | `agent-gates-capture-claims.patch` | `check_testdata_index.py`, `check_capture_claims.py` | "the two CSVs beside it" | the testdata tree holds many loose CSVs and `.txt` files; `check_capture_claims.py` also reads the prose corpus | **stale, left** — see the borderline readings above |
 | `agent-gates-disasm8051-self-test.patch` | `disasm8051.py --self-test` | "18 instructions", "4 `REL_SITES`", "11 `BIT_SITES`", "36 assertions in all" | every printed figure agrees | **matches** |
 | `agent-gates-gap-text-check.patch` | `verify_gap_text.py --check` | "the 143 instructions `sdas8051` cannot express" | "gap text verdicts: 143 agree" | **matches** |
+| `agent-gates-0751-writer-census.patch` | `census_xdata_writers.py --check` | gate comment: "which of the 29 sites store"; header: "the ten writer sites", "ten byte fixtures" | "of 29 found by `sites_for()`", of 10 writer and 10 fixture sites | **matches** — the comment half is now held by the suite |
+| `agent-gates-cross-decoder-disagreement.patch` | `cross_decoder_disagreement.py --check`, `--self-test` | "each of the five causes" | the run enumerates the closed vocabulary one label per line | **no figure to compare** — see below |
+| `agent-gates-bank-map-score.patch` | `bank_map_score.py --check`, `firmware_regions.py --check` | "a block whose verdict is outside the three its classifier can produce" | `ERASED`, `NON_ERASED`, `UNCLASSIFIED` | **no figure to compare** — see below |
+| `agent-gates-findings-frozen.patch` | `check_findings_frozen.py`, `gen_findings_index.py --check`, `check_no_append_logs.py`, `check_no_conflict_markers.py` | what `tools/README.md` and `docs/findings/test-line-pin-census.md` *were*: a hand-kept total with supersession notes under it, dated per-merge headings | neither document carries either shape now | **a record of a past tree**, not a claim about this one |
+| `agent-gates-reassembly-bound-check.patch` | `reassembly_checked_bound.py --check` | "0.15 s here over three runs", "a cheap tier §14e's table records at 5.9 s" | the tool prints no timing; the 5.9 s is `docs/agent-pipeline.md`'s | **no figure to compare** — see below |
 
 The commands:
 
@@ -94,8 +105,39 @@ python3 ec/tools/grade_0751_isolation.py --self-test
 python3 ec/tools/check_pin_table_rows.py
 python3 ec/tools/disasm8051.py --self-test
 python3 ec/tools/verify_gap_text.py --check
+python3 ec/tools/census_xdata_writers.py --check
+python3 ec/tools/cross_decoder_disagreement.py --check
+python3 ec/tools/bank_map_score.py --check
+python3 ec/tools/firmware_regions.py --check
+python3 ec/tools/check_findings_frozen.py
+python3 ec/tools/gen_findings_index.py --check
+python3 ec/tools/reassembly_checked_bound.py --check
 git apply --check docs/ci/agent-gates-testdata-row-claims.patch
 ```
+
+### The rows with nothing to compare, and why
+
+A row reading **no figure to compare**, and `findings-frozen`'s, are not rows
+this suite can assert, and each says why in `NOT_HELD`. The ones reading *no
+figure to compare* quote a figure no tool prints: a count of module constants
+spelled as a word (`bank-map-score`'s "three verdicts",
+`cross-decoder-disagreement`'s "five causes"), and a timing on one runner
+(`reassembly-bound-check`'s 0.15 s, which its own header calls one runner's
+figure). That is the same derived-sum shape as the disasm row below, one level
+up: a claim the tools' output does not spell as a figure cannot be compared
+against it.
+
+`findings-frozen` is different in kind. It quotes what `tools/README.md` and
+`docs/findings/test-line-pin-census.md` looked like *before* the checks this
+same patch wires removed the append logs — `tools/README.md`'s hand-kept total
+and the supersession notes under it, the census file's dated per-merge headings.
+Neither shape is in either document now, which is what those checks hold. Note
+what that does and does not mean for the figures: the census file has grown
+since, so "the dated headings are gone" is not "the file is shorter", and the
+patch's line counts are a record of one past tree rather than a claim about
+this one — there is nothing to re-derive and nothing to hold them to. Both
+documents and the decision are written up in
+`docs/findings/no-append-logs.md`, which the patch cites.
 
 ### The two borderline readings, stated rather than resolved
 
@@ -153,23 +195,53 @@ name a file that is there, which is the part of that claim this repository can
 check. Whether an issue is still open is a fact about GitHub, not about this
 tree, and this suite does not reach GitHub to ask.
 
+**The set is covered in both directions, and that is what makes the table a
+census of the set rather than of itself.** `PATCHES` names what the suite
+compares and `NOT_HELD` names what it does not and why, and a case holds each
+against the tree both ways: a name pointing at a patch that is gone, and a patch
+on disk that neither table names. The sibling asserts the same direction for
+applicability and gives the reason in one line — a new one is picked up silently
+by the glob. Without it, the first version of this table examined part of the
+set and read as if it covered all of it, which is a scan that covered part of
+the tree written up as if it covered the whole: the same defect as a zero-hit
+scan called `absent`.
+
 **What the suite does not check is prose**, and two things in particular. A
 patch claiming a tool "catches regression X", or "is cheap because it reads
 one CSV", is a reading. So is any figure a tool derives rather than prints —
 which is why the disasm sum above is a census row and not a key. Not found by
 this method, never absent.
 
-Every case was checked against a mutation it is supposed to catch, applied to
-the tree and reverted rather than asserted:
+**A tool's exit code is not asserted**, and the reason is the shape of the
+claim rather than an oversight: what is held here is a description against a
+figure, and a tool that exits non-zero can still print the figure its patch
+quotes. `check_pin_table_rows.py` is the case in point — it exits 1 on this
+tree, and the pin-table row above is where that reading lives. Asserting the
+code would make this a second copy of every tool's own gate, and it would go
+red here over a fact about the tool rather than about any description.
+
+Every case named in the table below was checked against a mutation it is
+supposed to catch, applied to the tree and reverted rather than asserted:
 
 | mutation | case that went red |
 |---|---|
 | put the header's dated-refusal count back to two | `test_each_patch_carries_the_figure_its_tool_prints` |
 | say four where the tool says three | same |
+| say a site count the tool no longer prints | same |
 | drop `evidence/ec-watch/` from the gate comment | `test_each_gate_comment_names_every_input_tree_its_tool_reads` |
 | correct an enumerated stale claim | `test_every_stale_key_still_quotes_its_patch` |
 | re-point a key at a sentence carrying the figure the tool now prints | `test_every_stale_key_is_still_wrong` |
+| re-point a key at a sentence quoting no figure at all | same |
 | give an owner back as a bare issue number | `test_every_stale_key_names_an_owner` |
+| land a patch in `docs/ci/` that neither table names | `test_every_patch_on_disk_is_accounted_for` |
+| let the header parse leak a line it should drop | `test_a_prose_half_with_no_claim_reads_as_empty` |
+
+The cases not named here were not checked against a mutation, and saying so is
+the point of naming the ones that were: `test_the_table_names_a_patch_that_exists`
+and `test_each_named_root_constant_still_reads_as_it_did` are assertions about
+the tree's shape rather than about a figure a tool moves, and the remaining
+`ParseTests` cases check the parse against inline text whose expected value is
+written out beside it.
 
 ## Read and not corrected
 
