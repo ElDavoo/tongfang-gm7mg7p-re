@@ -446,6 +446,10 @@ written from memory rather than measured.
 than carrying a list, cross-decodes each of the 143 with `disasm8051.py` (all
 143 agree; the verdict per instruction is in `gap-text-check.csv`), and its
 `--check` fails if a gap reason appears that has no cross-decode handler.
+`verify_reassembly.py --check`, which is in the cheap gate, prints the same
+composition beside the count and compares its total against the report's
+`instructions_unchecked` column; the transcript above is `--report`'s, and
+nothing in a gate runs that.
 
 Measured with `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` (SDCC 4.6.0), and
 reproduced unchanged on 4.5.0. The version is in every row of
