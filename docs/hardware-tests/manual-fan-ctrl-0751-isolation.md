@@ -746,6 +746,20 @@ For each run, from the three CSVs plus the by-hand power readings:
    answer to record and the status does not move — per `../../CLAUDE.md`,
    an ambiguous result is a result, not a reason to pick the
    confident-sounding phrasing.
+
+   **Correction (issue #124, 2026-10-03), leaving the sentence above as it
+   was written.** *It has no capture windows to re-grade* was true while that
+   file was a console log the grader could not open, and it stopped being true
+   when `../../ec/tools/probe_log_to_capture.py` converted the file into the
+   capture schema (§6). The derived capture has one window per mark and the
+   grader reads all of them, so **that** file is now re-gradeable — and what
+   comes out of it settles nothing §7 wants, for three reasons its own `#`
+   header states: it is a transcription rather than a capture, every timestamp
+   in it is one of two recorded choices, and there is no `no-op wrote` mark
+   anywhere in the source, so §4.4's control-vs-write comparison — the very
+   comparison this bullet is about — is not available over it. The conversion
+   is what makes the record legible; it adds no arm, no sample and no byte. See
+   `../findings/probe-log-capture-conversion.md`.
 5. **CPU package power** under the same fixed load, by hand at each mark. If
    the PLs did not move but the power ceiling did, something other than
    `0x0783-0x0785` is enforcing it, and that is a new question, not a
@@ -919,6 +933,27 @@ is the correction to where the day is still being spent, and what it promises
 is that a label it accepts is one this grader can place. Both ends apply that
 one predicate, so a label the prompt accepts and this grader later refuses
 would be a bug in one of the two rather than a documented gap.
+
+**One format, two producers, one reader.** A row is `ts,addr,old,new` and an
+action is a `ts,MARK,,label` row whose label is one of §6's six forms. That is
+the whole of the capture format, and
+`../../ec/tools/grade_0751_isolation.py` reads it unchanged from either of the
+two tools that write it: §3's three `ec_watch.py --mark --csv` watchers, and
+`../../windows/tools/manual_fan_ctrl_probe.py --csv`, whose `MarkCsv` writes the
+same four columns with one mark per arm and whose arm labels are §3's three
+action forms — so a probe capture and a §3 capture are one row to the reader,
+which is what §3b's corrections already rest on. **A log from before `--csv`
+existed is a third shape, and it is converted rather than graded**:
+`../../ec/tools/probe_log_to_capture.py` reads the free-form console text an
+older probe wrote and writes this schema, given an `--anchor` it has to be told,
+because such a log carries one run timestamp for the whole run and per-block
+offsets and no spacing between them. That is how the committed
+`../../evidence/ec-watch/2026-09-23-0751-isolation.txt` becomes gradeable, and
+the file the converter writes says in its own `#` header that it is a
+transcription rather than a capture and that every timestamp in it is one of
+two recorded choices. It is **not** a step in the next run: both tools write the
+format directly, and a run taken today never needs it. The write-up is
+`../findings/probe-log-capture-conversion.md`.
 
 **A run that did not reach its hold.** `windows/tools/manual_fan_ctrl_probe.py`
 records that in the capture itself, in one `#` row written from its
