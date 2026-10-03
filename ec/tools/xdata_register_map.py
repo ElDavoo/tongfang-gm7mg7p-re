@@ -3566,11 +3566,11 @@ def census_shape(args) -> str:
                              committed `cluster_key`s do not survive into it
 
     `--no-writer-axis` is deliberately **not** among them: `build()` calls
-    `components(groups[g], threshold)` with the writer axis always on, and its
-    own help scopes it to `--threshold-sweep`, so a write passing it clusters
-    as a default run -- listing it is the same overclaim the other way.
+    `components(groups[g], threshold)` with the writer axis always on, and
+    `main()` refuses it outside the two modes that read it, so no write has it.
 
-    Returned in `main()`'s own declaration order, the order the parser has.
+    Order is `main()`'s own declaration order; the set is derived from
+    `generate()`'s AST by `test_xdata_census_shape_set.py`, not kept here.
     """
     off = []
     if args.threshold != DEFAULT_THRESHOLD:
@@ -5597,6 +5597,21 @@ def main() -> int:
         ap.error("--export-ownership would overwrite the committed census, so "
                  "it must be given scratch outputs: pass --out-registers and "
                  "--out-clusters (see annotations/xdata-export-ownership.md).")
+
+    # The third of the three, and the only one refused by which mode asked for
+    # it rather than by what the run would do. `--no-writer-axis` drops the
+    # writer axis in `components()`, and only two modes pass it; every other
+    # mode parsed it and ignored it, so `--check --no-writer-axis` was a run
+    # whose numbers are a default run's wearing a flag that says it measured
+    # the second relation. Accepted and ignored is the same shape as a constant
+    # with no reader, so it is refused with the other two. Which two is derived
+    # rather than written: `test_xdata_census_shape_set.py` reads the readers
+    # out of the tool's own AST, so a third one goes red there.
+    if args.no_writer_axis and not (args.threshold_sweep
+                                    or args.collapse_co_readings):
+        ap.error("--no-writer-axis only changes what --threshold-sweep and "
+                 "--collapse-co-readings cluster on, so it is refused with "
+                 "every other mode rather than ignored by it.")
 
     if args.self_test:
         return self_test(args)
