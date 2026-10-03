@@ -128,16 +128,31 @@ END_DEPTH = "depth limit"
 END_BUDGET = "instruction budget"
 END_LOOP = "loop"
 END_IMAGE = "index past the end of the image"
+# Not a stop reason at all: the walk records it and carries on, so it is
+# neither a cut nor a control-flow end. See the call site.
+END_DPTR = "DPTR built at run time (a store to DPL/DPH)"
+# The two stop reasons that lead with the address rather than the reason. Both
+# are cuts -- both mean the walk gave up -- and neither can be told from the
+# others by its first characters, which is why each carries its own `cut`
+# verdict at its call site rather than being matched. They are templates rather
+# than constants because the address is the point of them.
+END_RUNS_PAST = "0x{pc:04X} runs past the end of the image"
+END_UNREACHABLE = "0x{pc:04X} is not reachable from region {region}"
 
-# Stop reasons that mean the walk gave up rather than finished. A `loop` is not
-# one of them: an arm that cycles has been fully explored, it just comes back
-# round, and saying `cut` there would understate what was read. END_IMAGE is one
-# of them because the arm stopped at the first address it could not read, and
-# an IndexError is not a result -- adding it can only widen what no_claim() and
-# arm_status() say about an arm, which is the safe direction. It fires zero
-# times over the committed image at the default bounds; see
-# ../../docs/findings/descend-index-guard.md for the count and the vector that
-# reaches it.
+# The four stop reasons emitted constant-first. Kept because four importers --
+# `run_entry_map.py`, `stride_index_table.py`, `bank_attribution.py` and
+# `bucket_c_codemap.py` -- match `Arm.ends` against them, and their behaviour is
+# not this change's to move.
+#
+# It is not how *this* tool classifies an arm any more. Every `arm.end()` call
+# site states whether its reason is a cut, and `Arm.cut_ends` is that answer;
+# `CUTS` names only the subset a reader can match by prefix. A `loop` is not a
+# cut, an arm that cycles having been fully explored -- it just comes back
+# round, and saying `cut` there would understate what was read. END_IMAGE is a
+# cut because the arm stopped at the first address it could not read, and an
+# IndexError is not a result. It fires zero times over the committed image at
+# the default bounds; see ../../docs/findings/descend-index-guard.md for the
+# count and the vector that reaches it.
 CUTS = (END_DEPTH, END_BUDGET, END_INDIRECT, END_IMAGE)
 
 
@@ -156,11 +171,32 @@ class Arm:
         self.movx_ri = 0                  # movx @Ri -- indirect, never an address
         self.insns = 0
         self.blocks = []                  # (block start, [(runtime, text)])
-        self.ends = []
+        self._ends = {}                   # message -> is it a cut, in order
 
-    def end(self, why):
-        if why not in self.ends:
-            self.ends.append(why)
+    def end(self, why, *, cut):
+        """Record `why` as a reason this arm ended. `cut` says whether the
+        walk gave up rather than finished, and is required rather than
+        defaulted: a stop reason nobody classified would otherwise land in the
+        finished bucket silently, which is the error this argument exists to
+        make a `TypeError` at the call site instead.
+
+        First write wins on a repeat. The same stop reason reaching an arm
+        twice is the same cut, so there is nothing to reconcile."""
+        if why not in self._ends:
+            self._ends[why] = cut
+
+    @property
+    def ends(self):
+        """The stop reasons, in the order they fired -- the CSV's `ends`
+        column, which this list reproduces byte for byte."""
+        return list(self._ends)
+
+    @property
+    def cut_ends(self):
+        """The subset of `ends` that means the walk gave up rather than
+        finished. Read from what each call site recorded, so it is the same
+        answer `arm_status()`, `no_claim()` and `callee_row()` all give."""
+        return [why for why, cut in self._ends.items() if cut]
 
     def touch(self, addr, read=False, write=False):
         cur = self.xdata.setdefault(addr, set())
@@ -337,17 +373,20 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
     while pending:
         pc, depth, dp = pending.pop(0)
         if pc in walked:
-            arm.end(f"{END_LOOP} back to 0x{pc:04X}")
+            arm.end(f"{END_LOOP} back to 0x{pc:04X}", cut=False)
             continue
         walked.add(pc)
         block = []
         while True:
             off = offset_for_runtime(pc, region)
             if off is None:
-                arm.end(f"0x{pc:04X} is not reachable from region {region}")
+                # The bytes at this address were never read, so nothing past
+                # it was reached -- the same fact `callee_row()` states as
+                # `unresolved` when it fires there.
+                arm.end(END_UNREACHABLE.format(pc=pc, region=region), cut=True)
                 break
             if budget <= 0:
-                arm.end(f"{END_BUDGET} at 0x{pc:04X}")
+                arm.end(f"{END_BUDGET} at 0x{pc:04X}", cut=True)
                 break
             # `offset_for_runtime()` bounds the *runtime address* against its
             # region (trace_xdata_refs.py:256), not the file offset it hands back
@@ -359,7 +398,7 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
             # certifies only 0x2004A of that. The read is in range because the
             # buffer is long enough.
             if off < 0 or off >= len(d):
-                arm.end(f"{END_IMAGE} at 0x{pc:04X}")
+                arm.end(f"{END_IMAGE} at 0x{pc:04X}", cut=True)
                 break
             op = d[off]
             n = OPCODE_LEN[op]
@@ -369,7 +408,10 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
             # allowed to land exactly on len(d). The test above is what holds
             # the index; deleting this one would not make that read safe.
             if off + n > len(d):
-                arm.end(f"0x{pc:04X} runs past the end of the image")
+                # The instruction does not fit, so it was never decoded. The
+                # same condition `END_IMAGE` records one step earlier for the
+                # index; both mean the walk gave up short of an instruction.
+                arm.end(END_RUNS_PAST.format(pc=pc), cut=True)
                 break
             raw = d[off:off + n]
             arm.insns += 1
@@ -410,13 +452,16 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
                 # on purpose -- see the module docstring and manual-fan-ctrl-
                 # 0751.md 6, which is eight sites this tool must not mis-credit.
                 dp = None
-                arm.end("DPTR built at run time (a store to DPL/DPH)")
+                # A note, not a terminator: the walk continues past this, so
+                # it is neither a cut nor a control-flow end. It is the one
+                # reason here that answers neither question.
+                arm.end(END_DPTR, cut=False)
 
             if op in (0x22, 0x32):            # ret / reti
-                arm.end(END_RET if op == 0x22 else END_RETI)
+                arm.end(END_RET if op == 0x22 else END_RETI, cut=False)
                 break
             if op == 0x73:                    # jmp @a+dptr
-                arm.end(END_INDIRECT)
+                arm.end(END_INDIRECT, cut=True)
                 break
 
             if op in (0x02, 0x12) or op & 0x1F in (0x01, 0x11):
@@ -426,7 +471,7 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
                 if op == 0x12 or op & 0x1F == 0x11:      # lcall / acall
                     pc += n
                     continue
-                arm.end(END_TAIL)                        # ljmp / ajmp
+                arm.end(END_TAIL, cut=False)             # ljmp / ajmp
                 break
 
             if op in REL_BRANCHES or op == 0x80:
@@ -439,9 +484,9 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
                 if depth < max_depth:
                     pending.append((target, depth + 1, dp))
                 else:
-                    arm.end(f"{END_DEPTH} at 0x{target:04X}")
+                    arm.end(f"{END_DEPTH} at 0x{target:04X}", cut=True)
                 if op not in REL_BRANCHES:      # sjmp: a transfer, not a split
-                    arm.end(END_TAIL)
+                    arm.end(END_TAIL, cut=False)
                     break
                 pc = (pc + n) & 0xFFFF
                 continue
@@ -492,7 +537,7 @@ def no_claim(arm) -> str:
         blind.append("a movx through a register")
     if arm.callees:
         blind.append("an unresolved callee")
-    cuts = [e for e in arm.ends if e.startswith(CUTS)]
+    cuts = arm.cut_ends
     if cuts:
         blind.append("a walk stopped at " + "; ".join(cuts))
     return ("no arm found by this method writes an XDATA address; "
@@ -503,7 +548,7 @@ def arm_status(arm) -> str:
     """`complete`, or the cuts that stopped the walk short. On every 0x0751 arm
     the answer is `complete` at the default bounds, which is the fact that
     lets the negative claims above be stated without a hedge."""
-    cuts = [e for e in arm.ends if e.startswith(CUTS)]
+    cuts = arm.cut_ends
     return "cut: " + "; ".join(cuts) if cuts else "complete"
 
 
@@ -711,7 +756,7 @@ def callee_row(d, region, callee, max_depth, max_insns):
     if not arm.insns:
         return row(0, "", "", "", 0, ends,
                    "unresolved: no instruction decodes at the entry point", "")
-    cuts = [e for e in arm.ends if e.startswith(CUTS)]
+    cuts = arm.cut_ends
     if cuts:
         status = "unresolved: " + "; ".join(cuts)
     elif arm.unattributed or arm.movx_ri:
