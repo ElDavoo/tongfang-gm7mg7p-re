@@ -4305,6 +4305,44 @@ registers:
       .asm listings are the only statement of it. No upstream name.
       Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
 
+  - name: XDATA_3202
+    addr: 0x3202
+    bits: [0, 1, 2]
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: 0x3202 had no entry in this file
+      before this one, and it is created at present-untested. Four direct MOV
+      DPTR sites, all in bank0, all reads, no PD-image site; recounted from
+      the image by ec/tools/check_register_counts.py, which is the authority
+      for the 4/4/0 above. The four accessors come in two polarity pairs, and
+      both pairs are named here because the inverted half is the reason the
+      other half exists: 0xC0C9 (return_1_if_3202_bits_1_and_2) returns 1
+      only when bits 1 and 2 are both set, and 0xC0B8
+      (return_1_unless_3202_bits_1_and_2) is its exact inverse on the same two
+      bits; 0xC0E7 (test_3202_bit0) returns the bit's own value, and 0xC0DA
+      (return_1_unless_3202_bit0) its inverse. So bits 0, 1 and 2 are all read
+      and no site here examines a bit above 2. The census row's refs=6 is a
+      different unit, not a disagreement: it counts C-level `movx` occurrences
+      across the same four functions, and two of them reload the byte before
+      their second bit test, so 4 direct sites become 6 C-level reads. The
+      decompiled C drops the R7 return at every site, so the .asm listings are
+      the only statement of it. No writer for this byte was found by this
+      method, which is a gap in the search and not evidence that none exists --
+      a store through a computed DPTR, an indirect `movx @Ri` or a table would
+      all be invisible to both tools here. With no writer, the value space is
+      unestablished, so what the three bits select is not stated here. This is
+      the other arm of the 0x06D9 countdown gate beside XDATA_1664: bank1
+      0x8096 decrements 0x06D9 only when both return zero, and 0x1984 reaches
+      the 0xC10C thunk on 0xC0C9, so what it gates on is bits 1 and 2 read one
+      call deeper. High XDATA is plausibly a hardware block rather than the
+      EC's own state; nothing measured here bears on which it is, so this row
+      claims the address and nothing beyond it. No hardware was involved.
+      Block census: docs/findings/3202-block-walk.md.
+
   - name: XDATA_1C01
     addr: 0x1C01
     sources: [xdata-refs]
