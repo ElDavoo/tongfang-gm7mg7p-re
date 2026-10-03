@@ -103,43 +103,45 @@ nothing reports green, which is the `census_test_line_pins.py` convention and
 the shape `test_walk_budget_census.py` already follows for its own baseline:
 a check that measured nothing has to say so rather than pass.
 
-## 3. The 61, and what a `partial` row costs a reader
+## 3. The 49, and what a `partial` row costs a reader
 
-`status` over the 171 rows is 76 `resolved`, 61 `partial: DPTR built at run
-time`, 34 `complete` — and the split is not spread across the table the way
-those three numbers read. **Every `complete` row is a `kind=arm` row and every
-`arm` row is `complete`; all 137 `callee` rows split 76 / 61.** `partial` is a
-word `callee_row()` has and `arm_status()` does not, so the 61 are a property
-of the callee population and of nothing else — and the cost is that a reader
-who takes `complete` to mean "nothing was left unattributed" is wrong on **7 of
-the 34 site arms**, which record `unattributed` of 1 or 2 and still read
-`complete`, because `arm_status()` reports cuts and has no `partial` to give.
+`status` over the 171 rows is 88 `resolved`, 49 `partial`, 34 `complete` — and
+the split is not spread across the table the way those three numbers read.
+**Every `complete` row is a `kind=arm` row and every `arm` row is `complete`;
+all 137 `callee` rows split 88 / 49.** `partial` is a word `callee_row()` has
+and `arm_status()` does not, so the 49 are a property of the callee population
+and of nothing else — and the cost is that a reader who takes `complete` to
+mean "nothing was left unattributed" is wrong on **5 of the 34 site arms**,
+which record `unattributed` of 2 and still read `complete`, because
+`arm_status()` reports cuts and has no `partial` to give.
 
 What one costs a reader:
 
 - **The window ends where DPTR stops being known.** `descend()` clears the
   pointer on a store to DPL or DPH and records
-  `"DPTR built at run time (a store to DPL/DPH)"` in `ends`.
+  `"DPTR built at run time (a store to DPL/DPH)"` in `ends`. The new
+  `dp_causes` column says which of the causes took the pointer away for each
+  unattributed store, so the 49 no longer all read as this one.
 - **Every later `movx` is counted `unattributed` rather than charged to the
   site**, on purpose: "unattributed" is the safe direction and a wrong address
-  is not. Over the 61 the count is 1 on 37 rows, 2 on 23 and 4 on one.
+  is not. Over the 49 the count is 1 on 29 rows and 2 on 20.
 - **So the row's `xdata` column is a lower bound on what the arm touches.**
   This is the sentence a reader needs and the table does not carry: **20 of the
-  61 have an empty `xdata` cell**, every `movx` in them landing
+  49 have an empty `xdata` cell**, every `movx` in them landing
   `unattributed`. An empty cell there does not mean the arm touched no XDATA;
   it means the arm touched XDATA through a pointer this walk could not
   resolve. A negative read off that column is a statement about the method and
-  not about the firmware, and the 15 empty `xdata` cells among the 76
+  not about the firmware, and the 15 empty `xdata` cells among the 88
   `resolved` rows are a different thing again — a resolved row has no
   unattributed access to have, so an empty cell there is at least consistent
   with the arm being XDATA-silent.
 
-### The 26, the 61, and the 16 between them
+### The 26, the 49, and the 13 between them
 
 26 rows carry `"DPTR built at run time (a store to DPL/DPH)"` in `ends`. That
-is **not** a subset of the 61: the two sets intersect in **16**. Of the 26,
-9 are `complete` (all of them site arms, which arrive at `descend()` holding
-the site's DPTR and so keep attributing), 1 is `resolved`, and **45 of the 61
+is **not** a subset of the 49: the two sets intersect in **13**. Of the 26, 9
+are `complete` (all of them site arms, which arrive at `descend()` holding the
+site's DPTR and so keep attributing), 4 are `resolved`, and **36 of the 49
 carry no such `ends` note at all**.
 
 The cause is one line. `callee_row()` calls `descend()` with `dptr=None`,
@@ -147,12 +149,24 @@ because a callee inherits the caller's DPTR and that value is not carried into
 the row. A callee whose first `movx` is `movx a,@dptr` therefore starts already
 unknown, and it starts unknown without anything having gone wrong: **a row
 carrying no note had no store of the form the walk recognises**, which for
-most of these 45 is the ordinary case — a callee handed an unknown pointer —
+most of these 36 is the ordinary case — a callee handed an unknown pointer —
 rather than a gap in the walk. (The next section is about the one form it does
 not recognise.) **So the `ends` cell and the `status` cell are answering two
 different questions, and neither is a subset of the other.** Counting the note
 to stand in for the status — which the shape of the two columns invites —
-understates the population by 45 rows.
+understates the population by 36 rows.
+
+> **Corrected 2026-10-03 (issue #242).** This section read "The 61", "76
+> `resolved`", "7 of the 34 site arms", a 1/2/4 tally, "the 16 between them"
+> and "45 of the 61". Every one of those moved when `descend()` began
+> following `inc dptr`: stores that had been charged to no address because the
+> pointer went unknown at an increment now carry one, which took twelve callee
+> rows out of `partial` and two site arms out of having an `unattributed` at
+> all. The `status` vocabulary also widened — `partial:` now names the cause
+> and can name more than one — so the three numbers above are a count of rows
+> starting with `partial`, which is the population this section is about. The
+> argument is unchanged and the arithmetic under it has been re-derived from
+> the committed table.
 
 ### The `ends` note is not a complete record, and one form is missing
 
@@ -182,7 +196,8 @@ Adding `0xD0` to `_dptr_write()` and re-running the reproducing command moves
 **`ends` on 5 of the 171 rows** and **drops a `code_pointers` entry of `0x0A49`
 from the two `0x93CA` arm rows**, and changes nothing else: `xdata`,
 `unattributed` and `status` are byte-identical on every row. So §3's reading of
-the 61 survives this untouched, and the damage is confined to two columns.
+the `partial` population survives this untouched, and the damage is confined to
+two columns.
 
 **What the dropped `code_pointers` entry is.** Both rows' `code_pointers` cell
 reads `0x0A49`, and both `window` cells contain the sequence that puts it
@@ -263,12 +278,15 @@ repository's own rule is to cite by name rather than by line anyway.
 
 ## 5. What does and does not hold the arms table
 
-**No check re-derives `manual-fan-ctrl-0751-arms.csv` and compares it.**
+**No check re-derives `manual-fan-ctrl-0751-arms.csv` byte for byte.**
 `walk_branch_arms.py` has no `--check` mode, and the nine site tables this
-census does read are held byte for byte by tools that have one. Two things
-stand in for that and neither is a gate: `census_xdata_writers.arms_gap()`
+census does read are held byte for byte by tools that have one. Three things
+stand in for that and none is a gate: `census_xdata_writers.arms_gap()`
 sums the file's `unattributed` column per `addr`, held by
-`test_census_xdata_writers.py`; and
+`test_census_xdata_writers.py`;
+`test_walk_branch_arms.py::UnknownDptrCauseTests` reads both arms tables and
+holds the claim that every unattributed store carries a declared cause, which
+is a property of the cells rather than of their bytes; and
 [`manual-fan-ctrl-0751.md`](../../ec/annotations/manual-fan-ctrl-0751.md)
 carries the `diff -` that reproduces the table, as a procedure for a person to
 run rather than as a command anything calls.

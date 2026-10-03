@@ -103,40 +103,53 @@ Reproduce with `python3 ec/tools/run_entry_map.py ec/firmware/GMxMGxx_11.800
 | slot | op | target | seg | stub | committed name | what it does per pass, and what it writes |
 |---|---|---|---|---|---|---|
 | `0x8518` | `ljmp` | `0xB065` | 0 | `0x155E` | `ten_count_gate_then_set_1300_and_200f` | Gates on `0x0440`/`0x047E`/`0x06DB`/`0x06E6`, then a ten-count latch sets `0x1300`/`0x1304` and `0x200F`. vis: none. invis: `0x0B00` `0x0BFD` `0x0BFE` `0x1300` `0x1302` `0x1304` `0x2007` `0x200F` |
-| `0x851B` | `lcall` | `0xA7C8` | 1 | `0x1564` | *no committed name* | A power-mode profile gate: on `0xBE9C` clear it sets bits in `0x0742`/`0x0782`/`0x078E` and clears `0x0783`–`0x0785`/`0x078B`, and rewrites `0x0751` from the bits it just read. vis: `0x0730`–`0x0732` `0x0737` `0x0739` `0x073A` `0x0742` `0x0751` `0x0782`–`0x0785` `0x078B` `0x078E` `0x07A7`–`0x07AA`. invis: `0x08E6` `0x0A50` `0x0A51` |
+| `0x851B` | `lcall` | `0xA7C8` | 1 | `0x1564` | *no committed name* | A power-mode profile gate: on `0xBE9C` clear it sets bits in `0x0742`/`0x0782`/`0x078E` and clears `0x0783`–`0x0785`/`0x078B`, and rewrites `0x0751` from the bits it just read. vis: `0x0730`–`0x0732` `0x0737` `0x0739` `0x073A` `0x0742` `0x0751` `0x0782`–`0x0785` `0x078B` `0x078E` `0x07A7`–`0x07AA`. invis: `0x08E6`–`0x08E7` `0x0A50`–`0x0A52` |
 | `0x851E` | `lcall` | `0xA844` | 1 | — | `update_0476_flags` | Sets or clears bit 4 of `0x0768` from `0x0398`, then sets or clears bits 5 and 6 of `0x0476` against `0x0490` bit 2, `0x04AB` and a 16-bit compare. vis: `0x0476` `0x0768`. invis: `0x084F` `0x0850` |
 | `0x8521` | `ljmp` | `0xCFC6` | 1 | — | `collect_two_flags_into_0816_then_raise_ap_oem_bit7` | Scans 253 bytes of `0x0B00` for two markers, sets bit 0 or 1 of `0x0816`, and on both seen sets bit 7 of `0x0741`. vis: `0x0741`. invis: `0x0816` |
 | `0x8524` | `ljmp` | `0x9049` | 2 | `0x156A` | `countdown_0806_and_branch_on_0490` | Gates on `0x0490` bits 0 and 2 with `0x0398` and `0x06E6`, reloads and decrements the `0x0806` countdown. vis: none. invis: `0x0806` `0x1607` `0x1641` |
 | `0x8527` | `ljmp` | `0xB0DC` | 3 | `0x1570` | `sync_0983_bit5_against_support_2_bit4` | Sets or clears bit 5 of `0x0983` to follow bit 4 of `0x0440`/`0x0766`. vis: none. invis: `0x0983` |
-| `0x852A` | `lcall` | `0xB83B` | 4 | `0x1576` | *no committed name* | Writes the `0x0A47`/`0x0A48` constant pair and touches `0x08E2`; one `movx` rides a DPTR built at run time and is unattributed. vis: none. invis: `0x08E2` `0x0A47` `0x1607` |
-| `0x852D` | `lcall` | `0x924C` | 4 | — | `set_0838_0839_0832_on_049f_bit2` | Clears bit 2 of `0x049F` if set, then writes `0x0838`/`0x0839` and sets bit 2 of `0x0832`. vis: `0x049F`. invis: `0x0832` `0x0838` `0x083A` `0x083B` `0x08B9` `0x08E2` |
+| `0x852A` | `lcall` | `0xB83B` | 4 | `0x1576` | *no committed name* | Writes the `0x0A47`/`0x0A48` constant pair and touches `0x08E2`; the `0x0A48` byte is written by the `inc dptr` after `0x0A47`, which the walk now follows. vis: none. invis: `0x08E2` `0x0A47`–`0x0A48` `0x1607` |
+| `0x852D` | `lcall` | `0x924C` | 4 | — | `set_0838_0839_0832_on_049f_bit2` | Clears bit 2 of `0x049F` if set, then writes `0x0838`/`0x0839` and sets bit 2 of `0x0832`. vis: `0x049F`. invis: `0x0832` `0x0838`–`0x083B` `0x08B9` `0x08E2` |
 | `0x8530` | `lcall` | `0xD091` | 4 | — | `dispatch_on_0860` | The `0x0860` dispatch: copies six `0x1Cxx` bytes into `0x0866`–`0x086B` and writes `0x0865`, then dispatches. vis: `0x07FD`–`0x07FF`. invis: `0x0864`–`0x086C` `0x08EB` `0x1063` `0x1C00`–`0x1C05` `0x1C15` `0x1C16` `0x1C39` `0x1C3A` `0x1F01` `0x1F06` `0x1F07`. **Cut** at the routine's `jmp @a+dptr` |
-| `0x8533` | `lcall` | `0xDFDF` | 4 | — | `gate_06e6_then_store_0464` | Gates on `0x06E6` then stores the `0x0464`/`0x0465` pair. vis: `0x0464`. invis: none |
+| `0x8533` | `lcall` | `0xDFDF` | 4 | — | `gate_06e6_then_store_0464` | Gates on `0x06E6` then stores the `0x0464`/`0x0465` pair. vis: `0x0464`–`0x0465`. invis: none |
 | `0x8536` | `ljmp` | `0xAC4A` | 4 | — | `toggle_08e2_bit4` | Returns unless `0xB9D8` is zero and `0x073C` is exactly `0x01`, then sets or clears bit 4 of `0x08E2` and adjusts `0x0826` and `0x086F`. vis: none. invis: `0x0826` `0x086F` `0x08E2`. **This is the split the issue named** |
-| `0x8539` | `lcall` | `0xE010` | 5 | `0x157C` | `load_06e6` | Loads `0x06E6` and, on `0x01`, stores R6:R7 to `0x046C`/`0x046D`. vis: `0x046C`. invis: none |
+| `0x8539` | `lcall` | `0xE010` | 5 | `0x157C` | `load_06e6` | Loads `0x06E6` and, on `0x01`, stores R6:R7 to `0x046C`/`0x046D`. vis: `0x046C`–`0x046D`. invis: none |
 | `0x853C` | `lcall` | `0x9167` | 5 | — | `gate_on_074c_then_dispatch` | Three gates on `0x074C`, then sets bit 5 and dispatches on the low nibble. vis: `0x0463` `0x074C`. invis: `0x098C`. **Cut** at the `0x7151` dispatcher's `jmp @a+dptr` |
-| `0x853F` | `lcall` | `0xB12C` | 5 | — | `manual_ctrl_profile_gate` | The chain's target: sets `0x078E` bit 3, forces the manual-ctrl profile back to High Capacity, and on `0x0490` bit 1 clear zeroes the `0x09C7`–`0x09C9` stress counters. vis: `0x0522` `0x0523` `0x078E` `0x07A6`. invis: `0x09C7` `0x09C8` `0x09C9` `0x0A47` `0x0A4A` `0x0A4E` |
-| `0x8542` | `lcall` | `0xB4A8` | 5 | — | *no committed name* | A state machine over `0x08EB`/`0x09E6`/`0x09E7`; its tail clears `0x08EB` bit 5 and zeroes `0x08A1` and `0x089C`/`0x089D`. vis: `0x047F` `0x06D1`. invis: `0x089C` `0x08A1` `0x08EB` `0x09E6` `0x09E7` |
-| `0x8545` | `lcall` | `0xB5D3` | 5 | — | *no committed name* | A larger state machine over the same `0x08EB` family, plus `0x0875`/`0x089E`/`0x08A2` and the `0x0A47`/`0x0A49` pair. vis: `0x047F` `0x06D1`. invis: `0x0875` `0x089E` `0x08A2` `0x08EB` `0x09E6` `0x09E7` `0x0A47` `0x0A49` |
-| `0x8548` | `ljmp` | `0xB737` | 5 | — | *no committed name* | The USER-bit branch of the `0x0751` state machine; its exit clears `0x08EB` bit 6 and zeroes the `0x08A0` count. vis: none. invis: `0x08A0` `0x08EB` `0x0A47` |
-| `0x854B` | `lcall` | `0x9334` | 6 | `0x1582` | `seed_tcc_defaults_from_ba36` | Seeds the TCC defaults: writes the `0x07D8`–`0x07DA` offsets, `0x0A47`/`0x0A48` pairs and `0x0A49`. vis: `0x0463` `0x07D8` `0x07D9` `0x07DA`. invis: `0x098C` `0x0A47` `0x0A49` `0x0A4A` |
-| `0x854E` | `lcall` | `0x9CA6` | 6 | — | `gate_06e6_442_then_sync_046a_from_086b` | Gates on `0x06E6` and `0x0442`, counts `0x0893` to `0x17`, then syncs the `0x046A`/`0x046B`/`0x046E`/`0x046F` group from `0x086B`–`0x086E`. vis: `0x0463` `0x0466` `0x046A` `0x046B` `0x046E` `0x046F` `0x0730`–`0x0732` `0x0737` `0x07A7`–`0x07AA` `0x07C6`. invis: `0x080F` `0x0865`–`0x0869` `0x086B`–`0x086C` `0x086E` `0x0893` `0x09C1` `0x09EF` `0x0A47` `0x0A50` `0x0A51` |
+| `0x853F` | `lcall` | `0xB12C` | 5 | — | `manual_ctrl_profile_gate` | The chain's target: sets `0x078E` bit 3, forces the manual-ctrl profile back to High Capacity, and on `0x0490` bit 1 clear zeroes the `0x09C7`–`0x09C9` stress counters. vis: `0x0522` `0x0523` `0x078E` `0x07A6`. invis: `0x09C7`–`0x09CA` `0x0A47` `0x0A4A`–`0x0A4B` `0x0A4E`–`0x0A50` |
+| `0x8542` | `lcall` | `0xB4A8` | 5 | — | *no committed name* | A state machine over `0x08EB`/`0x09E6`/`0x09E7`; its tail clears `0x08EB` bit 5 and zeroes `0x08A1` and `0x089C`/`0x089D`. vis: `0x047F` `0x06D1`. invis: `0x089C`–`0x089D` `0x08A1` `0x08EB` `0x09E6` `0x09E7` |
+| `0x8545` | `lcall` | `0xB5D3` | 5 | — | *no committed name* | A larger state machine over the same `0x08EB` family, plus `0x0875`/`0x089E`/`0x08A2` and the `0x0A47`/`0x0A49` pair. vis: `0x047F` `0x06D1`. invis: `0x0875` `0x089E`–`0x089F` `0x08A2` `0x08EB` `0x09E6` `0x09E7` `0x0A47`–`0x0A4A` |
+| `0x8548` | `ljmp` | `0xB737` | 5 | — | *no committed name* | The USER-bit branch of the `0x0751` state machine; its exit clears `0x08EB` bit 6 and zeroes the `0x08A0` count. vis: none. invis: `0x08A0` `0x08EB` `0x0A47`–`0x0A48` |
+| `0x854B` | `lcall` | `0x9334` | 6 | `0x1582` | `seed_tcc_defaults_from_ba36` | Seeds the TCC defaults: writes the `0x07D8`–`0x07DA` offsets, `0x0A47`/`0x0A48` pairs and `0x0A49`. vis: `0x0463` `0x07D8` `0x07D9` `0x07DA`. invis: `0x098C` `0x0A47`–`0x0A4A` |
+| `0x854E` | `lcall` | `0x9CA6` | 6 | — | `gate_06e6_442_then_sync_046a_from_086b` | Gates on `0x06E6` and `0x0442`, counts `0x0893` to `0x17`, then syncs the `0x046A`/`0x046B`/`0x046E`/`0x046F` group from `0x086B`–`0x086E`. vis: `0x0463` `0x0466` `0x046A` `0x046B` `0x046E` `0x046F` `0x0730`–`0x0732` `0x0737` `0x07A7`–`0x07AA` `0x07C6`. invis: `0x080F` `0x0865`–`0x0869` `0x086B`–`0x086C` `0x086E` `0x0893` `0x09C1`–`0x09C3` `0x09EF` `0x0A47` `0x0A50`–`0x0A52` |
 | `0x8551` | `lcall` | `0x83FF` | 6 | — | `sync_0788_and_07d4_from_09e9` | Copies `0x09E9` into `0x0788` and, when `0x0743` bit 0 is set, `0x09EA`/`0x09EB` into `0x07D4`/`0x07D5`. vis: `0x0788` `0x07C4` `0x07C5` `0x07D4` `0x07D5`. invis: none |
 | `0x8554` | `lcall` | `0xA2E0` | 6 | — | `step_0859_then_toggle_0858_bit0` | Steps the `0x0859` countdown, and at zero toggles bit 0 of `0x0858` against a `0xC224` read of `0x1604`. vis: none. invis: `0x0850` `0x0858` `0x0859` |
-| `0x8557` | `ljmp` | `0xA97B` | 6 | — | `dispatch_on_06e6_and_0741` | Gates on `0x06E6` and `0x0741`, decrements the `0x8A5`/`0x8A6` pair, sets or clears `0x0741` bit 2 and `0x086F`. vis: `0x0741` `0x0769` `0x076A` `0x076B`. invis: `0x086F` `0x08A5` `0x1803` `0x1805` `0x1808` |
+| `0x8557` | `ljmp` | `0xA97B` | 6 | — | `dispatch_on_06e6_and_0741` | Gates on `0x06E6` and `0x0741`, decrements the `0x8A5`/`0x8A6` pair, sets or clears `0x0741` bit 2 and `0x086F`. vis: `0x0741` `0x0769` `0x076A` `0x076B`. invis: `0x086F` `0x08A5`–`0x08A6` `0x1803` `0x1805` `0x1808` |
 
 **What a row is and is not.** A `write` is an instruction storing to an address
 in the block's own walk plus one level of `lcall` callee — it is not evidence
 the EC acts on the value, and no value is read back. The walks are
-`walk_branch_arms.descend()` used unchanged, so its refusals are these rows'
-refusals: a `movx` on a DPTR built at run time is **unattributed** rather than
-charged to the last `mov dptr`, and `--callee-depth 1` is a *declared* depth —
+`walk_branch_arms.descend()`, so its refusals are these rows' refusals: a
+`movx` on a DPTR built at run time is **unattributed** rather than charged to
+the last `mov dptr`, and `--callee-depth 1` is a *declared* depth —
 past it a callee reads `unresolved` or `partial`, and the write set is a lower
 bound rather than the whole set. **Cut** marks a walk that stopped at a bound
 rather than at a terminator, and the two such rows are cut at a `jmp @a+dptr`
 whose target the bytes do not resolve. A slot whose write set is empty would be
 reported as "no arm found by this method writes an XDATA address" and never as
 "the EC does not"; no slot here is empty, but the wording is the tool's.
+
+> **Corrected 2026-10-03.** The `vis`/`invis` cells above were written against
+> a `descend()` that set DPTR to unknown at an `inc dptr`, so each two-byte
+> store's high byte fell out of the walk set and the cells named only the low
+> one. `walk_branch_arms.py` now follows `inc dptr` as the increment it is
+> (`../walk-inc-dptr-attribution.md`), and twelve rows gained the byte they had
+> always been written to — `0x8557`'s prose already said it decrements the
+> `0x8A5`/`0x8A6` pair while its cell named `0x08A5` alone, which is the shape
+> of the error. `0x852A`'s prose claim that one `movx` there was unattributed
+> is withdrawn for the same reason: `0x0A48` is now reached, and the row counts
+> none. A store behind an in-place pointer mutation is still unattributed, but
+> no slot here carries one: the only committed row that does is callee `0x70E4`
+> in `bank0-8038-handler-arms.csv`, whose `dp_causes` names it.
 
 ## 4. The host-window split — the reason half of this cannot be graded by a capture
 

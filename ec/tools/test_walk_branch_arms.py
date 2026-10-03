@@ -14,10 +14,18 @@ firmware, so a case keeps testing what it was written to test if the bytes
 around some address in the image change. They are walked in the `common`
 region, whose file offset equals its runtime address, so a 0x40-byte buffer is
 its own address space and the addresses in a test are the offsets in the
-fixture -- except the one case that names the `pd-image` region, where a
-runtime address and its file offset are two different numbers and the point of
-the case is the gap between them.
+fixture -- except the two cases that name the `pd-image` region and the
+firmware, where a runtime address and its file offset are two different
+numbers or the claim is about this image specifically.
+
+`IncDptrTests` and `UnknownDptrCauseTests` cover what `descend()` does with a
+DPTR it cannot name. The second one's check over the two committed tables is a
+partition rather than a census: it asserts that a store with no address says
+which of the declared causes took the pointer away, and not how many there
+are. The numbers move with the walk, and a total in an assertion is a value
+every merge that touches the walk has to go and edit.
 """
+import csv
 import importlib.util
 from pathlib import Path
 import sys
@@ -60,6 +68,11 @@ READ = bytes([0x90, 0x07, 0x51, 0xE0, 0x22])                       # mov dptr,#0
 WRITE = bytes([0x90, 0x07, 0x51, 0xF0, 0x22])                      # ... ; movx @dptr,a ; ret
 BOTHE = bytes([0x90, 0x07, 0x51, 0xE0, 0xF0, 0x22])                 # ... ; movx a,@dptr ; movx @dptr,a ; ret
 SPLIT = bytes([0x90, 0x07, 0x51, 0xE0, 0x30, 0xE7, 0x02, 0x22])     # ... ; jnb acc.7,+2 ; ret
+
+# The two-byte store: `mov dptr,#hi ; movx @dptr,a ; inc dptr ;
+# movx @dptr,a`. This is the shape 0xB730 and the eight 0x8038 handlers do,
+# and the one the walk used to truncate at the increment.
+PAIR = bytes([0x90, 0x07, 0x51, 0xF0, 0xA3, 0xF0, 0x22])             # mov dptr,#0x0751 ; movx @dptr,a ; inc dptr ; movx @dptr,a ; ret
 
 
 class DirectionTests(unittest.TestCase):
@@ -143,6 +156,276 @@ class DptrTests(unittest.TestCase):
         arm = walk(fixture(bytes([0xE2, 0x22])))
         self.assertEqual(arm.xdata, {})
         self.assertEqual(arm.movx_ri, 1)
+
+
+class IncDptrTests(unittest.TestCase):
+    """`inc dptr` is a `mov dptr` of the successor, and the walk has to treat
+    it as one. It used to credit the byte walked over and then set the pointer
+    to unknown, which cost every store after an increment its address -- the
+    `movx @dptr,a` reaching `0x089F` at 0xB735, and the low byte of the
+    16-bit store every 0x8038 handler does.
+
+    Fixtures, not image addresses, for the reason this file's docstring gives:
+    a case anchored at an address keeps testing what it was written to test
+    only until the bytes there change. The one case that *is* on the image is
+    `UserClearCalleeTests::test_the_inc_dptr_store_lands_on_089f`, which
+    exists to pin the acceptance criterion against the firmware itself."""
+
+    def test_the_store_after_an_increment_lands_on_the_successor(self):
+        arm = walk(fixture(PAIR))
+        self.assertEqual(arm.writes(), {0x0751, 0x0752})
+        self.assertEqual(arm.unattributed, 0)
+        # The byte walked over is read on the way past and written by the
+        # store before the increment, which is why 0x0751 is `r+w` and not
+        # `write`. This is a modelling choice, kept: the pointer does cross
+        # that byte, and `0x089E` reading as `r+w` where the machine code only
+        # writes it is the visible consequence on the real table.
+        self.assertEqual(arm.accesses, "0x0751 r+w ; 0x0752 write")
+
+    def test_an_increment_with_no_pointer_beneath_it_stays_unknown(self):
+        # `inc dptr` on a pointer nothing set is not `dp + 1` for any `dp` the
+        # walk can name, so the store after it is unattributed rather than
+        # credited to 0x0001.
+        arm = walk(fixture(bytes([0xA3, 0xF0, 0x22])))
+        self.assertEqual(arm.xdata, {})
+        self.assertEqual(arm.unattributed, 1)
+
+    def test_an_increment_that_carries_bumps_the_high_byte(self):
+        # DPL is the low byte, so 0x08FF increments to 0x0900 and the carry
+        # lands in DPH. The case the issue asks the tool to state rather than
+        # assume, and the one an implementation which added 1 to a masked
+        # value would get wrong.
+        arm = walk(fixture(bytes([0x90, 0x08, 0xFF, 0xF0, 0xA3, 0xF0, 0x22])))
+        self.assertEqual(arm.writes(), {0x08FF, 0x0900})
+        self.assertEqual(arm.unattributed, 0)
+
+    def test_the_pointer_wraps_at_the_top_of_the_map(self):
+        # DPTR is 16 bits, so the increment from 0xFFFF is 0x0000. A result
+        # outside the register would be an address the machine cannot hold.
+        arm = walk(fixture(bytes([0x90, 0xFF, 0xFF, 0xF0, 0xA3, 0xF0, 0x22])))
+        self.assertEqual(arm.writes(), {0xFFFF, 0x0000})
+        self.assertEqual(arm.unattributed, 0)
+
+    def test_a_second_increment_carries_from_the_first(self):
+        # Three bytes as one pointer: each increment steps the previous one,
+        # so the middle store is neither lost nor charged to the first address.
+        arm = walk(fixture(bytes([0x90, 0x07, 0x51, 0xF0, 0xA3, 0xF0, 0xA3, 0xF0, 0x22])))
+        self.assertEqual(arm.writes(), {0x0751, 0x0752, 0x0753})
+        self.assertEqual(arm.unattributed, 0)
+
+    def test_an_increment_onto_a_code_pointer_is_not_an_xdata_address(self):
+        # `mov dptr,#0x93E6` is a CODE pointer and `descend()` records it as
+        # one. An increment that reaches one refuses it: the value goes to
+        # `code_immediates` and the store after it is unattributed rather than
+        # charged to an address the map says is not XDATA. Losing a possible
+        # store is the direction this tool takes everywhere else -- see
+        # `_dptr_write()` -- and the module docstring's `CODE_FLOOR` argument.
+        #
+        # `mov dptr` itself does *not* refuse: it records the immediate and
+        # leaves the pointer set, so a `movx` behind one is charged to
+        # `xdata`. The increment is deliberately the stricter of the two, and
+        # `test_the_increment_and_a_mov_dptr_of_the_same_value_disagree` is
+        # what keeps that divergence visible rather than accidental.
+        arm = walk(fixture(bytes([0x90, 0x07, 0x51, 0xF0, 0xA3, 0xF0, 0x22])))
+        # 0x0751 + 1 is not a CODE pointer; the crossing is the separate case
+        # below, where the increment itself steps over the floor.
+        self.assertEqual(arm.writes(), {0x0751, 0x0752})
+
+        crossed = walk(fixture(bytes([0x90, 0x7F, 0xFF, 0xF0, 0xA3, 0xF0, 0x22])))
+        self.assertEqual(crossed.xdata, {0x7FFF: {"r", "w"}})
+        self.assertNotIn(0x8000, crossed.xdata)
+        self.assertIn(0x8000, crossed.code_immediates)
+        self.assertEqual(crossed.unattributed, 1)
+        self.assertEqual(crossed.unknown_causes, [wba.DPTR_CODE])
+
+    def test_the_increment_and_a_mov_dptr_of_the_same_value_disagree(self):
+        # Pinned so the disagreement above is a fact about this file rather
+        # than an accident waiting to be "fixed" in one place and not the
+        # other. Making the two agree means deciding what a `movx` behind a
+        # CODE immediate is, which is a question about the map rather than
+        # about `inc dptr`, and it is not this change's to answer.
+        stepped = walk(fixture(bytes([0x90, 0x7F, 0xFF, 0xF0, 0xA3, 0xF0, 0x22])))
+        loaded = walk(fixture(bytes([0x90, 0x80, 0x00, 0xF0, 0x22])))
+        self.assertIn(0x8000, loaded.xdata)
+        self.assertNotIn(0x8000, stepped.xdata)
+        self.assertIn(0x8000, loaded.code_immediates)
+        self.assertIn(0x8000, stepped.code_immediates)
+
+    def test_a_decrement_between_two_increments_refuses_rather_than_guesses(self):
+        # Required by the increment, not by the issue: with the pointer live
+        # across more instructions, a stale `dp` here would produce 0x0753 --
+        # an address the machine never touches. `_dptr_write()`'s rule is that
+        # unattributed is the safe direction and a wrong address is not, and
+        # the in-place mutations reach that by the other direction.
+        arm = walk(fixture(bytes([0x90, 0x07, 0x51, 0xF0, 0xA5, 0xF0, 0x22])))
+        self.assertEqual(arm.xdata, {0x0751: {"w"}})
+        self.assertEqual(arm.unattributed, 1)
+        self.assertEqual(arm.unknown_causes, [wba.DPTR_MUTATED])
+
+    def test_a_mutation_records_against_the_store_behind_it_not_a_whole_row(self):
+        # The reason the causes are a list and not a set. A callee that opens
+        # on a `movx` and then decrements DPTR has two stores with no address
+        # and two different reasons: the first rode a pointer inherited from the
+        # caller, and the second rode one this walk has just seen stepped down.
+        # A single set for the row would say one or the other and be wrong
+        # about whichever it did not pick.
+        #
+        # The second cause is also the stronger claim, and the one a reader
+        # wants: an inherited pointer would be resolved by carrying the
+        # caller's value, while a mutated one would not, because the callee has
+        # moved it since.
+        arm = wba.descend(fixture(bytes([0xE0, 0xA5, 0xF0, 0x22])), "common", 0,
+                          None, DEPTH, INSNS, True, wba.DPTR_INHERITED)
+        self.assertEqual(arm.unknown_causes,
+                         [wba.DPTR_INHERITED, wba.DPTR_MUTATED])
+        self.assertEqual(wba.dp_causes(arm),
+                         f"{wba.DPTR_INHERITED} ; {wba.DPTR_MUTATED}")
+
+    def test_the_in_place_dptr_forms_are_the_ones_is_dptr_rebuild_names(self):
+        # The write-only half of the table. `inc dpl`/`dec dph`/`xch a,dpl` and
+        # the `anl`/`orl`/`xrl` on DPL move the pointer; the `anl a,0x82` forms
+        # only read the byte and must leave the pointer alone, or a
+        # read-modify-write of a pointer the walk could have followed would be
+        # dropped for no reason.
+        for op in (0x05, 0x15, 0xC5, 0x42, 0x43, 0x52, 0x53, 0x62, 0x63):
+            with self.subTest(op="0x%02X" % op):
+                img = fixture(bytes([0x90, 0x07, 0x51]), bytes([op, 0x82, 0x00]),
+                              bytes([0xF0, 0x22]))
+                arm = walk(img)
+                self.assertEqual(arm.unattributed, 1)
+                self.assertEqual(arm.unknown_causes, [wba.DPTR_MUTATED])
+        for op in (0x55, 0x45, 0x65):
+            with self.subTest(op="0x%02X" % op, reads_only=True):
+                img = fixture(bytes([0x90, 0x07, 0x51]), bytes([op, 0x82]),
+                              bytes([0xF0, 0x22]))
+                self.assertEqual(walk(img).writes(), {0x0751})
+
+    def test_a_store_is_charged_across_a_call_and_says_so(self):
+        # Issue #197: the callee may have rebuilt DPTR, so the address may be
+        # wrong. This does not close that -- the store is charged -- but the row
+        # has to say the credit is not one of the unquestioned ones, which is
+        # what the `dp_causes` cell and `no_claim()` carry.
+        arm = walk(fixture(bytes([0x90, 0x07, 0x51, 0x12, 0x81, 0x00, 0xF0, 0x22])))
+        self.assertEqual(arm.writes(), {0x0751})
+        self.assertTrue(arm.crossed_call)
+        self.assertIn(wba.DPTR_CARRIED, wba.dp_causes(arm))
+
+    def test_a_mov_dptr_after_the_call_clears_the_caveat(self):
+        # The mark is about the pointer's history, not a property of the row:
+        # once the walk sees a new `mov dptr` the value is the arm's own again
+        # and saying otherwise would make the column noise rather than a claim.
+        arm = walk(fixture(bytes([0x90, 0x07, 0x51, 0x12, 0x81, 0x00,
+                                  0x90, 0x09, 0xE6, 0xF0, 0x22])))
+        self.assertEqual(arm.writes(), {0x09E6})
+        self.assertFalse(arm.crossed_call)
+        self.assertNotIn(wba.DPTR_CARRIED, wba.dp_causes(arm))
+
+
+class UnknownDptrCauseTests(unittest.TestCase):
+    """An `unattributed` count with no cause is a number a reader has to take
+    on trust, and the causes are not interchangeable: an inherited pointer is
+    unknowable from the row while a rebuilt one is knowable in principle from
+    the same bytes. Each unattributed `movx` therefore records which, and the
+    cell names them per row."""
+
+    def test_every_unattributed_store_records_exactly_one_cause(self):
+        # The partition property, over the two tables this tool produces. Not
+        # a count of them: the numbers move with the walk, and a total in an
+        # assertion is a value every merge has to edit.
+        for addr in (0x0751, 0x1904, 0x1906, 0x1909, 0x190C):
+            for label, arm in _all_rows(FIRMWARE, addr):
+                with self.subTest(addr="0x%04X" % addr, row=label):
+                    self.assertEqual(len(arm.unknown_causes), arm.unattributed)
+                    self.assertTrue(set(arm.unknown_causes)
+                                    <= set(wba.UNKNOWN_CAUSES),
+                                    arm.unknown_causes)
+
+    def test_the_two_committed_tables_leave_nothing_without_a_cause(self):
+        # The claim the issue asks for, on the committed CSVs rather than on a
+        # re-walk: a reader of either table can tell what every unattributed
+        # store in it is a store *through*. `DPTR_CARRIED` is the one cause
+        # that can appear without an unattributed store, because it qualifies a
+        # store that *was* charged, so the check is on the others.
+        for name in ("manual-fan-ctrl-0751-arms.csv", "bank0-8038-handler-arms.csv"):
+            path = Path(HERE.parent / 'annotations' / name)
+            with self.subTest(csv=name):
+                with open(path, newline="") as f:
+                    for row in csv.DictReader(f):
+                        stores = int(row["unattributed"] or 0)
+                        causes = {c for c in row["dp_causes"].split(" ; ") if c}
+                        losses = causes - {wba.DPTR_CARRIED}
+                        where = "0x%s %s" % (row["addr"],
+                                              row["arm_start"] or row["callee"])
+                        self.assertEqual(bool(stores), bool(losses),
+                                         "%s: %d store(s), %r" % (where, stores,
+                                                                  sorted(losses)))
+                        self.assertTrue(causes <= _DECLARED, row["dp_causes"])
+
+    def test_a_callee_row_names_the_inherited_pointer_not_a_run_time_build(self):
+        # The larger half of what is left. `callee_row()` used to say
+        # "partial: DPTR built at run time" for every partial row, which for a
+        # callee that never builds one is a claim about the row that is not
+        # true -- and it is the cause a reader cannot get anywhere else, since
+        # the caller's pointer is precisely what this row does not carry.
+        row = wba.callee_row(_fixture_bytes([0xE0, 0x22]), "common", 0, 8, 64)
+        self.assertEqual(row[CSV_CAUSES], wba.DPTR_INHERITED)
+        self.assertIn(wba.DPTR_INHERITED, row[CSV_STATUS])
+        self.assertNotIn("run time", row[CSV_STATUS])
+
+    def test_a_callee_that_rebuilds_the_pointer_names_that_instead(self):
+        row = wba.callee_row(
+            _fixture_bytes([0x90, 0x07, 0x51, 0xE0, 0xF5, 0x82, 0xE0, 0x22]),
+            "common", 0, 8, 64)
+        self.assertEqual(row[CSV_CAUSES], wba.DPTR_BUILT)
+
+    def test_a_callee_that_does_both_names_both(self):
+        # The case a single-cause `partial:` reason cannot express, and the
+        # reason the status cell carries the whole list rather than one of it.
+        row = wba.callee_row(
+            _fixture_bytes([0xE0, 0x90, 0x07, 0x51, 0xF5, 0x82, 0xE0, 0x22]),
+            "common", 0, 8, 64)
+        self.assertIn(wba.DPTR_INHERITED, row[CSV_STATUS])
+        self.assertIn(wba.DPTR_BUILT, row[CSV_STATUS])
+
+
+# The cause vocabulary the partition and CSV checks hold the rows to, taken
+# from the tool rather than written out here so a new cause is a deliberate
+# edit in one place and not something a row can quietly acquire.
+_DECLARED = frozenset(wba.UNKNOWN_CAUSES) | {wba.DPTR_CARRIED}
+
+# Cell positions in a `callee_row()` result, named rather than indexed so a
+# column added to CSV_HEAD shows up as a wrong constant here and not as a row
+# that reads a different cell. Counted from the end, since the cells after the
+# address are what `callee_row()` fills in for the callee row shape.
+CSV_CAUSES = -4
+CSV_STATUS = -2
+CSV_UNATTRIBUTED = -5
+
+
+def _fixture_bytes(insns):
+    """The same flat `common`-region buffer `fixture()` builds, as the
+    `callee_row()` tests need it -- they call the row builder rather than the
+    descent, so they do not have a `walk()` to go through."""
+    return fixture(insns)
+
+
+def _all_rows(firmware, addr):
+    """[(label, arm)] for every arm and every callee row one address reaches,
+    at the same bounds the committed CSVs are written at. The label is the
+    address a reader would look the row up by, so a failure names the row."""
+    d = Path(firmware).read_bytes()
+    off, magic = wba.PD_MARKER
+    pd = d[off:off + len(magic)] == magic
+    for _foff, region, rt, test, arms in wba.arms_for(d, addr, pd, 16, 500):
+        if test is None:
+            continue
+        for arm in arms:
+            yield f"0x{rt:04X} {arm.kind}", arm
+        for callee in dict.fromkeys(c for a in arms for c in a.callees):
+            if wba.offset_for_runtime(callee, region) is None:
+                continue
+            yield f"0x{rt:04X} callee 0x{callee:04X}", wba.descend(
+                d, region, callee, None, 16, 500, True, wba.DPTR_INHERITED)
 
 
 class BoundTests(unittest.TestCase):
@@ -457,6 +740,40 @@ class UserClearCalleeTests(unittest.TestCase):
         # the routine, and the test that should notice is this one.
         self.assertEqual([f"0x{i:04X}" for i in range(len(self.d) - 2)
                           if self.d[i:i + 3] == b"\x02\xb7\x30"], ["0xB6A5"])
+
+    def test_the_inc_dptr_store_lands_on_089f(self):
+        # The `inc dptr` half of issue #242, on the bytes and then on the walk.
+        # 8a attributed the store at 0xB735 to nothing and explained it as a
+        # tool limitation -- `descend()` set the pointer to unknown at the
+        # increment -- so `0x089E` and `0x089F` were written as one 16-bit
+        # store in the firmware and the CSV named only the first byte of it.
+        #
+        # Both halves are pinned. The bytes first, so the case says what it
+        # says about the firmware and not about a walk that would produce the
+        # same answer from a different instruction; then the walk, because the
+        # credit is the thing the issue is about and no other test in this
+        # file covers it against the image.
+        self.assertEqual(self.at(0xB730, 7),
+                         bytes([0x90, 0x08, 0x9E, 0xF0, 0xA3, 0xF0, 0x22]))
+        row = wba.callee_row(self.d, "bank0", 0xB716, 16, 500)
+        self.assertIn(0x089F, _xdata_addresses(row))
+        # 0x089E is credited a read as well as a write, because the pointer
+        # walks over the byte on its way to 0x089F. That is a modelling
+        # choice, not what the machine code does, and it is the reason the
+        # `XDATA_089E` cell reads `r+w` -- so it is asserted here rather than
+        # left to be discovered as an apparent contradiction.
+        self.assertIn(0x089E, _xdata_addresses(row))
+        self.assertEqual(row[CSV_UNATTRIBUTED], 0)
+        # The point the issue names: the store is no longer counted, and the
+        # row no longer explains itself by a run-time DPTR build.
+        self.assertNotIn("run time", row[CSV_STATUS])
+        self.assertEqual(row[CSV_STATUS], "resolved")
+
+
+def _xdata_addresses(callee_row_result):
+    """The addresses a `callee_row()` result's `xdata` cell names."""
+    return {int(cell.split(" ", 1)[0], 16)
+            for cell in callee_row_result[1].split(" ; ") if cell}
 
 
 if __name__ == '__main__':
