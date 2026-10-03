@@ -199,6 +199,17 @@ known workaround — `-Duser.name=dave`, recorded in `docs/findings.md` — is
 deliberately **not** used here, per the issue's instruction not to work around
 the owner problem.
 
+*(Corrected 2026-10-03, issue #293. The owner state the paragraph above names as
+the block is now normalised in the scratch copy by `ghidra/project_owner.py` —
+the copy only, after the `copytree` and before `post_scripts`, with the
+committed `project.prp` left byte-identical — so `export-only` no longer aborts
+with `NotOwnerException`. Measured on a copy of the committed BIOS project: an
+`analyzeHeadless` run over the un-rewritten copy aborts with `Project is owned
+by dave` before opening anything, and the same run over the rewritten copy exits
+zero having processed the project's program files. What is left of #572 is the
+export itself. The paragraph above is left as it was written.
+`ghidra-project-owner.md` has the measurement.)*
+
 What remains after #572 lands is the export itself. `ec/tools/test_named_marker_agreement.py`
 asserts, for every row of `index.csv`, that the `[named]` marker on the file its
 `out_file` names **and** on the listing beside it both equal that row's
