@@ -45,8 +45,8 @@ void apply_oem_overrides_then_fill_08xx(undefined1 param_1,char param_2)
     if (CPU_PL1_PL4 != '\0') {
       DAT_EXTMEM_08c3 = CPU_PL1_PL4;
     }
-    if (DAT_EXTMEM_078b != '\0') {
-      DAT_EXTMEM_08bb = DAT_EXTMEM_078b - 1;
+    if (XDATA_078B != '\0') {
+      DAT_EXTMEM_08bb = XDATA_078B - 1;
     }
   }
   if ((CTGP_DB_CTRL & 1) != 0) {
