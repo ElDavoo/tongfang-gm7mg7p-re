@@ -128,7 +128,7 @@ routine and its helpers:
 |---|---:|---|
 | `0x09C7` | 2 | cleared in the `0x0490` gate below; incremented at `0xB211` |
 | `0x09C8` | 2 | cleared in the same gate; incremented at `0xB234` |
-| `0x09C9` | 9 | cleared in the same gate; `0xB151` writes two bytes walking into `0x09CA`; `0xB241` hands DPTR to `0xBCF5` (direction unresolved at this site); five sites read it |
+| `0x09C9` | 9 | `0xB151`, the `0x0490` gate's own clear, writes two bytes walking into `0x09CA`; `0xB241` hands DPTR to `0xBCF5`; `0xB25C` and `0xB272` load the address and the scan's window ends before any `movx`; `0xB2F7`, `0xB319`, `0xB345`, `0xBD91`, `0xBD9E` read it |
 | `0x09CA` | 5 | read at five sites |
 
 Two of the ten read sites carry an annotation row — `bank0,0xBD8B`
@@ -140,16 +140,28 @@ read. Which comparison each makes is the reading in
 the eight unannotated sites are left as reads whose comparison this does not
 identify.
 
-The `0xB241` row is worth its own note rather than being smoothed into
-"incremented". `trace_xdata_refs.py` reports it as a **DPTR handoff**: the site
-loads the counter's address and calls a helper, so the scan does not resolve
-what happens inside. That helper is named — `ghidra-functions.csv` has
-`bank0,0xBCF5` `stress_headroom`, annotated *"computes 65000 minus the stress
-counter minus 1, so the caller can skip the increment on borrow"* — so what
-this site does with `0x09C9` is read here from a committed annotation rather
-than from the bytes. The direction at `0xB241` is therefore **not** established
-by this scan either way, and where the increment itself lands is not settled
-here.
+The three sites the scan leaves unresolved are worth their own note rather
+than being smoothed into "incremented". `trace_xdata_refs.py` reports `0xB241`
+as a **DPTR handoff**: the site loads the counter's address and calls a helper,
+so the scan does not resolve what happens inside. That helper is named —
+`ghidra-functions.csv` has `bank0,0xBCF5` `stress_headroom`, annotated
+*"computes 65000 minus the stress counter minus 1, so the caller can skip the
+increment on borrow"* — so what this site does with `0x09C9` is read here from
+a committed annotation rather than from the bytes. The direction at `0xB241` is
+therefore **not** established by this scan either way, and where the increment
+itself lands is not settled here.
+
+`0xB25C` and `0xB272` are the same class and are named here rather than left
+out of the row: the scan reports **"no movx found in the decoded window"** for
+both, because each site's window ends on a flow opcode before any `movx`. Over
+those two addresses `disasm8051.py` shows each one loading `0x09C9` into DPTR,
+clearing `A`, writing the IRAM byte `0xf0` and branching away — `0xB263` is a
+`sjmp 0xB280`, and both arms of `0xB276`'s `jnc` write `0xf0` before reaching
+`0xB280`. So neither site stores through the DPTR it loads. **That is what
+`disasm8051.py` over these addresses resolves and what the scan does not give:**
+whether the loaded DPTR is consumed by whatever the branch reaches next is not
+settled by these two sites, and this write-up asserts no direction for either
+beyond the absence of a `movx` in the decoded window.
 
 The classification is `ec/decompiled/bank0/B12C.c`, which is committed: its
 `0x0490`-bit-1 branch is
