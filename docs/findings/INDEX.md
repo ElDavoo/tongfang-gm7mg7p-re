@@ -33,6 +33,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) — Which process wrote this mark: a fifth column measured against a `# provenance` row (issue #719)
 - [`0751-mark-split-boundary-gap.md`](0751-mark-split-boundary-gap.md) — A day whose three consoles marked one action 7 s apart was reported as two captures that never recorded it (issue #1372)
 - [`0751-notice-two-moments.md`](0751-notice-two-moments.md) — The 0751 startup notice described two moments as one (issue #749)
+- [`0751-pair-hint-block-scope.md`](0751-pair-hint-block-scope.md) — §4.6's `--dump-pair` hint named another block's bracket, and pointed at a file the same run refuses to read (issue #1394)
 - [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md) — The two path-taking readers are kept, and their docstrings name their callers (issue #771)
 - [`0751-readback-before-dump-holds-written-value.md`](0751-readback-before-dump-holds-written-value.md) — §4.6 said "still" without reading the dump that would support it (issue #1401)
 - [`0751-readback-writer-names.md`](0751-readback-writer-names.md) — §4.6's readback names the writer the two bytes rule out, and what is left
@@ -58,6 +59,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
 - [`bank-map-and-image-census.md`](bank-map-and-image-census.md) — The bank map, and a second image in the dump
+- [`bank0-c118-3202-bit0-thunk.md`](bank0-c118-3202-bit0-thunk.md) — bank0 `0xC118` is a thunk on `test_3202_bit0`, and it is one of four in an unexported run
 - [`bank1-c1e7-reachability.md`](bank1-c1e7-reachability.md) — No transfer in bank 1 names `0xC1E7`, which is why a reading of it stood unchallenged (issue #336)
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
@@ -228,6 +230,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`test-name-grader-coupling.md`](test-name-grader-coupling.md) — A test name that claims a coupling the test does not make
 - [`test-site-fits-guard.md`](test-site-fits-guard.md) — `test_site()` bounds the index at `:217` and reads three bytes underneath it, and the second bound is now there
 - [`testdata-addr-column-claim.md`](testdata-addr-column-claim.md) — A claim about a capture is columnar, and a claim about a fixture is not (issue #975)
+- [`testdata-grader-claims.md`](testdata-grader-claims.md) — What the testdata index's claims about the grader's own output grade to (issue #1007)
 - [`testdata-index-check.md`](testdata-index-check.md) — `ec/tools/testdata/README.md` is now held to the tree under it (issue #727)
 - [`testdata-index-evidence-column.md`](testdata-index-evidence-column.md) — The fixture CSVs' `evidence` column is resolved against the real tree, and eight cells that named nothing there are empty (issue #780)
 - [`testdata-index-feeds-and-call-graph.md`](testdata-index-feeds-and-call-graph.md) — The testdata index's `Feeds` column and its self-indexed nested tables are read too (issue #746)

@@ -3723,6 +3723,40 @@ def dump_pair_block(before, after, fallback):
     return None, "none"
 
 
+def pair_block_basis(value, how):
+    """Which block a `--dump-pair` is filed under, and what says so.
+
+    The same five answers `dump_pair_block` can give, said the way
+    `report_dump_pairs` says them on its group lines -- one name, the other
+    name, the two disagreeing, the flag filing it, and nothing at all. It
+    exists because a pair has two readers and one of them cannot print a
+    group: §4.6 names a pair from inside a sentence about a block's missing
+    `--dump`, where a heading line of its own would be out of place, and a
+    second phrasing of the same five answers is how those two come to
+    disagree about which block a bracket is filed under.
+
+    The file names themselves are not repeated. A pair that is not this
+    block's has already been named, with its two paths, by the whole-block
+    section's own refusal line a screen below, and this line's job is the
+    attribution -- which block, on what evidence -- so that the pair §4.6 did
+    not name is still accounted for rather than silently absent.
+    """
+    if how == "disagree":
+        return ("the two file names name different blocks, so this pair is "
+                "one of neither")
+    if value is None:
+        return ("no block named: these files carry no §6 <value> and neither "
+                "--block nor --wrote was given")
+    if how == "one-name":
+        return (f"block 0x{value:02X}, from the <value> in one of these two "
+                "file names; the other carries none")
+    if how == "name":
+        return (f"block 0x{value:02X}, from the <value> in these files' §6 "
+                "names")
+    return (f"block 0x{value:02X}, from --block/--wrote; these files carry no "
+            "<value> of their own")
+
+
 # Why a `--dump-pair` given one file twice is not a bracket, as one string
 # both readers print. `report_dump_pairs` drops such a pair from the
 # whole-block read and `report_readback` withholds it as a §4.6 readback, and
@@ -3873,7 +3907,8 @@ def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None,
                       "dump")
             else:
                 print(f"  {path}: 0x{MANUAL_FAN_CTRL:04X} = 0x{v:02X}")
-        report_readback(here, wrote, pairs, value, marker)
+        report_readback(here, wrote, pairs, value, marker,
+                        pair_fallback=fallback)
     if block_value is not None and not any(v == block_value
                                           for v, _, _ in groups):
         print(f"  no dump was given for block 0x{block_value:02X}, so §4.6's "
@@ -3884,7 +3919,7 @@ def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None,
               "§4.6 was not checked; each is named above")
 
 
-def report_readback(here, wrote, pairs, value, marker=""):
+def report_readback(here, wrote, pairs, value, marker="", pair_fallback=None):
     """What the last dump of one block says about §4.6, and whether at all.
 
     Split out of `report_dumps` because the grouping above means this is now
@@ -3911,7 +3946,48 @@ def report_readback(here, wrote, pairs, value, marker=""):
     where each one that is missing is said. One is that the block's last
     dump holds `0x0751` at all; the notice above covers that one, and a
     `--dump-pair` can be named in its place because a file can stand in for
-    a missing file. The pair named is one that can be *read*, and that is
+    a missing file -- but only the *same block's* pair, which is the clause
+    this used not to state and did not apply. Everything else on this page
+    inherits `--block` scoping for free, because `report_dumps` has already
+    skipped the groups of other blocks before reaching here; the pairs are
+    the exception, since they arrive as one list the caller hands in whole
+    and each has to be filed before it can be weighed against this block.
+    `dump_pair_block` is what files one, and it is the same filing the
+    whole-block section groups on, so a pair this names and a pair that
+    section reads cannot come to disagree about which block a bracket is
+    under. `pair_fallback` is that section's own `fallback`, threaded in
+    rather than re-derived here, so a file carrying no §6 name is filed
+    under the same block on both sides of the page -- see `dump_pair_block`
+    for why the fallback is consulted only when neither name speaks.
+
+    A group with no block named at all (`value is None`) is not filtered:
+    nothing is under test there, so there is nothing to scope the hint to,
+    and a pair that names some other block is the only one that could stand
+    in for a dump that named none. That is the reading -- "no block is named
+    here", not "this pair is another block's" -- and it is the one that
+    leaves the whole-block section's own unattributed group consistent with
+    this one.
+
+    Where no pair of this block's covers the address and at least one pair
+    of another block's does, the pairs passed over are named with the block
+    each belongs to and the basis it was filed under. Silence there would be
+    the same defect as a silent ending after a refusal: the operator handed
+    in a bracket that would have answered the question and the section ends
+    without saying so. It is printed once, under the coverage notice, and
+    only when a pair was actually passed over -- a run with no `--dump-pair`
+    at all has nothing to account for and gets nothing new.
+
+    What that line is about is the covering pairs that can be read, and it
+    says so rather than calling its count every pair given. A pair given one
+    file twice is in neither set: it is named with its reason above, where it
+    is refused, and it is not something this line passed over. A pair that
+    does not reach the address is not a candidate at all. Counting past both
+    would print a denial the section had itself just contradicted -- a run
+    handed a mistyped pair of the block under test is told, one screen
+    earlier, that it reaches `0x0751`, and is then told that none of the
+    pairs given is this block's.
+
+    The pair named is one that can be *read*, and that is
     `pair_refusal`'s question rather than coverage's: a pair given one file
     twice reaches the address and is not a readback of anything, so it is
     named with the reason and the walk goes on to the next pair rather than
@@ -3965,6 +4041,16 @@ def report_readback(here, wrote, pairs, value, marker=""):
             print(f"  the last --dump does not cover 0x{MANUAL_FAN_CTRL:04X}, "
                   "so the §4.6 readback was not taken -- nothing here says "
                   "what the byte held after the write")
+        # Which block each pair is filed under is decided before any of them is
+        # weighed against this block: a pair of another block's is not a
+        # candidate whatever it covers, and the pair that stands in for the
+        # missing dump has to be the same block's -- the `--dump` it
+        # recommends is one this section will grade, and handing the operator
+        # another block's after file earns them a refusal from the run they
+        # make next. `value is None` leaves the walk unfiltered, for the
+        # reason the docstring gives, and the pairs are walked in the order
+        # they were given so the first that qualifies is the one named.
+        passed_over = []
         for before_path, after_path, before, after in pairs:
             if MANUAL_FAN_CTRL not in set(before) & set(after):
                 continue
@@ -3984,12 +4070,50 @@ def report_readback(here, wrote, pairs, value, marker=""):
                       f"{after_path}")
                 print(f"      {reason}")
                 continue
+            # Filed after the refusal and not before it, so a pair that is not
+            # a bracket at all keeps saying so whatever block it belongs to --
+            # the two questions are independent, and scoping this one must not
+            # silence the other. Filed after coverage too: a pair that does not
+            # reach the address was never a candidate, and is not something
+            # this section passed over.
+            value_, how = dump_pair_block(before_path, after_path,
+                                          pair_fallback)
+            if value is not None and value_ != value:
+                passed_over.append((value_, how))
+                continue
             print(f"    a --dump-pair does cover it: {before_path} -> "
                   f"{after_path}; both files reach "
                   f"0x{MANUAL_FAN_CTRL:04X}")
             print(f"      pass the after file as the last --dump to take "
                   f"the readback: {after_path}")
             break
+        else:
+            # The pairs that reached the address and were not this block's,
+            # named so the section does not end as though no bracket covering
+            # `0x0751` was handed in at all. Gated on `passed_over` rather
+            # than on `pairs`: a run with no `--dump-pair`, and one whose
+            # pairs cover nothing here, have nothing to account for.
+            #
+            # The count and the claim are scoped to the same set, and the
+            # sentence says which set rather than calling it everything that
+            # was given. `passed_over` holds the covering pairs that can be
+            # read and are not this block's: a pair that does not reach the
+            # address was never a candidate, and one `pair_refusal` turned
+            # away is named with its reason above instead of here. Counting
+            # `pairs` and calling the count those would say too much in the
+            # shape that matters -- a mistyped pair of *this* block's reaches
+            # the address and is named as reaching it two lines above, so a
+            # line reading "none of the 2 given is this block's" would deny,
+            # on the same screen, a pair the section has just named. Saying
+            # "and can be read" is what keeps the denial out of it, and it is
+            # the same qualifier `pair_refusal` answers on.
+            if passed_over:
+                print(f"    no --dump-pair of block 0x{value:02X}'s reaches "
+                      f"0x{MANUAL_FAN_CTRL:04X} and is one to read; none of "
+                      f"the {len(passed_over)} --dump-pair(s) given that "
+                      "cover it and can be read is this block's -- "
+                      + "; ".join(pair_block_basis(v, h)
+                                  for v, h in passed_over))
     written = value if value is not None else wrote
     if written is None:
         # The other precondition, and the same kind of fact as the coverage

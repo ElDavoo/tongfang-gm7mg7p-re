@@ -54,16 +54,16 @@ The per-function byte readings are the committed listings, one `.asm` and one
 Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
-- `exported functions` — 2720
-- `annotated function rows` — 1962
-- `rows the index marks annotated` — 1969
+- `exported functions` — 2721
+- `annotated function rows` — 1963
+- `rows the index marks annotated` — 1970
 - `unresolved rows` — 172
 
 By program, as exported minus annotated minus the rest:
 
 | program | exported | annotated | unannotated |
 |---|---|---|---|
-| `bank0` | 750 | 698 | 52 (7%) |
+| `bank0` | 751 | 699 | 52 (7%) |
 | `bank1` | 676 | 594 | 82 (12%) |
 | `pd` | 541 | 541 | 0 (0%) |
 | `common` | 753 | 136 | 617 (82%) |
@@ -149,21 +149,21 @@ basis rather than the presence of a name.
 > naming rule is in `README.md`, and a check now refuses the collision from
 > either side.
 
-**173 of the 1961 rows are `type: unresolved`, and 289 carry a name that
+**172 of the 1963 rows are `type: unresolved`, and 290 carry a name that
 describes a shape rather than a job.** Each is counted on the whole prefix, not
-a narrower one, and the six prefixes below are the whole scope of that 289 — a
+a narrower one, and the six prefixes below are the whole scope of that 290 — a
 family that is not a row here is outside the total rather than quietly
 uncounted:
 
 | prefix | rows | of which |
 |---|---|---|
-| `call_` | 98 | |
+| `call_` | 99 | |
 | `load_` | 120 | 83 `load_dptr_`, 37 register and table |
 | `trampoline_` | 29 | |
 | `ret_` | 27 | 19 `ret_only_`, 8 named beside them |
 | `nop_` | 9 | |
 | `seed_` | 6 | |
-| **total** | **289** | |
+| **total** | **290** | |
 
 `--check` recounts that table off `ghidra-functions.csv` and holds every row,
 every breakdown and the total to it, so a tranche that moves a prefix tally
@@ -626,9 +626,9 @@ The same four totals as §2, restated here so the remainder can be read on its
 own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
-- `exported functions` — 2720
-- `annotated function rows` — 1962
-- `rows the index marks annotated` — 1969
+- `exported functions` — 2721
+- `annotated function rows` — 1963
+- `rows the index marks annotated` — 1970
 - `unresolved rows` — 172
 
 **617 of the 753 common-area functions are unannotated, and that is still the

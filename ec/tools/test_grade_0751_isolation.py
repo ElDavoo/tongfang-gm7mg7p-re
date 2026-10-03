@@ -8323,5 +8323,312 @@ class UnreadableDumpTests(unittest.TestCase):
         self.assertIn('no dump pair here was compared', section)
 
 
+# §4.6's `--dump-pair` hint is block-aware. These sit at the end of the file
+# for the reason the comment above `ReadbackNoticeTests` gives, which is the
+# same one that put that class where it is: line numbers in the findings
+# write-ups and in the per-pin table in
+# `docs/findings/test-line-pin-census.md` cite into this file below
+# `GradeTests`, and inserting beside
+# `test_readback_not_taken_when_nothing_here_covers_0751` -- which is where
+# the coverage half of the same comparison lives, and so the neighbour a
+# reader comes here from -- would move all of them onto the wrong line
+# without changing a word of the sentences citing them. Placement is all that
+# costs, and appending costs none.
+#
+# What is under test is one predicate the hint did not apply. Everything else
+# on the §4.6 page inherits `--block` scoping for free, because
+# `report_dumps` has already skipped the other blocks' groups before reaching
+# `report_readback`; the pairs are the exception, arriving as one list the
+# caller hands in whole, and each has to be filed before it can be weighed
+# against the block being graded. So a `--block 0x10` run whose only covering
+# pair is block 0xA0's was told to pass that pair's after file as its last
+# `--dump` -- and the same run then refuses to read it, one line lower, as
+# belonging to another block. The hint names the evidence and points at a file
+# the tool declines to read.
+#
+# Every case is about which files were handed in and which block they are
+# filed under; nothing here reads an EC. The 0x10 block's own `--dump` is
+# written into a temporary directory under §6's name shape, because
+# `0751-isolation-run-3blocks/` carries only the three CSVs and
+# `test_section6s_file_list_is_the_fixture_set` holds `0751-isolation-run/`
+# equal to §6's file list, so a 0x10-named 0xF00 dump added there would fail
+# that test. The shape is the one
+# `test_a_pair_whose_before_alone_covers_0751_is_not_named` already uses.
+class PairHintBlockScopeTests(unittest.TestCase):
+    # The block's own `--dump`, last and stopping short of 0x0751: the coverage
+    # notice fires on it, which is the precondition the hint exists to answer.
+    BLOCK_LAST = "0f00: 00 01 02 03\n"
+
+    def short_last(self, tmp):
+        """A 0x10-named 0xF00 dump under §6's shape, in `tmp`."""
+        path = Path(tmp) / "x-0751-isolation-10-before-0f00.txt"
+        path.write_text(self.BLOCK_LAST)
+        return str(path)
+
+    def test_a_block_run_is_not_handed_another_blocks_pair(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(
+                BLOCK_CAPTURES[0], '--block', '0x10', '--wrote', '0x10',
+                *dumps(self.short_last(tmp)),
+                '--dump-pair', RUN_BEFORE, RUN_AFTER)
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        # The instruction is withheld, and with it the promise of evidence.
+        # Both halves separately: a hint that names the pair without advising
+        # it, or advises it without naming it, is half the defect.
+        self.assertNotIn('a --dump-pair does cover it', section)
+        self.assertNotIn('pass the after file as the last --dump', section)
+        # What the operator handed in is accounted for. The section says
+        # there is no pair of this block's and names the block the one they
+        # did give belongs to, so a reader can tell "no bracket was given"
+        # from "a bracket was given and it is not this block's".
+        self.assertIn('the §4.6 readback was not taken', section)
+        self.assertIn("no --dump-pair of block 0x10's reaches 0x0751", section)
+        self.assertIn('block 0xA0, from the <value> in these files\' §6 names',
+                      section)
+        # And still no verdict: no readback was taken, so there is nothing to
+        # report one over.
+        self.assertNotIn('the last dump still holds', section)
+        self.assertNotIn('the last dump holds', section)
+        self.assertNotIn('readback, not evidence', section)
+
+    def test_pairs_of_two_blocks_are_each_named_with_their_own(self):
+        # The line's shape when more than one pair is passed over, and the
+        # case that keeps it honest: §6's own command block hands in three
+        # pairs for one block, so a two-block day is a command line an
+        # operator writes rather than a shape the fixtures force. Each pair is
+        # filed and attributed on its own. The count is of the covering pairs
+        # that can be read and are not this block's, and the line says so:
+        # the 0x10 pair here is given but is this block's, so a count of
+        # everything the operator handed in would be claiming more than the
+        # sentence can answer.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(
+                BLOCK_CAPTURES[0], '--block', '0x10', '--wrote', '0x10',
+                *dumps(self.short_last(tmp)),
+                '--dump-pair', RUN_BEFORE, RUN_AFTER,
+                '--dump-pair', *MULTI_10_DUMPS)
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        # One of the two is this block's, so it is the one named, and the line
+        # about the others does not fire -- a section cannot say "no pair of
+        # this block's reaches 0x0751" while naming one two lines below.
+        self.assertIn(f'a --dump-pair does cover it: {MULTI_10_DUMPS[0]} -> '
+                      f'{MULTI_10_DUMPS[1]}', section)
+        self.assertNotIn("no --dump-pair of block 0x10's reaches 0x0751",
+                         section)
+        # And with the block's own pair withheld, both of the others are
+        # named, each with the block its own two file names say. §6's `a0`
+        # pair and `multi-block/`'s own are the same 0xA0 read from two
+        # directories, so this is one block twice rather than two blocks --
+        # the duplicate is printed rather than collapsed, because collapsing
+        # it would be a claim that two files the operator named are one file.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(
+                BLOCK_CAPTURES[0], '--block', '0x10', '--wrote', '0x10',
+                *dumps(self.short_last(tmp)),
+                '--dump-pair', RUN_BEFORE, RUN_AFTER,
+                '--dump-pair', *MULTI_A0_DUMPS)
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('none of the 2 --dump-pair(s) given that cover it and '
+                      "can be read is this block's", section)
+        # Both carry the 0xA0 basis, named twice, and the count agrees with
+        # what is listed.
+        self.assertEqual(section.count('block 0xA0, from the <value> in these '
+                                      "files' §6 names"), 2)
+        self.assertIn('; block 0xA0, from the <value> in these files\' §6 '
+                      'names', section)
+
+    def test_a_pair_of_the_block_under_test_is_still_named(self):
+        # The other direction, and the reason the fix is a filter rather than
+        # a deletion: `multi-block/`'s own 0x10 pair, which reaches 0x0751 and
+        # carries 10 in both of its file names.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(
+                BLOCK_CAPTURES[0], '--block', '0x10', '--wrote', '0x10',
+                *dumps(self.short_last(tmp)),
+                '--dump-pair', *MULTI_10_DUMPS)
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        # Byte for byte what a pair of this block's printed before the filter,
+        # which is the whole claim: the two lines a same-block run gets are the
+        # two it always got, so §6's own advice does not churn.
+        self.assertIn(f'a --dump-pair does cover it: {MULTI_10_DUMPS[0]} -> '
+                      f'{MULTI_10_DUMPS[1]}; both files reach 0x0751', section)
+        self.assertIn(f'pass the after file as the last --dump to take the '
+                      f'readback: {MULTI_10_DUMPS[1]}', section)
+        # And nothing stands in their place. A hint that named the block's
+        # own pair and then said it belonged to another block would be the
+        # same defect with the sign flipped.
+        self.assertNotIn("no --dump-pair of block 0x10's reaches 0x0751",
+                         section)
+
+    def test_a_pair_of_another_block_that_is_not_a_bracket_still_says_so(self):
+        # The order of the two filters, and the reason it is the order it is.
+        # A pair given one file twice is not a readback of anything, whatever
+        # block it belongs to, and that is a second and independent fact from
+        # which block filed it. Filing the pair first would answer "is this
+        # block's" with "no" and drop the refusal on the floor -- a section
+        # that says only that the pair is another block's leaves the operator
+        # to re-run and get the same refusal, rather than telling them the
+        # flag is wrong. `pair_refusal` decides, and the block decides after.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(
+                BLOCK_CAPTURES[0], '--block', '0x10', '--wrote', '0x10',
+                *dumps(self.short_last(tmp)),
+                '--dump-pair', RUN_BEFORE, RUN_BEFORE)
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        # The refusal, with the same string the whole-block section prints.
+        self.assertIn('is not one to read from', section)
+        self.assertIn(grade.SAME_FILE_PAIR, section)
+        self.assertNotIn('a --dump-pair does cover it', section)
+        self.assertNotIn('pass the after file as the last --dump', section)
+        # And it is not also reported as a pair passed over: it was named with
+        # its reason, so it is not unaccounted for, and a section that said
+        # both would be describing one pair twice over two questions.
+        self.assertNotIn("no --dump-pair of block 0x10's reaches 0x0751",
+                         section)
+
+    def test_a_refused_pair_of_this_block_does_not_make_the_line_deny_it(self):
+        # The case one refused pair on its own cannot see, and the reason it
+        # needs its own: `test_a_pair_of_another_block_that_is_not_a_bracket_still_says_so`
+        # hands in a refused pair and nothing else, so the line never fires
+        # there and the count in it is never exercised with a second pair
+        # present. Add one and the two interact.
+        #
+        # §6's own command block hands in three pairs per value, so a mistyped
+        # 0x10 pair and a good 0xA0 one on one line is a shape an operator
+        # writes rather than one the fixtures have to be bent into. Both reach
+        # `0x0751`; the 0x10 one is given one file twice, so it is refused and
+        # named above, and the 0xA0 one is filed under another block and is the
+        # only pair the line has anything to say about.
+        #
+        # The line must not deny the 0x10 pair exists. It is named two lines
+        # earlier as reaching `0x0751`, and a sentence reading "none of the 2
+        # --dump-pair(s) given is this block's" would tell the operator their
+        # own pair does not exist, on the same screen, in a block of output
+        # that had just named it. The count is of what the line can speak
+        # about -- the covering pairs that can be read -- and says so.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(
+                BLOCK_CAPTURES[0], '--block', '0x10', '--wrote', '0x10',
+                *dumps(self.short_last(tmp)),
+                '--dump-pair', MULTI_10_DUMPS[0], MULTI_10_DUMPS[0],
+                '--dump-pair', RUN_BEFORE, RUN_AFTER)
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        # The refused 0x10 pair is still named, with its reason, above.
+        self.assertIn(f'a --dump-pair reaches 0x0751 and is not one to read '
+                      f'from: {MULTI_10_DUMPS[0]} -> {MULTI_10_DUMPS[0]}',
+                      section)
+        self.assertIn(grade.SAME_FILE_PAIR, section)
+        # And the line that fires does not contradict it. Both halves are
+        # asserted, because either alone leaves the other wrong: a correct
+        # count with the old "is this block's" wording still denies the 0x10
+        # pair, and a correct wording with a count of everything handed in
+        # still reports 2 where the line accounts for 1.
+        self.assertIn("no --dump-pair of block 0x10's reaches 0x0751 and is "
+                      "one to read", section)
+        self.assertIn('none of the 1 --dump-pair(s) given that cover it and '
+                      "can be read is this block's", section)
+        # The wording that is not allowed back: it counts the refused pair as
+        # absent and denies the block's own pair, which the refusal above has
+        # already named.
+        self.assertNotIn('--dump-pair(s) given is this block', section)
+        # The pair the line does account for is attributed as before.
+        self.assertIn('block 0xA0, from the <value> in these files\' §6 names',
+                      section)
+        # And the 0x10 pair is not filed under the other block either. It
+        # belongs to 0x10 whatever block it is refused under, and a line that
+        # answered "which block?" with "0xA0" for it would be the same
+        # mis-attribution the whole-block section's refusal line exists to
+        # stop.
+        self.assertEqual(section.count('block 0xA0, from the <value> in these '
+                                      "files' §6 names"), 1)
+        # Still no hint: the 0xA0 pair covers the address but is another
+        # block's, and the refused pair is not a bracket, so there is nothing
+        # to pass and nothing to grade.
+        self.assertNotIn('a --dump-pair does cover it', section)
+        self.assertNotIn('pass the after file as the last --dump', section)
+        self.assertNotIn('the last dump still holds', section)
+
+    def test_following_the_old_hint_is_still_refused_by_the_same_run(self):
+        # The end-to-end shape the defect is named by, and the one a gate
+        # that can only ever be asserted closed would not catch. The after
+        # file of block 0xA0's pair is passed as the block 0x10 run's last
+        # `--dump` -- exactly what the hint used to say to do -- and the run
+        # says it belongs to another block and does not read it.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(
+                BLOCK_CAPTURES[0], '--block', '0x10', '--wrote', '0x10',
+                *dumps(RUN_AFTER), '--dump-pair', RUN_BEFORE, RUN_AFTER)
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('belongs to block 0xA0, not the block under test '
+                      '(0x10) -- not read for §4.6 here', section)
+        self.assertIn('no dump was given for block 0x10, so §4.6\'s readback '
+                      "for it was not taken; the dumps named above are another "
+                      "block's", section)
+        # A hint can no longer point at a file the same run declines to read,
+        # in either direction: the pair is not named as the way to take the
+        # readback, and no pair is reported as passed over either -- the block
+        # under test has no group here to have one passed over from.
+        self.assertNotIn('a --dump-pair does cover it', section)
+        self.assertNotIn('pass the after file as the last --dump', section)
+        self.assertNotIn("no --dump-pair of block 0x10's reaches 0x0751",
+                         section)
+
+    def test_no_pair_at_all_gains_no_line(self):
+        # The gate is gated on a pair having been passed over, not on the
+        # coverage notice firing: a run whose last dump stops short of 0x0751
+        # and hands in no bracket has nothing to account for, and the section
+        # reads exactly as it always has. This is the shape
+        # `test_readback_not_taken_when_nothing_here_covers_0751` pins on
+        # committed files, re-checked with the group's own block so the group
+        # line is the --block one rather than §6's.
+        with tempfile.TemporaryDirectory() as tmp:
+            rc, out, _ = run(
+                BLOCK_CAPTURES[0], '--block', '0x10', '--wrote', '0x10',
+                *dumps(self.short_last(tmp)))
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('the §4.6 readback was not taken', section)
+        self.assertNotIn("no --dump-pair of block 0x10's reaches 0x0751",
+                         section)
+        self.assertNotIn('a --dump-pair does cover it', section)
+
+    def test_a_group_with_no_block_named_still_names_a_pair(self):
+        # The unfiltered case, and the reading the calibration rule asks for:
+        # a group with no §6 `<value>` and neither `--wrote` nor `--block` has
+        # no block under test, so there is nothing to scope the hint to. The
+        # `--dump` is a hand-written temporary one, because §6 stamps every
+        # committed dump with its block and that set is held equal to §6's file
+        # list; the pair is `multi-block/`'s own 0x10 pair, which does name a
+        # block. That asymmetry is the whole case: a filter applied here would
+        # read the pair's 0x10 as a mismatch against a group that named no
+        # block, and withhold a hint on a run that has no block to grade
+        # against. "No block is named here", not "the pair is another block's".
+        with tempfile.TemporaryDirectory() as tmp:
+            last = Path(tmp) / 'last-0f00.txt'
+            last.write_text(self.BLOCK_LAST)
+            rc, out, _ = run(QUIET, *dumps(str(last)),
+                             '--dump-pair', *MULTI_10_DUMPS)
+        self.assertEqual(rc, 0)
+        section = dumps_section(out)
+        self.assertIn('no block named: these files carry no §6 <value> and '
+                      'neither --block nor --wrote was given', section)
+        self.assertIn(f'a --dump-pair does cover it: {MULTI_10_DUMPS[0]} -> '
+                      f'{MULTI_10_DUMPS[1]}; both files reach 0x0751', section)
+        self.assertIn(f'pass the after file as the last --dump to take the '
+                      f'readback: {MULTI_10_DUMPS[1]}', section)
+        # The line that reports a pair passed over cannot fire here: it names
+        # the block under test, and there is not one. Asserted on the shape
+        # rather than the sentence, since there is no block to format.
+        self.assertNotIn("no --dump-pair of block", section)
+        self.assertNotIn('belong to another block', section)
+
+
 if __name__ == '__main__':
     unittest.main()
