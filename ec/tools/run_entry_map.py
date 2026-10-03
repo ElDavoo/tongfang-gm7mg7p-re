@@ -43,15 +43,16 @@ so a future capture that watches one and sees nothing does not read it as a
 stalled counter. A read-only EC window means this is a preparation for a run
 somebody makes at the machine, not a result: nothing here has been observed.
 
-**What it will not say.** The block walk is `walk_branch_arms.descend()` used
-unchanged, and its refusals are its refusals: a DPTR built at run time and a
-`movx @Ri` are `unattributed` rather than charged to the last `mov dptr`, a
-callee is followed only to `--callee-depth` and reports `unresolved` past it,
-and a slot with no attributed write is "no arm found by this method writes an
-XDATA address" -- never "the EC does not". The whole-image transfer scan is
-unaligned and covers two opcodes, so its zero is "not found by this method".
-A `write` is an instruction storing to an address, not evidence the EC acts on
-it.
+**What it will not say.** The block walk is `walk_branch_arms.descend()` and
+its refusals are its refusals: a `movx` whose DPTR has no known value and a
+`movx @Ri` are `unattributed` rather than charged to the last `mov dptr`, and
+the reason each one is unattributed is named per walk rather than assumed to
+be a run-time build. A callee is followed only to `--callee-depth` and reports
+`unresolved` past it, and a slot with no attributed write is "no arm found by
+this method writes an XDATA address" -- never "the EC does not". The
+whole-image transfer scan is unaligned and covers two opcodes, so its zero is
+"not found by this method". A `write` is an instruction storing to an address,
+not evidence the EC acts on it.
 
 `task-call-table.csv` is read and never written: it is `task_call_table.py`'s
 output, and `--check` there still holds it to the image.
@@ -75,7 +76,8 @@ sys.path.insert(0, HERE)
 from disasm8051 import decode                                    # noqa: E402
 from ec_timer_capture import HOST_WINDOW                          # noqa: E402
 from trace_xdata_refs import PD_MARKER, offset_for_runtime        # noqa: E402
-from walk_branch_arms import CUTS, descend                        # noqa: E402
+from walk_branch_arms import (CUTS, DPTR_INHERITED, descend,      # noqa: E402
+                              dp_causes)
 
 DEFAULT_FIRMWARE = os.path.join("ec", "firmware", "GMxMGxx_11.800")
 TASK_TABLE = os.path.join(HERE, os.pardir, "annotations", "task-call-table.csv")
@@ -292,6 +294,15 @@ def walk_slot(d, region, slot, pd_verified, callee_depth, max_depth, max_insns):
     stopping at the call would leave nearly every slot's write set empty -- but
     it is a *declared* depth, and a callee that does not settle at that depth
     says `unresolved` instead of being dropped.
+
+    A callee is descended with `DPTR_INHERITED`, because `dptr=None` on its own
+    says nothing about which of the two ways a walk opens with no pointer it is
+    -- only the caller knows that this one is the second, a routine entered
+    through a call that had a DPTR. Left at the default, a callee opening with
+    `movx a,@dptr` is recorded as `DPTR never set on this path`, which is a
+    claim about the routine's own bytes and is not what happened. The value is
+    still not carried, so those `movx` stay unattributed; what changes is the
+    reason they are unattributed for.
     """
     arm = descend(d, region, slot.target, None, max_depth, max_insns, pd_verified)
     slot.arm = arm
@@ -303,14 +314,20 @@ def walk_slot(d, region, slot, pd_verified, callee_depth, max_depth, max_insns):
             out.append((callee, None, "unresolved: not reachable from region "
                                       f"{region}", set()))
             continue
-        sub = descend(d, region, callee, None, max_depth, max_insns, pd_verified)
+        sub = descend(d, region, callee, None, max_depth, max_insns, pd_verified,
+                      DPTR_INHERITED)
         cuts = [e for e in sub.ends if e.startswith(CUTS)]
         if not sub.insns:
             status = "unresolved: no instruction decodes at the entry point"
         elif cuts:
             status = "unresolved: " + "; ".join(cuts)
         elif sub.unattributed or sub.movx_ri:
-            status = "partial: " + ("DPTR built at run time" if sub.unattributed
+            # The cause `descend()` recorded, rather than one assumed from the
+            # shape. A callee that never builds a DPTR has nothing to build
+            # one with, so naming a run-time build here asserts something its
+            # own walk did not record. The whole list is the answer, because a
+            # callee can inherit an unknown pointer, build one, and do both.
+            status = "partial: " + (dp_causes(sub) if sub.unattributed
                                     else "movx through a register")
         else:
             status = "resolved"
@@ -353,11 +370,14 @@ def no_claim(slot, callees):
     """The wording for a slot with no attributed write.
 
     `walk_branch_arms.no_claim()` states the same refusal for one arm, and the
-    first three clauses below are its vocabulary unchanged. The two that are
-    specific to a slot are the callees: a slot is usually a single `lcall`, so
-    an empty write set most often means the *callee* was not followed far
-    enough, and saying so is the difference between a bounded walk and an
-    absence. A callee that did not settle at the declared depth is named.
+    clauses below are its vocabulary, its DPTR clause included: the cause is
+    named per walk rather than assumed to be a run-time build, because a slot
+    is an arm rather than a callee and an arm can inherit a pointer as well as
+    build one. The clauses specific to a slot are the callees: a slot is
+    usually a single `lcall`, so an empty write set most often means the
+    *callee* was not followed far enough, and saying so is the difference
+    between a bounded walk and an absence. A callee that did not settle at the
+    declared depth is named.
     """
     if not slot.arm:
         return "no arm found by this method decodes to any instruction"
@@ -365,7 +385,8 @@ def no_claim(slot, callees):
         return ""
     blind = ["indirect access"]
     if slot.arm.unattributed:
-        blind.append("a DPTR built at run time")
+        for why in dict.fromkeys(slot.arm.unknown_causes):
+            blind.append("a " + why)
     if slot.arm.movx_ri:
         blind.append("a movx through a register")
     if slot.arm.callees:
@@ -848,8 +869,8 @@ def report(d, pd_verified, callee_depth, max_depth, max_insns, out=sys.stdout):
             if claim:
                 print(f"       {claim}")
             if arm.unattributed:
-                print(f"       {arm.unattributed} movx on a DPTR built at run time "
-                      "-- unattributed on purpose")
+                print(f"       {arm.unattributed} movx on a DPTR with no known "
+                      f"value ({dp_causes(arm)}) -- unattributed on purpose")
             if arm.movx_ri:
                 print(f"       {arm.movx_ri} movx through a register -- no address")
         writes = slot_writes(slot, callees)
