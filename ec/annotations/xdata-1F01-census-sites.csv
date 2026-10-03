@@ -1,0 +1,5 @@
+region,file_offset,census_state,census_bucket,census_count,census_refs
+bank0,0x0D065,mapped,write,1,bank0/D065.c:17
+bank0,0x0D6B5,census-blind,none,0,none
+bank0,0x0FED4,census-blind,none,0,none
+bank1,0x12742,census-blind,none,0,none

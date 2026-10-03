@@ -36,18 +36,19 @@ before it means anything:
      `../docs/findings/dptr-rebuild-walk-guard.md` is the census of what
      widening the reload guard did to committed rows.
   4. *What does the C-level census say about the same site?* `--census-column`
-     appends a `census` column to the `--csv` table carrying
-     `../annotations/xdata-0860-census-sites.csv`'s per-site correspondence:
-     the bucket and occurrence count of the decompiled C's references at that
-     site, or the token saying the correspondence was not recorded. **That
-     column is not derived from the image, and this tool never derives it.**
-     It is a hand-typed reading of the decompile, kept as data beside the
-     sweep that has to agree with it, and `../tools/check_site_census.py` is
-     what holds the two to each other -- the two methods' vocabularies and
-     every way they differ are that tool's docstring. A blank cell would read
-     as "the two agree", so there are none: `not recorded` is the explicit
-     "not done by this method" token, and the 14 addresses of the 0x086x page
-     other than `0x0860` carry it.
+     appends a `census` column to the `--csv` table carrying the per-site
+     correspondence from `../annotations/xdata-*-census-sites.csv` -- one file
+     per address, found by the address rather than listed here: the bucket and
+     occurrence count of the decompiled C's references at that site, or the
+     token saying the correspondence was not recorded. **That column is not
+     derived from the image, and this tool never derives it.** It is a
+     hand-typed reading of the decompile, kept as data beside the sweep that
+     has to agree with it, and `../tools/check_site_census.py` is what holds
+     the two to each other -- the two methods' vocabularies and every way they
+     differ are that tool's docstring, and its `check_cells()` holds the cell
+     this function renders against the committed column, so the two cannot
+     drift apart. A blank cell would read as "the two agree", so there are
+     none: `not recorded` is the explicit "not done by this method" token.
 
 The decode is a linear best-effort walk, not a disassembler: it stops at
 the first control-flow instruction and cannot follow branches (disasm8051.py
@@ -253,21 +254,30 @@ def is_terminator(why) -> bool:
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.join(HERE, os.pardir, os.pardir)
 ANNOT = os.path.join(HERE, os.pardir, "annotations")
-# The hand-typed cross-method correspondence --see the module docstring's
-# fourth point. Read only by --census-column.
-CENSUS_MAP = os.path.join(ANNOT, "xdata-0860-census-sites.csv")
+# The hand-typed cross-method correspondence -- see the module docstring's
+# fourth point. One file per address, named for the address it covers; read
+# only by --census-column, which merges them. The pattern is matched by
+# `census_map_path()` rather than this list, so an address added to the sweep
+# needs its own file and no edit here.
+CENSUS_MAP_SUFFIX = "-census-sites.csv"
 # What --check compares against when it is given no path: the 0x086x page's
 # own table, the one ../annotations/xdata-086x-dispatch.md §1 names. The other
 # three committed tables this tool emits are named on their own pages, so
 # those callers pass the path.
 SITES_CSV = os.path.join(ANNOT, "xdata-086x-dispatch-sites.csv")
 
-# The value each of the two non-mapped states renders as, in the vocabulary
-# check_site_census.py's docstring states. A third cell value, "not recorded",
+# The value each of the three non-mapped states renders as, in the vocabulary
+# check_site_census.py's docstring states. A fourth cell value, "not recorded",
 # belongs to the renderer rather than to this file: a site the map has no row
 # for is not the same claim as a row that says the census is blind there.
+#
+# `census-blind` is worded to keep the two blindnesses apart in the column
+# itself rather than only in prose: "no census occurrence" is what both methods
+# agree is not there, and this is the one where the sweep decoded an access the
+# C-level reader has no line for.
 CENSUS_TOKENS = {"no-occurrence": "no census occurrence",
-                 "other-program": "other program"}
+                 "other-program": "other program",
+                 "census-blind": "census blind at a decoded access"}
 
 
 def repo_path(path: str) -> str:
@@ -275,30 +285,61 @@ def repo_path(path: str) -> str:
     return os.path.relpath(path, REPO)
 
 
-def load_census_map(path: str = CENSUS_MAP) -> dict:
+def census_map_path(addr: str, directory: str = ANNOT) -> str:
+    """The correspondence file for one address, spelled as `csv_table()` spells
+    that address in its own `addr` column -- so the file is found by the same
+    string that identifies it in the sweep, and a caller holding an address
+    from anywhere needs no table to translate it."""
+    return os.path.join(directory, f"xdata-{int(addr, 16):04X}"
+                         f"{CENSUS_MAP_SUFFIX}")
+
+
+def load_census_map(paths=None, directory: str = ANNOT) -> dict:
     """file_offset (spelled as the map's CSV spells it) -> the cell to print.
 
     One `census` cell per site, rendered from the map's `census_state` and
     `census_count`, and nothing else: the token for "the decompile names no
-    address here" and the token for "a different program, with its own XDATA
-    map" are the map's to say, and this function only says which one. A state
-    the map does not define is a ValueError rather than a default cell,
-    because a default here is a cell that reads as agreement.
+    address here", the token for "a different program, with its own XDATA map"
+    and the token for "the sweep decoded an access the decompile does not name"
+    are the map's to say, and this function only says which one. A state the
+    map does not define is a ValueError rather than a default cell, because a
+    default here is a cell that reads as agreement.
+
+    `paths` is the list of files to merge, and `None` means every
+    `*-census-sites.csv` in `directory`. **The files are merged, not one file
+    per address being read in turn**, because a `--csv` run over several
+    addresses needs one dict covering all of them; a `file_offset` is unique
+    across the page because a `MOV DPTR` site names exactly one address.
+
+    A site with more than one row -- the sweep's window ended at a branch
+    before the store, so it carries the access it decoded and the one behind
+    the branch -- renders as the two cells joined by `+`, which is what puts
+    both directions in front of a reader of the sweep rather than only in the
+    mapping file. `check_site_census.py::check_cells()` holds what this returns
+    against the committed column, so the join and the cell cannot drift apart.
     """
-    with open(path, newline="") as f:
-        rows = list(csv.DictReader(f))
-    out = {}
-    for row in rows:
-        offset, state = row["file_offset"], row["census_state"]
-        if state == "mapped":
-            out[offset] = f"{row['census_bucket']} x{row['census_count']}"
-        elif state in CENSUS_TOKENS:
-            out[offset] = CENSUS_TOKENS[state]
-        else:
-            raise ValueError(f"{repo_path(path)}: {offset} has census_state "
-                             f"{state!r}, which is not one of 'mapped', "
-                             f"{', '.join(repr(s) for s in CENSUS_TOKENS)}")
-    return out
+    if paths is None:
+        paths = sorted(
+            os.path.join(directory, name) for name in os.listdir(directory)
+            if name.startswith("xdata-") and name.endswith(CENSUS_MAP_SUFFIX))
+    elif isinstance(paths, str):
+        paths = [paths]
+    out = collections.defaultdict(list)
+    for path in paths:
+        with open(path, newline="") as f:
+            for row in csv.DictReader(f):
+                offset, state = row["file_offset"], row["census_state"]
+                if state == "mapped":
+                    out[offset].append(f"{row['census_bucket']} "
+                                       f"x{row['census_count']}")
+                elif state in CENSUS_TOKENS:
+                    out[offset].append(CENSUS_TOKENS[state])
+                else:
+                    raise ValueError(
+                        f"{repo_path(path)}: {offset} has census_state "
+                        f"{state!r}, which is not one of 'mapped', "
+                        f"{', '.join(repr(s) for s in CENSUS_TOKENS)}")
+    return {offset: " + ".join(cells) for offset, cells in out.items()}
 
 
 def region_of(off: int, pd_verified: bool):
@@ -696,8 +737,8 @@ def main() -> int:
                     help="write the site table as CSV on stdout instead of the decode")
     ap.add_argument("--census-column", action="store_true",
                     help="with --csv, append the `census` column rendered from "
-                         f"{repo_path(CENSUS_MAP)} -- read from that file, not "
-                         "derived from the image")
+                         "the per-address xdata-*-census-sites.csv files -- "
+                         "read from those files, not derived from the image")
     ap.add_argument("--terminator-column", action="store_true",
                     help="with --csv, append the `terminator` column: which of "
                          "the five walk_why() terminators ended this row's "
@@ -734,9 +775,11 @@ def main() -> int:
                                     terminator=args.terminator_column)
         if unmapped:
             by_addr = ", ".join(f"{a} x{n}" for a, n in sorted(unmapped.items()))
+            named = ", ".join(repo_path(census_map_path(a))
+                               for a in sorted(unmapped))
             print(f"note: {sum(unmapped.values())} site(s) have no row in "
-                  f"{repo_path(CENSUS_MAP)} and read 'not recorded': {by_addr}\n",
-                  file=sys.stderr)
+                  f"the correspondence file for their address and read 'not "
+                  f"recorded': {by_addr} ({named})\n", file=sys.stderr)
         if args.check is None and not args.terminator_column:
             # The same omission as the note below, told without a `--check` to
             # read the committed header out of. On that path the tool is handed
