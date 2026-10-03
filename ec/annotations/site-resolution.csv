@@ -33,6 +33,9 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x0403,BAT_DESIGN_CAPACITY,0x13E4A,bank1,0xBE4A,read,read,0xBE10 FUN_CODE_be10,,
 0x0403,BAT_DESIGN_CAPACITY,0x15118,bank1,0xD118,read,read,0xD0C4 update_0524_0526_4a0_and_0497_flags,,
 0x0390,XDATA_0390,0x16176,bank1,0xE176,read,read,0xE100 FUN_CODE_e100,,
+0x0391,XDATA_0391,0x15BC5,bank1,0xDBC5,write,write,0xDB0B FUN_CODE_db0b,,
+0x0391,XDATA_0391,0x16171,bank1,0xE171,read,read,0xE100 FUN_CODE_e100,,
+0x0391,XDATA_0391,0x1626A,bank1,0xE26A,read,read,0xE237 gate_1c00_init_defaults,,
 0x0404,BAT_FULL_CAPACITY_1,0x0AA34,bank0,0xAA34,read,read,not exported,,
 0x0404,BAT_FULL_CAPACITY_1,0x13214,bank1,0xB214,handed to lcall/ljmp -> callee reads,read,0xB214 set_carry_if_0404_0405_is_0201,0x8892,0x8892 read_xdata_pair_to_r3r4
 0x0404,BAT_FULL_CAPACITY_1,0x1323B,bank1,0xB23B,handed to lcall/ljmp -> callee reads,read,0xB224 FUN_CODE_b224,0x8892,0x8892 read_xdata_pair_to_r3r4
@@ -198,7 +201,7 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x044B,XDATA_044B,0x09A57,bank0,0x9A57,read,read,0x9A0E mul_div_08ea_then_sub_044b_selected,,
 0x044B,XDATA_044B,0x09A89,bank0,0x9A89,write,write,0x9A86 call_ba15_then_write_02_to_044b,,
 0x044B,XDATA_044B,0x09A9F,bank0,0x9A9F,write,write,0x9A9C write_04_to_044b_and_set_08e2_bit7,,
-0x044B,XDATA_044B,0x09B33,bank0,0x9B33,read,read,0x9AAD FUN_CODE_9aad,,
+0x044B,XDATA_044B,0x09B33,bank0,0x9B33,read,read,0x9AAD dispatch_044b_then_write_01_02_03_or_04,,
 0x044B,XDATA_044B,0x0BD20,bank0,0xBD20,write,write,0xBD20 store_044b_then_read_08e2,,
 0x044C,XDATA_044C,0x0BC39,bank0,0xBC39,read,read,0xBC37 code_byte_sub_from_044c,,
 0x044C,XDATA_044C,0x0BEA3,bank0,0xBEA3,read,read,0xBEA3 x044c_minus_r7,,

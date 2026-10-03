@@ -545,10 +545,10 @@ main EC* whatever the PD image does with the same address number:
 
 | program | spelling | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 846 | 7,487 |
+| main-ec | `DAT_EXTMEM` | 843 | 7,472 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 44 | 490 |
 | main-ec | `pair-literal` | 156 | 468 |
-| main-ec | `symbol` | 158 | 6,197 |
+| main-ec | `symbol` | 161 | 6,212 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
 | pd | `DAT_EXTMEM` | 157 | 858 |
 | **total** | | **1,375** | **15,696** |
@@ -575,14 +575,14 @@ directly:
 
 | `program` | `spelled_as` | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 815 | 7,256 |
+| main-ec | `DAT_EXTMEM` | 813 | 7,242 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 41 | 385 |
 | main-ec | `pair-literal` | 155 | 461 |
-| main-ec | `symbol` | 144 | 5,593 |
+| main-ec | `symbol` | 146 | 5,607 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
-| both | `DAT_EXTMEM` | 31 | 321 |
+| both | `DAT_EXTMEM` | 30 | 312 |
 | both | `DAT_EXTMEM+pair-literal` | 4 | 139 |
-| both | `symbol+DAT_EXTMEM` | 14 | 742 |
+| both | `symbol+DAT_EXTMEM` | 15 | 751 |
 | pd | `DAT_EXTMEM` | 108 | 603 |
 | **total** | | **1,326** | **15,696** |
 
@@ -678,19 +678,19 @@ history of a table that still exists. The write-up is
 Read the `symbol` rows as the addresses the issue's grep could not see. **On
 §3's basis** — every row the main EC touches, which is the 1,218 the tool
 prints rather than the 1,169 `program=main-ec` rows of the second table above,
-the 49 difference being the `program=both` rows — that is **172 addresses in
-6,393 references**, counted per program. The corrected form of the issue's claim
+the 49 difference being the `program=both` rows — that is **175 addresses in
+6,408 references**, counted per program. The corrected form of the issue's claim
 is therefore a *three*-way split, not a two-way one:
 
-> 172 of the 1,218 XDATA addresses the main EC touches carry a name from
-> `ec/ghidra/xdata-symbols.csv`. Of the other 1,046, **890** read as
+> 175 of the 1,218 XDATA addresses the main EC touches carry a name from
+> `ec/ghidra/xdata-symbols.csv`. Of the other 1,043, **887** read as
 > `DAT_EXTMEM_xxxx` and **156** are named nowhere and reach the census only as a
 > literal argument to one of the pair accessors of §4.7.
 
-172 + 890 + 156 is 1,218 exactly, and the references are 6,393 + 7,977 + 468 =
+175 + 887 + 156 is 1,218 exactly, and the references are 6,408 + 7,962 + 468 =
 the main EC's own 14,838.
 
-**The same partition on the union key is 172 / 891 / 155**, and both readings
+**The same partition on the union key is 175 / 888 / 155**, and both readings
 are right about different things: counted within the main EC the last term is
 156, not 155, because the main EC reaches `0x04A3` as a `pair-literal` and
 nothing else, and it is the PD image that spells it `DAT_EXTMEM_xxxx` — so the
@@ -1366,11 +1366,11 @@ re-run over the committed tree, and the recipe is
 `xdata-06c2-06db-timers.md` §6a's with the `==` guard issue #178 added
 **removed** instead — the classifier-and-everything-it-counts regeneration, in
 its cheapest form. That is the `--no-eq-guard` flag
-(`ap.add_argument("--no-eq-guard"`, `../tools/xdata_register_map.py:5378`) with
+(`ap.add_argument("--no-eq-guard"`, `../tools/xdata_register_map.py:5518`) with
 scratch outputs, which is what §6a and this block's transcript now do rather
 than a source edit: the flag is refused with the committed output paths
-(`args.out_registers == OUT_REGISTERS`, `:5416`, not the `--check` refusal at
-`:5407`), so everything below is a report about the committed census and not a
+(`args.out_registers == OUT_REGISTERS`, `:5556`, not the `--check` refusal at
+`:5547`), so everything below is a report about the committed census and not a
 replacement for it. The derivation, with the commands and their output, is
 `../../docs/findings/xdata-4-4-identity-rederivation.md`.
 
@@ -1529,13 +1529,13 @@ tool into `/tmp`, symlinked the inputs back, and deleted the `==` guard from
 the copy's source, because when the block was written nothing else removed it.
 It was a workaround one rename away from silently regenerating the guard-on
 census instead, and the tree has since taken that step: issue #302
-parameterised the guard (`../tools/xdata_register_map.py:1992` is `if eq_guard
+parameterised the guard (`../tools/xdata_register_map.py:2005` is `if eq_guard
 and stripped.startswith("==")`) so `--no-eq-guard` could be a flag. A
 regeneration now writes to a scratch path and reads the committed decompile in
 place, with no copy of the tool and no source edit. The `--out-*` flags are not
 decoration either: the tool refuses `--no-eq-guard` with the committed output
-paths (`args.out_registers == OUT_REGISTERS`, `:5416`, not the `--check`
-refusal at `:5407`), which keeps this transcript from overwriting the census.
+paths (`args.out_registers == OUT_REGISTERS`, `:5556`, not the `--check`
+refusal at `:5547`), which keeps this transcript from overwriting the census.
 
 *(Correction, 2026-09-25, issue #582's re-run. The transcript above is the same
 experiment re-run against the tree as it now stands; the one it supersedes
@@ -1641,7 +1641,7 @@ by key" is not what the committed census would give anyway — `level-block-086x
 is `seeded` there, key and membership both unchanged, and `main-ec-002` is the
 only one of the two carried on overlap (0.97). The suite's own recipe is two
 generations behind: `GUARD` (`../tools/test_xdata_cluster_names.py:54`) is a
-literal the parameterised guard at `../tools/xdata_register_map.py:1992` —
+literal the parameterised guard at `../tools/xdata_register_map.py:2005` —
 `eq_guard and` — no longer contains, and its two-largest case pairs `main-
 ec-001` with `mode-oem-init` and `main-ec-002` with `level-block-086x`, which
 the committed census puts at `main-ec-002` and `main-ec-004`. **The suite is
@@ -2333,7 +2333,7 @@ symbol table.
 
 | cluster | key | name | size | refs | range | named inside | co-reading (§4.5) | the functions the cluster's addresses share |
 |---|---|---|---:|---:|---|---|---|---|
-| `main-ec-001` | `ke794087e13a6` | — | 152 | 873 | `0x0300`-`0x097B` | 10 | 37/100 fns, 479 (55%) | `FUN_CODE_dee8`, `FUN_CODE_def1`, `FUN_CODE_db0b` — **new, and the pass is what made it**: §4.7's 155 addresses are spread across this same `0x0300`-`0x05xx` working page, and the three routines whose `FUN_CODE_0402`/`FUN_CODE_0408` calls the pass resolves are the ones this cluster's addresses share. The old `0x0300`-page row is inside it (§4.7) |
+| `main-ec-001` | `ke794087e13a6` | — | 152 | 873 | `0x0300`-`0x097B` | 11 | 37/100 fns, 479 (55%) | `FUN_CODE_dee8`, `FUN_CODE_def1`, `FUN_CODE_db0b` — **new, and the pass is what made it**: §4.7's 155 addresses are spread across this same `0x0300`-`0x05xx` working page, and the three routines whose `FUN_CODE_0402`/`FUN_CODE_0408` calls the pass resolves are the ones this cluster's addresses share. The old `0x0300`-page row is inside it (§4.7) |
 | `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 92 | 1,130 | `0x0456`-`0x1809` | 34 | 25/136 fns, 294 (26%) | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
 | `main-ec-003` | `k733222e83898` | `counter-sweep` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | **63/127 fns, 4,642 (93%)** | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
 | `main-ec-004` | `ka39cda99615f` | `level-block-086x` | 28 | 181 | `0x045C`-`0x1C3A` | 14 | 8/21 fns, 66 (36%) | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `compute_level_blocks_086b_086c_086e` — the `0x06E6`/`0x0860` gate block |
@@ -2858,16 +2858,71 @@ order this file takes everywhere else.
   is no annotation on `0x7B14` to point at — and that is the honest limit of
   this account.
 
+  **Corrected 2026-10-02 (issue #294), in place.** Two sentences above are
+  wrong against the committed tree, and the correction belongs beside them
+  rather than in a newer place. `0x7B14` **does** have rows —
+  `stage_07c9_index_then_dispatch_on_flag_bits` in `ghidra-functions.csv`, whose
+  evidence cell cites both `7B14.asm` and `7B14.c` — so "there is no annotation
+  on `0x7B14` to point at" was a statement about a row that exists, and "not an
+  annotation effect" was the wrong conclusion drawn from it. And "what made
+  Ghidra re-render the file is not recorded in the committed tree" was true of
+  the *caller* and false of the callee: the mechanism is in
+  `ghidra-variables.csv`, one callee over, at
+  `pd,0x9028,param_1,r6_value,artifact`. The account above is left as written,
+  so its heading still says what it said; read it as the retracted version.
+
+  **The measurement.** `ec/tools/pd_9028_render_probe.py --run` re-renders the
+  PD program from the committed Ghidra project under three arms and diffs
+  `7B14.c`:
+
+  | arm | row removed | `7B14.c` against the committed file | `DAT_EXTMEM_07c9` |
+  |---|---|---|---:|
+  | `baseline` | none | byte-identical | 22 |
+  | `drop-variable` | `ghidra-variables.csv` `pd,0x9028,param_1` | differs | 21 |
+  | `drop-function` | `ghidra-functions.csv` `pd,9028` | differs (every call renamed `FUN_CODE_9028`) | 22 |
+
+  So the re-export is a fixed point — the committed corpus reproduces byte for
+  byte — and the variable row is what moves the token. Removing it restores
+  `0x1c` at the call the listing builds it for: committed
+  `make_dptr_r6_minus_3_9028(DAT_EXTMEM_07c9)` becomes
+  `make_dptr_r6_minus_3_9028(0x1c,DAT_EXTMEM_07c9)` — the column byte in A
+  first and the R6 row index second, which is the order `9028.asm` reads them.
+  Removing the *function* row renames the callee at every call site and leaves
+  the token count alone, so the name is not the mechanism here.
+
+  **What the measurement settles, and what it does not.** The `21` is not a loose
+  end: #238 is `1fcd5f1e`, `git log -S'pd,0x9028,param_1'` names that commit as
+  the one that added the row, and the file's token count goes 21 → 22 across it.
+  The `drop-variable` arm renders 21 and matches the pre-merge file's ten
+  `0x9028` call forms exactly. See `docs/findings/7b14-07c9-token.md`.
+
 **The policy these seven lines settle.** A variable row may change a caller's
-arity, and that is a correction rather than a loss: the committed four-argument
-signature is the one that matches the listing, and the fifth argument the
-decompiler used to promote was an unconsumed scratch register. The census
-counts C-level references and is therefore a lower bound on the machine code; a
-pin moves only with a measured reason recorded in the same change; and an
-address that leaves the census is "not found by this method" until an `.asm`
-witness says otherwise. The same rule is written where an annotation author
-meets it — `ghidra/scripts/ApplyAnnotations.java`, `ec/annotations/README.md`,
-and `../../docs/findings.md` §18.
+arity **or an argument's value at a call site**, and that is a correction
+rather than a loss. At `bank1` `0x9EA1` the committed four-argument signature
+is the one that matches the listing, and the fifth argument the decompiler used
+to promote was an unconsumed scratch register; at `pd` `0x9028` the same kind
+of row shortened a one-argument call to `make_dptr_r6_minus_3_9028(
+DAT_EXTMEM_07c9)` where the listing's `clr A` / `add A, #0x1c` says the call
+takes a constant column byte *and* a row index (issue #294, measured in the
+table above). The census counts C-level references and is therefore a lower
+bound on the machine code; a pin moves only with a measured reason recorded in
+the same change; and an address that leaves the census is "not found by this
+method" until an `.asm` witness says otherwise. The same rule is written where
+an annotation author meets it — `ghidra/scripts/ApplyAnnotations.java`,
+`ec/annotations/README.md`, and `../../docs/findings.md` §18.
+
+**One function row was measured, and it did not do this.** Dropping
+`ghidra-functions.csv`'s `pd,9028` row renames every call in `7B14.c` to
+`FUN_CODE_9028` and moves no token. So *that row* is not the mechanism here; what
+it establishes about the function layer is one row, and whether a name can move
+a caller's argument value is **not settled by one row**. What the code says is
+narrower than what the measurement shows: the only effect of a function row that
+reaches the decompiler is `f.setName(name, USER_DEFINED)`, and the `signature`
+column is *recorded, not applied* (the row also sets the plate comment, which the
+exporter prints and the decompiler does not read). A rename is not *provably*
+inert — Ghidra's decompiler is name-sensitive and this tree does not model that
+— so the counterfactual is what decides any given row, and
+`ec/tools/pd_9028_render_probe.py --run` is what reruns it.
 
 **The measurement, which is the part that was actually open.** Issue #259 added
 the `XDATA_0390` row, so `xdata-symbols.csv` names the byte and

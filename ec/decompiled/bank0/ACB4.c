@@ -15,7 +15,11 @@
    * 8 to NPCF.AMAT; 0xFF as its reset value is a reading of these surroundings, not a decode of
    what the value means. Of the addresses named, 0x07C6, 0x07A6, 0x0741, 0x0743, 0x0786 and 0x045A
    have entries in ec/annotations/registers.yaml and 0x07C5, 0x075E, 0x0787, 0x0788, 0x0F00, 0x073C,
-   0x072D, 0x0471, 0x0442 and 0x074C do not.
+   0x072D, 0x0471, 0x0442 and 0x074C do not. Corrected 2026-10-01 (issue #311): four of that second
+   list have since gained rows -- 0x07C5 is WHMS at bit 5, present-untested, from issue #30's DSDT
+   ECMG field sweep, and ec/annotations/ec-0x07c5-sites.md now walks its direct MOV DPTR sites;
+   0x0788 is CTWA, 0x0442 is XDATA_0442 and 0x074C is PDIN. The addresses named here still without a
+   row are 0x075E, 0x0787, 0x0F00, 0x073C, 0x072D and 0x0471.
    type: init
    evidence: ec/decompiled/bank0/ACB4.asm; ec/decompiled/bank0/ACB4.c;
    ec/annotations/ec-07c4-07d5-sites.md; ec/annotations/registers.yaml

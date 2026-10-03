@@ -37,7 +37,25 @@
    is not withdrawn by any of this. 0xC118 and 0xC10C have no listing under ec/decompiled/, and
    landing one needs a --report run on the pinned assembler (ec/ghidra/README.md), so both readings
    rest on the twelve bytes at the image offset quoted above and on the 0xC0C9 and 0xC0E7
-   annotations beside them.
+   annotations beside them. REPLACEMENT COUNT 2026-10-02, issue #465: the re-measurement the
+   paragraph above asks for is now made, and the family splits 25 entry / 0 operand / 23
+   not-found-by-this-method against bank 0, where the stub's own bank, replacing the withdrawn 19 /
+   22 / 7. Reproduce with `python3 ec/tools/census_forwarder_targets.py` from the repository root;
+   the per-target rows are ec/annotations/forwarder-targets.csv and the write-up is
+   docs/findings/forwarder-target-bank-census.md, which carries the withdrawn column beside the
+   replacement so the two can be read against each other. Both figures count one population -- the
+   `forwarder` rows scoped bank1 whose comment names a stub address the image holds -- and they
+   differ only in which bank's .asm files were asked, which is the whole of the correction. Not one
+   of the 22 addresses the withdrawn count called an operand byte is an operand byte in bank 0, and
+   in bank 0 the class does not occur at all across the family: each target is either the entry of
+   its own committed listing or has no committed listing. Those 23 are not found by this method
+   rather than absent, and landing them is a separate --report run. Common area: none of these
+   forwarders is bank-1 code. Every entry of the block is below 0x8000, so file_offset resolves each
+   to the same offset in every program and the bytes are one copy the banks share; at file 0x1198A,
+   bank 1's own region at the offset 0x198A, the firmware holds `70 0f 90 1c 04 e0`. So the phrase
+   this row uses -- that the imm16 is read in the bank the forwarder sits in -- is not a
+   well-defined reading for this population -- a forwarder below 0x8000 runs whichever bank is
+   selected when it is called.
    type: forwarder
    evidence: ec/decompiled/bank1/19A8.asm; ec/decompiled/bank1/19A8.c
    basis: hand-decoded
