@@ -127,7 +127,8 @@ class MarkCsvTests(unittest.TestCase):
                  patch.object(ec_watch.sys, 'stdin', FakeStdin(ec, 'wrote 0x0751=0xA0')), \
                  contextlib.redirect_stdout(text):
                 rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                    '--interval', '0', '--csv', str(out),
+                                    '--interval', '0', '--gap-ms', '0',
+                                    '--csv', str(out),
                                     *extra])
             return rc, out.read_text().splitlines(), text.getvalue()
 
@@ -218,7 +219,8 @@ class MarkCsvTests(unittest.TestCase):
             with patch.object(ec_watch, 'Ec', lambda: ec), \
                  contextlib.redirect_stdout(io.StringIO()):
                 ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                               '--interval', '0', '--csv', str(out)])
+                               '--interval', '0', '--gap-ms', '0',
+                               '--csv', str(out)])
             rows = out.read_text().splitlines()
         self.assertEqual([r.split(',', 1)[1] for r in rows[1:]],
                          ['0x0701,0x00,0x11', '0x0702,0x00,0x22'])
@@ -260,7 +262,8 @@ class BlankMarkTests(unittest.TestCase):
                  patch.object(ec_watch.sys, 'stdin', FakeStdin(ec, lines)), \
                  contextlib.redirect_stdout(text):
                 rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                    '--interval', '0', '--csv', str(out),
+                                    '--interval', '0', '--gap-ms', '0',
+                                    '--csv', str(out),
                                     '--mark'])
             return rc, out.read_text().splitlines(), text.getvalue()
 
@@ -373,7 +376,8 @@ class RefusedLabelTests(unittest.TestCase):
                  patch.object(ec_watch.sys, 'stdin', FakeStdin(ec, lines)), \
                  contextlib.redirect_stdout(text):
                 rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                    '--interval', '0', '--csv', str(out),
+                                    '--interval', '0', '--gap-ms', '0',
+                                    '--csv', str(out),
                                     '--mark', *self.VOCAB, *extra])
             return rc, out.read_text().splitlines(), text.getvalue()
 
@@ -506,7 +510,8 @@ class RefusedLabelTests(unittest.TestCase):
                               FakeStdin(ec, 'wrote 0x0751=\n')), \
                  contextlib.redirect_stdout(text):
                 rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                    '--interval', '0', '--csv', str(out),
+                                    '--interval', '0', '--gap-ms', '0',
+                                    '--csv', str(out),
                                     '--mark'])
             rows = out.read_text().splitlines()
         self.assertEqual(rc, 0)
@@ -521,7 +526,8 @@ class RefusedLabelTests(unittest.TestCase):
             with contextlib.redirect_stderr(err):
                 with self.assertRaises(SystemExit) as caught:
                     ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                   '--interval', '0', '--csv', str(out),
+                                   '--interval', '0', '--gap-ms', '0',
+                                   '--csv', str(out),
                                    *self.VOCAB])
             # The CSV is named on the command line and was never created, so
             # the refusal is above the file rather than after it -- and no EC
@@ -553,7 +559,8 @@ class RefusedLabelTests(unittest.TestCase):
                  contextlib.redirect_stderr(err):
                 with self.assertRaises(SystemExit) as caught:
                     ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                   '--interval', '0', '--csv', str(out),
+                                   '--interval', '0', '--gap-ms', '0',
+                                   '--csv', str(out),
                                    '--mark', *self.VOCAB])
             message = err.getvalue()
             self.assertNotEqual(caught.exception.code, 0)
@@ -664,7 +671,8 @@ class RefusedLabelTests(unittest.TestCase):
                  contextlib.redirect_stderr(err):
                 with self.assertRaises(SystemExit) as caught:
                     ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                   '--interval', '0', '--csv', str(out),
+                                   '--interval', '0', '--gap-ms', '0',
+                                   '--csv', str(out),
                                    '--mark', *self.VOCAB])
             message = err.getvalue()
         self.assertNotEqual(caught.exception.code, 0)
@@ -737,7 +745,8 @@ class RefusedLabelTests(unittest.TestCase):
             with contextlib.redirect_stderr(err):
                 with self.assertRaises(SystemExit) as caught:
                     ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                   '--interval', '0', '--csv', str(out),
+                                   '--interval', '0', '--gap-ms', '0',
+                                   '--csv', str(out),
                                    '--mark', '--grader', 'grader.py'])
             self.assertNotEqual(caught.exception.code, 0)
             self.assertFalse(out.exists())
@@ -801,7 +810,8 @@ class AppendNoticeTests(unittest.TestCase):
                  patch.object(ec_watch.sys, 'stdin', FakeStdin(ec, lines)), \
                  contextlib.redirect_stdout(text):
                 rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                    '--interval', '0', '--csv', str(out),
+                                    '--interval', '0', '--gap-ms', '0',
+                                    '--csv', str(out),
                                     '--mark', *(self.VOCAB if vocab else ())])
             return rc, out.read_text().splitlines(), text.getvalue()
 
@@ -944,7 +954,8 @@ class AppendNoticeTests(unittest.TestCase):
                               FakeStdin(ec, 'block one\n')), \
                  contextlib.redirect_stdout(text):
                 rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                    '--interval', '0', '--csv', str(out),
+                                    '--interval', '0', '--gap-ms', '0',
+                                    '--csv', str(out),
                                     '--mark'])
             rows = out.read_text().splitlines()
         self.assertEqual(rc, 0)
@@ -1111,7 +1122,8 @@ class AppendNoticeTests(unittest.TestCase):
                               FakeStdin(ec, 'wrote 0x0751=0x10\n')), \
                  contextlib.redirect_stdout(text):
                 rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                    '--interval', '0', '--csv', str(out),
+                                    '--interval', '0', '--gap-ms', '0',
+                                    '--csv', str(out),
                                     '--mark', *self.VOCAB])
         self.assertEqual(rc, 0)
         # Both marks are named either way. A preflight that could not read the
@@ -1161,7 +1173,8 @@ class AppendNoticeTests(unittest.TestCase):
                               FakeStdin(ec, 'wrote 0x0751=0x10\n')), \
                  contextlib.redirect_stdout(text):
                 rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                    '--interval', '0', '--csv', str(out),
+                                    '--interval', '0', '--gap-ms', '0',
+                                    '--csv', str(out),
                                     '--mark', *self.VOCAB])
         notice = text.getvalue()
         self.assertEqual(rc, 0)
@@ -1251,7 +1264,8 @@ class AppendNoticeTests(unittest.TestCase):
                               FakeStdin(ec, 'wrote 0x0751=0x10\n')), \
                  contextlib.redirect_stdout(text):
                 rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                    '--interval', '0', '--csv', str(out),
+                                    '--interval', '0', '--gap-ms', '0',
+                                    '--csv', str(out),
                                     '--mark', *self.VOCAB])
         notice = text.getvalue()
         self.assertEqual(rc, 0)
@@ -1280,7 +1294,9 @@ class BlockPathTests(unittest.TestCase):
 
     Every case here runs the real `ec_watch.main` against the FakeEc above, so
     what is under test is which method the tool calls, not a reimplementation
-    of the decision.
+    of the decision. The page itself is left out of every run below unless a
+    case asks for it by flag; `test_ec_watch_read_pacing.py` is where the
+    exclusion and the read gap are held.
     """
 
     def run_watch(self, *argv):
@@ -1290,7 +1306,7 @@ class BlockPathTests(unittest.TestCase):
         with patch.object(ec_watch, 'Ec', lambda: ec), \
              contextlib.redirect_stdout(out):
             rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
-                                '--interval', '0', *argv])
+                                '--interval', '0', '--gap-ms', '0', *argv])
         return rc, ec, out.getvalue()
 
     def test_the_flag_is_opt_in(self):
@@ -1330,14 +1346,18 @@ class BlockPathTests(unittest.TestCase):
         # 0x0460-0x046F stalled the fans on a sibling board through ECRR
         # (#94). A 4-byte read that covers the page is a different access
         # shape, not a smaller one, so the warning has to say so rather than
-        # let "fewer IOCTLs" read as "safer".
+        # let "fewer IOCTLs" read as "safer". It takes --include-fan-tach to
+        # reach: by default the page is out of the address set and there is
+        # nothing to warn about, which is what
+        # `test_ec_watch_read_pacing.py` holds rather than this case.
         ec = FakeEc()
         ec.marked.set()
         out = io.StringIO()
         with patch.object(ec_watch, 'Ec', lambda: ec), \
              contextlib.redirect_stdout(out):
             ec_watch.main(['--start', '0x0460', '--len', '0x4',
-                           '--interval', '0', '--block'])
+                           '--interval', '0', '--gap-ms', '0', '--block',
+                           '--include-fan-tach'])
         text = out.getvalue()
         self.assertIn("0x0460-0x046F", text)
         self.assertIn("#94", text)
@@ -1346,14 +1366,19 @@ class BlockPathTests(unittest.TestCase):
         self.assertEqual(set(ec.blocks), {(0x0460, 0x4)})
 
     def test_a_range_off_the_page_is_not_warned_about(self):
-        _, ec, out = self.run_watch('--block')
+        # The flag on, so what is quiet here is the range rather than the
+        # exclusion: a page-arm run that also reads the page has to be the
+        # case that warns, or this one would pass with the flag off.
+        _, ec, out = self.run_watch('--block', '--include-fan-tach')
         self.assertNotIn("#94", out)
         self.assertNotIn("0x0460-0x046F", out)
 
-    def test_the_default_range_contains_the_page_so_the_warning_is_the_point(self):
-        # 0x0000-0x07FF is this tool's default, and 0x0460-0x046F is inside it.
-        # Pinned because the warning is otherwise easy to "fix" by narrowing a
-        # default nobody asked to narrow.
+    def test_the_default_range_contains_the_page_so_the_exclusion_is_the_point(self):
+        # 0x0000-0x07FF is this tool's default and was left alone, and
+        # 0x0460-0x046F is inside it. Pinned because the page is the one thing
+        # it would be easy to "fix" by narrowing a default nobody asked to
+        # narrow -- and because a default that no longer covered the page
+        # would make every exclusion here vacuous.
         self.assertTrue(set(range(0x0000, 0x0800)) & set(ec_watch.FAN_TACH))
 
 

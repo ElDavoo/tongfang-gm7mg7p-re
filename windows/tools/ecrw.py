@@ -43,6 +43,20 @@ The DSDT's `ECRR` is `MMRW(0xFE410000 + Arg0, 0, 0, 0)` (`evidence/acpi/dsdt.dsl
 :50497), so a read here and a read through `ec/tools/ecmem.py` on Linux are the
 same physical byte, reached two different ways.
 
+**`dump` leaves out the fan-tach page and paces its reads.** Reading
+`0x0460-0x046F` through `ECRR` stalled the fans on a sibling Uniwill board, and
+the OEM software and `uniwill-laptop` both sleep about 6 ms after every EC
+access (HydroControl DESIGN.md §4.2, `docs/related-projects.md`);
+`--include-fan-tach` reads the page anyway, and `--gap-ms` sets the gap. This
+machine has never been observed to stall, so that is another board's figure
+rather than a finding here, and no interval in this repository is validated --
+but an unpaced `dump 0x0000 0x0800` reads those sixteen bytes as part of a
+2048-address burst with no gap in it, which is the shape of access that report
+is about, and `dump` had no way to say otherwise. A range this long is also
+slow: at the default gap it takes seconds rather than the moment an unpaced one
+took, which is what the cost is for. `read` and `write` are unchanged, and
+`mmrd` is one IOCTL by name.
+
 No driver is installed by this tool. It requires the vendor stack's driver to be
 already present and started; on the machine this was developed against that is
 `UWACPIDriver.sys` (Control Center Service 3.1.39.0), which creates the same
@@ -64,6 +78,7 @@ Usage:
   ecrw.py read  0x7b9 0x7d0 ...
   ecrw.py dump  0x0700 0x100          # start, length
   ecrw.py dump  0x0700 0x100 --block  # 4 bytes per IOCTL, same output
+  ecrw.py dump  0x0460 0x10 --include-fan-tach   # the page dump leaves out
   ecrw.py write 0x7b9=60 0x7d0=55     # requires --i-mean-it
   ecrw.py mmrd  0x0751                # one MMRD at an unaligned offset
 
@@ -72,6 +87,7 @@ Addresses and values accept 0x-prefixed hex or decimal.
 import argparse
 import ctypes
 import sys
+import time
 try:
     from ctypes import wintypes
 except ImportError:  # pragma: no cover - only on a Python without the module
@@ -94,6 +110,15 @@ GENERIC_WRITE = 0x40000000
 FILE_SHARE_READ_WRITE = 0x00000003
 OPEN_EXISTING = 3
 INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
+
+# The fan-tach bytes, which `dump` does not read unless --include-fan-tach is
+# given: ECRR reads of that page stalled the fans on a sibling board (#94,
+# docs/related-projects.md). The same range as `ec_watch.py`'s, and a local
+# constant rather than an import because `windows/tools/` is deployed as a
+# directory: `ecrw_fake.py` publishes three names and this one is not one of
+# them, so importing it would make this module unloadable under every offline
+# suite that installs the fixture.
+FAN_TACH = range(0x0460, 0x0470)
 
 
 class EcError(RuntimeError):
@@ -366,6 +391,19 @@ def main(argv=None):
                         help="read 4 bytes per IOCTL (MMRD) instead of 1 "
                              "(ECRR); same output, a path that has never been "
                              "run against the driver -- see this tool's help")
+    p_dump.add_argument("--include-fan-tach", action="store_true",
+                        help="read the fan-tach bytes 0x0460-0x046F, which are "
+                             "not read at all otherwise and print as '--': "
+                             "ECRR reads of that page stalled the fans on a "
+                             "sibling board (#94) and this machine has never "
+                             "been seen to. --block does not make it safer")
+    p_dump.add_argument("--gap-ms", type=float, default=6,
+                        help="milliseconds to sleep after every read (default "
+                             "6). The figure HydroControl reports for the OEM "
+                             "software and uniwill-laptop after reading a "
+                             "sibling board whose fans stalled on unpaced ECRR "
+                             "traffic; not measured on this machine, and no "
+                             "interval here is validated. 0 is unpaced")
 
     p_write = sub.add_parser("write", help="write addr=value pairs")
     p_write.add_argument("pairs", nargs="+")
@@ -395,16 +433,65 @@ def main(argv=None):
                     print(f"0x{addr:04X} = 0x{ec.read(addr):02X}")
             elif args.cmd == "dump":
                 start, length = _int(args.start), _int(args.length)
+                wanted = list(range(start, start + length))
+                addrs = wanted if args.include_fan_tach else [
+                    a for a in wanted if a not in FAN_TACH]
+                dropped = len(wanted) - len(addrs)
+                if not addrs:
+                    # Said rather than printed as an empty dump: a range that
+                    # reads nothing and prints nothing is indistinguishable
+                    # from a range that read nothing and moved nothing, which
+                    # is the reading #94 is about.
+                    print(f"nothing read: 0x{start:04X}+0x{length:04X} is "
+                          "inside the fan-tach bytes "
+                          f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X} "
+                          "and they are left out by default (#94). Move the "
+                          "range off the page, or pass --include-fan-tach to "
+                          "read it anyway.", file=sys.stderr)
+                    return 1
+                got = {}
+                if args.block:
+                    # One IOCTL per four bytes over a run rather than one per
+                    # byte. Reading runs rather than rows is also what keeps
+                    # the exclusion exact on this path: readmany covers a range
+                    # with the aligned blocks enclosing it, and a run that ends
+                    # at 0x045F or starts at 0x0470 cannot reach into a page
+                    # that starts on a block boundary and is a whole number of
+                    # blocks long. A range that both straddles and excludes
+                    # would otherwise be read past by the row that covers it.
+                    for run_start, run_length in block_runs(addrs):
+                        got.update(ec.readmany(run_start, run_length))
+                        time.sleep(args.gap_ms / 1000)
+                else:
+                    for a in addrs:
+                        got[a] = ec.read(a)
+                        time.sleep(args.gap_ms / 1000)
+                if dropped:
+                    print(f"not reading {dropped} byte(s) of "
+                          f"0x{start:04X}+0x{length:04X}: the fan-tach page "
+                          f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X} "
+                          "is left out by default (#94, and --block does not "
+                          "make it safer). '--' below is an address that was "
+                          "not read, not a zero.", file=sys.stderr)
+                elif (args.include_fan_tach and start < FAN_TACH.stop
+                        and start + length > FAN_TACH.start):
+                    print("--include-fan-tach: this dump is reading the "
+                          "fan-tach bytes "
+                          f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X}, "
+                          "whose ECRR reads stalled the fans on a sibling "
+                          "board (#94, docs/related-projects.md). This machine "
+                          "has never been seen to; the flag is the choice "
+                          "being made.", file=sys.stderr)
                 for base in range(start, start + length, 16):
                     n = min(16, start + length - base)
-                    if args.block:
-                        # One IOCTL per four bytes over the row rather than
-                        # one per byte. readmany's keys come out in ascending
-                        # order, which is the order the row prints in.
-                        row = list(ec.readmany(base, n).values())
-                    else:
-                        row = [ec.read(base + i) for i in range(n)]
-                    print(f"{base:04X}: " + " ".join(f"{b:02x}" for b in row))
+                    # Every row of the range prints, including one that is
+                    # wholly inside the page: the row is how the operator
+                    # finds where that page sits in what they asked for, and a
+                    # gap in the middle of a hexdump is not distinguishable
+                    # from a gap in the middle of the range.
+                    row = [got.get(base + i) for i in range(n)]
+                    print(f"{base:04X}: " + " ".join(
+                        "--" if b is None else f"{b:02x}" for b in row))
             elif args.cmd == "mmrd":
                 addr = _int(args.addr)
                 four = ec.read_dword_unaligned(addr)

@@ -31,6 +31,7 @@ import io
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 # The codes the fake answers, written out rather than read off the module,
 # because the module is not importable until the fake kernel32 is in place.
@@ -102,6 +103,25 @@ class FakeKernel32:
         """The EC offset of every recorded read, in order."""
         return [int.from_bytes(buf[:4], "little") - FAKE_EC_BASE
                 for code, buf in self.calls if code == FAKE_IOCTL_MMRD]
+
+    def ec_addresses(self):
+        """Every EC byte each recorded read touched, both IOCTLs.
+
+        `offsets()` answers for `MMRD` alone, and reads a four-byte buffer's
+        physical address; a byte read carries its 16-bit offset in the first
+        two. What the fan-tach cases want is the union over both, because a
+        page byte that reached the wire is what they are about however it got
+        there -- and an `MMRD` touches four addresses, not one, so counting
+        offsets would under-report a block read by three quarters.
+        """
+        out = []
+        for code, buf in self.calls:
+            if code == FAKE_IOCTL_ECRR:
+                out.append(int.from_bytes(buf[:2], "little"))
+            else:
+                first = int.from_bytes(buf[:4], "little") - FAKE_EC_BASE
+                out.extend(range(first, first + 4))
+        return out
 
     def codes(self):
         return [code for code, _ in self.calls]
@@ -341,10 +361,14 @@ class EcrwTests(unittest.TestCase):
     # 6. The `dump --block` flag itself. "Same output" is what the usage line
     #    and the flag's help both claim, so it is checked rather than left to
     #    the reader of readmany's docstring.
-    def dump(self, *argv):
+    def dump(self, *argv, gap="0"):
+        # `--gap-ms 0` unless a case says otherwise, so the case that is about
+        # a flag is not also the case that pays milliseconds per read. The
+        # default is 6 ms for a reason no case here can check; `DumpPacingTests`
+        # is where the value itself is held.
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
-            self.assertEqual(ecrw.main(["dump", *argv]), 0)
+            self.assertEqual(ecrw.main(["dump", *argv, "--gap-ms", gap]), 0)
         return out.getvalue()
 
     def test_the_block_flag_changes_the_call_count_and_not_the_output(self):
@@ -368,6 +392,7 @@ class EcrwTests(unittest.TestCase):
         blocked = self.dump("0x0751", "0x0a", "--block")
         self.assertEqual(blocked, plain)
         self.assertIn("0751: 51 52 53 54 55 56 57 58 59 5a", plain)
+
 
     # 7. The watch set's own safety rule, checked against the real
     #    decomposition rather than against a fake's report of it. #94 is why
@@ -546,6 +571,174 @@ class EcrwTests(unittest.TestCase):
         # 0x0751, 0x0752, 0x0753 and 0x0754 out of the fake's ramp, and the
         # physical address 0xFE410000 + 0x0751 as the label.
         self.assertEqual(out.getvalue(), "0xFE410751: 51 52 53 54\n")
+
+
+class DumpPacingTests(unittest.TestCase):
+    """`dump` leaves out the fan-tach page and sleeps between its reads.
+
+    Same question as `test_ec_watch.py`'s, and asked the same way -- over the
+    IOCTLs the fake kernel32 recorded rather than over what the dump printed.
+    A hexdump that happened to look right would not show a read that was
+    issued and then discarded from the output, and the whole of #94 is about
+    a read that was issued.
+
+    A sibling of `EcrwTests` rather than a subclass of it: the fixture it
+    needs is the module-level `K32` and its own `setUp`, and inheriting would
+    run every case above a second time under a second name.
+
+    Nothing here is evidence about this machine's fans. HydroControl reports
+    the stall on a sibling board and names the 6 ms; this pins that `dump`'s
+    defaults match those reports, not that they are right here.
+    """
+
+    # HydroControl's figure for the OEM software and uniwill-laptop, and this
+    # repository's default. Not measured on this machine.
+    DEFAULT_MS = 6
+
+    def setUp(self):
+        # The recorded calls are this test's, as above.
+        K32.calls = []
+        K32.ram = bytes(range(256)) * 256
+
+    def run_dump(self, *argv):
+        """`(rc, stdout, stderr)` for one `dump` against the fake kernel32.
+
+        Both streams, and not through the `dump()` helper above: what these
+        cases read is mostly the notice, and that is on stderr so the hexdump
+        on stdout stays pipeable.
+        """
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            rc = ecrw.main(["dump", *argv])
+        return rc, out.getvalue(), err.getvalue()
+
+    def run_paced(self, *argv):
+        """As `run_dump`, with `time.sleep` recorded rather than taken."""
+        sleeps = []
+        clock = type("FakeTime", (), {"sleep": lambda _, s: sleeps.append(s)})()
+        with patch.object(ecrw, "time", clock):
+            return self.run_dump(*argv), sleeps
+
+    def test_a_full_range_dump_reads_no_fan_tach_byte(self):
+        K32.calls = []
+        rc, _, _ = self.run_dump("0x0000", "0x0800", "--gap-ms", "0")
+        self.assertEqual(rc, 0)
+        # The wire, not the output: these are the bytes that went to the
+        # driver, and the fan-tach page is not among them.
+        self.assertEqual(set(K32.ec_addresses()) & FAN_TACH, set())
+        # ...and the rest of the range really was read, so this is not passing
+        # because the dump did nothing.
+        self.assertTrue(set(K32.ec_addresses()))
+
+    def test_the_block_path_reads_no_fan_tach_byte_either(self):
+        K32.calls = []
+        rc, _, _ = self.run_dump("0x0000", "0x0800", "--block", "--gap-ms", "0")
+        self.assertEqual(rc, 0)
+        self.assertTrue(K32.codes())
+        # `MMRD` covers four bytes, so a block read across the page would be
+        # a wider access to it rather than a narrower one (#94). `offsets()`
+        # is the block start of each one, and those are 4-aligned, so the
+        # page's own blocks are the ones that must be missing.
+        self.assertEqual(set(K32.offsets()) & FAN_TACH, set())
+        self.assertEqual(set(K32.ec_addresses()) & FAN_TACH, set())
+        # Both halves of the range really were read, split around the page.
+        self.assertEqual(min(K32.offsets()), 0x0000)
+        self.assertEqual(max(K32.offsets()), 0x07FC)
+
+    def test_the_flag_reads_the_page_and_says_so(self):
+        K32.calls = []
+        rc, _, err = self.run_dump("0x0460", "0x10", "--include-fan-tach",
+                                   "--gap-ms", "0")
+        self.assertEqual(rc, 0)
+        self.assertEqual(set(K32.ec_addresses()), FAN_TACH)
+        # Said where the operator is looking: a page read on purpose and one
+        # read by accident are the same IOCTLs.
+        self.assertIn("0x0460-0x046F", err)
+        self.assertIn("#94", err)
+
+    def test_the_exclusion_is_marked_in_the_hexdump_and_named_on_stderr(self):
+        rc, out, err = self.run_dump("0x0450", "0x30", "--gap-ms", "0")
+        self.assertEqual(rc, 0)
+        self.assertIn("not reading 16 byte(s)", err)
+        self.assertIn("0x0460-0x046F", err)
+        # '--' is an address that was not read. A zero there would read as a
+        # byte the EC returned, which is the failure the marking exists to
+        # make impossible.
+        page_row = [ln for ln in out.splitlines() if ln.startswith("0460:")]
+        self.assertEqual(len(page_row), 1)
+        self.assertEqual(page_row[0], "0460: " + "-- " * 15 + "--")
+        # The rows either side are whole, so the marking did not shift them.
+        for start in ("0450", "0470"):
+            row = [ln for ln in out.splitlines() if ln.startswith(f"{start}:")]
+            self.assertEqual(len(row), 1)
+            self.assertNotIn("--", row[0])
+
+    def test_a_dump_entirely_inside_the_page_says_it_read_nothing(self):
+        K32.calls = []
+        rc, out, err = self.run_dump("0x0460", "0x10", "--gap-ms", "0")
+        # A dump that read nothing and printed nothing is indistinguishable
+        # from a dump that read nothing and moved nothing, which is the reading
+        # #94 is about. So it says so, and issues no IOCTL to say it with.
+        self.assertNotEqual(rc, 0)
+        self.assertEqual(out, "")
+        self.assertEqual(K32.calls, [])
+        self.assertIn("nothing read", err)
+        self.assertIn("0x0460-0x046F", err)
+        self.assertIn("--include-fan-tach", err)
+
+    def test_a_dump_entirely_inside_the_page_runs_with_the_flag(self):
+        rc, out, _ = self.run_dump("0x0460", "0x10", "--include-fan-tach",
+                                   "--gap-ms", "0")
+        self.assertEqual(rc, 0)
+        self.assertIn("0460: 60 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f",
+                      out)
+
+    def test_a_range_off_the_page_is_untouched(self):
+        K32.calls = []
+        rc, out, err = self.run_dump("0x0750", "0x20", "--gap-ms", "0")
+        self.assertEqual(rc, 0)
+        self.assertEqual(err, "")
+        self.assertNotIn("--", out)
+        self.assertEqual(K32.codes(), [FAKE_IOCTL_ECRR] * 32)
+
+    def test_the_default_gap_reaches_the_sleep(self):
+        (rc, _, _), sleeps = self.run_paced("0x0750", "0x10")
+        self.assertEqual(rc, 0)
+        # The value is this file's, not the module's read back: a default that
+        # had changed would have to change here first to still pass.
+        self.assertEqual(sleeps, [self.DEFAULT_MS / 1000] * 16)
+
+    def test_the_gap_flag_is_what_the_operator_asked_for(self):
+        (_, _, _), sleeps = self.run_paced("0x0750", "0x10", "--gap-ms", "2.5")
+        self.assertEqual(sleeps, [0.0025] * 16)
+
+    def test_the_gap_is_paid_per_read_call_on_the_block_path_too(self):
+        (_, _, _), sleeps = self.run_paced("0x0000", "0x0800", "--block")
+        # Two calls into the driver, so two gaps -- for the same range the
+        # byte path would have read 2032 times. A `readmany` issues one
+        # IOCTL per four bytes without coming back here, so the gap is per
+        # call and --block is not the paced path. Leaving it unpaced would
+        # have left the identical hazard reachable through the back door of
+        # this tool.
+        self.assertEqual(sleeps, [self.DEFAULT_MS / 1000] * 2)
+
+    def test_how_many_ioctls_a_block_sweep_of_the_default_range_buries(
+            self):
+        K32.calls = []
+        rc, _, _ = self.run_dump("0x0000", "0x0800", "--block", "--gap-ms", "0")
+        self.assertEqual(rc, 0)
+        # The number `docs/findings/ec-read-pacing-fan-page.md` quotes for why
+        # `--block` is not the paced path, asserted rather than left to the
+        # prose: `readmany` issues one `MMRD` per four bytes, so the two runs
+        # the exclusion leaves -- 0x460 and 0x390 bytes -- are 280 + 228 = 508
+        # IOCTLs under two gaps. A docstring or a write-up that understated
+        # this is what put "four IOCTLs" there in the first place, and the
+        # direction of the error matters: it is what an operator reading that
+        # section would conclude about an unpaced sweep.
+        self.assertEqual(len(K32.calls), (0x460 + 0x390) // 4)
+        # All `MMRD`, so the count is the block path's and not the byte one's:
+        # the same range per byte would be 2032 `ECRR` under 2032 gaps.
+        self.assertEqual(set(K32.codes()), {FAKE_IOCTL_MMRD})
 
 
 if __name__ == "__main__":
