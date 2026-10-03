@@ -260,7 +260,7 @@ jobs:
         if: steps.round.outputs.stuck != 'true' && steps.round.outputs.escalate != 'true'
         continue-on-error: true
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
-        env:
+        env: &fix_env
           ANTHROPIC_BASE_URL: https://openrouter.ai/api
           ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
           # Keep plugin/subagent aliases on the same provider and model.
@@ -270,7 +270,7 @@ jobs:
           CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
           CLAUDE_CODE_EFFORT_LEVEL: max
           CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
-        with:
+        with: &fix_with
           anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
           prompt: |
             This is fix round ${{ steps.round.outputs.round }} of 10 on pull request
@@ -323,6 +323,18 @@ jobs:
             --max-turns 240
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
             --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
+
+      # LOCAL CHANGE (2026-10-04, not in the template): a second attempt when the first fails --
+      # in practice a provider error that ends the step early (#1702's round ended after 11
+      # seconds). It starts from whatever the first attempt left in the tree, which is the same
+      # tree a human retry would have. Same inputs as the first attempt, by YAML anchor.
+      - name: Fix (second attempt)
+        id: fix2
+        if: steps.fix.outcome == 'failure'
+        continue-on-error: true
+        uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
+        env: *fix_env
+        with: *fix_with
 
       # Round 9. Handed the whole history rather than the latest failure, told the approach is
       # not working, and allowed to revert -- because the way these loops actually fail is an
@@ -399,7 +411,7 @@ jobs:
       # outcome is 'skipped', never 'failure'. So testing for 'failure' on both is the whole
       # condition — no need to know which round this was.
       - name: Record a stall
-        if: steps.fix.outcome == 'failure' || steps.escalate.outcome == 'failure'
+        if: (steps.fix.outcome == 'failure' && steps.fix2.outcome != 'success') || steps.escalate.outcome == 'failure'
         uses: ./.github/actions/agent-stall
         with:
           issue: ${{ inputs.issue }}
@@ -408,7 +420,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Stop here
-        if: steps.fix.outcome == 'failure' || steps.escalate.outcome == 'failure'
+        if: (steps.fix.outcome == 'failure' && steps.fix2.outcome != 'success') || steps.escalate.outcome == 'failure'
         run: exit 1
 
       - name: Local gates (recorded, not enforced)

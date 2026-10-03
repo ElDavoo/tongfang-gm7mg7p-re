@@ -713,6 +713,18 @@ only covers what's specific to *this* copy.
   Before this, the only merge happened after the round, before the push, and a
   real conflict there discarded the whole round: #1716 lost a 57-minute round on
   a conflict in `measure_mark_provenance.py`.
+- **The review and fix steps get a second attempt** (2026-10-04, not in the
+  template). `agent-review.yml`'s `Verdict` and `agent-fix.yml`'s `Fix` are each
+  followed by a second, identical step that runs only when the first failed.
+  The second step reuses the first one's `env:` and `with:` through YAML anchors,
+  so the two prompts cannot drift apart. The stall is recorded only when both
+  attempts failed. On 2026-10-02 and 2026-10-03 several Claude steps ended
+  `is_error` within seconds or minutes of starting, including the #1716 review
+  that ended with "--json-schema was provided but Claude did not return
+  structured_output". Each of those failures labelled the pull request
+  `agent:stalled` and waited for a human to close and reopen it.
+  `check_history_checkouts.py` lists a prompt line once, because the alias
+  resolves to the anchor's lines.
 - **Branches are brought up to date by merging main, not by rebasing**
   (2026-10-03, not in the template). `.github/scripts/rebase-onto-main.sh`,
   which the implement and fix stages run before every push, merges `origin/main`.
