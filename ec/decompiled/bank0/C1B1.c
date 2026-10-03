@@ -5,16 +5,19 @@
 
 
 /* Reads the byte at XDATA 0x1663 and returns 1 in R7 if bit 6 is set, 0 if it is clear. No other
-   XDATA access and no call. The decompiled C drops the R7 return, leaving only the bit test.
+   XDATA access and no call. The decompiled C drops the R7 return, leaving only the bit test. 0xC1BE
+   immediately after is the same test on the same bit with the polarity inverted, and 0xC184 --
+   which no committed export names -- is a third accessor on bit 3; the three sites together are the
+   bit map in XDATA_1663.
    type: reader
    evidence: ec/decompiled/bank0/C1B1.asm; ec/decompiled/bank0/C1B1.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void test_1663_bit6(void)
 
 {
-  if ((DAT_EXTMEM_1663 >> 6 & 1) != 0) {
+  if ((XDATA_1663 >> 6 & 1) != 0) {
     return;
   }
   return;

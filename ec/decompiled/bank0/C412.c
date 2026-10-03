@@ -5,17 +5,18 @@
 
 
 /* Loads A from XDATA 0x1668 and leaves 1 in R7 when bit 4 is set, 0 when it is clear: JNB on bit 4
-   jumps to the R7=0 return. 0x1668 has no entry in ec/annotations/registers.yaml, so the bit is not
-   named.
+   jumps to the R7=0 return. This is the only site the image holds for the byte, so unlike 0x1663
+   and 0x1667 there is no mirror accessor to pair it with and no second polarity to compare against.
+   The byte's row is XDATA_1668.
    type: logic
    evidence: ec/decompiled/bank0/C412.asm; ec/decompiled/bank0/C412.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void test_1668_bit4(void)
 
 {
-  if ((DAT_EXTMEM_1668 >> 4 & 1) != 0) {
+  if ((XDATA_1668 >> 4 & 1) != 0) {
     return;
   }
   return;

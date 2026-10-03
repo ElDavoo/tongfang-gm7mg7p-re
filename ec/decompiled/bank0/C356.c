@@ -6,16 +6,17 @@
 
 /* Loads A from XDATA 0x1667 and leaves 1 in R7 if bit 0 is clear, 0 if it is set: JB on bit 0 jumps
    to the R7=0 return. Inverted polarity relative to the bit; it pairs with C349, which tests the
-   same bit of the same byte the other way round. 0x1667 is not in ec/annotations/registers.yaml.
+   same bit of the same byte the other way round, and the two are exact complements. The byte's row
+   is XDATA_1667.
    type: logic
    evidence: ec/decompiled/bank0/C356.asm; ec/decompiled/bank0/C356.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void test_1667_bit0_inverted(void)
 
 {
-  if ((DAT_EXTMEM_1667 & 1) != 1) {
+  if ((XDATA_1667 & 1) != 1) {
     return;
   }
   return;
