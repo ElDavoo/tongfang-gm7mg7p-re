@@ -167,11 +167,12 @@ aliasing **not** have happened.
    `jb 0xe4` at `:87` and `jb 0xe3` at `:90` are bit tests. All four are **ACC**
    bits, not PSW bits. `0xE0`-`0xE7` is the accumulator and `0xD0`-`0xD7` is
    PSW, as `disasm8051.py`'s `BIT_SFR` table has it, and the decoder renders
-   these four as `setb acc.3`, `setb acc.7`, `jb acc.4` and `jb acc.3`. Three
-   committed `ghidra-functions.csv` rows already carry the same correction for
-   the same operand bytes — the `0xA750`, `0xA841` and `0xAAB9` annotations,
-   each reading "bit addresses in internal RAM 0xE0, not masks on the byte just
-   read into A". So `FUN_CODE_e100` writes no register-bank bit anywhere, and
+   these four as `setb acc.3`, `setb acc.7`, `jb acc.4` and `jb acc.3`. The
+   `0xA750` annotation already carries the same correction for the same operand
+   bytes — "the test operands are bit addresses in internal RAM 0xE0, not masks
+   on the byte just read into A" — and the `0xA841` and `0xAAB9` annotations
+   repeat it in their own words, each opening by referring back to `0xA750`. So
+   `FUN_CODE_e100` writes no register-bank bit anywhere, and
    the "but that path never reaches the comparison" caveat an earlier draft
    carried here is not needed at all: the premise it rested on was wrong.
 
