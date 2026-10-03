@@ -48,6 +48,23 @@ so it is corrected in place there. The two-tuple's real holders are
 `ec/tools/test_grade_0751_one_capture_read.py` holds the reader to the contract
 they rely on.
 
+**The pin `measure_mark_provenance.py` holds over this grader.** That tool
+checks its citations against the tree, so an edit to the grader can turn the
+tool red without touching it, and this change moved one pin: the citation naming
+`existing_mark_provenance`'s mark-row branch.
+
+That pin is one of the ambiguous ones
+[0762-provenance-citation-reanchor.md](0762-provenance-citation-reanchor.md)
+already lists — its text is carried by `mark_labels_of` as well, and
+`resolve` picks the nearer of the two to a number that is only a hint. This
+edit moved both branches and the hint not at all, which put the nearer one on
+the wrong side: the two citations that between them name the pair both resolved
+onto `mark_labels_of`'s line, and `existing_mark_provenance`'s became the one
+scanned site no citation named. `measure_mark_provenance.py` and its citation
+suite went red on a grader edit that was correct on its own, so a red tool run
+is not by itself evidence that the edit was wrong. The citation is retargeted
+at its own branch.
+
 ## What the two reads were
 
 `main`'s read loop called `read_capture` for the marks and the change rows, then

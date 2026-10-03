@@ -608,7 +608,15 @@ CITATIONS = [
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: mark_labels_of recognising the row, existing_mark_labels' own "
      "extraction"),
-    ("ec/tools/grade_0751_isolation.py", 1577,
+    # `:1577` -> `:1613` by #767's edit to the grader, which moved this
+    # reader's branch down the file. This is one of the ambiguous pins -- the
+    # text is carried by `mark_labels_of` too, so `resolve` picks whichever of
+    # the two is nearer a number that is only a hint. The edit moved both and
+    # the hint not at all, which put the nearer one on the wrong side: this
+    # entry and the one above then resolved onto the same line, and this
+    # reader's was the one scanned site no citation named. The text the site
+    # quotes is unchanged.
+    ("ec/tools/grade_0751_isolation.py", 1613,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: existing_mark_provenance recognising the row -- #739's reader, "
      "the fifth site over this shape, and the one whose result is *supposed* "

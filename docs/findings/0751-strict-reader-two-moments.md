@@ -258,14 +258,19 @@ order, and this table is why it should not be read as one.
   could come from different files. It does not make the read atomic and does
   not claim to.
 - **[#767](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/767) is a
-  different site and is left alone.** `main()` reads the same capture twice
-  over, once through `read_capture` and once through `read_early_exits`.
-  Fixing it changes nothing about how many times `read_capture` opens the
-  file, and `0751-notice-two-moments.md` already deferred it for a reason that
-  still holds: taking it over one read is a change to the grader's own grading
-  path with its own test surface, and bundling it into a strict-reader fix
-  would be a half-fix smuggled in. This change does the strict reader's half
-  and writes the residual down instead.
+  different site and is left alone — and #767 has since closed it.** As written
+  when this page was written, `main()` read the same capture twice over, once
+  through `read_capture` and once through `read_early_exits`; that is no longer
+  true of the tree, and the write-up for the fix is
+  [0751-census-one-moment.md](0751-census-one-moment.md). The rest of the bullet
+  is the reasoning for the deferral and stands as the record of it, not as an
+  open item: fixing it changed nothing about how many times `read_capture`
+  opens the file, and `0751-notice-two-moments.md` had already deferred it for
+  a reason that held — taking it over one read is a change to the grader's own
+  grading path with its own test surface, and bundling it into a strict-reader
+  fix would be a half-fix smuggled in. This change did the strict reader's half
+  and wrote the residual down instead; #767 then took the other half on its own,
+  which is what the separation was for.
 - **Two readers outside this module still spell the `ts`/`#` test out with no
   strip** — `check_capture_encoding`'s `count` and `grade_timer_sweep.load`,
   each a second copy of `skippable_row`, and a BOM'd header is a data row to
