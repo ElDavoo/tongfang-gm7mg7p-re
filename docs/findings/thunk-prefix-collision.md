@@ -360,6 +360,32 @@ edit casually, and this change has no business in it. The comment is also not
 harmful in the direction that matters most — leaving the mode off is the
 conservative choice, and turning it on belongs to whoever owns the pipeline.
 
+> **Correction, 2026-10-03 (#628): the deferral above was lifted, and the
+> paragraph is left as written because the sentences above it are still the
+> diagnosis.** Both of the "not fixed here" reasons stopped holding. The gate was
+> changed: `.github/scripts/agent-gates.sh`'s census arm now runs
+> `--check && --self-test`, and the comment over it opens "`--self-test` used to
+> be deliberately not run, and the reason it gave is no longer true" — the stale
+> claim kept beside its correction, the same §4a-4d shape this file uses
+> elsewhere. That landed as #815's change, recorded in
+> [`xdata-census-self-test-gate.md`](xdata-census-self-test-gate.md), which is
+> also where the run's numbers and their runner-sensitivity are. So the mode is
+> no longer switched off for nothing: it is switched **on**.
+>
+> The second reason is wrong for this file, and the repository had already
+> settled that before this correction: **`.github/scripts/` is pushable — only
+> `.github/workflows/` and `.github/actions/` are not**, per the "One clause in
+> it is named rather than answered" blockquote in
+> [`xdata-green-set.md`](xdata-green-set.md). "Pipeline infrastructure CLAUDE.md
+> says not to edit casually" is still true, and it was the weaker of the two
+> reasons offered; it is recorded here so the next reader does not inherit "and
+> you couldn't anyway".
+>
+> #628 was opened from follow-up 3 below, which is this same paragraph, and it
+> reached implementation after the lift. Its own re-measurement and the two
+> tracker issues whose premises this falsified are in
+> [`xdata-self-test-deferral-already-lifted.md`](xdata-self-test-deferral-already-lifted.md).
+
 ## What this does not establish
 
 Nothing here is a hardware or Windows observation, and nothing claims to be. No
@@ -401,5 +427,13 @@ that does.
 3. **A gate comment that is wrong about a mode being red.** See above: the cheap
    tier defers `xdata_register_map.py --self-test` for a reason that stopped
    being true, and the mode passes today.
+
+   > **Done, 2026-10-03 (#628).** Opened from this item, and it landed as
+   > #815's change: both modes are gated and the comment is corrected in place.
+   > Measured and written up in
+   > [`xdata-self-test-deferral-already-lifted.md`](xdata-self-test-deferral-already-lifted.md);
+   > the correction beside the paragraph above is this issue's other half. The
+   > item is left in place because the diagnosis it carries is still the one
+   > that produced the fix.
 4. **`ec/ghidra/README.md`'s column list omits `name_basis`**, which the CSV has
    carried since #135.
