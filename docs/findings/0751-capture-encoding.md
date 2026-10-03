@@ -318,7 +318,13 @@ locale default** and is corrected and extended, dated, in place.
 - **The Windows cp1252 case, by observation.** No box is reachable from here.
   A human at the machine runs that if they want it confirmed.
 - **The three non-capture CSV appenders** (§2). Same gap, different column
-  sets, a follow-up in their own right.
+  sets, a follow-up in their own right. **Done 2026-10-03 at issue #1277**:
+  all three declare `encoding="utf-8"` at their `open()`, their readers do
+  too, and `evidence/battery-traces/` is measured by
+  [`check_probe_csv_encoding.py`](../../ec/tools/check_probe_csv_encoding.py)
+  rather than left out of scope — see
+  [`probe-csv-encoding.md`](probe-csv-encoding.md). The deferral above is
+  kept as the record of the decision #748 made, not as the current state.
 - **`measure_mark_provenance.py`'s crash and its 29 drifted pins** (§7). Its
   own issue. **Settled at issue #762**: the pins are re-anchored and the tool
   exits 0 on this tree. The figures this bullet carries are §7's, kept there as

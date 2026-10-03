@@ -29,6 +29,7 @@ repository, which `tools/run-tests.sh` guarantees (it cds to the repo root).
 """
 import contextlib
 import csv
+import ast
 import io
 from pathlib import Path
 import re
@@ -308,7 +309,7 @@ def capture(*extra, **kw):
         path = Path(tmp) / 'run.csv'
         rc, ec, clock, out, _ = run_probe([*BASE, "--csv", str(path), *extra],
                                           **kw)
-        rows = list(csv.reader(path.read_text().splitlines()))
+        rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
         return rc, ec, clock, out, rows
 
 
@@ -506,7 +507,7 @@ class ByteScriptTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'run.csv'
             rc, ec, _, out, err = run_probe([*BASE, "--csv", str(path)], ec=ec)
-            rows = list(csv.reader(path.read_text().splitlines()))
+            rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
         self.assertEqual(rc, 1)
         self.assertEqual(err.strip(), "error: ECRR failed")
         self.assertEqual(ec.writes,
@@ -577,7 +578,7 @@ class CsvTests(unittest.TestCase):
             path = Path(tmp) / 'run.csv'
             for _ in range(2):
                 run_probe([*BASE, "--csv", str(path)])
-            rows = list(csv.reader(path.read_text().splitlines()))
+            rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
         self.assertEqual(rows.count(COLS), 1)
         self.assertEqual(len(rows), 5)
 
@@ -630,6 +631,58 @@ class CsvTests(unittest.TestCase):
         # visible.
         self.assertIn("sweeping every 1.25s", out)
         self.assertEqual(clock.slept, [1.25, 1.25])
+
+    # 1. The declaration. `mark` is the only field of this shape that is not an
+    #    ISO timestamp, a `0x%02X` or a small int, and before issue #1277 the
+    #    `open()` took the writing process's locale to write it with. Held
+    #    over the tool's source rather than over a run, because on a utf-8
+    #    interpreter a round-trip cannot tell the two apart.
+    def test_the_capture_opener_declares_its_encoding(self):
+        tree = ast.parse((TOOLS / "ctgp_dben_probe.py").read_text(
+            encoding="utf-8"))
+        openers = [n for n in ast.walk(tree)
+                   if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                   and n.func.id == "open" and n.args
+                   and isinstance(n.args[0], ast.Attribute)
+                   and n.args[0].attr == "csv"]
+        self.assertTrue(openers, "no open() taking args.csv in the tool")
+        for call in openers:
+            with self.subTest(line=call.lineno):
+                self.assertIn("encoding",
+                              [k.arg for k in call.keywords
+                               if isinstance(k, ast.keyword)],
+                              f"ctgp_dben_probe.py's open() at line "
+                              f"{call.lineno} declares no encoding=")
+
+    # 2. What the declaration admits. Unlike the other two formats this one has
+    #    no `--phase` to drive a high byte through, so what there is to check
+    #    is that the file a real run produced is readable under the codec the
+    #    tool now declares, with no BOM in front of it.
+    def test_a_written_capture_is_utf8_and_bom_free(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "run.csv"
+            rc, _, _, _, _ = run_probe([*BASE, "--csv", str(path)])
+            raw = path.read_bytes()
+        self.assertEqual(rc, 0)
+        self.assertFalse(raw.startswith(b"\xef\xbb\xbf"),
+                         "the capture carries a BOM; the format is utf-8 "
+                         "with none")
+        rows = list(csv.reader(raw.decode("utf-8").splitlines()))
+        self.assertEqual(rows[0], COLS)
+
+    # 3. The structural half of "this shape cannot carry a high byte", held
+    #    rather than asserted in a comment. `mark` is the one column that is
+    #    free text rather than a formatted number, and it is drawn only from
+    #    `ARMS` -- so ASCII-encodable ARMS and COLS is what makes the claim
+    #    checkable here. It is a property of the two constants, measured over
+    #    this tree; it is not a statement that no future edit could add a
+    #    non-ASCII column, which is why this case exists rather than the note.
+    def test_every_fixed_string_this_shape_can_write_is_ascii(self):
+        for label, values in (("ARMS", probe.ARMS), ("COLS", probe.COLS)):
+            with self.subTest(constant=label):
+                for value in values:
+                    with self.subTest(value=value):
+                        value.encode("ascii")
 
 
 class CitationPinTests(unittest.TestCase):
