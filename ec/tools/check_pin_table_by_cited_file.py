@@ -276,7 +276,7 @@ def report(root, records, files, index):
 
     print(f"  read {len(census.markdown(root))} markdown file(s) and "
           f"{len(files)} test file(s) under the tree, on "
-          f"census_test_line_pins.py's population: "
+          f"census_test_line_pins.population(): "
           f"{'/'.join(census.PRUNED)}/ and {census.SELF_DOC} excluded there")
     print("  no verdict is rendered here and none fails: whether a cited line "
           "still bears the claim it is cited for is a reading, and it is "

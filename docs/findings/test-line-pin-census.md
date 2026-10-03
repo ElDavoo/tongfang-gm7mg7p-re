@@ -60,12 +60,24 @@ census, and the count it starts from.
 $ python3 ec/tools/census_test_line_pins.py
 132 pin(s) in 32 markdown file(s): 98 distinct spelling(s), 74 distinct resolved target(s)
   99 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 33 declined
-  1 def test_, 24 assertion, 23 comment, 5 blank, 46 other (of the pins that resolve)
-  read 291 markdown file(s) under the tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against 99 test file(s) in it
+  … def test_, … assertion, … comment, … blank, … other (of the pins that resolve)
+  read … markdown file(s) from the committed tree, excluding .git/vendor/.claude/ and docs/findings/test-line-pin-census.md; resolved against … test file(s) in the same population
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
 ```
+
+**The two lines carrying `…` are elided where the run prints a count of this
+repository's own text**, and nothing is elided that this change did not itself
+move. The `read` line had to be retyped anyway, for the naming of its reading,
+and retyping it with the figures in place is the habit
+[`no-append-logs.md`](no-append-logs.md) is about: the figure goes stale at the
+next merge, the sentence carrying it is the line every open branch edits, and
+the sentence below records what that line has already drifted through. The shape
+line moved with the same run and is elided for the same reason. The two lines
+above them are untouched by this change and stay written where they were
+measured. The command is the figure — run it, and `read` names the reading it
+used.
 
 *(The `read` line's population, because it is the one figure here that depends
 on something other than the commit: the tool walks the tree it is standing in
@@ -102,6 +114,27 @@ branch re-anchored it to `:3748`, and on this tree `:3608` is a `#` comment, so
 `def test_` gives `2 -> 1` and `comment` `23 -> 24`, with `assertion`, `other` and
 `blank` unmoved. `test_census_test_line_pins.py` pins the split this merge's tree
 measures.*
+
+> **The staging workaround in the parenthetical above is superseded, and so is
+> the sentence describing the population it was staging one to reach. The wrong
+> version stays written there, per [`../findings.md`](../findings.md) §4a-4d.**
+> `census_test_line_pins.py` reads `git ls-files` when the root it is given is
+> the top of a work tree, and a filesystem walk otherwise — a tempdir, a copy, a
+> subdirectory, a machine with no `git` — which is what keeps a scratch root
+> census-able and is the only reason `git ls-files | xargs cp --parents` was
+> needed at all. **A reader re-running the tool no longer has to stage a copy to
+> reproduce the run's figures**: for the repository root the committed reading
+> *is* the run, and an untracked markdown file in a worktree now moves neither
+> denominator. The walk moved one of the two and not the other, which the
+> parenthetical above does not say and this correction does: each denominator
+> counts files of its own kind, so a dropped `.md` moved the markdown figure and
+> could not move the test-file one at all. The `read` line names the reading it
+> used, so a fallback run's figures cannot be mistaken for this repository's.
+> The block above carries the run's new wording and elides the counts this
+> change would otherwise have had to re-derive; everything else in this section
+> stays as the record of the tree it was measured on. The measurement behind the
+> split, and what each reading does and does not answer, is
+> [`census-population-is-the-committed-tree.md`](census-population-is-the-committed-tree.md).
 
 *(Re-measured for #229 and #1497 merged together, 2026-10-01: this tree reads
 **`291` and `99`**, against `288` and `97` at `d4564110`, `289` and `98` on

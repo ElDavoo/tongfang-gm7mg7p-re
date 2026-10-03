@@ -70,9 +70,20 @@ own write-up `docs/findings/test-line-pin-census.md` -- whose per-pin table is a
 copy of the pins rather than an independent use of them, so counting it would
 make the class's size a function of the report about the class. That exclusion is
 `check_doc_figure_pins.py`'s `SELF_MODULES` rule applied to a document: a
-measurement of the measurement is not evidence about the census. The tree is read
-from the filesystem rather than from `git ls-files`, so a scratch copy of it is
-census-able, which is what the suite's red demonstration needs.
+measurement of the measurement is not evidence about the census.
+
+**Where the population is read from, and why the run names it.** `git ls-files`
+when `root` is the top of a work tree, and a filesystem walk otherwise -- a
+tempdir, a copy of the tree, a subdirectory, a machine with no `git` -- so a
+scratch copy stays census-able, which is what the suite's red-exit-zero
+demonstration needs. One set answers both denominators the run prints *and* the
+index the resolver answers a bare module name from, so a pin cannot resolve
+against a file the count does not include. The `read` line names the reading on
+every run, because a figure that cannot be traced to a reading is a figure that
+cannot be checked: on the fallback its numbers are that tree's, and saying so is
+the difference between a measurement of this repository and a measurement of a
+directory somebody made. `docs/findings/census-population-is-the-committed-tree.md`
+is the measurement behind the split.
 
 **And what this tool is not.** It is not in `.github/scripts/agent-gates.sh`, and
 cannot be from an agent branch: the plan stage's push token has no `workflow`
@@ -89,6 +100,7 @@ Usage:
 import argparse
 import os
 import re
+import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -149,8 +161,9 @@ SHAPES = (DEF_TEST, ASSERTION, COMMENT, BLANK, OTHER)
 def walk(root, suffix, pruned=PRUNED):
     """Repo-relative paths under `root` ending in `suffix`, sorted, pruned.
 
-    Sorted so a report is reproducible and a case can compare two runs without
-    ordering them first. The walk reads the tree it is given rather than
+    The fallback reading's half; `population()` is what decides which of the two
+    a run got. Sorted so a report is reproducible and a case can compare two
+    runs without ordering them first. Reads the tree it is given rather than
     `git ls-files`, so a scratch copy of the repository is census-able.
     """
     found = []
@@ -160,6 +173,76 @@ def walk(root, suffix, pruned=PRUNED):
             if name.endswith(suffix):
                 found.append(os.path.relpath(os.path.join(base, name), root))
     return sorted(found)
+
+
+def pruned_path(rel, pruned=PRUNED):
+    """True when `rel` is under one of `pruned`, at any depth, as `walk` reads it.
+
+    By path component rather than by prefix, because `walk` drops the directory
+    wherever it meets one and a committed reading has to drop the same ones --
+    otherwise `PRUNED` would mean one thing on one reading and another on the
+    other, and the run's `excluding …` half could not be read as a statement
+    about the census rather than about the source.
+    """
+    return any(part in pruned for part in rel.replace(os.sep, "/").split("/"))
+
+
+def ls_files(root):
+    """The paths `git ls-files` reports for `root`, or None if it has no answer.
+
+    None for a tempdir, a copy of the tree, a subdirectory of a work tree, or a
+    machine with no `git` on `PATH` -- the roots the committed reading has
+    nothing to say about, and the ones the caller falls back rather than asking
+    git a question about a tree git is not standing in.
+
+    The top-level test is an equality and not a success check: `git -C
+    ec/tools rev-parse --show-toplevel` succeeds and answers with the
+    repository's top, so a check that only asked whether it succeeded would
+    census the whole repository from a subdirectory and report it as that
+    subdirectory's figures. Realpaths on both sides, because `--show-toplevel`
+    answers with git's own spelling of the root and `root` arrives from `REPO`,
+    which is built out of `__file__` and need not be the same string.
+    """
+    try:
+        top = subprocess.run(["git", "-C", root, "rev-parse", "--show-toplevel"],
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                             check=True).stdout
+        top = os.fsdecode(top).strip()
+        if not top or os.path.realpath(top) != os.path.realpath(root):
+            return None
+        listed = subprocess.run(["git", "-C", root, "ls-files", "-z"],
+                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    # `-z` rather than a newline split, so a path with a newline in it is one
+    # entry and not two; `os.fsdecode` for the same reason `os.walk` uses it.
+    return sorted(os.fsdecode(name) for name in listed.split(b"\0") if name)
+
+
+def population(root, suffix):
+    """([repo-relative paths ending in suffix], the sentence naming where).
+
+    The one place the census decides what its corpus is, so the two
+    denominators the run prints and the index `resolve()` answers a bare module
+    name from are the same set: a pin into a file the count does not include
+    would be a claim about a file the tree is not carrying.
+
+    The committed reading is the default because the run's figures are
+    published as measurements of *this repository*, and a walk counts whatever
+    is in the directory -- an untracked scratch file, a `git worktree` of this
+    repository under a dot-directory, another clone's checkout. The walk stays
+    as the fallback, and the second half of the return says so on every run,
+    because a reader who cannot tell which reading produced a number cannot
+    check it.
+    """
+    listed = ls_files(root)
+    if listed is None:
+        return (walk(root, suffix),
+                f"a walk of the tree at {root}, which is not the top of a work "
+                "tree -- these figures are that tree's, not this repository's")
+    return ([rel for rel in listed if rel.endswith(suffix)
+             and not pruned_path(rel)], "the committed tree")
 
 
 def lines_of(text):
@@ -178,13 +261,13 @@ def lines_of(text):
 def suites(root):
     """({relpath: [line, ...]}, {basename: [relpath, ...]}) for the tree.
 
-    Both halves from one walk: the resolved file's text, and the index that
-    decides whether a bare module name is unique. A basename with more than one
-    file is what `ambiguous-path` is for, so the index keeps the list rather
+    Both halves from one population: the resolved file's text, and the index
+    that decides whether a bare module name is unique. A basename with more than
+    one file is what `ambiguous-path` is for, so the index keeps the list rather
     than collapsing it to the first match.
     """
     files, index = {}, {}
-    for rel in walk(root, ".py"):
+    for rel in population(root, ".py")[0]:
         base = os.path.basename(rel)
         if not base.startswith("test_"):
             continue
@@ -202,7 +285,7 @@ def suites(root):
 def markdown(root):
     """Repo-relative markdown paths to read, `vendor/` and this census's own
     write-up excluded (see the docstring for why the second is excluded)."""
-    return [rel for rel in walk(root, ".md") if rel != SELF_DOC]
+    return [rel for rel in population(root, ".md")[0] if rel != SELF_DOC]
 
 
 def fenced_lines(text):
@@ -360,8 +443,16 @@ def tally(records, at):
     return counts
 
 
-def report(root, records, files, verbose):
-    """The census's whole output, and the counts a run has to be readable by."""
+def report(root, records, files, verbose, source=None):
+    """The census's whole output, and the counts a run has to be readable by.
+
+    `source` is `population()`'s own sentence about where the corpus came from,
+    handed in by the caller that already read the population rather than read
+    here: a report and the `read` line above it must not be able to come from
+    two different readings of the same tree.
+    """
+    if source is None:
+        source = population(root, ".md")[1]
     for citing, at, spelling, verdict, path, how, shape, text in records:
         if not verbose:
             continue
@@ -382,9 +473,9 @@ def report(root, records, files, verbose):
     print("  " + ", ".join(f"{verdicts.get(v, 0)} {v}" for v in VERDICTS))
     print("  " + ", ".join(f"{shapes.get(s, 0)} {s}" for s in SHAPES)
           + " (of the pins that resolve)")
-    print(f"  read {len(markdown(root))} markdown file(s) under the tree, "
+    print(f"  read {len(markdown(root))} markdown file(s) from {source}, "
           f"excluding {'/'.join(PRUNED)}/ and {SELF_DOC}; resolved against "
-          f"{len(files)} test file(s) in it")
+          f"{len(files)} test file(s) in the same population")
     print("  no claim is measured here: whether a cited line still carries the "
           "claim it is cited for is a reading, and it is "
           "docs/findings/test-line-pin-census.md's table")
@@ -406,7 +497,7 @@ def main() -> int:
               "empty one", file=sys.stderr)
         return 1
     records, files = census(REPO)
-    report(REPO, records, files, args.verbose)
+    report(REPO, records, files, args.verbose, population(REPO, ".md")[1])
     if not records:
         print("census_test_line_pins.py: no `test_*.py:NNN` was found in the "
               "markdown read, so nothing was censused -- that is a broken "

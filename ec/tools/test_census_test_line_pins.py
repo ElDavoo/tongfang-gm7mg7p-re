@@ -24,9 +24,9 @@ the checker `docs/findings/test-line-pin-census.md` declines to ship.
 The fixtures are small enough to write inline, so each case reads as the error it
 is about rather than as a diff against a stored file. They are not the real pins,
 but they are the real shapes -- the `windows/tools/` prefix, the span that opens
-on a blank line, the fenced transcript, the wrong-directory pin. The last class
-is the real thing, and it is what says the class's own size rather than leaving
-the write-up's counts as another unpinned figure.
+on a blank line, the fenced transcript, the wrong-directory pin. The
+committed-tree class is the real thing, and it is what says the class's own size
+rather than leaving the write-up's counts as another unpinned figure.
 """
 import contextlib
 import importlib.util
@@ -34,6 +34,7 @@ import io
 import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -49,8 +50,8 @@ def tree(files):
     """A scratch repository holding `files`, as {relpath: text}.
 
     Built per call rather than shared, so a case that mutates a file mutates
-    its own tree. The census reads the tree it is handed rather than
-    `git ls-files`, which is what makes this possible at all.
+    its own tree. It is deliberately *not* a work tree, which is the fallback
+    reading's fixture; `work_tree()` is the other one.
     """
     root = tempfile.mkdtemp(prefix="census-test-line-pins-")
     for rel, text in files.items():
@@ -59,6 +60,38 @@ def tree(files):
         with open(path, "w", encoding="utf-8") as f:
             f.write(text)
     return root
+
+
+def git(root, *args):
+    """`git <args>` in `root`, its output discarded, raising if it fails."""
+    subprocess.run(["git", "-C", root, *args], check=True,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def work_tree(files):
+    """A scratch *work tree* holding `files` and committed; its path.
+
+    A commit rather than an `add`, so the fixture is what the committed reading
+    claims to be measuring, and `-c user.*` so a case does not inherit a git
+    identity -- or the absence of one -- from whatever machine runs it. `git` is
+    shelled out to by other suites in this tree and is on `PATH` in the
+    pipeline's own checkout, so this is house practice rather than a new
+    dependency.
+    """
+    root = tree(files)
+    git(root, "init", "-q")
+    git(root, "add", "-A")
+    git(root, "-c", "user.name=census", "-c", "user.email=census@example.invalid",
+        "commit", "-q", "-m", "fixture")
+    return root
+
+
+def drop(root, rel, text):
+    """Write `text` to `rel` under `root` without telling git about it."""
+    path = os.path.join(root, rel)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
 
 
 def verdicts(records):
@@ -538,6 +571,160 @@ class TheCommittedTree(unittest.TestCase):
         gate = os.path.join(census.REPO, ".github", "scripts", "agent-gates.sh")
         with open(gate, encoding="utf-8") as f:
             self.assertNotIn("census_test_line_pins.py", f.read())
+
+
+class PopulationSourceTests(unittest.TestCase):
+    """Which of the two readings a run got, and what each one is answerable to.
+
+    The run's figures are published as measurements of *this repository*, and a
+    walk counts whatever is in the directory it stands in: an untracked scratch
+    page, a `git worktree` of this repository under a dot-directory, another
+    clone's checkout. On a clean checkout the two readings agree exactly, which
+    is why CI never saw it and it had to be found by reading. So the cases below
+    are the ones a walk cannot be given -- a file that is in the tree and is not
+    in the repository -- plus the invariant that makes the split safe, which is
+    that a root with no work tree is still census-able and says that it fell
+    back rather than reading identically to a committed run.
+
+    Two of them are about *named* directories rather than dotted ones. `/tmp/`,
+    `/out/` and `/scratch/` are all listed in this repository's `.gitignore` and
+    none of them is a dot-directory, so a rule that pruned dot-directories would
+    have passed the dot-directory case and failed the named one. That is the
+    whole reason the reading is `git ls-files` and not a longer `PRUNED`.
+    """
+
+    def figures(self, root):
+        """(markdown read, test files read, pins found) as one run reports them."""
+        _read, files = census.suites(root)
+        records, _files = census.census(root)
+        return len(census.markdown(root)), len(files), len(records)
+
+    def run_main(self, root, *argv):
+        """(exit code, stdout, stderr) for a run over `root`, streams captured."""
+        err, out, saved = io.StringIO(), io.StringIO(), (census.REPO, sys.argv)
+        census.REPO, sys.argv = str(root), ["census_test_line_pins.py", *argv]
+        try:
+            with contextlib.redirect_stderr(err), contextlib.redirect_stdout(out):
+                rc = census.main()
+        finally:
+            census.REPO, sys.argv = saved
+        return rc, out.getvalue(), err.getvalue()
+
+    def kept(self, rel):
+        """Whether the population carries `rel` at all, the prune applied here.
+
+        The test's own component check rather than the tool's, so an
+        expectation computed from git and one computed by the same function
+        cannot agree because they are the same function.
+        """
+        return not any(part in census.PRUNED for part in rel.split("/"))
+
+    def test_an_untracked_markdown_does_not_move_either_denominator(self):
+        # The case the walk could not be given, and the one the reproduction is:
+        # drop any markdown carrying a pin into a directory the walk does not
+        # prune, and the markdown figure the write-up quotes moves, with no
+        # commit anywhere. One of the two denominators, not both -- each counts
+        # files of its own kind, so a dropped `.md` cannot move the test-file
+        # one either way. The assertion is over all three figures because the
+        # point is what the committed reading leaves alone, and the record count
+        # is in there because the dropped file carries a resolvable citation.
+        root = work_tree({"a.md": "`test_a.py:1`\n",
+                          "ec/tools/test_a.py": "one\ntwo\n"})
+        before = self.figures(root)
+        drop(root, ".claude-pr/CLAUDE.md", "`ec/tools/test_a.py:2`\n")
+        self.assertEqual(self.figures(root), before)
+
+    def test_an_untracked_file_in_a_named_gitignored_directory_does_not_either(self):
+        # The same thing under a directory `.gitignore` *names*, which is the
+        # half a dot-prune would have missed and the reason the reading is git's
+        # rather than a longer exclusion list.
+        root = work_tree({".gitignore": "/scratch/\n", "a.md": "`test_a.py:1`\n",
+                          "ec/tools/test_a.py": "one\ntwo\n"})
+        before = self.figures(root)
+        drop(root, "scratch/notes.md", "`ec/tools/test_a.py:2`\n")
+        self.assertEqual(self.figures(root), before)
+
+    def test_a_file_that_is_committed_stays_in_the_population_even_if_ignored(self):
+        # What the rule does *not* claim, and the boundary of it. `git ls-files`
+        # is the index, not the working directory, so a file that is tracked but
+        # listed in `.gitignore` is in the population; one that is ignored and
+        # never added is not, which is the case above. Stating the first without
+        # the second would leave "the committed tree" reading as "the clean
+        # tree".
+        root = work_tree({".gitignore": "/scratch/\n", "a.md": "`test_a.py:1`\n",
+                          "ec/tools/test_a.py": "one\ntwo\n"})
+        drop(root, "scratch/notes.md", "`ec/tools/test_a.py:2`\n")
+        git(root, "add", "-f", "scratch/notes.md")
+        read, _source = census.population(root, ".md")
+        self.assertIn("scratch/notes.md", read)
+
+    def test_a_root_that_is_not_a_work_tree_is_still_censusable(self):
+        # The invariant the split has to keep, and it is what the classes above
+        # depend on: every fixture in this suite is a bare tempdir, and a
+        # committed-only reading would have made all of them read nothing. The
+        # second half is the part a reader needs -- a fallback run has to say it
+        # fell back, or its figures are indistinguishable from the repository's.
+        root = tree({"a.md": "`test_a.py:1`\n", "ec/tools/test_a.py": "one\n"})
+        records, _files = census.census(root)
+        self.assertEqual([r[3] for r in records], [census.RESOLVES])
+        _read, source = census.population(root, ".md")
+        self.assertIn("not the top of a work tree", source)
+
+    def test_a_root_inside_a_work_tree_that_is_not_its_top_falls_back(self):
+        # The subdirectory edge. `git -C ec/tools rev-parse --show-toplevel`
+        # succeeds and answers with the repository's top, so a check that only
+        # asked whether it succeeded would census the whole repository from a
+        # subdirectory -- and report the result as that subdirectory's, which is
+        # the same defect one level up. `top.md` is the file that must *not*
+        # come along.
+        root = work_tree({"top.md": "`test_a.py:1`\n",
+                          "ec/tools/a.md": "`test_a.py:1`\n",
+                          "ec/tools/test_a.py": "one\n"})
+        inner = os.path.join(root, "ec", "tools")
+        self.assertEqual(census.markdown(inner), ["a.md"])
+        _read, source = census.population(inner, ".md")
+        self.assertIn("not the top of a work tree", source)
+
+    def test_the_run_names_the_reading_its_figures_came_from(self):
+        # A figure that cannot be traced to a reading is a figure that cannot
+        # be checked, and the fallback's numbers are that tree's rather than
+        # this repository's -- so the run says which on every invocation, in
+        # both readings, rather than leaving a reader to infer it.
+        pinned = work_tree({"a.md": "`test_a.py:1`\n",
+                            "ec/tools/test_a.py": "one\n"})
+        bare = tree({"a.md": "`test_a.py:1`\n", "ec/tools/test_a.py": "one\n"})
+        for root, wanted in ((pinned, "the committed tree"),
+                             (bare, "not the top of a work tree")):
+            with self.subTest(reading=wanted):
+                _rc, out, _err = self.run_main(root)
+                self.assertIn(wanted, out)
+                self.assertIn(census.SELF_DOC, out)
+
+    def test_each_denominator_is_the_set_git_reports_and_not_a_stored_number(self):
+        # The two denominators, held as claims rather than as numerals. The
+        # expected set is computed from `git ls-files` *here*, so the comparison
+        # is against git and not against a figure somebody wrote down: a
+        # literal is a value every merge that lands a write-up has to edit, and
+        # it would redden on the next one, reading as drift (CLAUDE.md, "No
+        # totals of the repository's own text"). On a clean checkout the walk
+        # answers this identically -- which is the whole reason the defect this
+        # change fixes was never caught here -- so this case holds the
+        # denominator rather than guarding the split; the cases above are what
+        # guard the split, on trees the walk gets wrong.
+        listed = sorted(
+            os.fsdecode(name) for name in subprocess.run(
+                ["git", "-C", census.REPO, "ls-files", "-z"], check=True,
+                stdout=subprocess.PIPE).stdout.split(b"\0") if name)
+        self.assertEqual(census.markdown(census.REPO),
+                         sorted(rel for rel in listed
+                                if rel.endswith(".md") and rel != census.SELF_DOC
+                                and self.kept(rel)))
+        files, _index = census.suites(census.REPO)
+        self.assertEqual(sorted(files),
+                         sorted(rel for rel in listed
+                                if rel.endswith(".py")
+                                and os.path.basename(rel).startswith("test_")
+                                and self.kept(rel)))
 
 
 if __name__ == "__main__":
