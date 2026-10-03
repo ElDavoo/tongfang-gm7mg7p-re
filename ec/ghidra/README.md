@@ -382,8 +382,10 @@ them; `bank0,CC64` reads `match` with 58 of 58 instructions checked and
 `bank1,C1E7` reads `match` with 29 of 29, both 0 unchecked, as `02.00` measured
 them, and no run under `05.50.4` has been made to say what that assembler would
 answer. Nothing in the cheap tier depends on which assembler a row names:
-`--check` compares listing bytes and digests and the report's `mismatch` count,
-and the deep tier's exit status is `mismatch == 0` and nothing else.
+`--check` compares listing bytes and digests and the report's `outcome` column,
+and the deep tier's exit status is `status_for()`'s answer -- a `mismatch`, or
+any row carrying an outcome outside `OUTCOMES`, which is a row the re-encode did
+not measure at all.
 
 **Five more joined them on issue #267, the same way and for the same reason**
 (correction, stated in place: the paragraph above was written when the count was
@@ -458,15 +460,18 @@ same command on a nightly run prints a disagreement where the transcript above
 prints an agreement: this run's version string, the committed one, a `NOTE`
 naming both, and a category-by-category comparison with the rows that moved
 named individually. **That `NOTE` is expected, not a regression** — it is the
-warning the version comparison exists to raise, and the run's exit status is
-`mismatch == 0` and nothing else. Measured on this repository's runner, whose
-`sdas8051` reports `02.00`: `match` 2,621 against 2,574 committed, `partial` 78
-against 73, `assembler-gap` 6 against 58, 52 rows moved, `instructions_checked`
-45,394 in both, and `mismatch` 0 in both. The version difference and the moved
-categories are reported and neither is adjudicated: a branch that has re-reported
-its listings and not yet committed the CSV moves the tally legitimately, and
-this tool cannot tell that from a regression. `docs/findings.md` §14g has the
-calibration, and the question it leaves open.
+warning the version comparison exists to raise, and neither it nor a moved
+category changes the run's exit status. Measured on this repository's runner,
+whose `sdas8051` reports `02.00`: `match` 2,621 against 2,574 committed,
+`partial` 78 against 73, `assembler-gap` 6 against 58, 52 rows moved,
+`instructions_checked` 45,394 in both, and `mismatch` 0 in both. The version
+difference and the moved categories are reported and neither is adjudicated: a
+branch that has re-reported its listings and not yet committed the CSV moves the
+tally legitimately, and this tool cannot tell that from a regression.
+`docs/findings.md` §14g has the calibration. What it left open — whether a
+report row carrying an outcome outside `OUTCOMES` should fail — is settled in
+`../docs/findings/reassembly-unmeasured-row-policy.md`: all five do, because
+none of them is a measurement.
 
 **`instructions_checked` being identical in both is not robustness, and it is
 what the correction above is about.** Those two columns are computed by

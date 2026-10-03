@@ -178,6 +178,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`provenance-clone-depth-behaviour.md`](provenance-clone-depth-behaviour.md) — Both clone depths run: `--verify-provenance` measured rather than asserted (issue #421)
 - [`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md) — What a re-encode row's own columns say, and the ceiling they support
 - [`reassembly-name-column.md`](reassembly-name-column.md) — `reassembly.csv`'s `name` column describes the listing, so it is compared and not trusted
+- [`reassembly-unmeasured-row-policy.md`](reassembly-unmeasured-row-policy.md) — What a re-encode row outside `OUTCOMES` does to a run, to `--check`, and to the report (issue #230)
 - [`rebuild-provenance.md`](rebuild-provenance.md) — What a rebuild from the committed inputs re-derives (issue #623)
 - [`region-edge-declined-sites.md`](region-edge-declined-sites.md) — The six offsets the rel8 site walk declines are now reported by the tool rather than verified once
 - [`rel8-displacement-bound.md`](rel8-displacement-bound.md) — What holds the rel8 displacement read in range: a constant in another module, and a marker check three frames away
