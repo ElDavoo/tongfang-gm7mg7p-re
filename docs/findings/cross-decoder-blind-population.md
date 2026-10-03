@@ -255,8 +255,9 @@ walk of that kind costs in unattributed `movx`es is already on the record for
 one address: `census_xdata_writers.py`'s own blind spot, where the arm walk
 charges stores to no address when it cannot name the pointer they ride, across
 the `0x0751` arms table. That figure was 100 before #242 made `descend()`
-follow `inc dptr` and the arms table's `dp_causes` column say which of the four
-causes each of the remainder is; `walk_branch_arms.py --census` prints it.
+follow `inc dptr` and the arms table's `dp_causes` column name the cause of
+each of the remainder; `walk_branch_arms.py --census` prints the vocabulary
+and the split.
 
 The case for it rests entirely on the 97. `named-past-first-branch` (62) would
 be closed by a longer window and nothing else; `no-xdata-named` (493) is not a

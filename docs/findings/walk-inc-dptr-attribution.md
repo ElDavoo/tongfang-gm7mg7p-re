@@ -18,7 +18,7 @@ that the value is ever anything but the accumulator's. The addresses that
 appear below are the machine code read correctly, and `manual-fan-ctrl-0751.md`
 §9's negatives — no arm writes a PL register, no arm reaches `0x0F00` — are
 unaffected: those are about arms, and the arms of `0x0751` still write no PL
-byte. `XDATA_089F` and the slot bytes stay `present-untested`.
+byte. `XDATA_089F` and `XDATA_089E` stay `present-untested`.
 
 ## The shape, on the bytes
 
@@ -68,13 +68,14 @@ leaving to the code:
   `CODE_FLOOR` — so this is a property of the code and not of a row.
 
 **The addresses that gained a credit**, from the two committed tables, are
-below, each with the direction its cell reads. Two shapes are in the list, not
-one, and the table records which is which:
+below. A cell that gained an address and a cell that widened the direction on
+one the row already named are two different facts, so the table keeps them in
+separate columns rather than under one word per address:
 
-| table | addresses newly attributed, by direction |
-|---|---|
-| `manual-fan-ctrl-0751-arms.csv` | `write`: `0x089F` `0x0A48` `0x0A51` `0x0A53` — `read`: `0x08E7` |
-| `bank0-8038-handler-arms.csv` | `write`: `0x08D1` `0x08D3` `0x08D5` `0x08D7` `0x08D9` `0x08DB` `0x08DD` `0x08DF` — `read`: `0x0A57` `0x0A5A` — `r+w`: `0x0A59` |
+| table | cells that gained an address, by the direction the cell reads | cells that widened one the row already named |
+|---|---|---|
+| `manual-fan-ctrl-0751-arms.csv` | `write`: `0x089F` `0x0A48` — `read`: `0x08E7` — `r+w`: `0x0A51` `0x0A53` | `0x089F`: `read` → `r+w` |
+| `bank0-8038-handler-arms.csv` | `write`: `0x08D1` `0x08D3` `0x08D5` `0x08D7` `0x08D9` `0x08DB` `0x08DD` `0x08DF` — `read`: `0x0A57` `0x0A5A` — `r+w`: `0x0A59` | `0x0A57`: `write` → `r+w` — `0x0A5A`: `read` → `r+w` |
 
 The `write` cells are the shape the issue named: each is the high byte of a
 two-byte store whose low byte was already named. The `read` and `r+w` cells are
@@ -89,9 +90,12 @@ is why its cell reads `r+w`; `0x0A51` and `0x0A53` are likewise written by the
 increment in `0xE389` and read on another path.
 
 The `0x08D1`–`0x08DF` run is one fact about the eight handlers: each seeds a
-`0x06xx` slot with `mov dptr,#slot ; movx @dptr,a ; inc dptr ; movx @dptr,a`,
-so the low byte of every accumulator pair in the table was named and the high
-byte was not. `bank0-8038-handler-flow.md` §6.2 already described them as word
+word slot at an even address in `0x08D0`–`0x08DE` with `mov dptr,#slot ; mov
+a,r6 ; movx @dptr,a ; inc dptr ; mov a,r7 ; movx @dptr,a` — the bytes at
+`0x805E` are `90 08 d0 ee f0 a3 ef f0`, and the `mov dptr,#0x0600` after them
+reaches the accumulator pair by a `mov dptr` of its own, not by the increment
+— so the low byte of every slot was named and the high byte was not.
+`bank0-8038-handler-flow.md` §6.2 already described them that way, as word
 slots written with `r6` at the lower address; the table now agrees with it.
 
 **One modelling choice is visible and unchanged.** The byte the pointer walks
@@ -184,11 +188,11 @@ re-derived and corrected in place.
 
 ## What this does not establish
 
-- **No register gained a status.** `XDATA_089F`, `XDATA_089E` and the eight
-  slot bytes stay `present-untested`. An address in an `xdata` cell is this
-  tool's reading of the machine code and nothing more; whether the EC acts on
-  any of them is open, and `XDATA_089F`'s `static_refs: 1` still counts
-  direct `mov dptr` sites rather than writers.
+- **No register gained a status.** `XDATA_089F` and `XDATA_089E` stay
+  `present-untested`. An address in an `xdata` cell is this tool's reading of
+  the machine code and nothing more; whether the EC acts on any of them is
+  open, and `XDATA_089F`'s `static_refs: 1` still counts direct `mov dptr`
+  sites rather than writers.
 - **No `registers.yaml` rows were added** for the addresses that gained a
   credit (the table above). A static attribution is not evidence a register
   exists; entering them is its own issue.

@@ -180,12 +180,12 @@ number that moves rather than a caveat that gets copied forward;
 > **100 stores over its 171 rows**, on the single cause of a DPTR rebuilt at
 > run time. Both halves moved. `descend()` now follows `inc dptr`, so stores
 > that reached no address because the pointer went unknown at an increment are
-> charged to their address, and the remainder splits across four causes rather
-> than one — of which *inherited from a caller* is the larger share on this
+> charged to their address, and the remainder now splits by cause rather than
+> into one — of which *inherited from a caller* is the larger share on this
 > table and was previously unnameable. `walk_branch_arms.py --census` over
-> `0x0751 --callee-depth 1` prints the current split. Issue #34 stays open:
-> the stores are still there, and any of them could still be a `0x0751`
-> writer no site scan can name.
+> `0x0751 --callee-depth 1` prints the vocabulary and the current split. Issue
+> #34 stays open: the stores are still there, and any of them could still be a
+> `0x0751` writer no site scan can name.
 
 That blind spot is issue #34, and it stays open. Three further limits are the
 tree's own and are not new:

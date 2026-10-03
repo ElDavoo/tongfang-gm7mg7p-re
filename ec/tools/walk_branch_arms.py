@@ -33,8 +33,9 @@ produces a confident wrong answer:
     `mov dptr,#imm16` last set, and to nothing before that. `inc dptr` steps
     that value by one, which is the same claim and is tracked the same way --
     the byte the pointer walked over is credited a read, and the store after
-    it lands on `dp + 1` rather than on nothing. Five named things stop the
-    pointer being known, and each unattributed `movx` records which:
+    it lands on `dp + 1` rather than on nothing. The named things that stop the
+    pointer being known are these, and each unattributed `movx` records
+    which:
 
       - `DPTR_BUILT` -- any store to DPL (`0x82`) or DPH (`0x83`), from the
         accumulator or from a register, builds the pointer at run time. Not
