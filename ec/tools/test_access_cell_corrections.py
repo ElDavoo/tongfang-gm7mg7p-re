@@ -44,14 +44,17 @@ import walk_budget_census as W          # noqa: E402
 FIRMWARE = HERE.parent / 'firmware' / 'GMxMGxx_11.800'
 ANNOT = HERE.parent / 'annotations'
 
-# The three rows `../../docs/findings/walk-window-terminators.md` §B
+# The rows `../../docs/findings/walk-window-terminators.md` §B
 # classified B, and the only rows any committed table may differ from
 # `classify(walk(d, off))` on. Held as the census's own classification rather
 # than as a second copy of it: the test below re-derives this set from
-# `walk_budget_census.py` and asserts it, so a fourth class-B row appearing
-# fails here rather than passing unnoticed.
+# `walk_budget_census.py` and asserts it, so a further class-B row appearing
+# fails here rather than passing unnoticed. Which is what happened when
+# `0x07D2`'s table joined `walk_budget_census.py`'s `TABLES` and its one
+# class-B row (`0x2F628`) was corrected.
 CLASS_B = {"ec-07d6-07d7-sites.csv": "0x2BECB",
            "ec-0x07d0-sites.csv": "0x2E8D4",
+           "ec-0x07d2-sites.csv": "0x2F628",
            "xdata-0400-045f-sites.csv": "0x0DD4A"}
 
 

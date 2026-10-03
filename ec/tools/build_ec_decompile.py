@@ -2207,12 +2207,17 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # `lcall 0xF739 ; mov dptr,#0x07D0 ; ret` units sit in no committed
     # listing, so none of them swallowed a neighbour. Write-up:
     # docs/findings/pd-07d0-accessor-stubs.md.
-    check("EC: index.csv is 2,720 rows, and the manifest records 2,720 "
+    # 2,720 -> 2,721 with issue #337's one bank0 seed 0xC118, likewise a
+    # seed for an address no committed listing covered: it sat in the run
+    # between 0xC0E7 and 0xC124 that bank1's 0x19A8 names, so nothing split
+    # or absorbed and the twelve bytes became a function of their own.
+    # Write-up: docs/findings/bank0-c118-3202-bit0-thunk.md.
+    check("EC: index.csv is 2,721 rows, and the manifest records 2,721 "
           "functions across 4 programs",
-          len(_ir) == 2720 and len(_mr) == 4
-          and sum(int(r["functions"]) for r in _mr) == 2720,
+          len(_ir) == 2721 and len(_mr) == 4
+          and sum(int(r["functions"]) for r in _mr) == 2721,
           "%d row(s), %d manifest row(s)" % (len(_ir), len(_mr)))
-    check("EC: listing-index.csv is the same 2,720 rows", len(_lr) == 2720,
+    check("EC: listing-index.csv is the same 2,721 rows", len(_lr) == 2721,
           "%d row(s)" % len(_lr))
     check("EC: the manifest's program set is the index's, with no label mapping "
           "in between",
@@ -2226,7 +2231,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: addresses are uniformly 4 bare hex digits in both indexes, so "
           "string and int (program, addr) keys agree",
           all(len({(r["program"], r["addr"]) for r in rows})
-              == len({(r["program"], int(r["addr"], 16)) for r in rows}) == 2720
+              == len({(r["program"], int(r["addr"], 16)) for r in rows}) == 2721
               for rows in (_ir, _lr)))
     # The annotation layer's two committed CSVs, the same way. 1,769 records
     # and not the 1,771 the follow-up issue quoted: the file is 1,772 physical
@@ -2282,9 +2287,9 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # A `common`-scoped row at an address both banks carry, so it is the shape
     # #603's 37 were, and it moves annotations_applied and functions_named below
     # the same way and for the same reason.
-    check("EC: annotations/ghidra-functions.csv is 1,962 records, no short row "
+    check("EC: annotations/ghidra-functions.csv is 1,963 records, no short row "
           "and no duplicate (scope, addr)",
-          len(_ann) == 1962 and not structure_problems("ghidra-functions.csv", _ann,
+          len(_ann) == 1963 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
     # The function layer's three counters, on the committed files, which is where
@@ -2347,14 +2352,17 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # which is `common`-scoped and so is handed to both bank programs, moving
     # both by one and `common` with bank0 for the reason #603's 37 did; `pd`
     # stays at 541, that row being EC-scoped.
-    _want_applied = {"bank0": 829, "bank1": 725, "pd": 541}
+    # ... and then 829 -> 830 with issue #337's one `bank0 0xC118` row, an
+    # EC-scoped seed like #603's, so `common` borrows bank0's 830 with it and
+    # no bank's own figure moves.
+    _want_applied = {"bank0": 830, "bank1": 725, "pd": 541}
     check("EC: the manifest's annotations_applied is what the exporter's reports "
-          "said -- 829 / 725 / 541 across the three programs, with `common` "
+          "said -- 830 / 725 / 541 across the three programs, with `common` "
           "borrowing bank0's",
           {r["program"]: int(r["annotations_applied"]) for r in _mr
            if r["program"] in _want_applied} == _want_applied
           and next(int(r["annotations_applied"]) for r in _mr
-                   if r["program"] == "common") == 829,
+                   if r["program"] == "common") == 830,
           str({r["program"]: r["annotations_applied"] for r in _mr}))
     check("EC: annotations_unmatched is 0 for all four programs, measured rather "
           "than written as a literal",
@@ -2389,11 +2397,14 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # read the same way in a manifest and are not the same fact. The write-up is
     # docs/findings/cased-in-reserved-namespace.md; the population is derived by
     # ec/tools/second_copy_census.py --check.
-    _want_named = {"bank0": 698, "bank1": 594, "common": 136, "pd": 541}
+    # ... and then bank0 from 698 to 699, with the sum to 1,970, for issue
+    # #337's one `bank0 0xC118` row: a seed that takes the index's
+    # `annotated` from no to yes, which is the ordinary direction.
+    _want_named = {"bank0": 699, "bank1": 594, "common": 136, "pd": 541}
     check("EC: functions_named is the index's own annotated=yes count per "
-          "program, 698 / 594 / 136 / 541, summing to 1,969",
+          "program, 699 / 594 / 136 / 541, summing to 1,970",
           {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
-          and sum(_want_named.values()) == 1969
+          and sum(_want_named.values()) == 1970
           and not annotation_ledger_mismatches(_mr, _ir, _ann),
           str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
     # The two-way ledger on the committed files, which is the whole substance of
@@ -2470,8 +2481,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "predates the row",
           _abu == [],
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
-    check("EC: the two ledger directions close the arithmetic -- 1,962 - 0 + 7 "
-          "= the 1,969 functions named",
+    check("EC: the two ledger directions close the arithmetic -- 1,963 - 0 + 7 "
+          "= the 1,970 functions named",
           len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
           "%d - %d + %d = %d, not %d"
           % (len(_ann), len(_abu), len(_nwr),
@@ -2521,7 +2532,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1962
+          == len({annotation_key(r) for r in _ann}) == 1963
           and len({(r["file_offset"], r["target"]) for r in _ct})
           == len({call_target_key(r) for r in _ct}) == 5998)
 

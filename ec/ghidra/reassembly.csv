@@ -406,6 +406,7 @@ bank0,C0B8,return_1_unless_3202_bits_1_and_2,match,672a440d50da90b4,9,0,,sdas805
 bank0,C0C9,return_1_if_3202_bits_1_and_2,match,127d900e0b6cceeb,9,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C0DA,return_1_unless_3202_bit0,match,12be96c03642fc95,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C0E7,test_3202_bit0,match,9bbf0094f4fef346,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,C118,call_test_3202_bit0_keep_result_in_r7,match,b38212ed6c8c2ffd,7,0,,sdas8051 02.00
 bank0,C124,set_1602_bit2,match,2c7f86ce99ebdf02,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C12C,clear_1602_bit2,match,4a2407a800314749,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C154,set_1602_bit7,match,3cb2ea8a08560a25,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14

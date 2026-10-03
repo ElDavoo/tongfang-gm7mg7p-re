@@ -33,6 +33,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) — Which process wrote this mark: a fifth column measured against a `# provenance` row (issue #719)
 - [`0751-mark-split-boundary-gap.md`](0751-mark-split-boundary-gap.md) — A day whose three consoles marked one action 7 s apart was reported as two captures that never recorded it (issue #1372)
 - [`0751-notice-two-moments.md`](0751-notice-two-moments.md) — The 0751 startup notice described two moments as one (issue #749)
+- [`0751-pair-hint-block-scope.md`](0751-pair-hint-block-scope.md) — §4.6's `--dump-pair` hint named another block's bracket, and pointed at a file the same run refuses to read (issue #1394)
 - [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md) — The two path-taking readers are kept, and their docstrings name their callers (issue #771)
 - [`0751-readback-before-dump-holds-written-value.md`](0751-readback-before-dump-holds-written-value.md) — §4.6 said "still" without reading the dump that would support it (issue #1401)
 - [`0751-readback-writer-names.md`](0751-readback-writer-names.md) — §4.6's readback names the writer the two bytes rule out, and what is left
@@ -57,10 +58,12 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
 - [`bank-map-and-image-census.md`](bank-map-and-image-census.md) — The bank map, and a second image in the dump
+- [`bank0-c118-3202-bit0-thunk.md`](bank0-c118-3202-bit0-thunk.md) — bank0 `0xC118` is a thunk on `test_3202_bit0`, and it is one of four in an unexported run
 - [`bank1-c1e7-reachability.md`](bank1-c1e7-reachability.md) — No transfer in bank 1 names `0xC1E7`, which is why a reading of it stood unchallenged (issue #336)
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
 - [`bucket-c-codemap.md`](bucket-c-codemap.md) — Bucket C against a recovered code map: 16 of the 140 sites are on an instruction boundary, and 14 of those 16 sit inside spans already listed as data tables
+- [`bucket-c-unplaced.md`](bucket-c-unplaced.md) — The unplaced bucket-C census: what the sites no data region covers say
 - [`call-graph-agreement-set-identity.md`](call-graph-agreement-set-identity.md) — Do the agreements agree as sets, and not only in number? 61 of 74, and the thirteen that do not (issue #704)
 - [`call-graph-diff-alignment.md`](call-graph-diff-alignment.md) — `diff_table()` names every row of a permuted table, including the rows that did not move (issue #469)
 - [`call-graph-unresolved.md`](call-graph-unresolved.md) — The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (issue #456)
@@ -173,6 +176,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pack-temp-producer-chain.md`](pack-temp-producer-chain.md) — The pack-temperature producer chain at `0x04A2`/`0x04A3` (issue #1425)
 - [`paged-trampoline-hits-by-hand.md`](paged-trampoline-hits-by-hand.md) — All 18 paged-trampoline hits, read one by one (issue #54)
 - [`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md) — The six `pd 0x07D0` accessors that were not functions, and what naming them did to the census (issue #1101)
+- [`pd-07d2-index-or-word-half.md`](pd-07d2-index-or-word-half.md) — `0x07D2` is an index in some routines and a 16-bit window's low byte in others, and choosing between them is the wrong question
 - [`pd-11c2-dispatch-key-selector.md`](pd-11c2-dispatch-key-selector.md) — The `pd 0x11C2` dispatch key is `0x0424 + 0x260 * R7`, and only three key pairs ever leave the default record (issue #647)
 - [`pd-call-site-table-framing.md`](pd-call-site-table-framing.md) — Five `pd` dispatch call sites whose tables the annotation rows read as instructions (issue #643)
 - [`pd-callers-status-intersection.md`](pd-callers-status-intersection.md) — A caller's literals are not index-register loads unless the site indexes on those registers
@@ -251,6 +255,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
 - [`walk-window-terminators.md`](walk-window-terminators.md) — `walk()`'s stop reason is a column now, and the 45 rows its budget truncates are named
 - [`xdata-0390-0391-filter-pair.md`](xdata-0390-0391-filter-pair.md) — The 0x0390/0x0391 pair: what the 0x9EA1 filter reads, what the `E100` branch selects, and where `0x0391`'s value comes from (issue #295)
+- [`xdata-044b-selector-value-set.md`](xdata-044b-selector-value-set.md) — `0x044B`'s writable set and its reader set are the same values, and `0x9A0E` spends the byte on one threshold of three
 - [`xdata-0786-tcc-offset-verdict.md`](xdata-0786-tcc-offset-verdict.md) — `0x0786` is a CPU TCC offset: the EC's own bytes decide the naming conflict
 - [`xdata-07fd-07ff-witness-triple.md`](xdata-07fd-07ff-witness-triple.md) — The `0x07FD`-`0x07FF` triple: a three-byte witness whose third byte discriminates (issue #573)
 - [`xdata-0860-census-sites-relined.md`](xdata-0860-census-sites-relined.md) — The four `0x0860` census citations move; the counts do not (issue #752)
