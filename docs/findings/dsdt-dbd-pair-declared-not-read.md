@@ -155,8 +155,18 @@ first is a reason to doubt the second:
   `--check` green. The census is now derived from the file
   (`ec/tools/check_dsdt_ecmg_pair.py`'s `computed_base_routes`), and it reports
   three states rather than one total: **17** regions in a method nothing calls,
-  **2** in a called method whose base resolves elsewhere, and **69** whose base
+  **1** in a called method whose base resolves elsewhere, and **64** whose base
   this scan **cannot place at all**. Only the first state is a cleared route.
+
+Those three states cover the regions at a **non-literal** base, and that is the
+population the heading names. A literal base is not in them: it is read off the
+source rather than placed by this scan, so filing one under a heading about
+bases this scan cannot resolve mislabels it. `ECMG` is the worked example — the
+window itself, at a literal base, at file scope — and reporting *the window*
+among the bases the scan cannot place says something false about the file.
+Literal regions are kept in their own bucket and still refused: a literal base
+inside the window, reached from a method something calls, is a reader with no
+field name in the path, and `--self-test` pins that case.
 
 The zero-call result is `accessor_census`'s, not the route census's:
 `--check --print` reports `0 call(s)` for `ECRR`, `ECRW` and `SMRW` because
@@ -165,7 +175,7 @@ nothing invokes those three *methods*. None of them declares an
 not among the 17 uncalled regions above. And the region that actually carries
 `ECRR`'s read, `MMNM` at `:50423`, is reported **unresolved-base** rather than
 cleared — `MMRW` has eight syntactic call sites, so this scan places it among
-the unbounded 69. The census decides reachability one level deep, so it reports
+the unbounded 64. The census decides reachability one level deep, so it reports
 that as "reached, not placeable" rather than following the callers; a
 transitive walk would be a change to `computed_base_routes`, not something this
 document reads as though the tool already did.
@@ -198,8 +208,8 @@ the named computed-base accessors, and whether anything calls them:
   ECRW  0 call(s); declared at dsdt.dsl:50504
   SMRW  0 call(s); declared at dsdt.dsl:50764
 every SystemMemory region at a non-literal base, from the file:
-  17 in a method nothing calls; 2 in a called method whose
-  base resolves elsewhere; 69 whose base this scan cannot place
+  17 in a method nothing calls; 1 in a called method whose base resolves elsewhere; 64 whose base this scan cannot place
+    literal base, outside this census: THBA at dsdt.dsl:7533, base 0xFE200000, method THEN
     unbounded: PDW1 at dsdt.dsl:6757, base Local2, method GPC1
     ...
 ```

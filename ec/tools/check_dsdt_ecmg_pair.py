@@ -329,7 +329,10 @@ def accessor_census(lines, names=ACCESSORS):
 # `PCI_Config` or `SystemIO` region cannot reach an XDATA byte, so including
 # those would inflate the route count with things that are not routes to this
 # window. The base is captured whole rather than pattern-matched for a literal,
-# because "is not a literal" is the whole test.
+# because this regex has to see the literals too -- `computed_base_routes`
+# refuses a literal base that lands in the window, and a pattern that dropped
+# them here could not. What separates the two populations is the `LITERAL_BASE_RE`
+# test at the census boundary, below, not this pattern.
 COMPUTED_REGION_RE = re.compile(
     r"^\s*OperationRegion\s*\(\s*(\w+)\s*,\s*SystemMemory\s*,\s*(.+?)\s*,"
     r"\s*(0x[0-9A-Fa-f]+|\d+)\s*\)")
@@ -426,10 +429,16 @@ def resolve_base(expression, names):
     return value if isinstance(value, int) else None
 
 
+def _overlaps(value, length, window_base, window_length):
+    """Whether `[value, value + length)` touches the ECMG window at all."""
+    return value < window_base + window_length and value + length > window_base
+
+
 def computed_base_routes(lines, window_base, window_length):
     """Every `SystemMemory` region at a non-literal base, and where it reaches.
 
-    Returns `{"invoked": [...], "uncalled": [...], "unbounded": [...]}`,
+    Returns `{"invoked": [...], "uncalled": [...], "unbounded": [...],
+    "literal": [...]}`,
     each entry naming the region, its line, the method that contains it, and
     -- where the base folds to a constant -- whether that constant overlaps the
     window at all.
@@ -453,10 +462,22 @@ def computed_base_routes(lines, window_base, window_length):
         called if anything invokes it -- so `MMNM`, the region carrying
         `ECRR`'s read, lands here rather than in `uncalled` even though all
         eight of `MMRW`'s callers are themselves uncalled.
+
+    A **literal** base is in none of the three, and that is the point of the
+    fourth key: a literal is not a route the scan has to *place*, it is one it
+    can read straight off the source, so filing it under a heading about bases
+    this scan cannot resolve mislabels it. `ECMG` itself is the worked example
+    -- the window, at a literal base, at file scope, where `enclosing_methods`
+    returns `None` -- and reporting *the window* among the bases the scan
+    cannot place is a false statement about the file. It is kept in `literal`
+    rather than dropped, because a literal base can still land inside the
+    window from a method something calls, and that is a reader with no field
+    name in the path; `census` refuses those, and `--self-test` pins the case
+    with `WIDG`.
     """
     names = literal_names(lines)
     enclosing = enclosing_methods(lines)
-    invoked, uncalled, unbounded = [], [], []
+    invoked, uncalled, unbounded, literal = [], [], [], []
     for index, line in enumerate(lines):
         match = COMPUTED_REGION_RE.match(line.split("//", 1)[0])
         if not match:
@@ -466,6 +487,23 @@ def computed_base_routes(lines, window_base, window_length):
         method = enclosing[index]
         entry = {"region": region, "line": index + 1, "base": base,
                  "length": length, "method": method}
+        if LITERAL_BASE_RE.match(base):
+            # Read, not resolved: there is nothing here for the scan to fold.
+            # The caller count is still worked out, because a literal region
+            # inside the window is refused only from a method something calls.
+            entry["state"] = "literal"
+            entry["resolves"] = resolve_base(base, names)
+            if method is not None:
+                declared = call_re(method)
+                entry["callers"] = [i + 1 for i, other in enumerate(lines)
+                                    if declared.search(
+                                        other.split("//", 1)[0])
+                                    and not other.split("//", 1)[0].strip()
+                                    .startswith("Method")]
+            else:
+                entry["callers"] = []
+            literal.append(entry)
+            continue
         if method is None:
             entry["state"] = UNBOUNDED
             unbounded.append(entry)
@@ -489,12 +527,13 @@ def computed_base_routes(lines, window_base, window_length):
         # A route is only *cleared* by a constant that lands outside the
         # window. One that lands inside it is a reader, with no field name
         # anywhere in the path, and no count of `DBD1` occurrences can see it.
-        overlaps = value < window_base + window_length and \
-            value + length > window_base
-        entry["state"] = "invoked-into-window" if overlaps else "invoked"
+        entry["state"] = ("invoked-into-window" if _overlaps(value, length,
+                                                            window_base,
+                                                            window_length)
+                          else "invoked")
         invoked.append(entry)
     return {"invoked": invoked, "uncalled": uncalled,
-            "unbounded": unbounded}
+            "unbounded": unbounded, "literal": literal}
 
 
 def region_length(lines, span):
@@ -819,11 +858,26 @@ def census(dsdt, fields_csv):
     window_base, window_length = window_bounds(lines, span)
     out["routes"] = routes = computed_base_routes(lines, window_base,
                                                    window_length)
-    for entry in routes.get("invoked", []):
-        if entry["state"] != "invoked-into-window":
+    # The refusal reads both the computed-base regions and the literal ones.
+    # The census buckets the latter separately only so the printed division
+    # describes the population it claims to -- a literal base is read off the
+    # source rather than placed by this scan, and folding `ECMG` in among the
+    # bases it cannot place says something false about the window itself.
+    # Excluding them from the *refusal* as well would be the opposite fix: a
+    # literal base inside the window is a reader like any other, so
+    # `WIDG` in `--self-test` is refused from this half of the table.
+    for entry in routes.get("invoked", []) + routes.get("literal", []):
+        if not _overlaps(entry["resolves"], entry["length"],
+                         window_base, window_length):
+            continue
+        if entry["state"] == "literal" and not entry.get("callers"):
+            # A literal region is not gated on a caller, so the reachability
+            # question does not arise for it the way it does for a computed
+            # one; file scope and an uncalled method are both reported below
+            # rather than silently cleared.
             continue
         problems.append(
-            "%s at %d is a computed-base region inside an invoked method, and "
+            "%s at %d is a %s region inside an invoked method, and "
             "its base %s resolves to 0x%08X, which overlaps the ECMG window "
             "(0x%08X, %d bytes):\n"
             "    %s\n"
@@ -832,7 +886,9 @@ def census(dsdt, fields_csv):
             "it carries dies. It is derived from the file rather than from a "
             "list of accessor names, which is the point: a fourth "
             "computed-base method is found here even though nothing names it." %
-            (entry["region"], entry["line"], entry["base"],
+            (entry["region"], entry["line"],
+             "literal-base" if entry["state"] == "literal" else "computed-base",
+             entry["base"],
              entry["resolves"], window_base, window_length,
              "method %s, called at %s" % (entry["method"],
                                           ", ".join(str(c)
@@ -933,11 +989,26 @@ def print_census(census):
         # The three states, not a single total: the point of deriving this from
         # the file is that the answer is not one number, and collapsing it to
         # one is how the earlier version of this claim came to sound exhaustive.
+        # The three counts are over the non-literal-base population the header
+        # names, which is what the buckets hold. Literal bases are listed
+        # separately because a literal is read off the source rather than
+        # placed by this scan, and one of them -- `ECMG` -- is the window.
         print("every SystemMemory region at a non-literal base, from the file:")
         print("  %d in a method nothing calls; %d in a called method whose "
               "base resolves elsewhere; %d whose base this scan cannot place"
               % (len(routes["uncalled"]), len(routes["invoked"]),
                  len(routes["unbounded"])))
+        for entry in routes.get("literal", []):
+            if entry["region"] == "ECMG":
+                # The window's own declaration. It is in the literal bucket
+                # like the others, but printing it as a region "outside this
+                # census" would read as a route the scan set aside, and it is
+                # the thing the census is measuring.
+                continue
+            print("    literal base, outside this census: %s at dsdt.dsl:%d, "
+                  "base %s, method %s"
+                  % (entry["region"], entry["line"], entry["base"],
+                     entry["method"] or "file scope"))
         for entry in routes["unbounded"]:
             if entry.get("method"):
                 print("    unbounded: %s at dsdt.dsl:%d, base %s, method %s"
@@ -1246,6 +1317,33 @@ def self_test():
           "WIDR is absent from ACCESSORS by construction, which is the point: "
           "found %s" % (found or "nothing reported"))
 
+    # 11b. The census and the label printed above it describe one population.
+    #     `WIDG` above is a *literal*-base region, and the census excludes
+    #     literals, so the refusal it proves has to come from the literal half
+    #     of the table rather than from the three buckets -- otherwise the
+    #     exclusion that fixed the label would have quietly disarmed this
+    #     check. And the window itself must not be filed among the bases the
+    #     scan cannot place: `ECMG` declares a literal base and sits at file
+    #     scope, which is the `method is None` branch.
+    _, walked_literal = on_fixture(
+        fourth.replace("                    Local0 = (Arg1 * 0x08)\n",
+                       "                    Local3 = WIDR ()\n"
+                       "                    Local0 = (Arg1 * 0x08)\n"),
+        FIXTURE_WIDTHS)
+    literal_routes = walked_literal.get("routes", {})
+    check("a literal-base region is not in the three census buckets",
+          not [e for bucket in ("invoked", "uncalled", "unbounded")
+               for e in literal_routes.get(bucket, [])
+               if e["region"] == "WIDG"] and
+          [e["region"] for e in literal_routes.get("literal", [])
+           if e["region"] == "WIDG"] == ["WIDG"],
+          "the buckets are the non-literal population the header names; "
+          "WIDG is kept apart and still refused: %r"
+          % ([e["region"] for e in literal_routes.get("literal", [])],))
+    check("a literal base inside the window is refused from the literal half",
+          any("literal-base" in p for p in found),
+          "found: %s" % (found or "nothing reported"))
+
     # 12. The positive control for that refusal: the same region in a method
     #     nothing calls is a reader with no route, and is reported as uncalled
     #     rather than refused. Without this the case above could pass on a rule
@@ -1315,6 +1413,44 @@ def self_test():
                   cover["bits"],
                   "%d + %d != %d" % (real["csv"]["widths"],
                                      cover["unnamed_bits"], cover["bits"]))
+        # The property the printed header claims: the three buckets hold the
+        # non-literal population and nothing else. Asserted against the regex
+        # rather than against a stored figure, so it is a relationship between
+        # two things this file computes -- a count of the tree would move on
+        # every DSDT revision and mean nothing.
+        real_routes = real.get("routes", {})
+        committed = read_lines(DEFAULT_DSDT)
+        non_literal = sum(
+            1 for line in committed
+            for match in [COMPUTED_REGION_RE.match(line.split("//", 1)[0])]
+            if match and not LITERAL_BASE_RE.match(match.group(2).strip()))
+        check("the census buckets hold exactly the non-literal-base regions",
+              sum(len(real_routes.get(b, []))
+                  for b in ("invoked", "uncalled", "unbounded")) ==
+              non_literal and not [
+                  e for b in ("invoked", "uncalled", "unbounded")
+                  for e in real_routes.get(b, [])
+                  if LITERAL_BASE_RE.match(e["base"])],
+              "%d bucketed against %d non-literal SystemMemory regions: %r" % (
+                  sum(len(real_routes.get(b, []))
+                      for b in ("invoked", "uncalled", "unbounded")),
+                  non_literal,
+                  [(e["region"], e["base"]) for b in ("invoked", "uncalled",
+                                                      "unbounded")
+                   for e in real_routes.get(b, [])
+                   if LITERAL_BASE_RE.match(e["base"])]))
+        # `ECMG` is the window itself: a literal base at file scope, where
+        # `enclosing_methods` returns `None`. Filing it among the bases the
+        # scan cannot place states something false about the file, in the
+        # sentence carrying the finding.
+        check("the window is not reported as a base the scan cannot place",
+              not [e for e in real_routes.get("unbounded", [])
+                   if e["region"] == "ECMG"] and
+              [e["region"] for e in real_routes.get("literal", [])
+               if e["region"] == "ECMG"] == ["ECMG"],
+              "ECMG in unbounded: %r; in literal: %r" % (
+                  [e["region"] for e in real_routes.get("unbounded", [])],
+                  [e["region"] for e in real_routes.get("literal", [])]))
     else:
         print("  skip  the committed pair (dsdt.dsl or the CSV is absent here)")
 
