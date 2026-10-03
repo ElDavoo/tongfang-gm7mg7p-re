@@ -280,7 +280,14 @@ only covers what's specific to *this* copy.
      matters — a table with one cell altered and a table with its last row
      dropped both have to come back rejected, over the same `diff_table()`
      `--check` uses — because a check that has quietly started accepting
-     everything looks exactly like a check that is working. That is why this
+     everything looks exactly like a check that is working. **(2026-10-03,
+     issue #469: that pair is not sufficient. Both leave every surviving row
+     where a positional zip will find it, so neither says anything about how
+     `diff_table()` pairs rows; a third assertion permutes the table and is
+     outstanding against #459, reported as a known defect so this arm stays
+     green until that fix lands.
+     [`findings/call-graph-diff-alignment.md`](findings/call-graph-diff-alignment.md).)**
+     That is why this
      one is `--self-test` in the arm rather than `--check` alone, unlike
      item 4's. **A re-copy of `agent-gates.sh` from the template restores the
      eight-tool list, so the path and the arm have to be re-applied with
