@@ -94,6 +94,20 @@ four lines: 117 = 8+11+70+28 enumerated rows; `bank0` 15 = 5+4+2+4;
 `static_refs_pd_image`, so the table cannot silently disagree with the
 numbers the rest of the repo quotes.
 
+**The `--csv` line now runs in CI, and holds the row set rather than the
+cells.** `../../ec/tools/test_sites_csv_regeneration.py` regenerates this table
+from the committed firmware for the four addresses above and compares it against
+the committed file on every run of `bash tools/run-tests.sh`. The suites that
+already read this file re-derive a cell of each row that is *present*, so a row
+edited out, added or reordered is not something they can see; this one freezes
+the four addresses as its own data — reading them back out of the CSV would be
+circular — so "this file is the map of these four addresses" is a claim
+something checks. A `region` cell is the one none of those cell-wise checks can
+reach, and the `region` column is what separates the 15 from the 102 below. "Not
+found by this method, never absent": a site reached through a computed DPTR has
+no row here and would have none in a regeneration either. The write-up is
+`../../docs/findings/sites-csv-regeneration.md`.
+
 The 102 `pd-image` rows are the `ITE8850-PD` program's own variables, at
 its own `0x07C4` — a different 8051 program with a different XDATA map,
 which `ec-0x07d0-sites.md` §1 sets out at length. The `region` column is

@@ -64,6 +64,18 @@ That is the reconciliation check this file rests on, and it is the same one
 counts sum to it, so the site table cannot silently disagree with the number
 everything else cites.
 
+**That command now runs in CI.** `../../ec/tools/test_sites_csv_regeneration.py`
+regenerates this table from the committed firmware for `0x07D1` and compares it
+against the committed file, on every run of `bash tools/run-tests.sh`. It is the
+`pd-image`-only table whose `region` cell no other suite can check —
+`classify()` and `walk_why()` say what a window did and why it ended, not which
+image a site is in — so a `region` relabelled here is a red run rather than a
+silent disagreement with §3a's conflation. "Not found by this method, never
+absent": a site reached through a computed DPTR has no row here and would have
+none in a regeneration either. The write-up, and the inventory of the other
+committed tables the same suite holds, are
+`../../docs/findings/sites-csv-regeneration.md`.
+
 ```console
 $ python3 -c "
 import csv, collections
