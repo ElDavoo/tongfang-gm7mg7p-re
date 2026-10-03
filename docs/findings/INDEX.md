@@ -134,6 +134,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`forwarder-target-bank-census.md`](forwarder-target-bank-census.md) — Every bank-switch forwarder's `imm16`, resolved in the bank its stub selects (issue #465)
 - [`gap-text-self-test-census.md`](gap-text-self-test-census.md) — The listing instruction census, and the readers that have to agree on it
 - [`gate-arm-coverage.md`](gate-arm-coverage.md) — What issue #318 asked for is already in the gate; what was missing is what holds it there (2026-10-01, issue #318)
+- [`ghidra-project-owner.md`](ghidra-project-owner.md) — The Ghidra projects are owned by `dave`, and that is the whole of why a non-owner cannot export (issue #293)
 - [`grader-merged-capture-sources.md`](grader-merged-capture-sources.md) — The merged timer-sweep run took its sample interval and its byte levels from one file each, and now refuses a merge whose files disagree (issue #1377)
 - [`grader-repeated-capture.md`](grader-repeated-capture.md) — A repeated capture opens phantom windows in the door grader and a ZeroDivisionError in the timer grader, and the rule that closes it is identity rather than a single capture (issue #491)
 - [`group-check-drift-and-shared-basis.md`](group-check-drift-and-shared-basis.md) — `group_functions.py --check` re-runs the rule, and `shared` was a basis no rule emitted (issue #442)
