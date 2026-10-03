@@ -62,7 +62,7 @@ a fourth thing to keep in step with the shape rather than a fourth answer.
 and no other: no EC, no firmware image, no Ghidra, no network, no scratch
 directory. The `#` lines are dropped before the header is read, by importing
 `check_capture_claims.capture_lines` rather than repeating its filter -- the
-committed summary opens with three of them, and a reader that takes a comment
+committed summary opens with a `#` block, and a reader that takes a comment
 as the fieldnames finds no `addr` column at all, which reads as "this file
 carries no addresses" rather than as a parser that skipped what it should not
 have. `normalise()` comes from the same module so `0x0449` and `0X0449` are

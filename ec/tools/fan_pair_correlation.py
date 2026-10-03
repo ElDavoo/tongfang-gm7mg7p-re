@@ -116,7 +116,7 @@ TACH_VENDOR_SECOND = (0x046C, 0x046B)
 TACH_EC_SECOND = (0x046C, 0x046D)
 
 # The per-address change-count summary. A different shape from a capture --
-# `addr,change_count,first_old,last_new` behind three `#` comment lines -- so
+# `addr,change_count,first_old,last_new` behind a `#` comment block -- so
 # it has its own reader rather than a flag on the other.
 SWEEP_SUMMARY = os.path.join(
     "evidence", "ec-watch", "2026-09-18-ac-plugin-sweep-summary.csv")
