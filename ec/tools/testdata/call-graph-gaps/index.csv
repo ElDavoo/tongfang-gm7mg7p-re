@@ -8,7 +8,11 @@ common,D03F,FUN_CODE_d03f,3,call-target,yes,no,,,,,common/D03F.c
 common,D040,FUN_CODE_d040,3,call-target,yes,no,,,,,common/D040.c
 common,D041,FUN_CODE_d041,3,call-target,yes,no,,,,,common/D041.c
 common,D050,FUN_CODE_d050,3,call-target,yes,no,,,,,common/D050.c
+common,D06A,FUN_CODE_d06a,3,call-target,yes,no,,,,,common/D06A.c
+common,D06D,FUN_CODE_d06d,3,call-target,yes,no,,,,,common/D06D.c
 common,D070,caller_xdata_d070,3,annotation,yes,yes,delay,hand-decoded,,,common/D070.c
+common,D07A,FUN_CODE_d07a,3,call-target,yes,no,,,,,common/D07A.c
+common,D07D,FUN_CODE_d07d,3,call-target,yes,no,,,,,common/D07D.c
 common,D080,caller_paged_d080,3,annotation,yes,yes,delay,hand-decoded,,,common/D080.c
 common,D090,caller_norow_d090,3,annotation,yes,yes,delay,hand-decoded,,,common/D090.c
 common,D0A0,caller_multi_d0a0,3,annotation,yes,yes,delay,hand-decoded,,,common/D0A0.c

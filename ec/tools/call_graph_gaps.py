@@ -73,15 +73,20 @@ it is `forms` and the vocabulary stays four.
 question the unreached population turns on is whether an anonymous row is the
 continuation of a neighbouring one. The rule answers it positionally -- the row
 immediately after some index row's last instruction -- and then has to say
-whether control *actually* falls through there, because 8051 `ret`/`reti` do not
-fall through and an address one past a `ret` is adjacent by arithmetic rather
-than entered by it. So:
+whether control *actually* falls through there. A returns-only test is the
+obvious reading and it is wrong on most of the population: an `ljmp` is three
+bytes of unconditional jump, and an address one past it is jumped over. So the
+second question is asked against `NO_FALLTHROUGH` rather than against the
+returns:
 
-  * `fall-through` -- adjacent, and the predecessor's last instruction is not a
-    return, so control does continue into it;
-  * `adjacent-return` -- adjacent, and the predecessor ends in `ret`/`reti`, so
-    the adjacency is a boundary artefact and **this method found no transfer
-    reaching it**;
+  * `fall-through` -- adjacent, and the predecessor's last instruction is not
+    one control can be taken away from the next address by, so **control does
+    continue into it**;
+  * `adjacent-no-fallthrough` -- adjacent, and the predecessor's last
+    instruction is one `NO_FALLTHROUGH` covers, so **this method credits it no
+    fall-through**: the adjacency is a boundary, and `NO_FALLTHROUGH`'s own
+    comment says which members are a boundary and which are a branch this tool
+    does not trace;
   * `not-adjacent` -- neither, i.e. nothing this method read places it.
 
 Two values would have had to call the second class a fall-through, which is the
@@ -152,7 +157,7 @@ UNREACHED_COLUMNS = ["scope", "addr", "name", "size", "entry",
                      "listing"]
 
 CAUSES = ("multi-scope", "xdata-or-data", "interior-entry", "no-index-row")
-ENTRIES = ("fall-through", "adjacent-return", "not-adjacent")
+ENTRIES = ("fall-through", "adjacent-no-fallthrough", "not-adjacent")
 
 # The one value in each table's vocabulary that means "this method placed it
 # nowhere". Named per table because the header comment above each is written
@@ -163,11 +168,32 @@ WEAK_NEGATIVE = {
     "call-graph-unreached.csv": "not-adjacent",
 }
 
-# `ret` and `reti` are the two mnemonics that end a routine without falling
-# through. Spelled out rather than inferred from the byte column, because the
-# 8051 map fixes those two and nothing else in the listing grammar means "this
-# address is not entered by falling into it".
-RETURNS = ("ret", "reti")
+# The mnemonics after which this tool credits the next address with **no**
+# fall-through. A returns-only rule is the obvious version of this predicate
+# and it is wrong on most of the population: an `ljmp` is three bytes of
+# unconditional jump, and the row one past it is jumped *over*, not fallen
+# into. The set is read off the mnemonic rather than the byte column because
+# this tool reads listings; the mnemonics it carries are the ones below.
+#
+# Two halves, and they are not the same claim about the bytes:
+#
+#   * `ret`/`reti` and the unconditional transfers -- `ljmp`, `ajmp`, `sjmp` and
+#     the indirect `jmp @A+DPTR` -- are boundaries: control provably does not
+#     continue into what follows.
+#   * the conditional branches continue into what follows *when the branch is
+#     not taken*. This tool reads listings rather than tracing, so it credits
+#     nothing past one. That is the conservative direction and it is a
+#     statement about what was measured, not about where the branch goes.
+#
+# `lcall`/`acall` are deliberately **out**, and that is the one decision here
+# easy to get wrong the other way: a call returns to the instruction after it,
+# so a row one past a call really is fallen into.
+NO_FALLTHROUGH = frozenset((
+    # boundaries: control provably does not continue into the next address
+    "ret", "reti", "ljmp", "ajmp", "sjmp", "jmp",
+    # conditional branches: credited nothing past, by the reading above
+    "jb", "jbc", "jc", "jnb", "jnz", "jz", "jnc", "cjne", "djnz",
+))
 
 
 def unresolved_sites(index, decompiled=DECOMPILED):
@@ -333,7 +359,7 @@ def unreached_rows(index, edges, decompiled=DECOMPILED):
         length = sum(1 for t in last[1:4] if t != "-")
         nxt = "%04X" % ((int(last[0], 16) + length) & 0xFFFF)
         pred.setdefault((r["program"], nxt), []).append(
-            (r, last[4] in RETURNS))
+            (r, last[4] in NO_FALLTHROUGH))
     rows = []
     for scope, addr in sorted(keys):
         row = index.by_scope_addr[(scope, addr)]
@@ -344,9 +370,10 @@ def unreached_rows(index, edges, decompiled=DECOMPILED):
             # Deterministic when two rows end on the same address: the one the
             # index sorts first, so the artifact does not depend on `index.csv`
             # row order.
-            r, is_return = sorted(found, key=lambda p: (p[0]["_addr"],
-                                                        p[0]["program"]))[0]
-            entry = "adjacent-return" if is_return else "fall-through"
+            r, no_fallthrough = sorted(found, key=lambda p: (p[0]["_addr"],
+                                                              p[0]["program"]))[0]
+            entry = ("adjacent-no-fallthrough" if no_fallthrough
+                     else "fall-through")
             chosen = r
         rows.append({
             "scope": scope,
@@ -457,7 +484,23 @@ def check_table(have, want, columns):
     return 1, lines
 
 
-def report(unresolved, unreached, overlap, xdata):
+def distinct_listings(sites):
+    """The number of `(scope, listing)` pairs reaching any unresolved target.
+
+    A **union**, over the whole site map, and not the sum of the per-target
+    `callers` column: that column counts distinct callers *per target*, so a
+    listing that reaches two unresolved targets is one listing and the sum
+    counts it twice. Summing a per-target count and printing it under the word
+    *distinct* is the same mistake one level down as reporting a per-target
+    cause as a per-population one, and `ReportPrintingTests` holds the printed
+    figure to this union rather than to the column.
+    """
+    return len({(scope, caller)
+                for reaching in sites.values()
+                for scope, caller, _site, _form in reaching})
+
+
+def report(sites, unresolved, unreached, overlap, xdata):
     """Print both populations, every figure split by cause, and the limits.
 
     The numbers here are the ones `ec/annotations/call-graph.md` quotes, so a
@@ -481,7 +524,7 @@ def report(unresolved, unreached, overlap, xdata):
     print("  sites reaching them                         %6d"
           % sum(int(r["sites"]) for r in unresolved))
     print("  distinct caller listings reaching them      %6d"
-          % sum(int(r["callers"]) for r in unresolved))
+          % distinct_listings(sites))
     for cause in CAUSES:
         print("    %-42s %6d targets, %6d sites"
               % (cause, by_cause[cause], sites_by_cause[cause]))
@@ -506,8 +549,10 @@ def report(unresolved, unreached, overlap, xdata):
                                   if r["pred_named"] == "yes")))
     print("  limit. `not-adjacent` is not 'reached by a function pointer': it is")
     print("  this method reading no transfer and no continuation for the row.")
-    print("  `adjacent-return` is a row one past a `ret`, which does not fall")
-    print("  through -- so it is counted, not credited with an entry.")
+    print("  `adjacent-no-fallthrough` is a row whose predecessor ends in a")
+    print("  return or a transfer control cannot be fallen past, or in a")
+    print("  conditional branch this tool does not trace -- so it is counted, not")
+    print("  credited with an entry.")
     print()
     print("  every non-obvious target, by address, so the classification is read")
     print("  at its rows rather than only counted:")
@@ -617,10 +662,25 @@ def self_test() -> int:
     check("a row one past a `ret` is adjacent but not entered by falling "
           "through: D040 sits after common/D03F's `ret`, and reading it as a "
           "fall-through would credit an entry the bytes do not make",
-          unreached_by_key[("common", "D040")]["entry"] == "adjacent-return"
+          unreached_by_key[("common", "D040")]["entry"]
+          == "adjacent-no-fallthrough"
           and unreached_by_key[("common", "D040")]["pred_addr"] == "D03F")
-    check("a row one past a non-returning instruction is a fall-through, and "
-          "the predecessor is named in the row: D031 after common/D030's `nop`",
+    check("and the same holds past a `ljmp`, which is the case a returns-only "
+          "predicate cannot see: D06D sits after common/D06A's 3-byte `ljmp`, "
+          "so it is jumped over rather than fallen into",
+          unreached_by_key[("common", "D06D")]["entry"]
+          == "adjacent-no-fallthrough"
+          and unreached_by_key[("common", "D06D")]["pred_addr"] == "D06A")
+    check("and past a conditional branch, which is the deliberate half of the "
+          "rule: D07D sits after common/D07A's `cjne`, and a branch taken "
+          "nothing, not taken the next address -- this tool reads listings "
+          "rather than tracing, so it credits no fall-through either way",
+          unreached_by_key[("common", "D07D")]["entry"]
+          == "adjacent-no-fallthrough"
+          and unreached_by_key[("common", "D07D")]["pred_addr"] == "D07A")
+    check("a row one past an instruction that hands control to the next address "
+          "is a fall-through, and the predecessor is named in the row: D031 "
+          "after common/D030's `nop`",
           unreached_by_key[("common", "D031")]["entry"] == "fall-through"
           and unreached_by_key[("common", "D031")]["pred_addr"] == "D030"
           and unreached_by_key[("common", "D031")]["pred_name"]
@@ -743,7 +803,7 @@ def main() -> int:
     for path, text, _cols in texts:
         with open(path, "w", newline="") as f:
             f.write(text)
-    report(rows, unreached, overlap, xdata)
+    report(sites, rows, unreached, overlap, xdata)
     return 0
 
 

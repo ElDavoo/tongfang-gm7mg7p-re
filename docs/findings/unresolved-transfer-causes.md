@@ -38,7 +38,7 @@ Measured on the committed tree, with `targets / sites`:
 $ python3 ec/tools/call_graph_gaps.py | head -12
   unresolved transfer targets                     80
   sites reaching them                            103
-  distinct caller listings reaching them          86
+  distinct caller listings reaching them          62
     multi-scope                                     5 targets,      6 sites
     xdata-or-data                                   2 targets,      2 sites
     interior-entry                                 60 targets,     81 sites
@@ -46,6 +46,14 @@ $ python3 ec/tools/call_graph_gaps.py | head -12
   of which every reaching site is ajmp/acall       31
   targets the precedence decided over one cause      2
 ```
+
+That `distinct caller listings` line is a **union** of `(scope, listing)` pairs
+over the whole site map, not a sum of the per-target `callers` column. The
+column counts distinct callers *per target*, so a listing that reaches two
+unresolved targets is one listing and the sum counts it twice; the sum is
+reported nowhere, because printing it under the word *distinct* is the same
+mistake one level down as reporting a per-target cause as a cause for the whole
+population.
 
 **The precedence decides two targets, and printing that is the point.** A
 precedence that quietly settles a row is a rule no reader can see, so the
@@ -102,28 +110,51 @@ neighbour, or is nothing reaching it? — has a computable half, and the rule
 answers it positionally: is the row immediately after some index row's last
 instruction?
 
-It then has to say whether control *actually* falls through there, because 8051
-`ret`/`reti` do not fall through. An address one past a `ret` is adjacent by
-arithmetic and **not entered by it**, and calling that a fall-through would
-credit an entry the bytes do not make. So `entry` is `fall-through`,
-`adjacent-return`, or `not-adjacent`:
+It then has to say whether control *actually* falls through there, and the
+obvious answer to that — ask whether the predecessor ends in `ret`/`reti` — is
+wrong on most of the population. An `ljmp` is three bytes of unconditional
+jump, so an address one past one is adjacent by arithmetic and **jumped over**;
+calling that a fall-through credits an entry the bytes do not make, which is
+the overclaim `CLAUDE.md` puts above every other rule. The question is
+therefore asked of `NO_FALLTHROUGH`, which carries two halves and says which is
+which: the returns and the unconditional transfers (`ljmp`, `ajmp`, `sjmp`, the
+indirect `jmp`), where control provably does not continue; and the conditional
+branches, which continue into what follows only when they are **not** taken —
+this tool reads listings rather than tracing, so it credits nothing past one,
+which is the conservative direction and a statement about the method rather
+than about the branch. `lcall`/`acall` are deliberately out of the set, because
+a call returns to the instruction after it and a row one past a call really is
+fallen into. So `entry` is `fall-through`, `adjacent-no-fallthrough`, or
+`not-adjacent`:
 
 | entry | rows | what it says |
 |---|---|---|
-| `fall-through` | 200 | adjacent, and the predecessor's last instruction is not a return, so control does continue into the row |
-| `adjacent-return` | 52 | adjacent, and the predecessor ends in `ret`/`reti` — adjacency is a boundary artefact and no transfer reaches the row |
+| `fall-through` | 35 | adjacent, and the predecessor's last instruction is one control does continue past, so **control does continue into the row** |
+| `adjacent-no-fallthrough` | 217 | adjacent, and the predecessor's last instruction is one `NO_FALLTHROUGH` covers, so **this method credits it no fall-through** |
 | `not-adjacent` | 66 | nothing this method read places it |
 
-Twenty-seven of the rows have a *named* predecessor — twelve `fall-through` and
-fifteen `adjacent-return` — and the artifact carries which per row. `common,
-0x0F12` is the worked example the issue reached for: it sits immediately after
-`common,0x0EF3` `write_internal_ram_init_constants`, whose last instruction is
-a `mov`, not a return.
+Twenty-seven of the rows have a *named* predecessor — four `fall-through` and
+twenty-three `adjacent-no-fallthrough` — and the artifact carries which per
+row. `common, 0x0F12` is the worked example the issue reached for: it sits
+immediately after `common, 0x0EF3` `write_internal_ram_init_constants`, whose
+last instruction is a `mov`, and a `mov` is not a boundary, so the row really
+is fallen into.
 
 `not-adjacent` is **not** "reached by a function pointer". It is this method
 reading no transfer and no continuation for the row — the same calibration the
 `inbound == 0` rows of `call-graph-callees.csv` carry, and stated as such in
 both artifacts' headers.
+
+The refuted case is on the committed tree, and it is the reason the set is
+wider than the returns. `common/0016` ends in a three-byte `ljmp`, so `0x0019`
+one past it is jumped over:
+
+```console
+$ tail -1 ec/decompiled/common/0016.asm
+0016     02 11 5c ljmp     0x115c
+$ grep "^common,0019," ec/annotations/call-graph-unreached.csv
+common,0019,FUN_CODE_0019,1,adjacent-no-fallthrough,common,0016,table_entry_to_115c,yes,common/0019.asm
+```
 
 ## A figure that did not re-derive: the `0x5A43` inbound count
 
@@ -179,11 +210,15 @@ escaped `--check`.
 
 ## Cross-program hosts are recorded, not filtered
 
-Fifty of the `interior-entry` hosts sit in the reaching site's own program and
-twelve do not: a `pd` transfer lands inside a `common` row. The two programs
-have separate address spaces (`citation_frames.program_reason`, and
+Some `interior-entry` hosts sit in a program other than the reaching site's own
+— a `pd` transfer lands inside a `common` row. The two programs have separate
+address spaces (`citation_frames.program_reason`, and
 [`pd-common-address-spaces.md`](pd-common-address-spaces.md)), so the host is
 deliberately **not** looked up under the reaching site's scope. Narrowing the
-search would report twelve real rows as unplaced, which is the quiet direction:
-a filter that drops rows looks exactly like a tool that found fewer of them.
-`host_scope` carries the program's name, so the reader sees which is which.
+search would report those rows as unplaced, which is the quiet direction: a
+filter that drops rows looks exactly like a tool that found fewer of them.
+`host_scope` carries the program's name, so the reader sees which is which and
+can count the split off the artifact. It is not counted here because the two
+populations differ: the host lookup fires for more targets than the
+`interior-entry` label names, since the precedence keeps a host for a target
+whose winning cause did not need one.

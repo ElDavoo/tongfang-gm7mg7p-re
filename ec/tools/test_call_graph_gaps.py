@@ -31,8 +31,16 @@ away.
 method placed the row nowhere. Nothing here may let them be read as claims about
 the firmware, so the artifact's own header comment is asserted to carry that
 caveat, and the worked addresses are the ones where reading them the strong way
-would be wrong -- a `ret`-terminated neighbour is adjacent but not entered by
-falling through.
+would be wrong -- a neighbour that ends in a `ret` or an `ljmp` is adjacent but
+is not entered by falling into it.
+
+**What the report prints is what the tool computed.** Every figure is read back
+out of the rendered lines rather than recomputed beside them, and the
+distinct-caller figure is held to the union of `(scope, listing)` pairs over
+the site map rather than to the sum of a per-target `callers` column. A number
+labelled *distinct* that was computed as a sum is the same mistake one level
+down as reporting a per-target cause as a per-population one, and it prints
+plausibly either way.
 
 **`--check` still rejects a table that drifted.** Asserted with a table one
 cell different, one with a row dropped, and one with CRLF endings, because a
@@ -60,6 +68,27 @@ import call_graph
 import call_graph_gaps
 
 FIXTURE = HERE / "testdata" / "call-graph-gaps"
+
+
+def predecessor_last_mnemonic(row):
+    """The mnemonic of the predecessor listing's last instruction, read back off
+    the committed `.asm` rather than taken from the classifier's own label.
+
+    Asserting a class against the set the tool used to build it would only
+    check that the tool agrees with itself. Reading the listing is what turns
+    "`fall-through` really falls through" into a claim about bytes, and it is
+    the only thing that catches a predicate narrowed back to something too
+    small -- a `ret`-only rule satisfies every `ret`-terminated row and
+    mislabels every `ljmp`-terminated one.
+    """
+    path = os.path.join(call_graph.DECOMPILED, row["pred_scope"],
+                        row["pred_addr"] + ".asm")
+    last = None
+    for parts in call_graph.citation_callers.iter_instructions(path):
+        last = parts
+    if last is None:
+        return None
+    return last[4]
 
 
 def load_committed():
@@ -266,45 +295,67 @@ class CalibrationTests(CommittedPopulationTests):
             self.assertIn("`%s`" % weak, block)
             self.assertIn("not a claim about the firmware", block)
 
-    def test_a_ret_terminated_neighbour_is_not_reported_as_a_fall_through(self):
-        """The `adjacent-return` class exists, and is not `fall-through`.
+    def test_a_boundary_neighbour_is_not_reported_as_a_fall_through(self):
+        """The `adjacent-no-fallthrough` class exists, and is not
+        `fall-through`.
 
-        8051 `ret`/`reti` do not fall through, so an address one past one is
-        adjacent by arithmetic and not entered by it. Reporting those as
-        fall-throughs would credit an entry the bytes do not make -- the exact
-        overclaim `CLAUDE.md` puts above every other rule. The class is asserted
-        to be non-empty so a tool that dropped it would fail here rather than
-        quietly merging it into `fall-through`.
+        A row one past a `ret` is adjacent by arithmetic and not entered by it;
+        a row one past an `ljmp` is *jumped over*, which is the same conclusion
+        for the opposite reason and the larger half of the class. Reporting
+        either as a fall-through would credit an entry the bytes do not make --
+        the exact overclaim `CLAUDE.md` puts above every other rule. The class
+        is asserted to be non-empty so a tool that dropped it would fail here
+        rather than quietly merging it into `fall-through`.
         """
-        adjacent = [r for r in self.unreached if r["entry"] == "adjacent-return"]
-        self.assertTrue(adjacent, "no adjacent-return rows; the class is gone")
+        adjacent = [r for r in self.unreached
+                    if r["entry"] == "adjacent-no-fallthrough"]
+        self.assertTrue(adjacent,
+                        "no adjacent-no-fallthrough rows; the class is gone")
         for r in adjacent:
             self.assertTrue(r["pred_addr"], "%s has no predecessor" % r["addr"])
-            # Every predecessor of this class ends in a return by construction;
-            # read one back off the committed listing to keep the class honest
-            # rather than trusting the classifier's own label.
-            path = os.path.join(
-                call_graph.DECOMPILED, r["pred_scope"], r["pred_addr"] + ".asm")
-            last = None
-            for parts in call_graph.citation_callers.iter_instructions(path):
-                last = parts
-            self.assertIsNotNone(last)
-            self.assertIn(last[4], call_graph_gaps.RETURNS,
-                          "%s is not preceded by a return"
-                          % os.path.basename(path))
+            self.assertIn(predecessor_last_mnemonic(r),
+                          call_graph_gaps.NO_FALLTHROUGH,
+                          "%s's predecessor is not one NO_FALLTHROUGH covers"
+                          % r["addr"])
 
-    def test_a_fall_through_row_is_preceded_by_a_non_returning_instruction(self):
-        """The other side of the same split, so the two classes cannot merge."""
+    def test_the_no_fall_through_class_is_wider_than_the_returns(self):
+        """The set is asked of more than the returns, and that is asserted.
+
+        `ret`/`reti` are the obvious boundary set and they are not the right
+        one: an `ljmp` is three bytes of unconditional jump, so the row one
+        past it is jumped over. A predicate narrowed back to the returns
+        satisfies every `ret`-terminated row and mislabels every
+        `ljmp`-terminated one, which is why a non-returning boundary has to be
+        in the population this case looks for rather than only in the rule.
+        """
+        adjacent = [r for r in self.unreached
+                    if r["entry"] == "adjacent-no-fallthrough"]
+        non_return = [r for r in adjacent
+                      if predecessor_last_mnemonic(r) not in ("ret", "reti")]
+        self.assertTrue(
+            non_return,
+            "every adjacent-no-fallthrough row is preceded by a return, so "
+            "the class cannot distinguish a return from an unconditional "
+            "transfer and the rule is a returns-only one wearing a wider name")
+        self.assertLess(
+            {"ret", "reti"}, set(call_graph_gaps.NO_FALLTHROUGH),
+            "NO_FALLTHROUGH no longer carries the returns it was widened from")
+
+    def test_a_fall_through_row_is_preceded_by_an_instruction_control_passes(self):
+        """The other side of the same split, so the two classes cannot merge.
+
+        Asserted over every row rather than a sample, because the class is the
+        one an overclaim lives in and a sample is only as good as the rows it
+        happens to reach.
+        """
         rows = [r for r in self.unreached if r["entry"] == "fall-through"]
         self.assertTrue(rows, "no fall-through rows")
-        for r in rows[:5]:
-            path = os.path.join(
-                call_graph.DECOMPILED, r["pred_scope"], r["pred_addr"] + ".asm")
-            last = None
-            for parts in call_graph.citation_callers.iter_instructions(path):
-                last = parts
-            self.assertNotIn(last[4], call_graph_gaps.RETURNS,
-                             "%s is preceded by a return" % r["pred_addr"])
+        for r in rows:
+            self.assertNotIn(predecessor_last_mnemonic(r),
+                             call_graph_gaps.NO_FALLTHROUGH,
+                             "%s is preceded by %s, which control does not "
+                             "continue past"
+                             % (r["addr"], r["pred_addr"]))
 
     def test_not_adjacent_rows_carry_no_predecessor(self):
         """The empty `pred_*` cells are asserted, not merely left empty.
@@ -532,8 +583,9 @@ class ReportPrintingTests(unittest.TestCase):
         cls.index = index = call_graph.load_index()
         edges, _unresolved, _orphans, _total, _listings = call_graph.scan(index)
         cls.xdata = xdata = build_ec_decompile.registered_addresses()
-        sites = call_graph_gaps.unresolved_sites(index)
+        cls.sites = sites = call_graph_gaps.unresolved_sites(index)
         rows = call_graph_gaps.unresolved_rows(index, sites, xdata)
+        cls.rows = rows
         unreached = call_graph_gaps.unreached_rows(index, edges)
         spans = call_graph_gaps.spans(index)
         overlap = sum(
@@ -544,7 +596,7 @@ class ReportPrintingTests(unittest.TestCase):
                 call_graph_gaps.hosts(addr, spans), xdata)) > 1)
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
-            call_graph_gaps.report(rows, unreached, overlap, xdata)
+            call_graph_gaps.report(sites, rows, unreached, overlap, xdata)
         cls.lines = buf.getvalue().splitlines()
 
     def figure(self, label):
@@ -573,9 +625,29 @@ class ReportPrintingTests(unittest.TestCase):
 
     def test_the_entry_split_sums_to_the_unreached_total(self):
         self.assertEqual(
-            self.figure("fall-through") + self.figure("adjacent-return")
+            self.figure("fall-through")
+            + self.figure("adjacent-no-fallthrough")
             + self.figure("not-adjacent"),
             self.figure("anonymous rows no transfer reaches"))
+
+    def test_the_distinct_caller_figure_is_the_union_not_a_sum(self):
+        """The number labelled *distinct* is the union over the site map.
+
+        The `callers` column counts distinct callers **per target**, so a
+        listing that reaches two unresolved targets appears in two rows and a
+        sum over the column counts it twice. The union is computed here from the
+        same `sites` map `report()` was handed, so a report that summed the
+        column under this label fails instead of printing a plausible figure.
+        """
+        union = call_graph_gaps.distinct_listings(self.sites)
+        self.assertEqual(self.figure("distinct caller listings reaching them"),
+                         union)
+        # And the two readings really are different, so this case cannot pass
+        # on a tree where they coincide by accident.
+        summed = sum(int(r["callers"]) for r in self.rows)
+        self.assertNotEqual(union, summed,
+                            "the union and the per-target sum are equal here, "
+                            "so this case would not catch a report that sums")
 
     def test_the_report_states_the_weak_negative_in_words(self):
         """The caveat is printed, not only in the docstring.

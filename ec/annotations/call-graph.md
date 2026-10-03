@@ -40,7 +40,7 @@ trees the numbers were taken on.
 | anonymous rows the table carries | 405 |
 | inbound sites to those | 552 |
 | anonymous rows no direct transfer reaches | 318 |
-| — by entry, `fall-through` / `adjacent-return` / `not-adjacent` | 200 / 52 / 66 |
+| — by entry, `fall-through` / `adjacent-no-fallthrough` / `not-adjacent` | 35 / 217 / 66 |
 | anonymous rows the table carries no row for | 310 |
 | distinct `FUN_*` callees the `.c` files name | 723 |
 | anonymous callees a comment names | 112 |
