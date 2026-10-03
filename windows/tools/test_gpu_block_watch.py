@@ -336,7 +336,7 @@ def door_section(text):
     """The procedure's §7, the section the tool's watch table is graded against.
 
     Everything from the `## 7.` heading up to the next one, so both the table
-    reader below and the note-count check read the same span.
+    reader below and the note check read the same span.
     """
     return doc_section(text, "## 7. The citation list")
 
@@ -605,18 +605,17 @@ class DoorTableTests(unittest.TestCase):
                 self.assertIn(status, cell, f"0x{addr:04X}")
                 self.assertIn(token, cell, f"0x{addr:04X}")
 
-    def test_the_door_no_row_note_counts_what_the_table_holds(self):
-        # "sixteen of the twenty-four" outlived its own arithmetic when four
-        # rows landed. The count is recomputed from registers.yaml, so the
-        # sentence is checked against the file it describes rather than
-        # against the tool, which is the copy being corrected.
-        expected = sum(1 for a in ADDRS if a not in self.statuses)
-        found = re.findall(r"\b(\d+) of the (\d+)\b", self.section)
-        self.assertEqual(len(found), 1,
-                         "§7's 'no row' count is gone or spelled more "
-                         "than once")
-        self.assertEqual(int(found[0][0]), expected)
-        self.assertEqual(int(found[0][1]), len(ADDRS))
+    def test_the_door_no_row_note_states_its_scope_and_keeps_no_census(self):
+        # The note once opened by counting its own table's rows, and it
+        # outlived its own arithmetic when a row landed. Recomputing such a
+        # count is not a fix: it is a value every merge that adds or
+        # re-grades a row has to edit. What is worth holding is the sentence's
+        # scope -- that a "no row" cell is about registers.yaml and not about
+        # the address -- and the arithmetic staying out.
+        self.assertIn("a statement about `registers.yaml`, not about the address",
+                      self.section)
+        self.assertEqual(re.findall(r"\b\d+ of the \d+\b", self.section), [],
+                         "§7's note counts its own table again")
 
 
 class SiteCensusTests(unittest.TestCase):
