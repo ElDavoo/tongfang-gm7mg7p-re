@@ -159,7 +159,19 @@ $ bash tools/run-tests.sh windows/tools
   left alone here. A 2 KiB sweep at 6 ms is twelve seconds; whether that is the
   right default for the tool, or whether a narrower one should be, is a
   decision about what the tool is for.
+- **What the paced default does to prose written against the unpaced one.**
+  `grade_0751_isolation.py`'s printed `ZERO_SCOPE_NOTE` and the bus-traffic
+  sections of the 0751 and `oem4-07a6-bit0` runbooks all restated the sweep as
+  `ECRR` reads with `--interval` slept between sweeps and nothing between
+  bytes; they now describe the per-read gap and name this file. Their read
+  counts did not move — pacing changes how long a sweep takes, not how many
+  reads it issues — but the runbooks had a second claim resting on the burst
+  shape, that their run put more traffic on the bus than any run before it, and
+  that is a claim about rate rather than count. Still open: the documents
+  decline to put a number on the sampling period, and whether the banner's
+  projection of a sweep's duration should now stand in for one is undecided.
 - **Whether the gap belongs at the driver instead.** Both tools now pace what
   they ask the vendor driver to do, and a Linux driver would want the same
-  answer from `acpi_call`. Nothing here settles where the pacing should live,
-  and #94 remains open on whether any interval is validated at all.
+  answer from `acpi_call`. Nothing here settles where the pacing should live.
+  What #94 leaves open is the other half: whether any interval at all is
+  validated against this EC, which no argument here can settle either.

@@ -26,12 +26,14 @@ of levels, and the two are not the same kind of fact:
   byte that moved, and the capture says nothing either way.
 
 §3 already puts the period on the page and stops where this gap starts.
-`--interval` is slept *between sweeps* and not between bytes, one sweep of the
-three watchers is `0x100 + 0x60 + 0x60 = 448` `ECRR` reads, and under its own
-bolded heading — **there is no safe interval to hand you from here** — how
-long one IOCTL takes is issue #94's open work and nothing in this repo measures
-it. So the per-byte sampling period is `--interval` plus a sweep duration that
-is unmeasured, and the change states that rather than inventing a threshold.
+One sweep of the
+three watchers is `0x100 + 0x60 + 0x60 = 448` `ECRR` reads, `ec_watch.py` paces
+each of them with `--gap-ms` (default 6, issue #94 — a gap per read, `--gap-ms 0`
+being the unpaced sweep this section originally described), and under its own
+bolded heading — **there is no safe interval to hand you from here** — no
+interval in this repo is validated against this EC. So the per-byte sampling
+period is `--interval` plus a paced sweep whose per-read cost is unmeasured,
+and the change states that rather than inventing a threshold.
 
 **The tool already knew this, and printed it on one branch only.** The
 `--dump-pair` paragraph in the module docstring, `report_dump_pairs`'s own
@@ -66,11 +68,11 @@ and three spellings of it is three chances to fix the grammar and leave the
 gap. Its content, in order: a zero here counts the change rows recorded between
 these samples and is not a measurement of the byte; `ec_watch.py` writes a row
 only when a byte differs between two of its sweeps; `--interval` is slept
-between sweeps rather than between bytes; the per-byte period is `--interval`
-plus a sweep duration nothing in this repo measures (issue #94), so a move that
-completes inside one sampling period is in no change row at all; and the wider
-`--dump-pair` bracket closes part of that gap and is complementary rather than
-stronger.
+between sweeps and `--gap-ms` after every read; the per-byte period is
+`--interval` plus a paced sweep and no interval here is validated against this
+EC, so a move that completes inside one sampling period is in no change row at
+all; and the wider `--dump-pair` bracket closes part of that gap and is
+complementary rather than stronger.
 
 The closing block prints it **unconditionally**, on every run whatever it
 found. A caveat printed only on the branch that produced a zero reads as part

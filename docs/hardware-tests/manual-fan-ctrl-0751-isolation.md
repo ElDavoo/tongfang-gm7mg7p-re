@@ -285,15 +285,20 @@ because five are entered as 16-bit pairs. The other 50 are named there as
 deliberately not entered, and 46 + 50 = 96, so a row this run prints is either
 nameable or accounted for.
 
-**Three concurrent watchers put more `ECRR` traffic on the bus than any run
-before this one, and this is the only one held under a fixed load.** The
+**Three concurrent watchers put more `ECRR` reads on the bus than any run
+before this one, and this is the only one held under a fixed load — though
+`ec_watch.py` now paces them, so that is not the same as putting more traffic
+on the bus at once than any run before it.** The
 arithmetic is worth having in front of you: `ecrw.Ec.read`
-(`../../windows/tools/ecrw.py:135`) is one `ECRR` `DeviceIoControl` per byte
-with nothing between calls, and `ec_watch.py` reads every address in its range
-once per sweep (`addrs`, `../../windows/tools/ec_watch.py:257`) with
-`--interval` slept between sweeps (`ec_watch.py:307`), not between bytes. So
-one sweep of each of the three watchers is `0x100 + 0x60 + 0x60 = 448` ECRR
-reads, all three running at once, for as long as the block runs.
+is one `ECRR` `DeviceIoControl` per byte, and `ec_watch.py` reads every
+address in its range once per sweep, so one sweep of each of the three
+watchers is `0x100 + 0x60 + 0x60 = 448` ECRR
+reads, all three running at once, for as long as the block runs. Those reads
+carry `--gap-ms` (default 6, issue #94): a gap after *every* read rather than
+none between them, so the same 448 calls are spread over seconds instead of
+issued as a burst, and `--gap-ms 0` is how a run gets the unpaced sweep this
+section used to describe. The write-up is
+[`../findings/ec-read-pacing-fan-page.md`](../findings/ec-read-pacing-fan-page.md).
 **448 is what this section's commands above do today, and it is what the
 numbers quoted in the tool's own docstring mean.** The commands have no
 `--block`, and the flag is off by default: issue #147 added a four-bytes-per-
@@ -302,7 +307,9 @@ these watchers do. If a run is taken with `--block` instead, the same three
 ranges are `0x100/4 + 0x60/4 + 0x60/4 = 112` IOCTLs — all three ranges are
 whole numbers of aligned 4-byte blocks — and that is a *call count*, not a
 statement that the traffic is safe: the path has never been run against the
-driver, and the one comparison a human can make is written out in
+driver, it issues its own IOCTLs without returning to the tool, so it pays one
+gap per run rather than one per read and is the *unpaced* path, and the one
+comparison a human can make is written out in
 `../../windows/tools/manual_fan_ctrl_probe.py`'s docstring. The tool's
 `--watch-page` computes the same 448 and the same 112 from the same three
 ranges (issue #666), so a reader meeting two 448s is meeting one figure. Quote
@@ -311,13 +318,16 @@ safety claim.
 `../../docs/related-projects.md` records the same mechanism stalling the fans
 on a sibling board, where the OEM software sleeps 6 ms after every EC access,
 and says to avoid bulk sweeps under load — which is the condition this run
-creates on purpose. Stopping at `0x045F` means this is not that stall, but it
-does not make the traffic small.
+creates on purpose. Stopping at `0x045F` means this is not that stall, and
+pacing the reads is the other half of why it is not: the two tools now sleep
+that 6 ms by default. What that does *not* establish is that 6 ms is right on
+this machine, because it is HydroControl's figure for a sibling board.
 
 **There is no safe interval to hand you from here.** How long one IOCTL takes
-is not measurable without the driver and the machine, issue #94 is the open
-work to make these tools safe by default, and nothing in this repo measures
-it. So the `--interval 0.5` in the commands above is a starting point and
+is not measurable without the driver and the machine, no interval in this repo
+is validated against this EC, and the 6 ms the tools now sleep by default is
+the sibling board's figure rather than a measured one. So the `--interval 0.5`
+in the commands above is a starting point and
 nothing more. If the fans audibly change during a block, raise it and redo the
 block: this procedure measures fan behaviour, and a block that moved the fans
 itself is worth less than no block.
@@ -522,8 +532,8 @@ does §3" is not read as "the probe does all of this file".
   **110**, and `TEMP` only joined the set the next day, with #143. **206 is
   the current default, and no committed run was taken at it.** 448 is 2.2x
   that default and 4.1x the 110 the committed run actually swept, on the one
-  run §3 holds under a fixed load with #94 still the open question of what it
-  does to a fan. **Nothing in the page is written** — the only byte
+  run §3 holds under a fixed load with what a wider paced sweep does to a fan
+  still unmeasured. **Nothing in the page is written** — the only byte
   this tool writes is `0x0751` in `{0x00, 0x10, 0xA0}`, whatever else is
   swept, which is what makes the wider sweep the same kind of read as the
   narrow one. §4.6 is unchanged by any of this: the page arm produces no dump
@@ -730,9 +740,9 @@ For each run, from the three CSVs plus the by-hand power readings:
    line: *a zero here is a zero of observed transitions, not a measurement
    of the byte* — `ec_watch.py` writes a change row only when a byte
    differs between two of its sweeps, `--interval` is slept between sweeps
-   rather than between bytes, and the per-byte sampling period is
-   `--interval` plus a sweep duration nothing in this repo measures (issue
-   #94), so a move that completes inside one sampling period is in no
+   and `--gap-ms` after every read, and the per-byte sampling period is
+   `--interval` plus a paced sweep rather than a free one, so a move that
+   completes inside one sampling period is in no
    change row at all. §3 already puts that period on the page and stops
    there; §6's `--dump-pair` is the wider bracket, and it is complementary
    rather than stronger.
@@ -1210,9 +1220,9 @@ context byte gets a line in every window, whether or not it moved, so a
 byte with no change row in it reads as a zero rather than as a missing
 line. **A zero here is a zero of observed transitions, not a measurement
 of the byte**: `ec_watch.py` writes a change row only when a byte differs
-between two of its sweeps, `--interval` is slept between sweeps rather than
-between bytes, and the per-byte sampling period is `--interval` plus a
-sweep duration nothing in this repo measures (issue #94), so a move that
+between two of its sweeps, `--interval` is slept between sweeps and
+`--gap-ms` after every read, and the per-byte sampling period is
+`--interval` plus a paced sweep rather than a free one, so a move that
 completes inside one sampling period is in no change row at all. §4.4
 names which of the three figures the control-vs-write comparison keys on
 and argues it from what a thermal wander looks like; the short form is that
@@ -1250,9 +1260,10 @@ Concretely:
   between two of its sweeps, so a move that completes inside one sampling
   period is in no change row at all — and that is what a zero here is a zero
   of: a zero of observed transitions, not a measurement of the byte. The
-  per-byte sampling period is `--interval` plus a sweep duration nothing in
-  this repo measures (issue #94), so a run at a cadence that cannot see the
-  move is not evidence the byte does nothing. `--dump-pair` brackets the
+  per-byte sampling period is `--interval` plus a paced sweep, and no
+  interval here is validated against this EC, so a run at a cadence that
+  cannot see the move is not evidence the byte does nothing.
+  `--dump-pair` brackets the
   wider gap and is complementary to the windows, not a stronger read, and a
   low-cadence confirmation run is a much smaller ask than re-deriving this
   after the fact.

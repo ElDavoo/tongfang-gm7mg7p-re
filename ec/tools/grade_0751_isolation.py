@@ -759,9 +759,12 @@ CONTEXT = (
 # -- not that it did not move. §3's own pacing note puts a number on the
 # interval and declines to put one on the sweep: `--interval` is slept
 # *between sweeps*, one sweep of the three watchers is 448 ECRR reads, and
-# issue #94 owns how long that takes. So the per-byte period is `--interval`
-# plus a duration nothing here measures, and the wider bracket that closes
-# part of it is `--dump-pair` -- complementary, not stronger.
+# `ec_watch.py` paces those reads itself now (#94) -- `--gap-ms` after every
+# one, so a sweep costs a gap per read and the sweep's own length is not a
+# free variable any more. What is still unmeasured is how long one of those
+# reads takes, so the per-byte period is `--interval` plus a paced sweep,
+# and the wider bracket that closes part of it is `--dump-pair` --
+# complementary, not stronger.
 #
 # The parenthetical token beside the figures (`(0 changes)`) is left as it is:
 # it counts what the report counted, which is true, and two committed cases
@@ -772,11 +775,14 @@ CONTEXT = (
 ZERO_SCOPE_NOTE = (
     "A zero here is a zero of observed transitions, not a measurement of the "
     "byte: `ec_watch.py` writes a change row only when a byte differs between "
-    "two of its sweeps, `--interval` is slept between sweeps rather than "
-    "between bytes, and the per-byte sampling period is `--interval` plus a "
-    "sweep duration nothing in this repo measures (issue #94), so a move that "
-    "completes inside one sampling period is in no change row at all. The "
-    "wider bracket, `--dump-pair`, closes part of that gap and is "
+    "two of its sweeps, `--interval` is slept between sweeps, and `--gap-ms` "
+    "is slept after every read, so a move that completes inside one sampling "
+    "period is in no change row at all. That per-byte period is `--interval` "
+    "plus a paced sweep rather than a free one: `--block` issues its IOCTLs "
+    "under one gap per run instead of one per read, `--gap-ms 0` is the "
+    "unpaced tool the default stopped being, and no interval here is "
+    "validated against this EC, so what one read costs is still unmeasured. "
+    "The wider bracket, `--dump-pair`, closes part of that gap and is "
     "complementary rather than stronger."
 )
 

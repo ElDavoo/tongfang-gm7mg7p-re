@@ -357,17 +357,25 @@ boundary, §4's table cannot be applied mechanically to a capture at all.
 
 Two concurrent watchers over `0x100 + 0x20 = 288` bytes put **288 `ECRR` reads
 per sweep pair** on the bus, for as long as the run lasts.
-`ecrw.Ec.read` (`../../windows/tools/ecrw.py:149`) is one `ECRR`
-`DeviceIoControl` per byte with nothing between calls, and `ec_watch.py` reads
-every address in its range once per sweep with `--interval` slept *between*
-sweeps, not between bytes. Both ranges are whole numbers of aligned 4-byte
-blocks, so a `--block` run is `0x100/4 + 0x20/4 = 72` IOCTLs — a **call count,
-not a statement that the traffic is safe**. The path has never been run against
+`ecrw.Ec.read` is one `ECRR`
+`DeviceIoControl` per byte, and `ec_watch.py` reads
+every address in its range once per sweep. Those reads carry `--gap-ms`
+(default 6, issue #94) — a gap after *every* read, not one between sweeps and
+none between bytes — so the same 288 calls are spread over seconds rather than
+issued as a burst, and `--gap-ms 0` is how a run gets the unpaced sweep this
+section used to describe. The write-up is
+[`../findings/ec-read-pacing-fan-page.md`](../findings/ec-read-pacing-fan-page.md).
+Both ranges are whole numbers of aligned 4-byte blocks, so a `--block` run is
+`0x100/4 + 0x20/4 = 72` IOCTLs — a **call count,
+not a statement that the traffic is safe**, and the *unpaced* path: it issues
+its own IOCTLs without returning to the tool, so it pays one gap per run rather
+than one per read. The path has never been run against
 the driver on this machine.
 
 **There is no safe interval to hand you from here.** How long one IOCTL takes is
-not measurable without the driver and the machine, issue #94 is the open work to
-make these tools safe by default, and nothing in this repo measures it. If the
+not measurable without the driver and the machine, no interval in this repo is
+validated against this EC, and the 6 ms the tools now sleep by default is the
+sibling board's figure rather than one measured here. If the
 fans audibly change during a run, raise `--interval` and redo the run.
 
 ## 4. What to read off, and the rule — written down in advance

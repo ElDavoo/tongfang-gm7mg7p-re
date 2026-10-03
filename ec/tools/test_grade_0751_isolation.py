@@ -755,6 +755,12 @@ class GradeTests(unittest.TestCase):
                       'the byte', flat)
         self.assertIn('so a move that completes inside one sampling period is '
                       'in no change row at all', flat)
+        # The mechanism sentence names the per-read gap, so a reader handed
+        # this note is not told the sweep is unpaced. The old wording said the
+        # interval was "slept between sweeps rather than between bytes", which
+        # is the tool this PR stopped being.
+        self.assertNotIn('slept between sweeps rather than between bytes',
+                         flat)
         # And in the preamble of every window rather than one of them: the
         # two windows here are the count the fixture has, not a figure this
         # holds, so the assertion is that the note is wherever the context
@@ -843,9 +849,10 @@ class GradeTests(unittest.TestCase):
             self.assertNotIn('stays put', fragment, name)
             self.assertNotIn('strongest negative', fragment, name)
         # The period is stated as unmeasured rather than given a number, and
-        # pointed at the issue that owns measuring it.
-        self.assertIn('plus a sweep duration nothing in this repo measures '
-                      '(issue #94)', flat)
+        # pointed at what is still open about it: the sweep is paced, and no
+        # interval here is validated against this EC.
+        self.assertIn('plus a paced sweep', flat)
+        self.assertIn('no interval here is validated against this EC', flat)
         # §7's `confirmed-inert` bullet is where the status call is made and
         # the caveat has to reach it, so it is cut by the bullet and read
         # rather than searched for across the section.
