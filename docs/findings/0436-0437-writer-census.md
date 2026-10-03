@@ -66,7 +66,7 @@ Both notes are corrected in this change.
 Three store immediates, two store a product, one copies another XDATA pair
 verbatim, one stores a literal or a copy depending on a compare. None reads
 `0x0436`, adds to it and writes it back — checked against the `inc`/`add`/
-`addc` opcodes in each of the six routines that reach a pair writer, and the
+`addc` opcodes in each of the seven routines that reach a pair writer, and the
 only `add`/`addc` among them (`FUN_CODE_db0b`) sits *after* the `0x0436` store
 and builds a different register pair for a different destination. The `inc
 DPTR` inside `write_r1r2_to_xdata_pair` walks the pointer to the second byte;
@@ -140,11 +140,11 @@ a statement about the method's depth, not about the bytes.
 One spelling correction falls out of reading them. The census renders
 `mov 0xf0,#0x60`, which is `mov B,#0x60` — `0xF0` is the SFR B, and Ghidra's
 own listings of the same bytes read it that way (`ec/decompiled/pd/3635.asm`,
-`ec/decompiled/pd/6FD5.asm`). Three of the five sites load it explicitly at the
-site; `0x6FF1` and `0x8802` do not, and reach `0x10BC` with whatever B their
-caller left. That is the one respect in which the five sites are not identical,
-and it is visible in the disassembly rather than in the class column, which
-reports the callee and not the argument.
+`ec/decompiled/pd/6FD5.asm`). All five sites load it, so `B` is `0x60` at every
+handoff to `0x10BC`; `0x6FF1` and `0x8802` load it immediately *before* the
+`mov dptr,#0x0437` (`0x6FED` and `0x87FE`) where the other three load it after.
+The argument is visible in the disassembly rather than in the class column,
+which reports the callee and not the argument.
 
 **The containing functions are not named.** All five sites fall in
 inter-listing gaps in `ec/decompiled/pd/`, so naming their routines needs a
@@ -188,8 +188,9 @@ The one committed observation of `0x0436` on this board steps `0x70` → `0x84`
 found by these methods increments, so **no committed image is found to produce
 that ramp**, and the honest finding is the negative one: the two candidates
 that store a computed value (`0xDBA8`, `0xDF45`) both take it from
-`publish_0514_and_0342_product` at common `0xCBF3`, a `0x0514` × `0x0342`
-product whose arithmetic this change does not work out and does not guess at.
+`publish_0514_and_0342_product` at bank1 `0xCBF3`
+(`ec/decompiled/bank1/CBF3.asm`), a `0x0514` × `0x0342` product whose
+arithmetic this change does not work out and does not guess at.
 Saying which of these produces a periodic ramp without decoding that product
 would be exactly the "reads as" overclaim the note already declines once.
 

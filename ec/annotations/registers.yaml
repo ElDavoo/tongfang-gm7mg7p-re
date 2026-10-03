@@ -1333,7 +1333,7 @@ registers:
       from the `wr` column and a `ho` column of 15 handoffs whose direction
       section 4 of ec/annotations/xdata-0400-045f.md resolves.
       None of the 8 increments what it stores: three store a literal (0xFFFF
-      at 0xB1B3, 0 at 0xBABF and 0xC277), two store the product XDATA 0x0514
+      at 0xB1D3, 0 at 0xBAD8 and 0xC28A), two store the product XDATA 0x0514
       x 0x0342 that publish_0514_and_0342_product computes, one
       (FUN_CODE_b224) stores XDATA 0x0518/0x0519 verbatim, and one stores
       either the literal 0x0201 or the 0x0404/0x0405 pair depending on a
