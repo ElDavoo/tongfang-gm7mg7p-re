@@ -70,7 +70,7 @@ void FUN_CODE_db0b(byte param_1,undefined1 param_2)
         compute_097e_times_10_write_0386_0387();
       }
       else {
-        DAT_EXTMEM_0391 = param_1;
+        XDATA_0391 = param_1;
         write_0_to_200b_335_times(100);
         DAT_EXTMEM_0975 = 0x9b;
         DAT_EXTMEM_0976 = 1;

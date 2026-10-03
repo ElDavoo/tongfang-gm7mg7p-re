@@ -46,6 +46,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-writer-census.md`](0751-writer-census.md) — The `0x0751` writer census — "at least three paths" becomes ten sites and thirteen stores, and the number is not closed
 - [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md) — The measurement tool's pins, re-anchored, and one `what` that had to be re-worded (issue #762)
 - [`07d6-07d7-pd-image-census.md`](07d6-07d7-pd-image-census.md) — `0x07D6`/`0x07D7` are 213 PD-image sites and 0 EC sites, and the two bytes reach opposite conclusions
+- [`3202-block-walk.md`](3202-block-walk.md) — `0x3202` and the `0x32xx` block: four read sites, no writer found, and two addresses the census does not carry (issue #338)
 - [`4900-stride-table.md`](4900-stride-table.md) — The 0x4900 stride table: how far it runs, what geometry the two strides imply, and what the index is
 - [`7151-case-tables-in-the-walk.md`](7151-case-tables-in-the-walk.md) — The main EC's `0x7151` dispatcher carries a case table inline, so the walk was decoding it as instructions (issue #1257)
 - [`7b14-07c9-token.md`](7b14-07c9-token.md) — The 0x07C9 token in `pd/7B14.c` is a variable row on the *callee*, and the re-export is a fixed point
@@ -134,6 +135,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`forwarder-target-bank-census.md`](forwarder-target-bank-census.md) — Every bank-switch forwarder's `imm16`, resolved in the bank its stub selects (issue #465)
 - [`gap-text-self-test-census.md`](gap-text-self-test-census.md) — The listing instruction census, and the readers that have to agree on it
 - [`gate-arm-coverage.md`](gate-arm-coverage.md) — What issue #318 asked for is already in the gate; what was missing is what holds it there (2026-10-01, issue #318)
+- [`ghidra-project-owner.md`](ghidra-project-owner.md) — The Ghidra projects are owned by `dave`, and that is the whole of why a non-owner cannot export (issue #293)
 - [`grader-merged-capture-sources.md`](grader-merged-capture-sources.md) — The merged timer-sweep run took its sample interval and its byte levels from one file each, and now refuses a merge whose files disagree (issue #1377)
 - [`grader-repeated-capture.md`](grader-repeated-capture.md) — A repeated capture opens phantom windows in the door grader and a ZeroDivisionError in the timer grader, and the rule that closes it is identity rather than a single capture (issue #491)
 - [`group-check-drift-and-shared-basis.md`](group-check-drift-and-shared-basis.md) — `group_functions.py --check` re-runs the rule, and `shared` was a basis no rule emitted (issue #442)
@@ -201,11 +203,13 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`prose-line-citations-held.md`](prose-line-citations-held.md) — The prose's line citations, and what now holds them (issue #801)
 - [`provenance-clone-depth-behaviour.md`](provenance-clone-depth-behaviour.md) — Both clone depths run: `--verify-provenance` measured rather than asserted (issue #421)
 - [`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md) — What a re-encode row's own columns say, and the ceiling they support
+- [`reassembly-gap-composition.md`](reassembly-gap-composition.md) — What is in the instructions sdas8051 declines, derived rather than recalled
 - [`reassembly-name-column.md`](reassembly-name-column.md) — `reassembly.csv`'s `name` column describes the listing, so it is compared and not trusted
 - [`reassembly-unmeasured-row-policy.md`](reassembly-unmeasured-row-policy.md) — What a re-encode row outside `OUTCOMES` does to a run, to `--check`, and to the report (issue #230)
 - [`rebuild-provenance.md`](rebuild-provenance.md) — What a rebuild from the committed inputs re-derives (issue #623)
 - [`region-edge-declined-sites.md`](region-edge-declined-sites.md) — The six offsets the rel8 site walk declines are now reported by the tool rather than verified once
 - [`rel8-displacement-bound.md`](rel8-displacement-bound.md) — What holds the rel8 displacement read in range: a constant in another module, and a marker check three frames away
+- [`remain-capacity-probe-offline-hold.md`](remain-capacity-probe-offline-hold.md) — The 0x0436 Linux probe: an unchecked column mapping, a path that missed §7, and a summary that aborted on `unknown` (issue #216)
 - [`reset-vector-dptr-targets.md`](reset-vector-dptr-targets.md) — The reset vector's two DPTR-only bank-0 targets, `0xD89F` and `0xD96C` (issue #559)
 - [`runner-red-suite-set.md`](runner-red-suite-set.md) — The runner's red set, and the third of #162's blocker that was a missing table row (issue #751)
 - [`scheduler-divide-down-cycle.md`](scheduler-divide-down-cycle.md) — How many entries to the divide-down scheduler is one case-`0x0A` turn (issue #1183)
@@ -238,6 +242,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`trampoline-target-census.md`](trampoline-target-census.md) — Every trampoline in the BL51 block gets a decoded target, read in the bank its stub selects (issue #574)
 - [`uncalled-vendor-setters.md`](uncalled-vendor-setters.md) — The three bytes the uncalled vendor setters write (issue #106)
 - [`uniwill-variable-0x60-writers.md`](uniwill-variable-0x60-writers.md) — Every writer of `UniWillVariable`, and which of them can explain offset 0x60
+- [`unresolved-transfer-causes.md`](unresolved-transfer-causes.md) — Why the call-graph's unresolved and unreached rows are the ones they are
 - [`verify-provenance-failure-answers.md`](verify-provenance-failure-answers.md) — `--verify-provenance` had ten ways to fail and one committed answer to none of them
 - [`walk-bounds-guard-pinned.md`](walk-bounds-guard-pinned.md) — The bounds disjunct is pinned, by two cases — and the sweep that could have noticed it cannot see it
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
