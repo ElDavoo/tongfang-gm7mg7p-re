@@ -71,9 +71,11 @@ about a scoped run?" differently.
 ## What the first run of this measurement got wrong
 
 Recorded because the correction is the point, not because the first version was
-worth keeping for its own sake. Two classes of claim this checker was written to
-hold were being decided against the wrong run or not read at all, and both were
-green — the run below reports every claim agreeing:
+worth keeping for its own sake. The first two classes of claim this checker was
+written to hold were being decided against the wrong run or not read at all, and
+both were green — the run below reports every claim agreeing. The third is the
+opposite failure and is in the same rule as the second: a correct row reported
+as a disagreement, reachable by an ordinary reword.
 
   * **A `--block` claim read unscoped.** As above: four claims that are actually
     read — row 29's `UNREAD_MARK_NOTE` and `exit 0`, row 30's `intact` and
@@ -88,11 +90,24 @@ green — the run below reports every claim agreeing:
     *whatever* followed a note, which took the `exit 0` out of row 29's own
     sentence. A decidable claim reached neither the claim list nor the decline
     list, so the census gave a reader no way to know it had never been looked at
-    — the silent cap this tool's own reasoning argues against. The rule is now
-    narrowed to the count it was written for.
+    — the silent cap this tool's own reasoning argues against. Narrowing the rule
+    to `count` stopped that, and left a second defect in the same place: the
+    drop was still **adjacency** where it claimed to be authorship, so a count
+    about a different counted line went unread behind a note mentioned earlier
+    in the sentence, and the note was then formatted with the dropped count's
+    numbers — a true row reported red, on an ordinary reword and with no fixture
+    touched. What makes a count the note's own is now **what the count's own
+    clause names**, read through the same `claim_shape()` every other count is
+    resolved with, and `claims_in()` and `note_own_count()` share one predicate
+    so the count dropped as a second reading and the pair the note is decided
+    against cannot be two different counts.
 
-Both are now caught by cases in `test_check_testdata_grader_claims.py` that
-mutate the **run** rather than the rule, and both mutations fail that suite.
+The first two are now caught by cases in `test_check_testdata_grader_claims.py`
+that mutate the **run** rather than the rule, and both mutations fail that
+suite. The third is caught from both sides instead, because both halves of it
+are wrong in opposite directions: a case that a count naming a counted line
+behind a note is still read, and a case that a count naming none behind no note
+is still its own claim rather than the note's numbers.
 
 ## The measurement
 

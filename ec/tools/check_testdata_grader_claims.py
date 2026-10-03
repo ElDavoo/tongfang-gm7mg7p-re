@@ -569,6 +569,18 @@ def claims_in(sentence):
     than declined, because it is not something this tool cannot read -- it is the
     same claim under another token.
 
+    **What makes the count the note's own is what the count's own clause names,
+    not the token in front of it.** A count whose clause names a counted line is
+    that line's claim and is read; one whose clause names none can only be the
+    numbers the note is formatted with, which is the case this rule is written
+    for. Reading the drop as adjacency instead took a row's real count with it:
+    naming a note earlier in a sentence and then stating a different line's count
+    dropped the count, and the note was then formatted with the dropped count's
+    numbers -- so a true row went missing against a sentence that was correct,
+    on an ordinary reword and with no fixture touched. `claim_shape()` already
+    answers "does this count name a counted line" from the same clause every
+    other count is read with, so the two cannot answer it differently.
+
     **Every other shape after a note is read normally.** Dropping whatever
     followed a note took row 29's "the count line and `UNREAD_MARK_NOTE` do not,
     exit 0" at its `exit 0` as well as its count: an `exit code` claim, decidable,
@@ -578,6 +590,27 @@ def claims_in(sentence):
     know it was never looked at. So the rule is narrowed to the one shape it was
     written for, and a shape this tool cannot decide belongs in `DECLINES` with a
     printed count rather than in a silent `continue` here.
+    """
+    found = tokens(sentence)
+
+    out = []
+    for index, (shape, start, end, match) in enumerate(found):
+        if count_is_a_notes_own(found, index, sentence):
+            continue
+        before = sentence[found[index - 1][2] if index else 0:start]
+        after = (sentence[end:found[index + 1][1]]
+                 if index + 1 < len(found) else sentence[end:])
+        out.append((shape, match, before, after))
+    return out
+
+
+def tokens(sentence):
+    """Every claim-shaped token in `sentence`, in reading order.
+
+    One scan shared by `claims_in()` and `note_own_count()`, because both are
+    asking about the same tokens and a second reader of the same seven patterns
+    would be a second answer to which count a note is written with -- which is
+    the disagreement this pair exists to prevent.
     """
     found = []
     for shape, pattern in (("note", NOTE_TOKEN),
@@ -590,16 +623,7 @@ def claims_in(sentence):
         for match in pattern.finditer(sentence):
             found.append((shape, match.start(), match.end(), match))
     found.sort(key=lambda item: (item[1], item[2]))
-
-    out = []
-    for index, (shape, start, end, match) in enumerate(found):
-        if shape == "count" and index and found[index - 1][0] == "note":
-            continue
-        before = sentence[found[index - 1][2] if index else 0:start]
-        after = (sentence[end:found[index + 1][1]]
-                 if index + 1 < len(found) else sentence[end:])
-        out.append((shape, match, before, after))
-    return out
+    return found
 
 
 def clause_of(before):
@@ -800,18 +824,78 @@ def nearest_count(before, after, body):
 
     A note constant with format fields is formatted from the numbers the index
     wrote beside it, and row 29 writes them as "`UNPLACED_GRADED_NOTE` at `2 of
-    the 8`" -- so the pair is looked for on **both sides** of the token, in the
-    clause first and only then in the sentence. `after` is the side the corpus
-    uses and `before` the one it does not; both are here so a reworded row reads
-    the same rather than red, and neither is the sentence *as a whole*, because a
-    note and a count in one sentence are not always about each other.
+    the 8`" -- so the pair is the one **the note is written with**, which is
+    what `note_own_count()` finds.
+
+    `before` and `after` are searched first, in that order, so a pair written
+    right beside the token is read from beside it. **Neither side carries a
+    count on this corpus**, because any count is itself a token and the windows
+    stop at the next token's start; both sides are kept because they are the
+    narrow reading and the fallback below is not, and a reworded row that put
+    the numbers beside the token would read them here rather than by the
+    sentence-level rule.
+
+    **A count belonging to a different claim is not the note's**, and neither is
+    the sentence as a whole. Taking the first `N of the M` anywhere in the
+    sentence formatted a note with another claim's numbers whenever a row named
+    a note and then stated a different counted line's count: the note was then
+    looked for in a spelling the run never printed, and the count that *was*
+    the row's went unread behind the drop. Falling through to the first count
+    the note owns is the same rule `claims_in()` drops on, so the pair a note
+    is decided against and the count dropped as its second reading cannot be two
+    different counts.
     """
     for text in (before, after):
         found = COUNT_PAIR.search(text)
         if found:
             return pair_of(found)
-    found = COUNT_PAIR.search(body)
-    return pair_of(found) if found else None
+    return note_own_count(body)
+
+
+def note_own_count(body):
+    """The `N of the M` in `body` a note constant is written with, or `None`.
+
+    **A count that names a counted line is that line's claim, not the note's.**
+    A row may name a note and then state the withheld banner's count in the same
+    sentence -- "the withheld banner's `1 of the 8` is what this one prints" --
+    and that pair is the banner's to be decided against. A count whose own
+    clause names no counted line can only be the numbers the note is formatted
+    with, which is the count this returns.
+
+    **The count the note is written with, not any count in the sentence.** A
+    sentence can carry a third `N of the M` that belongs to a claim of its own --
+    about another row's fixture, say -- and naming it here would format the note
+    with a pair no run printed and put a true row in the census as a
+    disagreement. The count has to be one a note is written beside, which is the
+    same condition `claims_in()` drops on, so the pair a note is decided against
+    and the count dropped as its second reading cannot be two different counts.
+    """
+    found = tokens(body)
+    for index, (shape, _start, _end, match) in enumerate(found):
+        if shape == "count" and count_is_a_notes_own(found, index, body):
+            return pair_of(match)
+    return None
+
+
+def count_is_a_notes_own(found, index, sentence):
+    """Whether the count at `found[index]` is one a note is written with.
+
+    **Both halves are needed, and neither is sufficient alone.** A count behind
+    a note that names a counted line is that line's claim -- the count the
+    adjacency rule used to drop, taking a row's real count with it. A count that
+    names no counted line but follows no note is a claim of its own, and reading
+    it as the note's numbers would format the note with a pair belonging to
+    whatever else the sentence says. `claims_in()` drops on this and
+    `note_own_count()` resolves on it, so the two cannot disagree about which
+    count the note is written with.
+    """
+    shape, start, end, _match = found[index]
+    if shape != "count" or not index or found[index - 1][0] != "note":
+        return False
+    before = sentence[found[index - 1][2]:start]
+    after = (sentence[end:found[index + 1][1]]
+             if index + 1 < len(found) else sentence[end:])
+    return claim_shape("count", before, after) is None
 
 
 def decline_for(shape, before, paths, tool, own, scope):

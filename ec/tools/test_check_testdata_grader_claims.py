@@ -408,6 +408,45 @@ class ReadsTheReport(ScratchIndex, unittest.TestCase):
         shapes = [shape for shape, _, _, _ in ctgc.claims_in(cell)]
         self.assertEqual(shapes, ["note", "exit"])
 
+    def test_a_count_about_another_line_behind_a_note_is_still_read(self):
+        # **The direction the adjacency rule got wrong.** Naming a note and then
+        # stating a *different* counted line's count is one row, two claims, and
+        # the count is the second of them: "the withheld banner's `1 of the 8`"
+        # is the banner's to be decided against whatever note the sentence
+        # mentioned earlier. Read as adjacency the count went unread, and
+        # `nearest_count()` then formatted the note with the banner's numbers --
+        # so the row reported a disagreement against a sentence that was
+        # correct, on an ordinary reword and with no fixture touched.
+        self.row(self.fixtures(UNREAD),
+                 "a run of this set prints `UNREAD_MARK_NOTE`, and the withheld "
+                 "banner's `1 of the 8` is what this one prints.")
+        self.assertEqual(self.verdicts(),
+                         [("note printed", "resolved"),
+                          ("withheld banner count", "resolved")])
+
+    def test_a_note_is_not_formatted_with_another_claims_count(self):
+        # The other half of the same rule, and the one that made the row above
+        # red rather than merely unread. The note and the count are separate
+        # claims, so the note cannot borrow the count's numbers: formatted with
+        # `1 of the 8` the note is looked for in a spelling the run never
+        # printed, which is a disagreement invented out of a true row. With no
+        # count written against it the note is undecided, and undecided is what
+        # "not checked, not absent" is for.
+        sentence = ("`UNREAD_MARK_NOTE` is named here, and the withheld "
+                    "banner's `1 of the 8` is what this one prints.")
+        note = next(row for row in ctgc.claims_in(sentence) if row[0] == "note")
+        self.assertIsNone(ctgc.nearest_count(note[2], note[3], sentence))
+
+    def test_a_count_naming_no_line_but_following_no_note_is_still_its_own_claim(self):
+        # The other half of the other half. A count that names no counted line
+        # is the note's numbers *only when a note is written beside it*; with
+        # no note, it is a claim of its own and declines as `no closed shape`
+        # rather than being read as some note's numbers.
+        cell = "a run of this set states `2 of the 8` and nothing else."
+        self.row(self.fixtures(UNPLACED), cell)
+        self.assertEqual(self.shapes(), [])
+        self.assertEqual(self.reasons(), ["no closed shape"])
+
     def test_a_note_constant_given_a_count_it_has_no_field_for_is_undecided(self):
         # `UNREAD_MARK_NOTE` takes no numbers, so a row that states one beside it
         # is a claim this tool cannot read -- `unresolved`, not a `KeyError` out
@@ -614,24 +653,30 @@ class TheRefusalClauseIsNeverAClaim(ScratchIndex, unittest.TestCase):
         self.assertEqual(result.declines, [])
 
     def test_the_clause_count_is_not_a_row_count(self):
-        # What stops the two census figures being read as one number, stated
-        # over the committed index: the stripped count is a **sum taken over
-        # rows**, so every cell has to read before it can be added up at all.
-        # Both totals are printed beside each other for exactly this reason,
-        # and neither is a floor this tool holds itself to.
+        # What stops the two census figures being read as one number: the
+        # stripped count is a **sum taken over rows**, so every cell has to read
+        # before it can be added up at all. Both totals are printed beside each
+        # other for exactly this reason, and neither is a floor this tool holds
+        # itself to.
         #
-        # **The distribution itself is asserted nowhere.** Which rows carry a
-        # clause, and which carry two of them, is a property of this tree: the
-        # two cases above pin a row carrying none and a row carrying two
-        # against trees the test builds itself, and a reword that moved either
-        # would break a property of the *index*, not of the tool.
+        # `refusal_count()` is pinned against cells this case writes, with the
+        # answer in the sentence: it counts clauses, so a row carrying none and
+        # a row carrying two are both correct answers and a function returning
+        # `0` for everything would pass a truthiness assertion over the index.
+        # What the committed tree's rows carry is **not** asserted -- that is a
+        # property of this tree, and a reword that moved a clause would break a
+        # property of the *index* rather than of the tool.
         # `docs/findings/testdata-grader-claims.md` is where the measurement
         # over the committed tree is recorded, next to the command that prints
         # it, for the reason nothing in the tool or its suite asserts it.
-        index = (HERE / 'testdata' / 'README.md').read_text(encoding='utf-8')
-        cells = ctgc.table_cells(index, column=3)
-        per_row = [ctgc.refusal_count(cell) for cell in cells]
-        self.assertTrue(per_row)
+        self.assertEqual(ctgc.refusal_count(
+            "a first sentence. a second sentence."), 0)
+        self.assertEqual(ctgc.refusal_count(
+            "it holds. It is *not* a prediction that it slips."), 1)
+        self.assertEqual(ctgc.refusal_count(
+            "one refusal here. It is *not* a prediction that it slips. "
+            "another there. It is *not* a prediction that the other does "
+            "either."), 2)
 
 
 class TheClosedListsHoldTheDocstring(unittest.TestCase):
@@ -800,7 +845,7 @@ class TheCommittedTree(ScratchIndex, unittest.TestCase):
 
 
 class EachRuleIsLoadBearing(unittest.TestCase):
-    """Every rule the tool has, dropped in turn, against the committed tree.
+    """Each of the rules below, dropped in turn, against the committed tree.
 
     A rule that stops changing the answer has stopped mattering, and a suite
     that does not notice has the same defect as a check that does not fire. Each
@@ -815,6 +860,19 @@ class EachRuleIsLoadBearing(unittest.TestCase):
     shapes-side of. Those are pinned in `DeclinesRatherThanGuesses` above, and
     the one exception is the declines this class does drop, where the committed
     tree has an instance to move.
+
+    **This is not every rule the tool has, and the scope is named rather than
+    implied.** The cases here loosen `clause_of()`, `UNPLACED_CONTEXT`,
+    `nearest_count()`, `note_text()`, the refused-run guard, `scope_of()` and
+    `scope_for()`, and each needs a committed-tree instance to move for the
+    loosening to show. `WINDOW_HEADER`, `MOVEMENT`, `NEGATED`, `CLAUSE_BREAK`,
+    `BLOCK_OF` and `numeral()` are loosened where they are load-bearing rather
+    than here: `MOVEMENT` in `DeclinesRatherThanGuesses`; the window header, the
+    block-verdict case fold and the numeral in `ReadsTheReport`; and the clause
+    breaks and the negation in `TheRefusalClauseIsNeverAClaim` and
+    `TheCommittedTree`. A rule with no case of its own is one whose removal this
+    class would not notice, so those classes are the rest of the coverage and
+    this one is not the whole of it.
     """
 
     def assert_the_rule_is_load_bearing(self, why, before, **patches):
