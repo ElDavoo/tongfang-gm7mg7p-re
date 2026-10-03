@@ -407,7 +407,7 @@ checked against §3's forms. §3's block-1 start legitimately appends to exactly
 that. A `st_size` predicate warns on the second console of every run, which is
 how an operator learns to skip the line.
 
-**Four ways a file comes to hold marks this run did not type** (#548). A
+**Five ways a file comes to hold marks this run did not type** (#548). A
 process cannot check any of them, which is the whole of what the notice can say,
 and the first three are the ones that can leave the day ungraded:
 
@@ -418,7 +418,18 @@ and the first three are the ones that can leave the day ungraded:
 4. a `manual_fan_ctrl_probe.py` capture, which writes the same
    `ts,MARK,,label` row (`:433-438`) and was never a `--label-vocab` prompt at
    all. The probe is only a *source* of a mark in someone else's file, and is
-   unchanged by this.
+   unchanged by this;
+5. **a block run again after one came out void** — the re-done block. This one
+   is different from the four above in that nothing went wrong: the redo is
+   what §3 tells the operator to do, and the runbook now says to give it its
+   own `<date>` so it lands in its own set of the three files. Appended to the
+   set the void block is in instead, it is a second `no-op`/`wrote`/`restored`
+   set carrying the same value, and the value under test is what a block, a
+   `--dump` pair and `--block` are all named by — so it stops naming one block,
+   the grader's census names every block carrying it whatever the run was
+   scoped to, a run over the whole day holds the exit code at 1, and `--block`
+   refuses the value rather than taking whichever attempt came
+   first. See `../../docs/findings/0751-redone-block-value.md`.
 
 §3a's service-stopped pass is *not* one of them, and its own runbook note is
 why: it is a second run with its own `<date>`, not a fourth block of §3's

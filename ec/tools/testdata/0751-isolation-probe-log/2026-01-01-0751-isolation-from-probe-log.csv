@@ -1,0 +1,24 @@
+# derived from evidence/ec-watch/2026-09-23-0751-isolation.txt by probe_log_to_capture.py; the source is a transcription and this is not a capture of its own.
+# caveat: transcribed, not captured. The source is a transcription of a console session, so a row here is a row somebody typed and not a byte the EC was observed to hold.
+# caveat: timestamps reconstructed. The absolute anchor and the inter-block gap are stated in the header below and are choices; the source carries one run timestamp and per-block offsets, and no inter-block spacing at all.
+# caveat: absent from the record, not observed to hold still. The source's own closing note records its 0x075B/0x075C PWM rows as changes omitted above, and it holds no fan-table row and no temperature row, so every zero the grader prints over one of those addresses is a zero over a file with no row rather than a byte seen to stay.
+# caveat: no control arm. There is no 'no-op wrote' mark anywhere in the source, so §4.4's control-vs-write comparison is not available over this capture and the grader's report is a read of the write arms alone.
+# run timestamp in the source's own header: 2026-09-23T16:31:01Z
+# anchor this file was given: 2026-01-01T12:00:00 (--anchor, a choice, not an observation)
+# inter-block gap this file was given: 30s (--block-gap, a choice; the source records no inter-block spacing at all)
+# every timestamp below is one of those two choices applied to an offset the source did record.
+# the source's own notes, transcribed:
+#   Issue #99 -- write 0x0751 alone, service running, AC, from Turbo (0x10)
+#   2026-09-23T16:31:01Z, Control Center 3.1.39.0 running, GCUService+GCUBridge up
+#   watch set: 0x0751 0x0783-0x0787 0x07C5 0x07C6 0x075B/5C(PWM) 0x0743-0x0746 + fan table 0x0F00-0x0F5F
+#   0x075B/0x075C (fan PWM) changes omitted above; a no-op control write (0x10->0x10)
+#   showed the same monotonic PWM drift, so PWM motion is thermal, not a 0x0751 reaction.
+ts,addr,old,new
+2026-01-01T12:00:00,MARK,,wrote 0x0751=0xA0
+2026-01-01T12:00:00,0x0751,0x10,0xA0
+2026-01-01T12:00:20,MARK,,restored 0x0751=0x10
+2026-01-01T12:00:30,MARK,,wrote 0x0751=0x00
+2026-01-01T12:00:30,0x0751,0x10,0x00
+2026-01-01T12:00:50,MARK,,restored 0x0751=0x10
+2026-01-01T12:01:00,MARK,,wrote 0x0751=0x10
+2026-01-01T12:01:20,MARK,,restored 0x0751=0x10
