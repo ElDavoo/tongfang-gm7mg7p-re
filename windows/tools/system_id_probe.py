@@ -25,23 +25,25 @@ The arithmetic, read off the listings rather than the decompiled C:
   * 0x8886 -- `[DPTR]` goes to R1 and `[DPTR+1]` to R2, so a pair is
     little-endian with the lower address in the low byte.
   * 0xA5E6 -- sixteen rounds of shift-and-subtract; on exit R1 is the
-    quotient's high byte, R2 its low byte, R3:R4 the remainder. R0 and R5
+    quotient's LOW byte, R2 its high byte, R3:R4 the remainder. The dividend
+    shift at 0xA5EE touches R1 before R2, and the epilogue at 0xA613 copies
+    R0 into R1, so the register touched first is the low one. R0 and R5
     accumulate the quotient bits and are fully shifted out over the sixteen
     rounds, so the result does not depend on their entry value.
   * 0xF3C9 -- R3 = 0x22 if 0x0456 bit 6 is set, else 0x44. Nine instructions,
     no ambiguity; F3C9.c drops both assignments and reads as returning one
     value, so the .asm is the one to cite.
   * 0xF3D7 -- R7 == 0: R3 = 100, R4 = 0, divide 0x0434/0x0435 by it, write
-    the quotient's high byte to 0x0449. R7 != 0: call 0xF3C9, R4 = 0, read
+    the quotient's low byte to 0x0449. R7 != 0: call 0xF3C9, R4 = 0, read
     0x060C/0x060D, mask R2 (the high byte) with 0x03, multiply the 16-bit
     value by 10 in two `mul AB`s, divide, write the same byte. Both arms store
-    R1, the *high* byte, on both paths.
+    R1, the *low* byte, on both paths.
 
 `060c-branch`, `current-branch` and `unexplained` are the three outcomes a
 sample can have, and a fourth is honest to name: `both-arms`, for a 0x0449
-that both arms reproduce. At low magnitudes both predict 0 or 1, so this is
-reachable in the field, and folding it into either arm would be picking the
-one that reads better.
+that both arms reproduce. Both arms return the low byte of a small quotient,
+so they collide near zero, and folding that into either arm would be picking
+the one that reads better.
 
 **The divisor a `060c-branch` sample implies is reported next to bit 6, not
 folded into a pass/fail.** A sample on the 0x060C arm matched under one of the
@@ -55,17 +57,26 @@ diagnosable from the log without re-running anything. Every sample also goes
 to the CSV with its branch and implied divisor, which is what §4 of the
 procedure reads off.
 
-**The annotated model and the one committed capture do not obviously agree,
-and this tool is built to show that rather than to settle it.** The
-`anl 0x02,#0x3` caps arm B's dividend at 0x03FF, so the byte arm B stores
-never leaves {0, 1}; arm A needs 25600 mA to leave 0 and 51200 mA -- 51.2 A --
-to reach 2. The one capture covering the byte,
+**An earlier version of this file read 0xA5E6's epilogue the other way round
+and called R1 the high byte, and a whole capture disagreed with it.** The
+committed capture covering the byte,
 evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv, has 0x0449 across
-0x22-0x5A over 238 changes. Reading that capture against the model puts every
-one of its 237 gradeable 0x0449 values in `unexplained`; it carries no 0x0456,
-0x0434 or 0x0435 at all, so it cannot exercise the bit-6 half either. Which
-of the two is wrong is not decided here, and the run decides it. Do not read
-a low match count as the model failing.
+0x22-0x5A, and under that reading neither arm could produce any of those
+values: the `anl 0x02,#0x3` caps arm B's dividend at 0x03FF and arm A's
+division by 100 needs 25600 mA to leave 0, so both arms returned 0x00 for any
+plausible input. `ec/tools/a5e6_quotient.py --capture` reproduces that and
+the corrected reading side by side, and
+../../docs/findings/a5e6-r1-is-the-low-byte.md is the correction. The capture
+carries no 0x0456, 0x0434 or 0x0435 at all, so it cannot exercise the bit-6
+half either way.
+
+**That is a reachability result, not a match.** Pairing the change log
+nearest-in-time does not align two bytes that were not written at the same
+instant, and a byte the inputs can produce is one an arm is *able* to produce,
+not one it did. What it establishes is the weaker and still decisive thing:
+under the swapped reading the observed values were not reachable at all. Which
+arm produced any given sample is still not known, and the run is what decides
+it. Do not read a low match count as the model failing.
 
 **There is no write path.** Nothing is written to the EC: no `write`
 subcommand, no `--i-mean-it` gate, because there is no write to gate. The
@@ -121,8 +132,14 @@ def divisor_from_bit6(system_id):
 
 
 def arm_current(current_ma):
-    """The R7 == 0 arm: 0x0434/0x0435 divided by 100, high byte stored."""
-    return ((current_ma // CURRENT_DIV) >> 8) & 0xFF
+    """The R7 == 0 arm: 0x0434/0x0435 divided by 100, low byte stored.
+
+    0xA5E6 returns the quotient's LOW byte in R1 and its high byte in R2 (the
+    shift at 0xA5EE touches R1 first, and the epilogue copies R0 into R1), and
+    0xF3D7 stores R1. So this masks rather than shifts: `current_ma // 100` is
+    the quotient and its low byte is what reaches XDATA 0x0449.
+    """
+    return (current_ma // CURRENT_DIV) & 0xFF
 
 
 def arm_060c(lo, hi, divisor):
@@ -133,10 +150,12 @@ def arm_060c(lo, hi, divisor):
     carry into R2, and the carry out of that `add` is discarded. With the high
     byte masked to 0-3 it cannot be reached, but masking it is the listing and
     masking it is what a reader of 0xF3D7 would have to check.
+
+    Stores R1, the quotient's low byte, for the reason `arm_current` gives.
     """
     hi &= 0x03
     product = (((hi * 10) & 0xFF) + ((lo * 10) >> 8)) << 8 | ((lo * 10) & 0xFF)
-    return ((product // divisor) >> 8) & 0xFF
+    return (product // divisor) & 0xFF
 
 
 def classify(snap):
@@ -386,8 +405,9 @@ def report(counts, implied, disagreeing, bit7, bit7_set, bit7_changes, sweeps,
     print("\nper arm -- an arm matches a sample when its arithmetic "
           "reproduces that\nsample's 0x0449:")
     for label, what in (
-            ("current-branch", "(0x0434|0x0435<<8) / 100"),
-            ("060c-branch", "((0x060C|0x060D<<8) & high 0x03) * 10 / 0x22|0x44"),
+            ("current-branch", "(0x0434|0x0435<<8) / 100, low byte"),
+            ("060c-branch", "((0x060C|0x060D<<8) & high 0x03) * 10 / "
+                            "0x22|0x44, low byte"),
             ("both-arms", "both arms reproduce 0x0449; R7 is not established"),
             ("unexplained", "neither arm reproduces 0x0449"),
     ):
