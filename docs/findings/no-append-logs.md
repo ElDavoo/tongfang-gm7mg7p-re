@@ -178,6 +178,68 @@ first, so a document that **names** the marker it forbids is not one — without
 that, `CLAUDE.md` and the tool's own docstring would each fail it, which is the
 fastest route to a check everybody disables.
 
+## Where the notes the rule cannot see ended up instead
+
+`python3 ec/tools/check_no_append_logs.py` exits 0 on this tree, and a tree
+carrying merge notes is not a contradiction — it is **a divergence of reach**.
+Each of the three limits the rule states about itself leaves notes somewhere it
+cannot see. They are decisions, not defects, and the notes are wanted; this
+section is where they ended up, so the next branch that appends one knows where
+the accumulation is and is not the first to find out.
+
+- **`heading-depth`** — `HEADING` is `re.compile(r"^##\s+(\S.*?)\s*$")`, so a
+  merge heading at `###` is a section per merge the rule never looks at.
+  `docs/findings/test-line-pin-census.md` carries `###` merge headings at `:2887`
+  and `:2945`, both out of the reach of the rule that removed that file's dated
+  `##` sections on purpose.
+- **`outside-scope`** — `is_findings()` exempts `docs/findings/` wholesale from
+  the supersession rule. That is §4a-4d doing its job, and undoing it is nobody's
+  business here. It is also the limit that leaves a findings document's own notes
+  in the tree and out of the rule's reach at the same time.
+- **`marker`** — the rule's vocabulary is one string,
+  `SUPERSESSION = re.compile(r"\*\(Superseded\b")`. This repository's merge notes
+  spell themselves `*(Merged-tree note …)*`, with an ordinal in front when a
+  document grew more than one, and neither spelling matches.
+
+Two of those are the failure above reproduced rather than a near miss.
+`docs/findings/doc-figure-pin-audit.md` carries a run of them appended at one
+spot — one unnumbered, then *Second*, *Third*, *Fourth* and *Fifth*, one per
+merge — which is the same signature as `tools/README.md`, rebuilt in the
+directory the rule exempts. And `docs/findings.md` carries inline notes of that
+shape in the one file `check_findings_frozen.py` exists to close: the freeze
+holds the section count and the numbering, and by its own docstring it does not
+check prose inside a section, so an inline note is legal there and is where the
+chain now grows.
+
+**The notes are not the defect, and none of this is an argument for deleting
+them.** §4a-4d is a real rule and a reader of a finding wants the history. What
+the defect is, narrowly, is that the corrections accumulated where the rule
+could not see them — so nothing ever told the branch that had just appended one
+that it was appending another. **Widening the rule is not the fix**: reading
+`###` and covering `docs/findings/` would fire on every note named above and turn
+a green gate red on a tree that is not defective. The rule stands as written.
+
+The rule for the next merge is already written down, in the section of
+`docs/findings/test-line-pin-census.md` that holds its per-pin table:
+
+> **Do not recreate the log.** A correction to this table is a row change plus,
+> where the reasoning matters, a paragraph in the section it belongs to. It is
+> not a new dated section.
+
+A correction whose *subject* is a merge is still a correction: it belongs in the
+section the claim it corrects lives in. This section is a worked instance of the
+thing it forbids — a dated heading here would be one more note in
+`docs/findings/test-line-pin-census.md`, out of the rule's reach in exactly the
+way the ones named above are.
+
+**And this list is a reading, not a census.** It was found by reading the
+documents the rule walks, and every negative it carries is **not found by this
+method**, never absent: setext headings are not read as headings by anything
+here, a parenthetical note carrying neither the rule's vocabulary nor this
+repository's merged-tree one is in neither population (`README.md:46` is one),
+and a correction chain kept in a commit message is not in the documents at all —
+`git log -p` is where that history is.
+
 ## What this does not claim
 
 **Digits are not the problem, and a rule against them would be the wrong rule.**

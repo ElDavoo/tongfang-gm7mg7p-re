@@ -632,6 +632,23 @@ spelling for the reason the three above give**, and the first draft of it did
 name `test_trace_xdata_refs.py` by line, which is the same self-inflicted record
 the paragraph above records for the other direction.*
 
+**And the clause above about the asserts being re-set to a measured triple is
+superseded, and this paragraph deliberately quotes no corrected figure.** The
+asserts are no longer a triple and have not been for some time: what
+`ec/tools/test_check_pin_table_by_cited_file.py`'s committed-tree class holds is
+now `test_the_tail_is_the_index_minus_the_files_a_pin_names`, an **identity** —
+the length of `unpinned(records, files)` against the index's files less the ones
+a pin names — and the count cases that used to hold the figures went in `9d711752`,
+for the reason the comment they left behind gives. **Every superseded triple
+above stays written per §4a-4d**, each true of the tree it was measured on.
+The figure that replaces them is not written here on purpose: it is the runner's
+and `census_test_line_pins.py`'s to print, and a corrected triple written into
+this paragraph would be the next merge's edit — which is the whole of
+[`no-append-logs.md`](no-append-logs.md), whose subject is corrections
+accumulating where nothing has to keep them honest. Run
+`python3 ec/tools/census_test_line_pins.py --verbose` and
+`python3 ec/tools/check_pin_table_by_cited_file.py` for the current pair.
+
 ## The name, which is a standing rather than a measurement
 
 The issue asked for `ec/tools/check_pin_table_by_cited_file.py` and for
