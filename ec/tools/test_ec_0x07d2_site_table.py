@@ -21,15 +21,15 @@ a PD-image decode cannot move an EC-side `status:` at all.
 
 **The bit-operation verdict is asserted against the raw `window` text, not a
 summary of it.** §6 of the write-up says `0x8B70` sets bit 3 of `0x07D2` and
-that `0x8B81` and `0x8BAD` set bits 1 and 0 of `0x07D3` *after* the `inc dptr`.
-That second half is the whole finding -- the field straddles a byte boundary --
-and it is the half a summary would drop. So each case checks that the `orl`
-sits on the side of the `inc dptr` the write-up names, read off the committed
-CSV rather than re-derived, and `trace_xdata_refs.walk_why()`'s decode of the
-firmware is checked against the same three addresses in `BitOperations` so the
-CSV cannot be the only witness. (`disasm8051.py` is what the write-up quotes for
-these addresses and agrees with both; it is not what this suite re-runs, because
-its own `--self-test` is already driven by `test_pd_image_census.py` under
+that `0x8B81` sets bit 1 of `0x07D3` *after* the `inc dptr`, so the field
+straddles a byte boundary. That second half is the whole finding, and it is the
+half a summary would drop. So each case checks that the `orl` sits on the side
+of the `inc dptr` the write-up names, read off the committed CSV rather than
+re-derived, and `trace_xdata_refs.walk_why()`'s decode of the firmware is checked
+against the same three addresses in `BitOperations` so the CSV cannot be the only
+witness. (`disasm8051.py` is what the write-up quotes for these addresses and
+agrees with both; it is not what this suite re-runs, because its own
+`--self-test` is already driven by `test_pd_image_census.py` under
 `tools/run-tests.sh`.)
 
 **The two verdict sentences are compared as strings.** `ec-0x07d2-sites.md` §4.3
@@ -75,10 +75,23 @@ NO_MOVX_SITE = "0x6757"
 # The bit operations of §6: site, the `orl` immediate, and the byte the write-up
 # says the bit belongs to. `BIT_BYTE` is the claim under test -- 0x8B81 and
 # 0x8BAD operate on 0x07D3, not 0x07D2, which is what makes the field straddle
-# a byte boundary.
+# a byte boundary. Which of them actually *stores* is a separate claim, held by
+# `STORES`: 0x8BAD's `orl` reaches only R5, so the field-boundary finding rests
+# on the other two and is not a three-instruction span.
 BIT_SITES = (("0x8B70", "#0x08", "0x07D2"),
              ("0x8B81", "#0x02", "0x07D3"),
              ("0x8BAD", "#0x01", "0x07D3"))
+
+# The bit sites that store their bit back into the byte, as §6 now states it.
+# 0x8BAD is deliberately absent: its `orl a,#0x01` goes into A and on into R5 and
+# the pair goes to `0xDC29`, which writes 0xFFFE/0xFFFF, so its committed access
+# cell carries no `write` at all. Asserted from the CSV and re-derived from the
+# firmware, because a §6 that read it as a third bit set is exactly the drift
+# this pins.
+STORES = ("0x8B70", "0x8B81")
+
+# The bit site that does not store, and the access cell §4.2 quotes for it.
+NO_STORE_SITE = "0x8BAD"
 
 VERDICT = (
     "On the PD side `0x07D2` is both: all nine of its `inc dptr` walks put it "
@@ -222,8 +235,10 @@ class TheNoMovxRow(unittest.TestCase):
 
 
 class BitOperations(unittest.TestCase):
-    """§6: bit 3 of `0x07D2` and bits 1:0 of `0x07D3`, which is the field that
-    straddles the byte boundary and is *not* the DSDT's unnamed field."""
+    """§6: bit 3 of `0x07D2` and bit 1 of `0x07D3`, which is the field that
+    straddles the byte boundary and is *not* the DSDT's unnamed field. Only
+    `0x8B70` and `0x8B81` store; `0x8BAD` ORs into `R5` and hands the pair to
+    `0xDC29`, which is why the span is two instructions and not three."""
 
     def test_the_committed_windows_carry_the_claimed_ors(self):
         by_runtime = {normalise(r["runtime"]): r for r in sites()}
@@ -263,6 +278,30 @@ class BitOperations(unittest.TestCase):
                 insns, _ = tref.walk_why(d, int(row["file_offset"], 16))
                 joined = " ; ".join(texts(insns))
                 self.assertIn(f"orl a,{orl}", joined)
+
+    def test_only_two_of_the_three_store_the_bit_back(self):
+        # §6's second claim, and the one a summary collapses into the first:
+        # that the straddling field is *written* by 0x8B70 and 0x8B81. Read off
+        # the committed access cells, where a stored bit shows up as a `write`.
+        by_runtime = {normalise(r["runtime"]): r for r in sites()}
+        for addr in STORES:
+            with self.subTest(runtime=addr):
+                self.assertIn("write", by_runtime[normalise(addr)]["access"])
+        row = by_runtime[normalise(NO_STORE_SITE)]
+        self.assertNotIn("write", row["access"])
+
+    def test_the_non_storing_site_really_has_no_store_instruction(self):
+        # The same claim re-derived from the firmware, so the CSV is not the
+        # only witness for it: 0x8BAD's window must reach no `movx @dptr` at
+        # all. Its `orl a,#0x01` goes into A, then into R5, and the R4/R5 pair
+        # goes to 0xDC29 -- which writes 0xFFFE/0xFFFF, not these two bytes.
+        with open(FIRMWARE, "rb") as f:
+            d = f.read()
+        row = next(r for r in sites()
+                   if normalise(r["runtime"]) == normalise(NO_STORE_SITE))
+        insns, _ = tref.walk_why(d, int(row["file_offset"], 16))
+        self.assertNotIn("movx @dptr,a", texts(insns))
+        self.assertIn("mov r5,a", texts(insns))
 
 
 class TheVerdictIsOneSentence(unittest.TestCase):

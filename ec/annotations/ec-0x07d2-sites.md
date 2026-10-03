@@ -475,9 +475,10 @@ tail, not the stride.
 
 ## 6. The bit operations, and the field boundary
 
-Three sites set single bits rather than replacing a byte, and they are all in
-`0x8A4A`'s routine. The write-up that matters is the one about what they span,
-because the two natural readings of the question are not equally true.
+Three sites OR a single bit into the byte they load rather than replacing it, and
+they are all in `0x8A4A`'s routine. The write-up that matters is the one about
+what they span, because the two natural readings of the question are not equally
+true.
 
 | site | instruction | byte | bit |
 |---|---|---|---|
@@ -485,15 +486,25 @@ because the two natural readings of the question are not equally true.
 | `0x8B81` | `orl a,#0x02` | `0x07D3` | 1 |
 | `0x8BAD` | `orl a,#0x01` | `0x07D3` | 0 |
 
-So the firmware sets bit 3 of `0x07D2` and bits 1:0 of `0x07D3` — a field that
-**straddles the byte boundary**, written in three separate instructions rather
-than one. **They do not form the DSDT's unnamed bit field**, and saying they do
-would be wrong twice over. The ECMG field list draws its next `Offset` at `0x7D3`,
-so `0x07D2` is outside the list entirely (§1), while bits 3:0 of `0x07D3` *are*
-inside the unnamed 4-bit run that the list gives as `Offset (0x7D3), , 4` before
-`GFID, 3`. The firmware therefore spans a field boundary the ASL draws one byte
-earlier: the two halves of the bit field are in different named regions on the
-DSDT side and in one instruction sequence on the firmware side.
+Two of the three store what they set. `0x8B70` sets bit 3 of `0x07D2` and writes
+it back; `0x8B81` reads `0x07D2`, writes it back unchanged, then after the
+`inc dptr` sets bit 1 of `0x07D3` and writes that. So the firmware sets bit 3 of
+`0x07D2` and bit 1 of `0x07D3` — a field that **straddles the byte boundary**,
+written by two separate instructions rather than one. **They do not form the
+DSDT's unnamed bit field**, and saying they did would be wrong twice over. The
+ECMG field list draws its next `Offset` at `0x7D3`, so `0x07D2` is outside the
+list entirely (§1), while bits 3:0 of `0x07D3` *are* inside the unnamed 4-bit
+run that the list gives as `Offset (0x7D3), , 4` before `GFID, 3`. The firmware
+therefore spans a field boundary the ASL draws one byte earlier: the two halves
+of the bit field are in different named regions on the DSDT side and in one
+instruction sequence on the firmware side.
+
+`0x8BAD` is the third `orl` and **stores nothing**, as §4.2's table and the
+committed row's `read x2` with no `write` already record. Its `orl a,#0x01` goes
+into `A` and on into `R5`, beside `R4` holding `[0x07D2]`, and the pair is handed
+to `0xDC29`, which writes `R4` to `0xFFFE` and `R5` to `0xFFFF`. So it is
+evidence that the firmware treats the two bytes as one unit, not a third write
+to this field: the field-boundary claim rests on the two sites that store.
 
 Two of the three also carry a store that changes nothing. At `0x8B70` the byte at
 `0x07D3` is read and written back unmodified, and at `0x8B81` the byte at
@@ -576,7 +587,7 @@ Three questions this walk opened, and deliberately did not answer:
   routine read `0x07D2` as a high byte and another multiply it alone?** §4.3
   states both and chooses neither. The call graph and the surrounding PD
   structures are `#26` and `#67`.
-- **Does the bit field `0x8B70`/`0x8B81`/`0x8BAD` sets have any DSDT
+- **Does the bit field `0x8B70`/`0x8B81` sets have any DSDT
   counterpart at all?** §6 establishes that it straddles a boundary the ASL
   draws one byte earlier, which means there may be nothing to collide with. A
   live observation would say more than another static pass, and no live

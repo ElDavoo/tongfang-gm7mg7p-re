@@ -1,4 +1,4 @@
-# `0x07D2` is an index and a word's low byte, and choosing between them is the wrong question
+# `0x07D2` is an index in some routines and a 16-bit window's low byte in others, and choosing between them is the wrong question
 
 Issue #226 asked whether the PD firmware's `0x07D2` is "only the high half of
 the `0x07D1` word, or an index in its own right", because the 16-bit reading
@@ -55,9 +55,17 @@ a structure stride. A base-less multiply is not itself new — `0x07D0`'s
 and here it becomes the address.
 
 **Bit operations, and the field boundary.** `0x8B70` does `orl a,#0x08` on
-`0x07D2`; `0x8B81` and `0x8BAD` do `orl a,#0x02` and `orl a,#0x01` on **`0x07D3`**,
-after the `inc dptr`. So the firmware sets bit 3 of `0x07D2` and bits 1:0 of
-`0x07D3` — a field straddling the byte boundary, in three separate instructions.
+`0x07D2` and stores it back; `0x8B81` reads `0x07D2`, stores it back unchanged,
+then does `orl a,#0x02` on **`0x07D3`** after the `inc dptr` and stores that. So
+the firmware sets bit 3 of `0x07D2` and bit 1 of `0x07D3` — a field straddling
+the byte boundary, written by two separate instructions rather than one.
+
+`0x8BAD` is a third `orl a,#0x01`, also on `0x07D3` after the `inc dptr`, and it
+does **not** store: the result goes into `R5`, and the `R4`/`R5` pair is handed
+to `0xDC29`, which writes `R4` to `0xFFFE` and `R5` to `0xFFFF`. It is evidence
+that the firmware treats the two bytes as one unit, because it builds a single
+register pair out of `0x07D2` then `0x07D3`; the field-boundary claim rests on
+the two sites that store.
 
 **This is not the DSDT's unnamed bit field, and the issue's question was a trap
 in that direction.** The ECMG field list reads `Offset (0x7D0), DBD1, 8, DBD2,
@@ -102,7 +110,7 @@ licence to write the byte.
 
 **Nothing was observed on hardware.** No register was read back, no write was
 attempted, no live test was run, and none is possible from this pipeline. The
-bit-field finding in particular is a statement about three instructions in a
+bit-field finding in particular is a statement about two instructions in a
 committed image and about nothing else.
 
 **`0x07D3`'s EC side is not this file's.** It is issue #183's
@@ -153,7 +161,7 @@ Both files are therefore exactly as they were, and the retraction style in
 
 - **What the `0x07D0`-`0x07D3` field is**, and why one routine reads `0x07D2` as
   a high byte while another multiplies it alone. `#26` and `#67`.
-- **Whether the field `0x8B70`/`0x8B81`/`0x8BAD` sets has any DSDT counterpart
+- **Whether the field `0x8B70`/`0x8B81` sets has any DSDT counterpart
   at all.** It straddles a boundary the ASL draws one byte earlier, which
   suggests there may be nothing to collide with. Only a live observation would
   settle it, and none is reachable from here.
