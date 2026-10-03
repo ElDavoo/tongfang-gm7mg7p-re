@@ -147,6 +147,16 @@ and that is the point of §4: nothing about them is a fact about a row.
 > that was a fact about a row — which is why a change to a name filter moved them
 > and a change to the CSV did not have to.
 
+> **Correction, 2026-10-03 (issue #626): the prefix above is keyed in
+> `TongFang.java`, not in `ExportDecompile.java`.** `switchD_` is one of the
+> tests in `TongFang.isPlaceholderName()`, and issue #626 deleted the private
+> second copy `ExportDecompile.java` carried, so the `ExportDecompile.java:339`
+> pin no longer resolves and the attribution to that file goes with it. Nothing
+> this paragraph argues moves: the `switchD_CODE:<addr>::` namespace, the
+> fourteen rows, and the reading above that `caseD_` and `default` are Ghidra's
+> too all stand, because the predicate's reserved set is unchanged — the two
+> deleted copies differed only in the `entry` test, and `switchD_` was in both.
+
 ## 4. What the bytes are not evidence of
 
 Measured over the 21 the tool now derives, and over the 25 this document

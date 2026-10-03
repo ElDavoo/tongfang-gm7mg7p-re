@@ -325,6 +325,32 @@ Fixing it means re-exporting the BIOS: a different component, a different driver
 follow-up #1.** The BIOS export is not re-exported by this change and no BIOS
 row was touched.
 
+> **Correction, 2026-10-03 (issue #626): there is one definition again, and the
+> two line pins above no longer resolve.** `ExportDecompile.java`'s private copy
+> is deleted, so the second bullet names a method that is no longer in the file
+> at all; the first bullet's `TongFang.java` pin was already landing in that
+> method's docstring rather than on the signature. Read both as
+> `TongFang.java`'s `isPlaceholderName()`, which is where the canonical copy has
+> always been. Its two call sites — the `annotated` column and the `[named]`
+> marker — now call it. `TongFang.java` is not edited, so the docstring claim
+> this paragraph calls untrue is now true of the only Java definition left, and
+> the `ExportDecompile.java` docstring that claimed it too went with the method.
+>
+> Of the blast radius above, the EC half is unaffected and still stands — no
+> exported EC function is named `entry*`, so reconciling the copies moved no EC
+> row. Of the BIOS half, the two rows the canonical predicate also matched are
+> renamed out of Ghidra's namespace (`EcPs2Kbd 0x260`, `Setup 0x000004B0`), so
+> `grade_name_basis.reserved_prefix_problems()` over
+> `bios/annotations/ghidra-functions.csv` returns an empty list where this file
+> reports those two. The other part is untouched: the disagreement this
+> paragraph measured — `annotated=no` in `bios/ghidra/index.csv` against `yes`
+> in `bios/ghidra/listing-index.csv` for `entry_clamp_status` and
+> `entry_dispatch` — is **unchanged in committed output**, because those two
+> files are written by a Ghidra run and none happened. That part is blocked on
+> #572 and is the remaining step.
+> [`entry-namespace-two-copies.md`](entry-namespace-two-copies.md) has the
+> measurement.
+
 **Pre-existing drift picked up by regenerating, not caused by it.**
 `ec/annotations/xdata-export-ownership.csv` was stale on `main`: 17 rows still
 carried the `FUN_CODE_*` placeholders Ghidra gave those addresses, while
@@ -389,6 +415,27 @@ that does.
    is provably zero-impact on the EC. The two `entry_*` rows are visibly wrong in
    committed output today: `annotated=no` in `bios/ghidra/index.csv` and `yes` in
    `bios/ghidra/listing-index.csv`.
+
+   > **Correction, 2026-10-03 (issue #626): the first half of this item is
+   > done, the second is not, and neither `file:NNN` pin in it resolves.** There
+   > is one `isPlaceholderName()` again — `ExportDecompile.java`'s private copy
+   > is deleted and both its call sites call `TongFang.isPlaceholderName()`, so
+   > the copy this item measured is gone rather than reconciled, and the
+   > `ExportDecompile.java` pin names a line the file no longer has. The two
+   > CSV-backed rows it lists as explaining the fault are renamed out of
+   > Ghidra's namespace (`EcPs2Kbd 0x260`, `Setup 0x000004B0`), and
+   > `grade_name_basis.reserved_prefix_problems()` over
+   > `bios/annotations/ghidra-functions.csv` now returns an empty list, held by
+   > `bios/tools/test_entry_namespace.py`.
+   >
+   > Still open is the re-export, and with it the sentence this item calls
+   > "visibly wrong in committed output today", which is **still true today**:
+   > `bios/ghidra/index.csv` and `bios/ghidra/listing-index.csv` are written by
+   > a Ghidra run, and none has happened, so `entry_clamp_status` and
+   > `entry_dispatch` remain `no` in the first and `yes` in the second. That
+   > step is blocked on #572.
+   > [`entry-namespace-two-copies.md`](entry-namespace-two-copies.md) §5 names
+   > what is left of it.
 2. **The same scan, generalised, and the `name`-column gap in
    `verify_reassembly.py --check`.** The prefix collision was findable from the
    committed CSV alone with no Ghidra run, and the same scan over

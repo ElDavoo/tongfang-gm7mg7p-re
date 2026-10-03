@@ -161,6 +161,25 @@ anyway because a rule that exists on only one side of a vocabulary is a rule
 that means two different things. Rule 5 is *not* carried there, for the reason
 in its entry.
 
+**CORRECTION (2026-10-03, issue #626). The EC-scoping above is withdrawn.** The
+two clauses it rested on are both false now. The `equals("entry")` /
+`startsWith("entry")` divergence between two copies of `isPlaceholderName()` is
+reconciled — `ExportDecompile.java`'s private copy is deleted and its two call
+sites call `TongFang.isPlaceholderName()` — and the two BIOS rows the scan
+found (`EcPs2Kbd 0x260`, `Setup 0x000004B0`) have been renamed out of Ghidra's
+namespace, so the same scan over the BIOS CSV returns an empty list. The
+paragraph above is left as written; this is the correction beside it.
+`docs/findings/entry-namespace-two-copies.md` carries the measurement.
+
+What is **not** done is carrying rule 5 to `bios_extract.py`. The measurement
+that would let it widen is now behind a test
+(`bios/tools/test_entry_namespace.py`), but landing the rule means a caller in
+`bios_extract.py` and edits to every file here that states the EC-only scope —
+so the rule stays unwired while the reason for scoping it is gone. That gap is
+the follow-up, and the test is what keeps it from being forgotten silently: it
+holds the scan at zero, so widening the rule adds a check rather than
+discovering a fault.
+
 ## The checks
 
 `build_ec_decompile.py --check` runs in CI and refuses:
