@@ -96,6 +96,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`cross-decoder-blind-population.md`](cross-decoder-blind-population.md) — What the cross-decoder's `vacuous` bucket is made of (issue #350)
 - [`cross-decoder-disagreement-population.md`](cross-decoder-disagreement-population.md) — What the cross-decoder's `disagree` bucket is made of (issue #510)
 - [`csv-column-usage-advice.md`](csv-column-usage-advice.md) — A `Usage:` line that reproduces its table, and a note for the diff a reader writes instead (issue #1020)
+- [`cut-classification-by-mechanism.md`](cut-classification-by-mechanism.md) — Every stop reason `descend()` records is now classified where it is emitted, not recovered from how its message begins
 - [`d8a0-init-routine.md`](d8a0-init-routine.md) — `bank0,0xD8A0`: the routine the reset operand lands one byte short of, and the four `0x20xx` bytes it alone touches (issue #575)
 - [`de3c-1c04-to-0563.md`](de3c-1c04-to-0563.md) — The store at `bank1,0xDE96` writes the `0x1C04` byte to the address the bytes at XDATA `0x0563`/`0x0564` spell, and that pair is staged by the same routine from two CODE tables — an indexed set, not one address and not the caller's
 - [`deep-schedule-lint-baseline.md`](deep-schedule-lint-baseline.md) — What the linters say about the prepared nightly, and what now holds it
@@ -218,6 +219,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md) — The `0x8518` block decoded: seven entry points, not one, and half of it is invisible to the host (issue #1185)
 - [`seed-dispatch-xdata-footprint.md`](seed-dispatch-xdata-footprint.md) — What the trio the old gate comment blamed actually does to XDATA, and the one seed byte still unexplained (2026-10-03, issue #628)
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
+- [`sites-csv-regeneration.md`](sites-csv-regeneration.md) — The committed sites tables are re-derived from the firmware, not from the pages that print the command (issue #313)
 - [`sweep-summary-schema.md`](sweep-summary-schema.md) — The AC-plugin sweep summary has a schema, a reader, and two blind spots written down
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
@@ -250,6 +252,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
 - [`walk-window-terminators.md`](walk-window-terminators.md) — `walk()`'s stop reason is a column now, and the 45 rows its budget truncates are named
 - [`xdata-0390-0391-filter-pair.md`](xdata-0390-0391-filter-pair.md) — The 0x0390/0x0391 pair: what the 0x9EA1 filter reads, what the `E100` branch selects, and where `0x0391`'s value comes from (issue #295)
+- [`xdata-044b-selector-value-set.md`](xdata-044b-selector-value-set.md) — `0x044B`'s writable set and its reader set are the same values, and `0x9A0E` spends the byte on one threshold of three
 - [`xdata-0786-tcc-offset-verdict.md`](xdata-0786-tcc-offset-verdict.md) — `0x0786` is a CPU TCC offset: the EC's own bytes decide the naming conflict
 - [`xdata-07fd-07ff-witness-triple.md`](xdata-07fd-07ff-witness-triple.md) — The `0x07FD`-`0x07FF` triple: a three-byte witness whose third byte discriminates (issue #573)
 - [`xdata-0860-census-sites-relined.md`](xdata-0860-census-sites-relined.md) — The four `0x0860` census citations move; the counts do not (issue #752)

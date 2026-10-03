@@ -1743,9 +1743,25 @@ registers:
       by falling through into forward_to_9a86, so 0x9AAD is the dispatcher
       and the indirect writer of all five successors while the static count
       stays at 6. Its arms map 0 to 1, 1 to 2, 2 to 3 or 1, 3 to 4 or 2, and
-      4 to 3: the byte is re-decided, not counted up. What the five values
-      mean is not decoded -- docs/findings/044b-mode-stepper.md. No PD site,
-      no upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
+      4 to 3: the byte is re-decided, not counted up. Which values a caller
+      can put there, and which values its readers have to cope with, is a
+      separate question from the transitions and it has its own answer:
+      each of 0, 1, 2, 3 and 4 has one producer -- reset_08ad_08bf_and_clear_08e2_bit7
+      (bank0 0x9C24) for 0, store_bd20_result_masked_7f (bank0 0x9A7B) for 1,
+      call_ba15_then_write_02_to_044b for 2, call_bd20_with_03_then_or_80_into_dptr
+      for 3 and write_04_to_044b_and_set_08e2_bit7 for 4 -- and the dispatch's
+      dec/jz chain enumerates the same set, so there is no value a reader tests
+      for that no writer produces. 0x9A7B stores 1 because 0xBA15 is a single
+      clr A and the next ret after it is the one at BA22. The other routine
+      that reads the byte is not a second dispatcher: mul_div_08ea_then_sub_044b_selected
+      (bank0 0x9A0E) tests it against 4 and against 2 and takes 0x08CA for every
+      other value, subtracting the selected byte from a scaled pair at
+      0x0A49/0x0A4A and returning the low byte, which bank0 0x9AAD passes to
+      x044c_minus_r7 (bank0 0xBEA3). What the five values mean is still not
+      decoded -- docs/findings/044b-mode-stepper.md for the transitions,
+      docs/findings/xdata-044b-selector-value-set.md for the value sets and the
+      consumer. No PD site, no upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
 
   - name: XDATA_044C
     addr: 0x044C
