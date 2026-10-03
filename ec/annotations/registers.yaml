@@ -4896,6 +4896,90 @@ registers:
       dsdt.dsl:52194-52328 and tops out at 0x0EA0 (see XDATA_1665). No
       hardware was involved; status stays present-untested.
 
+  - name: XDATA_201C
+    addr: 0x201C
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 direct MOV DPTR site in the EC image, bank0 at 0xD8CC, classified
+      `read`, no PD site. It is the routine at 0xD8A0 testing bit 1
+      (`jb acc.1`): the re-set of bit 0 of XDATA 0x0983 that the same
+      routine had just cleared happens only when this bit reads clear and
+      R7 is non-zero. No writer is found by either committed method, on
+      the "not found by this method" terms XDATA_1665 sets out (#110) -- a
+      computed DPH or an indirect `movx @Ri` is invisible to both scans --
+      and a byte only ever read must be written by something, so the writer
+      is an open question rather than an absence. The site sits in a
+      routine with no committed listing, so the holding function records
+      as not exported in ec/annotations/site-resolution.csv. What bit 1
+      means is not decoded here. No hardware was involved, so
+      `present-untested` is the ceiling. Reading and reproduction commands:
+      docs/findings/d8a0-init-routine.md.
+
+  - name: XDATA_2012
+    addr: 0x2012
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 direct MOV DPTR site in the EC image, bank0 at 0xD90E, classified
+      `read+write`, no PD site. The routine at 0xD8A0 sets bit 0 and
+      leaves the other seven bits as it found them, in the last block of
+      instructions before the routine's tail jump. One site that both
+      reads and writes makes this byte self-initialising rather than
+      merely seeded: what it holds afterwards is whatever was there with
+      bit 0 forced up, so the routine's write is not the whole of its
+      content. What the other seven bits carry is not decoded here. Same
+      reading, and the same open writer question, as XDATA_201C. No
+      hardware was involved, so `present-untested` is the ceiling.
+
+  - name: XDATA_2014
+    addr: 0x2014
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 direct MOV DPTR site in the EC image, bank0 at 0xD915, classified
+      `write`, no PD site. The routine at 0xD8A0 stores 0x06 here,
+      immediately after XDATA_2012's bit 0 and immediately before
+      XDATA_2015. A byte with exactly one direct site and that site a
+      write is either this routine's private state or is written by a
+      method neither committed scan sees; on the "not found by this
+      method" terms XDATA_1665 sets out (#110) that is open rather than
+      answered. What 0x06 selects is not decoded here -- read+write for
+      0x2012 is the reading's, not this byte's, and the two are separate
+      addresses that happen to be written three instructions apart. No
+      hardware was involved, so `present-untested` is the ceiling.
+
+  - name: XDATA_2015
+    addr: 0x2015
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 direct MOV DPTR site in the EC image, bank0 at 0xD91B, classified
+      `write`, no PD site. The routine at 0xD8A0 stores 0x80 and then
+      copies A into R7 and clears R6, which are the two registers it
+      hands its tail jump to 0xEADA -- so this byte is the source of the
+      routine's exit state, which is more than "a byte was written" and
+      is the one thing here that reaches past this routine. What 0x80
+      means is not decoded here. The callee's own committed listing
+      ec/decompiled/bank0/EADA.asm shows both registers being taken at
+      once in its first four instructions -- DPTR #0x0a47, store R6,
+      read R7 into A -- so the exit state is consumed on entry rather
+      than merely set here; what the callee goes on to do with A is not
+      decoded. No hardware was involved, so `present-untested` is the
+      ceiling.
+
   - name: GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)
     addr: 0x07C4
     bits: "0-2 unnamed; 3 = DBEN; 4 unnamed; 5 = DBST"
