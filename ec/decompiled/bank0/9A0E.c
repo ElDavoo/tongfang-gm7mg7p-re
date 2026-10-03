@@ -5,16 +5,28 @@
 
 
 /* Loads XDATA 0x08EA into R7 with R6 = 0, calls 0x707D with R4:R5 = 0x0013 and then 0x708F with R5
-   = 0x0A, and stores the two result bytes big-endian at 0x0A49 (high) and 0x0A4A (low). It calls
-   0xBB31 on 0x08CA, then 0x08CB, then 0x08C2, and takes the failure path - writing 0x00 to 0x0A49
-   and 0x01 to 0x0A4A - if the first or second call sets carry or the third clears it; what 0xBB31's
-   carry signifies is not established by this listing. Otherwise XDATA 0x044B selects which of
-   0x08CB, 0x08C2 or 0x08CA is subtracted from 0x0A4A, the difference is passed to 0xBB39 and
-   written wherever 0xBB39 leaves DPTR, and the low byte at 0x0A4A is returned in R7.
+   = 0x0A, and stores the two result bytes big-endian at 0x0A49 (high) and 0x0A4A (low). 0xBB31 and
+   0xBB39 are one routine with no ret between them: each computes (0x0A49:0x0A4A) minus the byte the
+   caller left in DPTR plus one, and leaves the high byte of the difference in A and the borrow of
+   the whole 16-bit subtraction in the carry. Called on 0x08CA, then 0x08CB and then 0x08C2 it must
+   clear carry each time - the jnc before the 0x08C2 call jumps on carry clear, so that is the same
+   lower bound as the two jc failure tests, not its inverse - so the arithmetic below runs only when
+   the scaled pair exceeds the byte at 0x08CA, the byte at 0x08CB and the byte at 0x08C2 - three
+   lower bounds, which together are the one condition that the pair exceeds the largest of the
+   three. Which of the three binds is not established: 0x96AD fills all three out of one indexed
+   CODE table over a base 0xB93A loads from XDATA 0x0A51/0x0A52 at run time, and
+   boot-xdata-sites.csv records all three as 0x00 at boot; on any other value the routine writes
+   0x00 to 0x0A49 and 0x01 to 0x0A4A and returns 1. XDATA 0x044B is then tested twice, against 0x04
+   and against 0x02, so value 4 selects 0x08CB, value 2 selects 0x08C2, and every other value - 0,
+   1, 3 and anything above 4 - takes 0x08CA. The selected byte is subtracted from the pair, and the
+   store that follows the call to 0xBB39 lands at 0x0A49 because that routine loads DPTR with that
+   literal rather than choosing it. The low byte at 0x0A4A is returned in R7.
    ec/annotations/registers.yaml now carries 0x044B as XDATA_044B, an EC-side site found with its
    meaning not established; 0x08EA, 0x08CA, 0x08CB, 0x08C2, 0x0A49 and 0x0A4A have no entry there.
    type: math
-   evidence: ec/decompiled/bank0/9A0E.asm; ec/decompiled/bank0/9A0E.c; ec/annotations/registers.yaml
+   evidence: ec/decompiled/bank0/9A0E.asm; ec/decompiled/bank0/9A0E.c; ec/decompiled/bank0/BB31.asm;
+   ec/decompiled/bank0/BB39.asm; ec/annotations/registers.yaml;
+   docs/findings/xdata-044b-selector-value-set.md
    basis: hand-decoded
    name_basis: ec-register */
 

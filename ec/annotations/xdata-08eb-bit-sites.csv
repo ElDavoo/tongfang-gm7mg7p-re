@@ -1,0 +1,26 @@
+bit,runtime,region,containing_function,role,bit_source,insn_addr,opcode,sweep_access,listing_access,evidence
+2,0xD487,bank0,not exported,set,window,0xD48B,"orl A,#0x04","read x1, write x1",read+write,ec/firmware/GMxMGxx_11.800
+2,0xD6A8,bank0,0xD673 FUN_CODE_d673,clear,window,0xD6AC,"anl A,#0xfb","read x1, write x1",read+write,ec/decompiled/bank0/D673.asm
+2,0xCD34,bank0,0xCCFC power_on_init_and_two_hang_paths,branch,window,0xCD38,jnb acc.2,read x1,read+write,ec/decompiled/bank0/CCFC.asm
+2,0xCD34,bank0,0xCCFC power_on_init_and_two_hang_paths,clear,listing,0xCD3C,"anl A,#0xfb",read x1,read+write,ec/decompiled/bank0/CCFC.asm
+3,0xB690,bank0,0xB5D3 FUN_CODE_b5d3,set,window,0xB694,"orl A,#0x08","read x1, write x1",read+write,ec/decompiled/bank0/B5D3.asm
+3,0xB716,bank0,0xB716 clear_08eb_bit3_09e6_09e7_08a2_089e_089f,clear,window,0xB71A,"anl A,#0xf7","read x1, write x1",read+write,ec/decompiled/bank0/B716.asm
+3,0xB65B,bank0,0xB5D3 FUN_CODE_b5d3,branch,window,0xB65F,jb acc.3,read x1,read,ec/decompiled/bank0/B5D3.asm
+3,0x8931,bank0,0x8931 gate_0751_0741_blocks_then_tail_jump_8c46,branch,window,0x8935,"anl A,#0x48",read x1,read,ec/decompiled/bank0/8931.asm
+4,0xCCB7,bank0,0xCC64 init_06e6_1_clear_0743_07c5_and_07d5_ff,set,listing,0xCCBE,"orl A,#0x10",no movx found in the decoded window,read+write,ec/decompiled/bank0/CC64.asm
+4,0xCCB7,bank0,0xCC64 init_06e6_1_clear_0743_07c5_and_07d5_ff,clear,listing,0xCCC4,"anl A,#0xef",no movx found in the decoded window,read+write,ec/decompiled/bank0/CC64.asm
+4,0xA916,bank1,0xA916 clamp_078b_level_into_0804,branch,window,0xA91A,"anl A,#0x10",read x1,read,ec/decompiled/bank1/A916.asm
+5,0xB53E,bank0,0xB4A8 FUN_CODE_b4a8,set,window,0xB542,"orl A,#0x20","read x1, write x1",read+write,ec/decompiled/bank0/B4A8.asm
+5,0xB5B2,bank0,0xB5B2 clear_08eb_bit5_09e6_09e7_08a1_089c_089d,clear,window,0xB5B6,"anl A,#0xdf","read x1, write x1",read+write,ec/decompiled/bank0/B5B2.asm
+5,0xB501,bank0,0xB4A8 FUN_CODE_b4a8,branch,window,0xB505,jb acc.5,read x1,read,ec/decompiled/bank0/B4A8.asm
+6,0xB7F4,bank0,0xB737 FUN_CODE_b737,set,window,0xB7F8,"orl A,#0x40","read x1, write x1",read+write,ec/decompiled/bank0/B737.asm
+6,0xB82E,bank0,0xB82E clear_08eb_bit6_and_zero_08a0,clear,window,0xB832,"anl A,#0xbf","read x1, write x1",read+write,ec/decompiled/bank0/B82E.asm
+6,0xB7BB,bank0,0xB737 FUN_CODE_b737,branch,window,0xB7BF,jb acc.6,read x1,read,ec/decompiled/bank0/B737.asm
+6,0x8931,bank0,0x8931 gate_0751_0741_blocks_then_tail_jump_8c46,branch,window,0x8935,"anl A,#0x48",read x1,read,ec/decompiled/bank0/8931.asm
+7,0xC86A,bank0,not exported,set,window,0xC86E,"orl A,#0x80","read x1, write x1",read+write,ec/firmware/GMxMGxx_11.800
+7,0xB476,bank0,0xB46C FUN_CODE_b46c,clear,window,0xB47A,"anl A,#0x7f","read x1, write x1",read+write,ec/decompiled/bank0/B46C.asm
+7,0xB489,bank0,0xB46C FUN_CODE_b46c,clear,listing,0xB491,"anl A,#0x7f",read x1,read+write,ec/decompiled/bank0/B46C.asm
+7,0xB489,bank0,0xB46C FUN_CODE_b46c,branch,window,0xB48D,jnb acc.7,read x1,read+write,ec/decompiled/bank0/B46C.asm
+7,0xB497,bank0,0xB46C FUN_CODE_b46c,branch,window,0xB49B,jnb acc.7,read x1,read,ec/decompiled/bank0/B46C.asm
+7,0xC47E,bank0,0xC478 set_160a_bit0_unless_b8f4_and_08eb,branch,window,0xC482,jb acc.7,read x1,read,ec/decompiled/bank0/C478.asm
+7,0xC860,bank0,not exported,branch,window,0xC864,jb acc.7,read x1,read,ec/firmware/GMxMGxx_11.800
