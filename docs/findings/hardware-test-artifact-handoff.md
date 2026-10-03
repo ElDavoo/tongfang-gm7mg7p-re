@@ -185,6 +185,17 @@ argument" went with them: `ec_validate.py` takes it through `--csv`, and leaving
 that half standing while correcting the other would have been the same defect in
 a smaller window.
 
+*** CORRECTION 2026-10-03 (issue #216), leaving the paragraph above as it was
+written.*** **The clause naming `remain-capacity-probe` no longer describes it.**
+The probe still `cd`s to the repository root on the way in, but it now resolves
+an output name carrying no `/` under `evidence/ec-watch/`, so §4's bare name
+lands where §7 lists it rather than at the top of the tree, whatever directory
+the operator was standing in. **The `ec_validate.py` half above is unchanged,
+and so is the reasoning of the paragraph below it:** §3 still passes a bare
+`--csv` name that resolves against the directory the command was started in, so
+§3's `rem` block still needs the correction described next, and the three
+documents it names are still unexamined against their own tools.
+
 **The bare-name boilerplate, and the three documents left carrying it.** The
 correction above fixed one of the two sites in `remain-capacity-0436.md`
 carrying that claim, and §3's `rem` block was the other: it still said following

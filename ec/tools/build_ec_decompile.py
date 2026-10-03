@@ -39,12 +39,14 @@ Usage:
 """
 import argparse
 import csv
+import getpass
 import hashlib
 import os
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 # This repository's own linear 8051 decoder, imported rather than run as a
 # subprocess per sampled function. It is import-safe -- everything it does
@@ -69,6 +71,15 @@ import grade_name_basis
 import second_copy_census
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# The shared Ghidra layer's project-owner helper. Imported rather than restated
+# because the rewrite has to be one implementation: this driver's copy, the BIOS
+# driver's and the render probe's are the same edit to the same file, and a
+# per-driver copy is three spellings that can drift. The path is the shared
+# layer rather than this directory, so REPO is the way to spell it.
+sys.path.insert(0, os.path.join(REPO, "ghidra"))
+import project_owner  # noqa: E402  (the path insert above is what makes this work)
+
 FIRMWARE = os.path.join(REPO, "ec", "firmware", "GMxMGxx_11.800")
 PROJECT = os.path.join(REPO, "ec", "ghidra", "project")
 SCRIPTS = os.path.join(REPO, "ghidra", "scripts")
@@ -720,6 +731,16 @@ def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
         if os.path.isdir(copy_dir):
             shutil.rmtree(copy_dir)
         shutil.copytree(PROJECT, copy_dir)
+        # The copy inherits the owner the committed project.prp records, and
+        # analyzeHeadless refuses a project owned by anyone else with
+        # NotOwnerException before it reads an annotation -- so without this the
+        # default export cannot run for any contributor whose username is not
+        # that one. Once, here, rather than per program: the copy is made once
+        # and the three programs share it. The scratch root is `work` and the
+        # helper refuses anything outside it, so this can only ever write the
+        # copy. docs/findings/ghidra-project-owner.md has the measurement.
+        print("  project copy: %s" % project_owner.rewrite_owner(
+            os.path.join(copy_dir, "ec.rep"), work))
         for program in programs:
             run([ghidra, copy_dir, "ec", "-process", program, "-noanalysis",
                  "-scriptPath", SCRIPTS,
@@ -1997,6 +2018,34 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("a mode outside the documented set is rejected", len(_p) == 1, str(_p))
     check("the committed manifest uses only documented modes",
           not manifest_mode_problems(_mr), str(manifest_mode_problems(_mr)))
+
+    # The owner state on the copy analyze() makes, asserted here because this is
+    # the tier that runs without Ghidra: the export itself would show it, but a
+    # property nothing checks cannot silently stop holding, and the way it
+    # silently stopped holding before is that no caller normalised it at all.
+    # Both halves are needed. "The copy is yours" is what makes the export run;
+    # "the committed project.prp is byte-identical" is what keeps that from
+    # being the answer. A check of only the first would go green on a rewrite
+    # aimed at the wrong directory.
+    _owner_before = open(os.path.join(PROJECT, "ec.rep", "project.prp"), "rb").read()
+    _scratch = tempfile.mkdtemp()
+    try:
+        _copy = os.path.join(_scratch, "project-copy")
+        shutil.copytree(PROJECT, _copy)
+        _rep = os.path.join(_copy, "ec.rep")
+        _report = project_owner.rewrite_owner(_rep, _scratch)
+        check("the export-only copy's owner is the running user, so "
+              "analyzeHeadless will open it (project_owner: %s)" % _report,
+              not project_owner.owner_problems(_rep, getpass.getuser()))
+        _p = project_owner.owner_problems(_rep)
+        check("the copy's owner state is readable and carries no fault",
+              not _p, str(_p))
+    finally:
+        shutil.rmtree(_scratch, ignore_errors=True)
+    check("the committed project.prp is byte-identical after that rewrite, so "
+          "the export path still never writes the tree",
+          open(os.path.join(PROJECT, "ec.rep", "project.prp"), "rb").read()
+          == _owner_before)
 
     # The "X has no entry in registers.yaml" idiom, which goes stale the moment
     # the byte it names is entered. Scoped to the addresses each clause governs,
