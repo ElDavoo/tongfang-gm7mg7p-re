@@ -266,6 +266,23 @@ alone deliberately** rather than tidied:
 They are named here so the next reader knows the line was read end to end and
 the two reads were a decision rather than a miss.
 
+**The first bullet is now measured, and held by a case (issue #896).**
+[`xdata-cluster-key-round-trip.md`](xdata-cluster-key-round-trip.md) recomputes
+`cluster_key(program, addrs)` over every row of the committed census and over a
+`--no-eq-guard` regeneration of it, and
+`ec/tools/test_xdata_cluster_names.py::TheKeyIsTheHashOfItsRow` runs that on
+every sweep. Both censuses re-derive clean — the figures and the command that
+produces them are in that file's §4 — so the decision above is **vindicated
+rather than overturned**, and `flip_table()`'s docstring and `across_report()`'s
+printed `by construction` line rest on a case rather than on an argument. One
+correction rides with it, made in that file: **#896 was filed on the claim that a
+hand-edited row would leave "every existing check green", and
+`xdata_register_map.py --check` would in fact go red** — it regenerates and
+byte-compares, and runs in the cheap gate. What nothing held was the round-trip
+itself, which `--check` establishes only as a consequence of both sides coming
+from one generation and which stops at the first differing line, and the
+guard-off census, which `--check` is refused the flag that produces.
+
 ## 7. What this does not do
 
 - **No firmware claim, and no live run.** Both censuses are files, no image is
