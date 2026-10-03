@@ -1,0 +1,27 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# value and count below was written by hand. See ../README.md.
+# Shape: the committed 2026-09-18-ac-plugin-sweep-summary.csv's own schema --
+# one row per address, the change total in a `change_count` column rather than
+# a row per change. It carries all three classifications at once, so a
+# classifier that answered "held" for everything and one that answered "moved"
+# for everything both have rows here they cannot pass:
+#   0x07C6,2,0x04,0x04  moved twice, returned to its first recorded value --
+#     the row issue #276's "held 0x04" was a claim about
+#   0x07C0,0,0x00,0x00  held, the only thing that reads "held"
+#   0x07C4,2,0x08,0x38  moved and stayed
+# The `#` block's source-log figure reconciles with the column (20 = 20), so
+# this is the fixture the agreeing branch is read from and
+# sweep-summary-example-unreconciled.csv is not. Not a prediction that a sweep
+# changes any address this many times.
+# derived from a sweep, 2026-01-01. Full 20-row log not committed.
+addr,change_count,first_old,last_new
+0x00C0,2,0x00,0x00
+0x00C1,2,0x00,0x08
+0x00D3,1,0x07,0xD1
+0x0743,1,0x02,0x03
+0x0751,7,0xA0,0x00
+0x07A6,3,0x29,0x29
+0x07C0,0,0x00,0x00
+0x07C4,2,0x08,0x38
+0x07C6,2,0x04,0x04
+0x07D7,0,0x00,0x00
