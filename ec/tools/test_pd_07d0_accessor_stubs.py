@@ -215,32 +215,44 @@ class TestExportRows(unittest.TestCase):
 
 
 class TestCensusRelationship(unittest.TestCase):
-    """A stub has a census row iff a committed listing transfers to it.
+    """A stub has a census row iff a committed listing transfers to it, or
+    iff a kept citation names it.
 
     The relationship, not a number. See the module docstring for why pinning
-    the seven inbound counts would be the wrong shape for this file.
+    the seven inbound counts would be the wrong shape for this file. The
+    second arm arrived with issue #460, which widened the table from the
+    reachable set to the reachable set *or* the kept-cited set; it does not
+    fire on these seven, because none of them carries a kept citation, so the
+    assertion is unchanged in what it holds and narrower in what it claims.
     """
 
     @classmethod
     def setUpClass(cls):
         cls.index = call_graph.load_index()
-        cls.edges, _unresolved, _orphans, _total, _listings = call_graph.scan(
+        cls.edges, _unresolved, _orphans, _total, listings = call_graph.scan(
             cls.index)
         # `call_graph` keys everything on the normalised *string* address its
         # own `Index` builds, not on an int, so these keys have to match its.
         cls.keys = {("pd", call_graph.norm_addr("%04X" % s)) for s in STUBS}
+        # The citation arm of the relationship, read off the same walk the
+        # committed file was built from. It is empty for all seven stubs, and
+        # the case below says so by asserting against both halves.
+        cited, _rejected, _undecided, _listing_kept = call_graph.citations(
+            cls.index, listings)
+        cls.cited = set(cited)
         cls.census = {(r["scope"], call_graph.norm_addr(r["addr"])): r
                       for r in committed_rows(HERE.parent / "annotations"
                                               / "call-graph-callees.csv")}
 
-    def test_a_row_exists_exactly_when_a_committed_listing_reaches_it(self):
-        # Read off `call_graph.scan()`, the same walk the committed file was
-        # built from. If the two ever disagree, one of them is wrong, and which
-        # one is not something this case could report -- so it reports the
-        # disagreement and stops.
+    def test_a_row_exists_exactly_when_a_listing_reaches_it_or_a_citation_names_it(self):
+        # Read off `call_graph.scan()` and `call_graph.citations()`, the same
+        # two walks the committed file was built from. If they ever disagree,
+        # one of them is wrong, and which one is not something this case could
+        # report -- so it reports the disagreement and stops.
         for key in sorted(self.keys):
             with self.subTest(stub=key[1]):
-                self.assertEqual(key in self.census, key in self.edges)
+                self.assertEqual(key in self.census,
+                                 key in self.edges or key in self.cited)
 
     def test_each_rows_inbound_is_the_number_of_transfer_sites(self):
         for key in sorted(self.keys & set(self.edges)):

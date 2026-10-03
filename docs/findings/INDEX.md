@@ -5,6 +5,7 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
+- [`0436-0437-writer-census.md`](0436-0437-writer-census.md) — The `0x0436`/`0x0437` writer census: eight stores and none of them a counter, and the PD's five sites name a base rather than a byte
 - [`044b-mode-stepper.md`](044b-mode-stepper.md) — `0x044B` is a five-value mode byte, and `bank0 0x9AAD` is the routine that re-decides it
 - [`0741-bit7-oc-recovery.md`](0741-bit7-oc-recovery.md) — One instruction sets AP_OEM bit 7, and the region it scans is 253 bytes rather than the three a committed annotation claimed
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
@@ -71,11 +72,13 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`census-doc-fallback-entry-addresses.md`](census-doc-fallback-entry-addresses.md) — Direction A's fallback was a search over a whole write-up, and it is now named addresses
 - [`census-figures-restated.md`](census-figures-restated.md) — The census figures a page keeps restating, and the tool that stops holding them by hand
 - [`charge-cap-2021-artifact-archaeology.md`](charge-cap-2021-artifact-archaeology.md) — The 2021 charge-cap archaeology: what is ruled out from committed inputs, and what a recovered artifact would have to show
+- [`charge-derating-counters-not-persisted.md`](charge-derating-counters-not-persisted.md) — The charge-derating counters are cleared by the boot path, not persisted (issue #90)
 - [`charge-target-caller-chain.md`](charge-target-caller-chain.md) — Who reaches `0xB158` — the charge-target caller chain, and how often it runs (issue #89)
 - [`checkout-claim-corpus.md`](checkout-claim-corpus.md) — The checkout-depth sweep derived its own population, and a retraction quotes the sentence it retracts
 - [`citation-code-vs-data.md`](citation-code-vs-data.md) — A citation is a code frame, not an address (issue #453)
 - [`citation-gap-scan.md`](citation-gap-scan.md) — The bytes a function boundary cut out of a citing listing (issue #560)
 - [`citation-undecided-verdicts.md`](citation-undecided-verdicts.md) — The 45 undecided citation pairs, one verdict each (issue #526)
+- [`cited-set-population.md`](cited-set-population.md) — The cited set was intersected with the reachable set, and the work list was the intersection (issue #460)
 - [`citing-listing-evidence.md`](citing-listing-evidence.md) — The citing listing is the other half of the citation question (issue #525)
 - [`class-b-access-cell-corrections.md`](class-b-access-cell-corrections.md) — The three class-B `access` cells were short rather than wrong, and all three are corrected (issue #865)
 - [`code-pointer-site-census.md`](code-pointer-site-census.md) — The 54 image-wide CODE-pointer sites, written down as a regenerable table, and what the list is not
@@ -113,6 +116,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`dump-pair-block-attribution.md`](dump-pair-block-attribution.md) — A whole-block bracket is not a second reading of the same bytes (issue #475)
 - [`dump-reads-for-a-refused-block.md`](dump-reads-for-a-refused-block.md) — A read taken for a block whose windows were refused (issue #499)
 - [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
+- [`ec-addr-reach-086x.md`](ec-addr-reach-086x.md) — Does the vendor service write any `0x08xx` byte, and how far did we look (issue #334)
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
 - [`ec-fan-table-defaults.md`](ec-fan-table-defaults.md) — The EC's own fan tables: where they live, what they say, and how far they are from the vendor's
 - [`ecmg-asl-references.md`](ecmg-asl-references.md) — Which of the 98 ECMG names the ASL reaches for, and what the two `0x71` arms are (issue #1159)
@@ -291,6 +295,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-pair-role-column.md`](xdata-pair-role-column.md) — The `pair_role` column: which half of a pair a census row is (issue #734)
 - [`xdata-per-program-counts.md`](xdata-per-program-counts.md) — The per-program count columns: `refs` and the five buckets, split, with `refs` itself unmoved (issue #713)
 - [`xdata-register-map-per-program-keying.md`](xdata-register-map-per-program-keying.md) — `xdata-register-map.md` §2 re-keyed per program, and what that moved (issue #714)
+- [`xdata-registers-agreement-vacuity.md`](xdata-registers-agreement-vacuity.md) — The guard-off registers loop was coverage-blind, and 17 of the 50 `pd` clusters are named by no register row at all (issue #968)
 - [`xdata-self-test-deferral-already-lifted.md`](xdata-self-test-deferral-already-lifted.md) — The self-test deferral #628 was filed against had already been lifted, and one file still described it in the present tense (2026-10-03, issue #628)
 - [`xdata-spelled-as-union.md`](xdata-spelled-as-union.md) — `spelled_as` is a union across programs, and the column that says so (issue #709)
 - [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md) — The two-largest case passed vacuously; its exhibits are now derived (issue #778)
