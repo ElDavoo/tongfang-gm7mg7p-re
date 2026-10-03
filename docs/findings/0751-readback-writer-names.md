@@ -1,4 +1,4 @@
-# §4.6's readback names the writer that cannot have moved the byte, and what is left
+# §4.6's readback names the writer the two bytes rule out, and what is left
 
 (2026-10-02, issue #220. Static reading of committed disassembly, the arms
 CSV, the writers CSV and §4 of the procedure. No capture opened, no EC, no
@@ -6,8 +6,9 @@ hardware, no Windows, no run.)
 
 Issue #220 asked two things of the surfaces an operator reads when a
 `0x0751` write has moved back by the time the after-dump was taken: say that
-the bank0 `0x8978` Fan-Boost temperature clear **cannot** be the writer on the
-three values this procedure writes, and name what does remain rather than
+the bank0 `0x8978` Fan-Boost temperature clear **cannot** be the writer while
+`0x0751` holds bit 6 clear, which is what all three values this procedure
+writes are, and name what does remain rather than
 "something". Both are text changes, to
 `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` §4's step 4 and step 6
 and to `report_readback()`'s mismatch line in
@@ -89,39 +90,37 @@ not rule out:
 
 So a readback that does not hold the written value is still a finding, and
 nothing in this change lowers the bar for it. What changed is that one
-candidate is named and excluded up front, so the operator does not spend the
-run matching a value against a path the byte cannot have taken.
+candidate is named and ruled out up front, so the operator does not spend the
+run matching a value against a path those two bytes rule out.
 
-**The grader's sentence is keyed on the value that was written, and the byte
-the last dump holds is a second, separate statement.** The store is
-`0x898A 90 07 51 / 0x898D e0 / 0x898E 54 bf / 0x8990 f0`: it loads the register
-and applies `anl a,#0xbf`, so it maps `X -> X & ~0x40`. That makes the answer
-to "which writer moved the byte away from the value I wrote" a fact about
-`written` and nothing else — the store can move the byte away from `written` if
-and only if `written & 0x40` — and it is what the two sentences key on. A
-written value with bit 6 clear gets "It is not the bank0 `0x8978` temperature
-clear", with the arithmetic shown (`0xA0 & 0xbf` is `0xA0`, the value written);
-a written value with bit 6 set gets "The bank0 `0x8978` temperature clear is
-among them", because there the store turns one value into another.
+**The grader's sentence is keyed on the byte the store reads, which is the
+register as it stands when the store runs and not the value handed to
+`--wrote`.** The store is `0x898A 90 07 51 / 0x898D e0 / 0x898E 54 bf /
+0x8990 f0`: it loads the register and applies `anl a,#0xbf`, so it maps
+`X -> X & ~0x40`. That comes out as `written` only while `X == written`, and
+nothing between the write and the last dump keeps the two in step. So the
+sentence names the store on **either** byte that puts it in reach — `written &
+0x40`, the transition it is the known producer of, since `0x40` read back as
+`0x00` is what `anl a,#0xbf` does to it, or the byte at the last dump holding
+bit 6 set, the state it runs in — and rules it out only on the two bytes both
+clear. That is the sentence a value written `0xA0` and read back `0x80` gets,
+with the arithmetic shown (`0xA0 & 0xbf` is `0xA0`, the value written) and its
+scope stated: what the two bytes rule out is that store, not that it never ran.
 
-Where the byte stands at the last dump is the other question, and it gets its
-own sentence in the present tense: `0x8942` loads `0x0751` and tests `acc.6` on
-what the register holds, so a byte with bit 6 set now puts the store back in
-reach from here, and one without keeps it out. The two readings can disagree,
-and when they do the disagreement is the finding — `0x40` read back as `0x00`
-is that store's own transition, so it is named as a candidate rather than
-ruled out, which is the case a message keyed on the last dump's byte gets
-backwards.
+A further sentence reports where the byte stands now, because reach from here is
+the operator's next question: `0x8942` loads `0x0751` and tests `acc.6` on what
+the register holds, so a byte with bit 6 set now runs the store on the next
+pass and one without does not.
 
-The `xrl a,#0x40` rows in
-[`manual-fan-ctrl-0751-writers.csv`](../../ec/annotations/manual-fan-ctrl-0751-writers.csv)
-are the reason `written` and `last` can drift apart between the write and the
-last dump: such a row can set bit 6 on a byte whose bit 6 was clear. It does
-not rescue the store on a written value with bit 6 clear — the row sets the
-bit and the store clears it again, so the byte is back where it started and
-that store is still not what moved it away from `written`. All of this is
-still a static reading of one image, and a byte that moved back is still a
-finding.
+**The `xrl a,#0x40` rows are why `--wrote` cannot settle it.** Those rows are a
+pure toggle of bit 6, so on their own they round-trip: the row sets the bit,
+this store clears it, and the byte lands back where it started — but only while
+such a row is the *sole* intervening writer. The same table's `0xA818`,
+`0xABE8`/`0xC741` and `0xAC00`/`0xC759` rows
+([`manual-fan-ctrl-0751-writers.csv`](../../ec/annotations/manual-fan-ctrl-0751-writers.csv))
+move other bits in the same pass, so the byte `0x0751` holds when this store
+runs is not the value written on any of those readings. All of this is still a
+static reading of one image, and a byte that moved back is still a finding.
 
 **No count of writers appears in any of the surfaces this change touches**,
 and that is deliberate. The census's own figure is open-ended by its own
@@ -158,21 +157,14 @@ than by line: each value gets its own case rather than a parameterised loop, so
 a failure names which value lost its wording; the mismatch line must carry the
 exclusion and the `0x8978`/`0x40`/annotation-path anchors; `"something"` must
 be gone; and a numeral presented as a count of writers is what the `#196`
-guard fails on. The predicate is pinned in both directions, because the two
-readings invert on `0x40` written and `0x00` held: that pair must name the
-temperature clear as a candidate, and every written value with bit 6 clear
-must exclude it whatever the last dump holds. The runbook side is located by
+guard fails on. The predicate is pinned in both directions: `0x40` written and
+`0x00` held must name the temperature clear as a candidate, and so must a
+written value with bit 6 clear over a held byte that has it set, while two
+bytes both clear must exclude it. The runbook side is located by
 anchor phrase rather than by line, and the tool side by the words the operator
 reads, so none of these anchors moves when another branch edits either file —
 and the runbook cannot lose its half of the claim on the next edit of the
 tool without a case going red.
-
-Editing `report_readback()` pushed the grader's per-capture census line below
-it down, so `measure_mark_provenance.py`'s citation of that line moved with it,
-and so did the live ledger row in
-[`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) that names
-that pin — the table there is the live half of that page, and `check_page` is
-what fails when one of the two moves and the other does not.
 
 ## What this does not establish
 

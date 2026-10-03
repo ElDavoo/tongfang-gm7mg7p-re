@@ -6606,19 +6606,21 @@ class ReadbackWriterNamesTests(unittest.TestCase):
     Issue #220. §4.6's readback said "something put it back", which names
     nothing an operator can act on, and it did not carry the one exclusion the
     static disassembly supports: the bank0 `0x898A` store is `anl a,#0xbf`, so
-    it maps `X -> X & ~0x40` and can only have moved the byte away from a
-    written value that had bit 6 set -- which none of the three values §3
-    writes has. These hold the message and the runbook to the same anchors by
+    it maps `X -> X & ~0x40` and runs only on a byte holding bit 6 set, which
+    none of the three values §3 writes is. These hold the message and the
+    runbook to the same anchors by
     content rather than by line, so the two cannot drift apart on the next
     edit of either.
 
-    The exclusion is keyed on the value that was written, because that is the
-    question the line answers -- which writer moved the byte away from it. The
-    byte the last dump holds answers a different one, whether the store is live
-    from here, and is reported in the present tense as such. The two cases
-    below pin that in both directions, because `0x40` written and `0x00` held
-    is the store's own transition: a message that reads the held byte as the
-    premise names it excluded on the one transition it produced.
+    The exclusion is keyed on the byte the store reads, which is the register as
+    it stands when the store runs rather than the value handed to `--wrote`, so
+    it takes both: the store is named on either byte holding bit 6 set, and
+    ruled out only on the two bytes both clear. `0x40` written and `0x00` held
+    is the store's own transition, and a held byte of `0x40` on a written value
+    with bit 6 clear is the `xrl a,#0x40` rows of
+    `manual-fan-ctrl-0751-writers.csv` having set it in between -- a message
+    reading `written` alone gets the first of those right and the second
+    backwards.
     """
 
     # One case per value rather than a loop over the three: a parameterised
@@ -6670,12 +6672,11 @@ class ReadbackWriterNamesTests(unittest.TestCase):
         self.assertIn('ec/annotations/manual-fan-ctrl-0751.md', section)
 
     # The counterpart, and the case that would have caught the other one. The
-    # store maps X -> X & ~0x40, so from a written value with bit 6 clear it
-    # cannot produce any other value -- whatever the byte holds by the time the
-    # last dump was taken, and however the two got out of step in between.
-    def test_a_written_value_with_bit_six_clear_excludes_the_writer(self):
-        for wrote, held in ((0xA0, 0x40), (0x00, 0x40), (0x10, 0xC0),
-                            (0xA0, 0x80)):
+    # store runs only on a byte holding bit 6 set, so when both the written
+    # value and the byte at the last dump hold it clear it is out of reach on
+    # both, and the message says which two bytes that rests on.
+    def test_both_bytes_clear_of_bit_six_exclude_the_writer(self):
+        for wrote, held in ((0xA0, 0x80), (0x00, 0x10), (0x10, 0x30)):
             with self.subTest(wrote=wrote, held=held):
                 with tempfile.TemporaryDirectory() as tmp:
                     after = Path(tmp) / 'after-0700.txt'
@@ -6686,14 +6687,41 @@ class ReadbackWriterNamesTests(unittest.TestCase):
                 section = dumps_section(out)
                 self.assertIn(f'the last dump holds 0x{held:02X}, not the '
                               f'written 0x{wrote:02X}', section)
-                # `0x40` and `0xC0` hold bit 6 set and `0x80` holds it clear,
-                # so the held byte disagrees with itself across the cases and
-                # with the written one in two of the three. None of them
-                # revives the store, because the question is what it does to
-                # the value that was written.
                 self.assertNotIn(
                     'The bank0 0x8978 temperature clear is among them', section)
                 self.assertIn(
+                    'It is not the bank0 0x8978 temperature clear on either of '
+                    'those two bytes', section)
+
+    # And the case that breaks a message keyed on `--wrote` alone. The store
+    # reads the register as it stands, so a held byte holding bit 6 set puts it
+    # in reach however the written value was set: `xrl a,#0x40` rows in
+    # `manual-fan-ctrl-0751-writers.csv` set that bit, and rows in that table
+    # move other bits in the same pass, so the byte the store ran on is not
+    # necessarily the value written. Ruling the store out on a written value
+    # with bit 6 clear is the overstatement this case pins.
+    def test_a_held_byte_with_bit_six_set_keeps_the_writer_in_play(self):
+        for wrote, held in ((0xA0, 0x40), (0x00, 0x40), (0x10, 0xC0)):
+            with self.subTest(wrote=wrote, held=held):
+                with tempfile.TemporaryDirectory() as tmp:
+                    after = Path(tmp) / 'after-0700.txt'
+                    after.write_text(f'0750: 00 {held:02x}\n')
+                    rc, out, _ = run(QUIET, '--dump', str(after),
+                                     '--wrote', f'0x{wrote:02X}')
+                self.assertEqual(rc, 0)
+                section = dumps_section(out)
+                self.assertIn(
+                    'The bank0 0x8978 temperature clear is among them', section)
+                # Named from the byte it reads, with the written value's own
+                # arithmetic shown and reported as not settling it.
+                self.assertIn(f'the last dump holds 0x{held:02X}, which is one',
+                              section)
+                self.assertIn(f'the written 0x{wrote:02X} having bit 6 clear',
+                              section)
+                self.assertIn(
+                    f'0x{wrote:02X} & 0xbf is 0x{wrote & 0xBF:02X}, which is '
+                    'the value written -- does not settle it', section)
+                self.assertNotIn(
                     'It is not the bank0 0x8978 temperature clear', section)
 
     # The other side, and the counterexample that has to name it. `0x40` is
@@ -6720,10 +6748,12 @@ class ReadbackWriterNamesTests(unittest.TestCase):
                 self.assertNotIn(
                     'It is not the bank0 0x8978 temperature clear', section)
 
-    # The held byte is a separate question and is reported as one: where the
-    # byte stands now, not what moved it. Both readings are here so a message
-    # that dropped either of them goes red.
-    def test_the_present_state_of_the_byte_is_reported_separately(self):
+    # Where the byte stands now is reported as what the store runs on next, not
+    # as a separate question from the one above: the exclusion is keyed on the
+    # same byte, so a message that read this as an aside could contradict the
+    # line above it. Both states are here so a message that dropped either of
+    # them goes red.
+    def test_the_present_state_of_the_byte_is_reported(self):
         for held, stands in ((0x40, 'set'), (0x00, 'clear')):
             with self.subTest(held=held):
                 with tempfile.TemporaryDirectory() as tmp:
@@ -6733,12 +6763,13 @@ class ReadbackWriterNamesTests(unittest.TestCase):
                                      '--wrote', '0xA0')
                 self.assertEqual(rc, 0)
                 section = dumps_section(out)
-                self.assertIn('Where the byte stands now is a separate '
-                              'question', section)
+                self.assertIn('Where the byte stands now is what that store '
+                              'runs on next', section)
                 self.assertIn(f'it holds 0x{held:02X}, so bit 6 is {stands} '
                               'now', section)
-        # And the two are not the same sentence: the present-state line must
-        # not carry the exclusion, which is about the written value.
+        # And the two are not the same sentence: on a held byte holding bit 6
+        # set the line above names the store, and this one must not contradict
+        # it by ruling it out.
         with tempfile.TemporaryDirectory() as tmp:
             after = Path(tmp) / 'after-0700.txt'
             after.write_text('0750: 00 40\n')
