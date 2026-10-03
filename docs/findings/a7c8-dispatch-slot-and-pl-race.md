@@ -360,10 +360,23 @@ Every writer this method finds on `0x0741`, and what each does to bit 0:
 | `0xCFEE` | `orl a,#0x80` | untouched |
 
 **No `orl a,#0x01` on `0x0741` is found.** That is *not found by this method*:
-the scan is a direct `MOV DPTR,#0x0741` census with an eight-instruction window
-around each site, so a blind whole-byte store, and any store through a DPTR
-built at run time, are invisible to it — `manual-fan-ctrl-0751.md` §6 is the
-worked counter-example on a second address. Bit 0 is not established absent.
+the scan is a direct `MOV DPTR,#0x0741` census whose eight-instruction window
+stops at the first branch, so a blind whole-byte store, any store through a
+DPTR built at run time, and any masked writer on a branch's **fall-through**
+are invisible to it — `manual-fan-ctrl-0751.md` §6 is the worked counter-example
+on a second address.
+
+The fall-through is a real miss here rather than a theoretical one, so it is
+worth naming. At `0xA9A5` the window ends at `jnb acc.2,0xaa03` (`0xAA03` is
+`ret`), and the fall-through at `0xA9AD` is `anl a,#0xfb` / `movx @dptr,a` with
+DPTR still `0x0741` — the next `mov dptr` is `0xA9B0` → `0x073C`, *after* the
+store. That is a writer of this register, and `trace_xdata_refs.py` classes the
+site `read x1` for exactly this reason. `0xCAEB` is the same shape
+(`jnb acc.4`, then `anl a,#0xef` at `0xCAF3`). Both are held in
+`test_a7c8_dispatch_slot.py`'s `TheFallThroughMiss` rather than left to a
+caveat, and both leave bit 0 alone — `0xfb` clears bit 2 and `0xef` clears bit
+4 — so the negative above stands once they are counted. Bit 0 is not
+established absent.
 
 What the negative does license is narrower and is the point: **the EC can take
 the bit away and this method finds nothing that gives it back**, so a driver

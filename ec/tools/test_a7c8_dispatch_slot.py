@@ -14,12 +14,14 @@ Two of the pins are negatives and both are written as scans that can fail.
 `TheOemBitZeroRevocation.test_no_instruction_sets_0741_bit0` is a direct-`MOV
 DPTR` census with the same eight-instruction window `trace_xdata_refs.py`
 classifies with, and it names its regions on the failure. It is blind to a
-blind whole-byte store beyond its window and to any store through a DPTR built
-at run time; `common 0x7151` in this same image is a dispatch mechanism a
-two-opcode scan cannot see, and `manual-fan-ctrl-0751.md` section 6 is the
-worked counter-example on a second address. Nothing here says a register is
-absent, and nothing here is a behavioural observation: no byte was read back
-and no hardware was reached.
+blind whole-byte store beyond its window, to any store through a DPTR built at
+run time, and to a masked writer sitting on a branch's fall-through --
+`common 0x7151` in this same image is a dispatch mechanism a two-opcode scan
+cannot see, `manual-fan-ctrl-0751.md` section 6 is the worked counter-example
+on a second address, and `TheFallThroughMiss` holds the last of those rather
+than leaving it to a caveat. Nothing here says a register is absent, and
+nothing here is a behavioural observation: no byte was read back and no
+hardware was reached.
 
 The polarity check comes first because it is the one thing a reader will
 re-derive backwards and because everything downstream depends on it: `jnb
@@ -137,10 +139,21 @@ def xdata_sites(addr):
 
     The window stops at the first control-flow instruction, which is what the
     tool's `terminator` column records and not an extra restriction added here.
-    Without it a read-only site runs on into the next routine and charges that
-    routine's read-modify-write to this register: `0x0741`'s site at `0xA9A5` is
-    `movx a,@dptr ; jnb acc.2`, and eight instructions past the branch there is
-    an `anl a,#0xfb` / `movx @dptr,a` pair belonging to somebody else."""
+    It buys one thing and costs another, and `0x0741` shows both. What it buys:
+    a read-only site does not run on into the next routine and charge that
+    routine's mask to this register -- at `0xB133` the `anl a,#0xcf` /
+    `movx @dptr,a` pair past the `jb acc.0` belongs to `0x07A6`, because
+    `mov dptr,#0x07a6` sits between the site and the store.
+
+    What it costs is a masked writer on the branch's *fall-through*, which is
+    not in the window at all: `0x0741`'s site at `0xA9A5` is
+    `movx a,@dptr ; jnb acc.2`, the branch target `0xAA03` is `ret`, and the
+    fall-through at `0xA9AD` is `anl a,#0xfb` / `movx @dptr,a` with DPTR still
+    `0x0741` -- the next `mov dptr` is `0xA9B0` -> `0x073C`. That is a real
+    writer of this register, not a neighbour's.
+    `fall_through_writers` finds this shape and `TheFallThroughMiss` holds what
+    it turns up, so the miss is a checked list rather than a caveat. It is the
+    price of matching the tool's window rather than a defect in the tool."""
     hi, lo = addr >> 8, addr & 0xFF
     needle = bytes((0x90, hi, lo))
     out = []
@@ -157,6 +170,49 @@ def xdata_sites(addr):
 MOVX_READ = "movx a,@dptr"
 MOVX_WRITE = "movx @dptr,a"
 MASK = re.compile(r"^(orl|anl|xrl)  a,#0x([0-9a-f]{2})$")
+
+
+def fall_through_writers(addr):
+    """[(region, site, mask)] for every masked writer of `addr` that the window
+    in `xdata_sites` stops short of: a `movx a,@dptr` / mask / `movx @dptr,a`
+    triple sitting on the *fall-through* of the branch that ends the window,
+    reached with DPTR still holding `addr`. Keyed by site like `rmw_writers`,
+    so the two lists join.
+
+    Only the fall-through, never the branch target -- that is control flow, not
+    a linear window, and following it is the thing this file's method does not
+    do. The window is `WINDOW` wide either way, so this reads the same span
+    `xdata_sites` reads and simply declines to stop at the terminator. A `mov
+    dptr` between the site and the store means the triple belongs to whatever
+    that names, which is the neighbour `rmw_writers` already declines; `0xB133`
+    is the worked case, its `anl a,#0xcf` writing `0x07A6`.
+
+    This is the blind spot `xdata_sites`' terminator rule introduces, named so
+    the negative below rests on the writer list plus this one rather than on
+    the window alone."""
+    hi, lo = addr >> 8, addr & 0xFF
+    needle = bytes((0x90, hi, lo))
+    out = []
+    for name, lo_off, hi_off, base in REGIONS:
+        data = IMAGE[lo_off:hi_off]
+        for m in re.finditer(re.escape(needle), data):
+            i = m.start()
+            held = addr
+            past_branch = False
+            window = list(disasm8051.decode(data, i, count=WINDOW,
+                                            stop_at_flow=False))
+            for n, (_, raw, text) in enumerate(window):
+                if text.startswith("mov  dptr,#"):
+                    held = int(text.split("#")[1], 16)
+                elif text == MOVX_READ and n + 2 < len(window) \
+                        and MASK.match(window[n + 1][2]) \
+                        and window[n + 2][2] == MOVX_WRITE:
+                    if past_branch and held == addr:
+                        out.append((name, i + base, window[n + 1][2]))
+                    break
+                if raw[0] in disasm8051.FLOW_OPCODES:
+                    past_branch = True
+    return out
 
 
 def rmw_writers(addr):
@@ -526,6 +582,60 @@ class TheOemBitZeroRevocation(unittest.TestCase):
             ('bank0', 0xCF78, "anl  a,#0x7f"),
             ('bank0', 0xCFEE, "orl  a,#0x80"),
         ])
+
+
+class TheFallThroughMiss(unittest.TestCase):
+    """What `xdata_sites`' terminator rule drops, held rather than described.
+
+    This is the blind spot the module docstring names, so it is the one piece
+    of the negative that is a list of its own. Neither mask here sets bit 0, so
+    the conclusion is unchanged -- but it is unchanged *because* these were
+    looked at, which is the difference between a scan that can fail and one
+    whose failure nobody had to think about.
+    """
+
+    def test_the_two_writers_the_terminator_drops(self):
+        # 0xA9A5 and 0xCAEB, both a `jnb` whose fall-through is a masked
+        # read-modify-write of 0x0741 itself. `trace_xdata_refs.py` classes
+        # both as `read x1`, so the tool and this helper agree on what the
+        # window sees; what is added here is the question of what it does not.
+        self.assertEqual(fall_through_writers(0x0741),
+                         [('bank0', 0xA9A5, "anl  a,#0xfb"),
+                          ('bank0', 0xCAEB, "anl  a,#0xef")])
+
+    def test_0xa9a5_writes_0741_and_not_the_next_register(self):
+        # The worked example, as bytes rather than as prose. The branch target
+        # is a `ret`, so the fall-through is the only way into the pair, and the
+        # next `mov dptr` is at 0xA9B0 -- after the store, not before it.
+        self.assertEqual(bank0_at(0xA9A5, 3), "90 07 41")
+        self.assertEqual(mnemonic(BANK0, 0x29A9, 0xA9A9), "jnb  acc.2,0xaa03")
+        self.assertEqual(bank0_at(0xAA03, 1), "22")   # ret, the branch target
+        self.assertEqual((bank0_at(0xA9AC, 3), bank0_at(0xA9AF, 1)),
+                         ("e0 54 fb", "f0"))
+        self.assertEqual(bank0_at(0xA9B0, 3), "90 07 3c")
+
+    def test_a_neighbouring_register_is_still_not_charged(self):
+        # The other half of the trade: the rule is what stops 0xB133's
+        # `anl a,#0xcf` being charged here, because `mov dptr,#0x07a6` sits
+        # between the site and the store. Without the DPTR check this site would
+        # enter the list above and be wrong about which register it names.
+        self.assertEqual(bank0_at(0xB13A, 3), "90 07 a6")
+        self.assertEqual(mnemonic(BANK0, 0x313E, 0xB13E), "anl  a,#0xcf")
+        self.assertNotIn(0xB133, [site for _, site, _ in
+                                  fall_through_writers(0x0741)])
+
+    def test_neither_dropped_mask_sets_bit_0(self):
+        # The load-bearing half, and the reason the write-up's verdict stands:
+        # `0xfb` clears bit 2 and `0xef` clears bit 4, and an `anl` cannot set
+        # the bit it does not clear. If either became an `orl` with bit 0, the
+        # negative in TheOemBitZeroRevocation would be wrong while still
+        # passing, which is the failure this class exists to make impossible.
+        for _, site, mask in fall_through_writers(0x0741):
+            with self.subTest(site=site):
+                op, imm = MASK.match(mask).groups()
+                self.assertNotEqual(op, "orl")
+                self.assertEqual(int(imm, 16) & 1, 1,
+                                 f"{mask} at {site:#06x} clears bit 0")
 
 
 if __name__ == '__main__':

@@ -242,8 +242,14 @@ registers:
       read-modify-writes -- orl #0x20 twice, anl #0xdf, anl #0xfb twice,
       orl #0x04, anl #0x7f twice, the anl #0xfe at 0xBD03, and orl #0x80 --
       and none of them sets bit 0. That is "not found by this method": the
-      scan is blind to a blind whole-byte store and to any store through a
-      DPTR built at run time, so bit 0 is not established absent. What it does
+      scan is blind to a blind whole-byte store, to any store through a
+      DPTR built at run time, and to a masked writer on a branch's
+      fall-through. Two of the last kind exist here and the window drops both:
+      0xA9A5 (anl a,#0xfb at 0xA9AD) and 0xCAEB (anl a,#0xef at 0xCAF3) are
+      real 0x0741 writers, so the ten above are ten plus these two. Neither
+      touches bit 0 -- 0xfb clears bit 2, 0xef clears bit 4 -- so the negative
+      stands once they are counted. Bit 0
+      is not established absent. What it does
       license is narrower and is the driver-relevant half: the EC can take the
       bit away, and this method finds nothing that gives it back. Consequence
       for a driver -- one that sets bit 0 once should re-assert it rather than
