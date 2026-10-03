@@ -1,0 +1,32 @@
+# registers.yaml fixture for `call_graph_gaps.py --self-test`.
+#
+# Not a register map, and not a claim about this EC: it carries the two
+# addresses the self-test needs the `xdata-or-data` rule to find, and nothing
+# else. The real file is `ec/annotations/registers.yaml`, and the tool reads
+# whichever path it is handed so this one can be a fixture without a second
+# lookup implementation.
+#
+# `D0D8` is deliberately *not* here, and that is the point of the fixture's
+# `no-index-row` case: the same lookup that finds one address and misses
+# another is what makes `xdata-or-data` a weak negative rather than a
+# classification of everything it does not name.
+registers:
+  - addr: 0xD012
+    name: D0_FIXTURE_XDATA_A
+    status: present-untested
+    sources: []
+    notes: >
+      Fixture-only. Carried so the self-test can assert the xdata-or-data rule
+      finds an address the index does not carry, which is the rule's whole
+      content and a case that cannot be built from `index.csv` alone.
+      It is ALSO strictly inside common/D010's span, so two rules would claim
+      it and the precedence is exercised here rather than described.
+  - addr: 0xD0F8
+    name: D0_FIXTURE_XDATA_B
+    status: present-untested
+    sources: []
+    notes: >
+      Fixture-only, and no transfer and no index row reaches it. It is here to
+      keep the two XDATA addresses apart: a lookup that found every unresolved
+      target would not be a lookup into registers.yaml at all, and the
+      `no-index-row` case at D0F1 is what the self-test pins the miss against.
