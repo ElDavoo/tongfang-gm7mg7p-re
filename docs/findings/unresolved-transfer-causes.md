@@ -28,7 +28,7 @@ target in that class is reported under the cause its resolver already gives.
 | cause | the predicate | what it means for the target |
 |---|---|---|
 | `multi-scope` | two or more `index.csv` rows carry the address, and no reaching site's own scope is among them | `Index.resolve()` declined it. The function may well exist in two banks; this scan is not entitled to say which |
-| `xdata-or-data` | no index row, and `registers.yaml` records the address | a data address, on a lookup this file describes below |
+| `xdata-or-data` | no index row, and `registers.yaml` records the address | an address `registers.yaml` documents as an XDATA byte — which is **not** a statement that the target is data, as the next section says |
 | `interior-entry` | no index row, and the address is strictly inside `[addr, addr+size)` of another row | a branch into a routine the index already carries at a different address |
 | `no-index-row` | none of the above | **this method placed the target nowhere.** Not a claim that it has no function |
 
@@ -59,8 +59,9 @@ population.
 precedence that quietly settles a row is a rule no reader can see, so the
 overlap is a reported figure rather than an implementation detail. Both are
 `0x074C` and `0x080C`, each an `xdata-or-data` target that is *also* an
-interior entry of a routine; the higher cause reports them and the `host_*`
-columns keep the routine — `pd,0738` for `0x074C` — so the precedence does not
+interior entry of a routine — and, as the next section shows, each is code.
+They are labelled `xdata-or-data` for that one reason: rule 2 outranks rule 3.
+The `host_*` columns keep the routine either way, so the precedence does not
 cost the reader the pointer:
 
 ```console
@@ -92,16 +93,51 @@ resolve, so it is the `forms` column and the vocabulary stays at four values.
 Thirty-one targets are reached only by `ajmp`/`acall`; twenty-six of the
 `interior-entry` ones are.
 
-## The `xdata-or-data` lookup has low recall, and that is what it is
+## The `xdata-or-data` lookup is a membership test, and not a data finding
 
-`registers.yaml` carries XDATA addresses and no code addresses. The
-lookup finds 2 of the 80 targets. **A target the lookup does not name is not
-found by this method** — it is not "not XDATA", and it is emphatically not
-"code". A two-hit lookup says nothing about the other seventy-eight, which is
-why the value is named for what it found rather than for what it excluded, and
-why the artifact's own header comment repeats the caveat: that file is what
-someone opens in an editor, and the terminal that printed the census is not
-carrying the docstring.
+The lookup establishes exactly one thing: that `registers.yaml` records the
+address as an XDATA byte. It does **not** establish that the transfer target is
+data, and on this tree it does not even point that way. CODE and XDATA are
+separate address spaces on an 8051, so an address appearing in a register
+cross-reference says nothing about whether a numerically equal code address is
+code. The committed index is the standing counter-example — `0x07C1` is both
+the `AP02` entry in `registers.yaml` and the first byte of
+`common,07C1,write_0x11_to_1700_1701_1702` in `ec/decompiled/index.csv` — and
+the addresses the file carries that are code row starts print as:
+
+```console
+$ python3 -c "import sys; sys.path.insert(0, 'ec/tools'); \
+    import build_ec_decompile, call_graph, call_graph_gaps as g; \
+    xa = build_ec_decompile.registered_addresses('ec/annotations/registers.yaml'); \
+    sp = g.spans(call_graph.load_index()); \
+    print(' '.join(sorted('0x%04X' % a for a in xa if any(s == a for s, _n, _r in sp))))"
+0x0402 0x0408 0x07C1 0x07D0 0x07D6 0x0862 0x086B 0x08A0 0x1666 0x1C14
+```
+
+**Both targets the class fires on here are code.** `0x074C` is an instruction
+inside the hand-decoded `pd/0738` `shift_r3r4_right_1`, and `0x080C` is the
+third byte of the `jnb` at `common/0806`:
+
+```console
+$ sed -n '18p' ec/decompiled/pd/0738.asm
+074C     a2 d5 -  mov      CY, 0xd5
+$ sed -n '11p' ec/decompiled/common/0806.asm
+080A     30 e3 15 jnb      0xe3, 0x0822
+```
+
+So the value is named for what the lookup found, and the name is the only thing
+carrying the caveat. A reader who takes `xdata-or-data` as a data finding is
+reading a membership test as a conclusion, on the two rows where this tree can
+check it and both of them come out the other way. The `host_*` columns are what
+keep the routine visible underneath the label, which is why the precedence
+above is affordable at all.
+
+The lookup also has **low recall**: it finds 2 of the 80 targets. **A target
+the lookup does not name is not found by this method** — it is not "not
+XDATA", and it is emphatically not "code". A two-hit lookup says nothing about
+the other seventy-eight, which is why the artifact's own header comment repeats
+the caveat too: that file is what someone opens in an editor, and the terminal
+that printed the census is not carrying the docstring.
 
 ## The unreached rows, and why `entry` is three values
 
@@ -140,6 +176,14 @@ row. `common, 0x0F12` is the worked example the issue reached for: it sits
 immediately after `common, 0x0EF3` `write_internal_ram_init_constants`, whose
 last instruction is a `mov`, and a `mov` is not a boundary, so the row really
 is fallen into.
+
+The `pred_*` columns name the **listing whose last instruction lands on the
+row**, which is not always the index row `index.csv` says owns those bytes: a
+listing that runs past its own declared `size` covers rows the index assigns
+elsewhere. Each listing's header already calls its boundary a hypothesis, so
+this is a precision limit in a supporting column rather than a
+misclassification — the byte immediately before the row really does hand
+control on either way, which is what `entry` reports.
 
 `not-adjacent` is **not** "reached by a function pointer". It is this method
 reading no transfer and no continuation for the row — the same calibration the

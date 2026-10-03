@@ -240,6 +240,37 @@ class CauseVocabularyTests(CommittedPopulationTests):
             if r["cause"] == "xdata-or-data":
                 self.assertIn(int(r["target"], 16), self.xdata)
 
+    def test_xdata_or_data_is_decided_without_the_code_span_search(self):
+        """Rule 2 reads `registers.yaml` and the index, and nothing else.
+
+        The label is named for a membership, not for a conclusion about data:
+        CODE and XDATA are separate address spaces, and `registers.yaml` carries
+        addresses that are code row starts in `index.csv`. So the rule must
+        reach the same answer with the code-span search withheld entirely --
+        recomputed here with `contained` empty, which is a rule that grew a
+        span term, or started consulting one, would fail.
+
+        The other direction, a rule that had grown a *negative* span term (in
+        `registers.yaml` and inside no code row, which is what would make the
+        class mean data), is pinned by the fixture's `D012` in `--self-test`,
+        where the label is asserted for an address `hosts()` places inside a
+        span. The two together hold the rule to the lookup alone whichever way
+        the tree's rows fall.
+
+        Which leaves the fixture carrying the non-emptiness: if a tranche ever
+        empties the class on the committed tree this test would hold nothing,
+        and `--self-test` is what keeps asserting the rule against a fixed
+        fixture regardless.
+        """
+        for r in self.rows:
+            if r["cause"] != "xdata-or-data":
+                continue
+            fired = call_graph_gaps.all_causes(
+                r["target"], {s[0] for s in self.sites[r["target"]]},
+                list(self.index.by_addr.get(r["target"], ())), [], self.xdata)
+            self.assertEqual(fired[0], "xdata-or-data",
+                             "%s is decided by more than the lookup" % r["target"])
+
     def test_a_host_is_never_invented_for_a_row_the_index_placed_nowhere(self):
         """`no-index-row` carries no host, and its address is in no span.
 

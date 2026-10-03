@@ -43,9 +43,14 @@ target in that class is reported under the cause its resolver already gives it.
   4. `no-index-row` -- none of the above.
 
 **Two of those four are weak negatives and are labelled as weak everywhere they
-are named.** `xdata-or-data` is a lookup in `registers.yaml`, which carries a
-few hundred XDATA addresses and not one code address: it finds a small
-minority of the targets, and a target it does not name is **not found by this
+are named.** `xdata-or-data` is a lookup in `registers.yaml`, and the whole of
+what it establishes is that the file records the address as an XDATA byte. It
+is **not** a finding that the target is data: CODE and XDATA are separate
+address spaces, so an address in a register cross-reference says nothing about
+whether a numerically equal code address is code, and `registers.yaml` carries
+addresses that are code row starts in `index.csv`. On the committed tree both
+targets rule 2 fires on are code, and carry this label only because rule 2
+outranks rule 3. A target the lookup does not name is **not found by this
 method**, never "not XDATA" and never "code". `no-index-row` is what is left
 once the three place a target, and it is **explicitly unclassified** -- it means
 this method placed the target nowhere, which is not a statement about the
@@ -88,6 +93,14 @@ returns:
     comment says which members are a boundary and which are a branch this tool
     does not trace;
   * `not-adjacent` -- neither, i.e. nothing this method read places it.
+
+`pred_*` names the **listing whose last instruction lands on the row**, which
+is not always the index row `index.csv` says owns those bytes -- a listing
+that runs past its own declared `size` covers rows the index assigns elsewhere,
+and each listing's header already calls that boundary a hypothesis. It is a
+precision limit in a supporting column, not a misclassification: the byte
+immediately before the row really does hand control on either way, and that is
+what `entry` reports.
 
 Two values would have had to call the second class a fall-through, which is the
 overclaim `CLAUDE.md` puts above every other rule; and `not-adjacent` is not
@@ -534,9 +547,12 @@ def report(sites, unresolved, unreached, overlap, xdata):
                            overlap))
     print()
     print("  registers.yaml addresses consulted         %6d" % len(xdata))
-    print("  limits. `xdata-or-data` is a lookup in a file that carries XDATA")
-    print("  addresses and no code addresses, so a target it does not name is")
-    print("  not found by this method -- not 'not XDATA', and not 'code'.")
+    print("  limits. `xdata-or-data` establishes one thing: registers.yaml")
+    print("  records the address as an XDATA byte. That is not a finding that")
+    print("  the target is data -- CODE and XDATA are separate address spaces,")
+    print("  and registers.yaml carries addresses that are code row starts. A")
+    print("  target the lookup does not name is not found by this method: not")
+    print("  'not XDATA', and not 'code'.")
     print("  `no-index-row` is what is left once the other three have had their")
     print("  turn: this method placed the target nowhere. Neither value is a")
     print("  claim that a target has no function.")
@@ -648,6 +664,13 @@ def self_test() -> int:
           == ["xdata-or-data", "interior-entry"]
           and by_addr["D012"]["cause"] == "xdata-or-data"
           and by_addr["D012"]["host_addr"] == "D010")
+    check("xdata-or-data is a registers.yaml membership and not a data "
+          "finding: the label is printed for D012 while `hosts()` places that "
+          "same address strictly inside a code row's span, so the class "
+          "cannot mean the target is outside code",
+          by_addr["D012"]["cause"] == "xdata-or-data"
+          and [h["addr"] for h in hosts("D012", spans_)] == ["D010"]
+          and "D012" not in index.by_addr)
     check("the paged-form signal is a column, not a fifth cause: D012 is "
           "reached by a 2-byte ajmp and is still xdata-or-data",
           by_addr["D012"]["forms"] == "ajmp"
