@@ -59,6 +59,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`cased-in-reserved-namespace.md`](cased-in-reserved-namespace.md) — `caseD_<n>` and `default` are Ghidra's too (issue #631)
 - [`census-doc-fallback-entry-addresses.md`](census-doc-fallback-entry-addresses.md) — Direction A's fallback was a search over a whole write-up, and it is now named addresses
 - [`census-figures-restated.md`](census-figures-restated.md) — The census figures a page keeps restating, and the tool that stops holding them by hand
+- [`charge-cap-2021-artifact-archaeology.md`](charge-cap-2021-artifact-archaeology.md) — The 2021 charge-cap archaeology: what is ruled out from committed inputs, and what a recovered artifact would have to show
 - [`charge-target-caller-chain.md`](charge-target-caller-chain.md) — Who reaches `0xB158` — the charge-target caller chain, and how often it runs (issue #89)
 - [`checkout-claim-corpus.md`](checkout-claim-corpus.md) — The checkout-depth sweep derived its own population, and a retraction quotes the sentence it retracts
 - [`citation-code-vs-data.md`](citation-code-vs-data.md) — A citation is a code frame, not an address (issue #453)
