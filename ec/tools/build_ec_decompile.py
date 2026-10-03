@@ -2228,9 +2228,9 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # A `common`-scoped row at an address both banks carry, so it is the shape
     # #603's 37 were, and it moves annotations_applied and functions_named below
     # the same way and for the same reason.
-    check("EC: annotations/ghidra-functions.csv is 1,961 records, no short row "
+    check("EC: annotations/ghidra-functions.csv is 1,962 records, no short row "
           "and no duplicate (scope, addr)",
-          len(_ann) == 1961 and not structure_problems("ghidra-functions.csv", _ann,
+          len(_ann) == 1962 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
     # The function layer's three counters, on the committed files, which is where
@@ -2293,14 +2293,14 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # which is `common`-scoped and so is handed to both bank programs, moving
     # both by one and `common` with bank0 for the reason #603's 37 did; `pd`
     # stays at 541, that row being EC-scoped.
-    _want_applied = {"bank0": 828, "bank1": 725, "pd": 541}
+    _want_applied = {"bank0": 829, "bank1": 725, "pd": 541}
     check("EC: the manifest's annotations_applied is what the exporter's reports "
-          "said -- 828 / 725 / 541 across the three programs, with `common` "
+          "said -- 829 / 725 / 541 across the three programs, with `common` "
           "borrowing bank0's",
           {r["program"]: int(r["annotations_applied"]) for r in _mr
            if r["program"] in _want_applied} == _want_applied
           and next(int(r["annotations_applied"]) for r in _mr
-                   if r["program"] == "common") == 828,
+                   if r["program"] == "common") == 829,
           str({r["program"]: r["annotations_applied"] for r in _mr}))
     check("EC: annotations_unmatched is 0 for all four programs, measured rather "
           "than written as a literal",
@@ -2335,11 +2335,11 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # read the same way in a manifest and are not the same fact. The write-up is
     # docs/findings/cased-in-reserved-namespace.md; the population is derived by
     # ec/tools/second_copy_census.py --check.
-    _want_named = {"bank0": 697, "bank1": 594, "common": 136, "pd": 541}
+    _want_named = {"bank0": 698, "bank1": 594, "common": 136, "pd": 541}
     check("EC: functions_named is the index's own annotated=yes count per "
-          "program, 697 / 594 / 136 / 541, summing to 1,968",
+          "program, 698 / 594 / 136 / 541, summing to 1,969",
           {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
-          and sum(_want_named.values()) == 1968
+          and sum(_want_named.values()) == 1969
           and not annotation_ledger_mismatches(_mr, _ir, _ann),
           str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
     # The two-way ledger on the committed files, which is the whole substance of
@@ -2416,8 +2416,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "predates the row",
           _abu == [],
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
-    check("EC: the two ledger directions close the arithmetic -- 1,961 - 0 + 7 "
-          "= the 1,968 functions named",
+    check("EC: the two ledger directions close the arithmetic -- 1,962 - 0 + 7 "
+          "= the 1,969 functions named",
           len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
           "%d - %d + %d = %d, not %d"
           % (len(_ann), len(_abu), len(_nwr),
@@ -2463,7 +2463,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1961
+          == len({annotation_key(r) for r in _ann}) == 1962
           and len({(r["file_offset"], r["target"]) for r in _ct})
           == len({call_target_key(r) for r in _ct}) == 5998)
 

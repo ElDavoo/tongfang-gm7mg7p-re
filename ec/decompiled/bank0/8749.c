@@ -18,7 +18,7 @@
    type: state
    evidence: ec/decompiled/bank0/8749.asm; ec/decompiled/bank0/8749.c; ec/annotations/registers.yaml
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void mode_tick_084c_07a5_09ee(char param_1)
 
@@ -90,20 +90,20 @@ void mode_tick_084c_07a5_09ee(char param_1)
   }
   if ((XDATA_0440 == '\0') || (cVar1 = read_06e6_xor_01(), cVar1 != '\0')) {
     DAT_EXTMEM_09ee = DAT_EXTMEM_09ee & 0xfe;
-    DAT_EXTMEM_07a5 = DAT_EXTMEM_07a5 & 0xf7;
+    XDATA_07A5 = XDATA_07A5 & 0xf7;
   }
   else {
     if ((CPU_TEMP < 0x5f) && (GPU_TEMP < 0x57)) {
       if ((CPU_TEMP < 0x51) && (GPU_TEMP < 0x51)) {
-        DAT_EXTMEM_07a5 = DAT_EXTMEM_07a5 & 0xf7;
+        XDATA_07A5 = XDATA_07A5 & 0xf7;
       }
     }
     else {
-      DAT_EXTMEM_07a5 = DAT_EXTMEM_07a5 | 8;
+      XDATA_07A5 = XDATA_07A5 | 8;
     }
-    param_1 = (DAT_EXTMEM_07a5 >> 3 & 1) != 0;
+    param_1 = (XDATA_07A5 >> 3 & 1) != 0;
     if ((bool)param_1 != ((DAT_EXTMEM_09ee & 1) != 0)) {
-      if ((DAT_EXTMEM_07a5 >> 3 & 1) == 0) {
+      if ((XDATA_07A5 >> 3 & 1) == 0) {
         DAT_EXTMEM_09ee = DAT_EXTMEM_09ee & 0xfe;
       }
       else {

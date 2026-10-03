@@ -56,10 +56,10 @@ vocabulary gap and a candidate to be widened; a row in any other is not.
                             one of them folded an address away, and this is
                             the honest remainder.
   names-nothing             The body names no address at all, in the
-                            comparison's own vocabulary. `common 0x4BB0` and
-                            `common 0x4FED` decompile to `do {} while (true);`
-                            and `pd 0x357E` to `return *param_1;`, and there
-                            is no address in either body to be in or out of.
+                            comparison's own vocabulary. `common 0x50DE` and
+                            `pd 0x357E` decompile to `do {} while (true);` and
+                            to `return *param_1;`, and there is no address in
+                            either body to be in or out of.
 
 **And no sixth cause, which is a decision rather than an omission.** The issue
 asked for the rows that stay `disagree` to be kept "and say why", and the five
@@ -262,8 +262,8 @@ def c_body(out_file, strip):
 
     `strip` defaults to nothing at all, and `disagreement_rows()` passes
     `strip_every_comment`: a cause is a fact about the code the decompiler
-    emitted, and Ghidra's `/* WARNING: Removing unreachable block (CODE,0x4be1) */`
-    is not code. `common 0x4BB0`'s body is `do {} while (true);` and reads
+    emitted, and Ghidra's `/* WARNING: Removing unreachable block (CODE,0x510f) */`
+    is not code. `common 0x50DE`'s body is `do {} while (true);` and reads
     `names-nothing` here rather than `names-other-addresses` because of that
     line and no other.
     """
@@ -434,16 +434,34 @@ def partition_problems(rows, parent):
 # names none at all (`return *param_1;`). Those are the two readings of
 # "not named in the C", and reading them as one bucket is the mistake the last
 # two causes exist to prevent.
+#
+# Two rows moved in issue #649, and the addresses are named here rather than
+# left to a reader comparing the CSVs across that merge. The `common`-scope
+# listing did not move -- `common,1228` and `common,4BB0` are still exported
+# and still in `ec/decompiled/index.csv` at the same addresses and sizes. What
+# moved is the **stride**: adding `bank0,0x9AAD`'s annotation row took one key
+# out of the non-annotated remainder, and `every 8th of the rest` re-phases for
+# every key after it, so a different set of rows is sampled and these two fell
+# out of it. Nothing was lost and no boundary moved.
+#
+#   common 0x1228 -> pd 0xDB89    both `named-by-decimal-literal`, and both are
+#                                  the same shape: the window's `mov DPTR,#imm`
+#                                  reaches the C as a decimal argument, 0xBF68
+#                                  as 49000 and 0x07CF as 1999.
+#   common 0x4BB0 -> common 0x50DE  both `names-nothing`, and both bodies are
+#                                  `do {} while ( true );` under Ghidra WARNING
+#                                  blocks naming unreachable code addresses, so
+#                                  the comment rule is what decides them.
 KNOWN_ANSWERS = [
     ("bank0", "B158", "charge_target_update", NAMED_BY_REGISTER_SYMBOL),
     ("bank0", "8F09", "copy_dptr_byte_to_075c", NAMED_BY_REGISTER_SYMBOL),
     ("common", "00CF", "walk_code_table_6f39", NAMED_BY_CODE_SYMBOL),
     ("bank1", "87DD", "copy_code_a691_a693_to_xdata", NAMED_BY_CODE_SYMBOL),
-    ("common", "1228", "FUN_CODE_1228", NAMED_BY_DECIMAL_LITERAL),
+    ("pd", "DB89", "mov_dptr_07cf_and_call_10e8", NAMED_BY_DECIMAL_LITERAL),
     ("bank1", "CFB1", "step_03c3_and_reload_03bf", NAMED_BY_DECIMAL_LITERAL),
     ("bank0", "B93A", "set_dptr_0a51_b93a", NAMES_OTHER_ADDRESSES),
     ("pd", "357E", "read_byte_to_r3_stride_60", NAMES_NOTHING),
-    ("common", "4BB0", "FUN_CODE_4bb0", NAMES_NOTHING),
+    ("common", "50DE", "FUN_CODE_50de", NAMES_NOTHING),
 ]
 
 
@@ -588,24 +606,26 @@ def self_test(fw):
           and "With DPTR loaded from 0x07D6" in open(_f4cd, errors="replace").read()
           and "07D6" in names_an_address(open(_f4cd, errors="replace").read()),
           "the fixture the header-comment rule exists for")
-    check("common 0x1228's body spells 0xBF68 as the decimal 49000",
-          49000 in decimal_literals(c_body("common/1228.c", strip_every_comment)),
-          str(sorted(decimal_literals(c_body("common/1228.c",
+    check("pd 0xDB89's body spells 0x07CF as the decimal 1999",
+          1999 in decimal_literals(c_body("pd/DB89.c", strip_every_comment)),
+          str(sorted(decimal_literals(c_body("pd/DB89.c",
                                              strip_every_comment)))))
     check("pd 0x357E's body names no address at all",
           not names_an_address(c_body("pd/357E.c", strip_every_comment)))
-    check("common 0x4BB0's body is the empty loop it is",
-          "while( true )" in (c_body("common/4BB0.c", strip_every_comment) or ""),
-          (c_body("common/4BB0.c", strip_every_comment) or "")[:60])
+    check("common 0x50DE's body is the empty loop it is",
+          "while( true )" in (c_body("common/50DE.c", strip_every_comment) or ""),
+          (c_body("common/50DE.c", strip_every_comment) or "")[:60])
     # The one that decides between the last two causes: Ghidra's own
-    # `/* WARNING: Removing unreachable block (CODE,0x4be1) */` lines name six
-    # code addresses in a body that is an empty loop, and a class asked of the
-    # file rather than of the code would call that a body that names something.
-    check("and its WARNING blocks, which name six code addresses, are prose "
+    # `/* WARNING: Removing unreachable block (CODE,0x510f) */` lines name code
+    # addresses in a body that is an empty loop, and a class asked of the file
+    # rather than of the code would call that a body that names something. Held
+    # as a difference rather than as a count of the addresses, which is a
+    # property of this export rather than a figure to carry.
+    check("and its WARNING blocks, which name code addresses, are prose "
           "rather than code",
-          names_an_address(c_body("common/4BB0.c", strip_header_comment))
-          - names_an_address(c_body("common/4BB0.c", strip_every_comment)),
-          str(sorted(names_an_address(c_body("common/4BB0.c",
+          names_an_address(c_body("common/50DE.c", strip_header_comment))
+          - names_an_address(c_body("common/50DE.c", strip_every_comment)),
+          str(sorted(names_an_address(c_body("common/50DE.c",
                                              strip_every_comment)))))
 
     if problems:
