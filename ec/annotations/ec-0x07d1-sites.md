@@ -526,10 +526,19 @@ list** — no `IndexField` or `CreateField` is declared over `ECMG` — but not 
 only route full stop: `ECRR`/`ECRW` at `dsdt.dsl:50497`/`:50504` compute
 `0xFE410000 + Arg0`, the base `ECMG` declares, and access the byte through the
 `OperationRegion` `MMRW` builds, so `ECRR` reads `0x07D0` with no field name
-in the path. What holds is that none of the file's three computed-base methods
-— `ECRR`, `ECRW`, `SMRW` at `:50764` — is ever invoked.
+in the path.
+
+The file has **many** computed-base methods, not three, and some that build one
+are called — `DLLR` builds `EMPC` at `:19119` from an `XBAS`-relative base
+(`XBAS` is `External`, so unbounded) and is invoked at `:19223`. Naming three of
+them is not an enumeration, so the census is derived from the file instead: no
+AML in the committed DSDT reaches the pair by a computed base that resolves
+into this window, and `ECRR`/`ECRW`/`SMRW` are among those nothing calls. A
+region whose base is a runtime value is reported as unbounded rather than
+cleared, and the writer arm also mirrors both bytes into `NPCF.AMAT`/`NPCF.AMIT`,
+whose owning AML is `External` and not committed here.
 `docs/findings/dsdt-dbd-pair-declared-not-read.md` is the write-up, and
-`ec/tools/check_dsdt_ecmg_pair.py` holds the counts and the accessor census.
+`ec/tools/check_dsdt_ecmg_pair.py` holds the counts and the route census.
 
 The `0x07D2` clause survives with its scope corrected: that byte is undeclared
 like almost every byte the `ECMG` field list covers, so its being unnamed is a
@@ -612,10 +621,14 @@ Three questions this walk opened, and deliberately did not answer:
   #228): it cannot arise between the DSDT and the PD image, because it was
   posed as a conflict between two readings and the DSDT has no reading.** Each
   name is one store and one declaration in `evidence/acpi/dsdt.dsl`, and both
-  stores are in the one `T1WR` `Arg0 == 0x1173` arm. Nothing loads the pair:
-  the names are the only route through the `ECMG` field list, and none of the
-  file's three computed-base methods (`ECRR`, `ECRW` at `dsdt.dsl:50497`/
-  `:50504`, `SMRW` at `:50764`) is ever invoked. What survives §6's divergence
+  stores are in the one `T1WR` `Arg0 == 0x1173` arm. No AML in the committed
+  DSDT loads the pair: the names are the only route through the `ECMG` field
+  list, and the route census -- derived from the file, not a list of three
+  names -- finds no computed-base region that resolves into this window from a
+  method that is called. `ECRR`, `ECRW` at `dsdt.dsl:50497`/`:50504` and `SMRW`
+  at `:50764` are among the methods nothing calls; a region whose base is a
+  runtime value is reported as unbounded rather than cleared. What survives
+  §6's divergence
   is a disagreement about *meaning*, and that turns into a fault only if
   something reads the pair the other way as well — which is the third bullet
   below. The live half of that is the `0x07C4`-`0x07D7` GPU-door run,

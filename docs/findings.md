@@ -430,15 +430,25 @@ survives**: what the DSDT and the PD firmware disagree about is the *meaning*
 of these two bytes, not two readings of them.
 
 "Nothing loads them" survives too, but not on the reason an earlier draft of
-this correction gave. `DBD1`/`DBD2` are the only route AML has to these bytes
-**through the `ECMG` field list** — no `IndexField` or `CreateField` is
-declared over `ECMG` — and that is *not* the same as being the only route
-full stop. `ECRR`/`ECRW` at `:50497`/`:50504` compute `0xFE410000 + Arg0`, the
-base `ECMG` itself declares, and read or write the byte through the
-`OperationRegion` `MMRW` builds, so `ECRR` is a **reader** of `0x07D0` with no
-field name anywhere in it. What holds is that none of the file's three
-computed-base methods — `ECRR`, `ECRW`, `SMRW` at `:50764` — is ever invoked,
-so no AML code reads the pair by any route.
+this correction gave, and not on the enumeration that draft used. `DBD1`/`DBD2`
+are the only route AML has to these bytes **through the `ECMG` field list** —
+no `IndexField` or `CreateField` is declared over `ECMG` — and that is *not*
+the same as being the only route full stop. `ECRR`/`ECRW` at `:50497`/`:50504`
+compute `0xFE410000 + Arg0`, the base `ECMG` itself declares, and read or write
+the byte through the `OperationRegion` `MMRW` builds, so `ECRR` is a
+**reader** of `0x07D0` with no field name anywhere in it.
+
+The file has **many** computed-base methods, not three, and some of the ones
+that build one *are* called — `DLLR` at `:19119` builds `EMPC` at an
+`XBAS`-relative base and is invoked at `:19223`, with `XBAS` declared `External`
+and so unbounded by anything committed. No list of three names can stand for
+the set, which is why the census is now derived from the file: **no AML in the
+committed DSDT reads the pair by any route whose base resolves into this
+window**, and `ECRR`/`ECRW`/`SMRW` are among the methods nothing calls. Two
+limits belong with that sentence rather than after it: a computed-base region
+whose base is a runtime value is reported as unbounded, never cleared, and the
+writer arm mirrors both bytes into `NPCF.AMAT`/`NPCF.AMIT`, whose owning AML is
+`External` and not committed here.
 
 The sentence this corrects is the collision question, which cannot be posed
 against the DSDT at all — it has no reading to conflict with — and becomes

@@ -7,12 +7,14 @@ firmware's 16-bit quantities straddle that field boundary in both directions."
 The first half of that was never measured. This measures it, and what the
 measurement supports is narrower than the sentence reads.
 
-**The short version: the DSDT *declares* the pair as two scalars and *writes*
-them, and never reads either one.** So "two independent 8-bit fields" is a
-statement about a field list, not about a value the ASL ever loads, and no AML
-object anywhere holds the two bytes as one quantity. The divergence §3d wanted
-to record is real, but it is not between two *readings* of the same bytes — the
-DSDT has only one direction, and it is out.
+**The short version: the committed DSDT *declares* the pair as two scalars and
+*writes* them, and never reads either one.** So "two independent 8-bit fields"
+is a statement about a field list, not about a value the ASL ever loads, and
+within this file no AML object holds the two bytes as one quantity. The
+divergence §3d wanted to record is real, but it is not between two *readings*
+of the same bytes — the DSDT has only one direction, and it is out. The scope
+is the committed DSDT and nothing wider: the same writer arm hands both bytes
+to `NPCF.AMAT`/`AMIT`, whose owning AML is not in this repository.
 
 "Never reads" needs a stated reason, because the obvious one is false. The
 file *does* contain a reader of these bytes — `ECRR`, which reaches them at a
@@ -140,26 +142,61 @@ first is a reason to doubt the second:
   `IndexField` sites are `:50592` and `:50611` (`IND0`/`DAT0` and `IND1`/`DAT1`)
   and its six `CreateField` sites are `TBF3` at `:20516`, two `GLVL` at `:41806`
   and `:41997`, and `RWFG`/`REOF`/`WRBF` at `:50768`-`:50770`, none over `ECMG`.
-- The file's **other** route is computed-base, and none of the three
-  computed-base methods is ever invoked: `ECRR`/`ECRW` above, and `SMRW` at
-  `:50764`, which builds its three `CreateField`s over a base handed in as
-  `Arg0` rather than one it hardcodes — so nothing in the file ties `SMRW` to
-  this window, and nothing calls it either.
+- The file's **other** routes are computed-base, and no name can stand for the
+  set of them. An earlier draft of this write-up said the file has "three
+  computed-base methods" and that none is ever invoked; that is false, and the
+  tool inherited it by carrying three accessor names. As with the `ECRR`
+  premise above, it never reached `main`, so there is nothing to retract in
+  place — only a premise to state correctly the first time. The file declares
+  far more `SystemMemory` regions at a non-literal base, **and methods that
+  build them are called**, so a claim resting on "none of the three is invoked"
+  rested on a list a fourth entry would have invalidated silently, leaving
+  `--check` green. The census is now derived from the file
+  (`ec/tools/check_dsdt_ecmg_pair.py`'s `computed_base_routes`), and it reports
+  three states rather than one total: **17** regions in a method nothing calls,
+  **3** in a called method whose base resolves elsewhere, and **68** whose base
+  this scan **cannot place at all**. Only the first state is a cleared route.
 
-**No AML code loads `0x07D0`/`0x07D1`.** That survives, on the second reason
-rather than the first, and `ec/tools/check_dsdt_ecmg_pair.py --check` holds it:
+`ECRR`/`ECRW` above and `SMRW` at `:50764` are among the uncalled ones, which is
+what the conclusion rests on. `DLLR` is the counterexample to the old framing
+and is worth naming: it builds `OperationRegion (EMPC, SystemMemory, EMPB,
+0x0100)` at `:19119` from `EMPB = XBAS | (Arg0 << 0x14) | …`, and it **is**
+invoked, once, at `:19223`. `EMPB` is built from `XBAS`, which is declared
+`External (XBAS, UnknownObj)` at `:335` and defined nowhere in this file, so
+**that region's reach is not determinable from the committed inputs** — the
+"not found by this method" form, not a verdict.
+
+**No AML in the committed DSDT loads `0x07D0`/`0x07D1`.** That survives on the
+derived census rather than on the three names, and the scope word on "committed
+DSDT" is load-bearing rather than a formality: the same `T1WR` arm **mirrors
+both bytes into `NPCF.AMAT` and `NPCF.AMIT`**, and `\_SB_.NPCF` is not defined
+in this file at all — it appears only as `External (...)` declarations at
+`:54`-`:66`. `evidence/acpi/dsdt.dsl` is the only AML source in the repository,
+so whether the AML that owns those two fields reads them back as one 16-bit
+quantity is not excluded by anything committed here. `AMAT` and `AMIT` are two
+independent scalars here, but "two scalars" is a statement about this file's
+writes. What holds is scoped to the DSDT; `ec/tools/check_dsdt_ecmg_pair.py
+--check` holds that much:
 
 ```console
 $ python3 ec/tools/check_dsdt_ecmg_pair.py --check --print
-the file's computed-base methods, and whether anything calls them:
+the named computed-base accessors, and whether anything calls them:
   ECRR  0 call(s); declared at dsdt.dsl:50497
   ECRW  0 call(s); declared at dsdt.dsl:50504
   SMRW  0 call(s); declared at dsdt.dsl:50764
+every SystemMemory region at a non-literal base, from the file:
+  17 in a method nothing calls; 3 in a called method whose
+  base resolves elsewhere; 68 whose base this scan cannot place
+    unbounded: PDW1 at dsdt.dsl:6757, base Local2, method GPC1
+    ...
 ```
 
-A caller appearing for any of the three turns the check red while the two-hit
-name census stays green — which is the whole point, because a reader reached
-through a computed base leaves no trace in the name counts at all.
+A caller appearing for any of the three named accessors turns the check red
+while the two-hit name census stays green — which is the whole point, because a
+reader reached through a computed base leaves no trace in the name counts at
+all. So does a computed-base region that resolves into the window from a method
+that *is* called, which is the case the previous three-name census could not
+see at all.
 
 One of the eight names `ecmg-asl-references.md` already listed as "written by
 a `T1WR` arm and read nowhere" — `DBD1` at `:50687` and `DBD2` at `:50688`.
@@ -335,6 +372,16 @@ combine them; every claim above is scoped to the DSDT and to the field list.
   committed DSDT. Whether a different firmware revision adds a reader is
   exactly what `ec/tools/check_dsdt_ecmg_pair.py --check` turns red over; it is
   not evidence about what any board does.
+- **Nothing about AML this repository does not hold.** The claim is scoped to
+  `evidence/acpi/dsdt.dsl`, which is the only AML source committed here. The
+  writer arm also mirrors both bytes into `NPCF.AMAT`/`NPCF.AMIT`, and
+  `\_SB_.NPCF` is `External` throughout, so an SSDT that owns those fields and
+  reads them back as a word is not excluded here. No SSDT is committed, so
+  nothing in this repository can answer it either way.
+- **Nothing about where the file's other computed-base regions reach.** Most
+  take a base from a runtime value, and `DLLR`'s `EMPB` is built from `XBAS`,
+  which is `External`. The census reports those as unbounded; it does not clear
+  them, and "unbounded" is not "safe".
 - **No new `registers.yaml` row for `0x07D2`.** Inventing an entry to hold a
   "nobody named this" observation would put a row in the source of truth for
   register status that asserts nothing. The absence is already carried where it
@@ -355,29 +402,43 @@ $ python3 -m unittest discover -s ec/tools -p test_check_dsdt_ecmg_pair.py
 ```
 
 `--check` fails when a name's hit count or classification moves, when a hit
-falls outside both named spans, when any of the three computed-base methods
-gains a caller, when a coverage figure moves, or when the `Field` parse and the
+falls outside both named spans, when any of the named accessors gains a caller,
+when a **computed-base region resolves into the window from a method that is
+called**, when a coverage figure moves, or when the `Field` parse and the
 committed CSV's `width` column stop agreeing. The last of those is the one
 that would have caught the `MGOF` dropout.
 
-The accessor census is the one that has no counterpart in the name census, and
+The route census is the one that has no counterpart in the name census, and
 that is what it is for: a reader reached through `ECRR` adds no occurrence of
 `DBD1`, leaves both hit counts exactly where they are, and passes every check
-the two-hit claim makes on its own. Only counting calls finds it.
+the two-hit claim makes on its own. Only counting calls finds it. Deriving the
+census from the file is what makes it hold for a route **nobody named** —
+`--self-test` pins that case with a method absent from the accessor list, which
+the previous three-name version would have passed.
+
+Its limit is stated rather than papered over: a region whose base is a runtime
+value is reported as **unbounded**, never cleared. `DLLR`'s `EMPC` is the
+worked example, because `XBAS` is `External`. The suite asserts that property
+directly, so a later edit cannot quietly resolve an unresolvable base and file
+it among the routes that were checked and missed.
 
 `--self-test` pins the refusals against fixtures, because a check that has
 quietly stopped refusing looks exactly like a check that is working: a reader
 added *inside* the writer arm (which stays inside a named span, so only the
 classification sees it), a third site in a neighbouring arm, a deleted store, a
 renamed writer arm, a `Field` list that no longer reconciles with its CSV, a
-field that is no longer 8 bits wide, and a caller for `ECRR`.
+field that is no longer 8 bits wide, a caller for `ECRR`, and a computed-base
+method nothing names that lands in the window and is called — with the same
+region in an uncalled method as its negative control.
 
 The suite beside it asserts the properties of the committed tree — that the two
 parsers reconcile, that the named plus unnamed split is the total, that every
-hit falls inside a span, that the three accessors are declared and uncalled,
-and that the undeclared-byte count and the gap sum are different quantities —
-rather than restating the census, so there is one place a later DSDT revision
-has to be edited and not two.
+hit falls inside a span, that the named accessors are declared and uncalled,
+that no computed-base region reaches the window from a called method, that an
+unplaceable base is reported rather than cleared, and that the undeclared-byte
+count and the gap sum are different quantities — rather than restating the
+census, so there is one place a later DSDT revision has to be edited and not
+two.
 
 Neither the tool nor the suite is called from
 `.github/scripts/agent-gates.sh`, which is a copy from `ElDavoo/agent-pipeline`;

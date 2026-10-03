@@ -183,6 +183,39 @@ class TheCommittedPair(unittest.TestCase):
                                  "a call to it is a reader this census exists "
                                  "to refuse" % name)
 
+    def test_no_computed_base_region_reaches_the_window_from_a_called_method(self):
+        # The property the derived census exists to hold, asserted as a
+        # property of the committed file rather than as a count of it: every
+        # region in the file that lands inside the ECMG window sits in a method
+        # nothing calls. A fourth computed-base method aimed at this window
+        # makes this fail, and it fails whether or not any document names it --
+        # which is what the hard-coded accessor list could not do.
+        inside = [entry for entry in self.census["routes"]["invoked"]
+                  if entry["state"] == "invoked-into-window"]
+        self.assertEqual(
+            inside, [],
+            "these computed-base regions resolve into the ECMG window and "
+            "their methods are called, so the DSDT reaches 0x07D0/0x07D1 by a "
+            "route no field name appears in: %r" % (inside,))
+
+    def test_a_route_the_scan_cannot_place_is_reported_not_cleared(self):
+        # The limit, asserted so a later edit cannot quietly turn "unresolved"
+        # into "safe". A base built from a runtime value or an `External` name
+        # (`XBAS` builds `EMPC` in `DLLR`) has no committed bound, so it is
+        # reported as unbounded and must not be filed among the routes that
+        # were checked and missed.
+        unbounded = self.census["routes"]["unbounded"]
+        self.assertTrue(
+            unbounded,
+            "the committed DSDT has computed-base regions whose base is a "
+            "runtime value; if this ever comes back empty the census is "
+            "resolving bases it cannot actually resolve")
+        for entry in unbounded:
+            self.assertEqual(entry["state"], pair.UNBOUNDED)
+            self.assertNotIn("resolves", entry,
+                             "an unbounded route must carry no resolved "
+                             "address, or it would read as a cleared one")
+
 
 class TheToolOnItsOwn(unittest.TestCase):
     """The tool run the way a gate runs it."""

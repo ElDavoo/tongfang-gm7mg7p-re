@@ -18,10 +18,12 @@ measured.
      added anywhere else in the file lands outside both and fails; a reader
      added *inside* the arm keeps its span and fails on the count, which is why
      both checks exist and neither is the load-bearing one alone.
-  2. *Accessor census.* The file's computed-base methods -- `ECRR`, `ECRW`
-     and `SMRW` -- and the count of calls to each. See `ACCESSORS` below for
-     why `ECRR`'s existing is the counterexample to the "only route" premise
-     and its having no caller is what saves the conclusion.
+  2. *Route census.* Every `SystemMemory` `OperationRegion` in the file whose
+     base is not a literal, the method each sits in, whether that method is
+     called, and what the base resolves to. Derived from the file rather than
+     carried as a list of names, because the file has dozens of these and no
+     hand-written list of three is the file's set -- see `computed_base_routes`
+     for what that changes and `UNBOUNDED` for the limit it leaves.
   3. *Coverage census.* What fraction of the `ECMG` window the field list
      declares at all, so "leaves `0x07D2` unnamed" can be stated as what it is
      -- a property of the list, not a hole cut around one byte.
@@ -85,12 +87,12 @@ LENGTH_RE = re.compile(r"^\s*OperationRegion\s*\(\s*ECMG\s*,[^,]+,\s*"
 REGION_RE = re.compile(r"^\s*OperationRegion\s*\(\s*ECMG\s*,")
 FIELD_RE = re.compile(r"^\s*Field\s*\(\s*ECMG\s*,")
 OFFSET_RE = re.compile(r"^\s*Offset\s*\(\s*(0x[0-9A-Fa-f]+|\d+)\s*\)")
-# The name is `*` rather than the `{0,4}` the issue's parse used. All 98
-# elements ECMG declares are four characters or fewer, so the bound never
-# mattered here -- which is exactly why it is a trap: a fifth character would
-# drop the line from the census with nothing to say so. Reconciliation against
-# the committed CSV is the backstop that catches it if this pattern ever needs
-# to change again. The trailing comma is optional; see the docstring. The
+# The name is `*` rather than the `{0,4}` the issue's parse used. Every name
+# this list happens to declare is short enough that the bound never bit here --
+# which is exactly why it is a trap: a fifth character would drop the line
+# from the census with nothing to say so. Reconciliation against the committed
+# CSV is the backstop that catches it, and it fails on its own if a longer name
+# ever appears. The trailing comma is optional; see the docstring. The
 # pattern is a named string so `--self-test` can put the comma back and then
 # put the real one back without either copy drifting.
 ELEMENT_PATTERN = r"^\s*([A-Za-z0-9_]*)\s*,\s*(\d+)\s*,?\s*$"
@@ -102,31 +104,36 @@ WRITER_ARG = "0x1173"
 ARM_RE = re.compile(r"^\s*ElseIf\s*\(\s*\(\s*Arg0\s*==\s*" + WRITER_ARG +
                     r"\s*\)\s*\)\s*$")
 
-# **The other routes to this window, and the reason a "these two names are the
-# only route AML has" sentence is false on its face.**
+# **The other routes to this window, and why no list of names can be the
+# file's set of them.**
 #
-#   `ECRR` and `ECRW` hardcode the base `ECMG` itself declares -- `Local0 =
-#   (0xFE410000 + Arg0)` -- and then read or write that byte through the
-#   `OperationRegion (MMNM, SystemMemory, Arg0, 0x04)` that `MMRW` builds at
-#   dsdt.dsl:50423. `ECRR` is a *reader*: `ECRR (0x07D0)` reads the `DBD1` byte
-#   with no field name anywhere in the path, so `DBD1`'s two hits do not by
-#   themselves show that no reader exists.
+# `ECRR` and `ECRW` hardcode the base `ECMG` itself declares -- `Local0 =
+# (0xFE410000 + Arg0)` -- and then read or write that byte through the
+# `OperationRegion (MMNM, SystemMemory, Arg0, 0x04)` that `MMRW` builds at
+# dsdt.dsl:50423. `ECRR` is a *reader*: `ECRR (0x07D0)` reads the `DBD1` byte
+# with no field name anywhere in the path, so `DBD1`'s two hits do not by
+# themselves show that no reader exists.
 #
-#   `SMRW` is the file's third computed-base method, and it is here because it
-#   has to be checked rather than assumed away. It builds three `CreateField`s
-#   over a base handed in as `Arg0` instead of one it hardcodes, so nothing in
-#   the file ties it to *this* window; but "no computed-base method is ever
-#   called" is the claim worth holding, and a call would be a route whichever
-#   window it was aimed at.
-#
-# What survives is a different claim, and this census holds that one instead:
-# none of the three is ever invoked, so the ASL does not read the pair by any
-# of these routes. The distinction is the point. `ECRR`'s existing in the file
-# is the counterexample to the premise; its having no caller is what saves the
-# conclusion. Any document that claims the field names are the only route has
-# to say both halves, because only the first half is a reason to doubt the
-# second.
+# Naming `ECRR`, `ECRW` and `SMRW` and calling that the file's computed-base
+# methods was wrong, and not by a small margin. The file declares far more
+# `OperationRegion`s at a non-literal base than that, in methods that *are*
+# called -- so a claim resting on "none of the three is invoked" was resting
+# on a three-element list that a fourth entry would have invalidated
+# silently, leaving `--check` green. `computed_base_routes` therefore derives
+# the set from the file; these three are kept below only as the ones a
+# document names, not as an exhaustive enumeration.
 ACCESSORS = ("ECRR", "ECRW", "SMRW")
+
+# What the derived census cannot answer, stated here because it is the reason
+# the conclusion is scoped rather than absolute. Most of the file's
+# computed-base regions take their base from a runtime value -- an argument, a
+# local computed from one, or a method's return -- so *which window they reach
+# is not a property of the committed source*. One of them builds its base from
+# `XBAS`, which is declared `External` at dsdt.dsl:335 and defined nowhere in
+# this file, so no committed input bounds it at all. A route the scan cannot
+# place is reported as unbounded rather than counted as safe, and no document
+# may read "the scan found nothing" as "there is nothing".
+UNBOUNDED = "unresolved-base"
 
 
 def method_re(name):
@@ -299,9 +306,10 @@ def name_census(lines, name, span):
 def accessor_census(lines, names=ACCESSORS):
     """{name: {"declarations": [line], "calls": [(line, text)]}} for `names`.
 
-    Both halves of the corrected claim, as data rather than as prose: the
-    declaration lines are carried so the printout can say where the route is
-    defined, and the calls are carried so the refusal can name one.
+    Retained because these three are the ones the documents name, and the
+    refusal below has to speak about the route a reader would actually take
+    (`ECRR (0x07D0)`) rather than about an index into a list. It is *not* the
+    file's set of computed-base methods -- `computed_base_routes` is.
     """
     out = {}
     for name in names:
@@ -316,6 +324,170 @@ def accessor_census(lines, names=ACCESSORS):
     return out
 
 
+# The `OperationRegion` form whose base this census keys on. Anchored on
+# `SystemMemory` because that is the address space `ECMG` itself uses: a
+# `PCI_Config` or `SystemIO` region cannot reach an XDATA byte, so including
+# those would inflate the route count with things that are not routes to this
+# window. The base is captured whole rather than pattern-matched for a literal,
+# because "is not a literal" is the whole test.
+COMPUTED_REGION_RE = re.compile(
+    r"^\s*OperationRegion\s*\(\s*(\w+)\s*,\s*SystemMemory\s*,\s*(.+?)\s*,"
+    r"\s*(0x[0-9A-Fa-f]+|\d+)\s*\)")
+LITERAL_BASE_RE = re.compile(r"^(0x[0-9A-Fa-f]+|\d+)$")
+
+METHOD_DECL_RE = re.compile(r"^\s*Method\s*\(\s*(\w+)\s*,")
+
+
+def enclosing_methods(lines):
+    """[innermost enclosing Method name or None] for each line.
+
+    A reader with no caller is only a route if something calls it, and what
+    something calls is a *method* -- so the question "is this region's method
+    invoked" needs the method each region sits in. Brace-matched rather than
+    scoped by indentation, for the reason `block_end` gives: the field list has
+    no nesting today and a pattern that depends on that breaks quietly on the
+    first nested one.
+
+    The declaration and the brace it opens are usually on *separate* lines
+    (`Method (X, 2, NotSerialized)` then `{`), so a pending declaration is
+    carried to the next brace rather than pushed where it is seen. Associating
+    the two wrongly -- pushing a placeholder on the brace line -- attributes
+    every region in the file to whichever scope opened last, which is how this
+    reported every one of them as uncalled.
+    """
+    stack, out, pending = [], [], None
+    for line in lines:
+        out.append(next((name for kind, name in stack if kind == "method"),
+                        None))
+        code = line.split("//", 1)[0]
+        opens, closes = code.count("{"), code.count("}")
+        declaration = METHOD_DECL_RE.match(code)
+        if declaration:
+            pending = declaration.group(1)
+        if opens:
+            stack.append(("method", pending) if pending else ("other", None))
+            pending = None
+        for _ in range(closes):
+            if stack:
+                stack.pop()
+    return out
+
+
+def literal_names(lines):
+    """{name: value} for every `Name (X, 0x...)` declared in the file.
+
+    Needed because a computed base is often a *named* constant rather than an
+    expression, and `EMPB`'s kind of name has to resolve to something before
+    the scan can say where it points. Names declared `External` are absent by
+    construction, which is exactly why a base built from one is unbounded.
+    """
+    out = {}
+    for line in lines:
+        match = re.match(r"^\s*Name\s*\(\s*(\w+)\s*,\s*"
+                         r"(0x[0-9A-Fa-f]+|\d+)\s*\)", line)
+        if match:
+            out[match.group(1)] = int(match.group(2), 16)
+    return out
+
+
+def resolve_base(expression, names):
+    """The constant an `OperationRegion` base evaluates to, or `None`.
+
+    Returns `None` rather than guessing whenever any part of the expression is
+    a runtime value -- an `Arg`, a `Local`, or a method call. That is the
+    honest answer and it is what most of this file's computed bases produce:
+    a base the scan cannot place is a base it cannot clear, and reporting it
+    as safe is the failure mode this function exists to prevent.
+    """
+    text = expression.strip()
+    if LITERAL_BASE_RE.match(text):
+        return int(text, 16)
+    if re.search(r"\w+\s*\(", text):        # a method call: opaque
+        return None
+    # Substitute the names we can resolve, then refuse anything still holding
+    # a bare identifier: an unresolved token is an unknown value, and folding
+    # around it would invent a number.
+    def substitute(match):
+        token = match.group(0)
+        return hex(names[token]) if token in names else None
+    folded = re.sub(r"\b[A-Za-z_]\w*\b", substitute, text)
+    if re.search(r"\b[A-Za-z_]\w*\b", folded):
+        return None
+    folded = folded.replace("<<", " << ").replace(">>", " >> ")
+    try:
+        value = eval(folded, {"__builtins__": {}}, {})  # noqa: S307
+    except Exception:
+        return None
+    return value if isinstance(value, int) else None
+
+
+def computed_base_routes(lines, window_base, window_length):
+    """Every `SystemMemory` region at a non-literal base, and where it reaches.
+
+    Returns `{"invoked": [...], "uncalled": [...], "unbounded": [...]}`,
+    each entry naming the region, its line, the method that contains it, and
+    -- where the base folds to a constant -- whether that constant overlaps the
+    window at all.
+
+    This is the census that replaces a hard-coded accessor list, and the
+    division it reports is the finding. Three outcomes, and the third is the
+    one a name list could never produce:
+
+      * **invoked** -- the region's method is called *and* the base folds to a
+        constant outside the window. This is a route to somewhere else, and it
+        is the only category that can be cleared.
+      * **uncalled** -- the region's method is never called. `ECRR` and
+        `ECRW` are here, which is what makes the conclusion survive: they are
+        genuine readers of `0x07D0` that nothing in the file ever reaches.
+      * **unbounded** -- the base is a runtime value. The scan cannot say
+        where it points, so it is reported rather than counted either way. A
+        DSDT revision that turns one of these into a constant is caught; one
+        that leaves it a runtime value is not, and no document may claim
+        otherwise.
+    """
+    names = literal_names(lines)
+    enclosing = enclosing_methods(lines)
+    invoked, uncalled, unbounded = [], [], []
+    for index, line in enumerate(lines):
+        match = COMPUTED_REGION_RE.match(line.split("//", 1)[0])
+        if not match:
+            continue
+        region, base = match.group(1), match.group(2).strip()
+        length = int(match.group(3), 16)
+        method = enclosing[index]
+        entry = {"region": region, "line": index + 1, "base": base,
+                 "length": length, "method": method}
+        if method is None:
+            entry["state"] = UNBOUNDED
+            unbounded.append(entry)
+            continue
+        declared = call_re(method)
+        callers = [i + 1 for i, other in enumerate(lines)
+                   if declared.search(other.split("//", 1)[0])
+                   and not other.split("//", 1)[0].strip().startswith("Method")]
+        entry["callers"] = callers
+        if not callers:
+            entry["state"] = "uncalled"
+            uncalled.append(entry)
+            continue
+        value = resolve_base(base, names)
+        if value is None:
+            # Reached, but not placeable: reported, never counted as clear.
+            entry["state"] = UNBOUNDED
+            unbounded.append(entry)
+            continue
+        entry["resolves"] = value
+        # A route is only *cleared* by a constant that lands outside the
+        # window. One that lands inside it is a reader, with no field name
+        # anywhere in the path, and no count of `DBD1` occurrences can see it.
+        overlaps = value < window_base + window_length and \
+            value + length > window_base
+        entry["state"] = "invoked-into-window" if overlaps else "invoked"
+        invoked.append(entry)
+    return {"invoked": invoked, "uncalled": uncalled,
+            "unbounded": unbounded}
+
+
 def region_length(lines, span):
     """The byte length the `ECMG` `OperationRegion` declares."""
     region = span[0]
@@ -324,6 +496,22 @@ def region_length(lines, span):
         if match:
             return _number(match.group(2))
     return None
+
+
+def window_bounds(lines, span):
+    """`(base, length)` of the `ECMG` window, read off its own declaration.
+
+    Parsed rather than carried, so the route census compares against the same
+    commit that declared the region. A route that lands inside *these* bounds
+    is a reader of this window; one compared against a number typed here would
+    quietly mean something else if the vendor moved the region.
+    """
+    region = span[0]
+    for index in range(region[0], region[1] + 1):
+        match = LENGTH_RE.match(lines[index])
+        if match:
+            return _number(match.group(1)), _number(match.group(2))
+    return 0, 0
 
 
 def element_positions(lines, span):
@@ -613,6 +801,34 @@ def census(dsdt, fields_csv):
                 "makes it false." %
                 (name, line, text, name))
 
+    # The derived route census. This is what a hard-coded accessor list cannot
+    # do: it finds every `SystemMemory` region at a non-literal base, so a
+    # computed-base method added anywhere in the file is seen whether or not
+    # anyone thought to name it here. Only a region whose base *resolves into
+    # the window* is a refusal -- a route the scan cannot place is reported
+    # and counted as unbounded, never cleared.
+    window_base, window_length = window_bounds(lines, span)
+    out["routes"] = routes = computed_base_routes(lines, window_base,
+                                                   window_length)
+    for entry in routes.get("invoked", []):
+        if entry["state"] != "invoked-into-window":
+            continue
+        problems.append(
+            "%s at %d is a computed-base region inside an invoked method, and "
+            "its base %s resolves to 0x%08X, which overlaps the ECMG window "
+            "(0x%08X, %d bytes):\n"
+            "    %s\n"
+            "    This is a route into 0x07D0/0x07D1 that no field name "
+            "appears in, so the name census above stays green while the claim "
+            "it carries dies. It is derived from the file rather than from a "
+            "list of accessor names, which is the point: a fourth "
+            "computed-base method is found here even though nothing names it." %
+            (entry["region"], entry["line"], entry["base"],
+             entry["resolves"], window_base, window_length,
+             "method %s, called at %s" % (entry["method"],
+                                          ", ".join(str(c)
+                                                    for c in entry["callers"]))))
+
     try:
         widths, rows = csv_widths(fields_csv)
     except (OSError, ValueError, KeyError) as exc:
@@ -697,12 +913,27 @@ def print_census(census):
         else:
             print("declared at %s bits each, of a window %s bytes long" %
                   (widths["DBD1"], census["coverage"]["region_bytes"]))
-    print("the file's computed-base methods, and whether anything calls them:")
+    print("the named computed-base accessors, and whether anything calls them:")
     for name, entry in census.get("accessors", {}).items():
         print("  %-5s %d call(s); declared at %s" %
               (name, len(entry["calls"]),
                ", ".join("dsdt.dsl:%d" % line for line in entry["declarations"])
                or "nowhere in the file"))
+    routes = census.get("routes")
+    if routes:
+        # The three states, not a single total: the point of deriving this from
+        # the file is that the answer is not one number, and collapsing it to
+        # one is how the earlier version of this claim came to sound exhaustive.
+        print("every SystemMemory region at a non-literal base, from the file:")
+        print("  %d in a method nothing calls; %d in a called method whose "
+              "base resolves elsewhere; %d whose base this scan cannot place"
+              % (len(routes["uncalled"]), len(routes["invoked"]),
+                 len(routes["unbounded"])))
+        for entry in routes["unbounded"]:
+            if entry.get("method"):
+                print("    unbounded: %s at dsdt.dsl:%d, base %s, method %s"
+                      % (entry["region"], entry["line"], entry["base"],
+                         entry["method"]))
     cover = census["coverage"]
     print("ECMG field list (dsdt.dsl:%d-%d, from dsdt.dsl:%d):" %
           (cover["field_line"], cover["span"][1][1], cover["region_line"]))
@@ -974,6 +1205,55 @@ def self_test():
           accessor_census(FIXTURE.split("\n"))["ECRR"]["calls"] == [],
           "ECRR is declared in the fixture and must not read as its own "
           "caller")
+
+    # 11. The refusal that a hard-coded accessor list could not produce. The
+    #     fourth computed-base method is one no document names: nothing in
+    #     `ACCESSORS` is `WIDR`, so under the old census this file was clean
+    #     while `WIDR` sat inside the window. This is the case the finding was
+    #     about -- a reader that arrives by a route the name list does not
+    #     have -- so it has to go red for the derived census to be worth
+    #     anything.
+    fourth = FIXTURE.replace(
+        "            Method (ECRW, 2, NotSerialized)\n",
+        "            Method (WIDR, 1, NotSerialized)\n"
+        "            {\n"
+        "                OperationRegion (WIDG, SystemMemory, 0xFE4107D0, 0x02)\n"
+        "                Field (WIDG, ByteAcc, NoLock, Preserve)\n"
+        "                {\n"
+        "                    WID0,   8\n"
+        "                }\n"
+        "                Local2 = WID0\n"
+        "                Return (Local2)\n"
+        "            }\n"
+        "            Method (ECRW, 2, NotSerialized)\n")
+    found = problems_for(
+        fourth.replace("                    Local0 = (Arg1 * 0x08)\n",
+                       "                    Local3 = WIDR ()\n"
+                       "                    Local0 = (Arg1 * 0x08)\n"))
+    check("a computed-base method nothing names, landing in the window and "
+          "called, is refused",
+          any("invoked-into-window" in p or "resolves to 0x%08X"
+              % 0xFE4107D0 in p for p in found),
+          "WIDR is absent from ACCESSORS by construction, which is the point: "
+          "found %s" % (found or "nothing reported"))
+
+    # 12. The positive control for that refusal: the same region in a method
+    #     nothing calls is a reader with no route, and is reported as uncalled
+    #     rather than refused. Without this the case above could pass on a rule
+    #     that refuses every computed-base region regardless of reachability.
+    idle = problems_for(fourth)
+    check("the same computed-base region in an uncalled method is not refused",
+          not any("invoked-into-window" in p for p in idle),
+          "found: %s" % (idle or "nothing reported"))
+
+    # 13. A runtime base is reported as unbounded, never cleared. `EMPB` in the
+    #     committed file is built from `XBAS`, which is `External`; a base the
+    #     scan cannot resolve must not be counted as a route that misses.
+    _, walked_routes = on_fixture(FIXTURE, FIXTURE_WIDTHS)
+    check("the route census reports a computed-base region in the fixture",
+          walked_routes.get("routes", {}).get("uncalled") is not None,
+          "the fixture's MMRW builds MMNM at Arg0 and nothing calls it, so it "
+          "belongs in the uncalled half")
 
     for path in scratch_paths:
         try:

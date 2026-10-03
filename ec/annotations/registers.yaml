@@ -708,8 +708,19 @@ registers:
       dsdt.dsl:50497/50504 compute 0xFE410000 + Arg0 -- the base ECMG
       itself declares -- and access the byte through the OperationRegion
       MMRW builds, so ECRR IS a reader of 0x07D0 with no field name in the
-      path at all. What holds is that none of the file's three
-      computed-base methods (ECRR, ECRW, SMRW at :50764) is ever invoked.
+      path at all. The file has MANY computed-base methods, not three,
+      and some that build one ARE called -- DLLR at :19119 builds EMPC
+      at an XBAS-relative base (XBAS is External, so unbounded by any
+      committed input) and is invoked at :19223 -- so a list of three
+      names is not an enumeration and the census is derived from the
+      file instead. What holds: no AML in the committed DSDT reaches the
+      pair by a computed base that resolves into this window, and ECRR,
+      ECRW, SMRW at :50764 are among the methods nothing calls. A region
+      whose base is a runtime value is reported as UNBOUNDED, never
+      cleared. The same writer arm also mirrors both bytes into
+      NPCF.AMAT/NPCF.AMIT, whose owning AML is External and not
+      committed here, so nothing here excludes an SSDT reading them back
+      as a word.
       What IS established is that the field list gives both 8 bits under
       one Offset (0x7D0) with DBD2 starting at bit 8, so they are two
       disjoint byte fields. So "two independent 8-bit fields" is a claim
@@ -831,9 +842,19 @@ registers:
       being the only route. ECRR/ECRW at dsdt.dsl:50497/50504 compute
       0xFE410000 + Arg0 -- the base ECMG itself declares -- and access the
       byte through the OperationRegion MMRW builds, so ECRR IS a reader of
-      0x07D0 with no field name in the path. What holds is that none of the
-      file's three computed-base methods (ECRR, ECRW, SMRW at :50764) is
-      ever invoked. Measured, and the part that stands: the field
+      0x07D0 with no field name in the path. The file has MANY
+      computed-base methods, not three, and some that build one ARE
+      called (DLLR at :19119 builds EMPC at an XBAS-relative base and is
+      invoked at :19223; XBAS is External, so its reach is unbounded by
+      any committed input), so a list of three names is not an
+      enumeration and the census is derived from the file instead. What
+      holds: no AML in the committed DSDT reaches the pair by a computed
+      base that resolves into this window, and ECRR, ECRW, SMRW at
+      :50764 are among the methods nothing calls. A region whose base is
+      a runtime value is reported as UNBOUNDED rather than cleared. The
+      same writer arm mirrors both bytes into NPCF.AMAT/NPCF.AMIT, whose
+      owning AML is External and not committed here. Measured, and the
+      part that stands: the field
       list gives both 8 bits under one Offset (0x7D0) with DBD2 starting
       at bit 8, so they are two disjoint byte fields. What that is NOT is
       two values the DSDT loads. The disagreement recorded above stands
