@@ -3454,8 +3454,21 @@ def report_blocks(blocks, selected=None):
             # console, so it is as unreadable as one short in all three, and
             # the note below is the one that says what to do about it.
             void += 1
-            print(f"  block {i}/{total}: PARTIAL -- last mark {last.label!r} is "
-                  f"the restore, but not in every capture{note}")
+            # Branched on `parse_mark` because this is the only one of the
+            # three verdicts whose clause can contradict the note beside it.
+            # `intact` and `void` each name a block that closed in every
+            # capture or in none, so their clause is a statement about the
+            # block and holds whichever console typed the fused label first.
+            # Here the block closed in some of them, and the note says which:
+            # a fused label whose first spelling is the short console's write
+            # cannot be called the restore on the same line that names that
+            # write as what the short capture ended on.
+            if parse_mark(last.label)[0] == "restore":
+                clause = (f"last mark {last.label!r} is the restore, but not "
+                          "in every capture")
+            else:
+                clause = f"last mark is {last.label!r}, not the restore"
+            print(f"  block {i}/{total}: PARTIAL -- {clause}{note}")
         else:
             void += 1
             print(f"  block {i}/{total}: VOID -- last mark is {last.label!r}, "

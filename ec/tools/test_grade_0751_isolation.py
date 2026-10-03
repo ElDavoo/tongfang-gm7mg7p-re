@@ -7724,6 +7724,74 @@ class RestoreCloserPerCaptureTests(unittest.TestCase):
                       "is the restore", out)
         self.assertNotIn('PARTIAL', out)
         self.assertIn('-- NOT GRADED, its windows are not printed', out)
+
+    def test_a_short_capture_inside_the_merge_window_does_not_read_as_the_restore(self):
+        # The fixture's own captures are 40 s apart, so block 2's restore lands
+        # in a window of its own in each capture, the block's last window reads
+        # `restored ...`, and the clause under `PARTIAL` agrees with the parser
+        # for a reason the committed set cannot tell from. Move the two
+        # restores that did land inside the short capture's write window and
+        # they fuse into it -- `coalesce_marks` joins labels within
+        # `MARK_MERGE_SECONDS` and `parse_mark` reads the first that parses --
+        # so the last window becomes the short console's *write* carrying the
+        # other two's restores behind it, while `Block.closers` still sees two
+        # captures closed and one not.
+        #
+        # Built in a temporary directory rather than added to the fixture: it
+        # is two timestamps moved, and a committed set carrying them would
+        # make its own header a claim about the merge window that has to
+        # hold true afterwards.
+        inside = '2026-01-01T12:08:33.000+01:00'
+        short_write = '2026-01-01T12:08:30.000+01:00'
+        # The two literals above are what put the rows in the window, so if the
+        # constant ever moves under them this says so rather than silently
+        # building the un-fused day and passing on the clause.
+        self.assertLessEqual(
+            (grade.parse_ts(inside) - grade.parse_ts(short_write)).total_seconds(),
+            grade.MARK_MERGE_SECONDS)
+
+        def onto_the_write(later):
+            def rewrite(text):
+                return text.replace(f'{later},MARK,,restored 0x0751=0xA0',
+                                    f'{inside},MARK,,restored 0x0751=0xA0')
+            return rewrite
+
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = copies_of(tmp, RESTORE_SHORT, {
+                '2026-01-01-0751-isolation-0f00-0f5f.csv':
+                    onto_the_write('2026-01-01T12:09:11.000+01:00'),
+                '2026-01-01-0751-isolation-0400-045f.csv':
+                    onto_the_write('2026-01-01T12:09:12.000+01:00')})
+            rc, out, err = run(*paths)
+            # The fused label is read off the run rather than written here: the
+            # clause has to follow the parser's reading of whatever the join
+            # made, which is the whole of what this case is about.
+            _, _, blocks, _ = as_main_reads(paths)
+            fused = blocks[1].windows[-1].label
+        self.assertEqual(rc, 1, err)
+        self.assertEqual(fused,
+                         'wrote 0x0751=0x00 / restored 0x0751=0xA0')
+        # What the tool's own parser makes of it, which is what the clause used
+        # to contradict: the first spelling that parses is the short console's
+        # write, so the label is not the restore.
+        self.assertEqual(grade.parse_mark(fused)[0], 'write')
+        second = block_lines(out)[1]
+        self.assertIn(f"block 2/2: PARTIAL -- last mark is {fused!r}, not the "
+                      "restore", second)
+        self.assertNotIn(f"last mark {fused!r} is the restore", second)
+        # Same three captures as the committed fixture's line, and the same
+        # note saying so. Split at the note rather than compared whole: only
+        # the clause moved, so the half before it differs and the half from it
+        # on is the line `setUp` already graded, byte for byte.
+        self.assertIn("2026-01-01-0751-isolation-0700-07ff.csv ends on "
+                      "'wrote 0x0751=0x00'", second)
+        for capture in ('0400-045f', '0f00-0f5f'):
+            self.assertIn(f'0751-isolation-{capture}.csv', second)
+        cut = '; the restore is in'
+        self.assertNotEqual(second.split(cut)[0], self.lines[1].split(cut)[0])
+        self.assertEqual(second.split(cut)[1:], self.lines[1].split(cut)[1:])
+
+
 class UnreadableCaptureTests(unittest.TestCase):
     # `main` over a file `read_capture` refuses. Built from temp files rather
     # than from `evidence/ec-watch/2026-09-23-0751-isolation.txt`, which is

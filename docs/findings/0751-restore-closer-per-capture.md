@@ -222,6 +222,17 @@ stray rather than a block's closing mark.
   evidence that it happened in *some* capture, which is what a missing mark
   leaves. A block can read `PARTIAL` with the byte correctly put back; the
   tool cannot tell that from the files, and does not say it.
+- **Only the `PARTIAL` clause asks `parse_mark`; `intact` and `void` still
+  quote the fused label.** A fused window can hold one console's mark *and*
+  another's from the same action, and `parse_mark` reads whichever was typed
+  first. That does not make the other two clauses false — a block that closed
+  in every capture or in none has a clause that is a statement about the block
+  and holds either way — but a block that closed in *some* of them can end on
+  a fused label the parser reads as the short console's write, and calling that
+  the restore on the line that names the write as what the short capture ended
+  on is a sentence contradicting itself. Building all three from `Block.closers`
+  instead is a wording change to two sentences this issue does not otherwise
+  touch.
 - **Per-capture *windowing* is out of scope.** Grading each capture's windows
   separately rather than the fused ones would rewrite `coalesce_marks`,
   `build_windows`, every window header and the census, and would break the
