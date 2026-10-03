@@ -747,7 +747,7 @@ the byte, and no value of any of the seven has ever been observed. A zero from
 a scan is "not found by this method", never absent, so "no site sets bit 1 of
 `0x09E7`" and "no site branches on bit 0 of `0x08EB`" are both statements about
 the scan. The one reader found for `0x08A2` (bank1 `0xA987`) was not decoded,
-and the remaining four members of the `main-ec-013` cluster are still unnamed.
+and the remaining four members of the `user-clear-bytes` cluster are still unnamed.
 
 > **Correction, 2026-09-24 (issue #253; ids again on 2026-09-24, when the census
 > was re-derived on the merged tree).** The cluster those four are members of is

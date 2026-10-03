@@ -690,7 +690,7 @@ version is left here rather than deleted, per `../../docs/findings.md` §4a's
 pattern.
 
 **And the two bytes the clustering cut away are the two whose reload is
-clearest.** `0x06C6` and `0x06CD` are not in `main-ec-003`, and both are reloaded
+clearest.** `0x06C6` and `0x06CD` are not in `counter-sweep`, and both are reloaded
 by an `if (byte == 0) byte = 2` store that this repository has already
 annotated: `dec_0443_low3_unless_0440_5_6_7` and
 `inc_0443_low3_unless_0440_5_6_7` write `2` to `0x06C6` at `0xF2CC` and

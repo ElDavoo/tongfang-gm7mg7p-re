@@ -792,7 +792,7 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   readers' address spaces, and the per-site read/write/handoff split in
   `annotations/pd-0x07d8-ref-table.csv`. Static, and explicit that the PD
   program's `0x07D8` is not the EC's register of that number.
-- **`annotations/xdata-06c2-06db-timers.md`** — the `main-ec-003` cluster read
+- **`annotations/xdata-06c2-06db-timers.md`** — the `counter-sweep` cluster read
   as the block the issue asked about: 37 of its 43 addresses are countdowns one
   393-byte routine walks over, and the other 6 are what four of them do at zero.
   It also measures why the cluster's headline census numbers are inflated 42×,

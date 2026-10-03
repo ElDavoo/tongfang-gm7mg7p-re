@@ -391,6 +391,30 @@ class SkipsDeliberately(unittest.TestCase):
                 '- The `0x08A8` listing is separate.\n')
         self.assertEqual(cited(text), (0, None))
 
+    def test_adjacent_list_items_do_not_bleed_without_terminal_punctuation(self):
+        # The `docs/findings/INDEX.md` shape: a generated list of link titles,
+        # none ending in a full stop, so `TERMINATOR` never fires between them
+        # and the whole list used to be adjudicated as one sentence. The first
+        # entry's cluster rescued the second entry's false claim, which is the
+        # bleeding `test_adjacent_list_items_do_not_bleed` above shows for the
+        # punctuated case and which here went unreported at all.
+        wrong = ('- [`a.md`](a.md) — a note about the `main-ec-002` cluster\n'
+                 '- [`b.md`](b.md) — `0x0860` is in the `main-ec-003` cluster\n')
+        self.assertEqual(cited(wrong), (1, '0x0860'))
+        right = wrong.replace('`main-ec-003`', '`main-ec-002`')
+        self.assertEqual(cited(right), (0, None))
+
+    def test_a_wrapped_list_item_is_still_one_paragraph(self):
+        # The other half of that boundary: an item whose text wraps must keep
+        # its continuation lines, or a claim written across two lines is
+        # silently dropped instead of split into sentences.
+        text = ('- The `0x08A8` address is in the `main-ec-003` cluster, and\n'
+                '  the `main-ec-002` cluster holds nothing here.\n')
+        units = list(ccc.units(text))
+        self.assertEqual(len(units), 1)
+        self.assertIn('0x08A8', units[0][1])
+        self.assertIn('main-ec-002', units[0][1])
+
     def test_table_rows_are_separate_units(self):
         text = ('| `main-ec-003` | 43 | 4,965 | `0x0460`-`0x09CE` | 43 | the block |\n'
                 '| `main-ec-002` | 44 | 248 | `0x044C`-`0x1F07` | 19 | the '

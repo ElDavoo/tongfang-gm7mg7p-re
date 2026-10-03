@@ -1,7 +1,7 @@
 # `0x0860`-`0x086E`: the EC's own level block, and what it dispatches on
 
 Issue #180 asked to read the `0x0860`-`0x086E` run in main-EC cluster
-`main-ec-004` and settle four questions: what sets `0x0860`, what the sibling
+`level-block-086x` and settle four questions: what sets `0x0860`, what the sibling
 bytes hold, what consumes the `0x1C39`/`0x1C3A` copy, and whether the
 `0x044C`-`0x05F1` group — `main-ec-055`, a different cluster — is the same
 mechanism. This is the answer.

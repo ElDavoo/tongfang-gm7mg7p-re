@@ -204,6 +204,16 @@ DISCLAIM = re.compile(
 # the one the corpus does reach.
 FENCE = re.compile(r"^\s*(?P<fence>`{3,})")
 
+# A list item, which `units()` treats as a unit boundary for the reason a table
+# row is one. `TERMINATOR` already covers the common case -- an item that ends
+# in a full stop, followed by `-` -- so this is the case it misses, not a second
+# rule beside it: a list whose entries carry no terminal punctuation. Matched
+# against the *stripped* line and after the fence and table-row branches, so a
+# fence body and a table row keep their own handling and a blockquoted list
+# (`> - ...`) is not a list item, which is right: a correction block is one
+# quoted passage and reads as one.
+LIST_ITEM = re.compile(r"(?:[-*+]|\d+\.)\s")
+
 # The one tool whose flags *change* the census rather than report it, so a
 # fenced block running one of them is showing a generation this run is not
 # holding prose to. `--map` and `--check` are excluded on purpose: both are
@@ -405,8 +415,15 @@ def units(text):
 
     A table row is its own unit: the columns of a census table mean different
     things, and letting a row run into the next would make the unit's addresses
-    mean nothing in particular. A fenced block is a paragraph boundary for the
-    same reason and by the same route, but it is still cut into sentences
+    mean nothing in particular. A list item is a boundary for the same reason
+    and by the same route, and it is the one this walk needed before issue
+    #435: `TERMINATOR` splits a list only where an entry ends in punctuation,
+    so `docs/findings/INDEX.md` -- a generated list of link titles, none of
+    them ending in a full stop -- arrived here as one unit thousands of
+    characters long, and whether that unit was checked at all came down to
+    whether any title in the tree happened to say "cluster". A fenced block is
+    a paragraph boundary for the same reason and by the same route, but it is
+    still cut into sentences
     inside itself -- `reset-vector-dptr-targets.md:451` puts a membership claim
     in a fence and a second, unrelated claim in the sentence after it *inside
     that fence*, and the split between them is the whole of the #605 fix.
@@ -466,6 +483,14 @@ def units(text):
         elif not stripped:
             yield from flush(buf)
             buf = []
+            lineno += 1
+        elif LIST_ITEM.match(stripped) and buf:
+            # `buf` restarts rather than clears, so the item's own continuation
+            # lines still join it: a wrapped item stays one paragraph and is
+            # still split into sentences above. `and buf` keeps a marker that
+            # opens the file from emitting an empty first unit.
+            yield from flush(buf)
+            buf = [(lineno, stripped)]
             lineno += 1
         else:
             buf.append((lineno, stripped))

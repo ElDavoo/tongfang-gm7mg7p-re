@@ -2424,7 +2424,7 @@ are the committed CSV's, and the committed CSV is what a fresh generation
 produces — `--check` exits 0 on this tree, where it exited 1 on both sides of
 this merge.)*
 
-`main-ec-002` is the one that matters most and the one most likely to be
+`mode-oem-init` is the one that matters most and the one most likely to be
 misread. It is where 34 named registers land, so it looks like "the named
 registers, discovered again", but what the clustering actually found is that
 the *initialisation* routines touch them all: a cluster is a co-occurrence, and
@@ -2433,7 +2433,7 @@ about init order, not about the registers' purposes. Reading it is one issue.
 The top ten addresses by reference count (`0x0440` 181, `0x08A8` 170,
 `0x0843` 168, `0x0844` 168, `0x0706` 160, `0x06D6` 148, then `0x080D` 137,
 `0x063A` 136, `0x0986` 135, `0x07F3` 133) are the issue's own list and belong
-in that reading: nine of the ten are in `main-ec-003`, and the tenth,
+in that reading: nine of the ten are in `counter-sweep`, and the tenth,
 `0x0440`, is a size-1 cluster on its own. **All 181 of its references are reads
 and none of them is a write**, spread over 91 functions, and at threshold 0.50
 it has no neighbour. The most-referenced address in the firmware is the one the
