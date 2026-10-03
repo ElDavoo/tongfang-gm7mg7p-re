@@ -892,11 +892,11 @@ XDATA_NAME_NOTE = {
         "0xBE as the branch and not as a voltage, and that is too strong. "
         "0xBE is 190, and 190 is a quotient 0xA5E6 produces for a "
         "dividend of 19000-19099 at divisor 100, so the computed arm can "
-        "produce this byte too (ec/tools/a5e6_quotient.py sweeps every "
-        "16-bit dividend). Every voltage recorded for this pack is below "
-        "that window, so the constant arm is still the likelier reading of "
-        "a committed 0xBE and nothing here claims which arm ran; what is "
-        "retracted is only that the value cannot be a voltage."),
+        "produce this byte too. Every voltage recorded for this pack is "
+        "below that window, so the constant arm is still the likelier "
+        "reading of a committed 0xBE and nothing here claims which arm "
+        "ran; what is retracted is only that the value cannot be a "
+        "voltage."),
     0x0449: (
         "The same branch, and the same gap. store_scaled_quotient_0449 at "
         "R7 = 0 reads 0x0434/0x0435 and divides by 100, and at any nonzero "
