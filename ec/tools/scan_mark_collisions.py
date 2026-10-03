@@ -63,9 +63,9 @@ from collections import Counter
 # it is describing. `grade_0751_isolation.read_capture` is the strict CSV
 # reader the refusal is applied to, so a mark's `ts` here is the same parsed
 # datetime the grader compares and not a string read a second way. Both are
-# stdlib-only, so importing them costs an offline tool nothing; the comment in
-# `grade_gpu_door.py:111-118` is why the *watcher* cannot be imported instead and
-# this pair can.
+# stdlib-only, so importing them costs an offline tool nothing -- and this tool
+# takes the watch table from `windows/tools/gpu_block_watch.py` by reference
+# rather than re-reading a capture's worth of it here.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import grade_0751_isolation as fan
 import grade_gpu_door as door

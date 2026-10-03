@@ -36,20 +36,32 @@ from ctypes import wintypes
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import uefi_var  # noqa: E402
 
-_k32 = uefi_var._k32
-_k32.SetFirmwareEnvironmentVariableExW.argtypes = [
-    wintypes.LPCWSTR, wintypes.LPCWSTR, ctypes.c_void_p, wintypes.DWORD,
-    wintypes.DWORD]
-_k32.SetFirmwareEnvironmentVariableExW.restype = wintypes.BOOL
+
+def _setter():
+    """kernel32 with `SetFirmwareEnvironmentVariableExW` declared on it.
+
+    Not at module scope: `uefi_var` binds its three handles on first call now
+    rather than at import, so there is nothing to declare against until that
+    call has happened. `uefi_var._load()` caches the handle, so this declares
+    the signature once per process whichever call gets there first.
+    """
+    k32 = uefi_var._load()[0]
+    k32.SetFirmwareEnvironmentVariableExW.argtypes = [
+        wintypes.LPCWSTR, wintypes.LPCWSTR, ctypes.c_void_p, wintypes.DWORD,
+        wintypes.DWORD]
+    k32.SetFirmwareEnvironmentVariableExW.restype = wintypes.BOOL
+    return k32
+
 
 NAME, GUID = uefi_var.UNIWILL_NAME, uefi_var.UNIWILL_GUID
 
 
 def read_raw():
+    k32 = uefi_var._load()[0]
     buf = ctypes.create_string_buffer(0x1000)
     attr = wintypes.DWORD()
-    n = _k32.GetFirmwareEnvironmentVariableExW(NAME, GUID, buf, len(buf),
-                                               ctypes.byref(attr))
+    n = k32.GetFirmwareEnvironmentVariableExW(NAME, GUID, buf, len(buf),
+                                              ctypes.byref(attr))
     if n == 0:
         raise SystemExit(f"error: read {NAME}: win32 error {ctypes.get_last_error()}")
     return buf.raw[:n], attr.value
@@ -57,7 +69,8 @@ def read_raw():
 
 def write_raw(data, attr):
     buf = ctypes.create_string_buffer(bytes(data), len(data))
-    if not _k32.SetFirmwareEnvironmentVariableExW(NAME, GUID, buf, len(data), attr):
+    if not _setter().SetFirmwareEnvironmentVariableExW(NAME, GUID, buf,
+                                                        len(data), attr):
         raise SystemExit(f"error: write {NAME}: win32 error {ctypes.get_last_error()}")
     back, back_attr = read_raw()
     if back != bytes(data) or back_attr != attr:

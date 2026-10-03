@@ -586,11 +586,16 @@ class TheOracleRule(unittest.TestCase):
         # renderer, its two census-side edits in `scan()` and `build()` and the
         # `#734` assertion block, every one of them above this span. Same
         # move-and-not-an-edit shape as each of the steps above it.
+        # **`:4855-4861` since issue #881**, whose name-indexed carry half added
+        # the module docstring's sixth outcome, `carry_names`' second pass,
+        # `name_clusters`' second return value and `print_carry`'s third
+        # parameter, every one of them above this span. Re-read against the
+        # file; the same move-and-not-an-edit shape as each step above it.
         self.assertEqual(
             cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
                                   "largest_class", 1, 2, found["texts"],
                                   found["asserted"])),
-            "ec/tools/xdata_register_map.py:4778-4784")
+            "ec/tools/xdata_register_map.py:4855-4861")
 
     def test_the_census_csvs_are_read_from_the_tool_that_writes_them(self):
         # Derived from `OUT_REGISTERS`/`OUT_CLUSTERS` rather than named here, so
@@ -653,15 +658,24 @@ class TheOracleRule(unittest.TestCase):
         # `build()`, and the `#734` assertion block, all above this span. That
         # is the fifth merge-shaped step here, and like the four before it both
         # members of the pair moved together.
-        self.assertIn("3844-3861", detail)
-        self.assertNotIn(":3833", detail)
+        # **`:3921-3938` / `#3910` since issue #881**, whose name-indexed carry
+        # half added the module docstring's sixth outcome, `carry_names`' second
+        # pass and docstring, `name_clusters`' second return value, `generate`'s
+        # fifth value and `print_carry`'s third parameter, all above this span.
+        # That is the sixth merge-shaped step, and like the five before it both
+        # members of the pair moved together. The negative guard is re-pinned
+        # with them, naming this tree's `:3910` -- the sum the `lines[3910]`
+        # assertion below points at -- because a guard that can never fail is
+        # not a guard. Both re-read against the file, not shifted by arithmetic.
+        self.assertIn("3921-3938", detail)
+        self.assertNotIn(":3910", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3833])
-        self.assertIn("check(", lines[3843])
+        self.assertIn("extmem_both", lines[3910])
+        self.assertIn("check(", lines[3920])
         self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3860])
+                      lines[3937])
 
 
 class SectionSelection(unittest.TestCase):

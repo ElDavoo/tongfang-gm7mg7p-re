@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Offline checks; no EC is opened and the vendor driver is never called.
 
-ctgp_dben_probe.py imports ecrw, which binds kernel32 at import time and so
-only loads on Windows -- windows/tools/ecrw_fake.py stands in for the whole
-module, installed by assignment the way the probe, ec_watch and GPU-block
-suites do, and FakeEc below scripts the two arms on top of it.
+ctgp_dben_probe.py imports ecrw -- windows/tools/ecrw_fake.py stands in for the
+whole module, installed by assignment the way the probe, ec_watch and GPU-block
+suites do, and FakeEc below scripts the two arms on top of it. What the fake is
+for now is scriptability: `ecrw` imports anywhere
+(`windows/tools/test_import_off_windows.py`), and replacing these suites' fakes
+with a scripted class each is the open follow-up.
 
 The byte-script checks run the tool from a byte with the value bit clear and
 read the two arms back out of its writes, so a probe that opened the gate and

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Offline checks; no EC is opened and the vendor driver is never called.
 
-charge_target_test.py imports ecrw, which binds kernel32 at import time and so
-only loads on Windows, and shells out to powershell for its WMI line. The fakes
-below stand in for both, which is what lets the branches no committed artifact
+charge_target_test.py imports ecrw and shells out to powershell for its WMI line.
+The fakes below stand in for both, which is what lets the branches no committed artifact
 shows run here: the three refusals and the restore in the finally.
 
 The register map keeps what is written to it, because a byte map is what makes
