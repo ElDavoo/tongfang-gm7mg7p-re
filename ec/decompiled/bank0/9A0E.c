@@ -11,15 +11,18 @@
    the whole 16-bit subtraction in the carry. Called on 0x08CA, then 0x08CB and then 0x08C2 it must
    clear carry each time - the jnc before the 0x08C2 call jumps on carry clear, so that is the same
    lower bound as the two jc failure tests, not its inverse - so the arithmetic below runs only when
-   the scaled value is above 0x08CB, the strongest of the three; 0x08C2 and 0x08CA are the weaker
-   two bounds and cannot change that; on any other value the routine writes 0x00 to 0x0A49 and 0x01
-   to 0x0A4A and returns 1. XDATA 0x044B is then tested twice, against 0x04 and against 0x02, so
-   value 4 selects 0x08CB, value 2 selects 0x08C2, and every other value - 0, 1, 3 and anything
-   above 4 - takes 0x08CA. The selected byte is subtracted from the pair, and the store that follows
-   the call to 0xBB39 lands at 0x0A49 because that routine loads DPTR with that literal rather than
-   choosing it. The low byte at 0x0A4A is returned in R7. ec/annotations/registers.yaml now carries
-   0x044B as XDATA_044B, an EC-side site found with its meaning not established; 0x08EA, 0x08CA,
-   0x08CB, 0x08C2, 0x0A49 and 0x0A4A have no entry there.
+   the scaled pair exceeds the byte at 0x08CA, the byte at 0x08CB and the byte at 0x08C2 - three
+   lower bounds, which together are the one condition that the pair exceeds the largest of the
+   three. Which of the three binds is not established: 0x96AD fills all three out of one indexed
+   CODE table over a base 0xB93A loads from XDATA 0x0A51/0x0A52 at run time, and
+   boot-xdata-sites.csv records all three as 0x00 at boot; on any other value the routine writes
+   0x00 to 0x0A49 and 0x01 to 0x0A4A and returns 1. XDATA 0x044B is then tested twice, against 0x04
+   and against 0x02, so value 4 selects 0x08CB, value 2 selects 0x08C2, and every other value - 0,
+   1, 3 and anything above 4 - takes 0x08CA. The selected byte is subtracted from the pair, and the
+   store that follows the call to 0xBB39 lands at 0x0A49 because that routine loads DPTR with that
+   literal rather than choosing it. The low byte at 0x0A4A is returned in R7.
+   ec/annotations/registers.yaml now carries 0x044B as XDATA_044B, an EC-side site found with its
+   meaning not established; 0x08EA, 0x08CA, 0x08CB, 0x08C2, 0x0A49 and 0x0A4A have no entry there.
    type: math
    evidence: ec/decompiled/bank0/9A0E.asm; ec/decompiled/bank0/9A0E.c; ec/decompiled/bank0/BB31.asm;
    ec/decompiled/bank0/BB39.asm; ec/annotations/registers.yaml;

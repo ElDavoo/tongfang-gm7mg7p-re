@@ -191,24 +191,28 @@ at the call sites:
 
 | the call | the branch after it | so the routine continues only if |
 |---|---|---|
-| `DPTR = 0x08CA` | `jc 0x9A41` (failure) | scaled > `0x08CA` |
-| `DPTR = 0x08CB` | `jc 0x9A41` (failure) | scaled > `0x08CB` |
-| `DPTR = 0x08C2` | `jnc 0x9A4B` (success) | scaled > `0x08C2` |
+| `DPTR = 0x08CA` | `jc 0x9A41` (failure) | scaled > `XDATA[0x08CA]` |
+| `DPTR = 0x08CB` | `jc 0x9A41` (failure) | scaled > `XDATA[0x08CB]` |
+| `DPTR = 0x08C2` | `jnc 0x9A4B` (success) | scaled > `XDATA[0x08C2]` |
 
 `jnc` jumps *on carry clear*, so the third branch continues to the arithmetic
 under the same predicate as the two `jc` failure tests — all three are lower
-bounds on the scaled value, not a bracket around it. **The subtraction runs only
-when the scaled value exceeds `0x08CB`**: `0x08C2 < 0x08CA < 0x08CB`, so the
-conjunction of the three tests collapses to the strongest of them. On any other
-value `0x9A0E` writes `0x00` to `0x0A49`, `0x01` to `0x0A4A` and returns 1.
+bounds on the scaled value, not a bracket around it. `0xBB31` opens with
+`movx A,@DPTR`, so what each call compares is the **byte at** the address in
+the first column. **The subtraction runs only when the scaled pair exceeds the
+byte at `0x08CA`, the byte at `0x08CB` and the byte at `0x08C2`** — three lower
+bounds, which together are the one condition that the pair exceeds the largest
+of the three. On any other value `0x9A0E` writes `0x00` to `0x0A49`, `0x01` to
+`0x0A4A` and returns 1.
 
-That collapse is worth stating plainly, because it is the routine's shape rather
-than a detail of it: `0x08C2` and `0x08CA` are the two weaker of three lower
-bounds, so the calls that test them are implied by the one that tests `0x08CB`
-and cannot change whether the routine continues. The guard is one threshold,
-`0x08CB`, arrived at through three reads — and that is also the byte value 4 of
-`0x044B` goes on to select at `0x9A52`, though the guard reaches the same
-conclusion whichever value the byte holds, since it runs before the selection.
+Which of the three binds is **not established**, and the addresses do not say.
+All three are run-time table entries rather than constants: `0x96AD` fills them
+out of one indexed CODE table, `mov A,#0x31` / `movc A,@A+DPTR` and then `#0x32`
+and `#0x33`, over an `R6:R7` base that `0xB93A` loads from XDATA `0x0A51` and
+`0x0A52` at run time, so which table they are read from is itself decided then.
+`ec/annotations/boot-xdata-sites.csv` records all three as `0x00` at boot, where
+they are equal and none of them is the largest. Ordering them by address says
+nothing about their values.
 
 Note also what the pair is before any of this: `0x9A0E` loads XDATA `0x08EA`,
 scales it through `mul16` (`0x707D`) with `0x0013` and `div_r6r4_by_r5_16bit`
@@ -271,10 +275,13 @@ one result and would report writers of `XDATA_044B` that bank1's never are.
   any of them. This page maps values to sites; it does not name what they are
   for. `044b-mode-stepper.md` says the same of the transitions, and
   `XDATA_044B` keeps `status: present-untested`.
-- **What `0x08C2`, `0x08CA` and `0x08CB` are.** All three are filled by the
-  indexed CODE-table copy in `0x96AD` and none has an entry in
-  `registers.yaml`. Their role in the arithmetic is established; their meaning
-  is not, and giving them entries is separate work with its own warrant.
+- **What `0x08C2`, `0x08CA` and `0x08CB` are, and which of them binds.** All
+  three are filled by the indexed CODE-table copy in `0x96AD` and none has an
+  entry in `registers.yaml`. Their role in the arithmetic is established; their
+  meaning is not, and giving them entries is separate work with its own
+  warrant. Which of the three is the largest at run time is not established
+  either, so the guard is recorded as the three-way condition it is in the
+  listing rather than as whichever byte turns out to be strongest.
 - **Whether the EC acts on any of it.** Every sentence above is a sentence
   about which arm stores which constant and which comparison guards which
   subtraction. A store being issued is not a behavioural observation, nothing
