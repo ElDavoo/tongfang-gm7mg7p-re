@@ -57,14 +57,22 @@ inference from their absence.
 
 ## The whole family
 
-A count over the committed image, so it moves only if the firmware does.
+A count over the committed image *and* over this repository's committed
+listings, so it moves when the firmware does and also when a listing lands.
 
 | stub | selects | forwarders | distinct targets | entry | operand | no-listing |
 |---|---|---:|---:|---:|---:|---:|
-| `0x1100` | bank 0 | 350 | 350 | 43 | 0 | 307 |
+| `0x1100` | bank 0 | 350 | 350 | 44 | 0 | 306 |
 | `0x1114` | bank 1 | 53 | 53 | 11 | 0 | 42 |
 | `0x1128` | bank 2 | 0 | 0 | 0 | 0 | 0 |
 | `0x113C` | bank 3 | 0 | 0 | 0 | 0 | 0 |
+
+**SUPERSEDED (issue #337):** the `0x1100` row previously read `43 | 0 | 307`
+in the last three columns, true when the census was measured. `0xC118` is seeded
+and exported now, so it reclassifies from `no-listing` to `entry` against
+`bank0/C118.asm` and the row moved with it — which is the case the sentence above
+used to say could not happen, since nothing in `ec/firmware/GMxMGxx_11.800` did.
+See `bank0-c118-3202-bit0-thunk.md`.
 
 The two stubs at zero are printed rather than dropped, so the sweep over the
 four sites is visibly complete rather than visibly incomplete.
@@ -109,11 +117,15 @@ not its membership.
 
 The shape of the change: **not one of the 22 addresses the withdrawn count
 called an operand byte is an operand byte in bank 0**, and in bank 0 the class
-does not occur at all. Nine of the 22 are real entries and thirteen have no
-committed listing. Conversely four of the seven it called "not covered by any
-committed bank1 listing" are entries in bank 0 — `0x8294`, `0xA747`, `0xC349`
-and `0xC48F` — and three have no listing in either bank (`0x8567`, `0x8588`,
-`0x85FB`).
+does not occur at all. Ten of the 22 are real entries and twelve have no
+committed listing. **SUPERSEDED (issue #337):** that split previously read nine
+and thirteen, true when the census was measured. `0xC118` is one of the 22 —
+this document names it below as one of the two transcribed by hand — and its
+landing bank-0 listing is what moved it, in the same direction as the row in the
+table above. See `bank0-c118-3202-bit0-thunk.md`. Conversely four of the seven it
+called "not covered by any committed bank1 listing" are entries in bank 0 —
+`0x8294`, `0xA747`, `0xC349` and `0xC48F` — and three have no listing in either
+bank (`0x8567`, `0x8588`, `0x85FB`).
 
 Where a `ghidra-functions.csv` row carries the bank-0 listing, the symbol that
 row gives: `0xC1E7` is `test_1664_bit0`, `0xC389` is `clear_1607_bit2`, `0xC349`
