@@ -1,0 +1,12 @@
+addr,file_offset,runtime,class,site_access,callee,callee_name,callee_size,callee_movx,why
+0x0434,0x221EE,0x21EE,unresolved,DPTR handed to lcall 0x369b -- direction unresolved here,0x369B,not exported,,,callee is not in the committed listing index
+0x0434,0x22461,0x2461,stride-base,DPTR handed to lcall 0x35b0 -- direction unresolved here,0x35B0,dptr_0428_plus_60a,11,none,"0x35AC dptr_0428_plus_60a is 11 bytes of pointer arithmetic with no movx; the address is a base, not a byte"
+0x0434,0x237DA,0x37DA,unresolved,no movx found in the decoded window,,,,,flow opcode
+0x0434,0x23F28,0x3F28,unresolved,DPTR handed to lcall 0x3717 -- direction unresolved here,0x3717,not exported,,,callee is not in the committed listing index
+0x0434,0x2878A,0x878A,unresolved,no movx found in the decoded window,,,,,flow opcode
+0x0434,0x289D4,0x89D4,stride-base,DPTR handed to lcall 0x10bc -- direction unresolved here,0x10BC,add_full_product_to_dptr,12,none,"0x10BC add_full_product_to_dptr is 12 bytes of pointer arithmetic with no movx; the address is a base, not a byte"
+0x0437,0x2358F,0x358F,stride-base,DPTR handed to ljmp 0x10bc -- direction unresolved here,0x10BC,add_full_product_to_dptr,12,none,"0x10BC add_full_product_to_dptr is 12 bytes of pointer arithmetic with no movx; the address is a base, not a byte"
+0x0437,0x239BC,0x39BC,stride-base,DPTR handed to ljmp 0x10bc -- direction unresolved here,0x10BC,add_full_product_to_dptr,12,none,"0x10BC add_full_product_to_dptr is 12 bytes of pointer arithmetic with no movx; the address is a base, not a byte"
+0x0437,0x26FF1,0x6FF1,stride-base,DPTR handed to lcall 0x10bc -- direction unresolved here,0x10BC,add_full_product_to_dptr,12,none,"0x10BC add_full_product_to_dptr is 12 bytes of pointer arithmetic with no movx; the address is a base, not a byte"
+0x0437,0x28724,0x8724,stride-base,DPTR handed to lcall 0x10bc -- direction unresolved here,0x10BC,add_full_product_to_dptr,12,none,"0x10BC add_full_product_to_dptr is 12 bytes of pointer arithmetic with no movx; the address is a base, not a byte"
+0x0437,0x28802,0x8802,stride-base,DPTR handed to ljmp 0x10bc -- direction unresolved here,0x10BC,add_full_product_to_dptr,12,none,"0x10BC add_full_product_to_dptr is 12 bytes of pointer arithmetic with no movx; the address is a base, not a byte"
