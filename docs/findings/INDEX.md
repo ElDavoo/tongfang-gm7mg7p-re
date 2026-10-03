@@ -223,6 +223,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`trampoline-relative-branch-sites.md`](trampoline-relative-branch-sites.md) — All 170 of §8's trampoline-landing relative sites are the trampoline block's own operands, and no branch reaches the block from outside it
 - [`trampoline-target-census.md`](trampoline-target-census.md) — Every trampoline in the BL51 block gets a decoded target, read in the bank its stub selects (issue #574)
 - [`uncalled-vendor-setters.md`](uncalled-vendor-setters.md) — The three bytes the uncalled vendor setters write (issue #106)
+- [`uniwill-variable-0x60-writers.md`](uniwill-variable-0x60-writers.md) — Every writer of `UniWillVariable`, and which of them can explain offset 0x60
 - [`verify-provenance-failure-answers.md`](verify-provenance-failure-answers.md) — `--verify-provenance` had ten ways to fail and one committed answer to none of them
 - [`walk-bounds-guard-pinned.md`](walk-bounds-guard-pinned.md) — The bounds disjunct is pinned, by two cases — and the sweep that could have noticed it cannot see it
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
