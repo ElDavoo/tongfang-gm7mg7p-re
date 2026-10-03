@@ -88,10 +88,11 @@ invariant, not the check.
 
 Eight keys, nine naming comments. **No claim here is that any of them is a
 missing function**, which is the opposite of a hole in the export. Four of the
-citing comments name the reaching instruction, and the other four do not: they
-describe what the callee *is* — the routine that makes those ljmps, or the
-routine the call site sits inside — and say nothing about how it is entered.
-So the table quotes each comment as it reads rather than under one claim:
+eight keys' comments name the reaching instruction; the rest describe what the
+callee *is* — the routine that makes those ljmps, or the routine the call site
+sits inside — and say nothing about how it is entered. Counted per comment the
+second arm is five, because `bank0,B4A8` is named by two of those. So the
+table quotes each comment as it reads rather than under one claim:
 
 | key | cited by | what its own comment says about it |
 |---|---|---|

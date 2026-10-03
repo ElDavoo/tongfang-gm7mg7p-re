@@ -43,8 +43,9 @@ trees the numbers were taken on.
 | — candidate (callee, comment) pairs, before the frame gate | 326 |
 | — kept / rejected / undecided by it | 134 / 166 / 26 |
 
-*** CORRECTION 2026-10-03 (issue #460), leaving the table above as it was
-written.*** Every cell is re-measured. Three of them moved *because of this
+*** CORRECTION 2026-10-03 (issue #460).*** Every cell above is re-measured, the
+table carrying the new figures rather than the old ones; each moved cell's
+former value is recorded under the block. Three of them moved *because of this
 change*; the rest were already behind, and `--check` cannot catch either kind
 because it compares `call-graph-callees.csv` against the listings and never
 reads this table, which is transcribed by hand.
