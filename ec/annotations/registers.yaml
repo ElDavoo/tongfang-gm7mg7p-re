@@ -4660,13 +4660,15 @@ registers:
       an unseeded function rather than a verdict about the bytes. Its 13
       bytes are a complete single-bit accessor ending exactly where
       set_1603_bit4 begins at 0xC191, read off the image rather than from
-      a listing. All three of this byte's sites have a bank1 forwarder onto
-      them -- 0x1A26 onto 0xC1B1, 0x1A2C onto 0xC349 and 0x1AB6 onto
-      0xC184, the same six-byte mechanism, rows in
-      `ec/annotations/trampoline-target-census.csv` -- so cross-bank
-      reachability is not what tells them apart. What does is that 0x1AB6's
-      target is the one classified no-listing, because no committed export
-      covers 0xC184 while the other two resolve to exported listings.
+      a listing. Of the six sites the three bytes this change names, three
+      have a bank1 forwarder onto them -- 0x1A26 onto 0xC1B1, 0x1A2C onto
+      0xC349 and 0x1AB6 onto 0xC184, the same six-byte mechanism, rows in
+      `ec/annotations/trampoline-target-census.csv` -- and 0xC1BE, 0xC356
+      and 0xC412 have none. So cross-bank reachability is the run's
+      ordinary shape rather than what marks 0xC184: 0xC1B1 is cross-bank
+      reachable too. What marks 0xC184 is that no committed export covers
+      it -- its forwarder target is the one classified `no-listing`, where
+      0xC1B1 and 0xC349 resolve to exported listings.
       docs/findings/xdata-1663-1667-1668.md is the write-up.
       Bit map, one entry per site, read off the committed listings for the
       two that have one and off the image for 0xC184. Three sites test two
@@ -4693,12 +4695,11 @@ registers:
       its complement. The selecting byte differs per site, so it is not one
       blanket statement -- 0xC1B1 is reached on bit 0 of 0x0815 (0x8F34
       `mov DPTR,#0x815` / `jb 0xe0, 0x8f3e`, which is the branch the
-      `lcall 0xc1b1` sits under), 0xC356 is the entry instruction of the arm
-      that bit 0 falling clear reaches (`ljmp 0x8fdb` lands on 0x8FDB's
-      first instruction), and 0xC349 and 0xC1BE are dispatched on the value
-      of 0x0815's neighbour 0x0817 through the dec A / jz chains at
-      0x8F55-0x8F5D and 0x8FF5-0x8FFD. 0x0817 has no entry in this file, so
-      what the state encodes is not decoded here.
+      `lcall 0xc1b1` sits under) and 0xC1BE is dispatched on the value of
+      0x0815's neighbour 0x0817 through the dec A / jz chain at
+      0x8FF5-0x8FFD. 0x0817 has no entry in this file, so what the state
+      encodes is not decoded here. The neighbouring pair's two sites are
+      reached the same way round and are described in XDATA_1667's note.
       The DSDT does not reach this byte -- the ECMG field list is
       dsdt.dsl:52194-52328, its 28 Offset declarations run from 0x043E to
       0x0EA0, and 0x1663 is above all of them. That is a fact about the

@@ -5689,14 +5689,16 @@ if __name__ == "__main__":
 # belongs at the end of the file for the same reason the `named_in_tree` block
 # above does.
 #
-# *** 2026-10-03, issue #635: `named_in_tree` 190 -> 193, and 217 -> 220, the
-# arithmetic every dated block above records, once more. registers.yaml gained
-# XDATA_1663, XDATA_1667 and XDATA_1668 -- the three unnamed single-bit test
-# bytes the 0x1663-0x1668 run held between #267's three -- and NOT_IN_TREE does
-# not move: each is reached by an exported function (0xC1B1/0xC1BE for 0x1663,
-# 0xC349/0xC356 for 0x1667, 0xC412 for 0x1668, per
-# ec/annotations/site-resolution.csv), so the count moves by the three that
-# are, and 220 - 27 = 193.
+# *** 2026-10-03, issue #635: registers.yaml gained XDATA_1663, XDATA_1667 and
+# XDATA_1668 -- the three unnamed single-bit test bytes the 0x1663-0x1668 run
+# held between #267's three -- and NOT_IN_TREE does not move: each is reached
+# by an exported function (0xC1B1/0xC1BE for 0x1663, 0xC349/0xC356 for
+# 0x1667, 0xC412 for 0x1668, per ec/annotations/site-resolution.csv), so the
+# movement is by the rows themselves rather than by the set. No figure is
+# written down here: `named_in_tree` is no longer pinned -- self_test() derives
+# it as len(symbols) - len(NOT_IN_TREE) and prints it, so `--self-test` is what
+# answers it and a numeral in prose here would be a hand-kept total that every
+# other branch adding a register row has to edit.
 #
 # The token half moves by the mechanism the #264 and #267 blocks above record,
 # for the same reason: `gen_xdata_symbols.py` turns the three rows into three
