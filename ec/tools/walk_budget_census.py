@@ -110,6 +110,7 @@ import io
 import os
 import sys
 
+from access_cell_corrections import corrected
 from trace_xdata_refs import (DPL, DPH, MOV_DIRECT_DIRECT, budget_end, classify,
                               is_dptr_rebuild, is_terminator, walk, walk_why)
 
@@ -299,7 +300,17 @@ def census_table(d: bytes, budget: int, extend: int):
     `is_terminator()` is the closed set, and the census refuses rather than
     rendering the odd token into a cell -- the same refusal
     `load_census_map()` makes, for the same reason: a cell that reads as an
-    answer is worse than a run that stops."""
+    answer is worse than a run that stops.
+
+    **`access_at_budget` goes through `access_cell_corrections.corrected()`
+    before either of the two comparisons below.** Three sites' committed cells
+    have been corrected because the budget-8 window was too short to hold an
+    access of their own, so the cell this column reports is the committed one
+    rather than the raw budget-8 verdict -- which is what makes `mismatched`
+    empty, and what leaves `access_at_extend` equal to `access_at_budget` and
+    the row `unchanged` rather than a class. A corrected row keeps its place
+    in this CSV: it is still budget-truncated, and the census is about the
+    terminator first."""
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow(COLUMNS)
@@ -321,7 +332,7 @@ def census_table(d: bytes, budget: int, extend: int):
             at_extend, why_extend = walk_why(d, off, extend)
             if not is_terminator(why_extend):
                 unknown.add((name, offset, why_extend))
-            access_budget = classify(insns)
+            access_budget = corrected(off, classify(insns))
             if budget == BUDGET and access_budget != committed:
                 mismatched.append((name, offset, committed, access_budget))
             access_extend = classify(at_extend)
@@ -407,9 +418,18 @@ def print_summary(tallies, moving: int, classes, budget: int, extend: int) -> No
               f"{budget_end(budget)} {n:3d}   {other}")
     print(f"\n{total} of {rows} rows across {len(TABLES)} tables are truncated "
           f"at a budget of {budget}.")
-    print(f"A budget of {extend} changes {moving} of their `access` cells: "
-          + ", ".join(f"{k} {v}" for k, v in sorted(classes.items()))
-          + f", and the other {total - moving} keep the cell they have.")
+    if moving:
+        print(f"A budget of {extend} changes {moving} of their `access` "
+              "cells: "
+              + ", ".join(f"{k} {v}" for k, v in sorted(classes.items()))
+              + f", and the other {total - moving} keep the cell they have.")
+    else:
+        # The empty case is the strong one, and it reads as a hole in a
+        # sentence built for the non-empty one -- a colon followed by nothing
+        # is a finding a reader has to reconstruct. Stated on its own terms:
+        # every truncated row already holds the cell a larger budget gives it.
+        print(f"A budget of {extend} changes none of their `access` cells; "
+              f"all {total} keep the cell they have.")
     print("`A` means a store to DPL/DPH that walk()'s reload guard cannot see "
           "sits in\nthe instructions the budget hides, so the larger budget "
           "files an indexed access under\nthe site register. `B` means the "

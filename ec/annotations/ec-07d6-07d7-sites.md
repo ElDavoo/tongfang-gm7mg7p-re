@@ -167,7 +167,8 @@ tally reconciles against the CSV without a second parse:
 | `read x1, write x1` | 3 | 1 |
 | `write x1` | 10 | 11 |
 | `write x2, walks 2 consecutive bytes (inc dptr)` | 2 | 3 |
-| `write x2, walks 3 consecutive bytes (inc dptr)` | 2 | — |
+| `write x2, walks 3 consecutive bytes (inc dptr)` | 1 | — |
+| `write x4, walks 4 consecutive bytes (inc dptr)` | 1 | — |
 | `DPTR handed to lcall … -- direction unresolved here` | 36 | 9 |
 | `no movx found in the decoded window` | 3 | 2 |
 | **total** | **142** | **71** |
@@ -187,6 +188,12 @@ the 0751 and 07C4-07D5 files draw. The two bytes are the loudest pair in the
 whole `0x07C4`-`0x07D7` block by site count, and 100% of that loudness is in
 another program.
 
+**One row of the table above is `write x4, walks 4 consecutive bytes (inc
+dptr)`, and it used to be counted as `write x2, walks 3 …`** — issue #865,
+corrected in §3.1 and derived by `../../ec/tools/access_cell_corrections.py`
+rather than typed in. That is the whole of the change: no figure in the
+paragraph above it moves, because that row walked before and walks now.
+
 ## 3. The three functions the census tags `[writer]`, and what the values come from
 
 `xdata-registers.csv` tags three of the fourteen `0x07D6` functions `[writer]`
@@ -198,7 +205,7 @@ committed decompiles rather than hand-decoding anything new.
 ### 3.1 `pd:0xBECB` — the one site that writes both bytes
 
 `write_07d6_07d7_07d8_07d9_then_store_07df` (`../decompiled/pd/BECB.c`). This
-is the CSV row at `0xBECB`, `write x2, walks 3 consecutive bytes (inc dptr)`,
+is the CSV row at `0xBECB`, `write x4, walks 4 consecutive bytes (inc dptr)`,
 and it is the only site in either address that touches both:
 
 ```
@@ -224,6 +231,21 @@ and it is the only site in either address that touches both:
 0xbee7  90 07 df  mov  dptr,#0x07df
 0xbeea  12 10 e8  lcall 0x10e8
 ```
+
+**Correction (issue #865), leaving the cell string above as it was written.**
+It read `write x2, walks 3 consecutive bytes (inc dptr)`; it is now `write x4,
+walks 4 consecutive bytes (inc dptr)`, which is what the listing under it has
+always shown and what the export's own name has always said. The budget-8
+window `walk()` takes ends at `0xbed4` — an `inc dptr`, the site's eighth
+instruction — which is why it dropped the two stores at `0xBED5` and
+`0xBED7`. There is no DPTR rebuild and no flow opcode between the cut and the
+first store the longer window reaches, so the extra accesses are this same
+function's and not another pointer's: `../../docs/findings/walk-window-terminators.md`
+§B classified the row that way, and `../../docs/findings/class-b-access-cell-corrections.md`
+carries the correction and how the tool now derives it. §2's table moves with
+it — one row leaves `write x2, walks 3` for the new `write x4, walks 4`
+string — and the `142`, the `85`, the `10` and the 3 read-modify-writes do
+not, because this row was always a four-byte write counted three bytes long.
 
 **Where each value comes from: R5 and R3, and nothing else.** Both are
 caller-supplied registers — there is no `mov a,#imm` on the path into either

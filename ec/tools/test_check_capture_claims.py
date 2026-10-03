@@ -620,7 +620,7 @@ class CaptureParsing(unittest.TestCase):
     """The CSV read, so a change to the tool's idea of a capture is caught."""
 
     def test_sweep_summary_comment_lines_are_dropped_before_the_header(self):
-        # The committed summary opens with three `#` lines. A reader that does
+        # The committed summary opens with a `#` block. A reader that does
         # not drop them first takes a comment as the fieldnames and finds no
         # addr column -- which reads as "the file has no rows", not as a parser
         # that skipped what it should not have.
