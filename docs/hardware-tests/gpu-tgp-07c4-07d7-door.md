@@ -388,7 +388,14 @@ Two caveats belong next to the table rather than in a footnote.
   by this method under this action" — never "the GPU does not read it" — and
   read any zero through `../../ec/tools/grade_gpu_door.py` first: it prints
   `net`, `total` and `max` side by side for every address, and `total` is the
-  figure that shows a move-and-return, which `net` cannot.
+  figure that shows a move-and-return, which `net` cannot. That reader takes
+  the `ts,addr,old,new` shape §3's watcher writes, which is what the
+  `2026-09-23-power-mode-cycle-0700-07ff.csv` named at the top of this file is.
+  The `2026-09-18-ac-plugin-sweep-summary.csv` beside it is not that shape — it
+  is a per-address summary, and `../../ec/tools/grade_sweep_summary.py` is what
+  reads it: `change_count` is the only total it carries, and a row whose two
+  endpoints match under a non-zero `change_count` is still a byte that moved.
+  Only `change_count == 0` with equal endpoints reads `held`.
 - **A readback is not an effect.** Nothing in this procedure checks whether the
   EC acted on a byte, and the table deliberately has no "readback OK ⇒
   confirmed" column. Do not add one. `../../CLAUDE.md`: a register write being
@@ -627,12 +634,16 @@ open until a human with the machine closes it.
   fills §5's columns 1-5 while naming columns 6-10 as not its own. It emits a
   CSV in the schema `ec_watch.py`, `../../ec/tools/grade_0751_isolation.py`
   and it already read, so grading needs no parser written for this file. It
-  states its own copy of the two window bounds and the 24 DSDT names because
-  it cannot import `gpu_block_watch.py` — that module imports `ecrw`, which
-  binds `kernel32` at import time, and an offline grader that imported it would
-  load only on Windows. `../../windows/tools/test_gpu_block_watch.py` holds the
-  two copies together, the same shape of hold as the one that caught this
-  procedure's four stale cells in #266.
+  reads the two window bounds and the 24 DSDT names straight out of
+  `gpu_block_watch.py`, which it imports — `ecrw` binds `kernel32` on its first
+  `Ec()` rather than at import, so the tool that wrote the capture is loadable
+  on the runner that grades it. The grader no longer keeps a transcription of
+  its own, so that chain runs watcher → grader once. This procedure's own §7
+  table is the second copy that remains, and it is still held: `DoorTableTests`
+  in `../../windows/tools/test_gpu_block_watch.py` checks §7 against the
+  watcher, and `CitationTableTests` holds the watcher's table against
+  `evidence/acpi/dsdt.dsl` and `ec/annotations/registers.yaml`, which is the
+  same chain the #266 hold used to check twice over.
 - **#96** and **#1** are what the answer feeds: the upstream correction must not
   be written as though `0x07D0` has one meaning, and the paired `0x07B9`/
   `0x07D0` write is still the experiment that would settle whether the byte is a

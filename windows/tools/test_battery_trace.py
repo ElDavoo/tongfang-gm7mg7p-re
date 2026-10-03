@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Offline checks; no EC is opened and the vendor driver is never called.
 
-battery_trace.py imports ecrw, which binds kernel32 at import time and so only
-loads on Windows, and shells out to powershell for its WMI line. The fakes
-below stand in for both: windows/tools/ecrw_fake.py is installed by assignment,
+battery_trace.py imports ecrw and shells out to powershell for its WMI line.
+The fakes below stand in for both: windows/tools/ecrw_fake.py is installed by assignment,
 so this suite is not a party to the setdefault ordering accident
 docs/findings.md §16 records, and only subprocess.run is replaced so the tool's
 own wmi() -- the six-token parse and the dict(zip(keys, ...)) the row is built

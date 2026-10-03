@@ -55,15 +55,15 @@ Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
 - `exported functions` — 2720
-- `annotated function rows` — 1961
-- `rows the index marks annotated` — 1968
+- `annotated function rows` — 1962
+- `rows the index marks annotated` — 1969
 - `unresolved rows` — 172
 
 By program, as exported minus annotated minus the rest:
 
 | program | exported | annotated | unannotated |
 |---|---|---|---|
-| `bank0` | 750 | 697 | 53 (7%) |
+| `bank0` | 750 | 698 | 52 (7%) |
 | `bank1` | 676 | 594 | 82 (12%) |
 | `pd` | 541 | 541 | 0 (0%) |
 | `common` | 753 | 136 | 617 (82%) |
@@ -627,8 +627,8 @@ own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
 - `exported functions` — 2720
-- `annotated function rows` — 1961
-- `rows the index marks annotated` — 1968
+- `annotated function rows` — 1962
+- `rows the index marks annotated` — 1969
 - `unresolved rows` — 172
 
 **617 of the 753 common-area functions are unannotated, and that is still the

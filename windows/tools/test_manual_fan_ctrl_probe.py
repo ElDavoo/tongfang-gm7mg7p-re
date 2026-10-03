@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Offline checks; no EC is opened and the vendor driver is never called.
 
-manual_fan_ctrl_probe.py imports ecrw, which binds kernel32 at import time and
-so only loads on Windows -- ecrw_fake.py stands in for the whole module, and
-the FakeEc below scripts the two arms byte by byte on top of it.
+manual_fan_ctrl_probe.py imports ecrw -- ecrw_fake.py stands in for the whole
+module, and the FakeEc below scripts the two arms byte by byte on top of it.
+What the fake is for now is scriptability: `ecrw` imports anywhere
+(`windows/tools/test_import_off_windows.py`), and replacing it with a scripted
+class here is the open follow-up.
 
 The script is keyed on the arm and the sweep within it, not on a timestamp, so
 what a byte does is an assertion about the run's shape -- the no-op moves PWM,

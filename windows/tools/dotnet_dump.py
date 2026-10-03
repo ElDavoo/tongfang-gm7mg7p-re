@@ -44,7 +44,10 @@ import argparse
 import ctypes
 import os
 import sys
-from ctypes import wintypes
+try:
+    from ctypes import wintypes
+except ImportError:  # pragma: no cover - only on a Python without the module
+    wintypes = None
 
 import pefile
 
@@ -55,10 +58,6 @@ TOKEN_QUERY = 0x0008
 SE_PRIVILEGE_ENABLED = 0x00000002
 LIST_MODULES_ALL = 0x03
 TH32CS_SNAPPROCESS = 0x00000002
-
-_k32 = ctypes.WinDLL("kernel32", use_last_error=True)
-_adv = ctypes.WinDLL("advapi32", use_last_error=True)
-_psapi = ctypes.WinDLL("psapi", use_last_error=True)
 
 
 class LUID(ctypes.Structure):
@@ -90,31 +89,79 @@ class PROCESSENTRY32W(ctypes.Structure):
                 ("szExeFile", wintypes.WCHAR * 260)]
 
 
-_k32.OpenProcess.restype = wintypes.HANDLE
-_k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
-_k32.ReadProcessMemory.argtypes = [wintypes.HANDLE, ctypes.c_void_p, ctypes.c_void_p,
-                                   ctypes.c_size_t, ctypes.POINTER(ctypes.c_size_t)]
-_k32.ReadProcessMemory.restype = wintypes.BOOL
-_k32.GetCurrentProcess.restype = wintypes.HANDLE
-_k32.CloseHandle.argtypes = [wintypes.HANDLE]
-_k32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
-_k32.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
-_k32.Process32FirstW.argtypes = [wintypes.HANDLE, ctypes.POINTER(PROCESSENTRY32W)]
-_k32.Process32NextW.argtypes = [wintypes.HANDLE, ctypes.POINTER(PROCESSENTRY32W)]
-_adv.OpenProcessToken.argtypes = [wintypes.HANDLE, wintypes.DWORD,
-                                  ctypes.POINTER(wintypes.HANDLE)]
-_adv.LookupPrivilegeValueW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR,
-                                       ctypes.POINTER(LUID)]
-_adv.AdjustTokenPrivileges.argtypes = [wintypes.HANDLE, wintypes.BOOL,
-                                       ctypes.POINTER(TOKEN_PRIVILEGES), wintypes.DWORD,
-                                       ctypes.c_void_p, ctypes.c_void_p]
-_psapi.EnumProcessModulesEx.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.HMODULE),
-                                        wintypes.DWORD, ctypes.POINTER(wintypes.DWORD),
-                                        wintypes.DWORD]
-_psapi.GetModuleFileNameExW.argtypes = [wintypes.HANDLE, wintypes.HMODULE,
-                                        wintypes.LPWSTR, wintypes.DWORD]
-_psapi.GetModuleInformation.argtypes = [wintypes.HANDLE, wintypes.HMODULE,
-                                        ctypes.POINTER(MODULEINFO), wintypes.DWORD]
+_dlls = None
+
+
+def _load():
+    """(kernel32, advapi32, psapi), loaded and declared on first use.
+
+    `ctypes.WinDLL` exists only on Windows, so binding the three at module
+    scope made this file loadable only there. Loading on first call keeps the
+    platform-neutral part -- the structures above, `restore_ranges`,
+    `diff_runs` -- importable anywhere, which is what
+    `windows/tools/test_import_off_windows.py` holds. Cached, so one process
+    binds each handle once.
+
+    The `wintypes` guard below cannot fire here, and `ecrw.py`'s equivalent can:
+    this module builds `LUID`, `LUID_AND_ATTRIBUTES`, `TOKEN_PRIVILEGES`,
+    `MODULEINFO` and `PROCESSENTRY32W` from `wintypes.DWORD` at
+    class-definition time, so an interpreter without `ctypes.wintypes` is
+    already dead during import and never reaches this line. Kept because the
+    guard costs nothing and names the interpreter rather than raising
+    `AttributeError` from a structure definition.
+    """
+    global _dlls
+    if _dlls is not None:
+        return _dlls
+    if wintypes is None:
+        raise SystemExit("error: ctypes.wintypes is unavailable on this "
+                         "interpreter, so the Win32 signatures this tool needs "
+                         "cannot be built")
+    try:
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        adv = ctypes.WinDLL("advapi32", use_last_error=True)
+        psapi = ctypes.WinDLL("psapi", use_last_error=True)
+    except AttributeError:
+        raise SystemExit("error: ctypes.WinDLL does not exist on this "
+                         "platform -- reading another process's decrypted image "
+                         "out of its address space is Windows-only. Nothing was "
+                         "read") from None
+
+    k32.OpenProcess.restype = wintypes.HANDLE
+    k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    k32.ReadProcessMemory.argtypes = [wintypes.HANDLE, ctypes.c_void_p,
+                                      ctypes.c_void_p, ctypes.c_size_t,
+                                      ctypes.POINTER(ctypes.c_size_t)]
+    k32.ReadProcessMemory.restype = wintypes.BOOL
+    k32.GetCurrentProcess.restype = wintypes.HANDLE
+    k32.CloseHandle.argtypes = [wintypes.HANDLE]
+    k32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+    k32.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+    k32.Process32FirstW.argtypes = [wintypes.HANDLE,
+                                    ctypes.POINTER(PROCESSENTRY32W)]
+    k32.Process32NextW.argtypes = [wintypes.HANDLE,
+                                   ctypes.POINTER(PROCESSENTRY32W)]
+    adv.OpenProcessToken.argtypes = [wintypes.HANDLE, wintypes.DWORD,
+                                     ctypes.POINTER(wintypes.HANDLE)]
+    adv.LookupPrivilegeValueW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR,
+                                          ctypes.POINTER(LUID)]
+    adv.AdjustTokenPrivileges.argtypes = [wintypes.HANDLE, wintypes.BOOL,
+                                          ctypes.POINTER(TOKEN_PRIVILEGES),
+                                          wintypes.DWORD, ctypes.c_void_p,
+                                          ctypes.c_void_p]
+    psapi.EnumProcessModulesEx.argtypes = [wintypes.HANDLE,
+                                           ctypes.POINTER(wintypes.HMODULE),
+                                           wintypes.DWORD,
+                                           ctypes.POINTER(wintypes.DWORD),
+                                           wintypes.DWORD]
+    psapi.GetModuleFileNameExW.argtypes = [wintypes.HANDLE, wintypes.HMODULE,
+                                           wintypes.LPWSTR, wintypes.DWORD]
+    psapi.GetModuleInformation.argtypes = [wintypes.HANDLE, wintypes.HMODULE,
+                                           ctypes.POINTER(MODULEINFO),
+                                           wintypes.DWORD]
+
+    _dlls = (k32, adv, psapi)
+    return _dlls
 
 
 def fail(msg):
@@ -122,52 +169,55 @@ def fail(msg):
 
 
 def enable_privilege(name):
+    k32, adv, _ = _load()
     tok = wintypes.HANDLE()
-    if not _adv.OpenProcessToken(_k32.GetCurrentProcess(),
-                                 TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
-                                 ctypes.byref(tok)):
+    if not adv.OpenProcessToken(k32.GetCurrentProcess(),
+                                TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+                                ctypes.byref(tok)):
         fail("OpenProcessToken")
     luid = LUID()
-    if not _adv.LookupPrivilegeValueW(None, name, ctypes.byref(luid)):
+    if not adv.LookupPrivilegeValueW(None, name, ctypes.byref(luid)):
         fail(f"LookupPrivilegeValue({name})")
     tp = TOKEN_PRIVILEGES(1, (LUID_AND_ATTRIBUTES * 1)(
         LUID_AND_ATTRIBUTES(luid, SE_PRIVILEGE_ENABLED)))
-    _adv.AdjustTokenPrivileges(tok, False, ctypes.byref(tp), 0, None, None)
+    adv.AdjustTokenPrivileges(tok, False, ctypes.byref(tp), 0, None, None)
     err = ctypes.get_last_error()
-    _k32.CloseHandle(tok)
+    k32.CloseHandle(tok)
     if err:  # ERROR_NOT_ALL_ASSIGNED = 1300: not elevated
         raise SystemExit(f"error: could not enable {name} (error {err}); run elevated")
 
 
 def find_pid(exe_name):
-    snap = _k32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+    k32 = _load()[0]
+    snap = k32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
     pe = PROCESSENTRY32W()
     pe.dwSize = ctypes.sizeof(pe)
     pids = []
-    ok = _k32.Process32FirstW(snap, ctypes.byref(pe))
+    ok = k32.Process32FirstW(snap, ctypes.byref(pe))
     while ok:
         if pe.szExeFile.lower() == exe_name.lower():
             pids.append(pe.th32ProcessID)
-        ok = _k32.Process32NextW(snap, ctypes.byref(pe))
-    _k32.CloseHandle(snap)
+        ok = k32.Process32NextW(snap, ctypes.byref(pe))
+    k32.CloseHandle(snap)
     if len(pids) != 1:
         raise SystemExit(f"error: expected one {exe_name} process, found {pids}")
     return pids[0]
 
 
 def find_module(hproc, module_name):
+    psapi = _load()[2]
     needed = wintypes.DWORD()
     mods = (wintypes.HMODULE * 1024)()
-    if not _psapi.EnumProcessModulesEx(hproc, mods, ctypes.sizeof(mods),
-                                       ctypes.byref(needed), LIST_MODULES_ALL):
+    if not psapi.EnumProcessModulesEx(hproc, mods, ctypes.sizeof(mods),
+                                      ctypes.byref(needed), LIST_MODULES_ALL):
         fail("EnumProcessModulesEx")
     buf = ctypes.create_unicode_buffer(1024)
     for i in range(needed.value // ctypes.sizeof(wintypes.HMODULE)):
-        _psapi.GetModuleFileNameExW(hproc, mods[i], buf, 1024)
+        psapi.GetModuleFileNameExW(hproc, mods[i], buf, 1024)
         if os.path.basename(buf.value).lower() == module_name.lower():
             mi = MODULEINFO()
-            if not _psapi.GetModuleInformation(hproc, mods[i], ctypes.byref(mi),
-                                               ctypes.sizeof(mi)):
+            if not psapi.GetModuleInformation(hproc, mods[i], ctypes.byref(mi),
+                                              ctypes.sizeof(mi)):
                 fail("GetModuleInformation")
             return buf.value, mi.lpBaseOfDll, mi.SizeOfImage
     raise SystemExit(f"error: module {module_name} not loaded in the target")
@@ -175,14 +225,15 @@ def find_module(hproc, module_name):
 
 def read_image(hproc, base, size, page=0x1000):
     """Read [base, base+size) page by page; unreadable pages come back as None."""
+    k32 = _load()[0]
     out = bytearray(size)
     unreadable = []
     got = ctypes.c_size_t()
     chunk = ctypes.create_string_buffer(page)
     for off in range(0, size, page):
         n = min(page, size - off)
-        if _k32.ReadProcessMemory(hproc, ctypes.c_void_p(base + off), chunk, n,
-                                  ctypes.byref(got)) and got.value == n:
+        if k32.ReadProcessMemory(hproc, ctypes.c_void_p(base + off), chunk, n,
+                                 ctypes.byref(got)) and got.value == n:
             out[off:off + n] = chunk.raw[:n]
         else:
             unreadable.append(off)
@@ -256,14 +307,15 @@ def main(argv=None):
     if not module:
         raise SystemExit("error: --module is required with --pid")
 
-    hproc = _k32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, pid)
+    k32 = _load()[0]
+    hproc = k32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, pid)
     if not hproc:
         fail(f"OpenProcess({pid})")
     try:
         path, base, size = find_module(hproc, module)
         mem, unreadable = read_image(hproc, base, size)
     finally:
-        _k32.CloseHandle(hproc)
+        k32.CloseHandle(hproc)
 
     disk_path = args.disk or path
     disk = open(disk_path, "rb").read()

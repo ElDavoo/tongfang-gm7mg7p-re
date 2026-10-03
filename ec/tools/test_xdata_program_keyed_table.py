@@ -71,24 +71,24 @@ WRITE_OPEN = re.compile(r"open\([^)]*['\"][wax]")
 # and a census re-derivation are then both visible: the first by
 # `TheMapAgrees`, the second by these.
 PER_PROGRAM_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 846, 7487),
+    ("main-ec", "DAT_EXTMEM", 843, 7472),
     ("main-ec", "DAT_EXTMEM+pair-literal", 44, 490),
     ("main-ec", "pair-literal", 156, 468),
-    ("main-ec", "symbol", 158, 6197),
+    ("main-ec", "symbol", 161, 6212),
     ("main-ec", "symbol+pair-literal", 14, 196),
     ("pd", "DAT_EXTMEM", 157, 858),
 ]
 PER_PROGRAM_TOTAL = (1375, 15696)
 
 UNION_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 815, 7256),
+    ("main-ec", "DAT_EXTMEM", 813, 7242),
     ("main-ec", "DAT_EXTMEM+pair-literal", 41, 385),
     ("main-ec", "pair-literal", 155, 461),
-    ("main-ec", "symbol", 144, 5593),
+    ("main-ec", "symbol", 146, 5607),
     ("main-ec", "symbol+pair-literal", 14, 196),
-    ("both", "DAT_EXTMEM", 31, 321),
+    ("both", "DAT_EXTMEM", 30, 312),
     ("both", "DAT_EXTMEM+pair-literal", 4, 139),
-    ("both", "symbol+DAT_EXTMEM", 14, 742),
+    ("both", "symbol+DAT_EXTMEM", 15, 751),
     ("pd", "DAT_EXTMEM", 108, 603),
 ]
 UNION_TOTAL = (1326, 15696)
@@ -96,8 +96,17 @@ UNION_TOTAL = (1326, 15696)
 # §2's three-way partition of the main EC, per program and on the union key,
 # each `(named, DAT_EXTMEM, pair-only)` in distinct addresses. The two differ in
 # the last two terms by the one address the two keyings disagree about.
-PER_PROGRAM_PARTITION = (172, 890, 156)
-UNION_PARTITION = (172, 891, 155)
+#
+# 172 / 890 -> 175 / 887 on the per-program reading, and the same 172 -> 175 on
+# the union one, in issue #649. Not a re-measurement of the partition rule and
+# not an effect of the `0x9AAD` annotation: that PR's re-export carried three
+# symbol renames the committed `.c` files had not yet caught up to --
+# `0x078B` and `0x07A5` move from `DAT_EXTMEM` to `symbol` and `0x0803` to
+# `symbol+DAT_EXTMEM` -- and all three are named in `registers.yaml` on
+# `origin/main`. Three addresses changing spelling is three off the `DAT_EXTMEM`
+# term and onto `named`, which is the whole of the move.
+PER_PROGRAM_PARTITION = (175, 887, 156)
+UNION_PARTITION = (175, 888, 155)
 
 # The one address whose partition bucket moves, and the two directions.
 MOVED = [("0x04A3", "DAT_EXTMEM", "pair-only")]
@@ -487,7 +496,7 @@ class TheMapAgrees(unittest.TestCase):
         named, total, other, extmem, pair = blockquote(
             self.text, "of the 1,218 XDATA addresses")
         self.assertEqual((named, total, other, extmem, pair),
-                         (172, 1218, 1046, 890, 156))
+                         (175, 1218, 1043, 887, 156))
         self.assertEqual(named + other, total)
         self.assertEqual(extmem + pair, other)
 
