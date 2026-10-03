@@ -231,6 +231,19 @@ class DryRunTests(unittest.TestCase):
             self.assertIn(f'would write {REPO}/evidence/ec-watch/'
                           '2026-01-01-0436-capacity.csv', proc.stdout)
 
+    def test_an_absolute_output_name_is_printed_as_given(self):
+        # The path is normalised once, where the argument is resolved against
+        # the repository root, so the two print sites name it directly. Printing
+        # "$REPO/$OUT" instead composes the root onto an argument that already
+        # carries one, and reports a path that does not exist -- which is the
+        # one thing this line is for.
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'absolute.csv'
+            proc = ProbeRun(Path(tmp) / 'r', out=str(out)).run()
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertIn(f'would write {out}\n', proc.stdout)
+            self.assertNotIn(f'{REPO}/{out}', proc.stdout)
+
     def test_a_fixture_flag_is_refused_outside_a_dry_run(self):
         # A real run must read this machine's sysfs and this EC. A flag that
         # could quietly point it somewhere else is not left in the tool.
@@ -326,6 +339,16 @@ class SummaryTests(unittest.TestCase):
             self.assertIn('charge_mwh was published only in: baseline',
                           proc.stdout)
             self.assertIn('not the not-a-discharge verdict either', proc.stdout)
+            # This branch is reached with an empty fell-list -- that is the
+            # condition that got here -- so nothing it prints may name one. It
+            # used to close with "What fell in those phases is above", pointing
+            # a reader at a table of +0 deltas as though it held a fall: the
+            # same defect this change exists to remove, reintroduced inside the
+            # block it rewrites. The other three lines here were asserted and
+            # passed straight over it.
+            self.assertIn('in the phases that published one, and the rest '
+                          'cannot be compared', proc.stdout)
+            self.assertNotRegex(proc.stdout, r'what fell')
 
     def test_a_flat_run_is_reported_as_not_a_discharge(self):
         with tempfile.TemporaryDirectory() as tmp:

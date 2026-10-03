@@ -102,6 +102,15 @@ if [ -n "$OUT_ARG" ]; then
 else
   OUT=evidence/ec-watch/$(date +%F)-0436-capacity.csv
 fi
+# Absolute once, here, where the argument has been resolved against the
+# repository root. The print sites name $OUT on its own rather than composing
+# "$REPO/$OUT", which prepends the root to an argument that already carries one
+# and so prints a path that does not exist. Opening $OUT is unaffected: it was
+# resolved against this directory either way.
+case $OUT in
+  /*) ;;
+  *) OUT=$REPO/$OUT ;;
+esac
 
 if [ -z "$ECM" ]; then
   if [ "$DRY_RUN" = 1 ]; then
@@ -189,10 +198,10 @@ capture_header() {
 # writing before it has written anything there -- including the truncation on
 # the branch below, which destroys whatever a previous run left at that name.
 if [ "$DRY_RUN" = 1 ]; then
-  printf 'remain-capacity-probe: --dry-run, no EC read and no file written; would write %s\n' "$REPO/$OUT"
+  printf 'remain-capacity-probe: --dry-run, no EC read and no file written; would write %s\n' "$OUT"
   capture_header
 else
-  printf 'remain-capacity-probe: writing %s\n' "$REPO/$OUT"
+  printf 'remain-capacity-probe: writing %s\n' "$OUT"
   capture_header > "$OUT"
 fi
 
@@ -368,8 +377,8 @@ if [ "${#fell[@]}" -eq 0 ]; then
     echo "  not-a-discharge verdict, which needs a charge_mwh to compare."
   else
     echo "nothing fell, and charge_mwh was published only in: ${CHARGE_MWH_PHASES[*]}"
-    echo "  -- so this is not the not-a-discharge verdict either. What fell in"
-    echo "  those phases is above; the rest have no charge_mwh to compare."
+    echo "  -- so this is not the not-a-discharge verdict either. Nothing fell"
+    echo "  in the phases that published one, and the rest cannot be compared."
   fi
   exit 0
 fi
@@ -419,4 +428,4 @@ echo "run by the pipeline that wrote this script."
 if [ "$DRY_RUN" = 1 ]; then
   echo "dry run: nothing was read from an EC and no file was written."
 fi
-echo "capture: $REPO/$OUT"
+echo "capture: $OUT"

@@ -202,10 +202,11 @@ this EC is not one to leave lying around.
 
 Without `--ec-reader`, a dry run substitutes a built-in reader that prints one
 distinguishable byte per address in argument order, so `--dry-run` alone is
-useful to a human reviewing the columns. `--sysfs-dir` and the output path are
-both resolved to absolute **before** the `cd "$(dirname "$0")/../.."`, so a
-relative fixture means what was typed rather than what the repository root looks
-like.
+useful to a human reviewing the columns. `--sysfs-dir` is made absolute
+**before** the `cd "$(dirname "$0")/../.."`, so a relative fixture means what was
+typed rather than what the repository root looks like; the output path is the
+one resolved against the repository root the `cd` has already moved to, and is
+made absolute there, so an argument that already carries a `/` is left alone.
 
 **What the dry run substitutes, and what it does not.** It substitutes its
 *inputs* — a fake reader and a fake `power_supply` tree — with the tool's own
