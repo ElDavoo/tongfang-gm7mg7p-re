@@ -461,17 +461,31 @@ function layer, and `variables_functions` (how many functions a row decompiled
 exported functions carry a symbol that is not a Ghidra placeholder, which
 `--check` derives from the index rather than from the report.
 
-### A variable row may change a caller's arity, and that is a correction
+### A variable row may change a caller's arity or an argument's value, and that is a correction
 
 The sibling rule to the one above, and the one an author is most likely to trip
 over, because the effect lands somewhere they did not edit. **Applying a
-variable row can change how many arguments a *caller* passes**: the signature
-these rows drive is the one the call sites are then read against. The first
-case was bank1 `0x9EA1` (rows 28-31 of the CSV), whose committed four-argument
-signature dropped an argument at its call sites — and `bank1/E100.c` stopped
-passing `DAT_EXTMEM_0390`, which was the XDATA census's only reference to that
-byte, so `xdata_register_map.py`'s reference count fell by one and `0x0390`
-left the census entirely.
+variable row can change how many arguments a *caller* passes, and what it
+passes**: the signature these rows drive is the one the call sites are then read
+against. The first case was bank1 `0x9EA1` (rows 28-31 of the CSV), whose
+committed four-argument signature dropped an argument at its call sites — and
+`bank1/E100.c` stopped passing `DAT_EXTMEM_0390`, which was the XDATA census's
+only reference to that byte, so `xdata_register_map.py`'s reference count fell
+by one and `0x0390` left the census entirely.
+
+**The second case is an argument's value rather than the count, one callee over
+(issue #294), and it is the same rule.** The row `pd,0x9028,param_1,
+r6_value,artifact` shortens `pd/7B14.c`'s
+`make_dptr_r6_minus_3_9028(0x1c,DAT_EXTMEM_07c9)` to
+`make_dptr_r6_minus_3_9028(DAT_EXTMEM_07c9)`. `pd/9028.asm` is `mov R7,A / mov
+A,R6 / addc A,#0xfd / mov DPL,R7 / mov DPH,A / ret` — it takes the column byte
+in **A** and the row index in **R6**, two inputs — and the site in question is
+`clr A / add A, #0x1c / lcall 0x9028`. The argument the row removed is the
+`0x1c`; the one it kept is the symbol the caller had already loaded into R6,
+which is why the census gains a token for a read of `0x07C9` that the
+instructions do not contain and loses a constant they did.
+`ec/tools/pd_9028_render_probe.py --run` re-renders the PD program with the row
+removed and the constant comes back in the order the instructions put it.
 
 The argument that went was not a parameter. `0x9EA1` reads R1, R3, R4, R5, R6
 and R7 and never names R2, while the call site loaded `0x0390` into R2 and then

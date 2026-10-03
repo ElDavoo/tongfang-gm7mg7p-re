@@ -1557,7 +1557,17 @@ registers:
       6 EC-side sites, all in bank0: 3 reads and 3 writes. Two of the writers
       store a constant (2 in call_ba15_then_write_02_to_044b, 4 in
       write_04_to_044b_and_set_08e2_bit7) and the third stores the caller's
-      accumulator, so the value is selected rather than measured. No PD site,
+      accumulator, so the value is selected rather than measured. The six
+      sites understate the byte, because all six are inline movx sites and
+      none of the three writes is inside the routine that decides the value:
+      dispatch_044b_then_write_01_02_03_or_04 (bank0 0x9AAD) reads the byte
+      once, at 0x9B33, which is its only counted site. Every write it
+      causes is reached by ljmp into one of the three writers named above or
+      by falling through into forward_to_9a86, so 0x9AAD is the dispatcher
+      and the indirect writer of all five successors while the static count
+      stays at 6. Its arms map 0 to 1, 1 to 2, 2 to 3 or 1, 3 to 4 or 2, and
+      4 to 3: the byte is re-decided, not counted up. What the five values
+      mean is not decoded -- docs/findings/044b-mode-stepper.md. No PD site,
       no upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
 
   - name: XDATA_044C

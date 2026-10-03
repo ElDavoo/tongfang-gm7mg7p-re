@@ -328,7 +328,22 @@ run off the anchor, names the file, and says it is not a re-key request
 (`xdata_register_map.py:3253` is the emitting function, `census_shape` the
 predicate, `carry_advice` the clause). All of it is **on stderr** so the CSVs stay
 pipeable — **so read it off the terminal, not off a redirected `--check` pipe**,
-the pipe that keeps the CSVs usable being the same pipe the hint is kept out of. A
+the pipe that keeps the CSVs usable being the same pipe the hint is kept out of.
+
+**And read the names, not only the count, from #881 on.** The `names:` tally
+counts *clusters that carried a name*, so its five cells do not add up to the
+number of names in the file — on `--export-ownership` and `--threshold 0.6` they
+cannot, and the difference is several names. The block now has a name-indexed
+half beside it, one record per row of the names file, which is where a name no
+cluster reaches is reported, with the best Jaccard it saw. So the tally's
+optional trailing clauses are what to read: `claimed by more than one cluster,
+not carried N` for names more than one new cluster reached and the rule then
+refused to pick between — carried to **none** of them, which is what the
+per-name line below it says — and `and N of the M names in
+annotations/xdata-cluster-names.csv are not carried by this method` for the ones
+that went unwritten. A committed-shape run prints neither, so the line stays
+byte-for-byte what it was before #881
+([`xdata-carry-name-coverage.md`](xdata-carry-name-coverage.md)). A
 committed-shape re-derivation that moves a key leaves the names file attached to a
 membership that has gone, which is what `--self-test`'s check at `:4128` exists to
 catch ("every key … names a cluster of the committed census"). **Re-key by hand;
@@ -447,15 +462,22 @@ measurement.
 5. **Re-key `xdata-cluster-names.csv`** if a **committed-shape** run — step 1's
    `--check`, or a bare write at the default threshold with the guard on —
    reports a key that is no longer `seeded`/`exact` for its own cluster, which is
-   what `--self-test` reports as `stale` (§3). **§6b's `--export-ownership` run is
-   not a trigger.** Its three `carried by overlap` lines are that run's *own* ids,
-   and the tail on each says so in as many words; a run measured to break five of
-   the nine names cannot be reporting that three of them moved. Re-key by hand;
-   there is no command that writes that file for you. *(#850 first wrote this
-   step as the one line "if step 1's *stderr* (§3) or a scratch run moved a
-   key", which is what §3 was pointing at before #851 gave a carry a
-   census-shape test — on that wording `--export-ownership` *is* a trigger, which
-   is the re-key of nine correct keys that #872 measured and closed.)*
+   what `--self-test` reports as `stale` (§3). Since #881 the same line's
+   name-indexed tail is a second thing to read: on a committed shape it prints
+   nothing beyond today's line, and any name in the
+   "not carried by this method" clause means the names file is attached to a
+   membership this census no longer has — the same re-key, with the name beside
+   it. **§6b's `--export-ownership` run is not a trigger.** Its
+   `carried by overlap` lines are that run's *own* ids, and the tail on each says
+   so in as many words; a run measured not to carry two of the file's names
+   cannot be reporting that the others moved. Those two are named on that run's
+   own per-name lines, and the clause counts them as **not carried by this
+   method** — not as a re-key request. Re-key by hand; there is no command that
+   writes that file for you. *(#850 first wrote this step as the one line "if
+   step 1's *stderr* (§3) or a scratch run moved a key", which is what §3 was
+   pointing at before #851 gave a carry a census-shape test — on that wording
+   `--export-ownership` *is* a trigger, which is the re-key of nine correct keys
+   that #872 measured and closed.)*
 6. **Re-run `--check`** to confirm.
 
 A `bash .github/scripts/agent-gates.sh` run covers **all of steps 1 and 2** —

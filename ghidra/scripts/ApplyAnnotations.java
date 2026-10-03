@@ -74,8 +74,37 @@
 //     .asm witness says otherwise. `xdata_register_map.py --self-test` pins
 //     that witness for 0x0390, so a zero cannot read as absence.
 //
-// See ec/annotations/xdata-register-map.md 7.1, ec/annotations/README.md, and
-// docs/findings.md 18.
+// The second case was pd 0x9028 (issue #294), one callee further, and it is
+// the same rule rather than a new one: the row there shortened a call the
+// listing takes TWO arguments for. `pd/9028.asm` is `mov R7,A / mov A,R6 /
+// addc A,#0xfd / mov DPL,R7 / mov DPH,A / ret` -- the column byte arrives in A
+// and the row index in R6 -- and with the `pd,0x9028,param_1,r6_value`
+// variable row applied, `pd/7B14.c` renders the call as
+// `make_dptr_r6_minus_3_9028(DAT_EXTMEM_07c9)`, one argument, where the
+// listing at that site is `clr A / add A, #0x1c / lcall 0x9028`. Remove the
+// row and the render becomes `make_dptr_r6_minus_3_9028(0x1c,DAT_EXTMEM_07c9)`:
+// the constant comes back, in the order the instructions put it. So the rule
+// covers an argument's VALUE at a call site and not only how many there are,
+// and the census gains a token with no machine access behind it when a row
+// shortens the signature.
+//
+// ONE FUNCTION ROW WAS MEASURED AND IT DID NOT DO THIS. Dropping
+// `ghidra-functions.csv`'s `pd,9028` row renames every call in `7B14.c` to
+// `FUN_CODE_9028` and leaves the token count where it was, so THAT ROW is not
+// the mechanism here. Do not read it as a property of the function layer: what
+// was measured is one row, and whether a name can move a caller's argument
+// value is NOT SETTLED BY ONE ROW. What the code says is narrower still -- the
+// only effect of a function row that reaches the decompiler is the `setName`
+// above (the row also sets the plate comment below, which the exporter prints
+// and the decompiler does not read), and the `signature` column is recorded
+// and not applied. A rename is not provably inert -- Ghidra's decompiler is
+// name-sensitive and this tree does not model that -- so any given row is
+// settled by its own counterfactual rather than by this paragraph:
+// `ec/tools/pd_9028_render_probe.py --run` re-renders the PD program from the
+// committed project with a row removed and diffs `7B14.c`.
+//
+// See ec/annotations/xdata-register-map.md 7.1, ec/annotations/README.md,
+// docs/findings.md 18, and docs/findings/7b14-07c9-token.md.
 //@category TongFang
 import ghidra.app.script.GhidraScript;
 import ghidra.app.decompiler.DecompInterface;

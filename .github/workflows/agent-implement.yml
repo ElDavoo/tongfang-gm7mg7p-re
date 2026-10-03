@@ -481,7 +481,7 @@ jobs:
             --model stealth/space-bunny-alpha
             --effort max
             --dangerously-skip-permissions
-            --max-turns 200
+            --max-turns 300
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
             --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
 
@@ -610,7 +610,7 @@ jobs:
             --model stealth/space-bunny-alpha
             --effort max
             --dangerously-skip-permissions
-            --max-turns 200
+            --max-turns 300
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
             --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
 

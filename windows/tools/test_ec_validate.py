@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Offline checks; no EC is opened and the vendor driver is never called.
 
-ec_validate.py imports ecrw, which binds kernel32 at import time and so only
-loads on Windows -- the fake below stands in for the whole module, exactly as
-test_ec_watch.py does. WMI is the other thing that cannot run here, so
+ec_validate.py imports ecrw -- the fake below stands in for the whole module,
+exactly as test_ec_watch.py does. `ecrw` itself imports anywhere
+(`windows/tools/test_import_off_windows.py`), so what the fake is for now is
+scripting the sweep byte by byte. WMI is the other thing that cannot run here, so
 wmi_battery is driven from the frames below instead: each frame is one
 sample's worth of both sides at once.
 

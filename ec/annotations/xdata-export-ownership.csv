@@ -125,7 +125,7 @@ bank0/9A7B.c,bank0,9A7B,6,bank0/9A7B.c,9A7B,store_bd20_result_masked_7f,no,1.00,
 bank0/9A86.c,bank0,9A86,3,bank0/9A86.c,9A86,call_ba15_then_write_02_to_044b,no,1.00,3,1.00
 bank0/9A90.c,bank0,9A90,5,bank0/9A90.c,9A90,call_bd20_with_03_then_or_80_into_dptr,no,1.00,5,1.00
 bank0/9A9C.c,bank0,9A9C,4,bank0/9A9C.c,9A9C,write_04_to_044b_and_set_08e2_bit7,no,1.00,4,1.00
-bank0/9AAD.c,bank0,9AAD,73,bank0/9AAD.c,9AAD,FUN_CODE_9aad,no,1.00,73,1.00
+bank0/9AAD.c,bank0,9AAD,73,bank0/9AAD.c,9AAD,dispatch_044b_then_write_01_02_03_or_04,no,1.00,73,1.00
 bank0/9BFD.c,bank0,9BFD,3,bank0/9BFD.c,9BFD,forward_to_9a86,no,1.00,3,1.00
 bank0/9C00.c,bank0,9C00,11,bank0/9C00.c,9C00,clear_09e9_unless_0743_bit2,no,1.00,11,1.00
 bank0/9C1D.c,bank0,9C1D,4,bank0/9C1D.c,9C1D,clear_two_bytes_at_dptr_then_9a90,no,1.00,4,1.00
