@@ -3,6 +3,7 @@
 and no real capture is involved."""
 import builtins
 import contextlib
+from datetime import datetime, timedelta
 import importlib.util
 import io
 import os
@@ -110,6 +111,24 @@ UNREAD_WINDOW = _set('unread-window')
 # the two clean ones move nothing -- so the `moved_groups` branch was reached
 # only over runs with no withheld window anywhere in the chain.
 BLOCK_CAPTURES_MOVED = _set('3blocks-moved')
+# `3blocks/` byte for byte, plus the block §3's own remedy for its void one
+# tells the operator to run -- appended into the same three CSVs rather than
+# onto a second set with its own <date>, which is what the remedy said to do
+# and what the runbook's three-CSVs-are-one-file note makes easy. The re-done
+# block carries block 2's own three labels, so 0x00 is the value under test of
+# two blocks: block 2, which is void, and block 4, which is not. The value is
+# what a block, a `--dump` pair and a §4.6 verdict are all named by, and what
+# `--block` takes, so on this input it names no single block.
+#
+# It is a separate directory rather than a variant built in the tests
+# because the cases below need the void block present -- the census names the
+# repeat alongside it, and `--block` refuses rather than taking the first --
+# and a variant with the void-ness removed is a different day, which is the
+# reason the other derived sets here are committed separately: a failure names
+# its own case. The exit-code case that needs the void-ness gone is the same
+# day with one mark added, so it is built in a `tempfile` below rather than
+# committed as a second copy of the same three files.
+REDONE_BLOCK = _set('redone-block')
 # §6's per-block dumps for the two-value day, and the only ones of the four
 # that carry a <value> a reader could confuse: both pairs read the same two
 # bytes in the opposite order, so a §4.6 verdict filed under the wrong block
@@ -1468,7 +1487,16 @@ class GradeTests(unittest.TestCase):
         self.assertIn('short the restore mark §3\'s step 5 makes', flat)
         self.assertIn('printed in its `marks:` list and recorded nowhere else',
                       flat)
-        self.assertIn('Redo the void block per §3', flat)
+        # The remedy is a second run on its own <date>, not a redo appended
+        # to the set this run is refusing: §3 fixes the three CSVs as one file
+        # for all three blocks, so "redo the void block" read as an
+        # instruction to append a fourth block of a value already in the set,
+        # which is the state the census now names and the exit code holds at
+        # 1. Asserting the old sentence's absence is the load-bearing half --
+        # a note carrying both would still send the operator into the file.
+        self.assertIn('Run the block again per §3, on its own <date> and its '
+                      'own set of the three CSVs', flat)
+        self.assertNotIn('Redo the void block per §3', flat)
         # The other two thirds of the day are still graded, and the void
         # block's marks are still locatable -- every window header prints,
         # numbered where it is in the whole mark stream, so this run reads
@@ -2520,7 +2548,14 @@ class MarkSetTests(unittest.TestCase):
         self.assertEqual(out.count('block: 0xA0 (block 1 of 1) -- NOT GRADED'),
                          2)
         self.assertNotIn('window delta', out)
-        self.assertIn('Redo the void block per §3', flat)
+        # The same second-run remedy `test_a_block_whose_last_mark_is_not_a_`
+        # restore_is_void` pins over a two-block day, and the same assertion
+        # that the sentence it replaced is gone: one void block in a day where
+        # the value is not repeated is the case where a reader is most likely
+        # to read "redo it" as "append it".
+        self.assertIn('Run the block again per §3, on its own <date> and its '
+                      'own set of the three CSVs', flat)
+        self.assertNotIn('Redo the void block per §3', flat)
 
     # Block labelling, on a two-value day with nothing wrong with it: the
     # passing case for everything the three above refuse. Every window says
@@ -3616,6 +3651,272 @@ class MarkSetTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertNotEqual(rel, UNPLACED_FAILURES)
         self.assertEqual(unplaced_census_lines(out), whole_lines)
+
+
+def with_restore_added(src, tmp, ts, before):
+    """`src`'s three captures copied into `tmp` with one row added to each.
+
+    For the case that is `REDONE_BLOCK` with block 2's missing restore put
+    back, which is the one shape that cannot be reached by a committed
+    directory without committing a second copy of the same day for a single
+    added row. `ts` is the row's timestamp on the `0x0700` capture and
+    `before` the prefix of the line it goes above; the other two captures get
+    the same offsets `3blocks/` uses, a second and two seconds later,
+    because `coalesce_marks` fuses a mark group across the three and a
+    restore three captures recorded at unrelated times is three restores.
+    The caller names the timestamp and the place rather than this naming
+    them: where the row lands is a fact about the fixture, and a helper that
+    picked its own place would be a second place to be wrong.
+    """
+    out = []
+    for offset, path in enumerate(src):
+        p = Path(tmp) / Path(path).name
+        lines = Path(path).read_text(encoding="utf-8").splitlines()
+        when = datetime.fromisoformat(ts) + timedelta(seconds=offset)
+        at_index = next(i for i, line in enumerate(lines)
+                        if line.startswith(before))
+        lines.insert(at_index, f"{when.isoformat()},MARK,,restored 0x0751=0xA0")
+        p.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        out.append(str(p))
+    return tuple(out)
+
+
+class RepeatedValueTests(unittest.TestCase):
+    """§3's re-done block, appended to the set rather than run on its own date.
+
+    A void block is a hole in the record, and §3's own remedy was to run the
+    block again. The three CSVs are one file for all three blocks, so that
+    remedy appended a second `no-op`/`wrote`/`restored` set carrying the same
+    value into the file the first attempt is in, and `assign_blocks` made it
+    a second block with that value. Nothing in the marks says which attempt a
+    window belongs to, and the value under test is what a block, a `--dump`
+    pair, a §4.6 verdict and `--block` are all named by -- so on that day the
+    value stopped naming a block, and `--block` took the first match, which
+    is the void attempt.
+
+    These are the cases that name the repeat rather than select past it. The
+    alternative -- a `--nth`, an index or a start-timestamp selector -- is
+    left open in `docs/findings/0751-redone-block-value.md`; what is not left
+    open is that the per-block verdict is not first-match-wins.
+    """
+
+    def census_block_lines(self, out):
+        """The census's one line per block, in order.
+
+        Cut on the section's own boundary rather than on the string
+        `block `, because the per-action listing above these lines carries
+        `block 0x00` on its window headers and a reader that picked those up
+        would be counting windows and calling them blocks. The census is the
+        last section a refused run prints, so the boundary is optional rather
+        than a `str.index` that would raise over the very runs below that
+        have no section after it.
+        """
+        census = out.split('=== mark census')[1]
+        end = census.find('\n=== ')
+        if end != -1:
+            census = census[:end]
+        return [line for line in census.splitlines()
+                if line.startswith('  block ')]
+
+    # The census names the repeat, on every block carrying the value, and
+    # says which blocks those are. Naming it on one of the two would leave a
+    # reader holding the other line unable to tell which block it belongs to.
+    def test_the_census_names_a_value_two_blocks_carry(self):
+        rc, out, _ = run(*REDONE_BLOCK)
+        self.assertEqual(rc, 1)
+        lines = self.census_block_lines(out)
+        # Four blocks, and the two that share a value are named as sharing
+        # it -- the clause is on both lines, and it names both indices, so
+        # neither line is the only record that the repeat exists.
+        self.assertEqual(len(lines), 4)
+        for index in ('2', '4'):
+            self.assertTrue(
+                any(line.startswith(f'  block {index} of 4: value under test '
+                                    '0x00')
+                    and 'is the value under test of 2 block(s) of this run '
+                        '(2, 4)' in line
+                    and 'names no one of them and --block is refused on it'
+                        in line
+                    for line in lines),
+                f'block {index} of 4 carries 0x00 and does not say so')
+        # And the two blocks that are not involved are untouched: a repeat
+        # is a fact about one value, not a verdict on the day.
+        for index, value in (('1', '0xA0'), ('3', '0x10')):
+            self.assertIn(f'  block {index} of 4: value under test {value}, '
+                          'roles control, write, restore', out)
+
+    # The defect does not need the void block, and this is the case the
+    # issue did not demonstrate: a day whose two `0x00` blocks are both
+    # intact prints two identical `value under test 0x00` census lines, and
+    # every check the grader runs over a block passes -- there is nothing
+    # short about either attempt. So the condition is on the value, and this
+    # run is the one that would otherwise have shipped green over a day
+    # `3blocks/` grades 1 for a different reason.
+    def test_a_repeat_holds_the_exit_code_with_no_void_block(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            both = with_restore_added(REDONE_BLOCK, tmp,
+                                      '2026-01-01T12:08:52.000+01:00',
+                                      '2026-01-01T12:16')
+            rc, out, _ = run(*both)
+        # Nothing is void any more, and the run says so -- so the 1 is the
+        # repeat and not the void check wearing its name.
+        self.assertIn('=== 4 block(s), one per no-op control arm (§3) ===',
+                      out)
+        self.assertNotIn('VOID --', out)
+        self.assertIn('Every block\'s last mark is its restore', out)
+        self.assertEqual(rc, 1)
+        # And the same clause the void case carries, so a reader cannot tell
+        # which of the two conditions the 1 came from without reading both.
+        self.assertIn('is the value under test of 2 block(s) of this run (2, 4)',
+                      out)
+        self.assertIn('names no one of them and --block is refused on it',
+                      out)
+
+    # `--block` refuses rather than taking the first match. The absence
+    # assertions are the load-bearing half: a reworded refusal that still
+    # printed block 2's windows would satisfy a positive assertion about the
+    # refusal text, and the first match is the void attempt -- a clean
+    # per-block attachment about the wrong attempt.
+    def test_block_refuses_a_value_two_blocks_carry(self):
+        rc, out, err = run(*REDONE_BLOCK, '--block', '0x00')
+        self.assertEqual(rc, 1)
+        # Both blocks, by index, and by the one thing `--block` takes: the
+        # value. A refusal that named only "this value is ambiguous" would
+        # send the operator back to the same three CSVs to work out which
+        # two blocks it meant.
+        self.assertIn('names 2 blocks in these captures, block 2 of 4 and '
+                      'block 4 of 4', err)
+        self.assertIn('The value under test is what identifies a block', err)
+        # The census prints first, and it is what names the two blocks the
+        # refusal then points at -- so this is not a run that printed nothing
+        # at all, it is a run that printed the day and graded none of it.
+        self.assertIn('=== mark census (§3/§6) ===', out)
+        self.assertEqual(len(self.census_block_lines(out)), 4)
+        # What must not be there is anything that reads as a verdict on one of
+        # the two: no window section, no per-block integrity section, and
+        # above all none of the header lines that say which block this run is
+        # about. A reworded refusal that still printed block 2's windows
+        # would satisfy every assertion about the refusal text and none of
+        # these, which is what makes them the load-bearing half.
+        self.assertNotIn('=== 11 window(s), one per mark ===', out)
+        self.assertNotIn('=== block 2 of 4, value under test 0x00', out)
+        self.assertNotIn('=== block 2 of 4, its integrity check', out)
+        self.assertNotIn('block: 0x00 (block 2 of 4)', out)
+        self.assertNotIn('=== what this does and does not settle', out)
+        # And the remedy is the one that does not put the operator back where
+        # they were.
+        self.assertIn('where this is §3\'s re-done block, the remedy is '
+                      'that block on its own <date> and its own set of the '
+                      'three CSVs (§3)', err)
+
+    # The whole point of `--block`: §6 runs one per value and attaches the
+    # output per block. A refusal scoped to the day rather than to the
+    # repeated value would cost a clean day its per-block attachments, so
+    # both unambiguous values on this same day are held to grading exactly
+    # as they are over `3blocks/`.
+    def test_block_still_grades_a_value_only_one_block_carries(self):
+        for value, block in (('0xA0', 1), ('0x10', 3)):
+            with self.subTest(value=value):
+                rc, out, _ = run(*REDONE_BLOCK, '--block', value)
+                self.assertEqual(rc, 0)
+                self.assertIn(f'=== block {block} of 4, value under test '
+                              f'{value}, 3 window(s) in it ===', out)
+                # The other three blocks are named as not selected, and the
+                # census still names the repeat: the census is whole-capture
+                # whatever the run was scoped to, so a scoped attachment
+                # carries the day's defect rather than hiding it.
+                self.assertIn('is the value under test of 2 block(s) of this '
+                              'run (2, 4)', out)
+                self.assertIn('names no one of them and --block is refused '
+                              'on it', out)
+                self.assertIn(f'the other {4 - 1} block(s) were not checked '
+                              'in this run', out)
+
+    # The re-done block is gradeable on its own, which is what makes the
+    # refusal a refusal rather than the day being ungradeable: its three
+    # windows are a block's worth, its restore is in all three captures, and
+    # its §4 verdict is its own. What it cannot be is selected by the value
+    # it shares, which is the refusal above and is not repeated here.
+    def test_the_re_done_block_grades_and_its_own_verdict_stands(self):
+        rc, out, _ = run(*REDONE_BLOCK)
+        self.assertEqual(rc, 1)
+        self.assertIn("block 4/4: intact -- last mark 'restored 0x0751=0xA0' "
+                      "is the restore", out)
+        self.assertIn('value under test 0x00; roles control, write, restore',
+                      out)
+        # Its three windows, and none of them withheld: the redo is a block
+        # with bytes in it, so the exit code is not held by its marks.
+        self.assertEqual(out.count('block: 0x00 (block 4 of 4)'), 3)
+        self.assertNotIn('block: 0x00 (block 4 of 4) -- NOT GRADED', out)
+
+    # The dumps section is unharmed by the refusal, and `verdict_marker`'s
+    # two-blocks-one-value path still fires over it. The pair is
+    # `multi-block/`'s `a0` dumps copied under a `00` file name, because the
+    # shape worth checking is a pair filed against a value two blocks carry:
+    # `DUMP_VALUE` reads the value out of the name and nothing else, so
+    # `verdicts_for` hands `verdict_marker` both blocks and the marker has to
+    # name both rather than filing one read under whichever came first.
+    def test_a_dump_pair_filed_under_a_repeated_value_still_reads(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            pair = tuple(
+                str(Path(tmp) / Path(d).name.replace('-a0-', '-00-'))
+                for d in MULTI_A0_DUMPS)
+            for src, dst in zip(MULTI_A0_DUMPS, pair):
+                Path(dst).write_bytes(Path(src).read_bytes())
+            rc, out, _ = run(*REDONE_BLOCK, '--dump-pair', *pair)
+        # Unscoped, so the dumps section is the whole-capture one and the
+        # refusal above does not apply: the refusal is `--block`'s, and a run
+        # that selects no block is not held by it. That is the shape being
+        # pinned -- `verdict_marker` reads `verdicts_for(blocks, selected)`,
+        # and a repeat that refused every run rather than every scoped one
+        # would have made the section unreachable.
+        self.assertEqual(rc, 1)
+        self.assertIn('is the value under test of 2 block(s) of this run '
+                      '(2, 4)', out)
+        self.assertIn('names no one of them and --block is refused on it',
+                      out)
+        section = out.split('=== whole-block dump pairs')[1] \
+                     .split('=== what this does and does not settle')[0]
+        self.assertIn('address(es) compared', section)
+        # Both blocks named on the one bucket, and the withheld half is named
+        # as withheld rather than the read being reported for the block whose
+        # windows printed.
+        self.assertIn('block 1 of 2 is VOID, its windows were withheld above; '
+                      'block 2 of 2 is intact, its windows were printed', out)
+
+    # The runbook and `VOID_BLOCK_NOTE` are two spellings of one instruction,
+    # and the instruction is the one this change exists to fix: a runbook
+    # still saying "redo it" into the set the run is refusing, beside a tool
+    # that refuses it, is the defect reaching the operator from the other
+    # side. Asserted over both at once so neither can be changed alone.
+    def test_the_runbook_and_the_void_note_give_the_same_remedy(self):
+        doc = RUNBOOK.read_text(encoding="utf-8")
+        flat = " ".join(doc.split())
+        section3 = " ".join(doc.split("\n## 3. ", 1)[1]
+                            .split("\n### 3a. ", 1)[0].split())
+        # §3 says the redo is a second run on its own date. The literal
+        # `<date>` rather than a resolved one: this is the runbook's
+        # placeholder and the sentence is about the operator substituting it.
+        self.assertIn('is void; redo it, on a second run with its own '
+                      '`<date>` and its own set of the three CSVs', section3)
+        self.assertNotIn('is void; redo it.', section3)
+        # And §6's one-set paragraph says the same, because §6 is where the
+        # operator goes for the file names and a set that is one file for all
+        # three blocks is where a re-done block would land.
+        section6 = " ".join(doc.split("\n## 6. ", 1)[1]
+                            .split("\n## 7. ", 1)[0].split())
+        self.assertIn('re-done block', section6)
+        self.assertIn('<date>', section6)
+        # The tool's own half, over the same fixture the refusal is read
+        # from, so a note that drifted from the runbook fails here too.
+        _, out, _ = run(*REDONE_BLOCK)
+        self.assertIn('Run the block again per §3, on its own <date> and its '
+                      'own set of the three CSVs rather than appended to this '
+                      'one', " ".join(out.split()))
+        # Both halves name a second set of files rather than an append into
+        # this one, which is the whole of the difference between the sentence
+        # they replaced and the sentence they are.
+        self.assertIn('its own set of the three CSVs', flat)
 
 
 class StageBoundaryTests(unittest.TestCase):
@@ -6148,14 +6449,31 @@ class MarkSplitBoundaryTests(unittest.TestCase):
         # block's windows print, so a split in a block this run did not grade
         # is visible there and nowhere else. This is the site the write-up
         # names as the one that matters for a §6 per-block invocation.
+        #
+        # What `--block 0xA0` now does on this day is refuse, and that is the
+        # same defect reached the other way round: the split makes one `write`
+        # per console, so `assign_blocks` opens three blocks and they all carry
+        # `0xA0`. The value that identifies a block does not identify one
+        # here for exactly the reason it does not on a re-done block, and the
+        # census names the three of them either way -- which is the property
+        # this test was written for, and it is now visible without a `--block`
+        # run at all. The distances are still on stdout under the refusal,
+        # because the census prints before it.
         with tempfile.TemporaryDirectory() as tmp:
-            rc_block, blocked, _ = run(*self.staggered(tmp, 7.0),
-                                       '--block', '0xA0')
+            rc_block, blocked, refused = run(*self.staggered(tmp, 7.0),
+                                            '--block', '0xA0')
         self.assertEqual(rc_block, 1)
-        self.assertIn('=== block 1 of 3, value under test 0xA0, 4 window(s) '
-                      'in it ===', blocked)
+        self.assertIn('=== mark census (§3/§6) ===', blocked)
         self.assertIn('recorded the same action 14.0s after this mark', blocked)
         self.assertNotIn(self.DID_NOT, blocked)
+        self.assertIn('0xA0 is the value under test of 3 block(s) of this run '
+                      '(1, 2, 3), so it names no one of them and --block is '
+                      'refused on it', blocked)
+        self.assertIn("--block '0xA0' names 3 blocks in these captures, "
+                      'block 1 of 3 and block 2 of 3 and block 3 of 3', refused)
+        # And no block's windows under a header naming one of them, which is
+        # what "the first match" would have printed.
+        self.assertNotIn('=== block 1 of 3, value under test 0xA0', blocked)
 
     def test_the_boundary_gap_is_one_mark_per_capture_of_the_same_action(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -7125,6 +7443,90 @@ class StrictReaderOpenCountTests(unittest.TestCase):
                          ['2026-01-01T12:00:00.000+01:00'])
         self.assertIn('�', accepted[0][1])
         self.assertEqual(unplaceable, [])
+
+
+class UnreadableCaptureTests(unittest.TestCase):
+    # `main` over a file `read_capture` refuses. Built from temp files rather
+    # than from `evidence/ec-watch/2026-09-23-0751-isolation.txt`, which is
+    # the case `test_probe_log_to_capture.py` holds: this suite is over
+    # constructed captures throughout, and a committed log under it would make
+    # that untrue. What is under test is `main`'s own half -- that a refusal
+    # the reader raises is printed and returned rather than raised out, over a
+    # command line that named the file.
+    def _written(self, tmp, name, payload):
+        path = Path(tmp) / name
+        path.write_bytes(payload)
+        return str(path)
+
+    def test_a_free_form_probe_log_is_refused_by_name_and_not_raised(self):
+        # The shape the reader hits first in a console log: a `#` note per
+        # header line, and then a line with no commas in it at all, which is a
+        # short row rather than a bad hex literal.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._written(tmp, 'probe.log', (
+                b'# a probe run\n'
+                b'# 2026-01-01T12:00:01Z, Control Center running\n'
+                b'=== write 0x0751=0xA0 (hold 20s) ===\n'
+                b'restored 0x0751 -> 0x10\n'))
+            rc, _, err = run(path)
+        self.assertEqual(rc, 1)
+        self.assertIn(f"{path}: short row ['=== write 0x0751=0xA0 (hold 20s) ===']",
+                      err)
+        # The remedy, and it names the converter rather than restating the
+        # refusal: the reader's own sentence is the first thing printed, so
+        # what follows has to be what an operator does about it.
+        self.assertIn('probe_log_to_capture.py', err)
+
+    def test_a_marked_capture_is_refused_by_the_readers_own_sentence(self):
+        # `bom_refusal` is the sentence `existing_mark_findings` already
+        # reports for the same file, and the equality is the anti-drift
+        # contract the notice runs on. `main` printing the exception's text is
+        # what keeps the third reader of it -- the operator, at a terminal --
+        # reading the same verdict as the other two.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._written(tmp, 'bom.csv',
+                                 grade.BOM_BYTES + b'ts,addr,old,new\n')
+            rc, _, err = run(path)
+        self.assertEqual(rc, 1)
+        self.assertIn(grade.bom_refusal(path), err)
+
+    def test_nothing_is_printed_for_a_capture_that_was_never_read(self):
+        # The refusal is before any mark is read, which is where `main` already
+        # refuses a capture given twice: a refusal that printed the census or a
+        # window would be reporting on a file it has not read a row of.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._written(tmp, 'bom.csv',
+                                 grade.BOM_BYTES + b'ts,addr,old,new\n')
+            rc, out, err = run(path)
+        self.assertEqual(rc, 1)
+        self.assertEqual(out, '')
+        self.assertNotIn('=== mark census', out)
+
+    def test_a_refusal_after_a_capture_was_read_does_not_claim_nothing_was(self):
+        # §6 passes one CSV per watcher, so this command line has several files
+        # on it and the read loop counts each as it goes. The refusal arrives
+        # after the first capture's census line is already on stdout, so
+        # "nothing was read" would be false about a file that was read and
+        # reported -- and it would send the operator looking for an unreadable
+        # capture rather than for the one this names. `grade_timer_sweep.py`
+        # draws the same line for the same reason: its disagreement sentence
+        # says the run was not built, because everything before it *was* read.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._written(tmp, 'bom.csv',
+                                 grade.BOM_BYTES + b'ts,addr,old,new\n')
+            rc, out, err = run(QUIET, path)
+        self.assertEqual(rc, 1)
+        # The earlier capture's own census line stands: reading it happened,
+        # and this is the count `main` prints per file as it goes.
+        self.assertIn(f'{QUIET}: ', out)
+        self.assertIn('change row(s)', out)
+        # No grade over it -- the refusal is before any window is built, so the
+        # report's own sections are absent and only the counts are on stdout.
+        self.assertNotIn('=== mark census', out)
+        self.assertNotIn('=== ', out)
+        # And the refusal says what did not happen, and which file.
+        self.assertIn(f'{path}: nothing was graded', err)
+        self.assertNotIn('nothing was read', err)
 
 
 if __name__ == '__main__':

@@ -418,6 +418,54 @@ generalisation is issue #110's: computed-DPTR visibility inside
 `trace_xdata_refs.py`. It stays open, and this document leads its follow-up
 list with it.
 
+> **CORRECTION (2026-10-03, issue #519) to the residual paragraph above, in
+> four places; the paragraph is left as it was.** All six sites are now read
+> and **all six close**, so the "not excluded" sentence above no longer holds
+> for any of them. The write-up is `docs/findings/addc-dph-residual-six.md`,
+> the per-site table is `ec/annotations/xdata-addc-dph-residual-sites.csv`
+> (reproducing byte for byte by `ec/tools/addc_dph_sites.py`), and the
+> arithmetic is:
+>
+> - **Three callees, not one.** The four `xx`=`0x0D` sites do not all follow
+>   `lcall 0x2A7B`: `0x2278` follows `lcall 0x2A8F` and `0x22DF` follows
+>   `lcall 0x2A7D`. All three end `clr A / ret`, so `A` is `0` on entry to
+>   every one of the four `addc`s and the page set is **`{0x0D, 0x0E}`** — two
+>   elements, because the carry is the callee's own `add` carry-out and `[0x67]`
+>   is a run-time byte. Neither member is `0x08` and neither is `0x1C`.
+> - **`0x28EF` has no store through the computed pointer.** The parenthetical
+>   above describes `0x2266` only. At `0x28EF` there is no `mov a,0x66` and no
+>   such `movx`; what follows the `mov DPH,A` is `movc a,@a+dptr` at `0x28F4`
+>   — a CODE read — and the `movx` after it is aimed at a hard literal
+>   `0x0023`. The same holds at `0x2912` (`movc` at `0x2917`, literal
+>   `0x0024`). Both are `R6`-`0x00` sites, so `DPH` is `0x2A` exactly: the
+>   `anl a,#0x1f` / `add a,#0x00` before them bounds `A` such that the `add`
+>   cannot carry out, and `CY` is `0` at both `addc`s.
+> - **Only `0x2266` writes.** The other three `0x0D` sites read (`movx A,@DPTR`
+>   at `0x2274`, `0x227C`, `0x22E3`), so the store set is one site, not two,
+>   and its `DPL` is `(0x90 + [0x67]) & 0xFF` — a page-`0x0D`/`0x0E` address
+>   whatever `[0x67]` is.
+> - **The `#110` hand-off.** The generalisation was handed to issue #110 as
+>   work that "stays open". No open issue in this repository covers general
+>   computed-DPTR visibility in `trace_xdata_refs.py`; the bounded
+>   single-address version of the method is committed, as the **sibling** tools
+>   `ec/tools/computed_dptr_sites.py` and `ec/annotations/computed-dptr-sites.md`
+>   rather than a mode of `trace_xdata_refs.py`. What remains unowned is
+>   stated as unowned in the write-up's §5, which also tables every `#110`
+>   reference in the tree.
+>
+> The negative is scoped to the construction, as every other row in this
+> section is: it is not "no writer exists". `mov DPTR,#imm16`, `movx @Ri` and
+> a handed-in `DPTR` are three other spellings this pattern cannot see. The
+> page-`0x08` conditional store at bank0 `0x8365` and its unobserved
+> `XDATA[0x0A56]` gate both stand — that site is a `clr A` one, which is the
+> other half of why this split matters. Its `DPH` is `0x08` or `0x09`, not
+> `0x08` alone: `clr A` clears the accumulator and leaves the carry, so the
+> "exactly the immediate" reading above does not hold for the `clr A` half
+> either. That makes this section's own table of gate values for `0x0862` and
+> `0x086D` a question this pass does not settle — see
+> `docs/findings/addc-dph-residual-six.md` §8. The six-site negative above is
+> unaffected and does not depend on it.
+
 **Excluded:** a DPTR built inside a callee and handed back, and any
 construction other than the `addc`-into-`DPH` form — a `mov DPH,A` after a
 `mov A,imm`, a `pop`, or a `swap` is not enumerated by the pattern above.
@@ -524,13 +572,13 @@ precedent is `xdata-0440-readers.md` §7's shape and `docs/findings.md` §4c.
 | direct `MOV DPTR,#imm16` (`trace_xdata_refs.py`, 67 rows) | **0 read sites** for the nine trio bytes; 4 read sites for `0x1C39`/`0x1C3A`, all inside `dispatch_on_0860`'s own block | a DPTR built from a register, memory, ACC or a stack pop; a table lookup; a `DPTR` handoff |
 | sequential `inc dptr` walk from a base below (the 197 `0x1C00`-page sites) | **0** windows decode a walk; `0x1C00`'s 35 sites none | a walk past a branch, since the walk stops at the first control-flow instruction; a walk from a computed base |
 | `movx @Ri,a` register-indirect (154 bytes, 21 on instruction boundaries) | **0** with `R0`/`R1` preloaded to any of the eleven | any `movx @Ri,a` in code no listing covers; a pointer set from memory or a subroutine |
-| `addc A,#imm ; mov DPH,A` computed DPTR (64 sites, 58 after `clr A`) | **0** build page `0x1C`; the one page-`0x08` site cannot reach page `0x1C` at all | the six non-`clr A` sites of §6.2's residual, whose `A` is a return value or `R6`; a `mov DPH,A` after `mov A,imm` or a `pop` |
+| `addc A,#imm ; mov DPH,A` computed DPTR (64 sites, 58 after `clr A`) | **0** build page `0x1C`; the one page-`0x08` site cannot reach page `0x1C` at all; the six non-`clr A` sites build `{0x0D, 0x0E}` or `0x2A` and so neither page either (issue #519) | a `mov DPH,A` after `mov A,imm` or a `pop` |
 | CODE-table copy class (whole-dump `08 62`/`08 6D` byte-pair scan) | **0** records name any of the eleven as a destination | a table walked by an unexported caller; a record built at runtime |
 | `DPTR`-handoff class (7 parameterised helpers) | **0** recorded callers, which bounds nothing | everything a handoff can carry — the largest single gap in this table |
 | host: DSDT `ECMG` fields (§8.1) | **0** fields and **0** literals | anything not in the committed `dsdt.dsl` |
 | host: Windows `ECSpec.cs` (§8.2) | **0** constants | the anti-tamper-obscured `GCUService.exe` bodies; a fresh `ilspycmd` run |
 | host: BIOS `0x62`/`0x66` index-data port (§8.3) | **structurally cannot** address page `0x1C` | anything in a raw BIOS image that is not in the committed decompiles |
-| computed DPTR inside `trace_xdata_refs.py` | **not attempted** — issue #110's work | named as the leading follow-up (§9) rather than claimed |
+| computed DPTR inside `trace_xdata_refs.py` | **not attempted** — no open issue in this repository covers it; the bounded sibling `ec/tools/computed_dptr_sites.py` is committed, a mode of that tool is not (§6.2's correction, issue #519) | named as the leading follow-up (§9) rather than claimed |
 
 **So the `0x1C36`-`0x1C38` negative, in its sharpest available form:** the
 only site each of those three bytes has, in any image, is the routine that
@@ -654,14 +702,23 @@ grep covers every module.
   (`0xD22D`, `0xD253`) do not; the `.asm` listings cover the same bytes, so
   this is not required here, and seeding them is a `--mode rebuild-project`
   change that cannot merge alongside anything else. That issue stays open.
-- **Follow-ups this opens**, in rough value order:
-  1. **issue #110**, general computed-DPTR visibility in
-     `trace_xdata_refs.py` — the leading item. §6.2 found the one page-`0x08`
-     construction by a byte pattern, and the six non-`clr A` sites of its
-     residual are exactly the shape a tool change would settle;
-  2. the six non-`clr A` `addc`-into-`DPH` sites (`0x2266`, `0x2270`,
-     `0x2278`, `0x22DF`, `0x28EF`, `0x2912`) and what `A` holds at each —
-     the only remaining writer candidate this document names;
+- **Follow-ups this opens**, in rough value order. Items 1 and 2 below are
+  the state after issue #519, which read the six residual sites; the old
+  wording is kept beside them in §6.2's correction block, and the full
+  accounting is `docs/findings/addc-dph-residual-six.md`:
+  1. **general computed-DPTR visibility in `trace_xdata_refs.py`** — still the
+     leading item, and still unowned: no open issue in this repository covers
+     it. §6.2 found the one page-`0x08` construction by a byte pattern, and
+     the bounded sibling `ec/tools/computed_dptr_sites.py` now covers the
+     eight page-`0x0F` sites; what is not in the committed tool is the general
+     category. This was handed to issue #110 as work that "stays open", which
+     is a claim about the queue that the queue does not support;
+  2. ~~the six non-`clr A` `addc`-into-`DPH` sites (`0x2266`, `0x2270`,
+     `0x2278`, `0x22DF`, `0x28EF`, `0x2912`) and what `A` holds at each —~~
+     **CLOSED by issue #519.** All six are read: four build page `{0x0D,
+     0x0E}` and two build `0x2A` and feed a `movc`, so none reaches page
+     `0x08` or page `0x1C` by this construction, and only `0x2266` writes.
+     They were the only writer candidate this document named;
   3. **a live read of `XDATA[0x0A56]`** at a moment when `0x0862` or
      `0x086D` is expected to move, which is the only thing that settles
      whether §6.2's conditional store ever fires. A human with the machine;

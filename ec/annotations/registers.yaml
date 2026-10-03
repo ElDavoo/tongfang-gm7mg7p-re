@@ -917,7 +917,17 @@ registers:
     static_refs_main_ec: 15
     static_refs_pd_image: 0
     status: confirmed-working
-    note: "cross-checked against coretemp (50 vs 51C)"
+    note: >
+      cross-checked against coretemp (50 vs 51C)
+      *** 2026-10-03 (issue #236) ***: a three-byte CODE record stores 0x20 into
+      this byte -- ec/tools/code_table_records.py, table at bank1 0x8453 record
+      12, one of twelve records that land on the 0x0400-0x045F page. static_refs
+      stays 15 and the status stays as it is: a record is not a MOV DPTR site,
+      so no count here moves, and a stored value is not a readback. When that
+      table is walked is not established -- the routine holding the call site has
+      no export and no recorded caller (entry bank1 0x8354) -- so this says what
+      the record stores and not what the byte holds between reset and the first
+      real reading. Method: docs/findings/code-table-record-writers.md.
 
   - name: GPU_TEMP
     addr: 0x044F
@@ -1024,6 +1034,49 @@ registers:
       `present-untested` is the ceiling. The annotation that moved the spelling,
       and the census transcript: ec/annotations/xdata-register-map.md; the
       calibration rule this note follows is docs/findings.md 4.
+
+  - name: XDATA_0391
+    addr: 0x0391
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three EC-side sites, no PD site, one byte wide at each: every one loads
+      DPTR with the three-byte sequence 90 03 91 and the next access is a
+      single 0xE0 read or 0xF0 write, never an inc-DPTR pair walk. Two are reads
+      and one is a write, and all three are the ones the sibling row's filter
+      call reaches.
+      The writer is bank1/DB0B.asm:101-102, on the carry-clear arm of the poll
+      at DB0B.asm:98 -- carry clear is that routine's success return (see
+      ec/decompiled/bank1/C4F0.asm:34-46) and the carry-set arm falls to 0xE8A4
+      instead. What it stores is NOT the routine's first argument, which is
+      what DB0B.c:73 renders as DAT_EXTMEM_0391 = param_1. The instruction is
+      mov A, R3 (DB0B.asm:100), and the poll it just returned from writes R3
+      from XDATA 0x1C04 on its success path (C4F0.asm:38, and the hand-decode
+      at C4F0.c:10 already records it). So the byte is the low half of the
+      16-bit value the 0x1C00 block poll returns; Ghidra's param_1 is a
+      register-tracking artifact of the same kind as the CONCAT11 pointer the
+      sibling note records, and it is corrected in
+      docs/findings/xdata-0390-0391-filter-pair.md rather than here.
+      The two readers are the two 0x9EA1 call sites. bank1/E100.asm:67-69
+      loads it into R0, and the branch at E100.asm:81 then overwrites that R0
+      with the filter's return value before E100.asm:91 publishes it to
+      0x0386 -- and that store is itself behind two guard bits (E100.asm:87
+      and :90 both branch to the ljmp at 0xE1D4), so 0x0386 is written only
+      when neither is set. E100 reads 0x0391 and compares it rather than
+      passing it on.
+      bank1/E237.asm:33-35 loads it into R2, which nothing in 0x9EA1 reads
+      (the filter's operands are R1, R3, R4, R5, R6 and R7), and that same site
+      hands the address on as R3:R4 (E237.asm:36-37), making 0x0391 the second
+      of the two accumulators this filter keeps. Whether some later instruction
+      in that routine reads the R2 is not settled here: the listing for
+      FUN_CODE_e100 ends at E100.asm:117 with a ljmp to 0xE27D, and the one for
+      gate_1c00_init_defaults stops at 0xE27C, so the committed instructions
+      end before any later use of R2 would sit.
+      A static direction is not behaviour and no live test was run, so
+      `present-untested` is the ceiling for this row as much as for 0x0390.
 
   - name: BAT_FULL_CAPACITY_1
     addr: 0x0404
@@ -1697,6 +1750,22 @@ registers:
       covers. Which artifact carries which of this page's addresses, and why the
       other cannot, is docs/findings/dptr-seed-census-gap.md. static_refs and
       status are unchanged, and a read-modify-write is not a behaviour.
+      *** CORRECTION 2026-10-03 (issue #236) ***  the sentence above names
+      "4 EC-side sites, all read-modify-writes" and no writer, and a reading of
+      it takes this byte to have no writer at all. That was wrong: a
+      read-modify-write stores, so all four write. What the entry was silent
+      about is a second writer class no MOV DPTR scan sees -- four three-byte
+      CODE records that seed the byte 0x00, 0x05, 0x80 and 0x83 from four
+      call sites of code_table_scatter_to_xdata (bank1 0xA530), three of them
+      in unexported routines. So this byte has four bit-level writers and four
+      whole-byte ones, which is a shape and not a name. static_refs stays 5 (4
+      main EC + 1 PD), because static_refs* are MOV DPTR site counts recomputed
+      from the image by check_register_counts.py and a record is not one; no new
+      source tag is added for the same reason, since one would make those keys
+      read as though records were in them. Method and table:
+      docs/findings/code-table-record-writers.md and
+      ec/annotations/xdata-code-table-records.csv. status unchanged; a stored
+      value is not a readback and not a behaviour.
 
   - name: XDATA_0458
     addr: 0x0458
@@ -1725,6 +1794,14 @@ registers:
       set_0480_50_zero_048f_0459_02_06e1_a0, which set bits 1 and 2 while
       clearing bits elsewhere -- flag-byte shape again, which is not a name.
       No upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** 2026-10-03 (issue #236) ***: a second writer class is not named above
+      and was silent rather than wrong -- one three-byte CODE record stores 0x00
+      here (table at bank1 0x851C record 2, via code_table_scatter_to_xdata at
+      bank1 0xA530), which no MOV DPTR scan sees because the destination is in
+      CODE. The three writers above are still the only direct ones. static_refs
+      stays 6 and no source tag is added: those keys are MOV DPTR site counts
+      recomputed from the image by check_register_counts.py, and a record is not
+      one. docs/findings/code-table-record-writers.md.
 
   - name: XDATA_045A
     addr: 0x045A
@@ -1772,6 +1849,15 @@ registers:
       bit 0 is a flag with a known owner and the rest of the byte is not
       established. No upstream name. Per-address table:
       ec/annotations/xdata-0400-045f.md.
+      *** 2026-10-03 (issue #236) ***: one three-byte CODE record stores 0x00
+      here (table at bank1 0x8453 record 52, via code_table_scatter_to_xdata at
+      bank1 0xA530), which no MOV DPTR scan sees because the destination is in
+      CODE. It is a whole-byte store where the five above are all bit 0, so
+      the record is the only writer of the byte's upper seven bits that this
+      repository has found -- a shape, and not a name. static_refs stays 12 and
+      no source tag is added: those keys are MOV DPTR site counts recomputed
+      from the image by check_register_counts.py, and a record is not one.
+      docs/findings/code-table-record-writers.md.
 
   - name: XDATA_045C
     addr: 0x045C
@@ -1785,6 +1871,15 @@ registers:
       lookup_94a0_table_by_0620_low3 storing a value chosen from a CODE table
       at bank1 0x94E4. No upstream name. Per-address table:
       ec/annotations/xdata-0400-045f.md.
+      *** 2026-10-03 (issue #236) ***: a second writer class is not named above
+      and was silent rather than wrong -- one three-byte CODE record stores 0x00
+      here (table at bank1 0x8453 record 36, via code_table_scatter_to_xdata at
+      bank1 0xA530), which no MOV DPTR scan sees because the destination is in
+      CODE. A second CODE-table-driven write to a byte whose other writer is
+      already one, which is a shape and not a name. static_refs stays 2 and no
+      source tag is added: those keys are MOV DPTR site counts recomputed from
+      the image by check_register_counts.py, and a record is not one.
+      docs/findings/code-table-record-writers.md.
 
   - name: XDATA_045D
     addr: 0x045D
@@ -1826,6 +1921,13 @@ registers:
       is in magic_55aa_and_0704_countdown. No upstream name. This is the last
       byte before the fan-tach page the isolation run stops short of (0x0460,
       issue #94). Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** 2026-10-03 (issue #236) ***: a fourth writer class is not named above
+      and was silent rather than wrong -- one three-byte CODE record stores 0x00
+      here (table at bank1 0x8453 record 13, via code_table_scatter_to_xdata at
+      bank1 0xA530), which no MOV DPTR scan sees because the destination is in
+      CODE. static_refs stays 10 and no source tag is added: those keys are MOV
+      DPTR site counts recomputed from the image by check_register_counts.py,
+      and a record is not one. docs/findings/code-table-record-writers.md.
 
   - name: BAT_CYCLE_COUNT
     addr: [0x04A6, 0x04A7]
@@ -4304,7 +4406,19 @@ registers:
       ten methods listed in that document's section 7. That is "not found by
       this method", never absence -- the computed-DPTR remainder is issue
       #110's and stays open. UNITS NOT DETERMINED. Per-address table:
-      ec/annotations/xdata-1c3x-consumers.md.
+      ec/annotations/xdata-1c3x-consumers.md. CORRECTION 2026-10-03 (issue
+      #519) to the "stays open" sentence above, which stands as written and is
+      corrected here rather than edited away: no open issue in this repository
+      covers general computed-DPTR visibility in trace_xdata_refs.py, and the
+      bounded version of the method is committed as the sibling tools
+      ec/tools/computed_dptr_sites.py and
+      ec/annotations/computed-dptr-sites.md rather than as a mode of that
+      tool. The six residual addc-into-DPH sites that document's section 6.2
+      named are read in docs/findings/addc-dph-residual-six.md and all six
+      close -- four build page 0x0D/0x0E, two build 0x2A and feed a movc --
+      so none reaches page 0x1C by that construction and only 0x2266 writes.
+      That negative is scoped to the construction and is not absence; this
+      entry stays present-untested and no status moved.
 
   - name: XDATA_1C37
     addr: 0x1C37
@@ -4580,6 +4694,157 @@ registers:
       seed_07d3_gfid_and_08xx_defaults. The byte is read once per arm of the
       branch, which is why the count is 3 and not 2: bit 2 of 0x1666 picks
       the arm, and each arm re-reads 0x166A before writing 0x07D3.
+      The DSDT does not reach this byte -- the ECMG field list is
+      dsdt.dsl:52194-52328 and tops out at 0x0EA0 (see XDATA_1665). No
+      hardware was involved; status stays present-untested.
+
+  - name: XDATA_1663
+    addr: 0x1663
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      3 direct MOV DPTR sites, all bank0, all classified `read` by
+      ec/tools/register_ref_table.py -- no PD site. No writer is found by
+      either committed method, on the "not found by this method" terms
+      XDATA_1665 sets out -- a computed DPH or an indirect movx @Ri is
+      invisible to both scans (#110), and a byte only ever read must be
+      written by something, so the writer is an open question rather than
+      an absence.
+      *** Here the two committed methods disagree, and this is the second
+      byte in the 0x1663-0x1668 span to carry that (issue #267 recorded
+      the first, on 0x1665). *** trace_xdata_refs.py finds 3 image sites
+      where the committed xdata-registers.csv read 2 C-level references.
+      The missing one is 0xC184, in a routine no committed export names,
+      so the C-level method cannot see it -- the same blind spot 0x1665's
+      0xC2C2 and 0xC4E7 sat in, and this byte's composition is the
+      mirror image of that one: seeding the site closes the gap in the
+      count and in the composition at once, rather than trading a
+      double-count for a miss. No .c is seeded for 0xC184 by this change,
+      so the two methods still disagree in the committed CSV and the row
+      below records the image count, which is the one
+      check_register_counts.py recomputes.
+      0xC184 is reached only through the bank1 trampoline at 0x1AB6
+      (mov DPTR,#0xC184 then ljmp 0x1100), so no bank0 listing names it:
+      an unseeded function rather than a verdict about the bytes. Its 13
+      bytes are a complete single-bit accessor ending exactly where
+      set_1603_bit4 begins at 0xC191, read off the image rather than from
+      a listing. Of the six sites the three bytes this change names, three
+      have a bank1 forwarder onto them -- 0x1A26 onto 0xC1B1, 0x1A2C onto
+      0xC349 and 0x1AB6 onto 0xC184, the same six-byte mechanism, rows in
+      `ec/annotations/trampoline-target-census.csv` -- and 0xC1BE, 0xC356
+      and 0xC412 have none. So cross-bank reachability is the run's
+      ordinary shape rather than what marks 0xC184: 0xC1B1 is cross-bank
+      reachable too. What marks 0xC184 is that no committed export covers
+      it -- its forwarder target is the one classified `no-listing`, where
+      0xC1B1 and 0xC349 resolve to exported listings.
+      docs/findings/xdata-1663-1667-1668.md is the write-up.
+      Bit map, one entry per site, read off the committed listings for the
+      two that have one and off the image for 0xC184. Three sites test two
+      different bits, so the polarity is the *name* and is given per site:
+      0xC1B1 bit 6 (`jnb 0xe6, 0xC1BB`), returns R7 = 1 when bit 6 is SET
+      -- not inverted;
+      0xC1BE bit 6 (`jb 0xe6, 0xC1C8`), returns R7 = 1 when bit 6 is CLEAR
+      -- the same bit, the opposite polarity, and the two are exact
+      complements, which is the mirror-accessor pair XDATA_1665 records
+      for 0x1665. That the two agree is a result, not a risk: they are the
+      same test written both ways round;
+      0xC184 bit 3 (`jb 0xe3, 0xC18E`), returns R7 = 1 when bit 3 is CLEAR
+      -- inverted like 0xC1BE, but a *different* bit, so this is not a
+      third copy of the pair above. No committed listing names a caller
+      for it, so what reads bit 3 is not determined here; the bank1
+      trampoline at 0x1AB6 is the only committed reference to the address.
+      Whether bit 3 and bit 6 of this byte are related -- two halves of
+      one flag, or unrelated -- is not determined here, and no committed
+      listing reads either bit a second time.
+      Both bit-6 sites do have callers, and they are called from opposite
+      arms of one state machine: bank0 0x8F20 calls 0xC1B1 and bank0
+      0x8FDB calls 0xC1BE. That is what makes the pair a mirror accessor
+      rather than a duplicate: one caller wants the bit and the other wants
+      its complement. The selecting byte differs per site, so it is not one
+      blanket statement -- 0xC1B1 is reached on bit 0 of 0x0815 (0x8F34
+      `mov DPTR,#0x815` / `jb 0xe0, 0x8f3e`, which is the branch the
+      `lcall 0xc1b1` sits under) and 0xC1BE is dispatched on the value of
+      0x0815's neighbour 0x0817 through the dec A / jz chain at
+      0x8FF5-0x8FFD. 0x0817 has no entry in this file, so what the state
+      encodes is not decoded here. The neighbouring pair's two sites are
+      reached the same way round and are described in XDATA_1667's note.
+      The DSDT does not reach this byte -- the ECMG field list is
+      dsdt.dsl:52194-52328, its 28 Offset declarations run from 0x043E to
+      0x0EA0, and 0x1663 is above all of them. That is a fact about the
+      ASL text rather than a scan result (see XDATA_1665). No hardware
+      was involved and no status was promoted; a static walk supplies
+      references, not behaviour.
+
+  - name: XDATA_1667
+    addr: 0x1667
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 direct MOV DPTR sites, both bank0, both `read`, no PD site. No
+      writer found by either committed method, on the "not found by this
+      method" terms XDATA_1665 sets out (#110). Here the two committed
+      methods agree, in count and in composition: the committed
+      xdata-registers.csv reads 2 references from 0xC349 and 0xC356, which
+      are the image's two sites. Unlike its neighbour this byte carried no
+      disagreement before this change either -- what it did carry was two
+      annotation rows claiming registers.yaml had no entry for it, which
+      this row makes stale.
+      Bit map, one entry per site:
+      0xC349 bit 0 (`jnb 0xe0, 0xC353`), returns R7 = 1 when bit 0 is SET
+      -- not inverted;
+      0xC356 bit 0 (`jb 0xe0, 0xC360`), returns R7 = 1 when bit 0 is CLEAR
+      -- inverted. The two are exact complements, the same mirror-accessor
+      pair XDATA_1665 records for 0x1665 and this byte's 0x1663
+      neighbour shows, so their agreement is a result worth stating
+      rather than a risk to guard against. No site for any other bit of 0x1667
+      is found by trace_xdata_refs.py or by the committed census, and a
+      computed DPH or an indirect movx @Ri would be invisible to both, so
+      that is the limit of the claim rather than an absence; no committed
+      listing reads bit 0 a second time. As with 0x1663's bit 6 the two
+      sites are called from opposite arms of one state machine -- bank0
+      0x8F20 calls 0xC349 and bank0 0x8FDB calls 0xC356 -- which is what
+      makes them a mirror accessor rather than a duplicate. The selecting
+      byte differs per site, as XDATA_1663's note sets out for the
+      neighbouring pair: 0xC349 is dispatched on 0x0817 through the
+      dec A / jz chain at 0x8F55-0x8F5D, while 0xC356 is the entry
+      instruction of the arm that bit 0 of 0x0815 falling clear reaches.
+      The DSDT does not reach this byte -- the ECMG field list is
+      dsdt.dsl:52194-52328 and tops out at 0x0EA0 (see XDATA_1665). No
+      hardware was involved; status stays present-untested.
+
+  - name: XDATA_1668
+    addr: 0x1668
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 direct MOV DPTR site, bank0, `read`, no PD site -- the fewest of
+      the three bytes this change names. No writer found by either
+      committed method, on the "not found by this method" terms
+      XDATA_1665 sets out (#110). The two committed methods agree here,
+      in count and in composition: the committed xdata-registers.csv
+      reads 1 reference from 0xC412, which is the image's only site.
+      Bit map, one entry per site:
+      0xC412 bit 4 (`jnb 0xe4, 0xC41C`), returns R7 = 1 when bit 4 is SET
+      -- not inverted. There is no second site and therefore no mirror
+      accessor and no second polarity: unlike 0x1663 and 0x1667 this byte
+      has nothing to compare its one reading against, which is a limit on
+      what the single entry can tell us rather than a finding. Unlike the
+      two above, its one site does reach a named consequence: its only
+      caller, bank0 0xAB6E, calls it after read_06e6_xor_01 returns 0 and
+      then clears bit 0 of XDATA 0x06E2 when the argument is non-zero, or
+      sets it and calls set_0751_and_07a6_bits when it is zero and bit 0
+      was clear. What bit 4 means is still not decoded here; only that this
+      is the one site of the six whose effect on another byte is visible in
+      a committed listing.
       The DSDT does not reach this byte -- the ECMG field list is
       dsdt.dsl:52194-52328 and tops out at 0x0EA0 (see XDATA_1665). No
       hardware was involved; status stays present-untested.

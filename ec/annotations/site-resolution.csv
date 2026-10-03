@@ -33,6 +33,9 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x0403,BAT_DESIGN_CAPACITY,0x13E4A,bank1,0xBE4A,read,read,0xBE10 FUN_CODE_be10,,
 0x0403,BAT_DESIGN_CAPACITY,0x15118,bank1,0xD118,read,read,0xD0C4 update_0524_0526_4a0_and_0497_flags,,
 0x0390,XDATA_0390,0x16176,bank1,0xE176,read,read,0xE100 FUN_CODE_e100,,
+0x0391,XDATA_0391,0x15BC5,bank1,0xDBC5,write,write,0xDB0B FUN_CODE_db0b,,
+0x0391,XDATA_0391,0x16171,bank1,0xE171,read,read,0xE100 FUN_CODE_e100,,
+0x0391,XDATA_0391,0x1626A,bank1,0xE26A,read,read,0xE237 gate_1c00_init_defaults,,
 0x0404,BAT_FULL_CAPACITY_1,0x0AA34,bank0,0xAA34,read,read,not exported,,
 0x0404,BAT_FULL_CAPACITY_1,0x13214,bank1,0xB214,handed to lcall/ljmp -> callee reads,read,0xB214 set_carry_if_0404_0405_is_0201,0x8892,0x8892 read_xdata_pair_to_r3r4
 0x0404,BAT_FULL_CAPACITY_1,0x1323B,bank1,0xB23B,handed to lcall/ljmp -> callee reads,read,0xB224 FUN_CODE_b224,0x8892,0x8892 read_xdata_pair_to_r3r4
@@ -857,6 +860,12 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x166A,XDATA_166A,0x0C4D9,bank0,0xC4D9,read,read,0xC4D9 test_166a_bit7_inverted,,
 0x166A,XDATA_166A,0x0DA29,bank0,0xDA29,read,read,0xD9FE seed_07d3_gfid_and_08xx_defaults,,
 0x166A,XDATA_166A,0x0DA3D,bank0,0xDA3D,read,read,0xD9FE seed_07d3_gfid_and_08xx_defaults,,
+0x1663,XDATA_1663,0x0C184,bank0,0xC184,read,read,not exported,,
+0x1663,XDATA_1663,0x0C1B1,bank0,0xC1B1,read,read,0xC1B1 test_1663_bit6,,
+0x1663,XDATA_1663,0x0C1BE,bank0,0xC1BE,read,read,0xC1BE test_1663_bit6_inverted,,
+0x1667,XDATA_1667,0x0C349,bank0,0xC349,read,read,0xC349 test_1667_bit0,,
+0x1667,XDATA_1667,0x0C356,bank0,0xC356,read,read,0xC356 test_1667_bit0_inverted,,
+0x1668,XDATA_1668,0x0C412,bank0,0xC412,read,read,0xC412 test_1668_bit4,,
 0x07C4,"GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)",0x0843D,bank0,0x843D,read,read,0x83FF sync_0788_and_07d4_from_09e9,,
 0x07C4,"GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)",0x0844A,bank0,0x844A,read,read,0x83FF sync_0788_and_07d4_from_09e9,,
 0x07C4,"GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)",0x08483,bank0,0x8483,read,read,0x83FF sync_0788_and_07d4_from_09e9,,
