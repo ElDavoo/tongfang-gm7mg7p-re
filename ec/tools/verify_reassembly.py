@@ -11,6 +11,18 @@ compared against the one the listing index carries for the same address. The
 first covers 100% of the instructions, including the ones the assembler below
 cannot express, and all four run anywhere.
 
+**It also derives what is in the instructions the assembler cannot express.**
+`refusal_reason()` replays `to_sdas()`'s decision order over the committed
+listings and `--check` prints the composition -- which form, how many, and
+which of the tool's refusal rules no instruction here reached -- beside the
+count, and compares the total against the report's own `instructions_unchecked`
+column. That comparison is the check; the composition is what it prints. Two
+derivations of the same listings, one through the decision order and one
+through the CSV written from it, that have to agree -- `docs/findings.md` §14g
+named the absence of one as its closing question, and what is printed is not a
+claim the 1:1 property needs: those instructions are still excluded from the
+re-encode, which is why `verify_gap_text.py` exists.
+
 **The full run, `sdas8051` needed.** The committed listing is re-encoded with
 `sdas8051` (SDCC's assembler, which never saw this firmware) and the result is
 compared to `ec/firmware/GMxMGxx_11.800`. Ghidra's SLEIGH decodes, an
@@ -415,6 +427,11 @@ def _operand_list(ops):
     return [o.strip() for o in ops.split(",")] if ops.strip() else []
 
 
+def _opcode_of(hexbytes):
+    """The instruction's opcode, or None for a listing line with no byte column."""
+    return int(hexbytes[:2], 16) if len(hexbytes) >= 2 else None
+
+
 def to_sdas(mnem, ops, pc=None, size=1, opcode=None, hexbytes=""):
     """The listing's operand syntax is already sdas syntax for almost every
     form; what is left is the corrections below and the gap list.
@@ -475,6 +492,103 @@ def to_sdas(mnem, ops, pc=None, size=1, opcode=None, hexbytes=""):
     # same register or two.
     parts = [p.lower() for p in parts]
     return "\t%s\t%s" % (mnem, ",".join(parts))
+
+
+# The two predicates to_sdas() applies inline rather than through a table, and
+# the gap vocabulary this file therefore knows by name rather than by the
+# collections above. Kept as the strings they are, because verify_gap_text.py
+# writes them into a committed CSV's `reason` column and compares against it.
+CJNE_DIRECT = "CJNE direct operand"
+BRANCH_RANGE = "branch displacement out of range"
+DA_A = "reserved `da A`"
+
+
+def refusal_reason(mnem, ops, pc, size, opcode, hexbytes):
+    """Which predicate in `to_sdas()` above declines this instruction, or None.
+
+    The same order `to_sdas()` applies them in, for the same reasons, so the
+    set of instructions it names is `to_sdas()`'s to decide and this only
+    reports which rule declined one. A None here means either `to_sdas()`
+    accepted the instruction or it declined one nothing here explains -- and
+    the second is a form this file has not been taught, which is a failure for
+    a caller that means to cross-decode every refusal rather than a footnote.
+
+    `verify_gap_text.why()` is this function by delegation. It was written
+    there first and drifted from here once; there is one decision order and it
+    lives beside the function that applies it, so there is one enumerator of
+    the vocabulary rather than two that can disagree.
+    """
+    key = re.sub(r"\s*,\s*", ",", ("%s %s" % (mnem, ops)).lower())
+    for gap in sorted(GAP_FORMS):
+        if key.startswith(gap):
+            return 'GAP_FORMS "%s"' % gap
+    if mnem in GAP_MNEMONICS:
+        return "GAP_MNEMONICS %s" % mnem
+    # Unreachable from a decline -- to_sdas() *translates* the reserved `da A`
+    # rather than declining it -- but to_sdas() still applies it in this
+    # position, so it is named in the same position.
+    if mnem == "a" and not ops.strip():
+        return DA_A
+    if opcode is not None and opcode in BIT_UNSUPPORTED:
+        return "BIT_UNSUPPORTED 0x%02X" % opcode
+    parts = _operand_list(ops)
+    if mnem == "cjne" and parts and parts[0].lower().startswith("0x"):
+        return CJNE_DIRECT
+    if mnem in RELATIVE_BRANCH and pc is not None and parts:
+        try:
+            rel = int(parts[-1], 16) - (pc + size)
+        except ValueError:
+            return None
+        if not -128 <= rel <= 127:
+            return BRANCH_RANGE
+    return None
+
+
+def refusal_rules():
+    """Every predicate `refusal_reason()` can name, as the strings it names.
+
+    Enumerated from the collections above rather than kept as a list beside
+    them, so a form added to `GAP_FORMS` or an opcode to `BIT_UNSUPPORTED` is
+    in here the moment it is there. `check()` prints the ones no instruction in
+    the committed listings reached, which is what turns §11's sentence that
+    `CLR bit` and `CJNE`-on-direct are in the vocabulary and in none of the
+    image's refusals from a recollection into a reading.
+
+    The reserved `da A` is not one of these: `to_sdas()` translates that form
+    rather than declining it, so there is no refusal for it to name. It is a
+    rule `refusal_reason()` can still return, and the two facts are different.
+    """
+    return (sorted('GAP_FORMS "%s"' % gap for gap in GAP_FORMS)
+            + sorted("GAP_MNEMONICS %s" % m for m in GAP_MNEMONICS)
+            + sorted("BIT_UNSUPPORTED 0x%02X" % op for op in BIT_UNSUPPORTED)
+            + [BRANCH_RANGE, CJNE_DIRECT])
+
+
+def refusal_composition(insns):
+    """-> (composition, unexplained) over one listing's parsed instructions.
+
+    `composition` is {(predicate, mnemonic): n} for the instructions
+    `to_sdas()` declines, and `unexplained` is [(addr, hexbytes, mnem, ops)]
+    for the ones `refusal_reason()` cannot name. The mnemonic is part of the
+    key because a reader asking what the refusals *are* is asking for
+    `ajmp`/`acall`/`mov`/`cpl`, while the rule is what the tool uses to decide
+    -- `clr 0x8e` is `CLR direct` and `CLR bit` depending on the byte in front
+    of it -- and one mnemonic can be refused by more than one rule.
+    """
+    composition = collections.Counter()
+    unexplained = []
+    for addr, hexbytes, mnem, ops in insns:
+        size = len(hexbytes) // 2
+        opcode = _opcode_of(hexbytes)
+        if to_sdas(mnem, ops, pc=addr, size=size, opcode=opcode,
+                   hexbytes=hexbytes) is not None:
+            continue
+        reason = refusal_reason(mnem, ops, addr, size, opcode, hexbytes)
+        if reason is None:
+            unexplained.append((addr, hexbytes, mnem, ops))
+        else:
+            composition[(reason, mnem)] += 1
+    return composition, unexplained
 
 
 def read_lst(path):
@@ -995,7 +1109,9 @@ def check_listing_bytes():
     The re-encode above is the stronger claim but the weaker coverage: some
     instructions use forms sdas8051 cannot express, so 143 of them are
     unchecked in the committed report. This checks all of them and needs nothing
-    but the firmware, so it runs in CI where the assembler does not.
+    but the firmware, so it runs in CI where the assembler does not. What is
+    *in* those 143 is derived here rather than transcribed; `check()` prints it
+    and compares its total against the report's own column.
 
     It is a different check rather than a weaker one. Re-encoding asks "does an
     independent assembler agree that these bytes mean this instruction"; this
@@ -1008,8 +1124,13 @@ def check_listing_bytes():
     rows, computed from the `insns` this loop has already parsed. That is
     deliberate rather than incidental: #138 made the cheap path parse each
     listing once, and a second pass here to collect a hash would give it back.
+    The composition is accumulated in that same loop for the same reason --
+    `refusal_composition()` reads the parse this already has, and a second walk
+    over the `.asm` files to collect a tally would give the saving back too.
 
-    Returns (ok, checked, bad, digests), digests being {addr|program: digest}."""
+    Returns (ok, checked, bad, digests, composition), digests being
+    {addr|program: digest} and composition being {(predicate, mnemonic): n}
+    over the instructions `to_sdas()` declines."""
     ok = True
     images = {}
     for prog in ("bank0", "bank1", "pd"):
@@ -1026,6 +1147,12 @@ def check_listing_bytes():
     bad = []
     digests = {}
     checked = 0
+    composition = collections.Counter()
+    # A row that `continue`s above -- a missing listing, or a parse this file
+    # knows to have mis-read -- is already in `bad`, so the tally's total falls
+    # short of the report's and check()'s cross-check fails on it too rather
+    # than letting the composition quietly cover fewer rows than the count it
+    # is printed beside.
     for row in csv.DictReader(open(LISTING_INDEX, newline="")):
         rel = row["out_file"]
         if not rel or rel.startswith("("):
@@ -1067,6 +1194,18 @@ def check_listing_bytes():
                 bad.append((prog, "%04X" % addr,
                             "listing says %s, image has %s"
                             % (want.hex(), got.hex())))
+        # The tally, off the same `insns` the digest and the byte check above
+        # were computed from. refusal_composition() re-runs to_sdas() over them
+        # rather than reading the report's column, because the report is the
+        # thing being checked: a tally summed from it could not disagree with
+        # it and would assert nothing.
+        here, unexplained = refusal_composition(insns)
+        composition.update(here)
+        for addr, hexbytes, mnem, ops in unexplained:
+            bad.append((prog, "%04X" % addr,
+                        "to_sdas() declines `%s %s` (%s) and no rule here "
+                        "explains why -- teach refusal_reason() the form"
+                        % (mnem, ops, hexbytes)))
     print("  listing bytes: %d instruction(s) checked against the firmware, "
           "%d disagreement(s)" % (checked, len(bad)))
     for prog, addr, why in bad[:20]:
@@ -1074,7 +1213,67 @@ def check_listing_bytes():
     if len(bad) > 20:
         print("  ... and %d more" % (len(bad) - 20))
     ok = not bad
-    return ok, checked, len(bad), digests
+    return ok, checked, len(bad), digests, composition
+
+
+def report_composition(composition, report):
+    """Print what is in the unchecked instructions, and check the total. -> ok.
+
+    The composition itself is the derived number: `docs/findings.md` §14g names
+    its own closing question as the fact that no committed check recomputes it,
+    and this is the replay of `to_sdas()`'s decision order over
+    `ec/decompiled/listing-index.csv` that answers it. It is printed rather
+    than asserted against a literal, because the five forms and their counts
+    move with a listing export and a hand-kept figure would be a value every
+    merge has to touch.
+
+    What *is* asserted is the total against the committed report's own
+    `instructions_unchecked` column -- two derivations of the same listings,
+    one through the decision order and one through the CSV that was written
+    from it. They agree today; a listing edit that changes which forms are
+    refused, a rule added to `GAP_FORMS`/`BIT_UNSUPPORTED`/the `CJNE` rule, and
+    a stale report each move one and not the other. Without the comparison the
+    composition above would be a plausible wrong number printed with a
+    confident tone, which is the failure §4 is about rather than a fix for it.
+
+    The rules with no instance are printed from `refusal_rules()` beside it, so
+    §11's sentence that `CLR bit`, `CJNE` on a direct address and the
+    carry-with-immediate forms are in the tool's refusal vocabulary and in none
+    of this image's refusals is a reading rather than a recollection. They are
+    the assembler's vocabulary, not the firmware's, and a form that has never
+    been refused here says nothing about whether the firmware contains one.
+    """
+    total = sum(composition.values())
+    print("  unchecked %d, by the rule that declined each:" % total)
+    # Predicate first, then the mnemonic: the rule is the discriminator the
+    # tool decides on, and a mnemonic alone reads as though the assembler
+    # refused `ajmp` as a fact about `ajmp` rather than about sdas8051's
+    # encoding of it.
+    for (reason, mnem), n in sorted(composition.items(),
+                                    key=lambda kv: (-kv[1], kv[0])):
+        print("    %-28s %4d  %s" % (reason, n, mnem))
+    named = {reason for reason, _mnem in composition}
+    unused = [rule for rule in refusal_rules() if rule not in named]
+    if unused:
+        print("  and the refusal rules no instruction here reached: %s"
+              % ", ".join(unused))
+    cells = [int_cell(r, "instructions_unchecked") for r in report.values()]
+    unreadable = sum(1 for c in cells if c is None)
+    if unreadable:
+        print("  FAIL %d report row(s) carry an instructions_unchecked that is "
+              "not an integer, so the total below is over the rest of them"
+              % unreadable)
+        return False
+    reported = sum(cells)
+    if reported != total:
+        print("  FAIL the replay refuses %d instruction(s) and the committed "
+              "report sums to %d.\n"
+              "       One of the two moved: the listings, the rules, or the "
+              "report. The composition above\n       describes the replay, so "
+              "do not read it as the report's." % (total, reported))
+        return False
+    print("  which is the same total as the report's instructions_unchecked")
+    return True
 
 
 def compare_digests(report, digests, live):
@@ -1586,6 +1785,9 @@ def check():
     text has moved since the report measured it, which is what a mnemonic or
     operand edit leaves the byte column unable to see. Fourth, that the report's
     copy of each function's name still matches the one the listing index holds.
+    `report_composition()` rides with the first of them and prints what the
+    instructions the assembler cannot express are made of, beside the count;
+    see the module docstring and that function for what it asserts.
 
     The first two are about the claim on file agreeing with the export; the
     third is about the export not having changed underneath it; the fourth is
@@ -1601,7 +1803,7 @@ def check():
     did not happen; that is a false claim about coverage, where a `mismatch` is
     a disagreement about bytes."""
     ok = True
-    bytes_ok, n_insns, n_bad, digests = check_listing_bytes()
+    bytes_ok, n_insns, n_bad, digests, composition = check_listing_bytes()
     ok = ok and bytes_ok
     if not os.path.isfile(REPORT):
         print("  FAIL no reassembly report at %s; run verify_reassembly.py"
@@ -1609,6 +1811,7 @@ def check():
         return 1
     report = {r["addr"] + "|" + r["program"]: r
               for r in csv.DictReader(open(REPORT, newline=""))}
+    ok = report_composition(composition, report) and ok
     live, names = listing_index_keys()
     for key, rel in live.items():
         if key not in report:
@@ -1726,7 +1929,7 @@ def add_digest_column(path=REPORT):
               "     A digest is written by the full --report run and by this "
               "one migration, and by\n     nothing else." % os.path.relpath(path, REPO))
         return 1
-    ok, _checked, bad, digests = check_listing_bytes()
+    ok, _checked, bad, digests, _composition = check_listing_bytes()
     if not ok or bad:
         print("  refusing to add a column to a report whose listings do not "
               "match the\n  firmware (%d disagreement(s) above). Fix those "
@@ -2384,6 +2587,62 @@ def self_test():
                 "mov dptr,#imm translates")
     assert_that(to_sdas("djnz", "a,0x0014", 0x0040) is None,
                 "a known assembler gap returns None rather than a bad line")
+    # The refusal composition, on a synthetic listing rather than on this
+    # repository's own -- so what is asserted is the claim (one of each form
+    # lands under its own rule, and the rules this listing does not exercise
+    # are the ones with no entry) rather than a census that moves on the next
+    # export. --check prints the live version beside the report's own total.
+    # `clr bit` and `CJNE`-on-direct are here precisely because the committed
+    # image exercises neither: a rule that cannot be exercised on the image is
+    # still a rule, and a change to one of them has to move a test rather than
+    # silently change which rows --check would say have no instance.
+    forms = parse_listing_str(
+        "; one of each form to_sdas() declines, plus two it does not\n"
+        "0040  81 5d -     ajmp  0x845d\n"
+        "0042  11 30 -     acall 0x8030\n"
+        "0044  92 d5 -     mov   0xd5, CY\n"
+        "0046  b2 d5 -     cpl   0xd5\n"
+        "0048  c1 d5 -     clr   0xd5\n"
+        "004a  b5 30 10 08 cjne  0x30,#0x10,0x0054\n"
+        "004e  d5 e0 e5    djnz  A, 0xa581\n"
+        "0051  74 12 -     mov   a,#0x12\n"
+        "0053  22  -  -    ret\n")
+    got, unexplained = refusal_composition(forms)
+    assert_that(got == {("GAP_MNEMONICS ajmp", "ajmp"): 1,
+                        ("GAP_MNEMONICS acall", "acall"): 1,
+                        ("BIT_UNSUPPORTED 0x92", "mov"): 1,
+                        ("BIT_UNSUPPORTED 0xB2", "cpl"): 1,
+                        ("BIT_UNSUPPORTED 0xC1", "clr"): 1,
+                        ("CJNE direct operand", "cjne"): 1,
+                        ('GAP_FORMS "djnz a,"', "djnz"): 1}
+                and not unexplained,
+                "the composition of a listing holding one of each form: %r"
+                % sorted(got.items()))
+    # The complementary half: everything the tool can refuse and this listing
+    # did not is exactly the carry-with-immediate forms and the out-of-range
+    # branch, so a rule added to a collection and not taught here is visible as
+    # a test failure rather than as a number --check prints.
+    assert_that([rule for rule in refusal_rules()
+                if rule not in {reason for reason, _mnem in got}]
+                == ['GAP_FORMS "addc c,#"', 'GAP_FORMS "anl c,#"',
+                    'GAP_FORMS "mov c,#"', 'GAP_FORMS "orl c,#"',
+                    'GAP_FORMS "subb c,#"', 'GAP_FORMS "xrl c,#"',
+                    BRANCH_RANGE],
+                "and the refusal rules that listing does not reach are the "
+                "carry-with-immediate forms and the branch range")
+    # `da A` is translated rather than declined, so it is a rule
+    # refusal_reason() can name and not one refusal_rules() enumerates. Both
+    # halves are asserted, because conflating them would make the "rules with
+    # no instance" line --check prints claim the reserved no-op is a gap.
+    assert_that(refusal_reason("a", "", 0x0040, 1, 0xD4, "d4") == DA_A
+                and to_sdas("a", "", pc=0x0040, size=1, opcode=0xD4,
+                            hexbytes="d4") == "\tda\ta",
+                "the reserved `da A` is named by refusal_reason() and "
+                "translated by to_sdas(), which is why it is not a rule")
+    # The one form refusal_reason() must not invent a reason for.
+    assert_that(refusal_reason("sjmp", "label", 0x0040, 2, 0x80, "800a") is None,
+                "an exclusion nothing explains returns None rather than a "
+                "guess, so the caller fails instead of guessing")
     # The relative-branch correction, which is the one that can silently encode
     # the wrong instruction: a target 2 bytes past a 2-byte jz at 0xEB2 is a
     # displacement of 0, and handing sdas the absolute address instead yields a
