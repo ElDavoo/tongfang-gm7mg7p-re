@@ -600,7 +600,15 @@ CITATIONS = [
     # re-anchored here too, so nothing is red on this tree.
     ("ec/tools/grade_0751_isolation.py", 1485, 'if addr == "MARK":',
      "reader: take_capture_row recognising the row, read_capture's own body"),
-    ("ec/tools/grade_0751_isolation.py", 1613, 'if addr == "MARK":',
+    # The second of the tied pair, and it has to stay *after* the midpoint
+    # between the two `if addr == "MARK"` sites, for the reason the pair below
+    # gives: past it the nearest carrying line is this reader's, before it the
+    # other's, and the join then reports this site as one no citation names.
+    # #388's edit to the grader added the module paragraph above both sites and
+    # moved them together, which carried this number below the new midpoint;
+    # it moves by that shift and by nothing else, and lands on the site rather
+    # than anywhere else past the midpoint.
+    ("ec/tools/grade_0751_isolation.py", 1678, 'if addr == "MARK":',
      "reader: partition_capture_rows recognising the row -- the fourth site "
      "over this shape, and the one the notice partitions its own read with, "
      "so a mark row is never hex-read there either"),

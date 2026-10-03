@@ -1318,7 +1318,35 @@ registers:
       handing DPTR to the pair helpers, so the EC reads it as a unit. The only
       writer is in the zero-clear at bank1 0xB8BF-0xB8D4, which stores 0 into
       all four bytes 0x0436-0x0439 -- 0x0436/0x0437 only when XDATA 0x0575
-      reads 0, 0x0438/0x0439 unconditionally, as the jnz at 0xB8BD shows. NOT
+      reads 0, 0x0438/0x0439 unconditionally, as the jnz at 0xB8BD shows.
+      *** 2026-10-03 (issue #213) ***: the "only writer" half above is wrong
+      and is corrected here rather than edited away. It is true of the `wr`
+      column and false of writers: ec/annotations/site-resolution.csv,
+      committed and never cross-read against this note, resolves 8 of the 17
+      sites to `write` and 9 to `read`, in 8 distinct routines. Only
+      0xB8BF in FUN_CODE_b88c is a store AT the site; the other 7 hand DPTR
+      to a pair writer (0x888C for six, 0x889E for cmp_0404_vs_0518_then_store_0436)
+      and are stores at the callee's entry.
+      ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1
+      re-derives the same split from the image by a different route, so the
+      disagreement was never between two counts but between a note written
+      from the `wr` column and a `ho` column of 15 handoffs whose direction
+      section 4 of ec/annotations/xdata-0400-045f.md resolves.
+      None of the 8 increments what it stores: three store a literal (0xFFFF
+      at 0xB1D3, 0 at 0xBAD8 and 0xC28A), two store the product XDATA 0x0514
+      x 0x0342 that publish_0514_and_0342_product computes, one
+      (FUN_CODE_b224) stores XDATA 0x0518/0x0519 verbatim, and one stores
+      either the literal 0x0201 or the 0x0404/0x0405 pair depending on a
+      compare. So no committed image is found by these methods to produce a
+      running value, and the ~35 s +0x14 step in the capture below is
+      unexplained by any of them; FUN_CODE_b88c stores zero and has one
+      caller, inside arm_05f2_countdown_0575_clears_0490. Both blind spots
+      stay open and are lower bounds in either direction: a writer behind a
+      depth-2 handoff or behind a callee outside the pair helpers (#110), and
+      the unscanned indirect movx @Ri plus P2 paging (#34). status, name,
+      static_refs and sources all unchanged -- a static scan is not a
+      behaviour. Write-up: docs/findings/0436-0437-writer-census.md.
+      NOT
       NAMED, deliberately. Upstream calls this pair
       EC_ADDR_BAT_REMAIN_CAPACITY (uniwill-acpi.c:79,81) and that is the only
       name anyone has for the address -- but the one committed observation of
@@ -1389,7 +1417,13 @@ registers:
       docs/findings.md 4g. Upstream agrees (EC_ADDR_BAT_VOLTAGE_1/_2,
       uniwill-acpi.c:83,85), a fourth. 14 EC-side sites for 0x0438 and 3 for
       0x0439; 12 of the 17 hand DPTR to the pair helpers. The only writer is
-      the shared zero-clear with 0x0436/0x0437. The symbol is
+      the shared zero-clear with 0x0436/0x0437.
+      *** 2026-10-03 (issue #213) ***: same correction as XDATA_0436_PAIR's,
+      and the same defect -- ec/annotations/site-resolution.csv resolves 5
+      0x0438 sites to `write`, of which 4 are handoffs to a pair writer and
+      only 0xB8CB in FUN_CODE_b88c stores at the site. The zero-clear is the
+      only DIRECT store, not the only writer.
+      The symbol is
       BAT_VOLTAGE_MV_0/_1 and not _LO/_HI: gen_xdata_symbols.py's docstring is
       right that an endianness suffix baked into a symbol outlives the note
       that would correct it. Per-address table:
@@ -4861,6 +4895,90 @@ registers:
       The DSDT does not reach this byte -- the ECMG field list is
       dsdt.dsl:52194-52328 and tops out at 0x0EA0 (see XDATA_1665). No
       hardware was involved; status stays present-untested.
+
+  - name: XDATA_201C
+    addr: 0x201C
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 direct MOV DPTR site in the EC image, bank0 at 0xD8CC, classified
+      `read`, no PD site. It is the routine at 0xD8A0 testing bit 1
+      (`jb acc.1`): the re-set of bit 0 of XDATA 0x0983 that the same
+      routine had just cleared happens only when this bit reads clear and
+      R7 is non-zero. No writer is found by either committed method, on
+      the "not found by this method" terms XDATA_1665 sets out (#110) -- a
+      computed DPH or an indirect `movx @Ri` is invisible to both scans --
+      and a byte only ever read must be written by something, so the writer
+      is an open question rather than an absence. The site sits in a
+      routine with no committed listing, so the holding function records
+      as not exported in ec/annotations/site-resolution.csv. What bit 1
+      means is not decoded here. No hardware was involved, so
+      `present-untested` is the ceiling. Reading and reproduction commands:
+      docs/findings/d8a0-init-routine.md.
+
+  - name: XDATA_2012
+    addr: 0x2012
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 direct MOV DPTR site in the EC image, bank0 at 0xD90E, classified
+      `read+write`, no PD site. The routine at 0xD8A0 sets bit 0 and
+      leaves the other seven bits as it found them, in the last block of
+      instructions before the routine's tail jump. One site that both
+      reads and writes makes this byte self-initialising rather than
+      merely seeded: what it holds afterwards is whatever was there with
+      bit 0 forced up, so the routine's write is not the whole of its
+      content. What the other seven bits carry is not decoded here. Same
+      reading, and the same open writer question, as XDATA_201C. No
+      hardware was involved, so `present-untested` is the ceiling.
+
+  - name: XDATA_2014
+    addr: 0x2014
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 direct MOV DPTR site in the EC image, bank0 at 0xD915, classified
+      `write`, no PD site. The routine at 0xD8A0 stores 0x06 here,
+      immediately after XDATA_2012's bit 0 and immediately before
+      XDATA_2015. A byte with exactly one direct site and that site a
+      write is either this routine's private state or is written by a
+      method neither committed scan sees; on the "not found by this
+      method" terms XDATA_1665 sets out (#110) that is open rather than
+      answered. What 0x06 selects is not decoded here -- read+write for
+      0x2012 is the reading's, not this byte's, and the two are separate
+      addresses that happen to be written three instructions apart. No
+      hardware was involved, so `present-untested` is the ceiling.
+
+  - name: XDATA_2015
+    addr: 0x2015
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 direct MOV DPTR site in the EC image, bank0 at 0xD91B, classified
+      `write`, no PD site. The routine at 0xD8A0 stores 0x80 and then
+      copies A into R7 and clears R6, which are the two registers it
+      hands its tail jump to 0xEADA -- so this byte is the source of the
+      routine's exit state, which is more than "a byte was written" and
+      is the one thing here that reaches past this routine. What 0x80
+      means is not decoded here. The callee's own committed listing
+      ec/decompiled/bank0/EADA.asm shows both registers being taken at
+      once in its first four instructions -- DPTR #0x0a47, store R6,
+      read R7 into A -- so the exit state is consumed on entry rather
+      than merely set here; what the callee goes on to do with A is not
+      decoded. No hardware was involved, so `present-untested` is the
+      ceiling.
 
   - name: GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)
     addr: 0x07C4
