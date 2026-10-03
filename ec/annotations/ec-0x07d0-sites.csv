@@ -251,5 +251,5 @@ addr,file_offset,region,runtime,frame_onto,frame_over,access,window,terminator
 0x07D0,0x2DC05,pd-image,0xDC05,22,2,read x1,"movx a,@dptr ; mov r7,a ; mov r3,#0x0b ; mov r5,#0x01 ; lcall 0xc901",flow opcode
 0x07D0,0x2DC11,pd-image,0xDC11,21,3,read x1,"movx a,@dptr ; mov r7,a",DPTR reloaded
 0x07D0,0x2DC20,pd-image,0xDC20,24,0,"read x1, write x1","movx a,@dptr ; inc a ; movx @dptr,a ; sjmp +0xca",flow opcode
-0x07D0,0x2E8D4,pd-image,0xE8D4,24,0,write x1,"mov a,r7 ; movx @dptr,a ; mov r6,#0x00 ; mov r7,#0x17 ; push 0x06 ; push 0x07 ; mov r5,#0x00",max_insns (8) exhausted
+0x07D0,0x2E8D4,pd-image,0xE8D4,24,0,"read x1, write x1","mov a,r7 ; movx @dptr,a ; mov r6,#0x00 ; mov r7,#0x17 ; push 0x06 ; push 0x07 ; mov r5,#0x00",max_insns (8) exhausted
 0x07D0,0x2E8F9,pd-image,0xE8F9,22,2,read x1,"movx a,@dptr ; mov r7,a ; lcall 0xf604",flow opcode

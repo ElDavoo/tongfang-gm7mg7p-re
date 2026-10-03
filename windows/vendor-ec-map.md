@@ -181,7 +181,10 @@ bit 0 at 17:57:51. That first write came from the UI: it published
 `Fan/Control` `SET_OPERATING_MODE_DETAIL` with `GpuDynamicBoostSwitch` = 1
 0.18 s earlier, which runs `SetGpuDynamicBoostSwitch(1)` (`:817-837`)
 without the bit-0 write. `evidence/ec-watch/2026-09-18-ac-plugin-sweep-summary.csv`
-shows the same `0x02` → `0x03` step.
+shows the same `0x02` → `0x03` step — a step *from* `0x02`, which is that
+file's `first_old`: the pre-image of the row's first recorded change, not
+necessarily the value the byte held when the sweep window opened
+(`../docs/findings/sweep-summary-schema.md`).
 
 **Not called, though defined in this class:** `SetPowerLedStatus`,
 `SetFanQuietModeEnable`, `SetOverBoostMode`, `SetPowerStatus` (all `0x07A5`),

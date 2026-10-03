@@ -429,11 +429,14 @@ class LayoutClaimTests(unittest.TestCase):
 class FieldTablePinningTests(unittest.TestCase):
     """All three copies of the field table, held to the decompiled struct.
 
-    The duplication is deliberate (`windows/tools/uefi_var.py` runs
-    `ctypes.WinDLL` at import, so nothing on Linux can import it) and this is
-    what makes it safe. The two Python copies are read with `ast` rather than by
-    importing them, and the C# by its declaration shape, so the check reads the
-    committed source rather than a re-import that would agree with a broken one.
+    The duplication is deliberate -- `windows/tools/uefi_var.py` used to run
+    `ctypes.WinDLL` at import, so nothing on Linux could import it -- and this is
+    what makes it safe. It binds those handles on first use now, so folding the
+    two copies back together is the open follow-up; until then this check is
+    what holds them apart. The two Python copies are read with `ast` rather than
+    by importing them, and the C# by its declaration shape, so the check reads
+    the committed source rather than a re-import that would agree with a broken
+    one.
     """
 
     # The C# scalar types and the struct format each maps to.
@@ -486,8 +489,8 @@ class FieldTablePinningTests(unittest.TestCase):
 
         The Python side *can* be read by `ast`, and is: a literal assignment
         evaluates the same whether it came from the module or from the source,
-        but reading it here means a `uefi_var.py` that cannot be imported at all
-        on this platform is still checked.
+        but reading it here means the check is about the committed source
+        rather than about whatever a platform's import of it would produce.
         """
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
@@ -513,8 +516,8 @@ class FieldTablePinningTests(unittest.TestCase):
         self.assertEqual(self.cs_fields(), layout.NVRAM_FIELDS)
 
     def test_the_windows_tool_table_matches_the_decompiled_struct(self):
-        # The other copy, in the file that cannot be imported here. Held to the
-        # same source, so the two cannot drift apart either.
+        # The other copy, in the Windows tool. Held to the same source, so the
+        # two cannot drift apart either.
         self.assertEqual(self.cs_fields(), self.py_table(UEFI_VAR_PY))
 
     def test_all_three_tables_agree(self):
