@@ -205,6 +205,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`rebuild-provenance.md`](rebuild-provenance.md) — What a rebuild from the committed inputs re-derives (issue #623)
 - [`region-edge-declined-sites.md`](region-edge-declined-sites.md) — The six offsets the rel8 site walk declines are now reported by the tool rather than verified once
 - [`rel8-displacement-bound.md`](rel8-displacement-bound.md) — What holds the rel8 displacement read in range: a constant in another module, and a marker check three frames away
+- [`remain-capacity-probe-offline-hold.md`](remain-capacity-probe-offline-hold.md) — The 0x0436 Linux probe: an unchecked column mapping, a path that missed §7, and a summary that aborted on `unknown` (issue #216)
 - [`reset-vector-dptr-targets.md`](reset-vector-dptr-targets.md) — The reset vector's two DPTR-only bank-0 targets, `0xD89F` and `0xD96C` (issue #559)
 - [`runner-red-suite-set.md`](runner-red-suite-set.md) — The runner's red set, and the third of #162's blocker that was a missing table row (issue #751)
 - [`scheduler-divide-down-cycle.md`](scheduler-divide-down-cycle.md) — How many entries to the divide-down scheduler is one case-`0x0A` turn (issue #1183)
