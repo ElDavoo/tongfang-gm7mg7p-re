@@ -157,6 +157,16 @@ the row's "seven transfer sites" undercounts the paths in. So every path into
 A, R7 and the carry as the caller left them is the whole of what the caller
 expected. What the cases do when their test *does* hold is not decoded.
 
+> **Corrected 2026-10-02, issue #649.** The sentence above is left standing, and
+> it no longer holds of the cases. `bank0 0x9AAD`'s five arms are decoded in
+> [`044b-mode-stepper.md`](044b-mode-stepper.md): every arm whose own test passes
+> rewrites XDATA 0x044B to one of 0x01, 0x02, 0x03 or 0x04, and every arm whose
+> test fails is one of the bail-outs enumerated above. What is still not decoded
+> is what the five values *mean* — which register or subsystem each one selects —
+> and the finding says so in those terms rather than in the terms above. The
+> transition map is in the `bank0 0x9AAD` row of
+> `../../ec/annotations/ghidra-functions.csv`.
+
 **`bank0 0xD2BE` turns out to be the same device, which the issue did not
 anticipate.** All five `ljmp` sites are in `dispatch_on_0860` (0xD091) and each
 is a guard on the way in:

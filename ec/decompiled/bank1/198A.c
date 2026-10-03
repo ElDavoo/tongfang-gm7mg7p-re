@@ -8,9 +8,28 @@
    bl51_bank_select_0; no instruction here reads or writes any XDATA address itself. 198A.c is the
    decompiler rendering that as a call to the stub, and it now passes `latch_0498_bit1_or_bit3`
    where it passed the bare address 0xC1E7 before that routine was annotated; the listing's `mov
-   DPTR,#0xc1e7` is the same address either way and is the right reading of it.
+   DPTR,#0xc1e7` is the same address either way and is the right reading of it. CORRECTION
+   2026-10-02, issue #465: the text here previously read that 198A.c 'now passes
+   `latch_0498_bit1_or_bit3` where it passed the bare address 0xC1E7 before that routine was
+   annotated; the listing's `mov DPTR,#0xc1e7` is the same address either way and is the right
+   reading of it', which credited the decompiled C for progress while naming a routine of a bank
+   this forwarder never runs. `latch_0498_bit1_or_bit3` is bank 1's 0xC1E7
+   (ec/decompiled/bank1/C1E7.asm), where it sets bit 1 or bit 3 of XDATA 0x0498 and writes no R7 at
+   all. The stub at 0x1100 selects bank 0, and in bank 0 the same address is the annotated
+   `test_1664_bit0` (ec/decompiled/bank0/C1E7.asm), which returns 1 in R7 when bit 0 of XDATA 0x1664
+   is set. That is the routine the R7 the corrected bank1,8096 row relies on is returned from, and
+   it is the one the generated `latch_0498_bit1_or_bit3` in 198A.c is not. The name comes from the
+   symbol Ghidra resolves in the bank-1 program, which a bank program carries for the shared
+   0x0000-0x7FFF common area as well as for its own code; renaming it means changing the symbol
+   table or the project's bank model, which is a rebuild, so the correction belongs here beside the
+   generated text rather than in it. Measured by ec/tools/census_forwarder_targets.py, whose
+   per-target row for this entry reads class `entry` against bank 0's listings and names
+   `test_1664_bit0`'s listing; docs/findings/forwarder-target-bank-census.md carries the census.
+   Common area: this forwarder's six bytes are at file 0x198A, and file 0x1198A -- bank 1's own
+   region at the same offset -- holds `70 0f 90 1c 04 e0`, so the listing is filed under bank1 and
+   executes whichever bank is selected when it is called.
    type: forwarder
-   evidence: ec/decompiled/bank1/198A.asm; ec/decompiled/bank1/198A.c
+   evidence: ec/decompiled/bank1/198A.asm; ec/decompiled/bank1/198A.c; ec/decompiled/bank0/C1E7.asm
    basis: hand-decoded
    name_basis: code-shape */
 

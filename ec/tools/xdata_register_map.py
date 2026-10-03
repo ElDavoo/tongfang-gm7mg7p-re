@@ -749,13 +749,13 @@ ORACLE = {
     # settles it; the 155 the pass adds are new `program=main-ec` rows, of which
     # `0x03DE` and `0x03B8` are two. (A shared address *number* is not a shared
     # byte, which is the collision `program=both` exists to carry.)
-    "extmem_distinct": 1013, "extmem_refs": 8574,
-    "extmem_raw": 8583, "extmem_commented": 9,
-    "extmem_main_distinct": 890, "extmem_main_refs": 7716,
+    "extmem_distinct": 1011, "extmem_refs": 8559,
+    "extmem_raw": 8568, "extmem_commented": 9,
+    "extmem_main_distinct": 887, "extmem_main_refs": 7701,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
     # Named by the decompiler. The 2026-09-30 move is recorded in the dated
     # block above `named_in_tree`, and the 2026-09-28 one at the END OF FILE.
-    "symbol_main_distinct": 172, "symbol_main_refs": 6248,
+    "symbol_main_distinct": 175, "symbol_main_refs": 6263,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1326, "refs": 15696,
