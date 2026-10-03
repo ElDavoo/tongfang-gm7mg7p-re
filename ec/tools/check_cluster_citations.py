@@ -107,6 +107,30 @@ the figures would be about.
     not among them -- so `fan-level`, which none of its rules catches, is still
     a limit on how a name should be chosen rather than a check. A smaller limit
     than the one this bullet used to carry, not none of one.
+  * *An address introduced as a bound or operand.* The any-of fallback has no
+    exemption for one, and the proposal to add it was measured and **not
+    adopted** -- `ec/tools/census_citation_exemptions.py` enumerates the set it
+    would admit, by calling this file's own `census()`, `units()`,
+    `skip_reason()`, `cited_clusters()` and `pairings()` rather than walking a
+    second time, and `docs/findings/operand-bound-exemption-census.md`
+    records the decision and the criterion it was taken against. Two measured
+    results decide it. The role lexicon is `bound`, `immediate`, `operand`,
+    `target`, and it fires on **no** address's own clause anywhere in the
+    committed corpus: every hit is a word in a neighbouring clause or elsewhere
+    in the unit, which is the `charge-target` false positive above reproduced
+    in the output rather than described. And the one sentence the proposal is
+    for -- §26's re-packed summary, which `OneAttributionPerUnit` holds as
+    *expected to report* -- **would** be admitted by it, and admitting it
+    silences exactly the `0x0800` disagreement that case exists to keep
+    reported. A rule whose only demonstration is the sentence that motivated
+    it is the half-measure `reset-vector-dptr-targets.md` declines. The
+    addresses a `SPAN` token makes a range are the one wordless case; they are
+    a separate exemption with a separate reading, the census reports them
+    separately rather than folding them into the lexicon figure, and none is
+    recorded as agreed. What the census measured is the prose committed here --
+    not a claim that the exemption would be wrong in general. The same census
+    turned up a live defect in this file's *walk*, which is fixed rather than
+    written up: see `LIST_ITEM` and `units()`.
   * *Anything outside the three roots*, and any address the census does not
     know, so a code address that collides with an XDATA one is not examined.
 
@@ -257,6 +281,25 @@ ZERO = re.compile(r"none|—|-", re.IGNORECASE)
 SPAN = re.compile(r"0x[0-9A-Fa-f]{4}-0x[0-9A-Fa-f]{4}")
 MARKUP = re.compile(r"[`*]")
 
+# A list item is its own unit, for the reason a table row is: the items mean
+# different things, and joining them makes one item's cluster id reach into the
+# next item's addresses. A *tight* list -- consecutive items with no blank line
+# between them, which is what `gen_findings_index.py` renders -- has no
+# paragraph break for the walk to cut on, so the whole list read as one unit and
+# whether it was membership-checked at all turned on whether any single title
+# anywhere in it contained a cue word. That is a live defect rather than a
+# hypothetical: naming one write-up `cluster-citation-operand-exemption.md`
+# moved the word `cluster` into that unit and turned this checker from exit 0 to
+# exit 1 on a tree whose prose had not changed, with a dozen unrelated
+# write-ups' addresses reported as disagreements. See
+# `docs/findings/operand-bound-exemption-census.md`.
+#
+# A continuation line does not start with a marker and so stays with the item it
+# continues, which is what keeps a wrapped item whole. `TERMINATOR`'s lookahead
+# carries `-` for the same reason and is left in place: it also separates a
+# sentence from a `-` that opens a line inside a paragraph this does not flush.
+LIST_ITEM = re.compile(r"^(?:[-*+]\s|\d+[.)]\s)")
+
 
 def clean(cell):
     """The cell's own text, without the markdown wrapped around it.
@@ -405,9 +448,16 @@ def units(text):
 
     A table row is its own unit: the columns of a census table mean different
     things, and letting a row run into the next would make the unit's addresses
-    mean nothing in particular. A fenced block is a paragraph boundary for the
-    same reason and by the same route, but it is still cut into sentences
-    inside itself -- `reset-vector-dptr-targets.md:451` puts a membership claim
+    mean nothing in particular. A **list item** is its own unit for the same
+    reason, and where a list is tight -- consecutive items with no blank line
+    between them, which is how `gen_findings_index.py` renders every write-up
+    title -- there is no paragraph break to cut on, so without this the whole
+    list was one unit and a single cue word in any title anywhere in it decided
+    whether every address in the index was checked. A continuation line carries
+    no marker and so stays with the item it continues, which keeps a wrapped
+    item whole. A fenced block is a paragraph boundary for the same reason and
+    by the same route, but it is still cut into sentences inside itself --
+    `reset-vector-dptr-targets.md:451` puts a membership claim
     in a fence and a second, unrelated claim in the sentence after it *inside
     that fence*, and the split between them is the whole of the #605 fix.
     Making the block one uncut unit would put both claims back in one sentence
@@ -466,6 +516,14 @@ def units(text):
         elif not stripped:
             yield from flush(buf)
             buf = []
+            lineno += 1
+        elif buf and LIST_ITEM.match(stripped):
+            # A new item opens where the paragraph would have continued. Only
+            # when `buf` is non-empty: a list straight after a blank line is
+            # already its own paragraph, and treating its first item as a flush
+            # would drop the text before it.
+            yield from flush(buf)
+            buf = [(lineno, stripped)]
             lineno += 1
         else:
             buf.append((lineno, stripped))
