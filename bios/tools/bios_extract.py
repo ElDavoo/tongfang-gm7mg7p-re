@@ -85,6 +85,15 @@ sys.path.insert(0, os.path.join(
 import grade_name_basis
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# The shared Ghidra layer's project-owner helper, for the same reason the one
+# above is imported rather than restated: the BIOS project records the same
+# owner the EC project does and refuses to open for anyone else, so the rewrite
+# is one implementation over two drivers rather than two that can drift.
+# Import-safe: everything the module does hangs off main().
+sys.path.insert(0, os.path.join(REPO, "ghidra"))
+import project_owner  # noqa: E402  (the path insert above is what makes this work)
+
 ZIP = os.path.join(REPO, "vendor", "bios-1.09", "BIOS_1.09.zip")
 ROM_MEMBER = "GM7MG7P/GMxMGxxN109A08.ROM"
 ROM_SHA256 = "dfe8047f35bb1125bbb45d69c96ad83d64e59dd5e50b8d88052c0db04a2d920e"
@@ -1207,6 +1216,15 @@ def build(args, work):
     if os.path.isdir(copy_dir):
         shutil.rmtree(copy_dir)
     shutil.copytree(project_dir, copy_dir)
+    # The copy inherits the owner the committed project.prp records, and
+    # analyzeHeadless refuses a project owned by anyone else with
+    # NotOwnerException before it reads an annotation -- so without this the
+    # export cannot run for any contributor whose username is not that one.
+    # The scratch root is `work` and the helper refuses anything outside it, so
+    # this can only ever write the copy.
+    # docs/findings/ghidra-project-owner.md has the measurement.
+    print("  project copy: %s" % project_owner.rewrite_owner(
+        os.path.join(copy_dir, "%s.rep" % PROJECT_NAME), work))
     for _p in (raw_listing, raw_fn):
         with open(_p, "w", newline="") as f:
             f.write("program\taddr\tname\tsize\tseed_basis\tannotated\t"
