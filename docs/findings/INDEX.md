@@ -5,12 +5,14 @@ write-up under `docs/findings/`, by file name. `docs/findings.md` is
 frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
+- [`0436-0437-writer-census.md`](0436-0437-writer-census.md) — The `0x0436`/`0x0437` writer census: eight stores and none of them a counter, and the PD's five sites name a base rather than a byte
 - [`044b-mode-stepper.md`](044b-mode-stepper.md) — `0x044B` is a five-value mode byte, and `bank0 0x9AAD` is the routine that re-decides it
 - [`0741-bit7-oc-recovery.md`](0741-bit7-oc-recovery.md) — One instruction sets AP_OEM bit 7, and the region it scans is 253 bytes rather than the three a committed annotation claimed
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
 - [`0751-capture-encoding.md`](0751-capture-encoding.md) — The capture format is `utf-8`, declared rather than inherited (issue #748)
 - [`0751-capture-row-shape.md`](0751-capture-row-shape.md) — One row stream for the 0751 capture readers, and a byte-order mark retired at the shape (issue #750)
 - [`0751-census-capture-identity.md`](0751-census-capture-identity.md) — The census counted a capture one way and its per-action line counted it another, and a list holding one file twice withheld a block on a clean run (issue #492)
+- [`0751-census-one-moment.md`](0751-census-one-moment.md) — One `open()` of a capture in `main`, and a truncated early-exit row (issue #767)
 - [`0751-dump-pair-battery-names.md`](0751-dump-pair-battery-names.md) — The 0x0400 pair's "other" bucket, on a mover the capture recorded (issue #219)
 - [`0751-early-exit-row.md`](0751-early-exit-row.md) — The grader dropped the probe's "the run ended early" row, and a 5-second arm graded as a 30-second one (issue #664)
 - [`0751-file-refusal-order.md`](0751-file-refusal-order.md) — Which of the two refusals names a file that is both (issue #784)
@@ -53,6 +55,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
 - [`bank-map-and-image-census.md`](bank-map-and-image-census.md) — The bank map, and a second image in the dump
+- [`bank1-c1e7-reachability.md`](bank1-c1e7-reachability.md) — No transfer in bank 1 names `0xC1E7`, which is why a reading of it stood unchallenged (issue #336)
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
 - [`bucket-c-codemap.md`](bucket-c-codemap.md) — Bucket C against a recovered code map: 16 of the 140 sites are on an instruction boundary, and 14 of those 16 sit inside spans already listed as data tables
@@ -69,11 +72,13 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`census-doc-fallback-entry-addresses.md`](census-doc-fallback-entry-addresses.md) — Direction A's fallback was a search over a whole write-up, and it is now named addresses
 - [`census-figures-restated.md`](census-figures-restated.md) — The census figures a page keeps restating, and the tool that stops holding them by hand
 - [`charge-cap-2021-artifact-archaeology.md`](charge-cap-2021-artifact-archaeology.md) — The 2021 charge-cap archaeology: what is ruled out from committed inputs, and what a recovered artifact would have to show
+- [`charge-derating-counters-not-persisted.md`](charge-derating-counters-not-persisted.md) — The charge-derating counters are cleared by the boot path, not persisted (issue #90)
 - [`charge-target-caller-chain.md`](charge-target-caller-chain.md) — Who reaches `0xB158` — the charge-target caller chain, and how often it runs (issue #89)
 - [`checkout-claim-corpus.md`](checkout-claim-corpus.md) — The checkout-depth sweep derived its own population, and a retraction quotes the sentence it retracts
 - [`citation-code-vs-data.md`](citation-code-vs-data.md) — A citation is a code frame, not an address (issue #453)
 - [`citation-gap-scan.md`](citation-gap-scan.md) — The bytes a function boundary cut out of a citing listing (issue #560)
 - [`citation-undecided-verdicts.md`](citation-undecided-verdicts.md) — The 45 undecided citation pairs, one verdict each (issue #526)
+- [`cited-set-population.md`](cited-set-population.md) — The cited set was intersected with the reachable set, and the work list was the intersection (issue #460)
 - [`citing-listing-evidence.md`](citing-listing-evidence.md) — The citing listing is the other half of the citation question (issue #525)
 - [`class-b-access-cell-corrections.md`](class-b-access-cell-corrections.md) — The three class-B `access` cells were short rather than wrong, and all three are corrected (issue #865)
 - [`code-pointer-site-census.md`](code-pointer-site-census.md) — The 54 image-wide CODE-pointer sites, written down as a regenerable table, and what the list is not
@@ -167,6 +172,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-common-address-attribution.md`](pd-common-address-attribution.md) — A `pd` caller's edge was attributed to a `common` row it never reached (issue #471)
 - [`pd-common-address-spaces.md`](pd-common-address-spaces.md) — The lone `pd` proxy edge was a missing annotation, not a cross-program call (issue #470)
 - [`pd-direct-offset-pointer-add.md`](pd-direct-offset-pointer-add.md) — The PD image keeps a 16-bit base in direct `0x0D`/`0x0E`: a literal at init, rewritten by an 81-caller add-and-store-back (issue #69)
+- [`pd-direct-offset-sites-hold.md`](pd-direct-offset-sites-hold.md) — The PD direct-offset site table is derived, and the derivation was called by nothing
 - [`pd-e2e4-entry-forms.md`](pd-e2e4-entry-forms.md) — The `pd` 0xE2E4 entry set: one entry at the first byte, and 35 bytes the export does not cover (issue #340)
 - [`pd-high-xdata-census-gap.md`](pd-high-xdata-census-gap.md) — Every `MOV DPTR` target in the PD image's `0xFFxx` region has a per-address verdict, and the largest group hands DPTR to a routine that adds it to a word rather than dereferencing it (issue #430)
 - [`pd-image-census.md`](pd-image-census.md) — The `ITE8850-PD` image: a consolidated map, a positive provenance answer, and one null worth the wording
