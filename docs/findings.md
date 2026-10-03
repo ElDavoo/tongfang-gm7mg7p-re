@@ -7721,7 +7721,7 @@ out, per §4a; the full derivation is in
 [`xdata-4-4-identity-rederivation.md`](findings/xdata-4-4-identity-rederivation.md)'s
 "Which tree §4.4 was measured against".)*
 Re-running the block's recipe with the flag that now does what its workaround
-did (`--no-eq-guard`, `ap.add_argument` in `xdata_register_map.py:5518`) gives
+did (`--no-eq-guard`, `ap.add_argument` in `xdata_register_map.py:5535`) gives
 439 → 445, 124 ranks intact and 315 changed, 424 keys unchanged, 434 committed
 rows reaching a new cluster, 15 clusters a key cannot carry (10 on overlap, 5
 on nothing), nine names carried and 430 committed clusters with a key and none.
@@ -7740,7 +7740,7 @@ figures are what the block now carries and the disagreement is written down
 rather than pasted. Two things this pass found that are not figures:
 `ec/tools/test_xdata_cluster_names.py` is **red on `main`**, because its
 `GUARD` literal predates the parameterised guard, `eq_guard and`, at
-`xdata_register_map.py:2005` and its two-largest case pairs ids with names a
+`xdata_register_map.py:2014` and its two-largest case pairs ids with names a
 generation behind — reported, not edited around, and a follow-up rather than a
 line to move here; and `test_xdata_cluster_names.py:286` carries a
 third-generation figure in its docstring, recorded rather than fixed.
@@ -9464,6 +9464,24 @@ tables, the `51`: the third figure above, which is the one this correction does
 *not* touch. §2b and
 [`xdata-6a-direction-rows-pinned.md`](findings/xdata-6a-direction-rows-pinned.md)
 now say exactly that. The wrong versions stay visible per §4a-4d.)*
+
+*(Corrected again, 2026-10-03, issue #918: **the `157`/`858` half of the
+sentence above is no longer open either, and the two sentences above it that
+describe it as narrower than it looked are both superseded.** #1364 added
+`OWNERSHIP["pd_distinct"]`/`["pd_refs"]` and an "and its pd half is" `check()`
+reading them over the de-duplicated census — §6b's own run — so the pair is a
+whole hold rather than a partial one, and "`OWNERSHIP` carries no `pd_*` key, so
+nothing holds §6b's de-duplicated pair" no longer describes this tree. **The
+guard-off `51`, the third of the figures named above, is closed as well**: it is
+asserted in `ec/tools/test_xdata_cluster_names.py` beside the `394` that is the
+main-EC arm of the same pair, and
+[`xdata-guard-off-pd-cluster-count-pinned.md`](findings/xdata-guard-off-pd-cluster-count-pinned.md)
+is the write-up, so "which no issue has taken" no longer describes this tree
+either. The wrong versions stay visible per §4a-4d; §2b, the §2b audit and
+[`xdata-ownership-main-keys-pin.md`](findings/xdata-ownership-main-keys-pin.md)
+carry the same correction beside the same sentences, and
+[`xdata-ownership-arms-do-not-partition.md`](findings/xdata-ownership-arms-do-not-partition.md)
+records why `pd_distinct` has no sum identity to assert where `refs` has one.)*
 
 Nothing was flipped, re-keyed or regenerated: the `--export-ownership` default
 stays off, `xdata-cluster-names.csv` keeps its 9 keys, both committed CSVs
@@ -13096,15 +13114,15 @@ results are in
 `--no-eq-guard` block above cited `xdata_register_map.py:4568` for the flag, and
 on `d330478` that line is `--co-reading-group-table prints the other half: every
 group over two` — **a different flag's help**. `ap.add_argument("--no-eq-guard"`
-is at **`:5518`**. That is the shape issue #873 found at `:4457`, naming the tail
+is at **`:5535`**. That is the shape issue #873 found at `:4457`, naming the tail
 of `--reconcile`'s help (`"image and registers.yaml, unlike every other mode"`,
-now **`:5505`**): on this tree the same defect has moved on to a *third* flag's
+now **`:5522`**): on this tree the same defect has moved on to a *third* flag's
 help, which is the argument for anchoring the code rather than re-pointing the
 number. §17's #254 correction block cited `xdata_register_map.py:916` for
 `store_target()`, `:939` for its `==` rejection and `:243` for `ASSIGN`, and
 those three land on a comment about callers, a `("write_r3r4_to_xdata_pair",
 "write")` tuple and prose about `cluster_key`. Re-measured, `def
-store_target()` is at **`:1982`**, its `==` rejection at **`:2005`** and `ASSIGN`
+store_target()` is at **`:1991`**, its `==` rejection at **`:2014`** and `ASSIGN`
 at **`:398`**, the first two named as content in the block now. The block's own
 reason for being a block — that a first attempt at those pins "ran exactly four
 lines low" because nothing said which tree it was measured against — is the whole
@@ -13116,7 +13134,7 @@ quoted above because it is right. `:1582` for the parameterised guard, in the
 `d330478`, and is a property of that tree rather than a constant.** Nothing here
 is a claim about the EC, the firmware, or any register's behaviour: the guard is
 still a conditional in front of the rejection is a statement about
-`xdata_register_map.py:2005` and nothing else, and it is the claim every one of
+`xdata_register_map.py:2014` and nothing else, and it is the claim every one of
 these corrections depends on. The same pins were re-anchored in
 `ec/annotations/xdata-register-map.md`, in
 `xdata-no-eq-guard-refusal-contract.md`, in
