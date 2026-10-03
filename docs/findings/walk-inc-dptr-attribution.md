@@ -92,7 +92,7 @@ increment in `0xE389` and read on another path.
 The `0x08D1`–`0x08DF` run is one fact about the eight handlers: each seeds a
 word slot at an even address in `0x08D0`–`0x08DE` with `mov dptr,#slot ; mov
 a,r6 ; movx @dptr,a ; inc dptr ; mov a,r7 ; movx @dptr,a` — the bytes at
-`0x805E` are `90 08 d0 ee f0 a3 ef f0`, and the `mov dptr,#0x0600` after them
+`0x8061` are `90 08 d0 ee f0 a3 ef f0`, and the `mov dptr,#0x0600` after them
 reaches the accumulator pair by a `mov dptr` of its own, not by the increment
 — so the low byte of every slot was named and the high byte was not.
 `bank0-8038-handler-flow.md` §6.2 already described them that way, as word
