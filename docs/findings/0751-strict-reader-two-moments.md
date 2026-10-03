@@ -351,7 +351,6 @@ involved anywhere in this change.
   working on. Nothing in the tree compares positions across files and the
   anti-drift contract does not need it to; the notice's sentence quotes the
   exception whole, which is what makes the containment assertion hold.
-- **#767**, as above: `main()`'s two reads are still two.
 - **The whole-buffer read is now the cost on the strict path.** It was the
   notice's to pay since #749 and the strict reader does not pay it twice
   today; a capture large enough for that to matter would say so here first.
