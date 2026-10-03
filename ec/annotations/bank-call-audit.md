@@ -95,7 +95,13 @@ it bites, and it is why the seventeen carry
 `ff_filler_not_a_function_*` rows now:
 [`docs/findings/ff-fill-census.md`](../../docs/findings/ff-fill-census.md)
 census them with `ec/tools/census_ff_fill.py`, which reads back the covering
-instruction for each of the 28.
+instruction for each of the 28. The same two functions were then run over every
+row in buckets A and C, where the column does predict a real opcode — across
+bucket A, where an anchored site is at an instruction boundary 57 times as often
+as an unanchored one. It does not do so in bucket C, where no anchored site is at
+a boundary, and this band is a second place it inverts:
+[`docs/findings/call-site-framing-census.md`](../../docs/findings/call-site-framing-census.md)
+measures it with `ec/tools/census_call_site_framing.py`.
 
 ## 2. Where the linker's own cross-bank calls go
 
