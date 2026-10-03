@@ -599,11 +599,15 @@ class FoldTests(unittest.TestCase):
     no `gate` line it can insert that composes with the ones already here is
     what each of those cut runs turned out to be, and
     `docs/findings/history-checkouts-gate-wiring.md` is where that saturation
-    is measured anchor by anchor. Folding is only the right answer while every
-    half is still there: a later re-cut that keeps some functions and drops
-    others would apply cleanly, pass every case above, and quietly lose a
-    gate. This is the case that says so, and it grows a line per fold for the
-    same reason.
+    is measured anchor by anchor. **A fourth fold went the other way**:
+    `check_testdata_grader_claims()` joined `agent-gates-testdata-row-claims.patch`
+    rather than the file above, because the `gate` line it wanted was at the end
+    of the list where that patch's own already sits, and two files here is
+    better than one that cannot land beside a fourth. Folding is only the right
+    answer while every half is still there: a later re-cut that keeps some
+    functions and drops others would apply cleanly, pass every case above, and
+    quietly lose a gate. This is the case that says so, and it grows a line per
+    fold for the same reason.
 
     It reads whichever file the patch's state says the content is in -- the
     scratch tree while the patch is prepared, the committed script once it is
@@ -625,29 +629,54 @@ class FoldTests(unittest.TestCase):
         "gate 'sweep summary'  check_sweep_summary",
     ]
 
-    def test_every_check_and_every_gate_line_land(self):
-        with retention_gate(self.FOLDED) as (gate, problem):
+    # A second fold, into a different file and for the same reason: the `gate`
+    # list is saturated at every line a hunk's context can reach, so
+    # `check_testdata_grader_claims()` joined the row-claims patch rather than
+    # shipping a file of its own. Held here rather than by naming the strings in
+    # the one above, because the two files carry different tools and a shared
+    # `REQUIRED` would read as if one file carried all of them.
+    FOLDED_SECOND = 'docs/ci/agent-gates-testdata-row-claims.patch'
+    REQUIRED_SECOND = [
+        'check_testdata_row_claims() {',
+        'check_testdata_grader_claims() {',
+        "gate 'testdata row claims'  check_testdata_row_claims",
+        "gate 'testdata grader claims'  check_testdata_grader_claims",
+    ]
+
+    def assert_every_line_lands(self, patch, required, absorbed):
+        with retention_gate(patch) as (gate, problem):
             self.assertFalse(problem, problem)
             landed = gate.read_text()
-        for line in self.REQUIRED:
-            with self.subTest(line=line):
+        for line in required:
+            with self.subTest(patch=patch, line=line):
                 # `assertTrue(line in landed, …)` rather than `assertIn`:
                 # `assertIn` prints the whole container on failure, and the
                 # container is the gate script -- 17 KB of shell ahead of the
                 # sentence that says what to do about it.
                 self.assertTrue(
                     line in landed,
-                    f'{self.FOLDED} no longer lands {line!r}. That patch has '
-                    'absorbed three others -- agent-gates-testdata-index.patch '
-                    'in #745, the history-checkouts check in #1033, and the '
-                    'sweep-summary check in #316 -- because the checks could '
-                    'not be landed at the same anchors as separate patches. '
-                    'A re-cut that keeps some '
-                    'halves and drops others still applies, still composes, '
-                    'and still passes every other case here, so nothing else '
-                    'in this suite would notice. If the patch is already '
-                    'landed, this is saying the landing lost it: the string is '
-                    'the one the landed script is supposed to carry.')
+                    f'{patch} no longer lands {line!r}. That patch has '
+                    f'absorbed {absorbed} because the checks could not be '
+                    'landed at the same anchors as separate patches. A re-cut '
+                    'that keeps some halves and drops others still applies, '
+                    'still composes, and still passes every other case here, '
+                    'so nothing else in this suite would notice. If the patch '
+                    'is already landed, this is saying the landing lost it: '
+                    'the string is the one the landed script is supposed to '
+                    'carry.')
+
+    def test_every_check_and_every_gate_line_land(self):
+        self.assert_every_line_lands(
+            self.FOLDED, self.REQUIRED,
+            'three others -- agent-gates-testdata-index.patch in #745, the '
+            'history-checkouts check in #1033, and the sweep-summary check in '
+            '#316')
+
+    def test_the_second_fold_still_lands_both_halves(self):
+        self.assert_every_line_lands(
+            self.FOLDED_SECOND, self.REQUIRED_SECOND,
+            'one other -- check_testdata_grader_claims.py, the index\'s third '
+            'column read for what it says the grader prints')
 
 
 @unittest.skipUnless(has_git(), 'no git on PATH')

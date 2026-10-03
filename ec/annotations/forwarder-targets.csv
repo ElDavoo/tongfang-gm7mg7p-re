@@ -355,7 +355,7 @@ stub,bank,forwarder,target,class,listing,listing_entry,bytes,reason,annotation
 0x1100,0,0x1996,0xC4BF,no-listing,,,90 16 0a e0 54 f7 f0 22,"no committed export names this address in bank0 -- an unseeded function, which is not a verdict about the bytes","bank1,1996"
 0x1100,0,0x199C,0xC4B7,no-listing,,,90 16 0a e0 44 08 f0 22,"no committed export names this address in bank0 -- an unseeded function, which is not a verdict about the bytes","bank1,199C"
 0x1100,0,0x19A2,0xCF96,entry,CF96,0xCF96,90 06 e7 74 01 f0 e4 90,,"bank1,19A2"
-0x1100,0,0x19A8,0xC118,no-listing,,,12 c0 e7 ef 60 03 7f 01,"no committed export names this address in bank0 -- an unseeded function, which is not a verdict about the bytes","bank1,19A8"
+0x1100,0,0x19A8,0xC118,entry,C118,0xC118,12 c0 e7 ef 60 03 7f 01,,"bank1,19A8"
 0x1100,0,0x19AE,0xCFA9,no-listing,,,7f 81 12 cf 96 e4 90 06,"no committed export names this address in bank0 -- an unseeded function, which is not a verdict about the bytes","bank1,19AE"
 0x1100,0,0x19B4,0xC389,entry,C389,0xC389,90 16 07 e0 54 fb f0 22,,"bank1,19B4"
 0x1100,0,0x19BA,0xC381,no-listing,,,90 16 07 e0 44 04 f0 22,"no committed export names this address in bank0 -- an unseeded function, which is not a verdict about the bytes","bank1,19BA"
