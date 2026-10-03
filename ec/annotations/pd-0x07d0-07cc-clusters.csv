@@ -251,7 +251,7 @@ addr,file_offset,region,runtime,function,function_addr,function_size,access
 0x07D0,0x2DC05,pd-image,0xDC05,loop_c901_per_index_0x07d0,0xDBD9,80,read x1
 0x07D0,0x2DC11,pd-image,0xDC11,loop_c901_per_index_0x07d0,0xDBD9,80,read x1
 0x07D0,0x2DC20,pd-image,0xDC20,loop_c901_per_index_0x07d0,0xDBD9,80,"read x1, write x1"
-0x07D0,0x2E8D4,pd-image,0xE8D4,index_07d0_by_0x17_then_fill_128d_and_call_f604,0xE8D4,46,write x1
+0x07D0,0x2E8D4,pd-image,0xE8D4,index_07d0_by_0x17_then_fill_128d_and_call_f604,0xE8D4,46,"read x1, write x1"
 0x07D0,0x2E8F9,pd-image,0xE8F9,index_07d0_by_0x17_then_fill_128d_and_call_f604,0xE8D4,46,read x1
 0x07CC,0x27455,pd-image,0x7455,-,-,-,write x1
 0x07CC,0x2745E,pd-image,0x745E,-,-,-,read x1

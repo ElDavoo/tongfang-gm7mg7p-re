@@ -353,6 +353,24 @@ is claimed: no count here moves, and the §4 buckets below classify what a
 *bucket B target* is, which is a different question from what a trampoline
 immediate points at.
 
+> **Correction, issue #574: the 403 immediates are now decoded, one row each.**
+> The sentence above is true of this audit and of its `--csv`, which still
+> matches only `lcall`/`ljmp` operands; it is no longer true of the tree.
+> [`../../docs/findings/trampoline-target-census.md`](../../docs/findings/trampoline-target-census.md)
+> gives every entry in this block a row carrying the immediate, the bank its
+> own tail-jump stub selects, §4's `entry`/`erased`/`other` class measured
+> **in that bank**, and whether a committed listing covers it — committed as
+> [`trampoline-target-census.csv`](trampoline-target-census.csv) and derived by
+> `tools/trampoline_target_census.py`. Nothing in this section moves: the block
+> count, the 350/53 split and the caller table above are unchanged and are
+> re-derived by that tool's `--self-test`, which reads the stub map from
+> `find_banks.find_stubs()` and the block's framing from the bytes rather than
+> from the scan that found it. The two hand-read addresses above agree with
+> their rows. `bucket`, `own_bank` and `other_bank` stay empty on those rows,
+> because §4's buckets classify what a *bucket B target* is, which is still a
+> different question from what a trampoline immediate points at. §11 has the
+> section.
+
 ## 4. Bucket B, target by target
 
 For every distinct target `≥ 0x8000` called from a bank, the byte at that
@@ -1766,3 +1784,43 @@ different population, and it moves a *load-bearing negative* rather than only a
 count. The rule, the fifteen sites it is pinned against, and what the two
 surviving single-site `P2` rows turn out to look like are in
 [`../../docs/findings/7151-case-tables-in-the-walk.md`](../../docs/findings/7151-case-tables-in-the-walk.md).
+
+## 11. The trampoline immediates, decoded — and which of the three counts this is
+
+§3 counted the block and did not decode an immediate. The census named in the
+correction under §3 gives every entry one: the `imm16`, the bank its own
+tail-jump stub selects, §4's `entry`/`erased`/`other` class measured **in that
+bank**, and whether a committed listing covers it. The write-up is
+[`../../docs/findings/trampoline-target-census.md`](../../docs/findings/trampoline-target-census.md);
+the table is [`trampoline-target-census.csv`](trampoline-target-census.csv), in
+`bank-call-targets.csv`'s own column order plus five columns, so a row joins on
+`file_offset` with the tail `ljmp` three bytes above the entry.
+
+**The order is the method.** The tail operand names the stub, the stub names the
+bank, and only then is the target byte read. Every entry in this block is
+common-area code, so "the bank the entry sits in" has no well-defined reading
+for it — which is why `bank1,19A8`'s withdrawn count was not merely measured
+against the wrong bank but against a bank these addresses do not belong to. The
+class is §4's own vocabulary read through `byte_class()`; no fourth member was
+added, and `entry` remains a scoring heuristic rather than a decode.
+
+**Three censuses of this family are in the tree and they answer different
+questions**, so what follows from the correction under §3 is not "this
+supersedes those":
+
+| census | population | reading | stands as |
+|---|---|---|---|
+| §3 above | this block, by range over the image | caller counts, no immediates | unchanged; §3's figures are re-derived, not restated |
+| [`subsystems.md`](subsystems.md) §4 | the committed export, by function shape | how many exported functions are a `mov DPTR,#imm16` + `ljmp <stub>` pair | unchanged, and a different population — the export, not the image's common area |
+| [`census_forwarder_targets.py`](../tools/census_forwarder_targets.py) | **this block's own entries**, against the committed `.asm` files | `entry` / `operand` / `no-listing`, issue #465 | the tree's per-target answer for this population, and the two tables cross-check each other |
+
+So the count the tree publishes *decoded*, one row per entry, is the block
+census — and it is **range-restricted by block rather than by shape**, which is
+the only sense in which it supersedes anything. It does not merge `subsystems.md`
+§4's export shape into itself, and it does not replace the per-target table
+`census_forwarder_targets.py` commits: the two read the same entries by different
+inputs and reach the same covered / not-covered split, and the suite asserts
+that they agree rather than asserting either against a number written down.
+What the byte reading adds is the one thing a method that only reads committed
+listings cannot reach: the bytes themselves, at the addresses no listing covers
+— the write-up has those figures.

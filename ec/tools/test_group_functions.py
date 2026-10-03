@@ -13,6 +13,12 @@ So the case that matters is the one where a same-region call and a
 cross-region call are *byte-identical* and differ only in which bank the
 target happens to exist in. Everything else here supports that.
 
+`UnplacedEdges` is the other half of the tool's output rather than of its
+refusal: an edge whose target address has no annotated row is counted, and the
+three decisions plus the split mode's own cut partition the call-edge census.
+A report that omitted that population would leave the tool correct and its
+accounting partial, which is the failure the other cases here cannot see.
+
 The fixtures are written inline rather than committed, because the `.asm`
 shape being tested is a hypothetical one -- a listing that really is three
 identical bytes at 0x8000 in both banks would be a committed export, and
@@ -25,6 +31,7 @@ import importlib.util
 import io
 import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -56,6 +63,17 @@ AJMP = "8000     01 30 - -   ajmp     0x8030"
 # point of `TwoProgramsOneAddress` below.
 LCALL_06A0 = "8000     12 06 a0 lcall    0x06A0"
 LCALL_06B0 = "8000     12 06 b0 lcall    0x06B0"
+# A call to a common-area address carrying no row at all -- neither the
+# caller's own scope nor `common`. There is nothing to join the edge onto and
+# nothing to proxy it onto, so it is the third decision.
+LCALL_06F0 = "8000     12 06 f0 lcall    0x06F0"
+# A bank-base call whose target carries a row ONLY in the other bank. The
+# same-bank branch finds nothing to join, and `cross_region` counts the edge
+# anyway, so this one edge is in both populations.
+LCALL_82A0 = "8100     12 82 a0 lcall    0x82A0"
+LCALL_83F0 = "8200     12 83 f0 lcall    0x83F0"
+LCALL_07D0 = "8400     12 07 d0 lcall    0x07D0"
+TOOL = HERE / 'group_functions.py'
 
 
 def listing(directory, name, *lines):
@@ -228,6 +246,97 @@ class TwoProgramsOneAddress(unittest.TestCase):
         # programs.
         self.assertEqual(dict(stats.proxy_by_caller), {'bank0': 1, 'pd': 1})
         self.assertEqual(dict(stats.proxy_by_target), {'06B0': 2})
+
+
+class UnplacedEdges(unittest.TestCase):
+    """The third decision, and the one `--report` used not to print.
+
+    `cluster()` makes one of three decisions per edge -- join it, proxy it, or
+    end at nothing -- and only the second had a line in the report, so nothing
+    printed beside the A/B/C census added back to it. An unplaced edge is not a
+    cut: a cut is the proxy rule's decision and says something about the call
+    structure, and an unplaced edge says only that its target address has no
+    row in `ghidra-functions.csv`. That is **not found by this method**, never
+    absent from the image.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+
+    def graph(self):
+        """One unplaced edge of each kind, beside one joined and one proxied.
+
+        The two placed edges are here so the census partition is an identity
+        over all four terms rather than a check that two zeroes and two zeroes
+        make four."""
+        return [
+            row('bank0', '8000', 'unplaced_caller',
+                listing(self.tmp.name, 'unplaced.asm', LCALL_06F0, RET)),
+            row('bank0', '8100', 'other_bank_caller',
+                listing(self.tmp.name, 'other_bank.asm', LCALL_82A0, RET)),
+            row('bank1', '82A0', 'other_bank_target',
+                listing(self.tmp.name, 'other_bank_target.asm', RET)),
+            row('bank0', '8200', 'joined_caller',
+                listing(self.tmp.name, 'joined.asm', LCALL_83F0, RET)),
+            row('bank0', '83F0', 'joined_target',
+                listing(self.tmp.name, 'joined_target.asm', RET)),
+            row('bank0', '8400', 'proxied_caller',
+                listing(self.tmp.name, 'proxied.asm', LCALL_07D0, RET)),
+            row('common', '07D0', 'proxied_target',
+                listing(self.tmp.name, 'proxied_target.asm', RET))]
+
+    def test_an_edge_with_no_row_is_counted_and_is_neither_joined(self):
+        grouped, stats = gf.group_rows(self.graph(), repo=gf.REPO, min_size=2)
+        self.assertEqual(stats.unplaced_edges, 2)
+        self.assertEqual(dict(stats.unplaced_by_caller), {'bank0': 2})
+        # The edge total and the address count are two populations, which is
+        # why both are kept: the two edges land on two different addresses.
+        self.assertEqual(dict(stats.unplaced_by_target),
+                         {'06F0': 1, '82A0': 1})
+        self.assertEqual(dict(stats.proxy_by_target), {'07D0': 1},
+                         "an unplaced edge is not a proxied one")
+        self.assertEqual(grouped[('bank0', '8000')][0], 'ungrouped')
+        self.assertEqual(grouped[('bank1', '82A0')][0], 'ungrouped',
+                         "an edge with no row to end on joins nothing, so the "
+                         "bank0 caller and the bank1 row are not one component")
+
+    def test_the_other_bank_sub_population_is_inside_cross_region(self):
+        # The discriminating case, and the reason the two counters are kept
+        # apart rather than folded together. The same-bank branch found no row
+        # to join, so this edge is unplaced; `cross_region` counted it anyway,
+        # because it counts a bucket-B edge whose target exists in the other
+        # bank whether or not it was joined. One edge, two populations, and a
+        # reader who added the counts would double it.
+        _grouped, stats = gf.group_rows(self.graph(), repo=gf.REPO, min_size=2)
+        self.assertEqual(dict(stats.unplaced_other_bank), {'82A0': 1})
+        self.assertEqual(stats.cross_region, 1)
+        self.assertNotIn('06F0', stats.unplaced_other_bank,
+                         "an address with no row in either bank is not the "
+                         "other-bank sub-population")
+
+    def test_the_decisions_partition_the_call_edge_census(self):
+        # A property of the code rather than of any tree, which is what makes
+        # it worth a test: no constant here holds a current-tree figure.
+        #
+        # `trampoline` is 0 on this graph and cannot be made otherwise without
+        # a shape-matched bank-select trampoline in the fixture; that term is
+        # pinned by `--self-test`, on the graph that has two.
+        rows = self.graph()
+        _grouped, stats = gf.group_rows(rows, repo=gf.REPO, min_size=2)
+        self.assertEqual(gf.edge_partition(stats),
+                         {'joined': 1, 'proxied': 1, 'unplaced': 2,
+                          'trampoline': 0})
+        self.assertEqual(sum(gf.edge_partition(stats).values()),
+                         sum(gf.bucket_populations(rows, gf.REPO).values()))
+
+    def test_the_self_test_exits_zero_on_the_committed_annotations(self):
+        # Nothing in CI or in `tools/run-tests.sh` runs `--self-test`, so the
+        # accounting this class is about would otherwise never be asserted.
+        result = subprocess.run([sys.executable, str(TOOL), '--self-test'],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('self-test passed', result.stdout)
 
 
 class Seeds(unittest.TestCase):
