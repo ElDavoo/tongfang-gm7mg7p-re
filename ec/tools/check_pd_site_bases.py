@@ -45,6 +45,15 @@ caller's own body and is out of what this file can see (see below) -- a
     the `movx @Ri` + P2 paging form (issue #34) is unscanned, so a zero is a
     lower bound.
 
+The `@Ri` form is unscanned in one direction and *refused* in the other, and
+the two are separate. `sites_for()` scans for `MOV DPTR,#imm16`, so a site
+whose address is carried in R0/R1 is never found at all -- that is the zero
+being a lower bound above. A *callee body* containing a `movx @Ri` is a
+different thing and is refused rather than counted: `movx_class()` returns
+`unresolved` for it, because `""` from that body would be read by
+`classify_site()` as the strongest class there is. The distinction is what
+keeps `stride-base` a statement about instructions this file can name.
+
 The output is committed as `ec/annotations/pd-0436-0437-bases.csv` and
 `--check` diffs it byte for byte, the arrangement `check_site_resolution.py`
 uses, because the point of a census is that a reader can take it without
@@ -96,6 +105,15 @@ UNRESOLVED = "unresolved"
 
 CLASSES = (STRIDE_BASE, READ, WRITE, READ_WRITE, UNRESOLVED)
 
+# The `movx` opcodes this file does not count, and refuses instead. `disasm8051`
+# names all four as `movx`, and issue #34 is the record of the form being missed
+# in a site scan; what is missing here is narrower and different -- a *callee
+# body* carrying one. Counting only the two `@DPTR` opcodes would let such a
+# body fall through to `""` and be classified `stride-base`, which is why these
+# are named rather than left implicit in the opcode test.
+MOVX_RI_READS = (0xE2, 0xE3)
+MOVX_RI_WRITES = (0xF2, 0xF3)
+
 
 def movx_class(insns) -> str:
     """`read`/`write`/`read+write` from a decoded body, or "" for no `movx`.
@@ -115,10 +133,23 @@ def movx_class(insns) -> str:
     those as items too, and a data byte can be `0xE0` without being a `movx`.
     A body that reached one is not a verdict this can make, so it is refused
     rather than counted -- see `decode_export()`'s `None`.
+
+    `MOVX_RI_READS`/`MOVX_RI_WRITES` are refused on the same reasoning and for
+    a sharper reason. `0xE2`/`0xE3` (`movx a,@r0`/`@r1`) and `0xF2`/`0xF3`
+    (`movx @r0,a`/`@r1,a`) are real `movx` and `disasm8051.decode()` names
+    them as such, so a body built from them decodes cleanly and falls past both
+    counted opcodes to `""` -- which `classify_site()` turns into the *strongest*
+    class, `stride-base`, on the strength of the claim that the callee "never
+    dereferences" the pointer. That is the reads-as-absent shape: an unscanned
+    form converted into an affirmative verdict rather than held as a lower
+    bound. So the opcodes that cannot be followed here produce `unresolved`,
+    which says "not found by this method" and nothing more.
     """
     reads = writes = 0
     for _off, raw, text in insns:
         if text.startswith(("inline args:", "case table:")):
+            return UNRESOLVED
+        if raw[0] in MOVX_RI_READS or raw[0] in MOVX_RI_WRITES:
             return UNRESOLVED
         if raw[0] == 0xE0:
             reads += 1
@@ -131,6 +162,27 @@ def movx_class(insns) -> str:
     if writes:
         return WRITE
     return ""
+
+
+def unresolved_why(insns) -> str:
+    """Which refusal stopped `movx_class`, in the row's own `why`.
+
+    Two causes reach here and a row that names only one of them would misread a
+    body of the other as the form it is not: an inline argument block or a case
+    table is *data*, while a `movx @Ri` is a real dereference this file cannot
+    follow. The second is the one that matters, since it is the case that would
+    otherwise have been classified `stride-base`.
+    """
+    for _off, raw, text in insns:
+        if text.startswith(("inline args:", "case table:")):
+            return ("callee's decode reached an inline argument block or a "
+                    "case table, which is data rather than a verdict about "
+                    "DPTR")
+        if raw[0] in MOVX_RI_READS or raw[0] in MOVX_RI_WRITES:
+            return ("callee's decode reached a movx @Ri, which dereferences "
+                    "XDATA through a register this file does not follow, so "
+                    "the class is not decided here")
+    return "callee's decode reached a form this file does not classify"
 
 
 def decode_export(d: bytes, off: int, addr: int, size: int) -> list:
@@ -228,9 +280,7 @@ def classify_site(d: bytes, off: int, region: str, functions: dict) -> dict:
         if cls == UNRESOLVED:
             return {"class": UNRESOLVED, "callee": f"0x{target:04X}",
                     "callee_name": name, "callee_size": size, "movx": "",
-                    "why": "callee's decode reached an inline argument block "
-                           "or a case table, which is data rather than a "
-                           "verdict about DPTR"}
+                    "why": unresolved_why(body)}
         return {"class": cls or STRIDE_BASE,
                 "callee": f"0x{target:04X}",
                 "callee_name": name.split(None, 1)[1] if " " in name else name,
@@ -359,6 +409,18 @@ def self_test() -> int:
           movx_class(decode(b"", 0, 32)) == "")
     check("a bare ret is no access",
           movx_class(decode(bytes.fromhex("22"), 0, 32)) == "")
+    # `add_full_product_to_dptr` with one `movx @r0,a` swapped in for its
+    # `mov dph,a`: every other byte is the committed callee's, so the single
+    # unfollowed opcode decides. Counting only the `@DPTR` forms returned "" for
+    # this, which `classify_site` turns into the strongest class -- so the case
+    # that keeps an unscanned form a lower bound rather than a verdict.
+    movx_ri = bytes.fromhex("a4 25 82 f5 82 f2 22")
+    check("a movx @r0,a body is refused, not read as no access",
+          movx_class(decode(movx_ri, 0, 32)) == UNRESOLVED,
+          "(0xF2 is a real movx the opcode test does not follow; '' here would "
+          "classify as stride-base)")
+    check("a refused body says which form refused it",
+          "movx @Ri" in unresolved_why(decode(movx_ri, 0, 32)))
 
     check("every class name this file can emit is in CLASSES",
           {STRIDE_BASE, READ, WRITE, READ_WRITE, UNRESOLVED} == set(CLASSES),

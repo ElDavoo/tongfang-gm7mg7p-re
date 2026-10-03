@@ -405,6 +405,34 @@ class TestTheClassifier(unittest.TestCase):
         seq = [(0, b"\xe0", "inline args: e0")]
         self.assertEqual(pdb.movx_class(seq), pdb.UNRESOLVED)
 
+    def test_a_movx_at_a_register_is_not_a_stride_base(self):
+        """A `movx @r0,a` body must not come back `stride-base`.
+
+        This is the case that was wrong. `0xF2` (`movx @r0,a`) and `0xF2`'s
+        read counterpart `0xE2` (`movx a,@r0`) are real `movx` instructions
+        that `disasm8051.decode()` names as such, so a body built from them
+        decodes cleanly -- but only the two `@DPTR` opcodes are counted, so
+        such a body fell through to `""`, and `classify_site()` turns `""`
+        into the *strongest* class. The body below is
+        `add_full_product_to_dptr` with one `movx @r0,a` swapped in, so every
+        byte of it is the committed callee except the one instruction that
+        decides the verdict.
+
+        An unscanned form must stay a lower bound on what was found. Returning
+        the strongest class instead converts it into the affirmative claim
+        that the callee "never dereferences" the pointer, which is what a
+        committed `stride-base` row would then carry.
+        """
+        body = bytes.fromhex("a4 25 82 f5 82 f2 22")   # ... mov DPL,A; movx @r0,a
+        self.assertNotEqual(pdb.movx_class(decode(body, 0, 32)), "")
+        self.assertEqual(pdb.movx_class(decode(body, 0, 32)), pdb.UNRESOLVED)
+        # The read form, `movx a,@r0`, refused on the same reasoning.
+        read = bytes.fromhex("a4 25 82 f5 82 e2 22")
+        self.assertEqual(pdb.movx_class(decode(read, 0, 32)), pdb.UNRESOLVED)
+        # And the decoder really does call these `movx`, so this is not the
+        # tool refusing a body it reads as pointer arithmetic.
+        self.assertIn("movx @r0", list(decode(body, 0, 32))[-2][2])
+
     def test_the_decode_stops_at_the_first_control_flow_instruction(self):
         """The bound that keeps a tail jump from reading the next routine.
 
