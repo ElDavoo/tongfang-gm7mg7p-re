@@ -23,11 +23,12 @@ is not established for this machine.** In `OemUniWillVariableDxe`, the routine
 `0x49B` with size `0xB4` and attributes 7. The whole initialisation block —
 including the 76-byte fill and the `SetVariable` at `0x609` — sits below the
 `jns 0x60F` at `0x4CA`, which is the taken path when that status is
-non-negative. It runs **only when the variable is absent**. Nothing in the tree
-shows it ran here: an earlier BIOS, the factory, or the service itself could
-have created the variable first. The issue's framing ("something rewrote the
-whole block after creation") presupposes an event with no committed evidence
-behind it.
+non-negative. It runs only when that status is **negative** — an absent
+variable (`EFI_NOT_FOUND`) being the expected instance of that, not the only
+one. Nothing in the tree shows it ran here: an earlier BIOS, the factory, or
+the service itself could have created the variable first. The issue's framing
+("something rewrote the whole block after creation") presupposes an event with
+no committed evidence behind it.
 
 **2. The issue's own candidate hypothesis is not what the committed dumps look
 like.** A `GetFwVars()` returning `default(NVRAM_STRUCT)` followed by a
@@ -43,11 +44,10 @@ was 1 and was later zeroed".
 ## What this retracts in `docs/findings.md` §8
 
 §8 records that "which writer did that is not known". That sentence survives,
-and it is the verdict below. The two sentences beside it in §8 do not.
-`docs/findings.md` is frozen by `check_findings_frozen.py`, so they cannot be
-corrected in place and this file is the correction — which has to name them,
-because a pointer to a write-up cannot retract a sentence that is still
-standing next to the figures a reader is looking at.
+and it is the verdict below. The two sentences beside it in §8 do not, and §8
+now carries the correction beside them in the §4a-4d shape, leaving them as
+they were. This file is the reasoning behind that correction, so it has to name
+them and give the measurement.
 
 - **"initialises it to 1, along with 0xFF in the reserved bytes"** — the 1 is
   right, and it is the store at `0x5CB`. The fill beside it is not "0xFF in the
@@ -158,7 +158,9 @@ it is a different block.
 
 ## Windows writers
 
-All of it is in `windows/decompiled/v3.1.39.0/GCUService/MyControlCenter/`.
+All of it is under `windows/decompiled/v3.1.39.0/GCUService/` — `MyControlCenter/`
+for `NvramVariable.cs` and `NVRAM_STRUCT.cs`, `MyControlCenter.MyFan/` for
+`MyFanManager_RamFan1p5.cs`, `GCUService.MySystem/` for `BatteryProtection2.cs`.
 That is the only decompiled `GCUService` in the tree: the other two version
 trees hold no `GCUService` directory and no `NvramVariable` identifier at all —
 **not found by this method**, rather than "identical" or "different", so
@@ -180,8 +182,9 @@ read had succeeded.
 places that write `1` into it — the profile loader and the read-back in
 `LoadNvramVariableInfo`, in `MyFanManager_RamFan1p5.cs` — target
 `NvramVariableInfo.MemoryOverClockSupport`, a static shadow field that is never
-marshalled. The value survives a whole-block write only because the no-op `case`
-falls through to the write, carrying the byte it read.
+marshalled. There is no `case` for the field in any `SetFwVars` overload, and
+`SetFwBufferTesting(varname)` runs unconditionally after each switch, so the
+whole cached struct — including the byte it read — is marshalled back.
 
 Three properties of the write set matter for the verdict:
 
