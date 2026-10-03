@@ -406,10 +406,15 @@ def resolve_base(expression, names):
         return None
     # Substitute the names we can resolve, then refuse anything still holding
     # a bare identifier: an unresolved token is an unknown value, and folding
-    # around it would invent a number.
+    # around it would invent a number. An unknown token is substituted with
+    # *itself*, never with `None`, because `re.sub` reads a `None` return as
+    # "delete this match" -- deleting `Arg0` out of `(Arg0 + 0x84)` leaves
+    # `( + 0x84)`, which still evaluates, so the guard below would never see
+    # the token it exists to catch. `(<runtime value> + <constant>)` is as
+    # unplaceable as a bare `EMPB` and has to come out the same way.
     def substitute(match):
         token = match.group(0)
-        return hex(names[token]) if token in names else None
+        return hex(names[token]) if token in names else token
     folded = re.sub(r"\b[A-Za-z_]\w*\b", substitute, text)
     if re.search(r"\b[A-Za-z_]\w*\b", folded):
         return None
@@ -1258,6 +1263,35 @@ def self_test():
           walked_routes.get("routes", {}).get("uncalled") is not None,
           "the fixture's MMRW builds MMNM at Arg0 and nothing calls it, so it "
           "belongs in the uncalled half")
+
+    # 14. A runtime value wearing a constant's clothes, in a method something
+    #     calls. `(Arg0 + 0x84)` is the shape of the committed file's `UPSC`
+    #     region, and the `EMPB` case above does not reach it: on its own the
+    #     unknown token *is* the expression, so deleting it leaves nothing
+    #     that evaluates. Wrapped in arithmetic, deleting `Arg0` from
+    #     `(Arg0 + 0x84)` leaves `( + 0x84)`, which evaluates to `0x84` -- a
+    #     constant nobody declared, in a bucket that clears a route. The
+    #     region has to come out unbounded, as a bare `EMPB` does.
+    runtime = FIXTURE.replace(
+        "            Method (MMRW, 4, NotSerialized)\n"
+        "            {\n",
+        "            Method (MMRW, 4, NotSerialized)\n"
+        "            {\n"
+        "                OperationRegion (MRCF, SystemMemory, "
+        "(Arg0 + 0x84), 0x04)\n")
+    found, walked_runtime = on_fixture(runtime, FIXTURE_WIDTHS)
+    routes = walked_runtime.get("routes", {})
+    check("a runtime value inside an arithmetic base is unbounded, not "
+          "cleared",
+          not found and
+          [e for e in routes.get("unbounded", []) if e["region"] == "MRCF"] and
+          not [e for e in routes.get("invoked", []) if e["region"] == "MRCF"],
+          "ECRR calls MMRW, so the base is resolved; a folded 0x84 would be "
+          "filed as a route that misses. Found %s; MRCF in unbounded: %s, "
+          "in invoked: %s" %
+          (found or "nothing",
+           [e["region"] for e in routes.get("unbounded", [])],
+           [e["region"] for e in routes.get("invoked", [])]))
 
     for path in scratch_paths:
         try:

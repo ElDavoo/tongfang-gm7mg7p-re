@@ -263,6 +263,16 @@ class TheRefusals(unittest.TestCase):
     """
 
     def report_on(self, text, widths):
+        return self.census_on(text, widths)[0]
+
+    def census_on(self, text, widths):
+        """`census()` on a fixture, returning `(problems, measured)`.
+
+        The measured half is what a refusal about the *route* census turns on:
+        a region the check reports as unbounded raises no problem, so a test
+        that only reads the problems cannot tell an honest refusal from a
+        rule that quietly cleared the route.
+        """
         handle, path = tempfile.mkstemp(suffix=".dsl", text=True)
         with os.fdopen(handle, "w", encoding="utf-8") as out:
             out.write(text)
@@ -276,7 +286,7 @@ class TheRefusals(unittest.TestCase):
         with os.fdopen(csv_handle, "w", encoding="utf-8") as out:
             out.write("\n".join(rows) + "\n")
         try:
-            return pair.census(path, csv_path)[0]
+            return pair.census(path, csv_path)
         finally:
             os.unlink(path)
             os.unlink(csv_path)
@@ -371,6 +381,42 @@ class TheRefusals(unittest.TestCase):
             any("ECRR is invoked" in p for p in problems),
             "a call to a computed-base accessor is a reader of 0x07D0 with no "
             "field name in it: %s" % (problems or "nothing reported"))
+
+    def test_a_runtime_value_inside_an_arithmetic_base_is_not_cleared(self):
+        # `(Arg0 + 0x84)` is a runtime value wearing a constant's clothes, and
+        # it is the shape the committed file's `UPSC` region has. `re.sub`
+        # reads a `None` return as "delete this match", so substituting an
+        # unresolvable token as `None` deleted `Arg0` and left `( + 0x84)`,
+        # which evaluates: the region was filed as a route to `0x84` in a
+        # method `ECRR` calls, and cleared, on a base nothing places. The bare
+        # `EMPB` case does not reach this path -- alone, the token is the whole
+        # expression, and deleting it leaves nothing that evaluates.
+        problems, measured = self.census_on(
+            pair.FIXTURE.replace(
+                "            Method (MMRW, 4, NotSerialized)\n"
+                "            {\n",
+                "            Method (MMRW, 4, NotSerialized)\n"
+                "            {\n"
+                "                OperationRegion (MRCF, SystemMemory, "
+                "(Arg0 + 0x84), 0x04)\n"),
+            self.widths_for())
+        self.assertEqual(problems, [])
+        routes = measured["routes"]
+        unbounded = [e for e in routes["unbounded"] if e["region"] == "MRCF"]
+        self.assertEqual(
+            [e["region"] for e in unbounded], ["MRCF"],
+            "ECRR calls MMRW, so this base is resolved, and a runtime value in "
+            "an arithmetic expression has to come out unbounded: %r" % (
+                routes,))
+        self.assertNotIn(
+            "resolves", unbounded[0],
+            "an unbounded route must carry no address, or the invented one "
+            "reads as a route that was checked and missed")
+        self.assertEqual(
+            [e["region"] for e in routes["invoked"]
+             if e["region"] == "MRCF"], [],
+            "MRCF resolved to 0x84 and was cleared, on a base no committed "
+            "input places")
 
 
 class WhatItDoesNotClaim(unittest.TestCase):

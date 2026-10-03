@@ -155,7 +155,7 @@ first is a reason to doubt the second:
   `--check` green. The census is now derived from the file
   (`ec/tools/check_dsdt_ecmg_pair.py`'s `computed_base_routes`), and it reports
   three states rather than one total: **17** regions in a method nothing calls,
-  **3** in a called method whose base resolves elsewhere, and **68** whose base
+  **2** in a called method whose base resolves elsewhere, and **69** whose base
   this scan **cannot place at all**. Only the first state is a cleared route.
 
 The zero-call result is `accessor_census`'s, not the route census's:
@@ -165,7 +165,7 @@ nothing invokes those three *methods*. None of them declares an
 not among the 17 uncalled regions above. And the region that actually carries
 `ECRR`'s read, `MMNM` at `:50423`, is reported **unresolved-base** rather than
 cleared — `MMRW` has eight syntactic call sites, so this scan places it among
-the unbounded 68. The census decides reachability one level deep, so it reports
+the unbounded 69. The census decides reachability one level deep, so it reports
 that as "reached, not placeable" rather than following the callers; a
 transitive walk would be a change to `computed_base_routes`, not something this
 document reads as though the tool already did.
@@ -198,8 +198,8 @@ the named computed-base accessors, and whether anything calls them:
   ECRW  0 call(s); declared at dsdt.dsl:50504
   SMRW  0 call(s); declared at dsdt.dsl:50764
 every SystemMemory region at a non-literal base, from the file:
-  17 in a method nothing calls; 3 in a called method whose
-  base resolves elsewhere; 68 whose base this scan cannot place
+  17 in a method nothing calls; 2 in a called method whose
+  base resolves elsewhere; 69 whose base this scan cannot place
     unbounded: PDW1 at dsdt.dsl:6757, base Local2, method GPC1
     ...
 ```
