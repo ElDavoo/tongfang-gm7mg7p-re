@@ -6132,6 +6132,14 @@ export-only run for this issue was made with the owner corrected in the scratch
 copy only, and the committed file is byte-identical afterwards. Both want their
 own issues.
 
+*(Corrected 2026-10-03. Defect 1 was fixed by issue #260 and is corrected in
+§18 in place; `opt_in_ghidra_oracle` exists and `--self-test --oracle` runs to
+completion. Defect 2 was fixed by issue #293, which normalises the owner state
+in the scratch copy in both Ghidra drivers and leaves the committed
+`project.prp` byte-identical; `docs/findings/ghidra-project-owner.md` records
+the measurement and which of the two places the username appears is the one
+that gates the open. The paragraph above is left as it was written.)*
+
 **Merge note, 2026-09-25, issue #263: the census moved by one reference, and
 the pins were already 26 behind.** The second batch above committed 88
 signatures, and the XDATA census read over the rebuilt export is **1,171
