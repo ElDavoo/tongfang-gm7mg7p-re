@@ -917,7 +917,17 @@ registers:
     static_refs_main_ec: 15
     static_refs_pd_image: 0
     status: confirmed-working
-    note: "cross-checked against coretemp (50 vs 51C)"
+    note: >
+      cross-checked against coretemp (50 vs 51C)
+      *** 2026-10-03 (issue #236) ***: a three-byte CODE record stores 0x20 into
+      this byte -- ec/tools/code_table_records.py, table at bank1 0x8453 record
+      12, one of twelve records that land on the 0x0400-0x045F page. static_refs
+      stays 15 and the status stays as it is: a record is not a MOV DPTR site,
+      so no count here moves, and a stored value is not a readback. When that
+      table is walked is not established -- the routine holding the call site has
+      no export and no recorded caller (entry bank1 0x8354) -- so this says what
+      the record stores and not what the byte holds between reset and the first
+      real reading. Method: docs/findings/code-table-record-writers.md.
 
   - name: GPU_TEMP
     addr: 0x044F
@@ -1697,6 +1707,22 @@ registers:
       covers. Which artifact carries which of this page's addresses, and why the
       other cannot, is docs/findings/dptr-seed-census-gap.md. static_refs and
       status are unchanged, and a read-modify-write is not a behaviour.
+      *** CORRECTION 2026-10-03 (issue #236) ***  the sentence above names
+      "4 EC-side sites, all read-modify-writes" and no writer, and a reading of
+      it takes this byte to have no writer at all. That was wrong: a
+      read-modify-write stores, so all four write. What the entry was silent
+      about is a second writer class no MOV DPTR scan sees -- four three-byte
+      CODE records that seed the byte 0x00, 0x05, 0x80 and 0x83 from four
+      call sites of code_table_scatter_to_xdata (bank1 0xA530), three of them
+      in unexported routines. So this byte has four bit-level writers and four
+      whole-byte ones, which is a shape and not a name. static_refs stays 5 (4
+      main EC + 1 PD), because static_refs* are MOV DPTR site counts recomputed
+      from the image by check_register_counts.py and a record is not one; no new
+      source tag is added for the same reason, since one would make those keys
+      read as though records were in them. Method and table:
+      docs/findings/code-table-record-writers.md and
+      ec/annotations/xdata-code-table-records.csv. status unchanged; a stored
+      value is not a readback and not a behaviour.
 
   - name: XDATA_0458
     addr: 0x0458
@@ -1725,6 +1751,14 @@ registers:
       set_0480_50_zero_048f_0459_02_06e1_a0, which set bits 1 and 2 while
       clearing bits elsewhere -- flag-byte shape again, which is not a name.
       No upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** 2026-10-03 (issue #236) ***: a second writer class is not named above
+      and was silent rather than wrong -- one three-byte CODE record stores 0x00
+      here (table at bank1 0x851C record 2, via code_table_scatter_to_xdata at
+      bank1 0xA530), which no MOV DPTR scan sees because the destination is in
+      CODE. The three writers above are still the only direct ones. static_refs
+      stays 6 and no source tag is added: those keys are MOV DPTR site counts
+      recomputed from the image by check_register_counts.py, and a record is not
+      one. docs/findings/code-table-record-writers.md.
 
   - name: XDATA_045A
     addr: 0x045A
@@ -1772,6 +1806,15 @@ registers:
       bit 0 is a flag with a known owner and the rest of the byte is not
       established. No upstream name. Per-address table:
       ec/annotations/xdata-0400-045f.md.
+      *** 2026-10-03 (issue #236) ***: one three-byte CODE record stores 0x00
+      here (table at bank1 0x8453 record 52, via code_table_scatter_to_xdata at
+      bank1 0xA530), which no MOV DPTR scan sees because the destination is in
+      CODE. It is a whole-byte store where the five above are all bit 0, so
+      the record is the only writer of the byte's upper seven bits that this
+      repository has found -- a shape, and not a name. static_refs stays 12 and
+      no source tag is added: those keys are MOV DPTR site counts recomputed
+      from the image by check_register_counts.py, and a record is not one.
+      docs/findings/code-table-record-writers.md.
 
   - name: XDATA_045C
     addr: 0x045C
@@ -1785,6 +1828,15 @@ registers:
       lookup_94a0_table_by_0620_low3 storing a value chosen from a CODE table
       at bank1 0x94E4. No upstream name. Per-address table:
       ec/annotations/xdata-0400-045f.md.
+      *** 2026-10-03 (issue #236) ***: a second writer class is not named above
+      and was silent rather than wrong -- one three-byte CODE record stores 0x00
+      here (table at bank1 0x8453 record 36, via code_table_scatter_to_xdata at
+      bank1 0xA530), which no MOV DPTR scan sees because the destination is in
+      CODE. A second CODE-table-driven write to a byte whose other writer is
+      already one, which is a shape and not a name. static_refs stays 2 and no
+      source tag is added: those keys are MOV DPTR site counts recomputed from
+      the image by check_register_counts.py, and a record is not one.
+      docs/findings/code-table-record-writers.md.
 
   - name: XDATA_045D
     addr: 0x045D
@@ -1826,6 +1878,13 @@ registers:
       is in magic_55aa_and_0704_countdown. No upstream name. This is the last
       byte before the fan-tach page the isolation run stops short of (0x0460,
       issue #94). Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** 2026-10-03 (issue #236) ***: a fourth writer class is not named above
+      and was silent rather than wrong -- one three-byte CODE record stores 0x00
+      here (table at bank1 0x8453 record 13, via code_table_scatter_to_xdata at
+      bank1 0xA530), which no MOV DPTR scan sees because the destination is in
+      CODE. static_refs stays 10 and no source tag is added: those keys are MOV
+      DPTR site counts recomputed from the image by check_register_counts.py,
+      and a record is not one. docs/findings/code-table-record-writers.md.
 
   - name: BAT_CYCLE_COUNT
     addr: [0x04A6, 0x04A7]
