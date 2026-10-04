@@ -121,6 +121,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`direct-address-opcode-rendering.md`](direct-address-opcode-rendering.md) — Six `direct`-destination opcodes the decoder printed as data, and the four committed tables that inherited it
 - [`disasm8051-oracle-from-the-annotations.md`](disasm8051-oracle-from-the-annotations.md) — The two hand transcriptions are re-read now, and the sentence the gate comment carries is true (2026-09-26, issue #811)
 - [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md) — `disasm8051.py --self-test` is the oracle for the opcode tables, and no gate
+- [`dispatch-table-closure-edges.md`](dispatch-table-closure-edges.md) — The two dispatch tables are closure edges, and `0xEFE7` is a dispatch
 - [`dmi-descriptor-evidence.md`](dmi-descriptor-evidence.md) — The DMI descriptor claims eight bits, and the source that names them was one fetch away (issue #10)
 - [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) — Which of the census checklist's figures a check actually holds, measured (issue #849)
 - [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md) — What `tools/check_doc_patch_refs.py` reads, in both directions (issue #955)
