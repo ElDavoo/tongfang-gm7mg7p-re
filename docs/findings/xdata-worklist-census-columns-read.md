@@ -2,7 +2,7 @@
 
 Issue #1240. The tree's own `check_cluster_citations.py` is the only thing
 holding the hand-typed worklist in `ec/annotations/xdata-register-map.md` §5 to
-`ec/annotations/xdata-clusters.csv`, and it was holding **one** of that table's
+`ec/annotations/xdata-clusters.csv`, and it was holding **two** of that table's
 four figures. The size and the reference count were looked for in the wrong
 cells, found nothing there, and reported nothing — while the tool's own
 docstring said all four were held. Fixed here, and every §5 row re-derived.

@@ -259,13 +259,18 @@ guard-off one — 60 membership and 14 census-count.** Neither half of the old
 pair is right, and they went wrong for different reasons, which is why this is
 a correction rather than a re-run:
 
-- **The committed figure went 3 → 0 without this page being touched.** Its two
-  membership lines were the recipe page's transcript, and `check_cluster_citations.py`
-  now skips a fence naming a regeneration switch; its third was the census-count
-  row, whose stale `named inside` cell that same commit corrected. Both halves
-  are `395ef26d` (#1424), whose own title records them. `3` was therefore already
-  stale before this correction, and the committed run exits 0 on `origin/main`
-  today.
+- **The committed figure went 3 → 0 without this page being touched**, and the two
+  halves moved in different commits. Its two membership lines were the recipe
+  page's transcript, and `check_cluster_citations.py` now skips a fence naming a
+  regeneration switch — that half is `395ef26d` (#1424). Its third was the
+  census-count row, and that half is `7245cc0f` (#1438), a commit *earlier* on
+  main: it added `XDATA_086C` at `0x086C`, took the census's `named_addrs` for
+  `main-ec-002` from 31 to 32, and corrected the row's `named inside` cell from
+  27 to 32 in the same commit. The correction block `395ef26d` added to
+  `ec/annotations/xdata-register-map.md` records that move in those terms; the
+  census-count disagreement was therefore already 0 before #1424 landed, and
+  `3` was already stale before this correction. The committed run exits 0 on
+  `origin/main` today.
 - **The guard-off figure went 51 → 62 on its own**, with main's tool on main's
   tree, before anything in this correction. The page has not been edited since
   `0a29edb9` (#1176), and the corpus and the tool have both moved under it.
