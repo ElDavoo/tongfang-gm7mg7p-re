@@ -60,6 +60,15 @@ audit had placed inside one**:
 | `0x055EA` | ljmp `0x9702` | 17/24 | `common-055a8-be-words` | yes |
 | `0x00381` | lcall `0x9402` | 15/24 | `common-032f-ljmp-table` | **no** |
 
+**The `yes` on the two `common-0656-address-table` rows is superseded, not
+reversed.** `bank-call-regions.csv` leaves both `0x00686` and `0x0067E` with an
+**empty** `entry_aligned`, because that region's stride is not uniform — its
+`note` in `data-regions.yaml` records that only 121 of its 176 words are
+`0x032F + 3k` — so the modulo this table's `yes` answers is a grid the file
+does not claim. The cell declines the question rather than saying `no`; see
+[`bank-call-regions-csv.md`](bank-call-regions-csv.md) §"`entry_aligned`: three
+values, keyed on `confidence`" for the rule.
+
 Three things in that table are worth more than the count.
 
 **`0x06952` and `0x00381` score 24-of-24 and 15-of-24 and are still not
@@ -376,3 +385,17 @@ cause, which is the cheapest way to get a gate switched off. The tool's own
 column and, for a future consumer, a new sibling CSV. Adding it to the
 committed CSV needs `build_ec_decompile.py` edited and is follow-up work, not
 this issue's worth of blast radius.
+
+**The committed sibling now exists**, one step further than that sentence
+leaves it: `annotations/bank-call-regions.csv`, written and re-derived by
+`tools/bank_call_regions.py`. It carries every bucket-C site and every paged
+`ajmp`/`acall` site rather than a sample, and it is keyed on `file_offset` alone
+so the two populations share one file without a tie to break. It is beside the
+console columns above, not instead of them: `scan_refs.py` and
+`audit_call_targets.py` are untouched, as are the committed per-site tables.
+What it adds is the *second* question — `entry_aligned`, which says whether a
+site is on its region's entry grid rather than merely inside the span, and
+which `--for-offset` above answers for one address. The cell is three-valued,
+`region_confidence` says which of the three a row gets, and
+[`bank-call-regions-csv.md`](bank-call-regions-csv.md) is where that rule and its
+boundary are argued.
