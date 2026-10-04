@@ -64,16 +64,24 @@ it acts on is `charge-target-derating.md` §1's reading, and §2's inference fro
 the live charge target to the 250 mV/cell tier, which is an inference and says
 so.
 
-**`0x09C9` is not readable by a host at all**, which is why
-[`charge-derating-counters-not-persisted.md`](charge-derating-counters-not-persisted.md)
-deferred the question of whether these bytes get rows at all, and why the
-answer there was "not yet":
+**`0x09C9` is not readable by a host at all**:
 `charge-target-derating.md` §2 records `0x09C9` reading back `0xFF` because
 the host's `0xFE410000` window does not map `0x0800-0x0DFF`, and all four
 addresses are inside that unmapped run. A note that said only "present" would
 let a reader infer the byte had been exercised; each of the four says it was
 not. What would settle the four on hardware is a read the host window cannot
 perform, so it is a different exercise, and a human's.
+
+[`charge-derating-counters-not-persisted.md`](charge-derating-counters-not-persisted.md)
+deferred the question of whether these bytes get rows at all, and answered
+"not yet" on the reasoning that a row for a host-unreadable byte would mean
+inventing a `status:`. These rows are the counterexample to that reasoning
+rather than a vindication of it, and the correction sits beside the claim it
+was made in: `present-untested` is the declared vocabulary's value for exactly
+this static warrant, and `check_status_vocabulary.py --check` accepts all four
+rows. Unreadable by a host is what makes the status `present-untested`; it is
+not a reason to leave a decoded byte out of the file that records decoded
+bytes.
 
 The sites at `0xB25C` and `0xB272` resolve to nothing in
 `ec/annotations/site-resolution.csv`, which records both as `unresolved-none`
