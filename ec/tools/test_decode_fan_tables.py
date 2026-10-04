@@ -59,6 +59,10 @@ _spec.loader.exec_module(dft)
 _spec2 = importlib.util.spec_from_file_location("fan_table_defaults", DEFAULTS)
 ftd = importlib.util.module_from_spec(_spec2)
 _spec2.loader.exec_module(ftd)
+_gfi_spec = importlib.util.spec_from_file_location(
+    "gen_findings_index", HERE / "gen_findings_index.py")
+GFI = importlib.util.module_from_spec(_gfi_spec)
+_gfi_spec.loader.exec_module(GFI)
 
 IMAGE = FIRMWARE.read_bytes()
 WALK = dft.walk(IMAGE, dft.pointer_base(IMAGE))
@@ -589,10 +593,11 @@ class WhatThisChangeDeliberatelyLeftAlone(unittest.TestCase):
         for overclaim in ("was observed", "we read back", "the run confirmed"):
             self.assertNotIn(overclaim, text)
 
-    def test_the_findings_index_names_this_write_up(self):
-        index = (REPO / "docs" / "findings" / "INDEX.md").read_text(
-            encoding="utf-8")
-        self.assertIn("ec-default-fan-tables.md", index)
+    def test_the_write_up_is_where_the_index_reads(self):
+        # The index is `gen_findings_index.py`'s output, not a committed file
+        # (2026-10-04), so "indexed" means a titled file in docs/findings/.
+        self.assertIn("ec-default-fan-tables.md",
+                      {name for name, _ in GFI.entries(str(REPO))})
 
     def test_neither_file_says_the_ec_reloads_on_its_own(self):
         # `0x06C2` is `present-untested`, so a statically reachable branch whose

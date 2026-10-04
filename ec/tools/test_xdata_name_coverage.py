@@ -52,8 +52,13 @@ xrm = load("xdata_register_map")
 # unchanged" is only checkable against a copy of the old string. Recomputing it
 # from `print_carry` would pass on any rewording of the tally, which is the
 # one thing a transcript in the tree must not lose.
-COMMITTED_TALLY = ("  names: seeded 9, exact 0, carried by overlap 0, tied, "
-                   "not carried 0, with no name 430\n")
+# The committed census's tally line, with its two census counts left as slots:
+# how many names the names file seeds, and how many clusters carry none. The
+# second moves whenever seeding re-forms the clusters (#1849 took it from 430 to
+# 437), so it is derived from the committed CSV rather than typed (2026-10-04);
+# the wording around it is still held literally.
+COMMITTED_TALLY = ("  names: seeded {seeded}, exact 0, carried by overlap 0, tied, "
+                   "not carried 0, with no name {unnamed}\n")
 
 NAMES_CSV = EC / "annotations/xdata-cluster-names.csv"
 CLUSTERS_CSV = EC / "annotations/xdata-clusters.csv"
@@ -479,14 +484,17 @@ class TheCommittedCensus(unittest.TestCase):
     def test_the_committed_shape_prints_the_line_it_always_printed(self):
         # The constraint #851 left in place, and the reason the two additions
         # are clauses rather than two more counters: a sixth cell would change
-        # this line on every run in the tree's transcripts. Pinned as a
-        # literal, so a rewording of the tally fails here. This is the one case
+        # this line on every run in the tree's transcripts. Its wording is
+        # pinned as a literal, so a rewording of the tally fails here; its two
+        # counts are derived from the committed CSVs. This is the one case
         # the literal can be checked against, because the counters in it are
         # the committed census's own -- a fixture would only pin a fixture.
         buf = io.StringIO()
         with contextlib.redirect_stderr(buf):
             xrm.print_carry(self.report, self.cov, "")
-        self.assertEqual(buf.getvalue(), COMMITTED_TALLY)
+        unnamed = sum(1 for r in self.old_rows if not r["cluster_name"])
+        self.assertEqual(buf.getvalue(), COMMITTED_TALLY.format(
+            seeded=len(self.seeded), unnamed=unnamed))
 
     def test_no_name_is_unwritten_and_none_is_duplicated(self):
         # The property the whole exercise rests on: on the committed census

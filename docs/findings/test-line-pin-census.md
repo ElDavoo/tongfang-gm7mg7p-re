@@ -2164,7 +2164,7 @@ fails the same way and nothing else about the table's size, shape or verdict
 split moves with it. `ec/tools/test_check_cluster_citations.py` is the suite
 every note above names: 48 tests, the single failure, on the same `:220` of
 #822's `xdata-cluster-names-guard-off-recipe.md` with the same two
-`0x0464`/`0x0465` disagreements against `main-ec-145`, re-checked here rather
+`0x0464`/`0x0465` disagreements against `main-ec-0464`, re-checked here rather
 than carried, so neither #978 nor #974 caused it and neither fixes it.
 
 ‡‡ **And a thirteenth, 2026-09-26 (the `#845` × `#974` merge, this file's own
@@ -2223,7 +2223,7 @@ by placing all 106.
 would have joined is not the one it joined above.**
 `ec/tools/test_check_cluster_citations.py` — 48 tests, the single failure, on
 the same `:220` of #822's `xdata-cluster-names-guard-off-recipe.md` with the same
-two `0x0464`/`0x0465` disagreements against `main-ec-145` — reproduces on a clean
+two `0x0464`/`0x0465` disagreements against `main-ec-0464` — reproduces on a clean
 `origin/main` worktree, re-checked here rather than carried, so neither #845 nor
 #974 caused it and neither fixes it.
 `ec/tools/test_check_pin_table_rows.py` read `FAILED (failures=4)` while the row
@@ -2300,7 +2300,7 @@ has rather than a count of anything, so it moves with the staleness and not with
 the merge. The one that remains is `ec/tools/test_check_cluster_citations.py` —
 48 tests, the single failure, on the same `:220` of #822's
 `xdata-cluster-names-guard-off-recipe.md` with the same two `0x0464`/`0x0465`
-disagreements against `main-ec-145` — re-run here on a clean `origin/main`
+disagreements against `main-ec-0464` — re-run here on a clean `origin/main`
 worktree at `5881153d`, where it fails identically, so neither #1008 nor #845
 caused it and neither fixes it.
 ‡ **What the tree carrying both #890 and #900 moved, re-registered against it,

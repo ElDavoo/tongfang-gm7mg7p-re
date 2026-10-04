@@ -169,7 +169,10 @@ jobs:
               correction next to it (the `docs/findings.md` §4 pattern);
             - `ec/annotations/registers.yaml` breaking its conventions: a `status:` value outside
               the existing vocabulary, or a register whose status the PR's own evidence changes
-              left un-updated in the same PR;
+              left un-updated in the same PR, or a dated paragraph of new findings appended to a
+              register's `note:` (that is a log, and the line two branches on one register
+              collide on): the finding belongs in its `docs/findings/` write-up, and the entry
+              gets at most one line pointing at it (CLAUDE.md, the registers.yaml bullet);
             - a hand-edit to generated decompile output, a committed Ghidra `.gpr`/`.rep`, or a
               Ghidra XDATA symbol table, where the change belongs in that component's
               `annotations/ghidra-functions.csv` (the EC and BIOS have one; the Windows project
@@ -204,9 +207,10 @@ jobs:
               branch that names a register or seeds a routine moves that census, and the two
               green PRs merge into a red main (#1919 after #1893). Hold the relation between
               derived values, or nothing; the prose figure records the tree it was measured on;
-            - new prose citing an XDATA cluster by its `main-ec-NNN` rank, or a census CSV row
-              by line number. Seeding renumbers both. Cite the `cluster_name` or `cluster_key`,
-              and the row's address (CLAUDE.md, the XDATA census bullet);
+            - new prose citing an XDATA cluster by a legacy three-digit `main-ec-NNN` rank, or a
+              census CSV row by line number. Cite the cluster's id (`main-ec-0300`, program and
+              lowest address), `cluster_name` or `cluster_key`, and the row's address (CLAUDE.md,
+              the XDATA census bullet);
             - a new tool without a way to check it: an analysis script with no self-test or no
               recorded known-answer run against the committed firmware, when its output is what
               the PR's claims rest on.

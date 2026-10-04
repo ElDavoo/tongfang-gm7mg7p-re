@@ -161,8 +161,8 @@ RESET_MD = os.path.join(REPO, "docs", "findings", "reset-vector-dptr-targets.md"
 ROW_SCOPE = (
     (DISPATCH_MD, "xdata-registers.csv", "0x0860", "addr"),
     (RESET_MD, "xdata-registers.csv", "0x0800", "addr"),
-    (RESET_MD, "xdata-clusters.csv", "main-ec-086", "cluster_id"),
-    (RESET_MD, "xdata-clusters.csv", "main-ec-104", "cluster_id"),
+    (RESET_MD, "xdata-clusters.csv", "main-ec-07FD", "cluster_id"),
+    (RESET_MD, "xdata-clusters.csv", "main-ec-0630", "cluster_id"),
 )
 
 # The one file carrying a site table. Rule 1 asks for the file rather than
