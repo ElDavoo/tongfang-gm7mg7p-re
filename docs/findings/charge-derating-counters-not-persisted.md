@@ -168,10 +168,10 @@ The classification is `ec/decompiled/bank0/B12C.c`, which is committed: its
 
 ```c
   if ((DAT_EXTMEM_0490 >> 1 & 1) != 1) {
-    DAT_EXTMEM_09c7 = 0;
-    DAT_EXTMEM_09c8 = 0;
-    DAT_EXTMEM_09c9 = 0;
-    DAT_EXTMEM_09ca = 0;
+    XDATA_09C7 = 0;
+    XDATA_09C8 = 0;
+    XDATA_09C9 = 0;
+    XDATA_09CA = 0;
     return;
   }
 ```

@@ -4510,6 +4510,84 @@ registers:
       are bank0 0xCCAD. No upstream name. Per-address table:
       ec/annotations/xdata-06c2-06db-timers.md.
 
+  - name: XDATA_09C7
+    addr: 0x09C7
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Seconds counter of the charge-target age derating, incremented and
+      compared against 0x3c by ec/annotations/charge-target-derating.md 1.
+      Two EC-side sites, no PD-image site: bank0 0xB149, a write in the
+      0x0490-gate else-branch that zeroes the block, and bank0 0xB211, which
+      reads, increments, stores, reads back and compares. No upstream name.
+      Not read back by any host: 0x09C9 reads 0xFF through the host's
+      0xFE410000 window because that window does not map 0x0800-0x0DFF, and
+      this byte is in the unmapped run. Per-address table:
+      ec/annotations/xdata-09c7-09ca-register-rows.md.
+
+  - name: XDATA_09C8
+    addr: 0x09C8
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Minutes counter of the charge-target age derating, the same
+      increment/compare shape as 0x09C7 and the same 0x3c. Two EC-side sites,
+      no PD-image site: bank0 0xB14D, a write in the 0x0490-gate else-branch,
+      and bank0 0xB234, the increment. No upstream name, and nothing here is
+      read back, for the reason 0x09C7's note gives. Per-address table:
+      ec/annotations/xdata-09c7-09ca-register-rows.md.
+
+  - name: XDATA_09C9
+    addr: 0x09C9
+    sources: [xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 9
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      High byte of the big-endian u16 stress counter the charge-target derating
+      compares against its tiers; the low byte is 0x09CA and the pair is stored
+      high byte first by two inline sequences -- the zeroing store at 0xB151
+      (mov DPTR,#0x09C9 / movx @DPTR,A / inc DPTR / movx @DPTR,A) and the
+      0x39D9 store at 0xB20A in charge_stress_update. Not by helper
+      0xBB90 / 0xBD54: both are called only with an 0x0A4x DPTR loaded, and
+      they are the store pair for that overlay's locals. 0xB20A is not one of
+      the sites below -- it stores through the DPTR that 0xBD98
+      tier_200_eligible leaves at 0x09C9, so it carries no MOV DPTR of its own.
+      Nine EC-side sites, no PD-image site: 0xB151 (that two-byte store), 0xB241
+      (DPTR handed to 0xBCF5), 0xB25C and 0xB272 (address loaded, no movx in the
+      decoded window -- a limit of the linear walk that produced
+      ec/annotations/site-resolution.csv, not evidence the byte is untouched;
+      ec/annotations/two-hop-dptr-handoffs.csv does resolve both one call on, to
+      reads+writes), and reads at 0xB2F7, 0xB319, 0xB345, 0xBD91, 0xBD9E, each
+      the high byte of a tier threshold. No upstream name. 0x09C9 reads back
+      0xFF through the host's 0xFE410000 window, which does not map
+      0x0800-0x0DFF, so nothing here is read back.
+      Per-address table: ec/annotations/xdata-09c7-09ca-register-rows.md.
+
+  - name: XDATA_09CA
+    addr: 0x09CA
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Low byte of the same big-endian u16 stress counter; five EC-side sites, no
+      PD-image site, and all five are direct reads -- 0xB2F1, 0xB313, 0xB33F,
+      0xBD8B and 0xBD98, each a movx A,@DPTR followed by a subb against the
+      low byte of a tier threshold (0xb8, 0xc8, 0xc0, 0xe0, 0xd8 -- the low
+      halves of 0x2CB8, 0x1FC8, 0x12C0, 0x46E0 and 0x39D8), each site then
+      taking the high-byte compare on 0x09C9. No upstream name, and nothing
+      here is read back, for the reason 0x09C7's note gives.
+      Per-address table: ec/annotations/xdata-09c7-09ca-register-rows.md.
+
   - name: XDATA_0860
     addr: 0x0860
     sources: [xdata-refs]
