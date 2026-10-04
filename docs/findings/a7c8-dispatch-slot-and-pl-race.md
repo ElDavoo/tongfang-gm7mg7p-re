@@ -89,9 +89,15 @@ in this image (`common 0x7151`, the `switch_case_dispatch` two hops above).
 The nine triples at `0x0DD6`, and the `00 00 0e` sentinel that follows them:
 
 ```console
-$ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0DD6 -n 1 --runtime 0x0DD6
-0x0dd6  0df5020df7040df9060dfb080dfe0a0e010c0e040e0df9100e0a1200000e0d  case table: 31 bytes
+$ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0DD3 -n 1 --runtime 0x0DD3
+0x0dd3  127151   lcall 0x7151
+0x0dd6  0df5020df7040df9060dfb080dfe0a0e010c0e040e0df9100e0a1200000e0d case table: 31 bytes
 ```
+
+The anchor is `0x0DD3`, not `0x0DD6`. The table is only yielded when the
+linear walk enters it through the `lcall 0x7151` — `disasm8051.CASE_TABLE_CALLS`'s
+one entry — and anchored on the table's own bytes that instruction stream is
+just `0x0d`, `inc r5`.
 
 The sentinel's third byte is doing double duty, which is worth seeing once
 rather than taking as a coincidence: `0x0DF1` holds `00 00`, the address the
@@ -487,7 +493,7 @@ python3 ec/tools/disasm8051.py --self-test
 
 # the parity gate and the case table
 python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0DCB -n 4 --runtime 0x0DCB
-python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0DD6 -n 1 --runtime 0x0DD6
+python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0DD3 -n 1 --runtime 0x0DD3
 python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0E0D -n 6 --runtime 0x0E0D
 
 # the dispatch slot and the stub, and the run's own four bytes

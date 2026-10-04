@@ -101,10 +101,11 @@ the EC left alone — `ec_timer_capture.py` refuses out-of-window addresses
 rather than letting that misreading happen.
 
 **Arm D's trigger is destructive to the vendor's own state.**
-`RefreshDefaultFanTableAll` is called from `FanTable_Refresh`
-(`windows/decompiled/v3.1.39.0/GCUService/MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs:227`,
-and the CML partial at `:90`), and `FanTable_Refresh` is what `FanTable_Init`
-calls in each of four branches: the EC version differs, the local JSONs are
+`RefreshDefaultFanTableAll` is called from `FanTable_Refresh` in
+`windows/decompiled/v3.1.39.0/GCUService/MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs`
+and in its `FanTable_Manager1p5_CML.cs` partial, and `FanTable_Refresh` is
+what `FanTable_Init` calls in each of four branches: the EC version differs,
+the local JSONs are
 invalid, they are all zero, or they are not found. The service logs which
 branch it took — "EC is the different version", "The local data is invalid",
 "The local data is all zero", "local fan table is not found" — and **that log
