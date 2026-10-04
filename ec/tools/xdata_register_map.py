@@ -5928,3 +5928,56 @@ if __name__ == "__main__":
 # renames the symbol table and not a decompile" distinction the #106 block above
 # draws, and it is why `named_in_tree` is the whole of the movement rather than
 # the start of a second one.
+
+# *** 2026-10-04, issue #1360: `functions_touched` counts one committed
+# `index.csv` row per `out_file`, and the "one frame of code" reading is not it.
+#
+# **Placed at the end of the file for the reason the block above gives about
+# `diff()` and `named_in_tree`.** The ruling belongs in this module's docstring,
+# and it was written there first; it cannot stay there. This module is cited by
+# line -- `check_eq_guard_citations.py` resolves the anchors below to line
+# numbers and holds every page citing them, `docs/findings.md` among them, to
+# what it finds there -- and the docstring is above every one of those anchors,
+# so a paragraph added to it moves all of them and turns every citation to a
+# line below the docstring red. `docs/findings.md` is frozen, so those citations
+# cannot be re-anchored from here. The prose goes where the earlier dated
+# blocks go and the code does not move at all.
+#
+# What the column counts: a function key is a `(program, addr)` pair, `scan()`
+# credits every occurrence in *that row's own* `.c` to it, and
+# `functions_touched` / `readers` / `writers` / `single_function` are `len()` of
+# sets of keys -- one credit per committed row, each named once.
+#
+# The other reading -- **one frame of code**, where a listing the export nested
+# inside another hands its credit to the frame holding it, so two `.c` files
+# that decompile the same bytes are counted once -- is a different column.
+# `nested_frame_census.py` measures that the export nests its own frames, so
+# this is a real alternative and not a hypothetical one. It is **not this
+# column**, for two reasons that are properties of the inputs rather than
+# preferences.
+#
+# **First, the collapse is not well-defined for part of the population.**
+# Handing a nested listing to "its container" needs a single outermost
+# container, and there is not always one: seven rows sit inside two containers
+# at once, and the census records those two in *different* buckets, so picking
+# either would be wrong about the other; `common 0x6A02` and `common 0x6D46`
+# nest in *each other* with neither span containing the other, so their chain
+# never terminates. A column built on it would assert a container the inputs do
+# not name -- `nested_frame_census.bucket_of()`'s "refusal rather than a third
+# bucket", reached from the other end.
+#
+# **Second, and this is the binding one, not every collapse is a
+# de-duplication.** The census reads *address*-inside-a-listing, which is weaker
+# than its *span*-inside-a-listing predicate: a row whose listing runs past its
+# container's last byte is held at its address only, so the container's `.c`
+# does not re-decompile the tail and handing the row over would delete credit
+# for statements no frame repeated. Beyond that, `similar()` takes the Jaccard
+# of these same sets, so changing them re-clusters the tree -- a tree-wide
+# renumbering, which is the cost that keeps `--export-ownership` off.
+#
+# `ec/tools/xdata_frame_credit.py` derives both readings from the build above
+# and prints the rows that differ, the two refusal classes by name, the
+# partial-overlap collapses, and the clustering cost. It writes nothing.
+# `python3 ec/tools/xdata_frame_credit.py --check` asserts that the committed
+# columns already encode the reading above, on every row. The write-up is
+# `docs/findings/xdata-frame-credit-column.md`.
