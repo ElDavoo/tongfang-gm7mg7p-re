@@ -403,7 +403,20 @@ OWNERSHIP_ORACLE = {
     # reach a class figure, because a class is a set of bodies that contain one
     # another and six identical forwarders make a class of seven, not a
     # re-partition of an existing one.
-    "rows": 2720,
+    #
+    # 2,720 -> 2,721 with issue #337's one bank0 seed 0xC118, and this figure
+    # alone: `tiny_bodies` did not move, which is the whole difference between
+    # that seed and #1101's. 0xC118 is a twelve-byte thunk on
+    # `test_3202_bit0` whose body is three statements, and three is
+    # MIN_BODY_STMTS, so it is at the floor rather than under it -- `tiny` counts
+    # `len(body) < MIN_BODY_STMTS`, not `<=`. Nothing split or absorbed (the
+    # address sat in the gap between 0xC0E7 and 0xC124 that bank1's 0x19A8
+    # names), so no class figure moved either. Write-up:
+    # docs/findings/bank0-c118-3202-bit0-thunk.md. That issue's commit left
+    # this pin behind and did not re-pin it, so every commit since has had a
+    # red --self-test; the message below is what made that legible, which is why
+    # it is worth the re-pin carrying its reason.
+    "rows": 2721,
     "classes": 56,
     "shared_rows": 146,
     "largest_class": 42,
@@ -628,10 +641,13 @@ def self_test(args) -> int:
     comps = classes_of(rows, bodies)
     real = [m for m in comps.values() if len(m) > 1]
     shared = [r for r in recs if r["shared"] == "yes"]
-    check(f"one row per index.csv row ({len(recs)}), at threshold {THRESHOLD} "
-          f"and floor {MIN_BODY_STMTS}",
+    check(f"one row per index.csv row, at threshold {THRESHOLD} and floor "
+          f"{MIN_BODY_STMTS}, {OWNERSHIP_ORACLE['rows']} rows expected "
+          f"(got {len(recs)})",
           len(recs) == OWNERSHIP_ORACLE["rows"] == len(rows))
-    check(f"{len(real)} containment classes, {len(shared)} non-owner rows",
+    check(f"{OWNERSHIP_ORACLE['classes']} containment classes, "
+          f"{OWNERSHIP_ORACLE['shared_rows']} non-owner rows "
+          f"(got {len(real)}/{len(shared)})",
           len(real) == OWNERSHIP_ORACLE["classes"]
           and len(shared) == OWNERSHIP_ORACLE["shared_rows"])
 
@@ -661,17 +677,21 @@ def self_test(args) -> int:
     comps_floor1 = classes_of(rows, bodies, THRESHOLD, False, 1)
     classes_floor1 = sum(1 for m in comps_floor1.values() if len(m) > 1)
     flood = max((len(m) for m in comps_floor1.values()), default=0)
-    check(f"the body floor is load-bearing: {with_floor} chained classes with "
-          f"it, {without} without it, and at the committed threshold a floor of "
-          f"1 giving {classes_floor1} classes with a {flood}-member flood",
+    check(f"the body floor is load-bearing: {OWNERSHIP_ORACLE['bridged']} chained "
+          f"classes with it, {OWNERSHIP_ORACLE['bridged_no_floor']} without it, "
+          f"and at the committed threshold a floor of 1 giving "
+          f"{OWNERSHIP_ORACLE['classes_no_floor']} classes with a "
+          f"{OWNERSHIP_ORACLE['flood_no_floor']}-member flood "
+          f"(got {with_floor}/{without}/{classes_floor1}/{flood})",
           with_floor == OWNERSHIP_ORACLE["bridged"]
           and without == OWNERSHIP_ORACLE["bridged_no_floor"]
           and classes_floor1 == OWNERSHIP_ORACLE["classes_no_floor"]
           and flood == OWNERSHIP_ORACLE["flood_no_floor"])
 
     tiny = sum(1 for v in bodies.values() if len(v) < MIN_BODY_STMTS)
-    check(f"{tiny} of the {len(rows)} bodies are too short to carry a "
-          f"containment claim, so the floor is not a rounding boundary",
+    check(f"{OWNERSHIP_ORACLE['tiny_bodies']} of the {len(rows)} bodies are too "
+          f"short to carry a containment claim, so the floor is not a rounding "
+          f"boundary (got {tiny})",
           tiny == OWNERSHIP_ORACLE["tiny_bodies"])
 
     weak = [r for r in shared if float(r["containment"]) < THRESHOLD]
@@ -688,8 +708,10 @@ def self_test(args) -> int:
           f"{SHARE_ORACLE['largest_class']}-file class whole and owned by "
           f"{SHARE_ORACLE['largest_class_owner']}, moves "
           f"{OWNERSHIP_ORACLE['shared_rows']} non-owner rows to "
-          f"{cost['shared_rows']} across {cost['classes']} classes, and hands "
-          f"{cost['newly_read']} files back to the census",
+          f"{SHARE_ORACLE['shared_rows']} across {SHARE_ORACLE['classes']} "
+          f"classes, and hands {SHARE_ORACLE['newly_read']} files back to the "
+          f"census (got {cost['shared_rows']}/{cost['classes']}/"
+          f"{cost['newly_read']})",
           cost["classes"] == SHARE_ORACLE["classes"]
           and cost["shared_rows"] == SHARE_ORACLE["shared_rows"]
           and cost["largest_class"] == SHARE_ORACLE["largest_class"]

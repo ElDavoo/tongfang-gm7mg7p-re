@@ -40,10 +40,11 @@ cannot decay into a standing exemption. That is the failure mode that would make
 this tool worse than no tool: a checker whose allowlist only ever grows, exempting
 `ORACLE["main_refs"]` from a check nobody reads any more.
 
-**The five entries, and what each is.** `ORACLE["extmem_refs"]` is real but
-mitigated: the measured sum is printed and the pin is not, but the two component
-pins are printed expected-then-got on this same line, so a moved sum localises
-to a component that did not move -- which is itself the evidence the sum moved.
+**The entries under `xdata_register_map.py`, and what each is.**
+`ORACLE["extmem_refs"]` is real but mitigated: the measured sum is printed and
+the pin is not, but the two component pins are printed expected-then-got on
+this same line, so a moved sum localises to a component that did not move --
+which is itself the evidence the sum moved.
 `DIRECTION_INVARIANT["assign_shaped"]` is real and unmitigated: neither the pin
 nor the measured `sum(shaped.values())` it was compared against appears on its
 line, so a perturbation yields a `FAIL` whose whole content is about the
@@ -63,18 +64,37 @@ cannot be until a human adds it there with a token that has `workflow` scope;
 `.github/` is out of this repository's agent reach by construction. It is run by
 its suite, which asserts the sweep over the committed tree, and by hand otherwise.
 
-**The scope is one module, and the reason is a name collision.** `check` is
+**The scope is a named list, and the reason it is not the tree.** `check` is
 defined across `ec/tools/` with unrelated signatures --
 `check_capture_claims.check(path, index, verbose)` and
 `check_findings_frozen.check(repo)` among them -- so a tree-wide walk of the
-callee name `check` would read those as census assertions. What is measured is
-`xdata_register_map.py`, whose `check(label, cond)` is the one this is about;
-`check(args)` at its end is the `--check` mode's own dispatch, has one
-positional argument, and is not an assertion.
+callee name `check` would read those as census assertions: the call is matched
+by bare name and the callee is **not** resolved per module, so `check(path,
+index, verbose)` reads as an assertion with no predicate at all. `TARGETS` is
+therefore the set of modules whose `check(label, cond)` is the one this is
+about, named rather than derived, and `--population` prints what a walk over
+every module under `POPULATION_DIRS` actually finds so a reader sees the
+population this is not covering instead of trusting the scope is right. How
+many modules that is changes whenever a tool is added or removed, so the figure
+is that command's output rather than a number kept in this docstring; the
+method is `--population`.
+
+**What the callee name costs inside a target, and one coincidence it leans
+on.** A call with one positional argument is not an assertion, which is what
+disambiguates `export_ownership.py`'s two definitions of `check`: the
+module-level `check(args)` that is the `--check` mode's own dispatch, and the
+`check(label, cond)` nested in `self_test` that this census is about. That is a
+coincidence of two signatures, not a property of either definition, and it is
+why the scope paragraph has to say it -- a reader who assumed the filter
+resolves callees would be wrong about both files. The other name the filter
+cannot resolve is a *held* predicate: a check passing a precomputed boolean has
+no `Subscript` under its second argument, so it can only ever read as a clean
+one, which is the direction that passes quietly.
 
 Usage:
     python3 ec/tools/check_pin_message_names.py
     python3 ec/tools/check_pin_message_names.py --verbose
+    python3 ec/tools/check_pin_message_names.py --population
 """
 import argparse
 import ast
@@ -86,9 +106,20 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 EC = os.path.join(HERE, os.pardir)
 REPO = os.path.join(EC, os.pardir)
 
-# The one module measured; see the scope paragraph in the docstring. Spelled
-# relative to this directory so a checkout anywhere answers the same.
-TARGET = "xdata_register_map.py"
+# The modules measured, spelled relative to the repository root so a checkout
+# anywhere answers the same and so a sibling under `windows/tools/` or
+# `bios/tools/` can be added without a second resolution rule. See the scope
+# paragraph in the docstring: this is a list because the callee name cannot be
+# resolved per module, not because a tree-wide walk was tried and abandoned.
+TARGETS = (
+    "ec/tools/xdata_register_map.py",
+    "ec/tools/export_ownership.py",
+)
+
+# Where `--population` walks. A reader asking what is not covered gets the
+# answer from running it, so the directories are named here rather than the
+# count of what they hold.
+POPULATION_DIRS = ("ec/tools", "windows/tools", "bios/tools")
 
 # A module-level dict is a candidate constant: name and all-caps, because that
 # is the convention every pin in `ec/tools/` follows and because a lowercase
@@ -112,45 +143,62 @@ ORACLE_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
 # The line each entry resolves to today is printed by the run, and is deliberately
 # not written here: #1363's own fix moved this check five lines down, and an
 # allowlist of line numbers would have needed editing for that.
+#
+# Per module, because the entries are only ever read against the module whose
+# checks they describe. A flat list scored every target at once, so pointing
+# this at a module with no entries emitted one "excuses nothing" line per
+# census entry -- the entry was not stale, it was simply about a different file.
+# An empty dict is the correct end state for a module whose cases are all
+# fixed, and the sweep is what turns a case added back into a case no entry
+# covers.
 ALLOWLIST = {
-    "oracle: DAT_EXTMEM_ only, what issue #132 counted": (
-        (("ORACLE", "extmem_refs"),),
-        "real, mitigated: the measured sum is printed and the pin is not, but "
-        "the two component pins are printed expected-then-got on this same "
-        "line, so a moved sum localises to a component that did not move -- "
-        "which is itself the evidence the sum moved"),
-    "and the split partitions the census rather than re-counting it": (
-        (("ORACLE", "both"),
-         ("PER_PROGRAM", "both_main_buckets"),
-         ("PER_PROGRAM", "both_pd_buckets")),
-        "three cases and they do not agree. ORACLE['both'] is benign: the pin "
-        "is printed expected-then-got by the 'PD-only, N touched by both' check "
-        "a few lines below, over a different measurement of the same key. The "
-        "two PER_PROGRAM bucket tuples are the #1363 shape again -- the message "
-        "prints the measured five-tuples in both slots and neither pin -- and "
-        "they are the sharpest thing left, because a five-tuple has no short "
-        "rendering the line could interpolate"),
-    "the only occurrences the second pass accepts and the census does not": (
-        (("DIRECTION_INVARIANT", "assign_shaped"),),
-        "real and unmitigated: the message prints DIRECTION_INVARIANT"
-        "['deref_surplus'] and the measured surplus list, so a perturbation of "
-        "assign_shaped yields a FAIL whose whole content is about the "
-        "`*`-dereference stores and carries neither the pin nor the measured "
-        "sum(shaped.values()) it was compared against. Nothing else reads the "
-        "key"),
-    "and the pass loses no address, which is the one thing it must never do": (
-        (("OWNERSHIP", "lost"),),
-        "benign with a caveat worth keeping: the pin is (), whose only legal "
-        "rendering is the 'none' the message already falls through to when the "
-        "measured set is empty, and the measured lost-address set is the "
-        "informative part. A *moved* pin would be a baked-in allowance, and the "
-        "line's own prose -- the one thing it must never do -- is what "
-        "contradicts it"),
-    "and the default census is unchanged, so the committed CSVs are still": (
-        (("ORACLE", "main_distinct"), ("ORACLE", "main_refs")),
-        "benign: the message is pure prose and carries no figure at all, but "
-        "the 'oracle: the full census, both spellings' check above asserts the "
-        "same pair against the same measured quantity, expected-then-got"),
+    "ec/tools/xdata_register_map.py": {
+        "oracle: DAT_EXTMEM_ only, what issue #132 counted": (
+            (("ORACLE", "extmem_refs"),),
+            "real, mitigated: the measured sum is printed and the pin is not, but "
+            "the two component pins are printed expected-then-got on this same "
+            "line, so a moved sum localises to a component that did not move -- "
+            "which is itself the evidence the sum moved"),
+        "and the split partitions the census rather than re-counting it": (
+            (("ORACLE", "both"),
+             ("PER_PROGRAM", "both_main_buckets"),
+             ("PER_PROGRAM", "both_pd_buckets")),
+            "three cases and they do not agree. ORACLE['both'] is benign: the pin "
+            "is printed expected-then-got by the 'PD-only, N touched by both' check "
+            "a few lines below, over a different measurement of the same key. The "
+            "two PER_PROGRAM bucket tuples are the #1363 shape again -- the message "
+            "prints the measured five-tuples in both slots and neither pin -- and "
+            "they are the sharpest thing left, because a five-tuple has no short "
+            "rendering the line could interpolate"),
+        "the only occurrences the second pass accepts and the census does not": (
+            (("DIRECTION_INVARIANT", "assign_shaped"),),
+            "real and unmitigated: the message prints DIRECTION_INVARIANT"
+            "['deref_surplus'] and the measured surplus list, so a perturbation of "
+            "assign_shaped yields a FAIL whose whole content is about the "
+            "`*`-dereference stores and carries neither the pin nor the measured "
+            "sum(shaped.values()) it was compared against. Nothing else reads the "
+            "key"),
+        "and the pass loses no address, which is the one thing it must never do": (
+            (("OWNERSHIP", "lost"),),
+            "benign with a caveat worth keeping: the pin is (), whose only legal "
+            "rendering is the 'none' the message already falls through to when the "
+            "measured set is empty, and the measured lost-address set is the "
+            "informative part. A *moved* pin would be a baked-in allowance, and the "
+            "line's own prose -- the one thing it must never do -- is what "
+            "contradicts it"),
+        "and the default census is unchanged, so the committed CSVs are still": (
+            (("ORACLE", "main_distinct"), ("ORACLE", "main_refs")),
+            "benign: the message is pure prose and carries no figure at all, but "
+            "the 'oracle: the full census, both spellings' check above asserts the "
+            "same pair against the same measured quantity, expected-then-got"),
+    },
+    # Empty because every case the sweep found here is fixed: each `check()`
+    # line it reported now names its own pins expected-then-got, which
+    # `test_export_ownership_pin_messages.py` asserts by perturbing each one.
+    # An entry here would be an exemption for a case that does not exist.
+    # `SHARE_ORACLE` arrived with #1651 and its checks are named on the same
+    # terms; docs/findings/export-ownership-pin-messages.md is the write-up.
+    "ec/tools/export_ownership.py": {},
 }
 
 
@@ -264,14 +312,18 @@ def sweep(text):
     return (tables, len(rows), violating)
 
 
-def allowed(label, keys):
+def allowed(target, label, keys):
     """(entry-prefix, why) for the allowlist entry covering this case, or None.
+
+    Scoped to `target`, because an entry describes one module's check and
+    reading it against another module's case is how a flat list came to report
+    every census entry as stale the moment this was pointed at a second file.
 
     The keys are compared too, not just the message prefix: an entry whose
     prefix still matches but whose keys have moved is a rotated entry, and it
     has to be rewritten rather than left to excuse a set nobody wrote down.
     """
-    for prefix, (wanted, why) in ALLOWLIST.items():
+    for prefix, (wanted, why) in ALLOWLIST.get(target, {}).items():
         if label.startswith(prefix) and sorted(wanted) == keys:
             return (prefix, why)
     return None
@@ -286,7 +338,7 @@ def report(tables, swept, violating, tool, verbose):
     """
     out, problems, covered = [], [], set()
     for lineno, label, keys in violating:
-        entry = allowed(label, keys)
+        entry = allowed(tool, label, keys)
         if entry is None:
             problems.append(
                 f"{tool}:{lineno}: the predicate reads "
@@ -303,8 +355,11 @@ def report(tables, swept, violating, tool, verbose):
 
     # The other direction, which a reader cannot get from reading the target. An
     # entry that excuses nothing is the standing exemption this tool refuses, and
-    # an allowlist that can only grow is how a checker certifies a defect.
-    for prefix, (wanted, _why) in sorted(ALLOWLIST.items()):
+    # an allowlist that can only grow is how a checker certifies a defect. It is
+    # read against this target's own entries only -- every entry in the map,
+    # which is what made the first widened run report five stale entries that
+    # were all about a different module.
+    for prefix, (wanted, _why) in sorted(ALLOWLIST.get(tool, {}).items()):
         if prefix in covered:
             continue
         problems.append(f"{tool}: the allowlist entry {prefix!r} excuses nothing "
@@ -322,6 +377,61 @@ def report(tables, swept, violating, tool, verbose):
     return out, problems
 
 
+def population(dirs=POPULATION_DIRS):
+    """Report lines for every module under `dirs`, one per module that defines one.
+
+    This is the answer to "what is `TARGETS` not covering?", printed rather
+    than asserted: a module's row is a fact about the tree and goes stale on
+    every merge that adds a tool, so nothing holds it to a value. What a reader
+    can check is the standing caveat in the docstring -- the callee is matched
+    by bare name and is not resolved per module -- which is why a row can name
+    a module whose `check` is `check(path, index, verbose)` and every one of
+    whose swept calls is not an assertion.
+
+    The closing lines name the modules carrying an unnamed pin, because they
+    are the actionable part of a list long enough to need one, and because "the
+    named scope covers every case" is a claim about the tree that this mode
+    exists to let a reader refute. Each named module is an *unresolved question*, not a
+    confirmed case: it needs its own `check` read before it could join
+    `TARGETS`, which is a decision this tool does not make.
+    """
+    out = [f"population: every module under {', '.join(dirs)} defining `check`, "
+           f"by the bare-name walk `sweep()` uses. The callee is not resolved "
+           f"per module, so a `check` with another signature reads as an "
+           f"assertion here; see the docstring."]
+    flagged = []
+    for relpath in sorted(dirs):
+        directory = os.path.join(REPO, relpath)
+        if not os.path.isdir(directory):
+            continue
+        for name in sorted(os.listdir(directory)):
+            if not name.endswith(".py"):
+                continue
+            path = os.path.join(directory, name)
+            rel = os.path.relpath(path, REPO)
+            with open(path, encoding="utf-8") as f:
+                text = f.read()
+            try:
+                tables, swept, violating = sweep(text)
+            except SyntaxError as e:
+                out.append(f"  {rel}: does not parse ({e})")
+                continue
+            if not swept and not tables:
+                continue
+            marked = " *" if rel in TARGETS else ""
+            if violating and rel not in TARGETS:
+                flagged.append(rel)
+            out.append(f"  {rel}{marked}: {len(tables)} constant(s), "
+                       f"{swept} call(s) swept, {len(violating)} unnamed pin(s)")
+    out.append("* in TARGETS, and so swept for real; every other row is what a "
+               "tree-wide walk of the bare name would answer, which is why the "
+               "scope is a list.")
+    out.append("modules with an unnamed pin outside TARGETS, each a question "
+               "this tool does not answer: "
+               + (", ".join(flagged) if flagged else "none"))
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -329,23 +439,36 @@ def main() -> int:
                     help="name every table treated as a constant and the "
                          "allowlist prefix each known case resolved by, so a "
                          "reader can see the population rather than trust it")
+    ap.add_argument("--population", action="store_true",
+                    help="report every module under the tool directories that "
+                         "defines `check`, rather than sweeping TARGETS, so a "
+                         "reader can see what the named scope is not covering")
     args = ap.parse_args()
 
-    path = os.path.join(HERE, TARGET)
-    try:
-        with open(path, encoding="utf-8") as f:
-            text = f.read()
-    except OSError as e:
-        print(f"{TARGET} cannot be read: {e}", file=sys.stderr)
-        return 2
-    try:
-        tables, swept, violating = sweep(text)
-    except SyntaxError as e:
-        print(f"{TARGET} does not parse: {e}", file=sys.stderr)
-        return 2
+    if args.population:
+        for line in population():
+            print(line)
+        return 0
 
-    out, problems = report(tables, swept, violating,
-                           os.path.relpath(path, REPO), args.verbose)
+    out, problems = [], []
+    for relpath in TARGETS:
+        path = os.path.join(REPO, relpath)
+        try:
+            with open(path, encoding="utf-8") as f:
+                text = f.read()
+        except OSError as e:
+            print(f"{relpath} cannot be read: {e}", file=sys.stderr)
+            return 2
+        try:
+            tables, swept, violating = sweep(text)
+        except SyntaxError as e:
+            print(f"{relpath} does not parse: {e}", file=sys.stderr)
+            return 2
+        target_out, target_problems = report(tables, swept, violating,
+                                             relpath, args.verbose)
+        out.extend(target_out)
+        problems.extend(target_problems)
+
     for line in out:
         print(line)
     for line in problems:
