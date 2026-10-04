@@ -2464,6 +2464,71 @@ registers:
       member is named as a fan, and that is the name the EC contradicts. All
       bank0, no PD-image site.
 
+  - name: XDATA_04A4
+    addr: 0x04A4
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 1
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      A second 16-bit little-endian milliamp reading, written by the same
+      routine that writes BAT_CURRENT_MA 0x0434/0x0435 twenty lines earlier
+      -- both stores are write_r1r2_to_xdata_pair in FUN_CODE_b43b
+      (ec/decompiled/bank1/B43B.c), at bank1 0xB487 and 0xB4B6 -- but fed
+      from a different source pair: 0x0434's store is reached from a
+      read_xdata_pair_to_r1r2(0x50A) and this one from a
+      read_xdata_pair_to_r1r2(0x50E), each arm short-circuiting to its store
+      when 0x0432 reads zero. So the two addresses are two readings from two
+      sources, not one value written twice.
+      The committed capture agrees and is why this row exists:
+      evidence/battery-traces/2026-09-09-profiles.csv is the only committed
+      record of the whole 0x0400-0x04FF page (its ec_hex cell is 256 bytes on
+      every row) and nothing had decoded it before
+      ec/tools/battery_page_census.py. There this pair equals the row's own
+      current_now / 1000 on all but five rows, and on the rows where it
+      differs from 0x0434/0x0435 it matches current_now where 0x0434 does
+      not -- the capture's sysfs read and its page dump are taken a moment
+      apart. Byte-position correlation is not identification, and 0x04A4 is
+      the standing counter-example inside this very capture: it tracks the
+      same quantity as 0x0434 from a different address. What is claimed here
+      is the writer, read off the listing, not the correlation.
+      Write-only in the census -- ec/annotations/xdata-inc-dptr-only.csv
+      gives the pair seven references and no reads against 0x0434's sixteen
+      including reads -- so the direction of the copy is settled statically
+      even though which value the EC treats as authoritative is not. The one
+      EC-side site is bank1 0xB4B6, handed to write_r1r2_to_xdata_pair; the
+      other two are pd-image (0x9A94, which resolves nothing, and 0xB64F),
+      which is another program's byte at the same address number, see
+      ec/annotations/pd-xdata-overlap.md. Graded present-untested because
+      static-scan finds a real EC-side reference, not yet exercised live:
+      nothing here is a read-back and no status rests on a live run.
+      Write-up: docs/findings/battery-page-first-decoding.md.
+
+  - name: XDATA_04A5
+    addr: 0x04A5
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 0
+    static_refs_pd_image: 3
+    status: unknown-not-absent
+    note: >
+      The high half of the 0x04A4 pair, and the byte every one of this
+      address's references belongs to the ITE8850-PD image rather than the
+      main EC -- so per the header this is unknown-not-absent and NOT absent,
+      which is a zero from one scan and never a proof the byte is unused. The
+      EC-side half of the pair is 0x04A4; see the XDATA_04A4 entry above for
+      the writer, the capture, and the caveat that the census's per-byte
+      direction is what settles the copy and not the EC treating either value
+      as authoritative. All 3 sites are pd-image; ec/annotations/
+      xdata-inc-dptr-only.csv lists 0x04A5 among the inc-DPTR-only bytes whose
+      pd sites are another program's, and ec/annotations/pd-index-geometry.md
+      places it in that image's own 0x04A1-0x04A6 block reached through
+      0x1F/0x60 stride arithmetic. It does move in the committed capture,
+      tracking current_now / 1000 with 0x04A4, which is the correlation and
+      not the identification. Write-up:
+      docs/findings/battery-page-first-decoding.md.
+
   - name: BAT_CYCLE_COUNT
     addr: [0x04A6, 0x04A7]
     sources: [uniwill-laptop, live]
@@ -2494,6 +2559,31 @@ registers:
       (big-endian) to 0x0A4C, where 150/250/350/450/550 cycles select 50-250
       mV/cell (ec/annotations/charge-target-derating.md). Read 450 live on
       2026-09-19, which puts it in the 200 mV/cell tier by count alone.
+      The pair steps within a single committed capture, which the note's
+      single "445" did not show: in evidence/battery-traces/
+      2026-09-09-profiles.csv the little-endian value is 445, then 446, then
+      447, and both steps are taken with status Charging, at 33% and 83%
+      capacity. Nothing here is a live observation -- every figure is read out
+      of that committed CSV by ec/tools/battery_page_census.py, and no status
+      moves on it. Status stays confirmed-working because its warrant is the
+      live read above, which a capture cannot strengthen or weaken.
+      Which writer produced either step is NOT settled, and this note does not
+      pick one. There are two: bank1 0xD34B, bump_counter_mirror_to_04a6_04a7
+      (ec/decompiled/bank1/D34B.c), increments 0x0343/0x0344 and mirrors both
+      halves here when the byte at 0x0349 reaches 0xC8, while bank1 0xDEE8 and
+      0xDEF1 copy the pair from 0x0343 after a 0x1C00 block transaction. The
+      gate byte 0x0349 sits below the 0x0400 base of that capture's page, so
+      the capture cannot tell the two apart. Correcting a natural reading
+      rather than adding to it: the count is NOT merely a value arriving over
+      the 0x1C00 path with no increment of its own -- 0xD34B is an incrementing
+      writer, already named in ec/annotations/ghidra-functions.csv and read the
+      same way in ec/annotations/pd-xdata-overlap.md. Its carry runs out of
+      0x0343 into 0x0344, so 0x04A6 is the LOW half: read little-endian the
+      capture's 0xBD 0x01 is the 445 above, where big-endian would be 48385.
+      0x04A7 holds 0x01 on every row of that capture, so both steps are visible
+      in the low half alone. Write-up and its suite:
+      docs/findings/battery-page-first-decoding.md and
+      ec/tools/test_battery_page_census.py.
 
   - name: PACK_TEMP_DK (pack temperature, decikelvin)
     addr: [0x04A2, 0x04A3]

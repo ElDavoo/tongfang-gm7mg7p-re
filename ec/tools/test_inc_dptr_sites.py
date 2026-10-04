@@ -108,7 +108,7 @@ PD_ONLY_ADDRESSES = {"0x043B": 2, "0x04A5": 3}
 # and the invariant below covers it like the other seven; being a high half is
 # a fact about the byte, not a reason to hold it out of the check.
 ENTERED_ADDRESSES = ("0x030F", "0x0403", "0x0435", "0x0437", "0x0439",
-                     "0x04A3", "0x04A7", "0x0523")
+                     "0x04A3", "0x04A5", "0x04A7", "0x0523")
 
 # The ten addresses `xdata-register-map.md` §4.7 spells, in order. See the
 # docstring for why this is ten and not the issue's eleven.
@@ -166,9 +166,19 @@ def rows():
 
 
 def declined(rows_):
-    """The rows in the 73, in address order."""
-    return [r for r in rows_ if r["mov_dptr_main_ec"] == "0"
-            and r["entered"] == "no"]
+    """The rows in the 73, in address order.
+
+    Cut by `ids.population_of` rather than by the two columns read here, so
+    this is the same set the tool's own summary and `TheSplit`'s four
+    populations are. The two used to agree -- no main-EC `MOV DPTR` site was
+    also `entered == "no"`, because the rule admitted a byte only on such a
+    site -- and issue #1202 broke that: `0x04A5` is entered in
+    `registers.yaml` on a committed capture and has no main-EC site at all, so
+    it is one of the 73 by the page's own membership rule and by
+    `population_of`, while an `entered == "no"` filter drops it and leaves
+    this helper disagreeing with the population it is named for.
+    """
+    return [r for r in rows_ if ids.population_of(r) in ids.DECLINED]
 
 
 def run_main(*argv):
@@ -364,19 +374,31 @@ class TheSplit(unittest.TestCase):
     def test_the_eight_entered_are_the_eight_named(self):
         entered = [r["addr"] for r in self.rows if r["entered"] == "yes"]
         self.assertEqual(entered, list(ENTERED_ADDRESSES))
-        # Every one of the eight, `0x04A3` included, has a main-EC `MOV DPTR`
-        # site of its own -- so this is asserted for all of them rather than
-        # for seven of them. `0x04A3` is the only entered row that is a high
-        # half, which is a fact about the byte and not a reason to hold it out:
-        # its site is `bank0:0xBAE7`, a read of the high half, and the pin below
-        # is what keeps that from being re-read as an exception.
+        # Every entered row but one, `0x04A3` included, has a main-EC `MOV
+        # DPTR` site of its own -- so this is asserted for all of them rather
+        # than for seven of them. `0x04A3` is the only entered row that is a
+        # high half, which is a fact about the byte and not a reason to hold it
+        # out: its site is `bank0:0xBAE7`, a read of the high half, and the pin
+        # below is what keeps that from being re-read as an exception.
+        #
+        # `0x04A5` is the one entered row with no main-EC site at all, and it
+        # is named rather than skipped: it was entered by issue #1202 on a
+        # committed capture in which the byte moves and tracks the row's own
+        # `current_now / 1000`, which is an observation rather than the static
+        # access §6's rule admits on. Asserting it here rather than exempting
+        # it is the point -- a silent exemption would let the next such entry
+        # pass unnoticed, and `xdata-inc-dptr-only.md` §3 carries the same
+        # note in prose.
         for r in self.rows:
-            if r["entered"] == "yes":
+            if r["entered"] == "yes" and r["addr"] != "0x04A5":
                 self.assertNotEqual(r["mov_dptr_main_ec"], "0",
                                     f"{r['addr']} is entered with no main-EC "
                                     "`MOV DPTR` site, so §6's rule and this "
                                     "table disagree about what entering means")
         for r in self.rows:
+            if r["addr"] == "0x04A5":
+                self.assertEqual(r["mov_dptr_main_ec"], "0")
+                self.assertNotEqual(r["mov_dptr_pd_image"], "0")
             if r["addr"] == "0x04A3":
                 self.assertEqual(r["mov_dptr_main_ec"], "1")
                 self.assertEqual(r["mov_dptr_pd_image"], "5")
@@ -431,8 +453,7 @@ class TheCensusShape(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         _resolved, cls.generated = build()
-        cls.rows = [r for r in ids.read_rows(cls.generated)
-                    if r["mov_dptr_main_ec"] == "0" and r["entered"] == "no"]
+        cls.rows = declined(ids.read_rows(cls.generated))
 
     def test_census_refs_is_the_sum_of_the_bucket_columns(self):
         # On all 107. The bucket columns are generated from `xrm.BUCKETS` and
