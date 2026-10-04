@@ -13,6 +13,16 @@ routed through `0x1114` was wrong about why it stopped.
 
 ## The retraction: `0x1114` was never missing
 
+**The retraction itself is already on `main`, filed under issue #1444**, and this
+change extends those rows rather than making it: the twenty-four
+`ec/annotations/ghidra-functions.csv` rows carrying
+`*** CORRECTION 2026-10-03 (issue #1444) ***` are where the sentence was retracted,
+and [`findings/a73f-09f1-mailbox-payload.md`](a73f-09f1-mailbox-payload.md)
+carries the same point under its own `## The retraction` heading. What follows
+restates the mechanism because the decode below rests on it, and what is new here
+is the part that retraction did not carry: the four stubs decoded as banks 0/1/2/3
+selected by P1.0-2, and the `0xA3D3` / `0xC77F` two-path corrections.
+
 `0xA73F` tail-jumps to `0x1666`, which loads DPTR with the constant `0x896A` and
 tail-jumps to `0x1114`. Every trampoline row in that group read:
 

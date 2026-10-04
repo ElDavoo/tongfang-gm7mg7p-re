@@ -85,21 +85,13 @@ union key:
 
 | term | per program | union key |
 |---|---:|---:|
-| named | 188 | 188 |
-| `DAT_EXTMEM_xxxx` | 874 | 875 |
+| named | 172 | 172 |
+| `DAT_EXTMEM_xxxx` | 890 | 891 |
 | pair-literal only | **156** | 155 |
 | total | 1,218 | 1,218 |
 
 References are `refs_main_ec` on both, so each column sums to the main EC's own
-14,838: 6,588 / 7,782 / 468 and 6,588 / 7,789 / 461.
-
-The `named` and `DAT_EXTMEM_xxxx` terms move with each re-export that carries
-symbol renames the committed `.c` text had not yet caught up to, which is what
-`test_xdata_program_keyed_table.py`'s own pin history above its tables records;
-the `pair-literal` terms and both totals do not, and that is the check that the
-movement is a spelling change rather than new addresses. The figures here are
-`python3 ec/tools/xdata_program_keyed_table.py`'s, and the page they are
-transcribed into is `ec/annotations/xdata-register-map.md` §2.
+14,838: 6,393 / 7,977 / 468 and 6,393 / 7,984 / 461.
 
 **The 155-vs-156 is one address, and the sibling page had already named it.**
 [`xdata-spelled-as-union.md`](xdata-spelled-as-union.md) reconciled the same
@@ -270,20 +262,12 @@ rather than to the 15,093 the `refs` column would give.
   the CSV's `refs` total, and the two programs' halves add to it;
 - each partition's three terms sum to the main EC's distinct and reference
   counts, and no row falls in no term;
+- the two partition terms the re-key introduces equal `ORACLE["symbol_main_distinct"]`
+  and `ORACLE["extmem_main_distinct"]`, read out of `xdata_register_map.py` **by
+  AST and not by import** — those pins already exist, already self-test, and
+  already carry a dated note about why they moved;
 - the per-program and union partitions differ in the pair-literal term by
   exactly the addresses `--moved` reports.
-
-*(Corrected 2026-10-04. This list held a fifth item — that the two partition
-terms the re-key introduces equal `ORACLE["symbol_main_distinct"]` and
-`ORACLE["extmem_main_distinct"]`, read out of `xdata_register_map.py` by AST and
-not by import. `xdata_register_map.py` no longer carries an `ORACLE` block: it
-was removed rather than re-pinned, so there is nothing there to read and nothing
-there that self-tests. `xdata_program_keyed_table.py` no longer reads a sibling
-constant either. The two terms are still derived and still checked — they are
-the `symbol_main_distinct` and `extmem_main_distinct` figures
-`check_census_figures.py --print` derives from the committed CSVs, and this
-suite holds its own `PER_PROGRAM_PARTITION` to the CSV's rows — but the
-cross-check is now within this suite rather than across a shared pin.)*
 
 **No *check* holds a census total as a constant.** `grep` finds no `1375` and no
 `7534` in the tool and no numeric `850` anywhere in it; the three figures the
@@ -331,11 +315,10 @@ The calibration rule governs all of them, and none of them is a deletion.
   re-scanned, and `xdata_register_map.py --check` reports 0 differences over the
   1,326 rows, which is what says the census did not move.
 - **No change to the census's keying.** The tool still emits 1,326 rows keyed on
-  `program` + `spelled_as`, and the census's own `distinct` figure is still 1,326
-  (`check_census_figures.py --print` derives it from the committed CSV). What
-  changed is how §2 *presents* the table. Re-keying the CSV itself would move the
-  pins, churn two generated files and invalidate far more than this issue asks
-  for; the per-program column is the answer that does not.
+  `program` + `spelled_as`, and `ORACLE["distinct"]` is still 1,326. What changed
+  is how §2 *presents* the table. Re-keying the CSV itself would move the pins,
+  churn two generated files and invalidate far more than this issue asks for;
+  the per-program column is the answer that does not.
 - **The function counts are still not split.** `readers`, `writers`,
   `functions_touched`, `single_function`, `co_reading` and `sources_beyond` are
   *not* per-program on a `both` row, and this change does not make them so. They
