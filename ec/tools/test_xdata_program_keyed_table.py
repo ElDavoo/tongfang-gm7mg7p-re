@@ -504,11 +504,9 @@ class TheMapAgrees(unittest.TestCase):
     def test_the_writeup_and_the_index_are_present(self):
         self.assertTrue(WRITEOUT.exists(),
                         "the write-up for this change is missing")
-        index = (REPO / "docs" / "findings" / "INDEX.md").read_text(
-            encoding="utf-8")
-        self.assertIn("xdata-register-map-per-program-keying.md", index,
-                      "docs/findings/INDEX.md is stale; run "
-                      "python3 ec/tools/gen_findings_index.py")
+        # The index is printed by gen_findings_index.py rather than committed
+        # (2026-10-04): every write-up added a line to it, so it was the one
+        # file nearly every pull request touched.
 
 
 if __name__ == "__main__":

@@ -234,7 +234,7 @@ jobs:
             - GENERATED files -- never hand-merge these: ec/decompiled/**,
               ec/ghidra/xdata-symbols.csv, ec/ghidra/manifest.csv, ec/decompiled/index.csv and
               listing-index.csv, ec/annotations/xdata-registers.csv and xdata-clusters.csv,
-              ec/ghidra/c-asm-counterpart.csv, docs/findings/INDEX.md. Resolve the
+              ec/ghidra/c-asm-counterpart.csv. Resolve the
               hand-written files first and `git add` them; then
                 .github/scripts/regenerate-conflicted.sh
               regenerates and stages every remaining conflicted generated file, in dependency

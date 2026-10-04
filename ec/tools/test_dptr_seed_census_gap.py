@@ -52,7 +52,6 @@ FUNCTIONS_CSV = EC / "annotations" / "ghidra-functions.csv"
 REGISTERS_YAML = EC / "annotations" / "registers.yaml"
 MAP_MD = EC / "annotations" / "xdata-register-map.md"
 FINDING = REPO / "docs" / "findings" / "dptr-seed-census-gap.md"
-INDEX_MD = REPO / "docs" / "findings" / "INDEX.md"
 
 # The eight addresses the census carries, and the two it does not. The split is
 # the finding: #429 grouped nine addresses as seed-to-helper and the ninth is
@@ -386,10 +385,6 @@ class TheCorrectionIsInPlace(unittest.TestCase):
                      in FINDING.read_text(encoding="utf-8").split("\n")
                      if line.startswith("# "))
         self.assertTrue(title, "the finding's first `# ` heading is its claim")
-        index = INDEX_MD.read_text(encoding="utf-8")
-        self.assertTrue(FINDING.name in index,
-                        "docs/findings/INDEX.md is out of date; regenerate it "
-                        "with gen_findings_index.py")
 
     def test_the_finding_names_the_inversion_it_is_not(self):
         # #399's shape is the `movx` in the caller. Recording the difference

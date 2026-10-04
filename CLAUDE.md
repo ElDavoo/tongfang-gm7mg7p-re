@@ -238,8 +238,10 @@ trusting one of theirs: every row says whether it was verified against
   nothing else — no summary section, no pointer appended here.
   `ec/tools/check_findings_frozen.py` fails a change that adds a section,
   deletes one, renumbers one or reuses a number, and
-  `gen_findings_index.py --check` fails a stale
-  `docs/findings/INDEX.md`; the patch that puts both in the gate is
+  `gen_findings_index.py --check` fails a write-up with no `# ` title (the
+  index itself is that tool's output and is not committed: every write-up
+  added a line to it, so nearly every pull request touched it); the patch
+  that puts both in the gate is
   `docs/ci/agent-gates-findings-frozen.patch`. The sections below §97 stay
   citable and stay put — the numbering is not what stopped, the *counter*
   is. **Do not "helpfully" add a summary section; that is the one edit to
