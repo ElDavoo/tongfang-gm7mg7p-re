@@ -70,6 +70,12 @@ import grade_name_basis
 # the two above are.
 import second_copy_census
 
+# The provenance header every committed .c carries, held against what
+# write_context() below composes and writeFunctionFile() writes. Imported for
+# the same reason as the three above and with the same one-way consequence: it
+# imports nothing from here, so the four stay independently runnable.
+import c_header_provenance
+
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # The shared Ghidra layer's project-owner helper. Imported rather than restated
@@ -116,6 +122,11 @@ CALL_TARGETS = os.path.join(REPO, "ec", "annotations", "bank-call-targets.csv")
 C_DIGESTS = os.path.join(REPO, "ec", "ghidra", "c-digests.csv")
 SUBSYSTEMS = os.path.join(REPO, "ec", "annotations", "subsystems.md")
 GHIDRA_VERSION = "12.1.3"
+# The `generator=` the context file carries, and so the half of every
+# committed `.c`'s second header line that is not the Ghidra version. A
+# constant rather than a literal at the write and another at the check, so
+# renaming the driver cannot leave the header check holding the old name.
+GENERATOR = "ec/tools/build_ec_decompile.py"
 
 # The Keil BL51 bank-switch stubs, from ec/tools/find_banks.py and ec/README.md.
 BANK_STUBS = [0x1100, 0x1114, 0x1128, 0x113C]
@@ -623,20 +634,37 @@ def build_images(work):
     return imgs
 
 
+def source_clauses():
+    """`source.<program>` for each of the three programs, as write_context()
+    writes them.
+
+    Composed here rather than inline in write_context() so the header check has
+    one copy to hold against: it needs the exact clause a committed `.c`
+    carries, and a second spelling of the "CODE bank 1 at file 0x10000" wording
+    is a header check that goes red on a tree the exporter wrote correctly.
+
+    One context file drives all three programs, so each gets its own source
+    line: the PD image is a different 64 KiB program at a different file
+    offset, not another view of the bank image.
+    """
+    rel = os.path.relpath(FIRMWARE, REPO)
+    return {
+        "bank0": "%s, CODE bank 0 at file 0x08000 + the 0x0000-0x7FFF common "
+                 "area" % rel,
+        "bank1": "%s, CODE bank 1 at file 0x10000 + the 0x0000-0x7FFF common "
+                 "area" % rel,
+        "pd": "%s, the ITE8850-PD image at file 0x20000 -- a separate program "
+              "with its own address space, not a third bank" % rel,
+    }
+
+
 def write_context(work, imgs, digest):
     p = os.path.join(work, "context.txt")
     rel = os.path.relpath(FIRMWARE, REPO)
     with open(p, "w") as f:
         f.write("source=%s\n" % rel)
-        # One context file drives all three programs, so each gets its own
-        # source line: the PD image is a different 64 KiB program at a different
-        # file offset, not another view of the bank image.
-        f.write("source.bank0=%s, CODE bank 0 at file 0x08000 + the 0x0000-0x7FFF "
-                "common area\n" % rel)
-        f.write("source.bank1=%s, CODE bank 1 at file 0x10000 + the 0x0000-0x7FFF "
-                "common area\n" % rel)
-        f.write("source.pd=%s, the ITE8850-PD image at file 0x20000 -- a separate "
-                "program with its own address space, not a third bank\n" % rel)
+        for program, clause in source_clauses().items():
+            f.write("source.%s=%s\n" % (program, clause))
         # The programs in this invocation and the export label each gets. The
         # exporter refuses a collision rather than letting one program's output
         # overwrite another's.
@@ -646,7 +674,7 @@ def write_context(work, imgs, digest):
             f.write("label.%s=%s\n" % (name, label))
         f.write("sha256=%s\n" % digest)
         f.write("ghidra_version=%s\n" % GHIDRA_VERSION)
-        f.write("generator=ec/tools/build_ec_decompile.py\n")
+        f.write("generator=%s\n" % GENERATOR)
         f.write("symbols=ec/ghidra/xdata-symbols.csv "
                 "(generated from ec/annotations/registers.yaml)\n")
         # Both annotation files, because the provenance header this key becomes
@@ -1406,7 +1434,11 @@ def _ledger_hint(column):
 # Ghidra placeholder. Parse it as a whole rather than by field offset, so a
 # re-ordering of the three is a red check here instead of a silent
 # name/address swap in 2,710 files.
-EC_C_HEADER = re.compile(r"^// (\S+) @ ([0-9A-Fa-f]+)\s+(\S+)")
+#
+# Named rather than defined because c_header_provenance.py already holds it --
+# that module reads the whole header, this one reads the first line of it, and
+# two spellings of the shape is the drift the header check exists to catch.
+EC_C_HEADER = c_header_provenance.C_HEADER
 
 
 def c_presence_problems(index_rows, decompiled_dir):
@@ -2727,6 +2759,21 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
               or os.path.relpath(_outside, REPO) not in open(_dg).read())
     finally:
         shutil.rmtree(_d, ignore_errors=True)
+
+    # The provenance header, on its own fixtures. The known-good case runs
+    # first and the mutations each name their file, for the reason the digest
+    # cases above give: a check that has quietly started accepting everything
+    # looks exactly like a check that is working.
+    c_header_provenance.self_test(check)
+    # And against the committed tree, so --check is not the only place the
+    # property is exercised. `_ir` and not `rows`: this function's `rows` is
+    # the seed set, which is tuples, and the index is what carries `seed_basis`.
+    _hp, _hn = c_header_provenance.header_problems(
+        OUTDIR, source_clauses(), sha256(FIRMWARE), GHIDRA_VERSION, GENERATOR,
+        set(r["out_file"] for r in _ir if r.get("seed_basis") == "call-target"))
+    check("EC: every committed .c carries the provenance header, and every one "
+          "names the committed firmware as the image it was exported from",
+          not _hp, "; ".join(_hp[:3]))
 
     seeded = {(p, a) for p, a, _ in rows}
     ec_vectors = discover_vector_table(fw[:COMMON_END])
@@ -4859,6 +4906,27 @@ def check(work):
         # summary from a nearly-clean run.
         fail("... and %d more committed .c whose digest does not match (re-run "
              "--write-digests if this came from a re-export)" % (len(_cdig) - 5))
+    # The question the digest cannot answer. It says each .c has not moved; it
+    # says nothing about which image the file was exported from, and
+    # --write-digests will bless a .c left behind by an export of another
+    # firmware without complaint. The header is the only place that claim is
+    # written down, so it is the only place a wrong-image .c is visible.
+    #
+    # The digest computed above for the manifest comparison is passed in, so
+    # this costs no second pass over the image, and source_clauses() is the
+    # same function write_context() writes the exporter's own clauses with.
+    _hdr, _hdr_n = c_header_provenance.header_problems(
+        OUTDIR, source_clauses(), digest, GHIDRA_VERSION, GENERATOR,
+        set(r["out_file"] for r in rows if r.get("seed_basis") == "call-target"))
+    for problem in _hdr[:5]:
+        fail("header: %s" % problem)
+    if len(_hdr) > 5:
+        fail("header: ... and %d more committed .c whose provenance header is "
+             "missing, malformed, or names another image" % (len(_hdr) - 5))
+    if not _hdr:
+        print("  header: %d committed .c carry the exporter's provenance "
+              "header, and every one names %s as the image it was exported from"
+              % (_hdr_n, os.path.relpath(FIRMWARE, REPO)))
     # The content guards on the same rows the structural pass above read, not a
     # second read of the file: the two are different questions about one parse.
     for a in _read.get("ghidra-functions.csv", []):

@@ -44,11 +44,17 @@ suite asserts it from this side.
 on `shape`.** A `read-by-hand` region has a uniform entry grid that a human
 read, so `yes`/`no` answers a real question about a real grid. An `inferred`
 region had its extent extended by pattern, and `common-0656-address-table`'s
-own `note` says the stride is not uniform across it -- 121 of its 176 words are
-`0x032F + 3k` and the rest are not on that progression -- so a modulo test there
-answers a question the file does not pose, and the cell is **empty**. So is
-`inferred-unchecked`'s, which is the tier `--check` cannot reach and is
-therefore not a claim at all. Keying on `confidence` rather than on `shape`
+`note` **used to** claim the stride was not uniform across it -- 121 of its 176
+words are `0x032F + 3k` and the rest are not on that progression. That claim was
+wrong: reading the words edge by edge (issue #1144) shows the stride *is*
+uniform and the content is mixed, the span being a directory of five `ljmp`
+tables plus 36 ordinary code addresses
+(`docs/findings/0656-directory-words.md`). Nothing here moves, because the rule
+never rested on the note -- an extent chosen by pattern does not claim a grid, so
+a modulo test there answers a question the file does not pose, and the cell is
+**empty**. So is `inferred-unchecked`'s, which is the tier `--check` cannot
+reach and is therefore not a claim at all. Keying on `confidence` rather than
+on `shape`
 because it is a field the source of truth already carries, that `load()`
 already validates against a closed vocabulary and `unchecked()` already filters
 by, and that a future entry reaches with no edit here; a shape-keyed rule would
@@ -162,9 +168,11 @@ HEADER_NOTE = """\
 #              columns being here so the test is checkable from the row alone.
 #   (empty)    the region is `inferred` (its extent was extended by pattern, so
 #              the grid is not a claim -- common-0656-address-table's `note`
-#              says its stride is not uniform) or `inferred-unchecked` (the tier
-#              --check cannot reach). The question is UNDEFINED there, not
-#              false, and `region_confidence` says which in the row itself.
+#              used to claim its stride was not uniform; reading its words one
+#              at a time (issue #1144) shows the stride IS uniform and the
+#              content is mixed) or `inferred-unchecked` (the tier --check
+#              cannot reach). The question is UNDEFINED there, not false, and
+#              `region_confidence` says which in the row itself.
 # An empty cell is therefore not the same absence as `in_data_region=no`:
 # `no` means the question does not arise, `yes` with an empty `entry_aligned`
 # means a region was found and the question is undefined for it.

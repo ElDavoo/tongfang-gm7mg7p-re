@@ -12,12 +12,15 @@
 set -euo pipefail
 
 declare -A REGEN=(
-  [docs/findings/INDEX.md]='python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md'
   [ec/ghidra/xdata-symbols.csv]='python3 ec/tools/gen_xdata_symbols.py'
   [ec/annotations/xdata-export-ownership.csv]='python3 ec/tools/export_ownership.py'
   [ec/annotations/xdata-registers.csv]='python3 ec/tools/xdata_register_map.py'
   [ec/annotations/xdata-clusters.csv]='python3 ec/tools/xdata_register_map.py'
   [ec/ghidra/c-asm-counterpart.csv]='python3 ec/tools/c_asm_counterpart.py --report'
+  # Not regenerated: removed from the tree on 2026-10-04 (gen_findings_index.py prints it).
+  # A branch older than that which added a write-up conflicts on it, and the resolution is
+  # to keep it deleted.
+  [docs/findings/INDEX.md]='git rm -q -f --ignore-unmatch docs/findings/INDEX.md'
 )
 # The order the generators run in: a generator runs after every generator whose output it
 # reads. The census reads the ownership map, so the ownership map goes first.
@@ -26,7 +29,7 @@ ORDER=(
   'python3 ec/tools/export_ownership.py'
   'python3 ec/tools/xdata_register_map.py'
   'python3 ec/tools/c_asm_counterpart.py --report'
-  'python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md'
+  'git rm -q -f --ignore-unmatch docs/findings/INDEX.md'
 )
 
 mapfile -t conflicted < <(git diff --name-only --diff-filter=U)
