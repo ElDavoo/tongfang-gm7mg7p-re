@@ -59,7 +59,7 @@ exception in it, and the delta constant is gone rather than renamed.
 
 The guard is a published part of how every committed table's `window` and
 `terminator` columns were produced, so widening it is a claim about those
-tables until the check says otherwise. The check says otherwise:
+tables until the check says otherwise. The checks say otherwise:
 
 ```sh
 python3 ec/tools/walk_budget_census.py ec/firmware/GMxMGxx_11.800 --check
@@ -69,12 +69,18 @@ python3 ec/tools/walk_budget_census.py ec/firmware/GMxMGxx_11.800 --check
 ec/annotations/walk-budget-census.csv: this run reproduces it byte for byte (18 lines)
 ```
 
-`walk_budget_census.TABLES` is what that `--check` is derived from, and **no
-committed row in any of them moves** — not a `window` cell, not a `terminator`,
-not an `access`. The six `--terminator-column` tables of
-[`dptr-rebuild-walk-guard.md`](dptr-rebuild-walk-guard.md) §9 and
-`xdata-086x-dispatch-sites.csv`'s own `--check` all still reproduce byte for
-byte; each command is that section's, unchanged.
+`walk_budget_census.TABLES` is what that `--check` is derived from, and the CSV
+it compares carries each of those tables' per-site `terminator` and `access`
+cells, so **no committed row in any of them moves** for those two. The
+`window` column is the one a `mov 0x82,@r0` could have moved while leaving both
+of those identical — a window whose `DPTR` the site had already reloaded
+terminates the same way and is charged the same access — and that CSV has no
+such column. `window` is held instead by
+`ec/tools/test_sites_csv_regeneration.py`, which regenerates every committed
+`*-sites.csv` from the image, `window` column included, and compares bytes. The
+`--terminator-column` tables §9 prints, and `xdata-086x-dispatch-sites.csv`'s
+own `--check`, all still reproduce byte for byte; each command is that
+section's, unchanged.
 
 The whole-image sweeps that write-up commits are unchanged as well, which is
 the stronger statement — the check only covers rows somebody committed, and
