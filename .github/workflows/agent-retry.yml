@@ -308,8 +308,10 @@ jobs:
                                      or .workflowName == "Agent · implement")] | length' \
                      "$RUNNER_TEMP/busy.json")
           echo "$intake plan/implement run(s) in flight, the ceiling is $MAX_INTAKE_RUNS"
-          echo "INTAKE_BUSY=$intake" >> "$GITHUB_ENV"
-          echo "MAX_INTAKE_RUNS=$MAX_INTAKE_RUNS" >> "$GITHUB_ENV"
+          # Kept in a file the later steps source, not in GITHUB_ENV: zizmor's github-env audit
+          # flags every new write to it in a workflow with this one's triggers.
+          printf 'INTAKE_BUSY=%d\nMAX_INTAKE_RUNS=%d\n' "$intake" "$MAX_INTAKE_RUNS" \
+            > "$RUNNER_TEMP/intake.sh"
           [ "$free" -lt 0 ] && free=0
           echo "$busy pipeline run(s) in flight, $free of $MAX_PARALLEL_AGENTS slot(s) free"
 
@@ -351,6 +353,14 @@ jobs:
           # reserve, so the sweeps that run first cannot take the budget the queue sweeps need.
           # `order_queue`: the queue sweeps' pick order. See its own comment.
           cat > "$RUNNER_TEMP/slots.sh" <<'EOF'
+          . "$RUNNER_TEMP/intake.sh"
+          # `take_intake`: count one more plan/implement run in flight, persisted for the later
+          # steps the same way.
+          take_intake() {
+            INTAKE_BUSY=$(( INTAKE_BUSY + 1 ))
+            printf 'INTAKE_BUSY=%d\nMAX_INTAKE_RUNS=%d\n' "$INTAKE_BUSY" "$MAX_INTAKE_RUNS" \
+              > "$RUNNER_TEMP/intake.sh"
+          }
           busy_issue() {
             jq -e --arg n "$1" --arg t "${2:-}" 'any(.[];
                 .headBranch == ("agent/issue-" + $n)
@@ -711,8 +721,7 @@ jobs:
           GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-implement.yml \
             -f issue="$waiting" -f author="$author"
           take_slot
-          INTAKE_BUSY=$(( INTAKE_BUSY + 1 ))
-          echo "INTAKE_BUSY=$INTAKE_BUSY" >> "$GITHUB_ENV"
+          take_intake
           done 3<<<"$candidates"
 
       # The same drain for the plan stage, and now its main intake: with `issues: [opened]` gone
@@ -814,5 +823,5 @@ jobs:
           take_slot
           # A plan hands straight on to an implement that opens a PR, so count it against the cap.
           open=$(( open + 1 ))
-          INTAKE_BUSY=$(( INTAKE_BUSY + 1 ))
+          take_intake
           done 3<<<"$candidates"
