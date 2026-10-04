@@ -7,14 +7,23 @@ The write-up for [issue
 `evidence/battery-traces/` was unrecorded. Both are now held, by
 `windows/tools/test_battery_trace.py`.
 
-**The tool is not edited by this.** Two committed citations hold it by line
-number — `ec/ghidra/xdata-overrides.csv:9` cites `battery_trace.py:51` for
-`ADDR_CURRENT`, and [`0751-capture-encoding.md`](0751-capture-encoding.md)
-cites `battery_trace.py:81` for the `open()` with no `encoding=`. Editing
-above either line silently falsifies a citation and nothing would catch it, so
-the deliverable here is tests and this page. Nothing below is hardware evidence:
-no EC is opened, no register is read back, and no row in this directory was
-produced by a run that happened now.
+**The append gap below has since been closed**, by the work recorded under
+[The append guard](#the-append-guard): `battery_trace.py` now compares the
+header already in the `--csv` target with the columns it is about to write and
+refuses the append on a mismatch, and `limit-pair-test` does the same before it
+writes anything.
+
+**The tool *was* edited, below the lines that hold it.** Two committed citations
+pin this file by line number: `ec/ghidra/xdata-overrides.csv:9` cites
+`battery_trace.py:51` for `ADDR_CURRENT`, and
+[`probe-csv-encoding.md`](probe-csv-encoding.md) cites `battery_trace.py:81` for
+the `open()` on `--csv`. Nothing in the tree resolves a prose `path.py:NNN`, so
+an edit above either would falsify a citation in silence — which is why the new
+guard is placed **below line 84**, leaving everything above byte-unchanged, and
+why a case in the suite now asserts each cited line still carries the text it is
+cited for rather than merely that it is still numbered 51 and 81. Nothing below
+is hardware evidence: no EC is opened, no register is read back, and no row in
+this directory was produced by a run that happened now.
 
 ## The census
 
@@ -76,8 +85,8 @@ append guard below has real committed runs behind it.
 on shapes the repository has since stopped producing, which would make them
 archive and the question closed. They are not archive. `linux/battery-trace/
 battery-trace:16` `echo`s the former's ten columns **byte for byte** and
-`linux/battery-trace/limit-pair-test:24` `echo`s the latter's eleven, both
-committed, neither superseded.
+`linux/battery-trace/limit-pair-test:22` names the latter's eleven in its
+`HDR=`, both committed, neither superseded.
 
 The drift is not a supersession. The two shell scripts predate
 `battery_trace.py` and were never replaced by it — all three are in the tree
@@ -118,8 +127,9 @@ script before the header, and four `# charge_types=…` rows are interleaved
 profile the operator had selected — hand-added, since nothing in this tree
 writes that line. The other 24 are `ecmem.py`'s own write confirmations,
 `0x07b9: was 0x00 wrote 0x3c readback 0x3c` and one line per register, which
-the three `$ECM write … >> "$OUT"` redirects at `limit-pair-test:40,42,44` put
-straight into the capture; that is `ecmem.py:56`'s format rendered exactly.
+the three `$ECM write … >> "$OUT"` redirects in `limit-pair-test`'s phase
+sequence put straight into the capture; that is `ecmem.py:56`'s format rendered
+exactly.
 A `csv.reader` returns every one of the 29 as a single-field row, the shape a
 data row with fields missing would also take. So the file is annotated both
 before and inside its own row stream, and
@@ -132,23 +142,34 @@ glob that passed over it would report what it read and mean less than it said.
 ## The append guard
 
 Every tool that writes here opens the file for append and decides about the
-header separately. Four of them, three different decisions:
+header separately. Four writers, and now two questions asked of them — is the
+file empty, and is the header already in it one of ours:
 
 | writer | the guard | what it asks |
 |---|---|---|
-| `battery_trace.py:81-84` | `if fh.tell() == 0` | is the file empty |
+| `battery_trace.py:83-86` | `if fh.tell() == 0` | is the file empty |
+| `battery_trace.py:101-110` | `if found != ",".join(cols)` | is the header already in it ours |
 | `charge_target_test.py:154-157` | `if fh.tell() == 0` | is the file empty |
 | `linux/battery-trace/battery-trace:15-17` | `if [ ! -s "$OUT" ]` | is the file non-empty |
-| `linux/battery-trace/limit-pair-test:23-24` | none | nothing; it appends the `#` line and the header on every run |
+| `linux/battery-trace/limit-pair-test:39-51` | `if [ "$have" != "$HDR" ]` | is the header already in it ours |
 
-**None of the four compares the header already in the file with the columns it
-is about to write.** `battery_trace.py` appends a row of fourteen
+**Two of the five now compare; the other three do not.** `battery_trace.py`
+used to be a fourth "no" in this table: it appended a row of fourteen
 current-shape columns to a file whose header is `2026-09-17-limit-pair.csv`'s
-eleven, and reports exit 0. Column 4 is `status` in one and `charging` in the
-other, so a reader that indexed by the file's own header reads the wrong field
-out of every row added. The suite asserts today's behaviour and says in a
-comment that the gap is unfixed; closing it turns that case red, which is the
-record turning over rather than a defect in the fix.
+eleven, and reported exit 0. Column 4 is `status` in one and `charging` in the
+other, so a reader that indexed by the file's own header read the wrong field
+out of every row added. It refuses now, and `limit-pair-test` — which had no
+guard at all, appending its `#` line and header on every run — compares before
+it writes. `charge_target_test.py` and `linux/battery-trace/battery-trace` are
+named in this table and are **not** covered by this work; they carry the same
+gap and have their own follow-up.
+
+Both refusals share one rule: a header that **matches** still appends, and only
+a mismatch refuses. That direction is the evidence — `battery_trace.py`'s two
+committed captures are each several invocations appending into one file, and
+`limit-pair-test`'s `OUT` default is dated, so a same-date second run is a
+continuation rather than a collision. Refusing it would have broken a workflow
+the tools' own defaults invite.
 
 Two things are *not* claimed here. That this has corrupted a committed file:
 it has not, and **no file in the directory carries a data row on a column set
@@ -157,19 +178,34 @@ mismatched header causes, and none of them shows any. That is a reading of the
 committed tree rather than a check that re-derives it: the census holds every
 file to the column set its class claims, which is a property of row 0, and the
 29 single-field rows above are non-data lines rather than rows on a foreign
-column set, so nothing in the suite walks every row. And that the guard is the
-defect: the guard is doing what it was written to do. The gap is that nobody
-wrote the check that is not there.
+column set, so nothing in the suite walks every row. And that the guard was the
+defect: each guard was doing what it was written to do. The gap was that nobody
+wrote the check that was not there.
 
-The one writer of the four with **no** guard is the interesting one, because it
-is the one that would double. `limit-pair-test` appends its `#` line and its
-header on every run, so two runs on one date would put a second header in the
-middle of the file — and `2026-09-17-limit-pair.csv` has exactly one of each,
-so the committed capture is a single run, and the non-data rows that run
-produced are the `$ECM write` confirmations counted above — the four
-`# charge_types=` rows are hand-added, and neither of the script's own per-run
-lines appears twice. The `2026-09-21-0522-*` files are on the guarded path, and
-each carries one header line.
+`2026-09-17-limit-pair.csv` opens with a `#` annotation rather than a header, and
+the two guards read row 0 differently, so what happens when that capture is
+pointed at is worth stating per tool rather than as one rule.
+`battery_trace.py` compares the raw first line, so it refuses the file on the
+annotation. That is the intended direction for that tool and not an oversight: a
+compare that skipped annotation lines could be walked past by a file carrying
+one, so its rule is deliberately the strict one, and its suite asserts both
+shapes — an annotation-first file, and a file whose row 0 is a foreign header.
+`limit-pair-test` compares the first line that is *not* a `#` row, so pointed at
+this capture it finds the script's own header, matches it, and appends. That is
+the correct outcome rather than a hole: the file is the shape the script writes,
+so appending to it continues a capture instead of interleaving into it. The
+skip is not a general rule — it is there because this script is the thing that
+writes `#` rows — and the stricter reading stays held over the Python tool.
+
+`2026-09-17-limit-pair.csv` is a **single run**: it has exactly one `# original`
+line and one header, and neither appears twice. So there is no committed
+evidence either way about what a second run of the new guard would produce —
+the continuation path is asserted in `battery_trace.py`'s suite (case 9) and
+reasoned about for the shell script, but no committed capture records two runs
+of `limit-pair-test`. The non-data rows that single run produced are the
+`$ECM write` confirmations counted above — the four `# charge_types=` rows are
+hand-added. The `2026-09-21-0522-*` files are on the guarded path, and each
+carries one header line.
 
 ## The two-source property, at the row level
 
@@ -203,6 +239,23 @@ from the two fixture bytes in the suite rather than by calling the tool's own
 
 ## What this does not settle
 
+- **That either refusal has been seen to fire on real hardware.** Neither tool
+  was run. `battery_trace.py`'s refusal is asserted against a temp file built
+  from committed text, and `limit-pair-test` needs root, `ec/tools/ecmem.py` and
+  `/sys` to run at all. Its guard was checked **by hand** while this was
+  written — `bash -n` on the script, and the compare driven against a copy of
+  the committed capture and against a header of another shape. That is a shape
+  check, not an execution of the script, and **nothing in the tree repeats it**:
+  no gate covers a file with no extension and no suite runs the script, so a
+  later edit to that guard is unchecked until someone drives it by hand again.
+  The continuation path (a header that matches, so the append proceeds) is
+  asserted for `battery_trace.py` and reasoned about for the shell script; no
+  committed capture records two runs of `limit-pair-test`, so that direction
+  rests on the dated `OUT` default and on nothing observed.
+- **That the suite holds a process exit code.** It asserts `main()`'s return
+  value, because the tool imports `ecrw` and shells out to powershell and so
+  cannot be run as a subprocess here; `sys.exit(main())` is what turns the
+  refusal into a non-zero exit, and that line is not under test.
 - **Whether the EC acted on any of it.** The suite opens no EC. The `ec_07xx`
   watch columns are asserted to be `WATCH`, in order, and to match what the
   committed captures recorded — that is a statement about a column set, never
@@ -223,7 +276,12 @@ from the two fixture bytes in the suite rather than by calling the tool's own
   `charge_target_test.py` and `ctgp_dben_probe.py` and every reader of all
   three formats. See [`probe-csv-encoding.md`](probe-csv-encoding.md). The
   rest of the bullet stands: this page still does not re-open that page's
-  reasoning, and the two still overlap by that one line.
+  reasoning, and the two still overlap by that one line. The append guard added
+  afterwards opens the `--csv` path a second time to read the header back, and
+  that read declares the codec too — so `check_probe_csv_encoding.py` holds it
+  as a *reader* site, keyed on the mode argument so it cannot be mistaken for
+  the appender. That is a reader of an existing capture, not a fourth appender,
+  and it is why the deferred question above stays deferred.
 - **The duplicated `wmi()`.** `battery_trace.py:59-63` and
   `charge_target_test.py:89-93` are byte-identical, as are `PS`, `WMI_QUERY` and
   `u16`. The house position, at the same page's §2, is that `windows/tools/` is
@@ -231,13 +289,20 @@ from the two fixture bytes in the suite rather than by calling the tool's own
   fakes the call locally and asserts nothing about the two bodies being equal,
   so whatever the charge-target work does to that helper applies here without
   this suite blocking it.
-- **The append gap, fixed.** It is recorded, tested as today's behaviour, and
-  left. `battery_trace.py` wrote both current captures and every row in them
+- **The append gap, fixed.** ~~It is recorded, tested as today's behaviour, and
+  left.~~ `battery_trace.py` wrote both current captures and every row in them
   went through the append path, so the path is not what is untested. What no
   committed run does is *append to a file whose header differs from `cols`*,
   and that narrower case is all a refusal would change — and no committed file
   records such an append either, so a cloud runner has no evidence to check
   the refusal against. Test 10 holds today's behaviour there. Its own issue.
+  **Closed:** that was its own issue, and this is it. Both tools refuse on a
+  mismatched header, and test 10 — `test_appending_to_a_foreign_header_
+  interleaves_it_anyway`, which held the damage — now asserts the refusal
+  instead. The reasoning above about there being no evidence to check against
+  was right and is why the refusal is asserted as a property of the tool rather
+  than read off a capture. What the refusal does **not** establish is stated
+  under What this does not settle below.
 - **Anything about the `2026-09-09-*` and `limit-pair` designs.** They are named
   and classified, not re-run and not re-derived. Re-deriving a shape would mean
   building the tool that produced it, which this work has no mandate to do.
@@ -247,15 +312,23 @@ from the two fixture bytes in the suite rather than by calling the tool's own
 No laptop and no Windows machine is reachable from a GitHub-hosted runner. Every
 value in the suite's fixture is a byte taken from a committed row or a token
 from a canned WMI line; the two Linux scripts above are read as text and never
-executed. The offline proof is:
+executed — `limit-pair-test`'s guard included, which needs root, `ecmem.py` and
+`/sys` to run for real. The offline proof is:
 
 ```
-    bash tools/run-tests.sh windows/tools
+    bash tools/run-tests.sh windows/tools/test_battery_trace.py
 ```
+
+Scoped to the one suite because that is what this work changes;
+`bash tools/run-tests.sh windows/tools` covers the same suite and the ones that
+share its fixtures, and is green on this tree.
 
 No gate runs that. `.github/scripts/agent-gates.sh` is copied from
 `ElDavoo/agent-pipeline` and a branch cannot edit it; `tools/run-tests.sh` prints
 on every run that no workflow calls it, and `docs/agent-pipeline.md` carries the
 line that would. `check_python_syntax` in that gate does `py_compile` the
-`windows/tools/*.py` glob, so the new suite is known to compile and is not known
-to pass from a commit.
+`windows/tools/*.py` glob, so the suite is known to compile and is not known to
+pass from a commit. It does **not** cover the shell script — `check_shellcheck`
+globs `find . -name '*.sh'` and `limit-pair-test` has no extension — so
+`bash -n linux/battery-trace/limit-pair-test` is the syntax check this work
+relies on, run by hand.
