@@ -276,10 +276,12 @@ written, so a `ctrl_read` row is the EC's *answer* to the arm byte rather than
 the arm byte itself: the arm byte — `0x03` across arm A, `0x01` across arm B —
 for as long as the write holds, and the starting byte if the EC takes it back.
 §4.3 is the question that separates the two, and §2's `0x0522` citation is why
-the second is not a surprise. Driven offline against `test_ctgp_dben_probe.py`'s
-`FakeEc`, the byte map it scripts over `ecrw_fake`, the write held from either
-start, which is how the correction could be made at all; that is the fixture's
-behaviour, not a claim about the EC.
+the second is not a surprise. Driven offline through `test_ctgp_dben_probe.py`'s
+`FakeEc` from both starts, the byte written and the byte read back are the same —
+`arm_bytes(0x00) == arm_bytes(0x03) == (0x03, 0x01)`, and every `ctrl_written`
+and `ctrl_read` row carries `0x03` across arm A and `0x01` across arm B
+throughout — and each run restores the byte it read itself. That is the
+fixture's behaviour, not a claim about the EC.
 
 While it holds, the arms preserve bits 2-7 and §2's two starts (`0x03` on AC,
 `0x00` on battery) have those zero, so the two runs are **indistinguishable by

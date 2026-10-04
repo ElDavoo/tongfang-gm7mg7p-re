@@ -116,9 +116,12 @@ as safe. Checked against the source:
 - The second run cannot disturb the first arm's byte. Each run reads `0x0743`
   for itself (`orig = ec.read(CTRL)`, inside `with Ec()`) and restores **that**
   value in the `finally`, so it never puts back a byte an earlier run wrote.
-  Held at `test_ctgp_dben_probe.py`'s
-  `test_a_byte_with_bit_zero_clear_has_it_forced_on_in_both_arms` and
-  `test_ctrl_c_partway_still_restores_the_byte`.
+  Checked in `main()` in `ctgp_dben_probe.py` and by driving it from both
+  starts, where the writes are `(0x03, 0x01, 0x00)` and `(0x03, 0x01, 0x03)` —
+  each run putting back its own read. The two cases in
+  `test_ctgp_dben_probe.py` hold the neighbouring properties (the banner says
+  `both arms FORCE`, and the `finally` restores under a `KeyboardInterrupt`),
+  not this one.
 
 So the *safety* half of the question is answered and already pinned. What was
 left was a wording defect: §6's "the same question asked with the gate starting
