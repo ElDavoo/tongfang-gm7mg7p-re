@@ -599,7 +599,9 @@ reads them the other way too. That is §8's third bullet.
   `pd-index-geometry.md` §2.3 lists (`#67`).
 - **The handoffs are resolved one level only.** `0x972E` returns a bare
   product with no base, and any callee that hands DPTR on again would stay
-  unresolved — none of these 8 does at depth 1, but depth 2 is not attempted.
+  unresolved — none of these 8 does at depth 1, and none of the 8 is in
+  `two_hop_census.py`'s committed rows, so `--callee-depth 2` moves none of
+  this address's cells either.
 - **What the 16-bit windows mean is not identified.** §4.3 establishes that
   `0x07D0`-`0x07D2` are treated as contiguous and that `0x07D1` participates
   in two overlapping little-endian words. A shift of adjacent bytes is

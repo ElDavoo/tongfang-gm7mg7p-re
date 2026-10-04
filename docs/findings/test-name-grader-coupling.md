@@ -76,6 +76,20 @@ copy-across-the-files fix gets wrong.
   therefore two things: the reader opens the capture and hands back the mark it
   wrote, and the label is *deliberately* unplaceable.
 
+  **Correction (issue #1329, 2026-10-04): the premise above is false, and the
+  conclusion is not.** *Is started without `--label-vocab`* reads as an operator
+  choice, and there is no such choice to make: that flag does not exist on
+  `system_id_probe.py`, so no run of it can be started with one, and no run can
+  be started with it and be refused for a label. The labels are free-form
+  because the tool carries no vocabulary and is not going to — the labels
+  `system-id-0456-bit6-divisor.md` §3 and §3b mandate are prose that no
+  `MARK_FORMS` entry leads, so a `--label-vocab 0751` here would refuse every
+  label the procedure asks for, at the first mark. Everything the paragraph
+  above concludes therefore stands, and is now asserted rather than argued:
+  `test_system_id_probe.py`'s `FreeFormLabelTests` reads those labels out of
+  the procedure and checks each of them against this same `parse_mark`. See
+  [system-id-probe-mark-labels.md](system-id-probe-mark-labels.md).
+
 Asserting a role in the probe's test would have been a fresh calibration error,
 and a more confident-sounding one than the one being fixed.
 

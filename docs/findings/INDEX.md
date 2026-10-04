@@ -50,6 +50,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md) — The measurement tool's pins, re-anchored, and one `what` that had to be re-worded (issue #762)
 - [`07d6-07d7-pd-image-census.md`](07d6-07d7-pd-image-census.md) — `0x07D6`/`0x07D7` are 213 PD-image sites and 0 EC sites, and the two bytes reach opposite conclusions
 - [`3202-block-walk.md`](3202-block-walk.md) — `0x3202` and the `0x32xx` block: four read sites, no writer found, and two addresses the census does not carry (issue #338)
+- [`3c-named-versus-spelled.md`](3c-named-versus-spelled.md) — §3c's named-versus-spelled counts, re-derived, and the 17 addresses that sit between them (issue #1162)
 - [`4900-stride-table.md`](4900-stride-table.md) — The 0x4900 stride table: how far it runs, what geometry the two strides imply, and what the index is
 - [`7151-case-tables-in-the-walk.md`](7151-case-tables-in-the-walk.md) — The main EC's `0x7151` dispatcher carries a case table inline, so the walk was decoding it as instructions (issue #1257)
 - [`7b14-07c9-token.md`](7b14-07c9-token.md) — The 0x07C9 token in `pd/7B14.c` is a variable row on the *callee*, and the re-export is a fixed point
@@ -90,6 +91,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`cited-set-population.md`](cited-set-population.md) — The cited set was intersected with the reachable set, and the work list was the intersection (issue #460)
 - [`citing-listing-evidence.md`](citing-listing-evidence.md) — The citing listing is the other half of the citation question (issue #525)
 - [`class-b-access-cell-corrections.md`](class-b-access-cell-corrections.md) — The three class-B `access` cells were short rather than wrong, and all three are corrected (issue #865)
+- [`closure-vs-function-inventory.md`](closure-vs-function-inventory.md) — The closure against the function inventory, and the `0x808E` boundary that answers §4 (issue #1080)
 - [`code-pointer-site-census.md`](code-pointer-site-census.md) — The 54 image-wide CODE-pointer sites, written down as a regenerable table, and what the list is not
 - [`code-table-record-writers.md`](code-table-record-writers.md) — The writers a `MOV DPTR` scan cannot see: every record of the EC's CODE tables
 - [`committed-checkout-triples-held.md`](committed-checkout-triples-held.md) — What the checkout suite holds, which was seven of nine depths and no `stated` at all
@@ -130,6 +132,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
 - [`ec-addr-reach-086x.md`](ec-addr-reach-086x.md) — Does the vendor service write any `0x08xx` byte, and how far did we look (issue #334)
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
+- [`ec-default-fan-tables.md`](ec-default-fan-tables.md) — The pointer-pair table at `0x60F2` ends at `0x6162`, and `0x888D` is entered by a branch rather than a call
 - [`ec-fan-table-defaults.md`](ec-fan-table-defaults.md) — The EC's own fan tables: where they live, what they say, and how far they are from the vendor's
 - [`ecmg-asl-references.md`](ecmg-asl-references.md) — Which of the 98 ECMG names the ASL reaches for, and what the two `0x71` arms are (issue #1159)
 - [`ecrw-fake-mirror-surface.md`](ecrw-fake-mirror-surface.md) — The `ecrw` fixture's mirror claim, measured, and narrowed to what it carries (issue #356)
@@ -164,6 +167,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`ifr-2718-reachability.md`](ifr-2718-reachability.md) — Question `0xE9F` is `DynamicPageCount`, and it is a sentinel no page count takes — so the two routes to Intel's Advanced page in the IFR are a self-reference and a TSE choice
 - [`ifr-charge-and-battery-options.md`](ifr-charge-and-battery-options.md) — The charge and battery questions in the Setup IFR, and what hides them
 - [`landed-gate-patch-state.md`](landed-gate-patch-state.md) — A landed gate patch is not a stale one: the four states, and the two-step landing (issue #772)
+- [`merged-capture-against-committed-pair.md`](merged-capture-against-committed-pair.md) — The two committed sweep captures are refused for one address, and that address is the free-running counter (issue #1452)
 - [`mmrd-unaligned-escape.md`](mmrd-unaligned-escape.md) — The unaligned `MMRD` escape, and the two sources that would have to say it is safe (issue #439)
 - [`mode-defaults-variant-selector.md`](mode-defaults-variant-selector.md) — Which writer seeds the per-mode PL defaults, and what the `0xABxx`/`0xC7xx` gate is (issue #111)
 - [`name-basis-and-groups.md`](name-basis-and-groups.md) — What grounds a name, and what a group is (issue #135)
@@ -201,6 +205,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-pair-unmoved-one-fold.md`](pd-pair-unmoved-one-fold.md) — The de-duplicated census's `157`/`858` pd pair is unmoved because the pass finds one fold in the PD program and that fold names no XDATA byte (issue #1364)
 - [`pd-sites-address-range.md`](pd-sites-address-range.md) — `--sites` refuses an address outside the PD region, and the arithmetic the census's row 10 declined to guard becomes a statement about the code
 - [`pd-unannotated-listings.md`](pd-unannotated-listings.md) — Every `pd` listing now has a row, and #471's figures did not move (issue #489)
+- [`pd-vector-handler-words.md`](pd-vector-handler-words.md) — Three of the `pd` image's five interrupt vectors are wired to a `ret`, and that is now derived rather than guessed (issue #1062)
 - [`pd-xdata-collision-survey.md`](pd-xdata-collision-survey.md) — The 39 other collisions, decoded: the PD image hands them on, and the low 4 KiB's excess sits on one page
 - [`perturb-arm-colliding-marks.md`](perturb-arm-colliding-marks.md) — The perturbation arm's capture holds the colliding marks #1376 said had never been taken, and the Fn arm's negative survives both readings of its window (issue #1432)
 - [`pin-table-beside-the-citing-file.md`](pin-table-beside-the-citing-file.md) — The beside-the-citing-file reading, in the tool that had only the tree's (issue #952)
@@ -231,6 +236,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
 - [`sites-csv-regeneration.md`](sites-csv-regeneration.md) — The committed sites tables are re-derived from the firmware, not from the pages that print the command (issue #313)
 - [`sweep-summary-schema.md`](sweep-summary-schema.md) — The AC-plugin sweep summary has a schema, a reader, and two blind spots written down
+- [`system-id-probe-mark-labels.md`](system-id-probe-mark-labels.md) — The `0x0456` probe's mark labels are free-form by design, and its blank press records nothing (issue #1329)
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
 - [`test-name-grader-coupling.md`](test-name-grader-coupling.md) — A test name that claims a coupling the test does not make
@@ -256,6 +262,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`trampoline-relative-branch-sites.md`](trampoline-relative-branch-sites.md) — All 170 of §8's trampoline-landing relative sites are the trampoline block's own operands, and no branch reaches the block from outside it
 - [`trampoline-target-census.md`](trampoline-target-census.md) — Every trampoline in the BL51 block gets a decoded target, read in the bank its stub selects (issue #574)
 - [`trampoline-target-reading.md`](trampoline-target-reading.md) — A trampoline target inside a `ret` run is a one-instruction far routine, and the bank-pointer reading is consistent with the stub's bytes (issue #1090)
+- [`two-hop-dptr-handoff.md`](two-hop-dptr-handoff.md) — The two hops that take a DPTR handoff further than one call
 - [`uncalled-vendor-setters.md`](uncalled-vendor-setters.md) — The three bytes the uncalled vendor setters write (issue #106)
 - [`uniwill-variable-0x60-writers.md`](uniwill-variable-0x60-writers.md) — Every writer of `UniWillVariable`, and which of them can explain offset 0x60
 - [`unresolved-transfer-causes.md`](unresolved-transfer-causes.md) — Why the call-graph's unresolved and unreached rows are the ones they are
@@ -296,6 +303,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md) — The dispatch reader reads statement position too, and one boundary it does not
 - [`xdata-export-ownership-page-census.md`](xdata-export-ownership-page-census.md) — Re-deriving the export-ownership page: every figure on `xdata-export-ownership.md`, from a fresh run (issue #654)
 - [`xdata-export-ownership-refusal-contract.md`](xdata-export-ownership-refusal-contract.md) — The `--export-ownership` refusal contract
+- [`xdata-export-ownership-refusal-denominators.md`](xdata-export-ownership-refusal-denominators.md) — The export-ownership refusal now quotes the census it protects
 - [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) — The 94 flipped clusters: both named mechanisms are refuted, and what the working page does show instead (issue #884)
 - [`xdata-green-set.md`](xdata-green-set.md) — The green set is empty, and the four sentences that said otherwise (issue #819)
 - [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md) — The guard-off generation's `cluster_key` distinctness had no case behind it, and the coverage sentences named two of the four censuses (issue #962)
@@ -325,4 +333,5 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-self-test-deferral-already-lifted.md`](xdata-self-test-deferral-already-lifted.md) — The self-test deferral #628 was filed against had already been lifted, and one file still described it in the present tense (2026-10-03, issue #628)
 - [`xdata-spelled-as-union.md`](xdata-spelled-as-union.md) — `spelled_as` is a union across programs, and the column that says so (issue #709)
 - [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md) — The two-largest case passed vacuously; its exhibits are now derived (issue #778)
+- [`xdata-worklist-census-columns-read.md`](xdata-worklist-census-columns-read.md) — §5's `size` and `refs` columns were never read; re-derived, they hold
 - [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md) — The 833 enters `write` and never leaves it: the word was wrong, the number was not (issue #890)

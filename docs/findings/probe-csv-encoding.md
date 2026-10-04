@@ -59,13 +59,30 @@ of the three files**, which is the whole of the constraint. `battery_trace.py:51
 is pinned by `ec/ghidra/xdata-overrides.csv:9`, `battery_trace.py:81-84` and
 `charge_target_test.py:154-157` are pinned in
 [`battery-trace-column-drift.md`](battery-trace-column-drift.md)'s append-guard
-table, and `0751-capture-encoding.md:117-118` pins all three. The three files'
+table, and `0751-capture-encoding.md:117-118` pins all three. ~~The three files'
 line counts are unchanged, so every one of those citations still resolves to
-the line it was written for.
+the line it was written for.~~
+
+> **Corrected 2026-10-04, by issue #1203.** The claim above was true of *these*
+> edits and stopped being true of `battery_trace.py` afterwards: the append
+> guard added later grew the file by 26 lines, so its line count is no longer
+> what it was when this page was written. Every citation named here still
+> resolves, for the reason the guard is placed the way it is — it sits **below
+> line 84**, so `battery_trace.py:51` and `battery_trace.py:81` still carry the
+> text they are written for, and `charge_target_test.py` and
+> `ctgp_dben_probe.py` were not touched at all. What did move is the
+> append-guard table's own row: it now reads `battery_trace.py:83-86` rather
+> than `81-84`, because the guard is the `else` of the same `fh.tell() == 0`.
+> The constraint held where it was aimed — above the cited lines — and the
+> correction is recorded rather than the sentence rewritten, per the §4a-4d
+> pattern. See [`battery-trace-column-drift.md`](battery-trace-column-drift.md)
+> for the guard itself.
 
 There is no explanatory comment above the `open()` in any of the three, and that
 is deliberate: a comment inserted above `battery_trace.py:81` moves every pin
 below it. The reasoning is this page, which is where this repository puts it.
+`battery_trace.py`'s append guard is below that line for the same reason, and
+carries its reasoning in the code where it is read.
 
 ## 3. Who reads each format
 
@@ -205,10 +222,16 @@ a good capture sits in a broken tree and must not be named.
   handle a byte above 0x7F.
 - **Whether this format should ever accept a BOM.** The separate question
   `0751-capture-encoding.md` §9 names.
-- **The append-guard gap.** None of the four writers compares the header
+- **The append-guard gap.** ~~None of the four writers compares the header
   already in the file with the columns it is about to write, which
-  `battery-trace-column-drift.md` records and deliberately leaves open.
-  Encoding is not that gap, and fixing one does not fix the other.
+  `battery-trace-column-drift.md` records and deliberately leaves open.~~
+  Closed for two of them at issue #1203: `battery_trace.py` and
+  `limit-pair-test` now compare the header already in the file and refuse a
+  mismatch, which leaves `charge_target_test.py` and
+  `linux/battery-trace/battery-trace` still carrying it, as that page records.
+  Encoding is not that gap, and fixing one does not fix the other — the guard
+  adds no codec question, and the header read it needed declares `utf-8` like
+  the appender.
 - **The two shells' and `2026-09-09-profiles.csv`'s provenance.** The absent
   writer is recorded as *not found by this method* at
   `battery-trace-column-drift.md`; it is not re-opened here.

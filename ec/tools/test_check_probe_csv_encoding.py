@@ -532,12 +532,15 @@ class TheDeclarationHalf(unittest.TestCase):
         rel = "windows/tools/battery_trace.py"
         root = self.copy_tool(rel, WRITER_STRIP)
         rows, problems = cpe.check_declarations(
-            self.site(rel, "open(args.csv", "writer"), root)
+            self.site(rel, "open(args.csv, 'a'", "writer"), root)
         # `_shown()` gives a temp tree the path it was given rather than a
         # `../../../../../tmp` chain, so the site is named by its tail and the
-        # rest of the row is compared whole.
+        # rest of the row is compared whole. The anchor carries the mode because
+        # the tool opens this path as a reader as well as the appender, and this
+        # fixture strips the keyword from both -- a table entry that reached
+        # both would report one site in the writer's direction.
         self.assertEqual([r[1:] for r in rows],
-                         [("open(args.csv", "writer", None)], rows)
+                         [("open(args.csv, 'a'", "writer", None)], rows)
         self.assertTrue(all(r[0].endswith(rel) for r in rows), rows)
         # One problem per site found, as a relation rather than a tally: a
         # count of how many `open()` calls the tool has is a value every merge
@@ -605,6 +608,30 @@ class TheDeclarationHalf(unittest.TestCase):
         self.assertEqual(len(problems), 1, problems)
         self.assertIn("no call matching", problems[0])
         self.assertIn("not looking at the writer it names", problems[0])
+
+    def test_the_writer_and_the_reader_of_one_path_are_told_apart(self):
+        # A tool that opens its `--csv` twice -- once to append, once to read the
+        # header already in the file back -- cannot be held by a single entry
+        # keyed on the path alone: the two sites fail in opposite directions, so
+        # a missing keyword on the reader would be reported as one that puts
+        # bytes on disk. Held over the committed tool, as a relation rather than
+        # a count of how many `open()` calls it has.
+        rel = "windows/tools/battery_trace.py"
+        path = os.path.join(REPO, rel)
+        writer = cpe.keywords_at(path, "open(args.csv, 'a'")
+        reader = cpe.keywords_at(path, "open(args.csv, 'r'")
+        self.assertTrue(writer, "the appender anchor matched nothing")
+        self.assertTrue(reader, "the header-read anchor matched nothing")
+        self.assertTrue(all("encoding" in k for k in writer), writer)
+        self.assertTrue(all("encoding" in k for k in reader), reader)
+        # And the two anchors are disjoint, which is the property the mode
+        # argument in each is there for: a path-only anchor would find both.
+        opened = [ast.unparse(c) for c in ast.walk(ast.parse(
+            open(path, encoding=cpe.DECLARED).read()))
+            if isinstance(c, ast.Call)
+            and ast.unparse(c).startswith("open(args.csv")]
+        self.assertTrue(any("'a'" in r for r in opened), opened)
+        self.assertTrue(any("'r'" in r for r in opened), opened)
 
     def test_an_enclosing_call_is_not_mistaken_for_the_site(self):
         # The anchor matches `p.read_text(...)` and must not also match the
