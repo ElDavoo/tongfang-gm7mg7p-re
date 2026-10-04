@@ -169,7 +169,9 @@ thread only under `--mark`, so a `MARK` row needs both flags; in
 `--mark-input`. **No mark-free capture here records the flags it was taken
 with** — the two that do record theirs say so in their own `#` headers — so
 the last column says what the file is and that no mark was placed in it, and
-stops there. The kinds below are kept distinct because merging them
+stops there. That gate describes the writers as they are now; the four oldest
+captures below predate the `MARK` row itself, so for those no flag decided it.
+The kinds below are kept distinct because merging them
 would be a claim these files do not support. `.txt` files in `ec-watch/` are
 outside this table by construction — it is over `*.csv` — and are reported as
 out of scope by `ec/tools/check_capture_marks.py` rather than passed over in
@@ -178,9 +180,9 @@ silence.
 | capture | `MARK` rows | why none, if none |
 |---|---|---|
 | `2026-09-18-ac-plugin-sweep-summary.csv` | 0 | Not a capture in this schema: a derived per-address summary (`addr,change_count,first_old,last_new`) rolled up from a 32,499-row log that is not committed. It carries no timestamp and no order, so no mark could be placed in it even had one been taken. |
-| `2026-09-18-profile-switch-0400-07ff.csv` | 0 | A `ts,addr,old,new` change log with no mark in it: the writer places a `MARK` row only for a label typed at the keyboard, so a byte's move here cannot be placed against the mode switch by the file alone. |
-| `2026-09-18-profile-switch-0700-07ff.csv` | 0 | The same, and the first of the two profile-switch cycles. |
-| `2026-09-23-power-mode-cycle-0700-07ff.csv` | 0 | The same, over the `0x0700-0x07FF` half of the power-mode cycle. This is the file whose `0x07C4` rows `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` had to retract as "at the plug-in". |
+| `2026-09-18-profile-switch-0400-07ff.csv` | 0 | A `ts,addr,old,new` change log with no mark in it, and none the writer could have written: `ec_watch.py` gained the `MARK` CSV row in `eb495de3` (2026-09-23), after this file's last row, so no flag and no typed label would have produced one. `docs/findings/probe-log-capture-conversion.md` records the same for its sibling. A byte's move here cannot be placed against the mode switch by the file alone. |
+| `2026-09-18-profile-switch-0700-07ff.csv` | 0 | The same, and the first of the two profile-switch cycles; `probe-log-capture-conversion.md` names this one as predating the `MARK` row. |
+| `2026-09-23-power-mode-cycle-0700-07ff.csv` | 0 | The same, over the `0x0700-0x07FF` half of the power-mode cycle; its last row is `18:00:29`, and `eb495de3` is dated `18:41`. This is the file whose `0x07C4` rows `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` had to retract as "at the plug-in". |
 | `2026-09-23-power-mode-cycle-0f00-0f5f.csv` | 0 | The same, over the `0x0F00-0x0F5F` fan-table half. |
 | `2026-09-24-06c2-06db-perturb-linux.csv` | 6 | — |
 | `2026-09-24-06c2-06db-suspend-linux.csv` | 2 | — |

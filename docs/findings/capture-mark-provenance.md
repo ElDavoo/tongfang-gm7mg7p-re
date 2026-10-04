@@ -57,7 +57,10 @@ number of captures that it is not.
 ## Why a committed capture can have none, and what is actually recorded
 
 The *possibility* is knowable from the writers' source, and no capture file
-records it, because it is a fact about the command that wrote it:
+records it, because it is a fact about the command that wrote it. These gates
+describe the writers as they are now, which is not every committed capture's
+explanation: the four oldest predate the `MARK` row itself, and
+"What the index records" below separates them.
 
 - `windows/tools/ec_watch.py` builds its `Marker` over
   `sink = CsvSink(args.csv) if args.csv else None` and calls `marker.start()`
@@ -104,6 +107,28 @@ was not passed, or it was and no label was typed. `ec_watch.py`'s
 with the flag and nothing typed produces exactly the file a run without it
 produces. The table therefore records the mark count and the file's shape, and
 a reader who needs the command has to ask the person who ran it.
+
+**That leaves the four oldest captures with a different reason again, and the
+table keeps it distinct.** For the `2026-09-18-*` and `2026-09-23-*` files the
+gate is not the explanation, because there was no row for it to gate:
+`eb495de3` ("record 0751-isolation marks in ec_watch's csv", 2026-09-23 18:41)
+added `CsvSink` and the `ts,MARK,,label` row to `windows/tools/ec_watch.py`,
+and before it the only mark handling was a `print(f"--- {now()}  MARK: {label}
+---")` to stdout. Each of those four files' last row precedes that commit —
+`22:59:55` and `23:05:13` on the 18th, `18:00:29` and `18:00:06` on the 23rd —
+so no flag and no typed label would have produced a row in them. That is a
+stronger statement than "taken without `--mark`", which leaves open that a
+label could have been typed: for these four there was no row to type one into.
+The tree already recorded it for two of them, in
+`probe-log-capture-conversion.md`'s "The two older captures, and what a
+refusal reads like" ("predate the `MARK` row"); the commit date carries the
+other two. `ec/tools/ec_timer_capture.py` entered the tree on 2026-09-24 and
+wrote none of the four.
+
+This is why the classes get different cells rather than one merged sentence.
+"The row did not exist yet" and "the flag was not passed" are each true
+statements about why there is no `MARK` row here, and a reader told only the
+second would go looking for a run to redo.
 
 ## What the check is for: a recorded reason, not marks
 
