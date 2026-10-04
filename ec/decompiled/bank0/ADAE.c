@@ -14,7 +14,7 @@
    type: dispatch
    evidence: ec/decompiled/bank0/ADAE.asm; ec/decompiled/bank0/ADAE.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void dispatch_on_0a47(void)
 
@@ -24,7 +24,7 @@ void dispatch_on_0a47(void)
   undefined1 *puVar3;
   
   puVar3 = (undefined1 *)0xa47;
-  if (DAT_EXTMEM_0a47 == '\x01') {
+  if (MAILBOX_PUBLISH_VALUE == '\x01') {
     init_0a48_to_40();
     set_dptr_0a59_b955();
     call_445e_40_88_then_load_0a49(1);
@@ -49,19 +49,19 @@ void dispatch_on_0a47(void)
     decrement_0a4a_then_redispatch();
     return;
   }
-  if (DAT_EXTMEM_0a47 == '\x10') {
+  if (MAILBOX_PUBLISH_VALUE == '\x10') {
     build_0791_0793_0794_then_branch();
     return;
   }
-  if (DAT_EXTMEM_0a47 == ' ') {
+  if (MAILBOX_PUBLISH_VALUE == ' ') {
     build_0795_0799_then_set_08ec();
     return;
   }
-  if (DAT_EXTMEM_0a47 == '0') {
+  if (MAILBOX_PUBLISH_VALUE == '0') {
     fill_0790_0791_0793_via_calls();
     return;
   }
-  if (DAT_EXTMEM_0a47 != '\0') {
+  if (MAILBOX_PUBLISH_VALUE != '\0') {
     decrement_0a4a_then_redispatch();
     return;
   }

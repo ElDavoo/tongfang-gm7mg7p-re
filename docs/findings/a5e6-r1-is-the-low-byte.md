@@ -98,6 +98,38 @@ first is its low byte — and the answers differ:
 | `0x8854` `add`, `0x885B` `subb` | `R1` (combined with no carry-in) | `R1` is low |
 | `0xA5E6` | `R1` (shifted first) | **`R1` is low** |
 
+*(**Correction, 2026-10-04 (issue #1332). The `0x8844` row is wrong, and so is
+the rule it is an instance of.** The row is left standing because the reason
+is the finding. The rule — *whichever register a helper touches first is its
+low byte* — holds for a helper that **accumulates**, where the low byte is
+consumed first and the carry runs from it into the high one. It does **not**
+hold for a helper that **shifts right**, which must consume the high byte
+first so that its LSB can travel down through the carry into the low byte's
+bit 7. `0x8844` touches `R2` first for exactly that reason, which makes `R2`
+the **high** byte and `R1` the low one — the opposite of what the row says.
+
+The byte order is settled by the helper that fills the pair rather than by
+`0x8844`'s own name or argument order: `0x8886 read_xdata_pair_to_r1r2` does
+`movx A,@DPTR` / `mov R1,A` / `inc DPTR` / `movx A,@DPTR` / `mov R2,A`, so
+`R1` holds the byte at the **lower** address, and `0x888C
+write_r1r2_to_xdata_pair` stores them back in that same order. The two
+agreeing is what makes a read/modify/write round trip through XDATA return
+the value it read.
+
+This changes nothing about the conclusion this file was written to support:
+`0xA5E6` is in the `R1`-low family, and `system_id_probe.py` did apply the
+wrong family's reading to it. The two helpers remain in different families
+and the rule still fails to transfer between them — the correction is to
+*why* `0x8844` is the odd one out, not to which family `0xA5E6` is in.
+
+`a5e6_quotient.py`'s `family_low()` reports `R2` for `0x8844`, on the
+"first shifted is low" rule this correction shows does not hold for a
+right-shift, and `test_a5e6_quotient.py` asserts that answer. Both are left
+as they are: correcting the tool means changing the byte-order claim another
+investigation's tool and suite are built on, which is its own change.
+`docs/findings/0436-capacity-ladder.md` §1 carries the derivation and the
+suite that executes `0x8844`'s committed instruction stream.)*
+
 `system_id_probe.py` applied the `0x8844` family's reading to the `0xA5E6`
 family. **This is the one piece of context a future reader needs**: the rule
 does not transfer between helpers even though it is the same rule, and

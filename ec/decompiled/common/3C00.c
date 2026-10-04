@@ -9,7 +9,7 @@
 undefined1 FUN_CODE_3c00(void)
 
 {
-  return DAT_EXTMEM_0a47;
+  return MAILBOX_PUBLISH_VALUE;
 }
 
 
