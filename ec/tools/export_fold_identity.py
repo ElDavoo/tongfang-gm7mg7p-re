@@ -30,7 +30,7 @@ than argued. The two are the obvious remaining candidates:
     the image, because a criterion that needed a fresh decode would not be
     answerable from what this repository committed.
 
-**Neither separates, and the reason is the finding rather than a null result.**
+**Neither separates, and why is the finding rather than a null result.**
 A `fragment` is a routine in its own right that the owner's text contains
 without being an export of it -- `common/322C.c` is recorded because
 `common/30FB.c` *calls* it -- so its address is a routine somebody reaches, and

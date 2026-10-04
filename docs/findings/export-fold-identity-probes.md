@@ -14,7 +14,7 @@ verdicts, but whether the **two criteria nobody has tried** do. Both come from
 committed inputs, and both were tested against the population where the answer
 is already known rather than argued.
 
-**The answer is no, and the reason is the finding rather than a null result.**
+**The answer is no, and why is the finding rather than a null result.**
 That is stated narrowly and deliberately below: these two probes do not
 separate the two recorded verdicts on the rows where both exist. It is not a
 claim that no mechanical criterion could — `export_ownership_verdicts.py` names
@@ -147,9 +147,8 @@ them:
 be from an agent branch — that script is a template copy
 (`docs/agent-pipeline.md`). It reads only the committed map, ledger, image and
 listings, with no Ghidra, no network and no assembler, so it is cheap-tier work
-whenever a human wires it in. The same is true of `export_ownership.py`, whose
-own `--self-test` was red on `main` for want of a gate that runs it; that pin is
-re-derived in this change and the wiring is left as a human's edit.
+whenever a human wires it in. Neither is `export_ownership.py`, so the wiring
+is a human's edit for both.
 
 ## The suite
 
