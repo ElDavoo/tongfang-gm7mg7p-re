@@ -207,6 +207,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-no-ret-fallthrough-boundaries.md`](pd-no-ret-fallthrough-boundaries.md) — `pd` 0x34EF falls through into `pd` 0x34F2, and the two are entries over a shared tail rather than one routine split in half (issue #646)
 - [`pd-only-status-vocabulary.md`](pd-only-status-vocabulary.md) — `0x07CC` is re-graded, and the rule that grades it is now written down and
 - [`pd-pair-unmoved-one-fold.md`](pd-pair-unmoved-one-fold.md) — The de-duplicated census's `157`/`858` pd pair is unmoved because the pass finds one fold in the PD program and that fold names no XDATA byte (issue #1364)
+- [`pd-pop-order-second-witness.md`](pd-pop-order-second-witness.md) — The `pop` order at PD `0x1052`/`0x1054` has a second witness, and it corroborates §3's reading (issue #1143)
 - [`pd-sites-address-range.md`](pd-sites-address-range.md) — `--sites` refuses an address outside the PD region, and the arithmetic the census's row 10 declined to guard becomes a statement about the code
 - [`pd-unannotated-listings.md`](pd-unannotated-listings.md) — Every `pd` listing now has a row, and #471's figures did not move (issue #489)
 - [`pd-vector-handler-words.md`](pd-vector-handler-words.md) — Three of the `pd` image's five interrupt vectors are wired to a `ret`, and that is now derived rather than guessed (issue #1062)
