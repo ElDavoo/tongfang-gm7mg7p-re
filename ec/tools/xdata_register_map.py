@@ -91,9 +91,9 @@ pointer/indirect XDATA access never names an address at all, exactly as
 it looks and a shallower one than `HAND_CHECKED`.** Every occurrence the census
 buckets `write` or `read+write` is asserted to have an assignment -- not `==`
 -- after the address, measured over the whole tree rather than over five
-hand-picked rows. Today that is **5,662 occurrences across 1,008 distinct
-addresses** of the census's 1,171, and it holds with no exemptions: the second
-pass accepts 5,664, and the two it accepts and the census does not are 0x048A's
+hand-picked rows. Today that is **5,677 occurrences across 1,008 distinct
+addresses** of the census's 1,326, and it holds with no exemptions: the second
+pass accepts 5,679, and the two it accepts and the census does not are 0x048A's
 `*`-dereference stores, which `store_target()` excludes for cause and a
 necessary condition does not need to exclude.
 
@@ -240,9 +240,9 @@ behind it.
 cowardly one.** The pass is a containment heuristic over decompiled text, not a
 function boundary: a non-owner is skipped rather than reconciled against its
 owner, so an owner that is not a superset takes the references with it. On
-this tree that costs `cluster_key` on 35 of the 430 clusters, breaks 5 of the
-10 hand names in `xdata-cluster-names.csv`, and adds 2 clusters -- a
-tree-wide renumbering to land on top of a detector known to be approximate.
+this tree that costs `cluster_key` on 39 of the 439 clusters, breaks 5 of the
+9 hand names in `xdata-cluster-names.csv`, and adds 1 cluster -- a tree-wide
+renumbering to land on top of a detector known to be approximate.
 The root cause is the export boundary, and fixing it needs
 `--mode rebuild-project`, which cannot share a branch
 (annotations/xdata-06c2-06db-timers.md 8 item 7). So the pass ships measured,
@@ -1605,8 +1605,8 @@ BUCKET_TOTALS = {"read": 8827, "write": 3587, "read+write": 2482,
 # `cluster_key` and every citation keyed to one -- and it is the function
 # boundary that has to land first (the sibling issue, recorded in-tree as
 # xdata-06c2-06db-timers.md 8 item 7). Measured on this tree the flip moves
-# `cluster_key` on 35 of the 430 clusters, breaks 5 of the 10 hand names in
-# xdata-cluster-names.csv, and adds 2 clusters. Those four figures are the
+# `cluster_key` on 39 of the 439 clusters, breaks 5 of the 9 hand names in
+# xdata-cluster-names.csv, and adds 1 cluster. Those four figures are the
 # argument for deferring it, so they are pinned here too, and the --self-test
 # ownership block asserts all four rather than leaving the promise to a reader.
 #
@@ -2717,8 +2717,8 @@ def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
     counted through the owner, because the owner's body is the superset. That
     is the whole of it, and the default stays off for the measured reason: the
     pass is a text heuristic rather than a function boundary, and flipping it
-    renumbers the whole tree -- `cluster_key` on 35 of the 430 clusters and 5
-    of the 10 hand names, in OWNERSHIP. The mechanism behind that is worth
+    renumbers the whole tree -- `cluster_key` on 39 of the 439 clusters and 5
+    of the 9 hand names, in OWNERSHIP. The mechanism behind that is worth
     stating rather than only measuring: a non-owner whose owner is *not* a
     superset would take its references out of the census with them. On this
     tree none is, so `OWNERSHIP["lost"]` is empty; see
@@ -5568,8 +5568,8 @@ def main() -> int:
                          "counted 42 times. The default is OFF: the pass is a "
                          "text heuristic rather than a function boundary, and "
                          "the measured cost of flipping it is a tree-wide "
-                         "renumbering (cluster_key on 35 of the 430 clusters, 5 "
-                         "of the 10 hand names; annotations/xdata-export-"
+                         "renumbering (cluster_key on 39 of the 439 clusters, 5 "
+                         "of the 9 hand names; annotations/xdata-export-"
                          "ownership.md 5). Refused with --check and --self-test, "
                          "and without scratch outputs")
     ap.add_argument("--out-registers", default=OUT_REGISTERS,
@@ -5606,13 +5606,13 @@ def main() -> int:
     # other way round from --no-eq-guard -- it turns the pass *on* rather than
     # reproducing a removed guard -- because the default has to stay where it
     # is: the committed CSVs are the 42-fold census, and flipping the default
-    # would move the reference count of 228 of the 1,171 register rows, move
-    # `cluster_key` on 35 of the 430 clusters and break 5 of the 10 hand
-    # cluster names. Those are OWNERSHIP's, measured on this tree and quoted
-    # here so a refusal is argued from the same numbers the rest of the file
-    # pins. So the name says what it does, where --no-eq-guard's says what
-    # removing its guard undoes. The guard itself is the same: a census this
-    # tool does not otherwise produce has to be written somewhere scratch.
+    # would move the reference count of 296 of the 1,326 register rows, move
+    # `cluster_key` on 39 of the 439 clusters, break 5 of the 9 hand cluster
+    # names and take the census to 440 clusters. Those are OWNERSHIP's,
+    # measured on this tree and quoted here so a refusal argues from the
+    # numbers the rest of the file pins. So the name says what it does, where
+    # --no-eq-guard's says what removing its guard undoes. The guard itself is
+    # the same: a census the tool does not otherwise produce goes to scratch.
     if args.export_ownership and (args.check or args.self_test):
         ap.error("--export-ownership changes what the census says, so it "
                  "cannot be combined with --check or --self-test. To see the "

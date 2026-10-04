@@ -115,11 +115,26 @@ This lands in `other->flow`, not in `read->flow`, and deliberately so. A
 handoff found one level down is a weaker claim than a handoff at the site, so
 `flow_bucket()` is deliberately not `bucket()` and the two never share a
 column. For the record and **not as this tool's claim**: `r2` decodes `0x34A5`
-as `movx a,@dptr`, so the callee does load the byte. Resolving it that way is
-`--callee-depth 1`'s question and not this one's, and `--callee-depth 1` does
-not reach a handoff it only finds after a follow, so **this cell is still
-direction-unresolved by the repository's own tools** and closing it is
-`--callee-depth 2`'s.
+as `movx a,@dptr`, so the callee does load the byte.
+
+**Correction (issue #1103): the cell now carries a direction, in a column that
+names both hops.** `--callee-depth 1` given together with `--follow-flow`
+resolves a handoff the follow reached, by decoding the callee's entry point the
+way depth 1 always did — the resolver was simply never handed the segment the
+follow landed on. `0x4B40` is now
+`other->flow->read`, with `flow_via` = `fall-through past jnz +0x12 at 0x4B43`
+and `callee` = `0x34A5`:
+
+```console
+$ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 \
+  --callee-depth 1 --follow-flow --csv | grep 0x24B40
+0x07D0,DBD1 (DSDT name; ECSpec calls the same byte BATTERY_CHARGE_LIMIT_DOWN),0x24B40,pd-image,0x4B40,DPTR handed to a call reached only by following a branch -> callee reads,jnz +0x12,0x34A5,"movx a,@dptr",fall-through past jnz +0x12 at 0x4B43
+```
+
+The column is a new one and not `read->flow` or `handoff->read`, because the
+cell is now two hops from the site where each of those is one: a branch, then
+a call. `two-hop-dptr-handoff.md` is the write-up and
+`two_hop_census.py` records which cells took each new hop.
 
 **The seven that stay `none` are all one shape, and the shape is the reason.**
 `0x4C15`, `0x4C1C`, `0x4C23`, `0x52F2`, `0x5322`, `0x7B10` and `0x8572` are

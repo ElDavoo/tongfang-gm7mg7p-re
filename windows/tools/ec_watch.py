@@ -40,6 +40,16 @@ which values the run means to write or what its actions should be. It is off
 by default because `gpu_block_watch.py:59,166` imports this `Marker` and
 stamps free-form labels through it, which a blanket check would refuse, while
 `system_id_probe.py:232` has its own, still `strip() or` at `:252` (#483, #484).
+**Correction (#1329, 2026-10-04), beside the sentence above rather than under
+it.** Both of those line numbers were already stale when this was written, and
+the "still `strip() or`" is no longer true: `system_id_probe.py`'s `Marker`
+records nothing for a blank press, says so, and asks again, on the same notice
+and counting rule as this one. What is left true is the reason the flag is a
+flag and not a rule — that probe's labels are free-form prose by design, and a
+0751 check would refuse every label its procedure mandates — which is a
+different argument from the one the two line numbers were standing in for. Its
+own write-up is
+[system-id-probe-mark-labels.md](../docs/findings/system-id-probe-mark-labels.md).
 
 The rule that check applies is read out of the grader rather than carried
 here, so the grader is a startup dependency of that flag and of nothing else
