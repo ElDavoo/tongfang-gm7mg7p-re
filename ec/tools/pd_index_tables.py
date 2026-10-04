@@ -60,7 +60,8 @@ from decode_index_table import (ENTRY_LEN, MAX_ENTRIES, PD_IMAGE,
                                 find_readers, lcalled_readers,
                                 reader_call_sites)
 from disasm8051 import decode
-from pd_image_census import CODE_TABLE_DISPATCHERS, code_table_inline_tables
+from pd_image_census import (CODE_TABLE_DISPATCHERS, CODE_TABLE_ENTRY_WIDTHS,
+                             code_table_inline_tables)
 from trace_xdata_refs import PD_MARKER, REGIONS, region_of
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -283,17 +284,29 @@ def self_test(d: bytes) -> int:
           "with 9 / 16 / 3 `lcall` byte sites (got "
           + " / ".join(str(len(s)) for _, s, _ in readers) + ")")
 
-    # The reconciliation the plan asks for: the two dispatchers the committed
-    # census already names must come back with the site counts it commits, or
-    # the two tools disagree about the same image and neither notices.
+    # The reconciliation, over *every* reader rather than over the ones the
+    # census already names. Walking `CODE_TABLE_DISPATCHERS` here would have
+    # stayed green with a fourth dispatcher this image grew -- the two searches
+    # would have agreed about the two they shared and said nothing about the
+    # one neither had. `READERS` is the set derived from the bytes, so
+    # comparing the two sets in both directions makes a disagreement a
+    # failure whichever tool holds it.
     committed = collections.Counter(target for target, _, _, _
                                     in code_table_inline_tables(read_region(d)))
     mine = {r["runtime"]: len(s) for r, s, _ in readers}
-    check(all(committed[t] == mine[t] for t in CODE_TABLE_DISPATCHERS)
-          and len(committed) == len(CODE_TABLE_DISPATCHERS),
-          f"and the 9 and 16 agree with `pd_image_census.py`'s committed "
-          f"figures for {', '.join(f'0x{t:04X}' for t in CODE_TABLE_DISPATCHERS)}"
-          f" (got {dict(committed)}, against {dict(mine)})")
+    check(set(committed) == set(READERS) and dict(committed) == mine,
+          f"and the census's per-dispatcher site counts agree with this "
+          f"tool's for all {len(READERS)}, "
+          f"{' / '.join(str(committed[t]) for t in READERS)} -- both searches "
+          f"over the same bytes, one set equality so a dispatcher either has "
+          f"is red (got {dict(sorted(committed.items()))}, against "
+          f"{dict(sorted(mine.items()))})")
+
+    check(tuple(CODE_TABLE_DISPATCHERS) == READERS,
+          f"and `pd_image_census.py`'s own `CODE_TABLE_DISPATCHERS` is the "
+          f"same {len(READERS)} this search derived: a dispatcher one of the "
+          f"two tools knows and the other does not has to turn this red (got "
+          f"{', '.join(f'0x{t:04X}' for t in CODE_TABLE_DISPATCHERS)})")
 
     strides = tuple(stride for _, _, stride in readers)
     check(strides == STRIDES,
@@ -301,6 +314,20 @@ def self_test(d: bytes) -> int:
           f"{', '.join(str(s) for s in strides)} bytes, against "
           f"{ENTRY_LEN} for the main EC's reader at 0x07151 (got "
           f"{', '.join(str(s) for s in strides)})")
+
+    # The census reads each dispatcher's inline bytes at its own entry width,
+    # so this holds its declared widths against the strides just derived from
+    # the readers' own `inc dptr` loops. It is a two-hop check on purpose --
+    # `STRIDES` is what `entry_stride()` returns, checked against the readers
+    # above, and this compares the census's numbers to those -- which is what
+    # stops a width drifting into a second true-looking constant that nothing
+    # re-derives.
+    derived_widths = dict(zip(READERS, STRIDES))
+    check(derived_widths == CODE_TABLE_ENTRY_WIDTHS,
+          f"and the census reads each one at that width -- "
+          f"{', '.join(f'0x{t:04X}={w}' for t, w in derived_widths.items())} "
+          f"bytes, rather than at one window for all three (got "
+          f"{CODE_TABLE_ENTRY_WIDTHS})")
 
     # The main EC reader's stride, through the same function, so a change to
     # the derivation cannot quietly mean something different there.
