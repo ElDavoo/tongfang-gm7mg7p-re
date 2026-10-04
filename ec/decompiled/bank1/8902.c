@@ -12,13 +12,13 @@
    type: writer
    evidence: ec/decompiled/bank1/8902.asm; ec/decompiled/bank1/8902.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void mask_and_store_to_070f_ring(byte param_1,undefined1 param_2)
 
 {
-  DAT_EXTMEM_070f = param_1 & 0xf;
-  *(undefined1 *)CONCAT11(7,DAT_EXTMEM_070f + 0x10) = param_2;
+  EVENT_RING_INDEX = param_1 & 0xf;
+  *(undefined1 *)CONCAT11(7,EVENT_RING_INDEX + 0x10) = param_2;
   load_dptr_8588_tail_jump_1100();
   return;
 }

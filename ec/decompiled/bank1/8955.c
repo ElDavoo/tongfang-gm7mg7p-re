@@ -7,11 +7,17 @@
 /* Writes 0x80 to XDATA 0x09F1, writes 0x00 to XDATA 0x047C, then zeroes eight consecutive XDATA
    bytes from 0x09F2 to 0x09F9 with an 8-iteration `DJNZ R0` loop that increments DPTR after each
    store. It reads no caller-supplied value and returns at 0x8969. No `lcall` or `ljmp` to 0x8955
-   appears in the generated .asm listings, so how control reaches it is not shown here.
+   appears in the generated .asm listings, so how control reaches it is not shown here.  ***
+   2026-10-03 (issue #1444): the value this writes is the mailbox's reset state, and it is what
+   makes the flag pair legible: 0x80 is bit 7 set with both three-bit index fields zero, so a
+   freshly initialised mailbox reads empty with producer and consumer both parked at slot 0. Read
+   back against 0x89B5 and 0x897B it is what establishes that bits 3 and 7 are flags rather than
+   part of an index -- the `& 0x77` in both of them clears exactly those two bits and nothing else.
+   docs/findings/a73f-09f1-mailbox-payload.md.
    type: init
    evidence: ec/decompiled/bank1/8955.asm; ec/decompiled/bank1/8955.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void init_09f1_and_zero_09f2_through_09f9(void)
 
@@ -19,10 +25,10 @@ void init_09f1_and_zero_09f2_through_09f9(void)
   char cVar1;
   undefined1 *puVar2;
   
-  DAT_EXTMEM_09f1 = 0x80;
-  DAT_EXTMEM_047c = 0;
+  MAILBOX_INDEX = 0x80;
+  MAILBOX_PAYLOAD_LATCH = 0;
   cVar1 = '\b';
-  puVar2 = &DAT_EXTMEM_09f2;
+  puVar2 = &MAILBOX_RING_SLOT0;
   do {
     *puVar2 = 0;
     puVar2 = puVar2 + 1;

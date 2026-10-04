@@ -199,6 +199,14 @@ jobs:
               fix is always to delete it. Never ask for a figure or total to be added,
               restated or re-measured; a claim that stands without its number is better
               without it;
+            - a test or checker that reads a figure out of prose and holds it to what a census
+              derives from the tree now (named addresses, references, functions, rows). Another
+              branch that names a register or seeds a routine moves that census, and the two
+              green PRs merge into a red main (#1919 after #1893). Hold the relation between
+              derived values, or nothing; the prose figure records the tree it was measured on;
+            - new prose citing an XDATA cluster by its `main-ec-NNN` rank, or a census CSV row
+              by line number. Seeding renumbers both. Cite the `cluster_name` or `cluster_key`,
+              and the row's address (CLAUDE.md, the XDATA census bullet);
             - a new tool without a way to check it: an analysis script with no self-test or no
               recorded known-answer run against the committed firmware, when its output is what
               the PR's claims rest on.

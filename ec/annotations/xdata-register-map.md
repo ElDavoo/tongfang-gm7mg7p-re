@@ -537,10 +537,10 @@ main EC* whatever the PD image does with the same address number:
 
 | program | spelling | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 838 | 7,459 |
+| main-ec | `DAT_EXTMEM` | 830 | 7,292 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 44 | 490 |
 | main-ec | `pair-literal` | 156 | 468 |
-| main-ec | `symbol` | 166 | 6,225 |
+| main-ec | `symbol` | 174 | 6,392 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
 | pd | `DAT_EXTMEM` | 157 | 858 |
 | **total** | | **1,375** | **15,696** |
@@ -567,10 +567,10 @@ directly:
 
 | `program` | `spelled_as` | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 808 | 7,229 |
+| main-ec | `DAT_EXTMEM` | 800 | 7,062 |
 | main-ec | `DAT_EXTMEM+pair-literal` | 41 | 385 |
 | main-ec | `pair-literal` | 155 | 461 |
-| main-ec | `symbol` | 151 | 5,620 |
+| main-ec | `symbol` | 159 | 5,787 |
 | main-ec | `symbol+pair-literal` | 14 | 196 |
 | both | `DAT_EXTMEM` | 30 | 312 |
 | both | `DAT_EXTMEM+pair-literal` | 4 | 139 |
@@ -1284,10 +1284,24 @@ assertions fix that, and they are deliberately different in kind:
   after the address. It is measured by `direction_invariant()`, a second walk
   of the same text whose predicate is only "an `=` that is not `==` follows",
   so it never consults the `store_target()` being tested. Today that is
-  **5,662 occurrences across 1,008 distinct addresses** of the census's 1,171,
-  and it holds with no exemptions. The failure message names every offending
-  occurrence as `file!line address`, so a failure is a worklist rather than a
-  number to re-derive by hand.
+  **5,677 occurrences across 1,008 distinct addresses**, and it holds with no
+  exemptions. The failure message names every offending occurrence as
+  `file!line address`, so a failure is a worklist rather than a number to
+  re-derive by hand. The self-test measures both figures on that line rather
+  than comparing them to constants, and reconciles the occurrence count against
+  the census's own `write`/`read+write` columns — so the population is a
+  measurement the check made, not a number restated beside it.
+
+*(Correction, 2026-10-04, issue #1385. This read "5,662 occurrences across 1,008
+distinct addresses of the census's 1,171". The 1,008 was already right; 5,662 was
+two re-pins stale, and the `1,171` denominator was ambiguous between the
+main-EC and both-programs address counts, which is why it is dropped rather than
+replaced. `DIRECTION_INVARIANT`, the constant that held the 5,662, was removed
+in `fb8be6ee` when the census stopped pinning its own totals, which left this
+sentence holding a figure nothing checked. The direction-invariant check now
+derives the census side from the walk that verifies it and asserts the two
+passes account for the same population; see
+`docs/findings/xdata-direction-invariant-population.md`.)*
 
 **What the invariant adds, and what it does not.** It is *not* a second pair
 of eyes: same files, same regex, same `strip_comments()`, and the buckets it
@@ -1358,11 +1372,11 @@ re-run over the committed tree, and the recipe is
 `xdata-06c2-06db-timers.md` §6a's with the `==` guard issue #178 added
 **removed** instead — the classifier-and-everything-it-counts regeneration, in
 its cheapest form. That is the `--no-eq-guard` flag
-(`ap.add_argument("--no-eq-guard"`, `../tools/xdata_register_map.py:4410`) with
+(`ap.add_argument("--no-eq-guard"`, `../tools/xdata_register_map.py:4481`) with
 scratch outputs, which is what §6a and this block's transcript now do rather
 than a source edit: the flag is refused with the committed output paths
-(`args.out_registers == OUT_REGISTERS`, `:4448`, not the `--check` refusal at
-`:4439`), so everything below is a report about the committed census and not a
+(`args.out_registers == OUT_REGISTERS`, `:4519`, not the `--check` refusal at
+`:4510`), so everything below is a report about the committed census and not a
 replacement for it. The derivation, with the commands and their output, is
 `../../docs/findings/xdata-4-4-identity-rederivation.md`.
 
@@ -1526,8 +1540,8 @@ and stripped.startswith("==")`) so `--no-eq-guard` could be a flag. A
 regeneration now writes to a scratch path and reads the committed decompile in
 place, with no copy of the tool and no source edit. The `--out-*` flags are not
 decoration either: the tool refuses `--no-eq-guard` with the committed output
-paths (`args.out_registers == OUT_REGISTERS`, `:4448`, not the `--check`
-refusal at `:4439`), which keeps this transcript from overwriting the census.
+paths (`args.out_registers == OUT_REGISTERS`, `:4519`, not the `--check`
+refusal at `:4510`), which keeps this transcript from overwriting the census.
 
 *(Correction, 2026-09-25, issue #582's re-run. The transcript above is the same
 experiment re-run against the tree as it now stands; the one it supersedes
@@ -2604,7 +2618,7 @@ is a human's, and the issue says so too.
   values are XDATA addresses or code offsets, is **not established here** and
   is not claimed.
 - **The corpus-wide direction invariant is a second code path over the same
-  text, not an independent reading of it.** §4.3's third assertion covers 5,662
+  text, not an independent reading of it.** §4.3's third assertion covers 5,677
   occurrences across 1,008 addresses and catches the `==`-as-store mistake on
   any of them, which is far wider than the five hand-checked rows. What it
   establishes is a *shape*: that an assignment, rather than a comparison,

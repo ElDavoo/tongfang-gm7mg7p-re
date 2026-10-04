@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
-"""Offline checks that a census row's three counts are read where they are.
+"""Offline checks that a census row's range is read where it is.
 
-`check_cluster_citations.py`'s count rule is the only thing holding
-`ec/annotations/xdata-register-map.md` §5's hand-typed `size`, `refs` and
-`named inside` columns to `ec/annotations/xdata-clusters.csv`. For as long as
-the rule found its columns by fixed index, it read the size and the reference
-count out of the wrong cells on §5's own table -- `row[1]` is a `cluster_key`
-and `row[2]` a `cluster_name` there -- and `number()` returned `None` for both,
-so the rule silently checked neither figure on any real row while its
-docstring claimed it held both (issue #1240). A rule that reads nothing exits
-0: the failure mode is silence, not a red suite, so what is pinned here is
-that each of the three figures is read *from its own column* on the shapes the
-corpus actually uses.
+`check_cluster_citations.py`'s census-row rule holds
+`ec/annotations/xdata-register-map.md` §5's hand-typed range column to
+`ec/annotations/xdata-clusters.csv`. It used to hold the `size` and `refs`
+columns as well; since 2026-10-04 it holds none of the three counts, because
+seeding a routine moves them and §5 is a shared file every such branch would
+have to edit (#1849). For as long as the rule found its columns by fixed index,
+it read the wrong cells on §5's own table -- `row[1]` is a `cluster_key` and
+`row[2]` a `cluster_name` there -- and silently checked nothing on any real row
+while its docstring claimed otherwise (issue #1240). A rule that reads nothing
+exits 0: the failure mode is silence, not a red suite, so what is pinned here
+is that the range is read *from its own column* on the shapes the corpus
+actually uses, and that the counts beside it are passed over.
 
 The fixtures are §5's real rows, at the figures the committed census has for
-them, so a case reads as the row it is about. Each case perturbs one cell and
-expects the disagreement that names that cell: a case that passes whether or
-not the fix is in place is not holding anything, so `test_the_three_figures_are
-_read_from_their_own_columns` is the one to delete-check first after any edit to
-`census_row()`.
+them, so a case reads as the row it is about. Each case perturbs one cell:
+`test_a_wrong_range_is_reported_on_the_nine_column_shape` is the one to
+delete-check first after any edit to `census_row()`.
 
 The two table shapes are both covered deliberately. §5 is nine columns wide
 because `cluster_key` and `cluster_name` sit between the id and the size, and
@@ -26,7 +25,7 @@ the shorter `cluster | size | refs | range | named inside` shape is what the
 tool's other suites build their fixtures in; a reader that resolved columns
 one way would check the other shape never. This file stands beside
 `test_check_cluster_citations.py`, which holds the rules themselves rather than
-which column each figure is read from.
+which column the range is read from.
 """
 import contextlib
 import importlib.util
@@ -90,78 +89,43 @@ def counted(text, counts=COUNTS):
     return len(problems), problems[0][3] if problems else None
 
 
-class ReadsEachFigureFromItsOwnColumn(unittest.TestCase):
-    """§5's three counted figures, each perturbed on its own.
+class OnlyTheRangeIsHeld(unittest.TestCase):
+    """§5's range, read from its own column, and the three counts beside it not.
 
-    The committed rows are right, so every fixture here is one cell moved: the
-    point is that the figure a cell carries is the figure the rule reads, and
-    a case that names the disagreement does that more sharply than an exit
-    code would.
+    The committed rows are right, so every fixture here is one cell moved. The
+    size, the reference count and the named count are figures of the census,
+    which seeding a routine moves -- #1849 turned §5 rows red
+    -- so the rule holds none of them (2026-10-04). The range is the cell that
+    says which cluster a row is about, and it is still read from its own column
+    on both shapes.
     """
 
-    def test_the_three_figures_are_read_from_their_own_columns(self):
-        # The case that goes red when the column resolution is reverted: all
-        # three perturbed at once, and all three named. On the pre-fix reader
-        # every one of these rows reads clean, because the size and the
-        # reference count are looked for in the key and the name.
+    def test_the_three_counts_are_not_held(self):
         text = ('| `main-ec-001` | `ke794087e13a6` | — | 999 | 888 | '
                 '`0x0300`-`0x097B` | 77 | prose |')
-        n, what = counted(text)
-        self.assertEqual(n, 3)
-        self.assertEqual(what, '152 addresses in the census, 999 in the row')
-
-    def test_a_wrong_size_is_reported(self):
-        # `size` is two columns before the range on §5's header, and one
-        # before it on the short shape -- the same cell in each, which is what
-        # makes the range the anchor rather than an index.
-        text = NINE_COLUMN.replace('| 152 |', '| 999 |')
-        n, what = counted(text)
-        self.assertEqual(n, 1)
-        self.assertEqual(what, '152 addresses in the census, 999 in the row')
-
-    def test_a_wrong_reference_count_is_reported(self):
-        text = NINE_COLUMN.replace('| 873 |', '| 999 |')
-        n, what = counted(text)
-        self.assertEqual(n, 1)
-        self.assertEqual(what, '873 references in the census, 999 in the row')
-
-    def test_a_reference_count_is_compared_as_a_number_not_as_its_text(self):
-        # The table writes `1,130` where the census holds `1130`, and the two
-        # have to be equal for the row to be right. Comparing the text would
-        # flag every comma in the column for good.
-        text = ('| `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 92 | '
-                '`1,130` | `0x0456`-`0x1809` | 35 | prose |')
         self.assertEqual(counted(text), (0, None))
+        self.assertEqual(counted(SIX_COLUMN.replace('| 152 | 873 |',
+                                                    '| 999 | 888 |')), (0, None))
 
-    def test_a_wrong_named_count_is_reported(self):
-        # The cell after the range. This one was read before the fix and is
-        # here to hold it still: an anchor that moved the named count off the
-        # range would pass every other case in this class.
-        text = NINE_COLUMN.replace('| 11 |', '| 40 |')
-        n, what = counted(text)
+    def test_a_wrong_range_is_reported_on_the_nine_column_shape(self):
+        # The case that goes red when the column resolution is reverted: on
+        # §5's header `row[1]` and `row[2]` are the key and the name, and a
+        # fixed-index reader finds no range there to disagree with.
+        n, what = counted(NINE_COLUMN.replace('`0x097B`', '`0x097C`'))
         self.assertEqual(n, 1)
-        self.assertEqual(what, '11 named addresses in the census, 40 in the row')
+        self.assertEqual(what, 'range `0x0300-0x097B` in the census, '
+                               '`0x0300-0x097C` in the row')
 
-    def test_the_shorter_shape_is_still_read(self):
-        # The same three figures with the key and the name columns absent, so
-        # the cells the sizes occupy are different ones. A fix that resolved
-        # columns only for §5's header would pass every case above and fail
-        # this one.
-        n, what = counted(SIX_COLUMN.replace('| 152 |', '| 999 |'))
+    def test_a_wrong_range_is_reported_on_the_shorter_shape(self):
+        n, what = counted(SIX_COLUMN.replace('`0x097B`', '`0x097C`'))
         self.assertEqual(n, 1)
-        self.assertEqual(what, '152 addresses in the census, 999 in the row')
+        self.assertEqual(what, 'range `0x0300-0x097B` in the census, '
+                               '`0x0300-0x097C` in the row')
 
-        n, what = counted(SIX_COLUMN.replace('| 873 |', '| 999 |'))
-        self.assertEqual(n, 1)
-        self.assertEqual(what, '873 references in the census, 999 in the row')
-
-    def test_an_alternate_census_without_a_range_column_still_holds_two_figures(self):
+    def test_an_alternate_census_without_a_range_column_holds_nothing(self):
         # A hand-built `--clusters` CSV can carry `size` and `refs` without an
-        # `addr_range` column at all. Nothing then holds the row's range or its
-        # named count -- there is no column to hold them to -- but the two
-        # counts beside them are ordinary columns of that same CSV and are
-        # still checked. Moving the read to the anchor must not have taken the
-        # two counts into the `addr_range` guard along with the other two.
+        # `addr_range` column at all. There is then nothing to hold the row's
+        # range to, and the counts are not held on any census.
         with tempfile.TemporaryDirectory() as d:
             clusters = os.path.join(d, "clusters.csv")
             registers = os.path.join(d, "registers.csv")
@@ -173,18 +137,8 @@ class ReadsEachFigureFromItsOwnColumn(unittest.TestCase):
                 f.write("0x0300,main-ec,main-ec-001\n")
             counts = ccc.census(clusters, registers)[2]
         self.assertEqual(counts["main-ec-001"]["addr_range"], "")
-
-        # The named count is 99 against the census's 0 and is *not* reported:
-        # that column is absent, so there is nothing to hold it to.
-        self.assertEqual(counted(NINE_COLUMN.replace("| 11 |", "| 99 |"),
+        self.assertEqual(counted(NINE_COLUMN.replace('`0x097B`', '`0x097C`'),
                                  counts), (0, None))
-        # The size and the reference count are columns this census does carry.
-        n, what = counted(NINE_COLUMN.replace("| 152 |", "| 999 |"), counts)
-        self.assertEqual(n, 1)
-        self.assertEqual(what, "152 addresses in the census, 999 in the row")
-        n, what = counted(NINE_COLUMN.replace("| 873 |", "| 999 |"), counts)
-        self.assertEqual(n, 1)
-        self.assertEqual(what, "873 references in the census, 999 in the row")
 
 
 class WhatTheAnchorCannotPlace(unittest.TestCase):
@@ -232,25 +186,25 @@ class WhatTheAnchorCannotPlace(unittest.TestCase):
         self.assertEqual(counted(text, counts), (0, None))
 
 
-class TheCommittedWorklistIsHeldToTheCsv(unittest.TestCase):
-    """§5 as committed, each of its rows read against the census beside it.
+class TheCommittedWorklistIsStillReadable(unittest.TestCase):
+    """§5 as committed: every row is found, and carries a range the rule anchors on.
 
-    The tool's own `TheCommittedTree` case runs the whole corpus and exits on
-    any disagreement, which is the gate that has to stay green. This one is the
-    narrower claim: it reads §5's rows *out of the committed file* rather than
-    from fixtures, so a row that drifts fails here naming the row and the
-    figure, and a table that loses its range column -- the shape this suite is
-    about -- fails here too, by finding no rows to read at all.
+    §5's rows are not held to the live census any more (2026-10-04). They name
+    clusters by rank, and seeding a routine renumbers the ranks, so a committed
+    row would go red for a cluster it never described; the committed-tree run
+    of `check_cluster_citations.py` passes rank-cited units over for the same
+    reason. What stays true of every tree is the shape the fixtures above test
+    against: §5 still has census rows, and each still carries a range in a
+    column with room for a size and a reference count before it.
 
     Deliberately not a census of rows: the number of rows §5 carries is a value
-    every merge that adds a cluster has to edit, so the assertion is that each
-    row found agrees, not how many were found.
+    every merge that adds a cluster has to edit.
     """
 
     WORKLIST = HERE.parent / "annotations" / "xdata-register-map.md"
 
     def _rows(self):
-        """The §5 census rows, as (cluster id, row text) for each found."""
+        """The §5 census rows, as (cluster id, cells) for each found."""
         found = []
         for line in self.WORKLIST.read_text(encoding="utf-8").split("\n"):
             row = ccc.cells(line.strip())
@@ -259,30 +213,20 @@ class TheCommittedWorklistIsHeldToTheCsv(unittest.TestCase):
             head = ccc.clean(row[0])
             ids = ccc.CLUSTER_ID.findall(head)
             if len(ids) == 1 and head == ids[0]:
-                found.append((ids[0], line.strip()))
+                found.append((ids[0], row))
         return found
 
-    def test_every_committed_worklist_row_agrees_with_the_committed_census(self):
-        counts = ccc.census()[2]
+    def test_every_committed_worklist_row_has_an_anchored_range(self):
         rows = self._rows()
         self.assertTrue(rows, f"§5 rows were found in {self.WORKLIST}")
         for cluster_id, row in rows:
             with self.subTest(cluster=cluster_id):
-                self.assertEqual(counted(row + "\n", counts), (0, None))
-
-    def test_a_perturbed_committed_row_is_reported(self):
-        # The negative of the case above, on the committed census rather than a
-        # fixture one: it is what says the previous case passes because the
-        # figures are read, not because nothing was read at all.
-        counts = ccc.census()[2]
-        self.assertEqual(counts["main-ec-002"]["size"], 92)
-        self.assertEqual(counts["main-ec-002"]["refs"], 1130)
-        self.assertEqual(counts["main-ec-002"]["named"], 35)
-        wrong = ('| `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 93 | '
-                 '`1,131` | `0x0456`-`0x1809` | 36 | prose |\n')
-        n, what = counted(wrong, counts)
-        self.assertEqual(n, 3)
-        self.assertEqual(what, "92 addresses in the census, 93 in the row")
+                anchors = [i for i, cell in enumerate(row[2:], start=2)
+                           if ccc.SPAN.fullmatch(ccc.clean(cell))]
+                self.assertTrue(anchors, "no range cell in the row")
+                self.assertGreaterEqual(anchors[0], 3,
+                                        "the range has no room for a size and "
+                                        "a reference count before it")
 
 
 if __name__ == '__main__':

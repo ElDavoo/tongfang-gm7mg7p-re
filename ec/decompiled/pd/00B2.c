@@ -7,7 +7,13 @@
 /* Saves A, B, DPH, DPL and PSW, sets PSW=0x00, pushes R0 through R7, loads DPTR with the CODE
    address 0x0157, calls 0x0050, then restores and RETIs. It is byte-for-byte the same shape as
    0x0056 apart from the three DPTR immediate bytes. What the 0x0157 table entry selects is not
-   decoded here.
+   decoded here. The 0x0157 table entry selects 0xF7AF, and that target is a single-byte handler,
+   one RET and nothing else. That previous wording said the selection was not decoded here; the
+   correction is recorded beside it rather than made silently, and ec/annotations/pd-image.md §2.1
+   and docs/findings/pd-vector-handler-words.md carry the derivation. How a handler is *reached* is
+   the other half and is unchanged: 0x0050 tail-jumps to 0x1229, which builds DPTR and falls through
+   into 0x122D's `jmp @a+dptr`, so the `lcall 0x0050` return address is what a RET at the target
+   returns to.
    type: forwarder
    evidence: ec/decompiled/pd/00B2.asm; ec/decompiled/pd/00B2.c
    basis: hand-decoded

@@ -15,7 +15,7 @@ void FUN_CODE_2d8f(char param_1)
   short sVar4;
   
   pbVar3 = (byte *)0xa47;
-  DAT_EXTMEM_0a47 = param_1;
+  MAILBOX_PUBLISH_VALUE = param_1;
   if (_c_0 != '\0') {
     _c_0 = 0;
     read_xdata_at_dptr_into_r7();
@@ -23,7 +23,7 @@ void FUN_CODE_2d8f(char param_1)
     load_dptr_high_from_a_low_from_code_table();
     bVar1 = *pbVar3;
     sVar4 = 0xa47;
-    bVar2 = dptr_3a00_plus_13x_3b51(DAT_EXTMEM_0a47);
+    bVar2 = dptr_3a00_plus_13x_3b51(MAILBOX_PUBLISH_VALUE);
     *pbVar3 = bVar1 | *(byte *)(sVar4 + (ushort)bVar2);
     clear_upper_internal_ram_byte_3ad1();
     return;
@@ -34,11 +34,11 @@ void FUN_CODE_2d8f(char param_1)
   }
   store_r7_to_upper_internal_ram_byte_3acc(0);
   clear_upper_internal_ram_byte_3ad1();
-  if (*(char *)(DAT_EXTMEM_0a47 + -0x78) < '\0') {
+  if (*(char *)(MAILBOX_PUBLISH_VALUE + -0x78) < '\0') {
     event_id_latch_and_bit_merge();
     return;
   }
-  or_table_bytes_into_dptr_under_flag_87(DAT_EXTMEM_0a47);
+  or_table_bytes_into_dptr_under_flag_87(MAILBOX_PUBLISH_VALUE);
   return;
 }
 

@@ -11,7 +11,7 @@ void FUN_CODE_3042(undefined1 param_1)
 {
   undefined1 uVar1;
   
-  DAT_EXTMEM_0a47 = param_1;
+  MAILBOX_PUBLISH_VALUE = param_1;
   store_r7_to_upper_internal_ram_byte_3983(0);
   set_iram_ad_88_clear_33();
   if (_3_3 != '\0') {

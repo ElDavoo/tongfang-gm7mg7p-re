@@ -7,6 +7,10 @@
 /* Clears the carry, adds A to DPTR (low byte first, the carry propagating into DPH), reads the byte
    at that XDATA address and returns it in A. Called from 0x897B with DPTR = 0x09F2 and A holding
    the index. The decompile's CONCAT11 expression is a garbled restatement of this 16-bit add.
+   2026-10-03 (issue #1444): this is one of only two ways the mailbox body at 0x09F2-0x09F9 is
+   reached, and the indexing is why seven of those eight bytes have no `MOV DPTR` site of their own
+   -- ec/tools/scan_refs.py reports zero for them, which is `not found by this method` and not
+   absence. docs/findings/a73f-09f1-mailbox-payload.md.
    type: reader
    evidence: ec/decompiled/bank1/89A9.asm; ec/decompiled/bank1/89A9.c
    basis: hand-decoded

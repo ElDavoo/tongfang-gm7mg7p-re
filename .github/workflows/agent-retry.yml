@@ -262,6 +262,13 @@ jobs:
           # LOCAL CHANGE (2026-10-02): 2 -> 4, in proportion to MAX_PARALLEL_AGENTS.
           INTAKE_RESERVED: '4'
           MERGE_PATH_MIN: '2'
+          # LOCAL CHANGE (2026-10-04): a ceiling on plan and implement runs in flight, whoever
+          # started them. An implement run holds a runner for up to five hours, and on
+          # 2026-10-04 seven of them did at once: with CI's three jobs per push that is the
+          # account's 20-job ceiling, so a conflict run waited 90 minutes in the queue, an
+          # implement job six hours, and every review behind them. Intake is what fills the
+          # pool and the merge path is what empties it, so intake gets a fixed share.
+          MAX_INTAKE_RUNS: '6'
         run: |
           set -euo pipefail
 
@@ -293,6 +300,18 @@ jobs:
                            | index($w)) ]' > "$RUNNER_TEMP/busy.json"
           busy=$(jq length "$RUNNER_TEMP/busy.json")
           free=$(( MAX_PARALLEL_AGENTS - busy ))
+          # Plan and implement runs in flight. Both queue sweeps stop at MAX_INTAKE_RUNS, and
+          # the plan sweep counts these against the open-PR cap: an implement run has no pull
+          # request until its last step, so a cap that counts only pull requests does not see
+          # the runs that are about to open them.
+          intake=$(jq '[.[] | select(.workflowName == "Agent · plan"
+                                     or .workflowName == "Agent · implement")] | length' \
+                     "$RUNNER_TEMP/busy.json")
+          echo "$intake plan/implement run(s) in flight, the ceiling is $MAX_INTAKE_RUNS"
+          # Kept in a file the later steps source, not in GITHUB_ENV: zizmor's github-env audit
+          # flags every new write to it in a workflow with this one's triggers.
+          printf 'INTAKE_BUSY=%d\nMAX_INTAKE_RUNS=%d\n' "$intake" "$MAX_INTAKE_RUNS" \
+            > "$RUNNER_TEMP/intake.sh"
           [ "$free" -lt 0 ] && free=0
           echo "$busy pipeline run(s) in flight, $free of $MAX_PARALLEL_AGENTS slot(s) free"
 
@@ -334,6 +353,14 @@ jobs:
           # reserve, so the sweeps that run first cannot take the budget the queue sweeps need.
           # `order_queue`: the queue sweeps' pick order. See its own comment.
           cat > "$RUNNER_TEMP/slots.sh" <<'EOF'
+          . "$RUNNER_TEMP/intake.sh"
+          # `take_intake`: count one more plan/implement run in flight, persisted for the later
+          # steps the same way.
+          take_intake() {
+            INTAKE_BUSY=$(( INTAKE_BUSY + 1 ))
+            printf 'INTAKE_BUSY=%d\nMAX_INTAKE_RUNS=%d\n' "$INTAKE_BUSY" "$MAX_INTAKE_RUNS" \
+              > "$RUNNER_TEMP/intake.sh"
+          }
           busy_issue() {
             jq -e --arg n "$1" --arg t "${2:-}" 'any(.[];
                 .headBranch == ("agent/issue-" + $n)
@@ -651,6 +678,7 @@ jobs:
           # would only look used.
           while IFS=$'\t' read -r waiting _ <&3; do
           [ "$FREE_SLOTS" -gt 0 ] || break
+          [ "$INTAKE_BUSY" -lt "$MAX_INTAKE_RUNS" ] || { echo "at the intake ceiling — stopping"; break; }
           if busy_issue "$waiting"; then
             echo "issue $waiting has a run in flight — leaving it"
             continue
@@ -693,6 +721,7 @@ jobs:
           GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-implement.yml \
             -f issue="$waiting" -f author="$author"
           take_slot
+          take_intake
           done 3<<<"$candidates"
 
       # The same drain for the plan stage, and now its main intake: with `issues: [opened]` gone
@@ -741,8 +770,9 @@ jobs:
                    --jq '[.[] | select(.headRefName | startswith("agent/"))
                               | select(.isDraft | not)
                               | select([.labels[].name] | index("agent:stuck") | not)] | length')
+          open=$(( open + INTAKE_BUSY ))
           if [ "$open" -ge "$MAX_OPEN_AGENT_PRS" ]; then
-            echo "$open agent pull requests open, at the cap — not planning anything new"
+            echo "$open agent pull requests open or being made, at the cap — not planning anything new"
             exit 0
           fi
 
@@ -767,6 +797,7 @@ jobs:
           # `_`, as in the step above: order_queue's sort key, already spent.
           while IFS=$'\t' read -r waiting title _ <&3; do
           [ "$FREE_SLOTS" -gt 0 ] || break
+          [ "$INTAKE_BUSY" -lt "$MAX_INTAKE_RUNS" ] || { echo "at the intake ceiling — stopping"; break; }
           [ "$(( open ))" -lt "$MAX_OPEN_AGENT_PRS" ] || { echo "at the open-PR cap — stopping"; break; }
           if busy_issue "$waiting" "$title"; then
             echo "issue $waiting has a run in flight — leaving it"
@@ -792,4 +823,5 @@ jobs:
           take_slot
           # A plan hands straight on to an implement that opens a PR, so count it against the cap.
           open=$(( open + 1 ))
+          take_intake
           done 3<<<"$candidates"

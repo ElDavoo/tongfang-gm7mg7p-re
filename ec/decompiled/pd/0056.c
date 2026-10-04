@@ -8,7 +8,14 @@
    address 0x0151, calls 0x0050, then pops everything in reverse and returns with RETI. Within this
    shard the three wrappers that set PSW=0x00 are exactly the three that also push R0-R7, while the
    two setting PSW=0x10 (register bank 1) do not. What the 0x0151 table entry selects is not decoded
-   here.
+   here. The 0x0151 table entry selects 0xA8AE, and that target is a committed entry,
+   `event_dispatch_ff80_ffe0`, whose own row records that it clears IE.7 on entry and dispatches on
+   bits of the XDATA word 0xFF80. That previous wording said the selection was not decoded here; the
+   correction is recorded beside it rather than made silently, and ec/annotations/pd-image.md §2.1
+   and docs/findings/pd-vector-handler-words.md carry the derivation. How a handler is *reached* is
+   the other half and is unchanged: 0x0050 tail-jumps to 0x1229, which builds DPTR and falls through
+   into 0x122D's `jmp @a+dptr`, so the `lcall 0x0050` return address is what a RET at the target
+   returns to.
    type: forwarder
    evidence: ec/decompiled/pd/0056.asm; ec/decompiled/pd/0056.c
    basis: hand-decoded

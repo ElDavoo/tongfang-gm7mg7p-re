@@ -1880,8 +1880,8 @@ def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
     return census, calls, raw
 
 
-def direction_invariant(by_file, symbols, func_names):
-    """(shaped, offenders, surplus, eq_after, eq_in_write) for issue #280.
+def direction_invariant(by_file, symbols, func_names, accessors=None):
+    """(shaped, census_side, offenders, surplus, eq_after, eq_in_write).
 
     A second walk of the same committed text as `scan()`, asking a different
     question. `scan()` decides a bucket per occurrence; this one records, per
@@ -1904,12 +1904,32 @@ def direction_invariant(by_file, symbols, func_names):
     Every occurrence in `surplus` is therefore expected to be a dereference
     store, and the caller asserts exactly that -- so a new shape slipping
     through shows up as a named site instead of quietly widening a tolerance.
+
+    **`census_side` is what makes the invariant's population a measurement.**
+    The walk already computes `bucket` for every occurrence and used to throw
+    it away except to compare against `assign_after()`; it now also counts the
+    occurrences the census buckets `write`/`read+write` and the addresses they
+    land on, which is the population the check is about. `pair_refs` is the
+    same sweep's by-direction pair count, so the caller can close the census
+    against this pass without either side carrying a written-down figure.
+
+    **It is a second code path, not a second opinion.** These counts come from
+    the walk below and the census's own columns, so agreeing is arithmetic
+    rather than corroboration; what the identity buys is that a figure nobody
+    typed cannot drift away from the pass that measured it. `accessors` is the
+    `load_pair_accessors()` table, defaulted here for the same reason `scan()`
+    defaults it, so a caller holding a subset can pass one.
     """
     pattern = occurrence_re(symbols)
+    accessors = load_pair_accessors() if accessors is None else accessors
     by_name = {name: addr for addr, name in symbols.items()}
     shaped = collections.Counter()
     offenders, surplus = [], []
     eq_after = eq_in_write = 0
+    write_like = 0
+    write_like_addrs = set()
+    deref_addrs = set()
+    pair_refs = collections.Counter()
     for out_file in sorted(by_file):
         with open(os.path.join(DECOMPILED, out_file)) as f:
             text = strip_comments(f.read())
@@ -1923,6 +1943,9 @@ def direction_invariant(by_file, symbols, func_names):
                     f"{hexaddr(addr)}")
             if store_shape:
                 shaped[addr] += 1
+            if bucket in ("write", "read+write"):
+                write_like += 1
+                write_like_addrs.add(addr)
             if nxt.startswith("=="):
                 eq_after += 1
                 if bucket in ("write", "read+write"):
@@ -1934,9 +1957,21 @@ def direction_invariant(by_file, symbols, func_names):
                 # that can happen is a store through a `*` dereference, because
                 # every other conjunct of `store_target()` is a *restriction*.
                 left = text[:m.start()].rstrip()
-                if not (left and left[-1] == "*"):
+                if left and left[-1] == "*":
+                    deref_addrs.add(addr)
+                else:
                     surplus.append(f"{site} ({bucket})")
-    return shaped, offenders, surplus, eq_after, eq_in_write
+        # A pair site names two bytes and `scan()` counts both, so the by-
+        # direction figures the caller reconciles against are references, not
+        # sites: the census's `spelled_refs[PAIR_SPELLING]` has no direction
+        # split, which is the whole reason this sweep exists.
+        for _, direction in pair_sites(text, accessors, pattern):
+            pair_refs[direction] += 2
+    census_side = {"write_like": write_like,
+                   "write_like_addrs": write_like_addrs,
+                   "deref_addrs": deref_addrs,
+                   "pair_refs": pair_refs}
+    return shaped, census_side, offenders, surplus, eq_after, eq_in_write
 
 
 def merge_group(census, programs):
@@ -2568,7 +2603,7 @@ def cluster_rows_build(g, cid, key, members, group, names, funcs, calls, symbols
         "cluster_key": key,
         # Filled in by name_clusters(), which is where a name carried forward
         # from the committed census lands. Empty is "no name", which is the
-        # state of 417 of the 427 clusters and is not a claim about them.
+        # state of most clusters and is not a claim about them.
         "cluster_name": "",
         "co_reading": sum(1 for f in touching if f in group_of),
         "co_reading_refs": top_group_refs,
@@ -3649,15 +3684,51 @@ def self_test(args) -> int:
     # primitive that never consults the rule under test -- so this fails on a
     # classifier that sums correctly while getting the direction wrong, which
     # is exactly what the oracle above cannot be widened into on its own.
-    shaped, offenders, surplus, eq_after, eq_in_write = direction_invariant(
-        by_file, symbols, func_names)
+    shaped, census_side, offenders, surplus, eq_after, eq_in_write = (
+        direction_invariant(by_file, symbols, func_names))
+    # The population the invariant is about, measured by the pass that checks
+    # it rather than written down beside it. `expected` is the census's own
+    # arithmetic and `got` is this walk's, so the line states a population it
+    # compared rather than one it merely repeated.
+    census_write_like = sum(e["buckets"]["write"] + e["buckets"]["read+write"]
+                            for g in GROUPS for e in groups[g].values())
     check("the corpus-wide direction invariant: every occurrence that "
           "the census buckets `write` or `read+write` has an assignment -- not "
           "`==` -- after the address, measured by a second pass that does not "
-          "re-implement the classifier"
+          "re-implement the classifier, over the population that pass measured "
+          f"itself ({census_side['write_like']} occurrences across "
+          f"{len(census_side['write_like_addrs'])} distinct addresses)"
           + (f"; offenders, as `file!line address`: "
              f"{', '.join(offenders)}" if offenders else ""),
           not offenders)
+    # The identity that makes those two figures a cross-path agreement rather
+    # than the census's own arithmetic restated by the walk measuring it. The
+    # census counts a resolved pair site in a direction bucket without an `=`
+    # for the second pass to find, so the two sides balance only once that
+    # half is added back; `spelled_refs[PAIR_SPELLING]` is direction-blind, so
+    # the by-direction count comes from the sweep above rather than a column.
+    pair_write = census_side["pair_refs"]["write"]
+    check("and the two passes account for the same write-like population: the "
+          "occurrences this walk measured plus the write-direction half of the "
+          "pair references it does not visit are the census's own `write` and "
+          f"`read+write` occurrences (expected {census_write_like}, got "
+          f"{census_side['write_like'] + pair_write})",
+          census_side["write_like"] + pair_write == census_write_like)
+    # The width is the other half of the population, and the two candidate
+    # counts are *not* the same set: `shaped` holds every address the second
+    # pass accepts an assignment on, while the write-like set holds every
+    # address the census buckets a store on. Asserting the difference is
+    # exactly the `*`-dereference addresses is what stops a re-deriver from
+    # reaching for `len(shaped)` and reading the width one too high, and it
+    # names the site rather than leaving the gap to be divided by hand.
+    shaped_only = set(shaped) - census_side["write_like_addrs"]
+    deref_only = census_side["deref_addrs"] - census_side["write_like_addrs"]
+    check(f"and the two address counts differ by exactly the `*`-dereference "
+          f"stores a necessary condition does not have to exclude -- the "
+          f"write-like set is {len(census_side['write_like_addrs'])} where "
+          f"`len(shaped)` is {len(shaped)}, the difference being "
+          f"{', '.join(hexaddr(a) for a in sorted(shaped_only)) or 'none'}",
+          shaped_only == deref_only)
     # The per-address form of the same necessary condition, so a failure here
     # says which address stopped balancing rather than only which occurrence.
     #

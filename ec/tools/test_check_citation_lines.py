@@ -112,6 +112,18 @@ def pointers(text, scope=SCOPE):
     return ccl.check_row_pointers(PAGE, text, list(scope), CSV_TEXT, False)
 
 
+def moved(text, scope=SCOPE):
+    """(Rule 3's result, the notes it printed) over an inline page.
+
+    A pointer whose number no longer lands on its declared row is a note, not
+    a problem (2026-10-04), so the cases about one read what was printed.
+    """
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        result = pointers(text, scope)
+    return result, out.getvalue()
+
+
 def site_problems(text=TABLE, rows=None):
     """Rule 1's (problems, checked, skipped) over an inline table."""
     return ccl.check_site_table(PAGE, text, SITES if rows is None else rows,
@@ -265,22 +277,27 @@ class Rule3RowPointers(unittest.TestCase):
         text = 'The `refs: 17` is `xdata-registers.csv:2` today.\n'
         self.assertEqual(pointers(text), ([], 1, 0))
 
-    def test_a_pointer_one_line_above_the_row_is_rejected(self):
+    def test_a_pointer_one_line_above_the_row_is_noted(self):
         text = 'The `refs: 17` is `xdata-registers.csv:1` today.\n'
-        self.assertTrue(saying(pointers, 'which is the header row', text=text))
+        (problems, checked, _), out = moved(text)
+        self.assertEqual((problems, checked), ([], 1))
+        self.assertIn('which is the header row', out)
 
-    def test_a_pointer_one_line_below_the_row_is_rejected(self):
+    def test_a_pointer_one_line_below_the_row_is_noted_not_rejected(self):
         # The nudge in the direction the corpus actually moves: a row inserted
         # above `0x0860` pushes it down and leaves every figure on the page
-        # still correct.
+        # still correct. The note names the row's line today, so a reader can
+        # follow the citation; the run stays green.
         text = 'The `refs: 17` is `xdata-registers.csv:3` today.\n'
-        problems = saying(pointers, 'which is the 0x0800 row',
-                          'not the 0x0860 row at 2', text=text)
-        self.assertTrue(problems)
+        (problems, _, _), out = moved(text)
+        self.assertEqual(problems, [])
+        self.assertIn('which is the 0x0800 row, not the 0x0860 row at 2', out)
 
-    def test_a_pointer_past_the_end_of_the_file_is_rejected(self):
+    def test_a_pointer_past_the_end_of_the_file_is_noted(self):
         text = 'See `xdata-registers.csv:9999`.\n'
-        self.assertTrue(saying(pointers, 'past the end of the file', text=text))
+        (problems, _, _), out = moved(text)
+        self.assertEqual(problems, [])
+        self.assertIn('past the end of the file', out)
 
     def test_a_full_path_pointer_is_the_same_citation(self):
         # The corpus writes both spellings and they are one citation, so the
@@ -297,8 +314,8 @@ class Rule3RowPointers(unittest.TestCase):
     def test_a_pointer_neither_declared_row_holds_names_both(self):
         scope = (SCOPE[0], (PAGE, 'xdata-registers.csv', '0x0800', 'addr'))
         text = 'See `xdata-registers.csv:4`.\n'
-        self.assertTrue(saying(pointers, 'the 0x0860 row at 2',
-                               'the 0x0800 row at 3', text=text, scope=scope))
+        _, out = moved(text, scope)
+        self.assertIn('the 0x0860 row at 2 or the 0x0800 row at 3', out)
 
     def test_a_declared_subject_with_no_row_is_reported(self):
         # A scope list that has itself gone stale. Raising nothing here would
@@ -334,7 +351,9 @@ class Rule3RowPointers(unittest.TestCase):
         # reading it as quoted would be a skip with no shape behind it.
         text = ('The correction above left the row at\n'
                 '`xdata-registers.csv:4`, which is the 0x06E6 row.\n')
-        self.assertTrue(saying(pointers, 'which is the 0x06E6 row', text=text))
+        (_, checked, skipped), out = moved(text)
+        self.assertEqual((checked, skipped), (1, 0))
+        self.assertIn('which is the 0x06E6 row', out)
 
     def test_a_correction_marker_inside_a_yaml_entry_is_still_checked(self):
         # The `XDATA_0860` note's own shape, and the fact that decides whether
@@ -352,9 +371,9 @@ class Rule3RowPointers(unittest.TestCase):
                 '      The live claim above.\n'
                 '      *** CORRECTION 2026-09-24 (issue #249): the row is\n'
                 '      xdata-registers.csv:4, not :3.\n')
-        _, _, skipped = pointers(text)
+        (_, _, skipped), out = moved(text)
         self.assertEqual(skipped, 0)
-        self.assertTrue(saying(pointers, 'which is the 0x06E6 row', text=text))
+        self.assertIn('which is the 0x06E6 row', out)
 
     def test_verbose_names_what_was_passed_over_and_why(self):
         err = io.StringIO()
@@ -370,7 +389,7 @@ class Rule3RowPointers(unittest.TestCase):
         text = ('The census counts C-level occurrences of the address in the\n'
                 'decompiled text, which is the `refs: 17` of\n'
                 '`xdata-registers.csv:662`. The 14/2/0/1 below is the bucketing.\n')
-        self.assertTrue(saying(pointers, 'page.md:3: cites', text=text))
+        self.assertIn('page.md:3: cites', moved(text)[1])
 
 
 class TheCommittedTree(unittest.TestCase):
@@ -398,14 +417,14 @@ class TheCommittedTree(unittest.TestCase):
     def test_the_committed_citations_hold(self):
         rc, out, err = self.run_main(['check_citation_lines.py'])
         self.assertEqual(rc, 0, err)
-        self.assertIn('resolve to the row they name', out)
+        self.assertIn('read against a row that exists', out)
 
     def test_the_run_says_how_many_it_checked_and_how_many_it_skipped(self):
         # Without this a rule that stopped looking and a tree with nothing to
         # look at print the same thing, and "checked nothing" would read from
         # the exit code exactly like "found nothing".
         _, out, _ = self.run_main(['check_citation_lines.py'])
-        match = re.search(r'(\d+) citation\(s\) resolve.*?, (\d+) skipped',
+        match = re.search(r'(\d+) citation\(s\) read.*?, (\d+) skipped',
                           out)
         self.assertIsNotNone(match, out)
         self.assertGreater(int(match.group(1)), 0)
