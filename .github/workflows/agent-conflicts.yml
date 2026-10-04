@@ -197,9 +197,26 @@ jobs:
         if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' }}
         uses: ./.github/actions/project-setup
 
+      # LOCAL CHANGE (2026-10-04): a conflict only in generated files needs no agent. The
+      # census CSVs, the symbol table and the counterpart map are functions of committed
+      # inputs, so regenerating them from the merged inputs is the resolution, and the script
+      # exits 1 without touching anything if any conflicted file is hand-written. An agent run
+      # here costs up to an hour of a runner; this costs a minute.
+      - name: Settle a generated-only conflict mechanically
+        id: regen
+        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' }}
+        run: |
+          set -euo pipefail
+          if .github/scripts/regenerate-conflicted.sh; then
+            echo "every conflicted file was generated; regenerated without an agent"
+            echo "mechanical=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "mechanical=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Resolve
         id: resolve
-        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' }}
+        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' && steps.regen.outputs.mechanical != 'true' }}
         continue-on-error: true
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
         env:
@@ -280,7 +297,7 @@ jobs:
             --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
 
       - name: Check and push
-        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' && steps.resolve.outcome == 'success' }}
+        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' && (steps.resolve.outcome == 'success' || steps.regen.outputs.mechanical == 'true') }}
         env:
           ISSUE: ${{ matrix.item.issue }}
           HEAD_SHA: ${{ matrix.item.head }}
@@ -304,7 +321,7 @@ jobs:
           git push --force-with-lease="agent/issue-${ISSUE}:${HEAD_SHA}" origin "HEAD:agent/issue-${ISSUE}"
 
       - name: Report a failed attempt
-        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' && (steps.resolve.outcome != 'success' || failure()) }}
+        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' && ((steps.resolve.outcome != 'success' && steps.regen.outputs.mechanical != 'true') || failure()) }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ matrix.item.pr }}
