@@ -713,6 +713,18 @@ only covers what's specific to *this* copy.
   Before this, the only merge happened after the round, before the push, and a
   real conflict there discarded the whole round: #1716 lost a 57-minute round on
   a conflict in `measure_mark_provenance.py`.
+- **Finishing a pull request comes before starting an issue** (2026-10-04, not in
+  the template). `agent-retry.yml`'s conflict and stale-review sweeps draw on
+  their own `MERGE_SLOTS` budget: every free slot, and never fewer than
+  `MERGE_PATH_MIN` even when none is free. They used to draw on what was left
+  after the intake reserve, which was zero whenever the implement stage filled
+  the pipeline. Between 2026-10-01 and 2026-10-04 no conflict was resolved unless
+  a human dispatched the stage, and #1875 sat approved and conflicting for six
+  hours. The number of open pull requests bounds their demand, and each slot they
+  take also comes out of the intake and follow-up budgets.
+  `agent-conflicts.yml`'s turn cap is 400, up from 240. The resolver for #1780
+  finished in 260 turns and the action failed it for exceeding the cap, so the
+  resolution was discarded.
 - **A conflict at push time keeps the work** (2026-10-04, not in the template).
   `rebase-onto-main.sh` exits 2 when merging main meets a conflict outside the
   generated files, and `agent-fix.yml` and `agent-implement.yml` then push the

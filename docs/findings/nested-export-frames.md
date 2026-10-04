@@ -220,14 +220,21 @@ measurements rather than restatements of the issue's list:
   `0xE322`.** Of the six functions that row names, the tool reports the two
   above as nested, the container `bank1 0xE2D3` and `bank1 0xE501` as
   `after-a-function`, and `bank1 0x703F forwarder_to_e322` and `bank1 0xE490` as
-  `unframed`. Whether `functions_touched 6` *overcounts* there depends on what
-  the column is meant to count, which `xdata-registers.csv` does not define, so
-  both readings are given and neither is ruled on: counted as six distinct
-  function rows, each named once, it is six and no row is counted twice;
-  counted as frames that do not hold one another, `0xE322` and `0xE332` sit
-  inside `0xE2D3`'s listing and the six names cover four such frames (`0x703F`,
-  `0xE2D3`, `0xE490`, `0xE501` — none of the four has an edge in the tool's
-  output).
+  `unframed`. This paragraph used to end "so both readings are given and neither
+  is ruled on", because `xdata-registers.csv` does not define the column. **It
+  is now ruled on**: `functions_touched` counts one committed `index.csv` row
+  per `out_file`, stated in the block at the end of
+  `ec/tools/xdata_register_map.py`, and
+  both readings are derived by `ec/tools/xdata_frame_credit.py`. Counted as six
+  distinct function rows, each named once, the six is six and no row is counted
+  twice; counted as frames that do not hold one another, `0xE322` and `0xE332`
+  sit inside `0xE2D3`'s listing and the six names cover four such frames
+  (`0x703F`, `0xE2D3`, `0xE490`, `0xE501` — none of the four has an edge in the
+  tool's output). The ruling keeps the six and says what it counts; the frame
+  reading of this row is in
+  [`xdata-frame-credit-column.md`](xdata-frame-credit-column.md), which is also
+  where the "four such frames" sentence above is measured rather than counted by
+  hand.
 - **The remaining rows are a separate population, and this change rules on
   neither.** The `auto`- and `call-target`-seeded remainder is Ghidra's own
   frames. `common 0x6A02` and `common 0x6D46` are the mutually nested pair §3 is
@@ -279,7 +286,12 @@ produces, which is how a gate stops gating.
   line is a human's change routed through `ElDavoo/agent-pipeline` upstream.
 - **The `0x1664` direction / issue #466.** That is `functions_touched`
   *under*counting its readers; this is the direction it cannot reach, a column
-  that can only overcount. Recorded, not addressed.
+  that can only overcount. Recorded, not addressed. The column's *meaning* is
+  no longer open on this side of it — [`xdata-frame-credit-column.md`](xdata-frame-credit-column.md)
+  rules that the counting is per committed `out_file`, which is what makes the
+  direction unreached a fact about the export rather than a fact about an
+  undefined column — but the undercounting direction itself is still not
+  addressed, and this bullet does not claim otherwise.
 - **The `auto`-seeded cluster of Ghidra's own frames** — the mutually nested
   `common 0x6A02` / `0x6D46` pair and `common 0x65A6`, whose listing reaches
   back below its own entry point. Measured, bucketed, and left as the named
