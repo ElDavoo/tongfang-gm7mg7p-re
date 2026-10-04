@@ -254,6 +254,45 @@ boot chain, a dispatch table or a polled task is an open question, and
 "boot-time" above is the shape of the `0x0782` bit-5 one-shot, not a
 scheduling claim.
 
+> **Corrected 2026-10-03 (issue #109); the paragraph above is left as it was
+> written.** It is a polled dispatch slot, and the "boot-time" reading it
+> flagged as possible is the wrong one.
+>
+> Two of its premises are now settled and one was never right.
+> **The framing:** `0x851B` is reached from `common 0x0E49 ljmp 0x1564`,
+> where `0x1564` is the far-call stub whose immediate is `0x851B`
+> (`task-call-table.csv`), and `0x0E49` is the dispatch slot the
+> divide-down scheduler's inline case table at `common 0x0DD6` reaches on
+> **case `0x02` and case `0x0C`**. So it is a recurring turn of a polled
+> scheduler. The run itself was decoded before this by
+> [`scheduler-run-8518-entries.md`](../../docs/findings/scheduler-run-8518-entries.md)
+> (issue #1185) — `0x851B` is the head of segment 1 — and what no file had
+> joined is the *stub* to the *scheduler*. **The attribution is wrong:**
+> `bank-call-audit.md` never claimed this run's framing; it is about
+> `lcall`/`ljmp` framing and the BL51 trampolines, and it does not mention
+> `0x8518` or `0x851B`. The debt was real and the pointer was not.
+>
+> **The one-shot:** "boot-time above is the shape of the `0x0782` bit-5
+> one-shot, not a scheduling claim" was right to doubt and the doubt resolves
+> the other way. `0xA80A`'s `anl a,#0xdf` guards *only* the `0x0751` mode
+> write between `0xA809` and `0xA823`. The PL clear is at `0xA82B`, and that
+> is the branch target of **both** `jnb`s — `0xA802` on bit 0 and `0xA806` on
+> bit 5 — as well as the fall-through past `lcall 0x8653` at `0xA828`. All
+> three paths converge on it. A routine that recurs with a one-shot inside it
+> is a periodic init pass, and that is what this is.
+>
+> **The driver's exposure:** "`a profile driver would inherit it`" assumes the
+> bit stays set once the driver has set it. It need not. bank0 `0xBD03` clears
+> bit 0 and, by the method that scan can reach, nothing sets it — see the
+> `0x0741` row in `registers.yaml`. The race is **possible**, not settled:
+> `0x0741` bit 0 has to be clear at the moment the routine runs, and the
+> routine's two entry gates (`0x0780 != 0xA2` and `0x06E6 == 0x01`) have never
+> been evaluated against a run time. Nothing in this correction is behavioural;
+> no register was read back and no hardware was reached. The write-up is
+> [`a7c8-dispatch-slot-and-pl-race.md`](../../docs/findings/a7c8-dispatch-slot-and-pl-race.md)
+> and the unrun procedure is
+> [`pl-clear-0741-gate.md`](../../docs/hardware-tests/pl-clear-0741-gate.md).
+
 ## 5. The per-mode default blocks are written by the EC and read by nobody
 
 The issue's hypothesis — the EC copies `0x0730-0x0737` / `0x07A7-0x07AA`
@@ -492,6 +531,22 @@ than only the listings quoted here.
 - **When `0xA7C8`'s routine runs**, and therefore whether the `AP_OEM`-gated
   PL clear in §4 can fire after a host has written the PLs, or only before.
   Resolving `0x851B`'s framing (`bank-call-audit.md`) is the way in.
+
+  > **Closed for `0xA7C8` 2026-10-03 (issue #109); the bullet above is left
+  > as it was written.** It runs on the divide-down scheduler's cases `0x02`
+  > and `0x0C`, via `common 0x0E49 ljmp 0x1564` and the `0x851B` stub — a
+  > polled task, not a boot chain, and `bank-call-audit.md` was never the file
+  > that said otherwise. The clear can therefore fire after a host has written
+  > the PLs, **whether** it does is still open: that needs `0x0741` bit 0 to
+  > be clear when the routine runs, and the two entry gates have never been
+  > evaluated. [`a7c8-dispatch-slot-and-pl-race.md`](../../docs/findings/a7c8-dispatch-slot-and-pl-race.md),
+  > and [`pl-clear-0741-gate.md`](../../docs/hardware-tests/pl-clear-0741-gate.md)
+  > for the run that has not happened.
+  >
+  > **The debt is closed for `0xA7C8` only.** `0x83FF` at `0x8551`, whose own
+  > open items live in `ec-07c4-07d5-sites.md` §2/§9 and
+  > `docs/hardware-tests/ctgp-dben-07c4-bit3.md`, is a different slot in the
+  > same run and is untouched here.
 - **The duplicated `0xABxx` / `0xC7xx` mode routines** — two copies, same
   masks. Which one is live, and on what condition. Partly answered by
   `docs/findings/mode-defaults-variant-selector.md` §7 (issue #111): the
