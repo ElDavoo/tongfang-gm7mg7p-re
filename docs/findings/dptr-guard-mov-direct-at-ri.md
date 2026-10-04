@@ -69,18 +69,29 @@ python3 ec/tools/walk_budget_census.py ec/firmware/GMxMGxx_11.800 --check
 ec/annotations/walk-budget-census.csv: this run reproduces it byte for byte (18 lines)
 ```
 
-`walk_budget_census.TABLES` is what that `--check` is derived from, and the CSV
-it compares carries each of those tables' per-site `terminator` and `access`
-cells, so **no committed row in any of them moves** for those two. The
-`window` column is the one a `mov 0x82,@r0` could have moved while leaving both
-of those identical — a window whose `DPTR` the site had already reloaded
+`walk_budget_census.TABLES` is what that `--check` is derived from, but the CSV
+it compares is not those tables' site tables. `census_table()` writes a row only
+where `walk_why()` ended at `budget_end()`, so what the CSV holds is the
+budget-truncated rows of the tables in that tuple and nothing for the rest:
+`ec-09e9-09eb-sites.csv`, `xdata-086x-dispatch-sites.csv` and
+`xdata-1c3x-consumers-sites.csv` contribute no rows to it at all. **No committed
+row moves** for `terminator` or `access`, in the rows it does hold or in the
+remainder of those tables — each remainder is re-derived by the command that
+wrote it: `xdata-1c3x-consumers-sites.csv` by §9's own diff,
+`xdata-086x-dispatch-sites.csv` by its own `--check`, and
+`ec-09e9-09eb-sites.csv` by `ec/tools/test_sites_csv_regeneration.py`, which
+holds it in `TABLES`. All three still reproduce byte for byte, each command
+that section's, unchanged.
+
+The `window` column is the one a `mov 0x82,@r0` could have moved while leaving
+both of those identical — a window whose `DPTR` the site had already reloaded
 terminates the same way and is charged the same access — and that CSV has no
-such column. `window` is held instead by
-`ec/tools/test_sites_csv_regeneration.py`, which regenerates every committed
-`*-sites.csv` from the image, `window` column included, and compares bytes. The
-`--terminator-column` tables §9 prints, and `xdata-086x-dispatch-sites.csv`'s
-own `--check`, all still reproduce byte for byte; each command is that
-section's, unchanged.
+such column. Every committed `window` column is re-derived from the image by
+the tool that wrote it: `ec/tools/test_sites_csv_regeneration.py` for the
+tables in its `TABLES`, and each table outside it under its own producer's
+`--check`. That is the property rather than a count of tables, so a table added
+later is held by whichever of the two it lands in instead of falling out of the
+argument.
 
 The whole-image sweeps that write-up commits are unchanged as well, which is
 the stronger statement — the check only covers rows somebody committed, and
