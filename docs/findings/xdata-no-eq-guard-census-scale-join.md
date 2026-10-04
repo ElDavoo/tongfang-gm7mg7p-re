@@ -237,6 +237,62 @@ membership lines the committed run already reports come back in a different
 spelling, because the message names the clusters the line cites and those are
 the ids that moved.
 
+**Correction, 2026-10-04 (issue #1240): both figures above are stale, and the
+guard-off one has moved for two separate reasons.** The transcript and the
+paragraph it belongs to are left as they were written, per §4a-4d. Re-running
+both against the same committed inputs, the committed census is now clean and
+the guard-off census reports 74:
+
+```console
+$ python3 ec/tools/xdata_register_map.py --no-eq-guard \
+    --out-clusters /tmp/off-clusters.csv --out-registers /tmp/off-registers.csv
+$ python3 ec/tools/check_cluster_citations.py >/dev/null; echo "exit $?"
+exit 0
+$ python3 ec/tools/check_cluster_citations.py \
+    --clusters /tmp/off-clusters.csv --registers /tmp/off-registers.csv \
+    2>&1 >/dev/null | tail -1
+74 citation(s) disagree with ../../../../../tmp/off-clusters.csv
+```
+
+So the sentence above reads **0 against the committed census and 74 against the
+guard-off one — 60 membership and 14 census-count.** Neither half of the old
+pair is right, and they went wrong for different reasons, which is why this is
+a correction rather than a re-run:
+
+- **The committed figure went 3 → 0 without this page being touched**, and the two
+  halves moved in different commits. Its two membership lines were the recipe
+  page's transcript, and `check_cluster_citations.py` now skips a fence naming a
+  regeneration switch — that half is `395ef26d` (#1424). Its third was the
+  census-count row, and that half is `7245cc0f` (#1438), a commit *earlier* on
+  main: it added `XDATA_086C` at `0x086C`, took the census's `named_addrs` for
+  `main-ec-002` from 31 to 32, and corrected the row's `named inside` cell from
+  27 to 32 in the same commit. The correction block `395ef26d` added to
+  `ec/annotations/xdata-register-map.md` records that move in those terms; the
+  census-count disagreement was therefore already 0 before #1424 landed, and
+  `3` was already stale before this correction. The committed run exits 0 on
+  `origin/main` today.
+- **The guard-off figure went 51 → 62 on its own**, with main's tool on main's
+  tree, before anything in this correction. The page has not been edited since
+  `0a29edb9` (#1176), and the corpus and the tool have both moved under it.
+
+The remaining 62 → 74 is #1240's, and it is two separable additions. Five are
+the count rule reading §5's `size` and `refs` against a `--clusters` census for
+the first time: the reference count for `main-ec-001`, and both figures for
+`main-ec-002` and `main-ec-012`, which are the three rows that reach beyond the
+two `named inside` cells the old reader could already see. That is the intended
+consequence of the fix rather than a regression. The other seven come from this
+change's own new findings file, `xdata-worklist-census-columns-read.md`, whose
+re-derived table restates §5's figures and is therefore read against the
+guard-off census the same way.
+
+What does not survive is "exactly one of the fifty-one". Under the fence rule
+the recipe page's transcript is now *skipped* — `--verbose` names it as a
+`census-regeneration transcript` at the fence's opener — rather than reported
+differently under each census, so there is no shared line to single out and the
+"other fifty" no longer has a page to be the exception to. The paragraph is left
+above as written rather than rewritten in place, because it was correct about
+the tree it measured.
+
 **That number is not a verdict on the prose.** It is what the checker reports
 when the census under it moves, and it is the same shape as the 507: many
 sentences that were correct against the committed ranks read against a
