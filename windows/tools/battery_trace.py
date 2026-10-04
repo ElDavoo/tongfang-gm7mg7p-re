@@ -78,7 +78,7 @@ def main(argv=None):
              "wmi_rate_mw", "ec_current_ma", "ec_voltage_mv"]
             + [f"ec_{a:04x}" for a in WATCH])
 
-    fh = open(args.csv, "a", newline="")
+    fh = open(args.csv, "a", newline="", encoding="utf-8")
     w = csv.writer(fh)
     if fh.tell() == 0:
         w.writerow(cols)

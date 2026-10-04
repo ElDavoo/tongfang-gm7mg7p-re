@@ -5697,6 +5697,81 @@ NOT_IN_TREE.update({
             "bank0 0xD8CC",
 })
 
+# Issue #1444. Two rings whose extent the committed listings fix by the index
+# arithmetic rather than by naming every byte, so the census -- which reads the
+# decompiled tree -- reaches the base of each and not the slots above it. The
+# same reason as 0x0390 and the same window as the block above: below every line
+# those citations name, so none of them shifts, and above the `__main__` guard.
+#
+# The first is the mailbox's. bank1 0x89B5 masks the byte at 0x09F1 with
+# `ANL A,#0x07` and adds it to DPTR, which the export writes as
+# CONCAT11/index arithmetic over register names, and bank1 0x8955 clears all
+# eight slots at init from the base with an 8-iteration `DJNZ R0` -- which is
+# what fixes the ring at eight bytes. 0x09F6 and 0x09F9 have sites of their own
+# and are here for the same reason as the rest, the .asm naming what the C does
+# not; 0x09F9's two sites being in the PD image rather than the EC makes that
+# plainer rather than different.
+#
+# The second is the sixteen-byte ring at 0x0710. bank1 0x88F0 masks 0x070F with
+# `ANL A,#0x0F` and forms DPTR as 0x0710 plus that nibble, which the export
+# spells CONCAT11(7,...). Re-derive with `python3 ec/tools/disasm8051.py
+# ec/firmware/GMxMGxx_11.800 --at 0x108F0 -n 16`, which decodes the increment,
+# the mask and the `MOV DPTR,#0x0710` past the listing's truncation, and with
+# `python3 ec/tools/scan_refs.py ec/firmware/GMxMGxx_11.800 0x0710`, which
+# reports the one EC-side site the census resolves no direction for. The reading
+# is docs/findings/a73f-09f1-mailbox-payload.md.
+NOT_IN_TREE.update({
+    0x09F3: "reached through a form the scan cannot see: as 0x09F2, a slot of "
+            "the mailbox ring, reached by `ANL A,#0x07` and `ADD A,DPL` at "
+            "bank1/89B5.asm and bank1/89E7.asm",
+    0x09F4: "reached through a form the scan cannot see: as 0x09F3, a slot of "
+            "the mailbox ring",
+    0x09F5: "reached through a form the scan cannot see: as 0x09F3, a slot of "
+            "the mailbox ring",
+    0x09F6: "reached through a form the scan cannot see: as 0x09F3, a slot of "
+            "the mailbox ring; its one EC-side site at bank1 0x8C59 is a DPTR "
+            "seed the listing overwrites with no MOVX between",
+    0x09F7: "reached through a form the scan cannot see: as 0x09F3, a slot of "
+            "the mailbox ring",
+    0x09F8: "reached through a form the scan cannot see: as 0x09F3, a slot of "
+            "the mailbox ring",
+    0x09F9: "reached through a form the scan cannot see: as 0x09F3, a slot of "
+            "the mailbox ring; both of its sites are in the PD image",
+    0x0710: "reached through a form the scan cannot see: the base of the ring "
+            "bank1/88F0.asm forms as 0x0710 plus a nibble masked at 0x070F, "
+            "which the export spells CONCAT11(7,...)",
+    0x0711: "reached through a form the scan cannot see: as 0x0710, a slot of "
+            "the sixteen-byte ring",
+    0x0712: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x0713: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x0714: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x0715: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x0716: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x0717: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x0718: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x0719: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x071A: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x071B: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x071C: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x071D: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x071E: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+    0x071F: "reached through a form the scan cannot see: as 0x0711, a slot of "
+            "the sixteen-byte ring",
+})
+
 if __name__ == "__main__":
     sys.exit(main())
 

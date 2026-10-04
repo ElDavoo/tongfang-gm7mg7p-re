@@ -55,7 +55,12 @@ REPO = os.path.join(HERE, os.pardir, os.pardir)
 # The two corpora, walked in that order. `ec/tools/testdata/` is the fixture
 # tree the grader's own suite runs against; `evidence/ec-watch/` is a finished
 # run committed as the file it was captured to, which is the other way a
-# capture reaches a reader.
+# capture reaches a reader. `evidence/battery-traces/` is out of this tool's
+# population and is walked by `check_probe_csv_encoding.py` instead: `count()`
+# below applies the `ts,addr,old,new` skip and the MARK rule, so its
+# marks/changes columns are this tool's product for *that* shape and mean
+# nothing for a `ts,phase,...` file, and widening ROOTS would print a
+# meaningless tally rather than add coverage.
 ROOTS = (
     os.path.join(HERE, "testdata"),
     os.path.join(REPO, "evidence", "ec-watch"),
