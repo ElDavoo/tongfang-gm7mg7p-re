@@ -376,6 +376,19 @@ immediate points at.
 > because §4's buckets classify what a *bucket B target* is, which is still a
 > different question from what a trampoline immediate points at. §11 has the
 > section.
+>
+> **What a target inside a `ret` run is, issue #1090.** The correction above
+> decodes the immediates; it does not say what the decoded addresses *are* where
+> they land in a run of identical bytes, and the `entry`/`erased`/`other` class
+> above cannot say it either — `0x22` reads `other` whether it is a lone
+> one-instruction routine or the 133rd byte of a fill.
+> [`../../docs/findings/trampoline-target-reading.md`](../../docs/findings/trampoline-target-reading.md)
+> carries that as a second committed table,
+> [`trampoline-target-reading.csv`](trampoline-target-reading.csv), derived by
+> `tools/trampoline_target_reading.py` from this block's rows plus the
+> `calls_trampoline` column of `bank-call-targets.csv`. Nothing in this section
+> moves: it adds columns, and its two tables are cross-checked against each
+> other rather than against a figure written down here.
 
 ## 4. Bucket B, target by target
 
