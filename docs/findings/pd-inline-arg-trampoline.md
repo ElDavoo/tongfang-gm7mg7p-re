@@ -165,8 +165,30 @@ than about any one site:
   and is worth knowing before anyone reads an `A`-bearing convention into this.
 
 ### Both readings of the two `pop`s are measured; which one this firmware
-uses is inferred from that comparison, and it is the one place this image
-contradicts the manual
+uses is inferred from that comparison (and see the correction below: the
+manual attribution in this heading was backwards)
+
+> **Correction (2026-10-04, issue #1143), leaving the heading and the paragraph
+> below as they were.** The clause "it is the one place this image contradicts
+> the manual", and the first sentence under this heading, are both **backwards**.
+> The MCS-51 `LCALL` pushes the return address's **low** byte first, so the
+> **high** byte ends up on top of the stack and `pop 0x83` (DPH) at `0x1052`
+> takes the high byte — the order this image takes. `pop 0x83 ; pop 0x82` is the
+> ordinary MCS-51 idiom for recovering a return address into `DPTR`, not a
+> departure from the architecture, and there is no core-vs-manual discrepancy
+> here to explain. The repository already says so in two committed places:
+> `boot_xdata_sites.py`'s `_push_return` documents "Low byte first, then high --
+> the 8051's push order, and `ret` is written against it" and pushes in that
+> order, and `trampoline-target-reading.md` records that `ret` "pops the caller's
+> `PCH` then its `PCL`", which only holds if the high byte is on top.
+>
+> **What survives is the measurement and the inference, unchanged.** The table
+> below still compares the two readings over the population, and adopting the
+> left-hand column is still an inference from it. What is withdrawn is the
+> attribution — the inference was about which reading *this image's* values
+> support, not about the architecture disagreeing with a manual.
+> [`pd-pop-order-second-witness.md`](pd-pop-order-second-witness.md) corroborates
+> the reading by a route that does not use this table at all.
 
 The MCS-51 `lcall` pushes the return address high byte first, so the low byte
 is on top of the stack and `pop 0x83` (DPH) at `0x1052` would take the **low**
@@ -211,12 +233,32 @@ enumerated set looks like. `--simulate` above runs the same two orders through
 the two routines for one site, so both the mechanism and the comparison behind
 this are things a reader can reproduce rather than claims about the manual.
 
+**A second witness now exists, and it is not this comparison.** The main EC's
+`?C?CCASE` helper at `common,0x7151` opens with the identical
+`pop 0x83 ; pop 0x82`, and
+[`ec/annotations/bank-call-audit.md`](../../ec/annotations/bank-call-audit.md)
+§9 reads the byte order off it by looking at where its own `mov` instructions
+put the bytes — `0x7161` reads offset 0 of an entry into `r0` and `0x7168` puts it
+in `dph`, with offset 1 going to `dpl`. That is a different routine, in a
+different program, reached by a different argument, and the inference above now
+rests on **the comparison and `0x7151`** rather than on the comparison alone.
+[`pd-pop-order-second-witness.md`](pd-pop-order-second-witness.md) is the
+census: over all fifteen `lcall 0x7151` sites, every table is well-formed under
+this reading and none under the byte-swapped one, and the same walk started at
+the byte-swapped return address finds no table at any of the fifteen.
+`ec/tools/pd_pop_order_oracle.py` prints both columns. **That is a second witness
+to the reading** — see §7 and §8 below, where what it does and does not settle
+is set out.
+
 The mechanism above — the destination, the four-byte width, and the +4 resume —
 is **independent of the order**: none of `B`, the `0x82` constant or the four
 `lcall`s touches the stack. Only *which* code bytes get copied depends on it,
 and the evidence above is what fixes that. **Why this firmware behaves so is
-not established here**, and a one-line note on a compiler's push order is the
-obvious place to look next.
+not established here** — though note, per the correction at the head of §3,
+that this is not a question about the core departing from the architecture:
+`LCALL` pushes the low byte first and the order measured here is the expected
+one. What is not established is which routines execute and what the deposited
+cells are read for.
 
 ## 4. The four bytes: an enumerated set of 32-bit constants, not a per-site
 packed immediate
@@ -435,7 +477,14 @@ reason.
 - **Not what the constant means.** §4 stops at the enumeration. A round decimal
   value is not a named unit, and this file does not supply one.
 - **Not why the two `pop`s deliver high byte first.** §3 measures the order and
-  leaves the cause open.
+  what it infers, and the correction at the head of §3 withdraws the manual
+  attribution that used to hang off it — this firmware's order is the
+  architecture's, not a departure from it. **What the census adds is a second
+  witness to the *reading***, from the main EC's `0x7151` over its fifteen
+  dispatch tables ([`pd-pop-order-second-witness.md`](pd-pop-order-second-witness.md)),
+  so the §3 inference no longer rests on the comparison alone. **What is still
+  open is not the order** but what that order is *for*: the census is a decode
+  over committed tables and says nothing about which routines execute.
 - **Not who reads the deposited cells — answered elsewhere, and negatively.**
   [`pd-inline-arg-readers.md`](pd-inline-arg-readers.md) is the sweep; it finds
   no consumer by the methods it states, and §5's destinations and the strength
@@ -467,7 +516,15 @@ reason.
    and `0x98`-`0x9F` to `subb a,rn`. Noted here because it was found while
    reading the `90 xx xx` scan's neighbourhood and not acted on — a separate
    issue, with its own oracle work.
-3. **Why the two `pop`s deliver high byte first** (§3).
+3. **Why the two `pop`s deliver high byte first** (§3). The *reading* now has a
+   second witness from the main EC's `0x7151`
+   ([`pd-pop-order-second-witness.md`](pd-pop-order-second-witness.md)), and the
+   order itself is the MCS-51 one — `LCALL` pushes the low byte first, leaving
+   the high byte on top for `pop DPH` to take — so the manual is not a loose end
+   here. **What is left is the execution, not the order**: which of the fifteen
+   tables and which `0x104D` call sites actually run, and what the deposited
+   cells are consumed for. Both the census and this file's table are decodes over
+   committed bytes, so neither can answer that.
 4. **The consumer of the `??82` cells** (§5), and whether the 32-byte
    `dptr_load` scan can be replaced by a real backward decode for the 64 sites
    it misses. Both halves are done in

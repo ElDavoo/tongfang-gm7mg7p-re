@@ -75,6 +75,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`call-graph-unresolved.md`](call-graph-unresolved.md) — The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (issue #456)
 - [`call-site-framing-census.md`](call-site-framing-census.md) — Every bucket-A and bucket-C scan site against the committed listings: `anchored` predicts a real opcode across bucket A, and fails to in bucket C and in the fill band (issue #594)
 - [`callee-depth-n.md`](callee-depth-n.md) — `--callee-depth` follows a chain of handoffs, and the two `LIGHTBAR_BAT_*` sites that were unresolved at depth 1 are reads at depth 2
+- [`callee-set-dptr-census-blindspot.md`](callee-set-dptr-census-blindspot.md) — The two committed XDATA methods were blind at the same two bytes, and `agree` was the wrong word for it
 - [`capture-claim-denials-are-checks.md`](capture-claim-denials-are-checks.md) — A denial is the only shape a retraction takes, so `check_capture_claims.py` checks it instead of skipping it (issue #328)
 - [`capture-claims-docstring-surface.md`](capture-claims-docstring-surface.md) — The capture-claims docstring quotes its own run, so a test now holds it to the run (issue #991)
 - [`capture-filename-date-prefix.md`](capture-filename-date-prefix.md) — The capture root's date prefix and its flatness are measured, and a name breaking either is refused (issue #973)
@@ -144,6 +145,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading
 - [`export-ownership-relative-containment.md`](export-ownership-relative-containment.md) — `containment` at 1.00 cannot tell a copy from a fragment, so the size now
 - [`fan-duty-channel-075b-075c.md`](fan-duty-channel-075b-075c.md) — The 0x14 between 0x075B and 0x075C is the EC's own constant, and the committed captures cannot name either fan (issue #247)
+- [`fan-tachometer-addresses.md`](fan-tachometer-addresses.md) — The four §2 features resolve to five EC addresses, and one of them is not the byte the Windows service reads
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
 - [`findings-index-staleness.md`](findings-index-staleness.md) — The index is hand-edited by merges and nothing runs the check that would catch it (issue #1137)
 - [`fixture-empty-pointer-cells.md`](fixture-empty-pointer-cells.md) — The fixture's six empty cells are not a count, and the set is derivable where the six is not (issue #1006)
@@ -206,6 +208,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-no-ret-fallthrough-boundaries.md`](pd-no-ret-fallthrough-boundaries.md) — `pd` 0x34EF falls through into `pd` 0x34F2, and the two are entries over a shared tail rather than one routine split in half (issue #646)
 - [`pd-only-status-vocabulary.md`](pd-only-status-vocabulary.md) — `0x07CC` is re-graded, and the rule that grades it is now written down and
 - [`pd-pair-unmoved-one-fold.md`](pd-pair-unmoved-one-fold.md) — The de-duplicated census's `157`/`858` pd pair is unmoved because the pass finds one fold in the PD program and that fold names no XDATA byte (issue #1364)
+- [`pd-pop-order-second-witness.md`](pd-pop-order-second-witness.md) — The `pop` order at PD `0x1052`/`0x1054` has a second witness, and it corroborates §3's reading (issue #1143)
 - [`pd-sites-address-range.md`](pd-sites-address-range.md) — `--sites` refuses an address outside the PD region, and the arithmetic the census's row 10 declined to guard becomes a statement about the code
 - [`pd-unannotated-listings.md`](pd-unannotated-listings.md) — Every `pd` listing now has a row, and #471's figures did not move (issue #489)
 - [`pd-vector-handler-words.md`](pd-vector-handler-words.md) — Three of the `pd` image's five interrupt vectors are wired to a `ret`, and that is now derived rather than guessed (issue #1062)
