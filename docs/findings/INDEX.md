@@ -243,6 +243,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`sites-csv-regeneration.md`](sites-csv-regeneration.md) — The committed sites tables are re-derived from the firmware, not from the pages that print the command (issue #313)
 - [`sweep-summary-schema.md`](sweep-summary-schema.md) — The AC-plugin sweep summary has a schema, a reader, and two blind spots written down
 - [`system-id-probe-mark-labels.md`](system-id-probe-mark-labels.md) — The `0x0456` probe's mark labels are free-form by design, and its blank press records nothing (issue #1329)
+- [`t1wr-call-site-arms.md`](t1wr-call-site-arms.md) — No committed Windows input calls T1WR, and the CPU power limits do not go through it either
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
 - [`test-name-grader-coupling.md`](test-name-grader-coupling.md) — A test name that claims a coupling the test does not make
