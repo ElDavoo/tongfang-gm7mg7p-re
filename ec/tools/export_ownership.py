@@ -34,10 +34,10 @@ strictly larger. The committed map is the strict-subset derivation.
 
 **`MIN_BODY_STMTS` is not a tuning knob, it is the false-positive guard.** At
 0.90 a one-statement body is contained by any larger body that happens to
-spell that one statement, and 1,272 of the tree's 2,710 bodies are two
-statements or fewer -- 494 of them a single statement, 426 of those naming
-`return` and 111 exactly `return`. Left unguarded those fragments chain a whole
-program together: on this tree a floor of 1 produces a **562-member** class of
+spell that one statement, and the tree's bodies two statements or fewer are
+what `--self-test` counts against the floor. Left unguarded those fragments
+chain a whole program together: on this tree a floor of 1 produces a
+**562-member** class of
 `bank1` files, 155 of them the fragments above, whose two largest members --
 78 and 67 statements -- hold a containment score of **1.5%** of the smaller,
 and folding it would silently drop 561 routines out of the census. At 3 the
@@ -103,9 +103,10 @@ the `lost` set pinned in `xdata_register_map.py`'s `OWNERSHIP` oracle is empty.
 That set is a measurement, not an absence -- the plan stage's detector did
 lose 0x05E0, by folding that same file into a larger body
 (annotations/xdata-export-ownership.md 4). The default stays off for the
-measured reason instead: the flip re-keys 35 of the 430 clusters and breaks 5
-of the 10 hand names. Nothing here says a byte is absent, and a row this pass
-leaves alone is "not found by this method".
+measured reason instead: the flip moves `cluster_key`s and breaks most of the
+hand names, which `annotations/xdata-export-ownership.md` 5 carries with the run
+beside them. Nothing here says a byte is absent, and a row this pass leaves
+alone is "not found by this method".
 
 **The `body_lines` column counts statements, not lines.** It is the cardinality
 of the set the containment score divides by, which is the only figure the rule
