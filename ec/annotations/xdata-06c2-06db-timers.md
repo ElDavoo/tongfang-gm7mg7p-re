@@ -1310,8 +1310,8 @@ touching it, not the EC's sweep.
    wherever a reader looks and measurable against a committed map, it is still
    there, and removing it would not tidy the clustering up — it would merge
    this block into a larger one.** The flip is its own PR once the boundaries
-   land: measured, it re-keys 35 of 430 `cluster_key`s, breaks 5 of the 10 hand
-   names and adds 2 clusters (`xdata-export-ownership.md` §5,
+   land: measured, it re-keys most of the `cluster_key`s, breaks most of the
+   hand names and adds a cluster (`xdata-export-ownership.md` §5,
    `xdata-register-map.md` §4.6). Until then the `refs` columns are an upper
    bound on *distinct* references, which `ec/README.md` says at the bullet.
 6. ~~**`0x1664` is read as a gate by the block and has no `registers.yaml`

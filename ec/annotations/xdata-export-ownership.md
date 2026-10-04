@@ -111,11 +111,11 @@ larger. The committed map is the strict-subset derivation.
 ### The body floor, which is the load-bearing choice
 
 At 0.90 a **one-statement** body is contained by any larger body that happens
-to spell that one statement, and 1,276 of the tree's 2,714 bodies are two
-statements or fewer — 495 of them a single statement, of which 427 name
-`return` and 112 are exactly `return`. Unguarded, those fragments chain a
-whole program together. Every cell below is at the committed 0.90, so the
-three columns are one detector rather than two:
+to spell that one statement, and `OWNERSHIP_ORACLE["tiny_bodies"]` of the
+tree's bodies are two statements or fewer — most of them a single statement, and
+most of *those* naming `return`. Unguarded, those fragments chain a whole
+program together. Every cell below is at the committed 0.90, so the three
+columns are one detector rather than two:
 
 | body floor | containment classes | classes holding together only through a chain | largest class |
 |---:|---:|---:|---:|
@@ -166,15 +166,18 @@ and the per-row verdicts.)
 
 ## 4. What the committed tool measures on this tree
 
-`xdata-export-ownership.csv`, 2,714 rows — one per `index.csv` row — and
-`--check` holds it to a fresh derivation:
+`xdata-export-ownership.csv` holds one row per `index.csv` row, and `--check`
+holds it to a fresh derivation. `python3 ec/tools/export_ownership.py --self-test`
+prints every figure below beside the assertion that re-derives it, and holds
+them against `OWNERSHIP_ORACLE`; the table is a reading of that run rather than
+a separate record of it:
 
 | | |
 |---|---:|
 | containment classes | 56 |
 | non-owner rows (`shared=yes`) | 146 |
 | largest class | 42, owned by `bank1/8001.c` |
-| bodies too short to compare | 1,276 |
+| bodies too short to compare | 1,282 |
 | non-owners reaching their owner only by a chain | 29 |
 
 And what the pass does to the census, measured with

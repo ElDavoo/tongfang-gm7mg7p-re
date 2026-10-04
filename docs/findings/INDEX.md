@@ -141,6 +141,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`emit-csv-flag-honesty.md`](emit-csv-flag-honesty.md) — `--emit-csv` refused the three modes it knew about, and honoured nothing on the fourth
 - [`entry-namespace-two-copies.md`](entry-namespace-two-copies.md) — `isPlaceholderName()` had two definitions and they had drifted (issue #626)
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading
+- [`export-fold-identity-probes.md`](export-fold-identity-probes.md) — Two more mechanical criteria for the fold, and neither separates a re-export from a fragment
 - [`export-ownership-relative-containment.md`](export-ownership-relative-containment.md) — `containment` at 1.00 cannot tell a copy from a fragment, so the size now
 - [`fan-duty-channel-075b-075c.md`](fan-duty-channel-075b-075c.md) — The 0x14 between 0x075B and 0x075C is the EC's own constant, and the committed captures cannot name either fan (issue #247)
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
