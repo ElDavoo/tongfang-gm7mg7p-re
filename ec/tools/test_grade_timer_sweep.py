@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Offline checks for grade_timer_sweep.py. No EC is opened and no real
-capture is read: the captures below are constructed in a temporary directory,
-carry the `2026-01-01` placeholder date `testdata/README.md` reserves for
-constructed input, and say so in their first line.
+"""Offline checks for grade_timer_sweep.py. No EC is opened: the captures
+below are constructed in a temporary directory, carry the `2026-01-01`
+placeholder date `testdata/README.md` reserves for constructed input, and say
+so in their first line. The exception is `CommittedPairAgainstTheSuite`, which
+holds the one committed instance of the merged-run path the grader has: it
+reads the sweep procedure's own §4a and §4b captures from `evidence/`, and
+`merged-capture-against-committed-pair.md` is the write-up for what it finds.
 
 The first test is the one that keeps the grader honest about the code. PRE and
 POST are hand-typed lists; this re-reads them from the committed EC image, so
@@ -624,6 +627,114 @@ class Grading(unittest.TestCase):
                       '1 addresses watched', out)
         self.assertNotIn('union', out)
         self.assertNotIn('stated by', out)
+
+
+class CommittedPairAgainstTheSuite(unittest.TestCase):
+    """The merged-run path against the sweep procedure's own two captures.
+
+    Every other case here builds its pair, because the merged path had no
+    committed instance to build from. These two are committed and real: §4a
+    and §4b of `docs/hardware-tests/xdata-06c2-06db-sweep.md`, the
+    perturbation and suspend arms. **They are not two captures of one sweep**,
+    which is what that path is for -- they are two runs about fifteen minutes
+    apart with four operator actions between them. So this pair is a merge of
+    the wrong thing, and the refusal it draws is the correct answer rather
+    than a defect; what it holds is that the refusal behaves as designed on a
+    real pair. `merged-capture-against-committed-pair.md` is the write-up.
+
+    Reading committed captures is still reading files, so this is no more a
+    live test than the rest of the suite: nothing is opened but a CSV.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def pair(self):
+        """The two committed captures, resolved from the repository root."""
+        watch = HERE.parent.parent / 'evidence' / 'ec-watch'
+        return (watch / '2026-09-24-06c2-06db-suspend-linux.csv',
+                watch / '2026-09-24-06c2-06db-perturb-linux.csv')
+
+    def test_the_committed_pair_is_refused_on_one_address(self):
+        suspend, perturb = self.pair()
+        rc, out, err = run_quietly(str(suspend), str(perturb))
+        # Refused before `grade()`, so no half-printed report sits behind it.
+        self.assertEqual(rc, 1)
+        self.assertEqual(out, '')
+        # The one disagreement, with both values in the file each came from,
+        # so an operator can see which is which without re-running anything.
+        for named in ('0x06D6', '0x04', '0x03', str(suspend), str(perturb)):
+            self.assertIn(named, err)
+        self.assertIn('so no run was built', err)
+        # The discriminating assertion. Both captures state `# interval
+        # 0.01s`, so the level clause is the only one that can fire, and a
+        # run whose refusal named the interval instead would be a different
+        # defect from the one this pair shows.
+        self.assertNotIn('sample interval is', err)
+        # And every other address agrees, which is why the sentence names one
+        # address and not thirty-five. Read the levels rather than pinning a
+        # list, so a future capture that moves a second address names itself
+        # here instead of passing on a stale set.
+        here, there = self.baselines(suspend), self.baselines(perturb)
+        self.assertEqual(here['0x06D6'], '0x04')
+        self.assertEqual(there['0x06D6'], '0x03')
+        self.assertEqual({a: v for a, v in here.items() if a != '0x06D6'},
+                         {a: v for a, v in there.items() if a != '0x06D6'})
+        for addr in here:
+            if addr != '0x06D6':
+                self.assertNotIn(addr, err)
+
+    def test_the_same_pair_grades_once_its_one_disagreement_is_removed(self):
+        # The control, and what pins the refusal to the disagreement rather
+        # than to being handed two captures. The two files are copied into
+        # this case's temporary directory and `0x06D6`'s `# baseline` level
+        # is made the same in both. The committed files are not modified, and
+        # the copies are derived input rather than anything
+        # `testdata/README.md` indexes.
+        suspend, perturb = self.pair()
+        agreed_level = self.baselines(suspend)['0x06D6']
+        other_level = self.baselines(perturb)['0x06D6']
+        self.assertNotEqual(agreed_level, other_level,
+                            'the control needs a disagreement to remove, so a '
+                            'pair that already agrees is not measuring this')
+        agreed = []
+        for source, level in ((suspend, agreed_level), (perturb, other_level)):
+            body = source.read_text().replace(f'0x06D6={level}',
+                                              f'0x06D6={agreed_level}')
+            copy = self.dir / source.name
+            copy.write_text(body)
+            # The patch is one token on the one `# baseline` line and reaches
+            # nothing else, so this grades the committed pair's own rows and
+            # geometry rather than a capture built to pass. Checked rather
+            # than assumed, because a `replace` that hit a row too would still
+            # grade.
+            before, after = source.read_text().splitlines(), body.splitlines()
+            self.assertEqual(len(before), len(after))
+            touched = [i for i, (a, b) in enumerate(zip(before, after)) if a != b]
+            self.assertEqual(len(touched), 0 if level == agreed_level else 1)
+            for i in touched:
+                self.assertTrue(before[i].startswith('# baseline '))
+            agreed.append(str(copy))
+        rc, out, err = run_quietly(*agreed)
+        self.assertEqual(rc, 0, err)
+        self.assertEqual(err, '')
+        # Both labels `grader-merged-capture-sources.md` added, so the merge
+        # this pair would be is labelled rather than refused.
+        self.assertIn('the union of the 2 captures given', out)
+        self.assertIn('stated by 2 of 2 files', out)
+
+    @staticmethod
+    def baselines(capture):
+        """`{address: level}` from one capture's `# baseline` line."""
+        for line in capture.read_text().splitlines():
+            if line.startswith('# baseline '):
+                return dict(pair.split('=') for pair in
+                            line.split(': ', 1)[1].split())
+        raise AssertionError(f"{capture.name} states no `# baseline` line")
 
 
 if __name__ == '__main__':

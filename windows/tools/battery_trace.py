@@ -82,6 +82,32 @@ def main(argv=None):
     w = csv.writer(fh)
     if fh.tell() == 0:
         w.writerow(cols)
+    else:
+        # The header already in the file has to be this tool's before anything
+        # is appended to it. fh.tell() only asks whether the file is empty, and
+        # both captures this tool wrote are several runs appending into one
+        # file, so that is the normal case rather than an edge -- and it is the
+        # wrong question: appending fourteen current-shape columns to a file
+        # whose header is a script's eleven puts `charging` where the reader
+        # indexing by that header expects `status`.
+        #
+        # Compared as the raw first line rather than through csv.reader, because
+        # these headers are unquoted ASCII and csv.writer emits them unquoted,
+        # so the strings are equal byte for byte and no quoting question arises.
+        # It is a second open(), and a read: "a" does not truncate, nothing has
+        # been written yet, and the explicit close below leaves the file
+        # byte-unchanged on this path -- which is why the refusal sits outside
+        # the try and does its own close rather than leaning on the finally.
+        with open(args.csv, "r", newline="", encoding="utf-8") as r:
+            found = r.readline().rstrip("\r\n")
+        if found != ",".join(cols):
+            fh.close()
+            print(f"error: {args.csv} already holds a header this tool did "
+                  f"not write:\n  in the file:  {found}\n  this tool "
+                  f"writes: {','.join(cols)}\nAppending would interleave the "
+                  f"two shapes. Write to a new file, or point --csv at one "
+                  f"this tool wrote.", file=sys.stderr)
+            return 1
 
     t0 = time.time()
     try:

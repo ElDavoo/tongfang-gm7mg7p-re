@@ -19,9 +19,40 @@ ECM="python3 ec/tools/ecmem.py"
 REGS=/sys/kernel/debug/regmap/INOU0000:00/registers
 STEP=${STEP:-10}
 
+HDR='ts,phase,ac,status,capacity,charge_now,current_now,voltage_now,mem7b9,mem7d0,regmap7b9'
+
+# Compare before appending. This script used to append its `#` line and its
+# header on every run, so a second run on one date put a second header in the
+# middle of the file; and appending into a capture of some other shape
+# interleaves two column sets in one file, where a reader indexing by the
+# file's own header reads the wrong field. A matching header appends, which is
+# the normal case -- the default OUT is dated, so a same-date second run is a
+# continuation and not a collision.
+#
+# The header is the first line that is not a `#` annotation, since row 0 is the
+# operator's own note and later `#` rows are interleaved by hand. An empty
+# match means a file that has annotations and no header yet -- an interrupted
+# first run -- and it takes the header rather than being called a mismatch.
+# `set -e` is deliberately off (a read of an absent register is not fatal
+# here), so the refusal exits explicitly.
+fresh=0
+if [ -s "$OUT" ]; then
+  have=$(grep -m1 -v '^#' "$OUT" || true)
+  if [ -n "$have" ] && [ "$have" != "$HDR" ]; then
+    printf 'error: %s already holds a header this script did not write\n' \
+      "$OUT" >&2
+    printf '  in the file:  %s\n  this script: %s\n' "$have" "$HDR" >&2
+    printf 'Appending would interleave the two shapes. Write to a new file.\n' >&2
+    exit 1
+  fi
+  [ -z "$have" ] && fresh=1
+else
+  fresh=1
+fi
+
 orig=$($ECM read 0x7b9 0x7d0 | tr '\n' ' ')
 echo "# original: $orig" >> "$OUT"
-echo "ts,phase,ac,status,capacity,charge_now,current_now,voltage_now,mem7b9,mem7d0,regmap7b9" >> "$OUT"
+[ "$fresh" -eq 1 ] && echo "$HDR" >> "$OUT"
 
 sample() {
   local phase=$1 n=$2 i
