@@ -96,6 +96,21 @@ installer payloads, and anything in firmware — is listed in that tool's
 output and in `../../docs/findings.md` §4o. A caller outside every
 committed input is not excluded; a caller inside one is.
 
+**The same negative was reached again, by call site rather than by value
+(2026-10-04, issue #1343), and the two agree — but that is a coincidence of
+methods, not a fact worth assuming.** The census above searches for the
+argument *value*, and thirteen of `T1WR`'s nineteen `Arg0` values are two hex
+digits it had to reject as ambiguous against fan levels and ILSpy markers.
+`../tools/t1wr_sites.py` instead reads the buffer the `0x9C40A4DC` handler
+builds from `SystemBuffer[0..3]`, which makes the `Arg0` a property of the
+call site, so no value is ambiguous. It also covers the native layer this
+paragraph cannot: a disassembly listing per committed PE, where the one
+`mov $0x9c40a4dc,%edx` is this file's own `TempWrite1` and no committed PE calls
+a `TempWrite*` export by a direct call to its address. Its reachability table
+finds no caller for any `T1WR` arm. See
+`../../docs/findings/t1wr-call-site-arms.md`, which also names what the native
+layer cannot see.
+
 ## `ReadEC` / `WriteEC` in full
 
 `ReadEC` (`0x180003410`) takes the register address in `ecx` and returns

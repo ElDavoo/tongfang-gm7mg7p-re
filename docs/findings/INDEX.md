@@ -146,6 +146,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading
 - [`export-ownership-relative-containment.md`](export-ownership-relative-containment.md) — `containment` at 1.00 cannot tell a copy from a fragment, so the size now
 - [`fan-duty-channel-075b-075c.md`](fan-duty-channel-075b-075c.md) — The 0x14 between 0x075B and 0x075C is the EC's own constant, and the committed captures cannot name either fan (issue #247)
+- [`fan-tachometer-addresses.md`](fan-tachometer-addresses.md) — The four §2 features resolve to five EC addresses, and one of them is not the byte the Windows service reads
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
 - [`findings-index-staleness.md`](findings-index-staleness.md) — The index is hand-edited by merges and nothing runs the check that would catch it (issue #1137)
 - [`fixture-empty-pointer-cells.md`](fixture-empty-pointer-cells.md) — The fixture's six empty cells are not a count, and the set is derivable where the six is not (issue #1006)
@@ -243,6 +244,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`sites-csv-regeneration.md`](sites-csv-regeneration.md) — The committed sites tables are re-derived from the firmware, not from the pages that print the command (issue #313)
 - [`sweep-summary-schema.md`](sweep-summary-schema.md) — The AC-plugin sweep summary has a schema, a reader, and two blind spots written down
 - [`system-id-probe-mark-labels.md`](system-id-probe-mark-labels.md) — The `0x0456` probe's mark labels are free-form by design, and its blank press records nothing (issue #1329)
+- [`t1wr-call-site-arms.md`](t1wr-call-site-arms.md) — No committed Windows input calls T1WR, and the CPU power limits do not go through it either
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
 - [`test-name-grader-coupling.md`](test-name-grader-coupling.md) — A test name that claims a coupling the test does not make
@@ -305,6 +307,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-cluster-refs-projection.md`](xdata-cluster-refs-projection.md) — A cluster's `refs` is the sum of its members' `refs_<program>`, and not of their `refs` (issue #343)
 - [`xdata-decile-cause-clamp-coverage.md`](xdata-decile-cause-clamp-coverage.md) — The `deciles()` floor had a case on one of its two callers and none on the other (issue #922)
 - [`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md) — `deciles()` had a floor in its docstring and none in its code, and the report was already printing the stretch (issue #889)
+- [`xdata-direction-invariant-population.md`](xdata-direction-invariant-population.md) — The direction invariant's population is measured, not restated
 - [`xdata-dispatch-position-pins.md`](xdata-dispatch-position-pins.md) — The three dispatch positions the docstring names are pinned on synthetic source
 - [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md) — The dispatch reader reads statement position too, and one boundary it does not
 - [`xdata-export-ownership-page-census.md`](xdata-export-ownership-page-census.md) — Re-deriving the export-ownership page: every figure on `xdata-export-ownership.md`, from a fresh run (issue #654)

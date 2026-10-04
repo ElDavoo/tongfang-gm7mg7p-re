@@ -15,8 +15,8 @@ argument is that a name is a human addition and an id is a rank, so a
 regeneration that rewrote the committed census to match the prose would invert
 the thing the section is about. Every run below writes to `/tmp`, and that is
 structural rather than a promise this file makes: `args.out_registers ==
-OUT_REGISTERS` at `ec/tools/xdata_register_map.py:4448` refuses `--no-eq-guard`
-with them, not the `--check` refusal at `:4439`.
+OUT_REGISTERS` at `ec/tools/xdata_register_map.py:4519` refuses `--no-eq-guard`
+with them, not the `--check` refusal at `:4510`.
 
 ## What the committed census holds, with a parser rather than a summary
 
