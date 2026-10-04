@@ -540,10 +540,10 @@ def section_provenance_reader(grader, tmp: str) -> None:
 # claim was wrong, and the two need a reader, not a guess.
 CITATIONS = [
     # -- writers -------------------------------------------------------------
-    ("windows/tools/ec_watch.py", 509,
+    ("windows/tools/ec_watch.py", 519,
      'self._sink.row([ts, "MARK", "", label,',
      "writer: the Marker._loop the issue's shape A is scoped to"),
-    ("windows/tools/system_id_probe.py", 268,
+    ("windows/tools/system_id_probe.py", 331,
      'self._sink.row([ts, "MARK", "", label, ""])',
      "writer: a third class, importing no ec_watch.Marker"),
     ("ec/tools/ec_timer_capture.py", 177, 'sink.row([ts, "MARK", "", label, ""])',
@@ -577,14 +577,14 @@ CITATIONS = [
     # `skippable_row`, so a name the change rows do not use costs none of
     # them. The third entry is the one left alone, and the reason it is
     # named is that "left alone" is a decision rather than an omission.
-    ("windows/tools/ec_watch.py", 155,
+    ("windows/tools/ec_watch.py", 165,
      'self.row(["ts", "addr", "old", "new", "provenance"])',
      "the 0751 family's header, widened to name the fifth field"),
     ("ec/tools/ec_timer_capture.py", 321,
      'sink.row(["ts", "addr", "old", "new", "provenance"])',
      "the timer family's own header, which the measurement above never "
      "counted as a header at all"),
-    ("windows/tools/system_id_probe.py", 221, "self.row(CSV_HEADER)",
+    ("windows/tools/system_id_probe.py", 256, "self.row(CSV_HEADER)",
      "a header deliberately not widened: `ts,sweep,0x…,branch,implied` is a "
      "different schema, and its names are not this row's names"),
     # -- readers that index the row -----------------------------------------
@@ -673,7 +673,7 @@ CITATIONS = [
      "writer"),
     # `:320` -> `:322` by #364's edit to that suite, which put two lines above
     # it; the text the site quotes is unchanged.
-    ("windows/tools/test_system_id_probe.py", 323,
+    ("windows/tools/test_system_id_probe.py", 418,
      "'MARK,,GPU mode -> dGPU,'",
      "the same in the other suite, so the blind side is the tree's and not "
      "one file's"),
@@ -739,10 +739,10 @@ CITATIONS = [
     ("ec/tools/grade_timer_sweep.py", 355, 'if "resumed" in r[3]:',
      "the one phrase grade_timer_sweep reads a MARK row for"),
     # -- the notice, the canary, and the `#` namespace -----------------------
-    ("windows/tools/ec_watch.py", 295,
+    ("windows/tools/ec_watch.py", 305,
      "def warn_unchecked_marks(path, existing_findings):",
      "the notice the measurement exists for"),
-    ("windows/tools/ec_watch.py", 381,
+    ("windows/tools/ec_watch.py", 391,
      "accepted, refused, unplaceable = existing_findings(path)",
      "the notice's one call into the grader's reader"),
     ("windows/tools/test_manual_fan_ctrl_probe.py", 517,

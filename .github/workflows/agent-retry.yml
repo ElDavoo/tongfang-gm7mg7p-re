@@ -261,6 +261,7 @@ jobs:
           #
           # LOCAL CHANGE (2026-10-02): 2 -> 4, in proportion to MAX_PARALLEL_AGENTS.
           INTAKE_RESERVED: '4'
+          MERGE_PATH_MIN: '2'
         run: |
           set -euo pipefail
 
@@ -305,6 +306,19 @@ jobs:
           echo "$op slot(s) for the conflict/review/follow-up sweeps, $(( free - op )) held for intake"
           echo "FREE_SLOTS=$free" >> "$GITHUB_ENV"
           echo "OP_SLOTS=$op" >> "$GITHUB_ENV"
+          # LOCAL CHANGE (2026-10-04): a third budget, for the two sweeps that unblock an open
+          # pull request -- resolving a conflict with main and restarting a review that never
+          # came. They used to draw on OP_SLOTS, which is what is left after the intake
+          # reserve, and with the implement stage filling the pipeline that was zero on every
+          # run: no conflict was resolved between 2026-10-01 and 2026-10-04 unless a human
+          # dispatched it, and #1875 sat approved and conflicting for six hours. Finishing a
+          # pull request now comes before starting an issue: these two sweeps may spend every
+          # free slot, and never fewer than MERGE_PATH_MIN even when none is free (a run past the
+          # cap queues; it does not fail). Their demand is bounded by the open pull requests, so
+          # they cannot starve intake the way an unbounded sweep did, and every slot they take
+          # comes out of the intake and follow-up budgets as well.
+          merge=$(( free > MERGE_PATH_MIN ? free : MERGE_PATH_MIN ))
+          echo "MERGE_SLOTS=$merge" >> "$GITHUB_ENV"
           if [ "$free" -gt 0 ]; then
             echo "idle=true" >> "$GITHUB_OUTPUT"
           else
@@ -349,6 +363,14 @@ jobs:
             OP_SLOTS=$(( OP_SLOTS - 1 ))
             echo "OP_SLOTS=$OP_SLOTS" >> "$GITHUB_ENV"
           }
+          # `take_merge_slot`: spend one of the merge-path sweeps' slots, and the same slot out of
+          # the other two budgets where they still have one, so the sweeps after these see it gone.
+          take_merge_slot() {
+            MERGE_SLOTS=$(( MERGE_SLOTS - 1 ))
+            echo "MERGE_SLOTS=$MERGE_SLOTS" >> "$GITHUB_ENV"
+            if [ "$FREE_SLOTS" -gt 0 ]; then take_slot; fi
+            if [ "$OP_SLOTS" -gt 0 ]; then take_op_slot; fi
+          }
           # Pick order for the two queue sweeps. Strict oldest-first was the intent, but the head
           # of the queue never clears: an issue too large to finish in one pull request holds it
           # indefinitely, and #20 -- "full symbolized disassembly of the EC firmware" -- is
@@ -387,7 +409,7 @@ jobs:
       # written to conflicting.txt, dispatched or not, so the review sweep below does not restart
       # a review that cannot run.
       - name: Resolve the next pull request that conflicts with main
-        if: steps.idle.outputs.idle == 'true' && env.OP_SLOTS != '0'
+        if: env.MERGE_SLOTS != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -412,15 +434,15 @@ jobs:
             done
             [ "$state" = CONFLICTING ] || continue
             echo "$pr" >> "$RUNNER_TEMP/conflicting.txt"
-            [ "$OP_SLOTS" -gt 0 ] || continue
+            [ "$MERGE_SLOTS" -gt 0 ] || continue
             if busy_pr "$pr" "$branch"; then
               continue
             fi
             echo "PR #$pr conflicts with main — dispatching the conflicts stage"
             GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-conflicts.yml -f pr="$pr"
-            take_op_slot
+            take_merge_slot
           done 3<<<"$prs"
-          echo "conflict sweep done, $OP_SLOTS opportunistic slot(s) left"
+          echo "conflict sweep done, $MERGE_SLOTS merge-path slot(s) left"
 
       # A review displaced out of the group. agent-review.yml declares the group at workflow level
       # (it calls the reusable fix stage, see README.md), so a cancelled review leaves no job and no
@@ -438,7 +460,7 @@ jobs:
       # need more than three restarts across its commits, but three on the same commit is a
       # review that fails before recording anything, every time.
       - name: Review the next pull request whose review never came
-        if: steps.idle.outputs.idle == 'true' && env.OP_SLOTS != '0'
+        if: env.MERGE_SLOTS != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -461,7 +483,7 @@ jobs:
 
           . "$RUNNER_TEMP/slots.sh"
           while read -r pr sha <&3; do
-            [ "$OP_SLOTS" -gt 0 ] || break
+            [ "$MERGE_SLOTS" -gt 0 ] || break
             # No CI and no review can run on a conflicting head; the conflict sweep owns it.
             if grep -qxF "$pr" "$RUNNER_TEMP/conflicting.txt"; then
               continue
@@ -491,16 +513,16 @@ jobs:
               continue
             fi
 
-            echo "pipeline idle — restarting the review of PR #$pr at ${sha:0:7}"
+            echo "restarting the review of PR #$pr at ${sha:0:7}"
             gh pr comment "$pr" --body "Restarting the review — this pull request's review never got its turn. <!-- agent-review-queued sha=${sha} -->"
             GH_TOKEN="$DISPATCH_TOKEN" gh pr close "$pr"
             GH_TOKEN="$DISPATCH_TOKEN" gh pr reopen "$pr"
             GH_TOKEN="$DISPATCH_TOKEN" gh pr merge --auto --squash "$pr" \
               || echo "::warning::could not re-arm auto-merge on PR #$pr"
-            take_op_slot
+            take_merge_slot
           done 3<<<"$prs"
 
-          echo "review sweep done, $OP_SLOTS opportunistic slot(s) left"
+          echo "review sweep done, $MERGE_SLOTS merge-path slot(s) left"
 
       # Not in the upstream template: agent-followups.yml is this repository's own stage, and
       # it can be displaced like any other. Its trace is a recent merge with neither a finished

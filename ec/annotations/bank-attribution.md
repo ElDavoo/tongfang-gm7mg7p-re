@@ -139,6 +139,20 @@ calls land in carries 5. **This is corroboration and not proof.** A walk that
 walked into a data table five times would score well, and the 10 deepest bank-0
 addresses are on 10 paths without any of that being evidence they are code.
 
+**`10233` is not 10,233 separate weak claims, and one byte value is a large
+part of it.** Of bank0's single-path addresses, **673 are `0x22` bytes** and
+**151** of those are inside the two `ret` runs this tool's walk reaches. A byte
+in a `ret` run reads as path count 1 by construction — there is nothing in it
+for a second path to disagree about — so the `1` column carries a run of filler
+that is not a weak claim at all, in either direction. Measured by
+`ec/tools/census_closure_functions.py` against the firmware, which prints this
+breakdown under *the `1 path` column*; written up in
+[closure-vs-function-inventory.md](../../docs/findings/closure-vs-function-inventory.md).
+`10233` there is the **path count** (`closure()`'s `reached[addr]`), which is
+what the table above tabulates — not `len(who[addr])`, the entry-point count,
+which is a larger set over the same addresses. The number above is the walk's
+and is not changed by this.
+
 ## 3. The four verdicts, and the three numbers drawn from them
 
 A bucket-B pair is `(caller bank b, target T)`. The closure is computed
@@ -306,6 +320,44 @@ after `0x8038` are never decoded. The walk did not decline to follow anything.
 mis-decode **is** followed to `0x808E`, and that `0x8039`–`0x8053` are **not** —
 so the failure mode stays visible in the form it actually takes, and the
 one-byte spread stays a measured fact rather than a claim.
+
+> **Correction, 2026-10-04 (issue #1080): the last clause of the paragraph above
+> is wrong, and the tables do distinguish the two — but not on spans.**
+> "nothing in the tables distinguishes that from a real one" was true of this
+> section's own two CSVs and false about the tree.
+> `ec/decompiled/index.csv` already names `0x8038` `index_table_base`
+> (`seed_basis=annotation`), and `ec/annotations/ghidra-functions.csv` carries a
+> row for it whose comment says in prose that the bytes are the eight-entry
+> dispatch table and not a function.
+>
+> **The proposed test — "`0x808E` is in no row of the index" — does not hold on
+> this tree, and asserting it would have been wrong.** `bank0 0x808E` is inside
+> `store_byte_through_0a59_into_0600`, the row at `0x806C` of size 40. What
+> does distinguish it is instruction boundaries: **no committed `.asm` starts an
+> instruction at `0x808E`.** The listing holding those bytes draws `0x808C`
+> `lcall 0xbe7e` — three bytes, `0x808C`-`0x808E` — straight across it. So the
+> walk decoded table data as `sjmp 0x808E` and landed on a byte no listing ever
+> decoded an instruction at.
+>
+> **No listing starts an instruction at this address** is *not found by this
+> method*, never "this is not code": it is what one decompilation of one image
+> decoded. The tool prints the figure and does not pin it, because it reads
+> `ec/decompiled/*.asm`, which a later annotation regenerates — so a redraw of
+> those bytes is not a regression and must not be graded as one. What is pinned
+> instead is the reason underneath it: bank0 `0x808C` reads `12 be 7e` in the
+> committed firmware, a three-byte `lcall 0xbe7e` over `0x808C`-`0x808E`, which
+> no merge can move.
+> `docs/findings/closure-vs-function-inventory.md` carries the measurement.
+
+**A `ret` run raises no bound either, which is the same blind spot by another
+route.** §5's accounting rests on a run whose right-hand edge a walk stopped at,
+and a run of `ret` bytes produces no such edge: each `ret` ends a flow cleanly,
+so a walk that entered one would descend into it and stop at the first byte,
+having learned nothing. `0xBF54`–`0xBFDD` is the largest such block in bank0,
+and it is reached almost entirely by *seeds* rather than by the walk — the
+reframe and its measurement are in
+[closure-vs-function-inventory.md](../../docs/findings/closure-vs-function-inventory.md).
+What §5's `bounds` column cannot see is the reason.
 
 ## 5. What the closure cannot see, measured
 
@@ -600,6 +652,15 @@ lands on code at all.
   caveat in §8 about what those runs are.
 - **A function-boundary set**, which is the only thing that would turn
   "attributed by this closure" into a claim a banked entry point can carry.
+  One already exists for this image and is not this file's:
+  `ec/decompiled/index.csv`, measured against the closure by
+  `ec/tools/census_closure_functions.py`, whose write-up is
+  [closure-vs-function-inventory.md](../../docs/findings/closure-vs-function-inventory.md).
+  §8's caveat applies in the other direction — a byte-scan-seeded row is no more
+  a boundary than a byte-derived walk is a frame — and the census reports the
+  `call-target` rows separately for that reason. What an inventory cut by
+  Ghidra does not settle is this bullet's actual question, which is what a
+  *banked entry point* may carry.
 - **`offset_for_runtime()`** stays as it is. Its same-bank reading is
   contradicted by nothing here: 568 pairs agree with it, 398 are outside this
   closure's reach, and 207 are the open population above.
