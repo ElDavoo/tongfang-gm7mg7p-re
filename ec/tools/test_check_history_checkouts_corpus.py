@@ -86,7 +86,10 @@ CONTROL_SITES = (
 # derived, and the two claims they carried that named `ci.yml` without a job
 # were found by it and corrected per `docs/findings.md` §4a-4d. A file leaving
 # or entering the population is a finding about the tree and this is where it
-# is read.
+# is read. #1054's `history-checkout-yaml-census.md` entered the same way, for
+# a different reason: what it carries is a fenced transcript of a scratch tree's
+# run, which the quotation rule reports rather than judges, so the entry is the
+# same kind of arrival and not a claim of the tree's own.
 EXPECTED_CORPUS_FILES = (
     ".github/scripts/agent-gates.sh",
     "docs/agent-pipeline.md",
@@ -98,6 +101,7 @@ EXPECTED_CORPUS_FILES = (
     "docs/findings/history-checkout-prompt-reach.md",
     "docs/findings/history-checkout-run-contract.md",
     "docs/findings/history-checkout-site-identity.md",
+    "docs/findings/history-checkout-yaml-census.md",
     "docs/findings/history-checkouts-gate-wiring.md",
     "docs/findings/provenance-clone-depth-behaviour.md",
     "docs/findings/testdata-index-repair-census.md",

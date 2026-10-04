@@ -162,6 +162,23 @@ above exists to shed; and the line a marker in a *folded* prompt block is
 reported on, which is the block's first rather than the marker's own, because
 folding has already joined the lines by the time the text is a value.
 
+**The census reads both spellings, and the reason it used to read one is a
+correction rather than a rule.** `load_workflows()` matched `*.yml` on the
+stated ground that *"a glob that quietly widened to both would report a file
+the pipeline does not read as one it does"* -- which is not what Actions does,
+which reads `.yml` and `.yaml` interchangeably, so there was no such file to
+report. The argument was about the cost of an over-report and priced that cost
+at silence, which it was while an unread workflow only went missing from the
+table. It is not any more, now that `main()` refuses a census of zero
+workflows: a tree whose workflows are spelled `.yaml` is told its census is
+broken and exits 1, and that diagnosis points at the tree's files when the
+fault is this glob. `SCAN_EXTENSIONS` below already read `.yaml`, so the prose
+half was holding a `.yaml` file's sentences to a standard its own measured
+half would not have applied to the workflow beside them. **The bound is the two
+suffixes**: a `.txt` or a `.json` sitting in `.github/workflows/` is not a
+workflow file, and a later reader widening this to everything YAML-ish is not
+fixing the defect this paragraph records.
+
 Usage:
     python3 ec/tools/check_history_checkouts.py            # the committed tree
     python3 ec/tools/check_history_checkouts.py --repo DIR # a scratch tree
@@ -181,6 +198,14 @@ REPO = os.path.join(HERE, os.pardir, os.pardir)
 # The relative form, so the same three calls read the same path whether the
 # repository root is this one or the scratch tree a case points `--repo` at.
 WORKFLOW_DIR = os.path.join(".github", "workflows")
+
+# The two spellings a workflow file may carry, and `load_workflows()` reads
+# both. A named pair rather than a second literal at the glob, because the
+# empty-directory reason it prints has to name the same two and a reader
+# comparing that line against the code above it should not be looking for a
+# third place. `.yaml` is here because Actions reads it, not because the
+# committed tree happens to hold one; nothing else is, and the bound is a test.
+WORKFLOW_SUFFIXES = (".yml", ".yaml")
 
 # `actions/checkout`'s own default, which is what a step that states no
 # `fetch-depth` gets. It is written here rather than treated as unknown because
@@ -549,22 +574,32 @@ def load_workflow(path):
 
 
 def load_workflows(repo):
-    """(workflows, unreadable) for every `*.yml` under the repository's own.
+    """(workflows, unreadable) for every workflow under the repository's own.
 
-    `*.yml` and not `*.yaml` because that is what the directory holds, and a
-    glob that quietly widened to both would report a file the pipeline does not
-    read as one it does.
+    Both suffixes in `WORKFLOW_SUFFIXES`, because Actions reads both. **It read
+    `*.yml` alone, and the reason it recorded for that is the correction rather
+    than the rule:** *"a glob that quietly widened to both would report a file
+    the pipeline does not read as one it does"* is not what Actions does with
+    the two spellings, and while the consequence of the narrow glob was silence
+    the argument held the cost at nothing. It stopped holding when `main()`
+    began refusing a census of zero workflows, because a tree whose workflows
+    are spelled `.yaml` is a tree this tool reads perfectly well and was told
+    its census was broken. That is also what the empty-directory reason below
+    has to stay true of: `ci.yaml` is a file the pipeline runs, so a directory
+    holding one does not hold "no `*.yml`".
     """
     directory = os.path.join(repo, WORKFLOW_DIR)
     try:
-        names = sorted(n for n in os.listdir(directory) if n.endswith(".yml"))
+        names = sorted(n for n in os.listdir(directory)
+                       if n.endswith(WORKFLOW_SUFFIXES))
     except OSError as exc:
         # `{}` and not `[]`, and the same on the return below: the first element
         # is read as a mapping by every caller, so a list here crashed the run
         # on a tree it was asked to refuse.
         return {}, [f"{WORKFLOW_DIR}/: not listed ({exc.strerror})"]
     if not names:
-        return {}, [f"{WORKFLOW_DIR}/: no *.yml in it"]
+        return {}, [f"{WORKFLOW_DIR}/: no "
+                    f"{' or '.join('*' + s for s in WORKFLOW_SUFFIXES)} in it"]
     workflows, unreadable = {}, []
     for name in names:
         got, jobs, why = load_workflow(os.path.join(directory, name))
