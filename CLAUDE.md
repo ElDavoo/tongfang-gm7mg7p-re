@@ -194,6 +194,13 @@ trusting one of theirs: every row says whether it was verified against
   - `docs/findings/test-line-pin-census.md` and its per-pin table record the
     tree they were measured on, and nothing holds them to the current one any
     more. Leave them alone unless the issue is about them.
+  - The XDATA census is not pinned either (2026-10-04). Seeding a routine or
+    naming a register moves its totals, so `xdata_register_map.py --self-test`
+    asserts relations (the columns partition the census, the ownership pass
+    loses no address) and never a figure. The committed CSVs, which `--check`
+    regenerates, are where a move shows up. Do not add a figure of the census
+    back to a constant, a test or prose; `check_census_figures.py --print`
+    prints them.
 - **Cite code by name, not by line number.** Write
   `grade_0751_isolation.py`'s `build_windows`, not `grade_0751_isolation.py:1981`.
   If the line itself is the point, pin it to a commit:

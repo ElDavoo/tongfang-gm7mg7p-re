@@ -20,8 +20,8 @@ reads from the exit code exactly like "found nothing".
 The fixtures are small enough to write inline, which keeps each case readable as
 the error it is about rather than as a diff against a stored file. They are not
 the real `0x0860` sites, but they are the real *shapes* -- the `:49`
-shorthand, the merged `0x25CE4`/`0x25CFC` row, the two correction paragraphs
-above `HAND_CHECKED["0x0860"]` -- and the last class is the real thing, which is
+shorthand, the merged `0x25CE4`/`0x25CFC` row -- and the last class is the
+real thing, which is
 what says the committed prose and the committed census currently agree.
 """
 import contextlib
@@ -87,34 +87,6 @@ SITES = [
      'census_refs': 'none'},
 ]
 
-# The `HAND_CHECKED` comment, in the committed shape: one live paragraph, a
-# `#`-only separator, then the two dated corrections that quote the wrong line
-# numbers verbatim. `bank0/D091.c's` names the file without claiming a line, and
-# the `(lines 45, 49, 71, 72, 75, 76 and 77)` list that follows is bound to it
-# -- the two ways this comment cites the same file, and the reason
-# `parse_citations` is a single left-to-right alternation.
-MAP = '\n'.join([
-    'HAND_CHECKED = {',
-    '    # 17 references: 14 `==` inside bank0/D091.c\'s dispatch test (lines 45, 49,',
-    '    # 71, 72, 75, 76 and 77 -- the later ones are multi-line boolean chains),',
-    '    # the dispatch argument itself at bank0/D091.c:84, a `= 0xff` at',
-    '    # bank0/D281.c:19 and a `= 0` at bank0/D289.c:18. Two stores in two',
-    '    # functions.',
-    '    #',
-    '    # CORRECTION (2026-09-24, issue #281): the line numbers above were 30, 34,',
-    '    # 56, 57, 60, 61 and 62, with the dispatch argument at :69.',
-    '    #',
-    '    # CORRECTION (2026-09-25, issue #752): the line numbers above were 43, 47, 69,',
-    '    # 70, 73, 74 and 75, with the dispatch argument at :81, `= 0xff` at',
-    '    # bank0/D281.c:18 and `= 0` at bank0/D289.c:17.',
-    '    "0x0860": {"read": 14, "write": 2, "read+write": 0, "passed-to-call": 1,',
-    '               "address-taken": 0, "writers": 2},',
-    '    # A second entry, whose comment is not this one and must not be read as it.',
-    '    # It cites bank0/F11C.c:99, which the CSV does not hold for 0x0860.',
-    '    "0x0440": {"read": 181, "write": 0},',
-    '}',
-])
-
 # A generated CSV small enough to read, with one row per declared subject so a
 # nudge of one line is a real move and not a coincidence. `0x0860` at line 2 and
 # `0x0800` at line 3 are the two Rule 3 resolves in these cases.
@@ -144,12 +116,6 @@ def site_problems(text=TABLE, rows=None):
     """Rule 1's (problems, checked, skipped) over an inline table."""
     return ccl.check_site_table(PAGE, text, SITES if rows is None else rows,
                                 False)
-
-
-def hand_problems(text=MAP, rows=None):
-    """Rule 2's (problems, checked, skipped) over an inline module."""
-    return ccl.check_hand_checked('xdata_register_map.py', text,
-                                 SITES if rows is None else rows, False)
 
 
 def saying(check, *needles, **kwargs) -> list:
@@ -209,7 +175,7 @@ class Rule1SiteTable(unittest.TestCase):
 
     def test_a_bare_list_binds_to_the_file_named_ahead_of_it(self):
         # `bank0/D091.c's` names the file and claims no line, which is the shape
-        # the `HAND_CHECKED` comment writes its seven `==` lines in.
+        # the removed `HAND_CHECKED` comment wrote its seven `==` lines in.
         self.assertEqual(
             ccl.parse_citations("inside bank0/D091.c's test (lines 45, 49, 71 and 72)"),
             {('D091.c', 45), ('D091.c', 49), ('D091.c', 71), ('D091.c', 72)})
@@ -290,67 +256,6 @@ class Rule1SiteTable(unittest.TestCase):
             '| bank0 `0xD281` | `0x0860` | `0xFF` at `0xD286` |',
         ])
         self.assertEqual(site_problems(text=text), ([], 9, 0))
-
-
-class Rule2HandChecked(unittest.TestCase):
-    """The `HAND_CHECKED` comment against the same CSV, as an unordered union."""
-
-    def test_the_base_fixture_agrees(self):
-        problems, checked, skipped = hand_problems()
-        self.assertEqual(problems, [])
-        # 10 is the union over the six mapped sites: eight `D091.c` lines (the
-        # seven `==` tests and the dispatch argument) and the two stores.
-        self.assertEqual(checked, 10)
-        # Both dated corrections above the entry are passed over, and the count
-        # says so rather than the run being quiet about it. It is 2 and not
-        # 17 because the tally is of citations the parser recognised, and the
-        # #281 correction names seven bare line numbers with no file ahead of
-        # them -- a number with no file to be a line *of* is not something this
-        # tool can count, and inventing a file for it is the move it refuses.
-        # The #752 correction names two `.c` lines and both are counted.
-        self.assertEqual(skipped, 2)
-
-    def test_a_citation_that_does_not_resolve_is_rejected(self):
-        text = MAP.replace('bank0/D281.c:19', 'bank0/D281.c:18')
-        self.assertTrue(saying(hand_problems, 'HAND_CHECKED', text=text))
-
-    def test_a_citation_that_is_dropped_entirely_is_rejected(self):
-        text = MAP.replace("""the dispatch argument itself at bank0/D091.c:84, a `= 0xff` at
-    # bank0/D281.c:19 and a `= 0` at bank0/D289.c:18. Two stores in two
-    # functions.""", 'Two stores in two functions.')
-        self.assertTrue(saying(hand_problems, 'comment cites', text=text))
-
-    def test_a_regrouping_across_sites_does_not_red_this_rule(self):
-        # The deliberate asymmetry, and the reason both rules exist: Rule 2 is
-        # insensitive to how the lines group into sites, so a CSV that moved
-        # `D091.c:84` onto another site leaves this one alone.
-        # Two existing sites trade their citations, so the CSV still holds the
-        # same ten lines and only says something different about which site
-        # each belongs to.
-        rows = [dict(r) for r in SITES]
-        for row in rows:
-            if row['file_offset'] == '0x0D117':
-                row['census_refs'] = 'bank0/D091.c:84'
-            elif row['file_offset'] == '0x0D144':
-                row['census_refs'] = 'bank0/D091.c:75,76,77'
-        self.assertEqual(hand_problems(rows=rows)[0], [])
-        # ...and Rule 1 is what catches it, on both rows.
-        problems = saying(site_problems, 'site 0x0D117 cites', rows=rows)
-        self.assertTrue(problems)
-        self.assertTrue(saying(site_problems, 'site 0x0D144 cites', rows=rows))
-
-    def test_only_this_entrys_comment_is_read(self):
-        # The entry below carries a citation the CSV does not hold for
-        # `0x0860`, and a walk that ran past this entry's closing line would
-        # take it as part of the same comment.
-        self.assertNotIn('F11C.c', ' '.join(ccl.hand_checked_comment(MAP)))
-
-    def test_a_module_with_no_such_entry_is_reported_as_checked_nothing(self):
-        # A rule that located nothing has to say so. Returning no problems for a
-        # comment that is not there would be the silent pass this tool is about.
-        problems, checked, _ = hand_problems(text='HAND_CHECKED = {\n}\n')
-        self.assertEqual(checked, 0)
-        self.assertTrue(any('checked nothing' in p for p in problems))
 
 
 class Rule3RowPointers(unittest.TestCase):
@@ -504,8 +409,7 @@ class TheCommittedTree(unittest.TestCase):
                           out)
         self.assertIsNotNone(match, out)
         self.assertGreater(int(match.group(1)), 0)
-        # Non-zero on the real tree too: `xdata_register_map.py` carries two
-        # dated corrections above the entry and the dispatch page three
+        # Non-zero on the real tree too: the dispatch page carries
         # blockquotes, so the skip is exercised by the committed files and not
         # only by a fixture. A rule that reported zero skips on a tree full of
         # them would be skipping for a reason nobody wrote down.

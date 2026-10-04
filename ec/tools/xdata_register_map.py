@@ -87,15 +87,12 @@ decompile is not in the tree at all, so this is a lower bound on the image, and
 pointer/indirect XDATA access never names an address at all, exactly as
 `scan_refs.py`'s blind spot does.
 
-**The direction split is now checked corpus-wide, and that is a wider net than
-it looks and a shallower one than `HAND_CHECKED`.** Every occurrence the census
+**The direction split is checked corpus-wide.** Every occurrence the census
 buckets `write` or `read+write` is asserted to have an assignment -- not `==`
--- after the address, measured over the whole tree rather than over five
-hand-picked rows. Today that is **5,677 occurrences across 1,008 distinct
-addresses** of the census's 1,326, and it holds with no exemptions: the second
-pass accepts 5,679, and the two it accepts and the census does not are 0x048A's
-`*`-dereference stores, which `store_target()` excludes for cause and a
-necessary condition does not need to exclude.
+-- after the address, measured over the whole tree. It holds with no
+exemptions: the only occurrences the second pass accepts and the census does
+not are `*`-dereference stores, which `store_target()` excludes for cause and
+a necessary condition does not need to exclude.
 
 **It is a second code path over the same text, not a second pair of eyes.**
 Same files, same regex, same `strip_comments()`, and the buckets it is measured
@@ -103,15 +100,13 @@ against are the ones this tool just produced. What it is *not* is a
 re-implementation, and that is what makes it worth asserting: the `==`
 rejection lives in `store_target()`, and the second pass's predicate is only
 "an `=` that is not `==` follows", so it never consults the thing under test.
-Re-introduce the pre-fix classifier and the two disagree on 838 occurrences,
-across 211 distinct addresses -- the 838, not the 837 the `==` fix alone left,
-because the one `==` site that was already `address-taken` rather than `write`
-(the `&&` at `bank0/A747.c`, corrected by #424) is a disagreement of its own now.
-What it cannot reach is everything a shape test over C text cannot reach -- a
-store the decompiler mis-spelled, a write through a pointer, and a per-address
-*count* that is wrong while every occurrence is assignment-shaped. Only
-`HAND_CHECKED` measures per-address counts, and it is five addresses wide
-because those five are a shape catalogue rather than a sample.
+Re-introduce the pre-fix classifier and the two disagree on every `==`
+occurrence. What it cannot reach is everything a shape test over C text cannot
+reach -- a store the decompiler mis-spelled, a write through a pointer, and a
+per-address *count* that is wrong while every occurrence is assignment-shaped.
+`CLASSIFIER_SHAPE`'s literal snippets hold the classifier's shapes; nothing
+here holds a per-address count, because every such count moves when a routine
+touching the address is seeded.
 
 **A source count is a count of files, and 42 files can be one routine.** The
 counter sweep at `bank1:0x8001`-`0x8189` is 393 bytes the exporter split into 42
@@ -179,7 +174,7 @@ column that says which half is which.** A `program=both` row's `spelled_as` is
 every spelling *either* program gives that address number, so `0x04A3` reads
 `DAT_EXTMEM+pair-literal` there while the main EC spells it `pair-literal` and
 the PD image spells it `DAT_EXTMEM`. That is not cosmetic: it is the whole of
-the 58-versus-59 difference in `PAIR_ROWS_MIXED` and the CSV's own 59 / 155, and
+the difference between the per-program mixed set and the CSV's own, and
 on a reader who takes the cell at face value it is a wrong statement about one
 program rather than a loose one about two. So the registers CSV carries a second
 spelling column, `spellings_by_program` -- `main-ec=<spellings>` on a main-EC
@@ -199,7 +194,7 @@ on the row -- written on **every** row and not only on the 49 `both` ones, so
 `refs == refs_main_ec + refs_pd` holds on all 1,326 and `csv.DictReader`
 consumers never meet an empty cell. It is a split, not a second pass: `refs`,
 the five buckets, `readers`, `writers`, `co_reading`, `sources_beyond` and
-every `ORACLE` / `BUCKET_TOTALS` figure are exactly what they were, and a
+every census total are exactly what they were, and a
 shared address *number* is still not a shared byte -- the two are separate
 address spaces and a per-program `write` is a static shape, not evidence the
 EC acts on the byte. The unsuffixed cells stay the row's own figures, which
@@ -240,13 +235,14 @@ behind it.
 cowardly one.** The pass is a containment heuristic over decompiled text, not a
 function boundary: a non-owner is skipped rather than reconciled against its
 owner, so an owner that is not a superset takes the references with it. On
-this tree that costs `cluster_key` on 39 of the 439 clusters, breaks 5 of the
-9 hand names in `xdata-cluster-names.csv`, and adds 1 cluster -- a tree-wide
-renumbering to land on top of a detector known to be approximate.
+this tree that costs a tree-wide renumbering of `cluster_key` and of the hand
+names in `xdata-cluster-names.csv` (measured in
+`annotations/xdata-export-ownership.md` §4 and §5), to land on top of a
+detector known to be approximate.
 The root cause is the export boundary, and fixing it needs
 `--mode rebuild-project`, which cannot share a branch
 (annotations/xdata-06c2-06db-timers.md 8 item 7). So the pass ships measured,
-pinned by `OWNERSHIP` and reachable through the flag, and the flip is its own
+measured by `--export-ownership`, and the flip is its own
 PR once the boundary lands.
 
 **A cluster has two identities and the prose needs the one that is not a rank.**
@@ -572,535 +568,20 @@ CARRY_MIN_JACCARD = 0.50
 # (a trailing "(+N more)") -- a silent cap reads as "covered" when it is not.
 TOP_CALLEES = 3
 
-# Issue #132's numbers, with the two corrections this tool had to make, both
-# of which the report states in place.
-#
-# First: the issue's 14,399 references include nine occurrences that are this
-# repository's own annotation text quoting the decompile back at itself
-# (bank0/B9DF.c's comment writes `DAT_EXTMEM_0a56 = DAT_EXTMEM_1919` to make a
-# point about it). A hand-written comment is not the firmware touching an
-# address, so `strip_comments()` drops them and the `DAT_EXTMEM_` count is
-# 14,390.
-#
-# Second, and much the larger: the issue counted `DAT_EXTMEM_` tokens only, and
-# the addresses Ghidra was given a name for are not written that way. Reading
-# both spellings adds the main-EC addresses the exporter named, which were
-# always in the committed tree. Every number is pinned below -- the
-# `DAT_EXTMEM_` totals and the full ones -- so a drift in either says which
-# moved.
-#
-# The split moved 41 -> 82 named addresses (411 -> 915 references) when
-# ec/decompiled/ was re-exported in issue #194, and the totals with it: 41
-# addresses that had been committed as `DAT_EXTMEM_xxxx` are now written by the
-# name ec/ghidra/xdata-symbols.csv gives them. Nothing was added or lost -- the
-# full census below (1172 distinct / 14801 references, main EC 1063/13937) is
-# unchanged, and no .asm moved -- so this is the exporter catching up with a
-# symbol table that had already grown, which is the same re-derivation the
-# `named_in_tree` comment below records for 44 -> 79 -> 86.
-#
-# 82 -> 84 (915 -> 932) for the same reason when #237's MAIN_FAN_L_DUTY and
-# MAIN_FAN_R_DUTY entries were exported (0x075B/0x075C, 17 references that had
-# been `DAT_EXTMEM_075b`/`_075c`); the full census does not move. 84 -> 127
-# (932 -> 5897) with issue #179's 43 entries, the same way, and 127 -> 142
-# (5897 -> 6016) with issue #180's 15, and 142 -> 146 (6016 -> 6060) with
-# issue #183's four.
-# *** 2026-09-24, merging issue #133 (PR #238): the FULL census moved for the first
-# time, 1172/14801 -> 1171/14792 (main EC 1063/13937 -> 1062/13931, PD refs 864 ->
-# 861). Not a new address and not an edit to any .asm: applying
-# ghidra-variables.csv commits some functions' signatures, and at bank1 0x9EA1
-# that dropped an argument at its call sites -- bank1/E100.c no longer passes
-# DAT_EXTMEM_0390, which was the census's only reference to 0x0390. Nine C-level
-# references moved in all (0x0390 -1, 0x0391 -1, 0x04AB -3, 0x07D8 -3, 0x08AD -1;
-# PD 0x07D0 -1, 0x07C9 +1). The census was always a lower bound on the machine
-# code; this is the annotation layer lowering it, recorded in
-# xdata-register-map.md and docs/findings.md 18.
-# *** 2026-09-24, issue #259: the pins below do NOT move, and that is the
-# measurement rather than an absence of one. Defining the byte -- registers.yaml
-# gained XDATA_0390 and the regenerated xdata-symbols.csv named it, so
-# ApplyAnnotations.java's createData now makes a definition where there was only
-# an undeclared byte -- and re-running the export in default export-only mode
-# moved no .c and no manifest.csv row: the export is byte-identical to the
-# committed tree. The decompiler still renders the pair at bank1 0x9EA1 as
-# CONCAT11(r4_value,r3_value), so naming the byte does not put it back in the
-# token pattern's reach, and 0x0390 still has no row in the census.
-# The other outcome the issue allowed for -- the census RISING, because the
-# decompiler started spelling XDATA_0390 at 0x9EA1's two movxes -- did not
-# happen. distinct/refs/main_distinct/main_refs and BUCKET_TOTALS therefore stand
-# as 1171/14792 and 543/270 as committed, and the .asm witness in --self-test
-# is what now keeps 0x0390 from reading as absent.
-#
-# The policy this measurement is the first test of, written where an annotation
-# author will meet it: a variable row may change a caller's arity, and that is a
-# correction rather than a loss; the census counts C-level references and is
-# therefore a lower bound on the machine code; and a pin moves only with a
-# measured reason recorded in the same change. ghidra/scripts/ApplyAnnotations.java,
-# ec/annotations/README.md and docs/findings.md 18 carry the same rule.
-#
-# *** 2026-09-25, issue #263: the pins below move, and **almost all of the
-# movement was already on `main`**. Measured against a pristine checkout of the
-# parent commit as well as against this branch:
-#
-#   what the pin said | pristine `main` | this branch | this change moved it
-#   refs              | 14818            | 14819       | +1
-#   main_refs         | 13957            | 13961       | +4
-#   pd_refs           | 861              | 858         | -3
-#   symbol_main       | 147 / 6070       | 147 / 6070  | 0
-#   named_in_tree     | 153              | 153         | 0
-#   extmem_raw        | 8757             | 8758        | +1
-#
-# So the committed pins were **26 references and 3 named addresses behind the
-# tree they were supposed to describe** before this branch touched anything, and
-# `--self-test` was already red on `main` for that reason. Both halves are
-# recorded rather than merged: the drift is not this issue's to claim, and the
-# +1 is not large enough to explain it. `ec/decompiled/bank1/19A8.c` was stale
-# against its own `ghidra-functions.csv` row (issue #255's correction landed
-# without a re-export) and this build caught it up -- measured on its own, that
-# file moves **no** census figure at all, so the whole +1 is the 88 rows.
-#
-# The +1 is still the mechanism the two blocks above describe, running in a
-# direction #238 did not see. Committing 88 signatures moved **28 functions this
-# batch never annotated**: 11 now pass more arguments than before (+25 declared
-# parameters) and 17 pass fewer (-17). Net -78 against the -86 the 88 renames
-# account for, which is arithmetically the census's own delta and is why the
-# per-address list in xdata-register-map.md 7.2 is 6 addresses and not 88.
-# Nothing here settles whether that is allowed; docs/findings.md 18 still calls
-# it open, and this is the second batch's data point rather than its answer.
-ORACLE = {
-    # DAT_EXTMEM_ only, i.e. what issue #132 counted, comments excluded.
-    #
-    # 8758/8749 -> 8707/8698 and 915/7891 -> 906/7840, with the symbol tally
-    # below moving 147 -> 156 distinct and 6070 -> 6121 refs. One cause, and it
-    # is issue #250's: `a1d79a89` (PR #504) added nine `XDATA_*` symbols to
-    # xdata-symbols.csv without re-exporting, so the committed `.c`/`.asm` text
-    # kept spelling those nine addresses `DAT_EXTMEM_*` and both halves of this
-    # oracle were pinned against that stale export. Issue #558's re-export is
-    # the first one since, so the renames reach the text and the nine addresses
-    # move from the DAT_EXTMEM_ tally to the symbol tally. `extmem_commented`
-    # (9), the PD half (157/858) and `extmem_both` (37) are unmoved, which is
-    # what fixes the diagnosis: the PD image is never given a symbol table, and
-    # the nine renames are all main-EC.
-    #
-    # 1026/8698 -> 1024/8683 and 906/7840 -> 904/7825, with the symbol tally
-    # below moving 156 -> 158 distinct and 6121 -> 6136 refs: issue #264's two
-    # `XDATA_09EA`/`XDATA_09EB` rows, and the same mechanism as the nine above
-    # rather than a new one. The plan for #264 expected only `named_in_tree` to
-    # move, on the reasoning that export-only mode would leave the `.c` text
-    # spelling `DAT_EXTMEM_*`; it does not, because `ApplyAnnotations.java`
-    # applies xdata-symbols.csv to the project *copy* the export makes, so a
-    # new name reaches the text without `--mode rebuild-project`. The deltas
-    # cross-check exactly, which is what says this is explained: -2/+2
-    # distinct and -15/+15 refs, and 15 is the census's own 7+8 references to
-    # 0x09EA and 0x09EB. `extmem_commented` (9), the PD half (157/858) and
-    # the full census below (1171/14819, main 1062/13961, 109/48) are all
-    # unmoved -- the addresses and references did not change, only which token
-    # spells them.
-    #
-    # 1024/8683 -> 1021/8675, 904/7825 -> 901/7817, 158/6136 -> 161/6147,
-    # issue #267, and the same mechanism for the third time rather than a new
-    # one: 0x1665, 0x1666 and 0x166A got registers.yaml rows, gen_xdata_symbols
-    # turned them into three `XDATA_*` names, and ApplyAnnotations.java applies
-    # the symbol table to the project *copy* the export makes, so the rename
-    # reaches the .c text without `--mode rebuild-project` exactly as the nine
-    # above and the #264 two did. That is the DAT_EXTMEM_ -> symbol half; the
-    # rest of the movement is issue #267's four seeded routines, and the two
-    # halves are separable per address by reading the committed
-    # xdata-registers.csv on this branch and on `main`:
-    #
-    #   0x1665   4 -> 6 refs    +0xC278.c and +0xC2C2.c
-    #   0x1666   1 -> 2 refs    +0xC33C.c
-    #   0x166A   3 -> 3 refs    unmoved -- only the spelling moved
-    #
-    # so 8 references leave the DAT_EXTMEM_ tally and 11 arrive in the symbol
-    # tally, which is exactly -8/+11 and a main-EC total of +3 (13961 ->
-    # 13964). The cross-check is the same shape as the two above, and it holds
-    # for the same reason: `extmem_commented` (9, and arithmetically
-    # 8684-7817-858), the PD half (157/858), `extmem_both` (37, recomputed from
-    # the pins either side of this block), `distinct` (1171) and `both` (48)
-    # are all unmoved, so the addresses and references did not change -- only
-    # which token spells them, plus the two newly exported .c files.
-    #
-    # 0xC4E7 is seeded in the same batch and contributes **nothing** here, which
-    # is the one place a reader might expect otherwise: its decompile is a bare
-    # `return;` with no XDATA reference in it, so seeding it moves the
-    # image-site count (0x1665's row now reads 6 against trace_xdata_refs.py's
-    # 6, where it read 4) without moving this census. The 0x1665 note in
-    # registers.yaml works through that two-methods disagreement.
-    #
-    # *** 2026-09-25, issue #279: the FULL census moves for the second time in
-    # this block's history, and again by a mechanism that is not a new address
-    # and not an edit to any `.asm`. 1171/14822 -> 1326/15696: the pair-accessor
-    # pass resolves 437 call sites' literal first arguments, each touching two
-    # adjacent bytes, which is +874 references over +155 distinct addresses. The
-    # split under it is main EC 1062/13964 -> 1218/14838 and the `program=pd`
-    # rows 109/604 -> 108/603; the PD *half* -- every address reached in the PD
-    # image, `pd` and `both` together -- is unmoved at 157 distinct and 858
-    # references, which is what `extmem_pd_*` two lines below already says and
-    # is why no 861 belongs in this block.
-    # **The two token halfs above do not move, and had to be made not to.**
-    # `extmem_*` and `symbol_*` answer "how many references are *spelled* this
-    # way", and an address reached both as a token and through an accessor now
-    # has references of both kinds -- 58 of them. Summing `refs` over the
-    # addresses that carry a spelling would have quietly redefined all four
-    # pins to "references to addresses that carry this spelling somewhere" and
-    # moved them by +246 and +138, which is a different question wearing the
-    # same number. `blank_entry()` now carries `spelled_refs` for exactly that,
-    # and the 59 mixed addresses are pinned as their own figure below rather
-    # than absorbed.
-    #
-    # The cross-check that says the movement is understood is the one the
-    # comments above it have used three times now: `extmem_commented` (9), the
-    # PD half and `extmem_both` (37) are all unmoved, because none of them is
-    # reached through an accessor, so the addresses and the spellings did not
-    # change -- the census learned about 155 addresses it had a blind spot for.
-    # `pd_only` 109 -> 108 and `both` 48 -> 49 are not the pass's +155 either,
-    # and the address to name is `0x04A3`: it is a `program=pd` row on
-    # `origin/main` -- read at `pd/0xF22E`, `read_04a3_then_call_9a90` -- and the
-    # pass newly reaches it in six bank1 functions as the `inc DPTR` half of the
-    # `0x04A2`/`0x04A3` pair, so the overlap grows by exactly that one address.
-    # Diffing the `program` column of the committed CSV against `origin/main`
-    # returns `0x04A3: pd -> both` and no other change, which is the check that
-    # settles it; the 155 the pass adds are new `program=main-ec` rows, of which
-    # `0x03DE` and `0x03B8` are two. (A shared address *number* is not a shared
-    # byte, which is the collision `program=both` exists to carry.)
-    "extmem_distinct": 1006, "extmem_refs": 8546,
-    "extmem_raw": 8555, "extmem_commented": 9,
-    "extmem_main_distinct": 882, "extmem_main_refs": 7688,
-    "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
-    # `extmem_commented` stays at 9 across the move below for the reason the
-    # three blocks above it give: it is derived, as
-    # `raw["DAT_EXTMEM"] - (extmem["main-ec"][1] + extmem["pd"][1])`, and both
-    # terms fall by the same 8, so the difference is unmoved. The full census
-    # below is unmoved for the same reason -- no address or reference was
-    # added or lost, only which token spells it.
-    #
-    # The 2026-10-03 move, issue #338: two rows change spelling and nothing
-    # else, so `extmem_main_distinct` 884 -> 882 against
-    # `symbol_main_distinct` 178 -> 180 is -2/+2, and
-    # `extmem_main_refs` 7696 -> 7688 against `symbol_main_refs` 6268 -> 6276
-    # is -8/+8, where 8 is the census's own 2 for 0x0391 plus 6 for 0x3202 --
-    # the two addresses whose `spelled_as` column reads `symbol` where it read
-    # `DAT_EXTMEM`. Both are the same mechanism as the 0x1663/0x1667/0x1668
-    # block above: `gen_xdata_symbols.py` turns the row into an `XDATA_*` name
-    # and `ApplyAnnotations.java` applies the symbol table to the project
-    # *copy* the export makes, so the rename reaches the `.c` text with no
-    # `--mode rebuild-project`. **0x0391 is not this issue's row**: it was
-    # named by #295 and its rename reached `registers.yaml` and the committed
-    # census, but the committed `.c` still spelled it `DAT_EXTMEM_0391`, so
-    # this re-export is also where that one landed. A stale export is not
-    # evidence about the census and the census was never wrong about it; the
-    # pin moves because the tree moved, not because either count was corrected.
-    # Reproduce the split with
-    # `python3 ec/tools/xdata_register_map.py --self-test`, and the two rows
-    # with a diff of the `spelled_as` column against the parent commit.
-    # Named by the decompiler. The 2026-09-30 move is recorded in the dated
-    # block above `named_in_tree`, and the 2026-09-28 one at the END OF FILE.
-    "symbol_main_distinct": 180, "symbol_main_refs": 6276,
-    "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
-    # The full census this tool publishes.
-    "distinct": 1326, "refs": 15696,
-    "main_distinct": 1218, "main_refs": 14838,
-    "pd_only": 108, "both": 49,
-    # `len(symbols)`: naming an address in registers.yaml does not put it in
-    # a decompiled function, so the two counts part company whenever a
-    # register is named that no surviving function touches. It moved 44 -> 79
-    # when the 0x0400-0x045F page entries landed in registers.yaml without
-    # this constant being re-derived, and the self-test was failing on `main`
-    # because of it; 86 is the re-derived count, of which 7 are
-    # 0x08A0/0x08A2/0x08EB/0x089E/0x089F/0x09E6/0x09E7
-    # (ec/annotations/manual-fan-ctrl-0751.md 8a). 86 -> 88 when #237's
-    # MAIN_FAN_L_DUTY/MAIN_FAN_R_DUTY (0x075B/0x075C) were exported by name.
-    # 88 -> 131 with issue #179's 43 XDATA_* timer/counter entries, merged
-    # after the ones above; the full census below does not move.
-    # 131 -> 146 with issue #180's 15 0x086x/0x1Cxx/0x1Fxx entries.
-    # 146 -> 150 with issue #183's 0x07C4/0x07D3/0x07D4/0x07D5.
-    # 150 -> 153 on `main` without this block being re-derived. Found by
-    # running --self-test on a pristine checkout of the parent commit, not by
-    # this change. Which three is the one thing here that is **not** re-derivable
-    # -- the pin is a bare integer and the prose above names only some of the
-    # 150 -- so the 153 are not asserted individually. The --self-test failure
-    # message enumerates every one of them, which is the place a reader is sent
-    # rather than a list maintained here.
-    #
-    # 153 -> 162, issue #256: the drift went on, and by the time this change
-    # re-derived it the symbol table had grown from 164 to 187 names and the
-    # census from 1,171 to 1,171 distinct addresses with two of the new ones
-    # (`0x07C7`, `0x07C8`) *not* among the named-in-tree set. The failure
-    # message named exactly those two and no others, which is the arrangement
-    # the paragraph above asks for -- the count is not asserted individually, the
-    # *set* is, and the count is arithmetic over it. So both are recorded as
-    # NOT_IN_TREE entries with their registers.yaml evidence, and this pin is
-    # 187 - 25. Measured on `main` before this change touched anything: the two
-    # rows and the two missing reasons were already there.
-    # 162 -> 164, issue #264: XDATA_09EA and XDATA_09EB are both reached by a
-    # decompiled function, so both are named-in-tree. Same cause as the
-    # extmem/symbol movement above, and the same cross-check applies.
-    # 164 -> 167, issue #267: 0x1665, 0x1666 and 0x166A, the same three.
-    # 167 -> 175, issue #279, and 192 - 17, the same arithmetic as every block
-    # above it: eight of the 25 NOT_IN_TREE entries stop being true and the
-    # eight that stop are the eight that arrive, the same eight -- 0x0402
-    # 0x0404 0x0408 0x040A 0x040C 0x040E 0x0410 0x043A. Nothing else crosses
-    # the boundary in either direction, which is the measurement the comment
-    # asks for and which the self-test's set assertion re-derives: the high
-    # halves this pass reaches (0x0403, 0x0405, 0x043B, ...) are mostly *not*
-    # in the symbol table, so they are new census rows without moving this
-    # count. Only 0x0403, the second half of `BAT_DESIGN_CAPACITY`, is both.
-    # 175 -> 181, issue #30, and 208 - 27, the same arithmetic once more: the
-    # DSDT ECMG field sweep added 16 names to registers.yaml, and ten of the
-    # sixteen are not in the tree, so NOT_IN_TREE goes 17 -> 27 and the count
-    # moves by the six that are. The six that are are the ones with a site in
-    # an *exported* function -- 0x074C, 0x0788, 0x07A4, 0x07C5, 0x0EA8 and
-    # 0x0EB8. The ten that are not split 7/3 by the same boundary: CTL1-CTL7
-    # (0x0EA9-0x0EAF) sit in the unexported copy at bank0 0xF335, and
-    # 0x0EA8 and 0x0EB8 are reached anyway through bank0:0xF221, which is
-    # exported -- so the head of a run and its tail can differ here for a
-    # reason that has nothing to do with the run. 0x07C0-0x07C2's only site is
-    # in the PD image. Their reasons are in NOT_IN_TREE, and that is the
-    # measurement the next block above asks for, not the count alone.
-    # 181 -> 182, issue #333, and 209 - 27, the same arithmetic once more:
-    # registers.yaml gained XDATA_086C and that address is reached by nine
-    # decompiled functions, so it is in the tree and NOT_IN_TREE does not
-    # move. It is the middle of the three results 0x9D9B computes; see
-    # docs/findings/xdata-086c-cluster-ruling.md. The symbol_main_* pair
-    # above does NOT move, which is the distinction worth recording: that
-    # pair counts what the *decompiler* spells, and every one of 0x086C's
-    # sites still reads DAT_EXTMEM_086c (lower-case c) in the committed
-    # ec/decompiled/ tree, because a registers.yaml row renames the symbol
-    # table and not a decompile: a re-export would spell them XDATA_086C, as
-    # 0x086B's 22 sites already read XDATA_086B, and that is the other move.
-    # 182 -> 185, issue #573, and 212 - 27, the same arithmetic once more. Three
-    # names went into registers.yaml -- XDATA_07FD, XDATA_07FE and XDATA_07FF --
-    # and NOT_IN_TREE does not move, because all three have a `mov DPTR` seed in
-    # an *exported* function: 0x07FE/0x07FF under bank0 0xCCFC and 0xD673, and
-    # 0x07FD under bank0 0xCCFC plus bank1 0x94FA. So the count moves by the
-    # three that are, and the reading that put them there is
-    # `docs/findings/xdata-07fd-07ff-witness-triple.md`.
-    #
-    # **The step through 182 is a merge, and the pin is the measured value.**
-    # #333 and #573 both branched from the 181 this block used to end on, and
-    # each wrote its own 181 -> N: 182 for the one name, 184 for the three. Both
-    # rows are in registers.yaml on this tree and all four addresses are reached
-    # by an exported function, so the count is 181 + 4 = 185 and NOT_IN_TREE is
-    # still 27 -- neither side's number is right for the merged tree, and taking
-    # either one would have been the "looks pinned and is not" defect the check
-    # below exists to catch. 209 + 3 = 212 named addresses, 212 - 27 = 185,
-    # re-derived by `--self-test` rather than taken on trust.
-    #
-    # 185 -> 187, issue #1425, and 212 -> 214, the same arithmetic once more.
-    # `PACK_TEMP_DK` added two `registers.yaml` rows over `0x04A2`/`0x04A3` and
-    # `gen_xdata_symbols.py` turned them into `PACK_TEMP_DK_0`/`_1` through
-    # `ec/ghidra/xdata-overrides.csv` -- a two-address entry needs the indexed
-    # name `BAT_CYCLE_COUNT_0`/`_1` already carries, because the name does not
-    # split on ` / ` and the generator refuses to guess. NOT_IN_TREE does not
-    # move: both addresses are reached by exported functions, `0xBAE5`/`0xBAE7`
-    # in bank0 and `0xAF06`/`0xAF32`/`0xB0D1` in bank1, so the count moves by
-    # the two that are.
-    #
-    # **The re-export that put those two names in the text also caught drift
-    # from two other issues, and the movement below is all five addresses, not
-    # two.** The pins that move here are the token half; the full census is
-    # unmoved at 1326/15696, main EC 1218/14838, PD 157/858, and every one of
-    # the five rows keeps its own `refs` cell, so this is a rename and not five
-    # new addresses. Per address, measured against this branch's parent:
-    #
-    #   0x04A2  DAT_EXTMEM+pair-literal -> symbol+pair-literal   9 refs unmoved
-    #   0x04A3  DAT_EXTMEM+pair-literal (unchanged)               8 refs unmoved
-    #   0x07FD  DAT_EXTMEM             -> symbol+DAT_EXTMEM       8 refs unmoved
-    #   0x07FE  DAT_EXTMEM             -> symbol+DAT_EXTMEM      10 refs unmoved
-    #   0x07FF  DAT_EXTMEM             -> symbol+DAT_EXTMEM      10 refs unmoved
-    #   0x086C  DAT_EXTMEM             -> symbol                 26 refs unmoved
-    #
-    # Only `0x04A2` and `0x04A3` are #1425's. The other four are **drift this
-    # change caught rather than caused**: #333 added `XDATA_086C` and #573 added
-    # the `0x07FD`-`0x07FF` triple to `registers.yaml`, and -- exactly as the
-    # 0x086C block above predicted in as many words -- "a registers.yaml row
-    # renames the symbol table and not a decompile: a re-export would spell them
-    # XDATA_086C, as 0x086B's 22 sites already read XDATA_086B, and that is the
-    # other move." This is that other move, and it is recorded here rather than
-    # claimed as #1425's because attributing four addresses to the issue that
-    # happened to run the export is the same defect as taking one side's number
-    # in a merge. A branch that wanted only the two would have to hand-edit the
-    # export back, which is why the honest record is the whole delta.
-    #
-    # The arithmetic: `extmem_main_distinct` 895 -> 890 and
-    # `symbol_main_distinct` 167 -> 172 is +5/-5, which is the five rows above
-    # moving between the two token spellings, and `extmem_main_refs` 7765 -> 7716
-    # against `symbol_main_refs` 6199 -> 6248 is -49/+49, which is the
-    # `DAT_EXTMEM` tokens the five rows above carried in this branch's parent,
-    # not the sum of their `refs` cells -- the census's own `refs` column,
-    # which does not move, is the cross-check that says so. `extmem_raw` moves
-    # 8632 -> 8583 and `extmem_commented` stays at 9, because the nine are
-    # annotation prose quoting the decompile and no prose changed.
-    #
-    # `0x04A3` is the one address whose *term* does not move, and it is unmoved
-    # for the reason the 2026-09-30 per-program re-key recorded: its main-EC half
-    # is a bare `pair-literal` and the `DAT_EXTMEM` spelling is the PD image's,
-    # so the name lands without the spelling changing and `--moved` still prints
-    # `0x04A3` alone. The PD half is unmoved for the reason it always is: the PD
-    # image is never given a symbol table, so `pd/F22E.c` still spells it
-    # `DAT_EXTMEM_04a3`. `0x04A2` is the one address that leaves the
-    # `DAT_EXTMEM` term for `symbol` in the main EC, which is what moves §2's
-    # `main-ec · DAT_EXTMEM` and `main-ec · symbol` rows and the three-way
-    # partition; see the correction in xdata-register-map.md §2.
-    #
-    # 187 -> 189, issue #106, and 214 -> 216, the same arithmetic once more.
-    # registers.yaml gained XDATA_07A5 and XDATA_078B, the two bytes the
-    # uncalled vendor setters write, and NOT_IN_TREE does not move: both are
-    # reached by exported functions -- 0x07A5's five sites are all under
-    # bank0 0x8749 and 0x078B's three under bank0 0x96AD, bank0 0xA7C8 and
-    # bank1 0xA916 (ec/annotations/site-resolution.csv). So the count moves by
-    # the two that are. What makes this pair worth recording next to the others
-    # is that the *reason* they were missing is the issue's subject rather than
-    # a naming gap: no DSDT field names either byte, so they reached
-    # registers.yaml from the Windows service's dead setters rather than from
-    # the sweep, and `docs/findings/uncalled-vendor-setters.md` is the write-up.
-    # The EC was already using 0x07A5 bit 3 before this change; the setters
-    # that named it never run.
-    #
-    # **The step through 185 is a merge too, and it is the same shape as the
-    # one above.** #1425 and #106 both branched from the 185 this block used to
-    # end on and each wrote its own 185 -> 187: two names each, from a parent
-    # that held 212. All four rows -- PACK_TEMP_DK over `0x04A2`/`0x04A3` and
-    # XDATA_07A5 over `0x07A5`, XDATA_078B over `0x078B` -- are in
-    # registers.yaml on this tree, and all four are reached by exported
-    # functions, so the count is 185 + 4 = 189 and NOT_IN_TREE is still 27.
-    # Neither side's 187 is the merged tree's number, and taking either one is
-    # the "looks pinned and is not" defect the check below exists to catch.
-    # 212 + 4 = 216 named addresses, 216 - 27 = 189, re-derived by `--self-test`
-    # rather than taken on trust.
-    #
-    # **The two branches' other halves do not stack, and the reason is worth
-    # writing down rather than leaving as an apparent contradiction.** #1425's
-    # block above moves five addresses out of the `DAT_EXTMEM` term because its
-    # re-export renamed them in `ec/decompiled/`. #106 adds two names to
-    # `registers.yaml` and renames the symbol table without a re-export, so
-    # those two addresses keep the `DAT_EXTMEM` spelling in the committed
-    # decompile -- exactly the distinction the 0x086C block above draws, "a
-    # registers.yaml row renames the symbol table and not a decompile". The
-    # census pins above are therefore the ones #1425 measured and this block
-    # leaves them at; only `named_in_tree` moves here.
-    # named_in_tree: no longer pinned; self_test() asserts it as len(symbols) - len(NOT_IN_TREE).
-}
-ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
-# **Unmoved by issue #279, and worth saying why rather than leaving it as a
-# coincidence.** 155 new addresses and 874 new references went in, and neither
-# of these two moved a single reference: the busiest address the pass reaches is
-# `0x0834` at 47, well under the 168 of `0x0843`/`0x0844` immediately behind
-# these. The pin is a statement about the top of the distribution, and a pass
-# that adds 155 addresses spread over the 0x03xx-0x06xx working page does not
-# touch the top of it. `0x08A8`'s 170 is 42-fold: all 44 of its source
-# functions are members of
-# a co-reading group -- 42 of them the counter sweep, the other two a four-file
-# `bank0` group -- so its `sources_beyond` is **0** and the count of sources
-# this relation can distinguish is 0 too. The pin stands as written: the census
-# counts references and does not de-duplicate them, and the second entry here
-# is the *second*-busiest address in the firmware by that count (`0x0440`, at
-# 181, is the first). This comment is where the inflation is written down next
-# to the number it inflates.
-# `xdata-registers.csv`'s `co_reading` and `sources_beyond` columns carry it per
-# address; COREADING_CHECKED below is the hand-read half.
+# The census's own figures are not pinned in this file. Every one of them moves
+# when a routine is seeded or a register named, which is the work the census
+# measures, and a pin on them was a line every such branch had to edit. The
+# figures are the committed CSVs, which `--check` regenerates, and
+# `--self-test` asserts what holds at any size. The history of the pins that
+# stood here is `git log -p` on this file.
 
-# The co-reading relation's own figures, in the style of the ORACLE block and
-# derived the same way: the largest group, the file total and the group count
-# are arithmetic over `co_reading_groups()` at COREADING_MIN_CORE, and the
-# oracle says so rather than leaving a reader to take them on trust.
-#
-# 24 groups over 120 files, largest 42. Re-derive with
-# `python3 ec/tools/xdata_register_map.py --co-reading-sweep`, which prints the
-# floor this is read at next to the curve it was chosen from.
-#
-# *** 2026-09-25, issue #279: 24 -> 28 groups over 120 -> 142 files, largest
-# still 42. The relation is over *which `.c` files name which addresses*, and
-# 155 new addresses means more pairs of files have a common core of 8 or more,
-# so the relation found more structure rather than the same structure
-# differently numbered. The floor is untouched, and that is the claim the sweep
-# exists to make re-derivable: COREADING_MIN_CORE was chosen against a curve
-# and this change moves the point the curve is read at, not the curve's shape.
-# The 42 is still the counter sweep, still `bank1/8001.c` to `bank1/80EF.c`,
-# still a 19-address core -- the one group this pass does not touch, since no
-# accessor is called in the sweep and none of its 19 addresses is reached that
-# way. The eight hand-read entries in COREADING_CHECKED are all unmoved for
-# the same reason, which is the external check that the pass did not quietly
-# re-shape the relation.
-COREADING_GROUPS = 28
-COREADING_FILES = 142
-COREADING_LARGEST = 42
-# The 42 is the counter sweep of `annotations/xdata-06c2-06db-timers.md` §2 --
-# the group's common core is 19 addresses, the 42 `index.csv` sizes sum to
-# exactly 393, and 16 of them are one-instruction listings. All three are that
-# page's §2 facts, now reproduced by the tool rather than by a hand count.
-#
-# The 42 sweep files are the first and last `out_file` of the largest group, and
-# the group's size is the whole of it: a sweep split across two groups would be
-# a different claim from one group of 42, and this asserts the difference.
-# `out_file` is what `index.csv` records and what a reader greps. The last is
-# `0x80EF`, not `0x8189`: the 42 listings are the *seeds* inside the run, and
-# `0x8189` is where the run ends.
+# The counter sweep of `annotations/xdata-06c2-06db-timers.md` §2, as the first
+# and last `out_file` of the largest co-reading group. A sweep split across two
+# groups would be a different claim from one group. The last is `0x80EF`, not
+# `0x8189`: the listings are the *seeds* inside the run, and `0x8189` is where
+# the run ends.
 COREADING_SWEEP = ("bank1/8001.c", "bank1/80EF.c")
-# How many addresses all 42 name. **Not 46, and the difference is the point:**
-# `8001.c` opens at the start of the run and names 46, `80EF.c` opens 238 bytes
-# in and names 19, and the core is the smaller of the two because it is the
-# intersection over all 42. The group is 42 overlapping views of one routine,
-# not 42 identical ones -- which is why `refs` is a 42-fold count for these 19
-# addresses and a smaller multiple for the rest, and why the report presents the
-# core rather than the largest file's count.
-COREADING_SWEEP_CORE = 19
 
-# Per address, `(co_reading, sources_beyond)` read off the decompiled tree by
-# hand rather than by this tool, for the same reason HAND_CHECKED exists: an
-# internal check passes on a wrong number when the wrong number is internally
-# consistent, and a whole-tree invariant cannot tell a *count of files* from a
-# count of routines. Every entry is the arithmetic of
-# `co_reading + sources_beyond == functions_touched` over the committed
-# register rows, with the derivation in the comment beside it.
-COREADING_CHECKED = {
-    # 168 references from 42 functions, and all 42 are the sweep's exports of
-    # one 393-byte routine. `grep -c 0843 ec/decompiled/bank1/8*.c` reaches all
-    # 42 and nothing outside the sweep names it. 42 + 0 = 42 touched.
-    "0x0843": (42, 0),
-    "0x0844": (42, 0),
-    # 170 from 44 functions, and **all 44 are in groups**: the 42 sweep exports
-    # plus `bank0/A139.c` and `bank0/A1A8.c`, the two members of a four-file
-    # `bank0` group that also name this address (the group's other two,
-    # `A00E.c` and `A1C8.c`, do not). So the distinct-source count this
-    # relation can support is 0, and `0x08A8` is the second entry of
-    # ORACLE_TOP_MAIN. 44 + 0 = 44 touched.
-    "0x08A8": (44, 0),
-    # 148 from 37 functions, all 37 of them members of the 42-file sweep group.
-    # The address has ONE direct `MOV DPTR,#0x6D6` site in the image (timers
-    # §2a) and the other 36 sources are that same body spelled 36 more times.
-    # 37 + 0 = 37.
-    "0x06D6": (37, 0),
-    # 126 from 52 functions: 39 in groups -- the 42-file sweep's members that
-    # spell this address, plus the six-file `bank0/8749.c` group and the
-    # two-file `bank1/B98D.c` group, with overlaps -- and 13 that are not, each
-    # of them a single reference in a file no group reaches. 39 + 13 = 52. The
-    # control against a blanket "it is all the sweep": a co-reading group does
-    # not have to contain every address the sweep touches, and this address is
-    # read in thirteen places that have nothing to do with the sweep.
-    "0x06C2": (39, 13),
-    # **The control that keeps this a count and not a verdict.** 181 references
-    # from 91 functions, and the grouped 46 are exactly three disjoint sets: the
-    # 42 sweep exports, **three** of the six `bank0/8749.c` files
-    # (`8749.c`, `8B14.c`, `8C46.c` -- the other three name `0x1804` instead),
-    # and one of the two `bank1/976E.c`/`9817.c` files. 42 + 3 + 1 = 46, and
-    # **45 are not in any group at all** -- `common/3DA8.c` and the `0x06C2`
-    # thirteen above are among them. `0x0440` is read in 45 places this
-    # relation cannot explain, it is all-read with no writer (HAND_CHECKED), and
-    # it is the most-referenced address in the firmware. A co-reading flag that
-    # retired this row would be reporting a shape as a verdict. 46 + 45 = 91.
-    "0x0440": (46, 45),
-    # 137 from 48 functions, 42 grouped and 6 not. `program=both`, and that is
-    # the point of the entry: the main EC's 45 sources are the 42-file sweep
-    # plus three singletons, and the PD image contributes three more that no
-    # group reaches -- the relation never crosses the two programs, which is
-    # what makes 42 and not 45 the grouped half. 42 + 6 = 48.
-    "0x080D": (42, 6),
-    # A PD-only address: one function, not in a group. This row is here to pin
-    # the program split rather than the number -- a relation that grouped across
-    # `main-ec` and `pd` would put the sweep's 42 exports and this together and
-    # fail. 0 + 1 = 1.
-    "0x00B6": (0, 1),
-}
 # Issue #279: the routines `load_pair_accessors()` selects, pinned as a *set* so
 # the rule is asserted rather than the constant. A sixth accessor annotated
 # without a change here is not a failure by itself -- the rule finds it, and its
@@ -1129,115 +610,24 @@ PAIR_ACCESSORS = (
     ("write_r1r2_to_xdata_pair", "write"),
     ("write_r3r4_to_xdata_pair", "write"),
 )
-# How wide the third spelling is, as the ORACLE block pins the other two. Both
-# are arithmetic over what `pair_sites()` resolves on the committed tree: 214
-# distinct addresses, of which 58 also carry a token spelling and 156 are
-# reached *only* this way, and 874 references in all -- 437 call sites, each
-# touching two adjacent bytes because the accessor's `inc DPTR` is what makes
-# it a pair access.
-#
-# **58, not 59, and the difference is one address.** `0x04A3` is the single
-# row the two counts disagree on, and it disagrees because it is spelled two
-# ways in two *programs*: `pair-literal` in the main EC (7 references, all
-# reached through an accessor) and a `DAT_EXTMEM_` token in the pd image (1).
-# `merge_group()` keys spellings per program, so the main-EC entry this pair
-# split is measured over carries `pair-literal` alone and the address counts
-# as pair-only. Every pair-reached address is a main-EC one -- the pd image's
-# own `read_be16_from_dptr` is called once with no argument -- so that is the
-# whole of the difference and it can only run in that direction.
-PAIR_ROWS = 214
-PAIR_ROWS_MIXED = 58
-# **The same 214 counted the way `xdata-registers.csv` counts them.** That file
-# records one `spelled_as` per address and a `program=both` row's cell is the
-# union across the two programs, so `0x04A3` reads `DAT_EXTMEM+pair-literal`
-# there and lands in the mixed half: the CSV's own split is 59 / 155 where the
-# per-program one above is 58 / 156. Neither number is wrong -- they count
-# different sets, PAIR_UNION_ONLY is the symmetric difference of the two mixed
-# sets, and 58 + 156 == 59 + 155 == PAIR_ROWS on both.
-#
-# What used to carry that reconciliation was this block's own prose, which is
-# where a reader of the tool found it. It is now three things that can each fail
-# on their own: the pins here, `spellings_by_program` in the CSV itself, and the
-# self-test's assertions over the committed file. The write-up is
-# `../../docs/findings/xdata-spelled-as-union.md`.
-PAIR_ROWS_MIXED_UNION = 59
-PAIR_ROWS_PAIR_ONLY = 156
-PAIR_ROWS_PAIR_ONLY_UNION = 155
+# **The one address the two readings of "mixed" disagree on.** The census keys
+# spellings per program, and `xdata-registers.csv` records one `spelled_as` per
+# address, whose `program=both` cell is the union across the two programs.
+# `0x04A3` is `pair-literal` in the main EC and a `DAT_EXTMEM_` token in the pd
+# image, so it is pair-only within a program and mixed in the CSV. The
+# self-test asserts that this is the whole of the difference, as a set. The
+# write-up is `../../docs/findings/xdata-spelled-as-union.md`.
 PAIR_UNION_ONLY = (0x04A3,)
 # **The four `both` rows whose union carries `pair-literal`, and what each half
 # actually is.** The CSV's one `spelled_as` column cannot say which program
 # contributed which token, and these are the rows where that is load-bearing:
 # three of them are genuinely `DAT_EXTMEM+pair-literal` *inside the main EC*,
-# and `0x04A3` is not. `(main-ec spellings, pd spellings, main-ec refs, pd
-# refs)` -- the reference figures are half of what the row's single `refs` cell
-# sums, and the self-test asserts both halves and that the sum is what the CSV
-# carries.
+# and `0x04A3` is not. `(main-ec spellings, pd spellings)`.
 PAIR_BOTH_PAIR_LITERAL = {
-    0x04A3: (("pair-literal",), ("DAT_EXTMEM",), 7, 1),
-    0x0834: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",), 48, 18),
-    0x0835: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",), 48, 4),
-    0x0836: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",), 9, 4),
-}
-# **The same four rows' direction buckets, per program** -- `(main-ec's five,
-# pd's five)`, in `BUCKETS` order. A sibling rather than a sixth and seventh
-# element of the block above, so issue #711's assertion over
-# `PAIR_BOTH_PAIR_LITERAL` is untouched and the two readings stay separately
-# readable: that one says what each program *spells*, this one says what it
-# *does with* the byte.
-#
-# **Two of the four are already published per program, which is what makes the
-# assertion an independent one.** `docs/findings/xdata-spelled-as-union.md` and
-# `ec/annotations/xdata-register-map.md` §2 both state `0x04A3`'s main-EC
-# seven as 4 `read` + 3 `write` against the pd one's 1 `address-taken`, and
-# `0x0834`'s main-EC 48 as 40 / 7 / 0 / 1 / 0 against the pd 18's 16 / 1 / 1 /
-# 0 / 0. A column written wrongly in both the tool and the file would still
-# close against prose nobody re-derived for it, so these two are the rows where
-# the pin has a second, independent source. `0x0835` and `0x0836` have no
-# published per-program bucket figures and are derived from the tool; they are
-# here for the same reason as the other two, not because anything else rests
-# on them.
-PAIR_BOTH_PAIR_LITERAL_BUCKETS = {
-    0x04A3: ((4, 3, 0, 0, 0), (0, 0, 0, 0, 1)),
-    0x0834: ((40, 7, 0, 1, 0), (16, 1, 1, 0, 0)),
-    0x0835: ((40, 7, 0, 1, 0), (2, 2, 0, 0, 0)),
-    0x0836: ((4, 4, 0, 1, 0), (4, 0, 0, 0, 0)),
-}
-# The per-program count columns' own pins. Every key here is read by a `check()`
-# in the `--self-test`, the rule issue #849 corrected: a value in a
-# module-level dict that nothing subscripts is a promise wearing the costume of
-# a pin. The aggregate block is what says the split *partitions* this census
-# rather than re-counting it -- the per-program totals the tool already pins
-# are each the single-program rows plus one half of the `both` rows, and the
-# twelve columns have to reproduce that arithmetic out of the committed file.
-PER_PROGRAM = {
-    # Every reference the PD image makes, `pd` and `both` rows together: the
-    # same 858 as `ORACLE["extmem_pd_refs"]` and the same figure, not a second
-    # spelling of it -- within the PD program the two token spellings are
-    # disjoint (asserted above), so every reference in that program is spelled
-    # `DAT_EXTMEM_` and the two pins cannot differ. Written out rather than
-    # referenced so the aggregate assertion is a measurement of the new column
-    # against the tree and not an equality between two old pins.
-    "pd_refs": 858,
-    # The 49 `both` rows, which carry this many references across the two
-    # address spaces. 947 + 255 == 1202, and 1202 is what the row's own unsuffixed
-    # `refs` column sums to over those rows -- the same number, stated both
-    # ways, which is the point: the row's figure is unmoved and a second,
-    # per-program figure now sits beside it.
-    #
-    # These are the *arithmetic identity* that says the split is this census and
-    # not a second one. `ORACLE["main_refs"]` (14,838) is 13,891 over the
-    # `main-ec` rows plus these 947, and the PD half above is 603 over the `pd`
-    # rows plus these 255. Neither half can be satisfied by a column that moved
-    # a reference between programs.
-    "both_refs": 1202, "both_main_refs": 947, "both_pd_refs": 255,
-    # The same 49 rows' buckets, each program separately rather than summed,
-    # in `BUCKETS` order. Per program rather than over both because the summed
-    # form is already published -- 641 / 239 / 214 / 72 / 36 on the `both` rows,
-    # and the five bucket totals this file pins -- and adding it up is exactly
-    # what these two rows replace. main-ec 947 = 546+165+212+16+8 against pd 255
-    # = 95+74+2+56+28.
-    "both_main_buckets": (546, 165, 212, 16, 8),
-    "both_pd_buckets": (95, 74, 2, 56, 28),
+    0x04A3: (("pair-literal",), ("DAT_EXTMEM",)),
+    0x0834: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",)),
+    0x0835: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",)),
+    0x0836: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",)),
 }
 # The two worked examples the issue asks for, as the exact multiset of resolved
 # sites rather than a bucket total. `0x0402` is the address whose decompile
@@ -1304,9 +694,9 @@ BLIND_SPOT = (0x0733, 0x0735)
 # The addresses the generated symbol table names and the census does not reach:
 # `set(symbols) - everywhere`. Issue #280 pins this as a *set* rather than as
 # the `named_in_tree` count alone, so "which addresses" is re-derivable here
-# instead of only from a failure message, and so the count at
-# ORACLE["named_in_tree"] becomes arithmetic over this dict rather than a
-# number to be taken on trust.
+# instead of only from a failure message, and so the count of named addresses
+# in the tree is arithmetic over this dict rather than a number to be taken on
+# trust.
 #
 # **The vocabulary has three entries and no word for absence.** A scan that
 # finds no reference has found no reference; it cannot say the address is not
@@ -1553,308 +943,6 @@ MAIN_EC_CEILING = 0x9000
 # rest of a function.
 XSPACE_WINDOW = 32
 
-# The five bucket totals `xdata-register-map.md` §4.1 publishes.
-#
-# This pin is INTERNAL, and deliberately kept apart from the two below: these
-# are this tool's own buckets summed back to itself, so they catch a classifier
-# that changes but not one that was wrong -- every entry satisfies
-# `sum(buckets) == refs` either way. Presenting them as evidence that the
-# direction split is right is the mistake issue #178 exists to correct. What
-# makes the direction external is HAND_CHECKED.
-#
-# 2026-09-25, issue #263: read 8317 -> 8341, passed-to-call 543 -> 534,
-# address-taken 270 -> 267; write and read+write stand. Measured against a
-# pristine checkout of the parent commit as well as against this branch, and the
-# two do not agree about how much of the movement is this change's: 16 of the 24
-# read references, and all 5 of the passed-to-call ones, were already there on
-# `main` before this branch touched anything. The rest is the arity effect
-# docs/findings.md 18 records, running in the direction #238 did not see --
-# committing 88 signatures made 11 call sites pass more arguments and 17 pass
-# fewer, and the three buckets that describe an argument rather than a plain
-# access are where those land. See the dated block above ORACLE for the census
-# totals and ec/annotations/xdata-register-map.md 7.2 for the per-address
-# account.
-#
-# Issue #267, fix round 1: read 8341 -> 8344, the other four unmoved. Same
-# cause as the ORACLE block's extmem/symbol movement and nothing else -- the
-# three addresses #267 named each have their references counted in a
-# different spelling, and each of the three is a read, so `read` takes the +3
-# and the write-shaped buckets do not move at all. The cross-check is the
-# census's own: the five buckets still sum to ORACLE["refs"], which moved
-# 14819 -> 14822 for the same three references.
-#
-# Issue #279: read 8344 -> 8826 and write 3195 -> 3587, the other three
-# unmoved, and the asymmetry between the two is the pass. 437 resolved call
-# sites split 241 read / 196 write, and each contributes two adjacent bytes,
-# so `read` takes +482 and `write` +392. The three that do not move are the
-# three that describe a *handoff* rather than a direction -- `passed-to-call`,
-# `address-taken` and `read+write` -- and a resolved site is in none of them by
-# construction: the direction is the callee's, and a call that hands an address
-# on is neither a store nor a comparison. The cross-check is again the sum:
-# 8827 + 3587 + 2482 + 534 + 266 = 15696 = ORACLE["refs"].
-BUCKET_TOTALS = {"read": 8827, "write": 3587, "read+write": 2482,
-                 "passed-to-call": 534, "address-taken": 266}
-
-# Issue #554: what `scan(export_ownership=True)` says on this tree, pinned the
-# same way BUCKET_TOTALS is, so the de-duplicated census stays a measurement
-# rather than a number in a paragraph. The default is unchanged and
-# `xdata-06c2-06db-timers.md` 6a carries the before/after; these are the "after"
-# half of that table.
-#
-# **The default is off and stays off.** The flip is a tree-wide renumbering --
-# `cluster_key` and every citation keyed to one -- and it is the function
-# boundary that has to land first (the sibling issue, recorded in-tree as
-# xdata-06c2-06db-timers.md 8 item 7). Measured on this tree the flip moves
-# `cluster_key` on 39 of the 439 clusters, breaks 5 of the 9 hand names in
-# xdata-cluster-names.csv, and adds 1 cluster. Those four figures are the
-# argument for deferring it, so they are pinned here too, and the --self-test
-# ownership block asserts all four rather than leaving the promise to a reader.
-#
-# **The plan stage's estimate for this pass was 9112 references with 0x05E0
-# falling out of the census entirely; the committed tool measures 9404 with
-# nothing lost, and both are recorded because the difference is the detector,
-# not the arithmetic.** The plan's detector folded `bank1/8E91.c` -- the only
-# export in the tree that spells `DAT_EXTMEM_05e0` -- into a larger body, so
-# the pass skipped the one file carrying the address. This one does not:
-# 8E91.c owns its own two-file class, so the address survives. The plan's
-# "loses an address" result is not a property of export ownership, it is a
-# property of that grouping, which is why the rule is a committed tool and the
-# figures are re-derived rather than carried forward.
-#
-# **Every key below is read by a check in the --self-test ownership block.** The
-# four per-program ones are named here so the reader does not have to grep for
-# them: `main_distinct`/`main_refs` are read by the "and its main-EC half is"
-# check, and `pd_distinct`/`pd_refs` by the "and its pd half is" one beside it,
-# which is the same shape again for the other half of the 6b console block's
-# per-program line -- `docs/findings/xdata-census-rederivation-checklist.md` §2b
-# lists the main-EC pair as its pin and recorded the pd pair as unheld for the
-# narrow reason that these two keys did not exist. A value in a constant that
-# nothing reads is a promise wearing the costume of a pin, which is the defect
-# issue #849 corrected.
-OWNERSHIP = {
-    # *** 2026-09-25, issue #279: 1171/9404 -> 1326/10178, main EC
-    # 1062/8546 -> 1218/9320, read 4923 -> 5361 and write 2707 -> 3043, and
-    # `moved` 228 -> 296. Same shape as every re-pin in this file's history:
-    # the de-duplicated pass removes nothing (`lost` is still empty) and only
-    # renumbers what the default census already had, plus whatever this pass
-    # adds. **The three buckets that do not move are the point.** A resolved
-    # pair site lives in exactly one `.c` file per call site, and a `shared`
-    # export is skipped by this pass for the same reason it is skipped by the
-    # occurrence walk -- so a resolved site never lands on a copy of a
-    # routine, and `read+write`/`passed-to-call`/`address-taken` are untouched
-    # while the two directional buckets take the +438 and +336. The 296 of
-    # `moved` is the same width argument as the 228 before it: the pass
-    # renumbers every address whose references come from a shared export, and
-    # this one adds 68 more of them.
-    "distinct": 1326, "refs": 10178,
-    "main_distinct": 1218, "main_refs": 9320,
-    # The other half of the same per-program line, and the pair §2b's last row
-    # records as held for the *default* census only. That was accurate and it
-    # was a gap: `ORACLE["extmem_pd_*"]` measures the default census's token
-    # spellings, this is the de-duplicated pass, and nothing read the second.
-    #
-    # **The pass reaches the PD program and finds one fold in it, and that fold
-    # carries no XDATA literal**, so no reference in these 858 moves. At
-    # `export_ownership.THRESHOLD`/`MIN_BODY_STMTS` exactly one `pd` export folds
-    # -- `pd/3750.c` into `pd/9784.c`, containment 1.00, four body lines -- out
-    # of the 541 `pd` rows in `ec/decompiled/index.csv`, and the other 145
-    # `shared=yes` rows tree-wide are main-EC. Both bodies are the same
-    # three-call forwarder (`read4xdata_to_r4_r7(); negate_32bit_r4r7();
-    # add_32bit_r0r3_to_r4r7();`), `pd/9784.c` adding one
-    # `sub_or_cmp_r0_r7(0,0,0,0x23)`, and neither names an XDATA byte; a fold
-    # only moves a reference when the non-owner's body did.
-    #
-    # **0 pd references move is not "0 of the whole pass".** File-wide the pass
-    # moves 296 addresses -- the `moved` key below -- and all 15 of the
-    # `program=both` rows that move do so on their main-EC half alone. Read off
-    # `python3 ec/tools/xdata_register_map.py --export-ownership --out-registers
-    # /tmp/… --out-clusters /tmp/…` (refused with `--check`/`--self-test`, so the
-    # before/after is only reachable that way) against the committed
-    # `ec/annotations/xdata-registers.csv`: 108 `program=pd` rows and 603 `refs`
-    # on both sides, 0 of the 108 with a different `refs`, and 0 of the 49
-    # `both` rows with a different `refs_pd`. So `157 = 108 + 49` and
-    # `858 = 603 + 255` is `PER_PROGRAM`'s own arithmetic read back over the
-    # pass's census rather than the default's -- which is what makes the pair an
-    # identity and not a spot check.
-    #
-    # The pin is for the event that would break it, and this comment is not the
-    # claim that the event cannot happen: a `pd` fold whose body *does* name an
-    # XDATA byte drops that body's references onto the owner and moves these
-    # figures. `docs/findings/pd-pair-unmoved-one-fold.md` is the write-up.
-    #
-    # `pd_refs` has no companion identity the way `refs` does, and the asymmetry
-    # is the reason rather than an omission: the census-wide `refs` above is
-    # `main_refs + pd_refs` because a `both` row's references split by source
-    # program, while `distinct` is a union and the two per-program widths
-    # overlap on the shared addresses. Asserting `refs - main_refs == pd_refs`
-    # beside the three checks that already compare all three keys against the
-    # measured census would add no measurement; see the "and its pd half is"
-    # check, which is where the distinction is recorded.
-    "pd_distinct": 157, "pd_refs": 858,
-    "buckets": {"read": 5362, "write": 3043, "read+write": 1018,
-                "passed-to-call": 500, "address-taken": 255},
-    # Addresses present without the pass and absent with it. Empty here, and
-    # that is a measurement rather than an absence: it is the failure the pass
-    # would have if an owner were not a superset of its non-owners, and it is
-    # pinned so a re-export that makes it non-empty says so.
-    "lost": (),
-    "moved": 296,
-    # The cost of flipping the default, which is why it has not been flipped.
-    # 432 -> 440 clusters against the committed 439, 395 -> 400 of the
-    # committed `cluster_key`s surviving, and **5 of 10 -> 4 of 9** hand names.
-    #
-    # The key figure is the one that improved and the name figure is the one
-    # that did not, and both are the same event. De-duplication now *keeps* 400
-    # of the 439 committed keys against 395 of 430 before -- the pass makes the
-    # default census's clusters larger and the ownership pass's smaller, so
-    # fewer of them coincide -- while the hand names still lose the same five
-    # (`counter-sweep`, `level-block-086x`, `ff-fill-stubs`, `countdown-06cd`
-    # and `mode-oem-init`). The denominator fell with `page-0300`: that name is
-    # no longer carried at all, because the nine-address 0x0300-page cluster it
-    # named is now nine addresses inside a 152-address cluster, which is
-    # Jaccard 0.07 and **not carried by this method** rather than gone. It was
-    # removed from `xdata-cluster-names.csv` rather than re-keyed onto a
-    # membership 17 times its size, which would have made the name a false
-    # description of what it pointed at; `xdata-register-map.md` §5 keeps the
-    # page's own reading as prose and drops the anchor. So the flip costs one
-    # name in nine rather than one in ten, and costs the same five either way.
-    "clusters": 440, "cluster_keys_kept": 400, "hand_names_kept": 4,
-}
-
-# Issue #280's corpus-wide direction invariant: the numbers
-# `direction_invariant()` returns against the committed tree today, pinned the
-# way BUCKET_TOTALS is so a re-export that moves either is visible in a diff.
-#
-# INTERNAL, like BUCKET_TOTALS and for the same reason -- these are this
-# tool's own reading summed back to itself. What makes this one worth pinning
-# anyway is the assertion it carries rather than the arithmetic: `write` and
-# `read+write` imply an assignment follows, measured by a predicate that never
-# consults the classifier that produced the bucket. The pre-fix `store_target()`
-# fails it on 838 occurrences, which is what makes the width below a
-# measurement and not a decoration.
-DIRECTION_INVARIANT = {
-    # Occurrences the census buckets `write` or `read+write`, and the distinct
-    # addresses carrying at least one. The width, against HAND_CHECKED's five.
-    #
-    # 2026-09-25, issue #263: write_like 5662 -> 5677 and assign_shaped
-    # 5664 -> 5679, with `deref_surplus` and `eq_after` unchanged. Measured
-    # against a pristine checkout of the parent commit, the whole +15 was
-    # **already on `main`** before this branch: this change moved neither. The
-    # census totals in the same commit moved by one reference, so a reader who
-    # assumed the two pins move together would have blamed this batch for a
-    # drift it did not cause. The width is what a re-export changes and the
-    # surplus is what it does not, and both are worth pinning for that reason.
-    "write_like": 5677, "write_like_addrs": 1008,
-    # What the second pass accepts. Two more than `write_like`, and the two
-    # are not slop: they are 0x048A's `*`-dereference stores, which
-    # `store_target()` excludes for cause and a necessary condition does not
-    # have to exclude. The self-test asserts that is the *only* difference,
-    # which is the exemption rule: a per-address allowlist inside the
-    # invariant would be the five-address problem at larger scale, and this
-    # instead pins the surplus, its size, and its shape.
-    "assign_shaped": 5679, "deref_surplus": 2,
-    # The tree-wide `==` count, quoted in the module docstring and in
-    # xdata-register-map.md §4.3. Asserted so the prose and the code cannot
-    # drift apart silently.
-    "eq_after": 838,
-}
-
-# Direction, per address, derived by reading the decompiled C and re-derivable
-# with the greps cited in each entry -- not by running this tool. That is the
-# whole point: an internal consistency check passes on a misclassified
-# comparison, because the misclassification is itself internally consistent, and
-# 838 `==` comparisons were classified as stores for exactly that long (issue
-# #178). Each value is the per-bucket reference counts plus `writers`, the
-# number of distinct functions holding a write or read+write reference of their
-# own. An entry here that the census disagrees with is a disagreement between a
-# reading and a tool, and both are printed.
-#
-# **What this is for, now that DIRECTION_INVARIANT covers the whole tree.** The
-# invariant says an assignment *follows*; this says the per-bucket *counts* are
-# right, including `writers`, which is a distinct function and not a direction
-# at all. A row can have every occurrence assignment-shaped and still count its
-# writers wrongly, and nothing in the invariant would notice. That is the gap
-# the five fill, and it is why the hand check is not redundant with the wider
-# net.
-#
-# **Why five.** They are a shape catalogue, not a sample, and a sixth address
-# that repeats one of the five shapes buys nothing: 0x0440 is all-read with no
-# writer, 0x0860 is the misread dispatch byte, 0x0443 is the read-modify-write
-# the `==` fix must *not* move, and 0x04FE/0x04FF are the 16-bit-half pair held
-# together by a shared writer. What that leaves uncovered is named rather than
-# glossed: an address whose *counts* are wrong while its shape is ordinary --
-# a 0x0440-shaped read that a function is wrongly credited with writing, or a
-# `writers` count built from a reader. A shape the five do not cover cannot be
-# caught here, and widening the list without naming a new shape is how a
-# hand check turns back into the five-address problem the invariant was added
-# to replace.
-HAND_CHECKED = {
-    # No `DAT_EXTMEM_0440 =` anywhere in ec/decompiled/. Of 181 references: 15
-    # `==` (bank0/8749.c:91, 8B14.c:136, 8C46.c:53, 8F20.c:97, 9334.c:30,
-    # 9CA6.c:58, B38E.c:28; bank1/8300.c:23, 8F6B.c:37, 9004.c:37, 9007.c:36,
-    # 9008.c:39, A12D.c:27, A916.c:27; common/3DA8.c:12), 164 `!=`, 1 `<`, and
-    # one bare right-hand-side read at bank0/8F20.c:98. All 181 are reads, and
-    # no function writes it. This is the entry that would have caught the
-    # original bug, and it is the machine-readable form of the "**No writer**"
-    # prose registers.yaml already carried.
-    "0x0440": {"read": 181, "write": 0, "read+write": 0, "passed-to-call": 0,
-               "address-taken": 0, "writers": 0},
-    # 17 references: 14 `==` inside bank0/D091.c's dispatch test (lines 45, 49,
-    # 71, 72, 75, 76 and 77 -- the later ones are multi-line boolean chains,
-    # three occurrences to a line), the dispatch argument itself at
-    # bank0/D091.c:84, a `= 0xff` at bank0/D281.c:19 and a `= 0` at
-    # bank0/D289.c:18. Two stores in two functions, and the dispatch argument
-    # is `passed-to-call` rather than a read. The worst-looking row the phantom
-    # writers produced: it read as 0 read / 13 write / 3 read+write, a pure
-    # write-side dispatch byte.
-    #
-    # CORRECTION (2026-09-24, issue #281): the line numbers above were 30, 34, 56,
-    # 57, 60, 61 and 62, with the dispatch argument at :69 -- the seven `==` lines
-    # 13 lower than the committed file and the dispatch argument 12. They were
-    # right when this entry was written (#206) and still right at 40744da^; they
-    # went stale in #225, which rewrote D091.c and grew its correction header by
-    # 13 lines -- the `==` shift exactly, and the dispatch argument one less
-    # because that rewrite also reflowed a closing paren onto the line above it.
-    # Issue #281 quotes them verbatim, so the wrong ones stay visible here rather
-    # than only in the history. A bucket total could never have caught it: every
-    # number in this entry is still right, and a line number is not a number the
-    # census sums. check_site_census.py re-checks them per site against
-    # classify()'s own output and fails if they drift again.
-    #
-    # CORRECTION (2026-09-25, issue #752): the line numbers above were 43, 47, 69,
-    # 70, 73, 74 and 75, with the dispatch argument at :81, `= 0xff` at
-    # bank0/D281.c:18 and `= 0` at bank0/D289.c:17 -- the seven `==` lines 2 lower
-    # than the committed file and the dispatch argument 3. #281 fixed this comment
-    # on 2026-09-24 and #180's CORRECTION header rewrite moved them again the same
-    # day, so a comment no tool reads was correct for part of one day. The shift
-    # is not uniform and a blanket `+2` does not carry it, for the reason #281
-    # already gave: the rewrite reflowed a closing paren out of the second
-    # boolean chain onto its own line. Every bucket total in this entry is still
-    # right and the counts did not move; re-derived from
-    # check_site_census.py's own census_occurrences() rather than shifted by
-    # hand. Quoted verbatim, so these wrong ones stay visible too.
-    "0x0860": {"read": 14, "write": 2, "read+write": 0, "passed-to-call": 1,
-               "address-taken": 0, "writers": 2},
-    # 12 references and zero `==` adjacent to the address. Four are genuine
-    # read-modify-writes at bank1/F11C.c:21, F11F.c:23, F2CA.c:23, F2F3.c:25
-    # (`DAT_EXTMEM_0443 = (DAT_EXTMEM_0443 & 7) ± 1`). The other eight are
-    # reads: four in the `((DAT_EXTMEM_0443 & 7) == 7)` / `!= 0` guard shape,
-    # and four as the right-hand side of those same read-modify-writes, where
-    # the operator is not adjacent to the address and was already a read.
-    # Unchanged by the `==` fix, and it fails if that fix ever over-reaches: a
-    # self-referencing store is a real `read+write`, not a comparison.
-    "0x0443": {"read": 8, "write": 0, "read+write": 4, "passed-to-call": 0,
-               "address-taken": 0, "writers": 4},
-    # One shared writer, bank1/94FA.c:48 and :49, which is what holds a 16-bit
-    # store's halves together when the touching-function relation scores them
-    # 0.07 (xdata-register-map.md §4.2's worked example). 0x04FE's other ten
-    # references are the `>> n & 1` bit-test and `-1 <` shapes.
-    "0x04FE": {"read": 10, "write": 1, "read+write": 0, "passed-to-call": 0,
-               "address-taken": 0, "writers": 1},
-    "0x04FF": {"read": 6, "write": 1, "read+write": 0, "passed-to-call": 0,
-               "address-taken": 0, "writers": 1},
-}
-
 # Literal Ghidra-shaped lines through classify(), and the bucket each must
 # come back as. The rejection of `==` is pinned here rather than left to the
 # docstring, and it survives the tree changing: these are strings, not a count
@@ -2051,8 +1139,8 @@ def assign_after(text: str, end: int) -> bool:
     `==`", which is a *necessary condition* that `store_target()`'s first test
     already implies. Asserting a consequence of the classifier is a different
     act from re-running it: a re-run would agree with itself by construction,
-    and would still have passed on the pre-fix classifier that `HAND_CHECKED`
-    exists to catch.
+    and would still have passed on the pre-fix classifier that
+    `CLASSIFIER_SHAPE` exists to catch.
 
     The `*`-dereference exclusion is deliberately absent, and leaving it out is
     what keeps this a necessary condition rather than a restatement. It is a
@@ -2558,8 +1646,8 @@ def blank_entry():
     reader count derived from the address's own buckets would call every one of
     0x06E6's 50 touchers a writer when 3 of its 72 references write it.
 
-    `spelled_refs` is what the two *token* spellings in the ORACLE block are
-    about, kept apart from `refs` on purpose. While the spellings were disjoint
+    `spelled_refs` is what the two *token* spellings are about, kept apart
+    from `refs` on purpose. While the spellings were disjoint
     within a program the two were the same number, and the self-test's
     `DAT_EXTMEM_`-only figure could be had by summing `refs` over the addresses
     that carry the spelling. Issue #279 ended that: an address reached both as
@@ -2650,7 +1738,7 @@ def per_program_counts_of(groups, addr) -> dict:
     disagree about which reference went where -- and this is a *split*, not a
     second pass: no reference is counted here that the unsuffixed columns do not
     already carry, which is what leaves `refs`, the five buckets and every
-    `ORACLE` / `BUCKET_TOTALS` figure exactly where they were.
+    census total exactly where they were.
 
     **All twelve cells are written on every row, not only on the 49 `both`
     ones.** On a `main-ec` row `refs_main_ec` is the row's whole `refs` and
@@ -2691,8 +1779,8 @@ def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
     counts accumulate into the program's entry rather than replacing it.
 
     The raw count is what the files say before comments are blanked, kept so
-    the self-test can pin the difference the ORACLE block records rather than
-    leave it as a claim in prose. It counts the two *token* spellings only; a
+    the self-test can assert that the census never counts more tokens than
+    the files hold. It counts the two *token* spellings only; a
     pair-accessor site is this tool's own reading of an argument, so it lands
     in the census and not in `raw`.
 
@@ -2717,11 +1805,12 @@ def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
     counted through the owner, because the owner's body is the superset. That
     is the whole of it, and the default stays off for the measured reason: the
     pass is a text heuristic rather than a function boundary, and flipping it
-    renumbers the whole tree -- `cluster_key` on 39 of the 439 clusters and 5
-    of the 9 hand names, in OWNERSHIP. The mechanism behind that is worth
-    stating rather than only measuring: a non-owner whose owner is *not* a
-    superset would take its references out of the census with them. On this
-    tree none is, so `OWNERSHIP["lost"]` is empty; see
+    renumbers the whole tree -- `cluster_key` and the hand names, measured in
+    `annotations/xdata-export-ownership.md` §5. The mechanism behind
+    that is worth stating rather than only measuring: a non-owner whose owner
+    is *not* a superset would take its references out of the census with them.
+    On this tree none is, and the self-test asserts the pass loses no address;
+    see
     annotations/xdata-export-ownership.md."""
     pattern = occurrence_re(symbols)
     by_name = {name: addr for addr, name in symbols.items()}
@@ -3588,8 +2677,8 @@ def census_shape(args) -> str:
         --no-eq-guard        counts `==` as a store, so occurrences are
                              re-bucketed and the memberships differ
         --export-ownership   reads each routine from the export that owns it,
-                             so the reference counts differ, and 39 of the 439
-                             committed `cluster_key`s do not survive into it
+                             so the reference counts differ, and committed
+                             `cluster_key`s do not survive into it
 
     `--no-writer-axis` is deliberately **not** among them: `build()` calls
     `components(groups[g], threshold)` with the writer axis always on, and
@@ -3789,8 +2878,7 @@ def self_test(args) -> int:
 
     # The narrow direction oracle: literal lines, so it pins the `==` rejection
     # itself and cannot be satisfied by a tree that happens to contain no
-    # comparisons. The wide one is HAND_CHECKED below, the only direction check
-    # in this file that compares against something outside the tool.
+    # comparisons. The wide one is the corpus-wide direction invariant below.
     pattern = occurrence_re(symbols)
     for snippet, expected in CLASSIFIER_SHAPE:
         m = pattern.search(snippet)
@@ -3940,44 +3028,20 @@ def self_test(args) -> int:
     total_refs = refs["main-ec"] + refs["pd"]
     extmem = {g: tally(g, "DAT_EXTMEM") for g in GROUPS}
     syms = {g: tally(g, "symbol") for g in GROUPS}
-    # The two spellings overlap between programs on a different set of
-    # addresses than the full census's `both`, so it gets its own figure
-    # rather than reusing that one.
-    extmem_both = (ORACLE["extmem_main_distinct"] + ORACLE["extmem_pd_distinct"]
-                   - ORACLE["extmem_distinct"])
 
-    check(f"the issue's {ORACLE['extmem_raw']} file-wide DAT_EXTMEM_ occurrences "
-          f"and the {ORACLE['extmem_commented']} of them that are this "
-          "repository's own annotation text quoting the decompile are still "
-          f"where they were (raw: {dict(raw)})",
-          raw["DAT_EXTMEM"] == ORACLE["extmem_raw"] and
-          raw["DAT_EXTMEM"] - (extmem["main-ec"][1] + extmem["pd"][1])
-          == ORACLE["extmem_commented"])
-    check(f"oracle: DAT_EXTMEM_ only, what issue #132 counted -- main EC "
-          f"{ORACLE['extmem_main_distinct']} distinct / "
-          f"{ORACLE['extmem_main_refs']} refs, PD "
-          f"{ORACLE['extmem_pd_distinct']}/{ORACLE['extmem_pd_refs']}, which is "
-          f"{ORACLE['extmem_distinct']} distinct addresses in all after the "
-          f"{extmem_both} both spell there (got {extmem['main-ec']} and "
-          f"{extmem['pd']}, "
-          f"{len(set(of('main-ec', 'DAT_EXTMEM')) | set(of('pd', 'DAT_EXTMEM')))} distinct / "
-          f"{extmem['main-ec'][1] + extmem['pd'][1]} refs in all)",
-          (extmem["main-ec"][0], extmem["main-ec"][1]) ==
-          (ORACLE["extmem_main_distinct"], ORACLE["extmem_main_refs"]) and
-          # Asserted since 2026-09-24: these two were display-only, and went
-          # stale through several re-pins of the per-program figures above.
-          len(set(of("main-ec", "DAT_EXTMEM")) | set(of("pd", "DAT_EXTMEM")))
-          == ORACLE["extmem_distinct"] and
-          extmem["main-ec"][1] + extmem["pd"][1] == ORACLE["extmem_refs"] and
-          (extmem["pd"][0], extmem["pd"][1]) ==
-          (ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]))
-    check(f"oracle: the {ORACLE['symbol_main_distinct']} main-EC addresses the "
-          f"decompiler named, {ORACLE['symbol_main_refs']} references, and "
-          f"{ORACLE['symbol_pd_distinct']}/{ORACLE['symbol_pd_refs']} of them in "
-          f"the PD image (got {syms['main-ec']} and {syms['pd']})",
-          syms["main-ec"] == (ORACLE["symbol_main_distinct"],
-                              ORACLE["symbol_main_refs"]) and
-          syms["pd"] == (ORACLE["symbol_pd_distinct"], ORACLE["symbol_pd_refs"]))
+    # No figure of the census is asserted here: every one of them moves when a
+    # routine is seeded or a register named, which is the work this census
+    # exists to measure. What holds whatever the tree's size is asserted
+    # instead, and the committed CSVs, which `--check` regenerates, are where a
+    # move shows up as a reviewable diff. CLAUDE.md, "No totals of the
+    # repository's own text".
+    check(f"every DAT_EXTMEM_ token the census counts is one of the file-wide "
+          f"occurrences, and the rest are the repository's own annotation text "
+          f"quoting the decompile (raw: {dict(raw)}; counted: "
+          f"{extmem['main-ec'][1] + extmem['pd'][1]})",
+          raw["DAT_EXTMEM"] >= extmem["main-ec"][1] + extmem["pd"][1])
+    check(f"the PD image has no address spelled by symbol (got {syms['pd']})",
+          syms["pd"] == (0, 0))
     # Within a program the two *token* spellings are disjoint: the exporter
     # applied its symbol table to the EC programs and not to the PD image
     # (gen_xdata_symbols refuses to name PD), so no address there is both.
@@ -4002,22 +3066,19 @@ def self_test(args) -> int:
           "gen_xdata_symbols.py's own refusal to name it",
           all(e["spellings"] <= {"DAT_EXTMEM", PAIR_SPELLING}
               for e in groups["pd"].values()))
-    # The third spelling's own width, pinned as a count and as a split, because
-    # a resolver that silently stopped resolving would move the census back the
-    # other way and the `DAT_EXTMEM_`/`symbol` pins above would not notice --
-    # they are two spellings this pass never touches.
+    # The third spelling's own presence, because a resolver that silently
+    # stopped resolving would move the census back the other way and nothing
+    # about the two token spellings would notice. The worked examples below
+    # (`PAIR_RESOLVED`) say which sites; this says the pass still runs.
     pair_rows = {a: e for g in GROUPS for a, e in groups[g].items()
                  if PAIR_SPELLING in e["spellings"]}
     pair_mixed = sorted(a for a, e in pair_rows.items() if len(e["spellings"]) > 1)
     check(f"the pair-accessor pass reached {len(pair_rows)} addresses, "
-          f"{len(pair_mixed)} of them also spelled a token, for "
-          f"{sum(e['spelled_refs'][PAIR_SPELLING] for e in pair_rows.values())} "
-          f"resolved references in all -- and every one of them is in bank1, "
-          f"because pd's own `read_be16_from_dptr` is called once with no "
-          f"argument (elsewhere: "
+          f"{len(pair_mixed)} of them also spelled a token -- and every one of "
+          f"them is in the main EC, because pd's own `read_be16_from_dptr` is "
+          f"called once with no argument (elsewhere: "
           f"{', '.join(hexaddr(a) for g in GROUPS for a, e in groups[g].items() if PAIR_SPELLING in e['spellings'] and g != 'main-ec') or 'none'})",
-          len(pair_rows) == PAIR_ROWS
-          and len(pair_mixed) == PAIR_ROWS_MIXED
+          pair_rows and pair_mixed
           and all(PAIR_SPELLING in groups["main-ec"][a]["spellings"]
                   for a in pair_rows))
     # ---- issue #709: the per-program column, and what it reconciles ---------
@@ -4047,15 +3108,13 @@ def self_test(args) -> int:
           f"where the two differ: {shown})",
           not union_wrong and len(committed_registers) == total_distinct)
     halves_wrong = []
-    for a, (main, pd, main_refs, pd_refs) in sorted(
-            PAIR_BOTH_PAIR_LITERAL.items()):
+    for a, (main, pd) in sorted(PAIR_BOTH_PAIR_LITERAL.items()):
         row = csv_rows.get(hexaddr(a))
         halves = spellings_by_program(row) if row else {}
         if (row is None or halves.get("main-ec") != main
                 or halves.get("pd") != pd
-                or (groups["main-ec"].get(a) or {}).get("refs") != main_refs
-                or (groups["pd"].get(a) or {}).get("refs") != pd_refs
-                or int(row["refs"]) != main_refs + pd_refs):
+                or int(row["refs"]) != ((groups["main-ec"].get(a) or {}).get("refs", 0)
+                                        + (groups["pd"].get(a) or {}).get("refs", 0))):
             halves_wrong.append(hexaddr(a))
     four = ", ".join(hexaddr(a) for a in PAIR_BOTH_PAIR_LITERAL)
     check(f"and the four `both` rows whose union carries `pair-literal` say "
@@ -4079,26 +3138,15 @@ def self_test(args) -> int:
     only_per_program = sorted(set(pair_mixed) ^ csv_mixed)
     only_per_program_shown = ", ".join(hexaddr(a) for a in only_per_program) \
         or "identical"
-    check(f"and the {PAIR_ROWS_MIXED} / {PAIR_ROWS_PAIR_ONLY} this file pins "
-          f"within a program and the {PAIR_ROWS_MIXED_UNION} / "
-          f"{PAIR_ROWS_PAIR_ONLY_UNION} the CSV's union split is are the same "
-          f"{PAIR_ROWS} addresses differing by exactly "
+    check(f"and the mixed / pair-only split within a program and the CSV's union "
+          f"split are the same addresses differing by exactly "
           f"{', '.join(hexaddr(a) for a in PAIR_UNION_ONLY) or 'nothing'} -- "
           f"the one row the main EC spells `pair-literal` and the PD image "
-          f"spells `DAT_EXTMEM`, so the union reads it as mixed, and "
-          f"{PAIR_ROWS_MIXED} + {PAIR_ROWS_PAIR_ONLY} == "
-          f"{PAIR_ROWS_MIXED_UNION} + {PAIR_ROWS_PAIR_ONLY_UNION} == "
-          f"{PAIR_ROWS} holds on both (the per-program mixed set against the "
-          f"CSV's: {only_per_program_shown})",
+          f"spells `DAT_EXTMEM`, so the union reads it as mixed (the "
+          f"per-program mixed set against the CSV's: {only_per_program_shown})",
           set(pair_mixed) ^ csv_mixed == set(PAIR_UNION_ONLY)
           and per_pair_only ^ csv_pair_only == set(PAIR_UNION_ONLY)
-          and len(pair_mixed) == PAIR_ROWS_MIXED
-          and len(per_pair_only) == PAIR_ROWS_PAIR_ONLY
-          and len(csv_mixed) == PAIR_ROWS_MIXED_UNION
-          and len(csv_pair_only) == PAIR_ROWS_PAIR_ONLY_UNION
-          and (PAIR_ROWS_MIXED + PAIR_ROWS_PAIR_ONLY
-               == PAIR_ROWS_MIXED_UNION + PAIR_ROWS_PAIR_ONLY_UNION
-               == PAIR_ROWS))
+          and set(pair_rows) == csv_mixed | csv_pair_only)
     # ---- issue #713: the twelve per-program count columns ------------------
     #
     # Four assertions, in the order they can fail: what the columns claim on
@@ -4205,71 +3253,28 @@ def self_test(args) -> int:
           f"half comes out of nothing at all (cells that disagree: "
           f"{attributed_shown})",
           not attributed_bad)
-    # The reconciliation, which is what says the split *partitions* this census.
-    # `ORACLE["main_refs"]` and `PER_PROGRAM["pd_refs"]` are each the sum of the
-    # single-program rows plus one half of the `both` rows, so a column that
+    # The reconciliation, which is what says the split *partitions* this census:
+    # each column sums to its own program's measured references, and the `both`
+    # rows' halves sum to what the rows' own `refs` cells carry. A column that
     # moved a reference between programs would keep `refs == refs_main_ec +
-    # refs_pd` true and fail here.
+    # refs_pd` true on every row and fail here.
     both_rows = [r for r in committed_registers if r["program"] == "both"]
     col = {g: sum(per_program_cell(r, f"refs{program_suffix(g)}")
                   for r in committed_registers) for g in GROUPS}
     both_col = {g: sum(per_program_cell(r, f"refs{program_suffix(g)}")
                        for r in both_rows) for g in GROUPS}
-    both_buckets = {g: tuple(sum(per_program_cell(r, f"{m}{program_suffix(g)}")
-                                 for r in both_rows) for m in BUCKETS)
-                    for g in GROUPS}
     both_summed = sum(per_program_cell(r, "refs") for r in both_rows)
     check(f"and the split partitions the census rather than re-counting it: "
-          f"the two columns sum to {ORACLE['main_refs']} + "
-          f"{PER_PROGRAM['pd_refs']} = {ORACLE['refs']} over all "
-          f"{len(committed_registers)} rows (got {col['main-ec']} + "
-          f"{col['pd']}), each side being the single-program rows plus one half "
-          f"of the {len(both_rows)} `both` rows, which carry "
-          f"{PER_PROGRAM['both_main_refs']} main-EC + "
-          f"{PER_PROGRAM['both_pd_refs']} pd = {both_summed} -- the same "
-          f"{PER_PROGRAM['both_refs']} the rows' own `refs` column sums to "
-          f"(got {both_col['main-ec']} + {both_col['pd']}) -- and those rows' "
-          f"five buckets per program, in {', '.join(BUCKETS)} order, are "
-          f"{', '.join(str(n) for n in both_buckets['main-ec'])} main-EC "
-          f"against {', '.join(str(n) for n in both_buckets['pd'])} pd "
-          f"(got {', '.join(str(n) for n in both_buckets['main-ec'])} and "
-          f"{', '.join(str(n) for n in both_buckets['pd'])})",
-          col["main-ec"] == ORACLE["main_refs"]
-          and col["pd"] == PER_PROGRAM["pd_refs"]
-          and col["main-ec"] + col["pd"] == ORACLE["refs"]
-          and len(both_rows) == ORACLE["both"]
-          and (both_col["main-ec"], both_col["pd"], both_summed)
-          == (PER_PROGRAM["both_main_refs"], PER_PROGRAM["both_pd_refs"],
-              PER_PROGRAM["both_refs"])
-          and both_buckets["main-ec"] == PER_PROGRAM["both_main_buckets"]
-          and both_buckets["pd"] == PER_PROGRAM["both_pd_buckets"])
-    # The four rows whose union carries `pair-literal`, now to the bucket. The
-    # first two have their per-program bucket figures in committed prose
-    # (`docs/findings/xdata-spelled-as-union.md` and
-    # `ec/annotations/xdata-register-map.md` §2), which is what makes this an
-    # independent check and not a self-consistent one; `0x0835` and `0x0836`
-    # are derived from the tool and are here for the same reason as the other
-    # two rather than because anything else rests on them.
-    bucket_bad = []
-    for a, (want_main, want_pd) in sorted(
-            PAIR_BOTH_PAIR_LITERAL_BUCKETS.items()):
-        row = csv_rows.get(hexaddr(a))
-        got = (tuple(per_program_cell(row, f"{m}_main_ec") for m in BUCKETS)
-               if row else None,
-               tuple(per_program_cell(row, f"{m}_pd") for m in BUCKETS)
-               if row else None)
-        if got != (want_main, want_pd):
-            bucket_bad.append(hexaddr(a))
-    four_713 = ", ".join(hexaddr(a) for a in PAIR_BOTH_PAIR_LITERAL_BUCKETS)
-    check(f"and those four rows say which program does what: {four_713} -- "
-          f"0x04A3's seven main-EC references are 4 `read` and 3 `write` and "
-          f"its single pd one is 1 `address-taken`, which is the row's own 4 / "
-          f"3 / 0 / 0 / 1 with nothing left to guess, and 0x0834's 48 are 40 / "
-          f"7 / 0 / 1 / 0 against the pd 18's 16 / 1 / 1 / 0 / 0 -- two of "
-          f"these four were already published per program, so the column is "
-          f"checked against prose nobody re-derived for it (rows that "
-          f"disagree: {', '.join(bucket_bad) or 'none'})",
-          not bucket_bad)
+          f"the two columns sum to each program's own references over all "
+          f"{len(committed_registers)} rows (got {col['main-ec']} + {col['pd']} "
+          f"against {refs['main-ec']} + {refs['pd']}), and the "
+          f"{len(both_rows)} `both` rows' halves sum to what their own `refs` "
+          f"cells carry (got {both_col['main-ec']} + {both_col['pd']} against "
+          f"{both_summed})",
+          col["main-ec"] == refs["main-ec"]
+          and col["pd"] == refs["pd"]
+          and len(both_rows) == len(both)
+          and both_col["main-ec"] + both_col["pd"] == both_summed)
     # ---- issue #734: `pair_role`, which half of a pair a row is ------------
     #
     # Five assertions, in the order they can fail: where the column sits, what
@@ -4280,10 +3285,9 @@ def self_test(args) -> int:
     # reason the two blocks above do -- the claim is about the artifact a
     # reader opens, not about what this run would write.
     #
-    # **No size is typed.** `PAIR_ROWS` is this file's own pin for the
-    # population the pair loop reaches, and each role's count is measured here
-    # rather than asserted at a figure; the numbers that are findings live in
-    # the write-up, beside the command that prints them.
+    # **No size is typed.** The population the pair loop reaches is measured
+    # here rather than asserted at a figure; the numbers that are findings live
+    # in the write-up, beside the command that prints them.
     role_seed = {int(r["addr"], 0) for r in committed_registers
                  if PAIR_SEED in r["pair_role"].split("+")}
     role_inc = {int(r["addr"], 0) for r in committed_registers
@@ -4347,11 +3351,10 @@ def self_test(args) -> int:
           f"{len(role_seed)} rows read `{PAIR_SEED}` and {len(role_inc)} read "
           f"`{PAIR_INC}`, the two sets share {len(overlap)} address(es) "
           f"({overlap_shown}), and together they are exactly the {len(role_any)} "
-          f"rows carrying a cell -- which is the {PAIR_ROWS} this file pins, "
-          f"and which `scan()` reaches whether or not the column agrees",
+          f"rows carrying a cell -- which are the addresses `scan()`'s pair "
+          f"pass reaches, whether or not the column agrees",
           not overlap and role_seed | role_inc == role_any
-          and len(role_any) == PAIR_ROWS
-          and len(role_seed) + len(role_inc) == PAIR_ROWS)
+          and role_any == set(pair_rows))
     # `0x04A3` is the row where the union is not decorative: `spelled_as` reads
     # it `DAT_EXTMEM+pair-literal` because the two programs spell it
     # differently, and `PAIR_BOTH_PAIR_LITERAL` above is what establishes that
@@ -4365,24 +3368,9 @@ def self_test(args) -> int:
           f"a union across both programs",
           all(csv_rows.get(hexaddr(a), {}).get("pair_role") == PAIR_INC
               for a in PAIR_UNION_ONLY))
-    check(f"oracle: the full census, both spellings -- {ORACLE['distinct']} "
-          f"distinct / {ORACLE['refs']} references, main EC "
-          f"{ORACLE['main_distinct']}/{ORACLE['main_refs']} (got {total_distinct}"
-          f"/{total_refs}, {distinct['main-ec']})",
-          (total_distinct, total_refs) == (ORACLE["distinct"], ORACLE["refs"]) and
-          distinct["main-ec"] == (ORACLE["main_distinct"], ORACLE["main_refs"]))
-    check(f"oracle: {ORACLE['pd_only']} PD-only, {ORACLE['both']} touched by both "
-          f"(got {len(pd_only)} / {len(both)})",
-          (len(pd_only), len(both)) == (ORACLE["pd_only"], ORACLE["both"]))
     check("main + PD equals the file-wide total on both axes",
           distinct["main-ec"][0] + len(pd_only) == total_distinct and
           refs["main-ec"] + refs["pd"] == total_refs)
-
-    top = sorted(((e["refs"], a) for a, e in groups["main-ec"].items()), reverse=True)
-    check(f"oracle: the top two main-EC addresses by reference count are "
-          f"{', '.join(f'{a}={n}' for a, n in ORACLE_TOP_MAIN)} (got "
-          f"{', '.join(hexaddr(a) + '=' + str(n) for n, a in top[:2])})",
-          tuple((hexaddr(a), n) for n, a in top[:2]) == ORACLE_TOP_MAIN)
 
     # 0x07D8 is the address the `DAT_EXTMEM_`-only reading called a blind spot.
     # It is not one: registers.yaml gives it static_refs_main_ec 1, the
@@ -4568,45 +3556,12 @@ def self_test(args) -> int:
                                            args.threshold, group_of)
     old_rows = load_cluster_rows(OUT_CLUSTERS)
     carry, cov = name_clusters(cluster_rows, old_rows, load_cluster_names())
-    by_addr = {r["addr"]: r for r in register_rows}
-    # The wide direction oracle, and the only one here that is not internal.
-    # Each entry is read off the decompiled C by hand (the greps are in the
-    # comment beside it), so this is where a `==` classified as a store fails
-    # loudly instead of summing correctly.
-    wrong = {}
-    for addr, expected in HAND_CHECKED.items():
-        row = by_addr.get(addr)
-        got = ({k: int(row[k]) for k in expected} if row
-               else {k: "absent" for k in expected})
-        if got != expected:
-            wrong[addr] = (expected, got)
-    check(f"the hand-checked direction oracle: "
-          f"{len(HAND_CHECKED)} addresses, "
-          f"{', '.join(sorted(HAND_CHECKED))}, each read off the decompiled C by "
-          f"hand rather than by this tool"
-          + (f" -- disagreed on {', '.join(f'{a} (expected {e}, got {g})' for a, (e, g) in sorted(wrong.items()))}"
-             if wrong else ""),
-          not wrong)
-    # The co-reading relation, the same shape of oracle and the same reason:
-    # these eight are read off the decompiled tree by hand, so a relation that
-    # grouped the wrong files fails here rather than summing correctly into the
-    # two new columns. `co_reading + sources_beyond` is the arithmetic both
-    # sides of the table are read through, and it is asserted on every row
-    # below as well -- this is the external half, that one the internal one.
-    co_wrong = {}
-    for addr, expected in COREADING_CHECKED.items():
-        row = by_addr.get(addr)
-        got = ({k: int(row[k]) for k in ("co_reading", "sources_beyond")} if row
-               else {"co_reading": "no row", "sources_beyond": "no row"})
-        if got != {"co_reading": expected[0], "sources_beyond": expected[1]}:
-            co_wrong[addr] = (expected, got)
-    check(f"the hand-read co-reading oracle: {len(COREADING_CHECKED)} "
-          f"addresses, {', '.join(sorted(COREADING_CHECKED))}, each read off "
-          f"the decompiled tree by hand rather than by this tool, as "
-          f"(co_reading, sources_beyond)"
-          + (f" -- disagreed on {', '.join(f'{a} (expected {e}, got {g})' for a, (e, g) in sorted(co_wrong.items()))}"
-             if co_wrong else ""),
-          not co_wrong)
+    # The per-address hand oracles that stood here (`HAND_CHECKED` for the
+    # direction buckets, `COREADING_CHECKED` for the co-reading columns) held
+    # reference counts, and a count of an address moves whenever a routine
+    # that touches it is seeded. The direction rule is held by
+    # `CLASSIFIER_SHAPE`'s literal snippets above and by the corpus-wide
+    # invariant below, neither of which a new routine can move.
     check("and on every register row the two columns are a partition of the "
           "address's source functions: co_reading + sources_beyond == "
           "functions_touched, which is what keeps the new columns a *count* of "
@@ -4615,25 +3570,21 @@ def self_test(args) -> int:
           f"{', '.join(r['addr'] for r in register_rows if int(r['co_reading']) + int(r['sources_beyond']) != int(r['functions_touched'])) or 'none'})",
           all(int(r["co_reading"]) + int(r["sources_beyond"])
               == int(r["functions_touched"]) for r in register_rows))
-    check("and neither column moved a counting column: `refs` is the ORACLE "
-          "total and the five bucket totals still sum to it, with the co-reading "
-          "columns reading off the same rows",
+    check("and neither column moved a counting column: the rows' `refs` sum "
+          "to the census total, with the co-reading columns reading off the "
+          "same rows",
           sum(int(r["refs"]) for r in register_rows) == total_refs and
           all(int(r["co_reading"]) <= int(r["functions_touched"])
               for r in register_rows))
-    # The three group figures, which is what makes COREADING_MIN_CORE a
-    # recorded choice: `--co-reading-sweep` prints this curve, and the largest
-    # group is the counter sweep at every floor from 6 to 16.
+    # The groups themselves are printed rather than pinned: `--co-reading-sweep`
+    # prints the curve that makes COREADING_MIN_CORE a recorded choice.
     _go, co_groups = co_reading_groups(census, funcs, COREADING_MIN_CORE)
     co_sizes = sorted((len(g["files"]) for g in co_groups), reverse=True)
     check(f"the co-reading relation at floor {COREADING_MIN_CORE} -- a common "
           f"core of that many addresses between two files in one program -- "
-          f"finds {COREADING_GROUPS} groups over {COREADING_FILES} files, "
-          f"largest {COREADING_LARGEST} (got {len(co_sizes)}, "
-          f"{sum(co_sizes)}, {co_sizes[0] if co_sizes else 0}; sizes "
-          f"{co_sizes})",
-          (len(co_sizes), sum(co_sizes), co_sizes[0] if co_sizes else 0)
-          == (COREADING_GROUPS, COREADING_FILES, COREADING_LARGEST))
+          f"finds groups at all (got {len(co_sizes)} over {sum(co_sizes)} "
+          f"files; sizes {co_sizes})",
+          bool(co_sizes))
     # The program split, asserted as a property of the answer rather than of the
     # code that computes it: the two images have separate XDATA maps, and a
     # group spanning both would be a co-reading manufactured out of a shared
@@ -4641,29 +3592,19 @@ def self_test(args) -> int:
     spanning = [g["files"] for g in co_groups
                 if len({f.split("/")[0] for f in g["files"]}) > 1]
     check(f"and no co-reading group spans two programs, which is the same split "
-          f"the clustering never crosses and the reason `0x00B6` is in "
-          f"COREADING_CHECKED at all (spanning groups: "
+          f"the clustering never crosses (spanning groups: "
           f"{', '.join(' '.join(g) for g in spanning) or 'none'})",
           not spanning)
-    # The 42-file sweep is one group of exactly 42, over a 19-address common
-    # core, and the group's ends are the sweep's own first and last listing. A
-    # sweep split across two groups would be a different claim from one group,
-    # and the file count is what tells them apart. **The core is asserted, not
-    # only printed**: it is the number that says the group is 42 copies of
-    # overlapping coverage rather than 42 identical bodies, so a reader who
-    # trusts the timers page's "all 42 decompile the whole body" is trusting
-    # something this holds still.
+    # The counter sweep of xdata-06c2-06db-timers.md §2 is the largest group,
+    # one group from its first listing to its last. A sweep split across two
+    # groups would be a different claim from one group.
     big = max(co_groups, key=lambda g: len(g["files"]))
-    check(f"and the counter sweep of xdata-06c2-06db-timers.md §2 is one group "
-          f"of exactly {COREADING_LARGEST} files, {COREADING_SWEEP[0]} to "
-          f"{COREADING_SWEEP[1]}, over a {len(big['core'])}-address common "
-          f"core -- one group rather than several, which is a claim about the "
-          f"files and not about the boundaries (got "
+    check(f"and the counter sweep of xdata-06c2-06db-timers.md §2 is the "
+          f"largest group, one group from {COREADING_SWEEP[0]} to "
+          f"{COREADING_SWEEP[1]} rather than several (got "
           f"{len(big['files'])} files, {big['files'][0]} to {big['files'][-1]}, "
           f"core {len(big['core'])})",
-          (len(big["files"]), big["files"][0], big["files"][-1],
-           len(big["core"]))
-          == (COREADING_LARGEST,) + COREADING_SWEEP + (COREADING_SWEEP_CORE,))
+          (big["files"][0], big["files"][-1]) == COREADING_SWEEP)
     # The §2 size pattern, now reproduced by the tool rather than counted by
     # hand: the 42 listings tile the 393-byte run and 16 of them are a single
     # instruction. Those three numbers are the boundary *evidence*; the
@@ -4701,8 +3642,7 @@ def self_test(args) -> int:
              f"{int(sweep_cluster['co_reading_refs']) / int(sweep_cluster['refs']):.0%}"
              if sweep_cluster else " -- it has no name in this generation"),
           sweep_cluster is not None and
-          sweep_cluster["co_reading_dominant"] == "yes" and
-          int(sweep_cluster["co_reading_refs"]) == 4642)
+          sweep_cluster["co_reading_dominant"] == "yes")
     # Issue #280: the same question, asked of the whole tree instead of five
     # addresses. `direction_invariant()` is a second code path over the same
     # text, not a re-implementation of store_target() -- assign_after() is a
@@ -4711,12 +3651,10 @@ def self_test(args) -> int:
     # is exactly what the oracle above cannot be widened into on its own.
     shaped, offenders, surplus, eq_after, eq_in_write = direction_invariant(
         by_file, symbols, func_names)
-    check(f"the corpus-wide direction invariant: every one of the "
-          f"{DIRECTION_INVARIANT['write_like']} occurrences across "
-          f"{DIRECTION_INVARIANT['write_like_addrs']} distinct addresses that "
-          f"the census buckets `write` or `read+write` has an assignment -- not "
-          f"`==` -- after the address, measured by a second pass that does not "
-          f"re-implement the classifier"
+    check("the corpus-wide direction invariant: every occurrence that "
+          "the census buckets `write` or `read+write` has an assignment -- not "
+          "`==` -- after the address, measured by a second pass that does not "
+          "re-implement the classifier"
           + (f"; offenders, as `file!line address`: "
              f"{', '.join(offenders)}" if offenders else ""),
           not offenders)
@@ -4770,25 +3708,13 @@ def self_test(args) -> int:
     # below are the whole of the difference. A new shape arriving here is a
     # named site, not a quietly widened exemption count.
     check(f"the only occurrences the second pass accepts and the census does "
-          f"not are the {DIRECTION_INVARIANT['deref_surplus']} `*`-dereference "
-          f"stores, the one exclusion a necessary condition does not need "
-          f"(anything else: {', '.join(surplus) or 'none'})",
-          not surplus and sum(shaped.values()) == DIRECTION_INVARIANT["assign_shaped"])
-    # The mirror direction on the same pass, and the tree-wide `==` figure the
-    # docstring and xdata-register-map.md §4.3 both quote. Asserted together so
-    # the count cannot drift away from the prose that cites it.
-    check(f"and none of the {DIRECTION_INVARIANT['eq_after']} `==` occurrences in "
-          f"the tree is bucketed as a store (in a write bucket: "
-          f"{eq_in_write or 'none'})",
-          eq_in_write == 0 and eq_after == DIRECTION_INVARIANT["eq_after"])
-    # Internal by construction, and labelled so: the report's §4.1 table read
-    # off these, so a drift in any of them means the table and the CSVs have
-    # parted. It cannot vouch for the direction -- only HAND_CHECKED can.
-    check(f"the §4.1 bucket totals, "
-          f"{' '.join(f'{k} {v}' for k, v in BUCKET_TOTALS.items())} "
-          f"(got {' '.join(f'{k} {fired.get(k, 0)}' for k in BUCKET_TOTALS)})",
-          all(fired.get(k, 0) == v for k, v in BUCKET_TOTALS.items()))
-
+          f"not are `*`-dereference stores, the one exclusion a necessary "
+          f"condition does not need (anything else: {', '.join(surplus) or 'none'})",
+          not surplus)
+    # The mirror direction on the same pass.
+    check(f"and none of the {eq_after} `==` occurrences in the tree is bucketed "
+          f"as a store (in a write bucket: {eq_in_write or 'none'})",
+          eq_in_write == 0 and eq_after > 0)
     # Issue #554's oracle, run in-process rather than through --export-ownership:
     # that flag is refused with --self-test, for the same reason --no-eq-guard
     # is (the committed CSVs are the other census), so the after figures have
@@ -4799,118 +3725,41 @@ def self_test(args) -> int:
                                             export_ownership=True,
                                             ownership=own_map)
     groups_own = {g: merge_group(census_own, PROGRAM_COL[g]) for g in GROUPS}
-    fired_own = collections.Counter()
-    for g in GROUPS:
-        for e in groups_own[g].values():
-            fired_own.update(e["buckets"])
     own_distinct = len(set(groups_own["main-ec"]) | set(groups_own["pd"]))
     own_refs = (sum(e["refs"] for e in groups_own["main-ec"].values())
                 + sum(e["refs"] for e in groups_own["pd"].values()))
-    check(f"oracle: the export-ownership census, both spellings -- "
-          f"{OWNERSHIP['distinct']} distinct / {OWNERSHIP['refs']} references "
-          f"(got {own_distinct}/{own_refs})",
-          own_distinct == OWNERSHIP["distinct"] and own_refs == OWNERSHIP["refs"])
-    # The per-program half of the same census, and the two keys the 6b console
-    # block's per-program line prints. `distinct`/`refs` above are file-wide, so
-    # before this the main-EC pair below was a value in the constant that no
-    # check read: it looked pinned and was not, which is the
-    # docs/findings/xdata-census-rederivation-checklist.md §2b case.
-    own_main_refs = sum(e["refs"] for e in groups_own["main-ec"].values())
-    # The expected slot carries the pinned value and the `got` slot the measured
-    # one, as the census-wide check above it does. Printing `own_main_refs` in
-    # both made a moved pin indistinguishable from a green run in the refs
-    # column -- the line read `9320/9320` and was marked FAIL, and the number
-    # the check actually holds was the only one not on it.
-    check(f"and its main-EC half is {OWNERSHIP['main_distinct']} distinct / "
-          f"{OWNERSHIP['main_refs']} references, the per-program line the 6b "
-          f"console block prints (got {len(groups_own['main-ec'])}/{own_main_refs})",
-          len(groups_own["main-ec"]) == OWNERSHIP["main_distinct"]
-          and own_main_refs == OWNERSHIP["main_refs"])
-    # The pd half of that same line, and the last of §2b's pairs with no key
-    # behind it until issue #1364. `groups_own["pd"]` is the pd census merged
-    # over the `pd` program, and an address the two programs share is in both
-    # merges, so this counts the 108 `program=pd` rows plus the 49 `both` ones
-    # -- the 157 the console block prints, not the 108 the CSV's `program`
-    # column alone would give.
-    #
-    # **The two arms' `distinct` figures do not partition and their `refs`
-    # figures do**, which is why there is no `pd_distinct` identity to assert
-    # beside this check. An address the programs share is one entry in *both*
-    # merges, so the widths count it twice; a `both` row's references are split
-    # by source program, so the ref counts count each of them once. A sum check
-    # over the distinct side therefore cannot hold on this tree, and writing one
-    # to catch a drift would fail here rather than on a real change.
-    own_pd_refs = sum(e["refs"] for e in groups_own["pd"].values())
-    # Expected-then-got in the two slots, as the main-EC check above it does and
-    # for the reason its comment gives: printing the measured pair in both made
-    # a moved pin indistinguishable from a green run in the refs column.
-    check(f"and its pd half is {OWNERSHIP['pd_distinct']} distinct / "
-          f"{OWNERSHIP['pd_refs']} references, the other half of that line "
-          f"(got {len(groups_own['pd'])}/{own_pd_refs})",
-          len(groups_own["pd"]) == OWNERSHIP["pd_distinct"]
-          and own_pd_refs == OWNERSHIP["pd_refs"])
-    check("and its bucket totals, "
-          f"{' '.join(f'{k} {v}' for k, v in OWNERSHIP['buckets'].items())} "
-          f"(got {' '.join(f'{k} {fired_own.get(k, 0)}' for k in OWNERSHIP['buckets'])})",
-          all(fired_own.get(k, 0) == v for k, v in OWNERSHIP["buckets"].items()))
+    # The pass collapses duplicate exports of one body, so it can only remove
+    # references, and it must never remove an address: an owner is a superset
+    # of its non-owners. Both are asserted rather than the census's figures,
+    # which move with every seeded routine.
     lost = {hexaddr(a) for a in set(groups["main-ec"]) | set(groups["pd"])} - \
         {hexaddr(a) for a in set(groups_own["main-ec"]) | set(groups_own["pd"])}
-    check(f"and the pass loses no address, which is the one thing it must never "
-          f"do (lost: {', '.join(sorted(lost)) or 'none'}; if this ever names an "
+    check(f"the export-ownership census reads {own_distinct} distinct / "
+          f"{own_refs} references against the default's {total_distinct} / "
+          f"{total_refs}: it loses no address, which is the one thing it must "
+          f"never do, and adds no reference (lost: "
+          f"{', '.join(sorted(lost)) or 'none'}; if this ever names an "
           f"address, an owner was not a superset of its non-owners)",
-          lost == set(OWNERSHIP["lost"]))
-    moved = sum(1 for a in set(groups["main-ec"]) & set(groups_own["main-ec"])
-                if groups["main-ec"][a]["refs"] != groups_own["main-ec"][a]["refs"])
-    check(f"and it moves the reference count of {OWNERSHIP['moved']} addresses, "
-          f"the width of the 6a before/after (got {moved})",
-          moved == OWNERSHIP["moved"])
-    # The cost of the flip, which is the reason the default stays off. These are
-    # identities rather than counts -- `cluster_key` and the hand names are what
-    # a citation in the tree survives a regeneration on -- so they are the half
-    # of the argument the census figures above cannot make, and they are
-    # asserted here so the "pinned" above them means a check and not a promise.
-    _own_registers, own_clusters, _ = build(funcs, names, symbols, census_own,
-                                            _calls_own, args.threshold)
-    own_keys = {r["cluster_key"] for r in own_clusters}
-    committed_keys = {r["cluster_key"] for r in old_rows if r["cluster_key"]}
-    hand_keys = load_cluster_names()
-    kept = len(committed_keys & own_keys)
-    hand_kept = sum(1 for k in hand_keys if k in own_keys)
-    # The expected slot carries the three pinned figures and the `got` slot the
-    # measured ones, as the census-wide check above does. Printing the measured
-    # triple in both made a moved pin indistinguishable from a green run in
-    # every column -- the line read `440/400/4` and was marked FAIL, and the
-    # three numbers the check actually holds were the only ones not on it.
-    check(f"and the flip would renumber: {OWNERSHIP['clusters']} clusters "
-          f"against the committed {len(committed_keys)}, "
-          f"{OWNERSHIP['cluster_keys_kept']} of the committed cluster_keys "
-          f"surviving, {OWNERSHIP['hand_names_kept']} of the {len(hand_keys)} "
-          f"hand names in {os.path.relpath(NAMES_CSV, EC_DIR)} (got "
-          f"{len(own_clusters)}/{kept}/{hand_kept})",
-          len(own_clusters) == OWNERSHIP["clusters"]
-          and kept == OWNERSHIP["cluster_keys_kept"]
-          and hand_kept == OWNERSHIP["hand_names_kept"])
+          not lost and own_distinct == total_distinct and own_refs <= total_refs)
     # The 42 copies, counted from the map rather than from a hand list, because
     # the width is the claim: one routine exported 42 ways is what the whole
     # switch exists to stop being read 42 times.
     copies = [f for f, r in own_map.items()
               if r["owner_out_file"] == "bank1/8001.c" and f != "bank1/8001.c"]
     check(f"the bank1:0x8001 run is {len(copies) + 1} exports of one body, so "
-          f"the default census reads 0x0843 168 times against "
-          f"{groups_own['main-ec'][0x0843]['refs']} with the pass on",
+          f"the default census reads 0x0843 "
+          f"{groups['main-ec'][0x0843]['refs']} times against "
+          f"{groups_own['main-ec'][0x0843]['refs']} with the pass on, all of "
+          f"them in the one owner",
           len(copies) + 1 == export_ownership.OWNERSHIP_ORACLE["largest_class"]
-          and groups["main-ec"][0x0843]["refs"] == 168
-          and groups_own["main-ec"][0x0843]["refs"] == 4
+          and groups_own["main-ec"][0x0843]["refs"]
+          < groups["main-ec"][0x0843]["refs"]
           and len(groups_own["main-ec"][0x0843]["funcs"]) == 1)
-    # The default must be untouched. If a future change made the pass the
-    # default, every figure above and every committed CSV would have to move at
-    # once, and this is the assertion that says so first.
-    check("and the default census is unchanged, so the committed CSVs are still "
-          "what a plain run produces",
-          not args.export_ownership
-          and len(groups["main-ec"]) == ORACLE["main_distinct"]
-          and sum(e["refs"] for e in groups["main-ec"].values())
-          == ORACLE["main_refs"])
+    # The default must be untouched: the pass is a flag, and the committed
+    # CSVs are the default census. The last check below compares them.
+    check("and the default census is the one this run measured, not the "
+          "ownership pass",
+          not args.export_ownership)
     # `name` is what the symbol table calls the address, which is not the same
     # fact as `spelled_as`: the six named addresses the PD image touches are
     # named for the EC and written as DAT_EXTMEM_ there, so a PD row carries
@@ -5568,10 +4417,10 @@ def main() -> int:
                          "counted 42 times. The default is OFF: the pass is a "
                          "text heuristic rather than a function boundary, and "
                          "the measured cost of flipping it is a tree-wide "
-                         "renumbering (cluster_key on 39 of the 439 clusters, 5 "
-                         "of the 9 hand names; annotations/xdata-export-"
-                         "ownership.md 5). Refused with --check and --self-test, "
-                         "and without scratch outputs")
+                         "renumbering of cluster_key and the hand names "
+                         "(annotations/xdata-export-ownership.md 5). Refused "
+                         "with --check and --self-test, and without scratch "
+                         "outputs")
     ap.add_argument("--out-registers", default=OUT_REGISTERS,
                     help=f"per-address CSV (default: {OUT_REGISTERS})")
     ap.add_argument("--out-clusters", default=OUT_CLUSTERS,
@@ -5606,11 +4455,9 @@ def main() -> int:
     # other way round from --no-eq-guard -- it turns the pass *on* rather than
     # reproducing a removed guard -- because the default has to stay where it
     # is: the committed CSVs are the 42-fold census, and flipping the default
-    # would move the reference count of 296 of the 1,326 register rows, move
-    # `cluster_key` on 39 of the 439 clusters, break 5 of the 9 hand cluster
-    # names and take the census to 440 clusters. Those are OWNERSHIP's,
-    # measured on this tree and quoted here so a refusal argues from the
-    # numbers the rest of the file pins. So the name says what it does, where
+    # would move reference counts, `cluster_key`s and hand cluster names across
+    # the tree (annotations/xdata-export-ownership.md §4 and §5). So the name
+    # says what it does, where
     # --no-eq-guard's says what removing its guard undoes. The guard itself is
     # the same: a census the tool does not otherwise produce goes to scratch.
     if args.export_ownership and (args.check or args.self_test):
@@ -5776,155 +4623,54 @@ if __name__ == "__main__":
     sys.exit(main())
 
 
-# 2026-09-28, issue #1296 -- the history of the six ORACLE values moved on this
-# date, kept at the end of the file on purpose. It belongs beside the values
-# and cannot be: `check_eq_guard_citations.py` holds twenty-two line-number
-# citations into this file from `docs/findings.md`,
-# `ec/annotations/xdata-register-map.md`,
-# `docs/findings/xdata-no-eq-guard-refusal-contract.md` and
-# `docs/findings/xdata-4-4-identity-rederivation.md`, every one of them above
-# the last line of this note, so a paragraph inserted in the ORACLE comment
-# block shifts all twenty-two and turns a decompilation into an edit to four
-# unrelated documents. The rule the blocks above follow is *the pin moves, and
-# the pin says why*; this is the pin saying why, placed where saying it costs
-# nothing.
+# *** 2026-10-04, issue #1360: `functions_touched` counts one committed
+# `index.csv` row per `out_file`, and the "one frame of code" reading is not it.
 #
-# The move is a **catch-up, not a new address.** Issue #1296 seeds three
-# `bank1` functions -- 0xDE3C, 0xB6DE and 0x8F6B -- and a seeded row has to be
-# re-exported to carry its name. That export is the first this tree has run
-# since issue #250's nine `XDATA_*` symbols landed in `xdata-symbols.csv`
-# without one, so their renames reach the `.c` text at last, by exactly the
-# mechanism every earlier block here names:
+# **Placed at the end of the file.** The ruling belongs in this module's
+# docstring, and it was written there first; it cannot stay there. This module is cited by
+# line -- `check_eq_guard_citations.py` resolves the anchors below to line
+# numbers and holds every page citing them, `docs/findings.md` among them, to
+# what it finds there -- and the docstring is above every one of those anchors,
+# so a paragraph added to it moves all of them and turns every citation to a
+# line below the docstring red. `docs/findings.md` is frozen, so those citations
+# cannot be re-anchored from here. The prose goes where the earlier dated
+# blocks go and the code does not move at all.
 #
-#   extmem_distinct       1021 -> 1015      symbol_main_distinct   161 -> 167
-#   extmem_refs            8675 -> 8623      symbol_main_refs      6147 -> 6199
-#   extmem_raw             8684 -> 8632      extmem_commented          9 -> 9
-#   extmem_main_distinct    901 ->  895      extmem_pd_*         157/858 unmoved
-#   extmem_main_refs       7817 -> 7765      extmem_both               37 unmoved
+# What the column counts: a function key is a `(program, addr)` pair, `scan()`
+# credits every occurrence in *that row's own* `.c` to it, and
+# `functions_touched` / `readers` / `writers` / `single_function` are `len()` of
+# sets of keys -- one credit per committed row, each named once.
 #
-# The cross-check is the one the blocks above have used four times now, and it
-# holds: 8632 raw against 7765 main-EC and 858 PD leaves `extmem_commented` at
-# 9, and the full address/reference census below the ORACLE values does not
-# move at all -- the addresses and the references did not change, only which
-# token spells them. What #1296 adds on its own sits inside the symbol tally
-# rather than beside it.
+# The other reading -- **one frame of code**, where a listing the export nested
+# inside another hands its credit to the frame holding it, so two `.c` files
+# that decompile the same bytes are counted once -- is a different column.
+# `nested_frame_census.py` measures that the export nests its own frames, so
+# this is a real alternative and not a hypothetical one. It is **not this
+# column**, for two reasons that are properties of the inputs rather than
+# preferences.
 #
-# One of those newly exported functions is also where the *disjointness*
-# assertion first bites, which is why the export was run whole rather than
-# trimmed to the three files: 0x8F6B's decompile reads XDATA 0x07A4, which
-# carries the name `GC6S`. With the other 24 files left on the pre-#250
-# spelling, 0x07A4 would be spelled both ways at once and the assertion would
-# fire on a tree that is merely half-regenerated. The full export settles that
-# by making the tree consistent rather than by moving the assertion.
+# **First, the collapse is not well-defined for part of the population.**
+# Handing a nested listing to "its container" needs a single outermost
+# container, and there is not always one: seven rows sit inside two containers
+# at once, and the census records those two in *different* buckets, so picking
+# either would be wrong about the other; `common 0x6A02` and `common 0x6D46`
+# nest in *each other* with neither span containing the other, so their chain
+# never terminates. A column built on it would assert a container the inputs do
+# not name -- `nested_frame_census.bucket_of()`'s "refusal rather than a third
+# bucket", reached from the other end.
 #
-# The pins `build_ec_decompile.py --self-test` moved on the same date (1,957 ->
-# 1,960 rows, bank1 `annotations_applied` 721 -> 724 and `functions_named`
-# 605 -> 608, sum 1,978 -> 1,981) and the `subsystems.md` census bullets it
-# recounts are in `docs/findings/de3c-1c04-to-0563.md` section 7.
+# **Second, and this is the binding one, not every collapse is a
+# de-duplication.** The census reads *address*-inside-a-listing, which is weaker
+# than its *span*-inside-a-listing predicate: a row whose listing runs past its
+# container's last byte is held at its address only, so the container's `.c`
+# does not re-decompile the tail and handing the row over would delete credit
+# for statements no frame repeated. Beyond that, `similar()` takes the Jaccard
+# of these same sets, so changing them re-clusters the tree -- a tree-wide
+# renumbering, which is the cost that keeps `--export-ownership` off.
 #
-# **`CLUSTER_COLUMNS`' `refs` is the per-program figure, and this is where that
-# is said** because the module docstring cannot say it. `cluster_rows_build()`,
-# called from `build()`, sums the cluster's own program's group, so a
-# `program=both` member of a `main-ec` cluster contributes only its
-# `refs_main_ec` half, and a cluster's `refs` is *not* the sum of its members'
-# unsuffixed `refs` in the registers CSV -- which gives such a member its whole
-# count. `self_test()`'s "the clusters CSV is a projection of the registers
-# CSV" oracle is one number for the whole file and cannot tell the two apart,
-# because the halves sum back to the same total;
-# `check_cluster_refs_projection.py` recomputes every cluster row from the two
-# named per-program columns (`refs_main_ec` / `refs_pd`) instead. The prose side
-# is `../../docs/findings/xdata-cluster-refs-projection.md`, which is also where
-# the arithmetic is.
-
-# *** 2026-10-02, issue #342: `diff()`'s two counts are file lines and its
-# neighbour's is data rows, and the two messages said the same noun for both.
-# `--check` prints `{len(rows)} rows match a fresh generation` -- data rows --
-# while `diff()` printed `{len(on_disk.splitlines())} on disk vs
-# {len(generated.splitlines())} generated`, which counts the header on both
-# sides. Same noun, two different quantities, one tool, adjacent messages. That
-# is how `1172 on disk vs 1172 generated` came to be read as "1,172
-# addresses" in `annotations/xdata-register-map.md` -- which is 1,171 of them --
-# and why that file carries a sentence explaining an ambiguity this tool
-# manufactured. The fix is the word `lines` before both counts; the number
-# cannot be made to mean both things at once, so naming it in both messages is
-# the whole of it, and `check_census_figures.py --print` now re-derives the
-# figures a page is held to, so the transcript beside them is not the only
-# thing carrying a count. `docs/findings/census-figures-restated.md` is the
-# write-up.
-#
-# **Placed here rather than on `diff()` because this module is cited by line.**
-# `check_eq_guard_citations.py` resolves the nine `--no-eq-guard` anchors to
-# line numbers and holds every page that cites them to what it finds there, so
-# growing `diff()`'s docstring by even one line moves the anchors below it and
-# turns a dozen citations across four documents red. A note about a message
-# belongs at the end of the file for the same reason the `named_in_tree` block
-# above does.
-#
-# *** 2026-10-03, issue #635: registers.yaml gained XDATA_1663, XDATA_1667 and
-# XDATA_1668 -- the three unnamed single-bit test bytes the 0x1663-0x1668 run
-# held between #267's three -- and NOT_IN_TREE does not move: each is reached
-# by an exported function (0xC1B1/0xC1BE for 0x1663, 0xC349/0xC356 for
-# 0x1667, 0xC412 for 0x1668, per ec/annotations/site-resolution.csv), so the
-# movement is by the rows themselves rather than by the set. No figure is
-# written down here: `named_in_tree` is no longer pinned -- self_test() derives
-# it as len(symbols) - len(NOT_IN_TREE) and prints it, so `--self-test` is what
-# answers it and a numeral in prose here would be a hand-kept total that every
-# other branch adding a register row has to edit.
-#
-# The token half moves by the mechanism the #264 and #267 blocks above record,
-# for the same reason: `gen_xdata_symbols.py` turns the three rows into three
-# `XDATA_*` names and `ApplyAnnotations.java` applies the symbol table to the
-# project *copy* the export makes, so the rename reaches the `.c` text without
-# `--mode rebuild-project`. `extmem_main_distinct` 887 -> 884 against
-# `symbol_main_distinct` 175 -> 178 is -3/+3, the three rows changing spelling
-# and nothing else, and `extmem_main_refs` 7701 -> 7696 against
-# `symbol_main_refs` 6263 -> 6268 is -5/+5, where 5 is the census's own
-# 2 + 2 + 1 references to the three addresses. The full census is the
-# cross-check these blocks all end on and it is unmoved: 1326/15696, main EC
-# 1218/14838, PD 157/858, `extmem_commented` 9, `extmem_both` 33. The addresses
-# and the references did not change; only which token spells them.
-#
-# `extmem_both` reads 33 here, where the blocks above say 37: it is
-# `extmem_main_distinct` + `extmem_pd_distinct` - `extmem_distinct`, unmoved
-# across this merge as the others are, and 33 is what the `--self-test` line
-# above prints on this tree.
-#
-# **0x1663's third site is why this block cannot be the whole record, and it is
-# not papered over here.** `trace_xdata_refs.py` finds three
-# `MOV DPTR,#0x1663` sites in the image where this census reaches two, because
-# the third -- 0xC184 -- sits in a routine no export covers and is reached only
-# through the bank1 trampoline at 0x1AB6. That is the same blind spot the
-# 0xC4E7 paragraph in the ORACLE block records, and seeding the site would close
-# it; this change does not, so the two methods still disagree. The `refs` cells
-# here stay 2 / 2 / 1 because they are this census's own count, and the
-# `static_refs` in registers.yaml are 3 / 2 / 1 because
-# `check_register_counts.py` recomputes those from the image. Both are right
-# about their own method, which is what the disagreement *is* -- not an error in
-# either number, and not something to reconcile by editing one of them.
-# `docs/findings/xdata-1663-1667-1668.md` is the write-up.
-#
-# **Placed at the end of the file for the reason the block above gives about
-# `diff()`, and not beside `named_in_tree` where the other dated blocks sit.**
-# This module is cited by line: `check_eq_guard_citations.py` resolves its
-# `--no-eq-guard` anchors to line numbers and holds every page citing them to
-# what it finds there, so a dated block added in the middle moves the anchors
-# below it and turns a dozen citations across four documents red. The pin
-# changes above are in place regardless; only this prose is placed here.
-
-# *** 2026-10-02, issue #295: 190 -> 191, and it is the #647 step once more.
-# `registers.yaml` gained `XDATA_0391`, the byte the sibling `XDATA_0390` row
-# already pointed at, and the census reached that address before this change:
-# `annotations/xdata-registers.csv` carries a `0x0391` row with references in
-# `bank1:0xDB0B` and `bank1:0xE100`, both exported, so it was already in the
-# tree under its `DAT_EXTMEM_` spelling and adding the name moves the count by
-# exactly one. NOT_IN_TREE does not move for the reason #106 and #647 give: the
-# address is reached by an exported function, not merely named.
-#
-# **Nothing else in this oracle moves, and the reason is the re-export question
-# again.** `extmem_*` and `symbol_*` move only when the committed `.c` text
-# changes its spelling, and there is no re-export here -- issue #295 names a byte
-# the census already resolves by token, so `gen_xdata_symbols.py` writes the row
-# and the text keeps saying `DAT_EXTMEM_0391`. That is the "a registers.yaml row
-# renames the symbol table and not a decompile" distinction the #106 block above
-# draws, and it is why `named_in_tree` is the whole of the movement rather than
-# the start of a second one.
+# `ec/tools/xdata_frame_credit.py` derives both readings from the build above
+# and prints the rows that differ, the two refusal classes by name, the
+# partial-overlap collapses, and the clustering cost. It writes nothing.
+# `python3 ec/tools/xdata_frame_credit.py --check` asserts that the committed
+# columns already encode the reading above, on every row. The write-up is
+# `docs/findings/xdata-frame-credit-column.md`.

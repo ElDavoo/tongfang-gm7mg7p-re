@@ -37,13 +37,9 @@ measurement:
     `:49` shorthand and the `bank0/` prefix are normalised away. A site in one
     file and not the other is a mismatch in both directions, and a `--` cell
     has to be a CSV row whose `census_refs` is `none`.
-  * **Rule 2 -- the `HAND_CHECKED["0x0860"]` comment against the same CSV, as an
-    unordered union.** A deliberately *different* rule from Rule 1, and the
-    difference is the point: it is insensitive to how the lines group into
-    sites, so a regrouping in the CSV does not redden it, and a citation moved
-    onto the wrong site cannot hide behind that insensitivity because Rule 1
-    catches that one. Both rules read one source of truth and neither re-greps
-    the decompile.
+  * **Rule 2** was the `HAND_CHECKED["0x0860"]` comment in
+    `xdata_register_map.py` against the same CSV. That comment went with the
+    per-address count pins it justified (2026-10-04), and the rule with it.
   * **Rule 3 -- every `<generated CSV>:NNN` in the scoped files against its
     declared row.** `ROW_SCOPE` below is the visible list of what is held to
     what. The declared subject is a constant in this file rather than something
@@ -146,7 +142,6 @@ REGISTERS_CSV = os.path.join(ANNOTATIONS, "xdata-registers.csv")
 CLUSTERS_CSV = os.path.join(ANNOTATIONS, "xdata-clusters.csv")
 DISPATCH_MD = os.path.join(ANNOTATIONS, "xdata-086x-dispatch.md")
 RESET_MD = os.path.join(REPO, "docs", "findings", "reset-vector-dptr-targets.md")
-MAP_PY = os.path.join(HERE, "xdata_register_map.py")
 
 # Rule 3's scope: (file, csv basename, declared subject, the column holding it).
 # The declared subject is a constant here and not read out of the prose, for
@@ -210,12 +205,6 @@ POINTER = re.compile(r"([\w-]+\.csv):(\d+)")
 MARKUP = re.compile(r"[`*]")
 NO_CITATION = re.compile(r"—|–|-|\bnone\b", re.IGNORECASE)
 OFFSET = re.compile(r"0x[0-9A-Fa-f]+")
-
-# `HAND_CHECKED` is keyed by address; this entry's comment is the one in scope,
-# and the reason is Rule 2's: it is the comment that re-derives the per-address
-# bucket totals the page's own table sums.
-HAND_CHECKED = "0x0860"
-
 
 def repo_path(path: str) -> str:
     return os.path.relpath(path, REPO)
@@ -308,9 +297,7 @@ def parse_citations(text: str) -> set:
 
     A *set*, because both callers are unordered: a table cell is compared
     against `census_refs` as a set, since the CSV does not care which order a
-    reader lists its lines in, and the `HAND_CHECKED` comment is compared
-    against the union over all mapped sites, since that comment does not group
-    them into sites at all. File names are reduced to their basename, so the
+    reader lists its lines in. File names are reduced to their basename, so the
     CSV's `bank0/D091.c` and the prose's `D091.c` are one file.
     """
     out, current = set(), None
@@ -504,78 +491,6 @@ def check_site_table(path: str, text: str, rows: list, verbose=False) -> tuple:
     return problems, checked, 0
 
 
-def hand_checked_comment(text: str) -> list:
-    """The raw comment lines above `HAND_CHECKED`'s entry, oldest first.
-
-    Walks back over the contiguous comment run, which is this entry's own prose
-    and nothing above it: the run stops at the previous entry's closing line.
-    The leading `#` is stripped, so a `#`-only separator line reads as the
-    empty line that ends a comment paragraph.
-    """
-    lines = text.split("\n")
-    index = next((i for i, line in enumerate(lines)
-                  if line.strip().startswith(f'"{HAND_CHECKED}": {{')), None)
-    run = []
-    for i in range(index - 1, -1, -1) if index is not None else ():
-        stripped = lines[i].strip()
-        if not stripped.startswith("#"):
-            break
-        run.append(stripped.lstrip("#").strip())
-    return list(reversed(run))
-
-
-def check_hand_checked(path: str, text: str, rows: list,
-                       verbose=False) -> tuple:
-    """Rule 2: the `HAND_CHECKED` comment against the mapping CSV, as a union.
-
-    (problems, checked, skipped). The union runs over every mapped site's
-    `census_refs`, so the comment is held to naming the same lines *in some
-    grouping* -- which is what it does, being a per-address count oracle that
-    happens to justify itself by listing the lines. A CSV that regrouped them
-    across sites reddens Rule 1 and leaves this one alone, and that asymmetry
-    is the reason both rules exist.
-    """
-    problems = []
-    run = hand_checked_comment(text)
-    if not run:
-        problems.append(
-            f"{repo_path(path)}: no comment above the "
-            f"HAND_CHECKED[{HAND_CHECKED!r}] entry, so Rule 2 checked "
-            "nothing -- that is a broken check, not a clean comment")
-        return problems, 0, 0
-
-    want = set()
-    for row in rows:
-        if row["census_state"] == "mapped":
-            want |= parse_csv_refs(row["census_refs"])
-
-    got, skipped, para = set(), 0, []
-    for line in run + [""]:
-        if line:
-            para.append(line)
-            continue
-        if not para:
-            continue
-        why = supersession(para)
-        if why:
-            skipped += len(parse_citations(" ".join(para)))
-            if verbose:
-                print(f"  skip ({why}) the HAND_CHECKED[{HAND_CHECKED}] "
-                      f"comment: {para[0][:60]}", file=sys.stderr)
-        else:
-            got |= parse_citations(" ".join(para))
-        para = []
-
-    if got != want:
-        problems.append(
-            f"{repo_path(path)}: the HAND_CHECKED[{HAND_CHECKED}] comment "
-            "cites " + (", ".join(f"{f}:{n}" for f, n in sorted(got)) or "nothing")
-            + " where "
-            + (", ".join(f"{f}:{n}" for f, n in sorted(want)) or "nothing")
-            + f" is what {repo_path(SITES_CSV)} holds over the mapped sites")
-    return problems, len(got), skipped
-
-
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -586,23 +501,17 @@ def main() -> int:
     csvs = {"xdata-registers.csv": read(REGISTERS_CSV),
             "xdata-clusters.csv": read(CLUSTERS_CSV)}
     sites = read_sites()
-    bodies = {DISPATCH_MD: read(DISPATCH_MD), RESET_MD: read(RESET_MD),
-              MAP_PY: read(MAP_PY)}
+    bodies = {DISPATCH_MD: read(DISPATCH_MD), RESET_MD: read(RESET_MD)}
 
     problems, checked, skipped = [], 0, 0
     for path, text in bodies.items():
         # `bodies` is keyed by path, so a file holding two rules runs both and
-        # the one that has no rule for a file is not asked. Three rules, three
-        # pairs, and no rule walks a file `ROW_SCOPE` does not name.
-        rules = []
-        if path == MAP_PY:
-            rules.append((check_hand_checked, (path, text, sites, args.verbose)))
-        else:
-            scope = [s for s in ROW_SCOPE if s[0] == path]
-            rules.append((check_row_pointers,
-                          (path, text, scope, csvs, args.verbose)))
-            if path == SITE_TABLE_MD:
-                rules.append((check_site_table, (path, text, sites, args.verbose)))
+        # the one that has no rule for a file is not asked. No rule walks a
+        # file `ROW_SCOPE` does not name.
+        scope = [s for s in ROW_SCOPE if s[0] == path]
+        rules = [(check_row_pointers, (path, text, scope, csvs, args.verbose))]
+        if path == SITE_TABLE_MD:
+            rules.append((check_site_table, (path, text, sites, args.verbose)))
         for rule, argv in rules:
             found, hit, miss = rule(*argv)
             problems += found
@@ -617,8 +526,8 @@ def main() -> int:
         return 1
     print(f"0x0860: {checked} citation(s) resolve to the row they name, "
           f"{skipped} skipped as superseded -- {len(ROW_SCOPE)} declared row(s) "
-          f"in {len({s[0] for s in ROW_SCOPE})} markdown file(s), the site "
-          f"table and the HAND_CHECKED comment against {repo_path(SITES_CSV)}")
+          f"in {len({s[0] for s in ROW_SCOPE})} markdown file(s) and the site "
+          f"table against {repo_path(SITES_CSV)}")
     return 0
 
 
