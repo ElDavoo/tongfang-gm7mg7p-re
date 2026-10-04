@@ -43,8 +43,10 @@ describes one).
 **Counts.** `xdata-register-map.md` §5 is a hand-typed copy of twelve rows of
 that CSV, and nothing held its numbers: four of the twelve rows disagreed with
 the census beside them before issue #272. A *census row* — a markdown table row
-whose first cell is one `main-ec-NNN` id — has its size, reference count,
-address range and named count held to the same CSV. It is a second gate rather
+whose first cell is one `main-ec-NNN` id — has its size, reference count
+and address range held to the same CSV. Its named count is not held: that
+column counts the addresses `registers.yaml` names, which every branch that
+names a register moves, so it is a census of this repository's own text. It is a second gate rather
 than an extension of the membership one and inherits none of its conditions:
 a §5 row carries a range and a title but never the word "member", so the
 membership rule skips every one of them, and this rule reads cells the
@@ -141,13 +143,10 @@ range is.
 
 **And what the count rule does not check.** A cell is read as a count only if
 it is a bare decimal integer — thousands commas allowed, so `1,136` is 1136 —
-or, in the "named inside" column, one of `none`, an em dash or a hyphen, which
-there say zero. Everything else in a census row is left alone, which is most
+in the size or reference column; the "named inside" column is not read at all.
+Everything else in a census row is left alone, which is most
 of why the rule can sit in the tree without flagging the corpus:
 
-  * *A listing.* `` `0x0403` `` in §5's "named inside" column is the one
-    address `main-ec-004` names, written out because a single name is worth
-    the space, and a listing is not a count of one.
   * *A span.* `` `0x030E`-`0x1809` `` is two addresses of a range. The count
     rule reads it as the row's range and holds it against `addr_range`, but it
     is never read as a number of anything, in any column.
@@ -158,7 +157,7 @@ of why the rule can sit in the tree without flagging the corpus:
     would flag those two figures permanently and for no reason.
   * *A dash in a size or reference column.* The same corpus writes `—` there
     for "this figure does not apply to this row", which is not a claim of
-    zero, so the two columns do not get the named cell's three spellings.
+    zero.
   * *A row naming more than one cluster id.* Which row's figures would apply
     is ambiguous, so a row that names two is not read as a census row at all.
   * *A row whose cluster id is not in its first cell.* The
@@ -282,12 +281,11 @@ TERMINATOR = re.compile(r"(?<=[.!?])\s+(?=[A-Z`*_|-])")
 
 # The shapes a census row's cells can be read in. A count is a bare decimal
 # integer -- thousands commas the way this corpus writes them, so `1,136` and
-# `4,965` both read and `1,,,2` does not -- or one of the three ways the
-# corpus says zero. Everything else in a table cell is left unread, and the
-# docstring names the committed prose each of those shapes is.
+# `4,965` both read and `1,,,2` does not. Everything else in a table cell is
+# left unread, and the docstring names the committed prose each of those
+# shapes is.
 BARE_NUMBER = re.compile(r"[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+")
-ZERO = re.compile(r"none|—|-", re.IGNORECASE)
-# A range, which is what anchors the named count. §5 writes it
+# A range, which is what anchors the size and reference columns. §5 writes it
 # `` `0x030E`-`0x1809` ``, one backtick per address, so it is only recognisable
 # as a span once `clean` has taken the backticks out.
 SPAN = re.compile(r"0x[0-9A-Fa-f]{4}-0x[0-9A-Fa-f]{4}")
@@ -337,25 +335,6 @@ def number(cell):
     text = clean(cell)
     if BARE_NUMBER.fullmatch(text):
         return int(text.replace(",", ""))
-    return None
-
-
-def named(cell):
-    """The cell read as a count of named addresses, or None if it is not one.
-
-    `number`, plus the three ways this corpus says zero -- `none`, an em dash,
-    a hyphen -- which in the "named inside" column do mean zero and so are
-    checked against the census's own count. This is the one cell where a
-    non-number is still a count claim, and it is what makes a row reading
-    `none` where the census names every member visible rather than merely
-    wrong. It is the reason the two readers are separate: the same dash means
-    "zero" here and "not applicable" in the two columns beside it.
-    """
-    stated = number(cell)
-    if stated is not None:
-        return stated
-    if ZERO.fullmatch(clean(cell)):
-        return 0
     return None
 
 
@@ -619,9 +598,9 @@ def census_row(path, lineno, unit, counts):
 
     problems = []
     # The range cell is what says which columns are which, so it is found
-    # first and the three counts are positioned against it rather than against
+    # first and the two counts are positioned against it rather than against
     # fixed indices: the two cells before it are the size and the reference
-    # count, the cell after it is the named count. A fixed index does not work
+    # count. A fixed index does not work
     # on §5's own header -- `cluster | key | name | size | refs | range |
     # named inside | co-reading | functions` -- where `row[1]` is a
     # `cluster_key` and `row[2]` a `cluster_name`, so both `number()` reads
@@ -673,14 +652,12 @@ def census_row(path, lineno, unit, counts):
             problems.append((path, lineno, ids,
                              f"range `{facts['addr_range']}` in the census, "
                              f"`{stated}` in the row", "census range", None))
-        if anchor + 1 < len(row):
-            stated = named(row[anchor + 1])
-            if stated is not None and stated != facts["named"]:
-                problems.append(
-                    (path, lineno, ids,
-                     f"{plural(facts['named'], 'named address')} in the "
-                     f"census, {clean(row[anchor + 1])} in the row",
-                     "census count", None))
+        # The named count, the cell after the range, is not held. It counts
+        # the addresses `registers.yaml` names, so it is a census of this
+        # repository's own text and every branch that names a register moves
+        # it: #1919 named one in `main-ec-004` on a base without #1891's read
+        # of that column, both were green, and main went red on the pair.
+        # CLAUDE.md's rule for such a total is to stop holding it.
     return problems
 
 
