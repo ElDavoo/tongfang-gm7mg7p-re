@@ -53,6 +53,11 @@ membership rule never sees. The first cell of such a row is read as a
 columns are figures about one cluster, and a key or a name does not say which
 the figures would be about.
 
+The columns are found by the row's own range cell rather than by a fixed index,
+which is what lets one reader cover §5's nine-column header and the shorter
+five-column shape alike; `census_row()` carries why, and what a row without a
+range is.
+
 **What the membership rule does not check, which is as much of the point:**
 
   * *Denials.* A unit that says an address is **not** in a cluster is skipped
@@ -160,6 +165,13 @@ of why the rule can sit in the tree without flagging the corpus:
     `gpu-tgp-07c4-07d7-door.md` cross-reference table puts `main-ec-001` in a
     cross-reference column beside `dsdt.dsl:52204` source line numbers, which
     are not counts of anything this census knows.
+  * *A row with no range cell to anchor the columns.* The range is what says
+    which cell is the size and which is the reference count, so a row without
+    one — or with one so near the front that neither has room before it — has
+    not said, and none of its three figures is read. No committed row is in
+    that state today; it is the shape a table would be left in if it lost the
+    column, and reading it on a guess is what the fixed-index reader this
+    replaced was doing silently.
 
 Every one of those is "not found by this method", never "absent" — the same
 caveat `ec/annotations/registers.yaml` carries for a static scan. Passing this
@@ -606,44 +618,69 @@ def census_row(path, lineno, unit, counts):
         return []
 
     problems = []
+    # The range cell is what says which columns are which, so it is found
+    # first and the three counts are positioned against it rather than against
+    # fixed indices: the two cells before it are the size and the reference
+    # count, the cell after it is the named count. A fixed index does not work
+    # on §5's own header -- `cluster | key | name | size | refs | range |
+    # named inside | co-reading | functions` -- where `row[1]` is a
+    # `cluster_key` and `row[2]` a `cluster_name`, so both `number()` reads
+    # returned None and the count rule checked neither figure on any real row
+    # while its docstring claimed it held both (#1240).
+    #
+    # The anchor rather than the header, for two reasons. `units()` yields one
+    # table row at a time and carries no table with it, so a header-resolving
+    # reader would have to reach past the unit for state the walk does not
+    # keep; and the corpus's shorter shape (`cluster | size | refs | range |
+    # named inside`) has no header row at all, so a header-only reader would
+    # check less than this one does. The range is the one cell whose *content*
+    # says which column it is, and both shapes carry it.
+    anchor = None
+    for i, cell in enumerate(row[2:], start=2):
+        if SPAN.fullmatch(clean(cell)):
+            anchor = i
+            break
+    # No anchor, or one too near the front for a size and a reference count to
+    # sit before it: which columns these figures occupy is not found by this
+    # method, and a row that does not say is left alone rather than guessed at.
+    if anchor is None or anchor < 3:
+        return problems
+
     # Both counts quote the cell as the table writes it rather than as the
     # number parsed out of it, so a reader can find the figure in the row
     # without converting it first. A census problem has no paired id: the
     # `kind` says which rule raised it, and only a membership one names a
     # cluster for the unit's own wording to have paired the address with.
-    for cell, column, noun in ((row[1], "size", "address"),
-                               (row[2], "refs", "reference")):
+    for cell, column, noun in ((row[anchor - 2], "size", "address"),
+                               (row[anchor - 1], "refs", "reference")):
         stated = number(cell)
         if stated is not None and stated != facts[column]:
             problems.append((path, lineno, ids,
                              f"{plural(facts[column], noun)} in the census, "
                              f"{clean(cell)} in the row", "census count", None))
-    # The range anchors the named count, so the cell after it is where the
-    # count goes. The range itself is held to the row's own `addr_range` --
-    # nearly free once the cell has been parsed to find that neighbour -- and
-    # a second span is not treated as another anchor, which is what keeps a
-    # span in the named column from being read as a range. An `--clusters` CSV
-    # with no `addr_range` column has nothing to hold the row to, so the range
-    # and the count anchored on it are left alone rather than checked against
-    # an empty string.
-    for i, cell in enumerate(row[2:], start=2):
-        stated = clean(cell)
-        if not SPAN.fullmatch(stated):
-            continue
-        if facts["addr_range"]:
-            if stated.upper() != facts["addr_range"].upper():
-                problems.append((path, lineno, ids,
-                                 f"range `{facts['addr_range']}` in the census, "
-                                 f"`{stated}` in the row", "census range", None))
-            if i + 1 < len(row):
-                stated = named(row[i + 1])
-                if stated is not None and stated != facts["named"]:
-                    problems.append(
-                        (path, lineno, ids,
-                         f"{plural(facts['named'], 'named address')} in the "
-                         f"census, {clean(row[i + 1])} in the row",
-                         "census count", None))
-        break
+    # The range itself is held to the row's own `addr_range` -- nearly free
+    # once the cell has been parsed to find its neighbours -- and the named
+    # count is the cell after it. Only the first span is an anchor, which is
+    # what keeps a span written in the named column from being read as a
+    # range. An `--clusters` CSV with no `addr_range` column has nothing to
+    # hold the row to, so the range and the count anchored on it are left
+    # alone rather than checked against an empty string; the two counts
+    # beside it are still checked, because that CSV does carry `size` and
+    # `refs`.
+    stated = clean(row[anchor])
+    if facts["addr_range"]:
+        if stated.upper() != facts["addr_range"].upper():
+            problems.append((path, lineno, ids,
+                             f"range `{facts['addr_range']}` in the census, "
+                             f"`{stated}` in the row", "census range", None))
+        if anchor + 1 < len(row):
+            stated = named(row[anchor + 1])
+            if stated is not None and stated != facts["named"]:
+                problems.append(
+                    (path, lineno, ids,
+                     f"{plural(facts['named'], 'named address')} in the "
+                     f"census, {clean(row[anchor + 1])} in the row",
+                     "census count", None))
     return problems
 
 
