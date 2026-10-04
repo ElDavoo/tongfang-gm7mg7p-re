@@ -5,13 +5,27 @@
 
 
 /* Writes the incoming A through the caller's DPTR, reads that byte straight back, copies it into
-   XDATA 0x075C, then calls 0xA73F with R7=0xA7 and again with R7=0x43 before returning. What the
-   two 0xA73F command codes select is not decoded here. 0x075C is entered in
+   XDATA 0x075C, then calls 0xA73F with R7=0xA7 and again with R7=0x43 before returning. ***
+   CORRECTION 2026-10-03 (issue #1444) *** An earlier version of this row called the two 0xA73F
+   values `command codes` and left what they select open, with 0xA73F recorded as having no entry in
+   ec/annotations/registers.yaml. They are not command codes: 0xA73F stores its R7 argument as a
+   payload byte in the eight-slot ring at XDATA 0x09F2-0x09F9 and returns without testing it. No
+   comparison on the mailbox path touches the value, and the only routines that touch a ring slot
+   are the initialiser at 0x8955, the two accessors at 0x89A9 and 0x89E7, and the two that call
+   them. There was never a command-code table to look them up in, and
+   ec/annotations/task-call-table.csv records no R7 value for any site. 0xA73F itself is a CODE
+   address and registers.yaml is an XDATA cross-reference, so its absent there was never the open
+   question; the XDATA bytes the mailbox path names now carry rows. What either value *means* is not
+   decoded here: each is queued as an entry code at bank1 XDATA 0x09F2 by the chain 0xA73F -> 0x1666
+   -> 0x1114, and the consumer side that would give them meaning is bank1's 0x8915
+   (saturating_count_09f0_then_call_88f0) reading 0x047C and calling 0x88F0. 0x075C is entered in
    ec/annotations/registers.yaml as MAIN_FAN_R_DUTY (issue #123), which also carries the
-   0x1804/0x1809 scratch bytes this routine copies between; 0xA73F has no entry there and is still
-   open.
+   0x1804/0x1809 scratch bytes this routine copies between. The mailbox walk is
+   `docs/findings/a73f-09f1-mailbox-payload.md`; the full site and code census is
+   ec/tools/a73f_notify_census.py (`docs/findings/a73f-notify-path.md`), and both of this routine's
+   sites are in it.
    type: writer
-   evidence: ec/decompiled/bank0/8F0F.asm; ec/decompiled/bank0/8F0F.c
+   evidence: ec/decompiled/bank0/8F0F.asm; ec/decompiled/bank0/8F0F.c; ec/annotations/registers.yaml
    basis: hand-decoded
    name_basis: ec-register */
 

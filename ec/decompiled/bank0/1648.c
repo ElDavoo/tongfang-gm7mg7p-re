@@ -6,8 +6,25 @@
 
 /* Loads DPTR with 0xAA30 and tail-jumps to 0x1114, a two-instruction trampoline of the same shape
    as its neighbours in this group. Ghidra's C names 0x1114 bl51_bank_select_1, and 0xAA30 lies in
-   the 0x8000-0xFFFF banked CODE window, but 0x1114 is not present in this decompiled tree, so what
-   it does with DPTR is not decoded here.
+   the 0x8000-0xFFFF banked CODE window. *** CORRECTION 2026-10-03 (issue #1444) *** An earlier
+   version of this row ended by saying `0x1114` was absent from the decompiled tree and that what it
+   does with DPTR was therefore not decoded here. Both halves were wrong. The body is in the tree:
+   `ec/decompiled/index.csv` lists `common,1114`, and `ec/decompiled/common/1114.asm` and
+   `ec/decompiled/common/1114.c` are committed beside this row's own listing. It is ten instructions
+   that push 0x08 and A=0x11 and DPL and DPH, write bank number 0x1E to the direct byte 0x08, set
+   P1.0 and clear P1.1 and P1.2, and return -- which is what makes a target in the 0x8000-0xFFFF
+   banked window reachable at all, and what the address this row loads into DPTR is for.
+   (Correction, issue #248: the false sentence was a scope error and not a decode, and that is why
+   every trampoline to this stub stopped at the same wall. `common` is a scope of its own in
+   ec/annotations/ghidra-functions.csv and this row is bank0, so a bank-scoped listing cannot see a
+   row filed under another scope. What the stub does with DPTR is the linker's cross-bank call: the
+   pushed DPL/DPH are the return address, so the constant above is the call target and the routine
+   reached is the one at that address in the bank the stub selects, which is bank 1 here. The stub
+   does not touch R7, so a register value crossing it arrives unchanged. For 0x1666 that is bank1's
+   0x896A, gate_06e6_0440_then_call_89b5, and the notify chain that runs through the 0x1114 member
+   of this family -- 0xA73F, 0x1666, this stub, bank1 0x896A -- is
+   docs/findings/a73f-notify-path.md.) `docs/findings/a73f-09f1-mailbox-payload.md` is the walk that
+   first turned this up.
    type: bank-switch
    evidence: ec/decompiled/bank0/1648.asm; ec/decompiled/bank0/1648.c
    basis: hand-decoded

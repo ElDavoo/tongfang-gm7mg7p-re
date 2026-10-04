@@ -82,7 +82,7 @@ bank0,8DE0,ramp_1804_toward_0670_and_set_1809,291,annotation,no,yes,state,hand-d
 bank0,8F03,call_bb28_on_1804,6,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/8F03.asm; ec/decompiled/bank0/8F03.c,,bank0/8F03.asm
 bank0,8F09,copy_dptr_byte_to_075c,5,annotation,no,yes,copy,hand-decoded,ec/decompiled/bank0/8F09.asm; ec/decompiled/bank0/8F09.c,,bank0/8F09.asm
 bank0,8F0E,return_trampoline,1,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/8F0E.asm; ec/decompiled/bank0/8F0E.c,,bank0/8F0E.asm
-bank0,8F0F,store_a_to_dptr_then_075c_and_notify,17,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/8F0F.asm; ec/decompiled/bank0/8F0F.c,,bank0/8F0F.asm
+bank0,8F0F,store_a_to_dptr_then_075c_and_notify,17,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/8F0F.asm; ec/decompiled/bank0/8F0F.c; ec/annotations/registers.yaml,,bank0/8F0F.asm
 bank0,8F20,state_0817_dispatch,187,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/8F20.asm; ec/decompiled/bank0/8F20.c,,bank0/8F20.asm
 bank0,8FDB,state_0817_fallthrough,61,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/8FDB.asm; ec/decompiled/bank0/8FDB.c,,bank0/8FDB.asm
 bank0,9000,ljmp_703d,3,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/9000.asm; ec/decompiled/bank0/9000.c,,bank0/9000.asm
@@ -143,7 +143,7 @@ bank0,A1C8,select_code_table_entry_and_store_0872_087a_088a,280,annotation,no,ye
 bank0,A2E0,step_0859_then_toggle_0858_bit0,50,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/A2E0.asm; ec/decompiled/bank0/A2E0.c,,bank0/A2E0.asm
 bank0,A312,gate_0494_then_dispatch_0851_and_7,98,annotation,no,yes,dispatch,hand-decoded,ec/decompiled/bank0/A312.asm; ec/decompiled/bank0/A312.c,,bank0/A312.asm
 bank0,A374,send_f381_then_set_0890_to_0a,19,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/A374.asm; ec/decompiled/bank0/A374.c; ec/annotations/registers.yaml,,bank0/A374.asm
-bank0,A3C3,on_0767_bit3_send_f160_then_896a,19,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/A3C3.asm; ec/decompiled/bank0/A3C3.c; ec/annotations/registers.yaml,,bank0/A3C3.asm
+bank0,A3C3,on_0767_bit3_send_f160_then_896a,19,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/A3C3.asm; ec/decompiled/bank0/A3C3.c; ec/decompiled/common/1114.asm; ec/annotations/registers.yaml,,bank0/A3C3.asm
 bank0,A3E0,FUN_CODE_a3e0,23,call-target,no,no,,,,,bank0/A3E0.asm
 bank0,A425,shared_return_stub_a425,1,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/A425.asm; ec/decompiled/bank0/A425.c,,bank0/A425.asm
 bank0,A426,FUN_CODE_a426,176,call-target,no,no,,,,,bank0/A426.asm
@@ -156,7 +156,7 @@ bank0,A71A,clear_0857_and_076f,10,annotation,no,yes,writer,hand-decoded,ec/decom
 bank0,A725,write_0857_from_acc,5,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/A725.asm; ec/decompiled/bank0/A725.c,,bank0/A725.asm
 bank0,A72A,gate_a747_on_06c2_0766,17,annotation,no,yes,gate,hand-decoded,ec/decompiled/bank0/A72A.asm; ec/decompiled/bank0/A72A.c; ec/annotations/registers.yaml,,bank0/A72A.asm
 bank0,A73B,call_a747,4,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/A73B.asm; ec/decompiled/bank0/A73B.c,,bank0/A73B.asm
-bank0,A73F,store_r7_at_6a_then_jump_1666,8,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/A73F.asm; ec/decompiled/bank0/A73F.c,,bank0/A73F.asm
+bank0,A73F,store_r7_at_6a_then_jump_1666,8,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/A73F.asm; ec/decompiled/bank0/A73F.c; ec/decompiled/common/1114.asm; ec/decompiled/bank1/896A.asm; ec/decompiled/bank1/89B5.asm,,bank0/A73F.asm
 bank0,A747,stage_0769_076e_convert_to_1803,129,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/A747.asm; ec/decompiled/bank0/A747.c; ec/annotations/registers.yaml,,bank0/A747.asm
 bank0,A7C8,FUN_CODE_a7c8,124,call-target,no,no,,,,,bank0/A7C8.asm
 bank0,A844,update_0476_flags,191,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/A844.asm; ec/decompiled/bank0/A844.c; ec/annotations/registers.yaml,,bank0/A844.asm

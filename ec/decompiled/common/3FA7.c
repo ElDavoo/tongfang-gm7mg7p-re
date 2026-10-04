@@ -12,7 +12,7 @@ void FUN_CODE_3fa7(byte param_1)
   char cVar1;
   byte bVar2;
   
-  DAT_EXTMEM_0a47 = param_1;
+  MAILBOX_PUBLISH_VALUE = param_1;
   store_r7_to_upper_internal_ram_byte_3835(0);
   cVar1 = DAT_INTMEM_ac;
   DAT_EXTMEM_0a48 = 0;
@@ -25,14 +25,14 @@ void FUN_CODE_3fa7(byte param_1)
   DAT_EXTMEM_0a4b = DAT_INTMEM_ac;
   DAT_INTMEM_ac = 0;
   if (cVar1 == -0x10) {
-    DAT_INTMEM_93 = DAT_EXTMEM_0a47;
+    DAT_INTMEM_93 = MAILBOX_PUBLISH_VALUE;
   }
   else {
     if (cVar1 != -0xd) {
       if (cVar1 == -0x13) {
-        DAT_INTMEM_28 = DAT_EXTMEM_0a47;
+        DAT_INTMEM_28 = MAILBOX_PUBLISH_VALUE;
         DAT_EXTMEM_0a48 = -6;
-        if ((DAT_EXTMEM_0a47 >> 2 & 1) == 0) {
+        if ((MAILBOX_PUBLISH_VALUE >> 2 & 1) == 0) {
           FUN_CODE_1618();
         }
         else {
@@ -45,8 +45,8 @@ void FUN_CODE_3fa7(byte param_1)
       }
       goto LAB_CODE_4017;
     }
-    DAT_INTMEM_94 = DAT_EXTMEM_0a47;
-    FUN_CODE_28d1(0,DAT_EXTMEM_0a47);
+    DAT_INTMEM_94 = MAILBOX_PUBLISH_VALUE;
+    FUN_CODE_28d1(0,MAILBOX_PUBLISH_VALUE);
   }
   DAT_EXTMEM_0a48 = -6;
 LAB_CODE_4017:
@@ -70,7 +70,7 @@ LAB_CODE_4017:
     }
     store_0a4c_triplet_then_countdown_and_dispatch(1,bVar2);
   }
-  FUN_CODE_161e(DAT_EXTMEM_0a47);
+  FUN_CODE_161e(MAILBOX_PUBLISH_VALUE);
   return;
 }
 

@@ -20,7 +20,7 @@ char FUN_CODE_223f(void)
   undefined1 *puVar7;
   byte *pbVar8;
   
-  DAT_EXTMEM_0a47 = 0;
+  MAILBOX_PUBLISH_VALUE = 0;
   clear_4c_bits_4_5_7();
   FUN_CODE_1510();
   if (DAT_EXTMEM_0db0 == '\0') {
@@ -107,10 +107,10 @@ char FUN_CODE_223f(void)
   if (DAT_INTMEM_4d != 0) {
     DAT_INTMEM_4c = DAT_INTMEM_4c | 0x10;
     FUN_CODE_2632();
-    DAT_EXTMEM_0a47 = 1;
+    MAILBOX_PUBLISH_VALUE = 1;
   }
-  if (DAT_EXTMEM_0a47 == 0) {
-    DAT_INTMEM_67 = DAT_EXTMEM_0a47;
+  if (MAILBOX_PUBLISH_VALUE == 0) {
+    DAT_INTMEM_67 = MAILBOX_PUBLISH_VALUE;
     do {
       bVar5 = *(byte *)CONCAT11('\r' - (((0x8f < DAT_INTMEM_67) << 7) >> 7),DAT_INTMEM_67 + 0x70);
       if (_3_7 != '\0') {

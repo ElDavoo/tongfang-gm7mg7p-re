@@ -53,7 +53,7 @@ void seed_tcc_defaults_from_ba36(undefined1 param_1,byte param_2)
       }
     }
   }
-  DAT_EXTMEM_0a47 = 0x61;
+  MAILBOX_PUBLISH_VALUE = 0x61;
   sVar4 = 0xa47;
   load_dptr_be16_from_xdata(0xa47);
   MODE_TCC_OFFSET_DEFAULTS_GAMING_0 = *(undefined1 *)(sVar4 + 7);

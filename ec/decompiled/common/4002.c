@@ -31,7 +31,7 @@ void FUN_CODE_4002(undefined1 *param_1)
     }
     store_0a4c_triplet_then_countdown_and_dispatch(1,bVar1);
   }
-  FUN_CODE_161e(DAT_EXTMEM_0a47);
+  FUN_CODE_161e(MAILBOX_PUBLISH_VALUE);
   return;
 }
 

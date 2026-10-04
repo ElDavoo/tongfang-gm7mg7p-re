@@ -17,8 +17,8 @@
 void inc_accumulator_070f_index(char param_1,undefined1 param_2)
 
 {
-  DAT_EXTMEM_070f = param_1 + 1U & 0xf;
-  *(undefined1 *)CONCAT11(7,DAT_EXTMEM_070f + 0x10) = param_2;
+  EVENT_RING_INDEX = param_1 + 1U & 0xf;
+  *(undefined1 *)CONCAT11(7,EVENT_RING_INDEX + 0x10) = param_2;
   load_dptr_8588_tail_jump_1100();
   return;
 }

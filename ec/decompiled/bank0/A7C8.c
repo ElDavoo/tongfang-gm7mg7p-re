@@ -18,8 +18,8 @@ byte FUN_CODE_a7c8(void)
   if (cVar1 != '\0') {
     DAT_EXTMEM_0742 = DAT_EXTMEM_0742 | 2;
     BIOS_OEM_2 = BIOS_OEM_2 | 8;
-    pbVar3 = &DAT_EXTMEM_078e;
-    DAT_EXTMEM_078e = DAT_EXTMEM_078e | 100;
+    pbVar3 = &XDATA_078E;
+    XDATA_078E = XDATA_078E | 100;
     cVar1 = read_06e6_xor_01();
     if (cVar1 != '\0') {
       return *pbVar3 ^ 5;

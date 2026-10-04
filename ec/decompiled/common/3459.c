@@ -58,7 +58,7 @@ void FUN_CODE_3459(byte param_1)
         shared_tail_return_of_3459_and_34c6();
         return;
       }
-      DAT_EXTMEM_0a47 = DAT_INTMEM_80;
+      MAILBOX_PUBLISH_VALUE = DAT_INTMEM_80;
       pcVar4 = (char *)0xa47;
       if ((DAT_INTMEM_88 & 1) != 0) {
         pbVar2 = &DAT_INTMEM_8d;
@@ -75,8 +75,8 @@ void FUN_CODE_3459(byte param_1)
             mul13_table_lookup_3b22(*pcVar4);
             load_dptr_high_from_a_low_from_code_table();
             *pcVar4 = '\x17';
-            pbVar5 = &DAT_EXTMEM_0a47;
-            mul13_table_lookup_3b3e(DAT_EXTMEM_0a47);
+            pbVar5 = &MAILBOX_PUBLISH_VALUE;
+            mul13_table_lookup_3b3e(MAILBOX_PUBLISH_VALUE);
             dph_from_a_dpl_from_code_3b70();
             pbVar6 = pbVar5;
             bVar3 = read_dptr_to_r6_then_dptr_3a00_plus_13x();
@@ -96,7 +96,7 @@ void FUN_CODE_3459(byte param_1)
           }
         }
       }
-      DAT_EXTMEM_0a47 = DAT_EXTMEM_0a47 + '\x01';
+      MAILBOX_PUBLISH_VALUE = MAILBOX_PUBLISH_VALUE + '\x01';
       FUN_CODE_34c6();
       return;
     }

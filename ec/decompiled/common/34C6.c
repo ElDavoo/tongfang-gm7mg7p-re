@@ -16,14 +16,14 @@ void FUN_CODE_34c6(byte param_1)
   byte *pbVar5;
   
   pcVar3 = (char *)0xa47;
-  if (2 < DAT_EXTMEM_0a47) {
-    shared_tail_return_of_3459_and_34c6(DAT_EXTMEM_0a47 - 3);
+  if (2 < MAILBOX_PUBLISH_VALUE) {
+    shared_tail_return_of_3459_and_34c6(MAILBOX_PUBLISH_VALUE - 3);
     return;
   }
-  if ((*(byte *)(DAT_EXTMEM_0a47 + 0x88) & 1) != 0) {
-    pbVar1 = (byte *)(DAT_EXTMEM_0a47 + 0x8d);
+  if ((*(byte *)(MAILBOX_PUBLISH_VALUE + 0x88) & 1) != 0) {
+    pbVar1 = (byte *)(MAILBOX_PUBLISH_VALUE + 0x8d);
     if ((*pbVar1 & 1) == 0) {
-      bVar2 = DAT_EXTMEM_0a47;
+      bVar2 = MAILBOX_PUBLISH_VALUE;
       FUN_CODE_3c2f();
       if ((*pbVar1 >> 4 & 1) != 0) {
         store_0a4f_triplet_then_retry_loop(1,0xf4);
@@ -36,8 +36,8 @@ void FUN_CODE_34c6(byte param_1)
           mul13_table_lookup_3b22(*pcVar3);
           load_dptr_high_from_a_low_from_code_table();
           *pcVar3 = '\x17';
-          pbVar4 = &DAT_EXTMEM_0a47;
-          mul13_table_lookup_3b3e(DAT_EXTMEM_0a47);
+          pbVar4 = &MAILBOX_PUBLISH_VALUE;
+          mul13_table_lookup_3b3e(MAILBOX_PUBLISH_VALUE);
           dph_from_a_dpl_from_code_3b70();
           pbVar5 = pbVar4;
           bVar2 = read_dptr_to_r6_then_dptr_3a00_plus_13x();
@@ -46,7 +46,7 @@ void FUN_CODE_34c6(byte param_1)
       }
     }
     else {
-      bVar2 = DAT_EXTMEM_0a47;
+      bVar2 = MAILBOX_PUBLISH_VALUE;
       store_0a4f_triplet_then_retry_loop(1,0xf5);
       if (bVar2 == 0) {
         FUN_CODE_3c2f();
@@ -58,7 +58,7 @@ void FUN_CODE_34c6(byte param_1)
       }
     }
   }
-  DAT_EXTMEM_0a47 = DAT_EXTMEM_0a47 + 1;
+  MAILBOX_PUBLISH_VALUE = MAILBOX_PUBLISH_VALUE + 1;
   FUN_CODE_34c6();
   return;
 }

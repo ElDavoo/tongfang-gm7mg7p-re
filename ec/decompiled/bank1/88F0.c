@@ -9,18 +9,25 @@
    to 0x070F, writes R5 to XDATA 0x0710 + that index, and calls 0x19EA. The listing for this address
    stops at 0x8900 because the call-target scan also found entries at 0x8901 and 0x8902; those
    instructions are the increment and the masked write, and the decompile's `DAT_EXTMEM_070f + 1 &
-   0xf` matches them.
+   0xf` matches them.  *** 2026-10-03 (issue #1444): the listing's cutoff is now walked past in the
+   committed image, which settles the ring base this row had to take from the decompile. The bytes
+   from 0x8901 are `INC A`, `ANL A,#0x0F`, `MOV DPTR,#0x070F`, `MOVX @DPTR,A`, `MOV DPTR,#0x0710`,
+   `ADD A,DPL`, `MOV DPL,A`, `MOV A,R5`, `MOVX @DPTR,A`, `LCALL 0x19EA`, `RET` -- so the sixteen
+   entries are at 0x0710-0x071F and this row's address is right. The decompile's `CONCAT11(7,...)`
+   agrees rather than disagreeing: its argument is the masked index plus 0x10, so it evaluates to
+   0x0710-0x071F over that range. The 0x8902 row already read it this way. Walked in
+   docs/findings/a73f-09f1-mailbox-payload.md.
    type: writer
    evidence: ec/decompiled/bank1/88F0.asm; ec/decompiled/bank1/88F0.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void push_r5_into_070f_ring_when_gates_pass(undefined1 param_1)
 
 {
   if ((XDATA_0440 != '\0') && (DAT_EXTMEM_06e6 == '\x01')) {
-    DAT_EXTMEM_070f = DAT_EXTMEM_070f + 1 & 0xf;
-    *(undefined1 *)CONCAT11(7,DAT_EXTMEM_070f + 0x10) = param_1;
+    EVENT_RING_INDEX = EVENT_RING_INDEX + 1 & 0xf;
+    *(undefined1 *)CONCAT11(7,EVENT_RING_INDEX + 0x10) = param_1;
     load_dptr_8588_tail_jump_1100();
   }
   return;
