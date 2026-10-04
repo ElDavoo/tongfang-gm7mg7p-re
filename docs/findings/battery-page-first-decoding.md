@@ -52,8 +52,8 @@ $ python3 ec/tools/battery_page_census.py
   0x043E (offset 0x3E)  moved 16 distinct 0x24-0x3D  registers.yaml: CPU_TEMP (confirmed-working)
   0x044F (offset 0x4F)  moved 14 distinct 0x22-0x35  registers.yaml: GPU_TEMP (confirmed-working)
   0x04A6 (offset 0xA6)  moved 3 distinct 0xBD-0xBF  registers.yaml: BAT_CYCLE_COUNT (confirmed-working)
-  0x04A4 (offset 0xA4)  moved 53 distinct 0x0A-0xFC  tracks current low half (157 row(s))  registers.yaml: no row
-  0x04A5 (offset 0xA5)  moved 11 distinct 0x03-0x0E  tracks current high half (157 row(s))  registers.yaml: no row
+  0x04A4 (offset 0xA4)  moved 53 distinct 0x0A-0xFC  tracks current low half (157 row(s))  registers.yaml: XDATA_04A4 (present-untested)
+  0x04A5 (offset 0xA5)  moved 11 distinct 0x03-0x0E  tracks current high half (157 row(s))  registers.yaml: XDATA_04A5 (unknown-not-absent)
 ```
 
 The offsets that moved with **no** `registers.yaml` row are the ones this

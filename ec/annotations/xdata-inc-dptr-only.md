@@ -186,7 +186,7 @@ apart. What the accessor establishes is a static access; what it does not
 establish is that the byte is a register, that the EC acts on it, or that any
 two sites agree about what the value means.
 
-**One of the 107 has since been entered, and the rule above is why that is
+**One of them has since been entered, and the rule above is why that is
 worth stating rather than leaving to the CSV's `entered` column** (issue #1202,
 2026-10-04). `0x04A5` — the `inc DPTR` half of the `0x04A4` pair, all three of
 whose sites are pd-image — now carries `XDATA_04A5` in `registers.yaml`, so its
