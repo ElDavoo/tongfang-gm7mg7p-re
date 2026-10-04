@@ -81,10 +81,13 @@ BOM_BYTES = b"\xef\xbb\xbf"
 #
 # The anchor is a substring of `ast.unparse()` over the call, not a line
 # number and not a grep: it has to survive the file growing above the call,
-# which is what a bare `file:NNN` in a check does not. `open(args.csv` finds
-# the appender each tool opens on its `--csv`; the `read_text` anchors find the
-# capture readers, which are the ones whose argument is a capture path rather
-# than a source file.
+# which is what a bare `file:NNN` in a check does not. The `open(args.csv`
+# anchors find the sites each tool opens on its `--csv`. `battery_trace.py`'s
+# two carry the mode argument as well, because it opens that path twice -- once
+# to append, once to read the header back -- and the second is a reader, whose
+# missing keyword means the opposite of the appender's. The `read_text` anchors
+# find the capture readers, which are the ones whose argument is a capture path
+# rather than a source file.
 #
 # The `read_text()` sites in these suites that read *source* rather than a
 # capture are deliberately *not* here. The undeclared ones are
@@ -97,7 +100,8 @@ BOM_BYTES = b"\xef\xbb\xbf"
 # next suite that reads another committed file.
 # `test_check_probe_csv_encoding.py` holds the classification instead.
 DECLARATIONS = (
-    ("windows/tools/battery_trace.py", "open(args.csv", "writer"),
+    ("windows/tools/battery_trace.py", "open(args.csv, 'a'", "writer"),
+    ("windows/tools/battery_trace.py", "open(args.csv, 'r'", "reader"),
     ("windows/tools/charge_target_test.py", "open(args.csv", "writer"),
     ("windows/tools/ctgp_dben_probe.py", "open(args.csv", "writer"),
     ("windows/tools/test_battery_trace.py", "(TRACES / name).read_text",

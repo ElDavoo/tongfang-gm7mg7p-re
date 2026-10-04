@@ -59,8 +59,8 @@ capture is the only record of one.
 Usage:
   # plan it, with the byte 0x0743 currently holds (from `ecrw.py read 0x0743`)
   ctgp_dben_probe.py --orig 0x03
-  # run it
-  ctgp_dben_probe.py --csv ../../evidence/ec-watch/<date>-ctgp-dben-07c4-bit3.csv ^
+  # run it, from next to ecrw.py as above -- the -ac capture §6 lists
+  ctgp_dben_probe.py --csv ../../evidence/ec-watch/<date>-ctgp-dben-07c4-bit3-ac.csv ^
       --seconds 30 --interval 0.5 --i-mean-it
 """
 import argparse
