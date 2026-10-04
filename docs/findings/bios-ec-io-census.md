@@ -131,13 +131,26 @@ row and a guess:
 ## 4. The base is not always `0x07`
 
 "Indexed by `0xA6`" means nothing without the base, and the modules do not
-agree on one. `OemSWBoardIDDxe 0x438`, `Setup 0x1B9A0`, `OemHooks 0x9B8` and
-`0xA00`, `OemTurboModeDxe 0x494`, `OemPowerModeDxe 0x89C`, `OemServiceDxe
-0xF58`/`0xFB8` and `OemGlobalNvsDxe 0xCC4` all select `0x04`; the rest select
-`0x07`, and `--module <name>` prints which is which for any one of them. Under
-`0x04`, index `0xA6` addresses `0x04A6`, a different register — so the census
-keys every verdict on the pair, and the base column is one of the two things
-the answer turns on.
+agree on one. There are two cases, and the second is why `--module` is worth
+running rather than a partition of modules into "the `0x04` ones" and "the
+`0x07` ones":
+
+- **The base is a literal in the function.** `Setup 0x1B9A0` (`mov R8B, 0x4` at
+  `0x1B9B5`), `OemHooks 0x9B8`/`0xA00` (`0x9C7`, `0xA15`) and `OemTurboModeDxe
+  0x494` (`0x4AA`) write `0x04` and nothing else, so every row of theirs
+  carries it. `OemSWBoardIDDxe 0x438` writes the same literal (`0x4C5`,
+  `0x52A`) — its first row is the one §7 is about, for a reason inside its own
+  window rather than about the base.
+- **The base is an argument, so the caller's to choose.** `OemPowerModeDxe
+  0x89C`, `OemServiceDxe 0xF58`/`0xFB8` and `OemGlobalNvsDxe 0xCC4` each alias
+  `DL` in at entry (`mov R8B, DL` at `0x8B0`, `0xF6C`/`0xFCC`, `0xCD8`), and
+  the committed table reaches each of them with `0x04` **and** with `0x07` from
+  different call sites.
+
+`--module <name>` prints the rows either way, and that is the check to run
+before repeating a base for a module. Under `0x04`, index `0xA6` addresses
+`0x04A6`, a different register — so the census keys every verdict on the pair,
+and the base column is one of the two things the answer turns on.
 
 ## 5. The table, and what it holds
 
@@ -223,7 +236,17 @@ discover:
 | `Setup` | `0x1B9A0` | the index is its `DL` argument and **no listing in the committed tree calls it**, so nothing settles the byte. Its base is `0x04`, which is what leaves `0x04A6` open. |
 | `OemGlobalNvsDxe` | `0xCC4` | the base is its `DL` argument; at the call from `0x741` the caller's window writes `DL` twice (`0x725` from memory, `0x73F` to `0x07`), so the byte is path-dependent. |
 | `OemServiceDxe` | `0xF58` | same argument, and the caller at `0xD20` writes `DL` three ways in its window. |
-| `OemSWBoardIDDxe` | `0x438` | `R8B` — the base — is written four times between the function's entry and the `0xA3` at `0x4C8`, on the arms of the `0xFF` tests above it. |
+| `OemSWBoardIDDxe` | `0x438` | `R8B` — the base — is written twice between the function's entry and the `0xA3` at `0x4C8`, `0x2` at `0x497` and `0x4` at `0x4C5`, and the two disagree. There is no `call` in that span, so the whole entry-to-`0xA3` range is one window and §3's two-writes rule is what leaves the column empty — not a branch, and not a register name the tool could not follow. |
+
+That last row is worth reading a step further, because the reason it is empty
+is narrower than it looks. No branch targets `0x4C5` or `0x4C8`, and the `jz` at
+`0x4BF` leaves forward to `0x56B`, so the only path to the `0xA3` is the
+fall-through — and the last write on it is `mov R8B, 0x4` at `0x4C5`. The byte
+that `0xA3` sends is therefore `0x04`, and filling the column in would yield
+`(0x04, 0x9f)`, which §5's address list already carries. So this row is the
+tool declining a window it cannot prove single-valued, not an address in
+doubt, and §6's verdict is the same either way. The tool does not fill it in
+because a rule that special-cased this window is the rule §3 exists to avoid.
 
 Rows whose only unreadable byte is the *value* written are not in this table;
 `--unresolved` prints them, and §5's `resolved` column is what separates the

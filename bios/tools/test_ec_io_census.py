@@ -24,6 +24,7 @@ import collections
 import csv
 import io
 import os
+import re
 import sys
 import unittest
 from contextlib import redirect_stdout
@@ -442,9 +443,12 @@ class CommittedTests(unittest.TestCase):
         self.assertLessEqual({"0x04", "0x07"}, bases)
 
     def test_a_base_the_modules_actually_select_is_among_them(self):
-        # The modules the write-up names as selecting 0x04.
+        # The modules §4 of the write-up names as carrying base 0x04, in
+        # either the literal form or the argument form.
         four = {r["module"] for r in committed() if r["base"] == "0x04"}
-        for module in ("OemSWBoardIDDxe", "Setup", "OemHooks"):
+        for module in ("OemSWBoardIDDxe", "Setup", "OemHooks",
+                       "OemTurboModeDxe", "OemPowerModeDxe", "OemServiceDxe",
+                       "OemGlobalNvsDxe"):
             self.assertIn(module, four)
 
     def test_a_read_and_a_write_are_told_apart(self):
@@ -518,11 +522,15 @@ class ModeTests(unittest.TestCase):
     def test_unresolved_prints_only_what_could_not_be_read(self):
         out, code = run("--unresolved")
         self.assertEqual(code, 0)
-        table = [r for r in committed() if r["resolved"] != "yes"]
-        self.assertTrue(table)
-        self.assertEqual(len(table),
-                         sum(1 for r in committed() if r["resolved"] != "yes"))
         self.assertNotIn("yes\n", out.split("access(es)")[0])
+        # A count of the tree's own rows, but read across two files: what the
+        # tool prints against what the committed CSV holds.
+        unread = sum(1 for r in committed() if r["resolved"] != "yes")
+        self.assertTrue(unread)
+        printed = re.search(r"(\d+) access\(es\); (\d+) with a byte", out)
+        self.assertIsNotNone(printed, out)
+        self.assertEqual((int(printed.group(1)), int(printed.group(2))),
+                         (unread, unread))
 
     def test_the_module_filter_prints_that_module(self):
         out, code = run("--module", "OemOcPei")
