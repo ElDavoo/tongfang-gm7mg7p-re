@@ -876,7 +876,11 @@ not unconditional record widths.
 
 **Historical scope:** the discovery gap in the first bullet is addressed by
 §8's separate census, not by changing §7.2's denominator. The second bullet's
-"first place" claim was incorrect: `0x34D9` and `0xC2FA` also discard B.
+"first place" claim was incorrect: `0x34D9` and `0xC2FA` also discard B. The
+third bullet's "nothing in this repository has looked at" and its "nothing more
+is claimed about them" are both out of date:
+[pd-stride-families.md](pd-stride-families.md) reads those three strides at
+site level and refutes a frame-literal bound one of them carried.
 
 - The `0x0870` base only appears via `--sites`, because the census follows the
   `MOV DPTR` path and `0xDA9B`'s chain crosses a `movx` first. A census that
