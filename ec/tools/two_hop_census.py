@@ -194,8 +194,10 @@ def check_table(generated: str, path: str) -> int:
         print(f"note: {e}", file=sys.stderr)
         return 1
     if generated == on_disk:
-        print(f"{repo_path(path)}: this run reproduces it byte for byte "
-              f"({generated.count(chr(10))} lines)")
+        # No line count in this message: a figure of the repository's own text
+        # in a success line is stale at the next census row, and the write-up
+        # pastes this line verbatim.
+        print(f"{repo_path(path)}: this run reproduces it byte for byte")
         return 0
     print(f"note: {repo_path(path)} differs from what this run produced; the "
           "file is the product of the command on the page that names it, so "

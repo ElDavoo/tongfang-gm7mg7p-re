@@ -204,12 +204,17 @@ fixture rather than reading it.
   one call past an accessor stub, and every one of the fourteen callers
   continues into `0x347B` or `0x38CA`, which begin `movx a,@dptr` — and that
   is `walk_branch_arms.py`'s shape, not this one. `0x0420`'s R1:R2 handoff is
-  **not** that shape: `clamp_r2r1_to_0420_above_3c0b` loads `0x0420` through
-  DPTR, copies it into R1:R2 and returns, with no branch in its window, so
-  what remains for it is what its one caller — bank1 `0x6727` — then does with
-  that pair. `handoff-site-warrant.md`'s forward reference to this issue says
-  that instead, rather than pointing at a closed issue for work nobody has
-  picked up.
+  **not** that shape: the tail of `clamp_r2r1_to_0420_above_3c0b` at `0xE779` —
+  `mov DPTR,#0x0420 ; mov R2,DPH ; mov R1,DPL ; ret` — has no branch in it, and
+  the branches `ec/decompiled/bank1/E769.asm` carries ahead of that tail
+  (`jnz 0xe772`, `jc 0xe779`, `jnc 0xe779`) are the range check against
+  `0x3C0B` that decides whether the tail runs, so no branch arm reaches a
+  `movx` here either. What remains for it is what its one caller — bank1
+  `0xE727`, file offset `0x16727`, the single transfer to `0xE769`
+  `ec/annotations/bank-call-targets.csv` records — then does with that pair.
+  `handoff-site-warrant.md`'s forward reference to this issue says that
+  instead, rather than pointing at a closed issue for work nobody has picked
+  up.
 * **`check_site_resolution.py`'s census is deliberately still depth 1.** Its
   `site-resolution.csv` stays byte-identical, and two of its tests hold that
   depth. Worth knowing rather than rediscovering as a bug: at depth 2 the

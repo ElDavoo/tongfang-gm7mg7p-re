@@ -271,11 +271,16 @@ The wrong sentence stays in the note with a dated correction beside it.
   tool gap) are inputs, not part of this. #1103 has since landed the two hops
   it named — a handoff reached past a branch, and a callee that forwards DPTR
   on again — in columns of their own, and `0x0420`'s R1:R2 handoff is
-  deliberately not among them: `clamp_r2r1_to_0420_above_3c0b` loads `0x0420`
-  through DPTR, copies it into R1:R2 and returns, with no branch in its
-  window, so it is not the accessor-stub shape `walk_branch_arms.py` walks.
-  What remains open for `0x0420` is what its one caller, bank1 `0x6727`, then
-  does with that pair, and nothing above depends on it.
+  deliberately not among them: the tail of `clamp_r2r1_to_0420_above_3c0b` at
+  `0xE779` — `mov DPTR,#0x0420 ; mov R2,DPH ; mov R1,DPL ; ret` — has no
+  branch in it, and the branches `ec/decompiled/bank1/E769.asm` carries ahead
+  of that tail (`jnz 0xe772`, `jc 0xe779`, `jnc 0xe779`) are the range check
+  against `0x3C0B` that decides whether the tail runs, so no branch arm
+  reaches a `movx` here either and it is not the accessor-stub shape
+  `walk_branch_arms.py` walks. What remains open for `0x0420` is what its one
+  caller — bank1 `0xE727`, file offset `0x16727`, the single transfer to
+  `0xE769` `ec/annotations/bank-call-targets.csv` records — then does with that
+  pair, and nothing above depends on it.
 * **`absent` on a zero-in-both-images count** (`0x0726`/`0x0765`) is a second
   decision about a second value, left open per the precedent in
   [pd-only-status-vocabulary.md](pd-only-status-vocabulary.md) §1.
