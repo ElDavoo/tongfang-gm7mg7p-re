@@ -722,6 +722,10 @@ CITATIONS = [
      "matches because it is the same literal spelled in prose"),
     ("ec/tools/grade_timer_sweep.py", 354, 'if r[1] == "MARK":',
      "reader: grade_timer_sweep.load recognising the row"),
+    ("ec/tools/grade_pd_index_block.py", 146, 'if r[1] == "MARK":',
+     "reader: grade_pd_index_block.load recognising the row; it opens the CSV "
+     "itself for the `# interval`/`# baseline` headers its report needs, "
+     "rather than going through the grader's reader"),
     ("ec/tools/check_capture_encoding.py", 168,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: the encoding check's own mark/change census, written against "

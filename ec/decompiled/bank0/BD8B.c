@@ -15,7 +15,7 @@ char tier_250_eligible(void)
 {
   char in_PSW;
   
-  return DAT_EXTMEM_09c9 - ('F' - (((DAT_EXTMEM_09ca < 0xe0U - (in_PSW >> 7)) << 7) >> 7));
+  return XDATA_09C9 - ('F' - (((XDATA_09CA < 0xe0U - (in_PSW >> 7)) << 7) >> 7));
 }
 
 

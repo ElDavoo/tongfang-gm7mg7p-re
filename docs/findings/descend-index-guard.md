@@ -100,6 +100,18 @@ range because the buffer is long enough*, not *because the region table bounds
 it*. The first is a statement about the bytes; the second is not true of the
 code.
 
+> **Correction (issue #857), beside the paragraph above and not in place of
+> it.** The `0x2004A` floor belongs to **`walk_branch_arms.py`'s own `main()`**,
+> which is a `return 1` on a failed comparison, and to no other module. `PD_MARKER`
+> is a `(offset, bytes)` pair in `trace_xdata_refs.py`; it cannot refuse anything
+> on its own, and what the slice comparison certifies is a floor for the callers
+> of whichever module chose to stop on it. A module reading the same marker and
+> continuing establishes no floor at all — a truncated image is then walked as far
+> as the code walks it. The floor computed here remains correct for this tool,
+> which is a `refuse` in
+> [`pd-marker-caller-contracts.md`](pd-marker-caller-contracts.md)'s census; what
+> it never was is a property of `PD_MARKER`.
+
 ## The two vectors, measured
 
 Both were run read-only over committed files. Neither is a live test and neither
