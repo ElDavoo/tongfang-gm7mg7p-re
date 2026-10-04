@@ -99,11 +99,16 @@ the handshake short, and **if the fans audibly change, restore immediately**
 PL1/PL2/PL4 at `0xA833`–`0xA83B` precisely when `0x0741` bit 0 is **clear**,
 and §6 records that this is the same condition the service deliberately parks
 the EC in for this handshake. Whether the two can overlap depends on when that
-routine runs, which is unresolved. **Watch `0x0783`, `0x0784` and `0x0785`
-alongside the window** (§3's watch set widens to cover them) and report any
-movement — a PL register going to zero around a handshake would be the first
-evidence that the overlap is real, and it is the thing most worth catching
-while the machine is in front of you.
+routine runs, which is unresolved. **Corrected 2026-10-03 (issue #109), the
+sentence above is left as written:** that routine is reached on two of the
+divide-down scheduler's nine cases, so it is a recurring polled task and the
+overlap is **possible**; whether it happens during *this* handshake is still
+open, and that is what watching the PLs would show — see
+[`../findings/a7c8-dispatch-slot-and-pl-race.md`](../findings/a7c8-dispatch-slot-and-pl-race.md).
+**Watch `0x0783`, `0x0784` and `0x0785` alongside the window** (§3's watch
+set widens to cover them) and report any movement — a PL register going to
+zero around a handshake would be the first evidence that the overlap is real,
+and it is the thing most worth catching while the machine is in front of you.
 
 **Do not read `0x0460`–`0x046F`.** Reading the fan-tachometer registers
 through `ECRR` stalled the fans on a sibling board, and both the OEM software
