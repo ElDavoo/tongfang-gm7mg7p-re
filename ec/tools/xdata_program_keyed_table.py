@@ -36,9 +36,8 @@ counts it as `DAT_EXTMEM` and the per-program key counts it in the
 pair-literal-only term. `docs/findings/xdata-spelled-as-union.md` has the whole
 reconciliation; this prints the move.
 
-**Nothing here re-derives the census.** The input is one committed CSV and the
-`ORACLE` block of `xdata_register_map.py`, and every figure below is read out of
-the former. No image is opened, no Ghidra run, no network, no laptop, EC or
+**Nothing here re-derives the census.** The input is one committed CSV, and
+every figure below is read out of it. No image is opened, no Ghidra run, no network, no laptop, EC or
 Windows machine is involved, and nothing is written anywhere: there is no
 `--out-`, and no code path in this file opens a file for writing.
 
@@ -49,7 +48,6 @@ Usage:
     python3 xdata_program_keyed_table.py --self-test
 """
 import argparse
-import ast
 import collections
 import csv
 import hashlib
@@ -58,7 +56,6 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 COMMITTED = HERE.parent / "annotations" / "xdata-registers.csv"
-ORACLE_SRC = HERE / "xdata_register_map.py"
 
 # The two programs the census splits into, in the order every table prints
 # them. Held as a list rather than read off the rows being split, so a fourth
@@ -271,48 +268,18 @@ def partition_table(part, unplaced, stream):
         print(f"| **{unplaced} row(s) in no term** | | |", file=stream)
 
 
-def read_oracle(path=ORACLE_SRC):
-    """`xdata_register_map.py`'s `ORACLE` block, read by AST and not imported.
-
-    Importing the tool would execute its module body to read six integers;
-    parsing the assignment does not, and it also cannot be defeated by a
-    `from xdata_register_map import *` that shadows the names. A value the
-    sibling computes rather than a literal is reported as None and skipped
-    rather than guessed at, so `--check` cannot silently assert against an
-    expression it did not read.
-    """
-    tree = ast.parse(Path(path).read_text(encoding="utf-8"))
-    for node in tree.body:
-        targets = getattr(node, "targets", [])
-        if (isinstance(node, ast.Assign) and len(targets) == 1
-                and isinstance(targets[0], ast.Name)
-                and targets[0].id == "ORACLE" and isinstance(node.value, ast.Dict)):
-            out = {}
-            for key, value in zip(node.value.keys, node.value.values):
-                try:
-                    out[key.value] = ast.literal_eval(value)
-                except (ValueError, SyntaxError):
-                    continue
-            return out
-    return {}
-
-
 def check(rows, stream=sys.stdout):
-    """The relations, asserted against each other and against the ORACLE pins.
+    """The relations, asserted against each other.
 
     **No total of the census is written here**, and that is the whole design.
     `1,375`, `850` and `7,534` are values a landing change moves, and a check
     that held one would be a number every branch has to remember to bump --
     which is the defect `CLAUDE.md` names. What is asserted instead is that the
-    two keyings *relate* the way the prose says they do, and the two partition
-    terms the re-key introduces are cross-checked against `ORACLE`'s
-    `symbol_main_distinct` and `extmem_main_distinct`, which are already pinned
-    and already self-tested in the sibling tool. So a drift shows up as a
-    relation failing rather than as a stale numeral.
+    two keyings *relate* the way the prose says they do, so a drift shows up as
+    a relation failing rather than as a stale numeral.
 
     Returns True when every relation held.
     """
-    oracle = read_oracle()
     counts, refs = per_program_split(rows)
     u_counts, u_refs = union_split(rows)
     per_part, per_unplaced = partition(rows, True)
@@ -337,16 +304,6 @@ def check(rows, stream=sys.stdout):
         print(f"  {'ok  ' if cond else 'FAIL'}  {label}", file=stream)
         if not cond:
             ok = False
-
-    def check_pin(label, got, key):
-        """A cross-check against the sibling tool's pin, or a skip that says so."""
-        nonlocal ok
-        want = oracle.get(key)
-        if not isinstance(want, int):
-            print(f"  skip  {label}: ORACLE[{key!r}] is absent or not an "
-                  f"integer literal, so nothing is asserted", file=stream)
-            return
-        check_relation(f"{label} (ORACLE[{key!r}])", got == want)
 
     print("xdata_program_keyed_table.py --check", file=stream)
     check_relation("the CSV's rows read by name, and every row carries a "
@@ -394,19 +351,6 @@ def check(rows, stream=sys.stdout):
                    "moves",
                    per_part["pair-only"][0] - union_part["pair-only"][0]
                    == len(bucket_moves(rows)))
-    check_pin("the per-program named term", per_part["named"][0],
-              "symbol_main_distinct")
-    check_pin("the per-program DAT_EXTMEM term", per_part["DAT_EXTMEM"][0],
-              "extmem_main_distinct")
-    check_pin("the per-program PD term", per_pd_rows, "extmem_pd_distinct")
-    check_pin("the union key's row count", union_total_rows, "distinct")
-    check_pin("the union key's reference total", union_total_refs, "refs")
-    check_pin("the main EC's address count", per_main_rows, "main_distinct")
-    check_pin("the main EC's reference count", per_main_refs, "main_refs")
-    check_pin("the PD image's reference count", per_pd_refs, "extmem_pd_refs")
-    check_pin("the PD-only row count",
-               sum(1 for r in rows if r.get("program") == "pd"), "pd_only")
-    check_pin("the `both` row count", both_rows, "both")
     return ok
 
 
@@ -599,8 +543,8 @@ def main() -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     modes = ap.add_mutually_exclusive_group()
     modes.add_argument("--check", action="store_true",
-                       help="assert the relations between the two keyings and "
-                            "the sibling tool's ORACLE pins; no census is run")
+                       help="assert the relations between the two keyings; "
+                            "no census is run")
     modes.add_argument("--self-test", action="store_true",
                        help="known-answer run over fixtures written in this "
                             "file; no census, no image, no Ghidra")

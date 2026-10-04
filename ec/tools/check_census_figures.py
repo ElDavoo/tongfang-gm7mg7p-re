@@ -16,31 +16,23 @@ re-derives the figures from `ec/annotations/xdata-registers.csv` and
 from them is the census figure by construction rather than by assertion -- and
 then asks each prose site whether it agrees. A census move turns the prose red.
 
-**Three things this reads, and one it refuses to read.** The two CSVs above, by
-`csv`. `ORACLE` and `BUCKET_TOTALS` out of `xdata_register_map.py`, by `ast` --
-read as text and parsed, never imported, because importing the census tool runs
-its module-level work and a checker that costs a second to start is a checker a
-person stops running. That is the technique `check_doc_figure_pins.py` uses for
-the same two constants. And the declared site list, by `csv`, which holds **no
-expected values**: a row says where a figure lives and which key it means, and
-the value it is held to is measured here, every run. That is the whole of what
-keeps this from becoming the next hand-kept total -- a census pass moves the
-prose, not this file.
+**Two things this reads.** The two CSVs above, and the declared site list, both
+by `csv`. The site list holds **no expected values**: a row says where a figure
+lives and which key it means, and the value it is held to is measured here,
+every run. That is the whole of what keeps this from becoming the next
+hand-kept total -- a census pass moves the prose, not this file.
 
-The constants are read **by name**. `xdata_register_map.py` has a second
-module-level dict, `OWNERSHIP`, and it shares key names with `ORACLE` while
-disagreeing on two of them -- `main_refs`, where `OWNERSHIP` reads 9320 against
-`ORACLE`'s 14838, and `refs`, where it reads 10178 against 15696. A reader that
-picked up whichever dict it found first would be comparing two different censuses
-and would report agreement or disagreement at random. `check_doc_figure_pins.py`
-says the same thing about `counter_sweep_entry.ORACLE` and this one.
+**Prose no longer carries the census's own figures** (2026-10-04). Every
+seeded routine and every named register moves them, and a figure written down
+was a line every such branch had to edit. `xdata_register_map.py` stopped
+pinning them in the same change, so a site key spelled `ORACLE:<key>` reads
+the figure derived here under that name, and `--print` is what a page cites
+instead of a number. The sites left are the ones a page is right to keep: a
+superseded figure beside its correction, or someone else's measurement.
 
-**Every `ORACLE` key is either derived here or declined with a reason.** That
-partition is asserted rather than assumed, so a census pass that adds a key
-gets a red run asking whether this tool can see it -- and a key that is dropped
-gets one too, rather than quietly ceasing to be anybody's problem. The declines
-are the reference counts *split by spelling*, plus `extmem_raw` and its comment
-delta, and the first kind's reason is one property of the data: an address the
+**Some figures are declined with a reason.** The declines are the reference
+counts *split by spelling*, plus `extmem_raw` and its comment delta, and the
+first kind's reason is one property of the data: an address the
 decompile spells two ways is one CSV row, and the row records one `refs` for the
 address rather than a split of it, so the committed CSV cannot say which
 reference took which token. `xdata-clusters.csv` cannot help either -- it sums
@@ -54,10 +46,8 @@ caveat `ec/annotations/registers.yaml` and `check_doc_figure_pins.py` both
 carry, and here it is load-bearing rather than decorative: the verdict on
 `extmem_raw` is "this tool derives its figures from the two CSVs and the CSV has
 no such column", which is a statement about a method. It is not a statement
-that nothing holds the figure. `extmem_raw` is `ORACLE["extmem_raw"]` and the
-`--self-test` asserts it; the reader who wants it checked by a machine is
-reading `xdata_register_map.py`, and §1a of the register map posts the grep
-that prints it.
+that nothing could hold the figure; §1a of the register map posts the grep that
+prints it.
 
 **And what a site is.** `ec/annotations/xdata-census-figure-sites.csv` names a
 file, a heading, a figure-free marker substring, the keys the line's figures
@@ -105,7 +95,6 @@ Usage:
     python3 ec/tools/check_census_figures.py --verbose
 """
 import argparse
-import ast
 import csv
 import os
 import re
@@ -134,10 +123,8 @@ WHY_SKIPPED = {
                 "one of its own",
 }
 
-# The `ORACLE` keys this tool cannot derive from the committed CSVs, each with
-# the reason. Asserted as a partition against `ORACLE` rather than left as a
-# list to keep in step: a census pass that adds a key fails until this says
-# which side of the line it is on.
+# The census figures this tool cannot derive from the committed CSVs, each with
+# the reason.
 #
 # The reference counts here are split by *spelling*. An address the decompile
 # spells two ways is one row of `xdata-registers.csv` carrying one `refs` for
@@ -215,38 +202,6 @@ def read_csv(path):
         return []
     with open(path, newline="", encoding="utf-8") as f:
         return list(csv.DictReader(f))
-
-
-def int_dict(tool, table):
-    """{key: value} for one module-level int dict, read by `ast`.
-
-    By name rather than by shape, because this module has two dicts with
-    overlapping keys and only one of them is the census; see the module
-    docstring. Returns {} for a name the module does not define or a table that
-    is not a literal dict of ints, which the caller reports rather than
-    mistaking for a table of zeroes.
-    """
-    path = os.path.join(HERE, tool)
-    try:
-        with open(path, encoding="utf-8") as f:
-            tree = ast.parse(f.read())
-    except (OSError, SyntaxError):
-        return {}
-    for node in tree.body:
-        if not isinstance(node, ast.Assign) or not isinstance(node.value, ast.Dict):
-            continue
-        target = node.targets[0]
-        if not (isinstance(target, ast.Name) and target.id == table):
-            continue
-        out = {}
-        for key, value in zip(node.value.keys, node.value.values):
-            if (isinstance(key, ast.Constant) and isinstance(key.value, str)
-                    and isinstance(value, ast.Constant)
-                    and isinstance(value.value, int)
-                    and not isinstance(value.value, bool)):
-                out[key.value] = value.value
-        return out
-    return {}
 
 
 def spellings(row):
@@ -401,12 +356,14 @@ def resolve(spec, figures, oracle, by_id):
     if spec.startswith("derived:"):
         return resolve_expression(spec[len("derived:"):], figures)
     if spec.startswith("ORACLE:"):
+        # The name `xdata_register_map.py`'s pins had; `main()` passes the
+        # derived figures as `oracle`, since the census no longer pins them.
         key = spec[len("ORACLE:"):]
         if key in DECLINED:
             return (None, DECLINED[key], "declined")
         if key in oracle:
-            return (oracle[key], f'ORACLE["{key}"]', "ok")
-        return (None, f"no ORACLE key named {key!r}", "unreadable")
+            return (oracle[key], f'the census figure {key}', "ok")
+        return (None, f"no census figure named {key!r}", "unreadable")
     if spec.startswith("census:"):
         key = spec[len("census:"):]
         if key in figures:
@@ -608,10 +565,8 @@ def fragment(figures, oracle):
     `--print` is the answer to "prefer deriving to transcribing" for a page
     that keeps its figures in prose: this emits them once, with the command
     that produced them, and a page that quotes a figure can name the line
-    rather than carry the number. The `ORACLE` column is the census's own pin
-    where it has one, and `--` where the figure is derived without a pin -- so
-    the fragment says which figures are held by a constant and which are only
-    held by this derivation.
+    rather than carry the number. `oracle` is accepted for the callers that
+    pass one and is not read: the census no longer pins its figures.
     """
     lines = [
         "<!-- Generated by `python3 ec/tools/check_census_figures.py --print`. "
@@ -619,8 +574,8 @@ def fragment(figures, oracle):
         "`ec/annotations/xdata-registers.csv` and `ec/annotations/xdata-clusters.csv` "
         "on every run. -->",
         "",
-        "| figure | value | `xdata_register_map.py`'s pin | derived from |",
-        "|---|---:|---|---|",
+        "| figure | value | derived from |",
+        "|---|---:|---|",
     ]
     sources = {
         "distinct": "data rows of `xdata-registers.csv`",
@@ -648,15 +603,12 @@ def fragment(figures, oracle):
     for key in order:
         if key not in figures:
             continue
-        pin = f'`ORACLE["{key}"]`' if key in oracle else "--"
         if key in BUCKETS:
-            pin = f'`BUCKET_TOTALS["{key}"]`'
             sources.setdefault(key, f"the `{key}` column, summed")
-        lines.append(f"| `{key}` | {figures[key]:,} | {pin} | "
+        lines.append(f"| `{key}` | {figures[key]:,} | "
                      f"{sources.get(key, 'the committed CSVs')} |")
     for key in sorted(DECLINED):
-        held = f'`ORACLE["{key}"]`' if key in oracle else "--"
-        lines.append(f"| `{key}` | not read by this method | {held} | "
+        lines.append(f"| `{key}` | not read by this method | "
                      f"{DECLINED[key]} |")
     return "\n".join(lines)
 
@@ -686,13 +638,8 @@ def main() -> int:
         print(f"{rel(SITES_CSV)} is not in this tree, so there was nothing to "
               f"hold to the census", file=sys.stderr)
         return 2
-    oracle = int_dict(CENSUS_TOOL, "ORACLE")
-    buckets = int_dict(CENSUS_TOOL, "BUCKET_TOTALS")
-    if not oracle or not buckets:
-        print(f"{CENSUS_TOOL}'s ORACLE / BUCKET_TOTALS could not be read by ast, "
-              f"so the prose has nothing to be held to", file=sys.stderr)
-        return 2
     figures = derive(registers, clusters)
+    oracle = figures
 
     if args.emit:
         print(fragment(figures, oracle))
@@ -702,30 +649,10 @@ def main() -> int:
     rows = site_rows()
     results, declined, problems = check_sites(rows, figures, oracle, by_id)
 
-    # The partition first: an `ORACLE` key this tool neither derives nor
-    # declines is a key the prose can name and nothing holds, and a key it
-    # derives that `ORACLE` has moved is a stale pin. Both are the conditions
-    # this tool exists to make loud, so they are reported before the sites.
-    for key in sorted(set(oracle) - set(DECLINED) - set(figures)):
-        problems.append(f'ORACLE["{key}"] is neither derived from the committed '
-                        f"CSVs nor listed in DECLINED, so this tool has no "
-                        f"measurement for it")
     for key in sorted(set(DECLINED) & set(figures)):
-        problems.append(f'ORACLE["{key}"] is listed in DECLINED but the '
-                        f"committed CSVs do derive it ({figures[key]}), so the "
-                        f"decline is stale and the figure needs a site")
-    for key in sorted(set(figures) & set(oracle)):
-        if figures[key] != oracle[key]:
-            problems.append(f'ORACLE["{key}"] reads {oracle[key]} and the '
-                            f"committed CSVs derive {figures[key]}; the pin is "
-                            f"stale")
-    for key in sorted(buckets):
-        if key not in figures:
-            problems.append(f'BUCKET_TOTALS["{key}"] has no column in the '
-                            f"committed registers CSV")
-        elif figures[key] != buckets[key]:
-            problems.append(f'BUCKET_TOTALS["{key}"] reads {buckets[key]} and '
-                            f"the committed CSVs derive {figures[key]}")
+        problems.append(f"{key} is listed in DECLINED but the committed CSVs "
+                        f"do derive it ({figures[key]}), so the decline is "
+                        f"stale")
 
     for name, lineno, marker, written, value, detail in results:
         state = "ok" if written == value else "MISMATCH"
@@ -738,7 +665,7 @@ def main() -> int:
         print(f"  {len(figures)} figure(s) derived from "
               f"{rel(REGISTERS_CSV)} and {rel(CLUSTERS_CSV)}: "
               + ", ".join(f"{k}={figures[k]}" for k in sorted(figures)))
-        print(f"  {len(DECLINED)} ORACLE key(s) declined: "
+        print(f"  {len(DECLINED)} figure(s) declined: "
               + ", ".join(sorted(DECLINED)))
 
     checked = [r for r in results]
