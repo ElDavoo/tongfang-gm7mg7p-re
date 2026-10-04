@@ -143,12 +143,13 @@ this walk that rested on a `.c` reading, and the committed image settles it:
 anchored at the listing's own start.)
 
 The ring base is **`0x0710`**, so the sixteen entries are `0x0710`-`0x071F` and
-the store is `0x0710 + cursor`. The decompile's
-`*(undefined1 *)CONCAT11(7,DAT_EXTMEM_070f + 0x10)` puts them at
-`0x0700`-`0x070F` and is wrong: `CONCAT11(7,x)` is `0x0700 + x`. The `.asm` is
-the machine code and wins. The `0x8902` annotation row already read it this
-way, so this is the listing's truncation being closed rather than a claim
-changed.
+the store is `0x0710 + cursor`. The decompile agrees rather than disagreeing:
+`CONCAT11(7,x)` is `(7 << 8) | (x & 0xFF)`, and its argument
+`DAT_EXTMEM_070f + 0x10` is the index the preceding line masks to `0..15` plus
+`0x10`, so it evaluates to `0x0710`-`0x071F` over that range. It is one of the
+few places the register arithmetic survives the export's spelling intact. The
+`0x8902` annotation row already read it this way, so walking past the listing's
+truncation confirms that row rather than changing a claim.
 
 `0x19EA` is `load_dptr_8588_tail_jump_1100`, a forwarder. **What drains
 `0x0710`-`0x071F` is not established by this walk**, which stops there.
@@ -224,10 +225,16 @@ is not a decode, and `ec/tools/disasm8051.py`'s docstring is the longer
 argument.
 
 **No hit falls inside any routine on the mailbox path** — bank1 `0x88F0`-`0x897A`,
-bank0 `0xA73F`-`0xA745`, bank0 `0x1666`-`0x166A`, common `0x1100`-`0x1128` — and
-the fourteen instructions from `0xA73F` through the gate to the `LCALL 0x89B5`
-that starts the ring store contain no comparison at all. That is a bounded
-negative: *no comparison on the path*, not *no comparison in the image*.
+bank0 `0xA73F`-`0xA745`, bank0 `0x1666`-`0x166A`, common `0x1100`-`0x1128`. That
+routine-level claim is what this method supports.
+
+Across the chain from `0xA73F` through the gate to the `LCALL 0x89B5` that
+starts the ring store, no comparison tests **the payload value**. The gate does
+contain comparisons — `cjne A,#0x1` at `bank1/896A.asm:896E` and `jz` at `:8975`
+— but they test the two gate bytes, `0x06E6` and `0x0440`, and no comparison
+between them and the ring store reads R7 at all. That is a bounded negative:
+*no comparison on the path tests the payload*, not *no comparison in the
+image*.
 
 So the enum's meaning is not in this firmware, by the method above. Whether the
 eight bytes are, say, event codes or a state machine's inputs is a question for
@@ -262,13 +269,16 @@ That is worth stating as a limitation rather than working around:
   again: its two sites are both in the ITE8850-PD image at file `0x20000`,
   which has its own XDATA map, so the EC image has none.
 - **`0x09F6`** would have been the one site to check before believing a count.
-  Its single EC-side site, bank0 `0x10C59`, is `MOV DPTR,#0x09F6` followed by
-  `MOV R4,0x83` and `MOV R3,0x82` and then `MOV DPTR,#0x0497` — no `MOVX` in
-  between, so the site names the address and never dereferences it.
-- **`0x0710`-`0x071F`** are the same shape in the other ring, and the cause is
-  a misreading worth recording on its own: the export's
-  `CONCAT11(7,DAT_EXTMEM_070f + 0x10)` places the ring at `0x0700`-`0x070F`
-  where `bank1/8902.asm` has `MOV DPTR,#0x0710`.
+  Its single EC-side site, bank1 `0x8C59` (file `0x10C59`), is `MOV DPTR,#0x09F6`
+  followed by `MOV R4,0x83` and `MOV R3,0x82` and then `MOV DPTR,#0x0497` —
+  no `MOVX` in between, so the site names the address and never dereferences
+  it.
+- **`0x0710`-`0x071F`** are the same shape in the other ring, and for the
+  reason set out under "`0x0710` is a second thing the instrument decides"
+  below: the store is `MOV DPTR,#0x0710` then `ADD A,DPL`, and
+  `trace_xdata_refs.is_dptr_rebuild()` treats the reload as a window terminator
+  rather than a longer window. The decompile spells the same arithmetic and
+  reaches the same base.
 
 The knowledge those rows would have carried is in this file and in the
 annotation rows for `0x88F0`, `0x89B5`, `0x897B` and `0x8955`, which carry the
