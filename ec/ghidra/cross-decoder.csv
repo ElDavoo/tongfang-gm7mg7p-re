@@ -185,7 +185,7 @@ bank0,B112,check_0xB112,annotation,2,0497,0497,,agree
 bank0,B12C,manual_ctrl_profile_gate,annotation,6,0741 078E,078E,0741,disagree
 bank0,B158,charge_target_update,annotation,6,0438 0439 0A48,0A48,0438 0439,disagree
 bank0,B1F0,charge_stress_update,annotation,7,0A4E 0A4F,0A4E 0A4F,,agree
-bank0,B35E,charge_target_minus_r3_times_0a47,annotation,8,0A47,0A47,,agree
+bank0,B35E,charge_target_minus_r3_times_0a47,annotation,8,0A47,,0A47,disagree
 bank0,B38D,unresolved_b38d,annotation,0,,,,vacuous
 bank0,B38E,step_1802_toward_bf12_limited_by_09cd,annotation,2,0456,,0456,disagree
 bank0,B3E4,call_c470_then_clear_0984_bit0,annotation,0,,,,vacuous
@@ -296,11 +296,11 @@ bank0,BC14,init_0817_081e_081f_read_0815,annotation,10,0815 0817 081E,0815 0817 
 bank0,BC26,copy_0a53_to_0873_and_0a54_to_087b,annotation,8,0873 087B 0A53 0A54,0873 087B 0A53 0A54,,agree
 bank0,BC37,code_byte_sub_from_044c,annotation,5,044C,044C,,agree
 bank0,BC3F,store_a_then_clear_0824_bit7_and_0768_bit2,annotation,9,0768 0824,0824,0768,disagree
-bank0,BC4F,fan_table_base_offset_helper,annotation,11,08E6 0A47,08E6 0A47,,agree
+bank0,BC4F,fan_table_base_offset_helper,annotation,11,08E6 0A47,08E6,0A47,disagree
 bank0,BC5F,inc_09e4_and_return_new,annotation,5,09E4,09E4,,agree
 bank0,BC67,store_code_byte_to_08ac_then_reload_dptr,annotation,5,08AC,08AC,,agree
 bank0,BC71,read_0434_keep_0435_in_r4,annotation,5,0434 0435,,0434 0435,disagree
-bank0,BC7B,load_dptr_0a47_then_nothing,annotation,1,0A47,0A47,,agree
+bank0,BC7B,load_dptr_0a47_then_nothing,annotation,1,0A47,,0A47,disagree
 bank0,BC7E,store_a_then_read_086c_set_cy,annotation,4,086C,086C,,agree
 bank0,BC85,clear_08a9_and_08aa,annotation,5,08A9,08A9,,agree
 bank0,BC8D,cfg_cell_count_selector,annotation,4,0491,0491,,agree
@@ -310,7 +310,7 @@ bank0,BCA9,clear_08a5_and_08a6,annotation,5,08A5,08A5,,agree
 bank0,BCB1,load_dptr_08e1_and_a_06_then_nothing,annotation,2,08E1,08E1,,agree
 bank0,BCB6,store_a_then_clear_08e0,annotation,4,08E0,08E0,,agree
 bank0,BCBD,dptr_r5_times_2_tail_call_705b,annotation,6,,,,vacuous
-bank0,BCCB,store_be16_of_08e6_and_arg_to_0a47,annotation,9,08E6 0A47,08E6 0A47,,agree
+bank0,BCCB,store_be16_of_08e6_and_arg_to_0a47,annotation,9,08E6 0A47,08E6,0A47,disagree
 bank0,BCDA,x0f10_table_indexed_by_0460,annotation,8,0460,0460,,agree
 bank0,BCE9,read_first_code_byte_pair_frag,annotation,4,,,,vacuous
 bank0,BCEE,dptr_from_code_be16,annotation,4,,,,vacuous
@@ -351,7 +351,7 @@ bank0,BE4A,write_64_a3_pair,annotation,5,,,,vacuous
 bank0,BE52,copy_x00c0_pair_to_iram_67_68,annotation,6,00C0,00C0,,agree
 bank0,BE5D,add_20_carry_to_r6_r7,annotation,7,0A47,,0A47,disagree
 bank0,BE68,x0469_minus_x1809,annotation,6,0469 1809,0469 1809,,agree
-bank0,BE73,write_a_then_zero_at_0a47_0a48,annotation,6,08B8 0A47,0A47,08B8,disagree
+bank0,BE73,write_a_then_zero_at_0a47_0a48,annotation,6,08B8 0A47,,08B8 0A47,disagree
 bank0,BE7E,write_9f_to_x1904,annotation,4,1904 1906,1904,1906,disagree
 bank0,BE88,write_9f_to_x1909,annotation,4,1909 190C,1909,190C,disagree
 bank0,BE92,write_9f_to_x190c,annotation,4,1904 190C,190C,1904,disagree
@@ -842,13 +842,13 @@ bank1,889E,write_r3r4_to_xdata_pair,annotation,5,,,,vacuous
 bank1,88A4,sub_r0_from_r1_stash_r0_on_borrow,annotation,3,,,,vacuous
 bank1,88F0,push_r5_into_070f_ring_when_gates_pass,annotation,2,0440,0440,,agree
 bank1,8901,inc_accumulator_070f_index,annotation,1,,,,vacuous
-bank1,8902,mask_and_store_to_070f_ring,annotation,8,070F 0710,070F,0710,disagree
+bank1,8902,mask_and_store_to_070f_ring,annotation,8,070F 0710,,070F 0710,disagree
 bank1,8915,saturating_count_09f0_then_call_88f0,annotation,2,06E6,06E6,,agree
-bank1,8955,init_09f1_and_zero_09f2_through_09f9,annotation,10,047C 09F1 09F2,047C 09F1 09F2,,agree
+bank1,8955,init_09f1_and_zero_09f2_through_09f9,annotation,10,047C 09F1 09F2,,047C 09F1 09F2,disagree
 bank1,896A,gate_06e6_0440_then_call_89b5,annotation,2,06E6,06E6,,agree
-bank1,897B,index_09f2_by_09f1_bits_7_5_and_bump_09f1,annotation,5,09F1 09F2,09F1 09F2,,agree
+bank1,897B,index_09f2_by_09f1_bits_7_5_and_bump_09f1,annotation,5,09F1 09F2,09F2,09F1,disagree
 bank1,89A9,read_xdata_at_dptr_plus_a,annotation,7,,,,vacuous
-bank1,89B5,store_r7_to_09f2_by_09f1_bits_0_2_and_bump,annotation,2,09F1,09F1,,agree
+bank1,89B5,store_r7_to_09f2_by_09f1_bits_0_2_and_bump,annotation,2,09F1,,09F1,disagree
 bank1,89E7,write_xdata_at_dptr_plus_a,annotation,8,,,,vacuous
 bank1,89F4,zero_xdata_bytes_r2r1_through_r2r3,annotation,6,,,,vacuous
 bank1,8A03,ret_terminating_89f4,annotation,0,,,,vacuous

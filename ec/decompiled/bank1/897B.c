@@ -4,26 +4,35 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Takes bits 7-5 of the byte at XDATA 0x09F1 as an index (`SWAP A` then `ANL A,#0x07`), reads XDATA
-   0x09F2 + index through the helper at 0x89A9, and leaves that byte in A and R7. It then writes
-   back ((0x09F1 & 0x77) + 0x10) & 0x77, which increments the three-bit field at bits 4-6, and sets
-   bit 7 of 0x09F1 when bits 7-5 of the new value equal bits 0-2 of it. The `ANL 0x00,#0x07` at
-   0x8995 masks R0, not the accumulator, and the `CJNE A,0x00` at 0x899B is the direct-register form
-   comparing A with R0; the decompile's `>> 4 & 7` index and `>> 4 == R0` test do not match these
-   instructions.
+/* *** CORRECTION 2026-10-03 (issue #1444): the two clauses below naming `bits 7-5` mean bits 4-6.
+   *** `SWAP A` puts original bit 4 at A bit 0 and original bit 6 at A bit 2, so `ANL A,#0x07`
+   selects bits 4-6, which is also what the second clause of this comment says the increment
+   touches. The name is left as it is because it is baked into the generated listings and index.csv;
+   renaming the row would need a `--mode rebuild-project` run this change does not do. Takes bits
+   7-5 of the byte at XDATA 0x09F1 as an index (`SWAP A` then `ANL A,#0x07`), reads XDATA 0x09F2 +
+   index through the helper at 0x89A9, and leaves that byte in A and R7. It then writes back
+   ((0x09F1 & 0x77) + 0x10) & 0x77, which increments the three-bit field at bits 4-6, and sets bit 7
+   of 0x09F1 when bits 7-5 of the new value equal bits 0-2 of it. That equality is the point of the
+   flag: after this increment the consumer's index has caught the producer's, and write-equals-read
+   is ambiguous between drained and wrapped without a bit to say which. 2026-10-03 (issue #1444):
+   with 0x89B5's identical test on the other side, bit 7 is the empty flag and bit 3 the full one,
+   each set by the side that laps the other and cleared as a side effect of the other's `& 0x77`.
+   docs/findings/a73f-09f1-mailbox-payload.md. The `ANL 0x00,#0x07` at 0x8995 masks R0, not the
+   accumulator, and the `CJNE A,0x00` at 0x899B is the direct-register form comparing A with R0; the
+   decompile's `>> 4 & 7` index and `>> 4 == R0` test do not match these instructions.
    type: state
    evidence: ec/decompiled/bank1/897B.asm; ec/decompiled/bank1/897B.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void index_09f2_by_09f1_bits_7_5_and_bump_09f1(void)
 
 {
-  read_xdata_at_dptr_plus_a(DAT_EXTMEM_09f1 >> 4 & 7,0x9f2);
-  DAT_EXTMEM_09f1 = (DAT_EXTMEM_09f1 & 0x77) + 0x10 & 0x77;
+  read_xdata_at_dptr_plus_a(MAILBOX_INDEX >> 4 & 7,0x9f2);
+  MAILBOX_INDEX = (MAILBOX_INDEX & 0x77) + 0x10 & 0x77;
   BANK0_R0 = BANK0_R0 & 7;
-  if (DAT_EXTMEM_09f1 >> 4 == BANK0_R0) {
-    DAT_EXTMEM_09f1 = DAT_EXTMEM_09f1 | 0x80;
+  if (MAILBOX_INDEX >> 4 == BANK0_R0) {
+    MAILBOX_INDEX = MAILBOX_INDEX | 0x80;
     return;
   }
   return;

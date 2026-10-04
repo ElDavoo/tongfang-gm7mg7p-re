@@ -6,7 +6,9 @@
 
 /* Clears the carry, adds A to DPTR (the carry propagating into DPH), writes R7 to that XDATA
    address and returns. R5 is never read here, so the decompile's third parameter is not a real
-   input. Called from 0x89B5 with DPTR = 0x09F2 and A holding the index.
+   input. Called from 0x89B5 with DPTR = 0x09F2 and A holding the index. 2026-10-03 (issue #1444):
+   as with 0x89A9, this indexed store is why the ring body carries no direct `MOV DPTR` site.
+   docs/findings/a73f-09f1-mailbox-payload.md.
    type: writer
    evidence: ec/decompiled/bank1/89E7.asm; ec/decompiled/bank1/89E7.c
    basis: hand-decoded

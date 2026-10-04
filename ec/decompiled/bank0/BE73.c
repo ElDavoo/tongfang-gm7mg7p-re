@@ -10,12 +10,12 @@
    type: writer
    evidence: ec/decompiled/bank0/BE73.asm; ec/decompiled/bank0/BE73.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void write_a_then_zero_at_0a47_0a48(undefined1 value_a)
 
 {
-  DAT_EXTMEM_0a47 = value_a;
+  MAILBOX_PUBLISH_VALUE = value_a;
   DAT_EXTMEM_0a48 = 0;
   return;
 }

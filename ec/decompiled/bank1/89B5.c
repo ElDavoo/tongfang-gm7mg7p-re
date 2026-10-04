@@ -8,25 +8,36 @@
    bit again. Otherwise it takes bits 0-2 of 0x09F1 as an index and calls 0x89E7 to write R7 to
    XDATA 0x09F2 + index, then writes back ((0x09F1 & 0x77) + 1) & 0x77, incrementing the three-bit
    field at bits 0-2. R7 is never set inside this function, so the stored byte comes from the
-   caller. As at 0x897B, the `ANL 0x00,#0x07` masks R0 and the `CJNE A,0x00` compares A with R0, so
-   bit 3 is set when bits 7-5 of the new value equal bits 0-2 of it.
+   caller. 2026-10-03 (issue #1444): every committed site that reaches 0x896A loads a literal into
+   R7 first -- ec/tools/a73f_call_sites.py is the enumeration, and the values run 0xA7 to 0xBC with
+   one 0x43 -- so this is a payload enum rather than a command selector: no comparison on the
+   mailbox path tests it, and the only routines that touch a ring slot are 0x8955, 0x89A9, 0x89E7
+   and the two that call the accessors. docs/findings/a73f-09f1-mailbox-payload.md. As at 0x897B,
+   the `ANL 0x00,#0x07` masks R0 and the `CJNE A,0x00` compares A with R0, so bit 3 is set when bits
+   7-5 of the new value equal bits 0-2 of it. *** CORRECTION 2026-10-03 (issue #1444): that `bits
+   7-5` is bits 4-6, as at 0x897B. *** It is also the full flag: this increment has carried the
+   producer's index all the way round onto the consumer's, and the `& 0x77` has cleared bit 3 on the
+   way through, so the flag is set once and then held until 0x897B's own `& 0x77` releases it. The
+   carry out of bit 2 lands in bit 3 and is discarded there rather than reaching bits 4-6, which is
+   what makes the two three-bit fields independent counters and not halves of one eight-bit index.
+   docs/findings/a73f-09f1-mailbox-payload.md.
    type: state
    evidence: ec/decompiled/bank1/89B5.asm; ec/decompiled/bank1/89B5.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void store_r7_to_09f2_by_09f1_bits_0_2_and_bump(void)
 
 {
-  if ((DAT_EXTMEM_09f1 >> 3 & 1) != 1) {
-    write_xdata_at_dptr_plus_a(DAT_EXTMEM_09f1 & 7,0x9f2);
-    DAT_EXTMEM_09f1 = (DAT_EXTMEM_09f1 & 0x77) + 1 & 0x77;
+  if ((MAILBOX_INDEX >> 3 & 1) != 1) {
+    write_xdata_at_dptr_plus_a(MAILBOX_INDEX & 7,0x9f2);
+    MAILBOX_INDEX = (MAILBOX_INDEX & 0x77) + 1 & 0x77;
     BANK0_R0 = BANK0_R0 & 7;
-    if (DAT_EXTMEM_09f1 >> 4 != BANK0_R0) {
+    if (MAILBOX_INDEX >> 4 != BANK0_R0) {
       return;
     }
   }
-  DAT_EXTMEM_09f1 = DAT_EXTMEM_09f1 | 8;
+  MAILBOX_INDEX = MAILBOX_INDEX | 8;
   return;
 }
 

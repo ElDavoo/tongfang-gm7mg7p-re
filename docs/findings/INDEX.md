@@ -6,6 +6,7 @@ frozen at §97 and is the record of what came before this directory was
 the place a finding went; `check_findings_frozen.py` holds that.
 
 - [`0436-0437-writer-census.md`](0436-0437-writer-census.md) — The `0x0436`/`0x0437` writer census: eight stores and none of them a counter, and the PD's five sites name a base rather than a byte
+- [`0436-capacity-ladder.md`](0436-capacity-ladder.md) — The `0x0436` band ladder: `0x0436` is compared against descending scalings of `0x0404`, and one of its eight writers stores `0x0404`'s own value
 - [`044b-mode-stepper.md`](044b-mode-stepper.md) — `0x044B` is a five-value mode byte, and `bank0 0x9AAD` is the routine that re-decides it
 - [`0741-bit7-oc-recovery.md`](0741-bit7-oc-recovery.md) — One instruction sets AP_OEM bit 7, and the region it scans is 253 bytes rather than the three a committed annotation claimed
 - [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md) — `--label-vocab` checks a label as it is typed, a `--csv` is graded whole, and only one of those is per-process (issue #548)
@@ -57,6 +58,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
 - [`a5e6-r1-is-the-low-byte.md`](a5e6-r1-is-the-low-byte.md) — `0xA5E6` returns the quotient's low byte in R1, and a probe built on the opposite reading could not have agreed with a capture (issue #358)
 - [`a73f-09f1-mailbox-payload.md`](a73f-09f1-mailbox-payload.md) — `0xA73F` pushes a payload into an eight-slot ring, and there was never a command-code table to look it up in (issue #1444)
+- [`a73f-notify-path.md`](a73f-notify-path.md) — The `0xA73F` notify path, decoded end to end
 - [`a7c8-dispatch-slot-and-pl-race.md`](a7c8-dispatch-slot-and-pl-race.md) — What calls `0xA7C8`, and whether the host-writes-PLs / EC-zeroes-PLs race is real
 - [`acpi-interpreter-region-access.md`](acpi-interpreter-region-access.md) — What the ACPI interpreter does with an unaligned `MMRD`, and what it still does not establish (issue #1337)
 - [`addc-dph-residual-six.md`](addc-dph-residual-six.md) — All six residual `addc A,#imm ; mov DPH,A` sites close: four build page `0x0D`/`0x0E`, two build page `0x2A` and read CODE (issue #519)
@@ -79,6 +81,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`capture-claim-denials-are-checks.md`](capture-claim-denials-are-checks.md) — A denial is the only shape a retraction takes, so `check_capture_claims.py` checks it instead of skipping it (issue #328)
 - [`capture-claims-docstring-surface.md`](capture-claims-docstring-surface.md) — The capture-claims docstring quotes its own run, so a test now holds it to the run (issue #991)
 - [`capture-filename-date-prefix.md`](capture-filename-date-prefix.md) — The capture root's date prefix and its flatness are measured, and a name breaking either is refused (issue #973)
+- [`capture-mark-provenance.md`](capture-mark-provenance.md) — A timing claim over a committed capture is mechanical or inferred, and the tree did not say which (issue #1189)
 - [`capture-prefix-vs-contents.md`](capture-prefix-vs-contents.md) — The date in a capture's name, held to the dates the capture carries: 15 captures, 14 agreeing, 1 stating none, 0 disagreeing (issue #1000)
 - [`cased-in-reserved-namespace.md`](cased-in-reserved-namespace.md) — `caseD_<n>` and `default` are Ghidra's too (issue #631)
 - [`census-doc-fallback-entry-addresses.md`](census-doc-fallback-entry-addresses.md) — Direction A's fallback was a search over a whole write-up, and it is now named addresses
@@ -307,6 +310,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-cluster-refs-projection.md`](xdata-cluster-refs-projection.md) — A cluster's `refs` is the sum of its members' `refs_<program>`, and not of their `refs` (issue #343)
 - [`xdata-decile-cause-clamp-coverage.md`](xdata-decile-cause-clamp-coverage.md) — The `deciles()` floor had a case on one of its two callers and none on the other (issue #922)
 - [`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md) — `deciles()` had a floor in its docstring and none in its code, and the report was already printing the stretch (issue #889)
+- [`xdata-direction-invariant-population.md`](xdata-direction-invariant-population.md) — The direction invariant's population is measured, not restated
 - [`xdata-dispatch-position-pins.md`](xdata-dispatch-position-pins.md) — The three dispatch positions the docstring names are pinned on synthetic source
 - [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md) — The dispatch reader reads statement position too, and one boundary it does not
 - [`xdata-export-ownership-page-census.md`](xdata-export-ownership-page-census.md) — Re-deriving the export-ownership page: every figure on `xdata-export-ownership.md`, from a fresh run (issue #654)

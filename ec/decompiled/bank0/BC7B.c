@@ -11,12 +11,12 @@
    type: unresolved
    evidence: ec/decompiled/bank0/BC7B.asm; ec/decompiled/bank0/BC7B.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 undefined1 load_dptr_0a47_then_nothing(undefined1 param_1)
 
 {
-  DAT_EXTMEM_0a47 = param_1;
+  MAILBOX_PUBLISH_VALUE = param_1;
   return XDATA_086C;
 }
 

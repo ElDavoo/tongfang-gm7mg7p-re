@@ -9,27 +9,33 @@
    0x10 (`CLR CY` / `ADD A,#0xF0` / `JNC`); on reaching 0x10 it clears 0x047C and writes 0 to
    0x09F0. It then tests bit 7 of the byte at 0x09F1 with `JB 0xE7` and, if that bit is clear, calls
    0x897B, stores the returned R7 into 0x047C, and calls 0x88F0 with R5 preset to 0x53. The
-   decompile's `-1 < DAT_EXTMEM_09f1` is its reading of that bit test, not a signed comparison.
+   decompile's `-1 < DAT_EXTMEM_09f1` is its reading of that bit test, not a signed comparison.  ***
+   2026-10-03 (issue #1444): the `JB 0xE7` is the consumer's half of one pair of flags: bit 7 of
+   0x09F1 is the mailbox's empty flag, set by 0x897B and cleared as a side effect of the `& 0x77` in
+   this routine's callee, and this test is what stops a read of a ring nothing has written. The
+   0x047C byte is the latch holding the last payload 0x897B returned: it is non-zero on entry, which
+   is what selects the saturating count over the drain, and 0x8955 clears it at init.
+   docs/findings/a73f-09f1-mailbox-payload.md.
    type: state
    evidence: ec/decompiled/bank1/8915.asm; ec/decompiled/bank1/8915.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void saturating_count_09f0_then_call_88f0(char param_1)
 
 {
   if ((DAT_EXTMEM_06e6 == '\x01') && (XDATA_0440 != '\0')) {
-    if (DAT_EXTMEM_047c != '\0') {
-      if (DAT_EXTMEM_09f0 + 1 < 0x10) {
-        DAT_EXTMEM_09f0 = DAT_EXTMEM_09f0 + 1;
+    if (MAILBOX_PAYLOAD_LATCH != '\0') {
+      if (MAILBOX_DRAIN_COUNT + 1 < 0x10) {
+        MAILBOX_DRAIN_COUNT = MAILBOX_DRAIN_COUNT + 1;
         return;
       }
-      DAT_EXTMEM_047c = '\0';
+      MAILBOX_PAYLOAD_LATCH = '\0';
     }
-    DAT_EXTMEM_09f0 = '\0';
-    if (-1 < DAT_EXTMEM_09f1) {
+    MAILBOX_DRAIN_COUNT = '\0';
+    if (-1 < MAILBOX_INDEX) {
       index_09f2_by_09f1_bits_7_5_and_bump_09f1();
-      DAT_EXTMEM_047c = param_1;
+      MAILBOX_PAYLOAD_LATCH = param_1;
       push_r5_into_070f_ring_when_gates_pass(0x53);
     }
   }

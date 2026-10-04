@@ -11,7 +11,7 @@ void FUN_CODE_0a7f(char param_1)
 {
   byte bVar1;
   
-  DAT_EXTMEM_0a47 = '\0';
+  MAILBOX_PUBLISH_VALUE = '\0';
   rearm_timer1_then_set_bit_4_of_internal_41();
   if (((DAT_EXTMEM_1304 & 1) != 1) && ((DAT_EXTMEM_1304 >> 1 & 1) != 1)) {
     if (DAT_EXTMEM_004b != '\0') {
@@ -25,9 +25,9 @@ void FUN_CODE_0a7f(char param_1)
         DAT_INTMEM_41 = DAT_INTMEM_41 & 0xef;
       }
       else {
-        DAT_EXTMEM_0a47 = '\x01';
+        MAILBOX_PUBLISH_VALUE = '\x01';
       }
-      if (DAT_EXTMEM_0a47 != '\0') {
+      if (MAILBOX_PUBLISH_VALUE != '\0') {
         bVar1 = _a_7 & 1;
         _a_7 = 0;
         FUN_CODE_0ad8(bVar1,bVar1);
