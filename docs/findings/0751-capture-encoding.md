@@ -121,6 +121,19 @@ no `encoding=`, but their column sets are `ts,phase,...` and
 decision rather than an oversight; they are worth a follow-up in their own
 right.
 
+> **Superseded by issue #1277.** All three now declare `encoding="utf-8"` at
+> their `open()`, so the paragraph above records the decision this issue made
+> and not the current state; §9 carries the follow-up and
+> [`probe-csv-encoding.md`](probe-csv-encoding.md) is the work that closed it.
+> The three line numbers still name the three `open()` calls they were written
+> for, because none of the three files grew *above* the line its citation
+> names, but the call each one names now carries the keyword this issue said
+> was missing. One of them did grow later, and below its opener:
+> `battery_trace.py` gained an append guard, which is issue #1203 and not this
+> one, and the guard opens the same `--csv` path a second time as a *reader*.
+> That second `open()` declares the codec too, so this page's claim does not
+> become true again by it.
+
 ## 3. `utf-8`, not `utf-8-sig`
 
 `utf-8-sig` was the live alternative and it loses on the measurement:
