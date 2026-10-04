@@ -270,20 +270,29 @@ and do not merge two files and read the union.
 the gate held off.** `ctgp_dben_probe.py`'s `arm_bytes()` sets `0x0743` bit 0 in
 both arms, so the gate is open for every sample in either file.
 
-**The starting byte is not in either capture.** `sample()` re-reads `0x0743` on
-every sweep, after the arm byte has been written, so every `ctrl_read` row is an
-arm byte — `0x03` across arm A and `0x01` across arm B from either start. The
-arms preserve bits 2-7, but §2's two starts (`0x03` on AC, `0x00` on battery)
-have those zero, so the two runs are **indistinguishable by their `0x0743`
-columns** — not necessarily by the whole file, since a battery-state run could
-differ in `0x07C4`/`0x07D4`/`0x07D5`, and that would be a real observation. What
-tells the two apart is the **filename** and the **console banner**:
-`baseline: 0x0743 = 0x00 (bit 0 CLEAR, ...)` and the closing
+**The starting byte is not in either capture while the host write holds.**
+`sample()` re-reads `0x0743` on every sweep, after the arm byte has been
+written, so a `ctrl_read` row is the EC's *answer* to the arm byte rather than
+the arm byte itself: the arm byte — `0x03` across arm A, `0x01` across arm B —
+for as long as the write holds, and the starting byte if the EC takes it back.
+§4.3 is the question that separates the two, and §2's `0x0522` citation is why
+the second is not a surprise. Driven offline against `ecrw_fake` the write held
+from either start, which is how the correction could be made at all; that is the
+fixture's behaviour, not a claim about the EC.
+
+While it holds, the arms preserve bits 2-7 and §2's two starts (`0x03` on AC,
+`0x00` on battery) have those zero, so the two runs are **indistinguishable by
+their `0x0743` columns** — not necessarily by the whole file, since a
+battery-state run could differ in `0x07C4`/`0x07D4`/`0x07D5`, and that would be
+a real observation. What tells the two apart is the **filename** and the
+**console banner**: `baseline: 0x0743 = 0x00 (bit 0 CLEAR, ...)` and the closing
 `restored 0x0743 -> 0x00`. A `-gate-closed.csv` capture whose `ctrl_read` never
-shows the starting byte is therefore the expected shape of a run, not a bad one;
-§4's first two reads are what a capture is read for, and neither is the starting
-byte. The tool says the same thing when it runs, and §2's arm A on battery is
-this run rather than the first.
+shows the starting byte is the expected shape of a run *while the write holds*;
+one that does show it is §4.3's "the EC took the byte back", which §4.3 already
+says makes the window moot, and that is the signal the run settled nothing
+rather than a bad capture. Either way §4's first two reads are what a capture
+is read for, and neither is the starting byte. The tool says the same thing
+when it runs, and §2's arm A on battery is this run rather than the first.
 
 Add each capture to `evidence/README.md`, which is the index every findings
 claim cites through.

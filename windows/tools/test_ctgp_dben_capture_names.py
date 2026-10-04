@@ -67,12 +67,19 @@ STARTING_CLAIM = ("is the byte the second run begins from, not a window "
 # can be right about the gate and still claim the capture records the byte the
 # run started from, which no CSV row carries. `arm_bytes(0x00)` and
 # `arm_bytes(0x03)` are the same pair, and `sample()` re-reads `0x0743` on every
-# sweep *after* the arm byte is written, so the only places the start state
-# reaches are the filename and the console banner -- and a capture whose
-# `ctrl_read` never shows it is the expected shape rather than a fault. Phrases
-# again, in this suite's idiom: the byte half is `arm_bytes()` above, and this
-# is the document saying where the difference is kept.
-STARTING_BYTE_CLAIMS = ("not in either capture",
+# sweep *after* the arm byte is written -- so what a `ctrl_read` row holds is
+# the EC's answer to the arm byte, which is the arm byte while the host write
+# holds and the starting byte if the EC takes it back (§4.3). Only while the
+# write holds are the places the start state reaches the filename and the
+# console banner. Phrases again, in this suite's idiom: the byte half is
+# `arm_bytes()` above, and this is the document saying where the difference is
+# kept. The first phrase carries the scope with it deliberately: §4.3 of the
+# procedure asks whether a `ctrl_read` that came back at the original says the
+# EC took the byte back, and §2 cites the `0x0522` work measuring that
+# happening in under 100 us, so the branch is live. Unhedged, "not in either
+# capture" asserts the opposite of what happens there and tells an operator the
+# very signal §4.3 calls moot is the expected shape.
+STARTING_BYTE_CLAIMS = ("not in either capture while the host write holds",
                         "What tells the two apart is the")
 
 # The name the tool's usage example carried before, and the reason it was a
@@ -264,8 +271,8 @@ evidence/ec-watch/<date>-thing.csv
 ```
 
 "Starting closed" is the byte the second run begins from, not a window with
-the gate held off. The starting byte is not in either capture. What tells the
-two apart is the filename and the console banner.
+the gate held off. The starting byte is not in either capture while the host
+write holds. What tells the two apart is the filename and the console banner.
 """
 
 
@@ -426,8 +433,9 @@ class LoosenedDiscriminatorTests(unittest.TestCase):
         # and passing it is the defect.
         overclaim = " ".join(SAMPLE.split()).replace(
             " ".join(
-                ("The starting byte is not in either capture. What tells the "
-                 "two apart is the filename and the console banner.").split()),
+                ("The starting byte is not in either capture while the host "
+                 "write holds. What tells the two apart is the filename and "
+                 "the console banner.").split()),
             "what the second capture records that the first does not is the "
             "starting byte")
         self.assertFalse(keeps_the_starting_byte_in_the_banner(overclaim),
@@ -440,6 +448,36 @@ class LoosenedDiscriminatorTests(unittest.TestCase):
         self.assertTrue(names_the_starting_byte(overclaim),
                         "this negative only means anything while the "
                         "overclaiming §6 still passes the STARTING_CLAIM hold")
+        self.assertTrue(keeps_the_starting_byte_in_the_banner(SAMPLE))
+
+    def test_a_section_six_that_drops_the_scope_is_reported(self):
+        # The other direction the claim fails in, and the one the fixture
+        # cannot object to: "while the host write holds" taken out. Offline
+        # against `ecrw_fake` the unhedged sentence is exactly what the
+        # evidence shows, so nothing here would catch it -- which is why it is
+        # a named negative here rather than something the arithmetic settles.
+        # §4.3 of the procedure asks whether a `ctrl_read` that came back at
+        # the original means the EC took the byte back, and §2 cites the
+        # `0x0522` work measuring that in under 100 us. In that branch the
+        # second run's rows carry the starting byte, the two runs are told
+        # apart by their `0x0743` columns after all, and the unhedged sentence
+        # asserts the opposite while telling an operator the signal that
+        # settles nothing is the expected shape.
+        unhedged = " ".join(SAMPLE.split()).replace(
+            "not in either capture while the host write holds",
+            "not in either capture")
+        self.assertNotEqual(
+            unhedged, " ".join(SAMPLE.split()),
+            "the fixture no longer carries the scope, so this negative would "
+            "be comparing the text to itself")
+        self.assertFalse(keeps_the_starting_byte_in_the_banner(unhedged),
+                         "the check passed a §6 that claims the starting byte "
+                         "is absent unconditionally, which inverts in the "
+                         "take-back branch §4.3 calls live")
+        # The filename-and-banner half survives, so this cannot be passing
+        # merely because the sentence went missing: what fails is the scope,
+        # not the claim's presence.
+        self.assertIn("What tells the two apart is the", unhedged)
         self.assertTrue(keeps_the_starting_byte_in_the_banner(SAMPLE))
 
     def test_a_missing_output_section_is_not_an_agreement(self):

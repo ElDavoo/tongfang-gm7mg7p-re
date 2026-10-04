@@ -162,25 +162,32 @@ is a real gap and a new question about the probe rather than a revision of this
 document: a third arm holding `0x0743` bit 0 clear would answer it. Stated here
 as an opening, not as work this change did.
 
-**The starting byte is not in the capture either.** Driven offline against
-`ecrw_fake` from both starts, the byte written and the byte read back are the
-same: `arm_bytes(0x00) == arm_bytes(0x03) == (0x03, 0x01)`, and `sample()`
-re-reads `0x0743` on every sweep *after* the arm byte is written, so every
-`ctrl_read` row is an arm byte. `orig` reaches the banner, the arm line and the
-restore line and no CSV row — `COLS` has no column for it. So the two runs are
-**indistinguishable by their `0x0743` columns**, which is narrower than saying
-the files are identical: a battery-state run could of course differ in
-`0x07C4`/`0x07D4`/`0x07D5`, and that would be a real observation. What cannot
-be recovered from the file is *which state the run started from*, and that is
-the state the `-gate-closed.csv` filename is about.
+**The starting byte is not in the capture either, for as long as the host write
+holds.** `sample()` re-reads `0x0743` on every sweep *after* the arm byte is
+written, so a `ctrl_read` row is the EC's *answer* to the arm byte, not the arm
+byte itself: the arm byte while the write holds, and the starting byte if the EC
+takes the write back. Which of the two a capture shows is the open question
+`ctgp-dben-07c4-bit3.md` §4.3 already asks, and §2's `0x0522` citation is why
+the second is not a surprise. Driven offline against `ecrw_fake` from both
+starts, the byte written and the byte read back are the same —
+`arm_bytes(0x00) == arm_bytes(0x03) == (0x03, 0x01)` — so the two runs are
+**indistinguishable by their `0x0743` columns** *there*. That is the fixture's
+behaviour and not a claim about the EC, so the consequence is scoped the same
+way: a `ctrl_read` that came back at the starting byte is §4.3's "the EC took
+the byte back", which §4.3 says makes the window moot. The distinction is
+narrower than saying the files are identical either way: a battery-state run
+could of course differ in `0x07C4`/`0x07D4`/`0x07D5`, and that would be a real
+observation. What cannot be recovered from the file is *which state the run
+started from*, and that is the state the `-gate-closed.csv` filename is about.
 
 This is worth spelling because the natural way to state the correction to §6
 overclaims in the other direction — that the second capture "records what the
 first does not ... the *starting* byte". An operator who went to the CSV for
 the "started closed" evidence would find `0x03` and `0x01` throughout and could
 reasonably read the run as something else. §6 says instead that the absence is
-the expected shape, and that the filename and the banner are what carry the
-run's start state.
+the expected shape while the write holds, that a `ctrl_read` showing the
+starting byte is the take-back case and not a fault, and that the filename and
+the banner are what carry the run's start state.
 
 ## What this does not claim
 
