@@ -1,0 +1,17 @@
+addr,file_offset,region,runtime,mode,via,callee,callee_window,callee2,callee2_window,class
+0x07E2,0x204F9,pd-image,0x04F9,depth2,,0xB1F2,,0x10C8,"movx a,@dptr ; mov r3,a ; inc dptr ; movx a,@dptr ; mov r2,a ; inc dptr ; movx a,@dptr ; mov r1,a",handed to lcall/ljmp -> second callee reads
+0x07E5,0x2662D,pd-image,0x662D,depth2,,0x383A,,0x0FCB,"movx a,@dptr ; mov r0,a ; inc dptr ; movx a,@dptr ; mov r1,a ; inc dptr ; movx a,@dptr ; mov r2,a",handed to lcall/ljmp -> second callee reads
+0x089E,0x0B6E8,bank0,0xB6E8,depth2,,0xBADE,,0x70E4,"xch a,0xf0 ; mov r0,a ; inc dptr ; movx a,@dptr ; add a,r0 ; movx @dptr,a ; xch a,0xf0 ; mov r0,a",handed to lcall/ljmp -> second callee reads+writes
+0x0811,0x2B5F9,pd-image,0xB5F9,depth2,,0x9A48,,0x10C8,"movx a,@dptr ; mov r3,a ; inc dptr ; movx a,@dptr ; mov r2,a ; inc dptr ; movx a,@dptr ; mov r1,a",handed to lcall/ljmp -> second callee reads
+0x07D6,0x2951B,pd-image,0x951B,depth2,,0xB2F7,,0x10C8,"movx a,@dptr ; mov r3,a ; inc dptr ; movx a,@dptr ; mov r2,a ; inc dptr ; movx a,@dptr ; mov r1,a",handed to lcall/ljmp -> second callee reads
+0x07D0,0x24B40,pd-image,0x4B40,flow,fall-through past jnz +0x12 at 0x4B43,0x34A5,"movx a,@dptr",,,DPTR handed to a call reached only by following a branch -> callee reads
+0x07D2,0x26757,pd-image,0x6757,flow,"fall-through past cjne a,#0x02,+0x08 at 0x675A",0x37DE,"movx a,@dptr ; mov 0xf0,#0x5e ; mul ab ; add a,#0xf5",,,DPTR handed to a call reached only by following a branch -> callee reads
+0x07D9,0x26DAA,pd-image,0x6DAA,flow,"fall-through past cjne r5,#0x03,+0x0f at 0x6DAD",0x0FAF,"movx a,@dptr ; mov r4,a ; inc dptr ; movx a,@dptr ; mov r5,a ; inc dptr ; movx a,@dptr ; mov r6,a",,,DPTR handed to a call reached only by following a branch -> callee reads
+0x0803,0x2233C,pd-image,0x233C,flow,fall-through past jnz +0x12 at 0x233F,0x34A5,"movx a,@dptr",,,DPTR handed to a call reached only by following a branch -> callee reads
+0x0803,0x2AE73,pd-image,0xAE73,flow,sjmp target 0xAE7D,0xAE91,"movx a,@dptr ; mov r7,a ; inc dptr ; movx a,@dptr ; mov r5,a ; mov r3,#0x10 ; lcall 0xf407",,,DPTR handed to a call reached only by following a branch -> callee reads
+0x07D4,0x2D01D,pd-image,0xD01D,flow,fall-through past jnz +0x27 at 0xD020,0x714F,"movx a,@dptr ; mov 0xf0,#0x17 ; mul ab ; add a,#0x2d",,,DPTR handed to a call reached only by following a branch -> callee reads
+0x07D6,0x2BB50,pd-image,0xBB50,flow,fall-through past jnz +0x0f at 0xBB53,0xB293,"movx a,@dptr ; mov 0xf0,#0x5e ; mul ab ; add a,#0xfc",,,DPTR handed to a call reached only by following a branch -> callee reads
+0x07D6,0x2BD80,pd-image,0xBD80,flow,fall-through past jnz +0x0f at 0xBD83,0xB293,"movx a,@dptr ; mov 0xf0,#0x5e ; mul ab ; add a,#0xfc",,,DPTR handed to a call reached only by following a branch -> callee reads
+0x0A47,0x0B4F4,bank0,0xB4F4,flow,fall-through past jz +0x05 at 0xB4F7,0xBE42,"mov a,#0x64 ; movx @dptr,a ; inc dptr ; mov a,#0xb5 ; movx @dptr,a ; ret",,,DPTR handed to a call reached only by following a branch -> callee writes
+0x0A47,0x0B64E,bank0,0xB64E,flow,fall-through past jz +0x05 at 0xB651,0xBE42,"mov a,#0x64 ; movx @dptr,a ; inc dptr ; mov a,#0xb5 ; movx @dptr,a ; ret",,,DPTR handed to a call reached only by following a branch -> callee writes
+0x0A47,0x0B7AE,bank0,0xB7AE,flow,fall-through past jz +0x05 at 0xB7B1,0xBE42,"mov a,#0x64 ; movx @dptr,a ; inc dptr ; mov a,#0xb5 ; movx @dptr,a ; ret",,,DPTR handed to a call reached only by following a branch -> callee writes
