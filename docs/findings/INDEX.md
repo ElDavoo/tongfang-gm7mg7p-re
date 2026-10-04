@@ -119,6 +119,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md) — `disasm8051.py --self-test` is the oracle for the opcode tables, and no gate
 - [`dmi-descriptor-evidence.md`](dmi-descriptor-evidence.md) — The DMI descriptor claims eight bits, and the source that names them was one fetch away (issue #10)
 - [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) — Which of the census checklist's figures a check actually holds, measured (issue #849)
+- [`doc-figure-pins-gate-wiring.md`](doc-figure-pins-gate-wiring.md) — The figure-pins checker is prepared for the cheap gate, in a patch that had to fold (issue #877)
 - [`doc-patch-ref-file-sets.md`](doc-patch-ref-file-sets.md) — What `tools/check_doc_patch_refs.py` reads, in both directions (issue #955)
 - [`doc-patch-reference-gate.md`](doc-patch-reference-gate.md) — The names prose gives a prepared gate patch, and what now holds them (issue #777)
 - [`door-grader-close-marks-threshold.md`](door-grader-close-marks-threshold.md) — The door grader's close-marks threshold is the 0751 grader's window, pinned rather than derived (issue #677)

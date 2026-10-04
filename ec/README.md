@@ -301,9 +301,16 @@ into `r2 -a 8051` with no stitching needed.
   — file, line, and the file the measurement resolved to — which is the only
   `file:line` check in the tree. Every `unheld` is "not found by this method",
   never "absent", and the docstring names the four limits that have to be read
-  with the verdicts. It runs by hand, where `check_cluster_citations.py` stands
-  today;
-  `../docs/findings/doc-figure-pin-audit.md` is the write-up.
+  with the verdicts. It still runs by hand, where `check_cluster_citations.py`
+  stands today, but a prepared route now exists: the check and its `gate` line
+  are folded into `../docs/ci/agent-gates-testdata-row-claims.patch` rather than a
+  patch of their own, because every insertion point the `gate` list admits fails
+  to compose with the set already prepared. That is a human's landing, and this
+  hand-run standing ends when it happens — with three edits that go with it, the
+  check being **red on the committed tree** until §2b is reconciled, and all of
+  it in the patch's own header.
+  `../docs/findings/doc-figure-pin-audit.md` is the write-up, and
+  `../docs/findings/doc-figure-pins-gate-wiring.md` is the wiring one.
 - **`tools/check_capture_claims.py`** — the capture-file sibling of that one:
   it holds the prose's claims about `evidence/ec-watch/*.csv` to the capture
   they name. `check_register_counts.py` recomputes `registers.yaml`'s numeric

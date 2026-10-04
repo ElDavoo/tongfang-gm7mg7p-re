@@ -503,3 +503,47 @@ gate switched off, and `ec/tools/test_reassembly_checked_bound.py` holds the
 strict form red on the committed tree so `--fail-on-overclaim` is not a flag
 nobody can tell works. The census it derives from is
 [`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md).
+
+## A fold into the tail patch, and a gate-list saturation measured again
+
+**2026-10-04, issue #877.** `ec/tools/check_doc_figure_pins.py` folds into
+`docs/ci/agent-gates-testdata-row-claims.patch`, for the reason the paragraph
+above records and re-measured here: **every insertion point the `gate` list
+admits fails to compose**, so a patch of its own would apply cleanly *alone* and
+fail in half the ordered pairs. The anchor table and the recipe that produces it
+are in [`doc-figure-pins-gate-wiring.md`](doc-figure-pins-gate-wiring.md), which
+is also where a reader cutting a hunk should go before trusting the collision
+table at the top of this file.
+
+The measurement is a re-derivation rather than an inheritance, and **it agrees
+with the one `history-checkouts-gate-wiring.md` took** — same anchors and the
+same verdicts, measured on a tree carrying more patches than that table's. Both
+are records of the trees they were measured on, which is what this file says
+about itself; the re-run is because a table is not a map of where a hunk may be
+cut today. That write-up carries a fourth detail of the recipe that cost a wrong
+table here before it cost a right one, and a re-cutter should have it: **each
+candidate needs its own seeded tree**, because `git checkout -- <file>` restores
+from the index, which still holds the previous candidate's edit.
+
+**Some function gaps are free and no `gate` line is, and that asymmetry is the
+reason to name the decision rather than let a reader find it.** A `check_*()`
+definition could have been cut on its own and would have been green everywhere —
+it applies, it composes in every ordered pair, and it passes `bash -n` and
+`shellcheck` — while arming nothing, because a gate list that does not name it
+never calls it. That is the shape of a check that looks landed and
+is not, and it is the half a reader of the anchor tables is most likely to
+conclude is available.
+
+**Landing this is not `git apply` alone, and the patch's header carries the list.**
+Three edits go with it: the tool's docstring paragraph saying it is not in the
+gate script, and the cases in `ec/tools/test_check_doc_figure_pins.py` that
+assert the same thing. The case that reads the gate script goes red on the
+apply, **by design** — it is that tool's own honesty about its standing, and the
+honest standing before a human lands the patch is the one it asserts. Its
+sibling reads the docstring, which the apply does not touch, so it stays green
+until the docstring paragraph is rewritten and turns red if that rewrite and the
+case are not made together. The other thing to know is a
+precondition rather than an edit: the checker
+**exits 1 on the committed tree**, so §2b of the census re-derivation checklist
+has to be reconciled before the landing, not after. That is the §"A deviation"
+heading above arriving from a third direction.

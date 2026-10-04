@@ -1,21 +1,69 @@
 # ec/tools/check_testdata_row_claims.py, wired into the cheap gate. Prepared
 #
-# **This patch now carries two tools, not one.** The second is
-# `ec/tools/check_testdata_grader_claims.py`, folded in here rather than cut as
-# a file of its own for the reason every other fold in this directory is:
+# **This patch now carries three tools, not one.** The second is
+# `ec/tools/check_testdata_grader_claims.py` and the third is
+# `ec/tools/check_doc_figure_pins.py`, both folded in here rather than cut as a
+# file of their own for the reason every other fold in this directory is:
 # `tools/test_agent_gates_patches.py` applies the whole set in every ordered
-# pair, and the seven-line `gate` list has no line left that a new hunk can be
-# cut against -- `agent-gates-pin-table-rows.patch` holds the one at the front,
+# pair, and the `gate` list has no line left that a new hunk can be cut
+# against -- `agent-gates-pin-table-rows.patch` holds the one at the front,
 # `agent-gates-capture-claims.patch` the one at `register counts`, and this
 # patch the one at the end. A separate file would apply cleanly *alone* and fail
 # in half the pairs, which is the failure that is silent in the way that
-# matters. `tools/test_agent_gates_patches.py`'s `FoldTests` reads this file
-# for both tools' strings, so a re-cut that keeps one half and drops the other
-# still applies, still composes, and passes every other case there.
+# matters. Every insertion point the list admits was cut for
+# `check_doc_figure_pins.py` and applied in both orders against the whole set,
+# and none of them composes; `docs/findings/doc-figure-pins-gate-wiring.md` has
+# the anchor table and the recipe that produces it.
 #
-# The new function hunk is at `check_shellcheck()`, the one anchor in the
-# script no patch in the set writes into; its two `gate` lines are appended to
-# the one this patch already carries.
+# `tools/test_agent_gates_patches.py`'s `FoldTests` reads this file for all
+# three tools' strings, so a re-cut that keeps one half and drops another still
+# applies, still composes, and passes every other case there.
+#
+# Both newer function hunks are at `check_shellcheck()`, whose gap is held by
+# this patch and nothing else in the set; their `gate` lines are appended to the
+# one this patch already carries.
+#
+# **Landing this needs three more edits, or the cheap tier goes red on them.**
+# They are not in the diff because `.github/` is out of this branch's reach, and
+# the second would assert a gate that does not exist until the first one has
+# been made:
+#
+#   1. `ec/tools/check_doc_figure_pins.py`'s docstring paragraph "And what this
+#      tool is not" says the tool is not in `.github/scripts/agent-gates.sh` and
+#      runs by hand. After the apply that is false, and the docstring is where a
+#      reader looks first.
+#   2. `ec/tools/test_check_doc_figure_pins.py`'s
+#      `TheToolRunsByHand.test_it_is_not_in_the_cheap_gate` asserts the name is
+#      *absent* from the gate script. **The apply turns this one red**, because
+#      that case reads the gate script and the apply is what puts the name in
+#      it. Its sibling `test_its_docstring_says_so` asserts the docstring still
+#      carries "not in `.github/scripts/agent-gates.sh`"; the patch adds no hunk
+#      against the docstring, so **that one stays green on the apply** and goes
+#      red when item 1's rewrite lands without a matching rewrite here. Either
+#      way a landing that does nothing else is not a clean run. They are that
+#      tool's own honesty about its standing -- a checker nobody runs is the
+#      shape of defect #819 was -- so the rewrite points the same claim the
+#      other way: the name is present, and the precondition below has been met.
+#   3. `docs/findings/prepared-gate-patches.md` and `ec/README.md` record this
+#      patch as prepared. Both say what is waiting to be landed and stop saying
+#      it once it is.
+#
+# **The precondition, and it is not met on the committed tree.**
+# `python3 ec/tools/check_doc_figure_pins.py
+# docs/findings/xdata-census-rederivation-checklist.md --section 2b` **exits 1
+# today**, and would put the cheap tier red on the commit that lands it: some
+# rows §2b marks `held` resolve to no oracle entry, no check literal and no cited
+# committed cell, and others cite a `file:line` that measures in a different
+# module from the one the row names. That is a real disagreement about
+# a published page, and reconciling it is its own piece of work -- which is why
+# it is *not* in this patch. Landing first is what makes it cheap: §2b is a
+# committed document and the tool names the row and the pin. **Re-measure it at
+# the tip you land on**; the disagreement is about text other changes move.
+#
+# The tool's own verdict vocabulary is what makes that readable rather than
+# alarming. An `unheld` row is "not found by this method", never "absent", and
+# the run prints the `file:line` that decided every row, so the disagreement can
+# be read rather than inferred.
 #
 # Original header, for ec/tools/check_testdata_row_claims.py alone:
 # ec/tools/check_testdata_row_claims.py, wired into the cheap gate. Prepared
@@ -105,7 +153,7 @@ diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
  # The per-image reference counts in registers.yaml are the evidence several
  # statuses rest on, and a file-wide total hiding PD-image references is the
  # mistake docs/findings.md §3a had to correct. This recomputes every count
-@@ -302,6 +323,29 @@
+@@ -302,6 +323,50 @@
    return "$rc"
  }
  
@@ -132,15 +180,37 @@ diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
 +  python3 ec/tools/check_testdata_grader_claims.py --check
 +}
 +
++# A figure written down is not a pin. The census re-derivation checklist's 2b
++# told a re-deriver which of its numbers to redo by hand and was wrong in both
++# directions: it sent readers to redo work the tree already does, and left the
++# numbers nothing held looking like company. This resolves every figure in a
++# named section's verdict tables to one of four verdicts -- a module-level
++# constant whose key is read outside its own span, an int inside a check() or
++# numeric assert* call, unheld, or not read by this method -- and prints the
++# file:line that decided it. A held row's pin has to resolve three ways: the
++# file exists, the line is one it has, and it is the file the measurement
++# resolved to, so a pin that has drifted onto the wrong module is reported
++# rather than counted. Cheap tier because of what it reads: committed markdown
++# and committed python, no firmware image, no Ghidra, no network, no assembler.
++# Every unheld is "not found by this method", never "absent", and the four
++# limits are in the tool's docstring rather than here. Not claimed: that it
++# would have caught a figure that decayed -- it reports what a search over
++# committed text finds, so a pin it cannot see is one this method did not find.
++check_doc_figure_pins() {
++  python3 ec/tools/check_doc_figure_pins.py \
++    docs/findings/xdata-census-rederivation-checklist.md --section 2b
++}
++
  check_shellcheck() {
    local f rc=0
    while IFS= read -r -d '' f; do
-@@ -331,6 +375,8 @@
+@@ -331,6 +396,9 @@
  gate 'python syntax'   check_python_syntax
  gate 'shellcheck'      check_shellcheck
  gate 'doc links'       check_doc_links
 +gate 'testdata row claims'  check_testdata_row_claims
 +gate 'testdata grader claims'  check_testdata_grader_claims
++gate 'doc figure pins'  check_doc_figure_pins
  
  # What this tier does not run, and the one command that runs it. Printed
  # unconditionally, including on a failing run, because the moment to notice

@@ -632,15 +632,21 @@ class FoldTests(unittest.TestCase):
     # A second fold, into a different file and for the same reason: the `gate`
     # list is saturated at every line a hunk's context can reach, so
     # `check_testdata_grader_claims()` joined the row-claims patch rather than
-    # shipping a file of its own. Held here rather than by naming the strings in
-    # the one above, because the two files carry different tools and a shared
-    # `REQUIRED` would read as if one file carried all of them.
+    # shipping a file of its own, and `check_doc_figure_pins()` after it for the
+    # same reason -- every insertion point the list admits was measured against
+    # the whole set and none composes
+    # (`docs/findings/doc-figure-pins-gate-wiring.md` has the table). Held here
+    # rather than by naming the strings in the one above, because the two files
+    # carry different tools and a shared `REQUIRED` would read as if one file
+    # carried all of them.
     FOLDED_SECOND = 'docs/ci/agent-gates-testdata-row-claims.patch'
     REQUIRED_SECOND = [
         'check_testdata_row_claims() {',
         'check_testdata_grader_claims() {',
+        'check_doc_figure_pins() {',
         "gate 'testdata row claims'  check_testdata_row_claims",
         "gate 'testdata grader claims'  check_testdata_grader_claims",
+        "gate 'doc figure pins'  check_doc_figure_pins",
     ]
 
     def assert_every_line_lands(self, patch, required, absorbed):
@@ -675,8 +681,10 @@ class FoldTests(unittest.TestCase):
     def test_the_second_fold_still_lands_both_halves(self):
         self.assert_every_line_lands(
             self.FOLDED_SECOND, self.REQUIRED_SECOND,
-            'one other -- check_testdata_grader_claims.py, the index\'s third '
-            'column read for what it says the grader prints')
+            'two others -- check_testdata_grader_claims.py, the index\'s third '
+            'column read for what it says the grader prints, and '
+            'check_doc_figure_pins.py, which holds a published page\'s figures '
+            'to the checks that resolve them')
 
 
 @unittest.skipUnless(has_git(), 'no git on PATH')
