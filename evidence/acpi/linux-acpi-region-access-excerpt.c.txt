@@ -1,0 +1,453 @@
+========================================================================
+linux-acpi-region-access-excerpt.c.txt -- the same region-access path in
+the kernel's own copy of ACPICA
+========================================================================
+
+Issue #1337 asks what the interpreter does with an unaligned `SystemMemory`
+`Field` operand. This is the copy the Linux kernel builds: `v6.6` still
+carries ACPICA under `drivers/acpi/acpica/`, and the repository's end
+product runs on this interpreter. It is the same source as
+`acpica-region-access-excerpt.c.txt` with kernel naming and kernel
+formatting, so it is weak evidence that the two disagree and strong
+evidence that they agree.
+
+The fragments are the same decision points as in the ACPICA excerpt,
+because that is the comparison worth making. Two things are *not* the
+same and are worth naming rather than glossing:
+
+  * This copy still has the October 2009 page-boundary clamp in
+    `acpi_ex_system_memory_space_handler`; the ACPICA revision quoted in
+    the sibling file has replaced it with a plain one-page cap. Neither
+    checks the operand's alignment, and neither is reached here: the
+    excerpts stop at the read switch.
+  * `acpi_evaluate_integer` at the end is the OS layer, not the
+    interpreter. It is here because it is the concrete statement of where
+    a returned `Integer` comes back out of on this side of the boundary.
+
+Same convention as the sibling file: `sed -n A,Bp` ranges of the real
+upstream file, upstream's own line number as a prefix, re-derived and
+diffed by `fetch-acpi-sources.sh`.
+
+  Project      : torvalds/linux
+  Revision     : ffc253263a1375a65fa6c9f62a893e9767fbebfa (tag v6.6, released 2023-10-30)
+  Licence      : Two licences, and which file carries which is not uniform.
+                 The four `drivers/acpi/acpica/` files excerpted below are
+                 `BSD-3-Clause OR GPL-2.0`, declared on line 1 of each;
+                 `drivers/acpi/utils.c`, also excerpted below, is
+                 `GPL-2.0-or-later`. Both identifiers are quoted as fragments
+                 further down -- they are above the excerpted ranges, so the
+                 headers would otherwise not be visible here.
+  Retrieved    : 2026-10-04
+  Fetched from : https://raw.githubusercontent.com/torvalds/linux/ffc253263a1375a65fa6c9f62a893e9767fbebfa/
+
+Nothing here was run, and nothing here is a statement about the machine.
+It is a static read of public source.
+
+--- fragments below this line are verbatim from torvalds/linux at the revision above ---
+
+  [acpi_ex_system_memory_space_handler -- the same width switch and the same #ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED, in the copy the kernel builds]
+  drivers/acpi/acpica/exregion.c lines 34-93
+     34: acpi_status
+     35: acpi_ex_system_memory_space_handler(u32 function,
+     36: 				    acpi_physical_address address,
+     37: 				    u32 bit_width,
+     38: 				    u64 *value,
+     39: 				    void *handler_context, void *region_context)
+     40: {
+     41: 	acpi_status status = AE_OK;
+     42: 	void *logical_addr_ptr = NULL;
+     43: 	struct acpi_mem_space_context *mem_info = region_context;
+     44: 	struct acpi_mem_mapping *mm = mem_info->cur_mm;
+     45: 	u32 length;
+     46: 	acpi_size map_length;
+     47: 	acpi_size page_boundary_map_length;
+     48: #ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED
+     49: 	u32 remainder;
+     50: #endif
+     51: 
+     52: 	ACPI_FUNCTION_TRACE(ex_system_memory_space_handler);
+     53: 
+     54: 	/* Validate and translate the bit width */
+     55: 
+     56: 	switch (bit_width) {
+     57: 	case 8:
+     58: 
+     59: 		length = 1;
+     60: 		break;
+     61: 
+     62: 	case 16:
+     63: 
+     64: 		length = 2;
+     65: 		break;
+     66: 
+     67: 	case 32:
+     68: 
+     69: 		length = 4;
+     70: 		break;
+     71: 
+     72: 	case 64:
+     73: 
+     74: 		length = 8;
+     75: 		break;
+     76: 
+     77: 	default:
+     78: 
+     79: 		ACPI_ERROR((AE_INFO, "Invalid SystemMemory width %u",
+     80: 			    bit_width));
+     81: 		return_ACPI_STATUS(AE_AML_OPERAND_VALUE);
+     82: 	}
+     83: 
+     84: #ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED
+     85: 	/*
+     86: 	 * Hardware does not support non-aligned data transfers, we must verify
+     87: 	 * the request.
+     88: 	 */
+     89: 	(void)acpi_ut_short_divide((u64) address, length, NULL, &remainder);
+     90: 	if (remainder != 0) {
+     91: 		return_ACPI_STATUS(AE_AML_ALIGNMENT);
+     92: 	}
+     93: #endif
+
+  [the same access label, the same pointer arithmetic from the requested address, the same ACPI_GET32]
+  drivers/acpi/acpica/exregion.c lines 190-240
+    190: access:
+    191: 	/*
+    192: 	 * Generate a logical pointer corresponding to the address we want to
+    193: 	 * access
+    194: 	 */
+    195: 	logical_addr_ptr = mm->logical_address +
+    196: 		((u64) address - (u64) mm->physical_address);
+    197: 
+    198: 	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
+    199: 			  "System-Memory (width %u) R/W %u Address=%8.8X%8.8X\n",
+    200: 			  bit_width, function, ACPI_FORMAT_UINT64(address)));
+    201: 
+    202: 	/*
+    203: 	 * Perform the memory read or write
+    204: 	 *
+    205: 	 * Note: For machines that do not support non-aligned transfers, the target
+    206: 	 * address was checked for alignment above. We do not attempt to break the
+    207: 	 * transfer up into smaller (byte-size) chunks because the AML specifically
+    208: 	 * asked for a transfer width that the hardware may require.
+    209: 	 */
+    210: 	switch (function) {
+    211: 	case ACPI_READ:
+    212: 
+    213: 		*value = 0;
+    214: 		switch (bit_width) {
+    215: 		case 8:
+    216: 
+    217: 			*value = (u64)ACPI_GET8(logical_addr_ptr);
+    218: 			break;
+    219: 
+    220: 		case 16:
+    221: 
+    222: 			*value = (u64)ACPI_GET16(logical_addr_ptr);
+    223: 			break;
+    224: 
+    225: 		case 32:
+    226: 
+    227: 			*value = (u64)ACPI_GET32(logical_addr_ptr);
+    228: 			break;
+    229: 
+    230: 		case 64:
+    231: 
+    232: 			*value = (u64)ACPI_GET64(logical_addr_ptr);
+    233: 			break;
+    234: 
+    235: 		default:
+    236: 
+    237: 			/* bit_width was already validated */
+    238: 
+    239: 			break;
+    240: 		}
+
+  [acpi_ex_decode_field_access -- the same switch, ByteAcc still lands on 8]
+  drivers/acpi/acpica/exprep.c lines 204-256
+    204: 	access = (field_flags & AML_FIELD_ACCESS_TYPE_MASK);
+    205: 
+    206: 	switch (access) {
+    207: 	case AML_FIELD_ACCESS_ANY:
+    208: 
+    209: #ifdef ACPI_UNDER_DEVELOPMENT
+    210: 		byte_alignment =
+    211: 		    acpi_ex_generate_access(obj_desc->common_field.
+    212: 					    start_field_bit_offset,
+    213: 					    obj_desc->common_field.bit_length,
+    214: 					    0xFFFFFFFF
+    215: 					    /* Temp until we pass region_length as parameter */
+    216: 		    );
+    217: 		bit_length = byte_alignment * 8;
+    218: #endif
+    219: 
+    220: 		byte_alignment = 1;
+    221: 		bit_length = 8;
+    222: 		break;
+    223: 
+    224: 	case AML_FIELD_ACCESS_BYTE:
+    225: 	case AML_FIELD_ACCESS_BUFFER:	/* ACPI 2.0 (SMBus Buffer) */
+    226: 
+    227: 		byte_alignment = 1;
+    228: 		bit_length = 8;
+    229: 		break;
+    230: 
+    231: 	case AML_FIELD_ACCESS_WORD:
+    232: 
+    233: 		byte_alignment = 2;
+    234: 		bit_length = 16;
+    235: 		break;
+    236: 
+    237: 	case AML_FIELD_ACCESS_DWORD:
+    238: 
+    239: 		byte_alignment = 4;
+    240: 		bit_length = 32;
+    241: 		break;
+    242: 
+    243: 	case AML_FIELD_ACCESS_QWORD:	/* ACPI 2.0 */
+    244: 
+    245: 		byte_alignment = 8;
+    246: 		bit_length = 64;
+    247: 		break;
+    248: 
+    249: 	default:
+    250: 
+    251: 		/* Invalid field access type */
+    252: 
+    253: 		ACPI_ERROR((AE_INFO, "Unknown field access type 0x%X", access));
+    254: 
+    255: 		return_UINT32(0);
+    256: 	}
+
+  [access_byte_width = ACPI_DIV_8(access_bit_width)]
+  drivers/acpi/acpica/exprep.c lines 331-337
+    331: 		return_ACPI_STATUS(AE_AML_OPERAND_VALUE);
+    332: 	}
+    333: 
+    334: 	/* Setup width (access granularity) fields (values are: 1, 2, 4, 8) */
+    335: 
+    336: 	obj_desc->common_field.access_byte_width = (u8)
+    337: 	    ACPI_DIV_8(access_bit_width);
+
+  [acpi_ex_access_region -- the function the dispatch below sits in, so a reader can see which one it is without leaving this file]
+  drivers/acpi/acpica/exfldio.c lines 181-201
+    181:  * FUNCTION:    acpi_ex_access_region
+    182:  *
+    183:  * PARAMETERS:  obj_desc                - Field to be read
+    184:  *              field_datum_byte_offset - Byte offset of this datum within the
+    185:  *                                        parent field
+    186:  *              value                   - Where to store value (must at least
+    187:  *                                        64 bits)
+    188:  *              function                - Read or Write flag plus other region-
+    189:  *                                        dependent flags
+    190:  *
+    191:  * RETURN:      Status
+    192:  *
+    193:  * DESCRIPTION: Read or Write a single field datum to an Operation Region.
+    194:  *
+    195:  ******************************************************************************/
+    196: 
+    197: acpi_status
+    198: acpi_ex_access_region(union acpi_operand_object *obj_desc,
+    199: 		      u32 field_datum_byte_offset, u64 *value, u32 function)
+    200: {
+    201: 	acpi_status status;
+
+  [the same dispatch, the same AccessByteWidth * 8]
+  drivers/acpi/acpica/exfldio.c lines 244-251
+    244: 	/* Invoke the appropriate address_space/op_region handler */
+    245: 
+    246: 	status = acpi_ev_address_space_dispatch(rgn_desc, obj_desc,
+    247: 						function, region_offset,
+    248: 						ACPI_MUL_8(obj_desc->
+    249: 							   common_field.
+    250: 							   access_byte_width),
+    251: 						value);
+
+  [acpi_ex_field_datum_io's own call site for acpi_ex_access_region -- the datum goes through access_region on its way to the dispatch above, rather than to the dispatch directly]
+  drivers/acpi/acpica/exfldio.c lines 438-448
+    438: 
+    439: 	case ACPI_TYPE_LOCAL_REGION_FIELD:
+    440: 		/*
+    441: 		 * For simple region_fields, we just directly access the owning
+    442: 		 * Operation Region.
+    443: 		 */
+    444: 		status =
+    445: 		    acpi_ex_access_region(obj_desc, field_datum_byte_offset,
+    446: 					  value, read_write);
+    447: 		break;
+    448: 
+
+  [the same AccessBitWidth and the same single-access shortcut]
+  drivers/acpi/acpica/exfldio.c lines 675-696
+    675: 	memset(buffer, 0, buffer_length);
+    676: 	access_bit_width = ACPI_MUL_8(obj_desc->common_field.access_byte_width);
+    677: 
+    678: 	/* Handle the simple case here */
+    679: 
+    680: 	if ((obj_desc->common_field.start_field_bit_offset == 0) &&
+    681: 	    (obj_desc->common_field.bit_length == access_bit_width)) {
+    682: 		if (buffer_length >= sizeof(u64)) {
+    683: 			status =
+    684: 			    acpi_ex_field_datum_io(obj_desc, 0, buffer,
+    685: 						   ACPI_READ);
+    686: 		} else {
+    687: 			/* Use raw_datum (u64) to handle buffers < 64 bits */
+    688: 
+    689: 			status =
+    690: 			    acpi_ex_field_datum_io(obj_desc, 0, &raw_datum,
+    691: 						   ACPI_READ);
+    692: 			memcpy(buffer, &raw_datum, buffer_length);
+    693: 		}
+    694: 
+    695: 		return_ACPI_STATUS(status);
+    696: 	}
+
+  [the same datum counts and priming read]
+  drivers/acpi/acpica/exfldio.c lines 707-727
+    707: 	/* Compute the number of datums (access width data items) */
+    708: 
+    709: 	datum_count =
+    710: 	    ACPI_ROUND_UP_TO(obj_desc->common_field.bit_length,
+    711: 			     access_bit_width);
+    712: 
+    713: 	field_datum_count = ACPI_ROUND_UP_TO(obj_desc->common_field.bit_length +
+    714: 					     obj_desc->common_field.
+    715: 					     start_field_bit_offset,
+    716: 					     access_bit_width);
+    717: 
+    718: 	/* Priming read from the field */
+    719: 
+    720: 	status =
+    721: 	    acpi_ex_field_datum_io(obj_desc, field_offset, &raw_datum,
+    722: 				   ACPI_READ);
+    723: 	if (ACPI_FAILURE(status)) {
+    724: 		return_ACPI_STATUS(status);
+    725: 	}
+    726: 	merged_datum =
+    727: 	    raw_datum >> obj_desc->common_field.start_field_bit_offset;
+
+  [the same per-datum loop and the same shift]
+  drivers/acpi/acpica/exfldio.c lines 729-758
+    729: 	/* Read the rest of the field */
+    730: 
+    731: 	for (i = 1; i < field_datum_count; i++) {
+    732: 
+    733: 		/* Get next input datum from the field */
+    734: 
+    735: 		field_offset += obj_desc->common_field.access_byte_width;
+    736: 		status =
+    737: 		    acpi_ex_field_datum_io(obj_desc, field_offset, &raw_datum,
+    738: 					   ACPI_READ);
+    739: 		if (ACPI_FAILURE(status)) {
+    740: 			return_ACPI_STATUS(status);
+    741: 		}
+    742: 
+    743: 		/*
+    744: 		 * Merge with previous datum if necessary.
+    745: 		 *
+    746: 		 * Note: Before the shift, check if the shift value will be larger than
+    747: 		 * the integer size. If so, there is no need to perform the operation.
+    748: 		 * This avoids the differences in behavior between different compilers
+    749: 		 * concerning shift values larger than the target data width.
+    750: 		 */
+    751: 		if (access_bit_width -
+    752: 		    obj_desc->common_field.start_field_bit_offset <
+    753: 		    ACPI_INTEGER_BIT_SIZE) {
+    754: 			merged_datum |=
+    755: 			    raw_datum << (access_bit_width -
+    756: 					  obj_desc->common_field.
+    757: 					  start_field_bit_offset);
+    758: 		}
+
+  [the same field-read dispatch: acpi_ex_read_data_from_field, from a case of the same four field types]
+  drivers/acpi/acpica/exresolv.c lines 258-270
+    258: 	case ACPI_TYPE_BUFFER_FIELD:
+    259: 	case ACPI_TYPE_LOCAL_REGION_FIELD:
+    260: 	case ACPI_TYPE_LOCAL_BANK_FIELD:
+    261: 	case ACPI_TYPE_LOCAL_INDEX_FIELD:
+    262: 
+    263: 		ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
+    264: 				  "FieldRead SourceDesc=%p Type=%X\n",
+    265: 				  stack_desc, stack_desc->common.type));
+    266: 
+    267: 		status =
+    268: 		    acpi_ex_read_data_from_field(walk_state, stack_desc,
+    269: 						 &obj_desc);
+    270: 
+
+  [the same call to acpi_ex_extract_from_field]
+  drivers/acpi/acpica/exfield.c lines 236-239
+    236: 	/* Read from the field */
+    237: 
+    238: 	status = acpi_ex_extract_from_field(obj_desc, buffer, buffer_length);
+    239: 	acpi_ex_release_global_lock(obj_desc->common_field.field_flags);
+
+  [the SPDX-License-Identifier line this file carries -- GPL-2.0-or-later, and not the BSD-3-Clause OR GPL-2.0 the kernel's own ACPICA copies carry]
+  drivers/acpi/utils.c lines 1-6
+      1: // SPDX-License-Identifier: GPL-2.0-or-later
+      2: /*
+      3:  *  acpi_utils.c - ACPI Utility Functions ($Revision: 10 $)
+      4:  *
+      5:  *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
+      6:  *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
+
+  [acpi_evaluate_integer -- the OS-side answer to the second question: where a returned Integer is read back out of]
+  drivers/acpi/utils.c lines 246-276
+    246: acpi_status
+    247: acpi_evaluate_integer(acpi_handle handle,
+    248: 		      acpi_string pathname,
+    249: 		      struct acpi_object_list *arguments, unsigned long long *data)
+    250: {
+    251: 	acpi_status status = AE_OK;
+    252: 	union acpi_object element;
+    253: 	struct acpi_buffer buffer = { 0, NULL };
+    254: 
+    255: 	if (!data)
+    256: 		return AE_BAD_PARAMETER;
+    257: 
+    258: 	buffer.length = sizeof(union acpi_object);
+    259: 	buffer.pointer = &element;
+    260: 	status = acpi_evaluate_object(handle, pathname, arguments, &buffer);
+    261: 	if (ACPI_FAILURE(status)) {
+    262: 		acpi_util_eval_error(handle, pathname, status);
+    263: 		return status;
+    264: 	}
+    265: 
+    266: 	if (element.type != ACPI_TYPE_INTEGER) {
+    267: 		acpi_util_eval_error(handle, pathname, AE_BAD_DATA);
+    268: 		return AE_BAD_DATA;
+    269: 	}
+    270: 
+    271: 	*data = element.integer.value;
+    272: 
+    273: 	acpi_handle_debug(handle, "Return value [%llu]\n", *data);
+    274: 
+    275: 	return AE_OK;
+    276: }
+
+  [the SPDX-License-Identifier line the kernel's ACPICA copies carry]
+  drivers/acpi/acpica/acmacros.h lines 1-4
+      1: /* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+      2: /******************************************************************************
+      3:  *
+      4:  * Name: acmacros.h - C macros for the entire subsystem.
+
+  [the same ACPI_GET32, and the same comment about the alignment hazard]
+  drivers/acpi/acpica/acmacros.h lines 13-29
+     13: /*
+     14:  * Extract data using a pointer. Any more than a byte and we
+     15:  * get into potential alignment issues -- see the STORE macros below.
+     16:  * Use with care.
+     17:  */
+     18: #define ACPI_CAST8(ptr)                 ACPI_CAST_PTR (u8, (ptr))
+     19: #define ACPI_CAST16(ptr)                ACPI_CAST_PTR (u16, (ptr))
+     20: #define ACPI_CAST32(ptr)                ACPI_CAST_PTR (u32, (ptr))
+     21: #define ACPI_CAST64(ptr)                ACPI_CAST_PTR (u64, (ptr))
+     22: #define ACPI_GET8(ptr)                  (*ACPI_CAST8 (ptr))
+     23: #define ACPI_GET16(ptr)                 (*ACPI_CAST16 (ptr))
+     24: #define ACPI_GET32(ptr)                 (*ACPI_CAST32 (ptr))
+     25: #define ACPI_GET64(ptr)                 (*ACPI_CAST64 (ptr))
+     26: #define ACPI_SET8(ptr, val)             (*ACPI_CAST8 (ptr) = (u8) (val))
+     27: #define ACPI_SET16(ptr, val)            (*ACPI_CAST16 (ptr) = (u16) (val))
+     28: #define ACPI_SET32(ptr, val)            (*ACPI_CAST32 (ptr) = (u32) (val))
+     29: #define ACPI_SET64(ptr, val)            (*ACPI_CAST64 (ptr) = (u64) (val))

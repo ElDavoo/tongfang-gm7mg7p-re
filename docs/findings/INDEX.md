@@ -59,6 +59,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`a5e6-r1-is-the-low-byte.md`](a5e6-r1-is-the-low-byte.md) — `0xA5E6` returns the quotient's low byte in R1, and a probe built on the opposite reading could not have agreed with a capture (issue #358)
 - [`a73f-09f1-mailbox-payload.md`](a73f-09f1-mailbox-payload.md) — `0xA73F` pushes a payload into an eight-slot ring, and there was never a command-code table to look it up in (issue #1444)
 - [`a7c8-dispatch-slot-and-pl-race.md`](a7c8-dispatch-slot-and-pl-race.md) — What calls `0xA7C8`, and whether the host-writes-PLs / EC-zeroes-PLs race is real
+- [`acpi-interpreter-region-access.md`](acpi-interpreter-region-access.md) — What the ACPI interpreter does with an unaligned `MMRD`, and what it still does not establish (issue #1337)
 - [`addc-dph-residual-six.md`](addc-dph-residual-six.md) — All six residual `addc A,#imm ; mov DPH,A` sites close: four build page `0x0D`/`0x0E`, two build page `0x2A` and read CODE (issue #519)
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
