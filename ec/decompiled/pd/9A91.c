@@ -6,8 +6,17 @@
 
 /* Loads B with 0x60 and DPTR with 0x04A4 and returns, with no read, no write and no call: the A
    that 0x9A90 loaded from R7 and both constants are simply handed back to the caller. Nothing in
-   these two listings says what that is for, so the role is not determined. 0x04A4 is the PD image's
-   own XDATA and has no entry in ec/annotations/registers.yaml.
+   these two listings says what that is for, so the role is not determined. 0x04A4 here is the PD
+   image's own XDATA, and it was outside ec/annotations/registers.yaml when this row was written.
+   *** CORRECTION 2026-10-04 (issue #1202) *** An earlier version of this row said 0x04A4 had no
+   entry in ec/annotations/registers.yaml, which was true then and is not now: the work that first
+   decoded the whole 0x0400-0x04FF page added XDATA_04A4 at that address. The clause is reworded
+   rather than deleted because the reason it mattered is the correction. What did not change, and is
+   the point of the row, is that the two are not the same byte: this is the PD image's own 0x04A4
+   inside its 0x04A1-0x04A6 field block reached through 0x60 stride arithmetic
+   (ec/annotations/pd-index-geometry.md), while the main EC's XDATA_04A4 is a 16-bit milliamp
+   reading written by FUN_CODE_b43b in the main image
+   (docs/findings/battery-page-first-decoding.md). Entering the address does not merge them.
    type: unresolved
    evidence: ec/decompiled/pd/9A91.asm; ec/decompiled/pd/9A91.c
    basis: hand-decoded
