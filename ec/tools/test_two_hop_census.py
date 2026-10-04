@@ -20,10 +20,16 @@ The fixtures are for the load-bearing part. The committed image's `other->flow`
 population settles at its first callee for every cell that settles at all, and
 its longest handoff chain is two links, so **neither** new column's *negative*
 shape is exercised by the image: no flow cell's callee writes or reads+writes,
-and no flow row takes two hops. A `FLOW_CALLEE_CLASSES` that resolved writes
-into `->read`, or a second-pass `classes_for()` that dropped a label, would
-pass every image-derived case here and be wrong. That is why the write /
-r+w / two-hop / unreachable cases are built rather than read.
+and no flow row takes two hops *at depth 1*. A `FLOW_CALLEE_CLASSES` that
+resolved writes into `->read`, or a second-pass `classes_for()` that dropped a
+label, would pass every image-derived case here and be wrong. That is why the
+write / r+w / two-hop / unreachable cases are built rather than read.
+
+The composed mode -- depth 2 *and* --follow-flow -- is the one this suite
+reaches through named cases rather than through the census, because
+`MODES` pairs `flow` with depth 1 and `depth2` with the follow off. It is
+where the label has to keep naming the branch at every depth, and nothing else
+here would notice if it stopped.
 """
 import collections
 import contextlib
@@ -141,6 +147,80 @@ class ImageTwoHopTests(unittest.TestCase):
         rows = [r for r in self.rows(0x07D0, 0, True) if r[0] == 0x24B40]
         self.assertEqual(rows[0][3], rrt.FLOW_CLASSES[3][0])
         self.assertIsNone(rows[0][4])
+
+    def test_a_branch_then_call_cell_keeps_its_flow_label_at_depth_2(self):
+        # The composition, which nothing else here reaches: `MODES` pairs
+        # `flow` with depth 1 and `depth2` with --follow-flow off, so without
+        # this case the mode the module's own --help advertises is unexercised.
+        # Each cell is named rather than counted, so a registers.yaml addition
+        # cannot falsify it, and each is asserted to be flow-aware -- not to
+        # equal one particular string, because a one-link chain keeps the
+        # depth-1 flow column and a two-link one gets the weaker `->callee->`
+        # beside it.
+        cells = {
+            (0x07D0, 0x24B40): (0x34A5, "fall-through past jnz +0x12 at 0x4B43"),
+            (0x07D2, 0x26757): (0x37DE, "fall-through past cjne a,#0x02,+0x08 at 0x675A"),
+            (0x07D9, 0x26DAA): (0x0FAF, "fall-through past cjne r5,#0x03,+0x0f at 0x6DAD"),
+            (0x0803, 0x2233C): (0x34A5, "fall-through past jnz +0x12 at 0x233F"),
+            (0x0803, 0x2AE73): (0xAE91, "sjmp target 0xAE7D"),
+            (0x07D4, 0x2D01D): (0x714F, "fall-through past jnz +0x27 at 0xD020"),
+            (0x07D6, 0x2BB50): (0xB293, "fall-through past jnz +0x0f at 0xBB53"),
+            (0x07D6, 0x2BD80): (0xB293, "fall-through past jnz +0x0f at 0xBD83"),
+        }
+        flow_labels = {label for label, _ in rrt.FLOW_CALLEE_DEPTH2_CLASSES[:4]}
+        for (addr, off), (callee, via) in cells.items():
+            one = [r for r in self.rows(addr, 1, True) if r[0] == off]
+            two = [r for r in self.rows(addr, 2, True) if r[0] == off]
+            self.assertEqual(len(one), 1, f"0x{addr:04X} at 0x{off:05X}")
+            self.assertEqual(len(two), 1, f"0x{addr:04X} at 0x{off:05X}")
+            # Each settles at its own callee, so both depths name the same
+            # routine and the same `flow_via`: the chain did not grow.
+            self.assertEqual(one[0][4], callee, f"0x{addr:04X}")
+            self.assertEqual(two[0][4], callee, f"0x{addr:04X}")
+            self.assertEqual(two[0][7], via, f"0x{addr:04X}")
+            self.assertEqual(len(two[0][8]), 1, f"0x{addr:04X}")
+            # The invariant the whole pair of sets exists for: at depth 2 a
+            # branch-then-call cell is still two hops from the site, so it
+            # cannot print in the one-hop `handoff->read` column beside a
+            # cell that took a single call to get there.
+            self.assertIn(two[0][3], flow_labels, f"0x{addr:04X}")
+            self.assertNotIn(two[0][3], [label for label, _ in rrt.HANDOFF_CLASSES])
+
+    def test_a_branch_then_two_calls_cell_takes_the_flow_weaker_column(self):
+        # The other half of the composition, on the two cells the write-up
+        # names: `other->flow->unresolved` at depth 1, and at depth 2 the
+        # three-hop claim, which is weaker than every one-hop column and so
+        # gets the flow-aware `->callee->` one rather than `handoff->callee->`
+        # -- which would file a cell that took a branch beside one that did not.
+        for addr, off, second in ((0x07D8, 0x26498, 0x10C8),
+                                  (0x07D5, 0x2A096, 0x10C8)):
+            one = [r for r in self.rows(addr, 1, True) if r[0] == off][0]
+            self.assertEqual(one[3], rrt.FLOW_CALLEE_CLASSES[3][0])
+            two = [r for r in self.rows(addr, 2, True) if r[0] == off][0]
+            self.assertEqual(two[3], rrt.FLOW_CALLEE_DEPTH2_CLASSES[3][0])
+            self.assertEqual(two[8][-1], second, f"0x{addr:04X}")
+            self.assertNotIn(two[3], [label for label, _ in rrt.CLASSES])
+            self.assertNotIn(two[3], [label for label, _ in rrt.HANDOFF_CLASSES])
+
+    def test_no_flow_cell_shares_a_column_with_a_call_at_the_site(self):
+        # The invariant stated as a property of the image rather than of the
+        # named cells: at the composed mode no row that resolved *through* the
+        # branch may sit in a column a site-local call could also occupy. This
+        # is what reconcile() cannot see -- it checks that every row has *a*
+        # column, not that the column says which hop the row took.
+        #
+        # `none` is excluded, and not as an exception: a site the follow does
+        # not settle keeps a `flow_via` and stays `none`, which is by design
+        # the same verdict as a site-local `none` reached further in rather
+        # than a claim about a hop. It asserts nothing about the branch, so
+        # there is nothing for it to be confused with.
+        site_local = {label for label, _ in rrt.CLASSES} | \
+                     {label for label, _ in rrt.HANDOFF_CLASSES}
+        for _name, addr in rrt.addresses(self.regs):
+            for r in self.rows(addr, 2, True):
+                if r[7] and r[3] != rrt.NONE:
+                    self.assertNotIn(r[3], site_local,
+                                     f"0x{addr:04X} at 0x{r[0]:05X}: {r[3]}")
 
     # -- shape 2: a callee that forwards DPTR on again ------------------------
 
@@ -303,6 +383,27 @@ class ColumnArithmeticTests(unittest.TestCase):
                          len(rrt.CLASSES) - 1 + len(rrt.FLOW_CLASSES)
                          - 1 + len(rrt.FLOW_CALLEE_CLASSES)
                          - 1 + len(rrt.HANDOFF_CLASSES))
+        # Depth 2 with both flags: the same arithmetic, and the second pass
+        # declares FLOW_CALLEE_DEPTH2_CLASSES rather than FLOW_CALLEE_CLASSES,
+        # because a branch-then-two-calls cell needs the flow-aware weaker
+        # column and the four `other->flow->` ones alone would be columns no
+        # row at this depth can reach.
+        self.assertEqual(len(rrt.classes_for(2, True)),
+                         len(rrt.CLASSES) - 1 + len(rrt.FLOW_CLASSES)
+                         - 1 + len(rrt.FLOW_CALLEE_DEPTH2_CLASSES)
+                         - 1 + len(rrt.HANDOFF_DEPTH2_CLASSES))
+
+    def test_the_composed_mode_declares_the_flow_aware_weaker_column(self):
+        # The half of the arithmetic a length check cannot see: at depth 2 with
+        # both flags the set in play has to be the flow-aware one, because the
+        # four `other->flow->` columns alone are columns no row at this depth
+        # can reach -- a mode that advertised them and reconciled anyway was
+        # the failure. Named rather than counted, so it survives a
+        # registers.yaml addition.
+        self.assertIn(rrt.FLOW_CALLEE_DEPTH2_CLASSES[3][0],
+                      {label for label, _ in rrt.classes_for(2, True)})
+        self.assertNotIn(rrt.FLOW_CALLEE_DEPTH2_CLASSES[3][0],
+                         {label for label, _ in rrt.classes_for(1, True)})
 
     def test_no_column_is_named_twice_in_any_mode(self):
         # reconcile() keys its unbucketed check on the label set, and the

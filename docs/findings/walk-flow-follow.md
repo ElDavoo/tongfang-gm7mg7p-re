@@ -128,7 +128,7 @@ and `callee` = `0x34A5`:
 ```console
 $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 \
   --callee-depth 1 --follow-flow --csv | grep 0x24B40
-0x07D0,DBD1 (DSDT name; ECSpec calls the same byte BATTERY_CHARGE_LIMIT_DOWN),0x24B40,pd-image,0x4B40,DPTR handed to a call reached only by following a branch -> callee reads,jnz +0x12,0x34A5,"movx a,@dptr",,fall-through past jnz +0x12 at 0x4B43
+0x07D0,DBD1 (DSDT name; ECSpec calls the same byte BATTERY_CHARGE_LIMIT_DOWN),0x24B40,pd-image,0x4B40,DPTR handed to a call reached only by following a branch -> callee reads,jnz +0x12,0x34A5,"movx a,@dptr",fall-through past jnz +0x12 at 0x4B43
 ```
 
 The column is a new one and not `read->flow` or `handoff->read`, because the

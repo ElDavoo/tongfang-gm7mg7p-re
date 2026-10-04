@@ -13,6 +13,13 @@ read as a one-call result:
 | a handoff the site only reaches **past a branch** | `other->flow` | `other->flow->read` | branch, then call |
 | a handoff whose **callee forwards DPTR again** | `handoff->unresolved` | `handoff->callee->read` | call, then call |
 
+At `--callee-depth 2 --follow-flow` the two compose, and the result is a third
+claim rather than either: branch-then-call-then-call is
+`other->flow->callee->read`, and it keeps the branch in the name rather than
+sharing the `handoff->callee->read` column with a cell one call from the site.
+All three weaker claims therefore read side by side, and none of them shares a
+column with the one-hop `handoff->read`.
+
 The first is the `0x4B40` cell `walk-flow-follow.md` §2 recorded as
 direction-unresolved. Its answer was already known by hand — `r2` decodes
 `0x34A5` as `movx a,@dptr` — and no tool produced it, because
@@ -131,8 +138,12 @@ things:
 
 * **`other->flow->unresolved`** — the flow-callee is itself a handoff and the
   bound was one call. Two cells are in it, `0x26498` and `0x2A096`, and both
-  reach `0x10C8` at `--callee-depth 2`, so a reader who wants the direction
-  asks for the deeper bound rather than being told the method gave up.
+  reach `0x10C8` at `--callee-depth 2 --follow-flow`, and at neither depth
+  alone — they are `other->flow` cells, so without the follow the branch is
+  never taken and both print `no movx in window` at any depth. At that mode
+  they are `other->flow->callee->read`, three hops from the site, so a reader
+  who wants the direction asks for the deeper bound *with* the follow rather
+  than being told the method gave up.
 * **`handoff->unresolved`** — the residue that reaches the `0x10BC`
   `DPTR += A × B` family, which adds to the pointer and never dereferences
   it. There is no direction to report at any depth, so a deeper bound would
@@ -176,6 +187,7 @@ writes, reads-and-writes, or hands DPTR on again is a fixture and not a row.
 
 ```console
 $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1 --follow-flow
+$ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 2 --follow-flow
 $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 2
 $ python3 ec/tools/two_hop_census.py --check
 $ python3 ec/tools/walk_flow_follow.py --check          # unchanged, byte for byte
@@ -192,4 +204,6 @@ the whole output, because a digest is a value every `registers.yaml` addition
 would have to edit.
 
 `--callee-depth 1 --follow-flow` is deliberately *not* unchanged: it gains the
-`other->flow->` columns. No committed artifact holds that mode's output.
+`other->flow->` columns. No committed artifact holds that mode's output, nor
+the composed one at depth 2 — which is why the composed mode is held by named
+cases in `test_two_hop_census.py` rather than by a census row.

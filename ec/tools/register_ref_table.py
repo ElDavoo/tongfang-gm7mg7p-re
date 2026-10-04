@@ -69,6 +69,15 @@ flags together (`--follow-flow` with `--callee-depth 1`), because a handoff
 reached only by a branch is a different cell from one sitting at the site and
 the two must not be counted as one.
 
+At `--callee-depth 2 --follow-flow` the branch hop is kept and the second call
+is added to it, which is a third claim again and gets `other->flow->callee->`
+rather than `handoff->callee->`: the naming is parallel on purpose, so
+branch-then-call-then-call reads beside branch-then-call and call-then-call and
+none of the three can be mistaken for the one-hop column. The re-bucketing is
+flow-first at that mode for the same reason -- routing a flow cell through the
+handoff pair would drop the branch and file a cell that took a branch and two
+calls beside one that took a single call.
+
 `two_hop_census.py` is the committed record of which cells took each of these
 two hops, and `--check` on it re-derives them from this image.
 
@@ -200,6 +209,29 @@ HANDOFF_DEPTH2_CLASSES = HANDOFF_CLASSES[:3] + (
     HANDOFF_CLASSES[3],
 )
 
+# What the `other->flow` column becomes at `--callee-depth 2 --follow-flow`,
+# and it is a set of its own rather than FLOW_CALLEE_CLASSES with two members
+# added, because the re-bucketing has to go flow-first at *every* depth: a
+# flow cell resolved through `depth2_bucket()` against the handoff pair would
+# be handed a `handoff->callee->` label, which drops the branch and files a
+# cell that took a branch and two calls beside a cell one call from the site.
+# The first three members are FLOW_CALLEE_CLASSES' own, and keep their cells
+# for the reason HANDOFF_DEPTH2_CLASSES' first three do -- the split keys on
+# the chain and not on the depth asked for. The naming is parallel again:
+# `other->flow->read` is branch-then-call and `other->flow->callee->read` is
+# branch-then-call-then-call, so all three weaker claims read side by side and
+# none of them shares a column with the one-hop `handoff->read`.
+FLOW_CALLEE_DEPTH2_CLASSES = FLOW_CALLEE_CLASSES[:3] + (
+    ("DPTR handed to a call reached only by following a branch -> second "
+     "callee reads", "other->flow->callee->read"),
+    ("DPTR handed to a call reached only by following a branch -> second "
+     "callee writes", "other->flow->callee->write"),
+    ("DPTR handed to a call reached only by following a branch -> second "
+     "callee reads+writes", "other->flow->callee->r+w"),
+    FLOW_CALLEE_CLASSES[3],
+    FLOW_CLASSES[3],
+)
+
 
 def classes_for(callee_depth: int, follow_flow: bool = False):
     """Column order for a mode. Each flag replaces one column in place by the
@@ -218,7 +250,6 @@ def classes_for(callee_depth: int, follow_flow: bool = False):
     # so replacing one with the other is one column in and N out like any
     # other, and a cell the first hop settled keeps the column it had.
     replacements = {}
-    replacements = {}
     if follow_flow:
         replacements[NONE] = FLOW_CLASSES
     if callee_depth > 1:
@@ -234,10 +265,18 @@ def classes_for(callee_depth: int, follow_flow: bool = False):
     if not follow_flow or not callee_depth:
         return out
     # Second pass: the inner `other->flow` label, which only a run with both
-    # flags reaches. One column in, four out, at the same position.
+    # flags reaches. One column in, N out, at the same position -- and the set
+    # is the one *this* depth declares, so at depth 2 the flow cell the second
+    # hop settles gets the flow-aware weaker column rather than the handoff
+    # one. Declaring FLOW_CALLEE_CLASSES here unconditionally would be the
+    # other half of the same mistake in the other direction: four
+    # `other->flow->` columns a depth-2 row can never land in, and
+    # reconcile() green either way, because it checks that every row has a
+    # column rather than that every declared column has rows.
+    flow = FLOW_CALLEE_DEPTH2_CLASSES if callee_depth > 1 else FLOW_CALLEE_CLASSES
     inner = []
     for label, short in out:
-        inner.extend(FLOW_CALLEE_CLASSES if label == FLOW_CLASSES[3][0]
+        inner.extend(flow if label == FLOW_CLASSES[3][0]
                      else ((label, short),))
     return tuple(inner)
 
@@ -366,7 +405,8 @@ def resolve_handoff(d: bytes, off: int, insns, pd_verified: bool, depth: int = 1
     return HANDOFF, target, f"{access} | {window}", chain, stop
 
 
-def depth2_bucket(label: str, chain) -> str:
+def depth2_bucket(label: str, chain, resolved=HANDOFF_CLASSES,
+                  depth2=HANDOFF_DEPTH2_CLASSES) -> str:
     """Move a cell only a *second* hop settled into the depth-2 column.
 
     `resolve_handoff()` hands back the same three label strings at every
@@ -376,12 +416,19 @@ def depth2_bucket(label: str, chain) -> str:
     to answer, which is the weaker claim and gets the `handoff->callee->` label
     here. A one-link chain and the unresolved bucket are returned unchanged,
     which is what keeps the depth-1 columns' own cells where they were.
+
+    The pair to work within is an argument because the labels are not the same
+    strings at both sites: a cell the *follow* reached hands back
+    HANDOFF_CLASSES' labels and has to be mapped into the flow pair first, so
+    calling this with the default pair on one of those would match nothing and
+    hand the label straight back -- the branch silently dropped, which is the
+    conflation the two sets exist to prevent.
     """
     if label == HANDOFF or len(chain or ()) < 2:
         return label
-    for i, (depth1_label, _short) in enumerate(HANDOFF_CLASSES[:3]):
+    for i, (depth1_label, _short) in enumerate(resolved[:3]):
         if label == depth1_label:
-            return HANDOFF_DEPTH2_CLASSES[len(HANDOFF_CLASSES[:3]) + i][0]
+            return depth2[len(resolved[:3]) + i][0]
     return label
 
 
@@ -432,13 +479,22 @@ def site_rows(d: bytes, addr: int, pd_verified: bool, callee_depth: int,
             # --follow-flow table already carries.
             label, callee, window, chain, stop = resolve_handoff(
                 d, f.final[0][0], f.final, pd_verified, callee_depth)
+            # Flow-first at every depth, and the order is load-bearing: the
+            # label comes back out of resolve_handoff() in HANDOFF_CLASSES'
+            # vocabulary, so it has to be mapped into the flow pair *before*
+            # depth2_bucket() splits it. Run the other way round, depth2_bucket
+            # matches nothing at this site, hands the label back untouched, and
+            # a branch-then-call cell prints in the one-hop `handoff->read`
+            # column -- the exact conflation these columns exist to prevent.
+            flow = FLOW_CALLEE_DEPTH2_CLASSES if callee_depth > 1 \
+                else FLOW_CALLEE_CLASSES
             if label == HANDOFF:
-                label = FLOW_CALLEE_CLASSES[3][0]
-            elif callee_depth > 1:
-                label = depth2_bucket(label, chain)
+                label = flow[3][0]
             else:
-                label = FLOW_CALLEE_CLASSES[
-                    [c for c, _ in HANDOFF_CLASSES].index(label)][0]
+                label = flow[[c for c, _ in HANDOFF_CLASSES].index(label)][0]
+                if callee_depth > 1:
+                    label = depth2_bucket(label, chain, FLOW_CALLEE_CLASSES,
+                                          FLOW_CALLEE_DEPTH2_CLASSES)
         yield (o, region_of(o, pd_verified)[0], runtime_addr(o, pd_verified),
                label, callee, window,
                " ; ".join(" ".join(mn.split()) for _, _, mn in insns[1:]), via,
@@ -589,7 +645,12 @@ def main() -> int:
                          "weaker `handoff->callee->` column rather than "
                          "sharing the one-hop one. Given together with "
                          "--follow-flow it also resolves a handoff the follow "
-                         "reached past a branch, into `other->flow->`")
+                         "reached past a branch, into `other->flow->` -- and "
+                         "at N>=2 keeps the branch in the name, so a cell "
+                         "that took a branch and two calls reads "
+                         "`other->flow->callee->` rather than sharing the "
+                         "`handoff->callee->` column with a cell one call "
+                         "from the site")
     ap.add_argument("--follow-flow", action="store_true",
                     help="split the `none` bucket by what ec/tools/walk_flow_"
                          "follow.py finds on the one path past the branch the "
