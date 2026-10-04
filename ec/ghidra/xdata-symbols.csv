@@ -105,6 +105,7 @@ addr,name,from_register,register_status,derivation,programs
 0x07D8,MODE_TCC_OFFSET_DEFAULTS_GAMING_0,MODE_TCC_OFFSET_DEFAULTS,present-untested,override,bank0;bank1
 0x07D9,MODE_TCC_OFFSET_DEFAULTS_OFFICE_1,MODE_TCC_OFFSET_DEFAULTS,present-untested,override,bank0;bank1
 0x07DA,MODE_TCC_OFFSET_DEFAULTS_TURBO_2,MODE_TCC_OFFSET_DEFAULTS,present-untested,override,bank0;bank1
+0x078E,XDATA_078E,XDATA_078E,present-untested,scalar-name,bank0;bank1
 0x0786,CPU_TCC_OFFSET,CPU_TCC_OFFSET (APTC/APTN),present-untested,scalar-name,bank0;bank1
 0x07C6,AP_OEM_6,AP_OEM_6 (whisper status / universal fan control),present-untested,scalar-name,bank0;bank1
 0x08A0,XDATA_08A0,XDATA_08A0,present-untested,scalar-name,bank0;bank1
